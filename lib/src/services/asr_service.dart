@@ -172,6 +172,7 @@ class AsrService {
   Future<AsrResult> transcribeFile({
     required String audioPath,
     required AsrConfig config,
+    String? expectedText,
     AsrProgressCallback? onProgress,
   }) async {
     _stopRequested = false;
@@ -190,6 +191,7 @@ class AsrService {
         return await _transcribeOffline(
           audioPath: audioPath,
           config: config,
+          expectedText: expectedText,
           onProgress: onProgress,
         );
       } on _CanceledAsrException {
@@ -239,36 +241,19 @@ class AsrService {
     _activeApiClient?.close();
     final client = http.Client();
     _activeApiClient = client;
-    String? preparedPath;
     try {
-      var uploadPath = audioPath;
-      if (p.extension(audioPath).toLowerCase() == '.wav') {
-        preparedPath = await _prepareWaveFileForAsr(audioPath);
-        if (preparedPath != null) {
-          uploadPath = preparedPath;
-        }
-      }
-      final request = http.MultipartRequest('POST', Uri.parse(endpoint));
-      request.headers['Authorization'] = 'Bearer $apiKey';
-      request.fields['model'] = config.model;
       final language = _normalizeApiLanguage(config.language);
-      if (language != null) {
-        request.fields['language'] = language;
-      }
-      request.files.add(await http.MultipartFile.fromPath('file', uploadPath));
-
-      final streamed = await client
-          .send(request)
-          .timeout(const Duration(seconds: 30));
-      if (!_isApiRequestActive(requestToken) || _stopRequested) {
-        return const AsrResult(
-          success: false,
-          error: 'asrRecognitionCancelled',
-        );
-      }
-      final response = await http.Response.fromStream(
-        streamed,
-      ).timeout(const Duration(seconds: 30));
+      final response = await _sendApiTranscriptionRequest(
+        client: client,
+        endpoint: endpoint,
+        apiKey: apiKey,
+        model: config.model,
+        language: language,
+        audioPath: audioPath,
+        includePrompt: false,
+        prompt: '',
+        requestToken: requestToken,
+      );
       if (!_isApiRequestActive(requestToken) || _stopRequested) {
         return const AsrResult(
           success: false,
@@ -321,12 +306,6 @@ class AsrService {
         errorParams: <String, Object?>{'error': error},
       );
     } finally {
-      if (preparedPath != null) {
-        final file = File(preparedPath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-      }
       if (identical(_activeApiClient, client)) {
         _activeApiClient = null;
       }
@@ -382,30 +361,37 @@ class AsrService {
     return '${compact.substring(0, 120)}...';
   }
 
-  Future<String?> _prepareWaveFileForAsr(String sourcePath) async {
-    try {
-      final wave = readWave(sourcePath);
-      if (wave.samples.isEmpty || wave.sampleRate <= 0) return null;
-      final prepared = _prepareWaveData(
-        samples: wave.samples,
-        sampleRate: wave.sampleRate,
-        targetSampleRate: _targetSampleRate,
-      );
-      if (prepared.samples.isEmpty) return null;
-      final tempDir = await getTemporaryDirectory();
-      final filePath = p.join(
-        tempDir.path,
-        'asr_prepared_${DateTime.now().microsecondsSinceEpoch}.wav',
-      );
-      await _writeWaveFile(
-        filePath: filePath,
-        sampleRate: prepared.sampleRate,
-        samples: prepared.samples,
-      );
-      return filePath;
-    } catch (_) {
-      return null;
+  Future<http.Response> _sendApiTranscriptionRequest({
+    required http.Client client,
+    required String endpoint,
+    required String apiKey,
+    required String model,
+    required String? language,
+    required String audioPath,
+    required bool includePrompt,
+    required String prompt,
+    required int requestToken,
+  }) async {
+    final request = http.MultipartRequest('POST', Uri.parse(endpoint));
+    request.headers['Authorization'] = 'Bearer $apiKey';
+    request.fields['model'] = model;
+    if (language != null) {
+      request.fields['language'] = language;
     }
+    if (includePrompt && prompt.isNotEmpty) {
+      request.fields['prompt'] = prompt;
+    }
+    request.files.add(await http.MultipartFile.fromPath('file', audioPath));
+
+    final streamed = await client
+        .send(request)
+        .timeout(const Duration(seconds: 30));
+    if (!_isApiRequestActive(requestToken) || _stopRequested) {
+      return http.Response('', 499);
+    }
+    return http.Response.fromStream(
+      streamed,
+    ).timeout(const Duration(seconds: 30));
   }
 
   _PreparedWaveData _prepareWaveData({
@@ -567,51 +553,10 @@ class AsrService {
     return output;
   }
 
-  Future<void> _writeWaveFile({
-    required String filePath,
-    required int sampleRate,
-    required List<double> samples,
-  }) async {
-    final pcm = Int16List(samples.length);
-    for (var i = 0; i < samples.length; i++) {
-      final value = samples[i].clamp(-1.0, 1.0);
-      pcm[i] = (value * 32767).round().clamp(-32768, 32767);
-    }
-
-    final dataLength = pcm.lengthInBytes;
-    final bytes = BytesBuilder();
-    void writeAscii(String value) => bytes.add(ascii.encode(value));
-    void writeLe16(int value) {
-      final data = ByteData(2)..setUint16(0, value, Endian.little);
-      bytes.add(data.buffer.asUint8List());
-    }
-
-    void writeLe32(int value) {
-      final data = ByteData(4)..setUint32(0, value, Endian.little);
-      bytes.add(data.buffer.asUint8List());
-    }
-
-    writeAscii('RIFF');
-    writeLe32(36 + dataLength);
-    writeAscii('WAVE');
-    writeAscii('fmt ');
-    writeLe32(16);
-    writeLe16(1);
-    writeLe16(1);
-    writeLe32(sampleRate);
-    writeLe32(sampleRate * 2);
-    writeLe16(2);
-    writeLe16(16);
-    writeAscii('data');
-    writeLe32(dataLength);
-    bytes.add(pcm.buffer.asUint8List());
-
-    await File(filePath).writeAsBytes(bytes.takeBytes(), flush: true);
-  }
-
   Future<AsrResult> _transcribeOffline({
     required String audioPath,
     required AsrConfig config,
+    String? expectedText,
     AsrProgressCallback? onProgress,
   }) async {
     final profile = _offlineProfiles[config.provider];
@@ -665,11 +610,11 @@ class AsrService {
       return const AsrResult(success: false, error: 'asrNoSpeechDetected');
     }
 
-    if (prepared.samples.length <
-        (_targetSampleRate * _minAsrSeconds).round()) {
+    final minSeconds = _minDurationForExpected(expectedText);
+    if (prepared.samples.length < (_targetSampleRate * minSeconds).round()) {
       return const AsrResult(success: false, error: 'asrRecordingTooShort');
     }
-    if (prepared.peak < 0.003) {
+    if (prepared.peak < _minPeakForExpected(expectedText)) {
       return const AsrResult(success: false, error: 'asrNoSpeechDetected');
     }
 
@@ -700,6 +645,22 @@ class AsrService {
     } finally {
       stream.free();
     }
+  }
+
+  double _minDurationForExpected(String? expectedText) {
+    final length = (expectedText ?? '').trim().runes.length;
+    if (length <= 0) return _minAsrSeconds;
+    if (length <= 4) return 0.018;
+    if (length <= 8) return 0.024;
+    return _minAsrSeconds;
+  }
+
+  double _minPeakForExpected(String? expectedText) {
+    final length = (expectedText ?? '').trim().runes.length;
+    if (length <= 0) return 0.003;
+    if (length <= 4) return 0.0018;
+    if (length <= 8) return 0.0022;
+    return 0.003;
   }
 
   Future<void> _ensureOfflineRecognizer({

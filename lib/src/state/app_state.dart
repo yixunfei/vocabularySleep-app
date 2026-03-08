@@ -1156,11 +1156,13 @@ class AppState extends ChangeNotifier {
 
   Future<AsrResult> transcribeRecording(
     String audioPath, {
+    String? expectedText,
     AsrProgressCallback? onProgress,
   }) {
     return _asr.transcribeFile(
       audioPath: audioPath,
       config: _config.asr,
+      expectedText: expectedText,
       onProgress: onProgress,
     );
   }

@@ -4533,6 +4533,7 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
 
       final result = await widget.state.transcribeRecording(
         audioPath,
+        expectedText: widget.word.word,
         onProgress: (progress) {
           if (!mounted) return;
           setState(() {
