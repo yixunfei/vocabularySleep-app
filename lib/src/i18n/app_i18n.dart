@@ -79,8 +79,11 @@ class AppI18n {
     'offlineWhisperBase': 'Offline (Whisper Base)',
     'offlineWhisperSmall': 'Offline (Whisper Small)',
     'asrLocalSimilarity': 'Local Similarity (No ASR)',
+    'asrMultiEngine': 'Multi-Engine (Selectable)',
     'asrLocalSimilarityHint':
         'Uses current playback TTS (local or remote) to generate reference audio, then compares pronunciation locally by acoustic similarity.',
+    'asrMultiEngineHint':
+        'Select one or more engines. They run in order. Text ASR and acoustic similarity results will be combined when available.',
     'asrOfflineModelManager': 'Offline Model Packages',
     'asrModelInstalled': 'Installed ({size})',
     'asrModelNotInstalled': 'Not installed (download size: {size})',
@@ -274,6 +277,8 @@ class AppI18n {
     'asrSimilarityFeatureInsufficient':
         'Audio is too short or unclear for similarity compare.',
     'asrSimilarityFailed': 'Local similarity compare failed: {error}',
+    'asrMultiEngineNoResult':
+        'No engine produced a valid result. Please adjust engine selection.',
     'asrOfflineFailed': 'Offline ASR failed: {error}',
     'asrOfflineInitFailed': 'Offline ASR initialization failed.',
     'asrUnsupportedOfflineProvider': 'Unsupported offline ASR provider.',

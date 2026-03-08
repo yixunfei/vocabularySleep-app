@@ -50,6 +50,14 @@ const List<_TtsApiModelOption> _ttsApiModels = <_TtsApiModelOption>[
   ),
 ];
 
+const List<AsrProviderType> _asrMultiEngineCandidates = <AsrProviderType>[
+  AsrProviderType.api,
+  AsrProviderType.customApi,
+  AsrProviderType.offline,
+  AsrProviderType.offlineSmall,
+  AsrProviderType.localSimilarity,
+];
+
 enum _AsrOfflineModelAction { download, remove }
 
 String _formatStorageSize(int bytes) {
@@ -77,6 +85,8 @@ String _asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
       return i18n.t('offlineWhisperSmall');
     case AsrProviderType.localSimilarity:
       return i18n.t('asrLocalSimilarity');
+    case AsrProviderType.multiEngine:
+      return i18n.t('asrMultiEngine');
   }
 }
 
@@ -3095,10 +3105,13 @@ class _HomePageState extends State<HomePage> {
     required ValueChanged<PlayConfig> onDraftChanged,
   }) {
     final provider = draft.asr.provider;
+    final selectedEngines = provider == AsrProviderType.multiEngine
+        ? draft.asr.normalizedEngineOrder
+        : <AsrProviderType>[provider];
     final isApiProvider =
-        provider == AsrProviderType.api ||
-        provider == AsrProviderType.customApi;
-    final isCustomApi = provider == AsrProviderType.customApi;
+        selectedEngines.contains(AsrProviderType.api) ||
+        selectedEngines.contains(AsrProviderType.customApi);
+    final isCustomApi = selectedEngines.contains(AsrProviderType.customApi);
     final resolvedAsrLanguageOption = _resolveAsrLanguageOption(
       asrLanguageController.text,
     );
@@ -3146,19 +3159,30 @@ class _HomePageState extends State<HomePage> {
                 value: AsrProviderType.localSimilarity,
                 child: Text(draftI18n.t('asrLocalSimilarity')),
               ),
+              DropdownMenuItem(
+                value: AsrProviderType.multiEngine,
+                child: Text(draftI18n.t('asrMultiEngine')),
+              ),
             ],
-              onChanged: (value) async {
-                if (value == null) return;
+            onChanged: (value) async {
+              if (value == null) return;
               if (value == AsrProviderType.offline ||
                   value == AsrProviderType.offlineSmall) {
-                  await _showAsrOfflineNotice(
+                await _showAsrOfflineNotice(
                   context: context,
                   i18n: draftI18n,
                   provider: value,
                 );
               }
               onDraftChanged(
-                draft.copyWith(asr: draft.asr.copyWith(provider: value)),
+                draft.copyWith(
+                  asr: draft.asr.copyWith(
+                    provider: value,
+                    engineOrder: value == AsrProviderType.multiEngine
+                        ? draft.asr.normalizedEngineOrder
+                        : draft.asr.engineOrder,
+                  ),
+                ),
               );
             },
           ),
@@ -3170,6 +3194,59 @@ class _HomePageState extends State<HomePage> {
                 context,
               ).textTheme.bodySmall?.copyWith(color: LegacyStyle.textSecondary),
             ),
+          ],
+          if (provider == AsrProviderType.multiEngine) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              draftI18n.t('asrMultiEngineHint'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: LegacyStyle.textSecondary),
+            ),
+            const SizedBox(height: 6),
+            for (final engine in _asrMultiEngineCandidates)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: draft.asr.normalizedEngineOrder.contains(engine),
+                title: Text(_asrProviderLabel(draftI18n, engine)),
+                onChanged: (checked) async {
+                  final current = List<AsrProviderType>.from(
+                    draft.asr.normalizedEngineOrder,
+                  );
+                  if (checked == true) {
+                    if (!current.contains(engine)) {
+                      current.add(engine);
+                    }
+                    if (engine == AsrProviderType.offline ||
+                        engine == AsrProviderType.offlineSmall) {
+                      await _showAsrOfflineNotice(
+                        context: context,
+                        i18n: draftI18n,
+                        provider: engine,
+                      );
+                    }
+                  } else {
+                    if (current.length <= 1) return;
+                    current.remove(engine);
+                    if (current.isEmpty) return;
+                  }
+                  final normalized = <AsrProviderType>[];
+                  for (final candidate in _asrMultiEngineCandidates) {
+                    if (current.contains(candidate)) {
+                      normalized.add(candidate);
+                    }
+                  }
+                  if (normalized.isEmpty) {
+                    normalized.add(AsrProviderType.api);
+                  }
+                  onDraftChanged(
+                    draft.copyWith(
+                      asr: draft.asr.copyWith(engineOrder: normalized),
+                    ),
+                  );
+                },
+              ),
           ],
           const SizedBox(height: 12),
           Text(
@@ -4792,12 +4869,32 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
       }
 
       final text = result.text?.trim() ?? '';
-      final compare = result.similarity == null
-          ? widget.state.comparePronunciation(widget.word.word, text)
-          : PronunciationComparison(
-              isCorrect: result.similarity! >= _similarityPassThreshold(),
-              similarity: result.similarity!.clamp(0.0, 1.0),
+      final textComparison = text.isEmpty
+          ? null
+          : widget.state.comparePronunciation(widget.word.word, text);
+      final acousticSimilarity = result.similarity?.clamp(0.0, 1.0);
+      final compare = acousticSimilarity == null
+          ? (textComparison ??
+                const PronunciationComparison(
+                  isCorrect: false,
+                  similarity: 0,
+                  differences: <String>[],
+                ))
+          : textComparison == null
+          ? PronunciationComparison(
+              isCorrect: acousticSimilarity >= _similarityPassThreshold(),
+              similarity: acousticSimilarity,
               differences: const <String>[],
+            )
+          : PronunciationComparison(
+              isCorrect:
+                  textComparison.isCorrect ||
+                  ((textComparison.similarity * 0.72 + acousticSimilarity * 0.28) >=
+                      _similarityPassThreshold()),
+              similarity: (textComparison.similarity * 0.72 +
+                      acousticSimilarity * 0.28)
+                  .clamp(0.0, 1.0),
+              differences: textComparison.differences,
             );
       setState(() {
         _recognizedText = text.isEmpty && result.similarity != null
@@ -4906,6 +5003,10 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
                   DropdownMenuItem(
                     value: AsrProviderType.localSimilarity,
                     child: Text(i18n.t('asrLocalSimilarity')),
+                  ),
+                  DropdownMenuItem(
+                    value: AsrProviderType.multiEngine,
+                    child: Text(i18n.t('asrMultiEngine')),
                   ),
                 ],
                 onChanged: (_isRecording || _isProcessing)

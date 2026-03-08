@@ -1173,7 +1173,11 @@ class AppState extends ChangeNotifier {
   }
 
   Future<String?> startAsrRecording({AsrProviderType? provider}) {
-    return _asr.startRecording(provider: provider ?? _config.asr.provider);
+    final selected = provider ?? _config.asr.provider;
+    final recordingProvider = selected == AsrProviderType.multiEngine
+        ? _config.asr.normalizedEngineOrder.first
+        : selected;
+    return _asr.startRecording(provider: recordingProvider);
   }
 
   Future<String?> stopAsrRecording() {

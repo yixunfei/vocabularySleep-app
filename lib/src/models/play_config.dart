@@ -7,7 +7,14 @@ enum PlayOrder { sequential, random }
 
 enum TtsProviderType { local, api, customApi }
 
-enum AsrProviderType { api, customApi, offline, offlineSmall, localSimilarity }
+enum AsrProviderType {
+  api,
+  customApi,
+  offline,
+  offlineSmall,
+  localSimilarity,
+  multiEngine,
+}
 
 class FieldPlaybackSetting {
   const FieldPlaybackSetting({this.enabled, this.repeat, this.label});
@@ -177,6 +184,7 @@ class AsrConfig {
   const AsrConfig({
     required this.enabled,
     required this.provider,
+    required this.engineOrder,
     this.apiKey,
     required this.model,
     required this.language,
@@ -185,14 +193,34 @@ class AsrConfig {
 
   final bool enabled;
   final AsrProviderType provider;
+  final List<AsrProviderType> engineOrder;
   final String? apiKey;
   final String model;
   final String language;
   final String? baseUrl;
 
+  List<AsrProviderType> get normalizedEngineOrder {
+    final input = engineOrder.isEmpty
+        ? const <AsrProviderType>[
+            AsrProviderType.api,
+            AsrProviderType.localSimilarity,
+          ]
+        : engineOrder;
+    final output = <AsrProviderType>[];
+    for (final item in input) {
+      if (item == AsrProviderType.multiEngine) continue;
+      if (!output.contains(item)) output.add(item);
+    }
+    if (output.isEmpty) {
+      output.add(AsrProviderType.api);
+    }
+    return output;
+  }
+
   AsrConfig copyWith({
     bool? enabled,
     AsrProviderType? provider,
+    List<AsrProviderType>? engineOrder,
     String? apiKey,
     String? model,
     String? language,
@@ -201,6 +229,9 @@ class AsrConfig {
     return AsrConfig(
       enabled: enabled ?? this.enabled,
       provider: provider ?? this.provider,
+      engineOrder: List<AsrProviderType>.from(
+        engineOrder ?? this.engineOrder,
+      ),
       apiKey: apiKey ?? this.apiKey,
       model: model ?? this.model,
       language: language ?? this.language,
@@ -211,6 +242,7 @@ class AsrConfig {
   Map<String, Object?> toJson() => <String, Object?>{
     'enabled': enabled,
     'provider': provider.name,
+    'engineOrder': engineOrder.map((item) => item.name).toList(growable: false),
     'apiKey': apiKey,
     'model': model,
     'language': language,
@@ -222,10 +254,34 @@ class AsrConfig {
       (item) => item.name == json['provider'],
       orElse: () => AsrProviderType.api,
     );
+    final parsedEngineOrder = <AsrProviderType>[];
+    final rawEngineOrder = json['engineOrder'];
+    if (rawEngineOrder is List) {
+      for (final item in rawEngineOrder) {
+        final name = '$item';
+        final provider = AsrProviderType.values.firstWhere(
+          (candidate) => candidate.name == name,
+          orElse: () => AsrProviderType.multiEngine,
+        );
+        if (provider == AsrProviderType.multiEngine) continue;
+        if (!parsedEngineOrder.contains(provider)) {
+          parsedEngineOrder.add(provider);
+        }
+      }
+    }
+    if (parsedEngineOrder.isEmpty) {
+      parsedEngineOrder.addAll(
+        const <AsrProviderType>[
+          AsrProviderType.api,
+          AsrProviderType.localSimilarity,
+        ],
+      );
+    }
 
     return AsrConfig(
       enabled: json['enabled'] as bool? ?? false,
       provider: provider,
+      engineOrder: parsedEngineOrder,
       apiKey: json['apiKey']?.toString(),
       model: json['model']?.toString() ?? 'FunAudioLLM/SenseVoiceSmall',
       language: json['language']?.toString() ?? 'en',
@@ -285,6 +341,10 @@ class PlayConfig {
     asr: const AsrConfig(
       enabled: false,
       provider: AsrProviderType.api,
+      engineOrder: <AsrProviderType>[
+        AsrProviderType.api,
+        AsrProviderType.localSimilarity,
+      ],
       model: 'FunAudioLLM/SenseVoiceSmall',
       language: 'en',
     ),

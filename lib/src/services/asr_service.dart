@@ -213,12 +213,40 @@ class AsrService {
       return const AsrResult(success: false, error: 'asrAudioFileNotFound');
     }
 
-    if (config.provider == AsrProviderType.offline ||
-        config.provider == AsrProviderType.offlineSmall) {
+    return _transcribeByProvider(
+      audioPath: audioPath,
+      config: config,
+      provider: config.provider,
+      expectedText: expectedText,
+      ttsConfig: ttsConfig,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<AsrResult> _transcribeByProvider({
+    required String audioPath,
+    required AsrConfig config,
+    required AsrProviderType provider,
+    required String? expectedText,
+    required TtsConfig? ttsConfig,
+    required AsrProgressCallback? onProgress,
+  }) async {
+    if (provider == AsrProviderType.multiEngine) {
+      return _transcribeByMultiEngine(
+        audioPath: audioPath,
+        config: config,
+        expectedText: expectedText,
+        ttsConfig: ttsConfig,
+        onProgress: onProgress,
+      );
+    }
+
+    if (provider == AsrProviderType.offline ||
+        provider == AsrProviderType.offlineSmall) {
       try {
         return await _transcribeOffline(
           audioPath: audioPath,
-          config: config,
+          config: config.copyWith(provider: provider),
           expectedText: expectedText,
           onProgress: onProgress,
         );
@@ -238,7 +266,7 @@ class AsrService {
       }
     }
 
-    if (config.provider == AsrProviderType.localSimilarity) {
+    if (provider == AsrProviderType.localSimilarity) {
       return _transcribeBySimilarity(
         audioPath: audioPath,
         expectedText: expectedText,
@@ -246,7 +274,67 @@ class AsrService {
       );
     }
 
-    return _transcribeByApi(audioPath: audioPath, config: config);
+    return _transcribeByApi(
+      audioPath: audioPath,
+      config: config.copyWith(provider: provider),
+    );
+  }
+
+  Future<AsrResult> _transcribeByMultiEngine({
+    required String audioPath,
+    required AsrConfig config,
+    required String? expectedText,
+    required TtsConfig? ttsConfig,
+    required AsrProgressCallback? onProgress,
+  }) async {
+    final providers = config.normalizedEngineOrder;
+    AsrResult? firstTextResult;
+    AsrResult? firstSimilarityResult;
+    AsrResult? firstError;
+
+    for (final engine in providers) {
+      if (_stopRequested) {
+        return const AsrResult(success: false, error: 'asrRecognitionCancelled');
+      }
+      final result = await _transcribeByProvider(
+        audioPath: audioPath,
+        config: config,
+        provider: engine,
+        expectedText: expectedText,
+        ttsConfig: ttsConfig,
+        onProgress: onProgress,
+      );
+      if (!result.success) {
+        firstError ??= result;
+        continue;
+      }
+
+      final hasText = (result.text ?? '').trim().isNotEmpty;
+      if (hasText && firstTextResult == null) {
+        firstTextResult = result;
+      }
+      if (result.similarity != null && firstSimilarityResult == null) {
+        firstSimilarityResult = result;
+      }
+    }
+
+    if (firstTextResult != null) {
+      return AsrResult(
+        success: true,
+        text: firstTextResult.text,
+        similarity: firstSimilarityResult?.similarity,
+        engine: 'multi_engine',
+      );
+    }
+    if (firstSimilarityResult != null) {
+      return AsrResult(
+        success: true,
+        similarity: firstSimilarityResult.similarity,
+        engine: 'multi_engine',
+      );
+    }
+    return firstError ??
+        const AsrResult(success: false, error: 'asrMultiEngineNoResult');
   }
 
   Future<void> dispose() async {
