@@ -80,7 +80,7 @@ class AppI18n {
     'offlineWhisperSmall': 'Offline (Whisper Small)',
     'asrLocalSimilarity': 'Local Similarity (No ASR)',
     'asrLocalSimilarityHint':
-        'Uses remote TTS to generate reference audio, then compares pronunciation locally by acoustic similarity.',
+        'Uses current playback TTS (local or remote) to generate reference audio, then compares pronunciation locally by acoustic similarity.',
     'asrOfflineModelManager': 'Offline Model Packages',
     'asrModelInstalled': 'Installed ({size})',
     'asrModelNotInstalled': 'Not installed (download size: {size})',
@@ -260,11 +260,13 @@ class AppI18n {
     'asrSimilarityTtsMissing':
         'TTS config is missing for local similarity mode.',
     'asrSimilarityRequiresRemoteTts':
-        'Local similarity mode requires remote TTS (API or Custom API).',
+        'Local similarity mode requires available TTS reference audio.',
     'asrSimilarityTtsApiKeyMissing':
         'TTS API key is missing for local similarity mode.',
     'asrSimilarityTtsBaseUrlMissing':
         'TTS Base URL is missing for local similarity mode.',
+    'asrSimilarityLocalSynthesisUnsupported':
+        'Current platform cannot export local TTS reference audio. Switch to remote TTS.',
     'asrSimilarityReferenceInvalid':
         'Failed to generate valid reference audio for similarity compare.',
     'asrSimilarityReferenceFailedHttp':

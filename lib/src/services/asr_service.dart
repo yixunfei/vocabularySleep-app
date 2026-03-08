@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -419,12 +421,6 @@ class AsrService {
     if (ttsConfig == null) {
       return const AsrResult(success: false, error: 'asrSimilarityTtsMissing');
     }
-    if (ttsConfig.provider == TtsProviderType.local) {
-      return const AsrResult(
-        success: false,
-        error: 'asrSimilarityRequiresRemoteTts',
-      );
-    }
 
     final waveData = readWave(audioPath);
     if (waveData.samples.isEmpty || waveData.sampleRate <= 0) {
@@ -551,6 +547,12 @@ class AsrService {
             error: 'asrSimilarityReferenceInvalid',
           );
         }
+        if (message == 'asrSimilarityLocalSynthesisUnsupported') {
+          return const AsrResult(
+            success: false,
+            error: 'asrSimilarityLocalSynthesisUnsupported',
+          );
+        }
         if (message.startsWith('asrSimilarityReferenceFailedHttp:')) {
           final payload = message.split(':');
           final code = payload.length > 1 ? int.tryParse(payload[1]) : null;
@@ -590,6 +592,10 @@ class AsrService {
     required String expected,
     required TtsConfig ttsConfig,
   }) async {
+    if (ttsConfig.provider == TtsProviderType.local) {
+      return _synthesizeLocalReferenceWav(expected: expected, ttsConfig: ttsConfig);
+    }
+
     final apiKey = ttsConfig.apiKey?.trim() ?? '';
     if (apiKey.isEmpty) {
       throw StateError('asrSimilarityTtsApiKeyMissing');
@@ -642,6 +648,105 @@ class AsrService {
       throw StateError('asrSimilarityReferenceInvalid');
     }
     return bytes;
+  }
+
+  Future<Uint8List> _synthesizeLocalReferenceWav({
+    required String expected,
+    required TtsConfig ttsConfig,
+  }) async {
+    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
+      throw StateError('asrSimilarityLocalSynthesisUnsupported');
+    }
+    final tts = FlutterTts();
+    final tempDir = await getTemporaryDirectory();
+    final outputPath = p.join(
+      tempDir.path,
+      'asr_similarity_local_ref_${DateTime.now().microsecondsSinceEpoch}.wav',
+    );
+    final outputFile = File(outputPath);
+
+    try {
+      await tts.awaitSynthCompletion(true);
+      final language = _normalizeTtsLanguage(ttsConfig.language);
+      if (language != null) {
+        await tts.setLanguage(language);
+      }
+      await tts.setSpeechRate(ttsConfig.speed.clamp(0.1, 2.0));
+      await tts.setVolume(1.0);
+      await tts.setPitch(1.0);
+      final localVoice = ttsConfig.localVoice.trim();
+      if (localVoice.isNotEmpty) {
+        await tts.setVoice(<String, String>{'name': localVoice});
+      }
+      final result = await tts.synthesizeToFile(expected, outputPath, true);
+      if (!_isTtsInvokeSuccess(result)) {
+        throw StateError('asrSimilarityReferenceInvalid');
+      }
+      final ready = await _waitForFileReady(outputFile);
+      if (!ready) {
+        throw StateError('asrSimilarityReferenceInvalid');
+      }
+      final bytes = await outputFile.readAsBytes();
+      if (!_isWavBytes(bytes)) {
+        throw StateError('asrSimilarityReferenceInvalid');
+      }
+      return bytes;
+    } on MissingPluginException {
+      throw StateError('asrSimilarityLocalSynthesisUnsupported');
+    } catch (error) {
+      if (error is StateError) rethrow;
+      throw StateError('asrSimilarityReferenceInvalid');
+    } finally {
+      try {
+        await tts.stop();
+      } catch (_) {}
+      if (await outputFile.exists()) {
+        await outputFile.delete();
+      }
+    }
+  }
+
+  bool _isTtsInvokeSuccess(dynamic result) {
+    if (result == null) return true;
+    if (result is bool) return result;
+    if (result is int) return result == 1;
+    return true;
+  }
+
+  Future<bool> _waitForFileReady(File file) async {
+    for (var i = 0; i < 30; i++) {
+      if (await file.exists()) {
+        final stat = await file.stat();
+        if (stat.size > 44) return true;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+    }
+    return false;
+  }
+
+  bool _isWavBytes(List<int> bytes) {
+    return bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x41 &&
+        bytes[10] == 0x56 &&
+        bytes[11] == 0x45;
+  }
+
+  String? _normalizeTtsLanguage(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty || value.toLowerCase() == 'auto') return null;
+    final tag = value.replaceAll('_', '-').toLowerCase();
+    if (tag == 'en') return 'en-US';
+    if (tag == 'zh') return 'zh-CN';
+    if (tag == 'ja') return 'ja-JP';
+    if (tag == 'fr') return 'fr-FR';
+    if (tag == 'de') return 'de-DE';
+    if (tag == 'es') return 'es-ES';
+    return value;
   }
 
   String _resolveTtsEndpoint(TtsConfig config) {
