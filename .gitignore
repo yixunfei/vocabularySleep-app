@@ -1,0 +1,99 @@
+# ------------------------------
+# Core Flutter/Dart generated files
+# ------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub/
+.pub-cache/
+.packages
+build/
+coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# ------------------------------
+# IDE / editor / OS
+# ------------------------------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*.class
+.DS_Store
+Thumbs.db
+.atom/
+.history/
+.svn/
+
+# ------------------------------
+# Logs / temp
+# ------------------------------
+*.log
+*.tmp
+*.temp
+.build/
+.buildlog/
+migrate_working_dir/
+run_windows_verbose.log
+
+# ------------------------------
+# Android
+# ------------------------------
+android/.gradle/
+android/local.properties
+android/**/build/
+android/captures/
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# ------------------------------
+# iOS / macOS
+# ------------------------------
+ios/.symlinks/
+ios/Pods/
+ios/Flutter/ephemeral/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+macos/Pods/
+macos/Flutter/ephemeral/
+macos/Runner.xcworkspace/xcuserdata/
+macos/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+macos/Runner.xcodeproj/xcuserdata/
+
+# ------------------------------
+# Linux / Windows generated
+# ------------------------------
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# ------------------------------
+# Symbolication / obfuscation
+# ------------------------------
+app.*.symbols
+app.*.map.json
+
+# ------------------------------
+# Secrets / private config
+# ------------------------------
+.env
+.env.*
+*.jks
+*.keystore
+android/key.properties
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# ------------------------------
+# Project-specific local files
+# ------------------------------
+.metadata
+logo.jpg
+vocabularySleep-app/

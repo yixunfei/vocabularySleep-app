@@ -1,0 +1,72 @@
+{
+  "@@locale": "zh",
+  "appTitle": "词汇播放器",
+  "settings": "设置",
+  "language": "语言",
+  "ttsLanguage": "TTS 语言（auto / en-US / zh-CN）",
+  "play": "播放",
+  "pause": "暂停",
+  "resume": "继续",
+  "prev": "上一个",
+  "next": "下一个",
+  "testMode": "测试模式",
+  "wordbooks": "词本",
+  "searchPlaceholder": "搜索单词或内容",
+  "all": "全部",
+  "word": "单词",
+  "meaning": "释义",
+  "fuzzy": "模糊",
+  "jumpByLetter": "按字母跳转",
+  "jumpByPrefix": "前缀跳转（如 ab）",
+  "go": "跳转",
+  "saveAndApply": "保存并应用",
+  "errorInitFailed": "初始化失败：{error}",
+  "@errorInitFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorImportFailed": "导入失败：{error}",
+  "@errorImportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorSaveWordFailed": "保存单词失败：{error}",
+  "@errorSaveWordFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "asrDisabled": "ASR 已禁用",
+  "asrApiRequestFailed": "ASR API 请求失败（状态码：{code}）",
+  "@asrApiRequestFailed": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "asrProgressPreparing": "正在准备离线识别器",
+  "asrProgressDecoding": "正在解码语音",
+  "asrProgressDone": "识别完成",
+  "asrProgressDownloading": "正在下载离线模型",
+  "asrProgressExtracting": "正在解压离线模型",
+  "pronunciationDiffMissing": "缺少“{value}”",
+  "@pronunciationDiffMissing": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffExtra": "多出“{value}”",
+  "@pronunciationDiffExtra": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffReplace": "将“{from}”读成了“{to}”",
+  "@pronunciationDiffReplace": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  }
+}

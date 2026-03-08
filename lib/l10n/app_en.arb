@@ -1,0 +1,72 @@
+{
+  "@@locale": "en",
+  "appTitle": "Vocabulary Player",
+  "settings": "Settings",
+  "language": "Language",
+  "ttsLanguage": "TTS Language (auto / en-US / zh-CN)",
+  "play": "Play",
+  "pause": "Pause",
+  "resume": "Resume",
+  "prev": "Prev",
+  "next": "Next",
+  "testMode": "Test Mode",
+  "wordbooks": "Wordbooks",
+  "searchPlaceholder": "Search word or content",
+  "all": "All",
+  "word": "Word",
+  "meaning": "Meaning",
+  "fuzzy": "Fuzzy",
+  "jumpByLetter": "Jump by letter",
+  "jumpByPrefix": "Jump by prefix (e.g. ab)",
+  "go": "Go",
+  "saveAndApply": "Save & Apply",
+  "errorInitFailed": "Initialization failed: {error}",
+  "@errorInitFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorImportFailed": "Import failed: {error}",
+  "@errorImportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorSaveWordFailed": "Save word failed: {error}",
+  "@errorSaveWordFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "asrDisabled": "ASR is disabled",
+  "asrApiRequestFailed": "ASR API request failed: {code}",
+  "@asrApiRequestFailed": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "asrProgressPreparing": "Preparing offline recognizer",
+  "asrProgressDecoding": "Decoding speech",
+  "asrProgressDone": "Recognition complete",
+  "asrProgressDownloading": "Downloading offline model",
+  "asrProgressExtracting": "Extracting offline model",
+  "pronunciationDiffMissing": "Missing \"{value}\"",
+  "@pronunciationDiffMissing": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffExtra": "Extra \"{value}\"",
+  "@pronunciationDiffExtra": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffReplace": "\"{from}\" -> \"{to}\"",
+  "@pronunciationDiffReplace": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  }
+}
