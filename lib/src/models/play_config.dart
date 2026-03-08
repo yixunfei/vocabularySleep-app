@@ -7,7 +7,7 @@ enum PlayOrder { sequential, random }
 
 enum TtsProviderType { local, api, customApi }
 
-enum AsrProviderType { api, customApi, offline, offlineSmall }
+enum AsrProviderType { api, customApi, offline, offlineSmall, localSimilarity }
 
 class FieldPlaybackSetting {
   const FieldPlaybackSetting({this.enabled, this.repeat, this.label});

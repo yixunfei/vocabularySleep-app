@@ -18,12 +18,16 @@ class AsrResult {
   const AsrResult({
     required this.success,
     this.text,
+    this.similarity,
+    this.engine,
     this.error,
     this.errorParams = const <String, Object?>{},
   });
 
   final bool success;
   final String? text;
+  final double? similarity;
+  final String? engine;
   final String? error;
   final Map<String, Object?> errorParams;
 }
@@ -95,6 +99,10 @@ class AsrService {
 
   static const String _defaultApiEndpoint =
       'https://api.siliconflow.cn/v1/audio/transcriptions';
+  static const String _defaultTtsApiEndpoint =
+      'https://api.siliconflow.cn/v1/audio/speech';
+  static const String _defaultTtsModel = 'FunAudioLLM/CosyVoice2-0.5B';
+  static const String _defaultTtsVoice = 'alex';
   static const int _targetSampleRate = 16000;
   static const double _minAsrSeconds = 0.03;
   static const int _modelCacheVersion = 1;
@@ -190,6 +198,7 @@ class AsrService {
     required String audioPath,
     required AsrConfig config,
     String? expectedText,
+    TtsConfig? ttsConfig,
     AsrProgressCallback? onProgress,
   }) async {
     _stopRequested = false;
@@ -225,6 +234,14 @@ class AsrService {
           errorParams: <String, Object?>{'error': error},
         );
       }
+    }
+
+    if (config.provider == AsrProviderType.localSimilarity) {
+      return _transcribeBySimilarity(
+        audioPath: audioPath,
+        expectedText: expectedText,
+        ttsConfig: ttsConfig,
+      );
     }
 
     return _transcribeByApi(audioPath: audioPath, config: config);
@@ -385,6 +402,264 @@ class AsrService {
       }
       client.close();
     }
+  }
+
+  Future<AsrResult> _transcribeBySimilarity({
+    required String audioPath,
+    required String? expectedText,
+    required TtsConfig? ttsConfig,
+  }) async {
+    final expected = (expectedText ?? '').trim();
+    if (expected.isEmpty) {
+      return const AsrResult(
+        success: false,
+        error: 'asrSimilarityExpectedTextMissing',
+      );
+    }
+    if (ttsConfig == null) {
+      return const AsrResult(success: false, error: 'asrSimilarityTtsMissing');
+    }
+    if (ttsConfig.provider == TtsProviderType.local) {
+      return const AsrResult(
+        success: false,
+        error: 'asrSimilarityRequiresRemoteTts',
+      );
+    }
+
+    final waveData = readWave(audioPath);
+    if (waveData.samples.isEmpty || waveData.sampleRate <= 0) {
+      return const AsrResult(success: false, error: 'asrInvalidWav');
+    }
+    final preparedUser = _prepareWaveData(
+      samples: waveData.samples,
+      sampleRate: waveData.sampleRate,
+      targetSampleRate: _targetSampleRate,
+    );
+    if (preparedUser.samples.isEmpty) {
+      return const AsrResult(success: false, error: 'asrNoSpeechDetected');
+    }
+    final minSeconds = _minDurationForExpected(expectedText);
+    if (preparedUser.samples.length < (_targetSampleRate * minSeconds).round()) {
+      return const AsrResult(success: false, error: 'asrRecordingTooShort');
+    }
+    if (preparedUser.peak < _minPeakForExpected(expectedText)) {
+      return const AsrResult(success: false, error: 'asrNoSpeechDetected');
+    }
+
+    final requestToken = ++_apiRequestToken;
+    _activeApiClient?.close();
+    final client = http.Client();
+    _activeApiClient = client;
+    String? referencePath;
+
+    try {
+      final referenceWavBytes = await _requestSimilarityReferenceWav(
+        client: client,
+        requestToken: requestToken,
+        expected: expected,
+        ttsConfig: ttsConfig,
+      );
+      if (!_isApiRequestActive(requestToken) || _stopRequested) {
+        return const AsrResult(
+          success: false,
+          error: 'asrRecognitionCancelled',
+        );
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      referencePath = p.join(
+        tempDir.path,
+        'asr_similarity_ref_${DateTime.now().microsecondsSinceEpoch}.wav',
+      );
+      await File(referencePath).writeAsBytes(referenceWavBytes, flush: true);
+      final refWave = readWave(referencePath);
+      final preparedRef = _prepareWaveData(
+        samples: refWave.samples,
+        sampleRate: refWave.sampleRate,
+        targetSampleRate: _targetSampleRate,
+      );
+      if (preparedRef.samples.isEmpty || preparedRef.peak <= 0) {
+        return const AsrResult(
+          success: false,
+          error: 'asrSimilarityReferenceInvalid',
+        );
+      }
+
+      final userFeatures = _extractAcousticFeatures(
+        preparedUser.samples,
+        sampleRate: preparedUser.sampleRate,
+      );
+      final refFeatures = _extractAcousticFeatures(
+        preparedRef.samples,
+        sampleRate: preparedRef.sampleRate,
+      );
+      if (userFeatures.isEmpty || refFeatures.isEmpty) {
+        return const AsrResult(
+          success: false,
+          error: 'asrSimilarityFeatureInsufficient',
+        );
+      }
+
+      final dtwDistance = _dtwDistance(refFeatures, userFeatures);
+      final userDurationSec = preparedUser.samples.length / _targetSampleRate;
+      final refDurationSec = preparedRef.samples.length / _targetSampleRate;
+      final similarity = _distanceToSimilarity(
+        dtwDistance,
+        userDurationSec: userDurationSec,
+        refDurationSec: refDurationSec,
+      );
+
+      return AsrResult(
+        success: true,
+        similarity: similarity,
+        engine: 'local_similarity',
+      );
+    } on _CanceledAsrException {
+      return const AsrResult(success: false, error: 'asrRecognitionCancelled');
+    } on TimeoutException {
+      if (_stopRequested) {
+        return const AsrResult(
+          success: false,
+          error: 'asrRecognitionCancelled',
+        );
+      }
+      return const AsrResult(success: false, error: 'asrApiTimeout');
+    } catch (error) {
+      if (_stopRequested) {
+        return const AsrResult(
+          success: false,
+          error: 'asrRecognitionCancelled',
+        );
+      }
+      if (error is StateError) {
+        final message = error.message.toString();
+        if (message == 'asrSimilarityTtsApiKeyMissing') {
+          return const AsrResult(
+            success: false,
+            error: 'asrSimilarityTtsApiKeyMissing',
+          );
+        }
+        if (message == 'asrSimilarityTtsBaseUrlMissing') {
+          return const AsrResult(
+            success: false,
+            error: 'asrSimilarityTtsBaseUrlMissing',
+          );
+        }
+        if (message == 'asrSimilarityReferenceInvalid') {
+          return const AsrResult(
+            success: false,
+            error: 'asrSimilarityReferenceInvalid',
+          );
+        }
+        if (message.startsWith('asrSimilarityReferenceFailedHttp:')) {
+          final payload = message.split(':');
+          final code = payload.length > 1 ? int.tryParse(payload[1]) : null;
+          final body = payload.length > 2 ? payload.sublist(2).join(':') : '';
+          return AsrResult(
+            success: false,
+            error: 'asrSimilarityReferenceFailedHttp',
+            errorParams: <String, Object?>{
+              'code':? code,
+              if (body.trim().isNotEmpty) 'body': body.trim(),
+            },
+          );
+        }
+      }
+      return AsrResult(
+        success: false,
+        error: 'asrSimilarityFailed',
+        errorParams: <String, Object?>{'error': '$error'},
+      );
+    } finally {
+      if (referencePath != null) {
+        final refFile = File(referencePath);
+        if (await refFile.exists()) {
+          await refFile.delete();
+        }
+      }
+      if (identical(_activeApiClient, client)) {
+        _activeApiClient = null;
+      }
+      client.close();
+    }
+  }
+
+  Future<Uint8List> _requestSimilarityReferenceWav({
+    required http.Client client,
+    required int requestToken,
+    required String expected,
+    required TtsConfig ttsConfig,
+  }) async {
+    final apiKey = ttsConfig.apiKey?.trim() ?? '';
+    if (apiKey.isEmpty) {
+      throw StateError('asrSimilarityTtsApiKeyMissing');
+    }
+    if (ttsConfig.provider == TtsProviderType.customApi &&
+        (ttsConfig.baseUrl == null || ttsConfig.baseUrl!.trim().isEmpty)) {
+      throw StateError('asrSimilarityTtsBaseUrlMissing');
+    }
+    final endpoint = _resolveTtsEndpoint(ttsConfig);
+    final model = (ttsConfig.model?.trim().isNotEmpty ?? false)
+        ? ttsConfig.model!.trim()
+        : _defaultTtsModel;
+    final voice = ttsConfig.remoteVoice.trim().isNotEmpty
+        ? ttsConfig.remoteVoice.trim()
+        : _defaultTtsVoice;
+    final response = await client
+        .post(
+          Uri.parse(endpoint),
+          headers: <String, String>{
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(<String, Object?>{
+            'model': model,
+            'input': expected,
+            'voice': '$model:$voice',
+            'response_format': 'wav',
+            'speed': 1.0,
+          }),
+        )
+        .timeout(const Duration(seconds: 30));
+
+    if (!_isApiRequestActive(requestToken) || _stopRequested) {
+      throw const _CanceledAsrException();
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError(
+        'asrSimilarityReferenceFailedHttp:${response.statusCode}:${_preview(response.body)}',
+      );
+    }
+    if (response.bodyBytes.isEmpty) {
+      throw StateError('asrSimilarityReferenceInvalid');
+    }
+    final bytes = response.bodyBytes;
+    if (bytes.length < 12 ||
+        bytes[0] != 0x52 ||
+        bytes[1] != 0x49 ||
+        bytes[2] != 0x46 ||
+        bytes[3] != 0x46) {
+      throw StateError('asrSimilarityReferenceInvalid');
+    }
+    return bytes;
+  }
+
+  String _resolveTtsEndpoint(TtsConfig config) {
+    if (config.provider == TtsProviderType.customApi) {
+      final value = config.baseUrl?.trim() ?? '';
+      if (value.isNotEmpty) {
+        var normalized = value.replaceAll(RegExp(r'/+$'), '');
+        final lower = normalized.toLowerCase();
+        if (lower.contains('/audio/speech')) {
+          return normalized;
+        }
+        if (lower.endsWith('/v1')) {
+          return '$normalized/audio/speech';
+        }
+        return '$normalized/v1/audio/speech';
+      }
+    }
+    return _defaultTtsApiEndpoint;
   }
 
   void _interruptApiRequest({required String reason}) {
@@ -625,6 +900,158 @@ class AsrService {
       output[i] = samples[left] * (1 - mix) + samples[right] * mix;
     }
     return output;
+  }
+
+  List<List<double>> _extractAcousticFeatures(
+    List<double> samples, {
+    required int sampleRate,
+  }) {
+    if (samples.isEmpty || sampleRate <= 0) return const <List<double>>[];
+    final frameSize = math.max(96, (sampleRate * 0.02).round());
+    final hopSize = math.max(64, (sampleRate * 0.01).round());
+    if (samples.length < frameSize) return const <List<double>>[];
+
+    final hamming = List<double>.generate(frameSize, (index) {
+      if (frameSize <= 1) return 1.0;
+      return 0.54 -
+          0.46 * math.cos((2 * math.pi * index) / (frameSize - 1).toDouble());
+    }, growable: false);
+
+    final features = <List<double>>[];
+    final targetFreqs = <double>[320, 520, 780, 1120, 1600, 2300, 3200];
+    for (
+      var start = 0;
+      start + frameSize <= samples.length;
+      start += hopSize
+    ) {
+      final frame = List<double>.filled(frameSize, 0.0, growable: false);
+      for (var i = 0; i < frameSize; i++) {
+        frame[i] = samples[start + i] * hamming[i];
+      }
+      final logEnergy = _frameLogEnergy(frame);
+      final zcr = _frameZeroCrossingRate(frame);
+      final bandPowers = targetFreqs
+          .map((freq) => math.log(_goertzelPower(frame, freq, sampleRate) + 1e-9))
+          .toList(growable: false);
+      final bandMean =
+          bandPowers.reduce((a, b) => a + b) / bandPowers.length.toDouble();
+      final normalizedBands = bandPowers
+          .map((value) => value - bandMean)
+          .toList(growable: false);
+
+      features.add(<double>[logEnergy, zcr, ...normalizedBands]);
+    }
+
+    const maxFrames = 180;
+    if (features.length <= maxFrames) return features;
+    final stride = (features.length / maxFrames).ceil().clamp(1, features.length);
+    final reduced = <List<double>>[];
+    for (var i = 0; i < features.length; i += stride) {
+      reduced.add(features[i]);
+      if (reduced.length >= maxFrames) break;
+    }
+    return reduced;
+  }
+
+  double _frameLogEnergy(List<double> frame) {
+    if (frame.isEmpty) return 0;
+    var power = 0.0;
+    for (final sample in frame) {
+      power += sample * sample;
+    }
+    final rms = math.sqrt(power / frame.length);
+    return math.log(rms + 1e-8);
+  }
+
+  double _frameZeroCrossingRate(List<double> frame) {
+    if (frame.length <= 1) return 0;
+    var crossings = 0;
+    for (var i = 1; i < frame.length; i++) {
+      final prev = frame[i - 1];
+      final curr = frame[i];
+      if ((prev >= 0 && curr < 0) || (prev < 0 && curr >= 0)) {
+        crossings += 1;
+      }
+    }
+    return crossings / (frame.length - 1);
+  }
+
+  double _goertzelPower(List<double> frame, double targetFreq, int sampleRate) {
+    if (frame.isEmpty || sampleRate <= 0) return 0;
+    final normalized = targetFreq / sampleRate;
+    final omega = 2.0 * math.pi * normalized;
+    final coeff = 2.0 * math.cos(omega);
+    var sPrev = 0.0;
+    var sPrev2 = 0.0;
+    for (final sample in frame) {
+      final s = sample + coeff * sPrev - sPrev2;
+      sPrev2 = sPrev;
+      sPrev = s;
+    }
+    final power = sPrev2 * sPrev2 + sPrev * sPrev - coeff * sPrev * sPrev2;
+    return power.abs();
+  }
+
+  double _dtwDistance(List<List<double>> ref, List<List<double>> sample) {
+    if (ref.isEmpty || sample.isEmpty) return double.infinity;
+    final n = ref.length;
+    final m = sample.length;
+    final band = (math.max(n, m) * 0.25)
+        .round()
+        .clamp(8, math.max(n, m))
+        .toInt();
+    const inf = 1e12;
+    var prev = List<double>.filled(m + 1, inf, growable: false);
+    prev[0] = 0;
+
+    for (var i = 1; i <= n; i++) {
+      final curr = List<double>.filled(m + 1, inf, growable: false);
+      final jStart = math.max(1, i - band);
+      final jEnd = math.min(m, i + band);
+      for (var j = jStart; j <= jEnd; j++) {
+        final cost = _frameDistance(ref[i - 1], sample[j - 1]);
+        final best = math.min(prev[j], math.min(curr[j - 1], prev[j - 1]));
+        curr[j] = cost + best;
+      }
+      prev = curr;
+    }
+
+    final distance = prev[m];
+    if (!distance.isFinite || distance >= inf / 2) return double.infinity;
+    return distance / (n + m).toDouble();
+  }
+
+  double _frameDistance(List<double> a, List<double> b) {
+    if (a.isEmpty || b.isEmpty) return 1;
+    final length = math.min(a.length, b.length);
+    if (length <= 0) return 1;
+    var sum = 0.0;
+    for (var i = 0; i < length; i++) {
+      final weight = i == 0
+          ? 1.15
+          : i == 1
+          ? 0.7
+          : 1.0;
+      final diff = a[i] - b[i];
+      sum += weight * diff * diff;
+    }
+    return math.sqrt(sum / length.toDouble());
+  }
+
+  double _distanceToSimilarity(
+    double dtwDistance, {
+    required double userDurationSec,
+    required double refDurationSec,
+  }) {
+    if (!dtwDistance.isFinite) return 0;
+    final baseSimilarity = math.exp(-1.65 * dtwDistance);
+    var durationRatio = 1.0;
+    if (userDurationSec > 0 && refDurationSec > 0) {
+      durationRatio = math.min(userDurationSec, refDurationSec) /
+          math.max(userDurationSec, refDurationSec);
+    }
+    final rhythmFactor = 0.55 + durationRatio * 0.45;
+    return (baseSimilarity * rhythmFactor).clamp(0.0, 1.0);
   }
 
   Future<AsrResult> _transcribeOffline({

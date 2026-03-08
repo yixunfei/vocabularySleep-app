@@ -1167,6 +1167,7 @@ class AppState extends ChangeNotifier {
       audioPath: audioPath,
       config: config,
       expectedText: expectedText,
+      ttsConfig: _config.tts,
       onProgress: onProgress,
     );
   }

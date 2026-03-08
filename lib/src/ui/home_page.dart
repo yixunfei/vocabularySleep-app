@@ -75,6 +75,8 @@ String _asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
       return i18n.t('offlineWhisperBase');
     case AsrProviderType.offlineSmall:
       return i18n.t('offlineWhisperSmall');
+    case AsrProviderType.localSimilarity:
+      return i18n.t('asrLocalSimilarity');
   }
 }
 
@@ -3140,11 +3142,15 @@ class _HomePageState extends State<HomePage> {
                 value: AsrProviderType.offlineSmall,
                 child: Text(draftI18n.t('offlineWhisperSmall')),
               ),
+              DropdownMenuItem(
+                value: AsrProviderType.localSimilarity,
+                child: Text(draftI18n.t('asrLocalSimilarity')),
+              ),
             ],
               onChanged: (value) async {
                 if (value == null) return;
-                if (value == AsrProviderType.offline ||
-                    value == AsrProviderType.offlineSmall) {
+              if (value == AsrProviderType.offline ||
+                  value == AsrProviderType.offlineSmall) {
                   await _showAsrOfflineNotice(
                   context: context,
                   i18n: draftI18n,
@@ -3156,6 +3162,15 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
+          if (provider == AsrProviderType.localSimilarity) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              draftI18n.t('asrLocalSimilarityHint'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: LegacyStyle.textSecondary),
+            ),
+          ],
           const SizedBox(height: 12),
           Text(
             draftI18n.t('asrOfflineModelManager'),
@@ -4763,9 +4778,9 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
         },
       );
       if (!mounted) return;
+      final i18n = AppI18n(widget.state.uiLanguage);
 
       if (!result.success) {
-        final i18n = AppI18n(widget.state.uiLanguage);
         setState(() {
           _error = result.error == null
               ? i18n.t('recognitionFailed')
@@ -4777,9 +4792,17 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
       }
 
       final text = result.text?.trim() ?? '';
-      final compare = widget.state.comparePronunciation(widget.word.word, text);
+      final compare = result.similarity == null
+          ? widget.state.comparePronunciation(widget.word.word, text)
+          : PronunciationComparison(
+              isCorrect: result.similarity! >= _similarityPassThreshold(),
+              similarity: result.similarity!.clamp(0.0, 1.0),
+              differences: const <String>[],
+            );
       setState(() {
-        _recognizedText = text;
+        _recognizedText = text.isEmpty && result.similarity != null
+            ? i18n.t('asrLocalSimilarityNoTranscript')
+            : text;
         _comparison = compare;
         _progress = const AsrProgress(
           stage: 'done',
@@ -4794,6 +4817,13 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
         });
       }
     }
+  }
+
+  double _similarityPassThreshold() {
+    final length = widget.word.word.trim().runes.length;
+    if (length <= 4) return 0.76;
+    if (length <= 8) return 0.73;
+    return 0.7;
   }
 
   Future<void> _playReference() async {
@@ -4872,6 +4902,10 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
                   DropdownMenuItem(
                     value: AsrProviderType.offlineSmall,
                     child: Text(i18n.t('offlineWhisperSmall')),
+                  ),
+                  DropdownMenuItem(
+                    value: AsrProviderType.localSimilarity,
+                    child: Text(i18n.t('asrLocalSimilarity')),
                   ),
                 ],
                 onChanged: (_isRecording || _isProcessing)

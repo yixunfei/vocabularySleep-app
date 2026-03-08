@@ -78,6 +78,9 @@ class AppI18n {
     'asrApiBaseUrl': 'ASR Base URL (Custom API)',
     'offlineWhisperBase': 'Offline (Whisper Base)',
     'offlineWhisperSmall': 'Offline (Whisper Small)',
+    'asrLocalSimilarity': 'Local Similarity (No ASR)',
+    'asrLocalSimilarityHint':
+        'Uses remote TTS to generate reference audio, then compares pronunciation locally by acoustic similarity.',
     'asrOfflineModelManager': 'Offline Model Packages',
     'asrModelInstalled': 'Installed ({size})',
     'asrModelNotInstalled': 'Not installed (download size: {size})',
@@ -250,6 +253,25 @@ class AppI18n {
     'asrRecordingTooShort': 'Recording is too short.',
     'asrNoSpeechDetected': 'No speech detected in recording.',
     'asrRecognitionCancelled': 'Recognition was cancelled.',
+    'asrLocalSimilarityNoTranscript':
+        'No transcript in local similarity mode (audio score only).',
+    'asrSimilarityExpectedTextMissing':
+        'Target word is missing for local similarity mode.',
+    'asrSimilarityTtsMissing':
+        'TTS config is missing for local similarity mode.',
+    'asrSimilarityRequiresRemoteTts':
+        'Local similarity mode requires remote TTS (API or Custom API).',
+    'asrSimilarityTtsApiKeyMissing':
+        'TTS API key is missing for local similarity mode.',
+    'asrSimilarityTtsBaseUrlMissing':
+        'TTS Base URL is missing for local similarity mode.',
+    'asrSimilarityReferenceInvalid':
+        'Failed to generate valid reference audio for similarity compare.',
+    'asrSimilarityReferenceFailedHttp':
+        'Reference audio request failed ({code}). {body}',
+    'asrSimilarityFeatureInsufficient':
+        'Audio is too short or unclear for similarity compare.',
+    'asrSimilarityFailed': 'Local similarity compare failed: {error}',
     'asrOfflineFailed': 'Offline ASR failed: {error}',
     'asrOfflineInitFailed': 'Offline ASR initialization failed.',
     'asrUnsupportedOfflineProvider': 'Unsupported offline ASR provider.',
