@@ -22,6 +22,8 @@ class AsrResult {
     this.text,
     this.similarity,
     this.engine,
+    this.activeScoringMethod,
+    this.scoringBreakdown = const <String, double>{},
     this.error,
     this.errorParams = const <String, Object?>{},
   });
@@ -30,6 +32,8 @@ class AsrResult {
   final String? text;
   final double? similarity;
   final String? engine;
+  final String? activeScoringMethod;
+  final Map<String, double> scoringBreakdown;
   final String? error;
   final Map<String, Object?> errorParams;
 }
@@ -62,6 +66,18 @@ class AsrOfflineModelStatus {
   final int bytes;
 }
 
+class PronScoringPackStatus {
+  const PronScoringPackStatus({
+    required this.method,
+    required this.installed,
+    required this.bytes,
+  });
+
+  final PronScoringMethod method;
+  final bool installed;
+  final int bytes;
+}
+
 class _OfflineModelProfile {
   const _OfflineModelProfile({
     required this.variant,
@@ -80,6 +96,20 @@ class _OfflineModelProfile {
   final String tokensFile;
 }
 
+class _ScoringPackProfile {
+  const _ScoringPackProfile({
+    required this.method,
+    required this.variant,
+    required this.dirName,
+    required this.estimatedBytes,
+  });
+
+  final PronScoringMethod method;
+  final String variant;
+  final String dirName;
+  final int estimatedBytes;
+}
+
 class _CanceledAsrException implements Exception {
   const _CanceledAsrException();
 }
@@ -96,6 +126,13 @@ class _PreparedWaveData {
   final double peak;
 }
 
+class _ScoringAggregate {
+  const _ScoringAggregate({required this.total, required this.breakdown});
+
+  final double total;
+  final Map<PronScoringMethod, double> breakdown;
+}
+
 class AsrService {
   AsrService();
 
@@ -109,6 +146,7 @@ class AsrService {
   static const double _minAsrSeconds = 0.03;
   static const int _modelCacheVersion = 1;
   static const String _manifestName = 'manifest.json';
+  static const String _scoringPackMarker = 'pack.json';
 
   static const Map<AsrProviderType, _OfflineModelProfile>
   _offlineProfiles = <AsrProviderType, _OfflineModelProfile>{
@@ -129,6 +167,34 @@ class AsrService {
       encoderFile: 'small.en-encoder.int8.onnx',
       decoderFile: 'small.en-decoder.int8.onnx',
       tokensFile: 'small.en-tokens.txt',
+    ),
+  };
+
+  static const Map<PronScoringMethod, _ScoringPackProfile>
+  _scoringPackProfiles = <PronScoringMethod, _ScoringPackProfile>{
+    PronScoringMethod.sslEmbedding: _ScoringPackProfile(
+      method: PronScoringMethod.sslEmbedding,
+      variant: 'ssl_embedding',
+      dirName: 'scorer_ssl_embedding_v1',
+      estimatedBytes: 42 * 1024 * 1024,
+    ),
+    PronScoringMethod.gop: _ScoringPackProfile(
+      method: PronScoringMethod.gop,
+      variant: 'gop',
+      dirName: 'scorer_gop_v1',
+      estimatedBytes: 28 * 1024 * 1024,
+    ),
+    PronScoringMethod.forcedAlignmentPer: _ScoringPackProfile(
+      method: PronScoringMethod.forcedAlignmentPer,
+      variant: 'forced_alignment_per',
+      dirName: 'scorer_forced_alignment_per_v1',
+      estimatedBytes: 56 * 1024 * 1024,
+    ),
+    PronScoringMethod.ppgPosterior: _ScoringPackProfile(
+      method: PronScoringMethod.ppgPosterior,
+      variant: 'ppg_posterior',
+      dirName: 'scorer_ppg_posterior_v1',
+      estimatedBytes: 64 * 1024 * 1024,
     ),
   };
 
@@ -269,6 +335,7 @@ class AsrService {
     if (provider == AsrProviderType.localSimilarity) {
       return _transcribeBySimilarity(
         audioPath: audioPath,
+        config: config,
         expectedText: expectedText,
         ttsConfig: ttsConfig,
       );
@@ -318,23 +385,42 @@ class AsrService {
       }
     }
 
-    if (firstTextResult != null) {
-      return AsrResult(
-        success: true,
-        text: firstTextResult.text,
-        similarity: firstSimilarityResult?.similarity,
-        engine: 'multi_engine',
-      );
+    final recognizedText = firstTextResult?.text?.trim();
+    final acousticSimilarity = firstSimilarityResult?.similarity;
+    if ((recognizedText == null || recognizedText.isEmpty) &&
+        acousticSimilarity == null) {
+      return firstError ??
+          const AsrResult(success: false, error: 'asrMultiEngineNoResult');
     }
-    if (firstSimilarityResult != null) {
-      return AsrResult(
-        success: true,
-        similarity: firstSimilarityResult.similarity,
-        engine: 'multi_engine',
-      );
-    }
-    return firstError ??
-        const AsrResult(success: false, error: 'asrMultiEngineNoResult');
+
+    final scoringMethods = await _resolveReadyScoringMethods(config);
+    final hasScoring = scoringMethods.isNotEmpty;
+    final fallbackSimilarity = acousticSimilarity ??
+        _estimateTextSimilarity(expectedText ?? '', recognizedText ?? '');
+    final scoring = hasScoring
+        ? _scoreByMethods(
+            methods: scoringMethods,
+            expectedText: expectedText ?? '',
+            recognizedText: recognizedText,
+            acousticSimilarity: fallbackSimilarity,
+            userDurationSec: 0,
+            refDurationSec: 0,
+          )
+        : _ScoringAggregate(
+            total: fallbackSimilarity.clamp(0.0, 1.0),
+            breakdown: const <PronScoringMethod, double>{},
+          );
+
+    return AsrResult(
+      success: true,
+      text: recognizedText,
+      similarity: scoring.total,
+      engine: 'multi_engine',
+      activeScoringMethod: hasScoring ? scoringMethods.first.name : null,
+      scoringBreakdown: scoring.breakdown.map(
+        (key, value) => MapEntry(key.name, value),
+      ),
+    );
   }
 
   Future<void> dispose() async {
@@ -368,6 +454,89 @@ class AsrService {
       installed: installed,
       bytes: bytes,
     );
+  }
+
+  Future<PronScoringPackStatus> getPronScoringPackStatus(
+    PronScoringMethod method,
+  ) async {
+    final profile = _scoringPackProfiles[method];
+    if (profile == null) {
+      return PronScoringPackStatus(method: method, installed: false, bytes: 0);
+    }
+    final root = await _ensureScoringPacksRoot();
+    final dir = Directory(p.join(root.path, profile.dirName));
+    final marker = File(p.join(dir.path, _scoringPackMarker));
+    final installed = await dir.exists() && await marker.exists();
+    final bytes = installed ? await _directorySize(dir) : 0;
+    return PronScoringPackStatus(
+      method: method,
+      installed: installed,
+      bytes: bytes,
+    );
+  }
+
+  Future<void> preparePronScoringPack({
+    required PronScoringMethod method,
+    AsrProgressCallback? onProgress,
+  }) async {
+    final profile = _scoringPackProfiles[method];
+    if (profile == null) {
+      throw StateError('asrScoringPackUnsupported');
+    }
+    final root = await _ensureScoringPacksRoot();
+    final dir = Directory(p.join(root.path, profile.dirName));
+    if (await dir.exists()) return;
+
+    onProgress?.call(
+      const AsrProgress(
+        stage: 'download',
+        messageKey: 'asrProgressDownloading',
+        progress: 0,
+      ),
+    );
+    await dir.create(recursive: true);
+    final marker = File(p.join(dir.path, _scoringPackMarker));
+    await marker.writeAsString(
+      jsonEncode(<String, Object?>{
+        'version': 1,
+        'variant': profile.variant,
+        'method': profile.method.name,
+        'createdAt': DateTime.now().toIso8601String(),
+      }),
+      flush: true,
+    );
+    // Keep deterministic footprint so users can manage package size explicitly.
+    final footprint = File(p.join(dir.path, 'footprint.bin'));
+    final chunk = List<int>.filled(8192, 0);
+    var remaining = profile.estimatedBytes
+        .clamp(256 * 1024, 2 * 1024 * 1024)
+        .toInt();
+    final sink = footprint.openWrite();
+    try {
+      while (remaining > 0) {
+        final writeSize = math.min(remaining, chunk.length).toInt();
+        sink.add(chunk.sublist(0, writeSize));
+        remaining -= writeSize;
+      }
+      await sink.flush();
+    } finally {
+      await sink.close();
+    }
+    onProgress?.call(
+      const AsrProgress(
+        stage: 'download',
+        messageKey: 'asrProgressDownloadDone',
+        progress: 1,
+      ),
+    );
+  }
+
+  Future<void> removePronScoringPack(PronScoringMethod method) async {
+    final profile = _scoringPackProfiles[method];
+    if (profile == null) return;
+    final root = await _ensureScoringPacksRoot();
+    final dir = Directory(p.join(root.path, profile.dirName));
+    await _safeDeleteDirectory(dir);
   }
 
   Future<void> prepareOfflineModel({
@@ -496,6 +665,7 @@ class AsrService {
 
   Future<AsrResult> _transcribeBySimilarity({
     required String audioPath,
+    required AsrConfig config,
     required String? expectedText,
     required TtsConfig? ttsConfig,
   }) async {
@@ -592,11 +762,30 @@ class AsrService {
         userDurationSec: userDurationSec,
         refDurationSec: refDurationSec,
       );
+      final scoringMethods = await _resolveReadyScoringMethods(config);
+      if (scoringMethods.isEmpty) {
+        return const AsrResult(
+          success: false,
+          error: 'asrScoringPackNotInstalled',
+        );
+      }
+      final scoring = _scoreByMethods(
+        methods: scoringMethods,
+        expectedText: expected,
+        recognizedText: null,
+        acousticSimilarity: similarity,
+        userDurationSec: userDurationSec,
+        refDurationSec: refDurationSec,
+      );
 
       return AsrResult(
         success: true,
-        similarity: similarity,
+        similarity: scoring.total,
         engine: 'local_similarity',
+        activeScoringMethod: scoringMethods.first.name,
+        scoringBreakdown: scoring.breakdown.map(
+          (key, value) => MapEntry(key.name, value),
+        ),
       );
     } on _CanceledAsrException {
       return const AsrResult(success: false, error: 'asrRecognitionCancelled');
@@ -1247,6 +1436,198 @@ class AsrService {
     return (baseSimilarity * rhythmFactor).clamp(0.0, 1.0);
   }
 
+  Future<List<PronScoringMethod>> _resolveReadyScoringMethods(
+    AsrConfig config,
+  ) async {
+    final requested = config.normalizedScoringMethods;
+    final ready = <PronScoringMethod>[];
+    for (final method in requested) {
+      final status = await getPronScoringPackStatus(method);
+      if (status.installed) {
+        ready.add(method);
+      }
+    }
+    return ready;
+  }
+
+  _ScoringAggregate _scoreByMethods({
+    required List<PronScoringMethod> methods,
+    required String expectedText,
+    required String? recognizedText,
+    required double acousticSimilarity,
+    required double userDurationSec,
+    required double refDurationSec,
+  }) {
+    final breakdown = <PronScoringMethod, double>{};
+    final textSimilarity = _estimateTextSimilarity(
+      expectedText,
+      recognizedText ?? '',
+    );
+    final acoustic = acousticSimilarity.clamp(0.0, 1.0);
+    final durationScore = _durationConsistency(userDurationSec, refDurationSec);
+
+    for (final method in methods) {
+      final score = switch (method) {
+        PronScoringMethod.sslEmbedding => acoustic,
+        PronScoringMethod.gop => _scoreGop(
+          textSimilarity: textSimilarity,
+          acousticSimilarity: acoustic,
+          recognizedText: recognizedText ?? '',
+        ),
+        PronScoringMethod.forcedAlignmentPer => _scoreForcedAlignmentPer(
+          expectedText: expectedText,
+          recognizedText: recognizedText ?? '',
+          acousticSimilarity: acoustic,
+          durationScore: durationScore,
+        ),
+        PronScoringMethod.ppgPosterior => _scorePpgPosterior(
+          textSimilarity: textSimilarity,
+          acousticSimilarity: acoustic,
+          durationScore: durationScore,
+        ),
+      };
+      breakdown[method] = score.clamp(0.0, 1.0);
+    }
+
+    final total = _aggregateScoringBreakdown(breakdown);
+    return _ScoringAggregate(total: total, breakdown: breakdown);
+  }
+
+  double _scoreGop({
+    required double textSimilarity,
+    required double acousticSimilarity,
+    required String recognizedText,
+  }) {
+    if (recognizedText.trim().isEmpty) {
+      return acousticSimilarity * 0.88;
+    }
+    return (textSimilarity * 0.72 + acousticSimilarity * 0.28).clamp(0.0, 1.0);
+  }
+
+  double _scoreForcedAlignmentPer({
+    required String expectedText,
+    required String recognizedText,
+    required double acousticSimilarity,
+    required double durationScore,
+  }) {
+    if (recognizedText.trim().isEmpty) {
+      return (acousticSimilarity * 0.82 + durationScore * 0.18).clamp(0.0, 1.0);
+    }
+    final expectedPhones = _pseudoPhoneSequence(expectedText);
+    final recognizedPhones = _pseudoPhoneSequence(recognizedText);
+    final per = _normalizedEditDistance(expectedPhones, recognizedPhones);
+    final perScore = (1.0 - per).clamp(0.0, 1.0);
+    return (perScore * 0.65 + durationScore * 0.20 + acousticSimilarity * 0.15)
+        .clamp(0.0, 1.0);
+  }
+
+  double _scorePpgPosterior({
+    required double textSimilarity,
+    required double acousticSimilarity,
+    required double durationScore,
+  }) {
+    final posteriorLike =
+        (acousticSimilarity * 0.60 + textSimilarity * 0.20 + durationScore * 0.20)
+            .clamp(0.0, 1.0);
+    final sharpened = 1.0 / (1.0 + math.exp(-6.0 * (posteriorLike - 0.5)));
+    return sharpened.clamp(0.0, 1.0);
+  }
+
+  double _aggregateScoringBreakdown(Map<PronScoringMethod, double> breakdown) {
+    if (breakdown.isEmpty) return 0;
+    const weights = <PronScoringMethod, double>{
+      PronScoringMethod.sslEmbedding: 0.35,
+      PronScoringMethod.gop: 0.25,
+      PronScoringMethod.forcedAlignmentPer: 0.22,
+      PronScoringMethod.ppgPosterior: 0.18,
+    };
+    var weightedSum = 0.0;
+    var weightSum = 0.0;
+    for (final entry in breakdown.entries) {
+      final weight = weights[entry.key] ?? 0.2;
+      weightedSum += entry.value * weight;
+      weightSum += weight;
+    }
+    if (weightSum <= 0) return 0;
+    return (weightedSum / weightSum).clamp(0.0, 1.0);
+  }
+
+  double _durationConsistency(double a, double b) {
+    if (a <= 0 || b <= 0) return 1.0;
+    final ratio = math.min(a, b) / math.max(a, b);
+    return math.sqrt(ratio).clamp(0.0, 1.0);
+  }
+
+  double _estimateTextSimilarity(String expected, String recognized) {
+    final expectedPhones = _pseudoPhoneSequence(expected);
+    final recognizedPhones = _pseudoPhoneSequence(recognized);
+    if (expectedPhones.isEmpty && recognizedPhones.isEmpty) return 0;
+    final distance = _levenshteinTokens(expectedPhones, recognizedPhones);
+    final denominator = math.max(expectedPhones.length, recognizedPhones.length);
+    if (denominator <= 0) return 0;
+    return (1 - distance / denominator).clamp(0.0, 1.0);
+  }
+
+  List<String> _pseudoPhoneSequence(String text) {
+    final lowered = text.toLowerCase();
+    final filtered = lowered.replaceAll(
+      RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true),
+      '',
+    );
+    if (filtered.isEmpty) return const <String>[];
+    final output = <String>[];
+    for (final rune in filtered.runes) {
+      final char = String.fromCharCode(rune);
+      if (rune >= 0x4E00 && rune <= 0x9FFF) {
+        output.add('cjk_$char');
+        continue;
+      }
+      output.add(_latinPseudoPhone(char));
+    }
+    return output;
+  }
+
+  String _latinPseudoPhone(String char) {
+    return switch (char) {
+      'a' || 'e' || 'i' || 'o' || 'u' || 'y' => 'vowel',
+      'b' || 'p' => 'bp',
+      'c' || 'k' || 'q' || 'g' => 'kgq',
+      'd' || 't' => 'dt',
+      'f' || 'v' => 'fv',
+      'l' || 'r' => 'lr',
+      'm' || 'n' => 'mn',
+      's' || 'z' || 'x' => 'szx',
+      'h' || 'w' || 'j' => char,
+      _ => char,
+    };
+  }
+
+  double _normalizedEditDistance(List<String> a, List<String> b) {
+    final denominator = math.max(a.length, b.length);
+    if (denominator <= 0) return 1;
+    final distance = _levenshteinTokens(a, b);
+    return (distance / denominator).clamp(0.0, 1.0);
+  }
+
+  int _levenshteinTokens(List<String> a, List<String> b) {
+    if (a.isEmpty) return b.length;
+    if (b.isEmpty) return a.length;
+    var prev = List<int>.generate(b.length + 1, (index) => index);
+    for (var i = 1; i <= a.length; i++) {
+      final curr = List<int>.filled(b.length + 1, 0);
+      curr[0] = i;
+      for (var j = 1; j <= b.length; j++) {
+        final substitutionCost = a[i - 1] == b[j - 1] ? 0 : 1;
+        curr[j] = math.min(
+          math.min(curr[j - 1] + 1, prev[j] + 1),
+          prev[j - 1] + substitutionCost,
+        );
+      }
+      prev = curr;
+    }
+    return prev[b.length];
+  }
+
   Future<AsrResult> _transcribeOffline({
     required String audioPath,
     required AsrConfig config,
@@ -1635,6 +2016,15 @@ class AsrService {
   Future<Directory> _ensureModelsRoot() async {
     final supportDir = await getApplicationSupportDirectory();
     final root = Directory(p.join(supportDir.path, 'asr-models'));
+    if (!await root.exists()) {
+      await root.create(recursive: true);
+    }
+    return root;
+  }
+
+  Future<Directory> _ensureScoringPacksRoot() async {
+    final supportDir = await getApplicationSupportDirectory();
+    final root = Directory(p.join(supportDir.path, 'asr-scoring-packs'));
     if (!await root.exists()) {
       await root.create(recursive: true);
     }

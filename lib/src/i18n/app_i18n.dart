@@ -84,6 +84,15 @@ class AppI18n {
         'Uses current playback TTS (local or remote) to generate reference audio, then compares pronunciation locally by acoustic similarity.',
     'asrMultiEngineHint':
         'Select one or more engines. They run in order. Text ASR and acoustic similarity results will be combined when available.',
+    'asrScoringMethods': 'Pronunciation Scoring Methods',
+    'asrScoringMethodsHint':
+        'Choose which scoring algorithms to enable. Installed packages only.',
+    'asrScoringPackManager': 'Scoring Package Manager',
+    'asrScoringPackInstallFirst': 'Download package first to enable this method.',
+    'scorerSslEmbedding': 'SSL Embedding Similarity (HuBERT/wav2vec2)',
+    'scorerGop': 'GOP Scoring',
+    'scorerForcedAlignmentPer': 'Forced Alignment + PER',
+    'scorerPpgPosterior': 'PPG Posterior Scoring',
     'asrOfflineModelManager': 'Offline Model Packages',
     'asrModelInstalled': 'Installed ({size})',
     'asrModelNotInstalled': 'Not installed (download size: {size})',
@@ -277,6 +286,9 @@ class AppI18n {
     'asrSimilarityFeatureInsufficient':
         'Audio is too short or unclear for similarity compare.',
     'asrSimilarityFailed': 'Local similarity compare failed: {error}',
+    'asrScoringPackNotInstalled':
+        'No selected scoring package is installed. Please download at least one.',
+    'asrScoringPackUnsupported': 'Unsupported scoring package.',
     'asrMultiEngineNoResult':
         'No engine produced a valid result. Please adjust engine selection.',
     'asrOfflineFailed': 'Offline ASR failed: {error}',

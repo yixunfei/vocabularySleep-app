@@ -57,8 +57,16 @@ const List<AsrProviderType> _asrMultiEngineCandidates = <AsrProviderType>[
   AsrProviderType.offlineSmall,
   AsrProviderType.localSimilarity,
 ];
+const List<PronScoringMethod> _asrScoringMethodCandidates =
+    <PronScoringMethod>[
+      PronScoringMethod.sslEmbedding,
+      PronScoringMethod.gop,
+      PronScoringMethod.forcedAlignmentPer,
+      PronScoringMethod.ppgPosterior,
+    ];
 
 enum _AsrOfflineModelAction { download, remove }
+enum _PronScoringPackAction { download, remove }
 
 String _formatStorageSize(int bytes) {
   if (bytes <= 0) return '0 B';
@@ -88,6 +96,15 @@ String _asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
     case AsrProviderType.multiEngine:
       return i18n.t('asrMultiEngine');
   }
+}
+
+String _scoringMethodLabel(AppI18n i18n, PronScoringMethod method) {
+  return switch (method) {
+    PronScoringMethod.sslEmbedding => i18n.t('scorerSslEmbedding'),
+    PronScoringMethod.gop => i18n.t('scorerGop'),
+    PronScoringMethod.forcedAlignmentPer => i18n.t('scorerForcedAlignmentPer'),
+    PronScoringMethod.ppgPosterior => i18n.t('scorerPpgPosterior'),
+  };
 }
 
 class HomePage extends StatefulWidget {
@@ -144,6 +161,13 @@ class _HomePageState extends State<HomePage> {
       <AsrProviderType, String>{
         AsrProviderType.offline: '~150 MB',
         AsrProviderType.offlineSmall: '~250 MB',
+      };
+  static const Map<PronScoringMethod, String> _asrScoringPackSizeHints =
+      <PronScoringMethod, String>{
+        PronScoringMethod.sslEmbedding: '~42 MB',
+        PronScoringMethod.gop: '~28 MB',
+        PronScoringMethod.forcedAlignmentPer: '~56 MB',
+        PronScoringMethod.ppgPosterior: '~64 MB',
       };
 
   @override
@@ -2271,6 +2295,15 @@ class _HomePageState extends State<HomePage> {
     AsrProviderType? offlineActionProvider;
     AsrProgress? offlineActionProgress;
     String? offlineActionError;
+    final scoringPackStatuses = <PronScoringMethod, PronScoringPackStatus>{};
+    for (final method in _asrScoringMethodCandidates) {
+      scoringPackStatuses[method] = await state.getPronScoringPackStatus(method);
+    }
+    if (!context.mounted) return;
+    final scoringBusyMethods = <PronScoringMethod>{};
+    PronScoringMethod? scoringActionMethod;
+    AsrProgress? scoringActionProgress;
+    String? scoringActionError;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -2365,6 +2398,11 @@ class _HomePageState extends State<HomePage> {
                               offlineActionProvider: offlineActionProvider,
                               offlineActionProgress: offlineActionProgress,
                               offlineActionError: offlineActionError,
+                              scoringPackStatuses: scoringPackStatuses,
+                              scoringBusyMethods: scoringBusyMethods,
+                              scoringActionMethod: scoringActionMethod,
+                              scoringActionProgress: scoringActionProgress,
+                              scoringActionError: scoringActionError,
                               onAsrLanguageCustomModeChanged: (value) {
                                 setStateDialog(
                                   () => asrLanguageCustomMode = value,
@@ -2409,6 +2447,75 @@ class _HomePageState extends State<HomePage> {
                                       offlineBusyProviders.remove(provider);
                                       if (offlineActionProvider == provider) {
                                         offlineActionProgress = null;
+                                      }
+                                    });
+                                  }
+                                }
+                              },
+                              onScoringPackAction: (method, action) async {
+                                setStateDialog(() {
+                                  scoringBusyMethods.add(method);
+                                  scoringActionMethod = method;
+                                  scoringActionProgress = null;
+                                  scoringActionError = null;
+                                });
+                                try {
+                                  if (action == _PronScoringPackAction.download) {
+                                    await state.preparePronScoringPack(
+                                      method,
+                                      onProgress: (progress) {
+                                        if (!context.mounted) return;
+                                        setStateDialog(() {
+                                          scoringActionMethod = method;
+                                          scoringActionProgress = progress;
+                                        });
+                                      },
+                                    );
+                                  } else {
+                                    await state.removePronScoringPack(method);
+                                  }
+                                  final refreshed = await state
+                                      .getPronScoringPackStatus(method);
+                                  if (!context.mounted) return;
+                                  setStateDialog(() {
+                                    scoringPackStatuses[method] = refreshed;
+                                    final enabled = draft.asr.scoringMethods
+                                        .contains(method);
+                                    if (!refreshed.installed && enabled) {
+                                      final nextMethods = List<PronScoringMethod>.from(
+                                        draft.asr.scoringMethods,
+                                      )..remove(method);
+                                      if (nextMethods.isEmpty) {
+                                        for (final candidate
+                                            in _asrScoringMethodCandidates) {
+                                          if (candidate == method) continue;
+                                          final candidateStatus =
+                                              scoringPackStatuses[candidate];
+                                          if (candidateStatus?.installed ==
+                                              true) {
+                                            nextMethods.add(candidate);
+                                            break;
+                                          }
+                                        }
+                                      }
+                                      draft = draft.copyWith(
+                                        asr: draft.asr.copyWith(
+                                          scoringMethods: nextMethods,
+                                        ),
+                                      );
+                                    }
+                                  });
+                                } catch (error) {
+                                  if (!context.mounted) return;
+                                  setStateDialog(() {
+                                    scoringActionError = '$error';
+                                  });
+                                } finally {
+                                  if (context.mounted) {
+                                    setStateDialog(() {
+                                      scoringBusyMethods.remove(method);
+                                      if (scoringActionMethod == method) {
+                                        scoringActionProgress = null;
                                       }
                                     });
                                   }
@@ -2460,6 +2567,13 @@ class _HomePageState extends State<HomePage> {
 
     if (confirmed == true) {
       final delayMs = int.tryParse(delayController.text.trim());
+      final asrSelectedEngines = draft.asr.provider == AsrProviderType.multiEngine
+          ? draft.asr.normalizedEngineOrder
+          : <AsrProviderType>[draft.asr.provider];
+      final asrUsesApi = asrSelectedEngines.contains(AsrProviderType.api) ||
+          asrSelectedEngines.contains(AsrProviderType.customApi);
+      final asrUsesCustomApi =
+          asrSelectedEngines.contains(AsrProviderType.customApi);
       final mergedFieldSettings = Map<String, FieldPlaybackSetting>.from(
         fieldSettings,
       );
@@ -2493,14 +2607,8 @@ class _HomePageState extends State<HomePage> {
         delayBetweenUnitsMs: delayMs ?? draft.delayBetweenUnitsMs,
         tts: nextTts,
         asr: draft.asr.copyWith(
-          apiKey:
-              (draft.asr.provider == AsrProviderType.api ||
-                  draft.asr.provider == AsrProviderType.customApi)
-              ? asrApiKeyController.text.trim()
-              : draft.asr.apiKey,
-          model:
-              (draft.asr.provider == AsrProviderType.api ||
-                  draft.asr.provider == AsrProviderType.customApi)
+          apiKey: asrUsesApi ? asrApiKeyController.text.trim() : draft.asr.apiKey,
+          model: asrUsesApi
               ? (asrModelController.text.trim().isEmpty
                     ? draft.asr.model
                     : asrModelController.text.trim())
@@ -2508,7 +2616,7 @@ class _HomePageState extends State<HomePage> {
           language: asrLanguageController.text.trim().isEmpty
               ? draft.asr.language
               : asrLanguageController.text.trim(),
-          baseUrl: draft.asr.provider == AsrProviderType.customApi
+          baseUrl: asrUsesCustomApi
               ? asrApiBaseUrlController.text.trim()
               : draft.asr.baseUrl,
         ),
@@ -3096,18 +3204,29 @@ class _HomePageState extends State<HomePage> {
     required AsrProviderType? offlineActionProvider,
     required AsrProgress? offlineActionProgress,
     required String? offlineActionError,
+    required Map<PronScoringMethod, PronScoringPackStatus> scoringPackStatuses,
+    required Set<PronScoringMethod> scoringBusyMethods,
+    required PronScoringMethod? scoringActionMethod,
+    required AsrProgress? scoringActionProgress,
+    required String? scoringActionError,
     required ValueChanged<bool> onAsrLanguageCustomModeChanged,
     required Future<void> Function(
       AsrProviderType provider,
       _AsrOfflineModelAction action,
     )
     onOfflineModelAction,
+    required Future<void> Function(
+      PronScoringMethod method,
+      _PronScoringPackAction action,
+    )
+    onScoringPackAction,
     required ValueChanged<PlayConfig> onDraftChanged,
   }) {
     final provider = draft.asr.provider;
     final selectedEngines = provider == AsrProviderType.multiEngine
         ? draft.asr.normalizedEngineOrder
         : <AsrProviderType>[provider];
+    final selectedScoringMethods = draft.asr.normalizedScoringMethods;
     final isApiProvider =
         selectedEngines.contains(AsrProviderType.api) ||
         selectedEngines.contains(AsrProviderType.customApi);
@@ -3247,6 +3366,165 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            draftI18n.t('asrScoringMethods'),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            draftI18n.t('asrScoringMethodsHint'),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: LegacyStyle.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          for (final method in _asrScoringMethodCandidates)
+            Builder(
+              builder: (context) {
+                final status = scoringPackStatuses[method];
+                final installed = status?.installed ?? false;
+                final checked = selectedScoringMethods.contains(method);
+                return CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: checked && installed,
+                  title: Text(_scoringMethodLabel(draftI18n, method)),
+                  subtitle: installed
+                      ? null
+                      : Text(draftI18n.t('asrScoringPackInstallFirst')),
+                  onChanged: installed
+                      ? (value) {
+                          final next = List<PronScoringMethod>.from(
+                            draft.asr.scoringMethods,
+                          );
+                          if (value == true) {
+                            if (!next.contains(method)) {
+                              next.add(method);
+                            }
+                          } else {
+                            next.remove(method);
+                          }
+                          if (next.isEmpty) {
+                            next.add(method);
+                          }
+                          onDraftChanged(
+                            draft.copyWith(
+                              asr: draft.asr.copyWith(scoringMethods: next),
+                            ),
+                          );
+                        }
+                      : null,
+                );
+              },
+            ),
+          const SizedBox(height: 8),
+          Text(
+            draftI18n.t('asrScoringPackManager'),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          for (final method in _asrScoringMethodCandidates)
+            Builder(
+              builder: (context) {
+                final status = scoringPackStatuses[method];
+                final installed = status?.installed ?? false;
+                final isBusy = scoringBusyMethods.contains(method);
+                final sizeHint = _asrScoringPackSizeHints[method] ?? '~32 MB';
+                final sizeText = installed && status != null && status.bytes > 0
+                    ? _formatStorageSize(status.bytes)
+                    : sizeHint;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: LegacyStyle.cardDecoration,
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              _scoringMethodLabel(draftI18n, method),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              installed
+                                  ? draftI18n.t(
+                                      'asrModelInstalled',
+                                      params: <String, Object?>{
+                                        'size': sizeText,
+                                      },
+                                    )
+                                  : draftI18n.t(
+                                      'asrModelNotInstalled',
+                                      params: <String, Object?>{
+                                        'size': sizeText,
+                                      },
+                                    ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: LegacyStyle.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonal(
+                        onPressed: isBusy
+                            ? null
+                            : () => onScoringPackAction(
+                                  method,
+                                  _PronScoringPackAction.download,
+                                ),
+                        child: Text(
+                          isBusy
+                              ? draftI18n.t('processing')
+                              : draftI18n.t('download'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: (!installed || isBusy)
+                            ? null
+                            : () => onScoringPackAction(
+                                  method,
+                                  _PronScoringPackAction.remove,
+                                ),
+                        child: Text(draftI18n.t('delete')),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          if (scoringActionMethod != null && scoringActionProgress != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              '${_scoringMethodLabel(draftI18n, scoringActionMethod)} - ${draftI18n.t(scoringActionProgress.messageKey, params: scoringActionProgress.messageParams)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 6),
+            LinearProgressIndicator(value: scoringActionProgress.progress),
+          ],
+          if ((scoringActionError ?? '').trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              scoringActionError ?? '',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+            ),
           ],
           const SizedBox(height: 12),
           Text(

@@ -16,6 +16,13 @@ enum AsrProviderType {
   multiEngine,
 }
 
+enum PronScoringMethod {
+  sslEmbedding,
+  gop,
+  forcedAlignmentPer,
+  ppgPosterior,
+}
+
 class FieldPlaybackSetting {
   const FieldPlaybackSetting({this.enabled, this.repeat, this.label});
 
@@ -185,6 +192,7 @@ class AsrConfig {
     required this.enabled,
     required this.provider,
     required this.engineOrder,
+    required this.scoringMethods,
     this.apiKey,
     required this.model,
     required this.language,
@@ -194,6 +202,7 @@ class AsrConfig {
   final bool enabled;
   final AsrProviderType provider;
   final List<AsrProviderType> engineOrder;
+  final List<PronScoringMethod> scoringMethods;
   final String? apiKey;
   final String model;
   final String language;
@@ -217,10 +226,25 @@ class AsrConfig {
     return output;
   }
 
+  List<PronScoringMethod> get normalizedScoringMethods {
+    final input = scoringMethods.isEmpty
+        ? const <PronScoringMethod>[PronScoringMethod.sslEmbedding]
+        : scoringMethods;
+    final output = <PronScoringMethod>[];
+    for (final item in input) {
+      if (!output.contains(item)) output.add(item);
+    }
+    if (output.isEmpty) {
+      output.add(PronScoringMethod.sslEmbedding);
+    }
+    return output;
+  }
+
   AsrConfig copyWith({
     bool? enabled,
     AsrProviderType? provider,
     List<AsrProviderType>? engineOrder,
+    List<PronScoringMethod>? scoringMethods,
     String? apiKey,
     String? model,
     String? language,
@@ -231,6 +255,9 @@ class AsrConfig {
       provider: provider ?? this.provider,
       engineOrder: List<AsrProviderType>.from(
         engineOrder ?? this.engineOrder,
+      ),
+      scoringMethods: List<PronScoringMethod>.from(
+        scoringMethods ?? this.scoringMethods,
       ),
       apiKey: apiKey ?? this.apiKey,
       model: model ?? this.model,
@@ -243,6 +270,9 @@ class AsrConfig {
     'enabled': enabled,
     'provider': provider.name,
     'engineOrder': engineOrder.map((item) => item.name).toList(growable: false),
+    'scoringMethods': scoringMethods
+        .map((item) => item.name)
+        .toList(growable: false),
     'apiKey': apiKey,
     'model': model,
     'language': language,
@@ -277,11 +307,29 @@ class AsrConfig {
         ],
       );
     }
+    final parsedScoringMethods = <PronScoringMethod>[];
+    final rawScoringMethods = json['scoringMethods'];
+    if (rawScoringMethods is List) {
+      for (final item in rawScoringMethods) {
+        final name = '$item';
+        final method = PronScoringMethod.values.firstWhere(
+          (candidate) => candidate.name == name,
+          orElse: () => PronScoringMethod.sslEmbedding,
+        );
+        if (!parsedScoringMethods.contains(method)) {
+          parsedScoringMethods.add(method);
+        }
+      }
+    }
+    if (parsedScoringMethods.isEmpty) {
+      parsedScoringMethods.add(PronScoringMethod.sslEmbedding);
+    }
 
     return AsrConfig(
       enabled: json['enabled'] as bool? ?? false,
       provider: provider,
       engineOrder: parsedEngineOrder,
+      scoringMethods: parsedScoringMethods,
       apiKey: json['apiKey']?.toString(),
       model: json['model']?.toString() ?? 'FunAudioLLM/SenseVoiceSmall',
       language: json['language']?.toString() ?? 'en',
@@ -345,6 +393,7 @@ class PlayConfig {
         AsrProviderType.api,
         AsrProviderType.localSimilarity,
       ],
+      scoringMethods: <PronScoringMethod>[PronScoringMethod.sslEmbedding],
       model: 'FunAudioLLM/SenseVoiceSmall',
       language: 'en',
     ),

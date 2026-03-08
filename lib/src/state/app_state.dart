@@ -1209,6 +1209,23 @@ class AppState extends ChangeNotifier {
     await _asr.removeOfflineModel(provider);
   }
 
+  Future<PronScoringPackStatus> getPronScoringPackStatus(
+    PronScoringMethod method,
+  ) {
+    return _asr.getPronScoringPackStatus(method);
+  }
+
+  Future<void> preparePronScoringPack(
+    PronScoringMethod method, {
+    AsrProgressCallback? onProgress,
+  }) async {
+    await _asr.preparePronScoringPack(method: method, onProgress: onProgress);
+  }
+
+  Future<void> removePronScoringPack(PronScoringMethod method) async {
+    await _asr.removePronScoringPack(method);
+  }
+
   PronunciationComparison comparePronunciation(
     String expected,
     String recognized,
