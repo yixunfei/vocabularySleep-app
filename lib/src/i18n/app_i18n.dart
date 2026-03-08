@@ -78,6 +78,9 @@ class AppI18n {
     'asrApiBaseUrl': 'ASR Base URL (Custom API)',
     'offlineWhisperBase': 'Offline (Whisper Base)',
     'offlineWhisperSmall': 'Offline (Whisper Small)',
+    'asrOfflineModelManager': 'Offline Model Packages',
+    'asrModelInstalled': 'Installed ({size})',
+    'asrModelNotInstalled': 'Not installed (download size: {size})',
     'asrOfflineNoticeTitle': 'Offline ASR Notice',
     'asrOfflineNoticeBody':
         'Offline ASR needs an extra first-time download ({size}) and has lower accuracy. Recommended: remote API (currently free on this platform after registration).',
@@ -173,6 +176,8 @@ class AppI18n {
     'delayBetweenUnits': 'Delay Between Units (ms)',
     'showText': 'Show text',
     'saveAndApply': 'Save & Apply',
+    'download': 'Download',
+    'processing': 'Processing...',
     'settingsTabPlayback': 'Playback',
     'settingsTabVoice': 'Voice',
     'settingsTabAsr': 'Recognition',

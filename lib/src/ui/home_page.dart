@@ -50,6 +50,34 @@ const List<_TtsApiModelOption> _ttsApiModels = <_TtsApiModelOption>[
   ),
 ];
 
+enum _AsrOfflineModelAction { download, remove }
+
+String _formatStorageSize(int bytes) {
+  if (bytes <= 0) return '0 B';
+  const units = <String>['B', 'KB', 'MB', 'GB', 'TB'];
+  var value = bytes.toDouble();
+  var unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  final digits = value >= 10 || unitIndex == 0 ? 0 : 1;
+  return '${value.toStringAsFixed(digits)} ${units[unitIndex]}';
+}
+
+String _asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
+  switch (provider) {
+    case AsrProviderType.api:
+      return i18n.t('siliconFlowApi');
+    case AsrProviderType.customApi:
+      return i18n.t('customApi');
+    case AsrProviderType.offline:
+      return i18n.t('offlineWhisperBase');
+    case AsrProviderType.offlineSmall:
+      return i18n.t('offlineWhisperSmall');
+  }
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -2218,6 +2246,19 @@ class _HomePageState extends State<HomePage> {
             (coreRepeats.containsKey(key) ? coreRepeats[key]! : 0),
     };
     var appearanceThemeDraft = 'flat';
+    final managedOfflineProviders = <AsrProviderType>[
+      AsrProviderType.offline,
+      AsrProviderType.offlineSmall,
+    ];
+    final offlineStatuses = <AsrProviderType, AsrOfflineModelStatus>{};
+    for (final provider in managedOfflineProviders) {
+      offlineStatuses[provider] = await state.getAsrOfflineModelStatus(provider);
+    }
+    if (!context.mounted) return;
+    final offlineBusyProviders = <AsrProviderType>{};
+    AsrProviderType? offlineActionProvider;
+    AsrProgress? offlineActionProgress;
+    String? offlineActionError;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -2307,10 +2348,59 @@ class _HomePageState extends State<HomePage> {
                               asrApiKeyController: asrApiKeyController,
                               asrApiBaseUrlController: asrApiBaseUrlController,
                               asrLanguageCustomMode: asrLanguageCustomMode,
+                              offlineStatuses: offlineStatuses,
+                              offlineBusyProviders: offlineBusyProviders,
+                              offlineActionProvider: offlineActionProvider,
+                              offlineActionProgress: offlineActionProgress,
+                              offlineActionError: offlineActionError,
                               onAsrLanguageCustomModeChanged: (value) {
                                 setStateDialog(
                                   () => asrLanguageCustomMode = value,
                                 );
+                              },
+                              onOfflineModelAction: (provider, action) async {
+                                setStateDialog(() {
+                                  offlineBusyProviders.add(provider);
+                                  offlineActionProvider = provider;
+                                  offlineActionProgress = null;
+                                  offlineActionError = null;
+                                });
+                                try {
+                                  if (action == _AsrOfflineModelAction.download) {
+                                    await state.prepareAsrOfflineModel(
+                                      provider,
+                                      onProgress: (progress) {
+                                        if (!context.mounted) return;
+                                        setStateDialog(() {
+                                          offlineActionProvider = provider;
+                                          offlineActionProgress = progress;
+                                        });
+                                      },
+                                    );
+                                  } else {
+                                    await state.removeAsrOfflineModel(provider);
+                                  }
+                                  final refreshed = await state
+                                      .getAsrOfflineModelStatus(provider);
+                                  if (!context.mounted) return;
+                                  setStateDialog(() {
+                                    offlineStatuses[provider] = refreshed;
+                                  });
+                                } catch (error) {
+                                  if (!context.mounted) return;
+                                  setStateDialog(() {
+                                    offlineActionError = '$error';
+                                  });
+                                } finally {
+                                  if (context.mounted) {
+                                    setStateDialog(() {
+                                      offlineBusyProviders.remove(provider);
+                                      if (offlineActionProvider == provider) {
+                                        offlineActionProgress = null;
+                                      }
+                                    });
+                                  }
+                                }
                               },
                               onDraftChanged: (next) {
                                 setStateDialog(() => draft = next);
@@ -2989,7 +3079,17 @@ class _HomePageState extends State<HomePage> {
     required TextEditingController asrApiKeyController,
     required TextEditingController asrApiBaseUrlController,
     required bool asrLanguageCustomMode,
+    required Map<AsrProviderType, AsrOfflineModelStatus> offlineStatuses,
+    required Set<AsrProviderType> offlineBusyProviders,
+    required AsrProviderType? offlineActionProvider,
+    required AsrProgress? offlineActionProgress,
+    required String? offlineActionError,
     required ValueChanged<bool> onAsrLanguageCustomModeChanged,
+    required Future<void> Function(
+      AsrProviderType provider,
+      _AsrOfflineModelAction action,
+    )
+    onOfflineModelAction,
     required ValueChanged<PlayConfig> onDraftChanged,
   }) {
     final provider = draft.asr.provider;
@@ -3041,11 +3141,11 @@ class _HomePageState extends State<HomePage> {
                 child: Text(draftI18n.t('offlineWhisperSmall')),
               ),
             ],
-            onChanged: (value) async {
-              if (value == null) return;
-              if (value == AsrProviderType.offline ||
-                  value == AsrProviderType.offlineSmall) {
-                await _showAsrOfflineNotice(
+              onChanged: (value) async {
+                if (value == null) return;
+                if (value == AsrProviderType.offline ||
+                    value == AsrProviderType.offlineSmall) {
+                  await _showAsrOfflineNotice(
                   context: context,
                   i18n: draftI18n,
                   provider: value,
@@ -3056,6 +3156,119 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
+          const SizedBox(height: 12),
+          Text(
+            draftI18n.t('asrOfflineModelManager'),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          for (final offlineProvider in <AsrProviderType>[
+            AsrProviderType.offline,
+            AsrProviderType.offlineSmall,
+          ]) ...<Widget>[
+            Builder(
+              builder: (context) {
+                final status = offlineStatuses[offlineProvider];
+                final installed = status?.installed ?? false;
+                final isBusy = offlineBusyProviders.contains(offlineProvider);
+                final sizeHint = _asrOfflineModelSizeHints[offlineProvider] ??
+                    '~150 MB';
+                final sizeText = installed && status != null && status.bytes > 0
+                    ? _formatStorageSize(status.bytes)
+                    : sizeHint;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: LegacyStyle.cardDecoration,
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              _asrProviderLabel(draftI18n, offlineProvider),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              installed
+                                  ? draftI18n.t(
+                                      'asrModelInstalled',
+                                      params: <String, Object?>{
+                                        'size': sizeText,
+                                      },
+                                    )
+                                  : draftI18n.t(
+                                      'asrModelNotInstalled',
+                                      params: <String, Object?>{
+                                        'size': sizeText,
+                                      },
+                                    ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: LegacyStyle.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonal(
+                        onPressed: isBusy
+                            ? null
+                            : () =>
+                                  onOfflineModelAction(
+                                    offlineProvider,
+                                    _AsrOfflineModelAction.download,
+                                  ),
+                        child: Text(
+                          isBusy
+                              ? draftI18n.t('processing')
+                              : draftI18n.t('download'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: (!installed || isBusy)
+                            ? null
+                            : () =>
+                                  onOfflineModelAction(
+                                    offlineProvider,
+                                    _AsrOfflineModelAction.remove,
+                                  ),
+                        child: Text(draftI18n.t('delete')),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+          if (offlineActionProvider != null && offlineActionProgress != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              '${_asrProviderLabel(draftI18n, offlineActionProvider)} - ${draftI18n.t(offlineActionProgress.messageKey, params: offlineActionProgress.messageParams)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 6),
+            LinearProgressIndicator(value: offlineActionProgress.progress),
+          ],
+          if ((offlineActionError ?? '').trim().isNotEmpty)
+            ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                offlineActionError ?? '',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+              ),
+            ],
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             initialValue: asrLanguageOption,
@@ -4475,6 +4688,13 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
   PronunciationComparison? _comparison;
   String? _error;
   AsrProgress? _progress;
+  late AsrProviderType _activeProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeProvider = widget.state.config.asr.provider;
+  }
 
   Future<void> _toggleRecording() async {
     if (_isProcessing) return;
@@ -4493,7 +4713,7 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
       _progress = null;
     });
 
-    final path = await widget.state.startAsrRecording();
+    final path = await widget.state.startAsrRecording(provider: _activeProvider);
     if (!mounted) return;
     if (path == null || path.trim().isEmpty) {
       final i18n = AppI18n(widget.state.uiLanguage);
@@ -4534,6 +4754,7 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
       final result = await widget.state.transcribeRecording(
         audioPath,
         expectedText: widget.word.word,
+        provider: _activeProvider,
         onProgress: (progress) {
           if (!mounted) return;
           setState(() {
@@ -4630,6 +4851,37 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
                 widget.word.word,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<AsrProviderType>(
+                initialValue: _activeProvider,
+                decoration: InputDecoration(labelText: i18n.t('asrProvider')),
+                items: <DropdownMenuItem<AsrProviderType>>[
+                  DropdownMenuItem(
+                    value: AsrProviderType.api,
+                    child: Text(i18n.t('siliconFlowApi')),
+                  ),
+                  DropdownMenuItem(
+                    value: AsrProviderType.customApi,
+                    child: Text(i18n.t('customApi')),
+                  ),
+                  DropdownMenuItem(
+                    value: AsrProviderType.offline,
+                    child: Text(i18n.t('offlineWhisperBase')),
+                  ),
+                  DropdownMenuItem(
+                    value: AsrProviderType.offlineSmall,
+                    child: Text(i18n.t('offlineWhisperSmall')),
+                  ),
+                ],
+                onChanged: (_isRecording || _isProcessing)
+                    ? null
+                    : (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _activeProvider = value;
+                        });
+                      },
               ),
               const SizedBox(height: 8),
               TextButton.icon(

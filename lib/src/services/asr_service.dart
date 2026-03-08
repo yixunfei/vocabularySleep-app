@@ -44,6 +44,18 @@ class AsrProgress {
 
 typedef AsrProgressCallback = void Function(AsrProgress progress);
 
+class AsrOfflineModelStatus {
+  const AsrOfflineModelStatus({
+    required this.provider,
+    required this.installed,
+    required this.bytes,
+  });
+
+  final AsrProviderType provider;
+  final bool installed;
+  final int bytes;
+}
+
 class _OfflineModelProfile {
   const _OfflineModelProfile({
     required this.variant,
@@ -120,6 +132,11 @@ class AsrService {
 
   bool _bindingsInitialized = false;
   bool _stopRequested = false;
+
+  static bool isOfflineProvider(AsrProviderType provider) {
+    return provider == AsrProviderType.offline ||
+        provider == AsrProviderType.offlineSmall;
+  }
 
   Future<String?> startRecording({required AsrProviderType provider}) async {
     final tempDir = await getTemporaryDirectory();
@@ -221,6 +238,63 @@ class AsrService {
     _offlineRecognizers.clear();
     _offlineLoadFutures.clear();
     await _recorder.dispose();
+  }
+
+  Future<AsrOfflineModelStatus> getOfflineModelStatus(
+    AsrProviderType provider,
+  ) async {
+    final profile = _offlineProfiles[provider];
+    if (profile == null) {
+      return AsrOfflineModelStatus(
+        provider: provider,
+        installed: false,
+        bytes: 0,
+      );
+    }
+
+    final modelsRoot = await _ensureModelsRoot();
+    final modelDir = Directory(p.join(modelsRoot.path, profile.dirName));
+    final installed = _hasModelFiles(profile, modelDir);
+    final bytes = installed ? await _directorySize(modelDir) : 0;
+    return AsrOfflineModelStatus(
+      provider: provider,
+      installed: installed,
+      bytes: bytes,
+    );
+  }
+
+  Future<void> prepareOfflineModel({
+    required AsrProviderType provider,
+    required String language,
+    AsrProgressCallback? onProgress,
+  }) async {
+    final profile = _offlineProfiles[provider];
+    if (profile == null) {
+      throw StateError('asrUnsupportedOfflineProvider');
+    }
+    await _ensureOfflineRecognizer(
+      provider: provider,
+      profile: profile,
+      language: language,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<void> removeOfflineModel(AsrProviderType provider) async {
+    final profile = _offlineProfiles[provider];
+    if (profile == null) return;
+
+    final recognizer = _offlineRecognizers.remove(provider);
+    recognizer?.free();
+    _offlineLoadFutures.remove(provider);
+
+    final modelsRoot = await _ensureModelsRoot();
+    final modelDir = Directory(p.join(modelsRoot.path, profile.dirName));
+    await _safeDeleteDirectory(modelDir);
+
+    final manifest = await _loadModelManifest(modelsRoot);
+    manifest.remove(profile.variant);
+    await _saveModelManifest(modelsRoot, manifest);
   }
 
   Future<AsrResult> _transcribeByApi({
@@ -1084,6 +1158,17 @@ class AsrService {
   Future<void> _safeDeleteDirectory(Directory dir) async {
     if (!await dir.exists()) return;
     await dir.delete(recursive: true);
+  }
+
+  Future<int> _directorySize(Directory dir) async {
+    if (!await dir.exists()) return 0;
+    var total = 0;
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      if (entity is! File) continue;
+      final stat = await entity.stat();
+      total += stat.size;
+    }
+    return total;
   }
 
   List<String> _requiredModelFiles(_OfflineModelProfile profile) => <String>[

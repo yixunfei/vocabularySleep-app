@@ -1157,18 +1157,22 @@ class AppState extends ChangeNotifier {
   Future<AsrResult> transcribeRecording(
     String audioPath, {
     String? expectedText,
+    AsrProviderType? provider,
     AsrProgressCallback? onProgress,
   }) {
+    final config = provider == null
+        ? _config.asr
+        : _config.asr.copyWith(provider: provider);
     return _asr.transcribeFile(
       audioPath: audioPath,
-      config: _config.asr,
+      config: config,
       expectedText: expectedText,
       onProgress: onProgress,
     );
   }
 
-  Future<String?> startAsrRecording() {
-    return _asr.startRecording(provider: _config.asr.provider);
+  Future<String?> startAsrRecording({AsrProviderType? provider}) {
+    return _asr.startRecording(provider: provider ?? _config.asr.provider);
   }
 
   Future<String?> stopAsrRecording() {
@@ -1178,6 +1182,27 @@ class AppState extends ChangeNotifier {
   Future<void> cancelAsrRecording() => _asr.cancelRecording();
 
   void stopAsrProcessing() => _asr.stopOfflineRecognition();
+
+  Future<AsrOfflineModelStatus> getAsrOfflineModelStatus(
+    AsrProviderType provider,
+  ) {
+    return _asr.getOfflineModelStatus(provider);
+  }
+
+  Future<void> prepareAsrOfflineModel(
+    AsrProviderType provider, {
+    AsrProgressCallback? onProgress,
+  }) async {
+    await _asr.prepareOfflineModel(
+      provider: provider,
+      language: _config.asr.language,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<void> removeAsrOfflineModel(AsrProviderType provider) async {
+    await _asr.removeOfflineModel(provider);
+  }
 
   PronunciationComparison comparePronunciation(
     String expected,
