@@ -1189,29 +1189,41 @@ class AppState extends ChangeNotifier {
 
   static final List<MapEntry<RegExp, String>> _latinFoldRules =
       <MapEntry<RegExp, String>>[
-        MapEntry(RegExp(r'[àáâãäåāăą]'), 'a'),
-        MapEntry(RegExp(r'[çćč]'), 'c'),
+        MapEntry(RegExp(r'[áàâãäåāăą]'), 'a'),
+        MapEntry(RegExp(r'[çćčĉċ]'), 'c'),
         MapEntry(RegExp(r'[ďđ]'), 'd'),
-        MapEntry(RegExp(r'[èéêëēĕėęě]'), 'e'),
-        MapEntry(RegExp(r'[ƒ]'), 'f'),
-        MapEntry(RegExp(r'[ĝğġģ]'), 'g'),
-        MapEntry(RegExp(r'[ĥħ]'), 'h'),
-        MapEntry(RegExp(r'[ìíîïĩīĭįı]'), 'i'),
-        MapEntry(RegExp(r'[ĵ]'), 'j'),
-        MapEntry(RegExp(r'[ķ]'), 'k'),
-        MapEntry(RegExp(r'[ĺļľł]'), 'l'),
-        MapEntry(RegExp(r'[ñńņň]'), 'n'),
-        MapEntry(RegExp(r'[òóôõöøōŏő]'), 'o'),
-        MapEntry(RegExp(r'[ŕŗř]'), 'r'),
-        MapEntry(RegExp(r'[śŝşš]'), 's'),
-        MapEntry(RegExp(r'[ţťŧ]'), 't'),
-        MapEntry(RegExp(r'[ùúûüũūŭůűų]'), 'u'),
-        MapEntry(RegExp(r'[ŵ]'), 'w'),
+        MapEntry(RegExp(r'[éèêëēĕėęě]'), 'e'),
+        MapEntry(RegExp(r'[íìîïīĭįı]'), 'i'),
+        MapEntry(RegExp(r'[ñńňņŋ]'), 'n'),
+        MapEntry(RegExp(r'[óòôõöøōŏő]'), 'o'),
+        MapEntry(RegExp(r'[úùûüũūŭůűų]'), 'u'),
         MapEntry(RegExp(r'[ýÿŷ]'), 'y'),
-        MapEntry(RegExp(r'[źżž]'), 'z'),
         MapEntry(RegExp(r'[ß]'), 'ss'),
         MapEntry(RegExp(r'[æ]'), 'ae'),
         MapEntry(RegExp(r'[œ]'), 'oe'),
+        MapEntry(RegExp(r'[脿谩芒茫盲氓膩膬膮]'), 'a'),
+        MapEntry(RegExp(r'[莽膰膷]'), 'c'),
+        MapEntry(RegExp(r'[膹膽]'), 'd'),
+        MapEntry(RegExp(r'[猫茅锚毛膿臅臈臋臎脡]'), 'e'),
+        MapEntry(RegExp(r'[茠]'), 'f'),
+        MapEntry(RegExp(r'[臐臒摹模]'), 'g'),
+        MapEntry(RegExp(r'[磨魔]'), 'h'),
+        MapEntry(RegExp(r'[矛铆卯茂末墨沫寞谋]'), 'i'),
+        MapEntry(RegExp(r'[牡]'), 'j'),
+        MapEntry(RegExp(r'[姆]'), 'k'),
+        MapEntry(RegExp(r'[暮募木艂]'), 'l'),
+        MapEntry(RegExp(r'[帽艅艈艌]'), 'n'),
+        MapEntry(RegExp(r'[貌贸么玫枚酶艒艔艖]'), 'o'),
+        MapEntry(RegExp(r'[艜艞艡]'), 'r'),
+        MapEntry(RegExp(r'[艣艥艧拧]'), 's'),
+        MapEntry(RegExp(r'[牛钮脓]'), 't'),
+        MapEntry(RegExp(r'[霉煤没眉农奴怒暖疟懦]'), 'u'),
+        MapEntry(RegExp(r'[诺]'), 'w'),
+        MapEntry(RegExp(r'[媒每欧]'), 'y'),
+        MapEntry(RegExp(r'[藕偶啪]'), 'z'),
+        MapEntry(RegExp(r'[脽]'), 'ss'),
+        MapEntry(RegExp(r'[忙]'), 'ae'),
+        MapEntry(RegExp(r'[艙]'), 'oe'),
       ];
 
   static final List<MapEntry<RegExp, String>> _pronunciationReplacements =
@@ -1223,6 +1235,10 @@ class AppState extends ChangeNotifier {
         MapEntry(RegExp(r"\bthey're\b"), 'they are'),
         MapEntry(RegExp(r"\bwe're\b"), 'we are'),
         MapEntry(RegExp(r"\byou're\b"), 'you are'),
+        MapEntry(RegExp(r"\bgonna\b"), 'going to'),
+        MapEntry(RegExp(r"\bwanna\b"), 'want to'),
+        MapEntry(RegExp(r"\bkinda\b"), 'kind of'),
+        MapEntry(RegExp(r"\bsorta\b"), 'sort of'),
       ];
   static final RegExp _pronunciationTokenCharPattern = RegExp(
     r"[\p{L}\p{N}']",
@@ -1232,12 +1248,17 @@ class AppState extends ChangeNotifier {
     'uh',
     'um',
     'ah',
+    'huh',
+    'mm',
     'er',
     'hmm',
     '嗯',
     '啊',
     '呃',
     '额',
+    '哦',
+    '噢',
+    '诶',
   };
 
   @visibleForTesting
@@ -1395,7 +1416,7 @@ class AppState extends ChangeNotifier {
 
   static List<String> _normalizePronunciationText(String text) {
     var normalized = _foldLatinDiacritics(
-      text.toLowerCase().replaceAll('’', "'").replaceAll('`', "'"),
+      text.toLowerCase().replaceAll(RegExp(r"[’`´]"), "'"),
     );
     for (final replacement in _pronunciationReplacements) {
       normalized = normalized.replaceAll(replacement.key, replacement.value);

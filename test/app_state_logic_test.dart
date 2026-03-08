@@ -34,7 +34,7 @@ void main() {
 
     test('search and jump normalize diacritics consistently', () {
       final words = <WordEntry>[
-        _word('Éclair', meaning: 'dessert'),
+        _word('脡clair', meaning: 'dessert'),
         _word('Banana', meaning: 'fruit'),
       ];
       final visible = AppState.filterWords(
@@ -44,7 +44,7 @@ void main() {
       );
 
       expect(visible.length, 1);
-      expect(visible.first.word, 'Éclair');
+      expect(visible.first.word, '脡clair');
       expect(AppState.findJumpIndexByPrefix(visible, 'ec'), 0);
       expect(AppState.findJumpIndexByInitial(visible, 'E'), 0);
     });
@@ -68,10 +68,28 @@ void main() {
       expect(result.isCorrect, true);
     });
 
+    test('casual contractions are normalized for scoring', () {
+      final result = AppState.comparePronunciationTexts(
+        expected: 'i am going to study',
+        recognized: "i'm gonna study",
+      );
+      expect(result.similarity, greaterThan(0.9));
+      expect(result.isCorrect, true);
+    });
+
+    test('cjk filler tokens are ignored for scoring', () {
+      final result = AppState.comparePronunciationTexts(
+        expected: '\u4f60\u597d\u4e16\u754c',
+        recognized: '\u55ef \u4f60\u597d \u554a \u4e16\u754c',
+      );
+      expect(result.similarity, greaterThan(0.9));
+      expect(result.isCorrect, true);
+    });
+
     test('cjk text compares by characters instead of full sentence token', () {
       final result = AppState.comparePronunciationTexts(
-        expected: '你好世界',
-        recognized: '你好世間',
+        expected: '\u4f60\u597d\u4e16\u754c',
+        recognized: '\u4f60\u597d\u4e16\u95f4',
       );
       expect(result.similarity, greaterThan(0.7));
       expect(result.differences.isNotEmpty, true);

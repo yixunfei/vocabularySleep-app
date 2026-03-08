@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
@@ -65,11 +66,25 @@ class _CanceledAsrException implements Exception {
   const _CanceledAsrException();
 }
 
+class _PreparedWaveData {
+  const _PreparedWaveData({
+    required this.samples,
+    required this.sampleRate,
+    required this.peak,
+  });
+
+  final List<double> samples;
+  final int sampleRate;
+  final double peak;
+}
+
 class AsrService {
   AsrService();
 
   static const String _defaultApiEndpoint =
       'https://api.siliconflow.cn/v1/audio/transcriptions';
+  static const int _targetSampleRate = 16000;
+  static const double _minAsrSeconds = 0.03;
   static const int _modelCacheVersion = 1;
   static const String _manifestName = 'manifest.json';
 
@@ -224,7 +239,15 @@ class AsrService {
     _activeApiClient?.close();
     final client = http.Client();
     _activeApiClient = client;
+    String? preparedPath;
     try {
+      var uploadPath = audioPath;
+      if (p.extension(audioPath).toLowerCase() == '.wav') {
+        preparedPath = await _prepareWaveFileForAsr(audioPath);
+        if (preparedPath != null) {
+          uploadPath = preparedPath;
+        }
+      }
       final request = http.MultipartRequest('POST', Uri.parse(endpoint));
       request.headers['Authorization'] = 'Bearer $apiKey';
       request.fields['model'] = config.model;
@@ -232,7 +255,7 @@ class AsrService {
       if (language != null) {
         request.fields['language'] = language;
       }
-      request.files.add(await http.MultipartFile.fromPath('file', audioPath));
+      request.files.add(await http.MultipartFile.fromPath('file', uploadPath));
 
       final streamed = await client
           .send(request)
@@ -298,6 +321,12 @@ class AsrService {
         errorParams: <String, Object?>{'error': error},
       );
     } finally {
+      if (preparedPath != null) {
+        final file = File(preparedPath);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      }
       if (identical(_activeApiClient, client)) {
         _activeApiClient = null;
       }
@@ -353,6 +382,233 @@ class AsrService {
     return '${compact.substring(0, 120)}...';
   }
 
+  Future<String?> _prepareWaveFileForAsr(String sourcePath) async {
+    try {
+      final wave = readWave(sourcePath);
+      if (wave.samples.isEmpty || wave.sampleRate <= 0) return null;
+      final prepared = _prepareWaveData(
+        samples: wave.samples,
+        sampleRate: wave.sampleRate,
+        targetSampleRate: _targetSampleRate,
+      );
+      if (prepared.samples.isEmpty) return null;
+      final tempDir = await getTemporaryDirectory();
+      final filePath = p.join(
+        tempDir.path,
+        'asr_prepared_${DateTime.now().microsecondsSinceEpoch}.wav',
+      );
+      await _writeWaveFile(
+        filePath: filePath,
+        sampleRate: prepared.sampleRate,
+        samples: prepared.samples,
+      );
+      return filePath;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  _PreparedWaveData _prepareWaveData({
+    required List<double> samples,
+    required int sampleRate,
+    required int targetSampleRate,
+  }) {
+    if (samples.isEmpty || sampleRate <= 0) {
+      return const _PreparedWaveData(
+        samples: <double>[],
+        sampleRate: _targetSampleRate,
+        peak: 0,
+      );
+    }
+
+    final denoised = _removeDcOffset(samples);
+    final trimmed = _trimSilence(denoised, sampleRate: sampleRate);
+    final preferred = _choosePreferredWaveSegment(
+      denoised: denoised,
+      trimmed: trimmed,
+      sampleRate: sampleRate,
+    );
+    if (preferred.isEmpty) {
+      return const _PreparedWaveData(
+        samples: <double>[],
+        sampleRate: _targetSampleRate,
+        peak: 0,
+      );
+    }
+
+    final normalized = _normalizeAmplitude(preferred);
+    final resampled = sampleRate == targetSampleRate
+        ? normalized
+        : _resampleLinear(
+            samples: normalized,
+            sourceSampleRate: sampleRate,
+            targetSampleRate: targetSampleRate,
+          );
+    if (resampled.isEmpty) {
+      return const _PreparedWaveData(
+        samples: <double>[],
+        sampleRate: _targetSampleRate,
+        peak: 0,
+      );
+    }
+    var peak = 0.0;
+    for (final sample in resampled) {
+      final value = sample.abs();
+      if (value > peak) peak = value;
+    }
+    return _PreparedWaveData(
+      samples: resampled,
+      sampleRate: targetSampleRate,
+      peak: peak,
+    );
+  }
+
+  List<double> _choosePreferredWaveSegment({
+    required List<double> denoised,
+    required List<double> trimmed,
+    required int sampleRate,
+  }) {
+    if (trimmed.isEmpty) return denoised;
+    final minPreferredSamples = (sampleRate * 0.09).round();
+    if (trimmed.length < minPreferredSamples &&
+        denoised.length > trimmed.length) {
+      return denoised;
+    }
+    return trimmed;
+  }
+
+  List<double> _removeDcOffset(List<double> samples) {
+    if (samples.isEmpty) return const <double>[];
+    var sum = 0.0;
+    for (final sample in samples) {
+      sum += sample;
+    }
+    final mean = sum / samples.length;
+    return List<double>.generate(samples.length, (index) {
+      final centered = samples[index] - mean;
+      if (centered > 1.0) return 1.0;
+      if (centered < -1.0) return -1.0;
+      return centered;
+    }, growable: false);
+  }
+
+  List<double> _trimSilence(List<double> samples, {required int sampleRate}) {
+    if (samples.isEmpty || sampleRate <= 0) return const <double>[];
+    var peak = 0.0;
+    for (final sample in samples) {
+      final value = sample.abs();
+      if (value > peak) peak = value;
+    }
+    if (peak <= 0) return const <double>[];
+
+    final threshold = math.max(0.006, peak * 0.05);
+    var first = -1;
+    var last = -1;
+    for (var i = 0; i < samples.length; i++) {
+      if (samples[i].abs() >= threshold) {
+        first = i;
+        break;
+      }
+    }
+    for (var i = samples.length - 1; i >= 0; i--) {
+      if (samples[i].abs() >= threshold) {
+        last = i;
+        break;
+      }
+    }
+    if (first < 0 || last < first) {
+      return const <double>[];
+    }
+
+    final padding = (sampleRate * 0.18).round();
+    final start = math.max(0, first - padding);
+    final end = math.min(samples.length - 1, last + padding);
+    return samples.sublist(start, end + 1);
+  }
+
+  List<double> _normalizeAmplitude(List<double> samples) {
+    if (samples.isEmpty) return const <double>[];
+    var peak = 0.0;
+    for (final sample in samples) {
+      final value = sample.abs();
+      if (value > peak) peak = value;
+    }
+    if (peak <= 0) return List<double>.from(samples, growable: false);
+    final gain = (0.92 / peak).clamp(0.5, 6.0);
+    return List<double>.generate(samples.length, (index) {
+      final value = samples[index] * gain;
+      if (value > 1.0) return 1.0;
+      if (value < -1.0) return -1.0;
+      return value;
+    }, growable: false);
+  }
+
+  List<double> _resampleLinear({
+    required List<double> samples,
+    required int sourceSampleRate,
+    required int targetSampleRate,
+  }) {
+    if (samples.isEmpty || sourceSampleRate <= 0 || targetSampleRate <= 0) {
+      return const <double>[];
+    }
+    if (sourceSampleRate == targetSampleRate) {
+      return List<double>.from(samples, growable: false);
+    }
+    final ratio = targetSampleRate / sourceSampleRate;
+    final outputLength = math.max(1, (samples.length * ratio).round());
+    final output = List<double>.filled(outputLength, 0, growable: false);
+    for (var i = 0; i < outputLength; i++) {
+      final sourcePos = i / ratio;
+      final left = sourcePos.floor();
+      final right = math.min(left + 1, samples.length - 1);
+      final mix = sourcePos - left;
+      output[i] = samples[left] * (1 - mix) + samples[right] * mix;
+    }
+    return output;
+  }
+
+  Future<void> _writeWaveFile({
+    required String filePath,
+    required int sampleRate,
+    required List<double> samples,
+  }) async {
+    final pcm = Int16List(samples.length);
+    for (var i = 0; i < samples.length; i++) {
+      final value = samples[i].clamp(-1.0, 1.0);
+      pcm[i] = (value * 32767).round().clamp(-32768, 32767);
+    }
+
+    final dataLength = pcm.lengthInBytes;
+    final bytes = BytesBuilder();
+    void writeAscii(String value) => bytes.add(ascii.encode(value));
+    void writeLe16(int value) {
+      final data = ByteData(2)..setUint16(0, value, Endian.little);
+      bytes.add(data.buffer.asUint8List());
+    }
+
+    void writeLe32(int value) {
+      final data = ByteData(4)..setUint32(0, value, Endian.little);
+      bytes.add(data.buffer.asUint8List());
+    }
+
+    writeAscii('RIFF');
+    writeLe32(36 + dataLength);
+    writeAscii('WAVE');
+    writeAscii('fmt ');
+    writeLe32(16);
+    writeLe16(1);
+    writeLe16(1);
+    writeLe32(sampleRate);
+    writeLe32(sampleRate * 2);
+    writeLe16(2);
+    writeLe16(16);
+    writeAscii('data');
+    writeLe32(dataLength);
+    bytes.add(pcm.buffer.asUint8List());
+
+    await File(filePath).writeAsBytes(bytes.takeBytes(), flush: true);
+  }
+
   Future<AsrResult> _transcribeOffline({
     required String audioPath,
     required AsrConfig config,
@@ -400,24 +656,28 @@ class AsrService {
       return const AsrResult(success: false, error: 'asrInvalidWav');
     }
 
-    if (waveData.samples.length < 1600) {
-      return const AsrResult(success: false, error: 'asrRecordingTooShort');
+    final prepared = _prepareWaveData(
+      samples: waveData.samples,
+      sampleRate: waveData.sampleRate,
+      targetSampleRate: _targetSampleRate,
+    );
+    if (prepared.samples.isEmpty) {
+      return const AsrResult(success: false, error: 'asrNoSpeechDetected');
     }
 
-    var maxAmplitude = 0.0;
-    for (final sample in waveData.samples) {
-      final value = sample.abs();
-      if (value > maxAmplitude) maxAmplitude = value;
+    if (prepared.samples.length <
+        (_targetSampleRate * _minAsrSeconds).round()) {
+      return const AsrResult(success: false, error: 'asrRecordingTooShort');
     }
-    if (maxAmplitude < 0.005) {
+    if (prepared.peak < 0.003) {
       return const AsrResult(success: false, error: 'asrNoSpeechDetected');
     }
 
     final stream = recognizer.createStream();
     try {
       stream.acceptWaveform(
-        samples: waveData.samples,
-        sampleRate: waveData.sampleRate,
+        samples: Float32List.fromList(prepared.samples),
+        sampleRate: prepared.sampleRate,
       );
       _checkCanceled();
       recognizer.decode(stream);
