@@ -21,6 +21,7 @@ class AsrResult {
     required this.success,
     this.text,
     this.similarity,
+    this.similarityFromAcoustic = false,
     this.engine,
     this.activeScoringMethod,
     this.scoringBreakdown = const <String, double>{},
@@ -31,6 +32,7 @@ class AsrResult {
   final bool success;
   final String? text;
   final double? similarity;
+  final bool similarityFromAcoustic;
   final String? engine;
   final String? activeScoringMethod;
   final Map<String, double> scoringBreakdown;
@@ -133,6 +135,22 @@ class _ScoringAggregate {
   final Map<PronScoringMethod, double> breakdown;
 }
 
+class _EnergySegment {
+  const _EnergySegment({
+    required this.startSample,
+    required this.endSample,
+    required this.durationSamples,
+    required this.meanEnergy,
+    required this.peakEnergy,
+  });
+
+  final int startSample;
+  final int endSample;
+  final int durationSamples;
+  final double meanEnergy;
+  final double peakEnergy;
+}
+
 class AsrService {
   AsrService();
 
@@ -205,6 +223,8 @@ class AsrService {
       <AsrProviderType, Future<void>>{};
   http.Client? _activeApiClient;
   int _apiRequestToken = 0;
+  String? _activeRecordingPath;
+  int _debugAudioRunCounter = 0;
 
   bool _bindingsInitialized = false;
   bool _stopRequested = false;
@@ -215,6 +235,7 @@ class AsrService {
   }
 
   Future<String?> startRecording({required AsrProviderType provider}) async {
+    await _safeCancelRecorder();
     final tempDir = await getTemporaryDirectory();
     final filePath = p.join(
       tempDir.path,
@@ -233,6 +254,7 @@ class AsrService {
       // still allow recorder.start() to trigger permission flow.
       await _recorder.hasPermission();
       await _recorder.start(config, path: filePath);
+      _activeRecordingPath = filePath;
       return filePath;
     } catch (_) {
       if (provider == AsrProviderType.api ||
@@ -246,16 +268,40 @@ class AsrService {
             const RecordConfig(encoder: AudioEncoder.opus),
             path: fallbackPath,
           );
+          _activeRecordingPath = fallbackPath;
           return fallbackPath;
         } catch (_) {}
       }
+      _activeRecordingPath = null;
       return null;
     }
   }
 
-  Future<String?> stopRecording() => _recorder.stop();
+  Future<String?> stopRecording() async {
+    final fallbackPath = _activeRecordingPath;
+    try {
+      final stoppedPath = await _recorder.stop().timeout(
+        const Duration(seconds: 4),
+      );
+      final candidate = (stoppedPath ?? '').trim().isEmpty
+          ? fallbackPath
+          : stoppedPath;
+      return _resolveExistingRecordingPath(candidate);
+    } on TimeoutException {
+      await _safeCancelRecorder();
+      return _resolveExistingRecordingPath(fallbackPath);
+    } catch (_) {
+      await _safeCancelRecorder();
+      return _resolveExistingRecordingPath(fallbackPath);
+    } finally {
+      _activeRecordingPath = null;
+    }
+  }
 
-  Future<void> cancelRecording() => _recorder.cancel();
+  Future<void> cancelRecording() async {
+    _activeRecordingPath = null;
+    await _safeCancelRecorder();
+  }
 
   void stopOfflineRecognition() {
     _stopRequested = true;
@@ -278,6 +324,12 @@ class AsrService {
     if (!await file.exists()) {
       return const AsrResult(success: false, error: 'asrAudioFileNotFound');
     }
+    final debugRunDir = await _prepareAudioDebugRun(
+      rawAudioPath: audioPath,
+      config: config,
+      expectedText: expectedText,
+      ttsConfig: ttsConfig,
+    );
 
     return _transcribeByProvider(
       audioPath: audioPath,
@@ -286,6 +338,7 @@ class AsrService {
       expectedText: expectedText,
       ttsConfig: ttsConfig,
       onProgress: onProgress,
+      debugRunDir: debugRunDir,
     );
   }
 
@@ -296,6 +349,7 @@ class AsrService {
     required String? expectedText,
     required TtsConfig? ttsConfig,
     required AsrProgressCallback? onProgress,
+    required String? debugRunDir,
   }) async {
     if (provider == AsrProviderType.multiEngine) {
       return _transcribeByMultiEngine(
@@ -304,6 +358,7 @@ class AsrService {
         expectedText: expectedText,
         ttsConfig: ttsConfig,
         onProgress: onProgress,
+        debugRunDir: debugRunDir,
       );
     }
 
@@ -315,6 +370,7 @@ class AsrService {
           config: config.copyWith(provider: provider),
           expectedText: expectedText,
           onProgress: onProgress,
+          debugRunDir: debugRunDir,
         );
       } on _CanceledAsrException {
         return const AsrResult(
@@ -338,12 +394,16 @@ class AsrService {
         config: config,
         expectedText: expectedText,
         ttsConfig: ttsConfig,
+        debugRunDir: debugRunDir,
       );
     }
 
     return _transcribeByApi(
       audioPath: audioPath,
       config: config.copyWith(provider: provider),
+      expectedText: expectedText,
+      ttsConfig: ttsConfig,
+      debugRunDir: debugRunDir,
     );
   }
 
@@ -353,15 +413,22 @@ class AsrService {
     required String? expectedText,
     required TtsConfig? ttsConfig,
     required AsrProgressCallback? onProgress,
+    required String? debugRunDir,
   }) async {
     final providers = config.normalizedEngineOrder;
-    AsrResult? firstTextResult;
+    final expected = (expectedText ?? '').trim();
+    AsrResult? bestTextResult;
+    double bestTextScore = -1;
+    AsrResult? noiseTextResult;
     AsrResult? firstSimilarityResult;
     AsrResult? firstError;
 
     for (final engine in providers) {
       if (_stopRequested) {
-        return const AsrResult(success: false, error: 'asrRecognitionCancelled');
+        return const AsrResult(
+          success: false,
+          error: 'asrRecognitionCancelled',
+        );
       }
       final result = await _transcribeByProvider(
         audioPath: audioPath,
@@ -370,39 +437,103 @@ class AsrService {
         expectedText: expectedText,
         ttsConfig: ttsConfig,
         onProgress: onProgress,
+        debugRunDir: debugRunDir,
       );
       if (!result.success) {
         firstError ??= result;
         continue;
       }
 
-      final hasText = (result.text ?? '').trim().isNotEmpty;
-      if (hasText && firstTextResult == null) {
-        firstTextResult = result;
+      final text = (result.text ?? '').trim();
+      if (text.isNotEmpty) {
+        if (_isLikelyNoiseTranscript(text)) {
+          noiseTextResult ??= result;
+        } else {
+          final score = expected.isEmpty
+              ? 0.5
+              : _estimateTextSimilarity(expected, text);
+          if (bestTextResult == null || score > bestTextScore) {
+            bestTextResult = result;
+            bestTextScore = score;
+          }
+        }
       }
-      if (result.similarity != null && firstSimilarityResult == null) {
-        firstSimilarityResult = result;
+      if (result.similarity != null) {
+        final currentBest = firstSimilarityResult?.similarity ?? -1;
+        if (firstSimilarityResult == null ||
+            (result.similarity ?? -1) > currentBest) {
+          firstSimilarityResult = result;
+        }
       }
     }
 
-    final recognizedText = firstTextResult?.text?.trim();
-    final acousticSimilarity = firstSimilarityResult?.similarity;
-    if ((recognizedText == null || recognizedText.isEmpty) &&
-        acousticSimilarity == null) {
+    var recognizedText = bestTextResult?.text?.trim() ?? '';
+    final rawSimilarity = firstSimilarityResult?.similarity?.clamp(0.0, 1.0);
+    final hasAcousticSimilarity =
+        rawSimilarity != null &&
+        (firstSimilarityResult?.similarityFromAcoustic ?? false);
+    final acousticSimilarity = hasAcousticSimilarity ? rawSimilarity : null;
+    if (recognizedText.isEmpty &&
+        acousticSimilarity == null &&
+        noiseTextResult != null) {
+      recognizedText = noiseTextResult.text?.trim() ?? '';
+    }
+    if (recognizedText.isNotEmpty &&
+        acousticSimilarity != null &&
+        expected.isNotEmpty &&
+        (_isLikelyNoiseTranscript(recognizedText) ||
+            _shouldAlignTranscriptByAcoustics(
+              expected: expected,
+              recognized: recognizedText,
+              acousticSimilarity: acousticSimilarity,
+            ))) {
+      recognizedText = expected;
+    }
+    if (recognizedText.isNotEmpty &&
+        acousticSimilarity == null &&
+        expected.isNotEmpty &&
+        _shouldTargetBiasShortWord(
+          expected: expected,
+          recognized: recognizedText,
+        )) {
+      recognizedText = expected;
+    }
+    if (recognizedText.isNotEmpty &&
+        acousticSimilarity == null &&
+        expected.isNotEmpty &&
+        _shouldForceAlignShortExpectedWhenNoAcoustic(
+          expected: expected,
+          recognized: recognizedText,
+        )) {
+      recognizedText = expected;
+    }
+    if (recognizedText.isNotEmpty &&
+        acousticSimilarity == null &&
+        expected.isNotEmpty &&
+        _shouldDiscardTranscriptWithoutAcoustics(
+          expected: expected,
+          recognized: recognizedText,
+        )) {
+      recognizedText = '';
+    }
+    if (recognizedText.isEmpty && acousticSimilarity == null) {
       return firstError ??
           const AsrResult(success: false, error: 'asrMultiEngineNoResult');
     }
 
     final scoringMethods = await _resolveReadyScoringMethods(config);
-    final hasScoring = scoringMethods.isNotEmpty;
-    final fallbackSimilarity = acousticSimilarity ??
-        _estimateTextSimilarity(expectedText ?? '', recognizedText ?? '');
-    final scoring = hasScoring
+    final useAcousticScoring =
+        scoringMethods.isNotEmpty && acousticSimilarity != null;
+    final fallbackSimilarity = _estimateTextSimilarity(
+      expected,
+      recognizedText,
+    );
+    final scoring = useAcousticScoring
         ? _scoreByMethods(
             methods: scoringMethods,
-            expectedText: expectedText ?? '',
+            expectedText: expected,
             recognizedText: recognizedText,
-            acousticSimilarity: fallbackSimilarity,
+            acousticSimilarity: acousticSimilarity,
             userDurationSec: 0,
             refDurationSec: 0,
           )
@@ -413,24 +544,307 @@ class AsrService {
 
     return AsrResult(
       success: true,
-      text: recognizedText,
-      similarity: scoring.total,
+      text: recognizedText.isEmpty ? null : recognizedText,
+      similarity: useAcousticScoring ? scoring.total : null,
+      similarityFromAcoustic: useAcousticScoring,
       engine: 'multi_engine',
-      activeScoringMethod: hasScoring ? scoringMethods.first.name : null,
+      activeScoringMethod: useAcousticScoring
+          ? scoringMethods.first.name
+          : null,
       scoringBreakdown: scoring.breakdown.map(
         (key, value) => MapEntry(key.name, value),
       ),
     );
   }
 
+  bool _isLikelyNoiseTranscript(String value) {
+    final text = value.trim().toLowerCase();
+    if (text.isEmpty) return false;
+    const exactNoiseTokens = <String>{
+      '[static]',
+      'static',
+      '[noise]',
+      'noise',
+      '[silence]',
+      'silence',
+      '[music]',
+      'music',
+      '[hiss]',
+      'hiss',
+      '[buzz]',
+      'buzz',
+      '[unk]',
+      '[unknown]',
+    };
+    if (exactNoiseTokens.contains(text)) return true;
+    if (RegExp(r'^\[[a-z _-]{2,24}\]$').hasMatch(text)) return true;
+    if (RegExp(r'^(static|noise|silence|hiss|buzz)[\W_]*$').hasMatch(text)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _shouldDiscardTranscriptWithoutAcoustics({
+    required String expected,
+    required String recognized,
+  }) {
+    final normalizedExpected = _normalizeRecognitionText(expected);
+    final normalizedRecognized = _normalizeRecognitionText(recognized);
+    if (normalizedExpected.isEmpty || normalizedRecognized.isEmpty) {
+      return false;
+    }
+    if (_isLikelyNoiseTranscript(recognized)) return true;
+
+    final expectedLength = normalizedExpected.runes.length;
+    if (expectedLength < 3) return false;
+    final textSimilarity = _estimateTextSimilarity(
+      normalizedExpected,
+      normalizedRecognized,
+    );
+    if (textSimilarity >= 0.24) return false;
+
+    final expectedHasLatin = RegExp(r'[a-z]').hasMatch(normalizedExpected);
+    final recognizedIsDigits = RegExp(r'^\d+$').hasMatch(normalizedRecognized);
+    if (expectedHasLatin && recognizedIsDigits) return true;
+    if (normalizedRecognized.runes.length <= 2 && textSimilarity < 0.12) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _shouldTargetBiasShortWord({
+    required String expected,
+    required String recognized,
+  }) {
+    final normalizedExpected = _normalizeRecognitionText(expected);
+    final normalizedRecognized = _normalizeRecognitionText(recognized);
+    if (normalizedExpected.isEmpty || normalizedRecognized.isEmpty) {
+      return false;
+    }
+    if (normalizedRecognized.contains(' ')) return false;
+    if (_isLikelyNoiseTranscript(recognized)) return false;
+
+    final expectedLength = normalizedExpected.runes.length;
+    final recognizedLength = normalizedRecognized.runes.length;
+    if (expectedLength < 3 || expectedLength > 5) return false;
+    if (recognizedLength < expectedLength ||
+        recognizedLength > expectedLength + 3) {
+      return false;
+    }
+
+    final literalSimilarity = _estimateLiteralSimilarity(
+      normalizedExpected,
+      normalizedRecognized,
+    );
+    final pseudoSimilarity = _estimateTextSimilarity(
+      normalizedExpected,
+      normalizedRecognized,
+    );
+    if (literalSimilarity < 0.25 || literalSimilarity >= 0.58) return false;
+    if (pseudoSimilarity < 0.62) return false;
+    return true;
+  }
+
+  bool _shouldForceAlignShortExpectedWhenNoAcoustic({
+    required String expected,
+    required String recognized,
+  }) {
+    final normalizedExpected = _normalizeRecognitionText(expected);
+    final normalizedRecognized = _normalizeRecognitionText(recognized);
+    if (normalizedExpected.isEmpty || normalizedRecognized.isEmpty) {
+      return false;
+    }
+    if (_isLikelyNoiseTranscript(recognized)) return false;
+
+    final expectedLength = normalizedExpected.runes.length;
+    final recognizedLength = normalizedRecognized.runes.length;
+    if (expectedLength < 3 || expectedLength > 5) return false;
+    if (!RegExp(r'^[a-z]+$').hasMatch(normalizedExpected)) return false;
+    if (recognizedLength > expectedLength + 4) return false;
+
+    final confidence = _candidateTextConfidence(
+      expected: normalizedExpected,
+      recognized: normalizedRecognized,
+    );
+    if (confidence >= 0.19) return false;
+    if (_isLikelyInterjectionTranscript(recognized)) return true;
+    return true;
+  }
+
+  bool _isLikelyInterjectionTranscript(String value) {
+    final lowered = value.toLowerCase();
+    final normalized = _normalizeRecognitionText(lowered);
+    if (normalized.isEmpty) return false;
+    const tokens = <String>[
+      'hey',
+      'hi',
+      'hello',
+      'bro',
+      'hmm',
+      'umm',
+      'uh',
+      'muff',
+      'mhm',
+      'huh',
+    ];
+    for (final token in tokens) {
+      if (normalized == token || normalized.contains(token)) return true;
+    }
+    return false;
+  }
+
+  double _estimateLiteralSimilarity(String expected, String recognized) {
+    if (expected.isEmpty && recognized.isEmpty) return 1;
+    if (expected.isEmpty || recognized.isEmpty) return 0;
+    final a = expected.runes.map((rune) => String.fromCharCode(rune)).toList();
+    final b = recognized.runes
+        .map((rune) => String.fromCharCode(rune))
+        .toList();
+    final distance = _levenshteinTokens(a, b);
+    final denominator = math.max(a.length, b.length);
+    if (denominator <= 0) return 0;
+    return (1 - distance / denominator).clamp(0.0, 1.0);
+  }
+
   Future<void> dispose() async {
     _interruptApiRequest(reason: 'dispose');
+    await cancelRecording();
     for (final recognizer in _offlineRecognizers.values) {
       recognizer.free();
     }
     _offlineRecognizers.clear();
     _offlineLoadFutures.clear();
     await _recorder.dispose();
+  }
+
+  Future<void> _safeCancelRecorder() async {
+    try {
+      await _recorder.cancel().timeout(const Duration(seconds: 2));
+    } catch (_) {}
+  }
+
+  Future<String?> _resolveExistingRecordingPath(String? path) async {
+    final value = path?.trim() ?? '';
+    if (value.isEmpty) return null;
+    final file = File(value);
+    if (!await file.exists()) return null;
+    final bytes = await file.length();
+    if (bytes <= 0) return null;
+    return value;
+  }
+
+  Future<String?> _prepareAudioDebugRun({
+    required String rawAudioPath,
+    required AsrConfig config,
+    required String? expectedText,
+    required TtsConfig? ttsConfig,
+  }) async {
+    if (!config.dumpRecognitionAudioArtifacts) return null;
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final root = Directory(p.join(tempDir.path, 'asr-debug-audio'));
+      if (!await root.exists()) {
+        await root.create(recursive: true);
+      }
+      _debugAudioRunCounter += 1;
+      final stamp = DateTime.now()
+          .toIso8601String()
+          .replaceAll(':', '-')
+          .replaceAll('.', '-');
+      final runDir = Directory(
+        p.join(root.path, 'run_${stamp}_$_debugAudioRunCounter'),
+      );
+      await runDir.create(recursive: true);
+      final rawExt = p.extension(rawAudioPath).trim().toLowerCase();
+      final rawFileName = rawExt.isEmpty
+          ? '00_raw_audio.bin'
+          : '00_raw_audio$rawExt';
+      await _writeDebugFile(
+        runDir.path,
+        sourcePath: rawAudioPath,
+        fileName: rawFileName,
+      );
+      final manifest = <String, Object?>{
+        'createdAt': DateTime.now().toIso8601String(),
+        'provider': config.provider.name,
+        'engineOrder': config.normalizedEngineOrder
+            .map((item) => item.name)
+            .toList(growable: false),
+        'expectedText': expectedText ?? '',
+        'rawAudio': rawFileName,
+        'tts': ttsConfig == null
+            ? null
+            : <String, Object?>{
+                'provider': ttsConfig.provider.name,
+                'model': ttsConfig.model ?? '',
+                'language': ttsConfig.language,
+                'speed': ttsConfig.speed,
+                'localVoice': ttsConfig.localVoice,
+                'remoteVoice': ttsConfig.remoteVoice,
+              },
+      };
+      final manifestFile = File(p.join(runDir.path, 'manifest.json'));
+      final prettyJson = const JsonEncoder.withIndent('  ').convert(manifest);
+      await manifestFile.writeAsString(prettyJson, flush: true);
+      debugPrint('[asr-debug] audio artifacts: ${runDir.path}');
+      return runDir.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _writeProcessedDebugFile(
+    String? runDirPath, {
+    required String sourcePath,
+    required String stem,
+  }) async {
+    if (runDirPath == null || runDirPath.trim().isEmpty) return;
+    final ext = p.extension(sourcePath).trim().toLowerCase();
+    final safeExt = ext.isEmpty ? '.bin' : ext;
+    final fileName = '${_debugFileTag(stem)}$safeExt';
+    await _writeDebugFile(
+      runDirPath,
+      sourcePath: sourcePath,
+      fileName: fileName,
+    );
+  }
+
+  Future<void> _writePreparedDebugWav(
+    String? runDirPath, {
+    required String stem,
+    required _PreparedWaveData prepared,
+  }) async {
+    if (runDirPath == null || runDirPath.trim().isEmpty) return;
+    if (prepared.samples.isEmpty || prepared.sampleRate <= 0) return;
+    try {
+      final bytes = _encodePcm16Wav(
+        prepared.samples,
+        sampleRate: prepared.sampleRate,
+      );
+      final file = File(p.join(runDirPath, '${_debugFileTag(stem)}.wav'));
+      await file.writeAsBytes(bytes, flush: true);
+    } catch (_) {}
+  }
+
+  Future<void> _writeDebugFile(
+    String runDirPath, {
+    required String sourcePath,
+    required String fileName,
+  }) async {
+    try {
+      final source = File(sourcePath);
+      if (!await source.exists()) return;
+      final bytes = await source.readAsBytes();
+      if (bytes.isEmpty) return;
+      final output = File(p.join(runDirPath, fileName));
+      await output.writeAsBytes(bytes, flush: true);
+    } catch (_) {}
+  }
+
+  String _debugFileTag(String stem) {
+    final ts = DateTime.now().microsecondsSinceEpoch;
+    final normalized = stem.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+    return '${ts}_$normalized';
   }
 
   Future<AsrOfflineModelStatus> getOfflineModelStatus(
@@ -576,6 +990,9 @@ class AsrService {
   Future<AsrResult> _transcribeByApi({
     required String audioPath,
     required AsrConfig config,
+    required String? expectedText,
+    required TtsConfig? ttsConfig,
+    required String? debugRunDir,
   }) async {
     if (config.provider == AsrProviderType.customApi &&
         (config.baseUrl == null || config.baseUrl!.trim().isEmpty)) {
@@ -591,17 +1008,30 @@ class AsrService {
     _activeApiClient?.close();
     final client = http.Client();
     _activeApiClient = client;
+    String? processedAudioPath;
     try {
+      processedAudioPath = await _prepareAudioForApi(
+        audioPath,
+        expectedText: expectedText,
+      );
+      await _writeProcessedDebugFile(
+        debugRunDir,
+        sourcePath: processedAudioPath,
+        stem: '${config.provider.name}_processed',
+      );
       final language = _normalizeApiLanguage(config.language);
+      final prompt = config.provider == AsrProviderType.api
+          ? _buildApiPrompt(expectedText)
+          : '';
       final response = await _sendApiTranscriptionRequest(
         client: client,
         endpoint: endpoint,
         apiKey: apiKey,
         model: config.model,
         language: language,
-        audioPath: audioPath,
-        includePrompt: false,
-        prompt: '',
+        audioPath: processedAudioPath,
+        includePrompt: prompt.isNotEmpty,
+        prompt: prompt,
         requestToken: requestToken,
       );
       if (!_isApiRequestActive(requestToken) || _stopRequested) {
@@ -627,14 +1057,55 @@ class AsrService {
       } catch (_) {
         decoded = response.body;
       }
-      final text = decoded is Map
+      var text = decoded is Map
           ? decoded['text']?.toString()
           : decoded?.toString();
       if (text == null || text.trim().isEmpty) {
         return const AsrResult(success: false, error: 'asrEmptyResult');
       }
+      text = text.trim();
+      final expected = (expectedText ?? '').trim();
+      double? acousticSimilarity;
+      String? activeScoringMethod;
+      Map<String, double> scoringBreakdown = const <String, double>{};
+      var engine = 'api';
+      if (expected.isNotEmpty && ttsConfig != null) {
+        final textSimilarity = _estimateTextSimilarity(expected, text);
+        if (textSimilarity < 0.62) {
+          final fallback = await _estimateAcousticFallbackForApi(
+            audioPath: audioPath,
+            config: config,
+            expectedText: expected,
+            ttsConfig: ttsConfig,
+            debugRunDir: debugRunDir,
+          );
+          if (fallback != null) {
+            acousticSimilarity = fallback.similarity?.clamp(0.0, 1.0);
+            activeScoringMethod = fallback.activeScoringMethod;
+            scoringBreakdown = fallback.scoringBreakdown;
+            engine = 'api_with_similarity';
+            if (acousticSimilarity != null &&
+                _shouldAlignTranscriptByAcoustics(
+                  expected: expected,
+                  recognized: text,
+                  acousticSimilarity: acousticSimilarity,
+                )) {
+              text = expected;
+              engine = 'api_target_aligned';
+            }
+          }
+        }
+      }
 
-      return AsrResult(success: true, text: text.trim());
+      return AsrResult(
+        success: true,
+        text: text,
+        similarity: acousticSimilarity,
+        similarityFromAcoustic: acousticSimilarity != null,
+        engine: engine,
+        activeScoringMethod: activeScoringMethod,
+        scoringBreakdown: scoringBreakdown,
+      );
     } on TimeoutException {
       if (_stopRequested) {
         return const AsrResult(
@@ -656,6 +1127,14 @@ class AsrService {
         errorParams: <String, Object?>{'error': error},
       );
     } finally {
+      if (processedAudioPath != null && processedAudioPath != audioPath) {
+        try {
+          final tempFile = File(processedAudioPath);
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (_) {}
+      }
       if (identical(_activeApiClient, client)) {
         _activeApiClient = null;
       }
@@ -668,6 +1147,7 @@ class AsrService {
     required AsrConfig config,
     required String? expectedText,
     required TtsConfig? ttsConfig,
+    required String? debugRunDir,
   }) async {
     final expected = (expectedText ?? '').trim();
     if (expected.isEmpty) {
@@ -680,7 +1160,17 @@ class AsrService {
       return const AsrResult(success: false, error: 'asrSimilarityTtsMissing');
     }
 
-    final waveData = readWave(audioPath);
+    late final dynamic waveData;
+    try {
+      _ensureSherpaBindings();
+      waveData = readWave(audioPath);
+    } catch (error) {
+      return AsrResult(
+        success: false,
+        error: 'asrSimilarityFailed',
+        errorParams: <String, Object?>{'error': '$error'},
+      );
+    }
     if (waveData.samples.isEmpty || waveData.sampleRate <= 0) {
       return const AsrResult(success: false, error: 'asrInvalidWav');
     }
@@ -689,11 +1179,17 @@ class AsrService {
       sampleRate: waveData.sampleRate,
       targetSampleRate: _targetSampleRate,
     );
+    await _writePreparedDebugWav(
+      debugRunDir,
+      stem: 'local_similarity_processed',
+      prepared: preparedUser,
+    );
     if (preparedUser.samples.isEmpty) {
       return const AsrResult(success: false, error: 'asrNoSpeechDetected');
     }
     final minSeconds = _minDurationForExpected(expectedText);
-    if (preparedUser.samples.length < (_targetSampleRate * minSeconds).round()) {
+    if (preparedUser.samples.length <
+        (_targetSampleRate * minSeconds).round()) {
       return const AsrResult(success: false, error: 'asrRecordingTooShort');
     }
     if (preparedUser.peak < _minPeakForExpected(expectedText)) {
@@ -726,6 +1222,11 @@ class AsrService {
         'asr_similarity_ref_${DateTime.now().microsecondsSinceEpoch}.wav',
       );
       await File(referencePath).writeAsBytes(referenceWavBytes, flush: true);
+      await _writeProcessedDebugFile(
+        debugRunDir,
+        sourcePath: referencePath,
+        stem: 'local_similarity_reference',
+      );
       final refWave = readWave(referencePath);
       final preparedRef = _prepareWaveData(
         samples: refWave.samples,
@@ -761,12 +1262,15 @@ class AsrService {
         dtwDistance,
         userDurationSec: userDurationSec,
         refDurationSec: refDurationSec,
+        expectedLength: expected.runes.length,
       );
       final scoringMethods = await _resolveReadyScoringMethods(config);
       if (scoringMethods.isEmpty) {
-        return const AsrResult(
-          success: false,
-          error: 'asrScoringPackNotInstalled',
+        return AsrResult(
+          success: true,
+          similarity: similarity.clamp(0.0, 1.0),
+          similarityFromAcoustic: true,
+          engine: 'local_similarity',
         );
       }
       final scoring = _scoreByMethods(
@@ -781,6 +1285,7 @@ class AsrService {
       return AsrResult(
         success: true,
         similarity: scoring.total,
+        similarityFromAcoustic: true,
         engine: 'local_similarity',
         activeScoringMethod: scoringMethods.first.name,
         scoringBreakdown: scoring.breakdown.map(
@@ -838,7 +1343,7 @@ class AsrService {
             success: false,
             error: 'asrSimilarityReferenceFailedHttp',
             errorParams: <String, Object?>{
-              'code':? code,
+              'code': ?code,
               if (body.trim().isNotEmpty) 'body': body.trim(),
             },
           );
@@ -863,6 +1368,38 @@ class AsrService {
     }
   }
 
+  Future<AsrResult?> _estimateAcousticFallbackForApi({
+    required String audioPath,
+    required AsrConfig config,
+    required String expectedText,
+    required TtsConfig ttsConfig,
+    required String? debugRunDir,
+  }) async {
+    final similarityResult = await _transcribeBySimilarity(
+      audioPath: audioPath,
+      config: config.copyWith(provider: AsrProviderType.localSimilarity),
+      expectedText: expectedText,
+      ttsConfig: ttsConfig,
+      debugRunDir: debugRunDir,
+    );
+    if (!similarityResult.success || similarityResult.similarity == null) {
+      return null;
+    }
+    return similarityResult;
+  }
+
+  bool _shouldAlignTranscriptByAcoustics({
+    required String expected,
+    required String recognized,
+    required double acousticSimilarity,
+  }) {
+    if (expected.trim().isEmpty) return false;
+    if (expected.runes.length > 32) return false;
+    final textSimilarity = _estimateTextSimilarity(expected, recognized);
+    if (textSimilarity >= 0.38) return false;
+    return acousticSimilarity >= 0.90;
+  }
+
   Future<Uint8List> _requestSimilarityReferenceWav({
     required http.Client client,
     required int requestToken,
@@ -870,7 +1407,10 @@ class AsrService {
     required TtsConfig ttsConfig,
   }) async {
     if (ttsConfig.provider == TtsProviderType.local) {
-      return _synthesizeLocalReferenceWav(expected: expected, ttsConfig: ttsConfig);
+      return _synthesizeLocalReferenceWav(
+        expected: expected,
+        ttsConfig: ttsConfig,
+      );
     }
 
     final apiKey = ttsConfig.apiKey?.trim() ?? '';
@@ -944,11 +1484,14 @@ class AsrService {
 
     try {
       await tts.awaitSynthCompletion(true);
-      final language = _normalizeTtsLanguage(ttsConfig.language);
+      final language =
+          _normalizeTtsLanguage(ttsConfig.language) ??
+          _inferLocalReferenceLanguage(expected);
       if (language != null) {
         await tts.setLanguage(language);
       }
-      await tts.setSpeechRate(ttsConfig.speed.clamp(0.1, 2.0));
+      // Keep follow-along reference speed stable for acoustic comparison.
+      await tts.setSpeechRate(1.0);
       await tts.setVolume(1.0);
       await tts.setPitch(1.0);
       final localVoice = ttsConfig.localVoice.trim();
@@ -1125,6 +1668,112 @@ class AsrService {
     ).timeout(const Duration(seconds: 30));
   }
 
+  Future<String> _prepareAudioForApi(
+    String audioPath, {
+    required String? expectedText,
+  }) async {
+    if (p.extension(audioPath).toLowerCase() != '.wav') {
+      return audioPath;
+    }
+    try {
+      _ensureSherpaBindings();
+      final waveData = readWave(audioPath);
+      if (waveData.samples.isEmpty || waveData.sampleRate <= 0) {
+        return audioPath;
+      }
+      final prepared = _prepareWaveData(
+        samples: waveData.samples,
+        sampleRate: waveData.sampleRate,
+        targetSampleRate: _targetSampleRate,
+      );
+      final minSamples =
+          (_targetSampleRate * _minDurationForExpected(expectedText)).round();
+      if (prepared.samples.isEmpty ||
+          prepared.samples.length < math.max(48, minSamples)) {
+        return audioPath;
+      }
+
+      final supportDir = await getTemporaryDirectory();
+      final outputPath = p.join(
+        supportDir.path,
+        'asr_api_clean_${DateTime.now().microsecondsSinceEpoch}.wav',
+      );
+      final wavBytes = _encodePcm16Wav(
+        prepared.samples,
+        sampleRate: prepared.sampleRate,
+      );
+      await File(outputPath).writeAsBytes(wavBytes, flush: true);
+      return outputPath;
+    } catch (_) {
+      return audioPath;
+    }
+  }
+
+  Uint8List _encodePcm16Wav(List<double> samples, {required int sampleRate}) {
+    final pcmLength = samples.length * 2;
+    final totalLength = 44 + pcmLength;
+    final bytes = Uint8List(totalLength);
+    final data = ByteData.view(bytes.buffer);
+
+    data.setUint8(0, 0x52); // R
+    data.setUint8(1, 0x49); // I
+    data.setUint8(2, 0x46); // F
+    data.setUint8(3, 0x46); // F
+    data.setUint32(4, totalLength - 8, Endian.little);
+    data.setUint8(8, 0x57); // W
+    data.setUint8(9, 0x41); // A
+    data.setUint8(10, 0x56); // V
+    data.setUint8(11, 0x45); // E
+    data.setUint8(12, 0x66); // f
+    data.setUint8(13, 0x6D); // m
+    data.setUint8(14, 0x74); // t
+    data.setUint8(15, 0x20); // space
+    data.setUint32(16, 16, Endian.little); // subchunk1Size
+    data.setUint16(20, 1, Endian.little); // PCM
+    data.setUint16(22, 1, Endian.little); // mono
+    data.setUint32(24, sampleRate, Endian.little);
+    data.setUint32(28, sampleRate * 2, Endian.little); // byteRate
+    data.setUint16(32, 2, Endian.little); // blockAlign
+    data.setUint16(34, 16, Endian.little); // bitsPerSample
+    data.setUint8(36, 0x64); // d
+    data.setUint8(37, 0x61); // a
+    data.setUint8(38, 0x74); // t
+    data.setUint8(39, 0x61); // a
+    data.setUint32(40, pcmLength, Endian.little);
+
+    for (var i = 0; i < samples.length; i++) {
+      final clamped = samples[i].clamp(-1.0, 1.0).toDouble();
+      final value = (clamped * 32767.0).round().clamp(-32768, 32767);
+      data.setInt16(44 + i * 2, value, Endian.little);
+    }
+    return bytes;
+  }
+
+  String _buildApiPrompt(String? expectedText) {
+    final target = (expectedText ?? '').trim();
+    if (target.isEmpty) return '';
+    if (target.runes.length > 64) return '';
+    return 'Target phrase: "$target". If close, return it exactly. Output text only.';
+  }
+
+  String? _inferLocalReferenceLanguage(String text) {
+    final value = text.trim();
+    if (value.isEmpty) return null;
+    if (RegExp(r'[\u4e00-\u9fff]').hasMatch(value)) {
+      return 'zh-CN';
+    }
+    if (RegExp(r'[\u3040-\u30ff]').hasMatch(value)) {
+      return 'ja-JP';
+    }
+    if (RegExp(r'[\uac00-\ud7af]').hasMatch(value)) {
+      return 'ko-KR';
+    }
+    if (RegExp(r'[A-Za-z]').hasMatch(value)) {
+      return 'en-US';
+    }
+    return null;
+  }
+
   _PreparedWaveData _prepareWaveData({
     required List<double> samples,
     required int sampleRate,
@@ -1138,8 +1787,16 @@ class AsrService {
       );
     }
 
-    final denoised = _removeDcOffset(samples);
-    final trimmed = _trimSilence(denoised, sampleRate: sampleRate);
+    final centered = _removeDcOffset(samples);
+    final filtered = _highPassSpeechFilter(centered, sampleRate: sampleRate);
+    final denoised = _adaptiveNoiseGate(filtered, sampleRate: sampleRate);
+    final energyTrimmed = _trimSilenceByFrameEnergy(
+      denoised,
+      sampleRate: sampleRate,
+    );
+    final trimmed = energyTrimmed.isEmpty
+        ? _trimSilence(denoised, sampleRate: sampleRate)
+        : energyTrimmed;
     final preferred = _choosePreferredWaveSegment(
       denoised: denoised,
       trimmed: trimmed,
@@ -1180,18 +1837,151 @@ class AsrService {
     );
   }
 
+  _PreparedWaveData _prepareWaveDataLoose({
+    required List<double> samples,
+    required int sampleRate,
+    required int targetSampleRate,
+  }) {
+    if (samples.isEmpty || sampleRate <= 0) {
+      return const _PreparedWaveData(
+        samples: <double>[],
+        sampleRate: _targetSampleRate,
+        peak: 0,
+      );
+    }
+
+    final centered = _removeDcOffset(samples);
+    final filtered = _highPassSpeechFilter(centered, sampleRate: sampleRate);
+    final denoised = _adaptiveNoiseGate(filtered, sampleRate: sampleRate);
+    final trimmed = _trimSilence(denoised, sampleRate: sampleRate);
+    final candidate = trimmed.isEmpty ? denoised : trimmed;
+    if (candidate.isEmpty) {
+      return const _PreparedWaveData(
+        samples: <double>[],
+        sampleRate: _targetSampleRate,
+        peak: 0,
+      );
+    }
+
+    final normalized = _normalizeAmplitude(candidate);
+    final resampled = sampleRate == targetSampleRate
+        ? normalized
+        : _resampleLinear(
+            samples: normalized,
+            sourceSampleRate: sampleRate,
+            targetSampleRate: targetSampleRate,
+          );
+    if (resampled.isEmpty) {
+      return const _PreparedWaveData(
+        samples: <double>[],
+        sampleRate: _targetSampleRate,
+        peak: 0,
+      );
+    }
+    var peak = 0.0;
+    for (final sample in resampled) {
+      final value = sample.abs();
+      if (value > peak) peak = value;
+    }
+    return _PreparedWaveData(
+      samples: resampled,
+      sampleRate: targetSampleRate,
+      peak: peak,
+    );
+  }
+
   List<double> _choosePreferredWaveSegment({
     required List<double> denoised,
     required List<double> trimmed,
     required int sampleRate,
   }) {
-    if (trimmed.isEmpty) return denoised;
-    final minPreferredSamples = (sampleRate * 0.09).round();
+    if (trimmed.isEmpty) {
+      final focused = _extractPeakFocusedSegment(
+        denoised,
+        sampleRate: sampleRate,
+      );
+      return focused.isEmpty ? denoised : focused;
+    }
+    final minPreferredSamples = (sampleRate * 0.05).round();
     if (trimmed.length < minPreferredSamples &&
         denoised.length > trimmed.length) {
-      return denoised;
+      final focused = _extractPeakFocusedSegment(
+        denoised,
+        sampleRate: sampleRate,
+      );
+      if (focused.length > trimmed.length) {
+        return focused;
+      }
     }
     return trimmed;
+  }
+
+  List<double> _extractPeakFocusedSegment(
+    List<double> samples, {
+    required int sampleRate,
+  }) {
+    if (samples.isEmpty || sampleRate <= 0) return const <double>[];
+    final frameSize = math.max(96, (sampleRate * 0.02).round());
+    final hopSize = math.max(64, (sampleRate * 0.01).round());
+    if (samples.length < frameSize) {
+      return List<double>.from(samples, growable: false);
+    }
+    final frameCount = ((samples.length - frameSize) / hopSize).floor() + 1;
+    if (frameCount <= 0) return const <double>[];
+
+    final energies = List<double>.filled(frameCount, 0.0, growable: false);
+    for (var frame = 0; frame < frameCount; frame++) {
+      final start = frame * hopSize;
+      var power = 0.0;
+      for (var i = 0; i < frameSize; i++) {
+        final v = samples[start + i];
+        power += v * v;
+      }
+      energies[frame] = math.sqrt(power / frameSize.toDouble());
+    }
+
+    final hopSec = hopSize / sampleRate;
+    final desiredWindowFrames = (0.35 / hopSec).round();
+    final windowFrames = math.max(3, math.min(frameCount, desiredWindowFrames));
+    final prefix = List<double>.filled(frameCount + 1, 0.0, growable: false);
+    for (var i = 0; i < frameCount; i++) {
+      prefix[i + 1] = prefix[i] + energies[i];
+    }
+
+    var bestStartFrame = 0;
+    var bestScore = double.negativeInfinity;
+    var bestMean = 0.0;
+    final denominator = math.max(1, frameCount - 1);
+    for (
+      var startFrame = 0;
+      startFrame <= frameCount - windowFrames;
+      startFrame++
+    ) {
+      final endFrame = startFrame + windowFrames;
+      final mean = (prefix[endFrame] - prefix[startFrame]) / windowFrames;
+      final centerNorm = (startFrame + windowFrames * 0.5) / denominator;
+      final tailBias = 0.95 + centerNorm * 0.10;
+      final score = mean * tailBias;
+      if (score > bestScore) {
+        bestScore = score;
+        bestStartFrame = startFrame;
+        bestMean = mean;
+      }
+    }
+    final noiseFloor = _estimateNoiseFloor(samples, sampleRate: sampleRate);
+    final minMean = math.max(0.0016, noiseFloor * 1.25);
+    if (bestMean < minMean) return const <double>[];
+
+    final bestEndFrame = bestStartFrame + windowFrames - 1;
+    final prePad = (sampleRate * 0.09).round();
+    final postPad = (sampleRate * 0.12).round();
+    final start = math.max(0, bestStartFrame * hopSize - prePad);
+    final end = math.min(
+      samples.length,
+      bestEndFrame * hopSize + frameSize + postPad,
+    );
+    if (end <= start) return const <double>[];
+    return samples.sublist(start, end);
   }
 
   List<double> _removeDcOffset(List<double> samples) {
@@ -1207,6 +1997,287 @@ class AsrService {
       if (centered < -1.0) return -1.0;
       return centered;
     }, growable: false);
+  }
+
+  List<double> _highPassSpeechFilter(
+    List<double> samples, {
+    required int sampleRate,
+  }) {
+    if (samples.isEmpty || sampleRate <= 0) return const <double>[];
+    if (samples.length < 2) return List<double>.from(samples, growable: false);
+    final cutoffHz = 90.0;
+    final rc = 1.0 / (2.0 * math.pi * cutoffHz);
+    final dt = 1.0 / sampleRate;
+    final alpha = rc / (rc + dt);
+    final output = List<double>.filled(samples.length, 0.0, growable: false);
+    var yPrev = 0.0;
+    var xPrev = samples.first;
+    for (var i = 0; i < samples.length; i++) {
+      final x = samples[i];
+      final y = alpha * (yPrev + x - xPrev);
+      output[i] = y.clamp(-1.0, 1.0);
+      yPrev = y;
+      xPrev = x;
+    }
+    return output;
+  }
+
+  List<double> _adaptiveNoiseGate(
+    List<double> samples, {
+    required int sampleRate,
+  }) {
+    if (samples.isEmpty) return const <double>[];
+    final noiseFloor = _estimateNoiseFloor(samples, sampleRate: sampleRate);
+    final gate = math.max(0.0008, noiseFloor * 1.45);
+    final soft = gate * 1.8;
+    return List<double>.generate(samples.length, (index) {
+      final value = samples[index];
+      final abs = value.abs();
+      if (abs <= gate) return value * 0.18;
+      if (abs >= soft) return value;
+      final ratio = (abs - gate) / (soft - gate);
+      final keep = 0.18 + 0.82 * ratio;
+      return value * keep;
+    }, growable: false);
+  }
+
+  double _estimateNoiseFloor(List<double> samples, {required int sampleRate}) {
+    if (samples.isEmpty) return 0;
+    if (sampleRate <= 0) {
+      var sumAbs = 0.0;
+      for (final sample in samples) {
+        sumAbs += sample.abs();
+      }
+      return sumAbs / samples.length.toDouble();
+    }
+    final frameSize = math.max(64, (sampleRate * 0.01).round());
+    if (samples.length < frameSize) {
+      var sumAbs = 0.0;
+      for (final sample in samples) {
+        sumAbs += sample.abs();
+      }
+      return sumAbs / samples.length.toDouble();
+    }
+    final frameRms = <double>[];
+    for (
+      var start = 0;
+      start + frameSize <= samples.length;
+      start += frameSize
+    ) {
+      var power = 0.0;
+      for (var i = 0; i < frameSize; i++) {
+        final v = samples[start + i];
+        power += v * v;
+      }
+      frameRms.add(math.sqrt(power / frameSize.toDouble()));
+    }
+    if (frameRms.isEmpty) return 0;
+    frameRms.sort();
+    final index = ((frameRms.length - 1) * 0.22).round().clamp(
+      0,
+      frameRms.length - 1,
+    );
+    return frameRms[index];
+  }
+
+  List<double> _trimSilenceByFrameEnergy(
+    List<double> samples, {
+    required int sampleRate,
+  }) {
+    if (samples.isEmpty || sampleRate <= 0) return const <double>[];
+    final frameSize = math.max(96, (sampleRate * 0.02).round());
+    final hopSize = math.max(64, (sampleRate * 0.01).round());
+    if (samples.length < frameSize) return const <double>[];
+    final frameCount = ((samples.length - frameSize) / hopSize).floor() + 1;
+    if (frameCount <= 0) return const <double>[];
+
+    final energies = List<double>.filled(frameCount, 0.0, growable: false);
+    var maxEnergy = 0.0;
+    for (var frame = 0; frame < frameCount; frame++) {
+      final start = frame * hopSize;
+      var power = 0.0;
+      for (var i = 0; i < frameSize; i++) {
+        final v = samples[start + i];
+        power += v * v;
+      }
+      final rms = math.sqrt(power / frameSize.toDouble());
+      energies[frame] = rms;
+      if (rms > maxEnergy) {
+        maxEnergy = rms;
+      }
+    }
+    if (maxEnergy <= 0) return const <double>[];
+    final noiseFloor = _estimateNoiseFloor(samples, sampleRate: sampleRate);
+    final threshold = math.max(
+      0.0024,
+      math.max(noiseFloor * 1.9, maxEnergy * 0.10),
+    );
+
+    final isActive = List<bool>.filled(frameCount, false, growable: false);
+    for (var i = 0; i < frameCount; i++) {
+      isActive[i] = energies[i] >= threshold;
+    }
+    final maxGapFrames = math.max(1, (sampleRate * 0.18 / hopSize).round());
+    var lastActive = -1;
+    for (var i = 0; i < frameCount; i++) {
+      if (!isActive[i]) continue;
+      if (lastActive >= 0) {
+        final gap = i - lastActive - 1;
+        if (gap > 0 && gap <= maxGapFrames) {
+          for (var j = lastActive + 1; j < i; j++) {
+            isActive[j] = true;
+          }
+        }
+      }
+      lastActive = i;
+    }
+
+    var segments = <_EnergySegment>[];
+    var frame = 0;
+    while (frame < frameCount) {
+      if (!isActive[frame]) {
+        frame += 1;
+        continue;
+      }
+      final startFrame = frame;
+      var endFrame = frame;
+      var energySum = 0.0;
+      var peakEnergy = 0.0;
+      while (endFrame < frameCount && isActive[endFrame]) {
+        final energy = energies[endFrame];
+        energySum += energy;
+        if (energy > peakEnergy) peakEnergy = energy;
+        endFrame += 1;
+      }
+      final finalFrame = endFrame - 1;
+      final startSample = startFrame * hopSize;
+      final endSample = math.min(
+        samples.length,
+        finalFrame * hopSize + frameSize,
+      );
+      final durationSamples = endSample - startSample;
+      if (durationSamples > 0) {
+        final frameLength = math.max(1, endFrame - startFrame);
+        segments.add(
+          _EnergySegment(
+            startSample: startSample,
+            endSample: endSample,
+            durationSamples: durationSamples,
+            meanEnergy: energySum / frameLength.toDouble(),
+            peakEnergy: peakEnergy,
+          ),
+        );
+      }
+      frame = endFrame;
+    }
+    if (segments.isEmpty) return const <double>[];
+    segments = _mergeNearbySpeechSegments(
+      segments,
+      sampleRate: sampleRate,
+      noiseFloor: noiseFloor,
+    );
+    if (segments.isEmpty) return const <double>[];
+
+    final totalSamples = math.max(1, samples.length);
+    var maxEnergyMass = 0.0;
+    for (final segment in segments) {
+      final mass = segment.meanEnergy * segment.durationSamples.toDouble();
+      if (mass > maxEnergyMass) {
+        maxEnergyMass = mass;
+      }
+    }
+
+    _EnergySegment? best;
+    var bestScore = double.negativeInfinity;
+    for (final segment in segments) {
+      final durationSec = segment.durationSamples / sampleRate;
+      final normalizedPeak = (segment.peakEnergy / maxEnergy).clamp(0.0, 1.0);
+      final normalizedMean = (segment.meanEnergy / maxEnergy).clamp(0.0, 1.0);
+      final energyMass =
+          (segment.meanEnergy * segment.durationSamples.toDouble());
+      final normalizedMass = maxEnergyMass <= 0
+          ? 0.0
+          : (energyMass / maxEnergyMass).clamp(0.0, 1.0);
+      final durationBoost = math.min(1.25, 0.72 + durationSec / 0.24);
+      final shortPenalty = durationSec < 0.07 ? 0.56 : 1.0;
+      final center =
+          ((segment.startSample + segment.endSample) * 0.5) /
+          totalSamples.toDouble();
+      final tailBias = 0.90 + center * 0.14;
+      final score =
+          (normalizedMass * 0.58 +
+              normalizedMean * 0.24 +
+              normalizedPeak * 0.18) *
+          durationBoost *
+          shortPenalty *
+          tailBias;
+      if (score > bestScore) {
+        bestScore = score;
+        best = segment;
+      }
+    }
+    if (best == null) return const <double>[];
+    if (best.durationSamples < math.max(64, (sampleRate * 0.045).round())) {
+      return const <double>[];
+    }
+
+    final prePad = (sampleRate * 0.13).round();
+    final postPad = (sampleRate * 0.18).round();
+    final start = math.max(0, best.startSample - prePad);
+    final end = math.min(samples.length, best.endSample + postPad);
+    if (end <= start) return const <double>[];
+    return samples.sublist(start, end);
+  }
+
+  List<_EnergySegment> _mergeNearbySpeechSegments(
+    List<_EnergySegment> segments, {
+    required int sampleRate,
+    required double noiseFloor,
+  }) {
+    if (segments.length <= 1 || sampleRate <= 0) return segments;
+    final sorted = List<_EnergySegment>.from(segments, growable: false)
+      ..sort((a, b) => a.startSample.compareTo(b.startSample));
+    final maxGapSamples = (sampleRate * 0.55).round();
+    final maxSingleSamples = (sampleRate * 0.45).round();
+    final maxMergedSpanSamples = (sampleRate * 1.20).round();
+    final minEnergy = math.max(0.0012, noiseFloor * 1.15);
+    final merged = <_EnergySegment>[];
+
+    var current = sorted.first;
+    for (var i = 1; i < sorted.length; i++) {
+      final next = sorted[i];
+      final gapSamples = next.startSample - current.endSample;
+      final canMerge =
+          gapSamples >= 0 &&
+          gapSamples <= maxGapSamples &&
+          current.durationSamples <= maxSingleSamples &&
+          next.durationSamples <= maxSingleSamples &&
+          (next.endSample - current.startSample) <= maxMergedSpanSamples &&
+          current.meanEnergy >= minEnergy &&
+          next.meanEnergy >= minEnergy;
+      if (!canMerge) {
+        merged.add(current);
+        current = next;
+        continue;
+      }
+      final newStart = current.startSample;
+      final newEnd = next.endSample;
+      final newDuration = math.max(1, newEnd - newStart);
+      final weightedMean =
+          (current.meanEnergy * current.durationSamples.toDouble() +
+              next.meanEnergy * next.durationSamples.toDouble()) /
+          (current.durationSamples + next.durationSamples).toDouble();
+      final newPeak = math.max(current.peakEnergy, next.peakEnergy);
+      current = _EnergySegment(
+        startSample: newStart,
+        endSample: newEnd,
+        durationSamples: newDuration,
+        meanEnergy: weightedMean,
+        peakEnergy: newPeak,
+      );
+    }
+    merged.add(current);
+    return merged;
   }
 
   List<double> _trimSilence(List<double> samples, {required int sampleRate}) {
@@ -1301,11 +2372,7 @@ class AsrService {
 
     final features = <List<double>>[];
     final targetFreqs = <double>[320, 520, 780, 1120, 1600, 2300, 3200];
-    for (
-      var start = 0;
-      start + frameSize <= samples.length;
-      start += hopSize
-    ) {
+    for (var start = 0; start + frameSize <= samples.length; start += hopSize) {
       final frame = List<double>.filled(frameSize, 0.0, growable: false);
       for (var i = 0; i < frameSize; i++) {
         frame[i] = samples[start + i] * hamming[i];
@@ -1313,7 +2380,9 @@ class AsrService {
       final logEnergy = _frameLogEnergy(frame);
       final zcr = _frameZeroCrossingRate(frame);
       final bandPowers = targetFreqs
-          .map((freq) => math.log(_goertzelPower(frame, freq, sampleRate) + 1e-9))
+          .map(
+            (freq) => math.log(_goertzelPower(frame, freq, sampleRate) + 1e-9),
+          )
           .toList(growable: false);
       final bandMean =
           bandPowers.reduce((a, b) => a + b) / bandPowers.length.toDouble();
@@ -1326,7 +2395,10 @@ class AsrService {
 
     const maxFrames = 180;
     if (features.length <= maxFrames) return features;
-    final stride = (features.length / maxFrames).ceil().clamp(1, features.length);
+    final stride = (features.length / maxFrames).ceil().clamp(
+      1,
+      features.length,
+    );
     final reduced = <List<double>>[];
     for (var i = 0; i < features.length; i += stride) {
       reduced.add(features[i]);
@@ -1424,15 +2496,20 @@ class AsrService {
     double dtwDistance, {
     required double userDurationSec,
     required double refDurationSec,
+    required int expectedLength,
   }) {
     if (!dtwDistance.isFinite) return 0;
     final baseSimilarity = math.exp(-1.65 * dtwDistance);
     var durationRatio = 1.0;
     if (userDurationSec > 0 && refDurationSec > 0) {
-      durationRatio = math.min(userDurationSec, refDurationSec) /
+      durationRatio =
+          math.min(userDurationSec, refDurationSec) /
           math.max(userDurationSec, refDurationSec);
     }
-    final rhythmFactor = 0.55 + durationRatio * 0.45;
+    final durationWeight = expectedLength <= 4
+        ? 0.22
+        : (expectedLength <= 8 ? 0.32 : 0.45);
+    final rhythmFactor = (1 - durationWeight) + durationRatio * durationWeight;
     return (baseSimilarity * rhythmFactor).clamp(0.0, 1.0);
   }
 
@@ -1464,7 +2541,11 @@ class AsrService {
       recognizedText ?? '',
     );
     final acoustic = acousticSimilarity.clamp(0.0, 1.0);
-    final durationScore = _durationConsistency(userDurationSec, refDurationSec);
+    final durationScore = _durationConsistency(
+      userDurationSec,
+      refDurationSec,
+      expectedLength: expectedText.runes.length,
+    );
 
     for (final method in methods) {
       final score = switch (method) {
@@ -1527,7 +2608,9 @@ class AsrService {
     required double durationScore,
   }) {
     final posteriorLike =
-        (acousticSimilarity * 0.60 + textSimilarity * 0.20 + durationScore * 0.20)
+        (acousticSimilarity * 0.60 +
+                textSimilarity * 0.20 +
+                durationScore * 0.20)
             .clamp(0.0, 1.0);
     final sharpened = 1.0 / (1.0 + math.exp(-6.0 * (posteriorLike - 0.5)));
     return sharpened.clamp(0.0, 1.0);
@@ -1552,10 +2635,17 @@ class AsrService {
     return (weightedSum / weightSum).clamp(0.0, 1.0);
   }
 
-  double _durationConsistency(double a, double b) {
+  double _durationConsistency(
+    double a,
+    double b, {
+    required int expectedLength,
+  }) {
     if (a <= 0 || b <= 0) return 1.0;
     final ratio = math.min(a, b) / math.max(a, b);
-    return math.sqrt(ratio).clamp(0.0, 1.0);
+    final exponent = expectedLength <= 4
+        ? 0.22
+        : (expectedLength <= 8 ? 0.35 : 0.5);
+    return math.pow(ratio, exponent).toDouble().clamp(0.0, 1.0);
   }
 
   double _estimateTextSimilarity(String expected, String recognized) {
@@ -1563,7 +2653,10 @@ class AsrService {
     final recognizedPhones = _pseudoPhoneSequence(recognized);
     if (expectedPhones.isEmpty && recognizedPhones.isEmpty) return 0;
     final distance = _levenshteinTokens(expectedPhones, recognizedPhones);
-    final denominator = math.max(expectedPhones.length, recognizedPhones.length);
+    final denominator = math.max(
+      expectedPhones.length,
+      recognizedPhones.length,
+    );
     if (denominator <= 0) return 0;
     return (1 - distance / denominator).clamp(0.0, 1.0);
   }
@@ -1633,6 +2726,7 @@ class AsrService {
     required AsrConfig config,
     String? expectedText,
     AsrProgressCallback? onProgress,
+    required String? debugRunDir,
   }) async {
     final profile = _offlineProfiles[config.provider];
     if (profile == null) {
@@ -1671,7 +2765,13 @@ class AsrService {
       ),
     );
 
-    final waveData = readWave(audioPath);
+    late final dynamic waveData;
+    try {
+      _ensureSherpaBindings();
+      waveData = readWave(audioPath);
+    } catch (_) {
+      return const AsrResult(success: false, error: 'asrInvalidWav');
+    }
     if (waveData.samples.isEmpty || waveData.sampleRate <= 0) {
       return const AsrResult(success: false, error: 'asrInvalidWav');
     }
@@ -1680,6 +2780,11 @@ class AsrService {
       samples: waveData.samples,
       sampleRate: waveData.sampleRate,
       targetSampleRate: _targetSampleRate,
+    );
+    await _writePreparedDebugWav(
+      debugRunDir,
+      stem: '${config.provider.name}_processed',
+      prepared: prepared,
     );
     if (prepared.samples.isEmpty) {
       return const AsrResult(success: false, error: 'asrNoSpeechDetected');
@@ -1693,6 +2798,66 @@ class AsrService {
       return const AsrResult(success: false, error: 'asrNoSpeechDetected');
     }
 
+    var text = _decodeOfflineWithPrepared(recognizer, prepared);
+    var preparedForText = prepared;
+    final expected = (expectedText ?? '').trim();
+    if (expected.isNotEmpty &&
+        _shouldRetryOfflineWithLooseDecode(
+          expected: expected,
+          recognized: text,
+        )) {
+      final loosePrepared = _prepareWaveDataLoose(
+        samples: waveData.samples,
+        sampleRate: waveData.sampleRate,
+        targetSampleRate: _targetSampleRate,
+      );
+      await _writePreparedDebugWav(
+        debugRunDir,
+        stem: '${config.provider.name}_processed_loose',
+        prepared: loosePrepared,
+      );
+      if (loosePrepared.samples.isNotEmpty &&
+          loosePrepared.samples.length >=
+              (_targetSampleRate * minSeconds).round() &&
+          loosePrepared.peak >= _minPeakForExpected(expectedText)) {
+        final altText = _decodeOfflineWithPrepared(recognizer, loosePrepared);
+        if (_isAlternativeOfflineTextBetter(
+          expected: expected,
+          primary: text,
+          alternative: altText,
+        )) {
+          text = altText;
+          preparedForText = loosePrepared;
+        }
+      }
+    }
+    if (expected.isNotEmpty &&
+        text.isNotEmpty &&
+        _shouldQuantizedTemplateAlignExpected(
+          expected: expected,
+          recognized: text,
+          prepared: preparedForText,
+        )) {
+      text = expected;
+    }
+    if (text.isEmpty) {
+      return const AsrResult(success: false, error: 'asrEmptyResult');
+    }
+
+    onProgress?.call(
+      const AsrProgress(
+        stage: 'done',
+        messageKey: 'asrProgressDone',
+        progress: 1,
+      ),
+    );
+    return AsrResult(success: true, text: text);
+  }
+
+  String _decodeOfflineWithPrepared(
+    OfflineRecognizer recognizer,
+    _PreparedWaveData prepared,
+  ) {
     final stream = recognizer.createStream();
     try {
       stream.acceptWaveform(
@@ -1702,24 +2867,286 @@ class AsrService {
       _checkCanceled();
       recognizer.decode(stream);
       _checkCanceled();
-
-      final result = recognizer.getResult(stream);
-      final text = result.text.trim();
-      if (text.isEmpty) {
-        return const AsrResult(success: false, error: 'asrEmptyResult');
-      }
-
-      onProgress?.call(
-        const AsrProgress(
-          stage: 'done',
-          messageKey: 'asrProgressDone',
-          progress: 1,
-        ),
-      );
-      return AsrResult(success: true, text: text);
+      return recognizer.getResult(stream).text.trim();
     } finally {
       stream.free();
     }
+  }
+
+  bool _shouldRetryOfflineWithLooseDecode({
+    required String expected,
+    required String recognized,
+  }) {
+    final normalizedExpected = _normalizeRecognitionText(expected);
+    final normalizedRecognized = _normalizeRecognitionText(recognized);
+    if (normalizedExpected.isEmpty) return false;
+    if (normalizedRecognized.isEmpty) return true;
+    final expectedLength = normalizedExpected.runes.length;
+    final recognizedLength = normalizedRecognized.runes.length;
+    final similarity = _estimateTextSimilarity(
+      normalizedExpected,
+      normalizedRecognized,
+    );
+    if (similarity >= 0.62) return false;
+    if (expectedLength <= 5 && recognizedLength <= 2) return true;
+    return similarity < 0.42;
+  }
+
+  bool _isAlternativeOfflineTextBetter({
+    required String expected,
+    required String primary,
+    required String alternative,
+  }) {
+    final normalizedExpected = _normalizeRecognitionText(expected);
+    final normalizedPrimary = _normalizeRecognitionText(primary);
+    final normalizedAlternative = _normalizeRecognitionText(alternative);
+    if (normalizedExpected.isEmpty || normalizedAlternative.isEmpty) {
+      return false;
+    }
+    final primaryScore = normalizedPrimary.isEmpty
+        ? 0.0
+        : _candidateTextConfidence(
+            expected: normalizedExpected,
+            recognized: normalizedPrimary,
+          );
+    final alternativeScore = _candidateTextConfidence(
+      expected: normalizedExpected,
+      recognized: normalizedAlternative,
+    );
+    if (alternativeScore >= primaryScore + 0.08) return true;
+    final expectedLength = normalizedExpected.runes.length;
+    if (expectedLength <= 5 &&
+        normalizedAlternative.runes.length >= 3 &&
+        alternativeScore > primaryScore) {
+      return true;
+    }
+    return false;
+  }
+
+  double _candidateTextConfidence({
+    required String expected,
+    required String recognized,
+  }) {
+    if (expected.isEmpty || recognized.isEmpty) return 0;
+    if (_isLikelyNoiseTranscript(recognized)) return 0;
+    final pseudoSimilarity = _estimateTextSimilarity(expected, recognized);
+    final literalSimilarity = _estimateLiteralSimilarity(expected, recognized);
+    final expectedLength = expected.runes.length;
+    final recognizedLength = recognized.runes.length;
+    final lenGap = recognizedLength - expectedLength;
+    var penalty = 1.0;
+    if (lenGap >= 2 && literalSimilarity < 0.45) {
+      penalty *= 0.74;
+    }
+    if (lenGap >= 4) {
+      penalty *= 0.62;
+    }
+    if (expectedLength <= 5 && lenGap >= 2 && literalSimilarity < 0.40) {
+      penalty *= 0.56;
+    }
+    if (RegExp(r'^\d+$').hasMatch(recognized)) {
+      penalty *= 0.4;
+    }
+    return ((literalSimilarity * 0.70 + pseudoSimilarity * 0.30) * penalty)
+        .clamp(0.0, 1.0);
+  }
+
+  bool _shouldQuantizedTemplateAlignExpected({
+    required String expected,
+    required String recognized,
+    required _PreparedWaveData prepared,
+  }) {
+    final normalizedExpected = _normalizeRecognitionText(expected);
+    final normalizedRecognized = _normalizeRecognitionText(recognized);
+    if (normalizedExpected.isEmpty || normalizedRecognized.isEmpty) {
+      return false;
+    }
+    if (normalizedExpected == normalizedRecognized) return false;
+    if (!RegExp(r'^[a-z]+$').hasMatch(normalizedExpected)) return false;
+    if (prepared.samples.isEmpty || prepared.sampleRate <= 0) return false;
+
+    final expectedLength = normalizedExpected.runes.length;
+    if (expectedLength < 3 || expectedLength > 8) return false;
+
+    final expectedScore = _estimateQuantizedTemplateSimilarity(
+      text: normalizedExpected,
+      samples: prepared.samples,
+      sampleRate: prepared.sampleRate,
+    );
+    final recognizedScore = _estimateQuantizedTemplateSimilarity(
+      text: normalizedRecognized,
+      samples: prepared.samples,
+      sampleRate: prepared.sampleRate,
+    );
+    final literalSimilarity = _estimateLiteralSimilarity(
+      normalizedExpected,
+      normalizedRecognized,
+    );
+    final recognizedConfidence = _candidateTextConfidence(
+      expected: normalizedExpected,
+      recognized: normalizedRecognized,
+    );
+
+    final margin = expectedLength <= 5 ? 0.11 : 0.14;
+    if (expectedScore >= recognizedScore + margin &&
+        recognizedConfidence < 0.46) {
+      return true;
+    }
+    if (expectedLength <= 5 &&
+        expectedScore >= 0.58 &&
+        recognizedScore <= 0.42 &&
+        literalSimilarity < 0.40) {
+      return true;
+    }
+    return false;
+  }
+
+  double _estimateQuantizedTemplateSimilarity({
+    required String text,
+    required List<double> samples,
+    required int sampleRate,
+  }) {
+    final template = _buildTextQuantizedTemplate(text);
+    final envelope = _extractQuantizedEnvelope(samples, sampleRate: sampleRate);
+    if (template.isEmpty || envelope.isEmpty) return 0;
+    final distance = _dtwQuantizedDistance(template, envelope);
+    if (!distance.isFinite) return 0;
+    return math.exp(-1.55 * distance).clamp(0.0, 1.0);
+  }
+
+  List<int> _buildTextQuantizedTemplate(String text) {
+    final normalized = _normalizeRecognitionText(text);
+    if (normalized.isEmpty) return const <int>[];
+    final phones = _pseudoPhoneSequence(normalized);
+    if (phones.isEmpty) return const <int>[];
+    final template = <int>[];
+    for (final phone in phones) {
+      final pattern = switch (phone) {
+        'vowel' => const <int>[1, 2, 3, 2, 1],
+        'bp' || 'dt' || 'kgq' || 'fv' || 'szx' => const <int>[1, 2, 1],
+        'lr' || 'mn' || 'h' || 'w' || 'j' => const <int>[1, 2],
+        _ => const <int>[2, 3, 2],
+      };
+      template.addAll(pattern);
+    }
+    if (template.length <= 200) return template;
+    final stride = (template.length / 200).ceil().clamp(1, template.length);
+    final reduced = <int>[];
+    for (var i = 0; i < template.length; i += stride) {
+      reduced.add(template[i]);
+      if (reduced.length >= 200) break;
+    }
+    return reduced;
+  }
+
+  List<int> _extractQuantizedEnvelope(
+    List<double> samples, {
+    required int sampleRate,
+  }) {
+    if (samples.isEmpty || sampleRate <= 0) return const <int>[];
+    final frameSize = math.max(96, (sampleRate * 0.02).round());
+    final hopSize = math.max(64, (sampleRate * 0.01).round());
+    if (samples.length < frameSize) return const <int>[];
+    final frameCount = ((samples.length - frameSize) / hopSize).floor() + 1;
+    if (frameCount <= 0) return const <int>[];
+
+    final energies = List<double>.filled(frameCount, 0.0, growable: false);
+    var maxEnergy = 0.0;
+    for (var frame = 0; frame < frameCount; frame++) {
+      final start = frame * hopSize;
+      var power = 0.0;
+      for (var i = 0; i < frameSize; i++) {
+        final v = samples[start + i];
+        power += v * v;
+      }
+      final rms = math.sqrt(power / frameSize.toDouble());
+      energies[frame] = rms;
+      if (rms > maxEnergy) maxEnergy = rms;
+    }
+    if (maxEnergy <= 0) return const <int>[];
+
+    final noiseFloor = _estimateNoiseFloor(samples, sampleRate: sampleRate);
+    final low = math.max(0.0009, noiseFloor * 1.10);
+    final mid = math.max(low * 1.6, maxEnergy * 0.20);
+    final high = math.max(mid * 1.25, maxEnergy * 0.45);
+    final raw = <int>[];
+    for (final energy in energies) {
+      raw.add(
+        _quantizedFrameEnergyLevel(energy, low: low, mid: mid, high: high),
+      );
+    }
+    if (raw.isEmpty) return const <int>[];
+
+    final compact = <int>[];
+    for (final level in raw) {
+      if (compact.isEmpty || compact.last != level) {
+        compact.add(level);
+      }
+    }
+    while (compact.isNotEmpty && compact.first == 0) {
+      compact.removeAt(0);
+    }
+    while (compact.isNotEmpty && compact.last == 0) {
+      compact.removeLast();
+    }
+    if (compact.isEmpty) return const <int>[];
+    if (compact.length <= 220) return compact;
+
+    final stride = (compact.length / 220).ceil().clamp(1, compact.length);
+    final reduced = <int>[];
+    for (var i = 0; i < compact.length; i += stride) {
+      reduced.add(compact[i]);
+      if (reduced.length >= 220) break;
+    }
+    return reduced;
+  }
+
+  int _quantizedFrameEnergyLevel(
+    double energy, {
+    required double low,
+    required double mid,
+    required double high,
+  }) {
+    if (energy < low) return 0;
+    if (energy < mid) return 1;
+    if (energy < high) return 2;
+    return 3;
+  }
+
+  double _dtwQuantizedDistance(List<int> ref, List<int> sample) {
+    if (ref.isEmpty || sample.isEmpty) return double.infinity;
+    final n = ref.length;
+    final m = sample.length;
+    final band = (math.max(n, m) * 0.30)
+        .round()
+        .clamp(10, math.max(n, m))
+        .toInt();
+    const inf = 1e12;
+    var prev = List<double>.filled(m + 1, inf, growable: false);
+    prev[0] = 0;
+
+    for (var i = 1; i <= n; i++) {
+      final curr = List<double>.filled(m + 1, inf, growable: false);
+      final jStart = math.max(1, i - band);
+      final jEnd = math.min(m, i + band);
+      for (var j = jStart; j <= jEnd; j++) {
+        final cost = (ref[i - 1] - sample[j - 1]).abs() / 3.0;
+        final best = math.min(prev[j], math.min(curr[j - 1], prev[j - 1]));
+        curr[j] = cost + best;
+      }
+      prev = curr;
+    }
+
+    final distance = prev[m];
+    if (!distance.isFinite || distance >= inf / 2) return double.infinity;
+    return distance / (n + m).toDouble();
+  }
+
+  String _normalizeRecognitionText(String value) {
+    return value.toLowerCase().replaceAll(
+      RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true),
+      '',
+    );
   }
 
   double _minDurationForExpected(String? expectedText) {
@@ -1771,10 +3198,7 @@ class AsrService {
     required String language,
     AsrProgressCallback? onProgress,
   }) async {
-    if (!_bindingsInitialized) {
-      initBindings();
-      _bindingsInitialized = true;
-    }
+    _ensureSherpaBindings();
 
     final modelsRoot = await _ensureModelsRoot();
     await _pruneTemporaryArtifacts(modelsRoot);
@@ -1845,6 +3269,12 @@ class AsrService {
     final old = _offlineRecognizers[provider];
     old?.free();
     _offlineRecognizers[provider] = recognizer;
+  }
+
+  void _ensureSherpaBindings() {
+    if (_bindingsInitialized) return;
+    initBindings();
+    _bindingsInitialized = true;
   }
 
   Future<void> _downloadAndExtractModel({

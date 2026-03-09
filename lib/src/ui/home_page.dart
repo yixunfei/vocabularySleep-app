@@ -3253,6 +3253,21 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: draft.asr.dumpRecognitionAudioArtifacts,
+            title: Text(draftI18n.t('asrDumpRecognitionAudio')),
+            subtitle: Text(draftI18n.t('asrDumpRecognitionAudioHint')),
+            onChanged: (enabled) {
+              onDraftChanged(
+                draft.copyWith(
+                  asr: draft.asr.copyWith(
+                    dumpRecognitionAudioArtifacts: enabled,
+                  ),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 10),
           DropdownButtonFormField<AsrProviderType>(
             initialValue: draft.asr.provider,
@@ -5058,6 +5073,9 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
   PronunciationComparison? _comparison;
   String? _error;
   AsrProgress? _progress;
+  String? _activeScoringMethod;
+  String? _activeScoringEngine;
+  Map<String, double> _scoringBreakdown = const <String, double>{};
   late AsrProviderType _activeProvider;
 
   @override
@@ -5081,6 +5099,9 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
       _recognizedText = null;
       _comparison = null;
       _progress = null;
+      _activeScoringMethod = null;
+      _activeScoringEngine = null;
+      _scoringBreakdown = const <String, double>{};
     });
 
     final path = await widget.state.startAsrRecording(provider: _activeProvider);
@@ -5142,6 +5163,9 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
               : i18n.t(result.error!, params: result.errorParams);
           _recognizedText = null;
           _comparison = null;
+          _activeScoringMethod = null;
+          _activeScoringEngine = null;
+          _scoringBreakdown = const <String, double>{};
         });
         return;
       }
@@ -5151,7 +5175,35 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
           ? null
           : widget.state.comparePronunciation(widget.word.word, text);
       final acousticSimilarity = result.similarity?.clamp(0.0, 1.0);
-      final compare = acousticSimilarity == null
+      final hasScoringBreakdown = result.scoringBreakdown.isNotEmpty;
+      final preferAcousticSimilarity =
+          acousticSimilarity != null &&
+          (result.similarityFromAcoustic || hasScoringBreakdown);
+      final baseThreshold = _similarityPassThreshold();
+      final acousticThreshold = hasScoringBreakdown
+          ? (baseThreshold - 0.06).clamp(0.60, 0.92).toDouble()
+          : baseThreshold;
+      final hasHardMismatch = _hasHardTextMismatch(
+        expected: widget.word.word,
+        recognized: text,
+        textComparison: textComparison,
+      );
+      final compare = preferAcousticSimilarity
+          ? PronunciationComparison(
+              isCorrect:
+                  !hasHardMismatch &&
+                  (acousticSimilarity >= acousticThreshold ||
+                      (textComparison?.isCorrect ?? false)),
+              similarity: hasHardMismatch
+                  ? min(
+                      acousticSimilarity,
+                      ((textComparison?.similarity ?? acousticSimilarity) * 1.35)
+                          .clamp(0.0, 1.0),
+                    )
+                  : acousticSimilarity,
+              differences: textComparison?.differences ?? const <String>[],
+            )
+          : acousticSimilarity == null
           ? (textComparison ??
                 const PronunciationComparison(
                   isCorrect: false,
@@ -5179,11 +5231,21 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
             ? i18n.t('asrLocalSimilarityNoTranscript')
             : text;
         _comparison = compare;
+        _activeScoringMethod = result.activeScoringMethod;
+        _activeScoringEngine = result.engine;
+        _scoringBreakdown = result.scoringBreakdown;
         _progress = const AsrProgress(
           stage: 'done',
           messageKey: 'asrProgressDone',
           progress: 1,
         );
+      });
+    } catch (_) {
+      if (!mounted) return;
+      final i18n = AppI18n(widget.state.uiLanguage);
+      setState(() {
+        _error = i18n.t('recognitionFailed');
+        _progress = null;
       });
     } finally {
       if (mounted) {
@@ -5199,6 +5261,51 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
     if (length <= 4) return 0.76;
     if (length <= 8) return 0.73;
     return 0.7;
+  }
+
+  bool _hasHardTextMismatch({
+    required String expected,
+    required String recognized,
+    required PronunciationComparison? textComparison,
+  }) {
+    final exp = expected.trim();
+    final rec = recognized.trim();
+    if (exp.isEmpty || rec.isEmpty) return false;
+    final comparison = textComparison;
+    if (comparison == null) return false;
+    if (comparison.isCorrect) return false;
+    if (comparison.similarity >= 0.56) return false;
+
+    final normalizedExpected = _normalizeForHardMatch(exp);
+    final normalizedRecognized = _normalizeForHardMatch(rec);
+    if (normalizedExpected == normalizedRecognized) return false;
+
+    final expectedTokens = _splitHardMatchTokens(normalizedExpected);
+    final recognizedTokens = _splitHardMatchTokens(normalizedRecognized);
+    if (expectedTokens.length == 1 && recognizedTokens.length == 1) {
+      return true;
+    }
+    return comparison.differences.any(
+      (item) =>
+          item.startsWith('replace::') ||
+          item.startsWith('missing::') ||
+          item.startsWith('extra::'),
+    );
+  }
+
+  String _normalizeForHardMatch(String value) {
+    return value.toLowerCase().replaceAll(
+      RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true),
+      ' ',
+    ).trim();
+  }
+
+  List<String> _splitHardMatchTokens(String value) {
+    if (value.isEmpty) return const <String>[];
+    return value
+        .split(RegExp(r'\s+'))
+        .where((item) => item.trim().isNotEmpty)
+        .toList(growable: false);
   }
 
   Future<void> _playReference() async {
@@ -5228,6 +5335,18 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
       }
     }
     return item;
+  }
+
+  String _formatScoringMethod(AppI18n i18n, String raw) {
+    PronScoringMethod? method;
+    for (final candidate in PronScoringMethod.values) {
+      if (candidate.name == raw) {
+        method = candidate;
+        break;
+      }
+    }
+    if (method == null) return raw;
+    return _scoringMethodLabel(i18n, method);
   }
 
   @override
@@ -5293,6 +5412,13 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
                         if (value == null) return;
                         setState(() {
                           _activeProvider = value;
+                          _recognizedText = null;
+                          _comparison = null;
+                          _activeScoringMethod = null;
+                          _activeScoringEngine = null;
+                          _scoringBreakdown = const <String, double>{};
+                          _error = null;
+                          _progress = null;
                         });
                       },
               ),
@@ -5378,6 +5504,40 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
                             },
                           ),
                         ),
+                        if ((_activeScoringMethod ?? '').trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            i18n.t(
+                              'asrScoringMethodApplied',
+                              params: <String, Object?>{
+                                'method': _formatScoringMethod(
+                                  i18n,
+                                  _activeScoringMethod!,
+                                ),
+                              },
+                            ),
+                          ),
+                        ],
+                        if ((_activeScoringEngine ?? '').trim().isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            i18n.t(
+                              'asrScoringEngineApplied',
+                              params: <String, Object?>{
+                                'engine': _activeScoringEngine!,
+                              },
+                            ),
+                          ),
+                        ],
+                        if (_scoringBreakdown.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(i18n.t('asrScoringBreakdown')),
+                          const SizedBox(height: 4),
+                          for (final entry in _scoringBreakdown.entries)
+                            Text(
+                              '- ${_formatScoringMethod(i18n, entry.key)}: ${(entry.value * 100).round()}%',
+                            ),
+                        ],
                         if (comparison.differences.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Text(i18n.t('differences')),

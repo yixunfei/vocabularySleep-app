@@ -193,6 +193,7 @@ class AsrConfig {
     required this.provider,
     required this.engineOrder,
     required this.scoringMethods,
+    this.dumpRecognitionAudioArtifacts = false,
     this.apiKey,
     required this.model,
     required this.language,
@@ -203,6 +204,7 @@ class AsrConfig {
   final AsrProviderType provider;
   final List<AsrProviderType> engineOrder;
   final List<PronScoringMethod> scoringMethods;
+  final bool dumpRecognitionAudioArtifacts;
   final String? apiKey;
   final String model;
   final String language;
@@ -245,6 +247,7 @@ class AsrConfig {
     AsrProviderType? provider,
     List<AsrProviderType>? engineOrder,
     List<PronScoringMethod>? scoringMethods,
+    bool? dumpRecognitionAudioArtifacts,
     String? apiKey,
     String? model,
     String? language,
@@ -259,6 +262,8 @@ class AsrConfig {
       scoringMethods: List<PronScoringMethod>.from(
         scoringMethods ?? this.scoringMethods,
       ),
+      dumpRecognitionAudioArtifacts:
+          dumpRecognitionAudioArtifacts ?? this.dumpRecognitionAudioArtifacts,
       apiKey: apiKey ?? this.apiKey,
       model: model ?? this.model,
       language: language ?? this.language,
@@ -273,6 +278,7 @@ class AsrConfig {
     'scoringMethods': scoringMethods
         .map((item) => item.name)
         .toList(growable: false),
+    'dumpRecognitionAudioArtifacts': dumpRecognitionAudioArtifacts,
     'apiKey': apiKey,
     'model': model,
     'language': language,
@@ -330,6 +336,8 @@ class AsrConfig {
       provider: provider,
       engineOrder: parsedEngineOrder,
       scoringMethods: parsedScoringMethods,
+      dumpRecognitionAudioArtifacts:
+          json['dumpRecognitionAudioArtifacts'] as bool? ?? false,
       apiKey: json['apiKey']?.toString(),
       model: json['model']?.toString() ?? 'FunAudioLLM/SenseVoiceSmall',
       language: json['language']?.toString() ?? 'en',

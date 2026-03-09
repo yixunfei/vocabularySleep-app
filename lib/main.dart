@@ -26,6 +26,14 @@ void main() {
       unawaited(logger.init());
 
       FlutterError.onError = (FlutterErrorDetails details) {
+        if (_isKnownBenignFrameworkIssue(details.exception)) {
+          logger.w(
+            'flutter',
+            'ignored known framework issue',
+            data: <String, Object?>{'error': '${details.exception}'},
+          );
+          return;
+        }
         logger.e(
           'flutter',
           'uncaught Flutter framework error',
@@ -37,6 +45,14 @@ void main() {
 
       PlatformDispatcher.instance.onError =
           (Object error, StackTrace stackTrace) {
+            if (_isKnownBenignFrameworkIssue(error)) {
+              logger.w(
+                'platform',
+                'ignored known platform issue',
+                data: <String, Object?>{'error': '$error'},
+              );
+              return true;
+            }
             logger.e(
               'platform',
               'uncaught platform error',
@@ -49,6 +65,14 @@ void main() {
       _runApp();
     },
     (Object error, StackTrace stackTrace) {
+      if (_isKnownBenignFrameworkIssue(error)) {
+        logger.w(
+          'zone',
+          'ignored known zone issue',
+          data: <String, Object?>{'error': '$error'},
+        );
+        return;
+      }
       logger.e(
         'zone',
         'uncaught zone error',
@@ -57,6 +81,14 @@ void main() {
       );
     },
   );
+}
+
+bool _isKnownBenignFrameworkIssue(Object error) {
+  final message = '$error';
+  return message.contains(
+        'Attempted to send a key down event when no keys are in keysPressed',
+      ) ||
+      message.contains('Unable to parse JSON message:\nThe document is empty.');
 }
 
 void _runApp() {
