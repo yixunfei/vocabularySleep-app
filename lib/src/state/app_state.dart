@@ -693,6 +693,11 @@ class AppState extends ChangeNotifier {
         'ttsVolume': config.tts.volume,
         'asrProvider': config.asr.provider.name,
         'asrEnabled': config.asr.enabled,
+        'appearanceTheme': config.appearance.normalizedTheme,
+        'appearanceCompact': config.appearance.compactLayout,
+        'appearanceHighContrast': config.appearance.highContrastText,
+        'appearanceGradient': config.appearance.normalizedGradientIntensity,
+        'appearanceEffects': config.appearance.normalizedEffectIntensity,
       },
     );
     _config = config;
@@ -1119,6 +1124,18 @@ class AppState extends ChangeNotifier {
     _ambient.addFileSource(file.path!, name: file.name);
     await _ambient.syncPlayback();
     notifyListeners();
+  }
+
+  Future<String?> pickBackgroundImageByPicker() async {
+    final picked = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.image,
+    );
+    if (picked == null || picked.files.isEmpty) return null;
+    final file = picked.files.first;
+    final path = file.path;
+    if (path == null || path.trim().isEmpty) return null;
+    return path;
   }
 
   Future<void> removeAmbientSource(String sourceId) async {

@@ -2,16 +2,87 @@ import 'dart:convert';
 
 typedef WordFieldValue = Object;
 
+class WordFieldStyle {
+  const WordFieldStyle({
+    this.backgroundHex = '',
+    this.borderHex = '',
+    this.textHex = '',
+    this.accentHex = '',
+  });
+
+  static const WordFieldStyle empty = WordFieldStyle();
+
+  final String backgroundHex;
+  final String borderHex;
+  final String textHex;
+  final String accentHex;
+
+  bool get isEmpty =>
+      backgroundHex.trim().isEmpty &&
+      borderHex.trim().isEmpty &&
+      textHex.trim().isEmpty &&
+      accentHex.trim().isEmpty;
+
+  WordFieldStyle copyWith({
+    String? backgroundHex,
+    String? borderHex,
+    String? textHex,
+    String? accentHex,
+  }) {
+    return WordFieldStyle(
+      backgroundHex: backgroundHex ?? this.backgroundHex,
+      borderHex: borderHex ?? this.borderHex,
+      textHex: textHex ?? this.textHex,
+      accentHex: accentHex ?? this.accentHex,
+    );
+  }
+
+  WordFieldStyle mergeWith(WordFieldStyle next) {
+    String choose(String current, String incoming) {
+      final normalized = incoming.trim();
+      return normalized.isEmpty ? current.trim() : normalized;
+    }
+
+    return WordFieldStyle(
+      backgroundHex: choose(backgroundHex, next.backgroundHex),
+      borderHex: choose(borderHex, next.borderHex),
+      textHex: choose(textHex, next.textHex),
+      accentHex: choose(accentHex, next.accentHex),
+    );
+  }
+
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'backgroundHex': backgroundHex.trim(),
+      'borderHex': borderHex.trim(),
+      'textHex': textHex.trim(),
+      'accentHex': accentHex.trim(),
+    };
+  }
+
+  factory WordFieldStyle.fromJsonMap(Object? raw) {
+    if (raw is! Map) return WordFieldStyle.empty;
+    return WordFieldStyle(
+      backgroundHex: '${raw['backgroundHex'] ?? ''}'.trim(),
+      borderHex: '${raw['borderHex'] ?? ''}'.trim(),
+      textHex: '${raw['textHex'] ?? ''}'.trim(),
+      accentHex: '${raw['accentHex'] ?? ''}'.trim(),
+    );
+  }
+}
+
 class WordFieldItem {
   const WordFieldItem({
     required this.key,
     required this.label,
     required this.value,
+    this.style = WordFieldStyle.empty,
   });
 
   final String key;
   final String label;
   final WordFieldValue value;
+  final WordFieldStyle style;
 
   List<String> asList() {
     final fieldValue = value;
@@ -27,11 +98,17 @@ class WordFieldItem {
 
   String asText() => asList().join('\n');
 
-  Map<String, Object?> toJsonMap() => <String, Object?>{
-    'key': key,
-    'label': label,
-    'value': value,
-  };
+  Map<String, Object?> toJsonMap() {
+    final output = <String, Object?>{
+      'key': key,
+      'label': label,
+      'value': value,
+    };
+    if (!style.isEmpty) {
+      output['style'] = style.toJsonMap();
+    }
+    return output;
+  }
 }
 
 class LegacyWordFields {
@@ -252,6 +329,7 @@ List<WordFieldItem> mergeFieldItems(List<WordFieldItem> items) {
         key: key,
         label: legacyFieldLabels[key] ?? label,
         value: value,
+        style: item.style,
       );
       continue;
     }
@@ -260,6 +338,7 @@ List<WordFieldItem> mergeFieldItems(List<WordFieldItem> items) {
       key: key,
       label: existing.label,
       value: _mergeFieldValues(existing.value, value),
+      style: existing.style.mergeWith(item.style),
     );
   }
 
@@ -313,6 +392,7 @@ List<WordFieldItem> parseFieldItemsJson(String raw) {
           key: key,
           label: label.isEmpty ? key : label,
           value: value,
+          style: WordFieldStyle.fromJsonMap(entry['style']),
         ),
       );
     }

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -57,15 +59,15 @@ const List<AsrProviderType> _asrMultiEngineCandidates = <AsrProviderType>[
   AsrProviderType.offlineSmall,
   AsrProviderType.localSimilarity,
 ];
-const List<PronScoringMethod> _asrScoringMethodCandidates =
-    <PronScoringMethod>[
-      PronScoringMethod.sslEmbedding,
-      PronScoringMethod.gop,
-      PronScoringMethod.forcedAlignmentPer,
-      PronScoringMethod.ppgPosterior,
-    ];
+const List<PronScoringMethod> _asrScoringMethodCandidates = <PronScoringMethod>[
+  PronScoringMethod.sslEmbedding,
+  PronScoringMethod.gop,
+  PronScoringMethod.forcedAlignmentPer,
+  PronScoringMethod.ppgPosterior,
+];
 
 enum _AsrOfflineModelAction { download, remove }
+
 enum _PronScoringPackAction { download, remove }
 
 String _formatStorageSize(int bytes) {
@@ -107,6 +109,223 @@ String _scoringMethodLabel(AppI18n i18n, PronScoringMethod method) {
   };
 }
 
+const Map<String, String> _defaultFieldLabelI18nKeys = <String, String>{
+  'meaning': 'fieldMeaning',
+  'examples': 'fieldExamples',
+  'etymology': 'fieldEtymology',
+  'roots': 'fieldRoots',
+  'affixes': 'fieldAffixes',
+  'variations': 'fieldVariations',
+  'memory': 'fieldMemory',
+  'story': 'fieldStory',
+};
+
+const Map<String, String> _ambientNameI18nKeysById = <String, String>{
+  'noise_white': 'ambientNameNoiseWhite',
+  'noise_pink': 'ambientNameNoisePink',
+  'noise_brown': 'ambientNameNoiseBrown',
+  'nature_wind': 'ambientNameNatureWind',
+  'nature_forest': 'ambientNameNatureForest',
+  'nature_fire': 'ambientNameNatureFire',
+  'nature_ocean': 'ambientNameNatureOcean',
+  'rain_light': 'ambientNameRainLight',
+  'rain_heavy': 'ambientNameRainHeavy',
+  'focus_library': 'ambientNameFocusLibrary',
+  'focus_cafe': 'ambientNameFocusCafe',
+  'focus_night': 'ambientNameFocusNightVillage',
+};
+
+String _localizedFieldLabel(
+  AppI18n i18n, {
+  required String key,
+  required String fallbackLabel,
+}) {
+  final normalizedKey = normalizeFieldKey(key);
+  final i18nKey = _defaultFieldLabelI18nKeys[normalizedKey];
+  final trimmedFallback = fallbackLabel.trim();
+  if (i18nKey == null) {
+    return trimmedFallback.isEmpty ? normalizedKey : trimmedFallback;
+  }
+
+  final localized = i18n.t(i18nKey);
+  if (trimmedFallback.isEmpty) return localized;
+
+  final legacyDefault = legacyFieldLabels[normalizedKey] ?? normalizedKey;
+  if (trimmedFallback == normalizedKey ||
+      trimmedFallback == legacyDefault ||
+      trimmedFallback == localized) {
+    return localized;
+  }
+  return trimmedFallback;
+}
+
+String _localizedAmbientName(
+  AppI18n i18n, {
+  required String sourceId,
+  required String fallbackName,
+}) {
+  final i18nKey = _ambientNameI18nKeysById[sourceId];
+  if (i18nKey == null) return fallbackName;
+  return i18n.t(i18nKey);
+}
+
+String _encodeColorToHex(Color color) {
+  final argb = color.toARGB32();
+  final alpha = (argb >> 24) & 0xFF;
+  final red = (argb >> 16) & 0xFF;
+  final green = (argb >> 8) & 0xFF;
+  final blue = argb & 0xFF;
+  final a = alpha.toRadixString(16).padLeft(2, '0').toUpperCase();
+  final r = red.toRadixString(16).padLeft(2, '0').toUpperCase();
+  final g = green.toRadixString(16).padLeft(2, '0').toUpperCase();
+  final b = blue.toRadixString(16).padLeft(2, '0').toUpperCase();
+  if (alpha == 0xFF) return '#$r$g$b';
+  return '#$a$r$g$b';
+}
+
+Future<Color?> _showColorPickerDialog({
+  required BuildContext context,
+  required String title,
+  required Color initialColor,
+}) async {
+  var hsl = HSLColor.fromColor(initialColor);
+  var alpha = ((initialColor.toARGB32() >> 24) & 0xFF) / 255.0;
+  return showDialog<Color>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (dialogContext, setStateDialog) {
+          final preview = hsl.withAlpha(alpha).toColor();
+          final alphaPercent = (alpha * 100).round();
+          return AlertDialog(
+            title: Text(title),
+            content: SizedBox(
+              width: 420,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    width: double.infinity,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: preview,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: LegacyStyle.border),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _encodeColorToHex(preview),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color:
+                            ThemeData.estimateBrightnessForColor(preview) ==
+                                Brightness.dark
+                            ? Colors.white
+                            : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _colorSlider(
+                    label: 'Hue',
+                    value: hsl.hue,
+                    min: 0,
+                    max: 360,
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        hsl = hsl.withHue(value);
+                      });
+                    },
+                  ),
+                  _colorSlider(
+                    label: 'Saturation',
+                    value: hsl.saturation,
+                    min: 0,
+                    max: 1,
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        hsl = hsl.withSaturation(value);
+                      });
+                    },
+                  ),
+                  _colorSlider(
+                    label: 'Lightness',
+                    value: hsl.lightness,
+                    min: 0,
+                    max: 1,
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        hsl = hsl.withLightness(value);
+                      });
+                    },
+                  ),
+                  _colorSlider(
+                    label: 'Alpha',
+                    value: alpha,
+                    min: 0,
+                    max: 1,
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        alpha = value;
+                      });
+                    },
+                    valueLabel: '$alphaPercent%',
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(
+                  MaterialLocalizations.of(context).cancelButtonLabel,
+                ),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, preview),
+                child: Text(MaterialLocalizations.of(context).okButtonLabel),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Widget _colorSlider({
+  required String label,
+  required double value,
+  required double min,
+  required double max,
+  required ValueChanged<double> onChanged,
+  String? valueLabel,
+}) {
+  return Row(
+    children: <Widget>[
+      SizedBox(width: 90, child: Text(label)),
+      Expanded(
+        child: Slider(
+          value: value.clamp(min, max).toDouble(),
+          min: min,
+          max: max,
+          onChanged: onChanged,
+        ),
+      ),
+      SizedBox(
+        width: 64,
+        child: Text(
+          valueLabel ??
+              (max == 1
+                  ? '${(value * 100).round()}%'
+                  : value.toStringAsFixed(0)),
+          textAlign: TextAlign.right,
+        ),
+      ),
+    ],
+  );
+}
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -127,6 +346,8 @@ class _HomePageState extends State<HomePage> {
   bool _showBackToTop = false;
   bool _showPlaybackPanel = true;
   double _lastPageScrollOffset = 0;
+  Timer? _visualTicker;
+  int _visualFrame = 0;
 
   static const List<String> _letterJumpOptions = <String>[
     'A',
@@ -179,6 +400,37 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _syncVisualTicker(AppearanceConfig appearance) {
+    final needsTicker =
+        appearance.flowingEffect ||
+        appearance.breathingEffect ||
+        appearance.marqueeText ||
+        appearance.rainbowText ||
+        appearance.randomEntryColors;
+    if (needsTicker) {
+      _visualTicker ??= Timer.periodic(const Duration(milliseconds: 66), (_) {
+        if (!mounted) return;
+        setState(() {
+          _visualFrame = (_visualFrame + 1) % 900000;
+        });
+      });
+      return;
+    }
+    if (_visualTicker != null) {
+      _visualTicker?.cancel();
+      _visualTicker = null;
+      if (mounted && _visualFrame != 0) {
+        setState(() {
+          _visualFrame = 0;
+        });
+      }
+    }
+  }
+
+  double get _visualPhase => (_visualFrame % 240) / 240;
+
+  int get _entryColorSeed => _visualFrame ~/ 20;
+
   void _handleScrollChange() {
     if (!_pageScrollController.hasClients) return;
     final position = _pageScrollController.position;
@@ -219,6 +471,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _visualTicker?.cancel();
     _searchController.dispose();
     _jumpPrefixController.dispose();
     _startPositionController.dispose();
@@ -233,6 +486,8 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, state, _) {
+        _syncVisualTicker(state.config.appearance);
+        LegacyStyle.applyAppearance(state.config.appearance);
         final i18n = AppI18n(state.uiLanguage);
         final message = state.error;
         if (message != null && message.isNotEmpty) {
@@ -248,8 +503,8 @@ class _HomePageState extends State<HomePage> {
         return Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            backgroundColor: Colors.black,
-            surfaceTintColor: Colors.black,
+            backgroundColor: LegacyStyle.appBarBackground,
+            surfaceTintColor: LegacyStyle.appBarBackground,
             toolbarHeight: 72,
             centerTitle: true,
             foregroundColor: LegacyStyle.primary,
@@ -292,14 +547,78 @@ class _HomePageState extends State<HomePage> {
             onExportTaskWordbook: () =>
                 _exportTaskWordbookWithNamePrompt(context, state),
           ),
-          body: DecoratedBox(
-            decoration: const BoxDecoration(gradient: LegacyStyle.pageGradient),
+          body: _buildAppBackground(
+            state: state,
             child: state.initializing
                 ? const Center(child: CircularProgressIndicator())
                 : _buildBody(context, state),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAppBackground({required AppState state, required Widget child}) {
+    final appearance = state.config.appearance;
+    final backgroundImagePath = appearance.backgroundImagePath.trim();
+    final hasBackgroundImage =
+        backgroundImagePath.isNotEmpty &&
+        File(backgroundImagePath).existsSync();
+    final pageBaseColor =
+        LegacyStyle.parseHexColor(appearance.pageBackgroundHex) ??
+        LegacyStyle.surface;
+
+    final imageMode = appearance.normalizedBackgroundImageMode;
+    final imageFit = switch (imageMode) {
+      'contain' => BoxFit.contain,
+      'stretch' => BoxFit.fill,
+      'top' => BoxFit.fitWidth,
+      'tile' => BoxFit.none,
+      _ => BoxFit.cover,
+    };
+    final imageAlignment = imageMode == 'top'
+        ? Alignment.topCenter
+        : Alignment.center;
+    final imageRepeat = imageMode == 'tile'
+        ? ImageRepeat.repeat
+        : ImageRepeat.noRepeat;
+    final baseGradient = LegacyStyle.pageGradient;
+    final animatedGradient = LinearGradient(
+      begin: baseGradient.begin,
+      end: baseGradient.end,
+      colors: baseGradient.colors,
+      transform: appearance.flowingEffect
+          ? GradientRotation(_visualPhase * pi * 2)
+          : null,
+    );
+
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: pageBaseColor,
+            gradient: animatedGradient,
+          ),
+        ),
+        if (hasBackgroundImage)
+          Opacity(
+            opacity: appearance.normalizedBackgroundImageOpacity,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: FileImage(File(backgroundImagePath)),
+                    fit: imageFit,
+                    alignment: imageAlignment,
+                    repeat: imageRepeat,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        child,
+      ],
     );
   }
 
@@ -325,12 +644,13 @@ class _HomePageState extends State<HomePage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1024;
+        final compact = state.config.appearance.compactLayout;
         final sidebarWidth = _sidebarCollapsed ? 74.0 : 318.0;
         final pagePadding = EdgeInsets.fromLTRB(
-          isDesktop ? 16 : 10,
-          8,
-          isDesktop ? 56 : 10,
-          12,
+          isDesktop ? (compact ? 12 : 16) : 10,
+          compact ? 6 : 8,
+          isDesktop ? (compact ? 44 : 56) : 10,
+          compact ? 10 : 12,
         );
         final minContentHeight = max(
           0.0,
@@ -339,6 +659,9 @@ class _HomePageState extends State<HomePage> {
         final detailPanel = _WordDetailPanel(
           state: state,
           i18n: i18n,
+          appearance: state.config.appearance,
+          visualPhase: _visualPhase,
+          entryColorSeed: _entryColorSeed,
           onEdit: (word) => _openWordEditorDialog(context, word),
           onDelete: (word) => _confirmDeleteWord(context, word),
           onFollowAlong: (word) => _openFollowAlongDialog(context, state, word),
@@ -357,6 +680,7 @@ class _HomePageState extends State<HomePage> {
           duration: const Duration(milliseconds: 220),
           width: sidebarWidth,
           child: _GlassPanel(
+            module: LegacyModule.sidebar,
             child: _SideMenuPanel(
               state: state,
               i18n: i18n,
@@ -405,10 +729,15 @@ class _HomePageState extends State<HomePage> {
                 children: <Widget>[
                   menuPanel,
                   const SizedBox(width: 12),
-                  Expanded(child: _GlassPanel(child: detailPanel)),
+                  Expanded(
+                    child: _GlassPanel(
+                      module: LegacyModule.detail,
+                      child: detailPanel,
+                    ),
+                  ),
                 ],
               )
-            : _GlassPanel(child: detailPanel);
+            : _GlassPanel(module: LegacyModule.detail, child: detailPanel);
         final playbackLeft = isDesktop
             ? pagePadding.left + sidebarWidth + 12
             : pagePadding.left;
@@ -472,6 +801,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFloatingPlaybackPanel(AppState state, AppI18n i18n) {
+    final appearance = state.config.appearance;
     final actionLabel = !state.isPlaying
         ? i18n.t('play')
         : (state.isPaused ? i18n.t('resume') : i18n.t('pause'));
@@ -497,8 +827,13 @@ class _HomePageState extends State<HomePage> {
     const horizontalGap = 6.0;
     const navButtonWidth = 112.0;
     const fieldHeight = 40.0;
-    final sectionFill = Colors.white.withValues(alpha: 0.68);
-    final sectionBorder = LegacyStyle.border.withValues(alpha: 0.9);
+    final playbackOpacity = appearance.normalizedPlaybackOpacity;
+    final sectionFill = LegacyStyle.surface.withValues(
+      alpha: (0.5 + playbackOpacity * 0.36).clamp(0.42, 0.95),
+    );
+    final sectionBorder = LegacyStyle.border.withValues(
+      alpha: (0.68 + playbackOpacity * 0.3).clamp(0.5, 1),
+    );
     final navButtonStyle = FilledButton.styleFrom(
       minimumSize: const Size(navButtonWidth, fieldHeight),
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -660,7 +995,7 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               Text(
                 i18n.t('startFrom'),
-                style: const TextStyle(
+                style: TextStyle(
                   color: LegacyStyle.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
@@ -748,84 +1083,95 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: LegacyStyle.panelDecoration,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 700;
+    final pulseScale = (appearance.breathingEffect && state.isPlaying)
+        ? (1 + sin(_visualPhase * pi * 2) * 0.012)
+        : 1.0;
 
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                if (showPlayingBadge) ...<Widget>[
-                  Align(alignment: Alignment.center, child: playingBadge),
+    return Transform.scale(
+      scale: pulseScale,
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: LegacyStyle.panelDecorationFor(
+          LegacyModule.playback,
+          selected: state.isPlaying && appearance.playbackGlow,
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 700;
+
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  if (showPlayingBadge) ...<Widget>[
+                    Align(alignment: Alignment.center, child: playingBadge),
+                    const SizedBox(height: 6),
+                  ],
+                  Align(alignment: Alignment.center, child: playbackControls),
                   const SizedBox(height: 6),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: navControls,
+                  ),
+                  const SizedBox(height: 6),
+                  modeButton,
                 ],
-                Align(alignment: Alignment.center, child: playbackControls),
-                const SizedBox(height: 6),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: navControls,
-                ),
-                const SizedBox(height: 6),
-                modeButton,
-              ],
-            );
-          }
+              );
+            }
 
-          Widget buildGridRow({
-            required Widget left,
-            required Widget right,
-            bool stretchRight = false,
-            Alignment leftAlignment = Alignment.centerLeft,
-          }) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            Widget buildGridRow({
+              required Widget left,
+              required Widget right,
+              bool stretchRight = false,
+              Alignment leftAlignment = Alignment.centerLeft,
+            }) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    flex: 4,
+                    child: Align(alignment: leftAlignment, child: left),
+                  ),
+                  SizedBox(width: horizontalGap),
+                  Expanded(
+                    flex: 8,
+                    child: stretchRight
+                        ? right
+                        : Align(alignment: Alignment.centerRight, child: right),
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Expanded(
-                  flex: 4,
-                  child: Align(alignment: leftAlignment, child: left),
-                ),
-                SizedBox(width: horizontalGap),
-                Expanded(
-                  flex: 8,
-                  child: stretchRight
-                      ? right
-                      : Align(alignment: Alignment.centerRight, child: right),
+                if (showPlayingBadge)
+                  buildGridRow(
+                    left: SizedBox(width: double.infinity, child: playingBadge),
+                    right: navControls,
+                    leftAlignment: Alignment.center,
+                  )
+                else
+                  buildGridRow(
+                    left: playbackControls,
+                    right: navControls,
+                    leftAlignment: Alignment.center,
+                  ),
+                const SizedBox(height: 6),
+                buildGridRow(
+                  left: showPlayingBadge
+                      ? playbackControls
+                      : const SizedBox.shrink(),
+                  right: modeButton,
+                  stretchRight: true,
+                  leftAlignment: Alignment.center,
                 ),
               ],
             );
-          }
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              if (showPlayingBadge)
-                buildGridRow(
-                  left: SizedBox(width: double.infinity, child: playingBadge),
-                  right: navControls,
-                  leftAlignment: Alignment.center,
-                )
-              else
-                buildGridRow(
-                  left: playbackControls,
-                  right: navControls,
-                  leftAlignment: Alignment.center,
-                ),
-              const SizedBox(height: 6),
-              buildGridRow(
-                left: showPlayingBadge
-                    ? playbackControls
-                    : const SizedBox.shrink(),
-                right: modeButton,
-                stretchRight: true,
-                leftAlignment: Alignment.center,
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -873,13 +1219,13 @@ class _HomePageState extends State<HomePage> {
     required IconData icon,
     required String tooltip,
     required VoidCallback onTap,
-    Color background = LegacyStyle.primary,
+    Color? background,
     Color foreground = Colors.white,
   }) {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: background,
+        color: background ?? LegacyStyle.primary,
         elevation: 6,
         shadowColor: Colors.black26,
         shape: const CircleBorder(),
@@ -910,11 +1256,7 @@ class _HomePageState extends State<HomePage> {
                 children: <Widget>[
                   Expanded(child: Text(i18n.languageName(code))),
                   if (code == currentLanguage)
-                    const Icon(
-                      Icons.check,
-                      size: 18,
-                      color: LegacyStyle.primary,
-                    ),
+                    Icon(Icons.check, size: 18, color: LegacyStyle.primary),
                 ],
               ),
             ),
@@ -970,42 +1312,105 @@ class _HomePageState extends State<HomePage> {
   ) async {
     final state = context.read<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    final fieldDisplayLabel = _localizedFieldLabel(
+      i18n,
+      key: field.key,
+      fallbackLabel: field.label,
+    );
     final keyController = TextEditingController(text: field.key);
     final labelController = TextEditingController(text: field.label);
     final valueController = TextEditingController(text: field.asText());
+    final styleBackgroundController = TextEditingController(
+      text: field.style.backgroundHex,
+    );
+    final styleBorderController = TextEditingController(
+      text: field.style.borderHex,
+    );
+    final styleTextController = TextEditingController(
+      text: field.style.textHex,
+    );
+    final styleAccentController = TextEditingController(
+      text: field.style.accentHex,
+    );
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(i18n.t('editFieldTitle', params: {'field': field.label})),
-          content: SizedBox(
-            width: 460,
-            child: SingleChildScrollView(
-              child: Column(
-                children: <Widget>[
-                  _editorField(i18n.t('fieldKey'), keyController),
-                  const SizedBox(height: 8),
-                  _editorField(i18n.t('fieldLabel'), labelController),
-                  const SizedBox(height: 8),
-                  _editorField(
-                    i18n.t('fieldContent'),
-                    valueController,
-                    maxLines: 6,
-                  ),
-                ],
+        return StatefulBuilder(
+          builder: (context, setStateDialog) => AlertDialog(
+            title: Text(
+              i18n.t('editFieldTitle', params: {'field': fieldDisplayLabel}),
+            ),
+            content: SizedBox(
+              width: 460,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    _editorField(i18n.t('fieldKey'), keyController),
+                    const SizedBox(height: 8),
+                    _editorField(i18n.t('fieldLabel'), labelController),
+                    const SizedBox(height: 8),
+                    _editorField(
+                      i18n.t('fieldContent'),
+                      valueController,
+                      maxLines: 6,
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        i18n.t('fieldStyleTitle'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _inlineFieldColorPickerTile(
+                      context: context,
+                      title: i18n.t('fieldStyleBackground'),
+                      controller: styleBackgroundController,
+                      hint: '#FFFFFF',
+                      refresh: () => setStateDialog(() {}),
+                    ),
+                    const SizedBox(height: 4),
+                    _inlineFieldColorPickerTile(
+                      context: context,
+                      title: i18n.t('fieldStyleBorder'),
+                      controller: styleBorderController,
+                      hint: '#D3E5FF',
+                      refresh: () => setStateDialog(() {}),
+                    ),
+                    const SizedBox(height: 4),
+                    _inlineFieldColorPickerTile(
+                      context: context,
+                      title: i18n.t('fieldStyleText'),
+                      controller: styleTextController,
+                      hint: '#0F172A',
+                      refresh: () => setStateDialog(() {}),
+                    ),
+                    const SizedBox(height: 4),
+                    _inlineFieldColorPickerTile(
+                      context: context,
+                      title: i18n.t('fieldStyleAccent'),
+                      controller: styleAccentController,
+                      hint: '#2563EB',
+                      refresh: () => setStateDialog(() {}),
+                    ),
+                  ],
+                ),
               ),
             ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(i18n.t('cancel')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(i18n.t('save')),
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(i18n.t('cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(i18n.t('save')),
-            ),
-          ],
         );
       },
     );
@@ -1023,12 +1428,23 @@ class _HomePageState extends State<HomePage> {
         ? nextKey
         : labelController.text.trim();
     final nextValue = valueController.text.trim();
+    final nextStyle = WordFieldStyle(
+      backgroundHex: styleBackgroundController.text.trim(),
+      borderHex: styleBorderController.text.trim(),
+      textHex: styleTextController.text.trim(),
+      accentHex: styleAccentController.text.trim(),
+    );
 
     final updated = <WordFieldItem>[];
     for (final item in baseFields) {
       if (item.key == field.key && item.label == field.label) {
         updated.add(
-          WordFieldItem(key: nextKey, label: nextLabel, value: nextValue),
+          WordFieldItem(
+            key: nextKey,
+            label: nextLabel,
+            value: nextValue,
+            style: nextStyle,
+          ),
         );
       } else {
         updated.add(item);
@@ -1050,13 +1466,18 @@ class _HomePageState extends State<HomePage> {
   ) async {
     final state = context.read<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    final fieldDisplayLabel = _localizedFieldLabel(
+      i18n,
+      key: field.key,
+      fallbackLabel: field.label,
+    );
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text(i18n.t('deleteFieldTitle')),
           content: Text(
-            i18n.t('deleteFieldMessage', params: {'field': field.label}),
+            i18n.t('deleteFieldMessage', params: {'field': fieldDisplayLabel}),
           ),
           actions: <Widget>[
             TextButton(
@@ -1151,6 +1572,7 @@ class _HomePageState extends State<HomePage> {
     required String initialName,
     required String confirmLabel,
   }) async {
+    final i18n = AppI18n(context.read<AppState>().uiLanguage);
     final controller = TextEditingController(text: initialName);
     final confirmed = await showDialog<bool>(
       context: context,
@@ -1165,7 +1587,7 @@ class _HomePageState extends State<HomePage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
@@ -1696,6 +2118,7 @@ class _HomePageState extends State<HomePage> {
       required String label,
       required String content,
       required bool startsEmptyNonCore,
+      WordFieldStyle style = WordFieldStyle.empty,
     }) {
       return _EditableFieldDraft(
         id: nextFieldId++,
@@ -1703,6 +2126,10 @@ class _HomePageState extends State<HomePage> {
         label: label,
         content: content,
         startsEmptyNonCore: startsEmptyNonCore,
+        backgroundHex: style.backgroundHex,
+        borderHex: style.borderHex,
+        textHex: style.textHex,
+        accentHex: style.accentHex,
       );
     }
 
@@ -1721,6 +2148,22 @@ class _HomePageState extends State<HomePage> {
         if (existingDraft.content.trim().isEmpty &&
             draft.content.trim().isNotEmpty) {
           existingDraft.content = draft.content.trim();
+        }
+        if (existingDraft.backgroundHex.trim().isEmpty &&
+            draft.backgroundHex.trim().isNotEmpty) {
+          existingDraft.backgroundHex = draft.backgroundHex.trim();
+        }
+        if (existingDraft.borderHex.trim().isEmpty &&
+            draft.borderHex.trim().isNotEmpty) {
+          existingDraft.borderHex = draft.borderHex.trim();
+        }
+        if (existingDraft.textHex.trim().isEmpty &&
+            draft.textHex.trim().isNotEmpty) {
+          existingDraft.textHex = draft.textHex.trim();
+        }
+        if (existingDraft.accentHex.trim().isEmpty &&
+            draft.accentHex.trim().isNotEmpty) {
+          existingDraft.accentHex = draft.accentHex.trim();
         }
         return;
       }
@@ -1745,6 +2188,7 @@ class _HomePageState extends State<HomePage> {
           label: item.label,
           content: item.asText(),
           startsEmptyNonCore: false,
+          style: item.style,
         ),
       );
     }
@@ -1754,7 +2198,11 @@ class _HomePageState extends State<HomePage> {
       addOrMergeDraft(
         createDraft(
           key: key,
-          label: legacyFieldLabels[key] ?? key,
+          label: _localizedFieldLabel(
+            i18n,
+            key: key,
+            fallbackLabel: legacyFieldLabels[key] ?? key,
+          ),
           content: '',
           startsEmptyNonCore: false,
         ),
@@ -1821,7 +2269,7 @@ class _HomePageState extends State<HomePage> {
                   children: <Widget>[
                     Container(
                       padding: const EdgeInsets.fromLTRB(22, 16, 10, 14),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(color: LegacyStyle.border),
                         ),
@@ -1930,9 +2378,14 @@ class _HomePageState extends State<HomePage> {
                                                 final label =
                                                     labelInput.isNotEmpty
                                                     ? labelInput
-                                                    : (schemaLabels[key] ??
-                                                          legacyFieldLabels[key] ??
-                                                          key);
+                                                    : _localizedFieldLabel(
+                                                        i18n,
+                                                        key: key,
+                                                        fallbackLabel:
+                                                            schemaLabels[key] ??
+                                                            legacyFieldLabels[key] ??
+                                                            key,
+                                                      );
                                                 fieldDrafts.add(
                                                   createDraft(
                                                     key: key,
@@ -2024,7 +2477,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Container(
                       padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         border: Border(
                           top: BorderSide(color: LegacyStyle.border),
                         ),
@@ -2077,7 +2530,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    final normalizedFields = _normalizeFieldDrafts(fieldDrafts);
+    final normalizedFields = _normalizeFieldDrafts(fieldDrafts, i18n);
     final rawContent = _buildRawContentFromFields(normalizedFields);
 
     await state.saveWord(
@@ -2101,7 +2554,10 @@ class _HomePageState extends State<HomePage> {
     return labels;
   }
 
-  List<WordFieldItem> _normalizeFieldDrafts(List<_EditableFieldDraft> drafts) {
+  List<WordFieldItem> _normalizeFieldDrafts(
+    List<_EditableFieldDraft> drafts,
+    AppI18n i18n,
+  ) {
     final items = <WordFieldItem>[];
     for (final draft in drafts) {
       final key = normalizeFieldKey(draft.key);
@@ -2109,7 +2565,11 @@ class _HomePageState extends State<HomePage> {
       final content = draft.content.trim();
       if (content.isEmpty) continue;
       final label = draft.label.trim().isEmpty
-          ? (legacyFieldLabels[key] ?? key)
+          ? _localizedFieldLabel(
+              i18n,
+              key: key,
+              fallbackLabel: legacyFieldLabels[key] ?? key,
+            )
           : draft.label.trim();
 
       Object value = content;
@@ -2122,7 +2582,19 @@ class _HomePageState extends State<HomePage> {
         value = rows.isEmpty ? content : rows;
       }
 
-      items.add(WordFieldItem(key: key, label: label, value: value));
+      items.add(
+        WordFieldItem(
+          key: key,
+          label: label,
+          value: value,
+          style: WordFieldStyle(
+            backgroundHex: draft.backgroundHex.trim(),
+            borderHex: draft.borderHex.trim(),
+            textHex: draft.textHex.trim(),
+            accentHex: draft.accentHex.trim(),
+          ),
+        ),
+      );
     }
     return mergeFieldItems(items);
   }
@@ -2149,12 +2621,14 @@ class _HomePageState extends State<HomePage> {
     String label,
     TextEditingController controller, {
     int maxLines = 1,
+    String? hintText,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
+        hintText: hintText,
         border: const OutlineInputBorder(),
       ),
     );
@@ -2254,6 +2728,36 @@ class _HomePageState extends State<HomePage> {
     final delayController = TextEditingController(
       text: '${draft.delayBetweenUnitsMs}',
     );
+    final backgroundImagePathController = TextEditingController(
+      text: draft.appearance.backgroundImagePath,
+    );
+    final pageBackgroundColorController = TextEditingController(
+      text: draft.appearance.pageBackgroundHex,
+    );
+    final backgroundGradientStartController = TextEditingController(
+      text: draft.appearance.backgroundGradientStartHex,
+    );
+    final backgroundGradientEndController = TextEditingController(
+      text: draft.appearance.backgroundGradientEndHex,
+    );
+    final sidebarColorController = TextEditingController(
+      text: draft.appearance.sidebarColorHex,
+    );
+    final detailColorController = TextEditingController(
+      text: draft.appearance.detailColorHex,
+    );
+    final playbackColorController = TextEditingController(
+      text: draft.appearance.playbackColorHex,
+    );
+    final fieldColorController = TextEditingController(
+      text: draft.appearance.fieldColorHex,
+    );
+    final borderColorController = TextEditingController(
+      text: draft.appearance.borderColorHex,
+    );
+    final accentColorController = TextEditingController(
+      text: draft.appearance.accentColorHex,
+    );
     var nonCoreBatchRepeat = 0;
 
     final nonCoreFieldKeys = <String>{};
@@ -2281,14 +2785,19 @@ class _HomePageState extends State<HomePage> {
             fieldSettings[key]?.repeat ??
             (coreRepeats.containsKey(key) ? coreRepeats[key]! : 0),
     };
-    var appearanceThemeDraft = 'flat';
+    var appearanceDraft = draft.appearance;
+    var appearancePresetsDraft = List<AppearanceThemePreset>.from(
+      draft.appearancePresets,
+    );
     final managedOfflineProviders = <AsrProviderType>[
       AsrProviderType.offline,
       AsrProviderType.offlineSmall,
     ];
     final offlineStatuses = <AsrProviderType, AsrOfflineModelStatus>{};
     for (final provider in managedOfflineProviders) {
-      offlineStatuses[provider] = await state.getAsrOfflineModelStatus(provider);
+      offlineStatuses[provider] = await state.getAsrOfflineModelStatus(
+        provider,
+      );
     }
     if (!context.mounted) return;
     final offlineBusyProviders = <AsrProviderType>{};
@@ -2297,7 +2806,9 @@ class _HomePageState extends State<HomePage> {
     String? offlineActionError;
     final scoringPackStatuses = <PronScoringMethod, PronScoringPackStatus>{};
     for (final method in _asrScoringMethodCandidates) {
-      scoringPackStatuses[method] = await state.getPronScoringPackStatus(method);
+      scoringPackStatuses[method] = await state.getPronScoringPackStatus(
+        method,
+      );
     }
     if (!context.mounted) return;
     final scoringBusyMethods = <PronScoringMethod>{};
@@ -2416,7 +2927,8 @@ class _HomePageState extends State<HomePage> {
                                   offlineActionError = null;
                                 });
                                 try {
-                                  if (action == _AsrOfflineModelAction.download) {
+                                  if (action ==
+                                      _AsrOfflineModelAction.download) {
                                     await state.prepareAsrOfflineModel(
                                       provider,
                                       onProgress: (progress) {
@@ -2460,7 +2972,8 @@ class _HomePageState extends State<HomePage> {
                                   scoringActionError = null;
                                 });
                                 try {
-                                  if (action == _PronScoringPackAction.download) {
+                                  if (action ==
+                                      _PronScoringPackAction.download) {
                                     await state.preparePronScoringPack(
                                       method,
                                       onProgress: (progress) {
@@ -2482,9 +2995,10 @@ class _HomePageState extends State<HomePage> {
                                     final enabled = draft.asr.scoringMethods
                                         .contains(method);
                                     if (!refreshed.installed && enabled) {
-                                      final nextMethods = List<PronScoringMethod>.from(
-                                        draft.asr.scoringMethods,
-                                      )..remove(method);
+                                      final nextMethods =
+                                          List<PronScoringMethod>.from(
+                                            draft.asr.scoringMethods,
+                                          )..remove(method);
                                       if (nextMethods.isEmpty) {
                                         for (final candidate
                                             in _asrScoringMethodCandidates) {
@@ -2527,11 +3041,119 @@ class _HomePageState extends State<HomePage> {
                             ),
                             _settingsAppearanceTab(
                               draftI18n: draftI18n,
-                              selectedTheme: appearanceThemeDraft,
-                              onThemeChanged: (value) {
+                              appearance: appearanceDraft,
+                              customThemes: appearancePresetsDraft,
+                              backgroundImagePathController:
+                                  backgroundImagePathController,
+                              pageBackgroundColorController:
+                                  pageBackgroundColorController,
+                              backgroundGradientStartController:
+                                  backgroundGradientStartController,
+                              backgroundGradientEndController:
+                                  backgroundGradientEndController,
+                              sidebarColorController: sidebarColorController,
+                              detailColorController: detailColorController,
+                              playbackColorController: playbackColorController,
+                              fieldColorController: fieldColorController,
+                              borderColorController: borderColorController,
+                              accentColorController: accentColorController,
+                              onChanged: (value) {
+                                setStateDialog(() => appearanceDraft = value);
+                              },
+                              onCustomThemesChanged: (themes) {
                                 setStateDialog(
-                                  () => appearanceThemeDraft = value,
+                                  () => appearancePresetsDraft = themes,
                                 );
+                              },
+                              onApplyCustomTheme: (theme) {
+                                setStateDialog(() {
+                                  appearanceDraft = theme.appearance;
+                                  backgroundImagePathController.text =
+                                      appearanceDraft.backgroundImagePath;
+                                  pageBackgroundColorController.text =
+                                      appearanceDraft.pageBackgroundHex;
+                                  backgroundGradientStartController.text =
+                                      appearanceDraft
+                                          .backgroundGradientStartHex;
+                                  backgroundGradientEndController.text =
+                                      appearanceDraft.backgroundGradientEndHex;
+                                  sidebarColorController.text =
+                                      appearanceDraft.sidebarColorHex;
+                                  detailColorController.text =
+                                      appearanceDraft.detailColorHex;
+                                  playbackColorController.text =
+                                      appearanceDraft.playbackColorHex;
+                                  fieldColorController.text =
+                                      appearanceDraft.fieldColorHex;
+                                  borderColorController.text =
+                                      appearanceDraft.borderColorHex;
+                                  accentColorController.text =
+                                      appearanceDraft.accentColorHex;
+                                });
+                              },
+                              onResetAppearance: () {
+                                setStateDialog(() {
+                                  appearanceDraft = AppearanceConfig.defaults;
+                                  backgroundImagePathController.text =
+                                      appearanceDraft.backgroundImagePath;
+                                  pageBackgroundColorController.text =
+                                      appearanceDraft.pageBackgroundHex;
+                                  backgroundGradientStartController.text =
+                                      appearanceDraft
+                                          .backgroundGradientStartHex;
+                                  backgroundGradientEndController.text =
+                                      appearanceDraft.backgroundGradientEndHex;
+                                  sidebarColorController.text =
+                                      appearanceDraft.sidebarColorHex;
+                                  detailColorController.text =
+                                      appearanceDraft.detailColorHex;
+                                  playbackColorController.text =
+                                      appearanceDraft.playbackColorHex;
+                                  fieldColorController.text =
+                                      appearanceDraft.fieldColorHex;
+                                  borderColorController.text =
+                                      appearanceDraft.borderColorHex;
+                                  accentColorController.text =
+                                      appearanceDraft.accentColorHex;
+                                });
+                              },
+                              onSaveCurrentAsCustomTheme: () {
+                                setStateDialog(() {
+                                  final index =
+                                      appearancePresetsDraft.length + 1;
+                                  final now = DateTime.now();
+                                  final preset = AppearanceThemePreset(
+                                    id: '${now.microsecondsSinceEpoch}',
+                                    name:
+                                        '${draftI18n.t('appearanceCustomThemePrefix')} $index',
+                                    appearance: appearanceDraft,
+                                  );
+                                  appearancePresetsDraft =
+                                      <AppearanceThemePreset>[
+                                        ...appearancePresetsDraft,
+                                        preset,
+                                      ];
+                                });
+                              },
+                              onPickBackgroundImage: () async {
+                                final path = await state
+                                    .pickBackgroundImageByPicker();
+                                if (path == null || path.trim().isEmpty) return;
+                                if (!context.mounted) return;
+                                setStateDialog(() {
+                                  backgroundImagePathController.text = path;
+                                  appearanceDraft = appearanceDraft.copyWith(
+                                    backgroundImagePath: path,
+                                  );
+                                });
+                              },
+                              onClearBackgroundImage: () {
+                                setStateDialog(() {
+                                  backgroundImagePathController.text = '';
+                                  appearanceDraft = appearanceDraft.copyWith(
+                                    backgroundImagePath: '',
+                                  );
+                                });
                               },
                             ),
                           ],
@@ -2567,13 +3189,16 @@ class _HomePageState extends State<HomePage> {
 
     if (confirmed == true) {
       final delayMs = int.tryParse(delayController.text.trim());
-      final asrSelectedEngines = draft.asr.provider == AsrProviderType.multiEngine
+      final asrSelectedEngines =
+          draft.asr.provider == AsrProviderType.multiEngine
           ? draft.asr.normalizedEngineOrder
           : <AsrProviderType>[draft.asr.provider];
-      final asrUsesApi = asrSelectedEngines.contains(AsrProviderType.api) ||
+      final asrUsesApi =
+          asrSelectedEngines.contains(AsrProviderType.api) ||
           asrSelectedEngines.contains(AsrProviderType.customApi);
-      final asrUsesCustomApi =
-          asrSelectedEngines.contains(AsrProviderType.customApi);
+      final asrUsesCustomApi = asrSelectedEngines.contains(
+        AsrProviderType.customApi,
+      );
       final mergedFieldSettings = Map<String, FieldPlaybackSetting>.from(
         fieldSettings,
       );
@@ -2601,13 +3226,30 @@ class _HomePageState extends State<HomePage> {
         ),
         localVoices: localVoices,
       );
+      final nextAppearance = appearanceDraft.copyWith(
+        backgroundImagePath: backgroundImagePathController.text.trim(),
+        pageBackgroundHex: pageBackgroundColorController.text.trim(),
+        backgroundGradientStartHex: backgroundGradientStartController.text
+            .trim(),
+        backgroundGradientEndHex: backgroundGradientEndController.text.trim(),
+        sidebarColorHex: sidebarColorController.text.trim(),
+        detailColorHex: detailColorController.text.trim(),
+        playbackColorHex: playbackColorController.text.trim(),
+        fieldColorHex: fieldColorController.text.trim(),
+        borderColorHex: borderColorController.text.trim(),
+        accentColorHex: accentColorController.text.trim(),
+      );
       final nextDraft = draft.copyWith(
         repeats: coreRepeats,
         fieldSettings: mergedFieldSettings,
         delayBetweenUnitsMs: delayMs ?? draft.delayBetweenUnitsMs,
+        appearance: nextAppearance,
+        appearancePresets: appearancePresetsDraft,
         tts: nextTts,
         asr: draft.asr.copyWith(
-          apiKey: asrUsesApi ? asrApiKeyController.text.trim() : draft.asr.apiKey,
+          apiKey: asrUsesApi
+              ? asrApiKeyController.text.trim()
+              : draft.asr.apiKey,
           model: asrUsesApi
               ? (asrModelController.text.trim().isEmpty
                     ? draft.asr.model
@@ -2765,7 +3407,7 @@ class _HomePageState extends State<HomePage> {
   }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 18, 14, 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: LegacyStyle.border)),
       ),
       child: Row(
@@ -2910,7 +3552,11 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 8),
               for (final key in nonCoreRepeats.keys.toList()..sort())
                 _repeatRow(
-                  key,
+                  _localizedFieldLabel(
+                    draftI18n,
+                    key: key,
+                    fallbackLabel: legacyFieldLabels[key] ?? key,
+                  ),
                   nonCoreRepeats[key] ?? 0,
                   (value) => onNonCoreRepeatChanged(key, value),
                 ),
@@ -3499,9 +4145,9 @@ class _HomePageState extends State<HomePage> {
                         onPressed: isBusy
                             ? null
                             : () => onScoringPackAction(
-                                  method,
-                                  _PronScoringPackAction.download,
-                                ),
+                                method,
+                                _PronScoringPackAction.download,
+                              ),
                         child: Text(
                           isBusy
                               ? draftI18n.t('processing')
@@ -3513,9 +4159,9 @@ class _HomePageState extends State<HomePage> {
                         onPressed: (!installed || isBusy)
                             ? null
                             : () => onScoringPackAction(
-                                  method,
-                                  _PronScoringPackAction.remove,
-                                ),
+                                method,
+                                _PronScoringPackAction.remove,
+                              ),
                         child: Text(draftI18n.t('delete')),
                       ),
                     ],
@@ -3558,8 +4204,8 @@ class _HomePageState extends State<HomePage> {
                 final status = offlineStatuses[offlineProvider];
                 final installed = status?.installed ?? false;
                 final isBusy = offlineBusyProviders.contains(offlineProvider);
-                final sizeHint = _asrOfflineModelSizeHints[offlineProvider] ??
-                    '~150 MB';
+                final sizeHint =
+                    _asrOfflineModelSizeHints[offlineProvider] ?? '~150 MB';
                 final sizeText = installed && status != null && status.bytes > 0
                     ? _formatStorageSize(status.bytes)
                     : sizeHint;
@@ -3607,11 +4253,10 @@ class _HomePageState extends State<HomePage> {
                       FilledButton.tonal(
                         onPressed: isBusy
                             ? null
-                            : () =>
-                                  onOfflineModelAction(
-                                    offlineProvider,
-                                    _AsrOfflineModelAction.download,
-                                  ),
+                            : () => onOfflineModelAction(
+                                offlineProvider,
+                                _AsrOfflineModelAction.download,
+                              ),
                         child: Text(
                           isBusy
                               ? draftI18n.t('processing')
@@ -3622,11 +4267,10 @@ class _HomePageState extends State<HomePage> {
                       TextButton(
                         onPressed: (!installed || isBusy)
                             ? null
-                            : () =>
-                                  onOfflineModelAction(
-                                    offlineProvider,
-                                    _AsrOfflineModelAction.remove,
-                                  ),
+                            : () => onOfflineModelAction(
+                                offlineProvider,
+                                _AsrOfflineModelAction.remove,
+                              ),
                         child: Text(draftI18n.t('delete')),
                       ),
                     ],
@@ -3635,7 +4279,8 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ],
-          if (offlineActionProvider != null && offlineActionProgress != null) ...[
+          if (offlineActionProvider != null &&
+              offlineActionProgress != null) ...[
             const SizedBox(height: 2),
             Text(
               '${_asrProviderLabel(draftI18n, offlineActionProvider)} - ${draftI18n.t(offlineActionProgress.messageKey, params: offlineActionProgress.messageParams)}',
@@ -3644,16 +4289,15 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 6),
             LinearProgressIndicator(value: offlineActionProgress.progress),
           ],
-          if ((offlineActionError ?? '').trim().isNotEmpty)
-            ...<Widget>[
-              const SizedBox(height: 8),
-              Text(
-                offlineActionError ?? '',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
-              ),
-            ],
+          if ((offlineActionError ?? '').trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              offlineActionError ?? '',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+            ),
+          ],
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             initialValue: asrLanguageOption,
@@ -3712,7 +4356,7 @@ class _HomePageState extends State<HomePage> {
               controller: asrLanguageController,
               decoration: InputDecoration(
                 labelText: draftI18n.t('asrLanguageCustomInput'),
-                hintText: 'e.g. pt-BR / it',
+                hintText: draftI18n.t('asrLanguageCustomInputHint'),
               ),
               onChanged: (value) {
                 onDraftChanged(
@@ -3759,9 +4403,28 @@ class _HomePageState extends State<HomePage> {
 
   Widget _settingsAppearanceTab({
     required AppI18n draftI18n,
-    required String selectedTheme,
-    required ValueChanged<String> onThemeChanged,
+    required AppearanceConfig appearance,
+    required List<AppearanceThemePreset> customThemes,
+    required TextEditingController backgroundImagePathController,
+    required TextEditingController pageBackgroundColorController,
+    required TextEditingController backgroundGradientStartController,
+    required TextEditingController backgroundGradientEndController,
+    required TextEditingController sidebarColorController,
+    required TextEditingController detailColorController,
+    required TextEditingController playbackColorController,
+    required TextEditingController fieldColorController,
+    required TextEditingController borderColorController,
+    required TextEditingController accentColorController,
+    required ValueChanged<AppearanceConfig> onChanged,
+    required ValueChanged<List<AppearanceThemePreset>> onCustomThemesChanged,
+    required ValueChanged<AppearanceThemePreset> onApplyCustomTheme,
+    required VoidCallback onResetAppearance,
+    required VoidCallback onSaveCurrentAsCustomTheme,
+    required Future<void> Function() onPickBackgroundImage,
+    required VoidCallback onClearBackgroundImage,
   }) {
+    final selectedTheme = appearance.normalizedTheme;
+    String percentText(double value) => '${(value * 100).round()}%';
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
@@ -3789,85 +4452,790 @@ class _HomePageState extends State<HomePage> {
                         ]
                         .map((theme) {
                           final selected = selectedTheme == theme;
+                          final preview = _themePreviewColor(theme);
                           return InkWell(
-                            onTap: () => onThemeChanged(theme),
+                            onTap: () =>
+                                onChanged(appearance.copyWith(theme: theme)),
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
                               width: 148,
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: selected
-                                      ? LegacyStyle.primary
+                                      ? preview
                                       : LegacyStyle.border,
                                 ),
                                 color: selected
-                                    ? LegacyStyle.primary.withValues(
-                                        alpha: 0.08,
-                                      )
+                                    ? preview.withValues(alpha: 0.1)
                                     : Colors.transparent,
                               ),
-                              child: Text(_themeLabel(draftI18n, theme)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Container(
+                                    height: 18,
+                                    decoration: BoxDecoration(
+                                      gradient: _themePreviewGradient(theme),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _themeLabel(draftI18n, theme),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         })
                         .toList(growable: false),
               ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  OutlinedButton.icon(
+                    onPressed: onResetAppearance,
+                    icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                    label: Text(draftI18n.t('appearanceReset')),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: onSaveCurrentAsCustomTheme,
+                    icon: const Icon(Icons.save_outlined, size: 18),
+                    label: Text(draftI18n.t('appearanceSaveCustomTheme')),
+                  ),
+                ],
+              ),
+              if (customThemes.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    draftI18n.t('appearanceCustomThemes'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: customThemes
+                      .map(
+                        (theme) => InputChip(
+                          label: Text(theme.name),
+                          selected: false,
+                          onPressed: () => onApplyCustomTheme(theme),
+                          onDeleted: () {
+                            final next = customThemes
+                                .where((item) => item.id != theme.id)
+                                .toList(growable: false);
+                            onCustomThemesChanged(next);
+                          },
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ],
             ],
           ),
           ExpansionTile(
+            initiallyExpanded: true,
             title: Text(
-              draftI18n.t('appearanceLayoutTitle'),
+              draftI18n.t('appearanceTypographyTitle'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(draftI18n.t('appearanceLayoutHint')),
+              _appearanceDropdownTile(
+                title: draftI18n.t('appearanceFontFamily'),
+                value: appearance.normalizedFontFamilyKey,
+                items: <DropdownMenuItem<String>>[
+                  DropdownMenuItem(
+                    value: 'system',
+                    child: Text(draftI18n.t('appearanceFontFamilySystem')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'serif',
+                    child: Text(draftI18n.t('appearanceFontFamilySerif')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'mono',
+                    child: Text(draftI18n.t('appearanceFontFamilyMono')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'rounded',
+                    child: Text(draftI18n.t('appearanceFontFamilyRounded')),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  onChanged(appearance.copyWith(fontFamilyKey: value));
+                },
+              ),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearanceFontScale'),
+                subtitle: draftI18n.t('appearanceFontScaleHint'),
+                value: ((appearance.normalizedFontScale - 0.85) / (1.45 - 0.85))
+                    .clamp(0, 1)
+                    .toDouble(),
+                valueLabel: appearance.normalizedFontScale.toStringAsFixed(2),
+                onChanged: (value) {
+                  final mapped = 0.85 + value * (1.45 - 0.85);
+                  onChanged(appearance.copyWith(fontScale: mapped));
+                },
+              ),
+              _appearanceDropdownTile(
+                title: draftI18n.t('appearanceTitleWeight'),
+                value: appearance.normalizedTitleWeightKey,
+                items: <DropdownMenuItem<String>>[
+                  DropdownMenuItem(
+                    value: 'regular',
+                    child: Text(draftI18n.t('appearanceWeightRegular')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'medium',
+                    child: Text(draftI18n.t('appearanceWeightMedium')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'semibold',
+                    child: Text(draftI18n.t('appearanceWeightSemibold')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'bold',
+                    child: Text(draftI18n.t('appearanceWeightBold')),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  onChanged(appearance.copyWith(titleWeightKey: value));
+                },
+              ),
+              _appearanceDropdownTile(
+                title: draftI18n.t('appearanceBodyWeight'),
+                value: appearance.normalizedBodyWeightKey,
+                items: <DropdownMenuItem<String>>[
+                  DropdownMenuItem(
+                    value: 'regular',
+                    child: Text(draftI18n.t('appearanceWeightRegular')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'medium',
+                    child: Text(draftI18n.t('appearanceWeightMedium')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'semibold',
+                    child: Text(draftI18n.t('appearanceWeightSemibold')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'bold',
+                    child: Text(draftI18n.t('appearanceWeightBold')),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  onChanged(appearance.copyWith(bodyWeightKey: value));
+                },
               ),
             ],
           ),
           ExpansionTile(
+            initiallyExpanded: true,
             title: Text(
               draftI18n.t('appearanceColorsTitle'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(draftI18n.t('appearanceColorsHint')),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceHighContrastText'),
+                subtitle: draftI18n.t('appearanceHighContrastTextHint'),
+                value: appearance.highContrastText,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(highContrastText: value)),
+              ),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearanceGradientIntensity'),
+                subtitle: draftI18n.t('appearanceGradientIntensityHint'),
+                value: appearance.normalizedGradientIntensity,
+                valueLabel: percentText(appearance.normalizedGradientIntensity),
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(gradientIntensity: value)),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceColorBackground'),
+                hint: '#FFFFFF',
+                controller: pageBackgroundColorController,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(pageBackgroundHex: value)),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceBackgroundGradientStart'),
+                hint: '#F0FDF4',
+                controller: backgroundGradientStartController,
+                onChanged: (value) => onChanged(
+                  appearance.copyWith(backgroundGradientStartHex: value),
+                ),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceBackgroundGradientEnd'),
+                hint: '#DCFCE7',
+                controller: backgroundGradientEndController,
+                onChanged: (value) => onChanged(
+                  appearance.copyWith(backgroundGradientEndHex: value),
+                ),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceColorAccent'),
+                hint: '#2563EB',
+                controller: accentColorController,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(accentColorHex: value)),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceColorBorder'),
+                hint: '#D3E5FF',
+                controller: borderColorController,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(borderColorHex: value)),
               ),
             ],
           ),
           ExpansionTile(
+            initiallyExpanded: true,
             title: Text(
-              draftI18n.t('appearanceBackgroundTitle'),
+              draftI18n.t('appearanceLayoutTitle'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(draftI18n.t('appearanceBackgroundHint')),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceCompactLayout'),
+                subtitle: draftI18n.t('appearanceCompactLayoutHint'),
+                value: appearance.compactLayout,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(compactLayout: value)),
+              ),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearanceSidebarOpacity'),
+                subtitle: draftI18n.t('appearanceSidebarOpacityHint'),
+                value: appearance.normalizedSidebarOpacity,
+                valueLabel: percentText(appearance.normalizedSidebarOpacity),
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(sidebarOpacity: value)),
+              ),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearanceDetailOpacity'),
+                subtitle: draftI18n.t('appearanceDetailOpacityHint'),
+                value: appearance.normalizedDetailOpacity,
+                valueLabel: percentText(appearance.normalizedDetailOpacity),
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(detailOpacity: value)),
+              ),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearancePlaybackOpacity'),
+                subtitle: draftI18n.t('appearancePlaybackOpacityHint'),
+                value: appearance.normalizedPlaybackOpacity,
+                valueLabel: percentText(appearance.normalizedPlaybackOpacity),
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(playbackOpacity: value)),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceColorSidebar'),
+                hint: '#FFFFFF',
+                controller: sidebarColorController,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(sidebarColorHex: value)),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceColorDetail'),
+                hint: '#FFFFFF',
+                controller: detailColorController,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(detailColorHex: value)),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceColorPlayback'),
+                hint: '#FFFFFF',
+                controller: playbackColorController,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(playbackColorHex: value)),
               ),
             ],
           ),
           ExpansionTile(
+            initiallyExpanded: true,
             title: Text(
               draftI18n.t('appearanceFieldSectionsTitle'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(draftI18n.t('appearanceFieldSectionsHint')),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearanceFieldOpacity'),
+                subtitle: draftI18n.t('appearanceFieldOpacityHint'),
+                value: appearance.normalizedFieldOpacity,
+                valueLabel: percentText(appearance.normalizedFieldOpacity),
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(fieldOpacity: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceFieldGradientAccent'),
+                subtitle: draftI18n.t('appearanceFieldGradientAccentHint'),
+                value: appearance.fieldGradientAccent,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(fieldGradientAccent: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceFieldGlow'),
+                subtitle: draftI18n.t('appearanceFieldGlowHint'),
+                value: appearance.fieldGlow,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(fieldGlow: value)),
+              ),
+              _appearanceColorInputTile(
+                title: draftI18n.t('appearanceColorField'),
+                hint: '#FFFFFF',
+                controller: fieldColorController,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(fieldColorHex: value)),
               ),
             ],
+          ),
+          ExpansionTile(
+            initiallyExpanded: true,
+            title: Text(
+              draftI18n.t('appearanceEffectsTitle'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            children: <Widget>[
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceRandomEntryColors'),
+                subtitle: draftI18n.t('appearanceRandomEntryColorsHint'),
+                value: appearance.randomEntryColors,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(randomEntryColors: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceRainbowText'),
+                subtitle: draftI18n.t('appearanceRainbowTextHint'),
+                value: appearance.rainbowText,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(rainbowText: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceMarqueeText'),
+                subtitle: draftI18n.t('appearanceMarqueeTextHint'),
+                value: appearance.marqueeText,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(marqueeText: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceBreathingEffect'),
+                subtitle: draftI18n.t('appearanceBreathingEffectHint'),
+                value: appearance.breathingEffect,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(breathingEffect: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceFlowingEffect'),
+                subtitle: draftI18n.t('appearanceFlowingEffectHint'),
+                value: appearance.flowingEffect,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(flowingEffect: value)),
+              ),
+            ],
+          ),
+          ExpansionTile(
+            initiallyExpanded: true,
+            title: Text(
+              draftI18n.t('appearanceBackgroundTitle'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            children: <Widget>[
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceEnhancedBackground'),
+                subtitle: draftI18n.t('appearanceEnhancedBackgroundHint'),
+                value: appearance.enhancedBackground,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(enhancedBackground: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearanceFrostedPanels'),
+                subtitle: draftI18n.t('appearanceFrostedPanelsHint'),
+                value: appearance.frostedPanels,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(frostedPanels: value)),
+              ),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearanceEffectIntensity'),
+                subtitle: draftI18n.t('appearanceEffectIntensityHint'),
+                value: appearance.normalizedEffectIntensity,
+                valueLabel: percentText(appearance.normalizedEffectIntensity),
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(effectIntensity: value)),
+              ),
+              _appearanceSwitchTile(
+                title: draftI18n.t('appearancePlaybackGlow'),
+                subtitle: draftI18n.t('appearancePlaybackGlowHint'),
+                value: appearance.playbackGlow,
+                onChanged: (value) =>
+                    onChanged(appearance.copyWith(playbackGlow: value)),
+              ),
+              ListTile(
+                title: Text(draftI18n.t('appearanceBackgroundImage')),
+                subtitle: TextField(
+                  controller: backgroundImagePathController,
+                  onChanged: (value) => onChanged(
+                    appearance.copyWith(backgroundImagePath: value),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: draftI18n.t('appearanceBackgroundImageHint'),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: <Widget>[
+                    OutlinedButton.icon(
+                      onPressed: onPickBackgroundImage,
+                      icon: const Icon(Icons.image_outlined, size: 18),
+                      label: Text(draftI18n.t('appearanceBackgroundImagePick')),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: onClearBackgroundImage,
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                      label: Text(
+                        draftI18n.t('appearanceBackgroundImageClear'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _appearanceDropdownTile(
+                title: draftI18n.t('appearanceBackgroundImageMode'),
+                value: appearance.normalizedBackgroundImageMode,
+                items: <DropdownMenuItem<String>>[
+                  DropdownMenuItem(
+                    value: 'cover',
+                    child: Text(draftI18n.t('appearanceBgModeCover')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'contain',
+                    child: Text(draftI18n.t('appearanceBgModeContain')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'stretch',
+                    child: Text(draftI18n.t('appearanceBgModeStretch')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'top',
+                    child: Text(draftI18n.t('appearanceBgModeTop')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'tile',
+                    child: Text(draftI18n.t('appearanceBgModeTile')),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  onChanged(appearance.copyWith(backgroundImageMode: value));
+                },
+              ),
+              _appearanceSliderTile(
+                title: draftI18n.t('appearanceBackgroundImageOpacity'),
+                subtitle: draftI18n.t('appearanceBackgroundImageOpacityHint'),
+                value: appearance.normalizedBackgroundImageOpacity,
+                valueLabel: percentText(
+                  appearance.normalizedBackgroundImageOpacity,
+                ),
+                onChanged: (value) => onChanged(
+                  appearance.copyWith(backgroundImageOpacity: value),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: LegacyStyle.cardDecorationFor(
+              LegacyModule.detail,
+              gradientAccent: true,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  draftI18n.t('appearancePreviewTitle'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  draftI18n.t('appearancePreviewHint'),
+                  style: TextStyle(color: LegacyStyle.textSecondary),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+
+  Widget _appearanceSwitchTile({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile.adaptive(
+      value: value,
+      onChanged: onChanged,
+      title: Text(title),
+      subtitle: Text(subtitle),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    );
+  }
+
+  Widget _appearanceSliderTile({
+    required String title,
+    required String subtitle,
+    required double value,
+    required String valueLabel,
+    required ValueChanged<double> onChanged,
+  }) {
+    return ListTile(
+      title: Text(title),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(subtitle),
+          const SizedBox(height: 6),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Slider(
+                  value: value.clamp(0, 1).toDouble(),
+                  min: 0,
+                  max: 1,
+                  divisions: 100,
+                  onChanged: onChanged,
+                ),
+              ),
+              SizedBox(
+                width: 56,
+                child: Text(
+                  valueLabel,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    );
+  }
+
+  Widget _appearanceDropdownTile({
+    required String title,
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return ListTile(
+      title: Text(title),
+      subtitle: DropdownButtonFormField<String>(
+        initialValue: value,
+        items: items,
+        onChanged: onChanged,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    );
+  }
+
+  Widget _appearanceColorInputTile({
+    required String title,
+    required String hint,
+    required TextEditingController controller,
+    required ValueChanged<String> onChanged,
+  }) {
+    final value = controller.text.trim();
+    final preview = LegacyStyle.parseHexColor(value);
+    final fallbackColor =
+        LegacyStyle.parseHexColor(hint) ??
+        LegacyStyle.parseHexColor('#FFFFFF') ??
+        Colors.white;
+    return ListTile(
+      title: Text(title),
+      subtitle: Row(
+        children: <Widget>[
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: preview ?? Colors.transparent,
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(color: LegacyStyle.border),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value.isEmpty ? hint : value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: value.isEmpty ? LegacyStyle.textSecondary : null,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Pick color',
+            onPressed: () async {
+              final selected = await _showColorPickerDialog(
+                context: context,
+                title: title,
+                initialColor: preview ?? fallbackColor,
+              );
+              if (selected == null) return;
+              final hex = _encodeColorToHex(selected);
+              controller.text = hex;
+              onChanged(hex);
+            },
+            icon: const Icon(Icons.color_lens_outlined),
+          ),
+          IconButton(
+            tooltip: 'Clear color',
+            onPressed: value.isEmpty
+                ? null
+                : () {
+                    controller.clear();
+                    onChanged('');
+                  },
+            icon: const Icon(Icons.clear),
+          ),
+        ],
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    );
+  }
+
+  Widget _inlineFieldColorPickerTile({
+    required BuildContext context,
+    required String title,
+    required TextEditingController controller,
+    required String hint,
+    required VoidCallback refresh,
+  }) {
+    final value = controller.text.trim();
+    final preview = LegacyStyle.parseHexColor(value);
+    final fallbackColor =
+        LegacyStyle.parseHexColor(hint) ??
+        LegacyStyle.parseHexColor('#FFFFFF') ??
+        Colors.white;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      title: Text(title),
+      subtitle: Row(
+        children: <Widget>[
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: preview ?? Colors.transparent,
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(color: LegacyStyle.border),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value.isEmpty ? hint : value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: value.isEmpty ? LegacyStyle.textSecondary : null,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Pick color',
+            onPressed: () async {
+              final selected = await _showColorPickerDialog(
+                context: context,
+                title: title,
+                initialColor: preview ?? fallbackColor,
+              );
+              if (selected == null) return;
+              controller.text = _encodeColorToHex(selected);
+              refresh();
+            },
+            icon: const Icon(Icons.color_lens_outlined),
+          ),
+          IconButton(
+            tooltip: 'Clear color',
+            onPressed: value.isEmpty
+                ? null
+                : () {
+                    controller.clear();
+                    refresh();
+                  },
+            icon: const Icon(Icons.clear),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _themePreviewColor(String themeKey) => switch (themeKey) {
+    'flat' => const Color(0xFF3B82F6),
+    'tech' => const Color(0xFF2563EB),
+    'dark' => const Color(0xFF0EA5E9),
+    'fantasy' => const Color(0xFFBE185D),
+    'nature' => const Color(0xFF16A34A),
+    'sunset' => const Color(0xFFEA580C),
+    'ocean' => const Color(0xFF0284C7),
+    'mono' => const Color(0xFF111827),
+    _ => const Color(0xFF3B82F6),
+  };
+
+  LinearGradient _themePreviewGradient(String themeKey) => switch (themeKey) {
+    'flat' => const LinearGradient(
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+    ),
+    'tech' => const LinearGradient(
+      colors: <Color>[Color(0xFFF8FBFF), Color(0xFFEAF2FF)],
+    ),
+    'dark' => const LinearGradient(
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFE0F2FE)],
+    ),
+    'fantasy' => const LinearGradient(
+      colors: <Color>[Color(0xFFFFF7FB), Color(0xFFF5F3FF)],
+    ),
+    'nature' => const LinearGradient(
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFECFDF5)],
+    ),
+    'sunset' => const LinearGradient(
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFFFEDD5)],
+    ),
+    'ocean' => const LinearGradient(
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFE0F2FE)],
+    ),
+    'mono' => const LinearGradient(
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF3F4F6)],
+    ),
+    _ => const LinearGradient(
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+    ),
+  };
 
   String _themeLabel(AppI18n i18n, String themeKey) => switch (themeKey) {
     'flat' => i18n.t('themeFlat'),
@@ -3932,6 +5300,14 @@ class _HomePageState extends State<HomePage> {
               return i18n.t('ambientCategoryFocus');
             }
 
+            String ambientNameOf(dynamic source) {
+              return _localizedAmbientName(
+                i18n,
+                sourceId: source.id as String,
+                fallbackName: source.name as String,
+              );
+            }
+
             final categories = <String, List<dynamic>>{};
             for (final source in builtins) {
               final category = categoryOf(source.id);
@@ -3951,7 +5327,7 @@ class _HomePageState extends State<HomePage> {
                   children: <Widget>[
                     Container(
                       padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(color: LegacyStyle.border),
                         ),
@@ -4005,9 +5381,7 @@ class _HomePageState extends State<HomePage> {
                           const Spacer(),
                           Text(
                             '${i18n.t('currentPlayingList')}: ${active.length}',
-                            style: const TextStyle(
-                              color: LegacyStyle.textSecondary,
-                            ),
+                            style: TextStyle(color: LegacyStyle.textSecondary),
                           ),
                           const SizedBox(width: 8),
                           OutlinedButton(
@@ -4116,7 +5490,7 @@ class _HomePageState extends State<HomePage> {
                                                     const SizedBox(width: 10),
                                                     Expanded(
                                                       child: Text(
-                                                        source.name as String,
+                                                        ambientNameOf(source),
                                                         maxLines: 1,
                                                         overflow: TextOverflow
                                                             .ellipsis,
@@ -4150,7 +5524,7 @@ class _HomePageState extends State<HomePage> {
                                     for (final source in imported)
                                       ListTile(
                                         contentPadding: EdgeInsets.zero,
-                                        title: Text(source.name),
+                                        title: Text(ambientNameOf(source)),
                                         leading: Switch(
                                           value: source.enabled,
                                           onChanged: (enabled) async {
@@ -4222,7 +5596,9 @@ class _HomePageState extends State<HomePage> {
                                                 Row(
                                                   children: <Widget>[
                                                     Expanded(
-                                                      child: Text(source.name),
+                                                      child: Text(
+                                                        ambientNameOf(source),
+                                                      ),
                                                     ),
                                                     IconButton(
                                                       onPressed: () async {
@@ -4285,15 +5661,20 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _GlassPanel extends StatelessWidget {
-  const _GlassPanel({required this.child});
+  const _GlassPanel({required this.child, this.module = LegacyModule.generic});
 
   final Widget child;
+  final LegacyModule module;
 
   @override
   Widget build(BuildContext context) {
+    final radius = LegacyStyle.moduleRadius(module);
     return DecoratedBox(
-      decoration: LegacyStyle.panelDecoration,
-      child: ClipRRect(borderRadius: BorderRadius.circular(18), child: child),
+      decoration: LegacyStyle.panelDecorationFor(module),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: child,
+      ),
     );
   }
 }
@@ -4556,8 +5937,10 @@ class _SideMenuPanel extends StatelessWidget {
             final selected = state.selectedWordbook?.id == book.id;
             return Container(
               margin: const EdgeInsets.only(bottom: 6),
-              decoration: LegacyStyle.cardDecoration.copyWith(
-                gradient: selected ? LegacyStyle.chipGradient : null,
+              decoration: LegacyStyle.cardDecorationFor(
+                LegacyModule.listItem,
+                selected: selected,
+                gradientAccent: selected,
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(
@@ -4572,7 +5955,7 @@ class _SideMenuPanel extends StatelessWidget {
                 ),
                 subtitle: Text(
                   i18n.t('wordsCount', params: {'count': book.wordCount}),
-                  style: const TextStyle(color: LegacyStyle.textSecondary),
+                  style: TextStyle(color: LegacyStyle.textSecondary),
                 ),
                 trailing: !allowManage
                     ? null
@@ -4588,9 +5971,9 @@ class _SideMenuPanel extends StatelessWidget {
                             value: 'add_single',
                             child: Text(i18n.t('addWord')),
                           ),
-                          const PopupMenuItem<String>(
+                          PopupMenuItem<String>(
                             value: 'add_json',
-                            child: Text('JSON Batch Import'),
+                            child: Text(i18n.t('jsonBatchImport')),
                           ),
                           const PopupMenuDivider(),
                           PopupMenuItem<String>(
@@ -4668,6 +6051,9 @@ class _WordDetailPanel extends StatelessWidget {
   const _WordDetailPanel({
     required this.state,
     required this.i18n,
+    required this.appearance,
+    required this.visualPhase,
+    required this.entryColorSeed,
     required this.onEdit,
     required this.onDelete,
     required this.onFollowAlong,
@@ -4683,6 +6069,9 @@ class _WordDetailPanel extends StatelessWidget {
 
   final AppState state;
   final AppI18n i18n;
+  final AppearanceConfig appearance;
+  final double visualPhase;
+  final int entryColorSeed;
   final ValueChanged<WordEntry> onEdit;
   final ValueChanged<WordEntry> onDelete;
   final ValueChanged<WordEntry> onFollowAlong;
@@ -4713,17 +6102,22 @@ class _WordDetailPanel extends StatelessWidget {
     );
     final progressCurrent = min(max(state.currentWordIndex + 1, 1), totalWords);
     final progress = progressCurrent / totalWords;
+    final detailRadius = LegacyStyle.moduleRadius(LegacyModule.detail);
 
     return Column(
       children: <Widget>[
         Container(
           width: double.infinity,
-          decoration: LegacyStyle.cardDecoration.copyWith(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
+          decoration:
+              LegacyStyle.cardDecorationFor(
+                LegacyModule.detail,
+                gradientAccent: true,
+              ).copyWith(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(detailRadius),
+                  topRight: Radius.circular(detailRadius),
+                ),
+              ),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4743,22 +6137,14 @@ class _WordDetailPanel extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 '${i18n.t('progress')}: $progressCurrent / $totalWords',
-                style: const TextStyle(color: LegacyStyle.textSecondary),
+                style: TextStyle(color: LegacyStyle.textSecondary),
               ),
               const SizedBox(height: 6),
               LinearProgressIndicator(value: progress),
               const SizedBox(height: 12),
               Row(
                 children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      word.word,
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: LegacyStyle.primary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
+                  Expanded(child: _buildWordHeadline(context, word.word)),
                   IconButton(
                     tooltip: i18n.t('edit'),
                     onPressed: () => onEdit(word),
@@ -4854,7 +6240,7 @@ class _WordDetailPanel extends StatelessWidget {
                 if (index > 0) const SizedBox(height: 8),
                 _WordFieldCard(
                   field: fields[index],
-                  accent: _fieldAccentColor(fields[index].key),
+                  accent: _fieldAccentColor(fields[index].key, index),
                   i18n: i18n,
                   canEditWord: true,
                   onCopyField: onCopyField,
@@ -4886,7 +6272,90 @@ class _WordDetailPanel extends StatelessWidget {
         normalized == 'translation';
   }
 
-  Color _fieldAccentColor(String key) {
+  Widget _buildWordHeadline(BuildContext context, String word) {
+    final baseStyle = Theme.of(context).textTheme.displaySmall?.copyWith(
+      color: LegacyStyle.primary,
+      fontWeight: FontWeight.w800,
+    );
+    if (baseStyle == null) return Text(word);
+    final isMarquee = appearance.marqueeText && word.length > 4;
+    final textStyle = baseStyle.copyWith(
+      color: appearance.rainbowText ? Colors.white : LegacyStyle.primary,
+    );
+
+    Widget rainbowWrap(Widget child) {
+      if (!appearance.rainbowText) return child;
+      return ShaderMask(
+        blendMode: BlendMode.srcIn,
+        shaderCallback: (bounds) {
+          return LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: const <Color>[
+              Color(0xFFEF4444),
+              Color(0xFFF59E0B),
+              Color(0xFF10B981),
+              Color(0xFF3B82F6),
+              Color(0xFF8B5CF6),
+            ],
+            transform: appearance.flowingEffect
+                ? GradientRotation(visualPhase * pi * 2)
+                : null,
+          ).createShader(bounds);
+        },
+        child: child,
+      );
+    }
+
+    Widget headline;
+    if (isMarquee) {
+      final repeated = '$word    |    ';
+      final offset = -visualPhase * 220;
+      headline = ClipRect(
+        child: SizedBox(
+          height: (textStyle.fontSize ?? 36) * 1.2,
+          child: Transform.translate(
+            offset: Offset(offset, 0),
+            child: Row(
+              children: <Widget>[
+                Text(repeated, style: textStyle, softWrap: false),
+                Text(repeated, style: textStyle, softWrap: false),
+                Text(repeated, style: textStyle, softWrap: false),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else {
+      headline = Text(
+        word,
+        style: textStyle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    headline = rainbowWrap(headline);
+    if (appearance.breathingEffect) {
+      final scale = 1 + sin(visualPhase * pi * 2) * 0.028;
+      headline = Transform.scale(
+        scale: scale,
+        alignment: Alignment.centerLeft,
+        child: headline,
+      );
+    }
+    return headline;
+  }
+
+  Color _fieldAccentColor(String key, int index) {
+    if (appearance.randomEntryColors) {
+      final seed =
+          key.runes.fold<int>(0, (sum, item) => sum + item) +
+          entryColorSeed * 97 +
+          index * 41;
+      final hue = (seed * 37) % 360;
+      return HSVColor.fromAHSV(1, hue.toDouble(), 0.62, 0.72).toColor();
+    }
     final code = key.runes.fold<int>(0, (sum, item) => sum + item);
     final hue = (code * 37) % 360;
     return HSVColor.fromAHSV(1, hue.toDouble(), 0.6, 0.62).toColor();
@@ -4900,6 +6369,10 @@ class _EditableFieldDraft {
     required this.label,
     required this.content,
     required this.startsEmptyNonCore,
+    this.backgroundHex = '',
+    this.borderHex = '',
+    this.textHex = '',
+    this.accentHex = '',
   });
 
   final int id;
@@ -4907,6 +6380,10 @@ class _EditableFieldDraft {
   String label;
   String content;
   final bool startsEmptyNonCore;
+  String backgroundHex;
+  String borderHex;
+  String textHex;
+  String accentHex;
 }
 
 class _EditableFieldCard extends StatelessWidget {
@@ -4927,9 +6404,10 @@ class _EditableFieldCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
-      decoration: LegacyStyle.cardDecoration.copyWith(
-        border: Border.all(color: LegacyStyle.border),
-      ),
+      decoration: LegacyStyle.cardDecorationFor(
+        LegacyModule.fieldItem,
+        gradientAccent: true,
+      ).copyWith(border: Border.all(color: LegacyStyle.border)),
       child: Column(
         children: <Widget>[
           Row(
@@ -4978,7 +6456,130 @@ class _EditableFieldCard extends StatelessWidget {
             },
             decoration: InputDecoration(labelText: i18n.t('fieldContent')),
           ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              i18n.t('fieldStyleTitle'),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              _editableFieldStyleInput(
+                context: context,
+                keyId: 'editable-field-bg-${field.id}',
+                label: i18n.t('fieldStyleBackground'),
+                value: field.backgroundHex,
+                fallbackColor: Colors.white,
+                onChanged: (value) {
+                  field.backgroundHex = value;
+                  onChanged();
+                },
+              ),
+              _editableFieldStyleInput(
+                context: context,
+                keyId: 'editable-field-border-${field.id}',
+                label: i18n.t('fieldStyleBorder'),
+                value: field.borderHex,
+                fallbackColor: LegacyStyle.border,
+                onChanged: (value) {
+                  field.borderHex = value;
+                  onChanged();
+                },
+              ),
+              _editableFieldStyleInput(
+                context: context,
+                keyId: 'editable-field-text-${field.id}',
+                label: i18n.t('fieldStyleText'),
+                value: field.textHex,
+                fallbackColor: LegacyStyle.textPrimary,
+                onChanged: (value) {
+                  field.textHex = value;
+                  onChanged();
+                },
+              ),
+              _editableFieldStyleInput(
+                context: context,
+                keyId: 'editable-field-accent-${field.id}',
+                label: i18n.t('fieldStyleAccent'),
+                value: field.accentHex,
+                fallbackColor: LegacyStyle.primary,
+                onChanged: (value) {
+                  field.accentHex = value;
+                  onChanged();
+                },
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _editableFieldStyleInput({
+    required BuildContext context,
+    required String keyId,
+    required String label,
+    required String value,
+    required Color fallbackColor,
+    required ValueChanged<String> onChanged,
+  }) {
+    final normalized = value.trim();
+    final preview = LegacyStyle.parseHexColor(normalized);
+    return SizedBox(
+      width: 250,
+      child: Container(
+        key: ValueKey<String>(keyId),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: LegacyStyle.border),
+        ),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: preview ?? Colors.transparent,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: LegacyStyle.border),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '$label: ${normalized.isEmpty ? i18n.t('fieldStyleHint') : normalized}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Pick color',
+              onPressed: () async {
+                final picked = await _showColorPickerDialog(
+                  context: context,
+                  title: label,
+                  initialColor: preview ?? fallbackColor,
+                );
+                if (picked == null) return;
+                onChanged(_encodeColorToHex(picked));
+              },
+              icon: const Icon(Icons.color_lens_outlined, size: 20),
+            ),
+            IconButton(
+              tooltip: 'Clear color',
+              onPressed: normalized.isEmpty ? null : () => onChanged(''),
+              icon: const Icon(Icons.clear, size: 20),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -5005,9 +6606,31 @@ class _WordFieldCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fieldStyle = field.style;
+    final styleAccent = LegacyStyle.parseHexColor(fieldStyle.accentHex);
+    final styleBackground = LegacyStyle.parseHexColor(fieldStyle.backgroundHex);
+    final styleBorder = LegacyStyle.parseHexColor(fieldStyle.borderHex);
+    final styleText = LegacyStyle.parseHexColor(fieldStyle.textHex);
+    final resolvedAccent = styleAccent ?? accent;
+    final autoBodyColor = styleBackground == null
+        ? LegacyStyle.textPrimary
+        : (ThemeData.estimateBrightnessForColor(styleBackground) ==
+                  Brightness.dark
+              ? Colors.white.withValues(alpha: 0.95)
+              : const Color(0xFF0F172A));
+    final bodyColor = styleText ?? autoBodyColor;
+    final titleColor = styleText ?? (styleAccent ?? bodyColor);
+    final displayLabel = _localizedFieldLabel(
+      i18n,
+      key: field.key,
+      fallbackLabel: field.label,
+    );
     return Container(
-      decoration: LegacyStyle.cardDecoration.copyWith(
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      decoration: LegacyStyle.fieldCardDecoration(
+        accentColor: resolvedAccent,
+        fieldKey: field.key,
+        backgroundColor: styleBackground,
+        borderColor: styleBorder,
       ),
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
       child: Column(
@@ -5017,10 +6640,10 @@ class _WordFieldCard extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  field.label,
+                  displayLabel,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: accent.withValues(alpha: 0.95),
+                    color: titleColor,
                   ),
                 ),
               ),
@@ -5048,7 +6671,9 @@ class _WordFieldCard extends StatelessWidget {
           const SizedBox(height: 4),
           SelectableText(
             field.asText(),
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.4),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(height: 1.4, color: bodyColor),
           ),
         ],
       ),
@@ -5104,7 +6729,9 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
       _scoringBreakdown = const <String, double>{};
     });
 
-    final path = await widget.state.startAsrRecording(provider: _activeProvider);
+    final path = await widget.state.startAsrRecording(
+      provider: _activeProvider,
+    );
     if (!mounted) return;
     if (path == null || path.trim().isEmpty) {
       final i18n = AppI18n(widget.state.uiLanguage);
@@ -5197,7 +6824,8 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
               similarity: hasHardMismatch
                   ? min(
                       acousticSimilarity,
-                      ((textComparison?.similarity ?? acousticSimilarity) * 1.35)
+                      ((textComparison?.similarity ?? acousticSimilarity) *
+                              1.35)
                           .clamp(0.0, 1.0),
                     )
                   : acousticSimilarity,
@@ -5219,11 +6847,12 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
           : PronunciationComparison(
               isCorrect:
                   textComparison.isCorrect ||
-                  ((textComparison.similarity * 0.72 + acousticSimilarity * 0.28) >=
+                  ((textComparison.similarity * 0.72 +
+                          acousticSimilarity * 0.28) >=
                       _similarityPassThreshold()),
-              similarity: (textComparison.similarity * 0.72 +
-                      acousticSimilarity * 0.28)
-                  .clamp(0.0, 1.0),
+              similarity:
+                  (textComparison.similarity * 0.72 + acousticSimilarity * 0.28)
+                      .clamp(0.0, 1.0),
               differences: textComparison.differences,
             );
       setState(() {
@@ -5294,10 +6923,10 @@ class _FollowAlongDialogState extends State<_FollowAlongDialog> {
   }
 
   String _normalizeForHardMatch(String value) {
-    return value.toLowerCase().replaceAll(
-      RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true),
-      ' ',
-    ).trim();
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true), ' ')
+        .trim();
   }
 
   List<String> _splitHardMatchTokens(String value) {
@@ -5647,9 +7276,9 @@ class _WordbookDrawer extends StatelessWidget {
                               value: 'add_single',
                               child: Text(i18n.t('addWord')),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'add_json',
-                              child: Text('JSON Batch Import'),
+                              child: Text(i18n.t('jsonBatchImport')),
                             ),
                             const PopupMenuDivider(),
                             PopupMenuItem(

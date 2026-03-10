@@ -16,12 +16,7 @@ enum AsrProviderType {
   multiEngine,
 }
 
-enum PronScoringMethod {
-  sslEmbedding,
-  gop,
-  forcedAlignmentPer,
-  ppgPosterior,
-}
+enum PronScoringMethod { sslEmbedding, gop, forcedAlignmentPer, ppgPosterior }
 
 class FieldPlaybackSetting {
   const FieldPlaybackSetting({this.enabled, this.repeat, this.label});
@@ -256,9 +251,7 @@ class AsrConfig {
     return AsrConfig(
       enabled: enabled ?? this.enabled,
       provider: provider ?? this.provider,
-      engineOrder: List<AsrProviderType>.from(
-        engineOrder ?? this.engineOrder,
-      ),
+      engineOrder: List<AsrProviderType>.from(engineOrder ?? this.engineOrder),
       scoringMethods: List<PronScoringMethod>.from(
         scoringMethods ?? this.scoringMethods,
       ),
@@ -306,12 +299,10 @@ class AsrConfig {
       }
     }
     if (parsedEngineOrder.isEmpty) {
-      parsedEngineOrder.addAll(
-        const <AsrProviderType>[
-          AsrProviderType.api,
-          AsrProviderType.localSimilarity,
-        ],
-      );
+      parsedEngineOrder.addAll(const <AsrProviderType>[
+        AsrProviderType.api,
+        AsrProviderType.localSimilarity,
+      ]);
     }
     final parsedScoringMethods = <PronScoringMethod>[];
     final rawScoringMethods = json['scoringMethods'];
@@ -346,6 +337,411 @@ class AsrConfig {
   }
 }
 
+class AppearanceConfig {
+  const AppearanceConfig({
+    this.theme = 'flat',
+    this.compactLayout = false,
+    this.highContrastText = false,
+    this.enhancedBackground = true,
+    this.frostedPanels = false,
+    this.gradientIntensity = 0.08,
+    this.effectIntensity = 0.12,
+    this.sidebarOpacity = 0.94,
+    this.detailOpacity = 0.95,
+    this.playbackOpacity = 0.93,
+    this.fieldOpacity = 0.94,
+    this.fieldGradientAccent = true,
+    this.fieldGlow = false,
+    this.playbackGlow = false,
+    this.pageBackgroundHex = '',
+    this.backgroundGradientStartHex = '',
+    this.backgroundGradientEndHex = '',
+    this.sidebarColorHex = '',
+    this.detailColorHex = '',
+    this.playbackColorHex = '',
+    this.fieldColorHex = '',
+    this.borderColorHex = '',
+    this.accentColorHex = '',
+    this.backgroundImagePath = '',
+    this.backgroundImageMode = 'cover',
+    this.backgroundImageOpacity = 0.28,
+    this.fontFamilyKey = 'system',
+    this.fontScale = 1.0,
+    this.titleWeightKey = 'semibold',
+    this.bodyWeightKey = 'regular',
+    this.randomEntryColors = false,
+    this.rainbowText = false,
+    this.marqueeText = false,
+    this.breathingEffect = false,
+    this.flowingEffect = false,
+  });
+
+  static const List<String> supportedThemes = <String>[
+    'flat',
+    'tech',
+    'dark',
+    'fantasy',
+    'nature',
+    'sunset',
+    'ocean',
+    'mono',
+  ];
+
+  static const List<String> supportedBackgroundImageModes = <String>[
+    'cover',
+    'contain',
+    'stretch',
+    'top',
+    'tile',
+  ];
+
+  static const List<String> supportedFontFamilyKeys = <String>[
+    'system',
+    'serif',
+    'mono',
+    'rounded',
+  ];
+
+  static const List<String> supportedFontWeightKeys = <String>[
+    'regular',
+    'medium',
+    'semibold',
+    'bold',
+  ];
+
+  static const List<String> supportedEffectToggles = <String>[
+    'randomEntryColors',
+    'rainbowText',
+    'marqueeText',
+    'breathingEffect',
+    'flowingEffect',
+  ];
+
+  static const AppearanceConfig defaults = AppearanceConfig();
+
+  final String theme;
+  final bool compactLayout;
+  final bool highContrastText;
+  final bool enhancedBackground;
+  final bool frostedPanels;
+  final double gradientIntensity;
+  final double effectIntensity;
+  final double sidebarOpacity;
+  final double detailOpacity;
+  final double playbackOpacity;
+  final double fieldOpacity;
+  final bool fieldGradientAccent;
+  final bool fieldGlow;
+  final bool playbackGlow;
+  final String pageBackgroundHex;
+  final String backgroundGradientStartHex;
+  final String backgroundGradientEndHex;
+  final String sidebarColorHex;
+  final String detailColorHex;
+  final String playbackColorHex;
+  final String fieldColorHex;
+  final String borderColorHex;
+  final String accentColorHex;
+  final String backgroundImagePath;
+  final String backgroundImageMode;
+  final double backgroundImageOpacity;
+  final String fontFamilyKey;
+  final double fontScale;
+  final String titleWeightKey;
+  final String bodyWeightKey;
+  final bool randomEntryColors;
+  final bool rainbowText;
+  final bool marqueeText;
+  final bool breathingEffect;
+  final bool flowingEffect;
+
+  double _clamp01(double value, {double fallback = 0.5}) {
+    final normalized = value.isFinite ? value : fallback;
+    if (normalized < 0) return 0;
+    if (normalized > 1) return 1;
+    return normalized;
+  }
+
+  double get normalizedGradientIntensity =>
+      _clamp01(gradientIntensity, fallback: defaults.gradientIntensity);
+
+  double get normalizedEffectIntensity =>
+      _clamp01(effectIntensity, fallback: defaults.effectIntensity);
+
+  double get normalizedSidebarOpacity =>
+      _clamp01(sidebarOpacity, fallback: defaults.sidebarOpacity);
+
+  double get normalizedDetailOpacity =>
+      _clamp01(detailOpacity, fallback: defaults.detailOpacity);
+
+  double get normalizedPlaybackOpacity =>
+      _clamp01(playbackOpacity, fallback: defaults.playbackOpacity);
+
+  double get normalizedFieldOpacity =>
+      _clamp01(fieldOpacity, fallback: defaults.fieldOpacity);
+
+  double get normalizedBackgroundImageOpacity => _clamp01(
+    backgroundImageOpacity,
+    fallback: defaults.backgroundImageOpacity,
+  );
+
+  double get normalizedFontScale {
+    final value = fontScale.isFinite ? fontScale : defaults.fontScale;
+    return value.clamp(0.85, 1.45).toDouble();
+  }
+
+  String get normalizedTheme {
+    final value = theme.trim().toLowerCase();
+    if (supportedThemes.contains(value)) return value;
+    return defaults.theme;
+  }
+
+  String get normalizedBackgroundImageMode {
+    final value = backgroundImageMode.trim().toLowerCase();
+    if (supportedBackgroundImageModes.contains(value)) return value;
+    return defaults.backgroundImageMode;
+  }
+
+  String get normalizedFontFamilyKey {
+    final value = fontFamilyKey.trim().toLowerCase();
+    if (supportedFontFamilyKeys.contains(value)) return value;
+    return defaults.fontFamilyKey;
+  }
+
+  String get normalizedTitleWeightKey {
+    final value = titleWeightKey.trim().toLowerCase();
+    if (supportedFontWeightKeys.contains(value)) return value;
+    return defaults.titleWeightKey;
+  }
+
+  String get normalizedBodyWeightKey {
+    final value = bodyWeightKey.trim().toLowerCase();
+    if (supportedFontWeightKeys.contains(value)) return value;
+    return defaults.bodyWeightKey;
+  }
+
+  AppearanceConfig copyWith({
+    String? theme,
+    bool? compactLayout,
+    bool? highContrastText,
+    bool? enhancedBackground,
+    bool? frostedPanels,
+    double? gradientIntensity,
+    double? effectIntensity,
+    double? sidebarOpacity,
+    double? detailOpacity,
+    double? playbackOpacity,
+    double? fieldOpacity,
+    bool? fieldGradientAccent,
+    bool? fieldGlow,
+    bool? playbackGlow,
+    String? pageBackgroundHex,
+    String? backgroundGradientStartHex,
+    String? backgroundGradientEndHex,
+    String? sidebarColorHex,
+    String? detailColorHex,
+    String? playbackColorHex,
+    String? fieldColorHex,
+    String? borderColorHex,
+    String? accentColorHex,
+    String? backgroundImagePath,
+    String? backgroundImageMode,
+    double? backgroundImageOpacity,
+    String? fontFamilyKey,
+    double? fontScale,
+    String? titleWeightKey,
+    String? bodyWeightKey,
+    bool? randomEntryColors,
+    bool? rainbowText,
+    bool? marqueeText,
+    bool? breathingEffect,
+    bool? flowingEffect,
+  }) {
+    return AppearanceConfig(
+      theme: theme ?? this.theme,
+      compactLayout: compactLayout ?? this.compactLayout,
+      highContrastText: highContrastText ?? this.highContrastText,
+      enhancedBackground: enhancedBackground ?? this.enhancedBackground,
+      frostedPanels: frostedPanels ?? this.frostedPanels,
+      gradientIntensity: gradientIntensity ?? this.gradientIntensity,
+      effectIntensity: effectIntensity ?? this.effectIntensity,
+      sidebarOpacity: sidebarOpacity ?? this.sidebarOpacity,
+      detailOpacity: detailOpacity ?? this.detailOpacity,
+      playbackOpacity: playbackOpacity ?? this.playbackOpacity,
+      fieldOpacity: fieldOpacity ?? this.fieldOpacity,
+      fieldGradientAccent: fieldGradientAccent ?? this.fieldGradientAccent,
+      fieldGlow: fieldGlow ?? this.fieldGlow,
+      playbackGlow: playbackGlow ?? this.playbackGlow,
+      pageBackgroundHex: pageBackgroundHex ?? this.pageBackgroundHex,
+      backgroundGradientStartHex:
+          backgroundGradientStartHex ?? this.backgroundGradientStartHex,
+      backgroundGradientEndHex:
+          backgroundGradientEndHex ?? this.backgroundGradientEndHex,
+      sidebarColorHex: sidebarColorHex ?? this.sidebarColorHex,
+      detailColorHex: detailColorHex ?? this.detailColorHex,
+      playbackColorHex: playbackColorHex ?? this.playbackColorHex,
+      fieldColorHex: fieldColorHex ?? this.fieldColorHex,
+      borderColorHex: borderColorHex ?? this.borderColorHex,
+      accentColorHex: accentColorHex ?? this.accentColorHex,
+      backgroundImagePath: backgroundImagePath ?? this.backgroundImagePath,
+      backgroundImageMode: backgroundImageMode ?? this.backgroundImageMode,
+      backgroundImageOpacity:
+          backgroundImageOpacity ?? this.backgroundImageOpacity,
+      fontFamilyKey: fontFamilyKey ?? this.fontFamilyKey,
+      fontScale: fontScale ?? this.fontScale,
+      titleWeightKey: titleWeightKey ?? this.titleWeightKey,
+      bodyWeightKey: bodyWeightKey ?? this.bodyWeightKey,
+      randomEntryColors: randomEntryColors ?? this.randomEntryColors,
+      rainbowText: rainbowText ?? this.rainbowText,
+      marqueeText: marqueeText ?? this.marqueeText,
+      breathingEffect: breathingEffect ?? this.breathingEffect,
+      flowingEffect: flowingEffect ?? this.flowingEffect,
+    );
+  }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'theme': normalizedTheme,
+    'compactLayout': compactLayout,
+    'highContrastText': highContrastText,
+    'enhancedBackground': enhancedBackground,
+    'frostedPanels': frostedPanels,
+    'gradientIntensity': normalizedGradientIntensity,
+    'effectIntensity': normalizedEffectIntensity,
+    'sidebarOpacity': normalizedSidebarOpacity,
+    'detailOpacity': normalizedDetailOpacity,
+    'playbackOpacity': normalizedPlaybackOpacity,
+    'fieldOpacity': normalizedFieldOpacity,
+    'fieldGradientAccent': fieldGradientAccent,
+    'fieldGlow': fieldGlow,
+    'playbackGlow': playbackGlow,
+    'pageBackgroundHex': pageBackgroundHex,
+    'backgroundGradientStartHex': backgroundGradientStartHex,
+    'backgroundGradientEndHex': backgroundGradientEndHex,
+    'sidebarColorHex': sidebarColorHex,
+    'detailColorHex': detailColorHex,
+    'playbackColorHex': playbackColorHex,
+    'fieldColorHex': fieldColorHex,
+    'borderColorHex': borderColorHex,
+    'accentColorHex': accentColorHex,
+    'backgroundImagePath': backgroundImagePath,
+    'backgroundImageMode': normalizedBackgroundImageMode,
+    'backgroundImageOpacity': normalizedBackgroundImageOpacity,
+    'fontFamilyKey': normalizedFontFamilyKey,
+    'fontScale': normalizedFontScale,
+    'titleWeightKey': normalizedTitleWeightKey,
+    'bodyWeightKey': normalizedBodyWeightKey,
+    'randomEntryColors': randomEntryColors,
+    'rainbowText': rainbowText,
+    'marqueeText': marqueeText,
+    'breathingEffect': breathingEffect,
+    'flowingEffect': flowingEffect,
+  };
+
+  factory AppearanceConfig.fromJson(Map<String, Object?> json) {
+    double readDouble(String key, double fallback) {
+      return (json[key] as num?)?.toDouble() ?? fallback;
+    }
+
+    return AppearanceConfig(
+      theme: json['theme']?.toString() ?? defaults.theme,
+      compactLayout: json['compactLayout'] as bool? ?? defaults.compactLayout,
+      highContrastText:
+          json['highContrastText'] as bool? ?? defaults.highContrastText,
+      enhancedBackground:
+          json['enhancedBackground'] as bool? ?? defaults.enhancedBackground,
+      frostedPanels: json['frostedPanels'] as bool? ?? defaults.frostedPanels,
+      gradientIntensity: readDouble(
+        'gradientIntensity',
+        defaults.gradientIntensity,
+      ),
+      effectIntensity: readDouble('effectIntensity', defaults.effectIntensity),
+      sidebarOpacity: readDouble('sidebarOpacity', defaults.sidebarOpacity),
+      detailOpacity: readDouble('detailOpacity', defaults.detailOpacity),
+      playbackOpacity: readDouble('playbackOpacity', defaults.playbackOpacity),
+      fieldOpacity: readDouble('fieldOpacity', defaults.fieldOpacity),
+      fieldGradientAccent:
+          json['fieldGradientAccent'] as bool? ?? defaults.fieldGradientAccent,
+      fieldGlow: json['fieldGlow'] as bool? ?? defaults.fieldGlow,
+      playbackGlow: json['playbackGlow'] as bool? ?? defaults.playbackGlow,
+      pageBackgroundHex: json['pageBackgroundHex']?.toString() ?? '',
+      backgroundGradientStartHex:
+          json['backgroundGradientStartHex']?.toString() ?? '',
+      backgroundGradientEndHex:
+          json['backgroundGradientEndHex']?.toString() ?? '',
+      sidebarColorHex: json['sidebarColorHex']?.toString() ?? '',
+      detailColorHex: json['detailColorHex']?.toString() ?? '',
+      playbackColorHex: json['playbackColorHex']?.toString() ?? '',
+      fieldColorHex: json['fieldColorHex']?.toString() ?? '',
+      borderColorHex: json['borderColorHex']?.toString() ?? '',
+      accentColorHex: json['accentColorHex']?.toString() ?? '',
+      backgroundImagePath: json['backgroundImagePath']?.toString() ?? '',
+      backgroundImageMode:
+          json['backgroundImageMode']?.toString() ??
+          defaults.backgroundImageMode,
+      backgroundImageOpacity: readDouble(
+        'backgroundImageOpacity',
+        defaults.backgroundImageOpacity,
+      ),
+      fontFamilyKey:
+          json['fontFamilyKey']?.toString() ?? defaults.fontFamilyKey,
+      fontScale: readDouble('fontScale', defaults.fontScale),
+      titleWeightKey:
+          json['titleWeightKey']?.toString() ?? defaults.titleWeightKey,
+      bodyWeightKey:
+          json['bodyWeightKey']?.toString() ?? defaults.bodyWeightKey,
+      randomEntryColors:
+          json['randomEntryColors'] as bool? ?? defaults.randomEntryColors,
+      rainbowText: json['rainbowText'] as bool? ?? defaults.rainbowText,
+      marqueeText: json['marqueeText'] as bool? ?? defaults.marqueeText,
+      breathingEffect:
+          json['breathingEffect'] as bool? ?? defaults.breathingEffect,
+      flowingEffect: json['flowingEffect'] as bool? ?? defaults.flowingEffect,
+    );
+  }
+}
+
+class AppearanceThemePreset {
+  const AppearanceThemePreset({
+    required this.id,
+    required this.name,
+    required this.appearance,
+  });
+
+  final String id;
+  final String name;
+  final AppearanceConfig appearance;
+
+  AppearanceThemePreset copyWith({
+    String? id,
+    String? name,
+    AppearanceConfig? appearance,
+  }) {
+    return AppearanceThemePreset(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      appearance: appearance ?? this.appearance,
+    );
+  }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'id': id,
+    'name': name,
+    'appearance': appearance.toJson(),
+  };
+
+  factory AppearanceThemePreset.fromJson(Map<String, Object?> json) {
+    return AppearanceThemePreset(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      appearance: json['appearance'] is Map
+          ? AppearanceConfig.fromJson(
+              (json['appearance'] as Map).cast<String, Object?>(),
+            )
+          : AppearanceConfig.defaults,
+    );
+  }
+}
+
 class PlayConfig {
   const PlayConfig({
     required this.repeats,
@@ -356,6 +752,8 @@ class PlayConfig {
     required this.asr,
     required this.showText,
     required this.delayBetweenUnitsMs,
+    this.appearance = AppearanceConfig.defaults,
+    this.appearancePresets = const <AppearanceThemePreset>[],
   });
 
   final Map<String, int> repeats;
@@ -366,6 +764,8 @@ class PlayConfig {
   final AsrConfig asr;
   final bool showText;
   final int delayBetweenUnitsMs;
+  final AppearanceConfig appearance;
+  final List<AppearanceThemePreset> appearancePresets;
 
   static PlayConfig get defaults => PlayConfig(
     repeats: const <String, int>{
@@ -407,6 +807,8 @@ class PlayConfig {
     ),
     showText: true,
     delayBetweenUnitsMs: 500,
+    appearance: AppearanceConfig.defaults,
+    appearancePresets: const <AppearanceThemePreset>[],
   );
 
   PlayConfig copyWith({
@@ -418,6 +820,8 @@ class PlayConfig {
     AsrConfig? asr,
     bool? showText,
     int? delayBetweenUnitsMs,
+    AppearanceConfig? appearance,
+    List<AppearanceThemePreset>? appearancePresets,
   }) {
     return PlayConfig(
       repeats: repeats ?? this.repeats,
@@ -428,6 +832,10 @@ class PlayConfig {
       asr: asr ?? this.asr,
       showText: showText ?? this.showText,
       delayBetweenUnitsMs: delayBetweenUnitsMs ?? this.delayBetweenUnitsMs,
+      appearance: appearance ?? this.appearance,
+      appearancePresets: List<AppearanceThemePreset>.from(
+        appearancePresets ?? this.appearancePresets,
+      ),
     );
   }
 
@@ -442,6 +850,10 @@ class PlayConfig {
     'asr': asr.toJson(),
     'showText': showText,
     'delayBetweenUnits': delayBetweenUnitsMs,
+    'appearance': appearance.toJson(),
+    'appearancePresets': appearancePresets
+        .map((item) => item.toJson())
+        .toList(growable: false),
   };
 
   factory PlayConfig.fromJson(Map<String, Object?> json) {
@@ -479,6 +891,32 @@ class PlayConfig {
     final asr = json['asr'] is Map
         ? AsrConfig.fromJson((json['asr'] as Map).cast<String, Object?>())
         : PlayConfig.defaults.asr;
+    final appearance = json['appearance'] is Map
+        ? AppearanceConfig.fromJson(
+            (json['appearance'] as Map).cast<String, Object?>(),
+          )
+        : AppearanceConfig(
+            theme: json['appearanceTheme']?.toString() ?? 'flat',
+          );
+    final appearancePresets = <AppearanceThemePreset>[];
+    final rawAppearancePresets = json['appearancePresets'];
+    if (rawAppearancePresets is List) {
+      for (final item in rawAppearancePresets) {
+        if (item is Map<String, Object?>) {
+          final preset = AppearanceThemePreset.fromJson(item);
+          if (preset.id.trim().isEmpty || preset.name.trim().isEmpty) continue;
+          appearancePresets.add(preset);
+          continue;
+        }
+        if (item is Map) {
+          final preset = AppearanceThemePreset.fromJson(
+            item.cast<String, Object?>(),
+          );
+          if (preset.id.trim().isEmpty || preset.name.trim().isEmpty) continue;
+          appearancePresets.add(preset);
+        }
+      }
+    }
 
     return PlayConfig(
       repeats: repeats,
@@ -489,6 +927,8 @@ class PlayConfig {
       asr: asr,
       showText: json['showText'] as bool? ?? true,
       delayBetweenUnitsMs: (json['delayBetweenUnits'] as num?)?.toInt() ?? 500,
+      appearance: appearance,
+      appearancePresets: appearancePresets,
     );
   }
 }
