@@ -76,4 +76,44 @@ class SettingsService {
       }),
     );
   }
+
+  Map<String, Object?> loadPracticeDashboard() {
+    final raw = _database.getSetting('practiceDashboard');
+    if (raw == null || raw.trim().isEmpty) {
+      return const <String, Object?>{
+        'date': '',
+        'todaySessions': 0,
+        'todayReviewed': 0,
+        'todayRemembered': 0,
+        'totalSessions': 0,
+        'totalReviewed': 0,
+        'totalRemembered': 0,
+        'lastSessionTitle': '',
+        'weakWords': <Object?>[],
+      };
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return decoded.cast<String, Object?>();
+      }
+    } catch (_) {
+      // ignore and fallback.
+    }
+    return const <String, Object?>{
+      'date': '',
+      'todaySessions': 0,
+      'todayReviewed': 0,
+      'todayRemembered': 0,
+      'totalSessions': 0,
+      'totalReviewed': 0,
+      'totalRemembered': 0,
+      'lastSessionTitle': '',
+      'weakWords': <Object?>[],
+    };
+  }
+
+  void savePracticeDashboard(Map<String, Object?> data) {
+    _database.setSetting('practiceDashboard', jsonEncode(data));
+  }
 }

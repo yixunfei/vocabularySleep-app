@@ -1,0 +1,66 @@
+import 'package:flutter/material.dart';
+
+class PageHeader extends StatelessWidget {
+  const PageHeader({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    this.eyebrow,
+    this.action,
+  });
+
+  final String title;
+  final String subtitle;
+  final String? eyebrow;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 390;
+        final textBlock = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            if ((eyebrow ?? '').trim().isNotEmpty) ...[
+              Text(
+                eyebrow!,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
+            Text(title, style: theme.textTheme.headlineMedium),
+            const SizedBox(height: 8),
+            Text(subtitle, style: theme.textTheme.bodyMedium),
+          ],
+        );
+
+        if (action == null) {
+          return textBlock;
+        }
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              textBlock,
+              const SizedBox(height: 12),
+              Align(alignment: Alignment.centerLeft, child: action!),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(child: textBlock),
+            const SizedBox(width: 12),
+            action!,
+          ],
+        );
+      },
+    );
+  }
+}

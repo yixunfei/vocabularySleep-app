@@ -212,6 +212,26 @@ class AsrConfig {
             AsrProviderType.localSimilarity,
           ]
         : engineOrder;
+    if (provider == AsrProviderType.multiEngine) {
+      const allowed = <AsrProviderType>[
+        AsrProviderType.offline,
+        AsrProviderType.offlineSmall,
+        AsrProviderType.localSimilarity,
+      ];
+      final filtered = <AsrProviderType>[];
+      for (final item in allowed) {
+        if (input.contains(item)) {
+          filtered.add(item);
+        }
+      }
+      if (filtered.isEmpty) {
+        filtered.addAll(const <AsrProviderType>[
+          AsrProviderType.offline,
+          AsrProviderType.localSimilarity,
+        ]);
+      }
+      return filtered;
+    }
     final output = <AsrProviderType>[];
     for (final item in input) {
       if (item == AsrProviderType.multiEngine) continue;

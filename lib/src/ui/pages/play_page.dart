@@ -1,0 +1,476 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../i18n/app_i18n.dart';
+import '../../models/play_config.dart';
+import '../../models/word_entry.dart';
+import '../../state/app_state.dart';
+import '../sheets/ambient_sheet.dart';
+import '../theme/app_theme.dart';
+import '../ui_copy.dart';
+import '../widgets/empty_state_view.dart';
+import '../widgets/page_header.dart';
+import '../widgets/section_header.dart';
+import '../widgets/status_badge.dart';
+import '../widgets/word_card.dart';
+import '../widgets/wordbook_switcher.dart';
+import 'follow_along_page.dart';
+
+class PlayPage extends StatelessWidget {
+  const PlayPage({
+    super.key,
+    required this.onOpenPractice,
+    required this.onOpenLibrary,
+  });
+
+  final VoidCallback onOpenPractice;
+  final VoidCallback onOpenLibrary;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final i18n = AppI18n(state.uiLanguage);
+    final current = state.currentWord;
+    if (state.selectedWordbook == null || current == null) {
+      return EmptyStateView(
+        icon: Icons.play_circle_outline_rounded,
+        title: pickUiText(i18n, zh: '还没有播放内容', en: 'Nothing to play yet'),
+        message: i18n.t('noWordbookYet'),
+      );
+    }
+
+    final visibleWords = state.visibleWords;
+    final index = visibleWords.indexWhere((item) => item.word == current.word);
+    final position = visibleWords.isEmpty
+        ? 0.0
+        : ((index + 1) / visibleWords.length);
+    final mode = experienceModeFromAppearance(state.config.appearance);
+    final weakCount = state.recentWeakWordEntries.length;
+    final todayAccuracy = (state.practiceTodayAccuracy * 100).round();
+    final showModeSuggestion =
+        (mode == AppExperienceMode.sleep && state.config.showText) ||
+        (mode == AppExperienceMode.focus && !state.config.showText);
+    final isPlaybackPaused = state.isPlaying && state.isPaused;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: <Widget>[
+        PageHeader(
+          eyebrow: experienceModeTitle(i18n, mode),
+          title: pickUiText(
+            i18n,
+            zh: '今晚想怎么听',
+            en: 'How do you want to play today',
+          ),
+          subtitle: experienceModeDescription(i18n, mode),
+          action: StatusBadge(
+            label: isPlaybackPaused
+                ? pickUiText(i18n, zh: '\u5df2\u6682\u505c', en: 'Paused')
+                : state.isPlaying
+                ? pickUiText(i18n, zh: '播放中', en: 'Playing')
+                : pickUiText(i18n, zh: '待播放', en: 'Ready'),
+            icon: isPlaybackPaused
+                ? Icons.pause_circle_filled_rounded
+                : state.isPlaying
+                ? Icons.graphic_eq_rounded
+                : Icons.play_circle_outline_rounded,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SectionHeader(
+                  title: pickUiText(
+                    i18n,
+                    zh: '下一步建议',
+                    en: 'Suggested next step',
+                  ),
+                  subtitle: pickUiText(
+                    i18n,
+                    zh: '把播放、练习和模式策略串联成连续路径。',
+                    en: 'Connect playback, practice, and mode strategy.',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (weakCount > 0)
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '你有 $weakCount 个最近薄弱词，建议先进入练习中心复习。',
+                      en: 'You have $weakCount recent weak words. Practice is recommended first.',
+                    ),
+                  )
+                else if (showModeSuggestion)
+                  Text(
+                    mode == AppExperienceMode.sleep
+                        ? pickUiText(
+                            i18n,
+                            zh: '当前是 Sleep 模式，建议关闭文本以减少视觉刺激。',
+                            en: 'Sleep mode is active. Hiding text can reduce visual stimulation.',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '当前是 Focus 模式，建议开启文本以提高复习效率。',
+                            en: 'Focus mode works better with text shown.',
+                          ),
+                  )
+                else
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: state.practiceTodaySessions > 0
+                          ? '你今天已完成 ${state.practiceTodaySessions} 次练习，当前正确率 $todayAccuracy%。可继续播放巩固。'
+                          : '建议先播放一轮当前范围，再进入练习中心做巩固。',
+                      en: state.practiceTodaySessions > 0
+                          ? 'You finished ${state.practiceTodaySessions} sessions today at $todayAccuracy% accuracy. Keep reinforcing with playback.'
+                          : 'Start with one playback cycle, then reinforce in Practice.',
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: <Widget>[
+                    if (weakCount > 0)
+                      FilledButton.icon(
+                        onPressed: onOpenPractice,
+                        icon: const Icon(Icons.fitness_center_rounded),
+                        label: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '去复习薄弱词',
+                            en: 'Review weak words',
+                          ),
+                        ),
+                      )
+                    else if (showModeSuggestion)
+                      FilledButton.tonalIcon(
+                        onPressed: () {
+                          state.updateConfig(
+                            state.config.copyWith(
+                              showText: mode == AppExperienceMode.focus,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.auto_fix_high_rounded),
+                        label: Text(
+                          mode == AppExperienceMode.sleep
+                              ? pickUiText(
+                                  i18n,
+                                  zh: '一键关闭文本',
+                                  en: 'Hide text now',
+                                )
+                              : pickUiText(
+                                  i18n,
+                                  zh: '一键显示文本',
+                                  en: 'Show text now',
+                                ),
+                        ),
+                      ),
+                    OutlinedButton.icon(
+                      onPressed: onOpenPractice,
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                      label: Text(
+                        pickUiText(i18n, zh: '打开练习中心', en: 'Open practice'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        WordbookSwitcher(
+          wordbook: state.selectedWordbook,
+          subtitle: pickUiText(
+            i18n,
+            zh: '${state.visibleWords.length} 个词可播放',
+            en: '${state.visibleWords.length} words in scope',
+          ),
+          onTap: () => _openWordbookSheet(context, state, i18n),
+        ),
+        const SizedBox(height: 18),
+        WordCard(
+          word: current,
+          i18n: i18n,
+          density: WordCardDensity.immersive,
+          showMeaning: state.config.showText,
+          showFields: mode == AppExperienceMode.focus,
+          isFavorite: state.favorites.contains(current.word),
+          isTaskWord: state.taskWords.contains(current.word),
+          onToggleFavorite: () => state.toggleFavorite(current),
+          onToggleTask: () => state.toggleTaskWord(current),
+          onPlayPronunciation: () => state.previewPronunciation(current.word),
+          onFollowAlong: () => _openFollowAlong(context, state, current),
+          onPreviousWord: () => _moveToPreviousWord(
+            state,
+            visibleWords: visibleWords,
+            currentIndex: index,
+          ),
+          onNextWord: () => _moveToNextWord(
+            state,
+            visibleWords: visibleWords,
+            currentIndex: index,
+          ),
+          onSwipePrevious: () => _moveToPreviousWord(
+            state,
+            visibleWords: visibleWords,
+            currentIndex: index,
+          ),
+          onSwipeNext: () => _moveToNextWord(
+            state,
+            visibleWords: visibleWords,
+            currentIndex: index,
+          ),
+          footer: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SectionHeader(
+                title: pickUiText(i18n, zh: '播放进度', en: 'Playback progress'),
+                subtitle: pickUiText(
+                  i18n,
+                  zh: '当前位置 ${index + 1}/${visibleWords.length}',
+                  en: 'Current position ${index + 1}/${visibleWords.length}',
+                ),
+              ),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(value: position.clamp(0, 1)),
+              const SizedBox(height: 10),
+              Slider(
+                value: index < 0 ? 0 : index.toDouble(),
+                min: 0,
+                max: visibleWords.isEmpty
+                    ? 0
+                    : (visibleWords.length - 1).toDouble(),
+                divisions: visibleWords.length > 1
+                    ? visibleWords.length - 1
+                    : null,
+                onChanged: visibleWords.length <= 1
+                    ? null
+                    : (value) => state.selectWordIndex(value.round()),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SectionHeader(
+                  title: pickUiText(i18n, zh: '播放模式', en: 'Playback mode'),
+                  subtitle: pickUiText(
+                    i18n,
+                    zh: '把高频控制收在主场景里',
+                    en: 'Keep high-frequency controls close to the listening flow.',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SegmentedButton<PlayOrder>(
+                  segments: PlayOrder.values
+                      .map(
+                        (order) => ButtonSegment<PlayOrder>(
+                          value: order,
+                          label: Text(playOrderLabel(i18n, order)),
+                        ),
+                      )
+                      .toList(growable: false),
+                  selected: <PlayOrder>{state.config.order},
+                  onSelectionChanged: (selection) {
+                    state.updateConfig(
+                      state.config.copyWith(order: selection.first),
+                    );
+                  },
+                ),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(i18n.t('showText')),
+                  subtitle: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '睡眠场景可关闭释义，只保留语音输入',
+                      en: 'Hide text when you want a lower-visual listening mode.',
+                    ),
+                  ),
+                  value: state.config.showText,
+                  onChanged: (value) => state.updateConfig(
+                    state.config.copyWith(showText: value),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 420;
+                final primaryControl = FilledButton.icon(
+                  onPressed: state.isPlaying
+                      ? state.pauseOrResume
+                      : state.playCurrentWordbook,
+                  icon: Icon(
+                    state.isPlaying && !state.isPaused
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                  ),
+                  label: Text(
+                    state.isPlaying && !state.isPaused
+                        ? i18n.t('pause')
+                        : i18n.t('play'),
+                  ),
+                );
+
+                final secondaryButtons = <Widget>[
+                  OutlinedButton.icon(
+                    onPressed: () => showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => AmbientSheet(state: state, i18n: i18n),
+                    ),
+                    icon: const Icon(Icons.surround_sound_rounded),
+                    label: Text(pickUiText(i18n, zh: '环境音', en: 'Ambient')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onOpenPractice,
+                    icon: const Icon(Icons.fitness_center_rounded),
+                    label: Text(pageLabelPractice(i18n)),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onOpenLibrary,
+                    icon: const Icon(Icons.menu_book_rounded),
+                    label: Text(pageLabelLibrary(i18n)),
+                  ),
+                ];
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      SizedBox(width: double.infinity, child: primaryControl),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: secondaryButtons,
+                      ),
+                    ],
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    SizedBox(width: double.infinity, child: primaryControl),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: secondaryButtons,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openFollowAlong(
+    BuildContext context,
+    AppState state,
+    WordEntry word,
+  ) async {
+    state.selectWordEntry(word);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
+    );
+  }
+
+  Future<void> _moveToPreviousWord(
+    AppState state, {
+    required List<WordEntry> visibleWords,
+    required int currentIndex,
+  }) async {
+    if (state.isPlaying) {
+      await state.movePlaybackPreviousWord();
+      return;
+    }
+    if (visibleWords.isEmpty) return;
+    final base = currentIndex < 0 ? 0 : currentIndex;
+    final target = (base - 1 + visibleWords.length) % visibleWords.length;
+    state.selectWordEntry(visibleWords[target]);
+  }
+
+  Future<void> _moveToNextWord(
+    AppState state, {
+    required List<WordEntry> visibleWords,
+    required int currentIndex,
+  }) async {
+    if (state.isPlaying) {
+      await state.movePlaybackNextWord();
+      return;
+    }
+    if (visibleWords.isEmpty) return;
+    final base = currentIndex < 0 ? 0 : currentIndex;
+    final target = (base + 1) % visibleWords.length;
+    state.selectWordEntry(visibleWords[target]);
+  }
+
+  Future<void> _openWordbookSheet(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            children: <Widget>[
+              Text(
+                pickUiText(i18n, zh: '切换词本', en: 'Switch wordbook'),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              for (final book in state.wordbooks) ...[
+                Card(
+                  child: ListTile(
+                    selected: state.selectedWordbook?.id == book.id,
+                    title: Text(book.name),
+                    subtitle: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '${book.wordCount} 个词',
+                        en: '${book.wordCount} words',
+                      ),
+                    ),
+                    onTap: () async {
+                      await state.selectWordbook(book);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

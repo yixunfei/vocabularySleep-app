@@ -71,6 +71,15 @@ class AppState extends ChangeNotifier {
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
   String? _lastBackupPath;
+  String _practiceDateKey = '';
+  int _practiceTodaySessions = 0;
+  int _practiceTodayReviewed = 0;
+  int _practiceTodayRemembered = 0;
+  int _practiceTotalSessions = 0;
+  int _practiceTotalReviewed = 0;
+  int _practiceTotalRemembered = 0;
+  String _practiceLastSessionTitle = '';
+  List<String> _practiceWeakWords = <String>[];
 
   bool _isPlaying = false;
   bool _isPaused = false;
@@ -121,11 +130,42 @@ class AppState extends ChangeNotifier {
   bool get testModeRevealed => _testModeRevealed;
   bool get testModeHintRevealed => _testModeHintRevealed;
   String? get lastBackupPath => _lastBackupPath;
+  int get practiceTodaySessions => _practiceTodaySessions;
+  int get practiceTodayReviewed => _practiceTodayReviewed;
+  int get practiceTodayRemembered => _practiceTodayRemembered;
+  int get practiceTotalSessions => _practiceTotalSessions;
+  int get practiceTotalReviewed => _practiceTotalReviewed;
+  int get practiceTotalRemembered => _practiceTotalRemembered;
+  String get practiceLastSessionTitle => _practiceLastSessionTitle;
+  List<String> get practiceWeakWords => _practiceWeakWords;
+  double get practiceTodayAccuracy => _practiceTodayReviewed <= 0
+      ? 0
+      : (_practiceTodayRemembered / _practiceTodayReviewed).clamp(0.0, 1.0);
+  double get practiceTotalAccuracy => _practiceTotalReviewed <= 0
+      ? 0
+      : (_practiceTotalRemembered / _practiceTotalReviewed).clamp(0.0, 1.0);
   List<AmbientSource> get ambientSources => _ambient.sources;
   double get ambientMasterVolume => _ambient.masterVolume;
 
   List<WordEntry> get visibleWords =>
       filterWords(words: _words, query: _searchQuery, mode: _searchMode);
+
+  List<WordEntry> get recentWeakWordEntries {
+    if (_practiceWeakWords.isEmpty || _words.isEmpty) {
+      return const <WordEntry>[];
+    }
+    final byWord = <String, WordEntry>{
+      for (final item in _words) item.word.trim(): item,
+    };
+    final output = <WordEntry>[];
+    for (final word in _practiceWeakWords) {
+      final entry = byWord[word];
+      if (entry != null) {
+        output.add(entry);
+      }
+    }
+    return output;
+  }
 
   WordEntry? get currentWord {
     if (_currentWordIndex < 0 || _currentWordIndex >= _words.length) {
@@ -155,6 +195,8 @@ class AppState extends ChangeNotifier {
       _testModeEnabled = testModeState['enabled'] ?? false;
       _testModeRevealed = testModeState['revealed'] ?? false;
       _testModeHintRevealed = testModeState['hintRevealed'] ?? false;
+      _loadPracticeDashboard();
+      _ensurePracticeDate(persist: true);
       await _reloadWordbooks(keepCurrentSelection: false);
       await _syncSpecialWordbooks();
       _initialized = true;
@@ -230,6 +272,45 @@ class AppState extends ChangeNotifier {
     _testModeRevealed = false;
     _testModeHintRevealed = false;
     _persistTestModeState();
+    notifyListeners();
+  }
+
+  void recordPracticeSession({
+    required String title,
+    required int total,
+    required int remembered,
+    required List<String> weakWords,
+  }) {
+    final safeTotal = total < 0 ? 0 : total;
+    final safeRemembered = remembered.clamp(0, safeTotal).toInt();
+    if (safeTotal <= 0) return;
+
+    _ensurePracticeDate();
+    _practiceTodaySessions += 1;
+    _practiceTodayReviewed += safeTotal;
+    _practiceTodayRemembered += safeRemembered;
+    _practiceTotalSessions += 1;
+    _practiceTotalReviewed += safeTotal;
+    _practiceTotalRemembered += safeRemembered;
+    _practiceLastSessionTitle = title.trim();
+
+    final merged = <String>[];
+    void addWord(String raw) {
+      final value = raw.trim();
+      if (value.isEmpty) return;
+      if (!merged.contains(value)) {
+        merged.add(value);
+      }
+    }
+
+    for (final item in weakWords) {
+      addWord(item);
+    }
+    for (final item in _practiceWeakWords) {
+      addWord(item);
+    }
+    _practiceWeakWords = merged.take(40).toList(growable: false);
+    _persistPracticeDashboard();
     notifyListeners();
   }
 
@@ -1144,8 +1225,65 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> previewPronunciation(String word) {
-    return _playback.speakText(word, _config);
+  Future<void> previewPronunciation(String word) async {
+    final target = word.trim();
+    if (target.isEmpty) return;
+    final configSnapshot = _config;
+    try {
+      await _playback.speakText(target, configSnapshot);
+      return;
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'preview pronunciation failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'provider': configSnapshot.tts.provider.name,
+          'word': target,
+        },
+      );
+
+      if (configSnapshot.tts.provider != TtsProviderType.local) {
+        final fallbackConfig = configSnapshot.copyWith(
+          tts: configSnapshot.tts.copyWith(
+            provider: TtsProviderType.local,
+            voice: configSnapshot.tts.localVoice,
+          ),
+        );
+        try {
+          _log.w(
+            'app_state',
+            'preview pronunciation fallback to local tts',
+            data: <String, Object?>{'word': target},
+          );
+          await _playback.speakText(target, fallbackConfig);
+          return;
+        } catch (fallbackError, fallbackStackTrace) {
+          _log.e(
+            'app_state',
+            'preview pronunciation local fallback failed',
+            error: fallbackError,
+            stackTrace: fallbackStackTrace,
+            data: <String, Object?>{'word': target},
+          );
+          _setMessage(
+            'errorInitFailed',
+            params: <String, Object?>{
+              'error': 'preview pronunciation: $fallbackError',
+            },
+          );
+          notifyListeners();
+          return;
+        }
+      }
+
+      _setMessage(
+        'errorInitFailed',
+        params: <String, Object?>{'error': 'preview pronunciation: $error'},
+      );
+      notifyListeners();
+    }
   }
 
   Future<List<String>> fetchLocalTtsVoices() async {
@@ -1879,6 +2017,71 @@ class AppState extends ChangeNotifier {
     if (notify) {
       notifyListeners();
     }
+  }
+
+  void _loadPracticeDashboard() {
+    final data = _settings.loadPracticeDashboard();
+    _practiceDateKey = '${data['date'] ?? ''}'.trim();
+    _practiceTodaySessions = _readPracticeInt(data['todaySessions']);
+    _practiceTodayReviewed = _readPracticeInt(data['todayReviewed']);
+    _practiceTodayRemembered = _readPracticeInt(data['todayRemembered']);
+    _practiceTotalSessions = _readPracticeInt(data['totalSessions']);
+    _practiceTotalReviewed = _readPracticeInt(data['totalReviewed']);
+    _practiceTotalRemembered = _readPracticeInt(data['totalRemembered']);
+    _practiceLastSessionTitle = '${data['lastSessionTitle'] ?? ''}'.trim();
+
+    final weakWords = <String>[];
+    final rawWeakWords = data['weakWords'];
+    if (rawWeakWords is List) {
+      for (final item in rawWeakWords) {
+        final value = '$item'.trim();
+        if (value.isEmpty || weakWords.contains(value)) continue;
+        weakWords.add(value);
+      }
+    }
+    _practiceWeakWords = weakWords.take(40).toList(growable: false);
+  }
+
+  int _readPracticeInt(Object? value) {
+    if (value is int) return value < 0 ? 0 : value;
+    if (value is num) {
+      final parsed = value.toInt();
+      return parsed < 0 ? 0 : parsed;
+    }
+    return 0;
+  }
+
+  void _ensurePracticeDate({bool persist = false}) {
+    final today = _todayDateKey();
+    if (_practiceDateKey == today) return;
+    _practiceDateKey = today;
+    _practiceTodaySessions = 0;
+    _practiceTodayReviewed = 0;
+    _practiceTodayRemembered = 0;
+    if (persist) {
+      _persistPracticeDashboard();
+    }
+  }
+
+  String _todayDateKey() {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    return '${now.year}-$month-$day';
+  }
+
+  void _persistPracticeDashboard() {
+    _settings.savePracticeDashboard(<String, Object?>{
+      'date': _practiceDateKey,
+      'todaySessions': _practiceTodaySessions,
+      'todayReviewed': _practiceTodayReviewed,
+      'todayRemembered': _practiceTodayRemembered,
+      'totalSessions': _practiceTotalSessions,
+      'totalReviewed': _practiceTotalReviewed,
+      'totalRemembered': _practiceTotalRemembered,
+      'lastSessionTitle': _practiceLastSessionTitle,
+      'weakWords': _practiceWeakWords,
+    });
   }
 
   void _persistTestModeState() {
