@@ -154,8 +154,8 @@ class HelpCenterPage extends StatelessWidget {
             title: pickUiText(i18n, zh: '词本管理', en: 'Wordbook management'),
             subtitle: pickUiText(
               i18n,
-              zh: '新建、重命名、删除与合并词本。',
-              en: 'Create, rename, delete, and merge wordbooks.',
+              zh: '新增、导入、编辑、重命名与合并词本。',
+              en: 'Create, import, edit, rename, and merge wordbooks.',
             ),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(

@@ -22,13 +22,20 @@ class SettingTile extends StatelessWidget {
     final resolvedTrailing =
         trailing ??
         (onTap != null ? const Icon(Icons.chevron_right_rounded) : null);
+    final iconLikeTrailing =
+        resolvedTrailing is Icon || resolvedTrailing is IconButton;
 
-    Widget buildTrailing() {
+    Widget buildTrailing({
+      int maxLines = 1,
+      TextAlign textAlign = TextAlign.right,
+    }) {
       final trailingChild = resolvedTrailing;
       if (trailingChild == null) return const SizedBox.shrink();
       return DefaultTextStyle.merge(
-        maxLines: 1,
+        maxLines: maxLines,
         overflow: TextOverflow.ellipsis,
+        softWrap: maxLines > 1,
+        textAlign: textAlign,
         style: theme.textTheme.labelLarge?.copyWith(
           color: theme.colorScheme.primary,
           fontWeight: FontWeight.w700,
@@ -48,20 +55,78 @@ class SettingTile extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 380;
+              final stackTextTrailing =
+                  resolvedTrailing != null &&
+                  !iconLikeTrailing &&
+                  constraints.maxWidth < 340;
+              final trailingMaxWidth = iconLikeTrailing
+                  ? 28.0
+                  : constraints.maxWidth * (stackTextTrailing ? 0.62 : 0.4);
+
+              final header = resolvedTrailing == null
+                  ? Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    )
+                  : stackTextTrailing
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 6),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: trailingMaxWidth,
+                            ),
+                            child: buildTrailing(maxLines: 2),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: trailingMaxWidth,
+                            minWidth: iconLikeTrailing ? 24 : 0,
+                          ),
+                          child: Align(
+                            alignment: Alignment.topRight,
+                            child: buildTrailing(
+                              maxLines: iconLikeTrailing ? 1 : 2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+
               final textBlock = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium,
-                  ),
+                  header,
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    maxLines: 2,
+                    maxLines: stackTextTrailing ? 2 : 3,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall,
                   ),
@@ -82,30 +147,6 @@ class SettingTile extends StatelessWidget {
                 );
               }
 
-              if (isNarrow) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Icon(icon),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: textBlock),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 36),
-                      child: buildTrailing(),
-                    ),
-                  ],
-                );
-              }
-
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -115,16 +156,6 @@ class SettingTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: textBlock),
-                  const SizedBox(width: 10),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: constraints.maxWidth * 0.42,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: buildTrailing(),
-                    ),
-                  ),
                 ],
               );
             },

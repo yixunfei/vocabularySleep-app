@@ -9,6 +9,7 @@ import 'package:sqlite3/sqlite3.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/wordbook.dart';
+import 'app_log_service.dart';
 import 'wordbook_import_service.dart';
 
 class WordbookMergeResult {
@@ -45,6 +46,7 @@ class AppDatabaseService {
   AppDatabaseService(this._importService);
 
   final WordbookImportService _importService;
+  final AppLogService _log = AppLogService.instance;
 
   late final Database _db;
   late final String dbPath;
@@ -55,24 +57,8 @@ class AppDatabaseService {
     'builtin:favorites': 'Favorites',
     'builtin:task': 'Task',
   };
-
-  static const _builtins = <_BuiltInWordbookConfig>[
-    _BuiltInWordbookConfig(
-      path: 'builtin:words-data',
-      name: 'GPT Words (Built-in)',
-      assetPath: 'assets/wordbooks/words-data.json',
-    ),
-    _BuiltInWordbookConfig(
-      path: 'builtin:zh-fr-basic',
-      name: 'ZH-FR Basic (Built-in)',
-      assetPath: 'assets/wordbooks/chinese-french-dictionary.json',
-    ),
-    _BuiltInWordbookConfig(
-      path: 'builtin:zh-de-basic',
-      name: 'ZH-DE Basic (Built-in)',
-      assetPath: 'assets/wordbooks/ch-gem.json',
-    ),
-  ];
+  static const String _dictAssetPrefix = 'dict/';
+  static const String _dictBuiltinPathPrefix = 'builtin:dict:';
 
   Future<void> init() async {
     if (_initialized) return;
@@ -83,10 +69,12 @@ class AppDatabaseService {
     dbPath = p.join(supportDir.path, 'vocabulary.db');
     _db = sqlite3.open(dbPath);
     _db.execute('PRAGMA foreign_keys = ON;');
+    _db.execute('PRAGMA journal_mode = WAL;');
+    _db.execute('PRAGMA synchronous = NORMAL;');
     _createTables();
     _migrateWordsSchema();
     ensureSpecialWordbooks();
-    await seedBuiltInWordbooks();
+    await syncBuiltInWordbooksCatalog();
     _initialized = true;
   }
 
@@ -121,9 +109,43 @@ class AppDatabaseService {
     return targetPath;
   }
 
+  Future<void> resetUserData() async {
+    if (!_initialized) {
+      throw StateError('Database is not initialized');
+    }
+
+    _runInTransaction<void>(() {
+      _db.execute('DELETE FROM user_marks;');
+      _db.execute('DELETE FROM progress;');
+      _db.execute('''
+        DELETE FROM words
+        WHERE wordbook_id IN (
+          SELECT id FROM wordbooks
+          WHERE path IN ('builtin:favorites', 'builtin:task')
+        )
+        ''');
+      _db.execute('''
+        DELETE FROM wordbooks
+        WHERE path IS NULL OR path NOT LIKE 'builtin:%'
+        ''');
+      _db.execute('DELETE FROM settings;');
+      _db.execute('''
+        UPDATE wordbooks
+        SET word_count = (
+          SELECT COUNT(*)
+          FROM words
+          WHERE words.wordbook_id = wordbooks.id
+        )
+        ''');
+    });
+
+    ensureSpecialWordbooks();
+    await syncBuiltInWordbooksCatalog();
+  }
+
   void dispose() {
     if (!_initialized) return;
-    _db.close();
+    _db.dispose();
     _initialized = false;
   }
 
@@ -228,40 +250,118 @@ class AppDatabaseService {
     }
   }
 
-  Future<void> seedBuiltInWordbooks() async {
-    for (final builtin in _builtins) {
+  Future<void> syncBuiltInWordbooksCatalog() async {
+    final builtins = await _resolveBuiltInWordbooks();
+    if (builtins.isEmpty) return;
+    _removeObsoleteBuiltInWordbooks(builtins.map((item) => item.path).toSet());
+    var created = 0;
+    var renamed = 0;
+    for (final builtin in builtins) {
       final existing = _selectOne(
-        'SELECT id, word_count FROM wordbooks WHERE path = ?',
+        'SELECT id, name, word_count FROM wordbooks WHERE path = ?',
         <Object?>[builtin.path],
       );
-      if (existing != null &&
-          ((existing['word_count'] as num?)?.toInt() ?? 0) > 0) {
+
+      if (existing == null) {
+        _db.execute(
+          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
+          <Object?>[builtin.name, builtin.path],
+        );
+        created += 1;
         continue;
       }
 
-      final content = await rootBundle.loadString(builtin.assetPath);
-      final entries = _importService.parseJsonText(content);
-      await importWordbook(
-        sourcePath: builtin.path,
-        name: builtin.name,
-        entries: entries,
-        replaceExisting: true,
-      );
+      final currentName = existing['name']?.toString().trim() ?? '';
+      if (currentName == builtin.name) continue;
+      _db.execute('UPDATE wordbooks SET name = ? WHERE path = ?', <Object?>[
+        builtin.name,
+        builtin.path,
+      ]);
+      renamed += 1;
     }
+    _log.i(
+      'database',
+      'built-in wordbook catalog synced',
+      data: <String, Object?>{
+        'count': builtins.length,
+        'created': created,
+        'renamed': renamed,
+      },
+    );
+  }
+
+  bool isLazyBuiltInPath(String path) =>
+      path.startsWith(_dictBuiltinPathPrefix);
+
+  Future<int> ensureBuiltInWordbookLoaded(String path) async {
+    if (!isLazyBuiltInPath(path)) return 0;
+
+    final builtins = await _resolveBuiltInWordbooks();
+    _BuiltInWordbookConfig? target;
+    for (final builtin in builtins) {
+      if (builtin.path == path) {
+        target = builtin;
+        break;
+      }
+    }
+
+    if (target == null) {
+      throw StateError('Built-in wordbook asset missing: $path');
+    }
+
+    final existing = _selectOne(
+      'SELECT word_count FROM wordbooks WHERE path = ?',
+      <Object?>[path],
+    );
+    if (existing == null) {
+      _db.execute(
+        'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
+        <Object?>[target.name, target.path],
+      );
+    } else if (((existing['word_count'] as num?) ?? 0).toInt() > 0) {
+      return ((existing['word_count'] as num?) ?? 0).toInt();
+    }
+
+    _log.i(
+      'database',
+      'loading built-in wordbook on demand',
+      data: <String, Object?>{'path': path, 'assetPath': target.assetPath},
+    );
+    final content = await rootBundle.loadString(target.assetPath);
+    final entries = _importService.parseJsonText(content);
+    final imported = await importWordbook(
+      sourcePath: target.path,
+      name: target.name,
+      entries: entries,
+      replaceExisting: true,
+    );
+    _log.i(
+      'database',
+      'built-in wordbook loaded',
+      data: <String, Object?>{
+        'path': path,
+        'assetPath': target.assetPath,
+        'count': imported,
+      },
+    );
+    return imported;
   }
 
   List<Wordbook> getWordbooks() {
     final rows = _selectMaps('''
       SELECT * FROM wordbooks
       ORDER BY
-        CASE path
-          WHEN 'builtin:task' THEN 0
-          WHEN 'builtin:favorites' THEN 1
-          WHEN 'builtin:words-data' THEN 2
-          WHEN 'builtin:zh-fr-basic' THEN 3
-          WHEN 'builtin:zh-de-basic' THEN 4
-          ELSE 5
+        CASE
+          WHEN path = 'builtin:task' THEN 0
+          WHEN path = 'builtin:favorites' THEN 1
+          WHEN path LIKE 'builtin:dict:%' THEN 2
+          WHEN path LIKE 'builtin:%' THEN 3
+          ELSE 4
         END,
+        CASE
+          WHEN path LIKE 'builtin:dict:%' THEN name
+          ELSE ''
+        END COLLATE NOCASE ASC,
         id DESC
     ''');
     return rows.map(Wordbook.fromMap).toList();
@@ -394,9 +494,10 @@ class AppDatabaseService {
     final existingFields = parseFieldItemsJson(
       existing['fields_json']?.toString() ?? '',
     );
-    final normalizedRawContent = payload.rawContent.trim().isNotEmpty
-        ? payload.rawContent.trim()
-        : (existing['raw_content']?.toString() ?? '');
+    final incomingRawContent = sanitizeDisplayText(payload.rawContent);
+    final normalizedRawContent = incomingRawContent.isNotEmpty
+        ? incomingRawContent
+        : sanitizeDisplayText(existing['raw_content']?.toString() ?? '');
     final normalizedFields = mergeFieldItems(<WordFieldItem>[
       ...existingFields,
       ...payload.fields,
@@ -470,9 +571,10 @@ class AppDatabaseService {
     final existingFields = parseFieldItemsJson(
       existing['fields_json']?.toString() ?? '',
     );
-    final normalizedRawContent = payload.rawContent.trim().isNotEmpty
-        ? payload.rawContent.trim()
-        : (existing['raw_content']?.toString() ?? '');
+    final incomingRawContent = sanitizeDisplayText(payload.rawContent);
+    final normalizedRawContent = incomingRawContent.isNotEmpty
+        ? incomingRawContent
+        : sanitizeDisplayText(existing['raw_content']?.toString() ?? '');
     final normalizedFields = mergeFieldItems(<WordFieldItem>[
       ...existingFields,
       ...payload.fields,
@@ -699,10 +801,69 @@ class AppDatabaseService {
             ],
           );
         }
+
+        _db.execute('''
+          UPDATE wordbooks
+          SET word_count = (
+            SELECT COUNT(*)
+            FROM words
+            WHERE words.wordbook_id = wordbooks.id
+          );
+          ''');
       });
+      ensureSpecialWordbooks();
+      await syncBuiltInWordbooksCatalog();
       return legacyWords.length;
     } finally {
-      legacyDb.close();
+      legacyDb.dispose();
+    }
+  }
+
+  Future<List<_BuiltInWordbookConfig>> _resolveBuiltInWordbooks() async {
+    try {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final assets =
+          manifest
+              .listAssets()
+              .where(
+                (path) =>
+                    path.startsWith(_dictAssetPrefix) &&
+                    path.toLowerCase().endsWith('.json'),
+              )
+              .toList(growable: false)
+            ..sort();
+
+      return assets.map(_buildBuiltInConfigFromAsset).toList(growable: false);
+    } catch (_) {
+      return const <_BuiltInWordbookConfig>[];
+    }
+  }
+
+  _BuiltInWordbookConfig _buildBuiltInConfigFromAsset(String assetPath) {
+    final filename = p.basenameWithoutExtension(assetPath).trim();
+    final baseName = filename.isEmpty ? 'dict' : filename;
+    return _BuiltInWordbookConfig(
+      path: '$_dictBuiltinPathPrefix$baseName',
+      name: baseName,
+      assetPath: assetPath,
+    );
+  }
+
+  void _removeObsoleteBuiltInWordbooks(Set<String> targetBuiltinPaths) {
+    final rows = _selectMaps(
+      'SELECT id, path FROM wordbooks WHERE path LIKE ?;',
+      <Object?>['builtin:%'],
+    );
+    for (final row in rows) {
+      final path = row['path']?.toString() ?? '';
+      if (_specialWordbooks.containsKey(path)) continue;
+      if (targetBuiltinPaths.contains(path)) continue;
+      final wordbookId = (row['id'] as num?)?.toInt();
+      if (wordbookId == null) continue;
+      _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
+        wordbookId,
+      ]);
+      _db.execute('DELETE FROM wordbooks WHERE id = ?', <Object?>[wordbookId]);
     }
   }
 
@@ -738,8 +899,8 @@ class AppDatabaseService {
   }
 
   void _insertWord(int wordbookId, WordEntryPayload payload) {
-    final normalizedWord = payload.word.trim();
-    final normalizedRawContent = payload.rawContent.trim();
+    final normalizedWord = sanitizeDisplayText(payload.word).trim();
+    final normalizedRawContent = sanitizeDisplayText(payload.rawContent);
 
     final fields = mergeFieldItems(<WordFieldItem>[
       ...payload.fields,

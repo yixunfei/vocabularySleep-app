@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../state/app_state.dart';
+import '../legacy_style.dart';
 import '../sheets/ambient_sheet.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
+import 'effectful_text.dart';
 
 class MiniPlayer extends StatefulWidget {
   const MiniPlayer({
@@ -437,6 +439,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
     if (state.selectedWordbook == null) return const SizedBox.shrink();
     final i18n = _i18n;
     final tokens = AppThemeTokens.of(context);
+    final appearance = LegacyStyle.appearance;
     final compact = state.config.appearance.compactLayout;
     final isPlaying = state.isPlaying;
     final title = isPlaying
@@ -458,13 +461,20 @@ class _MiniPlayerState extends State<MiniPlayer> {
           decoration: BoxDecoration(
             color: tokens.surfaceOverlay,
             borderRadius: BorderRadius.circular(compact ? 22 : 26),
-            border: Border.all(color: tokens.outline),
+            border: Border.all(
+              color: appearance.playbackGlow
+                  ? tokens.accent.withValues(alpha: 0.75)
+                  : tokens.outline,
+            ),
             boxShadow: <BoxShadow>[
               BoxShadow(
                 color: tokens.glow.withValues(
-                  alpha: tokens.isDark ? 0.18 : 0.08,
+                  alpha: appearance.playbackGlow
+                      ? (tokens.isDark ? 0.32 : 0.2)
+                      : (tokens.isDark ? 0.18 : 0.08),
                 ),
-                blurRadius: 18,
+                blurRadius: appearance.playbackGlow ? 28 : 18,
+                spreadRadius: appearance.playbackGlow ? 1.2 : 0,
                 offset: const Offset(0, 8),
               ),
             ],
@@ -486,11 +496,14 @@ class _MiniPlayerState extends State<MiniPlayer> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
+                          EffectfulText(
                             title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleMedium,
+                            maxLines: appearance.marqueeText ? null : 1,
+                            rainbowText: appearance.rainbowText,
+                            marqueeText: appearance.marqueeText,
+                            breathingEffect: appearance.breathingEffect,
+                            flowingEffect: appearance.flowingEffect,
                           ),
                           const SizedBox(height: 4),
                           Text(

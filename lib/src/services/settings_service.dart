@@ -6,6 +6,8 @@ import 'database_service.dart';
 class SettingsService {
   const SettingsService(this._database);
 
+  static const String uiLanguageSystem = 'system';
+
   final AppDatabaseService _database;
 
   PlayConfig loadPlayConfig() {
@@ -26,10 +28,19 @@ class SettingsService {
     _database.setSetting('playConfig', jsonEncode(config.toJson()));
   }
 
-  String loadUiLanguage() => _database.getSetting('uiLanguage') ?? 'zh';
+  String loadUiLanguage() {
+    final raw = _database.getSetting('uiLanguage');
+    if (raw == null) return uiLanguageSystem;
+    final normalized = raw.trim();
+    return normalized.isEmpty ? uiLanguageSystem : normalized;
+  }
 
   void saveUiLanguage(String language) {
-    _database.setSetting('uiLanguage', language);
+    final normalized = language.trim();
+    _database.setSetting(
+      'uiLanguage',
+      normalized.isEmpty ? uiLanguageSystem : normalized,
+    );
   }
 
   Map<String, bool> loadTestModeState() {

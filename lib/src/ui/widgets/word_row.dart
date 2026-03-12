@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
+import '../legacy_style.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
+import 'effectful_text.dart';
 
 enum _WordRowMenuAction { toggleFavorite, toggleTask }
 
@@ -41,6 +43,15 @@ class WordRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tokens = AppThemeTokens.of(context);
+    final appearance = LegacyStyle.appearance;
+    final rowAccent = appearance.randomEntryColors
+        ? seededAccentColor(
+            '${word.wordbookId}:${word.word}',
+            fallback: tokens.accent,
+            saturation: 0.52,
+            value: tokens.isDark ? 0.9 : 0.8,
+          )
+        : tokens.accent;
     final subtitle = word.meaning?.trim().isNotEmpty == true
         ? word.meaning!
         : (word.fields.isEmpty ? '' : word.fields.first.asText());
@@ -51,7 +62,18 @@ class WordRow extends StatelessWidget {
     final hasMenuActions = onToggleFavorite != null || onToggleTask != null;
 
     return Card(
-      color: selected ? tokens.surfaceStrong : null,
+      color: selected
+          ? Color.lerp(tokens.surfaceStrong, rowAccent, 0.14)
+          : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: (selected ? rowAccent : tokens.outline).withValues(
+            alpha: selected ? 0.92 : (appearance.randomEntryColors ? 0.82 : 1),
+          ),
+          width: selected ? 1.35 : 1,
+        ),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
@@ -63,15 +85,43 @@ class WordRow extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  Container(
+                    width: 10,
+                    height: 10,
+                    margin: const EdgeInsets.only(top: 8, right: 10),
+                    decoration: BoxDecoration(
+                      color: rowAccent,
+                      shape: BoxShape.circle,
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: rowAccent.withValues(
+                            alpha: appearance.randomEntryColors ? 0.32 : 0.18,
+                          ),
+                          blurRadius: appearance.randomEntryColors ? 10 : 6,
+                        ),
+                      ],
+                    ),
+                  ),
                   Expanded(
-                    child: Text(
+                    child: EffectfulText(
                       word.word,
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleLarge?.copyWith(
-                        color: selected ? tokens.accent : null,
+                        color: selected
+                            ? rowAccent
+                            : (appearance.randomEntryColors
+                                  ? Color.lerp(
+                                      tokens.textPrimary,
+                                      rowAccent,
+                                      0.28,
+                                    )
+                                  : null),
                         fontWeight: FontWeight.w700,
                       ),
+                      rainbowText: selected && appearance.rainbowText,
+                      marqueeText: selected && appearance.marqueeText,
+                      breathingEffect: selected && appearance.breathingEffect,
+                      flowingEffect: selected && appearance.flowingEffect,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -92,7 +142,7 @@ class WordRow extends StatelessWidget {
                       _WordRowTag(
                         label: '\u5f53\u524d',
                         icon: Icons.navigation_rounded,
-                        color: tokens.accent,
+                        color: rowAccent,
                       ),
                     if (isFavorite)
                       _WordRowTag(

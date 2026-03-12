@@ -5,6 +5,7 @@ import '../../i18n/app_i18n.dart';
 import '../../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
+import '../wordbook_localization.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
 import 'data_management_page.dart';
@@ -60,8 +61,8 @@ class MorePage extends StatelessWidget {
                 Text(
                   pickUiText(
                     i18n,
-                    zh: '当前词本：${state.selectedWordbook?.name ?? '-'}',
-                    en: 'Current wordbook: ${state.selectedWordbook?.name ?? '-'}',
+                    zh: '当前词本：${localizedWordbookName(i18n, state.selectedWordbook)}',
+                    en: 'Current wordbook: ${localizedWordbookName(i18n, state.selectedWordbook)}',
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -97,8 +98,8 @@ class MorePage extends StatelessWidget {
           title: pickUiText(i18n, zh: '词本管理', en: 'Wordbook management'),
           subtitle: pickUiText(
             i18n,
-            zh: '新建、重命名、删除和合并词本',
-            en: 'Create, rename, delete, and merge wordbooks.',
+            zh: '新增、导入、编辑、重命名和合并词本',
+            en: 'Create, import, edit, rename, and merge wordbooks.',
           ),
           onTap: () {
             Navigator.of(context).push(

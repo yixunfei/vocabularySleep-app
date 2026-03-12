@@ -3,13 +3,20 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
+import '../../services/asr_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
-class RecognitionSettingsPage extends StatelessWidget {
+class RecognitionSettingsPage extends StatefulWidget {
   const RecognitionSettingsPage({super.key});
 
+  @override
+  State<RecognitionSettingsPage> createState() =>
+      _RecognitionSettingsPageState();
+}
+
+class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
   static const List<AsrProviderType> _multiEngineCandidates = <AsrProviderType>[
     AsrProviderType.offline,
     AsrProviderType.offlineSmall,
@@ -28,6 +35,201 @@ class RecognitionSettingsPage extends StatelessWidget {
     PronScoringMethod.forcedAlignmentPer,
     PronScoringMethod.ppgPosterior,
   ];
+
+  static const List<AsrProviderType> _managedOfflineProviders =
+      <AsrProviderType>[AsrProviderType.offline, AsrProviderType.offlineSmall];
+
+  static const Map<AsrProviderType, String> _asrOfflineModelSizeHints =
+      <AsrProviderType, String>{
+        AsrProviderType.offline: '~150 MB',
+        AsrProviderType.offlineSmall: '~250 MB',
+      };
+
+  static const Map<PronScoringMethod, String> _asrScoringPackSizeHints =
+      <PronScoringMethod, String>{
+        PronScoringMethod.sslEmbedding: '~42 MB',
+        PronScoringMethod.gop: '~28 MB',
+        PronScoringMethod.forcedAlignmentPer: '~56 MB',
+        PronScoringMethod.ppgPosterior: '~64 MB',
+      };
+
+  final Map<AsrProviderType, AsrOfflineModelStatus> _offlineStatuses =
+      <AsrProviderType, AsrOfflineModelStatus>{};
+  final Map<PronScoringMethod, PronScoringPackStatus> _scoringPackStatuses =
+      <PronScoringMethod, PronScoringPackStatus>{};
+
+  final Set<AsrProviderType> _offlineBusyProviders = <AsrProviderType>{};
+  final Set<PronScoringMethod> _scoringBusyMethods = <PronScoringMethod>{};
+
+  AsrProviderType? _offlineActionProvider;
+  AsrProgress? _offlineActionProgress;
+  String? _offlineActionError;
+
+  PronScoringMethod? _scoringActionMethod;
+  AsrProgress? _scoringActionProgress;
+  String? _scoringActionError;
+
+  bool _loadingPackages = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshPackageStatuses();
+  }
+
+  Future<void> _refreshPackageStatuses() async {
+    if (_loadingPackages) return;
+    setState(() {
+      _loadingPackages = true;
+    });
+    final state = context.read<AppState>();
+    final offlineResults = <AsrProviderType, AsrOfflineModelStatus>{};
+    final scoringResults = <PronScoringMethod, PronScoringPackStatus>{};
+
+    try {
+      for (final provider in _managedOfflineProviders) {
+        offlineResults[provider] = await state.getAsrOfflineModelStatus(
+          provider,
+        );
+      }
+      for (final method in _scoringCandidates) {
+        scoringResults[method] = await state.getPronScoringPackStatus(method);
+      }
+      if (!mounted) return;
+      setState(() {
+        _offlineStatuses
+          ..clear()
+          ..addAll(offlineResults);
+        _scoringPackStatuses
+          ..clear()
+          ..addAll(scoringResults);
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingPackages = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _performOfflineModelAction(
+    AsrProviderType provider, {
+    required bool install,
+  }) async {
+    final state = context.read<AppState>();
+    setState(() {
+      _offlineBusyProviders.add(provider);
+      _offlineActionProvider = provider;
+      _offlineActionProgress = null;
+      _offlineActionError = null;
+    });
+
+    try {
+      if (install) {
+        await state.prepareAsrOfflineModel(
+          provider,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() {
+              _offlineActionProvider = provider;
+              _offlineActionProgress = progress;
+            });
+          },
+        );
+      } else {
+        await state.removeAsrOfflineModel(provider);
+      }
+      final refreshed = await state.getAsrOfflineModelStatus(provider);
+      if (!mounted) return;
+      setState(() {
+        _offlineStatuses[provider] = refreshed;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _offlineActionError = '$error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _offlineBusyProviders.remove(provider);
+          if (_offlineActionProvider == provider) {
+            _offlineActionProgress = null;
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _performScoringPackAction(
+    PronScoringMethod method, {
+    required bool install,
+  }) async {
+    final state = context.read<AppState>();
+    setState(() {
+      _scoringBusyMethods.add(method);
+      _scoringActionMethod = method;
+      _scoringActionProgress = null;
+      _scoringActionError = null;
+    });
+
+    try {
+      if (install) {
+        await state.preparePronScoringPack(
+          method,
+          onProgress: (progress) {
+            if (!mounted) return;
+            setState(() {
+              _scoringActionMethod = method;
+              _scoringActionProgress = progress;
+            });
+          },
+        );
+      } else {
+        await state.removePronScoringPack(method);
+      }
+
+      final refreshed = await state.getPronScoringPackStatus(method);
+      if (!mounted) return;
+      setState(() {
+        _scoringPackStatuses[method] = refreshed;
+      });
+
+      final config = state.config;
+      final asr = config.asr;
+      if (!refreshed.installed && asr.scoringMethods.contains(method)) {
+        final nextMethods = List<PronScoringMethod>.from(asr.scoringMethods)
+          ..remove(method);
+        if (nextMethods.isEmpty) {
+          for (final candidate in _scoringCandidates) {
+            final candidateStatus = _scoringPackStatuses[candidate];
+            if (candidateStatus?.installed == true) {
+              nextMethods.add(candidate);
+              break;
+            }
+          }
+        }
+        state.updateConfig(
+          config.copyWith(asr: asr.copyWith(scoringMethods: nextMethods)),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _scoringActionError = '$error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _scoringBusyMethods.remove(method);
+          if (_scoringActionMethod == method) {
+            _scoringActionProgress = null;
+          }
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -285,21 +487,34 @@ class RecognitionSettingsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     for (final method in _scoringCandidates)
-                      CheckboxListTile.adaptive(
-                        value: selectedScoringMethods.contains(method),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text(_scoringMethodLabel(i18n, method)),
-                        onChanged: (checked) {
-                          final next = _toggleScoringMethod(
-                            selectedScoringMethods,
-                            method,
-                            checked ?? false,
-                          );
-                          state.updateConfig(
-                            config.copyWith(
-                              asr: asr.copyWith(scoringMethods: next),
-                            ),
+                      Builder(
+                        builder: (context) {
+                          final status = _scoringPackStatuses[method];
+                          final installed = status?.installed ?? false;
+                          return CheckboxListTile.adaptive(
+                            value:
+                                selectedScoringMethods.contains(method) &&
+                                installed,
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: Text(_scoringMethodLabel(i18n, method)),
+                            subtitle: installed
+                                ? null
+                                : Text(i18n.t('asrScoringPackInstallFirst')),
+                            onChanged: installed
+                                ? (checked) {
+                                    final next = _toggleScoringMethod(
+                                      selectedScoringMethods,
+                                      method,
+                                      checked ?? false,
+                                    );
+                                    state.updateConfig(
+                                      config.copyWith(
+                                        asr: asr.copyWith(scoringMethods: next),
+                                      ),
+                                    );
+                                  }
+                                : null,
                           );
                         },
                       ),
@@ -332,6 +547,135 @@ class RecognitionSettingsPage extends StatelessWidget {
                       );
                     },
                   ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SectionHeader(
+                    title: i18n.t('asrOfflineModelManager'),
+                    subtitle: pickUiText(
+                      i18n,
+                      zh: '离线模型和评分包可在这里下载与删除。',
+                      en: 'Manage offline models and scoring packs here.',
+                    ),
+                  ),
+                  if (_loadingPackages) ...<Widget>[
+                    const SizedBox(height: 10),
+                    const LinearProgressIndicator(minHeight: 2),
+                  ],
+                  const SizedBox(height: 12),
+                  for (final provider in _managedOfflineProviders)
+                    _PackageRow(
+                      title: asrProviderLabel(i18n, provider),
+                      installed: _offlineStatuses[provider]?.installed ?? false,
+                      busy: _offlineBusyProviders.contains(provider),
+                      onDownload: () =>
+                          _performOfflineModelAction(provider, install: true),
+                      onRemove: () =>
+                          _performOfflineModelAction(provider, install: false),
+                      downloadLabel: i18n.t('download'),
+                      removeLabel: i18n.t('delete'),
+                      busyLabel: i18n.t('processing'),
+                      installedLabel: i18n.t(
+                        'asrModelInstalled',
+                        params: <String, Object?>{
+                          'size': _resolveOfflineSizeText(provider),
+                        },
+                      ),
+                      notInstalledLabel: i18n.t(
+                        'asrModelNotInstalled',
+                        params: <String, Object?>{
+                          'size': _resolveOfflineSizeText(provider),
+                        },
+                      ),
+                    ),
+                  if (_offlineActionProvider != null &&
+                      _offlineActionProgress != null) ...<Widget>[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${asrProviderLabel(i18n, _offlineActionProvider!)} - ${i18n.t(_offlineActionProgress!.messageKey, params: _offlineActionProgress!.messageParams)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      value: _offlineActionProgress!.progress,
+                    ),
+                  ],
+                  if ((_offlineActionError ?? '')
+                      .trim()
+                      .isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      _offlineActionError ?? '',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  Text(
+                    i18n.t('asrScoringPackManager'),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final method in _scoringCandidates)
+                    _PackageRow(
+                      title: _scoringMethodLabel(i18n, method),
+                      installed:
+                          _scoringPackStatuses[method]?.installed ?? false,
+                      busy: _scoringBusyMethods.contains(method),
+                      onDownload: () =>
+                          _performScoringPackAction(method, install: true),
+                      onRemove: () =>
+                          _performScoringPackAction(method, install: false),
+                      downloadLabel: i18n.t('download'),
+                      removeLabel: i18n.t('delete'),
+                      busyLabel: i18n.t('processing'),
+                      installedLabel: i18n.t(
+                        'asrModelInstalled',
+                        params: <String, Object?>{
+                          'size': _resolveScoringSizeText(method),
+                        },
+                      ),
+                      notInstalledLabel: i18n.t(
+                        'asrModelNotInstalled',
+                        params: <String, Object?>{
+                          'size': _resolveScoringSizeText(method),
+                        },
+                      ),
+                    ),
+                  if (_scoringActionMethod != null &&
+                      _scoringActionProgress != null) ...<Widget>[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_scoringMethodLabel(i18n, _scoringActionMethod!)} - ${i18n.t(_scoringActionProgress!.messageKey, params: _scoringActionProgress!.messageParams)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      value: _scoringActionProgress!.progress,
+                    ),
+                  ],
+                  if ((_scoringActionError ?? '')
+                      .trim()
+                      .isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      _scoringActionError ?? '',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -439,5 +783,100 @@ class RecognitionSettingsPage extends StatelessWidget {
       return '${i18n.languageName(normalized)} ($normalized)';
     }
     return normalized;
+  }
+
+  String _resolveOfflineSizeText(AsrProviderType provider) {
+    final status = _offlineStatuses[provider];
+    if (status != null && status.installed && status.bytes > 0) {
+      return _formatStorageSize(status.bytes);
+    }
+    return _asrOfflineModelSizeHints[provider] ?? '~150 MB';
+  }
+
+  String _resolveScoringSizeText(PronScoringMethod method) {
+    final status = _scoringPackStatuses[method];
+    if (status != null && status.installed && status.bytes > 0) {
+      return _formatStorageSize(status.bytes);
+    }
+    return _asrScoringPackSizeHints[method] ?? '~32 MB';
+  }
+
+  String _formatStorageSize(int bytes) {
+    if (bytes <= 0) return '0 B';
+    const units = <String>['B', 'KB', 'MB', 'GB', 'TB'];
+    var value = bytes.toDouble();
+    var unitIndex = 0;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex += 1;
+    }
+    final digits = value >= 10 || unitIndex == 0 ? 0 : 1;
+    return '${value.toStringAsFixed(digits)} ${units[unitIndex]}';
+  }
+}
+
+class _PackageRow extends StatelessWidget {
+  const _PackageRow({
+    required this.title,
+    required this.installed,
+    required this.busy,
+    required this.onDownload,
+    required this.onRemove,
+    required this.downloadLabel,
+    required this.removeLabel,
+    required this.busyLabel,
+    required this.installedLabel,
+    required this.notInstalledLabel,
+  });
+
+  final String title;
+  final bool installed;
+  final bool busy;
+  final VoidCallback onDownload;
+  final VoidCallback onRemove;
+  final String downloadLabel;
+  final String removeLabel;
+  final String busyLabel;
+  final String installedLabel;
+  final String notInstalledLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final hint = installed ? installedLabel : notInstalledLabel;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                Text(hint, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonal(
+            onPressed: busy ? null : onDownload,
+            child: Text(busy ? busyLabel : downloadLabel),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: (!installed || busy) ? null : onRemove,
+            child: Text(removeLabel),
+          ),
+        ],
+      ),
+    );
   }
 }

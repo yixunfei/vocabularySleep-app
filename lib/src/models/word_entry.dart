@@ -114,6 +114,11 @@ class WordEntry {
   }
 
   static WordEntry fromMap(Map<String, Object?> map) {
+    String? sanitizeNullable(Object? raw) {
+      final cleaned = sanitizeDisplayText('${raw ?? ''}');
+      return cleaned.isEmpty ? null : cleaned;
+    }
+
     List<String>? examples;
     final rawExamples = map['examples'];
     if (rawExamples is String && rawExamples.trim().isNotEmpty) {
@@ -121,14 +126,14 @@ class WordEntry {
         final parsed = jsonDecode(rawExamples);
         if (parsed is List) {
           examples = parsed
-              .map((item) => '$item'.trim())
+              .map((item) => sanitizeDisplayText('$item'))
               .where((item) => item.isNotEmpty)
               .toList();
         }
       } catch (_) {
         examples = rawExamples
             .split(RegExp(r'\r?\n'))
-            .map((line) => line.trim())
+            .map((line) => sanitizeDisplayText(line))
             .where((line) => line.isNotEmpty)
             .toList();
       }
@@ -154,17 +159,17 @@ class WordEntry {
     return WordEntry(
       id: (map['id'] as num?)?.toInt(),
       wordbookId: ((map['wordbook_id'] as num?) ?? 0).toInt(),
-      word: map['word']?.toString() ?? '',
-      meaning: map['meaning']?.toString(),
+      word: sanitizeDisplayText(map['word']?.toString() ?? ''),
+      meaning: sanitizeNullable(map['meaning']),
       examples: examples,
-      etymology: map['etymology']?.toString(),
-      roots: map['roots']?.toString(),
-      affixes: map['affixes']?.toString(),
-      variations: map['variations']?.toString(),
-      memory: map['memory']?.toString(),
-      story: map['story']?.toString(),
+      etymology: sanitizeNullable(map['etymology']),
+      roots: sanitizeNullable(map['roots']),
+      affixes: sanitizeNullable(map['affixes']),
+      variations: sanitizeNullable(map['variations']),
+      memory: sanitizeNullable(map['memory']),
+      story: sanitizeNullable(map['story']),
       fields: mergedFields,
-      rawContent: map['raw_content']?.toString() ?? '',
+      rawContent: sanitizeDisplayText(map['raw_content']?.toString() ?? ''),
     );
   }
 }

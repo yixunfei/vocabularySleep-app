@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import '../i18n/app_i18n.dart';
 import '../models/play_config.dart';
@@ -31,7 +32,16 @@ class PronunciationComparison {
 
 enum SearchMode { all, word, meaning, fuzzy }
 
-class AppState extends ChangeNotifier {
+class AppState extends ChangeNotifier with WidgetsBindingObserver {
+  static String _resolveSystemUiLanguage() {
+    final locale = PlatformDispatcher.instance.locale;
+    final languageCode = locale.languageCode.trim();
+    if (languageCode.isNotEmpty) {
+      return AppI18n.normalizeLanguageCode(languageCode);
+    }
+    return AppI18n.normalizeLanguageCode(locale.toLanguageTag());
+  }
+
   AppState({
     required AppDatabaseService database,
     required SettingsService settings,
@@ -42,7 +52,9 @@ class AppState extends ChangeNotifier {
        _settings = settings,
        _playback = playback,
        _ambient = ambient,
-       _asr = asr;
+       _asr = asr {
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   final AppDatabaseService _database;
   final SettingsService _settings;
@@ -66,7 +78,8 @@ class AppState extends ChangeNotifier {
   SearchMode _searchMode = SearchMode.all;
   Set<String> _favorites = <String>{};
   Set<String> _taskWords = <String>{};
-  String _uiLanguage = 'zh';
+  String _uiLanguage = _resolveSystemUiLanguage();
+  bool _uiLanguageFollowsSystem = true;
   bool _testModeEnabled = false;
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
@@ -94,6 +107,11 @@ class AppState extends ChangeNotifier {
   int _playSessionId = 0;
   bool _playbackScopeRestarting = false;
   int? _queuedPlaybackScopeTarget;
+  int _wordsVersion = 0;
+  List<WordEntry>? _visibleWordsCache;
+  int _visibleWordsCacheVersion = -1;
+  String _visibleWordsCacheQuery = '';
+  SearchMode _visibleWordsCacheMode = SearchMode.all;
 
   bool get initializing => _initializing;
   bool get initialized => _initialized;
@@ -126,6 +144,9 @@ class AppState extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   SearchMode get searchMode => _searchMode;
   String get uiLanguage => _uiLanguage;
+  bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
+  String get uiLanguageSelection =>
+      _uiLanguageFollowsSystem ? SettingsService.uiLanguageSystem : _uiLanguage;
   bool get testModeEnabled => _testModeEnabled;
   bool get testModeRevealed => _testModeRevealed;
   bool get testModeHintRevealed => _testModeHintRevealed;
@@ -147,8 +168,25 @@ class AppState extends ChangeNotifier {
   List<AmbientSource> get ambientSources => _ambient.sources;
   double get ambientMasterVolume => _ambient.masterVolume;
 
-  List<WordEntry> get visibleWords =>
-      filterWords(words: _words, query: _searchQuery, mode: _searchMode);
+  List<WordEntry> get visibleWords {
+    if (_visibleWordsCache != null &&
+        _visibleWordsCacheVersion == _wordsVersion &&
+        _visibleWordsCacheQuery == _searchQuery &&
+        _visibleWordsCacheMode == _searchMode) {
+      return _visibleWordsCache!;
+    }
+
+    final computed = filterWords(
+      words: _words,
+      query: _searchQuery,
+      mode: _searchMode,
+    );
+    _visibleWordsCache = computed;
+    _visibleWordsCacheVersion = _wordsVersion;
+    _visibleWordsCacheQuery = _searchQuery;
+    _visibleWordsCacheMode = _searchMode;
+    return computed;
+  }
 
   List<WordEntry> get recentWeakWordEntries {
     if (_practiceWeakWords.isEmpty || _words.isEmpty) {
@@ -179,6 +217,69 @@ class AppState extends ChangeNotifier {
     return _scopeWords.isEmpty ? null : _scopeWords.first;
   }
 
+  String _localizedBuiltinWordbookName(String path) {
+    final language = AppI18n.normalizeLanguageCode(_uiLanguage);
+    if (path == 'builtin:favorites') {
+      return switch (language) {
+        'zh' => '收藏',
+        'ja' => 'お気に入り',
+        'de' => 'Favoriten',
+        'fr' => 'Favoris',
+        'es' => 'Favoritos',
+        _ => 'Favorites',
+      };
+    }
+    if (path == 'builtin:task') {
+      return switch (language) {
+        'zh' => '任务',
+        'ja' => 'タスク',
+        'de' => 'Aufgabe',
+        'fr' => 'Tache',
+        'es' => 'Tarea',
+        _ => 'Task',
+      };
+    }
+    return '';
+  }
+
+  Wordbook _withLocalizedBuiltinName(Wordbook wordbook) {
+    final localized = _localizedBuiltinWordbookName(wordbook.path);
+    if (localized.isEmpty || localized == wordbook.name) return wordbook;
+    return Wordbook(
+      id: wordbook.id,
+      name: localized,
+      path: wordbook.path,
+      wordCount: wordbook.wordCount,
+      createdAt: wordbook.createdAt,
+    );
+  }
+
+  void _refreshLocalizedWordbookNames() {
+    if (_wordbooks.isEmpty) return;
+    _wordbooks = _wordbooks
+        .map(_withLocalizedBuiltinName)
+        .toList(growable: false);
+
+    final selectedId = _selectedWordbook?.id;
+    if (selectedId != null) {
+      _selectedWordbook = _wordbooks
+          .where((item) => item.id == selectedId)
+          .cast<Wordbook?>()
+          .firstOrNull;
+    }
+
+    final playingId = _playingWordbookId;
+    if (playingId != null) {
+      final playingBook = _wordbooks
+          .where((item) => item.id == playingId)
+          .cast<Wordbook?>()
+          .firstOrNull;
+      if (playingBook != null) {
+        _playingWordbookName = playingBook.name;
+      }
+    }
+  }
+
   Future<void> init() async {
     if (_initialized || _initializing) return;
     _initializing = true;
@@ -190,7 +291,14 @@ class AppState extends ChangeNotifier {
       await _database.init();
       _config = _settings.loadPlayConfig();
       _playback.updateRuntimeConfig(_config);
-      _uiLanguage = AppI18n.normalizeLanguageCode(_settings.loadUiLanguage());
+      final languageSetting = _settings.loadUiLanguage();
+      if (languageSetting == SettingsService.uiLanguageSystem) {
+        _uiLanguageFollowsSystem = true;
+        _uiLanguage = _resolveSystemUiLanguage();
+      } else {
+        _uiLanguageFollowsSystem = false;
+        _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
+      }
       final testModeState = _settings.loadTestModeState();
       _testModeEnabled = testModeState['enabled'] ?? false;
       _testModeRevealed = testModeState['revealed'] ?? false;
@@ -210,6 +318,7 @@ class AppState extends ChangeNotifier {
           'selectedWordbookName': _selectedWordbook?.name,
           'words': _words.length,
           'uiLanguage': _uiLanguage,
+          'uiLanguageFollowsSystem': _uiLanguageFollowsSystem,
           'logFile': logFilePath,
           'ttsProvider': _config.tts.provider.name,
           'ttsModel': _config.tts.model,
@@ -233,14 +342,55 @@ class AppState extends ChangeNotifier {
 
   void setUiLanguage(String language) {
     final normalized = AppI18n.normalizeLanguageCode(language);
-    if (normalized.isEmpty || normalized == _uiLanguage) return;
+    if (normalized.isEmpty ||
+        (normalized == _uiLanguage && !_uiLanguageFollowsSystem)) {
+      return;
+    }
     _log.i(
       'app_state',
       'set ui language',
-      data: <String, Object?>{'from': _uiLanguage, 'to': normalized},
+      data: <String, Object?>{
+        'from': _uiLanguage,
+        'to': normalized,
+        'followSystem': false,
+      },
     );
     _uiLanguage = normalized;
+    _uiLanguageFollowsSystem = false;
     _settings.saveUiLanguage(_uiLanguage);
+    _refreshLocalizedWordbookNames();
+    notifyListeners();
+  }
+
+  void setUiLanguageFollowSystem() {
+    final resolved = _resolveSystemUiLanguage();
+    final changed = !_uiLanguageFollowsSystem || _uiLanguage != resolved;
+    if (!changed) return;
+    _log.i(
+      'app_state',
+      'set ui language follow system',
+      data: <String, Object?>{'from': _uiLanguage, 'to': resolved},
+    );
+    _uiLanguageFollowsSystem = true;
+    _uiLanguage = resolved;
+    _settings.saveUiLanguage(SettingsService.uiLanguageSystem);
+    _refreshLocalizedWordbookNames();
+    notifyListeners();
+  }
+
+  @override
+  void didChangeLocales(List<Locale>? locales) {
+    super.didChangeLocales(locales);
+    if (!_uiLanguageFollowsSystem) return;
+    final resolved = _resolveSystemUiLanguage();
+    if (_uiLanguage == resolved) return;
+    _log.i(
+      'app_state',
+      'sync ui language from system locale change',
+      data: <String, Object?>{'from': _uiLanguage, 'to': resolved},
+    );
+    _uiLanguage = resolved;
+    _refreshLocalizedWordbookNames();
     notifyListeners();
   }
 
@@ -315,7 +465,9 @@ class AppState extends ChangeNotifier {
   }
 
   void setSearchQuery(String value) {
+    if (_searchQuery == value) return;
     _searchQuery = value;
+    _invalidateVisibleWordsCache();
     _ensureCurrentWordInScope();
     _log.d(
       'app_state',
@@ -332,6 +484,7 @@ class AppState extends ChangeNotifier {
   void setSearchMode(SearchMode mode) {
     if (_searchMode == mode) return;
     _searchMode = mode;
+    _invalidateVisibleWordsCache();
     _ensureCurrentWordInScope();
     _log.d(
       'app_state',
@@ -351,6 +504,7 @@ class AppState extends ChangeNotifier {
     int? focusWordId,
   }) async {
     if (wordbook == null) return;
+    final previousSelection = _selectedWordbook;
     _log.i(
       'app_state',
       'select wordbook',
@@ -362,8 +516,44 @@ class AppState extends ChangeNotifier {
         'focusWord': focusWord,
       },
     );
+    if (_database.isLazyBuiltInPath(wordbook.path) && wordbook.wordCount <= 0) {
+      final lazyWordbookId = wordbook.id;
+      final lazyWordbookName = wordbook.name;
+      final lazyPath = wordbook.path;
+      _setBusy(true);
+      try {
+        await _database.ensureBuiltInWordbookLoaded(lazyPath);
+        await _reloadWordbooks(keepCurrentSelection: false);
+        wordbook =
+            _wordbooks
+                .where((item) => item.path == lazyPath)
+                .cast<Wordbook?>()
+                .firstOrNull ??
+            wordbook;
+      } catch (error, stackTrace) {
+        _log.e(
+          'app_state',
+          'lazy built-in wordbook load failed',
+          error: error,
+          stackTrace: stackTrace,
+          data: <String, Object?>{
+            'id': lazyWordbookId,
+            'name': lazyWordbookName,
+            'path': lazyPath,
+          },
+        );
+        _selectedWordbook = previousSelection;
+        _setMessage(
+          'errorImportFailed',
+          params: <String, Object?>{'error': error},
+        );
+        return;
+      } finally {
+        _setBusy(false);
+      }
+    }
     _selectedWordbook = wordbook;
-    _words = _database.getWords(wordbook.id);
+    _setWords(_database.getWords(wordbook.id));
     _currentWordIndex = 0;
     if (focusWordId != null) {
       final index = _words.indexWhere((item) => item.id == focusWordId);
@@ -543,18 +733,18 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> saveWord({
+  Future<bool> saveWord({
     WordEntry? original,
     required String word,
     required List<WordFieldItem> fields,
     String rawContent = '',
   }) async {
     final selected = _selectedWordbook;
-    if (selected == null) return;
+    if (selected == null) return false;
     if (word.trim().isEmpty) {
       _setMessage('errorWordEmpty');
       notifyListeners();
-      return;
+      return false;
     }
 
     final payload = WordEntryPayload(
@@ -577,11 +767,13 @@ class AppState extends ChangeNotifier {
       await _reloadWordbooks(keepCurrentSelection: true);
       await selectWordbook(selected, focusWord: word.trim());
       await _syncSpecialWordbooks();
+      return true;
     } catch (error) {
       _setMessage(
         'errorSaveWordFailed',
         params: <String, Object?>{'error': error},
       );
+      return false;
     } finally {
       _setBusy(false);
     }
@@ -757,6 +949,82 @@ class AppState extends ChangeNotifier {
         'errorMergeFailed',
         params: <String, Object?>{'error': error},
       );
+    } finally {
+      _setBusy(false);
+    }
+  }
+
+  Future<bool> resetUserData() async {
+    _setBusy(true);
+    try {
+      await _createSafetyBackup(reason: 'reset_user_data');
+      await stop();
+      await _ambient.reset();
+      await _database.resetUserData();
+
+      _config = PlayConfig.defaults;
+      _playback.updateRuntimeConfig(_config);
+      _searchQuery = '';
+      _searchMode = SearchMode.all;
+      _favorites = <String>{};
+      _taskWords = <String>{};
+      _testModeEnabled = false;
+      _testModeRevealed = false;
+      _testModeHintRevealed = false;
+      _practiceDateKey = '';
+      _practiceTodaySessions = 0;
+      _practiceTodayReviewed = 0;
+      _practiceTodayRemembered = 0;
+      _practiceTotalSessions = 0;
+      _practiceTotalReviewed = 0;
+      _practiceTotalRemembered = 0;
+      _practiceLastSessionTitle = '';
+      _practiceWeakWords = <String>[];
+      _message = null;
+      _messageParams = const <String, Object?>{};
+
+      final languageSetting = _settings.loadUiLanguage();
+      if (languageSetting == SettingsService.uiLanguageSystem) {
+        _uiLanguageFollowsSystem = true;
+        _uiLanguage = _resolveSystemUiLanguage();
+      } else {
+        _uiLanguageFollowsSystem = false;
+        _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
+      }
+
+      _invalidateVisibleWordsCache();
+      await _reloadWordbooks(keepCurrentSelection: false);
+      final preferredWordbook = _wordbooks
+          .where(
+            (item) =>
+                item.wordCount > 0 &&
+                item.path != 'builtin:task' &&
+                item.path != 'builtin:favorites',
+          )
+          .cast<Wordbook?>()
+          .firstOrNull;
+      if (preferredWordbook != null) {
+        await selectWordbook(preferredWordbook);
+      }
+      await _syncSpecialWordbooks();
+      _loadPracticeDashboard();
+      _ensurePracticeDate(persist: true);
+      _refreshLocalizedWordbookNames();
+      notifyListeners();
+      return true;
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'reset user data failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _setMessage(
+        'errorInitFailed',
+        params: <String, Object?>{'error': 'reset user data: $error'},
+      );
+      notifyListeners();
+      return false;
     } finally {
       _setBusy(false);
     }
@@ -1875,7 +2143,10 @@ class AppState extends ChangeNotifier {
 
   Future<void> _reloadWordbooks({required bool keepCurrentSelection}) async {
     final selectedId = keepCurrentSelection ? _selectedWordbook?.id : null;
-    _wordbooks = _database.getWordbooks();
+    _wordbooks = _database
+        .getWordbooks()
+        .map(_withLocalizedBuiltinName)
+        .toList(growable: false);
 
     Wordbook? nextSelection;
     if (selectedId != null) {
@@ -1884,20 +2155,37 @@ class AppState extends ChangeNotifier {
           .cast<Wordbook?>()
           .firstOrNull;
     }
+    nextSelection ??= _wordbooks
+        .where((book) => !book.isSpecial && book.wordCount > 0)
+        .cast<Wordbook?>()
+        .firstOrNull;
     nextSelection ??= _wordbooks.isEmpty ? null : _wordbooks.first;
     _selectedWordbook = nextSelection;
 
     if (_selectedWordbook != null) {
-      _words = _database.getWords(_selectedWordbook!.id);
+      _setWords(_database.getWords(_selectedWordbook!.id));
       if (_currentWordIndex >= _words.length) {
         _currentWordIndex = _words.isEmpty ? 0 : (_words.length - 1);
       }
       _ensureCurrentWordInScope();
     } else {
-      _words = <WordEntry>[];
+      _setWords(<WordEntry>[]);
       _currentWordIndex = 0;
     }
     notifyListeners();
+  }
+
+  void _setWords(List<WordEntry> nextWords) {
+    _words = nextWords;
+    _wordsVersion += 1;
+    _invalidateVisibleWordsCache();
+  }
+
+  void _invalidateVisibleWordsCache() {
+    _visibleWordsCache = null;
+    _visibleWordsCacheVersion = -1;
+    _visibleWordsCacheQuery = '';
+    _visibleWordsCacheMode = SearchMode.all;
   }
 
   Future<void> _syncSpecialWordbooks() async {
@@ -2113,6 +2401,7 @@ class AppState extends ChangeNotifier {
   @override
   void dispose() {
     _log.i('app_state', 'dispose start');
+    WidgetsBinding.instance.removeObserver(this);
     _playback.stop();
     _ambient.stopAll();
     _asr.dispose();

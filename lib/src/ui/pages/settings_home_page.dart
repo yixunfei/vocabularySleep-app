@@ -193,7 +193,9 @@ class SettingsHomePage extends StatelessWidget {
               en: 'Interface language and display preferences.',
             ),
             trailing: Text(
-              i18n.languageName(state.uiLanguage),
+              state.uiLanguageFollowsSystem
+                  ? pickUiText(i18n, zh: '跟随系统', en: 'Follow system')
+                  : i18n.languageName(state.uiLanguage),
               style: Theme.of(context).textTheme.labelLarge,
             ),
             onTap: () => _open(context, const LanguageSettingsPage()),

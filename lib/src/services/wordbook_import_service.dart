@@ -239,7 +239,7 @@ class WordbookImportService {
     String word = '';
     for (final entry in record.entries) {
       if (_wordAliases.contains(entry.key.trim().toLowerCase())) {
-        final text = '${entry.value ?? ''}'.trim();
+        final text = sanitizeDisplayText('${entry.value ?? ''}');
         if (text.isNotEmpty) {
           word = text;
           break;
@@ -252,7 +252,7 @@ class WordbookImportService {
     for (final key in _contentFields) {
       final value = record[key];
       if (value == null) continue;
-      final text = '$value'.trim();
+      final text = sanitizeDisplayText('$value');
       if (text.isEmpty) continue;
       content = text;
       break;

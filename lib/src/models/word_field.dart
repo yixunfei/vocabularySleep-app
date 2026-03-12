@@ -228,6 +228,46 @@ bool isWordKey(String key) =>
 bool isContentKey(String key) =>
     _contentKeyAliases.contains(key.trim().toLowerCase());
 
+String sanitizeDisplayText(String raw) {
+  var text = raw;
+  if (text.isEmpty) return '';
+
+  text = text.replaceAll('\u0000', '');
+  text = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  text = _decodeWhitelistedEscapes(text);
+  text = text.replaceAll(RegExp(r'\\{2,}'), '\\');
+
+  text = text.replaceAll(RegExp(r'[ \t]+'), ' ');
+  text = text.split('\n').map((line) => line.trimRight()).join('\n').trim();
+  text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  return text;
+}
+
+String _decodeWhitelistedEscapes(String raw) {
+  var text = raw;
+  text = text
+      .replaceAll(r'\\r\\n', r'\n')
+      .replaceAll(r'\\n', r'\n')
+      .replaceAll(r'\\r', r'\r')
+      .replaceAll(r'\\t', r'\t')
+      .replaceAll(r'\\\"', r'\"')
+      .replaceAll(r"\\'", r"\'")
+      .replaceAll(r'\\/', r'\/');
+
+  return text.replaceAllMapped(RegExp(r'''\\([nrt"'/])'''), (match) {
+    final code = match.group(1);
+    return switch (code) {
+      'n' => '\n',
+      'r' => '\n',
+      't' => ' ',
+      '"' => '"',
+      "'" => "'",
+      '/' => '/',
+      _ => match.group(0) ?? '',
+    };
+  });
+}
+
 WordFieldValue? normalizeFieldValue(Object? value) {
   if (value == null) return null;
 
@@ -235,9 +275,9 @@ WordFieldValue? normalizeFieldValue(Object? value) {
     final list = value
         .map((item) {
           if (item == null) return '';
-          if (item is String) return item.trim();
+          if (item is String) return sanitizeDisplayText(item);
           if (item is num || item is bool) return '$item';
-          return jsonEncode(item);
+          return sanitizeDisplayText(jsonEncode(item));
         })
         .where((item) => item.isNotEmpty)
         .toList();
@@ -245,13 +285,13 @@ WordFieldValue? normalizeFieldValue(Object? value) {
   }
 
   if (value is String) {
-    final text = value.trim();
+    final text = sanitizeDisplayText(value);
     return text.isEmpty ? null : text;
   }
 
   if (value is num || value is bool) return '$value';
 
-  final text = jsonEncode(value);
+  final text = sanitizeDisplayText(jsonEncode(value));
   if (text == '{}' || text == '[]') return null;
   return text;
 }
@@ -438,7 +478,7 @@ LegacyWordFields toLegacyFields(List<WordFieldItem> items) {
 }
 
 List<WordFieldItem> parseSectionedContent(String content) {
-  final text = content.trim();
+  final text = sanitizeDisplayText(content);
   if (text.isEmpty) return const [];
 
   final items = <WordFieldItem>[];

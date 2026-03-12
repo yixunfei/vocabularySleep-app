@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../services/settings_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
@@ -13,6 +14,7 @@ class LanguageSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    final currentLanguageName = i18n.languageName(state.uiLanguage);
 
     return Scaffold(
       appBar: AppBar(
@@ -41,22 +43,47 @@ class LanguageSettingsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
-                    initialValue: state.uiLanguage,
+                    initialValue: state.uiLanguageSelection,
                     decoration: InputDecoration(
                       labelText: pickUiText(i18n, zh: '语言', en: 'Language'),
                     ),
-                    items: AppI18n.supportedLanguages
-                        .map(
-                          (code) => DropdownMenuItem<String>(
-                            value: code,
-                            child: Text(i18n.languageName(code)),
-                          ),
-                        )
-                        .toList(growable: false),
+                    items: <DropdownMenuItem<String>>[
+                      DropdownMenuItem<String>(
+                        value: SettingsService.uiLanguageSystem,
+                        child: Text(
+                          pickUiText(i18n, zh: '跟随系统', en: 'Follow system'),
+                        ),
+                      ),
+                      ...AppI18n.supportedLanguages.map(
+                        (code) => DropdownMenuItem<String>(
+                          value: code,
+                          child: Text(i18n.languageName(code)),
+                        ),
+                      ),
+                    ],
                     onChanged: (value) {
                       if (value == null || value.trim().isEmpty) return;
+                      if (value == SettingsService.uiLanguageSystem) {
+                        state.setUiLanguageFollowSystem();
+                        return;
+                      }
                       state.setUiLanguage(value);
                     },
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    state.uiLanguageFollowsSystem
+                        ? pickUiText(
+                            i18n,
+                            zh: '当前正在跟随系统语言：$currentLanguageName',
+                            en: 'Currently following system language: $currentLanguageName',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '当前已固定为手动语言：$currentLanguageName',
+                            en: 'Manual language is fixed to: $currentLanguageName',
+                          ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),

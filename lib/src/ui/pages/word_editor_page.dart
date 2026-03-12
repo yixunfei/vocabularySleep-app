@@ -93,14 +93,16 @@ class _WordEditorPageState extends State<WordEditorPage> {
         .join('\n')
         .trim();
 
-    await state.saveWord(
+    final success = await state.saveWord(
       original: widget.original,
       word: _wordController.text,
       fields: fields,
       rawContent: rawContent,
     );
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+    if (success) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   Future<void> _addField(AppI18n i18n) async {
@@ -242,6 +244,7 @@ class _WordEditorPageState extends State<WordEditorPage> {
               index: index,
               draft: _drafts[index],
               canRemove: _drafts.length > 1,
+              i18n: i18n,
               onRemove: () {
                 setState(() {
                   final removed = _drafts.removeAt(index);
@@ -273,12 +276,14 @@ class _FieldEditorCard extends StatelessWidget {
     required this.index,
     required this.draft,
     required this.canRemove,
+    required this.i18n,
     required this.onRemove,
   });
 
   final int index;
   final _FieldDraft draft;
   final bool canRemove;
+  final AppI18n i18n;
   final VoidCallback onRemove;
 
   @override
@@ -306,19 +311,19 @@ class _FieldEditorCard extends StatelessWidget {
             const SizedBox(height: 8),
             TextField(
               controller: draft.labelController,
-              decoration: const InputDecoration(labelText: 'Label'),
+              decoration: InputDecoration(labelText: i18n.t('fieldLabel')),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: draft.keyController,
-              decoration: const InputDecoration(labelText: 'Key'),
+              decoration: InputDecoration(labelText: i18n.t('fieldKey')),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: draft.valueController,
               minLines: 3,
               maxLines: 8,
-              decoration: const InputDecoration(labelText: 'Content'),
+              decoration: InputDecoration(labelText: i18n.t('fieldContent')),
             ),
           ],
         ),

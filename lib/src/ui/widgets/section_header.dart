@@ -15,23 +15,54 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: <Widget>[
-        Expanded(
-          child: Column(
+    final textBlock = LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 360;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              title,
+              style: isCompact
+                  ? theme.textTheme.titleMedium
+                  : theme.textTheme.titleLarge,
+            ),
+            if ((subtitle ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(subtitle!, style: theme.textTheme.bodySmall),
+            ],
+          ],
+        );
+      },
+    );
+
+    final resolvedTrailing = trailing;
+    if (resolvedTrailing == null) {
+      return textBlock;
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 360;
+        if (isCompact) {
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(title, style: theme.textTheme.titleLarge),
-              if ((subtitle ?? '').trim().isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(subtitle!, style: theme.textTheme.bodySmall),
-              ],
+              textBlock,
+              const SizedBox(height: 8),
+              Align(alignment: Alignment.centerRight, child: resolvedTrailing),
             ],
-          ),
-        ),
-        trailing ?? const SizedBox.shrink(),
-      ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            Expanded(child: textBlock),
+            const SizedBox(width: 12),
+            resolvedTrailing,
+          ],
+        );
+      },
     );
   }
 }

@@ -14,6 +14,7 @@ import '../widgets/section_header.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/word_card.dart';
 import '../widgets/wordbook_switcher.dart';
+import '../wordbook_localization.dart';
 import 'follow_along_page.dart';
 
 class PlayPage extends StatelessWidget {
@@ -187,6 +188,7 @@ class PlayPage extends StatelessWidget {
         const SizedBox(height: 18),
         WordbookSwitcher(
           wordbook: state.selectedWordbook,
+          title: localizedWordbookName(i18n, state.selectedWordbook),
           subtitle: pickUiText(
             i18n,
             zh: '${state.visibleWords.length} 个词可播放',
@@ -451,7 +453,7 @@ class PlayPage extends StatelessWidget {
                 Card(
                   child: ListTile(
                     selected: state.selectedWordbook?.id == book.id,
-                    title: Text(book.name),
+                    title: Text(localizedWordbookName(i18n, book)),
                     subtitle: Text(
                       pickUiText(
                         i18n,

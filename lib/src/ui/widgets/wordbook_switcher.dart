@@ -6,11 +6,13 @@ class WordbookSwitcher extends StatelessWidget {
   const WordbookSwitcher({
     super.key,
     required this.wordbook,
+    this.title,
     required this.subtitle,
     required this.onTap,
   });
 
   final Wordbook? wordbook;
+  final String? title;
   final String subtitle;
   final VoidCallback onTap;
 
@@ -42,7 +44,7 @@ class WordbookSwitcher extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          wordbook?.name ?? subtitle,
+                          title ?? wordbook?.name ?? subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleSmall,

@@ -5,6 +5,7 @@ import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
+import '../wordbook_localization.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
@@ -83,8 +84,8 @@ class PracticePage extends StatelessWidget {
                 Text(
                   pickUiText(
                     i18n,
-                    zh: '当前词本：${state.selectedWordbook?.name ?? '-'}',
-                    en: 'Wordbook: ${state.selectedWordbook?.name ?? '-'}',
+                    zh: '当前词本：${localizedWordbookName(i18n, state.selectedWordbook)}',
+                    en: 'Wordbook: ${localizedWordbookName(i18n, state.selectedWordbook)}',
                   ),
                 ),
                 const SizedBox(height: 6),

@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../models/word_field.dart';
+import '../legacy_style.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
+import 'effectful_text.dart';
 import 'status_badge.dart';
 
 enum WordCardDensity { immersive, compact, practice }
@@ -53,6 +55,7 @@ class WordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tokens = AppThemeTokens.of(context);
+    final appearance = LegacyStyle.appearance;
     final fields = _displayFields(word);
     final meaning = fields
         .where((item) => item.key == 'meaning')
@@ -111,6 +114,9 @@ class WordCard extends StatelessWidget {
               revealPracticeAnswer: revealPracticeAnswer,
               density: density,
               visibleExamples: visibleExamples,
+              titleColor:
+                  Color.lerp(tokens.textPrimary, tokens.accent, 0.42) ??
+                  tokens.textPrimary,
               textSecondary: tokens.textSecondary,
               onPreviousWord: onPreviousWord,
               onNextWord: onNextWord,
@@ -128,8 +134,20 @@ class WordCard extends StatelessWidget {
                       (item) => item.key != 'meaning' && item.key != 'examples',
                     )
                     .take(density == WordCardDensity.compact ? 2 : 4)
-                    .map(
-                      (field) => Container(
+                    .toList(growable: false)
+                    .asMap()
+                    .entries
+                    .map((entry) {
+                      final field = entry.value;
+                      final accentColor = appearance.randomEntryColors
+                          ? seededAccentColor(
+                              '${word.word}:${field.key}:${entry.key}',
+                              fallback: tokens.accent,
+                              saturation: 0.56,
+                              value: tokens.isDark ? 0.92 : 0.78,
+                            )
+                          : tokens.accent;
+                      return Container(
                         width: double.infinity,
                         margin: const EdgeInsets.only(bottom: 10),
                         constraints: const BoxConstraints(minHeight: 40),
@@ -137,10 +155,9 @@ class WordCard extends StatelessWidget {
                           horizontal: 12,
                           vertical: 10,
                         ),
-                        decoration: BoxDecoration(
-                          color: tokens.surfaceMuted,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: tokens.outline),
+                        decoration: LegacyStyle.fieldCardDecoration(
+                          accentColor: accentColor,
+                          fieldKey: field.key,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,19 +165,23 @@ class WordCard extends StatelessWidget {
                           children: <Widget>[
                             Text(
                               localizedFieldLabel(i18n, field),
-                              style: theme.textTheme.labelLarge,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: accentColor,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               field.asText(),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: tokens.textPrimary,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    )
+                      );
+                    })
                     .toList(growable: false),
               ),
             ],
@@ -224,6 +245,7 @@ class _WordHeaderBlock extends StatelessWidget {
     required this.revealPracticeAnswer,
     required this.density,
     required this.visibleExamples,
+    required this.titleColor,
     required this.textSecondary,
     required this.onPreviousWord,
     required this.onNextWord,
@@ -244,6 +266,7 @@ class _WordHeaderBlock extends StatelessWidget {
   final bool revealPracticeAnswer;
   final WordCardDensity density;
   final List<String> visibleExamples;
+  final Color titleColor;
   final Color textSecondary;
   final VoidCallback? onPreviousWord;
   final VoidCallback? onNextWord;
@@ -276,6 +299,7 @@ class _WordHeaderBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final appearance = LegacyStyle.appearance;
     final canReveal =
         density != WordCardDensity.practice || revealPracticeAnswer;
     final cleanedMeaning = visibleMeaning.trim();
@@ -319,7 +343,18 @@ class _WordHeaderBlock extends StatelessWidget {
     final wordPanel = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(word, style: titleStyle),
+        EffectfulText(
+          word,
+          style: titleStyle?.copyWith(
+            color: appearance.rainbowText ? Colors.white : titleColor,
+            fontWeight: FontWeight.w800,
+          ),
+          maxLines: appearance.marqueeText ? null : 2,
+          rainbowText: appearance.rainbowText,
+          marqueeText: appearance.marqueeText,
+          breathingEffect: appearance.breathingEffect,
+          flowingEffect: appearance.flowingEffect,
+        ),
         if (!canReveal) ...[
           const SizedBox(height: 10),
           Text(

@@ -217,6 +217,12 @@ class AmbientService {
     _players.clear();
   }
 
+  Future<void> reset() async {
+    await stopAll();
+    _masterVolume = 0.7;
+    _sources = List<AmbientSource>.from(_builtInPresets);
+  }
+
   double _resolvedVolume(AmbientSource source) {
     final merged = source.volume * _masterVolume;
     return merged.clamp(0.0, 1.0);
