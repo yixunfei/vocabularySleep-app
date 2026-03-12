@@ -6,6 +6,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../models/todo_item.dart';
+import '../models/tomato_timer.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/wordbook.dart';
@@ -30,6 +32,27 @@ class WordbookMergeResult {
   final bool deleteSourceAfterMerge;
 }
 
+class DatabaseBackupInfo {
+  const DatabaseBackupInfo({
+    required this.name,
+    required this.path,
+    required this.reason,
+    required this.modifiedAt,
+    required this.sizeBytes,
+  });
+
+  final String name;
+  final String path;
+  final String reason;
+  final DateTime modifiedAt;
+  final int sizeBytes;
+
+  String get reasonLabel {
+    final normalized = reason.trim().replaceAll('_', ' ');
+    return normalized.isEmpty ? 'manual' : normalized;
+  }
+}
+
 class _BuiltInWordbookConfig {
   const _BuiltInWordbookConfig({
     required this.path,
@@ -48,7 +71,7 @@ class AppDatabaseService {
   final WordbookImportService _importService;
   final AppLogService _log = AppLogService.instance;
 
-  late final Database _db;
+  late Database _db;
   late final String dbPath;
   bool _initialized = false;
   int _transactionDepth = 0;
@@ -59,6 +82,9 @@ class AppDatabaseService {
   };
   static const String _dictAssetPrefix = 'dict/';
   static const String _dictBuiltinPathPrefix = 'builtin:dict:';
+  static final RegExp _backupFilePattern = RegExp(
+    r'^vocabulary_(.+)_(\d{4}-\d{2}-\d{2}T.+)\.db$',
+  );
 
   Future<void> init() async {
     if (_initialized) return;
@@ -67,14 +93,8 @@ class AppDatabaseService {
       await supportDir.create(recursive: true);
     }
     dbPath = p.join(supportDir.path, 'vocabulary.db');
-    _db = sqlite3.open(dbPath);
-    _db.execute('PRAGMA foreign_keys = ON;');
-    _db.execute('PRAGMA journal_mode = WAL;');
-    _db.execute('PRAGMA synchronous = NORMAL;');
-    _createTables();
-    _migrateWordsSchema();
-    ensureSpecialWordbooks();
-    await syncBuiltInWordbooksCatalog();
+    _openDatabase();
+    await _prepareDatabase();
     _initialized = true;
   }
 
@@ -88,11 +108,7 @@ class AppDatabaseService {
       throw FileSystemException('Database file does not exist', dbPath);
     }
 
-    final supportDir = await getApplicationSupportDirectory();
-    final backupDir = Directory(p.join(supportDir.path, 'backups'));
-    if (!await backupDir.exists()) {
-      await backupDir.create(recursive: true);
-    }
+    final backupDir = await _ensureBackupDirectory();
 
     final timestamp = DateTime.now()
         .toIso8601String()
@@ -105,8 +121,128 @@ class AppDatabaseService {
       backupDir.path,
       'vocabulary_${normalizedReason}_$timestamp.db',
     );
-    await source.copy(targetPath);
+    final targetFile = File(targetPath);
+    if (await targetFile.exists()) {
+      await targetFile.delete();
+    }
+
+    _db.execute('PRAGMA wal_checkpoint(FULL);');
+    _db.execute("VACUUM INTO '${_escapeSqlString(targetPath)}';");
     return targetPath;
+  }
+
+  Future<List<DatabaseBackupInfo>> listSafetyBackups({int limit = 20}) async {
+    final backupDir = await _ensureBackupDirectory();
+    if (!await backupDir.exists()) {
+      return const <DatabaseBackupInfo>[];
+    }
+
+    final infos = <DatabaseBackupInfo>[];
+    await for (final entity in backupDir.list(followLinks: false)) {
+      if (entity is! File || !entity.path.toLowerCase().endsWith('.db')) {
+        continue;
+      }
+      final stat = await entity.stat();
+      final filename = p.basename(entity.path);
+      infos.add(
+        DatabaseBackupInfo(
+          name: filename,
+          path: entity.path,
+          reason: _parseBackupReason(filename),
+          modifiedAt: stat.modified,
+          sizeBytes: stat.size,
+        ),
+      );
+    }
+
+    infos.sort((left, right) => right.modifiedAt.compareTo(left.modifiedAt));
+    if (limit > 0 && infos.length > limit) {
+      return infos.take(limit).toList(growable: false);
+    }
+    return infos;
+  }
+
+  Future<void> restoreSafetyBackup(String backupPath) async {
+    if (!_initialized) {
+      throw StateError('Database is not initialized');
+    }
+
+    final backupFile = File(backupPath);
+    if (!await backupFile.exists()) {
+      throw FileSystemException('Backup file does not exist', backupPath);
+    }
+
+    final currentDb = File(dbPath);
+    final rollbackPath = '$dbPath.restore_previous';
+    final rollbackDb = File(rollbackPath);
+    final walFile = File('$dbPath-wal');
+    final shmFile = File('$dbPath-shm');
+    final rollbackWal = File('$rollbackPath-wal');
+    final rollbackShm = File('$rollbackPath-shm');
+    var reopenedRestoredDatabase = false;
+
+    _db.execute('PRAGMA wal_checkpoint(FULL);');
+    _db.dispose();
+
+    try {
+      if (await rollbackDb.exists()) {
+        await rollbackDb.delete();
+      }
+      if (await rollbackWal.exists()) {
+        await rollbackWal.delete();
+      }
+      if (await rollbackShm.exists()) {
+        await rollbackShm.delete();
+      }
+      if (await walFile.exists()) {
+        await walFile.delete();
+      }
+      if (await shmFile.exists()) {
+        await shmFile.delete();
+      }
+      if (await currentDb.exists()) {
+        await currentDb.rename(rollbackPath);
+      }
+
+      await backupFile.copy(dbPath);
+      _openDatabase();
+      reopenedRestoredDatabase = true;
+      await _prepareDatabase();
+
+      if (await rollbackDb.exists()) {
+        await rollbackDb.delete();
+      }
+      if (await rollbackWal.exists()) {
+        await rollbackWal.delete();
+      }
+      if (await rollbackShm.exists()) {
+        await rollbackShm.delete();
+      }
+    } catch (_) {
+      if (reopenedRestoredDatabase) {
+        try {
+          _db.dispose();
+        } catch (_) {}
+      }
+
+      final restoredDb = File(dbPath);
+      if (await restoredDb.exists()) {
+        await restoredDb.delete();
+      }
+      if (await walFile.exists()) {
+        await walFile.delete();
+      }
+      if (await shmFile.exists()) {
+        await shmFile.delete();
+      }
+      if (await rollbackDb.exists()) {
+        await rollbackDb.rename(dbPath);
+      }
+
+      _openDatabase();
+      await _prepareDatabase();
+      rethrow;
+    }
   }
 
   Future<void> resetUserData() async {
@@ -211,6 +347,49 @@ class AppDatabaseService {
       );
     ''');
 
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS todos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT NOT NULL,
+        completed INTEGER DEFAULT 0,
+        priority INTEGER DEFAULT 0,
+        category TEXT,
+        note TEXT,
+        color TEXT,
+        sort_order INTEGER DEFAULT 0,
+        due_at DATETIME,
+        alarm_enabled INTEGER DEFAULT 0,
+        created_at DATETIME,
+        completed_at DATETIME
+      );
+    ''');
+
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT,
+        color TEXT,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME,
+        updated_at DATETIME
+      );
+    ''');
+
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS timer_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        start_time DATETIME NOT NULL,
+        duration_minutes INTEGER DEFAULT 0,
+        focus_duration_minutes INTEGER DEFAULT 0,
+        break_duration_minutes INTEGER DEFAULT 0,
+        rounds_completed INTEGER DEFAULT 0,
+        focus_minutes INTEGER DEFAULT 25,
+        break_minutes INTEGER DEFAULT 5,
+        is_partial INTEGER DEFAULT 0
+      );
+    ''');
+
     _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_words_wordbook ON words(wordbook_id);',
     );
@@ -233,6 +412,104 @@ class AppDatabaseService {
     }
     if (!columnNames.contains('raw_content')) {
       _db.execute('ALTER TABLE words ADD COLUMN raw_content TEXT;');
+    }
+  }
+
+  void _migrateTimerRecordsSchema() {
+    final tableInfo = _db.select('PRAGMA table_info(timer_records);');
+    final columnNames = <String>{
+      for (final row in tableInfo) row['name'].toString(),
+    };
+
+    if (!columnNames.contains('focus_duration_minutes')) {
+      _db.execute(
+        'ALTER TABLE timer_records ADD COLUMN focus_duration_minutes INTEGER DEFAULT 0;',
+      );
+      _db.execute('''
+        UPDATE timer_records
+        SET focus_duration_minutes = COALESCE(rounds_completed, 0) * COALESCE(focus_minutes, 25)
+        WHERE COALESCE(focus_duration_minutes, 0) = 0;
+      ''');
+    }
+    if (!columnNames.contains('break_duration_minutes')) {
+      _db.execute(
+        'ALTER TABLE timer_records ADD COLUMN break_duration_minutes INTEGER DEFAULT 0;',
+      );
+      _db.execute('''
+        UPDATE timer_records
+        SET break_duration_minutes =
+          CASE
+            WHEN duration_minutes - COALESCE(focus_duration_minutes, COALESCE(rounds_completed, 0) * COALESCE(focus_minutes, 25)) > 0
+              THEN duration_minutes - COALESCE(focus_duration_minutes, COALESCE(rounds_completed, 0) * COALESCE(focus_minutes, 25))
+            ELSE 0
+          END
+        WHERE COALESCE(break_duration_minutes, 0) = 0;
+      ''');
+    }
+    if (!columnNames.contains('is_partial')) {
+      _db.execute(
+        'ALTER TABLE timer_records ADD COLUMN is_partial INTEGER DEFAULT 0;',
+      );
+    }
+  }
+
+  void _migrateNotesSchema() {
+    final tableInfo = _db.select('PRAGMA table_info(notes);');
+    final columnNames = <String>{
+      for (final row in tableInfo) row['name'].toString(),
+    };
+    if (!columnNames.contains('sort_order')) {
+      _db.execute('ALTER TABLE notes ADD COLUMN sort_order INTEGER DEFAULT 0;');
+      final rows = _selectMaps(
+        'SELECT id FROM notes ORDER BY updated_at DESC, created_at DESC, id DESC',
+      );
+      _runInTransaction<void>(() {
+        for (var index = 0; index < rows.length; index += 1) {
+          _db.execute('UPDATE notes SET sort_order = ? WHERE id = ?', <Object?>[
+            index,
+            rows[index]['id'],
+          ]);
+        }
+      });
+    }
+  }
+
+  void _migrateTodosSchema() {
+    final tableInfo = _db.select('PRAGMA table_info(todos);');
+    final columnNames = <String>{
+      for (final row in tableInfo) row['name'].toString(),
+    };
+
+    if (!columnNames.contains('category')) {
+      _db.execute('ALTER TABLE todos ADD COLUMN category TEXT;');
+    }
+    if (!columnNames.contains('note')) {
+      _db.execute('ALTER TABLE todos ADD COLUMN note TEXT;');
+    }
+    if (!columnNames.contains('color')) {
+      _db.execute('ALTER TABLE todos ADD COLUMN color TEXT;');
+    }
+    if (!columnNames.contains('due_at')) {
+      _db.execute('ALTER TABLE todos ADD COLUMN due_at DATETIME;');
+    }
+    if (!columnNames.contains('alarm_enabled')) {
+      _db.execute(
+        'ALTER TABLE todos ADD COLUMN alarm_enabled INTEGER DEFAULT 0;',
+      );
+    }
+    if (!columnNames.contains('sort_order')) {
+      _db.execute('ALTER TABLE todos ADD COLUMN sort_order INTEGER DEFAULT 0;');
+      final rows = _selectMaps(
+        'SELECT id FROM todos ORDER BY completed ASC, priority DESC, created_at DESC, id DESC',
+      );
+      _runInTransaction<void>(() {
+        for (var index = 0; index < rows.length; index += 1) {
+          _db.execute('UPDATE todos SET sort_order = ? WHERE id = ?', <Object?>[
+            index,
+            rows[index]['id'],
+          ]);
+        }
+      });
     }
   }
 
@@ -898,6 +1175,40 @@ class AppDatabaseService {
     }
   }
 
+  void _openDatabase() {
+    _db = sqlite3.open(dbPath);
+    _db.execute('PRAGMA foreign_keys = ON;');
+    _db.execute('PRAGMA journal_mode = WAL;');
+    _db.execute('PRAGMA synchronous = NORMAL;');
+  }
+
+  Future<void> _prepareDatabase() async {
+    _createTables();
+    _migrateWordsSchema();
+    _migrateTimerRecordsSchema();
+    _migrateTodosSchema();
+    _migrateNotesSchema();
+    ensureSpecialWordbooks();
+    await syncBuiltInWordbooksCatalog();
+    _initialized = true;
+  }
+
+  Future<Directory> _ensureBackupDirectory() async {
+    final supportDir = await getApplicationSupportDirectory();
+    final backupDir = Directory(p.join(supportDir.path, 'backups'));
+    if (!await backupDir.exists()) {
+      await backupDir.create(recursive: true);
+    }
+    return backupDir;
+  }
+
+  String _parseBackupReason(String filename) {
+    final match = _backupFilePattern.firstMatch(filename);
+    return match?.group(1) ?? 'manual';
+  }
+
+  String _escapeSqlString(String value) => value.replaceAll("'", "''");
+
   void _insertWord(int wordbookId, WordEntryPayload payload) {
     final normalizedWord = sanitizeDisplayText(payload.word).trim();
     final normalizedRawContent = sanitizeDisplayText(payload.rawContent);
@@ -983,5 +1294,176 @@ class AppDatabaseService {
       maps.add(map);
     }
     return maps;
+  }
+
+  List<TodoItem> getTodos() {
+    final rows = _selectMaps(
+      'SELECT * FROM todos ORDER BY sort_order ASC, created_at DESC, id DESC',
+    );
+    return rows.map(TodoItem.fromMap).toList();
+  }
+
+  void insertTodo(TodoItem item) {
+    final sortOrder = item.sortOrder > 0
+        ? item.sortOrder
+        : _nextTodoSortOrder();
+    _db.execute(
+      'INSERT INTO todos (content, completed, priority, category, note, color, sort_order, due_at, alarm_enabled, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      <Object?>[
+        item.content,
+        item.completed ? 1 : 0,
+        item.priority,
+        item.category,
+        item.note,
+        item.color,
+        sortOrder,
+        item.dueAt?.toIso8601String(),
+        item.alarmEnabled ? 1 : 0,
+        item.createdAt?.toIso8601String(),
+        item.completedAt?.toIso8601String(),
+      ],
+    );
+  }
+
+  void updateTodo(TodoItem item) {
+    if (item.id == null) return;
+    _db.execute(
+      'UPDATE todos SET content = ?, completed = ?, priority = ?, category = ?, note = ?, color = ?, sort_order = ?, due_at = ?, alarm_enabled = ?, completed_at = ? WHERE id = ?',
+      <Object?>[
+        item.content,
+        item.completed ? 1 : 0,
+        item.priority,
+        item.category,
+        item.note,
+        item.color,
+        item.sortOrder,
+        item.dueAt?.toIso8601String(),
+        item.alarmEnabled ? 1 : 0,
+        item.completedAt?.toIso8601String(),
+        item.id,
+      ],
+    );
+  }
+
+  void deleteTodo(int id) {
+    _db.execute('DELETE FROM todos WHERE id = ?', <Object?>[id]);
+  }
+
+  void clearCompletedTodos() {
+    _db.execute('DELETE FROM todos WHERE completed = 1');
+  }
+
+  void reorderTodos(List<int> orderedIds) {
+    if (orderedIds.isEmpty) return;
+    _runInTransaction<void>(() {
+      for (var index = 0; index < orderedIds.length; index += 1) {
+        _db.execute('UPDATE todos SET sort_order = ? WHERE id = ?', <Object?>[
+          index,
+          orderedIds[index],
+        ]);
+      }
+    });
+  }
+
+  List<PlanNote> getNotes() {
+    final rows = _selectMaps(
+      'SELECT * FROM notes ORDER BY sort_order ASC, updated_at DESC, id DESC',
+    );
+    return rows.map(PlanNote.fromMap).toList();
+  }
+
+  void insertNote(PlanNote note) {
+    final sortOrder = note.sortOrder > 0
+        ? note.sortOrder
+        : _nextNoteSortOrder();
+    _db.execute(
+      'INSERT INTO notes (title, content, color, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      <Object?>[
+        note.title,
+        note.content,
+        note.color,
+        sortOrder,
+        note.createdAt?.toIso8601String(),
+        note.updatedAt?.toIso8601String(),
+      ],
+    );
+  }
+
+  void updateNote(PlanNote note) {
+    if (note.id == null) return;
+    _db.execute(
+      'UPDATE notes SET title = ?, content = ?, color = ?, sort_order = ?, updated_at = ? WHERE id = ?',
+      <Object?>[
+        note.title,
+        note.content,
+        note.color,
+        note.sortOrder,
+        note.updatedAt?.toIso8601String(),
+        note.id,
+      ],
+    );
+  }
+
+  void deleteNote(int id) {
+    _db.execute('DELETE FROM notes WHERE id = ?', <Object?>[id]);
+  }
+
+  void deleteNotes(List<int> ids) {
+    if (ids.isEmpty) return;
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    _db.execute(
+      'DELETE FROM notes WHERE id IN ($placeholders)',
+      ids.cast<Object?>(),
+    );
+  }
+
+  void reorderNotes(List<int> orderedIds) {
+    if (orderedIds.isEmpty) return;
+    _runInTransaction<void>(() {
+      for (var index = 0; index < orderedIds.length; index += 1) {
+        _db.execute('UPDATE notes SET sort_order = ? WHERE id = ?', <Object?>[
+          index,
+          orderedIds[index],
+        ]);
+      }
+    });
+  }
+
+  void insertTimerRecord(TomatoTimerRecord record) {
+    _db.execute(
+      'INSERT INTO timer_records (start_time, duration_minutes, focus_duration_minutes, break_duration_minutes, rounds_completed, focus_minutes, break_minutes, is_partial) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      <Object?>[
+        record.startTime.toIso8601String(),
+        record.durationMinutes,
+        record.focusDurationMinutes,
+        record.breakDurationMinutes,
+        record.roundsCompleted,
+        record.focusMinutes,
+        record.breakMinutes,
+        record.partial ? 1 : 0,
+      ],
+    );
+  }
+
+  List<TomatoTimerRecord> getTimerRecords({int limit = 30}) {
+    final rows = _selectMaps(
+      'SELECT * FROM timer_records ORDER BY start_time DESC LIMIT ?',
+      <Object?>[limit],
+    );
+    return rows.map(TomatoTimerRecord.fromMap).toList();
+  }
+
+  int _nextNoteSortOrder() {
+    final row = _selectOne(
+      'SELECT COALESCE(MAX(sort_order), -1) AS value FROM notes',
+    );
+    return ((row?['value'] as num?)?.toInt() ?? -1) + 1;
+  }
+
+  int _nextTodoSortOrder() {
+    final row = _selectOne(
+      'SELECT COALESCE(MAX(sort_order), -1) AS value FROM todos',
+    );
+    return ((row?['value'] as num?)?.toInt() ?? -1) + 1;
   }
 }

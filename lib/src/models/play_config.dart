@@ -360,6 +360,7 @@ class AsrConfig {
 class AppearanceConfig {
   const AppearanceConfig({
     this.theme = 'flat',
+    this.timerStyle = 'hourglass',
     this.compactLayout = false,
     this.highContrastText = false,
     this.enhancedBackground = true,
@@ -407,6 +408,11 @@ class AppearanceConfig {
     'mono',
   ];
 
+  static const List<String> supportedTimerStyles = <String>[
+    'hourglass',
+    'countdown',
+  ];
+
   static const List<String> supportedBackgroundImageModes = <String>[
     'cover',
     'contain',
@@ -440,6 +446,7 @@ class AppearanceConfig {
   static const AppearanceConfig defaults = AppearanceConfig();
 
   final String theme;
+  final String timerStyle;
   final bool compactLayout;
   final bool highContrastText;
   final bool enhancedBackground;
@@ -516,6 +523,12 @@ class AppearanceConfig {
     return defaults.theme;
   }
 
+  String get normalizedTimerStyle {
+    final value = timerStyle.trim().toLowerCase();
+    if (supportedTimerStyles.contains(value)) return value;
+    return defaults.timerStyle;
+  }
+
   String get normalizedBackgroundImageMode {
     final value = backgroundImageMode.trim().toLowerCase();
     if (supportedBackgroundImageModes.contains(value)) return value;
@@ -542,6 +555,7 @@ class AppearanceConfig {
 
   AppearanceConfig copyWith({
     String? theme,
+    String? timerStyle,
     bool? compactLayout,
     bool? highContrastText,
     bool? enhancedBackground,
@@ -579,6 +593,7 @@ class AppearanceConfig {
   }) {
     return AppearanceConfig(
       theme: theme ?? this.theme,
+      timerStyle: timerStyle ?? this.timerStyle,
       compactLayout: compactLayout ?? this.compactLayout,
       highContrastText: highContrastText ?? this.highContrastText,
       enhancedBackground: enhancedBackground ?? this.enhancedBackground,
@@ -621,6 +636,7 @@ class AppearanceConfig {
 
   Map<String, Object?> toJson() => <String, Object?>{
     'theme': normalizedTheme,
+    'timerStyle': normalizedTimerStyle,
     'compactLayout': compactLayout,
     'highContrastText': highContrastText,
     'enhancedBackground': enhancedBackground,
@@ -664,6 +680,7 @@ class AppearanceConfig {
 
     return AppearanceConfig(
       theme: json['theme']?.toString() ?? defaults.theme,
+      timerStyle: json['timerStyle']?.toString() ?? defaults.timerStyle,
       compactLayout: json['compactLayout'] as bool? ?? defaults.compactLayout,
       highContrastText:
           json['highContrastText'] as bool? ?? defaults.highContrastText,

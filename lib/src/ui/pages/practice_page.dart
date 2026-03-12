@@ -44,6 +44,9 @@ class PracticePage extends StatelessWidget {
     final noPracticeToday = state.practiceTodaySessions == 0;
     final needsReinforce =
         !hasWeakWords && !noPracticeToday && state.practiceTodayAccuracy < 0.75;
+    final warmupWords = scopedWords.length <= 7
+        ? scopedWords
+        : scopedWords.take(7).toList(growable: false);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -122,6 +125,69 @@ class PracticePage extends StatelessWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: <Widget>[
+                    _buildStatBadge(
+                      context,
+                      icon: Icons.local_fire_department_rounded,
+                      value: '${state.practiceTodayReviewed}',
+                      label: pickUiText(
+                        i18n,
+                        zh: '今日练习词',
+                        en: 'Reviewed today',
+                        ja: '今日の練習語',
+                        de: 'Heute geuebt',
+                        fr: 'Revise aujourd’hui',
+                        es: 'Repasadas hoy',
+                      ),
+                    ),
+                    _buildStatBadge(
+                      context,
+                      icon: Icons.psychology_alt_outlined,
+                      value: '${weakWords.length}',
+                      label: pickUiText(
+                        i18n,
+                        zh: '薄弱词',
+                        en: 'Weak words',
+                        ja: '苦手単語',
+                        de: 'Schwaechen',
+                        fr: 'Mots faibles',
+                        es: 'Palabras debiles',
+                      ),
+                    ),
+                    _buildStatBadge(
+                      context,
+                      icon: Icons.task_alt_rounded,
+                      value: '${taskWords.length}',
+                      label: pickUiText(
+                        i18n,
+                        zh: '任务词',
+                        en: 'Task words',
+                        ja: 'タスク単語',
+                        de: 'Aufgabenwoerter',
+                        fr: 'Mots de tache',
+                        es: 'Palabras de tarea',
+                      ),
+                    ),
+                    _buildStatBadge(
+                      context,
+                      icon: Icons.favorite_rounded,
+                      value: '${favoriteWords.length}',
+                      label: pickUiText(
+                        i18n,
+                        zh: '收藏词',
+                        en: 'Favorites',
+                        ja: 'お気に入り',
+                        de: 'Favoriten',
+                        fr: 'Favoris',
+                        es: 'Favoritos',
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -256,6 +322,188 @@ class PracticePage extends StatelessWidget {
                           pickUiText(i18n, zh: '去跟读练习', en: 'Go follow along'),
                         ),
                       ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '快速开始',
+                    en: 'Quick start',
+                    ja: 'クイック開始',
+                    de: 'Schnellstart',
+                    fr: 'Demarrage rapide',
+                    es: 'Inicio rapido',
+                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '把常用热身、乱序冲刺与发音训练集中到一个区域，减少来回切换。',
+                    en: 'Keep warmups, shuffled sprints, and pronunciation drills together so you can start faster.',
+                    ja: 'ウォームアップ、シャッフル練習、発音トレーニングをひとまとめにして、すばやく始められます。',
+                    de: 'Warm-up, Shuffle-Sprints und Aussprachetraining sind hier gebuendelt, damit Sie schneller starten koennen.',
+                    fr: 'Regroupez echauffement, sessions melangees et prononciation pour demarrer plus vite.',
+                    es: 'Reune calentamiento, sprints aleatorios y pronunciacion para empezar mas rapido.',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: <Widget>[
+                    _buildQuickLaunchCard(
+                      context,
+                      icon: Icons.flash_on_rounded,
+                      title: pickUiText(
+                        i18n,
+                        zh: '当前词速练',
+                        en: 'Current word sprint',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: '1 题热身',
+                        en: '1-card warmup',
+                        ja: '1枚で準備運動',
+                        de: 'Warm-up mit 1 Karte',
+                        fr: 'Echauffement en 1 carte',
+                        es: 'Calentamiento de 1 tarjeta',
+                      ),
+                      onTap: () => _openPracticeSession(
+                        context,
+                        title: pickUiText(
+                          i18n,
+                          zh: '当前词速练',
+                          en: 'Current word sprint',
+                        ),
+                        subtitle: pickUiText(
+                          i18n,
+                          zh: '1 题短会话',
+                          en: 'Single-item mini session',
+                        ),
+                        words: <WordEntry>[current],
+                        shuffle: false,
+                      ),
+                    ),
+                    _buildQuickLaunchCard(
+                      context,
+                      icon: Icons.local_fire_department_rounded,
+                      title: pickUiText(
+                        i18n,
+                        zh: '7 词热身',
+                        en: '7-word warmup',
+                        ja: '7語ウォームアップ',
+                        de: '7-Woerter-Warm-up',
+                        fr: 'Echauffement 7 mots',
+                        es: 'Calentamiento de 7 palabras',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: '从当前范围快速起步',
+                        en: 'Start fast from current scope',
+                        ja: '現在の範囲から素早く開始',
+                        de: 'Schnell aus dem aktuellen Bereich starten',
+                        fr: 'Demarrer vite depuis la portee actuelle',
+                        es: 'Empezar rapido desde el alcance actual',
+                      ),
+                      onTap: warmupWords.isEmpty
+                          ? () => _showNoWordsSnack(context, i18n)
+                          : () => _openPracticeSession(
+                              context,
+                              title: pickUiText(
+                                i18n,
+                                zh: '7 词热身',
+                                en: '7-word warmup',
+                              ),
+                              subtitle: pickUiText(
+                                i18n,
+                                zh: '共 ${warmupWords.length} 个词',
+                                en: '${warmupWords.length} words',
+                              ),
+                              words: warmupWords,
+                              shuffle: false,
+                            ),
+                    ),
+                    _buildQuickLaunchCard(
+                      context,
+                      icon: Icons.shuffle_rounded,
+                      title: pickUiText(
+                        i18n,
+                        zh: '乱序冲刺',
+                        en: 'Shuffle sprint',
+                        ja: 'シャッフル練習',
+                        de: 'Shuffle-Sprint',
+                        fr: 'Sprint melange',
+                        es: 'Sprint aleatorio',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: '随机打散当前范围',
+                        en: 'Shuffle the current scope',
+                        ja: '現在の範囲をシャッフル',
+                        de: 'Aktuellen Bereich mischen',
+                        fr: 'Melanger la portee actuelle',
+                        es: 'Mezclar el alcance actual',
+                      ),
+                      onTap: scopedWords.isEmpty
+                          ? () => _showNoWordsSnack(context, i18n)
+                          : () => _openPracticeSession(
+                              context,
+                              title: pickUiText(
+                                i18n,
+                                zh: '乱序冲刺',
+                                en: 'Shuffle sprint',
+                              ),
+                              subtitle: pickUiText(
+                                i18n,
+                                zh: '共 ${scopedWords.length} 个词',
+                                en: '${scopedWords.length} words',
+                              ),
+                              words: scopedWords,
+                              shuffle: true,
+                            ),
+                    ),
+                    _buildQuickLaunchCard(
+                      context,
+                      icon: Icons.mic_external_on_rounded,
+                      title: pickUiText(
+                        i18n,
+                        zh: '发音跟读',
+                        en: 'Pronunciation drill',
+                        ja: '発音トレーニング',
+                        de: 'Aussprachetraining',
+                        fr: 'Exercice de prononciation',
+                        es: 'Practica de pronunciacion',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: '当前词即时跟读',
+                        en: 'Follow along with current word',
+                        ja: '現在の単語ですぐ練習',
+                        de: 'Mit dem aktuellen Wort direkt ueben',
+                        fr: 'Suivre immediatement avec le mot courant',
+                        es: 'Practicar de inmediato con la palabra actual',
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => FollowAlongPage(word: current),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -418,6 +666,75 @@ class PracticePage extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildStatBadge(
+    BuildContext context, {
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      constraints: const BoxConstraints(minWidth: 120),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(value, style: theme.textTheme.titleMedium),
+                Text(label, style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickLaunchCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 160,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(icon, color: theme.colorScheme.primary),
+              const SizedBox(height: 12),
+              Text(title, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(subtitle, style: theme.textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -1,0 +1,73 @@
+{
+  "@@locale": "fr",
+  "appTitle": "咸鱼声息",
+  "settings": "Paramètres",
+  "language": "Langue",
+  "ttsLanguage": "Langue TTS (auto / en-US / zh-CN)",
+  "play": "Jouer",
+  "pause": "Pause",
+  "resume": "CV",
+  "prev": "Précédent",
+  "next": "Suivant",
+  "testMode": "Mode Test",
+  "wordbooks": "Livres de mots",
+  "searchPlaceholder": "Rechercher un mot ou un contenu",
+  "all": "Tous",
+  "word": "Mot",
+  "meaning": "Signification",
+  "fuzzy": "Flou",
+  "jumpByLetter": "Sauter par lettre",
+  "jumpByPrefix": "Sauter par préfixe",
+  "go": "Aller",
+  "saveAndApply": "Enregistrer et appliquer",
+  "errorInitFailed": "Échec de l'initialisation : {error}",
+  "@errorInitFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorImportFailed": "Échec de l'importation : {error}",
+  "@errorImportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorSaveWordFailed": "Échec de l'enregistrement du mot : {error}",
+  "@errorSaveWordFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "asrDisabled": "L'ASR est désactivé.",
+  "asrApiRequestFailed": "La requête API ASR a échoué ({code}). {body}",
+  "@asrApiRequestFailed": {
+    "placeholders": {
+      "code": {},
+      "body": {}
+    }
+  },
+  "asrProgressPreparing": "Préparation de l'ASR...",
+  "asrProgressDecoding": "Reconnaître la parole...",
+  "asrProgressDone": "Reconnaissance terminée.",
+  "asrProgressDownloading": "Téléchargement du modèle ASR...",
+  "asrProgressExtracting": "Extraction du modèle ASR...",
+  "pronunciationDiffMissing": "Manquant : {value}",
+  "@pronunciationDiffMissing": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffExtra": "Supplément : {value}",
+  "@pronunciationDiffExtra": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffReplace": "\"{from}\" attendu, \"{to}\" entendu",
+  "@pronunciationDiffReplace": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  }
+}

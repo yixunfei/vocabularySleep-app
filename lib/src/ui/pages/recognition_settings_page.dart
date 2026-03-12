@@ -237,7 +237,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final asr = config.asr;
-    final languageOptions = <String>['en', 'zh', 'ja', 'de', 'fr', 'es'];
+    final languageOptions = <String>['en', 'zh', 'ja', 'de', 'fr', 'es', 'ru'];
     final language = asr.language.trim().isEmpty ? 'en' : asr.language.trim();
     if (!languageOptions.contains(language)) {
       languageOptions.add(language);

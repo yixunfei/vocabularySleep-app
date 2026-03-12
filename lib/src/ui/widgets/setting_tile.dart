@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../layout/app_width_tier.dart';
+
 class SettingTile extends StatelessWidget {
   const SettingTile({
     super.key,
@@ -55,10 +57,13 @@ class SettingTile extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final widthTier = AppWidthBreakpoints.tierFor(
+                constraints.maxWidth,
+              );
               final stackTextTrailing =
                   resolvedTrailing != null &&
                   !iconLikeTrailing &&
-                  constraints.maxWidth < 340;
+                  widthTier.isCompact;
               final trailingMaxWidth = iconLikeTrailing
                   ? 28.0
                   : constraints.maxWidth * (stackTextTrailing ? 0.62 : 0.4);

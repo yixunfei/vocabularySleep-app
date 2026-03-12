@@ -10,6 +10,7 @@ import 'src/services/ambient_service.dart';
 import 'src/services/app_log_service.dart';
 import 'src/services/asr_service.dart';
 import 'src/services/database_service.dart';
+import 'src/services/focus_service.dart';
 import 'src/services/playback_service.dart';
 import 'src/services/settings_service.dart';
 import 'src/services/tts_service.dart';
@@ -100,6 +101,12 @@ void _runApp() {
   final playback = PlaybackService(tts);
   final ambient = AmbientService();
   final asr = AsrService();
+  final focusService = FocusService(
+    database,
+    settings: settings,
+    ambient: ambient,
+    tts: tts,
+  );
 
   runApp(
     MultiProvider(
@@ -111,6 +118,7 @@ void _runApp() {
             playback: playback,
             ambient: ambient,
             asr: asr,
+            focusService: focusService,
           ),
         ),
       ],

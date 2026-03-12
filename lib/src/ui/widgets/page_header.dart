@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../layout/app_width_tier.dart';
+
 class PageHeader extends StatelessWidget {
   const PageHeader({
     super.key,
@@ -19,7 +21,9 @@ class PageHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 390;
+        final isCompact = AppWidthBreakpoints.tierFor(
+          constraints.maxWidth,
+        ).isCompact;
         final textBlock = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -42,7 +46,7 @@ class PageHeader extends StatelessWidget {
         if (action == null) {
           return textBlock;
         }
-        if (isNarrow) {
+        if (isCompact) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[

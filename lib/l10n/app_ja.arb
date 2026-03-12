@@ -1,0 +1,73 @@
+{
+  "@@locale": "ja",
+  "appTitle": "咸鱼声息",
+  "settings": "設定",
+  "language": "言語",
+  "ttsLanguage": "TTS 言語 (auto / en-US / zh-CN)",
+  "play": "遊ぶ",
+  "pause": "一時停止",
+  "resume": "再開する",
+  "prev": "前へ",
+  "next": "次",
+  "testMode": "テストモード",
+  "wordbooks": "単語帳",
+  "searchPlaceholder": "単語や内容を検索する",
+  "all": "全て",
+  "word": "言葉",
+  "meaning": "意味",
+  "fuzzy": "ファジー",
+  "jumpByLetter": "文字でジャンプ",
+  "jumpByPrefix": "接頭辞でジャンプ",
+  "go": "行く",
+  "saveAndApply": "保存して適用",
+  "errorInitFailed": "初期化に失敗しました: {error}",
+  "@errorInitFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorImportFailed": "インポートに失敗しました: {error}",
+  "@errorImportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorSaveWordFailed": "単語の保存に失敗しました: {error}",
+  "@errorSaveWordFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "asrDisabled": "ASR は無効になっています。",
+  "asrApiRequestFailed": "ASR API リクエストが失敗しました ({code})。 {body}",
+  "@asrApiRequestFailed": {
+    "placeholders": {
+      "code": {},
+      "body": {}
+    }
+  },
+  "asrProgressPreparing": "ASR を準備しています...",
+  "asrProgressDecoding": "音声を認識中...",
+  "asrProgressDone": "認識が完了しました。",
+  "asrProgressDownloading": "ASR モデルをダウンロードしています...",
+  "asrProgressExtracting": "ASR モデルを抽出しています...",
+  "pronunciationDiffMissing": "欠落: {value}",
+  "@pronunciationDiffMissing": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffExtra": "追加: {value}",
+  "@pronunciationDiffExtra": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffReplace": "「{from}」と予想され、「{to}」と聞こえました",
+  "@pronunciationDiffReplace": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  }
+}

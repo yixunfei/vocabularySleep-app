@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../state/app_state.dart';
-import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
 class VoiceSettingsPage extends StatefulWidget {
@@ -50,6 +49,237 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
       voices: <String>['anna', 'bella', 'maru', 'risuke'],
     ),
   ];
+  static const Map<String, Map<String, String>>
+  _pageTexts = <String, Map<String, String>>{
+    'en': <String, String>{
+      'pageTitle': 'Voice settings',
+      'providerSubtitle':
+          'Complete both local and remote TTS configuration paths.',
+      'systemDefault': 'System default',
+      'activeVoice': 'Current voice: {voice}',
+      'modelLabel': 'Model: {model}',
+      'customVoiceId': 'Custom voice ID',
+      'previewTitle': 'Live preview',
+      'previewSubtitle':
+          'Preview pronunciation immediately after adjusting settings.',
+      'previewWord': 'Preview word: {word}',
+      'previewUnavailable': 'No word available for preview',
+      'previewAction': 'Preview current setup',
+      'tuningTitle': 'Speech tuning',
+      'tuningSubtitle': 'Adjust speed and volume for your listening scene.',
+      'speedLabel': 'Speed: {value}%',
+      'volumeLabel': 'Volume: {value}%',
+      'remoteTip':
+          'Remote TTS requires API key; custom API also requires base URL.',
+    },
+    'zh': <String, String>{
+      'pageTitle': '语音设置',
+      'providerSubtitle': '补全本地与远程 TTS 的完整配置路径。',
+      'systemDefault': '系统默认',
+      'activeVoice': '当前音色：{voice}',
+      'modelLabel': '模型：{model}',
+      'customVoiceId': '自定义音色 ID',
+      'previewTitle': '即时试听',
+      'previewSubtitle': '调整设置后可立即试听当前发音效果。',
+      'previewWord': '试听词：{word}',
+      'previewUnavailable': '当前没有可试听的单词',
+      'previewAction': '试听当前配置',
+      'tuningTitle': '播报参数',
+      'tuningSubtitle': '按场景调整语速和音量。',
+      'speedLabel': '语速：{value}%',
+      'volumeLabel': '音量：{value}%',
+      'remoteTip': '远程 TTS 需要 API Key，自定义 API 还需要 Base URL。',
+    },
+    'ja': <String, String>{
+      'pageTitle': '音声設定',
+      'providerSubtitle': 'ローカルとリモート TTS の設定をまとめて調整します。',
+      'systemDefault': 'システム既定',
+      'activeVoice': '現在の音声：{voice}',
+      'modelLabel': 'モデル：{model}',
+      'customVoiceId': 'カスタム音声 ID',
+      'previewTitle': 'すぐに試聴',
+      'previewSubtitle': '設定を変えたらすぐに現在の読み上げを確認できます。',
+      'previewWord': '試聴単語：{word}',
+      'previewUnavailable': '試聴できる単語がありません',
+      'previewAction': '現在の設定で試聴',
+      'tuningTitle': '読み上げ調整',
+      'tuningSubtitle': '速度と音量をシーンに合わせて調整します。',
+      'speedLabel': '速度：{value}%',
+      'volumeLabel': '音量：{value}%',
+      'remoteTip': 'リモート TTS には API キーが必要です。カスタム API では Base URL も必要です。',
+    },
+    'de': <String, String>{
+      'pageTitle': 'Spracheinstellungen',
+      'providerSubtitle':
+          'Lokale und entfernte TTS-Konfiguration an einem Ort.',
+      'systemDefault': 'Systemstandard',
+      'activeVoice': 'Aktive Stimme: {voice}',
+      'modelLabel': 'Modell: {model}',
+      'customVoiceId': 'Benutzerdefinierte Stimmen-ID',
+      'previewTitle': 'Sofortprobe',
+      'previewSubtitle': 'Prüfe die Aussprache sofort nach jeder Änderung.',
+      'previewWord': 'Vorschauwort: {word}',
+      'previewUnavailable': 'Kein Wort für die Vorschau verfügbar',
+      'previewAction': 'Aktuelle Konfiguration anhören',
+      'tuningTitle': 'Sprachabstimmung',
+      'tuningSubtitle': 'Passe Tempo und Lautstärke an deine Nutzung an.',
+      'speedLabel': 'Geschwindigkeit: {value}%',
+      'volumeLabel': 'Lautstärke: {value}%',
+      'remoteTip':
+          'Remote-TTS benötigt einen API-Schlüssel; benutzerdefinierte APIs zusätzlich eine Base-URL.',
+    },
+    'fr': <String, String>{
+      'pageTitle': 'Paramètres vocaux',
+      'providerSubtitle':
+          'Regroupe la configuration TTS locale et distante au même endroit.',
+      'systemDefault': 'Valeur système',
+      'activeVoice': 'Voix actuelle : {voice}',
+      'modelLabel': 'Modèle : {model}',
+      'customVoiceId': 'ID de voix personnalisée',
+      'previewTitle': 'Aperçu instantané',
+      'previewSubtitle':
+          'Écoute immédiatement la prononciation après chaque réglage.',
+      'previewWord': 'Mot d\'aperçu : {word}',
+      'previewUnavailable': 'Aucun mot disponible pour l\'aperçu',
+      'previewAction': 'Tester la configuration actuelle',
+      'tuningTitle': 'Réglage vocal',
+      'tuningSubtitle': 'Ajuste la vitesse et le volume selon ton usage.',
+      'speedLabel': 'Vitesse : {value}%',
+      'volumeLabel': 'Volume : {value}%',
+      'remoteTip':
+          'Le TTS distant nécessite une clé API ; l\'API personnalisée demande aussi une URL de base.',
+    },
+    'es': <String, String>{
+      'pageTitle': 'Ajustes de voz',
+      'providerSubtitle':
+          'Reúne la configuración TTS local y remota en un solo lugar.',
+      'systemDefault': 'Predeterminado del sistema',
+      'activeVoice': 'Voz actual: {voice}',
+      'modelLabel': 'Modelo: {model}',
+      'customVoiceId': 'ID de voz personalizada',
+      'previewTitle': 'Vista previa inmediata',
+      'previewSubtitle':
+          'Escucha la pronunciación al instante después de cada ajuste.',
+      'previewWord': 'Palabra de prueba: {word}',
+      'previewUnavailable': 'No hay palabras disponibles para la vista previa',
+      'previewAction': 'Probar configuración actual',
+      'tuningTitle': 'Ajuste de voz',
+      'tuningSubtitle': 'Ajusta velocidad y volumen según tu uso.',
+      'speedLabel': 'Velocidad: {value}%',
+      'volumeLabel': 'Volumen: {value}%',
+      'remoteTip':
+          'El TTS remoto necesita clave API; la API personalizada también requiere URL base.',
+    },
+    'ru': <String, String>{
+      'pageTitle': 'Настройки голоса',
+      'providerSubtitle':
+          'Собирает локальные и удалённые настройки TTS в одном месте.',
+      'systemDefault': 'Системный вариант',
+      'activeVoice': 'Текущий голос: {voice}',
+      'modelLabel': 'Модель: {model}',
+      'customVoiceId': 'ID пользовательского голоса',
+      'previewTitle': 'Мгновенное прослушивание',
+      'previewSubtitle':
+          'Сразу проверьте произношение после изменения настроек.',
+      'previewWord': 'Слово для прослушивания: {word}',
+      'previewUnavailable': 'Нет слова для прослушивания',
+      'previewAction': 'Проверить текущую настройку',
+      'tuningTitle': 'Параметры речи',
+      'tuningSubtitle':
+          'Подстройте скорость и громкость под свой сценарий использования.',
+      'speedLabel': 'Скорость: {value}%',
+      'volumeLabel': 'Громкость: {value}%',
+      'remoteTip':
+          'Для удалённого TTS нужен API-ключ; для пользовательского API также нужен базовый URL.',
+    },
+  };
+  static const Map<String, Map<String, String>> _voiceProfileTexts =
+      <String, Map<String, String>>{
+        'en': <String, String>{
+          'alex': 'Alex · calm male',
+          'anna': 'Anna · warm female',
+          'bella': 'Bella · bright female',
+          'benjamin': 'Benjamin · deep male',
+          'charles': 'Charles · clear male',
+          'claire': 'Claire · gentle female',
+          'david': 'David · warm male',
+          'diana': 'Diana · crisp female',
+          'maru': 'Maru · relaxed Japanese',
+          'risuke': 'Risuke · lively Japanese',
+        },
+        'zh': <String, String>{
+          'alex': 'Alex · 沉稳男声',
+          'anna': 'Anna · 温柔女声',
+          'bella': 'Bella · 明亮女声',
+          'benjamin': 'Benjamin · 低沉男声',
+          'charles': 'Charles · 清晰男声',
+          'claire': 'Claire · 柔和女声',
+          'david': 'David · 温暖男声',
+          'diana': 'Diana · 清脆女声',
+          'maru': 'Maru · 放松日语声线',
+          'risuke': 'Risuke · 活力日语声线',
+        },
+        'ja': <String, String>{
+          'alex': 'Alex・落ち着いた男性音声',
+          'anna': 'Anna・やわらかな女性音声',
+          'bella': 'Bella・明るい女性音声',
+          'benjamin': 'Benjamin・低めの男性音声',
+          'charles': 'Charles・明瞭な男性音声',
+          'claire': 'Claire・穏やかな女性音声',
+          'david': 'David・温かみのある男性音声',
+          'diana': 'Diana・軽やかな女性音声',
+          'maru': 'Maru・リラックスした日本語音声',
+          'risuke': 'Risuke・元気な日本語音声',
+        },
+        'de': <String, String>{
+          'alex': 'Alex · ruhige Männerstimme',
+          'anna': 'Anna · warme Frauenstimme',
+          'bella': 'Bella · helle Frauenstimme',
+          'benjamin': 'Benjamin · tiefe Männerstimme',
+          'charles': 'Charles · klare Männerstimme',
+          'claire': 'Claire · sanfte Frauenstimme',
+          'david': 'David · warme Männerstimme',
+          'diana': 'Diana · frische Frauenstimme',
+          'maru': 'Maru · entspannte japanische Stimme',
+          'risuke': 'Risuke · lebhafte japanische Stimme',
+        },
+        'fr': <String, String>{
+          'alex': 'Alex · voix masculine posée',
+          'anna': 'Anna · voix féminine chaleureuse',
+          'bella': 'Bella · voix féminine lumineuse',
+          'benjamin': 'Benjamin · voix masculine grave',
+          'charles': 'Charles · voix masculine claire',
+          'claire': 'Claire · voix féminine douce',
+          'david': 'David · voix masculine chaleureuse',
+          'diana': 'Diana · voix féminine vive',
+          'maru': 'Maru · voix japonaise détendue',
+          'risuke': 'Risuke · voix japonaise énergique',
+        },
+        'es': <String, String>{
+          'alex': 'Alex · voz masculina serena',
+          'anna': 'Anna · voz femenina cálida',
+          'bella': 'Bella · voz femenina brillante',
+          'benjamin': 'Benjamin · voz masculina profunda',
+          'charles': 'Charles · voz masculina clara',
+          'claire': 'Claire · voz femenina suave',
+          'david': 'David · voz masculina cálida',
+          'diana': 'Diana · voz femenina nítida',
+          'maru': 'Maru · voz japonesa relajada',
+          'risuke': 'Risuke · voz japonesa enérgica',
+        },
+        'ru': <String, String>{
+          'alex': 'Alex · спокойный мужской голос',
+          'anna': 'Anna · тёплый женский голос',
+          'bella': 'Bella · яркий женский голос',
+          'benjamin': 'Benjamin · глубокий мужской голос',
+          'charles': 'Charles · чёткий мужской голос',
+          'claire': 'Claire · мягкий женский голос',
+          'david': 'David · тёплый мужской голос',
+          'diana': 'Diana · звонкий женский голос',
+          'maru': 'Maru · расслабленный японский голос',
+          'risuke': 'Risuke · энергичный японский голос',
+        },
+      };
 
   List<String> _localVoices = const <String>[];
   bool _loadingLocalVoices = false;
@@ -102,6 +332,28 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
     return merged;
   }
 
+  String _voiceUiText(
+    AppI18n i18n,
+    String key, {
+    Map<String, Object?> params = const <String, Object?>{},
+  }) {
+    final language = AppI18n.normalizeLanguageCode(i18n.languageCode);
+    var value = _pageTexts[language]?[key] ?? _pageTexts['en']?[key] ?? key;
+    for (final entry in params.entries) {
+      value = value.replaceAll('{${entry.key}}', '${entry.value ?? ''}');
+    }
+    return value;
+  }
+
+  String _localizedVoiceLabel(AppI18n i18n, String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return _voiceUiText(i18n, 'systemDefault');
+    final language = AppI18n.normalizeLanguageCode(i18n.languageCode);
+    return _voiceProfileTexts[language]?[value.toLowerCase()] ??
+        _voiceProfileTexts['en']?[value.toLowerCase()] ??
+        value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -111,8 +363,8 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
     final speedPercent = (tts.speed * 100).round();
     final volumePercent = (tts.volume * 100).round();
     final activeVoice = tts.activeVoice.trim().isEmpty
-        ? pickUiText(i18n, zh: '系统默认', en: 'System default')
-        : tts.activeVoice.trim();
+        ? _voiceUiText(i18n, 'systemDefault')
+        : _localizedVoiceLabel(i18n, tts.activeVoice.trim());
     final previewWord = state.currentWord?.word.trim() ?? '';
     final canPreview = previewWord.isNotEmpty;
     final provider = tts.provider;
@@ -132,9 +384,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
         : remoteVoiceOptions.first;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '语音设置', en: 'Voice settings')),
-      ),
+      appBar: AppBar(title: Text(_voiceUiText(i18n, 'pageTitle'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: <Widget>[
@@ -146,11 +396,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                 children: <Widget>[
                   SectionHeader(
                     title: i18n.t('ttsProvider'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '补齐本地与远程 TTS 的完整配置路径。',
-                      en: 'Complete both local and remote TTS configuration paths.',
-                    ),
+                    subtitle: _voiceUiText(i18n, 'providerSubtitle'),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<TtsProviderType>(
@@ -237,19 +483,19 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    pickUiText(
+                    _voiceUiText(
                       i18n,
-                      zh: '当前语音：$activeVoice',
-                      en: 'Active voice: $activeVoice',
+                      'activeVoice',
+                      params: <String, Object?>{'voice': activeVoice},
                     ),
                   ),
                   if ((tts.model ?? '').trim().isNotEmpty) ...<Widget>[
                     const SizedBox(height: 4),
                     Text(
-                      pickUiText(
+                      _voiceUiText(
                         i18n,
-                        zh: '模型：${tts.model}',
-                        en: 'Model: ${tts.model}',
+                        'modelLabel',
+                        params: <String, Object?>{'model': tts.model},
                       ),
                     ),
                   ],
@@ -267,12 +513,14 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                             !_localVoices.contains(selectedLocalVoice))
                           DropdownMenuItem<String>(
                             value: selectedLocalVoice,
-                            child: Text(selectedLocalVoice),
+                            child: Text(
+                              _localizedVoiceLabel(i18n, selectedLocalVoice),
+                            ),
                           ),
                         ..._localVoices.map(
                           (voice) => DropdownMenuItem<String>(
                             value: voice,
-                            child: Text(voice),
+                            child: Text(_localizedVoiceLabel(i18n, voice)),
                           ),
                         ),
                       ],
@@ -345,7 +593,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                           .map(
                             (voice) => DropdownMenuItem<String>(
                               value: voice,
-                              child: Text(voice),
+                              child: Text(_localizedVoiceLabel(i18n, voice)),
                             ),
                           )
                           .toList(growable: false),
@@ -397,11 +645,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                       TextFormField(
                         initialValue: tts.remoteVoice,
                         decoration: InputDecoration(
-                          labelText: pickUiText(
-                            i18n,
-                            zh: '自定义音色 ID',
-                            en: 'Custom voice ID',
-                          ),
+                          labelText: _voiceUiText(i18n, 'customVoiceId'),
                         ),
                         onChanged: (value) {
                           final next = value.trim();
@@ -448,26 +692,18 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: '即时试听', en: 'Live preview'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '修改参数后可立即试听当前单词发音。',
-                      en: 'Preview pronunciation immediately after adjusting settings.',
-                    ),
+                    title: _voiceUiText(i18n, 'previewTitle'),
+                    subtitle: _voiceUiText(i18n, 'previewSubtitle'),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     canPreview
-                        ? pickUiText(
+                        ? _voiceUiText(
                             i18n,
-                            zh: '试听词：$previewWord',
-                            en: 'Preview word: $previewWord',
+                            'previewWord',
+                            params: <String, Object?>{'word': previewWord},
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '当前没有可试听的单词',
-                            en: 'No word available for preview',
-                          ),
+                        : _voiceUiText(i18n, 'previewUnavailable'),
                   ),
                   const SizedBox(height: 10),
                   FilledButton.icon(
@@ -475,13 +711,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                         ? () => state.previewPronunciation(previewWord)
                         : null,
                     icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '试听当前配置',
-                        en: 'Preview current setup',
-                      ),
-                    ),
+                    label: Text(_voiceUiText(i18n, 'previewAction')),
                   ),
                 ],
               ),
@@ -495,19 +725,15 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: '播报参数', en: 'Speech tuning'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '按场景调整语速和音量。',
-                      en: 'Adjust speed and volume for your listening scene.',
-                    ),
+                    title: _voiceUiText(i18n, 'tuningTitle'),
+                    subtitle: _voiceUiText(i18n, 'tuningSubtitle'),
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    pickUiText(
+                    _voiceUiText(
                       i18n,
-                      zh: '语速：$speedPercent%',
-                      en: 'Speed: $speedPercent%',
+                      'speedLabel',
+                      params: <String, Object?>{'value': speedPercent},
                     ),
                   ),
                   Slider(
@@ -522,10 +748,10 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
                     },
                   ),
                   Text(
-                    pickUiText(
+                    _voiceUiText(
                       i18n,
-                      zh: '音量：$volumePercent%',
-                      en: 'Volume: $volumePercent%',
+                      'volumeLabel',
+                      params: <String, Object?>{'value': volumePercent},
                     ),
                   ),
                   Slider(
@@ -545,11 +771,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
           if (isRemote) ...<Widget>[
             const SizedBox(height: 12),
             Text(
-              pickUiText(
-                i18n,
-                zh: '远程 TTS 需要 API Key，自定义 API 还需要 Base URL。',
-                en: 'Remote TTS requires API key; custom API also requires base URL.',
-              ),
+              _voiceUiText(i18n, 'remoteTip'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

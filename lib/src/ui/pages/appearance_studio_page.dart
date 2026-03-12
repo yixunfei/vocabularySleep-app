@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../state/app_state.dart';
+import '../layout/app_width_tier.dart';
 import '../legacy_style.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
@@ -45,7 +46,9 @@ class AppearanceStudioPage extends StatelessWidget {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final compactWidth = constraints.maxWidth < 390;
+          final compactWidth = AppWidthBreakpoints.tierFor(
+            constraints.maxWidth,
+          ).isCompact;
           final sectionPadding = compactWidth ? 14.0 : 18.0;
           final sectionSpacing = compactWidth ? 14.0 : 16.0;
           final controlSpacing = compactWidth ? 8.0 : 10.0;
@@ -135,6 +138,24 @@ class AppearanceStudioPage extends StatelessWidget {
                           state,
                           config,
                           appearance.copyWith(theme: value),
+                        );
+                      },
+                    ),
+                    SizedBox(height: controlSpacing),
+                    DropdownButtonFormField<String>(
+                      initialValue: appearance.normalizedTimerStyle,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: i18n.t('appearanceTimerStyle'),
+                        helperText: i18n.t('appearanceTimerStyleHint'),
+                      ),
+                      items: _timerStyles(i18n),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        _apply(
+                          state,
+                          config,
+                          appearance.copyWith(timerStyle: value),
                         );
                       },
                     ),
@@ -686,6 +707,19 @@ class AppearanceStudioPage extends StatelessWidget {
     ];
   }
 
+  List<DropdownMenuItem<String>> _timerStyles(AppI18n i18n) {
+    return <DropdownMenuItem<String>>[
+      DropdownMenuItem(
+        value: 'hourglass',
+        child: Text(i18n.t('timerStyleHourglass')),
+      ),
+      DropdownMenuItem(
+        value: 'countdown',
+        child: Text(i18n.t('timerStyleCountdown')),
+      ),
+    ];
+  }
+
   Widget _slider(
     BuildContext context, {
     required bool compact,
@@ -775,19 +809,17 @@ class AppearanceStudioPage extends StatelessWidget {
       decoration: InputDecoration(
         labelText: title,
         hintText: hint,
-        prefixIcon: preview == null
-            ? null
-            : Padding(
-                padding: const EdgeInsets.all(12),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: preview,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                  ),
-                  child: const SizedBox(width: 16, height: 16),
-                ),
-              ),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(12),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: preview,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: const SizedBox(width: 16, height: 16),
+          ),
+        ),
         suffixIcon: SizedBox(
           width: normalized.isEmpty ? 48 : 96,
           child: Row(

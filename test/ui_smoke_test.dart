@@ -1,21 +1,32 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
+import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
+import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
+import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
+import 'package:vocabulary_sleep_app/src/services/database_service.dart';
+import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/data_management_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/follow_along_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/focus_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/library_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/language_settings_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/practice_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/theme/app_theme.dart';
+import 'package:vocabulary_sleep_app/src/ui/ui_copy.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/setting_tile.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/word_card.dart';
 
@@ -29,6 +40,56 @@ void main() {
 
       expect(find.textContaining('TTS'), findsWidgets);
       expect(find.byType(DropdownButtonFormField<TtsProviderType>), findsOne);
+    });
+
+    testWidgets(
+      'follow along keeps a safe provider when Windows loads local ASR config',
+      (tester) async {
+        final config = PlayConfig.defaults.copyWith(
+          asr: PlayConfig.defaults.asr.copyWith(
+            provider: AsrProviderType.multiEngine,
+          ),
+        );
+        final state = _FakeAppState.sample(uiLanguage: 'en', config: config);
+        const word = WordEntry(
+          wordbookId: 1,
+          word: 'Echo',
+          fields: <WordFieldItem>[],
+        );
+
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const FollowAlongPage(word: word),
+        );
+
+        final expectedProvider =
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.windows
+            ? asrProviderLabel(AppI18n('en'), AsrProviderType.api)
+            : asrProviderLabel(AppI18n('en'), AsrProviderType.multiEngine);
+
+        expect(find.textContaining(expectedProvider), findsWidgets);
+      },
+    );
+
+    testWidgets('voice settings localizes preset voice labels in Japanese', (
+      tester,
+    ) async {
+      final config = PlayConfig.defaults.copyWith(
+        tts: PlayConfig.defaults.tts.copyWith(
+          provider: TtsProviderType.api,
+          model: 'FunAudioLLM/CosyVoice2-0.5B',
+          voice: 'alex',
+          remoteVoice: 'alex',
+          remoteVoiceTypes: const <String>['alex'],
+        ),
+      );
+      final state = _FakeAppState.sample(uiLanguage: 'ja', config: config);
+      await _pumpPage(tester, state: state, child: const VoiceSettingsPage());
+
+      expect(find.text('音声設定'), findsOneWidget);
+      expect(find.textContaining('現在の音声：Alex'), findsOneWidget);
+      expect(find.text('Voice settings'), findsNothing);
     });
 
     testWidgets('recognition settings shows offline package section', (
@@ -45,11 +106,30 @@ void main() {
       expect(find.byType(SwitchListTile), findsWidgets);
     });
 
-    testWidgets('library page keeps index entry visible', (tester) async {
+    testWidgets('library page keeps prefix jump entry visible', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const LibraryPage());
 
-      expect(find.text('Open index'), findsOneWidget);
+      expect(find.text('Prefix jump'), findsOneWidget);
+      expect(find.text('Open index'), findsNothing);
+    });
+
+    testWidgets('library page hides alphabet index for non-Latin words', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[
+          WordEntry(wordbookId: 1, word: '睡眠', fields: <WordFieldItem>[]),
+          WordEntry(wordbookId: 1, word: '专注', fields: <WordFieldItem>[]),
+          WordEntry(wordbookId: 1, word: '放松', fields: <WordFieldItem>[]),
+        ],
+      );
+      await _pumpPage(tester, state: state, child: const LibraryPage());
+
+      expect(find.text('Prefix jump'), findsOneWidget);
+      expect(find.text('Open index'), findsNothing);
+      expect(find.text('All letters'), findsNothing);
     });
 
     testWidgets(
@@ -91,7 +171,7 @@ void main() {
       },
     );
 
-    testWidgets('library page uses wrapped index preview on narrow width', (
+    testWidgets('library page keeps prefix jump tools on narrow width', (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(320, 900));
@@ -151,8 +231,9 @@ void main() {
         child: const LibraryPage(),
       );
 
-      expect(find.text('All letters'), findsOneWidget);
-      expect(find.text('More...'), findsNothing);
+      expect(find.text('Prefix jump'), findsOneWidget);
+      expect(find.text('Open index'), findsNothing);
+      expect(find.text('All letters'), findsNothing);
 
       final horizontalScrollViews = tester
           .widgetList<SingleChildScrollView>(find.byType(SingleChildScrollView))
@@ -181,7 +262,128 @@ void main() {
       expect(find.text('System'), findsNothing);
     });
 
-    testWidgets('library index jump scrolls lazy list to target word', (
+    testWidgets('language settings includes Russian localization option', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'ru');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const LanguageSettingsPage(),
+      );
+
+      expect(find.text('Настройки языка'), findsOneWidget);
+      expect(find.text('Русский'), findsWidgets);
+      expect(find.text('Language settings'), findsNothing);
+    });
+
+    testWidgets('focus page opens and closes notes drawer from side rail', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      final drawerFinder = find.byKey(const ValueKey<String>('notes-drawer'));
+      final handleFinder = find.byKey(
+        const ValueKey<String>('notes-drawer-handle'),
+      );
+      final addTaskButtonFinder = find.text('Add task');
+
+      final collapsedLeft = tester.getTopLeft(drawerFinder).dx;
+      final collapsedHandleLeft = tester.getTopLeft(handleFinder).dx;
+      final addTaskButtonRight = tester.getTopRight(addTaskButtonFinder).dx;
+      expect(addTaskButtonRight, lessThan(collapsedHandleLeft - 4));
+
+      await tester.tap(handleFinder);
+      await tester.pumpAndSettle();
+
+      final expandedLeft = tester.getTopLeft(drawerFinder).dx;
+      expect(expandedLeft, lessThan(collapsedLeft - 100));
+
+      await tester.drag(drawerFinder, const Offset(260, 0));
+      await tester.pumpAndSettle();
+
+      final collapsedAgainLeft = tester.getTopLeft(drawerFinder).dx;
+      expect(collapsedAgainLeft, greaterThan(expandedLeft + 100));
+    });
+
+    testWidgets('focus page opens todo details editor and saves rich todo', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final focusService = _FakeFocusService.sample();
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey<String>('todo-editor-entry')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('todo-title-field')),
+        'Write bilingual release notes',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('todo-category-field')),
+        'Review',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('todo-note-field')),
+        'Capture UI polish and localization updates.',
+      );
+      await tester.tap(find.text('High'));
+      await tester.tap(find.byKey(const ValueKey<String>('todo-save-button')));
+      await tester.pumpAndSettle();
+
+      expect(
+        focusService.getTodos().any(
+          (todo) =>
+              todo.content == 'Write bilingual release notes' &&
+              todo.category == 'Review' &&
+              todo.note == 'Capture UI polish and localization updates.' &&
+              todo.priority == 2,
+        ),
+        isTrue,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('todo-title-field')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('focus page keeps timer stepper stable on narrow width', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Timer'), findsOneWidget);
+    });
+
+    testWidgets('library prefix jump scrolls lazy list to target word', (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(360, 720));
@@ -231,9 +433,10 @@ void main() {
         child: const LibraryPage(),
       );
 
-      await tester.tap(find.text('Open index'));
+      await tester.tap(find.text('Prefix jump'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Z').last);
+      await tester.enterText(find.byType(TextField).last, 'Zu');
+      await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
       expect(find.text('Zulu 25'), findsOneWidget);
@@ -251,6 +454,39 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(state.resetUserDataCalled, true);
+    });
+
+    testWidgets('data management page wires restore backup action', (
+      tester,
+    ) async {
+      final backup = DatabaseBackupInfo(
+        name: 'vocabulary_manual_2026-03-12T10-00-00.db',
+        path: '/tmp/vocabulary_manual_2026-03-12T10-00-00.db',
+        reason: 'manual',
+        modifiedAt: DateTime(2026, 3, 12, 10),
+        sizeBytes: 2048,
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        backups: <DatabaseBackupInfo>[backup],
+      );
+      await _pumpPage(tester, state: state, child: const DataManagementPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Restore backup'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Restore this backup'), findsOneWidget);
+
+      await tester.tap(find.text('Restore this backup'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Restore'));
+      await tester.pumpAndSettle();
+
+      expect(state.restoredBackupPath, backup.path);
     });
 
     testWidgets('wordbook management shows quick actions and opens editor', (
@@ -292,6 +528,7 @@ void main() {
 
       expect(find.text('New wordbook'), findsOneWidget);
       expect(find.text('Import wordbook'), findsOneWidget);
+      expect(find.text('Download online wordbooks'), findsOneWidget);
       expect(find.text('Edit'), findsOneWidget);
       expect(find.text('Rename'), findsOneWidget);
 
@@ -340,6 +577,43 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(state.importedWordbookName, 'Imported Pack');
+    });
+
+    testWidgets('practice page shows quick start and stats badges', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const PracticePage());
+
+      expect(find.text('Reviewed today'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Quick start'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Quick start'), findsOneWidget);
+      expect(find.text('7-word warmup'), findsOneWidget);
+      expect(find.text('Shuffle sprint'), findsOneWidget);
+    });
+
+    test('online wordbook catalog parses repo html payload', () {
+      const html =
+          '<script data-target="react-app.embeddedData">'
+          '{"payload":{"codeViewRepoRoute":{"tree":{"items":['
+          '{"name":"中英_12000.json","path":"中英_12000.json","contentType":"file"},'
+          '{"name":"notes.txt","path":"notes.txt","contentType":"file"},'
+          '{"name":"英法_12000.json","path":"英法_12000.json","contentType":"file"}'
+          ']}}}}</script>';
+
+      final entries = GitHubWordbookCatalog.parseRepositoryHtml(html);
+
+      expect(entries.map((item) => item.fileName), <String>[
+        '中英_12000.json',
+        '英法_12000.json',
+      ]);
     });
 
     testWidgets('word card renders visible appearance effects', (tester) async {
@@ -412,12 +686,21 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required List<Wordbook> wordbooks,
     required List<WordEntry> visibleWords,
     required List<String> localVoices,
+    required List<DatabaseBackupInfo> backups,
+    required FocusService focusService,
+    required List<AmbientSource> ambientSources,
+    required double ambientMasterVolume,
   }) : _config = config,
        _uiLanguage = uiLanguage,
+       _uiLanguageFollowsSystem = false,
        _selectedWordbook = selectedWordbook,
        _wordbooks = wordbooks,
        _visibleWords = visibleWords,
-       _localVoices = localVoices;
+       _localVoices = localVoices,
+       _backups = backups,
+       _focusService = focusService,
+       _ambientSources = ambientSources,
+       _ambientMasterVolume = ambientMasterVolume;
 
   factory _FakeAppState.sample({
     List<WordEntry>? words,
@@ -425,6 +708,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     PlayConfig? config,
     Wordbook? selectedWordbook,
     List<Wordbook>? wordbooks,
+    List<DatabaseBackupInfo>? backups,
+    FocusService? focusService,
+    List<AmbientSource>? ambientSources,
   }) {
     final visibleWords =
         words ??
@@ -450,23 +736,49 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       wordbooks: resolvedWordbooks,
       visibleWords: visibleWords,
       localVoices: const <String>['alex', 'anna'],
+      backups: backups ?? const <DatabaseBackupInfo>[],
+      focusService: focusService ?? _FakeFocusService.sample(),
+      ambientSources:
+          ambientSources ??
+          const <AmbientSource>[
+            AmbientSource(
+              id: 'rain_soft',
+              name: 'Soft Rain',
+              assetPath: 'assets/audio/rain.mp3',
+            ),
+          ],
+      ambientMasterVolume: 0.55,
     ).._currentWord = visibleWords.firstOrNull;
   }
 
   PlayConfig _config;
-  final String _uiLanguage;
+  String _uiLanguage;
+  bool _uiLanguageFollowsSystem;
   Wordbook? _selectedWordbook;
   List<Wordbook> _wordbooks;
   final List<WordEntry> _visibleWords;
   WordEntry? _currentWord;
   String? _lastBackupPath;
   final List<String> _localVoices;
+  final List<DatabaseBackupInfo> _backups;
+  final FocusService _focusService;
+  List<AmbientSource> _ambientSources;
+  double _ambientMasterVolume;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   bool resetUserDataCalled = false;
+  String? restoredBackupPath;
   String? createdWordbookName;
   String? renamedWordbookName;
   String? importedWordbookName;
+  String? importedWordbookFilePath;
+  final int _practiceTodaySessions = 2;
+  final int _practiceTodayReviewed = 9;
+  final int _practiceTodayRemembered = 7;
+  final int _practiceTotalSessions = 6;
+  final int _practiceTotalReviewed = 28;
+  final int _practiceTotalRemembered = 22;
+  final String _practiceLastSessionTitle = 'Scope sprint';
   final Set<String> _favorites = <String>{};
   final Set<String> _taskWords = <String>{};
   final Map<AsrProviderType, AsrOfflineModelStatus> _offlineStatuses =
@@ -510,13 +822,48 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   PlayConfig get config => _config;
 
   @override
+  List<AmbientSource> get ambientSources => _ambientSources;
+
+  @override
+  double get ambientMasterVolume => _ambientMasterVolume;
+
+  @override
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;
 
   @override
   Set<String> get favorites => _favorites;
 
   @override
+  FocusService get focusService => _focusService;
+
+  @override
   String? get lastBackupPath => _lastBackupPath;
+
+  @override
+  String get practiceLastSessionTitle => _practiceLastSessionTitle;
+
+  @override
+  int get practiceTodayReviewed => _practiceTodayReviewed;
+
+  @override
+  int get practiceTodaySessions => _practiceTodaySessions;
+
+  @override
+  double get practiceTodayAccuracy => _practiceTodayReviewed == 0
+      ? 0
+      : _practiceTodayRemembered / _practiceTodayReviewed;
+
+  @override
+  double get practiceTotalAccuracy => _practiceTotalReviewed == 0
+      ? 0
+      : _practiceTotalRemembered / _practiceTotalReviewed;
+
+  @override
+  int get practiceTotalSessions => _practiceTotalSessions;
+
+  @override
+  List<WordEntry> get recentWeakWordEntries =>
+      _visibleWords.length < 2 ? _visibleWords : _visibleWords.sublist(0, 2);
 
   @override
   SearchMode get searchMode => _searchMode;
@@ -532,6 +879,13 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   String get uiLanguage => _uiLanguage;
+
+  @override
+  bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
+
+  @override
+  String get uiLanguageSelection =>
+      _uiLanguageFollowsSystem ? 'system' : _uiLanguage;
 
   @override
   List<WordEntry> get words => _visibleWords;
@@ -592,7 +946,32 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }) async {}
 
   @override
+  Future<String?> startAsrRecording({AsrProviderType? provider}) async => null;
+
+  @override
+  Future<String?> stopAsrRecording() async => null;
+
+  @override
+  Future<void> cancelAsrRecording() async {}
+
+  @override
+  void stopAsrProcessing() {}
+
+  @override
+  Future<AsrResult> transcribeRecording(
+    String audioPath, {
+    String? expectedText,
+    AsrProviderType? provider,
+    AsrProgressCallback? onProgress,
+  }) async {
+    return const AsrResult(success: false, error: 'recognitionFailed');
+  }
+
+  @override
   Future<void> previewPronunciation(String word) async {}
+
+  @override
+  Future<void> addAmbientFileSource() async {}
 
   @override
   Future<void> removeAsrOfflineModel(AsrProviderType provider) async {}
@@ -601,9 +980,57 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   Future<void> removePronScoringPack(PronScoringMethod method) async {}
 
   @override
+  Future<void> removeAmbientSource(String sourceId) async {
+    _ambientSources = _ambientSources
+        .where((source) => source.id != sourceId)
+        .toList(growable: false);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> setAmbientMasterVolume(double value) async {
+    _ambientMasterVolume = value;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> setAmbientSourceEnabled(String sourceId, bool enabled) async {
+    _ambientSources = _ambientSources
+        .map(
+          (source) => source.id == sourceId
+              ? source.copyWith(enabled: enabled)
+              : source,
+        )
+        .toList(growable: false);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> setAmbientSourceVolume(String sourceId, double value) async {
+    _ambientSources = _ambientSources
+        .map(
+          (source) =>
+              source.id == sourceId ? source.copyWith(volume: value) : source,
+        )
+        .toList(growable: false);
+    notifyListeners();
+  }
+
+  @override
   Future<bool> resetUserData() async {
     resetUserDataCalled = true;
     _lastBackupPath = '/tmp/vocabulary_reset_backup.db';
+    notifyListeners();
+    return true;
+  }
+
+  @override
+  Future<List<DatabaseBackupInfo>> listDatabaseBackups() async => _backups;
+
+  @override
+  Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) async {
+    restoredBackupPath = backup.path;
+    _lastBackupPath = '/tmp/vocabulary_before_restore_backup.db';
     notifyListeners();
     return true;
   }
@@ -644,6 +1071,13 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }) async {
     importedWordbookName =
         await requestName?.call('imported_wordbook') ?? 'imported_wordbook';
+    notifyListeners();
+  }
+
+  @override
+  Future<void> importWordbookFile(String filePath, String name) async {
+    importedWordbookFilePath = filePath;
+    importedWordbookName = name;
     notifyListeners();
   }
 
@@ -718,6 +1152,19 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   Future<void> toggleTaskWord(WordEntry word) async {}
 
   @override
+  void setUiLanguage(String language) {
+    _uiLanguage = AppI18n.normalizeLanguageCode(language);
+    _uiLanguageFollowsSystem = false;
+    notifyListeners();
+  }
+
+  @override
+  void setUiLanguageFollowSystem() {
+    _uiLanguageFollowsSystem = true;
+    notifyListeners();
+  }
+
+  @override
   void updateConfig(PlayConfig config) {
     _config = config;
     notifyListeners();
@@ -729,6 +1176,286 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 }
 
+class _FakeFocusService extends ChangeNotifier implements FocusService {
+  _FakeFocusService({
+    TomatoTimerConfig? config,
+    TomatoTimerState? state,
+    List<TodoItem>? todos,
+    List<PlanNote>? notes,
+  }) : _config = config ?? const TomatoTimerConfig(workspaceSplitRatio: 0.42),
+       _state =
+           state ??
+           const TomatoTimerState(
+             phase: TomatoTimerPhase.focus,
+             currentRound: 1,
+             remainingSeconds: 20 * 60,
+             totalSeconds: 25 * 60,
+           ),
+       _todos = List<TodoItem>.from(
+         todos ??
+             const <TodoItem>[
+               TodoItem(id: 1, content: 'Prepare review notes'),
+               TodoItem(
+                 id: 2,
+                 content: 'Ship focus page polish',
+                 completed: true,
+               ),
+             ],
+       ),
+       _notes = List<PlanNote>.from(
+         notes ??
+             const <PlanNote>[
+               PlanNote(
+                 id: 1,
+                 title: 'Plan recap',
+                 content: 'Open the drawer to inspect note details.',
+               ),
+               PlanNote(
+                 id: 2,
+                 title: 'Voice cue',
+                 content: 'Keep the end reminder short and calm.',
+               ),
+             ],
+       );
+
+  factory _FakeFocusService.sample() => _FakeFocusService();
+
+  TomatoTimerConfig _config;
+  TomatoTimerState _state;
+  final List<TodoItem> _todos;
+  final List<PlanNote> _notes;
+
+  @override
+  TomatoTimerConfig get config => _config;
+
+  @override
+  bool get initialized => true;
+
+  @override
+  TomatoTimerState get state => _state;
+
+  @override
+  void addNote(String title, String? content, String? color) {
+    _notes.add(
+      PlanNote(
+        id: (_notes.lastOrNull?.id ?? 0) + 1,
+        title: title,
+        content: content,
+        color: color,
+      ),
+    );
+    notifyListeners();
+  }
+
+  @override
+  void addTodo(
+    String content, {
+    int priority = 1,
+    String? category,
+    String? note,
+    String? color,
+    DateTime? dueAt,
+    bool alarmEnabled = false,
+  }) {
+    _todos.add(
+      TodoItem(
+        id: (_todos.lastOrNull?.id ?? 0) + 1,
+        content: content,
+        priority: priority,
+        category: category,
+        note: note,
+        color: color,
+        dueAt: dueAt,
+        alarmEnabled: alarmEnabled,
+      ),
+    );
+    notifyListeners();
+  }
+
+  @override
+  void advanceToNextPhase() {
+    _state = const TomatoTimerState();
+    notifyListeners();
+  }
+
+  @override
+  void clearCompletedTodos() {
+    _todos.removeWhere((todo) => todo.completed);
+    notifyListeners();
+  }
+
+  @override
+  void deleteNote(int id) {
+    _notes.removeWhere((note) => note.id == id);
+    notifyListeners();
+  }
+
+  @override
+  void deleteNotes(List<int> ids) {
+    _notes.removeWhere((note) => ids.contains(note.id));
+    notifyListeners();
+  }
+
+  @override
+  void deleteTodo(int id) {
+    _todos.removeWhere((todo) => todo.id == id);
+    notifyListeners();
+  }
+
+  @override
+  List<PlanNote> getNotes() => List<PlanNote>.unmodifiable(_notes);
+
+  @override
+  int getTodayFocusMinutes() => 45;
+
+  @override
+  int getTodayRoundsCompleted() => 2;
+
+  @override
+  int getTodaySessionMinutes() => 60;
+
+  @override
+  List<TodoItem> getTodos() => List<TodoItem>.unmodifiable(_todos);
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  void pause() {
+    _state = _state.copyWith(isPaused: true);
+    notifyListeners();
+  }
+
+  @override
+  void reorderNotes(List<PlanNote> orderedNotes) {
+    _notes
+      ..clear()
+      ..addAll(orderedNotes);
+    notifyListeners();
+  }
+
+  @override
+  void reorderTodos(List<TodoItem> orderedTodos) {
+    _todos
+      ..clear()
+      ..addAll(orderedTodos);
+    notifyListeners();
+  }
+
+  @override
+  void resume() {
+    _state = _state.copyWith(isPaused: false);
+    notifyListeners();
+  }
+
+  @override
+  void saveConfig(TomatoTimerConfig config) {
+    _config = config;
+    notifyListeners();
+  }
+
+  @override
+  void saveTodo(TodoItem item) {
+    final index = _todos.indexWhere((todo) => todo.id == item.id);
+    if (index >= 0) {
+      _todos[index] = item;
+    } else {
+      _todos.add(item.copyWith(id: (_todos.lastOrNull?.id ?? 0) + 1));
+    }
+    notifyListeners();
+  }
+
+  @override
+  void saveReminderConfig(TimerReminderConfig reminder) {
+    _config = _config.copyWith(reminder: reminder);
+    notifyListeners();
+  }
+
+  @override
+  void saveWorkspaceSplitRatio(double ratio) {
+    _config = _config.copyWith(workspaceSplitRatio: ratio);
+    notifyListeners();
+  }
+
+  @override
+  void setCallbacks({
+    void Function(TomatoTimerState p1)? onTick,
+    void Function(TomatoTimerPhase p1, int p2)? onPhaseComplete,
+  }) {}
+
+  @override
+  void skip() {
+    _state = _state.copyWith(
+      remainingSeconds: (_state.remainingSeconds - 60).clamp(
+        0,
+        _state.totalSeconds,
+      ),
+    );
+    notifyListeners();
+  }
+
+  @override
+  void start({
+    int? focusDurationSeconds,
+    int? breakDurationSeconds,
+    int? focusMinutes,
+    int? breakMinutes,
+    int? rounds,
+  }) {
+    final nextFocusSeconds =
+        focusDurationSeconds ??
+        (focusMinutes != null
+            ? focusMinutes * 60
+            : _config.focusDurationSeconds);
+    _config = _config.copyWith(
+      focusDurationSeconds: nextFocusSeconds,
+      breakDurationSeconds:
+          breakDurationSeconds ??
+          (breakMinutes != null
+              ? breakMinutes * 60
+              : _config.breakDurationSeconds),
+      rounds: rounds,
+    );
+    _state = TomatoTimerState(
+      phase: TomatoTimerPhase.focus,
+      currentRound: 1,
+      remainingSeconds: nextFocusSeconds,
+      totalSeconds: nextFocusSeconds,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void stop({bool saveProgress = true}) {
+    _state = const TomatoTimerState();
+    notifyListeners();
+  }
+
+  @override
+  void toggleTodo(int id) {
+    final index = _todos.indexWhere((todo) => todo.id == id);
+    if (index < 0) return;
+    final current = _todos[index];
+    _todos[index] = current.copyWith(completed: !current.completed);
+    notifyListeners();
+  }
+
+  @override
+  void updateNote(PlanNote note) {
+    final index = _notes.indexWhere((item) => item.id == note.id);
+    if (index < 0) return;
+    _notes[index] = note;
+    notifyListeners();
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    return super.noSuchMethod(invocation);
+  }
+}
+
 extension<T> on List<T> {
   T? get firstOrNull => this.isEmpty ? null : first;
+
+  T? get lastOrNull => this.isEmpty ? null : last;
 }

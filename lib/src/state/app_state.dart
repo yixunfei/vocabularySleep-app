@@ -15,6 +15,7 @@ import '../services/ambient_service.dart';
 import '../services/app_log_service.dart';
 import '../services/asr_service.dart';
 import '../services/database_service.dart';
+import '../services/focus_service.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 
@@ -48,11 +49,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required PlaybackService playback,
     required AmbientService ambient,
     required AsrService asr,
+    required FocusService focusService,
   }) : _database = database,
        _settings = settings,
        _playback = playback,
        _ambient = ambient,
-       _asr = asr {
+       _asr = asr,
+       _focusService = focusService {
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -61,7 +64,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final PlaybackService _playback;
   final AmbientService _ambient;
   final AsrService _asr;
+  final FocusService _focusService;
   final AppLogService _log = AppLogService.instance;
+
+  FocusService get focusService => _focusService;
 
   bool _initializing = false;
   bool _initialized = false;
@@ -107,6 +113,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int _playSessionId = 0;
   bool _playbackScopeRestarting = false;
   int? _queuedPlaybackScopeTarget;
+  int _wordbookPlaybackSyncToken = 0;
   int _wordsVersion = 0;
   List<WordEntry>? _visibleWordsCache;
   int _visibleWordsCacheVersion = -1;
@@ -289,6 +296,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       await _database.init();
+      await _focusService.init();
       _config = _settings.loadPlayConfig();
       _playback.updateRuntimeConfig(_config);
       final languageSetting = _settings.loadUiLanguage();
@@ -504,6 +512,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     int? focusWordId,
   }) async {
     if (wordbook == null) return;
+    final shouldFollowPlayingWord =
+        (focusWordId == null) &&
+        ((focusWord ?? '').trim().isEmpty) &&
+        _isPlaying &&
+        _playingWordbookId == wordbook.id &&
+        _playingScopeWords.isNotEmpty;
+    if (shouldFollowPlayingWord) {
+      final playingIndex = _playingScopeIndex.clamp(
+        0,
+        _playingScopeWords.length - 1,
+      );
+      final playingEntry = _playingScopeWords[playingIndex];
+      focusWordId = playingEntry.id;
+      focusWord = playingEntry.word;
+    }
+    final normalizedFocusWord = focusWord?.trim();
     final previousSelection = _selectedWordbook;
     _log.i(
       'app_state',
@@ -554,6 +578,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     _selectedWordbook = wordbook;
     _setWords(_database.getWords(wordbook.id));
+    if (shouldFollowPlayingWord && _searchQuery.trim().isNotEmpty) {
+      final matchesFocusedWord = _scopeWords.any(
+        (item) =>
+            (focusWordId != null && item.id == focusWordId) ||
+            ((normalizedFocusWord ?? '').isNotEmpty &&
+                item.word == normalizedFocusWord),
+      );
+      if (!matchesFocusedWord) {
+        _searchQuery = '';
+        _invalidateVisibleWordsCache();
+      }
+    }
     _currentWordIndex = 0;
     if (focusWordId != null) {
       final index = _words.indexWhere((item) => item.id == focusWordId);
@@ -561,10 +597,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         _currentWordIndex = index;
       }
     }
-    if (_currentWordIndex == 0 &&
-        focusWord != null &&
-        focusWord.trim().isNotEmpty) {
-      final index = _words.indexWhere((item) => item.word == focusWord.trim());
+    if (_currentWordIndex == 0 && (normalizedFocusWord ?? '').isNotEmpty) {
+      final index = _words.indexWhere(
+        (item) => item.word == normalizedFocusWord,
+      );
       if (index >= 0) {
         _currentWordIndex = index;
       }
@@ -572,6 +608,70 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _ensureCurrentWordInScope();
     resetTestModeProgress();
     notifyListeners();
+    if (previousSelection?.id != wordbook.id) {
+      await _syncPlaybackToSelectedWordbook(wordbook);
+    }
+  }
+
+  Future<void> _syncPlaybackToSelectedWordbook(Wordbook wordbook) async {
+    if (!_isPlaying || _isPaused || _playingWordbookId == wordbook.id) {
+      return;
+    }
+
+    final scopeWords = _scopeWords;
+    if (scopeWords.isEmpty) {
+      await stop();
+      return;
+    }
+
+    final activeWord = currentWord;
+    var startIndex = 0;
+    if (activeWord != null) {
+      final scopedIndex = _indexOfWordEntry(scopeWords, activeWord);
+      if (scopedIndex >= 0) {
+        startIndex = scopedIndex;
+      }
+    }
+    final words = List<WordEntry>.from(scopeWords);
+    final safeStart = startIndex.clamp(0, words.length - 1);
+    final syncToken = ++_wordbookPlaybackSyncToken;
+
+    _log.i(
+      'app_state',
+      'sync playback to selected wordbook',
+      data: <String, Object?>{
+        'selectedWordbookId': wordbook.id,
+        'selectedWordbookName': wordbook.name,
+        'playingWordbookId': _playingWordbookId,
+        'startIndex': safeStart,
+        'startWordId': words[safeStart].id,
+        'startWord': words[safeStart].word,
+      },
+    );
+
+    _playingWordbookId = wordbook.id;
+    _playingWordbookName = wordbook.name;
+    _playingScopeWords = words;
+    _playingScopeIndex = safeStart;
+    _playingWord = words[safeStart].word;
+    _currentUnit = 0;
+    _totalUnits = 0;
+    _activeUnit = null;
+    notifyListeners();
+
+    _playSessionId += 1;
+    await _playback.stop();
+    if (syncToken != _wordbookPlaybackSyncToken) return;
+    if (_selectedWordbook?.id != wordbook.id) return;
+
+    unawaited(
+      _startPlaySession(
+        scopeWords: words,
+        startIndex: safeStart,
+        playingWordbookId: wordbook.id,
+        playingWordbookName: wordbook.name,
+      ),
+    );
   }
 
   void selectWordIndex(int index) {
@@ -959,57 +1059,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     try {
       await _createSafetyBackup(reason: 'reset_user_data');
       await stop();
+      _focusService.stop(saveProgress: false);
       await _ambient.reset();
       await _database.resetUserData();
 
-      _config = PlayConfig.defaults;
-      _playback.updateRuntimeConfig(_config);
+      _message = null;
+      _messageParams = const <String, Object?>{};
       _searchQuery = '';
       _searchMode = SearchMode.all;
       _favorites = <String>{};
       _taskWords = <String>{};
-      _testModeEnabled = false;
-      _testModeRevealed = false;
-      _testModeHintRevealed = false;
-      _practiceDateKey = '';
-      _practiceTodaySessions = 0;
-      _practiceTodayReviewed = 0;
-      _practiceTodayRemembered = 0;
-      _practiceTotalSessions = 0;
-      _practiceTotalReviewed = 0;
-      _practiceTotalRemembered = 0;
-      _practiceLastSessionTitle = '';
-      _practiceWeakWords = <String>[];
-      _message = null;
-      _messageParams = const <String, Object?>{};
-
-      final languageSetting = _settings.loadUiLanguage();
-      if (languageSetting == SettingsService.uiLanguageSystem) {
-        _uiLanguageFollowsSystem = true;
-        _uiLanguage = _resolveSystemUiLanguage();
-      } else {
-        _uiLanguageFollowsSystem = false;
-        _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
-      }
-
-      _invalidateVisibleWordsCache();
-      await _reloadWordbooks(keepCurrentSelection: false);
-      final preferredWordbook = _wordbooks
-          .where(
-            (item) =>
-                item.wordCount > 0 &&
-                item.path != 'builtin:task' &&
-                item.path != 'builtin:favorites',
-          )
-          .cast<Wordbook?>()
-          .firstOrNull;
-      if (preferredWordbook != null) {
-        await selectWordbook(preferredWordbook);
-      }
-      await _syncSpecialWordbooks();
-      _loadPracticeDashboard();
-      _ensurePracticeDate(persist: true);
-      _refreshLocalizedWordbookNames();
+      await _reloadPersistentStateAfterDatabaseChange();
       notifyListeners();
       return true;
     } catch (error, stackTrace) {
@@ -1022,6 +1082,42 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _setMessage(
         'errorInitFailed',
         params: <String, Object?>{'error': 'reset user data: $error'},
+      );
+      notifyListeners();
+      return false;
+    } finally {
+      _setBusy(false);
+    }
+  }
+
+  Future<List<DatabaseBackupInfo>> listDatabaseBackups() {
+    return _database.listSafetyBackups();
+  }
+
+  Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) async {
+    _setBusy(true);
+    try {
+      await _createSafetyBackup(reason: 'before_restore');
+      await stop();
+      _focusService.stop(saveProgress: false);
+      await _ambient.stopAll();
+      await _database.restoreSafetyBackup(backup.path);
+      _message = null;
+      _messageParams = const <String, Object?>{};
+      await _reloadPersistentStateAfterDatabaseChange();
+      notifyListeners();
+      return true;
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'restore backup failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{'path': backup.path},
+      );
+      _setMessage(
+        'errorInitFailed',
+        params: <String, Object?>{'error': 'restore backup: $error'},
       );
       notifyListeners();
       return false;
@@ -2287,6 +2383,45 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     } catch (_) {
       _lastBackupPath = null;
     }
+  }
+
+  Future<void> _reloadPersistentStateAfterDatabaseChange() async {
+    _config = _settings.loadPlayConfig();
+    _playback.updateRuntimeConfig(_config);
+
+    final languageSetting = _settings.loadUiLanguage();
+    if (languageSetting == SettingsService.uiLanguageSystem) {
+      _uiLanguageFollowsSystem = true;
+      _uiLanguage = _resolveSystemUiLanguage();
+    } else {
+      _uiLanguageFollowsSystem = false;
+      _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
+    }
+
+    final testModeState = _settings.loadTestModeState();
+    _testModeEnabled = testModeState['enabled'] ?? false;
+    _testModeRevealed = testModeState['revealed'] ?? false;
+    _testModeHintRevealed = testModeState['hintRevealed'] ?? false;
+
+    _practiceDateKey = '';
+    _practiceTodaySessions = 0;
+    _practiceTodayReviewed = 0;
+    _practiceTodayRemembered = 0;
+    _practiceTotalSessions = 0;
+    _practiceTotalReviewed = 0;
+    _practiceTotalRemembered = 0;
+    _practiceLastSessionTitle = '';
+    _practiceWeakWords = <String>[];
+
+    _searchQuery = '';
+    _searchMode = SearchMode.all;
+    _invalidateVisibleWordsCache();
+    _loadPracticeDashboard();
+    _ensurePracticeDate(persist: true);
+    await _focusService.init();
+    await _reloadWordbooks(keepCurrentSelection: false);
+    await _syncSpecialWordbooks();
+    _refreshLocalizedWordbookNames();
   }
 
   void _clearPlaybackSession({required bool notify}) {

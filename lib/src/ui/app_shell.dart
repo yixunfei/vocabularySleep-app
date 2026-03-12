@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../i18n/app_i18n.dart';
 import '../state/app_state.dart';
+import 'pages/focus_page.dart';
 import 'pages/library_page.dart';
 import 'pages/more_page.dart';
 import 'pages/play_page.dart';
@@ -84,6 +85,7 @@ class _AppShellState extends State<AppShell> {
                                 },
                               ),
                               const PracticePage(),
+                              const FocusPage(),
                               const MorePage(),
                             ],
                           ),
@@ -114,6 +116,11 @@ class _AppShellState extends State<AppShell> {
                         icon: const Icon(Icons.fitness_center_outlined),
                         selectedIcon: const Icon(Icons.fitness_center_rounded),
                         label: pageLabelPractice(i18n),
+                      ),
+                      NavigationDestination(
+                        icon: const Icon(Icons.timer_outlined),
+                        selectedIcon: const Icon(Icons.timer_rounded),
+                        label: pageLabelFocus(i18n),
                       ),
                       NavigationDestination(
                         icon: const Icon(Icons.widgets_outlined),

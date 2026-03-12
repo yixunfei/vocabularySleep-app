@@ -1,4 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
@@ -9,8 +15,15 @@ import '../ui_copy.dart';
 import '../wordbook_localization.dart';
 import 'wordbook_editor_page.dart';
 
-class WordbookManagementPage extends StatelessWidget {
+class WordbookManagementPage extends StatefulWidget {
   const WordbookManagementPage({super.key});
+
+  @override
+  State<WordbookManagementPage> createState() => _WordbookManagementPageState();
+}
+
+class _WordbookManagementPageState extends State<WordbookManagementPage> {
+  bool _onlineBusy = false;
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +34,12 @@ class WordbookManagementPage extends StatelessWidget {
         title: Text(
           pickUiText(
             i18n,
-            zh: '\u8bcd\u672c\u7ba1\u7406',
+            zh: '词本管理',
             en: 'Wordbook management',
+            ja: '単語帳管理',
+            de: 'Wortbuchverwaltung',
+            fr: 'Gestion des livres de mots',
+            es: 'Gestion del libro de palabras',
           ),
         ),
       ),
@@ -31,8 +48,11 @@ class WordbookManagementPage extends StatelessWidget {
         children: <Widget>[
           _QuickActionCard(
             i18n: i18n,
+            onlineBusy: _onlineBusy,
             onCreate: () => _createWordbook(context, state, i18n),
             onImport: () => _importWordbook(context, state, i18n),
+            onDownloadOnline: () =>
+                _downloadOnlineWordbook(context, state, i18n),
           ),
           const SizedBox(height: 16),
           for (final book in state.wordbooks) ...<Widget>[
@@ -55,13 +75,7 @@ class WordbookManagementPage extends StatelessWidget {
           FilledButton.tonalIcon(
             onPressed: () => _mergeWordbooks(context, state, i18n),
             icon: const Icon(Icons.merge_type_rounded),
-            label: Text(
-              pickUiText(
-                i18n,
-                zh: '\u5408\u5e76\u8bcd\u672c',
-                en: 'Merge wordbooks',
-              ),
-            ),
+            label: Text(pickUiText(i18n, zh: '合并词本', en: 'Merge wordbooks')),
           ),
         ],
       ),
@@ -75,14 +89,10 @@ class WordbookManagementPage extends StatelessWidget {
   ) async {
     final name = await showTextPromptDialog(
       context: context,
-      title: pickUiText(
-        i18n,
-        zh: '\u65b0\u5efa\u8bcd\u672c',
-        en: 'New wordbook',
-      ),
+      title: pickUiText(i18n, zh: '新建词本', en: 'New wordbook'),
       hintText: pickUiText(
         i18n,
-        zh: '\u4f8b\u5982\uff1a\u7761\u524d\u590d\u4e60',
+        zh: '例如：睡前复习',
         en: 'For example: Night review',
       ),
     );
@@ -99,23 +109,212 @@ class WordbookManagementPage extends StatelessWidget {
       requestName: (suggestedName) {
         return showTextPromptDialog(
           context: context,
-          title: pickUiText(
-            i18n,
-            zh: '\u5bfc\u5165\u8bcd\u672c',
-            en: 'Import wordbook',
-          ),
+          title: pickUiText(i18n, zh: '导入词本', en: 'Import wordbook'),
           subtitle: pickUiText(
             i18n,
-            zh: '\u53ef\u4ee5\u76f4\u63a5\u4f7f\u7528\u6587\u4ef6\u540d\uff0c\u4e5f\u53ef\u4ee5\u5728\u8fd9\u91cc\u4fee\u6539\u8bcd\u672c\u540d\u79f0\u3002',
+            zh: '可以直接使用文件名，也可以在这里修改词本名称。',
             en: 'Use the file name as-is, or rename the wordbook before import.',
           ),
           initialValue: suggestedName,
-          hintText: pickUiText(
+          hintText: pickUiText(i18n, zh: '词本名称', en: 'Wordbook name'),
+          confirmText: pickUiText(i18n, zh: '导入', en: 'Import'),
+        );
+      },
+    );
+  }
+
+  Future<void> _downloadOnlineWordbook(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n,
+  ) async {
+    if (_onlineBusy) return;
+    setState(() {
+      _onlineBusy = true;
+    });
+
+    List<RemoteWordbookEntry> entries;
+    try {
+      entries = await GitHubWordbookCatalog.fetch();
+    } catch (error) {
+      if (!context.mounted) return;
+      _showMessage(
+        context,
+        pickUiText(
+          i18n,
+          zh: '在线词本列表读取失败：$error',
+          en: 'Failed to load online wordbooks: $error',
+          ja: 'オンライン単語帳の読み込みに失敗しました: $error',
+          de: 'Online-Wortbuecher konnten nicht geladen werden: $error',
+          fr: 'Echec du chargement des livres en ligne : $error',
+          es: 'No se pudieron cargar los libros en linea: $error',
+        ),
+      );
+      setState(() {
+        _onlineBusy = false;
+      });
+      return;
+    }
+
+    if (!context.mounted) return;
+    setState(() {
+      _onlineBusy = false;
+    });
+
+    if (entries.isEmpty) {
+      _showMessage(
+        context,
+        pickUiText(
+          i18n,
+          zh: '当前仓库中未找到可下载的 JSON 词本。',
+          en: 'No downloadable JSON wordbooks were found in the repository.',
+          ja: 'リポジトリ内にダウンロード可能な JSON 単語帳が見つかりませんでした。',
+          de: 'Im Repository wurden keine herunterladbaren JSON-Wortbuecher gefunden.',
+          fr: 'Aucun livre JSON telechargeable n’a ete trouve dans le depot.',
+          es: 'No se encontraron libros JSON descargables en el repositorio.',
+        ),
+      );
+      return;
+    }
+
+    final selected = await _showOnlineWordbookPicker(context, i18n, entries);
+    if (!context.mounted || selected == null) return;
+
+    final importName = await showTextPromptDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '在线词本导入', en: 'Import online wordbook'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '已选择 ${selected.fileName}，可在导入前调整词本名称。',
+        en: 'Selected ${selected.fileName}. You can rename it before import.',
+      ),
+      initialValue: selected.displayName,
+      hintText: pickUiText(i18n, zh: '词本名称', en: 'Wordbook name'),
+      confirmText: pickUiText(i18n, zh: '下载并导入', en: 'Download & import'),
+    );
+    if (!context.mounted || importName == null || importName.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _onlineBusy = true;
+    });
+
+    File? tempFile;
+    try {
+      final response = await http.get(selected.downloadUri);
+      if (response.statusCode != 200) {
+        throw HttpException(
+          'HTTP ${response.statusCode}',
+          uri: selected.downloadUri,
+        );
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      final safeName = selected.fileName.replaceAll(RegExp(r'[^\w\-.]+'), '_');
+      tempFile = File(
+        '${tempDir.path}${Platform.pathSeparator}${DateTime.now().microsecondsSinceEpoch}_$safeName',
+      );
+      await tempFile.writeAsBytes(response.bodyBytes, flush: true);
+      await state.importWordbookFile(tempFile.path, importName.trim());
+    } catch (error) {
+      if (context.mounted) {
+        _showMessage(
+          context,
+          pickUiText(
             i18n,
-            zh: '\u8bcd\u672c\u540d\u79f0',
-            en: 'Wordbook name',
+            zh: '在线词本下载或导入失败：$error',
+            en: 'Failed to download or import the online wordbook: $error',
+            ja: 'オンライン単語帳のダウンロードまたはインポートに失敗しました: $error',
+            de: 'Das Online-Wortbuch konnte nicht heruntergeladen oder importiert werden: $error',
+            fr: 'Le telechargement ou l’importation du livre en ligne a echoue : $error',
+            es: 'No se pudo descargar o importar el libro en linea: $error',
           ),
-          confirmText: pickUiText(i18n, zh: '\u5bfc\u5165', en: 'Import'),
+        );
+      }
+    } finally {
+      if (tempFile != null) {
+        unawaited(() async {
+          try {
+            await tempFile!.delete();
+          } catch (_) {}
+        }());
+      }
+      if (mounted) {
+        setState(() {
+          _onlineBusy = false;
+        });
+      }
+    }
+  }
+
+  Future<RemoteWordbookEntry?> _showOnlineWordbookPicker(
+    BuildContext context,
+    AppI18n i18n,
+    List<RemoteWordbookEntry> entries,
+  ) {
+    return showModalBottomSheet<RemoteWordbookEntry>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) {
+        return FractionallySizedBox(
+          heightFactor: 0.88,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '在线词本',
+                    en: 'Online wordbooks',
+                    ja: 'オンライン単語帳',
+                    de: 'Online-Wortbuecher',
+                    fr: 'Livres de mots en ligne',
+                    es: 'Libros de palabras en linea',
+                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '来源：GitHub / yixunfei / GPT-WordBooks。选择后将下载对应 JSON 文件并导入应用。',
+                    en: 'Source: GitHub / yixunfei / GPT-WordBooks. Pick a JSON file to download and import into the app.',
+                    ja: 'ソース: GitHub / yixunfei / GPT-WordBooks。JSON ファイルを選択してアプリへ取り込みます。',
+                    de: 'Quelle: GitHub / yixunfei / GPT-WordBooks. Waehlen Sie eine JSON-Datei zum Herunterladen und Importieren.',
+                    fr: 'Source : GitHub / yixunfei / GPT-WordBooks. Choisissez un fichier JSON a telecharger puis importer.',
+                    es: 'Origen: GitHub / yixunfei / GPT-WordBooks. Elige un archivo JSON para descargarlo e importarlo en la app.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.separated(
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: entries.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final entry = entries[index];
+                      return Card(
+                        child: ListTile(
+                          leading: const CircleAvatar(
+                            child: Icon(Icons.download_rounded),
+                          ),
+                          title: Text(entry.displayName),
+                          subtitle: Text(entry.fileName),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => Navigator.of(context).pop(entry),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -143,11 +342,7 @@ class WordbookManagementPage extends StatelessWidget {
   ) async {
     final name = await showTextPromptDialog(
       context: context,
-      title: pickUiText(
-        i18n,
-        zh: '\u91cd\u547d\u540d\u8bcd\u672c',
-        en: 'Rename wordbook',
-      ),
+      title: pickUiText(i18n, zh: '重命名词本', en: 'Rename wordbook'),
       initialValue: book.name,
     );
     if (name == null || name.trim().isEmpty) return;
@@ -162,18 +357,14 @@ class WordbookManagementPage extends StatelessWidget {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(
-        i18n,
-        zh: '\u5220\u9664\u8bcd\u672c',
-        en: 'Delete wordbook',
-      ),
+      title: pickUiText(i18n, zh: '删除词本', en: 'Delete wordbook'),
       message: pickUiText(
         i18n,
-        zh: '\u786e\u5b9a\u5220\u9664\u201c${book.name}\u201d\u5417\uff1f',
+        zh: '确定删除“${book.name}”吗？',
         en: 'Delete "${book.name}"?',
       ),
       danger: true,
-      confirmText: pickUiText(i18n, zh: '\u5220\u9664', en: 'Delete'),
+      confirmText: pickUiText(i18n, zh: '删除', en: 'Delete'),
     );
     if (!confirmed) return;
     await state.deleteWordbook(book);
@@ -186,15 +377,12 @@ class WordbookManagementPage extends StatelessWidget {
   ) async {
     final books = state.wordbooks.where((item) => !item.isSystem).toList();
     if (books.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            pickUiText(
-              i18n,
-              zh: '\u81f3\u5c11\u9700\u8981\u4e24\u4e2a\u666e\u901a\u8bcd\u672c\u624d\u80fd\u5408\u5e76\u3002',
-              en: 'You need at least two regular wordbooks to merge.',
-            ),
-          ),
+      _showMessage(
+        context,
+        pickUiText(
+          i18n,
+          zh: '至少需要两个普通词本才能合并。',
+          en: 'You need at least two regular wordbooks to merge.',
         ),
       );
       return;
@@ -215,24 +403,14 @@ class WordbookManagementPage extends StatelessWidget {
               target = targetChoices.first;
             }
             return AlertDialog(
-              title: Text(
-                pickUiText(
-                  i18n,
-                  zh: '\u5408\u5e76\u8bcd\u672c',
-                  en: 'Merge wordbooks',
-                ),
-              ),
+              title: Text(pickUiText(i18n, zh: '合并词本', en: 'Merge wordbooks')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   DropdownButtonFormField<Wordbook>(
                     initialValue: source,
                     decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '\u6765\u6e90\u8bcd\u672c',
-                        en: 'Source',
-                      ),
+                      labelText: pickUiText(i18n, zh: '来源词本', en: 'Source'),
                     ),
                     items: books
                         .map(
@@ -253,11 +431,7 @@ class WordbookManagementPage extends StatelessWidget {
                   DropdownButtonFormField<Wordbook>(
                     initialValue: target,
                     decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '\u76ee\u6807\u8bcd\u672c',
-                        en: 'Target',
-                      ),
+                      labelText: pickUiText(i18n, zh: '目标词本', en: 'Target'),
                     ),
                     items: targetChoices
                         .map(
@@ -280,7 +454,7 @@ class WordbookManagementPage extends StatelessWidget {
                     title: Text(
                       pickUiText(
                         i18n,
-                        zh: '\u5408\u5e76\u540e\u5220\u9664\u6765\u6e90\u8bcd\u672c',
+                        zh: '合并后删除来源词本',
                         en: 'Delete source after merge',
                       ),
                     ),
@@ -317,18 +491,28 @@ class WordbookManagementPage extends StatelessWidget {
       deleteSourceAfterMerge: deleteSource,
     );
   }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 }
 
 class _QuickActionCard extends StatelessWidget {
   const _QuickActionCard({
     required this.i18n,
+    required this.onlineBusy,
     required this.onCreate,
     required this.onImport,
+    required this.onDownloadOnline,
   });
 
   final AppI18n i18n;
+  final bool onlineBusy;
   final VoidCallback onCreate;
   final VoidCallback onImport;
+  final VoidCallback onDownloadOnline;
 
   @override
   Widget build(BuildContext context) {
@@ -339,19 +523,15 @@ class _QuickActionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickUiText(
-                i18n,
-                zh: '\u5feb\u901f\u64cd\u4f5c',
-                en: 'Quick actions',
-              ),
+              pickUiText(i18n, zh: '快速操作', en: 'Quick actions'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
               pickUiText(
                 i18n,
-                zh: '\u65b0\u5efa\u3001\u5bfc\u5165\u6216\u7ee7\u7eed\u7f16\u8f91\u8bcd\u672c\u3002./dict \u76ee\u5f55\u4e0b\u7684 JSON \u4f1a\u88ab\u8bc6\u522b\u4e3a\u5185\u7f6e\u8bcd\u672c\uff0c\u540d\u79f0\u9ed8\u8ba4\u4f7f\u7528\u6587\u4ef6\u540d\uff0c\u5e76\u5728\u9996\u6b21\u6253\u5f00\u65f6\u8f7d\u5165\u3002',
-                en: 'Create, import, or continue editing wordbooks. JSON files under ./dict become built-ins, use the file name as their title, and load on first open.',
+                zh: '新建、导入，或从 GitHub 在线词库下载对应的 JSON 词本。./dict 目录下的 JSON 会被识别为内置词本，并在首次打开时加载。',
+                en: 'Create, import, or download matching JSON wordbooks from GitHub. JSON files under ./dict become built-ins and load on first open.',
               ),
             ),
             const SizedBox(height: 14),
@@ -362,23 +542,34 @@ class _QuickActionCard extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onCreate,
                   icon: const Icon(Icons.add_rounded),
-                  label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '\u65b0\u589e\u8bcd\u672c',
-                      en: 'New wordbook',
-                    ),
-                  ),
+                  label: Text(pickUiText(i18n, zh: '新增词本', en: 'New wordbook')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: onImport,
                   icon: const Icon(Icons.upload_file_rounded),
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '\u5bfc\u5165\u8bcd\u672c',
-                      en: 'Import wordbook',
-                    ),
+                    pickUiText(i18n, zh: '导入词本', en: 'Import wordbook'),
+                  ),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: onlineBusy ? null : onDownloadOnline,
+                  icon: Icon(
+                    onlineBusy
+                        ? Icons.downloading_rounded
+                        : Icons.cloud_download_rounded,
+                  ),
+                  label: Text(
+                    onlineBusy
+                        ? pickUiText(i18n, zh: '处理中…', en: 'Processing...')
+                        : pickUiText(
+                            i18n,
+                            zh: '下载在线词本',
+                            en: 'Download online wordbooks',
+                            ja: 'オンライン単語帳をダウンロード',
+                            de: 'Online-Wortbuecher laden',
+                            fr: 'Telecharger des livres en ligne',
+                            es: 'Descargar libros en linea',
+                          ),
                   ),
                 ),
               ],
@@ -414,8 +605,8 @@ class _WordbookCard extends StatelessWidget {
     final subtitle = pickUiText(
       i18n,
       zh: book.isSystem
-          ? '${book.wordCount} \u4e2a\u8bcd \u00b7 \u5185\u7f6e\u8bcd\u672c'
-          : '${book.wordCount} \u4e2a\u8bcd \u00b7 \u81ea\u5b9a\u4e49\u8bcd\u672c',
+          ? '${book.wordCount} 个词 · 内置词本'
+          : '${book.wordCount} 个词 · 自定义词本',
       en: book.isSystem
           ? '${book.wordCount} words · built-in'
           : '${book.wordCount} words · custom',
@@ -457,9 +648,7 @@ class _WordbookCard extends StatelessWidget {
                     label: Text(
                       pickUiText(
                         i18n,
-                        zh: isCurrent
-                            ? '\u5f53\u524d\u4f7f\u7528'
-                            : '\u8bbe\u4e3a\u5f53\u524d',
+                        zh: isCurrent ? '当前使用' : '设为当前',
                         en: isCurrent ? 'Current' : 'Use',
                       ),
                     ),
@@ -467,29 +656,19 @@ class _WordbookCard extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: onOpenEditor,
                     icon: const Icon(Icons.edit_note_rounded),
-                    label: Text(
-                      pickUiText(i18n, zh: '\u7f16\u8f91', en: 'Edit'),
-                    ),
+                    label: Text(pickUiText(i18n, zh: '编辑', en: 'Edit')),
                   ),
                   if (onRename != null)
                     OutlinedButton.icon(
                       onPressed: onRename,
                       icon: const Icon(Icons.drive_file_rename_outline_rounded),
-                      label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '\u91cd\u547d\u540d',
-                          en: 'Rename',
-                        ),
-                      ),
+                      label: Text(pickUiText(i18n, zh: '重命名', en: 'Rename')),
                     ),
                   if (onDelete != null)
                     TextButton.icon(
                       onPressed: onDelete,
                       icon: const Icon(Icons.delete_outline_rounded),
-                      label: Text(
-                        pickUiText(i18n, zh: '\u5220\u9664', en: 'Delete'),
-                      ),
+                      label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
                     ),
                 ],
               ),
@@ -498,5 +677,112 @@ class _WordbookCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class RemoteWordbookEntry {
+  const RemoteWordbookEntry({
+    required this.fileName,
+    required this.repositoryPath,
+  });
+
+  final String fileName;
+  final String repositoryPath;
+
+  String get displayName =>
+      fileName.replaceFirst(RegExp(r'\.json$', caseSensitive: false), '');
+
+  Uri get downloadUri => Uri.parse(
+    'https://raw.githubusercontent.com/'
+    '${GitHubWordbookCatalog.owner}/'
+    '${GitHubWordbookCatalog.repository}/'
+    '${GitHubWordbookCatalog.branch}/'
+    '${Uri.encodeComponent(repositoryPath).replaceAll('%2F', '/')}',
+  );
+}
+
+class GitHubWordbookCatalog {
+  const GitHubWordbookCatalog._();
+
+  static const String owner = 'yixunfei';
+  static const String repository = 'GPT-WordBooks';
+  static const String branch = 'main';
+
+  static Uri get repositoryUri =>
+      Uri.parse('https://github.com/$owner/$repository');
+
+  static Future<List<RemoteWordbookEntry>> fetch({http.Client? client}) async {
+    final activeClient = client ?? http.Client();
+    final shouldClose = client == null;
+    try {
+      final response = await activeClient.get(
+        repositoryUri,
+        headers: const <String, String>{'accept': 'text/html'},
+      );
+      if (response.statusCode != 200) {
+        throw HttpException('HTTP ${response.statusCode}', uri: repositoryUri);
+      }
+      return parseRepositoryHtml(response.body);
+    } finally {
+      if (shouldClose) {
+        activeClient.close();
+      }
+    }
+  }
+
+  @visibleForTesting
+  static List<RemoteWordbookEntry> parseRepositoryHtml(String html) {
+    final scriptMatch = RegExp(
+      r'react-app\.embeddedData">(.+?)</script>',
+      dotAll: true,
+    ).firstMatch(html);
+    if (scriptMatch != null) {
+      try {
+        final payload =
+            json.decode(scriptMatch.group(1)!) as Map<String, dynamic>;
+        final payloadMap = payload['payload'];
+        final route = payloadMap is Map<String, dynamic>
+            ? payloadMap['codeViewRepoRoute']
+            : null;
+        final tree = route is Map<String, dynamic> ? route['tree'] : null;
+        final items = tree is Map<String, dynamic> ? tree['items'] : null;
+        if (items is List) {
+          final entries = items
+              .whereType<Map>()
+              .map((item) {
+                final name = '${item['name'] ?? ''}'.trim();
+                final path = '${item['path'] ?? ''}'.trim();
+                final type = '${item['contentType'] ?? ''}'.trim();
+                if (type != 'file' || !name.toLowerCase().endsWith('.json')) {
+                  return null;
+                }
+                return RemoteWordbookEntry(
+                  fileName: name,
+                  repositoryPath: path,
+                );
+              })
+              .whereType<RemoteWordbookEntry>()
+              .toList(growable: false);
+          if (entries.isNotEmpty) {
+            return entries;
+          }
+        }
+      } catch (_) {}
+    }
+
+    final matches = RegExp(r'"path":"([^"]+\.json)"').allMatches(html);
+    final seen = <String>{};
+    final entries = <RemoteWordbookEntry>[];
+    for (final match in matches) {
+      final path = match.group(1);
+      if (path == null || !seen.add(path)) continue;
+      entries.add(
+        RemoteWordbookEntry(
+          fileName: path.split('/').last,
+          repositoryPath: path,
+        ),
+      );
+    }
+    return entries;
   }
 }

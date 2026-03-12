@@ -30,35 +30,6 @@ class LibraryPage extends StatefulWidget {
 }
 
 class _LibraryPageState extends State<LibraryPage> {
-  static const List<String> _letters = <String>[
-    'A',
-    'B',
-    'C',
-    'D',
-    'E',
-    'F',
-    'G',
-    'H',
-    'I',
-    'J',
-    'K',
-    'L',
-    'M',
-    'N',
-    'O',
-    'P',
-    'Q',
-    'R',
-    'S',
-    'T',
-    'U',
-    'V',
-    'W',
-    'X',
-    'Y',
-    'Z',
-    '#',
-  ];
   static const int _pageSize = 20;
   static const Duration _searchDebounceDuration = Duration(milliseconds: 160);
 
@@ -70,7 +41,6 @@ class _LibraryPageState extends State<LibraryPage> {
   Timer? _searchDebounce;
 
   bool _showScrollTopAnchor = false;
-  bool _showIndexAnchor = false;
   int _visibleItemCount = _pageSize;
   int _currentScopeWordCount = 0;
   String _paginationSignature = '';
@@ -360,17 +330,13 @@ class _LibraryPageState extends State<LibraryPage> {
         ? min(_currentScopeWordCount, _visibleItemCount + _pageSize)
         : _visibleItemCount;
     final shouldShowTop = _scrollController.offset > 320;
-    final shouldShowIndex =
-        _currentScopeWordCount > 10 && _scrollController.offset > 220;
     if (shouldShowTop == _showScrollTopAnchor &&
-        shouldShowIndex == _showIndexAnchor &&
         nextVisibleCount == _visibleItemCount) {
       return;
     }
     setState(() {
       _visibleItemCount = nextVisibleCount;
       _showScrollTopAnchor = shouldShowTop;
-      _showIndexAnchor = shouldShowIndex;
     });
   }
 
@@ -405,15 +371,6 @@ class _LibraryPageState extends State<LibraryPage> {
         ),
       ),
     );
-  }
-
-  Set<String> _availableInitialLetters(List<WordEntry> words) {
-    if (words.isEmpty) return const <String>{};
-    final letters = <String>{};
-    for (final word in words) {
-      letters.add(_initialBucket(word.word));
-    }
-    return letters;
   }
 
   String _wordbookSummary(AppI18n i18n, Wordbook? book, int visibleCount) {
@@ -452,194 +409,6 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  List<String> _buildPreviewLetters(
-    List<String> orderedLetters, {
-    required int maxCount,
-  }) {
-    if (orderedLetters.length <= maxCount) {
-      return orderedLetters;
-    }
-
-    final lastIndex = orderedLetters.length - 1;
-    final sampledIndices = <int>{};
-    for (var i = 0; i < maxCount; i += 1) {
-      sampledIndices.add(((i * lastIndex) / (maxCount - 1)).round());
-    }
-
-    final indices = sampledIndices.toList()..sort();
-    final preview = indices
-        .map((index) => orderedLetters[index])
-        .toList(growable: true);
-
-    if (preview.length >= maxCount) {
-      return preview;
-    }
-
-    for (final letter in orderedLetters) {
-      if (preview.contains(letter)) continue;
-      preview.add(letter);
-      if (preview.length >= maxCount) {
-        break;
-      }
-    }
-    return preview;
-  }
-
-  String _initialBucket(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return '#';
-    final first = trimmed[0].toUpperCase();
-    final code = first.codeUnitAt(0);
-    if (code >= 65 && code <= 90) return first;
-    return '#';
-  }
-
-  Future<void> _openLetterIndexSheet(
-    AppState state,
-    AppI18n i18n, {
-    required Set<String> availableLetters,
-    required bool preferCompact,
-  }) async {
-    var showAllLetters = !preferCompact;
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetContext) {
-        return SafeArea(
-          top: false,
-          child: StatefulBuilder(
-            builder: (context, setModalState) {
-              final compactActive = !showAllLetters;
-              final compactLetters = _letters
-                  .where((letter) => availableLetters.contains(letter))
-                  .toList(growable: false);
-              final lettersForSheet = compactActive ? compactLetters : _letters;
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                children: <Widget>[
-                  Text(
-                    pickUiText(
-                      i18n,
-                      zh: '\u5b57\u6bcd\u8df3\u8f6c',
-                      en: 'Letter index',
-                    ),
-                    style: Theme.of(sheetContext).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    compactActive
-                        ? pickUiText(
-                            i18n,
-                            zh: '\u5f53\u524d\u7ed3\u679c\u8f83\u5c11\uff0c\u9ed8\u8ba4\u4ec5\u663e\u793a\u53ef\u7528\u9996\u5b57\u6bcd\u3002',
-                            en: 'Compact mode shows only available initials for this result set.',
-                          )
-                        : pickUiText(
-                            i18n,
-                            zh: '\u5df2\u5c55\u5f00 A-Z \u5168\u7d22\u5f15\uff0c\u53ef\u76f4\u63a5\u8df3\u8f6c\u3002',
-                            en: 'Full A-Z index is expanded for direct jumping.',
-                          ),
-                    style: Theme.of(sheetContext).textTheme.bodySmall,
-                  ),
-                  if (preferCompact &&
-                      compactLetters.isNotEmpty &&
-                      compactLetters.length < _letters.length) ...<Widget>[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setModalState(() {
-                            showAllLetters = !showAllLetters;
-                          });
-                        },
-                        icon: Icon(
-                          showAllLetters
-                              ? Icons.filter_alt_outlined
-                              : Icons.unfold_more_rounded,
-                        ),
-                        label: Text(
-                          showAllLetters
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '\u4ec5\u770b\u53ef\u7528\u5b57\u6bcd',
-                                  en: 'Show available only',
-                                )
-                              : pickUiText(
-                                  i18n,
-                                  zh: '\u5c55\u5f00 A-Z \u5168\u7d22\u5f15',
-                                  en: 'Expand full A-Z',
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  if (lettersForSheet.isEmpty)
-                    Text(
-                      pickUiText(
-                        i18n,
-                        zh: '\u5f53\u524d\u8303\u56f4\u6682\u65e0\u53ef\u8df3\u8f6c\u5b57\u6bcd\u3002',
-                        en: 'No initials available for jump in current scope.',
-                      ),
-                      style: Theme.of(sheetContext).textTheme.bodySmall,
-                    )
-                  else
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: lettersForSheet
-                          .map((letter) {
-                            final enabled = availableLetters.contains(letter);
-                            return SizedBox(
-                              width: 44,
-                              child: FilledButton.tonal(
-                                onPressed: enabled
-                                    ? () {
-                                        Navigator.of(sheetContext).pop();
-                                        final success = state.jumpByInitial(
-                                          letter,
-                                        );
-                                        if (success) {
-                                          _scrollToCurrent(
-                                            state,
-                                            state.visibleWords,
-                                          );
-                                        }
-                                      }
-                                    : null,
-                                style: FilledButton.styleFrom(
-                                  minimumSize: const Size(44, 40),
-                                  padding: EdgeInsets.zero,
-                                ),
-                                child: Text(letter),
-                              ),
-                            );
-                          })
-                          .toList(growable: false),
-                    ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(sheetContext).pop();
-                      _openPrefixJump(state, i18n);
-                    },
-                    icon: const Icon(Icons.input_rounded),
-                    label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '\u524d\u7f00\u8df3\u8f6c',
-                        en: 'Prefix jump',
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -666,19 +435,9 @@ class _LibraryPageState extends State<LibraryPage> {
     _syncRowKeys(displayedWords);
     final previewVisible = state.config.showText;
     final searching = state.searchQuery.trim().isNotEmpty;
-    final availableLetters = _availableInitialLetters(words);
-    final orderedLetters = _letters
-        .where((letter) => availableLetters.contains(letter))
-        .toList(growable: false);
-    final useDenseIndexPreview = words.length > 12 && !searching;
-    final useCompactIndexSheet = searching || words.length <= 10;
     final mediaQuery = MediaQuery.of(context);
     final compactHeight = mediaQuery.size.height < 720;
     final showCompactAddWord = compactHeight || mediaQuery.size.width < 360;
-    final showFloatingIndexAnchor =
-        mediaQuery.size.height >= 680 &&
-        _showIndexAnchor &&
-        availableLetters.isNotEmpty;
     final showFloatingScrollTop = _showScrollTopAnchor;
     final overlayRight = compactHeight ? 12.0 : 16.0;
     final overlayBottom = mediaQuery.padding.bottom + 12;
@@ -788,168 +547,83 @@ class _LibraryPageState extends State<LibraryPage> {
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(14),
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final stackIndexHeader =
-                                  constraints.maxWidth < 380;
-                              final previewLetters = _buildPreviewLetters(
-                                orderedLetters,
-                                maxCount: constraints.maxWidth < 360 ? 4 : 6,
-                              );
-                              final openIndexButton = FilledButton.tonalIcon(
-                                onPressed: availableLetters.isEmpty
-                                    ? null
-                                    : () => _openLetterIndexSheet(
-                                        state,
-                                        i18n,
-                                        availableLetters: availableLetters,
-                                        preferCompact: useCompactIndexSheet,
-                                      ),
-                                icon: const Icon(Icons.unfold_more_rounded),
-                                label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '\u5c55\u5f00\u7d22\u5f15',
-                                    en: 'Open index',
-                                  ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '\u5feb\u901f\u8df3\u8f6c',
+                                  en: 'Quick jump',
+                                  ja: '\u30af\u30a4\u30c3\u30af\u30b8\u30e3\u30f3\u30d7',
+                                  de: 'Schnellsprung',
+                                  fr: 'Saut rapide',
+                                  es: 'Salto rapido',
                                 ),
-                              );
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '\u8f93\u5165\u5355\u8bcd\u524d\u7f00\uff0c\u53ef\u76f4\u63a5\u8df3\u5230\u5f53\u524d\u8303\u56f4\u5185\u7b2c\u4e00\u4e2a\u5339\u914d\u9879\u3002',
+                                  en: 'Type a prefix to jump directly to the first matching word in the current scope.',
+                                  ja: '\u63a5\u982d\u8f9e\u3092\u5165\u529b\u3059\u308b\u3068\u3001\u73fe\u5728\u306e\u7bc4\u56f2\u5185\u3067\u6700\u521d\u306b\u4e00\u81f4\u3059\u308b\u5358\u8a9e\u3078\u79fb\u52d5\u3067\u304d\u307e\u3059\u3002',
+                                  de: 'Geben Sie ein Praefix ein, um direkt zum ersten passenden Wort im aktuellen Bereich zu springen.',
+                                  fr: 'Saisissez un prefixe pour aller directement au premier mot correspondant dans la portee actuelle.',
+                                  es: 'Escribe un prefijo para saltar directamente a la primera palabra coincidente del alcance actual.',
+                                ),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: <Widget>[
-                                  if (stackIndexHeader) ...<Widget>[
-                                    Text(
+                                  ActionChip(
+                                    avatar: const Icon(
+                                      Icons.input_rounded,
+                                      size: 18,
+                                    ),
+                                    label: Text(
                                       pickUiText(
                                         i18n,
-                                        zh: '\u7d22\u5f15\u5bfc\u822a',
-                                        en: 'Index tools',
+                                        zh: '\u524d\u7f00\u8df3\u8f6c',
+                                        en: 'Prefix jump',
+                                        ja: '\u63a5\u982d\u8f9e\u30b8\u30e3\u30f3\u30d7',
+                                        de: 'Praefixsprung',
+                                        fr: 'Saut par prefixe',
+                                        es: 'Salto por prefijo',
                                       ),
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleMedium,
                                     ),
-                                    const SizedBox(height: 8),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: openIndexButton,
-                                    ),
-                                  ] else
-                                    Row(
-                                      children: <Widget>[
-                                        Expanded(
-                                          child: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '\u7d22\u5f15\u5bfc\u822a',
-                                              en: 'Index tools',
-                                            ),
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleMedium,
-                                          ),
-                                        ),
-                                        openIndexButton,
-                                      ],
-                                    ),
-                                  const SizedBox(height: 10),
-                                  if (useDenseIndexPreview &&
-                                      previewLetters.isNotEmpty)
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: <Widget>[
-                                        for (final letter in previewLetters)
-                                          ActionChip(
-                                            label: Text(letter),
-                                            onPressed: () {
-                                              final success = state
-                                                  .jumpByInitial(letter);
-                                              if (success) {
-                                                _scrollToCurrent(state, words);
-                                              }
-                                            },
-                                          ),
-                                        if (orderedLetters.length >
-                                            previewLetters.length)
-                                          ActionChip(
-                                            avatar: const Icon(
-                                              Icons.more_horiz_rounded,
-                                              size: 18,
-                                            ),
-                                            label: Text(
-                                              pickUiText(
-                                                i18n,
-                                                zh: '\u5168\u90e8\u7d22\u5f15',
-                                                en: 'All letters',
-                                              ),
-                                            ),
-                                            onPressed: () =>
-                                                _openLetterIndexSheet(
-                                                  state,
-                                                  i18n,
-                                                  availableLetters:
-                                                      availableLetters,
-                                                  preferCompact:
-                                                      useCompactIndexSheet,
-                                                ),
-                                          ),
-                                      ],
-                                    )
-                                  else
-                                    Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '\u5f53\u524d\u4ec5 ${words.length} \u4e2a\u7ed3\u679c\uff0c\u5df2\u81ea\u52a8\u7b80\u5316\u5b57\u6bcd\u7d22\u5f15\u5c55\u793a\u3002',
-                                        en: 'Only ${words.length} results now. Letter index is simplified automatically.',
-                                      ),
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                  const SizedBox(height: 10),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: <Widget>[
-                                      ActionChip(
-                                        avatar: const Icon(
-                                          Icons.input_rounded,
-                                          size: 18,
-                                        ),
-                                        label: Text(
-                                          pickUiText(
-                                            i18n,
-                                            zh: '\u524d\u7f00\u8df3\u8f6c',
-                                            en: 'Prefix jump',
-                                          ),
-                                        ),
-                                        onPressed: () =>
-                                            _openPrefixJump(state, i18n),
-                                      ),
-                                      if (searching)
-                                        ActionChip(
-                                          avatar: const Icon(
-                                            Icons.close_rounded,
-                                            size: 18,
-                                          ),
-                                          label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '\u6e05\u9664\u641c\u7d22',
-                                              en: 'Clear search',
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            _commitSearchQuery(state, '');
-                                          },
-                                        ),
-                                    ],
+                                    onPressed: () =>
+                                        _openPrefixJump(state, i18n),
                                   ),
+                                  if (searching)
+                                    ActionChip(
+                                      avatar: const Icon(
+                                        Icons.close_rounded,
+                                        size: 18,
+                                      ),
+                                      label: Text(
+                                        pickUiText(
+                                          i18n,
+                                          zh: '\u6e05\u9664\u641c\u7d22',
+                                          en: 'Clear search',
+                                          ja: '\u691c\u7d22\u3092\u30af\u30ea\u30a2',
+                                          de: 'Suche loeschen',
+                                          fr: 'Effacer la recherche',
+                                          es: 'Limpiar busqueda',
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _commitSearchQuery(state, '');
+                                      },
+                                    ),
                                 ],
-                              );
-                            },
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -1040,19 +714,6 @@ class _LibraryPageState extends State<LibraryPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
-              if (showFloatingIndexAnchor) ...<Widget>[
-                FloatingActionButton.small(
-                  heroTag: 'library_index_anchor',
-                  onPressed: () => _openLetterIndexSheet(
-                    state,
-                    i18n,
-                    availableLetters: availableLetters,
-                    preferCompact: useCompactIndexSheet,
-                  ),
-                  child: const Icon(Icons.sort_by_alpha_rounded),
-                ),
-                const SizedBox(height: 10),
-              ],
               if (showFloatingScrollTop) ...<Widget>[
                 FloatingActionButton.small(
                   heroTag: 'library_scroll_top',

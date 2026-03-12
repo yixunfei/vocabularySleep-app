@@ -1,0 +1,73 @@
+{
+  "@@locale": "de",
+  "appTitle": "咸鱼声息",
+  "settings": "Einstellungen",
+  "language": "Sprache",
+  "ttsLanguage": "TTS-Sprache (auto / en-US / zh-CN)",
+  "play": "Spielen",
+  "pause": "Pause",
+  "resume": "Wieder aufnehmen",
+  "prev": "Zurück",
+  "next": "Weiter",
+  "testMode": "Testmodus",
+  "wordbooks": "Wortbücher",
+  "searchPlaceholder": "Suchbegriff oder Inhalt suchen",
+  "all": "Alle",
+  "word": "Wort",
+  "meaning": "Bedeutung",
+  "fuzzy": "Unscharf",
+  "jumpByLetter": "Nach Buchstaben springen",
+  "jumpByPrefix": "Nach Präfix springen",
+  "go": "Los",
+  "saveAndApply": "Speichern und anwenden",
+  "errorInitFailed": "Initialisierung fehlgeschlagen: {error}",
+  "@errorInitFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorImportFailed": "Import fehlgeschlagen: {error}",
+  "@errorImportFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "errorSaveWordFailed": "Wort konnte nicht gespeichert werden: {error}",
+  "@errorSaveWordFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "asrDisabled": "ASR ist deaktiviert.",
+  "asrApiRequestFailed": "ASR-API-Anfrage fehlgeschlagen ({code}). {body}",
+  "@asrApiRequestFailed": {
+    "placeholders": {
+      "code": {},
+      "body": {}
+    }
+  },
+  "asrProgressPreparing": "ASR wird vorbereitet...",
+  "asrProgressDecoding": "Sprache wird erkannt...",
+  "asrProgressDone": "Erkennung abgeschlossen.",
+  "asrProgressDownloading": "ASR-Modell wird heruntergeladen...",
+  "asrProgressExtracting": "ASR-Modell wird entpackt...",
+  "pronunciationDiffMissing": "Fehlt: {value}",
+  "@pronunciationDiffMissing": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffExtra": "Zusätzlich: {value}",
+  "@pronunciationDiffExtra": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "pronunciationDiffReplace": "Erwartet \"{from}\", gehört \"{to}\"",
+  "@pronunciationDiffReplace": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  }
+}

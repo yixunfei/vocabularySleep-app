@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../layout/app_width_tier.dart';
+
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
@@ -17,7 +19,9 @@ class SectionHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final textBlock = LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 360;
+        final isCompact = AppWidthBreakpoints.tierFor(
+          constraints.maxWidth,
+        ).isCompact;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -43,7 +47,9 @@ class SectionHeader extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 360;
+        final isCompact = AppWidthBreakpoints.tierFor(
+          constraints.maxWidth,
+        ).isCompact;
         if (isCompact) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

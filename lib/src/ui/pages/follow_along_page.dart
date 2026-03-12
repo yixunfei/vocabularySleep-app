@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,6 +32,7 @@ class _FollowAlongPageState extends State<FollowAlongPage> {
   String? _activeScoringEngine;
   Map<String, double> _scoringBreakdown = const <String, double>{};
   late AsrProviderType _activeProvider;
+  AsrProviderType? _windowsGuardedProvider;
   late AppState _state;
   bool _boundState = false;
 
@@ -44,8 +46,48 @@ class _FollowAlongPageState extends State<FollowAlongPage> {
     super.didChangeDependencies();
     if (_boundState) return;
     _state = context.read<AppState>();
-    _activeProvider = _state.config.asr.provider;
+    final configuredProvider = _state.config.asr.provider;
+    _activeProvider = _sanitizeFollowAlongProvider(configuredProvider);
+    _windowsGuardedProvider = _isUnsafeWindowsLocalProvider(configuredProvider)
+        ? configuredProvider
+        : null;
     _boundState = true;
+  }
+
+  bool get _isWindowsDesktop =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+
+  bool _isUnsafeWindowsLocalProvider(AsrProviderType provider) {
+    if (!_isWindowsDesktop) return false;
+    return provider == AsrProviderType.multiEngine ||
+        provider == AsrProviderType.offline ||
+        provider == AsrProviderType.offlineSmall ||
+        provider == AsrProviderType.localSimilarity;
+  }
+
+  List<AsrProviderType> _availableProviders() {
+    if (!_isWindowsDesktop) {
+      return AsrProviderType.values;
+    }
+    return const <AsrProviderType>[
+      AsrProviderType.api,
+      AsrProviderType.customApi,
+    ];
+  }
+
+  AsrProviderType _windowsFallbackProvider() {
+    final configured = _state.config.asr.provider;
+    if (configured == AsrProviderType.customApi) {
+      return AsrProviderType.customApi;
+    }
+    return AsrProviderType.api;
+  }
+
+  AsrProviderType _sanitizeFollowAlongProvider(AsrProviderType provider) {
+    if (_isUnsafeWindowsLocalProvider(provider)) {
+      return _windowsFallbackProvider();
+    }
+    return provider;
   }
 
   Future<void> _toggleRecording() async {
@@ -337,6 +379,8 @@ class _FollowAlongPageState extends State<FollowAlongPage> {
     final i18n = AppI18n(state.uiLanguage);
     final comparison = _comparison;
     final progress = _progress;
+    final providers = _availableProviders();
+    final guardedProvider = _windowsGuardedProvider;
 
     return Scaffold(
       appBar: AppBar(title: Text(i18n.t('followAlongTitle'))),
@@ -401,7 +445,7 @@ class _FollowAlongPageState extends State<FollowAlongPage> {
                         labelText: i18n.t('asrProvider'),
                       ),
                       items: <DropdownMenuItem<AsrProviderType>>[
-                        for (final provider in AsrProviderType.values)
+                        for (final provider in providers)
                           DropdownMenuItem<AsrProviderType>(
                             value: provider,
                             child: Text(asrProviderLabel(i18n, provider)),
@@ -413,6 +457,7 @@ class _FollowAlongPageState extends State<FollowAlongPage> {
                               if (value == null) return;
                               setState(() {
                                 _activeProvider = value;
+                                _windowsGuardedProvider = null;
                                 _recognizedText = null;
                                 _comparison = null;
                                 _activeScoringMethod = null;
@@ -423,6 +468,44 @@ class _FollowAlongPageState extends State<FollowAlongPage> {
                               });
                             },
                     ),
+                  if (guardedProvider != null) ...<Widget>[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Icon(
+                            Icons.shield_outlined,
+                            size: 18,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSecondaryContainer,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              pickUiText(
+                                i18n,
+                                zh: 'Windows 下已临时避开 ${asrProviderLabel(i18n, guardedProvider)}，当前页面改用 ${asrProviderLabel(i18n, _activeProvider)}，以避免本地识别链路触发原生闪退。',
+                                en: 'Windows temporarily avoids ${asrProviderLabel(i18n, guardedProvider)} here and uses ${asrProviderLabel(i18n, _activeProvider)} instead to prevent a native crash.',
+                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSecondaryContainer,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   if (_advancedMode) const SizedBox(height: 8),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
