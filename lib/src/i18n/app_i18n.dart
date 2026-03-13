@@ -2622,6 +2622,19 @@ class AppI18n {
         'Choose how the focus timer looks on the focus page.',
     'timerStyleHourglass': 'Hourglass',
     'timerStyleCountdown': 'Countdown',
+    'busyInitializingApp': 'Initializing app...',
+    'busyLoadingWordbook': 'Loading wordbook...',
+    'busyImportingWordbook': 'Importing wordbook...',
+    'busyMigratingLegacyData': 'Migrating legacy data...',
+    'busyMergingWordbooks': 'Merging wordbooks...',
+    'busyResettingUserData': 'Resetting user data...',
+    'busyRestoringBackup': 'Restoring backup...',
+    'busyExportingUserData': 'Exporting user data...',
+    'exportUserData': 'Export user data',
+    'exportUserDataSubtitle':
+        'Export todos, notes, timer settings, and custom wordbooks to a JSON file.',
+    'exportUserDataSuccess': 'User data exported to {path}',
+    'exportUserDataFailed': 'Failed to export user data: {error}',
   };
 
   static const Map<String, String> _extraZh = <String, String>{
@@ -2629,6 +2642,18 @@ class AppI18n {
     'appearanceTimerStyleHint': '选择专注页中计时器的显示样式。',
     'timerStyleHourglass': '沙漏',
     'timerStyleCountdown': '倒计时',
+    'busyInitializingApp': '正在初始化应用...',
+    'busyLoadingWordbook': '正在加载单词本...',
+    'busyImportingWordbook': '正在导入单词本...',
+    'busyMigratingLegacyData': '正在迁移旧版数据...',
+    'busyMergingWordbooks': '正在合并单词本...',
+    'busyResettingUserData': '正在重置用户数据...',
+    'busyRestoringBackup': '正在恢复备份...',
+    'busyExportingUserData': '正在导出用户数据...',
+    'exportUserData': '导出用户数据',
+    'exportUserDataSubtitle': '将待办、笔记、专注设置和自定义单词本导出为 JSON 文件。',
+    'exportUserDataSuccess': '用户数据已导出到 {path}',
+    'exportUserDataFailed': '导出用户数据失败：{error}',
   };
 
   static const Map<String, String> _extraJa = <String, String>{
@@ -2636,6 +2661,18 @@ class AppI18n {
     'appearanceTimerStyleHint': '集中ページでのタイマー表示スタイルを選びます。',
     'timerStyleHourglass': '砂時計',
     'timerStyleCountdown': 'カウントダウン',
+    'busyInitializingApp': 'アプリを初期化しています...',
+    'busyLoadingWordbook': '単語帳を読み込み中...',
+    'busyImportingWordbook': '単語帳をインポート中...',
+    'busyMigratingLegacyData': '旧データを移行中...',
+    'busyMergingWordbooks': '単語帳を統合中...',
+    'busyResettingUserData': 'ユーザーデータをリセット中...',
+    'busyRestoringBackup': 'バックアップを復元中...',
+    'busyExportingUserData': 'ユーザーデータをエクスポート中...',
+    'exportUserData': 'ユーザーデータをエクスポート',
+    'exportUserDataSubtitle': 'タスク、メモ、タイマー設定、カスタム単語帳を JSON に書き出します。',
+    'exportUserDataSuccess': 'ユーザーデータを {path} に書き出しました',
+    'exportUserDataFailed': 'ユーザーデータの書き出しに失敗しました: {error}',
   };
 
   static const Map<String, String> _extraDe = <String, String>{
@@ -2644,6 +2681,20 @@ class AppI18n {
         'Wählen Sie aus, wie der Timer auf der Fokus-Seite aussieht.',
     'timerStyleHourglass': 'Sanduhr',
     'timerStyleCountdown': 'Countdown',
+    'busyInitializingApp': 'App wird initialisiert...',
+    'busyLoadingWordbook': 'Wortbuch wird geladen...',
+    'busyImportingWordbook': 'Wortbuch wird importiert...',
+    'busyMigratingLegacyData': 'Altdaten werden migriert...',
+    'busyMergingWordbooks': 'Wortbücher werden zusammengeführt...',
+    'busyResettingUserData': 'Benutzerdaten werden zurückgesetzt...',
+    'busyRestoringBackup': 'Backup wird wiederhergestellt...',
+    'busyExportingUserData': 'Benutzerdaten werden exportiert...',
+    'exportUserData': 'Benutzerdaten exportieren',
+    'exportUserDataSubtitle':
+        'Exportiert Aufgaben, Notizen, Timer-Einstellungen und eigene Wortbücher als JSON-Datei.',
+    'exportUserDataSuccess': 'Benutzerdaten wurden nach {path} exportiert',
+    'exportUserDataFailed':
+        'Benutzerdaten konnten nicht exportiert werden: {error}',
   };
 
   static const Map<String, String> _extraFr = <String, String>{
@@ -2652,6 +2703,21 @@ class AppI18n {
         'Choisissez l’apparence du minuteur sur la page de concentration.',
     'timerStyleHourglass': 'Sablier',
     'timerStyleCountdown': 'Compte à rebours',
+    'busyInitializingApp': 'Initialisation de l’application...',
+    'busyLoadingWordbook': 'Chargement du livre de mots...',
+    'busyImportingWordbook': 'Importation du livre de mots...',
+    'busyMigratingLegacyData': 'Migration des anciennes données...',
+    'busyMergingWordbooks': 'Fusion des livres de mots...',
+    'busyResettingUserData': 'Réinitialisation des données utilisateur...',
+    'busyRestoringBackup': 'Restauration de la sauvegarde...',
+    'busyExportingUserData': 'Exportation des données utilisateur...',
+    'exportUserData': 'Exporter les données utilisateur',
+    'exportUserDataSubtitle':
+        'Exporte les tâches, notes, réglages du minuteur et livres personnalisés dans un fichier JSON.',
+    'exportUserDataSuccess':
+        'Les données utilisateur ont été exportées vers {path}',
+    'exportUserDataFailed':
+        'Échec de l’export des données utilisateur : {error}',
   };
 
   static const Map<String, String> _extraEs = <String, String>{
@@ -2660,6 +2726,20 @@ class AppI18n {
         'Elige cómo se ve el temporizador en la página de enfoque.',
     'timerStyleHourglass': 'Reloj de arena',
     'timerStyleCountdown': 'Cuenta regresiva',
+    'busyInitializingApp': 'Inicializando la aplicación...',
+    'busyLoadingWordbook': 'Cargando el libro de palabras...',
+    'busyImportingWordbook': 'Importando el libro de palabras...',
+    'busyMigratingLegacyData': 'Migrando los datos antiguos...',
+    'busyMergingWordbooks': 'Combinando libros de palabras...',
+    'busyResettingUserData': 'Restableciendo los datos del usuario...',
+    'busyRestoringBackup': 'Restaurando la copia de seguridad...',
+    'busyExportingUserData': 'Exportando los datos del usuario...',
+    'exportUserData': 'Exportar datos del usuario',
+    'exportUserDataSubtitle':
+        'Exporta tareas, notas, ajustes del temporizador y libros personalizados a un archivo JSON.',
+    'exportUserDataSuccess': 'Los datos del usuario se exportaron a {path}',
+    'exportUserDataFailed':
+        'No se pudieron exportar los datos del usuario: {error}',
   };
 
   static const Map<String, String> _extraRu = <String, String>{
@@ -2668,6 +2748,20 @@ class AppI18n {
         'Выберите внешний вид таймера на странице фокуса.',
     'timerStyleHourglass': 'Песочные часы',
     'timerStyleCountdown': 'Обратный отсчёт',
+    'busyInitializingApp': 'Инициализация приложения...',
+    'busyLoadingWordbook': 'Загрузка словаря...',
+    'busyImportingWordbook': 'Импорт словаря...',
+    'busyMigratingLegacyData': 'Перенос старых данных...',
+    'busyMergingWordbooks': 'Объединение словарей...',
+    'busyResettingUserData': 'Сброс пользовательских данных...',
+    'busyRestoringBackup': 'Восстановление резервной копии...',
+    'busyExportingUserData': 'Экспорт пользовательских данных...',
+    'exportUserData': 'Экспорт данных пользователя',
+    'exportUserDataSubtitle':
+        'Экспортирует задачи, заметки, настройки таймера и пользовательские словари в JSON-файл.',
+    'exportUserDataSuccess': 'Данные пользователя экспортированы в {path}',
+    'exportUserDataFailed':
+        'Не удалось экспортировать данные пользователя: {error}',
   };
 
   static const Map<String, String> _focusEnhancedEn = <String, String>{
@@ -2750,6 +2844,25 @@ class AppI18n {
     'todoReminderStorageHint':
         'The reminder time is already stored and can be used for alarm integrations later.',
     'clearValue': 'Clear',
+    'noteUpdatedAt': 'Updated: {value}',
+    'noteCreatedAt': 'Created: {value}',
+    'noteContentEmpty': 'No note content yet.',
+    'startVoiceInput': 'Voice input',
+    'stopVoiceInput': 'Stop voice input',
+    'voiceInputUnavailable': 'Voice input is unavailable right now.',
+    'voiceInputAppendSuccess': 'Recognized text was added to the note.',
+    'reminderCustomSound': 'Custom reminder sound',
+    'reminderCustomSoundHint':
+        'Use a local audio file, or keep the system ringtone.',
+    'reminderPickCustomSound': 'Pick audio file',
+    'reminderClearCustomSound': 'Clear custom sound',
+    'reminderCustomSoundSelected': 'Custom reminder sound selected.',
+    'reminderCustomVoiceText': 'Custom voice text',
+    'reminderCustomVoiceTextHint':
+        'Optional spoken text for the end-of-timer voice reminder.',
+    'timerAttemptLockScreen': 'Attempt to lock screen on start',
+    'timerAttemptLockScreenHint':
+        'Most phones do not allow apps to lock the screen automatically. This switch only enables a best-effort attempt.',
   };
 
   static const Map<String, String> _focusEnhancedZh = <String, String>{
@@ -2831,6 +2944,22 @@ class AppI18n {
     'todoPickReminder': '选择日期和时间',
     'todoReminderStorageHint': '当前会先保存提醒时间，后续接入提醒能力时可直接使用。',
     'clearValue': '清除',
+    'noteUpdatedAt': '更新于：{value}',
+    'noteCreatedAt': '创建于：{value}',
+    'noteContentEmpty': '这条笔记还没有内容。',
+    'startVoiceInput': '语音输入',
+    'stopVoiceInput': '停止语音输入',
+    'voiceInputUnavailable': '当前无法使用语音输入。',
+    'voiceInputAppendSuccess': '识别文本已追加到笔记中。',
+    'reminderCustomSound': '自定义提醒音',
+    'reminderCustomSoundHint': '可选择本地音频文件，留空则继续使用系统铃声。',
+    'reminderPickCustomSound': '选择音频文件',
+    'reminderClearCustomSound': '清除自定义提醒音',
+    'reminderCustomSoundSelected': '已选择自定义提醒音。',
+    'reminderCustomVoiceText': '自定义语音播报文本',
+    'reminderCustomVoiceTextHint': '可选。计时结束后语音提醒将优先播报这里的内容。',
+    'timerAttemptLockScreen': '开始专注时尝试锁屏',
+    'timerAttemptLockScreenHint': '大多数手机不允许应用自动锁屏，这里只会进行尽力尝试。',
   };
 
   static const Map<String, String> _focusEnhancedJa = <String, String>{
@@ -3245,32 +3374,223 @@ class AppI18n {
     'clearValue': 'Очистить',
   };
 
+  static const Map<String, String> _focusEnhancedExtraEn = <String, String>{
+    'noteUpdatedAt': 'Updated: {value}',
+    'noteCreatedAt': 'Created: {value}',
+    'noteContentEmpty': 'No note content yet.',
+    'startVoiceInput': 'Voice input',
+    'stopVoiceInput': 'Stop voice input',
+    'voiceInputUnavailable': 'Voice input is unavailable right now.',
+    'voiceInputAppendSuccess': 'Recognized text was added to the note.',
+    'reminderCustomSound': 'Custom reminder sound',
+    'reminderCustomSoundHint':
+        'Use a local audio file, or keep the system ringtone.',
+    'reminderPickCustomSound': 'Pick audio file',
+    'reminderClearCustomSound': 'Clear custom sound',
+    'reminderCustomSoundSelected': 'Custom reminder sound selected.',
+    'reminderCustomVoiceText': 'Custom voice text',
+    'reminderCustomVoiceTextHint':
+        'Optional spoken text for the end-of-timer voice reminder.',
+    'timerAttemptLockScreen': 'Attempt to lock screen on start',
+    'timerAttemptLockScreenHint':
+        'Most phones do not allow apps to lock the screen automatically. This switch only enables a best-effort attempt.',
+  };
+
+  static const Map<String, String> _focusEnhancedExtraZh = <String, String>{
+    'noteUpdatedAt': '更新于：{value}',
+    'noteCreatedAt': '创建于：{value}',
+    'noteContentEmpty': '这条笔记还没有内容。',
+    'startVoiceInput': '语音输入',
+    'stopVoiceInput': '停止语音输入',
+    'voiceInputUnavailable': '当前无法使用语音输入。',
+    'voiceInputAppendSuccess': '识别文本已追加到笔记中。',
+    'reminderCustomSound': '自定义提醒音',
+    'reminderCustomSoundHint': '可选择本地音频文件，留空则继续使用系统铃声。',
+    'reminderPickCustomSound': '选择音频文件',
+    'reminderClearCustomSound': '清除自定义提醒音',
+    'reminderCustomSoundSelected': '已选择自定义提醒音。',
+    'reminderCustomVoiceText': '自定义语音播报文本',
+    'reminderCustomVoiceTextHint': '可选。计时结束后语音提醒将优先播报这里的内容。',
+    'timerAttemptLockScreen': '开始专注时尝试锁屏',
+    'timerAttemptLockScreenHint': '大多数手机不允许应用自动锁屏，这里只会进行尽力尝试。',
+  };
+
+  static const Map<String, String> _focusEnhancedExtraJa = <String, String>{
+    'noteUpdatedAt': '更新: {value}',
+    'noteCreatedAt': '作成: {value}',
+    'noteContentEmpty': 'このメモにはまだ内容がありません。',
+    'startVoiceInput': '音声入力',
+    'stopVoiceInput': '音声入力を停止',
+    'voiceInputUnavailable': '現在は音声入力を利用できません。',
+    'voiceInputAppendSuccess': '認識したテキストをメモに追加しました。',
+    'reminderCustomSound': 'カスタム通知音',
+    'reminderCustomSoundHint': '端末内の音声ファイルを選ぶか、システム音のままにできます。',
+    'reminderPickCustomSound': '音声ファイルを選択',
+    'reminderClearCustomSound': 'カスタム通知音をクリア',
+    'reminderCustomSoundSelected': 'カスタム通知音を選択しました。',
+    'reminderCustomVoiceText': 'カスタム音声テキスト',
+    'reminderCustomVoiceTextHint': '任意。タイマー終了時の音声案内でこの内容を優先して読み上げます。',
+    'timerAttemptLockScreen': '開始時に画面ロックを試す',
+    'timerAttemptLockScreenHint':
+        '多くの端末ではアプリによる自動ロックは許可されていません。これは可能な範囲で試すだけです。',
+  };
+
+  static const Map<String, String> _focusEnhancedExtraDe = <String, String>{
+    'noteUpdatedAt': 'Aktualisiert: {value}',
+    'noteCreatedAt': 'Erstellt: {value}',
+    'noteContentEmpty': 'Diese Notiz hat noch keinen Inhalt.',
+    'startVoiceInput': 'Spracheingabe',
+    'stopVoiceInput': 'Spracheingabe stoppen',
+    'voiceInputUnavailable': 'Spracheingabe ist derzeit nicht verfügbar.',
+    'voiceInputAppendSuccess': 'Der erkannte Text wurde zur Notiz hinzugefügt.',
+    'reminderCustomSound': 'Eigener Erinnerungston',
+    'reminderCustomSoundHint':
+        'Wählen Sie eine lokale Audiodatei oder nutzen Sie weiter den Systemton.',
+    'reminderPickCustomSound': 'Audiodatei wählen',
+    'reminderClearCustomSound': 'Eigenen Ton entfernen',
+    'reminderCustomSoundSelected': 'Eigener Erinnerungston ausgewählt.',
+    'reminderCustomVoiceText': 'Eigener Sprachtext',
+    'reminderCustomVoiceTextHint':
+        'Optionaler Text für die Sprachansage am Timerende.',
+    'timerAttemptLockScreen': 'Beim Start Bildschirm sperren versuchen',
+    'timerAttemptLockScreenHint':
+        'Die meisten Geräte erlauben Apps kein automatisches Sperren. Diese Option startet nur einen Best-Effort-Versuch.',
+  };
+
+  static const Map<String, String> _focusEnhancedExtraFr = <String, String>{
+    'noteUpdatedAt': 'Mis à jour : {value}',
+    'noteCreatedAt': 'Créé : {value}',
+    'noteContentEmpty': 'Cette note n’a pas encore de contenu.',
+    'startVoiceInput': 'Saisie vocale',
+    'stopVoiceInput': 'Arrêter la saisie vocale',
+    'voiceInputUnavailable':
+        'La saisie vocale est indisponible pour le moment.',
+    'voiceInputAppendSuccess': 'Le texte reconnu a été ajouté à la note.',
+    'reminderCustomSound': 'Son de rappel personnalisé',
+    'reminderCustomSoundHint':
+        'Choisissez un fichier audio local ou gardez la sonnerie système.',
+    'reminderPickCustomSound': 'Choisir un fichier audio',
+    'reminderClearCustomSound': 'Effacer le son personnalisé',
+    'reminderCustomSoundSelected': 'Son de rappel personnalisé sélectionné.',
+    'reminderCustomVoiceText': 'Texte vocal personnalisé',
+    'reminderCustomVoiceTextHint':
+        'Texte facultatif lu en priorité lors du rappel vocal de fin.',
+    'timerAttemptLockScreen': 'Essayer de verrouiller l’écran au démarrage',
+    'timerAttemptLockScreenHint':
+        'La plupart des téléphones n’autorisent pas les applications à verrouiller automatiquement l’écran. Cette option ne tente cela qu’au mieux.',
+  };
+
+  static const Map<String, String> _focusEnhancedExtraEs = <String, String>{
+    'noteUpdatedAt': 'Actualizado: {value}',
+    'noteCreatedAt': 'Creado: {value}',
+    'noteContentEmpty': 'Esta nota todavía no tiene contenido.',
+    'startVoiceInput': 'Entrada por voz',
+    'stopVoiceInput': 'Detener entrada por voz',
+    'voiceInputUnavailable':
+        'La entrada por voz no está disponible en este momento.',
+    'voiceInputAppendSuccess': 'El texto reconocido se añadió a la nota.',
+    'reminderCustomSound': 'Sonido de recordatorio personalizado',
+    'reminderCustomSoundHint':
+        'Elige un archivo de audio local o mantén el tono del sistema.',
+    'reminderPickCustomSound': 'Elegir archivo de audio',
+    'reminderClearCustomSound': 'Quitar sonido personalizado',
+    'reminderCustomSoundSelected':
+        'Se seleccionó un sonido de recordatorio personalizado.',
+    'reminderCustomVoiceText': 'Texto de voz personalizado',
+    'reminderCustomVoiceTextHint':
+        'Texto opcional que se leerá al final del temporizador.',
+    'timerAttemptLockScreen': 'Intentar bloquear la pantalla al iniciar',
+    'timerAttemptLockScreenHint':
+        'La mayoría de los teléfonos no permiten que las apps bloqueen la pantalla automáticamente. Esta opción solo hará un intento de mejor esfuerzo.',
+  };
+
+  static const Map<String, String> _focusEnhancedExtraRu = <String, String>{
+    'noteUpdatedAt': 'Обновлено: {value}',
+    'noteCreatedAt': 'Создано: {value}',
+    'noteContentEmpty': 'В этой заметке пока нет содержимого.',
+    'startVoiceInput': 'Голосовой ввод',
+    'stopVoiceInput': 'Остановить голосовой ввод',
+    'voiceInputUnavailable': 'Голосовой ввод сейчас недоступен.',
+    'voiceInputAppendSuccess': 'Распознанный текст был добавлен в заметку.',
+    'reminderCustomSound': 'Свой звук напоминания',
+    'reminderCustomSoundHint':
+        'Выберите локальный аудиофайл или оставьте системный сигнал.',
+    'reminderPickCustomSound': 'Выбрать аудиофайл',
+    'reminderClearCustomSound': 'Очистить свой звук',
+    'reminderCustomSoundSelected': 'Свой звук напоминания выбран.',
+    'reminderCustomVoiceText': 'Свой текст озвучивания',
+    'reminderCustomVoiceTextHint':
+        'Необязательный текст, который будет озвучен после завершения таймера.',
+    'timerAttemptLockScreen': 'Пытаться блокировать экран при старте',
+    'timerAttemptLockScreenHint':
+        'Большинство телефонов не разрешают приложениям автоматически блокировать экран. Эта опция выполняет только попытку без гарантий.',
+  };
+
   String t(
     String key, {
     Map<String, Object?> params = const <String, Object?>{},
   }) {
     final lang = normalizeLanguageCode(languageCode);
     final table = switch (lang) {
-      'zh' => {..._zh, ..._focusZh, ..._extraZh, ..._focusEnhancedZh},
-      'ja' => {..._ja, ..._focusJa, ..._extraJa, ..._focusEnhancedJa},
-      'de' => {..._de, ..._focusDe, ..._extraDe, ..._focusEnhancedDe},
-      'fr' => {..._fr, ..._focusFr, ..._extraFr, ..._focusEnhancedFr},
-      'es' => {..._es, ..._focusEs, ..._extraEs, ..._focusEnhancedEs},
+      'zh' => {
+        ..._zh,
+        ..._focusZh,
+        ..._extraZh,
+        ..._focusEnhancedZh,
+        ..._focusEnhancedExtraZh,
+      },
+      'ja' => {
+        ..._ja,
+        ..._focusJa,
+        ..._extraJa,
+        ..._focusEnhancedJa,
+        ..._focusEnhancedExtraJa,
+      },
+      'de' => {
+        ..._de,
+        ..._focusDe,
+        ..._extraDe,
+        ..._focusEnhancedDe,
+        ..._focusEnhancedExtraDe,
+      },
+      'fr' => {
+        ..._fr,
+        ..._focusFr,
+        ..._extraFr,
+        ..._focusEnhancedFr,
+        ..._focusEnhancedExtraFr,
+      },
+      'es' => {
+        ..._es,
+        ..._focusEs,
+        ..._extraEs,
+        ..._focusEnhancedEs,
+        ..._focusEnhancedExtraEs,
+      },
       'ru' => {
         ..._en,
         ..._focusEn,
         ..._extraEn,
         ..._focusEnhancedEn,
+        ..._focusEnhancedExtraEn,
         ..._ru,
         ..._extraRu,
         ..._focusEnhancedRu,
+        ..._focusEnhancedExtraRu,
       },
-      _ => {..._en, ..._focusEn, ..._extraEn, ..._focusEnhancedEn},
+      _ => {
+        ..._en,
+        ..._focusEn,
+        ..._extraEn,
+        ..._focusEnhancedEn,
+        ..._focusEnhancedExtraEn,
+      },
     };
     var value =
         table[key] ??
         _extraEn[key] ??
         _focusEnhancedEn[key] ??
+        _focusEnhancedExtraEn[key] ??
         _en[key] ??
         _focusEn[key] ??
         _humanizeKey(key);
