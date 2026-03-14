@@ -467,6 +467,18 @@ void main() {
       await tester.tap(voiceButton);
       await tester.pumpAndSettle();
 
+      final titleField = tester.widget<TextField>(
+        find.byKey(const ValueKey<String>('note-title-field')),
+      );
+      final contentField = tester.widget<TextField>(
+        find.byKey(const ValueKey<String>('note-content-field')),
+      );
+      expect(titleField.controller?.text ?? '', isEmpty);
+      expect(
+        contentField.controller?.text ?? '',
+        'Capture release review highlights',
+      );
+
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 

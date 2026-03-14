@@ -3676,22 +3676,25 @@ class _FocusPageState extends State<FocusPage>
     return '$existing\n$next';
   }
 
-  String _suggestNoteTitleFromVoice(String recognized) {
-    final normalized = recognized.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (normalized.isEmpty) {
-      return '';
-    }
-    final segments = normalized
-        .split(RegExp(r'[\r\n。！？.!?]+'))
-        .map((segment) => segment.trim())
-        .where((segment) => segment.isNotEmpty)
-        .toList(growable: false);
-    final base = (segments.isNotEmpty ? segments.first : normalized).trim();
-    const maxLength = 24;
-    if (base.characters.length <= maxLength) {
-      return base;
-    }
-    return '${base.characters.take(maxLength).toString()}…';
+  String _defaultNoteTitle(AppI18n i18n) {
+    final now = DateTime.now();
+    final localizations = MaterialLocalizations.of(context);
+    final date = localizations.formatShortDate(now);
+    final time = localizations.formatTimeOfDay(
+      TimeOfDay.fromDateTime(now),
+      alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
+    );
+    final prefix = pickUiText(
+      i18n,
+      zh: '快速笔记',
+      en: 'Quick note',
+      ja: 'クイックノート',
+      de: 'Schnellnotiz',
+      fr: 'Note rapide',
+      es: 'Nota rapida',
+      ru: 'Быстрая заметка',
+    );
+    return '$prefix $date $time';
   }
 
   void _showNoteDialog(FocusService focus, AppI18n i18n, {PlanNote? note}) {
@@ -3814,20 +3817,6 @@ class _FocusPageState extends State<FocusPage>
                   selection: TextSelection.collapsed(offset: merged.length),
                   composing: TextRange.empty,
                 );
-                if (titleController.text.trim().isEmpty) {
-                  final suggestedTitle = _suggestNoteTitleFromVoice(
-                    recognizedText,
-                  );
-                  if (suggestedTitle.isNotEmpty) {
-                    titleController.value = titleController.value.copyWith(
-                      text: suggestedTitle,
-                      selection: TextSelection.collapsed(
-                        offset: suggestedTitle.length,
-                      ),
-                      composing: TextRange.empty,
-                    );
-                  }
-                }
                 updateSheet(() {
                   voiceState = _NoteVoiceInputState.idle;
                   voiceProgress = null;
@@ -4012,9 +4001,14 @@ class _FocusPageState extends State<FocusPage>
                             const SizedBox(width: 8),
                             FilledButton.icon(
                               onPressed: () {
-                                final title = titleController.text.trim();
+                                final rawTitle = titleController.text.trim();
                                 final content = contentController.text.trim();
-                                if (title.isEmpty) return;
+                                if (rawTitle.isEmpty && content.isEmpty) {
+                                  return;
+                                }
+                                final title = rawTitle.isEmpty
+                                    ? _defaultNoteTitle(i18n)
+                                    : rawTitle;
                                 if (note == null) {
                                   focus.addNote(
                                     title,
