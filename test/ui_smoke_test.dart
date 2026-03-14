@@ -442,6 +442,17 @@ void main() {
       expect(find.text('Timer'), findsOneWidget);
     });
 
+    testWidgets('focus page keeps duration pickers wheel only', (tester) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      expect(find.text('Wheel picker'), findsNWidgets(2));
+      expect(find.byType(ChoiceChip), findsNothing);
+    });
+
     testWidgets('app shell opens ambient sheet from global launcher', (
       tester,
     ) async {

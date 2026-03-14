@@ -998,7 +998,6 @@ class _FocusPageState extends State<FocusPage>
                     label: i18n.t('focusMinutes'),
                     totalSeconds: config.focusDurationSeconds,
                     i18n: i18n,
-                    presetMinutes: const <int>[15, 20, 25, 30, 45, 60],
                     onChanged: (seconds) => focus.saveConfig(
                       config.copyWith(focusDurationSeconds: seconds),
                     ),
@@ -1010,7 +1009,6 @@ class _FocusPageState extends State<FocusPage>
                     label: i18n.t('breakMinutes'),
                     totalSeconds: config.breakDurationSeconds,
                     i18n: i18n,
-                    presetMinutes: const <int>[3, 5, 8, 10, 15, 20],
                     onChanged: (seconds) => focus.saveConfig(
                       config.copyWith(breakDurationSeconds: seconds),
                     ),
@@ -1063,7 +1061,6 @@ class _FocusPageState extends State<FocusPage>
     required String label,
     required int totalSeconds,
     required AppI18n i18n,
-    required List<int> presetMinutes,
     required ValueChanged<int> onChanged,
   }) {
     final theme = Theme.of(context);
@@ -1084,21 +1081,6 @@ class _FocusPageState extends State<FocusPage>
             Text(
               _formatUnitSummary(totalSeconds, i18n),
               style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                ...presetMinutes.map((minutes) {
-                  final targetSeconds = minutes * 60;
-                  return ChoiceChip(
-                    label: Text('$minutes${i18n.t('minutesUnit')}'),
-                    selected: totalSeconds == targetSeconds,
-                    onSelected: (_) => onChanged(targetSeconds),
-                  );
-                }),
-              ],
             ),
             const SizedBox(height: 12),
             SizedBox(
