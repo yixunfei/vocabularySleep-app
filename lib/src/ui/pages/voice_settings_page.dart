@@ -69,6 +69,14 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
       'tuningSubtitle': 'Adjust speed and volume for your listening scene.',
       'speedLabel': 'Speed: {value}%',
       'volumeLabel': 'Volume: {value}%',
+      'cacheTitle': 'API voice cache',
+      'cacheSubtitle':
+          'Reuse downloaded remote audio locally to reduce repeated API calls.',
+      'cacheEnabled': 'Enable local API voice cache',
+      'cacheSize': 'Current cache: {size}',
+      'cacheMaxLabel': 'Max cache size: {value} MB',
+      'cacheClear': 'Clear voice cache',
+      'cacheClearDone': 'Voice cache cleared',
       'remoteTip':
           'Remote TTS requires API key; custom API also requires base URL.',
     },
@@ -88,6 +96,13 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
       'tuningSubtitle': '按场景调整语速和音量。',
       'speedLabel': '语速：{value}%',
       'volumeLabel': '音量：{value}%',
+      'cacheTitle': 'API 语音缓存',
+      'cacheSubtitle': '将远程返回的语音缓存在本地，减少重复请求与等待。',
+      'cacheEnabled': '启用 API 语音本地缓存',
+      'cacheSize': '当前缓存：{size}',
+      'cacheMaxLabel': '最大缓存容量：{value} MB',
+      'cacheClear': '一键清空语音缓存',
+      'cacheClearDone': '语音缓存已清空',
       'remoteTip': '远程 TTS 需要 API Key，自定义 API 还需要 Base URL。',
     },
     'ja': <String, String>{
@@ -283,11 +298,15 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
 
   List<String> _localVoices = const <String>[];
   bool _loadingLocalVoices = false;
+  int _apiCacheBytes = 0;
+  bool _loadingApiCache = false;
+  bool _clearingApiCache = false;
 
   @override
   void initState() {
     super.initState();
     _loadLocalVoices();
+    _loadApiCacheSize();
   }
 
   Future<void> _loadLocalVoices() async {
@@ -299,6 +318,18 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
     setState(() {
       _loadingLocalVoices = false;
       _localVoices = voices;
+    });
+  }
+
+  Future<void> _loadApiCacheSize() async {
+    setState(() {
+      _loadingApiCache = true;
+    });
+    final bytes = await context.read<AppState>().getApiTtsCacheSizeBytes();
+    if (!mounted) return;
+    setState(() {
+      _loadingApiCache = false;
+      _apiCacheBytes = bytes;
     });
   }
 
@@ -352,6 +383,15 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
     return _voiceProfileTexts[language]?[value.toLowerCase()] ??
         _voiceProfileTexts['en']?[value.toLowerCase()] ??
         value;
+  }
+
+  String _formatCacheSize(int bytes) {
+    if (bytes <= 0) return '0 MB';
+    final megaBytes = bytes / (1024 * 1024);
+    if (megaBytes < 0.1) {
+      return '${(bytes / 1024).round()} KB';
+    }
+    return '${megaBytes.toStringAsFixed(megaBytes >= 10 ? 0 : 1)} MB';
   }
 
   @override
@@ -768,6 +808,113 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
               ),
             ),
           ),
+          if (isRemote) ...<Widget>[
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SectionHeader(
+                      title: _voiceUiText(i18n, 'cacheTitle'),
+                      subtitle: _voiceUiText(i18n, 'cacheSubtitle'),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(_voiceUiText(i18n, 'cacheEnabled')),
+                      subtitle: Text(
+                        _voiceUiText(
+                          i18n,
+                          'cacheSize',
+                          params: <String, Object?>{
+                            'size': _loadingApiCache
+                                ? '...'
+                                : _formatCacheSize(_apiCacheBytes),
+                          },
+                        ),
+                      ),
+                      value: tts.enableApiCache,
+                      onChanged: (value) {
+                        state.updateConfig(
+                          config.copyWith(
+                            tts: tts.copyWith(enableApiCache: value),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _voiceUiText(
+                        i18n,
+                        'cacheMaxLabel',
+                        params: <String, Object?>{
+                          'value': tts.maxApiCacheMb.clamp(32, 2048).toInt(),
+                        },
+                      ),
+                    ),
+                    Slider(
+                      min: 32,
+                      max: 512,
+                      divisions: 15,
+                      value: tts.maxApiCacheMb.clamp(32, 512).toDouble(),
+                      label:
+                          '${tts.maxApiCacheMb.clamp(32, 512).toInt()} MB',
+                      onChanged: (value) {
+                        state.updateConfig(
+                          config.copyWith(
+                            tts: tts.copyWith(maxApiCacheMb: value.round()),
+                          ),
+                        );
+                      },
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: _clearingApiCache
+                            ? null
+                            : () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final clearDoneText = _voiceUiText(
+                                  i18n,
+                                  'cacheClearDone',
+                                );
+                                setState(() {
+                                  _clearingApiCache = true;
+                                });
+                                try {
+                                  await state.clearApiTtsCache();
+                                  if (!mounted) return;
+                                  messenger.showSnackBar(
+                                    SnackBar(content: Text(clearDoneText)),
+                                  );
+                                  await _loadApiCacheSize();
+                                } finally {
+                                  if (mounted) {
+                                    setState(() {
+                                      _clearingApiCache = false;
+                                    });
+                                  }
+                                }
+                              },
+                        icon: _clearingApiCache
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.cleaning_services_rounded),
+                        label: Text(_voiceUiText(i18n, 'cacheClear')),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           if (isRemote) ...<Widget>[
             const SizedBox(height: 12),
             Text(

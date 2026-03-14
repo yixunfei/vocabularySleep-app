@@ -1802,6 +1802,34 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  Future<int> getApiTtsCacheSizeBytes() async {
+    try {
+      return await _playback.getApiTtsCacheSizeBytes();
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'get api tts cache size failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return 0;
+    }
+  }
+
+  Future<void> clearApiTtsCache() async {
+    try {
+      await _playback.clearApiTtsCache();
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'clear api tts cache failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   Future<AsrResult> transcribeRecording(
     String audioPath, {
     String? expectedText,

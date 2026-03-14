@@ -62,6 +62,8 @@ class TtsConfig {
     required this.language,
     required this.speed,
     required this.volume,
+    this.enableApiCache = false,
+    this.maxApiCacheMb = 128,
     this.apiKey,
     this.model,
     this.baseUrl,
@@ -75,6 +77,8 @@ class TtsConfig {
   final String language;
   final double speed;
   final double volume;
+  final bool enableApiCache;
+  final int maxApiCacheMb;
   final String? apiKey;
   final String? model;
   final String? baseUrl;
@@ -106,6 +110,8 @@ class TtsConfig {
     String? language,
     double? speed,
     double? volume,
+    bool? enableApiCache,
+    int? maxApiCacheMb,
     String? apiKey,
     String? model,
     String? baseUrl,
@@ -121,6 +127,8 @@ class TtsConfig {
       language: language ?? this.language,
       speed: speed ?? this.speed,
       volume: volume ?? this.volume,
+      enableApiCache: enableApiCache ?? this.enableApiCache,
+      maxApiCacheMb: maxApiCacheMb ?? this.maxApiCacheMb,
       apiKey: apiKey ?? this.apiKey,
       model: model ?? this.model,
       baseUrl: baseUrl ?? this.baseUrl,
@@ -136,6 +144,8 @@ class TtsConfig {
     'language': language,
     'speed': speed,
     'volume': volume,
+    'enableApiCache': enableApiCache,
+    'maxApiCacheMb': maxApiCacheMb,
     'apiKey': apiKey,
     'model': model,
     'baseUrl': baseUrl,
@@ -179,6 +189,11 @@ class TtsConfig {
       language: json['language']?.toString() ?? 'auto',
       speed: (json['speed'] as num?)?.toDouble() ?? 1.0,
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
+      enableApiCache: json['enableApiCache'] as bool? ?? false,
+      maxApiCacheMb:
+          ((json['maxApiCacheMb'] as num?)?.toInt() ?? 128)
+              .clamp(32, 2048)
+              .toInt(),
       apiKey: json['apiKey']?.toString(),
       model: json['model']?.toString(),
       baseUrl: json['baseUrl']?.toString(),
@@ -837,6 +852,8 @@ class PlayConfig {
       language: 'auto',
       speed: 1.0,
       volume: 1.0,
+      enableApiCache: false,
+      maxApiCacheMb: 128,
       model: 'FunAudioLLM/CosyVoice2-0.5B',
     ),
     asr: const AsrConfig(

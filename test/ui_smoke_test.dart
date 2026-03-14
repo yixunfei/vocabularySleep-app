@@ -95,6 +95,39 @@ void main() {
       expect(find.text('Voice settings'), findsNothing);
     });
 
+    testWidgets('voice settings shows API cache controls and clears cache', (
+      tester,
+    ) async {
+      final config = PlayConfig.defaults.copyWith(
+        tts: PlayConfig.defaults.tts.copyWith(
+          provider: TtsProviderType.api,
+          enableApiCache: true,
+        ),
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        config: config,
+        apiTtsCacheBytes: 5 * 1024 * 1024,
+      );
+      await _pumpPage(tester, state: state, child: const VoiceSettingsPage());
+
+      await tester.scrollUntilVisible(
+        find.text('API voice cache'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('API voice cache'), findsOneWidget);
+      expect(find.textContaining('Current cache:'), findsOneWidget);
+
+      await tester.tap(find.text('Clear voice cache'));
+      await tester.pumpAndSettle();
+
+      expect(state.clearedApiTtsCache, isTrue);
+      expect(find.textContaining('0 MB'), findsWidgets);
+    });
+
     testWidgets('recognition settings shows offline package section', (
       tester,
     ) async {
@@ -1277,6 +1310,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required String? asrRecordingPath,
     required String? asrStoppedRecordingPath,
     required AsrResult asrTranscriptionResult,
+    required int apiTtsCacheBytes,
   }) : _config = config,
        _uiLanguage = uiLanguage,
        _uiLanguageFollowsSystem = false,
@@ -1290,7 +1324,8 @@ class _FakeAppState extends ChangeNotifier implements AppState {
        _ambientMasterVolume = ambientMasterVolume,
        _asrRecordingPath = asrRecordingPath,
        _asrStoppedRecordingPath = asrStoppedRecordingPath,
-       _asrTranscriptionResult = asrTranscriptionResult;
+       _asrTranscriptionResult = asrTranscriptionResult,
+       _apiTtsCacheBytes = apiTtsCacheBytes;
 
   factory _FakeAppState.sample({
     List<WordEntry>? words,
@@ -1304,6 +1339,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     String? asrRecordingPath,
     String? asrStoppedRecordingPath,
     AsrResult? asrTranscriptionResult,
+    int apiTtsCacheBytes = 0,
   }) {
     final visibleWords =
         words ??
@@ -1346,6 +1382,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       asrTranscriptionResult:
           asrTranscriptionResult ??
           const AsrResult(success: false, error: 'recognitionFailed'),
+      apiTtsCacheBytes: apiTtsCacheBytes,
     ).._currentWord = visibleWords.firstOrNull;
   }
 
@@ -1365,9 +1402,11 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   final String? _asrRecordingPath;
   final String? _asrStoppedRecordingPath;
   final AsrResult _asrTranscriptionResult;
+  int _apiTtsCacheBytes;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   bool resetUserDataCalled = false;
+  bool clearedApiTtsCache = false;
   String? restoredBackupPath;
   String? deletedBackupPath;
   String? exportedUserDataPath;
@@ -1527,6 +1566,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   Future<List<String>> fetchLocalTtsVoices() async => _localVoices;
 
   @override
+  Future<int> getApiTtsCacheSizeBytes() async => _apiTtsCacheBytes;
+
+  @override
   Future<AsrOfflineModelStatus> getAsrOfflineModelStatus(
     AsrProviderType provider,
   ) async {
@@ -1605,6 +1647,13 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   Future<void> previewPronunciation(String word) async {}
+
+  @override
+  Future<void> clearApiTtsCache() async {
+    clearedApiTtsCache = true;
+    _apiTtsCacheBytes = 0;
+    notifyListeners();
+  }
 
   @override
   Future<void> addAmbientFileSource() async {}

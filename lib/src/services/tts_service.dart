@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 import '../models/play_config.dart';
 import 'app_log_service.dart';
@@ -37,11 +41,14 @@ class TtsService {
       'https://api.siliconflow.cn/v1/audio/speech';
   static const String _defaultApiModel = 'FunAudioLLM/CosyVoice2-0.5B';
   static const String _defaultApiVoice = 'alex';
+  static const int _minApiCacheMb = 32;
+  static const int _maxApiCacheMb = 2048;
 
   Completer<void>? _localCompletionCompleter;
   Completer<void>? _apiCompletionCompleter;
   int? _apiCompletionToken;
   http.Client? _activeApiClient;
+  Directory? _apiCacheDirectory;
   bool _localInitialized = false;
   String? _lastLocalLanguage;
   int _apiSpeakToken = 0;
@@ -94,6 +101,29 @@ class TtsService {
       },
     );
     return output;
+  }
+
+  Future<int> getApiCacheSizeBytes() async {
+    final dir = await _getApiCacheDirectory();
+    return _computeDirectoryBytes(dir);
+  }
+
+  Future<void> clearApiCache() async {
+    final dir = await _getApiCacheDirectory();
+    if (!await dir.exists()) {
+      return;
+    }
+    await for (final entity in dir.list()) {
+      if (entity is File) {
+        await _runOp<void>(
+          'api.cache.delete',
+          () => entity.delete(),
+          data: <String, Object?>{'path': entity.path},
+          swallowError: true,
+        );
+      }
+    }
+    _log.i('tts', 'api cache cleared', data: <String, Object?>{'path': dir.path});
   }
 
   Future<void> speak(String text, TtsConfig config) async {
@@ -328,22 +358,23 @@ class TtsService {
 
   Future<void> _speakByApi(String text, TtsConfig config) async {
     final speakToken = ++_apiSpeakToken;
-    final apiKey = config.apiKey?.trim() ?? '';
-    if (apiKey.isEmpty) {
-      throw StateError('TTS API key is missing.');
-    }
-    if (config.provider == TtsProviderType.customApi &&
-        (config.baseUrl == null || config.baseUrl!.trim().isEmpty)) {
-      throw StateError('Custom API base URL is missing.');
-    }
-
-    final endpoint = _resolveApiEndpoint(config);
     final model = (config.model?.trim().isNotEmpty ?? false)
         ? config.model!.trim()
         : _defaultApiModel;
     final voice = config.remoteVoice.trim().isNotEmpty
         ? config.remoteVoice.trim()
         : _defaultApiVoice;
+    final endpointPreview = config.provider == TtsProviderType.customApi
+        ? (config.baseUrl?.trim().isEmpty ?? true)
+              ? 'custom_api_missing_base_url'
+              : _resolveApiEndpoint(config)
+        : _defaultApiEndpoint;
+    final cacheKey = _buildApiCacheKey(
+      config: config,
+      model: model,
+      voice: voice,
+      text: text,
+    );
     final requestBody = <String, Object?>{
       'model': model,
       'input': text,
@@ -357,9 +388,10 @@ class TtsService {
       data: <String, Object?>{
         'speakToken': speakToken,
         'provider': config.provider.name,
-        'endpoint': endpoint,
+        'endpoint': endpointPreview,
         'model': model,
         'voice': voice,
+        'cacheEnabled': _shouldUseApiCache(config),
         'textPreview': _preview(text),
       },
     );
@@ -375,6 +407,59 @@ class TtsService {
       swallowError: true,
     );
     _activeApiClient?.close();
+
+    final cachedFile = await _lookupApiCacheFile(cacheKey, config);
+    if (cachedFile != null) {
+      final cachedBytes = await _runOp<int>(
+        'api.cache.length',
+        () => cachedFile.length(),
+        data: <String, Object?>{'path': cachedFile.path},
+      );
+      _throwIfApiInterrupted(speakToken, stage: 'before_cache_play');
+      try {
+        await _playApiSource(
+          source: DeviceFileSource(cachedFile.path),
+          config: config,
+          speakToken: speakToken,
+          bytes: cachedBytes ?? 0,
+          sourceLabel: 'cache_file',
+          endpoint: endpointPreview,
+          model: model,
+          voice: voice,
+        );
+        return;
+      } catch (error, stackTrace) {
+        if (error is _ApiSpeakInterrupted) {
+          rethrow;
+        }
+        _log.w(
+          'tts',
+          'api cache playback failed, fallback to network',
+          data: <String, Object?>{
+            'path': cachedFile.path,
+            'error': '$error',
+            'stackTrace': '$stackTrace',
+          },
+        );
+        await _runOp<void>(
+          'api.cache.delete.invalid',
+          () => cachedFile.delete(),
+          data: <String, Object?>{'path': cachedFile.path},
+          swallowError: true,
+        );
+      }
+    }
+
+    final apiKey = config.apiKey?.trim() ?? '';
+    if (apiKey.isEmpty) {
+      throw StateError('TTS API key is missing.');
+    }
+    if (config.provider == TtsProviderType.customApi &&
+        (config.baseUrl == null || config.baseUrl!.trim().isEmpty)) {
+      throw StateError('Custom API base URL is missing.');
+    }
+
+    final endpoint = _resolveApiEndpoint(config);
     final client = http.Client();
     _activeApiClient = client;
 
@@ -414,14 +499,59 @@ class TtsService {
         'TTS API returned non-audio content-type: $contentType, body=${_preview(response.body)}',
       );
     }
+
+    final audioBytes = response.bodyBytes;
+    final cacheFile = await _writeApiCacheFile(
+      cacheKey: cacheKey,
+      bytes: audioBytes,
+      config: config,
+    );
     _throwIfApiInterrupted(speakToken, stage: 'before_play');
 
+    try {
+      await _playApiSource(
+        source: cacheFile != null
+            ? DeviceFileSource(cacheFile.path)
+            : BytesSource(audioBytes),
+        config: config,
+        speakToken: speakToken,
+        bytes: audioBytes.length,
+        sourceLabel: cacheFile != null ? 'network_cached_file' : 'network_bytes',
+        endpoint: endpoint,
+        model: model,
+        voice: voice,
+      );
+    } finally {
+      if (identical(_activeApiClient, client)) {
+        _activeApiClient = null;
+      }
+      client.close();
+    }
+  }
+
+  Future<void> _playApiSource({
+    required Source source,
+    required TtsConfig config,
+    required int speakToken,
+    required int bytes,
+    required String sourceLabel,
+    required String endpoint,
+    required String model,
+    required String voice,
+  }) async {
     final completer = Completer<void>();
     _apiCompletionCompleter = completer;
     _apiCompletionToken = speakToken;
     late final StreamSubscription<void> sub;
     sub = _apiPlayer.onPlayerComplete.listen((_) {
-      _log.d('tts', 'api playback completed');
+      _log.d(
+        'tts',
+        'api playback completed',
+        data: <String, Object?>{
+          'speakToken': speakToken,
+          'source': sourceLabel,
+        },
+      );
       if (_apiCompletionToken != speakToken) return;
       _completeApiSpeak();
       sub.cancel();
@@ -430,13 +560,14 @@ class TtsService {
     await _runOp<void>(
       'api.player.play',
       () => _apiPlayer.play(
-        BytesSource(response.bodyBytes),
+        source,
         volume: config.volume.clamp(0.0, 1.0),
       ),
       data: <String, Object?>{
         'speakToken': speakToken,
-        'bytes': response.bodyBytes.length,
+        'bytes': bytes,
         'volume': config.volume.clamp(0.0, 1.0),
+        'source': sourceLabel,
       },
     );
 
@@ -453,6 +584,7 @@ class TtsService {
               'endpoint': endpoint,
               'model': model,
               'voice': voice,
+              'source': sourceLabel,
             },
           );
           unawaited(
@@ -466,15 +598,196 @@ class TtsService {
         },
       );
     } finally {
-      if (identical(_activeApiClient, client)) {
-        _activeApiClient = null;
-      }
-      client.close();
       await sub.cancel();
       if (_apiCompletionToken == speakToken) {
         _completeApiSpeak();
       }
     }
+  }
+
+  bool _shouldUseApiCache(TtsConfig config) =>
+      config.provider != TtsProviderType.local && config.enableApiCache;
+
+  String _buildApiCacheKey({
+    required TtsConfig config,
+    required String model,
+    required String voice,
+    required String text,
+  }) {
+    final payload = jsonEncode(<String, Object?>{
+      'provider': config.provider.name,
+      'baseUrl': config.baseUrl?.trim() ?? '',
+      'model': model,
+      'voice': voice,
+      'speed': config.speed,
+      'text': text,
+    });
+    return sha256.convert(utf8.encode(payload)).toString();
+  }
+
+  Future<File?> _lookupApiCacheFile(String cacheKey, TtsConfig config) async {
+    if (!_shouldUseApiCache(config)) {
+      return null;
+    }
+    final dir = await _getApiCacheDirectory();
+    final file = File(path.join(dir.path, '$cacheKey.mp3'));
+    final exists = await _runOp<bool>(
+      'api.cache.exists',
+      () => file.exists(),
+      data: <String, Object?>{'path': file.path},
+      swallowError: true,
+    );
+    if (exists != true) {
+      _log.d('tts', 'api cache miss', data: <String, Object?>{'key': cacheKey});
+      return null;
+    }
+    await _touchApiCacheFile(file);
+    _log.i(
+      'tts',
+      'api cache hit',
+      data: <String, Object?>{'key': cacheKey, 'path': file.path},
+    );
+    return file;
+  }
+
+  Future<File?> _writeApiCacheFile({
+    required String cacheKey,
+    required List<int> bytes,
+    required TtsConfig config,
+  }) async {
+    if (!_shouldUseApiCache(config) || bytes.isEmpty) {
+      return null;
+    }
+    final dir = await _getApiCacheDirectory();
+    final file = File(path.join(dir.path, '$cacheKey.mp3'));
+    final written = await _runOp<File>(
+      'api.cache.write',
+      () async {
+        await file.writeAsBytes(bytes, flush: true);
+        return file;
+      },
+      data: <String, Object?>{
+        'path': file.path,
+        'bytes': bytes.length,
+      },
+      swallowError: true,
+    );
+    if (written == null) {
+      return null;
+    }
+    await _touchApiCacheFile(written);
+    await _trimApiCacheIfNeeded(_normalizedApiCacheMb(config.maxApiCacheMb));
+    return written;
+  }
+
+  Future<void> _touchApiCacheFile(File file) async {
+    await _runOp<void>(
+      'api.cache.touch',
+      () => file.setLastModified(DateTime.now()),
+      data: <String, Object?>{'path': file.path},
+      swallowError: true,
+    );
+  }
+
+  Future<Directory> _getApiCacheDirectory() async {
+    final cached = _apiCacheDirectory;
+    if (cached != null) {
+      if (!await cached.exists()) {
+        await cached.create(recursive: true);
+      }
+      return cached;
+    }
+
+    final root = await getApplicationSupportDirectory();
+    final dir = Directory(path.join(root.path, 'tts_api_cache'));
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    _apiCacheDirectory = dir;
+    return dir;
+  }
+
+  int _normalizedApiCacheMb(int value) =>
+      value.clamp(_minApiCacheMb, _maxApiCacheMb).toInt();
+
+  Future<int> _computeDirectoryBytes(Directory dir) async {
+    var totalBytes = 0;
+    if (!await dir.exists()) {
+      return totalBytes;
+    }
+    await for (final entity in dir.list()) {
+      if (entity is! File) {
+        continue;
+      }
+      final stat = await _runOp<FileStat>(
+        'api.cache.stat',
+        () => entity.stat(),
+        data: <String, Object?>{'path': entity.path},
+        swallowError: true,
+      );
+      if (stat == null || stat.type != FileSystemEntityType.file) {
+        continue;
+      }
+      totalBytes += stat.size;
+    }
+    return totalBytes;
+  }
+
+  Future<void> _trimApiCacheIfNeeded(int maxCacheMb) async {
+    final dir = await _getApiCacheDirectory();
+    final files = <({File file, FileStat stat})>[];
+    var totalBytes = 0;
+
+    await for (final entity in dir.list()) {
+      if (entity is! File) {
+        continue;
+      }
+      final stat = await _runOp<FileStat>(
+        'api.cache.stat',
+        () => entity.stat(),
+        data: <String, Object?>{'path': entity.path},
+        swallowError: true,
+      );
+      if (stat == null || stat.type != FileSystemEntityType.file) {
+        continue;
+      }
+      totalBytes += stat.size;
+      files.add((file: entity, stat: stat));
+    }
+
+    final maxBytes = _normalizedApiCacheMb(maxCacheMb) * 1024 * 1024;
+    if (totalBytes <= maxBytes) {
+      return;
+    }
+
+    files.sort((left, right) => left.stat.modified.compareTo(right.stat.modified));
+    final targetBytes = totalBytes ~/ 2;
+    var remainingBytes = totalBytes;
+    for (final item in files) {
+      if (remainingBytes <= targetBytes) {
+        break;
+      }
+      await _runOp<void>(
+        'api.cache.delete.trim',
+        () => item.file.delete(),
+        data: <String, Object?>{
+          'path': item.file.path,
+          'bytes': item.stat.size,
+        },
+        swallowError: true,
+      );
+      remainingBytes -= item.stat.size;
+    }
+
+    _log.i(
+      'tts',
+      'api cache trimmed',
+      data: <String, Object?>{
+        'maxBytes': maxBytes,
+        'beforeBytes': totalBytes,
+        'afterBytes': remainingBytes,
+      },
+    );
   }
 
   String _resolveApiEndpoint(TtsConfig config) {

@@ -29,6 +29,8 @@ class PlaybackService {
   bool get isPaused => _paused;
 
   Future<List<String>> getLocalVoices() => _ttsService.getLocalVoices();
+  Future<int> getApiTtsCacheSizeBytes() => _ttsService.getApiCacheSizeBytes();
+  Future<void> clearApiTtsCache() => _ttsService.clearApiCache();
 
   void updateRuntimeConfig(PlayConfig config) {
     _activeConfig = config;
