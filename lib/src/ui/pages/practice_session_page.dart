@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,6 +38,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   bool _revealed = false;
   bool _hintRevealed = false;
   bool _reported = false;
+  bool _autoAddWeakWordsToTask = false;
 
   bool get _isCompleted => _index >= _sessionWords.length;
 
@@ -53,12 +56,16 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     }
   }
 
-  void _markResult(bool remembered) {
+  void _markResult(AppState state, bool remembered) {
     final current = _currentWord;
     if (current == null) return;
     var nextRemembered = _remembered;
     final nextRememberedWords = List<WordEntry>.from(_rememberedWords);
     final nextWeakWords = List<WordEntry>.from(_weakWords);
+    final shouldAddToTask =
+        !remembered &&
+        _autoAddWeakWordsToTask &&
+        !state.taskWords.contains(current.word);
     if (remembered) {
       nextRemembered += 1;
       if (nextRememberedWords.every((item) => !_isSameWord(item, current))) {
@@ -81,6 +88,10 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _revealed = false;
       _hintRevealed = false;
     });
+
+    if (shouldAddToTask) {
+      unawaited(state.toggleTaskWord(current));
+    }
 
     if (nextIndex >= _sessionWords.length) {
       _reportSession(
@@ -196,6 +207,32 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
               ),
               const SizedBox(height: 12),
               LinearProgressIndicator(value: progress),
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                key: const ValueKey<String>('practice-auto-task-switch'),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '没记住时自动加入任务本',
+                    en: 'Auto-add missed words to task list',
+                  ),
+                ),
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '开启后，点击“没记住”会自动把当前词加入任务本。',
+                    en: 'When enabled, tapping "Not yet" also adds the current word to the task list.',
+                  ),
+                ),
+                value: _autoAddWeakWordsToTask,
+                onChanged: (value) {
+                  setState(() {
+                    _autoAddWeakWordsToTask = value;
+                  });
+                },
+              ),
             ],
           ),
         ),
@@ -248,7 +285,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         children: <Widget>[
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () => _markResult(false),
+              onPressed: () => _markResult(state, false),
               icon: const Icon(Icons.refresh_rounded),
               label: Text(pickUiText(i18n, zh: '没记住', en: 'Not yet')),
             ),
@@ -256,7 +293,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
           const SizedBox(width: 12),
           Expanded(
             child: FilledButton.icon(
-              onPressed: () => _markResult(true),
+              onPressed: () => _markResult(state, true),
               icon: const Icon(Icons.check_rounded),
               label: Text(pickUiText(i18n, zh: '记住了', en: 'Remembered')),
             ),

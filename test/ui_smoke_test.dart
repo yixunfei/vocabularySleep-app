@@ -1147,6 +1147,39 @@ void main() {
       expect(find.textContaining('\u5bb8\u8336'), findsNothing);
     });
 
+    testWidgets('practice session can auto-add missed words to task list', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      const words = <WordEntry>[
+        WordEntry(wordbookId: 1, word: 'alpha', fields: <WordFieldItem>[]),
+        WordEntry(wordbookId: 1, word: 'bravo', fields: <WordFieldItem>[]),
+      ];
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeSessionPage(title: 'Task sync', words: words),
+      );
+
+      expect(state.taskWords, isEmpty);
+
+      await tester.tap(find.text('Not yet'));
+      await tester.pumpAndSettle();
+      expect(state.taskWords, isEmpty);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-auto-task-switch')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Not yet'));
+      await tester.pumpAndSettle();
+
+      expect(state.taskWords.contains('alpha'), isFalse);
+      expect(state.taskWords.contains('bravo'), isTrue);
+    });
+
     test('online wordbook catalog parses repo html payload', () {
       const html =
           '<script data-target="react-app.embeddedData">'
@@ -1763,7 +1796,14 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   Future<void> toggleFavorite(WordEntry word) async {}
 
   @override
-  Future<void> toggleTaskWord(WordEntry word) async {}
+  Future<void> toggleTaskWord(WordEntry word) async {
+    if (_taskWords.contains(word.word)) {
+      _taskWords.remove(word.word);
+    } else {
+      _taskWords.add(word.word);
+    }
+    notifyListeners();
+  }
 
   @override
   void recordPracticeSession({
