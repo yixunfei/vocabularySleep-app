@@ -238,38 +238,44 @@ class _FocusPageState extends State<FocusPage>
     return LayoutBuilder(
       builder: (context, constraints) {
         final widthTier = AppWidthBreakpoints.tierFor(constraints.maxWidth);
+        final availableWidth = math.max(0.0, constraints.maxWidth - 32);
+        final contentWidth = math.min(
+          availableWidth,
+          _pageContentMaxWidth(widthTier),
+        );
         return Stack(
           children: <Widget>[
             SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: <Widget>[
-                  _buildTimerDisplay(
-                    timerState,
-                    config,
-                    i18n,
-                    widthTier,
-                    appearance.normalizedTimerStyle,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: contentWidth),
+                  child: Column(
+                    children: <Widget>[
+                      _buildTimerDisplay(
+                        timerState,
+                        config,
+                        i18n,
+                        widthTier,
+                        appearance.normalizedTimerStyle,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTimerControls(focus, timerState, i18n),
+                      const SizedBox(height: 20),
+                      _buildTimerConfig(
+                        focus,
+                        config,
+                        i18n,
+                        contentWidth,
+                        widthTier,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTodayStats(focus, i18n, contentWidth, widthTier),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  _buildTimerControls(focus, timerState, i18n),
-                  const SizedBox(height: 20),
-                  _buildTimerConfig(
-                    focus,
-                    config,
-                    i18n,
-                    constraints.maxWidth,
-                    widthTier,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildTodayStats(
-                    focus,
-                    i18n,
-                    constraints.maxWidth,
-                    widthTier,
-                  ),
-                ],
+                ),
               ),
             ),
             Offstage(
@@ -1403,77 +1409,89 @@ class _FocusPageState extends State<FocusPage>
     final notes = focus.getNotes();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final drawerWidth = _notesDrawerWidth(constraints.maxWidth, focus);
+        final widthTier = AppWidthBreakpoints.tierFor(constraints.maxWidth);
+        final contentWidth = math.min(
+          constraints.maxWidth,
+          _pageContentMaxWidth(widthTier),
+        );
+        final layoutWidth = math.max(0.0, contentWidth - 32);
+        final drawerWidth = _notesDrawerWidth(layoutWidth, focus);
         final railWidth = 60.0;
         final railGutter = railWidth + 10;
         final hiddenOffset = drawerWidth - railWidth;
         final progress = _notesDrawerProgress.clamp(0.0, 1.0).toDouble();
 
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: progress, end: progress),
-            duration: _notesDrawerDragging
-                ? Duration.zero
-                : const Duration(milliseconds: 240),
-            curve: Curves.easeOutCubic,
-            builder: (context, animatedProgress, _) {
-              return Stack(
-                children: <Widget>[
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: railGutter,
-                    child: Transform.translate(
-                      offset: Offset(-12 * animatedProgress, 0),
-                      child: _buildTodoPanel(focus, i18n),
-                    ),
-                  ),
-                  if (animatedProgress > 0.01)
-                    Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _settleNotesDrawer(open: false),
-                        onHorizontalDragStart: (_) {
-                          setState(() {
-                            _notesDrawerDragging = true;
-                          });
-                        },
-                        onHorizontalDragUpdate: (details) =>
-                            _updateNotesDrawerProgress(
-                              details.delta.dx,
-                              drawerWidth,
-                            ),
-                        onHorizontalDragEnd: (details) =>
-                            _settleNotesDrawerFromVelocity(
-                              details.primaryVelocity ?? 0,
-                            ),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(
-                              alpha: 0.04 + animatedProgress * 0.10,
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: contentWidth),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: progress, end: progress),
+                duration: _notesDrawerDragging
+                    ? Duration.zero
+                    : const Duration(milliseconds: 240),
+                curve: Curves.easeOutCubic,
+                builder: (context, animatedProgress, _) {
+                  return Stack(
+                    children: <Widget>[
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        bottom: 0,
+                        right: railGutter,
+                        child: Transform.translate(
+                          offset: Offset(-12 * animatedProgress, 0),
+                          child: _buildTodoPanel(focus, i18n),
                         ),
                       ),
-                    ),
-                  Positioned(
-                    top: 0,
-                    bottom: 0,
-                    right: -hiddenOffset * (1 - animatedProgress),
-                    child: _buildNotesDrawer(
-                      focus: focus,
-                      notes: notes,
-                      i18n: i18n,
-                      width: drawerWidth,
-                      progress: animatedProgress,
-                    ),
-                  ),
-                ],
-              );
-            },
+                      if (animatedProgress > 0.01)
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _settleNotesDrawer(open: false),
+                            onHorizontalDragStart: (_) {
+                              setState(() {
+                                _notesDrawerDragging = true;
+                              });
+                            },
+                            onHorizontalDragUpdate: (details) =>
+                                _updateNotesDrawerProgress(
+                                  details.delta.dx,
+                                  drawerWidth,
+                                ),
+                            onHorizontalDragEnd: (details) =>
+                                _settleNotesDrawerFromVelocity(
+                                  details.primaryVelocity ?? 0,
+                                ),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(
+                                  alpha: 0.04 + animatedProgress * 0.10,
+                                ),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        top: 0,
+                        bottom: 0,
+                        right: -hiddenOffset * (1 - animatedProgress),
+                        child: _buildNotesDrawer(
+                          focus: focus,
+                          notes: notes,
+                          i18n: i18n,
+                          width: drawerWidth,
+                          progress: animatedProgress,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         );
       },
@@ -3847,6 +3865,14 @@ class _FocusPageState extends State<FocusPage>
       return ((maxWidth - spacing) / columns).clamp(220.0, maxWidth).toDouble();
     }
     return ((maxWidth - 12) / 2).clamp(220.0, maxWidth).toDouble();
+  }
+
+  double _pageContentMaxWidth(AppWidthTier widthTier) {
+    return switch (widthTier) {
+      AppWidthTier.compact => 560.0,
+      AppWidthTier.regular => 860.0,
+      AppWidthTier.expanded => 980.0,
+    };
   }
 }
 
