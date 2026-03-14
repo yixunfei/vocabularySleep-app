@@ -2499,7 +2499,7 @@ class _FocusPageState extends State<FocusPage>
           _settleNotesDrawerFromVelocity(details.primaryVelocity ?? 0),
       child: Material(
         color: Colors.transparent,
-        elevation: 8 + progress * 12,
+        elevation: 0,
         borderRadius: BorderRadius.circular(24),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -2507,13 +2507,6 @@ class _FocusPageState extends State<FocusPage>
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               border: Border.all(color: theme.colorScheme.outlineVariant),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06 + progress * 0.08),
-                  blurRadius: 22,
-                  offset: const Offset(-4, 10),
-                ),
-              ],
             ),
             child: SizedBox(
               key: const ValueKey<String>('notes-drawer'),
