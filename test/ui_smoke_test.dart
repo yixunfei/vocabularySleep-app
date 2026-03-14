@@ -543,6 +543,42 @@ void main() {
       expect(find.text('Ship focus page polish'), findsNothing);
     });
 
+    testWidgets('focus page toggles compact todo metrics on narrow width', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(360, 780));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('todo-metric-card-active')),
+        findsNothing,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('todo-metrics-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('todo-metric-card-active')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('todo-metric-card-completed')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('focus page groups todos in plan view and toggles list view', (
       tester,
     ) async {
