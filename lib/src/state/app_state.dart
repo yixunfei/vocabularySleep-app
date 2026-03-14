@@ -205,7 +205,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   bool requiresWordbookLoadConfirmation(Wordbook wordbook) {
-    return _database.isLazyBuiltInPath(wordbook.path) && wordbook.wordCount <= 0;
+    return _database.isLazyBuiltInPath(wordbook.path) &&
+        wordbook.wordCount <= 0;
   }
 
   List<WordEntry> get recentWeakWordEntries {
@@ -2760,6 +2761,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _log.i('app_state', 'dispose start');
     WidgetsBinding.instance.removeObserver(this);
     _playback.stop();
+    _focusService.dispose();
     _ambient.stopAll();
     _asr.dispose();
     _database.dispose();

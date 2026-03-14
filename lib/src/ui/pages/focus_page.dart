@@ -50,6 +50,7 @@ class _FocusPageState extends State<FocusPage>
   _TodoFilterMode _todoFilterMode = _TodoFilterMode.all;
   double _notesDrawerProgress = 0;
   bool _notesDrawerDragging = false;
+  bool _reminderDialogVisible = false;
 
   @override
   void initState() {
@@ -97,6 +98,72 @@ class _FocusPageState extends State<FocusPage>
         duration: const Duration(seconds: 2),
       ),
     );
+    if (state.focusService.reminderAcknowledgementPending) {
+      unawaited(
+        _showReminderAcknowledgementDialog(state.focusService, phase, i18n),
+      );
+    }
+  }
+
+  Future<void> _showReminderAcknowledgementDialog(
+    FocusService focus,
+    TomatoTimerPhase phase,
+    AppI18n i18n,
+  ) async {
+    if (_reminderDialogVisible || !mounted) {
+      return;
+    }
+    _reminderDialogVisible = true;
+    final acknowledged = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: Text(
+              phase == TomatoTimerPhase.focus
+                  ? i18n.t('focusPhaseComplete')
+                  : i18n.t('breakPhaseComplete'),
+            ),
+            content: Text(
+              pickUiText(
+                i18n,
+                zh: '提醒会持续到你确认，或在超时后自动停止。',
+                en: 'The reminder keeps playing until you confirm it, or it times out automatically.',
+                ja: 'リマインダーは確認するまで続き、一定時間後に自動停止します。',
+                de: 'Die Erinnerung laeuft weiter, bis du bestaetigst oder das Zeitlimit erreicht ist.',
+                fr: 'Le rappel continue jusqu’a confirmation ou jusqu’a l’arret automatique apres delai.',
+                es: 'El aviso seguira activo hasta que lo confirmes o se detendra al agotarse el tiempo.',
+                ru: 'Напоминание будет продолжаться, пока вы не подтвердите его, либо остановится по тайм-ауту.',
+              ),
+            ),
+            actions: <Widget>[
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '知道了',
+                    en: 'Acknowledge',
+                    ja: '確認しました',
+                    de: 'Bestaetigen',
+                    fr: 'Confirmer',
+                    es: 'Confirmar',
+                    ru: 'Подтвердить',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    _reminderDialogVisible = false;
+    if (!mounted || acknowledged != true) {
+      return;
+    }
+    await focus.acknowledgeReminder();
   }
 
   @override
@@ -2533,7 +2600,9 @@ class _FocusPageState extends State<FocusPage>
                 case _NoteVoiceInputState.transcribing:
                   return i18n.t(
                     voiceProgress?.messageKey ?? 'asrProgressDecoding',
-                    params: voiceProgress?.messageParams ?? const <String, Object?>{},
+                    params:
+                        voiceProgress?.messageParams ??
+                        const <String, Object?>{},
                   );
                 case _NoteVoiceInputState.starting:
                   return i18n.t('tapToStartRecord');
@@ -2672,7 +2741,8 @@ class _FocusPageState extends State<FocusPage>
                       )
                     : i18n.t(
                         voiceProgress?.messageKey ?? 'tapToStopRecord',
-                        params: voiceProgress?.messageParams ??
+                        params:
+                            voiceProgress?.messageParams ??
                             const <String, Object?>{},
                       ));
 

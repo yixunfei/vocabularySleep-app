@@ -1401,6 +1401,8 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     List<TodoItem>? todos,
     List<PlanNote>? notes,
     bool lockScreenActive = false,
+    bool reminderAcknowledgementPending = false,
+    TomatoTimerPhase? pendingReminderPhase,
   }) : _config = config ?? const TomatoTimerConfig(workspaceSplitRatio: 0.42),
        _state =
            state ??
@@ -1422,6 +1424,8 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
              ],
        ),
        _lockScreenActive = lockScreenActive,
+       _reminderAcknowledgementPending = reminderAcknowledgementPending,
+       _pendingReminderPhase = pendingReminderPhase,
        _notes = List<PlanNote>.from(
          notes ??
              const <PlanNote>[
@@ -1443,6 +1447,8 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   TomatoTimerConfig _config;
   TomatoTimerState _state;
   bool _lockScreenActive;
+  bool _reminderAcknowledgementPending;
+  TomatoTimerPhase? _pendingReminderPhase;
   final List<TodoItem> _todos;
   final List<PlanNote> _notes;
 
@@ -1456,11 +1462,24 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   bool get lockScreenActive => _lockScreenActive;
 
   @override
+  bool get reminderAcknowledgementPending => _reminderAcknowledgementPending;
+
+  @override
+  TomatoTimerPhase? get pendingReminderPhase => _pendingReminderPhase;
+
+  @override
   TomatoTimerState get state => _state;
 
   @override
   void setLockScreenActive(bool value) {
     _lockScreenActive = value;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> acknowledgeReminder() async {
+    _reminderAcknowledgementPending = false;
+    _pendingReminderPhase = null;
     notifyListeners();
   }
 

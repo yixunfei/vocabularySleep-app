@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
+import 'package:vocabulary_sleep_app/src/services/reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
@@ -32,6 +33,35 @@ class _MemoryDatabaseService extends AppDatabaseService {
     }
     return records.take(limit).toList(growable: false);
   }
+}
+
+class _FakeReminderService implements ReminderService {
+  int playCalls = 0;
+  int stopCalls = 0;
+  bool lastHaptic = false;
+  bool lastSound = false;
+  Duration? lastDuration;
+
+  @override
+  Future<void> play({
+    required bool haptic,
+    required bool sound,
+    String? customSoundPath,
+    Duration duration = const Duration(seconds: 10),
+  }) async {
+    playCalls += 1;
+    lastHaptic = haptic;
+    lastSound = sound;
+    lastDuration = duration;
+  }
+
+  @override
+  Future<void> stop() async {
+    stopCalls += 1;
+  }
+
+  @override
+  Future<void> dispose() async {}
 }
 
 void main() {
@@ -77,6 +107,12 @@ void main() {
           rounds: 2,
           autoStartBreak: false,
           autoStartNextRound: false,
+          reminder: TimerReminderConfig(
+            haptic: false,
+            sound: false,
+            voice: false,
+            visual: true,
+          ),
         ),
       );
 
@@ -112,6 +148,12 @@ void main() {
           rounds: 1,
           autoStartBreak: true,
           autoStartNextRound: false,
+          reminder: TimerReminderConfig(
+            haptic: false,
+            sound: false,
+            voice: false,
+            visual: true,
+          ),
         ),
       );
 
@@ -162,6 +204,12 @@ void main() {
             breakDurationSeconds: 1,
             rounds: 1,
             autoStartBreak: true,
+            reminder: TimerReminderConfig(
+              haptic: false,
+              sound: false,
+              voice: false,
+              visual: true,
+            ),
           ),
         );
 
@@ -179,6 +227,50 @@ void main() {
           expect(service.state.phase, TomatoTimerPhase.idle);
           expect(service.lockScreenActive, false);
         });
+      },
+    );
+
+    test(
+      'phase completion waits for reminder acknowledgement before auto advance',
+      () async {
+        final database = _MemoryDatabaseService();
+        final reminder = _FakeReminderService();
+        final service = FocusService(database, reminder: reminder);
+        await service.init();
+        service.saveConfig(
+          const TomatoTimerConfig(
+            focusDurationSeconds: 2,
+            breakDurationSeconds: 3,
+            rounds: 1,
+            autoStartBreak: true,
+            reminder: TimerReminderConfig(
+              haptic: true,
+              sound: true,
+              voice: false,
+              visual: true,
+            ),
+          ),
+        );
+
+        fakeAsync((async) {
+          service.start();
+          async.elapse(const Duration(seconds: 2));
+
+          expect(service.reminderAcknowledgementPending, true);
+          expect(service.pendingReminderPhase, TomatoTimerPhase.focus);
+          expect(service.state.phase, TomatoTimerPhase.breakReady);
+        });
+
+        expect(reminder.playCalls, 1);
+        expect(reminder.lastHaptic, true);
+        expect(reminder.lastSound, true);
+        expect(reminder.lastDuration, const Duration(seconds: 45));
+
+        await service.acknowledgeReminder();
+
+        expect(reminder.stopCalls, greaterThan(0));
+        expect(service.reminderAcknowledgementPending, false);
+        expect(service.state.phase, TomatoTimerPhase.breakTime);
       },
     );
   });

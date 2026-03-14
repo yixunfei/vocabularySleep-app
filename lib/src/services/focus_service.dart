@@ -9,23 +9,29 @@ import '../models/todo_item.dart';
 import '../models/tomato_timer.dart';
 import 'ambient_service.dart';
 import 'database_service.dart';
+import 'reminder_service.dart';
 import 'settings_service.dart';
 import 'tts_service.dart';
+
+enum _PendingReminderFollowUp { none, startBreak, startFocus, completeSession }
 
 class FocusService extends ChangeNotifier {
   FocusService(
     AppDatabaseService database, {
     SettingsService? settings,
     AmbientService? ambient,
+    ReminderService? reminder,
     TtsService? tts,
   }) : _database = database,
        _settings = settings ?? SettingsService(database),
        _ambient = ambient,
+       _reminder = reminder,
        _tts = tts;
 
   final AppDatabaseService _database;
   final SettingsService _settings;
   final AmbientService? _ambient;
+  final ReminderService? _reminder;
   final TtsService? _tts;
 
   bool _initialized = false;
@@ -33,11 +39,16 @@ class FocusService extends ChangeNotifier {
   TomatoTimerConfig _timerConfig = const TomatoTimerConfig();
   TomatoTimerState _timerState = const TomatoTimerState();
   Timer? _timer;
+  static const Duration _reminderAlertTimeout = Duration(seconds: 45);
   DateTime? _sessionStartTime;
   int _sessionDurationSeconds = 0;
   int _sessionFocusSeconds = 0;
   int _sessionBreakSeconds = 0;
   int _sessionRoundsCompleted = 0;
+  TomatoTimerPhase? _pendingReminderPhase;
+  _PendingReminderFollowUp _pendingReminderFollowUp =
+      _PendingReminderFollowUp.none;
+  int _pendingReminderRound = 0;
   void Function(TomatoTimerState)? _onTick;
   void Function(TomatoTimerPhase, int)? _onPhaseComplete;
 
@@ -45,6 +56,8 @@ class FocusService extends ChangeNotifier {
   TomatoTimerState get state => _timerState;
   bool get initialized => _initialized;
   bool get lockScreenActive => _lockScreenActive;
+  bool get reminderAcknowledgementPending => _pendingReminderPhase != null;
+  TomatoTimerPhase? get pendingReminderPhase => _pendingReminderPhase;
 
   Future<void> init() async {
     _timerConfig = await _loadConfig();
@@ -174,6 +187,8 @@ class FocusService extends ChangeNotifier {
     int? rounds,
   }) {
     _timer?.cancel();
+    _clearPendingReminder();
+    unawaited(_stopActiveReminder());
     final config = _timerConfig.copyWith(
       focusDurationSeconds:
           focusDurationSeconds ??
@@ -250,20 +265,86 @@ class FocusService extends ChangeNotifier {
     final phase = _timerState.phase;
     final round = _timerState.currentRound;
     final totalRounds = _timerConfig.rounds;
+    final reminder = _timerConfig.reminder;
+    final awaitReminderAcknowledgement =
+        triggerReminder && _requiresReminderAcknowledgement(reminder);
+
+    if (phase == TomatoTimerPhase.focus) {
+      _sessionRoundsCompleted += 1;
+    }
+
+    if (awaitReminderAcknowledgement) {
+      _queueReminderAcknowledgementState(
+        phase: phase,
+        round: round,
+        totalRounds: totalRounds,
+      );
+      _onPhaseComplete?.call(phase, round);
+      unawaited(_triggerReminder(phase, persistent: true));
+      return;
+    }
 
     if (triggerReminder) {
       unawaited(_triggerReminder(phase));
     }
     _onPhaseComplete?.call(phase, round);
+    _applyCompletedPhase(phase: phase, round: round, totalRounds: totalRounds);
+  }
 
+  bool _requiresReminderAcknowledgement(TimerReminderConfig reminder) {
+    return reminder.haptic || reminder.sound;
+  }
+
+  void _queueReminderAcknowledgementState({
+    required TomatoTimerPhase phase,
+    required int round,
+    required int totalRounds,
+  }) {
+    _pendingReminderPhase = phase;
+    switch (phase) {
+      case TomatoTimerPhase.focus:
+        _queueBreakPhase(round: round);
+        _pendingReminderRound = round;
+        _pendingReminderFollowUp = _timerConfig.autoStartBreak
+            ? _PendingReminderFollowUp.startBreak
+            : _PendingReminderFollowUp.none;
+        return;
+      case TomatoTimerPhase.breakTime:
+        if (round < totalRounds) {
+          _queueFocusPhase(round: round + 1);
+          _pendingReminderRound = round + 1;
+          _pendingReminderFollowUp = _timerConfig.autoStartNextRound
+              ? _PendingReminderFollowUp.startFocus
+              : _PendingReminderFollowUp.none;
+          return;
+        }
+        _timer?.cancel();
+        _timer = null;
+        _timerState = _timerState.copyWith(isPaused: true);
+        _pendingReminderRound = round;
+        _pendingReminderFollowUp = _PendingReminderFollowUp.completeSession;
+        _publishState();
+        return;
+      default:
+        return;
+    }
+  }
+
+  void _applyCompletedPhase({
+    required TomatoTimerPhase phase,
+    required int round,
+    required int totalRounds,
+  }) {
     if (phase == TomatoTimerPhase.focus) {
-      _sessionRoundsCompleted += 1;
       if (_timerConfig.autoStartBreak) {
         _startBreakPhase(round: round, totalRounds: totalRounds);
       } else {
         _queueBreakPhase(round: round);
       }
-    } else if (phase == TomatoTimerPhase.breakTime) {
+      return;
+    }
+
+    if (phase == TomatoTimerPhase.breakTime) {
       if (round < totalRounds) {
         if (_timerConfig.autoStartNextRound) {
           _startFocusPhase(round: round + 1);
@@ -276,7 +357,30 @@ class FocusService extends ChangeNotifier {
     }
   }
 
-  Future<void> _triggerReminder(TomatoTimerPhase phase) async {
+  Future<void> acknowledgeReminder() async {
+    await _stopActiveReminder();
+    final followUp = _pendingReminderFollowUp;
+    final round = _pendingReminderRound;
+    _clearPendingReminder();
+    switch (followUp) {
+      case _PendingReminderFollowUp.none:
+        return;
+      case _PendingReminderFollowUp.startBreak:
+        _startBreakPhase(round: round, totalRounds: _timerConfig.rounds);
+        return;
+      case _PendingReminderFollowUp.startFocus:
+        _startFocusPhase(round: round);
+        return;
+      case _PendingReminderFollowUp.completeSession:
+        _completeSession();
+        return;
+    }
+  }
+
+  Future<void> _triggerReminder(
+    TomatoTimerPhase phase, {
+    bool persistent = false,
+  }) async {
     final reminder = _timerConfig.reminder;
 
     if (reminder.pauseAmbient && _ambient != null) {
@@ -287,19 +391,36 @@ class FocusService extends ChangeNotifier {
       }
     }
 
-    if (reminder.haptic) {
+    var handledPersistentAlert = false;
+    if (persistent &&
+        _reminder != null &&
+        (reminder.haptic || reminder.sound)) {
       try {
-        await HapticFeedback.mediumImpact();
+        await _reminder.play(
+          haptic: reminder.haptic,
+          sound: reminder.sound,
+          duration: _reminderAlertTimeout,
+        );
+        handledPersistentAlert = true;
       } catch (_) {
-        // Not supported on all platforms.
+        // Fall back to one-shot system feedback below.
       }
     }
+    if (!handledPersistentAlert) {
+      if (reminder.haptic) {
+        try {
+          await HapticFeedback.mediumImpact();
+        } catch (_) {
+          // Not supported on all platforms.
+        }
+      }
 
-    if (reminder.sound) {
-      try {
-        await SystemSound.play(SystemSoundType.alert);
-      } catch (_) {
-        // Not supported on all platforms.
+      if (reminder.sound) {
+        try {
+          await SystemSound.play(SystemSoundType.alert);
+        } catch (_) {
+          // Not supported on all platforms.
+        }
       }
     }
 
@@ -346,6 +467,9 @@ class FocusService extends ChangeNotifier {
   }
 
   void advanceToNextPhase() {
+    if (reminderAcknowledgementPending) {
+      return;
+    }
     switch (_timerState.phase) {
       case TomatoTimerPhase.breakReady:
         _startBreakPhase(
@@ -364,6 +488,8 @@ class FocusService extends ChangeNotifier {
   void _completeSession() {
     _timer?.cancel();
     _saveCurrentSessionRecord(partial: false);
+    _clearPendingReminder();
+    unawaited(_stopActiveReminder());
     _lockScreenActive = false;
     _timerState = const TomatoTimerState();
     _publishState();
@@ -427,6 +553,8 @@ class FocusService extends ChangeNotifier {
     if (saveProgress) {
       _saveCurrentSessionRecord(partial: true);
     }
+    _clearPendingReminder();
+    unawaited(_stopActiveReminder());
     _lockScreenActive = false;
     _timerState = const TomatoTimerState();
     _resetSessionTracking();
@@ -437,6 +565,8 @@ class FocusService extends ChangeNotifier {
   void dispose() {
     _timer?.cancel();
     _timer = null;
+    unawaited(_stopActiveReminder());
+    unawaited(_reminder?.dispose() ?? Future<void>.value());
     super.dispose();
   }
 
@@ -645,6 +775,20 @@ class FocusService extends ChangeNotifier {
   void _publishState() {
     _onTick?.call(_timerState);
     notifyListeners();
+  }
+
+  Future<void> _stopActiveReminder() async {
+    try {
+      await _reminder?.stop();
+    } catch (_) {
+      // Best-effort cleanup for reminder playback.
+    }
+  }
+
+  void _clearPendingReminder() {
+    _pendingReminderPhase = null;
+    _pendingReminderRound = 0;
+    _pendingReminderFollowUp = _PendingReminderFollowUp.none;
   }
 
   void _resetSessionTracking() {
