@@ -451,6 +451,9 @@ void main() {
         isTrue,
       );
 
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('todo-filter-deferred')),
+      );
       await tester.tap(
         find.byKey(const ValueKey<String>('todo-filter-deferred')),
       );

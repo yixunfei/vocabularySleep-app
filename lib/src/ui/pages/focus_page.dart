@@ -1516,8 +1516,8 @@ class _FocusPageState extends State<FocusPage>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final topSectionMaxHeight = constraints.maxHeight.isFinite
-              ? math.min(300.0, math.max(180.0, constraints.maxHeight * 0.44))
-              : 300.0;
+              ? math.min(248.0, math.max(168.0, constraints.maxHeight * 0.36))
+              : 248.0;
 
           return Padding(
             padding: const EdgeInsets.all(12),
@@ -1765,19 +1765,28 @@ class _FocusPageState extends State<FocusPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: items
-                .map(
-                  (item) => _buildTodoMetricSummaryChip(
-                    value: metrics[item.key] ?? 0,
-                    label: item.label,
-                    icon: item.icon,
-                    color: item.color,
-                  ),
-                )
-                .toList(growable: false),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: items
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) => Padding(
+                      padding: EdgeInsets.only(
+                        right: entry.key == items.length - 1 ? 0 : 8,
+                      ),
+                      child: _buildTodoMetricSummaryChip(
+                        value: metrics[entry.value.key] ?? 0,
+                        label: entry.value.label,
+                        icon: entry.value.icon,
+                        color: entry.value.color,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
           ),
           if (_todoMetricsExpanded) ...<Widget>[
             const SizedBox(height: 10),
@@ -1823,23 +1832,44 @@ class _FocusPageState extends State<FocusPage>
     required Color color,
   }) {
     final theme = Theme.of(context);
+    final compact = MediaQuery.sizeOf(context).width < 420;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      constraints: BoxConstraints(minWidth: compact ? 88 : 96),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 12,
+        vertical: compact ? 8 : 10,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                '$value',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
           Text(
-            '$label $value',
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w700,
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -2617,12 +2647,12 @@ class _FocusPageState extends State<FocusPage>
                         _buildTodoPriorityBadge(todo, i18n, theme),
                         if (category.isNotEmpty)
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 148),
+                            constraints: const BoxConstraints(maxWidth: 132),
                             child: _buildTodoCategoryBadge(category, theme),
                           ),
                         if (scheduleBadge != null)
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 176),
+                            constraints: const BoxConstraints(maxWidth: 160),
                             child: scheduleBadge,
                           ),
                       ],
@@ -2707,17 +2737,33 @@ class _FocusPageState extends State<FocusPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.95),
+        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSecondaryContainer,
-          fontWeight: FontWeight.w700,
+        border: Border.all(
+          color: theme.colorScheme.secondary.withValues(alpha: 0.18),
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            Icons.label_outline_rounded,
+            size: 12,
+            color: theme.colorScheme.onSecondaryContainer,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
