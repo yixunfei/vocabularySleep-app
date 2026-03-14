@@ -17,6 +17,8 @@ import '../widgets/section_header.dart';
 
 enum _TodoSortMode { manual, priority, category }
 
+enum _TodoFilterMode { all, active, completed }
+
 class FocusPage extends StatefulWidget {
   const FocusPage({super.key});
 
@@ -42,6 +44,7 @@ class _FocusPageState extends State<FocusPage>
   TomatoTimerPhase? _lastCompletedPhase;
   bool _noteSelectionMode = false;
   _TodoSortMode _todoSortMode = _TodoSortMode.manual;
+  _TodoFilterMode _todoFilterMode = _TodoFilterMode.all;
   double _notesDrawerProgress = 0;
   bool _notesDrawerDragging = false;
 
@@ -1266,8 +1269,11 @@ class _FocusPageState extends State<FocusPage>
   Widget _buildTodoPanel(FocusService focus, AppI18n i18n) {
     final todos = focus.getTodos();
     final theme = Theme.of(context);
-    final displayTodos = _sortedTodos(todos);
-    final manualSort = _todoSortMode == _TodoSortMode.manual;
+    final filteredTodos = _filterTodos(todos);
+    final displayTodos = _sortedTodos(filteredTodos);
+    final manualSort =
+        _todoSortMode == _TodoSortMode.manual &&
+        _todoFilterMode == _TodoFilterMode.all;
 
     return Card(
       child: Padding(
@@ -1304,12 +1310,78 @@ class _FocusPageState extends State<FocusPage>
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: <Widget>[
-                ChoiceChip(
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: <Widget>[
+                  ChoiceChip(
+                    key: const ValueKey<String>('todo-filter-all'),
+                    label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '全部',
+                      en: 'All',
+                      ja: 'すべて',
+                      de: 'Alle',
+                      fr: 'Tous',
+                      es: 'Todo',
+                      ru: 'Все',
+                    ),
+                  ),
+                  selected: _todoFilterMode == _TodoFilterMode.all,
+                  onSelected: (_) {
+                    setState(() {
+                      _todoFilterMode = _TodoFilterMode.all;
+                    });
+                  },
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    key: const ValueKey<String>('todo-filter-active'),
+                    label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '进行中',
+                      en: 'Active',
+                      ja: '進行中',
+                      de: 'Aktiv',
+                      fr: 'Actives',
+                      es: 'Activas',
+                      ru: 'Активные',
+                    ),
+                  ),
+                  selected: _todoFilterMode == _TodoFilterMode.active,
+                  onSelected: (_) {
+                    setState(() {
+                      _todoFilterMode = _TodoFilterMode.active;
+                    });
+                  },
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    key: const ValueKey<String>('todo-filter-completed'),
+                    label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '已完成',
+                      en: 'Completed',
+                      ja: '完了',
+                      de: 'Erledigt',
+                      fr: 'Terminées',
+                      es: 'Completadas',
+                      ru: 'Выполненные',
+                    ),
+                  ),
+                  selected: _todoFilterMode == _TodoFilterMode.completed,
+                  onSelected: (_) {
+                    setState(() {
+                      _todoFilterMode = _TodoFilterMode.completed;
+                    });
+                  },
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
                   label: Text(i18n.t('dragToReorder')),
                   selected: manualSort,
                   onSelected: (_) {
@@ -1317,8 +1389,9 @@ class _FocusPageState extends State<FocusPage>
                       _todoSortMode = _TodoSortMode.manual;
                     });
                   },
-                ),
-                ChoiceChip(
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
                   label: Text(i18n.t('todoPriority')),
                   selected: _todoSortMode == _TodoSortMode.priority,
                   onSelected: (_) {
@@ -1326,8 +1399,9 @@ class _FocusPageState extends State<FocusPage>
                       _todoSortMode = _TodoSortMode.priority;
                     });
                   },
-                ),
-                ChoiceChip(
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
                   label: Text(i18n.t('todoCategory')),
                   selected: _todoSortMode == _TodoSortMode.category,
                   onSelected: (_) {
@@ -1335,17 +1409,19 @@ class _FocusPageState extends State<FocusPage>
                       _todoSortMode = _TodoSortMode.category;
                     });
                   },
-                ),
-                FilledButton.tonalIcon(
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.tonalIcon(
                   onPressed: () => _showTodoEditor(focus, i18n),
                   icon: const Icon(Icons.playlist_add_rounded),
                   label: Text(i18n.t('addTodo')),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: todos.isEmpty
+              child: displayTodos.isEmpty
                   ? Center(child: Text(i18n.t('todosEmpty')))
                   : manualSort
                   ? _buildReorderableTodosList(focus, displayTodos, i18n)
@@ -1369,6 +1445,16 @@ class _FocusPageState extends State<FocusPage>
         items.sort(_compareTodosByCategory);
         return items;
     }
+  }
+
+  List<TodoItem> _filterTodos(List<TodoItem> todos) {
+    return todos.where((item) {
+      return switch (_todoFilterMode) {
+        _TodoFilterMode.all => true,
+        _TodoFilterMode.active => !item.completed,
+        _TodoFilterMode.completed => item.completed,
+      };
+    }).toList(growable: false);
   }
 
   int _compareTodosByPriority(TodoItem a, TodoItem b) {

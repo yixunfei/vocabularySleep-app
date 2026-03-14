@@ -383,6 +383,45 @@ void main() {
       expect(find.text('Timer'), findsOneWidget);
     });
 
+    testWidgets('focus page filters active and completed todos', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Prepare review notes'), findsOneWidget);
+      expect(find.text('Ship focus page polish'), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('todo-filter-completed')),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('todo-filter-completed')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ship focus page polish'), findsOneWidget);
+      expect(find.text('Prepare review notes'), findsNothing);
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('todo-filter-active')),
+      );
+      await tester.tap(find.byKey(const ValueKey<String>('todo-filter-active')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Prepare review notes'), findsOneWidget);
+      expect(find.text('Ship focus page polish'), findsNothing);
+    });
+
     testWidgets('library prefix jump scrolls lazy list to target word', (
       tester,
     ) async {
