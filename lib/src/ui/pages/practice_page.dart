@@ -708,10 +708,10 @@ class PracticePage extends StatelessWidget {
       }
       await _openPracticeSession(
         context,
-        title: pickUiText(i18n, zh: '褰撳墠鑼冨洿浼氳瘽', en: 'Current scope session'),
+        title: pickUiText(i18n, zh: '当前范围会话', en: 'Current scope session'),
         subtitle: pickUiText(
           i18n,
-          zh: '鍏?${scopeWords.length} 涓瘝',
+          zh: '共 ${scopeWords.length} 个词',
           en: '${scopeWords.length} words',
         ),
         words: scopeWords,
@@ -727,14 +727,14 @@ class PracticePage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickUiText(i18n, zh: '璁板繂杞﹂亾', en: 'Memory lanes'),
+              pickUiText(i18n, zh: '记忆轨道', en: 'Memory lanes'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
               pickUiText(
                 i18n,
-                zh: '鎶婃湰杞粌涔犵粨鏋滃垎鎴愨€滃凡璁颁綇鈥濆拰鈥滃緟鍔犲己鈥濅袱鏉¤建閬擄紝涓嬩竴姝ヨ繛缁粌浠€涔堜細鏇存竻鏅般€?',
+                zh: '把每次练习结果分成“已记住”和“待加强”两条轨道，下一步练什么会更清晰。',
                 en: 'Split each finished session into stable and recovery lanes so the next drill is always clear.',
               ),
             ),
@@ -747,29 +747,25 @@ class PracticePage extends StatelessWidget {
                   context,
                   icon: Icons.check_circle_outline_rounded,
                   value: '$rememberedToday',
-                  label: pickUiText(
-                    i18n,
-                    zh: '浠婃棩宸茶浣?',
-                    en: 'Remembered today',
-                  ),
+                  label: pickUiText(i18n, zh: '今日已记住', en: 'Remembered today'),
                 ),
                 _buildStatBadge(
                   context,
                   icon: Icons.refresh_rounded,
                   value: '$needsReviewToday',
-                  label: pickUiText(i18n, zh: '浠婃棩寰呭姞寮?', en: 'Need review'),
+                  label: pickUiText(i18n, zh: '今日待复习', en: 'Need review'),
                 ),
                 _buildStatBadge(
                   context,
                   icon: Icons.auto_awesome_rounded,
                   value: '${stableWords.length}',
-                  label: pickUiText(i18n, zh: '绋冲畾闃熷垪', en: 'Stable queue'),
+                  label: pickUiText(i18n, zh: '稳定队列', en: 'Stable queue'),
                 ),
                 _buildStatBadge(
                   context,
                   icon: Icons.fitness_center_rounded,
                   value: '${recoveryWords.length}',
-                  label: pickUiText(i18n, zh: '鎭㈠闃熷垪', en: 'Recovery queue'),
+                  label: pickUiText(i18n, zh: '恢复队列', en: 'Recovery queue'),
                 ),
               ],
             ),
@@ -779,34 +775,34 @@ class PracticePage extends StatelessWidget {
               key: const ValueKey<String>('practice-memory-stable'),
               i18n: i18n,
               icon: Icons.auto_awesome_rounded,
-              title: pickUiText(i18n, zh: '绋冲畾杞﹂亾', en: 'Stable lane'),
+              title: pickUiText(i18n, zh: '稳定轨道', en: 'Stable lane'),
               subtitle: hasStableWords
                   ? pickUiText(
                       i18n,
-                      zh: '鎶婂凡璁颁綇鐨勫崟璇嶅啀鍋氫竴杞紝淇濇寔鍥炲繂閫熷害鍜屽彂闊崇ǔ瀹氭€с€?',
+                      zh: '把已记住的单词再练一轮，保持回忆速度和发音稳定性。',
                       en: 'Revisit words you already know to keep recall and pronunciation smooth.',
                     )
                   : pickUiText(
                       i18n,
-                      zh: '瀹屾垚涓€娆＄粌涔犲悗锛屽凡璁颁綇鐨勫崟璇嶄細鍦ㄨ繖閲岀Н绱€?',
+                      zh: '完成一轮练习后，已记住的单词会沉淀到这里。',
                       en: 'Finish one session and the words you remember will collect here.',
                     ),
               words: stableWords,
               actionLabel: hasStableWords
-                  ? pickUiText(i18n, zh: '澶嶄範宸茶浣?', en: 'Review remembered')
-                  : pickUiText(i18n, zh: '鍏堝畬鎴愪竴杞?', en: 'Start first session'),
+                  ? pickUiText(i18n, zh: '复习已记住', en: 'Review remembered')
+                  : pickUiText(i18n, zh: '先完成一轮', en: 'Start first session'),
               onTap: hasStableWords
                   ? () => _openReviewSession(
                       context,
                       i18n,
                       title: pickUiText(
                         i18n,
-                        zh: '宸茶浣忓崟璇嶅涔?',
+                        zh: '已记住单词复习',
                         en: 'Remembered word review',
                       ),
                       subtitle: pickUiText(
                         i18n,
-                        zh: '鍏?${stableWords.length} 涓凡璁颁綇鍗曡瘝',
+                        zh: '共 ${stableWords.length} 个已记住单词',
                         en: '${stableWords.length} remembered words',
                       ),
                       words: stableWords,
@@ -819,38 +815,30 @@ class PracticePage extends StatelessWidget {
               key: const ValueKey<String>('practice-memory-recovery'),
               i18n: i18n,
               icon: Icons.fitness_center_rounded,
-              title: pickUiText(i18n, zh: '鎭㈠杞﹂亾', en: 'Recovery lane'),
+              title: pickUiText(i18n, zh: '恢复轨道', en: 'Recovery lane'),
               subtitle: recoveryWords.isNotEmpty
                   ? pickUiText(
                       i18n,
-                      zh: '鎶婅杽寮辫瘝涓庝换鍔¤瘝鍚堝苟澶嶄範锛屽厛鎶婂皻涓嶇ǔ瀹氱殑鍗曡瘝鎷夊洖鏉ャ€?',
+                      zh: '把薄弱词和任务词合并复习，优先补齐还不稳定的词。',
                       en: 'Mix weak and task words into one queue so you can close the gaps quickly.',
                     )
                   : pickUiText(
                       i18n,
-                      zh: '杩欓噷浼氫繚鐣欐病璁颁綇鐨勫崟璇嶏紝鍚庨潰鍙互闆嗕腑鎭㈠銆?',
+                      zh: '没记住的单词会留在这里，后续可以集中恢复。',
                       en: 'Words you miss will stay here so you can recover them in focused batches.',
                     ),
               words: recoveryWords,
               actionLabel: recoveryWords.isNotEmpty
-                  ? pickUiText(
-                      i18n,
-                      zh: '寮€濮嬫仮澶嶅涔?',
-                      en: 'Start recovery review',
-                    )
-                  : pickUiText(i18n, zh: '鍏堝紑濮嬬粌涔?', en: 'Start first session'),
+                  ? pickUiText(i18n, zh: '开始恢复复习', en: 'Start recovery review')
+                  : pickUiText(i18n, zh: '先完成一轮', en: 'Start first session'),
               onTap: recoveryWords.isNotEmpty
                   ? () => _openReviewSession(
                       context,
                       i18n,
-                      title: pickUiText(
-                        i18n,
-                        zh: '鎭㈠杞﹂亾',
-                        en: 'Recovery lane',
-                      ),
+                      title: pickUiText(i18n, zh: '恢复轨道', en: 'Recovery lane'),
                       subtitle: pickUiText(
                         i18n,
-                        zh: '鍏?${recoveryWords.length} 涓緟鍔犲己鍗曡瘝',
+                        zh: '共 ${recoveryWords.length} 个待加强单词',
                         en: '${recoveryWords.length} words to reinforce',
                       ),
                       words: recoveryWords,
@@ -925,7 +913,7 @@ class PracticePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
-          pickUiText(i18n, zh: '杩樻病鏈夊崟璇?', en: 'No words yet'),
+          pickUiText(i18n, zh: '还没有单词', en: 'No words yet'),
           style: theme.textTheme.bodySmall,
         ),
       );

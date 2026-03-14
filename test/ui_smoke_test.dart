@@ -22,6 +22,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/focus_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/library_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/language_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
@@ -950,6 +951,64 @@ void main() {
       expect(find.text('Shuffle sprint'), findsOneWidget);
     });
 
+    testWidgets('practice page shows clean Chinese labels', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'zh');
+      await _pumpPage(tester, state: state, child: const PracticePage());
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('practice-memory-card')),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('\u8bb0\u5fc6\u8f68\u9053'), findsOneWidget);
+      expect(find.text('\u4eca\u65e5\u5df2\u8bb0\u4f4f'), findsOneWidget);
+      expect(find.text('\u6062\u590d\u961f\u5217'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('\u5feb\u901f\u5f00\u59cb'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('\u5feb\u901f\u5f00\u59cb'), findsOneWidget);
+      expect(find.text('\u5f53\u524d\u8bcd\u901f\u7ec3'), findsWidgets);
+      expect(find.textContaining('\u8930\u64b3'), findsNothing);
+    });
+
+    testWidgets('practice session result uses clean Chinese labels', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'zh');
+      const words = <WordEntry>[
+        WordEntry(
+          wordbookId: 1,
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: '含义', value: '开始'),
+          ],
+        ),
+      ];
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeSessionPage(title: '测试练习', words: words),
+      );
+
+      expect(find.text('\u663e\u793a\u63d0\u793a'), findsOneWidget);
+      expect(find.text('\u6ca1\u8bb0\u4f4f'), findsOneWidget);
+
+      await tester.tap(find.text('\u8bb0\u4f4f\u4e86'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('\u5df2\u8bb0\u4f4f\u5355\u8bcd'), findsOneWidget);
+      expect(find.text('\u590d\u4e60\u5df2\u8bb0\u4f4f'), findsOneWidget);
+      expect(find.textContaining('\u5bb8\u8336'), findsNothing);
+    });
+
     test('online wordbook catalog parses repo html payload', () {
       const html =
           '<script data-target="react-app.embeddedData">'
@@ -1567,6 +1626,15 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   Future<void> toggleTaskWord(WordEntry word) async {}
+
+  @override
+  void recordPracticeSession({
+    required String title,
+    required int total,
+    required int remembered,
+    required List<String> rememberedWords,
+    required List<String> weakWords,
+  }) {}
 
   @override
   void setUiLanguage(String language) {

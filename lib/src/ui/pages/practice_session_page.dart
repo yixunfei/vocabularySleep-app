@@ -308,7 +308,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
               if (_rememberedWords.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  pickUiText(i18n, zh: '宸茶浣忕殑璇?', en: 'Remembered words'),
+                  pickUiText(i18n, zh: '已记住单词', en: 'Remembered words'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -364,7 +364,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
               onPressed: () => _restart(_rememberedWords, shuffle: true),
               icon: const Icon(Icons.auto_awesome_rounded),
               label: Text(
-                pickUiText(i18n, zh: '鍐嶇粌宸茶浣忕殑璇?', en: 'Review remembered'),
+                pickUiText(i18n, zh: '复习已记住', en: 'Review remembered'),
               ),
             ),
           if (_weakWords.isNotEmpty)
