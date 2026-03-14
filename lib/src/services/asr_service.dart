@@ -1415,10 +1415,24 @@ class AsrService {
 
     final apiKey = ttsConfig.apiKey?.trim() ?? '';
     if (apiKey.isEmpty) {
+      final fallback = await _trySynthesizeLocalReferenceFallback(
+        expected: expected,
+        ttsConfig: ttsConfig,
+      );
+      if (fallback != null) {
+        return fallback;
+      }
       throw StateError('asrSimilarityTtsApiKeyMissing');
     }
     if (ttsConfig.provider == TtsProviderType.customApi &&
         (ttsConfig.baseUrl == null || ttsConfig.baseUrl!.trim().isEmpty)) {
+      final fallback = await _trySynthesizeLocalReferenceFallback(
+        expected: expected,
+        ttsConfig: ttsConfig,
+      );
+      if (fallback != null) {
+        return fallback;
+      }
       throw StateError('asrSimilarityTtsBaseUrlMissing');
     }
     final endpoint = _resolveTtsEndpoint(ttsConfig);
@@ -1465,6 +1479,20 @@ class AsrService {
       throw StateError('asrSimilarityReferenceInvalid');
     }
     return bytes;
+  }
+
+  Future<Uint8List?> _trySynthesizeLocalReferenceFallback({
+    required String expected,
+    required TtsConfig ttsConfig,
+  }) async {
+    try {
+      return await _synthesizeLocalReferenceWav(
+        expected: expected,
+        ttsConfig: ttsConfig.copyWith(provider: TtsProviderType.local),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Uint8List> _synthesizeLocalReferenceWav({
