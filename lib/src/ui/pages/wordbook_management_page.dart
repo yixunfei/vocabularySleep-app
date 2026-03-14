@@ -60,7 +60,7 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
               book: book,
               isCurrent: state.selectedWordbook?.id == book.id,
               i18n: i18n,
-              onSelect: () => state.selectWordbook(book),
+              onSelect: () => _selectWordbook(context, state, i18n, book),
               onOpenEditor: () => _openEditor(context, state, book),
               onRename: book.isSystem
                   ? null
@@ -105,6 +105,17 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
     AppState state,
     AppI18n i18n,
   ) async {
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '导入单词本', en: 'Import wordbook'),
+      message: pickUiText(
+        i18n,
+        zh: '单词本可能较大，导入与初始化需要一些时间。确认后将继续选择文件，请耐心等待。',
+        en: 'Wordbooks can be large, so import and initialization may take a while. Continue to choose a file and please wait patiently.',
+      ),
+      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+    );
+    if (!confirmed) return;
     await state.importWordbookByPicker(
       requestName: (suggestedName) {
         return showTextPromptDialog(
@@ -121,6 +132,28 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
         );
       },
     );
+  }
+
+  Future<void> _selectWordbook(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n,
+    Wordbook book,
+  ) async {
+    if (state.requiresWordbookLoadConfirmation(book)) {
+      final confirmed = await showConfirmDialog(
+        context: context,
+        title: pickUiText(i18n, zh: '初始化单词本', en: 'Initialize wordbook'),
+        message: pickUiText(
+          i18n,
+          zh: '${localizedWordbookName(i18n, book)} 可能较大，首次加载会初始化内容并需要一些时间。确认后继续，请耐心等待。',
+          en: '${localizedWordbookName(i18n, book)} may be large. The first load will initialize its contents and may take a while. Continue and please wait patiently.',
+        ),
+        confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+      );
+      if (!confirmed) return;
+    }
+    await state.selectWordbook(book);
   }
 
   Future<void> _downloadOnlineWordbook(
@@ -325,7 +358,7 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
     AppState state,
     Wordbook book,
   ) async {
-    await state.selectWordbook(book);
+    await _selectWordbook(context, state, AppI18n(state.uiLanguage), book);
     if (!context.mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(

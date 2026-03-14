@@ -204,6 +204,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return computed;
   }
 
+  bool requiresWordbookLoadConfirmation(Wordbook wordbook) {
+    return _database.isLazyBuiltInPath(wordbook.path) && wordbook.wordCount <= 0;
+  }
+
   List<WordEntry> get recentWeakWordEntries {
     if (_practiceWeakWords.isEmpty || _words.isEmpty) {
       return const <WordEntry>[];

@@ -31,13 +31,17 @@ class DataManagementPage extends StatelessWidget {
               zh: '支持 JSON / CSV / MDX 等格式。',
               en: 'Supports JSON / CSV / MDX and more.',
             ),
-            onTap: () => state.importWordbookByPicker(
-              requestName: (suggestedName) => showTextPromptDialog(
-                context: context,
-                title: pickUiText(i18n, zh: '词本名称', en: 'Wordbook name'),
-                initialValue: suggestedName,
-              ),
-            ),
+            onTap: () async {
+              final confirmed = await _confirmWordbookImport(context, i18n);
+              if (!confirmed) return;
+              await state.importWordbookByPicker(
+                requestName: (suggestedName) => showTextPromptDialog(
+                  context: context,
+                  title: pickUiText(i18n, zh: '词本名称', en: 'Wordbook name'),
+                  initialValue: suggestedName,
+                ),
+              );
+            },
           ),
           const SizedBox(height: 12),
           SettingTile(
@@ -52,7 +56,11 @@ class DataManagementPage extends StatelessWidget {
               zh: '从旧版 SQLite 数据库导入当前结构。',
               en: 'Import records from a previous SQLite database.',
             ),
-            onTap: state.importLegacyDatabaseByPicker,
+            onTap: () async {
+              final confirmed = await _confirmLegacyMigration(context, i18n);
+              if (!confirmed) return;
+              await state.importLegacyDatabaseByPicker();
+            },
           ),
           const SizedBox(height: 12),
           SettingTile(
@@ -391,5 +399,31 @@ class DataManagementPage extends StatelessWidget {
       return '${(bytes / 1024).toStringAsFixed(1)} KB';
     }
     return '$bytes B';
+  }
+
+  Future<bool> _confirmWordbookImport(BuildContext context, AppI18n i18n) {
+    return showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '导入单词本', en: 'Import wordbook'),
+      message: pickUiText(
+        i18n,
+        zh: '单词本可能较大，导入与初始化需要一些时间。确认后将继续选择文件，请耐心等待。',
+        en: 'Wordbooks can be large, so import and initialization may take a while. Continue to choose a file and please wait patiently.',
+      ),
+      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+    );
+  }
+
+  Future<bool> _confirmLegacyMigration(BuildContext context, AppI18n i18n) {
+    return showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '迁移旧数据库', en: 'Migrate legacy database'),
+      message: pickUiText(
+        i18n,
+        zh: '迁移前会先创建安全备份，旧库导入也可能持续一段时间。确认后将继续选择数据库文件。',
+        en: 'A safety backup will be created first, and migrating an old database may also take a while. Continue to choose a database file?',
+      ),
+      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+    );
   }
 }

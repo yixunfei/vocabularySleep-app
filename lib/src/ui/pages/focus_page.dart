@@ -1410,13 +1410,16 @@ class _FocusPageState extends State<FocusPage>
                     });
                   },
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton.tonalIcon(
-                  onPressed: () => _showTodoEditor(focus, i18n),
-                  icon: const Icon(Icons.playlist_add_rounded),
-                  label: Text(i18n.t('addTodo')),
-                  ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: () => _showTodoEditor(focus, i18n),
+                icon: const Icon(Icons.playlist_add_rounded),
+                label: Text(i18n.t('addTodo')),
               ),
             ),
             const SizedBox(height: 10),

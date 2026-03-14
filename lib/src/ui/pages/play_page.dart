@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../models/word_entry.dart';
+import '../../models/wordbook.dart';
 import '../../state/app_state.dart';
+import '../modal_helpers.dart';
 import '../sheets/ambient_sheet.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
@@ -128,6 +130,12 @@ class _PlayPageState extends State<PlayPage> {
                       ),
                     ),
                     onTap: () async {
+                      final confirmed = await _confirmWordbookLoadIfNeeded(
+                        state,
+                        i18n,
+                        book,
+                      );
+                      if (!confirmed) return;
                       await state.selectWordbook(book);
                       if (context.mounted) Navigator.of(context).pop();
                     },
@@ -511,6 +519,26 @@ class _PlayPageState extends State<PlayPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<bool> _confirmWordbookLoadIfNeeded(
+    AppState state,
+    AppI18n i18n,
+    Wordbook book,
+  ) {
+    if (!state.requiresWordbookLoadConfirmation(book)) {
+      return Future<bool>.value(true);
+    }
+    return showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '初始化单词本', en: 'Initialize wordbook'),
+      message: pickUiText(
+        i18n,
+        zh: '${localizedWordbookName(i18n, book)} 可能较大，首次加载会初始化内容并需要一些时间。确认后继续，请耐心等待。',
+        en: '${localizedWordbookName(i18n, book)} may be large. The first load will initialize its contents and may take a while. Continue and please wait patiently.',
+      ),
+      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
     );
   }
 }

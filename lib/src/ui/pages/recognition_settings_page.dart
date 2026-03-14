@@ -5,6 +5,7 @@ import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../services/asr_service.dart';
 import '../../state/app_state.dart';
+import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
@@ -118,6 +119,10 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     required bool install,
   }) async {
     final state = context.read<AppState>();
+    if (install) {
+      final confirmed = await _confirmOfflineModelInstall(provider);
+      if (!confirmed) return;
+    }
     setState(() {
       _offlineBusyProviders.add(provider);
       _offlineActionProvider = provider;
@@ -167,6 +172,10 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     required bool install,
   }) async {
     final state = context.read<AppState>();
+    if (install) {
+      final confirmed = await _confirmScoringPackInstall(method);
+      if (!confirmed) return;
+    }
     setState(() {
       _scoringBusyMethods.add(method);
       _scoringActionMethod = method;
@@ -229,6 +238,38 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
         });
       }
     }
+  }
+
+  Future<bool> _confirmOfflineModelInstall(AsrProviderType provider) {
+    final state = context.read<AppState>();
+    final i18n = AppI18n(state.uiLanguage);
+    final sizeText = _resolveOfflineSizeText(provider);
+    return showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '下载离线识别包', en: 'Download offline ASR package'),
+      message: pickUiText(
+        i18n,
+        zh: '${asrProviderLabel(i18n, provider)} 约 $sizeText，初始化下载可能需要一些时间。确认后开始下载，请耐心等待。',
+        en: '${asrProviderLabel(i18n, provider)} is about $sizeText. Download and initialization may take some time. Continue and please wait patiently.',
+      ),
+      confirmText: pickUiText(i18n, zh: '下载', en: 'Download'),
+    );
+  }
+
+  Future<bool> _confirmScoringPackInstall(PronScoringMethod method) {
+    final state = context.read<AppState>();
+    final i18n = AppI18n(state.uiLanguage);
+    final sizeText = _resolveScoringSizeText(method);
+    return showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '下载评分包', en: 'Download scoring pack'),
+      message: pickUiText(
+        i18n,
+        zh: '${_scoringMethodLabel(i18n, method)} 约 $sizeText，初始化下载可能需要一些时间。确认后开始下载，请耐心等待。',
+        en: '${_scoringMethodLabel(i18n, method)} is about $sizeText. Download and initialization may take some time. Continue and please wait patiently.',
+      ),
+      confirmText: pickUiText(i18n, zh: '下载', en: 'Download'),
+    );
   }
 
   @override

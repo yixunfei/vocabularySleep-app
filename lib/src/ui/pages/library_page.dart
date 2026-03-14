@@ -782,6 +782,12 @@ class _LibraryPageState extends State<LibraryPage> {
                     title: Text(localizedWordbookName(i18n, book)),
                     subtitle: Text(_wordbookSheetSubtitle(i18n, book)),
                     onTap: () async {
+                      final confirmed = await _confirmWordbookLoadIfNeeded(
+                        state,
+                        i18n,
+                        book,
+                      );
+                      if (!confirmed) return;
                       await state.selectWordbook(book);
                       if (context.mounted) Navigator.of(context).pop();
                     },
@@ -802,6 +808,26 @@ class _LibraryPageState extends State<LibraryPage> {
       MaterialPageRoute<void>(
         builder: (_) => WordDetailPage(initialWord: word),
       ),
+    );
+  }
+
+  Future<bool> _confirmWordbookLoadIfNeeded(
+    AppState state,
+    AppI18n i18n,
+    Wordbook book,
+  ) {
+    if (!state.requiresWordbookLoadConfirmation(book)) {
+      return Future<bool>.value(true);
+    }
+    return showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '初始化单词本', en: 'Initialize wordbook'),
+      message: pickUiText(
+        i18n,
+        zh: '${localizedWordbookName(i18n, book)} 可能较大，首次加载会初始化内容并需要一些时间。确认后继续，请耐心等待。',
+        en: '${localizedWordbookName(i18n, book)} may be large. The first load will initialize its contents and may take a while. Continue and please wait patiently.',
+      ),
+      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
     );
   }
 

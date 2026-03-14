@@ -611,6 +611,8 @@ void main() {
 
       await tester.tap(find.text('Import wordbook'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).last, 'Imported Pack');
       await tester.tap(find.text('Import'));
       await tester.pumpAndSettle();
@@ -934,6 +936,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   List<Wordbook> get wordbooks => _wordbooks;
+
+  @override
+  bool requiresWordbookLoadConfirmation(Wordbook wordbook) => false;
 
   @override
   Future<List<String>> fetchLocalTtsVoices() async => _localVoices;
