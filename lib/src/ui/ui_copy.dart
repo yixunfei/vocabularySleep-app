@@ -37,6 +37,10 @@ const Map<String, String> _legacyZhExactTextFixes = <String, String>{
   '閸愬秶绮屽鑼额唶娴ｅ繒娈戠拠?': '复习已记住',
   '澶嶄範钖勫急璇?': '复习薄弱词',
   '缁撴潫浼氳瘽': '结束会话',
+  '鐜闊?': '背景音',
+  '鍦ㄦ挱鏀鹃〉淇濇寔浣庡共鎵般€佸彲鍗曟墜璋冭妭': '在任意页面快速调节背景音，不占用当前内容空间。',
+  '鎬婚煶閲?': '总音量',
+  '瀵煎叆鑷畾涔夐煶棰?': '导入自定义音频',
 };
 
 String _repairLegacyZhText(String value) {

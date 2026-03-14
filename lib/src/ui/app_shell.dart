@@ -11,6 +11,7 @@ import 'pages/play_page.dart';
 import 'pages/practice_page.dart';
 import 'ui_copy.dart';
 import 'widgets/app_background.dart';
+import 'widgets/ambient_floating_launcher.dart';
 import 'widgets/busy_overlay.dart';
 import 'widgets/focus_lock_overlay.dart';
 import 'widgets/mini_player.dart';
@@ -307,6 +308,17 @@ class _AppShellState extends State<AppShell> {
                   onPresentationChanged: _handleMiniPlayerPresentation,
                 ),
               ),
+              if (!isInitializing)
+                Positioned(
+                  right: 16,
+                  bottom:
+                      bottomInset +
+                      _navigationBarHeight +
+                      (_miniPlayerReservedHeight > 0
+                          ? _miniPlayerReservedHeight + 18
+                          : 18),
+                  child: AmbientFloatingLauncher(state: state, i18n: i18n),
+                ),
               BusyOverlay(
                 visible: state.busy,
                 message: state.busyMessage ?? i18n.t('processing'),

@@ -272,9 +272,8 @@ class _FocusPageState extends State<FocusPage>
                 ],
               ),
             ),
-            Positioned(
-              top: 16,
-              right: 16,
+            Offstage(
+              offstage: true,
               child: _buildAmbientLauncher(
                 state,
                 i18n,

@@ -18,7 +18,7 @@ class AmbientSheet extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Center(
@@ -51,7 +51,7 @@ class AmbientSheet extends StatelessWidget {
               value: state.ambientMasterVolume,
               onChanged: (value) => state.setAmbientMasterVolume(value),
             ),
-            Flexible(
+            Expanded(
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: state.ambientSources.length + 1,

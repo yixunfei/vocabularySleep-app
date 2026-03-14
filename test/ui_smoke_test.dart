@@ -27,6 +27,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/theme/app_theme.dart';
 import 'package:vocabulary_sleep_app/src/ui/ui_copy.dart';
+import 'package:vocabulary_sleep_app/src/ui/widgets/ambient_floating_launcher.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/focus_lock_overlay.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/setting_tile.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/word_card.dart';
@@ -441,7 +442,9 @@ void main() {
       expect(find.text('Timer'), findsOneWidget);
     });
 
-    testWidgets('focus page expands floating ambient launcher', (tester) async {
+    testWidgets('app shell opens ambient sheet from global launcher', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -449,29 +452,40 @@ void main() {
         uiLanguage: 'en',
         focusService: _FakeFocusService.sample(),
       );
-      await _pumpPage(tester, state: state, child: const FocusPage());
-
-      await tester.tap(
-        find.byKey(const ValueKey<String>('ambient-launcher-toggle')),
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: Scaffold(
+              body: Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: AmbientFloatingLauncher(
+                    state: state,
+                    i18n: AppI18n('en'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       );
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const ValueKey<String>('ambient-launcher-panel')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey<String>('ambient-launcher-close')),
+        find.byKey(const ValueKey<String>('global-ambient-launcher')),
         findsOneWidget,
       );
 
       await tester.tap(
-        find.byKey(const ValueKey<String>('ambient-launcher-close')),
+        find.byKey(const ValueKey<String>('global-ambient-launcher')),
       );
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const ValueKey<String>('ambient-launcher-toggle')),
+        find.byKey(const ValueKey<String>('ambient-sheet')),
         findsOneWidget,
       );
     });
