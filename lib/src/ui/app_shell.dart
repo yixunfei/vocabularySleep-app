@@ -265,19 +265,41 @@ class _AppShellState extends State<AppShell> {
                               selectedIcon: const Icon(
                                 Icons.play_circle_filled_rounded,
                               ),
-                              label: pageLabelPlay(i18n),
+                              label: pickUiText(
+                                i18n,
+                                zh: '播放',
+                                en: 'Play',
+                                ja: '鍐嶇敓',
+                                de: 'Wiedergabe',
+                                fr: 'Lecture',
+                                es: 'Reproducir',
+                                ru: '袙芯褋锌褉芯懈蟹胁械写械薪懈械',
+                              ),
                             ),
                             NavigationDestination(
                               icon: const Icon(Icons.menu_book_outlined),
                               selectedIcon: const Icon(Icons.menu_book_rounded),
-                              label: pageLabelLibrary(i18n),
+                              label: pickUiText(
+                                i18n,
+                                zh: '词库',
+                                en: 'Library',
+                              ),
                             ),
                             NavigationDestination(
                               icon: const Icon(Icons.fitness_center_outlined),
                               selectedIcon: const Icon(
                                 Icons.fitness_center_rounded,
                               ),
-                              label: pageLabelPractice(i18n),
+                              label: pickUiText(
+                                i18n,
+                                zh: '练习',
+                                en: 'Practice',
+                                ja: '绶寸繏',
+                                de: '脺ben',
+                                fr: 'Pratique',
+                                es: 'Pr谩ctica',
+                                ru: '袩褉邪泻褌懈泻邪',
+                              ),
                             ),
                             NavigationDestination(
                               icon: const Icon(Icons.timer_outlined),
@@ -287,7 +309,11 @@ class _AppShellState extends State<AppShell> {
                             NavigationDestination(
                               icon: const Icon(Icons.widgets_outlined),
                               selectedIcon: const Icon(Icons.widgets_rounded),
-                              label: pageLabelMore(i18n),
+                              label: pickUiText(
+                                i18n,
+                                zh: '更多',
+                                en: 'More',
+                              ),
                             ),
                           ],
                         ),

@@ -61,7 +61,16 @@ class PracticePage extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: <Widget>[
         PageHeader(
-          eyebrow: pageLabelPractice(i18n),
+          eyebrow: pickUiText(
+            i18n,
+            zh: '练习',
+            en: 'Practice',
+            ja: '绶寸繏',
+            de: '脺ben',
+            fr: 'Pratique',
+            es: 'Pr谩ctica',
+            ru: '袩褉邪泻褌懈泻邪',
+          ),
           title: pickUiText(i18n, zh: '练习中心', en: 'Practice hub'),
           subtitle: pickUiText(
             i18n,
