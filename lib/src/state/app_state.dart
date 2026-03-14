@@ -100,6 +100,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int _practiceTotalReviewed = 0;
   int _practiceTotalRemembered = 0;
   String _practiceLastSessionTitle = '';
+  List<String> _practiceRememberedWords = <String>[];
   List<String> _practiceWeakWords = <String>[];
 
   bool _isPlaying = false;
@@ -174,6 +175,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int get practiceTotalReviewed => _practiceTotalReviewed;
   int get practiceTotalRemembered => _practiceTotalRemembered;
   String get practiceLastSessionTitle => _practiceLastSessionTitle;
+  List<String> get practiceRememberedWords => _practiceRememberedWords;
   List<String> get practiceWeakWords => _practiceWeakWords;
   double get practiceTodayAccuracy => _practiceTodayReviewed <= 0
       ? 0
@@ -210,20 +212,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   List<WordEntry> get recentWeakWordEntries {
-    if (_practiceWeakWords.isEmpty || _words.isEmpty) {
-      return const <WordEntry>[];
-    }
-    final byWord = <String, WordEntry>{
-      for (final item in _words) item.word.trim(): item,
-    };
-    final output = <WordEntry>[];
-    for (final word in _practiceWeakWords) {
-      final entry = byWord[word];
-      if (entry != null) {
-        output.add(entry);
-      }
-    }
-    return output;
+    return _practiceEntriesFromWords(_practiceWeakWords);
+  }
+
+  List<WordEntry> get recentRememberedWordEntries {
+    return _practiceEntriesFromWords(_practiceRememberedWords);
   }
 
   WordEntry? get currentWord {
@@ -451,6 +444,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required String title,
     required int total,
     required int remembered,
+    required List<String> rememberedWords,
     required List<String> weakWords,
   }) {
     final safeTotal = total < 0 ? 0 : total;
@@ -465,23 +459,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceTotalReviewed += safeTotal;
     _practiceTotalRemembered += safeRemembered;
     _practiceLastSessionTitle = title.trim();
+    final normalizedRememberedWords = _normalizePracticeWords(rememberedWords);
+    final normalizedWeakWords = _normalizePracticeWords(weakWords)
+      ..removeWhere(normalizedRememberedWords.contains);
+    final rememberedSet = normalizedRememberedWords.toSet();
+    final weakSet = normalizedWeakWords.toSet();
 
-    final merged = <String>[];
-    void addWord(String raw) {
-      final value = raw.trim();
-      if (value.isEmpty) return;
-      if (!merged.contains(value)) {
-        merged.add(value);
-      }
-    }
-
-    for (final item in weakWords) {
-      addWord(item);
-    }
-    for (final item in _practiceWeakWords) {
-      addWord(item);
-    }
-    _practiceWeakWords = merged.take(40).toList(growable: false);
+    _practiceRememberedWords = _mergePracticeWords(
+      primary: normalizedRememberedWords,
+      existing: _practiceRememberedWords,
+      excluded: weakSet,
+    );
+    _practiceWeakWords = _mergePracticeWords(
+      primary: normalizedWeakWords,
+      existing: _practiceWeakWords,
+      excluded: rememberedSet,
+    );
     _persistPracticeDashboard();
     notifyListeners();
   }
@@ -2623,6 +2616,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceTotalReviewed = 0;
     _practiceTotalRemembered = 0;
     _practiceLastSessionTitle = '';
+    _practiceRememberedWords = <String>[];
     _practiceWeakWords = <String>[];
 
     _searchQuery = '';
@@ -2664,17 +2658,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceTotalReviewed = _readPracticeInt(data['totalReviewed']);
     _practiceTotalRemembered = _readPracticeInt(data['totalRemembered']);
     _practiceLastSessionTitle = '${data['lastSessionTitle'] ?? ''}'.trim();
-
-    final weakWords = <String>[];
-    final rawWeakWords = data['weakWords'];
-    if (rawWeakWords is List) {
-      for (final item in rawWeakWords) {
-        final value = '$item'.trim();
-        if (value.isEmpty || weakWords.contains(value)) continue;
-        weakWords.add(value);
-      }
-    }
-    _practiceWeakWords = weakWords.take(40).toList(growable: false);
+    _practiceRememberedWords = _normalizePracticeWords(data['rememberedWords']);
+    final rememberedSet = _practiceRememberedWords.toSet();
+    _practiceWeakWords = _normalizePracticeWords(
+      data['weakWords'],
+    ).where((word) => !rememberedSet.contains(word)).toList(growable: false);
   }
 
   int _readPracticeInt(Object? value) {
@@ -2715,8 +2703,65 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       'totalReviewed': _practiceTotalReviewed,
       'totalRemembered': _practiceTotalRemembered,
       'lastSessionTitle': _practiceLastSessionTitle,
+      'rememberedWords': _practiceRememberedWords,
       'weakWords': _practiceWeakWords,
     });
+  }
+
+  List<WordEntry> _practiceEntriesFromWords(List<String> trackedWords) {
+    if (trackedWords.isEmpty || _words.isEmpty) {
+      return const <WordEntry>[];
+    }
+    final byWord = <String, WordEntry>{
+      for (final item in _words) item.word.trim(): item,
+    };
+    final output = <WordEntry>[];
+    for (final word in trackedWords) {
+      final entry = byWord[word];
+      if (entry != null) {
+        output.add(entry);
+      }
+    }
+    return output;
+  }
+
+  List<String> _normalizePracticeWords(Object? value) {
+    if (value is! List) {
+      return const <String>[];
+    }
+    final normalized = <String>[];
+    for (final item in value) {
+      final word = '$item'.trim();
+      if (word.isEmpty || normalized.contains(word)) {
+        continue;
+      }
+      normalized.add(word);
+    }
+    return normalized.take(40).toList(growable: false);
+  }
+
+  List<String> _mergePracticeWords({
+    required List<String> primary,
+    required List<String> existing,
+    Set<String> excluded = const <String>{},
+  }) {
+    final merged = <String>[];
+
+    void addWord(String raw) {
+      final value = raw.trim();
+      if (value.isEmpty || excluded.contains(value) || merged.contains(value)) {
+        return;
+      }
+      merged.add(value);
+    }
+
+    for (final item in primary) {
+      addWord(item);
+    }
+    for (final item in existing) {
+      addWord(item);
+    }
+    return merged.take(40).toList(growable: false);
   }
 
   void _persistTestModeState() {

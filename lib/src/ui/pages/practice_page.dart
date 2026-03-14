@@ -37,10 +37,19 @@ class PracticePage extends StatelessWidget {
     final favoriteWords = wordbookWords
         .where((word) => state.favorites.contains(word.word))
         .toList(growable: false);
+    final rememberedWords = state.recentRememberedWordEntries;
     final weakWords = state.recentWeakWordEntries;
+    final needsReviewCount =
+        (state.practiceTodayReviewed - state.practiceTodayRemembered).clamp(
+          0,
+          state.practiceTodayReviewed,
+        );
+    final stableWords = _mergeWordCollections(rememberedWords, favoriteWords);
+    final recoveryWords = _mergeWordCollections(weakWords, taskWords);
     final todayAccuracy = (state.practiceTodayAccuracy * 100).round();
     final totalAccuracy = (state.practiceTotalAccuracy * 100).round();
     final hasWeakWords = weakWords.isNotEmpty;
+    final hasStableWords = stableWords.isNotEmpty;
     final noPracticeToday = state.practiceTodaySessions == 0;
     final needsReinforce =
         !hasWeakWords && !noPracticeToday && state.practiceTodayAccuracy < 0.75;
@@ -59,6 +68,17 @@ class PracticePage extends StatelessWidget {
             zh: '从单词面板升级为会话式练习：范围选择、连续作答、结果反馈。',
             en: 'Move from single-word tools to session-based practice with progress and feedback.',
           ),
+        ),
+        const SizedBox(height: 16),
+        _buildMemoryLanesCard(
+          context,
+          i18n: i18n,
+          state: state,
+          stableWords: stableWords,
+          recoveryWords: recoveryWords,
+          rememberedToday: state.practiceTodayRemembered,
+          needsReviewToday: needsReviewCount,
+          hasStableWords: hasStableWords,
         ),
         const SizedBox(height: 16),
         Card(
@@ -669,6 +689,258 @@ class PracticePage extends StatelessWidget {
     );
   }
 
+  Widget _buildMemoryLanesCard(
+    BuildContext context, {
+    required AppI18n i18n,
+    required AppState state,
+    required List<WordEntry> stableWords,
+    required List<WordEntry> recoveryWords,
+    required int rememberedToday,
+    required int needsReviewToday,
+    required bool hasStableWords,
+  }) {
+    final scopeWords = state.visibleWords;
+
+    Future<void> openScopeWarmup() async {
+      if (scopeWords.isEmpty) {
+        _showNoWordsSnack(context, i18n);
+        return;
+      }
+      await _openPracticeSession(
+        context,
+        title: pickUiText(i18n, zh: '褰撳墠鑼冨洿浼氳瘽', en: 'Current scope session'),
+        subtitle: pickUiText(
+          i18n,
+          zh: '鍏?${scopeWords.length} 涓瘝',
+          en: '${scopeWords.length} words',
+        ),
+        words: scopeWords,
+        shuffle: false,
+      );
+    }
+
+    return Card(
+      key: const ValueKey<String>('practice-memory-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              pickUiText(i18n, zh: '璁板繂杞﹂亾', en: 'Memory lanes'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '鎶婃湰杞粌涔犵粨鏋滃垎鎴愨€滃凡璁颁綇鈥濆拰鈥滃緟鍔犲己鈥濅袱鏉¤建閬擄紝涓嬩竴姝ヨ繛缁粌浠€涔堜細鏇存竻鏅般€?',
+                en: 'Split each finished session into stable and recovery lanes so the next drill is always clear.',
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                _buildStatBadge(
+                  context,
+                  icon: Icons.check_circle_outline_rounded,
+                  value: '$rememberedToday',
+                  label: pickUiText(
+                    i18n,
+                    zh: '浠婃棩宸茶浣?',
+                    en: 'Remembered today',
+                  ),
+                ),
+                _buildStatBadge(
+                  context,
+                  icon: Icons.refresh_rounded,
+                  value: '$needsReviewToday',
+                  label: pickUiText(i18n, zh: '浠婃棩寰呭姞寮?', en: 'Need review'),
+                ),
+                _buildStatBadge(
+                  context,
+                  icon: Icons.auto_awesome_rounded,
+                  value: '${stableWords.length}',
+                  label: pickUiText(i18n, zh: '绋冲畾闃熷垪', en: 'Stable queue'),
+                ),
+                _buildStatBadge(
+                  context,
+                  icon: Icons.fitness_center_rounded,
+                  value: '${recoveryWords.length}',
+                  label: pickUiText(i18n, zh: '鎭㈠闃熷垪', en: 'Recovery queue'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _buildMemoryLane(
+              context,
+              key: const ValueKey<String>('practice-memory-stable'),
+              i18n: i18n,
+              icon: Icons.auto_awesome_rounded,
+              title: pickUiText(i18n, zh: '绋冲畾杞﹂亾', en: 'Stable lane'),
+              subtitle: hasStableWords
+                  ? pickUiText(
+                      i18n,
+                      zh: '鎶婂凡璁颁綇鐨勫崟璇嶅啀鍋氫竴杞紝淇濇寔鍥炲繂閫熷害鍜屽彂闊崇ǔ瀹氭€с€?',
+                      en: 'Revisit words you already know to keep recall and pronunciation smooth.',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '瀹屾垚涓€娆＄粌涔犲悗锛屽凡璁颁綇鐨勫崟璇嶄細鍦ㄨ繖閲岀Н绱€?',
+                      en: 'Finish one session and the words you remember will collect here.',
+                    ),
+              words: stableWords,
+              actionLabel: hasStableWords
+                  ? pickUiText(i18n, zh: '澶嶄範宸茶浣?', en: 'Review remembered')
+                  : pickUiText(i18n, zh: '鍏堝畬鎴愪竴杞?', en: 'Start first session'),
+              onTap: hasStableWords
+                  ? () => _openReviewSession(
+                      context,
+                      i18n,
+                      title: pickUiText(
+                        i18n,
+                        zh: '宸茶浣忓崟璇嶅涔?',
+                        en: 'Remembered word review',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: '鍏?${stableWords.length} 涓凡璁颁綇鍗曡瘝',
+                        en: '${stableWords.length} remembered words',
+                      ),
+                      words: stableWords,
+                    )
+                  : openScopeWarmup,
+            ),
+            const SizedBox(height: 12),
+            _buildMemoryLane(
+              context,
+              key: const ValueKey<String>('practice-memory-recovery'),
+              i18n: i18n,
+              icon: Icons.fitness_center_rounded,
+              title: pickUiText(i18n, zh: '鎭㈠杞﹂亾', en: 'Recovery lane'),
+              subtitle: recoveryWords.isNotEmpty
+                  ? pickUiText(
+                      i18n,
+                      zh: '鎶婅杽寮辫瘝涓庝换鍔¤瘝鍚堝苟澶嶄範锛屽厛鎶婂皻涓嶇ǔ瀹氱殑鍗曡瘝鎷夊洖鏉ャ€?',
+                      en: 'Mix weak and task words into one queue so you can close the gaps quickly.',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '杩欓噷浼氫繚鐣欐病璁颁綇鐨勫崟璇嶏紝鍚庨潰鍙互闆嗕腑鎭㈠銆?',
+                      en: 'Words you miss will stay here so you can recover them in focused batches.',
+                    ),
+              words: recoveryWords,
+              actionLabel: recoveryWords.isNotEmpty
+                  ? pickUiText(
+                      i18n,
+                      zh: '寮€濮嬫仮澶嶅涔?',
+                      en: 'Start recovery review',
+                    )
+                  : pickUiText(i18n, zh: '鍏堝紑濮嬬粌涔?', en: 'Start first session'),
+              onTap: recoveryWords.isNotEmpty
+                  ? () => _openReviewSession(
+                      context,
+                      i18n,
+                      title: pickUiText(
+                        i18n,
+                        zh: '鎭㈠杞﹂亾',
+                        en: 'Recovery lane',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: '鍏?${recoveryWords.length} 涓緟鍔犲己鍗曡瘝',
+                        en: '${recoveryWords.length} words to reinforce',
+                      ),
+                      words: recoveryWords,
+                    )
+                  : openScopeWarmup,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemoryLane(
+    BuildContext context, {
+    required Key key,
+    required AppI18n i18n,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<WordEntry> words,
+    required String actionLabel,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+
+    return Container(
+      key: key,
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(icon, color: theme.colorScheme.primary),
+              const SizedBox(width: 10),
+              Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(subtitle, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 10),
+          _buildWordPreviewChips(context, i18n, words),
+          const SizedBox(height: 12),
+          FilledButton.tonalIcon(
+            onPressed: onTap,
+            icon: const Icon(Icons.play_circle_outline_rounded),
+            label: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWordPreviewChips(
+    BuildContext context,
+    AppI18n i18n,
+    List<WordEntry> words,
+  ) {
+    final theme = Theme.of(context);
+    if (words.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Text(
+          pickUiText(i18n, zh: '杩樻病鏈夊崟璇?', en: 'No words yet'),
+          style: theme.textTheme.bodySmall,
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: words
+          .take(6)
+          .map((word) => Chip(label: Text(word.word)))
+          .toList(growable: false),
+    );
+  }
+
   Widget _buildStatBadge(
     BuildContext context, {
     required IconData icon,
@@ -736,6 +1008,35 @@ class PracticePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<WordEntry> _mergeWordCollections(
+    List<WordEntry> primary,
+    List<WordEntry> secondary, {
+    int limit = 12,
+  }) {
+    final merged = <WordEntry>[];
+    final seen = <String>{};
+
+    void addWord(WordEntry word) {
+      final key = '${word.wordbookId}:${word.word}';
+      if (seen.contains(key)) {
+        return;
+      }
+      seen.add(key);
+      merged.add(word);
+    }
+
+    for (final word in primary) {
+      addWord(word);
+    }
+    for (final word in secondary) {
+      addWord(word);
+    }
+    if (merged.length <= limit) {
+      return merged;
+    }
+    return merged.take(limit).toList(growable: false);
   }
 
   Future<void> _openPracticeSession(

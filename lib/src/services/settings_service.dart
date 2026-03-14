@@ -100,6 +100,7 @@ class SettingsService {
         'totalReviewed': 0,
         'totalRemembered': 0,
         'lastSessionTitle': '',
+        'rememberedWords': <Object?>[],
         'weakWords': <Object?>[],
       };
     }
@@ -120,6 +121,7 @@ class SettingsService {
       'totalReviewed': 0,
       'totalRemembered': 0,
       'lastSessionTitle': '',
+      'rememberedWords': <Object?>[],
       'weakWords': <Object?>[],
     };
   }

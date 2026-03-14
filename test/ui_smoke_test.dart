@@ -866,7 +866,20 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const PracticePage());
 
-      expect(find.text('Reviewed today'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('practice-memory-card')),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('practice-memory-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Memory lanes'), findsOneWidget);
+      expect(find.text('Remembered today'), findsOneWidget);
+      expect(find.text('Recovery queue'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('Quick start'),
@@ -1146,7 +1159,15 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   String get practiceLastSessionTitle => _practiceLastSessionTitle;
 
   @override
+  List<String> get practiceRememberedWords => recentRememberedWordEntries
+      .map((entry) => entry.word)
+      .toList(growable: false);
+
+  @override
   int get practiceTodayReviewed => _practiceTodayReviewed;
+
+  @override
+  int get practiceTodayRemembered => _practiceTodayRemembered;
 
   @override
   int get practiceTodaySessions => _practiceTodaySessions;
@@ -1162,7 +1183,17 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       : _practiceTotalRemembered / _practiceTotalReviewed;
 
   @override
+  int get practiceTotalRemembered => _practiceTotalRemembered;
+
+  @override
+  int get practiceTotalReviewed => _practiceTotalReviewed;
+
+  @override
   int get practiceTotalSessions => _practiceTotalSessions;
+
+  @override
+  List<WordEntry> get recentRememberedWordEntries =>
+      _visibleWords.length < 3 ? _visibleWords : _visibleWords.sublist(1, 3);
 
   @override
   List<WordEntry> get recentWeakWordEntries =>

@@ -29,6 +29,7 @@ class PracticeSessionPage extends StatefulWidget {
 
 class _PracticeSessionPageState extends State<PracticeSessionPage> {
   late List<WordEntry> _sessionWords;
+  final List<WordEntry> _rememberedWords = <WordEntry>[];
   final List<WordEntry> _weakWords = <WordEntry>[];
   int _index = 0;
   int _remembered = 0;
@@ -56,9 +57,13 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     final current = _currentWord;
     if (current == null) return;
     var nextRemembered = _remembered;
+    final nextRememberedWords = List<WordEntry>.from(_rememberedWords);
     final nextWeakWords = List<WordEntry>.from(_weakWords);
     if (remembered) {
       nextRemembered += 1;
+      if (nextRememberedWords.every((item) => !_isSameWord(item, current))) {
+        nextRememberedWords.add(current);
+      }
     } else if (nextWeakWords.every((item) => !_isSameWord(item, current))) {
       nextWeakWords.add(current);
     }
@@ -66,6 +71,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
 
     setState(() {
       _remembered = nextRemembered;
+      _rememberedWords
+        ..clear()
+        ..addAll(nextRememberedWords);
       _weakWords
         ..clear()
         ..addAll(nextWeakWords);
@@ -78,6 +86,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _reportSession(
         total: _sessionWords.length,
         remembered: nextRemembered,
+        rememberedWords: nextRememberedWords.map((item) => item.word).toList(),
         weakWords: nextWeakWords.map((item) => item.word).toList(),
       );
     }
@@ -99,6 +108,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       if (shuffle) {
         _sessionWords.shuffle();
       }
+      _rememberedWords.clear();
       _weakWords.clear();
       _index = 0;
       _remembered = 0;
@@ -111,6 +121,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   void _reportSession({
     required int total,
     required int remembered,
+    required List<String> rememberedWords,
     required List<String> weakWords,
   }) {
     if (_reported) return;
@@ -119,6 +130,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       title: widget.title,
       total: total,
       remembered: remembered,
+      rememberedWords: rememberedWords,
       weakWords: weakWords,
     );
   }
@@ -257,6 +269,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   List<Widget> _buildResult(BuildContext context, AppI18n i18n) {
     final total = _sessionWords.length;
     final weakCount = _weakWords.length;
+    final rememberedWords = _rememberedWords.length;
     final remembered = _remembered.clamp(0, total);
     final accuracy = total == 0 ? 0 : ((remembered / total) * 100).round();
 
@@ -292,6 +305,30 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                   en: 'Remembered: $remembered, Weak: $weakCount (Total $total)',
                 ),
               ),
+              if (_rememberedWords.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  pickUiText(i18n, zh: '宸茶浣忕殑璇?', en: 'Remembered words'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _rememberedWords
+                      .take(8)
+                      .map(
+                        (item) => Chip(
+                          avatar: const Icon(
+                            Icons.check_circle_rounded,
+                            size: 18,
+                          ),
+                          label: Text(item.word),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ],
               if (_weakWords.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -322,6 +359,14 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
             icon: const Icon(Icons.replay_rounded),
             label: Text(pickUiText(i18n, zh: '再来一轮', en: 'Restart')),
           ),
+          if (rememberedWords > 0)
+            OutlinedButton.icon(
+              onPressed: () => _restart(_rememberedWords, shuffle: true),
+              icon: const Icon(Icons.auto_awesome_rounded),
+              label: Text(
+                pickUiText(i18n, zh: '鍐嶇粌宸茶浣忕殑璇?', en: 'Review remembered'),
+              ),
+            ),
           if (_weakWords.isNotEmpty)
             OutlinedButton.icon(
               onPressed: () => _restart(_weakWords),
