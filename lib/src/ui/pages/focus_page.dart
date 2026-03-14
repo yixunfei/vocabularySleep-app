@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
@@ -18,9 +18,11 @@ import '../widgets/section_header.dart';
 
 enum _TodoSortMode { manual, priority, category }
 
-enum _TodoFilterMode { all, active, completed }
+enum _TodoFilterMode { all, active, deferred, completed }
 
 enum _TodoViewMode { plan, list }
+
+enum _TodoDraftState { active, deferred, completed }
 
 enum _NoteVoiceInputState { idle, starting, recording, transcribing }
 
@@ -1642,12 +1644,17 @@ class _FocusPageState extends State<FocusPage>
     final tomorrowStart = todayStart.add(const Duration(days: 1));
     var active = 0;
     var completed = 0;
+    var deferred = 0;
     var overdue = 0;
     var todayCount = 0;
 
     for (final todo in todos) {
       if (todo.completed) {
         completed += 1;
+        continue;
+      }
+      if (todo.isDeferred) {
+        deferred += 1;
         continue;
       }
       active += 1;
@@ -1666,6 +1673,7 @@ class _FocusPageState extends State<FocusPage>
       'active': active,
       'today': todayCount,
       'overdue': overdue,
+      'deferred': deferred,
       'completed': completed,
     };
   }
@@ -1719,6 +1727,21 @@ class _FocusPageState extends State<FocusPage>
         color: theme.colorScheme.error,
       ),
       (
+        key: 'deferred',
+        label: pickUiText(
+          i18n,
+          zh: '延后搁置',
+          en: 'Deferred',
+          ja: '保留中',
+          de: 'Zurueckgestellt',
+          fr: 'Reporte',
+          es: 'Pospuestas',
+          ru: 'Отложено',
+        ),
+        icon: Icons.snooze_rounded,
+        color: theme.colorScheme.outline,
+      ),
+      (
         key: 'completed',
         label: pickUiText(
           i18n,
@@ -1760,7 +1783,7 @@ class _FocusPageState extends State<FocusPage>
             const SizedBox(height: 10),
             LayoutBuilder(
               builder: (context, constraints) {
-                final columns = constraints.maxWidth < 560 ? 2 : 4;
+                final columns = constraints.maxWidth < 560 ? 2 : 5;
                 final spacing = 8.0;
                 final itemWidth =
                     (constraints.maxWidth - spacing * (columns - 1)) / columns;
@@ -1992,6 +2015,27 @@ class _FocusPageState extends State<FocusPage>
               },
             ),
             ChoiceChip(
+              key: const ValueKey<String>('todo-filter-deferred'),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '延后搁置',
+                  en: 'Deferred',
+                  ja: '保留中',
+                  de: 'Zurueckgestellt',
+                  fr: 'Reporte',
+                  es: 'Pospuestas',
+                  ru: 'Отложено',
+                ),
+              ),
+              selected: _todoFilterMode == _TodoFilterMode.deferred,
+              onSelected: (_) {
+                setState(() {
+                  _todoFilterMode = _TodoFilterMode.deferred;
+                });
+              },
+            ),
+            ChoiceChip(
               key: const ValueKey<String>('todo-filter-completed'),
               label: Text(
                 pickUiText(
@@ -2096,7 +2140,8 @@ class _FocusPageState extends State<FocusPage>
         .where((item) {
           return switch (_todoFilterMode) {
             _TodoFilterMode.all => true,
-            _TodoFilterMode.active => !item.completed,
+            _TodoFilterMode.active => !item.completed && !item.isDeferred,
+            _TodoFilterMode.deferred => item.isDeferred,
             _TodoFilterMode.completed => item.completed,
           };
         })
@@ -2114,12 +2159,17 @@ class _FocusPageState extends State<FocusPage>
     final overdue = <TodoItem>[];
     final today = <TodoItem>[];
     final upcoming = <TodoItem>[];
+    final deferred = <TodoItem>[];
     final inbox = <TodoItem>[];
     final completed = <TodoItem>[];
 
     for (final todo in todos) {
       if (todo.completed) {
         completed.add(todo);
+        continue;
+      }
+      if (todo.isDeferred) {
+        deferred.add(todo);
         continue;
       }
       final dueAt = todo.dueAt;
@@ -2182,6 +2232,21 @@ class _FocusPageState extends State<FocusPage>
         items: _sortedTodos(upcoming),
       ),
       _TodoPlanSection(
+        key: 'todo-plan-deferred',
+        title: pickUiText(
+          i18n,
+          zh: '延后搁置',
+          en: 'Deferred',
+          ja: '保留中',
+          de: 'Zurueckgestellt',
+          fr: 'Reporte',
+          es: 'Pospuestas',
+          ru: 'Отложено',
+        ),
+        icon: Icons.snooze_rounded,
+        items: _sortedTodos(deferred),
+      ),
+      _TodoPlanSection(
         key: 'todo-plan-inbox',
         title: pickUiText(
           i18n,
@@ -2197,6 +2262,26 @@ class _FocusPageState extends State<FocusPage>
         items: _sortedTodos(inbox),
       ),
     ];
+
+    if (_todoFilterMode == _TodoFilterMode.deferred) {
+      return <_TodoPlanSection>[
+        _TodoPlanSection(
+          key: 'todo-plan-deferred',
+          title: pickUiText(
+            i18n,
+            zh: '延后搁置',
+            en: 'Deferred',
+            ja: '保留中',
+            de: 'Zurueckgestellt',
+            fr: 'Reporte',
+            es: 'Pospuestas',
+            ru: 'Отложено',
+          ),
+          icon: Icons.snooze_rounded,
+          items: _sortedTodos(deferred),
+        ),
+      ];
+    }
 
     if (_todoFilterMode == _TodoFilterMode.completed) {
       return <_TodoPlanSection>[
@@ -2371,9 +2456,19 @@ class _FocusPageState extends State<FocusPage>
     return _compareTodoManualOrder(a, b);
   }
 
+  int _todoLifecycleRank(TodoItem todo) {
+    if (todo.completed) {
+      return 2;
+    }
+    if (todo.isDeferred) {
+      return 1;
+    }
+    return 0;
+  }
+
   int _compareTodoCompletion(TodoItem a, TodoItem b) {
-    final left = a.completed ? 1 : 0;
-    final right = b.completed ? 1 : 0;
+    final left = _todoLifecycleRank(a);
+    final right = _todoLifecycleRank(b);
     return left.compareTo(right);
   }
 
@@ -2478,7 +2573,9 @@ class _FocusPageState extends State<FocusPage>
                 width: 6,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: todo.completed ? 0.55 : 1),
+                  color: accent.withValues(
+                    alpha: todo.completed ? 0.55 : (todo.isDeferred ? 0.78 : 1),
+                  ),
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -2516,6 +2613,7 @@ class _FocusPageState extends State<FocusPage>
                       spacing: 6,
                       runSpacing: 6,
                       children: <Widget>[
+                        _buildTodoStatusBadge(todo, i18n, theme),
                         _buildTodoPriorityBadge(todo, i18n, theme),
                         if (category.isNotEmpty)
                           ConstrainedBox(
@@ -3045,8 +3143,117 @@ class _FocusPageState extends State<FocusPage>
     }
   }
 
+  _TodoDraftState _todoDraftStateOf(TodoItem todo) {
+    if (todo.completed) {
+      return _TodoDraftState.completed;
+    }
+    if (todo.isDeferred) {
+      return _TodoDraftState.deferred;
+    }
+    return _TodoDraftState.active;
+  }
+
+  String _todoDraftStateLabel(AppI18n i18n, _TodoDraftState state) {
+    return switch (state) {
+      _TodoDraftState.active => pickUiText(
+        i18n,
+        zh: '进行中',
+        en: 'Active',
+        ja: '進行中',
+        de: 'Aktiv',
+        fr: 'Actives',
+        es: 'Activas',
+        ru: 'Активные',
+      ),
+      _TodoDraftState.deferred => pickUiText(
+        i18n,
+        zh: '延后搁置',
+        en: 'Deferred',
+        ja: '保留中',
+        de: 'Zurueckgestellt',
+        fr: 'Reporte',
+        es: 'Pospuestas',
+        ru: 'Отложено',
+      ),
+      _TodoDraftState.completed => pickUiText(
+        i18n,
+        zh: '已完成',
+        en: 'Completed',
+        ja: '完了',
+        de: 'Erledigt',
+        fr: 'Terminees',
+        es: 'Completadas',
+        ru: 'Выполнено',
+      ),
+    };
+  }
+
+  String _todoStatusLabel(AppI18n i18n, TodoItem todo) {
+    return _todoDraftStateLabel(i18n, _todoDraftStateOf(todo));
+  }
+
+  IconData _todoStatusIcon(TodoItem todo) {
+    if (todo.completed) {
+      return Icons.task_alt_rounded;
+    }
+    if (todo.isDeferred) {
+      return Icons.snooze_rounded;
+    }
+    return Icons.flash_on_rounded;
+  }
+
+  Color _todoStatusColor(ThemeData theme, TodoItem todo) {
+    if (todo.completed) {
+      return theme.colorScheme.secondary;
+    }
+    if (todo.isDeferred) {
+      return theme.colorScheme.tertiary;
+    }
+    return theme.colorScheme.primary;
+  }
+
+  Widget _buildTodoStatusBadge(
+    TodoItem todo,
+    AppI18n i18n,
+    ThemeData theme,
+  ) {
+    final color = _todoStatusColor(theme, todo);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: todo.completed ? 0.16 : 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(_todoStatusIcon(todo), size: 14, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              _todoStatusLabel(i18n, todo),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _todoCardColor(TodoItem todo, ThemeData theme) {
     final accent = _parseHexColor(todo.color);
+    if (accent == null && todo.isDeferred) {
+      return Color.alphaBlend(
+        theme.colorScheme.tertiaryContainer.withValues(alpha: 0.36),
+        theme.colorScheme.surfaceContainerLow,
+      );
+    }
     if (accent == null) {
       return theme.colorScheme.surfaceContainerLow;
     }
@@ -3058,7 +3265,9 @@ class _FocusPageState extends State<FocusPage>
 
   Color _todoAccentColor(ThemeData theme, TodoItem todo) {
     return _parseHexColor(todo.color) ??
-        _todoPriorityColor(theme, todo.priority);
+        (todo.completed || todo.isDeferred
+            ? _todoStatusColor(theme, todo)
+            : _todoPriorityColor(theme, todo.priority));
   }
 
   String _todoPriorityLabel(AppI18n i18n, int priority) {
@@ -3142,6 +3351,9 @@ class _FocusPageState extends State<FocusPage>
     );
     final noteController = TextEditingController(text: todo?.note ?? '');
     var priority = (todo?.priority ?? 1).clamp(0, 2).toInt();
+    var draftState = todo == null
+        ? _TodoDraftState.active
+        : _todoDraftStateOf(todo);
     var selectedColor = _parseHexColor(todo?.color);
     var dueAt = todo?.dueAt;
     var alarmEnabled = todo?.alarmEnabled ?? false;
@@ -3201,6 +3413,38 @@ class _FocusPageState extends State<FocusPage>
                         hintText: i18n.t('todoCategoryHint'),
                         border: const OutlineInputBorder(),
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '状态',
+                        en: 'Status',
+                        ja: '状態',
+                        de: 'Status',
+                        fr: 'Statut',
+                        es: 'Estado',
+                        ru: 'Статус',
+                      ),
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        for (final value in _TodoDraftState.values)
+                          ChoiceChip(
+                            key: ValueKey<String>('todo-status-${value.name}'),
+                            label: Text(_todoDraftStateLabel(i18n, value)),
+                            selected: draftState == value,
+                            onSelected: (_) {
+                              setSheetState(() {
+                                draftState = value;
+                              });
+                            },
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -3357,7 +3601,8 @@ class _FocusPageState extends State<FocusPage>
                               TodoItem(
                                 id: todo?.id,
                                 content: content,
-                                completed: todo?.completed ?? false,
+                                completed: draftState == _TodoDraftState.completed,
+                                deferred: draftState == _TodoDraftState.deferred,
                                 priority: priority,
                                 category: _normalizeOptionalText(
                                   categoryController.text,
@@ -3370,7 +3615,10 @@ class _FocusPageState extends State<FocusPage>
                                 dueAt: dueAt,
                                 alarmEnabled: alarmEnabled && dueAt != null,
                                 createdAt: todo?.createdAt ?? DateTime.now(),
-                                completedAt: todo?.completedAt,
+                                completedAt:
+                                    draftState == _TodoDraftState.completed
+                                    ? (todo?.completedAt ?? DateTime.now())
+                                    : null,
                               ),
                             );
                             Navigator.pop(sheetContext);

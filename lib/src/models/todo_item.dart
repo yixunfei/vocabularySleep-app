@@ -5,6 +5,7 @@ class TodoItem {
     this.id,
     required this.content,
     this.completed = false,
+    this.deferred = false,
     this.priority = 0,
     this.category,
     this.note,
@@ -19,6 +20,7 @@ class TodoItem {
   final int? id;
   final String content;
   final bool completed;
+  final bool deferred;
   final int priority;
   final String? category;
   final String? note;
@@ -30,11 +32,13 @@ class TodoItem {
   final DateTime? completedAt;
 
   bool get hasReminder => alarmEnabled && dueAt != null;
+  bool get isDeferred => deferred && !completed;
 
   TodoItem copyWith({
     int? id,
     String? content,
     bool? completed,
+    bool? deferred,
     int? priority,
     Object? category = _unset,
     Object? note = _unset,
@@ -49,6 +53,7 @@ class TodoItem {
       id: id ?? this.id,
       content: content ?? this.content,
       completed: completed ?? this.completed,
+      deferred: deferred ?? this.deferred,
       priority: priority ?? this.priority,
       category: identical(category, _unset)
           ? this.category
@@ -70,6 +75,7 @@ class TodoItem {
       id: (map['id'] as num?)?.toInt(),
       content: (map['content'] as String?) ?? '',
       completed: (map['completed'] as num?)?.toInt() == 1,
+      deferred: (map['deferred'] as num?)?.toInt() == 1,
       priority: (map['priority'] as num?)?.toInt() ?? 0,
       category: map['category'] as String?,
       note: map['note'] as String?,
@@ -93,6 +99,7 @@ class TodoItem {
       if (id != null) 'id': id,
       'content': content,
       'completed': completed ? 1 : 0,
+      'deferred': isDeferred ? 1 : 0,
       'priority': priority,
       'category': category,
       'note': note,

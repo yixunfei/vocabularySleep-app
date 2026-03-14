@@ -186,6 +186,41 @@ void main() {
     );
   });
 
+  test('todo deferred status persists and is cleared by completion', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    database.insertTodo(
+      TodoItem(
+        content: 'Pause until next review cycle',
+        deferred: true,
+        priority: 1,
+        createdAt: DateTime(2026, 3, 14),
+      ),
+    );
+
+    final inserted = database.getTodos().singleWhere(
+      (item) => item.content == 'Pause until next review cycle',
+    );
+    expect(inserted.isDeferred, isTrue);
+    expect(inserted.completed, isFalse);
+
+    database.updateTodo(
+      inserted.copyWith(
+        completed: true,
+        deferred: true,
+        completedAt: DateTime(2026, 3, 15),
+      ),
+    );
+
+    final updated = database.getTodos().singleWhere(
+      (item) => item.id == inserted.id,
+    );
+    expect(updated.completed, isTrue);
+    expect(updated.isDeferred, isFalse);
+  });
+
   test('deleteSafetyBackup removes an existing backup file', () async {
     final database = AppDatabaseService(WordbookImportService());
     await database.init();

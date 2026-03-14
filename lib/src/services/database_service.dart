@@ -447,6 +447,7 @@ class AppDatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         content TEXT NOT NULL,
         completed INTEGER DEFAULT 0,
+        deferred INTEGER DEFAULT 0,
         priority INTEGER DEFAULT 0,
         category TEXT,
         note TEXT,
@@ -578,6 +579,9 @@ class AppDatabaseService {
     if (!columnNames.contains('category')) {
       _db.execute('ALTER TABLE todos ADD COLUMN category TEXT;');
     }
+    if (!columnNames.contains('deferred')) {
+      _db.execute('ALTER TABLE todos ADD COLUMN deferred INTEGER DEFAULT 0;');
+    }
     if (!columnNames.contains('note')) {
       _db.execute('ALTER TABLE todos ADD COLUMN note TEXT;');
     }
@@ -606,6 +610,10 @@ class AppDatabaseService {
         }
       });
     }
+
+    _db.execute(
+      'UPDATE todos SET deferred = 0 WHERE completed = 1 AND COALESCE(deferred, 0) != 0;',
+    );
   }
 
   void ensureSpecialWordbooks() {
@@ -1467,11 +1475,13 @@ class AppDatabaseService {
     final sortOrder = item.sortOrder > 0
         ? item.sortOrder
         : _nextTodoSortOrder();
+    final normalizedDeferred = item.completed ? false : item.deferred;
     _db.execute(
-      'INSERT INTO todos (content, completed, priority, category, note, color, sort_order, due_at, alarm_enabled, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO todos (content, completed, deferred, priority, category, note, color, sort_order, due_at, alarm_enabled, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       <Object?>[
         item.content,
         item.completed ? 1 : 0,
+        normalizedDeferred ? 1 : 0,
         item.priority,
         item.category,
         item.note,
@@ -1487,11 +1497,13 @@ class AppDatabaseService {
 
   void updateTodo(TodoItem item) {
     if (item.id == null) return;
+    final normalizedDeferred = item.completed ? false : item.deferred;
     _db.execute(
-      'UPDATE todos SET content = ?, completed = ?, priority = ?, category = ?, note = ?, color = ?, sort_order = ?, due_at = ?, alarm_enabled = ?, completed_at = ? WHERE id = ?',
+      'UPDATE todos SET content = ?, completed = ?, deferred = ?, priority = ?, category = ?, note = ?, color = ?, sort_order = ?, due_at = ?, alarm_enabled = ?, completed_at = ? WHERE id = ?',
       <Object?>[
         item.content,
         item.completed ? 1 : 0,
+        normalizedDeferred ? 1 : 0,
         item.priority,
         item.category,
         item.note,

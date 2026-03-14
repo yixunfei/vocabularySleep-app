@@ -335,7 +335,9 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const ValueKey<String>('todo-editor-entry')));
+      final addTaskButton = find.widgetWithText(TextButton, 'Add task');
+      await tester.ensureVisible(addTaskButton);
+      await tester.tap(addTaskButton, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -351,7 +353,9 @@ void main() {
         'Capture UI polish and localization updates.',
       );
       await tester.tap(find.text('High'));
-      await tester.tap(find.byKey(const ValueKey<String>('todo-save-button')));
+      final saveButton = find.byKey(const ValueKey<String>('todo-save-button'));
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       expect(
@@ -368,6 +372,55 @@ void main() {
         find.byKey(const ValueKey<String>('todo-title-field')),
         findsNothing,
       );
+    });
+
+    testWidgets('focus page supports deferred todo status and filter', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final focusService = _FakeFocusService.sample();
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      final addTaskButton = find.widgetWithText(TextButton, 'Add task');
+      await tester.ensureVisible(addTaskButton);
+      await tester.tap(addTaskButton, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('todo-title-field')),
+        'Park backlog cleanup',
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('todo-status-deferred')),
+      );
+      final saveButton = find.byKey(const ValueKey<String>('todo-save-button'));
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        focusService.getTodos().any(
+          (todo) => todo.content == 'Park backlog cleanup' && todo.isDeferred,
+        ),
+        isTrue,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('todo-filter-deferred')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Park backlog cleanup'), findsOneWidget);
+      expect(find.text('Prepare review notes'), findsNothing);
     });
 
     testWidgets('focus page quick notes support voice input', (tester) async {
@@ -1908,11 +1961,17 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
 
   @override
   void saveTodo(TodoItem item) {
+    final normalized = item.copyWith(
+      deferred: item.completed ? false : item.deferred,
+      completedAt: item.completed ? item.completedAt : null,
+    );
     final index = _todos.indexWhere((todo) => todo.id == item.id);
     if (index >= 0) {
-      _todos[index] = item;
+      _todos[index] = normalized;
     } else {
-      _todos.add(item.copyWith(id: (_todos.lastOrNull?.id ?? 0) + 1));
+      _todos.add(
+        normalized.copyWith(id: (_todos.lastOrNull?.id ?? 0) + 1),
+      );
     }
     notifyListeners();
   }
@@ -1988,7 +2047,12 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     final index = _todos.indexWhere((todo) => todo.id == id);
     if (index < 0) return;
     final current = _todos[index];
-    _todos[index] = current.copyWith(completed: !current.completed);
+    final nextCompleted = !current.completed;
+    _todos[index] = current.copyWith(
+      completed: nextCompleted,
+      deferred: false,
+      completedAt: nextCompleted ? DateTime(2026, 3, 14) : null,
+    );
     notifyListeners();
   }
 

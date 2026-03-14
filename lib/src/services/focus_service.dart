@@ -603,12 +603,14 @@ class FocusService extends ChangeNotifier {
     if (!_initialized || item.content.trim().isEmpty) return;
     final normalized = item.copyWith(
       content: item.content.trim(),
+      deferred: item.completed ? false : item.deferred,
       category: (item.category ?? '').trim().isEmpty
           ? null
           : item.category!.trim(),
       note: (item.note ?? '').trim().isEmpty ? null : item.note!.trim(),
       dueAt: item.alarmEnabled ? item.dueAt : null,
       alarmEnabled: item.alarmEnabled && item.dueAt != null,
+      completedAt: item.completed ? item.completedAt : null,
     );
     if (normalized.id == null) {
       _database.insertTodo(
@@ -622,7 +624,12 @@ class FocusService extends ChangeNotifier {
 
   void updateTodo(TodoItem item) {
     if (!_initialized) return;
-    _database.updateTodo(item);
+    _database.updateTodo(
+      item.copyWith(
+        deferred: item.completed ? false : item.deferred,
+        completedAt: item.completed ? item.completedAt : null,
+      ),
+    );
     notifyListeners();
   }
 
@@ -633,6 +640,7 @@ class FocusService extends ChangeNotifier {
     _database.updateTodo(
       item.copyWith(
         completed: !item.completed,
+        deferred: false,
         completedAt: !item.completed ? DateTime.now() : null,
       ),
     );
