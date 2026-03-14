@@ -832,7 +832,7 @@ class AppDatabaseService {
     if (oldWord.isEmpty || nextWord.isEmpty) throw ArgumentError('单词不能为空');
 
     final existing = _selectOne(
-      'SELECT id, fields_json, raw_content FROM words WHERE wordbook_id = ? AND word = ?',
+      'SELECT id FROM words WHERE wordbook_id = ? AND word = ?',
       <Object?>[wordbookId, oldWord],
     );
     if (existing == null) throw StateError('单词不存在');
@@ -845,20 +845,16 @@ class AppDatabaseService {
       if (conflict != null) throw StateError('目标单词已存在');
     }
 
-    final existingFields = parseFieldItemsJson(
-      existing['fields_json']?.toString() ?? '',
-    );
     final incomingRawContent = sanitizeDisplayText(payload.rawContent);
-    final normalizedRawContent = incomingRawContent.isNotEmpty
-        ? incomingRawContent
-        : sanitizeDisplayText(existing['raw_content']?.toString() ?? '');
     final normalizedFields = mergeFieldItems(<WordFieldItem>[
-      ...existingFields,
       ...payload.fields,
-      if (normalizedRawContent.isNotEmpty)
-        ...parseSectionedContent(normalizedRawContent),
+      if (incomingRawContent.isNotEmpty)
+        ...parseSectionedContent(incomingRawContent),
     ]);
     final legacy = toLegacyFields(normalizedFields);
+    final normalizedRawContent = incomingRawContent.isNotEmpty
+        ? incomingRawContent
+        : (legacy.meaning ?? '');
 
     _db.execute(
       '''
