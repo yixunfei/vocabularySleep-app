@@ -2639,8 +2639,15 @@ class AppI18n {
     'appearanceTimerStyle': 'Timer style',
     'appearanceTimerStyleHint':
         'Choose how the focus timer looks on the focus page.',
+    'appearanceWordTransitionStyle': 'Word switch effect',
+    'appearanceWordTransitionStyleHint':
+        'Choose how the current word changes when you switch left or right.',
     'timerStyleHourglass': 'Hourglass',
     'timerStyleCountdown': 'Countdown',
+    'wordTransitionStyleNone': 'None',
+    'wordTransitionStyleSmooth': 'Smooth slide',
+    'wordTransitionStyleFade': 'Fade',
+    'wordTransitionStylePageFlip': 'Page flip',
   };
 
   static const Map<String, String> _extraZh = <String, String>{
@@ -2772,6 +2779,12 @@ class AppI18n {
   };
 
   static const Map<String, String> _focusEnhancedZh = <String, String>{
+    'appearanceWordTransitionStyle': '单词切换特效',
+    'appearanceWordTransitionStyleHint': '选择左右切换单词时的显示效果。',
+    'wordTransitionStyleNone': '无特效',
+    'wordTransitionStyleSmooth': '平滑切换',
+    'wordTransitionStyleFade': '淡入淡出',
+    'wordTransitionStylePageFlip': '仿真翻页',
     'focusTitle': '专注/放松',
     'timerTab': '计时',
     'todoTab': '待办/笔记',

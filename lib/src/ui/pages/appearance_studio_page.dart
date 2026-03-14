@@ -160,6 +160,22 @@ class AppearanceStudioPage extends StatelessWidget {
                       },
                     ),
                     SizedBox(height: controlSpacing),
+                    DropdownButtonFormField<WordPageTransitionStyle>(
+                      initialValue: config.wordPageTransitionStyle,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: i18n.t('appearanceWordTransitionStyle'),
+                        helperText: i18n.t('appearanceWordTransitionStyleHint'),
+                      ),
+                      items: _wordTransitionStyles(i18n),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        state.updateConfig(
+                          config.copyWith(wordPageTransitionStyle: value),
+                        );
+                      },
+                    ),
+                    SizedBox(height: controlSpacing),
                     DropdownButtonFormField<String>(
                       initialValue: appearance.normalizedFontFamilyKey,
                       isExpanded: true,
@@ -718,6 +734,28 @@ class AppearanceStudioPage extends StatelessWidget {
         child: Text(i18n.t('timerStyleCountdown')),
       ),
     ];
+  }
+
+  List<DropdownMenuItem<WordPageTransitionStyle>> _wordTransitionStyles(
+    AppI18n i18n,
+  ) {
+    return WordPageTransitionStyle.values
+        .map(
+          (style) => DropdownMenuItem<WordPageTransitionStyle>(
+            value: style,
+            child: Text(_wordTransitionLabel(i18n, style)),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  String _wordTransitionLabel(AppI18n i18n, WordPageTransitionStyle style) {
+    return switch (style) {
+      WordPageTransitionStyle.defaultStyle => i18n.t('wordTransitionStyleNone'),
+      WordPageTransitionStyle.smooth => i18n.t('wordTransitionStyleSmooth'),
+      WordPageTransitionStyle.fade => i18n.t('wordTransitionStyleFade'),
+      WordPageTransitionStyle.pageFlip => i18n.t('wordTransitionStylePageFlip'),
+    };
   }
 
   Widget _slider(

@@ -57,7 +57,7 @@ class WordCard extends StatelessWidget {
   final Widget? footer;
 
   Duration get _transitionDuration => switch (transitionStyle) {
-    WordPageTransitionStyle.defaultStyle => const Duration(milliseconds: 220),
+    WordPageTransitionStyle.defaultStyle => Duration.zero,
     WordPageTransitionStyle.smooth => const Duration(milliseconds: 280),
     WordPageTransitionStyle.fade => const Duration(milliseconds: 240),
     WordPageTransitionStyle.pageFlip => const Duration(milliseconds: 340),
@@ -324,26 +324,28 @@ class WordCard extends StatelessWidget {
       ),
     );
 
-    final animatedCard = ClipRect(
-      child: AnimatedSwitcher(
-        duration: _transitionDuration,
-        reverseDuration: _transitionDuration,
-        layoutBuilder: (currentChild, previousChildren) {
-          return Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              ...previousChildren,
-              ...?switch (currentChild) {
-                final child? => <Widget>[child],
-                null => null,
+    final animatedCard = transitionStyle == WordPageTransitionStyle.defaultStyle
+        ? cardContent
+        : ClipRect(
+            child: AnimatedSwitcher(
+              duration: _transitionDuration,
+              reverseDuration: _transitionDuration,
+              layoutBuilder: (currentChild, previousChildren) {
+                return Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    ...previousChildren,
+                    ...?switch (currentChild) {
+                      final child? => <Widget>[child],
+                      null => null,
+                    },
+                  ],
+                );
               },
-            ],
+              transitionBuilder: _buildTransition,
+              child: cardContent,
+            ),
           );
-        },
-        transitionBuilder: _buildTransition,
-        child: cardContent,
-      ),
-    );
 
     if (!enableWordSwipe) return animatedCard;
 
