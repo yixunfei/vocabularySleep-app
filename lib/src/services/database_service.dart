@@ -718,7 +718,9 @@ class AppDatabaseService {
       'loading built-in wordbook on demand',
       data: <String, Object?>{'path': path, 'assetPath': target.assetPath},
     );
-    final content = await rootBundle.loadString(target.assetPath);
+    final bundleData = await rootBundle.load(target.assetPath);
+    final bytes = bundleData.buffer.asUint8List();
+    final content = _decodeBuiltInWordbookAsset(target.assetPath, bytes);
     final entries = await _importService.parseJsonTextAsync(content);
     final imported = await importWordbook(
       sourcePath: target.path,
@@ -1237,7 +1239,7 @@ class AppDatabaseService {
               .where(
                 (path) =>
                     path.startsWith(_dictAssetPrefix) &&
-                    path.toLowerCase().endsWith('.json'),
+                    _isBuiltInWordbookAsset(path),
               )
               .toList(growable: false)
             ..sort();
@@ -1249,13 +1251,31 @@ class AppDatabaseService {
   }
 
   _BuiltInWordbookConfig _buildBuiltInConfigFromAsset(String assetPath) {
-    final filename = p.basenameWithoutExtension(assetPath).trim();
-    final baseName = filename.isEmpty ? 'dict' : filename;
+    final filename = p.basename(assetPath).trim();
+    final normalizedFilename = filename.toLowerCase().endsWith('.json.gz')
+        ? filename.substring(0, filename.length - '.json.gz'.length)
+        : p.basenameWithoutExtension(filename);
+    final baseName = normalizedFilename.trim().isEmpty
+        ? 'dict'
+        : normalizedFilename.trim();
     return _BuiltInWordbookConfig(
       path: '$_dictBuiltinPathPrefix$baseName',
       name: baseName,
       assetPath: assetPath,
     );
+  }
+
+  bool _isBuiltInWordbookAsset(String assetPath) {
+    final normalized = assetPath.toLowerCase();
+    return normalized.endsWith('.json') || normalized.endsWith('.json.gz');
+  }
+
+  String _decodeBuiltInWordbookAsset(String assetPath, List<int> bytes) {
+    final normalized = assetPath.toLowerCase();
+    final decodedBytes = normalized.endsWith('.json.gz')
+        ? gzip.decode(bytes)
+        : bytes;
+    return utf8.decode(decodedBytes);
   }
 
   void _removeObsoleteBuiltInWordbooks(Set<String> targetBuiltinPaths) {
