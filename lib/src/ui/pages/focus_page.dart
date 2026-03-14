@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -762,6 +763,7 @@ class _FocusPageState extends State<FocusPage>
                     label: i18n.t('focusMinutes'),
                     totalSeconds: config.focusDurationSeconds,
                     i18n: i18n,
+                    presetMinutes: const <int>[15, 20, 25, 30, 45, 60],
                     onChanged: (seconds) => focus.saveConfig(
                       config.copyWith(focusDurationSeconds: seconds),
                     ),
@@ -773,6 +775,7 @@ class _FocusPageState extends State<FocusPage>
                     label: i18n.t('breakMinutes'),
                     totalSeconds: config.breakDurationSeconds,
                     i18n: i18n,
+                    presetMinutes: const <int>[3, 5, 8, 10, 15, 20],
                     onChanged: (seconds) => focus.saveConfig(
                       config.copyWith(breakDurationSeconds: seconds),
                     ),
@@ -825,10 +828,10 @@ class _FocusPageState extends State<FocusPage>
     required String label,
     required int totalSeconds,
     required AppI18n i18n,
+    required List<int> presetMinutes,
     required ValueChanged<int> onChanged,
   }) {
     final theme = Theme.of(context);
-    final parts = _DurationParts.fromSeconds(totalSeconds);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -848,55 +851,44 @@ class _FocusPageState extends State<FocusPage>
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 10),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: <Widget>[
-                Expanded(
-                  child: _buildDurationStepper(
-                    label: i18n.t('hoursLabel'),
-                    unit: i18n.t('hoursUnit'),
-                    value: parts.hours,
-                    onChanged: (value) => onChanged(
-                      _DurationParts(
-                        hours: value,
-                        minutes: parts.minutes,
-                        seconds: parts.seconds,
-                      ).toSeconds(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildDurationStepper(
-                    label: i18n.t('minutesLabel'),
-                    unit: i18n.t('minutesUnit'),
-                    value: parts.minutes,
-                    max: 59,
-                    onChanged: (value) => onChanged(
-                      _DurationParts(
-                        hours: parts.hours,
-                        minutes: value,
-                        seconds: parts.seconds,
-                      ).toSeconds(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildDurationStepper(
-                    label: i18n.t('secondsLabel'),
-                    unit: i18n.t('secondsUnit'),
-                    value: parts.seconds,
-                    max: 59,
-                    onChanged: (value) => onChanged(
-                      _DurationParts(
-                        hours: parts.hours,
-                        minutes: parts.minutes,
-                        seconds: value,
-                      ).toSeconds(),
-                    ),
-                  ),
-                ),
+                ...presetMinutes.map((minutes) {
+                  final targetSeconds = minutes * 60;
+                  return ChoiceChip(
+                    label: Text('$minutes${i18n.t('minutesUnit')}'),
+                    selected: totalSeconds == targetSeconds,
+                    onSelected: (_) => onChanged(targetSeconds),
+                  );
+                }),
               ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: () => _showDurationPicker(
+                  title: label,
+                  totalSeconds: totalSeconds,
+                  i18n: i18n,
+                  onChanged: onChanged,
+                ),
+                icon: const Icon(Icons.tune_rounded),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '滚轮精调',
+                    en: 'Wheel picker',
+                    ja: 'ホイールで調整',
+                    de: 'Mit Rad anpassen',
+                    fr: 'Ajuster avec la molette',
+                    es: 'Ajustar con rueda',
+                    ru: 'Настроить колесом',
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -904,93 +896,67 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Widget _buildDurationStepper({
-    required String label,
-    required String unit,
-    required int value,
-    int min = 0,
-    int max = 23,
+  Future<void> _showDurationPicker({
+    required String title,
+    required int totalSeconds,
+    required AppI18n i18n,
     required ValueChanged<int> onChanged,
-  }) {
-    final theme = Theme.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 72;
-
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Column(
-              children: <Widget>[
-                Text(
-                  label,
-                  maxLines: compact ? 2 : 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelMedium,
-                ),
-                const SizedBox(height: 4),
-                if (compact) ...<Widget>[
-                  InkResponse(
-                    onTap: value < max ? () => onChanged(value + 1) : null,
-                    radius: 16,
-                    child: const Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
+  }) async {
+    var draft = Duration(seconds: totalSeconds.clamp(1, 359999));
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(title, style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
                   Text(
-                    '$value',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleSmall,
+                    _formatUnitSummary(draft.inSeconds, i18n),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  Text(unit, style: theme.textTheme.labelSmall),
-                  const SizedBox(height: 4),
-                  InkResponse(
-                    onTap: value > min ? () => onChanged(value - 1) : null,
-                    radius: 16,
-                    child: const Icon(
-                      Icons.remove_circle_outline_rounded,
-                      size: 14,
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 220,
+                    child: CupertinoTimerPicker(
+                      mode: CupertinoTimerPickerMode.hms,
+                      initialTimerDuration: draft,
+                      onTimerDurationChanged: (value) {
+                        setSheetState(() {
+                          draft = value;
+                        });
+                      },
                     ),
                   ),
-                ] else
+                  const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: <Widget>[
-                      InkResponse(
-                        onTap: value > min ? () => onChanged(value - 1) : null,
-                        child: const Icon(
-                          Icons.remove_circle_outline_rounded,
-                          size: 18,
-                        ),
+                      TextButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        child: Text(i18n.t('cancel')),
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          '$value $unit',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.titleSmall,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      InkResponse(
-                        onTap: value < max ? () => onChanged(value + 1) : null,
-                        child: const Icon(
-                          Icons.add_circle_outline_rounded,
-                          size: 18,
-                        ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: () {
+                          onChanged(draft.inSeconds.clamp(1, 359999));
+                          Navigator.of(sheetContext).pop();
+                        },
+                        child: Text(i18n.t('save')),
                       ),
                     ],
                   ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
