@@ -51,6 +51,7 @@ class _FocusPageState extends State<FocusPage>
   double _notesDrawerProgress = 0;
   bool _notesDrawerDragging = false;
   bool _reminderDialogVisible = false;
+  bool _ambientLauncherExpanded = false;
 
   @override
   void initState() {
@@ -183,13 +184,6 @@ class _FocusPageState extends State<FocusPage>
         return Scaffold(
           appBar: AppBar(
             title: Text(i18n.t('focusTitle')),
-            actions: <Widget>[
-              IconButton(
-                tooltip: i18n.t('ambientAudio'),
-                onPressed: () => _openAmbientAudioSheet(context),
-                icon: const Icon(Icons.music_note_rounded),
-              ),
-            ],
             bottom: TabBar(
               controller: _tabController,
               tabs: <Widget>[
@@ -225,36 +219,168 @@ class _FocusPageState extends State<FocusPage>
     return LayoutBuilder(
       builder: (context, constraints) {
         final widthTier = AppWidthBreakpoints.tierFor(constraints.maxWidth);
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: <Widget>[
-              _buildAmbientSummaryCard(state, i18n, widthTier),
-              const SizedBox(height: 12),
-              _buildTimerDisplay(
-                timerState,
-                config,
+        return Stack(
+          children: <Widget>[
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: <Widget>[
+                  _buildTimerDisplay(
+                    timerState,
+                    config,
+                    i18n,
+                    widthTier,
+                    appearance.normalizedTimerStyle,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTimerControls(focus, timerState, i18n),
+                  const SizedBox(height: 20),
+                  _buildTimerConfig(
+                    focus,
+                    config,
+                    i18n,
+                    constraints.maxWidth,
+                    widthTier,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTodayStats(
+                    focus,
+                    i18n,
+                    constraints.maxWidth,
+                    widthTier,
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: _buildAmbientLauncher(
+                state,
                 i18n,
                 widthTier,
-                appearance.normalizedTimerStyle,
-              ),
-              const SizedBox(height: 20),
-              _buildTimerControls(focus, timerState, i18n),
-              const SizedBox(height: 20),
-              _buildTimerConfig(
-                focus,
-                config,
-                i18n,
                 constraints.maxWidth,
-                widthTier,
               ),
-              const SizedBox(height: 20),
-              _buildTodayStats(focus, i18n, constraints.maxWidth, widthTier),
-            ],
-          ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildAmbientLauncher(
+    AppState state,
+    AppI18n i18n,
+    AppWidthTier widthTier,
+    double maxWidth,
+  ) {
+    final theme = Theme.of(context);
+    final enabledSources = state.ambientSources
+        .where((source) => source.enabled)
+        .toList(growable: false);
+    final activeCount = enabledSources.length;
+    final panelWidth = math.min(
+      maxWidth - 32,
+      widthTier.isCompact ? 280.0 : 320.0,
+    );
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: _ambientLauncherExpanded
+          ? SizedBox(
+              key: const ValueKey<String>('ambient-launcher-panel'),
+              width: panelWidth,
+              child: Stack(
+                children: <Widget>[
+                  _buildAmbientSummaryCard(state, i18n, widthTier),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: IconButton.filledTonal(
+                      key: const ValueKey<String>('ambient-launcher-close'),
+                      tooltip: i18n.t('close'),
+                      onPressed: () {
+                        setState(() {
+                          _ambientLauncherExpanded = false;
+                        });
+                      },
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Material(
+              key: const ValueKey<String>('ambient-launcher-toggle'),
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: () {
+                  setState(() {
+                    _ambientLauncherExpanded = true;
+                  });
+                },
+                child: Ink(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.surfaceContainerHigh.withValues(
+                      alpha: 0.94,
+                    ),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.8,
+                      ),
+                    ),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: theme.colorScheme.shadow.withValues(alpha: 0.16),
+                        blurRadius: 22,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Icon(
+                        activeCount > 0
+                            ? Icons.surround_sound_rounded
+                            : Icons.music_note_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                      if (activeCount > 0)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '$activeCount',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 

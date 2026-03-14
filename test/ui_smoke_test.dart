@@ -441,6 +441,41 @@ void main() {
       expect(find.text('Timer'), findsOneWidget);
     });
 
+    testWidgets('focus page expands floating ambient launcher', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('ambient-launcher-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('ambient-launcher-panel')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('ambient-launcher-close')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('ambient-launcher-close')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('ambient-launcher-toggle')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('focus page filters active and completed todos', (
       tester,
     ) async {
