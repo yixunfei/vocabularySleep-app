@@ -517,6 +517,82 @@ void main() {
       expect(find.text('Ship focus page polish'), findsNothing);
     });
 
+    testWidgets('focus page groups todos in plan view and toggles list view', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day);
+      final tomorrowStart = todayStart.add(const Duration(days: 1));
+      final focusService = _FakeFocusService(
+        todos: <TodoItem>[
+          TodoItem(
+            id: 1,
+            content: 'Rescue overdue draft',
+            priority: 2,
+            dueAt: todayStart.subtract(const Duration(hours: 2)),
+          ),
+          TodoItem(
+            id: 2,
+            content: 'Ship today summary',
+            dueAt: todayStart.add(const Duration(hours: 10)),
+          ),
+          TodoItem(
+            id: 3,
+            content: 'Prepare next review',
+            dueAt: tomorrowStart.add(const Duration(hours: 9)),
+          ),
+          const TodoItem(id: 4, content: 'Inbox capture'),
+          const TodoItem(id: 5, content: 'Closed loop', completed: true),
+        ],
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+      );
+
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('todo-plan-overdue')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('todo-plan-today')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('todo-plan-upcoming')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('todo-plan-inbox')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('todo-plan-completed')),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('todo-view-list')),
+      );
+      await tester.tap(find.byKey(const ValueKey<String>('todo-view-list')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('todo-plan-overdue')),
+        findsNothing,
+      );
+      expect(find.text('Rescue overdue draft'), findsOneWidget);
+      expect(find.text('Ship today summary'), findsOneWidget);
+    });
+
     testWidgets('focus lock overlay renders when focus is locked', (
       tester,
     ) async {

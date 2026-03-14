@@ -20,7 +20,25 @@ enum _TodoSortMode { manual, priority, category }
 
 enum _TodoFilterMode { all, active, completed }
 
+enum _TodoViewMode { plan, list }
+
 enum _NoteVoiceInputState { idle, starting, recording, transcribing }
+
+class _TodoPlanSection {
+  const _TodoPlanSection({
+    required this.key,
+    required this.title,
+    required this.icon,
+    required this.items,
+    this.highlight = false,
+  });
+
+  final String key;
+  final String title;
+  final IconData icon;
+  final List<TodoItem> items;
+  final bool highlight;
+}
 
 class FocusPage extends StatefulWidget {
   const FocusPage({super.key});
@@ -48,6 +66,7 @@ class _FocusPageState extends State<FocusPage>
   bool _noteSelectionMode = false;
   _TodoSortMode _todoSortMode = _TodoSortMode.manual;
   _TodoFilterMode _todoFilterMode = _TodoFilterMode.all;
+  _TodoViewMode _todoViewMode = _TodoViewMode.plan;
   double _notesDrawerProgress = 0;
   bool _notesDrawerDragging = false;
   bool _reminderDialogVisible = false;
@@ -1485,9 +1504,11 @@ class _FocusPageState extends State<FocusPage>
     final theme = Theme.of(context);
     final filteredTodos = _filterTodos(todos);
     final displayTodos = _sortedTodos(filteredTodos);
+    final planSections = _buildTodoPlanSections(filteredTodos, i18n);
     final manualSort =
         _todoSortMode == _TodoSortMode.manual &&
         _todoFilterMode == _TodoFilterMode.all;
+    final metrics = _buildTodoMetrics(todos);
 
     return Card(
       child: Padding(
@@ -1512,6 +1533,8 @@ class _FocusPageState extends State<FocusPage>
               ],
             ),
             const SizedBox(height: 8),
+            _buildTodoMetricsStrip(metrics, i18n),
+            const SizedBox(height: 12),
             TextField(
               key: const ValueKey<String>('todo-editor-entry'),
               readOnly: true,
@@ -1529,6 +1552,50 @@ class _FocusPageState extends State<FocusPage>
               physics: const BouncingScrollPhysics(),
               child: Row(
                 children: <Widget>[
+                  ChoiceChip(
+                    key: const ValueKey<String>('todo-view-plan'),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '计划视图',
+                        en: 'Plan view',
+                        ja: '計画ビュー',
+                        de: 'Planansicht',
+                        fr: 'Vue planning',
+                        es: 'Vista de plan',
+                        ru: 'План',
+                      ),
+                    ),
+                    selected: _todoViewMode == _TodoViewMode.plan,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoViewMode = _TodoViewMode.plan;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    key: const ValueKey<String>('todo-view-list'),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '列表视图',
+                        en: 'List view',
+                        ja: 'リストビュー',
+                        de: 'Listenansicht',
+                        fr: 'Vue liste',
+                        es: 'Vista de lista',
+                        ru: 'Список',
+                      ),
+                    ),
+                    selected: _todoViewMode == _TodoViewMode.list,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoViewMode = _TodoViewMode.list;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
                   ChoiceChip(
                     key: const ValueKey<String>('todo-filter-all'),
                     label: Text(
@@ -1595,35 +1662,37 @@ class _FocusPageState extends State<FocusPage>
                     },
                   ),
                   const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: Text(i18n.t('dragToReorder')),
-                    selected: manualSort,
-                    onSelected: (_) {
-                      setState(() {
-                        _todoSortMode = _TodoSortMode.manual;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: Text(i18n.t('todoPriority')),
-                    selected: _todoSortMode == _TodoSortMode.priority,
-                    onSelected: (_) {
-                      setState(() {
-                        _todoSortMode = _TodoSortMode.priority;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: Text(i18n.t('todoCategory')),
-                    selected: _todoSortMode == _TodoSortMode.category,
-                    onSelected: (_) {
-                      setState(() {
-                        _todoSortMode = _TodoSortMode.category;
-                      });
-                    },
-                  ),
+                  if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
+                    ChoiceChip(
+                      label: Text(i18n.t('dragToReorder')),
+                      selected: manualSort,
+                      onSelected: (_) {
+                        setState(() {
+                          _todoSortMode = _TodoSortMode.manual;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text(i18n.t('todoPriority')),
+                      selected: _todoSortMode == _TodoSortMode.priority,
+                      onSelected: (_) {
+                        setState(() {
+                          _todoSortMode = _TodoSortMode.priority;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text(i18n.t('todoCategory')),
+                      selected: _todoSortMode == _TodoSortMode.category,
+                      onSelected: (_) {
+                        setState(() {
+                          _todoSortMode = _TodoSortMode.category;
+                        });
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1638,7 +1707,9 @@ class _FocusPageState extends State<FocusPage>
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: displayTodos.isEmpty
+              child: _todoViewMode == _TodoViewMode.plan
+                  ? _buildTodoPlanView(focus, planSections, i18n)
+                  : displayTodos.isEmpty
                   ? Center(child: Text(i18n.t('todosEmpty')))
                   : manualSort
                   ? _buildReorderableTodosList(focus, displayTodos, i18n)
@@ -1646,6 +1717,147 @@ class _FocusPageState extends State<FocusPage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Map<String, int> _buildTodoMetrics(List<TodoItem> todos) {
+    final today = DateTime.now();
+    final todayStart = _startOfDay(today);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+    var active = 0;
+    var completed = 0;
+    var overdue = 0;
+    var todayCount = 0;
+
+    for (final todo in todos) {
+      if (todo.completed) {
+        completed += 1;
+        continue;
+      }
+      active += 1;
+      final dueAt = todo.dueAt;
+      if (dueAt == null) {
+        continue;
+      }
+      if (dueAt.isBefore(todayStart)) {
+        overdue += 1;
+      } else if (dueAt.isBefore(tomorrowStart)) {
+        todayCount += 1;
+      }
+    }
+
+    return <String, int>{
+      'active': active,
+      'today': todayCount,
+      'overdue': overdue,
+      'completed': completed,
+    };
+  }
+
+  Widget _buildTodoMetricsStrip(Map<String, int> metrics, AppI18n i18n) {
+    final theme = Theme.of(context);
+    final items = <({String key, String label, IconData icon, Color color})>[
+      (
+        key: 'active',
+        label: pickUiText(
+          i18n,
+          zh: '进行中',
+          en: 'Active',
+          ja: '進行中',
+          de: 'Aktiv',
+          fr: 'Actives',
+          es: 'Activas',
+          ru: 'Активные',
+        ),
+        icon: Icons.flash_on_rounded,
+        color: theme.colorScheme.primary,
+      ),
+      (
+        key: 'today',
+        label: pickUiText(
+          i18n,
+          zh: '今天到期',
+          en: 'Due today',
+          ja: '今日まで',
+          de: 'Heute faellig',
+          fr: 'Aujourd’hui',
+          es: 'Para hoy',
+          ru: 'На сегодня',
+        ),
+        icon: Icons.today_rounded,
+        color: theme.colorScheme.tertiary,
+      ),
+      (
+        key: 'overdue',
+        label: pickUiText(
+          i18n,
+          zh: '已逾期',
+          en: 'Overdue',
+          ja: '期限超過',
+          de: 'Ueberfaellig',
+          fr: 'En retard',
+          es: 'Vencidas',
+          ru: 'Просрочено',
+        ),
+        icon: Icons.warning_amber_rounded,
+        color: theme.colorScheme.error,
+      ),
+      (
+        key: 'completed',
+        label: pickUiText(
+          i18n,
+          zh: '已完成',
+          en: 'Done',
+          ja: '完了',
+          de: 'Erledigt',
+          fr: 'Terminees',
+          es: 'Hechas',
+          ru: 'Готово',
+        ),
+        icon: Icons.task_alt_rounded,
+        color: theme.colorScheme.secondary,
+      ),
+    ];
+
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return Container(
+            width: 112,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: item.color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: item.color.withValues(alpha: 0.18)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Icon(item.icon, size: 18, color: item.color),
+                Text(
+                  '${metrics[item.key] ?? 0}',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -1674,6 +1886,254 @@ class _FocusPageState extends State<FocusPage>
           };
         })
         .toList(growable: false);
+  }
+
+  List<_TodoPlanSection> _buildTodoPlanSections(
+    List<TodoItem> todos,
+    AppI18n i18n,
+  ) {
+    final now = DateTime.now();
+    final todayStart = _startOfDay(now);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+
+    final overdue = <TodoItem>[];
+    final today = <TodoItem>[];
+    final upcoming = <TodoItem>[];
+    final inbox = <TodoItem>[];
+    final completed = <TodoItem>[];
+
+    for (final todo in todos) {
+      if (todo.completed) {
+        completed.add(todo);
+        continue;
+      }
+      final dueAt = todo.dueAt;
+      if (dueAt == null) {
+        inbox.add(todo);
+      } else if (dueAt.isBefore(todayStart)) {
+        overdue.add(todo);
+      } else if (dueAt.isBefore(tomorrowStart)) {
+        today.add(todo);
+      } else {
+        upcoming.add(todo);
+      }
+    }
+
+    final sections = <_TodoPlanSection>[
+      _TodoPlanSection(
+        key: 'todo-plan-overdue',
+        title: pickUiText(
+          i18n,
+          zh: '逾期待处理',
+          en: 'Overdue',
+          ja: '期限超過',
+          de: 'Ueberfaellig',
+          fr: 'En retard',
+          es: 'Vencidas',
+          ru: 'Просрочено',
+        ),
+        icon: Icons.warning_amber_rounded,
+        items: _sortedTodos(overdue),
+        highlight: overdue.isNotEmpty,
+      ),
+      _TodoPlanSection(
+        key: 'todo-plan-today',
+        title: pickUiText(
+          i18n,
+          zh: '今天计划',
+          en: 'Today',
+          ja: '今日',
+          de: 'Heute',
+          fr: 'Aujourd’hui',
+          es: 'Hoy',
+          ru: 'Сегодня',
+        ),
+        icon: Icons.today_rounded,
+        items: _sortedTodos(today),
+      ),
+      _TodoPlanSection(
+        key: 'todo-plan-upcoming',
+        title: pickUiText(
+          i18n,
+          zh: '接下来',
+          en: 'Upcoming',
+          ja: 'これから',
+          de: 'Als naechstes',
+          fr: 'A venir',
+          es: 'Proximas',
+          ru: 'Дальше',
+        ),
+        icon: Icons.upcoming_rounded,
+        items: _sortedTodos(upcoming),
+      ),
+      _TodoPlanSection(
+        key: 'todo-plan-inbox',
+        title: pickUiText(
+          i18n,
+          zh: '收件箱',
+          en: 'Inbox',
+          ja: '受信箱',
+          de: 'Inbox',
+          fr: 'Boite de reception',
+          es: 'Bandeja',
+          ru: 'Входящие',
+        ),
+        icon: Icons.inbox_rounded,
+        items: _sortedTodos(inbox),
+      ),
+    ];
+
+    if (_todoFilterMode == _TodoFilterMode.completed) {
+      return <_TodoPlanSection>[
+        _TodoPlanSection(
+          key: 'todo-plan-completed',
+          title: pickUiText(
+            i18n,
+            zh: '已完成',
+            en: 'Completed',
+            ja: '完了',
+            de: 'Erledigt',
+            fr: 'Terminees',
+            es: 'Completadas',
+            ru: 'Выполнено',
+          ),
+          icon: Icons.task_alt_rounded,
+          items: _sortedTodos(completed),
+        ),
+      ];
+    }
+
+    final visible = sections
+        .where((section) => section.items.isNotEmpty)
+        .toList(growable: true);
+    if (_todoFilterMode == _TodoFilterMode.all && completed.isNotEmpty) {
+      visible.add(
+        _TodoPlanSection(
+          key: 'todo-plan-completed',
+          title: pickUiText(
+            i18n,
+            zh: '已完成',
+            en: 'Completed',
+            ja: '完了',
+            de: 'Erledigt',
+            fr: 'Terminees',
+            es: 'Completadas',
+            ru: 'Выполнено',
+          ),
+          icon: Icons.task_alt_rounded,
+          items: _sortedTodos(completed),
+        ),
+      );
+    }
+    return visible;
+  }
+
+  Widget _buildTodoPlanView(
+    FocusService focus,
+    List<_TodoPlanSection> sections,
+    AppI18n i18n,
+  ) {
+    if (sections.isEmpty) {
+      return Center(
+        child: Text(
+          pickUiText(
+            i18n,
+            zh: '当前筛选下还没有任务，先添加一个今天要完成的小目标吧。',
+            en: 'No tasks match this view yet. Add one small goal for today.',
+            ja: 'この表示にはまだタスクがありません。まずは今日の小さな目標を追加しましょう。',
+            de: 'In dieser Ansicht gibt es noch keine Aufgaben. Fuege zuerst ein kleines Ziel fuer heute hinzu.',
+            fr: 'Aucune tache pour cette vue. Ajoutez d’abord un petit objectif pour aujourd’hui.',
+            es: 'Aun no hay tareas en esta vista. Agrega primero un pequeno objetivo para hoy.',
+            ru: 'Для этого представления пока нет задач. Добавьте сначала одну небольшую цель на сегодня.',
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: List<Widget>.generate(sections.length, (index) {
+          final section = sections[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == sections.length - 1 ? 0 : 12,
+            ),
+            child: _buildTodoPlanSection(focus, section, i18n),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildTodoPlanSection(
+    FocusService focus,
+    _TodoPlanSection section,
+    AppI18n i18n,
+  ) {
+    final theme = Theme.of(context);
+    final tint = section.highlight
+        ? theme.colorScheme.error
+        : theme.colorScheme.primary;
+
+    return Container(
+      key: ValueKey<String>(section.key),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: section.highlight ? 0.08 : 0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tint.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(section.icon, size: 18, color: tint),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  section.title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: tint.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${section.items.length}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: tint,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...List<Widget>.generate(section.items.length, (index) {
+            final todo = section.items[index];
+            return _buildTodoCard(
+              focus: focus,
+              todo: todo,
+              i18n: i18n,
+              index: index,
+              showDragHandle: false,
+            );
+          }),
+        ],
+      ),
+    );
   }
 
   int _compareTodosByPriority(TodoItem a, TodoItem b) {
@@ -1785,6 +2245,7 @@ class _FocusPageState extends State<FocusPage>
     final theme = Theme.of(context);
     final accent = _todoAccentColor(theme, todo);
     final category = (todo.category ?? '').trim();
+    final scheduleBadge = _buildTodoScheduleBadge(todo, i18n, theme);
 
     return Card(
       key: ValueKey<int>(todo.id ?? index),
@@ -1836,15 +2297,21 @@ class _FocusPageState extends State<FocusPage>
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
                       children: <Widget>[
                         _buildTodoPriorityBadge(todo, i18n, theme),
-                        if (category.isNotEmpty) ...<Widget>[
-                          const SizedBox(width: 6),
-                          Flexible(
+                        if (category.isNotEmpty)
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 148),
                             child: _buildTodoCategoryBadge(category, theme),
                           ),
-                        ],
+                        if (scheduleBadge != null)
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 176),
+                            child: scheduleBadge,
+                          ),
                       ],
                     ),
                   ],
@@ -1936,6 +2403,75 @@ class _FocusPageState extends State<FocusPage>
         overflow: TextOverflow.ellipsis,
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSecondaryContainer,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildTodoScheduleBadge(
+    TodoItem todo,
+    AppI18n i18n,
+    ThemeData theme,
+  ) {
+    final dueAt = todo.dueAt;
+    if (dueAt == null) {
+      return null;
+    }
+
+    final now = DateTime.now();
+    final todayStart = _startOfDay(now);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+    final text = dueAt.isBefore(todayStart)
+        ? pickUiText(
+            i18n,
+            zh: '已逾期',
+            en: 'Overdue',
+            ja: '期限超過',
+            de: 'Ueberfaellig',
+            fr: 'En retard',
+            es: 'Vencida',
+            ru: 'Просрочено',
+          )
+        : dueAt.isBefore(tomorrowStart)
+        ? pickUiText(
+            i18n,
+            zh: '今天 ${_formatTodoTime(dueAt)}',
+            en: 'Today ${_formatTodoTime(dueAt)}',
+            ja: '今日 ${_formatTodoTime(dueAt)}',
+            de: 'Heute ${_formatTodoTime(dueAt)}',
+            fr: 'Aujourd’hui ${_formatTodoTime(dueAt)}',
+            es: 'Hoy ${_formatTodoTime(dueAt)}',
+            ru: 'Сегодня ${_formatTodoTime(dueAt)}',
+          )
+        : _isSameDay(dueAt, tomorrowStart)
+        ? pickUiText(
+            i18n,
+            zh: '明天 ${_formatTodoTime(dueAt)}',
+            en: 'Tomorrow ${_formatTodoTime(dueAt)}',
+            ja: '明日 ${_formatTodoTime(dueAt)}',
+            de: 'Morgen ${_formatTodoTime(dueAt)}',
+            fr: 'Demain ${_formatTodoTime(dueAt)}',
+            es: 'Manana ${_formatTodoTime(dueAt)}',
+            ru: 'Завтра ${_formatTodoTime(dueAt)}',
+          )
+        : _formatTodoDateTime(dueAt);
+    final color = dueAt.isBefore(todayStart)
+        ? theme.colorScheme.error
+        : theme.colorScheme.tertiary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: todo.completed ? 0.10 : 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: color,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -2341,6 +2877,23 @@ class _FocusPageState extends State<FocusPage>
       alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
     );
     return '$date $time';
+  }
+
+  String _formatTodoTime(DateTime value) {
+    return MaterialLocalizations.of(context).formatTimeOfDay(
+      TimeOfDay.fromDateTime(value),
+      alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
+    );
+  }
+
+  DateTime _startOfDay(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
+
+  bool _isSameDay(DateTime left, DateTime right) {
+    return left.year == right.year &&
+        left.month == right.month &&
+        left.day == right.day;
   }
 
   String? _normalizeOptionalText(String value) {
