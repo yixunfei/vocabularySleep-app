@@ -1516,8 +1516,8 @@ class _FocusPageState extends State<FocusPage>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final topSectionMaxHeight = constraints.maxHeight.isFinite
-              ? math.min(248.0, math.max(168.0, constraints.maxHeight * 0.36))
-              : 248.0;
+              ? math.min(212.0, math.max(144.0, constraints.maxHeight * 0.30))
+              : 212.0;
 
           return Padding(
             padding: const EdgeInsets.all(12),
@@ -1539,6 +1539,20 @@ class _FocusPageState extends State<FocusPage>
                                 i18n.t('todoTab'),
                                 style: theme.textTheme.titleMedium,
                               ),
+                            ),
+                            TextButton(
+                              onPressed: () => _showTodoEditor(focus, i18n),
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 0,
+                                ),
+                                minimumSize: const Size(0, 32),
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(i18n.t('addTodo')),
                             ),
                             IconButton(
                               key: const ValueKey<String>(
@@ -1600,18 +1614,9 @@ class _FocusPageState extends State<FocusPage>
                             suffixIcon: const Icon(Icons.open_in_full_rounded),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12,
-                              vertical: 12,
+                              vertical: 10,
                             ),
                             border: const OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            onPressed: () => _showTodoEditor(focus, i18n),
-                            icon: const Icon(Icons.playlist_add_rounded),
-                            label: Text(i18n.t('addTodo')),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1834,42 +1839,39 @@ class _FocusPageState extends State<FocusPage>
     final theme = Theme.of(context);
     final compact = MediaQuery.sizeOf(context).width < 420;
     return Container(
-      constraints: BoxConstraints(minWidth: compact ? 88 : 96),
+      constraints: BoxConstraints(minWidth: compact ? 72 : 84),
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 12,
-        vertical: compact ? 8 : 10,
+        horizontal: compact ? 9 : 11,
+        vertical: compact ? 7 : 8,
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
-      child: Column(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
-              Text(
-                '$value',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
           Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
+            '$value',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: compact ? 60 : 72),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -1920,38 +1922,30 @@ class _FocusPageState extends State<FocusPage>
     return Container(
       width: double.infinity,
       key: const ValueKey<String>('todo-controls'),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
-      child: ChipTheme(
-        data: ChipTheme.of(context).copyWith(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-          labelStyle: theme.textTheme.bodySmall,
-        ),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: <Widget>[
-            _buildTodoControlLabel(
-              pickUiText(
-                i18n,
-                zh: '视图',
-                en: 'View',
-                ja: '表示',
-                de: 'Ansicht',
-                fr: 'Vue',
-                es: 'Vista',
-                ru: 'Вид',
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildTodoControlSection(
+            label: pickUiText(
+              i18n,
+              zh: '视图',
+              en: 'View',
+              ja: '表示',
+              de: 'Ansicht',
+              fr: 'Vue',
+              es: 'Vista',
+              ru: 'Вид',
             ),
-            ChoiceChip(
-              key: const ValueKey<String>('todo-view-plan'),
-              label: Text(
-                pickUiText(
+            children: <Widget>[
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-view-plan'),
+                label: pickUiText(
                   i18n,
                   zh: '计划视图',
                   en: 'Plan view',
@@ -1961,18 +1955,16 @@ class _FocusPageState extends State<FocusPage>
                   es: 'Vista de plan',
                   ru: 'План',
                 ),
+                selected: _todoViewMode == _TodoViewMode.plan,
+                onSelected: () {
+                  setState(() {
+                    _todoViewMode = _TodoViewMode.plan;
+                  });
+                },
               ),
-              selected: _todoViewMode == _TodoViewMode.plan,
-              onSelected: (_) {
-                setState(() {
-                  _todoViewMode = _TodoViewMode.plan;
-                });
-              },
-            ),
-            ChoiceChip(
-              key: const ValueKey<String>('todo-view-list'),
-              label: Text(
-                pickUiText(
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-view-list'),
+                label: pickUiText(
                   i18n,
                   zh: '列表视图',
                   en: 'List view',
@@ -1982,30 +1974,31 @@ class _FocusPageState extends State<FocusPage>
                   es: 'Vista de lista',
                   ru: 'Список',
                 ),
+                selected: _todoViewMode == _TodoViewMode.list,
+                onSelected: () {
+                  setState(() {
+                    _todoViewMode = _TodoViewMode.list;
+                  });
+                },
               ),
-              selected: _todoViewMode == _TodoViewMode.list,
-              onSelected: (_) {
-                setState(() {
-                  _todoViewMode = _TodoViewMode.list;
-                });
-              },
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildTodoControlSection(
+            label: pickUiText(
+              i18n,
+              zh: '筛选',
+              en: 'Filter',
+              ja: '絞り込み',
+              de: 'Filter',
+              fr: 'Filtre',
+              es: 'Filtro',
+              ru: 'Фильтр',
             ),
-            _buildTodoControlLabel(
-              pickUiText(
-                i18n,
-                zh: '筛选',
-                en: 'Filter',
-                ja: '絞り込み',
-                de: 'Filter',
-                fr: 'Filtre',
-                es: 'Filtro',
-                ru: 'Фильтр',
-              ),
-            ),
-            ChoiceChip(
-              key: const ValueKey<String>('todo-filter-all'),
-              label: Text(
-                pickUiText(
+            children: <Widget>[
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-all'),
+                label: pickUiText(
                   i18n,
                   zh: '全部',
                   en: 'All',
@@ -2015,18 +2008,16 @@ class _FocusPageState extends State<FocusPage>
                   es: 'Todo',
                   ru: 'Все',
                 ),
+                selected: _todoFilterMode == _TodoFilterMode.all,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.all;
+                  });
+                },
               ),
-              selected: _todoFilterMode == _TodoFilterMode.all,
-              onSelected: (_) {
-                setState(() {
-                  _todoFilterMode = _TodoFilterMode.all;
-                });
-              },
-            ),
-            ChoiceChip(
-              key: const ValueKey<String>('todo-filter-active'),
-              label: Text(
-                pickUiText(
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-active'),
+                label: pickUiText(
                   i18n,
                   zh: '进行中',
                   en: 'Active',
@@ -2036,18 +2027,16 @@ class _FocusPageState extends State<FocusPage>
                   es: 'Activas',
                   ru: 'Активные',
                 ),
+                selected: _todoFilterMode == _TodoFilterMode.active,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.active;
+                  });
+                },
               ),
-              selected: _todoFilterMode == _TodoFilterMode.active,
-              onSelected: (_) {
-                setState(() {
-                  _todoFilterMode = _TodoFilterMode.active;
-                });
-              },
-            ),
-            ChoiceChip(
-              key: const ValueKey<String>('todo-filter-deferred'),
-              label: Text(
-                pickUiText(
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-deferred'),
+                label: pickUiText(
                   i18n,
                   zh: '延后搁置',
                   en: 'Deferred',
@@ -2057,18 +2046,16 @@ class _FocusPageState extends State<FocusPage>
                   es: 'Pospuestas',
                   ru: 'Отложено',
                 ),
+                selected: _todoFilterMode == _TodoFilterMode.deferred,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.deferred;
+                  });
+                },
               ),
-              selected: _todoFilterMode == _TodoFilterMode.deferred,
-              onSelected: (_) {
-                setState(() {
-                  _todoFilterMode = _TodoFilterMode.deferred;
-                });
-              },
-            ),
-            ChoiceChip(
-              key: const ValueKey<String>('todo-filter-completed'),
-              label: Text(
-                pickUiText(
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-completed'),
+                label: pickUiText(
                   i18n,
                   zh: '已完成',
                   en: 'Completed',
@@ -2078,58 +2065,110 @@ class _FocusPageState extends State<FocusPage>
                   es: 'Completadas',
                   ru: 'Выполненные',
                 ),
-              ),
-              selected: _todoFilterMode == _TodoFilterMode.completed,
-              onSelected: (_) {
-                setState(() {
-                  _todoFilterMode = _TodoFilterMode.completed;
-                });
-              },
-            ),
-            if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
-              _buildTodoControlLabel(
-                pickUiText(
-                  i18n,
-                  zh: '排序',
-                  en: 'Sort',
-                  ja: '並び替え',
-                  de: 'Sortierung',
-                  fr: 'Tri',
-                  es: 'Orden',
-                  ru: 'Сортировка',
-                ),
-              ),
-              ChoiceChip(
-                label: Text(i18n.t('dragToReorder')),
-                selected: manualSort,
-                onSelected: (_) {
+                selected: _todoFilterMode == _TodoFilterMode.completed,
+                onSelected: () {
                   setState(() {
-                    _todoSortMode = _TodoSortMode.manual;
-                  });
-                },
-              ),
-              ChoiceChip(
-                label: Text(i18n.t('todoPriority')),
-                selected: _todoSortMode == _TodoSortMode.priority,
-                onSelected: (_) {
-                  setState(() {
-                    _todoSortMode = _TodoSortMode.priority;
-                  });
-                },
-              ),
-              ChoiceChip(
-                label: Text(i18n.t('todoCategory')),
-                selected: _todoSortMode == _TodoSortMode.category,
-                onSelected: (_) {
-                  setState(() {
-                    _todoSortMode = _TodoSortMode.category;
+                    _todoFilterMode = _TodoFilterMode.completed;
                   });
                 },
               ),
             ],
+          ),
+          if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
+            const SizedBox(height: 8),
+            _buildTodoControlSection(
+              label: pickUiText(
+                i18n,
+                zh: '排序',
+                en: 'Sort',
+                ja: '並び替え',
+                de: 'Sortierung',
+                fr: 'Tri',
+                es: 'Orden',
+                ru: 'Сортировка',
+              ),
+              children: <Widget>[
+                _buildTodoChoiceChip(
+                  label: i18n.t('dragToReorder'),
+                  selected: manualSort,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.manual;
+                    });
+                  },
+                ),
+                _buildTodoChoiceChip(
+                  label: i18n.t('todoPriority'),
+                  selected: _todoSortMode == _TodoSortMode.priority,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.priority;
+                    });
+                  },
+                ),
+                _buildTodoChoiceChip(
+                  label: i18n.t('todoCategory'),
+                  selected: _todoSortMode == _TodoSortMode.category,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.category;
+                    });
+                  },
+                ),
+              ],
+            ),
           ],
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildTodoControlSection({
+    required String label,
+    required List<Widget> children,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildTodoControlLabel(label),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: children
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) => Padding(
+                      padding: EdgeInsets.only(
+                        right: entry.key == children.length - 1 ? 0 : 6,
+                      ),
+                      child: entry.value,
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTodoChoiceChip({
+    Key? key,
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    return ChoiceChip(
+      key: key,
+      label: Text(label),
+      selected: selected,
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      onSelected: (_) => onSelected(),
     );
   }
 
