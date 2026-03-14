@@ -15,6 +15,8 @@ class Wordbook {
 
   bool get isSystem => path.startsWith('builtin:');
   bool get isSpecial => path == 'builtin:favorites' || path == 'builtin:task';
+  bool get isDeletableBuiltIn => path.startsWith('builtin:dict:');
+  bool get canDelete => !isSpecial && (!isSystem || isDeletableBuiltIn);
 
   factory Wordbook.fromMap(Map<String, Object?> map) {
     DateTime? createdAt;

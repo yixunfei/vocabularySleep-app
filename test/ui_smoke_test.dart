@@ -874,6 +874,38 @@ void main() {
       expect(state.importedWordbookName, 'Imported Pack');
     });
 
+    testWidgets('wordbook management allows deleting removable built-ins', (
+      tester,
+    ) async {
+      final builtinBook = Wordbook(
+        id: 9,
+        name: 'Built-in Pack',
+        path: 'builtin:dict:starter',
+        wordCount: 12,
+        createdAt: null,
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        selectedWordbook: builtinBook,
+        wordbooks: <Wordbook>[builtinBook],
+      );
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const WordbookManagementPage(),
+      );
+
+      expect(find.text('Delete'), findsOneWidget);
+
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+
+      expect(state.wordbooks, isEmpty);
+    });
+
     testWidgets('practice page shows quick start and stats badges', (
       tester,
     ) async {

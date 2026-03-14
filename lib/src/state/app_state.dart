@@ -748,7 +748,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> deleteWordbook(Wordbook wordbook) async {
     _setBusy(true);
     try {
-      _database.deleteWordbook(wordbook.id);
+      _database.deleteManagedWordbook(wordbook.id);
       await _reloadWordbooks(keepCurrentSelection: true);
       await _syncSpecialWordbooks();
     } catch (error) {

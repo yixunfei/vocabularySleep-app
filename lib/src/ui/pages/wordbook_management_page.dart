@@ -65,7 +65,7 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
               onRename: book.isSystem
                   ? null
                   : () => _renameWordbook(context, state, i18n, book),
-              onDelete: book.isSystem
+              onDelete: !book.canDelete
                   ? null
                   : () => _deleteWordbook(context, state, i18n, book),
             ),

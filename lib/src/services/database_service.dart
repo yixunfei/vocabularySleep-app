@@ -82,6 +82,8 @@ class AppDatabaseService {
   };
   static const String _dictAssetPrefix = 'dict/';
   static const String _dictBuiltinPathPrefix = 'builtin:dict:';
+  static const String _hiddenBuiltInWordbooksSettingKey =
+      'hidden_built_in_wordbooks';
   static final RegExp _backupFilePattern = RegExp(
     r'^vocabulary_(.+)_(\d{4}-\d{2}-\d{2}T.+)\.db$',
   );
@@ -623,10 +625,20 @@ class AppDatabaseService {
   Future<void> syncBuiltInWordbooksCatalog() async {
     final builtins = await _resolveBuiltInWordbooks();
     if (builtins.isEmpty) return;
-    _removeObsoleteBuiltInWordbooks(builtins.map((item) => item.path).toSet());
+    final builtinPaths = builtins.map((item) => item.path).toSet();
+    final hiddenPaths = _hiddenBuiltInWordbookPaths()
+      ..removeWhere((path) => !builtinPaths.contains(path));
+    _saveHiddenBuiltInWordbookPaths(hiddenPaths);
+    final visibleBuiltins = builtins
+        .where((item) => !hiddenPaths.contains(item.path))
+        .toList(growable: false);
+
+    _removeObsoleteBuiltInWordbooks(
+      visibleBuiltins.map((item) => item.path).toSet(),
+    );
     var created = 0;
     var renamed = 0;
-    for (final builtin in builtins) {
+    for (final builtin in visibleBuiltins) {
       final existing = _selectOne(
         'SELECT id, name, word_count FROM wordbooks WHERE path = ?',
         <Object?>[builtin.path],
@@ -653,8 +665,9 @@ class AppDatabaseService {
       'database',
       'built-in wordbook catalog synced',
       data: <String, Object?>{
-        'count': builtins.length,
+        'count': visibleBuiltins.length,
         'created': created,
+        'hidden': hiddenPaths.length,
         'renamed': renamed,
       },
     );
@@ -833,6 +846,28 @@ class AppDatabaseService {
     if (wordbook == null) throw StateError('单词本不存在');
     final path = wordbook['path']?.toString() ?? '';
     if (_isBuiltInPath(path)) throw StateError('系统单词本不允许删除');
+
+    _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
+      wordbookId,
+    ]);
+    _db.execute('DELETE FROM wordbooks WHERE id = ?', <Object?>[wordbookId]);
+  }
+
+  void deleteManagedWordbook(int wordbookId) {
+    final wordbook = _selectOne(
+      'SELECT path FROM wordbooks WHERE id = ?',
+      <Object?>[wordbookId],
+    );
+    if (wordbook == null) throw StateError('Wordbook not found');
+
+    final path = wordbook['path']?.toString() ?? '';
+    if (_isBuiltInPath(path)) {
+      if (!_isDeletableBuiltInPath(path)) {
+        throw StateError('Protected built-in wordbooks cannot be deleted');
+      }
+      final hiddenPaths = _hiddenBuiltInWordbookPaths()..add(path);
+      _saveHiddenBuiltInWordbookPaths(hiddenPaths);
+    }
 
     _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
       wordbookId,
@@ -1233,6 +1268,31 @@ class AppDatabaseService {
     }
   }
 
+  Set<String> _hiddenBuiltInWordbookPaths() {
+    final raw = getSetting(_hiddenBuiltInWordbooksSettingKey)?.trim();
+    if (raw == null || raw.isEmpty) {
+      return <String>{};
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return <String>{};
+      }
+      return decoded
+          .map((item) => '$item'.trim())
+          .where((path) => _isDeletableBuiltInPath(path))
+          .toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  void _saveHiddenBuiltInWordbookPaths(Set<String> paths) {
+    final sortedPaths = paths.toList(growable: false)..sort();
+    setSetting(_hiddenBuiltInWordbooksSettingKey, jsonEncode(sortedPaths));
+  }
+
   T _runInTransaction<T>(T Function() action) {
     final depth = _transactionDepth;
     final savepoint = 'sp_tx_$depth';
@@ -1356,6 +1416,8 @@ class AppDatabaseService {
   }
 
   bool _isBuiltInPath(String path) => path.startsWith('builtin:');
+  bool _isDeletableBuiltInPath(String path) =>
+      path.startsWith(_dictBuiltinPathPrefix);
 
   int _lastInsertId() {
     final row = _db.select('SELECT last_insert_rowid() AS id');
