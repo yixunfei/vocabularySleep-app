@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +27,7 @@ class _AppShellState extends State<AppShell> {
   int _index = 0;
   double _miniPlayerReservedHeight = 0;
   VoidCallback? _scrollLibraryToTop;
+  bool _exitDialogVisible = false;
 
   @override
   void initState() {
@@ -110,6 +112,78 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  Future<void> _confirmExit(AppI18n i18n) async {
+    if (_exitDialogVisible || !mounted) return;
+    _exitDialogVisible = true;
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '确认退出',
+              en: 'Exit app?',
+              ja: 'アプリを終了しますか',
+              de: 'App beenden?',
+              fr: 'Quitter l’application ?',
+              es: '¿Salir de la app?',
+              ru: 'Выйти из приложения?',
+            ),
+          ),
+          content: Text(
+            pickUiText(
+              i18n,
+              zh: '将退出当前应用，是否继续？',
+              en: 'This will close the current app. Continue?',
+              ja: '現在のアプリを終了します。続行しますか。',
+              de: 'Die aktuelle App wird geschlossen. Fortfahren?',
+              fr: 'L’application va se fermer. Continuer ?',
+              es: 'La aplicación se cerrará. ¿Continuar?',
+              ru: 'Приложение будет закрыто. Продолжить?',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                pickUiText(
+                  i18n,
+                  zh: '取消',
+                  en: 'Cancel',
+                  ja: 'キャンセル',
+                  de: 'Abbrechen',
+                  fr: 'Annuler',
+                  es: 'Cancelar',
+                  ru: 'Отмена',
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                pickUiText(
+                  i18n,
+                  zh: '退出',
+                  en: 'Exit',
+                  ja: '終了',
+                  de: 'Beenden',
+                  fr: 'Quitter',
+                  es: 'Salir',
+                  ru: 'Выйти',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    _exitDialogVisible = false;
+    if (shouldExit == true) {
+      await SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -130,106 +204,113 @@ class _AppShellState extends State<AppShell> {
       });
     }
 
-    return Scaffold(
-      body: AppBackground(
-        appearance: state.config.appearance,
-        child: Stack(
-          children: <Widget>[
-            SafeArea(
-              bottom: false,
-              child: Column(
-                children: <Widget>[
-                  Expanded(
-                    child: AnimatedPadding(
-                      duration: const Duration(milliseconds: 240),
-                      curve: Curves.easeOutCubic,
-                      padding: EdgeInsets.only(
-                        bottom: _miniPlayerReservedHeight,
-                      ),
-                      child: isInitializing
-                          ? _buildInitializingView(context, i18n)
-                          : IndexedStack(
-                              index: _index,
-                              children: <Widget>[
-                                PlayPage(
-                                  onOpenPractice: () => _setIndex(2),
-                                  onOpenLibrary: () => _setIndex(1),
-                                ),
-                                LibraryPage(
-                                  onAttachScrollToTop: (callback) {
-                                    _scrollLibraryToTop = callback;
-                                  },
-                                ),
-                                const PracticePage(),
-                                const FocusPage(),
-                                const MorePage(),
-                              ],
-                            ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: navigationChromeHeight,
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: bottomInset),
-                      child: NavigationBar(
-                        height: _navigationBarHeight,
-                        selectedIndex: _index,
-                        onDestinationSelected: _setIndex,
-                        destinations: <NavigationDestination>[
-                          NavigationDestination(
-                            icon: const Icon(Icons.play_circle_outline_rounded),
-                            selectedIcon: const Icon(
-                              Icons.play_circle_filled_rounded,
-                            ),
-                            label: pageLabelPlay(i18n),
-                          ),
-                          NavigationDestination(
-                            icon: const Icon(Icons.menu_book_outlined),
-                            selectedIcon: const Icon(Icons.menu_book_rounded),
-                            label: pageLabelLibrary(i18n),
-                          ),
-                          NavigationDestination(
-                            icon: const Icon(Icons.fitness_center_outlined),
-                            selectedIcon: const Icon(
-                              Icons.fitness_center_rounded,
-                            ),
-                            label: pageLabelPractice(i18n),
-                          ),
-                          NavigationDestination(
-                            icon: const Icon(Icons.timer_outlined),
-                            selectedIcon: const Icon(Icons.timer_rounded),
-                            label: pageLabelFocus(i18n),
-                          ),
-                          NavigationDestination(
-                            icon: const Icon(Icons.widgets_outlined),
-                            selectedIcon: const Icon(Icons.widgets_rounded),
-                            label: pageLabelMore(i18n),
-                          ),
-                        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _confirmExit(i18n);
+      },
+      child: Scaffold(
+        body: AppBackground(
+          appearance: state.config.appearance,
+          child: Stack(
+            children: <Widget>[
+              SafeArea(
+                bottom: false,
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: AnimatedPadding(
+                        duration: const Duration(milliseconds: 240),
+                        curve: Curves.easeOutCubic,
+                        padding: EdgeInsets.only(
+                          bottom: _miniPlayerReservedHeight,
+                        ),
+                        child: isInitializing
+                            ? _buildInitializingView(context, i18n)
+                            : IndexedStack(
+                                index: _index,
+                                children: <Widget>[
+                                  PlayPage(
+                                    onOpenPractice: () => _setIndex(2),
+                                    onOpenLibrary: () => _setIndex(1),
+                                  ),
+                                  LibraryPage(
+                                    onAttachScrollToTop: (callback) {
+                                      _scrollLibraryToTop = callback;
+                                    },
+                                  ),
+                                  const PracticePage(),
+                                  const FocusPage(),
+                                  const MorePage(),
+                                ],
+                              ),
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(
+                      height: navigationChromeHeight,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: bottomInset),
+                        child: NavigationBar(
+                          height: _navigationBarHeight,
+                          selectedIndex: _index,
+                          onDestinationSelected: _setIndex,
+                          destinations: <NavigationDestination>[
+                            NavigationDestination(
+                              icon: const Icon(Icons.play_circle_outline_rounded),
+                              selectedIcon: const Icon(
+                                Icons.play_circle_filled_rounded,
+                              ),
+                              label: pageLabelPlay(i18n),
+                            ),
+                            NavigationDestination(
+                              icon: const Icon(Icons.menu_book_outlined),
+                              selectedIcon: const Icon(Icons.menu_book_rounded),
+                              label: pageLabelLibrary(i18n),
+                            ),
+                            NavigationDestination(
+                              icon: const Icon(Icons.fitness_center_outlined),
+                              selectedIcon: const Icon(
+                                Icons.fitness_center_rounded,
+                              ),
+                              label: pageLabelPractice(i18n),
+                            ),
+                            NavigationDestination(
+                              icon: const Icon(Icons.timer_outlined),
+                              selectedIcon: const Icon(Icons.timer_rounded),
+                              label: pageLabelFocus(i18n),
+                            ),
+                            NavigationDestination(
+                              icon: const Icon(Icons.widgets_outlined),
+                              selectedIcon: const Icon(Icons.widgets_rounded),
+                              label: pageLabelMore(i18n),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: bottomInset + _navigationBarHeight + 8,
-              child: MiniPlayer(
-                state: state,
-                i18n: i18n,
-                onOpenPractice: () => _setIndex(2),
-                onOpenLibrary: () => _setIndex(1),
-                onPresentationChanged: _handleMiniPlayerPresentation,
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: bottomInset + _navigationBarHeight + 8,
+                child: MiniPlayer(
+                  state: state,
+                  i18n: i18n,
+                  onOpenPractice: () => _setIndex(2),
+                  onOpenLibrary: () => _setIndex(1),
+                  onPresentationChanged: _handleMiniPlayerPresentation,
+                ),
               ),
-            ),
-            BusyOverlay(
-              visible: state.busy,
-              message: state.busyMessage ?? i18n.t('processing'),
-              detail: _busyDetail(i18n, state),
-            ),
-          ],
+              BusyOverlay(
+                visible: state.busy,
+                message: state.busyMessage ?? i18n.t('processing'),
+                detail: _busyDetail(i18n, state),
+              ),
+            ],
+          ),
         ),
       ),
     );
