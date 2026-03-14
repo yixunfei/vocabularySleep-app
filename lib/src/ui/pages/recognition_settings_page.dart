@@ -272,6 +272,68 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     );
   }
 
+  bool _isLocalAsrProvider(AsrProviderType provider) {
+    return switch (provider) {
+      AsrProviderType.offline ||
+      AsrProviderType.offlineSmall ||
+      AsrProviderType.localSimilarity ||
+      AsrProviderType.multiEngine => true,
+      _ => false,
+    };
+  }
+
+  bool _shouldConfirmLocalAsrSwitch(
+    AsrProviderType current,
+    AsrProviderType next,
+  ) {
+    if (current == next) {
+      return false;
+    }
+    return !_isLocalAsrProvider(current) && _isLocalAsrProvider(next);
+  }
+
+  Future<bool> _confirmLocalAsrSwitch(AsrProviderType provider) {
+    final state = context.read<AppState>();
+    final i18n = AppI18n(state.uiLanguage);
+    return showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '切换到本地识别？', en: 'Switch to local recognition?'),
+      message: pickUiText(
+        i18n,
+        zh:
+            '推荐优先使用 API 识别以保证准确率，API 免费，只需要注册即可。如果你仍想使用本地识别，也可以继续切换到 ${asrProviderLabel(i18n, provider)}。',
+        en:
+            'API recognition is recommended for better accuracy, and the API tier is free with a simple signup. You can still continue if you prefer ${asrProviderLabel(i18n, provider)}.',
+      ),
+      confirmText: pickUiText(i18n, zh: '仍然切换', en: 'Switch anyway'),
+    );
+  }
+
+  Future<void> _handleAsrProviderChanged(
+    AsrProviderType value,
+    PlayConfig config,
+    AsrConfig asr,
+  ) async {
+    if (_shouldConfirmLocalAsrSwitch(asr.provider, value)) {
+      final confirmed = await _confirmLocalAsrSwitch(value);
+      if (!confirmed || !mounted) {
+        return;
+      }
+    }
+
+    final nextEngineOrder = value == AsrProviderType.multiEngine
+        ? _sanitizeMultiEngineOrder(
+            asr.engineOrder.isEmpty ? asr.normalizedEngineOrder : asr.engineOrder,
+          )
+        : asr.engineOrder;
+
+    context.read<AppState>().updateConfig(
+      config.copyWith(
+        asr: asr.copyWith(provider: value, engineOrder: nextEngineOrder),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -349,24 +411,9 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
                           ),
                         )
                         .toList(growable: false),
-                    onChanged: (value) {
+                    onChanged: (value) async {
                       if (value == null) return;
-                      final nextEngineOrder =
-                          value == AsrProviderType.multiEngine
-                          ? _sanitizeMultiEngineOrder(
-                              asr.engineOrder.isEmpty
-                                  ? asr.normalizedEngineOrder
-                                  : asr.engineOrder,
-                            )
-                          : asr.engineOrder;
-                      state.updateConfig(
-                        config.copyWith(
-                          asr: asr.copyWith(
-                            provider: value,
-                            engineOrder: nextEngineOrder,
-                          ),
-                        ),
-                      );
+                      await _handleAsrProviderChanged(value, config, asr);
                     },
                   ),
                   const SizedBox(height: 8),

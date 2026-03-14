@@ -109,6 +109,43 @@ void main() {
       expect(find.byType(SwitchListTile), findsWidgets);
     });
 
+    testWidgets('recognition settings confirms before switching to local ASR', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const RecognitionSettingsPage(),
+      );
+
+      final providerField = find.byType(DropdownButtonFormField<AsrProviderType>);
+
+      await tester.tap(providerField.first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Offline (Whisper Base)').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Switch to local recognition?'), findsOneWidget);
+      expect(
+        find.textContaining('API recognition is recommended for better accuracy'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(state.config.asr.provider, AsrProviderType.api);
+
+      await tester.tap(providerField.first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Offline (Whisper Base)').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Switch anyway'));
+      await tester.pumpAndSettle();
+      expect(state.config.asr.provider, AsrProviderType.offline);
+    });
+
     testWidgets('library page keeps prefix jump entry visible', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const LibraryPage());
