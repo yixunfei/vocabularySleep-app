@@ -2,9 +2,76 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dict_reader/dict_reader.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
+
+List<Map<String, Object?>> _parseJsonRecords(String content) {
+  final records = <Map<String, Object?>>[];
+
+  void push(Object? record) {
+    if (record is Map<String, Object?>) {
+      records.add(record);
+      return;
+    }
+    if (record is Map) {
+      records.add(record.cast<String, Object?>());
+    }
+  }
+
+  try {
+    final decoded = jsonDecode(content);
+    if (decoded is List) {
+      for (final item in decoded) {
+        push(item);
+      }
+      return records;
+    }
+
+    if (decoded is Map) {
+      final words = decoded['words'];
+      if (words is List) {
+        for (final item in words) {
+          push(item);
+        }
+      } else {
+        push(decoded);
+      }
+      return records;
+    }
+  } catch (_) {
+    // Fall back to JSONL / concatenated object parser.
+  }
+
+  final lines = content.split(RegExp(r'\r?\n'));
+  var depth = 0;
+  final buffer = StringBuffer();
+
+  for (final line in lines) {
+    final trimmed = line.trim();
+    if (trimmed.isEmpty) continue;
+    buffer.writeln(line);
+    for (final char in trimmed.runes) {
+      if (char == 123) depth += 1;
+      if (char == 125) depth -= 1;
+    }
+
+    if (depth == 0) {
+      final chunk = buffer.toString().trim();
+      buffer.clear();
+      if (chunk.isEmpty) continue;
+      try {
+        final decoded = jsonDecode(chunk);
+        push(decoded);
+      } catch (_) {
+        // Ignore malformed rows.
+      }
+    }
+  }
+
+  return records;
+}
 
 class WordbookImportService {
   static const Set<String> _wordAliases = <String>{
@@ -45,72 +112,30 @@ class WordbookImportService {
     final content = await file.readAsString();
     switch (ext) {
       case '.json':
-        return parseJsonText(content);
+        return parseJsonTextAsync(content);
       case '.csv':
         return parseCsvText(content);
       default:
-        return parseJsonText(content);
+        return parseJsonTextAsync(content);
     }
   }
 
   List<WordEntryPayload> parseJsonText(String content) {
     final payloads = <WordEntryPayload>[];
-
-    void push(Map<String, Object?>? record) {
-      if (record == null) return;
+    for (final record in _parseJsonRecords(content)) {
       final payload = _recordToPayload(record);
       if (payload != null) payloads.add(payload);
     }
+    return payloads;
+  }
 
-    try {
-      final decoded = jsonDecode(content);
-      if (decoded is List) {
-        for (final item in decoded) {
-          if (item is Map) push(item.cast<String, Object?>());
-        }
-        return payloads;
-      }
-
-      if (decoded is Map) {
-        if (decoded['words'] is List) {
-          for (final item in decoded['words'] as List) {
-            if (item is Map) push(item.cast<String, Object?>());
-          }
-        } else {
-          push(decoded.cast<String, Object?>());
-        }
-        return payloads;
-      }
-    } catch (_) {
-      // Fall back to JSONL / concatenated object parser.
+  Future<List<WordEntryPayload>> parseJsonTextAsync(String content) async {
+    final payloads = <WordEntryPayload>[];
+    final records = await compute(_parseJsonRecords, content);
+    for (final record in records) {
+      final payload = _recordToPayload(record);
+      if (payload != null) payloads.add(payload);
     }
-
-    final lines = content.split(RegExp(r'\r?\n'));
-    var depth = 0;
-    final buffer = StringBuffer();
-
-    for (final line in lines) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty) continue;
-      buffer.writeln(line);
-      for (final char in trimmed.runes) {
-        if (char == 123) depth += 1;
-        if (char == 125) depth -= 1;
-      }
-
-      if (depth == 0) {
-        final chunk = buffer.toString().trim();
-        buffer.clear();
-        if (chunk.isEmpty) continue;
-        try {
-          final decoded = jsonDecode(chunk);
-          if (decoded is Map) push(decoded.cast<String, Object?>());
-        } catch (_) {
-          // Ignore malformed rows.
-        }
-      }
-    }
-
     return payloads;
   }
 

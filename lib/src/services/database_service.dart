@@ -173,7 +173,10 @@ class AppDatabaseService {
     final normalizedTarget = p.normalize(file.path);
     if (!p.isWithin(normalizedBackupDir, normalizedTarget) &&
         normalizedBackupDir != normalizedTarget) {
-      throw FileSystemException('Backup file is outside the backup directory', backupPath);
+      throw FileSystemException(
+        'Backup file is outside the backup directory',
+        backupPath,
+      );
     }
 
     await file.delete();
@@ -189,42 +192,49 @@ class AppDatabaseService {
         .toIso8601String()
         .replaceAll(':', '-')
         .replaceAll('.', '-');
-    final exportPath = p.join(exportDir.path, 'vocabulary_user_data_$timestamp.json');
+    final exportPath = p.join(
+      exportDir.path,
+      'vocabulary_user_data_$timestamp.json',
+    );
 
     final rows = _selectMaps('''
       SELECT id, name, path, word_count, created_at
       FROM wordbooks
       ORDER BY id ASC
     ''');
-    final wordbooks = rows.map((row) {
-      final wordbookId = ((row['id'] as num?) ?? 0).toInt();
-      return <String, Object?>{
-        'id': wordbookId,
-        'name': row['name'],
-        'path': row['path'],
-        'word_count': row['word_count'],
-        'created_at': row['created_at'],
-        'words': getWords(wordbookId)
-            .map((word) => <String, Object?>{
-                  'id': word.id,
-                  'wordbook_id': word.wordbookId,
-                  'word': word.word,
-                  'meaning': word.meaning,
-                  'examples': word.examples,
-                  'etymology': word.etymology,
-                  'roots': word.roots,
-                  'affixes': word.affixes,
-                  'variations': word.variations,
-                  'memory': word.memory,
-                  'story': word.story,
-                  'fields': word.fields
-                      .map((field) => field.toJsonMap())
-                      .toList(growable: false),
-                  'raw_content': word.rawContent,
-                })
-            .toList(growable: false),
-      };
-    }).toList(growable: false);
+    final wordbooks = rows
+        .map((row) {
+          final wordbookId = ((row['id'] as num?) ?? 0).toInt();
+          return <String, Object?>{
+            'id': wordbookId,
+            'name': row['name'],
+            'path': row['path'],
+            'word_count': row['word_count'],
+            'created_at': row['created_at'],
+            'words': getWords(wordbookId)
+                .map(
+                  (word) => <String, Object?>{
+                    'id': word.id,
+                    'wordbook_id': word.wordbookId,
+                    'word': word.word,
+                    'meaning': word.meaning,
+                    'examples': word.examples,
+                    'etymology': word.etymology,
+                    'roots': word.roots,
+                    'affixes': word.affixes,
+                    'variations': word.variations,
+                    'memory': word.memory,
+                    'story': word.story,
+                    'fields': word.fields
+                        .map((field) => field.toJsonMap())
+                        .toList(growable: false),
+                    'raw_content': word.rawContent,
+                  },
+                )
+                .toList(growable: false),
+          };
+        })
+        .toList(growable: false);
 
     final timerRows = _selectMaps(
       'SELECT * FROM timer_records ORDER BY start_time DESC',
@@ -688,7 +698,7 @@ class AppDatabaseService {
       data: <String, Object?>{'path': path, 'assetPath': target.assetPath},
     );
     final content = await rootBundle.loadString(target.assetPath);
-    final entries = _importService.parseJsonText(content);
+    final entries = await _importService.parseJsonTextAsync(content);
     final imported = await importWordbook(
       sourcePath: target.path,
       name: target.name,
