@@ -12,6 +12,7 @@ import 'pages/practice_page.dart';
 import 'ui_copy.dart';
 import 'widgets/app_background.dart';
 import 'widgets/busy_overlay.dart';
+import 'widgets/focus_lock_overlay.dart';
 import 'widgets/mini_player.dart';
 
 class AppShell extends StatefulWidget {
@@ -257,7 +258,9 @@ class _AppShellState extends State<AppShell> {
                           onDestinationSelected: _setIndex,
                           destinations: <NavigationDestination>[
                             NavigationDestination(
-                              icon: const Icon(Icons.play_circle_outline_rounded),
+                              icon: const Icon(
+                                Icons.play_circle_outline_rounded,
+                              ),
                               selectedIcon: const Icon(
                                 Icons.play_circle_filled_rounded,
                               ),
@@ -309,6 +312,8 @@ class _AppShellState extends State<AppShell> {
                 message: state.busyMessage ?? i18n.t('processing'),
                 detail: _busyDetail(i18n, state),
               ),
+              if (state.focusService.lockScreenActive)
+                const Positioned.fill(child: FocusLockOverlay()),
             ],
           ),
         ),

@@ -364,6 +364,7 @@ class FocusService extends ChangeNotifier {
   void _completeSession() {
     _timer?.cancel();
     _saveCurrentSessionRecord(partial: false);
+    _lockScreenActive = false;
     _timerState = const TomatoTimerState();
     _publishState();
     _resetSessionTracking();
@@ -426,6 +427,7 @@ class FocusService extends ChangeNotifier {
     if (saveProgress) {
       _saveCurrentSessionRecord(partial: true);
     }
+    _lockScreenActive = false;
     _timerState = const TomatoTimerState();
     _resetSessionTracking();
     _publishState();

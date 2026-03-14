@@ -27,6 +27,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/theme/app_theme.dart';
 import 'package:vocabulary_sleep_app/src/ui/ui_copy.dart';
+import 'package:vocabulary_sleep_app/src/ui/widgets/focus_lock_overlay.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/setting_tile.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/word_card.dart';
 
@@ -415,11 +416,36 @@ void main() {
       await tester.ensureVisible(
         find.byKey(const ValueKey<String>('todo-filter-active')),
       );
-      await tester.tap(find.byKey(const ValueKey<String>('todo-filter-active')));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('todo-filter-active')),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Prepare review notes'), findsOneWidget);
       expect(find.text('Ship focus page polish'), findsNothing);
+    });
+
+    testWidgets('focus lock overlay renders when focus is locked', (
+      tester,
+    ) async {
+      final focusService = _FakeFocusService(
+        lockScreenActive: true,
+        state: const TomatoTimerState(
+          phase: TomatoTimerPhase.focus,
+          currentRound: 1,
+          remainingSeconds: 10 * 60,
+          totalSeconds: 25 * 60,
+        ),
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+      );
+
+      await _pumpPage(tester, state: state, child: const FocusLockOverlay());
+
+      expect(find.text('Focusing'), findsOneWidget);
+      expect(find.text('Long press to exit focus'), findsOneWidget);
     });
 
     testWidgets('library prefix jump scrolls lazy list to target word', (
@@ -537,7 +563,10 @@ void main() {
       await tester.tap(find.text('Export user data'));
       await tester.pumpAndSettle();
 
-      expect(state.exportedUserDataPath, '/tmp/vocabulary_user_data_export.json');
+      expect(
+        state.exportedUserDataPath,
+        '/tmp/vocabulary_user_data_export.json',
+      );
     });
 
     testWidgets('data management page wires delete backup action', (
@@ -917,6 +946,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;
 
   @override
+  bool get isPlaying => false;
+
+  @override
   Set<String> get favorites => _favorites;
 
   @override
@@ -1285,6 +1317,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     TomatoTimerState? state,
     List<TodoItem>? todos,
     List<PlanNote>? notes,
+    bool lockScreenActive = false,
   }) : _config = config ?? const TomatoTimerConfig(workspaceSplitRatio: 0.42),
        _state =
            state ??
@@ -1305,6 +1338,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
                ),
              ],
        ),
+       _lockScreenActive = lockScreenActive,
        _notes = List<PlanNote>.from(
          notes ??
              const <PlanNote>[
@@ -1325,26 +1359,30 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
 
   TomatoTimerConfig _config;
   TomatoTimerState _state;
+  bool _lockScreenActive;
   final List<TodoItem> _todos;
   final List<PlanNote> _notes;
 
   @override
   TomatoTimerConfig get config => _config;
 
-@override
-bool get initialized => true;
+  @override
+  bool get initialized => true;
 
-@override
-bool get lockScreenActive => false;
+  @override
+  bool get lockScreenActive => _lockScreenActive;
 
-@override
-TomatoTimerState get state => _state;
+  @override
+  TomatoTimerState get state => _state;
 
-@override
-void setLockScreenActive(bool value) {}
+  @override
+  void setLockScreenActive(bool value) {
+    _lockScreenActive = value;
+    notifyListeners();
+  }
 
-@override
-void addNote(String title, String? content, String? color) {
+  @override
+  void addNote(String title, String? content, String? color) {
     _notes.add(
       PlanNote(
         id: (_notes.lastOrNull?.id ?? 0) + 1,

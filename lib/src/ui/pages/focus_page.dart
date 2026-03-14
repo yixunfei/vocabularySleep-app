@@ -680,6 +680,24 @@ class _FocusPageState extends State<FocusPage>
     }
     buttons.add(
       OutlinedButton.icon(
+        onPressed: () => focus.setLockScreenActive(true),
+        icon: const Icon(Icons.lock_rounded),
+        label: Text(
+          pickUiText(
+            i18n,
+            zh: '锁屏专注',
+            en: 'Lock focus',
+            ja: '集中をロック',
+            de: 'Fokus sperren',
+            fr: 'Verrouiller le focus',
+            es: 'Bloquear enfoque',
+            ru: 'Заблокировать фокус',
+          ),
+        ),
+      ),
+    );
+    buttons.add(
+      OutlinedButton.icon(
         onPressed: () => _confirmStop(focus, i18n),
         icon: const Icon(Icons.stop_rounded),
         label: Text(i18n.t('stop')),
@@ -1318,97 +1336,97 @@ class _FocusPageState extends State<FocusPage>
                   ChoiceChip(
                     key: const ValueKey<String>('todo-filter-all'),
                     label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '全部',
-                      en: 'All',
-                      ja: 'すべて',
-                      de: 'Alle',
-                      fr: 'Tous',
-                      es: 'Todo',
-                      ru: 'Все',
+                      pickUiText(
+                        i18n,
+                        zh: '全部',
+                        en: 'All',
+                        ja: 'すべて',
+                        de: 'Alle',
+                        fr: 'Tous',
+                        es: 'Todo',
+                        ru: 'Все',
+                      ),
                     ),
-                  ),
-                  selected: _todoFilterMode == _TodoFilterMode.all,
-                  onSelected: (_) {
-                    setState(() {
-                      _todoFilterMode = _TodoFilterMode.all;
-                    });
-                  },
+                    selected: _todoFilterMode == _TodoFilterMode.all,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoFilterMode = _TodoFilterMode.all;
+                      });
+                    },
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
                     key: const ValueKey<String>('todo-filter-active'),
                     label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '进行中',
-                      en: 'Active',
-                      ja: '進行中',
-                      de: 'Aktiv',
-                      fr: 'Actives',
-                      es: 'Activas',
-                      ru: 'Активные',
+                      pickUiText(
+                        i18n,
+                        zh: '进行中',
+                        en: 'Active',
+                        ja: '進行中',
+                        de: 'Aktiv',
+                        fr: 'Actives',
+                        es: 'Activas',
+                        ru: 'Активные',
+                      ),
                     ),
-                  ),
-                  selected: _todoFilterMode == _TodoFilterMode.active,
-                  onSelected: (_) {
-                    setState(() {
-                      _todoFilterMode = _TodoFilterMode.active;
-                    });
-                  },
+                    selected: _todoFilterMode == _TodoFilterMode.active,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoFilterMode = _TodoFilterMode.active;
+                      });
+                    },
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
                     key: const ValueKey<String>('todo-filter-completed'),
                     label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '已完成',
-                      en: 'Completed',
-                      ja: '完了',
-                      de: 'Erledigt',
-                      fr: 'Terminées',
-                      es: 'Completadas',
-                      ru: 'Выполненные',
+                      pickUiText(
+                        i18n,
+                        zh: '已完成',
+                        en: 'Completed',
+                        ja: '完了',
+                        de: 'Erledigt',
+                        fr: 'Terminées',
+                        es: 'Completadas',
+                        ru: 'Выполненные',
+                      ),
                     ),
-                  ),
-                  selected: _todoFilterMode == _TodoFilterMode.completed,
-                  onSelected: (_) {
-                    setState(() {
-                      _todoFilterMode = _TodoFilterMode.completed;
-                    });
-                  },
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                  label: Text(i18n.t('dragToReorder')),
-                  selected: manualSort,
-                  onSelected: (_) {
-                    setState(() {
-                      _todoSortMode = _TodoSortMode.manual;
-                    });
-                  },
+                    selected: _todoFilterMode == _TodoFilterMode.completed,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoFilterMode = _TodoFilterMode.completed;
+                      });
+                    },
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
-                  label: Text(i18n.t('todoPriority')),
-                  selected: _todoSortMode == _TodoSortMode.priority,
-                  onSelected: (_) {
-                    setState(() {
-                      _todoSortMode = _TodoSortMode.priority;
-                    });
-                  },
+                    label: Text(i18n.t('dragToReorder')),
+                    selected: manualSort,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoSortMode = _TodoSortMode.manual;
+                      });
+                    },
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
-                  label: Text(i18n.t('todoCategory')),
-                  selected: _todoSortMode == _TodoSortMode.category,
-                  onSelected: (_) {
-                    setState(() {
-                      _todoSortMode = _TodoSortMode.category;
-                    });
-                  },
+                    label: Text(i18n.t('todoPriority')),
+                    selected: _todoSortMode == _TodoSortMode.priority,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoSortMode = _TodoSortMode.priority;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: Text(i18n.t('todoCategory')),
+                    selected: _todoSortMode == _TodoSortMode.category,
+                    onSelected: (_) {
+                      setState(() {
+                        _todoSortMode = _TodoSortMode.category;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -1451,13 +1469,15 @@ class _FocusPageState extends State<FocusPage>
   }
 
   List<TodoItem> _filterTodos(List<TodoItem> todos) {
-    return todos.where((item) {
-      return switch (_todoFilterMode) {
-        _TodoFilterMode.all => true,
-        _TodoFilterMode.active => !item.completed,
-        _TodoFilterMode.completed => item.completed,
-      };
-    }).toList(growable: false);
+    return todos
+        .where((item) {
+          return switch (_todoFilterMode) {
+            _TodoFilterMode.all => true,
+            _TodoFilterMode.active => !item.completed,
+            _TodoFilterMode.completed => item.completed,
+          };
+        })
+        .toList(growable: false);
   }
 
   int _compareTodosByPriority(TodoItem a, TodoItem b) {

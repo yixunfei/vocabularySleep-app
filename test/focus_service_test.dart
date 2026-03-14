@@ -149,5 +149,37 @@ void main() {
       expect(database.records.first.partial, true);
       expect(database.records.first.focusDurationMinutes, greaterThan(0));
     });
+
+    test(
+      'lock screen state clears when stopping or completing a session',
+      () async {
+        final database = _MemoryDatabaseService();
+        final service = FocusService(database);
+        await service.init();
+        service.saveConfig(
+          const TomatoTimerConfig(
+            focusDurationSeconds: 2,
+            breakDurationSeconds: 1,
+            rounds: 1,
+            autoStartBreak: true,
+          ),
+        );
+
+        fakeAsync((async) {
+          service.start();
+          service.setLockScreenActive(true);
+          expect(service.lockScreenActive, true);
+
+          service.stop(saveProgress: false);
+          expect(service.lockScreenActive, false);
+
+          service.start();
+          service.setLockScreenActive(true);
+          async.elapse(const Duration(seconds: 3));
+          expect(service.state.phase, TomatoTimerPhase.idle);
+          expect(service.lockScreenActive, false);
+        });
+      },
+    );
   });
 }
