@@ -368,6 +368,63 @@ void main() {
       );
     });
 
+    testWidgets('focus page quick notes support voice input', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final focusService = _FakeFocusService.sample();
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+        asrRecordingPath: 'temp-note.wav',
+        asrStoppedRecordingPath: 'temp-note.wav',
+        asrTranscriptionResult: const AsrResult(
+          success: true,
+          text: 'Capture release review highlights',
+        ),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('notes-drawer-handle')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.note_add_rounded).last);
+      await tester.pumpAndSettle();
+
+      final voiceButton = find.byKey(
+        const ValueKey<String>('note-voice-input-button'),
+      );
+      await tester.tap(voiceButton);
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: voiceButton,
+          matching: find.text('Tap to stop recording'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(voiceButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(
+        focusService.getNotes().any(
+          (note) =>
+              note.title.isNotEmpty &&
+              note.content == 'Capture release review highlights',
+        ),
+        isTrue,
+      );
+    });
+
     testWidgets('focus page keeps timer stepper stable on narrow width', (
       tester,
     ) async {
@@ -803,6 +860,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required FocusService focusService,
     required List<AmbientSource> ambientSources,
     required double ambientMasterVolume,
+    required String? asrRecordingPath,
+    required String? asrStoppedRecordingPath,
+    required AsrResult asrTranscriptionResult,
   }) : _config = config,
        _uiLanguage = uiLanguage,
        _uiLanguageFollowsSystem = false,
@@ -813,7 +873,10 @@ class _FakeAppState extends ChangeNotifier implements AppState {
        _backups = backups,
        _focusService = focusService,
        _ambientSources = ambientSources,
-       _ambientMasterVolume = ambientMasterVolume;
+       _ambientMasterVolume = ambientMasterVolume,
+       _asrRecordingPath = asrRecordingPath,
+       _asrStoppedRecordingPath = asrStoppedRecordingPath,
+       _asrTranscriptionResult = asrTranscriptionResult;
 
   factory _FakeAppState.sample({
     List<WordEntry>? words,
@@ -824,6 +887,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     List<DatabaseBackupInfo>? backups,
     FocusService? focusService,
     List<AmbientSource>? ambientSources,
+    String? asrRecordingPath,
+    String? asrStoppedRecordingPath,
+    AsrResult? asrTranscriptionResult,
   }) {
     final visibleWords =
         words ??
@@ -861,6 +927,11 @@ class _FakeAppState extends ChangeNotifier implements AppState {
             ),
           ],
       ambientMasterVolume: 0.55,
+      asrRecordingPath: asrRecordingPath,
+      asrStoppedRecordingPath: asrStoppedRecordingPath,
+      asrTranscriptionResult:
+          asrTranscriptionResult ??
+          const AsrResult(success: false, error: 'recognitionFailed'),
     ).._currentWord = visibleWords.firstOrNull;
   }
 
@@ -877,6 +948,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   final FocusService _focusService;
   List<AmbientSource> _ambientSources;
   double _ambientMasterVolume;
+  final String? _asrRecordingPath;
+  final String? _asrStoppedRecordingPath;
+  final AsrResult _asrTranscriptionResult;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   bool resetUserDataCalled = false;
@@ -1067,10 +1141,12 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }) async {}
 
   @override
-  Future<String?> startAsrRecording({AsrProviderType? provider}) async => null;
+  Future<String?> startAsrRecording({AsrProviderType? provider}) async =>
+      _asrRecordingPath;
 
   @override
-  Future<String?> stopAsrRecording() async => null;
+  Future<String?> stopAsrRecording() async =>
+      _asrStoppedRecordingPath ?? _asrRecordingPath;
 
   @override
   Future<void> cancelAsrRecording() async {}
@@ -1085,7 +1161,14 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     AsrProviderType? provider,
     AsrProgressCallback? onProgress,
   }) async {
-    return const AsrResult(success: false, error: 'recognitionFailed');
+    onProgress?.call(
+      const AsrProgress(
+        stage: 'decoding',
+        messageKey: 'asrProgressDecoding',
+        progress: 1,
+      ),
+    );
+    return _asrTranscriptionResult;
   }
 
   @override

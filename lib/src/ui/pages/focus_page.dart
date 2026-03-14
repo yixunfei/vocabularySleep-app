@@ -9,6 +9,7 @@ import '../../i18n/app_i18n.dart';
 import '../../models/todo_item.dart';
 import '../../models/tomato_timer.dart';
 import '../../services/ambient_service.dart';
+import '../../services/asr_service.dart';
 import '../../services/focus_service.dart';
 import '../../state/app_state.dart';
 import '../layout/app_width_tier.dart';
@@ -18,6 +19,8 @@ import '../widgets/section_header.dart';
 enum _TodoSortMode { manual, priority, category }
 
 enum _TodoFilterMode { all, active, completed }
+
+enum _NoteVoiceInputState { idle, starting, recording, transcribing }
 
 class FocusPage extends StatefulWidget {
   const FocusPage({super.key});
@@ -2456,10 +2459,56 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
+  String _mergeRecognizedNoteContent(String current, String recognized) {
+    final next = recognized.trim();
+    if (next.isEmpty) {
+      return current.trim();
+    }
+    final existing = current.trimRight();
+    if (existing.isEmpty) {
+      return next;
+    }
+    if (existing.endsWith('\n')) {
+      return '$existing$next';
+    }
+    return '$existing\n$next';
+  }
+
+  String _suggestNoteTitleFromVoice(String recognized) {
+    final normalized = recognized.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.isEmpty) {
+      return '';
+    }
+    final segments = normalized
+        .split(RegExp(r'[\r\n。！？.!?]+'))
+        .map((segment) => segment.trim())
+        .where((segment) => segment.isNotEmpty)
+        .toList(growable: false);
+    final base = (segments.isNotEmpty ? segments.first : normalized).trim();
+    const maxLength = 24;
+    if (base.characters.length <= maxLength) {
+      return base;
+    }
+    return '${base.characters.take(maxLength).toString()}…';
+  }
+
   void _showNoteDialog(FocusService focus, AppI18n i18n, {PlanNote? note}) {
+    final state = context.read<AppState>();
     final titleController = TextEditingController(text: note?.title ?? '');
     final contentController = TextEditingController(text: note?.content ?? '');
     var selectedColor = _parseHexColor(note?.color);
+    var voiceState = _NoteVoiceInputState.idle;
+    AsrProgress? voiceProgress;
+    String? voiceError;
+    var sheetClosed = false;
+
+    Future<void> cleanupVoiceInput() async {
+      if (voiceState == _NoteVoiceInputState.recording) {
+        await state.cancelAsrRecording();
+      } else if (voiceState == _NoteVoiceInputState.transcribing) {
+        state.stopAsrProcessing();
+      }
+    }
 
     showModalBottomSheet<void>(
       context: context,
@@ -2469,6 +2518,164 @@ class _FocusPageState extends State<FocusPage>
         return StatefulBuilder(
           builder: (sheetContext, setSheetState) {
             final theme = Theme.of(sheetContext);
+
+            void updateSheet(VoidCallback action) {
+              if (sheetClosed || !sheetContext.mounted) {
+                return;
+              }
+              setSheetState(action);
+            }
+
+            String voiceButtonLabel() {
+              switch (voiceState) {
+                case _NoteVoiceInputState.recording:
+                  return i18n.t('tapToStopRecord');
+                case _NoteVoiceInputState.transcribing:
+                  return i18n.t(
+                    voiceProgress?.messageKey ?? 'asrProgressDecoding',
+                    params: voiceProgress?.messageParams ?? const <String, Object?>{},
+                  );
+                case _NoteVoiceInputState.starting:
+                  return i18n.t('tapToStartRecord');
+                case _NoteVoiceInputState.idle:
+                  return i18n.t('tapToStartRecord');
+              }
+            }
+
+            Future<void> toggleVoiceInput() async {
+              if (voiceState == _NoteVoiceInputState.starting ||
+                  voiceState == _NoteVoiceInputState.transcribing) {
+                return;
+              }
+              if (voiceState == _NoteVoiceInputState.recording) {
+                updateSheet(() {
+                  voiceState = _NoteVoiceInputState.transcribing;
+                  voiceError = null;
+                  voiceProgress = const AsrProgress(
+                    stage: 'recording',
+                    messageKey: 'asrProgressStoppingRecording',
+                  );
+                });
+                final audioPath = await state.stopAsrRecording();
+                if (sheetClosed || !sheetContext.mounted) {
+                  return;
+                }
+                if (audioPath == null || audioPath.trim().isEmpty) {
+                  updateSheet(() {
+                    voiceState = _NoteVoiceInputState.idle;
+                    voiceProgress = null;
+                    voiceError = i18n.t('recordingFailed');
+                  });
+                  return;
+                }
+
+                final result = await state.transcribeRecording(
+                  audioPath,
+                  onProgress: (progress) {
+                    updateSheet(() {
+                      voiceProgress = progress;
+                    });
+                  },
+                );
+                if (sheetClosed || !sheetContext.mounted) {
+                  return;
+                }
+                if (!result.success) {
+                  updateSheet(() {
+                    voiceState = _NoteVoiceInputState.idle;
+                    voiceProgress = null;
+                    voiceError = result.error == null
+                        ? i18n.t('recognitionFailed')
+                        : i18n.t(result.error!, params: result.errorParams);
+                  });
+                  return;
+                }
+
+                final recognizedText = result.text?.trim() ?? '';
+                if (recognizedText.isEmpty) {
+                  updateSheet(() {
+                    voiceState = _NoteVoiceInputState.idle;
+                    voiceProgress = null;
+                    voiceError = i18n.t('asrEmptyResult');
+                  });
+                  return;
+                }
+
+                final merged = _mergeRecognizedNoteContent(
+                  contentController.text,
+                  recognizedText,
+                );
+                contentController.value = contentController.value.copyWith(
+                  text: merged,
+                  selection: TextSelection.collapsed(offset: merged.length),
+                  composing: TextRange.empty,
+                );
+                if (titleController.text.trim().isEmpty) {
+                  final suggestedTitle = _suggestNoteTitleFromVoice(
+                    recognizedText,
+                  );
+                  if (suggestedTitle.isNotEmpty) {
+                    titleController.value = titleController.value.copyWith(
+                      text: suggestedTitle,
+                      selection: TextSelection.collapsed(
+                        offset: suggestedTitle.length,
+                      ),
+                      composing: TextRange.empty,
+                    );
+                  }
+                }
+                updateSheet(() {
+                  voiceState = _NoteVoiceInputState.idle;
+                  voiceProgress = null;
+                  voiceError = null;
+                });
+                return;
+              }
+
+              updateSheet(() {
+                voiceState = _NoteVoiceInputState.starting;
+                voiceProgress = null;
+                voiceError = null;
+              });
+              final path = await state.startAsrRecording();
+              if (sheetClosed || !sheetContext.mounted) {
+                return;
+              }
+              if (path == null || path.trim().isEmpty) {
+                updateSheet(() {
+                  voiceState = _NoteVoiceInputState.idle;
+                  voiceError = i18n.t('startRecordingFailed');
+                });
+                return;
+              }
+              updateSheet(() {
+                voiceState = _NoteVoiceInputState.recording;
+              });
+            }
+
+            final isVoiceBusy =
+                voiceState == _NoteVoiceInputState.starting ||
+                voiceState == _NoteVoiceInputState.transcribing;
+            final isRecording = voiceState == _NoteVoiceInputState.recording;
+            final voiceHelperText =
+                voiceError ??
+                (voiceState == _NoteVoiceInputState.idle
+                    ? pickUiText(
+                        i18n,
+                        zh: '识别结果会追加到正文，标题留空时会自动生成摘要。',
+                        en: 'Transcribed text is appended to the note body, and an empty title will be auto-filled.',
+                        ja: '認識結果は本文に追記され、タイトルが空なら自動で要約が入ります。',
+                        de: 'Erkannter Text wird an den Inhalt angehängt, und ein leerer Titel wird automatisch ergänzt.',
+                        fr: 'Le texte reconnu est ajoute au contenu, et un titre vide sera complete automatiquement.',
+                        es: 'El texto reconocido se anade al contenido y el titulo vacio se completa automaticamente.',
+                        ru: 'Распознанный текст добавляется в заметку, а пустой заголовок заполняется автоматически.',
+                      )
+                    : i18n.t(
+                        voiceProgress?.messageKey ?? 'tapToStopRecord',
+                        params: voiceProgress?.messageParams ??
+                            const <String, Object?>{},
+                      ));
+
             return Padding(
               padding: EdgeInsets.fromLTRB(
                 16,
@@ -2508,6 +2715,38 @@ class _FocusPageState extends State<FocusPage>
                             labelText: i18n.t('noteContent'),
                             alignLabelWithHint: true,
                             border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.tonalIcon(
+                          key: const ValueKey<String>(
+                            'note-voice-input-button',
+                          ),
+                          onPressed: isVoiceBusy ? null : toggleVoiceInput,
+                          icon: isVoiceBusy
+                              ? SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                )
+                              : Icon(
+                                  isRecording
+                                      ? Icons.stop_circle_outlined
+                                      : Icons.mic_none_rounded,
+                                ),
+                          label: Text(voiceButtonLabel()),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          voiceHelperText,
+                          key: const ValueKey<String>('note-voice-helper-text'),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: voiceError == null
+                                ? theme.colorScheme.onSurfaceVariant
+                                : theme.colorScheme.error,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -2602,7 +2841,10 @@ class _FocusPageState extends State<FocusPage>
           },
         );
       },
-    );
+    ).whenComplete(() async {
+      sheetClosed = true;
+      await cleanupVoiceInput();
+    });
   }
 
   void _confirmDeleteSingleNote(
