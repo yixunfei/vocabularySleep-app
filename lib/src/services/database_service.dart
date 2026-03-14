@@ -162,6 +162,89 @@ class AppDatabaseService {
     return infos;
   }
 
+  Future<void> deleteSafetyBackup(String backupPath) async {
+    final backupDir = await _ensureBackupDirectory();
+    final file = File(backupPath);
+    if (!await file.exists()) {
+      throw FileSystemException('Backup file does not exist', backupPath);
+    }
+
+    final normalizedBackupDir = p.normalize(backupDir.path);
+    final normalizedTarget = p.normalize(file.path);
+    if (!p.isWithin(normalizedBackupDir, normalizedTarget) &&
+        normalizedBackupDir != normalizedTarget) {
+      throw FileSystemException('Backup file is outside the backup directory', backupPath);
+    }
+
+    await file.delete();
+  }
+
+  Future<String> exportUserData() async {
+    if (!_initialized) {
+      throw StateError('Database is not initialized');
+    }
+
+    final exportDir = await _ensureExportDirectory();
+    final timestamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .replaceAll('.', '-');
+    final exportPath = p.join(exportDir.path, 'vocabulary_user_data_$timestamp.json');
+
+    final rows = _selectMaps('''
+      SELECT id, name, path, word_count, created_at
+      FROM wordbooks
+      ORDER BY id ASC
+    ''');
+    final wordbooks = rows.map((row) {
+      final wordbookId = ((row['id'] as num?) ?? 0).toInt();
+      return <String, Object?>{
+        'id': wordbookId,
+        'name': row['name'],
+        'path': row['path'],
+        'word_count': row['word_count'],
+        'created_at': row['created_at'],
+        'words': getWords(wordbookId)
+            .map((word) => <String, Object?>{
+                  'id': word.id,
+                  'wordbook_id': word.wordbookId,
+                  'word': word.word,
+                  'meaning': word.meaning,
+                  'examples': word.examples,
+                  'etymology': word.etymology,
+                  'roots': word.roots,
+                  'affixes': word.affixes,
+                  'variations': word.variations,
+                  'memory': word.memory,
+                  'story': word.story,
+                  'fields': word.fields
+                      .map((field) => field.toJsonMap())
+                      .toList(growable: false),
+                  'raw_content': word.rawContent,
+                })
+            .toList(growable: false),
+      };
+    }).toList(growable: false);
+
+    final timerRows = _selectMaps(
+      'SELECT * FROM timer_records ORDER BY start_time DESC',
+    );
+
+    final payload = <String, Object?>{
+      'exported_at': DateTime.now().toIso8601String(),
+      'wordbooks': wordbooks,
+      'todos': getTodos().map((item) => item.toMap()).toList(growable: false),
+      'notes': getNotes().map((item) => item.toMap()).toList(growable: false),
+      'timer_records': timerRows,
+    };
+
+    await File(exportPath).writeAsString(
+      const JsonEncoder.withIndent('  ').convert(payload),
+      flush: true,
+    );
+    return exportPath;
+  }
+
   Future<void> restoreSafetyBackup(String backupPath) async {
     if (!_initialized) {
       throw StateError('Database is not initialized');
@@ -1196,6 +1279,15 @@ class AppDatabaseService {
       await backupDir.create(recursive: true);
     }
     return backupDir;
+  }
+
+  Future<Directory> _ensureExportDirectory() async {
+    final supportDir = await getApplicationSupportDirectory();
+    final exportDir = Directory(p.join(supportDir.path, 'exports'));
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+    return exportDir;
   }
 
   String _parseBackupReason(String filename) {

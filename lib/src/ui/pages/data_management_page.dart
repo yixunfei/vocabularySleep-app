@@ -83,6 +83,17 @@ class DataManagementPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           SettingTile(
+            icon: Icons.ios_share_rounded,
+            title: pickUiText(i18n, zh: '导出用户数据', en: 'Export user data'),
+            subtitle: pickUiText(
+              i18n,
+              zh: '导出单词本、待办、笔记与专注记录，便于手动备份重要内容。',
+              en: 'Export wordbooks, todos, notes, and focus records so important data can be backed up manually.',
+            ),
+            onTap: () => _exportUserData(context, state, i18n),
+          ),
+          const SizedBox(height: 12),
+          SettingTile(
             icon: Icons.cleaning_services_outlined,
             title: pickUiText(i18n, zh: '清空任务词本', en: 'Clear task wordbook'),
             subtitle: pickUiText(
@@ -333,15 +344,23 @@ class DataManagementPage extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
-              onPressed: () => _restoreBackup(context, state, i18n, backup),
-              icon: const Icon(Icons.restore_rounded),
-              label: Text(
-                pickUiText(i18n, zh: '恢复这个备份', en: 'Restore this backup'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              TextButton.icon(
+                onPressed: () => _deleteBackup(context, state, i18n, backup),
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
               ),
-            ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => _restoreBackup(context, state, i18n, backup),
+                icon: const Icon(Icons.restore_rounded),
+                label: Text(
+                  pickUiText(i18n, zh: '恢复这个备份', en: 'Restore this backup'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -377,6 +396,56 @@ class DataManagementPage extends StatelessWidget {
             i18n,
             zh: '备份已恢复，当前数据已重新加载。',
             en: 'Backup restored and app data reloaded.',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteBackup(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n,
+    DatabaseBackupInfo backup,
+  ) async {
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '删除备份', en: 'Delete backup'),
+      message: pickUiText(
+        i18n,
+        zh: '将永久删除这份安全备份。确认继续吗？',
+        en: 'This will permanently delete the selected safety backup. Continue?',
+      ),
+      confirmText: pickUiText(i18n, zh: '删除', en: 'Delete'),
+      danger: true,
+    );
+    if (!confirmed) return;
+
+    final success = await state.deleteDatabaseBackup(backup);
+    if (!context.mounted || !success) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          pickUiText(i18n, zh: '备份已删除。', en: 'Backup deleted.'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportUserData(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n,
+  ) async {
+    final path = await state.exportUserData();
+    if (!context.mounted || path == null || path.trim().isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          pickUiText(
+            i18n,
+            zh: '用户数据已导出到: $path',
+            en: 'User data exported to: $path',
           ),
         ),
       ),

@@ -1179,6 +1179,52 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return _database.listSafetyBackups();
   }
 
+  Future<bool> deleteDatabaseBackup(DatabaseBackupInfo backup) async {
+    try {
+      await _database.deleteSafetyBackup(backup.path);
+      if (_lastBackupPath == backup.path) {
+        _lastBackupPath = null;
+      }
+      notifyListeners();
+      return true;
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'delete backup failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{'path': backup.path},
+      );
+      _setMessage(
+        'errorInitFailed',
+        params: <String, Object?>{'error': 'delete backup: $error'},
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<String?> exportUserData() async {
+    _setBusy(true, messageKey: 'processing');
+    try {
+      return await _database.exportUserData();
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'export user data failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _setMessage(
+        'errorInitFailed',
+        params: <String, Object?>{'error': 'export user data: $error'},
+      );
+      return null;
+    } finally {
+      _setBusy(false);
+    }
+  }
+
   Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) async {
     _setBusy(
       true,

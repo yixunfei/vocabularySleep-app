@@ -528,6 +528,49 @@ void main() {
       expect(state.restoredBackupPath, backup.path);
     });
 
+    testWidgets('data management page wires export user data action', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const DataManagementPage());
+
+      await tester.tap(find.text('Export user data'));
+      await tester.pumpAndSettle();
+
+      expect(state.exportedUserDataPath, '/tmp/vocabulary_user_data_export.json');
+    });
+
+    testWidgets('data management page wires delete backup action', (
+      tester,
+    ) async {
+      final backup = DatabaseBackupInfo(
+        name: 'vocabulary_manual_2026-03-12T10-00-00.db',
+        path: '/tmp/vocabulary_manual_2026-03-12T10-00-00.db',
+        reason: 'manual',
+        modifiedAt: DateTime(2026, 3, 12, 10),
+        sizeBytes: 2048,
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        backups: <DatabaseBackupInfo>[backup],
+      );
+      await _pumpPage(tester, state: state, child: const DataManagementPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Restore backup'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
+      await tester.pumpAndSettle();
+
+      expect(state.deletedBackupPath, backup.path);
+    });
+
     testWidgets('wordbook management shows quick actions and opens editor', (
       tester,
     ) async {
@@ -809,6 +852,8 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   SearchMode _searchMode = SearchMode.all;
   bool resetUserDataCalled = false;
   String? restoredBackupPath;
+  String? deletedBackupPath;
+  String? exportedUserDataPath;
   String? createdWordbookName;
   String? renamedWordbookName;
   String? importedWordbookName;
@@ -1070,6 +1115,20 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   Future<List<DatabaseBackupInfo>> listDatabaseBackups() async => _backups;
+
+  @override
+  Future<bool> deleteDatabaseBackup(DatabaseBackupInfo backup) async {
+    deletedBackupPath = backup.path;
+    notifyListeners();
+    return true;
+  }
+
+  @override
+  Future<String?> exportUserData() async {
+    exportedUserDataPath = '/tmp/vocabulary_user_data_export.json';
+    notifyListeners();
+    return exportedUserDataPath;
+  }
 
   @override
   Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) async {

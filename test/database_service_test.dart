@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
@@ -144,5 +146,70 @@ void main() {
       'fresh note',
     );
     expect(updated.fields.any((item) => item.asText().contains('123')), isFalse);
+  });
+
+  test('exportUserData writes notes and todos to json', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    database.insertTodo(
+      TodoItem(
+        content: 'Review exported todos',
+        priority: 2,
+        createdAt: DateTime(2026, 3, 14),
+      ),
+    );
+    database.insertNote(
+      PlanNote(
+        title: 'Export note',
+        content: 'Keep user data safe.',
+        createdAt: DateTime(2026, 3, 14),
+        updatedAt: DateTime(2026, 3, 14),
+      ),
+    );
+
+    final exportPath = await database.exportUserData();
+    final exportFile = File(exportPath);
+    expect(await exportFile.exists(), isTrue);
+
+    final decoded = jsonDecode(await exportFile.readAsString()) as Map;
+    final todos = decoded['todos'] as List;
+    final notes = decoded['notes'] as List;
+    expect(
+      todos.any((item) => (item as Map)['content'] == 'Review exported todos'),
+      isTrue,
+    );
+    expect(
+      notes.any((item) => (item as Map)['title'] == 'Export note'),
+      isTrue,
+    );
+  });
+
+  test('deleteSafetyBackup removes an existing backup file', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_backup_delete',
+      name: 'Delete backup test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+          ],
+          rawContent: 'First',
+        ),
+      ],
+    );
+
+    final backupPath = await database.createSafetyBackup(reason: 'delete_test');
+    expect(await File(backupPath).exists(), isTrue);
+
+    await database.deleteSafetyBackup(backupPath);
+
+    expect(await File(backupPath).exists(), isFalse);
   });
 }
