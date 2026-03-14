@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../models/play_config.dart';
 import '../../models/word_entry.dart';
 import '../../models/word_field.dart';
 import '../legacy_style.dart';
@@ -17,6 +18,8 @@ class WordCard extends StatelessWidget {
     required this.word,
     required this.i18n,
     this.density = WordCardDensity.immersive,
+    this.transitionStyle = WordPageTransitionStyle.defaultStyle,
+    this.transitionDirection = 1,
     this.showMeaning = true,
     this.showFields = true,
     this.revealPracticeAnswer = true,
@@ -36,6 +39,8 @@ class WordCard extends StatelessWidget {
   final WordEntry word;
   final AppI18n i18n;
   final WordCardDensity density;
+  final WordPageTransitionStyle transitionStyle;
+  final int transitionDirection;
   final bool showMeaning;
   final bool showFields;
   final bool revealPracticeAnswer;
@@ -50,6 +55,100 @@ class WordCard extends StatelessWidget {
   final VoidCallback? onSwipePrevious;
   final VoidCallback? onSwipeNext;
   final Widget? footer;
+
+  Duration get _transitionDuration => switch (transitionStyle) {
+    WordPageTransitionStyle.defaultStyle => const Duration(milliseconds: 220),
+    WordPageTransitionStyle.smooth => const Duration(milliseconds: 280),
+    WordPageTransitionStyle.fade => const Duration(milliseconds: 240),
+    WordPageTransitionStyle.pageFlip => const Duration(milliseconds: 340),
+  };
+
+  String _wordIdentity(WordEntry entry) =>
+      '${entry.wordbookId}:${entry.id ?? entry.word}';
+
+  String _favoriteLabel() {
+    if (isFavorite) {
+      return pickUiText(i18n, zh: '取消收藏', en: 'Unfavorite');
+    }
+    return pickUiText(i18n, zh: '收藏', en: 'Favorite');
+  }
+
+  String _taskLabel() {
+    if (isTaskWord) {
+      return pickUiText(i18n, zh: '移出任务', en: 'Remove task');
+    }
+    return pickUiText(i18n, zh: '加入任务', en: 'Add to task');
+  }
+
+  List<WordFieldItem> _displayFields(WordEntry entry) {
+    if (entry.fields.isNotEmpty) return entry.fields;
+    return buildFieldItemsFromRecord(<String, Object?>{
+      'meaning': entry.meaning,
+      'examples': entry.examples,
+      'etymology': entry.etymology,
+      'roots': entry.roots,
+      'affixes': entry.affixes,
+      'variations': entry.variations,
+      'memory': entry.memory,
+      'story': entry.story,
+    });
+  }
+
+  Widget _buildTransition(Widget child, Animation<double> animation) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final direction = transitionDirection >= 0 ? 1 : -1;
+
+    return switch (transitionStyle) {
+      WordPageTransitionStyle.defaultStyle => FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: Offset(direction * 0.08, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      ),
+      WordPageTransitionStyle.smooth => FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: Offset(direction * 0.18, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      ),
+      WordPageTransitionStyle.fade => FadeTransition(
+        opacity: curved,
+        child: child,
+      ),
+      WordPageTransitionStyle.pageFlip => AnimatedBuilder(
+        animation: curved,
+        child: child,
+        builder: (context, flipChild) {
+          final value = curved.value;
+          final tilt = (1 - value) * 0.55 * direction;
+          return FadeTransition(
+            opacity: curved,
+            child: Transform(
+              alignment: direction > 0
+                  ? Alignment.centerRight
+                  : Alignment.centerLeft,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.0014)
+                ..rotateY(tilt),
+              child: flipChild,
+            ),
+          );
+        },
+      ),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +169,6 @@ class WordCard extends StatelessWidget {
       WordCardDensity.practice => theme.textTheme.headlineSmall,
       WordCardDensity.immersive => theme.textTheme.headlineLarge,
     };
-
     final canReveal =
         density != WordCardDensity.practice || revealPracticeAnswer;
     final visibleMeaning = showMeaning && canReveal
@@ -81,158 +179,179 @@ class WordCard extends StatelessWidget {
         : const <String>[];
     final enableWordSwipe = onSwipePrevious != null || onSwipeNext != null;
 
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(density == WordCardDensity.compact ? 18 : 22),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                if (isFavorite)
-                  StatusBadge(
-                    label: pickUiText(i18n, zh: '已收藏', en: 'Favorite'),
-                    icon: Icons.favorite_rounded,
-                    color: const Color(0xFFE25A7A),
-                  ),
-                if (isTaskWord)
-                  StatusBadge(
-                    label: pickUiText(i18n, zh: '任务词', en: 'Task'),
-                    icon: Icons.task_alt_rounded,
-                    color: tokens.success,
-                  ),
-              ],
-            ),
-            if (isFavorite || isTaskWord) const SizedBox(height: 14),
-            _WordHeaderBlock(
-              i18n: i18n,
-              word: word.word,
-              titleStyle: titleStyle,
-              visibleMeaning: visibleMeaning,
-              revealPracticeAnswer: revealPracticeAnswer,
-              density: density,
-              visibleExamples: visibleExamples,
-              titleColor:
-                  Color.lerp(tokens.textPrimary, tokens.accent, 0.42) ??
-                  tokens.textPrimary,
-              textSecondary: tokens.textSecondary,
-              onPreviousWord: onPreviousWord,
-              onNextWord: onNextWord,
-              onPlayPronunciation: onPlayPronunciation,
-              onFollowAlong: onFollowAlong,
-              onSwipePrevious: onSwipePrevious,
-              onSwipeNext: onSwipeNext,
-              enableWordSwipe: enableWordSwipe,
-            ),
-            if (showFields) ...[
-              const SizedBox(height: 18),
-              Column(
-                children: fields
-                    .where(
-                      (item) => item.key != 'meaning' && item.key != 'examples',
-                    )
-                    .take(density == WordCardDensity.compact ? 2 : 4)
-                    .toList(growable: false)
-                    .asMap()
-                    .entries
-                    .map((entry) {
-                      final field = entry.value;
-                      final accentColor = appearance.randomEntryColors
-                          ? seededAccentColor(
-                              '${word.word}:${field.key}:${entry.key}',
-                              fallback: tokens.accent,
-                              saturation: 0.56,
-                              value: tokens.isDark ? 0.92 : 0.78,
-                            )
-                          : tokens.accent;
-                      return Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 10),
-                        constraints: const BoxConstraints(minHeight: 40),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        decoration: LegacyStyle.fieldCardDecoration(
-                          accentColor: accentColor,
-                          fieldKey: field.key,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(
-                              localizedFieldLabel(i18n, field),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: accentColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              field.asText(),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: tokens.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    })
-                    .toList(growable: false),
+    final cardContent = KeyedSubtree(
+      key: ValueKey<String>(_wordIdentity(word)),
+      child: Card(
+        child: Padding(
+          padding: EdgeInsets.all(density == WordCardDensity.compact ? 18 : 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  if (isFavorite)
+                    StatusBadge(
+                      label: pickUiText(i18n, zh: '已收藏', en: 'Favorite'),
+                      icon: Icons.favorite_rounded,
+                      color: const Color(0xFFE25A7A),
+                    ),
+                  if (isTaskWord)
+                    StatusBadge(
+                      label: pickUiText(i18n, zh: '任务词', en: 'Task'),
+                      icon: Icons.task_alt_rounded,
+                      color: tokens.success,
+                    ),
+                ],
               ),
-            ],
-            const SizedBox(height: 18),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: <Widget>[
-                if (onToggleFavorite != null)
-                  OutlinedButton.icon(
-                    onPressed: onToggleFavorite,
-                    icon: Icon(
-                      isFavorite
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                    ),
-                    label: Text(pickUiText(i18n, zh: '收藏', en: 'Favorite')),
-                  ),
-                if (onToggleTask != null)
-                  OutlinedButton.icon(
-                    onPressed: onToggleTask,
-                    icon: Icon(
-                      isTaskWord
-                          ? Icons.task_alt_rounded
-                          : Icons.playlist_add_check_rounded,
-                    ),
-                    label: Text(
-                      pickUiText(i18n, zh: '加入任务', en: 'Add to task'),
-                    ),
-                  ),
+              if (isFavorite || isTaskWord) const SizedBox(height: 14),
+              _WordHeaderBlock(
+                i18n: i18n,
+                word: word.word,
+                titleStyle: titleStyle,
+                visibleMeaning: visibleMeaning,
+                revealPracticeAnswer: revealPracticeAnswer,
+                density: density,
+                visibleExamples: visibleExamples,
+                titleColor:
+                    Color.lerp(tokens.textPrimary, tokens.accent, 0.42) ??
+                    tokens.textPrimary,
+                textSecondary: tokens.textSecondary,
+                onPreviousWord: onPreviousWord,
+                onNextWord: onNextWord,
+                onPlayPronunciation: onPlayPronunciation,
+                onFollowAlong: onFollowAlong,
+                enableWordSwipe: enableWordSwipe,
+              ),
+              if (showFields) ...<Widget>[
+                const SizedBox(height: 18),
+                Column(
+                  children: fields
+                      .where(
+                        (item) =>
+                            item.key != 'meaning' && item.key != 'examples',
+                      )
+                      .take(density == WordCardDensity.compact ? 2 : 4)
+                      .toList(growable: false)
+                      .asMap()
+                      .entries
+                      .map((entry) {
+                        final field = entry.value;
+                        final accentColor = appearance.randomEntryColors
+                            ? seededAccentColor(
+                                '${word.word}:${field.key}:${entry.key}',
+                                fallback: tokens.accent,
+                                saturation: 0.56,
+                                value: tokens.isDark ? 0.92 : 0.78,
+                              )
+                            : tokens.accent;
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          constraints: const BoxConstraints(minHeight: 40),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: LegacyStyle.fieldCardDecoration(
+                            accentColor: accentColor,
+                            fieldKey: field.key,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                localizedFieldLabel(i18n, field),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: accentColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                field.asText(),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: tokens.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      })
+                      .toList(growable: false),
+                ),
               ],
-            ),
-            if (footer != null) ...[const SizedBox(height: 16), footer!],
-          ],
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: <Widget>[
+                  if (onToggleFavorite != null)
+                    OutlinedButton.icon(
+                      onPressed: onToggleFavorite,
+                      icon: Icon(
+                        isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                      ),
+                      label: Text(_favoriteLabel()),
+                    ),
+                  if (onToggleTask != null)
+                    OutlinedButton.icon(
+                      onPressed: onToggleTask,
+                      icon: Icon(
+                        isTaskWord
+                            ? Icons.task_alt_rounded
+                            : Icons.playlist_add_check_rounded,
+                      ),
+                      label: Text(_taskLabel()),
+                    ),
+                ],
+              ),
+              ...?switch (footer) {
+                final footerWidget? => <Widget>[
+                  const SizedBox(height: 16),
+                  footerWidget,
+                ],
+                null => null,
+              },
+            ],
+          ),
         ),
       ),
     );
-  }
 
-  List<WordFieldItem> _displayFields(WordEntry entry) {
-    if (entry.fields.isNotEmpty) return entry.fields;
-    return buildFieldItemsFromRecord(<String, Object?>{
-      'meaning': entry.meaning,
-      'examples': entry.examples,
-      'etymology': entry.etymology,
-      'roots': entry.roots,
-      'affixes': entry.affixes,
-      'variations': entry.variations,
-      'memory': entry.memory,
-      'story': entry.story,
-    });
+    final animatedCard = ClipRect(
+      child: AnimatedSwitcher(
+        duration: _transitionDuration,
+        reverseDuration: _transitionDuration,
+        layoutBuilder: (currentChild, previousChildren) {
+          return Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              ...previousChildren,
+              ...?switch (currentChild) {
+                final child? => <Widget>[child],
+                null => null,
+              },
+            ],
+          );
+        },
+        transitionBuilder: _buildTransition,
+        child: cardContent,
+      ),
+    );
+
+    if (!enableWordSwipe) return animatedCard;
+
+    return _WordSwipeRegion(
+      onSwipePrevious: onSwipePrevious,
+      onSwipeNext: onSwipeNext,
+      child: animatedCard,
+    );
   }
 }
 
@@ -251,13 +370,8 @@ class _WordHeaderBlock extends StatelessWidget {
     required this.onNextWord,
     required this.onPlayPronunciation,
     required this.onFollowAlong,
-    required this.onSwipePrevious,
-    required this.onSwipeNext,
     required this.enableWordSwipe,
   });
-
-  static const double _swipeVelocityThreshold = 320;
-  static const double _swipeDistanceThreshold = 56;
 
   final AppI18n i18n;
   final String word;
@@ -272,29 +386,7 @@ class _WordHeaderBlock extends StatelessWidget {
   final VoidCallback? onNextWord;
   final VoidCallback? onPlayPronunciation;
   final VoidCallback? onFollowAlong;
-  final VoidCallback? onSwipePrevious;
-  final VoidCallback? onSwipeNext;
   final bool enableWordSwipe;
-
-  void _onHorizontalDragEnd(
-    DragEndDetails details, {
-    required double dragDistance,
-  }) {
-    final velocity = details.primaryVelocity ?? 0;
-    final swipeRight =
-        velocity >= _swipeVelocityThreshold ||
-        dragDistance >= _swipeDistanceThreshold;
-    final swipeLeft =
-        velocity <= -_swipeVelocityThreshold ||
-        dragDistance <= -_swipeDistanceThreshold;
-    if (swipeRight) {
-      onSwipePrevious?.call();
-      return;
-    }
-    if (swipeLeft) {
-      onSwipeNext?.call();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -314,17 +406,13 @@ class _WordHeaderBlock extends StatelessWidget {
         IconButton.filledTonal(
           onPressed: onPreviousWord,
           icon: const Icon(Icons.chevron_left_rounded),
-          tooltip: pickUiText(
-            i18n,
-            zh: '\u4e0a\u4e00\u4e2a',
-            en: 'Previous word',
-          ),
+          tooltip: pickUiText(i18n, zh: '上一个', en: 'Previous word'),
         ),
       if (onNextWord != null)
         IconButton.filledTonal(
           onPressed: onNextWord,
           icon: const Icon(Icons.chevron_right_rounded),
-          tooltip: pickUiText(i18n, zh: '\u4e0b\u4e00\u4e2a', en: 'Next word'),
+          tooltip: pickUiText(i18n, zh: '下一个', en: 'Next word'),
         ),
       if (onPlayPronunciation != null)
         FilledButton.tonalIcon(
@@ -336,13 +424,17 @@ class _WordHeaderBlock extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onFollowAlong,
           icon: const Icon(Icons.mic_external_on_rounded),
-          label: Text(pickUiText(i18n, zh: '\u8ddf\u8bfb', en: 'Follow')),
+          label: Text(pickUiText(i18n, zh: '跟读', en: 'Follow')),
         ),
     ];
 
-    final wordPanel = Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        if (controls.isNotEmpty) ...<Widget>[
+          Wrap(spacing: 8, runSpacing: 8, children: controls),
+          const SizedBox(height: 14),
+        ],
         EffectfulText(
           word,
           style: titleStyle?.copyWith(
@@ -355,25 +447,25 @@ class _WordHeaderBlock extends StatelessWidget {
           breathingEffect: appearance.breathingEffect,
           flowingEffect: appearance.flowingEffect,
         ),
-        if (!canReveal) ...[
+        if (!canReveal) ...<Widget>[
           const SizedBox(height: 10),
           Text(
             pickUiText(
               i18n,
-              zh: '\u5148\u56de\u5fc6\uff0c\u518d\u70b9\u51fb\u663e\u793a\u7b54\u6848',
+              zh: '先回忆，再点击显示答案',
               en: 'Recall first, then reveal the answer.',
             ),
             style: theme.textTheme.bodyMedium?.copyWith(color: textSecondary),
           ),
-        ] else ...[
-          if (cleanedMeaning.isNotEmpty) ...[
+        ] else ...<Widget>[
+          if (cleanedMeaning.isNotEmpty) ...<Widget>[
             const SizedBox(height: 10),
             Text(
               cleanedMeaning,
               style: theme.textTheme.bodyLarge?.copyWith(color: textSecondary),
             ),
           ],
-          if (cleanedExamples.isNotEmpty) ...[
+          if (cleanedExamples.isNotEmpty) ...<Widget>[
             const SizedBox(height: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,7 +474,7 @@ class _WordHeaderBlock extends StatelessWidget {
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Text(
-                        '\u2022 $item',
+                        '- $item',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -395,49 +487,73 @@ class _WordHeaderBlock extends StatelessWidget {
             ),
           ],
         ],
-        if (enableWordSwipe) ...[
+        if (enableWordSwipe) ...<Widget>[
           const SizedBox(height: 10),
           Text(
             pickUiText(
               i18n,
-              zh: '\u5728\u5355\u8bcd\u533a\u57df\u5de6\u53f3\u6ed1\u52a8\u53ef\u5207\u8bcd',
-              en: 'Swipe left or right on this word to switch.',
+              zh: '在整张单词卡片上左右滑动可切词',
+              en: 'Swipe anywhere on this card to switch.',
             ),
             style: theme.textTheme.bodySmall?.copyWith(color: textSecondary),
           ),
         ],
       ],
     );
+  }
+}
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        if (controls.isNotEmpty) ...[
-          Wrap(spacing: 8, runSpacing: 8, children: controls),
-          const SizedBox(height: 14),
-        ],
-        if (enableWordSwipe)
-          Builder(
-            builder: (context) {
-              var dragDistance = 0.0;
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onHorizontalDragStart: (_) {
-                  dragDistance = 0;
-                },
-                onHorizontalDragUpdate: (details) {
-                  dragDistance += details.primaryDelta ?? 0;
-                },
-                onHorizontalDragEnd: (details) {
-                  _onHorizontalDragEnd(details, dragDistance: dragDistance);
-                },
-                child: wordPanel,
-              );
-            },
-          )
-        else
-          wordPanel,
-      ],
+class _WordSwipeRegion extends StatefulWidget {
+  const _WordSwipeRegion({
+    required this.child,
+    this.onSwipePrevious,
+    this.onSwipeNext,
+  });
+
+  static const double swipeVelocityThreshold = 320;
+  static const double swipeDistanceThreshold = 56;
+
+  final Widget child;
+  final VoidCallback? onSwipePrevious;
+  final VoidCallback? onSwipeNext;
+
+  @override
+  State<_WordSwipeRegion> createState() => _WordSwipeRegionState();
+}
+
+class _WordSwipeRegionState extends State<_WordSwipeRegion> {
+  double _dragDistance = 0;
+
+  void _handleHorizontalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    final swipeRight =
+        velocity >= _WordSwipeRegion.swipeVelocityThreshold ||
+        _dragDistance >= _WordSwipeRegion.swipeDistanceThreshold;
+    final swipeLeft =
+        velocity <= -_WordSwipeRegion.swipeVelocityThreshold ||
+        _dragDistance <= -_WordSwipeRegion.swipeDistanceThreshold;
+
+    if (swipeRight) {
+      widget.onSwipePrevious?.call();
+      return;
+    }
+    if (swipeLeft) {
+      widget.onSwipeNext?.call();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (_) {
+        _dragDistance = 0;
+      },
+      onHorizontalDragUpdate: (details) {
+        _dragDistance += details.primaryDelta ?? 0;
+      },
+      onHorizontalDragEnd: _handleHorizontalDragEnd,
+      child: widget.child,
     );
   }
 }

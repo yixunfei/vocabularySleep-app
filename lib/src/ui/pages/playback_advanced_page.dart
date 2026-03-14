@@ -31,6 +31,7 @@ class PlaybackAdvancedPage extends StatelessWidget {
     final wordRepeat = (repeats['word'] ?? 1).clamp(0, 5).toInt();
     final meaningRepeat = (repeats['meaning'] ?? 1).clamp(0, 5).toInt();
     final exampleRepeat = (repeats['example'] ?? 1).clamp(0, 5).toInt();
+    final spellingRepeat = (repeats['spelling'] ?? 0).clamp(0, 5).toInt();
     final nonCoreRepeats = <String, int>{
       for (final key in _nonCoreKeys)
         key: (repeats[key] ?? 0).clamp(0, 5).toInt(),
@@ -84,6 +85,76 @@ class PlaybackAdvancedPage extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SectionHeader(
+                    title: pickUiText(
+                      i18n,
+                      zh: '拼读与翻页',
+                      en: 'Spelling and transitions',
+                    ),
+                    subtitle: pickUiText(
+                      i18n,
+                      zh: '控制拼读播放方式，以及单词卡的左右切换动效。',
+                      en: 'Control spelling playback and left-right word card transitions.',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _RepeatSlider(
+                    label: pickUiText(i18n, zh: '拼读重复', en: 'Spelling repeat'),
+                    value: spellingRepeat,
+                    onChanged: (value) =>
+                        _updateRepeat(state, config, 'spelling', value),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(pickUiText(i18n, zh: '拼读模式', en: 'Spelling mode')),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: SpellingPlaybackMode.values
+                        .map(
+                          (mode) => ChoiceChip(
+                            label: Text(_spellingModeLabel(i18n, mode)),
+                            selected: config.spellingPlaybackMode == mode,
+                            onSelected: (_) {
+                              state.updateConfig(
+                                config.copyWith(spellingPlaybackMode: mode),
+                              );
+                            },
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(pickUiText(i18n, zh: '翻页效果', en: 'Page transition')),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: WordPageTransitionStyle.values
+                        .map(
+                          (style) => ChoiceChip(
+                            label: Text(_transitionStyleLabel(i18n, style)),
+                            selected: config.wordPageTransitionStyle == style,
+                            onSelected: (_) {
+                              state.updateConfig(
+                                config.copyWith(wordPageTransitionStyle: style),
+                              );
+                            },
+                          ),
+                        )
+                        .toList(growable: false),
                   ),
                 ],
               ),
@@ -294,6 +365,38 @@ class PlaybackAdvancedPage extends StatelessWidget {
       'memory' => i18n.t('fieldMemory'),
       'story' => i18n.t('fieldStory'),
       _ => key,
+    };
+  }
+
+  String _spellingModeLabel(AppI18n i18n, SpellingPlaybackMode mode) {
+    return switch (mode) {
+      SpellingPlaybackMode.letters => pickUiText(
+        i18n,
+        zh: '逐字母',
+        en: 'Letters',
+      ),
+      SpellingPlaybackMode.pairs => pickUiText(i18n, zh: '字母对', en: 'Pairs'),
+    };
+  }
+
+  String _transitionStyleLabel(AppI18n i18n, WordPageTransitionStyle style) {
+    return switch (style) {
+      WordPageTransitionStyle.defaultStyle => pickUiText(
+        i18n,
+        zh: '默认',
+        en: 'Default',
+      ),
+      WordPageTransitionStyle.smooth => pickUiText(
+        i18n,
+        zh: '平滑',
+        en: 'Smooth',
+      ),
+      WordPageTransitionStyle.fade => pickUiText(i18n, zh: '淡入', en: 'Fade'),
+      WordPageTransitionStyle.pageFlip => pickUiText(
+        i18n,
+        zh: '仿真翻页',
+        en: 'Page flip',
+      ),
     };
   }
 

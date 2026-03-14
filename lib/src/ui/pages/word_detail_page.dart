@@ -12,10 +12,83 @@ import '../widgets/word_card.dart';
 import 'follow_along_page.dart';
 import 'word_editor_page.dart';
 
-class WordDetailPage extends StatelessWidget {
+class WordDetailPage extends StatefulWidget {
   const WordDetailPage({super.key, required this.initialWord});
 
   final WordEntry initialWord;
+
+  @override
+  State<WordDetailPage> createState() => _WordDetailPageState();
+}
+
+class _WordDetailPageState extends State<WordDetailPage> {
+  int _transitionDirection = 1;
+
+  void _setTransitionDirection(int direction) {
+    if (_transitionDirection == direction) return;
+    setState(() {
+      _transitionDirection = direction;
+    });
+  }
+
+  int _indexOfWord(List<WordEntry> words, WordEntry target) {
+    for (var index = 0; index < words.length; index += 1) {
+      final item = words[index];
+      if (item.id != null && target.id != null && item.id == target.id) {
+        return index;
+      }
+      if (item.word == target.word && item.wordbookId == target.wordbookId) {
+        return index;
+      }
+    }
+    return words.indexWhere((item) => item.word == target.word);
+  }
+
+  WordEntry? _resolveWord(AppState state) {
+    final current = state.currentWord;
+    if (current != null &&
+        current.wordbookId == widget.initialWord.wordbookId &&
+        _indexOfWord(state.words, current) >= 0) {
+      return current;
+    }
+
+    final exactId = widget.initialWord.id;
+    if (exactId != null) {
+      for (final item in state.words) {
+        if (item.id == exactId) return item;
+      }
+    }
+
+    for (final item in state.words) {
+      if (item.word == widget.initialWord.word) return item;
+    }
+    return state.currentWord;
+  }
+
+  void _moveToWord(
+    AppState state, {
+    required List<WordEntry> visibleWords,
+    required int currentIndex,
+    required int offset,
+  }) {
+    if (visibleWords.isEmpty) return;
+    _setTransitionDirection(offset >= 0 ? 1 : -1);
+    final safeIndex = currentIndex < 0 ? 0 : currentIndex;
+    final nextIndex =
+        (safeIndex + offset + visibleWords.length) % visibleWords.length;
+    state.selectWordEntry(visibleWords[nextIndex]);
+  }
+
+  Future<void> _openFollowAlong(
+    BuildContext context,
+    AppState state,
+    WordEntry word,
+  ) async {
+    state.selectWordEntry(word);
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +102,7 @@ class WordDetailPage extends StatelessWidget {
           child: Text(
             pickUiText(
               i18n,
-              zh: '\u8fd9\u4e2a\u8bcd\u6761\u5df2\u7ecf\u4e0d\u5b58\u5728\u4e86',
+              zh: '这个词条已经不存在了',
               en: 'This word no longer exists.',
             ),
           ),
@@ -49,6 +122,8 @@ class WordDetailPage extends StatelessWidget {
             'memory': word.memory,
             'story': word.story,
           });
+    final visibleWords = state.visibleWords;
+    final currentIndex = _indexOfWord(visibleWords, word);
 
     return Scaffold(
       appBar: AppBar(
@@ -79,14 +154,10 @@ class WordDetailPage extends StatelessWidget {
                 case 'delete':
                   final confirmed = await showConfirmDialog(
                     context: context,
-                    title: pickUiText(
-                      i18n,
-                      zh: '\u5220\u9664\u8bcd\u6761',
-                      en: 'Delete word',
-                    ),
+                    title: pickUiText(i18n, zh: '删除词条', en: 'Delete word'),
                     message: pickUiText(
                       i18n,
-                      zh: '\u5220\u9664\u540e\u65e0\u6cd5\u6062\u590d\uff0c\u786e\u5b9a\u7ee7\u7eed\u5417\uff1f',
+                      zh: '删除后无法恢复，确定继续吗？',
                       en: 'This cannot be undone. Continue?',
                     ),
                     danger: true,
@@ -99,11 +170,11 @@ class WordDetailPage extends StatelessWidget {
             itemBuilder: (context) => <PopupMenuEntry<String>>[
               PopupMenuItem(
                 value: 'edit',
-                child: Text(pickUiText(i18n, zh: '\u7f16\u8f91', en: 'Edit')),
+                child: Text(pickUiText(i18n, zh: '编辑', en: 'Edit')),
               ),
               PopupMenuItem(
                 value: 'delete',
-                child: Text(pickUiText(i18n, zh: '\u5220\u9664', en: 'Delete')),
+                child: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
               ),
             ],
           ),
@@ -116,6 +187,8 @@ class WordDetailPage extends StatelessWidget {
             word: word,
             i18n: i18n,
             density: WordCardDensity.immersive,
+            transitionStyle: state.config.wordPageTransitionStyle,
+            transitionDirection: _transitionDirection,
             showMeaning: state.config.showText,
             showFields: state.config.showText,
             isFavorite: state.favorites.contains(word.word),
@@ -124,6 +197,38 @@ class WordDetailPage extends StatelessWidget {
             onToggleTask: () => state.toggleTaskWord(word),
             onPlayPronunciation: () => state.previewPronunciation(word.word),
             onFollowAlong: () => _openFollowAlong(context, state, word),
+            onPreviousWord: visibleWords.length <= 1
+                ? null
+                : () => _moveToWord(
+                    state,
+                    visibleWords: visibleWords,
+                    currentIndex: currentIndex,
+                    offset: -1,
+                  ),
+            onNextWord: visibleWords.length <= 1
+                ? null
+                : () => _moveToWord(
+                    state,
+                    visibleWords: visibleWords,
+                    currentIndex: currentIndex,
+                    offset: 1,
+                  ),
+            onSwipePrevious: visibleWords.length <= 1
+                ? null
+                : () => _moveToWord(
+                    state,
+                    visibleWords: visibleWords,
+                    currentIndex: currentIndex,
+                    offset: -1,
+                  ),
+            onSwipeNext: visibleWords.length <= 1
+                ? null
+                : () => _moveToWord(
+                    state,
+                    visibleWords: visibleWords,
+                    currentIndex: currentIndex,
+                    offset: 1,
+                  ),
           ),
           const SizedBox(height: 16),
           if (state.config.showText)
@@ -134,19 +239,15 @@ class WordDetailPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     SectionHeader(
-                      title: pickUiText(
-                        i18n,
-                        zh: '\u5168\u90e8\u5b57\u6bb5',
-                        en: 'All fields',
-                      ),
+                      title: pickUiText(i18n, zh: '全部字段', en: 'All fields'),
                       subtitle: pickUiText(
                         i18n,
-                        zh: '\u9605\u8bfb\u6001\u9ed8\u8ba4\u5c55\u793a\uff0c\u7ba1\u7406\u64cd\u4f5c\u6536\u5165\u53f3\u4e0a\u89d2\u83dc\u5355',
+                        zh: '阅读态默认展示，管理操作收在右上角菜单',
                         en: 'Reading stays primary; management moves into the overflow menu.',
                       ),
                     ),
                     const SizedBox(height: 14),
-                    for (final field in fields) ...[
+                    for (final field in fields) ...<Widget>[
                       Container(
                         width: double.infinity,
                         margin: const EdgeInsets.only(bottom: 12),
@@ -182,12 +283,12 @@ class WordDetailPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      '\u6587\u672c\u5f53\u524d\u5df2\u9690\u85cf',
+                      '文本当前已隐藏',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      '\u70b9\u51fb\u53f3\u4e0a\u89d2\u7684\u53ef\u89c1\u6027\u6309\u94ae\uff0c\u53ef\u4ee5\u91cd\u65b0\u663e\u793a\u91ca\u4e49\u548c\u5b57\u6bb5\u5185\u5bb9\u3002',
+                    const Text(
+                      '点击右上角的可见性按钮，可以重新显示释义和字段内容。',
                     ),
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
@@ -197,7 +298,7 @@ class WordDetailPage extends StatelessWidget {
                         );
                       },
                       icon: const Icon(Icons.visibility_rounded),
-                      label: const Text('\u663e\u793a\u6587\u672c'),
+                      label: const Text('显示文本'),
                     ),
                   ],
                 ),
@@ -205,30 +306,6 @@ class WordDetailPage extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-
-  WordEntry? _resolveWord(AppState state) {
-    final exactId = initialWord.id;
-    if (exactId != null) {
-      for (final item in state.words) {
-        if (item.id == exactId) return item;
-      }
-    }
-    for (final item in state.words) {
-      if (item.word == initialWord.word) return item;
-    }
-    return state.currentWord;
-  }
-
-  Future<void> _openFollowAlong(
-    BuildContext context,
-    AppState state,
-    WordEntry word,
-  ) async {
-    state.selectWordEntry(word);
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
     );
   }
 }

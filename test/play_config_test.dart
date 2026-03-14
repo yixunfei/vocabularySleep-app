@@ -1,0 +1,62 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:vocabulary_sleep_app/src/models/play_config.dart';
+import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
+import 'package:vocabulary_sleep_app/src/models/word_field.dart';
+
+void main() {
+  group('play config spelling', () {
+    test('spellWord can group by letter pairs', () {
+      expect(spellWord('word', mode: SpellingPlaybackMode.pairs), 'wo - rd');
+    });
+
+    test('buildPlayQueue inserts spelling before meaning', () {
+      final word = WordEntry(
+        wordbookId: 1,
+        word: 'word',
+        fields: const <WordFieldItem>[
+          WordFieldItem(key: 'meaning', label: 'Meaning', value: '词义'),
+          WordFieldItem(
+            key: 'examples',
+            label: 'Examples',
+            value: 'A sample sentence.',
+          ),
+        ],
+      );
+      final config = PlayConfig.defaults.copyWith(
+        repeats: <String, int>{
+          ...PlayConfig.defaults.repeats,
+          'word': 1,
+          'spelling': 1,
+          'meaning': 1,
+          'example': 0,
+        },
+        spellingPlaybackMode: SpellingPlaybackMode.letters,
+      );
+
+      final queue = buildPlayQueue(word, config);
+
+      expect(queue.map((item) => item.type).toList(growable: false), <String>[
+        'word',
+        'spelling',
+        'meaning',
+      ]);
+      expect(queue[1].text, 'w - o - r - d');
+    });
+
+    test('json round-trip preserves spelling and transition settings', () {
+      final config = PlayConfig.defaults.copyWith(
+        spellingPlaybackMode: SpellingPlaybackMode.pairs,
+        wordPageTransitionStyle: WordPageTransitionStyle.pageFlip,
+      );
+
+      final restored = PlayConfig.fromJson(config.toJson());
+
+      expect(restored.spellingPlaybackMode, SpellingPlaybackMode.pairs);
+      expect(
+        restored.wordPageTransitionStyle,
+        WordPageTransitionStyle.pageFlip,
+      );
+    });
+  });
+}

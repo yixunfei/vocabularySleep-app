@@ -12,6 +12,7 @@ import '../../services/focus_service.dart';
 import '../../state/app_state.dart';
 import '../layout/app_width_tier.dart';
 import '../ui_copy.dart';
+import '../widgets/section_header.dart';
 
 enum _TodoSortMode { manual, priority, category }
 
@@ -681,11 +682,48 @@ class _FocusPageState extends State<FocusPage>
       ),
     );
 
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 12,
-      runSpacing: 12,
-      children: buttons,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              pickUiText(i18n, zh: '当前操作', en: 'Current actions'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '保持当前专注节奏，下一步操作会在这里集中显示。',
+                en: 'Keep the current focus flow moving with the next actions collected here.',
+              ),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final availableWidth = constraints.maxWidth;
+                final isSingleColumn = availableWidth < 460;
+                final buttonWidth = isSingleColumn
+                    ? availableWidth
+                    : ((availableWidth - 12) / 2).clamp(180.0, availableWidth);
+
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: buttons
+                      .map(
+                        (button) => SizedBox(width: buttonWidth, child: button),
+                      )
+                      .toList(growable: false),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -705,9 +743,13 @@ class _FocusPageState extends State<FocusPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              i18n.t('timerConfig'),
-              style: Theme.of(context).textTheme.titleMedium,
+            SectionHeader(
+              title: i18n.t('timerConfig'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '专注时长、休息节奏与提醒方式会在这里统一调整。',
+                en: 'Tune session length, break cadence, and reminders in one place.',
+              ),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -1119,9 +1161,13 @@ class _FocusPageState extends State<FocusPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              i18n.t('todayStats'),
-              style: Theme.of(context).textTheme.titleMedium,
+            SectionHeader(
+              title: i18n.t('todayStats'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '今天的专注投入会按相同宽度的统计卡展示。',
+                en: 'Today’s focus progress is summarized in equal-width cards.',
+              ),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -1129,8 +1175,11 @@ class _FocusPageState extends State<FocusPage>
               runSpacing: 12,
               children: items
                   .map(
-                    (item) =>
-                        SizedBox(width: itemWidth, child: _buildStatCard(item)),
+                    (item) => SizedBox(
+                      width: itemWidth,
+                      height: 122,
+                      child: _buildStatCard(item),
+                    ),
                   )
                   .toList(growable: false),
             ),

@@ -5,6 +5,10 @@ import 'word_field.dart';
 
 enum PlayOrder { sequential, random }
 
+enum SpellingPlaybackMode { letters, pairs }
+
+enum WordPageTransitionStyle { defaultStyle, smooth, fade, pageFlip }
+
 enum TtsProviderType { local, api, customApi }
 
 enum AsrProviderType {
@@ -789,6 +793,8 @@ class PlayConfig {
     required this.asr,
     required this.showText,
     required this.delayBetweenUnitsMs,
+    this.spellingPlaybackMode = SpellingPlaybackMode.letters,
+    this.wordPageTransitionStyle = WordPageTransitionStyle.defaultStyle,
     this.appearance = AppearanceConfig.defaults,
     this.appearancePresets = const <AppearanceThemePreset>[],
   });
@@ -801,6 +807,8 @@ class PlayConfig {
   final AsrConfig asr;
   final bool showText;
   final int delayBetweenUnitsMs;
+  final SpellingPlaybackMode spellingPlaybackMode;
+  final WordPageTransitionStyle wordPageTransitionStyle;
   final AppearanceConfig appearance;
   final List<AppearanceThemePreset> appearancePresets;
 
@@ -857,6 +865,8 @@ class PlayConfig {
     AsrConfig? asr,
     bool? showText,
     int? delayBetweenUnitsMs,
+    SpellingPlaybackMode? spellingPlaybackMode,
+    WordPageTransitionStyle? wordPageTransitionStyle,
     AppearanceConfig? appearance,
     List<AppearanceThemePreset>? appearancePresets,
   }) {
@@ -869,6 +879,9 @@ class PlayConfig {
       asr: asr ?? this.asr,
       showText: showText ?? this.showText,
       delayBetweenUnitsMs: delayBetweenUnitsMs ?? this.delayBetweenUnitsMs,
+      spellingPlaybackMode: spellingPlaybackMode ?? this.spellingPlaybackMode,
+      wordPageTransitionStyle:
+          wordPageTransitionStyle ?? this.wordPageTransitionStyle,
       appearance: appearance ?? this.appearance,
       appearancePresets: List<AppearanceThemePreset>.from(
         appearancePresets ?? this.appearancePresets,
@@ -887,6 +900,8 @@ class PlayConfig {
     'asr': asr.toJson(),
     'showText': showText,
     'delayBetweenUnits': delayBetweenUnitsMs,
+    'spellingPlaybackMode': spellingPlaybackMode.name,
+    'wordPageTransitionStyle': wordPageTransitionStyle.name,
     'appearance': appearance.toJson(),
     'appearancePresets': appearancePresets
         .map((item) => item.toJson())
@@ -928,6 +943,14 @@ class PlayConfig {
     final asr = json['asr'] is Map
         ? AsrConfig.fromJson((json['asr'] as Map).cast<String, Object?>())
         : PlayConfig.defaults.asr;
+    final spellingPlaybackMode = SpellingPlaybackMode.values.firstWhere(
+      (item) => item.name == json['spellingPlaybackMode'],
+      orElse: () => PlayConfig.defaults.spellingPlaybackMode,
+    );
+    final wordPageTransitionStyle = WordPageTransitionStyle.values.firstWhere(
+      (item) => item.name == json['wordPageTransitionStyle'],
+      orElse: () => PlayConfig.defaults.wordPageTransitionStyle,
+    );
     final appearance = json['appearance'] is Map
         ? AppearanceConfig.fromJson(
             (json['appearance'] as Map).cast<String, Object?>(),
@@ -964,6 +987,8 @@ class PlayConfig {
       asr: asr,
       showText: json['showText'] as bool? ?? true,
       delayBetweenUnitsMs: (json['delayBetweenUnits'] as num?)?.toInt() ?? 500,
+      spellingPlaybackMode: spellingPlaybackMode,
+      wordPageTransitionStyle: wordPageTransitionStyle,
       appearance: appearance,
       appearancePresets: appearancePresets,
     );
@@ -1015,7 +1040,26 @@ bool _isFieldEnabled(String key, PlayConfig config) {
   return _resolveFieldRepeat(key, config) > 0;
 }
 
-String spellWord(String word) => word.split('').join(' - ').toUpperCase();
+String spellWord(
+  String word, {
+  SpellingPlaybackMode mode = SpellingPlaybackMode.letters,
+}) {
+  final normalized = word.trim();
+  if (normalized.isEmpty) return '';
+
+  final parts = <String>[];
+  if (mode == SpellingPlaybackMode.letters) {
+    for (var index = 0; index < normalized.length; index += 1) {
+      parts.add(normalized.substring(index, index + 1).toLowerCase());
+    }
+  } else {
+    for (var index = 0; index < normalized.length; index += 2) {
+      final end = (index + 2).clamp(0, normalized.length).toInt();
+      parts.add(normalized.substring(index, end).toLowerCase());
+    }
+  }
+  return parts.join(' - ');
+}
 
 List<T> shuffled<T>(List<T> list) {
   final random = Random();
@@ -1034,6 +1078,16 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
   final wordRepeat = max(0, config.repeats['word'] ?? 1);
   for (var i = 0; i < wordRepeat; i++) {
     queue.add(PlayUnit(type: 'word', text: word.word));
+  }
+
+  final spellingRepeat = max(0, config.repeats['spelling'] ?? 0);
+  if (spellingRepeat > 0) {
+    final spelling = spellWord(word.word, mode: config.spellingPlaybackMode);
+    if (spelling.trim().isNotEmpty) {
+      for (var i = 0; i < spellingRepeat; i++) {
+        queue.add(PlayUnit(type: 'spelling', text: spelling));
+      }
+    }
   }
 
   final fallbackFields = buildFieldItemsFromRecord(<String, Object?>{
@@ -1063,14 +1117,6 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
       for (var i = 0; i < repeat; i++) {
         queue.add(PlayUnit(type: unitType, text: text, label: label));
       }
-    }
-  }
-
-  final spellingRepeat = max(0, config.repeats['spelling'] ?? 0);
-  if (spellingRepeat > 0) {
-    final spelling = spellWord(word.word);
-    for (var i = 0; i < spellingRepeat; i++) {
-      queue.add(PlayUnit(type: 'spelling', text: spelling));
     }
   }
 

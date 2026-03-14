@@ -17,7 +17,7 @@ import '../widgets/wordbook_switcher.dart';
 import '../wordbook_localization.dart';
 import 'follow_along_page.dart';
 
-class PlayPage extends StatelessWidget {
+class PlayPage extends StatefulWidget {
   const PlayPage({
     super.key,
     required this.onOpenPractice,
@@ -26,6 +26,121 @@ class PlayPage extends StatelessWidget {
 
   final VoidCallback onOpenPractice;
   final VoidCallback onOpenLibrary;
+
+  @override
+  State<PlayPage> createState() => _PlayPageState();
+}
+
+class _PlayPageState extends State<PlayPage> {
+  int _transitionDirection = 1;
+
+  void _setTransitionDirection(int direction) {
+    if (_transitionDirection == direction) return;
+    setState(() {
+      _transitionDirection = direction;
+    });
+  }
+
+  int _indexOfWord(List<WordEntry> words, WordEntry target) {
+    for (var index = 0; index < words.length; index += 1) {
+      final item = words[index];
+      if (item.id != null && target.id != null && item.id == target.id) {
+        return index;
+      }
+      if (item.word == target.word && item.wordbookId == target.wordbookId) {
+        return index;
+      }
+    }
+    return words.indexWhere((item) => item.word == target.word);
+  }
+
+  Future<void> _moveToPreviousWord(
+    AppState state, {
+    required List<WordEntry> visibleWords,
+    required int currentIndex,
+  }) async {
+    _setTransitionDirection(-1);
+    if (state.isPlaying) {
+      await state.movePlaybackPreviousWord();
+      return;
+    }
+    if (visibleWords.isEmpty) return;
+    final base = currentIndex < 0 ? 0 : currentIndex;
+    final target = (base - 1 + visibleWords.length) % visibleWords.length;
+    state.selectWordEntry(visibleWords[target]);
+  }
+
+  Future<void> _moveToNextWord(
+    AppState state, {
+    required List<WordEntry> visibleWords,
+    required int currentIndex,
+  }) async {
+    _setTransitionDirection(1);
+    if (state.isPlaying) {
+      await state.movePlaybackNextWord();
+      return;
+    }
+    if (visibleWords.isEmpty) return;
+    final base = currentIndex < 0 ? 0 : currentIndex;
+    final target = (base + 1) % visibleWords.length;
+    state.selectWordEntry(visibleWords[target]);
+  }
+
+  Future<void> _openFollowAlong(
+    BuildContext context,
+    AppState state,
+    WordEntry word,
+  ) async {
+    state.selectWordEntry(word);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
+    );
+  }
+
+  Future<void> _openWordbookSheet(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            children: <Widget>[
+              Text(
+                pickUiText(i18n, zh: '切换词本', en: 'Switch wordbook'),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              for (final book in state.wordbooks) ...<Widget>[
+                Card(
+                  child: ListTile(
+                    selected: state.selectedWordbook?.id == book.id,
+                    title: Text(localizedWordbookName(i18n, book)),
+                    subtitle: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '${book.wordCount} 个词',
+                        en: '${book.wordCount} words',
+                      ),
+                    ),
+                    onTap: () async {
+                      await state.selectWordbook(book);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +156,7 @@ class PlayPage extends StatelessWidget {
     }
 
     final visibleWords = state.visibleWords;
-    final index = visibleWords.indexWhere((item) => item.word == current.word);
+    final index = _indexOfWord(visibleWords, current);
     final position = visibleWords.isEmpty
         ? 0.0
         : ((index + 1) / visibleWords.length);
@@ -66,7 +181,7 @@ class PlayPage extends StatelessWidget {
           subtitle: experienceModeDescription(i18n, mode),
           action: StatusBadge(
             label: isPlaybackPaused
-                ? pickUiText(i18n, zh: '\u5df2\u6682\u505c', en: 'Paused')
+                ? pickUiText(i18n, zh: '已暂停', en: 'Paused')
                 : state.isPlaying
                 ? pickUiText(i18n, zh: '播放中', en: 'Playing')
                 : pickUiText(i18n, zh: '待播放', en: 'Ready'),
@@ -138,7 +253,7 @@ class PlayPage extends StatelessWidget {
                   children: <Widget>[
                     if (weakCount > 0)
                       FilledButton.icon(
-                        onPressed: onOpenPractice,
+                        onPressed: widget.onOpenPractice,
                         icon: const Icon(Icons.fitness_center_rounded),
                         label: Text(
                           pickUiText(
@@ -173,7 +288,7 @@ class PlayPage extends StatelessWidget {
                         ),
                       ),
                     OutlinedButton.icon(
-                      onPressed: onOpenPractice,
+                      onPressed: widget.onOpenPractice,
                       icon: const Icon(Icons.arrow_forward_rounded),
                       label: Text(
                         pickUiText(i18n, zh: '打开练习中心', en: 'Open practice'),
@@ -201,6 +316,8 @@ class PlayPage extends StatelessWidget {
           word: current,
           i18n: i18n,
           density: WordCardDensity.immersive,
+          transitionStyle: state.config.wordPageTransitionStyle,
+          transitionDirection: _transitionDirection,
           showMeaning: state.config.showText,
           showFields: mode == AppExperienceMode.focus,
           isFavorite: state.favorites.contains(current.word),
@@ -254,7 +371,14 @@ class PlayPage extends StatelessWidget {
                     : null,
                 onChanged: visibleWords.length <= 1
                     ? null
-                    : (value) => state.selectWordIndex(value.round()),
+                    : (value) {
+                        final target = value.round();
+                        final direction = target >= (index < 0 ? 0 : index)
+                            ? 1
+                            : -1;
+                        _setTransitionDirection(direction);
+                        state.selectWordEntry(visibleWords[target]);
+                      },
               ),
             ],
           ),
@@ -344,12 +468,12 @@ class PlayPage extends StatelessWidget {
                     label: Text(pickUiText(i18n, zh: '环境音', en: 'Ambient')),
                   ),
                   OutlinedButton.icon(
-                    onPressed: onOpenPractice,
+                    onPressed: widget.onOpenPractice,
                     icon: const Icon(Icons.fitness_center_rounded),
                     label: Text(pageLabelPractice(i18n)),
                   ),
                   OutlinedButton.icon(
-                    onPressed: onOpenLibrary,
+                    onPressed: widget.onOpenLibrary,
                     icon: const Icon(Icons.menu_book_rounded),
                     label: Text(pageLabelLibrary(i18n)),
                   ),
@@ -387,92 +511,6 @@ class PlayPage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Future<void> _openFollowAlong(
-    BuildContext context,
-    AppState state,
-    WordEntry word,
-  ) async {
-    state.selectWordEntry(word);
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
-    );
-  }
-
-  Future<void> _moveToPreviousWord(
-    AppState state, {
-    required List<WordEntry> visibleWords,
-    required int currentIndex,
-  }) async {
-    if (state.isPlaying) {
-      await state.movePlaybackPreviousWord();
-      return;
-    }
-    if (visibleWords.isEmpty) return;
-    final base = currentIndex < 0 ? 0 : currentIndex;
-    final target = (base - 1 + visibleWords.length) % visibleWords.length;
-    state.selectWordEntry(visibleWords[target]);
-  }
-
-  Future<void> _moveToNextWord(
-    AppState state, {
-    required List<WordEntry> visibleWords,
-    required int currentIndex,
-  }) async {
-    if (state.isPlaying) {
-      await state.movePlaybackNextWord();
-      return;
-    }
-    if (visibleWords.isEmpty) return;
-    final base = currentIndex < 0 ? 0 : currentIndex;
-    final target = (base + 1) % visibleWords.length;
-    state.selectWordEntry(visibleWords[target]);
-  }
-
-  Future<void> _openWordbookSheet(
-    BuildContext context,
-    AppState state,
-    AppI18n i18n,
-  ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            children: <Widget>[
-              Text(
-                pickUiText(i18n, zh: '切换词本', en: 'Switch wordbook'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              for (final book in state.wordbooks) ...[
-                Card(
-                  child: ListTile(
-                    selected: state.selectedWordbook?.id == book.id,
-                    title: Text(localizedWordbookName(i18n, book)),
-                    subtitle: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '${book.wordCount} 个词',
-                        en: '${book.wordCount} words',
-                      ),
-                    ),
-                    onTap: () async {
-                      await state.selectWordbook(book);
-                      if (context.mounted) Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ],
-          ),
-        );
-      },
     );
   }
 }

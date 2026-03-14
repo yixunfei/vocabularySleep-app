@@ -1228,14 +1228,20 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   @override
   TomatoTimerConfig get config => _config;
 
-  @override
-  bool get initialized => true;
+@override
+bool get initialized => true;
 
-  @override
-  TomatoTimerState get state => _state;
+@override
+bool get lockScreenActive => false;
 
-  @override
-  void addNote(String title, String? content, String? color) {
+@override
+TomatoTimerState get state => _state;
+
+@override
+void setLockScreenActive(bool value) {}
+
+@override
+void addNote(String title, String? content, String? color) {
     _notes.add(
       PlanNote(
         id: (_notes.lastOrNull?.id ?? 0) + 1,

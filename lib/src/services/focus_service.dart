@@ -29,6 +29,7 @@ class FocusService extends ChangeNotifier {
   final TtsService? _tts;
 
   bool _initialized = false;
+  bool _lockScreenActive = false;
   TomatoTimerConfig _timerConfig = const TomatoTimerConfig();
   TomatoTimerState _timerState = const TomatoTimerState();
   Timer? _timer;
@@ -43,6 +44,7 @@ class FocusService extends ChangeNotifier {
   TomatoTimerConfig get config => _timerConfig;
   TomatoTimerState get state => _timerState;
   bool get initialized => _initialized;
+  bool get lockScreenActive => _lockScreenActive;
 
   Future<void> init() async {
     _timerConfig = await _loadConfig();
@@ -390,10 +392,24 @@ class FocusService extends ChangeNotifier {
     _publishState();
   }
 
+  void pauseOrResume() {
+    if (_timerState.isPaused) {
+      resume();
+      return;
+    }
+    pause();
+  }
+
   void resume() {
     if (!_timerState.canResume) return;
     _timerState = _timerState.copyWith(isPaused: false);
     _publishState();
+  }
+
+  void setLockScreenActive(bool value) {
+    if (_lockScreenActive == value) return;
+    _lockScreenActive = value;
+    notifyListeners();
   }
 
   void skip() {
