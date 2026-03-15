@@ -72,6 +72,7 @@ class _FocusPageState extends State<FocusPage>
   _TodoSortMode _todoSortMode = _TodoSortMode.manual;
   _TodoFilterMode _todoFilterMode = _TodoFilterMode.all;
   _TodoViewMode _todoViewMode = _TodoViewMode.list;
+  String? _expandedTodoMetricKey;
   bool _todoMetricsExpanded = false;
   double _notesDrawerProgress = 0;
   bool _notesDrawerDragging = false;
@@ -213,16 +214,30 @@ class _FocusPageState extends State<FocusPage>
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 52,
+        titleSpacing: 14,
+        scrolledUnderElevation: 0,
         title: Text(i18n.t('focusTitle')),
         bottom: TabBar(
           controller: _tabController,
+          labelStyle: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+          unselectedLabelStyle: Theme.of(context).textTheme.labelMedium,
+          indicatorWeight: 2,
+          indicatorSize: TabBarIndicatorSize.label,
+          dividerColor: Theme.of(context).colorScheme.outlineVariant,
           tabs: <Widget>[
             Tab(
+              height: 54,
               icon: const Icon(Icons.hourglass_bottom_rounded),
+              iconMargin: const EdgeInsets.only(bottom: 2),
               text: i18n.t('timerTab'),
             ),
             Tab(
+              height: 54,
               icon: const Icon(Icons.view_week_rounded),
+              iconMargin: const EdgeInsets.only(bottom: 2),
               text: i18n.t('todoTab'),
             ),
           ],
@@ -1457,10 +1472,12 @@ class _FocusPageState extends State<FocusPage>
           constraints.maxWidth,
           _pageContentMaxWidth(widthTier),
         );
-        final layoutWidth = math.max(0.0, contentWidth - 32);
+        final compactWorkspace = constraints.maxWidth < 600;
+        final outerPadding = compactWorkspace ? 12.0 : 16.0;
+        final layoutWidth = math.max(0.0, contentWidth - outerPadding * 2);
         final drawerWidth = _notesDrawerWidth(layoutWidth, focus);
-        final railWidth = 60.0;
-        final railGutter = railWidth + 10;
+        final railWidth = compactWorkspace ? 52.0 : 60.0;
+        final railGutter = railWidth + (compactWorkspace ? 6.0 : 10.0);
         final hiddenOffset = drawerWidth - railWidth;
         final progress = _notesDrawerProgress.clamp(0.0, 1.0).toDouble();
 
@@ -1469,7 +1486,7 @@ class _FocusPageState extends State<FocusPage>
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: contentWidth),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(outerPadding),
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: progress, end: progress),
                 duration: _notesDrawerDragging
@@ -1485,8 +1502,11 @@ class _FocusPageState extends State<FocusPage>
                         bottom: 0,
                         right: railGutter,
                         child: Transform.translate(
-                          offset: Offset(-12 * animatedProgress, 0),
-                          child: _buildTodoPanel(focus, i18n),
+                          offset: Offset(
+                            (compactWorkspace ? -8 : -12) * animatedProgress,
+                            0,
+                          ),
+                          child: _buildTodoPanel(focus, i18n, notes: notes),
                         ),
                       ),
                       if (animatedProgress > 0.01)
@@ -1527,6 +1547,7 @@ class _FocusPageState extends State<FocusPage>
                           notes: notes,
                           i18n: i18n,
                           width: drawerWidth,
+                          handleWidth: railWidth,
                           progress: animatedProgress,
                         ),
                       ),
@@ -1759,7 +1780,11 @@ class _FocusPageState extends State<FocusPage>
   }
 
 */
-  Widget _buildTodoPanel(FocusService focus, AppI18n i18n) {
+  Widget _buildTodoPanel(
+    FocusService focus,
+    AppI18n i18n, {
+    List<PlanNote> notes = const <PlanNote>[],
+  }) {
     final todos = focus.getTodos();
     final theme = Theme.of(context);
     final filteredTodos = _filterTodos(todos);
@@ -1774,6 +1799,20 @@ class _FocusPageState extends State<FocusPage>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compactLayout = constraints.maxWidth < 600;
+          if (compactLayout) {
+            return _buildCompactTodoPanel(
+              focus: focus,
+              i18n: i18n,
+              theme: theme,
+              notes: notes,
+              metrics: metrics,
+              displayTodos: displayTodos,
+              planSections: planSections,
+              manualSort: manualSort,
+              hasCompletedTodos: todos.any((item) => item.completed),
+              constraints: constraints,
+            );
+          }
           final topSection = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -1785,7 +1824,7 @@ class _FocusPageState extends State<FocusPage>
                 compactLayout: compactLayout,
               ),
               const SizedBox(height: 8),
-              _buildTodoWorkspaceSummary(metrics, i18n, compact: compactLayout),
+              _buildTodoWorkspaceSummary(metrics, i18n, compact: false),
               const SizedBox(height: 8),
               TextField(
                 key: const ValueKey<String>('todo-editor-entry'),
@@ -1822,10 +1861,6 @@ class _FocusPageState extends State<FocusPage>
                 manualSort: manualSort,
                 compact: compactLayout,
               ),
-              if (_todoMetricsExpanded) ...<Widget>[
-                const SizedBox(height: 8),
-                _buildTodoMetricsStrip(metrics, i18n, compact: compactLayout),
-              ],
               const SizedBox(height: 12),
               _buildTodoListBody(
                 focus: focus,
@@ -1833,6 +1868,7 @@ class _FocusPageState extends State<FocusPage>
                 planSections: planSections,
                 displayTodos: displayTodos,
                 manualSort: manualSort,
+                scrollable: false,
               ),
             ],
           );
@@ -1852,15 +1888,304 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
+  Widget _buildCompactTodoPanel({
+    required FocusService focus,
+    required AppI18n i18n,
+    required ThemeData theme,
+    required List<PlanNote> notes,
+    required Map<String, int> metrics,
+    required List<TodoItem> displayTodos,
+    required List<_TodoPlanSection> planSections,
+    required bool manualSort,
+    required bool hasCompletedTodos,
+    required BoxConstraints constraints,
+  }) {
+    final listBody = _buildTodoListBody(
+      focus: focus,
+      i18n: i18n,
+      planSections: planSections,
+      displayTodos: displayTodos,
+      manualSort: manualSort,
+      scrollable: true,
+    );
+
+    final metricsRow = _buildTodoMetricsStrip(metrics, i18n, compact: true);
+
+    final _ = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: <Widget>[
+          _buildTodoCompactMenuButton<_TodoViewMode>(
+            key: const ValueKey<String>('todo-view-menu'),
+            icon: Icons.view_week_rounded,
+            label: _todoViewModeLabel(i18n, _todoViewMode),
+            items: <PopupMenuEntry<_TodoViewMode>>[
+              CheckedPopupMenuItem<_TodoViewMode>(
+                key: const ValueKey<String>('todo-view-plan'),
+                value: _TodoViewMode.plan,
+                checked: _todoViewMode == _TodoViewMode.plan,
+                child: Text(_todoViewModeLabel(i18n, _TodoViewMode.plan)),
+              ),
+              CheckedPopupMenuItem<_TodoViewMode>(
+                key: const ValueKey<String>('todo-view-list'),
+                value: _TodoViewMode.list,
+                checked: _todoViewMode == _TodoViewMode.list,
+                child: Text(_todoViewModeLabel(i18n, _TodoViewMode.list)),
+              ),
+            ],
+            onSelected: (value) {
+              setState(() {
+                _todoViewMode = value;
+              });
+            },
+          ),
+          const SizedBox(width: 8),
+          _buildTodoCompactMenuButton<_TodoFilterMode>(
+            key: const ValueKey<String>('todo-filter-menu'),
+            icon: Icons.filter_alt_rounded,
+            label: _todoFilterModeLabel(i18n, _todoFilterMode),
+            items: <PopupMenuEntry<_TodoFilterMode>>[
+              CheckedPopupMenuItem<_TodoFilterMode>(
+                key: const ValueKey<String>('todo-filter-all'),
+                value: _TodoFilterMode.all,
+                checked: _todoFilterMode == _TodoFilterMode.all,
+                child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.all)),
+              ),
+              CheckedPopupMenuItem<_TodoFilterMode>(
+                key: const ValueKey<String>('todo-filter-active'),
+                value: _TodoFilterMode.active,
+                checked: _todoFilterMode == _TodoFilterMode.active,
+                child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.active)),
+              ),
+              CheckedPopupMenuItem<_TodoFilterMode>(
+                key: const ValueKey<String>('todo-filter-deferred'),
+                value: _TodoFilterMode.deferred,
+                checked: _todoFilterMode == _TodoFilterMode.deferred,
+                child: Text(
+                  _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
+                ),
+              ),
+              CheckedPopupMenuItem<_TodoFilterMode>(
+                key: const ValueKey<String>('todo-filter-completed'),
+                value: _TodoFilterMode.completed,
+                checked: _todoFilterMode == _TodoFilterMode.completed,
+                child: Text(
+                  _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              setState(() {
+                _todoFilterMode = value;
+              });
+            },
+          ),
+          if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
+            const SizedBox(width: 8),
+            _buildTodoCompactMenuButton<_TodoSortMode>(
+              key: const ValueKey<String>('todo-sort-menu'),
+              icon: Icons.swap_vert_rounded,
+              label: _todoSortModeLabel(i18n, _todoSortMode),
+              items: <PopupMenuEntry<_TodoSortMode>>[
+                CheckedPopupMenuItem<_TodoSortMode>(
+                  key: const ValueKey<String>('todo-sort-manual'),
+                  value: _TodoSortMode.manual,
+                  checked: manualSort,
+                  child: Text(_todoSortModeLabel(i18n, _TodoSortMode.manual)),
+                ),
+                CheckedPopupMenuItem<_TodoSortMode>(
+                  key: const ValueKey<String>('todo-sort-priority'),
+                  value: _TodoSortMode.priority,
+                  checked: _todoSortMode == _TodoSortMode.priority,
+                  child: Text(_todoSortModeLabel(i18n, _TodoSortMode.priority)),
+                ),
+                CheckedPopupMenuItem<_TodoSortMode>(
+                  key: const ValueKey<String>('todo-sort-category'),
+                  value: _TodoSortMode.category,
+                  checked: _todoSortMode == _TodoSortMode.category,
+                  child: Text(_todoSortModeLabel(i18n, _TodoSortMode.category)),
+                ),
+              ],
+              onSelected: (value) {
+                setState(() {
+                  _todoSortMode = value;
+                });
+              },
+            ),
+          ],
+          const SizedBox(width: 8),
+          _buildTodoCompactActionButton(
+            key: const ValueKey<String>('todo-notes-sheet-button'),
+            icon: Icons.sticky_note_2_outlined,
+            label: pickUiText(
+              i18n,
+              zh: '笔记 ${notes.length}',
+              en: 'Notes ${notes.length}',
+            ),
+            onPressed: () => _showNotesSheet(focus, notes, i18n),
+          ),
+        ],
+      ),
+    );
+
+    final commandRow = _buildTodoControls(
+      i18n,
+      manualSort: manualSort,
+      compact: true,
+    );
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildTodoHeader(
+          focus: focus,
+          i18n: i18n,
+          theme: theme,
+          hasCompletedTodos: hasCompletedTodos,
+          compactLayout: true,
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          key: const ValueKey<String>('todo-editor-entry'),
+          readOnly: true,
+          onTap: () => _showTodoEditor(focus, i18n),
+          decoration: InputDecoration(
+            isDense: true,
+            filled: true,
+            fillColor: theme.colorScheme.surfaceContainerLowest,
+            hintText: pickUiText(i18n, zh: '快速添加待办', en: 'Quick add a task'),
+            prefixIcon: const Icon(Icons.add_task_rounded),
+            suffixIcon: const Icon(Icons.edit_note_rounded),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 9,
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+          ),
+        ),
+        const SizedBox(height: 6),
+        metricsRow,
+        const SizedBox(height: 6),
+        commandRow,
+        const SizedBox(height: 10),
+        Expanded(child: listBody),
+      ],
+    );
+
+    if (!constraints.maxHeight.isFinite) {
+      return SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _buildTodoHeader(
+              focus: focus,
+              i18n: i18n,
+              theme: theme,
+              hasCompletedTodos: hasCompletedTodos,
+              compactLayout: true,
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              key: const ValueKey<String>('todo-editor-entry'),
+              readOnly: true,
+              onTap: () => _showTodoEditor(focus, i18n),
+              decoration: InputDecoration(
+                isDense: true,
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerLowest,
+                hintText: pickUiText(
+                  i18n,
+                  zh: '快速添加待办',
+                  en: 'Quick add a task',
+                ),
+                prefixIcon: const Icon(Icons.add_task_rounded),
+                suffixIcon: const Icon(Icons.edit_note_rounded),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 9,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            metricsRow,
+            const SizedBox(height: 6),
+            commandRow,
+            const SizedBox(height: 10),
+            _buildTodoListBody(
+              focus: focus,
+              i18n: i18n,
+              planSections: planSections,
+              displayTodos: displayTodos,
+              manualSort: manualSort,
+              scrollable: false,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(padding: const EdgeInsets.all(10), child: content);
+  }
+
+  Widget _buildTodoCompactActionButton({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: key,
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(999),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 16, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTodoListBody({
     required FocusService focus,
     required AppI18n i18n,
     required List<_TodoPlanSection> planSections,
     required List<TodoItem> displayTodos,
     required bool manualSort,
+    bool scrollable = false,
   }) {
     if (_todoViewMode == _TodoViewMode.plan) {
-      return _buildTodoPlanView(focus, planSections, i18n);
+      return _buildTodoPlanView(
+        focus,
+        planSections,
+        i18n,
+        scrollable: scrollable,
+      );
     }
     if (displayTodos.isEmpty) {
       final theme = Theme.of(context);
@@ -1882,8 +2207,18 @@ class _FocusPageState extends State<FocusPage>
       );
     }
     return manualSort
-        ? _buildReorderableTodosList(focus, displayTodos, i18n)
-        : _buildSortedTodosList(focus, displayTodos, i18n);
+        ? _buildReorderableTodosList(
+            focus,
+            displayTodos,
+            i18n,
+            scrollable: scrollable,
+          )
+        : _buildSortedTodosList(
+            focus,
+            displayTodos,
+            i18n,
+            scrollable: scrollable,
+          );
   }
 
   Widget _buildTodoHeader({
@@ -1893,42 +2228,19 @@ class _FocusPageState extends State<FocusPage>
     required bool hasCompletedTodos,
     bool compactLayout = false,
   }) {
-    if (compactLayout) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  i18n.t('todoTab'),
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-              _buildTodoMetricsToggleButton(i18n),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              if (hasCompletedTodos)
-                _buildTodoClearCompletedButton(focus, i18n),
-            ],
-          ),
-        ],
-      );
-    }
-
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
-          child: Text(i18n.t('todoTab'), style: theme.textTheme.titleMedium),
+          child: Text(
+            i18n.t('todoTab'),
+            style:
+                (compactLayout
+                        ? theme.textTheme.titleSmall
+                        : theme.textTheme.titleMedium)
+                    ?.copyWith(fontWeight: FontWeight.w800),
+          ),
         ),
-        _buildTodoMetricsToggleButton(i18n),
         if (hasCompletedTodos) _buildTodoClearCompletedButton(focus, i18n),
       ],
     );
@@ -1939,35 +2251,7 @@ class _FocusPageState extends State<FocusPage>
     AppI18n i18n, {
     bool compact = false,
   }) {
-    final theme = Theme.of(context);
-    final items = _todoMetricItems(i18n, theme);
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 12,
-        vertical: compact ? 10 : 12,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Wrap(
-        spacing: compact ? 10 : 12,
-        runSpacing: compact ? 10 : 12,
-        children: items
-            .map(
-              (item) => _buildTodoMetricOrbit(
-                key: ValueKey<String>('todo-metric-orbit-${item.key}'),
-                value: metrics[item.key] ?? 0,
-                label: item.label,
-                color: item.color,
-                compact: compact,
-              ),
-            )
-            .toList(growable: false),
-      ),
-    );
+    return _buildTodoMetricsStrip(metrics, i18n, compact: compact);
   }
   /*
       i18n,
@@ -2032,6 +2316,7 @@ class _FocusPageState extends State<FocusPage>
 
     */
 
+  // ignore: unused_element
   Widget _buildTodoMetricOrbit({
     required Key key,
     required int value,
@@ -2101,6 +2386,7 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
+  // ignore: unused_element
   Widget _buildTodoMetricsToggleButton(AppI18n i18n) {
     return IconButton(
       key: const ValueKey<String>('todo-metrics-toggle'),
@@ -2125,6 +2411,8 @@ class _FocusPageState extends State<FocusPage>
     return IconButton(
       tooltip: i18n.t('clearCompleted'),
       visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints.tightFor(width: 30, height: 30),
+      padding: EdgeInsets.zero,
       onPressed: focus.clearCompletedTodos,
       icon: const Icon(Icons.done_all_rounded),
     );
@@ -2446,82 +2734,45 @@ class _FocusPageState extends State<FocusPage>
     bool compact = false,
   }) {
     final theme = Theme.of(context);
-    final items = _todoMetricItems(i18n, theme);
+    final items = compact
+        ? _todoMetricItems(i18n, theme)
+              .where(
+                (item) =>
+                    item.key == 'active' ||
+                    item.key == 'today' ||
+                    item.key == 'overdue',
+              )
+              .toList(growable: false)
+        : _todoMetricItems(i18n, theme);
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.topCenter,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: items
-                .map(
-                  (item) => compact
-                      ? _buildTodoMetricCompactBadge(
-                          key: ValueKey<String>(
-                            'todo-metric-badge-${item.key}',
-                          ),
-                          value: metrics[item.key] ?? 0,
-                          label: item.label,
-                          color: item.color,
-                        )
-                      : _buildTodoMetricSummaryChip(
-                          value: metrics[item.key] ?? 0,
-                          label: item.label,
-                          icon: item.icon,
-                          color: item.color,
-                        ),
-                )
-                .toList(growable: false),
-          ),
-          if (!compact && _todoMetricsExpanded) ...<Widget>[
-            const SizedBox(height: 10),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth < 560 ? 2 : 5;
-                final spacing = 8.0;
-                final itemWidth =
-                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
-
-                return Wrap(
-                  spacing: spacing,
-                  runSpacing: spacing,
-                  children: items
-                      .map(
-                        (item) => SizedBox(
-                          key: ValueKey<String>('todo-metric-card-${item.key}'),
-                          width: itemWidth.isFinite
-                              ? math.max(0, itemWidth)
-                              : constraints.maxWidth,
-                          child: _buildTodoMetricCard(
-                            value: metrics[item.key] ?? 0,
-                            label: item.label,
-                            icon: item.icon,
-                            color: item.color,
-                          ),
-                        ),
-                      )
-                      .toList(growable: false),
-                );
-              },
+    return Wrap(
+      spacing: compact ? 6 : 8,
+      runSpacing: compact ? 6 : 8,
+      children: items
+          .map(
+            (item) => _buildTodoMetricCompactBadge(
+              key: ValueKey<String>('todo-metric-badge-${item.key}'),
+              metricKey: item.key,
+              value: metrics[item.key] ?? 0,
+              label: item.label,
+              color: item.color,
+              compact: compact,
             ),
-          ],
-        ],
-      ),
+          )
+          .toList(growable: false),
     );
   }
 
   Widget _buildTodoMetricCompactBadge({
     required Key key,
+    required String metricKey,
     required int value,
     required String label,
     required Color color,
+    bool compact = false,
   }) {
     final theme = Theme.of(context);
+    final expanded = _expandedTodoMetricKey == metricKey;
 
     return Tooltip(
       message: label,
@@ -2532,20 +2783,22 @@ class _FocusPageState extends State<FocusPage>
           borderRadius: BorderRadius.circular(999),
           onTap: () {
             setState(() {
-              _todoMetricsExpanded = !_todoMetricsExpanded;
+              _expandedTodoMetricKey = expanded ? null : metricKey;
             });
           },
-          child: Ink(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
             padding: EdgeInsets.symmetric(
-              horizontal: _todoMetricsExpanded ? 10 : 8,
-              vertical: 8,
+              horizontal: expanded ? (compact ? 10 : 12) : (compact ? 8 : 10),
+              vertical: compact ? 7 : 8,
             ),
             decoration: BoxDecoration(
-              color: color.withValues(
-                alpha: _todoMetricsExpanded ? 0.14 : 0.08,
-              ),
+              color: color.withValues(alpha: expanded ? 0.15 : 0.08),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: color.withValues(alpha: 0.18)),
+              border: Border.all(
+                color: color.withValues(alpha: expanded ? 0.26 : 0.18),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -2561,12 +2814,16 @@ class _FocusPageState extends State<FocusPage>
                 const SizedBox(width: 6),
                 Text(
                   '$value',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style:
+                      (compact
+                              ? theme.textTheme.labelLarge
+                              : theme.textTheme.titleSmall)
+                          ?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
                 ),
-                if (_todoMetricsExpanded) ...<Widget>[
+                if (expanded) ...<Widget>[
                   const SizedBox(width: 6),
                   Text(
                     label,
@@ -2580,93 +2837,6 @@ class _FocusPageState extends State<FocusPage>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTodoMetricSummaryChip({
-    required int value,
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
-    final theme = Theme.of(context);
-    final compact = MediaQuery.sizeOf(context).width < 420;
-    return Container(
-      constraints: BoxConstraints(minWidth: compact ? 72 : 84),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 9 : 11,
-        vertical: compact ? 7 : 8,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 15, color: color),
-          const SizedBox(width: 6),
-          Text(
-            '$value',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(width: 6),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: compact ? 60 : 72),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTodoMetricCard({
-    required int value,
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 8),
-          Text(
-            '$value',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall,
-          ),
-        ],
       ),
     );
   }
@@ -3003,15 +3173,15 @@ class _FocusPageState extends State<FocusPage>
       return Container(
         width: double.infinity,
         key: const ValueKey<String>('todo-controls'),
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: theme.colorScheme.outlineVariant),
         ),
         child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: <Widget>[
             _buildTodoCompactMenuButton<_TodoViewMode>(
               key: const ValueKey<String>('todo-view-menu'),
@@ -3539,9 +3709,9 @@ class _FocusPageState extends State<FocusPage>
       itemBuilder: (_) => items,
       onSelected: onSelected,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 200),
+        constraints: const BoxConstraints(maxWidth: 176),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(999),
@@ -3550,22 +3720,22 @@ class _FocusPageState extends State<FocusPage>
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: <Widget>[
-              Icon(icon, size: 16, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
+              Icon(icon, size: 15, color: theme.colorScheme.primary),
+              const SizedBox(width: 5),
               Flexible(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge?.copyWith(
+                  style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
               Icon(
                 Icons.expand_more_rounded,
-                size: 16,
+                size: 15,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
@@ -3833,8 +4003,9 @@ class _FocusPageState extends State<FocusPage>
   Widget _buildTodoPlanView(
     FocusService focus,
     List<_TodoPlanSection> sections,
-    AppI18n i18n,
-  ) {
+    AppI18n i18n, {
+    bool scrollable = false,
+  }) {
     if (sections.isEmpty) {
       return Center(
         child: Text(
@@ -3850,6 +4021,23 @@ class _FocusPageState extends State<FocusPage>
           ),
           textAlign: TextAlign.center,
         ),
+      );
+    }
+
+    if (scrollable) {
+      return ListView.builder(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.zero,
+        itemCount: sections.length,
+        itemBuilder: (context, index) {
+          final section = sections[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == sections.length - 1 ? 0 : 12,
+            ),
+            child: _buildTodoPlanSection(focus, section, i18n),
+          );
+        },
       );
     }
 
@@ -3992,12 +4180,15 @@ class _FocusPageState extends State<FocusPage>
   Widget _buildReorderableTodosList(
     FocusService focus,
     List<TodoItem> todos,
-    AppI18n i18n,
-  ) {
+    AppI18n i18n, {
+    bool scrollable = false,
+  }) {
     return ReorderableListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
+      physics: scrollable
+          ? const BouncingScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
-      shrinkWrap: true,
+      shrinkWrap: !scrollable,
       buildDefaultDragHandles: false,
       itemCount: todos.length,
       onReorder: (oldIndex, newIndex) {
@@ -4025,12 +4216,15 @@ class _FocusPageState extends State<FocusPage>
   Widget _buildSortedTodosList(
     FocusService focus,
     List<TodoItem> todos,
-    AppI18n i18n,
-  ) {
+    AppI18n i18n, {
+    bool scrollable = false,
+  }) {
     return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
+      physics: scrollable
+          ? const BouncingScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
-      shrinkWrap: true,
+      shrinkWrap: !scrollable,
       itemCount: todos.length,
       itemBuilder: (context, index) {
         final todo = todos[index];
@@ -4056,22 +4250,23 @@ class _FocusPageState extends State<FocusPage>
     final accent = _todoAccentColor(theme, todo);
     final category = (todo.category ?? '').trim();
     final scheduleBadge = _buildTodoScheduleBadge(todo, i18n, theme);
+    final compactCard = MediaQuery.sizeOf(context).width < 430;
 
     return Card(
       key: ValueKey<int>(todo.id ?? index),
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       color: _todoCardColor(todo, theme),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _showTodoEditor(focus, i18n, todo: todo),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+          padding: const EdgeInsets.fromLTRB(6, 4, 2, 4),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Container(
-                width: 6,
-                height: 52,
+                width: 5,
+                height: compactCard ? 40 : 44,
                 decoration: BoxDecoration(
                   color: accent.withValues(
                     alpha: todo.completed ? 0.55 : (todo.isDeferred ? 0.78 : 1),
@@ -4082,7 +4277,10 @@ class _FocusPageState extends State<FocusPage>
               const SizedBox(width: 6),
               Checkbox(
                 value: todo.completed,
-                visualDensity: VisualDensity.compact,
+                visualDensity: const VisualDensity(
+                  horizontal: -4,
+                  vertical: -4,
+                ),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onChanged: todo.id == null
                     ? null
@@ -4093,35 +4291,51 @@ class _FocusPageState extends State<FocusPage>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      todo.content,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        decoration: todo.completed
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: todo.completed
-                            ? theme.colorScheme.onSurfaceVariant
-                            : null,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        _buildTodoPriorityBadge(
+                          todo,
+                          i18n,
+                          theme,
+                          compact: compactCard,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            todo.content,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              decoration: todo.completed
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: todo.completed
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 4,
+                      runSpacing: 4,
                       children: <Widget>[
                         _buildTodoStatusBadge(todo, i18n, theme),
-                        _buildTodoPriorityBadge(todo, i18n, theme),
                         if (category.isNotEmpty)
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 132),
+                            constraints: BoxConstraints(
+                              maxWidth: compactCard ? 102 : 126,
+                            ),
                             child: _buildTodoCategoryBadge(category, theme),
                           ),
                         if (scheduleBadge != null)
                           ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 160),
+                            constraints: BoxConstraints(
+                              maxWidth: compactCard ? 128 : 152,
+                            ),
                             child: scheduleBadge,
                           ),
                       ],
@@ -4133,35 +4347,15 @@ class _FocusPageState extends State<FocusPage>
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  if (todo.hasReminder)
-                    Tooltip(
-                      message: _formatTodoDateTime(todo.dueAt!),
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 2),
-                        child: Icon(
-                          todo.alarmEnabled
-                              ? Icons.alarm_rounded
-                              : Icons.schedule_rounded,
-                          size: 18,
-                          color: theme.colorScheme.tertiary,
-                        ),
-                      ),
-                    ),
-                  if ((todo.note ?? '').trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 2),
-                      child: Icon(
-                        Icons.sticky_note_2_outlined,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
                   IconButton(
                     tooltip: i18n.t('delete'),
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 36,
-                      height: 36,
+                    visualDensity: const VisualDensity(
+                      horizontal: -4,
+                      vertical: -4,
+                    ),
+                    constraints: BoxConstraints.tightFor(
+                      width: compactCard ? 28 : 30,
+                      height: compactCard ? 28 : 30,
                     ),
                     onPressed: todo.id == null
                         ? null
@@ -4171,9 +4365,12 @@ class _FocusPageState extends State<FocusPage>
                   if (showDragHandle)
                     ReorderableDelayedDragStartListener(
                       index: index,
-                      child: const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Icon(Icons.drag_handle_rounded),
+                      child: Padding(
+                        padding: EdgeInsets.all(compactCard ? 4 : 6),
+                        child: Icon(
+                          Icons.drag_handle_rounded,
+                          size: compactCard ? 18 : 20,
+                        ),
                       ),
                     ),
                 ],
@@ -4185,10 +4382,18 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Widget _buildTodoPriorityBadge(TodoItem todo, AppI18n i18n, ThemeData theme) {
+  Widget _buildTodoPriorityBadge(
+    TodoItem todo,
+    AppI18n i18n,
+    ThemeData theme, {
+    bool compact = false,
+  }) {
     final color = _todoPriorityColor(theme, todo.priority);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 6 : 10,
+        vertical: compact ? 2 : 4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: todo.completed ? 0.20 : 0.92),
         borderRadius: BorderRadius.circular(999),
@@ -4197,18 +4402,20 @@ class _FocusPageState extends State<FocusPage>
         _todoPriorityLabel(i18n, todo.priority),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.1,
-        ),
+        style:
+            (compact ? theme.textTheme.labelSmall : theme.textTheme.labelMedium)
+                ?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.1,
+                ),
       ),
     );
   }
 
   Widget _buildTodoCategoryBadge(String label, ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(999),
@@ -4221,7 +4428,7 @@ class _FocusPageState extends State<FocusPage>
         children: <Widget>[
           Icon(
             Icons.label_outline_rounded,
-            size: 12,
+            size: 11,
             color: theme.colorScheme.onSecondaryContainer,
           ),
           const SizedBox(width: 4),
@@ -4293,7 +4500,7 @@ class _FocusPageState extends State<FocusPage>
         : theme.colorScheme.tertiary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: todo.completed ? 0.10 : 0.14),
         borderRadius: BorderRadius.circular(999),
@@ -4302,7 +4509,7 @@ class _FocusPageState extends State<FocusPage>
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.labelMedium?.copyWith(
+        style: theme.textTheme.labelSmall?.copyWith(
           color: color,
           fontWeight: FontWeight.w700,
         ),
@@ -4315,6 +4522,7 @@ class _FocusPageState extends State<FocusPage>
     required List<PlanNote> notes,
     required AppI18n i18n,
     required double width,
+    required double handleWidth,
     required double progress,
   }) {
     final theme = Theme.of(context);
@@ -4346,7 +4554,12 @@ class _FocusPageState extends State<FocusPage>
               width: width,
               child: Row(
                 children: <Widget>[
-                  _buildNotesDrawerHandle(i18n, notes.length, progress),
+                  _buildNotesDrawerHandle(
+                    i18n,
+                    notes.length,
+                    progress,
+                    handleWidth,
+                  ),
                   Expanded(
                     child: IgnorePointer(
                       ignoring: progress < 0.2,
@@ -4362,8 +4575,14 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Widget _buildNotesDrawerHandle(AppI18n i18n, int noteCount, double progress) {
+  Widget _buildNotesDrawerHandle(
+    AppI18n i18n,
+    int noteCount,
+    double progress,
+    double width,
+  ) {
     final theme = Theme.of(context);
+    final compactHandle = width <= 54;
     final handleColor = Color.lerp(
       theme.colorScheme.surfaceContainerHigh,
       theme.colorScheme.secondaryContainer,
@@ -4379,7 +4598,7 @@ class _FocusPageState extends State<FocusPage>
       key: const ValueKey<String>('notes-drawer-handle'),
       onTap: _toggleNotesDrawer,
       child: Ink(
-        width: 60,
+        width: width,
         decoration: BoxDecoration(
           color: handleColor,
           border: Border(
@@ -4389,16 +4608,20 @@ class _FocusPageState extends State<FocusPage>
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
+          padding: EdgeInsets.symmetric(
+            horizontal: compactHandle ? 6 : 8,
+            vertical: compactHandle ? 14 : 18,
+          ),
           child: Column(
             children: <Widget>[
               Icon(
                 progress >= 0.5
                     ? Icons.chevron_right_rounded
                     : Icons.chevron_left_rounded,
+                size: compactHandle ? 20 : 24,
                 color: foregroundColor,
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: compactHandle ? 10 : 14),
               Expanded(
                 child: Center(
                   child: RotatedBox(
@@ -4407,17 +4630,24 @@ class _FocusPageState extends State<FocusPage>
                       i18n.t('quickNotes'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: foregroundColor,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style:
+                          (compactHandle
+                                  ? theme.textTheme.labelMedium
+                                  : theme.textTheme.labelLarge)
+                              ?.copyWith(
+                                color: foregroundColor,
+                                fontWeight: FontWeight.w700,
+                              ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: compactHandle ? 10 : 14),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(
+                  horizontal: compactHandle ? 6 : 8,
+                  vertical: compactHandle ? 3 : 4,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(999),
@@ -4527,6 +4757,29 @@ class _FocusPageState extends State<FocusPage>
         .clamp(0.42, 0.68)
         .toDouble();
     return math.min(maxAllowed, math.max(320.0, maxWidth * preferredRatio));
+  }
+
+  Future<void> _showNotesSheet(
+    FocusService focus,
+    List<PlanNote> notes,
+    AppI18n i18n,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final sheetHeight = math.min(
+          MediaQuery.sizeOf(sheetContext).height * 0.84,
+          720.0,
+        );
+        return SizedBox(
+          key: const ValueKey<String>('notes-sheet'),
+          height: sheetHeight,
+          child: _buildNotesPanel(focus, notes, i18n),
+        );
+      },
+    );
   }
 
   void _toggleNotesDrawer() {
@@ -4748,7 +5001,7 @@ class _FocusPageState extends State<FocusPage>
   Widget _buildTodoStatusBadge(TodoItem todo, AppI18n i18n, ThemeData theme) {
     final color = _todoStatusColor(theme, todo);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: todo.completed ? 0.16 : 0.12),
         borderRadius: BorderRadius.circular(999),
@@ -4756,7 +5009,7 @@ class _FocusPageState extends State<FocusPage>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(_todoStatusIcon(todo), size: 14, color: color),
+          Icon(_todoStatusIcon(todo), size: 13, color: color),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
