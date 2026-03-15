@@ -1911,124 +1911,6 @@ class _FocusPageState extends State<FocusPage>
 
     final metricsRow = _buildTodoMetricsStrip(metrics, i18n, compact: true);
 
-    final _ = SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: <Widget>[
-          _buildTodoCompactMenuButton<_TodoViewMode>(
-            key: const ValueKey<String>('todo-view-menu'),
-            icon: Icons.view_week_rounded,
-            label: _todoViewModeLabel(i18n, _todoViewMode),
-            items: <PopupMenuEntry<_TodoViewMode>>[
-              CheckedPopupMenuItem<_TodoViewMode>(
-                key: const ValueKey<String>('todo-view-plan'),
-                value: _TodoViewMode.plan,
-                checked: _todoViewMode == _TodoViewMode.plan,
-                child: Text(_todoViewModeLabel(i18n, _TodoViewMode.plan)),
-              ),
-              CheckedPopupMenuItem<_TodoViewMode>(
-                key: const ValueKey<String>('todo-view-list'),
-                value: _TodoViewMode.list,
-                checked: _todoViewMode == _TodoViewMode.list,
-                child: Text(_todoViewModeLabel(i18n, _TodoViewMode.list)),
-              ),
-            ],
-            onSelected: (value) {
-              setState(() {
-                _todoViewMode = value;
-              });
-            },
-          ),
-          const SizedBox(width: 8),
-          _buildTodoCompactMenuButton<_TodoFilterMode>(
-            key: const ValueKey<String>('todo-filter-menu'),
-            icon: Icons.filter_alt_rounded,
-            label: _todoFilterModeLabel(i18n, _todoFilterMode),
-            items: <PopupMenuEntry<_TodoFilterMode>>[
-              CheckedPopupMenuItem<_TodoFilterMode>(
-                key: const ValueKey<String>('todo-filter-all'),
-                value: _TodoFilterMode.all,
-                checked: _todoFilterMode == _TodoFilterMode.all,
-                child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.all)),
-              ),
-              CheckedPopupMenuItem<_TodoFilterMode>(
-                key: const ValueKey<String>('todo-filter-active'),
-                value: _TodoFilterMode.active,
-                checked: _todoFilterMode == _TodoFilterMode.active,
-                child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.active)),
-              ),
-              CheckedPopupMenuItem<_TodoFilterMode>(
-                key: const ValueKey<String>('todo-filter-deferred'),
-                value: _TodoFilterMode.deferred,
-                checked: _todoFilterMode == _TodoFilterMode.deferred,
-                child: Text(
-                  _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
-                ),
-              ),
-              CheckedPopupMenuItem<_TodoFilterMode>(
-                key: const ValueKey<String>('todo-filter-completed'),
-                value: _TodoFilterMode.completed,
-                checked: _todoFilterMode == _TodoFilterMode.completed,
-                child: Text(
-                  _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
-                ),
-              ),
-            ],
-            onSelected: (value) {
-              setState(() {
-                _todoFilterMode = value;
-              });
-            },
-          ),
-          if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
-            const SizedBox(width: 8),
-            _buildTodoCompactMenuButton<_TodoSortMode>(
-              key: const ValueKey<String>('todo-sort-menu'),
-              icon: Icons.swap_vert_rounded,
-              label: _todoSortModeLabel(i18n, _todoSortMode),
-              items: <PopupMenuEntry<_TodoSortMode>>[
-                CheckedPopupMenuItem<_TodoSortMode>(
-                  key: const ValueKey<String>('todo-sort-manual'),
-                  value: _TodoSortMode.manual,
-                  checked: manualSort,
-                  child: Text(_todoSortModeLabel(i18n, _TodoSortMode.manual)),
-                ),
-                CheckedPopupMenuItem<_TodoSortMode>(
-                  key: const ValueKey<String>('todo-sort-priority'),
-                  value: _TodoSortMode.priority,
-                  checked: _todoSortMode == _TodoSortMode.priority,
-                  child: Text(_todoSortModeLabel(i18n, _TodoSortMode.priority)),
-                ),
-                CheckedPopupMenuItem<_TodoSortMode>(
-                  key: const ValueKey<String>('todo-sort-category'),
-                  value: _TodoSortMode.category,
-                  checked: _todoSortMode == _TodoSortMode.category,
-                  child: Text(_todoSortModeLabel(i18n, _TodoSortMode.category)),
-                ),
-              ],
-              onSelected: (value) {
-                setState(() {
-                  _todoSortMode = value;
-                });
-              },
-            ),
-          ],
-          const SizedBox(width: 8),
-          _buildTodoCompactActionButton(
-            key: const ValueKey<String>('todo-notes-sheet-button'),
-            icon: Icons.sticky_note_2_outlined,
-            label: pickUiText(
-              i18n,
-              zh: '笔记 ${notes.length}',
-              en: 'Notes ${notes.length}',
-            ),
-            onPressed: () => _showNotesSheet(focus, notes, i18n),
-          ),
-        ],
-      ),
-    );
-
     final commandRow = _buildTodoControls(
       i18n,
       manualSort: manualSort,
@@ -2131,44 +2013,6 @@ class _FocusPageState extends State<FocusPage>
     }
 
     return Padding(padding: const EdgeInsets.all(10), child: content);
-  }
-
-  Widget _buildTodoCompactActionButton({
-    required Key key,
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    final theme = Theme.of(context);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: key,
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(999),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: theme.colorScheme.outlineVariant),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, size: 16, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildTodoListBody({
@@ -3470,48 +3314,6 @@ class _FocusPageState extends State<FocusPage>
                 });
               },
             ),
-            _buildTodoCompactMenuButton<_TodoFilterMode>(
-              key: const ValueKey<String>('todo-filter-menu'),
-              icon: Icons.filter_alt_rounded,
-              label: _todoFilterModeLabel(i18n, _todoFilterMode),
-              items: <PopupMenuEntry<_TodoFilterMode>>[
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-all'),
-                  value: _TodoFilterMode.all,
-                  checked: _todoFilterMode == _TodoFilterMode.all,
-                  child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.all)),
-                ),
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-active'),
-                  value: _TodoFilterMode.active,
-                  checked: _todoFilterMode == _TodoFilterMode.active,
-                  child: Text(
-                    _todoFilterModeLabel(i18n, _TodoFilterMode.active),
-                  ),
-                ),
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-deferred'),
-                  value: _TodoFilterMode.deferred,
-                  checked: _todoFilterMode == _TodoFilterMode.deferred,
-                  child: Text(
-                    _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
-                  ),
-                ),
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-completed'),
-                  value: _TodoFilterMode.completed,
-                  checked: _todoFilterMode == _TodoFilterMode.completed,
-                  child: Text(
-                    _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
-                  ),
-                ),
-              ],
-              onSelected: (value) {
-                setState(() {
-                  _todoFilterMode = value;
-                });
-              },
-            ),
             if (_todoViewMode == _TodoViewMode.list)
               _buildTodoCompactMenuButton<_TodoSortMode>(
                 key: const ValueKey<String>('todo-sort-menu'),
@@ -4710,29 +4512,6 @@ class _FocusPageState extends State<FocusPage>
         .clamp(0.42, 0.68)
         .toDouble();
     return math.min(maxAllowed, math.max(320.0, maxWidth * preferredRatio));
-  }
-
-  Future<void> _showNotesSheet(
-    FocusService focus,
-    List<PlanNote> notes,
-    AppI18n i18n,
-  ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        final sheetHeight = math.min(
-          MediaQuery.sizeOf(sheetContext).height * 0.84,
-          720.0,
-        );
-        return SizedBox(
-          key: const ValueKey<String>('notes-sheet'),
-          height: sheetHeight,
-          child: _buildNotesPanel(focus, notes, i18n),
-        );
-      },
-    );
   }
 
   void _toggleNotesDrawer() {
