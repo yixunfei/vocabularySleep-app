@@ -11,7 +11,7 @@ import 'pages/play_page.dart';
 import 'pages/practice_page.dart';
 import 'ui_copy.dart';
 import 'widgets/app_background.dart';
-import 'widgets/ambient_floating_launcher.dart';
+import 'widgets/ambient_floating_dock.dart';
 import 'widgets/busy_overlay.dart';
 import 'widgets/focus_lock_overlay.dart';
 import 'widgets/mini_player.dart';
@@ -114,6 +114,31 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  void _showFocusLockBackHint(AppI18n i18n) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        content: Text(
+          pickUiText(
+            i18n,
+            zh: '当前处于专注锁屏状态，请长按底部解锁条退出专注。',
+            en: 'Focus lock is active. Long press the unlock bar to exit focus.',
+            ja: '集中ロック中です。下部の解除バーを長押しして終了してください。',
+            de: 'Der Fokus-Sperrbildschirm ist aktiv. Halte die Entsperrleiste gedrückt, um den Fokus zu beenden.',
+            fr: 'Le verrouillage du mode concentration est actif. Maintenez la barre de déverrouillage pour quitter.',
+            es: 'El bloqueo de enfoque está activo. Mantén pulsada la barra de desbloqueo para salir del enfoque.',
+            ru: 'Блокировка фокуса активна. Нажмите и удерживайте полосу разблокировки, чтобы выйти из режима.',
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _confirmExit(AppI18n i18n) async {
     if (_exitDialogVisible || !mounted) return;
     _exitDialogVisible = true;
@@ -193,6 +218,9 @@ class _AppShellState extends State<AppShell> {
     final media = MediaQuery.of(context);
     final bottomInset = media.padding.bottom;
     final navigationChromeHeight = _navigationBarHeight + bottomInset;
+    final ambientLauncherBottomClearance =
+        navigationChromeHeight +
+        (_miniPlayerReservedHeight > 0 ? _miniPlayerReservedHeight + 18 : 18);
     final message = state.error;
     final isInitializing = state.initializing && !state.initialized;
 
@@ -210,6 +238,10 @@ class _AppShellState extends State<AppShell> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
+        if (state.focusService.lockScreenActive) {
+          _showFocusLockBackHint(i18n);
+          return;
+        }
         _confirmExit(i18n);
       },
       child: Scaffold(
@@ -279,11 +311,7 @@ class _AppShellState extends State<AppShell> {
                             NavigationDestination(
                               icon: const Icon(Icons.menu_book_outlined),
                               selectedIcon: const Icon(Icons.menu_book_rounded),
-                              label: pickUiText(
-                                i18n,
-                                zh: '词库',
-                                en: 'Library',
-                              ),
+                              label: pickUiText(i18n, zh: '词库', en: 'Library'),
                             ),
                             NavigationDestination(
                               icon: const Icon(Icons.fitness_center_outlined),
@@ -309,11 +337,7 @@ class _AppShellState extends State<AppShell> {
                             NavigationDestination(
                               icon: const Icon(Icons.widgets_outlined),
                               selectedIcon: const Icon(Icons.widgets_rounded),
-                              label: pickUiText(
-                                i18n,
-                                zh: '更多',
-                                en: 'More',
-                              ),
+                              label: pickUiText(i18n, zh: '更多', en: 'More'),
                             ),
                           ],
                         ),
@@ -335,23 +359,27 @@ class _AppShellState extends State<AppShell> {
                 ),
               ),
               if (!isInitializing)
-                Positioned(
-                  right: 16,
-                  bottom:
-                      bottomInset +
-                      _navigationBarHeight +
-                      (_miniPlayerReservedHeight > 0
-                          ? _miniPlayerReservedHeight + 18
-                          : 18),
-                  child: AmbientFloatingLauncher(state: state, i18n: i18n),
+                Positioned.fill(
+                  child: AmbientFloatingDock(
+                    state: state,
+                    i18n: i18n,
+                    bottomClearance: ambientLauncherBottomClearance,
+                  ),
                 ),
               BusyOverlay(
                 visible: state.busy,
                 message: state.busyMessage ?? i18n.t('processing'),
                 detail: _busyDetail(i18n, state),
               ),
-              if (state.focusService.lockScreenActive)
-                const Positioned.fill(child: FocusLockOverlay()),
+              ValueListenableBuilder<int>(
+                valueListenable: state.focusService.viewRevision,
+                builder: (context, _, _) {
+                  if (!state.focusService.lockScreenActive) {
+                    return const SizedBox.shrink();
+                  }
+                  return const Positioned.fill(child: FocusLockOverlay());
+                },
+              ),
             ],
           ),
         ),

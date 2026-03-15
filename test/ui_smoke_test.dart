@@ -16,6 +16,7 @@ import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
+import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/data_management_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/follow_along_page.dart';
@@ -353,6 +354,62 @@ void main() {
       expect(find.text('Настройки языка'), findsOneWidget);
       expect(find.text('Русский'), findsWidgets);
       expect(find.text('Language settings'), findsNothing);
+    });
+
+    testWidgets('app shell blocks exit dialog while focus lock is active', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService(lockScreenActive: true),
+      );
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const AppShell(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Exit app?'), findsNothing);
+      expect(find.textContaining('Focus lock is active.'), findsOneWidget);
+    });
+
+    testWidgets('app shell still shows exit dialog when focus lock is off', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService(lockScreenActive: false),
+      );
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const AppShell(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Exit app?'), findsOneWidget);
+      expect(find.textContaining('Focus lock is active.'), findsNothing);
     });
 
     testWidgets('focus page keeps notes in a right drawer on phones', (
@@ -1643,7 +1700,13 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   String? get error => null;
 
   @override
+  Future<void> init() async {}
+
+  @override
   bool get initializing => false;
+
+  @override
+  bool get initialized => true;
 
   @override
   String? get lastBackupPath => _lastBackupPath;
