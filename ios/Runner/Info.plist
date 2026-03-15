@@ -28,6 +28,10 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access is used for quick note dictation and follow-along speech features.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Calendar access is used to write todo reminders into your system calendar.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Calendar access is used to keep todo reminders in sync with your system calendar.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Speech recognition is used to turn your spoken quick notes into text.</string>
 	<key>UIApplicationSceneManifest</key>

@@ -2771,10 +2771,11 @@ class AppI18n {
     'todoNotes': 'Notes',
     'todoNotesHint': 'Add notes, context, or acceptance criteria',
     'todoReminder': 'Reminder time',
-    'todoReminderHint': 'Save a reminder timestamp for future alerts',
+    'todoReminderHint':
+        'Save a reminder time and sync it to the system calendar when supported.',
     'todoPickReminder': 'Pick date and time',
     'todoReminderStorageHint':
-        'The reminder time is already stored and can be used for alarm integrations later.',
+        'Supported devices can sync this reminder into the system calendar and keep it updated.',
     'clearValue': 'Clear',
   };
 
@@ -2859,9 +2860,9 @@ class AppI18n {
     'todoNotes': '备注',
     'todoNotesHint': '补充说明、上下文或完成标准',
     'todoReminder': '提醒时间',
-    'todoReminderHint': '先保存提醒时间，后续可用于闹钟/提醒能力',
+    'todoReminderHint': '保存提醒时间，并在支持时同步到系统日历',
     'todoPickReminder': '选择日期和时间',
-    'todoReminderStorageHint': '当前会先保存提醒时间，后续接入提醒能力时可直接使用。',
+    'todoReminderStorageHint': '在支持的设备上，这个提醒会自动同步到系统日历并随编辑更新。',
     'clearValue': '清除',
   };
 

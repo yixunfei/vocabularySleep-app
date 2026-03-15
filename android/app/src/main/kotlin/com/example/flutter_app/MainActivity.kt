@@ -1,6 +1,8 @@
 package com.example.flutter_app
 
 import android.Manifest
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
@@ -14,6 +16,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.CalendarContract
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -25,10 +28,12 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.util.Locale
+import java.util.TimeZone
 
 class MainActivity : FlutterActivity() {
     private val reminderChannelName = "vocabulary_sleep/reminder"
     private val systemSpeechChannelName = "vocabulary_sleep/system_speech"
+    private val systemCalendarChannelName = "vocabulary_sleep/system_calendar"
 
     private val reminderHandler = Handler(Looper.getMainLooper())
     private val speechHandler = Handler(Looper.getMainLooper())
@@ -52,8 +57,13 @@ class MainActivity : FlutterActivity() {
     private var speechListening = false
     private var speechFinalized = false
 
+    private var pendingCalendarResult: MethodChannel.Result? = null
+    private var pendingCalendarMethod: String? = null
+    private var pendingCalendarArguments: Map<*, *>? = null
+
     companion object {
         private const val speechPermissionRequestCode = 44102
+        private const val calendarPermissionRequestCode = 44103
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -98,6 +108,23 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            systemCalendarChannelName,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "upsertTodoReminder" -> {
+                    upsertTodoReminder(call.arguments as? Map<*, *>, result)
+                }
+
+                "removeTodoReminder" -> {
+                    removeTodoReminder(call.arguments as? Map<*, *>, result)
+                }
+
+                else -> result.notImplemented()
+            }
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -107,6 +134,43 @@ class MainActivity : FlutterActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode != speechPermissionRequestCode) {
+            if (requestCode != calendarPermissionRequestCode) {
+                return
+            }
+
+            val result = pendingCalendarResult
+            val method = pendingCalendarMethod
+            val arguments = pendingCalendarArguments
+            pendingCalendarResult = null
+            pendingCalendarMethod = null
+            pendingCalendarArguments = null
+            if (result == null || method == null) {
+                return
+            }
+
+            val granted =
+                grantResults.isNotEmpty() &&
+                    grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            if (!granted) {
+                result.success(
+                    buildCalendarResult(success = false, errorCode = "permission_denied"),
+                )
+                return
+            }
+
+            when (method) {
+                "upsertTodoReminder" -> {
+                    result.success(upsertTodoReminderInternal(arguments))
+                }
+
+                "removeTodoReminder" -> {
+                    result.success(removeTodoReminderInternal(arguments))
+                }
+
+                else -> {
+                    result.success(buildCalendarResult(success = false, errorCode = "failed"))
+                }
+            }
             return
         }
 
@@ -463,6 +527,214 @@ class MainActivity : FlutterActivity() {
             SpeechRecognizer.ERROR_SERVER,
             -> "unavailable"
             else -> "failed"
+        }
+    }
+
+    private fun upsertTodoReminder(
+        arguments: Map<*, *>?,
+        result: MethodChannel.Result,
+    ) {
+        if (pendingCalendarResult != null) {
+            result.success(buildCalendarResult(success = false, errorCode = "busy"))
+            return
+        }
+
+        if (!ensureCalendarPermissions(arguments, result, "upsertTodoReminder")) {
+            return
+        }
+
+        result.success(upsertTodoReminderInternal(arguments))
+    }
+
+    private fun removeTodoReminder(
+        arguments: Map<*, *>?,
+        result: MethodChannel.Result,
+    ) {
+        if (pendingCalendarResult != null) {
+            result.success(buildCalendarResult(success = false, errorCode = "busy"))
+            return
+        }
+
+        if (!ensureCalendarPermissions(arguments, result, "removeTodoReminder")) {
+            return
+        }
+
+        result.success(removeTodoReminderInternal(arguments))
+    }
+
+    private fun ensureCalendarPermissions(
+        arguments: Map<*, *>?,
+        result: MethodChannel.Result,
+        method: String,
+    ): Boolean {
+        val hasReadPermission =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR) ==
+                PackageManager.PERMISSION_GRANTED
+        val hasWritePermission =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR) ==
+                PackageManager.PERMISSION_GRANTED
+        if (hasReadPermission && hasWritePermission) {
+            return true
+        }
+
+        pendingCalendarResult = result
+        pendingCalendarMethod = method
+        pendingCalendarArguments = arguments
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR),
+            calendarPermissionRequestCode,
+        )
+        return false
+    }
+
+    private fun upsertTodoReminderInternal(arguments: Map<*, *>?): Map<String, Any?> {
+        if (arguments == null) {
+            return buildCalendarResult(success = false, errorCode = "invalid_args")
+        }
+
+        val title = (arguments["title"] as? String)?.trim().orEmpty()
+        val startAtMillis = (arguments["startAtMillis"] as? Number)?.toLong()
+        val endAtMillis = (arguments["endAtMillis"] as? Number)?.toLong()
+        if (title.isEmpty() || startAtMillis == null) {
+            return buildCalendarResult(success = false, errorCode = "invalid_args")
+        }
+
+        val calendarId = resolveWritableCalendarId()
+            ?: return buildCalendarResult(success = false, errorCode = "unavailable")
+        val description = (arguments["description"] as? String)?.trim()
+        val resolvedEndAtMillis =
+            (endAtMillis ?: (startAtMillis + 30L * 60L * 1000L))
+                .coerceAtLeast(startAtMillis + 60_000L)
+        var eventId = (arguments["eventId"] as? String)?.trim()?.toLongOrNull()
+
+        return try {
+            val values = ContentValues().apply {
+                put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                put(CalendarContract.Events.TITLE, title)
+                put(CalendarContract.Events.DTSTART, startAtMillis)
+                put(CalendarContract.Events.DTEND, resolvedEndAtMillis)
+                put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+                put(CalendarContract.Events.HAS_ALARM, 1)
+                if (!description.isNullOrBlank()) {
+                    put(CalendarContract.Events.DESCRIPTION, description)
+                }
+            }
+
+            if (eventId != null) {
+                val eventUri = ContentUris.withAppendedId(
+                    CalendarContract.Events.CONTENT_URI,
+                    eventId,
+                )
+                val updated = contentResolver.update(eventUri, values, null, null)
+                if (updated <= 0) {
+                    eventId = null
+                }
+            }
+
+            if (eventId == null) {
+                val insertedUri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                    ?: return buildCalendarResult(success = false, errorCode = "failed")
+                eventId = ContentUris.parseId(insertedUri)
+            }
+
+            syncCalendarAlarm(eventId!!)
+            buildCalendarResult(
+                success = true,
+                errorCode = null,
+                eventId = eventId.toString(),
+            )
+        } catch (_: SecurityException) {
+            buildCalendarResult(success = false, errorCode = "permission_denied")
+        } catch (error: Throwable) {
+            buildCalendarResult(
+                success = false,
+                errorCode = "failed",
+                errorMessage = error.message,
+            )
+        }
+    }
+
+    private fun removeTodoReminderInternal(arguments: Map<*, *>?): Map<String, Any?> {
+        val eventId = (arguments?.get("eventId") as? String)?.trim()?.toLongOrNull()
+            ?: return buildCalendarResult(success = true, errorCode = "not_found")
+
+        return try {
+            val deleted = contentResolver.delete(
+                ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
+                null,
+                null,
+            )
+            if (deleted > 0) {
+                buildCalendarResult(success = true, errorCode = null)
+            } else {
+                buildCalendarResult(success = true, errorCode = "not_found")
+            }
+        } catch (_: SecurityException) {
+            buildCalendarResult(success = false, errorCode = "permission_denied")
+        } catch (error: Throwable) {
+            buildCalendarResult(
+                success = false,
+                errorCode = "failed",
+                errorMessage = error.message,
+            )
+        }
+    }
+
+    private fun resolveWritableCalendarId(): Long? {
+        val projection = arrayOf(
+            CalendarContract.Calendars._ID,
+            CalendarContract.Calendars.IS_PRIMARY,
+        )
+        val selection =
+            "${CalendarContract.Calendars.VISIBLE} = 1 AND " +
+                "${CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL} >= ?"
+        val selectionArgs = arrayOf(
+            CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR.toString(),
+        )
+
+        contentResolver.query(
+            CalendarContract.Calendars.CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            "${CalendarContract.Calendars.IS_PRIMARY} DESC, ${CalendarContract.Calendars._ID} ASC",
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                return cursor.getLong(0)
+            }
+        }
+        return null
+    }
+
+    private fun syncCalendarAlarm(eventId: Long) {
+        contentResolver.delete(
+            CalendarContract.Reminders.CONTENT_URI,
+            "${CalendarContract.Reminders.EVENT_ID} = ?",
+            arrayOf(eventId.toString()),
+        )
+        val reminderValues = ContentValues().apply {
+            put(CalendarContract.Reminders.EVENT_ID, eventId)
+            put(CalendarContract.Reminders.MINUTES, 0)
+            put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+        }
+        contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
+    }
+
+    private fun buildCalendarResult(
+        success: Boolean,
+        errorCode: String?,
+        eventId: String? = null,
+        errorMessage: String? = null,
+    ): Map<String, Any?> {
+        return mutableMapOf<String, Any?>(
+            "success" to success,
+            "errorCode" to errorCode,
+            "eventId" to eventId,
+        ).apply {
+            if (!errorMessage.isNullOrBlank()) {
+                put("errorMessage", errorMessage)
+            }
         }
     }
 

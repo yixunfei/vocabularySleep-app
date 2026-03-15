@@ -1,10 +1,12 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/services/reminder_service.dart';
+import 'package:vocabulary_sleep_app/src/services/system_calendar_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
@@ -12,6 +14,9 @@ class _MemoryDatabaseService extends AppDatabaseService {
 
   final Map<String, String> _settings = <String, String>{};
   final List<TomatoTimerRecord> records = <TomatoTimerRecord>[];
+  final List<TodoItem> todos = <TodoItem>[];
+  int getTimerRecordsCalls = 0;
+  int _nextTodoId = 1;
 
   @override
   String? getSetting(String key) => _settings[key];
@@ -27,7 +32,61 @@ class _MemoryDatabaseService extends AppDatabaseService {
   }
 
   @override
+  List<TodoItem> getTodos() {
+    final ordered = List<TodoItem>.from(todos);
+    ordered.sort((left, right) {
+      final order = left.sortOrder.compareTo(right.sortOrder);
+      if (order != 0) return order;
+      final leftCreated = left.createdAt?.millisecondsSinceEpoch ?? 0;
+      final rightCreated = right.createdAt?.millisecondsSinceEpoch ?? 0;
+      return rightCreated.compareTo(leftCreated);
+    });
+    return ordered;
+  }
+
+  @override
+  int insertTodo(TodoItem item) {
+    final inserted = item.copyWith(
+      id: _nextTodoId++,
+      sortOrder: item.sortOrder > 0 ? item.sortOrder : todos.length,
+    );
+    todos.add(inserted);
+    return inserted.id!;
+  }
+
+  @override
+  void updateTodo(TodoItem item) {
+    final index = todos.indexWhere((todo) => todo.id == item.id);
+    if (index < 0) {
+      return;
+    }
+    todos[index] = item;
+  }
+
+  @override
+  void deleteTodo(int id) {
+    todos.removeWhere((todo) => todo.id == id);
+  }
+
+  @override
+  void clearCompletedTodos() {
+    todos.removeWhere((todo) => todo.completed);
+  }
+
+  @override
+  void reorderTodos(List<int> orderedIds) {
+    for (var index = 0; index < orderedIds.length; index += 1) {
+      final todoIndex = todos.indexWhere((todo) => todo.id == orderedIds[index]);
+      if (todoIndex < 0) {
+        continue;
+      }
+      todos[todoIndex] = todos[todoIndex].copyWith(sortOrder: index);
+    }
+  }
+
+  @override
   List<TomatoTimerRecord> getTimerRecords({int limit = 30}) {
+    getTimerRecordsCalls += 1;
     if (limit >= records.length) {
       return List<TomatoTimerRecord>.from(records);
     }
@@ -47,6 +106,8 @@ class _FakeReminderService implements ReminderService {
     required bool haptic,
     required bool sound,
     String? customSoundPath,
+    String? announcementText,
+    String? announcementLanguageTag,
     Duration duration = const Duration(seconds: 10),
   }) async {
     playCalls += 1;
@@ -58,6 +119,24 @@ class _FakeReminderService implements ReminderService {
   @override
   Future<void> stop() async {
     stopCalls += 1;
+  }
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class _FakeSystemCalendarService implements SystemCalendarService {
+  final List<TodoItem> syncedTodos = <TodoItem>[];
+  final List<int> removedTodoIds = <int>[];
+
+  @override
+  Future<void> syncTodo(TodoItem item) async {
+    syncedTodos.add(item);
+  }
+
+  @override
+  Future<void> removeTodoReminder(int todoId) async {
+    removedTodoIds.add(todoId);
   }
 
   @override
@@ -169,6 +248,63 @@ void main() {
       expect(database.records.first.partial, false);
     });
 
+    test(
+      'today stats cache avoids repeated database reads until invalidated',
+      () async {
+        final database = _MemoryDatabaseService();
+        database.records.addAll(<TomatoTimerRecord>[
+          TomatoTimerRecord(
+            startTime: DateTime.now(),
+            durationMinutes: 30,
+            focusDurationMinutes: 25,
+            breakDurationMinutes: 5,
+            roundsCompleted: 2,
+            focusMinutes: 25,
+            breakMinutes: 5,
+          ),
+          TomatoTimerRecord(
+            startTime: DateTime.now(),
+            durationMinutes: 15,
+            focusDurationMinutes: 10,
+            breakDurationMinutes: 5,
+            roundsCompleted: 1,
+            focusMinutes: 10,
+            breakMinutes: 5,
+          ),
+        ]);
+
+        final service = FocusService(database);
+        await service.init();
+
+        expect(service.getTodayFocusMinutes(), 35);
+        expect(service.getTodaySessionMinutes(), 45);
+        expect(service.getTodayRoundsCompleted(), 3);
+        expect(database.getTimerRecordsCalls, 1);
+
+        expect(service.getTodayFocusMinutes(), 35);
+        expect(service.getTodaySessionMinutes(), 45);
+        expect(service.getTodayRoundsCompleted(), 3);
+        expect(database.getTimerRecordsCalls, 1);
+
+        service.stop();
+        expect(service.getTodayFocusMinutes(), 35);
+        expect(database.getTimerRecordsCalls, 1);
+
+        fakeAsync((async) {
+          service.start(
+            focusDurationSeconds: 60,
+            breakDurationSeconds: 60,
+            rounds: 1,
+          );
+          async.elapse(const Duration(seconds: 15));
+          service.stop();
+        });
+
+        expect(service.getTodayFocusMinutes(), greaterThanOrEqualTo(35));
+        expect(database.getTimerRecordsCalls, 2);
+      },
+    );
+
     test('stop stores a partial session record', () async {
       final database = _MemoryDatabaseService();
       final service = FocusService(database);
@@ -273,5 +409,49 @@ void main() {
         expect(service.state.phase, TomatoTimerPhase.breakTime);
       },
     );
+
+    test('saving a reminder todo syncs it to the system calendar', () async {
+      final database = _MemoryDatabaseService();
+      final systemCalendar = _FakeSystemCalendarService();
+      final service = FocusService(
+        database,
+        systemCalendar: systemCalendar,
+      );
+      await service.init();
+
+      service.addTodo(
+        'Sync release checklist',
+        dueAt: DateTime(2026, 3, 15, 9, 30),
+        alarmEnabled: true,
+      );
+      await pumpEventQueue();
+
+      expect(systemCalendar.syncedTodos, hasLength(1));
+      expect(systemCalendar.syncedTodos.single.id, isNotNull);
+      expect(systemCalendar.syncedTodos.single.hasReminder, isTrue);
+    });
+
+    test('deleting a reminder todo removes its system calendar event', () async {
+      final database = _MemoryDatabaseService();
+      final systemCalendar = _FakeSystemCalendarService();
+      final service = FocusService(
+        database,
+        systemCalendar: systemCalendar,
+      );
+      await service.init();
+
+      service.addTodo(
+        'Remove synced reminder',
+        dueAt: DateTime(2026, 3, 15, 11, 0),
+        alarmEnabled: true,
+      );
+      await pumpEventQueue();
+
+      final todoId = systemCalendar.syncedTodos.single.id!;
+      service.deleteTodo(todoId);
+      await pumpEventQueue();
+
+      expect(systemCalendar.removedTodoIds, contains(todoId));
+    });
   });
 }

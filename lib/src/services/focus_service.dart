@@ -11,6 +11,7 @@ import 'ambient_service.dart';
 import 'database_service.dart';
 import 'reminder_service.dart';
 import 'settings_service.dart';
+import 'system_calendar_service.dart';
 import 'tts_service.dart';
 
 enum _PendingReminderFollowUp { none, startBreak, startFocus, completeSession }
@@ -21,17 +22,21 @@ class FocusService extends ChangeNotifier {
     SettingsService? settings,
     AmbientService? ambient,
     ReminderService? reminder,
+    SystemCalendarService? systemCalendar,
     TtsService? tts,
   }) : _database = database,
        _settings = settings ?? SettingsService(database),
        _ambient = ambient,
        _reminder = reminder,
+       _systemCalendar =
+           systemCalendar ?? PlatformSystemCalendarService(database),
        _tts = tts;
 
   final AppDatabaseService _database;
   final SettingsService _settings;
   final AmbientService? _ambient;
   final ReminderService? _reminder;
+  final SystemCalendarService? _systemCalendar;
   final TtsService? _tts;
 
   bool _initialized = false;
@@ -51,6 +56,12 @@ class FocusService extends ChangeNotifier {
   int _pendingReminderRound = 0;
   void Function(TomatoTimerState)? _onTick;
   void Function(TomatoTimerPhase, int)? _onPhaseComplete;
+  final ValueNotifier<TomatoTimerState> _timerStateNotifier =
+      ValueNotifier<TomatoTimerState>(const TomatoTimerState());
+  final ValueNotifier<int> _viewRevision = ValueNotifier<int>(0);
+  List<TodoItem>? _todosCache;
+  List<PlanNote>? _notesCache;
+  _TodayStatsSnapshot? _todayStatsCache;
 
   TomatoTimerConfig get config => _timerConfig;
   TomatoTimerState get state => _timerState;
@@ -58,11 +69,16 @@ class FocusService extends ChangeNotifier {
   bool get lockScreenActive => _lockScreenActive;
   bool get reminderAcknowledgementPending => _pendingReminderPhase != null;
   TomatoTimerPhase? get pendingReminderPhase => _pendingReminderPhase;
+  ValueListenable<TomatoTimerState> get timerListenable => _timerStateNotifier;
+  ValueListenable<int> get viewRevision => _viewRevision;
 
   Future<void> init() async {
     _timerConfig = await _loadConfig();
     _initialized = true;
+    _timerStateNotifier.value = _timerState;
+    _bumpViewRevision();
     notifyListeners();
+    unawaited(_syncAllTodoReminders());
   }
 
   Future<TomatoTimerConfig> _loadConfig() async {
@@ -160,6 +176,7 @@ class FocusService extends ChangeNotifier {
       'tomato_reminder_config',
       jsonEncode(_timerConfig.reminder.toMap()),
     );
+    _bumpViewRevision();
     notifyListeners();
   }
 
@@ -382,6 +399,13 @@ class FocusService extends ChangeNotifier {
     bool persistent = false,
   }) async {
     final reminder = _timerConfig.reminder;
+    final language = AppI18n.normalizeLanguageCode(
+      _database.getSetting('uiLanguage') ?? 'en',
+    );
+    final i18n = AppI18n(language);
+    final voiceMessage = phase == TomatoTimerPhase.focus
+        ? i18n.t('focusPhaseComplete')
+        : i18n.t('breakPhaseComplete');
 
     if (reminder.pauseAmbient && _ambient != null) {
       try {
@@ -399,6 +423,8 @@ class FocusService extends ChangeNotifier {
         await _reminder.play(
           haptic: reminder.haptic,
           sound: reminder.sound,
+          announcementText: reminder.voice ? voiceMessage : null,
+          announcementLanguageTag: reminder.voice ? language : null,
           duration: _reminderAlertTimeout,
         );
         handledPersistentAlert = true;
@@ -425,15 +451,16 @@ class FocusService extends ChangeNotifier {
     }
 
     if (reminder.voice && _tts != null) {
-      final language = AppI18n.normalizeLanguageCode(
-        _database.getSetting('uiLanguage') ?? 'en',
-      );
-      final i18n = AppI18n(language);
-      final message = phase == TomatoTimerPhase.focus
-          ? i18n.t('focusPhaseComplete')
-          : i18n.t('breakPhaseComplete');
+      final voiceHandledNatively =
+          persistent &&
+          handledPersistentAlert &&
+          !kIsWeb &&
+          defaultTargetPlatform == TargetPlatform.android;
+      if (voiceHandledNatively) {
+        return;
+      }
       try {
-        await _tts.speak(message, _settings.loadPlayConfig().tts);
+        await _tts.speak(voiceMessage, _settings.loadPlayConfig().tts);
       } catch (_) {
         // Avoid breaking timer flow for reminder failures.
       }
@@ -511,6 +538,8 @@ class FocusService extends ChangeNotifier {
       partial: partial,
     );
     _database.insertTimerRecord(record);
+    _invalidateTodayStatsCache();
+    _bumpViewRevision();
   }
 
   void pause() {
@@ -536,6 +565,7 @@ class FocusService extends ChangeNotifier {
   void setLockScreenActive(bool value) {
     if (_lockScreenActive == value) return;
     _lockScreenActive = value;
+    _bumpViewRevision();
     notifyListeners();
   }
 
@@ -567,12 +597,21 @@ class FocusService extends ChangeNotifier {
     _timer = null;
     unawaited(_stopActiveReminder());
     unawaited(_reminder?.dispose() ?? Future<void>.value());
+    unawaited(_systemCalendar?.dispose() ?? Future<void>.value());
+    _timerStateNotifier.dispose();
+    _viewRevision.dispose();
     super.dispose();
   }
 
   List<TodoItem> getTodos() {
     if (!_initialized) return const <TodoItem>[];
-    return _database.getTodos();
+    final cached = _todosCache;
+    if (cached != null) {
+      return cached;
+    }
+    final todos = List<TodoItem>.unmodifiable(_database.getTodos());
+    _todosCache = todos;
+    return todos;
   }
 
   void addTodo(
@@ -601,50 +640,49 @@ class FocusService extends ChangeNotifier {
 
   void saveTodo(TodoItem item) {
     if (!_initialized || item.content.trim().isEmpty) return;
-    final normalized = item.copyWith(
-      content: item.content.trim(),
-      deferred: item.completed ? false : item.deferred,
-      category: (item.category ?? '').trim().isEmpty
-          ? null
-          : item.category!.trim(),
-      note: (item.note ?? '').trim().isEmpty ? null : item.note!.trim(),
-      dueAt: item.alarmEnabled ? item.dueAt : null,
-      alarmEnabled: item.alarmEnabled && item.dueAt != null,
-      completedAt: item.completed ? item.completedAt : null,
-    );
+    final normalized = _normalizeTodoItem(item);
+    TodoItem persisted = normalized;
     if (normalized.id == null) {
-      _database.insertTodo(
-        normalized.copyWith(createdAt: normalized.createdAt ?? DateTime.now()),
+      final inserted = normalized.copyWith(
+        createdAt: normalized.createdAt ?? DateTime.now(),
       );
+      final insertedId = _database.insertTodo(inserted);
+      persisted = inserted.copyWith(id: insertedId);
     } else {
       _database.updateTodo(normalized);
     }
+    _invalidateTodosCache();
+    _bumpViewRevision();
     notifyListeners();
+    _scheduleTodoReminderSync(persisted);
   }
 
   void updateTodo(TodoItem item) {
     if (!_initialized) return;
-    _database.updateTodo(
-      item.copyWith(
-        deferred: item.completed ? false : item.deferred,
-        completedAt: item.completed ? item.completedAt : null,
-      ),
-    );
+    final normalized = _normalizeTodoItem(item);
+    _database.updateTodo(normalized);
+    _invalidateTodosCache();
+    _bumpViewRevision();
     notifyListeners();
+    _scheduleTodoReminderSync(normalized);
   }
 
   void toggleTodo(int id) {
     if (!_initialized) return;
     final item = _findTodoById(id);
     if (item == null) return;
-    _database.updateTodo(
+    final updated = _normalizeTodoItem(
       item.copyWith(
         completed: !item.completed,
         deferred: false,
         completedAt: !item.completed ? DateTime.now() : null,
       ),
     );
+    _database.updateTodo(updated);
+    _invalidateTodosCache();
+    _bumpViewRevision();
     notifyListeners();
+    _scheduleTodoReminderSync(updated);
   }
 
   TodoItem? _findTodoById(int id) {
@@ -657,13 +695,25 @@ class FocusService extends ChangeNotifier {
   void deleteTodo(int id) {
     if (!_initialized) return;
     _database.deleteTodo(id);
+    _invalidateTodosCache();
+    _bumpViewRevision();
     notifyListeners();
+    _scheduleTodoReminderRemoval(id);
   }
 
   void clearCompletedTodos() {
     if (!_initialized) return;
+    final completedIds = getTodos()
+        .where((item) => item.completed && item.id != null)
+        .map((item) => item.id!)
+        .toList(growable: false);
     _database.clearCompletedTodos();
+    _invalidateTodosCache();
+    _bumpViewRevision();
     notifyListeners();
+    for (final id in completedIds) {
+      _scheduleTodoReminderRemoval(id);
+    }
   }
 
   void reorderTodos(List<TodoItem> orderedTodos) {
@@ -676,12 +726,20 @@ class FocusService extends ChangeNotifier {
     }
     if (ids.isEmpty) return;
     _database.reorderTodos(ids);
+    _invalidateTodosCache();
+    _bumpViewRevision();
     notifyListeners();
   }
 
   List<PlanNote> getNotes() {
     if (!_initialized) return const <PlanNote>[];
-    return _database.getNotes();
+    final cached = _notesCache;
+    if (cached != null) {
+      return cached;
+    }
+    final notes = List<PlanNote>.unmodifiable(_database.getNotes());
+    _notesCache = notes;
+    return notes;
   }
 
   void addNote(String title, String? content, String? color) {
@@ -696,24 +754,32 @@ class FocusService extends ChangeNotifier {
         updatedAt: now,
       ),
     );
+    _invalidateNotesCache();
+    _bumpViewRevision();
     notifyListeners();
   }
 
   void updateNote(PlanNote note) {
     if (!_initialized) return;
     _database.updateNote(note.copyWith(updatedAt: DateTime.now()));
+    _invalidateNotesCache();
+    _bumpViewRevision();
     notifyListeners();
   }
 
   void deleteNote(int id) {
     if (!_initialized) return;
     _database.deleteNote(id);
+    _invalidateNotesCache();
+    _bumpViewRevision();
     notifyListeners();
   }
 
   void deleteNotes(List<int> ids) {
     if (!_initialized || ids.isEmpty) return;
     _database.deleteNotes(ids);
+    _invalidateNotesCache();
+    _bumpViewRevision();
     notifyListeners();
   }
 
@@ -727,6 +793,8 @@ class FocusService extends ChangeNotifier {
     }
     if (ids.isEmpty) return;
     _database.reorderNotes(ids);
+    _invalidateNotesCache();
+    _bumpViewRevision();
     notifyListeners();
   }
 
@@ -736,42 +804,15 @@ class FocusService extends ChangeNotifier {
   }
 
   int getTodayFocusMinutes() {
-    if (!_initialized) return 0;
-    final today = DateTime.now();
-    final records = getTimerRecords(limit: 100);
-    var totalMinutes = 0;
-    for (final record in records) {
-      if (_isSameDay(record.startTime, today)) {
-        totalMinutes += record.focusDurationMinutes;
-      }
-    }
-    return totalMinutes;
+    return _getTodayStatsSnapshot().focusMinutes;
   }
 
   int getTodaySessionMinutes() {
-    if (!_initialized) return 0;
-    final today = DateTime.now();
-    final records = getTimerRecords(limit: 100);
-    var totalMinutes = 0;
-    for (final record in records) {
-      if (_isSameDay(record.startTime, today)) {
-        totalMinutes += record.durationMinutes;
-      }
-    }
-    return totalMinutes;
+    return _getTodayStatsSnapshot().sessionMinutes;
   }
 
   int getTodayRoundsCompleted() {
-    if (!_initialized) return 0;
-    final today = DateTime.now();
-    final records = getTimerRecords(limit: 100);
-    var totalRounds = 0;
-    for (final record in records) {
-      if (_isSameDay(record.startTime, today)) {
-        totalRounds += record.roundsCompleted;
-      }
-    }
-    return totalRounds;
+    return _getTodayStatsSnapshot().roundsCompleted;
   }
 
   bool _isSameDay(DateTime left, DateTime right) {
@@ -780,8 +821,104 @@ class FocusService extends ChangeNotifier {
         left.day == right.day;
   }
 
+  void _invalidateTodosCache() {
+    _todosCache = null;
+  }
+
+  void _invalidateNotesCache() {
+    _notesCache = null;
+  }
+
+  void _invalidateTodayStatsCache() {
+    _todayStatsCache = null;
+  }
+
+  TodoItem _normalizeTodoItem(TodoItem item) {
+    return item.copyWith(
+      content: item.content.trim(),
+      deferred: item.completed ? false : item.deferred,
+      category: (item.category ?? '').trim().isEmpty
+          ? null
+          : item.category!.trim(),
+      note: (item.note ?? '').trim().isEmpty ? null : item.note!.trim(),
+      dueAt: item.alarmEnabled ? item.dueAt : null,
+      alarmEnabled: item.alarmEnabled && item.dueAt != null,
+      completedAt: item.completed ? item.completedAt : null,
+    );
+  }
+
+  void _bumpViewRevision() {
+    _viewRevision.value += 1;
+  }
+
+  Future<void> _syncAllTodoReminders() async {
+    final systemCalendar = _systemCalendar;
+    if (systemCalendar == null || !_initialized) {
+      return;
+    }
+    for (final todo in getTodos()) {
+      await systemCalendar.syncTodo(todo);
+    }
+  }
+
+  void _scheduleTodoReminderSync(TodoItem item) {
+    final systemCalendar = _systemCalendar;
+    if (systemCalendar == null || item.id == null) {
+      return;
+    }
+    unawaited(systemCalendar.syncTodo(item));
+  }
+
+  void _scheduleTodoReminderRemoval(int todoId) {
+    final systemCalendar = _systemCalendar;
+    if (systemCalendar == null) {
+      return;
+    }
+    unawaited(systemCalendar.removeTodoReminder(todoId));
+  }
+
+  _TodayStatsSnapshot _getTodayStatsSnapshot() {
+    final today = DateTime.now();
+    final dayKey = _dayKey(today);
+    final cached = _todayStatsCache;
+    if (!_initialized) {
+      return _TodayStatsSnapshot.empty(dayKey);
+    }
+    if (cached != null && cached.dayKey == dayKey) {
+      return cached;
+    }
+    final records = getTimerRecords(limit: 100);
+    var focusMinutes = 0;
+    var sessionMinutes = 0;
+    var roundsCompleted = 0;
+    for (final record in records) {
+      if (!_isSameDay(record.startTime, today)) {
+        continue;
+      }
+      focusMinutes += record.focusDurationMinutes;
+      sessionMinutes += record.durationMinutes;
+      roundsCompleted += record.roundsCompleted;
+    }
+    final snapshot = _TodayStatsSnapshot(
+      dayKey: dayKey,
+      focusMinutes: focusMinutes,
+      sessionMinutes: sessionMinutes,
+      roundsCompleted: roundsCompleted,
+    );
+    _todayStatsCache = snapshot;
+    return snapshot;
+  }
+
+  String _dayKey(DateTime value) {
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
   void _publishState() {
     _onTick?.call(_timerState);
+    _timerStateNotifier.value = _timerState;
     notifyListeners();
   }
 
@@ -806,4 +943,27 @@ class FocusService extends ChangeNotifier {
     _sessionBreakSeconds = 0;
     _sessionRoundsCompleted = 0;
   }
+}
+
+class _TodayStatsSnapshot {
+  const _TodayStatsSnapshot({
+    required this.dayKey,
+    required this.focusMinutes,
+    required this.sessionMinutes,
+    required this.roundsCompleted,
+  });
+
+  factory _TodayStatsSnapshot.empty(String dayKey) {
+    return _TodayStatsSnapshot(
+      dayKey: dayKey,
+      focusMinutes: 0,
+      sessionMinutes: 0,
+      roundsCompleted: 0,
+    );
+  }
+
+  final String dayKey;
+  final int focusMinutes;
+  final int sessionMinutes;
+  final int roundsCompleted;
 }

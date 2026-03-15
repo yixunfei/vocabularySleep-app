@@ -721,11 +721,10 @@ class AppDatabaseService {
     final bundleData = await rootBundle.load(target.assetPath);
     final bytes = bundleData.buffer.asUint8List();
     final content = _decodeBuiltInWordbookAsset(target.assetPath, bytes);
-    final entries = await _importService.parseJsonTextAsync(content);
-    final imported = await importWordbook(
+    final imported = importWordbookJsonText(
       sourcePath: target.path,
       name: target.name,
-      entries: entries,
+      content: content,
       replaceExisting: true,
     );
     _log.i(
@@ -780,6 +779,46 @@ class AppDatabaseService {
       <Object?>[wordbookId, limit, offset],
     );
     return rows.map(WordEntry.fromMap).toList();
+  }
+
+  int importWordbookJsonText({
+    required String sourcePath,
+    required String name,
+    required String content,
+    bool replaceExisting = true,
+  }) {
+    return _runInTransaction<int>(() {
+      var wordbookId = 0;
+      final existing = _selectOne(
+        'SELECT id FROM wordbooks WHERE path = ?',
+        <Object?>[sourcePath],
+      );
+      if (existing != null) {
+        wordbookId = (existing['id'] as num).toInt();
+        if (replaceExisting) {
+          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
+            wordbookId,
+          ]);
+        }
+      } else {
+        _db.execute(
+          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
+          <Object?>[name, sourcePath],
+        );
+        wordbookId = _lastInsertId();
+      }
+
+      final count = _importService.processJsonText(
+        content,
+        onPayload: (payload) {
+          if (payload.word.trim().isEmpty) return;
+          _insertWord(wordbookId, payload);
+        },
+      );
+
+      _refreshWordbookCount(wordbookId);
+      return count;
+    });
   }
 
   Future<int> importWordbook({
@@ -1147,6 +1186,16 @@ class AppDatabaseService {
     required String filePath,
     required String name,
   }) async {
+    if (filePath.toLowerCase().endsWith('.json')) {
+      final content = await File(filePath).readAsString();
+      return importWordbookJsonText(
+        sourcePath: filePath,
+        name: name,
+        content: content,
+        replaceExisting: true,
+      );
+    }
+
     final entries = await _importService.parseFile(filePath);
     return importWordbook(
       sourcePath: filePath,
@@ -1491,7 +1540,7 @@ class AppDatabaseService {
     return rows.map(TodoItem.fromMap).toList();
   }
 
-  void insertTodo(TodoItem item) {
+  int insertTodo(TodoItem item) {
     final sortOrder = item.sortOrder > 0
         ? item.sortOrder
         : _nextTodoSortOrder();
@@ -1513,6 +1562,7 @@ class AppDatabaseService {
         item.completedAt?.toIso8601String(),
       ],
     );
+    return _lastInsertId();
   }
 
   void updateTodo(TodoItem item) {

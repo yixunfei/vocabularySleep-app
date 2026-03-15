@@ -1,4 +1,5 @@
 import AVFoundation
+import EventKit
 import Flutter
 import Speech
 import UIKit
@@ -6,8 +7,11 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private let systemSpeechChannelName = "vocabulary_sleep/system_speech"
+  private let systemCalendarChannelName = "vocabulary_sleep/system_calendar"
 
   private var systemSpeechChannel: FlutterMethodChannel?
+  private var systemCalendarChannel: FlutterMethodChannel?
+  private let systemCalendarStore = EKEventStore()
   private let systemSpeechAudioEngine = AVAudioEngine()
   private var systemSpeechRecognizer: SFSpeechRecognizer?
   private var systemSpeechRequest: SFSpeechAudioBufferRecognitionRequest?
@@ -39,6 +43,15 @@ import UIKit
       self?.handleSystemSpeech(call, result: result)
     }
     systemSpeechChannel = channel
+
+    let calendarChannel = FlutterMethodChannel(
+      name: systemCalendarChannelName,
+      binaryMessenger: registrar.messenger()
+    )
+    calendarChannel.setMethodCallHandler { [weak self] call, result in
+      self?.handleSystemCalendar(call, result: result)
+    }
+    systemCalendarChannel = calendarChannel
   }
 
   deinit {
@@ -54,6 +67,17 @@ import UIKit
     case "cancelListening":
       cancelSystemSpeechRecognition()
       result(nil)
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+
+  private func handleSystemCalendar(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    switch call.method {
+    case "upsertTodoReminder":
+      upsertSystemCalendarReminder(call.arguments as? [AnyHashable: Any], result: result)
+    case "removeTodoReminder":
+      removeSystemCalendarReminder(call.arguments as? [AnyHashable: Any], result: result)
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -302,6 +326,195 @@ import UIKit
     systemSpeechErrorCode = nil
     systemSpeechListening = false
     systemSpeechFinalized = false
+  }
+
+  private func upsertSystemCalendarReminder(
+    _ arguments: [AnyHashable: Any]?,
+    result: @escaping FlutterResult
+  ) {
+    requestSystemCalendarPermission { [weak self] errorCode in
+      guard let self else {
+        result(["success": false, "errorCode": "failed"])
+        return
+      }
+      guard errorCode == nil else {
+        result(self.buildSystemCalendarResult(success: false, errorCode: errorCode))
+        return
+      }
+      result(self.upsertSystemCalendarReminderInternal(arguments))
+    }
+  }
+
+  private func removeSystemCalendarReminder(
+    _ arguments: [AnyHashable: Any]?,
+    result: @escaping FlutterResult
+  ) {
+    requestSystemCalendarPermission { [weak self] errorCode in
+      guard let self else {
+        result(["success": false, "errorCode": "failed"])
+        return
+      }
+      guard errorCode == nil else {
+        result(self.buildSystemCalendarResult(success: false, errorCode: errorCode))
+        return
+      }
+      result(self.removeSystemCalendarReminderInternal(arguments))
+    }
+  }
+
+  private func requestSystemCalendarPermission(_ completion: @escaping (String?) -> Void) {
+    if #available(iOS 17.0, *) {
+      switch EKEventStore.authorizationStatus(for: .event) {
+      case .fullAccess:
+        completion(nil)
+      case .writeOnly:
+        systemCalendarStore.requestFullAccessToEvents { granted, _ in
+          DispatchQueue.main.async {
+            completion(granted ? nil : "permission_denied")
+          }
+        }
+      case .notDetermined:
+        systemCalendarStore.requestFullAccessToEvents { granted, error in
+          DispatchQueue.main.async {
+            if let error, !granted {
+              completion(error.localizedDescription.isEmpty ? "permission_denied" : "failed")
+              return
+            }
+            completion(granted ? nil : "permission_denied")
+          }
+        }
+      case .denied, .restricted:
+        completion("permission_denied")
+      @unknown default:
+        completion("unavailable")
+      }
+      return
+    }
+
+    switch EKEventStore.authorizationStatus(for: .event) {
+    case .authorized:
+      completion(nil)
+    case .notDetermined:
+      systemCalendarStore.requestAccess(to: .event) { granted, _ in
+        DispatchQueue.main.async {
+          completion(granted ? nil : "permission_denied")
+        }
+      }
+    case .denied, .restricted:
+      completion("permission_denied")
+    @unknown default:
+      completion("unavailable")
+    }
+  }
+
+  private func upsertSystemCalendarReminderInternal(
+    _ arguments: [AnyHashable: Any]?
+  ) -> [String: Any?] {
+    guard
+      let arguments,
+      let title = (arguments["title"] as? String)?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+      !title.isEmpty,
+      let startAtMillis = (arguments["startAtMillis"] as? NSNumber)?.doubleValue
+    else {
+      return buildSystemCalendarResult(success: false, errorCode: "invalid_args")
+    }
+
+    let startDate = Date(timeIntervalSince1970: startAtMillis / 1000)
+    let endAtMillis =
+      ((arguments["endAtMillis"] as? NSNumber)?.doubleValue ?? (startAtMillis + 30 * 60 * 1000))
+    let endDate = Date(timeIntervalSince1970: max(endAtMillis, startAtMillis + 60 * 1000) / 1000)
+    let notes = (arguments["description"] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let existingEventId = (arguments["eventId"] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    let event: EKEvent
+    if
+      let existingEventId,
+      !existingEventId.isEmpty,
+      let existingEvent = systemCalendarStore.event(withIdentifier: existingEventId)
+    {
+      event = existingEvent
+    } else {
+      event = EKEvent(eventStore: systemCalendarStore)
+      guard let defaultCalendar = systemCalendarStore.defaultCalendarForNewEvents else {
+        return buildSystemCalendarResult(success: false, errorCode: "unavailable")
+      }
+      event.calendar = defaultCalendar
+    }
+
+    if event.calendar == nil {
+      event.calendar = systemCalendarStore.defaultCalendarForNewEvents
+    }
+    guard event.calendar != nil else {
+      return buildSystemCalendarResult(success: false, errorCode: "unavailable")
+    }
+
+    event.title = title
+    event.notes = (notes?.isEmpty == false) ? notes : nil
+    event.startDate = startDate
+    event.endDate = endDate
+    event.alarms = [EKAlarm(absoluteDate: startDate)]
+
+    do {
+      try systemCalendarStore.save(event, span: .thisEvent, commit: true)
+      return buildSystemCalendarResult(
+        success: true,
+        errorCode: nil,
+        eventId: event.eventIdentifier
+      )
+    } catch {
+      return buildSystemCalendarResult(
+        success: false,
+        errorCode: "failed",
+        errorMessage: error.localizedDescription
+      )
+    }
+  }
+
+  private func removeSystemCalendarReminderInternal(
+    _ arguments: [AnyHashable: Any]?
+  ) -> [String: Any?] {
+    guard
+      let eventId = (arguments?["eventId"] as? String)?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+      !eventId.isEmpty
+    else {
+      return buildSystemCalendarResult(success: true, errorCode: "not_found")
+    }
+
+    guard let event = systemCalendarStore.event(withIdentifier: eventId) else {
+      return buildSystemCalendarResult(success: true, errorCode: "not_found")
+    }
+
+    do {
+      try systemCalendarStore.remove(event, span: .thisEvent, commit: true)
+      return buildSystemCalendarResult(success: true, errorCode: nil)
+    } catch {
+      return buildSystemCalendarResult(
+        success: false,
+        errorCode: "failed",
+        errorMessage: error.localizedDescription
+      )
+    }
+  }
+
+  private func buildSystemCalendarResult(
+    success: Bool,
+    errorCode: String?,
+    eventId: String? = nil,
+    errorMessage: String? = nil
+  ) -> [String: Any?] {
+    var payload: [String: Any?] = [
+      "success": success,
+      "errorCode": errorCode,
+      "eventId": eventId,
+    ]
+    if let errorMessage, !errorMessage.isEmpty {
+      payload["errorMessage"] = errorMessage
+    }
+    return payload
   }
 
   private func buildSystemSpeechCommandResult(
