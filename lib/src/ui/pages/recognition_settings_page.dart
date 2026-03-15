@@ -5,6 +5,7 @@ import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../services/asr_service.dart';
 import '../../state/app_state.dart';
+import '../../utils/asr_language.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
@@ -348,8 +349,8 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final asr = config.asr;
-    final languageOptions = <String>['en', 'zh', 'ja', 'de', 'fr', 'es', 'ru'];
-    final language = asr.language.trim().isEmpty ? 'en' : asr.language.trim();
+    final languageOptions = List<String>.from(kAsrLanguagePresetOptions);
+    final language = normalizeAsrLanguageTag(asr.language);
     if (!languageOptions.contains(language)) {
       languageOptions.add(language);
     }
@@ -524,7 +525,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
                     pickUiText(
                       i18n,
                       zh: '快速笔记的系统语音听写会复用这里的识别语言设置。',
-                      en: 'Quick note system dictation reuses this recognition language setting.',
+                      en: 'Quick note system dictation reuses this setting. Prefer System default or a full locale such as en-US or zh-CN.',
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -884,12 +885,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
   }
 
   String _languageLabel(AppI18n i18n, String code) {
-    final normalized = code.trim().toLowerCase();
-    final isKnown = AppI18n.supportedLanguages.contains(normalized);
-    if (isKnown) {
-      return '${i18n.languageName(normalized)} ($normalized)';
-    }
-    return normalized;
+    return asrLanguageLabel(i18n, code);
   }
 
   String _resolveOfflineSizeText(AsrProviderType provider) {

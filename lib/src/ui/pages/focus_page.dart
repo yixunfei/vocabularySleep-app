@@ -13,6 +13,7 @@ import '../../services/ambient_service.dart';
 import '../../services/focus_service.dart';
 import '../../services/system_speech_service.dart';
 import '../../state/app_state.dart';
+import '../../utils/asr_language.dart';
 import '../layout/app_width_tier.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
@@ -5207,11 +5208,15 @@ class _FocusPageState extends State<FocusPage>
   }
 
   String? _noteSpeechLanguageTag(AppState state) {
-    final value = state.config.asr.language.trim();
-    if (value.isEmpty || value.toLowerCase() == 'auto') {
+    final normalized = normalizeAsrLanguageTag(state.config.asr.language);
+    if (normalized == 'auto') {
       return null;
     }
-    return value;
+    return normalized;
+  }
+
+  String _noteSpeechLanguageLabel(AppI18n i18n, String? languageTag) {
+    return asrLanguageLabel(i18n, languageTag);
   }
 
   String _noteSpeechHelperText(
@@ -5219,9 +5224,7 @@ class _FocusPageState extends State<FocusPage>
     _NoteVoiceInputState voiceState,
     String? languageTag,
   ) {
-    final languageLabel = (languageTag ?? '').trim().isEmpty
-        ? pickUiText(i18n, zh: '系统默认语言', en: 'system default language')
-        : languageTag!.trim();
+    final languageLabel = _noteSpeechLanguageLabel(i18n, languageTag);
     return switch (voiceState) {
       _NoteVoiceInputState.starting => pickUiText(
         i18n,
@@ -5231,7 +5234,7 @@ class _FocusPageState extends State<FocusPage>
       _NoteVoiceInputState.listening => pickUiText(
         i18n,
         zh: '系统听写已开始，完成后再点一次即可写入笔记。',
-        en: 'System dictation is listening. Tap again when you are done.',
+        en: 'System dictation is active. Finish in the system panel, then tap again to insert the text.',
       ),
       _NoteVoiceInputState.finishing => pickUiText(
         i18n,
@@ -5271,7 +5274,7 @@ class _FocusPageState extends State<FocusPage>
       'language_not_supported' => pickUiText(
         i18n,
         zh: '当前语音识别语言不受系统支持，请更换语言代码。',
-        en: 'The selected recognition language is not supported by the system recognizer.',
+        en: 'The selected recognition language is not supported. Try the system default language or a full locale such as en-US or zh-CN.',
       ),
       'not_listening' => pickUiText(
         i18n,
@@ -5281,7 +5284,7 @@ class _FocusPageState extends State<FocusPage>
       'unsupported' || 'unavailable' => pickUiText(
         i18n,
         zh: '当前设备暂不支持系统语音识别。',
-        en: 'System speech recognition is not available on this device.',
+        en: 'No system speech recognizer or dictation panel is available on this device.',
       ),
       'cancelled' => pickUiText(
         i18n,

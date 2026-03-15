@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.Ringtone
@@ -56,6 +57,8 @@ class MainActivity : FlutterActivity() {
     private var speechErrorCode: String? = null
     private var speechListening = false
     private var speechFinalized = false
+    private var speechUsingIntentActivity = false
+    private var ignoreNextSpeechIntentResult = false
 
     private var pendingCalendarResult: MethodChannel.Result? = null
     private var pendingCalendarMethod: String? = null
@@ -64,6 +67,7 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val speechPermissionRequestCode = 44102
         private const val calendarPermissionRequestCode = 44103
+        private const val speechIntentRequestCode = 44104
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -203,6 +207,32 @@ class MainActivity : FlutterActivity() {
         super.onDestroy()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != speechIntentRequestCode) {
+            return
+        }
+
+        val shouldIgnore = ignoreNextSpeechIntentResult
+        ignoreNextSpeechIntentResult = false
+        speechListening = false
+        speechUsingIntentActivity = false
+
+        if (shouldIgnore) {
+            clearSpeechState()
+            return
+        }
+
+        updateSpeechTranscriptFromIntent(data)
+        speechErrorCode = when {
+            resultCode == RESULT_OK && speechTranscript.isNotBlank() -> null
+            resultCode == RESULT_CANCELED -> "cancelled"
+            else -> "no_match"
+        }
+        speechFinalized = true
+        finishPendingSpeechStop(force = true)
+    }
+
     private fun playReminder(arguments: Map<*, *>?): Boolean {
         if (arguments == null) return false
 
@@ -245,12 +275,16 @@ class MainActivity : FlutterActivity() {
             return
         }
 
+        val languageTag = readSpeechLanguageTag(arguments)
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            if (canLaunchSpeechRecognitionIntent()) {
+                result.success(startSpeechRecognitionIntent(languageTag))
+                return
+            }
             result.success(buildSpeechCommandResult(success = false, errorCode = "unavailable"))
             return
         }
 
-        val languageTag = readSpeechLanguageTag(arguments)
         if (
             ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
                 PackageManager.PERMISSION_GRANTED
@@ -273,28 +307,21 @@ class MainActivity : FlutterActivity() {
         destroySpeechRecognizer()
 
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            if (canLaunchSpeechRecognitionIntent()) {
+                return startSpeechRecognitionIntent(languageTag)
+            }
             return buildSpeechCommandResult(success = false, errorCode = "unavailable")
         }
 
         return try {
-            speechLocale = languageTag
+            speechLocale = resolveSpeechLocale(languageTag)
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).also { recognizer ->
                 recognizer.setRecognitionListener(createRecognitionListener())
             }
 
-            val intent = RecognizerIntent.ACTION_RECOGNIZE_SPEECH.let { action ->
-                android.content.Intent(action).apply {
-                    putExtra(
-                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
-                    )
-                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
-                    if (!languageTag.isNullOrBlank()) {
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag)
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, languageTag)
-                    }
-                }
+            val intent = buildSpeechRecognitionIntent(languageTag).apply {
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             }
 
             speechListening = true
@@ -303,6 +330,9 @@ class MainActivity : FlutterActivity() {
         } catch (error: Throwable) {
             destroySpeechRecognizer()
             clearSpeechState()
+            if (canLaunchSpeechRecognitionIntent()) {
+                return startSpeechRecognitionIntent(languageTag)
+            }
             buildSpeechCommandResult(
                 success = false,
                 errorCode = "start_failed",
@@ -350,6 +380,7 @@ class MainActivity : FlutterActivity() {
 
     private fun cancelSpeechRecognition() {
         cancelSpeechStopTimeout()
+        ignoreNextSpeechIntentResult = speechUsingIntentActivity
 
         try {
             speechRecognizer?.cancel()
@@ -450,10 +481,91 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun updateSpeechTranscriptFromIntent(data: Intent?) {
+        val matches = data
+            ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?: emptyList()
+        if (matches.isNotEmpty()) {
+            speechTranscript = matches.first()
+        }
+    }
+
     private fun readSpeechLanguageTag(arguments: Map<*, *>?): String? {
         return (arguments?.get("languageTag") as? String)
             ?.trim()
+            ?.replace('_', '-')
             ?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun canLaunchSpeechRecognitionIntent(): Boolean {
+        val intent = buildSpeechRecognitionIntent(languageTag = null)
+        return intent.resolveActivity(packageManager) != null
+    }
+
+    private fun buildSpeechRecognitionIntent(languageTag: String?): Intent {
+        val resolvedLanguageTag = resolveSpeechLocale(languageTag)
+        return Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+            )
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now")
+            if (!resolvedLanguageTag.isNullOrBlank()) {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, resolvedLanguageTag)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, resolvedLanguageTag)
+            }
+        }
+    }
+
+    private fun startSpeechRecognitionIntent(languageTag: String?): Map<String, Any?> {
+        if (!canLaunchSpeechRecognitionIntent()) {
+            return buildSpeechCommandResult(success = false, errorCode = "unavailable")
+        }
+
+        clearSpeechState()
+        speechLocale = resolveSpeechLocale(languageTag)
+        speechUsingIntentActivity = true
+        speechListening = true
+        ignoreNextSpeechIntentResult = false
+
+        return try {
+            startActivityForResult(buildSpeechRecognitionIntent(languageTag), speechIntentRequestCode)
+            buildSpeechCommandResult(success = true, errorCode = null)
+        } catch (error: Throwable) {
+            clearSpeechState()
+            buildSpeechCommandResult(
+                success = false,
+                errorCode = "start_failed",
+                errorMessage = error.message,
+            )
+        }
+    }
+
+    private fun resolveSpeechLocale(languageTag: String?): String? {
+        val raw = languageTag?.trim()?.replace('_', '-') ?: ""
+        if (raw.isEmpty() || raw.equals("auto", ignoreCase = true) || raw.equals("system", ignoreCase = true)) {
+            return Locale.getDefault().toLanguageTag()
+        }
+
+        val normalized = when (raw.lowercase(Locale.US)) {
+            "en" -> "en-US"
+            "en-gb" -> "en-GB"
+            "zh", "zh-cn", "zh-hans" -> "zh-CN"
+            "zh-tw", "zh-hk", "zh-hant" -> "zh-TW"
+            "ja" -> "ja-JP"
+            "ko" -> "ko-KR"
+            "de" -> "de-DE"
+            "fr" -> "fr-FR"
+            "es" -> "es-ES"
+            "pt" -> "pt-BR"
+            "it" -> "it-IT"
+            "ru" -> "ru-RU"
+            else -> raw
+        }
+        val locale = Locale.forLanguageTag(normalized)
+        return locale.toLanguageTag().takeIf { it.isNotBlank() } ?: normalized
     }
 
     private fun buildSpeechCommandResult(
@@ -500,6 +612,7 @@ class MainActivity : FlutterActivity() {
         speechErrorCode = null
         speechListening = false
         speechFinalized = false
+        speechUsingIntentActivity = false
     }
 
     private fun destroySpeechRecognizer() {

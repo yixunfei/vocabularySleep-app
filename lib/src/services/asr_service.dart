@@ -15,6 +15,7 @@ import 'package:record/record.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart';
 
 import '../models/play_config.dart';
+import '../utils/asr_language.dart';
 
 class AsrResult {
   const AsrResult({
@@ -1645,15 +1646,18 @@ class AsrService {
   }
 
   String? _normalizeApiLanguage(String raw) {
-    final value = raw.trim().toLowerCase();
-    if (value.isEmpty || value == 'auto') return null;
-    final normalized = value.replaceAll('_', '-');
+    final normalized = normalizeAsrLanguageTag(raw).toLowerCase();
+    if (normalized == 'auto') return null;
     if (normalized.startsWith('zh')) return 'zh';
     if (normalized.startsWith('en')) return 'en';
     if (normalized.startsWith('ja')) return 'ja';
+    if (normalized.startsWith('ko')) return 'ko';
     if (normalized.startsWith('de')) return 'de';
     if (normalized.startsWith('fr')) return 'fr';
     if (normalized.startsWith('es')) return 'es';
+    if (normalized.startsWith('pt')) return 'pt';
+    if (normalized.startsWith('it')) return 'it';
+    if (normalized.startsWith('ru')) return 'ru';
     return normalized.split('-').first;
   }
 
@@ -3281,7 +3285,12 @@ class AsrService {
         whisper: OfflineWhisperModelConfig(
           encoder: p.join(modelDir.path, profile.encoderFile),
           decoder: p.join(modelDir.path, profile.decoderFile),
-          language: language.trim(),
+          language: normalizeOfflineAsrLanguage(
+            language,
+            englishOnlyModel:
+                profile.variant.endsWith('.en') ||
+                profile.dirName.endsWith('.en'),
+          ),
           task: 'transcribe',
         ),
         tokens: p.join(modelDir.path, profile.tokensFile),

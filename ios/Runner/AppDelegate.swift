@@ -111,16 +111,7 @@ import UIKit
     cancelSystemSpeechRecognition(completePendingStop: false)
     clearSystemSpeechState()
 
-    let localeIdentifier = {
-      let normalized = (languageTag ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-      return normalized.isEmpty ? Locale.current.identifier : normalized
-    }()
-
-    guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: localeIdentifier)) else {
-      result(buildSystemSpeechCommandResult(success: false, errorCode: "unavailable"))
-      return
-    }
-    guard recognizer.isAvailable else {
+    guard let (recognizer, localeIdentifier) = resolveSystemSpeechRecognizer(languageTag: languageTag) else {
       result(buildSystemSpeechCommandResult(success: false, errorCode: "unavailable"))
       return
     }
@@ -167,6 +158,69 @@ import UIKit
     }
 
     result(buildSystemSpeechCommandResult(success: true, errorCode: nil))
+  }
+
+  private func resolveSystemSpeechRecognizer(languageTag: String?) -> (SFSpeechRecognizer, String)? {
+    let requested = normalizeSystemSpeechLocale(languageTag)
+    let baseLanguage = Locale(identifier: requested).languageCode
+    let candidates = [requested, Locale.current.identifier, baseLanguage]
+      .compactMap { value -> String? in
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+      }
+
+    var seen = Set<String>()
+    for identifier in candidates where seen.insert(identifier).inserted {
+      let locale = Locale(identifier: identifier)
+      guard let recognizer = SFSpeechRecognizer(locale: locale) else {
+        continue
+      }
+      guard recognizer.isAvailable else {
+        continue
+      }
+      return (recognizer, locale.identifier)
+    }
+    return nil
+  }
+
+  private func normalizeSystemSpeechLocale(_ languageTag: String?) -> String {
+    let raw = (languageTag ?? "")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .replacingOccurrences(of: "_", with: "-")
+    if raw.isEmpty || raw.caseInsensitiveCompare("auto") == .orderedSame ||
+      raw.caseInsensitiveCompare("system") == .orderedSame {
+      return Locale.current.identifier
+    }
+
+    switch raw.lowercased() {
+    case "en":
+      return "en-US"
+    case "en-gb":
+      return "en-GB"
+    case "zh", "zh-cn", "zh-hans":
+      return "zh-CN"
+    case "zh-tw", "zh-hk", "zh-hant":
+      return "zh-TW"
+    case "ja":
+      return "ja-JP"
+    case "ko":
+      return "ko-KR"
+    case "de":
+      return "de-DE"
+    case "fr":
+      return "fr-FR"
+    case "es":
+      return "es-ES"
+    case "pt":
+      return "pt-BR"
+    case "it":
+      return "it-IT"
+    case "ru":
+      return "ru-RU"
+    default:
+      return raw
+    }
   }
 
   private func stopSystemSpeech(result: @escaping FlutterResult) {

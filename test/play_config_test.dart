@@ -6,6 +6,14 @@ import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 
 void main() {
   group('play config spelling', () {
+    test('defaults ASR language to auto for system-aware speech input', () {
+      expect(PlayConfig.defaults.asr.language, 'auto');
+
+      final restored = PlayConfig.fromJson(<String, Object?>{});
+
+      expect(restored.asr.language, 'auto');
+    });
+
     test('spellWord can group by letter pairs', () {
       expect(spellWord('word', mode: SpellingPlaybackMode.pairs), 'wo - rd');
     });

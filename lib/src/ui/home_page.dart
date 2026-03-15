@@ -14,6 +14,7 @@ import '../models/word_field.dart';
 import '../models/wordbook.dart';
 import '../services/asr_service.dart';
 import '../state/app_state.dart';
+import '../utils/asr_language.dart';
 import 'legacy_style.dart';
 
 const List<_TtsApiModelOption> _ttsApiModels = <_TtsApiModelOption>[
@@ -2720,11 +2721,15 @@ class _HomePageState extends State<HomePage> {
       text: draft.asr.baseUrl ?? '',
     );
     final asrModelController = TextEditingController(text: draft.asr.model);
-    final asrLanguageController = TextEditingController(
-      text: draft.asr.language,
+    final initialAsrLanguageOption = _resolveAsrLanguageOption(
+      draft.asr.language,
     );
-    var asrLanguageCustomMode =
-        _resolveAsrLanguageOption(draft.asr.language) == 'custom';
+    final asrLanguageController = TextEditingController(
+      text: initialAsrLanguageOption == 'custom'
+          ? draft.asr.language
+          : normalizeAsrLanguageTag(draft.asr.language),
+    );
+    var asrLanguageCustomMode = initialAsrLanguageOption == 'custom';
     final delayController = TextEditingController(
       text: '${draft.delayBetweenUnitsMs}',
     );
@@ -3360,15 +3365,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _resolveAsrLanguageOption(String raw) {
-    final normalized = raw.trim().toLowerCase().replaceAll('_', '-');
-    if (normalized.isEmpty || normalized == 'auto') return 'auto';
-    if (normalized.startsWith('en')) return 'en';
-    if (normalized.startsWith('zh')) return 'zh';
-    if (normalized.startsWith('ja')) return 'ja';
-    if (normalized.startsWith('fr')) return 'fr';
-    if (normalized.startsWith('de')) return 'de';
-    if (normalized.startsWith('es')) return 'es';
-    return 'custom';
+    return resolveAsrLanguageOption(raw);
   }
 
   Future<void> _showAsrOfflineNotice({
@@ -4303,34 +4300,11 @@ class _HomePageState extends State<HomePage> {
             initialValue: asrLanguageOption,
             decoration: InputDecoration(labelText: draftI18n.t('asrLanguage')),
             items: <DropdownMenuItem<String>>[
-              DropdownMenuItem(
-                value: 'auto',
-                child: Text(draftI18n.t('asrLanguageAuto')),
-              ),
-              DropdownMenuItem(
-                value: 'en',
-                child: Text(draftI18n.t('asrLanguageEnglish')),
-              ),
-              DropdownMenuItem(
-                value: 'zh',
-                child: Text(draftI18n.t('asrLanguageChinese')),
-              ),
-              DropdownMenuItem(
-                value: 'ja',
-                child: Text(draftI18n.t('asrLanguageJapanese')),
-              ),
-              DropdownMenuItem(
-                value: 'fr',
-                child: Text(draftI18n.t('asrLanguageFrench')),
-              ),
-              DropdownMenuItem(
-                value: 'de',
-                child: Text(draftI18n.t('asrLanguageGerman')),
-              ),
-              DropdownMenuItem(
-                value: 'es',
-                child: Text(draftI18n.t('asrLanguageSpanish')),
-              ),
+              for (final code in kAsrLanguagePresetOptions)
+                DropdownMenuItem(
+                  value: code,
+                  child: Text(asrLanguageLabel(draftI18n, code)),
+                ),
               DropdownMenuItem(
                 value: 'custom',
                 child: Text(draftI18n.t('asrLanguageCustom')),

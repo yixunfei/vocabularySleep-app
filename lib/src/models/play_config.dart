@@ -369,7 +369,7 @@ class AsrConfig {
           json['dumpRecognitionAudioArtifacts'] as bool? ?? false,
       apiKey: json['apiKey']?.toString(),
       model: json['model']?.toString() ?? 'FunAudioLLM/SenseVoiceSmall',
-      language: json['language']?.toString() ?? 'en',
+      language: json['language']?.toString() ?? 'auto',
       baseUrl: json['baseUrl']?.toString(),
     );
   }
@@ -888,7 +888,7 @@ class PlayConfig {
       ],
       scoringMethods: <PronScoringMethod>[PronScoringMethod.sslEmbedding],
       model: 'FunAudioLLM/SenseVoiceSmall',
-      language: 'en',
+      language: 'auto',
     ),
     showText: true,
     delayBetweenUnitsMs: 500,
