@@ -39,9 +39,11 @@ class WordEntry {
     this.variations,
     this.memory,
     this.story,
-    required this.fields,
+    List<WordFieldItem> fields = const <WordFieldItem>[],
     this.rawContent = '',
-  });
+    String rawFieldsJson = '',
+  }) : _fields = fields,
+       _rawFieldsJson = rawFieldsJson;
 
   final int? id;
   final int wordbookId;
@@ -54,8 +56,32 @@ class WordEntry {
   final String? variations;
   final String? memory;
   final String? story;
-  final List<WordFieldItem> fields;
   final String rawContent;
+  final List<WordFieldItem> _fields;
+  final String _rawFieldsJson;
+
+  List<WordFieldItem> get fields {
+    if (_fields.isNotEmpty) return _fields;
+
+    final fallbackFields = buildFieldItemsFromRecord(<String, Object?>{
+      'meaning': meaning,
+      'examples': examples,
+      'etymology': etymology,
+      'roots': roots,
+      'affixes': affixes,
+      'variations': variations,
+      'memory': memory,
+      'story': story,
+    });
+    if (_rawFieldsJson.trim().isEmpty) {
+      return fallbackFields;
+    }
+
+    return mergeFieldItems(<WordFieldItem>[
+      ...parseFieldItemsJson(_rawFieldsJson),
+      ...fallbackFields,
+    ]);
+  }
 
   WordEntry copyWith({
     int? id,
@@ -71,6 +97,7 @@ class WordEntry {
     String? story,
     List<WordFieldItem>? fields,
     String? rawContent,
+    String? rawFieldsJson,
   }) {
     return WordEntry(
       id: id ?? this.id,
@@ -84,8 +111,9 @@ class WordEntry {
       variations: variations ?? this.variations,
       memory: memory ?? this.memory,
       story: story ?? this.story,
-      fields: fields ?? this.fields,
+      fields: fields ?? _fields,
       rawContent: rawContent ?? this.rawContent,
+      rawFieldsJson: fields == null ? (rawFieldsJson ?? _rawFieldsJson) : '',
     );
   }
 
@@ -139,23 +167,6 @@ class WordEntry {
       }
     }
 
-    final fieldItems = parseFieldItemsJson(
-      map['fields_json']?.toString() ?? '',
-    );
-    final mergedFields = mergeFieldItems(<WordFieldItem>[
-      ...fieldItems,
-      ...buildFieldItemsFromRecord(<String, Object?>{
-        'meaning': map['meaning'],
-        'examples': examples,
-        'etymology': map['etymology'],
-        'roots': map['roots'],
-        'affixes': map['affixes'],
-        'variations': map['variations'],
-        'memory': map['memory'],
-        'story': map['story'],
-      }),
-    ]);
-
     return WordEntry(
       id: (map['id'] as num?)?.toInt(),
       wordbookId: ((map['wordbook_id'] as num?) ?? 0).toInt(),
@@ -168,8 +179,9 @@ class WordEntry {
       variations: sanitizeNullable(map['variations']),
       memory: sanitizeNullable(map['memory']),
       story: sanitizeNullable(map['story']),
-      fields: mergedFields,
+      fields: const <WordFieldItem>[],
       rawContent: sanitizeDisplayText(map['raw_content']?.toString() ?? ''),
+      rawFieldsJson: map['fields_json']?.toString() ?? '',
     );
   }
 }

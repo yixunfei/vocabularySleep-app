@@ -73,11 +73,11 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
   String _buildWordSubtitle(WordEntry word) {
     final meaning = word.meaning?.trim() ?? '';
     if (meaning.isNotEmpty) return meaning;
-    for (final field in word.fields) {
-      final text = field.asText().trim();
-      if (text.isNotEmpty) {
-        return '${field.label}: $text';
-      }
+    final raw = word.rawContent.trim();
+    if (raw.isEmpty) return '';
+    for (final line in raw.split(RegExp(r'\r?\n'))) {
+      final text = line.trim();
+      if (text.isNotEmpty) return text;
     }
     return '';
   }
@@ -91,26 +91,24 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
         .where((word) {
           final wordText = _normalizeSearchText(word.word);
           final meaningText = _normalizeSearchText(word.meaning ?? '');
-          final fieldsText = _normalizeSearchText(
-            word.fields.map((field) => field.asText()).join('\n'),
-          );
+          final detailsText = _normalizeSearchText(word.rawContent);
           final compactWordText = wordText.replaceAll(' ', '');
-          final compactFieldsText = fieldsText.replaceAll(' ', '');
+          final compactDetailsText = detailsText.replaceAll(' ', '');
 
           switch (_searchMode) {
             case SearchMode.word:
               return wordText.contains(normalizedQuery);
             case SearchMode.meaning:
               return meaningText.contains(normalizedQuery) ||
-                  fieldsText.contains(normalizedQuery);
+                  detailsText.contains(normalizedQuery);
             case SearchMode.fuzzy:
               if (fuzzyPattern == null) return false;
               return fuzzyPattern.hasMatch(compactWordText) ||
-                  fuzzyPattern.hasMatch(compactFieldsText);
+                  fuzzyPattern.hasMatch(compactDetailsText);
             case SearchMode.all:
               return wordText.contains(normalizedQuery) ||
                   meaningText.contains(normalizedQuery) ||
-                  fieldsText.contains(normalizedQuery);
+                  detailsText.contains(normalizedQuery);
           }
         })
         .toList(growable: false);
