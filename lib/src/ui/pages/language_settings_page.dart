@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../models/app_home_tab.dart';
 import '../../services/settings_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
@@ -132,6 +133,57 @@ class LanguageSettingsPage extends StatelessWidget {
                             es: 'Idioma manual fijado actualmente: $currentLanguageName',
                             ru: 'Сейчас вручную выбран язык: $currentLanguageName',
                           ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SectionHeader(
+                    title: pickUiText(i18n, zh: '启动主页', en: 'Startup page'),
+                    subtitle: pickUiText(
+                      i18n,
+                      zh: '设置应用启动后默认打开的主页面。',
+                      en: 'Choose which main tab opens after the app launches.',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<AppHomeTab>(
+                    initialValue: state.startupPage,
+                    decoration: InputDecoration(
+                      labelText: pickUiText(
+                        i18n,
+                        zh: '默认页面',
+                        en: 'Default page',
+                      ),
+                    ),
+                    items: AppHomeTab.values
+                        .map(
+                          (tab) => DropdownMenuItem<AppHomeTab>(
+                            value: tab,
+                            child: Text(appHomeTabLabel(i18n, tab)),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      state.setStartupPage(value);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '当前默认进入：${appHomeTabLabel(i18n, state.startupPage)}',
+                      en: 'Current startup tab: ${appHomeTabLabel(i18n, state.startupPage)}',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

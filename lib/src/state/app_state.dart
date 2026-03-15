@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../i18n/app_i18n.dart';
+import '../models/app_home_tab.dart';
 import '../models/play_config.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
@@ -91,6 +92,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Set<String> _taskWords = <String>{};
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
+  AppHomeTab _startupPage = AppHomeTab.play;
   bool _testModeEnabled = false;
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
@@ -167,6 +169,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SearchMode get searchMode => _searchMode;
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
+  AppHomeTab get startupPage => _startupPage;
   String get uiLanguageSelection =>
       _uiLanguageFollowsSystem ? SettingsService.uiLanguageSystem : _uiLanguage;
   bool get testModeEnabled => _testModeEnabled;
@@ -319,6 +322,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         _uiLanguageFollowsSystem = false;
         _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
       }
+      _startupPage = _settings.loadStartupPage();
       final testModeState = _settings.loadTestModeState();
       _testModeEnabled = testModeState['enabled'] ?? false;
       _testModeRevealed = testModeState['revealed'] ?? false;
@@ -339,6 +343,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           'words': _words.length,
           'uiLanguage': _uiLanguage,
           'uiLanguageFollowsSystem': _uiLanguageFollowsSystem,
+          'startupPage': _startupPage.storageValue,
           'logFile': logFilePath,
           'ttsProvider': _config.tts.provider.name,
           'ttsModel': _config.tts.model,
@@ -395,6 +400,21 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _uiLanguage = resolved;
     _settings.saveUiLanguage(SettingsService.uiLanguageSystem);
     _refreshLocalizedWordbookNames();
+    notifyListeners();
+  }
+
+  void setStartupPage(AppHomeTab page) {
+    if (_startupPage == page) return;
+    _log.i(
+      'app_state',
+      'set startup page',
+      data: <String, Object?>{
+        'from': _startupPage.storageValue,
+        'to': page.storageValue,
+      },
+    );
+    _startupPage = page;
+    _settings.saveStartupPage(page);
     notifyListeners();
   }
 
@@ -2646,6 +2666,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _uiLanguageFollowsSystem = false;
       _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
     }
+    _startupPage = _settings.loadStartupPage();
 
     final testModeState = _settings.loadTestModeState();
     _testModeEnabled = testModeState['enabled'] ?? false;

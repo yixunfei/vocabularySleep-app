@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
@@ -41,5 +42,17 @@ void main() {
       'revealed': true,
       'hintRevealed': false,
     });
+  });
+
+  test('startup page persists through SettingsService', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+
+    expect(settings.loadStartupPage(), AppHomeTab.play);
+
+    settings.saveStartupPage(AppHomeTab.focus);
+
+    final restored = SettingsService(database).loadStartupPage();
+    expect(restored, AppHomeTab.focus);
   });
 }

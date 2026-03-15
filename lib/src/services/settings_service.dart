@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../models/app_home_tab.dart';
 import '../models/play_config.dart';
 import 'database_service.dart';
 
@@ -41,6 +42,14 @@ class SettingsService {
       'uiLanguage',
       normalized.isEmpty ? uiLanguageSystem : normalized,
     );
+  }
+
+  AppHomeTab loadStartupPage() {
+    return AppHomeTabX.fromStorage(_database.getSetting('startupPage'));
+  }
+
+  void saveStartupPage(AppHomeTab page) {
+    _database.setSetting('startupPage', page.storageValue);
   }
 
   Map<String, bool> loadTestModeState() {

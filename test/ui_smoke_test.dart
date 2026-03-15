@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
+import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
@@ -410,6 +411,31 @@ void main() {
 
       expect(find.text('Exit app?'), findsOneWidget);
       expect(find.textContaining('Focus lock is active.'), findsNothing);
+    });
+
+    testWidgets('app shell opens the configured startup tab after init', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        startupPage: AppHomeTab.focus,
+        focusService: _FakeFocusService.sample(),
+      );
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const AppShell(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tasks & Notes'), findsOneWidget);
     });
 
     testWidgets('focus page keeps notes in a right drawer on phones', (
@@ -1542,6 +1568,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     List<DatabaseBackupInfo>? backups,
     FocusService? focusService,
     List<AmbientSource>? ambientSources,
+    AppHomeTab startupPage = AppHomeTab.play,
     String? asrRecordingPath,
     String? asrStoppedRecordingPath,
     AsrResult? asrTranscriptionResult,
@@ -1565,31 +1592,33 @@ class _FakeAppState extends ChangeNotifier implements AppState {
         );
     final resolvedWordbooks = wordbooks ?? <Wordbook>[resolvedSelectedWordbook];
     return _FakeAppState(
-      config: config ?? PlayConfig.defaults,
-      uiLanguage: uiLanguage,
-      selectedWordbook: resolvedSelectedWordbook,
-      wordbooks: resolvedWordbooks,
-      visibleWords: visibleWords,
-      localVoices: const <String>['alex', 'anna'],
-      backups: backups ?? const <DatabaseBackupInfo>[],
-      focusService: focusService ?? _FakeFocusService.sample(),
-      ambientSources:
-          ambientSources ??
-          const <AmbientSource>[
-            AmbientSource(
-              id: 'rain_soft',
-              name: 'Soft Rain',
-              assetPath: 'assets/audio/rain.mp3',
-            ),
-          ],
-      ambientMasterVolume: 0.55,
-      asrRecordingPath: asrRecordingPath,
-      asrStoppedRecordingPath: asrStoppedRecordingPath,
-      asrTranscriptionResult:
-          asrTranscriptionResult ??
-          const AsrResult(success: false, error: 'recognitionFailed'),
-      apiTtsCacheBytes: apiTtsCacheBytes,
-    ).._currentWord = visibleWords.firstOrNull;
+        config: config ?? PlayConfig.defaults,
+        uiLanguage: uiLanguage,
+        selectedWordbook: resolvedSelectedWordbook,
+        wordbooks: resolvedWordbooks,
+        visibleWords: visibleWords,
+        localVoices: const <String>['alex', 'anna'],
+        backups: backups ?? const <DatabaseBackupInfo>[],
+        focusService: focusService ?? _FakeFocusService.sample(),
+        ambientSources:
+            ambientSources ??
+            const <AmbientSource>[
+              AmbientSource(
+                id: 'rain_soft',
+                name: 'Soft Rain',
+                assetPath: 'assets/audio/rain.mp3',
+              ),
+            ],
+        ambientMasterVolume: 0.55,
+        asrRecordingPath: asrRecordingPath,
+        asrStoppedRecordingPath: asrStoppedRecordingPath,
+        asrTranscriptionResult:
+            asrTranscriptionResult ??
+            const AsrResult(success: false, error: 'recognitionFailed'),
+        apiTtsCacheBytes: apiTtsCacheBytes,
+      )
+      .._startupPage = startupPage
+      .._currentWord = visibleWords.firstOrNull;
   }
 
   PlayConfig _config;
@@ -1609,6 +1638,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   final String? _asrStoppedRecordingPath;
   final AsrResult _asrTranscriptionResult;
   int _apiTtsCacheBytes;
+  AppHomeTab _startupPage = AppHomeTab.play;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   bool resetUserDataCalled = false;
@@ -1772,6 +1802,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
+
+  @override
+  AppHomeTab get startupPage => _startupPage;
 
   @override
   String get uiLanguageSelection =>
@@ -2108,6 +2141,12 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   void setUiLanguageFollowSystem() {
     _uiLanguageFollowsSystem = true;
+    notifyListeners();
+  }
+
+  @override
+  void setStartupPage(AppHomeTab page) {
+    _startupPage = page;
     notifyListeners();
   }
 

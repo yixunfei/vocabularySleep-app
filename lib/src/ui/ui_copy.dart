@@ -1,4 +1,5 @@
 import '../i18n/app_i18n.dart';
+import '../models/app_home_tab.dart';
 import '../models/play_config.dart';
 import '../models/word_field.dart';
 import '../services/ambient_service.dart';
@@ -249,6 +250,16 @@ String pageLabelPlay(AppI18n i18n) => pickUiText(
   es: 'Reproducir',
   ru: 'Воспроизведение',
 );
+
+String appHomeTabLabel(AppI18n i18n, AppHomeTab tab) {
+  return switch (tab) {
+    AppHomeTab.play => pageLabelPlay(i18n),
+    AppHomeTab.library => pageLabelLibrary(i18n),
+    AppHomeTab.practice => pageLabelPractice(i18n),
+    AppHomeTab.focus => pageLabelFocus(i18n),
+    AppHomeTab.more => pageLabelMore(i18n),
+  };
+}
 
 String pageLabelLibrary(AppI18n i18n) => pickUiText(
   i18n,

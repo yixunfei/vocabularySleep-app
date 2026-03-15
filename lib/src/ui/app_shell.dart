@@ -36,7 +36,15 @@ class _AppShellState extends State<AppShell> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<AppState>().init();
+      final state = context.read<AppState>();
+      state.init().then((_) {
+        if (!mounted) return;
+        final nextIndex = state.startupPage.index;
+        if (_index == nextIndex) return;
+        setState(() {
+          _index = nextIndex;
+        });
+      });
     });
   }
 
