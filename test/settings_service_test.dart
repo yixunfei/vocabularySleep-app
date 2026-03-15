@@ -80,4 +80,16 @@ void main() {
     final restored = SettingsService(database).loadWeatherEnabled();
     expect(restored, isTrue);
   });
+
+  test('remembered words persist through SettingsService', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+
+    expect(settings.loadRememberedWords(), isEmpty);
+
+    settings.saveRememberedWords(<String>{'Alpha', 'beta'});
+
+    final restored = SettingsService(database).loadRememberedWords();
+    expect(restored, <String>{'alpha', 'beta'});
+  });
 }

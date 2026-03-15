@@ -96,6 +96,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SearchMode _searchMode = SearchMode.all;
   Set<String> _favorites = <String>{};
   Set<String> _taskWords = <String>{};
+  Set<String> _rememberedWords = <String>{};
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
   AppHomeTab _startupPage = AppHomeTab.play;
@@ -336,6 +337,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         _uiLanguageFollowsSystem = false;
         _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
       }
+      _rememberedWords = _settings.loadRememberedWords();
       _startupPage = _settings.loadStartupPage();
       _focusStartupTab = _settings.loadFocusStartupTab();
       _weatherEnabled = _settings.loadWeatherEnabled();
@@ -567,6 +569,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       ..removeWhere(normalizedRememberedWords.contains);
     final rememberedSet = normalizedRememberedWords.toSet();
     final weakSet = normalizedWeakWords.toSet();
+    _updateRememberedWordsStatus(
+      rememberedWords: normalizedRememberedWords,
+      weakWords: normalizedWeakWords,
+    );
 
     _practiceRememberedWords = _mergePracticeWords(
       primary: normalizedRememberedWords,
@@ -2745,6 +2751,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _startupPage = _settings.loadStartupPage();
     _focusStartupTab = _settings.loadFocusStartupTab();
     _weatherEnabled = _settings.loadWeatherEnabled();
+    _rememberedWords = _settings.loadRememberedWords();
 
     final testModeState = _settings.loadTestModeState();
     _testModeEnabled = testModeState['enabled'] ?? false;
@@ -2868,11 +2875,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return const <WordEntry>[];
     }
     final byWord = <String, WordEntry>{
-      for (final item in _words) item.word.trim(): item,
+      for (final item in _words) _normalizeTrackedWord(item.word): item,
     };
     final output = <WordEntry>[];
     for (final word in trackedWords) {
-      final entry = byWord[word];
+      final entry = byWord[_normalizeTrackedWord(word)];
       if (entry != null) {
         output.add(entry);
       }
@@ -2885,10 +2892,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       words: words,
       progressByWordId: _wordMemoryProgressByWordId,
     );
-    if (tracked.isNotEmpty) {
-      return tracked;
-    }
-    return _practiceEntriesFromWords(_practiceRememberedWords);
+    final remembered = _practiceEntriesFromWords(
+      _rememberedWords.toList(growable: false),
+    );
+    final practice = _practiceEntriesFromWords(_practiceRememberedWords);
+    return _mergeTrackedWordEntries(<List<WordEntry>>[
+      tracked,
+      remembered,
+      practice,
+    ]);
   }
 
   List<WordEntry> _memoryRecoveryEntries(List<WordEntry> words) {
@@ -2896,10 +2908,24 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       words: words,
       progressByWordId: _wordMemoryProgressByWordId,
     );
-    if (tracked.isNotEmpty) {
-      return tracked;
+    final practice = _practiceEntriesFromWords(_practiceWeakWords);
+    final merged = _mergeTrackedWordEntries(<List<WordEntry>>[
+      tracked,
+      practice,
+    ]);
+    if (_rememberedWords.isEmpty) {
+      return merged;
     }
-    return _practiceEntriesFromWords(_practiceWeakWords);
+    final rememberedKeys = _rememberedWords
+        .map(_normalizeTrackedWord)
+        .where((item) => item.isNotEmpty)
+        .toSet();
+    return merged
+        .where(
+          (entry) =>
+              !rememberedKeys.contains(_normalizeTrackedWord(entry.word)),
+        )
+        .toList(growable: false);
   }
 
   void _refreshWordMemoryProgressCache(List<WordEntry> words) {
@@ -3033,6 +3059,52 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       addWord(item);
     }
     return merged.take(40).toList(growable: false);
+  }
+
+  void _updateRememberedWordsStatus({
+    required List<String> rememberedWords,
+    required List<String> weakWords,
+  }) {
+    if (rememberedWords.isEmpty && weakWords.isEmpty) {
+      return;
+    }
+    final next = Set<String>.from(_rememberedWords);
+    for (final word in weakWords) {
+      next.remove(_normalizeTrackedWord(word));
+    }
+    for (final word in rememberedWords) {
+      final normalized = _normalizeTrackedWord(word);
+      if (normalized.isNotEmpty) {
+        next.add(normalized);
+      }
+    }
+    if (setEquals(next, _rememberedWords)) {
+      return;
+    }
+    _rememberedWords = next;
+    _settings.saveRememberedWords(_rememberedWords);
+  }
+
+  List<WordEntry> _mergeTrackedWordEntries(List<List<WordEntry>> groups) {
+    if (groups.isEmpty) {
+      return const <WordEntry>[];
+    }
+    final merged = <WordEntry>[];
+    final seen = <String>{};
+    for (final group in groups) {
+      for (final entry in group) {
+        final identity = _wordEntryIdentity(entry);
+        if (identity == null || !seen.add(identity)) {
+          continue;
+        }
+        merged.add(entry);
+      }
+    }
+    return merged;
+  }
+
+  String _normalizeTrackedWord(String value) {
+    return value.trim().toLowerCase();
   }
 
   void _persistTestModeState() {

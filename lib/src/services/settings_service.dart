@@ -157,4 +157,28 @@ class SettingsService {
   void savePracticeDashboard(Map<String, Object?> data) {
     _database.setSetting('practiceDashboard', jsonEncode(data));
   }
+
+  Set<String> loadRememberedWords() {
+    final raw = _database.getSetting('rememberedWords');
+    if (raw == null || raw.trim().isEmpty) {
+      return <String>{};
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return <String>{};
+      }
+      return decoded
+          .map((item) => '$item'.trim().toLowerCase())
+          .where((item) => item.isNotEmpty)
+          .toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  void saveRememberedWords(Set<String> words) {
+    final sorted = words.toList(growable: false)..sort();
+    _database.setSetting('rememberedWords', jsonEncode(sorted));
+  }
 }
