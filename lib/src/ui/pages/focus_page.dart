@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
@@ -9,8 +9,8 @@ import '../../i18n/app_i18n.dart';
 import '../../models/todo_item.dart';
 import '../../models/tomato_timer.dart';
 import '../../services/ambient_service.dart';
-import '../../services/asr_service.dart';
 import '../../services/focus_service.dart';
+import '../../services/system_speech_service.dart';
 import '../../state/app_state.dart';
 import '../layout/app_width_tier.dart';
 import '../ui_copy.dart';
@@ -24,7 +24,7 @@ enum _TodoViewMode { plan, list }
 
 enum _TodoDraftState { active, deferred, completed }
 
-enum _NoteVoiceInputState { idle, starting, recording, transcribing }
+enum _NoteVoiceInputState { idle, starting, listening, finishing }
 
 class _TodoPlanSection {
   const _TodoPlanSection({
@@ -61,6 +61,7 @@ class _FocusPageState extends State<FocusPage>
   ];
 
   late final TabController _tabController;
+  final SystemSpeechService _systemSpeech = const PlatformSystemSpeechService();
   final Set<int> _selectedNoteIds = <int>{};
   FocusService? _boundFocusService;
   Timer? _visualReminderTimer;
@@ -68,7 +69,7 @@ class _FocusPageState extends State<FocusPage>
   bool _noteSelectionMode = false;
   _TodoSortMode _todoSortMode = _TodoSortMode.manual;
   _TodoFilterMode _todoFilterMode = _TodoFilterMode.all;
-  _TodoViewMode _todoViewMode = _TodoViewMode.plan;
+  _TodoViewMode _todoViewMode = _TodoViewMode.list;
   bool _todoMetricsExpanded = false;
   double _notesDrawerProgress = 0;
   bool _notesDrawerDragging = false;
@@ -79,12 +80,18 @@ class _FocusPageState extends State<FocusPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final focus = context.read<AppState>().focusService;
-      focus.setCallbacks(onPhaseComplete: _onPhaseComplete);
-      _boundFocusService = focus;
-    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final focus = context.read<AppState>().focusService;
+    if (identical(_boundFocusService, focus)) {
+      return;
+    }
+    _boundFocusService?.setCallbacks();
+    focus.setCallbacks(onPhaseComplete: _onPhaseComplete);
+    _boundFocusService = focus;
   }
 
   @override
@@ -92,6 +99,7 @@ class _FocusPageState extends State<FocusPage>
     _boundFocusService?.setCallbacks();
     _visualReminderTimer?.cancel();
     _tabController.dispose();
+    unawaited(_systemSpeech.dispose());
     super.dispose();
   }
 
@@ -194,42 +202,48 @@ class _FocusPageState extends State<FocusPage>
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
     final focus = state.focusService;
+    final timerListenable = Listenable.merge(<Listenable>[
+      focus.timerListenable,
+      focus.viewRevision,
+    ]);
 
-    return ListenableBuilder(
-      listenable: focus,
-      builder: (context, _) {
-        final notes = focus.getNotes();
-        _selectedNoteIds.removeWhere(
-          (id) => !notes.any((note) => note.id == id),
-        );
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(i18n.t('focusTitle')),
-            bottom: TabBar(
-              controller: _tabController,
-              tabs: <Widget>[
-                Tab(
-                  icon: const Icon(Icons.hourglass_bottom_rounded),
-                  text: i18n.t('timerTab'),
-                ),
-                Tab(
-                  icon: const Icon(Icons.view_week_rounded),
-                  text: i18n.t('todoTab'),
-                ),
-              ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(i18n.t('focusTitle')),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: <Widget>[
+            Tab(
+              icon: const Icon(Icons.hourglass_bottom_rounded),
+              text: i18n.t('timerTab'),
             ),
+            Tab(
+              icon: const Icon(Icons.view_week_rounded),
+              text: i18n.t('todoTab'),
+            ),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        physics: const BouncingScrollPhysics(),
+        children: <Widget>[
+          ListenableBuilder(
+            listenable: timerListenable,
+            builder: (context, _) => _buildTimerTab(state, focus, i18n),
           ),
-          body: TabBarView(
-            controller: _tabController,
-            physics: const BouncingScrollPhysics(),
-            children: <Widget>[
-              _buildTimerTab(state, focus, i18n),
-              _buildWorkspaceTab(focus, i18n),
-            ],
+          ValueListenableBuilder<int>(
+            valueListenable: focus.viewRevision,
+            builder: (context, _, _) {
+              final notes = focus.getNotes();
+              _selectedNoteIds.removeWhere(
+                (id) => !notes.any((note) => note.id == id),
+              );
+              return _buildWorkspaceTab(focus, notes, i18n);
+            },
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -1133,6 +1147,7 @@ class _FocusPageState extends State<FocusPage>
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
+      enableDrag: false,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -1408,8 +1423,11 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Widget _buildWorkspaceTab(FocusService focus, AppI18n i18n) {
-    final notes = focus.getNotes();
+  Widget _buildWorkspaceTab(
+    FocusService focus,
+    List<PlanNote> notes,
+    AppI18n i18n,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final widthTier = AppWidthBreakpoints.tierFor(constraints.maxWidth);
@@ -1501,7 +1519,51 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Widget _buildTodoPanel(FocusService focus, AppI18n i18n) {
+  /*  String _mobileNotesLabel(AppI18n i18n) {
+    return pickUiText(
+        i18n,
+        zh: '待办',
+        en: 'Tasks',
+        ja: 'タスク',
+        de: 'Aufgaben',
+        fr: 'Taches',
+        es: 'Tareas',
+        ru: 'Задачи',
+      ),
+      _WorkspacePane.notes => pickUiText(
+        i18n,
+        zh: '笔记',
+        en: 'Notes',
+        ja: 'ノート',
+        de: 'Notizen',
+        fr: 'Notes',
+        es: 'Notas',
+        ru: 'Заметки',
+      ),
+    };
+  }
+
+*/
+  /*  String _mobileNotesLabel(AppI18n i18n) {
+    return pickUiText(
+      i18n,
+      zh: '绗旇',
+      en: 'Notes',
+      ja: '銉庛兗銉?,
+      de: 'Notizen',
+      fr: 'Notes',
+      es: 'Notas',
+      ru: '袟邪屑械褌泻懈',
+    );
+  }
+
+*/
+  /*  Widget _buildTodoPanel(
+    FocusService focus,
+    AppI18n i18n, {
+    int noteCount = 0,
+    VoidCallback? onOpenNotes,
+  }) {
     final todos = focus.getTodos();
     final theme = Theme.of(context);
     final filteredTodos = _filterTodos(todos);
@@ -1515,9 +1577,19 @@ class _FocusPageState extends State<FocusPage>
     return Card(
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final compactHeight =
+              constraints.maxHeight.isFinite && constraints.maxHeight < 720;
           final topSectionMaxHeight = constraints.maxHeight.isFinite
-              ? math.min(212.0, math.max(144.0, constraints.maxHeight * 0.30))
-              : 212.0;
+              ? compactHeight
+                    ? math.min(
+                        288.0,
+                        math.max(184.0, constraints.maxHeight * 0.42),
+                      )
+                    : math.min(
+                        232.0,
+                        math.max(152.0, constraints.maxHeight * 0.34),
+                      )
+              : 232.0;
 
           return Padding(
             padding: const EdgeInsets.all(12),
@@ -1531,75 +1603,96 @@ class _FocusPageState extends State<FocusPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(
-                              child: Text(
-                                i18n.t('todoTab'),
-                                style: theme.textTheme.titleMedium,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => _showTodoEditor(focus, i18n),
-                              style: TextButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 0,
-                                ),
-                                minimumSize: const Size(0, 32),
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(i18n.t('addTodo')),
-                            ),
-                            IconButton(
-                              key: const ValueKey<String>(
-                                'todo-metrics-toggle',
-                              ),
-                              tooltip: _todoMetricsExpanded
-                                  ? pickUiText(
-                                      i18n,
-                                      zh: '收起统计',
-                                      en: 'Collapse stats',
-                                      ja: '統計を折りたたむ',
-                                      de: 'Statistiken einklappen',
-                                      fr: 'Replier les statistiques',
-                                      es: 'Contraer estadisticas',
-                                      ru: 'Свернуть статистику',
-                                    )
-                                  : pickUiText(
-                                      i18n,
-                                      zh: '展开统计',
-                                      en: 'Expand stats',
-                                      ja: '統計を展開',
-                                      de: 'Statistiken ausklappen',
-                                      fr: 'Developper les statistiques',
-                                      es: 'Expandir estadisticas',
-                                      ru: 'Развернуть статистику',
+                        if (constraints.maxWidth < 220)
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Flexible(
+                                  fit: FlexFit.loose,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 88,
                                     ),
-                              visualDensity: VisualDensity.compact,
-                              onPressed: () {
-                                setState(() {
-                                  _todoMetricsExpanded = !_todoMetricsExpanded;
-                                });
-                              },
-                              icon: Icon(
-                                _todoMetricsExpanded
-                                    ? Icons.unfold_less_rounded
-                                    : Icons.unfold_more_rounded,
-                              ),
+                                    child: Text(
+                                      i18n.t('todoTab'),
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => _showTodoEditor(focus, i18n),
+                                  style: TextButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 0,
+                                    ),
+                                    minimumSize: const Size(0, 32),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(i18n.t('addTodo')),
+                                ),
+                                IconButton(
+                                  key: const ValueKey<String>(
+                                    'todo-metrics-toggle',
+                                  ),
+                                  tooltip: _todoMetricsExpanded
+                                      ? pickUiText(
+                                          i18n,
+                                          zh: '收起统计',
+                                          en: 'Collapse stats',
+                                          ja: '統計を折りたたむ',
+                                          de: 'Statistiken einklappen',
+                                          fr: 'Replier les statistiques',
+                                          es: 'Contraer estadisticas',
+                                          ru: 'Свернуть статистику',
+                                        )
+                                      : pickUiText(
+                                          i18n,
+                                          zh: '展开统计',
+                                          en: 'Expand stats',
+                                          ja: '統計を展開',
+                                          de: 'Statistiken ausklappen',
+                                          fr: 'Developper les statistiques',
+                                          es: 'Expandir estadisticas',
+                                          ru: 'Развернуть статистику',
+                                        ),
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () {
+                                    setState(() {
+                                      _todoMetricsExpanded =
+                                          !_todoMetricsExpanded;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _todoMetricsExpanded
+                                        ? Icons.unfold_less_rounded
+                                        : Icons.unfold_more_rounded,
+                                  ),
+                                ),
+                                if (todos.any((item) => item.completed))
+                                  IconButton(
+                                    tooltip: i18n.t('clearCompleted'),
+                                    visualDensity: VisualDensity.compact,
+                                    onPressed: focus.clearCompletedTodos,
+                                    icon: const Icon(Icons.done_all_rounded),
+                                  ),
+                              ],
                             ),
-                            if (todos.any((item) => item.completed))
-                              IconButton(
-                                tooltip: i18n.t('clearCompleted'),
-                                visualDensity: VisualDensity.compact,
-                                onPressed: focus.clearCompletedTodos,
-                                icon: const Icon(Icons.done_all_rounded),
-                              ),
-                          ],
-                        ),
+                          )
+                        else
+                          _buildTodoHeader(
+                            focus: focus,
+                            i18n: i18n,
+                            theme: theme,
+                            hasCompletedTodos: todos.any(
+                              (item) => item.completed,
+                            ),
+                          ),
                         const SizedBox(height: 8),
                         _buildTodoMetricsStrip(metrics, i18n),
                         const SizedBox(height: 10),
@@ -1643,6 +1736,286 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
+*/
+  Widget _buildTodoPanel(FocusService focus, AppI18n i18n) {
+    final todos = focus.getTodos();
+    final theme = Theme.of(context);
+    final filteredTodos = _filterTodos(todos);
+    final displayTodos = _sortedTodos(filteredTodos);
+    final planSections = _buildTodoPlanSections(filteredTodos, i18n);
+    final manualSort =
+        _todoSortMode == _TodoSortMode.manual &&
+        _todoFilterMode == _TodoFilterMode.all;
+    final metrics = _buildTodoMetrics(todos);
+
+    return Card(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compactLayout = constraints.maxWidth < 600;
+          final compactHeight =
+              constraints.maxHeight.isFinite && constraints.maxHeight < 720;
+          final topSectionMaxHeight = constraints.maxHeight.isFinite
+              ? compactHeight
+                    ? math.min(
+                        248.0,
+                        math.max(168.0, constraints.maxHeight * 0.34),
+                      )
+                    : math.min(
+                        208.0,
+                        math.max(140.0, constraints.maxHeight * 0.26),
+                      )
+              : 208.0;
+          final topSection = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _buildTodoHeader(
+                focus: focus,
+                i18n: i18n,
+                theme: theme,
+                hasCompletedTodos: todos.any((item) => item.completed),
+                compactLayout: compactLayout,
+              ),
+              const SizedBox(height: 8),
+              _buildTodoWorkspaceSummary(metrics, i18n, compact: compactLayout),
+              const SizedBox(height: 8),
+              TextField(
+                key: const ValueKey<String>('todo-editor-entry'),
+                readOnly: true,
+                onTap: () => _showTodoEditor(focus, i18n),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: pickUiText(
+                    i18n,
+                    zh: '\u70b9\u51fb\u6dfb\u52a0\u5f85\u529e\u4e8b\u9879',
+                    en: 'Tap to add a task',
+                    ja: 'タップしてタスクを追加',
+                    de: 'Tippen, um eine Aufgabe hinzuzufuegen',
+                    fr: 'Touchez pour ajouter une tache',
+                    es: 'Toca para anadir una tarea',
+                    ru: 'Нажмите, чтобы добавить задачу',
+                  ),
+                  prefixIcon: const Icon(Icons.add_task_rounded),
+                  suffixIcon: const Icon(Icons.edit_note_rounded),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildTodoControls(
+                i18n,
+                manualSort: manualSort,
+                compact: compactLayout,
+              ),
+              if (_todoMetricsExpanded) ...<Widget>[
+                const SizedBox(height: 8),
+                _buildTodoMetricsStrip(metrics, i18n, compact: compactLayout),
+              ],
+            ],
+          );
+
+          return Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (compactLayout)
+                  topSection
+                else
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: topSectionMaxHeight),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: topSection,
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: _todoViewMode == _TodoViewMode.plan
+                      ? _buildTodoPlanView(focus, planSections, i18n)
+                      : displayTodos.isEmpty
+                      ? Center(child: Text(i18n.t('todosEmpty')))
+                      : manualSort
+                      ? _buildReorderableTodosList(focus, displayTodos, i18n)
+                      : _buildSortedTodosList(focus, displayTodos, i18n),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTodoHeader({
+    required FocusService focus,
+    required AppI18n i18n,
+    required ThemeData theme,
+    required bool hasCompletedTodos,
+    bool compactLayout = false,
+  }) {
+    if (compactLayout) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  i18n.t('todoTab'),
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+              _buildTodoMetricsToggleButton(i18n),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              if (hasCompletedTodos)
+                _buildTodoClearCompletedButton(focus, i18n),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Text(i18n.t('todoTab'), style: theme.textTheme.titleMedium),
+        ),
+        _buildTodoMetricsToggleButton(i18n),
+        if (hasCompletedTodos) _buildTodoClearCompletedButton(focus, i18n),
+      ],
+    );
+  }
+
+  Widget _buildTodoWorkspaceSummary(
+    Map<String, int> metrics,
+    AppI18n i18n, {
+    bool compact = false,
+  }) {
+    final theme = Theme.of(context);
+    final active = metrics['active'] ?? 0;
+    final today = metrics['today'] ?? 0;
+    final completed = metrics['completed'] ?? 0;
+    final overdue = metrics['overdue'] ?? 0;
+    final deferred = metrics['deferred'] ?? 0;
+    final summaryText = pickUiText(
+      i18n,
+      zh: '$active 进行中 · $today 今日计划 · $completed 已完成',
+      en: '$active active · $today due today · $completed done',
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 12,
+        vertical: compact ? 8 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            Icons.view_list_rounded,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              summaryText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+          if (overdue > 0)
+            _buildTodoSummaryPill(
+              label: pickUiText(
+                i18n,
+                zh: '逾期 $overdue',
+                en: '$overdue overdue',
+              ),
+              color: theme.colorScheme.error,
+            ),
+          if (deferred > 0) ...<Widget>[
+            const SizedBox(width: 6),
+            _buildTodoSummaryPill(
+              label: pickUiText(
+                i18n,
+                zh: '搁置 $deferred',
+                en: '$deferred deferred',
+              ),
+              color: theme.colorScheme.tertiary,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodoSummaryPill({required String label, required Color color}) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTodoMetricsToggleButton(AppI18n i18n) {
+    return IconButton(
+      key: const ValueKey<String>('todo-metrics-toggle'),
+      tooltip: _todoMetricsExpanded
+          ? pickUiText(i18n, zh: '收起统计', en: 'Collapse stats')
+          : pickUiText(i18n, zh: '展开统计', en: 'Expand stats'),
+      visualDensity: VisualDensity.compact,
+      onPressed: () {
+        setState(() {
+          _todoMetricsExpanded = !_todoMetricsExpanded;
+        });
+      },
+      icon: Icon(
+        _todoMetricsExpanded
+            ? Icons.unfold_less_rounded
+            : Icons.unfold_more_rounded,
+      ),
+    );
+  }
+
+  Widget _buildTodoClearCompletedButton(FocusService focus, AppI18n i18n) {
+    return IconButton(
+      tooltip: i18n.t('clearCompleted'),
+      visualDensity: VisualDensity.compact,
+      onPressed: focus.clearCompletedTodos,
+      icon: const Icon(Icons.done_all_rounded),
+    );
+  }
+
   Map<String, int> _buildTodoMetrics(List<TodoItem> todos) {
     final today = DateTime.now();
     final todayStart = _startOfDay(today);
@@ -1683,7 +2056,7 @@ class _FocusPageState extends State<FocusPage>
     };
   }
 
-  Widget _buildTodoMetricsStrip(Map<String, int> metrics, AppI18n i18n) {
+  /*  Widget _buildTodoMetricsStrip(Map<String, int> metrics, AppI18n i18n) {
     final theme = Theme.of(context);
     final items = <({String key, String label, IconData icon, Color color})>[
       (
@@ -1830,6 +2203,273 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
+*/
+  /*  List<({String key, String label, IconData icon, Color color})>
+  _todoMetricItems(AppI18n i18n, ThemeData theme) {
+    return <({String key, String label, IconData icon, Color color})>[
+      (
+        key: 'active',
+        label: pickUiText(
+          i18n,
+          zh: '杩涜涓?,
+          en: 'Active',
+          ja: '閫茶涓?,
+          de: 'Aktiv',
+          fr: 'Actives',
+          es: 'Activas',
+          ru: '袗泻褌懈胁薪褘械',
+        ),
+        icon: Icons.flash_on_rounded,
+        color: theme.colorScheme.primary,
+      ),
+      (
+        key: 'today',
+        label: pickUiText(
+          i18n,
+          zh: '浠婂ぉ鍒版湡',
+          en: 'Due today',
+          ja: '浠婃棩銇俱仹',
+          de: 'Heute faellig',
+          fr: 'Aujourd鈥檋ui',
+          es: 'Para hoy',
+          ru: '袧邪 褋械谐芯写薪褟',
+        ),
+        icon: Icons.today_rounded,
+        color: theme.colorScheme.tertiary,
+      ),
+      (
+        key: 'overdue',
+        label: pickUiText(
+          i18n,
+          zh: '宸查€炬湡',
+          en: 'Overdue',
+          ja: '鏈熼檺瓒呴亷',
+          de: 'Ueberfaellig',
+          fr: 'En retard',
+          es: 'Vencidas',
+          ru: '袩褉芯褋褉芯褔械薪芯',
+        ),
+        icon: Icons.warning_amber_rounded,
+        color: theme.colorScheme.error,
+      ),
+      (
+        key: 'deferred',
+        label: pickUiText(
+          i18n,
+          zh: '寤跺悗鎼佺疆',
+          en: 'Deferred',
+          ja: '淇濈暀涓?,
+          de: 'Zurueckgestellt',
+          fr: 'Reporte',
+          es: 'Pospuestas',
+          ru: '袨褌谢芯卸械薪芯',
+        ),
+        icon: Icons.snooze_rounded,
+        color: theme.colorScheme.outline,
+      ),
+      (
+        key: 'completed',
+        label: pickUiText(
+          i18n,
+          zh: '宸插畬鎴?,
+          en: 'Done',
+          ja: '瀹屼簡',
+          de: 'Erledigt',
+          fr: 'Terminees',
+          es: 'Hechas',
+          ru: '袚芯褌芯胁芯',
+        ),
+        icon: Icons.task_alt_rounded,
+        color: theme.colorScheme.secondary,
+      ),
+    ];
+  }
+
+*/
+  List<({String key, String label, IconData icon, Color color})>
+  _todoMetricItems(AppI18n i18n, ThemeData theme) {
+    return <({String key, String label, IconData icon, Color color})>[
+      (
+        key: 'active',
+        label: pickUiText(i18n, zh: '\u8fdb\u884c\u4e2d', en: 'Active'),
+        icon: Icons.flash_on_rounded,
+        color: theme.colorScheme.primary,
+      ),
+      (
+        key: 'today',
+        label: pickUiText(
+          i18n,
+          zh: '\u4eca\u5929\u5230\u671f',
+          en: 'Due today',
+        ),
+        icon: Icons.today_rounded,
+        color: theme.colorScheme.tertiary,
+      ),
+      (
+        key: 'overdue',
+        label: pickUiText(i18n, zh: '\u5df2\u903e\u671f', en: 'Overdue'),
+        icon: Icons.warning_amber_rounded,
+        color: theme.colorScheme.error,
+      ),
+      (
+        key: 'deferred',
+        label: pickUiText(i18n, zh: '\u5ef6\u540e\u6401\u7f6e', en: 'Deferred'),
+        icon: Icons.snooze_rounded,
+        color: theme.colorScheme.outline,
+      ),
+      (
+        key: 'completed',
+        label: pickUiText(i18n, zh: '\u5df2\u5b8c\u6210', en: 'Done'),
+        icon: Icons.task_alt_rounded,
+        color: theme.colorScheme.secondary,
+      ),
+    ];
+  }
+
+  Widget _buildTodoMetricsStrip(
+    Map<String, int> metrics,
+    AppI18n i18n, {
+    bool compact = false,
+  }) {
+    final theme = Theme.of(context);
+    final items = _todoMetricItems(i18n, theme);
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: items
+                .map(
+                  (item) => compact
+                      ? _buildTodoMetricCompactBadge(
+                          key: ValueKey<String>(
+                            'todo-metric-badge-${item.key}',
+                          ),
+                          value: metrics[item.key] ?? 0,
+                          label: item.label,
+                          color: item.color,
+                        )
+                      : _buildTodoMetricSummaryChip(
+                          value: metrics[item.key] ?? 0,
+                          label: item.label,
+                          icon: item.icon,
+                          color: item.color,
+                        ),
+                )
+                .toList(growable: false),
+          ),
+          if (!compact && _todoMetricsExpanded) ...<Widget>[
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth < 560 ? 2 : 5;
+                final spacing = 8.0;
+                final itemWidth =
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: items
+                      .map(
+                        (item) => SizedBox(
+                          key: ValueKey<String>('todo-metric-card-${item.key}'),
+                          width: itemWidth.isFinite
+                              ? math.max(0, itemWidth)
+                              : constraints.maxWidth,
+                          child: _buildTodoMetricCard(
+                            value: metrics[item.key] ?? 0,
+                            label: item.label,
+                            icon: item.icon,
+                            color: item.color,
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodoMetricCompactBadge({
+    required Key key,
+    required int value,
+    required String label,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+
+    return Tooltip(
+      message: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: key,
+          borderRadius: BorderRadius.circular(999),
+          onTap: () {
+            setState(() {
+              _todoMetricsExpanded = !_todoMetricsExpanded;
+            });
+          },
+          child: Ink(
+            padding: EdgeInsets.symmetric(
+              horizontal: _todoMetricsExpanded ? 10 : 8,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: color.withValues(
+                alpha: _todoMetricsExpanded ? 0.14 : 0.08,
+              ),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: color.withValues(alpha: 0.18)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '$value',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (_todoMetricsExpanded) ...<Widget>[
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTodoMetricSummaryChip({
     required int value,
     required String label,
@@ -1917,7 +2557,7 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Widget _buildTodoControls(AppI18n i18n, {required bool manualSort}) {
+  /*  Widget _buildTodoControls(AppI18n i18n, {required bool manualSort}) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
@@ -2123,6 +2763,704 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
+*/
+  /*  String _todoViewModeLabel(AppI18n i18n, _TodoViewMode mode) {
+    return switch (mode) {
+      _TodoViewMode.plan => pickUiText(
+          i18n,
+          zh: '璁″垝瑙嗗浘',
+          en: 'Plan view',
+          ja: '瑷堢敾銉撱儱銉?,
+          de: 'Planansicht',
+          fr: 'Vue planning',
+          es: 'Vista de plan',
+          ru: '袩谢邪薪',
+        ),
+      _TodoViewMode.list => pickUiText(
+          i18n,
+          zh: '鍒楄〃瑙嗗浘',
+          en: 'List view',
+          ja: '銉偣銉堛儞銉ャ兗',
+          de: 'Listenansicht',
+          fr: 'Vue liste',
+          es: 'Vista de lista',
+          ru: '小锌懈褋芯泻',
+        ),
+    };
+  }
+
+  String _todoFilterModeLabel(AppI18n i18n, _TodoFilterMode mode) {
+    return switch (mode) {
+      _TodoFilterMode.all => pickUiText(
+          i18n,
+          zh: '鍏ㄩ儴',
+          en: 'All',
+          ja: '銇欍伖銇?,
+          de: 'Alle',
+          fr: 'Tous',
+          es: 'Todo',
+          ru: '袙褋械',
+        ),
+      _TodoFilterMode.active => pickUiText(
+          i18n,
+          zh: '杩涜涓?,
+          en: 'Active',
+          ja: '閫茶涓?,
+          de: 'Aktiv',
+          fr: 'Actives',
+          es: 'Activas',
+          ru: '袗泻褌懈胁薪褘械',
+        ),
+      _TodoFilterMode.deferred => pickUiText(
+          i18n,
+          zh: '寤跺悗鎼佺疆',
+          en: 'Deferred',
+          ja: '淇濈暀涓?,
+          de: 'Zurueckgestellt',
+          fr: 'Reporte',
+          es: 'Pospuestas',
+          ru: '袨褌谢芯卸械薪芯',
+        ),
+      _TodoFilterMode.completed => pickUiText(
+          i18n,
+          zh: '宸插畬鎴?,
+          en: 'Completed',
+          ja: '瀹屼簡',
+          de: 'Erledigt',
+          fr: 'Terminees',
+          es: 'Completadas',
+          ru: '袙褘锌芯谢薪械薪薪褘械',
+        ),
+    };
+  }
+
+*/
+  String _todoViewModeLabel(AppI18n i18n, _TodoViewMode mode) {
+    return switch (mode) {
+      _TodoViewMode.plan => pickUiText(
+        i18n,
+        zh: '\u8ba1\u5212\u89c6\u56fe',
+        en: 'Plan view',
+      ),
+      _TodoViewMode.list => pickUiText(
+        i18n,
+        zh: '\u5217\u8868\u89c6\u56fe',
+        en: 'List view',
+      ),
+    };
+  }
+
+  String _todoFilterModeLabel(AppI18n i18n, _TodoFilterMode mode) {
+    return switch (mode) {
+      _TodoFilterMode.all => pickUiText(i18n, zh: '\u5168\u90e8', en: 'All'),
+      _TodoFilterMode.active => pickUiText(
+        i18n,
+        zh: '\u8fdb\u884c\u4e2d',
+        en: 'Active',
+      ),
+      _TodoFilterMode.deferred => pickUiText(
+        i18n,
+        zh: '\u5ef6\u540e\u6401\u7f6e',
+        en: 'Deferred',
+      ),
+      _TodoFilterMode.completed => pickUiText(
+        i18n,
+        zh: '\u5df2\u5b8c\u6210',
+        en: 'Completed',
+      ),
+    };
+  }
+
+  String _todoSortModeLabel(AppI18n i18n, _TodoSortMode mode) {
+    return switch (mode) {
+      _TodoSortMode.manual => i18n.t('dragToReorder'),
+      _TodoSortMode.priority => i18n.t('todoPriority'),
+      _TodoSortMode.category => i18n.t('todoCategory'),
+    };
+  }
+
+  /*  Widget _buildTodoControls(
+    AppI18n i18n, {
+    required bool manualSort,
+    bool compact = false,
+  }) {
+    final theme = Theme.of(context);
+    if (compact) {
+      return Container(
+        width: double.infinity,
+        key: const ValueKey<String>('todo-controls'),
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            _buildTodoCompactMenuButton<_TodoViewMode>(
+              key: const ValueKey<String>('todo-view-menu'),
+              icon: Icons.view_week_rounded,
+              label: _todoViewModeLabel(i18n, _todoViewMode),
+              items: <PopupMenuEntry<_TodoViewMode>>[
+                CheckedPopupMenuItem<_TodoViewMode>(
+                  key: const ValueKey<String>('todo-view-plan'),
+                  value: _TodoViewMode.plan,
+                  checked: _todoViewMode == _TodoViewMode.plan,
+                  child: Text(_todoViewModeLabel(i18n, _TodoViewMode.plan)),
+                ),
+                CheckedPopupMenuItem<_TodoViewMode>(
+                  key: const ValueKey<String>('todo-view-list'),
+                  value: _TodoViewMode.list,
+                  checked: _todoViewMode == _TodoViewMode.list,
+                  child: Text(_todoViewModeLabel(i18n, _TodoViewMode.list)),
+                ),
+              ],
+              onSelected: (value) {
+                setState(() {
+                  _todoViewMode = value;
+                });
+              },
+            ),
+            _buildTodoCompactMenuButton<_TodoFilterMode>(
+              key: const ValueKey<String>('todo-filter-menu'),
+              icon: Icons.filter_alt_rounded,
+              label: _todoFilterModeLabel(i18n, _todoFilterMode),
+              items: <PopupMenuEntry<_TodoFilterMode>>[
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-all'),
+                  value: _TodoFilterMode.all,
+                  checked: _todoFilterMode == _TodoFilterMode.all,
+                  child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.all)),
+                ),
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-active'),
+                  value: _TodoFilterMode.active,
+                  checked: _todoFilterMode == _TodoFilterMode.active,
+                  child: Text(
+                    _todoFilterModeLabel(i18n, _TodoFilterMode.active),
+                  ),
+                ),
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-deferred'),
+                  value: _TodoFilterMode.deferred,
+                  checked: _todoFilterMode == _TodoFilterMode.deferred,
+                  child: Text(
+                    _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
+                  ),
+                ),
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-completed'),
+                  value: _TodoFilterMode.completed,
+                  checked: _todoFilterMode == _TodoFilterMode.completed,
+                  child: Text(
+                    _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
+                  ),
+                ),
+              ],
+              onSelected: (value) {
+                setState(() {
+                  _todoFilterMode = value;
+                });
+              },
+            ),
+            if (_todoViewMode == _TodoViewMode.list)
+              _buildTodoCompactMenuButton<_TodoSortMode>(
+                key: const ValueKey<String>('todo-sort-menu'),
+                icon: Icons.swap_vert_rounded,
+                label: _todoSortModeLabel(i18n, _todoSortMode),
+                items: <PopupMenuEntry<_TodoSortMode>>[
+                  CheckedPopupMenuItem<_TodoSortMode>(
+                    key: const ValueKey<String>('todo-sort-manual'),
+                    value: _TodoSortMode.manual,
+                    checked: manualSort,
+                    child: Text(_todoSortModeLabel(i18n, _TodoSortMode.manual)),
+                  ),
+                  CheckedPopupMenuItem<_TodoSortMode>(
+                    key: const ValueKey<String>('todo-sort-priority'),
+                    value: _TodoSortMode.priority,
+                    checked: _todoSortMode == _TodoSortMode.priority,
+                    child: Text(
+                      _todoSortModeLabel(i18n, _TodoSortMode.priority),
+                    ),
+                  ),
+                  CheckedPopupMenuItem<_TodoSortMode>(
+                    key: const ValueKey<String>('todo-sort-category'),
+                    value: _TodoSortMode.category,
+                    checked: _todoSortMode == _TodoSortMode.category,
+                    child: Text(
+                      _todoSortModeLabel(i18n, _TodoSortMode.category),
+                    ),
+                  ),
+                ],
+                onSelected: (value) {
+                  setState(() {
+                    _todoSortMode = value;
+                  });
+                },
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      key: const ValueKey<String>('todo-controls'),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildTodoControlSection(
+            label: pickUiText(
+              i18n,
+              zh: '瑙嗗浘',
+              en: 'View',
+              ja: '琛ㄧず',
+              de: 'Ansicht',
+              fr: 'Vue',
+              es: 'Vista',
+              ru: '袙懈写',
+            ),
+            children: <Widget>[
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-view-plan'),
+                label: _todoViewModeLabel(i18n, _TodoViewMode.plan),
+                selected: _todoViewMode == _TodoViewMode.plan,
+                onSelected: () {
+                  setState(() {
+                    _todoViewMode = _TodoViewMode.plan;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-view-list'),
+                label: _todoViewModeLabel(i18n, _TodoViewMode.list),
+                selected: _todoViewMode == _TodoViewMode.list,
+                onSelected: () {
+                  setState(() {
+                    _todoViewMode = _TodoViewMode.list;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildTodoControlSection(
+            label: pickUiText(
+              i18n,
+              zh: '绛涢€?,
+              en: 'Filter',
+              ja: '绲炪倞杈笺伩',
+              de: 'Filter',
+              fr: 'Filtre',
+              es: 'Filtro',
+              ru: '肖懈谢褜褌褉',
+            ),
+            children: <Widget>[
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-all'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.all),
+                selected: _todoFilterMode == _TodoFilterMode.all,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.all;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-active'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.active),
+                selected: _todoFilterMode == _TodoFilterMode.active,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.active;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-deferred'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
+                selected: _todoFilterMode == _TodoFilterMode.deferred,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.deferred;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-completed'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
+                selected: _todoFilterMode == _TodoFilterMode.completed,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.completed;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
+            const SizedBox(height: 8),
+            _buildTodoControlSection(
+              label: pickUiText(
+                i18n,
+                zh: '鎺掑簭',
+                en: 'Sort',
+                ja: '涓︺伋鏇裤亪',
+                de: 'Sortierung',
+                fr: 'Tri',
+                es: 'Orden',
+                ru: '小芯褉褌懈褉芯胁泻邪',
+              ),
+              children: <Widget>[
+                _buildTodoChoiceChip(
+                  key: const ValueKey<String>('todo-sort-manual'),
+                  label: _todoSortModeLabel(i18n, _TodoSortMode.manual),
+                  selected: manualSort,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.manual;
+                    });
+                  },
+                ),
+                _buildTodoChoiceChip(
+                  key: const ValueKey<String>('todo-sort-priority'),
+                  label: _todoSortModeLabel(i18n, _TodoSortMode.priority),
+                  selected: _todoSortMode == _TodoSortMode.priority,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.priority;
+                    });
+                  },
+                ),
+                _buildTodoChoiceChip(
+                  key: const ValueKey<String>('todo-sort-category'),
+                  label: _todoSortModeLabel(i18n, _TodoSortMode.category),
+                  selected: _todoSortMode == _TodoSortMode.category,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.category;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+*/
+  Widget _buildTodoControls(
+    AppI18n i18n, {
+    required bool manualSort,
+    bool compact = false,
+  }) {
+    final theme = Theme.of(context);
+    if (compact) {
+      return Container(
+        width: double.infinity,
+        key: const ValueKey<String>('todo-controls'),
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            _buildTodoCompactMenuButton<_TodoViewMode>(
+              key: const ValueKey<String>('todo-view-menu'),
+              icon: Icons.view_week_rounded,
+              label: _todoViewModeLabel(i18n, _todoViewMode),
+              items: <PopupMenuEntry<_TodoViewMode>>[
+                CheckedPopupMenuItem<_TodoViewMode>(
+                  key: const ValueKey<String>('todo-view-plan'),
+                  value: _TodoViewMode.plan,
+                  checked: _todoViewMode == _TodoViewMode.plan,
+                  child: Text(_todoViewModeLabel(i18n, _TodoViewMode.plan)),
+                ),
+                CheckedPopupMenuItem<_TodoViewMode>(
+                  key: const ValueKey<String>('todo-view-list'),
+                  value: _TodoViewMode.list,
+                  checked: _todoViewMode == _TodoViewMode.list,
+                  child: Text(_todoViewModeLabel(i18n, _TodoViewMode.list)),
+                ),
+              ],
+              onSelected: (value) {
+                setState(() {
+                  _todoViewMode = value;
+                });
+              },
+            ),
+            _buildTodoCompactMenuButton<_TodoFilterMode>(
+              key: const ValueKey<String>('todo-filter-menu'),
+              icon: Icons.filter_alt_rounded,
+              label: _todoFilterModeLabel(i18n, _todoFilterMode),
+              items: <PopupMenuEntry<_TodoFilterMode>>[
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-all'),
+                  value: _TodoFilterMode.all,
+                  checked: _todoFilterMode == _TodoFilterMode.all,
+                  child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.all)),
+                ),
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-active'),
+                  value: _TodoFilterMode.active,
+                  checked: _todoFilterMode == _TodoFilterMode.active,
+                  child: Text(
+                    _todoFilterModeLabel(i18n, _TodoFilterMode.active),
+                  ),
+                ),
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-deferred'),
+                  value: _TodoFilterMode.deferred,
+                  checked: _todoFilterMode == _TodoFilterMode.deferred,
+                  child: Text(
+                    _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
+                  ),
+                ),
+                CheckedPopupMenuItem<_TodoFilterMode>(
+                  key: const ValueKey<String>('todo-filter-completed'),
+                  value: _TodoFilterMode.completed,
+                  checked: _todoFilterMode == _TodoFilterMode.completed,
+                  child: Text(
+                    _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
+                  ),
+                ),
+              ],
+              onSelected: (value) {
+                setState(() {
+                  _todoFilterMode = value;
+                });
+              },
+            ),
+            if (_todoViewMode == _TodoViewMode.list)
+              _buildTodoCompactMenuButton<_TodoSortMode>(
+                key: const ValueKey<String>('todo-sort-menu'),
+                icon: Icons.swap_vert_rounded,
+                label: _todoSortModeLabel(i18n, _todoSortMode),
+                items: <PopupMenuEntry<_TodoSortMode>>[
+                  CheckedPopupMenuItem<_TodoSortMode>(
+                    key: const ValueKey<String>('todo-sort-manual'),
+                    value: _TodoSortMode.manual,
+                    checked: manualSort,
+                    child: Text(_todoSortModeLabel(i18n, _TodoSortMode.manual)),
+                  ),
+                  CheckedPopupMenuItem<_TodoSortMode>(
+                    key: const ValueKey<String>('todo-sort-priority'),
+                    value: _TodoSortMode.priority,
+                    checked: _todoSortMode == _TodoSortMode.priority,
+                    child: Text(
+                      _todoSortModeLabel(i18n, _TodoSortMode.priority),
+                    ),
+                  ),
+                  CheckedPopupMenuItem<_TodoSortMode>(
+                    key: const ValueKey<String>('todo-sort-category'),
+                    value: _TodoSortMode.category,
+                    checked: _todoSortMode == _TodoSortMode.category,
+                    child: Text(
+                      _todoSortModeLabel(i18n, _TodoSortMode.category),
+                    ),
+                  ),
+                ],
+                onSelected: (value) {
+                  setState(() {
+                    _todoSortMode = value;
+                  });
+                },
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      key: const ValueKey<String>('todo-controls'),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildTodoControlSection(
+            label: pickUiText(i18n, zh: '\u89c6\u56fe', en: 'View'),
+            children: <Widget>[
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-view-plan'),
+                label: _todoViewModeLabel(i18n, _TodoViewMode.plan),
+                selected: _todoViewMode == _TodoViewMode.plan,
+                onSelected: () {
+                  setState(() {
+                    _todoViewMode = _TodoViewMode.plan;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-view-list'),
+                label: _todoViewModeLabel(i18n, _TodoViewMode.list),
+                selected: _todoViewMode == _TodoViewMode.list,
+                onSelected: () {
+                  setState(() {
+                    _todoViewMode = _TodoViewMode.list;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildTodoControlSection(
+            label: pickUiText(i18n, zh: '\u7b5b\u9009', en: 'Filter'),
+            children: <Widget>[
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-all'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.all),
+                selected: _todoFilterMode == _TodoFilterMode.all,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.all;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-active'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.active),
+                selected: _todoFilterMode == _TodoFilterMode.active,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.active;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-deferred'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
+                selected: _todoFilterMode == _TodoFilterMode.deferred,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.deferred;
+                  });
+                },
+              ),
+              _buildTodoChoiceChip(
+                key: const ValueKey<String>('todo-filter-completed'),
+                label: _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
+                selected: _todoFilterMode == _TodoFilterMode.completed,
+                onSelected: () {
+                  setState(() {
+                    _todoFilterMode = _TodoFilterMode.completed;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
+            const SizedBox(height: 8),
+            _buildTodoControlSection(
+              label: pickUiText(i18n, zh: '\u6392\u5e8f', en: 'Sort'),
+              children: <Widget>[
+                _buildTodoChoiceChip(
+                  key: const ValueKey<String>('todo-sort-manual'),
+                  label: _todoSortModeLabel(i18n, _TodoSortMode.manual),
+                  selected: manualSort,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.manual;
+                    });
+                  },
+                ),
+                _buildTodoChoiceChip(
+                  key: const ValueKey<String>('todo-sort-priority'),
+                  label: _todoSortModeLabel(i18n, _TodoSortMode.priority),
+                  selected: _todoSortMode == _TodoSortMode.priority,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.priority;
+                    });
+                  },
+                ),
+                _buildTodoChoiceChip(
+                  key: const ValueKey<String>('todo-sort-category'),
+                  label: _todoSortModeLabel(i18n, _TodoSortMode.category),
+                  selected: _todoSortMode == _TodoSortMode.category,
+                  onSelected: () {
+                    setState(() {
+                      _todoSortMode = _TodoSortMode.category;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodoCompactMenuButton<T>({
+    required Key key,
+    required IconData icon,
+    required String label,
+    required List<PopupMenuEntry<T>> items,
+    required PopupMenuItemSelected<T> onSelected,
+  }) {
+    final theme = Theme.of(context);
+
+    return PopupMenuButton<T>(
+      key: key,
+      itemBuilder: (_) => items,
+      onSelected: onSelected,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 200),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Icon(icon, size: 16, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.expand_more_rounded,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTodoControlSection({
     required String label,
     required List<Widget> children,
@@ -2132,26 +3470,7 @@ class _FocusPageState extends State<FocusPage>
       children: <Widget>[
         _buildTodoControlLabel(label),
         const SizedBox(width: 8),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: children
-                  .asMap()
-                  .entries
-                  .map(
-                    (entry) => Padding(
-                      padding: EdgeInsets.only(
-                        right: entry.key == children.length - 1 ? 0 : 6,
-                      ),
-                      child: entry.value,
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-          ),
-        ),
+        Expanded(child: Wrap(spacing: 6, runSpacing: 6, children: children)),
       ],
     );
   }
@@ -2628,19 +3947,19 @@ class _FocusPageState extends State<FocusPage>
 
     return Card(
       key: ValueKey<int>(todo.id ?? index),
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       color: _todoCardColor(todo, theme),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => _showTodoEditor(focus, i18n, todo: todo),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Container(
                 width: 6,
-                height: 52,
+                height: 46,
                 decoration: BoxDecoration(
                   color: accent.withValues(
                     alpha: todo.completed ? 0.55 : (todo.isDeferred ? 0.78 : 1),
@@ -2648,7 +3967,7 @@ class _FocusPageState extends State<FocusPage>
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Checkbox(
                 value: todo.completed,
                 visualDensity: VisualDensity.compact,
@@ -2657,7 +3976,6 @@ class _FocusPageState extends State<FocusPage>
                     ? null
                     : (_) => focus.toggleTodo(todo.id!),
               ),
-              const SizedBox(width: 2),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -2665,7 +3983,7 @@ class _FocusPageState extends State<FocusPage>
                   children: <Widget>[
                     Text(
                       todo.content,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -2677,10 +3995,10 @@ class _FocusPageState extends State<FocusPage>
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 5,
+                      runSpacing: 5,
                       children: <Widget>[
                         _buildTodoStatusBadge(todo, i18n, theme),
                         _buildTodoPriorityBadge(todo, i18n, theme),
@@ -2699,7 +4017,7 @@ class _FocusPageState extends State<FocusPage>
                   ],
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -2729,6 +4047,10 @@ class _FocusPageState extends State<FocusPage>
                   IconButton(
                     tooltip: i18n.t('delete'),
                     visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 36,
+                      height: 36,
+                    ),
                     onPressed: todo.id == null
                         ? null
                         : () => focus.deleteTodo(todo.id!),
@@ -2930,15 +4252,29 @@ class _FocusPageState extends State<FocusPage>
 
   Widget _buildNotesDrawerHandle(AppI18n i18n, int noteCount, double progress) {
     final theme = Theme.of(context);
+    final handleColor = Color.lerp(
+      theme.colorScheme.surfaceContainerHigh,
+      theme.colorScheme.secondaryContainer,
+      0.28 + progress * 0.42,
+    )!;
+    final foregroundColor = Color.lerp(
+      theme.colorScheme.onSurfaceVariant,
+      theme.colorScheme.onSecondaryContainer,
+      0.30 + progress * 0.50,
+    )!;
 
     return InkWell(
       key: const ValueKey<String>('notes-drawer-handle'),
       onTap: _toggleNotesDrawer,
       child: Ink(
         width: 60,
-        color: Color.alphaBlend(
-          theme.colorScheme.primary.withValues(alpha: 0.08 + progress * 0.08),
-          theme.colorScheme.primaryContainer,
+        decoration: BoxDecoration(
+          color: handleColor,
+          border: Border(
+            right: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.75),
+            ),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
@@ -2948,7 +4284,7 @@ class _FocusPageState extends State<FocusPage>
                 progress >= 0.5
                     ? Icons.chevron_right_rounded
                     : Icons.chevron_left_rounded,
-                color: theme.colorScheme.onPrimaryContainer,
+                color: foregroundColor,
               ),
               const SizedBox(height: 14),
               Expanded(
@@ -2960,7 +4296,7 @@ class _FocusPageState extends State<FocusPage>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: foregroundColor,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -3297,11 +4633,7 @@ class _FocusPageState extends State<FocusPage>
     return theme.colorScheme.primary;
   }
 
-  Widget _buildTodoStatusBadge(
-    TodoItem todo,
-    AppI18n i18n,
-    ThemeData theme,
-  ) {
+  Widget _buildTodoStatusBadge(TodoItem todo, AppI18n i18n, ThemeData theme) {
     final color = _todoStatusColor(theme, todo);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -3686,8 +5018,10 @@ class _FocusPageState extends State<FocusPage>
                               TodoItem(
                                 id: todo?.id,
                                 content: content,
-                                completed: draftState == _TodoDraftState.completed,
-                                deferred: draftState == _TodoDraftState.deferred,
+                                completed:
+                                    draftState == _TodoDraftState.completed,
+                                deferred:
+                                    draftState == _TodoDraftState.deferred,
                                 priority: priority,
                                 category: _normalizeOptionalText(
                                   categoryController.text,
@@ -3761,6 +5095,99 @@ class _FocusPageState extends State<FocusPage>
     return '$existing\n$next';
   }
 
+  String? _noteSpeechLanguageTag(AppState state) {
+    final value = state.config.asr.language.trim();
+    if (value.isEmpty || value.toLowerCase() == 'auto') {
+      return null;
+    }
+    return value;
+  }
+
+  String _noteSpeechHelperText(
+    AppI18n i18n,
+    _NoteVoiceInputState voiceState,
+    String? languageTag,
+  ) {
+    final languageLabel = (languageTag ?? '').trim().isEmpty
+        ? pickUiText(i18n, zh: '系统默认语言', en: 'system default language')
+        : languageTag!.trim();
+    return switch (voiceState) {
+      _NoteVoiceInputState.starting => pickUiText(
+        i18n,
+        zh: '正在调用系统语音识别，请稍候。',
+        en: 'Opening system speech recognition. Please wait.',
+      ),
+      _NoteVoiceInputState.listening => pickUiText(
+        i18n,
+        zh: '系统听写已开始，完成后再点一次即可写入笔记。',
+        en: 'System dictation is listening. Tap again when you are done.',
+      ),
+      _NoteVoiceInputState.finishing => pickUiText(
+        i18n,
+        zh: '正在整理识别文本并写入笔记。',
+        en: 'Finalizing the transcript and inserting it into the note.',
+      ),
+      _NoteVoiceInputState.idle => pickUiText(
+        i18n,
+        zh: '使用系统语音识别直接转成笔记文本，当前语言：$languageLabel。',
+        en: 'Use system speech recognition to append text directly to the note. Language: $languageLabel.',
+      ),
+    };
+  }
+
+  String _noteSpeechErrorText(
+    AppI18n i18n,
+    String? errorCode,
+    String? errorMessage,
+  ) {
+    final fallback = errorMessage?.trim();
+    return switch ((errorCode ?? '').trim()) {
+      'permission_denied' => pickUiText(
+        i18n,
+        zh: '系统语音权限未开启，请允许麦克风与语音识别权限后重试。',
+        en: 'Speech permission is not granted. Please allow microphone and speech recognition access.',
+      ),
+      'busy' => pickUiText(
+        i18n,
+        zh: '系统语音识别当前正忙，请稍后再试。',
+        en: 'System speech recognition is busy. Please try again shortly.',
+      ),
+      'no_match' => pickUiText(
+        i18n,
+        zh: '没有识别到可用文本，请再说一次。',
+        en: 'No usable transcript was captured. Please try again.',
+      ),
+      'language_not_supported' => pickUiText(
+        i18n,
+        zh: '当前语音识别语言不受系统支持，请更换语言代码。',
+        en: 'The selected recognition language is not supported by the system recognizer.',
+      ),
+      'not_listening' => pickUiText(
+        i18n,
+        zh: '当前没有进行中的系统听写。',
+        en: 'There is no active system dictation session.',
+      ),
+      'unsupported' || 'unavailable' => pickUiText(
+        i18n,
+        zh: '当前设备暂不支持系统语音识别。',
+        en: 'System speech recognition is not available on this device.',
+      ),
+      'cancelled' => pickUiText(
+        i18n,
+        zh: '系统听写已取消。',
+        en: 'System dictation was cancelled.',
+      ),
+      _ =>
+        fallback?.isNotEmpty == true
+            ? fallback!
+            : pickUiText(
+                i18n,
+                zh: '系统语音识别失败，请稍后重试。',
+                en: 'System speech recognition failed. Please try again.',
+              ),
+    };
+  }
+
   String _defaultNoteTitle(AppI18n i18n) {
     final now = DateTime.now();
     final localizations = MaterialLocalizations.of(context);
@@ -3788,15 +5215,13 @@ class _FocusPageState extends State<FocusPage>
     final contentController = TextEditingController(text: note?.content ?? '');
     var selectedColor = _parseHexColor(note?.color);
     var voiceState = _NoteVoiceInputState.idle;
-    AsrProgress? voiceProgress;
     String? voiceError;
     var sheetClosed = false;
+    final speechLanguageTag = _noteSpeechLanguageTag(state);
 
     Future<void> cleanupVoiceInput() async {
-      if (voiceState == _NoteVoiceInputState.recording) {
-        await state.cancelAsrRecording();
-      } else if (voiceState == _NoteVoiceInputState.transcribing) {
-        state.stopAsrProcessing();
+      if (voiceState != _NoteVoiceInputState.idle) {
+        await _systemSpeech.cancelListening();
       }
     }
 
@@ -3818,67 +5243,55 @@ class _FocusPageState extends State<FocusPage>
 
             String voiceButtonLabel() {
               switch (voiceState) {
-                case _NoteVoiceInputState.recording:
-                  return i18n.t('tapToStopRecord');
-                case _NoteVoiceInputState.transcribing:
-                  return i18n.t(
-                    voiceProgress?.messageKey ?? 'asrProgressDecoding',
-                    params:
-                        voiceProgress?.messageParams ??
-                        const <String, Object?>{},
-                  );
                 case _NoteVoiceInputState.starting:
-                  return i18n.t('tapToStartRecord');
+                  return pickUiText(
+                    i18n,
+                    zh: '正在启动听写…',
+                    en: 'Starting dictation...',
+                  );
+                case _NoteVoiceInputState.listening:
+                  return pickUiText(
+                    i18n,
+                    zh: '点击结束听写',
+                    en: 'Tap to stop dictation',
+                  );
+                case _NoteVoiceInputState.finishing:
+                  return pickUiText(
+                    i18n,
+                    zh: '正在整理识别结果…',
+                    en: 'Finishing dictation...',
+                  );
                 case _NoteVoiceInputState.idle:
-                  return i18n.t('tapToStartRecord');
+                  return pickUiText(
+                    i18n,
+                    zh: '点击开始听写',
+                    en: 'Tap to start dictation',
+                  );
               }
             }
 
             Future<void> toggleVoiceInput() async {
               if (voiceState == _NoteVoiceInputState.starting ||
-                  voiceState == _NoteVoiceInputState.transcribing) {
+                  voiceState == _NoteVoiceInputState.finishing) {
                 return;
               }
-              if (voiceState == _NoteVoiceInputState.recording) {
+              if (voiceState == _NoteVoiceInputState.listening) {
                 updateSheet(() {
-                  voiceState = _NoteVoiceInputState.transcribing;
+                  voiceState = _NoteVoiceInputState.finishing;
                   voiceError = null;
-                  voiceProgress = const AsrProgress(
-                    stage: 'recording',
-                    messageKey: 'asrProgressStoppingRecording',
-                  );
                 });
-                final audioPath = await state.stopAsrRecording();
-                if (sheetClosed || !sheetContext.mounted) {
-                  return;
-                }
-                if (audioPath == null || audioPath.trim().isEmpty) {
-                  updateSheet(() {
-                    voiceState = _NoteVoiceInputState.idle;
-                    voiceProgress = null;
-                    voiceError = i18n.t('recordingFailed');
-                  });
-                  return;
-                }
-
-                final result = await state.transcribeRecording(
-                  audioPath,
-                  onProgress: (progress) {
-                    updateSheet(() {
-                      voiceProgress = progress;
-                    });
-                  },
-                );
+                final result = await _systemSpeech.stopListening();
                 if (sheetClosed || !sheetContext.mounted) {
                   return;
                 }
                 if (!result.success) {
                   updateSheet(() {
                     voiceState = _NoteVoiceInputState.idle;
-                    voiceProgress = null;
-                    voiceError = result.error == null
-                        ? i18n.t('recognitionFailed')
-                        : i18n.t(result.error!, params: result.errorParams);
+                    voiceError = _noteSpeechErrorText(
+                      i18n,
+                      result.errorCode,
+                      result.errorMessage,
+                    );
                   });
                   return;
                 }
@@ -3887,8 +5300,11 @@ class _FocusPageState extends State<FocusPage>
                 if (recognizedText.isEmpty) {
                   updateSheet(() {
                     voiceState = _NoteVoiceInputState.idle;
-                    voiceProgress = null;
-                    voiceError = i18n.t('asrEmptyResult');
+                    voiceError = _noteSpeechErrorText(
+                      i18n,
+                      result.errorCode ?? 'no_match',
+                      result.errorMessage,
+                    );
                   });
                   return;
                 }
@@ -3904,7 +5320,6 @@ class _FocusPageState extends State<FocusPage>
                 );
                 updateSheet(() {
                   voiceState = _NoteVoiceInputState.idle;
-                  voiceProgress = null;
                   voiceError = null;
                 });
                 return;
@@ -3912,29 +5327,34 @@ class _FocusPageState extends State<FocusPage>
 
               updateSheet(() {
                 voiceState = _NoteVoiceInputState.starting;
-                voiceProgress = null;
                 voiceError = null;
               });
-              final path = await state.startAsrRecording();
+              final startResult = await _systemSpeech.startListening(
+                languageTag: speechLanguageTag,
+              );
               if (sheetClosed || !sheetContext.mounted) {
                 return;
               }
-              if (path == null || path.trim().isEmpty) {
+              if (!startResult.success) {
                 updateSheet(() {
                   voiceState = _NoteVoiceInputState.idle;
-                  voiceError = i18n.t('startRecordingFailed');
+                  voiceError = _noteSpeechErrorText(
+                    i18n,
+                    startResult.errorCode,
+                    startResult.errorMessage,
+                  );
                 });
                 return;
               }
               updateSheet(() {
-                voiceState = _NoteVoiceInputState.recording;
+                voiceState = _NoteVoiceInputState.listening;
               });
             }
 
             final isVoiceBusy =
                 voiceState == _NoteVoiceInputState.starting ||
-                voiceState == _NoteVoiceInputState.transcribing;
-            final isRecording = voiceState == _NoteVoiceInputState.recording;
+                voiceState == _NoteVoiceInputState.finishing;
+            final isRecording = voiceState == _NoteVoiceInputState.listening;
             final voiceHelperText =
                 voiceError ??
                 (voiceState == _NoteVoiceInputState.idle
@@ -3948,11 +5368,10 @@ class _FocusPageState extends State<FocusPage>
                         es: 'El texto reconocido se anade al contenido y el titulo vacio se completa automaticamente.',
                         ru: 'Распознанный текст добавляется в заметку, а пустой заголовок заполняется автоматически.',
                       )
-                    : i18n.t(
-                        voiceProgress?.messageKey ?? 'tapToStopRecord',
-                        params:
-                            voiceProgress?.messageParams ??
-                            const <String, Object?>{},
+                    : _noteSpeechHelperText(
+                        i18n,
+                        voiceState,
+                        speechLanguageTag,
                       ));
 
             return Padding(

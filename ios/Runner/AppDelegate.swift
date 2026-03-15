@@ -1,8 +1,25 @@
+import AVFoundation
 import Flutter
+import Speech
 import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  private let systemSpeechChannelName = "vocabulary_sleep/system_speech"
+
+  private var systemSpeechChannel: FlutterMethodChannel?
+  private let systemSpeechAudioEngine = AVAudioEngine()
+  private var systemSpeechRecognizer: SFSpeechRecognizer?
+  private var systemSpeechRequest: SFSpeechAudioBufferRecognitionRequest?
+  private var systemSpeechTask: SFSpeechRecognitionTask?
+  private var pendingSystemSpeechStopResult: FlutterResult?
+  private var systemSpeechStopTimeoutWorkItem: DispatchWorkItem?
+  private var systemSpeechTranscript = ""
+  private var systemSpeechLocaleIdentifier: String?
+  private var systemSpeechErrorCode: String?
+  private var systemSpeechListening = false
+  private var systemSpeechFinalized = false
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -12,5 +29,323 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+
+    let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "SystemSpeechBridge")
+    let channel = FlutterMethodChannel(
+      name: systemSpeechChannelName,
+      binaryMessenger: registrar.messenger()
+    )
+    channel.setMethodCallHandler { [weak self] call, result in
+      self?.handleSystemSpeech(call, result: result)
+    }
+    systemSpeechChannel = channel
+  }
+
+  deinit {
+    cancelSystemSpeechRecognition(completePendingStop: false)
+  }
+
+  private func handleSystemSpeech(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    switch call.method {
+    case "startListening":
+      startSystemSpeech(call.arguments as? [AnyHashable: Any], result: result)
+    case "stopListening":
+      stopSystemSpeech(result: result)
+    case "cancelListening":
+      cancelSystemSpeechRecognition()
+      result(nil)
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+
+  private func startSystemSpeech(
+    _ arguments: [AnyHashable: Any]?,
+    result: @escaping FlutterResult
+  ) {
+    if pendingSystemSpeechStopResult != nil || systemSpeechListening {
+      result(buildSystemSpeechCommandResult(success: false, errorCode: "busy"))
+      return
+    }
+
+    let languageTag = (arguments?["languageTag"] as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    requestSystemSpeechPermissions { [weak self] errorCode in
+      guard let self else {
+        result(["success": false, "errorCode": "failed"])
+        return
+      }
+      if let errorCode {
+        result(self.buildSystemSpeechCommandResult(success: false, errorCode: errorCode))
+        return
+      }
+      self.beginSystemSpeech(languageTag: languageTag, result: result)
+    }
+  }
+
+  private func beginSystemSpeech(languageTag: String?, result: @escaping FlutterResult) {
+    cancelSystemSpeechRecognition(completePendingStop: false)
+    clearSystemSpeechState()
+
+    let localeIdentifier = {
+      let normalized = (languageTag ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+      return normalized.isEmpty ? Locale.current.identifier : normalized
+    }()
+
+    guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: localeIdentifier)) else {
+      result(buildSystemSpeechCommandResult(success: false, errorCode: "unavailable"))
+      return
+    }
+    guard recognizer.isAvailable else {
+      result(buildSystemSpeechCommandResult(success: false, errorCode: "unavailable"))
+      return
+    }
+
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.shouldReportPartialResults = true
+    request.taskHint = .dictation
+
+    do {
+      let audioSession = AVAudioSession.sharedInstance()
+      try audioSession.setCategory(.record, mode: .measurement, options: [.duckOthers])
+      try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+
+      let inputNode = systemSpeechAudioEngine.inputNode
+      inputNode.removeTap(onBus: 0)
+      let format = inputNode.outputFormat(forBus: 0)
+      inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+        self?.systemSpeechRequest?.append(buffer)
+      }
+
+      systemSpeechAudioEngine.prepare()
+      try systemSpeechAudioEngine.start()
+    } catch {
+      finishSystemSpeechCapture(cancelTask: true)
+      result(
+        buildSystemSpeechCommandResult(
+          success: false,
+          errorCode: "start_failed",
+          errorMessage: error.localizedDescription
+        )
+      )
+      return
+    }
+
+    systemSpeechRecognizer = recognizer
+    systemSpeechRequest = request
+    systemSpeechLocaleIdentifier = localeIdentifier
+    systemSpeechListening = true
+
+    systemSpeechTask = recognizer.recognitionTask(with: request) { [weak self] recognitionResult, error in
+      DispatchQueue.main.async {
+        self?.handleSystemSpeechUpdate(result: recognitionResult, error: error)
+      }
+    }
+
+    result(buildSystemSpeechCommandResult(success: true, errorCode: nil))
+  }
+
+  private func stopSystemSpeech(result: @escaping FlutterResult) {
+    if pendingSystemSpeechStopResult != nil {
+      result(buildSystemSpeechRecognitionResult(errorCode: "busy"))
+      return
+    }
+
+    if systemSpeechFinalized || (!systemSpeechTranscript.isEmpty && !systemSpeechListening) || systemSpeechErrorCode != nil {
+      let response = buildSystemSpeechRecognitionResult()
+      finishSystemSpeechCapture(cancelTask: true)
+      clearSystemSpeechState()
+      result(response)
+      return
+    }
+
+    guard systemSpeechRequest != nil || systemSpeechTask != nil || systemSpeechAudioEngine.isRunning else {
+      result(buildSystemSpeechRecognitionResult(errorCode: "not_listening"))
+      return
+    }
+
+    pendingSystemSpeechStopResult = result
+    systemSpeechListening = false
+    stopSystemSpeechCaptureInput()
+
+    let workItem = DispatchWorkItem { [weak self] in
+      guard let self else { return }
+      self.systemSpeechFinalized = true
+      self.finishPendingSystemSpeechStop(force: true)
+    }
+    systemSpeechStopTimeoutWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: workItem)
+  }
+
+  private func handleSystemSpeechUpdate(result recognitionResult: SFSpeechRecognitionResult?, error: Error?) {
+    if let recognitionResult {
+      let text = recognitionResult.bestTranscription.formattedString
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      if !text.isEmpty {
+        systemSpeechTranscript = text
+      }
+      if recognitionResult.isFinal {
+        systemSpeechErrorCode = nil
+        systemSpeechListening = false
+        systemSpeechFinalized = true
+        finishSystemSpeechCapture(cancelTask: false)
+        finishPendingSystemSpeechStop(force: true)
+        return
+      }
+    }
+
+    if error != nil {
+      systemSpeechErrorCode = "failed"
+      systemSpeechListening = false
+      systemSpeechFinalized = true
+      finishSystemSpeechCapture(cancelTask: true)
+      finishPendingSystemSpeechStop(force: true)
+    }
+  }
+
+  private func finishPendingSystemSpeechStop(force: Bool) {
+    guard force, let stopResult = pendingSystemSpeechStopResult else {
+      return
+    }
+    cancelSystemSpeechStopTimeout()
+    let response = buildSystemSpeechRecognitionResult()
+    pendingSystemSpeechStopResult = nil
+    finishSystemSpeechCapture(cancelTask: true)
+    clearSystemSpeechState()
+    stopResult(response)
+  }
+
+  private func requestSystemSpeechPermissions(_ completion: @escaping (String?) -> Void) {
+    switch SFSpeechRecognizer.authorizationStatus() {
+    case .authorized:
+      requestMicrophonePermission(completion)
+    case .notDetermined:
+      SFSpeechRecognizer.requestAuthorization { status in
+        DispatchQueue.main.async {
+          if status == .authorized {
+            self.requestMicrophonePermission(completion)
+          } else {
+            completion("permission_denied")
+          }
+        }
+      }
+    case .denied, .restricted:
+      completion("permission_denied")
+    @unknown default:
+      completion("unavailable")
+    }
+  }
+
+  private func requestMicrophonePermission(_ completion: @escaping (String?) -> Void) {
+    let audioSession = AVAudioSession.sharedInstance()
+    switch audioSession.recordPermission {
+    case .granted:
+      completion(nil)
+    case .undetermined:
+      audioSession.requestRecordPermission { granted in
+        DispatchQueue.main.async {
+          completion(granted ? nil : "permission_denied")
+        }
+      }
+    case .denied:
+      completion("permission_denied")
+    @unknown default:
+      completion("unavailable")
+    }
+  }
+
+  private func cancelSystemSpeechRecognition(completePendingStop: Bool = true) {
+    cancelSystemSpeechStopTimeout()
+    if completePendingStop, let stopResult = pendingSystemSpeechStopResult {
+      systemSpeechErrorCode = "cancelled"
+      systemSpeechFinalized = true
+      let response = buildSystemSpeechRecognitionResult()
+      pendingSystemSpeechStopResult = nil
+      finishSystemSpeechCapture(cancelTask: true)
+      clearSystemSpeechState()
+      stopResult(response)
+      return
+    }
+
+    pendingSystemSpeechStopResult = nil
+    finishSystemSpeechCapture(cancelTask: true)
+    clearSystemSpeechState()
+  }
+
+  private func stopSystemSpeechCaptureInput() {
+    if systemSpeechAudioEngine.isRunning {
+      systemSpeechAudioEngine.stop()
+    }
+    systemSpeechAudioEngine.inputNode.removeTap(onBus: 0)
+    systemSpeechRequest?.endAudio()
+  }
+
+  private func finishSystemSpeechCapture(cancelTask: Bool) {
+    stopSystemSpeechCaptureInput()
+    if cancelTask {
+      systemSpeechTask?.cancel()
+    }
+    systemSpeechTask = nil
+    systemSpeechRequest = nil
+    systemSpeechRecognizer = nil
+    try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+  }
+
+  private func cancelSystemSpeechStopTimeout() {
+    systemSpeechStopTimeoutWorkItem?.cancel()
+    systemSpeechStopTimeoutWorkItem = nil
+  }
+
+  private func clearSystemSpeechState() {
+    systemSpeechTranscript = ""
+    systemSpeechLocaleIdentifier = nil
+    systemSpeechErrorCode = nil
+    systemSpeechListening = false
+    systemSpeechFinalized = false
+  }
+
+  private func buildSystemSpeechCommandResult(
+    success: Bool,
+    errorCode: String?,
+    errorMessage: String? = nil
+  ) -> [String: Any?] {
+    var payload: [String: Any?] = [
+      "success": success,
+      "errorCode": errorCode,
+    ]
+    if let errorMessage, !errorMessage.isEmpty {
+      payload["errorMessage"] = errorMessage
+    }
+    return payload
+  }
+
+  private func buildSystemSpeechRecognitionResult(
+    errorCode: String? = nil,
+    errorMessage: String? = nil
+  ) -> [String: Any?] {
+    let text = systemSpeechTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+    let resolvedErrorCode: String? = {
+      if let errorCode, !errorCode.isEmpty {
+        return errorCode
+      }
+      if !text.isEmpty {
+        return nil
+      }
+      if let systemSpeechErrorCode, !systemSpeechErrorCode.isEmpty {
+        return systemSpeechErrorCode
+      }
+      return "no_match"
+    }()
+
+    var payload: [String: Any?] = [
+      "success": !text.isEmpty && resolvedErrorCode == nil,
+      "text": text.isEmpty ? nil : text,
+      "locale": systemSpeechLocaleIdentifier,
+      "errorCode": resolvedErrorCode,
+    ]
+    if let errorMessage, !errorMessage.isEmpty {
+      payload["errorMessage"] = errorMessage
+    }
+    return payload
   }
 }

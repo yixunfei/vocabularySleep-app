@@ -246,7 +246,11 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     final sizeText = _resolveOfflineSizeText(provider);
     return showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '下载离线识别包', en: 'Download offline ASR package'),
+      title: pickUiText(
+        i18n,
+        zh: '下载离线识别包',
+        en: 'Download offline ASR package',
+      ),
       message: pickUiText(
         i18n,
         zh: '${asrProviderLabel(i18n, provider)} 约 $sizeText，初始化下载可能需要一些时间。确认后开始下载，请耐心等待。',
@@ -297,13 +301,15 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     final i18n = AppI18n(state.uiLanguage);
     return showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '切换到本地识别？', en: 'Switch to local recognition?'),
+      title: pickUiText(
+        i18n,
+        zh: '切换到本地识别？',
+        en: 'Switch to local recognition?',
+      ),
       message: pickUiText(
         i18n,
-        zh:
-            '推荐优先使用 API 识别以保证准确率，API 免费，只需要注册即可。如果你仍想使用本地识别，也可以继续切换到 ${asrProviderLabel(i18n, provider)}。',
-        en:
-            'API recognition is recommended for better accuracy, and the API tier is free with a simple signup. You can still continue if you prefer ${asrProviderLabel(i18n, provider)}.',
+        zh: '推荐优先使用 API 识别以保证准确率，API 免费，只需要注册即可。如果你仍想使用本地识别，也可以继续切换到 ${asrProviderLabel(i18n, provider)}。',
+        en: 'API recognition is recommended for better accuracy, and the API tier is free with a simple signup. You can still continue if you prefer ${asrProviderLabel(i18n, provider)}.',
       ),
       confirmText: pickUiText(i18n, zh: '仍然切换', en: 'Switch anyway'),
     );
@@ -323,7 +329,9 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
 
     final nextEngineOrder = value == AsrProviderType.multiEngine
         ? _sanitizeMultiEngineOrder(
-            asr.engineOrder.isEmpty ? asr.normalizedEngineOrder : asr.engineOrder,
+            asr.engineOrder.isEmpty
+                ? asr.normalizedEngineOrder
+                : asr.engineOrder,
           )
         : asr.engineOrder;
 
@@ -510,6 +518,17 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
                         config.copyWith(asr: asr.copyWith(language: value)),
                       );
                     },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '快速笔记的系统语音听写会复用这里的识别语言设置。',
+                      en: 'Quick note system dictation reuses this recognition language setting.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   if (usesCustomApi) ...<Widget>[
                     const SizedBox(height: 10),

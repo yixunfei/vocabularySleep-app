@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -28,7 +29,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/theme/app_theme.dart';
 import 'package:vocabulary_sleep_app/src/ui/ui_copy.dart';
-import 'package:vocabulary_sleep_app/src/ui/widgets/ambient_floating_launcher.dart';
+import 'package:vocabulary_sleep_app/src/ui/widgets/ambient_floating_dock.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/focus_lock_overlay.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/setting_tile.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/word_card.dart';
@@ -152,7 +153,9 @@ void main() {
         child: const RecognitionSettingsPage(),
       );
 
-      final providerField = find.byType(DropdownButtonFormField<AsrProviderType>);
+      final providerField = find.byType(
+        DropdownButtonFormField<AsrProviderType>,
+      );
 
       await tester.tap(providerField.first);
       await tester.pumpAndSettle();
@@ -161,7 +164,9 @@ void main() {
 
       expect(find.text('Switch to local recognition?'), findsOneWidget);
       expect(
-        find.textContaining('API recognition is recommended for better accuracy'),
+        find.textContaining(
+          'API recognition is recommended for better accuracy',
+        ),
         findsOneWidget,
       );
 
@@ -350,7 +355,7 @@ void main() {
       expect(find.text('Language settings'), findsNothing);
     });
 
-    testWidgets('focus page opens and closes notes drawer from side rail', (
+    testWidgets('focus page keeps notes in a right drawer on phones', (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -365,29 +370,67 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
-      final drawerFinder = find.byKey(const ValueKey<String>('notes-drawer'));
       final handleFinder = find.byKey(
         const ValueKey<String>('notes-drawer-handle'),
       );
-      final addTaskButtonFinder = find.text('Add task');
-
+      final drawerFinder = find.byKey(const ValueKey<String>('notes-drawer'));
+      expect(handleFinder, findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('todo-editor-entry')), findsOne);
+      expect(find.text('Tap to add a task'), findsOneWidget);
       final collapsedLeft = tester.getTopLeft(drawerFinder).dx;
-      final collapsedHandleLeft = tester.getTopLeft(handleFinder).dx;
-      final addTaskButtonRight = tester.getTopRight(addTaskButtonFinder).dx;
-      expect(addTaskButtonRight, lessThan(collapsedHandleLeft - 4));
 
       await tester.tap(handleFinder);
       await tester.pumpAndSettle();
 
       final expandedLeft = tester.getTopLeft(drawerFinder).dx;
       expect(expandedLeft, lessThan(collapsedLeft - 100));
-
-      await tester.drag(drawerFinder, const Offset(260, 0));
+      await tester.tap(handleFinder);
       await tester.pumpAndSettle();
-
       final collapsedAgainLeft = tester.getTopLeft(drawerFinder).dx;
       expect(collapsedAgainLeft, greaterThan(expandedLeft + 100));
     });
+
+    testWidgets(
+      'focus page keeps the notes drawer interaction on wide layouts',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(900, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final state = _FakeAppState.sample(
+          uiLanguage: 'en',
+          focusService: _FakeFocusService.sample(),
+        );
+        await _pumpPage(tester, state: state, child: const FocusPage());
+
+        await tester.tap(find.text('Tasks & Notes').first);
+        await tester.pumpAndSettle();
+
+        final drawerFinder = find.byKey(const ValueKey<String>('notes-drawer'));
+        final handleFinder = find.byKey(
+          const ValueKey<String>('notes-drawer-handle'),
+        );
+        final todoEntryFinder = find.byKey(
+          const ValueKey<String>('todo-editor-entry'),
+        );
+
+        final collapsedLeft = tester.getTopLeft(drawerFinder).dx;
+        final collapsedHandleLeft = tester.getTopLeft(handleFinder).dx;
+        final todoEntryRight = tester.getTopRight(todoEntryFinder).dx;
+        expect(collapsedHandleLeft, greaterThan(todoEntryRight));
+
+        await tester.tap(handleFinder);
+        await tester.pumpAndSettle();
+
+        final expandedLeft = tester.getTopLeft(drawerFinder).dx;
+        expect(expandedLeft, lessThan(collapsedLeft - 100));
+
+        await tester.drag(drawerFinder, const Offset(260, 0));
+        await tester.pumpAndSettle();
+
+        final collapsedAgainLeft = tester.getTopLeft(drawerFinder).dx;
+        expect(collapsedAgainLeft, greaterThan(expandedLeft + 100));
+      },
+    );
 
     testWidgets('focus page opens todo details editor and saves rich todo', (
       tester,
@@ -405,9 +448,9 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
-      final addTaskButton = find.widgetWithText(TextButton, 'Add task');
-      await tester.ensureVisible(addTaskButton);
-      await tester.tap(addTaskButton, warnIfMissed: false);
+      final todoEntry = find.byKey(const ValueKey<String>('todo-editor-entry'));
+      await tester.ensureVisible(todoEntry);
+      await tester.tap(todoEntry, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -460,9 +503,9 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
-      final addTaskButton = find.widgetWithText(TextButton, 'Add task');
-      await tester.ensureVisible(addTaskButton);
-      await tester.tap(addTaskButton, warnIfMissed: false);
+      final todoEntry = find.byKey(const ValueKey<String>('todo-editor-entry'));
+      await tester.ensureVisible(todoEntry);
+      await tester.tap(todoEntry, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -484,13 +527,11 @@ void main() {
         isTrue,
       );
 
-      await tester.ensureVisible(
-        find.byKey(const ValueKey<String>('todo-filter-deferred')),
+      await _selectTodoMenuOption(
+        tester,
+        menuKey: const ValueKey<String>('todo-filter-menu'),
+        optionKey: const ValueKey<String>('todo-filter-deferred'),
       );
-      await tester.tap(
-        find.byKey(const ValueKey<String>('todo-filter-deferred')),
-      );
-      await tester.pumpAndSettle();
 
       expect(find.text('Park backlog cleanup'), findsOneWidget);
       expect(find.text('Prepare review notes'), findsNothing);
@@ -499,17 +540,35 @@ void main() {
     testWidgets('focus page quick notes support voice input', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
+      const systemSpeechChannel = MethodChannel(
+        'vocabulary_sleep/system_speech',
+      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(systemSpeechChannel, (call) async {
+            switch (call.method) {
+              case 'startListening':
+                return <String, Object?>{'success': true, 'errorCode': null};
+              case 'stopListening':
+                return <String, Object?>{
+                  'success': true,
+                  'text': 'Capture release review highlights',
+                  'locale': 'en',
+                  'errorCode': null,
+                };
+              case 'cancelListening':
+                return null;
+            }
+            return null;
+          });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(systemSpeechChannel, null);
+      });
 
       final focusService = _FakeFocusService.sample();
       final state = _FakeAppState.sample(
         uiLanguage: 'en',
         focusService: focusService,
-        asrRecordingPath: 'temp-note.wav',
-        asrStoppedRecordingPath: 'temp-note.wav',
-        asrTranscriptionResult: const AsrResult(
-          success: true,
-          text: 'Capture release review highlights',
-        ),
       );
       await _pumpPage(tester, state: state, child: const FocusPage());
 
@@ -532,7 +591,7 @@ void main() {
       expect(
         find.descendant(
           of: voiceButton,
-          matching: find.text('Tap to stop recording'),
+          matching: find.text('Tap to stop dictation'),
         ),
         findsOneWidget,
       );
@@ -592,53 +651,85 @@ void main() {
       expect(find.byType(ChoiceChip), findsNothing);
     });
 
-    testWidgets('app shell opens ambient sheet from global launcher', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
+    testWidgets(
+      'ambient floating dock opens sheet and persists drag position',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final state = _FakeAppState.sample(
-        uiLanguage: 'en',
-        focusService: _FakeFocusService.sample(),
-      );
-      await tester.pumpWidget(
-        ChangeNotifierProvider<AppState>.value(
-          value: state,
-          child: MaterialApp(
-            theme: buildAppTheme(state.config.appearance),
-            home: Scaffold(
-              body: Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: AmbientFloatingLauncher(
-                    state: state,
-                    i18n: AppI18n('en'),
-                  ),
+        final state = _FakeAppState.sample(
+          uiLanguage: 'en',
+          focusService: _FakeFocusService.sample(),
+        );
+        await tester.pumpWidget(
+          ChangeNotifierProvider<AppState>.value(
+            value: state,
+            child: MaterialApp(
+              theme: buildAppTheme(state.config.appearance),
+              home: Scaffold(
+                body: Stack(
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: AmbientFloatingDock(
+                        state: state,
+                        i18n: AppI18n('en'),
+                        bottomClearance: 120,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const ValueKey<String>('global-ambient-launcher')),
-        findsOneWidget,
-      );
+        expect(
+          find.byKey(const ValueKey<String>('global-ambient-launcher')),
+          findsOneWidget,
+        );
 
-      await tester.tap(
-        find.byKey(const ValueKey<String>('global-ambient-launcher')),
-      );
-      await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('global-ambient-launcher')),
+        );
+        await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const ValueKey<String>('ambient-sheet')),
-        findsOneWidget,
-      );
-    });
+        expect(
+          find.byKey(const ValueKey<String>('ambient-sheet')),
+          findsOneWidget,
+        );
+
+        Navigator.of(
+          tester.element(find.byKey(const ValueKey<String>('ambient-sheet'))),
+        ).pop();
+        await tester.pumpAndSettle();
+
+        final launcherFinder = find.byKey(
+          const ValueKey<String>('global-ambient-launcher'),
+        );
+        final beforeDragCenter = tester.getCenter(launcherFinder);
+        final gesture = await tester.startGesture(beforeDragCenter);
+        await tester.pump(const Duration(milliseconds: 900));
+        await gesture.moveBy(const Offset(-120, 90));
+        await tester.pump(const Duration(milliseconds: 32));
+        await gesture.up();
+        await tester.pumpAndSettle();
+
+        final afterDragCenter = tester.getCenter(launcherFinder);
+        expect(afterDragCenter.dx, lessThan(beforeDragCenter.dx - 60));
+        expect(afterDragCenter.dy, greaterThan(beforeDragCenter.dy + 40));
+        expect(
+          state.config.appearance.normalizedAmbientLauncherX,
+          lessThan(PlayConfig.defaults.appearance.normalizedAmbientLauncherX),
+        );
+        expect(
+          state.config.appearance.normalizedAmbientLauncherY,
+          greaterThan(
+            PlayConfig.defaults.appearance.normalizedAmbientLauncherY,
+          ),
+        );
+      },
+    );
 
     testWidgets('focus page filters active and completed todos', (
       tester,
@@ -658,24 +749,20 @@ void main() {
       expect(find.text('Prepare review notes'), findsOneWidget);
       expect(find.text('Ship focus page polish'), findsOneWidget);
 
-      await tester.ensureVisible(
-        find.byKey(const ValueKey<String>('todo-filter-completed')),
+      await _selectTodoMenuOption(
+        tester,
+        menuKey: const ValueKey<String>('todo-filter-menu'),
+        optionKey: const ValueKey<String>('todo-filter-completed'),
       );
-      await tester.tap(
-        find.byKey(const ValueKey<String>('todo-filter-completed')),
-      );
-      await tester.pumpAndSettle();
 
       expect(find.text('Ship focus page polish'), findsOneWidget);
       expect(find.text('Prepare review notes'), findsNothing);
 
-      await tester.ensureVisible(
-        find.byKey(const ValueKey<String>('todo-filter-active')),
+      await _selectTodoMenuOption(
+        tester,
+        menuKey: const ValueKey<String>('todo-filter-menu'),
+        optionKey: const ValueKey<String>('todo-filter-active'),
       );
-      await tester.tap(
-        find.byKey(const ValueKey<String>('todo-filter-active')),
-      );
-      await tester.pumpAndSettle();
 
       expect(find.text('Prepare review notes'), findsOneWidget);
       expect(find.text('Ship focus page polish'), findsNothing);
@@ -696,24 +783,39 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const ValueKey<String>('todo-metric-card-active')),
-        findsNothing,
-      );
+      expect(find.text('Due today'), findsNothing);
 
       await tester.tap(
         find.byKey(const ValueKey<String>('todo-metrics-toggle')),
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const ValueKey<String>('todo-metric-card-active')),
-        findsOneWidget,
+      expect(find.text('Due today'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('focus page keeps todo workspace readable on compact height', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
       );
-      expect(
-        find.byKey(const ValueKey<String>('todo-metric-card-completed')),
-        findsOneWidget,
-      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      final todoEntry = find.byKey(const ValueKey<String>('todo-editor-entry'));
+      final firstTodo = find.text('Prepare review notes');
+
+      expect(todoEntry, findsOneWidget);
+      expect(firstTodo, findsOneWidget);
+      expect(tester.getRect(todoEntry).bottom, lessThan(640));
+      expect(tester.getRect(firstTodo).top, lessThan(640));
       expect(tester.takeException(), isNull);
     });
 
@@ -758,6 +860,18 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
+      expect(find.text('Rescue overdue draft'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('todo-plan-overdue')),
+        findsNothing,
+      );
+
+      await _selectTodoMenuOption(
+        tester,
+        menuKey: const ValueKey<String>('todo-view-menu'),
+        optionKey: const ValueKey<String>('todo-view-plan'),
+      );
+
       expect(
         find.byKey(const ValueKey<String>('todo-plan-overdue')),
         findsOneWidget,
@@ -779,11 +893,11 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.ensureVisible(
-        find.byKey(const ValueKey<String>('todo-view-list')),
+      await _selectTodoMenuOption(
+        tester,
+        menuKey: const ValueKey<String>('todo-view-menu'),
+        optionKey: const ValueKey<String>('todo-view-list'),
       );
-      await tester.tap(find.byKey(const ValueKey<String>('todo-view-list')));
-      await tester.pumpAndSettle();
 
       expect(
         find.byKey(const ValueKey<String>('todo-plan-overdue')),
@@ -814,6 +928,30 @@ void main() {
 
       expect(find.text('Focusing'), findsOneWidget);
       expect(find.text('Long press to exit focus'), findsOneWidget);
+    });
+
+    testWidgets('focus page disables sheet drag for timer wheel picker', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: _FakeFocusService.sample(),
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Wheel picker').first,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Wheel picker').first, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+      expect(bottomSheet.enableDrag, isFalse);
     });
 
     testWidgets('library prefix jump scrolls lazy list to target word', (
@@ -1278,6 +1416,17 @@ void main() {
 
 void _noop() {}
 
+Future<void> _selectTodoMenuOption(
+  WidgetTester tester, {
+  required ValueKey<String> menuKey,
+  required ValueKey<String> optionKey,
+}) async {
+  await tester.tap(find.byKey(menuKey));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(optionKey).last);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _pumpPage(
   WidgetTester tester, {
   required _FakeAppState state,
@@ -1470,6 +1619,15 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   double get ambientMasterVolume => _ambientMasterVolume;
 
   @override
+  bool get busy => false;
+
+  @override
+  String? get busyMessage => null;
+
+  @override
+  String? get busyMessageKey => null;
+
+  @override
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;
 
   @override
@@ -1480,6 +1638,12 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   FocusService get focusService => _focusService;
+
+  @override
+  String? get error => null;
+
+  @override
+  bool get initializing => false;
 
   @override
   String? get lastBackupPath => _lastBackupPath;
@@ -1647,6 +1811,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   Future<void> previewPronunciation(String word) async {}
+
+  @override
+  void clearMessage() {}
 
   @override
   Future<void> clearApiTtsCache() async {
@@ -1937,7 +2104,9 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
                  content: 'Keep the end reminder short and calm.',
                ),
              ],
-       );
+       ) {
+    _timerListenable = ValueNotifier<TomatoTimerState>(_state);
+  }
 
   factory _FakeFocusService.sample() => _FakeFocusService();
 
@@ -1948,6 +2117,8 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   TomatoTimerPhase? _pendingReminderPhase;
   final List<TodoItem> _todos;
   final List<PlanNote> _notes;
+  late final ValueNotifier<TomatoTimerState> _timerListenable;
+  final ValueNotifier<int> _viewRevision = ValueNotifier<int>(0);
 
   @override
   TomatoTimerConfig get config => _config;
@@ -1968,16 +2139,38 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   TomatoTimerState get state => _state;
 
   @override
+  ValueListenable<TomatoTimerState> get timerListenable => _timerListenable;
+
+  @override
+  ValueListenable<int> get viewRevision => _viewRevision;
+
+  void _publishTimerState() {
+    _timerListenable.value = _state;
+    notifyListeners();
+  }
+
+  void _publishViewState() {
+    _viewRevision.value += 1;
+    notifyListeners();
+  }
+
+  void _publishAll() {
+    _timerListenable.value = _state;
+    _viewRevision.value += 1;
+    notifyListeners();
+  }
+
+  @override
   void setLockScreenActive(bool value) {
     _lockScreenActive = value;
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
   Future<void> acknowledgeReminder() async {
     _reminderAcknowledgementPending = false;
     _pendingReminderPhase = null;
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
@@ -2015,37 +2208,37 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
         alarmEnabled: alarmEnabled,
       ),
     );
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
   void advanceToNextPhase() {
     _state = const TomatoTimerState();
-    notifyListeners();
+    _publishTimerState();
   }
 
   @override
   void clearCompletedTodos() {
     _todos.removeWhere((todo) => todo.completed);
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
   void deleteNote(int id) {
     _notes.removeWhere((note) => note.id == id);
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
   void deleteNotes(List<int> ids) {
     _notes.removeWhere((note) => ids.contains(note.id));
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
   void deleteTodo(int id) {
     _todos.removeWhere((todo) => todo.id == id);
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
@@ -2069,7 +2262,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   @override
   void pause() {
     _state = _state.copyWith(isPaused: true);
-    notifyListeners();
+    _publishTimerState();
   }
 
   @override
@@ -2077,7 +2270,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     _notes
       ..clear()
       ..addAll(orderedNotes);
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
@@ -2085,19 +2278,19 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     _todos
       ..clear()
       ..addAll(orderedTodos);
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
   void resume() {
     _state = _state.copyWith(isPaused: false);
-    notifyListeners();
+    _publishTimerState();
   }
 
   @override
   void saveConfig(TomatoTimerConfig config) {
     _config = config;
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
@@ -2110,17 +2303,15 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     if (index >= 0) {
       _todos[index] = normalized;
     } else {
-      _todos.add(
-        normalized.copyWith(id: (_todos.lastOrNull?.id ?? 0) + 1),
-      );
+      _todos.add(normalized.copyWith(id: (_todos.lastOrNull?.id ?? 0) + 1));
     }
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
   void saveReminderConfig(TimerReminderConfig reminder) {
     _config = _config.copyWith(reminder: reminder);
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
@@ -2143,7 +2334,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
         _state.totalSeconds,
       ),
     );
-    notifyListeners();
+    _publishTimerState();
   }
 
   @override
@@ -2174,13 +2365,13 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
       remainingSeconds: nextFocusSeconds,
       totalSeconds: nextFocusSeconds,
     );
-    notifyListeners();
+    _publishAll();
   }
 
   @override
   void stop({bool saveProgress = true}) {
     _state = const TomatoTimerState();
-    notifyListeners();
+    _publishAll();
   }
 
   @override
@@ -2194,7 +2385,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
       deferred: false,
       completedAt: nextCompleted ? DateTime(2026, 3, 14) : null,
     );
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
@@ -2202,7 +2393,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     final index = _notes.indexWhere((item) => item.id == note.id);
     if (index < 0) return;
     _notes[index] = note;
-    notifyListeners();
+    _publishViewState();
   }
 
   @override
