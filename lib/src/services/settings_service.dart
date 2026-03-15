@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../models/app_home_tab.dart';
+import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
 import 'database_service.dart';
 
@@ -50,6 +51,16 @@ class SettingsService {
 
   void saveStartupPage(AppHomeTab page) {
     _database.setSetting('startupPage', page.storageValue);
+  }
+
+  FocusStartupTab loadFocusStartupTab() {
+    return FocusStartupTabX.fromStorage(
+      _database.getSetting('focusStartupTab'),
+    );
+  }
+
+  void saveFocusStartupTab(FocusStartupTab tab) {
+    _database.setSetting('focusStartupTab', tab.storageValue);
   }
 
   bool loadWeatherEnabled() {

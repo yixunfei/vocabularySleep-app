@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/app_home_tab.dart';
+import '../../models/focus_startup_tab.dart';
 import '../../services/settings_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
@@ -26,7 +27,7 @@ class LanguageSettingsPage extends StatelessWidget {
             en: 'Language settings',
             ja: '言語設定',
             de: 'Spracheinstellungen',
-            fr: 'Paramètres de langue',
+            fr: 'Parametres de langue',
             es: 'Ajustes de idioma',
             ru: 'Настройки языка',
           ),
@@ -47,8 +48,8 @@ class LanguageSettingsPage extends StatelessWidget {
                       zh: '界面语言',
                       en: 'Interface language',
                       ja: '表示言語',
-                      de: 'Oberflächensprache',
-                      fr: 'Langue de l’interface',
+                      de: 'Oberflachensprache',
+                      fr: 'Langue de l interface',
                       es: 'Idioma de la interfaz',
                       ru: 'Язык интерфейса',
                     ),
@@ -58,8 +59,8 @@ class LanguageSettingsPage extends StatelessWidget {
                       en: 'Applies immediately across navigation and settings.',
                       ja: 'ナビゲーションや設定画面を含め、すぐに反映されます。',
                       de: 'Wird sofort in Navigation und Einstellungen angewendet.',
-                      fr: 'S’applique immédiatement à la navigation et aux réglages.',
-                      es: 'Se aplica de inmediato en navegación y ajustes.',
+                      fr: 'S applique immediatement a la navigation et aux reglages.',
+                      es: 'Se aplica de inmediato en navegacion y ajustes.',
                       ru: 'Применяется сразу во всей навигации и настройках.',
                     ),
                   ),
@@ -88,7 +89,7 @@ class LanguageSettingsPage extends StatelessWidget {
                             en: 'Follow system',
                             ja: 'システムに従う',
                             de: 'Systemsprache folgen',
-                            fr: 'Suivre le système',
+                            fr: 'Suivre le systeme',
                             es: 'Seguir al sistema',
                             ru: 'Следовать системе',
                           ),
@@ -119,7 +120,7 @@ class LanguageSettingsPage extends StatelessWidget {
                             en: 'Currently following system language: $currentLanguageName',
                             ja: '現在はシステム言語に従っています: $currentLanguageName',
                             de: 'Aktuell wird die Systemsprache verwendet: $currentLanguageName',
-                            fr: 'Langue système actuellement utilisée : $currentLanguageName',
+                            fr: 'Langue systeme actuellement utilisee : $currentLanguageName',
                             es: 'Actualmente sigue el idioma del sistema: $currentLanguageName',
                             ru: 'Сейчас используется язык системы: $currentLanguageName',
                           )
@@ -128,8 +129,8 @@ class LanguageSettingsPage extends StatelessWidget {
                             zh: '当前已固定为手动语言：$currentLanguageName',
                             en: 'Manual language is fixed to: $currentLanguageName',
                             ja: '現在は手動で次の言語に固定されています: $currentLanguageName',
-                            de: 'Manuell ausgewählte Sprache: $currentLanguageName',
-                            fr: 'Langue manuelle actuellement définie : $currentLanguageName',
+                            de: 'Manuell ausgewahlte Sprache: $currentLanguageName',
+                            fr: 'Langue manuelle actuellement definie : $currentLanguageName',
                             es: 'Idioma manual fijado actualmente: $currentLanguageName',
                             ru: 'Сейчас вручную выбран язык: $currentLanguageName',
                           ),
@@ -165,8 +166,8 @@ class LanguageSettingsPage extends StatelessWidget {
                       state.weatherEnabled
                           ? pickUiText(
                               i18n,
-                              zh: '已启用，点击天气胶囊可手动刷新。',
-                              en: 'Enabled. Tap the weather capsule to refresh.',
+                              zh: '已启用，点击天气图标可查看详情并刷新。',
+                              en: 'Enabled. Tap the weather icon for details or refresh.',
                             )
                           : pickUiText(
                               i18n,
@@ -219,11 +220,43 @@ class LanguageSettingsPage extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 10),
+                  DropdownButtonFormField<FocusStartupTab>(
+                    initialValue: state.focusStartupTab,
+                    decoration: InputDecoration(
+                      labelText: pickUiText(
+                        i18n,
+                        zh: '专注默认子页签',
+                        en: 'Focus default section',
+                      ),
+                    ),
+                    items: FocusStartupTab.values
+                        .map(
+                          (tab) => DropdownMenuItem<FocusStartupTab>(
+                            value: tab,
+                            child: Text(focusStartupTabLabel(i18n, tab)),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      state.setFocusStartupTab(value);
+                    },
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     pickUiText(
                       i18n,
                       zh: '当前默认进入：${appHomeTabLabel(i18n, state.startupPage)}',
                       en: 'Current startup tab: ${appHomeTabLabel(i18n, state.startupPage)}',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '当主入口为专注/放松时，将优先打开：${focusStartupTabLabel(i18n, state.focusStartupTab)}',
+                      en: 'When Focus is the startup page, it will open ${focusStartupTabLabel(i18n, state.focusStartupTab)} first.',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),

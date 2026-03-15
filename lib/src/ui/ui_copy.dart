@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../i18n/app_i18n.dart';
 import '../models/app_home_tab.dart';
+import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
 import '../models/word_field.dart';
 import '../services/ambient_service.dart';
@@ -260,6 +261,13 @@ String appHomeTabLabel(AppI18n i18n, AppHomeTab tab) {
     AppHomeTab.practice => pageLabelPractice(i18n),
     AppHomeTab.focus => pageLabelFocus(i18n),
     AppHomeTab.more => pageLabelMore(i18n),
+  };
+}
+
+String focusStartupTabLabel(AppI18n i18n, FocusStartupTab tab) {
+  return switch (tab) {
+    FocusStartupTab.timer => i18n.t('timerTab'),
+    FocusStartupTab.todo => i18n.t('todoTab'),
   };
 }
 

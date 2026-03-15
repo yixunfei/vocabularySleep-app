@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
+import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
@@ -437,7 +438,39 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Tasks & Notes'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('focus-workspace-tab')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('app shell respects configured focus startup section', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        startupPage: AppHomeTab.focus,
+        focusStartupTab: FocusStartupTab.timer,
+        focusService: _FakeFocusService.sample(),
+      );
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const AppShell(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('focus-timer-tab')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('play page shows weather badge when enabled', (tester) async {
@@ -1604,6 +1637,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     FocusService? focusService,
     List<AmbientSource>? ambientSources,
     AppHomeTab startupPage = AppHomeTab.play,
+    FocusStartupTab focusStartupTab = FocusStartupTab.todo,
     bool weatherEnabled = false,
     WeatherSnapshot? weatherSnapshot,
     bool weatherLoading = false,
@@ -1656,6 +1690,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
         apiTtsCacheBytes: apiTtsCacheBytes,
       )
       .._startupPage = startupPage
+      .._focusStartupTab = focusStartupTab
       .._weatherEnabled = weatherEnabled
       .._weatherSnapshot = weatherSnapshot
       .._weatherLoading = weatherLoading
@@ -1680,6 +1715,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   final AsrResult _asrTranscriptionResult;
   int _apiTtsCacheBytes;
   AppHomeTab _startupPage = AppHomeTab.play;
+  FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
@@ -1849,6 +1885,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   AppHomeTab get startupPage => _startupPage;
+
+  @override
+  FocusStartupTab get focusStartupTab => _focusStartupTab;
 
   @override
   bool get weatherEnabled => _weatherEnabled;
@@ -2200,6 +2239,12 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   void setStartupPage(AppHomeTab page) {
     _startupPage = page;
+    notifyListeners();
+  }
+
+  @override
+  void setFocusStartupTab(FocusStartupTab tab) {
+    _focusStartupTab = tab;
     notifyListeners();
   }
 

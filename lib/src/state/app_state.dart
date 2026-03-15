@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 
 import '../i18n/app_i18n.dart';
 import '../models/app_home_tab.dart';
+import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
 import '../models/weather_snapshot.dart';
 import '../models/word_entry.dart';
@@ -98,6 +99,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
   AppHomeTab _startupPage = AppHomeTab.play;
+  FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
@@ -178,6 +180,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
   AppHomeTab get startupPage => _startupPage;
+  FocusStartupTab get focusStartupTab => _focusStartupTab;
   bool get weatherEnabled => _weatherEnabled;
   WeatherSnapshot? get weatherSnapshot => _weatherSnapshot;
   bool get weatherLoading => _weatherLoading;
@@ -334,6 +337,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
       }
       _startupPage = _settings.loadStartupPage();
+      _focusStartupTab = _settings.loadFocusStartupTab();
       _weatherEnabled = _settings.loadWeatherEnabled();
       final testModeState = _settings.loadTestModeState();
       _testModeEnabled = testModeState['enabled'] ?? false;
@@ -356,6 +360,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           'uiLanguage': _uiLanguage,
           'uiLanguageFollowsSystem': _uiLanguageFollowsSystem,
           'startupPage': _startupPage.storageValue,
+          'focusStartupTab': _focusStartupTab.storageValue,
           'weatherEnabled': _weatherEnabled,
           'logFile': logFilePath,
           'ttsProvider': _config.tts.provider.name,
@@ -431,6 +436,21 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     );
     _startupPage = page;
     _settings.saveStartupPage(page);
+    notifyListeners();
+  }
+
+  void setFocusStartupTab(FocusStartupTab tab) {
+    if (_focusStartupTab == tab) return;
+    _log.i(
+      'app_state',
+      'set focus startup tab',
+      data: <String, Object?>{
+        'from': _focusStartupTab.storageValue,
+        'to': tab.storageValue,
+      },
+    );
+    _focusStartupTab = tab;
+    _settings.saveFocusStartupTab(tab);
     notifyListeners();
   }
 
@@ -2723,6 +2743,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
     }
     _startupPage = _settings.loadStartupPage();
+    _focusStartupTab = _settings.loadFocusStartupTab();
     _weatherEnabled = _settings.loadWeatherEnabled();
 
     final testModeState = _settings.loadTestModeState();

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../models/focus_startup_tab.dart';
 import '../../models/todo_item.dart';
 import '../../models/tomato_timer.dart';
 import '../../services/ambient_service.dart';
@@ -75,11 +76,12 @@ class _FocusPageState extends State<FocusPage>
   bool _notesDrawerDragging = false;
   bool _reminderDialogVisible = false;
   bool _ambientLauncherExpanded = false;
+  FocusStartupTab? _lastAppliedStartupTab;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, initialIndex: 1, vsync: this);
   }
 
   @override
@@ -200,6 +202,7 @@ class _FocusPageState extends State<FocusPage>
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    _syncConfiguredStartupTab(state.focusStartupTab);
     final i18n = AppI18n(state.uiLanguage);
     final focus = state.focusService;
     final timerListenable = Listenable.merge(<Listenable>[
@@ -228,19 +231,25 @@ class _FocusPageState extends State<FocusPage>
         controller: _tabController,
         physics: const BouncingScrollPhysics(),
         children: <Widget>[
-          ListenableBuilder(
-            listenable: timerListenable,
-            builder: (context, _) => _buildTimerTab(state, focus, i18n),
+          KeyedSubtree(
+            key: const ValueKey<String>('focus-timer-tab'),
+            child: ListenableBuilder(
+              listenable: timerListenable,
+              builder: (context, _) => _buildTimerTab(state, focus, i18n),
+            ),
           ),
-          ValueListenableBuilder<int>(
-            valueListenable: focus.viewRevision,
-            builder: (context, _, _) {
-              final notes = focus.getNotes();
-              _selectedNoteIds.removeWhere(
-                (id) => !notes.any((note) => note.id == id),
-              );
-              return _buildWorkspaceTab(focus, notes, i18n);
-            },
+          KeyedSubtree(
+            key: const ValueKey<String>('focus-workspace-tab'),
+            child: ValueListenableBuilder<int>(
+              valueListenable: focus.viewRevision,
+              builder: (context, _, _) {
+                final notes = focus.getNotes();
+                _selectedNoteIds.removeWhere(
+                  (id) => !notes.any((note) => note.id == id),
+                );
+                return _buildWorkspaceTab(focus, notes, i18n);
+              },
+            ),
           ),
         ],
       ),
@@ -308,6 +317,18 @@ class _FocusPageState extends State<FocusPage>
         );
       },
     );
+  }
+
+  void _syncConfiguredStartupTab(FocusStartupTab tab) {
+    if (_lastAppliedStartupTab == tab) {
+      return;
+    }
+    _lastAppliedStartupTab = tab;
+    final targetIndex = tab.index;
+    if (_tabController.index == targetIndex) {
+      return;
+    }
+    _tabController.index = targetIndex;
   }
 
   Widget _buildAmbientLauncher(
