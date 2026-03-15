@@ -10,12 +10,15 @@ import '../i18n/app_i18n.dart';
 import '../models/play_config.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
+import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';
 import '../services/ambient_service.dart';
 import '../services/app_log_service.dart';
 import '../services/asr_service.dart';
 import '../services/database_service.dart';
 import '../services/focus_service.dart';
+import '../services/memory_algorithm.dart';
+import '../services/memory_lane_selector.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 
@@ -102,6 +105,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _practiceLastSessionTitle = '';
   List<String> _practiceRememberedWords = <String>[];
   List<String> _practiceWeakWords = <String>[];
+  Map<int, WordMemoryProgress> _wordMemoryProgressByWordId =
+      <int, WordMemoryProgress>{};
 
   bool _isPlaying = false;
   bool _isPaused = false;
@@ -212,11 +217,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   List<WordEntry> get recentWeakWordEntries {
-    return _practiceEntriesFromWords(_practiceWeakWords);
+    return _memoryRecoveryEntries(_words);
   }
 
   List<WordEntry> get recentRememberedWordEntries {
-    return _practiceEntriesFromWords(_practiceRememberedWords);
+    return _memoryStableEntries(_words);
   }
 
   WordEntry? get currentWord {
@@ -446,6 +451,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required int remembered,
     required List<String> rememberedWords,
     required List<String> weakWords,
+    List<WordEntry>? rememberedEntries,
+    List<WordEntry>? weakEntries,
   }) {
     final safeTotal = total < 0 ? 0 : total;
     final safeRemembered = remembered.clamp(0, safeTotal).toInt();
@@ -474,6 +481,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       primary: normalizedWeakWords,
       existing: _practiceWeakWords,
       excluded: rememberedSet,
+    );
+    _updateWordMemoryProgress(
+      rememberedEntries: _resolveTrackedPracticeEntries(
+        preferredEntries: rememberedEntries,
+        fallbackWords: normalizedRememberedWords,
+      ),
+      weakEntries: _resolveTrackedPracticeEntries(
+        preferredEntries: weakEntries,
+        fallbackWords: normalizedWeakWords,
+      ),
     );
     _persistPracticeDashboard();
     notifyListeners();
@@ -2000,26 +2017,24 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .where((word) {
           final wordText = _normalizeSearchText(word.word);
           final meaningText = _normalizeSearchText(word.meaning ?? '');
-          final fieldsText = _normalizeSearchText(
-            word.fields.map((field) => field.asText()).join('\n'),
-          );
+          final detailsText = _normalizeSearchText(word.rawContent);
           final compactWordText = wordText.replaceAll(' ', '');
-          final compactFieldsText = fieldsText.replaceAll(' ', '');
+          final compactDetailsText = detailsText.replaceAll(' ', '');
 
           switch (mode) {
             case SearchMode.word:
               return wordText.contains(normalizedQuery);
             case SearchMode.meaning:
               return meaningText.contains(normalizedQuery) ||
-                  fieldsText.contains(normalizedQuery);
+                  detailsText.contains(normalizedQuery);
             case SearchMode.fuzzy:
               if (fuzzyPattern == null) return false;
               return fuzzyPattern.hasMatch(compactWordText) ||
-                  fuzzyPattern.hasMatch(compactFieldsText);
+                  fuzzyPattern.hasMatch(compactDetailsText);
             case SearchMode.all:
               return wordText.contains(normalizedQuery) ||
                   meaningText.contains(normalizedQuery) ||
-                  fieldsText.contains(normalizedQuery);
+                  detailsText.contains(normalizedQuery);
           }
         })
         .toList(growable: false);
@@ -2430,6 +2445,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void _setWords(List<WordEntry> nextWords) {
     _words = nextWords;
+    _refreshWordMemoryProgressCache(nextWords);
     _wordsVersion += 1;
     _invalidateVisibleWordsCache();
   }
@@ -2751,6 +2767,122 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }
     }
     return output;
+  }
+
+  List<WordEntry> _memoryStableEntries(List<WordEntry> words) {
+    final tracked = MemoryLaneSelector.selectStableEntries(
+      words: words,
+      progressByWordId: _wordMemoryProgressByWordId,
+    );
+    if (tracked.isNotEmpty) {
+      return tracked;
+    }
+    return _practiceEntriesFromWords(_practiceRememberedWords);
+  }
+
+  List<WordEntry> _memoryRecoveryEntries(List<WordEntry> words) {
+    final tracked = MemoryLaneSelector.selectRecoveryEntries(
+      words: words,
+      progressByWordId: _wordMemoryProgressByWordId,
+    );
+    if (tracked.isNotEmpty) {
+      return tracked;
+    }
+    return _practiceEntriesFromWords(_practiceWeakWords);
+  }
+
+  void _refreshWordMemoryProgressCache(List<WordEntry> words) {
+    final wordIds = words
+        .map((item) => item.id)
+        .whereType<int>()
+        .where((id) => id > 0);
+    _wordMemoryProgressByWordId = _database.getWordMemoryProgressByWordIds(
+      wordIds,
+    );
+  }
+
+  List<WordEntry> _resolveTrackedPracticeEntries({
+    required List<String> fallbackWords,
+    List<WordEntry>? preferredEntries,
+  }) {
+    final sourceEntries =
+        preferredEntries ?? _practiceEntriesFromWords(fallbackWords);
+    if (sourceEntries.isEmpty) {
+      return const <WordEntry>[];
+    }
+    final output = <WordEntry>[];
+    final seen = <String>{};
+    for (final entry in sourceEntries) {
+      final identity = _wordEntryIdentity(entry);
+      if (identity == null || !seen.add(identity)) {
+        continue;
+      }
+      output.add(entry);
+    }
+    return output;
+  }
+
+  void _updateWordMemoryProgress({
+    required List<WordEntry> rememberedEntries,
+    required List<WordEntry> weakEntries,
+  }) {
+    if (rememberedEntries.isEmpty && weakEntries.isEmpty) {
+      return;
+    }
+
+    final nextProgressByWordId = Map<int, WordMemoryProgress>.from(
+      _wordMemoryProgressByWordId,
+    );
+    final updatedAt = DateTime.now();
+
+    void persistProgress(WordEntry entry, {required bool remembered}) {
+      final wordId = entry.id;
+      if (wordId == null || wordId <= 0) {
+        return;
+      }
+      final previous =
+          nextProgressByWordId[wordId] ?? WordMemoryProgress(wordId: wordId);
+      final result = MemoryAlgorithm.sm2(
+        quality: remembered ? 4 : 1,
+        previousEaseFactor: previous.easeFactor,
+        previousInterval: previous.intervalDays,
+        consecutiveCorrect: previous.consecutiveCorrect,
+      );
+      final nextProgress = previous.copyWith(
+        timesPlayed: previous.timesPlayed + 1,
+        timesCorrect: previous.timesCorrect + (remembered ? 1 : 0),
+        lastPlayed: updatedAt,
+        familiarity: result.familiarity,
+        easeFactor: result.easeFactor,
+        intervalDays: result.intervalDays,
+        nextReview: DateTime.tryParse(result.nextReview),
+        consecutiveCorrect: result.consecutiveCorrect,
+        memoryState: result.memoryState,
+      );
+      _database.upsertWordMemoryProgress(nextProgress);
+      nextProgressByWordId[wordId] = nextProgress;
+    }
+
+    for (final entry in rememberedEntries) {
+      persistProgress(entry, remembered: true);
+    }
+    for (final entry in weakEntries) {
+      persistProgress(entry, remembered: false);
+    }
+
+    _wordMemoryProgressByWordId = nextProgressByWordId;
+  }
+
+  String? _wordEntryIdentity(WordEntry entry) {
+    final id = entry.id;
+    if (id != null && id > 0) {
+      return 'id:$id';
+    }
+    final word = entry.word.trim();
+    if (word.isEmpty) {
+      return null;
+    }
+    return 'word:${word.toLowerCase()}';
   }
 
   List<String> _normalizePracticeWords(Object? value) {

@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
+import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
+import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
@@ -31,9 +33,12 @@ void main() {
           }
           return tempDir.path;
         });
+    AppLogService.instance.resetForTest();
   });
 
   tearDown(() async {
+    await AppLogService.instance.flushForTest();
+    AppLogService.instance.resetForTest();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(pathProviderChannel, null);
     if (await tempDir.exists()) {
@@ -98,55 +103,61 @@ void main() {
     );
   });
 
-  test('updateWord replaces existing content instead of appending it', () async {
-    final database = AppDatabaseService(WordbookImportService());
-    await database.init();
-    addTearDown(database.dispose);
+  test(
+    'updateWord replaces existing content instead of appending it',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
 
-    await database.importWordbook(
-      sourcePath: 'custom:test_update',
-      name: 'Update test',
-      entries: const <WordEntryPayload>[
-        WordEntryPayload(
+      await database.importWordbook(
+        sourcePath: 'custom:test_update',
+        name: 'Update test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'alpha',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: '123'),
+            ],
+            rawContent: '123',
+          ),
+        ],
+      );
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_update',
+      );
+
+      database.updateWord(
+        wordbookId: wordbook.id,
+        sourceWord: 'alpha',
+        payload: const WordEntryPayload(
           word: 'alpha',
           fields: <WordFieldItem>[
-            WordFieldItem(key: 'meaning', label: 'Meaning', value: '123'),
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: '321'),
+            WordFieldItem(key: 'memory', label: 'Memory', value: 'fresh note'),
           ],
-          rawContent: '123',
+          rawContent: '321',
         ),
-      ],
-    );
+      );
 
-    final wordbook = database.getWordbooks().firstWhere(
-      (item) => item.path == 'custom:test_update',
-    );
-
-    database.updateWord(
-      wordbookId: wordbook.id,
-      sourceWord: 'alpha',
-      payload: const WordEntryPayload(
-        word: 'alpha',
-        fields: <WordFieldItem>[
-          WordFieldItem(key: 'meaning', label: 'Meaning', value: '321'),
-          WordFieldItem(key: 'memory', label: 'Memory', value: 'fresh note'),
-        ],
-        rawContent: '321',
-      ),
-    );
-
-    final updated = database.getWords(wordbook.id).single;
-    expect(updated.meaning, '321');
-    expect(updated.rawContent, '321');
-    expect(
-      updated.fields.firstWhere((item) => item.key == 'meaning').asText(),
-      '321',
-    );
-    expect(
-      updated.fields.firstWhere((item) => item.key == 'memory').asText(),
-      'fresh note',
-    );
-    expect(updated.fields.any((item) => item.asText().contains('123')), isFalse);
-  });
+      final updated = database.getWords(wordbook.id).single;
+      expect(updated.meaning, '321');
+      expect(updated.rawContent, '321');
+      expect(
+        updated.fields.firstWhere((item) => item.key == 'meaning').asText(),
+        '321',
+      );
+      expect(
+        updated.fields.firstWhere((item) => item.key == 'memory').asText(),
+        'fresh note',
+      );
+      expect(
+        updated.fields.any((item) => item.asText().contains('123')),
+        isFalse,
+      );
+    },
+  );
 
   test('exportUserData writes notes and todos to json', () async {
     final database = AppDatabaseService(WordbookImportService());
@@ -219,6 +230,106 @@ void main() {
     );
     expect(updated.completed, isTrue);
     expect(updated.isDeferred, isFalse);
+  });
+
+  test('word memory progress persists spaced repetition fields', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_progress',
+      name: 'Progress test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+          ],
+          rawContent: 'First',
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_progress',
+    );
+    final word = database.getWords(wordbook.id).single;
+
+    database.upsertWordMemoryProgress(
+      WordMemoryProgress(
+        wordId: word.id!,
+        timesPlayed: 4,
+        timesCorrect: 3,
+        lastPlayed: DateTime.utc(2026, 3, 15, 8),
+        familiarity: 0.625,
+        easeFactor: 2.42,
+        intervalDays: 6,
+        nextReview: DateTime.utc(2026, 3, 21, 8),
+        consecutiveCorrect: 2,
+        memoryState: 'familiar',
+      ),
+    );
+
+    final stored = database.getWordMemoryProgress(word.id!);
+    expect(stored, isNotNull);
+    expect(stored!.timesPlayed, 4);
+    expect(stored.timesCorrect, 3);
+    expect(stored.easeFactor, closeTo(2.42, 0.0001));
+    expect(stored.intervalDays, 6);
+    expect(stored.nextReview, DateTime.utc(2026, 3, 21, 8));
+    expect(stored.consecutiveCorrect, 2);
+    expect(stored.memoryState, 'familiar');
+  });
+
+  test('exportUserData includes word memory progress rows', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_progress_export',
+      name: 'Progress export test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+          ],
+          rawContent: 'First',
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_progress_export',
+    );
+    final word = database.getWords(wordbook.id).single;
+    database.upsertWordMemoryProgress(
+      WordMemoryProgress(
+        wordId: word.id!,
+        timesPlayed: 2,
+        timesCorrect: 1,
+        nextReview: DateTime.utc(2026, 3, 16, 8),
+        consecutiveCorrect: 1,
+        memoryState: 'learning',
+      ),
+    );
+
+    final exportPath = await database.exportUserData();
+    final decoded = jsonDecode(await File(exportPath).readAsString()) as Map;
+    final progressRows = decoded['progress'] as List<dynamic>;
+
+    expect(progressRows, isNotEmpty);
+    expect(
+      progressRows.any((item) {
+        final row = item as Map;
+        return row['word_id'] == word.id &&
+            row['times_played'] == 2 &&
+            row['consecutive_correct'] == 1;
+      }),
+      isTrue,
+    );
   });
 
   test('deleteSafetyBackup removes an existing backup file', () async {

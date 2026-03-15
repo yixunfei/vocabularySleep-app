@@ -10,6 +10,7 @@ import '../models/todo_item.dart';
 import '../models/tomato_timer.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
+import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';
 import 'app_log_service.dart';
 import 'wordbook_import_service.dart';
@@ -241,12 +242,16 @@ class AppDatabaseService {
     final timerRows = _selectMaps(
       'SELECT * FROM timer_records ORDER BY start_time DESC',
     );
+    final progressRows = _selectMaps(
+      'SELECT * FROM progress ORDER BY word_id ASC',
+    );
 
     final payload = <String, Object?>{
       'exported_at': DateTime.now().toIso8601String(),
       'wordbooks': wordbooks,
       'todos': getTodos().map((item) => item.toMap()).toList(growable: false),
       'notes': getNotes().map((item) => item.toMap()).toList(growable: false),
+      'progress': progressRows,
       'timer_records': timerRows,
     };
 
@@ -430,6 +435,11 @@ class AppDatabaseService {
         times_correct INTEGER DEFAULT 0,
         last_played DATETIME,
         familiarity REAL DEFAULT 0,
+        ease_factor REAL DEFAULT 2.5,
+        interval_days INTEGER DEFAULT 0,
+        next_review DATETIME,
+        consecutive_correct INTEGER DEFAULT 0,
+        memory_state TEXT DEFAULT 'new',
         FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE,
         UNIQUE(word_id)
       );
@@ -546,6 +556,47 @@ class AppDatabaseService {
       _db.execute(
         'ALTER TABLE timer_records ADD COLUMN is_partial INTEGER DEFAULT 0;',
       );
+    }
+  }
+
+  void _migrateProgressSchema() {
+    final tableInfo = _db.select('PRAGMA table_info(progress);');
+    final columnNames = <String>{
+      for (final row in tableInfo) row['name'].toString(),
+    };
+
+    if (!columnNames.contains('ease_factor')) {
+      _db.execute(
+        'ALTER TABLE progress ADD COLUMN ease_factor REAL DEFAULT 2.5;',
+      );
+    }
+    if (!columnNames.contains('interval_days')) {
+      _db.execute(
+        'ALTER TABLE progress ADD COLUMN interval_days INTEGER DEFAULT 0;',
+      );
+    }
+    if (!columnNames.contains('next_review')) {
+      _db.execute('ALTER TABLE progress ADD COLUMN next_review DATETIME;');
+    }
+    if (!columnNames.contains('consecutive_correct')) {
+      _db.execute(
+        'ALTER TABLE progress ADD COLUMN consecutive_correct INTEGER DEFAULT 0;',
+      );
+    }
+    if (!columnNames.contains('memory_state')) {
+      _db.execute(
+        "ALTER TABLE progress ADD COLUMN memory_state TEXT DEFAULT 'new';",
+      );
+      _db.execute('''
+        UPDATE progress
+        SET memory_state =
+          CASE
+            WHEN COALESCE(times_played, 0) <= 0 THEN 'new'
+            WHEN COALESCE(familiarity, 0) >= 0.8 THEN 'mastered'
+            WHEN COALESCE(familiarity, 0) >= 0.4 THEN 'familiar'
+            ELSE 'learning'
+          END;
+      ''');
     }
   }
 
@@ -779,6 +830,78 @@ class AppDatabaseService {
       <Object?>[wordbookId, limit, offset],
     );
     return rows.map(WordEntry.fromMap).toList();
+  }
+
+  Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
+    Iterable<int> wordIds,
+  ) {
+    final ids = wordIds.where((id) => id > 0).toSet().toList(growable: false);
+    if (ids.isEmpty) {
+      return const <int, WordMemoryProgress>{};
+    }
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    final rows = _selectMaps(
+      'SELECT * FROM progress WHERE word_id IN ($placeholders)',
+      ids.cast<Object?>(),
+    );
+    final progressList = rows
+        .map(WordMemoryProgress.fromMap)
+        .toList(growable: false);
+    return <int, WordMemoryProgress>{
+      for (final progress in progressList) progress.wordId: progress,
+    };
+  }
+
+  WordMemoryProgress? getWordMemoryProgress(int wordId) {
+    final row = _selectOne(
+      'SELECT * FROM progress WHERE word_id = ?',
+      <Object?>[wordId],
+    );
+    if (row == null) {
+      return null;
+    }
+    return WordMemoryProgress.fromMap(row);
+  }
+
+  void upsertWordMemoryProgress(WordMemoryProgress progress) {
+    _db.execute(
+      '''
+      INSERT INTO progress (
+        word_id,
+        times_played,
+        times_correct,
+        last_played,
+        familiarity,
+        ease_factor,
+        interval_days,
+        next_review,
+        consecutive_correct,
+        memory_state
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(word_id) DO UPDATE SET
+        times_played = excluded.times_played,
+        times_correct = excluded.times_correct,
+        last_played = excluded.last_played,
+        familiarity = excluded.familiarity,
+        ease_factor = excluded.ease_factor,
+        interval_days = excluded.interval_days,
+        next_review = excluded.next_review,
+        consecutive_correct = excluded.consecutive_correct,
+        memory_state = excluded.memory_state
+      ''',
+      <Object?>[
+        progress.wordId,
+        progress.timesPlayed,
+        progress.timesCorrect,
+        progress.lastPlayed?.toIso8601String(),
+        progress.familiarity,
+        progress.easeFactor,
+        progress.intervalDays,
+        progress.nextReview?.toIso8601String(),
+        progress.consecutiveCorrect,
+        progress.memoryState,
+      ],
+    );
   }
 
   int importWordbookJsonText({
@@ -1412,6 +1535,7 @@ class AppDatabaseService {
     _createTables();
     _migrateWordsSchema();
     _migrateTimerRecordsSchema();
+    _migrateProgressSchema();
     _migrateTodosSchema();
     _migrateNotesSchema();
     ensureSpecialWordbooks();

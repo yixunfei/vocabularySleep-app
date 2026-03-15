@@ -99,6 +99,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         remembered: nextRemembered,
         rememberedWords: nextRememberedWords.map((item) => item.word).toList(),
         weakWords: nextWeakWords.map((item) => item.word).toList(),
+        rememberedEntries: nextRememberedWords,
+        weakEntries: nextWeakWords,
       );
     }
   }
@@ -134,6 +136,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     required int remembered,
     required List<String> rememberedWords,
     required List<String> weakWords,
+    required List<WordEntry> rememberedEntries,
+    required List<WordEntry> weakEntries,
   }) {
     if (_reported) return;
     _reported = true;
@@ -143,6 +147,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       remembered: remembered,
       rememberedWords: rememberedWords,
       weakWords: weakWords,
+      rememberedEntries: rememberedEntries,
+      weakEntries: weakEntries,
     );
   }
 

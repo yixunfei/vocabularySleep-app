@@ -2094,6 +2094,8 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required int remembered,
     required List<String> rememberedWords,
     required List<String> weakWords,
+    List<WordEntry>? rememberedEntries,
+    List<WordEntry>? weakEntries,
   }) {}
 
   @override
