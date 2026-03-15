@@ -1,3 +1,17 @@
+class WeatherForecastDay {
+  const WeatherForecastDay({
+    required this.date,
+    required this.weatherCode,
+    required this.maxTemperatureCelsius,
+    required this.minTemperatureCelsius,
+  });
+
+  final DateTime date;
+  final int weatherCode;
+  final double maxTemperatureCelsius;
+  final double minTemperatureCelsius;
+}
+
 class WeatherSnapshot {
   const WeatherSnapshot({
     required this.city,
@@ -8,6 +22,7 @@ class WeatherSnapshot {
     required this.weatherCode,
     required this.isDay,
     required this.fetchedAt,
+    this.forecastDays = const <WeatherForecastDay>[],
   });
 
   final String city;
@@ -18,4 +33,11 @@ class WeatherSnapshot {
   final int weatherCode;
   final bool isDay;
   final DateTime fetchedAt;
+  final List<WeatherForecastDay> forecastDays;
+
+  double? get todayMaxTemperatureCelsius =>
+      forecastDays.isEmpty ? null : forecastDays.first.maxTemperatureCelsius;
+
+  double? get todayMinTemperatureCelsius =>
+      forecastDays.isEmpty ? null : forecastDays.first.minTemperatureCelsius;
 }

@@ -57,6 +57,10 @@ void main() {
             request.url.queryParameters['current'],
             contains('temperature_2m'),
           );
+          expect(
+            request.url.queryParameters['daily'],
+            contains('temperature_2m_max'),
+          );
           return http.Response(
             jsonEncode(<String, Object?>{
               'current': <String, Object?>{
@@ -65,6 +69,17 @@ void main() {
                 'weather_code': 1,
                 'is_day': 1,
                 'wind_speed_10m': 6.2,
+              },
+              'daily': <String, Object?>{
+                'time': <String>[
+                  '2026-03-15',
+                  '2026-03-16',
+                  '2026-03-17',
+                  '2026-03-18',
+                ],
+                'weather_code': <int>[1, 3, 61, 0],
+                'temperature_2m_max': <double>[22.1, 19.3, 18.0, 21.6],
+                'temperature_2m_min': <double>[14.2, 13.4, 11.8, 12.7],
               },
             }),
             200,
@@ -85,6 +100,10 @@ void main() {
       expect(snapshot.weatherCode, 1);
       expect(snapshot.isDay, isTrue);
       expect(snapshot.windSpeedKph, 6.2);
+      expect(snapshot.todayMaxTemperatureCelsius, 22.1);
+      expect(snapshot.todayMinTemperatureCelsius, 14.2);
+      expect(snapshot.forecastDays, hasLength(4));
+      expect(snapshot.forecastDays[2].weatherCode, 61);
     },
   );
 }

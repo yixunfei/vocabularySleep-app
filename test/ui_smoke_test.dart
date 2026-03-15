@@ -465,8 +465,12 @@ void main() {
         find.byKey(const ValueKey<String>('play-weather-badge')),
         findsOne,
       );
-      expect(find.text('Shanghai'), findsOneWidget);
-      expect(find.textContaining('18°C'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('play-weather-badge')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Shanghai, CN'), findsOneWidget);
+      expect(find.text('18°C'), findsOneWidget);
     });
 
     testWidgets('focus page keeps notes in a right drawer on phones', (
