@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import '../i18n/app_i18n.dart';
 import '../models/app_home_tab.dart';
 import '../models/play_config.dart';
+import '../models/weather_snapshot.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
@@ -22,6 +23,7 @@ import '../services/memory_algorithm.dart';
 import '../services/memory_lane_selector.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
+import '../services/weather_service.dart';
 
 class PronunciationComparison {
   const PronunciationComparison({
@@ -54,12 +56,14 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required AmbientService ambient,
     required AsrService asr,
     required FocusService focusService,
+    WeatherService? weatherService,
   }) : _database = database,
        _settings = settings,
        _playback = playback,
        _ambient = ambient,
        _asr = asr,
-       _focusService = focusService {
+       _focusService = focusService,
+       _weatherService = weatherService ?? WeatherService() {
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -69,6 +73,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final AmbientService _ambient;
   final AsrService _asr;
   final FocusService _focusService;
+  final WeatherService _weatherService;
   final AppLogService _log = AppLogService.instance;
 
   FocusService get focusService => _focusService;
@@ -93,6 +98,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
   AppHomeTab _startupPage = AppHomeTab.play;
+  bool _weatherEnabled = false;
+  WeatherSnapshot? _weatherSnapshot;
+  bool _weatherLoading = false;
   bool _testModeEnabled = false;
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
@@ -170,6 +178,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
   AppHomeTab get startupPage => _startupPage;
+  bool get weatherEnabled => _weatherEnabled;
+  WeatherSnapshot? get weatherSnapshot => _weatherSnapshot;
+  bool get weatherLoading => _weatherLoading;
   String get uiLanguageSelection =>
       _uiLanguageFollowsSystem ? SettingsService.uiLanguageSystem : _uiLanguage;
   bool get testModeEnabled => _testModeEnabled;
@@ -323,6 +334,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
       }
       _startupPage = _settings.loadStartupPage();
+      _weatherEnabled = _settings.loadWeatherEnabled();
       final testModeState = _settings.loadTestModeState();
       _testModeEnabled = testModeState['enabled'] ?? false;
       _testModeRevealed = testModeState['revealed'] ?? false;
@@ -344,12 +356,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           'uiLanguage': _uiLanguage,
           'uiLanguageFollowsSystem': _uiLanguageFollowsSystem,
           'startupPage': _startupPage.storageValue,
+          'weatherEnabled': _weatherEnabled,
           'logFile': logFilePath,
           'ttsProvider': _config.tts.provider.name,
           'ttsModel': _config.tts.model,
           'ttsVoice': _config.tts.activeVoice,
         },
       );
+      if (_weatherEnabled) {
+        unawaited(refreshWeather(force: true));
+      }
     } catch (error) {
       _log.e('app_state', 'init failed', error: error);
       _setMessage('errorInitFailed', params: <String, Object?>{'error': error});
@@ -416,6 +432,46 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _startupPage = page;
     _settings.saveStartupPage(page);
     notifyListeners();
+  }
+
+  void setWeatherEnabled(bool enabled) {
+    if (_weatherEnabled == enabled) return;
+    _weatherEnabled = enabled;
+    _settings.saveWeatherEnabled(enabled);
+    if (!enabled) {
+      notifyListeners();
+      return;
+    }
+    notifyListeners();
+    unawaited(refreshWeather(force: true));
+  }
+
+  Future<void> refreshWeather({bool force = false}) async {
+    if (!_weatherEnabled) return;
+    if (_weatherLoading) return;
+    if (!force && !_isWeatherStale()) return;
+
+    _weatherLoading = true;
+    notifyListeners();
+    try {
+      _weatherSnapshot = await _weatherService.fetchCurrentWeather();
+    } catch (error) {
+      _log.w(
+        'app_state',
+        'weather refresh failed',
+        data: <String, Object?>{'error': '$error'},
+      );
+    } finally {
+      _weatherLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void refreshWeatherIfStale() {
+    if (!_weatherEnabled || _weatherLoading || !_isWeatherStale()) {
+      return;
+    }
+    unawaited(refreshWeather());
   }
 
   @override
@@ -2667,6 +2723,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
     }
     _startupPage = _settings.loadStartupPage();
+    _weatherEnabled = _settings.loadWeatherEnabled();
 
     final testModeState = _settings.loadTestModeState();
     _testModeEnabled = testModeState['enabled'] ?? false;
@@ -2693,6 +2750,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     await _reloadWordbooks(keepCurrentSelection: false);
     await _syncSpecialWordbooks();
     _refreshLocalizedWordbookNames();
+    if (_weatherEnabled) {
+      unawaited(refreshWeather(force: true));
+    }
+  }
+
+  bool _isWeatherStale() {
+    final snapshot = _weatherSnapshot;
+    if (snapshot == null) {
+      return true;
+    }
+    return DateTime.now().difference(snapshot.fetchedAt) >=
+        const Duration(minutes: 30);
   }
 
   void _clearPlaybackSession({required bool notify}) {

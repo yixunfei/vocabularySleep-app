@@ -55,4 +55,16 @@ void main() {
     final restored = SettingsService(database).loadStartupPage();
     expect(restored, AppHomeTab.focus);
   });
+
+  test('weather toggle persists through SettingsService', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+
+    expect(settings.loadWeatherEnabled(), isFalse);
+
+    settings.saveWeatherEnabled(true);
+
+    final restored = SettingsService(database).loadWeatherEnabled();
+    expect(restored, isTrue);
+  });
 }

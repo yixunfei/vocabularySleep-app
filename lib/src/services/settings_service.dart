@@ -52,6 +52,14 @@ class SettingsService {
     _database.setSetting('startupPage', page.storageValue);
   }
 
+  bool loadWeatherEnabled() {
+    return _database.getSetting('weatherEnabled') == '1';
+  }
+
+  void saveWeatherEnabled(bool enabled) {
+    _database.setSetting('weatherEnabled', enabled ? '1' : '0');
+  }
+
   Map<String, bool> loadTestModeState() {
     final raw = _database.getSetting('testModeState');
     if (raw == null || raw.trim().isEmpty) {

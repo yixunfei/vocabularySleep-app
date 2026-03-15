@@ -36,6 +36,15 @@ class PlayPage extends StatefulWidget {
 class _PlayPageState extends State<PlayPage> {
   int _transitionDirection = 1;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AppState>().refreshWeatherIfStale();
+    });
+  }
+
   void _setTransitionDirection(int direction) {
     if (_transitionDirection == direction) return;
     setState(() {
@@ -175,6 +184,12 @@ class _PlayPageState extends State<PlayPage> {
         (mode == AppExperienceMode.sleep && state.config.showText) ||
         (mode == AppExperienceMode.focus && !state.config.showText);
     final isPlaybackPaused = state.isPlaying && state.isPaused;
+    final headerAction = _buildHeaderAction(
+      context,
+      i18n,
+      state,
+      isPlaybackPaused: isPlaybackPaused,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -187,18 +202,7 @@ class _PlayPageState extends State<PlayPage> {
             en: 'How do you want to play today',
           ),
           subtitle: experienceModeDescription(i18n, mode),
-          action: StatusBadge(
-            label: isPlaybackPaused
-                ? pickUiText(i18n, zh: '已暂停', en: 'Paused')
-                : state.isPlaying
-                ? pickUiText(i18n, zh: '播放中', en: 'Playing')
-                : pickUiText(i18n, zh: '待播放', en: 'Ready'),
-            icon: isPlaybackPaused
-                ? Icons.pause_circle_filled_rounded
-                : state.isPlaying
-                ? Icons.graphic_eq_rounded
-                : Icons.play_circle_outline_rounded,
-          ),
+          action: headerAction,
         ),
         const SizedBox(height: 14),
         Card(
@@ -519,6 +523,120 @@ class _PlayPageState extends State<PlayPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHeaderAction(
+    BuildContext context,
+    AppI18n i18n,
+    AppState state, {
+    required bool isPlaybackPaused,
+  }) {
+    final statusBadge = StatusBadge(
+      label: isPlaybackPaused
+          ? pickUiText(i18n, zh: '已暂停', en: 'Paused')
+          : state.isPlaying
+          ? pickUiText(i18n, zh: '播放中', en: 'Playing')
+          : pickUiText(i18n, zh: '待播放', en: 'Ready'),
+      icon: isPlaybackPaused
+          ? Icons.pause_circle_filled_rounded
+          : state.isPlaying
+          ? Icons.graphic_eq_rounded
+          : Icons.play_circle_outline_rounded,
+    );
+    if (!state.weatherEnabled) {
+      return statusBadge;
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[_buildWeatherBadge(context, i18n, state), statusBadge],
+    );
+  }
+
+  Widget _buildWeatherBadge(
+    BuildContext context,
+    AppI18n i18n,
+    AppState state,
+  ) {
+    final snapshot = state.weatherSnapshot;
+    final theme = Theme.of(context);
+    final icon = snapshot == null
+        ? Icons.cloud_sync_rounded
+        : weatherCodeIcon(snapshot.weatherCode, isDay: snapshot.isDay);
+    final title =
+        snapshot?.city ?? pickUiText(i18n, zh: '天气获取中', en: 'Loading weather');
+    final subtitle = snapshot == null
+        ? pickUiText(
+            i18n,
+            zh: state.weatherLoading ? '正在更新当前城市天气' : '点击刷新天气',
+            en: state.weatherLoading
+                ? 'Refreshing current city weather'
+                : 'Tap to refresh weather',
+          )
+        : '${snapshot.temperatureCelsius.round()}°C · ${weatherCodeLabel(i18n, snapshot.weatherCode, isDay: snapshot.isDay)}';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => state.refreshWeather(force: true),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 152, maxWidth: 220),
+          child: Ink(
+            key: const ValueKey<String>('play-weather-badge'),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.8),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(icon, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge,
+                      ),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                if (state.weatherLoading) ...<Widget>[
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

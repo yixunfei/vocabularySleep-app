@@ -9,6 +9,7 @@ import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
+import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
@@ -24,6 +25,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/follow_along_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/focus_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/library_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/language_settings_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/play_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
@@ -436,6 +438,35 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Tasks & Notes'), findsOneWidget);
+    });
+
+    testWidgets('play page shows weather badge when enabled', (tester) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        weatherEnabled: true,
+        weatherSnapshot: WeatherSnapshot(
+          city: 'Shanghai',
+          countryCode: 'CN',
+          temperatureCelsius: 18.4,
+          apparentTemperatureCelsius: 17.8,
+          windSpeedKph: 6.0,
+          weatherCode: 1,
+          isDay: true,
+          fetchedAt: DateTime(2026, 3, 15, 10),
+        ),
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: PlayPage(onOpenPractice: () {}, onOpenLibrary: () {}),
+      );
+
+      expect(
+        find.byKey(const ValueKey<String>('play-weather-badge')),
+        findsOne,
+      );
+      expect(find.text('Shanghai'), findsOneWidget);
+      expect(find.textContaining('18°C'), findsOneWidget);
     });
 
     testWidgets('focus page keeps notes in a right drawer on phones', (
@@ -1569,6 +1600,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     FocusService? focusService,
     List<AmbientSource>? ambientSources,
     AppHomeTab startupPage = AppHomeTab.play,
+    bool weatherEnabled = false,
+    WeatherSnapshot? weatherSnapshot,
+    bool weatherLoading = false,
     String? asrRecordingPath,
     String? asrStoppedRecordingPath,
     AsrResult? asrTranscriptionResult,
@@ -1618,6 +1652,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
         apiTtsCacheBytes: apiTtsCacheBytes,
       )
       .._startupPage = startupPage
+      .._weatherEnabled = weatherEnabled
+      .._weatherSnapshot = weatherSnapshot
+      .._weatherLoading = weatherLoading
       .._currentWord = visibleWords.firstOrNull;
   }
 
@@ -1639,6 +1676,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   final AsrResult _asrTranscriptionResult;
   int _apiTtsCacheBytes;
   AppHomeTab _startupPage = AppHomeTab.play;
+  bool _weatherEnabled = false;
+  WeatherSnapshot? _weatherSnapshot;
+  bool _weatherLoading = false;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   bool resetUserDataCalled = false;
@@ -1805,6 +1845,15 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   AppHomeTab get startupPage => _startupPage;
+
+  @override
+  bool get weatherEnabled => _weatherEnabled;
+
+  @override
+  WeatherSnapshot? get weatherSnapshot => _weatherSnapshot;
+
+  @override
+  bool get weatherLoading => _weatherLoading;
 
   @override
   String get uiLanguageSelection =>
@@ -2149,6 +2198,23 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     _startupPage = page;
     notifyListeners();
   }
+
+  @override
+  void setWeatherEnabled(bool enabled) {
+    _weatherEnabled = enabled;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> refreshWeather({bool force = false}) async {
+    _weatherLoading = true;
+    notifyListeners();
+    _weatherLoading = false;
+    notifyListeners();
+  }
+
+  @override
+  void refreshWeatherIfStale() {}
 
   @override
   void updateConfig(PlayConfig config) {

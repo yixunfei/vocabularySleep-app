@@ -147,6 +147,47 @@ class LanguageSettingsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
+                    title: pickUiText(i18n, zh: '天气概览', en: 'Weather glance'),
+                    subtitle: pickUiText(
+                      i18n,
+                      zh: '在播放页右上角显示当前城市级天气，不申请定位权限。',
+                      en: 'Show approximate city weather on the Play page without requesting GPS permission.',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: state.weatherEnabled,
+                    title: Text(
+                      pickUiText(i18n, zh: '显示天气', en: 'Show weather'),
+                    ),
+                    subtitle: Text(
+                      state.weatherEnabled
+                          ? pickUiText(
+                              i18n,
+                              zh: '已启用，点击天气胶囊可手动刷新。',
+                              en: 'Enabled. Tap the weather capsule to refresh.',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '关闭后不会发起城市与天气请求。',
+                              en: 'When off, the app skips city and weather requests.',
+                            ),
+                    ),
+                    onChanged: state.setWeatherEnabled,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SectionHeader(
                     title: pickUiText(i18n, zh: '启动主页', en: 'Startup page'),
                     subtitle: pickUiText(
                       i18n,

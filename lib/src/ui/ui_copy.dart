@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../i18n/app_i18n.dart';
 import '../models/app_home_tab.dart';
 import '../models/play_config.dart';
@@ -259,6 +261,77 @@ String appHomeTabLabel(AppI18n i18n, AppHomeTab tab) {
     AppHomeTab.focus => pageLabelFocus(i18n),
     AppHomeTab.more => pageLabelMore(i18n),
   };
+}
+
+String weatherCodeLabel(AppI18n i18n, int weatherCode, {required bool isDay}) {
+  if (weatherCode == 0) {
+    return pickUiText(
+      i18n,
+      zh: isDay ? '晴朗' : '晴夜',
+      en: isDay ? 'Clear' : 'Clear night',
+    );
+  }
+  if (weatherCode == 1 || weatherCode == 2) {
+    return pickUiText(i18n, zh: '多云间晴', en: 'Partly cloudy');
+  }
+  if (weatherCode == 3) {
+    return pickUiText(i18n, zh: '阴天', en: 'Overcast');
+  }
+  if (weatherCode == 45 || weatherCode == 48) {
+    return pickUiText(i18n, zh: '有雾', en: 'Foggy');
+  }
+  if (<int>{51, 53, 55, 56, 57}.contains(weatherCode)) {
+    return pickUiText(i18n, zh: '毛毛雨', en: 'Drizzle');
+  }
+  if (<int>{61, 63, 65, 66, 67, 80, 81, 82}.contains(weatherCode)) {
+    return pickUiText(i18n, zh: '下雨', en: 'Rain');
+  }
+  if (<int>{71, 73, 75, 77, 85, 86}.contains(weatherCode)) {
+    return pickUiText(i18n, zh: '下雪', en: 'Snow');
+  }
+  if (<int>{95, 96, 99}.contains(weatherCode)) {
+    return pickUiText(i18n, zh: '雷暴', en: 'Thunderstorm');
+  }
+  return pickUiText(i18n, zh: '天气变化', en: 'Changeable');
+}
+
+IconData weatherCodeIcon(int weatherCode, {required bool isDay}) {
+  if (weatherCode == 0) {
+    return isDay ? Icons.wb_sunny_rounded : Icons.nightlight_round;
+  }
+  if (weatherCode == 1 || weatherCode == 2) {
+    return Icons.cloud_queue_rounded;
+  }
+  if (weatherCode == 3) {
+    return Icons.cloud_rounded;
+  }
+  if (weatherCode == 45 || weatherCode == 48) {
+    return Icons.blur_on_rounded;
+  }
+  if (<int>{
+    51,
+    53,
+    55,
+    56,
+    57,
+    61,
+    63,
+    65,
+    66,
+    67,
+    80,
+    81,
+    82,
+  }.contains(weatherCode)) {
+    return Icons.water_drop_rounded;
+  }
+  if (<int>{71, 73, 75, 77, 85, 86}.contains(weatherCode)) {
+    return Icons.ac_unit_rounded;
+  }
+  if (<int>{95, 96, 99}.contains(weatherCode)) {
+    return Icons.thunderstorm_rounded;
+  }
+  return Icons.cloud_sync_rounded;
 }
 
 String pageLabelLibrary(AppI18n i18n) => pickUiText(
