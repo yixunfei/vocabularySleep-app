@@ -1521,6 +1521,7 @@ class _FocusPageState extends State<FocusPage>
 
   /*  String _mobileNotesLabel(AppI18n i18n) {
     return pickUiText(
+      i18n,
         i18n,
         zh: '待办',
         en: 'Tasks',
@@ -1546,7 +1547,6 @@ class _FocusPageState extends State<FocusPage>
 */
   /*  String _mobileNotesLabel(AppI18n i18n) {
     return pickUiText(
-      i18n,
       zh: '绗旇',
       en: 'Notes',
       ja: '銉庛兗銉?,
@@ -1752,19 +1752,6 @@ class _FocusPageState extends State<FocusPage>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compactLayout = constraints.maxWidth < 600;
-          final compactHeight =
-              constraints.maxHeight.isFinite && constraints.maxHeight < 720;
-          final topSectionMaxHeight = constraints.maxHeight.isFinite
-              ? compactHeight
-                    ? math.min(
-                        248.0,
-                        math.max(168.0, constraints.maxHeight * 0.34),
-                      )
-                    : math.min(
-                        208.0,
-                        math.max(140.0, constraints.maxHeight * 0.26),
-                      )
-              : 208.0;
           final topSection = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -1784,6 +1771,8 @@ class _FocusPageState extends State<FocusPage>
                 onTap: () => _showTodoEditor(focus, i18n),
                 decoration: InputDecoration(
                   isDense: true,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerLowest,
                   hintText: pickUiText(
                     i18n,
                     zh: '\u70b9\u51fb\u6dfb\u52a0\u5f85\u529e\u4e8b\u9879',
@@ -1798,9 +1787,11 @@ class _FocusPageState extends State<FocusPage>
                   suffixIcon: const Icon(Icons.edit_note_rounded),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 8,
+                    vertical: 10,
                   ),
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -1813,40 +1804,64 @@ class _FocusPageState extends State<FocusPage>
                 const SizedBox(height: 8),
                 _buildTodoMetricsStrip(metrics, i18n, compact: compactLayout),
               ],
+              const SizedBox(height: 12),
+              _buildTodoListBody(
+                focus: focus,
+                i18n: i18n,
+                planSections: planSections,
+                displayTodos: displayTodos,
+                manualSort: manualSort,
+              ),
             ],
           );
 
-          return Padding(
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                if (compactLayout)
-                  topSection
-                else
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: topSectionMaxHeight),
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: topSection,
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: _todoViewMode == _TodoViewMode.plan
-                      ? _buildTodoPlanView(focus, planSections, i18n)
-                      : displayTodos.isEmpty
-                      ? Center(child: Text(i18n.t('todosEmpty')))
-                      : manualSort
-                      ? _buildReorderableTodosList(focus, displayTodos, i18n)
-                      : _buildSortedTodosList(focus, displayTodos, i18n),
-                ),
-              ],
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: math.max(0.0, constraints.maxHeight - 20),
+              ),
+              child: topSection,
             ),
           );
         },
       ),
     );
+  }
+
+  Widget _buildTodoListBody({
+    required FocusService focus,
+    required AppI18n i18n,
+    required List<_TodoPlanSection> planSections,
+    required List<TodoItem> displayTodos,
+    required bool manualSort,
+  }) {
+    if (_todoViewMode == _TodoViewMode.plan) {
+      return _buildTodoPlanView(focus, planSections, i18n);
+    }
+    if (displayTodos.isEmpty) {
+      final theme = Theme.of(context);
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Text(
+          i18n.t('todosEmpty'),
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+    return manualSort
+        ? _buildReorderableTodosList(focus, displayTodos, i18n)
+        : _buildSortedTodosList(focus, displayTodos, i18n);
   }
 
   Widget _buildTodoHeader({
@@ -1903,12 +1918,36 @@ class _FocusPageState extends State<FocusPage>
     bool compact = false,
   }) {
     final theme = Theme.of(context);
-    final active = metrics['active'] ?? 0;
-    final today = metrics['today'] ?? 0;
-    final completed = metrics['completed'] ?? 0;
-    final overdue = metrics['overdue'] ?? 0;
-    final deferred = metrics['deferred'] ?? 0;
-    final summaryText = pickUiText(
+    final items = _todoMetricItems(i18n, theme);
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 12,
+        vertical: compact ? 10 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Wrap(
+        spacing: compact ? 10 : 12,
+        runSpacing: compact ? 10 : 12,
+        children: items
+            .map(
+              (item) => _buildTodoMetricOrbit(
+                key: ValueKey<String>('todo-metric-orbit-${item.key}'),
+                value: metrics[item.key] ?? 0,
+                label: item.label,
+                color: item.color,
+                compact: compact,
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
+  }
+  /*
       i18n,
       zh: '$active 进行中 · $today 今日计划 · $completed 已完成',
       en: '$active active · $today due today · $completed done',
@@ -1969,19 +2008,72 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Widget _buildTodoSummaryPill({required String label, required Color color}) {
+    */
+
+  Widget _buildTodoMetricOrbit({
+    required Key key,
+    required int value,
+    required String label,
+    required Color color,
+    required bool compact,
+  }) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+    final size = compact ? 56.0 : 64.0;
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        key: key,
+        borderRadius: BorderRadius.circular(size / 2),
+        onTap: () {
+          setState(() {
+            _todoMetricsExpanded = !_todoMetricsExpanded;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: size,
+          height: size,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.10),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: color.withValues(
+                alpha: _todoMetricsExpanded ? 0.48 : 0.22,
+              ),
+              width: _todoMetricsExpanded ? 1.4 : 1,
+            ),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: color.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                width: compact ? 10 : 11,
+                height: compact ? 10 : 11,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  '$value',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3739,20 +3831,16 @@ class _FocusPageState extends State<FocusPage>
       );
     }
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: List<Widget>.generate(sections.length, (index) {
-          final section = sections[index];
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: index == sections.length - 1 ? 0 : 12,
-            ),
-            child: _buildTodoPlanSection(focus, section, i18n),
-          );
-        }),
-      ),
+    return Column(
+      children: List<Widget>.generate(sections.length, (index) {
+        final section = sections[index];
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: index == sections.length - 1 ? 0 : 12,
+          ),
+          child: _buildTodoPlanSection(focus, section, i18n),
+        );
+      }),
     );
   }
 
@@ -3885,8 +3973,9 @@ class _FocusPageState extends State<FocusPage>
     AppI18n i18n,
   ) {
     return ReorderableListView.builder(
-      physics: const BouncingScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
+      shrinkWrap: true,
       buildDefaultDragHandles: false,
       itemCount: todos.length,
       onReorder: (oldIndex, newIndex) {
@@ -3917,8 +4006,9 @@ class _FocusPageState extends State<FocusPage>
     AppI18n i18n,
   ) {
     return ListView.builder(
-      physics: const BouncingScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
+      shrinkWrap: true,
       itemCount: todos.length,
       itemBuilder: (context, index) {
         final todo = todos[index];
@@ -3947,19 +4037,19 @@ class _FocusPageState extends State<FocusPage>
 
     return Card(
       key: ValueKey<int>(todo.id ?? index),
-      margin: const EdgeInsets.only(bottom: 6),
+      margin: const EdgeInsets.only(bottom: 8),
       color: _todoCardColor(todo, theme),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: () => _showTodoEditor(focus, i18n, todo: todo),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+          padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Container(
                 width: 6,
-                height: 46,
+                height: 52,
                 decoration: BoxDecoration(
                   color: accent.withValues(
                     alpha: todo.completed ? 0.55 : (todo.isDeferred ? 0.78 : 1),
@@ -3967,7 +4057,7 @@ class _FocusPageState extends State<FocusPage>
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Checkbox(
                 value: todo.completed,
                 visualDensity: VisualDensity.compact,
@@ -3995,10 +4085,10 @@ class _FocusPageState extends State<FocusPage>
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Wrap(
-                      spacing: 5,
-                      runSpacing: 5,
+                      spacing: 6,
+                      runSpacing: 6,
                       children: <Widget>[
                         _buildTodoStatusBadge(todo, i18n, theme),
                         _buildTodoPriorityBadge(todo, i18n, theme),
