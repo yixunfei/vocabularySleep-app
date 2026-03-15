@@ -10,6 +10,8 @@ abstract interface class ReminderService {
     required bool haptic,
     required bool sound,
     String? customSoundPath,
+    String? announcementText,
+    String? announcementLanguageTag,
     Duration duration,
   });
 
@@ -38,6 +40,8 @@ class PlatformReminderService implements ReminderService {
     required bool haptic,
     required bool sound,
     String? customSoundPath,
+    String? announcementText,
+    String? announcementLanguageTag,
     Duration duration = const Duration(seconds: 10),
   }) async {
     if (!haptic && !sound) return;
@@ -50,6 +54,8 @@ class PlatformReminderService implements ReminderService {
       haptic: haptic,
       sound: sound,
       customSoundPath: customSoundPath,
+      announcementText: announcementText,
+      announcementLanguageTag: announcementLanguageTag,
       duration: safeDuration,
     );
     if (handled) return;
@@ -67,6 +73,8 @@ class PlatformReminderService implements ReminderService {
     required bool haptic,
     required bool sound,
     required String? customSoundPath,
+    required String? announcementText,
+    required String? announcementLanguageTag,
     required Duration duration,
   }) async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
@@ -81,6 +89,10 @@ class PlatformReminderService implements ReminderService {
             'durationMs': duration.inMilliseconds,
             if ((customSoundPath ?? '').trim().isNotEmpty)
               'customSoundPath': customSoundPath!.trim(),
+            if ((announcementText ?? '').trim().isNotEmpty)
+              'announcementText': announcementText!.trim(),
+            if ((announcementLanguageTag ?? '').trim().isNotEmpty)
+              'announcementLanguageTag': announcementLanguageTag!.trim(),
           });
       return handled ?? false;
     } on MissingPluginException {
