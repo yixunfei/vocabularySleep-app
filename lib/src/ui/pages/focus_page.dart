@@ -20,7 +20,7 @@ import '../widgets/section_header.dart';
 
 enum _TodoSortMode { manual, priority, category }
 
-enum _TodoFilterMode { all, active, deferred, completed }
+enum _TodoFilterMode { all, active, today, overdue, deferred, completed }
 
 enum _TodoViewMode { plan, list }
 
@@ -2450,6 +2450,7 @@ class _FocusPageState extends State<FocusPage>
     }
 
     return <String, int>{
+      'all': todos.length,
       'active': active,
       'today': todayCount,
       'overdue': overdue,
@@ -2692,36 +2693,38 @@ class _FocusPageState extends State<FocusPage>
   _todoMetricItems(AppI18n i18n, ThemeData theme) {
     return <({String key, String label, IconData icon, Color color})>[
       (
+        key: 'all',
+        label: _todoFilterModeLabel(i18n, _TodoFilterMode.all),
+        icon: Icons.apps_rounded,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+      (
         key: 'active',
-        label: pickUiText(i18n, zh: '\u8fdb\u884c\u4e2d', en: 'Active'),
+        label: _todoFilterModeLabel(i18n, _TodoFilterMode.active),
         icon: Icons.flash_on_rounded,
         color: theme.colorScheme.primary,
       ),
       (
         key: 'today',
-        label: pickUiText(
-          i18n,
-          zh: '\u4eca\u5929\u5230\u671f',
-          en: 'Due today',
-        ),
+        label: _todoFilterModeLabel(i18n, _TodoFilterMode.today),
         icon: Icons.today_rounded,
         color: theme.colorScheme.tertiary,
       ),
       (
         key: 'overdue',
-        label: pickUiText(i18n, zh: '\u5df2\u903e\u671f', en: 'Overdue'),
+        label: _todoFilterModeLabel(i18n, _TodoFilterMode.overdue),
         icon: Icons.warning_amber_rounded,
         color: theme.colorScheme.error,
       ),
       (
         key: 'deferred',
-        label: pickUiText(i18n, zh: '\u5ef6\u540e\u6401\u7f6e', en: 'Deferred'),
+        label: _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
         icon: Icons.snooze_rounded,
         color: theme.colorScheme.outline,
       ),
       (
         key: 'completed',
-        label: pickUiText(i18n, zh: '\u5df2\u5b8c\u6210', en: 'Done'),
+        label: _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
         icon: Icons.task_alt_rounded,
         color: theme.colorScheme.secondary,
       ),
@@ -2734,16 +2737,7 @@ class _FocusPageState extends State<FocusPage>
     bool compact = false,
   }) {
     final theme = Theme.of(context);
-    final items = compact
-        ? _todoMetricItems(i18n, theme)
-              .where(
-                (item) =>
-                    item.key == 'active' ||
-                    item.key == 'today' ||
-                    item.key == 'overdue',
-              )
-              .toList(growable: false)
-        : _todoMetricItems(i18n, theme);
+    final items = _todoMetricItems(i18n, theme);
 
     return Wrap(
       spacing: compact ? 6 : 8,
@@ -2772,7 +2766,10 @@ class _FocusPageState extends State<FocusPage>
     bool compact = false,
   }) {
     final theme = Theme.of(context);
+    final filterMode = _todoFilterModeForMetricKey(metricKey);
     final expanded = _expandedTodoMetricKey == metricKey;
+    final selected = _todoFilterMode == filterMode;
+    final emphasized = expanded || selected;
 
     return Tooltip(
       message: label,
@@ -2783,7 +2780,8 @@ class _FocusPageState extends State<FocusPage>
           borderRadius: BorderRadius.circular(999),
           onTap: () {
             setState(() {
-              _expandedTodoMetricKey = expanded ? null : metricKey;
+              _todoFilterMode = filterMode;
+              _expandedTodoMetricKey = expanded && selected ? null : metricKey;
             });
           },
           child: AnimatedContainer(
@@ -2794,10 +2792,13 @@ class _FocusPageState extends State<FocusPage>
               vertical: compact ? 7 : 8,
             ),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: expanded ? 0.15 : 0.08),
+              color: color.withValues(
+                alpha: emphasized ? (selected ? 0.18 : 0.15) : 0.08,
+              ),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: color.withValues(alpha: expanded ? 0.26 : 0.18),
+                color: color.withValues(alpha: emphasized ? 0.38 : 0.18),
+                width: selected ? 1.4 : 1,
               ),
             ),
             child: Row(
@@ -2819,7 +2820,9 @@ class _FocusPageState extends State<FocusPage>
                               ? theme.textTheme.labelLarge
                               : theme.textTheme.titleSmall)
                           ?.copyWith(
-                            color: theme.colorScheme.onSurface,
+                            color: selected
+                                ? color
+                                : theme.colorScheme.onSurface,
                             fontWeight: FontWeight.w800,
                           ),
                 ),
@@ -2839,6 +2842,18 @@ class _FocusPageState extends State<FocusPage>
         ),
       ),
     );
+  }
+
+  _TodoFilterMode _todoFilterModeForMetricKey(String metricKey) {
+    return switch (metricKey) {
+      'all' => _TodoFilterMode.all,
+      'active' => _TodoFilterMode.active,
+      'today' => _TodoFilterMode.today,
+      'overdue' => _TodoFilterMode.overdue,
+      'deferred' => _TodoFilterMode.deferred,
+      'completed' => _TodoFilterMode.completed,
+      _ => _TodoFilterMode.all,
+    };
   }
 
   /*  Widget _buildTodoControls(AppI18n i18n, {required bool manualSort}) {
@@ -3142,6 +3157,16 @@ class _FocusPageState extends State<FocusPage>
         zh: '\u8fdb\u884c\u4e2d',
         en: 'Active',
       ),
+      _TodoFilterMode.today => pickUiText(
+        i18n,
+        zh: '\u4eca\u5929\u5230\u671f',
+        en: 'Due today',
+      ),
+      _TodoFilterMode.overdue => pickUiText(
+        i18n,
+        zh: '\u5df2\u903e\u671f',
+        en: 'Overdue',
+      ),
       _TodoFilterMode.deferred => pickUiText(
         i18n,
         zh: '\u5ef6\u540e\u6401\u7f6e',
@@ -3204,48 +3229,6 @@ class _FocusPageState extends State<FocusPage>
               onSelected: (value) {
                 setState(() {
                   _todoViewMode = value;
-                });
-              },
-            ),
-            _buildTodoCompactMenuButton<_TodoFilterMode>(
-              key: const ValueKey<String>('todo-filter-menu'),
-              icon: Icons.filter_alt_rounded,
-              label: _todoFilterModeLabel(i18n, _todoFilterMode),
-              items: <PopupMenuEntry<_TodoFilterMode>>[
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-all'),
-                  value: _TodoFilterMode.all,
-                  checked: _todoFilterMode == _TodoFilterMode.all,
-                  child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.all)),
-                ),
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-active'),
-                  value: _TodoFilterMode.active,
-                  checked: _todoFilterMode == _TodoFilterMode.active,
-                  child: Text(
-                    _todoFilterModeLabel(i18n, _TodoFilterMode.active),
-                  ),
-                ),
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-deferred'),
-                  value: _TodoFilterMode.deferred,
-                  checked: _todoFilterMode == _TodoFilterMode.deferred,
-                  child: Text(
-                    _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
-                  ),
-                ),
-                CheckedPopupMenuItem<_TodoFilterMode>(
-                  key: const ValueKey<String>('todo-filter-completed'),
-                  value: _TodoFilterMode.completed,
-                  checked: _todoFilterMode == _TodoFilterMode.completed,
-                  child: Text(
-                    _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
-                  ),
-                ),
-              ],
-              onSelected: (value) {
-                setState(() {
-                  _todoFilterMode = value;
                 });
               },
             ),
@@ -3606,52 +3589,6 @@ class _FocusPageState extends State<FocusPage>
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          _buildTodoControlSection(
-            label: pickUiText(i18n, zh: '\u7b5b\u9009', en: 'Filter'),
-            children: <Widget>[
-              _buildTodoChoiceChip(
-                key: const ValueKey<String>('todo-filter-all'),
-                label: _todoFilterModeLabel(i18n, _TodoFilterMode.all),
-                selected: _todoFilterMode == _TodoFilterMode.all,
-                onSelected: () {
-                  setState(() {
-                    _todoFilterMode = _TodoFilterMode.all;
-                  });
-                },
-              ),
-              _buildTodoChoiceChip(
-                key: const ValueKey<String>('todo-filter-active'),
-                label: _todoFilterModeLabel(i18n, _TodoFilterMode.active),
-                selected: _todoFilterMode == _TodoFilterMode.active,
-                onSelected: () {
-                  setState(() {
-                    _todoFilterMode = _TodoFilterMode.active;
-                  });
-                },
-              ),
-              _buildTodoChoiceChip(
-                key: const ValueKey<String>('todo-filter-deferred'),
-                label: _todoFilterModeLabel(i18n, _TodoFilterMode.deferred),
-                selected: _todoFilterMode == _TodoFilterMode.deferred,
-                onSelected: () {
-                  setState(() {
-                    _todoFilterMode = _TodoFilterMode.deferred;
-                  });
-                },
-              ),
-              _buildTodoChoiceChip(
-                key: const ValueKey<String>('todo-filter-completed'),
-                label: _todoFilterModeLabel(i18n, _TodoFilterMode.completed),
-                selected: _todoFilterMode == _TodoFilterMode.completed,
-                onSelected: () {
-                  setState(() {
-                    _todoFilterMode = _TodoFilterMode.completed;
-                  });
-                },
-              ),
-            ],
-          ),
           if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
             const SizedBox(height: 8),
             _buildTodoControlSection(
@@ -3808,11 +3745,27 @@ class _FocusPageState extends State<FocusPage>
   }
 
   List<TodoItem> _filterTodos(List<TodoItem> todos) {
+    final now = DateTime.now();
+    final todayStart = _startOfDay(now);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+
     return todos
         .where((item) {
+          final dueAt = item.dueAt;
           return switch (_todoFilterMode) {
             _TodoFilterMode.all => true,
             _TodoFilterMode.active => !item.completed && !item.isDeferred,
+            _TodoFilterMode.today =>
+              !item.completed &&
+                  !item.isDeferred &&
+                  dueAt != null &&
+                  !dueAt.isBefore(todayStart) &&
+                  dueAt.isBefore(tomorrowStart),
+            _TodoFilterMode.overdue =>
+              !item.completed &&
+                  !item.isDeferred &&
+                  dueAt != null &&
+                  dueAt.isBefore(todayStart),
             _TodoFilterMode.deferred => item.isDeferred,
             _TodoFilterMode.completed => item.completed,
           };
