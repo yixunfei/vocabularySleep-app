@@ -5,14 +5,20 @@ import '../../state/app_state.dart';
 import '../sheets/ambient_sheet.dart';
 
 class AmbientFloatingLauncher extends StatelessWidget {
+  static const double diameter = 56;
+
   const AmbientFloatingLauncher({
     super.key,
     required this.state,
     required this.i18n,
+    this.enabled = true,
+    this.surfaceAlpha = 0.84,
   });
 
   final AppState state;
   final AppI18n i18n;
+  final bool enabled;
+  final double surfaceAlpha;
 
   Future<void> _openAmbientSheet(BuildContext context) {
     return showModalBottomSheet<void>(
@@ -41,23 +47,31 @@ class AmbientFloatingLauncher extends StatelessWidget {
 
     return Tooltip(
       message: i18n.t('ambientAudio'),
+      triggerMode: TooltipTriggerMode.tap,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           key: const ValueKey<String>('global-ambient-launcher'),
           borderRadius: BorderRadius.circular(999),
-          onTap: () => _openAmbientSheet(context),
+          onTap: enabled ? () => _openAmbientSheet(context) : null,
           child: Ink(
-            width: 56,
-            height: 56,
+            width: diameter,
+            height: diameter,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: theme.colorScheme.surfaceContainerHigh.withValues(
-                alpha: 0.96,
+                alpha: surfaceAlpha,
               ),
               border: Border.all(
-                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.9),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.72),
               ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: Stack(
               clipBehavior: Clip.none,

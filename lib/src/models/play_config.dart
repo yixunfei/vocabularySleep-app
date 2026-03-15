@@ -190,10 +190,9 @@ class TtsConfig {
       speed: (json['speed'] as num?)?.toDouble() ?? 1.0,
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
       enableApiCache: json['enableApiCache'] as bool? ?? false,
-      maxApiCacheMb:
-          ((json['maxApiCacheMb'] as num?)?.toInt() ?? 128)
-              .clamp(32, 2048)
-              .toInt(),
+      maxApiCacheMb: ((json['maxApiCacheMb'] as num?)?.toInt() ?? 128)
+          .clamp(32, 2048)
+          .toInt(),
       apiKey: json['apiKey']?.toString(),
       model: json['model']?.toString(),
       baseUrl: json['baseUrl']?.toString(),
@@ -409,6 +408,8 @@ class AppearanceConfig {
     this.fontScale = 1.0,
     this.titleWeightKey = 'semibold',
     this.bodyWeightKey = 'regular',
+    this.ambientLauncherX = 1.0,
+    this.ambientLauncherY = 0.48,
     this.randomEntryColors = false,
     this.rainbowText = false,
     this.marqueeText = false,
@@ -495,6 +496,8 @@ class AppearanceConfig {
   final double fontScale;
   final String titleWeightKey;
   final String bodyWeightKey;
+  final double ambientLauncherX;
+  final double ambientLauncherY;
   final bool randomEntryColors;
   final bool rainbowText;
   final bool marqueeText;
@@ -572,6 +575,12 @@ class AppearanceConfig {
     return defaults.bodyWeightKey;
   }
 
+  double get normalizedAmbientLauncherX =>
+      _clamp01(ambientLauncherX, fallback: defaults.ambientLauncherX);
+
+  double get normalizedAmbientLauncherY =>
+      _clamp01(ambientLauncherY, fallback: defaults.ambientLauncherY);
+
   AppearanceConfig copyWith({
     String? theme,
     String? timerStyle,
@@ -604,6 +613,8 @@ class AppearanceConfig {
     double? fontScale,
     String? titleWeightKey,
     String? bodyWeightKey,
+    double? ambientLauncherX,
+    double? ambientLauncherY,
     bool? randomEntryColors,
     bool? rainbowText,
     bool? marqueeText,
@@ -645,6 +656,8 @@ class AppearanceConfig {
       fontScale: fontScale ?? this.fontScale,
       titleWeightKey: titleWeightKey ?? this.titleWeightKey,
       bodyWeightKey: bodyWeightKey ?? this.bodyWeightKey,
+      ambientLauncherX: ambientLauncherX ?? this.ambientLauncherX,
+      ambientLauncherY: ambientLauncherY ?? this.ambientLauncherY,
       randomEntryColors: randomEntryColors ?? this.randomEntryColors,
       rainbowText: rainbowText ?? this.rainbowText,
       marqueeText: marqueeText ?? this.marqueeText,
@@ -685,6 +698,8 @@ class AppearanceConfig {
     'fontScale': normalizedFontScale,
     'titleWeightKey': normalizedTitleWeightKey,
     'bodyWeightKey': normalizedBodyWeightKey,
+    'ambientLauncherX': normalizedAmbientLauncherX,
+    'ambientLauncherY': normalizedAmbientLauncherY,
     'randomEntryColors': randomEntryColors,
     'rainbowText': rainbowText,
     'marqueeText': marqueeText,
@@ -745,6 +760,14 @@ class AppearanceConfig {
           json['titleWeightKey']?.toString() ?? defaults.titleWeightKey,
       bodyWeightKey:
           json['bodyWeightKey']?.toString() ?? defaults.bodyWeightKey,
+      ambientLauncherX: readDouble(
+        'ambientLauncherX',
+        defaults.ambientLauncherX,
+      ),
+      ambientLauncherY: readDouble(
+        'ambientLauncherY',
+        defaults.ambientLauncherY,
+      ),
       randomEntryColors:
           json['randomEntryColors'] as bool? ?? defaults.randomEntryColors,
       rainbowText: json['rainbowText'] as bool? ?? defaults.rainbowText,

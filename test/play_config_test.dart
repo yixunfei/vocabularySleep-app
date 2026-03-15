@@ -48,6 +48,10 @@ void main() {
       final config = PlayConfig.defaults.copyWith(
         spellingPlaybackMode: SpellingPlaybackMode.pairs,
         wordPageTransitionStyle: WordPageTransitionStyle.pageFlip,
+        appearance: PlayConfig.defaults.appearance.copyWith(
+          ambientLauncherX: 0.18,
+          ambientLauncherY: 0.67,
+        ),
       );
 
       final restored = PlayConfig.fromJson(config.toJson());
@@ -56,6 +60,14 @@ void main() {
       expect(
         restored.wordPageTransitionStyle,
         WordPageTransitionStyle.pageFlip,
+      );
+      expect(
+        restored.appearance.normalizedAmbientLauncherX,
+        closeTo(0.18, 0.001),
+      );
+      expect(
+        restored.appearance.normalizedAmbientLauncherY,
+        closeTo(0.67, 0.001),
       );
     });
   });
