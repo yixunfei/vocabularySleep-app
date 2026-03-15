@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -13,6 +14,10 @@ class AppLogService {
   File? _file;
   Future<void>? _initFuture;
   Future<void> _queue = Future<void>.value();
+  bool _fileLoggingDisabled = false;
+  String? _fileLoggingDisableReason;
+  bool _reportedDisabledState = false;
+  int _writeGeneration = 0;
 
   Future<void> init() {
     _initFuture ??= _init();
@@ -20,17 +25,7 @@ class AppLogService {
   }
 
   Future<void> _init() async {
-    final supportDir = await getApplicationSupportDirectory();
-    final logDir = Directory(p.join(supportDir.path, 'logs'));
-    if (!await logDir.exists()) {
-      await logDir.create(recursive: true);
-    }
-    final day = DateTime.now().toIso8601String().substring(0, 10);
-    _file = File(p.join(logDir.path, 'app-$day.log'));
-    if (!await _file!.exists()) {
-      await _file!.create(recursive: true);
-    }
-    i('logger', 'log file ready', data: <String, Object?>{'path': _file!.path});
+    _file = await _prepareLogFile();
   }
 
   Future<String?> getLogFilePath() async {
@@ -87,18 +82,147 @@ class AppLogService {
     };
     final line = jsonEncode(payload);
     debugPrint(line);
+    final generation = _writeGeneration;
 
     _queue = _queue.then((_) async {
+      if (_fileLoggingDisabled || _writeGeneration != generation) {
+        return;
+      }
       try {
-        await init();
-        final file = _file;
-        if (file == null) return;
+        final file = await _ensureWritableFile();
+        if (file == null || _writeGeneration != generation) {
+          return;
+        }
         await file.writeAsString('$line\n', mode: FileMode.append, flush: true);
       } catch (writeError, writeStack) {
-        debugPrint(
-          '[AppLogService] write failed: $writeError\n$writeStack',
-        );
+        if (_shouldDisableFileLogging(writeError)) {
+          _disableFileLogging(writeError);
+          return;
+        }
+        try {
+          final recoveredFile = await _ensureWritableFile(forceRefresh: true);
+          if (recoveredFile == null || _writeGeneration != generation) {
+            return;
+          }
+          await recoveredFile.writeAsString(
+            '$line\n',
+            mode: FileMode.append,
+            flush: true,
+          );
+        } catch (recoveryError, recoveryStack) {
+          if (_shouldDisableFileLogging(recoveryError)) {
+            _disableFileLogging(recoveryError);
+            return;
+          }
+          debugPrint('[AppLogService] write failed: $writeError\n$writeStack');
+          debugPrint(
+            '[AppLogService] recovery failed: $recoveryError\n$recoveryStack',
+          );
+        }
       }
     });
+  }
+
+  Future<File?> _prepareLogFile() async {
+    if (_fileLoggingDisabled) {
+      return null;
+    }
+    try {
+      final supportDir = await getApplicationSupportDirectory();
+      final logDir = Directory(p.join(supportDir.path, 'logs'));
+      if (!await logDir.exists()) {
+        await logDir.create(recursive: true);
+      }
+      final file = File(p.join(logDir.path, _logFileNameFor(DateTime.now())));
+      if (!await file.exists()) {
+        await file.create(recursive: true);
+      }
+      return file;
+    } catch (error) {
+      if (_shouldDisableFileLogging(error)) {
+        _disableFileLogging(error);
+        return null;
+      }
+      rethrow;
+    }
+  }
+
+  Future<File?> _ensureWritableFile({bool forceRefresh = false}) async {
+    if (_fileLoggingDisabled) {
+      return null;
+    }
+    if (forceRefresh) {
+      _file = null;
+      _initFuture = null;
+    }
+    await init();
+    if (_fileLoggingDisabled) {
+      return null;
+    }
+    final current = _file;
+    final expectedName = _logFileNameFor(DateTime.now());
+    final needsRefresh =
+        current == null ||
+        p.basename(current.path) != expectedName ||
+        !await current.parent.exists() ||
+        !await current.exists();
+    if (needsRefresh) {
+      _file = await _prepareLogFile();
+      _initFuture = Future<void>.value();
+    }
+    return _file;
+  }
+
+  String _logFileNameFor(DateTime time) {
+    final day = time.toIso8601String().substring(0, 10);
+    return 'app-$day.log';
+  }
+
+  @visibleForTesting
+  Future<void> flushForTest() => _queue;
+
+  @visibleForTesting
+  bool get isFileLoggingDisabled => _fileLoggingDisabled;
+
+  @visibleForTesting
+  String? get fileLoggingDisableReason => _fileLoggingDisableReason;
+
+  @visibleForTesting
+  void resetForTest() {
+    _writeGeneration += 1;
+    _file = null;
+    _initFuture = null;
+    _queue = Future<void>.value();
+    _fileLoggingDisabled = false;
+    _fileLoggingDisableReason = null;
+    _reportedDisabledState = false;
+  }
+
+  bool _shouldDisableFileLogging(Object error) {
+    if (error is MissingPluginException) {
+      return true;
+    }
+    if (error is PlatformException) {
+      final message = '${error.message ?? ''}${error.details ?? ''}';
+      if (message.contains('path_provider') ||
+          message.contains('getApplicationSupportDirectory')) {
+        return true;
+      }
+    }
+    final message = '$error';
+    return message.contains('plugins.flutter.io/path_provider') ||
+        message.contains('getApplicationSupportDirectory');
+  }
+
+  void _disableFileLogging(Object error) {
+    _fileLoggingDisabled = true;
+    _fileLoggingDisableReason = '$error';
+    _file = null;
+    _initFuture = Future<void>.value();
+    if (_reportedDisabledState) {
+      return;
+    }
+    _reportedDisabledState = true;
+    debugPrint('[AppLogService] persistent file logging disabled: $error');
   }
 }

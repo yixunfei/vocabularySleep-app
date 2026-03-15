@@ -78,12 +78,11 @@ class PlaybackService {
     _paused = false;
     _skipCurrentWord = false;
 
-    final indices = config.order == PlayOrder.random
-        ? shuffled(List<int>.generate(words.length, (index) => index))
-        : List<int>.generate(
-            words.length - startIndex,
-            (index) => index + startIndex,
-          );
+    final indices = _buildPlaybackIndices(
+      wordCount: words.length,
+      startIndex: startIndex,
+      order: config.order,
+    );
     _log.d(
       'playback',
       'play order built',
@@ -332,6 +331,23 @@ class PlaybackService {
       await Future<void>.delayed(Duration(milliseconds: step));
       remainingMs -= step;
     }
+  }
+
+  List<int> _buildPlaybackIndices({
+    required int wordCount,
+    required int startIndex,
+    required PlayOrder order,
+  }) {
+    final safeStart = startIndex.clamp(0, wordCount - 1);
+    if (order != PlayOrder.random) {
+      return List<int>.generate(
+        wordCount - safeStart,
+        (index) => index + safeStart,
+      );
+    }
+    final remaining = List<int>.generate(wordCount, (index) => index)
+      ..remove(safeStart);
+    return <int>[safeStart, ...shuffled(remaining)];
   }
 }
 
