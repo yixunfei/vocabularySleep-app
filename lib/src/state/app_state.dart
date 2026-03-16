@@ -1384,6 +1384,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         'ttsVoice': config.tts.activeVoice,
         'ttsSpeed': config.tts.speed,
         'ttsVolume': config.tts.volume,
+        'voiceInputProvider': config.voiceInput.provider.name,
+        'voiceInputLanguage': config.voiceInput.language,
+        'voiceInputModel': config.voiceInput.model,
         'asrProvider': config.asr.provider.name,
         'asrEnabled': config.asr.enabled,
         'appearanceTheme': config.appearance.normalizedTheme,
@@ -1982,6 +1985,49 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> cancelAsrRecording() => _asr.cancelRecording();
 
   void stopAsrProcessing() => _asr.stopOfflineRecognition();
+
+  Future<String?> startVoiceInputRecording() {
+    if (_config.voiceInput.usesSystemSpeech) {
+      return Future<String?>.value(null);
+    }
+    return _asr.startRecording(provider: _config.voiceInput.recordingProvider);
+  }
+
+  Future<String?> stopVoiceInputRecording() => _asr.stopRecording();
+
+  Future<void> cancelVoiceInputRecording() => _asr.cancelRecording();
+
+  void stopVoiceInputProcessing() => _asr.stopOfflineRecognition();
+
+  Future<AsrResult> transcribeVoiceInputRecording(
+    String audioPath, {
+    AsrProgressCallback? onProgress,
+  }) {
+    return _asr.transcribeFile(
+      audioPath: audioPath,
+      config: _config.voiceInput.toAsrConfig(fallback: _config.asr),
+      ttsConfig: _config.tts,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<AsrOfflineModelStatus> getVoiceInputOfflineModelStatus() {
+    return _asr.getOfflineModelStatus(AsrProviderType.offline);
+  }
+
+  Future<void> prepareVoiceInputOfflineModel({
+    AsrProgressCallback? onProgress,
+  }) async {
+    await _asr.prepareOfflineModel(
+      provider: AsrProviderType.offline,
+      language: _config.voiceInput.language,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<void> removeVoiceInputOfflineModel() async {
+    await _asr.removeOfflineModel(AsrProviderType.offline);
+  }
 
   Future<AsrOfflineModelStatus> getAsrOfflineModelStatus(
     AsrProviderType provider,

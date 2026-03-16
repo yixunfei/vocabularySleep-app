@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/focus_startup_tab.dart';
+import '../../models/play_config.dart';
 import '../../models/todo_item.dart';
 import '../../models/tomato_timer.dart';
 import '../../services/ambient_service.dart';
@@ -1188,6 +1189,26 @@ class _FocusPageState extends State<FocusPage>
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            /*
+            final resolvedVoiceHelperText =
+                voiceInputProvider == VoiceInputProviderType.system
+                ? voiceHelperText
+                : (voiceError ??
+                          (_noteVoiceRecordingHelperText(
+                                i18n,
+                                voiceState,
+                                speechLanguageTag,
+                                voiceInputProvider,
+                              ) +
+                              (voiceState == _NoteVoiceInputState.idle
+                                  ? ' ${pickUiText(
+                                      i18n,
+                                      zh: '识别结果会追加到正文，标题留空时会自动生成摘要。',
+                                      en: 'Transcribed text is appended to the note body, and an empty title will be auto-filled.',
+                                    )}'
+                                  : '')));
+
+            */
             return Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Column(
@@ -5193,7 +5214,9 @@ class _FocusPageState extends State<FocusPage>
   }
 
   String? _noteSpeechLanguageTag(AppState state) {
-    final normalized = normalizeAsrLanguageTag(state.config.asr.language);
+    final normalized = normalizeAsrLanguageTag(
+      state.config.voiceInput.language,
+    );
     if (normalized == 'auto') {
       return null;
     }
@@ -5208,6 +5231,7 @@ class _FocusPageState extends State<FocusPage>
     AppI18n i18n,
     _NoteVoiceInputState voiceState,
     String? languageTag,
+    VoiceInputProviderType provider,
   ) {
     final languageLabel = _noteSpeechLanguageLabel(i18n, languageTag);
     return switch (voiceState) {
@@ -5287,6 +5311,66 @@ class _FocusPageState extends State<FocusPage>
     };
   }
 
+  String _noteVoiceInputErrorText(
+    AppI18n i18n,
+    String? errorKey,
+    Map<String, Object?> errorParams,
+  ) {
+    final key = (errorKey ?? '').trim();
+    if (key.isEmpty) {
+      return pickUiText(
+        i18n,
+        zh: '语音输入失败，请稍后重试。',
+        en: 'Voice input failed. Please try again.',
+      );
+    }
+    try {
+      return i18n.t(key, params: errorParams);
+    } catch (_) {
+      return key;
+    }
+  }
+
+  String _noteVoiceRecorderErrorText(AppI18n i18n) {
+    return pickUiText(
+      i18n,
+      zh: '无法启动语音输入录音，请检查麦克风权限后重试。',
+      en: 'Unable to start the voice input recorder. Please check microphone permission and try again.',
+    );
+  }
+
+  String _noteVoiceRecordingHelperText(
+    AppI18n i18n,
+    _NoteVoiceInputState voiceState,
+    String? languageTag,
+    VoiceInputProviderType provider,
+  ) {
+    final languageLabel = _noteSpeechLanguageLabel(i18n, languageTag);
+    final providerLabel = voiceInputProviderLabel(i18n, provider);
+    return switch (voiceState) {
+      _NoteVoiceInputState.starting => pickUiText(
+        i18n,
+        zh: '正在准备语音输入录音，请稍候。',
+        en: 'Preparing the voice input recorder. Please wait.',
+      ),
+      _NoteVoiceInputState.listening => pickUiText(
+        i18n,
+        zh: '语音输入录音中，再点一次即可结束并转写到笔记。',
+        en: 'Voice input recording is active. Tap again to finish and transcribe the note.',
+      ),
+      _NoteVoiceInputState.finishing => pickUiText(
+        i18n,
+        zh: '正在转写语音输入并写入笔记。',
+        en: 'Transcribing the voice input and inserting it into the note.',
+      ),
+      _NoteVoiceInputState.idle => pickUiText(
+        i18n,
+        zh: '使用$providerLabel将语音内容追加到笔记正文。当前语言：$languageLabel。',
+        en: 'Use $providerLabel to append speech text directly to the note. Language: $languageLabel.',
+      ),
+    };
+  }
+
   String _defaultNoteTitle(AppI18n i18n) {
     final now = DateTime.now();
     final localizations = MaterialLocalizations.of(context);
@@ -5317,10 +5401,13 @@ class _FocusPageState extends State<FocusPage>
     String? voiceError;
     var sheetClosed = false;
     final speechLanguageTag = _noteSpeechLanguageTag(state);
+    final voiceInputProvider = state.config.voiceInput.provider;
 
     Future<void> cleanupVoiceInput() async {
       if (voiceState != _NoteVoiceInputState.idle) {
         await _systemSpeech.cancelListening();
+        await state.cancelVoiceInputRecording();
+        state.stopVoiceInputProcessing();
       }
     }
 
@@ -5341,6 +5428,34 @@ class _FocusPageState extends State<FocusPage>
             }
 
             String voiceButtonLabel() {
+              if (voiceInputProvider != VoiceInputProviderType.system) {
+                switch (voiceState) {
+                  case _NoteVoiceInputState.starting:
+                    return pickUiText(
+                      i18n,
+                      zh: '正在启动语音输入…',
+                      en: 'Starting voice input...',
+                    );
+                  case _NoteVoiceInputState.listening:
+                    return pickUiText(
+                      i18n,
+                      zh: '点击结束语音输入',
+                      en: 'Tap to stop voice input',
+                    );
+                  case _NoteVoiceInputState.finishing:
+                    return pickUiText(
+                      i18n,
+                      zh: '正在转写语音输入…',
+                      en: 'Transcribing voice input...',
+                    );
+                  case _NoteVoiceInputState.idle:
+                    return pickUiText(
+                      i18n,
+                      zh: '点击开始语音输入',
+                      en: 'Tap to start voice input',
+                    );
+                }
+              }
               switch (voiceState) {
                 case _NoteVoiceInputState.starting:
                   return pickUiText(
@@ -5379,6 +5494,65 @@ class _FocusPageState extends State<FocusPage>
                   voiceState = _NoteVoiceInputState.finishing;
                   voiceError = null;
                 });
+                if (voiceInputProvider != VoiceInputProviderType.system) {
+                  final audioPath = await state.stopVoiceInputRecording();
+                  if (sheetClosed || !sheetContext.mounted) {
+                    return;
+                  }
+                  if ((audioPath ?? '').trim().isEmpty) {
+                    updateSheet(() {
+                      voiceState = _NoteVoiceInputState.idle;
+                      voiceError = _noteVoiceRecorderErrorText(i18n);
+                    });
+                    return;
+                  }
+
+                  final result = await state.transcribeVoiceInputRecording(
+                    audioPath!,
+                  );
+                  if (sheetClosed || !sheetContext.mounted) {
+                    return;
+                  }
+                  if (!result.success) {
+                    updateSheet(() {
+                      voiceState = _NoteVoiceInputState.idle;
+                      voiceError = _noteVoiceInputErrorText(
+                        i18n,
+                        result.error,
+                        result.errorParams,
+                      );
+                    });
+                    return;
+                  }
+
+                  final recognizedText = result.text?.trim() ?? '';
+                  if (recognizedText.isEmpty) {
+                    updateSheet(() {
+                      voiceState = _NoteVoiceInputState.idle;
+                      voiceError = _noteVoiceInputErrorText(
+                        i18n,
+                        result.error ?? 'asrEmptyResult',
+                        result.errorParams,
+                      );
+                    });
+                    return;
+                  }
+
+                  final merged = _mergeRecognizedNoteContent(
+                    contentController.text,
+                    recognizedText,
+                  );
+                  contentController.value = contentController.value.copyWith(
+                    text: merged,
+                    selection: TextSelection.collapsed(offset: merged.length),
+                    composing: TextRange.empty,
+                  );
+                  updateSheet(() {
+                    voiceState = _NoteVoiceInputState.idle;
+                    voiceError = null;
+                  });
+                  return;
+                }
                 final result = await _systemSpeech.stopListening();
                 if (sheetClosed || !sheetContext.mounted) {
                   return;
@@ -5428,6 +5602,23 @@ class _FocusPageState extends State<FocusPage>
                 voiceState = _NoteVoiceInputState.starting;
                 voiceError = null;
               });
+              if (voiceInputProvider != VoiceInputProviderType.system) {
+                final audioPath = await state.startVoiceInputRecording();
+                if (sheetClosed || !sheetContext.mounted) {
+                  return;
+                }
+                if ((audioPath ?? '').trim().isEmpty) {
+                  updateSheet(() {
+                    voiceState = _NoteVoiceInputState.idle;
+                    voiceError = _noteVoiceRecorderErrorText(i18n);
+                  });
+                  return;
+                }
+                updateSheet(() {
+                  voiceState = _NoteVoiceInputState.listening;
+                });
+                return;
+              }
               final startResult = await _systemSpeech.startListening(
                 languageTag: speechLanguageTag,
               );
@@ -5471,7 +5662,21 @@ class _FocusPageState extends State<FocusPage>
                         i18n,
                         voiceState,
                         speechLanguageTag,
+                        voiceInputProvider,
                       ));
+            final resolvedVoiceHelperText =
+                voiceInputProvider == VoiceInputProviderType.system
+                ? voiceHelperText
+                : (voiceError ??
+                      (_noteVoiceRecordingHelperText(
+                            i18n,
+                            voiceState,
+                            speechLanguageTag,
+                            voiceInputProvider,
+                          ) +
+                          (voiceState == _NoteVoiceInputState.idle
+                              ? ' ${pickUiText(i18n, zh: '识别结果会追加到正文，标题留空时会自动生成摘要。', en: 'Transcribed text is appended to the note body, and an empty title will be auto-filled.')}'
+                              : '')));
 
             return Padding(
               padding: EdgeInsets.fromLTRB(
@@ -5538,7 +5743,7 @@ class _FocusPageState extends State<FocusPage>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          voiceHelperText,
+                          resolvedVoiceHelperText,
                           key: const ValueKey<String>('note-voice-helper-text'),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: voiceError == null

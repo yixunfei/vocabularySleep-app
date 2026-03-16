@@ -11,6 +11,8 @@ enum WordPageTransitionStyle { defaultStyle, smooth, fade, pageFlip }
 
 enum TtsProviderType { local, api, customApi }
 
+enum VoiceInputProviderType { api, offline, system }
+
 enum AsrProviderType {
   api,
   customApi,
@@ -371,6 +373,88 @@ class AsrConfig {
       model: json['model']?.toString() ?? 'FunAudioLLM/SenseVoiceSmall',
       language: json['language']?.toString() ?? 'auto',
       baseUrl: json['baseUrl']?.toString(),
+    );
+  }
+}
+
+class VoiceInputConfig {
+  const VoiceInputConfig({
+    required this.provider,
+    required this.language,
+    required this.model,
+    this.apiKey,
+  });
+
+  final VoiceInputProviderType provider;
+  final String language;
+  final String model;
+  final String? apiKey;
+
+  bool get usesSystemSpeech => provider == VoiceInputProviderType.system;
+
+  AsrProviderType get recordingProvider => switch (provider) {
+    VoiceInputProviderType.api => AsrProviderType.api,
+    VoiceInputProviderType.offline => AsrProviderType.offline,
+    VoiceInputProviderType.system => AsrProviderType.api,
+  };
+
+  VoiceInputConfig copyWith({
+    VoiceInputProviderType? provider,
+    String? language,
+    String? model,
+    String? apiKey,
+  }) {
+    return VoiceInputConfig(
+      provider: provider ?? this.provider,
+      language: language ?? this.language,
+      model: model ?? this.model,
+      apiKey: apiKey ?? this.apiKey,
+    );
+  }
+
+  AsrConfig toAsrConfig({AsrConfig? fallback}) {
+    return AsrConfig(
+      enabled: true,
+      provider: recordingProvider,
+      engineOrder: fallback?.engineOrder ?? const <AsrProviderType>[],
+      scoringMethods:
+          fallback?.scoringMethods ??
+          const <PronScoringMethod>[PronScoringMethod.sslEmbedding],
+      dumpRecognitionAudioArtifacts:
+          fallback?.dumpRecognitionAudioArtifacts ?? false,
+      apiKey: apiKey ?? fallback?.apiKey,
+      model: model,
+      language: language,
+      baseUrl: fallback?.baseUrl,
+    );
+  }
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'provider': provider.name,
+    'language': language,
+    'model': model,
+    'apiKey': apiKey,
+  };
+
+  factory VoiceInputConfig.fromJson(Map<String, Object?> json) {
+    final provider = VoiceInputProviderType.values.firstWhere(
+      (item) => item.name == json['provider'],
+      orElse: () => VoiceInputProviderType.system,
+    );
+    return VoiceInputConfig(
+      provider: provider,
+      language: json['language']?.toString() ?? 'auto',
+      model: json['model']?.toString() ?? 'FunAudioLLM/SenseVoiceSmall',
+      apiKey: json['apiKey']?.toString(),
+    );
+  }
+
+  factory VoiceInputConfig.fromLegacyAsr(AsrConfig asr) {
+    return VoiceInputConfig(
+      provider: VoiceInputProviderType.system,
+      language: asr.language,
+      model: asr.model,
+      apiKey: asr.apiKey,
     );
   }
 }
@@ -828,6 +912,7 @@ class PlayConfig {
     required this.overallRepeat,
     required this.order,
     required this.tts,
+    required this.voiceInput,
     required this.asr,
     required this.showText,
     required this.delayBetweenUnitsMs,
@@ -842,6 +927,7 @@ class PlayConfig {
   final int overallRepeat;
   final PlayOrder order;
   final TtsConfig tts;
+  final VoiceInputConfig voiceInput;
   final AsrConfig asr;
   final bool showText;
   final int delayBetweenUnitsMs;
@@ -879,6 +965,11 @@ class PlayConfig {
       maxApiCacheMb: 128,
       model: 'FunAudioLLM/CosyVoice2-0.5B',
     ),
+    voiceInput: const VoiceInputConfig(
+      provider: VoiceInputProviderType.system,
+      language: 'auto',
+      model: 'FunAudioLLM/SenseVoiceSmall',
+    ),
     asr: const AsrConfig(
       enabled: false,
       provider: AsrProviderType.api,
@@ -902,6 +993,7 @@ class PlayConfig {
     int? overallRepeat,
     PlayOrder? order,
     TtsConfig? tts,
+    VoiceInputConfig? voiceInput,
     AsrConfig? asr,
     bool? showText,
     int? delayBetweenUnitsMs,
@@ -916,6 +1008,7 @@ class PlayConfig {
       overallRepeat: overallRepeat ?? this.overallRepeat,
       order: order ?? this.order,
       tts: tts ?? this.tts,
+      voiceInput: voiceInput ?? this.voiceInput,
       asr: asr ?? this.asr,
       showText: showText ?? this.showText,
       delayBetweenUnitsMs: delayBetweenUnitsMs ?? this.delayBetweenUnitsMs,
@@ -937,6 +1030,7 @@ class PlayConfig {
     'overallRepeat': overallRepeat,
     'order': order.name,
     'tts': tts.toJson(),
+    'voiceInput': voiceInput.toJson(),
     'asr': asr.toJson(),
     'showText': showText,
     'delayBetweenUnits': delayBetweenUnitsMs,
@@ -983,6 +1077,11 @@ class PlayConfig {
     final asr = json['asr'] is Map
         ? AsrConfig.fromJson((json['asr'] as Map).cast<String, Object?>())
         : PlayConfig.defaults.asr;
+    final voiceInput = json['voiceInput'] is Map
+        ? VoiceInputConfig.fromJson(
+            (json['voiceInput'] as Map).cast<String, Object?>(),
+          )
+        : VoiceInputConfig.fromLegacyAsr(asr);
     final spellingPlaybackMode = SpellingPlaybackMode.values.firstWhere(
       (item) => item.name == json['spellingPlaybackMode'],
       orElse: () => PlayConfig.defaults.spellingPlaybackMode,
@@ -1024,6 +1123,7 @@ class PlayConfig {
       overallRepeat: (json['overallRepeat'] as num?)?.toInt() ?? 1,
       order: order,
       tts: tts,
+      voiceInput: voiceInput,
       asr: asr,
       showText: json['showText'] as bool? ?? true,
       delayBetweenUnitsMs: (json['delayBetweenUnits'] as num?)?.toInt() ?? 500,

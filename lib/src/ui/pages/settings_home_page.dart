@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../state/app_state.dart';
+import '../../utils/asr_language.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
 import '../widgets/page_header.dart';
@@ -11,6 +12,7 @@ import 'appearance_studio_page.dart';
 import 'language_settings_page.dart';
 import 'playback_advanced_page.dart';
 import 'recognition_settings_page.dart';
+import 'voice_input_settings_page.dart';
 import 'voice_settings_page.dart';
 
 class SettingsHomePage extends StatelessWidget {
@@ -23,6 +25,10 @@ class SettingsHomePage extends StatelessWidget {
     final config = state.config;
     final appearance = config.appearance;
     final mode = experienceModeFromAppearance(appearance);
+    final voiceInputLabel = voiceInputProviderLabel(
+      i18n,
+      config.voiceInput.provider,
+    );
     final asrStatus = config.asr.enabled
         ? pickUiText(
             i18n,
@@ -139,6 +145,14 @@ class SettingsHomePage extends StatelessWidget {
                       fr: 'Voix : ${ttsProviderLabel(i18n, config.tts.provider)}',
                       es: 'Voz: ${ttsProviderLabel(i18n, config.tts.provider)}',
                       ru: 'Голос: ${ttsProviderLabel(i18n, config.tts.provider)}',
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '语音输入: $voiceInputLabel · ${asrLanguageLabel(i18n, config.voiceInput.language)}',
+                      en: 'Voice input: $voiceInputLabel · ${asrLanguageLabel(i18n, config.voiceInput.language)}',
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -274,6 +288,21 @@ class SettingsHomePage extends StatelessWidget {
               style: Theme.of(context).textTheme.labelLarge,
             ),
             onTap: () => _open(context, const VoiceSettingsPage()),
+          ),
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.mic_rounded,
+            title: pickUiText(i18n, zh: '语音输入设置', en: 'Voice input settings'),
+            subtitle: pickUiText(
+              i18n,
+              zh: '快速笔记语音输入的引擎、语言与离线模型。',
+              en: 'Provider, language, and offline package for quick-note voice input.',
+            ),
+            trailing: Text(
+              voiceInputLabel,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            onTap: () => _open(context, const VoiceInputSettingsPage()),
           ),
           const SizedBox(height: 12),
           SettingTile(

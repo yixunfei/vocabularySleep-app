@@ -201,6 +201,22 @@ String asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
   };
 }
 
+String voiceInputProviderLabel(AppI18n i18n, VoiceInputProviderType provider) {
+  return switch (provider) {
+    VoiceInputProviderType.api => i18n.t('siliconFlowApi'),
+    VoiceInputProviderType.offline => pickUiText(
+      i18n,
+      zh: '离线引擎',
+      en: 'Offline engine',
+    ),
+    VoiceInputProviderType.system => pickUiText(
+      i18n,
+      zh: '系统语音识别',
+      en: 'System speech recognition',
+    ),
+  };
+}
+
 String searchModeLabel(AppI18n i18n, SearchMode mode) {
   return switch (mode) {
     SearchMode.all => i18n.t('all'),

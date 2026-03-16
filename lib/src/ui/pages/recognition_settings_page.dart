@@ -524,8 +524,8 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
                   Text(
                     pickUiText(
                       i18n,
-                      zh: '快速笔记的系统语音听写会复用这里的识别语言设置。',
-                      en: 'Quick note system dictation reuses this setting. Prefer System default or a full locale such as en-US or zh-CN.',
+                      zh: '语音输入已独立到“语音输入设置”。这里的语言只影响跟读与练习识别。',
+                      en: 'Voice input is configured separately. This language now applies only to follow-along and practice recognition.',
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,

@@ -8,10 +8,36 @@ void main() {
   group('play config spelling', () {
     test('defaults ASR language to auto for system-aware speech input', () {
       expect(PlayConfig.defaults.asr.language, 'auto');
+      expect(
+        PlayConfig.defaults.voiceInput.provider,
+        VoiceInputProviderType.system,
+      );
+      expect(PlayConfig.defaults.voiceInput.language, 'auto');
 
       final restored = PlayConfig.fromJson(<String, Object?>{});
 
       expect(restored.asr.language, 'auto');
+      expect(restored.voiceInput.provider, VoiceInputProviderType.system);
+      expect(restored.voiceInput.language, 'auto');
+    });
+
+    test('legacy config migrates voice input fields from ASR config', () {
+      final restored = PlayConfig.fromJson(<String, Object?>{
+        'asr': <String, Object?>{
+          'enabled': true,
+          'provider': 'api',
+          'engineOrder': <String>['api'],
+          'scoringMethods': <String>['sslEmbedding'],
+          'apiKey': 'legacy-key',
+          'model': 'legacy-model',
+          'language': 'ja-JP',
+        },
+      });
+
+      expect(restored.voiceInput.provider, VoiceInputProviderType.system);
+      expect(restored.voiceInput.language, 'ja-JP');
+      expect(restored.voiceInput.model, 'legacy-model');
+      expect(restored.voiceInput.apiKey, 'legacy-key');
     });
 
     test('spellWord can group by letter pairs', () {
@@ -54,6 +80,12 @@ void main() {
 
     test('json round-trip preserves spelling and transition settings', () {
       final config = PlayConfig.defaults.copyWith(
+        voiceInput: PlayConfig.defaults.voiceInput.copyWith(
+          provider: VoiceInputProviderType.api,
+          language: 'en-US',
+          model: 'test-model',
+          apiKey: 'secret',
+        ),
         spellingPlaybackMode: SpellingPlaybackMode.pairs,
         wordPageTransitionStyle: WordPageTransitionStyle.pageFlip,
         appearance: PlayConfig.defaults.appearance.copyWith(
@@ -65,6 +97,10 @@ void main() {
       final restored = PlayConfig.fromJson(config.toJson());
 
       expect(restored.spellingPlaybackMode, SpellingPlaybackMode.pairs);
+      expect(restored.voiceInput.provider, VoiceInputProviderType.api);
+      expect(restored.voiceInput.language, 'en-US');
+      expect(restored.voiceInput.model, 'test-model');
+      expect(restored.voiceInput.apiKey, 'secret');
       expect(
         restored.wordPageTransitionStyle,
         WordPageTransitionStyle.pageFlip,
