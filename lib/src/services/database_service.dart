@@ -465,6 +465,7 @@ class AppDatabaseService {
         sort_order INTEGER DEFAULT 0,
         due_at DATETIME,
         alarm_enabled INTEGER DEFAULT 0,
+        sync_to_system_calendar INTEGER DEFAULT 1,
         created_at DATETIME,
         completed_at DATETIME
       );
@@ -645,6 +646,11 @@ class AppDatabaseService {
     if (!columnNames.contains('alarm_enabled')) {
       _db.execute(
         'ALTER TABLE todos ADD COLUMN alarm_enabled INTEGER DEFAULT 0;',
+      );
+    }
+    if (!columnNames.contains('sync_to_system_calendar')) {
+      _db.execute(
+        'ALTER TABLE todos ADD COLUMN sync_to_system_calendar INTEGER DEFAULT 1;',
       );
     }
     if (!columnNames.contains('sort_order')) {
@@ -1670,7 +1676,7 @@ class AppDatabaseService {
         : _nextTodoSortOrder();
     final normalizedDeferred = item.completed ? false : item.deferred;
     _db.execute(
-      'INSERT INTO todos (content, completed, deferred, priority, category, note, color, sort_order, due_at, alarm_enabled, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO todos (content, completed, deferred, priority, category, note, color, sort_order, due_at, alarm_enabled, sync_to_system_calendar, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       <Object?>[
         item.content,
         item.completed ? 1 : 0,
@@ -1682,6 +1688,7 @@ class AppDatabaseService {
         sortOrder,
         item.dueAt?.toIso8601String(),
         item.alarmEnabled ? 1 : 0,
+        item.syncToSystemCalendar ? 1 : 0,
         item.createdAt?.toIso8601String(),
         item.completedAt?.toIso8601String(),
       ],
@@ -1693,7 +1700,7 @@ class AppDatabaseService {
     if (item.id == null) return;
     final normalizedDeferred = item.completed ? false : item.deferred;
     _db.execute(
-      'UPDATE todos SET content = ?, completed = ?, deferred = ?, priority = ?, category = ?, note = ?, color = ?, sort_order = ?, due_at = ?, alarm_enabled = ?, completed_at = ? WHERE id = ?',
+      'UPDATE todos SET content = ?, completed = ?, deferred = ?, priority = ?, category = ?, note = ?, color = ?, sort_order = ?, due_at = ?, alarm_enabled = ?, sync_to_system_calendar = ?, completed_at = ? WHERE id = ?',
       <Object?>[
         item.content,
         item.completed ? 1 : 0,
@@ -1705,6 +1712,7 @@ class AppDatabaseService {
         item.sortOrder,
         item.dueAt?.toIso8601String(),
         item.alarmEnabled ? 1 : 0,
+        item.syncToSystemCalendar ? 1 : 0,
         item.completedAt?.toIso8601String(),
         item.id,
       ],

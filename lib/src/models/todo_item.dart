@@ -13,6 +13,7 @@ class TodoItem {
     this.sortOrder = 0,
     this.dueAt,
     this.alarmEnabled = false,
+    this.syncToSystemCalendar = true,
     this.createdAt,
     this.completedAt,
   });
@@ -28,6 +29,7 @@ class TodoItem {
   final int sortOrder;
   final DateTime? dueAt;
   final bool alarmEnabled;
+  final bool syncToSystemCalendar;
   final DateTime? createdAt;
   final DateTime? completedAt;
 
@@ -46,6 +48,7 @@ class TodoItem {
     int? sortOrder,
     Object? dueAt = _unset,
     bool? alarmEnabled,
+    bool? syncToSystemCalendar,
     DateTime? createdAt,
     Object? completedAt = _unset,
   }) {
@@ -63,6 +66,7 @@ class TodoItem {
       sortOrder: sortOrder ?? this.sortOrder,
       dueAt: identical(dueAt, _unset) ? this.dueAt : dueAt as DateTime?,
       alarmEnabled: alarmEnabled ?? this.alarmEnabled,
+      syncToSystemCalendar: syncToSystemCalendar ?? this.syncToSystemCalendar,
       createdAt: createdAt ?? this.createdAt,
       completedAt: identical(completedAt, _unset)
           ? this.completedAt
@@ -85,6 +89,9 @@ class TodoItem {
           ? DateTime.tryParse(map['due_at'] as String)
           : null,
       alarmEnabled: (map['alarm_enabled'] as num?)?.toInt() == 1,
+      syncToSystemCalendar: map['sync_to_system_calendar'] == null
+          ? true
+          : (map['sync_to_system_calendar'] as num?)?.toInt() == 1,
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'] as String)
           : null,
@@ -107,6 +114,7 @@ class TodoItem {
       'sort_order': sortOrder,
       'due_at': dueAt?.toIso8601String(),
       'alarm_enabled': alarmEnabled ? 1 : 0,
+      'sync_to_system_calendar': syncToSystemCalendar ? 1 : 0,
       'created_at': createdAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
     };

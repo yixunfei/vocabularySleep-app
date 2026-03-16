@@ -76,7 +76,9 @@ class _MemoryDatabaseService extends AppDatabaseService {
   @override
   void reorderTodos(List<int> orderedIds) {
     for (var index = 0; index < orderedIds.length; index += 1) {
-      final todoIndex = todos.indexWhere((todo) => todo.id == orderedIds[index]);
+      final todoIndex = todos.indexWhere(
+        (todo) => todo.id == orderedIds[index],
+      );
       if (todoIndex < 0) {
         continue;
       }
@@ -131,7 +133,17 @@ class _FakeSystemCalendarService implements SystemCalendarService {
 
   @override
   Future<void> syncTodo(TodoItem item) async {
-    syncedTodos.add(item);
+    if (item.id == null) {
+      return;
+    }
+    if (item.syncToSystemCalendar &&
+        item.hasReminder &&
+        !item.completed &&
+        !item.isDeferred) {
+      syncedTodos.add(item);
+      return;
+    }
+    removedTodoIds.add(item.id!);
   }
 
   @override
@@ -413,10 +425,7 @@ void main() {
     test('saving a reminder todo syncs it to the system calendar', () async {
       final database = _MemoryDatabaseService();
       final systemCalendar = _FakeSystemCalendarService();
-      final service = FocusService(
-        database,
-        systemCalendar: systemCalendar,
-      );
+      final service = FocusService(database, systemCalendar: systemCalendar);
       await service.init();
 
       service.addTodo(
@@ -431,27 +440,48 @@ void main() {
       expect(systemCalendar.syncedTodos.single.hasReminder, isTrue);
     });
 
-    test('deleting a reminder todo removes its system calendar event', () async {
-      final database = _MemoryDatabaseService();
-      final systemCalendar = _FakeSystemCalendarService();
-      final service = FocusService(
-        database,
-        systemCalendar: systemCalendar,
-      );
-      await service.init();
+    test(
+      'saving a local-only reminder todo does not sync it to the system calendar',
+      () async {
+        final database = _MemoryDatabaseService();
+        final systemCalendar = _FakeSystemCalendarService();
+        final service = FocusService(database, systemCalendar: systemCalendar);
+        await service.init();
 
-      service.addTodo(
-        'Remove synced reminder',
-        dueAt: DateTime(2026, 3, 15, 11, 0),
-        alarmEnabled: true,
-      );
-      await pumpEventQueue();
+        service.addTodo(
+          'Keep reminder inside app only',
+          dueAt: DateTime(2026, 3, 15, 14, 0),
+          alarmEnabled: true,
+          syncToSystemCalendar: false,
+        );
+        await pumpEventQueue();
 
-      final todoId = systemCalendar.syncedTodos.single.id!;
-      service.deleteTodo(todoId);
-      await pumpEventQueue();
+        expect(systemCalendar.syncedTodos, isEmpty);
+        expect(systemCalendar.removedTodoIds, hasLength(1));
+      },
+    );
 
-      expect(systemCalendar.removedTodoIds, contains(todoId));
-    });
+    test(
+      'deleting a reminder todo removes its system calendar event',
+      () async {
+        final database = _MemoryDatabaseService();
+        final systemCalendar = _FakeSystemCalendarService();
+        final service = FocusService(database, systemCalendar: systemCalendar);
+        await service.init();
+
+        service.addTodo(
+          'Remove synced reminder',
+          dueAt: DateTime(2026, 3, 15, 11, 0),
+          alarmEnabled: true,
+        );
+        await pumpEventQueue();
+
+        final todoId = systemCalendar.syncedTodos.single.id!;
+        service.deleteTodo(todoId);
+        await pumpEventQueue();
+
+        expect(systemCalendar.removedTodoIds, contains(todoId));
+      },
+    );
   });
 }

@@ -232,6 +232,43 @@ void main() {
     expect(updated.isDeferred, isFalse);
   });
 
+  test(
+    'todo calendar sync preference persists and defaults to enabled',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      database.insertTodo(
+        TodoItem(
+          content: 'Keep syncing by default',
+          alarmEnabled: true,
+          dueAt: DateTime(2026, 3, 16, 9),
+          createdAt: DateTime(2026, 3, 16),
+        ),
+      );
+      database.insertTodo(
+        TodoItem(
+          content: 'Only keep in-app reminder',
+          alarmEnabled: true,
+          dueAt: DateTime(2026, 3, 16, 10),
+          syncToSystemCalendar: false,
+          createdAt: DateTime(2026, 3, 16),
+        ),
+      );
+
+      final synced = database.getTodos().singleWhere(
+        (item) => item.content == 'Keep syncing by default',
+      );
+      final localOnly = database.getTodos().singleWhere(
+        (item) => item.content == 'Only keep in-app reminder',
+      );
+
+      expect(synced.syncToSystemCalendar, isTrue);
+      expect(localOnly.syncToSystemCalendar, isFalse);
+    },
+  );
+
   test('word memory progress persists spaced repetition fields', () async {
     final database = AppDatabaseService(WordbookImportService());
     await database.init();

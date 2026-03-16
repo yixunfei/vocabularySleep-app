@@ -4892,6 +4892,7 @@ class _FocusPageState extends State<FocusPage>
     var selectedColor = _parseHexColor(todo?.color);
     var dueAt = todo?.dueAt;
     var alarmEnabled = todo?.alarmEnabled ?? false;
+    var syncToSystemCalendar = todo?.syncToSystemCalendar ?? true;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -5110,6 +5111,40 @@ class _FocusPageState extends State<FocusPage>
                         i18n.t('todoReminderStorageHint'),
                         style: theme.textTheme.bodySmall,
                       ),
+                      const SizedBox(height: 8),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: syncToSystemCalendar,
+                        title: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '同步到系统日历',
+                            en: 'Sync to system calendar',
+                            ja: 'システムカレンダーに同期',
+                            de: 'Mit Systemkalender synchronisieren',
+                            fr: 'Synchroniser avec le calendrier systeme',
+                            es: 'Sincronizar con el calendario del sistema',
+                            ru: 'Синхронизировать с системным календарем',
+                          ),
+                        ),
+                        subtitle: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '开启后会写入系统日历事件；关闭后只保留应用内提醒。',
+                            en: 'When enabled, reminders are written to the system calendar. When disabled, they stay only inside the app.',
+                            ja: '有効にするとシステムカレンダーへ予定を作成し、無効にするとアプリ内のリマインダーだけを保持します。',
+                            de: 'Wenn aktiviert, werden Erinnerungen in den Systemkalender geschrieben. Andernfalls bleiben sie nur in der App.',
+                            fr: 'Lorsque cette option est activee, le rappel est ajoute au calendrier systeme. Sinon, il reste uniquement dans l’application.',
+                            es: 'Al activarlo, el recordatorio se agrega al calendario del sistema. Si se desactiva, solo se conserva dentro de la app.',
+                            ru: 'При включении напоминание будет сохранено в системный календарь. При выключении оно останется только внутри приложения.',
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setSheetState(() {
+                            syncToSystemCalendar = value;
+                          });
+                        },
+                      ),
                     ],
                     const SizedBox(height: 16),
                     Row(
@@ -5151,6 +5186,7 @@ class _FocusPageState extends State<FocusPage>
                                 sortOrder: todo?.sortOrder ?? 0,
                                 dueAt: dueAt,
                                 alarmEnabled: alarmEnabled && dueAt != null,
+                                syncToSystemCalendar: syncToSystemCalendar,
                                 createdAt: todo?.createdAt ?? DateTime.now(),
                                 completedAt:
                                     draftState == _TodoDraftState.completed

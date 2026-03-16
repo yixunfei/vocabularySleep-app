@@ -622,6 +622,7 @@ class FocusService extends ChangeNotifier {
     String? color,
     DateTime? dueAt,
     bool alarmEnabled = false,
+    bool syncToSystemCalendar = true,
   }) {
     if (!_initialized || content.trim().isEmpty) return;
     saveTodo(
@@ -633,6 +634,7 @@ class FocusService extends ChangeNotifier {
         color: color,
         dueAt: dueAt,
         alarmEnabled: alarmEnabled && dueAt != null,
+        syncToSystemCalendar: syncToSystemCalendar,
         createdAt: DateTime.now(),
       ),
     );
@@ -843,6 +845,7 @@ class FocusService extends ChangeNotifier {
       note: (item.note ?? '').trim().isEmpty ? null : item.note!.trim(),
       dueAt: item.alarmEnabled ? item.dueAt : null,
       alarmEnabled: item.alarmEnabled && item.dueAt != null,
+      syncToSystemCalendar: item.syncToSystemCalendar,
       completedAt: item.completed ? item.completedAt : null,
     );
   }

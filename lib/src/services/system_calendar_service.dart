@@ -41,18 +41,19 @@ class PlatformSystemCalendarService implements SystemCalendarService {
       }
 
       final links = _loadEventLinks();
-      final response = await _invokeCalendarMethod('upsertTodoReminder', <String, Object?>{
-        'todoId': todoId,
-        'title': item.content,
-        'description': _buildTodoDescription(item),
-        'startAtMillis': item.dueAt!.millisecondsSinceEpoch,
-        'endAtMillis': item.dueAt!
-            .add(const Duration(minutes: 30))
-            .millisecondsSinceEpoch,
-        if (links['$todoId'] case final String existingEventId
-            when existingEventId.trim().isNotEmpty)
-          'eventId': existingEventId.trim(),
-      });
+      final response =
+          await _invokeCalendarMethod('upsertTodoReminder', <String, Object?>{
+            'todoId': todoId,
+            'title': item.content,
+            'description': _buildTodoDescription(item),
+            'startAtMillis': item.dueAt!.millisecondsSinceEpoch,
+            'endAtMillis': item.dueAt!
+                .add(const Duration(minutes: 30))
+                .millisecondsSinceEpoch,
+            if (links['$todoId'] case final String existingEventId
+                when existingEventId.trim().isNotEmpty)
+              'eventId': existingEventId.trim(),
+          });
       final success = response['success'] == true;
       final eventId = '${response['eventId'] ?? ''}'.trim();
       if (!success || eventId.isEmpty) {
@@ -88,7 +89,10 @@ class PlatformSystemCalendarService implements SystemCalendarService {
           defaultTargetPlatform == TargetPlatform.iOS);
 
   bool _shouldSyncTodo(TodoItem item) {
-    return item.hasReminder && !item.completed && !item.isDeferred;
+    return item.syncToSystemCalendar &&
+        item.hasReminder &&
+        !item.completed &&
+        !item.isDeferred;
   }
 
   Future<void> _removeTodoReminderInternal(int todoId) async {
@@ -98,9 +102,10 @@ class PlatformSystemCalendarService implements SystemCalendarService {
       return;
     }
 
-    final response = await _invokeCalendarMethod('removeTodoReminder', <String, Object?>{
-      'eventId': eventId,
-    });
+    final response = await _invokeCalendarMethod(
+      'removeTodoReminder',
+      <String, Object?>{'eventId': eventId},
+    );
     final success = response['success'] == true;
     final errorCode = '${response['errorCode'] ?? ''}'.trim();
     if (success || errorCode == 'not_found') {
@@ -125,17 +130,12 @@ class PlatformSystemCalendarService implements SystemCalendarService {
         'errorCode': 'unsupported',
       };
     } catch (_) {
-      return const <String, Object?>{
-        'success': false,
-        'errorCode': 'failed',
-      };
+      return const <String, Object?>{'success': false, 'errorCode': 'failed'};
     }
   }
 
   Future<void> _enqueue(Future<void> Function() operation) {
-    final next = _operationQueue
-        .catchError((_) {})
-        .then((_) => operation());
+    final next = _operationQueue.catchError((_) {}).then((_) => operation());
     _operationQueue = next.catchError((_) {});
     return next;
   }
