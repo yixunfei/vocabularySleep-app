@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../layout/app_width_tier.dart';
+import 'app_logo.dart';
 
 class PageHeader extends StatelessWidget {
   const PageHeader({
@@ -19,6 +20,7 @@ class PageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final resolvedAction = action ?? const AppLogoMark();
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = AppWidthBreakpoints.tierFor(
@@ -43,16 +45,13 @@ class PageHeader extends StatelessWidget {
           ],
         );
 
-        if (action == null) {
-          return textBlock;
-        }
         if (isCompact) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               textBlock,
               const SizedBox(height: 12),
-              Align(alignment: Alignment.centerLeft, child: action!),
+              Align(alignment: Alignment.centerLeft, child: resolvedAction),
             ],
           );
         }
@@ -61,7 +60,7 @@ class PageHeader extends StatelessWidget {
           children: <Widget>[
             Expanded(child: textBlock),
             const SizedBox(width: 12),
-            action!,
+            resolvedAction,
           ],
         );
       },

@@ -54,9 +54,9 @@ function Ensure-BuildTools {
 }
 
 function Stop-FlutterAppProcess {
-  $running = Get-Process flutter_app -ErrorAction SilentlyContinue
+  $running = Get-Process xianyushengxi -ErrorAction SilentlyContinue
   if ($running) {
-    Write-Host "Stopping existing flutter_app process..."
+    Write-Host "Stopping existing xianyushengxi process..."
     $running | Stop-Process -Force
     Start-Sleep -Milliseconds 800
   }
@@ -80,8 +80,10 @@ function Remove-LockedRunnerArtifacts {
 
 function Reset-AppState {
   $paths = @(
-    (Join-Path $env:APPDATA "com.example\flutter_app"),
-    (Join-Path $env:LOCALAPPDATA "com.example\flutter_app")
+    (Join-Path $env:APPDATA "group.zn\xianyushengxi"),
+    (Join-Path $env:LOCALAPPDATA "group.zn\xianyushengxi"),
+    (Join-Path $env:APPDATA "group.zn\咸鱼声息"),
+    (Join-Path $env:LOCALAPPDATA "group.zn\咸鱼声息")
   )
   foreach ($path in $paths) {
     if (-not (Test-Path $path)) { continue }

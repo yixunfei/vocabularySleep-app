@@ -3,9 +3,13 @@ param(
   [switch]$Follow
 )
 
-$logRoot = Join-Path $env:APPDATA 'com.example\flutter_app\logs'
-if (-not (Test-Path $logRoot)) {
-  Write-Error "Log directory not found: $logRoot"
+$candidateRoots = @(
+  (Join-Path $env:APPDATA 'group.zn\xianyushengxi\logs'),
+  (Join-Path $env:APPDATA 'group.zn\咸鱼声息\logs')
+)
+$logRoot = $candidateRoots | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $logRoot) {
+  Write-Error "Log directory not found. Checked: $($candidateRoots -join ', ')"
   exit 1
 }
 

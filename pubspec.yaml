@@ -1,5 +1,5 @@
 name: vocabulary_sleep_app
-description: "咸鱼声息 - 词汇学习与睡眠辅助应用"
+description: "咸鱼声息 - 词汇学习、专注与助眠 Flutter 应用"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -67,7 +67,19 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "logo.jpg"
+  image_path: "assets/branding/logo.jpg"
+  web:
+    generate: true
+    image_path: "assets/branding/logo.jpg"
+    background_color: "#0F172A"
+    theme_color: "#0F172A"
+  windows:
+    generate: true
+    image_path: "assets/branding/logo.jpg"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/branding/logo.jpg"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -80,6 +92,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/branding/
     - assets/ambient/noise/
     - assets/ambient/nature/
     - assets/ambient/rain/

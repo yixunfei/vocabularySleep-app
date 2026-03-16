@@ -1,4 +1,4 @@
-package com.example.flutter_app
+package group.zn.xianyushengxi
 
 import android.Manifest
 import android.content.ContentUris
