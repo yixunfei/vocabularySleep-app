@@ -71,6 +71,30 @@ class SettingsService {
     _database.setSetting('weatherEnabled', enabled ? '1' : '0');
   }
 
+  bool loadStartupTodoPromptEnabled() {
+    return _database.getSetting('startupTodoPromptEnabled') == '1';
+  }
+
+  void saveStartupTodoPromptEnabled(bool enabled) {
+    _database.setSetting('startupTodoPromptEnabled', enabled ? '1' : '0');
+  }
+
+  String? loadStartupTodoPromptSuppressedDate() {
+    final raw = _database.getSetting('startupTodoPromptSuppressedDate');
+    if (raw == null) {
+      return null;
+    }
+    final normalized = raw.trim();
+    return normalized.isEmpty ? null : normalized;
+  }
+
+  void saveStartupTodoPromptSuppressedDate(String? dateKey) {
+    _database.setSetting(
+      'startupTodoPromptSuppressedDate',
+      dateKey?.trim() ?? '',
+    );
+  }
+
   Map<String, bool> loadTestModeState() {
     final raw = _database.getSetting('testModeState');
     if (raw == null || raw.trim().isEmpty) {

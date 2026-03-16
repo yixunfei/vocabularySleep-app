@@ -10,6 +10,7 @@ import '../i18n/app_i18n.dart';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
+import '../models/todo_item.dart';
 import '../models/weather_snapshot.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
@@ -19,6 +20,7 @@ import '../services/ambient_service.dart';
 import '../services/app_log_service.dart';
 import '../services/asr_service.dart';
 import '../services/database_service.dart';
+import '../services/daily_quote_service.dart';
 import '../services/focus_service.dart';
 import '../services/memory_algorithm.dart';
 import '../services/memory_lane_selector.dart';
@@ -58,13 +60,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required AsrService asr,
     required FocusService focusService,
     WeatherService? weatherService,
+    DailyQuoteService? dailyQuoteService,
   }) : _database = database,
        _settings = settings,
        _playback = playback,
        _ambient = ambient,
        _asr = asr,
        _focusService = focusService,
-       _weatherService = weatherService ?? WeatherService() {
+       _weatherService = weatherService ?? WeatherService(),
+       _dailyQuoteService = dailyQuoteService ?? DailyQuoteService() {
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -75,6 +79,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final AsrService _asr;
   final FocusService _focusService;
   final WeatherService _weatherService;
+  final DailyQuoteService _dailyQuoteService;
   final AppLogService _log = AppLogService.instance;
 
   FocusService get focusService => _focusService;
@@ -104,6 +109,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
+  bool _startupTodoPromptEnabled = false;
+  String? _startupTodoPromptSuppressedDate;
+  String? _startupDailyQuote;
+  String _startupDailyQuoteDateKey = '';
+  bool _startupDailyQuoteLoading = false;
   bool _testModeEnabled = false;
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
@@ -185,6 +195,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool get weatherEnabled => _weatherEnabled;
   WeatherSnapshot? get weatherSnapshot => _weatherSnapshot;
   bool get weatherLoading => _weatherLoading;
+  bool get startupTodoPromptEnabled => _startupTodoPromptEnabled;
+  bool get shouldShowStartupTodoPromptToday =>
+      _startupTodoPromptEnabled &&
+      _startupTodoPromptSuppressedDate != _todayDateKey();
+  String? get startupDailyQuote =>
+      _startupDailyQuoteDateKey == _todayDateKey() ? _startupDailyQuote : null;
+  bool get startupDailyQuoteLoading => _startupDailyQuoteLoading;
+  List<TodoItem> get todayActiveTodos {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+    return _focusService
+        .getTodos()
+        .where(
+          (item) =>
+              !item.completed &&
+              !item.isDeferred &&
+              item.dueAt != null &&
+              !item.dueAt!.isBefore(todayStart) &&
+              item.dueAt!.isBefore(tomorrowStart),
+        )
+        .toList(growable: false);
+  }
+
   String get uiLanguageSelection =>
       _uiLanguageFollowsSystem ? SettingsService.uiLanguageSystem : _uiLanguage;
   bool get testModeEnabled => _testModeEnabled;
@@ -341,6 +375,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _startupPage = _settings.loadStartupPage();
       _focusStartupTab = _settings.loadFocusStartupTab();
       _weatherEnabled = _settings.loadWeatherEnabled();
+      _startupTodoPromptEnabled = _settings.loadStartupTodoPromptEnabled();
+      _startupTodoPromptSuppressedDate = _settings
+          .loadStartupTodoPromptSuppressedDate();
       final testModeState = _settings.loadTestModeState();
       _testModeEnabled = testModeState['enabled'] ?? false;
       _testModeRevealed = testModeState['revealed'] ?? false;
@@ -468,25 +505,35 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     unawaited(refreshWeather(force: true));
   }
 
+  void setStartupTodoPromptEnabled(bool enabled) {
+    if (_startupTodoPromptEnabled == enabled) {
+      return;
+    }
+    _startupTodoPromptEnabled = enabled;
+    _settings.saveStartupTodoPromptEnabled(enabled);
+    notifyListeners();
+  }
+
+  void suppressStartupTodoPromptForToday() {
+    final today = _todayDateKey();
+    if (_startupTodoPromptSuppressedDate == today) {
+      return;
+    }
+    _startupTodoPromptSuppressedDate = today;
+    _settings.saveStartupTodoPromptSuppressedDate(today);
+    notifyListeners();
+  }
+
+  Future<void> refreshStartupTodoPromptContent({bool force = false}) async {
+    await Future.wait(<Future<void>>[
+      _refreshStartupDailyQuote(force: force),
+      _refreshWeatherSnapshot(force: force),
+    ]);
+  }
+
   Future<void> refreshWeather({bool force = false}) async {
     if (!_weatherEnabled) return;
-    if (_weatherLoading) return;
-    if (!force && !_isWeatherStale()) return;
-
-    _weatherLoading = true;
-    notifyListeners();
-    try {
-      _weatherSnapshot = await _weatherService.fetchCurrentWeather();
-    } catch (error) {
-      _log.w(
-        'app_state',
-        'weather refresh failed',
-        data: <String, Object?>{'error': '$error'},
-      );
-    } finally {
-      _weatherLoading = false;
-      notifyListeners();
-    }
+    await _refreshWeatherSnapshot(force: force);
   }
 
   void refreshWeatherIfStale() {
@@ -2797,6 +2844,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _startupPage = _settings.loadStartupPage();
     _focusStartupTab = _settings.loadFocusStartupTab();
     _weatherEnabled = _settings.loadWeatherEnabled();
+    _startupTodoPromptEnabled = _settings.loadStartupTodoPromptEnabled();
+    _startupTodoPromptSuppressedDate = _settings
+        .loadStartupTodoPromptSuppressedDate();
     _rememberedWords = _settings.loadRememberedWords();
 
     final testModeState = _settings.loadTestModeState();
@@ -2836,6 +2886,55 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     return DateTime.now().difference(snapshot.fetchedAt) >=
         const Duration(minutes: 30);
+  }
+
+  Future<void> _refreshWeatherSnapshot({bool force = false}) async {
+    if (_weatherLoading) return;
+    if (!force && !_isWeatherStale()) return;
+
+    _weatherLoading = true;
+    notifyListeners();
+    try {
+      _weatherSnapshot = await _weatherService.fetchCurrentWeather();
+    } catch (error) {
+      _log.w(
+        'app_state',
+        'weather refresh failed',
+        data: <String, Object?>{'error': '$error'},
+      );
+    } finally {
+      _weatherLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _refreshStartupDailyQuote({bool force = false}) async {
+    if (_startupDailyQuoteLoading) {
+      return;
+    }
+    final today = _todayDateKey();
+    final hasFreshQuote =
+        _startupDailyQuoteDateKey == today &&
+        (_startupDailyQuote?.trim().isNotEmpty ?? false);
+    if (!force && hasFreshQuote) {
+      return;
+    }
+
+    _startupDailyQuoteLoading = true;
+    notifyListeners();
+    try {
+      _startupDailyQuote = await _dailyQuoteService.fetchQuote();
+      _startupDailyQuoteDateKey = today;
+    } catch (error) {
+      _log.w(
+        'app_state',
+        'daily quote refresh failed',
+        data: <String, Object?>{'error': '$error'},
+      );
+    } finally {
+      _startupDailyQuoteLoading = false;
+      notifyListeners();
+    }
   }
 
   void _clearPlaybackSession({required bool notify}) {

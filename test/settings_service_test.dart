@@ -81,6 +81,21 @@ void main() {
     expect(restored, isTrue);
   });
 
+  test('startup todo prompt settings persist through SettingsService', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+
+    expect(settings.loadStartupTodoPromptEnabled(), isFalse);
+    expect(settings.loadStartupTodoPromptSuppressedDate(), isNull);
+
+    settings.saveStartupTodoPromptEnabled(true);
+    settings.saveStartupTodoPromptSuppressedDate('2026-03-16');
+
+    final restored = SettingsService(database);
+    expect(restored.loadStartupTodoPromptEnabled(), isTrue);
+    expect(restored.loadStartupTodoPromptSuppressedDate(), '2026-03-16');
+  });
+
   test('remembered words persist through SettingsService', () {
     final database = _MemoryDatabaseService();
     final settings = SettingsService(database);

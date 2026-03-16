@@ -109,6 +109,56 @@ class SettingsHomePage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
+                    pickUiText(i18n, zh: '启动提示', en: 'Startup prompt'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '进入主界面时弹出今日待办、每日一言和天气摘要。',
+                      en: 'Show today\'s todos, daily quote, and weather after entering the main screen.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: state.startupTodoPromptEnabled,
+                    title: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '开启今日待办提示',
+                        en: 'Enable today prompt',
+                      ),
+                    ),
+                    subtitle: Text(
+                      state.startupTodoPromptEnabled
+                          ? pickUiText(
+                              i18n,
+                              zh: '已开启，可在弹窗中选择“今日不再弹出”。',
+                              en: 'Enabled. You can still mute it for the rest of the day from the popup.',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '关闭后启动时不会自动弹出今日摘要。',
+                              en: 'When off, the startup summary will not appear automatically.',
+                            ),
+                    ),
+                    onChanged: state.setStartupTodoPromptEnabled,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
                     pickUiText(
                       i18n,
                       zh: '当前配置摘要',

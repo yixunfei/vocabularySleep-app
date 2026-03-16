@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../i18n/app_i18n.dart';
+import '../models/todo_item.dart';
+import '../models/weather_snapshot.dart';
 import '../state/app_state.dart';
 import 'pages/focus_page.dart';
 import 'pages/library_page.dart';
@@ -30,6 +34,7 @@ class _AppShellState extends State<AppShell> {
   double _miniPlayerReservedHeight = 0;
   VoidCallback? _scrollLibraryToTop;
   bool _exitDialogVisible = false;
+  bool _startupPromptShown = false;
 
   @override
   void initState() {
@@ -40,12 +45,100 @@ class _AppShellState extends State<AppShell> {
       state.init().then((_) {
         if (!mounted) return;
         final nextIndex = state.startupPage.index;
-        if (_index == nextIndex) return;
-        setState(() {
-          _index = nextIndex;
+        if (_index != nextIndex) {
+          setState(() {
+            _index = nextIndex;
+          });
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          unawaited(_maybeShowStartupTodoPrompt());
         });
       });
     });
+  }
+
+  Future<void> _maybeShowStartupTodoPrompt() async {
+    if (_startupPromptShown || !mounted) {
+      return;
+    }
+    final state = context.read<AppState>();
+    if (!state.shouldShowStartupTodoPromptToday) {
+      return;
+    }
+
+    _startupPromptShown = true;
+    unawaited(state.refreshStartupTodoPromptContent(force: true));
+
+    var suppressForToday = false;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return Consumer<AppState>(
+              builder: (dialogContext, state, _) {
+                final i18n = AppI18n(state.uiLanguage);
+                return AlertDialog(
+                  key: const ValueKey<String>('startup-todo-prompt-dialog'),
+                  title: Text(
+                    pickUiText(i18n, zh: '今日待办提示', en: 'Today at a glance'),
+                  ),
+                  content: SizedBox(
+                    width: 440,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          _buildStartupPromptTodoSection(i18n, state),
+                          const SizedBox(height: 16),
+                          _buildStartupPromptQuoteSection(i18n, state),
+                          const SizedBox(height: 16),
+                          _buildStartupPromptWeatherSection(i18n, state),
+                          const SizedBox(height: 12),
+                          CheckboxListTile.adaptive(
+                            key: const ValueKey<String>(
+                              'startup-todo-prompt-dont-show',
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            value: suppressForToday,
+                            title: Text(
+                              pickUiText(
+                                i18n,
+                                zh: '今日不再弹出',
+                                en: "Don't show again today",
+                              ),
+                            ),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                suppressForToday = value ?? false;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  actions: <Widget>[
+                    FilledButton(
+                      key: const ValueKey<String>('startup-todo-prompt-close'),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: Text(pickUiText(i18n, zh: '知道了', en: 'Close')),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+    if (!mounted || !suppressForToday) {
+      return;
+    }
+    state.suppressStartupTodoPromptForToday();
   }
 
   void _setIndex(int index) {
@@ -217,6 +310,321 @@ class _AppShellState extends State<AppShell> {
     if (shouldExit == true) {
       await SystemNavigator.pop();
     }
+  }
+
+  Widget _buildStartupPromptTodoSection(AppI18n i18n, AppState state) {
+    final todos = state.todayActiveTodos;
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildStartupPromptSectionHeader(
+          i18n,
+          icon: Icons.today_rounded,
+          title: pickUiText(i18n, zh: '今日进行中待办', en: 'Today\'s active todos'),
+        ),
+        const SizedBox(height: 8),
+        if (todos.isEmpty)
+          Text(
+            pickUiText(
+              i18n,
+              zh: '今天没有进行中的待办事项。',
+              en: 'No active todos scheduled for today.',
+            ),
+            style: theme.textTheme.bodyMedium,
+          )
+        else
+          ...todos.map((todo) => _buildStartupPromptTodoTile(i18n, todo)),
+      ],
+    );
+  }
+
+  Widget _buildStartupPromptQuoteSection(AppI18n i18n, AppState state) {
+    final theme = Theme.of(context);
+    final quote = state.startupDailyQuote?.trim() ?? '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildStartupPromptSectionHeader(
+          i18n,
+          icon: Icons.format_quote_rounded,
+          title: pickUiText(i18n, zh: '每日一言', en: 'Daily quote'),
+        ),
+        const SizedBox(height: 8),
+        if (state.startupDailyQuoteLoading && quote.isEmpty)
+          Row(
+            children: <Widget>[
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '正在获取今日一言...',
+                    en: 'Loading today\'s quote...',
+                  ),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          )
+        else
+          Text(
+            quote.isEmpty
+                ? pickUiText(
+                    i18n,
+                    zh: '暂时无法获取每日一言。',
+                    en: 'Unable to load the daily quote right now.',
+                  )
+                : quote,
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildStartupPromptWeatherSection(AppI18n i18n, AppState state) {
+    final theme = Theme.of(context);
+    final snapshot = state.weatherSnapshot;
+    if (state.weatherLoading && snapshot == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildStartupPromptSectionHeader(
+            i18n,
+            icon: Icons.cloud_rounded,
+            title: pickUiText(i18n, zh: '天气', en: 'Weather'),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '正在更新天气...',
+                    en: 'Refreshing weather...',
+                  ),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildStartupPromptSectionHeader(
+          i18n,
+          icon: Icons.cloud_rounded,
+          title: pickUiText(i18n, zh: '天气', en: 'Weather'),
+        ),
+        const SizedBox(height: 8),
+        if (snapshot == null)
+          Text(
+            pickUiText(
+              i18n,
+              zh: '暂时无法获取天气信息。',
+              en: 'Unable to load weather right now.',
+            ),
+            style: theme.textTheme.bodyMedium,
+          )
+        else ...<Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  weatherCodeIcon(snapshot.weatherCode, isDay: snapshot.isDay),
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      '${snapshot.city}, ${snapshot.countryCode}',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${snapshot.temperatureCelsius.round()}°C · ${weatherCodeLabel(i18n, snapshot.weatherCode, isDay: snapshot.isDay)}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    if (snapshot.todayMaxTemperatureCelsius != null ||
+                        snapshot.todayMinTemperatureCelsius != null)
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '最高 ${snapshot.todayMaxTemperatureCelsius?.round() ?? '--'}° / 最低 ${snapshot.todayMinTemperatureCelsius?.round() ?? '--'}°',
+                          en: 'High ${snapshot.todayMaxTemperatureCelsius?.round() ?? '--'}° / Low ${snapshot.todayMinTemperatureCelsius?.round() ?? '--'}°',
+                        ),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (snapshot.forecastDays.length > 1) ...<Widget>[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: snapshot.forecastDays
+                  .skip(1)
+                  .take(3)
+                  .map((day) => _buildStartupForecastChip(i18n, day))
+                  .toList(growable: false),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStartupPromptSectionHeader(
+    AppI18n i18n, {
+    required IconData icon,
+    required String title,
+  }) {
+    final theme = Theme.of(context);
+    return Row(
+      children: <Widget>[
+        Icon(icon, size: 18, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStartupPromptTodoTile(AppI18n i18n, TodoItem todo) {
+    final theme = Theme.of(context);
+    final priorityColor = switch (todo.priority) {
+      2 => theme.colorScheme.error,
+      1 => theme.colorScheme.tertiary,
+      _ => theme.colorScheme.primary,
+    };
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.72,
+        ),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(top: 6),
+            decoration: BoxDecoration(
+              color: priorityColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  todo.content,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (todo.dueAt != null)
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '提醒时间 ${_formatStartupPromptTime(todo.dueAt!)}',
+                      en: 'Reminder ${_formatStartupPromptTime(todo.dueAt!)}',
+                    ),
+                    style: theme.textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStartupForecastChip(AppI18n i18n, WeatherForecastDay day) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            weatherCodeIcon(day.weatherCode, isDay: true),
+            size: 16,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${_startupForecastDayLabel(i18n, day.date)} ${day.maxTemperatureCelsius.round()}°/${day.minTemperatureCelsius.round()}°',
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatStartupPromptTime(DateTime value) {
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  String _startupForecastDayLabel(AppI18n i18n, DateTime date) {
+    final today = DateTime.now();
+    final tomorrow = today.add(const Duration(days: 1));
+    if (DateUtils.isSameDay(date, today)) {
+      return pickUiText(i18n, zh: '今天', en: 'Today');
+    }
+    if (DateUtils.isSameDay(date, tomorrow)) {
+      return pickUiText(i18n, zh: '明天', en: 'Tomorrow');
+    }
+    return '${date.month}/${date.day}';
   }
 
   @override
