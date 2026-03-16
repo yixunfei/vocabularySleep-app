@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../models/play_config.dart';
 import '../theme/app_theme.dart';
 
-class AppBackground extends StatelessWidget {
+class AppBackground extends StatefulWidget {
   const AppBackground({
     super.key,
     required this.appearance,
@@ -16,12 +16,114 @@ class AppBackground extends StatelessWidget {
   final Widget child;
 
   @override
+  State<AppBackground> createState() => _AppBackgroundState();
+}
+
+class _AppBackgroundState extends State<AppBackground> {
+  FileImage? _backgroundImageProvider;
+  ImageStream? _backgroundImageStream;
+  ImageStreamListener? _backgroundImageListener;
+  String _backgroundImagePath = '';
+  bool _hasBackgroundImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncBackgroundImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant AppBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previousPath = oldWidget.appearance.backgroundImagePath.trim();
+    final nextPath = widget.appearance.backgroundImagePath.trim();
+    if (previousPath != nextPath) {
+      _syncBackgroundImage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _clearBackgroundImageListener();
+    super.dispose();
+  }
+
+  void _syncBackgroundImage() {
+    final nextPath = widget.appearance.backgroundImagePath.trim();
+    if (nextPath == _backgroundImagePath && _backgroundImageProvider != null) {
+      return;
+    }
+
+    _backgroundImagePath = nextPath;
+    _clearBackgroundImageListener();
+
+    if (nextPath.isEmpty) {
+      _backgroundImageProvider = null;
+      if (_hasBackgroundImage) {
+        setState(() {
+          _hasBackgroundImage = false;
+        });
+      }
+      return;
+    }
+
+    final provider = FileImage(File(nextPath));
+    final stream = provider.resolve(ImageConfiguration.empty);
+    final listener = ImageStreamListener(
+      (imageInfo, synchronousCall) {
+        if (!mounted || _backgroundImagePath != nextPath) {
+          return;
+        }
+        _backgroundImageProvider = provider;
+        if (_hasBackgroundImage) {
+          return;
+        }
+        setState(() {
+          _hasBackgroundImage = true;
+        });
+      },
+      onError: (error, stackTrace) {
+        if (!mounted || _backgroundImagePath != nextPath) {
+          return;
+        }
+        _backgroundImageProvider = null;
+        if (!_hasBackgroundImage) {
+          return;
+        }
+        setState(() {
+          _hasBackgroundImage = false;
+        });
+      },
+    );
+
+    _backgroundImageProvider = provider;
+    _backgroundImageStream = stream;
+    _backgroundImageListener = listener;
+    stream.addListener(listener);
+
+    if (_hasBackgroundImage) {
+      setState(() {
+        _hasBackgroundImage = false;
+      });
+    }
+  }
+
+  void _clearBackgroundImageListener() {
+    final stream = _backgroundImageStream;
+    final listener = _backgroundImageListener;
+    if (stream != null && listener != null) {
+      stream.removeListener(listener);
+    }
+    _backgroundImageStream = null;
+    _backgroundImageListener = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final appearance = widget.appearance;
     final tokens = AppThemeTokens.of(context);
-    final backgroundImagePath = appearance.backgroundImagePath.trim();
     final hasBackgroundImage =
-        backgroundImagePath.isNotEmpty &&
-        File(backgroundImagePath).existsSync();
+        _hasBackgroundImage && _backgroundImageProvider != null;
 
     final gradient = LinearGradient(
       begin: Alignment.topLeft,
@@ -73,22 +175,22 @@ class AppBackground extends StatelessWidget {
             color: tokens.glow.withValues(alpha: 0.14),
           ),
         ),
-        if (hasBackgroundImage)
+        if (_backgroundImageProvider != null)
           IgnorePointer(
             child: Opacity(
               opacity: effectiveImageOpacity,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: FileImage(File(backgroundImagePath)),
-                    fit: imageFit,
-                    alignment: appearance.normalizedBackgroundImageMode == 'top'
-                        ? Alignment.topCenter
-                        : Alignment.center,
-                    repeat: appearance.normalizedBackgroundImageMode == 'tile'
-                        ? ImageRepeat.repeat
-                        : ImageRepeat.noRepeat,
-                  ),
+              child: SizedBox.expand(
+                child: Image(
+                  image: _backgroundImageProvider!,
+                  fit: imageFit,
+                  alignment: appearance.normalizedBackgroundImageMode == 'top'
+                      ? Alignment.topCenter
+                      : Alignment.center,
+                  repeat: appearance.normalizedBackgroundImageMode == 'tile'
+                      ? ImageRepeat.repeat
+                      : ImageRepeat.noRepeat,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -101,7 +203,7 @@ class AppBackground extends StatelessWidget {
               ),
             ),
           ),
-        child,
+        widget.child,
       ],
     );
   }

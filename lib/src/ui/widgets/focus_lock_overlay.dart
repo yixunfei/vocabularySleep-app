@@ -98,188 +98,201 @@ class _FocusLockOverlayState extends State<FocusLockOverlay> {
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
     final focus = state.focusService;
-    final timerState = focus.state;
-    final config = focus.config;
-    final phase = timerState.phase;
-    final isActive = phase != TomatoTimerPhase.idle;
+    final overlayListenable = Listenable.merge(<Listenable>[
+      focus.timerListenable,
+      focus.viewRevision,
+    ]);
 
-    if (!isActive) {
-      return const SizedBox.shrink();
-    }
+    return ListenableBuilder(
+      listenable: overlayListenable,
+      builder: (context, _) {
+        final timerState = focus.state;
+        final config = focus.config;
+        final phase = timerState.phase;
+        final isActive = phase != TomatoTimerPhase.idle;
 
-    final remaining = timerState.remainingSeconds;
-    final total = timerState.totalSeconds;
-    final progress = total > 0
-        ? (1.0 - remaining / total).clamp(0.0, 1.0)
-        : 0.0;
-    final isFocusPhase = phase == TomatoTimerPhase.focus;
+        if (!isActive) {
+          return const SizedBox.shrink();
+        }
 
-    return PopScope(
-      canPop: false,
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Material(
-          color: isFocusPhase
-              ? const Color(0xF0101828)
-              : const Color(0xF0142030),
-          child: SafeArea(
-            child: Column(
-              children: <Widget>[
-                const Spacer(flex: 2),
-                // Phase label
-                Text(
-                  _phaseLabel(i18n, phase),
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Round indicator
-                Text(
-                  pickUiText(
-                    i18n,
-                    zh: '第 ${timerState.currentRound} / ${config.rounds} 轮',
-                    en: 'Round ${timerState.currentRound} / ${config.rounds}',
-                  ),
-                  style: const TextStyle(color: Colors.white38, fontSize: 13),
-                ),
-                const SizedBox(height: 32),
-                // Timer display
-                SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      SizedBox.expand(
-                        child: CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 6,
-                          backgroundColor: Colors.white12,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            isFocusPhase
-                                ? const Color(0xFF60A5FA)
-                                : const Color(0xFF34D399),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _formatTime(remaining),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 48,
-                          fontWeight: FontWeight.w300,
-                          fontFeatures: <FontFeature>[
-                            FontFeature.tabularFigures(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Current word (if playing)
-                if (state.isPlaying && state.currentWord != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      state.currentWord!.word,
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                const Spacer(flex: 2),
-                // Controls
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+        final remaining = timerState.remainingSeconds;
+        final total = timerState.totalSeconds;
+        final progress = total > 0
+            ? (1.0 - remaining / total).clamp(0.0, 1.0)
+            : 0.0;
+        final isFocusPhase = phase == TomatoTimerPhase.focus;
+
+        return PopScope(
+          canPop: false,
+          child: AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle.light,
+            child: Material(
+              color: isFocusPhase
+                  ? const Color(0xF0101828)
+                  : const Color(0xF0142030),
+              child: SafeArea(
+                child: Column(
                   children: <Widget>[
-                    // Pause / Resume
-                    IconButton(
-                      iconSize: 40,
-                      color: Colors.white70,
-                      icon: Icon(
-                        timerState.isPaused
-                            ? Icons.play_arrow_rounded
-                            : Icons.pause_rounded,
+                    const Spacer(flex: 2),
+                    // Phase label
+                    Text(
+                      _phaseLabel(i18n, phase),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        letterSpacing: 1.2,
                       ),
-                      onPressed: () => focus.pauseOrResume(),
                     ),
-                    const SizedBox(width: 24),
-                    // Skip phase
-                    if (timerState.isAwaitingManualTransition)
-                      IconButton(
-                        iconSize: 40,
-                        color: Colors.white70,
-                        icon: const Icon(Icons.skip_next_rounded),
-                        onPressed: () => focus.advanceToNextPhase(),
-                      )
-                    else
-                      IconButton(
-                        iconSize: 40,
-                        color: Colors.white70,
-                        icon: const Icon(Icons.skip_next_rounded),
-                        onPressed: () => focus.skip(),
+                    const SizedBox(height: 8),
+                    // Round indicator
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '第 ${timerState.currentRound} / ${config.rounds} 轮',
+                        en: 'Round ${timerState.currentRound} / ${config.rounds}',
                       ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                // Unlock hint + long-press to exit
-                GestureDetector(
-                  onLongPressStart: (_) => _startUnlock(),
-                  onLongPressEnd: (_) => _cancelUnlock(),
-                  onLongPressCancel: _cancelUnlock,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      SizedBox(
-                        width: 160,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: _unlockProgress,
-                            minHeight: 4,
-                            backgroundColor: Colors.white12,
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFFF87171),
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    // Timer display
+                    SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: <Widget>[
+                          SizedBox.expand(
+                            child: CircularProgressIndicator(
+                              value: progress,
+                              strokeWidth: 6,
+                              backgroundColor: Colors.white12,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                isFocusPhase
+                                    ? const Color(0xFF60A5FA)
+                                    : const Color(0xFF34D399),
+                              ),
                             ),
                           ),
+                          Text(
+                            _formatTime(remaining),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w300,
+                              fontFeatures: <FontFeature>[
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Current word (if playing)
+                    if (state.isPlaying && state.currentWord != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          state.currentWord!.word,
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _unlockConfirming
-                            ? pickUiText(
-                                i18n,
-                                zh: '松开取消',
-                                en: 'Release to cancel',
-                              )
-                            : pickUiText(
-                                i18n,
-                                zh: '长按退出专注',
-                                en: 'Long press to exit focus',
+                    const Spacer(flex: 2),
+                    // Controls
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        // Pause / Resume
+                        IconButton(
+                          iconSize: 40,
+                          color: Colors.white70,
+                          icon: Icon(
+                            timerState.isPaused
+                                ? Icons.play_arrow_rounded
+                                : Icons.pause_rounded,
+                          ),
+                          onPressed: () => focus.pauseOrResume(),
+                        ),
+                        const SizedBox(width: 24),
+                        // Skip phase
+                        if (timerState.isAwaitingManualTransition)
+                          IconButton(
+                            iconSize: 40,
+                            color: Colors.white70,
+                            icon: const Icon(Icons.skip_next_rounded),
+                            onPressed: () => focus.advanceToNextPhase(),
+                          )
+                        else
+                          IconButton(
+                            iconSize: 40,
+                            color: Colors.white70,
+                            icon: const Icon(Icons.skip_next_rounded),
+                            onPressed: () => focus.skip(),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    // Unlock hint + long-press to exit
+                    GestureDetector(
+                      onLongPressStart: (_) => _startUnlock(),
+                      onLongPressEnd: (_) => _cancelUnlock(),
+                      onLongPressCancel: _cancelUnlock,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          SizedBox(
+                            width: 160,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: _unlockProgress,
+                                minHeight: 4,
+                                backgroundColor: Colors.white12,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFF87171),
+                                ),
                               ),
-                        style: const TextStyle(
-                          color: Colors.white38,
-                          fontSize: 13,
-                        ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _unlockConfirming
+                                ? pickUiText(
+                                    i18n,
+                                    zh: '松开取消',
+                                    en: 'Release to cancel',
+                                  )
+                                : pickUiText(
+                                    i18n,
+                                    zh: '长按退出专注',
+                                    en: 'Long press to exit focus',
+                                  ),
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 48),
+                  ],
                 ),
-                const SizedBox(height: 48),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

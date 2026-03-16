@@ -129,6 +129,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<String> _practiceRememberedWords = <String>[];
   List<String> _practiceWeakWords = <String>[];
   Map<String, int> _practiceLaunchCursors = <String, int>{};
+  final Map<String, WordEntry> _practiceTrackedEntriesByWord =
+      <String, WordEntry>{};
   Map<int, WordMemoryProgress> _wordMemoryProgressByWordId =
       <int, WordMemoryProgress>{};
 
@@ -618,6 +620,14 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     ).where((word) => !normalizedRememberedWords.contains(word)).toList();
     final rememberedSet = normalizedRememberedWords.toSet();
     final weakSet = normalizedWeakWords.toSet();
+    final resolvedRememberedEntries = _resolveTrackedPracticeEntries(
+      preferredEntries: rememberedEntries,
+      fallbackWords: normalizedRememberedWords,
+    );
+    final resolvedWeakEntries = _resolveTrackedPracticeEntries(
+      preferredEntries: weakEntries,
+      fallbackWords: normalizedWeakWords,
+    );
     _updateRememberedWordsStatus(
       rememberedWords: normalizedRememberedWords,
       weakWords: normalizedWeakWords,
@@ -633,15 +643,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       existing: _practiceWeakWords,
       excluded: rememberedSet,
     );
+    _cachePracticeTrackedEntries(
+      rememberedEntries: resolvedRememberedEntries,
+      weakEntries: resolvedWeakEntries,
+    );
     _updateWordMemoryProgress(
-      rememberedEntries: _resolveTrackedPracticeEntries(
-        preferredEntries: rememberedEntries,
-        fallbackWords: normalizedRememberedWords,
-      ),
-      weakEntries: _resolveTrackedPracticeEntries(
-        preferredEntries: weakEntries,
-        fallbackWords: normalizedWeakWords,
-      ),
+      rememberedEntries: resolvedRememberedEntries,
+      weakEntries: resolvedWeakEntries,
     );
     _persistPracticeDashboard();
     notifyListeners();
@@ -664,8 +672,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       math.max(cursorAdvance ?? safeBatchSize, 1),
     );
     final normalizedKey = cursorKey.trim();
-    final anchorIndex =
-        anchorWord == null ? -1 : _indexOfWordEntry(sourceWords, anchorWord);
+    final anchorIndex = anchorWord == null
+        ? -1
+        : _indexOfWordEntry(sourceWords, anchorWord);
     final storedCursor = normalizedKey.isEmpty
         ? 0
         : (_practiceLaunchCursors[normalizedKey] ?? 0) % sourceWords.length;
@@ -2999,6 +3008,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void _loadPracticeDashboard() {
     final data = _settings.loadPracticeDashboard();
+    _practiceTrackedEntriesByWord.clear();
     _practiceDateKey = '${data['date'] ?? ''}'.trim();
     _practiceTodaySessions = _readPracticeInt(data['todaySessions']);
     _practiceTodayReviewed = _readPracticeInt(data['todayReviewed']);
@@ -3076,12 +3086,28 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   List<WordEntry> _practiceEntriesFromWords(List<String> trackedWords) {
-    if (trackedWords.isEmpty || _words.isEmpty) {
+    if (trackedWords.isEmpty) {
       return const <WordEntry>[];
     }
-    final byWord = <String, WordEntry>{
-      for (final item in _words) _normalizeTrackedWord(item.word): item,
-    };
+    final byWord = <String, WordEntry>{};
+
+    void addEntries(Iterable<WordEntry> entries) {
+      for (final entry in entries) {
+        final key = _normalizeTrackedWord(entry.word);
+        if (key.isEmpty || byWord.containsKey(key)) {
+          continue;
+        }
+        byWord[key] = entry;
+      }
+    }
+
+    addEntries(_practiceTrackedEntriesByWord.values);
+    addEntries(_scopeWords);
+    addEntries(_words);
+    if (byWord.isEmpty) {
+      return const <WordEntry>[];
+    }
+
     final output = <WordEntry>[];
     for (final word in trackedWords) {
       final entry = byWord[_normalizeTrackedWord(word)];
@@ -3162,6 +3188,31 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       output.add(entry);
     }
     return output;
+  }
+
+  void _cachePracticeTrackedEntries({
+    required List<WordEntry> rememberedEntries,
+    required List<WordEntry> weakEntries,
+  }) {
+    if (rememberedEntries.isEmpty && weakEntries.isEmpty) {
+      return;
+    }
+
+    for (final entry in <WordEntry>[...rememberedEntries, ...weakEntries]) {
+      final key = _normalizeTrackedWord(entry.word);
+      if (key.isEmpty) {
+        continue;
+      }
+      _practiceTrackedEntriesByWord[key] = entry;
+    }
+
+    final activeKeys = <String>{
+      ..._practiceRememberedWords.map(_normalizeTrackedWord),
+      ..._practiceWeakWords.map(_normalizeTrackedWord),
+    };
+    _practiceTrackedEntriesByWord.removeWhere(
+      (key, _) => !activeKeys.contains(key),
+    );
   }
 
   void _updateWordMemoryProgress({

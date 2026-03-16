@@ -220,29 +220,6 @@ class LanguageSettingsPage extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 10),
-                  DropdownButtonFormField<FocusStartupTab>(
-                    initialValue: state.focusStartupTab,
-                    decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '专注默认子页签',
-                        en: 'Focus default section',
-                      ),
-                    ),
-                    items: FocusStartupTab.values
-                        .map(
-                          (tab) => DropdownMenuItem<FocusStartupTab>(
-                            value: tab,
-                            child: Text(focusStartupTabLabel(i18n, tab)),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      state.setFocusStartupTab(value);
-                    },
-                  ),
-                  const SizedBox(height: 10),
                   Text(
                     pickUiText(
                       i18n,
@@ -251,15 +228,40 @@ class LanguageSettingsPage extends StatelessWidget {
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    pickUiText(
-                      i18n,
-                      zh: '当主入口为专注/放松时，将优先打开：${focusStartupTabLabel(i18n, state.focusStartupTab)}',
-                      en: 'When Focus is the startup page, it will open ${focusStartupTabLabel(i18n, state.focusStartupTab)} first.',
+                  if (state.startupPage == AppHomeTab.focus) ...<Widget>[
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<FocusStartupTab>(
+                      initialValue: state.focusStartupTab,
+                      decoration: InputDecoration(
+                        labelText: pickUiText(
+                          i18n,
+                          zh: '专注默认子页签',
+                          en: 'Focus default section',
+                        ),
+                      ),
+                      items: FocusStartupTab.values
+                          .map(
+                            (tab) => DropdownMenuItem<FocusStartupTab>(
+                              value: tab,
+                              child: Text(focusStartupTabLabel(i18n, tab)),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        state.setFocusStartupTab(value);
+                      },
                     ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '当主入口为专注/放松时，将优先打开：${focusStartupTabLabel(i18n, state.focusStartupTab)}',
+                        en: 'When Focus is the startup page, it will open ${focusStartupTabLabel(i18n, state.focusStartupTab)} first.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),
