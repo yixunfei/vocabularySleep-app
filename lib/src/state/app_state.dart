@@ -652,12 +652,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required List<WordEntry> sourceWords,
     required int batchSize,
     WordEntry? anchorWord,
+    int? cursorAdvance,
   }) {
     if (sourceWords.isEmpty || batchSize <= 0) {
       return const <WordEntry>[];
     }
 
     final safeBatchSize = math.min(batchSize, sourceWords.length);
+    final safeCursorAdvance = math.min(
+      sourceWords.length,
+      math.max(cursorAdvance ?? safeBatchSize, 1),
+    );
     final normalizedKey = cursorKey.trim();
     final anchorIndex =
         anchorWord == null ? -1 : _indexOfWordEntry(sourceWords, anchorWord);
@@ -674,7 +679,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (normalizedKey.isNotEmpty) {
       _ensurePracticeDate();
       _practiceLaunchCursors[normalizedKey] =
-          (startIndex + safeBatchSize) % sourceWords.length;
+          (startIndex + safeCursorAdvance) % sourceWords.length;
       _persistPracticeDashboard();
     }
 

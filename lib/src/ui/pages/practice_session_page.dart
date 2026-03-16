@@ -21,6 +21,7 @@ class PracticeSessionPage extends StatefulWidget {
     this.rotationKey,
     this.rotationSourceWords,
     this.rotationBatchSize,
+    this.rotationCursorAdvance,
   });
 
   final String title;
@@ -30,6 +31,7 @@ class PracticeSessionPage extends StatefulWidget {
   final String? rotationKey;
   final List<WordEntry>? rotationSourceWords;
   final int? rotationBatchSize;
+  final int? rotationCursorAdvance;
 
   @override
   State<PracticeSessionPage> createState() => _PracticeSessionPageState();
@@ -127,6 +129,13 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       widget.rotationBatchSize! > 0 &&
       widget.rotationSourceWords!.isNotEmpty;
 
+  bool get _rotationCoversWholeSource =>
+      _supportsNextBatch &&
+      widget.rotationBatchSize! >= widget.rotationSourceWords!.length;
+
+  bool get _showsNewRoundPrimaryAction =>
+      _rotationCoversWholeSource || (!_supportsNextBatch && widget.shuffle);
+
   void _restart(List<WordEntry> words, {bool shuffle = false}) {
     if (words.isEmpty) return;
     setState(() {
@@ -153,8 +162,39 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       cursorKey: widget.rotationKey!,
       sourceWords: widget.rotationSourceWords!,
       batchSize: widget.rotationBatchSize!,
+      cursorAdvance: widget.rotationCursorAdvance,
     );
     _restart(nextWords, shuffle: widget.shuffle);
+  }
+
+  void _handlePrimaryAction(AppState state) {
+    if (_supportsNextBatch) {
+      _restartFromNextBatch(state);
+      return;
+    }
+    _restart(widget.words, shuffle: widget.shuffle);
+  }
+
+  IconData get _primaryActionIcon {
+    if (_supportsNextBatch) {
+      return _rotationCoversWholeSource
+          ? Icons.autorenew_rounded
+          : Icons.skip_next_rounded;
+    }
+    return widget.shuffle ? Icons.autorenew_rounded : Icons.replay_rounded;
+  }
+
+  String _primaryActionLabel(AppI18n i18n) {
+    if (_supportsNextBatch) {
+      if (_showsNewRoundPrimaryAction) {
+        return pickUiText(i18n, zh: '新一轮', en: 'New round');
+      }
+      return pickUiText(i18n, zh: '下一批', en: 'Next batch');
+    }
+    if (_showsNewRoundPrimaryAction) {
+      return pickUiText(i18n, zh: '新一轮', en: 'New round');
+    }
+    return pickUiText(i18n, zh: '再来一轮', en: 'Restart');
   }
 
   void _reportSession({
@@ -424,21 +464,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         runSpacing: 12,
         children: <Widget>[
           FilledButton.icon(
-            onPressed: () => _supportsNextBatch
-                ? _restartFromNextBatch(context.read<AppState>())
-                : _restart(widget.words, shuffle: widget.shuffle),
-            icon: Icon(
-              _supportsNextBatch
-                  ? Icons.skip_next_rounded
-                  : Icons.replay_rounded,
-            ),
-            label: Text(
-              pickUiText(
-                i18n,
-                zh: _supportsNextBatch ? '下一批' : '再来一轮',
-                en: _supportsNextBatch ? 'Next batch' : 'Restart',
-              ),
-            ),
+            onPressed: () => _handlePrimaryAction(context.read<AppState>()),
+            icon: Icon(_primaryActionIcon),
+            label: Text(_primaryActionLabel(i18n)),
           ),
           if (rememberedWords > 0)
             OutlinedButton.icon(

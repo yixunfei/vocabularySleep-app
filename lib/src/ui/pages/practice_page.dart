@@ -308,6 +308,13 @@ class PracticePage extends StatelessWidget {
                           ),
                           words: scopedWords,
                           shuffle: false,
+                          rotationKey: _buildPracticeScopeRotationKey(
+                            state,
+                            slot: 'scope-session',
+                          ),
+                          rotationSourceWords: scopedWords,
+                          rotationBatchSize: scopedWords.length,
+                          rotationCursorAdvance: 1,
                         ),
                         icon: const Icon(Icons.play_arrow_rounded),
                         label: Text(
@@ -611,6 +618,13 @@ class PracticePage extends StatelessWidget {
               ),
               words: scopedWords,
               shuffle: false,
+              rotationKey: _buildPracticeScopeRotationKey(
+                state,
+                slot: 'scope-session',
+              ),
+              rotationSourceWords: scopedWords,
+              rotationBatchSize: scopedWords.length,
+              rotationCursorAdvance: 1,
             );
           },
         ),
@@ -748,6 +762,13 @@ class PracticePage extends StatelessWidget {
         ),
         words: scopeWords,
         shuffle: false,
+        rotationKey: _buildPracticeScopeRotationKey(
+          state,
+          slot: 'scope-session',
+        ),
+        rotationSourceWords: scopeWords,
+        rotationBatchSize: scopeWords.length,
+        rotationCursorAdvance: 1,
       );
     }
 
@@ -1091,6 +1112,7 @@ class PracticePage extends StatelessWidget {
     List<WordEntry>? rotationSourceWords,
     int? rotationBatchSize,
     WordEntry? rotationAnchorWord,
+    int? rotationCursorAdvance,
   }) async {
     if (words.isEmpty) return;
     var sessionWords = words;
@@ -1104,6 +1126,7 @@ class PracticePage extends StatelessWidget {
         sourceWords: rotationSourceWords,
         batchSize: rotationBatchSize,
         anchorWord: rotationAnchorWord,
+        cursorAdvance: rotationCursorAdvance,
       );
       if (sessionWords.isEmpty) {
         return;
@@ -1119,6 +1142,7 @@ class PracticePage extends StatelessWidget {
           rotationKey: rotationKey,
           rotationSourceWords: rotationSourceWords,
           rotationBatchSize: rotationBatchSize,
+          rotationCursorAdvance: rotationCursorAdvance,
         ),
       ),
     );

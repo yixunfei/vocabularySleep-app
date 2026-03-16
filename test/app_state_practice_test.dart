@@ -150,4 +150,64 @@ void main() {
     final dashboard = settings.loadPracticeDashboard();
     expect(dashboard['launchCursors'], containsPair('practice:warmup', 0));
   });
+
+  test(
+    'beginPracticeBatch can rotate full rounds with custom cursor advance',
+    () {
+      final database = _MemoryDatabaseService();
+      final settings = SettingsService(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: _FakePlaybackService(),
+        ambient: _FakeAmbientService(),
+        asr: _FakeAsrService(),
+        focusService: _FakeFocusService(),
+      );
+      final words = <WordEntry>[
+        _word('alpha'),
+        _word('bravo'),
+        _word('charlie'),
+      ];
+
+      final firstRound = state.beginPracticeBatch(
+        cursorKey: 'practice:scope-full',
+        sourceWords: words,
+        batchSize: words.length,
+        cursorAdvance: 1,
+      );
+      expect(
+        firstRound.map((item) => item.word).toList(growable: false),
+        <String>['alpha', 'bravo', 'charlie'],
+      );
+
+      final secondRound = state.beginPracticeBatch(
+        cursorKey: 'practice:scope-full',
+        sourceWords: words,
+        batchSize: words.length,
+        cursorAdvance: 1,
+      );
+      expect(
+        secondRound.map((item) => item.word).toList(growable: false),
+        <String>['bravo', 'charlie', 'alpha'],
+      );
+
+      final thirdRound = state.beginPracticeBatch(
+        cursorKey: 'practice:scope-full',
+        sourceWords: words,
+        batchSize: words.length,
+        cursorAdvance: 1,
+      );
+      expect(
+        thirdRound.map((item) => item.word).toList(growable: false),
+        <String>['charlie', 'alpha', 'bravo'],
+      );
+
+      final dashboard = settings.loadPracticeDashboard();
+      expect(
+        dashboard['launchCursors'],
+        containsPair('practice:scope-full', 0),
+      );
+    },
+  );
 }
