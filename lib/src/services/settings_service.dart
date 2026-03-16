@@ -72,7 +72,11 @@ class SettingsService {
   }
 
   bool loadStartupTodoPromptEnabled() {
-    return _database.getSetting('startupTodoPromptEnabled') == '1';
+    final raw = _database.getSetting('startupTodoPromptEnabled');
+    if (raw == null || raw.trim().isEmpty) {
+      return true;
+    }
+    return raw.trim() == '1';
   }
 
   void saveStartupTodoPromptEnabled(bool enabled) {

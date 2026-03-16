@@ -85,14 +85,14 @@ void main() {
     final database = _MemoryDatabaseService();
     final settings = SettingsService(database);
 
-    expect(settings.loadStartupTodoPromptEnabled(), isFalse);
+    expect(settings.loadStartupTodoPromptEnabled(), isTrue);
     expect(settings.loadStartupTodoPromptSuppressedDate(), isNull);
 
-    settings.saveStartupTodoPromptEnabled(true);
+    settings.saveStartupTodoPromptEnabled(false);
     settings.saveStartupTodoPromptSuppressedDate('2026-03-16');
 
     final restored = SettingsService(database);
-    expect(restored.loadStartupTodoPromptEnabled(), isTrue);
+    expect(restored.loadStartupTodoPromptEnabled(), isFalse);
     expect(restored.loadStartupTodoPromptSuppressedDate(), '2026-03-16');
   });
 

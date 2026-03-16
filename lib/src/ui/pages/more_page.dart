@@ -78,13 +78,59 @@ class MorePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  pickUiText(i18n, zh: '今日启动提示', en: 'Today startup prompt'),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '启动后弹出今日待办、每日一言和天气摘要，可在弹窗中选择今日不再弹出。',
+                    en: 'Show today\'s todos, daily quote, and weather after launch. You can still mute it for the rest of the day from the popup.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  value: state.startupTodoPromptEnabled,
+                  title: Text(
+                    pickUiText(i18n, zh: '开启启动提示', en: 'Enable startup prompt'),
+                  ),
+                  subtitle: Text(
+                    state.startupTodoPromptEnabled
+                        ? pickUiText(
+                            i18n,
+                            zh: '已开启，进入主界面时会自动显示今日摘要。',
+                            en: 'Enabled. The summary appears after entering the main screen.',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '已关闭，启动后不会自动弹出今日摘要。',
+                            en: 'Disabled. The summary stays hidden on startup.',
+                          ),
+                  ),
+                  onChanged: state.setStartupTodoPromptEnabled,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         SettingTile(
           icon: Icons.tune_rounded,
           title: pickUiText(i18n, zh: '设置中心', en: 'Settings center'),
           subtitle: pickUiText(
             i18n,
             zh: '语言、播放、语音和基础外观',
-            en: 'Language, playback, speech, and practical appearance settings.',
+            en: 'Language, playback, speech, startup prompt, and practical appearance settings.',
           ),
           onTap: () {
             Navigator.of(context).push(

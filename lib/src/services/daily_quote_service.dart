@@ -10,7 +10,9 @@ class DailyQuoteService {
   Future<String> fetchQuote() async {
     final client = _client ?? http.Client();
     try {
-      final uri = Uri.parse('https://v.api.aa1.cn/api/yiyan/index.php');
+      final uri = Uri.parse(
+        'https://v.api.aa1.cn/api/yiyan/index.php?type=json',
+      );
       final response = await client.get(uri);
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw StateError(
@@ -19,16 +21,30 @@ class DailyQuoteService {
       }
 
       final body = utf8.decode(response.bodyBytes, allowMalformed: true);
-      final cleaned = cleanQuoteBody(body);
-      if (cleaned.isEmpty) {
-        throw const FormatException('Daily quote payload is empty.');
-      }
-      return cleaned;
+      return parseQuotePayload(body);
     } finally {
       if (_client == null) {
         client.close();
       }
     }
+  }
+
+  static String parseQuotePayload(String raw) {
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      throw const FormatException('Daily quote payload must be a JSON object.');
+    }
+
+    final payload = decoded.cast<String, Object?>();
+    final quote = cleanQuoteBody('${payload['yiyan'] ?? ''}');
+    final source = cleanQuoteBody('${payload['from'] ?? ''}');
+    if (quote.isEmpty) {
+      throw const FormatException('Daily quote payload is empty.');
+    }
+    if (source.isEmpty || source == quote) {
+      return quote;
+    }
+    return '$quote\n- $source';
   }
 
   static String cleanQuoteBody(String raw) {
