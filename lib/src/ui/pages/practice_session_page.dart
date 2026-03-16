@@ -18,12 +18,18 @@ class PracticeSessionPage extends StatefulWidget {
     required this.words,
     this.subtitle,
     this.shuffle = false,
+    this.rotationKey,
+    this.rotationSourceWords,
+    this.rotationBatchSize,
   });
 
   final String title;
   final List<WordEntry> words;
   final String? subtitle;
   final bool shuffle;
+  final String? rotationKey;
+  final List<WordEntry>? rotationSourceWords;
+  final int? rotationBatchSize;
 
   @override
   State<PracticeSessionPage> createState() => _PracticeSessionPageState();
@@ -114,6 +120,13 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     return a.wordbookId == b.wordbookId && a.word == b.word;
   }
 
+  bool get _supportsNextBatch =>
+      widget.rotationKey != null &&
+      widget.rotationSourceWords != null &&
+      widget.rotationBatchSize != null &&
+      widget.rotationBatchSize! > 0 &&
+      widget.rotationSourceWords!.isNotEmpty;
+
   void _restart(List<WordEntry> words, {bool shuffle = false}) {
     if (words.isEmpty) return;
     setState(() {
@@ -129,6 +142,19 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _hintRevealed = false;
       _reported = false;
     });
+  }
+
+  void _restartFromNextBatch(AppState state) {
+    if (!_supportsNextBatch) {
+      _restart(widget.words, shuffle: widget.shuffle);
+      return;
+    }
+    final nextWords = state.beginPracticeBatch(
+      cursorKey: widget.rotationKey!,
+      sourceWords: widget.rotationSourceWords!,
+      batchSize: widget.rotationBatchSize!,
+    );
+    _restart(nextWords, shuffle: widget.shuffle);
   }
 
   void _reportSession({
@@ -398,9 +424,21 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         runSpacing: 12,
         children: <Widget>[
           FilledButton.icon(
-            onPressed: () => _restart(widget.words, shuffle: widget.shuffle),
-            icon: const Icon(Icons.replay_rounded),
-            label: Text(pickUiText(i18n, zh: '再来一轮', en: 'Restart')),
+            onPressed: () => _supportsNextBatch
+                ? _restartFromNextBatch(context.read<AppState>())
+                : _restart(widget.words, shuffle: widget.shuffle),
+            icon: Icon(
+              _supportsNextBatch
+                  ? Icons.skip_next_rounded
+                  : Icons.replay_rounded,
+            ),
+            label: Text(
+              pickUiText(
+                i18n,
+                zh: _supportsNextBatch ? '下一批' : '再来一轮',
+                en: _supportsNextBatch ? 'Next batch' : 'Restart',
+              ),
+            ),
           ),
           if (rememberedWords > 0)
             OutlinedButton.icon(

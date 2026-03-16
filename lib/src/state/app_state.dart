@@ -128,6 +128,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _practiceLastSessionTitle = '';
   List<String> _practiceRememberedWords = <String>[];
   List<String> _practiceWeakWords = <String>[];
+  Map<String, int> _practiceLaunchCursors = <String, int>{};
   Map<int, WordMemoryProgress> _wordMemoryProgressByWordId =
       <int, WordMemoryProgress>{};
 
@@ -644,6 +645,40 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     );
     _persistPracticeDashboard();
     notifyListeners();
+  }
+
+  List<WordEntry> beginPracticeBatch({
+    required String cursorKey,
+    required List<WordEntry> sourceWords,
+    required int batchSize,
+    WordEntry? anchorWord,
+  }) {
+    if (sourceWords.isEmpty || batchSize <= 0) {
+      return const <WordEntry>[];
+    }
+
+    final safeBatchSize = math.min(batchSize, sourceWords.length);
+    final normalizedKey = cursorKey.trim();
+    final anchorIndex =
+        anchorWord == null ? -1 : _indexOfWordEntry(sourceWords, anchorWord);
+    final storedCursor = normalizedKey.isEmpty
+        ? 0
+        : (_practiceLaunchCursors[normalizedKey] ?? 0) % sourceWords.length;
+    final startIndex = anchorIndex >= 0 ? anchorIndex : storedCursor;
+    final batch = <WordEntry>[];
+    for (var offset = 0; offset < safeBatchSize; offset += 1) {
+      final index = (startIndex + offset) % sourceWords.length;
+      batch.add(sourceWords[index]);
+    }
+
+    if (normalizedKey.isNotEmpty) {
+      _ensurePracticeDate();
+      _practiceLaunchCursors[normalizedKey] =
+          (startIndex + safeBatchSize) % sourceWords.length;
+      _persistPracticeDashboard();
+    }
+
+    return batch.toList(growable: false);
   }
 
   void setSearchQuery(String value) {
@@ -2865,6 +2900,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceLastSessionTitle = '';
     _practiceRememberedWords = <String>[];
     _practiceWeakWords = <String>[];
+    _practiceLaunchCursors = <String, int>{};
 
     _searchQuery = '';
     _searchMode = SearchMode.all;
@@ -2971,6 +3007,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceWeakWords = _normalizePracticeWords(
       data['weakWords'],
     ).where((word) => !rememberedSet.contains(word)).toList(growable: false);
+    _practiceLaunchCursors = _readPracticeLaunchCursors(data['launchCursors']);
   }
 
   int _readPracticeInt(Object? value) {
@@ -2980,6 +3017,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return parsed < 0 ? 0 : parsed;
     }
     return 0;
+  }
+
+  Map<String, int> _readPracticeLaunchCursors(Object? value) {
+    if (value is! Map) {
+      return <String, int>{};
+    }
+    final parsed = <String, int>{};
+    for (final entry in value.entries) {
+      final key = '${entry.key}'.trim();
+      if (key.isEmpty) {
+        continue;
+      }
+      final index = _readPracticeInt(entry.value);
+      parsed[key] = index;
+    }
+    return parsed;
   }
 
   void _ensurePracticeDate({bool persist = false}) {
@@ -3013,6 +3066,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       'lastSessionTitle': _practiceLastSessionTitle,
       'rememberedWords': _practiceRememberedWords,
       'weakWords': _practiceWeakWords,
+      'launchCursors': _practiceLaunchCursors,
     });
   }
 

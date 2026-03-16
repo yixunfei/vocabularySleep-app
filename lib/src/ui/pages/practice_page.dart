@@ -56,6 +56,9 @@ class PracticePage extends StatelessWidget {
     final warmupWords = scopedWords.length <= 7
         ? scopedWords
         : scopedWords.take(7).toList(growable: false);
+    final currentSprintSourceWords = _containsWordEntry(scopedWords, current)
+        ? scopedWords
+        : wordbookWords;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -424,6 +427,13 @@ class PracticePage extends StatelessWidget {
                         ),
                         words: <WordEntry>[current],
                         shuffle: false,
+                        rotationKey: _buildPracticeScopeRotationKey(
+                          state,
+                          slot: 'current-word',
+                        ),
+                        rotationSourceWords: currentSprintSourceWords,
+                        rotationBatchSize: 1,
+                        rotationAnchorWord: current,
                       ),
                     ),
                     _buildQuickLaunchCard(
@@ -461,8 +471,14 @@ class PracticePage extends StatelessWidget {
                                 zh: '共 ${warmupWords.length} 个词',
                                 en: '${warmupWords.length} words',
                               ),
-                              words: warmupWords,
+                              words: scopedWords,
                               shuffle: false,
+                              rotationKey: _buildPracticeScopeRotationKey(
+                                state,
+                                slot: 'warmup-7',
+                              ),
+                              rotationSourceWords: scopedWords,
+                              rotationBatchSize: 7,
                             ),
                     ),
                     _buildQuickLaunchCard(
@@ -558,6 +574,13 @@ class PracticePage extends StatelessWidget {
             ),
             words: <WordEntry>[current],
             shuffle: false,
+            rotationKey: _buildPracticeScopeRotationKey(
+              state,
+              slot: 'current-word',
+            ),
+            rotationSourceWords: currentSprintSourceWords,
+            rotationBatchSize: 1,
+            rotationAnchorWord: current,
           ),
         ),
         const SizedBox(height: 12),
@@ -1036,21 +1059,66 @@ class PracticePage extends StatelessWidget {
     return merged.take(limit).toList(growable: false);
   }
 
+  String _buildPracticeScopeRotationKey(
+    AppState state, {
+    required String slot,
+  }) {
+    final query = state.searchQuery.trim().toLowerCase();
+    final wordbookId = state.selectedWordbook?.id ?? 0;
+    return 'practice:$slot:wordbook:$wordbookId:mode:${state.searchMode.name}:query:$query';
+  }
+
+  bool _containsWordEntry(List<WordEntry> words, WordEntry target) {
+    return words.any((entry) => _isSameWordEntry(entry, target));
+  }
+
+  bool _isSameWordEntry(WordEntry a, WordEntry b) {
+    final aId = a.id;
+    final bId = b.id;
+    if (aId != null && bId != null) {
+      return aId == bId;
+    }
+    return a.wordbookId == b.wordbookId && a.word == b.word;
+  }
+
   Future<void> _openPracticeSession(
     BuildContext context, {
     required String title,
     required String subtitle,
     required List<WordEntry> words,
     required bool shuffle,
+    String? rotationKey,
+    List<WordEntry>? rotationSourceWords,
+    int? rotationBatchSize,
+    WordEntry? rotationAnchorWord,
   }) async {
     if (words.isEmpty) return;
+    var sessionWords = words;
+    final canRotate =
+        rotationKey != null &&
+        rotationSourceWords != null &&
+        rotationBatchSize != null;
+    if (canRotate) {
+      sessionWords = context.read<AppState>().beginPracticeBatch(
+        cursorKey: rotationKey,
+        sourceWords: rotationSourceWords,
+        batchSize: rotationBatchSize,
+        anchorWord: rotationAnchorWord,
+      );
+      if (sessionWords.isEmpty) {
+        return;
+      }
+    }
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PracticeSessionPage(
           title: title,
           subtitle: subtitle,
-          words: words,
+          words: sessionWords,
           shuffle: shuffle,
+          rotationKey: rotationKey,
+          rotationSourceWords: rotationSourceWords,
+          rotationBatchSize: rotationBatchSize,
         ),
       ),
     );

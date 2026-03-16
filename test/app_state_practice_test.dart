@@ -64,9 +64,10 @@ void main() {
 
   test('recordPracticeSession keeps practice lists writable-safe', () {
     final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
     final state = AppState(
       database: database,
-      settings: SettingsService(database),
+      settings: settings,
       playback: _FakePlaybackService(),
       ambient: _FakeAmbientService(),
       asr: _FakeAsrService(),
@@ -91,5 +92,62 @@ void main() {
     expect(state.practiceTodayRemembered, 1);
     expect(state.practiceRememberedWords, <String>['alpha']);
     expect(state.practiceWeakWords, <String>['bravo']);
+  });
+
+  test('beginPracticeBatch advances cursor and honors anchor words', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+    final state = AppState(
+      database: database,
+      settings: settings,
+      playback: _FakePlaybackService(),
+      ambient: _FakeAmbientService(),
+      asr: _FakeAsrService(),
+      focusService: _FakeFocusService(),
+    );
+    final words = <WordEntry>[_word('alpha'), _word('bravo'), _word('charlie')];
+
+    final firstBatch = state.beginPracticeBatch(
+      cursorKey: 'practice:warmup',
+      sourceWords: words,
+      batchSize: 2,
+    );
+    expect(
+      firstBatch.map((item) => item.word).toList(growable: false),
+      <String>['alpha', 'bravo'],
+    );
+
+    final secondBatch = state.beginPracticeBatch(
+      cursorKey: 'practice:warmup',
+      sourceWords: words,
+      batchSize: 2,
+    );
+    expect(
+      secondBatch.map((item) => item.word).toList(growable: false),
+      <String>['charlie', 'alpha'],
+    );
+
+    final anchoredBatch = state.beginPracticeBatch(
+      cursorKey: 'practice:warmup',
+      sourceWords: words,
+      batchSize: 1,
+      anchorWord: words[1],
+    );
+    expect(
+      anchoredBatch.map((item) => item.word).toList(growable: false),
+      <String>['bravo'],
+    );
+
+    final nextBatch = state.beginPracticeBatch(
+      cursorKey: 'practice:warmup',
+      sourceWords: words,
+      batchSize: 1,
+    );
+    expect(nextBatch.map((item) => item.word).toList(growable: false), <String>[
+      'charlie',
+    ]);
+
+    final dashboard = settings.loadPracticeDashboard();
+    expect(dashboard['launchCursors'], containsPair('practice:warmup', 0));
   });
 }

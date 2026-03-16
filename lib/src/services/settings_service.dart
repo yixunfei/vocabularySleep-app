@@ -158,6 +158,7 @@ class SettingsService {
         'lastSessionTitle': '',
         'rememberedWords': <Object?>[],
         'weakWords': <Object?>[],
+        'launchCursors': <String, Object?>{},
       };
     }
     try {
@@ -179,6 +180,7 @@ class SettingsService {
       'lastSessionTitle': '',
       'rememberedWords': <Object?>[],
       'weakWords': <Object?>[],
+      'launchCursors': <String, Object?>{},
     };
   }
 
