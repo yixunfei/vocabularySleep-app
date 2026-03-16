@@ -1495,10 +1495,22 @@ class _FocusPageState extends State<FocusPage>
         );
         final compactWorkspace = constraints.maxWidth < 600;
         final outerPadding = compactWorkspace ? 12.0 : 16.0;
+        if (compactWorkspace) {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: contentWidth),
+              child: Padding(
+                padding: EdgeInsets.all(outerPadding),
+                child: _buildTodoPanel(focus, i18n, notes: notes),
+              ),
+            ),
+          );
+        }
         final layoutWidth = math.max(0.0, contentWidth - outerPadding * 2);
         final drawerWidth = _notesDrawerWidth(layoutWidth, focus);
-        final railWidth = compactWorkspace ? 52.0 : 60.0;
-        final railGutter = railWidth + (compactWorkspace ? 6.0 : 10.0);
+        final railWidth = 60.0;
+        final railGutter = railWidth + 10.0;
         final hiddenOffset = drawerWidth - railWidth;
         final progress = _notesDrawerProgress.clamp(0.0, 1.0).toDouble();
 
@@ -1523,10 +1535,7 @@ class _FocusPageState extends State<FocusPage>
                         bottom: 0,
                         right: railGutter,
                         child: Transform.translate(
-                          offset: Offset(
-                            (compactWorkspace ? -8 : -12) * animatedProgress,
-                            0,
-                          ),
+                          offset: Offset(-12 * animatedProgress, 0),
                           child: _buildTodoPanel(focus, i18n, notes: notes),
                         ),
                       ),
@@ -1947,6 +1956,18 @@ class _FocusPageState extends State<FocusPage>
           theme: theme,
           hasCompletedTodos: hasCompletedTodos,
           compactLayout: true,
+          actions: <Widget>[
+            IconButton(
+              key: const ValueKey<String>('todo-notes-sheet-button'),
+              tooltip: i18n.t('quickNotes'),
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints.tightFor(width: 30, height: 30),
+              padding: EdgeInsets.zero,
+              onPressed: () => _showNotesSheet(focus, i18n),
+              icon: const Icon(Icons.sticky_note_2_outlined),
+            ),
+            _buildTodoMetricsToggleButton(i18n),
+          ],
         ),
         const SizedBox(height: 6),
         TextField(
@@ -1989,6 +2010,21 @@ class _FocusPageState extends State<FocusPage>
               theme: theme,
               hasCompletedTodos: hasCompletedTodos,
               compactLayout: true,
+              actions: <Widget>[
+                IconButton(
+                  key: const ValueKey<String>('todo-notes-sheet-button'),
+                  tooltip: i18n.t('quickNotes'),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 30,
+                    height: 30,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => _showNotesSheet(focus, i18n),
+                  icon: const Icon(Icons.sticky_note_2_outlined),
+                ),
+                _buildTodoMetricsToggleButton(i18n),
+              ],
             ),
             const SizedBox(height: 6),
             TextField(
@@ -2092,6 +2128,7 @@ class _FocusPageState extends State<FocusPage>
     required ThemeData theme,
     required bool hasCompletedTodos,
     bool compactLayout = false,
+    List<Widget> actions = const <Widget>[],
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -2106,6 +2143,7 @@ class _FocusPageState extends State<FocusPage>
                     ?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
+        ...actions,
         if (hasCompletedTodos) _buildTodoClearCompletedButton(focus, i18n),
       ],
     );
@@ -2632,7 +2670,8 @@ class _FocusPageState extends State<FocusPage>
   }) {
     final theme = Theme.of(context);
     final filterMode = _todoFilterModeForMetricKey(metricKey);
-    final expanded = _expandedTodoMetricKey == metricKey;
+    final expanded =
+        _todoMetricsExpanded || _expandedTodoMetricKey == metricKey;
     final selected = _todoFilterMode == filterMode;
     final emphasized = expanded || selected;
 
@@ -2646,7 +2685,13 @@ class _FocusPageState extends State<FocusPage>
           onTap: () {
             setState(() {
               _todoFilterMode = filterMode;
-              _expandedTodoMetricKey = expanded && selected ? null : metricKey;
+              if (_todoMetricsExpanded) {
+                _expandedTodoMetricKey = metricKey;
+              } else {
+                _expandedTodoMetricKey = expanded && selected
+                    ? null
+                    : metricKey;
+              }
             });
           },
           child: AnimatedContainer(
@@ -3335,6 +3380,18 @@ class _FocusPageState extends State<FocusPage>
                 });
               },
             ),
+            _buildTodoCompactMenuButton<_TodoFilterMode>(
+              key: const ValueKey<String>('todo-filter-menu'),
+              icon: Icons.filter_alt_rounded,
+              label: _todoFilterModeLabel(i18n, _todoFilterMode),
+              items: _buildTodoFilterMenuItems(i18n),
+              onSelected: (value) {
+                setState(() {
+                  _todoFilterMode = value;
+                  _expandedTodoMetricKey = null;
+                });
+              },
+            ),
             if (_todoViewMode == _TodoViewMode.list)
               _buildTodoCompactMenuButton<_TodoSortMode>(
                 key: const ValueKey<String>('todo-sort-menu'),
@@ -3503,6 +3560,49 @@ class _FocusPageState extends State<FocusPage>
         ),
       ),
     );
+  }
+
+  List<PopupMenuEntry<_TodoFilterMode>> _buildTodoFilterMenuItems(
+    AppI18n i18n,
+  ) {
+    return <PopupMenuEntry<_TodoFilterMode>>[
+      CheckedPopupMenuItem<_TodoFilterMode>(
+        key: const ValueKey<String>('todo-filter-all'),
+        value: _TodoFilterMode.all,
+        checked: _todoFilterMode == _TodoFilterMode.all,
+        child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.all)),
+      ),
+      CheckedPopupMenuItem<_TodoFilterMode>(
+        key: const ValueKey<String>('todo-filter-active'),
+        value: _TodoFilterMode.active,
+        checked: _todoFilterMode == _TodoFilterMode.active,
+        child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.active)),
+      ),
+      CheckedPopupMenuItem<_TodoFilterMode>(
+        key: const ValueKey<String>('todo-filter-today'),
+        value: _TodoFilterMode.today,
+        checked: _todoFilterMode == _TodoFilterMode.today,
+        child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.today)),
+      ),
+      CheckedPopupMenuItem<_TodoFilterMode>(
+        key: const ValueKey<String>('todo-filter-overdue'),
+        value: _TodoFilterMode.overdue,
+        checked: _todoFilterMode == _TodoFilterMode.overdue,
+        child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.overdue)),
+      ),
+      CheckedPopupMenuItem<_TodoFilterMode>(
+        key: const ValueKey<String>('todo-filter-deferred'),
+        value: _TodoFilterMode.deferred,
+        checked: _todoFilterMode == _TodoFilterMode.deferred,
+        child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.deferred)),
+      ),
+      CheckedPopupMenuItem<_TodoFilterMode>(
+        key: const ValueKey<String>('todo-filter-completed'),
+        value: _TodoFilterMode.completed,
+        checked: _todoFilterMode == _TodoFilterMode.completed,
+        child: Text(_todoFilterModeLabel(i18n, _TodoFilterMode.completed)),
+      ),
+    ];
   }
 
   Widget _buildTodoControlSection({
@@ -4517,6 +4617,70 @@ class _FocusPageState extends State<FocusPage>
                 ? Center(child: Text(i18n.t('notesEmpty')))
                 : _noteSelectionMode
                 ? _buildSelectableNotesList(notes)
+                : _buildReorderableNotesList(focus, notes, i18n),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showNotesSheet(FocusService focus, AppI18n i18n) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        final mediaQuery = MediaQuery.of(sheetContext);
+        final sheetHeight = math.max(320.0, mediaQuery.size.height * 0.72);
+        return ValueListenableBuilder<int>(
+          valueListenable: focus.viewRevision,
+          builder: (context, revision, child) {
+            final notes = focus.getNotes();
+            return SizedBox(
+              key: const ValueKey<String>('notes-sheet'),
+              height: sheetHeight,
+              child: _buildNotesSheetContent(focus, notes, i18n),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildNotesSheetContent(
+    FocusService focus,
+    List<PlanNote> notes,
+    AppI18n i18n,
+  ) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  i18n.t('quickNotes'),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: i18n.t('addNote'),
+                onPressed: () => _showNoteDialog(focus, i18n),
+                icon: const Icon(Icons.note_add_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(i18n.t('dragToReorder'), style: theme.textTheme.bodySmall),
+          const SizedBox(height: 8),
+          Expanded(
+            child: notes.isEmpty
+                ? Center(child: Text(i18n.t('notesEmpty')))
                 : _buildReorderableNotesList(focus, notes, i18n),
           ),
         ],
