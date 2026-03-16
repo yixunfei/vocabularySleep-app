@@ -1,6 +1,8 @@
 # 咸鱼声息 Flutter App
-
+![alt text](logo.jpg)
 `咸鱼声息` 是一个围绕词汇学习、专注练习、白噪音助眠、语音输入与跟读训练构建的 Flutter 多平台应用。
+
+
 
 当前工程已经统一了应用标识与打包命名：
 
@@ -18,6 +20,11 @@
 - 播放队列、TTS、环境音混音与专注场景
 - 快速笔记、待办事项、天气与启动提示等移动端入口能力
 - 跟读练习、语音识别、相似度评分与练习统计
+
+![alt text](image.png)
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)
 
 ## 快速开始
 
@@ -97,9 +104,6 @@ Windows 下也可以直接使用辅助脚本：
 
 更详细的目录说明请查看 [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)。
 
-## 迁移与重置
-
-如果你是从旧包名、旧窗口名或者旧本地数据目录升级过来，建议先阅读 [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)。
 
 ## 当前已知限制
 
