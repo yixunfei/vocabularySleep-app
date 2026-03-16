@@ -612,8 +612,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceTotalRemembered += safeRemembered;
     _practiceLastSessionTitle = title.trim();
     final normalizedRememberedWords = _normalizePracticeWords(rememberedWords);
-    final normalizedWeakWords = _normalizePracticeWords(weakWords)
-      ..removeWhere(normalizedRememberedWords.contains);
+    final normalizedWeakWords = _normalizePracticeWords(
+      weakWords,
+    ).where((word) => !normalizedRememberedWords.contains(word)).toList();
     final rememberedSet = normalizedRememberedWords.toSet();
     final weakSet = normalizedWeakWords.toSet();
     _updateRememberedWordsStatus(
