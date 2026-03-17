@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:uuid/uuid.dart';
 
@@ -39,13 +41,323 @@ class AmbientSource {
   }
 }
 
+typedef AmbientLoopPlayerFactory = AmbientLoopPlayer Function();
+
+abstract class AmbientLoopPlayer {
+  Future<void> setSource(Source source);
+  Future<Duration?> getDuration();
+  Future<void> setReleaseMode(ReleaseMode releaseMode);
+  Future<void> setVolume(double volume);
+  Future<void> resume();
+  Future<void> stop();
+  Future<void> dispose();
+}
+
+class AudioPlayerAmbientLoopPlayer implements AmbientLoopPlayer {
+  AudioPlayerAmbientLoopPlayer([AudioPlayer? player])
+    : _player = player ?? AudioPlayer();
+
+  final AudioPlayer _player;
+
+  @override
+  Future<void> setSource(Source source) => _player.setSource(source);
+
+  @override
+  Future<Duration?> getDuration() => _player.getDuration();
+
+  @override
+  Future<void> setReleaseMode(ReleaseMode releaseMode) {
+    return _player.setReleaseMode(releaseMode);
+  }
+
+  @override
+  Future<void> setVolume(double volume) => _player.setVolume(volume);
+
+  @override
+  Future<void> resume() => _player.resume();
+
+  @override
+  Future<void> stop() => _player.stop();
+
+  @override
+  Future<void> dispose() => _player.dispose();
+}
+
+/// Keeps two preloaded players leapfrogging so ambient loops do not pause
+/// audibly at the wraparound point.
+class SeamlessAmbientLoop {
+  SeamlessAmbientLoop({
+    required this.source,
+    required double initialVolume,
+    AmbientLoopPlayerFactory? playerFactory,
+    this.overlap = const Duration(milliseconds: 180),
+    this.fadeInterval = const Duration(milliseconds: 45),
+  }) : _playerFactory = playerFactory ?? (() => AudioPlayerAmbientLoopPlayer()),
+       _targetVolume = initialVolume.clamp(0.0, 1.0);
+
+  final Source source;
+  final AmbientLoopPlayerFactory _playerFactory;
+  final Duration overlap;
+  final Duration fadeInterval;
+
+  AmbientLoopPlayer? _firstPlayer;
+  AmbientLoopPlayer? _secondPlayer;
+  Duration? _trackDuration;
+  Duration _effectiveOverlap = Duration.zero;
+  double _targetVolume;
+  int _activeIndex = 0;
+  bool _disposed = false;
+  bool _started = false;
+  bool _usingNativeLoopFallback = false;
+  int _runToken = 0;
+  Timer? _handoffTimer;
+  Timer? _fadeTimer;
+  int? _fadeFromIndex;
+  int? _fadeToIndex;
+  double _fadeProgress = 0;
+
+  Future<void> start() async {
+    if (_disposed || _started) {
+      return;
+    }
+    _started = true;
+    _runToken += 1;
+    final runToken = _runToken;
+
+    final firstPlayer = _playerFactory();
+    await _preparePlayer(firstPlayer);
+    if (!_isRunActive(runToken)) {
+      await firstPlayer.dispose();
+      return;
+    }
+
+    final duration = await firstPlayer.getDuration();
+    if (!_isRunActive(runToken)) {
+      await firstPlayer.dispose();
+      return;
+    }
+
+    _firstPlayer = firstPlayer;
+    _trackDuration = duration;
+
+    if (!_canUseSeamlessLoop(duration)) {
+      _usingNativeLoopFallback = true;
+      await firstPlayer.setReleaseMode(ReleaseMode.loop);
+      await firstPlayer.setVolume(_targetVolume);
+      await firstPlayer.resume();
+      return;
+    }
+
+    final secondPlayer = _playerFactory();
+    await _preparePlayer(secondPlayer);
+    if (!_isRunActive(runToken)) {
+      await firstPlayer.dispose();
+      await secondPlayer.dispose();
+      return;
+    }
+
+    _secondPlayer = secondPlayer;
+    _effectiveOverlap = _resolveEffectiveOverlap(duration!);
+
+    await firstPlayer.setVolume(_targetVolume);
+    await secondPlayer.setVolume(0);
+    await firstPlayer.resume();
+    _scheduleNextHandoff(runToken);
+  }
+
+  Future<void> setTargetVolume(double value) async {
+    _targetVolume = value.clamp(0.0, 1.0);
+    if (_disposed || !_started) {
+      return;
+    }
+    await _syncVolumes();
+  }
+
+  Future<void> dispose() async {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    _runToken += 1;
+    _handoffTimer?.cancel();
+    _fadeTimer?.cancel();
+    _handoffTimer = null;
+    _fadeTimer = null;
+    _fadeFromIndex = null;
+    _fadeToIndex = null;
+    _fadeProgress = 0;
+
+    final players = <AmbientLoopPlayer>[
+      ...<AmbientLoopPlayer?>[_firstPlayer, _secondPlayer].nonNulls,
+    ];
+    _firstPlayer = null;
+    _secondPlayer = null;
+    _trackDuration = null;
+
+    for (final player in players) {
+      await player.stop();
+      await player.dispose();
+    }
+  }
+
+  bool _canUseSeamlessLoop(Duration? duration) {
+    if (duration == null) {
+      return false;
+    }
+    final minimumDurationMs =
+        overlap.inMilliseconds * 2 + fadeInterval.inMilliseconds;
+    return duration.inMilliseconds > minimumDurationMs;
+  }
+
+  Duration _resolveEffectiveOverlap(Duration duration) {
+    final cappedOverlap = duration.inMilliseconds ~/ 4;
+    final overlapMs = overlap.inMilliseconds.clamp(1, cappedOverlap);
+    return Duration(milliseconds: overlapMs);
+  }
+
+  Future<void> _preparePlayer(AmbientLoopPlayer player) async {
+    await player.setReleaseMode(ReleaseMode.stop);
+    await player.setSource(source);
+  }
+
+  void _scheduleNextHandoff(int runToken) {
+    final duration = _trackDuration;
+    final secondPlayer = _secondPlayer;
+    if (!_isRunActive(runToken) || duration == null || secondPlayer == null) {
+      return;
+    }
+
+    final handoffDelay = duration - _effectiveOverlap;
+    _handoffTimer?.cancel();
+    _handoffTimer = Timer(handoffDelay, () {
+      unawaited(_performHandoff(runToken));
+    });
+  }
+
+  Future<void> _performHandoff(int runToken) async {
+    if (!_isRunActive(runToken)) {
+      return;
+    }
+    final fromIndex = _activeIndex;
+    final toIndex = fromIndex == 0 ? 1 : 0;
+    final fromPlayer = _playerByIndex(fromIndex);
+    final toPlayer = _playerByIndex(toIndex);
+    if (fromPlayer == null || toPlayer == null) {
+      return;
+    }
+
+    await toPlayer.setVolume(0);
+    await toPlayer.resume();
+    if (!_isRunActive(runToken)) {
+      return;
+    }
+
+    _activeIndex = toIndex;
+    _fadeFromIndex = fromIndex;
+    _fadeToIndex = toIndex;
+    _fadeProgress = 0;
+    _scheduleNextHandoff(runToken);
+    _startFade(runToken);
+  }
+
+  void _startFade(int runToken) {
+    final totalMs = _effectiveOverlap.inMilliseconds;
+    final tickMs = fadeInterval.inMilliseconds.clamp(1, totalMs);
+    final step = tickMs / totalMs;
+
+    _fadeTimer?.cancel();
+    _fadeTimer = Timer.periodic(Duration(milliseconds: tickMs), (timer) {
+      _fadeProgress = (_fadeProgress + step).clamp(0.0, 1.0);
+      unawaited(_syncVolumes());
+      if (_fadeProgress >= 1) {
+        timer.cancel();
+        _fadeTimer = null;
+        unawaited(_completeFade(runToken));
+      }
+    });
+  }
+
+  Future<void> _completeFade(int runToken) async {
+    final fromPlayer = _fadeFromIndex == null
+        ? null
+        : _playerByIndex(_fadeFromIndex!);
+    _fadeFromIndex = null;
+    _fadeToIndex = null;
+    _fadeProgress = 0;
+
+    if (fromPlayer != null) {
+      await fromPlayer.stop();
+    }
+    if (_isRunActive(runToken)) {
+      await _syncVolumes();
+    }
+  }
+
+  Future<void> _syncVolumes() async {
+    final firstPlayer = _firstPlayer;
+    if (firstPlayer == null) {
+      return;
+    }
+
+    if (_usingNativeLoopFallback || _secondPlayer == null) {
+      await firstPlayer.setVolume(_targetVolume);
+      return;
+    }
+
+    final secondPlayer = _secondPlayer!;
+    final fadeFromIndex = _fadeFromIndex;
+    final fadeToIndex = _fadeToIndex;
+
+    if (fadeFromIndex != null && fadeToIndex != null) {
+      final fromVolume = _targetVolume * (1 - _fadeProgress);
+      final toVolume = _targetVolume * _fadeProgress;
+      final fromPlayer = _playerByIndex(fadeFromIndex);
+      final toPlayer = _playerByIndex(fadeToIndex);
+      if (fromPlayer != null) {
+        await fromPlayer.setVolume(fromVolume);
+      }
+      if (toPlayer != null) {
+        await toPlayer.setVolume(toVolume);
+      }
+      return;
+    }
+
+    if (_activeIndex == 0) {
+      await firstPlayer.setVolume(_targetVolume);
+      await secondPlayer.setVolume(0);
+    } else {
+      await firstPlayer.setVolume(0);
+      await secondPlayer.setVolume(_targetVolume);
+    }
+  }
+
+  AmbientLoopPlayer? _playerByIndex(int index) {
+    return switch (index) {
+      0 => _firstPlayer,
+      1 => _secondPlayer,
+      _ => null,
+    };
+  }
+
+  bool _isRunActive(int runToken) {
+    return !_disposed && _started && runToken == _runToken;
+  }
+}
+
 class AmbientService {
-  AmbientService() {
+  AmbientService({
+    AmbientLoopPlayerFactory? playerFactory,
+    Duration seamlessLoopOverlap = const Duration(milliseconds: 180),
+  }) : _playerFactory = playerFactory ?? (() => AudioPlayerAmbientLoopPlayer()),
+       _seamlessLoopOverlap = seamlessLoopOverlap {
     _sources = List<AmbientSource>.from(_builtInPresets);
   }
 
   final _uuid = const Uuid();
-  final Map<String, AudioPlayer> _players = <String, AudioPlayer>{};
+  final AmbientLoopPlayerFactory _playerFactory;
+  final Duration _seamlessLoopOverlap;
+  final Map<String, SeamlessAmbientLoop> _loops =
+      <String, SeamlessAmbientLoop>{};
 
   double _masterVolume = 0.7;
   List<AmbientSource> _sources = <AmbientSource>[];
@@ -131,9 +443,11 @@ class AmbientService {
   void setMasterVolume(double value) {
     _masterVolume = value.clamp(0.0, 1.0);
     for (final source in _sources.where((item) => item.enabled)) {
-      final player = _players[source.id];
-      if (player == null) continue;
-      player.setVolume(_resolvedVolume(source));
+      final loop = _loops[source.id];
+      if (loop == null) {
+        continue;
+      }
+      unawaited(loop.setTargetVolume(_resolvedVolume(source)));
     }
   }
 
@@ -150,13 +464,13 @@ class AmbientService {
       if (source.id != sourceId) return source;
       return source.copyWith(volume: volume);
     }).toList();
-    final player = _players[sourceId];
+    final loop = _loops[sourceId];
     final source = _sources
         .where((item) => item.id == sourceId)
         .cast<AmbientSource?>()
         .firstOrNull;
-    if (player != null && source != null) {
-      player.setVolume(_resolvedVolume(source));
+    if (loop != null && source != null) {
+      unawaited(loop.setTargetVolume(_resolvedVolume(source)));
     }
   }
 
@@ -176,51 +490,69 @@ class AmbientService {
 
   void removeSource(String sourceId) {
     _sources = _sources.where((source) => source.id != sourceId).toList();
-    final player = _players.remove(sourceId);
-    player?.stop();
-    player?.dispose();
+    final loop = _loops.remove(sourceId);
+    if (loop != null) {
+      unawaited(loop.dispose());
+    }
   }
 
   Future<void> syncPlayback() async {
     final enabledSources = _sources.where((source) => source.enabled).toList();
     final enabledIds = enabledSources.map((source) => source.id).toSet();
 
-    for (final entry in _players.entries.toList()) {
-      if (enabledIds.contains(entry.key)) continue;
-      await entry.value.stop();
+    for (final entry in _loops.entries.toList()) {
+      if (enabledIds.contains(entry.key)) {
+        continue;
+      }
       await entry.value.dispose();
-      _players.remove(entry.key);
+      _loops.remove(entry.key);
     }
 
     for (final source in enabledSources) {
-      if (_players.containsKey(source.id)) {
-        await _players[source.id]!.setVolume(_resolvedVolume(source));
+      final targetVolume = _resolvedVolume(source);
+      final existingLoop = _loops[source.id];
+      if (existingLoop != null) {
+        await existingLoop.setTargetVolume(targetVolume);
         continue;
       }
-      final player = AudioPlayer();
-      await player.setReleaseMode(ReleaseMode.loop);
-      await player.setVolume(_resolvedVolume(source));
-      if (source.assetPath != null) {
-        await player.play(AssetSource(source.assetPath!));
-      } else if (source.filePath != null) {
-        await player.play(DeviceFileSource(source.filePath!));
+
+      final playbackSource = _toPlaybackSource(source);
+      if (playbackSource == null) {
+        continue;
       }
-      _players[source.id] = player;
+
+      final loop = SeamlessAmbientLoop(
+        source: playbackSource,
+        initialVolume: targetVolume,
+        playerFactory: _playerFactory,
+        overlap: _seamlessLoopOverlap,
+      );
+      await loop.start();
+      _loops[source.id] = loop;
     }
   }
 
   Future<void> stopAll() async {
-    for (final player in _players.values) {
-      await player.stop();
-      await player.dispose();
+    for (final loop in _loops.values) {
+      await loop.dispose();
     }
-    _players.clear();
+    _loops.clear();
   }
 
   Future<void> reset() async {
     await stopAll();
     _masterVolume = 0.7;
     _sources = List<AmbientSource>.from(_builtInPresets);
+  }
+
+  Source? _toPlaybackSource(AmbientSource source) {
+    if (source.assetPath != null) {
+      return AssetSource(source.assetPath!);
+    }
+    if (source.filePath != null) {
+      return DeviceFileSource(source.filePath!);
+    }
+    return null;
   }
 
   double _resolvedVolume(AmbientSource source) {
