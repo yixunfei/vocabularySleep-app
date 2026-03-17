@@ -95,6 +95,5 @@ ios/Runner/GoogleService-Info.plist
 # ------------------------------
 # Project-specific local files
 # ------------------------------
-.claude/
 .metadata
 vocabularySleep-app/
