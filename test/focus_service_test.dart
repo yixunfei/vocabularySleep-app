@@ -102,6 +102,8 @@ class _FakeReminderService implements ReminderService {
   bool lastHaptic = false;
   bool lastSound = false;
   Duration? lastDuration;
+  String? lastAnnouncementText;
+  String? lastAnnouncementLanguageTag;
 
   @override
   Future<void> play({
@@ -116,6 +118,8 @@ class _FakeReminderService implements ReminderService {
     lastHaptic = haptic;
     lastSound = sound;
     lastDuration = duration;
+    lastAnnouncementText = announcementText;
+    lastAnnouncementLanguageTag = announcementLanguageTag;
   }
 
   @override
@@ -419,6 +423,43 @@ void main() {
         expect(reminder.stopCalls, greaterThan(0));
         expect(service.reminderAcknowledgementPending, false);
         expect(service.state.phase, TomatoTimerPhase.breakTime);
+      },
+    );
+
+    test(
+      'reminder announcement includes round and next-step details',
+      () async {
+        final database = _MemoryDatabaseService();
+        database.setSetting('uiLanguage', 'zh');
+        final reminder = _FakeReminderService();
+        final service = FocusService(database, reminder: reminder);
+        await service.init();
+        service.saveConfig(
+          const TomatoTimerConfig(
+            focusDurationSeconds: 2,
+            breakDurationSeconds: 180,
+            rounds: 1,
+            autoStartBreak: true,
+            reminder: TimerReminderConfig(
+              haptic: true,
+              sound: true,
+              voice: true,
+              visual: true,
+            ),
+          ),
+        );
+
+        fakeAsync((async) {
+          service.start();
+          async.elapse(const Duration(seconds: 2));
+        });
+
+        expect(reminder.playCalls, 1);
+        expect(reminder.lastAnnouncementLanguageTag, 'zh');
+        expect(reminder.lastAnnouncementText, contains('专注时间结束'));
+        expect(reminder.lastAnnouncementText, contains('第'));
+        expect(reminder.lastAnnouncementText, contains('时长'));
+        expect(reminder.lastAnnouncementText, contains('3 分'));
       },
     );
 

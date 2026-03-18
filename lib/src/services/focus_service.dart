@@ -403,9 +403,11 @@ class FocusService extends ChangeNotifier {
       _database.getSetting('uiLanguage') ?? 'en',
     );
     final i18n = AppI18n(language);
-    final voiceMessage = phase == TomatoTimerPhase.focus
-        ? i18n.t('focusPhaseComplete')
-        : i18n.t('breakPhaseComplete');
+    final voiceMessage = _buildReminderVoiceMessage(
+      i18n,
+      phase,
+      persistent: persistent,
+    );
 
     if (reminder.pauseAmbient && _ambient != null) {
       try {
@@ -465,6 +467,53 @@ class FocusService extends ChangeNotifier {
         // Avoid breaking timer flow for reminder failures.
       }
     }
+  }
+
+  String _buildReminderVoiceMessage(
+    AppI18n i18n,
+    TomatoTimerPhase phase, {
+    required bool persistent,
+  }) {
+    final round = _timerState.currentRound;
+    final totalRounds = _timerConfig.rounds;
+    final breakDuration = _formatReminderDuration(
+      i18n,
+      _timerConfig.breakDurationSeconds,
+    );
+    final focusDuration = _formatReminderDuration(
+      i18n,
+      _timerConfig.focusDurationSeconds,
+    );
+
+    if (phase == TomatoTimerPhase.focus) {
+      final nextAction = persistent || !_timerConfig.autoStartBreak
+          ? i18n.t('startBreak')
+          : i18n.t('breakReady');
+      return '${i18n.t('focusPhaseComplete')} ${i18n.t('roundProgress', params: <String, Object?>{'current': round, 'total': totalRounds})}. $nextAction. ${i18n.t('breakMinutes')}: $breakDuration.';
+    }
+
+    if (phase == TomatoTimerPhase.breakTime && round < totalRounds) {
+      final nextRound = round + 1;
+      final nextAction = persistent || !_timerConfig.autoStartNextRound
+          ? i18n.t('startFocus')
+          : i18n.t('focusReady');
+      return '${i18n.t('breakPhaseComplete')} $nextAction. ${i18n.t('roundProgress', params: <String, Object?>{'current': nextRound, 'total': totalRounds})}. ${i18n.t('focusMinutesLabel')}: $focusDuration.';
+    }
+
+    final focusMinutes = (_sessionFocusSeconds / 60)
+        .round()
+        .clamp(0, 9999)
+        .toString();
+    final sessionMinutes = (_sessionDurationSeconds / 60)
+        .round()
+        .clamp(0, 9999)
+        .toString();
+    return '${i18n.t('breakPhaseComplete')} ${i18n.t('roundsLabel')}: $totalRounds. ${i18n.t('focusMinutesLabel')}: $focusMinutes ${i18n.t('minutesUnit')}. ${i18n.t('sessionMinutesLabel')}: $sessionMinutes ${i18n.t('minutesUnit')}.';
+  }
+
+  String _formatReminderDuration(AppI18n i18n, int seconds) {
+    final minutes = (seconds / 60).round().clamp(1, 9999);
+    return '$minutes ${i18n.t('minutesUnit')}';
   }
 
   void _queueBreakPhase({required int round}) {

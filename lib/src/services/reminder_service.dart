@@ -5,6 +5,20 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+class _ReminderToneSegment {
+  const _ReminderToneSegment({
+    required this.startMs,
+    required this.durationMs,
+    required this.frequency,
+    required this.amplitude,
+  });
+
+  final int startMs;
+  final int durationMs;
+  final double frequency;
+  final double amplitude;
+}
+
 abstract interface class ReminderService {
   Future<void> play({
     required bool haptic,
@@ -228,10 +242,35 @@ class PlatformReminderService implements ReminderService {
 
   static Uint8List _buildReminderToneBytes() {
     const sampleRate = 44100;
-    const durationMs = 880;
-    const attackMs = 24;
-    const releaseMs = 160;
-    const frequency = 880.0;
+    const durationMs = 1400;
+    const attackMs = 18;
+    const releaseMs = 120;
+    const toneSegments = <_ReminderToneSegment>[
+      _ReminderToneSegment(
+        startMs: 0,
+        durationMs: 180,
+        frequency: 784,
+        amplitude: 0.45,
+      ),
+      _ReminderToneSegment(
+        startMs: 260,
+        durationMs: 210,
+        frequency: 1046,
+        amplitude: 0.52,
+      ),
+      _ReminderToneSegment(
+        startMs: 560,
+        durationMs: 260,
+        frequency: 1318,
+        amplitude: 0.62,
+      ),
+      _ReminderToneSegment(
+        startMs: 920,
+        durationMs: 220,
+        frequency: 988,
+        amplitude: 0.48,
+      ),
+    ];
     final sampleCount = (sampleRate * durationMs / 1000).round();
     final byteCount = sampleCount * 2;
     final buffer = ByteData(44 + byteCount);
@@ -261,15 +300,38 @@ class PlatformReminderService implements ReminderService {
     final twoPi = math.pi * 2;
 
     for (var index = 0; index < sampleCount; index++) {
-      final attackEnvelope = attackSamples <= 0
-          ? 1.0
-          : (index / attackSamples).clamp(0.0, 1.0);
-      final releaseEnvelope = releaseSamples <= 0
-          ? 1.0
-          : ((sampleCount - index) / releaseSamples).clamp(0.0, 1.0);
-      final envelope = math.min(attackEnvelope, releaseEnvelope);
-      final sample =
-          math.sin(twoPi * frequency * index / sampleRate) * envelope * 0.62;
+      final millis = index * 1000 / sampleRate;
+      _ReminderToneSegment? activeSegment;
+      for (final segment in toneSegments) {
+        final segmentEnd = segment.startMs + segment.durationMs;
+        if (millis >= segment.startMs && millis < segmentEnd) {
+          activeSegment = segment;
+          break;
+        }
+      }
+
+      var sample = 0.0;
+      if (activeSegment != null) {
+        final segmentStartSample = (sampleRate * activeSegment.startMs / 1000)
+            .round();
+        final segmentSampleCount =
+            (sampleRate * activeSegment.durationMs / 1000).round();
+        final localIndex = index - segmentStartSample;
+        final attackEnvelope = attackSamples <= 0
+            ? 1.0
+            : (localIndex / attackSamples).clamp(0.0, 1.0);
+        final releaseEnvelope = releaseSamples <= 0
+            ? 1.0
+            : ((segmentSampleCount - localIndex) / releaseSamples).clamp(
+                0.0,
+                1.0,
+              );
+        final envelope = math.min(attackEnvelope, releaseEnvelope);
+        sample =
+            math.sin(twoPi * activeSegment.frequency * index / sampleRate) *
+            envelope *
+            activeSegment.amplitude;
+      }
       buffer.setInt16(44 + index * 2, (sample * 32767).round(), Endian.little);
     }
 
