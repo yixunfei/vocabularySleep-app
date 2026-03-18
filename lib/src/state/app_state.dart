@@ -2083,8 +2083,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void stopAsrProcessing() => _asr.stopOfflineRecognition();
 
-  Future<String?> startVoiceInputRecording() {
-    if (_config.voiceInput.usesSystemSpeech) {
+  Future<String?> startVoiceInputRecording({bool forceRecorder = false}) {
+    if (_config.voiceInput.usesSystemSpeech && !forceRecorder) {
       return Future<String?>.value(null);
     }
     return _asr.startRecording(provider: _config.voiceInput.recordingProvider);
