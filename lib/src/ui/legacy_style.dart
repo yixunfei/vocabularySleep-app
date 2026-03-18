@@ -153,38 +153,38 @@ class LegacyStyle {
       dark: false,
     ),
     'ocean': const _LegacyPalette(
-      primary: Color(0xFF38BDF8),
+      primary: Color(0xFF0EA5E9),
       accent: Color(0xFF2DD4BF),
-      surface: Color(0xFF0B1F2E),
-      textPrimary: Color(0xFFF3FCFF),
-      textSecondary: Color(0xFFA9CEDA),
-      border: Color(0xFF24506A),
-      pageGradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: <Color>[
-          Color(0xFF04111B),
-          Color(0xFF08263A),
-          Color(0xFF0A415D),
-          Color(0xFF0F7891),
-        ],
-      ),
-      dark: true,
-    ),
-    'mono': const _LegacyPalette(
-      primary: Color(0xFF18181B),
-      accent: Color(0xFF52525B),
-      surface: Color(0xFFFCFCFA),
-      textPrimary: Color(0xFF141414),
-      textSecondary: Color(0xFF52525B),
-      border: Color(0xFFE4E4E7),
+      surface: Color(0xFFFCFEFF),
+      textPrimary: Color(0xFF0E5164),
+      textSecondary: Color(0xFF568194),
+      border: Color(0xFFC8EAF2),
       pageGradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
           Color(0xFFFFFFFF),
-          Color(0xFFF8F8F6),
-          Color(0xFFF0F0EC),
+          Color(0xFFF2FBFF),
+          Color(0xFFE3F8FE),
+          Color(0xFFD8F1FB),
+        ],
+      ),
+      dark: false,
+    ),
+    'mono': const _LegacyPalette(
+      primary: Color(0xFF18181B),
+      accent: Color(0xFF71717A),
+      surface: Color(0xFFFFFFFF),
+      textPrimary: Color(0xFF18181B),
+      textSecondary: Color(0xFF71717A),
+      border: Color(0xFFE7E5E4),
+      pageGradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          Color(0xFFFFFFFF),
+          Color(0xFFFAFAF8),
+          Color(0xFFF4F4F1),
         ],
       ),
       dark: false,
@@ -229,8 +229,8 @@ class LegacyStyle {
   }
 
   static Color get appBarBackground => switch (_appearance.normalizedTheme) {
-    'ocean' => const Color(0xFF0A2236).withValues(alpha: 0.94),
-    'mono' => const Color(0xFFFCFCFA).withValues(alpha: 0.94),
+    'ocean' => const Color(0xFFF7FDFF).withValues(alpha: 0.95),
+    'mono' => const Color(0xFFFFFFFF).withValues(alpha: 0.95),
     _ =>
       _palette.dark
           ? const Color(0xFF0F172A).withValues(alpha: 0.95)
