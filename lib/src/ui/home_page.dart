@@ -15,6 +15,7 @@ import '../models/wordbook.dart';
 import '../services/asr_service.dart';
 import '../state/app_state.dart';
 import '../utils/asr_language.dart';
+import '../utils/speech_api_model_options.dart';
 import 'legacy_style.dart';
 
 const List<_TtsApiModelOption> _ttsApiModels = <_TtsApiModelOption>[
@@ -3866,6 +3867,12 @@ class _HomePageState extends State<HomePage> {
     required ValueChanged<PlayConfig> onDraftChanged,
   }) {
     final provider = draft.asr.provider;
+    final selectedApiModel = normalizeSpeechApiModelValue(
+      asrModelController.text.trim().isEmpty
+          ? draft.asr.model
+          : asrModelController.text,
+    );
+    final apiModelOptions = resolveSpeechApiModelOptions(selectedApiModel);
     final selectedEngines = provider == AsrProviderType.multiEngine
         ? draft.asr.normalizedEngineOrder
         : <AsrProviderType>[provider];
@@ -4357,9 +4364,35 @@ class _HomePageState extends State<HomePage> {
           ],
           if (isApiProvider) ...<Widget>[
             const SizedBox(height: 10),
-            TextField(
-              controller: asrModelController,
+            DropdownButtonFormField<String>(
+              initialValue: selectedApiModel,
+              isExpanded: true,
               decoration: InputDecoration(labelText: draftI18n.t('asrModel')),
+              items: apiModelOptions
+                  .map(
+                    (option) => DropdownMenuItem<String>(
+                      value: option.value,
+                      child: Text(
+                        speechApiModelOptionLabel(draftI18n, option),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                if (value == null || value.trim().isEmpty) return;
+                asrModelController.text = value.trim();
+                onDraftChanged(
+                  draft.copyWith(asr: draft.asr.copyWith(model: value.trim())),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              speechApiModelHelperText(draftI18n),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: LegacyStyle.textSecondary),
             ),
             const SizedBox(height: 10),
             TextField(

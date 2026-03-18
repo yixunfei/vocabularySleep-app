@@ -6,6 +6,7 @@ import '../../models/play_config.dart';
 import '../../services/asr_service.dart';
 import '../../state/app_state.dart';
 import '../../utils/asr_language.dart';
+import '../../utils/speech_api_model_options.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
@@ -83,6 +84,8 @@ class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
     final config = state.config;
     final voiceInput = config.voiceInput;
     final language = normalizeAsrLanguageTag(voiceInput.language);
+    final selectedApiModel = normalizeSpeechApiModelValue(voiceInput.model);
+    final apiModelOptions = resolveSpeechApiModelOptions(selectedApiModel);
     final languageOptions = <String>[
       ...kAsrLanguagePresetOptions,
       if (!kAsrLanguagePresetOptions.contains(language)) language,
@@ -214,12 +217,25 @@ class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    TextFormField(
-                      initialValue: voiceInput.model,
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedApiModel,
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: i18n.t('asrModel'),
                       ),
+                      items: apiModelOptions
+                          .map(
+                            (option) => DropdownMenuItem<String>(
+                              value: option.value,
+                              child: Text(
+                                speechApiModelOptionLabel(i18n, option),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
                       onChanged: (value) {
+                        if (value == null || value.trim().isEmpty) return;
                         state.updateConfig(
                           config.copyWith(
                             voiceInput: voiceInput.copyWith(
@@ -228,6 +244,13 @@ class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
                           ),
                         );
                       },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      speechApiModelHelperText(i18n),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextFormField(

@@ -6,6 +6,7 @@ import '../../models/play_config.dart';
 import '../../services/asr_service.dart';
 import '../../state/app_state.dart';
 import '../../utils/asr_language.dart';
+import '../../utils/speech_api_model_options.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
@@ -351,6 +352,8 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     final asr = config.asr;
     final languageOptions = List<String>.from(kAsrLanguagePresetOptions);
     final language = normalizeAsrLanguageTag(asr.language);
+    final selectedApiModel = normalizeSpeechApiModelValue(asr.model);
+    final apiModelOptions = resolveSpeechApiModelOptions(selectedApiModel);
     if (!languageOptions.contains(language)) {
       languageOptions.add(language);
     }
@@ -549,18 +552,38 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
                   ],
                   if (usesApi) ...<Widget>[
                     const SizedBox(height: 10),
-                    TextFormField(
-                      initialValue: asr.model,
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedApiModel,
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: i18n.t('asrModel'),
                       ),
+                      items: apiModelOptions
+                          .map(
+                            (option) => DropdownMenuItem<String>(
+                              value: option.value,
+                              child: Text(
+                                speechApiModelOptionLabel(i18n, option),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
                       onChanged: (value) {
+                        if (value == null || value.trim().isEmpty) return;
                         state.updateConfig(
                           config.copyWith(
                             asr: asr.copyWith(model: value.trim()),
                           ),
                         );
                       },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      speechApiModelHelperText(i18n),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
