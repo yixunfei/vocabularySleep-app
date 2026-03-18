@@ -5209,8 +5209,8 @@ class _HomePageState extends State<HomePage> {
     'fantasy' => const Color(0xFFBE185D),
     'nature' => const Color(0xFF16A34A),
     'sunset' => const Color(0xFFEA580C),
-    'ocean' => const Color(0xFF0284C7),
-    'mono' => const Color(0xFF111827),
+    'ocean' => const Color(0xFF38BDF8),
+    'mono' => const Color(0xFF18181B),
     _ => const Color(0xFF3B82F6),
   };
 
@@ -5234,10 +5234,10 @@ class _HomePageState extends State<HomePage> {
       colors: <Color>[Color(0xFFFFFFFF), Color(0xFFFFEDD5)],
     ),
     'ocean' => const LinearGradient(
-      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFE0F2FE)],
+      colors: <Color>[Color(0xFF06141F), Color(0xFF0D3B54), Color(0xFF12708B)],
     ),
     'mono' => const LinearGradient(
-      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF3F4F6)],
+      colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF2F2EF), Color(0xFFE6E5E1)],
     ),
     _ => const LinearGradient(
       colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF8FAFC)],

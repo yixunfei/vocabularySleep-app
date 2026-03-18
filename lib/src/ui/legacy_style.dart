@@ -153,37 +153,38 @@ class LegacyStyle {
       dark: false,
     ),
     'ocean': const _LegacyPalette(
-      primary: Color(0xFF0284C7),
-      accent: Color(0xFF0EA5E9),
-      surface: Color(0xFFFFFFFF),
-      textPrimary: Color(0xFF0C4A6E),
-      textSecondary: Color(0xFF155E75),
-      border: Color(0xFFBAE6FD),
+      primary: Color(0xFF38BDF8),
+      accent: Color(0xFF2DD4BF),
+      surface: Color(0xFF0B1F2E),
+      textPrimary: Color(0xFFF3FCFF),
+      textSecondary: Color(0xFFA9CEDA),
+      border: Color(0xFF24506A),
       pageGradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
-          Color(0xFFFFFFFF),
-          Color(0xFFF0F9FF),
-          Color(0xFFE0F2FE),
+          Color(0xFF04111B),
+          Color(0xFF08263A),
+          Color(0xFF0A415D),
+          Color(0xFF0F7891),
         ],
       ),
-      dark: false,
+      dark: true,
     ),
     'mono': const _LegacyPalette(
-      primary: Color(0xFF111827),
-      accent: Color(0xFF374151),
-      surface: Color(0xFFFFFFFF),
-      textPrimary: Color(0xFF111827),
-      textSecondary: Color(0xFF334155),
-      border: Color(0xFFD1D5DB),
+      primary: Color(0xFF18181B),
+      accent: Color(0xFF52525B),
+      surface: Color(0xFFFCFCFA),
+      textPrimary: Color(0xFF141414),
+      textSecondary: Color(0xFF52525B),
+      border: Color(0xFFE4E4E7),
       pageGradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
           Color(0xFFFFFFFF),
-          Color(0xFFF9FAFB),
-          Color(0xFFF3F4F6),
+          Color(0xFFF8F8F6),
+          Color(0xFFF0F0EC),
         ],
       ),
       dark: false,
@@ -227,9 +228,14 @@ class LegacyStyle {
     return _palette.dark ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
   }
 
-  static Color get appBarBackground => _palette.dark
-      ? const Color(0xFF0F172A).withValues(alpha: 0.95)
-      : Colors.white.withValues(alpha: 0.92);
+  static Color get appBarBackground => switch (_appearance.normalizedTheme) {
+    'ocean' => const Color(0xFF0A2236).withValues(alpha: 0.94),
+    'mono' => const Color(0xFFFCFCFA).withValues(alpha: 0.94),
+    _ =>
+      _palette.dark
+          ? const Color(0xFF0F172A).withValues(alpha: 0.95)
+          : Colors.white.withValues(alpha: 0.92),
+  };
 
   static LinearGradient get pageGradient {
     final customBg = parseHexColor(_appearance.pageBackgroundHex);
