@@ -46,24 +46,34 @@ class TodoItem {
   bool get hasSystemCalendarAlerts =>
       systemCalendarNotificationEnabled || systemCalendarAlarmEnabled;
 
+  List<int> get systemCalendarNotificationOffsets =>
+      _buildSystemCalendarOffsets(
+        enabled: systemCalendarNotificationEnabled,
+        minutesBefore: systemCalendarNotificationMinutesBefore,
+      );
+
+  List<int> get systemCalendarAlarmOffsets => _buildSystemCalendarOffsets(
+    enabled: systemCalendarAlarmEnabled,
+    minutesBefore: systemCalendarAlarmMinutesBefore,
+  );
+
   List<int> get systemCalendarReminderOffsets {
-    final offsets = <int>[];
-
-    void addOffset(bool enabled, int minutesBefore) {
-      if (!enabled) return;
-      final safeMinutes = minutesBefore < 0 ? 0 : minutesBefore;
-      if (!offsets.contains(safeMinutes)) {
-        offsets.add(safeMinutes);
-      }
-    }
-
-    addOffset(
-      systemCalendarNotificationEnabled,
-      systemCalendarNotificationMinutesBefore,
-    );
-    addOffset(systemCalendarAlarmEnabled, systemCalendarAlarmMinutesBefore);
+    final offsets = <int>{
+      ...systemCalendarNotificationOffsets,
+      ...systemCalendarAlarmOffsets,
+    }.toList(growable: false);
     offsets.sort();
     return offsets;
+  }
+
+  List<int> _buildSystemCalendarOffsets({
+    required bool enabled,
+    required int minutesBefore,
+  }) {
+    if (!enabled) {
+      return const <int>[];
+    }
+    return <int>[minutesBefore < 0 ? 0 : minutesBefore];
   }
 
   TodoItem copyWith({

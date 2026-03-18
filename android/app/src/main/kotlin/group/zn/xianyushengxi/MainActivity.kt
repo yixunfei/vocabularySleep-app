@@ -66,6 +66,11 @@ class MainActivity : FlutterActivity() {
     private var pendingCalendarMethod: String? = null
     private var pendingCalendarArguments: Map<*, *>? = null
 
+    private data class CalendarReminderSpec(
+        val minutes: Int,
+        val method: Int,
+    )
+
     companion object {
         private const val speechPermissionRequestCode = 44102
         private const val calendarPermissionRequestCode = 44103
@@ -725,7 +730,7 @@ class MainActivity : FlutterActivity() {
         val resolvedEndAtMillis =
             (endAtMillis ?: (startAtMillis + 30L * 60L * 1000L))
                 .coerceAtLeast(startAtMillis + 60_000L)
-        val reminderOffsets = readCalendarReminderOffsets(arguments)
+        val reminderSpecs = readCalendarReminderSpecs(arguments)
         var eventId = (arguments["eventId"] as? String)?.trim()?.toLongOrNull()
 
         return try {
@@ -735,7 +740,7 @@ class MainActivity : FlutterActivity() {
                 put(CalendarContract.Events.DTSTART, startAtMillis)
                 put(CalendarContract.Events.DTEND, resolvedEndAtMillis)
                 put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
-                put(CalendarContract.Events.HAS_ALARM, if (reminderOffsets.isNotEmpty()) 1 else 0)
+                put(CalendarContract.Events.HAS_ALARM, if (reminderSpecs.isNotEmpty()) 1 else 0)
                 if (!description.isNullOrBlank()) {
                     put(CalendarContract.Events.DESCRIPTION, description)
                 }
@@ -758,7 +763,7 @@ class MainActivity : FlutterActivity() {
                 eventId = ContentUris.parseId(insertedUri)
             }
 
-            syncCalendarReminders(eventId!!, reminderOffsets)
+            syncCalendarReminders(eventId!!, reminderSpecs)
             buildCalendarResult(
                 success = true,
                 errorCode = null,
@@ -827,27 +832,85 @@ class MainActivity : FlutterActivity() {
         return null
     }
 
-    private fun syncCalendarReminders(eventId: Long, reminderOffsets: List<Int>) {
+    private fun syncCalendarReminders(eventId: Long, reminderSpecs: List<CalendarReminderSpec>) {
         contentResolver.delete(
             CalendarContract.Reminders.CONTENT_URI,
             "${CalendarContract.Reminders.EVENT_ID} = ?",
             arrayOf(eventId.toString()),
         )
-        if (reminderOffsets.isEmpty()) {
+        if (reminderSpecs.isEmpty()) {
             return
         }
-        for (minutes in reminderOffsets) {
-            val reminderValues = ContentValues().apply {
-                put(CalendarContract.Reminders.EVENT_ID, eventId)
-                put(CalendarContract.Reminders.MINUTES, minutes.coerceAtLeast(0))
-                put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+        for (reminder in reminderSpecs) {
+            val inserted = insertCalendarReminder(
+                eventId = eventId,
+                minutes = reminder.minutes,
+                method = reminder.method,
+            )
+            if (!inserted && reminder.method == CalendarContract.Reminders.METHOD_ALARM) {
+                insertCalendarReminder(
+                    eventId = eventId,
+                    minutes = reminder.minutes,
+                    method = CalendarContract.Reminders.METHOD_ALERT,
+                )
             }
-            contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
         }
     }
 
-    private fun readCalendarReminderOffsets(arguments: Map<*, *>?): List<Int> {
-        val rawOffsets = arguments?.get("reminderOffsetsMinutes") as? List<*> ?: return emptyList()
+    private fun insertCalendarReminder(eventId: Long, minutes: Int, method: Int): Boolean {
+        val reminderValues = ContentValues().apply {
+            put(CalendarContract.Reminders.EVENT_ID, eventId)
+            put(CalendarContract.Reminders.MINUTES, minutes.coerceAtLeast(0))
+            put(CalendarContract.Reminders.METHOD, method)
+        }
+        return try {
+            contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues) != null
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun readCalendarReminderSpecs(arguments: Map<*, *>?): List<CalendarReminderSpec> {
+        val reminderSpecs = linkedMapOf<String, CalendarReminderSpec>()
+        val notificationOffsets = readCalendarReminderOffsets(arguments, "notificationOffsetsMinutes")
+        val alarmOffsets = readCalendarReminderOffsets(arguments, "alarmOffsetsMinutes")
+
+        for (minutes in notificationOffsets) {
+            val safeMinutes = minutes.coerceAtLeast(0)
+            reminderSpecs["${CalendarContract.Reminders.METHOD_ALERT}:$safeMinutes"] =
+                CalendarReminderSpec(
+                    minutes = safeMinutes,
+                    method = CalendarContract.Reminders.METHOD_ALERT,
+                )
+        }
+        for (minutes in alarmOffsets) {
+            val safeMinutes = minutes.coerceAtLeast(0)
+            reminderSpecs["${CalendarContract.Reminders.METHOD_ALARM}:$safeMinutes"] =
+                CalendarReminderSpec(
+                    minutes = safeMinutes,
+                    method = CalendarContract.Reminders.METHOD_ALARM,
+                )
+        }
+
+        if (reminderSpecs.isEmpty()) {
+            for (minutes in readCalendarReminderOffsets(arguments, "reminderOffsetsMinutes")) {
+                val safeMinutes = minutes.coerceAtLeast(0)
+                reminderSpecs["${CalendarContract.Reminders.METHOD_ALERT}:$safeMinutes"] =
+                    CalendarReminderSpec(
+                        minutes = safeMinutes,
+                        method = CalendarContract.Reminders.METHOD_ALERT,
+                    )
+            }
+        }
+
+        return reminderSpecs.values.toList(growable = false)
+    }
+
+    private fun readCalendarReminderOffsets(
+        arguments: Map<*, *>?,
+        key: String,
+    ): List<Int> {
+        val rawOffsets = arguments?.get(key) as? List<*> ?: return emptyList()
         val offsets = mutableListOf<Int>()
         for (item in rawOffsets) {
             val parsed =

@@ -483,6 +483,14 @@ void main() {
       expect(systemCalendar.syncedTodos.single.id, isNotNull);
       expect(systemCalendar.syncedTodos.single.hasReminder, isTrue);
       expect(
+        systemCalendar.syncedTodos.single.systemCalendarNotificationOffsets,
+        <int>[5],
+      );
+      expect(
+        systemCalendar.syncedTodos.single.systemCalendarAlarmOffsets,
+        <int>[15],
+      );
+      expect(
         systemCalendar.syncedTodos.single.systemCalendarReminderOffsets,
         <int>[5, 15],
       );

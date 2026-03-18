@@ -495,7 +495,14 @@ import UIKit
     let endDate = Date(timeIntervalSince1970: max(endAtMillis, startAtMillis + 60 * 1000) / 1000)
     let notes = (arguments["description"] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines)
-    let reminderOffsets = readSystemCalendarReminderOffsets(arguments["reminderOffsetsMinutes"])
+    let notificationOffsets = readSystemCalendarReminderOffsets(
+      arguments["notificationOffsetsMinutes"]
+    )
+    let alarmOffsets = readSystemCalendarReminderOffsets(arguments["alarmOffsetsMinutes"])
+    let reminderOffsets =
+      (notificationOffsets + alarmOffsets).isNotEmpty
+      ? Array(Set(notificationOffsets + alarmOffsets)).sorted()
+      : readSystemCalendarReminderOffsets(arguments["reminderOffsetsMinutes"])
     let existingEventId = (arguments["eventId"] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -525,6 +532,8 @@ import UIKit
     event.notes = (notes?.isEmpty == false) ? notes : nil
     event.startDate = startDate
     event.endDate = endDate
+    // EventKit exposes a single alarm channel, so notification and alarm offsets
+    // are merged into the same event alarm list on iOS.
     event.alarms =
       reminderOffsets.isEmpty
       ? nil

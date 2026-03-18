@@ -41,20 +41,24 @@ class PlatformSystemCalendarService implements SystemCalendarService {
       }
 
       final links = _loadEventLinks();
-      final response =
-          await _invokeCalendarMethod('upsertTodoReminder', <String, Object?>{
-            'todoId': todoId,
-            'title': item.content,
-            'description': _buildTodoDescription(item),
-            'startAtMillis': item.dueAt!.millisecondsSinceEpoch,
-            'endAtMillis': item.dueAt!
-                .add(const Duration(minutes: 30))
-                .millisecondsSinceEpoch,
-            'reminderOffsetsMinutes': item.systemCalendarReminderOffsets,
-            if (links['$todoId'] case final String existingEventId
-                when existingEventId.trim().isNotEmpty)
-              'eventId': existingEventId.trim(),
-          });
+      final response = await _invokeCalendarMethod(
+        'upsertTodoReminder',
+        <String, Object?>{
+          'todoId': todoId,
+          'title': item.content,
+          'description': _buildTodoDescription(item),
+          'startAtMillis': item.dueAt!.millisecondsSinceEpoch,
+          'endAtMillis': item.dueAt!
+              .add(const Duration(minutes: 30))
+              .millisecondsSinceEpoch,
+          'notificationOffsetsMinutes': item.systemCalendarNotificationOffsets,
+          'alarmOffsetsMinutes': item.systemCalendarAlarmOffsets,
+          'reminderOffsetsMinutes': item.systemCalendarReminderOffsets,
+          if (links['$todoId'] case final String existingEventId
+              when existingEventId.trim().isNotEmpty)
+            'eventId': existingEventId.trim(),
+        },
+      );
       final success = response['success'] == true;
       final eventId = '${response['eventId'] ?? ''}'.trim();
       if (!success || eventId.isEmpty) {
