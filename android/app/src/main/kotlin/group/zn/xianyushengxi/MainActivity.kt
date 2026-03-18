@@ -719,6 +719,7 @@ class MainActivity : FlutterActivity() {
         val resolvedEndAtMillis =
             (endAtMillis ?: (startAtMillis + 30L * 60L * 1000L))
                 .coerceAtLeast(startAtMillis + 60_000L)
+        val reminderOffsets = readCalendarReminderOffsets(arguments)
         var eventId = (arguments["eventId"] as? String)?.trim()?.toLongOrNull()
 
         return try {
@@ -728,7 +729,7 @@ class MainActivity : FlutterActivity() {
                 put(CalendarContract.Events.DTSTART, startAtMillis)
                 put(CalendarContract.Events.DTEND, resolvedEndAtMillis)
                 put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
-                put(CalendarContract.Events.HAS_ALARM, 1)
+                put(CalendarContract.Events.HAS_ALARM, if (reminderOffsets.isNotEmpty()) 1 else 0)
                 if (!description.isNullOrBlank()) {
                     put(CalendarContract.Events.DESCRIPTION, description)
                 }
@@ -751,7 +752,7 @@ class MainActivity : FlutterActivity() {
                 eventId = ContentUris.parseId(insertedUri)
             }
 
-            syncCalendarAlarm(eventId!!)
+            syncCalendarReminders(eventId!!, reminderOffsets)
             buildCalendarResult(
                 success = true,
                 errorCode = null,
@@ -820,18 +821,41 @@ class MainActivity : FlutterActivity() {
         return null
     }
 
-    private fun syncCalendarAlarm(eventId: Long) {
+    private fun syncCalendarReminders(eventId: Long, reminderOffsets: List<Int>) {
         contentResolver.delete(
             CalendarContract.Reminders.CONTENT_URI,
             "${CalendarContract.Reminders.EVENT_ID} = ?",
             arrayOf(eventId.toString()),
         )
-        val reminderValues = ContentValues().apply {
-            put(CalendarContract.Reminders.EVENT_ID, eventId)
-            put(CalendarContract.Reminders.MINUTES, 0)
-            put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+        if (reminderOffsets.isEmpty()) {
+            return
         }
-        contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
+        for (minutes in reminderOffsets) {
+            val reminderValues = ContentValues().apply {
+                put(CalendarContract.Reminders.EVENT_ID, eventId)
+                put(CalendarContract.Reminders.MINUTES, minutes.coerceAtLeast(0))
+                put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+            }
+            contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
+        }
+    }
+
+    private fun readCalendarReminderOffsets(arguments: Map<*, *>?): List<Int> {
+        val rawOffsets = arguments?.get("reminderOffsetsMinutes") as? List<*> ?: return emptyList()
+        val offsets = mutableListOf<Int>()
+        for (item in rawOffsets) {
+            val parsed =
+                when (item) {
+                    is Number -> item.toInt()
+                    else -> item?.toString()?.trim()?.toIntOrNull()
+                } ?: continue
+            val safeMinutes = parsed.coerceAtLeast(0)
+            if (!offsets.contains(safeMinutes)) {
+                offsets.add(safeMinutes)
+            }
+        }
+        offsets.sort()
+        return offsets
     }
 
     private fun buildCalendarResult(

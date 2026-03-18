@@ -623,6 +623,10 @@ class FocusService extends ChangeNotifier {
     DateTime? dueAt,
     bool alarmEnabled = false,
     bool syncToSystemCalendar = true,
+    bool systemCalendarNotificationEnabled = true,
+    int systemCalendarNotificationMinutesBefore = 0,
+    bool systemCalendarAlarmEnabled = false,
+    int systemCalendarAlarmMinutesBefore = 10,
   }) {
     if (!_initialized || content.trim().isEmpty) return;
     saveTodo(
@@ -635,6 +639,11 @@ class FocusService extends ChangeNotifier {
         dueAt: dueAt,
         alarmEnabled: alarmEnabled && dueAt != null,
         syncToSystemCalendar: syncToSystemCalendar,
+        systemCalendarNotificationEnabled: systemCalendarNotificationEnabled,
+        systemCalendarNotificationMinutesBefore:
+            systemCalendarNotificationMinutesBefore,
+        systemCalendarAlarmEnabled: systemCalendarAlarmEnabled,
+        systemCalendarAlarmMinutesBefore: systemCalendarAlarmMinutesBefore,
         createdAt: DateTime.now(),
       ),
     );
@@ -846,6 +855,15 @@ class FocusService extends ChangeNotifier {
       dueAt: item.alarmEnabled ? item.dueAt : null,
       alarmEnabled: item.alarmEnabled && item.dueAt != null,
       syncToSystemCalendar: item.syncToSystemCalendar,
+      systemCalendarNotificationEnabled: item.systemCalendarNotificationEnabled,
+      systemCalendarNotificationMinutesBefore: item
+          .systemCalendarNotificationMinutesBefore
+          .clamp(0, 7 * 24 * 60)
+          .toInt(),
+      systemCalendarAlarmEnabled: item.systemCalendarAlarmEnabled,
+      systemCalendarAlarmMinutesBefore: item.systemCalendarAlarmMinutesBefore
+          .clamp(0, 7 * 24 * 60)
+          .toInt(),
       completedAt: item.completed ? item.completedAt : null,
     );
   }

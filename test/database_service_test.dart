@@ -253,6 +253,9 @@ void main() {
           alarmEnabled: true,
           dueAt: DateTime(2026, 3, 16, 10),
           syncToSystemCalendar: false,
+          systemCalendarNotificationEnabled: false,
+          systemCalendarAlarmEnabled: true,
+          systemCalendarAlarmMinutesBefore: 15,
           createdAt: DateTime(2026, 3, 16),
         ),
       );
@@ -265,7 +268,14 @@ void main() {
       );
 
       expect(synced.syncToSystemCalendar, isTrue);
+      expect(synced.systemCalendarNotificationEnabled, isTrue);
+      expect(synced.systemCalendarNotificationMinutesBefore, 0);
+      expect(synced.systemCalendarAlarmEnabled, isFalse);
+      expect(synced.systemCalendarAlarmMinutesBefore, 10);
       expect(localOnly.syncToSystemCalendar, isFalse);
+      expect(localOnly.systemCalendarNotificationEnabled, isFalse);
+      expect(localOnly.systemCalendarAlarmEnabled, isTrue);
+      expect(localOnly.systemCalendarAlarmMinutesBefore, 15);
     },
   );
 

@@ -432,12 +432,19 @@ void main() {
         'Sync release checklist',
         dueAt: DateTime(2026, 3, 15, 9, 30),
         alarmEnabled: true,
+        systemCalendarNotificationMinutesBefore: 5,
+        systemCalendarAlarmEnabled: true,
+        systemCalendarAlarmMinutesBefore: 15,
       );
       await pumpEventQueue();
 
       expect(systemCalendar.syncedTodos, hasLength(1));
       expect(systemCalendar.syncedTodos.single.id, isNotNull);
       expect(systemCalendar.syncedTodos.single.hasReminder, isTrue);
+      expect(
+        systemCalendar.syncedTodos.single.systemCalendarReminderOffsets,
+        <int>[5, 15],
+      );
     });
 
     test(

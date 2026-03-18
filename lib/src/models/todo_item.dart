@@ -14,6 +14,10 @@ class TodoItem {
     this.dueAt,
     this.alarmEnabled = false,
     this.syncToSystemCalendar = true,
+    this.systemCalendarNotificationEnabled = true,
+    this.systemCalendarNotificationMinutesBefore = 0,
+    this.systemCalendarAlarmEnabled = false,
+    this.systemCalendarAlarmMinutesBefore = 10,
     this.createdAt,
     this.completedAt,
   });
@@ -30,11 +34,37 @@ class TodoItem {
   final DateTime? dueAt;
   final bool alarmEnabled;
   final bool syncToSystemCalendar;
+  final bool systemCalendarNotificationEnabled;
+  final int systemCalendarNotificationMinutesBefore;
+  final bool systemCalendarAlarmEnabled;
+  final int systemCalendarAlarmMinutesBefore;
   final DateTime? createdAt;
   final DateTime? completedAt;
 
   bool get hasReminder => alarmEnabled && dueAt != null;
   bool get isDeferred => deferred && !completed;
+  bool get hasSystemCalendarAlerts =>
+      systemCalendarNotificationEnabled || systemCalendarAlarmEnabled;
+
+  List<int> get systemCalendarReminderOffsets {
+    final offsets = <int>[];
+
+    void addOffset(bool enabled, int minutesBefore) {
+      if (!enabled) return;
+      final safeMinutes = minutesBefore < 0 ? 0 : minutesBefore;
+      if (!offsets.contains(safeMinutes)) {
+        offsets.add(safeMinutes);
+      }
+    }
+
+    addOffset(
+      systemCalendarNotificationEnabled,
+      systemCalendarNotificationMinutesBefore,
+    );
+    addOffset(systemCalendarAlarmEnabled, systemCalendarAlarmMinutesBefore);
+    offsets.sort();
+    return offsets;
+  }
 
   TodoItem copyWith({
     int? id,
@@ -49,6 +79,10 @@ class TodoItem {
     Object? dueAt = _unset,
     bool? alarmEnabled,
     bool? syncToSystemCalendar,
+    bool? systemCalendarNotificationEnabled,
+    int? systemCalendarNotificationMinutesBefore,
+    bool? systemCalendarAlarmEnabled,
+    int? systemCalendarAlarmMinutesBefore,
     DateTime? createdAt,
     Object? completedAt = _unset,
   }) {
@@ -67,6 +101,17 @@ class TodoItem {
       dueAt: identical(dueAt, _unset) ? this.dueAt : dueAt as DateTime?,
       alarmEnabled: alarmEnabled ?? this.alarmEnabled,
       syncToSystemCalendar: syncToSystemCalendar ?? this.syncToSystemCalendar,
+      systemCalendarNotificationEnabled:
+          systemCalendarNotificationEnabled ??
+          this.systemCalendarNotificationEnabled,
+      systemCalendarNotificationMinutesBefore:
+          systemCalendarNotificationMinutesBefore ??
+          this.systemCalendarNotificationMinutesBefore,
+      systemCalendarAlarmEnabled:
+          systemCalendarAlarmEnabled ?? this.systemCalendarAlarmEnabled,
+      systemCalendarAlarmMinutesBefore:
+          systemCalendarAlarmMinutesBefore ??
+          this.systemCalendarAlarmMinutesBefore,
       createdAt: createdAt ?? this.createdAt,
       completedAt: identical(completedAt, _unset)
           ? this.completedAt
@@ -92,6 +137,18 @@ class TodoItem {
       syncToSystemCalendar: map['sync_to_system_calendar'] == null
           ? true
           : (map['sync_to_system_calendar'] as num?)?.toInt() == 1,
+      systemCalendarNotificationEnabled:
+          map['system_calendar_notification_enabled'] == null
+          ? true
+          : (map['system_calendar_notification_enabled'] as num?)?.toInt() == 1,
+      systemCalendarNotificationMinutesBefore:
+          (map['system_calendar_notification_minutes_before'] as num?)
+              ?.toInt() ??
+          0,
+      systemCalendarAlarmEnabled:
+          (map['system_calendar_alarm_enabled'] as num?)?.toInt() == 1,
+      systemCalendarAlarmMinutesBefore:
+          (map['system_calendar_alarm_minutes_before'] as num?)?.toInt() ?? 10,
       createdAt: map['created_at'] != null
           ? DateTime.tryParse(map['created_at'] as String)
           : null,
@@ -115,6 +172,13 @@ class TodoItem {
       'due_at': dueAt?.toIso8601String(),
       'alarm_enabled': alarmEnabled ? 1 : 0,
       'sync_to_system_calendar': syncToSystemCalendar ? 1 : 0,
+      'system_calendar_notification_enabled': systemCalendarNotificationEnabled
+          ? 1
+          : 0,
+      'system_calendar_notification_minutes_before':
+          systemCalendarNotificationMinutesBefore,
+      'system_calendar_alarm_enabled': systemCalendarAlarmEnabled ? 1 : 0,
+      'system_calendar_alarm_minutes_before': systemCalendarAlarmMinutesBefore,
       'created_at': createdAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
     };

@@ -5039,6 +5039,37 @@ class _FocusPageState extends State<FocusPage>
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
+  List<int> _todoCalendarReminderLeadOptions(int currentMinutes) {
+    final values = <int>[0, 5, 10, 15, 30, 60, 120, 24 * 60];
+    if (!values.contains(currentMinutes) && currentMinutes >= 0) {
+      values.add(currentMinutes);
+      values.sort();
+    }
+    return values;
+  }
+
+  String _todoCalendarReminderLeadLabel(AppI18n i18n, int minutesBefore) {
+    if (minutesBefore <= 0) {
+      return pickUiText(i18n, zh: '准时提醒', en: 'At event time');
+    }
+    if (minutesBefore < 60) {
+      return pickUiText(
+        i18n,
+        zh: '提前 $minutesBefore 分钟',
+        en: '$minutesBefore minutes before',
+      );
+    }
+    if (minutesBefore % 60 == 0) {
+      final hours = minutesBefore ~/ 60;
+      return pickUiText(i18n, zh: '提前 $hours 小时', en: '$hours hours before');
+    }
+    return pickUiText(
+      i18n,
+      zh: '提前 $minutesBefore 分钟',
+      en: '$minutesBefore minutes before',
+    );
+  }
+
   Future<void> _showTodoEditor(
     FocusService focus,
     AppI18n i18n, {
@@ -5057,6 +5088,13 @@ class _FocusPageState extends State<FocusPage>
     var dueAt = todo?.dueAt;
     var alarmEnabled = todo?.alarmEnabled ?? false;
     var syncToSystemCalendar = todo?.syncToSystemCalendar ?? true;
+    var systemCalendarNotificationEnabled =
+        todo?.systemCalendarNotificationEnabled ?? true;
+    var systemCalendarNotificationMinutesBefore =
+        todo?.systemCalendarNotificationMinutesBefore ?? 0;
+    var systemCalendarAlarmEnabled = todo?.systemCalendarAlarmEnabled ?? false;
+    var systemCalendarAlarmMinutesBefore =
+        todo?.systemCalendarAlarmMinutesBefore ?? 10;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -5309,6 +5347,138 @@ class _FocusPageState extends State<FocusPage>
                           });
                         },
                       ),
+                      if (syncToSystemCalendar) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Text(
+                          pickUiText(i18n, zh: '日历写入方式', en: 'Calendar alerts'),
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        SwitchListTile.adaptive(
+                          contentPadding: EdgeInsets.zero,
+                          value: systemCalendarNotificationEnabled,
+                          title: Text(
+                            pickUiText(
+                              i18n,
+                              zh: '写入日历通知',
+                              en: 'Write calendar notification',
+                            ),
+                          ),
+                          subtitle: Text(
+                            _todoCalendarReminderLeadLabel(
+                              i18n,
+                              systemCalendarNotificationMinutesBefore,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setSheetState(() {
+                              systemCalendarNotificationEnabled = value;
+                            });
+                          },
+                        ),
+                        if (systemCalendarNotificationEnabled)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: DropdownButtonFormField<int>(
+                              initialValue:
+                                  systemCalendarNotificationMinutesBefore,
+                              decoration: InputDecoration(
+                                labelText: pickUiText(
+                                  i18n,
+                                  zh: '通知提前时间',
+                                  en: 'Notification lead time',
+                                ),
+                              ),
+                              items:
+                                  _todoCalendarReminderLeadOptions(
+                                        systemCalendarNotificationMinutesBefore,
+                                      )
+                                      .map((minutes) {
+                                        return DropdownMenuItem<int>(
+                                          value: minutes,
+                                          child: Text(
+                                            _todoCalendarReminderLeadLabel(
+                                              i18n,
+                                              minutes,
+                                            ),
+                                          ),
+                                        );
+                                      })
+                                      .toList(growable: false),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setSheetState(() {
+                                  systemCalendarNotificationMinutesBefore =
+                                      value;
+                                });
+                              },
+                            ),
+                          ),
+                        SwitchListTile.adaptive(
+                          contentPadding: EdgeInsets.zero,
+                          value: systemCalendarAlarmEnabled,
+                          title: Text(
+                            pickUiText(
+                              i18n,
+                              zh: '写入日历闹钟',
+                              en: 'Write calendar alarm',
+                            ),
+                          ),
+                          subtitle: Text(
+                            _todoCalendarReminderLeadLabel(
+                              i18n,
+                              systemCalendarAlarmMinutesBefore,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setSheetState(() {
+                              systemCalendarAlarmEnabled = value;
+                            });
+                          },
+                        ),
+                        if (systemCalendarAlarmEnabled)
+                          DropdownButtonFormField<int>(
+                            initialValue: systemCalendarAlarmMinutesBefore,
+                            decoration: InputDecoration(
+                              labelText: pickUiText(
+                                i18n,
+                                zh: '闹钟提前时间',
+                                en: 'Alarm lead time',
+                              ),
+                            ),
+                            items:
+                                _todoCalendarReminderLeadOptions(
+                                      systemCalendarAlarmMinutesBefore,
+                                    )
+                                    .map((minutes) {
+                                      return DropdownMenuItem<int>(
+                                        value: minutes,
+                                        child: Text(
+                                          _todoCalendarReminderLeadLabel(
+                                            i18n,
+                                            minutes,
+                                          ),
+                                        ),
+                                      );
+                                    })
+                                    .toList(growable: false),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setSheetState(() {
+                                systemCalendarAlarmMinutesBefore = value;
+                              });
+                            },
+                          ),
+                        const SizedBox(height: 6),
+                        Text(
+                          pickUiText(
+                            i18n,
+                            zh: '不同系统日历会自行决定这些提醒以通知还是闹钟样式呈现。',
+                            en: 'Each system calendar decides whether these reminders appear as notifications or alarm-style alerts.',
+                          ),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
                     ],
                     const SizedBox(height: 16),
                     Row(
@@ -5351,6 +5521,14 @@ class _FocusPageState extends State<FocusPage>
                                 dueAt: dueAt,
                                 alarmEnabled: alarmEnabled && dueAt != null,
                                 syncToSystemCalendar: syncToSystemCalendar,
+                                systemCalendarNotificationEnabled:
+                                    systemCalendarNotificationEnabled,
+                                systemCalendarNotificationMinutesBefore:
+                                    systemCalendarNotificationMinutesBefore,
+                                systemCalendarAlarmEnabled:
+                                    systemCalendarAlarmEnabled,
+                                systemCalendarAlarmMinutesBefore:
+                                    systemCalendarAlarmMinutesBefore,
                                 createdAt: todo?.createdAt ?? DateTime.now(),
                                 completedAt:
                                     draftState == _TodoDraftState.completed

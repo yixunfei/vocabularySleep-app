@@ -480,6 +480,7 @@ import UIKit
     let endDate = Date(timeIntervalSince1970: max(endAtMillis, startAtMillis + 60 * 1000) / 1000)
     let notes = (arguments["description"] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines)
+    let reminderOffsets = readSystemCalendarReminderOffsets(arguments["reminderOffsetsMinutes"])
     let existingEventId = (arguments["eventId"] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -509,7 +510,12 @@ import UIKit
     event.notes = (notes?.isEmpty == false) ? notes : nil
     event.startDate = startDate
     event.endDate = endDate
-    event.alarms = [EKAlarm(absoluteDate: startDate)]
+    event.alarms =
+      reminderOffsets.isEmpty
+      ? nil
+      : reminderOffsets.map { offset in
+          EKAlarm(relativeOffset: -TimeInterval(offset * 60))
+        }
 
     do {
       try systemCalendarStore.save(event, span: .thisEvent, commit: true)
@@ -569,6 +575,28 @@ import UIKit
       payload["errorMessage"] = errorMessage
     }
     return payload
+  }
+
+  private func readSystemCalendarReminderOffsets(_ raw: Any?) -> [Int] {
+    guard let list = raw as? [Any] else {
+      return []
+    }
+
+    var offsets = Set<Int>()
+    for item in list {
+      if let number = item as? NSNumber {
+        offsets.insert(max(0, number.intValue))
+        continue
+      }
+      if
+        let text = (item as? String)?
+          .trimmingCharacters(in: .whitespacesAndNewlines),
+        let value = Int(text)
+      {
+        offsets.insert(max(0, value))
+      }
+    }
+    return offsets.sorted()
   }
 
   private func buildSystemSpeechCommandResult(

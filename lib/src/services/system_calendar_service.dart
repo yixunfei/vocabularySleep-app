@@ -50,6 +50,7 @@ class PlatformSystemCalendarService implements SystemCalendarService {
             'endAtMillis': item.dueAt!
                 .add(const Duration(minutes: 30))
                 .millisecondsSinceEpoch,
+            'reminderOffsetsMinutes': item.systemCalendarReminderOffsets,
             if (links['$todoId'] case final String existingEventId
                 when existingEventId.trim().isNotEmpty)
               'eventId': existingEventId.trim(),
