@@ -903,7 +903,7 @@ class MainActivity : FlutterActivity() {
             }
         }
 
-        return reminderSpecs.values.toList(growable = false)
+        return reminderSpecs.values.toList()
     }
 
     private fun readCalendarReminderOffsets(
