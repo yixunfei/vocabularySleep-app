@@ -23,6 +23,8 @@ import UIKit
   private var systemSpeechErrorCode: String?
   private var systemSpeechListening = false
   private var systemSpeechFinalized = false
+  private var activeSystemSpeechSessionToken: Int?
+  private var nextSystemSpeechSessionToken = 0
 
   override func application(
     _ application: UIApplication,
@@ -146,14 +148,21 @@ import UIKit
       return
     }
 
+    let sessionToken = nextSystemSpeechSessionToken + 1
+    nextSystemSpeechSessionToken = sessionToken
     systemSpeechRecognizer = recognizer
     systemSpeechRequest = request
     systemSpeechLocaleIdentifier = localeIdentifier
     systemSpeechListening = true
+    activeSystemSpeechSessionToken = sessionToken
 
     systemSpeechTask = recognizer.recognitionTask(with: request) { [weak self] recognitionResult, error in
       DispatchQueue.main.async {
-        self?.handleSystemSpeechUpdate(result: recognitionResult, error: error)
+        self?.handleSystemSpeechUpdate(
+          sessionToken: sessionToken,
+          result: recognitionResult,
+          error: error
+        )
       }
     }
 
@@ -174,9 +183,6 @@ import UIKit
     for identifier in candidates where seen.insert(identifier).inserted {
       let locale = Locale(identifier: identifier)
       guard let recognizer = SFSpeechRecognizer(locale: locale) else {
-        continue
-      }
-      guard recognizer.isAvailable else {
         continue
       }
       return (recognizer, locale.identifier)
@@ -255,7 +261,15 @@ import UIKit
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: workItem)
   }
 
-  private func handleSystemSpeechUpdate(result recognitionResult: SFSpeechRecognitionResult?, error: Error?) {
+  private func handleSystemSpeechUpdate(
+    sessionToken: Int,
+    result recognitionResult: SFSpeechRecognitionResult?,
+    error: Error?
+  ) {
+    guard activeSystemSpeechSessionToken == sessionToken else {
+      return
+    }
+
     if let recognitionResult {
       let text = recognitionResult.bestTranscription.formattedString
         .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -380,6 +394,7 @@ import UIKit
     systemSpeechErrorCode = nil
     systemSpeechListening = false
     systemSpeechFinalized = false
+    activeSystemSpeechSessionToken = nil
   }
 
   private func upsertSystemCalendarReminder(

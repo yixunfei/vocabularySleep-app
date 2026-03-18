@@ -59,6 +59,8 @@ class MainActivity : FlutterActivity() {
     private var speechFinalized = false
     private var speechUsingIntentActivity = false
     private var ignoreNextSpeechIntentResult = false
+    private var activeSpeechSessionToken: Long? = null
+    private var nextSpeechSessionToken = 0L
 
     private var pendingCalendarResult: MethodChannel.Result? = null
     private var pendingCalendarMethod: String? = null
@@ -276,15 +278,6 @@ class MainActivity : FlutterActivity() {
         }
 
         val languageTag = readSpeechLanguageTag(arguments)
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            if (canLaunchSpeechRecognitionIntent()) {
-                result.success(startSpeechRecognitionIntent(languageTag))
-                return
-            }
-            result.success(buildSpeechCommandResult(success = false, errorCode = "unavailable"))
-            return
-        }
-
         if (
             ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
                 PackageManager.PERMISSION_GRANTED
@@ -306,20 +299,16 @@ class MainActivity : FlutterActivity() {
         clearSpeechState()
         destroySpeechRecognizer()
 
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            if (canLaunchSpeechRecognitionIntent()) {
-                return startSpeechRecognitionIntent(languageTag)
-            }
-            return buildSpeechCommandResult(success = false, errorCode = "unavailable")
-        }
-
         return try {
-            speechLocale = resolveSpeechLocale(languageTag)
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).also { recognizer ->
-                recognizer.setRecognitionListener(createRecognitionListener())
+            val resolvedLanguageTag = resolveSpeechLocale(languageTag)
+            val sessionToken = ++nextSpeechSessionToken
+            speechLocale = resolvedLanguageTag
+            activeSpeechSessionToken = sessionToken
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(applicationContext).also { recognizer ->
+                recognizer.setRecognitionListener(createRecognitionListener(sessionToken))
             }
 
-            val intent = buildSpeechRecognitionIntent(languageTag).apply {
+            val intent = buildSpeechRecognitionIntent(resolvedLanguageTag).apply {
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             }
@@ -335,7 +324,7 @@ class MainActivity : FlutterActivity() {
             }
             buildSpeechCommandResult(
                 success = false,
-                errorCode = "start_failed",
+                errorCode = if (SpeechRecognizer.isRecognitionAvailable(this)) "start_failed" else "unavailable",
                 errorMessage = error.message,
             )
         }
@@ -404,7 +393,7 @@ class MainActivity : FlutterActivity() {
         clearSpeechState()
     }
 
-    private fun createRecognitionListener(): RecognitionListener {
+    private fun createRecognitionListener(sessionToken: Long): RecognitionListener {
         return object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) = Unit
 
@@ -415,10 +404,16 @@ class MainActivity : FlutterActivity() {
             override fun onBufferReceived(buffer: ByteArray?) = Unit
 
             override fun onEndOfSpeech() {
+                if (!isActiveSpeechSession(sessionToken)) {
+                    return
+                }
                 speechListening = false
             }
 
             override fun onError(error: Int) {
+                if (!isActiveSpeechSession(sessionToken)) {
+                    return
+                }
                 speechErrorCode = mapSpeechErrorCode(error)
                 speechFinalized = true
                 speechListening = false
@@ -427,6 +422,9 @@ class MainActivity : FlutterActivity() {
             }
 
             override fun onResults(results: Bundle?) {
+                if (!isActiveSpeechSession(sessionToken)) {
+                    return
+                }
                 updateSpeechTranscript(results)
                 speechErrorCode = null
                 speechFinalized = true
@@ -436,11 +434,18 @@ class MainActivity : FlutterActivity() {
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
+                if (!isActiveSpeechSession(sessionToken)) {
+                    return
+                }
                 updateSpeechTranscript(partialResults)
             }
 
             override fun onEvent(eventType: Int, params: Bundle?) = Unit
         }
+    }
+
+    private fun isActiveSpeechSession(sessionToken: Long): Boolean {
+        return activeSpeechSessionToken == sessionToken
     }
 
     private fun finishPendingSpeechStop(force: Boolean) {
@@ -613,6 +618,7 @@ class MainActivity : FlutterActivity() {
         speechListening = false
         speechFinalized = false
         speechUsingIntentActivity = false
+        activeSpeechSessionToken = null
     }
 
     private fun destroySpeechRecognizer() {

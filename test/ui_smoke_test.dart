@@ -906,6 +906,88 @@ void main() {
       );
     });
 
+    testWidgets('focus page quick notes allow repeated system voice input', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      const systemSpeechChannel = MethodChannel(
+        'vocabulary_sleep/system_speech',
+      );
+      var stopCallCount = 0;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(systemSpeechChannel, (call) async {
+            switch (call.method) {
+              case 'startListening':
+                return <String, Object?>{'success': true, 'errorCode': null};
+              case 'stopListening':
+                stopCallCount += 1;
+                return <String, Object?>{
+                  'success': true,
+                  'text': stopCallCount == 1
+                      ? 'Capture release review highlights'
+                      : 'List rollout follow-up items',
+                  'locale': 'en',
+                  'errorCode': null,
+                };
+              case 'cancelListening':
+                return null;
+            }
+            return null;
+          });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(systemSpeechChannel, null);
+      });
+
+      final focusService = _FakeFocusService.sample();
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+      );
+      await _pumpPage(tester, state: state, child: const FocusPage());
+
+      await tester.tap(find.text('Tasks & Notes').first);
+      await tester.pumpAndSettle();
+
+      final notesButton = find.byKey(
+        const ValueKey<String>('todo-notes-sheet-button'),
+      );
+      await tester.ensureVisible(notesButton);
+      await tester.tap(notesButton, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.note_add_rounded).last);
+      await tester.pumpAndSettle();
+
+      final voiceButton = find.byKey(
+        const ValueKey<String>('note-voice-input-button'),
+      );
+      await tester.tap(voiceButton);
+      await tester.pumpAndSettle();
+      await tester.tap(voiceButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(voiceButton);
+      await tester.pumpAndSettle();
+      await tester.tap(voiceButton);
+      await tester.pumpAndSettle();
+
+      final contentField = tester.widget<TextField>(
+        find.byKey(const ValueKey<String>('note-content-field')),
+      );
+      expect(
+        contentField.controller?.text ?? '',
+        'Capture release review highlights\nList rollout follow-up items',
+      );
+      expect(
+        find.text(
+          'No system speech recognizer or dictation panel is available on this device.',
+        ),
+        findsNothing,
+      );
+    });
+
     testWidgets('focus page keeps timer stepper stable on narrow width', (
       tester,
     ) async {
