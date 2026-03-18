@@ -10,6 +10,7 @@ import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
+import 'package:vocabulary_sleep_app/src/models/user_data_export.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
@@ -360,6 +361,45 @@ void main() {
       expect(find.text('Language settings'), findsNothing);
     });
 
+    testWidgets(
+      'language settings hides focus subtab option when startup page has no child tab',
+      (tester) async {
+        final state = _FakeAppState.sample(
+          uiLanguage: 'en',
+          startupPage: AppHomeTab.play,
+        );
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const LanguageSettingsPage(),
+        );
+
+        expect(find.text('Focus default section'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'language settings shows focus subtab option for focus startup',
+      (tester) async {
+        final state = _FakeAppState.sample(
+          uiLanguage: 'en',
+          startupPage: AppHomeTab.focus,
+          focusStartupTab: FocusStartupTab.todo,
+        );
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const LanguageSettingsPage(),
+        );
+
+        expect(find.text('Focus default section'), findsOneWidget);
+        expect(
+          find.textContaining('When Focus is the startup page'),
+          findsOneWidget,
+        );
+      },
+    );
+
     testWidgets('app shell blocks exit dialog while focus lock is active', (
       tester,
     ) async {
@@ -473,6 +513,99 @@ void main() {
       );
     });
 
+    testWidgets('app shell shows startup todo prompt when enabled', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        startupTodoPromptEnabled: true,
+        startupDailyQuote: 'Stay curious.',
+        weatherSnapshot: WeatherSnapshot(
+          city: 'Shanghai',
+          countryCode: 'CN',
+          temperatureCelsius: 18.4,
+          apparentTemperatureCelsius: 17.8,
+          windSpeedKph: 6.0,
+          weatherCode: 1,
+          isDay: true,
+          fetchedAt: DateTime(2026, 3, 16, 8),
+          forecastDays: <WeatherForecastDay>[
+            WeatherForecastDay(
+              date: DateTime(2026, 3, 16),
+              weatherCode: 1,
+              maxTemperatureCelsius: 22,
+              minTemperatureCelsius: 14,
+            ),
+            WeatherForecastDay(
+              date: DateTime(2026, 3, 17),
+              weatherCode: 3,
+              maxTemperatureCelsius: 20,
+              minTemperatureCelsius: 13,
+            ),
+          ],
+        ),
+        todayActiveTodos: <TodoItem>[
+          TodoItem(
+            content: 'Review today tasks',
+            dueAt: DateTime(2026, 3, 16, 9, 0),
+            alarmEnabled: true,
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const AppShell(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('startup-todo-prompt-dialog')),
+        findsOneWidget,
+      );
+      expect(find.text('Review today tasks'), findsOneWidget);
+      expect(find.text('Stay curious.'), findsOneWidget);
+      expect(find.text('Shanghai, CN'), findsOneWidget);
+    });
+
+    testWidgets('startup todo prompt can be muted for today', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        startupTodoPromptEnabled: true,
+      );
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const AppShell(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('startup-todo-prompt-dont-show')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('startup-todo-prompt-close')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(state.startupPromptSuppressedToday, isTrue);
+    });
+
     testWidgets('play page shows weather badge when enabled', (tester) async {
       final state = _FakeAppState.sample(
         uiLanguage: 'en',
@@ -506,7 +639,7 @@ void main() {
       expect(find.text('18°C'), findsOneWidget);
     });
 
-    testWidgets('focus page keeps notes in a right drawer on phones', (
+    testWidgets('focus page opens notes in a bottom sheet on phones', (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -521,24 +654,20 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
-      final handleFinder = find.byKey(
-        const ValueKey<String>('notes-drawer-handle'),
-      );
-      final drawerFinder = find.byKey(const ValueKey<String>('notes-drawer'));
-      expect(handleFinder, findsOneWidget);
       expect(find.byKey(const ValueKey<String>('todo-editor-entry')), findsOne);
-      expect(find.text('Tap to add a task'), findsOneWidget);
-      final collapsedLeft = tester.getTopLeft(drawerFinder).dx;
+      expect(find.text('Quick add a task'), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('notes-drawer')), findsNothing);
+      expect(find.byKey(const ValueKey<String>('notes-sheet')), findsNothing);
 
-      await tester.tap(handleFinder);
+      final notesButton = find.byKey(
+        const ValueKey<String>('todo-notes-sheet-button'),
+      );
+      await tester.ensureVisible(notesButton);
+      await tester.tap(notesButton, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      final expandedLeft = tester.getTopLeft(drawerFinder).dx;
-      expect(expandedLeft, lessThan(collapsedLeft - 100));
-      await tester.tap(handleFinder);
-      await tester.pumpAndSettle();
-      final collapsedAgainLeft = tester.getTopLeft(drawerFinder).dx;
-      expect(collapsedAgainLeft, greaterThan(expandedLeft + 100));
+      expect(find.byKey(const ValueKey<String>('notes-sheet')), findsOneWidget);
+      expect(find.text('Plan recap'), findsOneWidget);
     });
 
     testWidgets(
@@ -726,9 +855,11 @@ void main() {
       await tester.tap(find.text('Tasks & Notes').first);
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const ValueKey<String>('notes-drawer-handle')),
+      final notesButton = find.byKey(
+        const ValueKey<String>('todo-notes-sheet-button'),
       );
+      await tester.ensureVisible(notesButton);
+      await tester.tap(notesButton, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       await tester.tap(find.byIcon(Icons.note_add_rounded).last);
@@ -794,6 +925,7 @@ void main() {
     testWidgets('focus page keeps duration pickers wheel only', (tester) async {
       final state = _FakeAppState.sample(
         uiLanguage: 'en',
+        focusStartupTab: FocusStartupTab.timer,
         focusService: _FakeFocusService.sample(),
       );
       await _pumpPage(tester, state: state, child: const FocusPage());
@@ -890,6 +1022,7 @@ void main() {
 
       final state = _FakeAppState.sample(
         uiLanguage: 'en',
+        focusStartupTab: FocusStartupTab.timer,
         focusService: _FakeFocusService.sample(),
       );
       await _pumpPage(tester, state: state, child: const FocusPage());
@@ -1035,10 +1168,14 @@ void main() {
         find.byKey(const ValueKey<String>('todo-plan-upcoming')),
         findsOneWidget,
       );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -320));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey<String>('todo-plan-inbox')),
         findsOneWidget,
       );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -320));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey<String>('todo-plan-completed')),
         findsOneWidget,
@@ -1089,16 +1226,14 @@ void main() {
 
       final state = _FakeAppState.sample(
         uiLanguage: 'en',
+        focusStartupTab: FocusStartupTab.timer,
         focusService: _FakeFocusService.sample(),
       );
       await _pumpPage(tester, state: state, child: const FocusPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Wheel picker').first,
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.text('Wheel picker').first, warnIfMissed: false);
+      final wheelPicker = find.text('Wheel picker').first;
+      await tester.ensureVisible(wheelPicker);
+      await tester.tap(wheelPicker, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       final bottomSheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
@@ -1219,10 +1354,21 @@ void main() {
 
       await tester.tap(find.text('Export user data'));
       await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(0), 'manual_backup');
+      await tester.enterText(
+        find.byType(TextField).at(1),
+        '/tmp/manual-exports',
+      );
+      await tester.tap(find.text('Export'));
+      await tester.pumpAndSettle();
 
       expect(
         state.exportedUserDataPath,
-        '/tmp/vocabulary_user_data_export.json',
+        '/tmp/manual-exports/manual_backup.json',
+      );
+      expect(
+        state.exportedUserDataSections,
+        contains(UserDataExportSection.settings),
       );
     });
 
@@ -1505,6 +1651,51 @@ void main() {
       expect(state.taskWords.contains('bravo'), isTrue);
     });
 
+    testWidgets('practice session updates practice stats and memory lanes', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        practiceTodaySessions: 0,
+        practiceTodayReviewed: 0,
+        practiceTodayRemembered: 0,
+        practiceTotalSessions: 0,
+        practiceTotalReviewed: 0,
+        practiceTotalRemembered: 0,
+        practiceLastSessionTitle: '',
+        recentRememberedEntries: const <WordEntry>[],
+        recentWeakEntries: const <WordEntry>[],
+      );
+      const words = <WordEntry>[
+        WordEntry(wordbookId: 1, word: 'alpha', fields: <WordFieldItem>[]),
+        WordEntry(wordbookId: 1, word: 'bravo', fields: <WordFieldItem>[]),
+      ];
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeSessionPage(title: 'Memory sync', words: words),
+      );
+
+      await tester.tap(find.text('Remembered'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Not yet'));
+      await tester.pumpAndSettle();
+
+      expect(state.practiceTodaySessions, 1);
+      expect(state.practiceTodayReviewed, 2);
+      expect(state.practiceTodayRemembered, 1);
+      expect(state.practiceLastSessionTitle, 'Memory sync');
+      expect(
+        state.recentRememberedWordEntries.map((entry) => entry.word).toList(),
+        <String>['alpha'],
+      );
+      expect(
+        state.recentWeakWordEntries.map((entry) => entry.word).toList(),
+        <String>['bravo'],
+      );
+    });
+
     test('online wordbook catalog parses repo html payload', () {
       const html =
           '<script data-target="react-app.embeddedData">'
@@ -1641,10 +1832,23 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     bool weatherEnabled = false,
     WeatherSnapshot? weatherSnapshot,
     bool weatherLoading = false,
+    bool startupTodoPromptEnabled = false,
+    String? startupDailyQuote,
+    bool startupDailyQuoteLoading = false,
+    List<TodoItem>? todayActiveTodos,
     String? asrRecordingPath,
     String? asrStoppedRecordingPath,
     AsrResult? asrTranscriptionResult,
     int apiTtsCacheBytes = 0,
+    int practiceTodaySessions = 2,
+    int practiceTodayReviewed = 9,
+    int practiceTodayRemembered = 7,
+    int practiceTotalSessions = 6,
+    int practiceTotalReviewed = 28,
+    int practiceTotalRemembered = 22,
+    String practiceLastSessionTitle = 'Scope sprint',
+    List<WordEntry>? recentRememberedEntries,
+    List<WordEntry>? recentWeakEntries,
   }) {
     final visibleWords =
         words ??
@@ -1694,7 +1898,32 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       .._weatherEnabled = weatherEnabled
       .._weatherSnapshot = weatherSnapshot
       .._weatherLoading = weatherLoading
-      .._currentWord = visibleWords.firstOrNull;
+      .._startupTodoPromptEnabled = startupTodoPromptEnabled
+      .._startupDailyQuote = startupDailyQuote
+      .._startupDailyQuoteLoading = startupDailyQuoteLoading
+      .._todayActiveTodos = List<TodoItem>.from(
+        todayActiveTodos ?? <TodoItem>[],
+      )
+      .._currentWord = visibleWords.firstOrNull
+      .._practiceTodaySessions = practiceTodaySessions
+      .._practiceTodayReviewed = practiceTodayReviewed
+      .._practiceTodayRemembered = practiceTodayRemembered
+      .._practiceTotalSessions = practiceTotalSessions
+      .._practiceTotalReviewed = practiceTotalReviewed
+      .._practiceTotalRemembered = practiceTotalRemembered
+      .._practiceLastSessionTitle = practiceLastSessionTitle
+      .._recentRememberedEntries = List<WordEntry>.from(
+        recentRememberedEntries ??
+            (visibleWords.length < 3
+                ? visibleWords
+                : visibleWords.sublist(1, 3)),
+      )
+      .._recentWeakEntries = List<WordEntry>.from(
+        recentWeakEntries ??
+            (visibleWords.length < 2
+                ? visibleWords
+                : visibleWords.sublist(0, 2)),
+      );
   }
 
   PlayConfig _config;
@@ -1719,6 +1948,10 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
+  bool _startupTodoPromptEnabled = false;
+  String? _startupDailyQuote;
+  bool _startupDailyQuoteLoading = false;
+  List<TodoItem> _todayActiveTodos = <TodoItem>[];
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   bool resetUserDataCalled = false;
@@ -1726,17 +1959,22 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   String? restoredBackupPath;
   String? deletedBackupPath;
   String? exportedUserDataPath;
+  String? exportedUserDataDirectoryPath;
+  String? exportedUserDataFileName;
+  Set<UserDataExportSection>? exportedUserDataSections;
   String? createdWordbookName;
   String? renamedWordbookName;
   String? importedWordbookName;
   String? importedWordbookFilePath;
-  final int _practiceTodaySessions = 2;
-  final int _practiceTodayReviewed = 9;
-  final int _practiceTodayRemembered = 7;
-  final int _practiceTotalSessions = 6;
-  final int _practiceTotalReviewed = 28;
-  final int _practiceTotalRemembered = 22;
-  final String _practiceLastSessionTitle = 'Scope sprint';
+  int _practiceTodaySessions = 2;
+  int _practiceTodayReviewed = 9;
+  int _practiceTodayRemembered = 7;
+  int _practiceTotalSessions = 6;
+  int _practiceTotalReviewed = 28;
+  int _practiceTotalRemembered = 22;
+  String _practiceLastSessionTitle = 'Scope sprint';
+  List<WordEntry> _recentRememberedEntries = <WordEntry>[];
+  List<WordEntry> _recentWeakEntries = <WordEntry>[];
   final Set<String> _favorites = <String>{};
   final Set<String> _taskWords = <String>{};
   final Map<AsrProviderType, AsrOfflineModelStatus> _offlineStatuses =
@@ -1859,11 +2097,11 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   List<WordEntry> get recentRememberedWordEntries =>
-      _visibleWords.length < 3 ? _visibleWords : _visibleWords.sublist(1, 3);
+      List<WordEntry>.unmodifiable(_recentRememberedEntries);
 
   @override
   List<WordEntry> get recentWeakWordEntries =>
-      _visibleWords.length < 2 ? _visibleWords : _visibleWords.sublist(0, 2);
+      List<WordEntry>.unmodifiable(_recentWeakEntries);
 
   @override
   SearchMode get searchMode => _searchMode;
@@ -1901,6 +2139,24 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   String get uiLanguageSelection =>
       _uiLanguageFollowsSystem ? 'system' : _uiLanguage;
+
+  @override
+  bool get startupTodoPromptEnabled => _startupTodoPromptEnabled;
+
+  @override
+  bool get shouldShowStartupTodoPromptToday => _startupTodoPromptEnabled;
+
+  @override
+  String? get startupDailyQuote => _startupDailyQuote;
+
+  @override
+  bool get startupDailyQuoteLoading => _startupDailyQuoteLoading;
+
+  @override
+  List<TodoItem> get todayActiveTodos =>
+      List<TodoItem>.unmodifiable(_todayActiveTodos);
+
+  bool startupPromptSuppressedToday = false;
 
   @override
   List<WordEntry> get words => _visibleWords;
@@ -2075,8 +2331,23 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
-  Future<String?> exportUserData() async {
-    exportedUserDataPath = '/tmp/vocabulary_user_data_export.json';
+  Future<String> getDefaultUserDataExportDirectoryPath() async =>
+      '/tmp/vocabulary_exports';
+
+  @override
+  Future<String?> exportUserData({
+    Iterable<UserDataExportSection>? sections,
+    String? directoryPath,
+    String? fileName,
+  }) async {
+    exportedUserDataSections = sections?.toSet();
+    exportedUserDataDirectoryPath = directoryPath ?? '/tmp/vocabulary_exports';
+    exportedUserDataFileName = fileName ?? 'vocabulary_user_data_export.json';
+    final resolvedFileName = exportedUserDataFileName!.endsWith('.json')
+        ? exportedUserDataFileName!
+        : '${exportedUserDataFileName!}.json';
+    exportedUserDataPath =
+        '${exportedUserDataDirectoryPath!}/$resolvedFileName';
     notifyListeners();
     return exportedUserDataPath;
   }
@@ -2221,7 +2492,44 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required List<String> weakWords,
     List<WordEntry>? rememberedEntries,
     List<WordEntry>? weakEntries,
-  }) {}
+  }) {
+    _practiceTodaySessions += 1;
+    _practiceTodayReviewed += total;
+    _practiceTodayRemembered += remembered;
+    _practiceTotalSessions += 1;
+    _practiceTotalReviewed += total;
+    _practiceTotalRemembered += remembered;
+    _practiceLastSessionTitle = title;
+    _recentRememberedEntries = _resolvePracticeEntries(
+      rememberedWords,
+      preferredEntries: rememberedEntries,
+    );
+    _recentWeakEntries = _resolvePracticeEntries(
+      weakWords,
+      preferredEntries: weakEntries,
+    );
+    notifyListeners();
+  }
+
+  List<WordEntry> _resolvePracticeEntries(
+    List<String> trackedWords, {
+    List<WordEntry>? preferredEntries,
+  }) {
+    if (preferredEntries != null && preferredEntries.isNotEmpty) {
+      return List<WordEntry>.from(preferredEntries);
+    }
+    if (trackedWords.isEmpty) {
+      return const <WordEntry>[];
+    }
+
+    final byWord = <String, WordEntry>{
+      for (final entry in _visibleWords) entry.word.toLowerCase(): entry,
+    };
+    return trackedWords
+        .map((word) => byWord[word.toLowerCase()])
+        .whereType<WordEntry>()
+        .toList(growable: false);
+  }
 
   @override
   void setUiLanguage(String language) {
@@ -2255,12 +2563,28 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
+  void setStartupTodoPromptEnabled(bool enabled) {
+    _startupTodoPromptEnabled = enabled;
+    notifyListeners();
+  }
+
+  @override
+  void suppressStartupTodoPromptForToday() {
+    startupPromptSuppressedToday = true;
+    _startupTodoPromptEnabled = false;
+    notifyListeners();
+  }
+
+  @override
   Future<void> refreshWeather({bool force = false}) async {
     _weatherLoading = true;
     notifyListeners();
     _weatherLoading = false;
     notifyListeners();
   }
+
+  @override
+  Future<void> refreshStartupTodoPromptContent({bool force = false}) async {}
 
   @override
   void refreshWeatherIfStale() {}
@@ -2414,6 +2738,11 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     String? color,
     DateTime? dueAt,
     bool alarmEnabled = false,
+    bool syncToSystemCalendar = true,
+    bool systemCalendarNotificationEnabled = true,
+    int systemCalendarNotificationMinutesBefore = 0,
+    bool systemCalendarAlarmEnabled = false,
+    int systemCalendarAlarmMinutesBefore = 10,
   }) {
     _todos.add(
       TodoItem(
@@ -2425,6 +2754,12 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
         color: color,
         dueAt: dueAt,
         alarmEnabled: alarmEnabled,
+        syncToSystemCalendar: syncToSystemCalendar,
+        systemCalendarNotificationEnabled: systemCalendarNotificationEnabled,
+        systemCalendarNotificationMinutesBefore:
+            systemCalendarNotificationMinutesBefore,
+        systemCalendarAlarmEnabled: systemCalendarAlarmEnabled,
+        systemCalendarAlarmMinutesBefore: systemCalendarAlarmMinutesBefore,
       ),
     );
     _publishViewState();

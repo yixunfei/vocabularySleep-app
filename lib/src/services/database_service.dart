@@ -8,6 +8,7 @@ import 'package:sqlite3/sqlite3.dart';
 
 import '../models/todo_item.dart';
 import '../models/tomato_timer.dart';
+import '../models/user_data_export.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
@@ -87,6 +88,10 @@ class AppDatabaseService {
       'hidden_built_in_wordbooks';
   static final RegExp _backupFilePattern = RegExp(
     r'^vocabulary_(.+)_(\d{4}-\d{2}-\d{2}T.+)\.db$',
+  );
+  static final RegExp _windowsReservedFileNamePattern = RegExp(
+    r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)',
+    caseSensitive: false,
   );
 
   Future<void> init() async {
@@ -185,81 +190,86 @@ class AppDatabaseService {
     await file.delete();
   }
 
-  Future<String> exportUserData() async {
+  Future<String> exportUserData({
+    Iterable<UserDataExportSection>? sections,
+    String? directoryPath,
+    String? fileName,
+  }) async {
     if (!_initialized) {
       throw StateError('Database is not initialized');
     }
 
-    final exportDir = await _ensureExportDirectory();
-    final timestamp = DateTime.now()
-        .toIso8601String()
-        .replaceAll(':', '-')
-        .replaceAll('.', '-');
+    final resolvedSections = _resolveUserDataExportSections(sections);
+    final exportDir = (directoryPath ?? '').trim().isEmpty
+        ? await _ensureExportDirectory()
+        : Directory(directoryPath!.trim());
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
     final exportPath = p.join(
       exportDir.path,
-      'vocabulary_user_data_$timestamp.json',
+      _normalizeUserDataExportFileName(fileName),
     );
-
-    final rows = _selectMaps('''
-      SELECT id, name, path, word_count, created_at
-      FROM wordbooks
-      ORDER BY id ASC
-    ''');
-    final wordbooks = rows
-        .map((row) {
-          final wordbookId = ((row['id'] as num?) ?? 0).toInt();
-          return <String, Object?>{
-            'id': wordbookId,
-            'name': row['name'],
-            'path': row['path'],
-            'word_count': row['word_count'],
-            'created_at': row['created_at'],
-            'words': getWords(wordbookId)
-                .map(
-                  (word) => <String, Object?>{
-                    'id': word.id,
-                    'wordbook_id': word.wordbookId,
-                    'word': word.word,
-                    'meaning': word.meaning,
-                    'examples': word.examples,
-                    'etymology': word.etymology,
-                    'roots': word.roots,
-                    'affixes': word.affixes,
-                    'variations': word.variations,
-                    'memory': word.memory,
-                    'story': word.story,
-                    'fields': word.fields
-                        .map((field) => field.toJsonMap())
-                        .toList(growable: false),
-                    'raw_content': word.rawContent,
-                  },
-                )
-                .toList(growable: false),
-          };
-        })
-        .toList(growable: false);
-
-    final timerRows = _selectMaps(
-      'SELECT * FROM timer_records ORDER BY start_time DESC',
-    );
-    final progressRows = _selectMaps(
-      'SELECT * FROM progress ORDER BY word_id ASC',
-    );
-
-    final payload = <String, Object?>{
-      'exported_at': DateTime.now().toIso8601String(),
-      'wordbooks': wordbooks,
-      'todos': getTodos().map((item) => item.toMap()).toList(growable: false),
-      'notes': getNotes().map((item) => item.toMap()).toList(growable: false),
-      'progress': progressRows,
-      'timer_records': timerRows,
-    };
+    final payload = buildUserDataExportPayload(sections: resolvedSections);
 
     await File(exportPath).writeAsString(
       const JsonEncoder.withIndent('  ').convert(payload),
       flush: true,
     );
     return exportPath;
+  }
+
+  Map<String, Object?> buildUserDataExportPayload({
+    Iterable<UserDataExportSection>? sections,
+  }) {
+    if (!_initialized) {
+      throw StateError('Database is not initialized');
+    }
+
+    final resolvedSections = _resolveUserDataExportSections(sections);
+    final payload = <String, Object?>{
+      'exported_at': DateTime.now().toIso8601String(),
+      'schema_version': 2,
+      'sections': resolvedSections
+          .map((section) => section.storageKey)
+          .toList(growable: false),
+    };
+
+    if (resolvedSections.contains(UserDataExportSection.wordbooks)) {
+      payload[UserDataExportSection.wordbooks.storageKey] =
+          _buildWordbooksExportPayload();
+    }
+    if (resolvedSections.contains(UserDataExportSection.todos)) {
+      payload[UserDataExportSection.todos.storageKey] = getTodos()
+          .map((item) => item.toMap())
+          .toList(growable: false);
+    }
+    if (resolvedSections.contains(UserDataExportSection.notes)) {
+      payload[UserDataExportSection.notes.storageKey] = getNotes()
+          .map((item) => item.toMap())
+          .toList(growable: false);
+    }
+    if (resolvedSections.contains(UserDataExportSection.progress)) {
+      payload[UserDataExportSection.progress.storageKey] = _selectMaps(
+        'SELECT * FROM progress ORDER BY word_id ASC',
+      );
+    }
+    if (resolvedSections.contains(UserDataExportSection.timerRecords)) {
+      payload[UserDataExportSection.timerRecords.storageKey] = _selectMaps(
+        'SELECT * FROM timer_records ORDER BY start_time DESC',
+      );
+    }
+    if (resolvedSections.contains(UserDataExportSection.settings)) {
+      payload[UserDataExportSection.settings.storageKey] =
+          _buildSettingsExportPayload();
+    }
+
+    return payload;
+  }
+
+  Future<String> getDefaultUserDataExportDirectoryPath() async {
+    final exportDir = await _ensureExportDirectory();
+    return exportDir.path;
   }
 
   Future<void> restoreSafetyBackup(String backupPath) async {
@@ -1594,6 +1604,96 @@ class AppDatabaseService {
   String _parseBackupReason(String filename) {
     final match = _backupFilePattern.firstMatch(filename);
     return match?.group(1) ?? 'manual';
+  }
+
+  List<Map<String, Object?>> _buildWordbooksExportPayload() {
+    final rows = _selectMaps('''
+      SELECT id, name, path, word_count, created_at
+      FROM wordbooks
+      ORDER BY id ASC
+    ''');
+    return rows
+        .map((row) {
+          final wordbookId = ((row['id'] as num?) ?? 0).toInt();
+          return <String, Object?>{
+            'id': wordbookId,
+            'name': row['name'],
+            'path': row['path'],
+            'word_count': row['word_count'],
+            'created_at': row['created_at'],
+            'words': getWords(wordbookId)
+                .map(
+                  (word) => <String, Object?>{
+                    'id': word.id,
+                    'wordbook_id': word.wordbookId,
+                    'word': word.word,
+                    'meaning': word.meaning,
+                    'examples': word.examples,
+                    'etymology': word.etymology,
+                    'roots': word.roots,
+                    'affixes': word.affixes,
+                    'variations': word.variations,
+                    'memory': word.memory,
+                    'story': word.story,
+                    'fields': word.fields
+                        .map((field) => field.toJsonMap())
+                        .toList(growable: false),
+                    'raw_content': word.rawContent,
+                  },
+                )
+                .toList(growable: false),
+          };
+        })
+        .toList(growable: false);
+  }
+
+  Map<String, String> _buildSettingsExportPayload() {
+    final rows = _selectMaps(
+      'SELECT key, value FROM settings ORDER BY key ASC',
+    );
+    return <String, String>{
+      for (final row in rows) '${row['key'] ?? ''}': '${row['value'] ?? ''}',
+    };
+  }
+
+  Set<UserDataExportSection> _resolveUserDataExportSections(
+    Iterable<UserDataExportSection>? sections,
+  ) {
+    final resolved = sections == null
+        ? UserDataExportSection.values.toSet()
+        : sections.toSet();
+    if (resolved.isEmpty) {
+      throw ArgumentError('At least one export section must be selected');
+    }
+    return resolved;
+  }
+
+  String _normalizeUserDataExportFileName(String? rawFileName) {
+    final timestamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .replaceAll('.', '-');
+    var normalized = (rawFileName ?? '').trim();
+    if (normalized.isEmpty) {
+      normalized = 'xianyushengxi_user_data_$timestamp.json';
+    }
+    if (!normalized.toLowerCase().endsWith('.json')) {
+      normalized = '$normalized.json';
+    }
+    normalized = normalized.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]+'), '_');
+    normalized = normalized.replaceAll(RegExp(r'\s+'), '_');
+    normalized = normalized.replaceAll(RegExp(r'_+'), '_');
+    normalized = normalized.replaceAll(RegExp(r'^\.+|\.+$'), '');
+    if (normalized.isEmpty) {
+      normalized = 'xianyushengxi_user_data_$timestamp.json';
+    }
+    if (_windowsReservedFileNamePattern.hasMatch(normalized)) {
+      normalized = 'export_$normalized';
+    }
+    if (!normalized.toLowerCase().endsWith('.json')) {
+      normalized = '$normalized.json';
+    }
+    return normalized;
   }
 
   String _escapeSqlString(String value) => value.replaceAll("'", "''");

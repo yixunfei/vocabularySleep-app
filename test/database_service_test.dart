@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
+import 'package:vocabulary_sleep_app/src/models/user_data_export.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
@@ -196,6 +197,59 @@ void main() {
       isTrue,
     );
   });
+
+  test(
+    'exportUserData respects selected sections, settings, and custom destination',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      database.insertTodo(
+        TodoItem(
+          content: 'Only export selected content',
+          priority: 1,
+          createdAt: DateTime(2026, 3, 18),
+        ),
+      );
+      database.insertNote(
+        PlanNote(
+          title: 'Should stay out of this export',
+          content: 'Notes are not selected this time.',
+          createdAt: DateTime(2026, 3, 18),
+          updatedAt: DateTime(2026, 3, 18),
+        ),
+      );
+      database.setSetting('theme', 'mono');
+
+      final exportPath = await database.exportUserData(
+        sections: const <UserDataExportSection>{
+          UserDataExportSection.todos,
+          UserDataExportSection.settings,
+        },
+        directoryPath: '${tempDir.path}${Platform.pathSeparator}custom-exports',
+        fileName: 'manual backup',
+      );
+
+      expect(await File(exportPath).exists(), isTrue);
+      expect(exportPath, endsWith('manual_backup.json'));
+
+      final decoded =
+          jsonDecode(await File(exportPath).readAsString())
+              as Map<String, dynamic>;
+      expect(decoded['sections'], <String>['todos', 'settings']);
+      expect(decoded.containsKey('todos'), isTrue);
+      expect(decoded.containsKey('settings'), isTrue);
+      expect(decoded.containsKey('notes'), isFalse);
+      expect(
+        (decoded['todos'] as List<dynamic>).any(
+          (item) => (item as Map)['content'] == 'Only export selected content',
+        ),
+        isTrue,
+      );
+      expect(decoded['settings'], containsPair('theme', 'mono'));
+    },
+  );
 
   test('todo deferred status persists and is cleared by completion', () async {
     final database = AppDatabaseService(WordbookImportService());

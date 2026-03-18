@@ -11,6 +11,7 @@ import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
 import '../models/todo_item.dart';
+import '../models/user_data_export.dart';
 import '../models/weather_snapshot.dart';
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
@@ -1414,10 +1415,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  Future<String?> exportUserData() async {
+  Future<String> getDefaultUserDataExportDirectoryPath() async {
+    return _database.getDefaultUserDataExportDirectoryPath();
+  }
+
+  Future<String?> exportUserData({
+    Iterable<UserDataExportSection>? sections,
+    String? directoryPath,
+    String? fileName,
+  }) async {
     _setBusy(true, messageKey: 'processing');
     try {
-      return await _database.exportUserData();
+      return await _database.exportUserData(
+        sections: sections,
+        directoryPath: directoryPath,
+        fileName: fileName,
+      );
     } catch (error, stackTrace) {
       _log.e(
         'app_state',
@@ -1426,8 +1439,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         stackTrace: stackTrace,
       );
       _setMessage(
-        'errorInitFailed',
-        params: <String, Object?>{'error': 'export user data: $error'},
+        'errorExportFailed',
+        params: <String, Object?>{'error': error},
       );
       return null;
     } finally {

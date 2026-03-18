@@ -1,12 +1,60 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../models/user_data_export.dart';
 import '../../services/database_service.dart';
 import '../../state/app_state.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/setting_tile.dart';
+
+const List<_UserDataExportSectionOption> _userDataExportSectionOptions =
+    <_UserDataExportSectionOption>[
+      _UserDataExportSectionOption(
+        section: UserDataExportSection.wordbooks,
+        zhTitle: '单词本与单词',
+        enTitle: 'Wordbooks and words',
+        zhSubtitle: '导出词本信息、单词内容和字段数据。',
+        enSubtitle: 'Export wordbooks, entries, and field content.',
+      ),
+      _UserDataExportSectionOption(
+        section: UserDataExportSection.todos,
+        zhTitle: '待办事项',
+        enTitle: 'Todos',
+        zhSubtitle: '导出待办状态、提醒与排序信息。',
+        enSubtitle: 'Export todo status, reminders, and ordering.',
+      ),
+      _UserDataExportSectionOption(
+        section: UserDataExportSection.notes,
+        zhTitle: '笔记',
+        enTitle: 'Notes',
+        zhSubtitle: '导出笔记标题、正文和更新时间。',
+        enSubtitle: 'Export note titles, content, and timestamps.',
+      ),
+      _UserDataExportSectionOption(
+        section: UserDataExportSection.progress,
+        zhTitle: '记忆进度',
+        enTitle: 'Memory progress',
+        zhSubtitle: '导出单词熟悉度与复习状态。',
+        enSubtitle: 'Export familiarity and spaced-repetition progress.',
+      ),
+      _UserDataExportSectionOption(
+        section: UserDataExportSection.timerRecords,
+        zhTitle: '专注记录',
+        enTitle: 'Focus records',
+        zhSubtitle: '导出番茄钟与专注时段记录。',
+        enSubtitle: 'Export focus timer sessions and history.',
+      ),
+      _UserDataExportSectionOption(
+        section: UserDataExportSection.settings,
+        zhTitle: '应用设置',
+        enTitle: 'App settings',
+        zhSubtitle: '导出当前本地设置与偏好。',
+        enSubtitle: 'Export local settings and preferences.',
+      ),
+    ];
 
 class DataManagementPage extends StatelessWidget {
   const DataManagementPage({super.key});
@@ -425,9 +473,7 @@ class DataManagementPage extends StatelessWidget {
     if (!context.mounted || !success) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          pickUiText(i18n, zh: '备份已删除。', en: 'Backup deleted.'),
-        ),
+        content: Text(pickUiText(i18n, zh: '备份已删除。', en: 'Backup deleted.')),
       ),
     );
   }
@@ -437,7 +483,22 @@ class DataManagementPage extends StatelessWidget {
     AppState state,
     AppI18n i18n,
   ) async {
-    final path = await state.exportUserData();
+    final defaultDirectoryPath = await state
+        .getDefaultUserDataExportDirectoryPath();
+    if (!context.mounted) return;
+
+    final options = await _showUserDataExportDialog(
+      context: context,
+      i18n: i18n,
+      defaultDirectoryPath: defaultDirectoryPath,
+    );
+    if (options == null) return;
+
+    final path = await state.exportUserData(
+      sections: options.sections,
+      directoryPath: options.directoryPath,
+      fileName: options.fileName,
+    );
     if (!context.mounted || path == null || path.trim().isEmpty) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -449,6 +510,244 @@ class DataManagementPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Future<UserDataExportOptions?> _showUserDataExportDialog({
+    required BuildContext context,
+    required AppI18n i18n,
+    required String defaultDirectoryPath,
+  }) async {
+    final fileNameController = TextEditingController(
+      text: _buildDefaultUserDataExportFileName(),
+    );
+    final directoryController = TextEditingController(
+      text: defaultDirectoryPath,
+    );
+    final selectedSections = <UserDataExportSection>{
+      for (final option in _userDataExportSectionOptions) option.section,
+    };
+    String? validationMessage;
+
+    return showDialog<UserDataExportOptions>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setStateDialog) {
+            Future<void> pickDirectory() async {
+              try {
+                final picked = await FilePicker.platform.getDirectoryPath(
+                  dialogTitle: pickUiText(
+                    i18n,
+                    zh: '选择导出位置',
+                    en: 'Choose export location',
+                  ),
+                  initialDirectory: directoryController.text.trim().isEmpty
+                      ? null
+                      : directoryController.text.trim(),
+                );
+                if (picked == null || picked.trim().isEmpty) return;
+                setStateDialog(() {
+                  directoryController.text = picked.trim();
+                  validationMessage = null;
+                });
+              } catch (error) {
+                if (!dialogContext.mounted) return;
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '选择导出位置失败：$error',
+                        en: 'Failed to choose export location: $error',
+                      ),
+                    ),
+                  ),
+                );
+              }
+            }
+
+            void submit() {
+              final fileName = fileNameController.text.trim();
+              final directoryPath = directoryController.text.trim();
+              if (selectedSections.isEmpty) {
+                setStateDialog(() {
+                  validationMessage = pickUiText(
+                    i18n,
+                    zh: '请至少选择一项导出内容。',
+                    en: 'Select at least one export section.',
+                  );
+                });
+                return;
+              }
+              if (fileName.isEmpty) {
+                setStateDialog(() {
+                  validationMessage = pickUiText(
+                    i18n,
+                    zh: '请输入导出文件名。',
+                    en: 'Enter an export file name.',
+                  );
+                });
+                return;
+              }
+              if (directoryPath.isEmpty) {
+                setStateDialog(() {
+                  validationMessage = pickUiText(
+                    i18n,
+                    zh: '请选择或输入导出位置。',
+                    en: 'Choose or enter an export location.',
+                  );
+                });
+                return;
+              }
+              Navigator.of(dialogContext).pop(
+                UserDataExportOptions(
+                  sections: Set<UserDataExportSection>.from(selectedSections),
+                  directoryPath: directoryPath,
+                  fileName: fileName,
+                ),
+              );
+            }
+
+            final theme = Theme.of(dialogContext);
+            return AlertDialog(
+              title: Text(
+                pickUiText(i18n, zh: '导出用户数据', en: 'Export user data'),
+              ),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '选择要导出的内容、保存位置和文件名。导出文件为 JSON，可用于手动备份。',
+                          en: 'Choose what to export, where to save it, and the file name. The export will be written as JSON.',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        pickUiText(i18n, zh: '导出内容', en: 'Export content'),
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      for (final option in _userDataExportSectionOptions)
+                        CheckboxListTile(
+                          value: selectedSections.contains(option.section),
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(
+                            pickUiText(
+                              i18n,
+                              zh: option.zhTitle,
+                              en: option.enTitle,
+                            ),
+                          ),
+                          subtitle: Text(
+                            pickUiText(
+                              i18n,
+                              zh: option.zhSubtitle,
+                              en: option.enSubtitle,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setStateDialog(() {
+                              if (value ?? false) {
+                                selectedSections.add(option.section);
+                              } else {
+                                selectedSections.remove(option.section);
+                              }
+                              validationMessage = null;
+                            });
+                          },
+                        ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: fileNameController,
+                        decoration: InputDecoration(
+                          labelText: pickUiText(
+                            i18n,
+                            zh: '导出文件名',
+                            en: 'File name',
+                          ),
+                          hintText:
+                              'xianyushengxi_user_data_2026-03-18_09-30-00.json',
+                          helperText: pickUiText(
+                            i18n,
+                            zh: '可不手动填写 .json 后缀，系统会自动补齐。',
+                            en: 'The .json suffix is optional and will be added automatically.',
+                          ),
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (_) {
+                          if (validationMessage == null) return;
+                          setStateDialog(() => validationMessage = null);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: directoryController,
+                        minLines: 1,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          labelText: pickUiText(
+                            i18n,
+                            zh: '导出位置',
+                            en: 'Export location',
+                          ),
+                          helperText: pickUiText(
+                            i18n,
+                            zh: '可直接输入路径，也可以点击右侧按钮选择文件夹。',
+                            en: 'Enter a path directly or use the folder button to choose one.',
+                          ),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            tooltip: pickUiText(
+                              i18n,
+                              zh: '选择文件夹',
+                              en: 'Choose folder',
+                            ),
+                            onPressed: pickDirectory,
+                            icon: const Icon(Icons.folder_open_outlined),
+                          ),
+                        ),
+                        onChanged: (_) {
+                          if (validationMessage == null) return;
+                          setStateDialog(() => validationMessage = null);
+                        },
+                      ),
+                      if (validationMessage != null) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Text(
+                          validationMessage!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+                ),
+                FilledButton.icon(
+                  onPressed: submit,
+                  icon: const Icon(Icons.ios_share_rounded),
+                  label: Text(pickUiText(i18n, zh: '开始导出', en: 'Export')),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -495,4 +794,31 @@ class DataManagementPage extends StatelessWidget {
       confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
     );
   }
+
+  String _buildDefaultUserDataExportFileName({DateTime? now}) {
+    final value = now ?? DateTime.now();
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    final second = value.second.toString().padLeft(2, '0');
+    return 'xianyushengxi_user_data_${value.year}-$month-$day'
+        '_$hour-$minute-$second.json';
+  }
+}
+
+class _UserDataExportSectionOption {
+  const _UserDataExportSectionOption({
+    required this.section,
+    required this.zhTitle,
+    required this.enTitle,
+    required this.zhSubtitle,
+    required this.enSubtitle,
+  });
+
+  final UserDataExportSection section;
+  final String zhTitle;
+  final String enTitle;
+  final String zhSubtitle;
+  final String enSubtitle;
 }
