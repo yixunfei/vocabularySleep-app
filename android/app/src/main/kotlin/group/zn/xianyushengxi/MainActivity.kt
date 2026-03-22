@@ -136,6 +136,7 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
     }
 
     override fun onRequestPermissionsResult(
@@ -842,18 +843,11 @@ class MainActivity : FlutterActivity() {
             return
         }
         for (reminder in reminderSpecs) {
-            val inserted = insertCalendarReminder(
+            insertCalendarReminder(
                 eventId = eventId,
                 minutes = reminder.minutes,
                 method = reminder.method,
             )
-            if (!inserted && reminder.method == CalendarContract.Reminders.METHOD_ALARM) {
-                insertCalendarReminder(
-                    eventId = eventId,
-                    minutes = reminder.minutes,
-                    method = CalendarContract.Reminders.METHOD_ALERT,
-                )
-            }
         }
     }
 
@@ -875,28 +869,29 @@ class MainActivity : FlutterActivity() {
         val notificationOffsets = readCalendarReminderOffsets(arguments, "notificationOffsetsMinutes")
         val alarmOffsets = readCalendarReminderOffsets(arguments, "alarmOffsetsMinutes")
 
-        for (minutes in notificationOffsets) {
-            val safeMinutes = minutes.coerceAtLeast(0)
-            reminderSpecs["${CalendarContract.Reminders.METHOD_ALERT}:$safeMinutes"] =
-                CalendarReminderSpec(
-                    minutes = safeMinutes,
-                    method = CalendarContract.Reminders.METHOD_ALERT,
-                )
-        }
-        for (minutes in alarmOffsets) {
-            val safeMinutes = minutes.coerceAtLeast(0)
-            reminderSpecs["${CalendarContract.Reminders.METHOD_ALARM}:$safeMinutes"] =
-                CalendarReminderSpec(
-                    minutes = safeMinutes,
-                    method = CalendarContract.Reminders.METHOD_ALARM,
-                )
-        }
-
-        if (reminderSpecs.isEmpty()) {
+        if (alarmOffsets.isNotEmpty()) {
+            for (minutes in alarmOffsets) {
+                val safeMinutes = minutes.coerceAtLeast(0)
+                reminderSpecs["${CalendarContract.Reminders.METHOD_ALARM}:$safeMinutes"] =
+                    buildCalendarReminderSpec(
+                        minutes = safeMinutes,
+                        method = CalendarContract.Reminders.METHOD_ALARM,
+                    )
+            }
+        } else if (notificationOffsets.isNotEmpty()) {
+            for (minutes in notificationOffsets) {
+                val safeMinutes = minutes.coerceAtLeast(0)
+                reminderSpecs["${CalendarContract.Reminders.METHOD_ALERT}:$safeMinutes"] =
+                    buildCalendarReminderSpec(
+                        minutes = safeMinutes,
+                        method = CalendarContract.Reminders.METHOD_ALERT,
+                    )
+            }
+        } else {
             for (minutes in readCalendarReminderOffsets(arguments, "reminderOffsetsMinutes")) {
                 val safeMinutes = minutes.coerceAtLeast(0)
                 reminderSpecs["${CalendarContract.Reminders.METHOD_ALERT}:$safeMinutes"] =
-                    CalendarReminderSpec(
+                    buildCalendarReminderSpec(
                         minutes = safeMinutes,
                         method = CalendarContract.Reminders.METHOD_ALERT,
                     )
@@ -904,6 +899,13 @@ class MainActivity : FlutterActivity() {
         }
 
         return reminderSpecs.values.toList()
+    }
+
+    private fun buildCalendarReminderSpec(minutes: Int, method: Int): CalendarReminderSpec {
+        return CalendarReminderSpec(
+            minutes = minutes.coerceAtLeast(0),
+            method = method,
+        )
     }
 
     private fun readCalendarReminderOffsets(

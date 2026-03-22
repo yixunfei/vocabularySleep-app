@@ -3,6 +3,11 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:uuid/uuid.dart';
 
+final AudioContext _ambientPlaybackContext = AudioContextConfig(
+  focus: AudioContextConfigFocus.mixWithOthers,
+  stayAwake: true,
+).build();
+
 class AmbientSource {
   const AmbientSource({
     required this.id,
@@ -58,9 +63,21 @@ class AudioPlayerAmbientLoopPlayer implements AmbientLoopPlayer {
     : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
+  bool _audioContextConfigured = false;
+
+  Future<void> _ensureAudioContext() async {
+    if (_audioContextConfigured) {
+      return;
+    }
+    await _player.setAudioContext(_ambientPlaybackContext);
+    _audioContextConfigured = true;
+  }
 
   @override
-  Future<void> setSource(Source source) => _player.setSource(source);
+  Future<void> setSource(Source source) async {
+    await _ensureAudioContext();
+    await _player.setSource(source);
+  }
 
   @override
   Future<Duration?> getDuration() => _player.getDuration();

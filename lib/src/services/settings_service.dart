@@ -158,7 +158,11 @@ class SettingsService {
         'lastSessionTitle': '',
         'rememberedWords': <Object?>[],
         'weakWords': <Object?>[],
+        'weakReasonIdsByWord': <String, Object?>{},
+        'history': <Object?>[],
+        'sessionPrefs': <String, Object?>{},
         'launchCursors': <String, Object?>{},
+        'trackedEntries': <Object?>[],
       };
     }
     try {
@@ -180,7 +184,11 @@ class SettingsService {
       'lastSessionTitle': '',
       'rememberedWords': <Object?>[],
       'weakWords': <Object?>[],
+      'weakReasonIdsByWord': <String, Object?>{},
+      'history': <Object?>[],
+      'sessionPrefs': <String, Object?>{},
       'launchCursors': <String, Object?>{},
+      'trackedEntries': <Object?>[],
     };
   }
 

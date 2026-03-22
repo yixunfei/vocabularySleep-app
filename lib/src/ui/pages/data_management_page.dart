@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -524,6 +525,8 @@ class DataManagementPage extends StatelessWidget {
     final directoryController = TextEditingController(
       text: defaultDirectoryPath,
     );
+    final supportsNativeDirectoryPicker =
+        !kIsWeb && defaultTargetPlatform != TargetPlatform.windows;
     final selectedSections = <UserDataExportSection>{
       for (final option in _userDataExportSectionOptions) option.section,
     };
@@ -536,6 +539,9 @@ class DataManagementPage extends StatelessWidget {
         return StatefulBuilder(
           builder: (dialogContext, setStateDialog) {
             Future<void> pickDirectory() async {
+              if (!supportsNativeDirectoryPicker) {
+                return;
+              }
               try {
                 final picked = await FilePicker.platform.getDirectoryPath(
                   dialogTitle: pickUiText(
@@ -699,21 +705,29 @@ class DataManagementPage extends StatelessWidget {
                             zh: '导出位置',
                             en: 'Export location',
                           ),
-                          helperText: pickUiText(
-                            i18n,
-                            zh: '可直接输入路径，也可以点击右侧按钮选择文件夹。',
-                            en: 'Enter a path directly or use the folder button to choose one.',
-                          ),
+                          helperText: supportsNativeDirectoryPicker
+                              ? pickUiText(
+                                  i18n,
+                                  zh: '可直接输入路径，也可以点击右侧按钮选择文件夹。',
+                                  en: 'Enter a path directly or use the folder button to choose one.',
+                                )
+                              : pickUiText(
+                                  i18n,
+                                  zh: 'Windows 端为避免系统不稳定，已禁用文件夹选择器，请直接输入导出路径。',
+                                  en: 'On Windows, the folder chooser is disabled to avoid system instability. Enter the export path directly.',
+                                ),
                           border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            tooltip: pickUiText(
-                              i18n,
-                              zh: '选择文件夹',
-                              en: 'Choose folder',
-                            ),
-                            onPressed: pickDirectory,
-                            icon: const Icon(Icons.folder_open_outlined),
-                          ),
+                          suffixIcon: supportsNativeDirectoryPicker
+                              ? IconButton(
+                                  tooltip: pickUiText(
+                                    i18n,
+                                    zh: '选择文件夹',
+                                    en: 'Choose folder',
+                                  ),
+                                  onPressed: pickDirectory,
+                                  icon: const Icon(Icons.folder_open_outlined),
+                                )
+                              : null,
                         ),
                         onChanged: (_) {
                           if (validationMessage == null) return;

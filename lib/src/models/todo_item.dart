@@ -1,3 +1,5 @@
+enum TodoSystemCalendarAlertMode { notification, alarm }
+
 class TodoItem {
   static const Object _unset = Object();
 
@@ -43,28 +45,32 @@ class TodoItem {
 
   bool get hasReminder => alarmEnabled && dueAt != null;
   bool get isDeferred => deferred && !completed;
+  TodoSystemCalendarAlertMode get systemCalendarAlertMode =>
+      systemCalendarAlarmEnabled
+      ? TodoSystemCalendarAlertMode.alarm
+      : TodoSystemCalendarAlertMode.notification;
+
   bool get hasSystemCalendarAlerts =>
-      systemCalendarNotificationEnabled || systemCalendarAlarmEnabled;
+      systemCalendarNotificationOffsets.isNotEmpty ||
+      systemCalendarAlarmOffsets.isNotEmpty;
 
   List<int> get systemCalendarNotificationOffsets =>
       _buildSystemCalendarOffsets(
-        enabled: systemCalendarNotificationEnabled,
+        enabled:
+            systemCalendarAlertMode ==
+            TodoSystemCalendarAlertMode.notification,
         minutesBefore: systemCalendarNotificationMinutesBefore,
       );
 
   List<int> get systemCalendarAlarmOffsets => _buildSystemCalendarOffsets(
-    enabled: systemCalendarAlarmEnabled,
+    enabled: systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm,
     minutesBefore: systemCalendarAlarmMinutesBefore,
   );
 
-  List<int> get systemCalendarReminderOffsets {
-    final offsets = <int>{
-      ...systemCalendarNotificationOffsets,
-      ...systemCalendarAlarmOffsets,
-    }.toList(growable: false);
-    offsets.sort();
-    return offsets;
-  }
+  List<int> get systemCalendarReminderOffsets =>
+      systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm
+      ? systemCalendarAlarmOffsets
+      : systemCalendarNotificationOffsets;
 
   List<int> _buildSystemCalendarOffsets({
     required bool enabled,
@@ -182,12 +188,14 @@ class TodoItem {
       'due_at': dueAt?.toIso8601String(),
       'alarm_enabled': alarmEnabled ? 1 : 0,
       'sync_to_system_calendar': syncToSystemCalendar ? 1 : 0,
-      'system_calendar_notification_enabled': systemCalendarNotificationEnabled
+      'system_calendar_notification_enabled':
+          systemCalendarAlertMode == TodoSystemCalendarAlertMode.notification
           ? 1
           : 0,
       'system_calendar_notification_minutes_before':
           systemCalendarNotificationMinutesBefore,
-      'system_calendar_alarm_enabled': systemCalendarAlarmEnabled ? 1 : 0,
+      'system_calendar_alarm_enabled':
+          systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm ? 1 : 0,
       'system_calendar_alarm_minutes_before': systemCalendarAlarmMinutesBefore,
       'created_at': createdAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),

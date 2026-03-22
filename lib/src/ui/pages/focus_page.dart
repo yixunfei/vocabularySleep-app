@@ -27,6 +27,8 @@ enum _TodoViewMode { plan, list }
 
 enum _TodoDraftState { active, deferred, completed }
 
+enum _TodoSystemCalendarAlertMode { notification, alarm }
+
 enum _NoteVoiceInputState { idle, starting, listening, finishing }
 
 class _TodoPlanSection {
@@ -5068,11 +5070,12 @@ class _FocusPageState extends State<FocusPage>
     var dueAt = todo?.dueAt;
     var alarmEnabled = todo?.alarmEnabled ?? false;
     var syncToSystemCalendar = todo?.syncToSystemCalendar ?? true;
-    var systemCalendarNotificationEnabled =
-        todo?.systemCalendarNotificationEnabled ?? true;
+    var systemCalendarAlertMode =
+        todo?.systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm
+        ? _TodoSystemCalendarAlertMode.alarm
+        : _TodoSystemCalendarAlertMode.notification;
     var systemCalendarNotificationMinutesBefore =
         todo?.systemCalendarNotificationMinutesBefore ?? 0;
-    var systemCalendarAlarmEnabled = todo?.systemCalendarAlarmEnabled ?? false;
     var systemCalendarAlarmMinutesBefore =
         todo?.systemCalendarAlarmMinutesBefore ?? 10;
 
@@ -5334,9 +5337,10 @@ class _FocusPageState extends State<FocusPage>
                           style: theme.textTheme.titleSmall,
                         ),
                         const SizedBox(height: 8),
-                        SwitchListTile.adaptive(
+                        RadioListTile<_TodoSystemCalendarAlertMode>.adaptive(
                           contentPadding: EdgeInsets.zero,
-                          value: systemCalendarNotificationEnabled,
+                          value: _TodoSystemCalendarAlertMode.notification,
+                          groupValue: systemCalendarAlertMode,
                           title: Text(
                             pickUiText(
                               i18n,
@@ -5351,12 +5355,14 @@ class _FocusPageState extends State<FocusPage>
                             ),
                           ),
                           onChanged: (value) {
+                            if (value == null) return;
                             setSheetState(() {
-                              systemCalendarNotificationEnabled = value;
+                              systemCalendarAlertMode = value;
                             });
                           },
                         ),
-                        if (systemCalendarNotificationEnabled)
+                        if (systemCalendarAlertMode ==
+                            _TodoSystemCalendarAlertMode.notification)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: DropdownButtonFormField<int>(
@@ -5394,9 +5400,10 @@ class _FocusPageState extends State<FocusPage>
                               },
                             ),
                           ),
-                        SwitchListTile.adaptive(
+                        RadioListTile<_TodoSystemCalendarAlertMode>.adaptive(
                           contentPadding: EdgeInsets.zero,
-                          value: systemCalendarAlarmEnabled,
+                          value: _TodoSystemCalendarAlertMode.alarm,
+                          groupValue: systemCalendarAlertMode,
                           title: Text(
                             pickUiText(
                               i18n,
@@ -5411,12 +5418,14 @@ class _FocusPageState extends State<FocusPage>
                             ),
                           ),
                           onChanged: (value) {
+                            if (value == null) return;
                             setSheetState(() {
-                              systemCalendarAlarmEnabled = value;
+                              systemCalendarAlertMode = value;
                             });
                           },
                         ),
-                        if (systemCalendarAlarmEnabled)
+                        if (systemCalendarAlertMode ==
+                            _TodoSystemCalendarAlertMode.alarm)
                           DropdownButtonFormField<int>(
                             initialValue: systemCalendarAlarmMinutesBefore,
                             decoration: InputDecoration(
@@ -5502,11 +5511,13 @@ class _FocusPageState extends State<FocusPage>
                                 alarmEnabled: alarmEnabled && dueAt != null,
                                 syncToSystemCalendar: syncToSystemCalendar,
                                 systemCalendarNotificationEnabled:
-                                    systemCalendarNotificationEnabled,
+                                    systemCalendarAlertMode ==
+                                    _TodoSystemCalendarAlertMode.notification,
                                 systemCalendarNotificationMinutesBefore:
                                     systemCalendarNotificationMinutesBefore,
                                 systemCalendarAlarmEnabled:
-                                    systemCalendarAlarmEnabled,
+                                    systemCalendarAlertMode ==
+                                    _TodoSystemCalendarAlertMode.alarm,
                                 systemCalendarAlarmMinutesBefore:
                                     systemCalendarAlarmMinutesBefore,
                                 createdAt: todo?.createdAt ?? DateTime.now(),

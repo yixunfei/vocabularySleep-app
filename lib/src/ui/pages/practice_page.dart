@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../models/practice_session_record.dart';
 import '../../models/word_entry.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
@@ -10,6 +11,9 @@ import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
 import 'follow_along_page.dart';
+import 'practice_notebook_page.dart';
+import 'practice_review_page.dart';
+import 'practice_support.dart';
 import 'practice_session_page.dart';
 import 'review_session_page.dart';
 
@@ -39,6 +43,7 @@ class PracticePage extends StatelessWidget {
         .toList(growable: false);
     final rememberedWords = state.recentRememberedWordEntries;
     final weakWords = state.recentWeakWordEntries;
+    final wrongNotebookWords = state.practiceWrongNotebookEntries;
     final needsReviewCount =
         (state.practiceTodayReviewed - state.practiceTodayRemembered).clamp(
           0,
@@ -59,6 +64,11 @@ class PracticePage extends StatelessWidget {
     final currentSprintSourceWords = _containsWordEntry(scopedWords, current)
         ? scopedWords
         : wordbookWords;
+    final recentHistory = state.practiceSessionHistory;
+    final notebookDueCount = wrongNotebookWords.where((word) {
+      final nextReview = state.memoryProgressForWordEntry(word)?.nextReview;
+      return nextReview == null || !nextReview.isAfter(DateTime.now());
+    }).length;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -92,6 +102,16 @@ class PracticePage extends StatelessWidget {
           needsReviewToday: needsReviewCount,
           hasStableWords: hasStableWords,
         ),
+        const SizedBox(height: 16),
+        _buildWrongNotebookCard(
+          context,
+          i18n: i18n,
+          state: state,
+          notebookWords: wrongNotebookWords,
+          dueCount: notebookDueCount,
+        ),
+        const SizedBox(height: 16),
+        _buildRecentHistoryCard(context, i18n: i18n, history: recentHistory),
         const SizedBox(height: 16),
         Card(
           child: Padding(
@@ -947,6 +967,259 @@ class PracticePage extends StatelessWidget {
             label: Text(actionLabel),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWrongNotebookCard(
+    BuildContext context, {
+    required AppI18n i18n,
+    required AppState state,
+    required List<WordEntry> notebookWords,
+    required int dueCount,
+  }) {
+    final wordbookCount = notebookWords
+        .map((entry) => entry.wordbookId)
+        .toSet()
+        .length;
+    final theme = Theme.of(context);
+    final hasNotebookWords = notebookWords.isNotEmpty;
+
+    return Card(
+      key: const ValueKey<String>('practice-wrong-notebook-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              pickUiText(i18n, zh: '错题本', en: 'Wrong notebook'),
+              style: theme.textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasNotebookWords
+                  ? pickUiText(
+                      i18n,
+                      zh: '把近期没记住的单词集中管理，支持错题顺序、到期优先、薄弱优先和随机练习。',
+                      en: 'Keep missed words in one place with notebook order, due-first, weak-first, and shuffle review.',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '练习时点击“没记住”后，单词会自动进入错题本，方便后续集中复习。',
+                      en: 'When you mark a word as "Not yet" during practice, it will be added here for focused review later.',
+                    ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                _buildStatBadge(
+                  context,
+                  icon: Icons.bookmarks_rounded,
+                  value: '${notebookWords.length}',
+                  label: pickUiText(i18n, zh: '错题数', en: 'Notebook words'),
+                ),
+                _buildStatBadge(
+                  context,
+                  icon: Icons.schedule_rounded,
+                  value: '$dueCount',
+                  label: pickUiText(i18n, zh: '待复习', en: 'Due now'),
+                ),
+                _buildStatBadge(
+                  context,
+                  icon: Icons.layers_rounded,
+                  value: '$wordbookCount',
+                  label: pickUiText(i18n, zh: '涉及词库', en: 'Wordbooks'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _buildWordPreviewChips(context, i18n, notebookWords),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const PracticeNotebookPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.menu_book_rounded),
+                  label: Text(
+                    pickUiText(i18n, zh: '打开错题本', en: 'Open notebook'),
+                  ),
+                ),
+                if (hasNotebookWords)
+                  OutlinedButton.icon(
+                    onPressed: () => _openPracticeSession(
+                      context,
+                      title: pickUiText(
+                        i18n,
+                        zh: '错题本练习',
+                        en: 'Wrong notebook review',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: '共 ${notebookWords.length} 个错题',
+                        en: '${notebookWords.length} notebook words',
+                      ),
+                      words: notebookWords,
+                      shuffle: false,
+                    ),
+                    icon: const Icon(Icons.play_circle_outline_rounded),
+                    label: Text(pickUiText(i18n, zh: '直接复习', en: 'Start now')),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentHistoryCard(
+    BuildContext context, {
+    required AppI18n i18n,
+    required List<PracticeSessionRecord> history,
+  }) {
+    final theme = Theme.of(context);
+    return Card(
+      key: const ValueKey<String>('practice-history-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              pickUiText(i18n, zh: '最近练习历史', en: 'Recent session history'),
+              style: theme.textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '保留最近几次练习结果，方便回看准确率变化和主要薄弱点。',
+                en: 'Keep the latest sessions visible so you can track accuracy and the main weak spots.',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PracticeReviewPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.analytics_outlined),
+                label: Text(
+                  pickUiText(i18n, zh: '打开复盘页', en: 'Open review page'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (history.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '还没有练习历史，完成一轮会话后会自动显示在这里。',
+                    en: 'No session history yet. Finish one session and it will appear here.',
+                  ),
+                  style: theme.textTheme.bodySmall,
+                ),
+              )
+            else
+              ...history.take(5).map((record) {
+                final reasonBadges = record.weakReasonCounts.entries.toList(
+                  growable: false,
+                )..sort((left, right) => right.value.compareTo(left.value));
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              record.title.isEmpty
+                                  ? pickUiText(
+                                      i18n,
+                                      zh: '练习会话',
+                                      en: 'Practice session',
+                                    )
+                                  : record.title,
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ),
+                          Text(
+                            formatPracticeDateTime(i18n, record.practicedAt),
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '正确率 ${(record.accuracy * 100).round()}% · 记住 ${record.remembered}/${record.total} · 错题 ${record.weakCount}',
+                          en: 'Accuracy ${(record.accuracy * 100).round()}% · ${record.remembered}/${record.total} remembered · ${record.weakCount} weak',
+                        ),
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      if (reasonBadges.isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: reasonBadges
+                              .take(3)
+                              .map(
+                                (entry) => Chip(
+                                  visualDensity: VisualDensity.compact,
+                                  avatar: Icon(
+                                    practiceWeakReasonIcon(entry.key),
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    '${practiceWeakReasonLabel(i18n, entry.key)} × ${entry.value}',
+                                  ),
+                                ),
+                              )
+                              .toList(growable: false),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+          ],
+        ),
       ),
     );
   }

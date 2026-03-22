@@ -41,7 +41,6 @@ class _MiniPlayerState extends State<MiniPlayer> {
 
   bool get _hasSleepTimer => _sleepTimer != null && _sleepTimerEndsAt != null;
   bool get _isVisible => _state.isPlaying || _hasSleepTimer;
-
   @override
   void dispose() {
     _sleepTimer?.cancel();

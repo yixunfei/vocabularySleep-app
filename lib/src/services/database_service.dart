@@ -219,6 +219,31 @@ class AppDatabaseService {
     return exportPath;
   }
 
+  Future<String> writeTextExport({
+    required String contents,
+    required String defaultFileStem,
+    required String extension,
+    String? directoryPath,
+    String? fileName,
+  }) async {
+    final exportDir = (directoryPath ?? '').trim().isEmpty
+        ? await _ensureExportDirectory()
+        : Directory(directoryPath!.trim());
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+    final exportPath = p.join(
+      exportDir.path,
+      _normalizeExportFileName(
+        rawFileName: fileName,
+        defaultFileStem: defaultFileStem,
+        extension: extension,
+      ),
+    );
+    await File(exportPath).writeAsString(contents, flush: true);
+    return exportPath;
+  }
+
   Map<String, Object?> buildUserDataExportPayload({
     Iterable<UserDataExportSection>? sections,
   }) {
@@ -705,6 +730,16 @@ class AppDatabaseService {
     _db.execute(
       'UPDATE todos SET deferred = 0 WHERE completed = 1 AND COALESCE(deferred, 0) != 0;',
     );
+    _db.execute('''
+      UPDATE todos
+      SET system_calendar_notification_enabled =
+        CASE
+          WHEN COALESCE(system_calendar_alarm_enabled, 0) = 1 THEN 0
+          ELSE 1
+        END
+      WHERE COALESCE(system_calendar_notification_enabled, 0) =
+            COALESCE(system_calendar_alarm_enabled, 0);
+    ''');
   }
 
   void ensureSpecialWordbooks() {
@@ -1669,29 +1704,41 @@ class AppDatabaseService {
   }
 
   String _normalizeUserDataExportFileName(String? rawFileName) {
+    return _normalizeExportFileName(
+      rawFileName: rawFileName,
+      defaultFileStem: 'xianyushengxi_user_data',
+      extension: 'json',
+    );
+  }
+
+  String _normalizeExportFileName({
+    required String? rawFileName,
+    required String defaultFileStem,
+    required String extension,
+  }) {
     final timestamp = DateTime.now()
         .toIso8601String()
         .replaceAll(':', '-')
         .replaceAll('.', '-');
     var normalized = (rawFileName ?? '').trim();
     if (normalized.isEmpty) {
-      normalized = 'xianyushengxi_user_data_$timestamp.json';
+      normalized = '${defaultFileStem}_$timestamp.$extension';
     }
-    if (!normalized.toLowerCase().endsWith('.json')) {
-      normalized = '$normalized.json';
+    if (!normalized.toLowerCase().endsWith('.$extension')) {
+      normalized = '$normalized.$extension';
     }
     normalized = normalized.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]+'), '_');
     normalized = normalized.replaceAll(RegExp(r'\s+'), '_');
     normalized = normalized.replaceAll(RegExp(r'_+'), '_');
     normalized = normalized.replaceAll(RegExp(r'^\.+|\.+$'), '');
     if (normalized.isEmpty) {
-      normalized = 'xianyushengxi_user_data_$timestamp.json';
+      normalized = '${defaultFileStem}_$timestamp.$extension';
     }
     if (_windowsReservedFileNamePattern.hasMatch(normalized)) {
       normalized = 'export_$normalized';
     }
-    if (!normalized.toLowerCase().endsWith('.json')) {
-      normalized = '$normalized.json';
+    if (!normalized.toLowerCase().endsWith('.$extension')) {
+      normalized = '$normalized.$extension';
     }
     return normalized;
   }
@@ -1795,30 +1842,39 @@ class AppDatabaseService {
   }
 
   int insertTodo(TodoItem item) {
+    final normalizedItem = _normalizeTodoSystemCalendarAlertSelection(item);
     final sortOrder = item.sortOrder > 0
         ? item.sortOrder
         : _nextTodoSortOrder();
-    final normalizedDeferred = item.completed ? false : item.deferred;
+    final normalizedDeferred = normalizedItem.completed
+        ? false
+        : normalizedItem.deferred;
     _db.execute(
       'INSERT INTO todos (content, completed, deferred, priority, category, note, color, sort_order, due_at, alarm_enabled, sync_to_system_calendar, system_calendar_notification_enabled, system_calendar_notification_minutes_before, system_calendar_alarm_enabled, system_calendar_alarm_minutes_before, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       <Object?>[
-        item.content,
-        item.completed ? 1 : 0,
+        normalizedItem.content,
+        normalizedItem.completed ? 1 : 0,
         normalizedDeferred ? 1 : 0,
-        item.priority,
-        item.category,
-        item.note,
-        item.color,
+        normalizedItem.priority,
+        normalizedItem.category,
+        normalizedItem.note,
+        normalizedItem.color,
         sortOrder,
-        item.dueAt?.toIso8601String(),
-        item.alarmEnabled ? 1 : 0,
-        item.syncToSystemCalendar ? 1 : 0,
-        item.systemCalendarNotificationEnabled ? 1 : 0,
-        item.systemCalendarNotificationMinutesBefore,
-        item.systemCalendarAlarmEnabled ? 1 : 0,
-        item.systemCalendarAlarmMinutesBefore,
-        item.createdAt?.toIso8601String(),
-        item.completedAt?.toIso8601String(),
+        normalizedItem.dueAt?.toIso8601String(),
+        normalizedItem.alarmEnabled ? 1 : 0,
+        normalizedItem.syncToSystemCalendar ? 1 : 0,
+        normalizedItem.systemCalendarAlertMode ==
+                TodoSystemCalendarAlertMode.notification
+            ? 1
+            : 0,
+        normalizedItem.systemCalendarNotificationMinutesBefore,
+        normalizedItem.systemCalendarAlertMode ==
+                TodoSystemCalendarAlertMode.alarm
+            ? 1
+            : 0,
+        normalizedItem.systemCalendarAlarmMinutesBefore,
+        normalizedItem.createdAt?.toIso8601String(),
+        normalizedItem.completedAt?.toIso8601String(),
       ],
     );
     return _lastInsertId();
@@ -1826,28 +1882,46 @@ class AppDatabaseService {
 
   void updateTodo(TodoItem item) {
     if (item.id == null) return;
-    final normalizedDeferred = item.completed ? false : item.deferred;
+    final normalizedItem = _normalizeTodoSystemCalendarAlertSelection(item);
+    final normalizedDeferred = normalizedItem.completed
+        ? false
+        : normalizedItem.deferred;
     _db.execute(
       'UPDATE todos SET content = ?, completed = ?, deferred = ?, priority = ?, category = ?, note = ?, color = ?, sort_order = ?, due_at = ?, alarm_enabled = ?, sync_to_system_calendar = ?, system_calendar_notification_enabled = ?, system_calendar_notification_minutes_before = ?, system_calendar_alarm_enabled = ?, system_calendar_alarm_minutes_before = ?, completed_at = ? WHERE id = ?',
       <Object?>[
-        item.content,
-        item.completed ? 1 : 0,
+        normalizedItem.content,
+        normalizedItem.completed ? 1 : 0,
         normalizedDeferred ? 1 : 0,
-        item.priority,
-        item.category,
-        item.note,
-        item.color,
-        item.sortOrder,
-        item.dueAt?.toIso8601String(),
-        item.alarmEnabled ? 1 : 0,
-        item.syncToSystemCalendar ? 1 : 0,
-        item.systemCalendarNotificationEnabled ? 1 : 0,
-        item.systemCalendarNotificationMinutesBefore,
-        item.systemCalendarAlarmEnabled ? 1 : 0,
-        item.systemCalendarAlarmMinutesBefore,
-        item.completedAt?.toIso8601String(),
-        item.id,
+        normalizedItem.priority,
+        normalizedItem.category,
+        normalizedItem.note,
+        normalizedItem.color,
+        normalizedItem.sortOrder,
+        normalizedItem.dueAt?.toIso8601String(),
+        normalizedItem.alarmEnabled ? 1 : 0,
+        normalizedItem.syncToSystemCalendar ? 1 : 0,
+        normalizedItem.systemCalendarAlertMode ==
+                TodoSystemCalendarAlertMode.notification
+            ? 1
+            : 0,
+        normalizedItem.systemCalendarNotificationMinutesBefore,
+        normalizedItem.systemCalendarAlertMode ==
+                TodoSystemCalendarAlertMode.alarm
+            ? 1
+            : 0,
+        normalizedItem.systemCalendarAlarmMinutesBefore,
+        normalizedItem.completedAt?.toIso8601String(),
+        normalizedItem.id,
       ],
+    );
+  }
+
+  TodoItem _normalizeTodoSystemCalendarAlertSelection(TodoItem item) {
+    final useAlarm =
+        item.systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm;
+    return item.copyWith(
+      systemCalendarNotificationEnabled: !useAlarm,
+      systemCalendarAlarmEnabled: useAlarm,
     );
   }
 

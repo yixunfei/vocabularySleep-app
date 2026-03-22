@@ -894,6 +894,8 @@ class FocusService extends ChangeNotifier {
   }
 
   TodoItem _normalizeTodoItem(TodoItem item) {
+    final useAlarm =
+        item.systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm;
     return item.copyWith(
       content: item.content.trim(),
       deferred: item.completed ? false : item.deferred,
@@ -904,12 +906,12 @@ class FocusService extends ChangeNotifier {
       dueAt: item.alarmEnabled ? item.dueAt : null,
       alarmEnabled: item.alarmEnabled && item.dueAt != null,
       syncToSystemCalendar: item.syncToSystemCalendar,
-      systemCalendarNotificationEnabled: item.systemCalendarNotificationEnabled,
+      systemCalendarNotificationEnabled: !useAlarm,
       systemCalendarNotificationMinutesBefore: item
           .systemCalendarNotificationMinutesBefore
           .clamp(0, 7 * 24 * 60)
           .toInt(),
-      systemCalendarAlarmEnabled: item.systemCalendarAlarmEnabled,
+      systemCalendarAlarmEnabled: useAlarm,
       systemCalendarAlarmMinutesBefore: item.systemCalendarAlarmMinutesBefore
           .clamp(0, 7 * 24 * 60)
           .toInt(),

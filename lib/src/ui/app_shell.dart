@@ -639,7 +639,6 @@ class _AppShellState extends State<AppShell> {
         (_miniPlayerReservedHeight > 0 ? _miniPlayerReservedHeight + 18 : 18);
     final message = state.error;
     final isInitializing = state.initializing && !state.initialized;
-
     if (message != null && message.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

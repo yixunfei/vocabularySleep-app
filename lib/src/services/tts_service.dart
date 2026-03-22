@@ -43,6 +43,20 @@ class TtsService {
   static const String _defaultApiVoice = 'alex';
   static const int _minApiCacheMb = 32;
   static const int _maxApiCacheMb = 2048;
+  static final AudioContext _spokenAudioContext = AudioContext(
+    android: const AudioContextAndroid(
+      stayAwake: true,
+      contentType: AndroidContentType.speech,
+      usageType: AndroidUsageType.assistanceNavigationGuidance,
+      audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.playback,
+      options: const <AVAudioSessionOptions>{
+        AVAudioSessionOptions.mixWithOthers,
+      },
+    ),
+  );
 
   Completer<void>? _localCompletionCompleter;
   Completer<void>? _apiCompletionCompleter;
@@ -50,6 +64,8 @@ class TtsService {
   http.Client? _activeApiClient;
   Directory? _apiCacheDirectory;
   bool _localInitialized = false;
+  bool _localAudioConfigured = false;
+  bool _apiAudioConfigured = false;
   String? _lastLocalLanguage;
   int _apiSpeakToken = 0;
 
@@ -60,8 +76,56 @@ class TtsService {
       () => _flutterTts.awaitSpeakCompletion(true),
       swallowError: true,
     );
+    await _configureLocalAudioSession();
     _localInitialized = true;
     _log.d('tts', 'local initialized');
+  }
+
+  Future<void> _configureLocalAudioSession() async {
+    if (_localAudioConfigured) {
+      return;
+    }
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      await _runOp<void>(
+        'local.setAudioAttributesForNavigation',
+        () => _flutterTts.setAudioAttributesForNavigation(),
+        swallowError: true,
+      );
+    }
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      await _runOp<dynamic>(
+        'local.setSharedInstance',
+        () => _flutterTts.setSharedInstance(true),
+        swallowError: true,
+      );
+      await _runOp<dynamic>(
+        'local.setIosAudioCategory',
+        () => _flutterTts.setIosAudioCategory(
+          IosTextToSpeechAudioCategory.playback,
+          <IosTextToSpeechAudioCategoryOptions>[
+            IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          ],
+          IosTextToSpeechAudioMode.spokenAudio,
+        ),
+        swallowError: true,
+      );
+    }
+
+    _localAudioConfigured = true;
+  }
+
+  Future<void> _ensureApiAudioConfigured() async {
+    if (_apiAudioConfigured) {
+      return;
+    }
+    await _runOp<void>(
+      'api.setAudioContext',
+      () => _apiPlayer.setAudioContext(_spokenAudioContext),
+      swallowError: true,
+    );
+    _apiAudioConfigured = true;
   }
 
   Future<List<String>> getLocalVoices() async {
@@ -123,7 +187,11 @@ class TtsService {
         );
       }
     }
-    _log.i('tts', 'api cache cleared', data: <String, Object?>{'path': dir.path});
+    _log.i(
+      'tts',
+      'api cache cleared',
+      data: <String, Object?>{'path': dir.path},
+    );
   }
 
   Future<void> speak(String text, TtsConfig config) async {
@@ -306,9 +374,11 @@ class TtsService {
 
     final completer = Completer<void>();
     _localCompletionCompleter = completer;
+    final requestFocus =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
     final result = await _runOp<dynamic>(
       'local.speak',
-      () => _flutterTts.speak(text),
+      () => _flutterTts.speak(text, focus: requestFocus),
       data: <String, Object?>{'textPreview': _preview(text)},
     );
     if (!_isSpeakResultSuccess(result)) {
@@ -357,6 +427,7 @@ class TtsService {
   }
 
   Future<void> _speakByApi(String text, TtsConfig config) async {
+    await _ensureApiAudioConfigured();
     final speakToken = ++_apiSpeakToken;
     final model = (config.model?.trim().isNotEmpty ?? false)
         ? config.model!.trim()
@@ -516,7 +587,9 @@ class TtsService {
         config: config,
         speakToken: speakToken,
         bytes: audioBytes.length,
-        sourceLabel: cacheFile != null ? 'network_cached_file' : 'network_bytes',
+        sourceLabel: cacheFile != null
+            ? 'network_cached_file'
+            : 'network_bytes',
         endpoint: endpoint,
         model: model,
         voice: voice,
@@ -559,10 +632,7 @@ class TtsService {
 
     await _runOp<void>(
       'api.player.play',
-      () => _apiPlayer.play(
-        source,
-        volume: config.volume.clamp(0.0, 1.0),
-      ),
+      () => _apiPlayer.play(source, volume: config.volume.clamp(0.0, 1.0)),
       data: <String, Object?>{
         'speakToken': speakToken,
         'bytes': bytes,
@@ -666,10 +736,7 @@ class TtsService {
         await file.writeAsBytes(bytes, flush: true);
         return file;
       },
-      data: <String, Object?>{
-        'path': file.path,
-        'bytes': bytes.length,
-      },
+      data: <String, Object?>{'path': file.path, 'bytes': bytes.length},
       swallowError: true,
     );
     if (written == null) {
@@ -760,7 +827,9 @@ class TtsService {
       return;
     }
 
-    files.sort((left, right) => left.stat.modified.compareTo(right.stat.modified));
+    files.sort(
+      (left, right) => left.stat.modified.compareTo(right.stat.modified),
+    );
     final targetBytes = totalBytes ~/ 2;
     var remainingBytes = totalBytes;
     for (final item in files) {
