@@ -23,6 +23,7 @@ import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
+import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
@@ -1191,6 +1192,30 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('pending todo action opens detail editor in focus page', (
+      tester,
+    ) async {
+      final focusService = _FakeFocusService.sample();
+      final targetTodo = focusService.getTodos().first;
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+      );
+      focusService._pendingTodoReminderAction = TodoReminderLaunchAction(
+        todoId: targetTodo.id!,
+        type: TodoReminderActionType.detail,
+      );
+
+      await _pumpPage(tester, state: state, child: const FocusPage());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('todo-title-field')),
+        findsOneWidget,
+      );
+      expect(find.text(targetTodo.content), findsWidgets);
+    });
+
     testWidgets('focus page groups todos in plan view and toggles list view', (
       tester,
     ) async {
@@ -2015,7 +2040,47 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Today sprint'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Old sprint'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
       expect(find.text('Old sprint'), findsOneWidget);
+    });
+
+    testWidgets('practice review page shows interactive trend card', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      state._practiceSessionHistory = <PracticeSessionRecord>[
+        PracticeSessionRecord(
+          title: 'Round 1',
+          practicedAt: DateTime.now(),
+          total: 8,
+          remembered: 6,
+        ),
+        PracticeSessionRecord(
+          title: 'Round 2',
+          practicedAt: DateTime.now().subtract(const Duration(days: 1)),
+          total: 10,
+          remembered: 4,
+        ),
+      ];
+
+      await _pumpPage(tester, state: state, child: const PracticeReviewPage());
+
+      expect(
+        find.byKey(const ValueKey<String>('practice-trend-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Trend card'), findsOneWidget);
+      expect(find.text('Accuracy'), findsWidgets);
+      expect(find.text('Reviewed'), findsWidgets);
+      expect(find.text('Weak'), findsWidgets);
+      expect(find.text('Weekly'), findsOneWidget);
+      expect(find.text('Monthly'), findsOneWidget);
     });
 
     testWidgets('wrong notebook exports current filtered results', (
@@ -2463,6 +2528,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       List<PracticeSessionRecord>.unmodifiable(_practiceSessionHistory);
 
   @override
+  int? get pendingTodoReminderLaunchId => null;
+
+  @override
   PracticeQuestionType get practiceDefaultQuestionType =>
       _practiceDefaultQuestionType;
 
@@ -2571,6 +2639,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       List<TodoItem>.unmodifiable(_todayActiveTodos);
 
   bool startupPromptSuppressedToday = false;
+
+  @override
+  int? consumePendingTodoReminderLaunchId() => null;
 
   @override
   List<WordEntry> get words => _visibleWords;
@@ -2770,6 +2841,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   Map<String, Object?> buildPracticeReviewExportPayload({
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final resolvedHistory = (records ?? _practiceSessionHistory).toList(
       growable: false,
@@ -2793,6 +2865,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     String? fileName,
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     final resolvedName = fileName ?? 'practice_review.${format.extension}';
     exportedPracticeReviewPath =
@@ -2804,8 +2877,10 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   Map<String, Object?> buildPracticeWrongNotebookExportPayload({
     required Iterable<WordEntry> entries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     return <String, Object?>{
+      'metadata': metadata,
       'entries': entries.map((entry) => entry.word).toList(growable: false),
     };
   }
@@ -2816,6 +2891,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required PracticeExportFormat format,
     String? directoryPath,
     String? fileName,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     final resolvedName = fileName ?? 'wrong_notebook.${format.extension}';
     exportedWrongNotebookPath =
@@ -3241,6 +3317,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   bool _lockScreenActive;
   bool _reminderAcknowledgementPending;
   TomatoTimerPhase? _pendingReminderPhase;
+  TodoReminderLaunchAction? _pendingTodoReminderAction;
   final List<TodoItem> _todos;
   final List<PlanNote> _notes;
   late final ValueNotifier<TomatoTimerState> _timerListenable;
@@ -3395,6 +3472,54 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
 
   @override
   Future<void> init() async {}
+
+  @override
+  Future<TodoReminderLaunchAction?> consumePendingTodoReminderAction() async {
+    final pending = _pendingTodoReminderAction;
+    _pendingTodoReminderAction = null;
+    return pending;
+  }
+
+  @override
+  Future<TodoReminderCapability> getTodoReminderCapability() async {
+    return const TodoReminderCapability(
+      notificationsGranted: true,
+      notificationPermissionRequestable: false,
+      exactAlarmGranted: true,
+      exactAlarmSettingsAvailable: false,
+    );
+  }
+
+  @override
+  Future<bool> requestTodoReminderNotificationPermission() async => true;
+
+  @override
+  Future<void> openTodoReminderExactAlarmSettings() async {}
+
+  @override
+  void completeTodo(int id) {
+    final index = _todos.indexWhere((todo) => todo.id == id);
+    if (index < 0) return;
+    final current = _todos[index];
+    _todos[index] = current.copyWith(
+      completed: true,
+      deferred: false,
+      completedAt: DateTime(2026, 3, 14),
+    );
+    _publishViewState();
+  }
+
+  @override
+  void snoozeTodoReminder(int id, Duration duration) {
+    final index = _todos.indexWhere((todo) => todo.id == id);
+    if (index < 0) return;
+    final current = _todos[index];
+    _todos[index] = current.copyWith(
+      dueAt: DateTime(2026, 3, 14).add(duration),
+      alarmEnabled: true,
+    );
+    _publishViewState();
+  }
 
   @override
   void pause() {

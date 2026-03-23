@@ -249,7 +249,7 @@ class _PracticeNotebookPageState extends State<PracticeNotebookPage> {
                         if (notebookWordbookIds.length > 1) ...<Widget>[
                           const SizedBox(height: 12),
                           DropdownButtonFormField<int?>(
-                            value: _wordbookFilterId,
+                            initialValue: _wordbookFilterId,
                             decoration: InputDecoration(
                               border: const OutlineInputBorder(),
                               labelText: pickUiText(
@@ -1074,6 +1074,14 @@ class _PracticeNotebookPageState extends State<PracticeNotebookPage> {
       entries: entries,
       format: format,
       fileName: fileName.trim(),
+      metadata: <String, Object?>{
+        'query': _query.trim(),
+        'statusFilter': _statusFilter.name,
+        'reasonFilter': _reasonFilter,
+        'wordbookFilterId': _wordbookFilterId,
+        'order': _order.name,
+        'count': entries.length,
+      },
     );
     if (!context.mounted || path == null || path.trim().isEmpty) {
       return;
@@ -1110,7 +1118,7 @@ class _PracticeNotebookPageState extends State<PracticeNotebookPage> {
     final added = await context.read<AppState>().addPracticeWordsToTask(
       selectedEntries,
     );
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1140,7 +1148,7 @@ class _PracticeNotebookPageState extends State<PracticeNotebookPage> {
     final added = await context.read<AppState>().addPracticeWordsToFavorites(
       selectedEntries,
     );
-    if (!mounted) {
+    if (!context.mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1247,7 +1255,7 @@ class _PracticeNotebookPageState extends State<PracticeNotebookPage> {
       },
     );
 
-    if (confirmed != true || !mounted) {
+    if (confirmed != true || !context.mounted) {
       return;
     }
 

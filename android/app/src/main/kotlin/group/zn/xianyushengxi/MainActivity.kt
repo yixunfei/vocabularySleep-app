@@ -1,6 +1,7 @@
 package group.zn.xianyushengxi
 
 import android.Manifest
+import android.app.AlarmManager
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
@@ -17,6 +18,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.Settings
 import android.provider.CalendarContract
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -35,6 +37,7 @@ class MainActivity : FlutterActivity() {
     private val reminderChannelName = "vocabulary_sleep/reminder"
     private val systemSpeechChannelName = "vocabulary_sleep/system_speech"
     private val systemCalendarChannelName = "vocabulary_sleep/system_calendar"
+    private val todoReminderChannelName = "vocabulary_sleep/todo_reminder"
 
     private val reminderHandler = Handler(Looper.getMainLooper())
     private val speechHandler = Handler(Looper.getMainLooper())
@@ -65,6 +68,10 @@ class MainActivity : FlutterActivity() {
     private var pendingCalendarResult: MethodChannel.Result? = null
     private var pendingCalendarMethod: String? = null
     private var pendingCalendarArguments: Map<*, *>? = null
+    private var pendingTodoReminderPermissionResult: MethodChannel.Result? = null
+    private var pendingTodoLaunchId: Int? = null
+    private var pendingTodoActionType: String? = null
+    private var pendingTodoSnoozeMinutes: Int = 10
 
     private data class CalendarReminderSpec(
         val minutes: Int,
@@ -75,6 +82,12 @@ class MainActivity : FlutterActivity() {
         private const val speechPermissionRequestCode = 44102
         private const val calendarPermissionRequestCode = 44103
         private const val speechIntentRequestCode = 44104
+        private const val todoNotificationPermissionRequestCode = 44105
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        capturePendingTodoLaunch(intent)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -137,6 +150,90 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            todoReminderChannelName,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "upsertTodoReminder" -> {
+                    val arguments = call.arguments as? Map<*, *>
+                    val todoId = (arguments?.get("todoId") as? Number)?.toInt() ?: 0
+                    val title = (arguments?.get("title") as? String)?.trim().orEmpty()
+                    val triggerAtMillis =
+                        (arguments?.get("triggerAtMillis") as? Number)?.toLong() ?: 0L
+                    val dueAtMillis =
+                        (arguments?.get("dueAtMillis") as? Number)?.toLong() ?: 0L
+                    if (todoId <= 0 || title.isEmpty() || triggerAtMillis <= 0L || dueAtMillis <= 0L) {
+                        result.success(null)
+                        return@setMethodCallHandler
+                    }
+                    TodoReminderScheduler.upsert(
+                        applicationContext,
+                        TodoReminderSpec(
+                            todoId = todoId,
+                            title = title,
+                            description = (arguments?.get("description") as? String)?.trim(),
+                            triggerAtMillis = triggerAtMillis,
+                            dueAtMillis = dueAtMillis,
+                            mode = (arguments?.get("mode") as? String)?.trim().orEmpty(),
+                        ),
+                    )
+                    result.success(null)
+                }
+
+                "removeTodoReminder" -> {
+                    val arguments = call.arguments as? Map<*, *>
+                    val todoId = (arguments?.get("todoId") as? Number)?.toInt() ?: 0
+                    if (todoId > 0) {
+                        TodoReminderScheduler.remove(applicationContext, todoId)
+                    }
+                    result.success(null)
+                }
+
+                "getTodoReminderCapability" -> {
+                    result.success(buildTodoReminderCapability())
+                }
+
+                "requestTodoReminderNotificationPermission" -> {
+                    requestTodoReminderNotificationPermission(result)
+                }
+
+                "openTodoReminderExactAlarmSettings" -> {
+                    openTodoReminderExactAlarmSettings()
+                    result.success(null)
+                }
+
+                "consumePendingTodoLaunchId" -> {
+                    val pending = pendingTodoLaunchId
+                    pendingTodoLaunchId = null
+                    result.success(pending)
+                }
+
+                "consumePendingTodoAction" -> {
+                    val todoId = pendingTodoLaunchId
+                    val actionType = pendingTodoActionType
+                    pendingTodoLaunchId = null
+                    pendingTodoActionType = null
+                    val pendingSnoozeMinutes = pendingTodoSnoozeMinutes
+                    pendingTodoSnoozeMinutes = 10
+                    if (todoId == null || todoId <= 0) {
+                        result.success(null)
+                    } else {
+                        result.success(
+                            mapOf(
+                                "todoId" to todoId,
+                                "type" to (actionType ?: "open"),
+                                "snoozeMinutes" to pendingSnoozeMinutes,
+                            ),
+                        )
+                    }
+                }
+
+                else -> result.notImplemented()
+            }
+        }
+        TodoReminderScheduler.ensureNotificationChannels(applicationContext)
+
     }
 
     override fun onRequestPermissionsResult(
@@ -145,6 +242,15 @@ class MainActivity : FlutterActivity() {
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == todoNotificationPermissionRequestCode) {
+            val result = pendingTodoReminderPermissionResult
+            pendingTodoReminderPermissionResult = null
+            result?.success(
+                grantResults.isNotEmpty() &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED,
+            )
+            return
+        }
         if (requestCode != speechPermissionRequestCode) {
             if (requestCode != calendarPermissionRequestCode) {
                 return
@@ -239,6 +345,86 @@ class MainActivity : FlutterActivity() {
         }
         speechFinalized = true
         finishPendingSpeechStop(force = true)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        capturePendingTodoLaunch(intent)
+    }
+
+    private fun capturePendingTodoLaunch(intent: Intent?) {
+        val todoId = intent?.getIntExtra("todoId", 0) ?: 0
+        if (todoId > 0) {
+            pendingTodoLaunchId = todoId
+            pendingTodoActionType =
+                intent?.getStringExtra("todoAction")?.trim()?.ifEmpty { "open" } ?: "open"
+            pendingTodoSnoozeMinutes = intent?.getIntExtra("todoSnoozeMinutes", 10) ?: 10
+        }
+    }
+
+    private fun buildTodoReminderCapability(): Map<String, Any?> {
+        val notificationsGranted =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED
+        val exactAlarmSettingsAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        val exactAlarmGranted =
+            !exactAlarmSettingsAvailable ||
+                (getSystemService(Context.ALARM_SERVICE) as? AlarmManager)
+                    ?.canScheduleExactAlarms() == true
+        return mapOf(
+            "notificationsGranted" to notificationsGranted,
+            "notificationPermissionRequestable" to
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU),
+            "exactAlarmGranted" to exactAlarmGranted,
+            "exactAlarmSettingsAvailable" to exactAlarmSettingsAvailable,
+        )
+    }
+
+    private fun requestTodoReminderNotificationPermission(result: MethodChannel.Result) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            result.success(true)
+            return
+        }
+        val granted =
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            result.success(true)
+            return
+        }
+        pendingTodoReminderPermissionResult = result
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            todoNotificationPermissionRequestCode,
+        )
+    }
+
+    private fun openTodoReminderExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return
+        }
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    Uri.parse("package:$packageName"),
+                ),
+            )
+        } catch (_: Throwable) {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:$packageName"),
+                ),
+            )
+        }
     }
 
     private fun playReminder(arguments: Map<*, *>?): Boolean {

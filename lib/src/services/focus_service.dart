@@ -12,6 +12,7 @@ import 'database_service.dart';
 import 'reminder_service.dart';
 import 'settings_service.dart';
 import 'system_calendar_service.dart';
+import 'todo_reminder_service.dart';
 import 'tts_service.dart';
 
 enum _PendingReminderFollowUp { none, startBreak, startFocus, completeSession }
@@ -23,6 +24,7 @@ class FocusService extends ChangeNotifier {
     AmbientService? ambient,
     ReminderService? reminder,
     SystemCalendarService? systemCalendar,
+    TodoReminderService? todoReminder,
     TtsService? tts,
   }) : _database = database,
        _settings = settings ?? SettingsService(database),
@@ -30,6 +32,7 @@ class FocusService extends ChangeNotifier {
        _reminder = reminder,
        _systemCalendar =
            systemCalendar ?? PlatformSystemCalendarService(database),
+       _todoReminder = todoReminder ?? PlatformTodoReminderService(),
        _tts = tts;
 
   final AppDatabaseService _database;
@@ -37,6 +40,7 @@ class FocusService extends ChangeNotifier {
   final AmbientService? _ambient;
   final ReminderService? _reminder;
   final SystemCalendarService? _systemCalendar;
+  final TodoReminderService _todoReminder;
   final TtsService? _tts;
 
   bool _initialized = false;
@@ -71,6 +75,26 @@ class FocusService extends ChangeNotifier {
   TomatoTimerPhase? get pendingReminderPhase => _pendingReminderPhase;
   ValueListenable<TomatoTimerState> get timerListenable => _timerStateNotifier;
   ValueListenable<int> get viewRevision => _viewRevision;
+
+  Future<TodoReminderCapability> getTodoReminderCapability() {
+    return _todoReminder.getCapability();
+  }
+
+  Future<bool> requestTodoReminderNotificationPermission() {
+    return _todoReminder.requestNotificationPermission();
+  }
+
+  Future<void> openTodoReminderExactAlarmSettings() {
+    return _todoReminder.openExactAlarmSettings();
+  }
+
+  Future<int?> consumePendingTodoReminderLaunchId() {
+    return _todoReminder.consumePendingTodoLaunchId();
+  }
+
+  Future<TodoReminderLaunchAction?> consumePendingTodoReminderAction() {
+    return _todoReminder.consumePendingTodoAction();
+  }
 
   Future<void> init() async {
     _timerConfig = await _loadConfig();
@@ -647,6 +671,7 @@ class FocusService extends ChangeNotifier {
     unawaited(_stopActiveReminder());
     unawaited(_reminder?.dispose() ?? Future<void>.value());
     unawaited(_systemCalendar?.dispose() ?? Future<void>.value());
+    unawaited(_todoReminder.dispose());
     _timerStateNotifier.dispose();
     _viewRevision.dispose();
     super.dispose();
@@ -759,6 +784,45 @@ class FocusService extends ChangeNotifier {
     _bumpViewRevision();
     notifyListeners();
     _scheduleTodoReminderRemoval(id);
+  }
+
+  void completeTodo(int id) {
+    if (!_initialized) return;
+    final item = _findTodoById(id);
+    if (item == null || item.completed) return;
+    final updated = _normalizeTodoItem(
+      item.copyWith(
+        completed: true,
+        deferred: false,
+        completedAt: DateTime.now(),
+      ),
+    );
+    _database.updateTodo(updated);
+    _invalidateTodosCache();
+    _bumpViewRevision();
+    notifyListeners();
+    _scheduleTodoReminderSync(updated);
+  }
+
+  void snoozeTodoReminder(int id, Duration duration) {
+    if (!_initialized) return;
+    final item = _findTodoById(id);
+    if (item == null || !item.hasReminder || item.completed) return;
+    final nextDueAt = DateTime.now().add(duration);
+    final updated = _normalizeTodoItem(
+      item.copyWith(
+        dueAt: nextDueAt,
+        alarmEnabled: true,
+        completed: false,
+        deferred: false,
+        completedAt: null,
+      ),
+    );
+    _database.updateTodo(updated);
+    _invalidateTodosCache();
+    _bumpViewRevision();
+    notifyListeners();
+    _scheduleTodoReminderSync(updated);
   }
 
   void clearCompletedTodos() {
@@ -925,28 +989,32 @@ class FocusService extends ChangeNotifier {
 
   Future<void> _syncAllTodoReminders() async {
     final systemCalendar = _systemCalendar;
-    if (systemCalendar == null || !_initialized) {
+    if (!_initialized) {
       return;
     }
     for (final todo in getTodos()) {
-      await systemCalendar.syncTodo(todo);
+      await _todoReminder.syncTodo(todo);
+      await systemCalendar?.syncTodo(todo);
     }
   }
 
   void _scheduleTodoReminderSync(TodoItem item) {
-    final systemCalendar = _systemCalendar;
-    if (systemCalendar == null || item.id == null) {
+    if (item.id == null) {
       return;
     }
-    unawaited(systemCalendar.syncTodo(item));
+    unawaited(_todoReminder.syncTodo(item));
+    final systemCalendar = _systemCalendar;
+    if (systemCalendar != null) {
+      unawaited(systemCalendar.syncTodo(item));
+    }
   }
 
   void _scheduleTodoReminderRemoval(int todoId) {
+    unawaited(_todoReminder.removeTodoReminder(todoId));
     final systemCalendar = _systemCalendar;
-    if (systemCalendar == null) {
-      return;
+    if (systemCalendar != null) {
+      unawaited(systemCalendar.removeTodoReminder(todoId));
     }
-    unawaited(systemCalendar.removeTodoReminder(todoId));
   }
 
   _TodayStatsSnapshot _getTodayStatsSnapshot() {

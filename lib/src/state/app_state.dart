@@ -47,6 +47,8 @@ class PronunciationComparison {
 enum SearchMode { all, word, meaning, fuzzy }
 
 class AppState extends ChangeNotifier with WidgetsBindingObserver {
+  static const int _practiceSessionHistoryLimit = 365;
+
   static String _resolveSystemUiLanguage() {
     final locale = PlatformDispatcher.instance.locale;
     final languageCode = locale.languageCode.trim();
@@ -145,6 +147,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool _practiceShowHintsByDefault = false;
   PracticeQuestionType _practiceDefaultQuestionType =
       PracticeQuestionType.flashcard;
+  int? _pendingTodoReminderLaunchId;
 
   bool _isPlaying = false;
   bool _isPaused = false;
@@ -256,6 +259,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool get practiceShowHintsByDefault => _practiceShowHintsByDefault;
   PracticeQuestionType get practiceDefaultQuestionType =>
       _practiceDefaultQuestionType;
+  int? get pendingTodoReminderLaunchId => _pendingTodoReminderLaunchId;
   List<WordEntry> get practiceWrongNotebookEntries {
     return _practiceEntriesFromWords(_practiceWeakWords);
   }
@@ -512,6 +516,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     try {
       await _database.init();
       await _focusService.init();
+      await _pollPendingTodoReminderLaunch();
       _config = _settings.loadPlayConfig();
       _playback.updateRuntimeConfig(_config);
       final languageSetting = _settings.loadUiLanguage();
@@ -708,6 +713,20 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _uiLanguage = resolved;
     _refreshLocalizedWordbookNames();
     notifyListeners();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_pollPendingTodoReminderLaunch());
+    }
+  }
+
+  int? consumePendingTodoReminderLaunchId() {
+    final pending = _pendingTodoReminderLaunchId;
+    _pendingTodoReminderLaunchId = null;
+    return pending;
   }
 
   void setTestModeEnabled(bool enabled) {
@@ -1615,6 +1634,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Map<String, Object?> buildPracticeReviewExportPayload({
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final now = DateTime.now();
     final notebookEntries =
@@ -1649,6 +1669,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         'lastSessionTitle': _practiceLastSessionTitle,
         'defaultQuestionType': _practiceDefaultQuestionType.storageValue,
       },
+      'metadata': metadata,
       'weakReasonCounts': overallReasonCounts,
       'sessionHistory': sessions.map((record) => record.toMap()).toList(),
       'wrongNotebook': notebookEntries
@@ -1672,6 +1693,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     String? fileName,
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     _setBusy(true, messageKey: 'processing');
     try {
@@ -1680,6 +1702,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           buildPracticeReviewExportPayload(
             records: records,
             wrongNotebookEntries: wrongNotebookEntries,
+            metadata: metadata,
           ),
         ),
         PracticeExportFormat.csv => _buildPracticeReviewCsv(records: records),
@@ -1710,12 +1733,14 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Map<String, Object?> buildPracticeWrongNotebookExportPayload({
     required Iterable<WordEntry> entries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final resolvedEntries = _dedupePracticeEntries(entries);
     return <String, Object?>{
       'exported_at': DateTime.now().toIso8601String(),
       'schema_version': 1,
       'count': resolvedEntries.length,
+      'metadata': metadata,
       'entries': resolvedEntries
           .map(
             (entry) => <String, Object?>{
@@ -1736,13 +1761,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required PracticeExportFormat format,
     String? directoryPath,
     String? fileName,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     _setBusy(true, messageKey: 'processing');
     try {
       final resolvedEntries = _dedupePracticeEntries(entries);
       final contents = switch (format) {
         PracticeExportFormat.json => const JsonEncoder.withIndent('  ').convert(
-          buildPracticeWrongNotebookExportPayload(entries: resolvedEntries),
+          buildPracticeWrongNotebookExportPayload(
+            entries: resolvedEntries,
+            metadata: metadata,
+          ),
         ),
         PracticeExportFormat.csv => _buildPracticeWrongNotebookCsv(
           resolvedEntries,
@@ -3938,7 +3967,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       ),
       ..._practiceSessionHistory,
     ];
-    _practiceSessionHistory = nextHistory.take(12).toList(growable: false);
+    _practiceSessionHistory = nextHistory
+        .take(_practiceSessionHistoryLimit)
+        .toList(growable: false);
   }
 
   List<WordEntry> _dedupePracticeEntries(Iterable<WordEntry> entries) {
@@ -4166,6 +4197,29 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _busyMessageKey = null;
       _busyMessageParams = const <String, Object?>{};
     }
+    notifyListeners();
+  }
+
+  Future<void> _pollPendingTodoReminderLaunch() async {
+    int? todoId;
+    try {
+      todoId = await _focusService.consumePendingTodoReminderLaunchId();
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'pending todo reminder launch poll failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return;
+    }
+    if (todoId == null || todoId <= 0) {
+      return;
+    }
+    if (_pendingTodoReminderLaunchId == todoId) {
+      return;
+    }
+    _pendingTodoReminderLaunchId = todoId;
     notifyListeners();
   }
 

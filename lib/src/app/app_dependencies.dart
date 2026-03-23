@@ -8,6 +8,7 @@ import '../services/focus_service.dart';
 import '../services/playback_service.dart';
 import '../services/reminder_service.dart';
 import '../services/settings_service.dart';
+import '../services/todo_reminder_service.dart';
 import '../services/tts_service.dart';
 import '../services/wordbook_import_service.dart';
 import '../state/app_state.dart';
@@ -39,11 +40,13 @@ class AppDependencies {
     final ambient = AmbientService();
     final asr = AsrService();
     final reminder = PlatformReminderService();
+    final todoReminder = PlatformTodoReminderService();
     final focusService = FocusService(
       database,
       settings: settings,
       ambient: ambient,
       reminder: reminder,
+      todoReminder: todoReminder,
       tts: tts,
     );
 

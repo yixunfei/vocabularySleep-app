@@ -7,6 +7,7 @@ import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/services/reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/services/system_calendar_service.dart';
+import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
@@ -154,6 +155,46 @@ class _FakeSystemCalendarService implements SystemCalendarService {
   Future<void> removeTodoReminder(int todoId) async {
     removedTodoIds.add(todoId);
   }
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class _FakeTodoReminderService implements TodoReminderService {
+  final List<TodoItem> syncedTodos = <TodoItem>[];
+  final List<int> removedTodoIds = <int>[];
+
+  @override
+  Future<void> syncTodo(TodoItem item) async {
+    syncedTodos.add(item);
+  }
+
+  @override
+  Future<void> removeTodoReminder(int todoId) async {
+    removedTodoIds.add(todoId);
+  }
+
+  @override
+  Future<TodoReminderCapability> getCapability() async {
+    return const TodoReminderCapability(
+      notificationsGranted: true,
+      notificationPermissionRequestable: false,
+      exactAlarmGranted: true,
+      exactAlarmSettingsAvailable: false,
+    );
+  }
+
+  @override
+  Future<bool> requestNotificationPermission() async => true;
+
+  @override
+  Future<void> openExactAlarmSettings() async {}
+
+  @override
+  Future<int?> consumePendingTodoLaunchId() async => null;
+
+  @override
+  Future<TodoReminderLaunchAction?> consumePendingTodoAction() async => null;
 
   @override
   Future<void> dispose() async {}
@@ -466,7 +507,12 @@ void main() {
     test('saving a reminder todo syncs it to the system calendar', () async {
       final database = _MemoryDatabaseService();
       final systemCalendar = _FakeSystemCalendarService();
-      final service = FocusService(database, systemCalendar: systemCalendar);
+      final todoReminder = _FakeTodoReminderService();
+      final service = FocusService(
+        database,
+        systemCalendar: systemCalendar,
+        todoReminder: todoReminder,
+      );
       await service.init();
 
       service.addTodo(
@@ -480,11 +526,12 @@ void main() {
       await pumpEventQueue();
 
       expect(systemCalendar.syncedTodos, hasLength(1));
+      expect(todoReminder.syncedTodos, hasLength(1));
       expect(systemCalendar.syncedTodos.single.id, isNotNull);
       expect(systemCalendar.syncedTodos.single.hasReminder, isTrue);
       expect(
         systemCalendar.syncedTodos.single.systemCalendarNotificationOffsets,
-        <int>[5],
+        isEmpty,
       );
       expect(
         systemCalendar.syncedTodos.single.systemCalendarAlarmOffsets,
@@ -492,7 +539,7 @@ void main() {
       );
       expect(
         systemCalendar.syncedTodos.single.systemCalendarReminderOffsets,
-        <int>[5, 15],
+        <int>[15],
       );
     });
 
@@ -501,7 +548,12 @@ void main() {
       () async {
         final database = _MemoryDatabaseService();
         final systemCalendar = _FakeSystemCalendarService();
-        final service = FocusService(database, systemCalendar: systemCalendar);
+        final todoReminder = _FakeTodoReminderService();
+        final service = FocusService(
+          database,
+          systemCalendar: systemCalendar,
+          todoReminder: todoReminder,
+        );
         await service.init();
 
         service.addTodo(
@@ -514,6 +566,7 @@ void main() {
 
         expect(systemCalendar.syncedTodos, isEmpty);
         expect(systemCalendar.removedTodoIds, hasLength(1));
+        expect(todoReminder.syncedTodos, hasLength(1));
       },
     );
 
@@ -522,7 +575,12 @@ void main() {
       () async {
         final database = _MemoryDatabaseService();
         final systemCalendar = _FakeSystemCalendarService();
-        final service = FocusService(database, systemCalendar: systemCalendar);
+        final todoReminder = _FakeTodoReminderService();
+        final service = FocusService(
+          database,
+          systemCalendar: systemCalendar,
+          todoReminder: todoReminder,
+        );
         await service.init();
 
         service.addTodo(
@@ -537,6 +595,7 @@ void main() {
         await pumpEventQueue();
 
         expect(systemCalendar.removedTodoIds, contains(todoId));
+        expect(todoReminder.removedTodoIds, contains(todoId));
       },
     );
   });

@@ -107,6 +107,9 @@ class _FakeFocusService implements FocusService {
   }
 
   @override
+  Future<int?> consumePendingTodoReminderLaunchId() async => null;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 

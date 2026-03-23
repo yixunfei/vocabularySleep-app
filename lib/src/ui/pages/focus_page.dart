@@ -13,6 +13,7 @@ import '../../models/tomato_timer.dart';
 import '../../services/ambient_service.dart';
 import '../../services/focus_service.dart';
 import '../../services/system_speech_service.dart';
+import '../../services/todo_reminder_service.dart';
 import '../../state/app_state.dart';
 import '../../utils/asr_language.dart';
 import '../layout/app_width_tier.dart';
@@ -68,8 +69,10 @@ class _FocusPageState extends State<FocusPage>
   late final TabController _tabController;
   final SystemSpeechService _systemSpeech = const PlatformSystemSpeechService();
   final Set<int> _selectedNoteIds = <int>{};
+  final Map<int, GlobalKey> _todoCardKeys = <int, GlobalKey>{};
   FocusService? _boundFocusService;
   Timer? _visualReminderTimer;
+  Timer? _todoHighlightTimer;
   TomatoTimerPhase? _lastCompletedPhase;
   bool _noteSelectionMode = false;
   _TodoSortMode _todoSortMode = _TodoSortMode.manual;
@@ -78,6 +81,8 @@ class _FocusPageState extends State<FocusPage>
   String? _expandedTodoMetricKey;
   bool _todoMetricsExpanded = false;
   double _notesDrawerProgress = 0;
+  int? _lastOpenedReminderTodoId;
+  int? _highlightedTodoId;
   bool _notesDrawerDragging = false;
   bool _reminderDialogVisible = false;
   bool _ambientLauncherExpanded = false;
@@ -99,12 +104,19 @@ class _FocusPageState extends State<FocusPage>
     _boundFocusService?.setCallbacks();
     focus.setCallbacks(onPhaseComplete: _onPhaseComplete);
     _boundFocusService = focus;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _maybeOpenPendingTodoReminder();
+    });
   }
 
   @override
   void dispose() {
     _boundFocusService?.setCallbacks();
     _visualReminderTimer?.cancel();
+    _todoHighlightTimer?.cancel();
     _tabController.dispose();
     unawaited(_systemSpeech.dispose());
     super.dispose();
@@ -141,6 +153,108 @@ class _FocusPageState extends State<FocusPage>
         _showReminderAcknowledgementDialog(state.focusService, phase, i18n),
       );
     }
+  }
+
+  Future<void> _maybeOpenPendingTodoReminder() async {
+    final state = context.read<AppState>();
+    final action = await state.focusService.consumePendingTodoReminderAction();
+    final fallbackTodoId = state.consumePendingTodoReminderLaunchId();
+    final todoId = action?.todoId ?? fallbackTodoId;
+    if (todoId == null || todoId <= 0) {
+      return;
+    }
+    if (_lastOpenedReminderTodoId == todoId) {
+      return;
+    }
+    _lastOpenedReminderTodoId = todoId;
+    final focus = state.focusService;
+    final todo = focus
+        .getTodos()
+        .where((item) => item.id == todoId)
+        .cast<TodoItem?>()
+        .firstOrNull;
+    if (todo == null) {
+      return;
+    }
+    _tabController.animateTo(1);
+    _highlightAndScrollToTodo(todoId);
+    switch (action?.type) {
+      case TodoReminderActionType.detail:
+        unawaited(
+          _showTodoEditor(focus, AppI18n(state.uiLanguage), todo: todo),
+        );
+        break;
+      case TodoReminderActionType.complete:
+        focus.completeTodo(todoId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                pickUiText(
+                  AppI18n(state.uiLanguage),
+                  zh: '待办已完成：${todo.content}',
+                  en: 'Todo completed: ${todo.content}',
+                ),
+              ),
+            ),
+          );
+        }
+        break;
+      case TodoReminderActionType.snooze:
+        focus.snoozeTodoReminder(
+          todoId,
+          Duration(minutes: action?.snoozeMinutes ?? 10),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                pickUiText(
+                  AppI18n(state.uiLanguage),
+                  zh: '提醒已稍后 ${action?.snoozeMinutes ?? 10} 分钟',
+                  en: 'Reminder snoozed for ${action?.snoozeMinutes ?? 10} minutes',
+                ),
+              ),
+            ),
+          );
+        }
+        break;
+      case TodoReminderActionType.open:
+      case null:
+        break;
+    }
+  }
+
+  void _highlightAndScrollToTodo(int todoId) {
+    _todoHighlightTimer?.cancel();
+    setState(() {
+      _highlightedTodoId = todoId;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final targetKey = _todoCardKeys[todoId];
+      final targetContext = targetKey?.currentContext;
+      if (targetContext != null) {
+        Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          alignment: 0.18,
+        );
+      }
+    });
+    _todoHighlightTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        if (_highlightedTodoId == todoId) {
+          _highlightedTodoId = null;
+        }
+      });
+    });
   }
 
   Future<void> _showReminderAcknowledgementDialog(
@@ -4109,11 +4223,28 @@ class _FocusPageState extends State<FocusPage>
     final category = (todo.category ?? '').trim();
     final scheduleBadge = _buildTodoScheduleBadge(todo, i18n, theme);
     final compactCard = MediaQuery.sizeOf(context).width < 430;
+    final todoId = todo.id;
+    final cardKey = todoId == null
+        ? null
+        : _todoCardKeys.putIfAbsent(todoId, () => GlobalKey());
+    final highlighted = todoId != null && _highlightedTodoId == todoId;
 
     return Card(
-      key: ValueKey<int>(todo.id ?? index),
+      key: cardKey ?? ValueKey<int>(todo.id ?? index),
       margin: const EdgeInsets.only(bottom: 4),
-      color: _todoCardColor(todo, theme),
+      color: highlighted
+          ? Color.alphaBlend(
+              theme.colorScheme.primary.withValues(alpha: 0.14),
+              _todoCardColor(todo, theme),
+            )
+          : _todoCardColor(todo, theme),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: highlighted ? theme.colorScheme.primary : Colors.transparent,
+          width: highlighted ? 1.6 : 0,
+        ),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => _showTodoEditor(focus, i18n, todo: todo),
@@ -5078,6 +5209,8 @@ class _FocusPageState extends State<FocusPage>
         todo?.systemCalendarNotificationMinutesBefore ?? 0;
     var systemCalendarAlarmMinutesBefore =
         todo?.systemCalendarAlarmMinutesBefore ?? 10;
+    Future<TodoReminderCapability> reminderCapabilityFuture = focus
+        .getTodoReminderCapability();
 
     await showModalBottomSheet<void>(
       context: context,
@@ -5297,6 +5430,111 @@ class _FocusPageState extends State<FocusPage>
                         style: theme.textTheme.bodySmall,
                       ),
                       const SizedBox(height: 8),
+                      FutureBuilder<TodoReminderCapability>(
+                        future: reminderCapabilityFuture,
+                        builder: (context, snapshot) {
+                          final capability =
+                              snapshot.data ??
+                              const TodoReminderCapability(
+                                notificationsGranted: true,
+                                notificationPermissionRequestable: false,
+                                exactAlarmGranted: true,
+                                exactAlarmSettingsAvailable: false,
+                              );
+                          final showNotificationWarning =
+                              capability.needsNotificationPermission;
+                          final showExactAlarmWarning =
+                              systemCalendarAlertMode ==
+                                  _TodoSystemCalendarAlertMode.alarm &&
+                              capability.needsExactAlarmPermission;
+                          if (!showNotificationWarning &&
+                              !showExactAlarmWarning) {
+                            return const SizedBox.shrink();
+                          }
+                          return Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: theme.colorScheme.outlineVariant,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                if (showNotificationWarning) ...<Widget>[
+                                  Text(
+                                    pickUiText(
+                                      i18n,
+                                      zh: '当前系统未授予通知权限，待办到点后可能不会显示提醒。',
+                                      en: 'Notification permission is not granted, so todo reminders may not appear on time.',
+                                    ),
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  OutlinedButton.icon(
+                                    onPressed: () async {
+                                      await focus
+                                          .requestTodoReminderNotificationPermission();
+                                      if (!context.mounted) return;
+                                      setSheetState(() {
+                                        reminderCapabilityFuture = focus
+                                            .getTodoReminderCapability();
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.notifications_active_rounded,
+                                    ),
+                                    label: Text(
+                                      pickUiText(
+                                        i18n,
+                                        zh: '授予通知权限',
+                                        en: 'Enable notifications',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                if (showExactAlarmWarning) ...<Widget>[
+                                  if (showNotificationWarning)
+                                    const SizedBox(height: 8),
+                                  Text(
+                                    pickUiText(
+                                      i18n,
+                                      zh: '闹钟模式建议开启“精确闹钟”，否则系统可能延后提醒时间。',
+                                      en: 'Alarm mode works best with exact alarms enabled. Otherwise the system may delay the reminder.',
+                                    ),
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  OutlinedButton.icon(
+                                    onPressed: () async {
+                                      await focus
+                                          .openTodoReminderExactAlarmSettings();
+                                      if (!context.mounted) return;
+                                      setSheetState(() {
+                                        reminderCapabilityFuture = focus
+                                            .getTodoReminderCapability();
+                                      });
+                                    },
+                                    icon: const Icon(Icons.alarm_on_rounded),
+                                    label: Text(
+                                      pickUiText(
+                                        i18n,
+                                        zh: '打开精确闹钟设置',
+                                        en: 'Open exact alarm settings',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
                         value: syncToSystemCalendar,
@@ -5333,137 +5571,144 @@ class _FocusPageState extends State<FocusPage>
                       if (syncToSystemCalendar) ...<Widget>[
                         const SizedBox(height: 8),
                         Text(
-                          pickUiText(i18n, zh: '日历写入方式', en: 'Calendar alerts'),
+                          pickUiText(i18n, zh: '提醒方式', en: 'Reminder type'),
                           style: theme.textTheme.titleSmall,
                         ),
                         const SizedBox(height: 8),
-                        RadioListTile<_TodoSystemCalendarAlertMode>.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          value: _TodoSystemCalendarAlertMode.notification,
+                        RadioGroup<_TodoSystemCalendarAlertMode>(
                           groupValue: systemCalendarAlertMode,
-                          title: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '写入日历通知',
-                              en: 'Write calendar notification',
-                            ),
-                          ),
-                          subtitle: Text(
-                            _todoCalendarReminderLeadLabel(
-                              i18n,
-                              systemCalendarNotificationMinutesBefore,
-                            ),
-                          ),
                           onChanged: (value) {
-                            if (value == null) return;
+                            if (value == null) {
+                              return;
+                            }
                             setSheetState(() {
                               systemCalendarAlertMode = value;
                             });
                           },
-                        ),
-                        if (systemCalendarAlertMode ==
-                            _TodoSystemCalendarAlertMode.notification)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: DropdownButtonFormField<int>(
-                              initialValue:
-                                  systemCalendarNotificationMinutesBefore,
-                              decoration: InputDecoration(
-                                labelText: pickUiText(
-                                  i18n,
-                                  zh: '通知提前时间',
-                                  en: 'Notification lead time',
+                          child: Column(
+                            children: <Widget>[
+                              RadioListTile<
+                                _TodoSystemCalendarAlertMode
+                              >.adaptive(
+                                contentPadding: EdgeInsets.zero,
+                                value:
+                                    _TodoSystemCalendarAlertMode.notification,
+                                title: Text(
+                                  pickUiText(
+                                    i18n,
+                                    zh: '应用通知提醒',
+                                    en: 'App notification reminder',
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  _todoCalendarReminderLeadLabel(
+                                    i18n,
+                                    systemCalendarNotificationMinutesBefore,
+                                  ),
                                 ),
                               ),
-                              items:
-                                  _todoCalendarReminderLeadOptions(
+                              if (systemCalendarAlertMode ==
+                                  _TodoSystemCalendarAlertMode.notification)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: DropdownButtonFormField<int>(
+                                    initialValue:
                                         systemCalendarNotificationMinutesBefore,
-                                      )
-                                      .map((minutes) {
-                                        return DropdownMenuItem<int>(
-                                          value: minutes,
-                                          child: Text(
-                                            _todoCalendarReminderLeadLabel(
-                                              i18n,
-                                              minutes,
-                                            ),
-                                          ),
-                                        );
-                                      })
-                                      .toList(growable: false),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                setSheetState(() {
-                                  systemCalendarNotificationMinutesBefore =
-                                      value;
-                                });
-                              },
-                            ),
-                          ),
-                        RadioListTile<_TodoSystemCalendarAlertMode>.adaptive(
-                          contentPadding: EdgeInsets.zero,
-                          value: _TodoSystemCalendarAlertMode.alarm,
-                          groupValue: systemCalendarAlertMode,
-                          title: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '写入日历闹钟',
-                              en: 'Write calendar alarm',
-                            ),
-                          ),
-                          subtitle: Text(
-                            _todoCalendarReminderLeadLabel(
-                              i18n,
-                              systemCalendarAlarmMinutesBefore,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setSheetState(() {
-                              systemCalendarAlertMode = value;
-                            });
-                          },
-                        ),
-                        if (systemCalendarAlertMode ==
-                            _TodoSystemCalendarAlertMode.alarm)
-                          DropdownButtonFormField<int>(
-                            initialValue: systemCalendarAlarmMinutesBefore,
-                            decoration: InputDecoration(
-                              labelText: pickUiText(
-                                i18n,
-                                zh: '闹钟提前时间',
-                                en: 'Alarm lead time',
+                                    decoration: InputDecoration(
+                                      labelText: pickUiText(
+                                        i18n,
+                                        zh: '提醒提前时间',
+                                        en: 'Reminder lead time',
+                                      ),
+                                    ),
+                                    items:
+                                        _todoCalendarReminderLeadOptions(
+                                              systemCalendarNotificationMinutesBefore,
+                                            )
+                                            .map((minutes) {
+                                              return DropdownMenuItem<int>(
+                                                value: minutes,
+                                                child: Text(
+                                                  _todoCalendarReminderLeadLabel(
+                                                    i18n,
+                                                    minutes,
+                                                  ),
+                                                ),
+                                              );
+                                            })
+                                            .toList(growable: false),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setSheetState(() {
+                                        systemCalendarNotificationMinutesBefore =
+                                            value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              RadioListTile<
+                                _TodoSystemCalendarAlertMode
+                              >.adaptive(
+                                contentPadding: EdgeInsets.zero,
+                                value: _TodoSystemCalendarAlertMode.alarm,
+                                title: Text(
+                                  pickUiText(
+                                    i18n,
+                                    zh: '应用闹钟提醒',
+                                    en: 'App alarm reminder',
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  _todoCalendarReminderLeadLabel(
+                                    i18n,
+                                    systemCalendarAlarmMinutesBefore,
+                                  ),
+                                ),
                               ),
-                            ),
-                            items:
-                                _todoCalendarReminderLeadOptions(
+                              if (systemCalendarAlertMode ==
+                                  _TodoSystemCalendarAlertMode.alarm)
+                                DropdownButtonFormField<int>(
+                                  initialValue:
                                       systemCalendarAlarmMinutesBefore,
-                                    )
-                                    .map((minutes) {
-                                      return DropdownMenuItem<int>(
-                                        value: minutes,
-                                        child: Text(
-                                          _todoCalendarReminderLeadLabel(
-                                            i18n,
-                                            minutes,
-                                          ),
-                                        ),
-                                      );
-                                    })
-                                    .toList(growable: false),
-                            onChanged: (value) {
-                              if (value == null) return;
-                              setSheetState(() {
-                                systemCalendarAlarmMinutesBefore = value;
-                              });
-                            },
+                                  decoration: InputDecoration(
+                                    labelText: pickUiText(
+                                      i18n,
+                                      zh: '提醒提前时间',
+                                      en: 'Reminder lead time',
+                                    ),
+                                  ),
+                                  items:
+                                      _todoCalendarReminderLeadOptions(
+                                            systemCalendarAlarmMinutesBefore,
+                                          )
+                                          .map((minutes) {
+                                            return DropdownMenuItem<int>(
+                                              value: minutes,
+                                              child: Text(
+                                                _todoCalendarReminderLeadLabel(
+                                                  i18n,
+                                                  minutes,
+                                                ),
+                                              ),
+                                            );
+                                          })
+                                          .toList(growable: false),
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setSheetState(() {
+                                      systemCalendarAlarmMinutesBefore = value;
+                                    });
+                                  },
+                                ),
+                            ],
                           ),
+                        ),
                         const SizedBox(height: 6),
                         Text(
                           pickUiText(
                             i18n,
                             zh: '不同系统日历会自行决定这些提醒以通知还是闹钟样式呈现。',
-                            en: 'Each system calendar decides whether these reminders appear as notifications or alarm-style alerts.',
+                            en: 'The app handles the real reminder. System calendar sync only writes a mirrored event when enabled.',
                           ),
                           style: theme.textTheme.bodySmall,
                         ),
