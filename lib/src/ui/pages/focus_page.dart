@@ -19,6 +19,8 @@ import '../../utils/asr_language.dart';
 import '../layout/app_width_tier.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
+import 'focus_page_controller.dart';
+import 'focus_timer_widgets.dart';
 
 enum _TodoSortMode { manual, priority, category }
 
@@ -67,13 +69,9 @@ class _FocusPageState extends State<FocusPage>
   ];
 
   late final TabController _tabController;
+  late final FocusPageController _pageController;
   final SystemSpeechService _systemSpeech = const PlatformSystemSpeechService();
   final Set<int> _selectedNoteIds = <int>{};
-  final Map<int, GlobalKey> _todoCardKeys = <int, GlobalKey>{};
-  FocusService? _boundFocusService;
-  Timer? _visualReminderTimer;
-  Timer? _todoHighlightTimer;
-  TomatoTimerPhase? _lastCompletedPhase;
   bool _noteSelectionMode = false;
   _TodoSortMode _todoSortMode = _TodoSortMode.manual;
   _TodoFilterMode _todoFilterMode = _TodoFilterMode.all;
@@ -81,16 +79,13 @@ class _FocusPageState extends State<FocusPage>
   String? _expandedTodoMetricKey;
   bool _todoMetricsExpanded = false;
   double _notesDrawerProgress = 0;
-  int? _lastOpenedReminderTodoId;
-  int? _highlightedTodoId;
   bool _notesDrawerDragging = false;
-  bool _reminderDialogVisible = false;
   bool _ambientLauncherExpanded = false;
-  FocusStartupTab? _lastAppliedStartupTab;
 
   @override
   void initState() {
     super.initState();
+    _pageController = FocusPageController();
     _tabController = TabController(length: 2, initialIndex: 1, vsync: this);
   }
 
@@ -98,12 +93,12 @@ class _FocusPageState extends State<FocusPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final focus = context.read<AppState>().focusService;
-    if (identical(_boundFocusService, focus)) {
+    if (!_pageController.bindFocusService(
+      focus,
+      onPhaseComplete: _onPhaseComplete,
+    )) {
       return;
     }
-    _boundFocusService?.setCallbacks();
-    focus.setCallbacks(onPhaseComplete: _onPhaseComplete);
-    _boundFocusService = focus;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -114,9 +109,7 @@ class _FocusPageState extends State<FocusPage>
 
   @override
   void dispose() {
-    _boundFocusService?.setCallbacks();
-    _visualReminderTimer?.cancel();
-    _todoHighlightTimer?.cancel();
+    _pageController.dispose();
     _tabController.dispose();
     unawaited(_systemSpeech.dispose());
     super.dispose();
@@ -127,16 +120,13 @@ class _FocusPageState extends State<FocusPage>
     final state = context.read<AppState>();
     final i18n = AppI18n(state.uiLanguage);
     if (state.focusService.config.reminder.visual) {
-      _visualReminderTimer?.cancel();
-      setState(() {
-        _lastCompletedPhase = phase;
-      });
-      _visualReminderTimer = Timer(const Duration(seconds: 2), () {
-        if (!mounted) return;
-        setState(() {
-          _lastCompletedPhase = null;
-        });
-      });
+      _pageController.startVisualReminder(
+        phase,
+        refresh: () {
+          if (!mounted) return;
+          setState(() {});
+        },
+      );
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -163,10 +153,9 @@ class _FocusPageState extends State<FocusPage>
     if (todoId == null || todoId <= 0) {
       return;
     }
-    if (_lastOpenedReminderTodoId == todoId) {
+    if (!_pageController.tryMarkReminderOpened(todoId)) {
       return;
     }
-    _lastOpenedReminderTodoId = todoId;
     final focus = state.focusService;
     final todo = focus
         .getTodos()
@@ -226,35 +215,31 @@ class _FocusPageState extends State<FocusPage>
   }
 
   void _highlightAndScrollToTodo(int todoId) {
-    _todoHighlightTimer?.cancel();
-    setState(() {
-      _highlightedTodoId = todoId;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      final targetKey = _todoCardKeys[todoId];
-      final targetContext = targetKey?.currentContext;
-      if (targetContext != null) {
-        Scrollable.ensureVisible(
-          targetContext,
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOutCubic,
-          alignment: 0.18,
-        );
-      }
-    });
-    _todoHighlightTimer = Timer(const Duration(seconds: 4), () {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        if (_highlightedTodoId == todoId) {
-          _highlightedTodoId = null;
-        }
-      });
-    });
+    _pageController.highlightTodo(
+      todoId,
+      refresh: () {
+        if (!mounted) return;
+        setState(() {});
+      },
+      ensureVisible: () {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+          final targetContext = _pageController
+              .todoCardKey(todoId)
+              .currentContext;
+          if (targetContext != null) {
+            Scrollable.ensureVisible(
+              targetContext,
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutCubic,
+              alignment: 0.18,
+            );
+          }
+        });
+      },
+    );
   }
 
   Future<void> _showReminderAcknowledgementDialog(
@@ -262,10 +247,10 @@ class _FocusPageState extends State<FocusPage>
     TomatoTimerPhase phase,
     AppI18n i18n,
   ) async {
-    if (_reminderDialogVisible || !mounted) {
+    if (_pageController.reminderDialogVisible || !mounted) {
       return;
     }
-    _reminderDialogVisible = true;
+    _pageController.setReminderDialogVisible(true);
     final acknowledged = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -311,7 +296,7 @@ class _FocusPageState extends State<FocusPage>
         );
       },
     );
-    _reminderDialogVisible = false;
+    _pageController.setReminderDialogVisible(false);
     if (!mounted || acknowledged != true) {
       return;
     }
@@ -453,15 +438,7 @@ class _FocusPageState extends State<FocusPage>
   }
 
   void _syncConfiguredStartupTab(FocusStartupTab tab) {
-    if (_lastAppliedStartupTab == tab) {
-      return;
-    }
-    _lastAppliedStartupTab = tab;
-    final targetIndex = tab.index;
-    if (_tabController.index == targetIndex) {
-      return;
-    }
-    _tabController.index = targetIndex;
+    _pageController.syncConfiguredStartupTab(tab, _tabController);
   }
 
   Widget _buildAmbientLauncher(
@@ -767,378 +744,25 @@ class _FocusPageState extends State<FocusPage>
     AppI18n i18n,
     AppWidthTier widthTier,
     String timerStyle,
-  ) {
-    final phaseText = switch (timerState.phase) {
-      TomatoTimerPhase.idle => i18n.t('timerIdle'),
-      TomatoTimerPhase.focus => i18n.t('focusPhase'),
-      TomatoTimerPhase.breakTime => i18n.t('breakPhase'),
-      TomatoTimerPhase.breakReady => i18n.t('breakReady'),
-      TomatoTimerPhase.focusReady => i18n.t('focusReady'),
-    };
-    final indicatorSize = switch (widthTier) {
-      AppWidthTier.compact => 188.0,
-      AppWidthTier.expanded => 256.0,
-      AppWidthTier.regular => 220.0,
-    };
-    final helperText = timerState.isAwaitingManualTransition
-        ? i18n.t('timerWaitingAction')
-        : null;
-    final theme = Theme.of(context);
-    final alertActive = _lastCompletedPhase != null;
-    final accent = alertActive
-        ? (_lastCompletedPhase == TomatoTimerPhase.focus
-              ? theme.colorScheme.tertiary
-              : theme.colorScheme.secondary)
-        : theme.colorScheme.primary;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 240),
-      decoration: BoxDecoration(
-        color: alertActive
-            ? accent.withValues(alpha: 0.12)
-            : theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: alertActive
-              ? accent.withValues(alpha: 0.38)
-              : theme.colorScheme.outlineVariant,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: <Widget>[
-            Text(phaseText, style: theme.textTheme.titleLarge),
-            if (helperText != null) ...<Widget>[
-              const SizedBox(height: 8),
-              Text(
-                helperText,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
-            if (timerState.phase != TomatoTimerPhase.idle) ...<Widget>[
-              const SizedBox(height: 10),
-              Text(
-                i18n.t(
-                  'roundProgress',
-                  params: <String, Object?>{
-                    'current': timerState.currentRound,
-                    'total': config.rounds,
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 18),
-            _buildTimerVisual(
-              timerState,
-              timerStyle: timerStyle,
-              size: indicatorSize,
-              accent: accent,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              _formatTime(timerState.remainingSeconds),
-              style: widthTier.isCompact
-                  ? theme.textTheme.headlineLarge
-                  : theme.textTheme.displaySmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${_formatUnitSummary(timerState.totalSeconds, i18n)} · ${_formatPercent(timerState.remainingProgress)}',
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimerVisual(
-    TomatoTimerState timerState, {
-    required String timerStyle,
-    required double size,
-    required Color accent,
-  }) {
-    final remaining = timerState.remainingProgress.clamp(0.0, 1.0).toDouble();
-    final theme = Theme.of(context);
-    final isActive = timerState.isActiveCountdown && !timerState.isPaused;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: remaining, end: remaining),
-      duration: isActive
-          ? const Duration(milliseconds: 920)
-          : const Duration(milliseconds: 260),
-      curve: Curves.easeInOutCubic,
-      builder: (context, animatedRemaining, _) {
-        final secondsLeft = animatedRemaining * timerState.totalSeconds;
-        final fraction = secondsLeft - secondsLeft.floorToDouble();
-        final pulse = isActive ? math.sin(fraction * math.pi) : 0.0;
-
-        if (timerStyle == 'countdown') {
-          return _buildCountdownVisual(
-            size: size,
-            accent: accent,
-            theme: theme,
-            remaining: animatedRemaining,
-            pulse: pulse,
-            paused: timerState.isPaused,
-          );
-        }
-
-        return _buildHourglassVisual(
-          size: size,
-          accent: accent,
-          theme: theme,
-          remaining: animatedRemaining,
-          pulse: pulse,
-          paused: timerState.isPaused,
-        );
-      },
-    );
-  }
-
-  Widget _buildCountdownVisual({
-    required double size,
-    required Color accent,
-    required ThemeData theme,
-    required double remaining,
-    required double pulse,
-    required bool paused,
-  }) {
-    final glowOpacity = paused ? 0.08 : 0.14 + pulse * 0.12;
-
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            width: size * (0.86 + pulse * 0.05),
-            height: size * (0.86 + pulse * 0.05),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: <Color>[
-                  accent.withValues(alpha: glowOpacity),
-                  accent.withValues(alpha: 0.02),
-                ],
-              ),
-            ),
-          ),
-          Transform.rotate(
-            angle: paused ? 0 : (0.5 - pulse) * 0.18,
-            child: CustomPaint(
-              size: Size.square(size),
-              painter: _CountdownRingPainter(
-                remaining: remaining,
-                pulse: pulse,
-                accent: accent,
-                track: theme.colorScheme.surfaceContainerHighest,
-                surface: theme.colorScheme.surface,
-              ),
-            ),
-          ),
-          Container(
-            width: size * (0.32 + remaining * 0.16),
-            height: size * (0.32 + remaining * 0.16),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: theme.colorScheme.surface.withValues(alpha: 0.94),
-              border: Border.all(
-                color: accent.withValues(alpha: 0.28),
-                width: 1.6,
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.10 + pulse * 0.06),
-                  blurRadius: 16,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.hourglass_bottom_rounded,
-              size: size * 0.16,
-              color: accent,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHourglassVisual({
-    required double size,
-    required Color accent,
-    required ThemeData theme,
-    required double remaining,
-    required double pulse,
-    required bool paused,
-  }) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            width: size * (0.80 + pulse * 0.04),
-            height: size * (0.80 + pulse * 0.04),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(size * 0.24),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: <Color>[
-                  accent.withValues(alpha: 0.14 + pulse * 0.08),
-                  theme.colorScheme.surfaceContainerLow,
-                ],
-              ),
-            ),
-          ),
-          Transform.rotate(
-            angle: paused ? 0 : (0.5 - pulse) * 0.08,
-            child: CustomPaint(
-              size: Size.square(size * 0.82),
-              painter: _HourglassPainter(
-                remaining: remaining,
-                pulse: pulse,
-                accent: accent,
-                track: theme.colorScheme.surfaceContainerHighest,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  ) => FocusTimerDisplayCard(
+    timerState: timerState,
+    config: config,
+    i18n: i18n,
+    widthTier: widthTier,
+    timerStyle: timerStyle,
+    lastCompletedPhase: _pageController.lastCompletedPhase,
+  );
 
   Widget _buildTimerControls(
     FocusService focus,
     TomatoTimerState timerState,
     AppI18n i18n,
-  ) {
-    final phase = timerState.phase;
-    if (phase == TomatoTimerPhase.idle) {
-      return FilledButton.icon(
-        onPressed: focus.start,
-        icon: const Icon(Icons.play_arrow_rounded),
-        label: Text(i18n.t('startFocus')),
-      );
-    }
-
-    final buttons = <Widget>[];
-    if (phase == TomatoTimerPhase.breakReady) {
-      buttons.add(
-        FilledButton.icon(
-          onPressed: focus.advanceToNextPhase,
-          icon: const Icon(Icons.self_improvement_rounded),
-          label: Text(i18n.t('startBreak')),
-        ),
-      );
-    } else if (phase == TomatoTimerPhase.focusReady) {
-      buttons.add(
-        FilledButton.icon(
-          onPressed: focus.advanceToNextPhase,
-          icon: const Icon(Icons.play_circle_outline_rounded),
-          label: Text(i18n.t('startNextRound')),
-        ),
-      );
-    } else {
-      buttons.add(
-        FilledButton.icon(
-          onPressed: timerState.isPaused ? focus.resume : focus.pause,
-          icon: Icon(
-            timerState.isPaused
-                ? Icons.play_arrow_rounded
-                : Icons.pause_rounded,
-          ),
-          label: Text(i18n.t(timerState.isPaused ? 'resume' : 'pause')),
-        ),
-      );
-      buttons.add(
-        OutlinedButton.icon(
-          onPressed: focus.skip,
-          icon: const Icon(Icons.skip_next_rounded),
-          label: Text(i18n.t('skip')),
-        ),
-      );
-    }
-    buttons.add(
-      OutlinedButton.icon(
-        onPressed: () => focus.setLockScreenActive(true),
-        icon: const Icon(Icons.lock_rounded),
-        label: Text(
-          pickUiText(
-            i18n,
-            zh: '锁屏专注',
-            en: 'Lock focus',
-            ja: '集中をロック',
-            de: 'Fokus sperren',
-            fr: 'Verrouiller le focus',
-            es: 'Bloquear enfoque',
-            ru: 'Заблокировать фокус',
-          ),
-        ),
-      ),
-    );
-    buttons.add(
-      OutlinedButton.icon(
-        onPressed: () => _confirmStop(focus, i18n),
-        icon: const Icon(Icons.stop_rounded),
-        label: Text(i18n.t('stop')),
-      ),
-    );
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              pickUiText(i18n, zh: '当前操作', en: 'Current actions'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              pickUiText(
-                i18n,
-                zh: '保持当前专注节奏，下一步操作会在这里集中显示。',
-                en: 'Keep the current focus flow moving with the next actions collected here.',
-              ),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 14),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final availableWidth = constraints.maxWidth;
-                final isSingleColumn = availableWidth < 460;
-                final buttonWidth = isSingleColumn
-                    ? availableWidth
-                    : ((availableWidth - 12) / 2).clamp(180.0, availableWidth);
-
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: buttons
-                      .map(
-                        (button) => SizedBox(width: buttonWidth, child: button),
-                      )
-                      .toList(growable: false),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  ) => FocusTimerControlsCard(
+    focus: focus,
+    timerState: timerState,
+    i18n: i18n,
+    onConfirmStop: () => _confirmStop(focus, i18n),
+  );
 
   Widget _buildTimerConfig(
     FocusService focus,
@@ -4224,10 +3848,9 @@ class _FocusPageState extends State<FocusPage>
     final scheduleBadge = _buildTodoScheduleBadge(todo, i18n, theme);
     final compactCard = MediaQuery.sizeOf(context).width < 430;
     final todoId = todo.id;
-    final cardKey = todoId == null
-        ? null
-        : _todoCardKeys.putIfAbsent(todoId, () => GlobalKey());
-    final highlighted = todoId != null && _highlightedTodoId == todoId;
+    final cardKey = todoId == null ? null : _pageController.todoCardKey(todoId);
+    final highlighted =
+        todoId != null && _pageController.highlightedTodoId == todoId;
 
     return Card(
       key: cardKey ?? ValueKey<int>(todo.id ?? index),
@@ -6747,17 +6370,6 @@ class _FocusPageState extends State<FocusPage>
     return 'ambientCategoryFocus';
   }
 
-  String _formatTime(int seconds) {
-    final duration = Duration(seconds: seconds.clamp(0, 359999));
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final secs = duration.inSeconds.remainder(60);
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-    }
-    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-  }
-
   String _formatUnitSummary(int seconds, AppI18n i18n) {
     final parts = _DurationParts.fromSeconds(seconds);
     final segments = <String>[];
@@ -6769,10 +6381,6 @@ class _FocusPageState extends State<FocusPage>
     }
     segments.add('${parts.seconds}${i18n.t('secondsUnit')}');
     return segments.join(' ');
-  }
-
-  String _formatPercent(double value) {
-    return '${(value.clamp(0.0, 1.0) * 100).round()}%';
   }
 
   double _responsiveItemWidth(
@@ -6836,239 +6444,4 @@ class _StatItem {
   final IconData icon;
   final String value;
   final String label;
-}
-
-class _CountdownRingPainter extends CustomPainter {
-  const _CountdownRingPainter({
-    required this.remaining,
-    required this.pulse,
-    required this.accent,
-    required this.track,
-    required this.surface,
-  });
-
-  final double remaining;
-  final double pulse;
-  final Color accent;
-  final Color track;
-  final Color surface;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final stroke = size.shortestSide * 0.08;
-    final radius = size.shortestSide / 2 - stroke;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    final clampedRemaining = remaining.clamp(0.0, 1.0).toDouble();
-    final sweep = math.pi * 2 * clampedRemaining;
-
-    final trackPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..color = track
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, trackPaint);
-
-    final ringPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round
-      ..shader = SweepGradient(
-        startAngle: -math.pi / 2,
-        endAngle: math.pi * 1.5,
-        colors: <Color>[
-          accent.withValues(alpha: 0.34),
-          accent,
-          accent.withValues(alpha: 0.72),
-        ],
-      ).createShader(rect);
-
-    final glowPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke + 6
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16)
-      ..color = accent.withValues(alpha: 0.16 + pulse * 0.18);
-
-    if (clampedRemaining > 0) {
-      canvas.drawArc(rect, -math.pi / 2, sweep, false, glowPaint);
-      canvas.drawArc(rect, -math.pi / 2, sweep, false, ringPaint);
-    }
-
-    final markerPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = size.shortestSide * 0.018;
-    for (var index = 0; index < 12; index++) {
-      final angle = -math.pi / 2 + math.pi * 2 * (index / 12);
-      final activeThreshold = clampedRemaining * 12;
-      markerPaint.color = index < activeThreshold
-          ? accent.withValues(alpha: 0.62)
-          : accent.withValues(alpha: 0.14);
-      final outer = center + Offset(math.cos(angle), math.sin(angle)) * radius;
-      final inner =
-          center +
-          Offset(math.cos(angle), math.sin(angle)) * (radius - stroke * 0.55);
-      canvas.drawLine(inner, outer, markerPaint);
-    }
-
-    if (clampedRemaining > 0) {
-      final handleAngle = -math.pi / 2 + sweep;
-      final dotCenter =
-          center +
-          Offset(math.cos(handleAngle), math.sin(handleAngle)) * radius;
-      final dotGlow = Paint()
-        ..color = accent.withValues(alpha: 0.28 + pulse * 0.18)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-      canvas.drawCircle(dotCenter, stroke * 0.52 + pulse * 4, dotGlow);
-      canvas.drawCircle(
-        dotCenter,
-        stroke * 0.34 + pulse * 1.2,
-        Paint()..color = surface,
-      );
-      canvas.drawCircle(
-        dotCenter,
-        stroke * 0.24 + pulse * 1.2,
-        Paint()..color = accent,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _CountdownRingPainter oldDelegate) {
-    return oldDelegate.remaining != remaining ||
-        oldDelegate.pulse != pulse ||
-        oldDelegate.accent != accent ||
-        oldDelegate.track != track ||
-        oldDelegate.surface != surface;
-  }
-}
-
-class _HourglassPainter extends CustomPainter {
-  const _HourglassPainter({
-    required this.remaining,
-    required this.pulse,
-    required this.accent,
-    required this.track,
-  });
-
-  final double remaining;
-  final double pulse;
-  final Color accent;
-  final Color track;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final width = size.width;
-    final height = size.height;
-    final clampedRemaining = remaining.clamp(0.0, 1.0).toDouble();
-    final sandPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = accent.withValues(alpha: 0.90);
-    final glassPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = track.withValues(alpha: 0.54);
-    final framePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.shortestSide * 0.055
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..color = accent.withValues(alpha: 0.92);
-    final glowPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.shortestSide * 0.075
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14)
-      ..color = accent.withValues(alpha: 0.14 + pulse * 0.12);
-
-    final topChamber = Path()
-      ..moveTo(width * 0.28, height * 0.18)
-      ..lineTo(width * 0.72, height * 0.18)
-      ..lineTo(width * 0.50, height * 0.47)
-      ..close();
-    final bottomChamber = Path()
-      ..moveTo(width * 0.50, height * 0.53)
-      ..lineTo(width * 0.72, height * 0.82)
-      ..lineTo(width * 0.28, height * 0.82)
-      ..close();
-
-    canvas.drawPath(topChamber, glassPaint);
-    canvas.drawPath(bottomChamber, glassPaint);
-
-    final topFillHeight = height * 0.29 * clampedRemaining;
-    canvas.save();
-    canvas.clipPath(topChamber);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          width * 0.24,
-          height * 0.48 - topFillHeight,
-          width * 0.52,
-          topFillHeight + 4,
-        ),
-        Radius.circular(width * 0.04),
-      ),
-      sandPaint,
-    );
-    canvas.restore();
-
-    final bottomFillHeight = height * 0.29 * (1 - clampedRemaining);
-    canvas.save();
-    canvas.clipPath(bottomChamber);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          width * 0.24,
-          height * 0.82 - bottomFillHeight,
-          width * 0.52,
-          bottomFillHeight + 4,
-        ),
-        Radius.circular(width * 0.04),
-      ),
-      sandPaint,
-    );
-    canvas.restore();
-
-    if (clampedRemaining > 0 && clampedRemaining < 1) {
-      final streamPaint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.shortestSide * (0.014 + pulse * 0.010)
-        ..strokeCap = StrokeCap.round
-        ..color = accent.withValues(alpha: 0.78);
-      canvas.drawLine(
-        Offset(width * 0.50, height * 0.44),
-        Offset(width * 0.50, height * 0.60),
-        streamPaint,
-      );
-      canvas.drawCircle(
-        Offset(width * 0.50, height * (0.60 + pulse * 0.07)),
-        size.shortestSide * 0.018,
-        Paint()..color = accent,
-      );
-    }
-
-    final framePath = Path()
-      ..moveTo(width * 0.22, height * 0.10)
-      ..lineTo(width * 0.78, height * 0.10)
-      ..moveTo(width * 0.30, height * 0.18)
-      ..lineTo(width * 0.50, height * 0.45)
-      ..lineTo(width * 0.70, height * 0.18)
-      ..moveTo(width * 0.30, height * 0.82)
-      ..lineTo(width * 0.50, height * 0.55)
-      ..lineTo(width * 0.70, height * 0.82)
-      ..moveTo(width * 0.22, height * 0.90)
-      ..lineTo(width * 0.78, height * 0.90);
-
-    canvas.drawPath(framePath, glowPaint);
-    canvas.drawPath(framePath, framePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _HourglassPainter oldDelegate) {
-    return oldDelegate.remaining != remaining ||
-        oldDelegate.pulse != pulse ||
-        oldDelegate.accent != accent ||
-        oldDelegate.track != track;
-  }
 }
