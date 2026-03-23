@@ -292,6 +292,16 @@ void main() {
         'rememberedWords': <String>['Alpha'],
         'weakWords': <String>['Beta'],
         'launchCursors': <String, int>{'practice:warmup': 2},
+        'trackedEntries': <Map<String, Object?>>[
+          <String, Object?>{
+            'id': 2,
+            'wordbookId': 1,
+            'word': 'Beta',
+            'meaning': 'Second letter',
+            'rawContent': '',
+            'fields': <Object?>[],
+          },
+        ],
       });
 
       final state = AppState(
@@ -314,6 +324,12 @@ void main() {
       expect(state.practiceLastSessionTitle, 'Yesterday sprint');
       expect(state.practiceRememberedWords, <String>['Alpha']);
       expect(state.practiceWeakWords, <String>['Beta']);
+      expect(
+        state.practiceWrongNotebookEntries
+            .map((item) => item.word)
+            .toList(growable: false),
+        <String>['Beta'],
+      );
 
       final restoredDashboard = settings.loadPracticeDashboard();
       expect(restoredDashboard['date'], _dateKey(DateTime.now()));
@@ -324,6 +340,7 @@ void main() {
         restoredDashboard['launchCursors'],
         containsPair('practice:warmup', 2),
       );
+      expect((restoredDashboard['trackedEntries'] as List).length, 1);
     },
   );
 }

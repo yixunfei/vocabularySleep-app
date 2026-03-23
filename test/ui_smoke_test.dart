@@ -8,12 +8,16 @@ import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
+import 'package:vocabulary_sleep_app/src/models/practice_export_format.dart';
+import 'package:vocabulary_sleep_app/src/models/practice_question_type.dart';
+import 'package:vocabulary_sleep_app/src/models/practice_session_record.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
 import 'package:vocabulary_sleep_app/src/models/user_data_export.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
+import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
 import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
@@ -29,6 +33,8 @@ import 'package:vocabulary_sleep_app/src/ui/pages/library_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/language_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/play_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/practice_notebook_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
@@ -1454,6 +1460,34 @@ void main() {
       );
     });
 
+    testWidgets(
+      'data management export dialog disables folder chooser on windows',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+        try {
+          final state = _FakeAppState.sample(uiLanguage: 'en');
+          await _pumpPage(
+            tester,
+            state: state,
+            child: const DataManagementPage(),
+          );
+
+          await tester.tap(find.text('Export user data'));
+          await tester.pumpAndSettle();
+
+          expect(find.byIcon(Icons.folder_open_outlined), findsNothing);
+          expect(
+            find.text(
+              'On Windows, the folder chooser is disabled to avoid system instability. Enter the export path directly.',
+            ),
+            findsOneWidget,
+          );
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
+      },
+    );
+
     testWidgets('data management page wires delete backup action', (
       tester,
     ) async {
@@ -1631,6 +1665,19 @@ void main() {
       expect(find.text('Recovery queue'), findsOneWidget);
 
       await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('practice-wrong-notebook-card')),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('practice-wrong-notebook-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Wrong notebook'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
         find.text('Quick start'),
         300,
         scrollable: find.byType(Scrollable).first,
@@ -1656,6 +1703,15 @@ void main() {
       expect(find.text('\u8bb0\u5fc6\u8f68\u9053'), findsOneWidget);
       expect(find.text('\u4eca\u65e5\u5df2\u8bb0\u4f4f'), findsOneWidget);
       expect(find.text('\u6062\u590d\u961f\u5217'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('practice-wrong-notebook-card')),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('\u9519\u9898\u672c'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('\u5feb\u901f\u5f00\u59cb'),
@@ -1690,6 +1746,12 @@ void main() {
       );
 
       expect(find.text('\u663e\u793a\u63d0\u793a'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('\u6ca1\u8bb0\u4f4f'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('\u6ca1\u8bb0\u4f4f'), findsOneWidget);
 
       await tester.tap(find.text('\u8bb0\u4f4f\u4e86'));
@@ -1717,12 +1779,33 @@ void main() {
 
       expect(state.taskWords, isEmpty);
 
+      await tester.scrollUntilVisible(
+        find.text('Not yet'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Not yet'));
       await tester.pumpAndSettle();
       expect(state.taskWords, isEmpty);
 
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('practice-auto-task-switch')),
+        -220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
       await tester.tap(
         find.byKey(const ValueKey<String>('practice-auto-task-switch')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Not yet'),
+        220,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
@@ -1759,6 +1842,13 @@ void main() {
         child: const PracticeSessionPage(title: 'Memory sync', words: words),
       );
 
+      await tester.scrollUntilVisible(
+        find.text('Remembered'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Remembered'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Not yet'));
@@ -1775,6 +1865,198 @@ void main() {
       expect(
         state.recentWeakWordEntries.map((entry) => entry.word).toList(),
         <String>['bravo'],
+      );
+    });
+
+    testWidgets('practice session supports meaning choice mode', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      const words = <WordEntry>[
+        WordEntry(
+          wordbookId: 1,
+          word: 'alpha',
+          meaning: 'first',
+          fields: <WordFieldItem>[],
+        ),
+        WordEntry(
+          wordbookId: 1,
+          word: 'bravo',
+          meaning: 'second',
+          fields: <WordFieldItem>[],
+        ),
+        WordEntry(
+          wordbookId: 1,
+          word: 'charlie',
+          meaning: 'third',
+          fields: <WordFieldItem>[],
+        ),
+      ];
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeSessionPage(title: 'Meaning mode', words: words),
+      );
+
+      await tester.tap(find.text('Meaning choice'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Choose the correct meaning for the word.'),
+        findsOneWidget,
+      );
+      expect(find.text('first'), findsOneWidget);
+    });
+
+    testWidgets('wrong notebook supports search and reason filter', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        recentWeakEntries: const <WordEntry>[
+          WordEntry(wordbookId: 1, word: 'alpha', meaning: 'first'),
+          WordEntry(wordbookId: 1, word: 'bravo', meaning: 'second'),
+        ],
+      );
+      state._practiceWeakReasonsByWord['alpha'] = <String>['meaning'];
+      state._practiceWeakReasonsByWord['bravo'] = <String>['spelling'];
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeNotebookPage(),
+      );
+
+      await tester.enterText(find.byType(TextField).first, 'alp');
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('alpha'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('alpha'), findsOneWidget);
+      expect(find.text('bravo'), findsNothing);
+
+      await tester.fling(
+        find.byType(Scrollable).first,
+        const Offset(0, 800),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('All reasons'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Meaning'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('alpha'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('alpha'), findsOneWidget);
+      expect(find.text('bravo'), findsNothing);
+    });
+
+    testWidgets('practice review page supports time range filtering', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      state._practiceSessionHistory = <PracticeSessionRecord>[
+        PracticeSessionRecord(
+          title: 'Today sprint',
+          practicedAt: DateTime.now(),
+          total: 10,
+          remembered: 7,
+          weakReasonCounts: const <String, int>{'recall': 2},
+        ),
+        PracticeSessionRecord(
+          title: 'Old sprint',
+          practicedAt: DateTime.now().subtract(const Duration(days: 40)),
+          total: 10,
+          remembered: 4,
+          weakReasonCounts: const <String, int>{'meaning': 3},
+        ),
+      ];
+
+      await _pumpPage(tester, state: state, child: const PracticeReviewPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Today sprint'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Today sprint'), findsOneWidget);
+      expect(find.text('Old sprint'), findsNothing);
+
+      await tester.fling(
+        find.byType(Scrollable).first,
+        const Offset(0, 1000),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('All'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Today sprint'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Today sprint'), findsOneWidget);
+      expect(find.text('Old sprint'), findsOneWidget);
+    });
+
+    testWidgets('wrong notebook exports current filtered results', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        recentWeakEntries: const <WordEntry>[
+          WordEntry(wordbookId: 1, word: 'alpha', meaning: 'first'),
+          WordEntry(wordbookId: 1, word: 'bravo', meaning: 'second'),
+        ],
+      );
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeNotebookPage(),
+      );
+
+      await tester.enterText(find.byType(TextField).first, 'alp');
+      await tester.pumpAndSettle();
+
+      await tester.fling(
+        find.byType(Scrollable).first,
+        const Offset(0, -800),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Export filtered (JSON)'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextField).last,
+        'filtered_wrong_notebook.json',
+      );
+      await tester.tap(find.text('Export'));
+      await tester.pumpAndSettle();
+
+      expect(
+        state.exportedWrongNotebookPath,
+        contains('filtered_wrong_notebook.json'),
       );
     });
 
@@ -2044,6 +2326,8 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   String? exportedUserDataDirectoryPath;
   String? exportedUserDataFileName;
   Set<UserDataExportSection>? exportedUserDataSections;
+  String? exportedPracticeReviewPath;
+  String? exportedWrongNotebookPath;
   String? createdWordbookName;
   String? renamedWordbookName;
   String? importedWordbookName;
@@ -2057,6 +2341,22 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   String _practiceLastSessionTitle = 'Scope sprint';
   List<WordEntry> _recentRememberedEntries = <WordEntry>[];
   List<WordEntry> _recentWeakEntries = <WordEntry>[];
+  final Map<String, List<String>> _practiceWeakReasonsByWord =
+      <String, List<String>>{};
+  List<PracticeSessionRecord> _practiceSessionHistory = <PracticeSessionRecord>[
+    PracticeSessionRecord(
+      title: 'Scope sprint',
+      practicedAt: DateTime(2026, 3, 20, 9, 30),
+      total: 8,
+      remembered: 6,
+      weakReasonCounts: const <String, int>{'recall': 1, 'meaning': 1},
+    ),
+  ];
+  bool _practiceAutoAddWeakWordsToTask = false;
+  bool _practiceAutoPlayPronunciation = false;
+  bool _practiceShowHintsByDefault = false;
+  PracticeQuestionType _practiceDefaultQuestionType =
+      PracticeQuestionType.flashcard;
   final Set<String> _favorites = <String>{};
   final Set<String> _taskWords = <String>{};
   final Map<AsrProviderType, AsrOfflineModelStatus> _offlineStatuses =
@@ -2150,6 +2450,27 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       .toList(growable: false);
 
   @override
+  bool get practiceAutoAddWeakWordsToTask => _practiceAutoAddWeakWordsToTask;
+
+  @override
+  bool get practiceAutoPlayPronunciation => _practiceAutoPlayPronunciation;
+
+  @override
+  bool get practiceShowHintsByDefault => _practiceShowHintsByDefault;
+
+  @override
+  List<PracticeSessionRecord> get practiceSessionHistory =>
+      List<PracticeSessionRecord>.unmodifiable(_practiceSessionHistory);
+
+  @override
+  PracticeQuestionType get practiceDefaultQuestionType =>
+      _practiceDefaultQuestionType;
+
+  @override
+  List<WordEntry> get practiceWrongNotebookEntries =>
+      List<WordEntry>.unmodifiable(_recentWeakEntries);
+
+  @override
   int get practiceTodayReviewed => _practiceTodayReviewed;
 
   @override
@@ -2184,6 +2505,17 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   List<WordEntry> get recentWeakWordEntries =>
       List<WordEntry>.unmodifiable(_recentWeakEntries);
+
+  @override
+  WordMemoryProgress? memoryProgressForWordEntry(WordEntry entry) => null;
+
+  @override
+  List<String> practiceWeakReasonsForWord(WordEntry entry) {
+    return List<String>.unmodifiable(
+      _practiceWeakReasonsByWord[entry.word.trim().toLowerCase()] ??
+          const <String>[],
+    );
+  }
 
   @override
   SearchMode get searchMode => _searchMode;
@@ -2435,6 +2767,64 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
+  Map<String, Object?> buildPracticeReviewExportPayload({
+    Iterable<PracticeSessionRecord>? records,
+    Iterable<WordEntry>? wrongNotebookEntries,
+  }) {
+    final resolvedHistory = (records ?? _practiceSessionHistory).toList(
+      growable: false,
+    );
+    final resolvedNotebook = (wrongNotebookEntries ?? _recentWeakEntries)
+        .toList(growable: false);
+    return <String, Object?>{
+      'sessionHistory': resolvedHistory
+          .map((record) => record.toMap())
+          .toList(growable: false),
+      'wrongNotebook': resolvedNotebook
+          .map((entry) => <String, Object?>{'word': entry.word})
+          .toList(growable: false),
+    };
+  }
+
+  @override
+  Future<String?> exportPracticeReviewData({
+    required PracticeExportFormat format,
+    String? directoryPath,
+    String? fileName,
+    Iterable<PracticeSessionRecord>? records,
+    Iterable<WordEntry>? wrongNotebookEntries,
+  }) async {
+    final resolvedName = fileName ?? 'practice_review.${format.extension}';
+    exportedPracticeReviewPath =
+        '${directoryPath ?? '/tmp/vocabulary_exports'}/$resolvedName';
+    notifyListeners();
+    return exportedPracticeReviewPath;
+  }
+
+  @override
+  Map<String, Object?> buildPracticeWrongNotebookExportPayload({
+    required Iterable<WordEntry> entries,
+  }) {
+    return <String, Object?>{
+      'entries': entries.map((entry) => entry.word).toList(growable: false),
+    };
+  }
+
+  @override
+  Future<String?> exportPracticeWrongNotebookData({
+    required Iterable<WordEntry> entries,
+    required PracticeExportFormat format,
+    String? directoryPath,
+    String? fileName,
+  }) async {
+    final resolvedName = fileName ?? 'wrong_notebook.${format.extension}';
+    exportedWrongNotebookPath =
+        '${directoryPath ?? '/tmp/vocabulary_exports'}/$resolvedName';
+    notifyListeners();
+    return exportedWrongNotebookPath;
+  }
+
+  @override
   Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) async {
     restoredBackupPath = backup.path;
     _lastBackupPath = '/tmp/vocabulary_before_restore_backup.db';
@@ -2553,7 +2943,14 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
-  Future<void> toggleFavorite(WordEntry word) async {}
+  Future<void> toggleFavorite(WordEntry word) async {
+    if (_favorites.contains(word.word)) {
+      _favorites.remove(word.word);
+    } else {
+      _favorites.add(word.word);
+    }
+    notifyListeners();
+  }
 
   @override
   Future<void> toggleTaskWord(WordEntry word) async {
@@ -2574,6 +2971,8 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required List<String> weakWords,
     List<WordEntry>? rememberedEntries,
     List<WordEntry>? weakEntries,
+    Map<String, List<String>> weakReasonIdsByWord =
+        const <String, List<String>>{},
   }) {
     _practiceTodaySessions += 1;
     _practiceTodayReviewed += total;
@@ -2590,7 +2989,109 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       weakWords,
       preferredEntries: weakEntries,
     );
+    _practiceWeakReasonsByWord
+      ..clear()
+      ..addAll(weakReasonIdsByWord);
+    _practiceSessionHistory = <PracticeSessionRecord>[
+      PracticeSessionRecord(
+        title: title,
+        practicedAt: DateTime(2026, 3, 20, 10, 0),
+        total: total,
+        remembered: remembered,
+      ),
+      ..._practiceSessionHistory,
+    ];
     notifyListeners();
+  }
+
+  @override
+  void updatePracticeSessionPreferences({
+    bool? autoAddWeakWordsToTask,
+    bool? autoPlayPronunciation,
+    bool? showHintsByDefault,
+    PracticeQuestionType? defaultQuestionType,
+  }) {
+    if (autoAddWeakWordsToTask != null) {
+      _practiceAutoAddWeakWordsToTask = autoAddWeakWordsToTask;
+    }
+    if (autoPlayPronunciation != null) {
+      _practiceAutoPlayPronunciation = autoPlayPronunciation;
+    }
+    if (showHintsByDefault != null) {
+      _practiceShowHintsByDefault = showHintsByDefault;
+    }
+    if (defaultQuestionType != null) {
+      _practiceDefaultQuestionType = defaultQuestionType;
+    }
+    notifyListeners();
+  }
+
+  @override
+  bool dismissPracticeWeakWord(WordEntry entry) {
+    final previousLength = _recentWeakEntries.length;
+    _recentWeakEntries = _recentWeakEntries
+        .where((item) => item.word != entry.word)
+        .toList(growable: false);
+    _practiceWeakReasonsByWord.remove(entry.word.trim().toLowerCase());
+    if (previousLength == _recentWeakEntries.length) {
+      return false;
+    }
+    notifyListeners();
+    return true;
+  }
+
+  @override
+  int dismissPracticeWeakWords(Iterable<WordEntry> entries) {
+    final keys = entries.map((item) => item.word).toSet();
+    final previousLength = _recentWeakEntries.length;
+    _recentWeakEntries = _recentWeakEntries
+        .where((item) => !keys.contains(item.word))
+        .toList(growable: false);
+    _practiceWeakReasonsByWord.removeWhere((key, _) => keys.contains(key));
+    final removed = previousLength - _recentWeakEntries.length;
+    if (removed > 0) {
+      notifyListeners();
+    }
+    return removed;
+  }
+
+  @override
+  Future<int> addPracticeWordsToTask(Iterable<WordEntry> entries) async {
+    var added = 0;
+    for (final entry in entries) {
+      if (_taskWords.add(entry.word)) {
+        added += 1;
+      }
+    }
+    if (added > 0) {
+      notifyListeners();
+    }
+    return added;
+  }
+
+  @override
+  Future<int> addPracticeWordsToFavorites(Iterable<WordEntry> entries) async {
+    var added = 0;
+    for (final entry in entries) {
+      if (_favorites.add(entry.word)) {
+        added += 1;
+      }
+    }
+    if (added > 0) {
+      notifyListeners();
+    }
+    return added;
+  }
+
+  @override
+  int clearPracticeWeakWords({bool masteredOnly = false}) {
+    final removed = _recentWeakEntries.length;
+    _recentWeakEntries = <WordEntry>[];
+    _practiceWeakReasonsByWord.clear();
+    if (removed > 0) {
+      notifyListeners();
+    }
+    return removed;
   }
 
   List<WordEntry> _resolvePracticeEntries(

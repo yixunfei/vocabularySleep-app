@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
+import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
 import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
@@ -16,6 +17,8 @@ class _MemoryDatabaseService extends AppDatabaseService {
   _MemoryDatabaseService() : super(WordbookImportService());
 
   final Map<String, String> _settings = <String, String>{};
+  final Map<int, WordMemoryProgress> _progressByWordId =
+      <int, WordMemoryProgress>{};
 
   @override
   String? getSetting(String key) => _settings[key];
@@ -23,6 +26,25 @@ class _MemoryDatabaseService extends AppDatabaseService {
   @override
   void setSetting(String key, String value) {
     _settings[key] = value;
+  }
+
+  @override
+  Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
+    Iterable<int> wordIds,
+  ) {
+    final output = <int, WordMemoryProgress>{};
+    for (final wordId in wordIds) {
+      final progress = _progressByWordId[wordId];
+      if (progress != null) {
+        output[wordId] = progress;
+      }
+    }
+    return output;
+  }
+
+  @override
+  void upsertWordMemoryProgress(WordMemoryProgress progress) {
+    _progressByWordId[progress.wordId] = progress;
   }
 }
 
@@ -55,8 +77,13 @@ class _FakeFocusService implements FocusService {
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 
-WordEntry _word(String value) {
-  return WordEntry(wordbookId: 1, word: value, fields: const <WordFieldItem>[]);
+WordEntry _word(String value, {int? id}) {
+  return WordEntry(
+    id: id,
+    wordbookId: 1,
+    word: value,
+    fields: const <WordFieldItem>[],
+  );
 }
 
 void main() {
@@ -208,6 +235,75 @@ void main() {
         dashboard['launchCursors'],
         containsPair('practice:scope-full', 0),
       );
+    },
+  );
+
+  test(
+    'wrong notebook keeps weak words in stored order and supports cleanup',
+    () {
+      final database = _MemoryDatabaseService();
+      final settings = SettingsService(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: _FakePlaybackService(),
+        ambient: _FakeAmbientService(),
+        asr: _FakeAsrService(),
+        focusService: _FakeFocusService(),
+      );
+
+      state.recordPracticeSession(
+        title: 'Round 1',
+        total: 2,
+        remembered: 1,
+        rememberedWords: const <String>['charlie'],
+        weakWords: const <String>['bravo'],
+        rememberedEntries: <WordEntry>[_word('charlie', id: 3)],
+        weakEntries: <WordEntry>[_word('bravo', id: 2)],
+        weakReasonIdsByWord: const <String, List<String>>{
+          'bravo': <String>['meaning'],
+        },
+      );
+      state.recordPracticeSession(
+        title: 'Round 2',
+        total: 2,
+        remembered: 1,
+        rememberedWords: const <String>['charlie'],
+        weakWords: const <String>['alpha'],
+        rememberedEntries: <WordEntry>[_word('charlie', id: 3)],
+        weakEntries: <WordEntry>[_word('alpha', id: 1)],
+        weakReasonIdsByWord: const <String, List<String>>{
+          'alpha': <String>['spelling', 'meaning'],
+        },
+      );
+
+      expect(
+        state.practiceWrongNotebookEntries.map((item) => item.word).toList(),
+        <String>['alpha', 'bravo'],
+      );
+      expect(state.practiceWeakReasonsForWord(_word('alpha', id: 1)), <String>[
+        'spelling',
+        'meaning',
+      ]);
+      expect(state.practiceSessionHistory.first.title, 'Round 2');
+      expect(state.practiceSessionHistory.first.weakReasonCounts, <String, int>{
+        'spelling': 1,
+        'meaning': 1,
+      });
+
+      expect(state.dismissPracticeWeakWord(_word('alpha', id: 1)), isTrue);
+      expect(
+        state.practiceWrongNotebookEntries.map((item) => item.word).toList(),
+        <String>['bravo'],
+      );
+      expect(state.practiceWeakReasonsForWord(_word('alpha', id: 1)), isEmpty);
+
+      final removed = state.clearPracticeWeakWords();
+      expect(removed, 1);
+      expect(state.practiceWrongNotebookEntries, isEmpty);
+
+      final dashboard = settings.loadPracticeDashboard();
+      expect(dashboard['weakWords'], isEmpty);
     },
   );
 }
