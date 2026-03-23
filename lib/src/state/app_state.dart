@@ -32,6 +32,11 @@ import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 import '../services/weather_service.dart';
 
+part 'app_state_practice.dart';
+part 'app_state_playback.dart';
+part 'app_state_startup.dart';
+part 'app_state_wordbook.dart';
+
 class PronunciationComparison {
   const PronunciationComparison({
     required this.isCorrect,
@@ -328,108 +333,27 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     bool? autoPlayPronunciation,
     bool? showHintsByDefault,
     PracticeQuestionType? defaultQuestionType,
-  }) {
-    final nextAutoAdd =
-        autoAddWeakWordsToTask ?? _practiceAutoAddWeakWordsToTask;
-    final nextAutoPlay =
-        autoPlayPronunciation ?? _practiceAutoPlayPronunciation;
-    final nextShowHints = showHintsByDefault ?? _practiceShowHintsByDefault;
-    final nextQuestionType =
-        defaultQuestionType ?? _practiceDefaultQuestionType;
-    final changed =
-        nextAutoAdd != _practiceAutoAddWeakWordsToTask ||
-        nextAutoPlay != _practiceAutoPlayPronunciation ||
-        nextShowHints != _practiceShowHintsByDefault ||
-        nextQuestionType != _practiceDefaultQuestionType;
-    if (!changed) {
-      return;
-    }
-    _practiceAutoAddWeakWordsToTask = nextAutoAdd;
-    _practiceAutoPlayPronunciation = nextAutoPlay;
-    _practiceShowHintsByDefault = nextShowHints;
-    _practiceDefaultQuestionType = nextQuestionType;
-    _persistPracticeDashboard();
-    notifyListeners();
-  }
+  }) => _updatePracticeSessionPreferencesImpl(
+    autoAddWeakWordsToTask: autoAddWeakWordsToTask,
+    autoPlayPronunciation: autoPlayPronunciation,
+    showHintsByDefault: showHintsByDefault,
+    defaultQuestionType: defaultQuestionType,
+  );
 
-  bool dismissPracticeWeakWord(WordEntry entry) {
-    final key = _normalizeTrackedWord(entry.word);
-    if (key.isEmpty) {
-      return false;
-    }
-    return _removePracticeWeakKeys(<String>{key}) > 0;
-  }
+  bool dismissPracticeWeakWord(WordEntry entry) =>
+      _dismissPracticeWeakWordImpl(entry);
 
-  int dismissPracticeWeakWords(Iterable<WordEntry> entries) {
-    final keys = entries
-        .map((entry) => _normalizeTrackedWord(entry.word))
-        .where((item) => item.isNotEmpty)
-        .toSet();
-    return _removePracticeWeakKeys(keys);
-  }
+  int dismissPracticeWeakWords(Iterable<WordEntry> entries) =>
+      _dismissPracticeWeakWordsImpl(entries);
 
-  Future<int> addPracticeWordsToTask(Iterable<WordEntry> entries) async {
-    final uniqueEntries = _dedupePracticeEntries(entries);
-    var added = 0;
-    for (final entry in uniqueEntries) {
-      if (_taskWords.contains(entry.word)) {
-        continue;
-      }
-      await toggleTaskWord(entry);
-      added += 1;
-    }
-    return added;
-  }
+  Future<int> addPracticeWordsToTask(Iterable<WordEntry> entries) =>
+      _addPracticeWordsToTaskImpl(entries);
 
-  Future<int> addPracticeWordsToFavorites(Iterable<WordEntry> entries) async {
-    final uniqueEntries = _dedupePracticeEntries(entries);
-    var added = 0;
-    for (final entry in uniqueEntries) {
-      if (_favorites.contains(entry.word)) {
-        continue;
-      }
-      await toggleFavorite(entry);
-      added += 1;
-    }
-    return added;
-  }
+  Future<int> addPracticeWordsToFavorites(Iterable<WordEntry> entries) =>
+      _addPracticeWordsToFavoritesImpl(entries);
 
-  int clearPracticeWeakWords({bool masteredOnly = false}) {
-    if (_practiceWeakWords.isEmpty) {
-      return 0;
-    }
-    if (!masteredOnly) {
-      return _removePracticeWeakKeys(
-        _practiceWeakWords
-            .map(_normalizeTrackedWord)
-            .where((item) => item.isNotEmpty)
-            .toSet(),
-      );
-    }
-
-    final now = DateTime.now();
-    final rememberedKeys = <String>{
-      ..._rememberedWords,
-      ..._practiceRememberedWords
-          .map(_normalizeTrackedWord)
-          .where((item) => item.isNotEmpty),
-    };
-    final removableKeys = <String>{};
-    for (final entry in practiceWrongNotebookEntries) {
-      final key = _normalizeTrackedWord(entry.word);
-      if (key.isEmpty) {
-        continue;
-      }
-      if (rememberedKeys.contains(key)) {
-        removableKeys.add(key);
-        continue;
-      }
-      if (_isStablePracticeProgress(memoryProgressForWordEntry(entry), now)) {
-        removableKeys.add(key);
-      }
-    }
-    return _removePracticeWeakKeys(removableKeys);
-  }
+  int clearPracticeWeakWords({bool masteredOnly = false}) =>
+      _clearPracticeWeakWordsImpl(masteredOnly: masteredOnly);
 
   WordEntry? get currentWord {
     if (_currentWordIndex < 0 || _currentWordIndex >= _words.length) {
@@ -506,259 +430,56 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  Future<void> init() async {
-    if (_initialized || _initializing) return;
-    _initializing = true;
-    _message = null;
-    _log.i('app_state', 'init start');
-    notifyListeners();
+  Future<void> init() => _initImpl();
 
-    try {
-      await _database.init();
-      await _focusService.init();
-      await _pollPendingTodoReminderLaunch();
-      _config = _settings.loadPlayConfig();
-      _playback.updateRuntimeConfig(_config);
-      final languageSetting = _settings.loadUiLanguage();
-      if (languageSetting == SettingsService.uiLanguageSystem) {
-        _uiLanguageFollowsSystem = true;
-        _uiLanguage = _resolveSystemUiLanguage();
-      } else {
-        _uiLanguageFollowsSystem = false;
-        _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
-      }
-      _rememberedWords = _settings.loadRememberedWords();
-      _startupPage = _settings.loadStartupPage();
-      _focusStartupTab = _settings.loadFocusStartupTab();
-      _weatherEnabled = _settings.loadWeatherEnabled();
-      _startupTodoPromptEnabled = _settings.loadStartupTodoPromptEnabled();
-      _startupTodoPromptSuppressedDate = _settings
-          .loadStartupTodoPromptSuppressedDate();
-      final testModeState = _settings.loadTestModeState();
-      _testModeEnabled = testModeState['enabled'] ?? false;
-      _testModeRevealed = testModeState['revealed'] ?? false;
-      _testModeHintRevealed = testModeState['hintRevealed'] ?? false;
-      _loadPracticeDashboard();
-      _ensurePracticeDate(persist: true);
-      await _reloadWordbooks(keepCurrentSelection: false);
-      await _syncSpecialWordbooks();
-      _initialized = true;
-      final logFilePath = await _log.getLogFilePath();
-      _log.i(
-        'app_state',
-        'init success',
-        data: <String, Object?>{
-          'wordbooks': _wordbooks.length,
-          'selectedWordbookId': _selectedWordbook?.id,
-          'selectedWordbookName': _selectedWordbook?.name,
-          'words': _words.length,
-          'uiLanguage': _uiLanguage,
-          'uiLanguageFollowsSystem': _uiLanguageFollowsSystem,
-          'startupPage': _startupPage.storageValue,
-          'focusStartupTab': _focusStartupTab.storageValue,
-          'weatherEnabled': _weatherEnabled,
-          'logFile': logFilePath,
-          'ttsProvider': _config.tts.provider.name,
-          'ttsModel': _config.tts.model,
-          'ttsVoice': _config.tts.activeVoice,
-        },
-      );
-      if (_weatherEnabled) {
-        unawaited(refreshWeather(force: true));
-      }
-    } catch (error) {
-      _log.e('app_state', 'init failed', error: error);
-      _setMessage('errorInitFailed', params: <String, Object?>{'error': error});
-    } finally {
-      _initializing = false;
-      notifyListeners();
-    }
-  }
+  void clearMessage() => _clearMessageImpl();
 
-  void clearMessage() {
-    _message = null;
-    _messageParams = const <String, Object?>{};
-    notifyListeners();
-  }
+  void setUiLanguage(String language) => _setUiLanguageImpl(language);
 
-  void setUiLanguage(String language) {
-    final normalized = AppI18n.normalizeLanguageCode(language);
-    if (normalized.isEmpty ||
-        (normalized == _uiLanguage && !_uiLanguageFollowsSystem)) {
-      return;
-    }
-    _log.i(
-      'app_state',
-      'set ui language',
-      data: <String, Object?>{
-        'from': _uiLanguage,
-        'to': normalized,
-        'followSystem': false,
-      },
-    );
-    _uiLanguage = normalized;
-    _uiLanguageFollowsSystem = false;
-    _settings.saveUiLanguage(_uiLanguage);
-    _refreshLocalizedWordbookNames();
-    notifyListeners();
-  }
+  void setUiLanguageFollowSystem() => _setUiLanguageFollowSystemImpl();
 
-  void setUiLanguageFollowSystem() {
-    final resolved = _resolveSystemUiLanguage();
-    final changed = !_uiLanguageFollowsSystem || _uiLanguage != resolved;
-    if (!changed) return;
-    _log.i(
-      'app_state',
-      'set ui language follow system',
-      data: <String, Object?>{'from': _uiLanguage, 'to': resolved},
-    );
-    _uiLanguageFollowsSystem = true;
-    _uiLanguage = resolved;
-    _settings.saveUiLanguage(SettingsService.uiLanguageSystem);
-    _refreshLocalizedWordbookNames();
-    notifyListeners();
-  }
+  void setStartupPage(AppHomeTab page) => _setStartupPageImpl(page);
 
-  void setStartupPage(AppHomeTab page) {
-    if (_startupPage == page) return;
-    _log.i(
-      'app_state',
-      'set startup page',
-      data: <String, Object?>{
-        'from': _startupPage.storageValue,
-        'to': page.storageValue,
-      },
-    );
-    _startupPage = page;
-    _settings.saveStartupPage(page);
-    notifyListeners();
-  }
+  void setFocusStartupTab(FocusStartupTab tab) => _setFocusStartupTabImpl(tab);
 
-  void setFocusStartupTab(FocusStartupTab tab) {
-    if (_focusStartupTab == tab) return;
-    _log.i(
-      'app_state',
-      'set focus startup tab',
-      data: <String, Object?>{
-        'from': _focusStartupTab.storageValue,
-        'to': tab.storageValue,
-      },
-    );
-    _focusStartupTab = tab;
-    _settings.saveFocusStartupTab(tab);
-    notifyListeners();
-  }
+  void setWeatherEnabled(bool enabled) => _setWeatherEnabledImpl(enabled);
 
-  void setWeatherEnabled(bool enabled) {
-    if (_weatherEnabled == enabled) return;
-    _weatherEnabled = enabled;
-    _settings.saveWeatherEnabled(enabled);
-    if (!enabled) {
-      notifyListeners();
-      return;
-    }
-    notifyListeners();
-    unawaited(refreshWeather(force: true));
-  }
+  void setStartupTodoPromptEnabled(bool enabled) =>
+      _setStartupTodoPromptEnabledImpl(enabled);
 
-  void setStartupTodoPromptEnabled(bool enabled) {
-    if (_startupTodoPromptEnabled == enabled) {
-      return;
-    }
-    _startupTodoPromptEnabled = enabled;
-    _settings.saveStartupTodoPromptEnabled(enabled);
-    notifyListeners();
-  }
+  void suppressStartupTodoPromptForToday() =>
+      _suppressStartupTodoPromptForTodayImpl();
 
-  void suppressStartupTodoPromptForToday() {
-    final today = _todayDateKey();
-    if (_startupTodoPromptSuppressedDate == today) {
-      return;
-    }
-    _startupTodoPromptSuppressedDate = today;
-    _settings.saveStartupTodoPromptSuppressedDate(today);
-    notifyListeners();
-  }
+  Future<void> refreshStartupTodoPromptContent({bool force = false}) =>
+      _refreshStartupTodoPromptContentImpl(force: force);
 
-  Future<void> refreshStartupTodoPromptContent({bool force = false}) async {
-    await Future.wait(<Future<void>>[
-      _refreshStartupDailyQuote(force: force),
-      _refreshWeatherSnapshot(force: force),
-    ]);
-  }
+  Future<void> refreshWeather({bool force = false}) =>
+      _refreshWeatherImpl(force: force);
 
-  Future<void> refreshWeather({bool force = false}) async {
-    if (!_weatherEnabled) return;
-    await _refreshWeatherSnapshot(force: force);
-  }
-
-  void refreshWeatherIfStale() {
-    if (!_weatherEnabled || _weatherLoading || !_isWeatherStale()) {
-      return;
-    }
-    unawaited(refreshWeather());
-  }
+  void refreshWeatherIfStale() => _refreshWeatherIfStaleImpl();
 
   @override
   void didChangeLocales(List<Locale>? locales) {
     super.didChangeLocales(locales);
-    if (!_uiLanguageFollowsSystem) return;
-    final resolved = _resolveSystemUiLanguage();
-    if (_uiLanguage == resolved) return;
-    _log.i(
-      'app_state',
-      'sync ui language from system locale change',
-      data: <String, Object?>{'from': _uiLanguage, 'to': resolved},
-    );
-    _uiLanguage = resolved;
-    _refreshLocalizedWordbookNames();
-    notifyListeners();
+    _didChangeLocalesImpl(locales);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_pollPendingTodoReminderLaunch());
-    }
+    _didChangeAppLifecycleStateImpl(state);
   }
 
-  int? consumePendingTodoReminderLaunchId() {
-    final pending = _pendingTodoReminderLaunchId;
-    _pendingTodoReminderLaunchId = null;
-    return pending;
-  }
+  int? consumePendingTodoReminderLaunchId() =>
+      _consumePendingTodoReminderLaunchIdImpl();
 
-  void setTestModeEnabled(bool enabled) {
-    _testModeEnabled = enabled;
-    _testModeRevealed = false;
-    _testModeHintRevealed = false;
-    _persistTestModeState();
-    notifyListeners();
-  }
+  void setTestModeEnabled(bool enabled) => _setTestModeEnabledImpl(enabled);
 
-  void toggleTestModeReveal() {
-    if (!_testModeEnabled) return;
-    _testModeRevealed = !_testModeRevealed;
-    _persistTestModeState();
-    notifyListeners();
-  }
+  void toggleTestModeReveal() => _toggleTestModeRevealImpl();
 
-  void toggleTestModeHint() {
-    if (!_testModeEnabled) return;
-    _testModeHintRevealed = !_testModeHintRevealed;
-    _persistTestModeState();
-    notifyListeners();
-  }
+  void toggleTestModeHint() => _toggleTestModeHintImpl();
 
-  void resetTestModeProgress() {
-    if (!_testModeEnabled) return;
-    if (!_testModeRevealed && !_testModeHintRevealed) return;
-    _testModeRevealed = false;
-    _testModeHintRevealed = false;
-    _persistTestModeState();
-    notifyListeners();
-  }
+  void resetTestModeProgress() => _resetTestModeProgressImpl();
 
   void recordPracticeSession({
     required String title,
@@ -770,74 +491,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     List<WordEntry>? weakEntries,
     Map<String, List<String>> weakReasonIdsByWord =
         const <String, List<String>>{},
-  }) {
-    final safeTotal = total < 0 ? 0 : total;
-    final safeRemembered = remembered.clamp(0, safeTotal).toInt();
-    if (safeTotal <= 0) return;
-
-    _ensurePracticeDate();
-    _practiceTodaySessions += 1;
-    _practiceTodayReviewed += safeTotal;
-    _practiceTodayRemembered += safeRemembered;
-    _practiceTotalSessions += 1;
-    _practiceTotalReviewed += safeTotal;
-    _practiceTotalRemembered += safeRemembered;
-    _practiceLastSessionTitle = title.trim();
-    final normalizedRememberedWords = _normalizePracticeWords(rememberedWords);
-    final normalizedWeakWords = _normalizePracticeWords(
-      weakWords,
-    ).where((word) => !normalizedRememberedWords.contains(word)).toList();
-    final rememberedSet = normalizedRememberedWords.toSet();
-    final weakSet = normalizedWeakWords.toSet();
-    final resolvedRememberedEntries = _resolveTrackedPracticeEntries(
-      preferredEntries: rememberedEntries,
-      fallbackWords: normalizedRememberedWords,
-    );
-    final resolvedWeakEntries = _resolveTrackedPracticeEntries(
-      preferredEntries: weakEntries,
-      fallbackWords: normalizedWeakWords,
-    );
-    final normalizedWeakReasonsByWord = _normalizePracticeWeakReasonMap(
-      weakReasonIdsByWord,
-      normalizedWeakWords,
-    );
-    _updateRememberedWordsStatus(
-      rememberedWords: normalizedRememberedWords,
-      weakWords: normalizedWeakWords,
-    );
-
-    _practiceRememberedWords = _mergePracticeWords(
-      primary: normalizedRememberedWords,
-      existing: _practiceRememberedWords,
-      excluded: weakSet,
-    );
-    _practiceWeakWords = _mergePracticeWords(
-      primary: normalizedWeakWords,
-      existing: _practiceWeakWords,
-      excluded: rememberedSet,
-    );
-    _cachePracticeTrackedEntries(
-      rememberedEntries: resolvedRememberedEntries,
-      weakEntries: resolvedWeakEntries,
-    );
-    _updatePracticeWeakReasonMap(
-      rememberedWords: normalizedRememberedWords,
-      weakWords: normalizedWeakWords,
-      weakReasonsByWord: normalizedWeakReasonsByWord,
-    );
-    _updateWordMemoryProgress(
-      rememberedEntries: resolvedRememberedEntries,
-      weakEntries: resolvedWeakEntries,
-    );
-    _appendPracticeSessionHistory(
-      title: title,
-      total: safeTotal,
-      remembered: safeRemembered,
-      weakReasonIdsByWord: normalizedWeakReasonsByWord,
-    );
-    _persistPracticeDashboard();
-    notifyListeners();
-  }
+  }) => _recordPracticeSessionImpl(
+    title: title,
+    total: total,
+    remembered: remembered,
+    rememberedWords: rememberedWords,
+    weakWords: weakWords,
+    rememberedEntries: rememberedEntries,
+    weakEntries: weakEntries,
+    weakReasonIdsByWord: weakReasonIdsByWord,
+  );
 
   List<WordEntry> beginPracticeBatch({
     required String cursorKey,
@@ -845,267 +508,33 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required int batchSize,
     WordEntry? anchorWord,
     int? cursorAdvance,
-  }) {
-    if (sourceWords.isEmpty || batchSize <= 0) {
-      return const <WordEntry>[];
-    }
+  }) => _beginPracticeBatchImpl(
+    cursorKey: cursorKey,
+    sourceWords: sourceWords,
+    batchSize: batchSize,
+    anchorWord: anchorWord,
+    cursorAdvance: cursorAdvance,
+  );
 
-    final safeBatchSize = math.min(batchSize, sourceWords.length);
-    final safeCursorAdvance = math.min(
-      sourceWords.length,
-      math.max(cursorAdvance ?? safeBatchSize, 1),
-    );
-    final normalizedKey = cursorKey.trim();
-    final anchorIndex = anchorWord == null
-        ? -1
-        : _indexOfWordEntry(sourceWords, anchorWord);
-    final storedCursor = normalizedKey.isEmpty
-        ? 0
-        : (_practiceLaunchCursors[normalizedKey] ?? 0) % sourceWords.length;
-    final startIndex = anchorIndex >= 0 ? anchorIndex : storedCursor;
-    final batch = <WordEntry>[];
-    for (var offset = 0; offset < safeBatchSize; offset += 1) {
-      final index = (startIndex + offset) % sourceWords.length;
-      batch.add(sourceWords[index]);
-    }
+  void setSearchQuery(String value) => _setSearchQueryImpl(value);
 
-    if (normalizedKey.isNotEmpty) {
-      _ensurePracticeDate();
-      _practiceLaunchCursors[normalizedKey] =
-          (startIndex + safeCursorAdvance) % sourceWords.length;
-      _persistPracticeDashboard();
-    }
-
-    return batch.toList(growable: false);
-  }
-
-  void setSearchQuery(String value) {
-    if (_searchQuery == value) return;
-    _searchQuery = value;
-    _invalidateVisibleWordsCache();
-    _ensureCurrentWordInScope();
-    _log.d(
-      'app_state',
-      'set search query',
-      data: <String, Object?>{
-        'query': value,
-        'mode': _searchMode.name,
-        'visibleCount': visibleWords.length,
-      },
-    );
-    notifyListeners();
-  }
-
-  void setSearchMode(SearchMode mode) {
-    if (_searchMode == mode) return;
-    _searchMode = mode;
-    _invalidateVisibleWordsCache();
-    _ensureCurrentWordInScope();
-    _log.d(
-      'app_state',
-      'set search mode',
-      data: <String, Object?>{
-        'mode': mode.name,
-        'query': _searchQuery,
-        'visibleCount': visibleWords.length,
-      },
-    );
-    notifyListeners();
-  }
+  void setSearchMode(SearchMode mode) => _setSearchModeImpl(mode);
 
   Future<void> selectWordbook(
     Wordbook? wordbook, {
     String? focusWord,
     int? focusWordId,
-  }) async {
-    if (wordbook == null) return;
-    final shouldFollowPlayingWord =
-        (focusWordId == null) &&
-        ((focusWord ?? '').trim().isEmpty) &&
-        _isPlaying &&
-        _playingWordbookId == wordbook.id &&
-        _playingScopeWords.isNotEmpty;
-    if (shouldFollowPlayingWord) {
-      final playingIndex = _playingScopeIndex.clamp(
-        0,
-        _playingScopeWords.length - 1,
-      );
-      final playingEntry = _playingScopeWords[playingIndex];
-      focusWordId = playingEntry.id;
-      focusWord = playingEntry.word;
-    }
-    final normalizedFocusWord = focusWord?.trim();
-    final previousSelection = _selectedWordbook;
-    _log.i(
-      'app_state',
-      'select wordbook',
-      data: <String, Object?>{
-        'id': wordbook.id,
-        'name': wordbook.name,
-        'path': wordbook.path,
-        'focusWordId': focusWordId,
-        'focusWord': focusWord,
-      },
-    );
-    if (_database.isLazyBuiltInPath(wordbook.path) && wordbook.wordCount <= 0) {
-      final lazyWordbookId = wordbook.id;
-      final lazyWordbookName = wordbook.name;
-      final lazyPath = wordbook.path;
-      _setBusy(
-        true,
-        messageKey: 'busyLoadingWordbook',
-        params: <String, Object?>{'name': lazyWordbookName},
-      );
-      try {
-        await _database.ensureBuiltInWordbookLoaded(lazyPath);
-        await _reloadWordbooks(keepCurrentSelection: false);
-        wordbook =
-            _wordbooks
-                .where((item) => item.path == lazyPath)
-                .cast<Wordbook?>()
-                .firstOrNull ??
-            wordbook;
-      } catch (error, stackTrace) {
-        _log.e(
-          'app_state',
-          'lazy built-in wordbook load failed',
-          error: error,
-          stackTrace: stackTrace,
-          data: <String, Object?>{
-            'id': lazyWordbookId,
-            'name': lazyWordbookName,
-            'path': lazyPath,
-          },
-        );
-        _selectedWordbook = previousSelection;
-        _setMessage(
-          'errorImportFailed',
-          params: <String, Object?>{'error': error},
-        );
-        return;
-      } finally {
-        _setBusy(false);
-      }
-    }
-    _selectedWordbook = wordbook;
-    _setWords(_database.getWords(wordbook.id));
-    if (shouldFollowPlayingWord && _searchQuery.trim().isNotEmpty) {
-      final matchesFocusedWord = _scopeWords.any(
-        (item) =>
-            (focusWordId != null && item.id == focusWordId) ||
-            ((normalizedFocusWord ?? '').isNotEmpty &&
-                item.word == normalizedFocusWord),
-      );
-      if (!matchesFocusedWord) {
-        _searchQuery = '';
-        _invalidateVisibleWordsCache();
-      }
-    }
-    _currentWordIndex = 0;
-    if (focusWordId != null) {
-      final index = _words.indexWhere((item) => item.id == focusWordId);
-      if (index >= 0) {
-        _currentWordIndex = index;
-      }
-    }
-    if (_currentWordIndex == 0 && (normalizedFocusWord ?? '').isNotEmpty) {
-      final index = _words.indexWhere(
-        (item) => item.word == normalizedFocusWord,
-      );
-      if (index >= 0) {
-        _currentWordIndex = index;
-      }
-    }
-    _ensureCurrentWordInScope();
-    resetTestModeProgress();
-    notifyListeners();
-    if (previousSelection?.id != wordbook.id) {
-      await _syncPlaybackToSelectedWordbook(wordbook);
-    }
-  }
+  }) => _selectWordbookImpl(
+    wordbook,
+    focusWord: focusWord,
+    focusWordId: focusWordId,
+  );
 
-  Future<void> _syncPlaybackToSelectedWordbook(Wordbook wordbook) async {
-    if (!_isPlaying || _isPaused || _playingWordbookId == wordbook.id) {
-      return;
-    }
+  void selectWordIndex(int index) => _selectWordIndexImpl(index);
 
-    final scopeWords = _scopeWords;
-    if (scopeWords.isEmpty) {
-      await stop();
-      return;
-    }
+  void selectWordByText(String word) => _selectWordByTextImpl(word);
 
-    final activeWord = currentWord;
-    var startIndex = 0;
-    if (activeWord != null) {
-      final scopedIndex = _indexOfWordEntry(scopeWords, activeWord);
-      if (scopedIndex >= 0) {
-        startIndex = scopedIndex;
-      }
-    }
-    final words = List<WordEntry>.from(scopeWords);
-    final safeStart = startIndex.clamp(0, words.length - 1);
-    final syncToken = ++_wordbookPlaybackSyncToken;
-
-    _log.i(
-      'app_state',
-      'sync playback to selected wordbook',
-      data: <String, Object?>{
-        'selectedWordbookId': wordbook.id,
-        'selectedWordbookName': wordbook.name,
-        'playingWordbookId': _playingWordbookId,
-        'startIndex': safeStart,
-        'startWordId': words[safeStart].id,
-        'startWord': words[safeStart].word,
-      },
-    );
-
-    _playingWordbookId = wordbook.id;
-    _playingWordbookName = wordbook.name;
-    _playingScopeWords = words;
-    _playingScopeIndex = safeStart;
-    _playingWord = words[safeStart].word;
-    _currentUnit = 0;
-    _totalUnits = 0;
-    _activeUnit = null;
-    notifyListeners();
-
-    _playSessionId += 1;
-    await _playback.stop();
-    if (syncToken != _wordbookPlaybackSyncToken) return;
-    if (_selectedWordbook?.id != wordbook.id) return;
-
-    unawaited(
-      _startPlaySession(
-        scopeWords: words,
-        startIndex: safeStart,
-        playingWordbookId: wordbook.id,
-        playingWordbookName: wordbook.name,
-      ),
-    );
-  }
-
-  void selectWordIndex(int index) {
-    if (index < 0 || index >= _words.length) return;
-    _currentWordIndex = index;
-    resetTestModeProgress();
-    notifyListeners();
-  }
-
-  void selectWordByText(String word) {
-    final index = _words.indexWhere((item) => item.word == word);
-    if (index >= 0) {
-      _currentWordIndex = index;
-      resetTestModeProgress();
-      notifyListeners();
-    }
-  }
-
-  void selectWordEntry(WordEntry entry) {
-    _setCurrentWordByEntry(entry);
-    resetTestModeProgress();
-    notifyListeners();
-  }
+  void selectWordEntry(WordEntry entry) => _selectWordEntryImpl(entry);
 
   Future<void> createWordbook(String name) async {
     if (name.trim().isEmpty) return;
@@ -1635,57 +1064,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    final now = DateTime.now();
-    final notebookEntries =
-        (wrongNotebookEntries ?? practiceWrongNotebookEntries).toList(
-          growable: false,
-        );
-    final sessions = (records ?? practiceSessionHistory).toList(
-      growable: false,
-    );
-    final overallReasonCounts = <String, int>{};
-    for (final session in sessions) {
-      for (final entry in session.weakReasonCounts.entries) {
-        overallReasonCounts.update(
-          entry.key,
-          (value) => value + entry.value,
-          ifAbsent: () => entry.value,
-        );
-      }
-    }
-    return <String, Object?>{
-      'exported_at': now.toIso8601String(),
-      'schema_version': 1,
-      'summary': <String, Object?>{
-        'todaySessions': _practiceTodaySessions,
-        'todayReviewed': _practiceTodayReviewed,
-        'todayRemembered': _practiceTodayRemembered,
-        'totalSessions': _practiceTotalSessions,
-        'totalReviewed': _practiceTotalReviewed,
-        'totalRemembered': _practiceTotalRemembered,
-        'todayAccuracy': practiceTodayAccuracy,
-        'totalAccuracy': practiceTotalAccuracy,
-        'lastSessionTitle': _practiceLastSessionTitle,
-        'defaultQuestionType': _practiceDefaultQuestionType.storageValue,
-      },
-      'metadata': metadata,
-      'weakReasonCounts': overallReasonCounts,
-      'sessionHistory': sessions.map((record) => record.toMap()).toList(),
-      'wrongNotebook': notebookEntries
-          .map(
-            (entry) => <String, Object?>{
-              'id': entry.id,
-              'wordbookId': entry.wordbookId,
-              'word': entry.word,
-              'meaning': _practiceMeaningText(entry),
-              'reasons': practiceWeakReasonsForWord(entry),
-              'memoryProgress': memoryProgressForWordEntry(entry)?.toMap(),
-            },
-          )
-          .toList(growable: false),
-    };
-  }
+  }) => _buildPracticeReviewExportPayloadImpl(
+    records: records,
+    wrongNotebookEntries: wrongNotebookEntries,
+    metadata: metadata,
+  );
 
   Future<String?> exportPracticeReviewData({
     required PracticeExportFormat format,
@@ -1694,67 +1077,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    _setBusy(true, messageKey: 'processing');
-    try {
-      final contents = switch (format) {
-        PracticeExportFormat.json => const JsonEncoder.withIndent('  ').convert(
-          buildPracticeReviewExportPayload(
-            records: records,
-            wrongNotebookEntries: wrongNotebookEntries,
-            metadata: metadata,
-          ),
-        ),
-        PracticeExportFormat.csv => _buildPracticeReviewCsv(records: records),
-      };
-      return await _database.writeTextExport(
-        contents: contents,
-        defaultFileStem: 'xianyushengxi_practice_review',
-        extension: format.extension,
-        directoryPath: directoryPath,
-        fileName: fileName,
-      );
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'export practice review failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      _setMessage(
-        'errorExportFailed',
-        params: <String, Object?>{'error': error},
-      );
-      return null;
-    } finally {
-      _setBusy(false);
-    }
-  }
+  }) => _exportPracticeReviewDataImpl(
+    format: format,
+    directoryPath: directoryPath,
+    fileName: fileName,
+    records: records,
+    wrongNotebookEntries: wrongNotebookEntries,
+    metadata: metadata,
+  );
 
   Map<String, Object?> buildPracticeWrongNotebookExportPayload({
     required Iterable<WordEntry> entries,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) {
-    final resolvedEntries = _dedupePracticeEntries(entries);
-    return <String, Object?>{
-      'exported_at': DateTime.now().toIso8601String(),
-      'schema_version': 1,
-      'count': resolvedEntries.length,
-      'metadata': metadata,
-      'entries': resolvedEntries
-          .map(
-            (entry) => <String, Object?>{
-              'id': entry.id,
-              'wordbookId': entry.wordbookId,
-              'word': entry.word,
-              'meaning': _practiceMeaningText(entry),
-              'reasons': practiceWeakReasonsForWord(entry),
-              'memoryProgress': memoryProgressForWordEntry(entry)?.toMap(),
-            },
-          )
-          .toList(growable: false),
-    };
-  }
+  }) => _buildPracticeWrongNotebookExportPayloadImpl(
+    entries: entries,
+    metadata: metadata,
+  );
 
   Future<String?> exportPracticeWrongNotebookData({
     required Iterable<WordEntry> entries,
@@ -1762,130 +1100,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     String? directoryPath,
     String? fileName,
     Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    _setBusy(true, messageKey: 'processing');
-    try {
-      final resolvedEntries = _dedupePracticeEntries(entries);
-      final contents = switch (format) {
-        PracticeExportFormat.json => const JsonEncoder.withIndent('  ').convert(
-          buildPracticeWrongNotebookExportPayload(
-            entries: resolvedEntries,
-            metadata: metadata,
-          ),
-        ),
-        PracticeExportFormat.csv => _buildPracticeWrongNotebookCsv(
-          resolvedEntries,
-        ),
-      };
-      return await _database.writeTextExport(
-        contents: contents,
-        defaultFileStem: 'xianyushengxi_wrong_notebook',
-        extension: format.extension,
-        directoryPath: directoryPath,
-        fileName: fileName,
-      );
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'export practice wrong notebook failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      _setMessage(
-        'errorExportFailed',
-        params: <String, Object?>{'error': error},
-      );
-      return null;
-    } finally {
-      _setBusy(false);
-    }
-  }
-
-  String _buildPracticeReviewCsv({Iterable<PracticeSessionRecord>? records}) {
-    final sessions = (records ?? _practiceSessionHistory).toList(
-      growable: false,
-    );
-    final rows = <List<String>>[
-      <String>[
-        'title',
-        'practiced_at',
-        'total',
-        'remembered',
-        'weak_count',
-        'accuracy_percent',
-        ...practiceWeakReasonIds,
-      ],
-    ];
-    for (final record in sessions) {
-      rows.add(<String>[
-        record.title,
-        record.practicedAt.toIso8601String(),
-        '${record.total}',
-        '${record.remembered}',
-        '${record.weakCount}',
-        '${(record.accuracy * 100).round()}',
-        for (final reason in practiceWeakReasonIds)
-          '${record.weakReasonCounts[reason] ?? 0}',
-      ]);
-    }
-
-    String escape(String value) {
-      final normalized = value.replaceAll('"', '""');
-      if (normalized.contains(',') ||
-          normalized.contains('\n') ||
-          normalized.contains('\r')) {
-        return '"$normalized"';
-      }
-      return normalized;
-    }
-
-    return rows.map((row) => row.map(escape).join(',')).join('\n');
-  }
-
-  String _buildPracticeWrongNotebookCsv(Iterable<WordEntry> entries) {
-    final rows = <List<String>>[
-      <String>[
-        'word',
-        'meaning',
-        'wordbook_id',
-        'reasons',
-        'times_played',
-        'times_correct',
-        'accuracy_percent',
-        'next_review',
-      ],
-    ];
-    for (final entry in entries) {
-      final progress = memoryProgressForWordEntry(entry);
-      final timesPlayed = progress?.timesPlayed ?? 0;
-      final timesCorrect = progress?.timesCorrect ?? 0;
-      final accuracy = timesPlayed <= 0
-          ? 0
-          : ((timesCorrect / timesPlayed) * 100).round();
-      rows.add(<String>[
-        entry.word,
-        _practiceMeaningText(entry),
-        '${entry.wordbookId}',
-        practiceWeakReasonsForWord(entry).join('|'),
-        '$timesPlayed',
-        '$timesCorrect',
-        '$accuracy',
-        progress?.nextReview?.toIso8601String() ?? '',
-      ]);
-    }
-
-    String escape(String value) {
-      final normalized = value.replaceAll('"', '""');
-      if (normalized.contains(',') ||
-          normalized.contains('\n') ||
-          normalized.contains('\r')) {
-        return '"$normalized"';
-      }
-      return normalized;
-    }
-
-    return rows.map((row) => row.map(escape).join(',')).join('\n');
-  }
+  }) => _exportPracticeWrongNotebookDataImpl(
+    entries: entries,
+    format: format,
+    directoryPath: directoryPath,
+    fileName: fileName,
+    metadata: metadata,
+  );
 
   Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) async {
     _setBusy(
@@ -1951,370 +1172,25 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  Future<void> play() async {
-    final selected = _selectedWordbook;
-    final scopeWords = _scopeWords;
-    if (selected == null || scopeWords.isEmpty || _isPlaying) {
-      _log.w(
-        'app_state',
-        'play ignored',
-        data: <String, Object?>{
-          'selectedWordbook': selected?.id,
-          'scopeWords': scopeWords.length,
-          'isPlaying': _isPlaying,
-        },
-      );
-      return;
-    }
+  Future<void> play() => _playImpl();
 
-    final activeWord = currentWord;
-    var startIndex = 0;
-    if (activeWord != null) {
-      final scopedIndex = _indexOfWordEntry(scopeWords, activeWord);
-      if (scopedIndex >= 0) startIndex = scopedIndex;
-    }
-    _log.i(
-      'app_state',
-      'play requested',
-      data: <String, Object?>{
-        'wordbookId': selected.id,
-        'wordbookName': selected.name,
-        'scopeWords': scopeWords.length,
-        'startIndex': startIndex,
-        'activeWord': activeWord?.word,
-        'searchMode': _searchMode.name,
-        'searchQuery': _searchQuery,
-        'provider': _config.tts.provider.name,
-        'model': _config.tts.model,
-        'voice': _config.tts.activeVoice,
-      },
-    );
+  Future<void> pauseOrResume() => _pauseOrResumeImpl();
 
-    await _startPlaySession(
-      scopeWords: scopeWords,
-      startIndex: startIndex,
-      playingWordbookId: selected.id,
-      playingWordbookName: selected.name,
-    );
-  }
+  Future<void> stop() => _stopPlaybackImpl();
 
-  Future<void> _startPlaySession({
-    required List<WordEntry> scopeWords,
-    required int startIndex,
-    required int playingWordbookId,
-    required String playingWordbookName,
-  }) async {
-    if (scopeWords.isEmpty) return;
-    final words = List<WordEntry>.from(scopeWords);
-    final safeStart = startIndex.clamp(0, words.length - 1);
-    final sessionId = ++_playSessionId;
+  Future<void> skipCurrentWord() => _skipCurrentWordImpl();
 
-    _isPlaying = true;
-    _isPaused = false;
-    _playingWordbookId = playingWordbookId;
-    _playingWordbookName = playingWordbookName;
-    _playingScopeWords = words;
-    _playingScopeIndex = safeStart;
-    _playingWord = words[safeStart].word;
-    _currentUnit = 0;
-    _totalUnits = 0;
-    _activeUnit = null;
-    notifyListeners();
+  Future<void> playPreviousWord() => _playPreviousWordImpl();
 
-    try {
-      await _playback.playWords(
-        words: words,
-        startIndex: safeStart,
-        config: _config,
-        onWordChanged: (index, word) {
-          if (sessionId != _playSessionId) return;
-          final nextWord = (index >= 0 && index < words.length)
-              ? words[index]
-              : word;
-          final mappedIndex = _indexOfWordEntry(words, nextWord);
-          if (mappedIndex >= 0) {
-            _playingScopeIndex = mappedIndex;
-          } else if (index >= 0 && index < words.length) {
-            _playingScopeIndex = index;
-          }
-          _playingWord = nextWord.word;
-          if (_selectedWordbook?.id == _playingWordbookId) {
-            _setCurrentWordByEntry(nextWord);
-            resetTestModeProgress();
-          }
-          notifyListeners();
-        },
-        onUnitChanged: (current, total, unit) {
-          if (sessionId != _playSessionId) return;
-          _currentUnit = current;
-          _totalUnits = total;
-          _activeUnit = unit;
-          notifyListeners();
-        },
-        onFinished: () {
-          if (sessionId != _playSessionId) return;
-          _log.i(
-            'app_state',
-            'playback finished callback',
-            data: <String, Object?>{
-              'wordbookId': _playingWordbookId,
-              'scopeWords': words.length,
-            },
-          );
-          _clearPlaybackSession(notify: true);
-        },
-      );
-    } catch (error, stackTrace) {
-      if (sessionId != _playSessionId) return;
-      _log.e(
-        'app_state',
-        'playback crashed',
-        error: error,
-        stackTrace: stackTrace,
-        data: <String, Object?>{
-          'wordbookId': _playingWordbookId,
-          'scopeWords': words.length,
-          'startIndex': safeStart,
-        },
-      );
-      _setMessage(
-        'errorInitFailed',
-        params: <String, Object?>{'error': 'playback: $error'},
-      );
-      _clearPlaybackSession(notify: true);
-    }
-  }
+  Future<void> playNextWord() => _playNextWordImpl();
 
-  Future<void> pauseOrResume() async {
-    if (!_isPlaying) {
-      _log.w('app_state', 'pauseOrResume ignored because not playing');
-      return;
-    }
-    _log.i(
-      'app_state',
-      _isPaused ? 'resume requested' : 'pause requested',
-      data: <String, Object?>{
-        'provider': _config.tts.provider.name,
-        'currentUnit': _currentUnit,
-        'totalUnits': _totalUnits,
-      },
-    );
-    try {
-      if (_isPaused) {
-        await _playback.resume();
-        _isPaused = false;
-      } else {
-        await _playback.pause();
-        _isPaused = true;
-      }
-      notifyListeners();
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'pauseOrResume failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      _setMessage(
-        'errorInitFailed',
-        params: <String, Object?>{'error': 'pause/resume: $error'},
-      );
-      notifyListeners();
-    }
-  }
+  Future<void> jumpToPlayingWordbook() => _jumpToPlayingWordbookImpl();
 
-  Future<void> stop() async {
-    _log.i(
-      'app_state',
-      'stop requested',
-      data: <String, Object?>{
-        'isPlaying': _isPlaying,
-        'isPaused': _isPaused,
-        'currentUnit': _currentUnit,
-        'totalUnits': _totalUnits,
-      },
-    );
-    try {
-      _playSessionId += 1;
-      await _playback.stop();
-    } catch (error, stackTrace) {
-      _log.e('app_state', 'stop failed', error: error, stackTrace: stackTrace);
-    } finally {
-      _clearPlaybackSession(notify: true);
-    }
-  }
+  Future<void> playCurrentWordbook() => _playCurrentWordbookImpl();
 
-  Future<void> skipCurrentWord() => _playback.skipCurrentWord();
+  Future<void> movePlaybackPreviousWord() => _movePlaybackPreviousWordImpl();
 
-  Future<void> playPreviousWord() async {
-    final scopeWords = _scopeWords;
-    if (scopeWords.isEmpty) return;
-    final current = currentWord;
-    final currentScopeIndex = current == null
-        ? 0
-        : _indexOfWordEntry(scopeWords, current);
-    final safeIndex = currentScopeIndex < 0 ? 0 : currentScopeIndex;
-    final nextScopeIndex =
-        (safeIndex - 1 + scopeWords.length) % scopeWords.length;
-    _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
-    resetTestModeProgress();
-    _log.i(
-      'app_state',
-      'browse previous requested',
-      data: <String, Object?>{
-        'fromIndex': safeIndex,
-        'toIndex': nextScopeIndex,
-        'word': scopeWords[nextScopeIndex].word,
-      },
-    );
-    notifyListeners();
-  }
-
-  Future<void> playNextWord() async {
-    final scopeWords = _scopeWords;
-    if (scopeWords.isEmpty) return;
-    final current = currentWord;
-    final currentScopeIndex = current == null
-        ? 0
-        : _indexOfWordEntry(scopeWords, current);
-    final safeIndex = currentScopeIndex < 0 ? 0 : currentScopeIndex;
-    final nextScopeIndex = (safeIndex + 1) % scopeWords.length;
-    _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
-    resetTestModeProgress();
-    _log.i(
-      'app_state',
-      'browse next requested',
-      data: <String, Object?>{
-        'fromIndex': safeIndex,
-        'toIndex': nextScopeIndex,
-        'word': scopeWords[nextScopeIndex].word,
-      },
-    );
-    notifyListeners();
-  }
-
-  Future<void> jumpToPlayingWordbook() async {
-    final playingId = _playingWordbookId;
-    if (playingId == null) return;
-    final target = _wordbooks
-        .where((book) => book.id == playingId)
-        .cast<Wordbook?>()
-        .firstOrNull;
-    if (target == null) return;
-    final focusIndex = _playingScopeWords.isEmpty
-        ? null
-        : _playingScopeIndex.clamp(0, _playingScopeWords.length - 1);
-    final focusEntry = focusIndex == null
-        ? null
-        : _playingScopeWords[focusIndex];
-    final focusWord = focusEntry?.word ?? _playingWord;
-    await selectWordbook(
-      target,
-      focusWord: focusWord,
-      focusWordId: focusEntry?.id,
-    );
-    final hasFocusedEntry = focusEntry != null
-        ? _scopeWords.any((item) => _isSameWordEntry(item, focusEntry))
-        : (focusWord != null
-              ? _scopeWords.any((item) => item.word == focusWord)
-              : true);
-    if (_searchQuery.trim().isNotEmpty && !hasFocusedEntry) {
-      _searchQuery = '';
-      await selectWordbook(
-        target,
-        focusWord: focusWord,
-        focusWordId: focusEntry?.id,
-      );
-    }
-  }
-
-  Future<void> playCurrentWordbook() async {
-    if (_selectedWordbook == null) return;
-    if (_isPlaying) {
-      await stop();
-    }
-    await play();
-  }
-
-  Future<void> movePlaybackPreviousWord() async {
-    if (!_isPlaying || _playingScopeWords.isEmpty) return;
-    final current = _playingScopeIndex.clamp(0, _playingScopeWords.length - 1);
-    final target =
-        (current - 1 + _playingScopeWords.length) % _playingScopeWords.length;
-    await _restartPlaybackFromPlayingScope(target);
-  }
-
-  Future<void> movePlaybackNextWord() async {
-    if (!_isPlaying || _playingScopeWords.isEmpty) return;
-    final current = _playingScopeIndex.clamp(0, _playingScopeWords.length - 1);
-    final target = (current + 1) % _playingScopeWords.length;
-    await _restartPlaybackFromPlayingScope(target);
-  }
-
-  Future<void> _restartPlaybackFromPlayingScope(int targetIndex) async {
-    _queuedPlaybackScopeTarget = targetIndex;
-    if (_playbackScopeRestarting) {
-      _log.d(
-        'app_state',
-        'restart playback queued',
-        data: <String, Object?>{
-          'queuedTarget': _queuedPlaybackScopeTarget,
-          'playingScopeSize': _playingScopeWords.length,
-        },
-      );
-      return;
-    }
-    _playbackScopeRestarting = true;
-    try {
-      while (_queuedPlaybackScopeTarget != null) {
-        final pending = _queuedPlaybackScopeTarget!;
-        _queuedPlaybackScopeTarget = null;
-        await _restartPlaybackFromPlayingScopeInternal(pending);
-        if (!_isPlaying) break;
-      }
-    } finally {
-      _playbackScopeRestarting = false;
-    }
-  }
-
-  Future<void> _restartPlaybackFromPlayingScopeInternal(int targetIndex) async {
-    final playingId = _playingWordbookId;
-    final playingName = _playingWordbookName;
-    if (playingId == null ||
-        playingName == null ||
-        _playingScopeWords.isEmpty) {
-      return;
-    }
-    final words = List<WordEntry>.from(_playingScopeWords);
-    final safeTarget = targetIndex.clamp(0, words.length - 1);
-    _log.i(
-      'app_state',
-      'restart playback from scope index',
-      data: <String, Object?>{
-        'wordbookId': playingId,
-        'targetIndex': safeTarget,
-        'targetWordId': words[safeTarget].id,
-        'targetWord': words[safeTarget].word,
-      },
-    );
-    _playingScopeIndex = safeTarget;
-    _playingWord = words[safeTarget].word;
-    if (_selectedWordbook?.id == playingId) {
-      _setCurrentWordByEntry(words[safeTarget]);
-      resetTestModeProgress();
-      notifyListeners();
-    }
-    _playSessionId += 1;
-    await _playback.stop();
-    unawaited(
-      _startPlaySession(
-        scopeWords: words,
-        startIndex: safeTarget,
-        playingWordbookId: playingId,
-        playingWordbookName: playingName,
-      ),
-    );
-  }
+  Future<void> movePlaybackNextWord() => _movePlaybackNextWordImpl();
 
   bool jumpByInitial(String initial) {
     final scopeWords = _scopeWords;
@@ -3388,781 +2264,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  bool _isWeatherStale() {
-    final snapshot = _weatherSnapshot;
-    if (snapshot == null) {
-      return true;
-    }
-    return DateTime.now().difference(snapshot.fetchedAt) >=
-        const Duration(minutes: 30);
-  }
-
-  Future<void> _refreshWeatherSnapshot({bool force = false}) async {
-    if (_weatherLoading) return;
-    if (!force && !_isWeatherStale()) return;
-
-    _weatherLoading = true;
-    notifyListeners();
-    try {
-      _weatherSnapshot = await _weatherService.fetchCurrentWeather();
-    } catch (error) {
-      _log.w(
-        'app_state',
-        'weather refresh failed',
-        data: <String, Object?>{'error': '$error'},
-      );
-    } finally {
-      _weatherLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> _refreshStartupDailyQuote({bool force = false}) async {
-    if (_startupDailyQuoteLoading) {
-      return;
-    }
-    final today = _todayDateKey();
-    final hasFreshQuote =
-        _startupDailyQuoteDateKey == today &&
-        (_startupDailyQuote?.trim().isNotEmpty ?? false);
-    if (!force && hasFreshQuote) {
-      return;
-    }
-
-    _startupDailyQuoteLoading = true;
-    notifyListeners();
-    try {
-      _startupDailyQuote = await _dailyQuoteService.fetchQuote();
-      _startupDailyQuoteDateKey = today;
-    } catch (error) {
-      _log.w(
-        'app_state',
-        'daily quote refresh failed',
-        data: <String, Object?>{'error': '$error'},
-      );
-    } finally {
-      _startupDailyQuoteLoading = false;
-      notifyListeners();
-    }
-  }
-
-  void _clearPlaybackSession({required bool notify}) {
-    _isPlaying = false;
-    _isPaused = false;
-    _currentUnit = 0;
-    _totalUnits = 0;
-    _activeUnit = null;
-    _playingWordbookId = null;
-    _playingWordbookName = null;
-    _playingWord = null;
-    _playingScopeWords = <WordEntry>[];
-    _playingScopeIndex = 0;
-    _queuedPlaybackScopeTarget = null;
-    _playbackScopeRestarting = false;
-    if (notify) {
-      notifyListeners();
-    }
-  }
-
-  void _loadPracticeDashboard() {
-    final data = _settings.loadPracticeDashboard();
-    _practiceTrackedEntriesByWord.clear();
-    _practiceDateKey = '${data['date'] ?? ''}'.trim();
-    _practiceTodaySessions = _readPracticeInt(data['todaySessions']);
-    _practiceTodayReviewed = _readPracticeInt(data['todayReviewed']);
-    _practiceTodayRemembered = _readPracticeInt(data['todayRemembered']);
-    _practiceTotalSessions = _readPracticeInt(data['totalSessions']);
-    _practiceTotalReviewed = _readPracticeInt(data['totalReviewed']);
-    _practiceTotalRemembered = _readPracticeInt(data['totalRemembered']);
-    _practiceLastSessionTitle = '${data['lastSessionTitle'] ?? ''}'.trim();
-    _practiceRememberedWords = _normalizePracticeWords(data['rememberedWords']);
-    final rememberedSet = _practiceRememberedWords.toSet();
-    _practiceWeakWords = _normalizePracticeWords(
-      data['weakWords'],
-    ).where((word) => !rememberedSet.contains(word)).toList(growable: false);
-    _practiceWeakWordReasons = _readPracticeWeakReasonMap(
-      data['weakReasonIdsByWord'],
-    );
-    _practiceSessionHistory = _readPracticeSessionHistory(data['history']);
-    final sessionPrefs = _readPracticeSessionPreferences(data['sessionPrefs']);
-    _practiceAutoAddWeakWordsToTask =
-        sessionPrefs['autoAddWeakWordsToTask'] == true;
-    _practiceAutoPlayPronunciation =
-        sessionPrefs['autoPlayPronunciation'] == true;
-    _practiceShowHintsByDefault = sessionPrefs['showHintsByDefault'] == true;
-    _practiceDefaultQuestionType = PracticeQuestionType.fromStorage(
-      '${sessionPrefs['defaultQuestionType'] ?? ''}',
-    );
-    _practiceLaunchCursors = _readPracticeLaunchCursors(data['launchCursors']);
-    _practiceTrackedEntriesByWord.addAll(
-      _readTrackedPracticeEntries(data['trackedEntries']),
-    );
-    _prunePracticeTrackedEntries();
-    _prunePracticeWeakReasons();
-  }
-
-  int _readPracticeInt(Object? value) {
-    if (value is int) return value < 0 ? 0 : value;
-    if (value is num) {
-      final parsed = value.toInt();
-      return parsed < 0 ? 0 : parsed;
-    }
-    return 0;
-  }
-
-  Map<String, int> _readPracticeLaunchCursors(Object? value) {
-    if (value is! Map) {
-      return <String, int>{};
-    }
-    final parsed = <String, int>{};
-    for (final entry in value.entries) {
-      final key = '${entry.key}'.trim();
-      if (key.isEmpty) {
-        continue;
-      }
-      final index = _readPracticeInt(entry.value);
-      parsed[key] = index;
-    }
-    return parsed;
-  }
-
-  void _ensurePracticeDate({bool persist = false}) {
-    final today = _todayDateKey();
-    if (_practiceDateKey == today) return;
-    _practiceDateKey = today;
-    _practiceTodaySessions = 0;
-    _practiceTodayReviewed = 0;
-    _practiceTodayRemembered = 0;
-    if (persist) {
-      _persistPracticeDashboard();
-    }
-  }
-
-  String _todayDateKey() {
-    final now = DateTime.now();
-    final month = now.month.toString().padLeft(2, '0');
-    final day = now.day.toString().padLeft(2, '0');
-    return '${now.year}-$month-$day';
-  }
-
-  void _persistPracticeDashboard() {
-    _settings.savePracticeDashboard(<String, Object?>{
-      'date': _practiceDateKey,
-      'todaySessions': _practiceTodaySessions,
-      'todayReviewed': _practiceTodayReviewed,
-      'todayRemembered': _practiceTodayRemembered,
-      'totalSessions': _practiceTotalSessions,
-      'totalReviewed': _practiceTotalReviewed,
-      'totalRemembered': _practiceTotalRemembered,
-      'lastSessionTitle': _practiceLastSessionTitle,
-      'rememberedWords': _practiceRememberedWords,
-      'weakWords': _practiceWeakWords,
-      'weakReasonIdsByWord': _practiceWeakWordReasons,
-      'history': _practiceSessionHistory
-          .map((record) => record.toMap())
-          .toList(growable: false),
-      'sessionPrefs': <String, Object?>{
-        'autoAddWeakWordsToTask': _practiceAutoAddWeakWordsToTask,
-        'autoPlayPronunciation': _practiceAutoPlayPronunciation,
-        'showHintsByDefault': _practiceShowHintsByDefault,
-        'defaultQuestionType': _practiceDefaultQuestionType.storageValue,
-      },
-      'launchCursors': _practiceLaunchCursors,
-      'trackedEntries': _serializeTrackedPracticeEntries(),
-    });
-  }
-
-  Map<String, Object?> _readPracticeSessionPreferences(Object? value) {
-    if (value is! Map) {
-      return const <String, Object?>{
-        'autoAddWeakWordsToTask': false,
-        'autoPlayPronunciation': false,
-        'showHintsByDefault': false,
-        'defaultQuestionType': 'flashcard',
-      };
-    }
-    return <String, Object?>{
-      'autoAddWeakWordsToTask': value['autoAddWeakWordsToTask'] == true,
-      'autoPlayPronunciation': value['autoPlayPronunciation'] == true,
-      'showHintsByDefault': value['showHintsByDefault'] == true,
-      'defaultQuestionType': '${value['defaultQuestionType'] ?? 'flashcard'}',
-    };
-  }
-
-  List<PracticeSessionRecord> _readPracticeSessionHistory(Object? value) {
-    if (value is! List) {
-      return <PracticeSessionRecord>[];
-    }
-    return value
-        .whereType<Map>()
-        .map(
-          (item) => PracticeSessionRecord.fromMap(item.cast<String, Object?>()),
-        )
-        .toList(growable: false);
-  }
-
-  Map<String, List<String>> _readPracticeWeakReasonMap(Object? value) {
-    if (value is! Map) {
-      return <String, List<String>>{};
-    }
-    final output = <String, List<String>>{};
-    for (final entry in value.entries) {
-      final key = _normalizeTrackedWord('${entry.key}');
-      if (key.isEmpty) {
-        continue;
-      }
-      final reasons = _sanitizePracticeWeakReasons(entry.value);
-      if (reasons.isNotEmpty) {
-        output[key] = reasons;
-      }
-    }
-    return output;
-  }
-
-  List<Map<String, Object?>> _serializeTrackedPracticeEntries() {
-    if (_practiceTrackedEntriesByWord.isEmpty) {
-      return const <Map<String, Object?>>[];
-    }
-    final entries = _practiceTrackedEntriesByWord.entries.toList(
-      growable: false,
-    )..sort((left, right) => left.key.compareTo(right.key));
-    return entries
-        .map((entry) => _serializeTrackedPracticeEntry(entry.value))
-        .toList(growable: false);
-  }
-
-  Map<String, Object?> _serializeTrackedPracticeEntry(WordEntry entry) {
-    return <String, Object?>{
-      'id': entry.id,
-      'wordbookId': entry.wordbookId,
-      'word': entry.word,
-      'meaning': entry.meaning,
-      'rawContent': entry.rawContent,
-      'fields': entry.fields
-          .map((field) => field.toJsonMap())
-          .toList(growable: false),
-    };
-  }
-
-  Map<String, WordEntry> _readTrackedPracticeEntries(Object? value) {
-    if (value is! List) {
-      return <String, WordEntry>{};
-    }
-    final entries = <String, WordEntry>{};
-    for (final item in value) {
-      if (item is! Map) {
-        continue;
-      }
-      final word = '${item['word'] ?? ''}'.trim();
-      final wordbookId = _readPracticeInt(item['wordbookId']);
-      if (word.isEmpty || wordbookId <= 0) {
-        continue;
-      }
-      final key = _normalizeTrackedWord(word);
-      if (key.isEmpty || entries.containsKey(key)) {
-        continue;
-      }
-      entries[key] = WordEntry(
-        id: _readPracticeTrackedWordId(item['id']),
-        wordbookId: wordbookId,
-        word: word,
-        meaning: '${item['meaning'] ?? ''}'.trim().isEmpty
-            ? null
-            : '${item['meaning']}'.trim(),
-        rawContent: '${item['rawContent'] ?? ''}',
-        fields: _readTrackedPracticeFields(item['fields']),
-      );
-    }
-    return entries;
-  }
-
-  int? _readPracticeTrackedWordId(Object? value) {
-    final parsed = _readPracticeInt(value);
-    return parsed > 0 ? parsed : null;
-  }
-
-  List<WordFieldItem> _readTrackedPracticeFields(Object? value) {
-    if (value is! List) {
-      return const <WordFieldItem>[];
-    }
-    final output = <WordFieldItem>[];
-    for (final item in value) {
-      if (item is! Map) {
-        continue;
-      }
-      final key = '${item['key'] ?? ''}'.trim();
-      if (key.isEmpty) {
-        continue;
-      }
-      final label = '${item['label'] ?? key}'.trim();
-      final rawValue = item['value'];
-      final fieldValue = switch (rawValue) {
-        List<dynamic>() =>
-          rawValue
-              .map((entry) => '$entry'.trim())
-              .where((entry) => entry.isNotEmpty)
-              .toList(growable: false),
-        _ => '$rawValue'.trim(),
-      };
-      output.add(
-        WordFieldItem(
-          key: key,
-          label: label.isEmpty ? key : label,
-          value: fieldValue,
-          style: WordFieldStyle.fromJsonMap(item['style']),
-        ),
-      );
-    }
-    return output;
-  }
-
-  List<WordEntry> _practiceEntriesFromWords(List<String> trackedWords) {
-    if (trackedWords.isEmpty) {
-      return const <WordEntry>[];
-    }
-    final byWord = <String, WordEntry>{};
-
-    void addEntries(Iterable<WordEntry> entries) {
-      for (final entry in entries) {
-        final key = _normalizeTrackedWord(entry.word);
-        if (key.isEmpty || byWord.containsKey(key)) {
-          continue;
-        }
-        byWord[key] = entry;
-      }
-    }
-
-    addEntries(_practiceTrackedEntriesByWord.values);
-    addEntries(_scopeWords);
-    addEntries(_words);
-    if (byWord.isEmpty) {
-      return const <WordEntry>[];
-    }
-
-    final output = <WordEntry>[];
-    for (final word in trackedWords) {
-      final entry = byWord[_normalizeTrackedWord(word)];
-      if (entry != null) {
-        output.add(entry);
-      }
-    }
-    return output;
-  }
-
-  List<WordEntry> _memoryStableEntries(List<WordEntry> words) {
-    final tracked = MemoryLaneSelector.selectStableEntries(
-      words: words,
-      progressByWordId: _wordMemoryProgressByWordId,
-    );
-    final remembered = _practiceEntriesFromWords(
-      _rememberedWords.toList(growable: false),
-    );
-    final practice = _practiceEntriesFromWords(_practiceRememberedWords);
-    return _mergeTrackedWordEntries(<List<WordEntry>>[
-      tracked,
-      remembered,
-      practice,
-    ]);
-  }
-
-  List<WordEntry> _memoryRecoveryEntries(List<WordEntry> words) {
-    final tracked = MemoryLaneSelector.selectRecoveryEntries(
-      words: words,
-      progressByWordId: _wordMemoryProgressByWordId,
-    );
-    final practice = _practiceEntriesFromWords(_practiceWeakWords);
-    final merged = _mergeTrackedWordEntries(<List<WordEntry>>[
-      tracked,
-      practice,
-    ]);
-    if (_rememberedWords.isEmpty) {
-      return merged;
-    }
-    final rememberedKeys = _rememberedWords
-        .map(_normalizeTrackedWord)
-        .where((item) => item.isNotEmpty)
-        .toSet();
-    return merged
-        .where(
-          (entry) =>
-              !rememberedKeys.contains(_normalizeTrackedWord(entry.word)),
-        )
-        .toList(growable: false);
-  }
-
-  void _refreshWordMemoryProgressCache(List<WordEntry> words) {
-    final wordIds = <int>{
-      ...words.map((item) => item.id).whereType<int>().where((id) => id > 0),
-      ..._practiceTrackedEntriesByWord.values
-          .map((item) => item.id)
-          .whereType<int>()
-          .where((id) => id > 0),
-    };
-    _wordMemoryProgressByWordId = _database.getWordMemoryProgressByWordIds(
-      wordIds,
-    );
-  }
-
-  List<WordEntry> _resolveTrackedPracticeEntries({
-    required List<String> fallbackWords,
-    List<WordEntry>? preferredEntries,
-  }) {
-    final sourceEntries =
-        preferredEntries ?? _practiceEntriesFromWords(fallbackWords);
-    if (sourceEntries.isEmpty) {
-      return const <WordEntry>[];
-    }
-    final output = <WordEntry>[];
-    final seen = <String>{};
-    for (final entry in sourceEntries) {
-      final identity = _wordEntryIdentity(entry);
-      if (identity == null || !seen.add(identity)) {
-        continue;
-      }
-      output.add(entry);
-    }
-    return output;
-  }
-
-  void _cachePracticeTrackedEntries({
-    required List<WordEntry> rememberedEntries,
-    required List<WordEntry> weakEntries,
-  }) {
-    if (rememberedEntries.isEmpty && weakEntries.isEmpty) {
-      return;
-    }
-
-    for (final entry in <WordEntry>[...rememberedEntries, ...weakEntries]) {
-      final key = _normalizeTrackedWord(entry.word);
-      if (key.isEmpty) {
-        continue;
-      }
-      _practiceTrackedEntriesByWord[key] = entry;
-    }
-    _prunePracticeTrackedEntries();
-  }
-
-  int _removePracticeWeakKeys(Set<String> keys) {
-    if (keys.isEmpty || _practiceWeakWords.isEmpty) {
-      return 0;
-    }
-
-    final nextWeakWords = _practiceWeakWords
-        .where((word) => !keys.contains(_normalizeTrackedWord(word)))
-        .toList(growable: false);
-    final removed = _practiceWeakWords.length - nextWeakWords.length;
-    if (removed <= 0) {
-      return 0;
-    }
-
-    _practiceWeakWords = nextWeakWords;
-    for (final key in keys) {
-      _practiceWeakWordReasons.remove(key);
-    }
-    _prunePracticeTrackedEntries();
-    _prunePracticeWeakReasons();
-    _persistPracticeDashboard();
-    notifyListeners();
-    return removed;
-  }
-
-  void _prunePracticeTrackedEntries() {
-    final activeKeys = <String>{
-      ..._practiceRememberedWords.map(_normalizeTrackedWord),
-      ..._practiceWeakWords.map(_normalizeTrackedWord),
-    }.where((item) => item.isNotEmpty).toSet();
-    _practiceTrackedEntriesByWord.removeWhere(
-      (key, _) => !activeKeys.contains(key),
-    );
-  }
-
-  void _prunePracticeWeakReasons() {
-    final activeWeakKeys = _practiceWeakWords
-        .map(_normalizeTrackedWord)
-        .where((item) => item.isNotEmpty)
-        .toSet();
-    _practiceWeakWordReasons.removeWhere(
-      (key, _) => !activeWeakKeys.contains(key),
-    );
-  }
-
-  Map<String, List<String>> _normalizePracticeWeakReasonMap(
-    Map<String, List<String>> raw,
-    List<String> weakWords,
-  ) {
-    if (weakWords.isEmpty) {
-      return <String, List<String>>{};
-    }
-    final output = <String, List<String>>{};
-    for (final word in weakWords) {
-      final key = _normalizeTrackedWord(word);
-      if (key.isEmpty) {
-        continue;
-      }
-      output[key] = _sanitizePracticeWeakReasons(raw[key]);
-    }
-    return output;
-  }
-
-  List<String> _sanitizePracticeWeakReasons(Object? raw) {
-    final normalized = <String>[];
-    final items = raw is List ? raw : const <Object?>[];
-    for (final item in items) {
-      final value = '${item ?? ''}'.trim();
-      if (!practiceWeakReasonIds.contains(value) ||
-          normalized.contains(value)) {
-        continue;
-      }
-      normalized.add(value);
-    }
-    if (normalized.isEmpty) {
-      return const <String>['recall'];
-    }
-    return normalized;
-  }
-
-  void _updatePracticeWeakReasonMap({
-    required List<String> rememberedWords,
-    required List<String> weakWords,
-    required Map<String, List<String>> weakReasonsByWord,
-  }) {
-    for (final word in rememberedWords) {
-      final key = _normalizeTrackedWord(word);
-      if (key.isNotEmpty) {
-        _practiceWeakWordReasons.remove(key);
-      }
-    }
-    for (final word in weakWords) {
-      final key = _normalizeTrackedWord(word);
-      if (key.isEmpty) {
-        continue;
-      }
-      _practiceWeakWordReasons[key] = List<String>.from(
-        weakReasonsByWord[key] ?? const <String>['recall'],
-        growable: false,
-      );
-    }
-    _prunePracticeWeakReasons();
-  }
-
-  void _appendPracticeSessionHistory({
-    required String title,
-    required int total,
-    required int remembered,
-    required Map<String, List<String>> weakReasonIdsByWord,
-  }) {
-    final reasonCounts = <String, int>{};
-    for (final reasons in weakReasonIdsByWord.values) {
-      for (final reason in reasons) {
-        reasonCounts.update(reason, (value) => value + 1, ifAbsent: () => 1);
-      }
-    }
-    final nextHistory = <PracticeSessionRecord>[
-      PracticeSessionRecord(
-        title: title.trim(),
-        practicedAt: DateTime.now(),
-        total: total,
-        remembered: remembered,
-        weakReasonCounts: reasonCounts,
-      ),
-      ..._practiceSessionHistory,
-    ];
-    _practiceSessionHistory = nextHistory
-        .take(_practiceSessionHistoryLimit)
-        .toList(growable: false);
-  }
-
-  List<WordEntry> _dedupePracticeEntries(Iterable<WordEntry> entries) {
-    final output = <WordEntry>[];
-    final seen = <String>{};
-    for (final entry in entries) {
-      final key = _wordEntryIdentity(entry);
-      if (key == null || !seen.add(key)) {
-        continue;
-      }
-      output.add(entry);
-    }
-    return output;
-  }
-
-  String _practiceMeaningText(WordEntry entry) {
-    final direct = entry.meaning?.trim() ?? '';
-    if (direct.isNotEmpty) {
-      return direct;
-    }
-    for (final field in entry.fields) {
-      if (field.key == 'meaning') {
-        final text = field.asText().trim();
-        if (text.isNotEmpty) {
-          return text;
-        }
-      }
-    }
-    return '';
-  }
-
-  bool _isStablePracticeProgress(WordMemoryProgress? progress, DateTime now) {
-    if (progress == null || !progress.isTracked) {
-      return false;
-    }
-    if (progress.timesCorrect <= 0 || progress.consecutiveCorrect <= 0) {
-      return false;
-    }
-    final nextReview = progress.nextReview;
-    if (nextReview == null) {
-      return false;
-    }
-    return nextReview.isAfter(now);
-  }
-
-  void _updateWordMemoryProgress({
-    required List<WordEntry> rememberedEntries,
-    required List<WordEntry> weakEntries,
-  }) {
-    if (rememberedEntries.isEmpty && weakEntries.isEmpty) {
-      return;
-    }
-
-    final nextProgressByWordId = Map<int, WordMemoryProgress>.from(
-      _wordMemoryProgressByWordId,
-    );
-    final updatedAt = DateTime.now();
-
-    void persistProgress(WordEntry entry, {required bool remembered}) {
-      final wordId = entry.id;
-      if (wordId == null || wordId <= 0) {
-        return;
-      }
-      final previous =
-          nextProgressByWordId[wordId] ?? WordMemoryProgress(wordId: wordId);
-      final result = MemoryAlgorithm.sm2(
-        quality: remembered ? 4 : 1,
-        previousEaseFactor: previous.easeFactor,
-        previousInterval: previous.intervalDays,
-        consecutiveCorrect: previous.consecutiveCorrect,
-      );
-      final nextProgress = previous.copyWith(
-        timesPlayed: previous.timesPlayed + 1,
-        timesCorrect: previous.timesCorrect + (remembered ? 1 : 0),
-        lastPlayed: updatedAt,
-        familiarity: result.familiarity,
-        easeFactor: result.easeFactor,
-        intervalDays: result.intervalDays,
-        nextReview: DateTime.tryParse(result.nextReview),
-        consecutiveCorrect: result.consecutiveCorrect,
-        memoryState: result.memoryState,
-      );
-      _database.upsertWordMemoryProgress(nextProgress);
-      nextProgressByWordId[wordId] = nextProgress;
-    }
-
-    for (final entry in rememberedEntries) {
-      persistProgress(entry, remembered: true);
-    }
-    for (final entry in weakEntries) {
-      persistProgress(entry, remembered: false);
-    }
-
-    _wordMemoryProgressByWordId = nextProgressByWordId;
-  }
-
-  String? _wordEntryIdentity(WordEntry entry) {
-    final id = entry.id;
-    if (id != null && id > 0) {
-      return 'id:$id';
-    }
-    final word = entry.word.trim();
-    if (word.isEmpty) {
-      return null;
-    }
-    return 'word:${word.toLowerCase()}';
-  }
-
-  List<String> _normalizePracticeWords(Object? value) {
-    if (value is! List) {
-      return const <String>[];
-    }
-    final normalized = <String>[];
-    for (final item in value) {
-      final word = '$item'.trim();
-      if (word.isEmpty || normalized.contains(word)) {
-        continue;
-      }
-      normalized.add(word);
-    }
-    return normalized.take(40).toList(growable: false);
-  }
-
-  List<String> _mergePracticeWords({
-    required List<String> primary,
-    required List<String> existing,
-    Set<String> excluded = const <String>{},
-  }) {
-    final merged = <String>[];
-
-    void addWord(String raw) {
-      final value = raw.trim();
-      if (value.isEmpty || excluded.contains(value) || merged.contains(value)) {
-        return;
-      }
-      merged.add(value);
-    }
-
-    for (final item in primary) {
-      addWord(item);
-    }
-    for (final item in existing) {
-      addWord(item);
-    }
-    return merged.take(40).toList(growable: false);
-  }
-
-  void _updateRememberedWordsStatus({
-    required List<String> rememberedWords,
-    required List<String> weakWords,
-  }) {
-    if (rememberedWords.isEmpty && weakWords.isEmpty) {
-      return;
-    }
-    final next = Set<String>.from(_rememberedWords);
-    for (final word in weakWords) {
-      next.remove(_normalizeTrackedWord(word));
-    }
-    for (final word in rememberedWords) {
-      final normalized = _normalizeTrackedWord(word);
-      if (normalized.isNotEmpty) {
-        next.add(normalized);
-      }
-    }
-    if (setEquals(next, _rememberedWords)) {
-      return;
-    }
-    _rememberedWords = next;
-    _settings.saveRememberedWords(_rememberedWords);
-  }
-
-  List<WordEntry> _mergeTrackedWordEntries(List<List<WordEntry>> groups) {
-    if (groups.isEmpty) {
-      return const <WordEntry>[];
-    }
-    final merged = <WordEntry>[];
-    final seen = <String>{};
-    for (final group in groups) {
-      for (final entry in group) {
-        final identity = _wordEntryIdentity(entry);
-        if (identity == null || !seen.add(identity)) {
-          continue;
-        }
-        merged.add(entry);
-      }
-    }
-    return merged;
-  }
-
-  String _normalizeTrackedWord(String value) {
-    return value.trim().toLowerCase();
-  }
-
   void _persistTestModeState() {
     _settings.saveTestModeState(
       enabled: _testModeEnabled,
@@ -4200,26 +2301,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  Future<void> _pollPendingTodoReminderLaunch() async {
-    int? todoId;
-    try {
-      todoId = await _focusService.consumePendingTodoReminderLaunchId();
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'pending todo reminder launch poll failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return;
-    }
-    if (todoId == null || todoId <= 0) {
-      return;
-    }
-    if (_pendingTodoReminderLaunchId == todoId) {
-      return;
-    }
-    _pendingTodoReminderLaunchId = todoId;
+  void _notifyStateChanged() {
     notifyListeners();
   }
 
