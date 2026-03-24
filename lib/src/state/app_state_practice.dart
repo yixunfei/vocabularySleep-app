@@ -230,7 +230,7 @@ extension _AppStatePractice on AppState {
     return batch.toList(growable: false);
   }
 
-  Map<String, Object?> _buildPracticeReviewExportPayloadImpl({
+  PracticeReviewExportPayload _buildPracticeReviewExportPayloadImpl({
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
     Map<String, Object?> metadata = const <String, Object?>{},
@@ -253,37 +253,36 @@ extension _AppStatePractice on AppState {
         );
       }
     }
-    return <String, Object?>{
-      'exported_at': now.toIso8601String(),
-      'schema_version': 1,
-      'summary': <String, Object?>{
-        'todaySessions': _practiceTodaySessions,
-        'todayReviewed': _practiceTodayReviewed,
-        'todayRemembered': _practiceTodayRemembered,
-        'totalSessions': _practiceTotalSessions,
-        'totalReviewed': _practiceTotalReviewed,
-        'totalRemembered': _practiceTotalRemembered,
-        'todayAccuracy': practiceTodayAccuracy,
-        'totalAccuracy': practiceTotalAccuracy,
-        'lastSessionTitle': _practiceLastSessionTitle,
-        'defaultQuestionType': _practiceDefaultQuestionType.storageValue,
-      },
-      'metadata': metadata,
-      'weakReasonCounts': overallReasonCounts,
-      'sessionHistory': sessions.map((record) => record.toMap()).toList(),
-      'wrongNotebook': notebookEntries
+    return PracticeReviewExportPayload(
+      exportedAt: now,
+      summary: PracticeReviewExportSummary(
+        todaySessions: _practiceTodaySessions,
+        todayReviewed: _practiceTodayReviewed,
+        todayRemembered: _practiceTodayRemembered,
+        totalSessions: _practiceTotalSessions,
+        totalReviewed: _practiceTotalReviewed,
+        totalRemembered: _practiceTotalRemembered,
+        todayAccuracy: practiceTodayAccuracy,
+        totalAccuracy: practiceTotalAccuracy,
+        lastSessionTitle: _practiceLastSessionTitle,
+        defaultQuestionType: _practiceDefaultQuestionType.storageValue,
+      ),
+      metadata: metadata,
+      weakReasonCounts: overallReasonCounts,
+      sessionHistory: sessions,
+      wrongNotebook: notebookEntries
           .map(
-            (entry) => <String, Object?>{
-              'id': entry.id,
-              'wordbookId': entry.wordbookId,
-              'word': entry.word,
-              'meaning': _practiceMeaningText(entry),
-              'reasons': practiceWeakReasonsForWord(entry),
-              'memoryProgress': memoryProgressForWordEntry(entry)?.toMap(),
-            },
+            (entry) => PracticeExportWordEntry(
+              id: entry.id,
+              wordbookId: entry.wordbookId,
+              word: entry.word,
+              meaning: _practiceMeaningText(entry),
+              reasons: practiceWeakReasonsForWord(entry),
+              memoryProgress: memoryProgressForWordEntry(entry),
+            ),
           )
           .toList(growable: false),
-    };
+    );
   }
 
   Future<String?> _exportPracticeReviewDataImpl({
@@ -302,7 +301,7 @@ extension _AppStatePractice on AppState {
             records: records,
             wrongNotebookEntries: wrongNotebookEntries,
             metadata: metadata,
-          ),
+          ).toJsonMap(),
         ),
         PracticeExportFormat.csv => _buildPracticeReviewCsv(records: records),
       };
@@ -330,29 +329,29 @@ extension _AppStatePractice on AppState {
     }
   }
 
-  Map<String, Object?> _buildPracticeWrongNotebookExportPayloadImpl({
+  PracticeWrongNotebookExportPayload
+  _buildPracticeWrongNotebookExportPayloadImpl({
     required Iterable<WordEntry> entries,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final resolvedEntries = _dedupePracticeEntries(entries);
-    return <String, Object?>{
-      'exported_at': DateTime.now().toIso8601String(),
-      'schema_version': 1,
-      'count': resolvedEntries.length,
-      'metadata': metadata,
-      'entries': resolvedEntries
+    return PracticeWrongNotebookExportPayload(
+      exportedAt: DateTime.now(),
+      count: resolvedEntries.length,
+      metadata: metadata,
+      entries: resolvedEntries
           .map(
-            (entry) => <String, Object?>{
-              'id': entry.id,
-              'wordbookId': entry.wordbookId,
-              'word': entry.word,
-              'meaning': _practiceMeaningText(entry),
-              'reasons': practiceWeakReasonsForWord(entry),
-              'memoryProgress': memoryProgressForWordEntry(entry)?.toMap(),
-            },
+            (entry) => PracticeExportWordEntry(
+              id: entry.id,
+              wordbookId: entry.wordbookId,
+              word: entry.word,
+              meaning: _practiceMeaningText(entry),
+              reasons: practiceWeakReasonsForWord(entry),
+              memoryProgress: memoryProgressForWordEntry(entry),
+            ),
           )
           .toList(growable: false),
-    };
+    );
   }
 
   Future<String?> _exportPracticeWrongNotebookDataImpl({
@@ -370,7 +369,7 @@ extension _AppStatePractice on AppState {
           _buildPracticeWrongNotebookExportPayloadImpl(
             entries: resolvedEntries,
             metadata: metadata,
-          ),
+          ).toJsonMap(),
         ),
         PracticeExportFormat.csv => _buildPracticeWrongNotebookCsv(
           resolvedEntries,
@@ -491,66 +490,40 @@ extension _AppStatePractice on AppState {
   void _loadPracticeDashboard() {
     final data = _settings.loadPracticeDashboard();
     _practiceTrackedEntriesByWord.clear();
-    _practiceDateKey = '${data['date'] ?? ''}'.trim();
-    _practiceTodaySessions = _readPracticeInt(data['todaySessions']);
-    _practiceTodayReviewed = _readPracticeInt(data['todayReviewed']);
-    _practiceTodayRemembered = _readPracticeInt(data['todayRemembered']);
-    _practiceTotalSessions = _readPracticeInt(data['totalSessions']);
-    _practiceTotalReviewed = _readPracticeInt(data['totalReviewed']);
-    _practiceTotalRemembered = _readPracticeInt(data['totalRemembered']);
-    _practiceLastSessionTitle = '${data['lastSessionTitle'] ?? ''}'.trim();
-    _practiceRememberedWords = _normalizePracticeWords(data['rememberedWords']);
-    _practiceWeakWords = _normalizePracticeWords(data['weakWords'])
+    _practiceDateKey = data.date.trim();
+    _practiceTodaySessions = data.todaySessions;
+    _practiceTodayReviewed = data.todayReviewed;
+    _practiceTodayRemembered = data.todayRemembered;
+    _practiceTotalSessions = data.totalSessions;
+    _practiceTotalReviewed = data.totalReviewed;
+    _practiceTotalRemembered = data.totalRemembered;
+    _practiceLastSessionTitle = data.lastSessionTitle.trim();
+    _practiceRememberedWords = _normalizePracticeWords(data.rememberedWords);
+    _practiceWeakWords = _normalizePracticeWords(data.weakWords)
         .where((word) => !_practiceRememberedWords.contains(word))
         .toList(growable: false);
-    final weakReasonMap = _readPracticeWeakReasonMap(
-      data['weakReasonIdsByWord'],
-    );
     _practiceWeakWordReasons = _normalizePracticeWeakReasonMap(
-      weakReasonMap,
+      data.weakReasonIdsByWord,
       _practiceWeakWords,
     );
-    final sessionPrefs = _readPracticeSessionPreferences(data['sessionPrefs']);
-    _practiceAutoAddWeakWordsToTask =
-        sessionPrefs['autoAddWeakWordsToTask'] == true;
-    _practiceAutoPlayPronunciation =
-        sessionPrefs['autoPlayPronunciation'] == true;
-    _practiceShowHintsByDefault = sessionPrefs['showHintsByDefault'] == true;
-    _practiceDefaultQuestionType = PracticeQuestionType.fromStorage(
-      '${sessionPrefs['defaultQuestionType'] ?? 'flashcard'}',
-    );
-    _practiceSessionHistory = _readPracticeSessionHistory(data['history']);
-    _practiceLaunchCursors = _readPracticeLaunchCursors(data['launchCursors']);
+    _practiceAutoAddWeakWordsToTask = data.sessionPrefs.autoAddWeakWordsToTask;
+    _practiceAutoPlayPronunciation = data.sessionPrefs.autoPlayPronunciation;
+    _practiceShowHintsByDefault = data.sessionPrefs.showHintsByDefault;
+    _practiceDefaultQuestionType = data.sessionPrefs.defaultQuestionType;
+    _practiceSessionHistory = data.history;
+    _practiceLaunchCursors = data.launchCursors;
     _practiceTrackedEntriesByWord
       ..clear()
-      ..addAll(_readTrackedPracticeEntries(data['trackedEntries']));
+      ..addEntries(
+        <String, WordEntry>{
+          for (final entry in data.trackedEntries)
+            if (_normalizeTrackedWord(entry.word).isNotEmpty &&
+                entry.wordbookId > 0)
+              _normalizeTrackedWord(entry.word): entry.toWordEntry(),
+        }.entries,
+      );
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
-  }
-
-  int _readPracticeInt(Object? value) {
-    if (value is int) return value < 0 ? 0 : value;
-    if (value is num) {
-      final parsed = value.toInt();
-      return parsed < 0 ? 0 : parsed;
-    }
-    return 0;
-  }
-
-  Map<String, int> _readPracticeLaunchCursors(Object? value) {
-    if (value is! Map) {
-      return <String, int>{};
-    }
-    final parsed = <String, int>{};
-    for (final entry in value.entries) {
-      final key = '${entry.key}'.trim();
-      if (key.isEmpty) {
-        continue;
-      }
-      final index = _readPracticeInt(entry.value);
-      parsed[key] = index;
-    }
-    return parsed;
   }
 
   void _ensurePracticeDate({bool persist = false}) {
@@ -573,174 +546,32 @@ extension _AppStatePractice on AppState {
   }
 
   void _persistPracticeDashboard() {
-    _settings.savePracticeDashboard(<String, Object?>{
-      'date': _practiceDateKey,
-      'todaySessions': _practiceTodaySessions,
-      'todayReviewed': _practiceTodayReviewed,
-      'todayRemembered': _practiceTodayRemembered,
-      'totalSessions': _practiceTotalSessions,
-      'totalReviewed': _practiceTotalReviewed,
-      'totalRemembered': _practiceTotalRemembered,
-      'lastSessionTitle': _practiceLastSessionTitle,
-      'rememberedWords': _practiceRememberedWords,
-      'weakWords': _practiceWeakWords,
-      'weakReasonIdsByWord': _practiceWeakWordReasons,
-      'history': _practiceSessionHistory
-          .map((record) => record.toMap())
-          .toList(growable: false),
-      'sessionPrefs': <String, Object?>{
-        'autoAddWeakWordsToTask': _practiceAutoAddWeakWordsToTask,
-        'autoPlayPronunciation': _practiceAutoPlayPronunciation,
-        'showHintsByDefault': _practiceShowHintsByDefault,
-        'defaultQuestionType': _practiceDefaultQuestionType.storageValue,
-      },
-      'launchCursors': _practiceLaunchCursors,
-      'trackedEntries': _serializeTrackedPracticeEntries(),
-    });
-  }
-
-  Map<String, Object?> _readPracticeSessionPreferences(Object? value) {
-    if (value is! Map) {
-      return const <String, Object?>{
-        'autoAddWeakWordsToTask': false,
-        'autoPlayPronunciation': false,
-        'showHintsByDefault': false,
-        'defaultQuestionType': 'flashcard',
-      };
-    }
-    return <String, Object?>{
-      'autoAddWeakWordsToTask': value['autoAddWeakWordsToTask'] == true,
-      'autoPlayPronunciation': value['autoPlayPronunciation'] == true,
-      'showHintsByDefault': value['showHintsByDefault'] == true,
-      'defaultQuestionType': '${value['defaultQuestionType'] ?? 'flashcard'}',
-    };
-  }
-
-  List<PracticeSessionRecord> _readPracticeSessionHistory(Object? value) {
-    if (value is! List) {
-      return <PracticeSessionRecord>[];
-    }
-    return value
-        .whereType<Map>()
-        .map(
-          (item) => PracticeSessionRecord.fromMap(item.cast<String, Object?>()),
-        )
-        .toList(growable: false);
-  }
-
-  Map<String, List<String>> _readPracticeWeakReasonMap(Object? value) {
-    if (value is! Map) {
-      return <String, List<String>>{};
-    }
-    final output = <String, List<String>>{};
-    for (final entry in value.entries) {
-      final key = _normalizeTrackedWord('${entry.key}');
-      if (key.isEmpty) {
-        continue;
-      }
-      final reasons = _sanitizePracticeWeakReasons(entry.value);
-      if (reasons.isNotEmpty) {
-        output[key] = reasons;
-      }
-    }
-    return output;
-  }
-
-  List<Map<String, Object?>> _serializeTrackedPracticeEntries() {
-    if (_practiceTrackedEntriesByWord.isEmpty) {
-      return const <Map<String, Object?>>[];
-    }
-    final entries = _practiceTrackedEntriesByWord.entries.toList(
-      growable: false,
-    )..sort((left, right) => left.key.compareTo(right.key));
-    return entries
-        .map((entry) => _serializeTrackedPracticeEntry(entry.value))
-        .toList(growable: false);
-  }
-
-  Map<String, Object?> _serializeTrackedPracticeEntry(WordEntry entry) {
-    return <String, Object?>{
-      'id': entry.id,
-      'wordbookId': entry.wordbookId,
-      'word': entry.word,
-      'meaning': entry.meaning,
-      'rawContent': entry.rawContent,
-      'fields': entry.fields
-          .map((field) => field.toJsonMap())
-          .toList(growable: false),
-    };
-  }
-
-  Map<String, WordEntry> _readTrackedPracticeEntries(Object? value) {
-    if (value is! List) {
-      return <String, WordEntry>{};
-    }
-    final entries = <String, WordEntry>{};
-    for (final item in value) {
-      if (item is! Map) {
-        continue;
-      }
-      final word = '${item['word'] ?? ''}'.trim();
-      final wordbookId = _readPracticeInt(item['wordbookId']);
-      if (word.isEmpty || wordbookId <= 0) {
-        continue;
-      }
-      final key = _normalizeTrackedWord(word);
-      if (key.isEmpty || entries.containsKey(key)) {
-        continue;
-      }
-      entries[key] = WordEntry(
-        id: _readPracticeTrackedWordId(item['id']),
-        wordbookId: wordbookId,
-        word: word,
-        meaning: '${item['meaning'] ?? ''}'.trim().isEmpty
-            ? null
-            : '${item['meaning']}'.trim(),
-        rawContent: '${item['rawContent'] ?? ''}',
-        fields: _readTrackedPracticeFields(item['fields']),
-      );
-    }
-    return entries;
-  }
-
-  int? _readPracticeTrackedWordId(Object? value) {
-    final parsed = _readPracticeInt(value);
-    return parsed > 0 ? parsed : null;
-  }
-
-  List<WordFieldItem> _readTrackedPracticeFields(Object? value) {
-    if (value is! List) {
-      return const <WordFieldItem>[];
-    }
-    final output = <WordFieldItem>[];
-    for (final item in value) {
-      if (item is! Map) {
-        continue;
-      }
-      final key = '${item['key'] ?? ''}'.trim();
-      if (key.isEmpty) {
-        continue;
-      }
-      final label = '${item['label'] ?? key}'.trim();
-      final rawValue = item['value'];
-      final fieldValue = switch (rawValue) {
-        List<dynamic>() =>
-          rawValue
-              .map((entry) => '$entry'.trim())
-              .where((entry) => entry.isNotEmpty)
-              .toList(growable: false),
-        _ => '$rawValue'.trim(),
-      };
-      output.add(
-        WordFieldItem(
-          key: key,
-          label: label.isEmpty ? key : label,
-          value: fieldValue,
-          style: WordFieldStyle.fromJsonMap(item['style']),
+    _settings.savePracticeDashboard(
+      PracticeDashboardState(
+        date: _practiceDateKey,
+        todaySessions: _practiceTodaySessions,
+        todayReviewed: _practiceTodayReviewed,
+        todayRemembered: _practiceTodayRemembered,
+        totalSessions: _practiceTotalSessions,
+        totalReviewed: _practiceTotalReviewed,
+        totalRemembered: _practiceTotalRemembered,
+        lastSessionTitle: _practiceLastSessionTitle,
+        rememberedWords: _practiceRememberedWords,
+        weakWords: _practiceWeakWords,
+        weakReasonIdsByWord: _practiceWeakWordReasons,
+        history: _practiceSessionHistory,
+        sessionPrefs: PracticeSessionPreferences(
+          autoAddWeakWordsToTask: _practiceAutoAddWeakWordsToTask,
+          autoPlayPronunciation: _practiceAutoPlayPronunciation,
+          showHintsByDefault: _practiceShowHintsByDefault,
+          defaultQuestionType: _practiceDefaultQuestionType,
         ),
-      );
-    }
-    return output;
+        launchCursors: _practiceLaunchCursors,
+        trackedEntries: _practiceTrackedEntriesByWord.values
+            .map(PracticeTrackedEntrySnapshot.fromWordEntry)
+            .toList(growable: false),
+      ),
+    );
   }
 
   List<WordEntry> _practiceEntriesFromWords(List<String> trackedWords) {

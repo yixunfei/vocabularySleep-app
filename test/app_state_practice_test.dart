@@ -175,7 +175,7 @@ void main() {
     ]);
 
     final dashboard = settings.loadPracticeDashboard();
-    expect(dashboard['launchCursors'], containsPair('practice:warmup', 0));
+    expect(dashboard.launchCursors, containsPair('practice:warmup', 0));
   });
 
   test(
@@ -231,10 +231,7 @@ void main() {
       );
 
       final dashboard = settings.loadPracticeDashboard();
-      expect(
-        dashboard['launchCursors'],
-        containsPair('practice:scope-full', 0),
-      );
+      expect(dashboard.launchCursors, containsPair('practice:scope-full', 0));
     },
   );
 
@@ -303,7 +300,7 @@ void main() {
       expect(state.practiceWrongNotebookEntries, isEmpty);
 
       final dashboard = settings.loadPracticeDashboard();
-      expect(dashboard['weakWords'], isEmpty);
+      expect(dashboard.weakWords, isEmpty);
     },
   );
 }

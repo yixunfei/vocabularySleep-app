@@ -309,8 +309,8 @@ void main() {
     expect(database.progressByWordId[2]?.timesCorrect, 0);
 
     final dashboard = settings.loadPracticeDashboard();
-    expect(dashboard['lastSessionTitle'], 'Memory lane');
-    expect(dashboard['rememberedWords'], <String>['Alpha']);
-    expect(dashboard['weakWords'], <String>['Bravo']);
+    expect(dashboard.lastSessionTitle, 'Memory lane');
+    expect(dashboard.rememberedWords, <String>['Alpha']);
+    expect(dashboard.weakWords, <String>['Bravo']);
   });
 }

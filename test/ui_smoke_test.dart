@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
+import 'package:vocabulary_sleep_app/src/models/export_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_export_format.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_question_type.dart';
@@ -2838,7 +2839,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
-  Map<String, Object?> buildPracticeReviewExportPayload({
+  PracticeReviewExportPayload buildPracticeReviewExportPayload({
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
     Map<String, Object?> metadata = const <String, Object?>{},
@@ -2848,14 +2849,34 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     );
     final resolvedNotebook = (wrongNotebookEntries ?? _recentWeakEntries)
         .toList(growable: false);
-    return <String, Object?>{
-      'sessionHistory': resolvedHistory
-          .map((record) => record.toMap())
+    return PracticeReviewExportPayload(
+      exportedAt: DateTime(2026, 3, 24),
+      summary: const PracticeReviewExportSummary(
+        todaySessions: 0,
+        todayReviewed: 0,
+        todayRemembered: 0,
+        totalSessions: 0,
+        totalReviewed: 0,
+        totalRemembered: 0,
+        todayAccuracy: 0,
+        totalAccuracy: 0,
+        lastSessionTitle: '',
+        defaultQuestionType: 'flashcard',
+      ),
+      metadata: metadata,
+      sessionHistory: resolvedHistory,
+      wrongNotebook: resolvedNotebook
+          .map(
+            (entry) => PracticeExportWordEntry(
+              id: entry.id,
+              wordbookId: entry.wordbookId,
+              word: entry.word,
+              meaning: entry.meaning ?? '',
+              reasons: const <String>[],
+            ),
+          )
           .toList(growable: false),
-      'wrongNotebook': resolvedNotebook
-          .map((entry) => <String, Object?>{'word': entry.word})
-          .toList(growable: false),
-    };
+    );
   }
 
   @override
@@ -2875,14 +2896,27 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
-  Map<String, Object?> buildPracticeWrongNotebookExportPayload({
+  PracticeWrongNotebookExportPayload buildPracticeWrongNotebookExportPayload({
     required Iterable<WordEntry> entries,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
-    return <String, Object?>{
-      'metadata': metadata,
-      'entries': entries.map((entry) => entry.word).toList(growable: false),
-    };
+    final resolvedEntries = entries.toList(growable: false);
+    return PracticeWrongNotebookExportPayload(
+      exportedAt: DateTime(2026, 3, 24),
+      count: resolvedEntries.length,
+      metadata: metadata,
+      entries: resolvedEntries
+          .map(
+            (entry) => PracticeExportWordEntry(
+              id: entry.id,
+              wordbookId: entry.wordbookId,
+              word: entry.word,
+              meaning: entry.meaning ?? '',
+              reasons: const <String>[],
+            ),
+          )
+          .toList(growable: false),
+    );
   }
 
   @override

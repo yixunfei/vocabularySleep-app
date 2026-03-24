@@ -9,10 +9,12 @@ import 'package:flutter/widgets.dart';
 import '../i18n/app_i18n.dart';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
+import '../models/export_dto.dart';
 import '../models/play_config.dart';
 import '../models/practice_export_format.dart';
 import '../models/practice_question_type.dart';
 import '../models/practice_session_record.dart';
+import '../models/settings_dto.dart';
 import '../models/todo_item.dart';
 import '../models/user_data_export.dart';
 import '../models/weather_snapshot.dart';
@@ -1060,7 +1062,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  Map<String, Object?> buildPracticeReviewExportPayload({
+  PracticeReviewExportPayload buildPracticeReviewExportPayload({
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
     Map<String, Object?> metadata = const <String, Object?>{},
@@ -1086,7 +1088,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     metadata: metadata,
   );
 
-  Map<String, Object?> buildPracticeWrongNotebookExportPayload({
+  PracticeWrongNotebookExportPayload buildPracticeWrongNotebookExportPayload({
     required Iterable<WordEntry> entries,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) => _buildPracticeWrongNotebookExportPayloadImpl(
@@ -2228,9 +2230,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _rememberedWords = _settings.loadRememberedWords();
 
     final testModeState = _settings.loadTestModeState();
-    _testModeEnabled = testModeState['enabled'] ?? false;
-    _testModeRevealed = testModeState['revealed'] ?? false;
-    _testModeHintRevealed = testModeState['hintRevealed'] ?? false;
+    _testModeEnabled = testModeState.enabled;
+    _testModeRevealed = testModeState.revealed;
+    _testModeHintRevealed = testModeState.hintRevealed;
 
     _practiceDateKey = '';
     _practiceTodaySessions = 0;
@@ -2266,9 +2268,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void _persistTestModeState() {
     _settings.saveTestModeState(
-      enabled: _testModeEnabled,
-      revealed: _testModeRevealed,
-      hintRevealed: _testModeHintRevealed,
+      TestModeState(
+        enabled: _testModeEnabled,
+        revealed: _testModeRevealed,
+        hintRevealed: _testModeHintRevealed,
+      ),
     );
   }
 

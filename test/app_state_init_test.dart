@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
+import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
@@ -226,9 +227,7 @@ void main() {
       settings.saveStartupTodoPromptSuppressedDate(_dateKey(DateTime.now()));
       settings.saveRememberedWords(<String>{'Alpha'});
       settings.saveTestModeState(
-        enabled: true,
-        revealed: true,
-        hintRevealed: false,
+        const TestModeState(enabled: true, revealed: true, hintRevealed: false),
       );
 
       final state = AppState(
@@ -283,29 +282,30 @@ void main() {
       final settings = SettingsService(database);
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
 
-      settings.savePracticeDashboard(<String, Object?>{
-        'date': _dateKey(yesterday),
-        'todaySessions': 3,
-        'todayReviewed': 12,
-        'todayRemembered': 8,
-        'totalSessions': 7,
-        'totalReviewed': 28,
-        'totalRemembered': 19,
-        'lastSessionTitle': 'Yesterday sprint',
-        'rememberedWords': <String>['Alpha'],
-        'weakWords': <String>['Beta'],
-        'launchCursors': <String, int>{'practice:warmup': 2},
-        'trackedEntries': <Map<String, Object?>>[
-          <String, Object?>{
-            'id': 2,
-            'wordbookId': 1,
-            'word': 'Beta',
-            'meaning': 'Second letter',
-            'rawContent': '',
-            'fields': <Object?>[],
-          },
-        ],
-      });
+      settings.savePracticeDashboard(
+        PracticeDashboardState(
+          date: _dateKey(yesterday),
+          todaySessions: 3,
+          todayReviewed: 12,
+          todayRemembered: 8,
+          totalSessions: 7,
+          totalReviewed: 28,
+          totalRemembered: 19,
+          lastSessionTitle: 'Yesterday sprint',
+          rememberedWords: const <String>['Alpha'],
+          weakWords: const <String>['Beta'],
+          launchCursors: const <String, int>{'practice:warmup': 2},
+          trackedEntries: const <PracticeTrackedEntrySnapshot>[
+            PracticeTrackedEntrySnapshot(
+              id: 2,
+              wordbookId: 1,
+              word: 'Beta',
+              meaning: 'Second letter',
+              rawContent: '',
+            ),
+          ],
+        ),
+      );
 
       final state = AppState(
         database: database,
@@ -335,15 +335,15 @@ void main() {
       );
 
       final restoredDashboard = settings.loadPracticeDashboard();
-      expect(restoredDashboard['date'], _dateKey(DateTime.now()));
-      expect(restoredDashboard['todaySessions'], 0);
-      expect(restoredDashboard['todayReviewed'], 0);
-      expect(restoredDashboard['todayRemembered'], 0);
+      expect(restoredDashboard.date, _dateKey(DateTime.now()));
+      expect(restoredDashboard.todaySessions, 0);
+      expect(restoredDashboard.todayReviewed, 0);
+      expect(restoredDashboard.todayRemembered, 0);
       expect(
-        restoredDashboard['launchCursors'],
+        restoredDashboard.launchCursors,
         containsPair('practice:warmup', 2),
       );
-      expect((restoredDashboard['trackedEntries'] as List).length, 1);
+      expect(restoredDashboard.trackedEntries, hasLength(1));
     },
   );
 }

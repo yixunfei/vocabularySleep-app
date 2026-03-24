@@ -30,9 +30,9 @@ extension _AppStateStartup on AppState {
       _startupTodoPromptSuppressedDate = _settings
           .loadStartupTodoPromptSuppressedDate();
       final testModeState = _settings.loadTestModeState();
-      _testModeEnabled = testModeState['enabled'] ?? false;
-      _testModeRevealed = testModeState['revealed'] ?? false;
-      _testModeHintRevealed = testModeState['hintRevealed'] ?? false;
+      _testModeEnabled = testModeState.enabled;
+      _testModeRevealed = testModeState.revealed;
+      _testModeHintRevealed = testModeState.hintRevealed;
       _loadPracticeDashboard();
       _ensurePracticeDate(persist: true);
       await _reloadWordbooks(keepCurrentSelection: false);
