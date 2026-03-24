@@ -298,33 +298,66 @@ class _FocusTimerVisual extends StatelessWidget {
   Widget _buildHourglassVisual(BuildContext context) {
     final theme = Theme.of(context);
     final timeText = _formatTime(timerState.remainingSeconds);
-    final hourglassSize = size * 0.72;
     return SizedBox(
       width: size,
       height: size,
-      child: Column(
-        children: <Widget>[
-          _TimerReadoutPanel(
-            timeText: timeText,
-            label: i18n.t('timerTab'),
-            accent: accent,
-            compact: true,
-            emphasized: timerState.phase == TomatoTimerPhase.focus,
-          ),
-          const Spacer(),
-          RepaintBoundary(
-            child: CustomPaint(
-              size: Size.square(hourglassSize),
-              painter: _HourglassPainter(
-                remaining: timerState.remainingProgress,
-                pulse: timerState.phase == TomatoTimerPhase.focus ? 1 : 0.7,
-                accent: accent,
-                track: theme.colorScheme.outlineVariant,
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final readoutHeight = math.min(
+            78.0,
+            math.max(58.0, constraints.maxHeight * 0.34),
+          );
+          final readoutWidth = math.min(constraints.maxWidth, 144.0);
+          final gap = math.max(6.0, constraints.maxHeight * 0.03);
+          final maxHourglassSize = math.max(
+            0.0,
+            math.min(
+              constraints.maxWidth * 0.72,
+              constraints.maxHeight - readoutHeight - gap,
             ),
-          ),
-          const Spacer(),
-        ],
+          );
+
+          return Column(
+            children: <Widget>[
+              SizedBox(
+                width: readoutWidth,
+                height: readoutHeight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: _TimerReadoutPanel(
+                    timeText: timeText,
+                    label: i18n.t('timerTab'),
+                    accent: accent,
+                    compact: true,
+                    emphasized: timerState.phase == TomatoTimerPhase.focus,
+                  ),
+                ),
+              ),
+              SizedBox(height: gap),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox.square(
+                    dimension: maxHourglassSize,
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        size: Size.square(maxHourglassSize),
+                        painter: _HourglassPainter(
+                          remaining: timerState.remainingProgress,
+                          pulse: timerState.phase == TomatoTimerPhase.focus
+                              ? 1
+                              : 0.7,
+                          accent: accent,
+                          track: theme.colorScheme.outlineVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
