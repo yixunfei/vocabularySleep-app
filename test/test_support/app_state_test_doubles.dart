@@ -95,7 +95,69 @@ class StubAmbientService implements AmbientService {
 
 class StubAsrService implements AsrService {
   @override
-  dynamic noSuchMethod(Invocation invocation) => null;
+  Future<String?> startRecording({required AsrProviderType provider}) async {
+    return null;
+  }
+
+  @override
+  Future<String?> stopRecording() async => null;
+
+  @override
+  Future<void> cancelRecording() async {}
+
+  @override
+  void stopOfflineRecognition() {}
+
+  @override
+  Future<AsrResult> transcribeFile({
+    required String audioPath,
+    required AsrConfig config,
+    String? expectedText,
+    TtsConfig? ttsConfig,
+    AsrProgressCallback? onProgress,
+  }) async {
+    return const AsrResult(success: false, error: 'asrDisabled');
+  }
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<AsrOfflineModelStatus> getOfflineModelStatus(
+    AsrProviderType provider,
+  ) async {
+    return AsrOfflineModelStatus(
+      provider: provider,
+      installed: false,
+      bytes: 0,
+    );
+  }
+
+  @override
+  Future<PronScoringPackStatus> getPronScoringPackStatus(
+    PronScoringMethod method,
+  ) async {
+    return PronScoringPackStatus(method: method, installed: false, bytes: 0);
+  }
+
+  @override
+  Future<void> preparePronScoringPack({
+    required PronScoringMethod method,
+    AsrProgressCallback? onProgress,
+  }) async {}
+
+  @override
+  Future<void> removePronScoringPack(PronScoringMethod method) async {}
+
+  @override
+  Future<void> prepareOfflineModel({
+    required AsrProviderType provider,
+    required String language,
+    AsrProgressCallback? onProgress,
+  }) async {}
+
+  @override
+  Future<void> removeOfflineModel(AsrProviderType provider) async {}
 }
 
 class _StubSystemCalendarService implements SystemCalendarService {

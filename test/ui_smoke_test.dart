@@ -2216,7 +2216,9 @@ Future<void> _pumpPage(
   await tester.pumpAndSettle();
 }
 
-class _FakeAppState extends ChangeNotifier implements AppState {
+class _FakeAppState extends ChangeNotifier
+    with WidgetsBindingObserver
+    implements AppState {
   _FakeAppState({
     required PlayConfig config,
     required String uiLanguage,
@@ -2363,6 +2365,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   List<Wordbook> _wordbooks;
   final List<WordEntry> _visibleWords;
   WordEntry? _currentWord;
+  int _currentWordIndex = 0;
   String? _lastBackupPath;
   final List<String> _localVoices;
   final List<DatabaseBackupInfo> _backups;
@@ -2373,6 +2376,14 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   final String? _asrStoppedRecordingPath;
   final AsrResult _asrTranscriptionResult;
   int _apiTtsCacheBytes;
+  bool _isPlaying = false;
+  bool _isPaused = false;
+  int _currentUnit = 0;
+  int _totalUnits = 0;
+  PlayUnit? _activeUnit;
+  int? _playingWordbookId;
+  String? _playingWordbookName;
+  String? _playingWord;
   AppHomeTab _startupPage = AppHomeTab.play;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   bool _weatherEnabled = false;
@@ -2384,6 +2395,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   List<TodoItem> _todayActiveTodos = <TodoItem>[];
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
+  bool _testModeEnabled = false;
+  bool _testModeRevealed = false;
+  bool _testModeHintRevealed = false;
   bool resetUserDataCalled = false;
   bool clearedApiTtsCache = false;
   String? restoredBackupPath;
@@ -2484,7 +2498,37 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;
 
   @override
-  bool get isPlaying => false;
+  int get currentWordIndex => _currentWordIndex;
+
+  @override
+  bool get isPlaying => _isPlaying;
+
+  @override
+  bool get isPaused => _isPaused;
+
+  @override
+  int get currentUnit => _currentUnit;
+
+  @override
+  int get totalUnits => _totalUnits;
+
+  @override
+  PlayUnit? get activeUnit => _activeUnit;
+
+  @override
+  int? get playingWordbookId => _playingWordbookId;
+
+  @override
+  String? get playingWordbookName => _playingWordbookName;
+
+  @override
+  String? get playingWord => _playingWord;
+
+  @override
+  bool get isPlayingDifferentWordbook =>
+      _isPlaying &&
+      _playingWordbookId != null &&
+      _selectedWordbook?.id != _playingWordbookId;
 
   @override
   Set<String> get favorites => _favorites;
@@ -2512,6 +2556,11 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   List<String> get practiceRememberedWords => recentRememberedWordEntries
+      .map((entry) => entry.word)
+      .toList(growable: false);
+
+  @override
+  List<String> get practiceWeakWords => recentWeakWordEntries
       .map((entry) => entry.word)
       .toList(growable: false);
 
@@ -2622,6 +2671,15 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   String get uiLanguageSelection =>
       _uiLanguageFollowsSystem ? 'system' : _uiLanguage;
+
+  @override
+  bool get testModeEnabled => _testModeEnabled;
+
+  @override
+  bool get testModeRevealed => _testModeRevealed;
+
+  @override
+  bool get testModeHintRevealed => _testModeHintRevealed;
 
   @override
   bool get startupTodoPromptEnabled => _startupTodoPromptEnabled;
@@ -2743,6 +2801,92 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   Future<void> previewPronunciation(String word) async {}
 
   @override
+  Future<void> play() async {
+    _isPlaying = true;
+    _isPaused = false;
+    _playingWordbookId = _selectedWordbook?.id;
+    _playingWordbookName = _selectedWordbook?.name;
+    _playingWord = currentWord?.word;
+    _totalUnits = _visibleWords.length;
+    _currentUnit = _visibleWords.isEmpty ? 0 : (_currentWordIndex + 1);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> pauseOrResume() async {
+    if (!_isPlaying) {
+      await play();
+      return;
+    }
+    _isPaused = !_isPaused;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> stop() async {
+    _isPlaying = false;
+    _isPaused = false;
+    _currentUnit = 0;
+    _totalUnits = 0;
+    _activeUnit = null;
+    _playingWordbookId = null;
+    _playingWordbookName = null;
+    _playingWord = null;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> skipCurrentWord() => playNextWord();
+
+  @override
+  Future<void> playPreviousWord() async {
+    await movePlaybackPreviousWord();
+    await play();
+  }
+
+  @override
+  Future<void> playNextWord() async {
+    await movePlaybackNextWord();
+    await play();
+  }
+
+  @override
+  Future<void> jumpToPlayingWordbook() async {
+    final playingWordbookId = _playingWordbookId;
+    if (playingWordbookId == null) {
+      return;
+    }
+    final match = _wordbooks
+        .where((item) => item.id == playingWordbookId)
+        .cast<Wordbook?>()
+        .firstOrNull;
+    if (match == null) {
+      return;
+    }
+    _selectedWordbook = match;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> playCurrentWordbook() => play();
+
+  @override
+  Future<void> movePlaybackPreviousWord() async {
+    if (_visibleWords.isEmpty) {
+      return;
+    }
+    selectWordIndex((_currentWordIndex - 1).clamp(0, _visibleWords.length - 1));
+  }
+
+  @override
+  Future<void> movePlaybackNextWord() async {
+    if (_visibleWords.isEmpty) {
+      return;
+    }
+    selectWordIndex((_currentWordIndex + 1).clamp(0, _visibleWords.length - 1));
+  }
+
+  @override
   void clearMessage() {}
 
   @override
@@ -2754,6 +2898,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   Future<void> addAmbientFileSource() async {}
+
+  @override
+  Future<String?> pickBackgroundImageByPicker() async => null;
 
   @override
   Future<void> removeAsrOfflineModel(AsrProviderType provider) async {}
@@ -2964,6 +3111,69 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
+  Future<bool> saveWord({
+    WordEntry? original,
+    required String word,
+    required List<WordFieldItem> fields,
+    String rawContent = '',
+  }) async {
+    final normalized = word.trim();
+    if (normalized.isEmpty) {
+      return false;
+    }
+    final nextEntry = WordEntry(
+      id: original?.id,
+      wordbookId: _selectedWordbook?.id ?? 1,
+      word: normalized,
+      fields: fields,
+      rawContent: rawContent,
+    );
+    if (original == null) {
+      _visibleWords.add(nextEntry);
+      _currentWordIndex = _visibleWords.length - 1;
+    } else {
+      final index = _visibleWords.indexWhere((item) => item.word == original.word);
+      if (index >= 0) {
+        _visibleWords[index] = nextEntry;
+        _currentWordIndex = index;
+      } else {
+        _visibleWords.add(nextEntry);
+        _currentWordIndex = _visibleWords.length - 1;
+      }
+    }
+    _currentWord = nextEntry;
+    notifyListeners();
+    return true;
+  }
+
+  @override
+  Future<void> importLegacyDatabaseByPicker() async {}
+
+  @override
+  Future<int> importWordsBatch(List<WordEntryPayload> payloads) async {
+    var imported = 0;
+    for (final payload in payloads) {
+      final normalized = payload.word.trim();
+      if (normalized.isEmpty) {
+        continue;
+      }
+      _visibleWords.add(
+        WordEntry(
+          wordbookId: _selectedWordbook?.id ?? 1,
+          word: normalized,
+          fields: payload.fields,
+          rawContent: payload.rawContent,
+        ),
+      );
+      imported += 1;
+    }
+    if (imported > 0) {
+      notifyListeners();
+    }
+    return imported;
+  }
+
+  @override
   Future<void> deleteWordbook(Wordbook wordbook) async {
     _wordbooks = _wordbooks.where((item) => item.id != wordbook.id).toList();
     if (_selectedWordbook?.id == wordbook.id) {
@@ -2996,6 +3206,18 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }) async {}
 
   @override
+  Future<void> clearTaskWordbook() async {
+    if (_taskWords.isEmpty) {
+      return;
+    }
+    _taskWords.clear();
+    notifyListeners();
+  }
+
+  @override
+  Future<void> exportTaskWordbook(String name) async {}
+
+  @override
   Future<void> renameWordbook(Wordbook wordbook, String newName) async {
     renamedWordbookName = newName;
     _wordbooks = _wordbooks
@@ -3023,7 +3245,33 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   void selectWordEntry(WordEntry entry) {
     _currentWord = entry;
+    final index = _visibleWords.indexWhere((item) => item.word == entry.word);
+    if (index >= 0) {
+      _currentWordIndex = index;
+    }
     notifyListeners();
+  }
+
+  @override
+  void selectWordIndex(int index) {
+    if (_visibleWords.isEmpty) {
+      _currentWord = null;
+      _currentWordIndex = 0;
+      notifyListeners();
+      return;
+    }
+    final normalized = index.clamp(0, _visibleWords.length - 1);
+    _currentWordIndex = normalized;
+    _currentWord = _visibleWords[normalized];
+    notifyListeners();
+  }
+
+  @override
+  void selectWordByText(String word) {
+    final index = _visibleWords.indexWhere((item) => item.word == word);
+    if (index >= 0) {
+      selectWordIndex(index);
+    }
   }
 
   @override
@@ -3112,6 +3360,27 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       ..._practiceSessionHistory,
     ];
     notifyListeners();
+  }
+
+  @override
+  List<WordEntry> beginPracticeBatch({
+    required String cursorKey,
+    required List<WordEntry> sourceWords,
+    required int batchSize,
+    WordEntry? anchorWord,
+    int? cursorAdvance,
+  }) {
+    if (sourceWords.isEmpty || batchSize <= 0) {
+      return const <WordEntry>[];
+    }
+    final anchorIndex = anchorWord == null
+        ? -1
+        : sourceWords.indexWhere((entry) => _isSameWord(entry, anchorWord));
+    final startIndex = anchorIndex >= 0 ? anchorIndex : 0;
+    final endIndex = (startIndex + batchSize).clamp(0, sourceWords.length);
+    return sourceWords
+        .sublist(startIndex, endIndex)
+        .toList(growable: false);
   }
 
   @override
@@ -3283,15 +3552,93 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   void refreshWeatherIfStale() {}
 
   @override
+  void setTestModeEnabled(bool enabled) {
+    _testModeEnabled = enabled;
+    notifyListeners();
+  }
+
+  @override
+  void toggleTestModeReveal() {
+    _testModeRevealed = !_testModeRevealed;
+    notifyListeners();
+  }
+
+  @override
+  void toggleTestModeHint() {
+    _testModeHintRevealed = !_testModeHintRevealed;
+    notifyListeners();
+  }
+
+  @override
+  void resetTestModeProgress() {
+    _testModeRevealed = false;
+    _testModeHintRevealed = false;
+    notifyListeners();
+  }
+
+  @override
   void updateConfig(PlayConfig config) {
     _config = config;
     notifyListeners();
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
-    return super.noSuchMethod(invocation);
+  Future<String?> startVoiceInputRecording({bool forceRecorder = false}) async {
+    return _asrRecordingPath;
   }
+
+  @override
+  Future<String?> stopVoiceInputRecording() async {
+    return _asrStoppedRecordingPath ?? _asrRecordingPath;
+  }
+
+  @override
+  Future<void> cancelVoiceInputRecording() async {}
+
+  @override
+  void stopVoiceInputProcessing() {}
+
+  @override
+  Future<AsrResult> transcribeVoiceInputRecording(
+    String audioPath, {
+    AsrProgressCallback? onProgress,
+  }) async {
+    return transcribeRecording(audioPath, onProgress: onProgress);
+  }
+
+  @override
+  Future<AsrOfflineModelStatus> getVoiceInputOfflineModelStatus() async {
+    return getAsrOfflineModelStatus(AsrProviderType.offline);
+  }
+
+  @override
+  Future<void> prepareVoiceInputOfflineModel({
+    AsrProgressCallback? onProgress,
+  }) async {}
+
+  @override
+  Future<void> removeVoiceInputOfflineModel() async {}
+
+  @override
+  PronunciationComparison comparePronunciation(
+    String expected,
+    String recognized,
+  ) {
+    return AppState.comparePronunciationTexts(
+      expected: expected,
+      recognized: recognized,
+    );
+  }
+
+  bool _isSameWord(WordEntry left, WordEntry right) {
+    final leftId = left.id;
+    final rightId = right.id;
+    if (leftId != null && rightId != null) {
+      return leftId == rightId;
+    }
+    return left.wordbookId == right.wordbookId && left.word == right.word;
+  }
+
 }
 
 class _FakeFocusService extends ChangeNotifier implements FocusService {
@@ -3508,6 +3855,9 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   Future<void> init() async {}
 
   @override
+  Future<int?> consumePendingTodoReminderLaunchId() async => null;
+
+  @override
   Future<TodoReminderLaunchAction?> consumePendingTodoReminderAction() async {
     final pending = _pendingTodoReminderAction;
     _pendingTodoReminderAction = null;
@@ -3562,6 +3912,15 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   }
 
   @override
+  void pauseOrResume() {
+    if (_state.isPaused) {
+      resume();
+      return;
+    }
+    pause();
+  }
+
+  @override
   void reorderNotes(List<PlanNote> orderedNotes) {
     _notes
       ..clear()
@@ -3602,6 +3961,11 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
       _todos.add(normalized.copyWith(id: (_todos.lastOrNull?.id ?? 0) + 1));
     }
     _publishViewState();
+  }
+
+  @override
+  void updateTodo(TodoItem item) {
+    saveTodo(item);
   }
 
   @override
@@ -3693,9 +4057,10 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
-    return super.noSuchMethod(invocation);
+  List<TomatoTimerRecord> getTimerRecords({int limit = 30}) {
+    return const <TomatoTimerRecord>[];
   }
+
 }
 
 extension<T> on List<T> {
