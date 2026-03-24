@@ -970,11 +970,13 @@ class _InteractiveTrendChart extends StatelessWidget {
       onTapDown: (details) => onSelect(nearestIndex(details.localPosition)),
       onHorizontalDragUpdate: (details) =>
           onSelect(nearestIndex(details.localPosition)),
-      child: CustomPaint(
-        size: Size(width, height),
-        painter: _TrendChartPainter(
-          series: series,
-          selectedIndex: selectedIndex,
+      child: RepaintBoundary(
+        child: CustomPaint(
+          size: Size(width, height),
+          painter: _TrendChartPainter(
+            series: series,
+            selectedIndex: selectedIndex,
+          ),
         ),
       ),
     );

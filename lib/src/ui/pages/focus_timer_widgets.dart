@@ -270,14 +270,16 @@ class _FocusTimerVisual extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: <Widget>[
-          CustomPaint(
-            size: Size.square(size),
-            painter: _CountdownRingPainter(
-              remaining: timerState.remainingProgress,
-              pulse: timerState.phase == TomatoTimerPhase.focus ? 1 : 0.7,
-              accent: accent,
-              track: theme.colorScheme.outlineVariant,
-              surface: theme.colorScheme.surface,
+          RepaintBoundary(
+            child: CustomPaint(
+              size: Size.square(size),
+              painter: _CountdownRingPainter(
+                remaining: timerState.remainingProgress,
+                pulse: timerState.phase == TomatoTimerPhase.focus ? 1 : 0.7,
+                accent: accent,
+                track: theme.colorScheme.outlineVariant,
+                surface: theme.colorScheme.surface,
+              ),
             ),
           ),
           Column(
@@ -306,13 +308,15 @@ class _FocusTimerVisual extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: <Widget>[
-          CustomPaint(
-            size: Size.square(size),
-            painter: _HourglassPainter(
-              remaining: timerState.remainingProgress,
-              pulse: timerState.phase == TomatoTimerPhase.focus ? 1 : 0.7,
-              accent: accent,
-              track: theme.colorScheme.outlineVariant,
+          RepaintBoundary(
+            child: CustomPaint(
+              size: Size.square(size),
+              painter: _HourglassPainter(
+                remaining: timerState.remainingProgress,
+                pulse: timerState.phase == TomatoTimerPhase.focus ? 1 : 0.7,
+                accent: accent,
+                track: theme.colorScheme.outlineVariant,
+              ),
             ),
           ),
           Positioned(

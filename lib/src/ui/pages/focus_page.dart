@@ -166,6 +166,15 @@ class _FocusPageState extends State<FocusPage>
       return;
     }
     _tabController.animateTo(1);
+    if (_todoViewMode != _TodoViewMode.list ||
+        _todoFilterMode == _TodoFilterMode.completed) {
+      setState(() {
+        _todoViewMode = _TodoViewMode.list;
+        if (_todoFilterMode == _TodoFilterMode.completed) {
+          _todoFilterMode = _TodoFilterMode.active;
+        }
+      });
+    }
     _highlightAndScrollToTodo(todoId);
     switch (action?.type) {
       case TodoReminderActionType.detail:
