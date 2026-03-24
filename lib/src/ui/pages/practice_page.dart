@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../models/settings_dto.dart';
 import '../../models/practice_session_record.dart';
 import '../../models/word_entry.dart';
 import '../../state/app_state.dart';
@@ -583,175 +584,498 @@ class PracticePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        SettingTile(
-          icon: Icons.flash_on_rounded,
-          title: pickUiText(i18n, zh: '当前词速练', en: 'Current word sprint'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '仅针对当前词做一题一反馈，快速热身。',
-            en: 'Quick one-item session for the current word.',
-          ),
-          onTap: () => _openPracticeSession(
-            context,
+        _buildPracticeRoundSetupCard(
+          context,
+          i18n: i18n,
+          state: state,
+          current: current,
+          wordbookWords: wordbookWords,
+          scopedWords: scopedWords,
+          taskWords: taskWords,
+          favoriteWords: favoriteWords,
+          weakWords: weakWords,
+          wrongNotebookWords: wrongNotebookWords,
+        ),
+        if (!state.practiceRoundSettings.collapsed) ...<Widget>[
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.flash_on_rounded,
             title: pickUiText(i18n, zh: '当前词速练', en: 'Current word sprint'),
             subtitle: pickUiText(
               i18n,
-              zh: '1 题短会话',
-              en: 'Single-item mini session',
+              zh: '仅针对当前词做一题一反馈，快速热身。',
+              en: 'Quick one-item session for the current word.',
             ),
-            words: <WordEntry>[current],
-            shuffle: false,
-            rotationKey: _buildPracticeScopeRotationKey(
-              state,
-              slot: 'current-word',
-            ),
-            rotationSourceWords: currentSprintSourceWords,
-            rotationBatchSize: 1,
-            rotationAnchorWord: current,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SettingTile(
-          icon: Icons.view_list_rounded,
-          title: pickUiText(i18n, zh: '当前范围会话', en: 'Current scope session'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '基于当前筛选范围连续练习。',
-            en: 'Practice continuously within current filtered scope.',
-          ),
-          onTap: () {
-            if (scopedWords.isEmpty) {
-              _showNoWordsSnack(context, i18n);
-              return;
-            }
-            _openPracticeSession(
+            onTap: () => _openPracticeSession(
               context,
-              title: pickUiText(
-                i18n,
-                zh: '当前范围会话',
-                en: 'Current scope session',
-              ),
+              title: pickUiText(i18n, zh: '当前词速练', en: 'Current word sprint'),
               subtitle: pickUiText(
                 i18n,
-                zh: '共 ${scopedWords.length} 个词',
-                en: '${scopedWords.length} words',
+                zh: '1 题短会话',
+                en: 'Single-item mini session',
               ),
-              words: scopedWords,
+              words: <WordEntry>[current],
               shuffle: false,
               rotationKey: _buildPracticeScopeRotationKey(
                 state,
-                slot: 'scope-session',
+                slot: 'current-word',
               ),
-              rotationSourceWords: scopedWords,
-              rotationBatchSize: scopedWords.length,
-              rotationCursorAdvance: 1,
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        SettingTile(
-          icon: Icons.library_books_rounded,
-          title: pickUiText(i18n, zh: '整本词本会话', en: 'Whole wordbook session'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '覆盖当前词本全部词条，可随机顺序。',
-            en: 'Cover the whole wordbook with optional shuffle.',
+              rotationSourceWords: currentSprintSourceWords,
+              rotationBatchSize: 1,
+              rotationAnchorWord: current,
+            ),
           ),
-          onTap: () => _openPracticeSession(
-            context,
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.view_list_rounded,
+            title: pickUiText(i18n, zh: '当前范围会话', en: 'Current scope session'),
+            subtitle: pickUiText(
+              i18n,
+              zh: '基于当前筛选范围连续练习。',
+              en: 'Practice continuously within current filtered scope.',
+            ),
+            onTap: () {
+              if (scopedWords.isEmpty) {
+                _showNoWordsSnack(context, i18n);
+                return;
+              }
+              _openPracticeSession(
+                context,
+                title: pickUiText(
+                  i18n,
+                  zh: '当前范围会话',
+                  en: 'Current scope session',
+                ),
+                subtitle: pickUiText(
+                  i18n,
+                  zh: '共 ${scopedWords.length} 个词',
+                  en: '${scopedWords.length} words',
+                ),
+                words: scopedWords,
+                shuffle: false,
+                rotationKey: _buildPracticeScopeRotationKey(
+                  state,
+                  slot: 'scope-session',
+                ),
+                rotationSourceWords: scopedWords,
+                rotationBatchSize: scopedWords.length,
+                rotationCursorAdvance: 1,
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.library_books_rounded,
             title: pickUiText(i18n, zh: '整本词本会话', en: 'Whole wordbook session'),
             subtitle: pickUiText(
               i18n,
-              zh: '共 ${wordbookWords.length} 个词',
-              en: '${wordbookWords.length} words',
+              zh: '覆盖当前词本全部词条，可随机顺序。',
+              en: 'Cover the whole wordbook with optional shuffle.',
             ),
-            words: wordbookWords,
-            shuffle: true,
+            onTap: () => _openPracticeSession(
+              context,
+              title: pickUiText(
+                i18n,
+                zh: '整本词本会话',
+                en: 'Whole wordbook session',
+              ),
+              subtitle: pickUiText(
+                i18n,
+                zh: '共 ${wordbookWords.length} 个词',
+                en: '${wordbookWords.length} words',
+              ),
+              words: wordbookWords,
+              shuffle: true,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        SettingTile(
-          icon: Icons.task_alt_rounded,
-          title: pickUiText(i18n, zh: '任务词复习', en: 'Task word review'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '针对任务词开启复习会话。',
-            en: 'Review session focused on task words.',
-          ),
-          onTap: () => _openReviewSession(
-            context,
-            i18n,
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.task_alt_rounded,
             title: pickUiText(i18n, zh: '任务词复习', en: 'Task word review'),
             subtitle: pickUiText(
               i18n,
-              zh: '共 ${taskWords.length} 个任务词',
-              en: '${taskWords.length} task words',
-            ),
-            words: taskWords,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SettingTile(
-          icon: Icons.favorite_rounded,
-          title: pickUiText(i18n, zh: '收藏词复习', en: 'Favorite word review'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '复习收藏列表并快速进入会话。',
-            en: 'Review favorite words and start a session quickly.',
-          ),
-          onTap: () => _openReviewSession(
-            context,
-            i18n,
-            title: pickUiText(i18n, zh: '收藏词复习', en: 'Favorite word review'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '共 ${favoriteWords.length} 个收藏词',
-              en: '${favoriteWords.length} favorite words',
-            ),
-            words: favoriteWords,
-          ),
-        ),
-        if (weakWords.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          SettingTile(
-            icon: Icons.psychology_alt_outlined,
-            title: pickUiText(i18n, zh: '最近薄弱词复习', en: 'Recent weak words'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '根据历史会话自动沉淀，建议优先复习。',
-              en: 'Auto-collected from session history. Recommended next step.',
+              zh: '针对任务词开启复习会话。',
+              en: 'Review session focused on task words.',
             ),
             onTap: () => _openReviewSession(
               context,
               i18n,
+              title: pickUiText(i18n, zh: '任务词复习', en: 'Task word review'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '共 ${taskWords.length} 个任务词',
+                en: '${taskWords.length} task words',
+              ),
+              words: taskWords,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.favorite_rounded,
+            title: pickUiText(i18n, zh: '收藏词复习', en: 'Favorite word review'),
+            subtitle: pickUiText(
+              i18n,
+              zh: '复习收藏列表并快速进入会话。',
+              en: 'Review favorite words and start a session quickly.',
+            ),
+            onTap: () => _openReviewSession(
+              context,
+              i18n,
+              title: pickUiText(i18n, zh: '收藏词复习', en: 'Favorite word review'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '共 ${favoriteWords.length} 个收藏词',
+                en: '${favoriteWords.length} favorite words',
+              ),
+              words: favoriteWords,
+            ),
+          ),
+          if (weakWords.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SettingTile(
+              icon: Icons.psychology_alt_outlined,
               title: pickUiText(i18n, zh: '最近薄弱词复习', en: 'Recent weak words'),
               subtitle: pickUiText(
                 i18n,
-                zh: '共 ${weakWords.length} 个薄弱词',
-                en: '${weakWords.length} weak words',
+                zh: '根据历史会话自动沉淀，建议优先复习。',
+                en: 'Auto-collected from session history. Recommended next step.',
               ),
-              words: weakWords,
+              onTap: () => _openReviewSession(
+                context,
+                i18n,
+                title: pickUiText(i18n, zh: '最近薄弱词复习', en: 'Recent weak words'),
+                subtitle: pickUiText(
+                  i18n,
+                  zh: '共 ${weakWords.length} 个薄弱词',
+                  en: '${weakWords.length} weak words',
+                ),
+                words: weakWords,
+              ),
             ),
+          ],
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.mic_external_on_rounded,
+            title: pickUiText(i18n, zh: '跟读练习', en: 'Follow along'),
+            subtitle: pickUiText(
+              i18n,
+              zh: '使用当前词进行录音、识别与发音评分。',
+              en: 'Record, transcribe, and score pronunciation for current word.',
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => FollowAlongPage(word: current),
+                ),
+              );
+            },
           ),
         ],
-        const SizedBox(height: 12),
-        SettingTile(
-          icon: Icons.mic_external_on_rounded,
-          title: pickUiText(i18n, zh: '跟读练习', en: 'Follow along'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '使用当前词进行录音、识别与发音评分。',
-            en: 'Record, transcribe, and score pronunciation for current word.',
-          ),
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => FollowAlongPage(word: current),
-              ),
-            );
-          },
-        ),
       ],
+    );
+  }
+
+  Widget _buildPracticeRoundSetupCard(
+    BuildContext context, {
+    required AppI18n i18n,
+    required AppState state,
+    required WordEntry current,
+    required List<WordEntry> wordbookWords,
+    required List<WordEntry> scopedWords,
+    required List<WordEntry> taskWords,
+    required List<WordEntry> favoriteWords,
+    required List<WordEntry> weakWords,
+    required List<WordEntry> wrongNotebookWords,
+  }) {
+    final settings = state.practiceRoundSettings;
+    final sourceWords = _resolvePracticeRoundSourceWords(
+      settings.source,
+      wordbookWords: wordbookWords,
+      scopedWords: scopedWords,
+      taskWords: taskWords,
+      favoriteWords: favoriteWords,
+      weakWords: weakWords,
+      wrongNotebookWords: wrongNotebookWords,
+    );
+    final effectiveRoundSize = sourceWords.isEmpty
+        ? settings.roundSize
+        : settings.roundSize.clamp(1, sourceWords.length);
+    final sourceLabel = _practiceRoundSourceLabel(i18n, settings.source);
+    final rotationKey = _buildPracticeRoundRotationKey(
+      state,
+      source: settings.source,
+    );
+    final anchorWord = _resolvePracticeRoundAnchorWord(
+      settings.startMode,
+      sourceWords: sourceWords,
+      current: current,
+    );
+    final previewIndex = state.previewPracticeBatchStartIndex(
+      cursorKey: rotationKey,
+      sourceWords: sourceWords,
+      startMode: settings.startMode,
+      anchorWord: anchorWord,
+    );
+    final previewWord = sourceWords.isEmpty
+        ? ''
+        : sourceWords[previewIndex].word;
+    final roundSummary = sourceWords.isEmpty
+        ? pickUiText(
+            i18n,
+            zh: '当前来源还没有可用单词，先切换范围或词本。',
+            en: 'No words available for this source yet.',
+          )
+        : pickUiText(
+            i18n,
+            zh: '一轮 $effectiveRoundSize 个词，来源：$sourceLabel',
+            en: 'One round: $effectiveRoundSize words from $sourceLabel',
+          );
+    final startSummary = sourceWords.isEmpty
+        ? pickUiText(
+            i18n,
+            zh: '起点会在有可用单词后自动计算。',
+            en: 'A starting point will appear once words are available.',
+          )
+        : switch (settings.startMode) {
+            PracticeRoundStartMode.resumeCursor => pickUiText(
+              i18n,
+              zh: '从上次位置继续：第 ${previewIndex + 1} 个词 $previewWord',
+              en: 'Resume from saved position: #${previewIndex + 1} $previewWord',
+            ),
+            PracticeRoundStartMode.currentWord => pickUiText(
+              i18n,
+              zh: '从当前词开始：第 ${previewIndex + 1} 个词 $previewWord',
+              en: 'Start from current word: #${previewIndex + 1} $previewWord',
+            ),
+            PracticeRoundStartMode.fromStart => pickUiText(
+              i18n,
+              zh: '从头开始：第 ${previewIndex + 1} 个词 $previewWord',
+              en: 'Start from the beginning: #${previewIndex + 1} $previewWord',
+            ),
+          };
+    final availableSummary = sourceWords.isEmpty
+        ? pickUiText(i18n, zh: '可用词数 0', en: '0 words available')
+        : pickUiText(
+            i18n,
+            zh: '当前来源共 ${sourceWords.length} 个词',
+            en: '${sourceWords.length} words available',
+          );
+
+    return Card(
+      key: const ValueKey<String>('practice-round-setup-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        pickUiText(i18n, zh: '一轮设置', en: 'Round setup'),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(roundSummary),
+                      const SizedBox(height: 4),
+                      Text(
+                        startSummary,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton.filledTonal(
+                  key: const ValueKey<String>('practice-round-toggle'),
+                  onPressed: () {
+                    state.updatePracticeRoundSettings(
+                      collapsed: !settings.collapsed,
+                    );
+                  },
+                  icon: Icon(
+                    settings.collapsed
+                        ? Icons.expand_more_rounded
+                        : Icons.expand_less_rounded,
+                  ),
+                ),
+              ],
+            ),
+            if (!settings.collapsed) ...<Widget>[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<PracticeRoundSource>(
+                key: const ValueKey<String>('practice-round-source'),
+                initialValue: settings.source,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: pickUiText(
+                    i18n,
+                    zh: '练习来源',
+                    en: 'Practice source',
+                  ),
+                ),
+                items: PracticeRoundSource.values
+                    .map(
+                      (source) => DropdownMenuItem<PracticeRoundSource>(
+                        value: source,
+                        child: Text(_practiceRoundSourceLabel(i18n, source)),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  state.updatePracticeRoundSettings(source: value);
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<PracticeRoundStartMode>(
+                key: const ValueKey<String>('practice-round-start-mode'),
+                initialValue: settings.startMode,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: pickUiText(i18n, zh: '起点规则', en: 'Starting point'),
+                ),
+                items: PracticeRoundStartMode.values
+                    .map(
+                      (mode) => DropdownMenuItem<PracticeRoundStartMode>(
+                        value: mode,
+                        child: Text(_practiceRoundStartModeLabel(i18n, mode)),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  state.updatePracticeRoundSettings(startMode: value);
+                },
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickUiText(i18n, zh: '每轮单词数', en: 'Words per round'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: <Widget>[
+                        IconButton(
+                          onPressed: settings.roundSize <= 1
+                              ? null
+                              : () {
+                                  state.updatePracticeRoundSettings(
+                                    roundSize: settings.roundSize - 1,
+                                  );
+                                },
+                          icon: const Icon(Icons.remove_rounded),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: <Widget>[
+                              Text(
+                                '$effectiveRoundSize',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                availableSummary,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: sourceWords.isEmpty
+                              ? () {
+                                  state.updatePracticeRoundSettings(
+                                    roundSize: settings.roundSize + 1,
+                                  );
+                                }
+                              : effectiveRoundSize >= sourceWords.length
+                              ? null
+                              : () {
+                                  state.updatePracticeRoundSettings(
+                                    roundSize: settings.roundSize + 1,
+                                  );
+                                },
+                          icon: const Icon(Icons.add_rounded),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  pickUiText(i18n, zh: '轮内乱序', en: 'Shuffle within round'),
+                ),
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '每一轮仍按你设定的起点取词，但轮内顺序会打散。',
+                    en: 'Keep the selected start point, but shuffle the order inside each round.',
+                  ),
+                ),
+                value: settings.shuffle,
+                onChanged: (value) {
+                  state.updatePracticeRoundSettings(shuffle: value);
+                },
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: sourceWords.isEmpty
+                    ? null
+                    : () => _openPracticeSession(
+                        context,
+                        title: pickUiText(
+                          i18n,
+                          zh: '$sourceLabel一轮练习',
+                          en: '$sourceLabel round',
+                        ),
+                        subtitle: sourceWords.isEmpty
+                            ? pickUiText(i18n, zh: '暂无单词', en: 'No words')
+                            : pickUiText(
+                                i18n,
+                                zh: '$effectiveRoundSize / ${sourceWords.length} 个词',
+                                en: '$effectiveRoundSize of ${sourceWords.length} words',
+                              ),
+                        words: sourceWords,
+                        shuffle: settings.shuffle,
+                        rotationKey: rotationKey,
+                        rotationSourceWords: sourceWords,
+                        rotationBatchSize: effectiveRoundSize,
+                        rotationAnchorWord: anchorWord,
+                        rotationCursorAdvance: effectiveRoundSize,
+                      ),
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: Text(
+                  pickUiText(i18n, zh: '按当前设置开始', en: 'Start this round'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -1324,6 +1648,99 @@ class PracticePage extends StatelessWidget {
     );
   }
 
+  String _practiceRoundSourceLabel(AppI18n i18n, PracticeRoundSource source) {
+    return switch (source) {
+      PracticeRoundSource.currentScope => pickUiText(
+        i18n,
+        zh: '当前范围',
+        en: 'Current scope',
+      ),
+      PracticeRoundSource.wholeWordbook => pickUiText(
+        i18n,
+        zh: '整本词本',
+        en: 'Whole wordbook',
+      ),
+      PracticeRoundSource.wrongNotebook => pickUiText(
+        i18n,
+        zh: '错题本',
+        en: 'Wrong notebook',
+      ),
+      PracticeRoundSource.taskWords => pickUiText(
+        i18n,
+        zh: '任务词',
+        en: 'Task words',
+      ),
+      PracticeRoundSource.favorites => pickUiText(
+        i18n,
+        zh: '收藏词',
+        en: 'Favorites',
+      ),
+      PracticeRoundSource.recentWeak => pickUiText(
+        i18n,
+        zh: '最近薄弱词',
+        en: 'Recent weak words',
+      ),
+    };
+  }
+
+  String _practiceRoundStartModeLabel(
+    AppI18n i18n,
+    PracticeRoundStartMode mode,
+  ) {
+    return switch (mode) {
+      PracticeRoundStartMode.resumeCursor => pickUiText(
+        i18n,
+        zh: '从上次位置继续',
+        en: 'Resume last position',
+      ),
+      PracticeRoundStartMode.currentWord => pickUiText(
+        i18n,
+        zh: '从当前词开始',
+        en: 'Start at current word',
+      ),
+      PracticeRoundStartMode.fromStart => pickUiText(
+        i18n,
+        zh: '从头开始',
+        en: 'Start from the beginning',
+      ),
+    };
+  }
+
+  List<WordEntry> _resolvePracticeRoundSourceWords(
+    PracticeRoundSource source, {
+    required List<WordEntry> wordbookWords,
+    required List<WordEntry> scopedWords,
+    required List<WordEntry> taskWords,
+    required List<WordEntry> favoriteWords,
+    required List<WordEntry> weakWords,
+    required List<WordEntry> wrongNotebookWords,
+  }) {
+    return switch (source) {
+      PracticeRoundSource.currentScope => scopedWords,
+      PracticeRoundSource.wholeWordbook => wordbookWords,
+      PracticeRoundSource.wrongNotebook => wrongNotebookWords,
+      PracticeRoundSource.taskWords => taskWords,
+      PracticeRoundSource.favorites => favoriteWords,
+      PracticeRoundSource.recentWeak => weakWords,
+    };
+  }
+
+  WordEntry? _resolvePracticeRoundAnchorWord(
+    PracticeRoundStartMode mode, {
+    required List<WordEntry> sourceWords,
+    required WordEntry current,
+  }) {
+    if (sourceWords.isEmpty) {
+      return null;
+    }
+    return switch (mode) {
+      PracticeRoundStartMode.resumeCursor => null,
+      PracticeRoundStartMode.currentWord =>
+        _containsWordEntry(sourceWords, current) ? current : sourceWords.first,
+      PracticeRoundStartMode.fromStart => sourceWords.first,
+    };
+  }
+
   List<WordEntry> _mergeWordCollections(
     List<WordEntry> primary,
     List<WordEntry> secondary, {
@@ -1360,6 +1777,25 @@ class PracticePage extends StatelessWidget {
     final query = state.searchQuery.trim().toLowerCase();
     final wordbookId = state.selectedWordbook?.id ?? 0;
     return 'practice:$slot:wordbook:$wordbookId:mode:${state.searchMode.name}:query:$query';
+  }
+
+  String _buildPracticeRoundRotationKey(
+    AppState state, {
+    required PracticeRoundSource source,
+  }) {
+    final slot = switch (source) {
+      PracticeRoundSource.currentScope => 'current-scope',
+      PracticeRoundSource.wholeWordbook => 'whole-wordbook',
+      PracticeRoundSource.wrongNotebook => 'wrong-notebook',
+      PracticeRoundSource.taskWords => 'task-words',
+      PracticeRoundSource.favorites => 'favorites',
+      PracticeRoundSource.recentWeak => 'recent-weak',
+    };
+    if (source == PracticeRoundSource.currentScope) {
+      return _buildPracticeScopeRotationKey(state, slot: 'round-$slot');
+    }
+    final wordbookId = state.selectedWordbook?.id ?? 0;
+    return 'practice:round:$slot:wordbook:$wordbookId';
   }
 
   bool _containsWordEntry(List<WordEntry> words, WordEntry target) {

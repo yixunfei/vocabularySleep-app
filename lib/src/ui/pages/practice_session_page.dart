@@ -39,6 +39,16 @@ class PracticeSessionPage extends StatefulWidget {
   State<PracticeSessionPage> createState() => _PracticeSessionPageState();
 }
 
+class _PracticeAnswerDecision {
+  const _PracticeAnswerDecision({
+    this.addToWrongNotebook = true,
+    this.weakReasonIds = const <String>[],
+  });
+
+  final bool addToWrongNotebook;
+  final List<String> weakReasonIds;
+}
+
 class _PracticeSessionPageState extends State<PracticeSessionPage> {
   late List<WordEntry> _sessionWords;
   final List<WordEntry> _rememberedWords = <WordEntry>[];
@@ -54,6 +64,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   bool _revealed = false;
   bool _hintRevealed = false;
   bool _reported = false;
+  bool _sessionStarted = false;
   bool _autoAddWeakWordsToTask = false;
   bool _autoPlayPronunciation = false;
   bool _sessionPreferencesLoaded = false;
@@ -855,15 +866,40 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     );
   }
 
-  void _markResult(
+  Future<void> _markResult(
     AppState state,
     bool remembered, {
     List<String> weakReasonIds = const <String>[],
-  }) {
+  }) async {
     final current = _currentWord;
     if (current == null) {
       return;
     }
+    final decision = await _showAnswerFeedbackDialog(
+      state,
+      current: current,
+      remembered: remembered,
+      weakReasonIds: weakReasonIds,
+    );
+    if (!mounted || decision == null) {
+      return;
+    }
+    _applyAnswerResult(
+      state,
+      current: current,
+      remembered: remembered,
+      weakReasonIds: decision.weakReasonIds,
+      addToWrongNotebook: remembered ? false : decision.addToWrongNotebook,
+    );
+  }
+
+  void _applyAnswerResult(
+    AppState state, {
+    required WordEntry current,
+    required bool remembered,
+    required List<String> weakReasonIds,
+    required bool addToWrongNotebook,
+  }) {
     var nextRemembered = _remembered;
     final nextRememberedWords = List<WordEntry>.from(_rememberedWords);
     final nextWeakWords = List<WordEntry>.from(_weakWords);
@@ -889,6 +925,17 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                 : List<String>.from(_selectedWeakReasons, growable: false));
     }
 
+    if (!_sessionStarted) {
+      _sessionStarted = true;
+      state.startPracticeSession(title: widget.title);
+    }
+    state.recordPracticeAnswer(
+      entry: current,
+      remembered: remembered,
+      weakReasonIds: weakReasonIds,
+      addToWrongNotebook: addToWrongNotebook,
+    );
+
     final nextIndex = _index + 1;
     setState(() {
       _remembered = nextRemembered;
@@ -911,10 +958,6 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _reportSession(
         total: _sessionWords.length,
         remembered: nextRemembered,
-        rememberedWords: nextRememberedWords.map((item) => item.word).toList(),
-        weakWords: nextWeakWords.map((item) => item.word).toList(),
-        rememberedEntries: nextRememberedWords,
-        weakEntries: nextWeakWords,
         weakReasonIdsByWord: Map<String, List<String>>.from(
           _weakReasonIdsByWord,
         ),
@@ -924,7 +967,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     _prepareCurrentQuestion();
   }
 
-  void _continueObjectiveQuestion(AppState state) {
+  Future<void> _continueObjectiveQuestion(AppState state) async {
     if (!_objectiveAnswered) {
       return;
     }
@@ -933,7 +976,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       PracticeQuestionType.spelling => 'spelling',
       PracticeQuestionType.flashcard || PracticeQuestionType.mixed => 'recall',
     };
-    _markResult(
+    await _markResult(
       state,
       _objectiveCorrect,
       weakReasonIds: _objectiveCorrect
@@ -973,6 +1016,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _revealed = false;
       _hintRevealed = context.read<AppState>().practiceShowHintsByDefault;
       _reported = false;
+      _sessionStarted = false;
     });
     _prepareCurrentQuestion();
   }
@@ -1024,25 +1068,199 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   void _reportSession({
     required int total,
     required int remembered,
-    required List<String> rememberedWords,
-    required List<String> weakWords,
-    required List<WordEntry> rememberedEntries,
-    required List<WordEntry> weakEntries,
     required Map<String, List<String>> weakReasonIdsByWord,
   }) {
     if (_reported) {
       return;
     }
     _reported = true;
-    context.read<AppState>().recordPracticeSession(
+    context.read<AppState>().finishPracticeSession(
       title: widget.title,
       total: total,
       remembered: remembered,
-      rememberedWords: rememberedWords,
-      weakWords: weakWords,
-      rememberedEntries: rememberedEntries,
-      weakEntries: weakEntries,
       weakReasonIdsByWord: weakReasonIdsByWord,
+    );
+  }
+
+  Future<_PracticeAnswerDecision?> _showAnswerFeedbackDialog(
+    AppState state, {
+    required WordEntry current,
+    required bool remembered,
+    List<String> weakReasonIds = const <String>[],
+  }) {
+    final i18n = AppI18n(state.uiLanguage);
+    final meaning = practiceMeaningText(current);
+    final isLastItem = _index + 1 >= _sessionWords.length;
+    final initialReasons = weakReasonIds.isNotEmpty
+        ? weakReasonIds
+        : (_selectedWeakReasons.isEmpty
+              ? const <String>['recall']
+              : _selectedWeakReasons.toList(growable: false));
+    var addToWrongNotebook = !remembered;
+    final selectedReasons = Set<String>.from(initialReasons);
+
+    return showDialog<_PracticeAnswerDecision>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                remembered
+                    ? pickUiText(i18n, zh: '答得漂亮', en: 'Nice work')
+                    : pickUiText(i18n, zh: '没关系，再来一次', en: 'Keep going'),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      remembered
+                          ? pickUiText(
+                              i18n,
+                              zh: '这题已经拿下了，继续保持。',
+                              en: 'You have this one. Keep the momentum going.',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '给这次卡壳补一个原因，下一轮会更准。',
+                              en: 'Tag the blocker and the next round will be more focused.',
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            current.word,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          if (meaning.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 4),
+                            Text(meaning),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (!remembered) ...<Widget>[
+                      const SizedBox(height: 12),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '加入错题本',
+                            en: 'Add to wrong notebook',
+                          ),
+                        ),
+                        subtitle: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '这一轮结束前也会立刻落地到错题本和记忆轨道。',
+                            en: 'This will persist to the wrong notebook and memory lanes right away.',
+                          ),
+                        ),
+                        value: addToWrongNotebook,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            addToWrongNotebook = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        pickUiText(i18n, zh: '没记住的主要原因', en: 'Main blocker'),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: practiceWeakReasonIds
+                            .map(
+                              (reasonId) => FilterChip(
+                                selected: selectedReasons.contains(reasonId),
+                                avatar: Icon(
+                                  practiceWeakReasonIcon(reasonId),
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  practiceWeakReasonLabel(i18n, reasonId),
+                                ),
+                                onSelected: (selected) {
+                                  setDialogState(() {
+                                    if (selected) {
+                                      selectedReasons.add(reasonId);
+                                    } else {
+                                      selectedReasons.remove(reasonId);
+                                    }
+                                  });
+                                },
+                              ),
+                            )
+                            .toList(growable: false),
+                      ),
+                      if (_autoAddWeakWordsToTask &&
+                          !state.taskWords.contains(current.word)) ...<Widget>[
+                        const SizedBox(height: 12),
+                        Text(
+                          pickUiText(
+                            i18n,
+                            zh: '本题还会同步加入任务词，方便稍后回捞。',
+                            en: 'This word will also be added to your task list for follow-up practice.',
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(pickUiText(i18n, zh: '返回', en: 'Back')),
+                ),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(
+                      _PracticeAnswerDecision(
+                        addToWrongNotebook: addToWrongNotebook,
+                        weakReasonIds: remembered
+                            ? const <String>[]
+                            : (selectedReasons.isEmpty
+                                  ? const <String>['recall']
+                                  : selectedReasons.toList(growable: false)),
+                      ),
+                    );
+                  },
+                  icon: Icon(
+                    isLastItem
+                        ? Icons.flag_rounded
+                        : Icons.navigate_next_rounded,
+                  ),
+                  label: Text(
+                    isLastItem
+                        ? pickUiText(i18n, zh: '完成这一轮', en: 'Finish round')
+                        : pickUiText(i18n, zh: '继续下一题', en: 'Next word'),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

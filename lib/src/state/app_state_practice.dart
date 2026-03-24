@@ -190,6 +190,166 @@ extension _AppStatePractice on AppState {
     _notifyStateChanged();
   }
 
+  void _startPracticeSessionImpl({required String title}) {
+    _ensurePracticeDate();
+    _practiceTodaySessions += 1;
+    _practiceTotalSessions += 1;
+    _practiceLastSessionTitle = title.trim();
+    _persistPracticeDashboard();
+    _notifyStateChanged();
+  }
+
+  void _recordPracticeAnswerImpl({
+    required WordEntry entry,
+    required bool remembered,
+    List<String> weakReasonIds = const <String>[],
+    bool addToWrongNotebook = true,
+  }) {
+    _ensurePracticeDate();
+    _practiceTodayReviewed += 1;
+    _practiceTotalReviewed += 1;
+    if (remembered) {
+      _practiceTodayRemembered += 1;
+      _practiceTotalRemembered += 1;
+    }
+
+    final normalizedWord = _normalizeTrackedWord(entry.word);
+    final rememberedWords = remembered
+        ? <String>[entry.word]
+        : const <String>[];
+    final sanitizedWeakReasons = _sanitizePracticeWeakReasons(weakReasonIds);
+
+    if (remembered) {
+      _practiceRememberedWords = _mergePracticeWords(
+        primary: rememberedWords,
+        existing: _practiceRememberedWords,
+      );
+      _practiceWeakWords = _practiceWeakWords
+          .where((word) => _normalizeTrackedWord(word) != normalizedWord)
+          .toList(growable: false);
+      if (normalizedWord.isNotEmpty) {
+        _practiceWeakWordReasons.remove(normalizedWord);
+      }
+    } else {
+      _practiceRememberedWords = _practiceRememberedWords
+          .where((word) => _normalizeTrackedWord(word) != normalizedWord)
+          .toList(growable: false);
+      if (addToWrongNotebook) {
+        _practiceWeakWords = _mergePracticeWords(
+          primary: <String>[entry.word],
+          existing: _practiceWeakWords,
+        );
+        if (normalizedWord.isNotEmpty) {
+          _practiceWeakWordReasons[normalizedWord] = List<String>.from(
+            sanitizedWeakReasons,
+            growable: false,
+          );
+        }
+      } else {
+        _practiceWeakWords = _practiceWeakWords
+            .where((word) => _normalizeTrackedWord(word) != normalizedWord)
+            .toList(growable: false);
+        if (normalizedWord.isNotEmpty) {
+          _practiceWeakWordReasons.remove(normalizedWord);
+        }
+      }
+    }
+
+    _updateRememberedWordsStatus(
+      rememberedWords: rememberedWords,
+      weakWords: remembered ? const <String>[] : <String>[entry.word],
+    );
+    _cachePracticeTrackedEntries(
+      rememberedEntries: remembered ? <WordEntry>[entry] : const <WordEntry>[],
+      weakEntries: !remembered && addToWrongNotebook
+          ? <WordEntry>[entry]
+          : const <WordEntry>[],
+    );
+    _updateWordMemoryProgress(
+      rememberedEntries: remembered ? <WordEntry>[entry] : const <WordEntry>[],
+      weakEntries: !remembered ? <WordEntry>[entry] : const <WordEntry>[],
+    );
+    _prunePracticeTrackedEntries();
+    _prunePracticeWeakReasons();
+    _persistPracticeDashboard();
+    _notifyStateChanged();
+  }
+
+  void _finishPracticeSessionImpl({
+    required String title,
+    required int total,
+    required int remembered,
+    Map<String, List<String>> weakReasonIdsByWord =
+        const <String, List<String>>{},
+  }) {
+    final safeTotal = total < 0 ? 0 : total;
+    if (safeTotal <= 0) {
+      return;
+    }
+    _practiceLastSessionTitle = title.trim();
+    _appendPracticeSessionHistory(
+      title: title,
+      total: safeTotal,
+      remembered: remembered.clamp(0, safeTotal).toInt(),
+      weakReasonIdsByWord: _normalizePracticeWeakReasonMap(
+        weakReasonIdsByWord,
+        weakReasonIdsByWord.keys.toList(growable: false),
+      ),
+    );
+    _persistPracticeDashboard();
+    _notifyStateChanged();
+  }
+
+  void _updatePracticeRoundSettingsImpl({
+    PracticeRoundSource? source,
+    PracticeRoundStartMode? startMode,
+    int? roundSize,
+    bool? shuffle,
+    bool? collapsed,
+  }) {
+    final nextSettings = _practiceRoundSettings.copyWith(
+      source: source,
+      startMode: startMode,
+      roundSize: roundSize,
+      shuffle: shuffle,
+      collapsed: collapsed,
+    );
+    if (nextSettings.source == _practiceRoundSettings.source &&
+        nextSettings.startMode == _practiceRoundSettings.startMode &&
+        nextSettings.roundSize == _practiceRoundSettings.roundSize &&
+        nextSettings.shuffle == _practiceRoundSettings.shuffle &&
+        nextSettings.collapsed == _practiceRoundSettings.collapsed) {
+      return;
+    }
+    _practiceRoundSettings = nextSettings;
+    _persistPracticeDashboard();
+    _notifyStateChanged();
+  }
+
+  int _previewPracticeBatchStartIndexImpl({
+    required String cursorKey,
+    required List<WordEntry> sourceWords,
+    PracticeRoundStartMode? startMode,
+    WordEntry? anchorWord,
+  }) {
+    if (sourceWords.isEmpty) {
+      return 0;
+    }
+    final resolvedStartMode = startMode ?? _practiceRoundSettings.startMode;
+    return switch (resolvedStartMode) {
+      PracticeRoundStartMode.fromStart => 0,
+      PracticeRoundStartMode.currentWord => math.max(
+        0,
+        _indexOfWordEntry(sourceWords, anchorWord ?? sourceWords.first),
+      ),
+      PracticeRoundStartMode.resumeCursor =>
+        cursorKey.trim().isEmpty
+            ? 0
+            : (_practiceLaunchCursors[cursorKey.trim()] ?? 0) %
+                  sourceWords.length,
+    };
+  }
+
   List<WordEntry> _beginPracticeBatchImpl({
     required String cursorKey,
     required List<WordEntry> sourceWords,
@@ -510,6 +670,7 @@ extension _AppStatePractice on AppState {
     _practiceAutoPlayPronunciation = data.sessionPrefs.autoPlayPronunciation;
     _practiceShowHintsByDefault = data.sessionPrefs.showHintsByDefault;
     _practiceDefaultQuestionType = data.sessionPrefs.defaultQuestionType;
+    _practiceRoundSettings = data.roundSettings;
     _practiceSessionHistory = data.history;
     _practiceLaunchCursors = data.launchCursors;
     _practiceTrackedEntriesByWord
@@ -566,6 +727,7 @@ extension _AppStatePractice on AppState {
           showHintsByDefault: _practiceShowHintsByDefault,
           defaultQuestionType: _practiceDefaultQuestionType,
         ),
+        roundSettings: _practiceRoundSettings,
         launchCursors: _practiceLaunchCursors,
         trackedEntries: _practiceTrackedEntriesByWord.values
             .map(PracticeTrackedEntrySnapshot.fromWordEntry)

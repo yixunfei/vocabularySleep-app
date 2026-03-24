@@ -154,6 +154,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool _practiceShowHintsByDefault = false;
   PracticeQuestionType _practiceDefaultQuestionType =
       PracticeQuestionType.flashcard;
+  PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
   int? _pendingTodoReminderLaunchId;
 
   bool _isPlaying = false;
@@ -266,6 +267,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool get practiceShowHintsByDefault => _practiceShowHintsByDefault;
   PracticeQuestionType get practiceDefaultQuestionType =>
       _practiceDefaultQuestionType;
+  PracticeRoundSettings get practiceRoundSettings => _practiceRoundSettings;
   int? get pendingTodoReminderLaunchId => _pendingTodoReminderLaunchId;
   List<WordEntry> get practiceWrongNotebookEntries {
     return _practiceEntriesFromWords(_practiceWeakWords);
@@ -504,6 +506,48 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     weakReasonIdsByWord: weakReasonIdsByWord,
   );
 
+  void startPracticeSession({required String title}) =>
+      _startPracticeSessionImpl(title: title);
+
+  void recordPracticeAnswer({
+    required WordEntry entry,
+    required bool remembered,
+    List<String> weakReasonIds = const <String>[],
+    bool addToWrongNotebook = true,
+  }) => _recordPracticeAnswerImpl(
+    entry: entry,
+    remembered: remembered,
+    weakReasonIds: weakReasonIds,
+    addToWrongNotebook: addToWrongNotebook,
+  );
+
+  void finishPracticeSession({
+    required String title,
+    required int total,
+    required int remembered,
+    Map<String, List<String>> weakReasonIdsByWord =
+        const <String, List<String>>{},
+  }) => _finishPracticeSessionImpl(
+    title: title,
+    total: total,
+    remembered: remembered,
+    weakReasonIdsByWord: weakReasonIdsByWord,
+  );
+
+  void updatePracticeRoundSettings({
+    PracticeRoundSource? source,
+    PracticeRoundStartMode? startMode,
+    int? roundSize,
+    bool? shuffle,
+    bool? collapsed,
+  }) => _updatePracticeRoundSettingsImpl(
+    source: source,
+    startMode: startMode,
+    roundSize: roundSize,
+    shuffle: shuffle,
+    collapsed: collapsed,
+  );
+
   List<WordEntry> beginPracticeBatch({
     required String cursorKey,
     required List<WordEntry> sourceWords,
@@ -516,6 +560,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     batchSize: batchSize,
     anchorWord: anchorWord,
     cursorAdvance: cursorAdvance,
+  );
+
+  int previewPracticeBatchStartIndex({
+    required String cursorKey,
+    required List<WordEntry> sourceWords,
+    PracticeRoundStartMode? startMode,
+    WordEntry? anchorWord,
+  }) => _previewPracticeBatchStartIndexImpl(
+    cursorKey: cursorKey,
+    sourceWords: sourceWords,
+    startMode: startMode,
+    anchorWord: anchorWord,
   );
 
   void setSearchQuery(String value) => _setSearchQueryImpl(value);
@@ -2251,6 +2307,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceAutoPlayPronunciation = false;
     _practiceShowHintsByDefault = false;
     _practiceDefaultQuestionType = PracticeQuestionType.flashcard;
+    _practiceRoundSettings = PracticeRoundSettings.defaults;
 
     _searchQuery = '';
     _searchMode = SearchMode.all;

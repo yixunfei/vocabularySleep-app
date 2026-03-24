@@ -217,6 +217,128 @@ class PracticeTrackedEntrySnapshot {
   }
 }
 
+enum PracticeRoundSource {
+  currentScope,
+  wholeWordbook,
+  wrongNotebook,
+  taskWords,
+  favorites,
+  recentWeak,
+}
+
+extension PracticeRoundSourceStorage on PracticeRoundSource {
+  String get storageValue => switch (this) {
+    PracticeRoundSource.currentScope => 'current_scope',
+    PracticeRoundSource.wholeWordbook => 'whole_wordbook',
+    PracticeRoundSource.wrongNotebook => 'wrong_notebook',
+    PracticeRoundSource.taskWords => 'task_words',
+    PracticeRoundSource.favorites => 'favorites',
+    PracticeRoundSource.recentWeak => 'recent_weak',
+  };
+
+  static PracticeRoundSource fromStorage(String raw) {
+    return switch (raw.trim()) {
+      'whole_wordbook' => PracticeRoundSource.wholeWordbook,
+      'wrong_notebook' => PracticeRoundSource.wrongNotebook,
+      'task_words' => PracticeRoundSource.taskWords,
+      'favorites' => PracticeRoundSource.favorites,
+      'recent_weak' => PracticeRoundSource.recentWeak,
+      _ => PracticeRoundSource.currentScope,
+    };
+  }
+}
+
+enum PracticeRoundStartMode { resumeCursor, currentWord, fromStart }
+
+extension PracticeRoundStartModeStorage on PracticeRoundStartMode {
+  String get storageValue => switch (this) {
+    PracticeRoundStartMode.resumeCursor => 'resume_cursor',
+    PracticeRoundStartMode.currentWord => 'current_word',
+    PracticeRoundStartMode.fromStart => 'from_start',
+  };
+
+  static PracticeRoundStartMode fromStorage(String raw) {
+    return switch (raw.trim()) {
+      'current_word' => PracticeRoundStartMode.currentWord,
+      'from_start' => PracticeRoundStartMode.fromStart,
+      _ => PracticeRoundStartMode.resumeCursor,
+    };
+  }
+}
+
+class PracticeRoundSettings {
+  const PracticeRoundSettings({
+    this.source = PracticeRoundSource.currentScope,
+    this.startMode = PracticeRoundStartMode.resumeCursor,
+    this.roundSize = 10,
+    this.shuffle = false,
+    this.collapsed = true,
+  });
+
+  static const PracticeRoundSettings defaults = PracticeRoundSettings();
+
+  final PracticeRoundSource source;
+  final PracticeRoundStartMode startMode;
+  final int roundSize;
+  final bool shuffle;
+  final bool collapsed;
+
+  factory PracticeRoundSettings.fromJsonValue(Object? value) {
+    if (value is! Map) {
+      return defaults;
+    }
+
+    int readRoundSize(Object? raw) {
+      if (raw is int) {
+        return raw.clamp(1, 200);
+      }
+      if (raw is num) {
+        return raw.toInt().clamp(1, 200);
+      }
+      return defaults.roundSize;
+    }
+
+    return PracticeRoundSettings(
+      source: PracticeRoundSourceStorage.fromStorage(
+        '${value['source'] ?? PracticeRoundSource.currentScope.name}',
+      ),
+      startMode: PracticeRoundStartModeStorage.fromStorage(
+        '${value['startMode'] ?? PracticeRoundStartMode.resumeCursor.name}',
+      ),
+      roundSize: readRoundSize(value['roundSize']),
+      shuffle: value['shuffle'] == true,
+      collapsed: value['collapsed'] != false,
+    );
+  }
+
+  PracticeRoundSettings copyWith({
+    PracticeRoundSource? source,
+    PracticeRoundStartMode? startMode,
+    int? roundSize,
+    bool? shuffle,
+    bool? collapsed,
+  }) {
+    final nextRoundSize = roundSize ?? this.roundSize;
+    return PracticeRoundSettings(
+      source: source ?? this.source,
+      startMode: startMode ?? this.startMode,
+      roundSize: nextRoundSize.clamp(1, 200),
+      shuffle: shuffle ?? this.shuffle,
+      collapsed: collapsed ?? this.collapsed,
+    );
+  }
+
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'source': source.storageValue,
+      'startMode': startMode.storageValue,
+      'roundSize': roundSize.clamp(1, 200),
+      'shuffle': shuffle,
+      'collapsed': collapsed,
+    };
+  }
+}
+
 class PracticeDashboardState {
   const PracticeDashboardState({
     this.date = '',
@@ -232,6 +354,7 @@ class PracticeDashboardState {
     this.weakReasonIdsByWord = const <String, List<String>>{},
     this.history = const <PracticeSessionRecord>[],
     this.sessionPrefs = PracticeSessionPreferences.defaults,
+    this.roundSettings = PracticeRoundSettings.defaults,
     this.launchCursors = const <String, int>{},
     this.trackedEntries = const <PracticeTrackedEntrySnapshot>[],
   });
@@ -251,6 +374,7 @@ class PracticeDashboardState {
   final Map<String, List<String>> weakReasonIdsByWord;
   final List<PracticeSessionRecord> history;
   final PracticeSessionPreferences sessionPrefs;
+  final PracticeRoundSettings roundSettings;
   final Map<String, int> launchCursors;
   final List<PracticeTrackedEntrySnapshot> trackedEntries;
 
@@ -379,6 +503,9 @@ class PracticeDashboardState {
       sessionPrefs: PracticeSessionPreferences.fromJsonValue(
         value['sessionPrefs'],
       ),
+      roundSettings: PracticeRoundSettings.fromJsonValue(
+        value['roundSettings'],
+      ),
       launchCursors: readLaunchCursors(value['launchCursors']),
       trackedEntries: readTrackedEntries(value['trackedEntries']),
     );
@@ -401,6 +528,7 @@ class PracticeDashboardState {
           .map((record) => record.toMap())
           .toList(growable: false),
       'sessionPrefs': sessionPrefs.toJsonMap(),
+      'roundSettings': roundSettings.toJsonMap(),
       'launchCursors': launchCursors,
       'trackedEntries': trackedEntries
           .map((entry) => entry.toJsonMap())
