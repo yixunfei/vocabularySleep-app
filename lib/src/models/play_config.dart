@@ -462,7 +462,7 @@ class VoiceInputConfig {
 class AppearanceConfig {
   const AppearanceConfig({
     this.theme = 'flat',
-    this.timerStyle = 'hourglass',
+    this.timerStyle = 'countdown',
     this.compactLayout = false,
     this.highContrastText = false,
     this.enhancedBackground = true,

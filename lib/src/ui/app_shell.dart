@@ -35,6 +35,7 @@ class _AppShellState extends State<AppShell> {
   VoidCallback? _scrollLibraryToTop;
   bool _exitDialogVisible = false;
   bool _startupPromptShown = false;
+  int? _lastHandledTodoReminderLaunchId;
 
   @override
   void initState() {
@@ -151,6 +152,27 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _index = index;
     });
+  }
+
+  void _handlePendingTodoReminderLaunch(AppState state) {
+    final pendingTodoId = state.pendingTodoReminderLaunchId;
+    if (pendingTodoId == null || pendingTodoId <= 0) {
+      return;
+    }
+    if (_lastHandledTodoReminderLaunchId == pendingTodoId) {
+      return;
+    }
+    _lastHandledTodoReminderLaunchId = pendingTodoId;
+    if (_index != 3) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _index = 3;
+        });
+      });
+    }
   }
 
   void _handleMiniPlayerPresentation(
@@ -630,6 +652,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    _handlePendingTodoReminderLaunch(state);
     final i18n = AppI18n(state.uiLanguage);
     final media = MediaQuery.of(context);
     final bottomInset = media.padding.bottom;

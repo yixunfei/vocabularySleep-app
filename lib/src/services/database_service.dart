@@ -13,6 +13,7 @@ import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';
+import '../models/export_dto.dart';
 import 'app_log_service.dart';
 import 'wordbook_import_service.dart';
 
@@ -213,7 +214,7 @@ class AppDatabaseService {
     final payload = buildUserDataExportPayload(sections: resolvedSections);
 
     await File(exportPath).writeAsString(
-      const JsonEncoder.withIndent('  ').convert(payload),
+      const JsonEncoder.withIndent('  ').convert(payload.toJsonMap()),
       flush: true,
     );
     return exportPath;
@@ -244,7 +245,7 @@ class AppDatabaseService {
     return exportPath;
   }
 
-  Map<String, Object?> buildUserDataExportPayload({
+  UserDataExportPayload buildUserDataExportPayload({
     Iterable<UserDataExportSection>? sections,
   }) {
     if (!_initialized) {
@@ -252,44 +253,33 @@ class AppDatabaseService {
     }
 
     final resolvedSections = _resolveUserDataExportSections(sections);
-    final payload = <String, Object?>{
-      'exported_at': DateTime.now().toIso8601String(),
-      'schema_version': 2,
-      'sections': resolvedSections
+    return UserDataExportPayload(
+      exportedAt: DateTime.now(),
+      sections: resolvedSections
           .map((section) => section.storageKey)
           .toList(growable: false),
-    };
-
-    if (resolvedSections.contains(UserDataExportSection.wordbooks)) {
-      payload[UserDataExportSection.wordbooks.storageKey] =
-          _buildWordbooksExportPayload();
-    }
-    if (resolvedSections.contains(UserDataExportSection.todos)) {
-      payload[UserDataExportSection.todos.storageKey] = getTodos()
-          .map((item) => item.toMap())
-          .toList(growable: false);
-    }
-    if (resolvedSections.contains(UserDataExportSection.notes)) {
-      payload[UserDataExportSection.notes.storageKey] = getNotes()
-          .map((item) => item.toMap())
-          .toList(growable: false);
-    }
-    if (resolvedSections.contains(UserDataExportSection.progress)) {
-      payload[UserDataExportSection.progress.storageKey] = _selectMaps(
-        'SELECT * FROM progress ORDER BY word_id ASC',
-      );
-    }
-    if (resolvedSections.contains(UserDataExportSection.timerRecords)) {
-      payload[UserDataExportSection.timerRecords.storageKey] = _selectMaps(
-        'SELECT * FROM timer_records ORDER BY start_time DESC',
-      );
-    }
-    if (resolvedSections.contains(UserDataExportSection.settings)) {
-      payload[UserDataExportSection.settings.storageKey] =
-          _buildSettingsExportPayload();
-    }
-
-    return payload;
+      wordbooks: resolvedSections.contains(UserDataExportSection.wordbooks)
+          ? _buildWordbooksExportPayload()
+          : const <UserDataExportWordbook>[],
+      todos: resolvedSections.contains(UserDataExportSection.todos)
+          ? getTodos()
+          : const <TodoItem>[],
+      notes: resolvedSections.contains(UserDataExportSection.notes)
+          ? getNotes()
+          : const <PlanNote>[],
+      progress: resolvedSections.contains(UserDataExportSection.progress)
+          ? _selectMaps(
+              'SELECT * FROM progress ORDER BY word_id ASC',
+            ).map(WordMemoryProgress.fromMap).toList(growable: false)
+          : const <WordMemoryProgress>[],
+      timerRecords:
+          resolvedSections.contains(UserDataExportSection.timerRecords)
+          ? getTimerRecords(limit: 100000)
+          : const <TomatoTimerRecord>[],
+      settings: resolvedSections.contains(UserDataExportSection.settings)
+          ? _buildSettingsExportPayload()
+          : const <String, String>{},
+    );
   }
 
   Future<String> getDefaultUserDataExportDirectoryPath() async {
@@ -1641,7 +1631,7 @@ class AppDatabaseService {
     return match?.group(1) ?? 'manual';
   }
 
-  List<Map<String, Object?>> _buildWordbooksExportPayload() {
+  List<UserDataExportWordbook> _buildWordbooksExportPayload() {
     final rows = _selectMaps('''
       SELECT id, name, path, word_count, created_at
       FROM wordbooks
@@ -1650,34 +1640,10 @@ class AppDatabaseService {
     return rows
         .map((row) {
           final wordbookId = ((row['id'] as num?) ?? 0).toInt();
-          return <String, Object?>{
-            'id': wordbookId,
-            'name': row['name'],
-            'path': row['path'],
-            'word_count': row['word_count'],
-            'created_at': row['created_at'],
-            'words': getWords(wordbookId)
-                .map(
-                  (word) => <String, Object?>{
-                    'id': word.id,
-                    'wordbook_id': word.wordbookId,
-                    'word': word.word,
-                    'meaning': word.meaning,
-                    'examples': word.examples,
-                    'etymology': word.etymology,
-                    'roots': word.roots,
-                    'affixes': word.affixes,
-                    'variations': word.variations,
-                    'memory': word.memory,
-                    'story': word.story,
-                    'fields': word.fields
-                        .map((field) => field.toJsonMap())
-                        .toList(growable: false),
-                    'raw_content': word.rawContent,
-                  },
-                )
-                .toList(growable: false),
-          };
+          return UserDataExportWordbook(
+            wordbook: Wordbook.fromMap(row),
+            words: getWords(wordbookId),
+          );
         })
         .toList(growable: false);
   }

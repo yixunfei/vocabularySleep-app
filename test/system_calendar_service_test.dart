@@ -46,7 +46,7 @@ void main() {
   });
 
   test(
-    'system calendar sync sends notification and alarm offsets separately',
+    'system calendar sync keeps a single selected alert type',
     () async {
       final database = AppDatabaseService(WordbookImportService());
       await database.init();
@@ -87,7 +87,7 @@ void main() {
       );
       expect(
         List<Object?>.from(arguments['notificationOffsetsMinutes'] as List),
-        <Object?>[5],
+        isEmpty,
       );
       expect(
         List<Object?>.from(arguments['alarmOffsetsMinutes'] as List),
@@ -95,7 +95,7 @@ void main() {
       );
       expect(
         List<Object?>.from(arguments['reminderOffsetsMinutes'] as List),
-        <Object?>[5, 15],
+        <Object?>[15],
       );
     },
   );

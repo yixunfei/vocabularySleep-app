@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
+import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
@@ -25,24 +26,17 @@ void main() {
     final database = _MemoryDatabaseService();
     final settings = SettingsService(database);
 
-    expect(settings.loadTestModeState(), const <String, bool>{
-      'enabled': false,
-      'revealed': false,
-      'hintRevealed': false,
-    });
+    expect(settings.loadTestModeState(), TestModeState.defaults);
 
     settings.saveTestModeState(
-      enabled: true,
-      revealed: true,
-      hintRevealed: false,
+      const TestModeState(enabled: true, revealed: true, hintRevealed: false),
     );
 
     final restored = SettingsService(database).loadTestModeState();
-    expect(restored, const <String, bool>{
-      'enabled': true,
-      'revealed': true,
-      'hintRevealed': false,
-    });
+    expect(
+      restored,
+      const TestModeState(enabled: true, revealed: true, hintRevealed: false),
+    );
   });
 
   test('startup page persists through SettingsService', () {

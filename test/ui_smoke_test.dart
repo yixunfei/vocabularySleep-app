@@ -7,10 +7,12 @@ import 'package:provider/provider.dart';
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
+import 'package:vocabulary_sleep_app/src/models/export_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_export_format.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_question_type.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_session_record.dart';
+import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
 import 'package:vocabulary_sleep_app/src/models/user_data_export.dart';
@@ -23,6 +25,7 @@ import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
+import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
@@ -1191,6 +1194,30 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('pending todo action opens detail editor in focus page', (
+      tester,
+    ) async {
+      final focusService = _FakeFocusService.sample();
+      final targetTodo = focusService.getTodos().first;
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+      );
+      focusService._pendingTodoReminderAction = TodoReminderLaunchAction(
+        todoId: targetTodo.id!,
+        type: TodoReminderActionType.detail,
+      );
+
+      await _pumpPage(tester, state: state, child: const FocusPage());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('todo-title-field')),
+        findsOneWidget,
+      );
+      expect(find.text(targetTodo.content), findsWidgets);
+    });
+
     testWidgets('focus page groups todos in plan view and toggles list view', (
       tester,
     ) async {
@@ -1649,6 +1676,20 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const PracticePage());
 
+      expect(
+        find.byKey(const ValueKey<String>('practice-round-setup-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Round setup'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-round-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Practice source'), findsOneWidget);
+      expect(find.text('Words per round'), findsOneWidget);
+
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey<String>('practice-memory-card')),
         250,
@@ -1756,6 +1797,8 @@ void main() {
 
       await tester.tap(find.text('\u8bb0\u4f4f\u4e86'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('\u5b8c\u6210\u8fd9\u4e00\u8f6e'));
+      await tester.pumpAndSettle();
 
       expect(find.text('\u5df2\u8bb0\u4f4f\u5355\u8bcd'), findsOneWidget);
       expect(find.text('\u590d\u4e60\u5df2\u8bb0\u4f4f'), findsOneWidget);
@@ -1788,14 +1831,26 @@ void main() {
 
       await tester.tap(find.text('Not yet'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Next word'));
+      await tester.pumpAndSettle();
       expect(state.taskWords, isEmpty);
 
       await tester.scrollUntilVisible(
-        find.byKey(const ValueKey<String>('practice-auto-task-switch')),
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
         -220,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('practice-answer-feedback-switch')),
+        findsOneWidget,
+      );
 
       await tester.tap(
         find.byKey(const ValueKey<String>('practice-auto-task-switch')),
@@ -1810,6 +1865,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Not yet'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Finish round'));
       await tester.pumpAndSettle();
 
       expect(state.taskWords.contains('alpha'), isFalse);
@@ -1851,7 +1908,11 @@ void main() {
 
       await tester.tap(find.text('Remembered'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Next word'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Not yet'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Finish round'));
       await tester.pumpAndSettle();
 
       expect(state.practiceTodaySessions, 1);
@@ -1899,14 +1960,12 @@ void main() {
         child: const PracticeSessionPage(title: 'Meaning mode', words: words),
       );
 
-      await tester.tap(find.text('Meaning choice'));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
+      );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Choose the correct meaning for the word.'),
-        findsOneWidget,
-      );
-      expect(find.text('first'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, 'Meaning choice'), findsOneWidget);
     });
 
     testWidgets('wrong notebook supports search and reason filter', (
@@ -2015,7 +2074,47 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Today sprint'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Old sprint'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
       expect(find.text('Old sprint'), findsOneWidget);
+    });
+
+    testWidgets('practice review page shows interactive trend card', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      state._practiceSessionHistory = <PracticeSessionRecord>[
+        PracticeSessionRecord(
+          title: 'Round 1',
+          practicedAt: DateTime.now(),
+          total: 8,
+          remembered: 6,
+        ),
+        PracticeSessionRecord(
+          title: 'Round 2',
+          practicedAt: DateTime.now().subtract(const Duration(days: 1)),
+          total: 10,
+          remembered: 4,
+        ),
+      ];
+
+      await _pumpPage(tester, state: state, child: const PracticeReviewPage());
+
+      expect(
+        find.byKey(const ValueKey<String>('practice-trend-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Trend card'), findsOneWidget);
+      expect(find.text('Accuracy'), findsWidgets);
+      expect(find.text('Reviewed'), findsWidgets);
+      expect(find.text('Weak'), findsWidgets);
+      expect(find.text('Weekly'), findsOneWidget);
+      expect(find.text('Monthly'), findsOneWidget);
     });
 
     testWidgets('wrong notebook exports current filtered results', (
@@ -2150,7 +2249,9 @@ Future<void> _pumpPage(
   await tester.pumpAndSettle();
 }
 
-class _FakeAppState extends ChangeNotifier implements AppState {
+class _FakeAppState extends ChangeNotifier
+    with WidgetsBindingObserver
+    implements AppState {
   _FakeAppState({
     required PlayConfig config,
     required String uiLanguage,
@@ -2297,6 +2398,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   List<Wordbook> _wordbooks;
   final List<WordEntry> _visibleWords;
   WordEntry? _currentWord;
+  int _currentWordIndex = 0;
   String? _lastBackupPath;
   final List<String> _localVoices;
   final List<DatabaseBackupInfo> _backups;
@@ -2307,6 +2409,14 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   final String? _asrStoppedRecordingPath;
   final AsrResult _asrTranscriptionResult;
   int _apiTtsCacheBytes;
+  bool _isPlaying = false;
+  bool _isPaused = false;
+  int _currentUnit = 0;
+  int _totalUnits = 0;
+  PlayUnit? _activeUnit;
+  int? _playingWordbookId;
+  String? _playingWordbookName;
+  String? _playingWord;
   AppHomeTab _startupPage = AppHomeTab.play;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   bool _weatherEnabled = false;
@@ -2318,6 +2428,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   List<TodoItem> _todayActiveTodos = <TodoItem>[];
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
+  bool _testModeEnabled = false;
+  bool _testModeRevealed = false;
+  bool _testModeHintRevealed = false;
   bool resetUserDataCalled = false;
   bool clearedApiTtsCache = false;
   String? restoredBackupPath;
@@ -2355,8 +2468,11 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   bool _practiceAutoAddWeakWordsToTask = false;
   bool _practiceAutoPlayPronunciation = false;
   bool _practiceShowHintsByDefault = false;
+  bool _practiceShowAnswerFeedbackDialog = true;
   PracticeQuestionType _practiceDefaultQuestionType =
       PracticeQuestionType.flashcard;
+  PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
+  final Map<String, int> _practiceLaunchCursors = <String, int>{};
   final Set<String> _favorites = <String>{};
   final Set<String> _taskWords = <String>{};
   final Map<AsrProviderType, AsrOfflineModelStatus> _offlineStatuses =
@@ -2418,7 +2534,37 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;
 
   @override
-  bool get isPlaying => false;
+  int get currentWordIndex => _currentWordIndex;
+
+  @override
+  bool get isPlaying => _isPlaying;
+
+  @override
+  bool get isPaused => _isPaused;
+
+  @override
+  int get currentUnit => _currentUnit;
+
+  @override
+  int get totalUnits => _totalUnits;
+
+  @override
+  PlayUnit? get activeUnit => _activeUnit;
+
+  @override
+  int? get playingWordbookId => _playingWordbookId;
+
+  @override
+  String? get playingWordbookName => _playingWordbookName;
+
+  @override
+  String? get playingWord => _playingWord;
+
+  @override
+  bool get isPlayingDifferentWordbook =>
+      _isPlaying &&
+      _playingWordbookId != null &&
+      _selectedWordbook?.id != _playingWordbookId;
 
   @override
   Set<String> get favorites => _favorites;
@@ -2450,6 +2596,10 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       .toList(growable: false);
 
   @override
+  List<String> get practiceWeakWords =>
+      recentWeakWordEntries.map((entry) => entry.word).toList(growable: false);
+
+  @override
   bool get practiceAutoAddWeakWordsToTask => _practiceAutoAddWeakWordsToTask;
 
   @override
@@ -2459,12 +2609,22 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   bool get practiceShowHintsByDefault => _practiceShowHintsByDefault;
 
   @override
+  bool get practiceShowAnswerFeedbackDialog =>
+      _practiceShowAnswerFeedbackDialog;
+
+  @override
   List<PracticeSessionRecord> get practiceSessionHistory =>
       List<PracticeSessionRecord>.unmodifiable(_practiceSessionHistory);
 
   @override
+  int? get pendingTodoReminderLaunchId => null;
+
+  @override
   PracticeQuestionType get practiceDefaultQuestionType =>
       _practiceDefaultQuestionType;
+
+  @override
+  PracticeRoundSettings get practiceRoundSettings => _practiceRoundSettings;
 
   @override
   List<WordEntry> get practiceWrongNotebookEntries =>
@@ -2555,6 +2715,15 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       _uiLanguageFollowsSystem ? 'system' : _uiLanguage;
 
   @override
+  bool get testModeEnabled => _testModeEnabled;
+
+  @override
+  bool get testModeRevealed => _testModeRevealed;
+
+  @override
+  bool get testModeHintRevealed => _testModeHintRevealed;
+
+  @override
   bool get startupTodoPromptEnabled => _startupTodoPromptEnabled;
 
   @override
@@ -2571,6 +2740,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
       List<TodoItem>.unmodifiable(_todayActiveTodos);
 
   bool startupPromptSuppressedToday = false;
+
+  @override
+  int? consumePendingTodoReminderLaunchId() => null;
 
   @override
   List<WordEntry> get words => _visibleWords;
@@ -2671,6 +2843,92 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   Future<void> previewPronunciation(String word) async {}
 
   @override
+  Future<void> play() async {
+    _isPlaying = true;
+    _isPaused = false;
+    _playingWordbookId = _selectedWordbook?.id;
+    _playingWordbookName = _selectedWordbook?.name;
+    _playingWord = currentWord?.word;
+    _totalUnits = _visibleWords.length;
+    _currentUnit = _visibleWords.isEmpty ? 0 : (_currentWordIndex + 1);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> pauseOrResume() async {
+    if (!_isPlaying) {
+      await play();
+      return;
+    }
+    _isPaused = !_isPaused;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> stop() async {
+    _isPlaying = false;
+    _isPaused = false;
+    _currentUnit = 0;
+    _totalUnits = 0;
+    _activeUnit = null;
+    _playingWordbookId = null;
+    _playingWordbookName = null;
+    _playingWord = null;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> skipCurrentWord() => playNextWord();
+
+  @override
+  Future<void> playPreviousWord() async {
+    await movePlaybackPreviousWord();
+    await play();
+  }
+
+  @override
+  Future<void> playNextWord() async {
+    await movePlaybackNextWord();
+    await play();
+  }
+
+  @override
+  Future<void> jumpToPlayingWordbook() async {
+    final playingWordbookId = _playingWordbookId;
+    if (playingWordbookId == null) {
+      return;
+    }
+    final match = _wordbooks
+        .where((item) => item.id == playingWordbookId)
+        .cast<Wordbook?>()
+        .firstOrNull;
+    if (match == null) {
+      return;
+    }
+    _selectedWordbook = match;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> playCurrentWordbook() => play();
+
+  @override
+  Future<void> movePlaybackPreviousWord() async {
+    if (_visibleWords.isEmpty) {
+      return;
+    }
+    selectWordIndex((_currentWordIndex - 1).clamp(0, _visibleWords.length - 1));
+  }
+
+  @override
+  Future<void> movePlaybackNextWord() async {
+    if (_visibleWords.isEmpty) {
+      return;
+    }
+    selectWordIndex((_currentWordIndex + 1).clamp(0, _visibleWords.length - 1));
+  }
+
+  @override
   void clearMessage() {}
 
   @override
@@ -2682,6 +2940,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
 
   @override
   Future<void> addAmbientFileSource() async {}
+
+  @override
+  Future<String?> pickBackgroundImageByPicker() async => null;
 
   @override
   Future<void> removeAsrOfflineModel(AsrProviderType provider) async {}
@@ -2767,23 +3028,44 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
-  Map<String, Object?> buildPracticeReviewExportPayload({
+  PracticeReviewExportPayload buildPracticeReviewExportPayload({
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final resolvedHistory = (records ?? _practiceSessionHistory).toList(
       growable: false,
     );
     final resolvedNotebook = (wrongNotebookEntries ?? _recentWeakEntries)
         .toList(growable: false);
-    return <String, Object?>{
-      'sessionHistory': resolvedHistory
-          .map((record) => record.toMap())
+    return PracticeReviewExportPayload(
+      exportedAt: DateTime(2026, 3, 24),
+      summary: const PracticeReviewExportSummary(
+        todaySessions: 0,
+        todayReviewed: 0,
+        todayRemembered: 0,
+        totalSessions: 0,
+        totalReviewed: 0,
+        totalRemembered: 0,
+        todayAccuracy: 0,
+        totalAccuracy: 0,
+        lastSessionTitle: '',
+        defaultQuestionType: 'flashcard',
+      ),
+      metadata: metadata,
+      sessionHistory: resolvedHistory,
+      wrongNotebook: resolvedNotebook
+          .map(
+            (entry) => PracticeExportWordEntry(
+              id: entry.id,
+              wordbookId: entry.wordbookId,
+              word: entry.word,
+              meaning: entry.meaning ?? '',
+              reasons: const <String>[],
+            ),
+          )
           .toList(growable: false),
-      'wrongNotebook': resolvedNotebook
-          .map((entry) => <String, Object?>{'word': entry.word})
-          .toList(growable: false),
-    };
+    );
   }
 
   @override
@@ -2793,6 +3075,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     String? fileName,
     Iterable<PracticeSessionRecord>? records,
     Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     final resolvedName = fileName ?? 'practice_review.${format.extension}';
     exportedPracticeReviewPath =
@@ -2802,12 +3085,27 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
-  Map<String, Object?> buildPracticeWrongNotebookExportPayload({
+  PracticeWrongNotebookExportPayload buildPracticeWrongNotebookExportPayload({
     required Iterable<WordEntry> entries,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) {
-    return <String, Object?>{
-      'entries': entries.map((entry) => entry.word).toList(growable: false),
-    };
+    final resolvedEntries = entries.toList(growable: false);
+    return PracticeWrongNotebookExportPayload(
+      exportedAt: DateTime(2026, 3, 24),
+      count: resolvedEntries.length,
+      metadata: metadata,
+      entries: resolvedEntries
+          .map(
+            (entry) => PracticeExportWordEntry(
+              id: entry.id,
+              wordbookId: entry.wordbookId,
+              word: entry.word,
+              meaning: entry.meaning ?? '',
+              reasons: const <String>[],
+            ),
+          )
+          .toList(growable: false),
+    );
   }
 
   @override
@@ -2816,6 +3114,7 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     required PracticeExportFormat format,
     String? directoryPath,
     String? fileName,
+    Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     final resolvedName = fileName ?? 'wrong_notebook.${format.extension}';
     exportedWrongNotebookPath =
@@ -2854,6 +3153,71 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
+  Future<bool> saveWord({
+    WordEntry? original,
+    required String word,
+    required List<WordFieldItem> fields,
+    String rawContent = '',
+  }) async {
+    final normalized = word.trim();
+    if (normalized.isEmpty) {
+      return false;
+    }
+    final nextEntry = WordEntry(
+      id: original?.id,
+      wordbookId: _selectedWordbook?.id ?? 1,
+      word: normalized,
+      fields: fields,
+      rawContent: rawContent,
+    );
+    if (original == null) {
+      _visibleWords.add(nextEntry);
+      _currentWordIndex = _visibleWords.length - 1;
+    } else {
+      final index = _visibleWords.indexWhere(
+        (item) => item.word == original.word,
+      );
+      if (index >= 0) {
+        _visibleWords[index] = nextEntry;
+        _currentWordIndex = index;
+      } else {
+        _visibleWords.add(nextEntry);
+        _currentWordIndex = _visibleWords.length - 1;
+      }
+    }
+    _currentWord = nextEntry;
+    notifyListeners();
+    return true;
+  }
+
+  @override
+  Future<void> importLegacyDatabaseByPicker() async {}
+
+  @override
+  Future<int> importWordsBatch(List<WordEntryPayload> payloads) async {
+    var imported = 0;
+    for (final payload in payloads) {
+      final normalized = payload.word.trim();
+      if (normalized.isEmpty) {
+        continue;
+      }
+      _visibleWords.add(
+        WordEntry(
+          wordbookId: _selectedWordbook?.id ?? 1,
+          word: normalized,
+          fields: payload.fields,
+          rawContent: payload.rawContent,
+        ),
+      );
+      imported += 1;
+    }
+    if (imported > 0) {
+      notifyListeners();
+    }
+    return imported;
+  }
+
+  @override
   Future<void> deleteWordbook(Wordbook wordbook) async {
     _wordbooks = _wordbooks.where((item) => item.id != wordbook.id).toList();
     if (_selectedWordbook?.id == wordbook.id) {
@@ -2886,6 +3250,18 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }) async {}
 
   @override
+  Future<void> clearTaskWordbook() async {
+    if (_taskWords.isEmpty) {
+      return;
+    }
+    _taskWords.clear();
+    notifyListeners();
+  }
+
+  @override
+  Future<void> exportTaskWordbook(String name) async {}
+
+  @override
   Future<void> renameWordbook(Wordbook wordbook, String newName) async {
     renamedWordbookName = newName;
     _wordbooks = _wordbooks
@@ -2913,7 +3289,33 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   @override
   void selectWordEntry(WordEntry entry) {
     _currentWord = entry;
+    final index = _visibleWords.indexWhere((item) => item.word == entry.word);
+    if (index >= 0) {
+      _currentWordIndex = index;
+    }
     notifyListeners();
+  }
+
+  @override
+  void selectWordIndex(int index) {
+    if (_visibleWords.isEmpty) {
+      _currentWord = null;
+      _currentWordIndex = 0;
+      notifyListeners();
+      return;
+    }
+    final normalized = index.clamp(0, _visibleWords.length - 1);
+    _currentWordIndex = normalized;
+    _currentWord = _visibleWords[normalized];
+    notifyListeners();
+  }
+
+  @override
+  void selectWordByText(String word) {
+    final index = _visibleWords.indexWhere((item) => item.word == word);
+    if (index >= 0) {
+      selectWordIndex(index);
+    }
   }
 
   @override
@@ -3005,10 +3407,155 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   }
 
   @override
+  void startPracticeSession({required String title}) {
+    _practiceTodaySessions += 1;
+    _practiceTotalSessions += 1;
+    _practiceLastSessionTitle = title;
+    notifyListeners();
+  }
+
+  @override
+  void recordPracticeAnswer({
+    required WordEntry entry,
+    required bool remembered,
+    List<String> weakReasonIds = const <String>[],
+    bool addToWrongNotebook = true,
+  }) {
+    _practiceTodayReviewed += 1;
+    _practiceTotalReviewed += 1;
+    if (remembered) {
+      _practiceTodayRemembered += 1;
+      _practiceTotalRemembered += 1;
+      if (_recentRememberedEntries.every((item) => !_isSameWord(item, entry))) {
+        _recentRememberedEntries = <WordEntry>[
+          entry,
+          ..._recentRememberedEntries,
+        ];
+      }
+      _recentWeakEntries = _recentWeakEntries
+          .where((item) => !_isSameWord(item, entry))
+          .toList(growable: false);
+      _practiceWeakReasonsByWord.remove(_reasonKey(entry));
+    } else {
+      if (addToWrongNotebook &&
+          _recentWeakEntries.every((item) => !_isSameWord(item, entry))) {
+        _recentWeakEntries = <WordEntry>[entry, ..._recentWeakEntries];
+      }
+      if (addToWrongNotebook) {
+        _practiceWeakReasonsByWord[_reasonKey(entry)] = weakReasonIds.isEmpty
+            ? const <String>['recall']
+            : List<String>.from(weakReasonIds, growable: false);
+      }
+    }
+    notifyListeners();
+  }
+
+  @override
+  void finishPracticeSession({
+    required String title,
+    required int total,
+    required int remembered,
+    Map<String, List<String>> weakReasonIdsByWord =
+        const <String, List<String>>{},
+  }) {
+    _practiceLastSessionTitle = title;
+    _practiceSessionHistory = <PracticeSessionRecord>[
+      PracticeSessionRecord(
+        title: title,
+        practicedAt: DateTime(2026, 3, 24, 9, 0),
+        total: total,
+        remembered: remembered,
+        weakReasonCounts: <String, int>{
+          for (final entry in weakReasonIdsByWord.values.expand((item) => item))
+            entry: weakReasonIdsByWord.values
+                .expand((item) => item)
+                .where((item) => item == entry)
+                .length,
+        },
+      ),
+      ..._practiceSessionHistory,
+    ];
+    notifyListeners();
+  }
+
+  @override
+  List<WordEntry> beginPracticeBatch({
+    required String cursorKey,
+    required List<WordEntry> sourceWords,
+    required int batchSize,
+    WordEntry? anchorWord,
+    int? cursorAdvance,
+  }) {
+    if (sourceWords.isEmpty || batchSize <= 0) {
+      return const <WordEntry>[];
+    }
+    final trimmedKey = cursorKey.trim();
+    final anchorIndex = anchorWord == null
+        ? -1
+        : sourceWords.indexWhere((entry) => _isSameWord(entry, anchorWord));
+    final startIndex = anchorIndex >= 0
+        ? anchorIndex
+        : (_practiceLaunchCursors[trimmedKey] ?? 0) % sourceWords.length;
+    final safeBatchSize = batchSize.clamp(1, sourceWords.length);
+    final output = <WordEntry>[];
+    for (var offset = 0; offset < safeBatchSize; offset += 1) {
+      output.add(sourceWords[(startIndex + offset) % sourceWords.length]);
+    }
+    if (trimmedKey.isNotEmpty) {
+      _practiceLaunchCursors[trimmedKey] =
+          (startIndex + (cursorAdvance ?? safeBatchSize)) % sourceWords.length;
+    }
+    return output;
+  }
+
+  @override
+  void updatePracticeRoundSettings({
+    PracticeRoundSource? source,
+    PracticeRoundStartMode? startMode,
+    int? roundSize,
+    bool? shuffle,
+    bool? collapsed,
+  }) {
+    _practiceRoundSettings = _practiceRoundSettings.copyWith(
+      source: source,
+      startMode: startMode,
+      roundSize: roundSize,
+      shuffle: shuffle,
+      collapsed: collapsed,
+    );
+    notifyListeners();
+  }
+
+  @override
+  int previewPracticeBatchStartIndex({
+    required String cursorKey,
+    required List<WordEntry> sourceWords,
+    PracticeRoundStartMode? startMode,
+    WordEntry? anchorWord,
+  }) {
+    if (sourceWords.isEmpty) {
+      return 0;
+    }
+    final resolvedStartMode = startMode ?? _practiceRoundSettings.startMode;
+    return switch (resolvedStartMode) {
+      PracticeRoundStartMode.fromStart => 0,
+      PracticeRoundStartMode.currentWord =>
+        sourceWords
+            .indexWhere(
+              (entry) => _isSameWord(entry, anchorWord ?? sourceWords.first),
+            )
+            .clamp(0, sourceWords.length - 1),
+      PracticeRoundStartMode.resumeCursor =>
+        (_practiceLaunchCursors[cursorKey.trim()] ?? 0) % sourceWords.length,
+    };
+  }
+
+  @override
   void updatePracticeSessionPreferences({
     bool? autoAddWeakWordsToTask,
     bool? autoPlayPronunciation,
     bool? showHintsByDefault,
+    bool? showAnswerFeedbackDialog,
     PracticeQuestionType? defaultQuestionType,
   }) {
     if (autoAddWeakWordsToTask != null) {
@@ -3019,6 +3566,9 @@ class _FakeAppState extends ChangeNotifier implements AppState {
     }
     if (showHintsByDefault != null) {
       _practiceShowHintsByDefault = showHintsByDefault;
+    }
+    if (showAnswerFeedbackDialog != null) {
+      _practiceShowAnswerFeedbackDialog = showAnswerFeedbackDialog;
     }
     if (defaultQuestionType != null) {
       _practiceDefaultQuestionType = defaultQuestionType;
@@ -3173,15 +3723,94 @@ class _FakeAppState extends ChangeNotifier implements AppState {
   void refreshWeatherIfStale() {}
 
   @override
+  void setTestModeEnabled(bool enabled) {
+    _testModeEnabled = enabled;
+    notifyListeners();
+  }
+
+  @override
+  void toggleTestModeReveal() {
+    _testModeRevealed = !_testModeRevealed;
+    notifyListeners();
+  }
+
+  @override
+  void toggleTestModeHint() {
+    _testModeHintRevealed = !_testModeHintRevealed;
+    notifyListeners();
+  }
+
+  @override
+  void resetTestModeProgress() {
+    _testModeRevealed = false;
+    _testModeHintRevealed = false;
+    notifyListeners();
+  }
+
+  @override
   void updateConfig(PlayConfig config) {
     _config = config;
     notifyListeners();
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
-    return super.noSuchMethod(invocation);
+  Future<String?> startVoiceInputRecording({bool forceRecorder = false}) async {
+    return _asrRecordingPath;
   }
+
+  @override
+  Future<String?> stopVoiceInputRecording() async {
+    return _asrStoppedRecordingPath ?? _asrRecordingPath;
+  }
+
+  @override
+  Future<void> cancelVoiceInputRecording() async {}
+
+  @override
+  void stopVoiceInputProcessing() {}
+
+  @override
+  Future<AsrResult> transcribeVoiceInputRecording(
+    String audioPath, {
+    AsrProgressCallback? onProgress,
+  }) async {
+    return transcribeRecording(audioPath, onProgress: onProgress);
+  }
+
+  @override
+  Future<AsrOfflineModelStatus> getVoiceInputOfflineModelStatus() async {
+    return getAsrOfflineModelStatus(AsrProviderType.offline);
+  }
+
+  @override
+  Future<void> prepareVoiceInputOfflineModel({
+    AsrProgressCallback? onProgress,
+  }) async {}
+
+  @override
+  Future<void> removeVoiceInputOfflineModel() async {}
+
+  @override
+  PronunciationComparison comparePronunciation(
+    String expected,
+    String recognized,
+  ) {
+    return AppState.comparePronunciationTexts(
+      expected: expected,
+      recognized: recognized,
+    );
+  }
+
+  bool _isSameWord(WordEntry left, WordEntry right) {
+    final leftId = left.id;
+    final rightId = right.id;
+    if (leftId != null && rightId != null) {
+      return leftId == rightId;
+    }
+    return left.wordbookId == right.wordbookId && left.word == right.word;
+  }
+
+  String _reasonKey(WordEntry entry) => entry.word.trim().toLowerCase();
 }
 
 class _FakeFocusService extends ChangeNotifier implements FocusService {
@@ -3241,6 +3870,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   bool _lockScreenActive;
   bool _reminderAcknowledgementPending;
   TomatoTimerPhase? _pendingReminderPhase;
+  TodoReminderLaunchAction? _pendingTodoReminderAction;
   final List<TodoItem> _todos;
   final List<PlanNote> _notes;
   late final ValueNotifier<TomatoTimerState> _timerListenable;
@@ -3397,9 +4027,69 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   Future<void> init() async {}
 
   @override
+  Future<int?> consumePendingTodoReminderLaunchId() async => null;
+
+  @override
+  Future<TodoReminderLaunchAction?> consumePendingTodoReminderAction() async {
+    final pending = _pendingTodoReminderAction;
+    _pendingTodoReminderAction = null;
+    return pending;
+  }
+
+  @override
+  Future<TodoReminderCapability> getTodoReminderCapability() async {
+    return const TodoReminderCapability(
+      notificationsGranted: true,
+      notificationPermissionRequestable: false,
+      exactAlarmGranted: true,
+      exactAlarmSettingsAvailable: false,
+    );
+  }
+
+  @override
+  Future<bool> requestTodoReminderNotificationPermission() async => true;
+
+  @override
+  Future<void> openTodoReminderExactAlarmSettings() async {}
+
+  @override
+  void completeTodo(int id) {
+    final index = _todos.indexWhere((todo) => todo.id == id);
+    if (index < 0) return;
+    final current = _todos[index];
+    _todos[index] = current.copyWith(
+      completed: true,
+      deferred: false,
+      completedAt: DateTime(2026, 3, 14),
+    );
+    _publishViewState();
+  }
+
+  @override
+  void snoozeTodoReminder(int id, Duration duration) {
+    final index = _todos.indexWhere((todo) => todo.id == id);
+    if (index < 0) return;
+    final current = _todos[index];
+    _todos[index] = current.copyWith(
+      dueAt: DateTime(2026, 3, 14).add(duration),
+      alarmEnabled: true,
+    );
+    _publishViewState();
+  }
+
+  @override
   void pause() {
     _state = _state.copyWith(isPaused: true);
     _publishTimerState();
+  }
+
+  @override
+  void pauseOrResume() {
+    if (_state.isPaused) {
+      resume();
+      return;
+    }
+    pause();
   }
 
   @override
@@ -3443,6 +4133,11 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
       _todos.add(normalized.copyWith(id: (_todos.lastOrNull?.id ?? 0) + 1));
     }
     _publishViewState();
+  }
+
+  @override
+  void updateTodo(TodoItem item) {
+    saveTodo(item);
   }
 
   @override
@@ -3534,8 +4229,8 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) {
-    return super.noSuchMethod(invocation);
+  List<TomatoTimerRecord> getTimerRecords({int limit = 30}) {
+    return const <TomatoTimerRecord>[];
   }
 }
 

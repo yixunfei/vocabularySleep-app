@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import '../i18n/app_i18n.dart';
 import '../models/todo_item.dart';
@@ -12,6 +13,7 @@ import 'database_service.dart';
 import 'reminder_service.dart';
 import 'settings_service.dart';
 import 'system_calendar_service.dart';
+import 'todo_reminder_service.dart';
 import 'tts_service.dart';
 
 enum _PendingReminderFollowUp { none, startBreak, startFocus, completeSession }
@@ -23,6 +25,7 @@ class FocusService extends ChangeNotifier {
     AmbientService? ambient,
     ReminderService? reminder,
     SystemCalendarService? systemCalendar,
+    TodoReminderService? todoReminder,
     TtsService? tts,
   }) : _database = database,
        _settings = settings ?? SettingsService(database),
@@ -30,6 +33,7 @@ class FocusService extends ChangeNotifier {
        _reminder = reminder,
        _systemCalendar =
            systemCalendar ?? PlatformSystemCalendarService(database),
+       _todoReminder = todoReminder ?? PlatformTodoReminderService(),
        _tts = tts;
 
   final AppDatabaseService _database;
@@ -37,6 +41,7 @@ class FocusService extends ChangeNotifier {
   final AmbientService? _ambient;
   final ReminderService? _reminder;
   final SystemCalendarService? _systemCalendar;
+  final TodoReminderService _todoReminder;
   final TtsService? _tts;
 
   bool _initialized = false;
@@ -71,6 +76,26 @@ class FocusService extends ChangeNotifier {
   TomatoTimerPhase? get pendingReminderPhase => _pendingReminderPhase;
   ValueListenable<TomatoTimerState> get timerListenable => _timerStateNotifier;
   ValueListenable<int> get viewRevision => _viewRevision;
+
+  Future<TodoReminderCapability> getTodoReminderCapability() {
+    return _todoReminder.getCapability();
+  }
+
+  Future<bool> requestTodoReminderNotificationPermission() {
+    return _todoReminder.requestNotificationPermission();
+  }
+
+  Future<void> openTodoReminderExactAlarmSettings() {
+    return _todoReminder.openExactAlarmSettings();
+  }
+
+  Future<int?> consumePendingTodoReminderLaunchId() {
+    return _todoReminder.consumePendingTodoLaunchId();
+  }
+
+  Future<TodoReminderLaunchAction?> consumePendingTodoReminderAction() {
+    return _todoReminder.consumePendingTodoAction();
+  }
 
   Future<void> init() async {
     _timerConfig = await _loadConfig();
@@ -399,10 +424,8 @@ class FocusService extends ChangeNotifier {
     bool persistent = false,
   }) async {
     final reminder = _timerConfig.reminder;
-    final language = AppI18n.normalizeLanguageCode(
-      _database.getSetting('uiLanguage') ?? 'en',
-    );
-    final i18n = AppI18n(language);
+    final systemLanguageTag = _resolveSystemLanguageTag();
+    final i18n = AppI18n(_resolveSystemI18nLanguageCode(systemLanguageTag));
     final voiceMessage = _buildReminderVoiceMessage(
       i18n,
       phase,
@@ -426,7 +449,7 @@ class FocusService extends ChangeNotifier {
           haptic: reminder.haptic,
           sound: reminder.sound,
           announcementText: reminder.voice ? voiceMessage : null,
-          announcementLanguageTag: reminder.voice ? language : null,
+          announcementLanguageTag: reminder.voice ? systemLanguageTag : null,
           duration: _reminderAlertTimeout,
         );
         handledPersistentAlert = true;
@@ -462,11 +485,32 @@ class FocusService extends ChangeNotifier {
         return;
       }
       try {
-        await _tts.speak(voiceMessage, _settings.loadPlayConfig().tts);
+        await _tts.speak(
+          voiceMessage,
+          _settings.loadPlayConfig().tts.copyWith(language: systemLanguageTag),
+        );
       } catch (_) {
         // Avoid breaking timer flow for reminder failures.
       }
     }
+  }
+
+  String _resolveSystemLanguageTag() {
+    final tag = WidgetsBinding.instance.platformDispatcher.locale
+        .toLanguageTag()
+        .trim();
+    if (tag.isEmpty) {
+      return 'en';
+    }
+    return tag;
+  }
+
+  String _resolveSystemI18nLanguageCode(String languageTag) {
+    final normalized = AppI18n.normalizeLanguageCode(languageTag);
+    if (normalized.trim().isEmpty) {
+      return 'en';
+    }
+    return normalized;
   }
 
   String _buildReminderVoiceMessage(
@@ -647,6 +691,7 @@ class FocusService extends ChangeNotifier {
     unawaited(_stopActiveReminder());
     unawaited(_reminder?.dispose() ?? Future<void>.value());
     unawaited(_systemCalendar?.dispose() ?? Future<void>.value());
+    unawaited(_todoReminder.dispose());
     _timerStateNotifier.dispose();
     _viewRevision.dispose();
     super.dispose();
@@ -759,6 +804,45 @@ class FocusService extends ChangeNotifier {
     _bumpViewRevision();
     notifyListeners();
     _scheduleTodoReminderRemoval(id);
+  }
+
+  void completeTodo(int id) {
+    if (!_initialized) return;
+    final item = _findTodoById(id);
+    if (item == null || item.completed) return;
+    final updated = _normalizeTodoItem(
+      item.copyWith(
+        completed: true,
+        deferred: false,
+        completedAt: DateTime.now(),
+      ),
+    );
+    _database.updateTodo(updated);
+    _invalidateTodosCache();
+    _bumpViewRevision();
+    notifyListeners();
+    _scheduleTodoReminderSync(updated);
+  }
+
+  void snoozeTodoReminder(int id, Duration duration) {
+    if (!_initialized) return;
+    final item = _findTodoById(id);
+    if (item == null || !item.hasReminder || item.completed) return;
+    final nextDueAt = DateTime.now().add(duration);
+    final updated = _normalizeTodoItem(
+      item.copyWith(
+        dueAt: nextDueAt,
+        alarmEnabled: true,
+        completed: false,
+        deferred: false,
+        completedAt: null,
+      ),
+    );
+    _database.updateTodo(updated);
+    _invalidateTodosCache();
+    _bumpViewRevision();
+    notifyListeners();
+    _scheduleTodoReminderSync(updated);
   }
 
   void clearCompletedTodos() {
@@ -925,28 +1009,32 @@ class FocusService extends ChangeNotifier {
 
   Future<void> _syncAllTodoReminders() async {
     final systemCalendar = _systemCalendar;
-    if (systemCalendar == null || !_initialized) {
+    if (!_initialized) {
       return;
     }
     for (final todo in getTodos()) {
-      await systemCalendar.syncTodo(todo);
+      await _todoReminder.syncTodo(todo);
+      await systemCalendar?.syncTodo(todo);
     }
   }
 
   void _scheduleTodoReminderSync(TodoItem item) {
-    final systemCalendar = _systemCalendar;
-    if (systemCalendar == null || item.id == null) {
+    if (item.id == null) {
       return;
     }
-    unawaited(systemCalendar.syncTodo(item));
+    unawaited(_todoReminder.syncTodo(item));
+    final systemCalendar = _systemCalendar;
+    if (systemCalendar != null) {
+      unawaited(systemCalendar.syncTodo(item));
+    }
   }
 
   void _scheduleTodoReminderRemoval(int todoId) {
+    unawaited(_todoReminder.removeTodoReminder(todoId));
     final systemCalendar = _systemCalendar;
-    if (systemCalendar == null) {
-      return;
+    if (systemCalendar != null) {
+      unawaited(systemCalendar.removeTodoReminder(todoId));
     }
-    unawaited(systemCalendar.removeTodoReminder(todoId));
   }
 
   _TodayStatsSnapshot _getTodayStatsSnapshot() {
@@ -991,7 +1079,6 @@ class FocusService extends ChangeNotifier {
   void _publishState() {
     _onTick?.call(_timerState);
     _timerStateNotifier.value = _timerState;
-    notifyListeners();
   }
 
   Future<void> _stopActiveReminder() async {

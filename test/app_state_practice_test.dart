@@ -1,17 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vocabulary_sleep_app/src/models/play_config.dart';
+import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
-import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
-import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
-import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
-import 'package:vocabulary_sleep_app/src/services/playback_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
+import 'test_support/app_state_test_doubles.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
   _MemoryDatabaseService() : super(WordbookImportService());
@@ -48,35 +45,6 @@ class _MemoryDatabaseService extends AppDatabaseService {
   }
 }
 
-class _FakePlaybackService implements PlaybackService {
-  @override
-  void updateRuntimeConfig(PlayConfig config) {}
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeAmbientService implements AmbientService {
-  @override
-  List<AmbientSource> get sources => const <AmbientSource>[];
-
-  @override
-  double get masterVolume => 0;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeAsrService implements AsrService {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeFocusService implements FocusService {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
 WordEntry _word(String value, {int? id}) {
   return WordEntry(
     id: id,
@@ -95,10 +63,10 @@ void main() {
     final state = AppState(
       database: database,
       settings: settings,
-      playback: _FakePlaybackService(),
-      ambient: _FakeAmbientService(),
-      asr: _FakeAsrService(),
-      focusService: _FakeFocusService(),
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
     );
 
     expect(
@@ -121,16 +89,60 @@ void main() {
     expect(state.practiceWeakWords, <String>['bravo']);
   });
 
+  test(
+    'recordPracticeAnswer persists weak notebook and counters immediately',
+    () {
+      final database = _MemoryDatabaseService();
+      final settings = SettingsService(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+      final alpha = _word('alpha', id: 1);
+      final bravo = _word('bravo', id: 2);
+
+      state.startPracticeSession(title: 'Live session');
+      state.recordPracticeAnswer(
+        entry: alpha,
+        remembered: false,
+        weakReasonIds: const <String>['meaning'],
+      );
+      state.recordPracticeAnswer(entry: bravo, remembered: true);
+      state.finishPracticeSession(
+        title: 'Live session',
+        total: 2,
+        remembered: 1,
+        weakReasonIdsByWord: const <String, List<String>>{
+          'alpha': <String>['meaning'],
+        },
+      );
+
+      expect(state.practiceTodaySessions, 1);
+      expect(state.practiceTodayReviewed, 2);
+      expect(state.practiceTodayRemembered, 1);
+      expect(
+        state.practiceWrongNotebookEntries.map((item) => item.word).toList(),
+        <String>['alpha'],
+      );
+      expect(state.practiceWeakReasonsForWord(alpha), <String>['meaning']);
+      expect(state.practiceSessionHistory.first.title, 'Live session');
+    },
+  );
+
   test('beginPracticeBatch advances cursor and honors anchor words', () {
     final database = _MemoryDatabaseService();
     final settings = SettingsService(database);
     final state = AppState(
       database: database,
       settings: settings,
-      playback: _FakePlaybackService(),
-      ambient: _FakeAmbientService(),
-      asr: _FakeAsrService(),
-      focusService: _FakeFocusService(),
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
     );
     final words = <WordEntry>[_word('alpha'), _word('bravo'), _word('charlie')];
 
@@ -175,7 +187,7 @@ void main() {
     ]);
 
     final dashboard = settings.loadPracticeDashboard();
-    expect(dashboard['launchCursors'], containsPair('practice:warmup', 0));
+    expect(dashboard.launchCursors, containsPair('practice:warmup', 0));
   });
 
   test(
@@ -186,10 +198,10 @@ void main() {
       final state = AppState(
         database: database,
         settings: settings,
-        playback: _FakePlaybackService(),
-        ambient: _FakeAmbientService(),
-        asr: _FakeAsrService(),
-        focusService: _FakeFocusService(),
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
       );
       final words = <WordEntry>[
         _word('alpha'),
@@ -231,12 +243,55 @@ void main() {
       );
 
       final dashboard = settings.loadPracticeDashboard();
-      expect(
-        dashboard['launchCursors'],
-        containsPair('practice:scope-full', 0),
-      );
+      expect(dashboard.launchCursors, containsPair('practice:scope-full', 0));
     },
   );
+
+  test('practice round settings persist and preview the saved cursor', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+    final state = AppState(
+      database: database,
+      settings: settings,
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
+    );
+    final words = <WordEntry>[_word('alpha'), _word('bravo'), _word('charlie')];
+
+    state.updatePracticeRoundSettings(
+      source: PracticeRoundSource.wrongNotebook,
+      startMode: PracticeRoundStartMode.resumeCursor,
+      roundSize: 2,
+      shuffle: true,
+      collapsed: false,
+    );
+    state.beginPracticeBatch(
+      cursorKey: 'practice:round:test',
+      sourceWords: words,
+      batchSize: 2,
+      cursorAdvance: 2,
+    );
+
+    expect(
+      state.previewPracticeBatchStartIndex(
+        cursorKey: 'practice:round:test',
+        sourceWords: words,
+      ),
+      2,
+    );
+
+    final dashboard = settings.loadPracticeDashboard();
+    expect(dashboard.roundSettings.source, PracticeRoundSource.wrongNotebook);
+    expect(
+      dashboard.roundSettings.startMode,
+      PracticeRoundStartMode.resumeCursor,
+    );
+    expect(dashboard.roundSettings.roundSize, 2);
+    expect(dashboard.roundSettings.shuffle, isTrue);
+    expect(dashboard.roundSettings.collapsed, isFalse);
+  });
 
   test(
     'wrong notebook keeps weak words in stored order and supports cleanup',
@@ -246,10 +301,10 @@ void main() {
       final state = AppState(
         database: database,
         settings: settings,
-        playback: _FakePlaybackService(),
-        ambient: _FakeAmbientService(),
-        asr: _FakeAsrService(),
-        focusService: _FakeFocusService(),
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
       );
 
       state.recordPracticeSession(
@@ -303,7 +358,7 @@ void main() {
       expect(state.practiceWrongNotebookEntries, isEmpty);
 
       final dashboard = settings.loadPracticeDashboard();
-      expect(dashboard['weakWords'], isEmpty);
+      expect(dashboard.weakWords, isEmpty);
     },
   );
 }

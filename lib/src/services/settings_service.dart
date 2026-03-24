@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
+import '../models/settings_dto.dart';
 import 'database_service.dart';
 
 class SettingsService {
@@ -99,101 +100,42 @@ class SettingsService {
     );
   }
 
-  Map<String, bool> loadTestModeState() {
+  TestModeState loadTestModeState() {
     final raw = _database.getSetting('testModeState');
     if (raw == null || raw.trim().isEmpty) {
-      return const <String, bool>{
-        'enabled': false,
-        'revealed': false,
-        'hintRevealed': false,
-      };
+      return TestModeState.defaults;
     }
 
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is Map) {
-        return <String, bool>{
-          'enabled': decoded['enabled'] as bool? ?? false,
-          'revealed': decoded['revealed'] as bool? ?? false,
-          'hintRevealed': decoded['hintRevealed'] as bool? ?? false,
-        };
-      }
+      return TestModeState.fromJsonValue(decoded);
     } catch (_) {
       // ignore and fallback.
     }
 
-    return const <String, bool>{
-      'enabled': false,
-      'revealed': false,
-      'hintRevealed': false,
-    };
+    return TestModeState.defaults;
   }
 
-  void saveTestModeState({
-    required bool enabled,
-    required bool revealed,
-    required bool hintRevealed,
-  }) {
-    _database.setSetting(
-      'testModeState',
-      jsonEncode(<String, Object?>{
-        'enabled': enabled,
-        'revealed': revealed,
-        'hintRevealed': hintRevealed,
-      }),
-    );
+  void saveTestModeState(TestModeState state) {
+    _database.setSetting('testModeState', jsonEncode(state.toJsonMap()));
   }
 
-  Map<String, Object?> loadPracticeDashboard() {
+  PracticeDashboardState loadPracticeDashboard() {
     final raw = _database.getSetting('practiceDashboard');
     if (raw == null || raw.trim().isEmpty) {
-      return const <String, Object?>{
-        'date': '',
-        'todaySessions': 0,
-        'todayReviewed': 0,
-        'todayRemembered': 0,
-        'totalSessions': 0,
-        'totalReviewed': 0,
-        'totalRemembered': 0,
-        'lastSessionTitle': '',
-        'rememberedWords': <Object?>[],
-        'weakWords': <Object?>[],
-        'weakReasonIdsByWord': <String, Object?>{},
-        'history': <Object?>[],
-        'sessionPrefs': <String, Object?>{},
-        'launchCursors': <String, Object?>{},
-        'trackedEntries': <Object?>[],
-      };
+      return PracticeDashboardState.defaults;
     }
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is Map) {
-        return decoded.cast<String, Object?>();
-      }
+      return PracticeDashboardState.fromJsonValue(decoded);
     } catch (_) {
       // ignore and fallback.
     }
-    return const <String, Object?>{
-      'date': '',
-      'todaySessions': 0,
-      'todayReviewed': 0,
-      'todayRemembered': 0,
-      'totalSessions': 0,
-      'totalReviewed': 0,
-      'totalRemembered': 0,
-      'lastSessionTitle': '',
-      'rememberedWords': <Object?>[],
-      'weakWords': <Object?>[],
-      'weakReasonIdsByWord': <String, Object?>{},
-      'history': <Object?>[],
-      'sessionPrefs': <String, Object?>{},
-      'launchCursors': <String, Object?>{},
-      'trackedEntries': <Object?>[],
-    };
+    return PracticeDashboardState.defaults;
   }
 
-  void savePracticeDashboard(Map<String, Object?> data) {
-    _database.setSetting('practiceDashboard', jsonEncode(data));
+  void savePracticeDashboard(PracticeDashboardState data) {
+    _database.setSetting('practiceDashboard', jsonEncode(data.toJsonMap()));
   }
 
   Set<String> loadRememberedWords() {

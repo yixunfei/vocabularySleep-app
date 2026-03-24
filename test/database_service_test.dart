@@ -307,7 +307,7 @@ void main() {
           alarmEnabled: true,
           dueAt: DateTime(2026, 3, 16, 10),
           syncToSystemCalendar: false,
-          systemCalendarNotificationEnabled: false,
+          systemCalendarNotificationEnabled: true,
           systemCalendarAlarmEnabled: true,
           systemCalendarAlarmMinutesBefore: 15,
           createdAt: DateTime(2026, 3, 16),
