@@ -101,6 +101,7 @@ class AppDatabaseService {
     r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)',
     caseSensitive: false,
   );
+  static const int _currentSchemaVersion = 3;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -434,15 +435,11 @@ class AppDatabaseService {
         wordbook_id INTEGER NOT NULL,
         word TEXT NOT NULL,
         meaning TEXT,
-        examples TEXT,
-        etymology TEXT,
-        roots TEXT,
-        affixes TEXT,
-        variations TEXT,
-        memory TEXT,
-        story TEXT,
-        fields_json TEXT,
-        raw_content TEXT,
+        search_word TEXT NOT NULL,
+        search_meaning TEXT,
+        search_details TEXT,
+        search_word_compact TEXT NOT NULL,
+        search_details_compact TEXT,
         entry_json TEXT,
         FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id) ON DELETE CASCADE
       );
@@ -552,10 +549,31 @@ class AppDatabaseService {
     );
     _db.execute('CREATE INDEX IF NOT EXISTS idx_words_word ON words(word);');
     _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_search_word ON words(wordbook_id, search_word);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_search_meaning ON words(wordbook_id, search_meaning);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_search_details ON words(wordbook_id, search_details);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_search_word_compact ON words(wordbook_id, search_word_compact);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_search_details_compact ON words(wordbook_id, search_details_compact);',
+    );
+    _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_word_fields_word ON word_fields(word_id);',
     );
     _db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_word_fields_key ON word_fields(field_key);',
+      'CREATE INDEX IF NOT EXISTS idx_word_fields_word_sort ON word_fields(word_id, sort_order, id);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_fields_key_label_word ON word_fields(field_key, field_label, word_id);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_fields_key_sort ON word_fields(field_key, sort_order, word_id);',
     );
     _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_marks_word ON user_marks(word_id);',
@@ -563,23 +581,6 @@ class AppDatabaseService {
     _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_progress_word ON progress(word_id);',
     );
-  }
-
-  void _migrateWordsSchema() {
-    final tableInfo = _db.select('PRAGMA table_info(words);');
-    final columnNames = <String>{
-      for (final row in tableInfo) row['name'].toString(),
-    };
-    if (!columnNames.contains('fields_json')) {
-      _db.execute('ALTER TABLE words ADD COLUMN fields_json TEXT;');
-    }
-    if (!columnNames.contains('raw_content')) {
-      _db.execute('ALTER TABLE words ADD COLUMN raw_content TEXT;');
-    }
-    if (!columnNames.contains('entry_json')) {
-      _db.execute('ALTER TABLE words ADD COLUMN entry_json TEXT;');
-    }
-    _backfillWordEntryJson();
   }
 
   void _migrateWordFieldsSchema() {
@@ -606,24 +607,138 @@ class AppDatabaseService {
     }
   }
 
-  void _backfillWordEntryJson() {
-    final rows = _selectMaps('''
-      SELECT * FROM words
-      WHERE entry_json IS NULL OR TRIM(entry_json) = ''
-      ''');
-    if (rows.isEmpty) {
+  void _migrateWordsStorageSchema() {
+    final tableInfo = _db.select('PRAGMA table_info(words);');
+    final columnNames = <String>{
+      for (final row in tableInfo) row['name'].toString(),
+    };
+    final hasLegacyColumns =
+        columnNames.contains('examples') ||
+        columnNames.contains('etymology') ||
+        columnNames.contains('roots') ||
+        columnNames.contains('affixes') ||
+        columnNames.contains('variations') ||
+        columnNames.contains('memory') ||
+        columnNames.contains('story') ||
+        columnNames.contains('fields_json') ||
+        columnNames.contains('raw_content');
+    final missingSearchColumns =
+        !columnNames.contains('search_word') ||
+        !columnNames.contains('search_meaning') ||
+        !columnNames.contains('search_details') ||
+        !columnNames.contains('search_word_compact') ||
+        !columnNames.contains('search_details_compact') ||
+        !columnNames.contains('entry_json');
+    if (!hasLegacyColumns && !missingSearchColumns) {
       return;
     }
-    for (final row in rows) {
-      final wordId = (row['id'] as num?)?.toInt();
+
+    final existingRows = _selectMaps('SELECT * FROM words ORDER BY id ASC');
+    final fieldRows = _selectMaps('''
+      SELECT word_id, field_key, field_label, field_value_json, style_json, sort_order
+      FROM word_fields
+      ORDER BY word_id ASC, sort_order ASC, id ASC
+      ''');
+    final existingFieldsByWordId = <int, List<WordFieldItem>>{};
+    for (final row in fieldRows) {
+      final wordId = (row['word_id'] as num?)?.toInt();
       if (wordId == null || wordId <= 0) {
         continue;
       }
-      final entry = WordEntry.fromMap(row);
-      _db.execute('UPDATE words SET entry_json = ? WHERE id = ?', <Object?>[
-        jsonEncode(entry.toJsonMap()),
-        wordId,
-      ]);
+      final field = _wordFieldItemFromRow(row);
+      if (field == null) {
+        continue;
+      }
+      existingFieldsByWordId
+          .putIfAbsent(wordId, () => <WordFieldItem>[])
+          .add(field);
+    }
+
+    _db.execute('PRAGMA foreign_keys = OFF;');
+    try {
+      _db.execute('ALTER TABLE words RENAME TO words_legacy_cache;');
+      _db.execute('''
+        CREATE TABLE words (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          wordbook_id INTEGER NOT NULL,
+          word TEXT NOT NULL,
+          meaning TEXT,
+          search_word TEXT NOT NULL,
+          search_meaning TEXT,
+          search_details TEXT,
+          search_word_compact TEXT NOT NULL,
+          search_details_compact TEXT,
+          entry_json TEXT,
+          FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id) ON DELETE CASCADE
+        );
+      ''');
+      for (final row in existingRows) {
+        final baseEntry = WordEntry.fromMap(row);
+        final wordId = (row['id'] as num?)?.toInt();
+        final fields = wordId == null
+            ? const <WordFieldItem>[]
+            : (existingFieldsByWordId[wordId] ?? const <WordFieldItem>[]);
+        final entry = fields.isEmpty
+            ? baseEntry
+            : baseEntry.copyWith(fields: fields);
+        final prepared = _buildStoredWordRecord(
+          id: entry.id,
+          wordbookId: entry.wordbookId,
+          word: entry.word,
+          fields: entry.fields,
+          rawContent: entry.rawContent,
+        );
+        _db.execute(
+          '''
+          INSERT INTO words (
+            id,
+            wordbook_id,
+            word,
+            meaning,
+            search_word,
+            search_meaning,
+            search_details,
+            search_word_compact,
+            search_details_compact,
+            entry_json
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ''',
+          <Object?>[
+            entry.id,
+            entry.wordbookId,
+            prepared.row['word'],
+            prepared.row['meaning'],
+            prepared.row['search_word'],
+            prepared.row['search_meaning'],
+            prepared.row['search_details'],
+            prepared.row['search_word_compact'],
+            prepared.row['search_details_compact'],
+            prepared.row['entry_json'],
+          ],
+        );
+      }
+      _db.execute('DROP TABLE words_legacy_cache;');
+      _db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_words_wordbook ON words(wordbook_id);',
+      );
+      _db.execute('CREATE INDEX IF NOT EXISTS idx_words_word ON words(word);');
+      _db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_words_search_word ON words(wordbook_id, search_word);',
+      );
+      _db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_words_search_meaning ON words(wordbook_id, search_meaning);',
+      );
+      _db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_words_search_details ON words(wordbook_id, search_details);',
+      );
+      _db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_words_search_word_compact ON words(wordbook_id, search_word_compact);',
+      );
+      _db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_words_search_details_compact ON words(wordbook_id, search_details_compact);',
+      );
+    } finally {
+      _db.execute('PRAGMA foreign_keys = ON;');
     }
   }
 
@@ -991,6 +1106,94 @@ class AppDatabaseService {
         .toList(growable: false);
   }
 
+  List<WordEntry> searchWords(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    final normalizedQuery = _normalizeSearchCacheText(query);
+    if (normalizedQuery.isEmpty) {
+      return getWords(wordbookId, limit: limit, offset: offset);
+    }
+    final likeQuery = _buildContainsLikePattern(normalizedQuery);
+    final fuzzyLikeQuery = _buildFuzzyLikePattern(query);
+    final resolvedFuzzyPattern = fuzzyLikeQuery.isEmpty
+        ? likeQuery
+        : fuzzyLikeQuery;
+
+    final (whereClause, params) = switch (mode.trim()) {
+      'word' => (
+        'wordbook_id = ? AND search_word LIKE ?',
+        <Object?>[wordbookId, likeQuery],
+      ),
+      'meaning' => (
+        'wordbook_id = ? AND (COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
+        <Object?>[wordbookId, likeQuery, likeQuery],
+      ),
+      'fuzzy' => (
+        'wordbook_id = ? AND (search_word_compact LIKE ? OR COALESCE(search_details_compact, \'\') LIKE ?)',
+        <Object?>[wordbookId, resolvedFuzzyPattern, resolvedFuzzyPattern],
+      ),
+      _ => (
+        'wordbook_id = ? AND (search_word LIKE ? OR COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
+        <Object?>[wordbookId, likeQuery, likeQuery, likeQuery],
+      ),
+    };
+
+    final rows = _selectMaps(
+      '''
+      SELECT * FROM words
+      WHERE $whereClause
+      ORDER BY id ASC
+      LIMIT ? OFFSET ?
+      ''',
+      <Object?>[...params, limit, offset],
+    );
+    final wordIds = rows
+        .map((row) => (row['id'] as num?)?.toInt())
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList(growable: false);
+    final fieldsByWordId = _getWordFieldsByWordIds(wordIds);
+    return rows
+        .map((row) {
+          final entry = WordEntry.fromMap(row);
+          final wordId = (row['id'] as num?)?.toInt();
+          final fields = wordId == null
+              ? const <WordFieldItem>[]
+              : (fieldsByWordId[wordId] ?? const <WordFieldItem>[]);
+          return fields.isEmpty ? entry : entry.copyWith(fields: fields);
+        })
+        .toList(growable: false);
+  }
+
+  String _buildContainsLikePattern(String raw) {
+    final escaped = raw
+        .replaceAll('\\', '\\\\')
+        .replaceAll('%', '\\%')
+        .replaceAll('_', '\\_');
+    return '%$escaped%';
+  }
+
+  String _buildFuzzyLikePattern(String raw) {
+    final compact = _normalizeSearchCompactText(raw);
+    if (compact.isEmpty) {
+      return '';
+    }
+    final escaped = compact
+        .split('')
+        .map(
+          (char) => char
+              .replaceAll('\\', '\\\\')
+              .replaceAll('%', '\\%')
+              .replaceAll('_', '\\_'),
+        )
+        .join('%');
+    return '%$escaped%';
+  }
+
   Map<int, List<WordFieldItem>> _getWordFieldsByWordIds(Iterable<int> wordIds) {
     final ids = wordIds.where((id) => id > 0).toSet().toList(growable: false);
     if (ids.isEmpty) {
@@ -1316,7 +1519,7 @@ class AppDatabaseService {
       if (normalizedRawContent.isNotEmpty)
         ...parseSectionedContent(normalizedRawContent),
     ]);
-    final prepared = _buildStoredWordColumns(
+    final prepared = _buildStoredWordRecord(
       id: existingEntry.id,
       wordbookId: wordbookId,
       word: word,
@@ -1327,22 +1530,22 @@ class AppDatabaseService {
     _db.execute(
       '''
       UPDATE words SET
-        meaning = ?, examples = ?, etymology = ?, roots = ?,
-        affixes = ?, variations = ?, memory = ?, story = ?,
-        fields_json = ?, raw_content = ?, entry_json = ?
+        meaning = ?,
+        search_word = ?,
+        search_meaning = ?,
+        search_details = ?,
+        search_word_compact = ?,
+        search_details_compact = ?,
+        entry_json = ?
       WHERE id = ?
       ''',
       <Object?>[
         prepared.row['meaning'],
-        prepared.row['examples'],
-        prepared.row['etymology'],
-        prepared.row['roots'],
-        prepared.row['affixes'],
-        prepared.row['variations'],
-        prepared.row['memory'],
-        prepared.row['story'],
-        prepared.row['fields_json'],
-        prepared.row['raw_content'],
+        prepared.row['search_word'],
+        prepared.row['search_meaning'],
+        prepared.row['search_details'],
+        prepared.row['search_word_compact'],
+        prepared.row['search_details_compact'],
         prepared.row['entry_json'],
         (existing['id'] as num).toInt(),
       ],
@@ -1394,7 +1597,7 @@ class AppDatabaseService {
       if (incomingRawContent.isNotEmpty)
         ...parseSectionedContent(incomingRawContent),
     ]);
-    final prepared = _buildStoredWordColumns(
+    final prepared = _buildStoredWordRecord(
       id: (existing['id'] as num).toInt(),
       wordbookId: wordbookId,
       word: nextWord,
@@ -1405,22 +1608,24 @@ class AppDatabaseService {
     _db.execute(
       '''
       UPDATE words SET
-        word = ?, meaning = ?, examples = ?, etymology = ?, roots = ?,
-        affixes = ?, variations = ?, memory = ?, story = ?, fields_json = ?, raw_content = ?, entry_json = ?
+        word = ?,
+        meaning = ?,
+        search_word = ?,
+        search_meaning = ?,
+        search_details = ?,
+        search_word_compact = ?,
+        search_details_compact = ?,
+        entry_json = ?
       WHERE id = ?
       ''',
       <Object?>[
         prepared.row['word'],
         prepared.row['meaning'],
-        prepared.row['examples'],
-        prepared.row['etymology'],
-        prepared.row['roots'],
-        prepared.row['affixes'],
-        prepared.row['variations'],
-        prepared.row['memory'],
-        prepared.row['story'],
-        prepared.row['fields_json'],
-        prepared.row['raw_content'],
+        prepared.row['search_word'],
+        prepared.row['search_meaning'],
+        prepared.row['search_details'],
+        prepared.row['search_word_compact'],
+        prepared.row['search_details_compact'],
         prepared.row['entry_json'],
         (existing['id'] as num).toInt(),
       ],
@@ -1607,26 +1812,40 @@ class AppDatabaseService {
         }
 
         for (final word in legacyWords) {
+          final entry = WordEntry.fromMap(word);
+          final prepared = _buildStoredWordRecord(
+            id: entry.id,
+            wordbookId: entry.wordbookId,
+            word: entry.word,
+            fields: entry.fields,
+            rawContent: entry.rawContent,
+          );
           _db.execute(
             '''
-            INSERT INTO words (id, wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO words (
+              id,
+              wordbook_id,
+              word,
+              meaning,
+              search_word,
+              search_meaning,
+              search_details,
+              search_word_compact,
+              search_details_compact,
+              entry_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             <Object?>[
-              word['id'],
-              word['wordbook_id'],
-              word['word'],
-              word['meaning'],
-              word['examples'],
-              word['etymology'],
-              word['roots'],
-              word['affixes'],
-              word['variations'],
-              word['memory'],
-              word['story'],
-              word['fields_json'],
-              word['raw_content'],
-              word['entry_json'],
+              entry.id,
+              entry.wordbookId,
+              prepared.row['word'],
+              prepared.row['meaning'],
+              prepared.row['search_word'],
+              prepared.row['search_meaning'],
+              prepared.row['search_details'],
+              prepared.row['search_word_compact'],
+              prepared.row['search_details_compact'],
+              prepared.row['entry_json'],
             ],
           );
         }
@@ -1640,7 +1859,6 @@ class AppDatabaseService {
           );
           ''');
       });
-      _backfillWordEntryJson();
       _migrateWordFieldsSchema();
       ensureSpecialWordbooks();
       await syncBuiltInWordbooksCatalog();
@@ -1781,15 +1999,62 @@ class AppDatabaseService {
 
   Future<void> _prepareDatabase() async {
     _createTables();
-    _migrateWordsSchema();
-    _migrateWordFieldsSchema();
-    _migrateTimerRecordsSchema();
-    _migrateProgressSchema();
-    _migrateTodosSchema();
-    _migrateNotesSchema();
+    _applySchemaMigrations();
     ensureSpecialWordbooks();
     await syncBuiltInWordbooksCatalog();
     _initialized = true;
+  }
+
+  void _applySchemaMigrations() {
+    var version = _readSchemaVersion();
+    if (version < 1) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 1},
+      );
+      _migrateTimerRecordsSchema();
+      _migrateProgressSchema();
+      _migrateTodosSchema();
+      _migrateNotesSchema();
+      _setSchemaVersion(1);
+      version = 1;
+    }
+    if (version < 2) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 2},
+      );
+      _migrateWordsStorageSchema();
+      _setSchemaVersion(2);
+      version = 2;
+    }
+    if (version < 3) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 3},
+      );
+      _migrateWordFieldsSchema();
+      _setSchemaVersion(3);
+      version = 3;
+    }
+    if (version != _currentSchemaVersion) {
+      _setSchemaVersion(_currentSchemaVersion);
+    }
+  }
+
+  int _readSchemaVersion() {
+    final row = _db.select('PRAGMA user_version;');
+    if (row.isEmpty) {
+      return 0;
+    }
+    return (row.first['user_version'] as num?)?.toInt() ?? 0;
+  }
+
+  void _setSchemaVersion(int version) {
+    _db.execute('PRAGMA user_version = $version;');
   }
 
   Future<Directory> _ensureBackupDirectory() async {
@@ -1895,6 +2160,22 @@ class AppDatabaseService {
 
   String _escapeSqlString(String value) => value.replaceAll("'", "''");
 
+  String _normalizeSearchCacheText(String raw) {
+    final lower = sanitizeDisplayText(raw).toLowerCase();
+    if (lower.isEmpty) {
+      return '';
+    }
+    return lower.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  String _normalizeSearchCompactText(String raw) {
+    final normalized = _normalizeSearchCacheText(raw);
+    if (normalized.isEmpty) {
+      return '';
+    }
+    return normalized.replaceAll(RegExp(r'[^a-z0-9\u4e00-\u9fff]+'), '');
+  }
+
   void _replaceWordFields(int wordId, List<WordFieldItem> fields) {
     _db.execute('DELETE FROM word_fields WHERE word_id = ?', <Object?>[wordId]);
     final normalizedFields = mergeFieldItems(List<WordFieldItem>.from(fields));
@@ -1923,7 +2204,7 @@ class AppDatabaseService {
     }
   }
 
-  _PreparedWordRecord _buildStoredWordColumns({
+  _PreparedWordRecord _buildStoredWordRecord({
     int? id,
     required int wordbookId,
     required String word,
@@ -1941,6 +2222,10 @@ class AppDatabaseService {
     final persistedRawContent = normalizedRawContent.isNotEmpty
         ? normalizedRawContent
         : (legacy.meaning ?? '');
+    final detailsText = normalizedFields
+        .map((item) => item.asText().trim())
+        .where((item) => item.isNotEmpty)
+        .join('\n');
     final entry = WordEntry(
       id: id,
       wordbookId: wordbookId,
@@ -1961,17 +2246,11 @@ class AppDatabaseService {
       row: <String, Object?>{
         'word': normalizedWord,
         'meaning': legacy.meaning,
-        'examples': legacy.examples == null
-            ? null
-            : jsonEncode(legacy.examples),
-        'etymology': legacy.etymology,
-        'roots': legacy.roots,
-        'affixes': legacy.affixes,
-        'variations': legacy.variations,
-        'memory': legacy.memory,
-        'story': legacy.story,
-        'fields_json': stringifyFieldItems(normalizedFields),
-        'raw_content': persistedRawContent,
+        'search_word': _normalizeSearchCacheText(normalizedWord),
+        'search_meaning': _normalizeSearchCacheText(legacy.meaning ?? ''),
+        'search_details': _normalizeSearchCacheText(detailsText),
+        'search_word_compact': _normalizeSearchCompactText(normalizedWord),
+        'search_details_compact': _normalizeSearchCompactText(detailsText),
         'entry_json': jsonEncode(entry.toJsonMap()),
       },
       fields: normalizedFields,
@@ -1979,7 +2258,7 @@ class AppDatabaseService {
   }
 
   void _insertWord(int wordbookId, WordEntryPayload payload) {
-    final prepared = _buildStoredWordColumns(
+    final prepared = _buildStoredWordRecord(
       wordbookId: wordbookId,
       word: payload.word,
       fields: payload.fields,
@@ -1988,22 +2267,28 @@ class AppDatabaseService {
 
     _db.execute(
       '''
-      INSERT INTO words (wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO words (
+        wordbook_id,
+        word,
+        meaning,
+        search_word,
+        search_meaning,
+        search_details,
+        search_word_compact,
+        search_details_compact,
+        entry_json
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       <Object?>[
         wordbookId,
         prepared.row['word'],
         prepared.row['meaning'],
-        prepared.row['examples'],
-        prepared.row['etymology'],
-        prepared.row['roots'],
-        prepared.row['affixes'],
-        prepared.row['variations'],
-        prepared.row['memory'],
-        prepared.row['story'],
-        prepared.row['fields_json'],
-        prepared.row['raw_content'],
+        prepared.row['search_word'],
+        prepared.row['search_meaning'],
+        prepared.row['search_details'],
+        prepared.row['search_word_compact'],
+        prepared.row['search_details_compact'],
         prepared.row['entry_json'],
       ],
     );

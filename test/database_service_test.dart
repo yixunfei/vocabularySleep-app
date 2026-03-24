@@ -161,6 +161,18 @@ void main() {
     },
   );
 
+  test('database schema version is upgraded for future migrations', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    final sqlite = sqlite3.open(database.dbPath);
+    addTearDown(sqlite.dispose);
+    final row = sqlite.select('PRAGMA user_version;').single;
+
+    expect((row['user_version'] as int?) ?? 0, greaterThanOrEqualTo(3));
+  });
+
   test('words persist a complete entry_json snapshot in sqlite', () async {
     final database = AppDatabaseService(WordbookImportService());
     await database.init();
@@ -236,6 +248,60 @@ void main() {
     expect(
       restored.fields.firstWhere((item) => item.key == 'usage').style.textHex,
       '#ffffff',
+    );
+  });
+
+  test('searchWords queries cached sqlite search columns', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_search_words',
+      name: 'Search words test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'Alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+            WordFieldItem(key: 'usage', label: 'Usage', value: 'Launch item'),
+          ],
+          rawContent: 'First',
+        ),
+        WordEntryPayload(
+          word: 'Bravo',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'Second'),
+          ],
+          rawContent: 'Second',
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_search_words',
+    );
+
+    expect(
+      database
+          .searchWords(wordbook.id, query: 'alp', mode: 'word')
+          .map((item) => item.word)
+          .toList(growable: false),
+      <String>['Alpha'],
+    );
+    expect(
+      database
+          .searchWords(wordbook.id, query: 'launch', mode: 'meaning')
+          .map((item) => item.word)
+          .toList(growable: false),
+      <String>['Alpha'],
+    );
+    expect(
+      database
+          .searchWords(wordbook.id, query: 'ah', mode: 'fuzzy')
+          .map((item) => item.word)
+          .toList(growable: false),
+      <String>['Alpha'],
     );
   });
 

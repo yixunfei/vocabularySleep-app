@@ -293,11 +293,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return _visibleWordsCache!;
     }
 
-    final computed = filterWords(
-      words: _words,
-      query: _searchQuery,
-      mode: _searchMode,
-    );
+    final selectedWordbook = _selectedWordbook;
+    final normalizedQuery = _searchQuery.trim();
+    final computed = normalizedQuery.isEmpty || selectedWordbook == null
+        ? _words
+        : _database.searchWords(
+            selectedWordbook.id,
+            query: normalizedQuery,
+            mode: _searchMode.name,
+          );
     _visibleWordsCache = computed;
     _visibleWordsCacheVersion = _wordsVersion;
     _visibleWordsCacheQuery = _searchQuery;
