@@ -208,6 +208,26 @@ void main() {
     expect(decoded['rawContent'], 'First');
     expect((decoded['fields'] as List).length, 2);
 
+    final fieldRows = sqlite.select(
+      '''
+      SELECT field_key, field_label, field_value_json, style_json
+      FROM word_fields
+      WHERE word_id = (SELECT id FROM words WHERE wordbook_id = ?)
+      ORDER BY sort_order ASC
+      ''',
+      <Object?>[wordbook.id],
+    );
+    expect(fieldRows.length, 2);
+    expect(fieldRows.first['field_key'], 'meaning');
+    expect(
+      jsonDecode('${fieldRows.last['field_value_json']}'),
+      'Use it in a sentence.',
+    );
+    expect(
+      (jsonDecode('${fieldRows.last['style_json']}') as Map)['textHex'],
+      '#ffffff',
+    );
+
     final restored = database.getWords(wordbook.id).single;
     expect(
       restored.fields.firstWhere((item) => item.key == 'usage').asText(),

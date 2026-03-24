@@ -68,6 +68,13 @@ class _BuiltInWordbookConfig {
   final String assetPath;
 }
 
+class _PreparedWordRecord {
+  const _PreparedWordRecord({required this.row, required this.fields});
+
+  final Map<String, Object?> row;
+  final List<WordFieldItem> fields;
+}
+
 class AppDatabaseService {
   AppDatabaseService(this._importService);
 
@@ -442,6 +449,19 @@ class AppDatabaseService {
     ''');
 
     _db.execute('''
+      CREATE TABLE IF NOT EXISTS word_fields (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        word_id INTEGER NOT NULL,
+        field_key TEXT NOT NULL,
+        field_label TEXT NOT NULL,
+        field_value_json TEXT NOT NULL,
+        style_json TEXT,
+        sort_order INTEGER DEFAULT 0,
+        FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE
+      );
+    ''');
+
+    _db.execute('''
       CREATE TABLE IF NOT EXISTS user_marks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         word_id INTEGER NOT NULL,
@@ -532,6 +552,12 @@ class AppDatabaseService {
     );
     _db.execute('CREATE INDEX IF NOT EXISTS idx_words_word ON words(word);');
     _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_fields_word ON word_fields(word_id);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_fields_key ON word_fields(field_key);',
+    );
+    _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_marks_word ON user_marks(word_id);',
     );
     _db.execute(
@@ -554,6 +580,30 @@ class AppDatabaseService {
       _db.execute('ALTER TABLE words ADD COLUMN entry_json TEXT;');
     }
     _backfillWordEntryJson();
+  }
+
+  void _migrateWordFieldsSchema() {
+    final rowsWithoutFields = _selectMaps('''
+      SELECT w.*
+      FROM words w
+      LEFT JOIN (
+        SELECT word_id, COUNT(*) AS field_count
+        FROM word_fields
+        GROUP BY word_id
+      ) wf ON wf.word_id = w.id
+      WHERE COALESCE(wf.field_count, 0) = 0
+      ''');
+    if (rowsWithoutFields.isEmpty) {
+      return;
+    }
+    for (final row in rowsWithoutFields) {
+      final wordId = (row['id'] as num?)?.toInt();
+      if (wordId == null || wordId <= 0) {
+        continue;
+      }
+      final entry = WordEntry.fromMap(row);
+      _replaceWordFields(wordId, entry.fields);
+    }
   }
 
   void _backfillWordEntryJson() {
@@ -917,10 +967,106 @@ class AppDatabaseService {
     int offset = 0,
   }) {
     final rows = _selectMaps(
-      'SELECT * FROM words WHERE wordbook_id = ? LIMIT ? OFFSET ?',
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC LIMIT ? OFFSET ?',
       <Object?>[wordbookId, limit, offset],
     );
-    return rows.map(WordEntry.fromMap).toList();
+    final wordIds = rows
+        .map((row) => (row['id'] as num?)?.toInt())
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList(growable: false);
+    final fieldsByWordId = _getWordFieldsByWordIds(wordIds);
+    return rows
+        .map((row) {
+          final entry = WordEntry.fromMap(row);
+          final wordId = (row['id'] as num?)?.toInt();
+          final fields = wordId == null
+              ? const <WordFieldItem>[]
+              : (fieldsByWordId[wordId] ?? const <WordFieldItem>[]);
+          if (fields.isEmpty) {
+            return entry;
+          }
+          return entry.copyWith(fields: fields);
+        })
+        .toList(growable: false);
+  }
+
+  Map<int, List<WordFieldItem>> _getWordFieldsByWordIds(Iterable<int> wordIds) {
+    final ids = wordIds.where((id) => id > 0).toSet().toList(growable: false);
+    if (ids.isEmpty) {
+      return const <int, List<WordFieldItem>>{};
+    }
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    final rows = _selectMaps('''
+      SELECT word_id, field_key, field_label, field_value_json, style_json, sort_order
+      FROM word_fields
+      WHERE word_id IN ($placeholders)
+      ORDER BY word_id ASC, sort_order ASC, id ASC
+      ''', ids.cast<Object?>());
+    final output = <int, List<WordFieldItem>>{};
+    for (final row in rows) {
+      final wordId = (row['word_id'] as num?)?.toInt();
+      if (wordId == null || wordId <= 0) {
+        continue;
+      }
+      final field = _wordFieldItemFromRow(row);
+      if (field == null) {
+        continue;
+      }
+      output.putIfAbsent(wordId, () => <WordFieldItem>[]).add(field);
+    }
+    return output.map(
+      (key, value) =>
+          MapEntry(key, mergeFieldItems(List<WordFieldItem>.from(value))),
+    );
+  }
+
+  WordFieldItem? _wordFieldItemFromRow(Map<String, Object?> row) {
+    final key = normalizeFieldKey('${row['field_key'] ?? ''}');
+    if (key.isEmpty) {
+      return null;
+    }
+    final label = '${row['field_label'] ?? key}'.trim();
+    final value = _decodeWordFieldValue(row['field_value_json']);
+    if (value == null) {
+      return null;
+    }
+    return WordFieldItem(
+      key: key,
+      label: label.isEmpty ? key : label,
+      value: value,
+      style: WordFieldStyle.fromJsonMap(_decodeJsonObject(row['style_json'])),
+    );
+  }
+
+  WordFieldValue? _decodeWordFieldValue(Object? raw) {
+    if (raw == null) {
+      return null;
+    }
+    final text = '$raw'.trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    try {
+      return normalizeFieldValue(jsonDecode(text));
+    } catch (_) {
+      return normalizeFieldValue(text);
+    }
+  }
+
+  Object? _decodeJsonObject(Object? raw) {
+    if (raw == null) {
+      return null;
+    }
+    final text = '$raw'.trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    try {
+      return jsonDecode(text);
+    } catch (_) {
+      return null;
+    }
   }
 
   Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
@@ -1170,7 +1316,7 @@ class AppDatabaseService {
       if (normalizedRawContent.isNotEmpty)
         ...parseSectionedContent(normalizedRawContent),
     ]);
-    final columns = _buildStoredWordColumns(
+    final prepared = _buildStoredWordColumns(
       id: existingEntry.id,
       wordbookId: wordbookId,
       word: word,
@@ -1187,20 +1333,21 @@ class AppDatabaseService {
       WHERE id = ?
       ''',
       <Object?>[
-        columns['meaning'],
-        columns['examples'],
-        columns['etymology'],
-        columns['roots'],
-        columns['affixes'],
-        columns['variations'],
-        columns['memory'],
-        columns['story'],
-        columns['fields_json'],
-        columns['raw_content'],
-        columns['entry_json'],
+        prepared.row['meaning'],
+        prepared.row['examples'],
+        prepared.row['etymology'],
+        prepared.row['roots'],
+        prepared.row['affixes'],
+        prepared.row['variations'],
+        prepared.row['memory'],
+        prepared.row['story'],
+        prepared.row['fields_json'],
+        prepared.row['raw_content'],
+        prepared.row['entry_json'],
         (existing['id'] as num).toInt(),
       ],
     );
+    _replaceWordFields((existing['id'] as num).toInt(), prepared.fields);
     if (refreshWordbookCount) {
       _refreshWordbookCount(wordbookId);
     }
@@ -1247,7 +1394,7 @@ class AppDatabaseService {
       if (incomingRawContent.isNotEmpty)
         ...parseSectionedContent(incomingRawContent),
     ]);
-    final columns = _buildStoredWordColumns(
+    final prepared = _buildStoredWordColumns(
       id: (existing['id'] as num).toInt(),
       wordbookId: wordbookId,
       word: nextWord,
@@ -1263,21 +1410,22 @@ class AppDatabaseService {
       WHERE id = ?
       ''',
       <Object?>[
-        columns['word'],
-        columns['meaning'],
-        columns['examples'],
-        columns['etymology'],
-        columns['roots'],
-        columns['affixes'],
-        columns['variations'],
-        columns['memory'],
-        columns['story'],
-        columns['fields_json'],
-        columns['raw_content'],
-        columns['entry_json'],
+        prepared.row['word'],
+        prepared.row['meaning'],
+        prepared.row['examples'],
+        prepared.row['etymology'],
+        prepared.row['roots'],
+        prepared.row['affixes'],
+        prepared.row['variations'],
+        prepared.row['memory'],
+        prepared.row['story'],
+        prepared.row['fields_json'],
+        prepared.row['raw_content'],
+        prepared.row['entry_json'],
         (existing['id'] as num).toInt(),
       ],
     );
+    _replaceWordFields((existing['id'] as num).toInt(), prepared.fields);
 
     _refreshWordbookCount(wordbookId);
   }
@@ -1301,19 +1449,15 @@ class AppDatabaseService {
     final trimmed = name.trim();
     if (trimmed.isEmpty) throw ArgumentError('名称不能为空');
     return _runInTransaction<int>(() {
+      final sourceWords = getWords(sourceWordbookId);
       _db.execute(
         'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
         <Object?>[trimmed, 'export_${DateTime.now().millisecondsSinceEpoch}'],
       );
       final insertedId = _lastInsertId();
-      _db.execute(
-        '''
-        INSERT INTO words (wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json)
-        SELECT ?, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json
-        FROM words WHERE wordbook_id = ?
-        ''',
-        <Object?>[insertedId, sourceWordbookId],
-      );
+      for (final entry in sourceWords) {
+        _insertWord(insertedId, entry.toPayload());
+      }
       _refreshWordbookCount(insertedId);
       return insertedId;
     });
@@ -1442,6 +1586,7 @@ class AppDatabaseService {
       final legacyWords = _rowsAsMaps(legacyDb.select('SELECT * FROM words'));
 
       _runInTransaction<void>(() {
+        _db.execute('DELETE FROM word_fields;');
         _db.execute('DELETE FROM words;');
         _db.execute('DELETE FROM wordbooks;');
 
@@ -1495,6 +1640,8 @@ class AppDatabaseService {
           );
           ''');
       });
+      _backfillWordEntryJson();
+      _migrateWordFieldsSchema();
       ensureSpecialWordbooks();
       await syncBuiltInWordbooksCatalog();
       return legacyWords.length;
@@ -1635,6 +1782,7 @@ class AppDatabaseService {
   Future<void> _prepareDatabase() async {
     _createTables();
     _migrateWordsSchema();
+    _migrateWordFieldsSchema();
     _migrateTimerRecordsSchema();
     _migrateProgressSchema();
     _migrateTodosSchema();
@@ -1747,7 +1895,35 @@ class AppDatabaseService {
 
   String _escapeSqlString(String value) => value.replaceAll("'", "''");
 
-  Map<String, Object?> _buildStoredWordColumns({
+  void _replaceWordFields(int wordId, List<WordFieldItem> fields) {
+    _db.execute('DELETE FROM word_fields WHERE word_id = ?', <Object?>[wordId]);
+    final normalizedFields = mergeFieldItems(List<WordFieldItem>.from(fields));
+    for (var index = 0; index < normalizedFields.length; index += 1) {
+      final field = normalizedFields[index];
+      _db.execute(
+        '''
+        INSERT INTO word_fields (
+          word_id,
+          field_key,
+          field_label,
+          field_value_json,
+          style_json,
+          sort_order
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ''',
+        <Object?>[
+          wordId,
+          field.key,
+          field.label,
+          jsonEncode(field.value),
+          field.style.isEmpty ? null : jsonEncode(field.style.toJsonMap()),
+          index,
+        ],
+      );
+    }
+  }
+
+  _PreparedWordRecord _buildStoredWordColumns({
     int? id,
     required int wordbookId,
     required String word,
@@ -1781,24 +1957,29 @@ class AppDatabaseService {
       rawContent: persistedRawContent,
     );
 
-    return <String, Object?>{
-      'word': normalizedWord,
-      'meaning': legacy.meaning,
-      'examples': legacy.examples == null ? null : jsonEncode(legacy.examples),
-      'etymology': legacy.etymology,
-      'roots': legacy.roots,
-      'affixes': legacy.affixes,
-      'variations': legacy.variations,
-      'memory': legacy.memory,
-      'story': legacy.story,
-      'fields_json': stringifyFieldItems(normalizedFields),
-      'raw_content': persistedRawContent,
-      'entry_json': jsonEncode(entry.toJsonMap()),
-    };
+    return _PreparedWordRecord(
+      row: <String, Object?>{
+        'word': normalizedWord,
+        'meaning': legacy.meaning,
+        'examples': legacy.examples == null
+            ? null
+            : jsonEncode(legacy.examples),
+        'etymology': legacy.etymology,
+        'roots': legacy.roots,
+        'affixes': legacy.affixes,
+        'variations': legacy.variations,
+        'memory': legacy.memory,
+        'story': legacy.story,
+        'fields_json': stringifyFieldItems(normalizedFields),
+        'raw_content': persistedRawContent,
+        'entry_json': jsonEncode(entry.toJsonMap()),
+      },
+      fields: normalizedFields,
+    );
   }
 
   void _insertWord(int wordbookId, WordEntryPayload payload) {
-    final columns = _buildStoredWordColumns(
+    final prepared = _buildStoredWordColumns(
       wordbookId: wordbookId,
       word: payload.word,
       fields: payload.fields,
@@ -1812,20 +1993,21 @@ class AppDatabaseService {
       ''',
       <Object?>[
         wordbookId,
-        columns['word'],
-        columns['meaning'],
-        columns['examples'],
-        columns['etymology'],
-        columns['roots'],
-        columns['affixes'],
-        columns['variations'],
-        columns['memory'],
-        columns['story'],
-        columns['fields_json'],
-        columns['raw_content'],
-        columns['entry_json'],
+        prepared.row['word'],
+        prepared.row['meaning'],
+        prepared.row['examples'],
+        prepared.row['etymology'],
+        prepared.row['roots'],
+        prepared.row['affixes'],
+        prepared.row['variations'],
+        prepared.row['memory'],
+        prepared.row['story'],
+        prepared.row['fields_json'],
+        prepared.row['raw_content'],
+        prepared.row['entry_json'],
       ],
     );
+    _replaceWordFields(_lastInsertId(), prepared.fields);
   }
 
   void _refreshWordbookCount(int wordbookId) {
