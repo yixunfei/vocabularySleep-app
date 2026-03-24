@@ -152,6 +152,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool _practiceAutoAddWeakWordsToTask = false;
   bool _practiceAutoPlayPronunciation = false;
   bool _practiceShowHintsByDefault = false;
+  bool _practiceShowAnswerFeedbackDialog = true;
   PracticeQuestionType _practiceDefaultQuestionType =
       PracticeQuestionType.flashcard;
   PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
@@ -265,6 +266,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool get practiceAutoAddWeakWordsToTask => _practiceAutoAddWeakWordsToTask;
   bool get practiceAutoPlayPronunciation => _practiceAutoPlayPronunciation;
   bool get practiceShowHintsByDefault => _practiceShowHintsByDefault;
+  bool get practiceShowAnswerFeedbackDialog =>
+      _practiceShowAnswerFeedbackDialog;
   PracticeQuestionType get practiceDefaultQuestionType =>
       _practiceDefaultQuestionType;
   PracticeRoundSettings get practiceRoundSettings => _practiceRoundSettings;
@@ -336,11 +339,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     bool? autoAddWeakWordsToTask,
     bool? autoPlayPronunciation,
     bool? showHintsByDefault,
+    bool? showAnswerFeedbackDialog,
     PracticeQuestionType? defaultQuestionType,
   }) => _updatePracticeSessionPreferencesImpl(
     autoAddWeakWordsToTask: autoAddWeakWordsToTask,
     autoPlayPronunciation: autoPlayPronunciation,
     showHintsByDefault: showHintsByDefault,
+    showAnswerFeedbackDialog: showAnswerFeedbackDialog,
     defaultQuestionType: defaultQuestionType,
   );
 
@@ -2306,6 +2311,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceAutoAddWeakWordsToTask = false;
     _practiceAutoPlayPronunciation = false;
     _practiceShowHintsByDefault = false;
+    _practiceShowAnswerFeedbackDialog = true;
     _practiceDefaultQuestionType = PracticeQuestionType.flashcard;
     _practiceRoundSettings = PracticeRoundSettings.defaults;
 
