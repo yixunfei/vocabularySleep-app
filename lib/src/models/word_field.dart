@@ -2,6 +2,53 @@ import 'dart:convert';
 
 typedef WordFieldValue = Object;
 
+enum WordFieldMediaType { image, audio, video, file, link }
+
+class WordFieldMediaItem {
+  const WordFieldMediaItem({
+    required this.type,
+    required this.source,
+    this.label = '',
+    this.mimeType,
+  });
+
+  final WordFieldMediaType type;
+  final String source;
+  final String label;
+  final String? mimeType;
+
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'type': type.name,
+      'source': source,
+      'label': label,
+      'mimeType': mimeType,
+    };
+  }
+
+  factory WordFieldMediaItem.fromJsonMap(Object? raw) {
+    if (raw is! Map) {
+      return const WordFieldMediaItem(
+        type: WordFieldMediaType.link,
+        source: '',
+      );
+    }
+    final typeName = '${raw['type'] ?? 'link'}'.trim();
+    final type = WordFieldMediaType.values.firstWhere(
+      (item) => item.name == typeName,
+      orElse: () => WordFieldMediaType.link,
+    );
+    return WordFieldMediaItem(
+      type: type,
+      source: '${raw['source'] ?? ''}'.trim(),
+      label: '${raw['label'] ?? ''}'.trim(),
+      mimeType: '${raw['mimeType'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${raw['mimeType']}'.trim(),
+    );
+  }
+}
+
 class WordFieldStyle {
   const WordFieldStyle({
     this.backgroundHex = '',
@@ -77,12 +124,34 @@ class WordFieldItem {
     required this.label,
     required this.value,
     this.style = WordFieldStyle.empty,
+    this.tags = const <String>[],
+    this.media = const <WordFieldMediaItem>[],
   });
 
   final String key;
   final String label;
   final WordFieldValue value;
   final WordFieldStyle style;
+  final List<String> tags;
+  final List<WordFieldMediaItem> media;
+
+  WordFieldItem copyWith({
+    String? key,
+    String? label,
+    WordFieldValue? value,
+    WordFieldStyle? style,
+    List<String>? tags,
+    List<WordFieldMediaItem>? media,
+  }) {
+    return WordFieldItem(
+      key: key ?? this.key,
+      label: label ?? this.label,
+      value: value ?? this.value,
+      style: style ?? this.style,
+      tags: tags ?? this.tags,
+      media: media ?? this.media,
+    );
+  }
 
   List<String> asList() {
     final fieldValue = value;
@@ -106,6 +175,14 @@ class WordFieldItem {
     };
     if (!style.isEmpty) {
       output['style'] = style.toJsonMap();
+    }
+    if (tags.isNotEmpty) {
+      output['tags'] = tags;
+    }
+    if (media.isNotEmpty) {
+      output['media'] = media
+          .map((item) => item.toJsonMap())
+          .toList(growable: false);
     }
     return output;
   }
@@ -143,6 +220,10 @@ const Map<String, String> legacyFieldLabels = <String, String>{
   'memory': 'Memory',
   'story': 'Story',
 };
+
+bool isLegacyFieldKey(String key) {
+  return legacyFieldLabels.containsKey(normalizeFieldKey(key));
+}
 
 const List<String> _legacyOrder = <String>[
   'meaning',
@@ -328,6 +409,38 @@ WordFieldValue _mergeFieldValues(WordFieldValue base, WordFieldValue next) {
   return deduplicated;
 }
 
+List<String> _mergeFieldTags(List<String> base, List<String> next) {
+  final merged = <String>[];
+  for (final tag in <String>[...base, ...next]) {
+    final normalized = tag.trim();
+    if (normalized.isEmpty || merged.contains(normalized)) {
+      continue;
+    }
+    merged.add(normalized);
+  }
+  return merged;
+}
+
+List<WordFieldMediaItem> _mergeFieldMedia(
+  List<WordFieldMediaItem> base,
+  List<WordFieldMediaItem> next,
+) {
+  final merged = <WordFieldMediaItem>[];
+  final keys = <String>{};
+  for (final item in <WordFieldMediaItem>[...base, ...next]) {
+    final source = item.source.trim();
+    if (source.isEmpty) {
+      continue;
+    }
+    final key = '${item.type.name}:$source:${item.label.trim()}';
+    if (!keys.add(key)) {
+      continue;
+    }
+    merged.add(item);
+  }
+  return merged;
+}
+
 List<String> _toList(Object value) {
   if (value is List) return value.map((item) => '$item').toList();
   return ['$value'];
@@ -385,6 +498,8 @@ List<WordFieldItem> mergeFieldItems(List<WordFieldItem> items) {
         label: legacyFieldLabels[key] ?? label,
         value: value,
         style: item.style,
+        tags: _mergeFieldTags(const <String>[], item.tags),
+        media: _mergeFieldMedia(const <WordFieldMediaItem>[], item.media),
       );
       continue;
     }
@@ -394,6 +509,8 @@ List<WordFieldItem> mergeFieldItems(List<WordFieldItem> items) {
       label: existing.label,
       value: _mergeFieldValues(existing.value, value),
       style: existing.style.mergeWith(item.style),
+      tags: _mergeFieldTags(existing.tags, item.tags),
+      media: _mergeFieldMedia(existing.media, item.media),
     );
   }
 
@@ -448,6 +565,22 @@ List<WordFieldItem> parseFieldItemsJson(String raw) {
           label: label.isEmpty ? key : label,
           value: value,
           style: WordFieldStyle.fromJsonMap(entry['style']),
+          tags:
+              (entry['tags'] is List
+                      ? (entry['tags'] as List)
+                            .map((item) => '$item'.trim())
+                            .where((item) => item.isNotEmpty)
+                            .toList(growable: false)
+                      : const <String>[])
+                  .cast<String>(),
+          media:
+              (entry['media'] is List
+                      ? (entry['media'] as List)
+                            .map(WordFieldMediaItem.fromJsonMap)
+                            .where((item) => item.source.trim().isNotEmpty)
+                            .toList(growable: false)
+                      : const <WordFieldMediaItem>[])
+                  .cast<WordFieldMediaItem>(),
         ),
       );
     }

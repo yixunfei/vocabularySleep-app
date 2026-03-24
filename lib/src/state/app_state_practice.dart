@@ -209,6 +209,7 @@ extension _AppStatePractice on AppState {
     required bool remembered,
     List<String> weakReasonIds = const <String>[],
     bool addToWrongNotebook = true,
+    String? sessionTitle,
   }) {
     _ensurePracticeDate();
     _practiceTodayReviewed += 1;
@@ -274,6 +275,16 @@ extension _AppStatePractice on AppState {
       rememberedEntries: remembered ? <WordEntry>[entry] : const <WordEntry>[],
       weakEntries: !remembered ? <WordEntry>[entry] : const <WordEntry>[],
     );
+    final wordId = entry.id;
+    if (wordId != null && wordId > 0) {
+      _database.insertWordMemoryEvent(
+        wordId: wordId,
+        eventKind: remembered ? 'remembered' : 'weak',
+        quality: remembered ? 4 : 1,
+        weakReasonIds: remembered ? const <String>[] : sanitizedWeakReasons,
+        sessionTitle: sessionTitle ?? _practiceLastSessionTitle,
+      );
+    }
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
     _persistPracticeDashboard();

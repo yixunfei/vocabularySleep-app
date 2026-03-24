@@ -33,6 +33,7 @@ import '../services/memory_lane_selector.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 import '../services/weather_service.dart';
+import '../utils/search_text_normalizer.dart' as search_text;
 
 part 'app_state_practice.dart';
 part 'app_state_playback.dart';
@@ -295,13 +296,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     final selectedWordbook = _selectedWordbook;
     final normalizedQuery = _searchQuery.trim();
-    final computed = normalizedQuery.isEmpty || selectedWordbook == null
+    final computed = selectedWordbook == null
         ? _words
-        : _database.searchWords(
-            selectedWordbook.id,
-            query: normalizedQuery,
-            mode: _searchMode.name,
-          );
+        : (normalizedQuery.isEmpty
+              ? _database.getWords(selectedWordbook.id)
+              : _database.searchWords(
+                  selectedWordbook.id,
+                  query: normalizedQuery,
+                  mode: _searchMode.name,
+                ));
     _visibleWordsCache = computed;
     _visibleWordsCacheVersion = _wordsVersion;
     _visibleWordsCacheQuery = _searchQuery;
@@ -523,11 +526,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required bool remembered,
     List<String> weakReasonIds = const <String>[],
     bool addToWrongNotebook = true,
+    String? sessionTitle,
   }) => _recordPracticeAnswerImpl(
     entry: entry,
     remembered: remembered,
     weakReasonIds: weakReasonIds,
     addToWrongNotebook: addToWrongNotebook,
+    sessionTitle: sessionTitle,
   );
 
   void finishPracticeSession({
@@ -1260,22 +1265,32 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> movePlaybackNextWord() => _movePlaybackNextWordImpl();
 
   bool jumpByInitial(String initial) {
-    final scopeWords = _scopeWords;
-    if (scopeWords.isEmpty) return false;
-    final index = findJumpIndexByInitial(scopeWords, initial);
-    if (index < 0) return false;
-    _setCurrentWordByEntry(scopeWords[index]);
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null) return false;
+    final entry = _database.findJumpWordByInitial(
+      selectedWordbook.id,
+      initial: initial,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+    if (entry == null) return false;
+    _setCurrentWordByEntry(entry);
     resetTestModeProgress();
     notifyListeners();
     return true;
   }
 
   bool jumpByPrefix(String rawPrefix) {
-    final scopeWords = _scopeWords;
-    if (scopeWords.isEmpty) return false;
-    final index = findJumpIndexByPrefix(scopeWords, rawPrefix);
-    if (index < 0) return false;
-    _setCurrentWordByEntry(scopeWords[index]);
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null) return false;
+    final entry = _database.findJumpWordByPrefix(
+      selectedWordbook.id,
+      prefix: rawPrefix,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+    if (entry == null) return false;
+    _setCurrentWordByEntry(entry);
     resetTestModeProgress();
     notifyListeners();
     return true;
@@ -1649,15 +1664,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required String query,
     required SearchMode mode,
   }) {
-    final normalizedQuery = _normalizeSearchText(query);
+    final normalizedQuery = search_text.normalizeSearchText(query);
     if (normalizedQuery.isEmpty) return words;
-    final fuzzyPattern = _buildFuzzyPattern(normalizedQuery);
+    final fuzzyPattern = search_text.buildFuzzyPattern(normalizedQuery);
 
     return words
         .where((word) {
-          final wordText = _normalizeSearchText(word.word);
-          final meaningText = _normalizeSearchText(word.meaning ?? '');
-          final detailsText = _normalizeSearchText(word.rawContent);
+          final wordText = search_text.normalizeSearchText(word.word);
+          final meaningText = search_text.normalizeSearchText(
+            word.meaning ?? '',
+          );
+          final detailsText = search_text.normalizeSearchText(word.rawContent);
           final compactWordText = wordText.replaceAll(' ', '');
           final compactDetailsText = detailsText.replaceAll(' ', '');
 
@@ -1688,16 +1705,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final normalized = initial.trim().toUpperCase();
     if (normalized.isEmpty) return -1;
     return scopedWords.indexWhere(
-      (entry) => _wordInitialBucket(entry.word) == normalized,
+      (entry) => search_text.wordInitialBucket(entry.word) == normalized,
     );
   }
 
   @visibleForTesting
   static int findJumpIndexByPrefix(List<WordEntry> scopedWords, String prefix) {
-    final normalizedPrefix = _normalizeJumpText(prefix);
+    final normalizedPrefix = search_text.normalizeJumpText(prefix);
     if (normalizedPrefix.isEmpty) return -1;
     return scopedWords.indexWhere(
-      (entry) => _normalizeJumpText(entry.word).startsWith(normalizedPrefix),
+      (entry) => search_text
+          .normalizeJumpText(entry.word)
+          .startsWith(normalizedPrefix),
     );
   }
 
@@ -1764,26 +1783,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       similarity: similarity,
       differences: differences,
     );
-  }
-
-  static String _normalizeSearchText(String text) {
-    var normalized = _foldLatinDiacritics(text.toLowerCase());
-    normalized = normalized.replaceAll(RegExp(r'\s+'), ' ').trim();
-    return normalized;
-  }
-
-  static String _normalizeJumpText(String text) {
-    final normalized = _normalizeSearchText(text);
-    return normalized.replaceAll(RegExp(r'[^a-z0-9\u4e00-\u9fff]+'), '');
-  }
-
-  static String _wordInitialBucket(String word) {
-    final normalized = _normalizeJumpText(word);
-    if (normalized.isEmpty) return '#';
-    final first = normalized[0];
-    final code = first.codeUnitAt(0);
-    final isLatinLetter = code >= 97 && code <= 122;
-    return isLatinLetter ? first.toUpperCase() : '#';
   }
 
   static String _foldLatinDiacritics(String text) {
@@ -2038,15 +2037,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     return differences.reversed.take(12).toList(growable: false);
-  }
-
-  static RegExp? _buildFuzzyPattern(String query) {
-    final normalized = query.trim();
-    if (normalized.isEmpty) return null;
-    final compact = normalized.replaceAll(' ', '');
-    if (compact.isEmpty) return null;
-    final escaped = compact.split('').map(RegExp.escape).join('.*');
-    return RegExp(escaped, caseSensitive: false);
   }
 
   Future<void> _reloadWordbooks({required bool keepCurrentSelection}) async {

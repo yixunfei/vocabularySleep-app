@@ -3420,6 +3420,7 @@ class _FakeAppState extends ChangeNotifier
     required bool remembered,
     List<String> weakReasonIds = const <String>[],
     bool addToWrongNotebook = true,
+    String? sessionTitle,
   }) {
     _practiceTodayReviewed += 1;
     _practiceTotalReviewed += 1;

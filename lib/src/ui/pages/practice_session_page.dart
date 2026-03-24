@@ -1082,6 +1082,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       remembered: remembered,
       weakReasonIds: weakReasonIds,
       addToWrongNotebook: addToWrongNotebook,
+      sessionTitle: widget.title,
     );
 
     final nextIndex = _index + 1;

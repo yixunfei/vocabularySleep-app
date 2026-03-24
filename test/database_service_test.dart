@@ -208,7 +208,7 @@ void main() {
     addTearDown(sqlite.dispose);
 
     final row = sqlite.select(
-      'SELECT entry_json FROM words WHERE wordbook_id = ?',
+      'SELECT entry_json, extension_json FROM words WHERE wordbook_id = ?',
       <Object?>[wordbook.id],
     ).single;
     final entryJson = '${row['entry_json'] ?? ''}';
@@ -218,7 +218,14 @@ void main() {
     expect(decoded['word'], 'alpha');
     expect(decoded['wordbookId'], wordbook.id);
     expect(decoded['rawContent'], 'First');
-    expect((decoded['fields'] as List).length, 2);
+    expect(decoded.containsKey('fields'), isFalse);
+
+    final extensionJson = '${row['extension_json'] ?? ''}';
+    expect(extensionJson.trim(), isNotEmpty);
+    final decodedExtension = jsonDecode(extensionJson) as Map<String, Object?>;
+    final extensionFields = decodedExtension['fields'] as List;
+    expect(extensionFields, hasLength(1));
+    expect((extensionFields.single as Map)['key'], 'usage');
 
     final fieldRows = sqlite.select(
       '''
@@ -303,6 +310,172 @@ void main() {
           .toList(growable: false),
       <String>['Alpha'],
     );
+  });
+
+  test(
+    'searchWords normalizes diacritics and fuzzy order like in-memory search',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbook(
+        sourcePath: 'custom:test_search_diacritics',
+        name: 'Search diacritics test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'Éclair',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: 'Dessert'),
+            ],
+            rawContent: 'Dessert',
+          ),
+        ],
+      );
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_search_diacritics',
+      );
+
+      expect(
+        database
+            .searchWords(wordbook.id, query: 'ecl', mode: 'word')
+            .map((item) => item.word)
+            .toList(growable: false),
+        <String>['Éclair'],
+      );
+      expect(
+        database
+            .searchWords(wordbook.id, query: 'elr', mode: 'fuzzy')
+            .map((item) => item.word)
+            .toList(growable: false),
+        <String>['Éclair'],
+      );
+    },
+  );
+
+  test('word field style tag and media subtables round-trip through sqlite', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_field_subtables',
+      name: 'Field subtables test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(
+              key: 'usage',
+              label: 'Usage',
+              value: 'Use it in a sentence.',
+              style: WordFieldStyle(
+                backgroundHex: '#101010',
+                borderHex: '#202020',
+                textHex: '#ffffff',
+                accentHex: '#00ffcc',
+              ),
+              tags: <String>['core', 'spoken'],
+              media: <WordFieldMediaItem>[
+                WordFieldMediaItem(
+                  type: WordFieldMediaType.audio,
+                  source: 'https://example.com/audio.mp3',
+                  label: 'Pronunciation',
+                  mimeType: 'audio/mpeg',
+                ),
+              ],
+            ),
+          ],
+          rawContent: 'Use it in a sentence.',
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_field_subtables',
+    );
+    final sqlite = sqlite3.open(database.dbPath);
+    addTearDown(sqlite.dispose);
+
+    final fieldId =
+        (sqlite.select(
+              'SELECT id FROM word_fields WHERE word_id = (SELECT id FROM words WHERE wordbook_id = ?) AND field_key = ?',
+              <Object?>[wordbook.id, 'usage'],
+            ).single['id']
+            as int);
+
+    final styleRow = sqlite.select(
+      'SELECT text_hex, accent_hex FROM word_field_styles WHERE word_field_id = ?',
+      <Object?>[fieldId],
+    ).single;
+    expect(styleRow['text_hex'], '#ffffff');
+    expect(styleRow['accent_hex'], '#00ffcc');
+
+    final tagRows = sqlite.select(
+      'SELECT tag FROM word_field_tags WHERE word_field_id = ? ORDER BY sort_order ASC',
+      <Object?>[fieldId],
+    );
+    expect(tagRows.map((row) => row['tag']), <Object?>['core', 'spoken']);
+
+    final mediaRow = sqlite.select(
+      'SELECT media_type, media_source, media_label, mime_type FROM word_field_media WHERE word_field_id = ?',
+      <Object?>[fieldId],
+    ).single;
+    expect(mediaRow['media_type'], 'audio');
+    expect(mediaRow['media_source'], 'https://example.com/audio.mp3');
+    expect(mediaRow['media_label'], 'Pronunciation');
+    expect(mediaRow['mime_type'], 'audio/mpeg');
+
+    final restored = database.getWords(wordbook.id).single;
+    final usage = restored.fields.firstWhere((item) => item.key == 'usage');
+    expect(usage.style.textHex, '#ffffff');
+    expect(usage.tags, <String>['core', 'spoken']);
+    expect(usage.media.single.source, 'https://example.com/audio.mp3');
+    expect(usage.media.single.type, WordFieldMediaType.audio);
+  });
+
+  test('word memory events persist detailed answer history', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_memory_events',
+      name: 'Memory event test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+          ],
+          rawContent: 'First',
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_memory_events',
+    );
+    final word = database.getWords(wordbook.id).single;
+    database.insertWordMemoryEvent(
+      wordId: word.id!,
+      eventKind: 'weak',
+      quality: 1,
+      weakReasonIds: const <String>['meaning', 'spelling'],
+      sessionTitle: 'Round A',
+      createdAt: DateTime(2026, 3, 24, 14, 0),
+    );
+
+    final events = database.getWordMemoryEvents(word.id!);
+    expect(events, hasLength(1));
+    expect(events.single['event_kind'], 'weak');
+    expect(events.single['quality'], 1);
+    expect(events.single['session_title'], 'Round A');
+    expect(jsonDecode('${events.single['weak_reasons_json']}'), <Object?>[
+      'meaning',
+      'spelling',
+    ]);
   });
 
   test('exportUserData writes notes and todos to json', () async {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';
 import '../models/export_dto.dart';
+import '../utils/search_text_normalizer.dart' as search_text;
 import 'app_log_service.dart';
 import 'wordbook_import_service.dart';
 
@@ -101,7 +103,7 @@ class AppDatabaseService {
     r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)',
     caseSensitive: false,
   );
-  static const int _currentSchemaVersion = 3;
+  static const int _currentSchemaVersion = 5;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -440,6 +442,7 @@ class AppDatabaseService {
         search_details TEXT,
         search_word_compact TEXT NOT NULL,
         search_details_compact TEXT,
+        extension_json TEXT,
         entry_json TEXT,
         FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id) ON DELETE CASCADE
       );
@@ -455,6 +458,40 @@ class AppDatabaseService {
         style_json TEXT,
         sort_order INTEGER DEFAULT 0,
         FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE
+      );
+    ''');
+
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS word_field_styles (
+        word_field_id INTEGER PRIMARY KEY,
+        background_hex TEXT,
+        border_hex TEXT,
+        text_hex TEXT,
+        accent_hex TEXT,
+        FOREIGN KEY (word_field_id) REFERENCES word_fields(id) ON DELETE CASCADE
+      );
+    ''');
+
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS word_field_tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        word_field_id INTEGER NOT NULL,
+        tag TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        FOREIGN KEY (word_field_id) REFERENCES word_fields(id) ON DELETE CASCADE
+      );
+    ''');
+
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS word_field_media (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        word_field_id INTEGER NOT NULL,
+        media_type TEXT NOT NULL,
+        media_source TEXT NOT NULL,
+        media_label TEXT,
+        mime_type TEXT,
+        sort_order INTEGER DEFAULT 0,
+        FOREIGN KEY (word_field_id) REFERENCES word_fields(id) ON DELETE CASCADE
       );
     ''');
 
@@ -485,6 +522,19 @@ class AppDatabaseService {
         memory_state TEXT DEFAULT 'new',
         FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE,
         UNIQUE(word_id)
+      );
+    ''');
+
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS word_memory_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        word_id INTEGER NOT NULL,
+        event_kind TEXT NOT NULL,
+        quality INTEGER DEFAULT 0,
+        weak_reasons_json TEXT,
+        session_title TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE
       );
     ''');
 
@@ -576,10 +626,25 @@ class AppDatabaseService {
       'CREATE INDEX IF NOT EXISTS idx_word_fields_key_sort ON word_fields(field_key, sort_order, word_id);',
     );
     _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_field_tags_field_sort ON word_field_tags(word_field_id, sort_order, id);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_field_tags_tag ON word_field_tags(tag, word_field_id);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_field_media_field_sort ON word_field_media(word_field_id, sort_order, id);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_field_media_type_source ON word_field_media(media_type, media_source, word_field_id);',
+    );
+    _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_marks_word ON user_marks(word_id);',
     );
     _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_progress_word ON progress(word_id);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_word_memory_events_word_time ON word_memory_events(word_id, created_at DESC, id DESC);',
     );
   }
 
@@ -668,6 +733,7 @@ class AppDatabaseService {
           search_details TEXT,
           search_word_compact TEXT NOT NULL,
           search_details_compact TEXT,
+          extension_json TEXT,
           entry_json TEXT,
           FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id) ON DELETE CASCADE
         );
@@ -700,8 +766,9 @@ class AppDatabaseService {
             search_details,
             search_word_compact,
             search_details_compact,
+            extension_json,
             entry_json
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ''',
           <Object?>[
             entry.id,
@@ -713,6 +780,7 @@ class AppDatabaseService {
             prepared.row['search_details'],
             prepared.row['search_word_compact'],
             prepared.row['search_details_compact'],
+            prepared.row['extension_json'],
             prepared.row['entry_json'],
           ],
         );
@@ -1113,12 +1181,12 @@ class AppDatabaseService {
     int limit = 100000,
     int offset = 0,
   }) {
-    final normalizedQuery = _normalizeSearchCacheText(query);
+    final normalizedQuery = search_text.normalizeSearchText(query);
     if (normalizedQuery.isEmpty) {
       return getWords(wordbookId, limit: limit, offset: offset);
     }
     final likeQuery = _buildContainsLikePattern(normalizedQuery);
-    final fuzzyLikeQuery = _buildFuzzyLikePattern(query);
+    final fuzzyLikeQuery = search_text.buildFuzzySqlLikePattern(query);
     final resolvedFuzzyPattern = fuzzyLikeQuery.isEmpty
         ? likeQuery
         : fuzzyLikeQuery;
@@ -1169,28 +1237,140 @@ class AppDatabaseService {
         .toList(growable: false);
   }
 
+  WordEntry? findJumpWordByPrefix(
+    int wordbookId, {
+    required String prefix,
+    required String query,
+    required String mode,
+  }) {
+    final normalizedPrefix = search_text.normalizeJumpText(prefix);
+    if (normalizedPrefix.isEmpty) {
+      return null;
+    }
+    final scopedWordIds = _resolveScopedWordIds(
+      wordbookId,
+      query: query,
+      mode: mode,
+    );
+    if (scopedWordIds.isEmpty) {
+      return null;
+    }
+    final placeholders = List<String>.filled(
+      scopedWordIds.length,
+      '?',
+    ).join(', ');
+    final row = _selectOne(
+      '''
+      SELECT *
+      FROM words
+      WHERE id IN ($placeholders)
+        AND search_word_compact LIKE ?
+      ORDER BY id ASC
+      LIMIT 1
+      ''',
+      <Object?>[
+        ...scopedWordIds,
+        '${normalizedPrefix.replaceAll('%', '\\%').replaceAll('_', '\\_')}%',
+      ],
+    );
+    if (row == null) {
+      return null;
+    }
+    return _inflateWordEntry(row);
+  }
+
+  WordEntry? findJumpWordByInitial(
+    int wordbookId, {
+    required String initial,
+    required String query,
+    required String mode,
+  }) {
+    final normalized = initial.trim().toUpperCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    final scopedWordIds = _resolveScopedWordIds(
+      wordbookId,
+      query: query,
+      mode: mode,
+    );
+    if (scopedWordIds.isEmpty) {
+      return null;
+    }
+    final placeholders = List<String>.filled(
+      scopedWordIds.length,
+      '?',
+    ).join(', ');
+    final row = normalized == '#'
+        ? _selectOne('''
+            SELECT *
+            FROM words
+            WHERE id IN ($placeholders)
+              AND (
+                search_word_compact = ''
+                OR substr(search_word_compact, 1, 1) < 'a'
+                OR substr(search_word_compact, 1, 1) > 'z'
+              )
+            ORDER BY id ASC
+            LIMIT 1
+            ''', scopedWordIds.cast<Object?>())
+        : _selectOne(
+            '''
+            SELECT *
+            FROM words
+            WHERE id IN ($placeholders)
+              AND substr(search_word_compact, 1, 1) = ?
+            ORDER BY id ASC
+            LIMIT 1
+            ''',
+            <Object?>[...scopedWordIds, normalized.toLowerCase()],
+          );
+    if (row == null) {
+      return null;
+    }
+    return _inflateWordEntry(row);
+  }
+
+  List<int> _resolveScopedWordIds(
+    int wordbookId, {
+    required String query,
+    required String mode,
+  }) {
+    final normalizedQuery = search_text.normalizeSearchText(query);
+    if (normalizedQuery.isEmpty) {
+      final rows = _selectMaps(
+        'SELECT id FROM words WHERE wordbook_id = ? ORDER BY id ASC',
+        <Object?>[wordbookId],
+      );
+      return rows
+          .map((row) => (row['id'] as num?)?.toInt())
+          .whereType<int>()
+          .where((id) => id > 0)
+          .toList(growable: false);
+    }
+    return searchWords(
+      wordbookId,
+      query: normalizedQuery,
+      mode: mode,
+    ).map((item) => item.id).whereType<int>().toList(growable: false);
+  }
+
+  WordEntry _inflateWordEntry(Map<String, Object?> row) {
+    final entry = WordEntry.fromMap(row);
+    final wordId = (row['id'] as num?)?.toInt();
+    if (wordId == null || wordId <= 0) {
+      return entry;
+    }
+    final fieldsByWordId = _getWordFieldsByWordIds(<int>[wordId]);
+    final fields = fieldsByWordId[wordId] ?? const <WordFieldItem>[];
+    return fields.isEmpty ? entry : entry.copyWith(fields: fields);
+  }
+
   String _buildContainsLikePattern(String raw) {
     final escaped = raw
         .replaceAll('\\', '\\\\')
         .replaceAll('%', '\\%')
         .replaceAll('_', '\\_');
-    return '%$escaped%';
-  }
-
-  String _buildFuzzyLikePattern(String raw) {
-    final compact = _normalizeSearchCompactText(raw);
-    if (compact.isEmpty) {
-      return '';
-    }
-    final escaped = compact
-        .split('')
-        .map(
-          (char) => char
-              .replaceAll('\\', '\\\\')
-              .replaceAll('%', '\\%')
-              .replaceAll('_', '\\_'),
-        )
-        .join('%');
     return '%$escaped%';
   }
 
@@ -1201,11 +1381,19 @@ class AppDatabaseService {
     }
     final placeholders = List<String>.filled(ids.length, '?').join(', ');
     final rows = _selectMaps('''
-      SELECT word_id, field_key, field_label, field_value_json, style_json, sort_order
+      SELECT id, word_id, field_key, field_label, field_value_json, style_json, sort_order
       FROM word_fields
       WHERE word_id IN ($placeholders)
       ORDER BY word_id ASC, sort_order ASC, id ASC
       ''', ids.cast<Object?>());
+    final fieldIds = rows
+        .map((row) => (row['id'] as num?)?.toInt())
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList(growable: false);
+    final stylesByFieldId = _getWordFieldStylesByFieldIds(fieldIds);
+    final tagsByFieldId = _getWordFieldTagsByFieldIds(fieldIds);
+    final mediaByFieldId = _getWordFieldMediaByFieldIds(fieldIds);
     final output = <int, List<WordFieldItem>>{};
     for (final row in rows) {
       final wordId = (row['word_id'] as num?)?.toInt();
@@ -1216,7 +1404,21 @@ class AppDatabaseService {
       if (field == null) {
         continue;
       }
-      output.putIfAbsent(wordId, () => <WordFieldItem>[]).add(field);
+      final fieldId = (row['id'] as num?)?.toInt();
+      final fieldWithSubtables = field.copyWith(
+        style: fieldId == null
+            ? field.style
+            : (stylesByFieldId[fieldId] ?? field.style),
+        tags: fieldId == null
+            ? field.tags
+            : (tagsByFieldId[fieldId] ?? field.tags),
+        media: fieldId == null
+            ? field.media
+            : (mediaByFieldId[fieldId] ?? field.media),
+      );
+      output
+          .putIfAbsent(wordId, () => <WordFieldItem>[])
+          .add(fieldWithSubtables);
     }
     return output.map(
       (key, value) =>
@@ -1240,6 +1442,98 @@ class AppDatabaseService {
       value: value,
       style: WordFieldStyle.fromJsonMap(_decodeJsonObject(row['style_json'])),
     );
+  }
+
+  Map<int, WordFieldStyle> _getWordFieldStylesByFieldIds(
+    Iterable<int> fieldIds,
+  ) {
+    final ids = fieldIds.where((id) => id > 0).toSet().toList(growable: false);
+    if (ids.isEmpty) {
+      return const <int, WordFieldStyle>{};
+    }
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    final rows = _selectMaps('''
+      SELECT word_field_id, background_hex, border_hex, text_hex, accent_hex
+      FROM word_field_styles
+      WHERE word_field_id IN ($placeholders)
+      ''', ids.cast<Object?>());
+    return <int, WordFieldStyle>{
+      for (final row in rows)
+        ((row['word_field_id'] as num?) ?? 0).toInt(): WordFieldStyle(
+          backgroundHex: '${row['background_hex'] ?? ''}'.trim(),
+          borderHex: '${row['border_hex'] ?? ''}'.trim(),
+          textHex: '${row['text_hex'] ?? ''}'.trim(),
+          accentHex: '${row['accent_hex'] ?? ''}'.trim(),
+        ),
+    };
+  }
+
+  Map<int, List<String>> _getWordFieldTagsByFieldIds(Iterable<int> fieldIds) {
+    final ids = fieldIds.where((id) => id > 0).toSet().toList(growable: false);
+    if (ids.isEmpty) {
+      return const <int, List<String>>{};
+    }
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    final rows = _selectMaps('''
+      SELECT word_field_id, tag
+      FROM word_field_tags
+      WHERE word_field_id IN ($placeholders)
+      ORDER BY word_field_id ASC, sort_order ASC, id ASC
+      ''', ids.cast<Object?>());
+    final output = <int, List<String>>{};
+    for (final row in rows) {
+      final fieldId = (row['word_field_id'] as num?)?.toInt();
+      final tag = '${row['tag'] ?? ''}'.trim();
+      if (fieldId == null || fieldId <= 0 || tag.isEmpty) {
+        continue;
+      }
+      output.putIfAbsent(fieldId, () => <String>[]).add(tag);
+    }
+    return output;
+  }
+
+  Map<int, List<WordFieldMediaItem>> _getWordFieldMediaByFieldIds(
+    Iterable<int> fieldIds,
+  ) {
+    final ids = fieldIds.where((id) => id > 0).toSet().toList(growable: false);
+    if (ids.isEmpty) {
+      return const <int, List<WordFieldMediaItem>>{};
+    }
+    final placeholders = List<String>.filled(ids.length, '?').join(', ');
+    final rows = _selectMaps('''
+      SELECT word_field_id, media_type, media_source, media_label, mime_type
+      FROM word_field_media
+      WHERE word_field_id IN ($placeholders)
+      ORDER BY word_field_id ASC, sort_order ASC, id ASC
+      ''', ids.cast<Object?>());
+    final output = <int, List<WordFieldMediaItem>>{};
+    for (final row in rows) {
+      final fieldId = (row['word_field_id'] as num?)?.toInt();
+      if (fieldId == null || fieldId <= 0) {
+        continue;
+      }
+      final type = WordFieldMediaType.values.firstWhere(
+        (item) => item.name == '${row['media_type'] ?? 'link'}'.trim(),
+        orElse: () => WordFieldMediaType.link,
+      );
+      final source = '${row['media_source'] ?? ''}'.trim();
+      if (source.isEmpty) {
+        continue;
+      }
+      output
+          .putIfAbsent(fieldId, () => <WordFieldMediaItem>[])
+          .add(
+            WordFieldMediaItem(
+              type: type,
+              source: source,
+              label: '${row['media_label'] ?? ''}'.trim(),
+              mimeType: '${row['mime_type'] ?? ''}'.trim().isEmpty
+                  ? null
+                  : '${row['mime_type']}'.trim(),
+            ),
+          );
+    }
+    return output;
   }
 
   WordFieldValue? _decodeWordFieldValue(Object? raw) {
@@ -1341,6 +1635,59 @@ class AppDatabaseService {
         progress.consecutiveCorrect,
         progress.memoryState,
       ],
+    );
+  }
+
+  void insertWordMemoryEvent({
+    required int wordId,
+    required String eventKind,
+    required int quality,
+    List<String> weakReasonIds = const <String>[],
+    String? sessionTitle,
+    DateTime? createdAt,
+  }) {
+    if (!_initialized || wordId <= 0) {
+      return;
+    }
+    final normalizedReasons = weakReasonIds
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+    _db.execute(
+      '''
+      INSERT INTO word_memory_events (
+        word_id,
+        event_kind,
+        quality,
+        weak_reasons_json,
+        session_title,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      ''',
+      <Object?>[
+        wordId,
+        eventKind.trim(),
+        quality,
+        normalizedReasons.isEmpty ? null : jsonEncode(normalizedReasons),
+        sessionTitle?.trim(),
+        (createdAt ?? DateTime.now()).toIso8601String(),
+      ],
+    );
+  }
+
+  List<Map<String, Object?>> getWordMemoryEvents(int wordId, {int limit = 50}) {
+    if (!_initialized || wordId <= 0) {
+      return const <Map<String, Object?>>[];
+    }
+    return _selectMaps(
+      '''
+      SELECT *
+      FROM word_memory_events
+      WHERE word_id = ?
+      ORDER BY created_at DESC, id DESC
+      LIMIT ?
+      ''',
+      <Object?>[wordId, limit],
     );
   }
 
@@ -2040,8 +2387,126 @@ class AppDatabaseService {
       _setSchemaVersion(3);
       version = 3;
     }
+    if (version < 4) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 4},
+      );
+      _migrateWordFieldSubtablesSchema();
+      _setSchemaVersion(4);
+      version = 4;
+    }
+    if (version < 5) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 5},
+      );
+      _migrateWordExtensionSchema();
+      _setSchemaVersion(5);
+      version = 5;
+    }
     if (version != _currentSchemaVersion) {
       _setSchemaVersion(_currentSchemaVersion);
+    }
+  }
+
+  void _migrateWordFieldSubtablesSchema() {
+    final fieldRows = _selectMaps('''
+      SELECT id, word_id, style_json, sort_order
+      FROM word_fields
+      ORDER BY word_id ASC, sort_order ASC, id ASC
+      ''');
+    if (fieldRows.isEmpty) {
+      return;
+    }
+    final byWordId = <int, List<Map<String, Object?>>>{};
+    for (final row in fieldRows) {
+      final wordId = (row['word_id'] as num?)?.toInt();
+      if (wordId == null || wordId <= 0) {
+        continue;
+      }
+      byWordId.putIfAbsent(wordId, () => <Map<String, Object?>>[]).add(row);
+      final fieldId = (row['id'] as num?)?.toInt();
+      if (fieldId == null || fieldId <= 0) {
+        continue;
+      }
+      final style = WordFieldStyle.fromJsonMap(
+        _decodeJsonObject(row['style_json']),
+      );
+      if (!style.isEmpty) {
+        _db.execute(
+          '''
+          INSERT OR REPLACE INTO word_field_styles (
+            word_field_id,
+            background_hex,
+            border_hex,
+            text_hex,
+            accent_hex
+          ) VALUES (?, ?, ?, ?, ?)
+          ''',
+          <Object?>[
+            fieldId,
+            style.backgroundHex.trim(),
+            style.borderHex.trim(),
+            style.textHex.trim(),
+            style.accentHex.trim(),
+          ],
+        );
+      }
+    }
+
+    for (final entry in byWordId.entries) {
+      final wordRow = _selectOne('SELECT * FROM words WHERE id = ?', <Object?>[
+        entry.key,
+      ]);
+      if (wordRow == null) {
+        continue;
+      }
+      final wordEntry = WordEntry.fromMap(wordRow);
+      final rows = entry.value;
+      final fields = wordEntry.fields;
+      final count = math.min(rows.length, fields.length);
+      for (var index = 0; index < count; index += 1) {
+        final fieldId = (rows[index]['id'] as num?)?.toInt();
+        if (fieldId == null || fieldId <= 0) {
+          continue;
+        }
+        _replaceWordFieldSubtables(fieldId, fields[index]);
+      }
+    }
+  }
+
+  void _migrateWordExtensionSchema() {
+    final tableInfo = _db.select('PRAGMA table_info(words);');
+    final columnNames = <String>{
+      for (final row in tableInfo) row['name'].toString(),
+    };
+    if (!columnNames.contains('extension_json')) {
+      _db.execute('ALTER TABLE words ADD COLUMN extension_json TEXT;');
+    }
+
+    final rows = _selectMaps('SELECT * FROM words ORDER BY id ASC');
+    for (final row in rows) {
+      final wordId = (row['id'] as num?)?.toInt();
+      if (wordId == null || wordId <= 0) {
+        continue;
+      }
+      final fieldRows =
+          _getWordFieldsByWordIds(<int>[wordId])[wordId] ??
+          const <WordFieldItem>[];
+      final extensionJson = _buildExtensionJson(fieldRows);
+      final compactEntryJson = _buildCompactEntryJson(
+        wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
+        word: '${row['word'] ?? ''}',
+        meaning: '${row['meaning'] ?? ''}',
+        rawContent: WordEntry.fromMap(row).rawContent,
+      );
+      _db.execute(
+        'UPDATE words SET extension_json = ?, entry_json = ? WHERE id = ?',
+        <Object?>[extensionJson, compactEntryJson, wordId],
+      );
     }
   }
 
@@ -2160,23 +2625,28 @@ class AppDatabaseService {
 
   String _escapeSqlString(String value) => value.replaceAll("'", "''");
 
-  String _normalizeSearchCacheText(String raw) {
-    final lower = sanitizeDisplayText(raw).toLowerCase();
-    if (lower.isEmpty) {
-      return '';
-    }
-    return lower.replaceAll(RegExp(r'\s+'), ' ').trim();
-  }
-
-  String _normalizeSearchCompactText(String raw) {
-    final normalized = _normalizeSearchCacheText(raw);
-    if (normalized.isEmpty) {
-      return '';
-    }
-    return normalized.replaceAll(RegExp(r'[^a-z0-9\u4e00-\u9fff]+'), '');
-  }
-
   void _replaceWordFields(int wordId, List<WordFieldItem> fields) {
+    _db.execute(
+      '''
+      DELETE FROM word_field_styles
+      WHERE word_field_id IN (SELECT id FROM word_fields WHERE word_id = ?)
+      ''',
+      <Object?>[wordId],
+    );
+    _db.execute(
+      '''
+      DELETE FROM word_field_tags
+      WHERE word_field_id IN (SELECT id FROM word_fields WHERE word_id = ?)
+      ''',
+      <Object?>[wordId],
+    );
+    _db.execute(
+      '''
+      DELETE FROM word_field_media
+      WHERE word_field_id IN (SELECT id FROM word_fields WHERE word_id = ?)
+      ''',
+      <Object?>[wordId],
+    );
     _db.execute('DELETE FROM word_fields WHERE word_id = ?', <Object?>[wordId]);
     final normalizedFields = mergeFieldItems(List<WordFieldItem>.from(fields));
     for (var index = 0; index < normalizedFields.length; index += 1) {
@@ -2201,7 +2671,117 @@ class AppDatabaseService {
           index,
         ],
       );
+      _replaceWordFieldSubtables(_lastInsertId(), field);
     }
+  }
+
+  void _replaceWordFieldSubtables(int wordFieldId, WordFieldItem field) {
+    _db.execute(
+      'DELETE FROM word_field_styles WHERE word_field_id = ?',
+      <Object?>[wordFieldId],
+    );
+    _db.execute(
+      'DELETE FROM word_field_tags WHERE word_field_id = ?',
+      <Object?>[wordFieldId],
+    );
+    _db.execute(
+      'DELETE FROM word_field_media WHERE word_field_id = ?',
+      <Object?>[wordFieldId],
+    );
+
+    if (!field.style.isEmpty) {
+      _db.execute(
+        '''
+        INSERT INTO word_field_styles (
+          word_field_id,
+          background_hex,
+          border_hex,
+          text_hex,
+          accent_hex
+        ) VALUES (?, ?, ?, ?, ?)
+        ''',
+        <Object?>[
+          wordFieldId,
+          field.style.backgroundHex.trim(),
+          field.style.borderHex.trim(),
+          field.style.textHex.trim(),
+          field.style.accentHex.trim(),
+        ],
+      );
+    }
+
+    for (var index = 0; index < field.tags.length; index += 1) {
+      final tag = field.tags[index].trim();
+      if (tag.isEmpty) {
+        continue;
+      }
+      _db.execute(
+        '''
+        INSERT INTO word_field_tags (word_field_id, tag, sort_order)
+        VALUES (?, ?, ?)
+        ''',
+        <Object?>[wordFieldId, tag, index],
+      );
+    }
+
+    for (var index = 0; index < field.media.length; index += 1) {
+      final media = field.media[index];
+      if (media.source.trim().isEmpty) {
+        continue;
+      }
+      _db.execute(
+        '''
+        INSERT INTO word_field_media (
+          word_field_id,
+          media_type,
+          media_source,
+          media_label,
+          mime_type,
+          sort_order
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ''',
+        <Object?>[
+          wordFieldId,
+          media.type.name,
+          media.source.trim(),
+          media.label.trim(),
+          media.mimeType?.trim(),
+          index,
+        ],
+      );
+    }
+  }
+
+  String? _buildExtensionJson(List<WordFieldItem> fields) {
+    final extensions = fields
+        .where((field) => !isLegacyFieldKey(field.key))
+        .map((field) {
+          final sanitized = field.copyWith(
+            style: WordFieldStyle.empty,
+            tags: const <String>[],
+            media: const <WordFieldMediaItem>[],
+          );
+          return sanitized.toJsonMap();
+        })
+        .toList(growable: false);
+    if (extensions.isEmpty) {
+      return null;
+    }
+    return jsonEncode(<String, Object?>{'fields': extensions});
+  }
+
+  String _buildCompactEntryJson({
+    required int wordbookId,
+    required String word,
+    required String meaning,
+    required String rawContent,
+  }) {
+    return jsonEncode(<String, Object?>{
+      'wordbookId': wordbookId,
+      'word': word,
+      'meaning': meaning,
+      'rawContent': rawContent,
+    });
   }
 
   _PreparedWordRecord _buildStoredWordRecord({
@@ -2226,19 +2806,11 @@ class AppDatabaseService {
         .map((item) => item.asText().trim())
         .where((item) => item.isNotEmpty)
         .join('\n');
-    final entry = WordEntry(
-      id: id,
+    final extensionJson = _buildExtensionJson(normalizedFields);
+    final compactEntryJson = _buildCompactEntryJson(
       wordbookId: wordbookId,
       word: normalizedWord,
-      meaning: legacy.meaning,
-      examples: legacy.examples,
-      etymology: legacy.etymology,
-      roots: legacy.roots,
-      affixes: legacy.affixes,
-      variations: legacy.variations,
-      memory: legacy.memory,
-      story: legacy.story,
-      fields: normalizedFields,
+      meaning: legacy.meaning ?? '',
       rawContent: persistedRawContent,
     );
 
@@ -2246,12 +2818,17 @@ class AppDatabaseService {
       row: <String, Object?>{
         'word': normalizedWord,
         'meaning': legacy.meaning,
-        'search_word': _normalizeSearchCacheText(normalizedWord),
-        'search_meaning': _normalizeSearchCacheText(legacy.meaning ?? ''),
-        'search_details': _normalizeSearchCacheText(detailsText),
-        'search_word_compact': _normalizeSearchCompactText(normalizedWord),
-        'search_details_compact': _normalizeSearchCompactText(detailsText),
-        'entry_json': jsonEncode(entry.toJsonMap()),
+        'search_word': search_text.normalizeSearchText(normalizedWord),
+        'search_meaning': search_text.normalizeSearchText(legacy.meaning ?? ''),
+        'search_details': search_text.normalizeSearchText(detailsText),
+        'search_word_compact': search_text.normalizeFuzzyCompactText(
+          normalizedWord,
+        ),
+        'search_details_compact': search_text.normalizeFuzzyCompactText(
+          detailsText,
+        ),
+        'extension_json': extensionJson,
+        'entry_json': compactEntryJson,
       },
       fields: normalizedFields,
     );
@@ -2276,9 +2853,10 @@ class AppDatabaseService {
         search_details,
         search_word_compact,
         search_details_compact,
+        extension_json,
         entry_json
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       <Object?>[
         wordbookId,
@@ -2289,6 +2867,7 @@ class AppDatabaseService {
         prepared.row['search_details'],
         prepared.row['search_word_compact'],
         prepared.row['search_details_compact'],
+        prepared.row['extension_json'],
         prepared.row['entry_json'],
       ],
     );
