@@ -298,15 +298,23 @@ class _FocusTimerVisual extends StatelessWidget {
   Widget _buildHourglassVisual(BuildContext context) {
     final theme = Theme.of(context);
     final timeText = _formatTime(timerState.remainingSeconds);
+    final hourglassSize = size * 0.72;
     return SizedBox(
       width: size,
       height: size,
-      child: Stack(
-        alignment: Alignment.center,
+      child: Column(
         children: <Widget>[
+          _TimerReadoutPanel(
+            timeText: timeText,
+            label: i18n.t('timerTab'),
+            accent: accent,
+            compact: true,
+            emphasized: timerState.phase == TomatoTimerPhase.focus,
+          ),
+          const Spacer(),
           RepaintBoundary(
             child: CustomPaint(
-              size: Size.square(size),
+              size: Size.square(hourglassSize),
               painter: _HourglassPainter(
                 remaining: timerState.remainingProgress,
                 pulse: timerState.phase == TomatoTimerPhase.focus ? 1 : 0.7,
@@ -315,16 +323,7 @@ class _FocusTimerVisual extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            bottom: size * 0.06,
-            child: _TimerReadoutPanel(
-              timeText: timeText,
-              label: i18n.t('timerTab'),
-              accent: accent,
-              compact: true,
-              emphasized: timerState.phase == TomatoTimerPhase.focus,
-            ),
-          ),
+          const Spacer(),
         ],
       ),
     );

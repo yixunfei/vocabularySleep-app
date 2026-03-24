@@ -65,8 +65,10 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   bool _hintRevealed = false;
   bool _reported = false;
   bool _sessionStarted = false;
+  bool _sessionSettingsExpanded = false;
   bool _autoAddWeakWordsToTask = false;
   bool _autoPlayPronunciation = false;
+  bool _answerFeedbackDialogEnabled = true;
   bool _sessionPreferencesLoaded = false;
 
   PracticeQuestionType _questionType = PracticeQuestionType.flashcard;
@@ -104,6 +106,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     _autoAddWeakWordsToTask = state.practiceAutoAddWeakWordsToTask;
     _autoPlayPronunciation = state.practiceAutoPlayPronunciation;
     _hintRevealed = state.practiceShowHintsByDefault;
+    _answerFeedbackDialogEnabled = state.practiceShowAnswerFeedbackDialog;
     _questionType = state.practiceDefaultQuestionType;
     _sessionPreferencesLoaded = true;
     _prepareCurrentQuestion();
@@ -427,116 +430,244 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
             const SizedBox(height: 12),
             LinearProgressIndicator(value: progress),
             const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        pickUiText(i18n, zh: '浼氳瘽璁剧疆', en: 'Session settings'),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '棰樺瀷銆佽嚜鍔ㄩ」鍜岀瓟棰樺脊绐楅兘鍙互鍦ㄨ繖閲岀粺涓€鎺у埗銆?',
+                          en: 'Question mode, automation toggles, and answer popup behavior live here.',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton.filledTonal(
+                  key: const ValueKey<String>(
+                    'practice-session-settings-toggle',
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _sessionSettingsExpanded = !_sessionSettingsExpanded;
+                    });
+                  },
+                  icon: Icon(
+                    _sessionSettingsExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _sessionAvailableQuestionTypes
-                  .map(
-                    (type) => ChoiceChip(
-                      selected: _questionType == type,
-                      avatar: Icon(practiceQuestionTypeIcon(type), size: 16),
-                      label: Text(practiceQuestionTypeLabel(i18n, type)),
-                      onSelected: (selected) {
-                        if (!selected) {
-                          return;
-                        }
-                        setState(() {
-                          _questionType = type;
-                        });
-                        state.updatePracticeSessionPreferences(
-                          defaultQuestionType: type,
-                        );
-                        _prepareCurrentQuestion();
-                      },
+              children: <Widget>[
+                Chip(
+                  avatar: Icon(
+                    practiceQuestionTypeIcon(_questionType),
+                    size: 16,
+                  ),
+                  label: Text(practiceQuestionTypeLabel(i18n, _questionType)),
+                ),
+                if (_autoAddWeakWordsToTask)
+                  Chip(
+                    avatar: const Icon(
+                      Icons.playlist_add_check_rounded,
+                      size: 16,
                     ),
-                  )
-                  .toList(growable: false),
+                    label: Text(
+                      pickUiText(i18n, zh: '鑷姩鍔犲叆浠诲姟璇?', en: 'Auto task sync'),
+                    ),
+                  ),
+                if (_autoPlayPronunciation)
+                  Chip(
+                    avatar: const Icon(Icons.volume_up_rounded, size: 16),
+                    label: Text(
+                      pickUiText(i18n, zh: '鑷姩鍙戦煶', en: 'Auto pronunciation'),
+                    ),
+                  ),
+                if (_hintRevealed)
+                  Chip(
+                    avatar: const Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 16,
+                    ),
+                    label: Text(
+                      pickUiText(i18n, zh: '榛樿灞曞紑鎻愮ず', en: 'Hints open'),
+                    ),
+                  ),
+                Chip(
+                  avatar: Icon(
+                    _answerFeedbackDialogEnabled
+                        ? Icons.celebration_rounded
+                        : Icons.notifications_off_outlined,
+                    size: 16,
+                  ),
+                  label: Text(
+                    _answerFeedbackDialogEnabled
+                        ? pickUiText(
+                            i18n,
+                            zh: '绛旈寮圭獥寮€鍚?',
+                            en: 'Answer popup on',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '绛旈寮圭獥鍏抽棴',
+                            en: 'Answer popup off',
+                          ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            SwitchListTile.adaptive(
-              key: const ValueKey<String>('practice-auto-task-switch'),
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(
-                pickUiText(
-                  i18n,
-                  zh: '没记住时自动加入任务本',
-                  en: 'Auto-add missed words to task list',
+            if (_sessionSettingsExpanded) ...<Widget>[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _sessionAvailableQuestionTypes
+                    .map(
+                      (type) => ChoiceChip(
+                        selected: _questionType == type,
+                        avatar: Icon(practiceQuestionTypeIcon(type), size: 16),
+                        label: Text(practiceQuestionTypeLabel(i18n, type)),
+                        onSelected: (selected) {
+                          if (!selected) {
+                            return;
+                          }
+                          setState(() {
+                            _questionType = type;
+                          });
+                          state.updatePracticeSessionPreferences(
+                            defaultQuestionType: type,
+                          );
+                          _prepareCurrentQuestion();
+                        },
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                key: const ValueKey<String>('practice-auto-task-switch'),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '没记住时自动加入任务本',
+                    en: 'Auto-add missed words to task list',
+                  ),
                 ),
-              ),
-              subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '开启后，点击“没记住”会自动把当前词加入任务本。',
-                  en: 'When enabled, tapping "Not yet" also adds the current word to the task list.',
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '开启后，点击“没记住”会自动把当前词加入任务本。',
+                    en: 'When enabled, tapping "Not yet" also adds the current word to the task list.',
+                  ),
                 ),
+                value: _autoAddWeakWordsToTask,
+                onChanged: (value) {
+                  setState(() {
+                    _autoAddWeakWordsToTask = value;
+                  });
+                  state.updatePracticeSessionPreferences(
+                    autoAddWeakWordsToTask: value,
+                  );
+                },
               ),
-              value: _autoAddWeakWordsToTask,
-              onChanged: (value) {
-                setState(() {
-                  _autoAddWeakWordsToTask = value;
-                });
-                state.updatePracticeSessionPreferences(
-                  autoAddWeakWordsToTask: value,
-                );
-              },
-            ),
-            SwitchListTile.adaptive(
-              key: const ValueKey<String>('practice-auto-play-switch'),
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(
-                pickUiText(
-                  i18n,
-                  zh: '切题时自动播放发音',
-                  en: 'Auto-play pronunciation',
+              SwitchListTile.adaptive(
+                key: const ValueKey<String>('practice-auto-play-switch'),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '切题时自动播放发音',
+                    en: 'Auto-play pronunciation',
+                  ),
                 ),
-              ),
-              subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '每次进入新题时自动播放当前单词发音。',
-                  en: 'Automatically play the current word pronunciation when a new card appears.',
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '每次进入新题时自动播放当前单词发音。',
+                    en: 'Automatically play the current word pronunciation when a new card appears.',
+                  ),
                 ),
+                value: _autoPlayPronunciation,
+                onChanged: (value) {
+                  setState(() {
+                    _autoPlayPronunciation = value;
+                    _lastAutoPlayedKey = null;
+                  });
+                  state.updatePracticeSessionPreferences(
+                    autoPlayPronunciation: value,
+                  );
+                  if (value) {
+                    _maybeAutoPlayCurrentWord(state, force: true);
+                  }
+                },
               ),
-              value: _autoPlayPronunciation,
-              onChanged: (value) {
-                setState(() {
-                  _autoPlayPronunciation = value;
-                  _lastAutoPlayedKey = null;
-                });
-                state.updatePracticeSessionPreferences(
-                  autoPlayPronunciation: value,
-                );
-                if (value) {
-                  _maybeAutoPlayCurrentWord(state, force: true);
-                }
-              },
-            ),
-            SwitchListTile.adaptive(
-              key: const ValueKey<String>('practice-hint-default-switch'),
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(
-                pickUiText(i18n, zh: '新题默认展开提示', en: 'Show hints by default'),
-              ),
-              subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '每次切到新题时默认展开字段提示，适合复习模式。',
-                  en: 'Keep field hints expanded when a new card opens, useful for review mode.',
+              SwitchListTile.adaptive(
+                key: const ValueKey<String>('practice-hint-default-switch'),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(
+                  pickUiText(i18n, zh: '新题默认展开提示', en: 'Show hints by default'),
                 ),
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '每次切到新题时默认展开字段提示，适合复习模式。',
+                    en: 'Keep field hints expanded when a new card opens, useful for review mode.',
+                  ),
+                ),
+                value: state.practiceShowHintsByDefault,
+                onChanged: (value) {
+                  setState(() {
+                    _hintRevealed = value;
+                  });
+                  state.updatePracticeSessionPreferences(
+                    showHintsByDefault: value,
+                  );
+                },
               ),
-              value: state.practiceShowHintsByDefault,
-              onChanged: (value) {
-                setState(() {
-                  _hintRevealed = value;
-                });
-                state.updatePracticeSessionPreferences(
-                  showHintsByDefault: value,
-                );
-              },
-            ),
+              SwitchListTile.adaptive(
+                key: const ValueKey<String>('practice-answer-feedback-switch'),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(
+                  pickUiText(i18n, zh: '绛旈鍚庡脊绐楀弽棣?', en: 'Show answer popup'),
+                ),
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '绛斿畬涓€棰樺悗鏄剧ず榧撳姳寮圭獥锛屽苟鍙洿鎺ュ喅瀹氭槸鍚﹀姞鍏ラ敊棰樻湰銆?',
+                    en: 'Show the encouraging answer popup and let you decide whether to add the word to the wrong notebook.',
+                  ),
+                ),
+                value: _answerFeedbackDialogEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    _answerFeedbackDialogEnabled = value;
+                  });
+                  state.updatePracticeSessionPreferences(
+                    showAnswerFeedbackDialog: value,
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -873,6 +1004,23 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   }) async {
     final current = _currentWord;
     if (current == null) {
+      return;
+    }
+    if (!_answerFeedbackDialogEnabled) {
+      final resolvedWeakReasonIds = remembered
+          ? const <String>[]
+          : (weakReasonIds.isNotEmpty
+                ? weakReasonIds
+                : (_selectedWeakReasons.isEmpty
+                      ? const <String>['recall']
+                      : _selectedWeakReasons.toList(growable: false)));
+      _applyAnswerResult(
+        state,
+        current: current,
+        remembered: remembered,
+        weakReasonIds: resolvedWeakReasonIds,
+        addToWrongNotebook: !remembered,
+      );
       return;
     }
     final decision = await _showAnswerFeedbackDialog(

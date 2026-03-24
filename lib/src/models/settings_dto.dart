@@ -52,6 +52,7 @@ class PracticeSessionPreferences {
     this.autoAddWeakWordsToTask = false,
     this.autoPlayPronunciation = false,
     this.showHintsByDefault = false,
+    this.showAnswerFeedbackDialog = true,
     this.defaultQuestionType = PracticeQuestionType.flashcard,
   });
 
@@ -61,6 +62,7 @@ class PracticeSessionPreferences {
   final bool autoAddWeakWordsToTask;
   final bool autoPlayPronunciation;
   final bool showHintsByDefault;
+  final bool showAnswerFeedbackDialog;
   final PracticeQuestionType defaultQuestionType;
 
   factory PracticeSessionPreferences.fromJsonValue(Object? value) {
@@ -71,6 +73,7 @@ class PracticeSessionPreferences {
       autoAddWeakWordsToTask: value['autoAddWeakWordsToTask'] == true,
       autoPlayPronunciation: value['autoPlayPronunciation'] == true,
       showHintsByDefault: value['showHintsByDefault'] == true,
+      showAnswerFeedbackDialog: value['showAnswerFeedbackDialog'] != false,
       defaultQuestionType: PracticeQuestionType.fromStorage(
         '${value['defaultQuestionType'] ?? 'flashcard'}',
       ),
@@ -82,6 +85,7 @@ class PracticeSessionPreferences {
       'autoAddWeakWordsToTask': autoAddWeakWordsToTask,
       'autoPlayPronunciation': autoPlayPronunciation,
       'showHintsByDefault': showHintsByDefault,
+      'showAnswerFeedbackDialog': showAnswerFeedbackDialog,
       'defaultQuestionType': defaultQuestionType.storageValue,
     };
   }

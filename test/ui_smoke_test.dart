@@ -1676,6 +1676,20 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const PracticePage());
 
+      expect(
+        find.byKey(const ValueKey<String>('practice-round-setup-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Round setup'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-round-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Practice source'), findsOneWidget);
+      expect(find.text('Words per round'), findsOneWidget);
+
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey<String>('practice-memory-card')),
         250,
@@ -1714,19 +1728,6 @@ void main() {
       expect(find.text('Quick start'), findsOneWidget);
       expect(find.text('7-word warmup'), findsOneWidget);
       expect(find.text('Shuffle sprint'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey<String>('practice-round-setup-card')),
-        findsOneWidget,
-      );
-      expect(find.text('Round setup'), findsOneWidget);
-
-      await tester.tap(
-        find.byKey(const ValueKey<String>('practice-round-toggle')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Practice source'), findsOneWidget);
-      expect(find.text('Words per round'), findsOneWidget);
     });
 
     testWidgets('practice page shows clean Chinese labels', (tester) async {
@@ -1835,11 +1836,21 @@ void main() {
       expect(state.taskWords, isEmpty);
 
       await tester.scrollUntilVisible(
-        find.byKey(const ValueKey<String>('practice-auto-task-switch')),
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
         -220,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('practice-answer-feedback-switch')),
+        findsOneWidget,
+      );
 
       await tester.tap(
         find.byKey(const ValueKey<String>('practice-auto-task-switch')),
@@ -1949,14 +1960,12 @@ void main() {
         child: const PracticeSessionPage(title: 'Meaning mode', words: words),
       );
 
-      await tester.tap(find.text('Meaning choice'));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
+      );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Choose the correct meaning for the word.'),
-        findsOneWidget,
-      );
-      expect(find.text('first'), findsOneWidget);
+      expect(find.widgetWithText(ChoiceChip, 'Meaning choice'), findsOneWidget);
     });
 
     testWidgets('wrong notebook supports search and reason filter', (
@@ -2459,6 +2468,7 @@ class _FakeAppState extends ChangeNotifier
   bool _practiceAutoAddWeakWordsToTask = false;
   bool _practiceAutoPlayPronunciation = false;
   bool _practiceShowHintsByDefault = false;
+  bool _practiceShowAnswerFeedbackDialog = true;
   PracticeQuestionType _practiceDefaultQuestionType =
       PracticeQuestionType.flashcard;
   PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
@@ -2597,6 +2607,10 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   bool get practiceShowHintsByDefault => _practiceShowHintsByDefault;
+
+  @override
+  bool get practiceShowAnswerFeedbackDialog =>
+      _practiceShowAnswerFeedbackDialog;
 
   @override
   List<PracticeSessionRecord> get practiceSessionHistory =>
@@ -3541,6 +3555,7 @@ class _FakeAppState extends ChangeNotifier
     bool? autoAddWeakWordsToTask,
     bool? autoPlayPronunciation,
     bool? showHintsByDefault,
+    bool? showAnswerFeedbackDialog,
     PracticeQuestionType? defaultQuestionType,
   }) {
     if (autoAddWeakWordsToTask != null) {
@@ -3551,6 +3566,9 @@ class _FakeAppState extends ChangeNotifier
     }
     if (showHintsByDefault != null) {
       _practiceShowHintsByDefault = showHintsByDefault;
+    }
+    if (showAnswerFeedbackDialog != null) {
+      _practiceShowAnswerFeedbackDialog = showAnswerFeedbackDialog;
     }
     if (defaultQuestionType != null) {
       _practiceDefaultQuestionType = defaultQuestionType;

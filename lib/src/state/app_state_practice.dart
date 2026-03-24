@@ -5,6 +5,7 @@ extension _AppStatePractice on AppState {
     bool? autoAddWeakWordsToTask,
     bool? autoPlayPronunciation,
     bool? showHintsByDefault,
+    bool? showAnswerFeedbackDialog,
     PracticeQuestionType? defaultQuestionType,
   }) {
     final nextAutoAdd =
@@ -12,12 +13,15 @@ extension _AppStatePractice on AppState {
     final nextAutoPlay =
         autoPlayPronunciation ?? _practiceAutoPlayPronunciation;
     final nextShowHints = showHintsByDefault ?? _practiceShowHintsByDefault;
+    final nextShowAnswerFeedbackDialog =
+        showAnswerFeedbackDialog ?? _practiceShowAnswerFeedbackDialog;
     final nextQuestionType =
         defaultQuestionType ?? _practiceDefaultQuestionType;
     final changed =
         nextAutoAdd != _practiceAutoAddWeakWordsToTask ||
         nextAutoPlay != _practiceAutoPlayPronunciation ||
         nextShowHints != _practiceShowHintsByDefault ||
+        nextShowAnswerFeedbackDialog != _practiceShowAnswerFeedbackDialog ||
         nextQuestionType != _practiceDefaultQuestionType;
     if (!changed) {
       return;
@@ -25,6 +29,7 @@ extension _AppStatePractice on AppState {
     _practiceAutoAddWeakWordsToTask = nextAutoAdd;
     _practiceAutoPlayPronunciation = nextAutoPlay;
     _practiceShowHintsByDefault = nextShowHints;
+    _practiceShowAnswerFeedbackDialog = nextShowAnswerFeedbackDialog;
     _practiceDefaultQuestionType = nextQuestionType;
     _persistPracticeDashboard();
     _notifyStateChanged();
@@ -669,6 +674,8 @@ extension _AppStatePractice on AppState {
     _practiceAutoAddWeakWordsToTask = data.sessionPrefs.autoAddWeakWordsToTask;
     _practiceAutoPlayPronunciation = data.sessionPrefs.autoPlayPronunciation;
     _practiceShowHintsByDefault = data.sessionPrefs.showHintsByDefault;
+    _practiceShowAnswerFeedbackDialog =
+        data.sessionPrefs.showAnswerFeedbackDialog;
     _practiceDefaultQuestionType = data.sessionPrefs.defaultQuestionType;
     _practiceRoundSettings = data.roundSettings;
     _practiceSessionHistory = data.history;
@@ -725,6 +732,7 @@ extension _AppStatePractice on AppState {
           autoAddWeakWordsToTask: _practiceAutoAddWeakWordsToTask,
           autoPlayPronunciation: _practiceAutoPlayPronunciation,
           showHintsByDefault: _practiceShowHintsByDefault,
+          showAnswerFeedbackDialog: _practiceShowAnswerFeedbackDialog,
           defaultQuestionType: _practiceDefaultQuestionType,
         ),
         roundSettings: _practiceRoundSettings,
