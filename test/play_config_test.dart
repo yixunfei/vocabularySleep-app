@@ -13,12 +13,14 @@ void main() {
         VoiceInputProviderType.system,
       );
       expect(PlayConfig.defaults.voiceInput.language, 'auto');
+      expect(PlayConfig.defaults.appearance.timerStyle, 'countdown');
 
       final restored = PlayConfig.fromJson(<String, Object?>{});
 
       expect(restored.asr.language, 'auto');
       expect(restored.voiceInput.provider, VoiceInputProviderType.system);
       expect(restored.voiceInput.language, 'auto');
+      expect(restored.appearance.timerStyle, 'countdown');
     });
 
     test('legacy config migrates voice input fields from ASR config', () {

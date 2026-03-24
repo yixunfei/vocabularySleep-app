@@ -1,6 +1,9 @@
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 
+import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
@@ -8,6 +11,7 @@ import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/services/reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/services/system_calendar_service.dart';
 import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
+import 'package:vocabulary_sleep_app/src/services/tts_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
@@ -200,7 +204,46 @@ class _FakeTodoReminderService implements TodoReminderService {
   Future<void> dispose() async {}
 }
 
+class _FakeTtsService extends TtsService {
+  String? lastText;
+  String? lastLanguage;
+
+  @override
+  Future<void> speak(String text, TtsConfig config) async {
+    lastText = text;
+    lastLanguage = config.language;
+  }
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> pause(TtsProviderType provider) async {}
+
+  @override
+  Future<void> resume(TtsProviderType provider) async {}
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const audioChannel = MethodChannel('xyz.luan/audioplayers');
+  const audioGlobalChannel = MethodChannel('xyz.luan/audioplayers.global');
+  const audioGlobalEventsChannel = MethodChannel(
+    'xyz.luan/audioplayers.global/events',
+  );
+
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioChannel, (call) async => null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioGlobalChannel, (call) async => null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          audioGlobalEventsChannel,
+          (call) async => null,
+        );
+  });
+
   group('FocusService', () {
     test('loads defaults and keeps auto-start-next key compatible', () async {
       final database = _MemoryDatabaseService();
@@ -470,8 +513,11 @@ void main() {
     test(
       'reminder announcement includes round and next-step details',
       () async {
+        final binding = TestWidgetsFlutterBinding.ensureInitialized();
+        binding.platformDispatcher.localeTestValue = const Locale('zh', 'CN');
+        addTearDown(binding.platformDispatcher.clearAllTestValues);
         final database = _MemoryDatabaseService();
-        database.setSetting('uiLanguage', 'zh');
+        database.setSetting('uiLanguage', 'en');
         final reminder = _FakeReminderService();
         final service = FocusService(database, reminder: reminder);
         await service.init();
@@ -496,13 +542,47 @@ void main() {
         });
 
         expect(reminder.playCalls, 1);
-        expect(reminder.lastAnnouncementLanguageTag, 'zh');
+        expect(reminder.lastAnnouncementLanguageTag, startsWith('zh'));
         expect(reminder.lastAnnouncementText, contains('专注时间结束'));
         expect(reminder.lastAnnouncementText, contains('第'));
         expect(reminder.lastAnnouncementText, contains('时长'));
         expect(reminder.lastAnnouncementText, contains('3 分'));
       },
     );
+
+    test('voice reminders pass the system locale to TTS playback', () async {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.localeTestValue = const Locale('ja', 'JP');
+      addTearDown(binding.platformDispatcher.clearAllTestValues);
+
+      final database = _MemoryDatabaseService();
+      database.setSetting('uiLanguage', 'en');
+      final tts = _FakeTtsService();
+      final service = FocusService(database, tts: tts);
+      await service.init();
+      service.saveConfig(
+        const TomatoTimerConfig(
+          focusDurationSeconds: 2,
+          breakDurationSeconds: 3,
+          rounds: 1,
+          autoStartBreak: true,
+          reminder: TimerReminderConfig(
+            haptic: false,
+            sound: false,
+            voice: true,
+            visual: true,
+          ),
+        ),
+      );
+
+      fakeAsync((async) {
+        service.start();
+        async.elapse(const Duration(seconds: 2));
+      });
+
+      expect(tts.lastText, isNotNull);
+      expect(tts.lastLanguage, startsWith('ja'));
+    });
 
     test('saving a reminder todo syncs it to the system calendar', () async {
       final database = _MemoryDatabaseService();

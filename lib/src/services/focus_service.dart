@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import '../i18n/app_i18n.dart';
 import '../models/todo_item.dart';
@@ -423,10 +424,8 @@ class FocusService extends ChangeNotifier {
     bool persistent = false,
   }) async {
     final reminder = _timerConfig.reminder;
-    final language = AppI18n.normalizeLanguageCode(
-      _database.getSetting('uiLanguage') ?? 'en',
-    );
-    final i18n = AppI18n(language);
+    final systemLanguageTag = _resolveSystemLanguageTag();
+    final i18n = AppI18n(_resolveSystemI18nLanguageCode(systemLanguageTag));
     final voiceMessage = _buildReminderVoiceMessage(
       i18n,
       phase,
@@ -450,7 +449,7 @@ class FocusService extends ChangeNotifier {
           haptic: reminder.haptic,
           sound: reminder.sound,
           announcementText: reminder.voice ? voiceMessage : null,
-          announcementLanguageTag: reminder.voice ? language : null,
+          announcementLanguageTag: reminder.voice ? systemLanguageTag : null,
           duration: _reminderAlertTimeout,
         );
         handledPersistentAlert = true;
@@ -486,11 +485,32 @@ class FocusService extends ChangeNotifier {
         return;
       }
       try {
-        await _tts.speak(voiceMessage, _settings.loadPlayConfig().tts);
+        await _tts.speak(
+          voiceMessage,
+          _settings.loadPlayConfig().tts.copyWith(language: systemLanguageTag),
+        );
       } catch (_) {
         // Avoid breaking timer flow for reminder failures.
       }
     }
+  }
+
+  String _resolveSystemLanguageTag() {
+    final tag = WidgetsBinding.instance.platformDispatcher.locale
+        .toLanguageTag()
+        .trim();
+    if (tag.isEmpty) {
+      return 'en';
+    }
+    return tag;
+  }
+
+  String _resolveSystemI18nLanguageCode(String languageTag) {
+    final normalized = AppI18n.normalizeLanguageCode(languageTag);
+    if (normalized.trim().isEmpty) {
+      return 'en';
+    }
+    return normalized;
   }
 
   String _buildReminderVoiceMessage(
@@ -1059,7 +1079,6 @@ class FocusService extends ChangeNotifier {
   void _publishState() {
     _onTick?.call(_timerState);
     _timerStateNotifier.value = _timerState;
-    notifyListeners();
   }
 
   Future<void> _stopActiveReminder() async {

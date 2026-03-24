@@ -264,6 +264,7 @@ class _FocusTimerVisual extends StatelessWidget {
 
   Widget _buildCountdownVisual(BuildContext context) {
     final theme = Theme.of(context);
+    final timeText = _formatTime(timerState.remainingSeconds);
     return SizedBox(
       width: size,
       height: size,
@@ -282,18 +283,12 @@ class _FocusTimerVisual extends StatelessWidget {
               ),
             ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                _formatTime(timerState.remainingSeconds),
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(i18n.t('timerTab'), style: theme.textTheme.bodyMedium),
-            ],
+          _TimerReadoutPanel(
+            timeText: timeText,
+            label: i18n.t('timerTab'),
+            accent: accent,
+            compact: false,
+            emphasized: timerState.phase == TomatoTimerPhase.focus,
           ),
         ],
       ),
@@ -302,6 +297,7 @@ class _FocusTimerVisual extends StatelessWidget {
 
   Widget _buildHourglassVisual(BuildContext context) {
     final theme = Theme.of(context);
+    final timeText = _formatTime(timerState.remainingSeconds);
     return SizedBox(
       width: size,
       height: size,
@@ -320,17 +316,99 @@ class _FocusTimerVisual extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: size * 0.12,
-            child: Column(
-              children: <Widget>[
-                Text(
-                  _formatTime(timerState.remainingSeconds),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(i18n.t('timerTab'), style: theme.textTheme.bodySmall),
-              ],
+            bottom: size * 0.06,
+            child: _TimerReadoutPanel(
+              timeText: timeText,
+              label: i18n.t('timerTab'),
+              accent: accent,
+              compact: true,
+              emphasized: timerState.phase == TomatoTimerPhase.focus,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimerReadoutPanel extends StatelessWidget {
+  const _TimerReadoutPanel({
+    required this.timeText,
+    required this.label,
+    required this.accent,
+    required this.compact,
+    required this.emphasized,
+  });
+
+  final String timeText;
+  final String label;
+  final Color accent;
+  final bool compact;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final horizontalPadding = compact ? 14.0 : 18.0;
+    final verticalPadding = compact ? 10.0 : 14.0;
+    final timeStyle =
+        (compact ? theme.textTheme.headlineSmall : theme.textTheme.displaySmall)
+            ?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: compact ? 0.5 : -1.1,
+              fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+              color: theme.colorScheme.onSurface,
+              shadows: emphasized
+                  ? <Shadow>[
+                      Shadow(
+                        blurRadius: compact ? 10 : 14,
+                        color: accent.withValues(alpha: compact ? 0.18 : 0.22),
+                      ),
+                    ]
+                  : const <Shadow>[],
+            );
+
+    return Container(
+      constraints: BoxConstraints(minWidth: compact ? 124 : 152),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            theme.colorScheme.surface.withValues(alpha: compact ? 0.92 : 0.96),
+            theme.colorScheme.surfaceContainerHighest.withValues(
+              alpha: compact ? 0.88 : 0.92,
+            ),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(compact ? 22 : 28),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            blurRadius: compact ? 12 : 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 8),
+            color: accent.withValues(alpha: compact ? 0.08 : 0.1),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(timeText, style: timeStyle),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -476,6 +554,9 @@ class _HourglassPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14)
       ..color = accent.withValues(alpha: 0.14 + pulse * 0.12);
+    final capPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = accent.withValues(alpha: 0.2 + pulse * 0.05);
 
     final topChamber = Path()
       ..moveTo(width * 0.28, height * 0.18)
@@ -494,6 +575,20 @@ class _HourglassPainter extends CustomPainter {
     canvas.drawPath(bottomChamber, glowPaint);
     canvas.drawPath(topChamber, framePaint);
     canvas.drawPath(bottomChamber, framePaint);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(width * 0.24, height * 0.1, width * 0.52, height * 0.06),
+        Radius.circular(width * 0.03),
+      ),
+      capPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(width * 0.24, height * 0.84, width * 0.52, height * 0.06),
+        Radius.circular(width * 0.03),
+      ),
+      capPaint,
+    );
 
     final topFillHeight = height * 0.29 * clampedRemaining;
     canvas.save();
@@ -538,6 +633,11 @@ class _HourglassPainter extends CustomPainter {
       Offset(width * 0.50, height * 0.47),
       Offset(width * 0.50, height * (0.52 + (1 - clampedRemaining) * 0.12)),
       streamPaint,
+    );
+    canvas.drawCircle(
+      Offset(width * 0.50, height * (0.56 + (1 - clampedRemaining) * 0.12)),
+      size.shortestSide * 0.018,
+      sandPaint..color = accent.withValues(alpha: 0.86),
     );
   }
 
