@@ -1,21 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
-import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
-import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/daily_quote_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
-import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
-import 'package:vocabulary_sleep_app/src/services/playback_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/weather_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
+import 'test_support/app_state_test_doubles.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
   _MemoryDatabaseService() : super(WordbookImportService());
@@ -47,42 +43,6 @@ class _MemoryDatabaseService extends AppDatabaseService {
   void upsertWordMemoryProgress(WordMemoryProgress progress) {
     progressByWordId[progress.wordId] = progress;
   }
-}
-
-class _FakePlaybackService implements PlaybackService {
-  @override
-  void updateRuntimeConfig(PlayConfig config) {}
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeAmbientService implements AmbientService {
-  @override
-  List<AmbientSource> get sources => const <AmbientSource>[];
-
-  @override
-  double get masterVolume => 0;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeAsrService implements AsrService {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeFocusService implements FocusService {
-  _FakeFocusService({this.todos = const <TodoItem>[]});
-
-  final List<TodoItem> todos;
-
-  @override
-  List<TodoItem> getTodos() => todos;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
 class _FakeWeatherService extends WeatherService {
@@ -137,18 +97,21 @@ WordEntry _word(String value, {int? id}) {
 
 AppState _createState({
   _MemoryDatabaseService? database,
-  _FakeFocusService? focusService,
+  StubFocusService? focusService,
   _FakeWeatherService? weatherService,
   _FakeDailyQuoteService? dailyQuoteService,
 }) {
   final resolvedDatabase = database ?? _MemoryDatabaseService();
+  final resolvedSettings = SettingsService(resolvedDatabase);
   return AppState(
     database: resolvedDatabase,
-    settings: SettingsService(resolvedDatabase),
-    playback: _FakePlaybackService(),
-    ambient: _FakeAmbientService(),
-    asr: _FakeAsrService(),
-    focusService: focusService ?? _FakeFocusService(),
+    settings: resolvedSettings,
+    playback: TrackingPlaybackService(),
+    ambient: StubAmbientService(),
+    asr: StubAsrService(),
+    focusService:
+        focusService ??
+        StubFocusService(resolvedDatabase, settings: resolvedSettings),
     weatherService: weatherService,
     dailyQuoteService: dailyQuoteService,
   );
@@ -167,7 +130,8 @@ void main() {
   test('todayActiveTodos keeps only active todos due today', () {
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
-    final focus = _FakeFocusService(
+    final focus = StubFocusService(
+      _MemoryDatabaseService(),
       todos: <TodoItem>[
         TodoItem(
           content: 'today active',

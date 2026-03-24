@@ -5,23 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
-import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
-import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
-import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
-import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
-import 'package:vocabulary_sleep_app/src/services/playback_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/weather_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
+import 'test_support/app_state_test_doubles.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
   _MemoryDatabaseService({
@@ -67,51 +63,6 @@ class _MemoryDatabaseService extends AppDatabaseService {
   ) {
     return const <int, WordMemoryProgress>{};
   }
-}
-
-class _FakePlaybackService implements PlaybackService {
-  int updateCalls = 0;
-  PlayConfig? lastConfig;
-
-  @override
-  void updateRuntimeConfig(PlayConfig config) {
-    updateCalls += 1;
-    lastConfig = config;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeAmbientService implements AmbientService {
-  @override
-  List<AmbientSource> get sources => const <AmbientSource>[];
-
-  @override
-  double get masterVolume => 0;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeAsrService implements AsrService {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}
-
-class _FakeFocusService implements FocusService {
-  int initCalls = 0;
-
-  @override
-  Future<void> init() async {
-    initCalls += 1;
-  }
-
-  @override
-  Future<int?> consumePendingTodoReminderLaunchId() async => null;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
 class _FakeWeatherService extends WeatherService {
@@ -216,8 +167,8 @@ void main() {
         },
       );
       final settings = SettingsService(database);
-      final playback = _FakePlaybackService();
-      final focus = _FakeFocusService();
+      final playback = TrackingPlaybackService();
+      final focus = StubFocusService(database, settings: settings);
       final weather = _FakeWeatherService();
 
       settings.saveStartupPage(AppHomeTab.focus);
@@ -234,8 +185,8 @@ void main() {
         database: database,
         settings: settings,
         playback: playback,
-        ambient: _FakeAmbientService(),
-        asr: _FakeAsrService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
         focusService: focus,
         weatherService: weather,
       );
@@ -310,10 +261,10 @@ void main() {
       final state = AppState(
         database: database,
         settings: settings,
-        playback: _FakePlaybackService(),
-        ambient: _FakeAmbientService(),
-        asr: _FakeAsrService(),
-        focusService: _FakeFocusService(),
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
       );
 
       await state.init();
