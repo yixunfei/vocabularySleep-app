@@ -24,6 +24,14 @@ class WordEntryPayload {
       rawContent: rawContent ?? this.rawContent,
     );
   }
+
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'word': word,
+      'fields': fields.map((item) => item.toJsonMap()).toList(growable: false),
+      'rawContent': rawContent,
+    };
+  }
 }
 
 class WordEntry {
@@ -141,6 +149,73 @@ class WordEntry {
     );
   }
 
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'id': id,
+      'wordbookId': wordbookId,
+      'word': word,
+      'meaning': meaning,
+      'examples': examples,
+      'etymology': etymology,
+      'roots': roots,
+      'affixes': affixes,
+      'variations': variations,
+      'memory': memory,
+      'story': story,
+      'fields': fields.map((item) => item.toJsonMap()).toList(growable: false),
+      'rawContent': rawContent,
+    };
+  }
+
+  static WordEntry fromJsonMap(Map<String, Object?> map) {
+    List<String>? parseExamples(Object? raw) {
+      if (raw is List) {
+        final output = raw
+            .map((item) => sanitizeDisplayText('$item'))
+            .where((item) => item.isNotEmpty)
+            .toList(growable: false);
+        return output.isEmpty ? null : output;
+      }
+      if (raw is String && raw.trim().isNotEmpty) {
+        final output = raw
+            .split(RegExp(r'\r?\n'))
+            .map(sanitizeDisplayText)
+            .where((item) => item.isNotEmpty)
+            .toList(growable: false);
+        return output.isEmpty ? null : output;
+      }
+      return null;
+    }
+
+    List<WordFieldItem> parseFields(Object? raw) {
+      if (raw is! List) {
+        return const <WordFieldItem>[];
+      }
+      return parseFieldItemsJson(jsonEncode(raw));
+    }
+
+    String? sanitizeNullable(Object? raw) {
+      final cleaned = sanitizeDisplayText('${raw ?? ''}');
+      return cleaned.isEmpty ? null : cleaned;
+    }
+
+    return WordEntry(
+      id: (map['id'] as num?)?.toInt(),
+      wordbookId: ((map['wordbookId'] as num?) ?? 0).toInt(),
+      word: sanitizeDisplayText('${map['word'] ?? ''}'),
+      meaning: sanitizeNullable(map['meaning']),
+      examples: parseExamples(map['examples']),
+      etymology: sanitizeNullable(map['etymology']),
+      roots: sanitizeNullable(map['roots']),
+      affixes: sanitizeNullable(map['affixes']),
+      variations: sanitizeNullable(map['variations']),
+      memory: sanitizeNullable(map['memory']),
+      story: sanitizeNullable(map['story']),
+      fields: parseFields(map['fields']),
+      rawContent: sanitizeDisplayText('${map['rawContent'] ?? ''}'),
+    );
+  }
+
   static WordEntry fromMap(Map<String, Object?> map) {
     String? sanitizeNullable(Object? raw) {
       final cleaned = sanitizeDisplayText('${raw ?? ''}');
@@ -167,9 +242,39 @@ class WordEntry {
       }
     }
 
+    final rowId = (map['id'] as num?)?.toInt();
+    final rowWordbookId = ((map['wordbook_id'] as num?) ?? 0).toInt();
+    final entryJson = '${map['entry_json'] ?? ''}'.trim();
+    if (entryJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(entryJson);
+        if (decoded is Map) {
+          final entry = WordEntry.fromJsonMap(decoded.cast<String, Object?>());
+          return entry.copyWith(
+            id: rowId ?? entry.id,
+            wordbookId: rowWordbookId > 0 ? rowWordbookId : entry.wordbookId,
+            word: sanitizeDisplayText(map['word']?.toString() ?? entry.word),
+            meaning: sanitizeNullable(map['meaning']) ?? entry.meaning,
+            examples: examples ?? entry.examples,
+            etymology: sanitizeNullable(map['etymology']) ?? entry.etymology,
+            roots: sanitizeNullable(map['roots']) ?? entry.roots,
+            affixes: sanitizeNullable(map['affixes']) ?? entry.affixes,
+            variations: sanitizeNullable(map['variations']) ?? entry.variations,
+            memory: sanitizeNullable(map['memory']) ?? entry.memory,
+            story: sanitizeNullable(map['story']) ?? entry.story,
+            rawContent: sanitizeDisplayText(
+              map['raw_content']?.toString() ?? entry.rawContent,
+            ),
+          );
+        }
+      } catch (_) {
+        // Fall back to legacy columns if the structured payload is invalid.
+      }
+    }
+
     return WordEntry(
-      id: (map['id'] as num?)?.toInt(),
-      wordbookId: ((map['wordbook_id'] as num?) ?? 0).toInt(),
+      id: rowId,
+      wordbookId: rowWordbookId,
       word: sanitizeDisplayText(map['word']?.toString() ?? ''),
       meaning: sanitizeNullable(map['meaning']),
       examples: examples,

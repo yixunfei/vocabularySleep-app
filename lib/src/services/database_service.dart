@@ -436,6 +436,7 @@ class AppDatabaseService {
         story TEXT,
         fields_json TEXT,
         raw_content TEXT,
+        entry_json TEXT,
         FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id) ON DELETE CASCADE
       );
     ''');
@@ -548,6 +549,31 @@ class AppDatabaseService {
     }
     if (!columnNames.contains('raw_content')) {
       _db.execute('ALTER TABLE words ADD COLUMN raw_content TEXT;');
+    }
+    if (!columnNames.contains('entry_json')) {
+      _db.execute('ALTER TABLE words ADD COLUMN entry_json TEXT;');
+    }
+    _backfillWordEntryJson();
+  }
+
+  void _backfillWordEntryJson() {
+    final rows = _selectMaps('''
+      SELECT * FROM words
+      WHERE entry_json IS NULL OR TRIM(entry_json) = ''
+      ''');
+    if (rows.isEmpty) {
+      return;
+    }
+    for (final row in rows) {
+      final wordId = (row['id'] as num?)?.toInt();
+      if (wordId == null || wordId <= 0) {
+        continue;
+      }
+      final entry = WordEntry.fromMap(row);
+      _db.execute('UPDATE words SET entry_json = ? WHERE id = ?', <Object?>[
+        jsonEncode(entry.toJsonMap()),
+        wordId,
+      ]);
     }
   }
 
@@ -1121,7 +1147,7 @@ class AppDatabaseService {
     if (word.isEmpty) throw ArgumentError('单词不能为空');
 
     final existing = _selectOne(
-      'SELECT id, fields_json, raw_content FROM words WHERE wordbook_id = ? AND word = ?',
+      'SELECT * FROM words WHERE wordbook_id = ? AND word = ?',
       <Object?>[wordbookId, word],
     );
 
@@ -1133,40 +1159,45 @@ class AppDatabaseService {
       return true;
     }
 
-    final existingFields = parseFieldItemsJson(
-      existing['fields_json']?.toString() ?? '',
-    );
+    final existingEntry = WordEntry.fromMap(existing);
     final incomingRawContent = sanitizeDisplayText(payload.rawContent);
     final normalizedRawContent = incomingRawContent.isNotEmpty
         ? incomingRawContent
-        : sanitizeDisplayText(existing['raw_content']?.toString() ?? '');
+        : existingEntry.rawContent;
     final normalizedFields = mergeFieldItems(<WordFieldItem>[
-      ...existingFields,
+      ...existingEntry.fields,
       ...payload.fields,
       if (normalizedRawContent.isNotEmpty)
         ...parseSectionedContent(normalizedRawContent),
     ]);
-    final legacy = toLegacyFields(normalizedFields);
+    final columns = _buildStoredWordColumns(
+      id: existingEntry.id,
+      wordbookId: wordbookId,
+      word: word,
+      fields: normalizedFields,
+      rawContent: normalizedRawContent,
+    );
 
     _db.execute(
       '''
       UPDATE words SET
         meaning = ?, examples = ?, etymology = ?, roots = ?,
         affixes = ?, variations = ?, memory = ?, story = ?,
-        fields_json = ?, raw_content = ?
+        fields_json = ?, raw_content = ?, entry_json = ?
       WHERE id = ?
       ''',
       <Object?>[
-        legacy.meaning,
-        legacy.examples == null ? null : jsonEncode(legacy.examples),
-        legacy.etymology,
-        legacy.roots,
-        legacy.affixes,
-        legacy.variations,
-        legacy.memory,
-        legacy.story,
-        stringifyFieldItems(normalizedFields),
-        normalizedRawContent,
+        columns['meaning'],
+        columns['examples'],
+        columns['etymology'],
+        columns['roots'],
+        columns['affixes'],
+        columns['variations'],
+        columns['memory'],
+        columns['story'],
+        columns['fields_json'],
+        columns['raw_content'],
+        columns['entry_json'],
         (existing['id'] as num).toInt(),
       ],
     );
@@ -1216,30 +1247,34 @@ class AppDatabaseService {
       if (incomingRawContent.isNotEmpty)
         ...parseSectionedContent(incomingRawContent),
     ]);
-    final legacy = toLegacyFields(normalizedFields);
-    final normalizedRawContent = incomingRawContent.isNotEmpty
-        ? incomingRawContent
-        : (legacy.meaning ?? '');
+    final columns = _buildStoredWordColumns(
+      id: (existing['id'] as num).toInt(),
+      wordbookId: wordbookId,
+      word: nextWord,
+      fields: normalizedFields,
+      rawContent: incomingRawContent,
+    );
 
     _db.execute(
       '''
       UPDATE words SET
         word = ?, meaning = ?, examples = ?, etymology = ?, roots = ?,
-        affixes = ?, variations = ?, memory = ?, story = ?, fields_json = ?, raw_content = ?
+        affixes = ?, variations = ?, memory = ?, story = ?, fields_json = ?, raw_content = ?, entry_json = ?
       WHERE id = ?
       ''',
       <Object?>[
-        nextWord,
-        legacy.meaning,
-        legacy.examples == null ? null : jsonEncode(legacy.examples),
-        legacy.etymology,
-        legacy.roots,
-        legacy.affixes,
-        legacy.variations,
-        legacy.memory,
-        legacy.story,
-        stringifyFieldItems(normalizedFields),
-        normalizedRawContent,
+        columns['word'],
+        columns['meaning'],
+        columns['examples'],
+        columns['etymology'],
+        columns['roots'],
+        columns['affixes'],
+        columns['variations'],
+        columns['memory'],
+        columns['story'],
+        columns['fields_json'],
+        columns['raw_content'],
+        columns['entry_json'],
         (existing['id'] as num).toInt(),
       ],
     );
@@ -1273,8 +1308,8 @@ class AppDatabaseService {
       final insertedId = _lastInsertId();
       _db.execute(
         '''
-        INSERT INTO words (wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content)
-        SELECT ?, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content
+        INSERT INTO words (wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json)
+        SELECT ?, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json
         FROM words WHERE wordbook_id = ?
         ''',
         <Object?>[insertedId, sourceWordbookId],
@@ -1429,8 +1464,8 @@ class AppDatabaseService {
         for (final word in legacyWords) {
           _db.execute(
             '''
-            INSERT INTO words (id, wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO words (id, wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             <Object?>[
               word['id'],
@@ -1446,6 +1481,7 @@ class AppDatabaseService {
               word['story'],
               word['fields_json'],
               word['raw_content'],
+              word['entry_json'],
             ],
           );
         }
@@ -1711,38 +1747,83 @@ class AppDatabaseService {
 
   String _escapeSqlString(String value) => value.replaceAll("'", "''");
 
-  void _insertWord(int wordbookId, WordEntryPayload payload) {
-    final normalizedWord = sanitizeDisplayText(payload.word).trim();
-    final normalizedRawContent = sanitizeDisplayText(payload.rawContent);
-
-    final fields = mergeFieldItems(<WordFieldItem>[
-      ...payload.fields,
+  Map<String, Object?> _buildStoredWordColumns({
+    int? id,
+    required int wordbookId,
+    required String word,
+    required List<WordFieldItem> fields,
+    required String rawContent,
+  }) {
+    final normalizedWord = sanitizeDisplayText(word).trim();
+    final normalizedRawContent = sanitizeDisplayText(rawContent);
+    final normalizedFields = mergeFieldItems(<WordFieldItem>[
+      ...fields,
       if (normalizedRawContent.isNotEmpty)
         ...parseSectionedContent(normalizedRawContent),
     ]);
-    final legacy = toLegacyFields(fields);
-    final rawContent = normalizedRawContent.isNotEmpty
+    final legacy = toLegacyFields(normalizedFields);
+    final persistedRawContent = normalizedRawContent.isNotEmpty
         ? normalizedRawContent
         : (legacy.meaning ?? '');
+    final entry = WordEntry(
+      id: id,
+      wordbookId: wordbookId,
+      word: normalizedWord,
+      meaning: legacy.meaning,
+      examples: legacy.examples,
+      etymology: legacy.etymology,
+      roots: legacy.roots,
+      affixes: legacy.affixes,
+      variations: legacy.variations,
+      memory: legacy.memory,
+      story: legacy.story,
+      fields: normalizedFields,
+      rawContent: persistedRawContent,
+    );
+
+    return <String, Object?>{
+      'word': normalizedWord,
+      'meaning': legacy.meaning,
+      'examples': legacy.examples == null ? null : jsonEncode(legacy.examples),
+      'etymology': legacy.etymology,
+      'roots': legacy.roots,
+      'affixes': legacy.affixes,
+      'variations': legacy.variations,
+      'memory': legacy.memory,
+      'story': legacy.story,
+      'fields_json': stringifyFieldItems(normalizedFields),
+      'raw_content': persistedRawContent,
+      'entry_json': jsonEncode(entry.toJsonMap()),
+    };
+  }
+
+  void _insertWord(int wordbookId, WordEntryPayload payload) {
+    final columns = _buildStoredWordColumns(
+      wordbookId: wordbookId,
+      word: payload.word,
+      fields: payload.fields,
+      rawContent: payload.rawContent,
+    );
 
     _db.execute(
       '''
-      INSERT INTO words (wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO words (wordbook_id, word, meaning, examples, etymology, roots, affixes, variations, memory, story, fields_json, raw_content, entry_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       <Object?>[
         wordbookId,
-        normalizedWord,
-        legacy.meaning,
-        legacy.examples == null ? null : jsonEncode(legacy.examples),
-        legacy.etymology,
-        legacy.roots,
-        legacy.affixes,
-        legacy.variations,
-        legacy.memory,
-        legacy.story,
-        stringifyFieldItems(fields),
-        rawContent,
+        columns['word'],
+        columns['meaning'],
+        columns['examples'],
+        columns['etymology'],
+        columns['roots'],
+        columns['affixes'],
+        columns['variations'],
+        columns['memory'],
+        columns['story'],
+        columns['fields_json'],
+        columns['raw_content'],
+        columns['entry_json'],
       ],
     );
   }

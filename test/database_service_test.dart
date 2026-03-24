@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/user_data_export.dart';
@@ -159,6 +160,64 @@ void main() {
       );
     },
   );
+
+  test('words persist a complete entry_json snapshot in sqlite', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_entry_json',
+      name: 'Entry json test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+            WordFieldItem(
+              key: 'usage',
+              label: 'Usage',
+              value: 'Use it in a sentence.',
+              style: WordFieldStyle(
+                backgroundHex: '#101010',
+                textHex: '#ffffff',
+              ),
+            ),
+          ],
+          rawContent: 'First',
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_entry_json',
+    );
+    final sqlite = sqlite3.open(database.dbPath);
+    addTearDown(sqlite.dispose);
+
+    final row = sqlite.select(
+      'SELECT entry_json FROM words WHERE wordbook_id = ?',
+      <Object?>[wordbook.id],
+    ).single;
+    final entryJson = '${row['entry_json'] ?? ''}';
+    expect(entryJson.trim(), isNotEmpty);
+
+    final decoded = jsonDecode(entryJson) as Map<String, Object?>;
+    expect(decoded['word'], 'alpha');
+    expect(decoded['wordbookId'], wordbook.id);
+    expect(decoded['rawContent'], 'First');
+    expect((decoded['fields'] as List).length, 2);
+
+    final restored = database.getWords(wordbook.id).single;
+    expect(
+      restored.fields.firstWhere((item) => item.key == 'usage').asText(),
+      'Use it in a sentence.',
+    );
+    expect(
+      restored.fields.firstWhere((item) => item.key == 'usage').style.textHex,
+      '#ffffff',
+    );
+  });
 
   test('exportUserData writes notes and todos to json', () async {
     final database = AppDatabaseService(WordbookImportService());
