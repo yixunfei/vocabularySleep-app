@@ -1337,6 +1337,34 @@ class AppDatabaseService {
     return ((row?['count'] as num?) ?? 0).toInt();
   }
 
+  int? findSearchOffsetByWordId(
+    int wordbookId, {
+    required int wordId,
+    required String query,
+    required String mode,
+  }) {
+    if (wordId <= 0) {
+      return null;
+    }
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
+      query: query,
+      mode: mode,
+    );
+    final exists = _selectOne(
+      'SELECT id FROM words WHERE $whereClause AND id = ? LIMIT 1',
+      <Object?>[...params, wordId],
+    );
+    if (exists == null) {
+      return null;
+    }
+    final row = _selectOne(
+      'SELECT COUNT(*) AS count FROM words WHERE $whereClause AND id < ?',
+      <Object?>[...params, wordId],
+    );
+    return ((row?['count'] as num?) ?? 0).toInt();
+  }
+
   (String, List<Object?>) _buildSearchWhereClause({
     required int wordbookId,
     required String query,

@@ -434,6 +434,33 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     );
   }
 
+  int? findVisibleWordOffsetForEntry(WordEntry entry) {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null || entry.wordbookId != selectedWordbook.id) {
+      return null;
+    }
+    final wordId = entry.id;
+    if (_searchQuery.trim().isEmpty || wordId == null || wordId <= 0) {
+      final index = visibleWords.indexWhere(
+        (item) => _isSameWordEntry(item, entry),
+      );
+      return index < 0 ? null : index;
+    }
+    final offset = _database.findSearchOffsetByWordId(
+      selectedWordbook.id,
+      wordId: wordId,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+    if (offset != null) {
+      return offset;
+    }
+    final fallbackIndex = visibleWords.indexWhere(
+      (item) => _isSameWordEntry(item, entry),
+    );
+    return fallbackIndex < 0 ? null : fallbackIndex;
+  }
+
   WordEntry? get currentWord {
     if (_currentWordIndex < 0 || _currentWordIndex >= _words.length) {
       return _scopeWords.isEmpty ? null : _scopeWords.first;
@@ -1399,15 +1426,26 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> addOnlineAmbientSource(OnlineAmbientSoundOption option) async {
+    final playbackUrl = await _onlineAmbientCatalogService.resolvePlaybackUrl(
+      option,
+    );
     _ambient.addRemoteSource(
       id: option.id,
       name: option.name,
-      remoteUrl: option.streamUrl,
+      remoteUrl: playbackUrl,
       categoryKey: option.categoryKey,
       volume: option.defaultVolume,
     );
     await _ambient.syncPlayback();
     notifyListeners();
+  }
+
+  Future<List<OnlineAmbientSoundOption>> fetchOnlineAmbientCatalog({
+    bool forceRefresh = false,
+  }) {
+    return _onlineAmbientCatalogService.fetchCatalog(
+      forceRefresh: forceRefresh,
+    );
   }
 
   Future<String?> downloadOnlineAmbientSource(
@@ -1428,7 +1466,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         data: <String, Object?>{
           'id': option.id,
           'name': option.name,
-          'url': option.streamUrl,
+          'url': option.primaryUrl,
         },
       );
       return null;

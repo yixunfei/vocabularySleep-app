@@ -2802,6 +2802,14 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
+  int? findVisibleWordOffsetForEntry(WordEntry entry) {
+    final index = _visibleWords.indexWhere(
+      (item) => item.word == entry.word && item.wordbookId == entry.wordbookId,
+    );
+    return index < 0 ? null : index;
+  }
+
+  @override
   List<Wordbook> get wordbooks => _wordbooks;
 
   @override
@@ -3033,6 +3041,13 @@ class _FakeAppState extends ChangeNotifier
     ];
     notifyListeners();
     return path;
+  }
+
+  @override
+  Future<List<OnlineAmbientSoundOption>> fetchOnlineAmbientCatalog({
+    bool forceRefresh = false,
+  }) async {
+    return OnlineAmbientCatalogService.fallbackOptions;
   }
 
   @override

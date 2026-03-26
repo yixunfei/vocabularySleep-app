@@ -44,6 +44,7 @@ class _LibraryPageState extends State<LibraryPage> {
   int _visibleItemCount = _pageSize;
   int _currentScopeWordCount = 0;
   String _paginationSignature = '';
+  String _autoScrolledSignature = '';
   List<WordEntry> _loadedWords = const <WordEntry>[];
 
   @override
@@ -154,6 +155,24 @@ class _LibraryPageState extends State<LibraryPage> {
     if (scopeWordCount > 0 && _visibleItemCount == 0) {
       _visibleItemCount = min(_pageSize, scopeWordCount);
     }
+  }
+
+  void _maybeScrollToCurrentWord(AppState state) {
+    final current = state.currentWord;
+    if (current == null || _paginationSignature == _autoScrolledSignature) {
+      return;
+    }
+    final targetIndex = state.findVisibleWordOffsetForEntry(current);
+    if (targetIndex == null || targetIndex < 0) {
+      return;
+    }
+    _autoScrolledSignature = _paginationSignature;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _scrollToIndex(targetIndex);
+    });
   }
 
   bool _ensureVisibleItemCount(int requiredCount) {
@@ -436,6 +455,7 @@ class _LibraryPageState extends State<LibraryPage> {
     final selectedIdentity = currentWord == null
         ? null
         : _wordIdentity(currentWord);
+    _maybeScrollToCurrentWord(state);
     final previewVisible = state.config.showText;
     final searching = state.searchQuery.trim().isNotEmpty;
     final mediaQuery = MediaQuery.of(context);
