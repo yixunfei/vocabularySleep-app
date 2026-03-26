@@ -1,22 +1,26 @@
-enum AppHomeTab { play, library, practice, focus, more }
+enum AppHomeTab { study, practice, focus, toolbox, more }
 
 extension AppHomeTabX on AppHomeTab {
   String get storageValue => name;
 
   int get index => switch (this) {
-    AppHomeTab.play => 0,
-    AppHomeTab.library => 1,
-    AppHomeTab.practice => 2,
-    AppHomeTab.focus => 3,
+    AppHomeTab.study => 0,
+    AppHomeTab.practice => 1,
+    AppHomeTab.focus => 2,
+    AppHomeTab.toolbox => 3,
     AppHomeTab.more => 4,
   };
 
   static AppHomeTab fromStorage(String? raw) {
     final normalized = raw?.trim();
-    return AppHomeTab.values.firstWhere(
-      (item) => item.storageValue == normalized,
-      orElse: () => AppHomeTab.play,
-    );
+    return switch (normalized) {
+      'play' || 'library' || 'study' => AppHomeTab.study,
+      'practice' => AppHomeTab.practice,
+      'focus' => AppHomeTab.focus,
+      'toolbox' => AppHomeTab.toolbox,
+      'more' => AppHomeTab.more,
+      _ => AppHomeTab.study,
+    };
   }
 
   static AppHomeTab fromIndex(int index) {
@@ -25,6 +29,6 @@ extension AppHomeTabX on AppHomeTab {
         return item;
       }
     }
-    return AppHomeTab.play;
+    return AppHomeTab.study;
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
+import 'package:vocabulary_sleep_app/src/models/study_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
@@ -43,12 +44,24 @@ void main() {
     final database = _MemoryDatabaseService();
     final settings = SettingsService(database);
 
-    expect(settings.loadStartupPage(), AppHomeTab.play);
+    expect(settings.loadStartupPage(), AppHomeTab.study);
 
     settings.saveStartupPage(AppHomeTab.focus);
 
     final restored = SettingsService(database).loadStartupPage();
     expect(restored, AppHomeTab.focus);
+  });
+
+  test('study startup section persists through SettingsService', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+
+    expect(settings.loadStudyStartupTab(), StudyStartupTab.play);
+
+    settings.saveStudyStartupTab(StudyStartupTab.library);
+
+    final restored = SettingsService(database).loadStudyStartupTab();
+    expect(restored, StudyStartupTab.library);
   });
 
   test('focus startup section persists through SettingsService', () {

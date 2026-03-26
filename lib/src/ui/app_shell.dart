@@ -5,14 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../i18n/app_i18n.dart';
+import '../models/study_startup_tab.dart';
 import '../models/todo_item.dart';
 import '../models/weather_snapshot.dart';
 import '../state/app_state.dart';
 import 'pages/focus_page.dart';
-import 'pages/library_page.dart';
 import 'pages/more_page.dart';
-import 'pages/play_page.dart';
 import 'pages/practice_page.dart';
+import 'pages/study_page.dart';
+import 'pages/toolbox_page.dart';
 import 'ui_copy.dart';
 import 'widgets/app_background.dart';
 import 'widgets/ambient_floating_dock.dart';
@@ -31,6 +32,7 @@ class _AppShellState extends State<AppShell> {
   static const double _navigationBarHeight = 80;
 
   int _index = 0;
+  StudyStartupTab _studyTab = StudyStartupTab.play;
   double _miniPlayerReservedHeight = 0;
   VoidCallback? _scrollLibraryToTop;
   bool _exitDialogVisible = false;
@@ -46,11 +48,10 @@ class _AppShellState extends State<AppShell> {
       state.init().then((_) {
         if (!mounted) return;
         final nextIndex = state.startupPage.index;
-        if (_index != nextIndex) {
-          setState(() {
-            _index = nextIndex;
-          });
-        }
+        setState(() {
+          _index = nextIndex;
+          _studyTab = state.studyStartupTab;
+        });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           unawaited(_maybeShowStartupTodoPrompt());
@@ -144,7 +145,7 @@ class _AppShellState extends State<AppShell> {
 
   void _setIndex(int index) {
     if (_index == index) {
-      if (index == 1) {
+      if (index == 0 && _studyTab == StudyStartupTab.library) {
         _scrollLibraryToTop?.call();
       }
       return;
@@ -152,6 +153,19 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _index = index;
     });
+  }
+
+  void _setStudyTab(StudyStartupTab tab) {
+    if (_studyTab == tab) {
+      if (tab == StudyStartupTab.library) {
+        _scrollLibraryToTop?.call();
+      }
+      return;
+    }
+    setState(() {
+      _studyTab = tab;
+    });
+    context.read<AppState>().setStudyStartupTab(tab);
   }
 
   void _handlePendingTodoReminderLaunch(AppState state) {
@@ -163,13 +177,13 @@ class _AppShellState extends State<AppShell> {
       return;
     }
     _lastHandledTodoReminderLaunchId = pendingTodoId;
-    if (_index != 3) {
+    if (_index != 2) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
         }
         setState(() {
-          _index = 3;
+          _index = 2;
         });
       });
     }
@@ -703,17 +717,17 @@ class _AppShellState extends State<AppShell> {
                             : IndexedStack(
                                 index: _index,
                                 children: <Widget>[
-                                  PlayPage(
-                                    onOpenPractice: () => _setIndex(2),
-                                    onOpenLibrary: () => _setIndex(1),
-                                  ),
-                                  LibraryPage(
-                                    onAttachScrollToTop: (callback) {
+                                  StudyPage(
+                                    selectedTab: _studyTab,
+                                    onSelectTab: _setStudyTab,
+                                    onOpenPractice: () => _setIndex(1),
+                                    onAttachLibraryScrollToTop: (callback) {
                                       _scrollLibraryToTop = callback;
                                     },
                                   ),
                                   const PracticePage(),
                                   const FocusPage(),
+                                  const ToolboxPage(),
                                   const MorePage(),
                                 ],
                               ),
@@ -729,43 +743,18 @@ class _AppShellState extends State<AppShell> {
                           onDestinationSelected: _setIndex,
                           destinations: <NavigationDestination>[
                             NavigationDestination(
-                              icon: const Icon(
-                                Icons.play_circle_outline_rounded,
-                              ),
+                              icon: const Icon(Icons.auto_stories_outlined),
                               selectedIcon: const Icon(
-                                Icons.play_circle_filled_rounded,
+                                Icons.auto_stories_rounded,
                               ),
-                              label: pickUiText(
-                                i18n,
-                                zh: '播放',
-                                en: 'Play',
-                                ja: '鍐嶇敓',
-                                de: 'Wiedergabe',
-                                fr: 'Lecture',
-                                es: 'Reproducir',
-                                ru: '袙芯褋锌褉芯懈蟹胁械写械薪懈械',
-                              ),
-                            ),
-                            NavigationDestination(
-                              icon: const Icon(Icons.menu_book_outlined),
-                              selectedIcon: const Icon(Icons.menu_book_rounded),
-                              label: pickUiText(i18n, zh: '词库', en: 'Library'),
+                              label: pageLabelStudy(i18n),
                             ),
                             NavigationDestination(
                               icon: const Icon(Icons.fitness_center_outlined),
                               selectedIcon: const Icon(
                                 Icons.fitness_center_rounded,
                               ),
-                              label: pickUiText(
-                                i18n,
-                                zh: '练习',
-                                en: 'Practice',
-                                ja: '绶寸繏',
-                                de: '脺ben',
-                                fr: 'Pratique',
-                                es: 'Pr谩ctica',
-                                ru: '袩褉邪泻褌懈泻邪',
-                              ),
+                              label: pageLabelPractice(i18n),
                             ),
                             NavigationDestination(
                               icon: const Icon(Icons.timer_outlined),
@@ -773,9 +762,14 @@ class _AppShellState extends State<AppShell> {
                               label: pageLabelFocus(i18n),
                             ),
                             NavigationDestination(
+                              icon: const Icon(Icons.handyman_outlined),
+                              selectedIcon: const Icon(Icons.handyman_rounded),
+                              label: pageLabelToolbox(i18n),
+                            ),
+                            NavigationDestination(
                               icon: const Icon(Icons.widgets_outlined),
                               selectedIcon: const Icon(Icons.widgets_rounded),
-                              label: pickUiText(i18n, zh: '更多', en: 'More'),
+                              label: pageLabelMore(i18n),
                             ),
                           ],
                         ),
@@ -791,8 +785,11 @@ class _AppShellState extends State<AppShell> {
                 child: MiniPlayer(
                   state: state,
                   i18n: i18n,
-                  onOpenPractice: () => _setIndex(2),
-                  onOpenLibrary: () => _setIndex(1),
+                  onOpenPractice: () => _setIndex(1),
+                  onOpenLibrary: () {
+                    _setIndex(0);
+                    _setStudyTab(StudyStartupTab.library);
+                  },
                   onPresentationChanged: _handleMiniPlayerPresentation,
                 ),
               ),

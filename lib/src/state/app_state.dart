@@ -15,6 +15,7 @@ import '../models/practice_export_format.dart';
 import '../models/practice_question_type.dart';
 import '../models/practice_session_record.dart';
 import '../models/settings_dto.dart';
+import '../models/study_startup_tab.dart';
 import '../models/todo_item.dart';
 import '../models/user_data_export.dart';
 import '../models/weather_snapshot.dart';
@@ -121,8 +122,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Set<String> _rememberedWords = <String>{};
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
-  AppHomeTab _startupPage = AppHomeTab.play;
+  AppHomeTab _startupPage = AppHomeTab.study;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
+  StudyStartupTab _studyStartupTab = StudyStartupTab.play;
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
@@ -225,6 +227,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
   AppHomeTab get startupPage => _startupPage;
   FocusStartupTab get focusStartupTab => _focusStartupTab;
+  StudyStartupTab get studyStartupTab => _studyStartupTab;
   bool get weatherEnabled => _weatherEnabled;
   WeatherSnapshot? get weatherSnapshot => _weatherSnapshot;
   bool get weatherLoading => _weatherLoading;
@@ -547,6 +550,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void setStartupPage(AppHomeTab page) => _setStartupPageImpl(page);
 
   void setFocusStartupTab(FocusStartupTab tab) => _setFocusStartupTabImpl(tab);
+
+  void setStudyStartupTab(StudyStartupTab tab) => _setStudyStartupTabImpl(tab);
 
   void setWeatherEnabled(bool enabled) => _setWeatherEnabledImpl(enabled);
 

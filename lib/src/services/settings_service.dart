@@ -4,6 +4,7 @@ import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
 import '../models/settings_dto.dart';
+import '../models/study_startup_tab.dart';
 import 'database_service.dart';
 
 class SettingsService {
@@ -62,6 +63,22 @@ class SettingsService {
 
   void saveFocusStartupTab(FocusStartupTab tab) {
     _database.setSetting('focusStartupTab', tab.storageValue);
+  }
+
+  StudyStartupTab loadStudyStartupTab() {
+    final stored = _database.getSetting('studyStartupTab');
+    if (stored != null && stored.trim().isNotEmpty) {
+      return StudyStartupTabX.fromStorage(stored);
+    }
+    final legacyStartup = _database.getSetting('startupPage');
+    if ((legacyStartup ?? '').trim() == 'library') {
+      return StudyStartupTab.library;
+    }
+    return StudyStartupTab.play;
+  }
+
+  void saveStudyStartupTab(StudyStartupTab tab) {
+    _database.setSetting('studyStartupTab', tab.storageValue);
   }
 
   bool loadWeatherEnabled() {

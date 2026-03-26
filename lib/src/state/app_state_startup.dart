@@ -27,6 +27,7 @@ extension _AppStateStartup on AppState {
           .loadPlaybackProgressByWordbook();
       _startupPage = _settings.loadStartupPage();
       _focusStartupTab = _settings.loadFocusStartupTab();
+      _studyStartupTab = _settings.loadStudyStartupTab();
       _weatherEnabled = _settings.loadWeatherEnabled();
       _startupTodoPromptEnabled = _settings.loadStartupTodoPromptEnabled();
       _startupTodoPromptSuppressedDate = _settings
@@ -143,6 +144,21 @@ extension _AppStateStartup on AppState {
     );
     _focusStartupTab = tab;
     _settings.saveFocusStartupTab(tab);
+    _notifyStateChanged();
+  }
+
+  void _setStudyStartupTabImpl(StudyStartupTab tab) {
+    if (_studyStartupTab == tab) return;
+    _log.i(
+      'app_state',
+      'set study startup tab',
+      data: <String, Object?>{
+        'from': _studyStartupTab.storageValue,
+        'to': tab.storageValue,
+      },
+    );
+    _studyStartupTab = tab;
+    _settings.saveStudyStartupTab(tab);
     _notifyStateChanged();
   }
 

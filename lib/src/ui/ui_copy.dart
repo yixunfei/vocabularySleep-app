@@ -4,6 +4,7 @@ import '../i18n/app_i18n.dart';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
+import '../models/study_startup_tab.dart';
 import '../models/word_field.dart';
 import '../services/ambient_service.dart';
 import '../services/online_ambient_catalog_service.dart';
@@ -344,13 +345,31 @@ String pageLabelPlay(AppI18n i18n) => pickUiText(
   ru: 'Воспроизведение',
 );
 
+String pageLabelStudy(AppI18n i18n) => pickUiText(
+  i18n,
+  zh: '学习',
+  en: 'Study',
+  ja: '学習',
+  de: 'Lernen',
+  fr: 'Étude',
+  es: 'Estudio',
+  ru: 'Учёба',
+);
+
 String appHomeTabLabel(AppI18n i18n, AppHomeTab tab) {
   return switch (tab) {
-    AppHomeTab.play => pageLabelPlay(i18n),
-    AppHomeTab.library => pageLabelLibrary(i18n),
+    AppHomeTab.study => pageLabelStudy(i18n),
     AppHomeTab.practice => pageLabelPractice(i18n),
     AppHomeTab.focus => pageLabelFocus(i18n),
+    AppHomeTab.toolbox => pageLabelToolbox(i18n),
     AppHomeTab.more => pageLabelMore(i18n),
+  };
+}
+
+String studyStartupTabLabel(AppI18n i18n, StudyStartupTab tab) {
+  return switch (tab) {
+    StudyStartupTab.play => pageLabelPlay(i18n),
+    StudyStartupTab.library => pageLabelLibrary(i18n),
   };
 }
 
@@ -465,4 +484,15 @@ String pageLabelMore(AppI18n i18n) => pickUiText(
   fr: 'Plus',
   es: 'Más',
   ru: 'Ещё',
+);
+
+String pageLabelToolbox(AppI18n i18n) => pickUiText(
+  i18n,
+  zh: '工具箱',
+  en: 'Toolbox',
+  ja: 'ツール',
+  de: 'Werkzeuge',
+  fr: 'Outils',
+  es: 'Caja',
+  ru: 'Инструменты',
 );

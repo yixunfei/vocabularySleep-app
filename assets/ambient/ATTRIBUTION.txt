@@ -3,4 +3,5 @@ https://github.com/remvze/moodist
 
 Please follow the upstream project license and attribution requirements.
 
-Downloaded files: 19
+Bundled offline files: 12
+Online download catalog: Moodist website first, GitHub source tree as fallback

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/app_home_tab.dart';
 import '../../models/focus_startup_tab.dart';
+import '../../models/study_startup_tab.dart';
 import '../../services/settings_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
@@ -228,6 +229,40 @@ class LanguageSettingsPage extends StatelessWidget {
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  if (state.startupPage == AppHomeTab.study) ...<Widget>[
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<StudyStartupTab>(
+                      initialValue: state.studyStartupTab,
+                      decoration: InputDecoration(
+                        labelText: pickUiText(
+                          i18n,
+                          zh: '学习页默认子页',
+                          en: 'Study default section',
+                        ),
+                      ),
+                      items: StudyStartupTab.values
+                          .map(
+                            (tab) => DropdownMenuItem<StudyStartupTab>(
+                              value: tab,
+                              child: Text(studyStartupTabLabel(i18n, tab)),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        state.setStudyStartupTab(value);
+                      },
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '当启动页为学习时，将优先打开：${studyStartupTabLabel(i18n, state.studyStartupTab)}',
+                        en: 'When Study is the startup page, it will open ${studyStartupTabLabel(i18n, state.studyStartupTab)} first.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                   if (state.startupPage == AppHomeTab.focus) ...<Widget>[
                     const SizedBox(height: 10),
                     DropdownButtonFormField<FocusStartupTab>(

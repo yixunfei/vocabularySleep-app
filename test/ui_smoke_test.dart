@@ -13,6 +13,7 @@ import 'package:vocabulary_sleep_app/src/models/practice_export_format.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_question_type.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_session_record.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
+import 'package:vocabulary_sleep_app/src/models/study_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
 import 'package:vocabulary_sleep_app/src/models/user_data_export.dart';
@@ -377,7 +378,7 @@ void main() {
       (tester) async {
         final state = _FakeAppState.sample(
           uiLanguage: 'en',
-          startupPage: AppHomeTab.play,
+          startupPage: AppHomeTab.practice,
         );
         await _pumpPage(
           tester,
@@ -386,6 +387,29 @@ void main() {
         );
 
         expect(find.text('Focus default section'), findsNothing);
+        expect(find.text('Study default section'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'language settings shows study subtab option for study startup',
+      (tester) async {
+        final state = _FakeAppState.sample(
+          uiLanguage: 'en',
+          startupPage: AppHomeTab.study,
+          studyStartupTab: StudyStartupTab.library,
+        );
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const LanguageSettingsPage(),
+        );
+
+        expect(find.text('Study default section'), findsOneWidget);
+        expect(
+          find.textContaining('When Study is the startup page'),
+          findsOneWidget,
+        );
       },
     );
 
@@ -2322,7 +2346,8 @@ class _FakeAppState extends ChangeNotifier
     List<DatabaseBackupInfo>? backups,
     FocusService? focusService,
     List<AmbientSource>? ambientSources,
-    AppHomeTab startupPage = AppHomeTab.play,
+    AppHomeTab startupPage = AppHomeTab.study,
+    StudyStartupTab studyStartupTab = StudyStartupTab.play,
     FocusStartupTab focusStartupTab = FocusStartupTab.todo,
     bool weatherEnabled = false,
     WeatherSnapshot? weatherSnapshot,
@@ -2389,6 +2414,7 @@ class _FakeAppState extends ChangeNotifier
         apiTtsCacheBytes: apiTtsCacheBytes,
       )
       .._startupPage = startupPage
+      .._studyStartupTab = studyStartupTab
       .._focusStartupTab = focusStartupTab
       .._weatherEnabled = weatherEnabled
       .._weatherSnapshot = weatherSnapshot
@@ -2447,7 +2473,8 @@ class _FakeAppState extends ChangeNotifier
   int? _playingWordbookId;
   String? _playingWordbookName;
   String? _playingWord;
-  AppHomeTab _startupPage = AppHomeTab.play;
+  AppHomeTab _startupPage = AppHomeTab.study;
+  StudyStartupTab _studyStartupTab = StudyStartupTab.play;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
@@ -2735,6 +2762,9 @@ class _FakeAppState extends ChangeNotifier
   FocusStartupTab get focusStartupTab => _focusStartupTab;
 
   @override
+  StudyStartupTab get studyStartupTab => _studyStartupTab;
+
+  @override
   bool get weatherEnabled => _weatherEnabled;
 
   @override
@@ -2776,6 +2806,12 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   int? consumePendingTodoReminderLaunchId() => null;
+
+  @override
+  void setStudyStartupTab(StudyStartupTab tab) {
+    _studyStartupTab = tab;
+    notifyListeners();
+  }
 
   @override
   List<WordEntry> get words => _visibleWords;
