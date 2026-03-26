@@ -14,6 +14,8 @@ class AmbientSource {
     required this.name,
     this.assetPath,
     this.filePath,
+    this.remoteUrl,
+    this.categoryKey,
     this.enabled = false,
     this.volume = 0.5,
   });
@@ -22,16 +24,22 @@ class AmbientSource {
   final String name;
   final String? assetPath;
   final String? filePath;
+  final String? remoteUrl;
+  final String? categoryKey;
   final bool enabled;
   final double volume;
 
   bool get isAsset => assetPath != null;
+  bool get isFile => filePath != null;
+  bool get isRemote => remoteUrl != null;
 
   AmbientSource copyWith({
     String? id,
     String? name,
     String? assetPath,
     String? filePath,
+    String? remoteUrl,
+    String? categoryKey,
     bool? enabled,
     double? volume,
   }) {
@@ -40,6 +48,8 @@ class AmbientSource {
       name: name ?? this.name,
       assetPath: assetPath ?? this.assetPath,
       filePath: filePath ?? this.filePath,
+      remoteUrl: remoteUrl ?? this.remoteUrl,
+      categoryKey: categoryKey ?? this.categoryKey,
       enabled: enabled ?? this.enabled,
       volume: volume ?? this.volume,
     );
@@ -505,6 +515,32 @@ class AmbientService {
     ];
   }
 
+  void addRemoteSource({
+    required String id,
+    required String name,
+    required String remoteUrl,
+    required String categoryKey,
+    double volume = 0.5,
+  }) {
+    final normalizedVolume = volume.clamp(0.0, 1.0);
+    final existingIndex = _sources.indexWhere((source) => source.id == id);
+    final nextSource = AmbientSource(
+      id: id,
+      name: name,
+      remoteUrl: remoteUrl,
+      categoryKey: categoryKey,
+      enabled: true,
+      volume: normalizedVolume,
+    );
+    if (existingIndex < 0) {
+      _sources = <AmbientSource>[..._sources, nextSource];
+      return;
+    }
+    final updated = List<AmbientSource>.from(_sources);
+    updated[existingIndex] = nextSource;
+    _sources = updated;
+  }
+
   void removeSource(String sourceId) {
     _sources = _sources.where((source) => source.id != sourceId).toList();
     final loop = _loops.remove(sourceId);
@@ -568,6 +604,9 @@ class AmbientService {
     }
     if (source.filePath != null) {
       return DeviceFileSource(source.filePath!);
+    }
+    if (source.remoteUrl != null) {
+      return UrlSource(source.remoteUrl!);
     }
     return null;
   }

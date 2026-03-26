@@ -10,13 +10,13 @@ import '../../models/focus_startup_tab.dart';
 import '../../models/play_config.dart';
 import '../../models/todo_item.dart';
 import '../../models/tomato_timer.dart';
-import '../../services/ambient_service.dart';
 import '../../services/focus_service.dart';
 import '../../services/system_speech_service.dart';
 import '../../services/todo_reminder_service.dart';
 import '../../state/app_state.dart';
 import '../../utils/asr_language.dart';
 import '../layout/app_width_tier.dart';
+import '../sheets/ambient_sheet.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'focus_page_controller.dart';
@@ -6205,178 +6205,18 @@ class _FocusPageState extends State<FocusPage>
   }
 
   Future<void> _openAmbientAudioSheet(BuildContext context) async {
-    final i18n = AppI18n(context.read<AppState>().uiLanguage);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) {
-        return Consumer<AppState>(
-          builder: (context, state, _) {
-            final sources = state.ambientSources;
-            final builtinSources = sources
-                .where((item) => item.isAsset)
-                .toList();
-            final customSources = sources
-                .where((item) => !item.isAsset)
-                .toList();
-
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                16,
-                16,
-                16 + MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          i18n.t('ambientAudio'),
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      FilledButton.tonalIcon(
-                        onPressed: state.addAmbientFileSource,
-                        icon: const Icon(Icons.library_music_rounded),
-                        label: Text(i18n.t('importAudio')),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(i18n.t('masterVolume')),
-                  Slider(
-                    value: state.ambientMasterVolume.clamp(0.0, 1.0),
-                    onChanged: state.setAmbientMasterVolume,
-                  ),
-                  Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      physics: const BouncingScrollPhysics(),
-                      children: <Widget>[
-                        ..._buildAmbientGroups(
-                          sources: builtinSources,
-                          i18n: i18n,
-                          state: state,
-                        ),
-                        if (customSources.isNotEmpty) ...<Widget>[
-                          const SizedBox(height: 8),
-                          Text(
-                            i18n.t('importedAudio'),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          ...customSources.map(
-                            (source) => _buildAmbientTile(
-                              source: source,
-                              i18n: i18n,
-                              state: state,
-                              removable: true,
-                            ),
-                          ),
-                        ],
-                        if (sources.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Center(
-                              child: Text(i18n.t('noAudioSources')),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  List<Widget> _buildAmbientGroups({
-    required List<AmbientSource> sources,
-    required AppI18n i18n,
-    required AppState state,
-  }) {
-    final grouped = <String, List<AmbientSource>>{};
-    for (final source in sources) {
-      final key = _ambientCategoryKey(source.id);
-      grouped.putIfAbsent(key, () => <AmbientSource>[]).add(source);
-    }
-
-    final widgets = <Widget>[];
-    for (final entry in grouped.entries) {
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(top: 8, bottom: 4),
-          child: Text(
-            i18n.t(entry.key),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-      );
-      for (final source in entry.value) {
-        widgets.add(
-          _buildAmbientTile(
-            source: source,
-            i18n: i18n,
-            state: state,
-            removable: false,
-          ),
-        );
-      }
-    }
-    return widgets;
-  }
-
-  Widget _buildAmbientTile({
-    required AmbientSource source,
-    required AppI18n i18n,
-    required AppState state,
-    required bool removable,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(child: Text(localizedAmbientName(i18n, source))),
-                Switch(
-                  value: source.enabled,
-                  onChanged: (enabled) =>
-                      state.setAmbientSourceEnabled(source.id, enabled),
-                ),
-                if (removable)
-                  IconButton(
-                    onPressed: () => state.removeAmbientSource(source.id),
-                    icon: const Icon(Icons.delete_outline_rounded),
-                  ),
-              ],
-            ),
-            Slider(
-              value: source.volume.clamp(0.0, 1.0),
-              onChanged: (value) =>
-                  state.setAmbientSourceVolume(source.id, value),
-            ),
-          ],
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.92,
+        child: AmbientSheet(
+          state: context.read<AppState>(),
+          i18n: AppI18n(context.read<AppState>().uiLanguage),
         ),
       ),
     );
-  }
-
-  String _ambientCategoryKey(String id) {
-    if (id.startsWith('noise_')) return 'ambientCategoryNoise';
-    if (id.startsWith('nature_')) return 'ambientCategoryNature';
-    if (id.startsWith('rain_')) return 'ambientCategoryRain';
-    return 'ambientCategoryFocus';
   }
 
   String _formatUnitSummary(int seconds, AppI18n i18n) {

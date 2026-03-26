@@ -30,6 +30,7 @@ import '../services/daily_quote_service.dart';
 import '../services/focus_service.dart';
 import '../services/memory_algorithm.dart';
 import '../services/memory_lane_selector.dart';
+import '../services/online_ambient_catalog_service.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 import '../services/weather_service.dart';
@@ -95,6 +96,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final WeatherService _weatherService;
   final DailyQuoteService _dailyQuoteService;
   final AppLogService _log = AppLogService.instance;
+  final OnlineAmbientCatalogService _onlineAmbientCatalogService =
+      OnlineAmbientCatalogService();
 
   FocusService get focusService => _focusService;
 
@@ -1393,6 +1396,43 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _ambient.addFileSource(file.path!, name: file.name);
     await _ambient.syncPlayback();
     notifyListeners();
+  }
+
+  Future<void> addOnlineAmbientSource(OnlineAmbientSoundOption option) async {
+    _ambient.addRemoteSource(
+      id: option.id,
+      name: option.name,
+      remoteUrl: option.streamUrl,
+      categoryKey: option.categoryKey,
+      volume: option.defaultVolume,
+    );
+    await _ambient.syncPlayback();
+    notifyListeners();
+  }
+
+  Future<String?> downloadOnlineAmbientSource(
+    OnlineAmbientSoundOption option,
+  ) async {
+    try {
+      final path = await _onlineAmbientCatalogService.downloadToLocal(option);
+      _ambient.addFileSource(path, name: option.name);
+      await _ambient.syncPlayback();
+      notifyListeners();
+      return path;
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'download online ambient failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'id': option.id,
+          'name': option.name,
+          'url': option.streamUrl,
+        },
+      );
+      return null;
+    }
   }
 
   Future<String?> pickBackgroundImageByPicker() async {

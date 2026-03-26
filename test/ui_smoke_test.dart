@@ -25,6 +25,7 @@ import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
+import 'package:vocabulary_sleep_app/src/services/online_ambient_catalog_service.dart';
 import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
@@ -42,6 +43,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/sheets/ambient_sheet.dart';
 import 'package:vocabulary_sleep_app/src/ui/theme/app_theme.dart';
 import 'package:vocabulary_sleep_app/src/ui/ui_copy.dart';
 import 'package:vocabulary_sleep_app/src/ui/widgets/ambient_floating_dock.dart';
@@ -646,6 +648,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Shanghai, CN'), findsOneWidget);
       expect(find.text('18°C'), findsOneWidget);
+    });
+
+    testWidgets('ambient sheet opens online ambient catalog actions', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: Scaffold(
+          body: AmbientSheet(state: state, i18n: AppI18n('en')),
+        ),
+      );
+
+      await tester.tap(find.text('Online ambient'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Online ambient sounds'), findsOneWidget);
+      await tester.tap(find.text('Play online').first);
+      await tester.pumpAndSettle();
+      expect(state.playedOnlineAmbientId, isNotNull);
+
+      await tester.tap(find.text('Download').first);
+      await tester.pumpAndSettle();
+      expect(state.downloadedOnlineAmbientId, isNotNull);
     });
 
     testWidgets('focus page opens notes in a bottom sheet on phones', (
@@ -2441,6 +2468,8 @@ class _FakeAppState extends ChangeNotifier
   Set<UserDataExportSection>? exportedUserDataSections;
   String? exportedPracticeReviewPath;
   String? exportedWrongNotebookPath;
+  String? playedOnlineAmbientId;
+  String? downloadedOnlineAmbientId;
   String? createdWordbookName;
   String? renamedWordbookName;
   String? importedWordbookName;
@@ -2968,6 +2997,43 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   Future<void> addAmbientFileSource() async {}
+
+  @override
+  Future<void> addOnlineAmbientSource(OnlineAmbientSoundOption option) async {
+    playedOnlineAmbientId = option.id;
+    _ambientSources = <AmbientSource>[
+      ..._ambientSources,
+      AmbientSource(
+        id: option.id,
+        name: option.name,
+        remoteUrl: option.streamUrl,
+        categoryKey: option.categoryKey,
+        enabled: true,
+        volume: option.defaultVolume,
+      ),
+    ];
+    notifyListeners();
+  }
+
+  @override
+  Future<String?> downloadOnlineAmbientSource(
+    OnlineAmbientSoundOption option,
+  ) async {
+    downloadedOnlineAmbientId = option.id;
+    final path = '/tmp/${option.id}.mp3';
+    _ambientSources = <AmbientSource>[
+      ..._ambientSources,
+      AmbientSource(
+        id: 'file_${option.id}',
+        name: option.name,
+        filePath: path,
+        enabled: true,
+        volume: option.defaultVolume,
+      ),
+    ];
+    notifyListeners();
+    return path;
+  }
 
   @override
   Future<String?> pickBackgroundImageByPicker() async => null;
