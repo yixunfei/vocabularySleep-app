@@ -6,6 +6,7 @@ import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
 import '../models/word_field.dart';
 import '../services/ambient_service.dart';
+import '../services/online_ambient_catalog_service.dart';
 import '../state/app_state.dart';
 import 'theme/app_theme.dart';
 
@@ -165,6 +166,14 @@ String localizedFieldLabel(AppI18n i18n, WordFieldItem item) {
 }
 
 String localizedAmbientName(AppI18n i18n, AmbientSource source) {
+  final moodistKey = _moodistTranslationKeyForSource(source);
+  if (moodistKey != null) {
+    return localizedOnlineAmbientName(
+      i18n,
+      relativePath: moodistKey,
+      fallbackName: source.name,
+    );
+  }
   return switch (source.id) {
     'noise_white' => i18n.t('ambientNameNoiseWhite'),
     'noise_pink' => i18n.t('ambientNameNoisePink'),
@@ -181,6 +190,148 @@ String localizedAmbientName(AppI18n i18n, AmbientSource source) {
     _ => source.name,
   };
 }
+
+String localizedOnlineAmbientName(
+  AppI18n i18n, {
+  required String relativePath,
+  required String fallbackName,
+}) {
+  if (AppI18n.normalizeLanguageCode(i18n.languageCode) != 'zh') {
+    return fallbackName;
+  }
+  final normalizedKey = relativePath
+      .replaceAll('\\', '/')
+      .replaceFirst(RegExp(r'\.(mp3|wav)$'), '');
+  return _moodistZhNames[normalizedKey] ?? fallbackName;
+}
+
+String localizedOnlineAmbientOptionName(
+  AppI18n i18n,
+  OnlineAmbientSoundOption option,
+) {
+  return localizedOnlineAmbientName(
+    i18n,
+    relativePath: option.relativePath,
+    fallbackName: option.name,
+  );
+}
+
+String? _moodistTranslationKeyForSource(AmbientSource source) {
+  String? buildFromId(String prefix) {
+    if (!source.id.startsWith(prefix)) {
+      return null;
+    }
+    final payload = source.id.substring(prefix.length);
+    final separator = payload.indexOf('_');
+    if (separator <= 0 || separator >= payload.length - 1) {
+      return null;
+    }
+    final category = payload.substring(0, separator);
+    final slug = payload.substring(separator + 1);
+    return '$category/$slug';
+  }
+
+  final remote = buildFromId('remote_moodist_');
+  if (remote != null) {
+    return remote;
+  }
+  final downloaded = buildFromId('downloaded_remote_moodist_');
+  if (downloaded != null) {
+    return downloaded;
+  }
+  return null;
+}
+
+const Map<String, String> _moodistZhNames = <String, String>{
+  'nature/river': '河流',
+  'nature/waves': '海浪',
+  'nature/campfire': '篝火',
+  'nature/wind': '风声',
+  'nature/howling-wind': '呼啸狂风',
+  'nature/wind-in-trees': '林间风声',
+  'nature/waterfall': '瀑布',
+  'nature/walk-in-snow': '雪地行走',
+  'nature/walk-on-leaves': '落叶脚步',
+  'nature/walk-on-gravel': '砂石脚步',
+  'nature/droplets': '水滴',
+  'nature/jungle': '丛林',
+  'rain/light-rain': '小雨',
+  'rain/heavy-rain': '大雨',
+  'rain/thunder': '雷声',
+  'rain/rain-on-window': '雨打窗户',
+  'rain/rain-on-car-roof': '雨打车顶',
+  'rain/rain-on-umbrella': '雨打雨伞',
+  'rain/rain-on-tent': '雨打帐篷',
+  'rain/rain-on-leaves': '雨打树叶',
+  'animals/birds': '鸟鸣',
+  'animals/seagulls': '海鸥',
+  'animals/beehive': '蜂巢',
+  'animals/cows': '奶牛',
+  'animals/sheep': '绵羊',
+  'animals/crickets': '蟋蟀',
+  'animals/crows': '乌鸦',
+  'animals/frog': '青蛙',
+  'animals/owl': '猫头鹰',
+  'animals/whale': '鲸鸣',
+  'animals/wolf': '狼嚎',
+  'animals/chickens': '鸡群',
+  'animals/cat-purring': '猫咪呼噜',
+  'animals/dog-barking': '狗吠',
+  'animals/horse-gallop': '马蹄奔跑',
+  'animals/woodpecker': '啄木鸟',
+  'urban/crowd': '人群',
+  'urban/fireworks': '烟花',
+  'urban/busy-street': '繁忙街道',
+  'urban/highway': '高速公路',
+  'urban/ambulance-siren': '救护车警笛',
+  'urban/road': '道路',
+  'urban/traffic': '交通车流',
+  'places/church': '教堂',
+  'places/restaurant': '餐厅',
+  'places/airport': '机场',
+  'places/office': '办公室',
+  'places/subway-station': '地铁站',
+  'places/temple': '寺庙',
+  'places/library': '图书馆',
+  'places/carousel': '旋转木马',
+  'places/supermarket': '超市',
+  'places/laundry-room': '洗衣房',
+  'places/construction-site': '工地',
+  'places/crowded-bar': '拥挤酒吧',
+  'places/cafe': '咖啡馆',
+  'places/laboratory': '实验室',
+  'places/underwater': '水下',
+  'transport/inside-a-train': '车厢内部',
+  'transport/rowing-boat': '划船',
+  'transport/airplane': '飞机',
+  'transport/sailboat': '帆船',
+  'transport/train': '火车',
+  'transport/submarine': '潜艇',
+  'things/keyboard': '键盘',
+  'things/typewriter': '打字机',
+  'things/paper': '纸张',
+  'things/clock': '时钟',
+  'things/wind-chimes': '风铃',
+  'things/singing-bowl': '颂钵',
+  'things/ceiling-fan': '吊扇',
+  'things/dryer': '烘干机',
+  'things/slide-projector': '幻灯机',
+  'things/boiling-water': '沸水',
+  'things/bubbles': '气泡',
+  'things/tuning-radio': '调频收音机',
+  'things/morse-code': '摩斯电码',
+  'things/washing-machine': '洗衣机',
+  'things/vinyl-effect': '黑胶唱片',
+  'things/windshield-wipers': '雨刷',
+  'noise/white-noise': '白噪音',
+  'noise/pink-noise': '粉红噪音',
+  'noise/brown-noise': '棕噪音',
+  'binaural/binaural-alpha': '双耳节拍 Alpha',
+  'binaural/binaural-beta': '双耳节拍 Beta',
+  'binaural/binaural-delta': '双耳节拍 Delta',
+  'binaural/binaural-gamma': '双耳节拍 Gamma',
+  'binaural/binaural-theta': '双耳节拍 Theta',
+};
 
 String pageLabelPlay(AppI18n i18n) => pickUiText(
   i18n,

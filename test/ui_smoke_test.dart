@@ -662,17 +662,20 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Online ambient'));
+      await tester.tap(find.text('Ambient catalog'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Online ambient sounds'), findsOneWidget);
-      await tester.tap(find.text('Play online').first);
-      await tester.pumpAndSettle();
-      expect(state.playedOnlineAmbientId, isNotNull);
+      expect(find.text('Ambient sound catalog'), findsOneWidget);
+      expect(find.text('Play online'), findsNothing);
 
       await tester.tap(find.text('Download').first);
       await tester.pumpAndSettle();
       expect(state.downloadedOnlineAmbientId, isNotNull);
+      expect(find.text('Delete').first, findsOneWidget);
+
+      await tester.tap(find.text('Delete').first);
+      await tester.pumpAndSettle();
+      expect(state.deletedDownloadedOnlineAmbientId, isNotNull);
     });
 
     testWidgets('focus page opens notes in a bottom sheet on phones', (
@@ -2468,8 +2471,9 @@ class _FakeAppState extends ChangeNotifier
   Set<UserDataExportSection>? exportedUserDataSections;
   String? exportedPracticeReviewPath;
   String? exportedWrongNotebookPath;
-  String? playedOnlineAmbientId;
   String? downloadedOnlineAmbientId;
+  String? deletedDownloadedOnlineAmbientId;
+  final Set<String> _downloadedOnlineAmbientRelativePaths = <String>{};
   String? createdWordbookName;
   String? renamedWordbookName;
   String? importedWordbookName;
@@ -3007,41 +3011,43 @@ class _FakeAppState extends ChangeNotifier
   Future<void> addAmbientFileSource() async {}
 
   @override
-  Future<void> addOnlineAmbientSource(OnlineAmbientSoundOption option) async {
-    playedOnlineAmbientId = option.id;
-    _ambientSources = <AmbientSource>[
-      ..._ambientSources,
-      AmbientSource(
-        id: option.id,
-        name: option.name,
-        remoteUrl: option.streamUrl,
-        categoryKey: option.categoryKey,
-        enabled: true,
-        volume: option.defaultVolume,
-      ),
-    ];
-    notifyListeners();
-  }
-
-  @override
   Future<String?> downloadOnlineAmbientSource(
     OnlineAmbientSoundOption option,
   ) async {
     downloadedOnlineAmbientId = option.id;
+    _downloadedOnlineAmbientRelativePaths.add(option.relativePath);
     final path = '/tmp/${option.id}.mp3';
     _ambientSources = <AmbientSource>[
       ..._ambientSources,
       AmbientSource(
-        id: 'file_${option.id}',
+        id: 'downloaded_${option.id}',
         name: option.name,
         filePath: path,
         enabled: true,
         volume: option.defaultVolume,
+        categoryKey: option.categoryKey,
       ),
     ];
     notifyListeners();
     return path;
   }
+
+  @override
+  Future<bool> deleteDownloadedOnlineAmbientSource(
+    OnlineAmbientSoundOption option,
+  ) async {
+    deletedDownloadedOnlineAmbientId = option.id;
+    _downloadedOnlineAmbientRelativePaths.remove(option.relativePath);
+    _ambientSources = _ambientSources
+        .where((source) => source.id != 'downloaded_${option.id}')
+        .toList(growable: false);
+    notifyListeners();
+    return true;
+  }
+
+  @override
+  Future<Set<String>> fetchDownloadedOnlineAmbientRelativePaths() async =>
+      Set<String>.from(_downloadedOnlineAmbientRelativePaths);
 
   @override
   Future<List<OnlineAmbientSoundOption>> fetchOnlineAmbientCatalog({

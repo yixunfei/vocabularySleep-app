@@ -134,13 +134,50 @@ class OnlineAmbientCatalogService {
     return option.fallbackUrl;
   }
 
-  Future<String> downloadToLocal(OnlineAmbientSoundOption option) async {
-    final client = _client ?? http.Client();
+  Future<String> localPathFor(OnlineAmbientSoundOption option) async {
     final targetDirectory = await _ensureDownloadDirectory();
-    final targetPath = p.join(
+    return p.join(
       targetDirectory.path,
       option.relativePath.replaceAll('/', Platform.pathSeparator),
     );
+  }
+
+  Future<bool> isDownloaded(OnlineAmbientSoundOption option) async {
+    final targetPath = await localPathFor(option);
+    final file = File(targetPath);
+    return await file.exists() && await file.length() > 0;
+  }
+
+  Future<void> deleteLocal(OnlineAmbientSoundOption option) async {
+    final targetPath = await localPathFor(option);
+    final file = File(targetPath);
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
+  Future<Set<String>> listDownloadedRelativePaths() async {
+    final root = await _ensureDownloadDirectory();
+    if (!await root.exists()) {
+      return <String>{};
+    }
+    final output = <String>{};
+    await for (final entity in root.list(recursive: true, followLinks: false)) {
+      if (entity is! File) {
+        continue;
+      }
+      final relative = p.relative(entity.path, from: root.path);
+      if (relative.trim().isEmpty) {
+        continue;
+      }
+      output.add(relative.replaceAll(Platform.pathSeparator, '/'));
+    }
+    return output;
+  }
+
+  Future<String> downloadToLocal(OnlineAmbientSoundOption option) async {
+    final client = _client ?? http.Client();
+    final targetPath = await localPathFor(option);
     final targetFile = File(targetPath);
     if (await targetFile.exists() && await targetFile.length() > 0) {
       return targetFile.path;
@@ -304,6 +341,12 @@ class OnlineAmbientCatalogService {
       'nature' => 'ambientCategoryNature',
       'rain' => 'ambientCategoryRain',
       'noise' => 'ambientCategoryNoise',
+      'animals' => 'ambientCategoryAnimals',
+      'urban' => 'ambientCategoryUrban',
+      'places' => 'ambientCategoryPlaces',
+      'transport' => 'ambientCategoryTransport',
+      'things' => 'ambientCategoryThings',
+      'binaural' => 'ambientCategoryBinaural',
       _ => 'ambientCategoryFocus',
     };
   }

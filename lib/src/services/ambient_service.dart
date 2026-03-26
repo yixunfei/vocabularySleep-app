@@ -503,16 +503,34 @@ class AmbientService {
 
   void addFileSource(String path, {String? name}) {
     final fileName = name ?? path.split(RegExp(r'[\\/]')).last;
-    _sources = <AmbientSource>[
-      ..._sources,
-      AmbientSource(
-        id: 'file_${_uuid.v4()}',
-        name: fileName,
-        filePath: path,
-        enabled: true,
-        volume: 0.5,
-      ),
-    ];
+    addFileSourceWithMetadata(path, name: fileName);
+  }
+
+  void addFileSourceWithMetadata(
+    String path, {
+    String? id,
+    String? name,
+    String? categoryKey,
+    double volume = 0.5,
+  }) {
+    final fileName = name ?? path.split(RegExp(r'[\\/]')).last;
+    final sourceId = id ?? 'file_${_uuid.v4()}';
+    final source = AmbientSource(
+      id: sourceId,
+      name: fileName,
+      filePath: path,
+      categoryKey: categoryKey,
+      enabled: true,
+      volume: volume.clamp(0.0, 1.0),
+    );
+    final existingIndex = _sources.indexWhere((item) => item.id == sourceId);
+    if (existingIndex < 0) {
+      _sources = <AmbientSource>[..._sources, source];
+      return;
+    }
+    final updated = List<AmbientSource>.from(_sources);
+    updated[existingIndex] = source;
+    _sources = updated;
   }
 
   void addRemoteSource({

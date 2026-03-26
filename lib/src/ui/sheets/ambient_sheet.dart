@@ -94,7 +94,7 @@ class AmbientSheet extends StatelessWidget {
                   title: pickUiText(liveI18n, zh: '环境音', en: 'Ambient sound'),
                   subtitle: pickUiText(
                     liveI18n,
-                    zh: '把环境音放在播放流程附近，可直接切换在线或本地声音。',
+                    zh: '把环境音放在播放流程附近，可直接管理本地与下载资源。',
                     en: 'Keep ambient sound close to playback, with direct access to online and local sounds.',
                   ),
                 ),
@@ -118,7 +118,11 @@ class AmbientSheet extends StatelessWidget {
                       onPressed: () => showOnlineAmbientCatalogSheet(context),
                       icon: const Icon(Icons.cloud_rounded),
                       label: Text(
-                        pickUiText(liveI18n, zh: '在线白噪音', en: 'Online ambient'),
+                        pickUiText(
+                          liveI18n,
+                          zh: '白噪音资源',
+                          en: 'Ambient catalog',
+                        ),
                       ),
                     ),
                   ],

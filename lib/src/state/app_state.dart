@@ -1425,21 +1425,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  Future<void> addOnlineAmbientSource(OnlineAmbientSoundOption option) async {
-    final playbackUrl = await _onlineAmbientCatalogService.resolvePlaybackUrl(
-      option,
-    );
-    _ambient.addRemoteSource(
-      id: option.id,
-      name: option.name,
-      remoteUrl: playbackUrl,
-      categoryKey: option.categoryKey,
-      volume: option.defaultVolume,
-    );
-    await _ambient.syncPlayback();
-    notifyListeners();
-  }
-
   Future<List<OnlineAmbientSoundOption>> fetchOnlineAmbientCatalog({
     bool forceRefresh = false,
   }) {
@@ -1448,12 +1433,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     );
   }
 
+  Future<Set<String>> fetchDownloadedOnlineAmbientRelativePaths() {
+    return _onlineAmbientCatalogService.listDownloadedRelativePaths();
+  }
+
   Future<String?> downloadOnlineAmbientSource(
     OnlineAmbientSoundOption option,
   ) async {
     try {
       final path = await _onlineAmbientCatalogService.downloadToLocal(option);
-      _ambient.addFileSource(path, name: option.name);
+      _ambient.addFileSourceWithMetadata(
+        path,
+        id: 'downloaded_${option.id}',
+        name: option.name,
+        categoryKey: option.categoryKey,
+        volume: option.defaultVolume,
+      );
       await _ambient.syncPlayback();
       notifyListeners();
       return path;
@@ -1470,6 +1465,42 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         },
       );
       return null;
+    }
+  }
+
+  Future<bool> deleteDownloadedOnlineAmbientSource(
+    OnlineAmbientSoundOption option,
+  ) async {
+    try {
+      final path = await _onlineAmbientCatalogService.localPathFor(option);
+      await _onlineAmbientCatalogService.deleteLocal(option);
+      final matchingIds = _ambient.sources
+          .where(
+            (source) =>
+                source.id == 'downloaded_${option.id}' ||
+                (source.filePath?.trim() ?? '') == path.trim(),
+          )
+          .map((source) => source.id)
+          .toList(growable: false);
+      for (final sourceId in matchingIds) {
+        _ambient.removeSource(sourceId);
+      }
+      await _ambient.syncPlayback();
+      notifyListeners();
+      return true;
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'delete downloaded ambient failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'id': option.id,
+          'name': option.name,
+          'relativePath': option.relativePath,
+        },
+      );
+      return false;
     }
   }
 

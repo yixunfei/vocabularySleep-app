@@ -28,14 +28,16 @@ class _OnlineAmbientCatalogSheet extends StatefulWidget {
 
 class _OnlineAmbientCatalogSheetState
     extends State<_OnlineAmbientCatalogSheet> {
-  String? _playingId;
-  String? _downloadingId;
+  String? _pendingId;
   late Future<List<OnlineAmbientSoundOption>> _catalogFuture;
+  late Future<Set<String>> _downloadedPathsFuture;
 
   @override
   void initState() {
     super.initState();
-    _catalogFuture = context.read<AppState>().fetchOnlineAmbientCatalog();
+    final state = context.read<AppState>();
+    _catalogFuture = state.fetchOnlineAmbientCatalog();
+    _downloadedPathsFuture = state.fetchDownloadedOnlineAmbientRelativePaths();
   }
 
   @override
@@ -63,8 +65,8 @@ class _OnlineAmbientCatalogSheetState
                         Text(
                           pickUiText(
                             i18n,
-                            zh: '在线白噪音',
-                            en: 'Online ambient sounds',
+                            zh: '白噪音资源',
+                            en: 'Ambient sound catalog',
                           ),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
@@ -72,8 +74,8 @@ class _OnlineAmbientCatalogSheetState
                         Text(
                           pickUiText(
                             i18n,
-                            zh: '优先从 Moodist 站点解析和连接，失败后再回退 GitHub 音源。',
-                            en: 'Prefer live parsing and playback from Moodist, with GitHub as fallback.',
+                            zh: '优先从 Moodist 站点解析资源并下载，本地存在时可直接删除。',
+                            en: 'Prefer catalog parsing from Moodist and download locally. Delete when already downloaded.',
                           ),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
@@ -88,16 +90,24 @@ class _OnlineAmbientCatalogSheetState
               ),
               const SizedBox(height: 12),
               Expanded(
-                child: FutureBuilder<List<OnlineAmbientSoundOption>>(
-                  future: _catalogFuture,
+                child: FutureBuilder<Object>(
+                  future: Future.wait<Object>(<Future<Object>>[
+                    _catalogFuture,
+                    _downloadedPathsFuture,
+                  ]),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
+                    if (snapshot.connectionState != ConnectionState.done ||
+                        snapshot.data is! List<Object>) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
+                    final data = snapshot.data! as List<Object>;
                     final options =
-                        snapshot.data ??
+                        data[0] as List<OnlineAmbientSoundOption>? ??
                         OnlineAmbientCatalogService.fallbackOptions;
+                    final downloadedPaths =
+                        data[1] as Set<String>? ?? <String>{};
+
                     final grouped = <String, List<OnlineAmbientSoundOption>>{};
                     for (final item in options) {
                       grouped
@@ -123,8 +133,17 @@ class _OnlineAmbientCatalogSheetState
                                     ).textTheme.titleMedium,
                                   ),
                                   const SizedBox(height: 8),
-                                  ...entry.value.map(
-                                    (option) => Card(
+                                  ...entry.value.map((option) {
+                                    final downloaded = downloadedPaths.contains(
+                                      option.relativePath,
+                                    );
+                                    final localizedName =
+                                        localizedOnlineAmbientOptionName(
+                                          i18n,
+                                          option,
+                                        );
+
+                                    return Card(
                                       margin: const EdgeInsets.only(bottom: 8),
                                       child: Padding(
                                         padding: const EdgeInsets.all(12),
@@ -136,7 +155,7 @@ class _OnlineAmbientCatalogSheetState
                                                     CrossAxisAlignment.start,
                                                 children: <Widget>[
                                                   Text(
-                                                    option.name,
+                                                    localizedName,
                                                     style: Theme.of(
                                                       context,
                                                     ).textTheme.titleSmall,
@@ -152,117 +171,95 @@ class _OnlineAmbientCatalogSheetState
                                               ),
                                             ),
                                             const SizedBox(width: 12),
-                                            FilledButton.tonal(
-                                              onPressed:
-                                                  _playingId == option.id ||
-                                                      _downloadingId ==
-                                                          option.id
-                                                  ? null
-                                                  : () async {
-                                                      setState(() {
-                                                        _playingId = option.id;
-                                                      });
-                                                      await state
-                                                          .addOnlineAmbientSource(
-                                                            option,
-                                                          );
-                                                      if (!mounted ||
-                                                          !context.mounted) {
-                                                        return;
-                                                      }
-                                                      setState(() {
-                                                        _playingId = null;
-                                                      });
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            pickUiText(
-                                                              i18n,
-                                                              zh: '已开始在线播放：${option.name}',
-                                                              en: 'Now streaming: ${option.name}',
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                              child: Text(
-                                                _playingId == option.id
-                                                    ? pickUiText(
-                                                        i18n,
-                                                        zh: '连接中',
-                                                        en: 'Connecting',
-                                                      )
-                                                    : pickUiText(
-                                                        i18n,
-                                                        zh: '在线播放',
-                                                        en: 'Play online',
-                                                      ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
                                             FilledButton(
-                                              onPressed:
-                                                  _playingId == option.id ||
-                                                      _downloadingId ==
-                                                          option.id
+                                              onPressed: _pendingId == option.id
                                                   ? null
                                                   : () async {
                                                       setState(() {
-                                                        _downloadingId =
-                                                            option.id;
+                                                        _pendingId = option.id;
                                                       });
-                                                      final path = await state
-                                                          .downloadOnlineAmbientSource(
-                                                            option,
-                                                          );
+                                                      final deleted = downloaded
+                                                          ? await state
+                                                                .deleteDownloadedOnlineAmbientSource(
+                                                                  option,
+                                                                )
+                                                          : null;
+                                                      final path = downloaded
+                                                          ? null
+                                                          : await state
+                                                                .downloadOnlineAmbientSource(
+                                                                  option,
+                                                                );
                                                       if (!mounted ||
                                                           !context.mounted) {
                                                         return;
                                                       }
                                                       setState(() {
-                                                        _downloadingId = null;
+                                                        _pendingId = null;
+                                                        _downloadedPathsFuture =
+                                                            state
+                                                                .fetchDownloadedOnlineAmbientRelativePaths();
                                                       });
                                                       ScaffoldMessenger.of(
                                                         context,
                                                       ).showSnackBar(
                                                         SnackBar(
                                                           content: Text(
-                                                            path == null
-                                                                ? pickUiText(
-                                                                    i18n,
-                                                                    zh: '下载失败，请稍后重试。',
-                                                                    en: 'Download failed. Please try again later.',
-                                                                  )
-                                                                : pickUiText(
-                                                                    i18n,
-                                                                    zh: '已下载到本地：${option.name}',
-                                                                    en: 'Downloaded locally: ${option.name}',
-                                                                  ),
+                                                            downloaded
+                                                                ? (deleted ==
+                                                                          true
+                                                                      ? pickUiText(
+                                                                          i18n,
+                                                                          zh: '已删除本地音频：$localizedName',
+                                                                          en: 'Deleted local audio: $localizedName',
+                                                                        )
+                                                                      : pickUiText(
+                                                                          i18n,
+                                                                          zh: '删除失败，请稍后重试。',
+                                                                          en: 'Delete failed. Please try again later.',
+                                                                        ))
+                                                                : (path == null
+                                                                      ? pickUiText(
+                                                                          i18n,
+                                                                          zh: '下载失败，请稍后重试。',
+                                                                          en: 'Download failed. Please try again later.',
+                                                                        )
+                                                                      : pickUiText(
+                                                                          i18n,
+                                                                          zh: '已下载到本地：$localizedName',
+                                                                          en: 'Downloaded locally: $localizedName',
+                                                                        )),
                                                           ),
                                                         ),
                                                       );
                                                     },
                                               child: Text(
-                                                _downloadingId == option.id
+                                                _pendingId == option.id
                                                     ? pickUiText(
                                                         i18n,
-                                                        zh: '下载中',
-                                                        en: 'Downloading',
+                                                        zh: downloaded
+                                                            ? '删除中'
+                                                            : '下载中',
+                                                        en: downloaded
+                                                            ? 'Deleting'
+                                                            : 'Downloading',
                                                       )
                                                     : pickUiText(
                                                         i18n,
-                                                        zh: '下载本地',
-                                                        en: 'Download',
+                                                        zh: downloaded
+                                                            ? '删除白噪音'
+                                                            : '下载白噪音',
+                                                        en: downloaded
+                                                            ? 'Delete'
+                                                            : 'Download',
                                                       ),
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-                                  ),
+                                    );
+                                  }),
                                 ],
                               ),
                             );

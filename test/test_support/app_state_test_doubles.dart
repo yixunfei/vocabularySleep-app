@@ -81,6 +81,15 @@ class StubAmbientService implements AmbientService {
   void addFileSource(String path, {String? name}) {}
 
   @override
+  void addFileSourceWithMetadata(
+    String path, {
+    String? id,
+    String? name,
+    String? categoryKey,
+    double volume = 0.5,
+  }) {}
+
+  @override
   void addRemoteSource({
     required String id,
     required String name,

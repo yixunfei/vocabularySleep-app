@@ -316,101 +316,149 @@ class _PlayPageState extends State<PlayPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionHeader(
-                  title: pickUiText(
-                    i18n,
-                    zh: '下一步建议',
-                    en: 'Suggested next step',
-                  ),
+                  title: pickUiText(i18n, zh: '连续路径', en: 'Continuous path'),
                   subtitle: pickUiText(
                     i18n,
-                    zh: '把播放、练习和模式策略串联成连续路径。',
-                    en: 'Connect playback, practice, and mode strategy.',
+                    zh: '先播放一轮，再进入练习巩固，最后按当前模式微调展示策略。',
+                    en: 'Move from playback into practice, then fine-tune the current mode strategy.',
                   ),
                 ),
-                const SizedBox(height: 12),
-                if (weakCount > 0)
-                  Text(
-                    pickUiText(
-                      i18n,
-                      zh: '你有 $weakCount 个最近薄弱词，建议先进入练习中心复习。',
-                      en: 'You have $weakCount recent weak words. Practice is recommended first.',
+                const SizedBox(height: 14),
+                _FlowStepCard(
+                  icon: isPlaybackPaused
+                      ? Icons.play_circle_fill_rounded
+                      : Icons.headphones_rounded,
+                  title: pickUiText(
+                    i18n,
+                    zh: '1. 播放当前范围',
+                    en: '1. Play this scope',
+                  ),
+                  description: isPlaybackPaused
+                      ? pickUiText(
+                          i18n,
+                          zh: '从上次停下的位置继续听，保持节奏不断。',
+                          en: 'Resume from where you paused and keep the rhythm going.',
+                        )
+                      : pickUiText(
+                          i18n,
+                          zh: '围绕当前单词继续听一轮，先把输入打满。',
+                          en: 'Continue one focused pass around the current word to saturate input first.',
+                        ),
+                  action: FilledButton.icon(
+                    onPressed: isPlaybackPaused
+                        ? state.pauseOrResume
+                        : state.playCurrentWordbook,
+                    icon: Icon(
+                      isPlaybackPaused
+                          ? Icons.play_arrow_rounded
+                          : Icons.volume_up_rounded,
                     ),
-                  )
-                else if (showModeSuggestion)
-                  Text(
-                    mode == AppExperienceMode.sleep
-                        ? pickUiText(
-                            i18n,
-                            zh: '当前是 Sleep 模式，建议关闭文本以减少视觉刺激。',
-                            en: 'Sleep mode is active. Hiding text can reduce visual stimulation.',
-                          )
-                        : pickUiText(
-                            i18n,
-                            zh: '当前是 Focus 模式，建议开启文本以提高复习效率。',
-                            en: 'Focus mode works better with text shown.',
-                          ),
-                  )
-                else
-                  Text(
-                    pickUiText(
-                      i18n,
-                      zh: state.practiceTodaySessions > 0
-                          ? '你今天已完成 ${state.practiceTodaySessions} 次练习，当前正确率 $todayAccuracy%。可继续播放巩固。'
-                          : '建议先播放一轮当前范围，再进入练习中心做巩固。',
-                      en: state.practiceTodaySessions > 0
-                          ? 'You finished ${state.practiceTodaySessions} sessions today at $todayAccuracy% accuracy. Keep reinforcing with playback.'
-                          : 'Start with one playback cycle, then reinforce in Practice.',
+                    label: Text(
+                      isPlaybackPaused
+                          ? pickUiText(i18n, zh: '继续播放', en: 'Resume')
+                          : pickUiText(
+                              i18n,
+                              zh: '开始一轮播放',
+                              en: 'Start playback',
+                            ),
                     ),
                   ),
+                ),
                 const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: <Widget>[
-                    if (weakCount > 0)
-                      FilledButton.icon(
-                        onPressed: widget.onOpenPractice,
-                        icon: const Icon(Icons.fitness_center_rounded),
-                        label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '去复习薄弱词',
-                            en: 'Review weak words',
-                          ),
+                _FlowStepCard(
+                  icon: weakCount > 0
+                      ? Icons.fitness_center_rounded
+                      : Icons.school_rounded,
+                  title: pickUiText(
+                    i18n,
+                    zh: '2. 进入练习巩固',
+                    en: '2. Reinforce in practice',
+                  ),
+                  description: weakCount > 0
+                      ? pickUiText(
+                          i18n,
+                          zh: '你有 $weakCount 个最近薄弱词，优先回收这些不稳定项。',
+                          en: 'You have $weakCount recent weak words. Recover the unstable items first.',
+                        )
+                      : pickUiText(
+                          i18n,
+                          zh: state.practiceTodaySessions > 0
+                              ? '今天已完成 ${state.practiceTodaySessions} 次练习，当前正确率 $todayAccuracy%。可以继续巩固。'
+                              : '听完一轮后立刻进入练习，会更容易把短时记忆压实。',
+                          en: state.practiceTodaySessions > 0
+                              ? 'You finished ${state.practiceTodaySessions} sessions today at $todayAccuracy% accuracy. Keep reinforcing.'
+                              : 'Practice immediately after one pass to lock short-term memory in place.',
                         ),
-                      )
-                    else if (showModeSuggestion)
-                      FilledButton.tonalIcon(
-                        onPressed: () {
-                          state.updateConfig(
-                            state.config.copyWith(
-                              showText: mode == AppExperienceMode.focus,
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.auto_fix_high_rounded),
-                        label: Text(
-                          mode == AppExperienceMode.sleep
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '一键关闭文本',
-                                  en: 'Hide text now',
-                                )
-                              : pickUiText(
-                                  i18n,
-                                  zh: '一键显示文本',
-                                  en: 'Show text now',
-                                ),
-                        ),
-                      ),
-                    OutlinedButton.icon(
-                      onPressed: widget.onOpenPractice,
-                      icon: const Icon(Icons.arrow_forward_rounded),
-                      label: Text(
-                        pickUiText(i18n, zh: '打开练习中心', en: 'Open practice'),
-                      ),
+                  action: FilledButton.tonalIcon(
+                    onPressed: widget.onOpenPractice,
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: Text(
+                      weakCount > 0
+                          ? pickUiText(
+                              i18n,
+                              zh: '复习薄弱词',
+                              en: 'Review weak words',
+                            )
+                          : pickUiText(i18n, zh: '打开练习中心', en: 'Open practice'),
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _FlowStepCard(
+                  icon: Icons.tune_rounded,
+                  title: pickUiText(
+                    i18n,
+                    zh: '3. 调整模式策略',
+                    en: '3. Tune mode strategy',
+                  ),
+                  description: showModeSuggestion
+                      ? (mode == AppExperienceMode.sleep
+                            ? pickUiText(
+                                i18n,
+                                zh: '当前是 Sleep 模式，建议切到纯听，减少视觉刺激。',
+                                en: 'Sleep mode works better as a listening-first experience with less visual stimulation.',
+                              )
+                            : pickUiText(
+                                i18n,
+                                zh: '当前是 Focus 模式，建议显示文本，提高复习密度。',
+                                en: 'Focus mode works better with text visible for denser review.',
+                              ))
+                      : pickUiText(
+                          i18n,
+                          zh: '当前展示策略已经和模式匹配，可以直接保持。',
+                          en: 'Your current presentation strategy already matches the active mode.',
+                        ),
+                  action: FilledButton.tonalIcon(
+                    onPressed: showModeSuggestion
+                        ? () {
+                            state.updateConfig(
+                              state.config.copyWith(
+                                showText: mode == AppExperienceMode.focus,
+                              ),
+                            );
+                          }
+                        : null,
+                    icon: const Icon(Icons.auto_fix_high_rounded),
+                    label: Text(
+                      showModeSuggestion
+                          ? (mode == AppExperienceMode.sleep
+                                ? pickUiText(
+                                    i18n,
+                                    zh: '切到纯听模式',
+                                    en: 'Hide text now',
+                                  )
+                                : pickUiText(
+                                    i18n,
+                                    zh: '显示文本提示',
+                                    en: 'Show text now',
+                                  ))
+                          : pickUiText(
+                              i18n,
+                              zh: '策略已匹配',
+                              en: 'Already aligned',
+                            ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1133,6 +1181,64 @@ class _PlayPageState extends State<PlayPage> {
         en: '${localizedWordbookName(i18n, book)} may be large. The first load will initialize its contents and may take a while. Continue and please wait patiently.',
       ),
       confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+    );
+  }
+}
+
+class _FlowStepCard extends StatelessWidget {
+  const _FlowStepCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final Widget action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(description, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 10),
+                action,
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
