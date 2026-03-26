@@ -174,6 +174,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int? _queuedPlaybackScopeTarget;
   int _wordbookPlaybackSyncToken = 0;
   int _wordsVersion = 0;
+  Map<String, PlaybackProgressSnapshot> _playbackProgressByWordbookPath =
+      <String, PlaybackProgressSnapshot>{};
   List<WordEntry>? _visibleWordsCache;
   int _visibleWordsCacheVersion = -1;
   String _visibleWordsCacheQuery = '';
@@ -294,17 +296,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return _visibleWordsCache!;
     }
 
-    final selectedWordbook = _selectedWordbook;
     final normalizedQuery = _searchQuery.trim();
-    final computed = selectedWordbook == null
+    final selectedWordbook = _selectedWordbook;
+    final computed = selectedWordbook == null || normalizedQuery.isEmpty
         ? _words
-        : (normalizedQuery.isEmpty
-              ? _database.getWords(selectedWordbook.id)
-              : _database.searchWords(
-                  selectedWordbook.id,
-                  query: normalizedQuery,
-                  mode: _searchMode.name,
-                ));
+        : _database.searchWords(
+            selectedWordbook.id,
+            query: normalizedQuery,
+            mode: _searchMode.name,
+          );
     _visibleWordsCache = computed;
     _visibleWordsCacheVersion = _wordsVersion;
     _visibleWordsCacheQuery = _searchQuery;
@@ -370,6 +370,66 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   int clearPracticeWeakWords({bool masteredOnly = false}) =>
       _clearPracticeWeakWordsImpl(masteredOnly: masteredOnly);
+
+  int get visibleWordCount {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null) {
+      return 0;
+    }
+    if (_searchQuery.trim().isEmpty) {
+      return _words.length;
+    }
+    return _database.countSearchWords(
+      selectedWordbook.id,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+  }
+
+  List<WordEntry> getVisibleWordsPage({required int limit, int offset = 0}) {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null) {
+      return const <WordEntry>[];
+    }
+    if (_searchQuery.trim().isEmpty) {
+      final start = offset.clamp(0, _words.length).toInt();
+      final end = (start + limit).clamp(start, _words.length).toInt();
+      return _words.sublist(start, end);
+    }
+    return _database.searchWords(
+      selectedWordbook.id,
+      query: _searchQuery,
+      mode: _searchMode.name,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  int? findVisibleWordOffsetByPrefix(String prefix) {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null) {
+      return null;
+    }
+    return _database.findSearchOffsetByPrefix(
+      selectedWordbook.id,
+      prefix: prefix,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+  }
+
+  int? findVisibleWordOffsetByInitial(String initial) {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null) {
+      return null;
+    }
+    return _database.findSearchOffsetByInitial(
+      selectedWordbook.id,
+      initial: initial,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+  }
 
   WordEntry? get currentWord {
     if (_currentWordIndex < 0 || _currentWordIndex >= _words.length) {
@@ -1060,8 +1120,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         stackTrace: stackTrace,
       );
       _setMessage(
-        'errorInitFailed',
-        params: <String, Object?>{'error': 'reset user data: $error'},
+        'errorResetUserDataFailed',
+        params: <String, Object?>{'error': error},
       );
       notifyListeners();
       return false;
@@ -1263,6 +1323,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> movePlaybackPreviousWord() => _movePlaybackPreviousWordImpl();
 
   Future<void> movePlaybackNextWord() => _movePlaybackNextWordImpl();
+
+  void rememberPlaybackProgress([WordEntry? entry]) =>
+      _rememberPlaybackProgressImpl(entry);
+
+  bool restorePlaybackProgressForSelectedWordbook() =>
+      _restorePlaybackProgressForSelectedWordbookImpl();
 
   bool jumpByInitial(String initial) {
     final selectedWordbook = _selectedWordbook;
@@ -2062,7 +2128,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     if (_selectedWordbook != null) {
       _setWords(_database.getWords(_selectedWordbook!.id));
-      if (_currentWordIndex >= _words.length) {
+      final restoredIndex = _playbackProgressIndexForWordbook(
+        _selectedWordbook!,
+      );
+      if (restoredIndex >= 0) {
+        final target = (_searchQuery.trim().isEmpty
+            ? _words
+            : _scopeWords)[restoredIndex];
+        _setCurrentWordByEntry(target);
+      } else if (_currentWordIndex >= _words.length) {
         _currentWordIndex = _words.isEmpty ? 0 : (_words.length - 1);
       }
       _ensureCurrentWordInScope();
@@ -2256,6 +2330,89 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return true;
   }
 
+  Wordbook? _resolveWordbookForEntry(WordEntry entry) {
+    return _wordbooks
+            .where((item) => item.id == entry.wordbookId)
+            .cast<Wordbook?>()
+            .firstOrNull ??
+        (_selectedWordbook?.id == entry.wordbookId ? _selectedWordbook : null);
+  }
+
+  void _persistPlaybackProgress() {
+    _settings.savePlaybackProgressByWordbook(_playbackProgressByWordbookPath);
+  }
+
+  void _rememberPlaybackProgressImpl([WordEntry? entry]) {
+    final resolvedEntry = entry ?? currentWord;
+    if (resolvedEntry == null) {
+      return;
+    }
+    final wordbook = _resolveWordbookForEntry(resolvedEntry);
+    final path = wordbook?.path.trim() ?? '';
+    if (path.isEmpty) {
+      return;
+    }
+    final previous = _playbackProgressByWordbookPath[path];
+    if (previous != null &&
+        previous.wordId == resolvedEntry.id &&
+        previous.word == resolvedEntry.word) {
+      return;
+    }
+    _playbackProgressByWordbookPath = <String, PlaybackProgressSnapshot>{
+      ..._playbackProgressByWordbookPath,
+      path: PlaybackProgressSnapshot(
+        wordbookPath: path,
+        wordId: resolvedEntry.id,
+        word: resolvedEntry.word,
+        updatedAt: DateTime.now(),
+      ),
+    };
+    _persistPlaybackProgress();
+  }
+
+  int _playbackProgressIndexForWordbook(Wordbook wordbook) {
+    final snapshot = _playbackProgressByWordbookPath[wordbook.path.trim()];
+    if (snapshot == null) {
+      return -1;
+    }
+    final scoped = _scopeWords;
+    final entries = _searchQuery.trim().isEmpty ? _words : scoped;
+    if (entries.isEmpty) {
+      return -1;
+    }
+    final byId = snapshot.wordId;
+    if (byId != null) {
+      final index = entries.indexWhere((item) => item.id == byId);
+      if (index >= 0) {
+        return index;
+      }
+    }
+    return entries.indexWhere((item) => item.word == snapshot.word);
+  }
+
+  bool _restorePlaybackProgressForSelectedWordbookImpl() {
+    if (_isPlaying) {
+      return false;
+    }
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null || _words.isEmpty) {
+      return false;
+    }
+    final index = _playbackProgressIndexForWordbook(selectedWordbook);
+    if (index < 0) {
+      return false;
+    }
+    final target = (_searchQuery.trim().isEmpty ? _words : _scopeWords)[index];
+    final current = currentWord;
+    if (current != null && _isSameWordEntry(current, target)) {
+      return false;
+    }
+    _setCurrentWordByEntry(target);
+    resetTestModeProgress();
+    _notifyStateChanged();
+    return true;
+  }
+
   Future<void> _createSafetyBackup({required String reason}) async {
     try {
       _lastBackupPath = await _database.createSafetyBackup(reason: reason);
@@ -2283,6 +2440,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _startupTodoPromptSuppressedDate = _settings
         .loadStartupTodoPromptSuppressedDate();
     _rememberedWords = _settings.loadRememberedWords();
+    _playbackProgressByWordbookPath = _settings
+        .loadPlaybackProgressByWordbook();
 
     final testModeState = _settings.loadTestModeState();
     _testModeEnabled = testModeState.enabled;

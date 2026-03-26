@@ -23,6 +23,8 @@ extension _AppStateStartup on AppState {
         _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
       }
       _rememberedWords = _settings.loadRememberedWords();
+      _playbackProgressByWordbookPath = _settings
+          .loadPlaybackProgressByWordbook();
       _startupPage = _settings.loadStartupPage();
       _focusStartupTab = _settings.loadFocusStartupTab();
       _weatherEnabled = _settings.loadWeatherEnabled();

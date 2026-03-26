@@ -1,7 +1,7 @@
 import 'practice_session_record.dart';
 import 'todo_item.dart';
 import 'tomato_timer.dart';
-import 'word_entry.dart';
+import 'word_field.dart';
 import 'word_memory_progress.dart';
 import 'wordbook.dart';
 
@@ -143,7 +143,7 @@ class UserDataExportWordbook {
   const UserDataExportWordbook({required this.wordbook, required this.words});
 
   final Wordbook wordbook;
-  final List<WordEntry> words;
+  final List<UserDataExportWordRecord> words;
 
   Map<String, Object?> toJsonMap() {
     return <String, Object?>{
@@ -152,27 +152,59 @@ class UserDataExportWordbook {
       'path': wordbook.path,
       'word_count': wordbook.wordCount,
       'created_at': wordbook.createdAt?.toIso8601String(),
-      'words': words
-          .map(
-            (word) => <String, Object?>{
-              'id': word.id,
-              'wordbook_id': word.wordbookId,
-              'word': word.word,
-              'meaning': word.meaning,
-              'examples': word.examples,
-              'etymology': word.etymology,
-              'roots': word.roots,
-              'affixes': word.affixes,
-              'variations': word.variations,
-              'memory': word.memory,
-              'story': word.story,
-              'fields': word.fields
-                  .map((field) => field.toJsonMap())
-                  .toList(growable: false),
-              'raw_content': word.rawContent,
-            },
-          )
+      'words': words.map((word) => word.toJsonMap()).toList(growable: false),
+    };
+  }
+}
+
+class UserDataExportWordRecord {
+  const UserDataExportWordRecord({
+    this.id,
+    required this.wordbookId,
+    required this.word,
+    this.meaning,
+    this.examples,
+    this.etymology,
+    this.roots,
+    this.affixes,
+    this.variations,
+    this.memory,
+    this.story,
+    this.fields = const <WordFieldItem>[],
+    this.rawContent = '',
+  });
+
+  final int? id;
+  final int wordbookId;
+  final String word;
+  final String? meaning;
+  final List<String>? examples;
+  final String? etymology;
+  final String? roots;
+  final String? affixes;
+  final String? variations;
+  final String? memory;
+  final String? story;
+  final List<WordFieldItem> fields;
+  final String rawContent;
+
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'id': id,
+      'wordbook_id': wordbookId,
+      'word': word,
+      'meaning': meaning,
+      'examples': examples,
+      'etymology': etymology,
+      'roots': roots,
+      'affixes': affixes,
+      'variations': variations,
+      'memory': memory,
+      'story': story,
+      'fields': fields
+          .map((field) => field.toJsonMap())
           .toList(growable: false),
+      'raw_content': rawContent,
     };
   }
 }

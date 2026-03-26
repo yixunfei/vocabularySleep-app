@@ -12,7 +12,7 @@ extension _AppStateWordbook on AppState {
       data: <String, Object?>{
         'query': value,
         'mode': _searchMode.name,
-        'visibleCount': visibleWords.length,
+        'visibleCount': visibleWordCount,
       },
     );
     _notifyStateChanged();
@@ -29,7 +29,7 @@ extension _AppStateWordbook on AppState {
       data: <String, Object?>{
         'mode': mode.name,
         'query': _searchQuery,
-        'visibleCount': visibleWords.length,
+        'visibleCount': visibleWordCount,
       },
     );
     _notifyStateChanged();
@@ -111,6 +111,10 @@ extension _AppStateWordbook on AppState {
     }
     _selectedWordbook = wordbook;
     _setWords(_database.getWords(wordbook.id));
+    final restoredProgressIndex =
+        (focusWordId == null && (normalizedFocusWord ?? '').isEmpty)
+        ? _playbackProgressIndexForWordbook(wordbook)
+        : -1;
     if (shouldFollowPlayingWord && _searchQuery.trim().isNotEmpty) {
       final matchesFocusedWord = _scopeWords.any(
         (item) =>
@@ -123,7 +127,14 @@ extension _AppStateWordbook on AppState {
         _invalidateVisibleWordsCache();
       }
     }
-    _currentWordIndex = 0;
+    _currentWordIndex = restoredProgressIndex >= 0
+        ? _indexOfWordEntry(
+            _words,
+            (_searchQuery.trim().isEmpty
+                ? _words
+                : _scopeWords)[restoredProgressIndex],
+          )
+        : 0;
     if (focusWordId != null) {
       final index = _words.indexWhere((item) => item.id == focusWordId);
       if (index >= 0) {

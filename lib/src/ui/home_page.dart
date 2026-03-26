@@ -17,6 +17,7 @@ import '../state/app_state.dart';
 import '../utils/asr_language.dart';
 import '../utils/speech_api_model_options.dart';
 import 'legacy_style.dart';
+import 'ui_copy.dart';
 
 const List<_TtsApiModelOption> _ttsApiModels = <_TtsApiModelOption>[
   _TtsApiModelOption(
@@ -1682,7 +1683,7 @@ class _HomePageState extends State<HomePage> {
                           children: <Widget>[
                             Expanded(
                               child: Text(
-                                '${wordbook.name} 鐠?${i18n.t('addWord')}',
+                                '${wordbook.name} · ${i18n.t('addWord')}',
                                 style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
@@ -1698,9 +1699,21 @@ class _HomePageState extends State<HomePage> {
                         onTap: (index) {
                           setStateDialog(() => activeTab = index);
                         },
-                        tabs: const <Tab>[
-                          Tab(text: 'Single Add'),
-                          Tab(text: 'JSON Batch'),
+                        tabs: <Tab>[
+                          Tab(
+                            text: pickUiText(
+                              i18n,
+                              zh: '单个添加',
+                              en: 'Single Add',
+                            ),
+                          ),
+                          Tab(
+                            text: pickUiText(
+                              i18n,
+                              zh: 'JSON 批量',
+                              en: 'JSON Batch',
+                            ),
+                          ),
                         ],
                       ),
                       Expanded(
@@ -1741,8 +1754,12 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                               child: ListView(
                                 children: <Widget>[
-                                  const Text(
-                                    '闂傚倷娴囬妴鈧柛瀣尰閵囧嫰寮介妸褉妲堥梺浼欏瘜閸ｏ綁骞冨Δ鍛仺婵炲牊瀵ч弫顖炴⒑閼恒儳澧悗姘嵆閻涱喚鈧綆鍠栭崘鈧梺闈涱煭闂勫嫰顢欏鍥╃＝闁稿本鐟чˇ锕傛倵濮樸儱濮傞柛鈹惧亾濡炪倖宸婚崑鎾绘煕婵犲啯鍊愰柟顕€缂氶ˇ鏌ユ煃缂佹ɑ宕屾俊顐㈠暙閳藉螣濞嗘儳鏁奸梻鍌欑閹诧繝鎮ч弴銏犵疇閹兼番鍔岀粻?word闂傚倷绶氬褍螞閺傚簱鏌﹂柣鎺撳彠ning闂傚倷绶氬褍螞閺冨牏鍙曢柣鐔锋▍mples闂傚倷绶氬褍螞閺冨牏鍙曢柣鐔峰墯mology闂傚倷绶氬褍螞閺冨倹瀚婚柣鐘殿煻ts闂傚倷绶氬褍螞閺傛鍟呮い褏鎯宨xes闂傚倷绶氬褍螞閺冨倻涓嶇€瑰嫭顒琲ations闂傚倷绶氬褍螞閺傚簱鏌﹂柣鎺撳敥ory闂傚倷绶氬褍螞閺冣偓瀵板嫰鎮為—绁寉闂傚倷绶氬褍螞閺冨牆绀傞柣鐐电亙lds',
+                                  Text(
+                                    pickUiText(
+                                      i18n,
+                                      zh: '每一项使用一个 JSON 对象，常用字段包括 word、meaning、examples、etymology、roots、affixes、variations、memory、story 和 fields。',
+                                      en: 'Use one JSON object per entry. Common fields include word, meaning, examples, etymology, roots, affixes, variations, memory, story, and fields.',
+                                    ),
                                   ),
                                   const SizedBox(height: 10),
                                   TextField(
@@ -1819,13 +1836,9 @@ class _HomePageState extends State<HomePage> {
       await state.importWordsBatch(payloads);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'JSON 闂傚倷娴囬褍霉閻戣棄鏋侀柟闂寸閸屻劎鎲搁弬璺ㄦ殾闁挎繂顦獮銏′繆椤栨繃顏犵紒鎰仱閺屸剝寰勬繝鍕拡闂佺顑呴ˇ鎶铰? $error',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('JSON 批量导入解析失败：$error')));
     }
   }
 

@@ -44,6 +44,7 @@ class _LibraryPageState extends State<LibraryPage> {
   int _visibleItemCount = _pageSize;
   int _currentScopeWordCount = 0;
   String _paginationSignature = '';
+  List<WordEntry> _loadedWords = const <WordEntry>[];
 
   @override
   void initState() {
@@ -128,17 +129,15 @@ class _LibraryPageState extends State<LibraryPage> {
     _rowHeights[identity] = nextHeight;
   }
 
-  String _buildPaginationSignature(AppState state, List<WordEntry> words) {
+  String _buildPaginationSignature(AppState state, int totalWords) {
     final selectedWordbookId = state.selectedWordbook?.id.toString() ?? 'none';
     final searchQuery = state.searchQuery.trim();
-    final firstIdentity = words.isEmpty ? 'empty' : _wordIdentity(words.first);
-    final lastIdentity = words.isEmpty ? 'empty' : _wordIdentity(words.last);
-    return '$selectedWordbookId|${state.searchMode.name}|$searchQuery|${words.length}|$firstIdentity|$lastIdentity';
+    return '$selectedWordbookId|${state.searchMode.name}|$searchQuery|$totalWords';
   }
 
-  void _syncPaginationState(AppState state, List<WordEntry> words) {
-    final signature = _buildPaginationSignature(state, words);
-    final scopeWordCount = words.length;
+  void _syncPaginationState(AppState state, int totalWords) {
+    final signature = _buildPaginationSignature(state, totalWords);
+    final scopeWordCount = totalWords;
     if (_paginationSignature != signature) {
       _paginationSignature = signature;
       _currentScopeWordCount = scopeWordCount;
@@ -253,30 +252,21 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  void _scrollToCurrent(
-    AppState state,
-    List<WordEntry> words, {
-    int attempt = 0,
-  }) {
-    final current = state.currentWord;
-    if (current == null || words.isEmpty) return;
-    final targetIdentity = _wordIdentity(current);
-    final targetIndex = words.indexWhere(
-      (word) => _wordIdentity(word) == targetIdentity,
-    );
-    if (targetIndex < 0) return;
-
+  void _scrollToIndex(int targetIndex, {int attempt = 0}) {
+    if (targetIndex < 0 || _currentScopeWordCount <= 0) return;
     final loaded = _ensureVisibleItemCount(targetIndex + 1);
     if (loaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _scrollToCurrent(state, words, attempt: attempt);
+        _scrollToIndex(targetIndex, attempt: attempt);
       });
       return;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (targetIndex >= _loadedWords.length) return;
+      final targetIdentity = _wordIdentity(_loadedWords[targetIndex]);
       final key = _rowKeys[targetIdentity];
       final targetContext = key?.currentContext;
       if (targetContext != null) {
@@ -290,11 +280,11 @@ class _LibraryPageState extends State<LibraryPage> {
       }
       if (attempt >= 4 || !_scrollController.hasClients) return;
       unawaited(
-        _coarseScrollToIndex(words, targetIndex).whenComplete(() {
+        _coarseScrollToIndex(_loadedWords, targetIndex).whenComplete(() {
           if (!mounted) return;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            _scrollToCurrent(state, words, attempt: attempt + 1);
+            _scrollToIndex(targetIndex, attempt: attempt + 1);
           });
         }),
       );
@@ -355,9 +345,13 @@ class _LibraryPageState extends State<LibraryPage> {
       ),
     );
     if (!mounted || prefix == null || prefix.trim().isEmpty) return;
-    final success = state.jumpByPrefix(prefix.trim());
+    final normalizedPrefix = prefix.trim();
+    final targetIndex = state.findVisibleWordOffsetByPrefix(normalizedPrefix);
+    final success = state.jumpByPrefix(normalizedPrefix);
     if (success) {
-      _scrollToCurrent(state, state.visibleWords);
+      if (targetIndex != null) {
+        _scrollToIndex(targetIndex);
+      }
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
@@ -427,12 +421,21 @@ class _LibraryPageState extends State<LibraryPage> {
       );
     }
 
-    final words = state.visibleWords;
-    _syncPaginationState(state, words);
-    final displayedWords = words
-        .take(_visibleItemCount.clamp(0, words.length).toInt())
-        .toList(growable: false);
+    final totalWords = state.visibleWordCount;
+    final words = _WordCountProxy(totalWords);
+    _syncPaginationState(state, totalWords);
+    final displayedWords = totalWords <= 0
+        ? const <WordEntry>[]
+        : state.getVisibleWordsPage(
+            limit: _visibleItemCount.clamp(0, totalWords).toInt(),
+            offset: 0,
+          );
+    _loadedWords = displayedWords;
     _syncRowKeys(displayedWords);
+    final currentWord = state.currentWord;
+    final selectedIdentity = currentWord == null
+        ? null
+        : _wordIdentity(currentWord);
     final previewVisible = state.config.showText;
     final searching = state.searchQuery.trim().isNotEmpty;
     final mediaQuery = MediaQuery.of(context);
@@ -492,7 +495,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       subtitle: _wordbookSummary(
                         i18n,
                         state.selectedWordbook,
-                        words.length,
+                        totalWords,
                       ),
                       onTap: () {
                         _commitSearchQuery(state, _searchController.text);
@@ -543,7 +546,7 @@ class _LibraryPageState extends State<LibraryPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    if (words.isNotEmpty)
+                    if (totalWords > 0)
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(14),
@@ -632,7 +635,7 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            if (words.isEmpty)
+            if (totalWords <= 0)
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(
@@ -658,7 +661,7 @@ class _LibraryPageState extends State<LibraryPage> {
                   child: SizedBox(key: _listTopKey, height: 0),
                 ),
               ),
-            if (words.isNotEmpty)
+            if (totalWords > 0)
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList(
@@ -673,7 +676,7 @@ class _LibraryPageState extends State<LibraryPage> {
                           child: WordRow(
                             word: word,
                             i18n: i18n,
-                            selected: state.currentWord?.word == word.word,
+                            selected: selectedIdentity == _wordIdentity(word),
                             showMeaning: previewVisible,
                             showFields: previewVisible,
                             isFavorite: state.favorites.contains(word.word),
@@ -690,7 +693,7 @@ class _LibraryPageState extends State<LibraryPage> {
                   }, childCount: displayedWords.length),
                 ),
               ),
-            if (displayedWords.length < words.length)
+            if (displayedWords.length < totalWords)
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                 sliver: SliverToBoxAdapter(
@@ -698,7 +701,7 @@ class _LibraryPageState extends State<LibraryPage> {
                     pickUiText(
                       i18n,
                       zh: '已加载 ${displayedWords.length}/${words.length}，继续下滑将自动加载后续内容。',
-                      en: 'Loaded ${displayedWords.length}/${words.length}. Keep scrolling to load more.',
+                      en: 'Loaded ${displayedWords.length}/$totalWords. Keep scrolling to load more.',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -837,6 +840,12 @@ class _LibraryPageState extends State<LibraryPage> {
       MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
     );
   }
+}
+
+class _WordCountProxy {
+  const _WordCountProxy(this.length);
+
+  final int length;
 }
 
 class _MeasuredSize extends StatefulWidget {

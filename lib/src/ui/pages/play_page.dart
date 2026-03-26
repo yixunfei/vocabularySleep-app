@@ -38,6 +38,7 @@ class PlayPage extends StatefulWidget {
 
 class _PlayPageState extends State<PlayPage> {
   int _transitionDirection = 1;
+  double? _progressDragValue;
 
   @override
   void initState() {
@@ -81,7 +82,9 @@ class _PlayPageState extends State<PlayPage> {
     if (visibleWords.isEmpty) return;
     final base = currentIndex < 0 ? 0 : currentIndex;
     final target = (base - 1 + visibleWords.length) % visibleWords.length;
-    state.selectWordEntry(visibleWords[target]);
+    final targetWord = visibleWords[target];
+    state.selectWordEntry(targetWord);
+    state.rememberPlaybackProgress(targetWord);
   }
 
   Future<void> _moveToNextWord(
@@ -97,7 +100,97 @@ class _PlayPageState extends State<PlayPage> {
     if (visibleWords.isEmpty) return;
     final base = currentIndex < 0 ? 0 : currentIndex;
     final target = (base + 1) % visibleWords.length;
-    state.selectWordEntry(visibleWords[target]);
+    final targetWord = visibleWords[target];
+    state.selectWordEntry(targetWord);
+    state.rememberPlaybackProgress(targetWord);
+  }
+
+  int _resolveTargetIndex(double value, int totalWords) {
+    if (totalWords <= 1) {
+      return 0;
+    }
+    final clamped = value.clamp(0.0, 1.0);
+    return (clamped * (totalWords - 1)).round().clamp(0, totalWords - 1);
+  }
+
+  double _resolveSliderValue(int index, int totalWords) {
+    if (totalWords <= 1) {
+      return 0;
+    }
+    return (index.clamp(0, totalWords - 1) / (totalWords - 1)).toDouble();
+  }
+
+  int _progressJumpStep(int totalWords) {
+    if (totalWords >= 10000) return 500;
+    if (totalWords >= 5000) return 250;
+    if (totalWords >= 2000) return 100;
+    if (totalWords >= 500) return 25;
+    if (totalWords >= 200) return 10;
+    return 5;
+  }
+
+  void _jumpToIndex(
+    AppState state, {
+    required List<WordEntry> visibleWords,
+    required int currentIndex,
+    required int targetIndex,
+  }) {
+    if (visibleWords.isEmpty) {
+      return;
+    }
+    final normalizedTarget = targetIndex.clamp(0, visibleWords.length - 1);
+    final normalizedCurrent = currentIndex < 0 ? 0 : currentIndex;
+    _setTransitionDirection(normalizedTarget >= normalizedCurrent ? 1 : -1);
+    final targetWord = visibleWords[normalizedTarget];
+    state.selectWordEntry(targetWord);
+    state.rememberPlaybackProgress(targetWord);
+  }
+
+  Future<void> _openExactJumpDialog(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n, {
+    required List<WordEntry> visibleWords,
+    required int currentIndex,
+  }) async {
+    if (visibleWords.length <= 1) {
+      return;
+    }
+    final raw = await showTextPromptDialog(
+      context: context,
+      title: pickUiText(i18n, zh: '精确跳转', en: 'Exact jump'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '输入 1 到 ${visibleWords.length} 之间的位置编号。',
+        en: 'Enter a position between 1 and ${visibleWords.length}.',
+      ),
+      hintText: pickUiText(i18n, zh: '例如 256', en: 'e.g. 256'),
+      confirmText: pickUiText(i18n, zh: '跳转', en: 'Jump'),
+    );
+    if (!mounted || !context.mounted || raw == null) {
+      return;
+    }
+    final target = int.tryParse(raw.trim());
+    if (target == null || target < 1 || target > visibleWords.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            pickUiText(
+              i18n,
+              zh: '请输入 1 到 ${visibleWords.length} 之间的编号。',
+              en: 'Enter a number between 1 and ${visibleWords.length}.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    _jumpToIndex(
+      state,
+      visibleWords: visibleWords,
+      currentIndex: currentIndex,
+      targetIndex: target - 1,
+    );
   }
 
   Future<void> _openFollowAlong(
@@ -180,6 +273,14 @@ class _PlayPageState extends State<PlayPage> {
     final position = visibleWords.isEmpty
         ? 0.0
         : ((index + 1) / visibleWords.length);
+    final effectiveSliderValue =
+        _progressDragValue ??
+        _resolveSliderValue(index < 0 ? 0 : index, visibleWords.length);
+    final previewIndex = _resolveTargetIndex(
+      effectiveSliderValue,
+      visibleWords.length,
+    );
+    final progressStep = _progressJumpStep(visibleWords.length);
     final mode = experienceModeFromAppearance(state.config.appearance);
     final weakCount = state.recentWeakWordEntries.length;
     final todayAccuracy = (state.practiceTodayAccuracy * 100).round();
@@ -368,32 +469,92 @@ class _PlayPageState extends State<PlayPage> {
                 title: pickUiText(i18n, zh: '播放进度', en: 'Playback progress'),
                 subtitle: pickUiText(
                   i18n,
-                  zh: '当前位置 ${index + 1}/${visibleWords.length}',
-                  en: 'Current position ${index + 1}/${visibleWords.length}',
+                  zh: _progressDragValue == null
+                      ? '当前位置 ${index + 1}/${visibleWords.length}'
+                      : '预览位置 ${previewIndex + 1}/${visibleWords.length}',
+                  en: _progressDragValue == null
+                      ? 'Current position ${index + 1}/${visibleWords.length}'
+                      : 'Preview position ${previewIndex + 1}/${visibleWords.length}',
                 ),
               ),
               const SizedBox(height: 10),
               LinearProgressIndicator(value: position.clamp(0, 1)),
               const SizedBox(height: 10),
               Slider(
-                value: index < 0 ? 0 : index.toDouble(),
+                value: effectiveSliderValue,
                 min: 0,
-                max: visibleWords.isEmpty
-                    ? 0
-                    : (visibleWords.length - 1).toDouble(),
-                divisions: visibleWords.length > 1
-                    ? visibleWords.length - 1
-                    : null,
+                max: 1,
+                onChangeStart: visibleWords.length <= 1
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _progressDragValue = value;
+                        });
+                      },
                 onChanged: visibleWords.length <= 1
                     ? null
                     : (value) {
-                        final target = value.round();
-                        final direction = target >= (index < 0 ? 0 : index)
-                            ? 1
-                            : -1;
-                        _setTransitionDirection(direction);
-                        state.selectWordEntry(visibleWords[target]);
+                        setState(() {
+                          _progressDragValue = value;
+                        });
                       },
+                onChangeEnd: visibleWords.length <= 1
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _progressDragValue = null;
+                        });
+                        _jumpToIndex(
+                          state,
+                          visibleWords: visibleWords,
+                          currentIndex: index,
+                          targetIndex: _resolveTargetIndex(
+                            value,
+                            visibleWords.length,
+                          ),
+                        );
+                      },
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  ActionChip(
+                    onPressed: visibleWords.length <= 1
+                        ? null
+                        : () => _jumpToIndex(
+                            state,
+                            visibleWords: visibleWords,
+                            currentIndex: index,
+                            targetIndex: (index < 0 ? 0 : index) - progressStep,
+                          ),
+                    label: Text('-$progressStep'),
+                  ),
+                  ActionChip(
+                    onPressed: visibleWords.length <= 1
+                        ? null
+                        : () => _openExactJumpDialog(
+                            context,
+                            state,
+                            i18n,
+                            visibleWords: visibleWords,
+                            currentIndex: index,
+                          ),
+                    label: Text(pickUiText(i18n, zh: '精确跳转', en: 'Exact jump')),
+                  ),
+                  ActionChip(
+                    onPressed: visibleWords.length <= 1
+                        ? null
+                        : () => _jumpToIndex(
+                            state,
+                            visibleWords: visibleWords,
+                            currentIndex: index,
+                            targetIndex: (index < 0 ? 0 : index) + progressStep,
+                          ),
+                    label: Text('+$progressStep'),
+                  ),
+                ],
               ),
             ],
           ),

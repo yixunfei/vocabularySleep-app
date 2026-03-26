@@ -437,14 +437,14 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickUiText(i18n, zh: '浼氳瘽璁剧疆', en: 'Session settings'),
+                        pickUiText(i18n, zh: '会话设置', en: 'Session settings'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         pickUiText(
                           i18n,
-                          zh: '棰樺瀷銆佽嚜鍔ㄩ」鍜岀瓟棰樺脊绐楅兘鍙互鍦ㄨ繖閲岀粺涓€鎺у埗銆?',
+                          zh: '题型、自动项和答题弹窗都可以在这里统一控制。',
                           en: 'Question mode, automation toggles, and answer popup behavior live here.',
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
@@ -488,14 +488,14 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                       size: 16,
                     ),
                     label: Text(
-                      pickUiText(i18n, zh: '鑷姩鍔犲叆浠诲姟璇?', en: 'Auto task sync'),
+                      pickUiText(i18n, zh: '自动加入任务词', en: 'Auto task sync'),
                     ),
                   ),
                 if (_autoPlayPronunciation)
                   Chip(
                     avatar: const Icon(Icons.volume_up_rounded, size: 16),
                     label: Text(
-                      pickUiText(i18n, zh: '鑷姩鍙戦煶', en: 'Auto pronunciation'),
+                      pickUiText(i18n, zh: '自动发音', en: 'Auto pronunciation'),
                     ),
                   ),
                 if (_hintRevealed)
@@ -505,7 +505,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                       size: 16,
                     ),
                     label: Text(
-                      pickUiText(i18n, zh: '榛樿灞曞紑鎻愮ず', en: 'Hints open'),
+                      pickUiText(i18n, zh: '提示已展开', en: 'Hints open'),
                     ),
                   ),
                 Chip(
@@ -517,14 +517,10 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                   ),
                   label: Text(
                     _answerFeedbackDialogEnabled
-                        ? pickUiText(
-                            i18n,
-                            zh: '绛旈寮圭獥寮€鍚?',
-                            en: 'Answer popup on',
-                          )
+                        ? pickUiText(i18n, zh: '答题弹窗开启', en: 'Answer popup on')
                         : pickUiText(
                             i18n,
-                            zh: '绛旈寮圭獥鍏抽棴',
+                            zh: '答题弹窗关闭',
                             en: 'Answer popup off',
                           ),
                   ),
@@ -648,12 +644,12 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 title: Text(
-                  pickUiText(i18n, zh: '绛旈鍚庡脊绐楀弽棣?', en: 'Show answer popup'),
+                  pickUiText(i18n, zh: '答题后弹窗反馈', en: 'Show answer popup'),
                 ),
                 subtitle: Text(
                   pickUiText(
                     i18n,
-                    zh: '绛斿畬涓€棰樺悗鏄剧ず榧撳姳寮圭獥锛屽苟鍙洿鎺ュ喅瀹氭槸鍚﹀姞鍏ラ敊棰樻湰銆?',
+                    zh: '答完一题后显示鼓励弹窗，并可直接决定是否加入错题本。',
                     en: 'Show the encouraging answer popup and let you decide whether to add the word to the wrong notebook.',
                   ),
                 ),

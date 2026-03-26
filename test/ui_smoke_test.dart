@@ -412,7 +412,7 @@ void main() {
     testWidgets('app shell blocks exit dialog while focus lock is active', (
       tester,
     ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.binding.setSurfaceSize(const Size(390, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final state = _FakeAppState.sample(
@@ -440,7 +440,7 @@ void main() {
     testWidgets('app shell still shows exit dialog when focus lock is off', (
       tester,
     ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
+      await tester.binding.setSurfaceSize(const Size(390, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final state = _FakeAppState.sample(
@@ -2751,6 +2751,28 @@ class _FakeAppState extends ChangeNotifier
   List<WordEntry> get visibleWords => _visibleWords;
 
   @override
+  int get visibleWordCount => _visibleWords.length;
+
+  @override
+  List<WordEntry> getVisibleWordsPage({required int limit, int offset = 0}) {
+    final start = offset.clamp(0, _visibleWords.length).toInt();
+    final end = (start + limit).clamp(start, _visibleWords.length).toInt();
+    return _visibleWords.sublist(start, end);
+  }
+
+  @override
+  int? findVisibleWordOffsetByPrefix(String prefix) {
+    final index = AppState.findJumpIndexByPrefix(_visibleWords, prefix);
+    return index < 0 ? null : index;
+  }
+
+  @override
+  int? findVisibleWordOffsetByInitial(String initial) {
+    final index = AppState.findJumpIndexByInitial(_visibleWords, initial);
+    return index < 0 ? null : index;
+  }
+
+  @override
   List<Wordbook> get wordbooks => _wordbooks;
 
   @override
@@ -2927,6 +2949,12 @@ class _FakeAppState extends ChangeNotifier
     }
     selectWordIndex((_currentWordIndex + 1).clamp(0, _visibleWords.length - 1));
   }
+
+  @override
+  void rememberPlaybackProgress([WordEntry? entry]) {}
+
+  @override
+  bool restorePlaybackProgressForSelectedWordbook() => false;
 
   @override
   void clearMessage() {}

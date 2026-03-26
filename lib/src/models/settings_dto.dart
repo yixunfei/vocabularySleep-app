@@ -540,3 +540,47 @@ class PracticeDashboardState {
     };
   }
 }
+
+class PlaybackProgressSnapshot {
+  const PlaybackProgressSnapshot({
+    required this.wordbookPath,
+    this.wordId,
+    required this.word,
+    required this.updatedAt,
+  });
+
+  final String wordbookPath;
+  final int? wordId;
+  final String word;
+  final DateTime updatedAt;
+
+  factory PlaybackProgressSnapshot.fromJsonMap(Map<String, Object?> map) {
+    int? readId(Object? raw) {
+      if (raw is int) {
+        return raw > 0 ? raw : null;
+      }
+      if (raw is num) {
+        final value = raw.toInt();
+        return value > 0 ? value : null;
+      }
+      return null;
+    }
+
+    return PlaybackProgressSnapshot(
+      wordbookPath: '${map['wordbookPath'] ?? ''}'.trim(),
+      wordId: readId(map['wordId']),
+      word: '${map['word'] ?? ''}'.trim(),
+      updatedAt:
+          DateTime.tryParse('${map['updatedAt'] ?? ''}') ?? DateTime.now(),
+    );
+  }
+
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'wordbookPath': wordbookPath,
+      'wordId': wordId,
+      'word': word,
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+}

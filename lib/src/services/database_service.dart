@@ -86,6 +86,7 @@ class AppDatabaseService {
   late Database _db;
   late final String dbPath;
   bool _initialized = false;
+  Future<void>? _initFuture;
   int _transactionDepth = 0;
 
   static const _specialWordbooks = <String, String>{
@@ -103,24 +104,41 @@ class AppDatabaseService {
     r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)',
     caseSensitive: false,
   );
-  static const int _currentSchemaVersion = 5;
+  static const int _maxSqlVariablesPerStatement = 900;
+  static const int _currentSchemaVersion = 7;
 
-  Future<void> init() async {
-    if (_initialized) return;
-    final supportDir = await getApplicationSupportDirectory();
-    if (!await supportDir.exists()) {
-      await supportDir.create(recursive: true);
+  Future<void> init() {
+    if (_initialized) {
+      return Future<void>.value();
     }
-    dbPath = p.join(supportDir.path, 'vocabulary.db');
-    _openDatabase();
-    await _prepareDatabase();
-    _initialized = true;
+    _initFuture ??= _initImpl();
+    return _initFuture!;
+  }
+
+  Future<void> _initImpl() async {
+    try {
+      final supportDir = await getApplicationSupportDirectory();
+      if (!await supportDir.exists()) {
+        await supportDir.create(recursive: true);
+      }
+      dbPath = p.join(supportDir.path, 'vocabulary.db');
+      _openDatabase();
+      await _prepareDatabase();
+      _initialized = true;
+    } catch (_) {
+      try {
+        _db.dispose();
+      } catch (_) {}
+      rethrow;
+    } finally {
+      if (!_initialized) {
+        _initFuture = null;
+      }
+    }
   }
 
   Future<String> createSafetyBackup({String reason = 'manual'}) async {
-    if (!_initialized) {
-      throw StateError('Database is not initialized');
-    }
+    await init();
 
     final source = File(dbPath);
     if (!await source.exists()) {
@@ -206,9 +224,7 @@ class AppDatabaseService {
     String? directoryPath,
     String? fileName,
   }) async {
-    if (!_initialized) {
-      throw StateError('Database is not initialized');
-    }
+    await init();
 
     final resolvedSections = _resolveUserDataExportSections(sections);
     final exportDir = (directoryPath ?? '').trim().isEmpty
@@ -298,9 +314,7 @@ class AppDatabaseService {
   }
 
   Future<void> restoreSafetyBackup(String backupPath) async {
-    if (!_initialized) {
-      throw StateError('Database is not initialized');
-    }
+    await init();
 
     final backupFile = File(backupPath);
     if (!await backupFile.exists()) {
@@ -381,9 +395,7 @@ class AppDatabaseService {
   }
 
   Future<void> resetUserData() async {
-    if (!_initialized) {
-      throw StateError('Database is not initialized');
-    }
+    await init();
 
     _runInTransaction<void>(() {
       _db.execute('DELETE FROM user_marks;');
@@ -415,6 +427,7 @@ class AppDatabaseService {
   }
 
   void dispose() {
+    _initFuture = null;
     if (!_initialized) return;
     _db.dispose();
     _initialized = false;
@@ -1181,34 +1194,14 @@ class AppDatabaseService {
     int limit = 100000,
     int offset = 0,
   }) {
-    final normalizedQuery = search_text.normalizeSearchText(query);
-    if (normalizedQuery.isEmpty) {
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
+      query: query,
+      mode: mode,
+    );
+    if (params.length == 1) {
       return getWords(wordbookId, limit: limit, offset: offset);
     }
-    final likeQuery = _buildContainsLikePattern(normalizedQuery);
-    final fuzzyLikeQuery = search_text.buildFuzzySqlLikePattern(query);
-    final resolvedFuzzyPattern = fuzzyLikeQuery.isEmpty
-        ? likeQuery
-        : fuzzyLikeQuery;
-
-    final (whereClause, params) = switch (mode.trim()) {
-      'word' => (
-        'wordbook_id = ? AND search_word LIKE ?',
-        <Object?>[wordbookId, likeQuery],
-      ),
-      'meaning' => (
-        'wordbook_id = ? AND (COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
-        <Object?>[wordbookId, likeQuery, likeQuery],
-      ),
-      'fuzzy' => (
-        'wordbook_id = ? AND (search_word_compact LIKE ? OR COALESCE(search_details_compact, \'\') LIKE ?)',
-        <Object?>[wordbookId, resolvedFuzzyPattern, resolvedFuzzyPattern],
-      ),
-      _ => (
-        'wordbook_id = ? AND (search_word LIKE ? OR COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
-        <Object?>[wordbookId, likeQuery, likeQuery, likeQuery],
-      ),
-    };
 
     final rows = _selectMaps(
       '''
@@ -1237,6 +1230,147 @@ class AppDatabaseService {
         .toList(growable: false);
   }
 
+  int countSearchWords(
+    int wordbookId, {
+    required String query,
+    required String mode,
+  }) {
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
+      query: query,
+      mode: mode,
+    );
+    final row = _selectOne(
+      'SELECT COUNT(*) AS count FROM words WHERE $whereClause',
+      params,
+    );
+    return ((row?['count'] as num?) ?? 0).toInt();
+  }
+
+  int? findSearchOffsetByPrefix(
+    int wordbookId, {
+    required String prefix,
+    required String query,
+    required String mode,
+  }) {
+    final normalizedPrefix = search_text.normalizeJumpText(prefix);
+    if (normalizedPrefix.isEmpty) {
+      return null;
+    }
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
+      query: query,
+      mode: mode,
+    );
+    final target = _selectOne(
+      '''
+      SELECT id
+      FROM words
+      WHERE $whereClause
+        AND search_word_compact LIKE ?
+      ORDER BY id ASC
+      LIMIT 1
+      ''',
+      <Object?>[
+        ...params,
+        '${normalizedPrefix.replaceAll('%', '\\%').replaceAll('_', '\\_')}%',
+      ],
+    );
+    final targetId = (target?['id'] as num?)?.toInt();
+    if (targetId == null || targetId <= 0) {
+      return null;
+    }
+    final row = _selectOne(
+      'SELECT COUNT(*) AS count FROM words WHERE $whereClause AND id < ?',
+      <Object?>[...params, targetId],
+    );
+    return ((row?['count'] as num?) ?? 0).toInt();
+  }
+
+  int? findSearchOffsetByInitial(
+    int wordbookId, {
+    required String initial,
+    required String query,
+    required String mode,
+  }) {
+    final normalized = initial.trim().toUpperCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
+      query: query,
+      mode: mode,
+    );
+    final target = normalized == '#'
+        ? _selectOne('''
+            SELECT id
+            FROM words
+            WHERE $whereClause
+              AND (
+                search_word_compact = ''
+                OR substr(search_word_compact, 1, 1) < 'a'
+                OR substr(search_word_compact, 1, 1) > 'z'
+              )
+            ORDER BY id ASC
+            LIMIT 1
+            ''', params)
+        : _selectOne(
+            '''
+            SELECT id
+            FROM words
+            WHERE $whereClause
+              AND substr(search_word_compact, 1, 1) = ?
+            ORDER BY id ASC
+            LIMIT 1
+            ''',
+            <Object?>[...params, normalized.toLowerCase()],
+          );
+    final targetId = (target?['id'] as num?)?.toInt();
+    if (targetId == null || targetId <= 0) {
+      return null;
+    }
+    final row = _selectOne(
+      'SELECT COUNT(*) AS count FROM words WHERE $whereClause AND id < ?',
+      <Object?>[...params, targetId],
+    );
+    return ((row?['count'] as num?) ?? 0).toInt();
+  }
+
+  (String, List<Object?>) _buildSearchWhereClause({
+    required int wordbookId,
+    required String query,
+    required String mode,
+  }) {
+    final normalizedQuery = search_text.normalizeSearchText(query);
+    if (normalizedQuery.isEmpty) {
+      return ('wordbook_id = ?', <Object?>[wordbookId]);
+    }
+    final likeQuery = _buildContainsLikePattern(normalizedQuery);
+    final fuzzyLikeQuery = search_text.buildFuzzySqlLikePattern(query);
+    final resolvedFuzzyPattern = fuzzyLikeQuery.isEmpty
+        ? likeQuery
+        : fuzzyLikeQuery;
+    return switch (mode.trim()) {
+      'word' => (
+        'wordbook_id = ? AND search_word LIKE ?',
+        <Object?>[wordbookId, likeQuery],
+      ),
+      'meaning' => (
+        'wordbook_id = ? AND (COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
+        <Object?>[wordbookId, likeQuery, likeQuery],
+      ),
+      'fuzzy' => (
+        'wordbook_id = ? AND (search_word_compact LIKE ? OR COALESCE(search_details_compact, \'\') LIKE ?)',
+        <Object?>[wordbookId, resolvedFuzzyPattern, resolvedFuzzyPattern],
+      ),
+      _ => (
+        'wordbook_id = ? AND (search_word LIKE ? OR COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
+        <Object?>[wordbookId, likeQuery, likeQuery, likeQuery],
+      ),
+    };
+  }
+
   WordEntry? findJumpWordByPrefix(
     int wordbookId, {
     required String prefix,
@@ -1247,29 +1381,22 @@ class AppDatabaseService {
     if (normalizedPrefix.isEmpty) {
       return null;
     }
-    final scopedWordIds = _resolveScopedWordIds(
-      wordbookId,
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
       query: query,
       mode: mode,
     );
-    if (scopedWordIds.isEmpty) {
-      return null;
-    }
-    final placeholders = List<String>.filled(
-      scopedWordIds.length,
-      '?',
-    ).join(', ');
     final row = _selectOne(
       '''
       SELECT *
       FROM words
-      WHERE id IN ($placeholders)
+      WHERE $whereClause
         AND search_word_compact LIKE ?
       ORDER BY id ASC
       LIMIT 1
       ''',
       <Object?>[
-        ...scopedWordIds,
+        ...params,
         '${normalizedPrefix.replaceAll('%', '\\%').replaceAll('_', '\\_')}%',
       ],
     );
@@ -1289,23 +1416,16 @@ class AppDatabaseService {
     if (normalized.isEmpty) {
       return null;
     }
-    final scopedWordIds = _resolveScopedWordIds(
-      wordbookId,
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
       query: query,
       mode: mode,
     );
-    if (scopedWordIds.isEmpty) {
-      return null;
-    }
-    final placeholders = List<String>.filled(
-      scopedWordIds.length,
-      '?',
-    ).join(', ');
     final row = normalized == '#'
         ? _selectOne('''
             SELECT *
             FROM words
-            WHERE id IN ($placeholders)
+            WHERE $whereClause
               AND (
                 search_word_compact = ''
                 OR substr(search_word_compact, 1, 1) < 'a'
@@ -1313,46 +1433,22 @@ class AppDatabaseService {
               )
             ORDER BY id ASC
             LIMIT 1
-            ''', scopedWordIds.cast<Object?>())
+            ''', params)
         : _selectOne(
             '''
             SELECT *
             FROM words
-            WHERE id IN ($placeholders)
+            WHERE $whereClause
               AND substr(search_word_compact, 1, 1) = ?
             ORDER BY id ASC
             LIMIT 1
             ''',
-            <Object?>[...scopedWordIds, normalized.toLowerCase()],
+            <Object?>[...params, normalized.toLowerCase()],
           );
     if (row == null) {
       return null;
     }
     return _inflateWordEntry(row);
-  }
-
-  List<int> _resolveScopedWordIds(
-    int wordbookId, {
-    required String query,
-    required String mode,
-  }) {
-    final normalizedQuery = search_text.normalizeSearchText(query);
-    if (normalizedQuery.isEmpty) {
-      final rows = _selectMaps(
-        'SELECT id FROM words WHERE wordbook_id = ? ORDER BY id ASC',
-        <Object?>[wordbookId],
-      );
-      return rows
-          .map((row) => (row['id'] as num?)?.toInt())
-          .whereType<int>()
-          .where((id) => id > 0)
-          .toList(growable: false);
-    }
-    return searchWords(
-      wordbookId,
-      query: normalizedQuery,
-      mode: mode,
-    ).map((item) => item.id).whereType<int>().toList(growable: false);
   }
 
   WordEntry _inflateWordEntry(Map<String, Object?> row) {
@@ -1374,18 +1470,69 @@ class AppDatabaseService {
     return '%$escaped%';
   }
 
+  List<List<int>> _chunkSqlIntIds(Iterable<int> ids) {
+    final normalized = ids
+        .where((id) => id > 0)
+        .toSet()
+        .toList(growable: false);
+    if (normalized.isEmpty) {
+      return const <List<int>>[];
+    }
+    final chunks = <List<int>>[];
+    for (
+      var start = 0;
+      start < normalized.length;
+      start += _maxSqlVariablesPerStatement
+    ) {
+      final end = math.min(
+        start + _maxSqlVariablesPerStatement,
+        normalized.length,
+      );
+      chunks.add(normalized.sublist(start, end));
+    }
+    return chunks;
+  }
+
+  List<Map<String, Object?>> _selectMapsByChunkedIntIds({
+    required Iterable<int> ids,
+    required String selectSqlPrefix,
+    required String whereColumn,
+    String? orderByClause,
+  }) {
+    final chunks = _chunkSqlIntIds(ids);
+    if (chunks.isEmpty) {
+      return const <Map<String, Object?>>[];
+    }
+    final rows = <Map<String, Object?>>[];
+    final orderSql = (orderByClause ?? '').trim().isEmpty
+        ? ''
+        : ' ORDER BY ${orderByClause!.trim()}';
+    for (final chunk in chunks) {
+      final placeholders = List<String>.filled(chunk.length, '?').join(', ');
+      rows.addAll(
+        _selectMaps(
+          '$selectSqlPrefix WHERE $whereColumn IN ($placeholders)$orderSql',
+          chunk.cast<Object?>(),
+        ),
+      );
+    }
+    return rows;
+  }
+
   Map<int, List<WordFieldItem>> _getWordFieldsByWordIds(Iterable<int> wordIds) {
     final ids = wordIds.where((id) => id > 0).toSet().toList(growable: false);
     if (ids.isEmpty) {
       return const <int, List<WordFieldItem>>{};
     }
-    final placeholders = List<String>.filled(ids.length, '?').join(', ');
-    final rows = _selectMaps('''
+    final rows = _selectMapsByChunkedIntIds(
+      ids: ids,
+      selectSqlPrefix: '''
       SELECT id, word_id, field_key, field_label, field_value_json, style_json, sort_order
       FROM word_fields
-      WHERE word_id IN ($placeholders)
-      ORDER BY word_id ASC, sort_order ASC, id ASC
-      ''', ids.cast<Object?>());
+      ''',
+      whereColumn: 'word_id',
+      orderByClause: 'word_id ASC, sort_order ASC, id ASC',
+    );
     final fieldIds = rows
         .map((row) => (row['id'] as num?)?.toInt())
         .whereType<int>()
@@ -1451,12 +1598,14 @@ class AppDatabaseService {
     if (ids.isEmpty) {
       return const <int, WordFieldStyle>{};
     }
-    final placeholders = List<String>.filled(ids.length, '?').join(', ');
-    final rows = _selectMaps('''
+    final rows = _selectMapsByChunkedIntIds(
+      ids: ids,
+      selectSqlPrefix: '''
       SELECT word_field_id, background_hex, border_hex, text_hex, accent_hex
       FROM word_field_styles
-      WHERE word_field_id IN ($placeholders)
-      ''', ids.cast<Object?>());
+      ''',
+      whereColumn: 'word_field_id',
+    );
     return <int, WordFieldStyle>{
       for (final row in rows)
         ((row['word_field_id'] as num?) ?? 0).toInt(): WordFieldStyle(
@@ -1473,13 +1622,15 @@ class AppDatabaseService {
     if (ids.isEmpty) {
       return const <int, List<String>>{};
     }
-    final placeholders = List<String>.filled(ids.length, '?').join(', ');
-    final rows = _selectMaps('''
+    final rows = _selectMapsByChunkedIntIds(
+      ids: ids,
+      selectSqlPrefix: '''
       SELECT word_field_id, tag
       FROM word_field_tags
-      WHERE word_field_id IN ($placeholders)
-      ORDER BY word_field_id ASC, sort_order ASC, id ASC
-      ''', ids.cast<Object?>());
+      ''',
+      whereColumn: 'word_field_id',
+      orderByClause: 'word_field_id ASC, sort_order ASC, id ASC',
+    );
     final output = <int, List<String>>{};
     for (final row in rows) {
       final fieldId = (row['word_field_id'] as num?)?.toInt();
@@ -1499,13 +1650,15 @@ class AppDatabaseService {
     if (ids.isEmpty) {
       return const <int, List<WordFieldMediaItem>>{};
     }
-    final placeholders = List<String>.filled(ids.length, '?').join(', ');
-    final rows = _selectMaps('''
+    final rows = _selectMapsByChunkedIntIds(
+      ids: ids,
+      selectSqlPrefix: '''
       SELECT word_field_id, media_type, media_source, media_label, mime_type
       FROM word_field_media
-      WHERE word_field_id IN ($placeholders)
-      ORDER BY word_field_id ASC, sort_order ASC, id ASC
-      ''', ids.cast<Object?>());
+      ''',
+      whereColumn: 'word_field_id',
+      orderByClause: 'word_field_id ASC, sort_order ASC, id ASC',
+    );
     final output = <int, List<WordFieldMediaItem>>{};
     for (final row in rows) {
       final fieldId = (row['word_field_id'] as num?)?.toInt();
@@ -1573,10 +1726,10 @@ class AppDatabaseService {
     if (ids.isEmpty) {
       return const <int, WordMemoryProgress>{};
     }
-    final placeholders = List<String>.filled(ids.length, '?').join(', ');
-    final rows = _selectMaps(
-      'SELECT * FROM progress WHERE word_id IN ($placeholders)',
-      ids.cast<Object?>(),
+    final rows = _selectMapsByChunkedIntIds(
+      ids: ids,
+      selectSqlPrefix: 'SELECT * FROM progress',
+      whereColumn: 'word_id',
     );
     final progressList = rows
         .map(WordMemoryProgress.fromMap)
@@ -1883,6 +2036,7 @@ class AppDatabaseService {
         search_details = ?,
         search_word_compact = ?,
         search_details_compact = ?,
+        extension_json = ?,
         entry_json = ?
       WHERE id = ?
       ''',
@@ -1893,6 +2047,7 @@ class AppDatabaseService {
         prepared.row['search_details'],
         prepared.row['search_word_compact'],
         prepared.row['search_details_compact'],
+        prepared.row['extension_json'],
         prepared.row['entry_json'],
         (existing['id'] as num).toInt(),
       ],
@@ -1962,6 +2117,7 @@ class AppDatabaseService {
         search_details = ?,
         search_word_compact = ?,
         search_details_compact = ?,
+        extension_json = ?,
         entry_json = ?
       WHERE id = ?
       ''',
@@ -1973,6 +2129,7 @@ class AppDatabaseService {
         prepared.row['search_details'],
         prepared.row['search_word_compact'],
         prepared.row['search_details_compact'],
+        prepared.row['extension_json'],
         prepared.row['entry_json'],
         (existing['id'] as num).toInt(),
       ],
@@ -2001,14 +2158,14 @@ class AppDatabaseService {
     final trimmed = name.trim();
     if (trimmed.isEmpty) throw ArgumentError('名称不能为空');
     return _runInTransaction<int>(() {
-      final sourceWords = getWords(sourceWordbookId);
+      final sourceWords = _buildWordEntryPayloadsForWordbook(sourceWordbookId);
       _db.execute(
         'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
         <Object?>[trimmed, 'export_${DateTime.now().millisecondsSinceEpoch}'],
       );
       final insertedId = _lastInsertId();
       for (final entry in sourceWords) {
-        _insertWord(insertedId, entry.toPayload());
+        _insertWord(insertedId, entry);
       }
       _refreshWordbookCount(insertedId);
       return insertedId;
@@ -2179,8 +2336,9 @@ class AppDatabaseService {
               search_details,
               search_word_compact,
               search_details_compact,
+              extension_json,
               entry_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             <Object?>[
               entry.id,
@@ -2192,6 +2350,7 @@ class AppDatabaseService {
               prepared.row['search_details'],
               prepared.row['search_word_compact'],
               prepared.row['search_details_compact'],
+              prepared.row['extension_json'],
               prepared.row['entry_json'],
             ],
           );
@@ -2407,6 +2566,26 @@ class AppDatabaseService {
       _setSchemaVersion(5);
       version = 5;
     }
+    if (version < 6) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 6},
+      );
+      _migrateWordCompatibilityCacheSchema();
+      _setSchemaVersion(6);
+      version = 6;
+    }
+    if (version < 7) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 7},
+      );
+      _migrateWordEntryRecoverySchema();
+      _setSchemaVersion(7);
+      version = 7;
+    }
     if (version != _currentSchemaVersion) {
       _setSchemaVersion(_currentSchemaVersion);
     }
@@ -2486,22 +2665,34 @@ class AppDatabaseService {
     if (!columnNames.contains('extension_json')) {
       _db.execute('ALTER TABLE words ADD COLUMN extension_json TEXT;');
     }
+    _rebuildWordCompatibilityCaches();
+  }
 
+  void _migrateWordCompatibilityCacheSchema() {
+    _rebuildWordCompatibilityCaches();
+  }
+
+  void _migrateWordEntryRecoverySchema() {
+    _rebuildWordCompatibilityCaches();
+  }
+
+  void _rebuildWordCompatibilityCaches() {
     final rows = _selectMaps('SELECT * FROM words ORDER BY id ASC');
+    final wordIds = rows
+        .map((row) => (row['id'] as num?)?.toInt())
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList(growable: false);
+    final fieldsByWordId = _getWordFieldsByWordIds(wordIds);
     for (final row in rows) {
       final wordId = (row['id'] as num?)?.toInt();
       if (wordId == null || wordId <= 0) {
         continue;
       }
-      final fieldRows =
-          _getWordFieldsByWordIds(<int>[wordId])[wordId] ??
-          const <WordFieldItem>[];
+      final fieldRows = fieldsByWordId[wordId] ?? const <WordFieldItem>[];
       final extensionJson = _buildExtensionJson(fieldRows);
-      final compactEntryJson = _buildCompactEntryJson(
-        wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
-        word: '${row['word'] ?? ''}',
-        meaning: '${row['meaning'] ?? ''}',
-        rawContent: WordEntry.fromMap(row).rawContent,
+      final compactEntryJson = _buildEntryRecoveryJson(
+        rawContent: _resolveStoredRawContent(row),
       );
       _db.execute(
         'UPDATE words SET extension_json = ?, entry_json = ? WHERE id = ?',
@@ -2556,7 +2747,94 @@ class AppDatabaseService {
           final wordbookId = ((row['id'] as num?) ?? 0).toInt();
           return UserDataExportWordbook(
             wordbook: Wordbook.fromMap(row),
-            words: getWords(wordbookId),
+            words: _buildWordbookExportWords(wordbookId),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  List<WordEntryPayload> _buildWordEntryPayloadsForWordbook(int wordbookId) {
+    final rows = _selectMaps(
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC',
+      <Object?>[wordbookId],
+    );
+    final wordIds = rows
+        .map((row) => (row['id'] as num?)?.toInt())
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList(growable: false);
+    final fieldsByWordId = _getWordFieldsByWordIds(wordIds);
+
+    return rows
+        .map((row) {
+          final wordId = (row['id'] as num?)?.toInt();
+          final fields = wordId == null
+              ? const <WordFieldItem>[]
+              : (fieldsByWordId[wordId] ?? const <WordFieldItem>[]);
+          if (fields.isEmpty) {
+            return WordEntry.fromMap(row).toPayload();
+          }
+          return WordEntryPayload(
+            word: sanitizeDisplayText('${row['word'] ?? ''}'),
+            fields: fields,
+            rawContent: _resolveStoredRawContent(row),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  List<UserDataExportWordRecord> _buildWordbookExportWords(int wordbookId) {
+    final rows = _selectMaps(
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC',
+      <Object?>[wordbookId],
+    );
+    final wordIds = rows
+        .map((row) => (row['id'] as num?)?.toInt())
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList(growable: false);
+    final fieldsByWordId = _getWordFieldsByWordIds(wordIds);
+
+    return rows
+        .map((row) {
+          final wordId = (row['id'] as num?)?.toInt();
+          final fields = wordId == null
+              ? const <WordFieldItem>[]
+              : (fieldsByWordId[wordId] ?? const <WordFieldItem>[]);
+          if (fields.isEmpty) {
+            final fallback = WordEntry.fromMap(row);
+            return UserDataExportWordRecord(
+              id: fallback.id,
+              wordbookId: fallback.wordbookId,
+              word: fallback.word,
+              meaning: fallback.meaning,
+              examples: fallback.examples,
+              etymology: fallback.etymology,
+              roots: fallback.roots,
+              affixes: fallback.affixes,
+              variations: fallback.variations,
+              memory: fallback.memory,
+              story: fallback.story,
+              fields: fallback.fields,
+              rawContent: fallback.rawContent,
+            );
+          }
+
+          final legacy = toLegacyFields(fields);
+          return UserDataExportWordRecord(
+            id: wordId,
+            wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
+            word: sanitizeDisplayText('${row['word'] ?? ''}'),
+            meaning: legacy.meaning ?? _sanitizeNullableText(row['meaning']),
+            examples: legacy.examples,
+            etymology: legacy.etymology,
+            roots: legacy.roots,
+            affixes: legacy.affixes,
+            variations: legacy.variations,
+            memory: legacy.memory,
+            story: legacy.story,
+            fields: fields,
+            rawContent: _resolveStoredRawContent(row),
           );
         })
         .toList(growable: false);
@@ -2755,14 +3033,7 @@ class AppDatabaseService {
   String? _buildExtensionJson(List<WordFieldItem> fields) {
     final extensions = fields
         .where((field) => !isLegacyFieldKey(field.key))
-        .map((field) {
-          final sanitized = field.copyWith(
-            style: WordFieldStyle.empty,
-            tags: const <String>[],
-            media: const <WordFieldMediaItem>[],
-          );
-          return sanitized.toJsonMap();
-        })
+        .map((field) => field.toJsonMap())
         .toList(growable: false);
     if (extensions.isEmpty) {
       return null;
@@ -2770,18 +3041,48 @@ class AppDatabaseService {
     return jsonEncode(<String, Object?>{'fields': extensions});
   }
 
-  String _buildCompactEntryJson({
-    required int wordbookId,
-    required String word,
-    required String meaning,
-    required String rawContent,
-  }) {
-    return jsonEncode(<String, Object?>{
-      'wordbookId': wordbookId,
-      'word': word,
-      'meaning': meaning,
-      'rawContent': rawContent,
-    });
+  String? _buildEntryRecoveryJson({required String rawContent}) {
+    final normalizedRawContent = sanitizeDisplayText(rawContent);
+    if (normalizedRawContent.isEmpty) {
+      return null;
+    }
+    return jsonEncode(<String, Object?>{'rawContent': normalizedRawContent});
+  }
+
+  String _readEntryRecoveryRawContent(Object? raw) {
+    final jsonText = '${raw ?? ''}'.trim();
+    if (jsonText.isEmpty) {
+      return '';
+    }
+    try {
+      final decoded = jsonDecode(jsonText);
+      if (decoded is Map) {
+        return sanitizeDisplayText(
+          '${decoded['rawContent'] ?? decoded['raw_content'] ?? ''}',
+        );
+      }
+    } catch (_) {
+      // Keep compatibility with broken legacy cache rows by treating them as empty.
+    }
+    return '';
+  }
+
+  String _resolveStoredRawContent(Map<String, Object?> row) {
+    final inlineRawContent = sanitizeDisplayText('${row['raw_content'] ?? ''}');
+    if (inlineRawContent.isNotEmpty) {
+      return inlineRawContent;
+    }
+    final cachedRawContent = _readEntryRecoveryRawContent(row['entry_json']);
+    if (cachedRawContent.isNotEmpty) {
+      return cachedRawContent;
+    }
+    final fallbackMeaning = sanitizeDisplayText('${row['meaning'] ?? ''}');
+    return fallbackMeaning;
+  }
+
+  String? _sanitizeNullableText(Object? raw) {
+    final text = sanitizeDisplayText('${raw ?? ''}');
+    return text.isEmpty ? null : text;
   }
 
   _PreparedWordRecord _buildStoredWordRecord({
@@ -2807,10 +3108,7 @@ class AppDatabaseService {
         .where((item) => item.isNotEmpty)
         .join('\n');
     final extensionJson = _buildExtensionJson(normalizedFields);
-    final compactEntryJson = _buildCompactEntryJson(
-      wordbookId: wordbookId,
-      word: normalizedWord,
-      meaning: legacy.meaning ?? '',
+    final compactEntryJson = _buildEntryRecoveryJson(
       rawContent: persistedRawContent,
     );
 

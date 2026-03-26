@@ -226,6 +226,92 @@ void main() {
     },
   );
 
+  test('resetUserData auto-initializes database before reset flow', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    final settings = SettingsService(database);
+    final state = AppState(
+      database: database,
+      settings: settings,
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
+    );
+    addTearDown(database.dispose);
+
+    final success = await state.resetUserData();
+
+    expect(success, isTrue);
+    expect(state.error, isNull);
+    expect(state.lastBackupPath, isNotNull);
+    expect(await File(state.lastBackupPath!).exists(), isTrue);
+    expect(
+      database.getWordbooks().map((item) => item.path).toSet(),
+      containsAll(<String>{'builtin:favorites', 'builtin:task'}),
+    );
+  });
+
+  test(
+    'init restores last playback progress for the selected wordbook',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbook(
+        sourcePath: 'custom:test_playback_progress_restore',
+        name: 'Playback restore test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'Alpha',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+            ],
+            rawContent: 'First',
+          ),
+          WordEntryPayload(
+            word: 'Bravo',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: 'Second'),
+            ],
+            rawContent: 'Second',
+          ),
+        ],
+      );
+
+      final initialSettings = SettingsService(database);
+      final initialState = AppState(
+        database: database,
+        settings: initialSettings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: initialSettings),
+      );
+      await initialState.init();
+      initialState.selectWordEntry(initialState.words.last);
+      initialState.rememberPlaybackProgress(initialState.words.last);
+
+      final restoredSettings = SettingsService(database);
+      final restoredState = AppState(
+        database: database,
+        settings: restoredSettings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: restoredSettings),
+      );
+
+      await restoredState.init();
+
+      expect(
+        restoredState.selectedWordbook?.path,
+        'custom:test_playback_progress_restore',
+      );
+      expect(restoredState.currentWord?.word, 'Bravo');
+    },
+  );
+
   test(
     'init resets stale practice day counters but keeps totals and cursors',
     () async {

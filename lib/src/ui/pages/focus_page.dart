@@ -2261,9 +2261,9 @@ class _FocusPageState extends State<FocusPage>
         key: 'today',
         label: pickUiText(
           i18n,
-          zh: '浠婂ぉ鍒版湡',
+          zh: '今天到期',
           en: 'Due today',
-          ja: '浠婃棩銇俱仹',
+          ja: '今日まで',
           de: 'Heute faellig',
           fr: 'Aujourd鈥檋ui',
           es: 'Para hoy',
@@ -2276,9 +2276,9 @@ class _FocusPageState extends State<FocusPage>
         key: 'overdue',
         label: pickUiText(
           i18n,
-          zh: '宸查€炬湡',
+          zh: '已逾期',
           en: 'Overdue',
-          ja: '鏈熼檺瓒呴亷',
+          ja: '期限超過',
           de: 'Ueberfaellig',
           fr: 'En retard',
           es: 'Vencidas',
@@ -2741,9 +2741,9 @@ class _FocusPageState extends State<FocusPage>
         ),
       _TodoFilterMode.active => pickUiText(
           i18n,
-          zh: '杩涜涓?,
+          zh: '进行中',
           en: 'Active',
-          ja: '閫茶涓?,
+          ja: '進行中',
           de: 'Aktiv',
           fr: 'Actives',
           es: 'Activas',
@@ -2751,9 +2751,9 @@ class _FocusPageState extends State<FocusPage>
         ),
       _TodoFilterMode.deferred => pickUiText(
           i18n,
-          zh: '寤跺悗鎼佺疆',
+          zh: '已延期',
           en: 'Deferred',
-          ja: '淇濈暀涓?,
+          ja: '保留中',
           de: 'Zurueckgestellt',
           fr: 'Reporte',
           es: 'Pospuestas',
@@ -2761,7 +2761,7 @@ class _FocusPageState extends State<FocusPage>
         ),
       _TodoFilterMode.completed => pickUiText(
           i18n,
-          zh: '宸插畬鎴?,
+          zh: '已完成',
           en: 'Completed',
           ja: '瀹屼簡',
           de: 'Erledigt',
@@ -2961,7 +2961,7 @@ class _FocusPageState extends State<FocusPage>
           _buildTodoControlSection(
             label: pickUiText(
               i18n,
-              zh: '绛涢€?,
+              zh: '筛选',
               en: 'Filter',
               ja: '绲炪倞杈笺伩',
               de: 'Filter',
@@ -5926,9 +5926,9 @@ class _FocusPageState extends State<FocusPage>
             String effectiveVoiceHelperText() {
               final insertHint = pickUiText(
                 i18n,
-                zh: '璇嗗埆缁撴灉浼氳拷鍔犲埌姝ｆ枃锛屾爣棰樼暀绌烘椂浼氳嚜鍔ㄧ敓鎴愭憳瑕併€?',
+                zh: '识别结果会追加到正文，标题留空时会自动生成摘要。',
                 en: 'Transcribed text is appended to the note body, and an empty title will be auto-filled.',
-                ja: '瑾嶈瓨绲愭灉銇湰鏂囥伀杩借銇曘倢銆併偪銈ゃ儓銉亴绌恒仾銈夎嚜鍕曘仹瑕佺磩銇屽叆銈娿伨銇欍€?',
+                ja: '認識結果は本文に追記され、タイトルが空の場合は自動で要約が入ります。',
                 de: 'Erkannter Text wird an den Inhalt angeh盲ngt, und ein leerer Titel wird automatisch erg盲nzt.',
                 fr: 'Le texte reconnu est ajoute au contenu, et un titre vide sera complete automatiquement.',
                 es: 'El texto reconocido se anade al contenido y el titulo vacio se completa automaticamente.',

@@ -42,6 +42,7 @@ extension _AppStatePlayback on AppState {
     _playingScopeWords = words;
     _playingScopeIndex = safeStart;
     _playingWord = words[safeStart].word;
+    _rememberPlaybackProgressImpl(words[safeStart]);
     _currentUnit = 0;
     _totalUnits = 0;
     _activeUnit = null;
@@ -127,6 +128,7 @@ extension _AppStatePlayback on AppState {
     _playingScopeWords = words;
     _playingScopeIndex = safeStart;
     _playingWord = words[safeStart].word;
+    _rememberPlaybackProgressImpl(words[safeStart]);
     _currentUnit = 0;
     _totalUnits = 0;
     _activeUnit = null;
@@ -149,6 +151,7 @@ extension _AppStatePlayback on AppState {
             _playingScopeIndex = index;
           }
           _playingWord = nextWord.word;
+          _rememberPlaybackProgressImpl(nextWord);
           if (_selectedWordbook?.id == _playingWordbookId) {
             _setCurrentWordByEntry(nextWord);
             resetTestModeProgress();
@@ -268,6 +271,7 @@ extension _AppStatePlayback on AppState {
     final nextScopeIndex =
         (safeIndex - 1 + scopeWords.length) % scopeWords.length;
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
+    _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
     _log.i(
       'app_state',
@@ -291,6 +295,7 @@ extension _AppStatePlayback on AppState {
     final safeIndex = currentScopeIndex < 0 ? 0 : currentScopeIndex;
     final nextScopeIndex = (safeIndex + 1) % scopeWords.length;
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
+    _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
     _log.i(
       'app_state',
@@ -410,6 +415,7 @@ extension _AppStatePlayback on AppState {
     );
     _playingScopeIndex = safeTarget;
     _playingWord = words[safeTarget].word;
+    _rememberPlaybackProgressImpl(words[safeTarget]);
     if (_selectedWordbook?.id == playingId) {
       _setCurrentWordByEntry(words[safeTarget]);
       resetTestModeProgress();

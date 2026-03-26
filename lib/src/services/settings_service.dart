@@ -161,4 +161,42 @@ class SettingsService {
     final sorted = words.toList(growable: false)..sort();
     _database.setSetting('rememberedWords', jsonEncode(sorted));
   }
+
+  Map<String, PlaybackProgressSnapshot> loadPlaybackProgressByWordbook() {
+    final raw = _database.getSetting('playbackProgressByWordbook');
+    if (raw == null || raw.trim().isEmpty) {
+      return const <String, PlaybackProgressSnapshot>{};
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) {
+        return const <String, PlaybackProgressSnapshot>{};
+      }
+      final output = <String, PlaybackProgressSnapshot>{};
+      for (final entry in decoded.entries) {
+        final path = '${entry.key}'.trim();
+        if (path.isEmpty || entry.value is! Map) {
+          continue;
+        }
+        output[path] = PlaybackProgressSnapshot.fromJsonMap(
+          (entry.value as Map).cast<String, Object?>(),
+        );
+      }
+      return output;
+    } catch (_) {
+      return const <String, PlaybackProgressSnapshot>{};
+    }
+  }
+
+  void savePlaybackProgressByWordbook(
+    Map<String, PlaybackProgressSnapshot> snapshots,
+  ) {
+    final keys = snapshots.keys.toList(growable: false)..sort();
+    _database.setSetting(
+      'playbackProgressByWordbook',
+      jsonEncode(<String, Object?>{
+        for (final key in keys) key: snapshots[key]!.toJsonMap(),
+      }),
+    );
+  }
 }

@@ -170,93 +170,95 @@ void main() {
     addTearDown(sqlite.dispose);
     final row = sqlite.select('PRAGMA user_version;').single;
 
-    expect((row['user_version'] as int?) ?? 0, greaterThanOrEqualTo(3));
+    expect((row['user_version'] as int?) ?? 0, greaterThanOrEqualTo(7));
   });
 
-  test('words persist a complete entry_json snapshot in sqlite', () async {
-    final database = AppDatabaseService(WordbookImportService());
-    await database.init();
-    addTearDown(database.dispose);
+  test(
+    'words persist only minimal entry_json recovery fields in sqlite',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
 
-    await database.importWordbook(
-      sourcePath: 'custom:test_entry_json',
-      name: 'Entry json test',
-      entries: const <WordEntryPayload>[
-        WordEntryPayload(
-          word: 'alpha',
-          fields: <WordFieldItem>[
-            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
-            WordFieldItem(
-              key: 'usage',
-              label: 'Usage',
-              value: 'Use it in a sentence.',
-              style: WordFieldStyle(
-                backgroundHex: '#101010',
-                textHex: '#ffffff',
+      await database.importWordbook(
+        sourcePath: 'custom:test_entry_json',
+        name: 'Entry json test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'alpha',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+              WordFieldItem(
+                key: 'usage',
+                label: 'Usage',
+                value: 'Use it in a sentence.',
+                style: WordFieldStyle(
+                  backgroundHex: '#101010',
+                  textHex: '#ffffff',
+                ),
               ),
-            ),
-          ],
-          rawContent: 'First',
-        ),
-      ],
-    );
+            ],
+            rawContent: 'First',
+          ),
+        ],
+      );
 
-    final wordbook = database.getWordbooks().firstWhere(
-      (item) => item.path == 'custom:test_entry_json',
-    );
-    final sqlite = sqlite3.open(database.dbPath);
-    addTearDown(sqlite.dispose);
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_entry_json',
+      );
+      final sqlite = sqlite3.open(database.dbPath);
+      addTearDown(sqlite.dispose);
 
-    final row = sqlite.select(
-      'SELECT entry_json, extension_json FROM words WHERE wordbook_id = ?',
-      <Object?>[wordbook.id],
-    ).single;
-    final entryJson = '${row['entry_json'] ?? ''}';
-    expect(entryJson.trim(), isNotEmpty);
+      final row = sqlite.select(
+        'SELECT entry_json, extension_json FROM words WHERE wordbook_id = ?',
+        <Object?>[wordbook.id],
+      ).single;
+      final entryJson = '${row['entry_json'] ?? ''}';
+      expect(entryJson.trim(), isNotEmpty);
 
-    final decoded = jsonDecode(entryJson) as Map<String, Object?>;
-    expect(decoded['word'], 'alpha');
-    expect(decoded['wordbookId'], wordbook.id);
-    expect(decoded['rawContent'], 'First');
-    expect(decoded.containsKey('fields'), isFalse);
+      final decoded = jsonDecode(entryJson) as Map<String, Object?>;
+      expect(decoded['rawContent'], 'First');
+      expect(decoded.keys, <String>['rawContent']);
 
-    final extensionJson = '${row['extension_json'] ?? ''}';
-    expect(extensionJson.trim(), isNotEmpty);
-    final decodedExtension = jsonDecode(extensionJson) as Map<String, Object?>;
-    final extensionFields = decodedExtension['fields'] as List;
-    expect(extensionFields, hasLength(1));
-    expect((extensionFields.single as Map)['key'], 'usage');
+      final extensionJson = '${row['extension_json'] ?? ''}';
+      expect(extensionJson.trim(), isNotEmpty);
+      final decodedExtension =
+          jsonDecode(extensionJson) as Map<String, Object?>;
+      final extensionFields = decodedExtension['fields'] as List;
+      expect(extensionFields, hasLength(1));
+      expect((extensionFields.single as Map)['key'], 'usage');
 
-    final fieldRows = sqlite.select(
-      '''
+      final fieldRows = sqlite.select(
+        '''
       SELECT field_key, field_label, field_value_json, style_json
       FROM word_fields
       WHERE word_id = (SELECT id FROM words WHERE wordbook_id = ?)
       ORDER BY sort_order ASC
       ''',
-      <Object?>[wordbook.id],
-    );
-    expect(fieldRows.length, 2);
-    expect(fieldRows.first['field_key'], 'meaning');
-    expect(
-      jsonDecode('${fieldRows.last['field_value_json']}'),
-      'Use it in a sentence.',
-    );
-    expect(
-      (jsonDecode('${fieldRows.last['style_json']}') as Map)['textHex'],
-      '#ffffff',
-    );
+        <Object?>[wordbook.id],
+      );
+      expect(fieldRows.length, 2);
+      expect(fieldRows.first['field_key'], 'meaning');
+      expect(
+        jsonDecode('${fieldRows.last['field_value_json']}'),
+        'Use it in a sentence.',
+      );
+      expect(
+        (jsonDecode('${fieldRows.last['style_json']}') as Map)['textHex'],
+        '#ffffff',
+      );
 
-    final restored = database.getWords(wordbook.id).single;
-    expect(
-      restored.fields.firstWhere((item) => item.key == 'usage').asText(),
-      'Use it in a sentence.',
-    );
-    expect(
-      restored.fields.firstWhere((item) => item.key == 'usage').style.textHex,
-      '#ffffff',
-    );
-  });
+      final restored = database.getWords(wordbook.id).single;
+      expect(
+        restored.fields.firstWhere((item) => item.key == 'usage').asText(),
+        'Use it in a sentence.',
+      );
+      expect(
+        restored.fields.firstWhere((item) => item.key == 'usage').style.textHex,
+        '#ffffff',
+      );
+    },
+  );
 
   test('searchWords queries cached sqlite search columns', () async {
     final database = AppDatabaseService(WordbookImportService());
@@ -435,6 +437,63 @@ void main() {
     expect(usage.media.single.type, WordFieldMediaType.audio);
   });
 
+  test('getWords chunks sqlite IN queries for large field datasets', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    final entries = List<WordEntryPayload>.generate(1100, (index) {
+      return WordEntryPayload(
+        word: 'bulk_$index',
+        fields: <WordFieldItem>[
+          WordFieldItem(
+            key: 'meaning',
+            label: 'Meaning',
+            value: 'Meaning $index',
+          ),
+          WordFieldItem(
+            key: 'usage',
+            label: 'Usage',
+            value: 'Usage $index',
+            style: const WordFieldStyle(
+              backgroundHex: '#111111',
+              textHex: '#ffffff',
+            ),
+            tags: const <String>['bulk'],
+            media: <WordFieldMediaItem>[
+              WordFieldMediaItem(
+                type: WordFieldMediaType.audio,
+                source: 'https://example.com/audio/$index.mp3',
+                label: 'Audio',
+              ),
+            ],
+          ),
+        ],
+        rawContent: 'Meaning $index',
+      );
+    });
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_large_field_queries',
+      name: 'Large field query test',
+      entries: entries,
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_large_field_queries',
+    );
+    final words = database.getWords(wordbook.id);
+
+    expect(words, hasLength(1100));
+    final last = words.last;
+    expect(last.word, 'bulk_1099');
+    final usage = last.fields.firstWhere((item) => item.key == 'usage');
+    expect(usage.asText(), 'Usage 1099');
+    expect(usage.style.textHex, '#ffffff');
+    expect(usage.tags, <String>['bulk']);
+    expect(usage.media.single.source, 'https://example.com/audio/1099.mp3');
+  });
+
   test('word memory events persist detailed answer history', () async {
     final database = AppDatabaseService(WordbookImportService());
     await database.init();
@@ -515,6 +574,68 @@ void main() {
       isTrue,
     );
   });
+
+  test(
+    'buildUserDataExportPayload aggregates wordbook fields from sqlite tables',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbook(
+        sourcePath: 'custom:test_export_wordbook_tables',
+        name: 'Export table aggregation test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'alpha',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: 'First'),
+              WordFieldItem(
+                key: 'usage',
+                label: 'Usage',
+                value: 'Use it in a sentence.',
+                style: WordFieldStyle(
+                  backgroundHex: '#101010',
+                  textHex: '#ffffff',
+                ),
+                tags: <String>['core'],
+                media: <WordFieldMediaItem>[
+                  WordFieldMediaItem(
+                    type: WordFieldMediaType.audio,
+                    source: 'https://example.com/audio.mp3',
+                    label: 'Pronunciation',
+                  ),
+                ],
+              ),
+            ],
+            rawContent: 'First',
+          ),
+        ],
+      );
+
+      final payload = database.buildUserDataExportPayload(
+        sections: const <UserDataExportSection>{
+          UserDataExportSection.wordbooks,
+        },
+      );
+      final exportedWordbook = payload.wordbooks.firstWhere(
+        (item) => item.wordbook.path == 'custom:test_export_wordbook_tables',
+      );
+      final exportedWord = exportedWordbook.words.single;
+      final usage = exportedWord.fields.firstWhere(
+        (field) => field.key == 'usage',
+      );
+
+      expect(exportedWord.word, 'alpha');
+      expect(exportedWord.rawContent, 'First');
+      expect(exportedWord.meaning, 'First');
+      expect(usage.asText(), 'Use it in a sentence.');
+      expect(usage.style.textHex, '#ffffff');
+      expect(usage.tags, <String>['core']);
+      expect(usage.media.single.source, 'https://example.com/audio.mp3');
+      expect(usage.media.single.type, WordFieldMediaType.audio);
+    },
+  );
 
   test(
     'exportUserData respects selected sections, settings, and custom destination',

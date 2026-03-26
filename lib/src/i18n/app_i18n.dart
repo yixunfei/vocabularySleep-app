@@ -395,6 +395,7 @@ class AppI18n {
     'errorTaskOperationFailed': 'Task operation failed: {error}',
     'errorClearTaskWordbookFailed': 'Clear task wordbook failed: {error}',
     'errorExportFailed': 'Export failed: {error}',
+    'errorResetUserDataFailed': 'Reset local data failed: {error}',
     'errorMergeFailed': 'Merge failed: {error}',
     'recordingFailed': 'Recording failed',
     'startRecordingFailed':
@@ -791,6 +792,7 @@ class AppI18n {
     'errorFavoriteOperationFailed': '收藏操作失败：{error}',
     'errorImportFailed': '导入失败：{error}',
     'errorInitFailed': '初始化失败：{error}',
+    'errorResetUserDataFailed': '重置本地数据失败：{error}',
     'errorMergeFailed': '合并词本失败：{error}',
     'errorMigrationFailed': '迁移失败：{error}',
     'errorRenameWordbookFailed': '重命名词本失败：{error}',

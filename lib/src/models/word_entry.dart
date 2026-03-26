@@ -222,6 +222,43 @@ class WordEntry {
       return cleaned.isEmpty ? null : cleaned;
     }
 
+    List<WordFieldItem> parseInlineFields(Object? raw) {
+      if (raw == null) {
+        return const <WordFieldItem>[];
+      }
+      if (raw is String) {
+        final jsonText = raw.trim();
+        if (jsonText.isEmpty) {
+          return const <WordFieldItem>[];
+        }
+        return parseFieldItemsJson(jsonText);
+      }
+      try {
+        return parseFieldItemsJson(jsonEncode(raw));
+      } catch (_) {
+        return const <WordFieldItem>[];
+      }
+    }
+
+    List<WordFieldItem> parseExtensionFields(Object? raw) {
+      final jsonText = '${raw ?? ''}'.trim();
+      if (jsonText.isEmpty) {
+        return const <WordFieldItem>[];
+      }
+      try {
+        final decoded = jsonDecode(jsonText);
+        if (decoded is Map) {
+          final fields = decoded['fields'];
+          if (fields is List) {
+            return parseInlineFields(fields);
+          }
+        }
+      } catch (_) {
+        // Fall back to legacy fields/entry_json when extension_json is invalid.
+      }
+      return const <WordFieldItem>[];
+    }
+
     List<String>? examples;
     final rawExamples = map['examples'];
     if (rawExamples is String && rawExamples.trim().isNotEmpty) {
@@ -244,24 +281,58 @@ class WordEntry {
 
     final rowId = (map['id'] as num?)?.toInt();
     final rowWordbookId = ((map['wordbook_id'] as num?) ?? 0).toInt();
+    final rowMeaning = sanitizeNullable(map['meaning']);
+    final rowEtymology = sanitizeNullable(map['etymology']);
+    final rowRoots = sanitizeNullable(map['roots']);
+    final rowAffixes = sanitizeNullable(map['affixes']);
+    final rowVariations = sanitizeNullable(map['variations']);
+    final rowMemory = sanitizeNullable(map['memory']);
+    final rowStory = sanitizeNullable(map['story']);
+    final inlineFields = mergeFieldItems(<WordFieldItem>[
+      ...parseInlineFields(map['fields_json']),
+      ...parseExtensionFields(map['extension_json']),
+    ]);
     final entryJson = '${map['entry_json'] ?? ''}'.trim();
     if (entryJson.isNotEmpty) {
       try {
         final decoded = jsonDecode(entryJson);
         if (decoded is Map) {
           final entry = WordEntry.fromJsonMap(decoded.cast<String, Object?>());
-          return entry.copyWith(
+          final resolvedMeaning = rowMeaning ?? entry.meaning;
+          final resolvedExamples = examples ?? entry.examples;
+          final resolvedEtymology = rowEtymology ?? entry.etymology;
+          final resolvedRoots = rowRoots ?? entry.roots;
+          final resolvedAffixes = rowAffixes ?? entry.affixes;
+          final resolvedVariations = rowVariations ?? entry.variations;
+          final resolvedMemory = rowMemory ?? entry.memory;
+          final resolvedStory = rowStory ?? entry.story;
+          final resolvedFields = mergeFieldItems(<WordFieldItem>[
+            ...entry.fields,
+            ...inlineFields,
+            ...buildFieldItemsFromRecord(<String, Object?>{
+              'meaning': resolvedMeaning,
+              'examples': resolvedExamples,
+              'etymology': resolvedEtymology,
+              'roots': resolvedRoots,
+              'affixes': resolvedAffixes,
+              'variations': resolvedVariations,
+              'memory': resolvedMemory,
+              'story': resolvedStory,
+            }),
+          ]);
+          return WordEntry(
             id: rowId ?? entry.id,
             wordbookId: rowWordbookId > 0 ? rowWordbookId : entry.wordbookId,
             word: sanitizeDisplayText(map['word']?.toString() ?? entry.word),
-            meaning: sanitizeNullable(map['meaning']) ?? entry.meaning,
-            examples: examples ?? entry.examples,
-            etymology: sanitizeNullable(map['etymology']) ?? entry.etymology,
-            roots: sanitizeNullable(map['roots']) ?? entry.roots,
-            affixes: sanitizeNullable(map['affixes']) ?? entry.affixes,
-            variations: sanitizeNullable(map['variations']) ?? entry.variations,
-            memory: sanitizeNullable(map['memory']) ?? entry.memory,
-            story: sanitizeNullable(map['story']) ?? entry.story,
+            meaning: resolvedMeaning,
+            examples: resolvedExamples,
+            etymology: resolvedEtymology,
+            roots: resolvedRoots,
+            affixes: resolvedAffixes,
+            variations: resolvedVariations,
+            memory: resolvedMemory,
+            story: resolvedStory,
+            fields: resolvedFields,
             rawContent: sanitizeDisplayText(
               map['raw_content']?.toString() ?? entry.rawContent,
             ),
@@ -272,21 +343,34 @@ class WordEntry {
       }
     }
 
+    final fallbackFields = mergeFieldItems(<WordFieldItem>[
+      ...inlineFields,
+      ...buildFieldItemsFromRecord(<String, Object?>{
+        'meaning': rowMeaning,
+        'examples': examples,
+        'etymology': rowEtymology,
+        'roots': rowRoots,
+        'affixes': rowAffixes,
+        'variations': rowVariations,
+        'memory': rowMemory,
+        'story': rowStory,
+      }),
+    ]);
+
     return WordEntry(
       id: rowId,
       wordbookId: rowWordbookId,
       word: sanitizeDisplayText(map['word']?.toString() ?? ''),
-      meaning: sanitizeNullable(map['meaning']),
+      meaning: rowMeaning,
       examples: examples,
-      etymology: sanitizeNullable(map['etymology']),
-      roots: sanitizeNullable(map['roots']),
-      affixes: sanitizeNullable(map['affixes']),
-      variations: sanitizeNullable(map['variations']),
-      memory: sanitizeNullable(map['memory']),
-      story: sanitizeNullable(map['story']),
-      fields: const <WordFieldItem>[],
+      etymology: rowEtymology,
+      roots: rowRoots,
+      affixes: rowAffixes,
+      variations: rowVariations,
+      memory: rowMemory,
+      story: rowStory,
+      fields: fallbackFields,
       rawContent: sanitizeDisplayText(map['raw_content']?.toString() ?? ''),
-      rawFieldsJson: map['fields_json']?.toString() ?? '',
     );
   }
 }
