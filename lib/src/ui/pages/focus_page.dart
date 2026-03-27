@@ -22,6 +22,9 @@ import '../widgets/section_header.dart';
 import 'focus_page_controller.dart';
 import 'focus_timer_widgets.dart';
 
+part 'focus_page_dialogs.dart';
+part 'focus_page_support.dart';
+
 enum _TodoSortMode { manual, priority, category }
 
 enum _TodoFilterMode { all, active, today, overdue, deferred, completed }
@@ -34,22 +37,6 @@ enum _TodoSystemCalendarAlertMode { notification, alarm }
 
 enum _NoteVoiceInputState { idle, starting, listening, finishing }
 
-class _TodoPlanSection {
-  const _TodoPlanSection({
-    required this.key,
-    required this.title,
-    required this.icon,
-    required this.items,
-    this.highlight = false,
-  });
-
-  final String key;
-  final String title;
-  final IconData icon;
-  final List<TodoItem> items;
-  final bool highlight;
-}
-
 class FocusPage extends StatefulWidget {
   const FocusPage({super.key});
 
@@ -58,7 +45,10 @@ class FocusPage extends StatefulWidget {
 }
 
 class _FocusPageState extends State<FocusPage>
-    with SingleTickerProviderStateMixin {
+    with
+        SingleTickerProviderStateMixin,
+        _FocusPageDialogsMixin,
+        _FocusPageSupportMixin {
   static const List<int> _todoPalette = <int>[
     0xFFFDE68A,
     0xFFBFDBFE,
@@ -920,73 +910,6 @@ class _FocusPageState extends State<FocusPage>
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _showDurationPicker({
-    required String title,
-    required int totalSeconds,
-    required AppI18n i18n,
-    required ValueChanged<int> onChanged,
-  }) async {
-    var draft = Duration(seconds: totalSeconds.clamp(1, 359999));
-    await showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      enableDrag: false,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(title, style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatUnitSummary(draft.inSeconds, i18n),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 220,
-                    child: CupertinoTimerPicker(
-                      mode: CupertinoTimerPickerMode.hms,
-                      initialTimerDuration: draft,
-                      onTimerDurationChanged: (value) {
-                        setSheetState(() {
-                          draft = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.of(sheetContext).pop(),
-                        child: Text(i18n.t('cancel')),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: () {
-                          onChanged(draft.inSeconds.clamp(1, 359999));
-                          Navigator.of(sheetContext).pop();
-                        },
-                        child: Text(i18n.t('save')),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
@@ -4369,29 +4292,7 @@ class _FocusPageState extends State<FocusPage>
     );
   }
 
-  Future<void> _showNotesSheet(FocusService focus, AppI18n i18n) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (sheetContext) {
-        final mediaQuery = MediaQuery.of(sheetContext);
-        final sheetHeight = math.max(320.0, mediaQuery.size.height * 0.72);
-        return ValueListenableBuilder<int>(
-          valueListenable: focus.viewRevision,
-          builder: (context, revision, child) {
-            final notes = focus.getNotes();
-            return SizedBox(
-              key: const ValueKey<String>('notes-sheet'),
-              height: sheetHeight,
-              child: _buildNotesSheetContent(focus, notes, i18n),
-            );
-          },
-        );
-      },
-    );
-  }
-
+  @override
   Widget _buildNotesSheetContent(
     FocusService focus,
     List<PlanNote> notes,
@@ -4765,23 +4666,6 @@ class _FocusPageState extends State<FocusPage>
   String? _colorToHex(Color? value) {
     if (value == null) return null;
     return value.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase();
-  }
-
-  Future<DateTime?> _pickTodoReminderDateTime(DateTime? current) async {
-    final seed = current ?? DateTime.now().add(const Duration(hours: 1));
-    final date = await showDatePicker(
-      context: context,
-      initialDate: seed,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 3650)),
-    );
-    if (date == null || !mounted) return null;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(seed),
-    );
-    if (time == null) return null;
-    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
   List<int> _todoCalendarReminderLeadOptions(int currentMinutes) {
@@ -6203,94 +6087,4 @@ class _FocusPageState extends State<FocusPage>
       ),
     );
   }
-
-  Future<void> _openAmbientAudioSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.92,
-        child: AmbientSheet(
-          state: context.read<AppState>(),
-          i18n: AppI18n(context.read<AppState>().uiLanguage),
-        ),
-      ),
-    );
-  }
-
-  String _formatUnitSummary(int seconds, AppI18n i18n) {
-    final parts = _DurationParts.fromSeconds(seconds);
-    final segments = <String>[];
-    if (parts.hours > 0) {
-      segments.add('${parts.hours}${i18n.t('hoursUnit')}');
-    }
-    if (parts.minutes > 0 || segments.isNotEmpty) {
-      segments.add('${parts.minutes}${i18n.t('minutesUnit')}');
-    }
-    segments.add('${parts.seconds}${i18n.t('secondsUnit')}');
-    return segments.join(' ');
-  }
-
-  double _responsiveItemWidth(
-    double maxWidth,
-    AppWidthTier widthTier, {
-    required int columns,
-  }) {
-    if (widthTier.isCompact) {
-      return maxWidth;
-    }
-    final spacing = 12.0 * (columns - 1);
-    if (widthTier.isExpanded) {
-      return ((maxWidth - spacing) / columns).clamp(220.0, maxWidth).toDouble();
-    }
-    return ((maxWidth - 12) / 2).clamp(220.0, maxWidth).toDouble();
-  }
-
-  double _pageContentMaxWidth(AppWidthTier widthTier) {
-    return switch (widthTier) {
-      AppWidthTier.compact => 560.0,
-      AppWidthTier.regular => 860.0,
-      AppWidthTier.expanded => 980.0,
-    };
-  }
-}
-
-class _DurationParts {
-  const _DurationParts({
-    required this.hours,
-    required this.minutes,
-    required this.seconds,
-  });
-
-  final int hours;
-  final int minutes;
-  final int seconds;
-
-  factory _DurationParts.fromSeconds(int totalSeconds) {
-    final safe = totalSeconds.clamp(0, 359999);
-    final duration = Duration(seconds: safe);
-    return _DurationParts(
-      hours: duration.inHours,
-      minutes: duration.inMinutes.remainder(60),
-      seconds: duration.inSeconds.remainder(60),
-    );
-  }
-
-  int toSeconds() {
-    final total = hours * 3600 + minutes * 60 + seconds;
-    return total <= 0 ? 1 : total;
-  }
-}
-
-class _StatItem {
-  const _StatItem({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String value;
-  final String label;
 }

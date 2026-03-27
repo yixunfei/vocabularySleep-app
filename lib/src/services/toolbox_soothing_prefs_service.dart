@@ -10,12 +10,14 @@ class SoothingPrefsState {
     this.recentModeIds = const <String>[],
     this.lastTrackIndexByMode = const <String, int>{},
     this.lastModeId,
+    this.continuePlaybackOnExit = false,
   });
 
   final Set<String> favoriteModeIds;
   final List<String> recentModeIds;
   final Map<String, int> lastTrackIndexByMode;
   final String? lastModeId;
+  final bool continuePlaybackOnExit;
 
   Map<String, Object?> toJson() {
     final favorites = favoriteModeIds.toList(growable: false)..sort();
@@ -24,6 +26,7 @@ class SoothingPrefsState {
       'recent_mode_ids': recentModeIds,
       'last_track_index_by_mode': lastTrackIndexByMode,
       'last_mode_id': lastModeId,
+      'continue_playback_on_exit': continuePlaybackOnExit,
     };
   }
 
@@ -58,6 +61,8 @@ class SoothingPrefsState {
       lastModeId: '${map['last_mode_id'] ?? ''}'.trim().isEmpty
           ? null
           : '${map['last_mode_id']}'.trim(),
+      continuePlaybackOnExit:
+          map['continue_playback_on_exit'] as bool? ?? false,
     );
   }
 }

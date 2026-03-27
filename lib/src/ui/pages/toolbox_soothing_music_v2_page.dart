@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, unused_field
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -9,6 +11,7 @@ import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../services/toolbox_soothing_audio_service.dart';
 import '../../services/toolbox_soothing_prefs_service.dart';
+import 'toolbox_soothing_music_v2_copy.dart';
 import '../legacy_style.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
@@ -25,6 +28,8 @@ class SoothingMusicV2Page extends StatefulWidget {
 }
 
 enum _ModeLibraryFilter { all, favorites, recent }
+
+enum _SoothingPageMenuAction { toggleContinuePlayback }
 
 class _SoothingModeTheme {
   const _SoothingModeTheme({
@@ -63,12 +68,11 @@ class _SoothingModeTheme {
   final String footerZh;
   final String footerEn;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: zhTitle, en: enTitle);
-  String subtitle(AppI18n i18n) =>
-      pickUiText(i18n, zh: zhSubtitle, en: enSubtitle);
+  String title(AppI18n i18n) => SoothingMusicCopy.modeTitle(i18n, id);
+  String subtitle(AppI18n i18n) => SoothingMusicCopy.modeSubtitle(i18n, id);
   String description(AppI18n i18n) =>
-      pickUiText(i18n, zh: zhDescription, en: enDescription);
-  String footer(AppI18n i18n) => pickUiText(i18n, zh: footerZh, en: footerEn);
+      SoothingMusicCopy.modeDescription(i18n, id);
+  String footer(AppI18n i18n) => SoothingMusicCopy.modeFooter(i18n, id);
 }
 
 class _TrackLabelPair {
@@ -81,17 +85,15 @@ class _TrackLabelPair {
 class _SoothingTrack {
   const _SoothingTrack({
     required this.assetPath,
-    required this.zhLabel,
-    required this.enLabel,
+    required this.labelKey,
     required this.seed,
   });
 
   final String assetPath;
-  final String zhLabel;
-  final String enLabel;
+  final String labelKey;
   final int seed;
 
-  String label(AppI18n i18n) => zhLabel;
+  String label(AppI18n i18n) => SoothingMusicCopy.trackLabel(i18n, labelKey);
 }
 
 class _SoothingRuntimeStore {
@@ -99,6 +101,15 @@ class _SoothingRuntimeStore {
   static List<String> recentModeIds = <String>[];
   static Map<String, int> lastTrackIndexByMode = <String, int>{};
   static String? lastModeId;
+  static AudioPlayer? retainedPlayer;
+  static String? activeModeId;
+  static int activeTrackIndex = 0;
+  static bool activePlaying = false;
+  static double activeVolume = 0.62;
+  static bool activeMuted = false;
+  static Duration activePosition = Duration.zero;
+  static Duration activeDuration = const Duration(minutes: 2);
+  static bool continuePlaybackOnExit = false;
 }
 
 class _SoothingVisualPalette {
@@ -454,25 +465,21 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       };
 
   static List<_SoothingTrack> _tracksForMode(String modeId) {
-    final labels =
-        _trackLabelsByMode[modeId] ??
-        const <_TrackLabelPair>[
-          _TrackLabelPair(zh: '默认曲目', en: 'Default track'),
-        ];
-    return List<_SoothingTrack>.generate(labels.length, (index) {
+    final labelKeys =
+        SoothingMusicCopy.trackKeysByMode[modeId] ??
+        const <String>['track.fallback'];
+    return List<_SoothingTrack>.generate(labelKeys.length, (index) {
       final number = index + 1;
       final suffix = number == 1 ? '' : '$number';
-      final label = labels[index];
       return _SoothingTrack(
         assetPath: 'music/$modeId$suffix.m4a',
-        zhLabel: label.zh,
-        enLabel: label.en,
+        labelKey: labelKeys[index],
         seed: (modeId.hashCode.abs() % 97) + number * 31,
       );
     }, growable: false);
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  late final AudioPlayer _player;
   late final AnimationController _orbitController;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<Duration>? _durationSubscription;
@@ -486,33 +493,37 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   bool _playing = false;
   bool _muted = false;
   bool _loading = false;
+  bool _tracksExpanded = false;
+  bool _continuePlaybackOnExit = false;
   double _volume = 0.62;
   double? _draggingRatio;
   Duration _position = Duration.zero;
   Duration _duration = const Duration(minutes: 2);
   Duration? _sleepRemaining;
-  String? _audioErrorLabelZh;
-  String? _audioErrorLabelEn;
+  String? _audioErrorLabelKey;
   final Map<String, Uint8List> _trackBytesCache = <String, Uint8List>{};
 
   @override
   void initState() {
     super.initState();
+    _player = _SoothingRuntimeStore.retainedPlayer ?? AudioPlayer();
     _orbitController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 16),
+      duration: const Duration(seconds: 14),
     );
     _positionSubscription = _player.onPositionChanged.listen((value) {
       if (!mounted) return;
       setState(() {
         _position = value;
       });
+      _SoothingRuntimeStore.activePosition = value;
     });
     _durationSubscription = _player.onDurationChanged.listen((value) {
       if (!mounted || value.inMilliseconds <= 0) return;
       setState(() {
         _duration = value;
       });
+      _SoothingRuntimeStore.activeDuration = value;
     });
     _stateSubscription = _player.onPlayerStateChanged.listen((state) {
       if (!mounted) return;
@@ -521,6 +532,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       setState(() {
         _playing = nextPlaying;
       });
+      _SoothingRuntimeStore.activePlaying = nextPlaying;
       if (nextPlaying) {
         _orbitController.repeat();
       } else {
@@ -537,7 +549,23 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _stateSubscription?.cancel();
     _sleepTimer?.cancel();
     _orbitController.dispose();
-    unawaited(_player.dispose());
+    final shouldRetainPlayer = _continuePlaybackOnExit && _playing;
+    if (shouldRetainPlayer) {
+      _SoothingRuntimeStore.retainedPlayer = _player;
+      _SoothingRuntimeStore.activeModeId = _mode.id;
+      _SoothingRuntimeStore.activeTrackIndex = _trackIndex;
+      _SoothingRuntimeStore.activePlaying = _playing;
+      _SoothingRuntimeStore.activeVolume = _volume;
+      _SoothingRuntimeStore.activeMuted = _muted;
+      _SoothingRuntimeStore.activePosition = _position;
+      _SoothingRuntimeStore.activeDuration = _duration;
+    } else {
+      if (identical(_SoothingRuntimeStore.retainedPlayer, _player)) {
+        _SoothingRuntimeStore.retainedPlayer = null;
+      }
+      _SoothingRuntimeStore.activePlaying = false;
+      unawaited(_player.dispose());
+    }
     super.dispose();
   }
 
@@ -553,6 +581,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       prefs.lastTrackIndexByMode,
     );
     _SoothingRuntimeStore.lastModeId = prefs.lastModeId;
+    _SoothingRuntimeStore.continuePlaybackOnExit = prefs.continuePlaybackOnExit;
+    _continuePlaybackOnExit = prefs.continuePlaybackOnExit;
     _mode = _modes.firstWhere(
       (mode) => mode.id == _SoothingRuntimeStore.lastModeId,
       orElse: () => _mode,
@@ -561,7 +591,37 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
     await _player.setAudioContext(_soothingAudioContext);
     await _player.setReleaseMode(ReleaseMode.loop);
-    await _player.setVolume(_volume);
+    _volume = _SoothingRuntimeStore.activeVolume;
+    _muted = _SoothingRuntimeStore.activeMuted;
+    await _player.setVolume(_muted ? 0 : _volume);
+
+    if (_SoothingRuntimeStore.retainedPlayer != null &&
+        _SoothingRuntimeStore.activeModeId != null) {
+      final retainedModeId = _SoothingRuntimeStore.activeModeId!;
+      _mode = _modes.firstWhere(
+        (mode) => mode.id == retainedModeId,
+        orElse: () => _mode,
+      );
+      _trackIndex = _SoothingRuntimeStore.activeTrackIndex.clamp(
+        0,
+        _tracksForMode(_mode.id).length - 1,
+      );
+      _position = _SoothingRuntimeStore.activePosition;
+      _duration = _SoothingRuntimeStore.activeDuration;
+      _playing = _SoothingRuntimeStore.activePlaying;
+      _scene = await ToolboxSoothingAudioService.load(_mode.id);
+      if (_playing) {
+        _orbitController.repeat();
+      }
+      if (mounted) {
+        setState(() {});
+      }
+      for (final mode in _modes.where((item) => item.id != _mode.id).take(2)) {
+        unawaited(_preloadModeAssets(mode.id));
+      }
+      return;
+    }
+
     await _preloadModeAssets(_mode.id);
     await _loadMode(_mode, autoplay: false);
     for (final mode in _modes.where((item) => item.id != _mode.id).take(2)) {
@@ -615,12 +675,15 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       setState(() {
         _scene = scene;
       });
+      _SoothingRuntimeStore.activeModeId = mode.id;
+      _SoothingRuntimeStore.activeTrackIndex = _trackIndex;
+      _SoothingRuntimeStore.activeVolume = _volume;
+      _SoothingRuntimeStore.activeMuted = _muted;
       _rememberRecent(mode.id);
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _audioErrorLabelZh = mode.zhTitle;
-        _audioErrorLabelEn = mode.enTitle;
+        _audioErrorLabelKey = 'mode:${mode.id}';
       });
     } finally {
       if (mounted) {
@@ -639,11 +702,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     }
     if (_playing) {
       await _player.pause();
+      _SoothingRuntimeStore.activePlaying = false;
       _orbitController.stop();
       return;
     }
     await _player.resume();
     _rememberRecent(_mode.id);
+    _SoothingRuntimeStore.activePlaying = true;
     _orbitController.repeat();
   }
 
@@ -677,8 +742,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _audioErrorLabelZh = _currentTrack.zhLabel;
-        _audioErrorLabelEn = _currentTrack.enLabel;
+        _audioErrorLabelKey = 'track:${_currentTrack.labelKey}';
       });
     } finally {
       if (mounted) {
@@ -690,6 +754,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
     _SoothingRuntimeStore.lastTrackIndexByMode[_mode.id] = _trackIndex;
     _SoothingRuntimeStore.lastModeId = _mode.id;
+    _SoothingRuntimeStore.activeTrackIndex = _trackIndex;
     unawaited(_persistPrefs());
   }
 
@@ -729,16 +794,20 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     setState(() {
       _muted = value;
     });
+    _SoothingRuntimeStore.activeMuted = value;
     await _player.setVolume(value ? 0 : _volume);
+    unawaited(_persistPrefs());
   }
 
   Future<void> _setVolume(double value) async {
     setState(() {
       _volume = value;
     });
+    _SoothingRuntimeStore.activeVolume = value;
     if (!_muted) {
       await _player.setVolume(value);
     }
+    unawaited(_persistPrefs());
   }
 
   double get _progressRatio {
@@ -808,13 +877,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         recentModeIds: _SoothingRuntimeStore.recentModeIds,
         lastTrackIndexByMode: _SoothingRuntimeStore.lastTrackIndexByMode,
         lastModeId: _SoothingRuntimeStore.lastModeId,
+        continuePlaybackOnExit: _continuePlaybackOnExit,
       ),
     );
   }
 
   void _clearAudioError() {
-    _audioErrorLabelZh = null;
-    _audioErrorLabelEn = null;
+    _audioErrorLabelKey = null;
   }
 
   String _format(Duration value) {
@@ -824,18 +893,17 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }
 
   String? _audioErrorText(AppI18n i18n) {
-    final zh = _audioErrorLabelZh;
-    final en = _audioErrorLabelEn;
-    if (zh == null || en == null) return null;
-    return pickUiText(
+    final key = _audioErrorLabelKey;
+    if (key == null || key.isEmpty) return null;
+    final label = key.startsWith('mode:')
+        ? SoothingMusicCopy.modeTitle(i18n, key.substring(5))
+        : key.startsWith('track:')
+        ? SoothingMusicCopy.trackLabel(i18n, key.substring(6))
+        : key;
+    return SoothingMusicCopy.text(
       i18n,
-      zh: '无法加载 $zh',
-      en: 'Unable to load $en',
-      ja: '$en を読み込めません',
-      de: '$en konnte nicht geladen werden',
-      fr: 'Impossible de charger $en',
-      es: 'No se pudo cargar $en',
-      ru: 'Не удалось загрузить $en',
+      'track.audio_error',
+      params: <String, Object?>{'label': label},
     );
   }
 
@@ -884,15 +952,82 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     return Scaffold(
       backgroundColor: palette.backgroundBottom,
       appBar: AppBar(
-        backgroundColor: palette.backgroundBottom,
-        foregroundColor: palette.textPrimary,
+        backgroundColor: Colors.transparent,
+        foregroundColor: palette.isDark
+            ? Colors.white
+            : const Color(0xFF10263A),
         surfaceTintColor: Colors.transparent,
-        title: Text(_pageTitle(i18n)),
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        flexibleSpace: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                Color.lerp(
+                  palette.backgroundTop,
+                  palette.accent,
+                  palette.isDark ? 0.22 : 0.18,
+                )!,
+                Color.lerp(
+                  palette.backgroundTop,
+                  palette.orbitAccent,
+                  palette.isDark ? 0.14 : 0.12,
+                )!,
+              ],
+            ),
+            border: Border(
+              bottom: BorderSide(
+                color: palette.accent.withValues(
+                  alpha: palette.isDark ? 0.3 : 0.18,
+                ),
+              ),
+            ),
+          ),
+        ),
+        title: Text(
+          _copyPageTitle(i18n),
+          style: TextStyle(
+            color: palette.isDark ? Colors.white : const Color(0xFF10263A),
+            fontWeight: FontWeight.w800,
+            shadows: <Shadow>[
+              Shadow(
+                color: palette.accent.withValues(
+                  alpha: palette.isDark ? 0.18 : 0.08,
+                ),
+                blurRadius: 18,
+              ),
+            ],
+          ),
+        ),
         actions: <Widget>[
           IconButton(
-            tooltip: _sleepTimerButtonLabel(i18n),
+            tooltip: _copySleepTimerButtonLabel(i18n),
             onPressed: () => _showSleepTimerSheet(context, i18n),
             icon: const Icon(Icons.timer_outlined),
+          ),
+          PopupMenuButton<_SoothingPageMenuAction>(
+            tooltip: SoothingMusicCopy.text(i18n, 'setting.keep_playing'),
+            onSelected: (value) {
+              if (value == _SoothingPageMenuAction.toggleContinuePlayback) {
+                setState(() {
+                  _continuePlaybackOnExit = !_continuePlaybackOnExit;
+                  _SoothingRuntimeStore.continuePlaybackOnExit =
+                      _continuePlaybackOnExit;
+                });
+                unawaited(_persistPrefs());
+              }
+            },
+            itemBuilder: (context) => <PopupMenuEntry<_SoothingPageMenuAction>>[
+              CheckedPopupMenuItem<_SoothingPageMenuAction>(
+                value: _SoothingPageMenuAction.toggleContinuePlayback,
+                checked: _continuePlaybackOnExit,
+                child: Text(
+                  SoothingMusicCopy.text(i18n, 'setting.keep_playing'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -971,27 +1106,88 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Text(
+            _copyModesButtonLabel(i18n),
+            style: TextStyle(
+              color: palette.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: <Widget>[
               Expanded(
-                child: _CompactCurrentModeCard(
-                  title: _mode.title(i18n),
-                  subtitle: _mode.subtitle(i18n),
-                  accent: palette.accent,
-                  icon: _mode.icon,
-                  isFavorite: _SoothingRuntimeStore.favoriteModeIds.contains(
-                    _mode.id,
+                child: PopupMenuButton<_SoothingModeTheme>(
+                  tooltip: _copyModesButtonLabel(i18n),
+                  onSelected: (mode) => unawaited(_setMode(mode)),
+                  itemBuilder: (context) => _modes
+                      .map(
+                        (mode) => PopupMenuItem<_SoothingModeTheme>(
+                          value: mode,
+                          child: Row(
+                            children: <Widget>[
+                              Icon(
+                                mode.icon,
+                                size: 18,
+                                color: _mode.id == mode.id
+                                    ? palette.accent
+                                    : palette.textSecondary,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  mode.title(i18n),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (_mode.id == mode.id)
+                                Icon(
+                                  Icons.check_rounded,
+                                  size: 16,
+                                  color: palette.accent,
+                                ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                  child: _CompactCurrentModeCard(
+                    title: _mode.title(i18n),
+                    subtitle: _mode.subtitle(i18n),
+                    accent: palette.accent,
+                    icon: _mode.icon,
+                    isFavorite: _SoothingRuntimeStore.favoriteModeIds.contains(
+                      _mode.id,
+                    ),
+                    onToggleFavorite: () => _toggleFavorite(_mode.id),
+                    palette: palette,
+                    dropdownEnabled: true,
+                    showFavoriteButton: false,
                   ),
-                  onToggleFavorite: () => _toggleFavorite(_mode.id),
-                  palette: palette,
                 ),
               ),
-              const SizedBox(width: 10),
-              FilledButton.tonalIcon(
-                onPressed: () =>
-                    _showModeSheet(context, i18n, palette: palette),
-                icon: const Icon(Icons.tune_rounded),
-                label: Text(_modesButtonLabel(i18n)),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: palette.panelSurfaceMuted,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: palette.border),
+                ),
+                child: IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _toggleFavorite(_mode.id),
+                  icon: Icon(
+                    _SoothingRuntimeStore.favoriteModeIds.contains(_mode.id)
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    size: 18,
+                    color:
+                        _SoothingRuntimeStore.favoriteModeIds.contains(_mode.id)
+                        ? palette.accent
+                        : palette.textSecondary,
+                  ),
+                ),
               ),
             ],
           ),
@@ -999,8 +1195,9 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
             const SizedBox(height: 10),
             _InfoPill(
               icon: Icons.timer_outlined,
-              label: _activeSleepTimerLabel(i18n, _sleepRemaining!),
+              label: _copyActiveSleepTimerLabel(i18n, _sleepRemaining!),
               palette: palette,
+              accent: palette.accent,
             ),
           ],
         ],
@@ -1025,7 +1222,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _pageTitle(i18n),
+            _copyPageTitle(i18n),
             style: TextStyle(
               color: palette.textPrimary,
               fontSize: 28,
@@ -1034,7 +1231,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
           ),
           const SizedBox(height: 8),
           Text(
-            _pageSubtitle(i18n),
+            _copyPageSubtitle(i18n),
             style: TextStyle(color: palette.textSecondary, height: 1.45),
           ),
           const SizedBox(height: 16),
@@ -1052,8 +1249,9 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
             const SizedBox(height: 12),
             _InfoPill(
               icon: Icons.timer_outlined,
-              label: _activeSleepTimerLabel(i18n, _sleepRemaining!),
+              label: _copyActiveSleepTimerLabel(i18n, _sleepRemaining!),
               palette: palette,
+              accent: palette.accent,
             ),
           ],
           const SizedBox(height: 14),
@@ -1125,7 +1323,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
           ),
           const SizedBox(height: 12),
           Text(
-            _emptyModeTitle(i18n, filter),
+            _copyEmptyModeTitle(i18n, filter),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: palette.textPrimary,
@@ -1135,14 +1333,14 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
           ),
           const SizedBox(height: 6),
           Text(
-            _emptyModeSubtitle(i18n, filter),
+            _copyEmptyModeSubtitle(i18n, filter),
             textAlign: TextAlign.center,
             style: TextStyle(color: palette.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: onReset,
-            child: Text(_showAllModesLabel(i18n)),
+            child: Text(_copyShowAllModesLabel(i18n)),
           ),
         ],
       ),
@@ -1161,7 +1359,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       children: _ModeLibraryFilter.values
           .map(
             (value) => _ModeFilterChip(
-              label: _modeFilterLabel(i18n, value),
+              label: _copyModeFilterLabel(i18n, value),
               selected: filter == value,
               palette: palette,
               onTap: () => onChanged(value),
@@ -1273,7 +1471,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _activeModeLabel(i18n),
+                                  _copyActiveModeLabel(i18n),
                                   style: TextStyle(
                                     color: tileAccent,
                                     fontSize: 11,
@@ -1298,7 +1496,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                     const SizedBox(height: 8),
                     _InfoPill(
                       icon: Icons.library_music_rounded,
-                      label: _trackCountLabel(i18n, trackCount),
+                      label: _copyTrackCountLabel(i18n, trackCount),
                       palette: palette,
                       dense: true,
                       accent: tileAccent,
@@ -1308,7 +1506,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: _favoriteToggleLabel(i18n),
+                tooltip: _copyFavoriteToggleLabel(i18n),
                 visualDensity: VisualDensity.compact,
                 onPressed: onFavoriteTap,
                 icon: Icon(
@@ -1336,6 +1534,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }) {
     final narrow = compact && MediaQuery.of(context).size.width < 430;
     final bands = _currentSpectrum;
+    final playbackGain = _playing ? 1.28 : 0.82;
 
     return Column(
       children: <Widget>[
@@ -1351,9 +1550,28 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                       radius: 0.96,
                       colors: <Color>[
                         palette.glowA.withValues(
-                          alpha: palette.isDark ? 0.3 : 0.16,
+                          alpha: palette.isDark ? 0.44 : 0.3,
                         ),
                         Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: <Color>[
+                        palette.accent.withValues(
+                          alpha: palette.isDark ? 0.08 : 0.1,
+                        ),
+                        Colors.transparent,
+                        palette.orbitAccent.withValues(
+                          alpha: palette.isDark ? 0.06 : 0.08,
+                        ),
                       ],
                     ),
                   ),
@@ -1364,7 +1582,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                 top: compact ? 70 : 90,
                 child: _GlowBlob(
                   color: palette.glowA,
-                  size: compact ? 190 : 250,
+                  size: compact ? 220 : 290,
                 ),
               ),
               Positioned(
@@ -1372,7 +1590,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                 top: compact ? 86 : 66,
                 child: _GlowBlob(
                   color: palette.glowB,
-                  size: compact ? 180 : 236,
+                  size: compact ? 210 : 270,
                 ),
               ),
               Positioned.fill(
@@ -1391,7 +1609,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                 : _mode.id == 'study' || _mode.id == 'jazz'
                                 ? 0.82
                                 : 0.56) *
-                            effectBoost,
+                            effectBoost *
+                            playbackGain,
                         particleGain:
                             (_mode.id == 'dreaming'
                                 ? 1
@@ -1400,17 +1619,20 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                 : _mode.id == 'sleep'
                                 ? 0.35
                                 : 0.6) *
-                            effectBoost,
+                            effectBoost *
+                            playbackGain,
                         breathingGain:
                             (_mode.id == 'sleep'
                                 ? 1
                                 : _mode.id == 'music_box' || _mode.id == 'harp'
                                 ? 0.86
                                 : 0.62) *
-                            waveBoost,
-                        rippleGain: waveBoost,
+                            waveBoost *
+                            playbackGain,
+                        rippleGain: waveBoost * playbackGain,
                         waveGain:
-                            (0.84 + effectBoost * 0.26) *
+                            (1.04 + effectBoost * 0.34) *
+                            playbackGain *
                             (_mode.id == 'dreaming' ? 1.1 : 1),
                         compact: compact,
                         isDark: palette.isDark,
@@ -1436,7 +1658,9 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                       _mode.title(i18n),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        color: palette.textPrimary,
+                                        color: palette.isDark
+                                            ? Colors.white
+                                            : const Color(0xFF10263A),
                                         fontSize: veryCramped
                                             ? 26
                                             : cramped
@@ -1448,6 +1672,16 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                             : 54,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: 0.8,
+                                        shadows: <Shadow>[
+                                          Shadow(
+                                            color: palette.accent.withValues(
+                                              alpha: palette.isDark
+                                                  ? 0.24
+                                                  : 0.12,
+                                            ),
+                                            blurRadius: 24,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(height: 12),
@@ -1565,31 +1799,130 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
               ),
               _InfoPill(
                 icon: Icons.library_music_rounded,
-                label: _trackCountLabel(i18n, _tracks.length),
+                label: _copyTrackCountLabel(i18n, _tracks.length),
                 palette: palette,
               ),
               if (_sleepRemaining != null)
                 _InfoPill(
                   icon: Icons.timer_outlined,
-                  label: _activeSleepTimerLabel(i18n, _sleepRemaining!),
+                  label: _copyActiveSleepTimerLabel(i18n, _sleepRemaining!),
                   palette: palette,
                   accent: palette.orbitAccent,
                 ),
             ],
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 42,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _tracks.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) => _TrackPill(
-                label: _tracks[index].label(i18n),
-                selected: _trackIndex == index,
-                palette: palette,
-                compact: compact,
-                onTap: () => _setTrackIndex(index),
+          InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () {
+              setState(() {
+                _tracksExpanded = !_tracksExpanded;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: palette.panelSurfaceMuted,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: palette.border),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          SoothingMusicCopy.text(i18n, 'track.selector'),
+                          style: TextStyle(
+                            color: palette.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _currentTrack.label(i18n),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: palette.textPrimary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        if (SoothingMusicCopy.trackLabel(
+                              AppI18n('zh'),
+                              _currentTrack.labelKey,
+                            ) !=
+                            _currentTrack.label(i18n)) ...<Widget>[
+                          const SizedBox(height: 1),
+                          Text(
+                            SoothingMusicCopy.trackLabel(
+                              AppI18n('zh'),
+                              _currentTrack.labelKey,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: palette.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    SoothingMusicCopy.text(
+                      i18n,
+                      _tracksExpanded ? 'track.hide' : 'track.show',
+                    ),
+                    style: TextStyle(
+                      color: palette.accent,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: _tracksExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: palette.accent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 180),
+            crossFadeState: _tracksExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: SizedBox(
+                height: 42,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _tracks.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) => _TrackPill(
+                    label: _tracks[index].label(i18n),
+                    selected: _trackIndex == index,
+                    palette: palette,
+                    compact: compact,
+                    onTap: () => _setTrackIndex(index),
+                  ),
+                ),
               ),
             ),
           ),
@@ -1639,7 +1972,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   IconButton(
-                    tooltip: _volumeToggleLabel(i18n),
+                    tooltip: _copyVolumeToggleLabel(i18n),
                     onPressed: () => _setMuted(!_muted),
                     icon: Icon(
                       _muted
@@ -1673,7 +2006,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   _TransportIconButton(
-                    tooltip: _previousTrackLabel(i18n),
+                    tooltip: _copyPreviousTrackLabel(i18n),
                     icon: Icons.skip_previous_rounded,
                     palette: palette,
                     compact: stacked,
@@ -1711,7 +2044,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                   ),
                   SizedBox(width: stacked ? 4 : 8),
                   _TransportIconButton(
-                    tooltip: _nextTrackLabel(i18n),
+                    tooltip: _copyNextTrackLabel(i18n),
                     icon: Icons.skip_next_rounded,
                     palette: palette,
                     compact: stacked,
@@ -1827,7 +2160,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
             children: values
                 .map((value) {
-                  final label = _sleepTimerOptionLabel(i18n, value);
+                  final label = _copySleepTimerOptionLabel(i18n, value);
                   final selected = value == null
                       ? _sleepRemaining == null
                       : _sleepRemaining?.inMinutes == value.inMinutes;
@@ -1874,14 +2207,14 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _browseModesTitle(i18n),
+                        _copyBrowseModesTitle(i18n),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        _browseModesSubtitle(i18n),
+                        _copyBrowseModesSubtitle(i18n),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 14),
@@ -1948,6 +2281,107 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       },
     );
   }
+
+  String _copyPageTitle(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'page.title');
+
+  String _copyPageSubtitle(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'page.subtitle');
+
+  String _copyBrowseModesTitle(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'mode.browser.title');
+
+  String _copyBrowseModesSubtitle(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'mode.browser.subtitle');
+
+  String _copyModesButtonLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'mode.button');
+
+  String _copyModeFilterLabel(AppI18n i18n, _ModeLibraryFilter filter) {
+    return switch (filter) {
+      _ModeLibraryFilter.all => SoothingMusicCopy.text(i18n, 'mode.filter.all'),
+      _ModeLibraryFilter.favorites => SoothingMusicCopy.text(
+        i18n,
+        'mode.filter.favorites',
+      ),
+      _ModeLibraryFilter.recent => SoothingMusicCopy.text(
+        i18n,
+        'mode.filter.recent',
+      ),
+    };
+  }
+
+  String _copyEmptyModeTitle(AppI18n i18n, _ModeLibraryFilter filter) {
+    return switch (filter) {
+      _ModeLibraryFilter.favorites => SoothingMusicCopy.text(
+        i18n,
+        'mode.empty.favorites.title',
+      ),
+      _ModeLibraryFilter.recent => SoothingMusicCopy.text(
+        i18n,
+        'mode.empty.recent.title',
+      ),
+      _ModeLibraryFilter.all => '',
+    };
+  }
+
+  String _copyEmptyModeSubtitle(AppI18n i18n, _ModeLibraryFilter filter) {
+    return switch (filter) {
+      _ModeLibraryFilter.favorites => SoothingMusicCopy.text(
+        i18n,
+        'mode.empty.favorites.subtitle',
+      ),
+      _ModeLibraryFilter.recent => SoothingMusicCopy.text(
+        i18n,
+        'mode.empty.recent.subtitle',
+      ),
+      _ModeLibraryFilter.all => '',
+    };
+  }
+
+  String _copyShowAllModesLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'mode.show_all');
+
+  String _copySleepTimerButtonLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'timer.button');
+
+  String _copySleepTimerOptionLabel(AppI18n i18n, Duration? value) {
+    if (value == null) return SoothingMusicCopy.text(i18n, 'timer.off');
+    return SoothingMusicCopy.text(
+      i18n,
+      'timer.minutes',
+      params: <String, Object?>{'count': value.inMinutes},
+    );
+  }
+
+  String _copyActiveSleepTimerLabel(AppI18n i18n, Duration value) =>
+      SoothingMusicCopy.text(
+        i18n,
+        'timer.active',
+        params: <String, Object?>{'duration': _format(value)},
+      );
+
+  String _copyTrackCountLabel(AppI18n i18n, int count) =>
+      SoothingMusicCopy.text(
+        i18n,
+        'track.count',
+        params: <String, Object?>{'count': count},
+      );
+
+  String _copyActiveModeLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'mode.active');
+
+  String _copyFavoriteToggleLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'mode.favorite_toggle');
+
+  String _copyPreviousTrackLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'track.previous');
+
+  String _copyNextTrackLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'track.next');
+
+  String _copyVolumeToggleLabel(AppI18n i18n) =>
+      SoothingMusicCopy.text(i18n, 'audio.toggle_mute');
 
   String _pageTitle(AppI18n i18n) => pickUiText(
     i18n,
@@ -2205,6 +2639,8 @@ class _CompactCurrentModeCard extends StatelessWidget {
     required this.isFavorite,
     required this.onToggleFavorite,
     required this.palette,
+    this.dropdownEnabled = false,
+    this.showFavoriteButton = true,
   });
 
   final String title;
@@ -2214,6 +2650,8 @@ class _CompactCurrentModeCard extends StatelessWidget {
   final bool isFavorite;
   final VoidCallback onToggleFavorite;
   final _SoothingVisualPalette palette;
+  final bool dropdownEnabled;
+  final bool showFavoriteButton;
 
   @override
   Widget build(BuildContext context) {
@@ -2263,17 +2701,27 @@ class _CompactCurrentModeCard extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: onToggleFavorite,
-            icon: Icon(
-              isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-              size: 18,
-              color: isFavorite ? accent : palette.textSecondary,
+          if (showFavoriteButton)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: onToggleFavorite,
+              icon: Icon(
+                isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                size: 18,
+                color: isFavorite ? accent : palette.textSecondary,
+              ),
             ),
-          ),
+          if (dropdownEnabled)
+            Padding(
+              padding: EdgeInsets.only(left: showFavoriteButton ? 2 : 0),
+              child: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: palette.accent,
+                size: 20,
+              ),
+            ),
         ],
       ),
     );
@@ -2444,7 +2892,9 @@ class _InfoPill extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: palette.textSecondary,
+                color: accent == null
+                    ? palette.textSecondary
+                    : Color.lerp(resolvedAccent, palette.textPrimary, 0.3),
                 fontSize: dense ? 11 : 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -2553,6 +3003,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
     final shortest = math.min(size.width, size.height);
     final compactBoost = compact ? 1.16 : 1.0;
     final innerRadius = shortest * (compact ? 0.17 : 0.14);
+    final expandedBands = _expandBands(bands, 24);
     final energy =
         bands.fold<double>(0, (sum, item) => sum + item) / bands.length;
 
@@ -2560,9 +3011,9 @@ class _SoothingSpectrumPainter extends CustomPainter {
       canvas,
       size,
       center,
-      color: accent.withValues(alpha: isDark ? 0.2 : 0.14),
+      color: accent.withValues(alpha: isDark ? 0.34 : 0.24),
       phase: phase,
-      amplitude: shortest * 0.034 * waveGain,
+      amplitude: shortest * 0.046 * waveGain,
       verticalOffset: -shortest * 0.06,
       direction: 1,
     );
@@ -2570,14 +3021,14 @@ class _SoothingSpectrumPainter extends CustomPainter {
       canvas,
       size,
       center,
-      color: orbitAccent.withValues(alpha: isDark ? 0.16 : 0.12),
+      color: orbitAccent.withValues(alpha: isDark ? 0.28 : 0.2),
       phase: phase + 1.6,
-      amplitude: shortest * 0.028 * waveGain,
+      amplitude: shortest * 0.036 * waveGain,
       verticalOffset: shortest * 0.08,
       direction: -1,
     );
 
-    for (var ring = 0; ring < 3; ring += 1) {
+    for (var ring = 0; ring < 4; ring += 1) {
       final progress = ((phase / (math.pi * 2)) + ring * 0.32) % 1;
       final radius =
           innerRadius * (1.04 + progress * (1.75 + rippleGain * 0.18));
@@ -2586,16 +3037,16 @@ class _SoothingSpectrumPainter extends CustomPainter {
         radius,
         Paint()
           ..color = accent.withValues(
-            alpha: (1 - progress) * (isDark ? 0.12 : 0.08) * rippleGain,
+            alpha: (1 - progress) * (isDark ? 0.18 : 0.14) * rippleGain,
           )
           ..style = PaintingStyle.stroke
-          ..strokeWidth = compact ? 1.6 : 2.1,
+          ..strokeWidth = compact ? 2.0 : 2.8,
       );
     }
 
     for (
       var i = 0;
-      i < (10 + particleGain * 24 * compactBoost).round();
+      i < (16 + particleGain * 34 * compactBoost).round();
       i += 1
     ) {
       final drift = phase + i * 0.47;
@@ -2606,15 +3057,15 @@ class _SoothingSpectrumPainter extends CustomPainter {
       );
       canvas.drawCircle(
         point,
-        1.3 + (i % 3) * 0.8,
+        1.6 + (i % 3) * 0.9,
         Paint()
           ..color = orbitAccent.withValues(
-            alpha: (0.08 + (i % 5) * 0.03).clamp(0.08, 0.28),
+            alpha: (0.14 + (i % 5) * 0.04).clamp(0.14, 0.42),
           ),
       );
     }
 
-    for (var i = 0; i < (6 + particleGain * 14).round(); i += 1) {
+    for (var i = 0; i < (10 + particleGain * 20).round(); i += 1) {
       final drift = phase * 1.24 + i * 1.34;
       final radius =
           innerRadius * (0.72 + (i % 4) * 0.18 + math.sin(drift) * 0.08);
@@ -2624,8 +3075,8 @@ class _SoothingSpectrumPainter extends CustomPainter {
       );
       canvas.drawCircle(
         point,
-        1.8 + (i % 2) * 0.6,
-        Paint()..color = accent.withValues(alpha: isDark ? 0.24 : 0.16),
+        2.0 + (i % 2) * 0.8,
+        Paint()..color = accent.withValues(alpha: isDark ? 0.34 : 0.24),
       );
     }
 
@@ -2642,16 +3093,19 @@ class _SoothingSpectrumPainter extends CustomPainter {
           ).createShader(
             Rect.fromCircle(center: center, radius: innerRadius * 2.8),
           );
-    for (var i = 0; i < bands.length; i += 1) {
-      final angle = -math.pi / 2 + (math.pi * 2 * i / bands.length);
-      final amplitude = bands[i];
+    for (var i = 0; i < expandedBands.length; i += 1) {
+      final angle = -math.pi / 2 + (math.pi * 2 * i / expandedBands.length);
+      final amplitude = expandedBands[i];
+      final pulse =
+          0.84 + 0.38 * math.sin(phase * 1.8 + i * 0.42 + amplitude * 3.2);
       final length =
-          (18 + amplitude * shortest * 0.064 * barGain * compactBoost)
-              .toDouble();
-      final barWidth = 4.6 + barGain * 1.8;
+          (22 + amplitude * shortest * 0.08 * barGain * compactBoost)
+              .toDouble() *
+          pulse.clamp(0.72, 1.28);
+      final barWidth = 3.4 + barGain * 1.4;
       final barCenter = Offset(
-        center.dx + math.cos(angle) * (innerRadius * 2.16 + length * 0.5),
-        center.dy + math.sin(angle) * (innerRadius * 2.16 + length * 0.5),
+        center.dx + math.cos(angle) * (innerRadius * 2.08 + length * 0.5),
+        center.dy + math.sin(angle) * (innerRadius * 2.08 + length * 0.5),
       );
       canvas.save();
       canvas.translate(barCenter.dx, barCenter.dy);
@@ -2671,7 +3125,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
           RadialGradient(
             colors: <Color>[
               Colors.white.withValues(alpha: 0.26 + energy * 0.1),
-              accent.withValues(alpha: 0.12 + energy * 0.12),
+              accent.withValues(alpha: 0.2 + energy * 0.16),
               Colors.transparent,
             ],
           ).createShader(
@@ -2688,9 +3142,9 @@ class _SoothingSpectrumPainter extends CustomPainter {
         center,
         radius,
         Paint()
-          ..color = accent.withValues(alpha: 0.018 * (5 - ring))
+          ..color = accent.withValues(alpha: 0.028 * (5 - ring))
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 18,
+          ..strokeWidth = 16,
       );
     }
 
@@ -2712,6 +3166,18 @@ class _SoothingSpectrumPainter extends CustomPainter {
       bands: bands.reversed.toList(growable: false),
       direction: -1,
     );
+  }
+
+  List<double> _expandBands(List<double> source, int count) {
+    if (source.isEmpty) return List<double>.filled(count, 0.2);
+    return List<double>.generate(count, (index) {
+      final position = index * (source.length - 1) / math.max(1, count - 1);
+      final lower = position.floor().clamp(0, source.length - 1);
+      final upper = position.ceil().clamp(0, source.length - 1);
+      if (lower == upper) return source[lower];
+      final t = position - lower;
+      return source[lower] * (1 - t) + source[upper] * t;
+    }, growable: false);
   }
 
   void _drawWaveRibbon(
@@ -2748,10 +3214,10 @@ class _SoothingSpectrumPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = compact ? 2.2 : 2.8
+      ..strokeWidth = compact ? 2.8 : 3.6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
     canvas.drawPath(path, paint);
   }
 
@@ -2789,10 +3255,10 @@ class _SoothingSpectrumPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.2
+      ..strokeWidth = 4.6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 13);
     canvas.drawPath(path, paint);
   }
 
