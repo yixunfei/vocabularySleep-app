@@ -386,6 +386,7 @@ class AmbientService {
   final Map<String, SeamlessAmbientLoop> _loops =
       <String, SeamlessAmbientLoop>{};
 
+  bool _enabled = true;
   double _masterVolume = 0.7;
   List<AmbientSource> _sources = <AmbientSource>[];
 
@@ -415,12 +416,6 @@ class AmbientService {
       volume: 0.42,
     ),
     AmbientSource(
-      id: 'nature_forest',
-      name: 'Wind in Trees',
-      assetPath: 'ambient/nature/wind-in-trees.mp3',
-      volume: 0.42,
-    ),
-    AmbientSource(
       id: 'nature_fire',
       name: 'Campfire',
       assetPath: 'ambient/nature/campfire.mp3',
@@ -431,12 +426,6 @@ class AmbientService {
       name: 'Waves',
       assetPath: 'ambient/nature/waves.mp3',
       volume: 0.45,
-    ),
-    AmbientSource(
-      id: 'rain_light',
-      name: 'Light Rain',
-      assetPath: 'ambient/rain/light-rain.mp3',
-      volume: 0.4,
     ),
     AmbientSource(
       id: 'rain_heavy',
@@ -451,12 +440,6 @@ class AmbientService {
       volume: 0.45,
     ),
     AmbientSource(
-      id: 'focus_cafe',
-      name: 'Cafe',
-      assetPath: 'ambient/places/cafe.mp3',
-      volume: 0.44,
-    ),
-    AmbientSource(
       id: 'focus_night',
       name: 'Night Village',
       assetPath: 'ambient/places/night-village.mp3',
@@ -465,7 +448,12 @@ class AmbientService {
   ];
 
   List<AmbientSource> get sources => List<AmbientSource>.from(_sources);
+  bool get isEnabled => _enabled;
   double get masterVolume => _masterVolume;
+
+  void setEnabled(bool value) {
+    _enabled = value;
+  }
 
   void setMasterVolume(double value) {
     _masterVolume = value.clamp(0.0, 1.0);
@@ -568,6 +556,11 @@ class AmbientService {
   }
 
   Future<void> syncPlayback() async {
+    if (!_enabled) {
+      await stopAll();
+      return;
+    }
+
     final enabledSources = _sources.where((source) => source.enabled).toList();
     final enabledIds = enabledSources.map((source) => source.id).toSet();
 
@@ -612,6 +605,7 @@ class AmbientService {
 
   Future<void> reset() async {
     await stopAll();
+    _enabled = true;
     _masterVolume = 0.7;
     _sources = List<AmbientSource>.from(_builtInPresets);
   }

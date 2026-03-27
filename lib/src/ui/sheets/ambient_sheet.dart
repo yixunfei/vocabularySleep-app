@@ -18,6 +18,7 @@ class AmbientSheet extends StatelessWidget {
     return Consumer<AppState>(
       builder: (context, liveState, _) {
         final liveI18n = AppI18n(liveState.uiLanguage);
+        final ambientEnabled = liveState.ambientEnabled;
         final builtInSources = liveState.ambientSources
             .where((source) => source.isAsset)
             .toList(growable: false);
@@ -29,41 +30,46 @@ class AmbientSheet extends StatelessWidget {
             .toList(growable: false);
 
         Widget buildSourceCard(source, {bool removable = false}) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          localizedAmbientName(liveI18n, source),
-                          style: Theme.of(context).textTheme.titleMedium,
+          return Opacity(
+            opacity: ambientEnabled ? 1 : 0.72,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            localizedAmbientName(liveI18n, source),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                         ),
-                      ),
-                      Switch(
-                        value: source.enabled,
-                        onChanged: (value) =>
-                            liveState.setAmbientSourceEnabled(source.id, value),
-                      ),
-                      if (removable)
-                        IconButton(
-                          onPressed: () =>
-                              liveState.removeAmbientSource(source.id),
-                          icon: const Icon(Icons.delete_outline_rounded),
+                        Switch(
+                          value: source.enabled,
+                          onChanged: (value) => liveState
+                              .setAmbientSourceEnabled(source.id, value),
                         ),
-                    ],
-                  ),
-                  Slider(
-                    value: source.volume,
-                    onChanged: source.enabled
-                        ? (value) =>
-                              liveState.setAmbientSourceVolume(source.id, value)
-                        : null,
-                  ),
-                ],
+                        if (removable)
+                          IconButton(
+                            onPressed: () =>
+                                liveState.removeAmbientSource(source.id),
+                            icon: const Icon(Icons.delete_outline_rounded),
+                          ),
+                      ],
+                    ),
+                    Slider(
+                      value: source.volume,
+                      onChanged: source.enabled
+                          ? (value) => liveState.setAmbientSourceVolume(
+                              source.id,
+                              value,
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -98,36 +104,150 @@ class AmbientSheet extends StatelessWidget {
                     en: 'Keep ambient sound close to playback, with direct access to online and local sounds.',
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final narrow = constraints.maxWidth < 380;
+                    final statusText = ambientEnabled
+                        ? pickUiText(
+                            liveI18n,
+                            zh: '已开启，可一键静音全部环境音。',
+                            en: 'On. Mute every ambient source at once.',
+                          )
+                        : pickUiText(
+                            liveI18n,
+                            zh: '已关闭，重新开启后恢复当前组合。',
+                            en: 'Off. Restore the current mix when enabled.',
+                          );
+
+                    return DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerLow
+                            .withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          12,
+                          narrow ? 8 : 10,
+                          8,
+                          narrow ? 8 : 10,
+                        ),
+                        child: narrow
+                            ? Row(
+                                children: <Widget>[
+                                  Icon(
+                                    ambientEnabled
+                                        ? Icons.volume_up_rounded
+                                        : Icons.volume_off_rounded,
+                                    size: 18,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      ambientEnabled
+                                          ? pickUiText(
+                                              liveI18n,
+                                              zh: '总开关已开启',
+                                              en: 'Master switch on',
+                                            )
+                                          : pickUiText(
+                                              liveI18n,
+                                              zh: '总开关已关闭',
+                                              en: 'Master switch off',
+                                            ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge,
+                                    ),
+                                  ),
+                                  Switch.adaptive(
+                                    value: ambientEnabled,
+                                    onChanged: (value) =>
+                                        liveState.setAmbientEnabled(value),
+                                  ),
+                                ],
+                              )
+                            : Row(
+                                children: <Widget>[
+                                  Icon(
+                                    ambientEnabled
+                                        ? Icons.volume_up_rounded
+                                        : Icons.volume_off_rounded,
+                                    size: 20,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Text(
+                                          pickUiText(
+                                            liveI18n,
+                                            zh: '总开关',
+                                            en: 'Master switch',
+                                          ),
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          statusText,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch.adaptive(
+                                    value: ambientEnabled,
+                                    onChanged: (value) =>
+                                        liveState.setAmbientEnabled(value),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 14),
                 Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: <Widget>[
                     OutlinedButton.icon(
                       onPressed: liveState.addAmbientFileSource,
-                      icon: const Icon(Icons.library_music_rounded),
+                      icon: const Icon(Icons.library_music_rounded, size: 18),
                       label: Text(
-                        pickUiText(
-                          liveI18n,
-                          zh: '导入本地音频',
-                          en: 'Add local audio',
-                        ),
+                        pickUiText(liveI18n, zh: '导入音频', en: 'Add audio'),
                       ),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => showOnlineAmbientCatalogSheet(context),
-                      icon: const Icon(Icons.cloud_rounded),
+                      icon: const Icon(Icons.cloud_rounded, size: 18),
                       label: Text(
-                        pickUiText(
-                          liveI18n,
-                          zh: '白噪音资源',
-                          en: 'Ambient catalog',
-                        ),
+                        pickUiText(liveI18n, zh: '资源库', en: 'Ambient catalog'),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 Text(
                   pickUiText(liveI18n, zh: '总音量', en: 'Master volume'),
                   style: Theme.of(context).textTheme.labelLarge,

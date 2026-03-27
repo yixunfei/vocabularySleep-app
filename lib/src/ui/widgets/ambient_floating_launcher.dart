@@ -41,9 +41,11 @@ class AmbientFloatingLauncher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final activeCount = state.ambientSources
+    final ambientEnabled = state.ambientEnabled;
+    final selectedCount = state.ambientSources
         .where((source) => source.enabled)
         .length;
+    final activeCount = ambientEnabled ? selectedCount : 0;
 
     return Tooltip(
       message: i18n.t('ambientAudio'),
@@ -78,7 +80,9 @@ class AmbientFloatingLauncher extends StatelessWidget {
               alignment: Alignment.center,
               children: <Widget>[
                 Icon(
-                  activeCount > 0
+                  !ambientEnabled
+                      ? Icons.volume_off_rounded
+                      : activeCount > 0
                       ? Icons.surround_sound_rounded
                       : Icons.music_note_rounded,
                   color: theme.colorScheme.primary,

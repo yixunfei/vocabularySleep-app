@@ -19,7 +19,7 @@ extension AppHomeTabX on AppHomeTab {
       'focus' => AppHomeTab.focus,
       'toolbox' => AppHomeTab.toolbox,
       'more' => AppHomeTab.more,
-      _ => AppHomeTab.study,
+      _ => AppHomeTab.focus,
     };
   }
 
@@ -29,6 +29,6 @@ extension AppHomeTabX on AppHomeTab {
         return item;
       }
     }
-    return AppHomeTab.study;
+    return AppHomeTab.focus;
   }
 }

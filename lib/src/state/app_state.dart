@@ -122,7 +122,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Set<String> _rememberedWords = <String>{};
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
-  AppHomeTab _startupPage = AppHomeTab.study;
+  AppHomeTab _startupPage = AppHomeTab.focus;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   StudyStartupTab _studyStartupTab = StudyStartupTab.play;
   bool _weatherEnabled = false;
@@ -292,6 +292,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       ? 0
       : (_practiceTotalRemembered / _practiceTotalReviewed).clamp(0.0, 1.0);
   List<AmbientSource> get ambientSources => _ambient.sources;
+  bool get ambientEnabled => _ambient.isEnabled;
   double get ambientMasterVolume => _ambient.masterVolume;
 
   List<WordEntry> get visibleWords {
@@ -1399,6 +1400,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> setAmbientMasterVolume(double value) async {
     _ambient.setMasterVolume(value);
+    await _ambient.syncPlayback();
+    notifyListeners();
+  }
+
+  Future<void> setAmbientEnabled(bool value) async {
+    _ambient.setEnabled(value);
     await _ambient.syncPlayback();
     notifyListeners();
   }

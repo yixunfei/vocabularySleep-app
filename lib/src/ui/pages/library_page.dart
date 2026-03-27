@@ -167,6 +167,9 @@ class _LibraryPageState extends State<LibraryPage> {
       return;
     }
     _autoScrolledSignature = _paginationSignature;
+    if (targetIndex <= 1) {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
