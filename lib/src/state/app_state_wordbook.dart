@@ -73,13 +73,27 @@ extension _AppStateWordbook on AppState {
       final lazyWordbookId = wordbook.id;
       final lazyWordbookName = wordbook.name;
       final lazyPath = wordbook.path;
+      final i18n = AppI18n(_uiLanguage);
       _setBusy(
         true,
         messageKey: 'busyLoadingWordbook',
         params: <String, Object?>{'name': lazyWordbookName},
+        detail: i18n.t('download'),
+        progress: 0,
       );
       try {
-        await _database.ensureBuiltInWordbookLoaded(lazyPath);
+        await _database.ensureBuiltInWordbookLoaded(
+          lazyPath,
+          onProgress: (progress) {
+            _setBusy(
+              true,
+              messageKey: 'busyLoadingWordbook',
+              params: <String, Object?>{'name': lazyWordbookName},
+              detail: _busyDetailForWordbookLoadProgress(progress),
+              progress: _busyProgressForWordbookLoad(progress),
+            );
+          },
+        );
         await _reloadWordbooks(keepCurrentSelection: false);
         wordbook =
             _wordbooks

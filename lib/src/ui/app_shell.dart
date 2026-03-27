@@ -204,6 +204,10 @@ class _AppShellState extends State<AppShell> {
   }
 
   String? _busyDetail(AppI18n i18n, AppState state) {
+    final explicitDetail = state.busyDetail;
+    if ((explicitDetail ?? '').trim().isNotEmpty) {
+      return explicitDetail;
+    }
     final key = state.busyMessageKey;
     if (key == 'busyLoadingWordbook' ||
         key == 'busyImportingWordbook' ||
@@ -801,10 +805,32 @@ class _AppShellState extends State<AppShell> {
                     bottomClearance: ambientLauncherBottomClearance,
                   ),
                 ),
+              if (!isInitializing &&
+                  (state.wordbookImportActive ||
+                      state.remotePrewarmActive ||
+                      state.remotePrewarmFailed))
+                Positioned(
+                  top: media.padding.top + 10,
+                  left: 16,
+                  right: 16,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (state.wordbookImportActive)
+                        _buildWordbookImportBanner(i18n, state),
+                      if (state.wordbookImportActive &&
+                          (state.remotePrewarmActive || state.remotePrewarmFailed))
+                        const SizedBox(height: 8),
+                      if (state.remotePrewarmActive || state.remotePrewarmFailed)
+                        _buildRemotePrewarmBanner(i18n, state),
+                    ],
+                  ),
+                ),
               BusyOverlay(
                 visible: state.busy,
                 message: state.busyMessage ?? i18n.t('processing'),
                 detail: _busyDetail(i18n, state),
+                progress: state.busyProgress,
               ),
               ValueListenableBuilder<int>(
                 valueListenable: state.focusService.viewRevision,
@@ -815,6 +841,127 @@ class _AppShellState extends State<AppShell> {
                   return const Positioned.fill(child: FocusLockOverlay());
                 },
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRemotePrewarmBanner(AppI18n i18n, AppState state) {
+    final failed = state.remotePrewarmFailed;
+    final progress = state.remotePrewarmProgress;
+    final current = state.remotePrewarmCurrentLabel;
+    return Material(
+      elevation: 4,
+      color: Colors.transparent,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: failed
+                ? Theme.of(context).colorScheme.error.withValues(alpha: 0.32)
+                : Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: failed ? '资源预热失败' : '正在后台预热资源',
+                  en: failed
+                      ? 'Background prewarm failed'
+                      : 'Prewarming resources in background',
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                failed
+                    ? pickUiText(
+                        i18n,
+                        zh: '首次下载未完成，稍后会在实际使用时继续按需拉取。',
+                        en: 'Initial downloads did not finish. Resources will still download on demand when opened.',
+                      )
+                    : pickUiText(
+                        i18n,
+                        zh: '已完成 ${state.remotePrewarmCompletedCount} / ${state.remotePrewarmTotalCount}，当前：${current.isEmpty ? '准备中' : current}',
+                        en: '${state.remotePrewarmCompletedCount} / ${state.remotePrewarmTotalCount} complete. Current: ${current.isEmpty ? 'Preparing…' : current}',
+                      ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (!failed) ...<Widget>[
+                const SizedBox(height: 10),
+                LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWordbookImportBanner(AppI18n i18n, AppState state) {
+    final progress = state.wordbookImportProgress;
+    final processed = state.wordbookImportProcessedEntries;
+    final total = state.wordbookImportTotalEntries;
+    final subtitle = total == null || total <= 0
+        ? pickUiText(i18n, zh: '正在解析并导入，请稍候…', en: 'Parsing and importing, please wait...')
+        : pickUiText(
+            i18n,
+            zh: '已处理 $processed / $total',
+            en: 'Processed $processed / $total',
+          );
+    return Material(
+      elevation: 4,
+      color: Colors.transparent,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '正在后台导入词本：${state.wordbookImportName}',
+                        en: 'Importing in background: ${state.wordbookImportName}',
+                      ),
+                      style: Theme.of(context).textTheme.titleSmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 8),
+              LinearProgressIndicator(value: progress, minHeight: 4),
             ],
           ),
         ),

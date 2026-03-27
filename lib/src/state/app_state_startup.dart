@@ -64,6 +64,13 @@ extension _AppStateStartup on AppState {
       if (_weatherEnabled) {
         unawaited(refreshWeather(force: true));
       }
+      if (_remoteResourcePrewarm != null &&
+          !_settings.loadRemoteResourcePrewarmCompleted()) {
+        unawaited(_startRemoteResourcePrewarmImpl());
+      } else {
+        _remotePrewarmCompleted = _settings
+            .loadRemoteResourcePrewarmCompleted();
+      }
     } catch (error) {
       _log.e('app_state', 'init failed', error: error);
       _setMessage('errorInitFailed', params: <String, Object?>{'error': error});
@@ -350,5 +357,41 @@ extension _AppStateStartup on AppState {
     }
     _pendingTodoReminderLaunchId = todoId;
     _notifyStateChanged();
+  }
+
+  Future<void> _startRemoteResourcePrewarmImpl() async {
+    final prewarm = _remoteResourcePrewarm;
+    if (prewarm == null || _remotePrewarmActive || _remotePrewarmCompleted) {
+      return;
+    }
+    _remotePrewarmActive = true;
+    _remotePrewarmFailed = false;
+    _remotePrewarmCompletedCount = 0;
+    _remotePrewarmTotalCount = 0;
+    _remotePrewarmCurrentLabel = '';
+    _notifyStateChanged();
+    try {
+      await prewarm.prewarm(
+        onProgress: (progress) {
+          _remotePrewarmCompletedCount = progress.completed;
+          _remotePrewarmTotalCount = progress.total;
+          _remotePrewarmCurrentLabel = progress.currentLabel;
+          _notifyStateChanged();
+        },
+      );
+      _remotePrewarmCompleted = true;
+      _settings.saveRemoteResourcePrewarmCompleted(true);
+    } catch (error, stackTrace) {
+      _remotePrewarmFailed = true;
+      _log.e(
+        'app_state',
+        'remote resource prewarm failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _remotePrewarmActive = false;
+      _notifyStateChanged();
+    }
   }
 }

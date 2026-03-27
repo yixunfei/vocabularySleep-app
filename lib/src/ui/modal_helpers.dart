@@ -9,9 +9,16 @@ Future<String?> showTextPromptDialog({
   String? confirmText,
 }) async {
   final controller = TextEditingController(text: initialValue);
+  var closed = false;
   return showDialog<String>(
     context: context,
-    builder: (context) {
+    builder: (dialogContext) {
+      void close([String? value]) {
+        if (closed) return;
+        closed = true;
+        Navigator.of(dialogContext).pop(value);
+      }
+
       return AlertDialog(
         title: Text(title),
         content: Column(
@@ -26,20 +33,22 @@ Future<String?> showTextPromptDialog({
               controller: controller,
               autofocus: true,
               decoration: InputDecoration(hintText: hintText),
-              onSubmitted: (_) =>
-                  Navigator.of(context).pop(controller.text.trim()),
+              onSubmitted: (_) => close(controller.text.trim()),
             ),
           ],
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            onPressed: () => close(),
+            child: Text(
+              MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+            ),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            onPressed: () => close(controller.text.trim()),
             child: Text(
-              confirmText ?? MaterialLocalizations.of(context).okButtonLabel,
+              confirmText ??
+                  MaterialLocalizations.of(dialogContext).okButtonLabel,
             ),
           ),
         ],
@@ -55,20 +64,29 @@ Future<bool> showConfirmDialog({
   String? confirmText,
   bool danger = false,
 }) async {
+  var resolved = false;
   final result = await showDialog<bool>(
     context: context,
-    builder: (context) {
+    builder: (dialogContext) {
+      void close(bool value) {
+        if (resolved) return;
+        resolved = true;
+        Navigator.of(dialogContext).pop(value);
+      }
+
       final actionButton = danger
           ? FilledButton.tonal(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => close(true),
               child: Text(
-                confirmText ?? MaterialLocalizations.of(context).okButtonLabel,
+                confirmText ??
+                    MaterialLocalizations.of(dialogContext).okButtonLabel,
               ),
             )
           : FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => close(true),
               child: Text(
-                confirmText ?? MaterialLocalizations.of(context).okButtonLabel,
+                confirmText ??
+                    MaterialLocalizations.of(dialogContext).okButtonLabel,
               ),
             );
       return AlertDialog(
@@ -76,8 +94,10 @@ Future<bool> showConfirmDialog({
         content: Text(message),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+            onPressed: () => close(false),
+            child: Text(
+              MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+            ),
           ),
           actionButton,
         ],

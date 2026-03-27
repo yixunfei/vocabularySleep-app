@@ -28,6 +28,7 @@ import '../services/app_log_service.dart';
 import '../services/asr_service.dart';
 import '../services/database_service.dart';
 import '../services/daily_quote_service.dart';
+import '../services/cstcloud_resource_prewarm_service.dart';
 import '../services/focus_service.dart';
 import '../services/memory_algorithm.dart';
 import '../services/memory_lane_selector.dart';
@@ -75,6 +76,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required AmbientService ambient,
     required AsrService asr,
     required FocusService focusService,
+    CstCloudResourcePrewarmService? remoteResourcePrewarm,
     WeatherService? weatherService,
     DailyQuoteService? dailyQuoteService,
   }) : _database = database,
@@ -83,6 +85,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
        _ambient = ambient,
        _asr = asr,
        _focusService = focusService,
+       _remoteResourcePrewarm = remoteResourcePrewarm,
        _weatherService = weatherService ?? WeatherService(),
        _dailyQuoteService = dailyQuoteService ?? DailyQuoteService() {
     WidgetsBinding.instance.addObserver(this);
@@ -94,6 +97,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final AmbientService _ambient;
   final AsrService _asr;
   final FocusService _focusService;
+  final CstCloudResourcePrewarmService? _remoteResourcePrewarm;
   final WeatherService _weatherService;
   final DailyQuoteService _dailyQuoteService;
   final AppLogService _log = AppLogService.instance;
@@ -107,6 +111,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool _busy = false;
   String? _busyMessageKey;
   Map<String, Object?> _busyMessageParams = const <String, Object?>{};
+  String? _busyDetail;
+  double? _busyProgress;
+  bool _wordbookImportActive = false;
+  String _wordbookImportName = '';
+  int _wordbookImportProcessedEntries = 0;
+  int? _wordbookImportTotalEntries;
   String? _message;
   Map<String, Object?> _messageParams = const <String, Object?>{};
 
@@ -133,6 +143,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String? _startupDailyQuote;
   String _startupDailyQuoteDateKey = '';
   bool _startupDailyQuoteLoading = false;
+  bool _remotePrewarmActive = false;
+  bool _remotePrewarmCompleted = false;
+  bool _remotePrewarmFailed = false;
+  int _remotePrewarmCompletedCount = 0;
+  int _remotePrewarmTotalCount = 0;
+  String _remotePrewarmCurrentLabel = '';
   bool _testModeEnabled = false;
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
@@ -195,6 +211,19 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (!_busy || key == null || key.trim().isEmpty) return null;
     return AppI18n(_uiLanguage).t(key, params: _busyMessageParams);
   }
+  String? get busyDetail => _busy ? _busyDetail : null;
+  double? get busyProgress => _busy ? _busyProgress : null;
+  bool get wordbookImportActive => _wordbookImportActive;
+  String get wordbookImportName => _wordbookImportName;
+  int get wordbookImportProcessedEntries => _wordbookImportProcessedEntries;
+  int? get wordbookImportTotalEntries => _wordbookImportTotalEntries;
+  double? get wordbookImportProgress {
+    final total = _wordbookImportTotalEntries;
+    if (!_wordbookImportActive || total == null || total <= 0) {
+      return null;
+    }
+    return (_wordbookImportProcessedEntries / total).clamp(0.0, 1.0);
+  }
 
   String? get error {
     final key = _message;
@@ -238,6 +267,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String? get startupDailyQuote =>
       _startupDailyQuoteDateKey == _todayDateKey() ? _startupDailyQuote : null;
   bool get startupDailyQuoteLoading => _startupDailyQuoteLoading;
+  bool get remotePrewarmActive => _remotePrewarmActive;
+  bool get remotePrewarmCompleted => _remotePrewarmCompleted;
+  bool get remotePrewarmFailed => _remotePrewarmFailed;
+  int get remotePrewarmCompletedCount => _remotePrewarmCompletedCount;
+  int get remotePrewarmTotalCount => _remotePrewarmTotalCount;
+  String get remotePrewarmCurrentLabel => _remotePrewarmCurrentLabel;
+  double get remotePrewarmProgress => _remotePrewarmTotalCount <= 0
+      ? 0
+      : (_remotePrewarmCompletedCount / _remotePrewarmTotalCount).clamp(
+          0.0,
+          1.0,
+        );
   List<TodoItem> get todayActiveTodos {
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
@@ -782,18 +823,28 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> importWordbookFile(String filePath, String name) async {
-    _setBusy(
-      true,
-      messageKey: 'busyImportingWordbook',
-      params: <String, Object?>{'name': name.trim()},
-    );
+    if (_wordbookImportActive) {
+      _setMessage('processing');
+      return;
+    }
+    final normalizedName = name.trim().isEmpty
+        ? AppI18n(_uiLanguage).t('importedWordbookName')
+        : name.trim();
+    _wordbookImportActive = true;
+    _wordbookImportName = normalizedName;
+    _wordbookImportProcessedEntries = 0;
+    _wordbookImportTotalEntries = null;
+    _notifyStateChanged();
     try {
       await _createSafetyBackup(reason: 'import_wordbook');
-      final count = await _database.importWordbookFile(
+      final count = await _database.importWordbookFileAsync(
         filePath: filePath,
-        name: name.trim().isEmpty
-            ? AppI18n(_uiLanguage).t('importedWordbookName')
-            : name.trim(),
+        name: normalizedName,
+        onProgress: (processedEntries, totalEntries) {
+          _wordbookImportProcessedEntries = processedEntries;
+          _wordbookImportTotalEntries = totalEntries;
+          _notifyStateChanged();
+        },
       );
       await _reloadWordbooks(keepCurrentSelection: false);
       await _syncSpecialWordbooks();
@@ -809,7 +860,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         params: <String, Object?>{'error': error},
       );
     } finally {
-      _setBusy(false);
+      _wordbookImportActive = false;
+      _wordbookImportName = '';
+      _wordbookImportProcessedEntries = 0;
+      _wordbookImportTotalEntries = null;
+      _notifyStateChanged();
     }
   }
 
@@ -2630,16 +2685,107 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     bool value, {
     String? messageKey,
     Map<String, Object?> params = const <String, Object?>{},
+    String? detail,
+    double? progress,
   }) {
     _busy = value;
     if (value) {
       _busyMessageKey = messageKey;
       _busyMessageParams = params;
+      final trimmedDetail = detail?.trim() ?? '';
+      _busyDetail = trimmedDetail.isEmpty ? null : trimmedDetail;
+      _busyProgress = progress?.clamp(0.0, 1.0).toDouble();
     } else {
       _busyMessageKey = null;
       _busyMessageParams = const <String, Object?>{};
+      _busyDetail = null;
+      _busyProgress = null;
     }
     notifyListeners();
+  }
+
+  double? _busyProgressForWordbookLoad(BuiltInWordbookLoadProgress progress) {
+    final stageProgress = progress.progress;
+    if (stageProgress == null) {
+      return progress.stage == BuiltInWordbookLoadStage.completed ? 1.0 : null;
+    }
+    return switch (progress.stage) {
+      BuiltInWordbookLoadStage.downloading =>
+        (stageProgress * 0.72).clamp(0.0, 0.72),
+      BuiltInWordbookLoadStage.processing =>
+        (0.72 + stageProgress * 0.26).clamp(0.72, 0.98),
+      BuiltInWordbookLoadStage.completed => 1.0,
+    };
+  }
+
+  String _busyDetailForWordbookLoadProgress(
+    BuiltInWordbookLoadProgress progress,
+  ) {
+    final i18n = AppI18n(_uiLanguage);
+    return switch (progress.stage) {
+      BuiltInWordbookLoadStage.downloading => _busyDownloadDetailText(
+        i18n,
+        receivedBytes: progress.receivedBytes ?? 0,
+        totalBytes: progress.totalBytes ?? 0,
+        progress: progress.progress,
+      ),
+      BuiltInWordbookLoadStage.processing => _busyProcessingDetailText(
+        i18n,
+        processedEntries: progress.processedEntries ?? 0,
+        totalEntries: progress.totalEntries,
+        progress: progress.progress,
+      ),
+      BuiltInWordbookLoadStage.completed => _busyProcessingDetailText(
+        i18n,
+        processedEntries:
+            progress.processedEntries ?? progress.totalEntries ?? 0,
+        totalEntries: progress.totalEntries ?? progress.processedEntries,
+        progress: 1.0,
+      ),
+    };
+  }
+
+  String _busyDownloadDetailText(
+    AppI18n i18n, {
+    required int receivedBytes,
+    required int totalBytes,
+    required double? progress,
+  }) {
+    final label = i18n.t('download');
+    if (totalBytes <= 0) {
+      return label;
+    }
+    final percent = (((progress ?? 0) * 100).clamp(0.0, 100.0)).round();
+    return '$label ${_formatByteSize(receivedBytes)}/${_formatByteSize(totalBytes)} | $percent%';
+  }
+
+  String _busyProcessingDetailText(
+    AppI18n i18n, {
+    required int processedEntries,
+    required int? totalEntries,
+    required double? progress,
+  }) {
+    final label = i18n.t('processing');
+    if (totalEntries == null || totalEntries <= 0) {
+      return processedEntries <= 0 ? label : '$label | $processedEntries';
+    }
+    final percent = (((progress ?? 0) * 100).clamp(0.0, 100.0)).round();
+    return '$label | $processedEntries/$totalEntries | $percent%';
+  }
+
+  String _formatByteSize(int bytes) {
+    if (bytes <= 0) {
+      return '0 KB';
+    }
+    const units = <String>['B', 'KB', 'MB', 'GB'];
+    var size = bytes.toDouble();
+    var unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+    final precision = size >= 100 || unitIndex == 0 ? 0 : 1;
+    return '${size.toStringAsFixed(precision)} ${units[unitIndex]}';
   }
 
   void _notifyStateChanged() {

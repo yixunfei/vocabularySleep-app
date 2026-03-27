@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../services/ambient_service.dart';
 import '../services/asr_service.dart';
+import '../services/built_in_wordbook_source.dart';
+import '../services/cstcloud_resource_cache_service.dart';
+import '../services/cstcloud_resource_prewarm_service.dart';
 import '../services/database_service.dart';
 import '../services/focus_service.dart';
 import '../services/playback_service.dart';
@@ -17,6 +20,8 @@ import '../state/app_state.dart';
 class AppDependencies {
   AppDependencies._({
     required this.database,
+    required this.cstCloudResourceCache,
+    required this.cstCloudResourcePrewarm,
     required this.settings,
     required this.playback,
     required this.ambient,
@@ -25,6 +30,8 @@ class AppDependencies {
   });
 
   final AppDatabaseService database;
+  final CstCloudResourceCacheService cstCloudResourceCache;
+  final CstCloudResourcePrewarmService cstCloudResourcePrewarm;
   final SettingsService settings;
   final PlaybackService playback;
   final AmbientService ambient;
@@ -33,7 +40,17 @@ class AppDependencies {
 
   factory AppDependencies.create() {
     final importer = WordbookImportService();
-    final database = AppDatabaseService(importer);
+    final cstCloudResourceCache = CstCloudResourceCacheService();
+    final cstCloudResourcePrewarm = CstCloudResourcePrewarmService(
+      cstCloudResourceCache,
+    );
+    final database = AppDatabaseService(
+      importer,
+      builtInWordbookSource: CstCloudBuiltInWordbookSource(
+        cstCloudResourceCache,
+        fallback: const AssetBuiltInWordbookSource(),
+      ),
+    );
     final settings = SettingsService(database);
     final tts = TtsService();
     final playback = PlaybackService(tts);
@@ -52,6 +69,8 @@ class AppDependencies {
 
     return AppDependencies._(
       database: database,
+      cstCloudResourceCache: cstCloudResourceCache,
+      cstCloudResourcePrewarm: cstCloudResourcePrewarm,
       settings: settings,
       playback: playback,
       ambient: ambient,
@@ -63,6 +82,9 @@ class AppDependencies {
   Widget wrapWithProviders(Widget child) {
     return MultiProvider(
       providers: [
+        Provider<CstCloudResourceCacheService>.value(
+          value: cstCloudResourceCache,
+        ),
         ChangeNotifierProvider<AppState>(
           create: (_) => AppState(
             database: database,
@@ -71,6 +93,7 @@ class AppDependencies {
             ambient: ambient,
             asr: asr,
             focusService: focusService,
+            remoteResourcePrewarm: cstCloudResourcePrewarm,
           ),
         ),
       ],

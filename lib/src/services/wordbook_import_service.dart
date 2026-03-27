@@ -163,6 +163,7 @@ class WordbookImportService {
   int processJsonText(
     String content, {
     required void Function(WordEntryPayload payload) onPayload,
+    void Function(int processed, int? total)? onProgress,
   }) {
     Map<String, Object?>? asRecordMap(Object? value) {
       if (value is Map<String, Object?>) {
@@ -183,13 +184,37 @@ class WordbookImportService {
       return 1;
     }
 
+    var lastReportedProcessed = -1;
+    var lastReportedPercent = -1;
+
+    void reportProgress(int processed, int? total, {bool force = false}) {
+      if (onProgress == null) return;
+      if (!force) {
+        if (total != null && total > 0) {
+          final percent = ((processed * 100) ~/ total).clamp(0, 100);
+          if (processed < total && percent == lastReportedPercent) {
+            return;
+          }
+          lastReportedPercent = percent;
+        } else if (processed - lastReportedProcessed < 64) {
+          return;
+        }
+      }
+      lastReportedProcessed = processed;
+      onProgress(processed, total);
+    }
+
     try {
       final decoded = jsonDecode(content);
       if (decoded is List) {
         var count = 0;
-        for (final item in decoded) {
-          count += emitPayload(item);
+        final total = decoded.length;
+        reportProgress(0, total, force: true);
+        for (var index = 0; index < total; index += 1) {
+          count += emitPayload(decoded[index]);
+          reportProgress(index + 1, total);
         }
+        reportProgress(total, total, force: true);
         return count;
       }
 
@@ -198,12 +223,19 @@ class WordbookImportService {
           final container = decoded[key];
           if (container is! List) continue;
           var count = 0;
-          for (final item in container) {
-            count += emitPayload(item);
+          final total = container.length;
+          reportProgress(0, total, force: true);
+          for (var index = 0; index < total; index += 1) {
+            count += emitPayload(container[index]);
+            reportProgress(index + 1, total);
           }
+          reportProgress(total, total, force: true);
           return count;
         }
-        return emitPayload(decoded);
+        reportProgress(0, 1, force: true);
+        final count = emitPayload(decoded);
+        reportProgress(1, 1, force: true);
+        return count;
       }
     } catch (_) {
       // Fall back to JSONL / concatenated object parser below.
@@ -212,7 +244,9 @@ class WordbookImportService {
     final lines = content.split(RegExp(r'\r?\n'));
     var depth = 0;
     var count = 0;
+    var processed = 0;
     final buffer = StringBuffer();
+    reportProgress(0, null, force: true);
 
     for (final line in lines) {
       final trimmed = line.trim();
@@ -230,12 +264,15 @@ class WordbookImportService {
 
       try {
         final decoded = jsonDecode(chunk);
+        processed += 1;
         count += emitPayload(decoded);
+        reportProgress(processed, null);
       } catch (_) {
         // Ignore malformed rows.
       }
     }
 
+    reportProgress(processed, null, force: true);
     return count;
   }
 

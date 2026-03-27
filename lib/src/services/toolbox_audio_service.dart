@@ -92,11 +92,22 @@ class ToolboxAudioBank {
     );
   }
 
-  static Uint8List harpNote(double frequency) {
-    final key = 'harp:${frequency.toStringAsFixed(2)}';
+  static Uint8List harpNote(
+    double frequency, {
+    String style = 'silk',
+    double reverb = 0.24,
+  }) {
+    final normalizedReverb = reverb.clamp(0.0, 0.8).toDouble();
+    final key =
+        'harp:${frequency.toStringAsFixed(2)}:$style:${normalizedReverb.toStringAsFixed(2)}';
     return _cache.putIfAbsent(
       key,
-      () => _buildPluckNote(frequency: frequency, durationSeconds: 2.2),
+      () => _buildPluckNote(
+        frequency: frequency,
+        durationSeconds: 2.4,
+        style: style,
+        reverb: normalizedReverb,
+      ),
     );
   }
 
@@ -204,25 +215,208 @@ class ToolboxAudioBank {
   static Uint8List _buildPluckNote({
     required double frequency,
     required double durationSeconds,
+    required String style,
+    required double reverb,
   }) {
-    const sampleRate = 24000;
+    const sampleRate = 32000;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
+    final tone = _pluckTone(style);
+    final delaySamples = math.max(18, (sampleRate / frequency).round());
+    final ring = List<double>.generate(delaySamples, (i) {
+      final phase = i / delaySamples;
+      final noise =
+          (math.sin((i + 1) * 12.9898 + frequency * 0.005) +
+              math.cos((i + 1) * 78.233 + frequency * 0.0017)) *
+          0.5;
+      final brightMask = phase < tone.brightness ? 1.0 : 0.76;
+      return noise * brightMask;
+    });
+    final bodyPhaseShift = frequency * 0.0003;
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
-      final envelope =
-          (1 - math.exp(-36 * t)) *
-          math.exp(-2.8 * t) *
-          (1 - t / durationSeconds);
-      final vibrato = 1 + 0.0025 * math.sin(math.pi * 2 * 5.2 * t);
-      final base = frequency * vibrato;
-      var value = math.sin(math.pi * 2 * base * t) * 0.72;
-      value += math.sin(math.pi * 2 * base * 2 * t + 0.4) * 0.24;
-      value += math.sin(math.pi * 2 * base * 3 * t + 0.85) * 0.12;
-      value += math.sin(math.pi * 2 * base * 4.8 * t + 1.3) * 0.05;
-      samples[i] = value * envelope;
+      final env =
+          (1 - math.exp(-tone.attack * t)) *
+          math.exp(-tone.decay * t) *
+          (1 - t / durationSeconds).clamp(0.0, 1.0);
+
+      final idx = i % delaySamples;
+      final next = (idx + 1) % delaySamples;
+      final averaged = (ring[idx] + ring[next]) * 0.5;
+      final lowpass = averaged * (0.86 + tone.brightness * 0.11);
+      ring[idx] = lowpass * tone.feedback;
+      final stringSample = ring[idx];
+
+      final pickTransient =
+          (math.sin(math.pi * 2 * frequency * 4.8 * t + bodyPhaseShift) * 0.55 +
+              math.sin(math.pi * 2 * frequency * 7.4 * t + 0.65) * 0.45) *
+          math.exp(-45 * t) *
+          tone.transient;
+      final bodyResonance =
+          math.sin(math.pi * 2 * frequency * t) * 0.2 +
+          math.sin(math.pi * 2 * frequency * 2.01 * t + 0.36) * 0.1 +
+          math.sin(math.pi * 2 * frequency * 3.07 * t + 1.1) * 0.05;
+      final shimmer =
+          math.sin(math.pi * 2 * frequency * 5.2 * t + 0.7) *
+          tone.shimmer *
+          math.exp(-3.4 * t);
+
+      final value =
+          (stringSample +
+              pickTransient +
+              bodyResonance * tone.bodyMix +
+              shimmer) *
+          env;
+      samples[i] = _softClip(value * 1.55);
     }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
+    _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.92);
+  }
+
+  static _HarpPluckTone _pluckTone(String style) {
+    return switch (style) {
+      'warm' => const _HarpPluckTone(
+        attack: 36,
+        decay: 2.0,
+        feedback: 0.9935,
+        brightness: 0.48,
+        transient: 0.2,
+        bodyMix: 0.95,
+        shimmer: 0.018,
+      ),
+      'crystal' => const _HarpPluckTone(
+        attack: 52,
+        decay: 3.0,
+        feedback: 0.9915,
+        brightness: 0.78,
+        transient: 0.36,
+        bodyMix: 0.68,
+        shimmer: 0.07,
+      ),
+      'bright' => const _HarpPluckTone(
+        attack: 44,
+        decay: 2.9,
+        feedback: 0.9922,
+        brightness: 0.66,
+        transient: 0.28,
+        bodyMix: 0.74,
+        shimmer: 0.055,
+      ),
+      'nylon' => const _HarpPluckTone(
+        attack: 34,
+        decay: 2.3,
+        feedback: 0.9932,
+        brightness: 0.45,
+        transient: 0.18,
+        bodyMix: 0.9,
+        shimmer: 0.015,
+      ),
+      'glass' => const _HarpPluckTone(
+        attack: 56,
+        decay: 3.3,
+        feedback: 0.9908,
+        brightness: 0.84,
+        transient: 0.42,
+        bodyMix: 0.58,
+        shimmer: 0.085,
+      ),
+      'concert' => const _HarpPluckTone(
+        attack: 38,
+        decay: 2.7,
+        feedback: 0.9933,
+        brightness: 0.56,
+        transient: 0.24,
+        bodyMix: 0.88,
+        shimmer: 0.028,
+      ),
+      'steel' => const _HarpPluckTone(
+        attack: 46,
+        decay: 2.8,
+        feedback: 0.9924,
+        brightness: 0.7,
+        transient: 0.31,
+        bodyMix: 0.76,
+        shimmer: 0.048,
+      ),
+      _ => const _HarpPluckTone(
+        attack: 40,
+        decay: 2.5,
+        feedback: 0.9927,
+        brightness: 0.58,
+        transient: 0.24,
+        bodyMix: 0.82,
+        shimmer: 0.036,
+      ),
+    };
+  }
+
+  static void _applySchroederReverb(
+    List<double> samples, {
+    required int sampleRate,
+    required double amount,
+  }) {
+    final mix = amount.clamp(0.0, 0.8).toDouble();
+    if (mix <= 0.001) return;
+    final input = List<double>.from(samples, growable: false);
+    final combDelays = <int>[
+      (sampleRate * 0.0297).round(),
+      (sampleRate * 0.0371).round(),
+      (sampleRate * 0.0411).round(),
+      (sampleRate * 0.0437).round(),
+    ];
+    final allpassDelays = <int>[
+      (sampleRate * 0.005).round(),
+      (sampleRate * 0.0017).round(),
+    ];
+    final combFeedback = 0.74 + mix * 0.2;
+    final allpassFeedback = 0.5;
+    final wet = List<double>.filled(samples.length, 0);
+
+    for (final delay in combDelays) {
+      if (delay <= 1) continue;
+      final buffer = List<double>.filled(delay, 0);
+      var bufferIndex = 0;
+      for (var i = 0; i < samples.length; i += 1) {
+        final delayed = buffer[bufferIndex];
+        final value = input[i] + delayed * combFeedback;
+        buffer[bufferIndex] = value;
+        wet[i] += delayed;
+        bufferIndex += 1;
+        if (bufferIndex >= delay) {
+          bufferIndex = 0;
+        }
+      }
+    }
+
+    for (var i = 0; i < samples.length; i += 1) {
+      wet[i] /= combDelays.length;
+    }
+
+    var processed = wet;
+    for (final delay in allpassDelays) {
+      if (delay <= 1) continue;
+      final buffer = List<double>.filled(delay, 0);
+      var bufferIndex = 0;
+      final output = List<double>.filled(samples.length, 0);
+      for (var i = 0; i < samples.length; i += 1) {
+        final delayed = buffer[bufferIndex];
+        final current = processed[i];
+        final value = -allpassFeedback * current + delayed;
+        buffer[bufferIndex] = current + delayed * allpassFeedback;
+        output[i] = value;
+        bufferIndex += 1;
+        if (bufferIndex >= delay) {
+          bufferIndex = 0;
+        }
+      }
+      processed = output;
+    }
+
+    final wetMix = mix * 0.92;
+    final dryMix = 1.0 - wetMix * 0.72;
+    for (var i = 0; i < samples.length; i += 1) {
+      samples[i] = input[i] * dryMix + processed[i] * wetMix;
+    }
   }
 
   static Uint8List _buildClick(
@@ -457,6 +651,11 @@ class ToolboxAudioBank {
     final x = value.clamp(0.0, 1.0);
     return x * x * (3 - 2 * x);
   }
+
+  static double _softClip(double value) {
+    final x = value.clamp(-3.0, 3.0);
+    return x / (1 + x.abs());
+  }
 }
 
 class _LoopEvent {
@@ -476,3 +675,23 @@ class _LoopEvent {
 }
 
 enum _LoopTimbre { pluck, bell }
+
+class _HarpPluckTone {
+  const _HarpPluckTone({
+    required this.attack,
+    required this.decay,
+    required this.feedback,
+    required this.brightness,
+    required this.transient,
+    required this.bodyMix,
+    required this.shimmer,
+  });
+
+  final double attack;
+  final double decay;
+  final double feedback;
+  final double brightness;
+  final double transient;
+  final double bodyMix;
+  final double shimmer;
+}

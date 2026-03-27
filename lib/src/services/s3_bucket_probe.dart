@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 
@@ -79,6 +80,16 @@ class S3RangeObjectResult {
   final List<int> bytes;
   final String contentType;
   final String? contentRange;
+}
+
+class S3GetObjectResult {
+  const S3GetObjectResult({
+    required this.bytes,
+    required this.contentType,
+  });
+
+  final List<int> bytes;
+  final String contentType;
 }
 
 class S3BucketProbeClient {
@@ -172,6 +183,39 @@ class S3BucketProbeClient {
           response.headers.value(HttpHeaders.contentTypeHeader) ??
           'application/octet-stream',
       contentRange: response.headers.value(HttpHeaders.contentRangeHeader),
+    );
+  }
+
+  Future<S3GetObjectResult> getObject(
+    String objectKey, {
+    void Function(int receivedBytes, int totalBytes)? onProgress,
+  }) async {
+    final uri = _buildObjectUri(objectKey);
+    final signed = _signRequest(uri);
+    final request = await _httpClient.getUrl(uri);
+    signed.headers.forEach(request.headers.set);
+    final response = await request.close();
+    final totalBytes =
+        int.tryParse(
+          response.headers.value(HttpHeaders.contentLengthHeader) ?? '',
+        ) ??
+        0;
+    final bytes = await _readAllBytes(
+      response,
+      onProgress: onProgress,
+      totalBytes: totalBytes,
+    );
+    if (response.statusCode < 200 || response.statusCode >= 299) {
+      throw HttpException(
+        'S3 get probe failed with ${response.statusCode}: ${utf8.decode(bytes, allowMalformed: true)}',
+        uri: uri,
+      );
+    }
+    return S3GetObjectResult(
+      bytes: bytes,
+      contentType:
+          response.headers.value(HttpHeaders.contentTypeHeader) ??
+          'application/octet-stream',
     );
   }
 
@@ -358,12 +402,36 @@ class S3BucketProbeClient {
     }
   }
 
-  static Future<List<int>> _readAllBytes(HttpClientResponse response) async {
-    final chunks = <int>[];
-    await for (final chunk in response) {
-      chunks.addAll(chunk);
+  static Future<List<int>> _readAllBytes(
+    HttpClientResponse response, {
+    void Function(int receivedBytes, int totalBytes)? onProgress,
+    int totalBytes = 0,
+  }) async {
+    final chunks = BytesBuilder(copy: false);
+    var receivedBytes = 0;
+    var lastReportedPercent = -1;
+    void report({bool force = false}) {
+      if (onProgress == null) return;
+      if (!force && totalBytes > 0) {
+        final currentPercent =
+            (receivedBytes * 100 ~/ totalBytes).clamp(0, 100);
+        if (receivedBytes < totalBytes &&
+            currentPercent == lastReportedPercent) {
+          return;
+        }
+        lastReportedPercent = currentPercent;
+      }
+      onProgress(receivedBytes, totalBytes);
     }
-    return chunks;
+
+    report(force: true);
+    await for (final chunk in response) {
+      chunks.add(chunk);
+      receivedBytes += chunk.length;
+      report();
+    }
+    report(force: true);
+    return chunks.takeBytes();
   }
 }
 

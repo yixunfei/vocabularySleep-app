@@ -27,6 +27,7 @@ class StudyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    final studyLocked = state.wordbookImportActive;
     final selectedWordbookName = localizedWordbookName(
       i18n,
       state.selectedWordbook,
@@ -58,7 +59,9 @@ class StudyPage extends StatelessWidget {
                   zh: '进入连续播放、进度跳转与播放模式控制。',
                   en: 'Open continuous playback, progress jump, and playback mode controls.',
                 ),
-                onTap: () => onSelectTab(StudyStartupTab.play),
+                onTap: studyLocked
+                    ? null
+                    : () => onSelectTab(StudyStartupTab.play),
               );
 
               final libraryCard = _StudyEntryCard(
@@ -78,7 +81,9 @@ class StudyPage extends StatelessWidget {
                   zh: '进入搜索、前缀跳转、加词和词条浏览。',
                   en: 'Open search, prefix jump, add-word, and library browsing tools.',
                 ),
-                onTap: () => onSelectTab(StudyStartupTab.library),
+                onTap: studyLocked
+                    ? null
+                    : () => onSelectTab(StudyStartupTab.library),
               );
 
               return Row(
@@ -92,16 +97,18 @@ class StudyPage extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: IndexedStack(
-            index: selectedTab == StudyStartupTab.play ? 0 : 1,
-            children: <Widget>[
-              PlayPage(
-                onOpenPractice: onOpenPractice,
-                onOpenLibrary: () => onSelectTab(StudyStartupTab.library),
-              ),
-              LibraryPage(onAttachScrollToTop: onAttachLibraryScrollToTop),
-            ],
-          ),
+          child: studyLocked
+              ? _StudyImportLockPanel(state: state, i18n: i18n)
+              : IndexedStack(
+                  index: selectedTab == StudyStartupTab.play ? 0 : 1,
+                  children: <Widget>[
+                    PlayPage(
+                      onOpenPractice: onOpenPractice,
+                      onOpenLibrary: () => onSelectTab(StudyStartupTab.library),
+                    ),
+                    LibraryPage(onAttachScrollToTop: onAttachLibraryScrollToTop),
+                  ],
+                ),
         ),
       ],
     );
@@ -183,7 +190,7 @@ class _StudyEntryCard extends StatelessWidget {
   final String title;
   final String summary;
   final String hint;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -312,6 +319,65 @@ class _StudyEntryCard extends StatelessWidget {
                       : 18,
                   color: accent,
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StudyImportLockPanel extends StatelessWidget {
+  const _StudyImportLockPanel({required this.state, required this.i18n});
+
+  final AppState state;
+  final AppI18n i18n;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = state.wordbookImportProgress;
+    final processed = state.wordbookImportProcessedEntries;
+    final total = state.wordbookImportTotalEntries;
+    final detail = total == null || total <= 0
+        ? pickUiText(i18n, zh: '正在解析并导入，请稍候…', en: 'Parsing and importing, please wait...')
+        : pickUiText(
+            i18n,
+            zh: '已处理 $processed / $total',
+            en: 'Processed $processed / $total',
+          );
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '学习模块导入中',
+                    en: 'Study import in progress',
+                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '词本正在后台导入，导入完成后将自动启用学习模块。',
+                    en: 'Wordbook is importing in background. Study modules will auto-enable when complete.',
+                  ),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+                Text(detail, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 10),
+                LinearProgressIndicator(value: progress, minHeight: 6),
               ],
             ),
           ),

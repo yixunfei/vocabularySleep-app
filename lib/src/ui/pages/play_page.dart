@@ -266,6 +266,12 @@ class _PlayPageState extends State<PlayPage> {
         icon: Icons.play_circle_outline_rounded,
         title: pickUiText(i18n, zh: '还没有播放内容', en: 'Nothing to play yet'),
         message: i18n.t('noWordbookYet'),
+        actionLabel: pickUiText(
+          i18n,
+          zh: '去词库选择词本',
+          en: 'Choose wordbook in Library',
+        ),
+        onAction: widget.onOpenLibrary,
       );
     }
 

@@ -6,9 +6,11 @@ import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
+import '../../services/cstcloud_resource_cache_service.dart';
 import '../../services/toolbox_soothing_audio_service.dart';
 import '../../services/toolbox_soothing_prefs_service.dart';
 import 'toolbox_soothing_music_v2_copy.dart';
@@ -148,63 +150,50 @@ class _SoothingVisualPalette {
   final Color dangerFg;
 
   factory _SoothingVisualPalette.resolve({
-    required AppThemeTokens tokens,
+    required bool isDark,
     required AppearanceConfig appearance,
     required _SoothingModeTheme mode,
   }) {
-    final gradientStrength =
-        0.18 +
-        appearance.normalizedGradientIntensity * (tokens.isDark ? 0.44 : 0.28);
     final effectStrength =
         0.34 +
-        appearance.normalizedEffectIntensity * (tokens.isDark ? 0.9 : 0.7);
-    final accent = Color.lerp(tokens.accent, mode.accent, 0.58)!;
-    final orbitAccent = Color.lerp(tokens.accentSoft, mode.orbitAccent, 0.8)!;
-    final backgroundTop = Color.lerp(
-      tokens.canvas,
-      mode.backgroundA,
-      tokens.isDark
-          ? 0.72 + gradientStrength * 0.14
-          : 0.14 + gradientStrength * 0.16,
-    )!;
-    final backgroundBottom = Color.lerp(
-      tokens.canvas,
-      mode.backgroundB,
-      tokens.isDark
-          ? 0.86 + gradientStrength * 0.08
-          : 0.18 + gradientStrength * 0.14,
-    )!;
+        appearance.normalizedEffectIntensity * (isDark ? 0.42 : 0.28);
+    final accent = mode.accent;
+    final orbitAccent = mode.orbitAccent;
+    final backgroundTop = isDark
+        ? const Color(0xFF2A384B)
+        : const Color(0xFFF4F7F9);
+    final backgroundBottom = isDark
+        ? const Color(0xFF101823)
+        : const Color(0xFFDDE5EA);
     final panelSurface = Color.lerp(
-      tokens.surfaceOverlay,
-      backgroundTop,
-      tokens.isDark
-          ? 0.34 + effectStrength * 0.08
-          : 0.08 + effectStrength * 0.04,
-    )!.withValues(alpha: tokens.isDark ? 0.93 : 0.94);
-    final panelSurfaceMuted = Color.lerp(
-      tokens.surfaceMuted,
-      backgroundBottom,
-      tokens.isDark ? 0.26 : 0.06,
-    )!.withValues(alpha: tokens.isDark ? 0.9 : 0.96);
-    final controlSurface = Color.lerp(
-      tokens.surfaceStrong,
-      backgroundBottom,
-      tokens.isDark ? 0.3 : 0.08,
-    )!.withValues(alpha: tokens.isDark ? 0.94 : 0.97);
-    final border = Color.lerp(
-      tokens.outline,
+      isDark ? const Color(0xFF182433) : Colors.white,
       accent,
-      tokens.isDark ? 0.24 : 0.16,
+      isDark ? 0.1 + effectStrength * 0.04 : 0.04 + effectStrength * 0.03,
+    )!.withValues(alpha: isDark ? 0.94 : 0.96);
+    final panelSurfaceMuted = Color.lerp(
+      isDark ? const Color(0xFF1E2B3C) : const Color(0xFFF7FAFC),
+      orbitAccent,
+      isDark ? 0.08 : 0.04,
+    )!.withValues(alpha: isDark ? 0.92 : 0.96);
+    final controlSurface = Color.lerp(
+      isDark ? const Color(0xFF233245) : Colors.white,
+      accent,
+      isDark ? 0.14 : 0.06,
+    )!.withValues(alpha: isDark ? 0.96 : 0.98);
+    final border = Color.lerp(
+      isDark ? const Color(0xFF41556D) : const Color(0xFFB8C4CE),
+      accent,
+      isDark ? 0.18 : 0.12,
     )!;
-    final textPrimary = tokens.isDark
-        ? Color.lerp(tokens.textPrimary, Colors.white, 0.12)!
-        : Color.lerp(tokens.textPrimary, const Color(0xFF0E2436), 0.14)!;
-    final textSecondary = tokens.isDark
-        ? Color.lerp(tokens.textSecondary, Colors.white, 0.04)!
-        : Color.lerp(tokens.textSecondary, const Color(0xFF4D677B), 0.12)!;
+    final textPrimary = isDark
+        ? const Color(0xFFF5F7FA)
+        : const Color(0xFF122235);
+    final textSecondary = isDark
+        ? const Color(0xFFB5C2CF)
+        : const Color(0xFF586978);
 
     return _SoothingVisualPalette(
-      isDark: tokens.isDark,
+      isDark: isDark,
       backgroundTop: backgroundTop,
       backgroundBottom: backgroundBottom,
       panelSurface: panelSurface,
@@ -217,8 +206,8 @@ class _SoothingVisualPalette {
       orbitAccent: orbitAccent,
       glowA: Color.lerp(mode.blobA, accent, 0.42)!,
       glowB: Color.lerp(mode.blobB, orbitAccent, 0.36)!,
-      dangerBg: Color.lerp(tokens.danger, backgroundBottom, 0.72)!,
-      dangerFg: Color.lerp(tokens.danger, Colors.white, 0.72)!,
+      dangerBg: isDark ? const Color(0xFF4B2B30) : const Color(0xFFF3D7DA),
+      dangerFg: isDark ? const Color(0xFFFFC5CB) : const Color(0xFF7A1E27),
     );
   }
 }
@@ -485,6 +474,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   StreamSubscription<Duration>? _durationSubscription;
   StreamSubscription<PlayerState>? _stateSubscription;
   Timer? _sleepTimer;
+  CstCloudResourceCacheService? _remoteResourceCache;
 
   _SoothingModeTheme _mode = _modes[1];
   _ModeLibraryFilter _modeFilter = _ModeLibraryFilter.all;
@@ -569,6 +559,20 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_remoteResourceCache != null) return;
+    try {
+      _remoteResourceCache = Provider.of<CstCloudResourceCacheService>(
+        context,
+        listen: false,
+      );
+    } on ProviderNotFoundException {
+      _remoteResourceCache = null;
+    }
+  }
+
   Future<void> _initAudio() async {
     final prefs = await ToolboxSoothingPrefsService.load();
     _SoothingRuntimeStore.favoriteModeIds = Set<String>.from(
@@ -632,12 +636,37 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   Future<void> _preloadModeAssets(String modeId) async {
     for (final track in _tracksForMode(modeId)) {
       try {
-        final data = await rootBundle.load(track.assetPath);
-        _trackBytesCache[track.assetPath] = data.buffer.asUint8List();
+        _trackBytesCache[track.assetPath] = await _loadTrackBytes(track);
       } catch (_) {
         // Ignore warmup failures.
       }
     }
+  }
+
+  Future<Uint8List> _loadTrackBytes(_SoothingTrack track) async {
+    if (_trackBytesCache[track.assetPath] case final Uint8List cached) {
+      return cached;
+    }
+    if (_remoteResourceCache != null) {
+      try {
+        final bytes = await _remoteResourceCache!.readBytes(
+          track.assetPath,
+          cacheRelativePath: track.assetPath,
+        );
+        _trackBytesCache[track.assetPath] = bytes;
+        return bytes;
+      } catch (_) {
+        // Keep a local fallback path for tests and offline recovery.
+      }
+    }
+    // Historical direct local asset loading is kept below as a documented
+    // fallback path. The preferred runtime flow is S3 first-download plus
+    // application-support cache.
+    // final bundleData = await rootBundle.load(track.assetPath);
+    final bundleData = await rootBundle.load(track.assetPath);
+    final bytes = bundleData.buffer.asUint8List();
+    _trackBytesCache[track.assetPath] = bytes;
+    return bytes;
   }
 
   List<_SoothingTrack> get _tracks => _tracksForMode(_mode.id);
@@ -660,10 +689,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     try {
       final scene = await ToolboxSoothingAudioService.load(mode.id);
       final track = _tracksForMode(mode.id)[restoredTrackIndex];
-      final bytes =
-          _trackBytesCache[track.assetPath] ??
-          (await rootBundle.load(track.assetPath)).buffer.asUint8List();
-      _trackBytesCache[track.assetPath] = bytes;
+      final bytes = await _loadTrackBytes(track);
       await _player.setSourceBytes(bytes, mimeType: 'audio/mp4');
       await _player.setVolume(_muted ? 0 : _volume);
       if (autoplay) {
@@ -728,10 +754,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     });
 
     try {
-      final bytes =
-          _trackBytesCache[_currentTrack.assetPath] ??
-          (await rootBundle.load(_currentTrack.assetPath)).buffer.asUint8List();
-      _trackBytesCache[_currentTrack.assetPath] = bytes;
+      final bytes = await _loadTrackBytes(_currentTrack);
       await _player.setSourceBytes(bytes, mimeType: 'audio/mp4');
       await _player.setVolume(_muted ? 0 : _volume);
       if (_playing) {
@@ -939,10 +962,10 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final tokens = AppThemeTokens.of(context);
+    final isDark = AppThemeTokens.of(context).isDark;
     final appearance = LegacyStyle.appearance;
     final palette = _SoothingVisualPalette.resolve(
-      tokens: tokens,
+      isDark: isDark,
       appearance: appearance,
       mode: _mode,
     );
@@ -952,53 +975,26 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     return Scaffold(
       backgroundColor: palette.backgroundBottom,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: palette.isDark
-            ? Colors.white
-            : const Color(0xFF10263A),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF10263A),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shadowColor: Colors.transparent,
         flexibleSpace: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: <Color>[
-                Color.lerp(
-                  palette.backgroundTop,
-                  palette.accent,
-                  palette.isDark ? 0.22 : 0.18,
-                )!,
-                Color.lerp(
-                  palette.backgroundTop,
-                  palette.orbitAccent,
-                  palette.isDark ? 0.14 : 0.12,
-                )!,
-              ],
-            ),
+            color: Colors.white,
             border: Border(
               bottom: BorderSide(
-                color: palette.accent.withValues(
-                  alpha: palette.isDark ? 0.3 : 0.18,
-                ),
+                color: const Color(0xFFE4EBF0),
               ),
             ),
           ),
         ),
         title: Text(
           _copyPageTitle(i18n),
-          style: TextStyle(
-            color: palette.isDark ? Colors.white : const Color(0xFF10263A),
+          style: const TextStyle(
+            color: Color(0xFF10263A),
             fontWeight: FontWeight.w800,
-            shadows: <Shadow>[
-              Shadow(
-                color: palette.accent.withValues(
-                  alpha: palette.isDark ? 0.18 : 0.08,
-                ),
-                blurRadius: 18,
-              ),
-            ],
           ),
         ),
         actions: <Widget>[
@@ -1959,6 +1955,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
               final totalLabel = _format(_duration);
               final narrow = compact && MediaQuery.of(context).size.width < 430;
               final stacked = compact || constraints.maxWidth < 1000;
+              final ultraNarrow = constraints.maxWidth < 360;
+              final sideBySideControls = stacked && !ultraNarrow;
 
               final sliderTheme = SliderTheme.of(context).copyWith(
                 trackHeight: 3.2,
@@ -1974,16 +1972,25 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                   IconButton(
                     tooltip: _copyVolumeToggleLabel(i18n),
                     onPressed: () => _setMuted(!_muted),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 34,
+                      height: 34,
+                    ),
                     icon: Icon(
                       _muted
                           ? Icons.volume_off_rounded
                           : Icons.volume_up_rounded,
                       color: palette.textSecondary,
+                      size: 18,
                     ),
                   ),
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: narrow
+                      maxWidth: sideBySideControls
+                          ? (narrow ? 64 : 84)
+                          : narrow
                           ? 96
                           : stacked
                           ? 128
@@ -2116,12 +2123,23 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Expanded(child: volumeControl),
-                            transportControls,
-                          ],
-                        ),
+                        if (sideBySideControls)
+                          Row(
+                            children: <Widget>[
+                              Expanded(child: volumeControl),
+                              const SizedBox(width: 8),
+                              transportControls,
+                            ],
+                          )
+                        else
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              volumeControl,
+                              const SizedBox(height: 8),
+                              transportControls,
+                            ],
+                          ),
                         const SizedBox(height: 8),
                         progressBlock,
                       ],

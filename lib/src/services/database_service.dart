@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:io';
 
-import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -17,6 +16,7 @@ import '../models/wordbook.dart';
 import '../models/export_dto.dart';
 import '../utils/search_text_normalizer.dart' as search_text;
 import 'app_log_service.dart';
+import 'built_in_wordbook_source.dart';
 import 'wordbook_import_service.dart';
 
 class WordbookMergeResult {
@@ -58,17 +58,28 @@ class DatabaseBackupInfo {
   }
 }
 
-class _BuiltInWordbookConfig {
-  const _BuiltInWordbookConfig({
-    required this.path,
-    required this.name,
-    required this.assetPath,
+enum BuiltInWordbookLoadStage { downloading, processing, completed }
+
+class BuiltInWordbookLoadProgress {
+  const BuiltInWordbookLoadProgress({
+    required this.stage,
+    this.progress,
+    this.receivedBytes,
+    this.totalBytes,
+    this.processedEntries,
+    this.totalEntries,
   });
 
-  final String path;
-  final String name;
-  final String assetPath;
+  final BuiltInWordbookLoadStage stage;
+  final double? progress;
+  final int? receivedBytes;
+  final int? totalBytes;
+  final int? processedEntries;
+  final int? totalEntries;
 }
+
+typedef BuiltInWordbookLoadProgressCallback =
+    void Function(BuiltInWordbookLoadProgress progress);
 
 class _PreparedWordRecord {
   const _PreparedWordRecord({required this.row, required this.fields});
@@ -77,10 +88,39 @@ class _PreparedWordRecord {
   final List<WordFieldItem> fields;
 }
 
+class _WordImportInsertStatements {
+  _WordImportInsertStatements({
+    required this.wordInsert,
+    required this.fieldInsert,
+    required this.styleInsert,
+    required this.tagInsert,
+    required this.mediaInsert,
+  });
+
+  final PreparedStatement wordInsert;
+  final PreparedStatement fieldInsert;
+  final PreparedStatement styleInsert;
+  final PreparedStatement tagInsert;
+  final PreparedStatement mediaInsert;
+
+  void dispose() {
+    wordInsert.dispose();
+    fieldInsert.dispose();
+    styleInsert.dispose();
+    tagInsert.dispose();
+    mediaInsert.dispose();
+  }
+}
+
 class AppDatabaseService {
-  AppDatabaseService(this._importService);
+  AppDatabaseService(
+    this._importService, {
+    BuiltInWordbookSource? builtInWordbookSource,
+  }) : _builtInWordbookSource =
+           builtInWordbookSource ?? const AssetBuiltInWordbookSource();
 
   final WordbookImportService _importService;
+  final BuiltInWordbookSource _builtInWordbookSource;
   final AppLogService _log = AppLogService.instance;
 
   late Database _db;
@@ -93,7 +133,6 @@ class AppDatabaseService {
     'builtin:favorites': 'Favorites',
     'builtin:task': 'Task',
   };
-  static const String _dictAssetPrefix = 'dict/';
   static const String _dictBuiltinPathPrefix = 'builtin:dict:';
   static const String _hiddenBuiltInWordbooksSettingKey =
       'hidden_built_in_wordbooks';
@@ -1072,11 +1111,14 @@ class AppDatabaseService {
   bool isLazyBuiltInPath(String path) =>
       path.startsWith(_dictBuiltinPathPrefix);
 
-  Future<int> ensureBuiltInWordbookLoaded(String path) async {
+  Future<int> ensureBuiltInWordbookLoaded(
+    String path, {
+    BuiltInWordbookLoadProgressCallback? onProgress,
+  }) async {
     if (!isLazyBuiltInPath(path)) return 0;
 
     final builtins = await _resolveBuiltInWordbooks();
-    _BuiltInWordbookConfig? target;
+    BuiltInWordbookConfig? target;
     for (final builtin in builtins) {
       if (builtin.path == path) {
         target = builtin;
@@ -1098,29 +1140,89 @@ class AppDatabaseService {
         <Object?>[target.name, target.path],
       );
     } else if (((existing['word_count'] as num?) ?? 0).toInt() > 0) {
-      return ((existing['word_count'] as num?) ?? 0).toInt();
+      final loadedCount = ((existing['word_count'] as num?) ?? 0).toInt();
+      onProgress?.call(
+        BuiltInWordbookLoadProgress(
+          stage: BuiltInWordbookLoadStage.completed,
+          progress: 1.0,
+          processedEntries: loadedCount,
+          totalEntries: loadedCount,
+        ),
+      );
+      return loadedCount;
     }
 
     _log.i(
       'database',
       'loading built-in wordbook on demand',
-      data: <String, Object?>{'path': path, 'assetPath': target.assetPath},
+      data: <String, Object?>{'path': path, 'sourcePath': target.sourcePath},
     );
-    final bundleData = await rootBundle.load(target.assetPath);
-    final bytes = bundleData.buffer.asUint8List();
-    final content = _decodeBuiltInWordbookAsset(target.assetPath, bytes);
+    // Historical local bundle loading is kept below as a reference because the
+    // app now prefers first-use S3 download + local cache for built-in wordbooks.
+    // final bundleData = await rootBundle.load(target.assetPath);
+    // final bytes = bundleData.buffer.asUint8List();
+    // final content = _decodeBuiltInWordbookAsset(target.assetPath, bytes);
+    onProgress?.call(
+      const BuiltInWordbookLoadProgress(
+        stage: BuiltInWordbookLoadStage.downloading,
+        progress: 0,
+      ),
+    );
+    final content = await _builtInWordbookSource.loadBuiltInWordbookContent(
+      target,
+      onProgress: onProgress == null
+          ? null
+          : (downloadProgress) {
+              onProgress(
+                BuiltInWordbookLoadProgress(
+                  stage: BuiltInWordbookLoadStage.downloading,
+                  progress: downloadProgress.progress,
+                  receivedBytes: downloadProgress.receivedBytes,
+                  totalBytes: downloadProgress.totalBytes,
+                ),
+              );
+            },
+    );
+    onProgress?.call(
+      const BuiltInWordbookLoadProgress(
+        stage: BuiltInWordbookLoadStage.processing,
+        progress: 0,
+      ),
+    );
     final imported = importWordbookJsonText(
       sourcePath: target.path,
       name: target.name,
       content: content,
       replaceExisting: true,
+      onProgress: onProgress == null
+          ? null
+          : (processedEntries, totalEntries) {
+              onProgress(
+                BuiltInWordbookLoadProgress(
+                  stage: BuiltInWordbookLoadStage.processing,
+                  progress: totalEntries == null || totalEntries <= 0
+                      ? null
+                      : (processedEntries / totalEntries).clamp(0.0, 1.0),
+                  processedEntries: processedEntries,
+                  totalEntries: totalEntries,
+                ),
+              );
+            },
+    );
+    onProgress?.call(
+      BuiltInWordbookLoadProgress(
+        stage: BuiltInWordbookLoadStage.completed,
+        progress: 1.0,
+        processedEntries: imported,
+        totalEntries: imported,
+      ),
     );
     _log.i(
       'database',
       'built-in wordbook loaded',
       data: <String, Object?>{
         'path': path,
-        'assetPath': target.assetPath,
+        'sourcePath': target.sourcePath,
         'count': imported,
       },
     );
@@ -1877,6 +1979,7 @@ class AppDatabaseService {
     required String name,
     required String content,
     bool replaceExisting = true,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
   }) {
     return _runInTransaction<int>(() {
       var wordbookId = 0;
@@ -1899,13 +2002,25 @@ class AppDatabaseService {
         wordbookId = _lastInsertId();
       }
 
-      final count = _importService.processJsonText(
-        content,
-        onPayload: (payload) {
-          if (payload.word.trim().isEmpty) return;
-          _insertWord(wordbookId, payload);
-        },
-      );
+      final statements = _openWordImportInsertStatements();
+      var count = 0;
+      try {
+        _importService.processJsonText(
+          content,
+          onPayload: (payload) {
+            if (_insertWordWithStatements(
+              wordbookId,
+              payload,
+              statements: statements,
+            )) {
+              count += 1;
+            }
+          },
+          onProgress: onProgress,
+        );
+      } finally {
+        statements.dispose();
+      }
 
       _refreshWordbookCount(wordbookId);
       return count;
@@ -1917,6 +2032,7 @@ class AppDatabaseService {
     required String name,
     required List<WordEntryPayload> entries,
     bool replaceExisting = true,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
   }) async {
     return _runInTransaction<int>(() {
       var wordbookId = 0;
@@ -1939,14 +2055,102 @@ class AppDatabaseService {
         wordbookId = _lastInsertId();
       }
 
+      final totalEntries = entries.length;
+      var processedEntries = 0;
+      var lastReportedPercent = -1;
+      void reportProgress({bool force = false}) {
+        if (onProgress == null) return;
+        if (!force && totalEntries > 0) {
+          final percent =
+              (processedEntries * 100 ~/ totalEntries).clamp(0, 100);
+          if (processedEntries < totalEntries && percent == lastReportedPercent) {
+            return;
+          }
+          lastReportedPercent = percent;
+        }
+        onProgress(processedEntries, totalEntries);
+      }
+
+      final statements = _openWordImportInsertStatements();
       var count = 0;
-      for (final entry in entries) {
-        if (entry.word.trim().isEmpty) continue;
-        _insertWord(wordbookId, entry);
-        count += 1;
+      reportProgress(force: true);
+      try {
+        for (final entry in entries) {
+          processedEntries += 1;
+          if (_insertWordWithStatements(
+            wordbookId,
+            entry,
+            statements: statements,
+          )) {
+            count += 1;
+          }
+          reportProgress();
+        }
+      } finally {
+        statements.dispose();
+      }
+      reportProgress(force: true);
+
+      _refreshWordbookCount(wordbookId);
+      return count;
+    });
+  }
+
+  Future<int> importWordbookAsync({
+    required String sourcePath,
+    required String name,
+    required List<WordEntryPayload> entries,
+    bool replaceExisting = true,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+    int yieldEvery = 180,
+  }) async {
+    return _runInTransactionAsync<int>(() async {
+      var wordbookId = 0;
+      final existing = _selectOne(
+        'SELECT id FROM wordbooks WHERE path = ?',
+        <Object?>[sourcePath],
+      );
+      if (existing != null) {
+        wordbookId = (existing['id'] as num).toInt();
+        if (replaceExisting) {
+          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
+            wordbookId,
+          ]);
+        }
+      } else {
+        _db.execute(
+          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
+          <Object?>[name, sourcePath],
+        );
+        wordbookId = _lastInsertId();
+      }
+
+      final totalEntries = entries.length;
+      onProgress?.call(0, totalEntries);
+      final statements = _openWordImportInsertStatements();
+      var count = 0;
+      try {
+        for (var index = 0; index < totalEntries; index += 1) {
+          final entry = entries[index];
+          if (_insertWordWithStatements(
+            wordbookId,
+            entry,
+            statements: statements,
+          )) {
+            count += 1;
+          }
+          final processed = index + 1;
+          if (processed == totalEntries || processed % yieldEvery == 0) {
+            onProgress?.call(processed, totalEntries);
+            await Future<void>.delayed(Duration.zero);
+          }
+        }
+      } finally {
+        statements.dispose();
       }
 
       _refreshWordbookCount(wordbookId);
+      onProgress?.call(totalEntries, totalEntries);
       return count;
     });
   }
@@ -2289,6 +2493,7 @@ class AppDatabaseService {
   Future<int> importWordbookFile({
     required String filePath,
     required String name,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
   }) async {
     if (filePath.toLowerCase().endsWith('.json')) {
       final content = await File(filePath).readAsString();
@@ -2297,15 +2502,34 @@ class AppDatabaseService {
         name: name,
         content: content,
         replaceExisting: true,
+        onProgress: onProgress,
       );
     }
 
+    onProgress?.call(0, null);
     final entries = await _importService.parseFile(filePath);
     return importWordbook(
       sourcePath: filePath,
       name: name,
       entries: entries,
       replaceExisting: true,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<int> importWordbookFileAsync({
+    required String filePath,
+    required String name,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+  }) async {
+    onProgress?.call(0, null);
+    final entries = await _importService.parseFile(filePath);
+    return importWordbookAsync(
+      sourcePath: filePath,
+      name: name,
+      entries: entries,
+      replaceExisting: true,
+      onProgress: onProgress,
     );
   }
 
@@ -2402,52 +2626,14 @@ class AppDatabaseService {
     }
   }
 
-  Future<List<_BuiltInWordbookConfig>> _resolveBuiltInWordbooks() async {
-    try {
-      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-      final assets =
-          manifest
-              .listAssets()
-              .where(
-                (path) =>
-                    path.startsWith(_dictAssetPrefix) &&
-                    _isBuiltInWordbookAsset(path),
-              )
-              .toList(growable: false)
-            ..sort();
-
-      return assets.map(_buildBuiltInConfigFromAsset).toList(growable: false);
-    } catch (_) {
-      return const <_BuiltInWordbookConfig>[];
-    }
-  }
-
-  _BuiltInWordbookConfig _buildBuiltInConfigFromAsset(String assetPath) {
-    final filename = p.basename(assetPath).trim();
-    final normalizedFilename = filename.toLowerCase().endsWith('.json.gz')
-        ? filename.substring(0, filename.length - '.json.gz'.length)
-        : p.basenameWithoutExtension(filename);
-    final baseName = normalizedFilename.trim().isEmpty
-        ? 'dict'
-        : normalizedFilename.trim();
-    return _BuiltInWordbookConfig(
-      path: '$_dictBuiltinPathPrefix$baseName',
-      name: baseName,
-      assetPath: assetPath,
-    );
-  }
-
-  bool _isBuiltInWordbookAsset(String assetPath) {
-    final normalized = assetPath.toLowerCase();
-    return normalized.endsWith('.json') || normalized.endsWith('.json.gz');
-  }
-
-  String _decodeBuiltInWordbookAsset(String assetPath, List<int> bytes) {
-    final normalized = assetPath.toLowerCase();
-    final decodedBytes = normalized.endsWith('.json.gz')
-        ? gzip.decode(bytes)
-        : bytes;
-    return utf8.decode(decodedBytes);
+  Future<List<BuiltInWordbookConfig>> _resolveBuiltInWordbooks() async {
+    // Historical local asset scan is retained here as commented reference. The
+    // active path now comes from the injected built-in wordbook source so the
+    // app can bootstrap dictionaries from CSTCloud on first use.
+    // final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    // final assets = manifest.listAssets().where((path) =>
+    //     path.startsWith(_dictAssetPrefix) && _isBuiltInWordbookAsset(path));
+    return _builtInWordbookSource.listBuiltInWordbooks();
   }
 
   void _removeObsoleteBuiltInWordbooks(Set<String> targetBuiltinPaths) {
@@ -2505,6 +2691,37 @@ class AppDatabaseService {
 
     try {
       final result = action();
+      _transactionDepth -= 1;
+      if (depth == 0) {
+        _db.execute('COMMIT;');
+      } else {
+        _db.execute('RELEASE SAVEPOINT $savepoint;');
+      }
+      return result;
+    } catch (_) {
+      _transactionDepth -= 1;
+      if (depth == 0) {
+        _db.execute('ROLLBACK;');
+      } else {
+        _db.execute('ROLLBACK TO SAVEPOINT $savepoint;');
+        _db.execute('RELEASE SAVEPOINT $savepoint;');
+      }
+      rethrow;
+    }
+  }
+
+  Future<T> _runInTransactionAsync<T>(Future<T> Function() action) async {
+    final depth = _transactionDepth;
+    final savepoint = 'sp_tx_$depth';
+    if (depth == 0) {
+      _db.execute('BEGIN TRANSACTION;');
+    } else {
+      _db.execute('SAVEPOINT $savepoint;');
+    }
+    _transactionDepth += 1;
+
+    try {
+      final result = await action();
       _transactionDepth -= 1;
       if (depth == 0) {
         _db.execute('COMMIT;');
@@ -3158,6 +3375,153 @@ class AppDatabaseService {
       },
       fields: normalizedFields,
     );
+  }
+
+  _WordImportInsertStatements _openWordImportInsertStatements() {
+    return _WordImportInsertStatements(
+      wordInsert: _db.prepare(
+        '''
+        INSERT INTO words (
+          wordbook_id,
+          word,
+          meaning,
+          search_word,
+          search_meaning,
+          search_details,
+          search_word_compact,
+          search_details_compact,
+          extension_json,
+          entry_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+      ),
+      fieldInsert: _db.prepare(
+        '''
+        INSERT INTO word_fields (
+          word_id,
+          field_key,
+          field_label,
+          field_value_json,
+          style_json,
+          sort_order
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ''',
+      ),
+      styleInsert: _db.prepare(
+        '''
+        INSERT INTO word_field_styles (
+          word_field_id,
+          background_hex,
+          border_hex,
+          text_hex,
+          accent_hex
+        ) VALUES (?, ?, ?, ?, ?)
+        ''',
+      ),
+      tagInsert: _db.prepare(
+        '''
+        INSERT INTO word_field_tags (word_field_id, tag, sort_order)
+        VALUES (?, ?, ?)
+        ''',
+      ),
+      mediaInsert: _db.prepare(
+        '''
+        INSERT INTO word_field_media (
+          word_field_id,
+          media_type,
+          media_source,
+          media_label,
+          mime_type,
+          sort_order
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ''',
+      ),
+    );
+  }
+
+  bool _insertWordWithStatements(
+    int wordbookId,
+    WordEntryPayload payload, {
+    required _WordImportInsertStatements statements,
+  }) {
+    if (payload.word.trim().isEmpty) {
+      return false;
+    }
+    final prepared = _buildStoredWordRecord(
+      wordbookId: wordbookId,
+      word: payload.word,
+      fields: payload.fields,
+      rawContent: payload.rawContent,
+    );
+
+    statements.wordInsert.execute(<Object?>[
+      wordbookId,
+      prepared.row['word'],
+      prepared.row['meaning'],
+      prepared.row['search_word'],
+      prepared.row['search_meaning'],
+      prepared.row['search_details'],
+      prepared.row['search_word_compact'],
+      prepared.row['search_details_compact'],
+      prepared.row['extension_json'],
+      prepared.row['entry_json'],
+    ]);
+    final wordId = _lastInsertId();
+    final normalizedFields = prepared.fields;
+    for (var index = 0; index < normalizedFields.length; index += 1) {
+      final field = normalizedFields[index];
+      statements.fieldInsert.execute(<Object?>[
+        wordId,
+        field.key,
+        field.label,
+        jsonEncode(field.value),
+        field.style.isEmpty ? null : jsonEncode(field.style.toJsonMap()),
+        index,
+      ]);
+      final wordFieldId = _lastInsertId();
+      _insertWordFieldSubtablesWithStatements(
+        wordFieldId,
+        field,
+        statements: statements,
+      );
+    }
+    return true;
+  }
+
+  void _insertWordFieldSubtablesWithStatements(
+    int wordFieldId,
+    WordFieldItem field, {
+    required _WordImportInsertStatements statements,
+  }) {
+    if (!field.style.isEmpty) {
+      statements.styleInsert.execute(<Object?>[
+        wordFieldId,
+        field.style.backgroundHex.trim(),
+        field.style.borderHex.trim(),
+        field.style.textHex.trim(),
+        field.style.accentHex.trim(),
+      ]);
+    }
+
+    for (var index = 0; index < field.tags.length; index += 1) {
+      final tag = field.tags[index].trim();
+      if (tag.isEmpty) continue;
+      statements.tagInsert.execute(<Object?>[wordFieldId, tag, index]);
+    }
+
+    for (var index = 0; index < field.media.length; index += 1) {
+      final media = field.media[index];
+      if (media.source.trim().isEmpty) continue;
+      statements.mediaInsert.execute(<Object?>[
+        wordFieldId,
+        media.type.name,
+        media.source.trim(),
+        media.label.trim(),
+        media.mimeType?.trim(),
+        index,
+      ]);
+    }
   }
 
   void _insertWord(int wordbookId, WordEntryPayload payload) {

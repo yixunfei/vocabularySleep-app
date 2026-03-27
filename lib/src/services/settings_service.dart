@@ -11,6 +11,8 @@ class SettingsService {
   const SettingsService(this._database);
 
   static const String uiLanguageSystem = 'system';
+  static const String remotePrewarmCompletedKey =
+      'remoteResourcePrewarmCompletedV1';
 
   final AppDatabaseService _database;
 
@@ -215,5 +217,13 @@ class SettingsService {
         for (final key in keys) key: snapshots[key]!.toJsonMap(),
       }),
     );
+  }
+
+  bool loadRemoteResourcePrewarmCompleted() {
+    return _database.getSetting(remotePrewarmCompletedKey) == '1';
+  }
+
+  void saveRemoteResourcePrewarmCompleted(bool value) {
+    _database.setSetting(remotePrewarmCompletedKey, value ? '1' : '0');
   }
 }
