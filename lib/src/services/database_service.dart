@@ -1057,6 +1057,31 @@ class AppDatabaseService {
     }
   }
 
+  Future<void> syncBuiltInWordbooksCatalogIfNeeded() async {
+    if (!_shouldSyncBuiltInCatalogOnStartup()) {
+      _log.i(
+        'database',
+        'skip built-in wordbook catalog sync on startup',
+        data: <String, Object?>{'reason': 'non_special_wordbooks_exist'},
+      );
+      return;
+    }
+    await syncBuiltInWordbooksCatalog();
+  }
+
+  bool _shouldSyncBuiltInCatalogOnStartup() {
+    final row = _selectOne(
+      '''
+      SELECT COUNT(*) AS count
+      FROM wordbooks
+      WHERE path NOT IN ('builtin:favorites', 'builtin:task')
+      ''',
+      const <Object?>[],
+    );
+    final count = (row?['count'] as num?)?.toInt() ?? 0;
+    return count <= 0;
+  }
+
   Future<void> syncBuiltInWordbooksCatalog() async {
     final builtins = await _resolveBuiltInWordbooks();
     if (builtins.isEmpty) return;
@@ -2027,6 +2052,61 @@ class AppDatabaseService {
     });
   }
 
+  Future<int> importWordbookJsonTextAsync({
+    required String sourcePath,
+    required String name,
+    required String content,
+    bool replaceExisting = true,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+    int yieldEvery = 180,
+  }) async {
+    return _runInTransactionAsync<int>(() async {
+      var wordbookId = 0;
+      final existing = _selectOne(
+        'SELECT id FROM wordbooks WHERE path = ?',
+        <Object?>[sourcePath],
+      );
+      if (existing != null) {
+        wordbookId = (existing['id'] as num).toInt();
+        if (replaceExisting) {
+          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
+            wordbookId,
+          ]);
+        }
+      } else {
+        _db.execute(
+          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
+          <Object?>[name, sourcePath],
+        );
+        wordbookId = _lastInsertId();
+      }
+
+      final statements = _openWordImportInsertStatements();
+      var count = 0;
+      try {
+        await _importService.processJsonTextAsync(
+          content,
+          onPayload: (payload) {
+            if (_insertWordWithStatements(
+              wordbookId,
+              payload,
+              statements: statements,
+            )) {
+              count += 1;
+            }
+          },
+          onProgress: onProgress,
+          yieldEvery: yieldEvery,
+        );
+      } finally {
+        statements.dispose();
+      }
+
+      _refreshWordbookCount(wordbookId);
+      return count;
+    });
+  }
+
   Future<int> importWordbook({
     required String sourcePath,
     required String name,
@@ -2522,6 +2602,17 @@ class AppDatabaseService {
     required String name,
     void Function(int processedEntries, int? totalEntries)? onProgress,
   }) async {
+    if (filePath.toLowerCase().endsWith('.json')) {
+      onProgress?.call(0, null);
+      final content = await File(filePath).readAsString();
+      return importWordbookJsonTextAsync(
+        sourcePath: filePath,
+        name: name,
+        content: content,
+        replaceExisting: true,
+        onProgress: onProgress,
+      );
+    }
     onProgress?.call(0, null);
     final entries = await _importService.parseFile(filePath);
     return importWordbookAsync(
@@ -2752,7 +2843,7 @@ class AppDatabaseService {
     _createTables();
     _applySchemaMigrations();
     ensureSpecialWordbooks();
-    await syncBuiltInWordbooksCatalog();
+    await syncBuiltInWordbooksCatalogIfNeeded();
     _initialized = true;
   }
 

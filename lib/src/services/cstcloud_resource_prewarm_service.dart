@@ -19,6 +19,19 @@ class CstCloudResourcePrewarmService {
 
   final CstCloudResourceCacheService _cacheService;
 
+  Future<bool> shouldPrewarmMusic() async {
+    final music = await _cacheService.listObjects('music/');
+    final remoteTargets = music
+        .where((item) => item.key.startsWith('music/'))
+        .where((item) => !item.key.endsWith('/'))
+        .toList(growable: false);
+    if (remoteTargets.isEmpty) {
+      return false;
+    }
+    final hasLocal = await _cacheService.hasCachedFilesUnderPrefix('music');
+    return !hasLocal;
+  }
+
   Future<void> prewarm({
     required void Function(CstCloudResourcePrewarmProgress progress) onProgress,
   }) async {

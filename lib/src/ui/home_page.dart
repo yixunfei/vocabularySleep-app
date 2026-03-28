@@ -5292,6 +5292,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _openAmbientDialog(BuildContext context, AppState state) async {
     final i18n = AppI18n(state.uiLanguage);
+    unawaited(state.ensureRemoteResourcePrewarmOnDemand());
     await showDialog<void>(
       context: context,
       barrierDismissible: false,

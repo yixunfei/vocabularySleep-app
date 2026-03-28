@@ -113,6 +113,24 @@ class CstCloudResourceCacheService {
     return targetFile;
   }
 
+  Future<bool> hasCachedFilesUnderPrefix(String prefix) async {
+    final normalized = prefix.trim();
+    if (normalized.isEmpty) return false;
+    final baseDir = await _cacheBaseDir();
+    final targetDir = Directory(
+      p.join(baseDir.path, normalized.replaceAll('\\', '/')),
+    );
+    if (!await targetDir.exists()) {
+      return false;
+    }
+    await for (final entity in targetDir.list(recursive: true, followLinks: false)) {
+      if (entity is File) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<Directory> _cacheBaseDir() async {
     final supportDir = await getApplicationSupportDirectory();
     final dir = Directory(p.join(supportDir.path, 'remote_resource_cache'));

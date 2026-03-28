@@ -1,29 +1,53 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:record/record.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
+import '../../state/app_state.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
+
+AppI18n _toolboxI18n(BuildContext context) {
+  final state = context.watch<AppState?>();
+  final language =
+      state?.uiLanguage ?? Localizations.localeOf(context).languageCode;
+  return AppI18n(language);
+}
 
 class SoothingMusicToolPage extends StatelessWidget {
   const SoothingMusicToolPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final i18n = _toolboxI18n(context);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '舒缓轻音', en: 'Soothing music'),
+      title: pickUiText(
+        i18n,
+        zh: '舒缓轻音',
+        en: 'Soothing music',
+        ja: 'ヒーリング音楽',
+        de: 'Beruhigende Musik',
+        fr: 'Musique apaisante',
+        es: 'Musica relajante',
+        ru: 'Успокаивающая музыка',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '本地合成的柔和氛围音色，用来安静下来、放慢节奏。',
+        zh: '本地合成的柔和氛围音色，用来慢慢降速与放松。',
         en: 'Locally synthesized soft textures for slowing down and settling your rhythm.',
+        ja: 'ローカル合成の柔らかい音色で、気持ちとペースを落ち着かせます。',
+        de: 'Lokal synthetisierte, weiche Klangtexturen zum Entschleunigen.',
+        fr: 'Textures sonores locales et douces pour ralentir et se poser.',
+        es: 'Texturas suaves sintetizadas en local para bajar el ritmo y relajarte.',
+        ru: 'Локально синтезированные мягкие текстуры для замедления и расслабления.',
       ),
       child: const _SoothingMusicTool(),
     );
@@ -37,7 +61,7 @@ class HarpToolPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final i18n = _toolboxI18n(context);
     if (fullScreen) {
       return Scaffold(
         backgroundColor: Colors.black,
@@ -48,13 +72,354 @@ class HarpToolPage extends StatelessWidget {
       );
     }
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '空灵竖琴', en: 'Ethereal harp'),
+      title: pickUiText(
+        i18n,
+        zh: '空灵竖琴',
+        en: 'Ethereal harp',
+        ja: 'エーテルハープ',
+        de: 'Ätherharfe',
+        fr: 'Harpe éthérée',
+        es: 'Arpa etérea',
+        ru: 'Эфирная арфа',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '轻扫琴弦或单独点弦，做一个安静的触感乐器。',
-        en: 'Glide across the strings or pluck them one by one like a tactile calm instrument.',
+        zh: '在同一乐器台中切换竖琴、钢琴、长笛、鼓垫、吉他和三角铁。',
+        en: 'Switch harp, piano, flute, drum pad, guitar, and triangle in one instrument deck.',
+        ja: '1つのデッキでハープ、ピアノ、フルート、ドラム、ギター、トライアングルを切替。',
+        de: 'Harfe, Klavier, Flöte, Drum-Pad, Gitarre und Triangel in einem Deck umschalten.',
+        fr: 'Basculez harpe, piano, flûte, pad de batterie, guitare et triangle dans un même deck.',
+        es: 'Cambia arpa, piano, flauta, pad de batería, guitarra y triángulo en un solo panel.',
+        ru: 'Переключайте арфу, пианино, флейту, драм-пэд, гитару и треугольник в одной панели.',
       ),
-      child: const _HarpTool(),
+      child: const _HarpInstrumentDeck(),
+    );
+  }
+}
+
+enum _HarpDeckInstrument { harp, piano, flute, drumPad, guitar, triangle }
+
+class _HarpInstrumentDeck extends StatefulWidget {
+  const _HarpInstrumentDeck();
+
+  @override
+  State<_HarpInstrumentDeck> createState() => _HarpInstrumentDeckState();
+}
+
+class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
+  _HarpDeckInstrument _selected = _HarpDeckInstrument.harp;
+
+  String _label(AppI18n i18n, _HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.piano => pickUiText(
+        i18n,
+        zh: '钢琴',
+        en: 'Piano',
+        ja: 'ピアノ',
+        de: 'Klavier',
+        fr: 'Piano',
+        es: 'Piano',
+        ru: 'Пианино',
+      ),
+      _HarpDeckInstrument.flute => pickUiText(
+        i18n,
+        zh: '长笛',
+        en: 'Flute',
+        ja: 'フルート',
+        de: 'Flöte',
+        fr: 'Flûte',
+        es: 'Flauta',
+        ru: 'Флейта',
+      ),
+      _HarpDeckInstrument.drumPad => pickUiText(
+        i18n,
+        zh: '鼓垫',
+        en: 'Drum pad',
+        ja: 'ドラムパッド',
+        de: 'Drum-Pad',
+        fr: 'Pad de batterie',
+        es: 'Pad de batería',
+        ru: 'Драм-пэд',
+      ),
+      _HarpDeckInstrument.guitar => pickUiText(
+        i18n,
+        zh: '吉他',
+        en: 'Guitar',
+        ja: 'ギター',
+        de: 'Gitarre',
+        fr: 'Guitare',
+        es: 'Guitarra',
+        ru: 'Гитара',
+      ),
+      _HarpDeckInstrument.triangle => pickUiText(
+        i18n,
+        zh: '三角铁',
+        en: 'Triangle',
+        ja: 'トライアングル',
+        de: 'Triangel',
+        fr: 'Triangle',
+        es: 'Triángulo',
+        ru: 'Треугольник',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '竖琴',
+        en: 'Harp',
+        ja: 'ハープ',
+        de: 'Harfe',
+        fr: 'Harpe',
+        es: 'Arpa',
+        ru: 'Арфа',
+      ),
+    };
+  }
+
+  String _subtitle(AppI18n i18n, _HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.piano => pickUiText(
+        i18n,
+        zh: '带预设包的触控钢琴。',
+        en: 'Touch piano with preset packs.',
+        ja: 'プリセット対応のタッチピアノ。',
+        de: 'Touch-Klavier mit Preset-Paketen.',
+        fr: 'Piano tactile avec packs de préréglages.',
+        es: 'Piano táctil con paquetes de presets.',
+        ru: 'Сенсорное пианино с пакетами пресетов.',
+      ),
+      _HarpDeckInstrument.flute => pickUiText(
+        i18n,
+        zh: '支持调式与音色预设的长笛。',
+        en: 'Flute with scale and timbre presets.',
+        ja: 'スケールと音色プリセット対応のフルート。',
+        de: 'Flöte mit Skalen- und Klang-Presets.',
+        fr: 'Flûte avec gammes et presets de timbre.',
+        es: 'Flauta con escalas y presets de timbre.',
+        ru: 'Флейта с ладовыми и тембровыми пресетами.',
+      ),
+      _HarpDeckInstrument.drumPad => pickUiText(
+        i18n,
+        zh: '四块鼓垫与鼓组预设切换。',
+        en: 'Four pads with switchable drum kits.',
+        ja: '4パッドと切替可能なドラムキット。',
+        de: 'Vier Pads mit umschaltbaren Drum-Kits.',
+        fr: 'Quatre pads avec kits de batterie commutables.',
+        es: 'Cuatro pads con kits de batería intercambiables.',
+        ru: 'Четыре пэда с переключаемыми наборами ударных.',
+      ),
+      _HarpDeckInstrument.guitar => pickUiText(
+        i18n,
+        zh: '点弦与扫弦一体的吉他面板。',
+        en: 'Guitar panel for pluck and strum.',
+        ja: 'ピッキングとストラムを一体化したギターパネル。',
+        de: 'Gitarrenpanel für Zupfen und Strumming.',
+        fr: 'Panneau guitare pour pincé et strum.',
+        es: 'Panel de guitarra para pulsar y rasguear.',
+        ru: 'Гитарная панель для щипка и боя.',
+      ),
+      _HarpDeckInstrument.triangle => pickUiText(
+        i18n,
+        zh: '三角铁振铃风格预设。',
+        en: 'Triangle with ring-style presets.',
+        ja: '余韻スタイルを切替できるトライアングル。',
+        de: 'Triangel mit Ring-Style-Presets.',
+        fr: 'Triangle avec presets de style de résonance.',
+        es: 'Triángulo con presets de estilo de resonancia.',
+        ru: 'Треугольник с пресетами стиля звона.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '保留竖琴二阶段调音与手势能力。',
+        en: 'Harp with phase-two gesture and tone controls.',
+        ja: '第2段階のジェスチャーと音色制御を備えたハープ。',
+        de: 'Harfe mit Gesten- und Klangsteuerung aus Phase 2.',
+        fr: 'Harpe avec gestes et réglages sonores de phase 2.',
+        es: 'Arpa con gestos y control de tono de la fase dos.',
+        ru: 'Арфа с жестами и тональными настройками второго этапа.',
+      ),
+    };
+  }
+
+  IconData _icon(_HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.piano => Icons.piano_rounded,
+      _HarpDeckInstrument.flute => Icons.air_rounded,
+      _HarpDeckInstrument.drumPad => Icons.album_rounded,
+      _HarpDeckInstrument.guitar => Icons.queue_music_rounded,
+      _HarpDeckInstrument.triangle => Icons.change_history_rounded,
+      _ => Icons.music_note_rounded,
+    };
+  }
+
+  Widget _activeTool() {
+    return switch (_selected) {
+      _HarpDeckInstrument.piano => const _PianoTool(),
+      _HarpDeckInstrument.flute => const _FluteTool(),
+      _HarpDeckInstrument.drumPad => const _DrumPadTool(),
+      _HarpDeckInstrument.guitar => const _GuitarTool(),
+      _HarpDeckInstrument.triangle => const _TriangleTool(),
+      _ => const _HarpTool(),
+    };
+  }
+
+  void _openInstrumentFullScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _DeckInstrumentFullScreenPage(instrument: _selected),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SectionHeader(
+                  title: pickUiText(
+                    i18n,
+                    zh: '乐器切换',
+                    en: 'Instrument switch',
+                    ja: '楽器切替',
+                    de: 'Instrumentenwechsel',
+                    fr: 'Changement d’instrument',
+                    es: 'Cambio de instrumento',
+                    ru: 'Переключение инструмента',
+                  ),
+                  subtitle: pickUiText(
+                    i18n,
+                    zh: '在竖琴模块中集中使用 6 种乐器。',
+                    en: 'Use all 6 instruments inside the harp module.',
+                    ja: 'ハープモジュール内で6種の楽器を集中使用。',
+                    de: 'Alle 6 Instrumente direkt im Harfenmodul nutzen.',
+                    fr: 'Utilisez les 6 instruments dans le module harpe.',
+                    es: 'Usa los 6 instrumentos dentro del módulo de arpa.',
+                    ru: 'Используйте все 6 инструментов внутри модуля арфы.',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _HarpDeckInstrument.values
+                      .map(
+                        (item) => ChoiceChip(
+                          avatar: Icon(_icon(item), size: 16),
+                          label: Text(_label(i18n, item)),
+                          selected: item == _selected,
+                          onSelected: (_) => setState(() => _selected = item),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _subtitle(i18n, _selected),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _openInstrumentFullScreen,
+                  icon: const Icon(Icons.open_in_full_rounded),
+                  label: Text(pickUiText(i18n, zh: '全屏模式', en: 'Full screen')),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: KeyedSubtree(
+            key: ValueKey<_HarpDeckInstrument>(_selected),
+            child: _activeTool(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DeckInstrumentFullScreenPage extends StatefulWidget {
+  const _DeckInstrumentFullScreenPage({required this.instrument});
+
+  final _HarpDeckInstrument instrument;
+
+  @override
+  State<_DeckInstrumentFullScreenPage> createState() =>
+      _DeckInstrumentFullScreenPageState();
+}
+
+class _DeckInstrumentFullScreenPageState
+    extends State<_DeckInstrumentFullScreenPage> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    super.dispose();
+  }
+
+  Widget _tool() {
+    return switch (widget.instrument) {
+      _HarpDeckInstrument.piano => const _PianoTool(fullScreen: true),
+      _HarpDeckInstrument.flute => const _FluteTool(fullScreen: true),
+      _HarpDeckInstrument.drumPad => const _DrumPadTool(fullScreen: true),
+      _HarpDeckInstrument.guitar => const _GuitarTool(fullScreen: true),
+      _HarpDeckInstrument.triangle => const _TriangleTool(fullScreen: true),
+      _ => _HarpTool(
+        fullScreen: true,
+        onExitFullScreen: () => Navigator.of(context).pop(),
+      ),
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.instrument == _HarpDeckInstrument.harp) {
+      return Scaffold(backgroundColor: Colors.black, body: _tool());
+    }
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                child: _tool(),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              top: 8,
+              child: FilledButton.tonal(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.black.withValues(alpha: 0.38),
+                  foregroundColor: Colors.white,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Icon(Icons.arrow_back_rounded, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -64,13 +429,27 @@ class FocusBeatsToolPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final i18n = _toolboxI18n(context);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '专注节拍', en: 'Focus beats'),
+      title: pickUiText(
+        i18n,
+        zh: '专注节拍',
+        en: 'Focus beats',
+        ja: '集中ビート',
+        de: 'Fokus-Beat',
+        fr: 'Rythmes de focus',
+        es: 'Beats de enfoque',
+        ru: 'Фокус-бит',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '可调 BPM 的本地节拍器，适合写作、学习或呼吸同步。',
+        zh: '可调 BPM 的本地节拍器，适合学习、写作和呼吸同步。',
         en: 'A local BPM-adjustable metronome for writing, study, or breath syncing.',
+        ja: 'BPM調整可能なローカルメトロノーム。学習や呼吸同期に最適。',
+        de: 'Lokales BPM-Metronom fur Lernen, Schreiben und Atem-Synchronisation.',
+        fr: 'Metronome BPM local pour etude, ecriture et respiration guidee.',
+        es: 'Metronomo BPM local para estudio, escritura y sincronizacion de respiracion.',
+        ru: 'Локальный метроном с BPM для учебы, письма и дыхательной синхронизации.',
       ),
       child: const _FocusBeatsTool(),
     );
@@ -82,15 +461,189 @@ class WoodfishToolPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final i18n = _toolboxI18n(context);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '电子木鱼', en: 'Digital woodfish'),
+      title: pickUiText(
+        i18n,
+        zh: '电子木鱼',
+        en: 'Digital woodfish',
+        ja: '電子木魚',
+        de: 'Digitales Mokugyo',
+        fr: 'Mokugyo numerique',
+        es: 'Mokugyo digital',
+        ru: 'Цифровой мокугё',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '轻敲一下，记一次数，也给自己一个短暂的停顿。',
+        zh: '轻敲一下记一次数，也给自己一个短暂停顿。',
         en: 'Tap once for a count and give yourself a short reset in the middle of the day.',
+        ja: '1回タップでカウントし、気分を短くリセット。',
+        de: 'Einmal tippen, einmal zahlen und kurz neu fokussieren.',
+        fr: 'Un tap pour compter et vous offrir une courte remise a zero.',
+        es: 'Un toque para contar y darte un breve reinicio.',
+        ru: 'Один удар - один счет и короткая перезагрузка.',
       ),
       child: const _WoodfishTool(),
+    );
+  }
+}
+
+class PianoToolPage extends StatelessWidget {
+  const PianoToolPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    return ToolboxToolPage(
+      title: pickUiText(
+        i18n,
+        zh: '钢琴',
+        en: 'Piano',
+        ja: 'ピアノ',
+        de: 'Klavier',
+        fr: 'Piano',
+        es: 'Piano',
+        ru: 'Пианино',
+      ),
+      subtitle: pickUiText(
+        i18n,
+        zh: '本地合成触控钢琴，支持实时键盘演奏与预设切换。',
+        en: 'Local touch piano with responsive keys and switchable preset packs.',
+        ja: 'レスポンスの良いタッチ鍵盤。プリセットを切り替えて演奏できます。',
+        de: 'Lokales Touch-Piano mit reaktionsschnellen Tasten und umschaltbaren Presets.',
+        fr: 'Piano tactile local avec touches réactives et packs de préréglages.',
+        es: 'Piano táctil local con teclas sensibles y paquetes de ajustes.',
+        ru: 'Локальное сенсорное пианино с отзывчивыми клавишами и пакетами пресетов.',
+      ),
+      child: const _PianoTool(),
+    );
+  }
+}
+
+class FluteToolPage extends StatelessWidget {
+  const FluteToolPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    return ToolboxToolPage(
+      title: pickUiText(
+        i18n,
+        zh: '长笛',
+        en: 'Flute',
+        ja: 'フルート',
+        de: 'Flöte',
+        fr: 'Flûte',
+        es: 'Flauta',
+        ru: 'Флейта',
+      ),
+      subtitle: pickUiText(
+        i18n,
+        zh: '一键吹奏的本地长笛，支持调式切换与音色预设。',
+        en: 'Breath-like local flute notes with scale switching and preset packs.',
+        ja: '息づかいのあるローカルフルート音色。スケールとプリセットを切り替え可能。',
+        de: 'Atmungsähnliche lokale Flötentöne mit Skalenwechsel und Presets.',
+        fr: 'Notes de flûte locales au souffle naturel avec gammes et préréglages.',
+        es: 'Notas de flauta locales con respiración natural, escalas y presets.',
+        ru: 'Локальная флейта с дыхательным тембром, сменой ладов и пресетов.',
+      ),
+      child: const _FluteTool(),
+    );
+  }
+}
+
+class DrumPadToolPage extends StatelessWidget {
+  const DrumPadToolPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    return ToolboxToolPage(
+      title: pickUiText(
+        i18n,
+        zh: '鼓垫',
+        en: 'Drum pad',
+        ja: 'ドラムパッド',
+        de: 'Drum-Pad',
+        fr: 'Pad de batterie',
+        es: 'Pad de batería',
+        ru: 'Драм-пэд',
+      ),
+      subtitle: pickUiText(
+        i18n,
+        zh: '紧凑鼓垫整合底鼓、军鼓、踩镲与嗵鼓，并支持音色预设。',
+        en: 'Compact drum pad with kick, snare, hi-hat and tom, plus kit presets.',
+        ja: 'キック、スネア、ハイハット、タムをまとめたコンパクトなドラムパッド。',
+        de: 'Kompaktes Drum-Pad mit Kick, Snare, Hi-Hat und Tom inklusive Kit-Presets.',
+        fr: 'Pad compact avec kick, caisse claire, charleston et tom, avec presets de kit.',
+        es: 'Pad compacto con bombo, caja, hi-hat y tom, con presets de kit.',
+        ru: 'Компактный драм-пэд: бочка, малый, хай-хэт и томы с наборами пресетов.',
+      ),
+      child: const _DrumPadTool(),
+    );
+  }
+}
+
+class GuitarToolPage extends StatelessWidget {
+  const GuitarToolPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    return ToolboxToolPage(
+      title: pickUiText(
+        i18n,
+        zh: '吉他',
+        en: 'Guitar',
+        ja: 'ギター',
+        de: 'Gitarre',
+        fr: 'Guitare',
+        es: 'Guitarra',
+        ru: 'Гитара',
+      ),
+      subtitle: pickUiText(
+        i18n,
+        zh: '可点弦与扫弦的本地吉他，支持尼龙/钢弦/氛围预设。',
+        en: 'Tap strings or strum with local nylon, steel, and ambient preset packs.',
+        ja: 'タップ弾きとストラムに対応。ナイロン/スチール/アンビエントを切替可能。',
+        de: 'Saiten antippen oder strummen mit Nylon-, Steel- und Ambient-Presets.',
+        fr: 'Pincez ou grattez les cordes avec presets nylon, acier et ambient.',
+        es: 'Pulsa o rasguea cuerdas con presets de nailon, acero y ambient.',
+        ru: 'Щипок и бой по струнам с пресетами нейлон, сталь и ambient.',
+      ),
+      child: const _GuitarTool(),
+    );
+  }
+}
+
+class TriangleToolPage extends StatelessWidget {
+  const TriangleToolPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    return ToolboxToolPage(
+      title: pickUiText(
+        i18n,
+        zh: '三角铁',
+        en: 'Triangle',
+        ja: 'トライアングル',
+        de: 'Triangel',
+        fr: 'Triangle',
+        es: 'Triángulo',
+        ru: 'Треугольник',
+      ),
+      subtitle: pickUiText(
+        i18n,
+        zh: '清亮金属敲击音，支持不同振铃质感预设。',
+        en: 'Clean metallic strikes with controllable ring and style presets.',
+        ja: '澄んだ金属打音。余韻コントロールとスタイルプリセット対応。',
+        de: 'Klarer metallischer Anschlag mit steuerbarem Nachklang und Presets.',
+        fr: 'Frappe métallique nette avec résonance réglable et presets.',
+        es: 'Golpe metálico limpio con resonancia ajustable y presets.',
+        ru: 'Чистый металлический удар с регулировкой звона и пресетами.',
+      ),
+      child: const _TriangleTool(),
     );
   }
 }
@@ -705,6 +1258,9 @@ class _HarpToolState extends State<_HarpTool>
 
   Offset? _lastDragPoint;
   int? _lastDragStringIndex;
+  int? _activePointerId;
+  Offset? _pointerDownPosition;
+  bool _pointerDragActive = false;
   int? _focusedString;
   int? _lastTickMicros;
   bool _muted = false;
@@ -729,6 +1285,9 @@ class _HarpToolState extends State<_HarpTool>
     if (widget.fullScreen) {
       unawaited(_enterImmersiveMode());
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_warmUpActiveTone());
+    });
   }
 
   _HarpScalePreset get _activeScale =>
@@ -743,6 +1302,146 @@ class _HarpToolState extends State<_HarpTool>
   List<double> get _activeNotes => _activeScale.notes;
 
   bool get _isHorizontalLayout => widget.fullScreen;
+
+  String _scaleLabel(AppI18n i18n, _HarpScalePreset preset) {
+    return switch (preset.id) {
+      'a_minor' => pickUiText(i18n, zh: 'A小调', en: 'A Minor'),
+      'd_dorian' => pickUiText(i18n, zh: 'D多利亚', en: 'D Dorian'),
+      'zen' => pickUiText(i18n, zh: '禅意五声音阶', en: 'Zen Pentatonic'),
+      'c_lydian' => pickUiText(i18n, zh: 'C利底亚', en: 'C Lydian'),
+      'hirajoshi' => pickUiText(i18n, zh: '平调子', en: 'Hirajoshi'),
+      _ => pickUiText(i18n, zh: 'C大调', en: 'C Major'),
+    };
+  }
+
+  String _chordLabel(AppI18n i18n, _HarpChordPreset preset) {
+    return switch (preset.id) {
+      'minor' => pickUiText(i18n, zh: '小三和弦', en: 'Minor'),
+      'sus2' => pickUiText(i18n, zh: '挂二', en: 'Sus2'),
+      'add9' => pickUiText(i18n, zh: '加九', en: 'Add9'),
+      'sus4' => pickUiText(i18n, zh: '挂四', en: 'Sus4'),
+      'maj7' => pickUiText(i18n, zh: '大七', en: 'Maj7'),
+      'min7' => pickUiText(i18n, zh: '小七', en: 'Min7'),
+      _ => pickUiText(i18n, zh: '大三和弦', en: 'Major'),
+    };
+  }
+
+  String _pluckLabel(AppI18n i18n, _HarpPluckPreset preset) {
+    return switch (preset.id) {
+      'warm' => pickUiText(i18n, zh: '温暖', en: 'Warm'),
+      'crystal' => pickUiText(i18n, zh: '水晶', en: 'Crystal'),
+      'bright' => pickUiText(i18n, zh: '明亮', en: 'Bright'),
+      'nylon' => pickUiText(i18n, zh: '尼龙', en: 'Nylon'),
+      'glass' => pickUiText(i18n, zh: '玻璃', en: 'Glass'),
+      'concert' => pickUiText(i18n, zh: '音乐厅', en: 'Concert'),
+      'steel' => pickUiText(i18n, zh: '钢弦', en: 'Steel'),
+      _ => pickUiText(i18n, zh: '丝绸', en: 'Silk'),
+    };
+  }
+
+  String _pluckDescription(AppI18n i18n, _HarpPluckPreset preset) {
+    return switch (preset.id) {
+      'warm' => pickUiText(
+        i18n,
+        zh: '更厚实、尾音更慢。',
+        en: 'More body and slower tail.',
+      ),
+      'crystal' => pickUiText(
+        i18n,
+        zh: '高频更亮，颗粒更清晰。',
+        en: 'Sharper upper harmonics.',
+      ),
+      'bright' => pickUiText(
+        i18n,
+        zh: '起音更清楚，适合扫弦。',
+        en: 'Clear attack for active strum.',
+      ),
+      'nylon' => pickUiText(
+        i18n,
+        zh: '圆润柔和，瞬态较轻。',
+        en: 'Round body with light transient.',
+      ),
+      'glass' => pickUiText(
+        i18n,
+        zh: '更薄更亮，泛音闪烁。',
+        en: 'Thin body and sparkling top.',
+      ),
+      'concert' => pickUiText(
+        i18n,
+        zh: '接近踏板竖琴的均衡延音。',
+        en: 'Pedal-harp like balance and sustain.',
+      ),
+      'steel' => pickUiText(
+        i18n,
+        zh: '核心更强，拨弦更亮。',
+        en: 'Stronger core and brighter attack.',
+      ),
+      _ => pickUiText(i18n, zh: '平衡柔和。', en: 'Balanced and soft.'),
+    };
+  }
+
+  String _patternLabel(AppI18n i18n, _HarpPatternPreset preset) {
+    return switch (preset.id) {
+      'cascade' => pickUiText(i18n, zh: '瀑布', en: 'Cascade'),
+      'chord' => pickUiText(i18n, zh: '和弦脉冲', en: 'Chord'),
+      _ => pickUiText(i18n, zh: '滑行', en: 'Glide'),
+    };
+  }
+
+  String _patternDescription(AppI18n i18n, _HarpPatternPreset preset) {
+    return switch (preset.id) {
+      'cascade' => pickUiText(i18n, zh: '先上行再下行。', en: 'Up then down.'),
+      'chord' => pickUiText(
+        i18n,
+        zh: '脉冲弹奏当前和弦音。',
+        en: 'Pulse active chord tones.',
+      ),
+      _ => pickUiText(i18n, zh: '连续上行扫弦。', en: 'Ascending sweep.'),
+    };
+  }
+
+  String _paletteLabel(AppI18n i18n, _HarpPalettePreset preset) {
+    return switch (preset.id) {
+      'aurora' => pickUiText(i18n, zh: '极光', en: 'Aurora'),
+      'ember' => pickUiText(i18n, zh: '余烬', en: 'Ember'),
+      'jade' => pickUiText(i18n, zh: '翡翠', en: 'Jade'),
+      _ => pickUiText(i18n, zh: '月光', en: 'Moon'),
+    };
+  }
+
+  String _realismLabel(AppI18n i18n, _HarpRealismPreset preset) {
+    return switch (preset.id) {
+      'pedal_harp' => pickUiText(i18n, zh: '踏板竖琴', en: 'Pedal Harp'),
+      'steel_studio' => pickUiText(i18n, zh: '钢弦录音棚', en: 'Steel Studio'),
+      'chamber_soft' => pickUiText(i18n, zh: '室内柔和', en: 'Chamber Soft'),
+      _ => pickUiText(i18n, zh: '音乐会尼龙', en: 'Concert Nylon'),
+    };
+  }
+
+  String _realismDescription(AppI18n i18n, _HarpRealismPreset preset) {
+    return switch (preset.id) {
+      'pedal_harp' => pickUiText(
+        i18n,
+        zh: '适合旋律线条的平衡延音。',
+        en: 'Balanced sustain for melodic passages.',
+      ),
+      'steel_studio' => pickUiText(
+        i18n,
+        zh: '瞬态紧致，音符分离清晰。',
+        en: 'Tight transient and clear note separation.',
+      ),
+      'chamber_soft' => pickUiText(
+        i18n,
+        zh: '柔和拨弦，余韵舒展。',
+        en: 'Soft finger-pluck with gentle bloom.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '圆润琴体与受控厅堂尾音。',
+        en: 'Round body with controlled hall tail.',
+      ),
+    };
+  }
 
   Future<void> _enterImmersiveMode() async {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -783,11 +1482,20 @@ class _HarpToolState extends State<_HarpTool>
     _invalidateAudioPlayers();
   }
 
-  void _invalidateAudioPlayers() {
+  void _invalidateAudioPlayers({bool warmUp = true}) {
     for (final player in _playersByKey.values) {
       unawaited(player.dispose());
     }
     _playersByKey.clear();
+    if (warmUp) {
+      unawaited(_warmUpActiveTone());
+    }
+  }
+
+  Future<void> _warmUpActiveTone() async {
+    for (final frequency in _activeNotes) {
+      await _playerForFrequency(frequency).warmUp();
+    }
   }
 
   ToolboxEffectPlayer _playerForFrequency(double frequency) {
@@ -812,13 +1520,11 @@ class _HarpToolState extends State<_HarpTool>
     Size size, {
     required bool horizontalLayout,
   }) {
-    final leadingInset = horizontalLayout
-        ? size.height * 0.14
-        : size.width * 0.14;
-    final trailingInset = horizontalLayout
-        ? size.height * 0.14
-        : size.width * 0.14;
     final totalSpan = horizontalLayout ? size.height : size.width;
+    final adaptiveInset = totalSpan * (horizontalLayout ? 0.12 : 0.11);
+    final minInset = horizontalLayout ? 28.0 : 22.0;
+    final leadingInset = math.max(minInset, adaptiveInset);
+    final trailingInset = math.max(minInset, adaptiveInset);
     final usableSpan = math.max(1.0, totalSpan - leadingInset - trailingInset);
     if (_stringCount == 1) {
       return horizontalLayout ? size.height / 2 : size.width / 2;
@@ -981,6 +1687,14 @@ class _HarpToolState extends State<_HarpTool>
       size,
       horizontalLayout: _isHorizontalLayout,
     );
+    final axis = _isHorizontalLayout ? localPosition.dy : localPosition.dx;
+    final span = _isHorizontalLayout ? size.height : size.width;
+    final spacing = _stringCount <= 1 ? span : span / (_stringCount - 1);
+    final distance =
+        (_stringTrackAt(index, size, horizontalLayout: _isHorizontalLayout) -
+                axis)
+            .abs();
+    if (distance > spacing * 0.45) return;
     _pluckString(
       index,
       intensity: 0.46,
@@ -990,10 +1704,10 @@ class _HarpToolState extends State<_HarpTool>
     );
   }
 
-  void _handlePanStart(DragStartDetails details, Size size) {
-    _lastDragPoint = details.localPosition;
+  void _handlePanStart(Offset localPosition, Size size) {
+    _lastDragPoint = localPosition;
     final startIndex = _nearestStringByPosition(
-      details.localPosition,
+      localPosition,
       size,
       horizontalLayout: _isHorizontalLayout,
     );
@@ -1007,8 +1721,8 @@ class _HarpToolState extends State<_HarpTool>
     );
   }
 
-  void _handlePanUpdate(DragUpdateDetails details, Size size) {
-    final current = details.localPosition;
+  void _handlePanUpdate(Offset localPosition, Size size) {
+    final current = localPosition;
     final previous = _lastDragPoint;
     _lastDragPoint = current;
     if (previous == null) return;
@@ -1058,6 +1772,56 @@ class _HarpToolState extends State<_HarpTool>
   void _handlePanEnd() {
     _lastDragPoint = null;
     _lastDragStringIndex = null;
+  }
+
+  bool _shouldEnterSweepMode(Offset delta) {
+    final primaryDelta = (_isHorizontalLayout ? delta.dy : delta.dx).abs();
+    final crossDelta = (_isHorizontalLayout ? delta.dx : delta.dy).abs();
+    if (primaryDelta < _swipeThreshold) return false;
+    return primaryDelta >= crossDelta * 1.2;
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_activePointerId != null) return;
+    _activePointerId = event.pointer;
+    _pointerDownPosition = event.localPosition;
+    _pointerDragActive = false;
+    _lastDragPoint = null;
+    _lastDragStringIndex = null;
+  }
+
+  void _handlePointerMove(PointerMoveEvent event, Size size) {
+    if (_activePointerId != event.pointer) return;
+    final start = _pointerDownPosition;
+    if (start == null) return;
+    final current = event.localPosition;
+    if (!_pointerDragActive) {
+      final delta = current - start;
+      if (!_shouldEnterSweepMode(delta)) return;
+      _pointerDragActive = true;
+      _handlePanStart(start, size);
+    }
+    _handlePanUpdate(current, size);
+  }
+
+  void _handlePointerUp(PointerUpEvent event, Size size) {
+    if (_activePointerId != event.pointer) return;
+    if (_pointerDragActive) {
+      _handlePanEnd();
+    } else {
+      _handleTap(event.localPosition, size);
+    }
+    _activePointerId = null;
+    _pointerDownPosition = null;
+    _pointerDragActive = false;
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_activePointerId != event.pointer) return;
+    _handlePanEnd();
+    _activePointerId = null;
+    _pointerDownPosition = null;
+    _pointerDragActive = false;
   }
 
   int _nearestStringByFrequency(double frequency) {
@@ -1168,7 +1932,7 @@ class _HarpToolState extends State<_HarpTool>
       unawaited(_exitImmersiveMode());
     }
     _vibrationTicker.dispose();
-    _invalidateAudioPlayers();
+    _invalidateAudioPlayers(warmUp: false);
     super.dispose();
   }
 
@@ -1186,51 +1950,12 @@ class _HarpToolState extends State<_HarpTool>
     required Size size,
     required bool rounded,
   }) {
-    final gestures = <Type, GestureRecognizerFactory>{
-      TapGestureRecognizer:
-          GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-            () => TapGestureRecognizer(debugOwner: this),
-            (TapGestureRecognizer instance) {
-              instance.onTapUp = (TapUpDetails details) {
-                _handleTap(details.localPosition, size);
-              };
-            },
-          ),
-      if (_isHorizontalLayout)
-        VerticalDragGestureRecognizer:
-            GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
-              () => VerticalDragGestureRecognizer(debugOwner: this),
-              (VerticalDragGestureRecognizer instance) {
-                instance.onStart = (DragStartDetails details) {
-                  _handlePanStart(details, size);
-                };
-                instance.onUpdate = (DragUpdateDetails details) {
-                  _handlePanUpdate(details, size);
-                };
-                instance.onEnd = (_) => _handlePanEnd();
-                instance.onCancel = _handlePanEnd;
-              },
-            )
-      else
-        HorizontalDragGestureRecognizer:
-            GestureRecognizerFactoryWithHandlers<
-              HorizontalDragGestureRecognizer
-            >(() => HorizontalDragGestureRecognizer(debugOwner: this), (
-              HorizontalDragGestureRecognizer instance,
-            ) {
-              instance.onStart = (DragStartDetails details) {
-                _handlePanStart(details, size);
-              };
-              instance.onUpdate = (DragUpdateDetails details) {
-                _handlePanUpdate(details, size);
-              };
-              instance.onEnd = (_) => _handlePanEnd();
-              instance.onCancel = _handlePanEnd;
-            }),
-    };
-    Widget content = RawGestureDetector(
+    Widget content = Listener(
       behavior: HitTestBehavior.opaque,
-      gestures: gestures,
+      onPointerDown: _handlePointerDown,
+      onPointerMove: (event) => _handlePointerMove(event, size),
+      onPointerUp: (event) => _handlePointerUp(event, size),
+      onPointerCancel: _handlePointerCancel,
       child: SizedBox(
         width: size.width,
         height: size.height,
@@ -1258,16 +1983,15 @@ class _HarpToolState extends State<_HarpTool>
   }
 
   Widget _buildFullScreenBody(BuildContext context) {
-    final theme = Theme.of(context);
+    final i18n = _toolboxI18n(context);
     final reverbPercent = (_reverbUi * 100).round();
-    final topInset = MediaQuery.viewPaddingOf(context).top;
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     final activePreset = _realismPresets.where((preset) {
       return preset.id == _activeRealismPresetId;
     });
     final presetLabel = activePreset.isEmpty
-        ? 'Custom'
-        : activePreset.first.label;
+        ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+        : _realismLabel(i18n, activePreset.first);
 
     return Stack(
       children: <Widget>[
@@ -1284,57 +2008,61 @@ class _HarpToolState extends State<_HarpTool>
           ),
         ),
         Positioned(
-          left: 12,
-          right: 12,
-          top: topInset + 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.26),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Row(
-              children: <Widget>[
-                IconButton(
-                  onPressed:
-                      widget.onExitFullScreen ??
-                      () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    'Ethereal Harp',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: () => setState(() => _muted = !_muted),
-                  icon: Icon(
-                    _muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-                  ),
-                  label: Text(_muted ? 'Muted' : 'Sound'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
           left: 16,
           right: 16,
           bottom: bottomInset + 10,
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              _CompactMetric(label: 'Layout', value: 'Horizontal'),
-              const SizedBox(width: 8),
-              _CompactMetric(label: 'Preset', value: presetLabel),
-              const SizedBox(width: 8),
-              _CompactMetric(label: 'Reverb', value: '$reverbPercent%'),
+              Row(
+                children: <Widget>[
+                  FilledButton.tonal(
+                    onPressed:
+                        widget.onExitFullScreen ??
+                        () => Navigator.of(context).pop(),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.black.withValues(alpha: 0.38),
+                      foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: const Icon(Icons.arrow_back_rounded, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  FilledButton.tonal(
+                    onPressed: () => setState(() => _muted = !_muted),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.black.withValues(alpha: 0.38),
+                      foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: Icon(
+                      _muted
+                          ? Icons.volume_off_rounded
+                          : Icons.volume_up_rounded,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  _CompactMetric(
+                    label: pickUiText(i18n, zh: '布局', en: 'Layout'),
+                    value: pickUiText(i18n, zh: '横向', en: 'Horizontal'),
+                  ),
+                  const SizedBox(width: 8),
+                  _CompactMetric(
+                    label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                    value: presetLabel,
+                  ),
+                  const SizedBox(width: 8),
+                  _CompactMetric(
+                    label: pickUiText(i18n, zh: '残响', en: 'Reverb'),
+                    value: '$reverbPercent%',
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -1344,6 +2072,7 @@ class _HarpToolState extends State<_HarpTool>
 
   @override
   Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
     final theme = Theme.of(context);
     final reverbPercent = (_reverbUi * 100).round();
     if (widget.fullScreen) {
@@ -1355,10 +2084,13 @@ class _HarpToolState extends State<_HarpTool>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const SectionHeader(
-              title: 'Strings',
-              subtitle:
-                  'Second-pass harp with exposed tone, harmony, and gesture feel controls.',
+            SectionHeader(
+              title: pickUiText(i18n, zh: '琴弦', en: 'Strings'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '二阶段竖琴：开放音色、和声与手势手感参数。',
+                en: 'Second-pass harp with exposed tone, harmony, and gesture feel controls.',
+              ),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -1366,20 +2098,33 @@ class _HarpToolState extends State<_HarpTool>
               runSpacing: 10,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
-                const ToolboxMetricCard(label: 'Strings', value: '12'),
-                ToolboxMetricCard(label: 'Scale', value: _activeScale.label),
-                ToolboxMetricCard(label: 'Reverb', value: '$reverbPercent%'),
+                ToolboxMetricCard(
+                  label: pickUiText(i18n, zh: '弦数', en: 'Strings'),
+                  value: '12',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(i18n, zh: '调式', en: 'Scale'),
+                  value: _scaleLabel(i18n, _activeScale),
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(i18n, zh: '残响', en: 'Reverb'),
+                  value: '$reverbPercent%',
+                ),
                 FilledButton.tonalIcon(
                   onPressed: () => setState(() => _muted = !_muted),
                   icon: Icon(
                     _muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
                   ),
-                  label: Text(_muted ? 'Muted' : 'Sound on'),
+                  label: Text(
+                    _muted
+                        ? pickUiText(i18n, zh: '静音', en: 'Muted')
+                        : pickUiText(i18n, zh: '声音开', en: 'Sound on'),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: _openFullScreen,
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: const Text('Full screen'),
+                  label: Text(pickUiText(i18n, zh: '全屏', en: 'Full screen')),
                 ),
               ],
             ),
@@ -1404,19 +2149,28 @@ class _HarpToolState extends State<_HarpTool>
                 OutlinedButton.icon(
                   onPressed: _playArpeggio,
                   icon: const Icon(Icons.auto_awesome_rounded),
-                  label: const Text('Auto arpeggio'),
+                  label: Text(
+                    pickUiText(i18n, zh: '自动琶音', en: 'Auto arpeggio'),
+                  ),
                 ),
                 Text(
-                  'Tip: a wider, faster swipe creates a brighter strum.',
+                  pickUiText(
+                    i18n,
+                    zh: '提示：更宽更快的扫弦会产生更明亮的音色。',
+                    en: 'Tip: a wider, faster swipe creates a brighter strum.',
+                  ),
                   style: theme.textTheme.bodySmall,
                 ),
               ],
             ),
             const SizedBox(height: 14),
-            const SectionHeader(
-              title: 'High Realism Presets',
-              subtitle:
-                  'Preset bundles tuned for realistic string behavior and room response.',
+            SectionHeader(
+              title: pickUiText(i18n, zh: '高真实度预设', en: 'High Realism Presets'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '针对琴弦行为与空间响应调校的预设包。',
+                en: 'Preset bundles tuned for realistic string behavior and room response.',
+              ),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -1425,9 +2179,9 @@ class _HarpToolState extends State<_HarpTool>
               children: _realismPresets
                   .map(
                     (preset) => ChoiceChip(
-                      label: Text(preset.label),
+                      label: Text(_realismLabel(i18n, preset)),
                       selected: _activeRealismPresetId == preset.id,
-                      tooltip: preset.description,
+                      tooltip: _realismDescription(i18n, preset),
                       onSelected: (_) {
                         _applyRealismPreset(preset);
                       },
@@ -1438,10 +2192,13 @@ class _HarpToolState extends State<_HarpTool>
             const SizedBox(height: 16),
             Divider(color: theme.colorScheme.outlineVariant),
             const SizedBox(height: 12),
-            const SectionHeader(
-              title: 'Tone & Palette',
-              subtitle:
-                  'String color, pluck timbre, and reverb are all local and real-time.',
+            SectionHeader(
+              title: pickUiText(i18n, zh: '音色与配色', en: 'Tone & Palette'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '弦色、拨弦音色与残响均为本地实时渲染。',
+                en: 'String color, pluck timbre, and reverb are all local and real-time.',
+              ),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -1450,9 +2207,9 @@ class _HarpToolState extends State<_HarpTool>
               children: _pluckPresets
                   .map(
                     (preset) => ChoiceChip(
-                      label: Text(preset.label),
+                      label: Text(_pluckLabel(i18n, preset)),
                       selected: _pluckStyleId == preset.id,
-                      tooltip: preset.description,
+                      tooltip: _pluckDescription(i18n, preset),
                       onSelected: (_) {
                         if (_pluckStyleId == preset.id) return;
                         setState(() {
@@ -1472,7 +2229,7 @@ class _HarpToolState extends State<_HarpTool>
               children: _palettePresets
                   .map(
                     (preset) => ChoiceChip(
-                      label: Text(preset.label),
+                      label: Text(_paletteLabel(i18n, preset)),
                       selected: _paletteId == preset.id,
                       onSelected: (_) {
                         if (_paletteId == preset.id) return;
@@ -1486,7 +2243,13 @@ class _HarpToolState extends State<_HarpTool>
                   .toList(growable: false),
             ),
             const SizedBox(height: 12),
-            Text('Reverb $reverbPercent%'),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '残响 $reverbPercent%',
+                en: 'Reverb $reverbPercent%',
+              ),
+            ),
             Slider(
               value: _reverbUi,
               min: 0.0,
@@ -1509,10 +2272,13 @@ class _HarpToolState extends State<_HarpTool>
               },
             ),
             const SizedBox(height: 8),
-            const SectionHeader(
-              title: 'Scale & Chord',
-              subtitle:
-                  'Expose mode, chord voicing, and arpeggio pattern from the same harp deck.',
+            SectionHeader(
+              title: pickUiText(i18n, zh: '和弦与调式', en: 'Scale & Chord'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '在同一竖琴面板中开放调式、和弦与琶音模式。',
+                en: 'Expose mode, chord voicing, and arpeggio pattern from the same harp deck.',
+              ),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -1521,7 +2287,7 @@ class _HarpToolState extends State<_HarpTool>
               children: _scalePresets
                   .map(
                     (preset) => ChoiceChip(
-                      label: Text(preset.label),
+                      label: Text(_scaleLabel(i18n, preset)),
                       selected: _scaleId == preset.id,
                       onSelected: (_) {
                         if (_scaleId == preset.id) return;
@@ -1541,7 +2307,7 @@ class _HarpToolState extends State<_HarpTool>
               children: _chordPresets
                   .map(
                     (preset) => ChoiceChip(
-                      label: Text(preset.label),
+                      label: Text(_chordLabel(i18n, preset)),
                       selected: _chordId == preset.id,
                       onSelected: (_) {
                         if (_chordId == preset.id) return;
@@ -1561,9 +2327,9 @@ class _HarpToolState extends State<_HarpTool>
               children: _patternPresets
                   .map(
                     (preset) => ChoiceChip(
-                      label: Text(preset.label),
+                      label: Text(_patternLabel(i18n, preset)),
                       selected: _patternId == preset.id,
-                      tooltip: preset.description,
+                      tooltip: _patternDescription(i18n, preset),
                       onSelected: (_) {
                         if (_patternId == preset.id) return;
                         setState(() {
@@ -1577,7 +2343,7 @@ class _HarpToolState extends State<_HarpTool>
             ),
             const SizedBox(height: 8),
             FilterChip(
-              label: const Text('Chord resonance'),
+              label: Text(pickUiText(i18n, zh: '和弦共振', en: 'Chord resonance')),
               selected: _chordResonanceEnabled,
               onSelected: (selected) {
                 setState(() {
@@ -1587,7 +2353,13 @@ class _HarpToolState extends State<_HarpTool>
               },
             ),
             const SizedBox(height: 12),
-            Text('Chord root ${_chordRootIndex + 1} / $_stringCount'),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '和弦根音 ${_chordRootIndex + 1} / $_stringCount',
+                en: 'Chord root ${_chordRootIndex + 1} / $_stringCount',
+              ),
+            ),
             Slider(
               value: _chordRootIndex.toDouble(),
               min: 0,
@@ -1600,13 +2372,22 @@ class _HarpToolState extends State<_HarpTool>
               },
             ),
             const SizedBox(height: 8),
-            const SectionHeader(
-              title: 'Feel',
-              subtitle:
-                  'Expose damping and trigger threshold for touch sensitivity tuning.',
+            SectionHeader(
+              title: pickUiText(i18n, zh: '手感参数', en: 'Feel'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '开放阻尼与触发阈值，便于触控灵敏度调节。',
+                en: 'Expose damping and trigger threshold for touch sensitivity tuning.',
+              ),
             ),
             const SizedBox(height: 10),
-            Text('Damping ${_damping.toStringAsFixed(1)}'),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '阻尼 ${_damping.toStringAsFixed(1)}',
+                en: 'Damping ${_damping.toStringAsFixed(1)}',
+              ),
+            ),
             Slider(
               value: _damping,
               min: 4,
@@ -1620,7 +2401,13 @@ class _HarpToolState extends State<_HarpTool>
               },
             ),
             const SizedBox(height: 6),
-            Text('Trigger threshold ${_swipeThreshold.toStringAsFixed(1)} px'),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '触发阈值 ${_swipeThreshold.toStringAsFixed(1)} px',
+                en: 'Trigger threshold ${_swipeThreshold.toStringAsFixed(1)} px',
+              ),
+            ),
             Slider(
               value: _swipeThreshold,
               min: 0.4,
@@ -1716,6 +2503,10 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
       vsync: this,
       duration: const Duration(milliseconds: 180),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_accentPlayer.warmUp());
+      unawaited(_regularPlayer.warmUp());
+    });
   }
 
   @override
@@ -1729,12 +2520,12 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
 
   Duration get _interval => Duration(milliseconds: (60000 / _bpm).round());
 
-  Future<void> _tick() async {
+  void _tick() {
     final nextBeat = (_activeBeat + 1) % _beatsPerBar;
     if (nextBeat == 0) {
-      await _accentPlayer.play(volume: 0.95);
+      unawaited(_accentPlayer.play(volume: 0.95));
     } else {
-      await _regularPlayer.play(volume: 0.8);
+      unawaited(_regularPlayer.play(volume: 0.8));
     }
     if (!mounted) return;
     _pulseController
@@ -1750,7 +2541,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     _running = true;
     _tick();
     _timer = Timer.periodic(_interval, (_) {
-      unawaited(_tick());
+      _tick();
     });
     setState(() {});
   }
@@ -1889,6 +2680,9 @@ class _WoodfishToolState extends State<_WoodfishTool> {
       ToolboxAudioBank.woodfishClick(),
       maxPlayers: 6,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_player.warmUp());
+    });
   }
 
   @override
@@ -1897,9 +2691,9 @@ class _WoodfishToolState extends State<_WoodfishTool> {
     super.dispose();
   }
 
-  Future<void> _hit() async {
+  void _hit() {
     HapticFeedback.mediumImpact();
-    await _player.play(volume: 1.0);
+    unawaited(_player.play(volume: 1.0));
     if (!mounted) return;
     setState(() {
       _count += 1;
@@ -1986,6 +2780,2621 @@ class _WoodfishToolState extends State<_WoodfishTool> {
   }
 }
 
+class _PianoKey {
+  const _PianoKey({
+    required this.id,
+    required this.label,
+    required this.frequency,
+    this.blackAfter = false,
+  });
+
+  final String id;
+  final String label;
+  final double frequency;
+  final bool blackAfter;
+}
+
+class _PianoPreset {
+  const _PianoPreset({
+    required this.id,
+    required this.styleId,
+    required this.touch,
+  });
+
+  final String id;
+  final String styleId;
+  final double touch;
+}
+
+class _FlutePreset {
+  const _FlutePreset({
+    required this.id,
+    required this.styleId,
+    required this.scaleId,
+    required this.breath,
+  });
+
+  final String id;
+  final String styleId;
+  final String scaleId;
+  final double breath;
+}
+
+class _DrumKitPreset {
+  const _DrumKitPreset({
+    required this.id,
+    required this.kitId,
+    required this.drive,
+  });
+
+  final String id;
+  final String kitId;
+  final double drive;
+}
+
+class _GuitarPreset {
+  const _GuitarPreset({
+    required this.id,
+    required this.styleId,
+    required this.pluckVolume,
+    required this.strumVolume,
+    required this.strumDelayMs,
+  });
+
+  final String id;
+  final String styleId;
+  final double pluckVolume;
+  final double strumVolume;
+  final int strumDelayMs;
+}
+
+class _TrianglePreset {
+  const _TrianglePreset({
+    required this.id,
+    required this.styleId,
+    required this.ring,
+  });
+
+  final String id;
+  final String styleId;
+  final double ring;
+}
+
+class _PianoTool extends StatefulWidget {
+  const _PianoTool({this.fullScreen = false});
+
+  final bool fullScreen;
+
+  @override
+  State<_PianoTool> createState() => _PianoToolState();
+}
+
+class _PianoToolState extends State<_PianoTool> {
+  static const List<_PianoKey> _whiteKeys = <_PianoKey>[
+    _PianoKey(id: 'C2', label: 'C2', frequency: 65.41, blackAfter: true),
+    _PianoKey(id: 'D2', label: 'D2', frequency: 73.42, blackAfter: true),
+    _PianoKey(id: 'E2', label: 'E2', frequency: 82.41),
+    _PianoKey(id: 'F2', label: 'F2', frequency: 87.31, blackAfter: true),
+    _PianoKey(id: 'G2', label: 'G2', frequency: 98.0, blackAfter: true),
+    _PianoKey(id: 'A2', label: 'A2', frequency: 110.0, blackAfter: true),
+    _PianoKey(id: 'B2', label: 'B2', frequency: 123.47),
+    _PianoKey(id: 'C3', label: 'C3', frequency: 130.81, blackAfter: true),
+    _PianoKey(id: 'D3', label: 'D3', frequency: 146.83, blackAfter: true),
+    _PianoKey(id: 'E3', label: 'E3', frequency: 164.81),
+    _PianoKey(id: 'F3', label: 'F3', frequency: 174.61, blackAfter: true),
+    _PianoKey(id: 'G3', label: 'G3', frequency: 196.0, blackAfter: true),
+    _PianoKey(id: 'A3', label: 'A3', frequency: 220.0, blackAfter: true),
+    _PianoKey(id: 'B3', label: 'B3', frequency: 246.94),
+    _PianoKey(id: 'C4', label: 'C4', frequency: 261.63, blackAfter: true),
+    _PianoKey(id: 'D4', label: 'D4', frequency: 293.66, blackAfter: true),
+    _PianoKey(id: 'E4', label: 'E4', frequency: 329.63),
+    _PianoKey(id: 'F4', label: 'F4', frequency: 349.23, blackAfter: true),
+    _PianoKey(id: 'G4', label: 'G4', frequency: 392.0, blackAfter: true),
+    _PianoKey(id: 'A4', label: 'A4', frequency: 440.0, blackAfter: true),
+    _PianoKey(id: 'B4', label: 'B4', frequency: 493.88),
+    _PianoKey(id: 'C5', label: 'C5', frequency: 523.25, blackAfter: true),
+    _PianoKey(id: 'D5', label: 'D5', frequency: 587.33, blackAfter: true),
+    _PianoKey(id: 'E5', label: 'E5', frequency: 659.25),
+    _PianoKey(id: 'F5', label: 'F5', frequency: 698.46, blackAfter: true),
+    _PianoKey(id: 'G5', label: 'G5', frequency: 783.99, blackAfter: true),
+    _PianoKey(id: 'A5', label: 'A5', frequency: 880.0, blackAfter: true),
+    _PianoKey(id: 'B5', label: 'B5', frequency: 987.77),
+    _PianoKey(id: 'C6', label: 'C6', frequency: 1046.5),
+  ];
+  static const List<_PianoKey> _blackKeys = <_PianoKey>[
+    _PianoKey(id: 'C#2', label: 'C#2', frequency: 69.30),
+    _PianoKey(id: 'D#2', label: 'D#2', frequency: 77.78),
+    _PianoKey(id: 'F#2', label: 'F#2', frequency: 92.50),
+    _PianoKey(id: 'G#2', label: 'G#2', frequency: 103.83),
+    _PianoKey(id: 'A#2', label: 'A#2', frequency: 116.54),
+    _PianoKey(id: 'C#3', label: 'C#3', frequency: 138.59),
+    _PianoKey(id: 'D#3', label: 'D#3', frequency: 155.56),
+    _PianoKey(id: 'F#3', label: 'F#3', frequency: 185.0),
+    _PianoKey(id: 'G#3', label: 'G#3', frequency: 207.65),
+    _PianoKey(id: 'A#3', label: 'A#3', frequency: 233.08),
+    _PianoKey(id: 'C#4', label: 'C#4', frequency: 277.18),
+    _PianoKey(id: 'D#4', label: 'D#4', frequency: 311.13),
+    _PianoKey(id: 'F#4', label: 'F#4', frequency: 369.99),
+    _PianoKey(id: 'G#4', label: 'G#4', frequency: 415.3),
+    _PianoKey(id: 'A#4', label: 'A#4', frequency: 466.16),
+    _PianoKey(id: 'C#5', label: 'C#5', frequency: 554.37),
+    _PianoKey(id: 'D#5', label: 'D#5', frequency: 622.25),
+    _PianoKey(id: 'F#5', label: 'F#5', frequency: 739.99),
+    _PianoKey(id: 'G#5', label: 'G#5', frequency: 830.61),
+    _PianoKey(id: 'A#5', label: 'A#5', frequency: 932.33),
+  ];
+  static const List<int> _blackSlots = <int>[
+    0,
+    1,
+    3,
+    4,
+    5,
+    7,
+    8,
+    10,
+    11,
+    12,
+    14,
+    15,
+    17,
+    18,
+    19,
+    21,
+    22,
+    24,
+    25,
+    26,
+  ];
+  static const List<_PianoPreset> _presets = <_PianoPreset>[
+    _PianoPreset(id: 'concert_hall', styleId: 'concert', touch: 0.92),
+    _PianoPreset(id: 'bright_stage', styleId: 'bright', touch: 0.96),
+    _PianoPreset(id: 'felt_room', styleId: 'felt', touch: 0.84),
+  ];
+
+  final Map<String, ToolboxEffectPlayer> _players =
+      <String, ToolboxEffectPlayer>{};
+  String? _activeKeyId;
+  String _presetId = _presets.first.id;
+  double _touch = _presets.first.touch;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_warmUpActivePreset());
+    });
+  }
+
+  _PianoPreset get _activePreset {
+    return _presets.firstWhere(
+      (item) => item.id == _presetId,
+      orElse: () => _presets.first,
+    );
+  }
+
+  String _presetLabel(AppI18n i18n, _PianoPreset preset) {
+    return switch (preset.id) {
+      'bright_stage' => pickUiText(
+        i18n,
+        zh: '明亮舞台',
+        en: 'Bright stage',
+        ja: 'ブライトステージ',
+        de: 'Helle Bühne',
+        fr: 'Scène brillante',
+        es: 'Escenario brillante',
+        ru: 'Яркая сцена',
+      ),
+      'felt_room' => pickUiText(
+        i18n,
+        zh: '毛毡小室',
+        en: 'Felt room',
+        ja: 'フェルトルーム',
+        de: 'Felt-Raum',
+        fr: 'Pièce feutrée',
+        es: 'Sala de fieltro',
+        ru: 'Фетровая комната',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '音乐厅',
+        en: 'Concert hall',
+        ja: 'コンサートホール',
+        de: 'Konzertsaal',
+        fr: 'Salle de concert',
+        es: 'Sala de conciertos',
+        ru: 'Концертный зал',
+      ),
+    };
+  }
+
+  String _presetSubtitle(AppI18n i18n, _PianoPreset preset) {
+    return switch (preset.id) {
+      'bright_stage' => pickUiText(
+        i18n,
+        zh: '更强击弦感与亮度，适合旋律突出。',
+        en: 'Sharper hammer attack and brighter harmonics for lead lines.',
+        ja: 'ハンマー感と高域を強めた、主旋律向けの音色。',
+        de: 'Klarerer Anschlag und hellere Obertöne für Lead-Melodien.',
+        fr: 'Attaque plus nette et harmoniques brillantes pour la mélodie.',
+        es: 'Ataque más marcado y armónicos brillantes para la melodía.',
+        ru: 'Более резкая атака и яркие обертоны для ведущей мелодии.',
+      ),
+      'felt_room' => pickUiText(
+        i18n,
+        zh: '柔和包裹感，适合夜间安静弹奏。',
+        en: 'Softer felt-like body for intimate and quiet playing.',
+        ja: '柔らかいフェルト感で、静かな演奏に向くトーン。',
+        de: 'Weicher, intimer Felt-Charakter für ruhiges Spielen.',
+        fr: 'Corps feutré et doux pour un jeu intime et calme.',
+        es: 'Cuerpo más suave tipo fieltro para tocar en calma.',
+        ru: 'Мягкий, камерный тембр в стиле felt для спокойной игры.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '均衡延音与空间感，通用演奏音色。',
+        en: 'Balanced sustain and room feel for all-purpose playing.',
+        ja: 'サステインと空間感のバランスが良い標準トーン。',
+        de: 'Ausgewogener Sustain mit Raumgefühl für vielseitiges Spiel.',
+        fr: 'Sustain équilibré et sensation d’espace polyvalente.',
+        es: 'Sustain equilibrado y sensación de sala para todo uso.',
+        ru: 'Сбалансированный сустейн и пространство для универсальной игры.',
+      ),
+    };
+  }
+
+  void _invalidatePlayers() {
+    for (final player in _players.values) {
+      unawaited(player.dispose());
+    }
+    _players.clear();
+  }
+
+  void _applyPreset(String presetId) {
+    final preset = _presets.firstWhere(
+      (item) => item.id == presetId,
+      orElse: () => _presets.first,
+    );
+    if (_presetId == preset.id) return;
+    setState(() {
+      _presetId = preset.id;
+      _touch = preset.touch;
+    });
+    _invalidatePlayers();
+    unawaited(_warmUpActivePreset());
+  }
+
+  Future<void> _warmUpActivePreset() async {
+    final warmupKeys = <_PianoKey>[..._whiteKeys, ..._blackKeys];
+    for (final key in warmupKeys) {
+      await _playerFor(key).warmUp();
+    }
+  }
+
+  ToolboxEffectPlayer _playerFor(_PianoKey key) {
+    final styleId = _activePreset.styleId;
+    final cacheKey = '${key.id}:$styleId';
+    final existing = _players[cacheKey];
+    if (existing != null) return existing;
+    final created = ToolboxEffectPlayer(
+      ToolboxAudioBank.pianoNote(key.frequency, style: styleId),
+      maxPlayers: 8,
+    );
+    _players[cacheKey] = created;
+    return created;
+  }
+
+  Future<void> _hitKey(_PianoKey key, {double? volume}) async {
+    HapticFeedback.selectionClick();
+    unawaited(_playerFor(key).play(volume: volume ?? _touch));
+    if (!mounted) return;
+    setState(() {
+      _activeKeyId = key.id;
+    });
+    Future<void>.delayed(const Duration(milliseconds: 120), () {
+      if (!mounted || _activeKeyId != key.id) return;
+      setState(() {
+        _activeKeyId = null;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _invalidatePlayers();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    final theme = Theme.of(context);
+    final preset = _activePreset;
+    final presetLabel = _presetLabel(i18n, preset);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '琴键',
+                    en: 'Keys',
+                    ja: '鍵盤',
+                    de: 'Tasten',
+                    fr: 'Touches',
+                    es: 'Teclas',
+                    ru: 'Клавиши',
+                  ),
+                  value: '${_whiteKeys.length + _blackKeys.length}',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '音域',
+                    en: 'Range',
+                    ja: '音域',
+                    de: 'Umfang',
+                    fr: 'Étendue',
+                    es: 'Rango',
+                    ru: 'Диапазон',
+                  ),
+                  value: 'C2-C6',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '预设',
+                    en: 'Preset',
+                    ja: 'プリセット',
+                    de: 'Preset',
+                    fr: 'Préréglage',
+                    es: 'Preajuste',
+                    ru: 'Пресет',
+                  ),
+                  value: presetLabel,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SectionHeader(
+              title: pickUiText(
+                i18n,
+                zh: '预设包',
+                en: 'Preset pack',
+                ja: 'プリセットパック',
+                de: 'Preset-Paket',
+                fr: 'Pack de préréglages',
+                es: 'Paquete de presets',
+                ru: 'Пакет пресетов',
+              ),
+              subtitle: pickUiText(
+                i18n,
+                zh: '切换钢琴音色与默认触键力度。',
+                en: 'Switch timbre and default touch intensity.',
+                ja: '音色と初期タッチ強度を切り替えます。',
+                de: 'Wechselt Klangfarbe und Standard-Anschlagsstärke.',
+                fr: 'Basculez le timbre et l’intensité de toucher par défaut.',
+                es: 'Cambia timbre e intensidad de toque por defecto.',
+                ru: 'Переключает тембр и базовую силу нажатия.',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _presets
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_presetLabel(i18n, item)),
+                      selected: item.id == _presetId,
+                      onSelected: (_) => _applyPreset(item.id),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _presetSubtitle(i18n, preset),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '触键力度 ${(_touch * 100).round()}%',
+                en: 'Touch ${(_touch * 100).round()}%',
+                ja: 'タッチ ${(_touch * 100).round()}%',
+                de: 'Anschlag ${(_touch * 100).round()}%',
+                fr: 'Toucher ${(_touch * 100).round()}%',
+                es: 'Toque ${(_touch * 100).round()}%',
+                ru: 'Касание ${(_touch * 100).round()}%',
+              ),
+              style: theme.textTheme.labelLarge,
+            ),
+            Slider(
+              value: _touch,
+              min: 0.55,
+              max: 1.0,
+              divisions: 18,
+              onChanged: (value) => setState(() => _touch = value),
+            ),
+            const SizedBox(height: 6),
+            SectionHeader(
+              title: pickUiText(
+                i18n,
+                zh: '键盘',
+                en: 'Keyboard',
+                ja: '鍵盤',
+                de: 'Klaviatur',
+                fr: 'Clavier',
+                es: 'Teclado',
+                ru: 'Клавиатура',
+              ),
+              subtitle: pickUiText(
+                i18n,
+                zh: '直接点击琴键演奏，黑键覆盖在白键上层。',
+                en: 'Tap keys directly. Black keys are layered above.',
+                ja: '鍵盤を直接タップ。黒鍵は白鍵の上に重なります。',
+                de: 'Tasten direkt antippen. Schwarze Tasten liegen darüber.',
+                fr: 'Touchez directement les touches. Les noires sont au-dessus.',
+                es: 'Toca directamente las teclas. Las negras van por encima.',
+                ru: 'Нажимайте клавиши напрямую; чёрные расположены поверх белых.',
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: widget.fullScreen ? 300 : 240,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const minWhiteWidth = 44.0;
+                  final totalWidth = math.max(
+                    constraints.maxWidth,
+                    _whiteKeys.length * minWhiteWidth,
+                  );
+                  final whiteWidth = totalWidth / _whiteKeys.length;
+                  final blackWidth = whiteWidth * 0.64;
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: totalWidth,
+                      child: Stack(
+                        children: <Widget>[
+                          Row(
+                            children: _whiteKeys
+                                .map(
+                                  (key) => SizedBox(
+                                    width: whiteWidth,
+                                    child: Listener(
+                                      behavior: HitTestBehavior.opaque,
+                                      onPointerDown: (_) =>
+                                          unawaited(_hitKey(key)),
+                                      child: AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 90,
+                                        ),
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 1,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              const BorderRadius.vertical(
+                                                bottom: Radius.circular(12),
+                                              ),
+                                          border: Border.all(
+                                            color: theme
+                                                .colorScheme
+                                                .outlineVariant,
+                                          ),
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: <Color>[
+                                              _activeKeyId == key.id
+                                                  ? theme
+                                                        .colorScheme
+                                                        .primaryContainer
+                                                  : Colors.white,
+                                              _activeKeyId == key.id
+                                                  ? theme.colorScheme.primary
+                                                        .withValues(alpha: 0.32)
+                                                  : const Color(0xFFEFF2F8),
+                                            ],
+                                          ),
+                                        ),
+                                        child: Align(
+                                          alignment: Alignment.bottomCenter,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 10,
+                                            ),
+                                            child: Text(
+                                              key.label,
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w800,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(growable: false),
+                          ),
+                          ...List<Widget>.generate(_blackKeys.length, (index) {
+                            final key = _blackKeys[index];
+                            final slot = _blackSlots[index];
+                            return Positioned(
+                              left: whiteWidth * (slot + 1) - blackWidth / 2,
+                              top: 0,
+                              child: Listener(
+                                behavior: HitTestBehavior.opaque,
+                                onPointerDown: (_) =>
+                                    unawaited(_hitKey(key, volume: 0.9)),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 90),
+                                  width: blackWidth,
+                                  height: widget.fullScreen ? 180 : 148,
+                                  decoration: BoxDecoration(
+                                    borderRadius: const BorderRadius.vertical(
+                                      bottom: Radius.circular(10),
+                                    ),
+                                    border: Border.all(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.38,
+                                      ),
+                                    ),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: <Color>[
+                                        _activeKeyId == key.id
+                                            ? const Color(0xFF2F56A6)
+                                            : const Color(0xFF12141A),
+                                        _activeKeyId == key.id
+                                            ? const Color(0xFF1A2E63)
+                                            : const Color(0xFF050608),
+                                      ],
+                                    ),
+                                  ),
+                                  alignment: Alignment.bottomCenter,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Text(
+                                      key.label,
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: Colors.white70,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FluteTool extends StatefulWidget {
+  const _FluteTool({this.fullScreen = false});
+
+  final bool fullScreen;
+
+  @override
+  State<_FluteTool> createState() => _FluteToolState();
+}
+
+class _FluteToolState extends State<_FluteTool> {
+  static const List<_PianoKey> _majorNotes = <_PianoKey>[
+    _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
+    _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
+    _PianoKey(id: 'E5', label: 'E', frequency: 659.25),
+    _PianoKey(id: 'F5', label: 'F', frequency: 698.46),
+    _PianoKey(id: 'G5', label: 'G', frequency: 783.99),
+    _PianoKey(id: 'A5', label: 'A', frequency: 880.0),
+    _PianoKey(id: 'B5', label: 'B', frequency: 987.77),
+  ];
+  static const List<_PianoKey> _pentatonicNotes = <_PianoKey>[
+    _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
+    _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
+    _PianoKey(id: 'E5', label: 'E', frequency: 659.25),
+    _PianoKey(id: 'G5', label: 'G', frequency: 783.99),
+    _PianoKey(id: 'A5', label: 'A', frequency: 880.0),
+    _PianoKey(id: 'C6', label: 'C6', frequency: 1046.5),
+  ];
+  static const List<_PianoKey> _dorianNotes = <_PianoKey>[
+    _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
+    _PianoKey(id: 'E5', label: 'E', frequency: 659.25),
+    _PianoKey(id: 'F5', label: 'F', frequency: 698.46),
+    _PianoKey(id: 'G5', label: 'G', frequency: 783.99),
+    _PianoKey(id: 'A5', label: 'A', frequency: 880.0),
+    _PianoKey(id: 'B5', label: 'B', frequency: 987.77),
+    _PianoKey(id: 'C6', label: 'C6', frequency: 1046.5),
+  ];
+  static const List<_FlutePreset> _presets = <_FlutePreset>[
+    _FlutePreset(
+      id: 'airy_flow',
+      styleId: 'airy',
+      scaleId: 'major',
+      breath: 0.76,
+    ),
+    _FlutePreset(
+      id: 'lead_solo',
+      styleId: 'lead',
+      scaleId: 'pentatonic',
+      breath: 0.86,
+    ),
+    _FlutePreset(
+      id: 'alto_warm',
+      styleId: 'alto',
+      scaleId: 'dorian',
+      breath: 0.68,
+    ),
+  ];
+
+  final Map<String, ToolboxEffectPlayer> _players =
+      <String, ToolboxEffectPlayer>{};
+  final AudioRecorder _micRecorder = AudioRecorder();
+  final ToolboxLoopController _sustainLoop = ToolboxLoopController();
+  StreamSubscription<Amplitude>? _amplitudeSub;
+  final Set<int> _pressedHoles = <int>{};
+  String _presetId = _presets.first.id;
+  String _scale = _presets.first.scaleId;
+  String _style = _presets.first.styleId;
+  double _breath = _presets.first.breath;
+  bool _blowSensorEnabled = false;
+  bool _blowPermissionDenied = false;
+  bool _isBlowing = false;
+  double _micLevel = 0;
+  double _blowThreshold = 0.34;
+  int? _sustainedNoteIndex;
+  String? _lastNote;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_warmUpActivePreset());
+    });
+  }
+
+  _FlutePreset get _activePreset {
+    return _presets.firstWhere(
+      (item) => item.id == _presetId,
+      orElse: () => _presets.first,
+    );
+  }
+
+  List<_PianoKey> get _activeNotes {
+    return switch (_scale) {
+      'pentatonic' => _pentatonicNotes,
+      'dorian' => _dorianNotes,
+      _ => _majorNotes,
+    };
+  }
+
+  String _presetLabel(AppI18n i18n, _FlutePreset preset) {
+    return switch (preset.id) {
+      'lead_solo' => pickUiText(
+        i18n,
+        zh: '独奏领奏',
+        en: 'Lead solo',
+        ja: 'リードソロ',
+        de: 'Lead-Solo',
+        fr: 'Solo lead',
+        es: 'Solo lead',
+        ru: 'Лид-соло',
+      ),
+      'alto_warm' => pickUiText(
+        i18n,
+        zh: '暖音中音',
+        en: 'Warm alto',
+        ja: 'ウォームアルト',
+        de: 'Warmes Alt',
+        fr: 'Alto chaud',
+        es: 'Alto cálido',
+        ru: 'Тёплый альт',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '空气流',
+        en: 'Airy flow',
+        ja: 'エアリーフロー',
+        de: 'Luftiger Fluss',
+        fr: 'Flux aérien',
+        es: 'Flujo aéreo',
+        ru: 'Воздушный поток',
+      ),
+    };
+  }
+
+  String _presetSubtitle(AppI18n i18n, _FlutePreset preset) {
+    return switch (preset.id) {
+      'lead_solo' => pickUiText(
+        i18n,
+        zh: '更亮、更靠前，适合旋律句的突出。',
+        en: 'Brighter lead tone with stronger presence for melodic phrases.',
+        ja: '明るく前に出る音色で、主旋律を際立たせます。',
+        de: 'Hellerer Lead-Sound mit mehr Präsenz für Melodielinien.',
+        fr: 'Timbre plus brillant et présent pour les lignes mélodiques.',
+        es: 'Tono más brillante y presente para frases melódicas.',
+        ru: 'Более яркий и выдвинутый тембр для мелодических фраз.',
+      ),
+      'alto_warm' => pickUiText(
+        i18n,
+        zh: '更厚实的中频和更柔和尾音，适合氛围铺底。',
+        en: 'Warmer midrange and softer tail for calm backing layers.',
+        ja: '中域を厚くし、余韻を柔らかくした落ち着いたトーン。',
+        de: 'Wärmere Mitten und weicheres Ausklingen für ruhige Flächen.',
+        fr: 'Médiums plus chauds et fin de note douce pour des nappes calmes.',
+        es: 'Medios más cálidos y cola suave para capas tranquilas.',
+        ru: 'Тёплая середина и мягкий хвост для спокойной подложки.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '自然气息感，适合轻柔演奏。',
+        en: 'Natural breathy tone for gentle and flowing play.',
+        ja: '自然な息づかいで、やわらかな演奏に向きます。',
+        de: 'Natürlicher, luftiger Klang für sanftes Spiel.',
+        fr: 'Souffle naturel pour un jeu doux et fluide.',
+        es: 'Tono de soplo natural para tocar suave y fluido.',
+        ru: 'Естественное дыхание тембра для мягкой и плавной игры.',
+      ),
+    };
+  }
+
+  String _scaleLabel(AppI18n i18n, String scaleId) {
+    return switch (scaleId) {
+      'pentatonic' => pickUiText(
+        i18n,
+        zh: '五声音阶',
+        en: 'Pentatonic',
+        ja: 'ペンタトニック',
+        de: 'Pentatonik',
+        fr: 'Pentatonique',
+        es: 'Pentatónica',
+        ru: 'Пентатоника',
+      ),
+      'dorian' => pickUiText(
+        i18n,
+        zh: '多利亚',
+        en: 'Dorian',
+        ja: 'ドリアン',
+        de: 'Dorisch',
+        fr: 'Dorien',
+        es: 'Dórico',
+        ru: 'Дорийский',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '大调',
+        en: 'Major',
+        ja: 'メジャー',
+        de: 'Dur',
+        fr: 'Majeur',
+        es: 'Mayor',
+        ru: 'Мажор',
+      ),
+    };
+  }
+
+  String _styleLabel(AppI18n i18n, String styleId) {
+    return switch (styleId) {
+      'lead' => pickUiText(
+        i18n,
+        zh: '领奏',
+        en: 'Lead',
+        ja: 'リード',
+        de: 'Lead',
+        fr: 'Lead',
+        es: 'Lead',
+        ru: 'Лид',
+      ),
+      'alto' => pickUiText(
+        i18n,
+        zh: '中音',
+        en: 'Alto',
+        ja: 'アルト',
+        de: 'Alt',
+        fr: 'Alto',
+        es: 'Alto',
+        ru: 'Альт',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '空气',
+        en: 'Airy',
+        ja: 'エアリー',
+        de: 'Luftig',
+        fr: 'Aérien',
+        es: 'Aéreo',
+        ru: 'Воздушный',
+      ),
+    };
+  }
+
+  double _normalizedMicLevel(Amplitude amplitude) {
+    final value = amplitude.current;
+    if (value.isNaN || value.isInfinite) return 0;
+    if (value >= 0 && value <= 1.2) {
+      return value.clamp(0.0, 1.0).toDouble();
+    }
+    return ((value + 60) / 60).clamp(0.0, 1.0).toDouble();
+  }
+
+  int? _noteIndexFromHoles() {
+    if (_pressedHoles.isEmpty) return null;
+    final notes = _activeNotes;
+    if (notes.isEmpty) return null;
+    final closed = _pressedHoles.length.clamp(1, 6);
+    return (notes.length - closed).clamp(0, notes.length - 1);
+  }
+
+  Future<void> _syncBreathSustain() async {
+    final nextIndex = (_blowSensorEnabled && _isBlowing)
+        ? _noteIndexFromHoles()
+        : null;
+    if (nextIndex == null) {
+      if (_sustainedNoteIndex != null) {
+        _sustainedNoteIndex = null;
+        await _sustainLoop.stop();
+      }
+      return;
+    }
+    final note = _activeNotes[nextIndex];
+    if (_sustainedNoteIndex == nextIndex) {
+      await _sustainLoop.setVolume(_breath.clamp(0.2, 1.0));
+      return;
+    }
+    _sustainedNoteIndex = nextIndex;
+    _lastNote = note.label;
+    await _sustainLoop.play(
+      ToolboxAudioBank.fluteNote(note.frequency, style: _style),
+      volume: _breath.clamp(0.2, 1.0),
+    );
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _setHolePressed(int index, bool pressed) {
+    var changed = false;
+    if (pressed) {
+      changed = _pressedHoles.add(index);
+    } else {
+      changed = _pressedHoles.remove(index);
+    }
+    if (!changed) return;
+    if (mounted) {
+      setState(() {});
+    }
+    unawaited(_syncBreathSustain());
+  }
+
+  Future<void> _startBlowSensor() async {
+    if (_blowSensorEnabled) return;
+    try {
+      final granted = await _micRecorder.hasPermission();
+      if (!granted) {
+        if (mounted) {
+          setState(() {
+            _blowPermissionDenied = true;
+            _blowSensorEnabled = false;
+            _isBlowing = false;
+            _micLevel = 0;
+          });
+        }
+        await _syncBreathSustain();
+        return;
+      }
+      await _micRecorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+        path:
+            '${Directory.systemTemp.path}${Platform.pathSeparator}'
+            'flute_blow_meter_${DateTime.now().microsecondsSinceEpoch}.wav',
+      );
+      await _amplitudeSub?.cancel();
+      _amplitudeSub = _micRecorder
+          .onAmplitudeChanged(const Duration(milliseconds: 60))
+          .listen((amplitude) {
+            final level = _normalizedMicLevel(amplitude);
+            final blowing = level >= _blowThreshold;
+            var shouldRefresh = false;
+            if ((_micLevel - level).abs() > 0.01) {
+              _micLevel = level;
+              shouldRefresh = true;
+            }
+            if (_isBlowing != blowing) {
+              _isBlowing = blowing;
+              shouldRefresh = true;
+              unawaited(_syncBreathSustain());
+            }
+            if (shouldRefresh && mounted) {
+              setState(() {});
+            }
+          });
+      if (mounted) {
+        setState(() {
+          _blowSensorEnabled = true;
+          _blowPermissionDenied = false;
+          _isBlowing = false;
+          _micLevel = 0;
+        });
+      }
+      unawaited(_warmUpActivePreset());
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _blowPermissionDenied = true;
+          _blowSensorEnabled = false;
+          _isBlowing = false;
+          _micLevel = 0;
+        });
+      }
+      await _syncBreathSustain();
+    }
+  }
+
+  Future<void> _stopBlowSensor({bool resetUi = true}) async {
+    await _amplitudeSub?.cancel();
+    _amplitudeSub = null;
+    try {
+      await _micRecorder.stop();
+    } catch (_) {}
+    _isBlowing = false;
+    _blowSensorEnabled = false;
+    if (resetUi) {
+      _micLevel = 0;
+    }
+    await _syncBreathSustain();
+    if (resetUi && mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _toggleBlowSensor() async {
+    if (_blowSensorEnabled) {
+      await _stopBlowSensor();
+      return;
+    }
+    await _startBlowSensor();
+  }
+
+  Future<void> _disposeMicRecorder() async {
+    try {
+      await _micRecorder.stop();
+    } catch (_) {}
+    try {
+      await _micRecorder.dispose();
+    } catch (_) {}
+  }
+
+  void _invalidatePlayers() {
+    for (final player in _players.values) {
+      unawaited(player.dispose());
+    }
+    _players.clear();
+  }
+
+  Future<void> _warmUpActivePreset() async {
+    for (final note in _activeNotes.take(6)) {
+      await _playerFor(note).warmUp();
+    }
+  }
+
+  void _applyPreset(String presetId) {
+    final preset = _presets.firstWhere(
+      (item) => item.id == presetId,
+      orElse: () => _presets.first,
+    );
+    setState(() {
+      _presetId = preset.id;
+      _style = preset.styleId;
+      _scale = preset.scaleId;
+      _breath = preset.breath;
+    });
+    _invalidatePlayers();
+    unawaited(_warmUpActivePreset());
+    unawaited(_syncBreathSustain());
+  }
+
+  ToolboxEffectPlayer _playerFor(_PianoKey key) {
+    final cacheKey = 'flute:${key.id}:$_style';
+    final existing = _players[cacheKey];
+    if (existing != null) return existing;
+    final created = ToolboxEffectPlayer(
+      ToolboxAudioBank.fluteNote(key.frequency, style: _style),
+      maxPlayers: 6,
+    );
+    _players[cacheKey] = created;
+    return created;
+  }
+
+  Future<void> _play(_PianoKey key) async {
+    HapticFeedback.selectionClick();
+    unawaited(_playerFor(key).play(volume: _breath.clamp(0.2, 1.0)));
+    if (!mounted) return;
+    setState(() {
+      _lastNote = key.label;
+    });
+  }
+
+  @override
+  void dispose() {
+    final amplitudeSub = _amplitudeSub;
+    _amplitudeSub = null;
+    if (amplitudeSub != null) {
+      unawaited(amplitudeSub.cancel());
+    }
+    unawaited(_disposeMicRecorder());
+    unawaited(_sustainLoop.dispose());
+    _invalidatePlayers();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    final theme = Theme.of(context);
+    final preset = _activePreset;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '预设',
+                    en: 'Preset',
+                    ja: 'プリセット',
+                    de: 'Preset',
+                    fr: 'Préréglage',
+                    es: 'Preajuste',
+                    ru: 'Пресет',
+                  ),
+                  value: _presetLabel(i18n, preset),
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '调式',
+                    en: 'Scale',
+                    ja: 'スケール',
+                    de: 'Skala',
+                    fr: 'Gamme',
+                    es: 'Escala',
+                    ru: 'Лад',
+                  ),
+                  value: _scaleLabel(i18n, _scale),
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '气息',
+                    en: 'Breath',
+                    ja: 'ブレス',
+                    de: 'Atem',
+                    fr: 'Souffle',
+                    es: 'Soplo',
+                    ru: 'Дыхание',
+                  ),
+                  value: '${(_breath * 100).round()}%',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '最近音符',
+                    en: 'Last note',
+                    ja: '直前ノート',
+                    de: 'Letzter Ton',
+                    fr: 'Dernière note',
+                    es: 'Última nota',
+                    ru: 'Последняя нота',
+                  ),
+                  value: _lastNote ?? '--',
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SectionHeader(
+              title: pickUiText(
+                i18n,
+                zh: '预设包',
+                en: 'Preset pack',
+                ja: 'プリセットパック',
+                de: 'Preset-Paket',
+                fr: 'Pack de préréglages',
+                es: 'Paquete de presets',
+                ru: 'Пакет пресетов',
+              ),
+              subtitle: pickUiText(
+                i18n,
+                zh: '每个预设同时绑定音色、调式和默认气息强度。',
+                en: 'Each preset binds timbre, scale, and default breath intensity.',
+                ja: '各プリセットは音色・スケール・ブレス強度をまとめて切り替えます。',
+                de: 'Jedes Preset verknüpft Klangfarbe, Skala und Atemintensität.',
+                fr: 'Chaque preset relie timbre, gamme et intensité de souffle.',
+                es: 'Cada preset combina timbre, escala e intensidad de soplo.',
+                ru: 'Каждый пресет связывает тембр, лад и силу дыхания.',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _presets
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_presetLabel(i18n, item)),
+                      selected: item.id == _presetId,
+                      onSelected: (_) => _applyPreset(item.id),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _presetSubtitle(i18n, preset),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[
+                    Color(0xFFE7F2FF),
+                    Color(0xFFCFE6FF),
+                    Color(0xFFBADBFF),
+                  ],
+                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
+              ),
+              child: Row(
+                children: List<Widget>.generate(7, (index) {
+                  return Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      height: 14,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: index.isEven
+                            ? const Color(0xFF7A9AC8)
+                            : const Color(0xFF5578AB),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <String>['major', 'pentatonic', 'dorian']
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_scaleLabel(i18n, item)),
+                      selected: _scale == item,
+                      onSelected: (_) {
+                        if (_scale == item) return;
+                        setState(() => _scale = item);
+                        _invalidatePlayers();
+                        unawaited(_warmUpActivePreset());
+                        unawaited(_syncBreathSustain());
+                      },
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '气息 ${(_breath * 100).round()}% · 音色 ${_styleLabel(i18n, _style)}',
+                en: 'Breath ${(_breath * 100).round()}% · Tone ${_styleLabel(i18n, _style)}',
+                ja: 'ブレス ${(_breath * 100).round()}% · 音色 ${_styleLabel(i18n, _style)}',
+                de: 'Atem ${(_breath * 100).round()}% · Klang ${_styleLabel(i18n, _style)}',
+                fr: 'Souffle ${(_breath * 100).round()}% · Timbre ${_styleLabel(i18n, _style)}',
+                es: 'Soplo ${(_breath * 100).round()}% · Timbre ${_styleLabel(i18n, _style)}',
+                ru: 'Дыхание ${(_breath * 100).round()}% · Тембр ${_styleLabel(i18n, _style)}',
+              ),
+            ),
+            Slider(
+              value: _breath,
+              min: 0.2,
+              max: 1.0,
+              divisions: 16,
+              onChanged: (value) {
+                setState(() => _breath = value);
+                unawaited(_syncBreathSustain());
+              },
+            ),
+            const SizedBox(height: 8),
+            SectionHeader(
+              title: pickUiText(i18n, zh: '模拟吹奏', en: 'Blow Simulation'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '使用麦克风吹气 + 按孔触发持续发音，松手后结束。',
+                en: 'Use microphone breath + hole buttons for sustained notes, then stop on release.',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                FilledButton.tonalIcon(
+                  onPressed: _toggleBlowSensor,
+                  icon: Icon(
+                    _blowSensorEnabled
+                        ? Icons.mic_rounded
+                        : Icons.mic_off_rounded,
+                  ),
+                  label: Text(
+                    _blowSensorEnabled
+                        ? pickUiText(
+                            i18n,
+                            zh: '关闭吹气检测',
+                            en: 'Disable blow sensor',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '开启吹气检测',
+                            en: 'Enable blow sensor',
+                          ),
+                  ),
+                ),
+                if (_blowPermissionDenied)
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '麦克风权限不可用',
+                      en: 'Microphone permission unavailable',
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '吹气阈值 ${(_blowThreshold * 100).round()}% · 当前 ${(_micLevel * 100).round()}%',
+                en: 'Blow threshold ${(_blowThreshold * 100).round()}% · Current ${(_micLevel * 100).round()}%',
+              ),
+            ),
+            Slider(
+              value: _blowThreshold,
+              min: 0.12,
+              max: 0.75,
+              divisions: 21,
+              onChanged: (value) {
+                setState(() => _blowThreshold = value);
+              },
+            ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: _micLevel.clamp(0.0, 1.0),
+                minHeight: 8,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: List<Widget>.generate(6, (index) {
+                final holeNumber = index + 1;
+                final pressed = _pressedHoles.contains(holeNumber);
+                return Listener(
+                  onPointerDown: (_) => _setHolePressed(holeNumber, true),
+                  onPointerUp: (_) => _setHolePressed(holeNumber, false),
+                  onPointerCancel: (_) => _setHolePressed(holeNumber, false),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 80),
+                    width: widget.fullScreen ? 62 : 54,
+                    height: widget.fullScreen ? 62 : 54,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: pressed
+                          ? const Color(0xFF2563EB)
+                          : theme.colorScheme.surfaceContainerHigh,
+                      border: Border.all(
+                        color: pressed
+                            ? const Color(0xFF1D4ED8)
+                            : theme.colorScheme.outlineVariant,
+                      ),
+                      boxShadow: pressed
+                          ? <BoxShadow>[
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF2563EB,
+                                ).withValues(alpha: 0.28),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : const <BoxShadow>[],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'H$holeNumber',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: pressed
+                            ? Colors.white
+                            : theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '吹气状态：${_isBlowing ? "进行中" : "未吹气"} · 按孔：${_pressedHoles.length}',
+                en: 'Blow: ${_isBlowing ? "active" : "idle"} · Holes pressed: ${_pressedHoles.length}',
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _activeNotes
+                  .map(
+                    (note) => FilledButton.tonal(
+                      onPressed: () => unawaited(_play(note)),
+                      child: Text(note.label),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrumPad {
+  const _DrumPad({required this.id, required this.color});
+
+  final String id;
+  final Color color;
+}
+
+class _DrumPadTool extends StatefulWidget {
+  const _DrumPadTool({this.fullScreen = false});
+
+  final bool fullScreen;
+
+  @override
+  State<_DrumPadTool> createState() => _DrumPadToolState();
+}
+
+class _DrumPadToolState extends State<_DrumPadTool> {
+  static const List<_DrumPad> _pads = <_DrumPad>[
+    _DrumPad(id: 'kick', color: Color(0xFF2563EB)),
+    _DrumPad(id: 'snare', color: Color(0xFFEF4444)),
+    _DrumPad(id: 'hihat', color: Color(0xFFF59E0B)),
+    _DrumPad(id: 'tom', color: Color(0xFF10B981)),
+  ];
+  static const List<_DrumKitPreset> _presets = <_DrumKitPreset>[
+    _DrumKitPreset(id: 'acoustic_kit', kitId: 'acoustic', drive: 1.0),
+    _DrumKitPreset(id: 'electro_kit', kitId: 'electro', drive: 0.96),
+    _DrumKitPreset(id: 'lofi_kit', kitId: 'lofi', drive: 0.88),
+  ];
+
+  final Map<String, ToolboxEffectPlayer> _players =
+      <String, ToolboxEffectPlayer>{};
+  String? _activePadId;
+  String? _lastHitId;
+  int _hits = 0;
+  String _presetId = _presets.first.id;
+  String _kit = _presets.first.kitId;
+  double _drive = _presets.first.drive;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_warmUpActivePreset());
+    });
+  }
+
+  _DrumKitPreset get _activePreset {
+    return _presets.firstWhere(
+      (item) => item.id == _presetId,
+      orElse: () => _presets.first,
+    );
+  }
+
+  String _presetLabel(AppI18n i18n, _DrumKitPreset preset) {
+    return switch (preset.id) {
+      'electro_kit' => pickUiText(
+        i18n,
+        zh: '电子套件',
+        en: 'Electro kit',
+        ja: 'エレクトロキット',
+        de: 'Elektro-Kit',
+        fr: 'Kit électro',
+        es: 'Kit electro',
+        ru: 'Электро-набор',
+      ),
+      'lofi_kit' => pickUiText(
+        i18n,
+        zh: '低保真套件',
+        en: 'Lo-fi kit',
+        ja: 'ローファイキット',
+        de: 'Lo-fi-Kit',
+        fr: 'Kit lo-fi',
+        es: 'Kit lo-fi',
+        ru: 'Lo-fi набор',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '原声套件',
+        en: 'Acoustic kit',
+        ja: 'アコースティックキット',
+        de: 'Akustik-Kit',
+        fr: 'Kit acoustique',
+        es: 'Kit acústico',
+        ru: 'Акустический набор',
+      ),
+    };
+  }
+
+  String _presetSubtitle(AppI18n i18n, _DrumKitPreset preset) {
+    return switch (preset.id) {
+      'electro_kit' => pickUiText(
+        i18n,
+        zh: '更利落的瞬态与电子感打击纹理。',
+        en: 'Sharper transients and synthetic drum character.',
+        ja: 'アタックが強く、電子的な質感を持つキット。',
+        de: 'Klarere Transienten mit elektronischem Drum-Charakter.',
+        fr: 'Transitoires plus nettes et caractère électronique.',
+        es: 'Transitorios más marcados y carácter electrónico.',
+        ru: 'Более резкая атака и электронный характер ударов.',
+      ),
+      'lofi_kit' => pickUiText(
+        i18n,
+        zh: '更松弛的质感与轻微低保真尾音。',
+        en: 'Relaxed impact with slightly dusty lo-fi tail.',
+        ja: '柔らかいアタックと少しざらついたローファイ感。',
+        de: 'Entspannter Anschlag mit leicht staubigem Lo-fi-Ausklang.',
+        fr: 'Impact plus doux avec une légère queue lo-fi.',
+        es: 'Impacto relajado con una cola lo-fi ligera.',
+        ru: 'Более мягкий удар с лёгким lo-fi хвостом.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '更接近原声鼓组的自然敲击感。',
+        en: 'Natural punch closer to an acoustic drum set.',
+        ja: 'アコースティック寄りの自然な打撃感。',
+        de: 'Natürlicher Punch wie bei einem akustischen Drumset.',
+        fr: 'Impact naturel proche d’une batterie acoustique.',
+        es: 'Golpe natural cercano a una batería acústica.',
+        ru: 'Естественный панч, близкий к акустической установке.',
+      ),
+    };
+  }
+
+  String _padLabel(AppI18n i18n, String id) {
+    return switch (id) {
+      'snare' => pickUiText(
+        i18n,
+        zh: '军鼓',
+        en: 'Snare',
+        ja: 'スネア',
+        de: 'Snare',
+        fr: 'Caisse claire',
+        es: 'Caja',
+        ru: 'Малый',
+      ),
+      'hihat' => pickUiText(
+        i18n,
+        zh: '踩镲',
+        en: 'Hi-hat',
+        ja: 'ハイハット',
+        de: 'Hi-Hat',
+        fr: 'Charleston',
+        es: 'Hi-hat',
+        ru: 'Хай-хэт',
+      ),
+      'tom' => pickUiText(
+        i18n,
+        zh: '嗵鼓',
+        en: 'Tom',
+        ja: 'タム',
+        de: 'Tom',
+        fr: 'Tom',
+        es: 'Tom',
+        ru: 'Том',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '底鼓',
+        en: 'Kick',
+        ja: 'キック',
+        de: 'Kick',
+        fr: 'Kick',
+        es: 'Bombo',
+        ru: 'Бочка',
+      ),
+    };
+  }
+
+  void _invalidatePlayers() {
+    for (final player in _players.values) {
+      unawaited(player.dispose());
+    }
+    _players.clear();
+  }
+
+  void _applyPreset(String presetId) {
+    final preset = _presets.firstWhere(
+      (item) => item.id == presetId,
+      orElse: () => _presets.first,
+    );
+    setState(() {
+      _presetId = preset.id;
+      _kit = preset.kitId;
+      _drive = preset.drive;
+    });
+    _invalidatePlayers();
+    unawaited(_warmUpActivePreset());
+  }
+
+  Future<void> _warmUpActivePreset() async {
+    for (final pad in _pads) {
+      await _playerFor(pad.id).warmUp();
+    }
+  }
+
+  ToolboxEffectPlayer _playerFor(String id) {
+    final cacheKey = '$id:$_kit';
+    final existing = _players[cacheKey];
+    if (existing != null) return existing;
+    final created = ToolboxEffectPlayer(
+      ToolboxAudioBank.drumHit(id, kit: _kit),
+      maxPlayers: 8,
+    );
+    _players[cacheKey] = created;
+    return created;
+  }
+
+  Future<void> _hit(_DrumPad pad) async {
+    HapticFeedback.heavyImpact();
+    unawaited(_playerFor(pad.id).play(volume: _drive.clamp(0.2, 1.0)));
+    if (!mounted) return;
+    setState(() {
+      _activePadId = pad.id;
+      _lastHitId = pad.id;
+      _hits += 1;
+    });
+    Future<void>.delayed(const Duration(milliseconds: 120), () {
+      if (!mounted || _activePadId != pad.id) return;
+      setState(() => _activePadId = null);
+    });
+  }
+
+  @override
+  void dispose() {
+    _invalidatePlayers();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    final preset = _activePreset;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '鼓垫',
+                    en: 'Pads',
+                    ja: 'パッド',
+                    de: 'Pads',
+                    fr: 'Pads',
+                    es: 'Pads',
+                    ru: 'Пэды',
+                  ),
+                  value: '${_pads.length}',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '最近击打',
+                    en: 'Last hit',
+                    ja: '直前ヒット',
+                    de: 'Letzter Schlag',
+                    fr: 'Dernier coup',
+                    es: 'Último golpe',
+                    ru: 'Последний удар',
+                  ),
+                  value: _lastHitId == null
+                      ? '--'
+                      : _padLabel(i18n, _lastHitId!),
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '次数',
+                    en: 'Count',
+                    ja: '回数',
+                    de: 'Anzahl',
+                    fr: 'Compteur',
+                    es: 'Conteo',
+                    ru: 'Счёт',
+                  ),
+                  value: '$_hits',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '预设',
+                    en: 'Preset',
+                    ja: 'プリセット',
+                    de: 'Preset',
+                    fr: 'Préréglage',
+                    es: 'Preajuste',
+                    ru: 'Пресет',
+                  ),
+                  value: _presetLabel(i18n, preset),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SectionHeader(
+              title: pickUiText(
+                i18n,
+                zh: '预设包',
+                en: 'Preset pack',
+                ja: 'プリセットパック',
+                de: 'Preset-Paket',
+                fr: 'Pack de préréglages',
+                es: 'Paquete de presets',
+                ru: 'Пакет пресетов',
+              ),
+              subtitle: pickUiText(
+                i18n,
+                zh: '切换鼓组类型，并同步设置默认冲击力度。',
+                en: 'Switch kit type and default impact drive together.',
+                ja: 'キット種類と標準の打撃ドライブをまとめて切り替えます。',
+                de: 'Wechselt Kit-Typ und Standard-Drive gemeinsam.',
+                fr: 'Changez le type de kit et le drive d’impact par défaut.',
+                es: 'Cambia el kit y el nivel de impacto por defecto.',
+                ru: 'Переключает тип набора и силу удара по умолчанию.',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _presets
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_presetLabel(i18n, item)),
+                      selected: item.id == _presetId,
+                      onSelected: (_) => _applyPreset(item.id),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _presetSubtitle(i18n, preset),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '冲击力度 ${(_drive * 100).round()}%',
+                en: 'Drive ${(_drive * 100).round()}%',
+                ja: 'ドライブ ${(_drive * 100).round()}%',
+                de: 'Drive ${(_drive * 100).round()}%',
+                fr: 'Drive ${(_drive * 100).round()}%',
+                es: 'Drive ${(_drive * 100).round()}%',
+                ru: 'Драйв ${(_drive * 100).round()}%',
+              ),
+            ),
+            Slider(
+              value: _drive,
+              min: 0.45,
+              max: 1.0,
+              divisions: 11,
+              onChanged: (value) => setState(() => _drive = value),
+            ),
+            const SizedBox(height: 8),
+            AspectRatio(
+              aspectRatio: widget.fullScreen ? 1.35 : 1.1,
+              child: GridView.count(
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                children: _pads
+                    .map((pad) {
+                      final active = _activePadId == pad.id;
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () => unawaited(_hit(pad)),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(18),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: <Color>[
+                                  pad.color.withValues(
+                                    alpha: active ? 0.95 : 0.74,
+                                  ),
+                                  pad.color.withValues(
+                                    alpha: active ? 0.7 : 0.52,
+                                  ),
+                                ],
+                              ),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: pad.color.withValues(
+                                    alpha: active ? 0.42 : 0.24,
+                                  ),
+                                  blurRadius: active ? 18 : 12,
+                                  spreadRadius: active ? 2 : 0,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                _padLabel(i18n, pad.id),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    })
+                    .toList(growable: false),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GuitarTool extends StatefulWidget {
+  const _GuitarTool({this.fullScreen = false});
+
+  final bool fullScreen;
+
+  @override
+  State<_GuitarTool> createState() => _GuitarToolState();
+}
+
+class _GuitarToolState extends State<_GuitarTool> {
+  static const List<_PianoKey> _strings = <_PianoKey>[
+    _PianoKey(id: 'E2', label: 'E2', frequency: 82.41),
+    _PianoKey(id: 'A2', label: 'A2', frequency: 110.0),
+    _PianoKey(id: 'D3', label: 'D3', frequency: 146.83),
+    _PianoKey(id: 'G3', label: 'G3', frequency: 196.0),
+    _PianoKey(id: 'B3', label: 'B3', frequency: 246.94),
+    _PianoKey(id: 'E4', label: 'E4', frequency: 329.63),
+  ];
+
+  final Map<String, ToolboxEffectPlayer> _players =
+      <String, ToolboxEffectPlayer>{};
+  static const List<_GuitarPreset> _presets = <_GuitarPreset>[
+    _GuitarPreset(
+      id: 'steel_strum',
+      styleId: 'steel',
+      pluckVolume: 0.9,
+      strumVolume: 0.84,
+      strumDelayMs: 34,
+    ),
+    _GuitarPreset(
+      id: 'nylon_finger',
+      styleId: 'nylon',
+      pluckVolume: 0.84,
+      strumVolume: 0.78,
+      strumDelayMs: 42,
+    ),
+    _GuitarPreset(
+      id: 'ambient_chime',
+      styleId: 'ambient',
+      pluckVolume: 0.78,
+      strumVolume: 0.72,
+      strumDelayMs: 52,
+    ),
+  ];
+  String _presetId = _presets.first.id;
+  int? _activeString;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_warmUpActivePreset());
+    });
+  }
+
+  _GuitarPreset get _activePreset {
+    return _presets.firstWhere(
+      (item) => item.id == _presetId,
+      orElse: () => _presets.first,
+    );
+  }
+
+  String _presetLabel(AppI18n i18n, _GuitarPreset preset) {
+    return switch (preset.id) {
+      'nylon_finger' => pickUiText(
+        i18n,
+        zh: '尼龙指弹',
+        en: 'Nylon finger',
+        ja: 'ナイロン指弾き',
+        de: 'Nylon Fingerstyle',
+        fr: 'Nylon finger',
+        es: 'Nailon finger',
+        ru: 'Нейлон фингер',
+      ),
+      'ambient_chime' => pickUiText(
+        i18n,
+        zh: '氛围铃音',
+        en: 'Ambient chime',
+        ja: 'アンビエントチャイム',
+        de: 'Ambient Chime',
+        fr: 'Ambient chime',
+        es: 'Ambient chime',
+        ru: 'Ambient chime',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '钢弦扫弦',
+        en: 'Steel strum',
+        ja: 'スチールストラム',
+        de: 'Steel Strum',
+        fr: 'Steel strum',
+        es: 'Steel strum',
+        ru: 'Steel strum',
+      ),
+    };
+  }
+
+  String _presetSubtitle(AppI18n i18n, _GuitarPreset preset) {
+    return switch (preset.id) {
+      'nylon_finger' => pickUiText(
+        i18n,
+        zh: '圆润柔和，适合慢速分解和指弹。',
+        en: 'Round and soft tone for slow arpeggios and finger picking.',
+        ja: '丸く柔らかい音で、ゆっくりした分散和音に最適。',
+        de: 'Runder, weicher Klang für langsame Arpeggios und Fingerpicking.',
+        fr: 'Timbre rond et doux pour arpèges lents et fingerstyle.',
+        es: 'Tono redondo y suave para arpegios lentos y fingerpicking.',
+        ru: 'Мягкий округлый тембр для медленных арпеджио и фингерстайла.',
+      ),
+      'ambient_chime' => pickUiText(
+        i18n,
+        zh: '更空灵的泛音尾音，适合氛围铺底。',
+        en: 'Airier overtones and longer shimmer for ambient layers.',
+        ja: '倍音を強めた余韻で、アンビエント層に向くサウンド。',
+        de: 'Luftigere Obertöne mit längerem Schimmer für Ambient-Flächen.',
+        fr: 'Harmoniques aériennes et résonance longue pour l’ambient.',
+        es: 'Armónicos más aéreos y cola larga para capas ambient.',
+        ru: 'Более воздушные обертоны и длинный шимер для ambient-подложки.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '清晰有力的钢弦核心，适合节奏扫弦。',
+        en: 'Clear steel-core tone tuned for rhythmic strumming.',
+        ja: '明瞭なスチール芯で、リズムストラム向け。',
+        de: 'Klarer Steel-Kernklang für rhythmisches Strumming.',
+        fr: 'Noyau acier net, idéal pour le strumming rythmique.',
+        es: 'Núcleo claro de acero, ideal para rasgueo rítmico.',
+        ru: 'Чёткий стальной тон, настроенный под ритмический бой.',
+      ),
+    };
+  }
+
+  String _styleLabel(AppI18n i18n, String styleId) {
+    return switch (styleId) {
+      'nylon' => pickUiText(
+        i18n,
+        zh: '尼龙',
+        en: 'Nylon',
+        ja: 'ナイロン',
+        de: 'Nylon',
+        fr: 'Nylon',
+        es: 'Nailon',
+        ru: 'Нейлон',
+      ),
+      'ambient' => pickUiText(
+        i18n,
+        zh: '氛围',
+        en: 'Ambient',
+        ja: 'アンビエント',
+        de: 'Ambient',
+        fr: 'Ambient',
+        es: 'Ambient',
+        ru: 'Ambient',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '钢弦',
+        en: 'Steel',
+        ja: 'スチール',
+        de: 'Steel',
+        fr: 'Acier',
+        es: 'Acero',
+        ru: 'Сталь',
+      ),
+    };
+  }
+
+  void _applyPreset(String presetId) {
+    if (_presetId == presetId) return;
+    setState(() => _presetId = presetId);
+    _invalidatePlayers();
+    unawaited(_warmUpActivePreset());
+  }
+
+  Future<void> _warmUpActivePreset() async {
+    for (final note in _strings) {
+      await _playerFor(note).warmUp();
+    }
+  }
+
+  ToolboxEffectPlayer _playerFor(_PianoKey note) {
+    final key = '${note.id}:${_activePreset.styleId}';
+    final existing = _players[key];
+    if (existing != null) return existing;
+    final created = ToolboxEffectPlayer(
+      ToolboxAudioBank.guitarNote(note.frequency, style: _activePreset.styleId),
+      maxPlayers: 8,
+    );
+    _players[key] = created;
+    return created;
+  }
+
+  Future<void> _pluck(int index, {double? volume}) async {
+    if (index < 0 || index >= _strings.length) return;
+    HapticFeedback.selectionClick();
+    final note = _strings[index];
+    unawaited(
+      _playerFor(note).play(volume: volume ?? _activePreset.pluckVolume),
+    );
+    if (!mounted) return;
+    setState(() => _activeString = index);
+    Future<void>.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted || _activeString != index) return;
+      setState(() => _activeString = null);
+    });
+  }
+
+  Future<void> _strum({required bool down}) async {
+    final preset = _activePreset;
+    final indexes = down
+        ? List<int>.generate(_strings.length, (i) => i)
+        : List<int>.generate(_strings.length, (i) => _strings.length - 1 - i);
+    for (final index in indexes) {
+      await _pluck(index, volume: preset.strumVolume);
+      await Future<void>.delayed(Duration(milliseconds: preset.strumDelayMs));
+    }
+  }
+
+  void _invalidatePlayers() {
+    for (final player in _players.values) {
+      unawaited(player.dispose());
+    }
+    _players.clear();
+  }
+
+  @override
+  void dispose() {
+    _invalidatePlayers();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    final theme = Theme.of(context);
+    final preset = _activePreset;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '琴弦',
+                    en: 'Strings',
+                    ja: '弦',
+                    de: 'Saiten',
+                    fr: 'Cordes',
+                    es: 'Cuerdas',
+                    ru: 'Струны',
+                  ),
+                  value: '6',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '预设',
+                    en: 'Preset',
+                    ja: 'プリセット',
+                    de: 'Preset',
+                    fr: 'Préréglage',
+                    es: 'Preajuste',
+                    ru: 'Пресет',
+                  ),
+                  value: _presetLabel(i18n, preset),
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '音色',
+                    en: 'Tone',
+                    ja: '音色',
+                    de: 'Klang',
+                    fr: 'Timbre',
+                    es: 'Timbre',
+                    ru: 'Тембр',
+                  ),
+                  value: _styleLabel(i18n, preset.styleId),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SectionHeader(
+              title: pickUiText(
+                i18n,
+                zh: '预设包',
+                en: 'Preset pack',
+                ja: 'プリセットパック',
+                de: 'Preset-Paket',
+                fr: 'Pack de préréglages',
+                es: 'Paquete de presets',
+                ru: 'Пакет пресетов',
+              ),
+              subtitle: pickUiText(
+                i18n,
+                zh: '预设同时控制琴弦材质、拨弦力度和扫弦速度。',
+                en: 'Presets control string material, pluck volume, and strum speed.',
+                ja: 'プリセットで弦素材、ピッキング強度、ストラム速度を一括制御。',
+                de: 'Presets steuern Saitenmaterial, Zupf-Lautstärke und Strum-Tempo.',
+                fr: 'Les presets pilotent matériau, attaque et vitesse de strum.',
+                es: 'Los presets controlan material, ataque y velocidad de rasgueo.',
+                ru: 'Пресеты управляют материалом струн, атакой и скоростью боя.',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _presets
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_presetLabel(i18n, item)),
+                      selected: _presetId == item.id,
+                      onSelected: (_) => _applyPreset(item.id),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _presetSubtitle(i18n, preset),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[Color(0xFFF6E7C8), Color(0xFFEBCF9A)],
+                ),
+              ),
+              child: Column(
+                children: List<Widget>.generate(_strings.length, (index) {
+                  final active = _activeString == index;
+                  final note = _strings[index];
+                  return Listener(
+                    behavior: HitTestBehavior.opaque,
+                    onPointerDown: (_) => unawaited(_pluck(index)),
+                    child: Container(
+                      height: widget.fullScreen ? 40 : 34,
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: <Widget>[
+                          SizedBox(
+                            width: 28,
+                            child: Text(
+                              note.label,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF5A3818),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 90),
+                              height: active ? 3.4 : 2.2,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(999),
+                                color: active
+                                    ? const Color(0xFFFB923C)
+                                    : const Color(0xFF7C5A3A),
+                                boxShadow: active
+                                    ? <BoxShadow>[
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFFFB923C,
+                                          ).withValues(alpha: 0.35),
+                                          blurRadius: 10,
+                                          spreadRadius: 1,
+                                        ),
+                                      ]
+                                    : const <BoxShadow>[],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                FilledButton.tonalIcon(
+                  onPressed: () => unawaited(_strum(down: true)),
+                  icon: const Icon(Icons.south_rounded),
+                  label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '下扫弦',
+                      en: 'Strum down',
+                      ja: 'ダウンストラム',
+                      de: 'Abschlag',
+                      fr: 'Strum vers le bas',
+                      es: 'Rasgueo abajo',
+                      ru: 'Бой вниз',
+                    ),
+                  ),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: () => unawaited(_strum(down: false)),
+                  icon: const Icon(Icons.north_rounded),
+                  label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '上扫弦',
+                      en: 'Strum up',
+                      ja: 'アップストラム',
+                      de: 'Aufschlag',
+                      fr: 'Strum vers le haut',
+                      es: 'Rasgueo arriba',
+                      ru: 'Бой вверх',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TriangleTool extends StatefulWidget {
+  const _TriangleTool({this.fullScreen = false});
+
+  final bool fullScreen;
+
+  @override
+  State<_TriangleTool> createState() => _TriangleToolState();
+}
+
+class _TriangleToolState extends State<_TriangleTool> {
+  static const List<_TrianglePreset> _presets = <_TrianglePreset>[
+    _TrianglePreset(id: 'orchestral_ring', styleId: 'orchestral', ring: 0.86),
+    _TrianglePreset(id: 'soft_ring', styleId: 'soft', ring: 0.74),
+    _TrianglePreset(id: 'bright_ring', styleId: 'bright', ring: 0.96),
+  ];
+  final Map<String, ToolboxEffectPlayer> _players =
+      <String, ToolboxEffectPlayer>{};
+  String _presetId = _presets.first.id;
+  int _hits = 0;
+  double _ring = _presets.first.ring;
+  double _flash = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_warmUpActivePreset());
+    });
+  }
+
+  _TrianglePreset get _activePreset {
+    return _presets.firstWhere(
+      (item) => item.id == _presetId,
+      orElse: () => _presets.first,
+    );
+  }
+
+  String _presetLabel(AppI18n i18n, _TrianglePreset preset) {
+    return switch (preset.id) {
+      'soft_ring' => pickUiText(
+        i18n,
+        zh: '柔和振铃',
+        en: 'Soft ring',
+        ja: 'ソフトリング',
+        de: 'Sanfter Ring',
+        fr: 'Résonance douce',
+        es: 'Resonancia suave',
+        ru: 'Мягкий звон',
+      ),
+      'bright_ring' => pickUiText(
+        i18n,
+        zh: '明亮振铃',
+        en: 'Bright ring',
+        ja: 'ブライトリング',
+        de: 'Heller Ring',
+        fr: 'Résonance brillante',
+        es: 'Resonancia brillante',
+        ru: 'Яркий звон',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '管弦振铃',
+        en: 'Orchestral ring',
+        ja: 'オーケストラリング',
+        de: 'Orchestraler Ring',
+        fr: 'Résonance orchestrale',
+        es: 'Resonancia orquestal',
+        ru: 'Оркестровый звон',
+      ),
+    };
+  }
+
+  String _presetSubtitle(AppI18n i18n, _TrianglePreset preset) {
+    return switch (preset.id) {
+      'soft_ring' => pickUiText(
+        i18n,
+        zh: '更柔和的高频和更短的余音，适合轻节奏。',
+        en: 'Softer highs and shorter tail for gentle rhythm support.',
+        ja: '高域を抑えた短めの余韻で、軽いリズム向け。',
+        de: 'Sanftere Höhen und kürzeres Ausklingen für leichte Patterns.',
+        fr: 'Aigus adoucis et queue plus courte pour un rythme léger.',
+        es: 'Agudos suaves y cola corta para ritmos ligeros.',
+        ru: 'Мягкие верха и короткий хвост для лёгкого ритма.',
+      ),
+      'bright_ring' => pickUiText(
+        i18n,
+        zh: '更亮更脆，余音更明显，适合强调节拍。',
+        en: 'Brighter attack and stronger ring to mark accents.',
+        ja: '明るく鋭いアタックで、アクセントを強調。',
+        de: 'Hellerer Anschlag und stärkerer Ring für Akzente.',
+        fr: 'Attaque plus brillante et résonance marquée.',
+        es: 'Ataque brillante y resonancia más marcada para acentos.',
+        ru: 'Более яркая атака и выраженный звон для акцентов.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: '均衡明亮与延音，接近管弦乐中的三角铁表现。',
+        en: 'Balanced brightness and decay close to orchestral behavior.',
+        ja: '明るさと余韻のバランスが良い標準オーケストラ音。',
+        de: 'Ausgewogene Helligkeit und Decay wie im Orchester.',
+        fr: 'Équilibre entre brillance et décroissance orchestral.',
+        es: 'Equilibrio entre brillo y decaimiento de estilo orquestal.',
+        ru: 'Сбалансированная яркость и затухание в оркестровом стиле.',
+      ),
+    };
+  }
+
+  ToolboxEffectPlayer _playerFor(String styleId) {
+    final existing = _players[styleId];
+    if (existing != null) return existing;
+    final created = ToolboxEffectPlayer(
+      ToolboxAudioBank.triangleHit(style: styleId),
+      maxPlayers: 6,
+    );
+    _players[styleId] = created;
+    return created;
+  }
+
+  void _disposePlayers() {
+    for (final player in _players.values) {
+      unawaited(player.dispose());
+    }
+    _players.clear();
+  }
+
+  void _applyPreset(String presetId) {
+    final preset = _presets.firstWhere(
+      (item) => item.id == presetId,
+      orElse: () => _presets.first,
+    );
+    setState(() {
+      _presetId = preset.id;
+      _ring = preset.ring;
+    });
+    unawaited(_warmUpActivePreset());
+  }
+
+  Future<void> _warmUpActivePreset() async {
+    await _playerFor(_activePreset.styleId).warmUp();
+  }
+
+  @override
+  void dispose() {
+    _disposePlayers();
+    super.dispose();
+  }
+
+  Future<void> _strike() async {
+    HapticFeedback.lightImpact();
+    unawaited(
+      _playerFor(_activePreset.styleId).play(volume: _ring.clamp(0.2, 1.0)),
+    );
+    if (!mounted) return;
+    setState(() {
+      _hits += 1;
+      _flash = 1;
+    });
+    Future<void>.delayed(const Duration(milliseconds: 160), () {
+      if (!mounted) return;
+      setState(() => _flash = 0);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    final preset = _activePreset;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '击打',
+                    en: 'Hits',
+                    ja: 'ヒット',
+                    de: 'Treffer',
+                    fr: 'Coups',
+                    es: 'Golpes',
+                    ru: 'Удары',
+                  ),
+                  value: '$_hits',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '振铃',
+                    en: 'Ring',
+                    ja: 'リング',
+                    de: 'Ring',
+                    fr: 'Résonance',
+                    es: 'Resonancia',
+                    ru: 'Звон',
+                  ),
+                  value: '${(_ring * 100).round()}%',
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(
+                    i18n,
+                    zh: '预设',
+                    en: 'Preset',
+                    ja: 'プリセット',
+                    de: 'Preset',
+                    fr: 'Préréglage',
+                    es: 'Preajuste',
+                    ru: 'Пресет',
+                  ),
+                  value: _presetLabel(i18n, preset),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SectionHeader(
+              title: pickUiText(
+                i18n,
+                zh: '预设包',
+                en: 'Preset pack',
+                ja: 'プリセットパック',
+                de: 'Preset-Paket',
+                fr: 'Pack de préréglages',
+                es: 'Paquete de presets',
+                ru: 'Пакет пресетов',
+              ),
+              subtitle: pickUiText(
+                i18n,
+                zh: '预设会同步调整三角铁音色与默认振铃长度。',
+                en: 'Presets change triangle tone and default ring length together.',
+                ja: 'プリセットで音色と余韻長を同時に切り替えます。',
+                de: 'Presets ändern Klangfarbe und Nachklanglänge gemeinsam.',
+                fr: 'Les presets ajustent timbre et longueur de résonance.',
+                es: 'Los presets ajustan timbre y longitud de resonancia.',
+                ru: 'Пресеты одновременно меняют тембр и длину звона.',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _presets
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_presetLabel(i18n, item)),
+                      selected: item.id == _presetId,
+                      onSelected: (_) => _applyPreset(item.id),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _presetSubtitle(i18n, preset),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => unawaited(_strike()),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                height: widget.fullScreen ? 260 : 210,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      const Color(0xFFE6EEF9),
+                      Color.lerp(
+                        const Color(0xFFC9DDF8),
+                        const Color(0xFFEAB308),
+                        _flash * 0.24,
+                      )!,
+                    ],
+                  ),
+                  border: Border.all(color: const Color(0xFF98B6DE)),
+                ),
+                child: CustomPaint(
+                  painter: _TriangleInstrumentPainter(intensity: _flash),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '振铃 ${(_ring * 100).round()}%',
+                en: 'Ring ${(_ring * 100).round()}%',
+                ja: 'リング ${(_ring * 100).round()}%',
+                de: 'Ring ${(_ring * 100).round()}%',
+                fr: 'Résonance ${(_ring * 100).round()}%',
+                es: 'Resonancia ${(_ring * 100).round()}%',
+                ru: 'Звон ${(_ring * 100).round()}%',
+              ),
+            ),
+            Slider(
+              value: _ring,
+              min: 0.2,
+              max: 1,
+              divisions: 16,
+              onChanged: (value) => setState(() => _ring = value),
+            ),
+            const SizedBox(height: 4),
+            FilledButton.icon(
+              onPressed: () => unawaited(_strike()),
+              icon: const Icon(Icons.music_video_rounded),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '敲击三角铁',
+                  en: 'Strike triangle',
+                  ja: 'トライアングルを鳴らす',
+                  de: 'Triangel anschlagen',
+                  fr: 'Frapper le triangle',
+                  es: 'Golpear triángulo',
+                  ru: 'Ударить треугольник',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _HarpPainter extends CustomPainter {
   const _HarpPainter({
     required this.stringCount,
@@ -2008,13 +5417,11 @@ class _HarpPainter extends CustomPainter {
   final bool horizontalLayout;
 
   double _stringTrackAt(int index, Size size) {
-    final leadingInset = horizontalLayout
-        ? size.height * 0.14
-        : size.width * 0.14;
-    final trailingInset = horizontalLayout
-        ? size.height * 0.14
-        : size.width * 0.14;
     final totalSpan = horizontalLayout ? size.height : size.width;
+    final adaptiveInset = totalSpan * (horizontalLayout ? 0.12 : 0.11);
+    final minInset = horizontalLayout ? 28.0 : 22.0;
+    final leadingInset = math.max(minInset, adaptiveInset);
+    final trailingInset = math.max(minInset, adaptiveInset);
     final usableSpan = math.max(1.0, totalSpan - leadingInset - trailingInset);
     if (stringCount == 1) return totalSpan / 2;
     return leadingInset + usableSpan * (index / (stringCount - 1));
@@ -2097,14 +5504,19 @@ class _HarpPainter extends CustomPainter {
     };
 
     final topGradient = Color.lerp(
-      _paletteColorAt(0),
-      const Color(0xFF020617),
-      0.58,
+      _paletteColorAt(0.05),
+      const Color(0xFF041224),
+      0.42,
+    );
+    final middleGradient = Color.lerp(
+      _paletteColorAt(0.45),
+      const Color(0xFF0B2A43),
+      0.46,
     );
     final bottomGradient = Color.lerp(
-      _paletteColorAt(1),
+      _paletteColorAt(0.95),
       const Color(0xFF0F172A),
-      0.35,
+      0.28,
     );
     final framePaint = Paint()
       ..shader = LinearGradient(
@@ -2112,7 +5524,7 @@ class _HarpPainter extends CustomPainter {
         end: Alignment.bottomCenter,
         colors: <Color>[
           topGradient ?? const Color(0xFF0F172A),
-          (topGradient ?? colorScheme.primary).withValues(alpha: 0.88),
+          middleGradient ?? (topGradient ?? colorScheme.primary),
           bottomGradient ?? const Color(0xFF1E1B4B),
         ],
       ).createShader(Offset.zero & size);
@@ -2146,11 +5558,22 @@ class _HarpPainter extends CustomPainter {
       size.width * 0.42,
       glowPaint,
     );
+    final auroraPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          _paletteColorAt(0.12).withValues(alpha: 0.08),
+          Colors.transparent,
+          _paletteColorAt(0.86).withValues(alpha: 0.1),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, auroraPaint);
 
-    final topY = size.height * 0.08;
-    final bottomY = size.height * 0.92;
-    final leftX = size.width * 0.08;
-    final rightX = size.width * 0.92;
+    final topY = size.height * 0.06;
+    final bottomY = size.height * 0.94;
+    final leftX = size.width * 0.06;
+    final rightX = size.width * 0.94;
     final midY = (topY + bottomY) / 2;
     final midX = (leftX + rightX) / 2;
     final textScale = horizontalLayout
@@ -2296,6 +5719,71 @@ class _HarpPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _HarpPainter oldDelegate) {
     return true;
+  }
+}
+
+class _TriangleInstrumentPainter extends CustomPainter {
+  const _TriangleInstrumentPainter({required this.intensity});
+
+  final double intensity;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final top = Offset(size.width * 0.5, size.height * 0.18);
+    final left = Offset(size.width * 0.24, size.height * 0.8);
+    final right = Offset(size.width * 0.76, size.height * 0.8);
+    final path = Path()
+      ..moveTo(top.dx, top.dy)
+      ..lineTo(left.dx, left.dy)
+      ..lineTo(right.dx, right.dy)
+      ..close();
+
+    final glow = Paint()
+      ..color = const Color(
+        0xFFF59E0B,
+      ).withValues(alpha: 0.18 + intensity * 0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 14
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawPath(path, glow);
+
+    final stroke = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0xFF6B7D99),
+          Color(0xFF314255),
+          Color(0xFF1C2937),
+        ],
+      ).createShader(Offset.zero & size)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, stroke);
+
+    final striker = Paint()
+      ..color = const Color(0xFF243447)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    final strikerX = size.width * 0.78;
+    final strikerY = size.height * (0.28 + intensity * 0.02);
+    canvas.drawLine(
+      Offset(strikerX, strikerY),
+      Offset(strikerX + 34, strikerY + 50),
+      striker,
+    );
+    canvas.drawCircle(
+      Offset(strikerX + 34, strikerY + 50),
+      5,
+      Paint()..color = const Color(0xFFF59E0B).withValues(alpha: 0.8),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _TriangleInstrumentPainter oldDelegate) {
+    return oldDelegate.intensity != intensity;
   }
 }
 

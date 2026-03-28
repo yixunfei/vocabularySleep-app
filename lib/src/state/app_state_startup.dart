@@ -64,13 +64,7 @@ extension _AppStateStartup on AppState {
       if (_weatherEnabled) {
         unawaited(refreshWeather(force: true));
       }
-      if (_remoteResourcePrewarm != null &&
-          !_settings.loadRemoteResourcePrewarmCompleted()) {
-        unawaited(_startRemoteResourcePrewarmImpl());
-      } else {
-        _remotePrewarmCompleted = _settings
-            .loadRemoteResourcePrewarmCompleted();
-      }
+      _remotePrewarmCompleted = _settings.loadRemoteResourcePrewarmCompleted();
     } catch (error) {
       _log.e('app_state', 'init failed', error: error);
       _setMessage('errorInitFailed', params: <String, Object?>{'error': error});
@@ -393,5 +387,24 @@ extension _AppStateStartup on AppState {
       _remotePrewarmActive = false;
       _notifyStateChanged();
     }
+  }
+
+  Future<void> _ensureRemoteResourcePrewarmOnDemandImpl() async {
+    final prewarm = _remoteResourcePrewarm;
+    if (prewarm == null || _remotePrewarmActive || _remotePrewarmCompleted) {
+      return;
+    }
+    try {
+      final shouldPrewarm = await prewarm.shouldPrewarmMusic();
+      if (!shouldPrewarm) {
+        _remotePrewarmCompleted = true;
+        _settings.saveRemoteResourcePrewarmCompleted(true);
+        _notifyStateChanged();
+        return;
+      }
+    } catch (_) {
+      // Keep lazy behavior if remote probe fails; actual download can still run later.
+    }
+    await _startRemoteResourcePrewarmImpl();
   }
 }

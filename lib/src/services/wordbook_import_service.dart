@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -267,6 +268,136 @@ class WordbookImportService {
         processed += 1;
         count += emitPayload(decoded);
         reportProgress(processed, null);
+      } catch (_) {
+        // Ignore malformed rows.
+      }
+    }
+
+    reportProgress(processed, null, force: true);
+    return count;
+  }
+
+  Future<int> processJsonTextAsync(
+    String content, {
+    required void Function(WordEntryPayload payload) onPayload,
+    void Function(int processed, int? total)? onProgress,
+    int yieldEvery = 180,
+  }) async {
+    final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
+
+    Map<String, Object?>? asRecordMap(Object? value) {
+      if (value is Map<String, Object?>) {
+        return value;
+      }
+      if (value is Map) {
+        return value.cast<String, Object?>();
+      }
+      return null;
+    }
+
+    int emitPayload(Object? value) {
+      final record = asRecordMap(value);
+      if (record == null) return 0;
+      final payload = _recordToPayload(record);
+      if (payload == null) return 0;
+      onPayload(payload);
+      return 1;
+    }
+
+    var lastReportedProcessed = -1;
+    var lastReportedPercent = -1;
+    var sinceLastYield = 0;
+
+    void reportProgress(int processed, int? total, {bool force = false}) {
+      if (onProgress == null) return;
+      if (!force) {
+        if (total != null && total > 0) {
+          final percent = ((processed * 100) ~/ total).clamp(0, 100);
+          if (processed < total && percent == lastReportedPercent) {
+            return;
+          }
+          lastReportedPercent = percent;
+        } else if (processed - lastReportedProcessed < 64) {
+          return;
+        }
+      }
+      lastReportedProcessed = processed;
+      onProgress(processed, total);
+    }
+
+    Future<void> maybeYield() async {
+      sinceLastYield += 1;
+      if (sinceLastYield < resolvedYieldEvery) return;
+      sinceLastYield = 0;
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    try {
+      final decoded = jsonDecode(content);
+      if (decoded is List) {
+        var count = 0;
+        final total = decoded.length;
+        reportProgress(0, total, force: true);
+        for (var index = 0; index < total; index += 1) {
+          count += emitPayload(decoded[index]);
+          reportProgress(index + 1, total);
+          await maybeYield();
+        }
+        reportProgress(total, total, force: true);
+        return count;
+      }
+
+      if (decoded is Map) {
+        for (final key in _jsonRecordContainerKeys) {
+          final container = decoded[key];
+          if (container is! List) continue;
+          var count = 0;
+          final total = container.length;
+          reportProgress(0, total, force: true);
+          for (var index = 0; index < total; index += 1) {
+            count += emitPayload(container[index]);
+            reportProgress(index + 1, total);
+            await maybeYield();
+          }
+          reportProgress(total, total, force: true);
+          return count;
+        }
+        reportProgress(0, 1, force: true);
+        final count = emitPayload(decoded);
+        reportProgress(1, 1, force: true);
+        return count;
+      }
+    } catch (_) {
+      // Fall back to JSONL / concatenated object parser below.
+    }
+
+    final lines = content.split(RegExp(r'\r?\n'));
+    var depth = 0;
+    var count = 0;
+    var processed = 0;
+    final buffer = StringBuffer();
+    reportProgress(0, null, force: true);
+
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      buffer.writeln(line);
+      for (final char in trimmed.runes) {
+        if (char == 123) depth += 1;
+        if (char == 125) depth -= 1;
+      }
+
+      if (depth != 0) continue;
+      final chunk = buffer.toString().trim();
+      buffer.clear();
+      if (chunk.isEmpty) continue;
+
+      try {
+        final decoded = jsonDecode(chunk);
+        processed += 1;
+        count += emitPayload(decoded);
+        reportProgress(processed, null);
+        await maybeYield();
       } catch (_) {
         // Ignore malformed rows.
       }

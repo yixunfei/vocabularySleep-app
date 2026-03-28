@@ -611,6 +611,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void refreshWeatherIfStale() => _refreshWeatherIfStaleImpl();
 
+  Future<void> ensureRemoteResourcePrewarmOnDemand() =>
+      _ensureRemoteResourcePrewarmOnDemandImpl();
+
   @override
   void didChangeLocales(List<Locale>? locales) {
     super.didChangeLocales(locales);
@@ -761,6 +764,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     } catch (error) {
       _setMessage(
         'errorCreateWordbookFailed',
+        params: <String, Object?>{'error': error},
+      );
+    } finally {
+      _setBusy(false);
+    }
+  }
+
+  Future<void> refreshBuiltInWordbookCatalog() async {
+    _setBusy(true);
+    try {
+      await _database.syncBuiltInWordbooksCatalog();
+      await _reloadWordbooks(keepCurrentSelection: true);
+      await _syncSpecialWordbooks();
+    } catch (error) {
+      _setMessage(
+        'errorImportFailed',
         params: <String, Object?>{'error': error},
       );
     } finally {

@@ -53,6 +53,8 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
             onImport: () => _importWordbook(context, state, i18n),
             onDownloadOnline: () =>
                 _downloadOnlineWordbook(context, state, i18n),
+            onRefreshBuiltInCatalog: () =>
+                _refreshBuiltInCatalog(context, state, i18n),
           ),
           const SizedBox(height: 16),
           for (final book in state.wordbooks) ...<Widget>[
@@ -279,6 +281,23 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
         });
       }
     }
+  }
+
+  Future<void> _refreshBuiltInCatalog(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n,
+  ) async {
+    await state.refreshBuiltInWordbookCatalog();
+    if (!context.mounted) return;
+    _showMessage(
+      context,
+      pickUiText(
+        i18n,
+        zh: '内置词本目录已刷新',
+        en: 'Built-in wordbook catalog refreshed',
+      ),
+    );
   }
 
   Future<RemoteWordbookEntry?> _showOnlineWordbookPicker(
@@ -539,6 +558,7 @@ class _QuickActionCard extends StatelessWidget {
     required this.onCreate,
     required this.onImport,
     required this.onDownloadOnline,
+    required this.onRefreshBuiltInCatalog,
   });
 
   final AppI18n i18n;
@@ -546,6 +566,7 @@ class _QuickActionCard extends StatelessWidget {
   final VoidCallback onCreate;
   final VoidCallback onImport;
   final VoidCallback onDownloadOnline;
+  final VoidCallback onRefreshBuiltInCatalog;
 
   @override
   Widget build(BuildContext context) {
@@ -603,6 +624,17 @@ class _QuickActionCard extends StatelessWidget {
                             fr: 'Telecharger des livres en ligne',
                             es: 'Descargar libros en linea',
                           ),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onRefreshBuiltInCatalog,
+                  icon: const Icon(Icons.sync_rounded),
+                  label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '刷新内置词本',
+                      en: 'Refresh built-ins',
+                    ),
                   ),
                 ),
               ],
