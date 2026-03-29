@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/online_ambient_catalog_service.dart';
+import '../../services/cstcloud_resource_cache_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
 
@@ -28,11 +29,9 @@ class _OnlineAmbientCatalogSheet extends StatefulWidget {
 
 class _OnlineAmbientCatalogSheetState
     extends State<_OnlineAmbientCatalogSheet> {
-  String? _pendingId;
   late Future<List<OnlineAmbientSoundOption>> _catalogFuture;
   late Future<Set<String>> _downloadedPathsFuture;
-  final Map<String, double> _downloadProgressById = <String, double>{};
-  final Map<String, double> _deleteProgressById = <String, double>{};
+  Set<String> _downloadedPaths = <String>{};
 
   @override
   void initState() {
@@ -40,26 +39,22 @@ class _OnlineAmbientCatalogSheetState
     final state = context.read<AppState>();
     _catalogFuture = state.fetchOnlineAmbientCatalog();
     _downloadedPathsFuture = state.fetchDownloadedOnlineAmbientRelativePaths();
-  }
-
-  void _setDownloadProgress(String id, double? progress) {
-    if (!mounted) return;
-    setState(() {
-      if (progress == null) {
-        _downloadProgressById.remove(id);
-      } else {
-        _downloadProgressById[id] = progress.clamp(0.0, 1.0);
+    _downloadedPathsFuture.then((paths) {
+      if (mounted) {
+        setState(() {
+          _downloadedPaths = paths;
+        });
       }
     });
   }
 
-  void _setDeleteProgress(String id, double? progress) {
-    if (!mounted) return;
-    setState(() {
-      if (progress == null) {
-        _deleteProgressById.remove(id);
-      } else {
-        _deleteProgressById[id] = progress.clamp(0.0, 1.0);
+  void _refreshDownloadedPaths() {
+    final state = context.read<AppState>();
+    state.fetchDownloadedOnlineAmbientRelativePaths().then((paths) {
+      if (mounted) {
+        setState(() {
+          _downloadedPaths = paths;
+        });
       }
     });
   }
@@ -115,10 +110,7 @@ class _OnlineAmbientCatalogSheetState
               const SizedBox(height: 12),
               Expanded(
                 child: FutureBuilder<Object>(
-                  future: Future.wait<Object>(<Future<Object>>[
-                    _catalogFuture,
-                    _downloadedPathsFuture,
-                  ]),
+                  future: Future.wait<Object>(<Future<Object>>[_catalogFuture]),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done ||
                         snapshot.data is! List<Object>) {
@@ -129,8 +121,6 @@ class _OnlineAmbientCatalogSheetState
                     final options =
                         data[0] as List<OnlineAmbientSoundOption>? ??
                         OnlineAmbientCatalogService.fallbackOptions;
-                    final downloadedPaths =
-                        data[1] as Set<String>? ?? <String>{};
 
                     final grouped = <String, List<OnlineAmbientSoundOption>>{};
                     for (final item in options) {
@@ -158,9 +148,8 @@ class _OnlineAmbientCatalogSheetState
                                   ),
                                   const SizedBox(height: 8),
                                   ...entry.value.map((option) {
-                                    final downloaded = downloadedPaths.contains(
-                                      option.relativePath,
-                                    );
+                                    final downloaded = _downloadedPaths
+                                        .contains(option.relativePath);
                                     final localizedName =
                                         localizedOnlineAmbientOptionName(
                                           i18n,
@@ -195,205 +184,13 @@ class _OnlineAmbientCatalogSheetState
                                               ),
                                             ),
                                             const SizedBox(width: 12),
-                                            SizedBox(
-                                              width: 100,
-                                              child: downloaded
-                                                  ? OutlinedButton.icon(
-                                                      icon:
-                                                          _deleteProgressById
-                                                              .containsKey(
-                                                                option.id,
-                                                              )
-                                                          ? SizedBox(
-                                                              width: 16,
-                                                              height: 16,
-                                                              child: CircularProgressIndicator(
-                                                                strokeWidth: 2,
-                                                                value:
-                                                                    _deleteProgressById[option
-                                                                        .id],
-                                                              ),
-                                                            )
-                                                          : const Icon(
-                                                              Icons
-                                                                  .delete_outline_rounded,
-                                                              size: 18,
-                                                            ),
-                                                      label: Text(
-                                                        _pendingId == option.id
-                                                            ? pickUiText(
-                                                                i18n,
-                                                                zh: '删除中',
-                                                                en: 'Deleting',
-                                                              )
-                                                            : pickUiText(
-                                                                i18n,
-                                                                zh: '删除',
-                                                                en: 'Delete',
-                                                              ),
-                                                      ),
-                                                      style:
-                                                          OutlinedButton.styleFrom(
-                                                            foregroundColor:
-                                                                Colors.red,
-                                                            side:
-                                                                const BorderSide(
-                                                                  color: Colors
-                                                                      .red,
-                                                                ),
-                                                          ),
-                                                      onPressed:
-                                                          _pendingId ==
-                                                              option.id
-                                                          ? null
-                                                          : () async {
-                                                              setState(() {
-                                                                _pendingId =
-                                                                    option.id;
-                                                              });
-                                                              _setDeleteProgress(
-                                                                option.id,
-                                                                0.1,
-                                                              );
-                                                              final deleted =
-                                                                  await state
-                                                                      .deleteDownloadedOnlineAmbientSource(
-                                                                        option,
-                                                                      );
-                                                              if (!mounted ||
-                                                                  !context
-                                                                      .mounted) {
-                                                                return;
-                                                              }
-                                                              _setDeleteProgress(
-                                                                option.id,
-                                                                null,
-                                                              );
-                                                              setState(() {
-                                                                _pendingId =
-                                                                    null;
-                                                                _downloadedPathsFuture =
-                                                                    state
-                                                                        .fetchDownloadedOnlineAmbientRelativePaths();
-                                                              });
-                                                              ScaffoldMessenger.of(
-                                                                context,
-                                                              ).showSnackBar(
-                                                                SnackBar(
-                                                                  content: Text(
-                                                                    deleted ==
-                                                                            true
-                                                                        ? pickUiText(
-                                                                            i18n,
-                                                                            zh: '已删除本地音频：$localizedName',
-                                                                            en: 'Deleted local audio: $localizedName',
-                                                                          )
-                                                                        : pickUiText(
-                                                                            i18n,
-                                                                            zh: '删除失败，请稍后重试。',
-                                                                            en: 'Delete failed. Please try again later.',
-                                                                          ),
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            },
-                                                    )
-                                                  : FilledButton.icon(
-                                                      icon:
-                                                          _downloadProgressById
-                                                              .containsKey(
-                                                                option.id,
-                                                              )
-                                                          ? SizedBox(
-                                                              width: 16,
-                                                              height: 16,
-                                                              child: CircularProgressIndicator(
-                                                                strokeWidth: 2,
-                                                                value:
-                                                                    _downloadProgressById[option
-                                                                        .id],
-                                                              ),
-                                                            )
-                                                          : const Icon(
-                                                              Icons
-                                                                  .download_rounded,
-                                                              size: 18,
-                                                            ),
-                                                      label: Text(
-                                                        _pendingId == option.id
-                                                            ? pickUiText(
-                                                                i18n,
-                                                                zh: '下载中',
-                                                                en: 'Downloading',
-                                                              )
-                                                            : pickUiText(
-                                                                i18n,
-                                                                zh: '下载',
-                                                                en: 'Download',
-                                                              ),
-                                                      ),
-                                                      onPressed:
-                                                          _pendingId ==
-                                                              option.id
-                                                          ? null
-                                                          : () async {
-                                                              setState(() {
-                                                                _pendingId =
-                                                                    option.id;
-                                                              });
-                                                              _setDownloadProgress(
-                                                                option.id,
-                                                                0.1,
-                                                              );
-                                                              final path = await state
-                                                                  .downloadOnlineAmbientSourceWithProgress(
-                                                                    option,
-                                                                    (progress) {
-                                                                      _setDownloadProgress(
-                                                                        option
-                                                                            .id,
-                                                                        progress
-                                                                            .progress,
-                                                                      );
-                                                                    },
-                                                                  );
-                                                              if (!mounted ||
-                                                                  !context
-                                                                      .mounted) {
-                                                                return;
-                                                              }
-                                                              _setDownloadProgress(
-                                                                option.id,
-                                                                null,
-                                                              );
-                                                              setState(() {
-                                                                _pendingId =
-                                                                    null;
-                                                                _downloadedPathsFuture =
-                                                                    state
-                                                                        .fetchDownloadedOnlineAmbientRelativePaths();
-                                                              });
-                                                              ScaffoldMessenger.of(
-                                                                context,
-                                                              ).showSnackBar(
-                                                                SnackBar(
-                                                                  content: Text(
-                                                                    path == null
-                                                                        ? pickUiText(
-                                                                            i18n,
-                                                                            zh: '下载失败，请稍后重试。',
-                                                                            en: 'Download failed. Please try again later.',
-                                                                          )
-                                                                        : pickUiText(
-                                                                            i18n,
-                                                                            zh: '已下载到本地：$localizedName',
-                                                                            en: 'Downloaded locally: $localizedName',
-                                                                          ),
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            },
-                                                    ),
+                                            AmbientActionBuilder(
+                                              option: option,
+                                              downloaded: downloaded,
+                                              localizedName: localizedName,
+                                              onActionComplete: () {
+                                                _refreshDownloadedPaths();
+                                              },
                                             ),
                                           ],
                                         ),
@@ -414,5 +211,196 @@ class _OnlineAmbientCatalogSheetState
         );
       },
     );
+  }
+}
+
+class AmbientActionBuilder extends StatefulWidget {
+  const AmbientActionBuilder({
+    super.key,
+    required this.option,
+    required this.downloaded,
+    required this.localizedName,
+    required this.onActionComplete,
+  });
+
+  final OnlineAmbientSoundOption option;
+  final bool downloaded;
+  final String localizedName;
+  final VoidCallback onActionComplete;
+
+  @override
+  State<AmbientActionBuilder> createState() => _AmbientActionBuilderState();
+}
+
+class _AmbientActionBuilderState extends State<AmbientActionBuilder> {
+  bool _isPending = false;
+  double? _progress;
+  bool _isDownloading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(context.read<AppState>().uiLanguage);
+    final buttonWidth = 100.0;
+
+    return SizedBox(width: buttonWidth, child: _buildButton(context, i18n));
+  }
+
+  Widget _buildButton(BuildContext context, AppI18n i18n) {
+    if (widget.downloaded) {
+      return _buildDeleteButton(context, i18n);
+    } else {
+      return _buildDownloadButton(context, i18n);
+    }
+  }
+
+  Widget _buildDeleteButton(BuildContext context, AppI18n i18n) {
+    final isDeleting = _isPending && _isDownloading;
+    final progress = isDeleting ? _progress : null;
+
+    return OutlinedButton.icon(
+      icon: progress != null
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, value: progress),
+            )
+          : const Icon(Icons.delete_outline_rounded, size: 18),
+      label: Text(
+        isDeleting
+            ? pickUiText(i18n, zh: '删除中', en: 'Deleting')
+            : pickUiText(i18n, zh: '删除', en: 'Delete'),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.red,
+        side: const BorderSide(color: Colors.red),
+      ),
+      onPressed: isDeleting ? null : _handleDelete,
+    );
+  }
+
+  Widget _buildDownloadButton(BuildContext context, AppI18n i18n) {
+    final isDownloadingNow = _isPending && _isDownloading;
+    final progress = isDownloadingNow ? _progress : null;
+
+    return FilledButton.icon(
+      icon: progress != null
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, value: progress),
+            )
+          : const Icon(Icons.download_rounded, size: 18),
+      label: Text(
+        isDownloadingNow
+            ? pickUiText(i18n, zh: '下载中', en: 'Downloading')
+            : pickUiText(i18n, zh: '下载', en: 'Download'),
+      ),
+      onPressed: isDownloadingNow ? null : _handleDownload,
+    );
+  }
+
+  Future<void> _handleDelete() async {
+    if (!mounted) return;
+    setState(() {
+      _isPending = true;
+      _isDownloading = true;
+      _progress = 0.1;
+    });
+
+    try {
+      final state = context.read<AppState>();
+      final i18n = AppI18n(state.uiLanguage);
+      final deleted = await state.deleteDownloadedOnlineAmbientSource(
+        widget.option,
+      );
+
+      if (!mounted) return;
+
+      widget.onActionComplete();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              deleted
+                  ? pickUiText(
+                      i18n,
+                      zh: '已删除本地音频：${widget.localizedName}',
+                      en: 'Deleted local audio: ${widget.localizedName}',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '删除失败，请稍后重试。',
+                      en: 'Delete failed. Please try again later.',
+                    ),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPending = false;
+          _isDownloading = false;
+          _progress = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleDownload() async {
+    if (!mounted) return;
+    setState(() {
+      _isPending = true;
+      _isDownloading = true;
+      _progress = 0.1;
+    });
+
+    try {
+      final state = context.read<AppState>();
+      final i18n = AppI18n(state.uiLanguage);
+      final path = await state.downloadOnlineAmbientSourceWithProgress(
+        widget.option,
+        (progress) {
+          if (mounted) {
+            setState(() {
+              _progress = progress.progress;
+            });
+          }
+        },
+      );
+
+      if (!mounted) return;
+
+      widget.onActionComplete();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              path == null
+                  ? pickUiText(
+                      i18n,
+                      zh: '下载失败，请稍后重试。',
+                      en: 'Download failed. Please try again later.',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '已下载到本地：${widget.localizedName}',
+                      en: 'Downloaded locally: ${widget.localizedName}',
+                    ),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPending = false;
+          _isDownloading = false;
+          _progress = null;
+        });
+      }
+    }
   }
 }

@@ -437,6 +437,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
   late final AudioPlayer _player;
   late final AnimationController _orbitController;
+  Timer? _visualRefreshTimer;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<Duration>? _durationSubscription;
   StreamSubscription<PlayerState>? _stateSubscription;
@@ -501,6 +502,18 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       }
     });
     unawaited(_initAudio());
+    _startVisualRefreshTimer();
+  }
+
+  void _startVisualRefreshTimer() {
+    _visualRefreshTimer?.cancel();
+    _visualRefreshTimer = Timer.periodic(const Duration(milliseconds: 100), (
+      timer,
+    ) {
+      if (mounted && _playing) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -509,6 +522,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _durationSubscription?.cancel();
     _stateSubscription?.cancel();
     _sleepTimer?.cancel();
+    _visualRefreshTimer?.cancel();
     _orbitController.dispose();
     final shouldRetainPlayer = _continuePlaybackOnExit && _playing;
     if (shouldRetainPlayer) {
@@ -845,10 +859,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     await AudioPlayerSourceHelper.waitForDuration(
       _player,
       tag: 'soothing_audio',
-      data: <String, Object?>{
-        'playerId': _player.playerId,
-        'modeId': _mode.id,
-      },
+      data: <String, Object?>{'playerId': _player.playerId, 'modeId': _mode.id},
       timeout: const Duration(seconds: 5),
     );
     await _player.resume();
@@ -1055,11 +1066,18 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
             frames.length - 1,
           )];
     final seed = _currentTrack.seed.toDouble();
+    final time = DateTime.now().millisecondsSinceEpoch / 1000.0;
+    final playingBoost = _playing ? 1.0 : 0.3;
     return List<double>.generate(base.length, (index) {
-      final mod =
+      final mod1 =
           math.sin(_progressRatio * math.pi * 6 + seed * 0.013 + index * 0.4) *
           0.08;
-      return (base[index] + mod).clamp(0.04, 1.0);
+      final mod2 = math.sin(time * 2.5 + index * 0.6) * 0.12 * playingBoost;
+      final mod3 = math.cos(time * 1.8 - index * 0.3) * 0.06 * playingBoost;
+      final combined = base[index] + mod1 + mod2 + mod3;
+      final minVal = 0.04 + (playingBoost * 0.08);
+      final maxVal = 0.85 + (playingBoost * 0.15);
+      return combined.clamp(minVal, maxVal);
     }, growable: false);
   }
 
