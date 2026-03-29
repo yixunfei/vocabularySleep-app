@@ -54,7 +54,7 @@ class AppDependencies {
     final settings = SettingsService(database);
     final tts = TtsService();
     final playback = PlaybackService(tts);
-    final ambient = AmbientService();
+    final ambient = AmbientService(resourceCache: cstCloudResourceCache);
     final asr = AsrService();
     final reminder = PlatformReminderService();
     final todoReminder = PlatformTodoReminderService();

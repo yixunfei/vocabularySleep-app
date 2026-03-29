@@ -180,6 +180,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
   int? _pendingTodoReminderLaunchId;
 
+  // Ambient sync debounce to prevent race conditions from rapid state changes
+  Timer? _ambientSyncDebounceTimer;
+
   bool _isPlaying = false;
   bool _isPaused = false;
   int _currentUnit = 0;
@@ -211,6 +214,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (!_busy || key == null || key.trim().isEmpty) return null;
     return AppI18n(_uiLanguage).t(key, params: _busyMessageParams);
   }
+
   String? get busyDetail => _busy ? _busyDetail : null;
   double? get busyProgress => _busy ? _busyProgress : null;
   bool get wordbookImportActive => _wordbookImportActive;
@@ -1474,25 +1478,25 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> setAmbientMasterVolume(double value) async {
     _ambient.setMasterVolume(value);
-    await _ambient.syncPlayback();
+    _scheduleAmbientSync();
     notifyListeners();
   }
 
   Future<void> setAmbientEnabled(bool value) async {
     _ambient.setEnabled(value);
-    await _ambient.syncPlayback();
+    _scheduleAmbientSync();
     notifyListeners();
   }
 
   Future<void> setAmbientSourceEnabled(String sourceId, bool enabled) async {
     _ambient.setSourceEnabled(sourceId, enabled);
-    await _ambient.syncPlayback();
+    _scheduleAmbientSync();
     notifyListeners();
   }
 
   Future<void> setAmbientSourceVolume(String sourceId, double value) async {
     _ambient.setSourceVolume(sourceId, value);
-    await _ambient.syncPlayback();
+    _scheduleAmbientSync();
     notifyListeners();
   }
 
@@ -1507,7 +1511,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (file.path == null || file.path!.trim().isEmpty) return;
 
     _ambient.addFileSource(file.path!, name: file.name);
-    await _ambient.syncPlayback();
+    _scheduleAmbientSync();
     notifyListeners();
   }
 
@@ -1535,7 +1539,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         categoryKey: option.categoryKey,
         volume: option.defaultVolume,
       );
-      await _ambient.syncPlayback();
+      _scheduleAmbientSync();
       notifyListeners();
       return path;
     } catch (error, stackTrace) {
@@ -1547,7 +1551,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         data: <String, Object?>{
           'id': option.id,
           'name': option.name,
-          'url': option.primaryUrl,
+          'remoteKey': option.remoteKey,
         },
       );
       return null;
@@ -1571,7 +1575,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       for (final sourceId in matchingIds) {
         _ambient.removeSource(sourceId);
       }
-      await _ambient.syncPlayback();
+      _scheduleAmbientSync();
       notifyListeners();
       return true;
     } catch (error, stackTrace) {
@@ -1604,8 +1608,21 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> removeAmbientSource(String sourceId) async {
     _ambient.removeSource(sourceId);
-    await _ambient.syncPlayback();
+    _scheduleAmbientSync();
     notifyListeners();
+  }
+
+  /// Schedule a debounced ambient sync playback to avoid race conditions
+  /// from multiple rapid state changes. This consolidates multiple rapid
+  /// ambient state changes into a single sync call.
+  void _scheduleAmbientSync() {
+    _ambientSyncDebounceTimer?.cancel();
+    _ambientSyncDebounceTimer = Timer(
+      const Duration(milliseconds: 200),
+      () async {
+        await _ambient.syncPlayback();
+      },
+    );
   }
 
   Future<void> previewPronunciation(String word) async {
@@ -2729,8 +2746,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return progress.stage == BuiltInWordbookLoadStage.completed ? 1.0 : null;
     }
     return switch (progress.stage) {
-      BuiltInWordbookLoadStage.downloading =>
-        (stageProgress * 0.72).clamp(0.0, 0.72),
+      BuiltInWordbookLoadStage.downloading => (stageProgress * 0.72).clamp(
+        0.0,
+        0.72,
+      ),
       BuiltInWordbookLoadStage.processing =>
         (0.72 + stageProgress * 0.26).clamp(0.72, 0.98),
       BuiltInWordbookLoadStage.completed => 1.0,
@@ -2814,6 +2833,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     _log.i('app_state', 'dispose start');
+    _ambientSyncDebounceTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _playback.stop();
     _focusService.dispose();

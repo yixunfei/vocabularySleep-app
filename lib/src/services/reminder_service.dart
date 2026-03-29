@@ -5,6 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'audio_player_source_helper.dart';
+
 class _ReminderToneSegment {
   const _ReminderToneSegment({
     required this.startMs,
@@ -131,28 +133,44 @@ class PlatformReminderService implements ReminderService {
       await _fallbackPlayer.setReleaseMode(ReleaseMode.loop);
       final normalizedPath = customSoundPath?.trim() ?? '';
       if (normalizedPath.isNotEmpty) {
-        await _fallbackPlayer.play(
+        await AudioPlayerSourceHelper.play(
+          _fallbackPlayer,
           DeviceFileSource(normalizedPath),
           volume: 1,
+          tag: 'reminder_audio',
           ctx: _fallbackAudioContext,
+          data: <String, Object?>{'customSoundPath': normalizedPath},
         );
       } else {
-        await _fallbackPlayer.play(
+        await AudioPlayerSourceHelper.play(
+          _fallbackPlayer,
           BytesSource(_toneBytes),
           volume: 1,
+          tag: 'reminder_audio',
           ctx: _fallbackAudioContext,
           mode: PlayerMode.lowLatency,
+          data: <String, Object?>{
+            'bytes': _toneBytes.length,
+            'source': 'generated_reminder_tone',
+          },
         );
       }
     } catch (_) {
       if ((customSoundPath ?? '').trim().isNotEmpty) {
         try {
           await _fallbackPlayer.stop();
-          await _fallbackPlayer.play(
+          await AudioPlayerSourceHelper.play(
+            _fallbackPlayer,
             BytesSource(_toneBytes),
             volume: 1,
+            tag: 'reminder_audio',
             ctx: _fallbackAudioContext,
             mode: PlayerMode.lowLatency,
+            data: <String, Object?>{
+              'bytes': _toneBytes.length,
+              'source': 'generated_reminder_tone',
+              'fallbackAfterCustomSoundFailure': true,
+            },
           );
           return;
         } catch (_) {}

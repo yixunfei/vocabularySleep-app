@@ -1,7 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:uuid/uuid.dart';
+
+import 'audio_player_source_helper.dart';
+import 'app_log_service.dart';
+import 'cstcloud_resource_cache_service.dart';
 
 final AudioContext _ambientPlaybackContext = AudioContextConfig(
   focus: AudioContextConfigFocus.mixWithOthers,
@@ -15,7 +20,9 @@ class AmbientSource {
     this.assetPath,
     this.filePath,
     this.remoteUrl,
+    this.remoteKey,
     this.categoryKey,
+    this.builtIn = false,
     this.enabled = false,
     this.volume = 0.5,
   });
@@ -25,13 +32,16 @@ class AmbientSource {
   final String? assetPath;
   final String? filePath;
   final String? remoteUrl;
+  final String? remoteKey;
   final String? categoryKey;
+  final bool builtIn;
   final bool enabled;
   final double volume;
 
   bool get isAsset => assetPath != null;
   bool get isFile => filePath != null;
   bool get isRemote => remoteUrl != null;
+  bool get isBuiltIn => builtIn;
 
   AmbientSource copyWith({
     String? id,
@@ -39,7 +49,9 @@ class AmbientSource {
     String? assetPath,
     String? filePath,
     String? remoteUrl,
+    String? remoteKey,
     String? categoryKey,
+    bool? builtIn,
     bool? enabled,
     double? volume,
   }) {
@@ -49,7 +61,9 @@ class AmbientSource {
       assetPath: assetPath ?? this.assetPath,
       filePath: filePath ?? this.filePath,
       remoteUrl: remoteUrl ?? this.remoteUrl,
+      remoteKey: remoteKey ?? this.remoteKey,
       categoryKey: categoryKey ?? this.categoryKey,
+      builtIn: builtIn ?? this.builtIn,
       enabled: enabled ?? this.enabled,
       volume: volume ?? this.volume,
     );
@@ -73,6 +87,7 @@ class AudioPlayerAmbientLoopPlayer implements AmbientLoopPlayer {
     : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
+  final AppLogService _log = AppLogService.instance;
   bool _audioContextConfigured = false;
 
   Future<void> _ensureAudioContext() async {
@@ -86,11 +101,47 @@ class AudioPlayerAmbientLoopPlayer implements AmbientLoopPlayer {
   @override
   Future<void> setSource(Source source) async {
     await _ensureAudioContext();
-    await _player.setSource(source);
+    _log.d(
+      'ambient_audio',
+      'ambient player setSource start',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'sourceType': source.runtimeType.toString(),
+      },
+    );
+    await AudioPlayerSourceHelper.setSource(
+      _player,
+      source,
+      tag: 'ambient_audio',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+    _log.d(
+      'ambient_audio',
+      'ambient player setSource complete',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'sourceType': source.runtimeType.toString(),
+      },
+    );
   }
 
   @override
-  Future<Duration?> getDuration() => _player.getDuration();
+  Future<Duration?> getDuration() async {
+    final duration = await AudioPlayerSourceHelper.waitForDuration(
+      _player,
+      tag: 'ambient_audio',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+    _log.d(
+      'ambient_audio',
+      'ambient player duration resolved',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'durationMs': duration?.inMilliseconds,
+      },
+    );
+    return duration;
+  }
 
   @override
   Future<void> setReleaseMode(ReleaseMode releaseMode) {
@@ -101,13 +152,49 @@ class AudioPlayerAmbientLoopPlayer implements AmbientLoopPlayer {
   Future<void> setVolume(double volume) => _player.setVolume(volume);
 
   @override
-  Future<void> resume() => _player.resume();
+  Future<void> resume() async {
+    _log.d(
+      'ambient_audio',
+      'ambient player resume start',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+    await _player.resume();
+    _log.d(
+      'ambient_audio',
+      'ambient player resume complete',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+  }
 
   @override
-  Future<void> stop() => _player.stop();
+  Future<void> stop() async {
+    _log.d(
+      'ambient_audio',
+      'ambient player stop start',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+    await _player.stop();
+    _log.d(
+      'ambient_audio',
+      'ambient player stop complete',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+  }
 
   @override
-  Future<void> dispose() => _player.dispose();
+  Future<void> dispose() async {
+    _log.d(
+      'ambient_audio',
+      'ambient player dispose start',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+    await _player.dispose();
+    _log.d(
+      'ambient_audio',
+      'ambient player dispose complete',
+      data: <String, Object?>{'playerId': _player.playerId},
+    );
+  }
 }
 
 /// Keeps two preloaded players leapfrogging so ambient loops do not pause
@@ -150,6 +237,15 @@ class SeamlessAmbientLoop {
     _started = true;
     _runToken += 1;
     final runToken = _runToken;
+    AppLogService.instance.d(
+      'ambient_audio',
+      'seamless loop start',
+      data: <String, Object?>{
+        'runToken': runToken,
+        'sourceType': source.runtimeType.toString(),
+        'initialVolume': _targetVolume,
+      },
+    );
 
     final firstPlayer = _playerFactory();
     await _preparePlayer(firstPlayer);
@@ -166,11 +262,33 @@ class SeamlessAmbientLoop {
 
     _firstPlayer = firstPlayer;
     _trackDuration = duration;
+    AppLogService.instance.d(
+      'ambient_audio',
+      'first ambient player prepared',
+      data: <String, Object?>{
+        'runToken': runToken,
+        'durationMs': duration?.inMilliseconds,
+      },
+    );
 
     if (!_canUseSeamlessLoop(duration)) {
       _usingNativeLoopFallback = true;
+      AppLogService.instance.w(
+        'ambient_audio',
+        'ambient loop falling back to native loop',
+        data: <String, Object?>{
+          'runToken': runToken,
+          'durationMs': duration?.inMilliseconds,
+        },
+      );
       await firstPlayer.setReleaseMode(ReleaseMode.loop);
       await firstPlayer.setVolume(_targetVolume);
+      // CRITICAL FIX: Wait for player to be ready before resuming
+      await _playerReady(firstPlayer);
+      if (!_isRunActive(runToken)) {
+        await firstPlayer.dispose();
+        return;
+      }
       await firstPlayer.resume();
       return;
     }
@@ -185,15 +303,40 @@ class SeamlessAmbientLoop {
 
     _secondPlayer = secondPlayer;
     _effectiveOverlap = _resolveEffectiveOverlap(duration!);
+    AppLogService.instance.d(
+      'ambient_audio',
+      'second ambient player prepared',
+      data: <String, Object?>{
+        'runToken': runToken,
+        'durationMs': duration.inMilliseconds,
+        'effectiveOverlapMs': _effectiveOverlap.inMilliseconds,
+      },
+    );
 
     await firstPlayer.setVolume(_targetVolume);
     await secondPlayer.setVolume(0);
+
+    // CRITICAL FIX: Wait for player to be ready before resuming.
+    // Without this, resume() may be called before the audio source is loaded,
+    // causing no sound output, especially on Windows.
+    await _playerReady(firstPlayer);
+    if (!_isRunActive(runToken)) {
+      await firstPlayer.dispose();
+      await secondPlayer.dispose();
+      return;
+    }
+
     await firstPlayer.resume();
     _scheduleNextHandoff(runToken);
   }
 
   Future<void> setTargetVolume(double value) async {
     _targetVolume = value.clamp(0.0, 1.0);
+    AppLogService.instance.d(
+      'ambient_audio',
+      'ambient loop target volume updated',
+      data: <String, Object?>{'targetVolume': _targetVolume},
+    );
     if (_disposed || !_started) {
       return;
     }
@@ -204,6 +347,7 @@ class SeamlessAmbientLoop {
     if (_disposed) {
       return;
     }
+    AppLogService.instance.d('ambient_audio', 'seamless loop dispose start');
     _disposed = true;
     _runToken += 1;
     _handoffTimer?.cancel();
@@ -225,6 +369,7 @@ class SeamlessAmbientLoop {
       await player.stop();
       await player.dispose();
     }
+    AppLogService.instance.d('ambient_audio', 'seamless loop dispose complete');
   }
 
   bool _canUseSeamlessLoop(Duration? duration) {
@@ -236,6 +381,31 @@ class SeamlessAmbientLoop {
     return duration.inMilliseconds > minimumDurationMs;
   }
 
+  /// Check if a player is ready for playback by verifying duration is available.
+  /// This is critical for Windows where audio initialization takes longer.
+  Future<bool> _playerReady(AmbientLoopPlayer player) async {
+    try {
+      final duration = await player.getDuration();
+      final ready = duration != null && duration.inMilliseconds > 0;
+      AppLogService.instance.d(
+        'ambient_audio',
+        'player ready check',
+        data: <String, Object?>{
+          'ready': ready,
+          'durationMs': duration?.inMilliseconds,
+        },
+      );
+      return ready;
+    } catch (error) {
+      AppLogService.instance.w(
+        'ambient_audio',
+        'player ready check failed',
+        data: <String, Object?>{'error': '$error'},
+      );
+      return false;
+    }
+  }
+
   Duration _resolveEffectiveOverlap(Duration duration) {
     final cappedOverlap = duration.inMilliseconds ~/ 4;
     final overlapMs = overlap.inMilliseconds.clamp(1, cappedOverlap);
@@ -243,8 +413,13 @@ class SeamlessAmbientLoop {
   }
 
   Future<void> _preparePlayer(AmbientLoopPlayer player) async {
+    AppLogService.instance.d('ambient_audio', 'prepare ambient player start');
     await player.setReleaseMode(ReleaseMode.stop);
     await player.setSource(source);
+    AppLogService.instance.d(
+      'ambient_audio',
+      'prepare ambient player complete',
+    );
   }
 
   void _scheduleNextHandoff(int runToken) {
@@ -255,6 +430,15 @@ class SeamlessAmbientLoop {
     }
 
     final handoffDelay = duration - _effectiveOverlap;
+    AppLogService.instance.d(
+      'ambient_audio',
+      'schedule ambient handoff',
+      data: <String, Object?>{
+        'runToken': runToken,
+        'handoffDelayMs': handoffDelay.inMilliseconds,
+        'effectiveOverlapMs': _effectiveOverlap.inMilliseconds,
+      },
+    );
     _handoffTimer?.cancel();
     _handoffTimer = Timer(handoffDelay, () {
       unawaited(_performHandoff(runToken));
@@ -280,6 +464,15 @@ class SeamlessAmbientLoop {
     }
 
     _activeIndex = toIndex;
+    AppLogService.instance.d(
+      'ambient_audio',
+      'ambient handoff started',
+      data: <String, Object?>{
+        'runToken': runToken,
+        'fromIndex': fromIndex,
+        'toIndex': toIndex,
+      },
+    );
     _fadeFromIndex = fromIndex;
     _fadeToIndex = toIndex;
     _fadeProgress = 0;
@@ -315,6 +508,14 @@ class SeamlessAmbientLoop {
     if (fromPlayer != null) {
       await fromPlayer.stop();
     }
+    AppLogService.instance.d(
+      'ambient_audio',
+      'ambient fade complete',
+      data: <String, Object?>{
+        'runToken': runToken,
+        'activeIndex': _activeIndex,
+      },
+    );
     if (_isRunActive(runToken)) {
       await _syncVolumes();
     }
@@ -375,14 +576,18 @@ class AmbientService {
   AmbientService({
     AmbientLoopPlayerFactory? playerFactory,
     Duration seamlessLoopOverlap = const Duration(milliseconds: 180),
+    CstCloudResourceCacheService? resourceCache,
   }) : _playerFactory = playerFactory ?? (() => AudioPlayerAmbientLoopPlayer()),
-       _seamlessLoopOverlap = seamlessLoopOverlap {
+       _seamlessLoopOverlap = seamlessLoopOverlap,
+       _resourceCache = resourceCache {
     _sources = List<AmbientSource>.from(_builtInPresets);
   }
 
   final _uuid = const Uuid();
   final AmbientLoopPlayerFactory _playerFactory;
   final Duration _seamlessLoopOverlap;
+  final CstCloudResourceCacheService? _resourceCache;
+  final AppLogService _log = AppLogService.instance;
   final Map<String, SeamlessAmbientLoop> _loops =
       <String, SeamlessAmbientLoop>{};
 
@@ -394,55 +599,73 @@ class AmbientService {
     AmbientSource(
       id: 'noise_white',
       name: 'White Noise',
+      remoteKey: 'ambient/moodist/noise/white-noise.wav',
       assetPath: 'ambient/noise/white-noise.wav',
+      builtIn: true,
       volume: 0.36,
     ),
     AmbientSource(
       id: 'noise_pink',
       name: 'Pink Noise',
+      remoteKey: 'ambient/moodist/noise/pink-noise.wav',
       assetPath: 'ambient/noise/pink-noise.wav',
+      builtIn: true,
       volume: 0.34,
     ),
     AmbientSource(
       id: 'noise_brown',
       name: 'Brown Noise',
+      remoteKey: 'ambient/moodist/noise/brown-noise.wav',
       assetPath: 'ambient/noise/brown-noise.wav',
+      builtIn: true,
       volume: 0.38,
     ),
     AmbientSource(
       id: 'nature_wind',
       name: 'Wind',
+      remoteKey: 'ambient/moodist/nature/wind.mp3',
       assetPath: 'ambient/nature/wind.mp3',
+      builtIn: true,
       volume: 0.42,
     ),
     AmbientSource(
       id: 'nature_fire',
       name: 'Campfire',
+      remoteKey: 'ambient/moodist/nature/campfire.mp3',
       assetPath: 'ambient/nature/campfire.mp3',
+      builtIn: true,
       volume: 0.45,
     ),
     AmbientSource(
       id: 'nature_ocean',
       name: 'Waves',
+      remoteKey: 'ambient/moodist/nature/waves.mp3',
       assetPath: 'ambient/nature/waves.mp3',
+      builtIn: true,
       volume: 0.45,
     ),
     AmbientSource(
       id: 'rain_heavy',
       name: 'Heavy Rain',
+      remoteKey: 'ambient/moodist/rain/heavy-rain.mp3',
       assetPath: 'ambient/rain/heavy-rain.mp3',
+      builtIn: true,
       volume: 0.36,
     ),
     AmbientSource(
       id: 'focus_library',
       name: 'Library',
+      remoteKey: 'ambient/moodist/places/library.mp3',
       assetPath: 'ambient/places/library.mp3',
+      builtIn: true,
       volume: 0.45,
     ),
     AmbientSource(
       id: 'focus_night',
       name: 'Night Village',
+      remoteKey: 'ambient/moodist/places/night-village.mp3',
       assetPath: 'ambient/places/night-village.mp3',
+      builtIn: true,
       volume: 0.4,
     ),
   ];
@@ -453,10 +676,20 @@ class AmbientService {
 
   void setEnabled(bool value) {
     _enabled = value;
+    _log.d(
+      'ambient',
+      'ambient enabled updated',
+      data: <String, Object?>{'enabled': value},
+    );
   }
 
   void setMasterVolume(double value) {
     _masterVolume = value.clamp(0.0, 1.0);
+    _log.d(
+      'ambient',
+      'ambient master volume updated',
+      data: <String, Object?>{'masterVolume': _masterVolume},
+    );
     for (final source in _sources.where((item) => item.enabled)) {
       final loop = _loops[source.id];
       if (loop == null) {
@@ -467,6 +700,11 @@ class AmbientService {
   }
 
   void setSourceEnabled(String sourceId, bool enabled) {
+    _log.d(
+      'ambient',
+      'ambient source enabled updated',
+      data: <String, Object?>{'sourceId': sourceId, 'enabled': enabled},
+    );
     _sources = _sources.map((source) {
       if (source.id != sourceId) return source;
       return source.copyWith(enabled: enabled);
@@ -475,6 +713,11 @@ class AmbientService {
 
   void setSourceVolume(String sourceId, double value) {
     final volume = value.clamp(0.0, 1.0);
+    _log.d(
+      'ambient',
+      'ambient source volume updated',
+      data: <String, Object?>{'sourceId': sourceId, 'volume': volume},
+    );
     _sources = _sources.map((source) {
       if (source.id != sourceId) return source;
       return source.copyWith(volume: volume);
@@ -556,8 +799,18 @@ class AmbientService {
   }
 
   Future<void> syncPlayback() async {
+    _log.d(
+      'ambient',
+      'syncPlayback start',
+      data: <String, Object?>{
+        'enabled': _enabled,
+        'totalSources': _sources.length,
+        'enabledSources': _sources.where((source) => source.enabled).length,
+      },
+    );
     if (!_enabled) {
       await stopAll();
+      _log.d('ambient', 'syncPlayback stopped all because ambient disabled');
       return;
     }
 
@@ -580,8 +833,19 @@ class AmbientService {
         continue;
       }
 
-      final playbackSource = _toPlaybackSource(source);
+      final playbackSource = await _toPlaybackSource(source);
       if (playbackSource == null) {
+        _log.w(
+          'ambient',
+          'ambient source skipped because no playback source was resolved',
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'assetPath': source.assetPath,
+            'filePath': source.filePath,
+            'remoteUrl': source.remoteUrl,
+            'remoteKey': source.remoteKey,
+          },
+        );
         continue;
       }
 
@@ -591,9 +855,62 @@ class AmbientService {
         playerFactory: _playerFactory,
         overlap: _seamlessLoopOverlap,
       );
-      await loop.start();
-      _loops[source.id] = loop;
+      try {
+        await loop.start().timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw TimeoutException(
+              'Ambient loop start timed out after 15 seconds',
+              const Duration(seconds: 15),
+            );
+          },
+        );
+        _loops[source.id] = loop;
+        _log.d(
+          'ambient',
+          'ambient loop started',
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'sourceType': playbackSource.runtimeType.toString(),
+            'targetVolume': targetVolume,
+          },
+        );
+      } on TimeoutException catch (error, stackTrace) {
+        await loop.dispose();
+        _log.e(
+          'ambient',
+          'ambient source start timed out - file may be corrupted or incompatible',
+          error: error,
+          stackTrace: stackTrace,
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'assetPath': source.assetPath,
+            'filePath': source.filePath,
+            'timeoutSeconds': 15,
+          },
+        );
+      } catch (error, stackTrace) {
+        await loop.dispose();
+        _log.e(
+          'ambient',
+          'ambient source start failed',
+          error: error,
+          stackTrace: stackTrace,
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'assetPath': source.assetPath,
+            'filePath': source.filePath,
+            'remoteUrl': source.remoteUrl,
+            'remoteKey': source.remoteKey,
+          },
+        );
+      }
     }
+    _log.d(
+      'ambient',
+      'syncPlayback complete',
+      data: <String, Object?>{'activeLoops': _loops.length},
+    );
   }
 
   Future<void> stopAll() async {
@@ -610,17 +927,138 @@ class AmbientService {
     _sources = List<AmbientSource>.from(_builtInPresets);
   }
 
-  Source? _toPlaybackSource(AmbientSource source) {
-    if (source.assetPath != null) {
-      return AssetSource(source.assetPath!);
+  Future<Source?> _toPlaybackSource(AmbientSource source) async {
+    final remoteKey = source.remoteKey?.trim();
+    final resourceCache = _resourceCache;
+    if ((remoteKey ?? '').isNotEmpty && resourceCache != null) {
+      try {
+        final file = await resourceCache.ensureFileDownloaded(
+          remoteKey!,
+          cacheRelativePath: remoteKey,
+        );
+        if (await file.exists() && await file.length() > 0) {
+          final filePath = file.path;
+          _rememberResolvedFilePath(source.id, filePath);
+          _log.d(
+            'ambient',
+            'ambient source resolved to downloaded file',
+            data: <String, Object?>{
+              'sourceId': source.id,
+              'path': filePath,
+              'remoteKey': remoteKey,
+              'pathLength': filePath.length,
+              'fileSize': await file.length(),
+            },
+          );
+          return DeviceFileSource(filePath);
+        } else {
+          _log.w(
+            'ambient',
+            'downloaded file does not exist or is empty',
+            data: <String, Object?>{
+              'sourceId': source.id,
+              'path': file.path,
+              'exists': await file.exists(),
+              'length': await file.length(),
+            },
+          );
+        }
+      } catch (error, stackTrace) {
+        _log.w(
+          'ambient',
+          'built-in ambient download failed; using fallback if available',
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'remoteKey': remoteKey,
+            'error': '$error',
+          },
+        );
+        _log.e(
+          'ambient',
+          'built-in ambient remote load detail',
+          error: error,
+          stackTrace: stackTrace,
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'remoteKey': remoteKey,
+            'temporaryDiagnostic': 'remove_after_ambient_s3_rollout_stabilizes',
+          },
+        );
+      }
     }
     if (source.filePath != null) {
-      return DeviceFileSource(source.filePath!);
+      final file = File(source.filePath!);
+      final exists = await file.exists();
+      final length = exists ? await file.length() : 0;
+      if (exists && length > 0) {
+        _log.d(
+          'ambient',
+          'ambient source resolved to local file',
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'path': source.filePath,
+            'length': length,
+          },
+        );
+        return DeviceFileSource(source.filePath!);
+      } else {
+        _log.w(
+          'ambient',
+          'local file does not exist or is empty',
+          data: <String, Object?>{
+            'sourceId': source.id,
+            'path': source.filePath,
+            'exists': exists,
+            'length': length,
+          },
+        );
+      }
+    }
+    if (source.assetPath != null) {
+      _log.d(
+        'ambient',
+        'ambient source resolved to asset',
+        data: <String, Object?>{
+          'sourceId': source.id,
+          'assetPath': source.assetPath,
+        },
+      );
+      return AssetSource(source.assetPath!);
     }
     if (source.remoteUrl != null) {
+      _log.d(
+        'ambient',
+        'ambient source resolved to remote url',
+        data: <String, Object?>{'sourceId': source.id, 'url': source.remoteUrl},
+      );
       return UrlSource(source.remoteUrl!);
     }
+    _log.e(
+      'ambient',
+      'ambient source could not be resolved to any source type',
+      data: <String, Object?>{
+        'sourceId': source.id,
+        'assetPath': source.assetPath,
+        'filePath': source.filePath,
+        'remoteUrl': source.remoteUrl,
+        'remoteKey': source.remoteKey,
+      },
+    );
     return null;
+  }
+
+  void _rememberResolvedFilePath(String sourceId, String path) {
+    final index = _sources.indexWhere((source) => source.id == sourceId);
+    if (index < 0) {
+      return;
+    }
+    final current = _sources[index];
+    if ((current.filePath ?? '').trim() == path.trim()) {
+      return;
+    }
+    final updated = List<AmbientSource>.from(_sources);
+    updated[index] = current.copyWith(filePath: path);
+    _sources = updated;
   }
 
   double _resolvedVolume(AmbientSource source) {

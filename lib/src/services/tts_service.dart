@@ -11,6 +11,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../models/play_config.dart';
+import 'audio_player_source_helper.dart';
 import 'app_log_service.dart';
 
 class TtsService {
@@ -632,7 +633,16 @@ class TtsService {
 
     await _runOp<void>(
       'api.player.play',
-      () => _apiPlayer.play(source, volume: config.volume.clamp(0.0, 1.0)),
+      () => AudioPlayerSourceHelper.play(
+        _apiPlayer,
+        source,
+        volume: config.volume.clamp(0.0, 1.0),
+        tag: 'tts_audio',
+        data: <String, Object?>{
+          'speakToken': speakToken,
+          'source': sourceLabel,
+        },
+      ),
       data: <String, Object?>{
         'speakToken': speakToken,
         'bytes': bytes,

@@ -1,7 +1,15 @@
+import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:crypto/crypto.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+import 'audio_player_source_helper.dart';
+import 'app_log_service.dart';
 
 final AudioContext _toolboxAudioContext = AudioContextConfig(
   focus: AudioContextConfigFocus.mixWithOthers,
@@ -11,6 +19,7 @@ class ToolboxLoopController {
   final AudioPlayer _player = AudioPlayer();
   bool _audioContextConfigured = false;
   Uint8List? _activeBytes;
+  String? _activePath;
 
   Future<void> _ensureAudioContext() async {
     if (_audioContextConfigured) return;
@@ -21,11 +30,32 @@ class ToolboxLoopController {
   Future<void> play(Uint8List bytes, {double volume = 0.7}) async {
     await _ensureAudioContext();
     if (!identical(_activeBytes, bytes)) {
-      await _player.setSourceBytes(bytes, mimeType: 'audio/wav');
+      final sourcePath = await _ToolboxAudioTempStore.instance.pathFor(bytes);
+      if (_activePath != sourcePath) {
+        await AudioPlayerSourceHelper.setSource(
+          _player,
+          DeviceFileSource(sourcePath, mimeType: 'audio/wav'),
+          tag: 'toolbox_loop_audio',
+          data: <String, Object?>{
+            'bytes': bytes.length,
+            'playerId': _player.playerId,
+          },
+        );
+        _activePath = sourcePath;
+      }
       _activeBytes = bytes;
     }
     await _player.setReleaseMode(ReleaseMode.loop);
     await _player.setVolume(volume.clamp(0.0, 1.0));
+    await AudioPlayerSourceHelper.waitForDuration(
+      _player,
+      tag: 'toolbox_loop_audio',
+      data: <String, Object?>{
+        'bytes': bytes.length,
+        'playerId': _player.playerId,
+      },
+      timeout: const Duration(seconds: 5),
+    );
     await _player.resume();
   }
 
@@ -43,37 +73,380 @@ class ToolboxEffectPlayer {
 
   final Uint8List bytes;
   final int maxPlayers;
+  final AppLogService _log = AppLogService.instance;
 
-  AudioPool? _pool;
-
-  Future<AudioPool> _ensurePool() async {
-    final existing = _pool;
-    if (existing != null) return existing;
-    final created = await AudioPool.create(
-      source: BytesSource(bytes, mimeType: 'audio/wav'),
-      maxPlayers: maxPlayers,
-      minPlayers: math.min(2, maxPlayers),
-      audioContext: _toolboxAudioContext,
-    );
-    _pool = created;
-    return created;
-  }
+  final _ToolboxAsyncLock _voiceLock = _ToolboxAsyncLock();
+  final List<_ToolboxReusableEffectVoice> _voices =
+      <_ToolboxReusableEffectVoice>[];
+  final Set<AudioPlayer> _overflowPlayers = <AudioPlayer>{};
+  Future<String>? _sourcePathFuture;
 
   Future<void> play({double volume = 1.0}) async {
-    final pool = await _ensurePool();
-    await pool.start(volume: volume.clamp(0.0, 1.0));
+    try {
+      final normalizedVolume = volume.clamp(0.0, 1.0);
+      final sourcePath = await _ensureSourcePath();
+      final voice = await _acquireVoice(sourcePath: sourcePath);
+      if (voice != null) {
+        await voice.play(volume: normalizedVolume);
+        return;
+      }
+      await _playOverflow(volume: normalizedVolume, sourcePath: sourcePath);
+    } catch (error, stackTrace) {
+      _log.e(
+        'toolbox_audio',
+        'toolbox effect playback failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'bytes': bytes.length,
+          'strategy': 'reusable_voice_pool',
+        },
+      );
+    }
   }
 
   Future<void> warmUp() async {
-    await _ensurePool();
+    try {
+      await _ensureSourcePath();
+    } catch (error, stackTrace) {
+      _log.w(
+        'toolbox_audio',
+        'toolbox effect warm-up skipped after failure',
+        data: <String, Object?>{
+          'error': '$error',
+          'strategy': 'reusable_voice_pool',
+        },
+      );
+      _log.e(
+        'toolbox_audio',
+        'toolbox effect warm-up detail',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'bytes': bytes.length,
+          'strategy': 'reusable_voice_pool',
+        },
+      );
+    }
   }
 
   Future<void> dispose() async {
-    final pool = _pool;
-    _pool = null;
-    if (pool != null) {
-      await pool.dispose();
+    final voices = _voices.toList(growable: false);
+    _voices.clear();
+    for (final voice in voices) {
+      await voice.dispose();
     }
+    final overflowPlayers = _overflowPlayers.toList(growable: false);
+    _overflowPlayers.clear();
+    for (final player in overflowPlayers) {
+      await player.dispose();
+    }
+  }
+
+  Future<_ToolboxReusableEffectVoice?> _acquireVoice({
+    required String sourcePath,
+    bool allowOverflow = true,
+  }) async {
+    return _voiceLock.synchronized(() async {
+      for (final voice in _voices) {
+        if (!voice.isBusy) {
+          voice.reserve();
+          try {
+            await voice.prepare(sourcePath);
+            return voice;
+          } catch (_) {
+            voice.release();
+            if (!allowOverflow) {
+              rethrow;
+            }
+            return null;
+          }
+        }
+      }
+      if (_voices.length >= maxPlayers) {
+        return null;
+      }
+      final created = _ToolboxReusableEffectVoice(bytes);
+      _voices.add(created);
+      created.reserve();
+      try {
+        await created.prepare(sourcePath);
+        return created;
+      } catch (_) {
+        created.release();
+        _voices.remove(created);
+        await created.dispose();
+        if (!allowOverflow) {
+          rethrow;
+        }
+        return null;
+      }
+    });
+  }
+
+  Future<String> _ensureSourcePath() {
+    final existing = _sourcePathFuture;
+    if (existing != null) {
+      return existing;
+    }
+    final future = _ToolboxAudioTempStore.instance.pathFor(bytes);
+    _sourcePathFuture = future;
+    return future;
+  }
+
+  Future<void> _playOverflow({
+    required double volume,
+    required String sourcePath,
+  }) async {
+    final player = AudioPlayer();
+    _overflowPlayers.add(player);
+    try {
+      await player.setAudioContext(_toolboxAudioContext);
+      await player.setReleaseMode(ReleaseMode.stop);
+      await AudioPlayerSourceHelper.setSource(
+        player,
+        DeviceFileSource(sourcePath, mimeType: 'audio/wav'),
+        tag: 'toolbox_audio',
+        data: <String, Object?>{
+          'bytes': bytes.length,
+          'playerId': player.playerId,
+          'path': sourcePath,
+          'strategy': 'overflow',
+        },
+      );
+      await player.setVolume(volume);
+      await AudioPlayerSourceHelper.waitForDuration(
+        player,
+        tag: 'toolbox_audio',
+        data: <String, Object?>{
+          'bytes': bytes.length,
+          'playerId': player.playerId,
+          'path': sourcePath,
+          'strategy': 'overflow',
+        },
+        timeout: const Duration(seconds: 5),
+      );
+      unawaited(
+        _waitForPlayerCompletionOrTimeout(
+          player,
+        ).whenComplete(() => _disposeOverflowPlayer(player)),
+      );
+      await player.resume();
+    } catch (_) {
+      await _disposeOverflowPlayer(player);
+      rethrow;
+    }
+  }
+
+  Future<void> _disposeOverflowPlayer(AudioPlayer player) async {
+    if (!_overflowPlayers.remove(player)) {
+      return;
+    }
+    await player.dispose();
+  }
+
+  Future<void> _waitForPlayerCompletionOrTimeout(AudioPlayer player) async {
+    final completer = Completer<void>();
+    StreamSubscription<void>? subscription;
+    Timer? timer;
+
+    void complete() {
+      if (completer.isCompleted) {
+        return;
+      }
+      timer?.cancel();
+      unawaited(subscription?.cancel() ?? Future<void>.value());
+      completer.complete();
+    }
+
+    subscription = player.onPlayerComplete.listen(
+      (_) => complete(),
+      onError: (Object error, StackTrace stackTrace) => complete(),
+      onDone: complete,
+      cancelOnError: true,
+    );
+    timer = Timer(const Duration(seconds: 20), complete);
+    return completer.future;
+  }
+}
+
+class _ToolboxReusableEffectVoice {
+  _ToolboxReusableEffectVoice(this.bytes);
+
+  final Uint8List bytes;
+  final AudioPlayer _player = AudioPlayer();
+  bool _disposed = false;
+  bool _busy = false;
+  bool _prepared = false;
+  String? _preparedPath;
+  Future<void>? _prepareFuture;
+
+  bool get isBusy => _busy;
+
+  void reserve() {
+    _busy = true;
+  }
+
+  void release() {
+    _busy = false;
+  }
+
+  Future<void> prepare(String sourcePath) {
+    final existing = _prepareFuture;
+    if (existing != null) {
+      return existing;
+    }
+    if (_prepared && _preparedPath == sourcePath) {
+      return Future<void>.value();
+    }
+    final future = _doPrepare(sourcePath).whenComplete(() {
+      _prepareFuture = null;
+    });
+    _prepareFuture = future;
+    return future;
+  }
+
+  Future<void> play({required double volume}) async {
+    final preparedPath = _preparedPath;
+    if (preparedPath == null) {
+      throw StateError('Attempted to play an unprepared toolbox voice.');
+    }
+    await prepare(preparedPath);
+    if (_disposed) {
+      throw StateError('Attempted to play a disposed toolbox voice.');
+    }
+    try {
+      await _player.setVolume(volume);
+      await AudioPlayerSourceHelper.waitForDuration(
+        _player,
+        tag: 'toolbox_audio',
+        data: <String, Object?>{
+          'playerId': _player.playerId,
+          'path': preparedPath,
+        },
+        timeout: const Duration(seconds: 5),
+      );
+      unawaited(
+        _waitForPlaybackEndOrTimeout().whenComplete(() async {
+          release();
+          if (_disposed) {
+            return;
+          }
+          try {
+            await _player.stop();
+          } catch (_) {}
+        }),
+      );
+      await _player.resume();
+    } catch (_) {
+      release();
+      _prepared = false;
+      _preparedPath = null;
+      rethrow;
+    }
+  }
+
+  Future<void> dispose() async {
+    _disposed = true;
+    release();
+    await _player.dispose();
+  }
+
+  Future<void> _waitForPlaybackEndOrTimeout() async {
+    final completer = Completer<void>();
+    StreamSubscription<void>? subscription;
+    Timer? timer;
+
+    void complete() {
+      if (completer.isCompleted) {
+        return;
+      }
+      timer?.cancel();
+      unawaited(subscription?.cancel() ?? Future<void>.value());
+      completer.complete();
+    }
+
+    subscription = _player.onPlayerComplete.listen(
+      (_) => complete(),
+      onError: (Object error, StackTrace stackTrace) => complete(),
+      onDone: complete,
+      cancelOnError: true,
+    );
+    timer = Timer(const Duration(seconds: 20), complete);
+    return completer.future;
+  }
+
+  Future<void> _doPrepare(String sourcePath) async {
+    if (_disposed) {
+      return;
+    }
+    await _player.setAudioContext(_toolboxAudioContext);
+    await _player.setReleaseMode(ReleaseMode.stop);
+    await AudioPlayerSourceHelper.setSource(
+      _player,
+      DeviceFileSource(sourcePath, mimeType: 'audio/wav'),
+      tag: 'toolbox_audio',
+      data: <String, Object?>{
+        'bytes': bytes.length,
+        'playerId': _player.playerId,
+        'path': sourcePath,
+        'strategy': 'voice_prepare',
+      },
+    );
+    _prepared = true;
+    _preparedPath = sourcePath;
+  }
+}
+
+class _ToolboxAsyncLock {
+  Future<void> _tail = Future<void>.value();
+
+  Future<T> synchronized<T>(Future<T> Function() operation) {
+    final previous = _tail;
+    final release = Completer<void>();
+    _tail = release.future;
+    return previous.whenComplete(() {}).then((_) => operation()).whenComplete(
+      () {
+        if (!release.isCompleted) {
+          release.complete();
+        }
+      },
+    );
+  }
+}
+
+class _ToolboxAudioTempStore {
+  _ToolboxAudioTempStore._();
+
+  static final _ToolboxAudioTempStore instance = _ToolboxAudioTempStore._();
+
+  final Map<String, Future<String>> _pathFutures = <String, Future<String>>{};
+
+  Future<String> pathFor(Uint8List bytes) {
+    final digest = sha1.convert(bytes).toString();
+    final existing = _pathFutures[digest];
+    if (existing != null) {
+      return existing;
+    }
+    final future = _writeBytes(digest, bytes);
+    _pathFutures[digest] = future;
+    return future.catchError((Object error) {
+      _pathFutures.remove(digest);
+      throw error;
+    });
+  }
+
+  Future<String> _writeBytes(String digest, Uint8List bytes) async {
+    final tempDir = await getTemporaryDirectory();
+    final cacheDir = Directory(p.join(tempDir.path, 'toolbox_audio_cache'));
+    if (!await cacheDir.exists()) {
+      await cacheDir.create(recursive: true);
+    }
+    final file = File(p.join(cacheDir.path, '$digest.wav'));
+    if (!await file.exists() || await file.length() != bytes.length) {
+      await file.writeAsBytes(bytes, flush: true);
+    }
+    return file.path;
   }
 }
 

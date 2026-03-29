@@ -2,17 +2,22 @@
 
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
+import '../../services/app_log_service.dart';
+import '../../services/audio_player_source_helper.dart';
 import '../../services/cstcloud_resource_cache_service.dart';
 import '../../services/toolbox_soothing_audio_service.dart';
 import '../../services/toolbox_soothing_prefs_service.dart';
+import 'toolbox_soothing_music/runtime_store.dart';
+import 'toolbox_soothing_music/track_catalog.dart';
+import 'toolbox_soothing_music/track_loader.dart';
 import 'toolbox_soothing_music_v2_copy.dart';
 import '../legacy_style.dart';
 import '../theme/app_theme.dart';
@@ -21,6 +26,9 @@ import '../ui_copy.dart';
 final AudioContext _soothingAudioContext = AudioContextConfig(
   focus: AudioContextConfigFocus.mixWithOthers,
 ).build();
+
+typedef _SoothingTrack = SoothingMusicTrack;
+typedef _SoothingRuntimeStore = SoothingMusicRuntimeStore;
 
 class SoothingMusicV2Page extends StatefulWidget {
   const SoothingMusicV2Page({super.key});
@@ -84,36 +92,6 @@ class _TrackLabelPair {
   final String en;
 }
 
-class _SoothingTrack {
-  const _SoothingTrack({
-    required this.assetPath,
-    required this.labelKey,
-    required this.seed,
-  });
-
-  final String assetPath;
-  final String labelKey;
-  final int seed;
-
-  String label(AppI18n i18n) => SoothingMusicCopy.trackLabel(i18n, labelKey);
-}
-
-class _SoothingRuntimeStore {
-  static Set<String> favoriteModeIds = <String>{};
-  static List<String> recentModeIds = <String>[];
-  static Map<String, int> lastTrackIndexByMode = <String, int>{};
-  static String? lastModeId;
-  static AudioPlayer? retainedPlayer;
-  static String? activeModeId;
-  static int activeTrackIndex = 0;
-  static bool activePlaying = false;
-  static double activeVolume = 0.62;
-  static bool activeMuted = false;
-  static Duration activePosition = Duration.zero;
-  static Duration activeDuration = const Duration(minutes: 2);
-  static bool continuePlaybackOnExit = false;
-}
-
 class _SoothingVisualPalette {
   const _SoothingVisualPalette({
     required this.isDark,
@@ -155,8 +133,7 @@ class _SoothingVisualPalette {
     required _SoothingModeTheme mode,
   }) {
     final effectStrength =
-        0.34 +
-        appearance.normalizedEffectIntensity * (isDark ? 0.42 : 0.28);
+        0.34 + appearance.normalizedEffectIntensity * (isDark ? 0.42 : 0.28);
     final accent = mode.accent;
     final orbitAccent = mode.orbitAccent;
     final backgroundTop = isDark
@@ -214,6 +191,7 @@ class _SoothingVisualPalette {
 
 class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     with SingleTickerProviderStateMixin {
+  final AppLogService _log = AppLogService.instance;
   static const List<_SoothingModeTheme> _modes = <_SoothingModeTheme>[
     _SoothingModeTheme(
       id: 'chill',
@@ -454,18 +432,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       };
 
   static List<_SoothingTrack> _tracksForMode(String modeId) {
-    final labelKeys =
-        SoothingMusicCopy.trackKeysByMode[modeId] ??
-        const <String>['track.fallback'];
-    return List<_SoothingTrack>.generate(labelKeys.length, (index) {
-      final number = index + 1;
-      final suffix = number == 1 ? '' : '$number';
-      return _SoothingTrack(
-        assetPath: 'music/$modeId$suffix.m4a',
-        labelKey: labelKeys[index],
-        seed: (modeId.hashCode.abs() % 97) + number * 31,
-      );
-    }, growable: false);
+    return SoothingMusicTrackCatalog.tracksForMode(modeId);
   }
 
   late final AudioPlayer _player;
@@ -475,6 +442,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   StreamSubscription<PlayerState>? _stateSubscription;
   Timer? _sleepTimer;
   CstCloudResourceCacheService? _remoteResourceCache;
+  SoothingMusicTrackLoader? _trackLoader;
 
   _SoothingModeTheme _mode = _modes[1];
   _ModeLibraryFilter _modeFilter = _ModeLibraryFilter.all;
@@ -491,7 +459,10 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   Duration _duration = const Duration(minutes: 2);
   Duration? _sleepRemaining;
   String? _audioErrorLabelKey;
-  final Map<String, Uint8List> _trackBytesCache = <String, Uint8List>{};
+  String? _trackLoadLabelKey;
+  double? _trackLoadProgress;
+  int _trackLoadReceivedBytes = 0;
+  int _trackLoadTotalBytes = 0;
 
   @override
   void initState() {
@@ -562,18 +533,25 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_remoteResourceCache != null) return;
+    CstCloudResourceCacheService? nextCache;
     try {
-      _remoteResourceCache = Provider.of<CstCloudResourceCacheService>(
+      nextCache = Provider.of<CstCloudResourceCacheService>(
         context,
         listen: false,
       );
     } on ProviderNotFoundException {
-      _remoteResourceCache = null;
+      nextCache = null;
+    }
+    if (!identical(_remoteResourceCache, nextCache) || _trackLoader == null) {
+      _remoteResourceCache = nextCache;
+      _trackLoader = SoothingMusicTrackLoader(
+        remoteResourceCache: _remoteResourceCache,
+      );
     }
   }
 
   Future<void> _initAudio() async {
+    _log.d('soothing_audio', 'init start');
     final prefs = await ToolboxSoothingPrefsService.load();
     _SoothingRuntimeStore.favoriteModeIds = Set<String>.from(
       prefs.favoriteModeIds,
@@ -598,6 +576,17 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _volume = _SoothingRuntimeStore.activeVolume;
     _muted = _SoothingRuntimeStore.activeMuted;
     await _player.setVolume(_muted ? 0 : _volume);
+    _log.d(
+      'soothing_audio',
+      'player bootstrap configured',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'modeId': _mode.id,
+        'trackIndex': _trackIndex,
+        'volume': _volume,
+        'muted': _muted,
+      },
+    );
 
     if (_SoothingRuntimeStore.retainedPlayer != null &&
         _SoothingRuntimeStore.activeModeId != null) {
@@ -620,6 +609,18 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (mounted) {
         setState(() {});
       }
+      _log.d(
+        'soothing_audio',
+        'restored retained player',
+        data: <String, Object?>{
+          'playerId': _player.playerId,
+          'modeId': _mode.id,
+          'trackIndex': _trackIndex,
+          'playing': _playing,
+          'positionMs': _position.inMilliseconds,
+          'durationMs': _duration.inMilliseconds,
+        },
+      );
       for (final mode in _modes.where((item) => item.id != _mode.id).take(2)) {
         unawaited(_preloadModeAssets(mode.id));
       }
@@ -634,40 +635,47 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }
 
   Future<void> _preloadModeAssets(String modeId) async {
-    for (final track in _tracksForMode(modeId)) {
-      try {
-        _trackBytesCache[track.assetPath] = await _loadTrackBytes(track);
-      } catch (_) {
-        // Ignore warmup failures.
-      }
-    }
+    _log.d(
+      'soothing_audio',
+      'preload mode assets start',
+      data: <String, Object?>{'modeId': modeId},
+    );
+    await _resolvedTrackLoader.preloadMode(modeId);
+    _log.d(
+      'soothing_audio',
+      'preload mode assets complete',
+      data: <String, Object?>{'modeId': modeId},
+    );
   }
 
   Future<Uint8List> _loadTrackBytes(_SoothingTrack track) async {
-    if (_trackBytesCache[track.assetPath] case final Uint8List cached) {
-      return cached;
+    _trackLoadLabelKey = track.labelKey;
+    _trackLoadProgress = null;
+    _trackLoadReceivedBytes = 0;
+    _trackLoadTotalBytes = 0;
+    if (mounted) {
+      setState(() {});
     }
-    if (_remoteResourceCache != null) {
-      try {
-        final bytes = await _remoteResourceCache!.readBytes(
-          track.assetPath,
-          cacheRelativePath: track.assetPath,
-        );
-        _trackBytesCache[track.assetPath] = bytes;
-        return bytes;
-      } catch (_) {
-        // Keep a local fallback path for tests and offline recovery.
-      }
+    try {
+      return await _resolvedTrackLoader.load(
+        track,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() {
+            _trackLoadLabelKey = track.labelKey;
+            _trackLoadProgress = progress.progress;
+            _trackLoadReceivedBytes = progress.receivedBytes;
+            _trackLoadTotalBytes = progress.totalBytes;
+          });
+        },
+      );
+    } finally {
+      _clearTrackLoadState();
     }
-    // Historical direct local asset loading is kept below as a documented
-    // fallback path. The preferred runtime flow is S3 first-download plus
-    // application-support cache.
-    // final bundleData = await rootBundle.load(track.assetPath);
-    final bundleData = await rootBundle.load(track.assetPath);
-    final bytes = bundleData.buffer.asUint8List();
-    _trackBytesCache[track.assetPath] = bytes;
-    return bytes;
   }
+
+  SoothingMusicTrackLoader get _resolvedTrackLoader => _trackLoader ??=
+      SoothingMusicTrackLoader(remoteResourceCache: _remoteResourceCache);
 
   List<_SoothingTrack> get _tracks => _tracksForMode(_mode.id);
   _SoothingTrack get _currentTrack => _tracks[_trackIndex];
@@ -677,6 +685,16 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     required bool autoplay,
   }) async {
     final restoredTrackIndex = _restoredTrackIndexForMode(mode.id);
+    _log.d(
+      'soothing_audio',
+      'load mode start',
+      data: <String, Object?>{
+        'modeId': mode.id,
+        'restoredTrackIndex': restoredTrackIndex,
+        'autoplay': autoplay,
+        'playerId': _player.playerId,
+      },
+    );
     setState(() {
       _mode = mode;
       _trackIndex = restoredTrackIndex;
@@ -690,12 +708,61 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       final scene = await ToolboxSoothingAudioService.load(mode.id);
       final track = _tracksForMode(mode.id)[restoredTrackIndex];
       final bytes = await _loadTrackBytes(track);
-      await _player.setSourceBytes(bytes, mimeType: 'audio/mp4');
+      _log.d(
+        'soothing_audio',
+        'track bytes loaded',
+        data: <String, Object?>{
+          'modeId': mode.id,
+          'trackAssetPath': track.assetPath,
+          'bytes': bytes.length,
+        },
+      );
+      await AudioPlayerSourceHelper.setSource(
+        _player,
+        BytesSource(bytes, mimeType: 'audio/mp4'),
+        tag: 'soothing_audio',
+        data: <String, Object?>{
+          'modeId': mode.id,
+          'trackAssetPath': track.assetPath,
+          'bytes': bytes.length,
+        },
+      );
+      final duration = await AudioPlayerSourceHelper.waitForDuration(
+        _player,
+        tag: 'soothing_audio',
+        data: <String, Object?>{
+          'modeId': mode.id,
+          'trackAssetPath': track.assetPath,
+          'playerId': _player.playerId,
+        },
+      );
+      if (duration != null) {
+        _duration = duration;
+      }
       await _player.setVolume(_muted ? 0 : _volume);
       if (autoplay) {
         await _player.resume();
+        _log.d(
+          'soothing_audio',
+          'load mode resumed playback',
+          data: <String, Object?>{
+            'modeId': mode.id,
+            'trackAssetPath': track.assetPath,
+            'durationMs': duration?.inMilliseconds,
+            'volume': _muted ? 0 : _volume,
+          },
+        );
       } else {
         await _player.stop();
+        _log.d(
+          'soothing_audio',
+          'load mode primed without autoplay',
+          data: <String, Object?>{
+            'modeId': mode.id,
+            'trackAssetPath': track.assetPath,
+            'durationMs': duration?.inMilliseconds,
+          },
+        );
       }
       if (!mounted) return;
       setState(() {
@@ -706,7 +773,28 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       _SoothingRuntimeStore.activeVolume = _volume;
       _SoothingRuntimeStore.activeMuted = _muted;
       _rememberRecent(mode.id);
-    } catch (_) {
+      _log.d(
+        'soothing_audio',
+        'load mode complete',
+        data: <String, Object?>{
+          'modeId': mode.id,
+          'trackAssetPath': track.assetPath,
+          'sceneId': scene.id,
+          'durationMs': duration?.inMilliseconds,
+        },
+      );
+    } catch (error, stackTrace) {
+      _log.e(
+        'soothing_audio',
+        'load mode failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'modeId': mode.id,
+          'trackIndex': restoredTrackIndex,
+          'playerId': _player.playerId,
+        },
+      );
       if (!mounted) return;
       setState(() {
         _audioErrorLabelKey = 'mode:${mode.id}';
@@ -721,6 +809,17 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }
 
   Future<void> _togglePlayback() async {
+    _log.d(
+      'soothing_audio',
+      'toggle playback requested',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'playing': _playing,
+        'loading': _loading,
+        'modeId': _mode.id,
+        'trackIndex': _trackIndex,
+      },
+    );
     if (_loading) return;
     if (_scene == null) {
       await _loadMode(_mode, autoplay: true);
@@ -730,12 +829,37 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       await _player.pause();
       _SoothingRuntimeStore.activePlaying = false;
       _orbitController.stop();
+      _log.d(
+        'soothing_audio',
+        'playback paused',
+        data: <String, Object?>{
+          'playerId': _player.playerId,
+          'modeId': _mode.id,
+        },
+      );
       return;
     }
+    // CRITICAL FIX: Wait for player to be ready before resuming.
+    // Without this, resume() may be called before the audio source is loaded,
+    // causing no sound output.
+    await AudioPlayerSourceHelper.waitForDuration(
+      _player,
+      tag: 'soothing_audio',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'modeId': _mode.id,
+      },
+      timeout: const Duration(seconds: 5),
+    );
     await _player.resume();
     _rememberRecent(_mode.id);
     _SoothingRuntimeStore.activePlaying = true;
     _orbitController.repeat();
+    _log.d(
+      'soothing_audio',
+      'playback resumed',
+      data: <String, Object?>{'playerId': _player.playerId, 'modeId': _mode.id},
+    );
   }
 
   Future<void> _setMode(_SoothingModeTheme mode) async {
@@ -745,6 +869,18 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
   Future<void> _setTrackIndex(int index) async {
     if (index == _trackIndex) return;
+    final nextTrack = _tracks[index];
+    _log.d(
+      'soothing_audio',
+      'set track start',
+      data: <String, Object?>{
+        'modeId': _mode.id,
+        'previousTrackIndex': _trackIndex,
+        'nextTrackIndex': index,
+        'nextTrackAssetPath': nextTrack.assetPath,
+        'playerId': _player.playerId,
+      },
+    );
     setState(() {
       _trackIndex = index;
       _loading = true;
@@ -755,14 +891,65 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
     try {
       final bytes = await _loadTrackBytes(_currentTrack);
-      await _player.setSourceBytes(bytes, mimeType: 'audio/mp4');
+      await AudioPlayerSourceHelper.setSource(
+        _player,
+        BytesSource(bytes, mimeType: 'audio/mp4'),
+        tag: 'soothing_audio',
+        data: <String, Object?>{
+          'modeId': _mode.id,
+          'trackAssetPath': _currentTrack.assetPath,
+          'bytes': bytes.length,
+        },
+      );
+      final duration = await AudioPlayerSourceHelper.waitForDuration(
+        _player,
+        tag: 'soothing_audio',
+        data: <String, Object?>{
+          'modeId': _mode.id,
+          'trackAssetPath': _currentTrack.assetPath,
+          'playerId': _player.playerId,
+        },
+      );
+      if (duration != null) {
+        _duration = duration;
+      }
       await _player.setVolume(_muted ? 0 : _volume);
       if (_playing) {
         await _player.resume();
+        _log.d(
+          'soothing_audio',
+          'set track resumed playback',
+          data: <String, Object?>{
+            'modeId': _mode.id,
+            'trackAssetPath': _currentTrack.assetPath,
+            'durationMs': duration?.inMilliseconds,
+          },
+        );
       } else {
         await _player.stop();
+        _log.d(
+          'soothing_audio',
+          'set track primed while paused',
+          data: <String, Object?>{
+            'modeId': _mode.id,
+            'trackAssetPath': _currentTrack.assetPath,
+            'durationMs': duration?.inMilliseconds,
+          },
+        );
       }
-    } catch (_) {
+    } catch (error, stackTrace) {
+      _log.e(
+        'soothing_audio',
+        'set track failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'modeId': _mode.id,
+          'trackIndex': _trackIndex,
+          'trackAssetPath': _currentTrack.assetPath,
+          'playerId': _player.playerId,
+        },
+      );
       if (!mounted) return;
       setState(() {
         _audioErrorLabelKey = 'track:${_currentTrack.labelKey}';
@@ -819,6 +1006,15 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     });
     _SoothingRuntimeStore.activeMuted = value;
     await _player.setVolume(value ? 0 : _volume);
+    _log.d(
+      'soothing_audio',
+      'muted updated',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'muted': value,
+        'effectiveVolume': value ? 0 : _volume,
+      },
+    );
     unawaited(_persistPrefs());
   }
 
@@ -830,6 +1026,16 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     if (!_muted) {
       await _player.setVolume(value);
     }
+    _log.d(
+      'soothing_audio',
+      'volume updated',
+      data: <String, Object?>{
+        'playerId': _player.playerId,
+        'volume': value,
+        'muted': _muted,
+        'effectiveVolume': _muted ? 0 : value,
+      },
+    );
     unawaited(_persistPrefs());
   }
 
@@ -909,10 +1115,39 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _audioErrorLabelKey = null;
   }
 
+  void _clearTrackLoadState() {
+    if (!mounted) {
+      _trackLoadLabelKey = null;
+      _trackLoadProgress = null;
+      _trackLoadReceivedBytes = 0;
+      _trackLoadTotalBytes = 0;
+      return;
+    }
+    setState(() {
+      _trackLoadLabelKey = null;
+      _trackLoadProgress = null;
+      _trackLoadReceivedBytes = 0;
+      _trackLoadTotalBytes = 0;
+    });
+  }
+
   String _format(Duration value) {
     final minutes = value.inMinutes.toString();
     final seconds = (value.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes <= 0) return '0 B';
+    const units = <String>['B', 'KB', 'MB', 'GB'];
+    var value = bytes.toDouble();
+    var unitIndex = 0;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex += 1;
+    }
+    final digits = value >= 10 || unitIndex == 0 ? 0 : 1;
+    return '${value.toStringAsFixed(digits)} ${units[unitIndex]}';
   }
 
   String? _audioErrorText(AppI18n i18n) {
@@ -928,6 +1163,27 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       'track.audio_error',
       params: <String, Object?>{'label': label},
     );
+  }
+
+  String? _trackLoadText(AppI18n i18n) {
+    final labelKey = _trackLoadLabelKey;
+    if (!_loading || labelKey == null || labelKey.isEmpty) {
+      return null;
+    }
+    final label = SoothingMusicCopy.trackLabel(i18n, labelKey);
+    final progress = _trackLoadProgress;
+    final bytesText = _trackLoadTotalBytes > 0
+        ? '${_formatBytes(_trackLoadReceivedBytes)} / ${_formatBytes(_trackLoadTotalBytes)}'
+        : _trackLoadReceivedBytes > 0
+        ? _formatBytes(_trackLoadReceivedBytes)
+        : null;
+    if (progress == null) {
+      return bytesText == null ? label : '$label · $bytesText';
+    }
+    final percent = (progress * 100).round();
+    return bytesText == null
+        ? '$label · $percent%'
+        : '$label · $percent% · $bytesText';
   }
 
   void _startSleepTimer(Duration? value) {
@@ -983,11 +1239,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         flexibleSpace: DecoratedBox(
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border(
-              bottom: BorderSide(
-                color: const Color(0xFFE4EBF0),
-              ),
-            ),
+            border: Border(bottom: BorderSide(color: const Color(0xFFE4EBF0))),
           ),
         ),
         title: Text(
@@ -1718,6 +1970,52 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                           color: palette.textSecondary,
                                           fontSize: narrow ? 12 : 13,
                                           height: 1.45,
+                                        ),
+                                      ),
+                                    ],
+                                    if (_trackLoadText(i18n)
+                                        case final String
+                                            loadingText) ...<Widget>[
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: palette.panelSurface
+                                              .withValues(alpha: 0.9),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: palette.border,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Text(
+                                              loadingText,
+                                              style: TextStyle(
+                                                color: palette.textPrimary,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            if (_trackLoadProgress !=
+                                                null) ...<Widget>[
+                                              const SizedBox(height: 8),
+                                              LinearProgressIndicator(
+                                                value: _trackLoadProgress,
+                                                minHeight: 4,
+                                                backgroundColor: palette.border
+                                                    .withValues(alpha: 0.3),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                       ),
                                     ],

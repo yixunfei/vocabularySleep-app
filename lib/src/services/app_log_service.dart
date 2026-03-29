@@ -211,7 +211,8 @@ class AppLogService {
     }
     final message = '$error';
     return message.contains('plugins.flutter.io/path_provider') ||
-        message.contains('getApplicationSupportDirectory');
+        message.contains('getApplicationSupportDirectory') ||
+        message.contains('Binding has not yet been initialized');
   }
 
   void _disableFileLogging(Object error) {

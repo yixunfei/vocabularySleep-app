@@ -7,11 +7,55 @@ import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'online_ambient_sheet.dart';
 
-class AmbientSheet extends StatelessWidget {
+class AmbientSheet extends StatefulWidget {
   const AmbientSheet({super.key, required this.state, required this.i18n});
 
   final AppState state;
   final AppI18n i18n;
+
+  @override
+  State<AmbientSheet> createState() => _AmbientSheetState();
+}
+
+class _AmbientSheetState extends State<AmbientSheet> {
+  final Set<String> _togglingSourceIds = <String>{};
+  bool _isTogglingMaster = false;
+
+  Future<void> _toggleSource(String sourceId, bool value) async {
+    if (_togglingSourceIds.contains(sourceId)) {
+      return; // Prevent duplicate toggles
+    }
+    setState(() {
+      _togglingSourceIds.add(sourceId);
+    });
+    try {
+      await widget.state.setAmbientSourceEnabled(sourceId, value);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _togglingSourceIds.remove(sourceId);
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleMaster(bool value) async {
+    if (_isTogglingMaster) {
+      return;
+    }
+    setState(() {
+      _isTogglingMaster = true;
+    });
+    try {
+      await widget.state.setAmbientEnabled(value);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTogglingMaster = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +64,17 @@ class AmbientSheet extends StatelessWidget {
         final liveI18n = AppI18n(liveState.uiLanguage);
         final ambientEnabled = liveState.ambientEnabled;
         final builtInSources = liveState.ambientSources
-            .where((source) => source.isAsset)
+            .where((source) => source.isBuiltIn)
             .toList(growable: false);
         final onlineSources = liveState.ambientSources
             .where((source) => source.isRemote)
             .toList(growable: false);
         final localSources = liveState.ambientSources
-            .where((source) => source.isFile)
+            .where((source) => source.isFile && !source.isBuiltIn)
             .toList(growable: false);
 
         Widget buildSourceCard(source, {bool removable = false}) {
+          final isToggling = _togglingSourceIds.contains(source.id);
           return Opacity(
             opacity: ambientEnabled ? 1 : 0.72,
             child: Card(
@@ -46,26 +91,40 @@ class AmbientSheet extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
-                        Switch(
-                          value: source.enabled,
-                          onChanged: (value) => liveState
-                              .setAmbientSourceEnabled(source.id, value),
-                        ),
-                        if (removable)
+                        if (isToggling)
+                          const SizedBox(
+                            width: 44,
+                            height: 24,
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          )
+                        else
+                          Switch(
+                            value: source.enabled,
+                            onChanged: (value) => _toggleSource(source.id, value),
+                          ),
+                        if (removable && !isToggling)
                           IconButton(
                             onPressed: () =>
                                 liveState.removeAmbientSource(source.id),
                             icon: const Icon(Icons.delete_outline_rounded),
                           ),
+                        if (removable && isToggling)
+                          const SizedBox(width: 48), // Placeholder space
                       ],
                     ),
                     Slider(
                       value: source.volume,
-                      onChanged: source.enabled
+                      onChanged: (source.enabled && !isToggling)
                           ? (value) => liveState.setAmbientSourceVolume(
-                              source.id,
-                              value,
-                            )
+                                source.id,
+                                value,
+                              )
                           : null,
                     ),
                   ],
@@ -169,11 +228,25 @@ class AmbientSheet extends StatelessWidget {
                                       ).textTheme.labelLarge,
                                     ),
                                   ),
-                                  Switch.adaptive(
-                                    value: ambientEnabled,
-                                    onChanged: (value) =>
-                                        liveState.setAmbientEnabled(value),
-                                  ),
+                                  if (_isTogglingMaster)
+                                    const SizedBox(
+                                      width: 40,
+                                      height: 24,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Switch.adaptive(
+                                      value: ambientEnabled,
+                                      onChanged: _isTogglingMaster
+                                          ? null
+                                          : (value) => _toggleMaster(value),
+                                    ),
                                 ],
                               )
                             : Row(
@@ -215,11 +288,25 @@ class AmbientSheet extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  Switch.adaptive(
-                                    value: ambientEnabled,
-                                    onChanged: (value) =>
-                                        liveState.setAmbientEnabled(value),
-                                  ),
+                                  if (_isTogglingMaster)
+                                    const SizedBox(
+                                      width: 50,
+                                      height: 28,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Switch.adaptive(
+                                      value: ambientEnabled,
+                                      onChanged: _isTogglingMaster
+                                          ? null
+                                          : (value) => _toggleMaster(value),
+                                    ),
                                 ],
                               ),
                       ),

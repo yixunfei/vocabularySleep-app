@@ -74,8 +74,8 @@ class _OnlineAmbientCatalogSheetState
                         Text(
                           pickUiText(
                             i18n,
-                            zh: '优先从 Moodist 站点解析资源并下载，本地存在时可直接删除。',
-                            en: 'Prefer catalog parsing from Moodist and download locally. Delete when already downloaded.',
+                            zh: '从远程资源库下载并缓存环境音，已缓存的音频可直接删除。',
+                            en: 'Browse ambient sounds from the remote library and cache them locally. Delete any cached file directly.',
                           ),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),

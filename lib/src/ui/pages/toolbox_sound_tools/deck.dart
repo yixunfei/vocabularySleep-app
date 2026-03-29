@@ -366,7 +366,11 @@ class _DeckInstrumentFullScreenPageState
   @override
   void initState() {
     super.initState();
-    unawaited(_enterToolboxLandscapeMode());
+    unawaited(
+      widget.instrument == _HarpDeckInstrument.piano
+          ? _enterToolboxPortraitMode()
+          : _enterToolboxLandscapeMode(),
+    );
   }
 
   @override

@@ -48,13 +48,30 @@ bool _supportsMobileOrientationLock() {
 }
 
 Future<void> _enterToolboxLandscapeMode() async {
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-  if (_supportsMobileOrientationLock()) {
-    await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
+  await _enterToolboxImmersiveMode(
+    orientations: const <DeviceOrientation>[
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
-    ]);
+    ],
+  );
+}
+
+Future<void> _enterToolboxPortraitMode() async {
+  await _enterToolboxImmersiveMode(
+    orientations: const <DeviceOrientation>[
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ],
+  );
+}
+
+Future<void> _enterToolboxImmersiveMode({
+  List<DeviceOrientation>? orientations,
+}) async {
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+  if (_supportsMobileOrientationLock() && orientations != null) {
+    await SystemChrome.setPreferredOrientations(orientations);
   }
 }
 

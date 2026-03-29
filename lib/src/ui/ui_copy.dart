@@ -218,6 +218,13 @@ String localizedOnlineAmbientOptionName(
 }
 
 String? _moodistTranslationKeyForSource(AmbientSource source) {
+  final remoteKey = source.remoteKey?.replaceAll('\\', '/').trim();
+  if (remoteKey != null &&
+      remoteKey.isNotEmpty &&
+      remoteKey.startsWith('ambient/moodist/')) {
+    return remoteKey.substring('ambient/moodist/'.length);
+  }
+
   String? buildFromId(String prefix) {
     if (!source.id.startsWith(prefix)) {
       return null;
@@ -232,11 +239,11 @@ String? _moodistTranslationKeyForSource(AmbientSource source) {
     return '$category/$slug';
   }
 
-  final remote = buildFromId('remote_moodist_');
+  final remote = buildFromId('ambient_');
   if (remote != null) {
     return remote;
   }
-  final downloaded = buildFromId('downloaded_remote_moodist_');
+  final downloaded = buildFromId('downloaded_ambient_');
   if (downloaded != null) {
     return downloaded;
   }

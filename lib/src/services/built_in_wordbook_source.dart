@@ -29,7 +29,7 @@ abstract class BuiltInWordbookSource {
 
 class AssetBuiltInWordbookSource implements BuiltInWordbookSource {
   const AssetBuiltInWordbookSource({
-    this.dictAssetPrefix = 'dict/',
+    this.dictAssetPrefix = 'assets/wordbooks/',
     this.dictBuiltinPathPrefix = 'builtin:dict:',
   });
 
@@ -114,7 +114,7 @@ class CstCloudBuiltInWordbookSource implements BuiltInWordbookSource {
           objects
               .where((item) => item.key.startsWith(remotePrefix))
               .where((item) => !item.key.endsWith('/'))
-              .where((item) => item.key.toLowerCase().endsWith('.json'))
+              .where((item) => _isBuiltInWordbookRemoteObject(item.key))
               .toList(growable: false)
             ..sort((a, b) => a.key.compareTo(b.key));
       return files.map(_buildConfigFromRemoteObject).toList(growable: false);
@@ -150,14 +150,22 @@ class CstCloudBuiltInWordbookSource implements BuiltInWordbookSource {
 
   BuiltInWordbookConfig _buildConfigFromRemoteObject(S3ObjectSummary object) {
     final filename = p.basename(object.key).trim();
-    final baseName = p.basenameWithoutExtension(filename).trim().isEmpty
+    final normalizedFilename = filename.toLowerCase().endsWith('.json.gz')
+        ? filename.substring(0, filename.length - '.json.gz'.length)
+        : p.basenameWithoutExtension(filename);
+    final baseName = normalizedFilename.trim().isEmpty
         ? 'dict'
-        : p.basenameWithoutExtension(filename).trim();
+        : normalizedFilename.trim();
     return BuiltInWordbookConfig(
       path: '$dictBuiltinPathPrefix$baseName',
       name: baseName,
       sourcePath: object.key,
     );
+  }
+
+  bool _isBuiltInWordbookRemoteObject(String key) {
+    final normalized = key.toLowerCase();
+    return normalized.endsWith('.json') || normalized.endsWith('.json.gz');
   }
 }
 

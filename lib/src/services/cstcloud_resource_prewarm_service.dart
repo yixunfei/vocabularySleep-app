@@ -18,27 +18,40 @@ class CstCloudResourcePrewarmService {
   CstCloudResourcePrewarmService(this._cacheService);
 
   final CstCloudResourceCacheService _cacheService;
+  static const List<String> _resourcePrefixes = <String>['music/', 'ambient/'];
 
   Future<bool> shouldPrewarmMusic() async {
-    final music = await _cacheService.listObjects('music/');
-    final remoteTargets = music
-        .where((item) => item.key.startsWith('music/'))
-        .where((item) => !item.key.endsWith('/'))
-        .toList(growable: false);
-    if (remoteTargets.isEmpty) {
-      return false;
+    for (final prefix in _resourcePrefixes) {
+      final objects = await _cacheService.listObjects(prefix);
+      final remoteTargets = objects
+          .where((item) => item.key.startsWith(prefix))
+          .where((item) => !item.key.endsWith('/'))
+          .toList(growable: false);
+      if (remoteTargets.isEmpty) {
+        continue;
+      }
+      final hasLocal = await _cacheService.hasCachedFilesUnderPrefix(
+        prefix.replaceFirst(RegExp(r'/$'), ''),
+      );
+      if (!hasLocal) {
+        return true;
+      }
     }
-    final hasLocal = await _cacheService.hasCachedFilesUnderPrefix('music');
-    return !hasLocal;
+    return false;
   }
 
   Future<void> prewarm({
     required void Function(CstCloudResourcePrewarmProgress progress) onProgress,
   }) async {
-    final music = await _cacheService.listObjects('music/');
-    final targets = <String>[
-      ...music.where((item) => !item.key.endsWith('/')).map((item) => item.key),
-    ];
+    final targets = <String>[];
+    for (final prefix in _resourcePrefixes) {
+      final objects = await _cacheService.listObjects(prefix);
+      targets.addAll(
+        objects
+            .where((item) => !item.key.endsWith('/'))
+            .map((item) => item.key),
+      );
+    }
 
     for (var index = 0; index < targets.length; index += 1) {
       final key = targets[index];
