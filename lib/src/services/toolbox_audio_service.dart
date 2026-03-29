@@ -115,55 +115,101 @@ class ToolboxAudioBank {
     );
   }
 
-  static Uint8List pianoNote(double frequency, {String style = 'concert'}) {
+  static Uint8List pianoNote(
+    double frequency, {
+    String style = 'concert',
+    double reverb = 0.12,
+    double decay = 1.0,
+  }) {
     final normalizedStyle = switch (style) {
       'bright' => 'bright',
       'felt' => 'felt',
+      'upright' => 'upright',
       _ => 'concert',
     };
-    final key = 'piano:${frequency.toStringAsFixed(2)}:$normalizedStyle';
+    final normalizedReverb = (reverb.clamp(0.0, 0.55) * 20).round() / 20;
+    final normalizedDecay = (decay.clamp(0.7, 1.8) * 20).round() / 20;
+    final key =
+        'piano:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '${normalizedReverb.toStringAsFixed(2)}:'
+        '${normalizedDecay.toStringAsFixed(2)}';
     return _cache.putIfAbsent(
       key,
-      () => _buildPianoNote(frequency, normalizedStyle),
-    );
-  }
-
-  static Uint8List fluteNote(double frequency, {String style = 'airy'}) {
-    final normalizedStyle = switch (style) {
-      'lead' => 'lead',
-      'alto' => 'alto',
-      _ => 'airy',
-    };
-    final key = 'flute:${frequency.toStringAsFixed(2)}:$normalizedStyle';
-    return _cache.putIfAbsent(
-      key,
-      () => _buildFluteNote(frequency, normalizedStyle),
-    );
-  }
-
-  static Uint8List guitarNote(double frequency, {String style = 'steel'}) {
-    final normalizedStyle = switch (style) {
-      'nylon' => 'nylon',
-      'ambient' => 'ambient',
-      _ => 'steel',
-    };
-    final key = 'guitar:${frequency.toStringAsFixed(2)}:$normalizedStyle';
-    return _cache.putIfAbsent(
-      key,
-      () => _buildPluckNote(
-        frequency: frequency,
-        durationSeconds: 2.1,
-        style: normalizedStyle == 'ambient' ? 'glass' : normalizedStyle,
-        reverb: switch (normalizedStyle) {
-          'nylon' => 0.14,
-          'ambient' => 0.28,
-          _ => 0.16,
-        },
+      () => _buildPianoNote(
+        frequency,
+        normalizedStyle,
+        reverb: normalizedReverb.toDouble(),
+        decay: normalizedDecay.toDouble(),
       ),
     );
   }
 
-  static Uint8List drumHit(String kind, {String kit = 'acoustic'}) {
+  static Uint8List fluteNote(
+    double frequency, {
+    String style = 'airy',
+    double reverb = 0.22,
+    double tail = 0.5,
+  }) {
+    final normalizedStyle = switch (style) {
+      'lead' => 'lead',
+      'alto' => 'alto',
+      'bamboo' => 'bamboo',
+      _ => 'airy',
+    };
+    final normalizedReverb = (reverb.clamp(0.0, 0.5) * 20).round() / 20;
+    final normalizedTail = (tail.clamp(0.15, 1.0) * 20).round() / 20;
+    final key =
+        'flute:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '${normalizedReverb.toStringAsFixed(2)}:'
+        '${normalizedTail.toStringAsFixed(2)}';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildFluteNote(
+        frequency,
+        normalizedStyle,
+        reverb: normalizedReverb.toDouble(),
+        tail: normalizedTail.toDouble(),
+      ),
+    );
+  }
+
+  static Uint8List guitarNote(
+    double frequency, {
+    String style = 'steel',
+    double resonance = 0.5,
+    double pickPosition = 0.55,
+  }) {
+    final normalizedStyle = switch (style) {
+      'nylon' => 'nylon',
+      'ambient' => 'ambient',
+      'twelve' => 'twelve',
+      _ => 'steel',
+    };
+    final normalizedResonance = (resonance.clamp(0.0, 1.0) * 10).round() / 10;
+    final normalizedPickPosition =
+        (pickPosition.clamp(0.05, 0.95) * 10).round() / 10;
+    final key =
+        'guitar:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '${normalizedResonance.toStringAsFixed(1)}:'
+        '${normalizedPickPosition.toStringAsFixed(1)}';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildGuitarNote(
+        frequency: frequency,
+        style: normalizedStyle,
+        resonance: normalizedResonance.toDouble(),
+        pickPosition: normalizedPickPosition.toDouble(),
+      ),
+    );
+  }
+
+  static Uint8List drumHit(
+    String kind, {
+    String kit = 'acoustic',
+    double tone = 0.5,
+    double tail = 0.42,
+    String material = 'wood',
+  }) {
     final normalizedKind = switch (kind) {
       'kick' => 'kick',
       'snare' => 'snare',
@@ -176,21 +222,116 @@ class ToolboxAudioBank {
       'lofi' => 'lofi',
       _ => 'acoustic',
     };
-    final key = 'drum:$normalizedKind:$normalizedKit';
+    final normalizedTone = (tone.clamp(0.0, 1.0) * 10).round() / 10;
+    final normalizedTail = (tail.clamp(0.0, 1.0) * 10).round() / 10;
+    final normalizedMaterial = switch (material) {
+      'metal' => 'metal',
+      'hybrid' => 'hybrid',
+      _ => 'wood',
+    };
+    final key =
+        'drum:$normalizedKind:$normalizedKit:'
+        '${normalizedTone.toStringAsFixed(1)}:'
+        '${normalizedTail.toStringAsFixed(1)}:$normalizedMaterial';
     return _cache.putIfAbsent(
       key,
-      () => _buildDrumHit(normalizedKind, normalizedKit),
+      () => _buildDrumHit(
+        normalizedKind,
+        normalizedKit,
+        normalizedTone.toDouble(),
+        normalizedTail.toDouble(),
+        normalizedMaterial,
+      ),
     );
   }
 
-  static Uint8List triangleHit({String style = 'orchestral'}) {
+  static Uint8List triangleHit({
+    String style = 'orchestral',
+    String material = 'steel',
+    double strike = 0.65,
+    double damping = 0.2,
+  }) {
     final normalizedStyle = switch (style) {
       'soft' => 'soft',
       'bright' => 'bright',
       _ => 'orchestral',
     };
-    final key = 'triangle:hit:$normalizedStyle';
-    return _cache.putIfAbsent(key, () => _buildTriangleHit(normalizedStyle));
+    final normalizedMaterial = switch (material) {
+      'brass' => 'brass',
+      'aluminum' => 'aluminum',
+      _ => 'steel',
+    };
+    final normalizedStrike = (strike.clamp(0.0, 1.0) * 10).round() / 10;
+    final normalizedDamping = (damping.clamp(0.0, 1.0) * 10).round() / 10;
+    final key =
+        'triangle:hit:$normalizedStyle:$normalizedMaterial:'
+        '${normalizedStrike.toStringAsFixed(1)}:'
+        '${normalizedDamping.toStringAsFixed(1)}';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildTriangleHit(
+        normalizedStyle,
+        normalizedMaterial,
+        normalizedStrike.toDouble(),
+        normalizedDamping.toDouble(),
+      ),
+    );
+  }
+
+  static Uint8List guqinNote(
+    double frequency, {
+    String style = 'silk',
+    double resonance = 0.62,
+    double slide = 0,
+  }) {
+    final normalizedStyle = switch (style) {
+      'bright' => 'bright',
+      'hollow' => 'hollow',
+      _ => 'silk',
+    };
+    final normalizedResonance = (resonance.clamp(0.0, 1.0) * 10).round() / 10;
+    final normalizedSlide = (slide.clamp(-1.0, 1.0) * 10).round() / 10;
+    final key =
+        'guqin:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '${normalizedResonance.toStringAsFixed(1)}:'
+        '${normalizedSlide.toStringAsFixed(1)}';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildGuqinNote(
+        frequency: frequency,
+        style: normalizedStyle,
+        resonance: normalizedResonance.toDouble(),
+        slide: normalizedSlide.toDouble(),
+      ),
+    );
+  }
+
+  static Uint8List violinNote(
+    double frequency, {
+    String style = 'solo',
+    double bow = 0.65,
+    double reverb = 0.24,
+  }) {
+    final normalizedStyle = switch (style) {
+      'warm' => 'warm',
+      'glass' => 'glass',
+      _ => 'solo',
+    };
+    final normalizedBow = (bow.clamp(0.15, 1.0) * 20).round() / 20;
+    final normalizedReverb = (reverb.clamp(0.0, 0.5) * 20).round() / 20;
+    final key =
+        'violin:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '${normalizedBow.toStringAsFixed(2)}:'
+        '${normalizedReverb.toStringAsFixed(2)}';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildViolinNote(
+        frequency: frequency,
+        style: normalizedStyle,
+        bow: normalizedBow.toDouble(),
+        reverb: normalizedReverb.toDouble(),
+      ),
+    );
   }
 
   static Uint8List metronomeClick({required bool accent}) {
@@ -355,261 +496,783 @@ class ToolboxAudioBank {
     return _encodeWav(samples, sampleRate: sampleRate, gain: 0.92);
   }
 
-  static Uint8List _buildPianoNote(double frequency, String style) {
+  static Uint8List _buildPianoNote(
+    double frequency,
+    String style, {
+    required double reverb,
+    required double decay,
+  }) {
     const sampleRate = 32000;
-    const durationSeconds = 2.3;
+    final durationSeconds = 2.0 + decay * 1.0;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
-    final detuneA = frequency * 0.9975;
-    final detuneB = frequency * 1.0025;
+    final detuneA = frequency * 0.9972;
+    final detuneB = frequency * 1.0028;
     final harmonicMix = switch (style) {
-      'bright' => 1.18,
-      'felt' => 0.82,
+      'bright' => 1.2,
+      'felt' => 0.78,
+      'upright' => 1.06,
       _ => 1.0,
     };
-    final decayMul = switch (style) {
-      'bright' => 1.08,
-      'felt' => 0.82,
-      _ => 1.0,
-    };
+    final decayMul =
+        switch (style) {
+          'bright' => 1.1,
+          'felt' => 0.82,
+          'upright' => 0.92,
+          _ => 1.0,
+        } /
+        decay;
     final hammerNoise = switch (style) {
-      'bright' => 0.055,
-      'felt' => 0.024,
+      'bright' => 0.058,
+      'felt' => 0.022,
+      'upright' => 0.046,
       _ => 0.04,
     };
+    final duplexMul = switch (style) {
+      'bright' => 0.1,
+      'felt' => 0.035,
+      'upright' => 0.07,
+      _ => 0.06,
+    };
+    final inharmonicity = 1 + (frequency / 440.0) * 0.00045;
 
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
       final env =
-          (1 - math.exp(-130 * t)) *
-          math.exp(-(3.6 * decayMul) * t) *
+          (1 - math.exp(-140 * t)) *
+          math.exp(-(3.4 * decayMul) * t) *
           (1 - t / durationSeconds).clamp(0.0, 1.0);
       final hammer =
           (math.sin((i + 1) * 12.9898) + math.cos((i + 1) * 78.233)) *
           hammerNoise *
-          math.exp(-95 * t);
-      var value = math.sin(math.pi * 2 * frequency * t) * 0.56;
-      value += math.sin(math.pi * 2 * detuneA * t + 0.07) * 0.19;
-      value += math.sin(math.pi * 2 * detuneB * t - 0.06) * 0.19;
+          math.exp(-92 * t);
+      var value = 0.0;
+      for (var partial = 1; partial <= 6; partial += 1) {
+        final partialFreq = frequency * partial * (1 + (partial - 1) * 0.0005);
+        final amplitude = switch (partial) {
+          1 => 0.56,
+          2 => 0.22 * harmonicMix,
+          3 => 0.12 * harmonicMix,
+          4 => 0.07 * harmonicMix,
+          5 => 0.038 * harmonicMix,
+          _ => 0.024 * harmonicMix,
+        };
+        value +=
+            math.sin(math.pi * 2 * partialFreq * inharmonicity * t) * amplitude;
+      }
+      value += math.sin(math.pi * 2 * detuneA * t + 0.07) * 0.16;
+      value += math.sin(math.pi * 2 * detuneB * t - 0.06) * 0.16;
       value +=
-          math.sin(math.pi * 2 * frequency * 2 * t + 0.23) *
-          (0.18 * harmonicMix);
+          math.sin(math.pi * 2 * frequency * 6.7 * t + 0.5) *
+          duplexMul *
+          math.exp(-5.8 * t);
       value +=
-          math.sin(math.pi * 2 * frequency * 3 * t + 0.41) *
-          (0.1 * harmonicMix);
-      value +=
-          math.sin(math.pi * 2 * frequency * 4.2 * t + 0.93) *
-          (0.06 * harmonicMix);
-      samples[i] = _softClip((value + hammer) * env * 1.42);
+          math.sin(math.pi * 2 * frequency * 8.2 * t + 1.1) *
+          (duplexMul * 0.7) *
+          math.exp(-7.2 * t);
+      final sympathetic =
+          math.sin(math.pi * 2 * frequency * 0.5 * t + 0.9) *
+          (0.06 + harmonicMix * 0.02) *
+          math.exp(-2.8 * t);
+      samples[i] = _softClip((value + hammer + sympathetic) * env * 1.38);
     }
 
-    final reverb = switch (style) {
-      'bright' => 0.09,
-      'felt' => 0.15,
+    final baseReverb = switch (style) {
+      'bright' => 0.1,
+      'felt' => 0.17,
+      'upright' => 0.13,
       _ => 0.12,
     };
-    _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.94);
-  }
-
-  static Uint8List _buildFluteNote(double frequency, String style) {
-    const sampleRate = 32000;
-    const durationSeconds = 1.9;
-    final totalSamples = (sampleRate * durationSeconds).round();
-    final samples = List<double>.filled(totalSamples, 0);
-    final vibratoDepth = switch (style) {
-      'lead' => 0.0034,
-      'alto' => 0.0054,
-      _ => 0.0042,
-    };
-    final noiseAmt = switch (style) {
-      'lead' => 0.012,
-      'alto' => 0.024,
-      _ => 0.018,
-    };
-    final overtoneMul = switch (style) {
-      'lead' => 1.2,
-      'alto' => 0.82,
-      _ => 1.0,
-    };
-    for (var i = 0; i < totalSamples; i += 1) {
-      final t = i / sampleRate;
-      final vibrato = 1 + vibratoDepth * math.sin(math.pi * 2 * 5.3 * t);
-      final base = frequency * vibrato;
-      final env =
-          (1 - math.exp(-19 * t)) *
-          math.exp(-1.7 * t) *
-          (1 - t / durationSeconds).clamp(0.0, 1.0);
-      final breathNoise =
-          (math.sin((i + 1) * 23.17) + math.cos((i + 1) * 47.31)) *
-          noiseAmt *
-          math.exp(-2.4 * t);
-      var value = math.sin(math.pi * 2 * base * t) * 0.75;
-      value +=
-          math.sin(math.pi * 2 * base * 2 * t + 0.12) * (0.18 * overtoneMul);
-      value +=
-          math.sin(math.pi * 2 * base * 3 * t + 0.35) * (0.07 * overtoneMul);
-      samples[i] = _softClip((value + breathNoise) * env * 1.25);
-    }
-    final reverb = switch (style) {
-      'lead' => 0.14,
-      'alto' => 0.24,
-      _ => 0.2,
-    };
-    _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
+    _applySchroederReverb(
+      samples,
+      sampleRate: sampleRate,
+      amount: ((baseReverb + reverb) / 2).clamp(0.0, 0.55),
+    );
     return _encodeWav(samples, sampleRate: sampleRate, gain: 0.92);
   }
 
-  static Uint8List _buildDrumHit(String kind, String kit) {
-    return switch (kind) {
-      'snare' => _buildSnareHit(kit),
-      'hihat' => _buildHiHatHit(kit),
-      'tom' => _buildTomHit(kit),
-      _ => _buildKickHit(kit),
+  static Uint8List _buildFluteNote(
+    double frequency,
+    String style, {
+    required double reverb,
+    required double tail,
+  }) {
+    const sampleRate = 32000;
+    const durationSeconds = 2.85;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+
+    final vibratoDepth = switch (style) {
+      'lead' => 0.0028,
+      'alto' => 0.0048,
+      'bamboo' => 0.0032,
+      _ => 0.004,
+    };
+    final vibratoRate = switch (style) {
+      'lead' => 5.8,
+      'alto' => 4.9,
+      'bamboo' => 5.1,
+      _ => 5.2,
+    };
+    final breathNoise = switch (style) {
+      'lead' => 0.012,
+      'alto' => 0.024,
+      'bamboo' => 0.028,
+      _ => 0.018,
+    };
+    final overtoneMul = switch (style) {
+      'lead' => 1.3,
+      'alto' => 0.84,
+      'bamboo' => 0.9,
+      _ => 1.0,
+    };
+    final attackSeconds = switch (style) {
+      'lead' => 0.03,
+      'alto' => 0.055,
+      'bamboo' => 0.062,
+      _ => 0.048,
+    };
+    final steadyDecay =
+        (switch (style) {
+          'lead' => 0.98,
+          'alto' => 0.72,
+          'bamboo' => 0.78,
+          _ => 0.84,
+        }) /
+        (0.72 + tail * 0.86);
+    final releaseStartBase = switch (style) {
+      'lead' => durationSeconds * 0.66,
+      'alto' => durationSeconds * 0.6,
+      'bamboo' => durationSeconds * 0.58,
+      _ => durationSeconds * 0.62,
+    };
+    final releaseStart = (releaseStartBase + tail * 0.28).clamp(
+      durationSeconds * 0.5,
+      durationSeconds * 0.9,
+    );
+    final tailFloor =
+        ((switch (style) {
+                  'lead' => 0.09,
+                  'alto' => 0.16,
+                  'bamboo' => 0.14,
+                  _ => 0.12,
+                }) *
+                (0.7 + tail * 1.05))
+            .clamp(0.05, 0.3);
+
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final attack = (t / attackSeconds).clamp(0.0, 1.0).toDouble();
+      final sustain = math.exp(-steadyDecay * t);
+      final releaseNorm =
+          ((durationSeconds - t) / (durationSeconds - releaseStart))
+              .clamp(0.0, 1.0)
+              .toDouble();
+      final releaseCurve = math.pow(releaseNorm, 1.35).toDouble();
+      final tailBlend = t >= releaseStart ? releaseCurve : 1.0;
+      final env = (attack * sustain * tailBlend + tailFloor * (1 - releaseNorm))
+          .clamp(0.0, 1.0)
+          .toDouble();
+
+      final vibLfo = math.sin(
+        math.pi * 2 * vibratoRate * t + math.sin(math.pi * 2 * 0.38 * t) * 0.34,
+      );
+      final pitched = frequency * (1 + vibratoDepth * vibLfo);
+
+      final jetNoise =
+          (math.sin((i + 1) * 23.17) +
+              math.sin((i + 1) * 47.31 + 0.9) +
+              math.cos((i + 1) * 61.11)) *
+          breathNoise *
+          math.exp(-2.15 * t);
+      final chiff =
+          (math.sin((i + 1) * 111.3) + math.cos((i + 1) * 87.7)) *
+          (0.016 + breathNoise * 0.45) *
+          math.exp(-58 * t);
+
+      var tone = math.sin(math.pi * 2 * pitched * t) * 0.7;
+      tone +=
+          math.sin(math.pi * 2 * pitched * 2.01 * t + 0.11) *
+          (0.17 * overtoneMul);
+      tone +=
+          math.sin(math.pi * 2 * pitched * 2.98 * t + 0.36) *
+          (0.08 * overtoneMul);
+      tone +=
+          math.sin(math.pi * 2 * pitched * 4.07 * t + 0.63) *
+          (0.04 * overtoneMul);
+
+      final tailResonance =
+          math.sin(math.pi * 2 * pitched * 0.5 * t + 0.82) *
+          (0.05 + tailFloor * 0.18) *
+          math.exp(-1.55 * math.max(0.0, t - releaseStart));
+      samples[i] = _softClip(
+        (tone + jetNoise + chiff + tailResonance) * env * 1.3,
+      );
+    }
+
+    final baseReverb = switch (style) {
+      'lead' => 0.16,
+      'alto' => 0.27,
+      'bamboo' => 0.24,
+      _ => 0.22,
+    };
+    _applySchroederReverb(
+      samples,
+      sampleRate: sampleRate,
+      amount: ((baseReverb + reverb) / 2).clamp(0.0, 0.5),
+    );
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
+  }
+
+  static Uint8List _buildGuitarNote({
+    required double frequency,
+    required String style,
+    required double resonance,
+    required double pickPosition,
+  }) {
+    const sampleRate = 32000;
+    const durationSeconds = 2.9;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    final styleBrightness = switch (style) {
+      'nylon' => 0.72,
+      'ambient' => 0.84,
+      'twelve' => 1.2,
+      _ => 1.0,
+    };
+    final styleDecay = switch (style) {
+      'nylon' => 0.92,
+      'ambient' => 1.24,
+      'twelve' => 1.06,
+      _ => 1.0,
+    };
+    final styleBody = switch (style) {
+      'nylon' => 0.82,
+      'ambient' => 0.96,
+      'twelve' => 0.76,
+      _ => 0.9,
+    };
+    final resonantBody = 0.38 + resonance * 0.62;
+    final pickColor = (0.25 + pickPosition * 1.25).clamp(0.25, 1.35);
+    final doubledFrequency = frequency * 2.0;
+
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final env =
+          (1 - math.exp(-44 * t)) *
+          math.exp(-(2.25 / styleDecay) * t) *
+          (1 - t / durationSeconds).clamp(0.0, 1.0);
+      var tone = 0.0;
+      for (var partial = 1; partial <= 8; partial += 1) {
+        final harmonicFreq = frequency * partial;
+        final comb = math.sin(math.pi * pickPosition * partial).abs();
+        final amp =
+            (1 / math.pow(partial, 1.12)) *
+            (0.75 + comb * 1.05) *
+            styleBrightness;
+        final partialDecay = math.exp(-(0.7 + partial * 0.22 / styleDecay) * t);
+        tone +=
+            math.sin(math.pi * 2 * harmonicFreq * t + partial * 0.09) *
+            amp *
+            partialDecay *
+            0.52;
+      }
+      if (style == 'twelve') {
+        tone +=
+            math.sin(math.pi * 2 * doubledFrequency * 0.996 * t + 0.16) *
+            0.24 *
+            math.exp(-1.85 * t);
+        tone +=
+            math.sin(math.pi * 2 * doubledFrequency * 1.004 * t - 0.09) *
+            0.22 *
+            math.exp(-1.8 * t);
+      }
+      final bridgeClick =
+          (math.sin((i + 1) * 18.17) + math.cos((i + 1) * 63.41)) *
+          (0.03 + pickColor * 0.02) *
+          math.exp(-44 * t);
+      final fretNoise =
+          (math.sin((i + 1) * 137.0) + math.cos((i + 1) * 96.5)) *
+          (0.008 + pickColor * 0.01) *
+          math.exp(-18 * t);
+      final bodyModeA =
+          math.sin(math.pi * 2 * frequency * 0.5 * t + 0.7) *
+          resonantBody *
+          styleBody *
+          0.18 *
+          math.exp(-2.8 * t);
+      final bodyModeB =
+          math.sin(math.pi * 2 * frequency * 0.77 * t + 1.1) *
+          resonantBody *
+          styleBody *
+          0.12 *
+          math.exp(-3.2 * t);
+      final sympathetic =
+          math.sin(math.pi * 2 * frequency * 1.01 * t + 0.5) *
+          (0.06 + resonance * 0.08) *
+          math.exp(-1.9 * t);
+      samples[i] = _softClip(
+        (tone + bridgeClick + fretNoise + bodyModeA + bodyModeB + sympathetic) *
+            env *
+            1.28,
+      );
+    }
+
+    final reverb = switch (style) {
+      'nylon' => 0.16 + resonance * 0.11,
+      'ambient' => 0.28 + resonance * 0.15,
+      'twelve' => 0.2 + resonance * 0.12,
+      _ => 0.18 + resonance * 0.12,
+    };
+    _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
+  }
+
+  static Uint8List _buildGuqinNote({
+    required double frequency,
+    required String style,
+    required double resonance,
+    required double slide,
+  }) {
+    const sampleRate = 32000;
+    const durationSeconds = 4.6;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    final toneBrightness = switch (style) {
+      'bright' => 1.16,
+      'hollow' => 0.74,
+      _ => 0.92,
+    };
+    final bodyMul = switch (style) {
+      'bright' => 0.9,
+      'hollow' => 1.12,
+      _ => 1.0,
+    };
+    final decayBase = switch (style) {
+      'bright' => 1.5,
+      'hollow' => 1.22,
+      _ => 1.34,
+    };
+    final slideSemitone = slide.clamp(-1.0, 1.0) * 2.4;
+    final slideSign = slideSemitone.sign;
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final attack = (1 - math.exp(-38 * t));
+      final decay = math.exp(-(decayBase - resonance * 0.42) * t);
+      final tail = (1 - t / durationSeconds).clamp(0.0, 1.0).toDouble();
+      final env = (attack * decay * tail).clamp(0.0, 1.0).toDouble();
+      final slideProgress = (1 - math.exp(-6.5 * t)) * math.exp(-0.82 * t);
+      final slideCurve = math.pow(slideProgress, 1.05).toDouble();
+      final slideOffset = slideSemitone * slideCurve;
+      final microVibrato =
+          1 + 0.0018 * math.sin(math.pi * 2 * (4.2 + resonance) * t);
+      final shiftedFrequency =
+          frequency *
+          math.pow(2.0, slideOffset / 12.0).toDouble() *
+          microVibrato;
+      final stringFriction =
+          (math.sin((i + 1) * 19.31) + math.cos((i + 1) * 57.11)) *
+          (0.012 + resonance * 0.016) *
+          math.exp(-24 * t);
+      final slideRustle =
+          (math.sin((i + 1) * 103.9) + math.cos((i + 1) * 77.4)) *
+          (0.007 + slideSign.abs() * 0.012) *
+          math.exp(-8.6 * math.max(0.0, t - 0.09));
+      var tone = math.sin(math.pi * 2 * shiftedFrequency * t) * 0.66;
+      tone +=
+          math.sin(math.pi * 2 * shiftedFrequency * 2 * t + 0.2) *
+          (0.2 * toneBrightness);
+      tone +=
+          math.sin(math.pi * 2 * shiftedFrequency * 3.1 * t + 0.68) *
+          (0.1 * toneBrightness);
+      tone +=
+          math.sin(math.pi * 2 * shiftedFrequency * 4.8 * t + 1.18) *
+          (0.045 * toneBrightness);
+      final harmonicChime =
+          math.sin(math.pi * 2 * shiftedFrequency * 2.0 * t + 0.42) *
+          (0.1 + resonance * 0.1) *
+          math.exp(-1.9 * t);
+      final body =
+          math.sin(math.pi * 2 * shiftedFrequency * 0.5 * t + 0.9) *
+          (0.1 + resonance * 0.08) *
+          bodyMul *
+          math.exp(-2.2 * t);
+      samples[i] = _softClip(
+        (tone + harmonicChime + body + stringFriction + slideRustle) *
+            env *
+            1.22,
+      );
+    }
+    _applySchroederReverb(
+      samples,
+      sampleRate: sampleRate,
+      amount: 0.2 + resonance * 0.24,
+    );
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.88);
+  }
+
+  static double _drumMaterialBrightness(String material) {
+    return switch (material) {
+      'metal' => 1.22,
+      'hybrid' => 1.06,
+      _ => 0.9,
     };
   }
 
-  static Uint8List _buildKickHit(String kit) {
+  static Uint8List _buildDrumHit(
+    String kind,
+    String kit,
+    double tone,
+    double tail,
+    String material,
+  ) {
+    return switch (kind) {
+      'snare' => _buildSnareHit(kit, tone, tail, material),
+      'hihat' => _buildHiHatHit(kit, tone, tail, material),
+      'tom' => _buildTomHit(kit, tone, tail, material),
+      _ => _buildKickHit(kit, tone, tail, material),
+    };
+  }
+
+  static Uint8List _buildKickHit(
+    String kit,
+    double tone,
+    double tail,
+    String material,
+  ) {
+    const sampleRate = 24000;
+    const durationSeconds = 0.58;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    final bodyMul = switch (kit) {
+      'electro' => 1.26,
+      'lofi' => 0.86,
+      _ => 1.0,
+    };
+    final clickMul = switch (kit) {
+      'electro' => 1.42,
+      'lofi' => 0.72,
+      _ => 1.0,
+    };
+    final materialMul = _drumMaterialBrightness(material);
+    final tailDecay = 10.4 - tail * 5.1;
+    final startSweep = 124 + tone * 52;
+    final endSweep = 33 + tone * 24;
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final sweep =
+          startSweep -
+          (startSweep - endSweep) *
+              math.pow((t / durationSeconds).clamp(0.0, 1.0), 0.88);
+      final env = math.exp(-tailDecay * t);
+      final sub = math.sin(math.pi * 2 * sweep * t) * (0.86 * bodyMul);
+      final subTail =
+          math.sin(math.pi * 2 * (sweep * 0.52) * t + 0.2) *
+          (0.19 + tail * 0.18) *
+          math.exp(-4.6 * t);
+      final click = math.exp(-115 * t) * (0.09 * clickMul * materialMul);
+      final beaterNoise =
+          (math.sin((i + 1) * 30.41) + math.cos((i + 1) * 51.22)) *
+          (0.018 + tone * 0.014) *
+          math.exp(-46 * t);
+      samples[i] = _softClip(
+        (sub + subTail + click + beaterNoise) * env * 1.34,
+      );
+    }
+    if (kit != 'electro') {
+      _applySchroederReverb(
+        samples,
+        sampleRate: sampleRate,
+        amount: 0.02 + tail * 0.06,
+      );
+    }
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
+  }
+
+  static Uint8List _buildSnareHit(
+    String kit,
+    double tone,
+    double tail,
+    String material,
+  ) {
     const sampleRate = 24000;
     const durationSeconds = 0.42;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
-    final bodyMul = switch (kit) {
-      'electro' => 1.22,
-      'lofi' => 0.84,
-      _ => 1.0,
-    };
-    final clickMul = switch (kit) {
-      'electro' => 1.3,
-      'lofi' => 0.7,
-      _ => 1.0,
-    };
-    for (var i = 0; i < totalSamples; i += 1) {
-      final t = i / sampleRate;
-      final sweep = 108 - 62 * (t / durationSeconds).clamp(0.0, 1.0);
-      final env = math.exp(-12.5 * t);
-      final click = math.exp(-95 * t) * (0.08 * clickMul);
-      final low = math.sin(math.pi * 2 * sweep * t) * (0.82 * bodyMul);
-      samples[i] = _softClip((low + click) * env * 1.4);
-    }
-    if (kit == 'lofi') {
-      _applySchroederReverb(samples, sampleRate: sampleRate, amount: 0.06);
-    }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.98);
-  }
-
-  static Uint8List _buildSnareHit(String kit) {
-    const sampleRate = 24000;
-    const durationSeconds = 0.32;
-    final totalSamples = (sampleRate * durationSeconds).round();
-    final samples = List<double>.filled(totalSamples, 0);
     final toneMul = switch (kit) {
-      'electro' => 0.86,
-      'lofi' => 0.74,
+      'electro' => 0.92,
+      'lofi' => 0.78,
       _ => 1.0,
     };
     final noiseMul = switch (kit) {
-      'electro' => 1.18,
-      'lofi' => 0.92,
+      'electro' => 1.24,
+      'lofi' => 0.9,
       _ => 1.0,
     };
+    final materialMul = _drumMaterialBrightness(material);
+    final toneFrequency = 146 + tone * 110;
+    final decay = 16.8 - tail * 7.8;
+    final wireDecay = 30 - tail * 13;
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
-      final env = math.exp(-19.5 * t);
-      final tone =
-          math.sin(math.pi * 2 * 184 * t) * (0.3 * toneMul) * math.exp(-14 * t);
-      final noise =
-          (math.sin((i + 1) * 91.7) + math.cos((i + 1) * 67.3)) *
-          (0.34 * noiseMul);
-      samples[i] = _softClip((tone + noise) * env);
+      final env = math.exp(-decay * t);
+      final shell =
+          math.sin(math.pi * 2 * toneFrequency * t) *
+          (0.36 * toneMul) *
+          math.exp(-(9.8 - tail * 3.2) * t);
+      final overtone =
+          math.sin(math.pi * 2 * toneFrequency * 2.02 * t + 0.16) *
+          0.12 *
+          math.exp(-12.5 * t);
+      final wireNoise =
+          (math.sin((i + 1) * 91.7) +
+              math.cos((i + 1) * 67.3) +
+              math.sin((i + 1) * 121.9)) *
+          (0.3 * noiseMul * (0.86 + materialMul * 0.2)) *
+          math.exp(-wireDecay * t);
+      final snap =
+          math.sin(math.pi * 2 * (4100 + tone * 1100) * t) *
+          (0.04 * materialMul) *
+          math.exp(-80 * t);
+      samples[i] = _softClip(
+        (shell + overtone + wireNoise + snap) * env * 1.06,
+      );
     }
-    if (kit == 'electro') {
-      _applySchroederReverb(samples, sampleRate: sampleRate, amount: 0.08);
-    }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.98);
+    _applySchroederReverb(
+      samples,
+      sampleRate: sampleRate,
+      amount: kit == 'electro' ? (0.08 + tail * 0.05) : (0.03 + tail * 0.04),
+    );
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
   }
 
-  static Uint8List _buildHiHatHit(String kit) {
+  static Uint8List _buildHiHatHit(
+    String kit,
+    double tone,
+    double tail,
+    String material,
+  ) {
     const sampleRate = 24000;
-    const durationSeconds = 0.18;
+    const durationSeconds = 0.3;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
     final noiseMul = switch (kit) {
-      'electro' => 1.28,
-      'lofi' => 0.82,
+      'electro' => 1.34,
+      'lofi' => 0.8,
       _ => 1.0,
     };
+    final materialMul = _drumMaterialBrightness(material);
+    final decay = 30 - tail * 14;
+    final modes = <double>[
+      5100 + tone * 2600,
+      6800 + tone * 3100,
+      8600 + tone * 3600,
+    ];
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
-      final env = math.exp(-34 * t);
+      final env = math.exp(-decay * t);
       final noise =
           (math.sin((i + 1) * 211.3) +
               math.sin((i + 1) * 139.7) +
               math.cos((i + 1) * 97.1)) *
-          (0.22 * noiseMul);
-      final metal =
-          math.sin(math.pi * 2 * 6200 * t) * 0.07 +
-          math.sin(math.pi * 2 * 7400 * t + 0.5) * 0.05;
-      samples[i] = _softClip((noise + metal) * env);
+          (0.21 * noiseMul) *
+          math.exp(-18 * t);
+      var metal = 0.0;
+      for (var mode = 0; mode < modes.length; mode += 1) {
+        metal +=
+            math.sin(math.pi * 2 * modes[mode] * t + mode * 0.41) *
+            (0.042 + mode * 0.012) *
+            materialMul;
+      }
+      final stick =
+          math.sin(math.pi * 2 * (9500 + tone * 2000) * t) *
+          0.014 *
+          math.exp(-120 * t);
+      samples[i] = _softClip((noise + metal + stick) * env * 1.08);
     }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.98);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
   }
 
-  static Uint8List _buildTomHit(String kit) {
+  static Uint8List _buildTomHit(
+    String kit,
+    double tone,
+    double tail,
+    String material,
+  ) {
     const sampleRate = 24000;
-    const durationSeconds = 0.38;
+    const durationSeconds = 0.52;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
     final bodyMul = switch (kit) {
-      'electro' => 1.14,
-      'lofi' => 0.8,
+      'electro' => 1.12,
+      'lofi' => 0.84,
       _ => 1.0,
     };
+    final materialMul = _drumMaterialBrightness(material);
+    final rootStart = 126 + tone * 74;
+    final rootEnd = 94 + tone * 52;
+    final decay = 10.8 - tail * 4.6;
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
-      final env = math.exp(-11 * t);
-      final fundamental = math.sin(math.pi * 2 * 136 * t) * (0.62 * bodyMul);
-      final overtone = math.sin(math.pi * 2 * 272 * t + 0.2) * 0.2;
+      final pitch =
+          rootStart -
+          (rootStart - rootEnd) * (t / durationSeconds).clamp(0.0, 1.0);
+      final env = math.exp(-decay * t);
+      final fundamental = math.sin(math.pi * 2 * pitch * t) * (0.64 * bodyMul);
+      final overtone =
+          math.sin(math.pi * 2 * pitch * 2.03 * t + 0.18) *
+          (0.25 * materialMul) *
+          math.exp(-7.5 * t);
+      final shell =
+          math.sin(math.pi * 2 * pitch * 0.52 * t + 0.7) *
+          0.16 *
+          math.exp(-3.8 * t);
       final knock =
           (math.sin((i + 1) * 32.7) + math.cos((i + 1) * 53.2)) *
-          0.06 *
+          (0.048 + tone * 0.018) *
           math.exp(-40 * t);
-      samples[i] = _softClip((fundamental + overtone + knock) * env * 1.2);
+      samples[i] = _softClip(
+        (fundamental + overtone + shell + knock) * env * 1.14,
+      );
     }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.98);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
   }
 
-  static Uint8List _buildTriangleHit(String style) {
+  static Uint8List _buildTriangleHit(
+    String style,
+    String material,
+    double strike,
+    double damping,
+  ) {
     const sampleRate = 32000;
-    const durationSeconds = 2.2;
+    const durationSeconds = 2.9;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
-    final highMul = switch (style) {
-      'bright' => 1.22,
-      'soft' => 0.74,
+    final styleHighMul = switch (style) {
+      'bright' => 1.3,
+      'soft' => 0.68,
       _ => 1.0,
     };
-    final decayMul = switch (style) {
-      'bright' => 1.12,
-      'soft' => 0.78,
+    final styleDecayMul = switch (style) {
+      'bright' => 1.1,
+      'soft' => 0.82,
       _ => 1.0,
     };
+    final materialHighMul = switch (material) {
+      'brass' => 0.88,
+      'aluminum' => 1.16,
+      _ => 1.0,
+    };
+    final strikeEdge = strike.clamp(0.0, 1.0);
+    final decay = (2.15 + damping * 1.75) * styleDecayMul;
+    final modes = <double>[
+      980 + strikeEdge * 230,
+      1410 + strikeEdge * 320,
+      2010 + strikeEdge * 430,
+      2780 + strikeEdge * 570,
+      3520 + strikeEdge * 690,
+    ];
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
-      final env = (1 - math.exp(-110 * t)) * math.exp(-(2.5 * decayMul) * t);
-      var value = math.sin(math.pi * 2 * 980 * t) * 0.52;
-      value += math.sin(math.pi * 2 * 1365 * t + 0.34) * (0.3 * highMul);
-      value += math.sin(math.pi * 2 * 1810 * t + 0.85) * (0.2 * highMul);
-      value += math.sin(math.pi * 2 * 2480 * t + 1.32) * (0.1 * highMul);
-      samples[i] = _softClip(value * env * 1.3);
+      final env = (1 - math.exp(-130 * t)) * math.exp(-decay * t);
+      var value = 0.0;
+      for (var mode = 0; mode < modes.length; mode += 1) {
+        value +=
+            math.sin(math.pi * 2 * modes[mode] * t + mode * 0.37) *
+            (0.36 / (mode + 1)) *
+            styleHighMul *
+            materialHighMul;
+      }
+      final click =
+          (math.sin((i + 1) * 102.5) + math.cos((i + 1) * 44.1)) *
+          (0.018 + strikeEdge * 0.012) *
+          math.exp(-130 * t);
+      samples[i] = _softClip((value + click) * env * 1.1);
     }
     final reverb = switch (style) {
-      'bright' => 0.2,
-      'soft' => 0.32,
-      _ => 0.26,
+      'bright' => 0.22 + (1 - damping) * 0.09,
+      'soft' => 0.28 + (1 - damping) * 0.05,
+      _ => 0.25 + (1 - damping) * 0.08,
     };
     _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.92);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
+  }
+
+  static Uint8List _buildViolinNote({
+    required double frequency,
+    required String style,
+    required double bow,
+    required double reverb,
+  }) {
+    const sampleRate = 32000;
+    const durationSeconds = 3.8;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    final brightness = switch (style) {
+      'warm' => 0.82,
+      'glass' => 1.18,
+      _ => 1.0,
+    };
+    final body = switch (style) {
+      'warm' => 1.12,
+      'glass' => 0.78,
+      _ => 0.94,
+    };
+    final vibratoDepth = switch (style) {
+      'warm' => 0.0048,
+      'glass' => 0.0034,
+      _ => 0.004,
+    };
+    final vibratoRate = switch (style) {
+      'warm' => 5.0,
+      'glass' => 6.2,
+      _ => 5.6,
+    };
+
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final attack = (1 - math.exp(-(18 + bow * 22) * t));
+      final sustain = math.exp(-(0.42 + (1 - bow) * 0.34) * t);
+      final release = ((durationSeconds - t) / 0.9).clamp(0.0, 1.0).toDouble();
+      final env = (attack * sustain * math.pow(release, 1.2)).clamp(0.0, 1.0);
+      final vibrato =
+          math.sin(
+            math.pi * 2 * vibratoRate * t +
+                math.sin(math.pi * 2 * 0.28 * t) * 0.24,
+          ) *
+          vibratoDepth;
+      final bowedFrequency = frequency * (1 + vibrato);
+      var tone = math.sin(math.pi * 2 * bowedFrequency * t) * 0.54;
+      tone +=
+          math.sin(math.pi * 2 * bowedFrequency * 2.01 * t + 0.18) *
+          (0.22 * brightness);
+      tone +=
+          math.sin(math.pi * 2 * bowedFrequency * 3.03 * t + 0.44) *
+          (0.11 * brightness);
+      tone +=
+          math.sin(math.pi * 2 * bowedFrequency * 4.08 * t + 0.82) *
+          (0.06 * brightness);
+      final bowNoise =
+          (math.sin((i + 1) * 24.71) +
+              math.cos((i + 1) * 41.33) +
+              math.sin((i + 1) * 73.19 + 0.5)) *
+          (0.012 + bow * 0.024) *
+          math.exp(-0.55 * t);
+      final bodyResonance =
+          math.sin(math.pi * 2 * bowedFrequency * 0.5 * t + 0.7) *
+          (0.08 + body * 0.04) *
+          math.exp(-1.6 * t);
+      final scrape =
+          math.sin(math.pi * 2 * bowedFrequency * 6.7 * t + 0.3) *
+          (0.018 + bow * 0.016) *
+          math.exp(-4.2 * t);
+      samples[i] = _softClip(
+        (tone + bowNoise + bodyResonance + scrape) * env * 1.28,
+      );
+    }
+
+    _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
   }
 
   static _HarpPluckTone _pluckTone(String style) {

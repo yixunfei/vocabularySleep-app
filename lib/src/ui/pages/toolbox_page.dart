@@ -108,7 +108,7 @@ class ToolboxPage extends StatelessWidget {
               subtitle: pickUiText(
                 i18n,
                 zh: '统一入口切换竖琴、钢琴、长笛、鼓垫、吉他和三角铁。',
-                en: 'Unified deck for harp, piano, flute, drum pad, guitar, and triangle.',
+                en: 'Unified deck for harp, piano, flute, drum pad, guitar, triangle, and violin.',
                 ja: 'ハープ、ピアノ、フルート、ドラム、ギター、トライアングルを1画面で切替。',
                 de: 'Einheitliches Deck fur Harfe, Klavier, Flote, Drum-Pad, Gitarre und Triangel.',
                 fr: 'Deck unifie pour harpe, piano, flute, pad batterie, guitare et triangle.',
