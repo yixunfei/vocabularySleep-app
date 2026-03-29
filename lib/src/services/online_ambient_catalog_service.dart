@@ -155,9 +155,17 @@ class OnlineAmbientCatalogService {
   }
 
   Future<String> downloadToLocal(OnlineAmbientSoundOption option) async {
+    return downloadToLocalWithProgress(option, null);
+  }
+
+  Future<String> downloadToLocalWithProgress(
+    OnlineAmbientSoundOption option,
+    void Function(ResourceDownloadProgress progress)? onProgress,
+  ) async {
     final file = await _cacheService.ensureFileDownloaded(
       option.remoteKey,
       cacheRelativePath: option.remoteKey,
+      onProgress: onProgress,
     );
     return file.path;
   }

@@ -31,6 +31,8 @@ class _OnlineAmbientCatalogSheetState
   String? _pendingId;
   late Future<List<OnlineAmbientSoundOption>> _catalogFuture;
   late Future<Set<String>> _downloadedPathsFuture;
+  final Map<String, double> _downloadProgressById = <String, double>{};
+  final Map<String, double> _deleteProgressById = <String, double>{};
 
   @override
   void initState() {
@@ -38,6 +40,28 @@ class _OnlineAmbientCatalogSheetState
     final state = context.read<AppState>();
     _catalogFuture = state.fetchOnlineAmbientCatalog();
     _downloadedPathsFuture = state.fetchDownloadedOnlineAmbientRelativePaths();
+  }
+
+  void _setDownloadProgress(String id, double? progress) {
+    if (!mounted) return;
+    setState(() {
+      if (progress == null) {
+        _downloadProgressById.remove(id);
+      } else {
+        _downloadProgressById[id] = progress.clamp(0.0, 1.0);
+      }
+    });
+  }
+
+  void _setDeleteProgress(String id, double? progress) {
+    if (!mounted) return;
+    setState(() {
+      if (progress == null) {
+        _deleteProgressById.remove(id);
+      } else {
+        _deleteProgressById[id] = progress.clamp(0.0, 1.0);
+      }
+    });
   }
 
   @override
@@ -171,89 +195,205 @@ class _OnlineAmbientCatalogSheetState
                                               ),
                                             ),
                                             const SizedBox(width: 12),
-                                            FilledButton(
-                                              onPressed: _pendingId == option.id
-                                                  ? null
-                                                  : () async {
-                                                      setState(() {
-                                                        _pendingId = option.id;
-                                                      });
-                                                      final deleted = downloaded
-                                                          ? await state
-                                                                .deleteDownloadedOnlineAmbientSource(
-                                                                  option,
-                                                                )
-                                                          : null;
-                                                      final path = downloaded
-                                                          ? null
-                                                          : await state
-                                                                .downloadOnlineAmbientSource(
-                                                                  option,
-                                                                );
-                                                      if (!mounted ||
-                                                          !context.mounted) {
-                                                        return;
-                                                      }
-                                                      setState(() {
-                                                        _pendingId = null;
-                                                        _downloadedPathsFuture =
-                                                            state
-                                                                .fetchDownloadedOnlineAmbientRelativePaths();
-                                                      });
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            downloaded
-                                                                ? (deleted ==
-                                                                          true
-                                                                      ? pickUiText(
-                                                                          i18n,
-                                                                          zh: '已删除本地音频：$localizedName',
-                                                                          en: 'Deleted local audio: $localizedName',
-                                                                        )
-                                                                      : pickUiText(
-                                                                          i18n,
-                                                                          zh: '删除失败，请稍后重试。',
-                                                                          en: 'Delete failed. Please try again later.',
-                                                                        ))
-                                                                : (path == null
-                                                                      ? pickUiText(
-                                                                          i18n,
-                                                                          zh: '下载失败，请稍后重试。',
-                                                                          en: 'Download failed. Please try again later.',
-                                                                        )
-                                                                      : pickUiText(
-                                                                          i18n,
-                                                                          zh: '已下载到本地：$localizedName',
-                                                                          en: 'Downloaded locally: $localizedName',
-                                                                        )),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                              child: Text(
-                                                _pendingId == option.id
-                                                    ? pickUiText(
-                                                        i18n,
-                                                        zh: downloaded
-                                                            ? '删除中'
-                                                            : '下载中',
-                                                        en: downloaded
-                                                            ? 'Deleting'
-                                                            : 'Downloading',
-                                                      )
-                                                    : pickUiText(
-                                                        i18n,
-                                                        zh: downloaded
-                                                            ? '删除白噪音'
-                                                            : '下载白噪音',
-                                                        en: downloaded
-                                                            ? 'Delete'
-                                                            : 'Download',
+                                            SizedBox(
+                                              width: 100,
+                                              child: downloaded
+                                                  ? OutlinedButton.icon(
+                                                      icon:
+                                                          _deleteProgressById
+                                                              .containsKey(
+                                                                option.id,
+                                                              )
+                                                          ? SizedBox(
+                                                              width: 16,
+                                                              height: 16,
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                value:
+                                                                    _deleteProgressById[option
+                                                                        .id],
+                                                              ),
+                                                            )
+                                                          : const Icon(
+                                                              Icons
+                                                                  .delete_outline_rounded,
+                                                              size: 18,
+                                                            ),
+                                                      label: Text(
+                                                        _pendingId == option.id
+                                                            ? pickUiText(
+                                                                i18n,
+                                                                zh: '删除中',
+                                                                en: 'Deleting',
+                                                              )
+                                                            : pickUiText(
+                                                                i18n,
+                                                                zh: '删除',
+                                                                en: 'Delete',
+                                                              ),
                                                       ),
-                                              ),
+                                                      style:
+                                                          OutlinedButton.styleFrom(
+                                                            foregroundColor:
+                                                                Colors.red,
+                                                            side:
+                                                                const BorderSide(
+                                                                  color: Colors
+                                                                      .red,
+                                                                ),
+                                                          ),
+                                                      onPressed:
+                                                          _pendingId ==
+                                                              option.id
+                                                          ? null
+                                                          : () async {
+                                                              setState(() {
+                                                                _pendingId =
+                                                                    option.id;
+                                                              });
+                                                              _setDeleteProgress(
+                                                                option.id,
+                                                                0.1,
+                                                              );
+                                                              final deleted =
+                                                                  await state
+                                                                      .deleteDownloadedOnlineAmbientSource(
+                                                                        option,
+                                                                      );
+                                                              if (!mounted ||
+                                                                  !context
+                                                                      .mounted) {
+                                                                return;
+                                                              }
+                                                              _setDeleteProgress(
+                                                                option.id,
+                                                                null,
+                                                              );
+                                                              setState(() {
+                                                                _pendingId =
+                                                                    null;
+                                                                _downloadedPathsFuture =
+                                                                    state
+                                                                        .fetchDownloadedOnlineAmbientRelativePaths();
+                                                              });
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    deleted ==
+                                                                            true
+                                                                        ? pickUiText(
+                                                                            i18n,
+                                                                            zh: '已删除本地音频：$localizedName',
+                                                                            en: 'Deleted local audio: $localizedName',
+                                                                          )
+                                                                        : pickUiText(
+                                                                            i18n,
+                                                                            zh: '删除失败，请稍后重试。',
+                                                                            en: 'Delete failed. Please try again later.',
+                                                                          ),
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                    )
+                                                  : FilledButton.icon(
+                                                      icon:
+                                                          _downloadProgressById
+                                                              .containsKey(
+                                                                option.id,
+                                                              )
+                                                          ? SizedBox(
+                                                              width: 16,
+                                                              height: 16,
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                value:
+                                                                    _downloadProgressById[option
+                                                                        .id],
+                                                              ),
+                                                            )
+                                                          : const Icon(
+                                                              Icons
+                                                                  .download_rounded,
+                                                              size: 18,
+                                                            ),
+                                                      label: Text(
+                                                        _pendingId == option.id
+                                                            ? pickUiText(
+                                                                i18n,
+                                                                zh: '下载中',
+                                                                en: 'Downloading',
+                                                              )
+                                                            : pickUiText(
+                                                                i18n,
+                                                                zh: '下载',
+                                                                en: 'Download',
+                                                              ),
+                                                      ),
+                                                      onPressed:
+                                                          _pendingId ==
+                                                              option.id
+                                                          ? null
+                                                          : () async {
+                                                              setState(() {
+                                                                _pendingId =
+                                                                    option.id;
+                                                              });
+                                                              _setDownloadProgress(
+                                                                option.id,
+                                                                0.1,
+                                                              );
+                                                              final path = await state
+                                                                  .downloadOnlineAmbientSourceWithProgress(
+                                                                    option,
+                                                                    (progress) {
+                                                                      _setDownloadProgress(
+                                                                        option
+                                                                            .id,
+                                                                        progress
+                                                                            .progress,
+                                                                      );
+                                                                    },
+                                                                  );
+                                                              if (!mounted ||
+                                                                  !context
+                                                                      .mounted) {
+                                                                return;
+                                                              }
+                                                              _setDownloadProgress(
+                                                                option.id,
+                                                                null,
+                                                              );
+                                                              setState(() {
+                                                                _pendingId =
+                                                                    null;
+                                                                _downloadedPathsFuture =
+                                                                    state
+                                                                        .fetchDownloadedOnlineAmbientRelativePaths();
+                                                              });
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    path == null
+                                                                        ? pickUiText(
+                                                                            i18n,
+                                                                            zh: '下载失败，请稍后重试。',
+                                                                            en: 'Download failed. Please try again later.',
+                                                                          )
+                                                                        : pickUiText(
+                                                                            i18n,
+                                                                            zh: '已下载到本地：$localizedName',
+                                                                            en: 'Downloaded locally: $localizedName',
+                                                                          ),
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            },
+                                                    ),
                                             ),
                                           ],
                                         ),

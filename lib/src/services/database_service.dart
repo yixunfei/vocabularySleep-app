@@ -58,6 +58,41 @@ class DatabaseBackupInfo {
   }
 }
 
+class DownloadedAmbientSoundInfo {
+  const DownloadedAmbientSoundInfo({
+    required this.soundId,
+    required this.remoteKey,
+    required this.relativePath,
+    required this.categoryKey,
+    required this.name,
+    required this.filePath,
+    required this.downloadedAt,
+    required this.lastAccessedAt,
+  });
+
+  final String soundId;
+  final String remoteKey;
+  final String relativePath;
+  final String categoryKey;
+  final String name;
+  final String filePath;
+  final DateTime downloadedAt;
+  final DateTime lastAccessedAt;
+
+  factory DownloadedAmbientSoundInfo.fromMap(Map<String, Object?> map) {
+    return DownloadedAmbientSoundInfo(
+      soundId: map['sound_id'] as String,
+      remoteKey: map['remote_key'] as String,
+      relativePath: map['relative_path'] as String,
+      categoryKey: map['category_key'] as String,
+      name: map['name'] as String,
+      filePath: map['file_path'] as String,
+      downloadedAt: DateTime.parse(map['downloaded_at'] as String),
+      lastAccessedAt: DateTime.parse(map['last_accessed_at'] as String),
+    );
+  }
+}
+
 enum BuiltInWordbookLoadStage { downloading, processing, completed }
 
 class BuiltInWordbookLoadProgress {
@@ -144,7 +179,7 @@ class AppDatabaseService {
     caseSensitive: false,
   );
   static const int _maxSqlVariablesPerStatement = 900;
-  static const int _currentSchemaVersion = 7;
+  static const int _currentSchemaVersion = 8;
 
   Future<void> init() {
     if (_initialized) {
@@ -646,6 +681,20 @@ class AppDatabaseService {
       );
     ''');
 
+    _db.execute('''
+      CREATE TABLE IF NOT EXISTS downloaded_ambient_sounds (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sound_id TEXT NOT NULL UNIQUE,
+        remote_key TEXT NOT NULL,
+        relative_path TEXT NOT NULL UNIQUE,
+        category_key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        downloaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_accessed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    ''');
+
     _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_words_wordbook ON words(wordbook_id);',
     );
@@ -1070,14 +1119,11 @@ class AppDatabaseService {
   }
 
   bool _shouldSyncBuiltInCatalogOnStartup() {
-    final row = _selectOne(
-      '''
+    final row = _selectOne('''
       SELECT COUNT(*) AS count
       FROM wordbooks
       WHERE path NOT IN ('builtin:favorites', 'builtin:task')
-      ''',
-      const <Object?>[],
-    );
+      ''', const <Object?>[]);
     final count = (row?['count'] as num?)?.toInt() ?? 0;
     return count <= 0;
   }
@@ -2141,9 +2187,12 @@ class AppDatabaseService {
       void reportProgress({bool force = false}) {
         if (onProgress == null) return;
         if (!force && totalEntries > 0) {
-          final percent =
-              (processedEntries * 100 ~/ totalEntries).clamp(0, 100);
-          if (processedEntries < totalEntries && percent == lastReportedPercent) {
+          final percent = (processedEntries * 100 ~/ totalEntries).clamp(
+            0,
+            100,
+          );
+          if (processedEntries < totalEntries &&
+              percent == lastReportedPercent) {
             return;
           }
           lastReportedPercent = percent;
@@ -2922,6 +2971,16 @@ class AppDatabaseService {
       _setSchemaVersion(7);
       version = 7;
     }
+    if (version < 8) {
+      _log.i(
+        'database',
+        'apply schema migration',
+        data: <String, Object?>{'from': version, 'to': 8},
+      );
+      _migrateDownloadedAmbientSoundsSchema();
+      _setSchemaVersion(8);
+      version = 8;
+    }
     if (version != _currentSchemaVersion) {
       _setSchemaVersion(_currentSchemaVersion);
     }
@@ -3010,6 +3069,12 @@ class AppDatabaseService {
 
   void _migrateWordEntryRecoverySchema() {
     _rebuildWordCompatibilityCaches();
+  }
+
+  void _migrateDownloadedAmbientSoundsSchema() {
+    // Table was already created in _createTables for new installations.
+    // For existing users, we just need to ensure the table exists.
+    // The migration is mainly for upgrading from schema version 7 to 8.
   }
 
   void _rebuildWordCompatibilityCaches() {
@@ -3470,8 +3535,7 @@ class AppDatabaseService {
 
   _WordImportInsertStatements _openWordImportInsertStatements() {
     return _WordImportInsertStatements(
-      wordInsert: _db.prepare(
-        '''
+      wordInsert: _db.prepare('''
         INSERT INTO words (
           wordbook_id,
           word,
@@ -3485,10 +3549,8 @@ class AppDatabaseService {
           entry_json
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''',
-      ),
-      fieldInsert: _db.prepare(
-        '''
+        '''),
+      fieldInsert: _db.prepare('''
         INSERT INTO word_fields (
           word_id,
           field_key,
@@ -3497,10 +3559,8 @@ class AppDatabaseService {
           style_json,
           sort_order
         ) VALUES (?, ?, ?, ?, ?, ?)
-        ''',
-      ),
-      styleInsert: _db.prepare(
-        '''
+        '''),
+      styleInsert: _db.prepare('''
         INSERT INTO word_field_styles (
           word_field_id,
           background_hex,
@@ -3508,16 +3568,12 @@ class AppDatabaseService {
           text_hex,
           accent_hex
         ) VALUES (?, ?, ?, ?, ?)
-        ''',
-      ),
-      tagInsert: _db.prepare(
-        '''
+        '''),
+      tagInsert: _db.prepare('''
         INSERT INTO word_field_tags (word_field_id, tag, sort_order)
         VALUES (?, ?, ?)
-        ''',
-      ),
-      mediaInsert: _db.prepare(
-        '''
+        '''),
+      mediaInsert: _db.prepare('''
         INSERT INTO word_field_media (
           word_field_id,
           media_type,
@@ -3526,8 +3582,7 @@ class AppDatabaseService {
           mime_type,
           sort_order
         ) VALUES (?, ?, ?, ?, ?, ?)
-        ''',
-      ),
+        '''),
     );
   }
 
@@ -3919,5 +3974,56 @@ class AppDatabaseService {
       'SELECT COALESCE(MAX(sort_order), -1) AS value FROM todos',
     );
     return ((row?['value'] as num?)?.toInt() ?? -1) + 1;
+  }
+
+  List<Map<String, Object?>> _selectDownloadedAmbientSounds() {
+    return _selectMaps(
+      'SELECT * FROM downloaded_ambient_sounds ORDER BY downloaded_at DESC',
+    );
+  }
+
+  List<DownloadedAmbientSoundInfo> getDownloadedAmbientSounds() {
+    final rows = _selectDownloadedAmbientSounds();
+    return rows.map((row) => DownloadedAmbientSoundInfo.fromMap(row)).toList();
+  }
+
+  void insertDownloadedAmbientSound({
+    required String soundId,
+    required String remoteKey,
+    required String relativePath,
+    required String categoryKey,
+    required String name,
+    required String filePath,
+  }) {
+    _db.execute(
+      '''
+      INSERT OR REPLACE INTO downloaded_ambient_sounds (
+        sound_id, remote_key, relative_path, category_key, name, file_path, last_accessed_at
+      ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ''',
+      <Object?>[soundId, remoteKey, relativePath, categoryKey, name, filePath],
+    );
+  }
+
+  void deleteDownloadedAmbientSound(String soundId) {
+    _db.execute(
+      'DELETE FROM downloaded_ambient_sounds WHERE sound_id = ?',
+      <Object?>[soundId],
+    );
+  }
+
+  bool isAmbientSoundDownloaded(String soundId) {
+    final row = _selectOne(
+      'SELECT 1 FROM downloaded_ambient_sounds WHERE sound_id = ?',
+      <Object?>[soundId],
+    );
+    return row != null;
+  }
+
+  void updateDownloadedAmbientSoundAccess(String soundId) {
+    _db.execute(
+      'UPDATE downloaded_ambient_sounds SET last_accessed_at = CURRENT_TIMESTAMP WHERE sound_id = ?',
+      <Object?>[soundId],
+    );
   }
 }

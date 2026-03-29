@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
@@ -29,6 +30,7 @@ import '../services/asr_service.dart';
 import '../services/database_service.dart';
 import '../services/daily_quote_service.dart';
 import '../services/cstcloud_resource_prewarm_service.dart';
+import '../services/cstcloud_resource_cache_service.dart';
 import '../services/focus_service.dart';
 import '../services/memory_algorithm.dart';
 import '../services/memory_lane_selector.dart';
@@ -1530,14 +1532,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<String?> downloadOnlineAmbientSource(
     OnlineAmbientSoundOption option,
   ) async {
+    return downloadOnlineAmbientSourceWithProgress(option, null);
+  }
+
+  Future<String?> downloadOnlineAmbientSourceWithProgress(
+    OnlineAmbientSoundOption option,
+    void Function(ResourceDownloadProgress progress)? onProgress,
+  ) async {
     try {
-      final path = await _onlineAmbientCatalogService.downloadToLocal(option);
+      final path = await _onlineAmbientCatalogService
+          .downloadToLocalWithProgress(option, onProgress);
       _ambient.addFileSourceWithMetadata(
         path,
         id: 'downloaded_${option.id}',
         name: option.name,
         categoryKey: option.categoryKey,
         volume: option.defaultVolume,
+      );
+      _database.insertDownloadedAmbientSound(
+        soundId: option.id,
+        remoteKey: option.remoteKey,
+        relativePath: option.relativePath,
+        categoryKey: option.categoryKey,
+        name: option.name,
+        filePath: path,
       );
       _scheduleAmbientSync();
       notifyListeners();
@@ -1564,6 +1582,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     try {
       final path = await _onlineAmbientCatalogService.localPathFor(option);
       await _onlineAmbientCatalogService.deleteLocal(option);
+      _database.deleteDownloadedAmbientSound(option.id);
       final matchingIds = _ambient.sources
           .where(
             (source) =>
@@ -1623,6 +1642,38 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         await _ambient.syncPlayback();
       },
     );
+  }
+
+  /// Restore downloaded ambient sounds from database on app startup
+  Future<void> _restoreDownloadedAmbientSounds() async {
+    try {
+      final downloadedSounds = _database.getDownloadedAmbientSounds();
+      for (final sound in downloadedSounds) {
+        final file = File(sound.filePath);
+        if (await file.exists()) {
+          _ambient.addFileSourceWithMetadata(
+            sound.filePath,
+            id: 'downloaded_${sound.soundId}',
+            name: sound.name,
+            categoryKey: sound.categoryKey,
+            volume: 0.5,
+          );
+          _database.updateDownloadedAmbientSoundAccess(sound.soundId);
+        } else {
+          _database.deleteDownloadedAmbientSound(sound.soundId);
+        }
+      }
+      if (downloadedSounds.isNotEmpty) {
+        _scheduleAmbientSync();
+      }
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'restore downloaded ambient sounds failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<void> previewPronunciation(String word) async {

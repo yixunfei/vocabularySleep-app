@@ -11,6 +11,8 @@ extension _AppStateStartup on AppState {
     try {
       await _database.init();
       await _focusService.init();
+      await _ambient.init();
+      await _restoreDownloadedAmbientSounds();
       await _pollPendingTodoReminderLaunchImpl();
       _config = _settings.loadPlayConfig();
       _playback.updateRuntimeConfig(_config);

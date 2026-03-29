@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import 'audio_player_source_helper.dart';
@@ -594,6 +596,90 @@ class AmbientService {
   bool _enabled = true;
   double _masterVolume = 0.7;
   List<AmbientSource> _sources = <AmbientSource>[];
+  bool _initialized = false;
+
+  Future<void> init() async {
+    if (_initialized) {
+      return;
+    }
+    await _scanDownloadedAmbientSources();
+    _initialized = true;
+  }
+
+  Future<void> _scanDownloadedAmbientSources() async {
+    final resourceCache = _resourceCache;
+    if (resourceCache == null) {
+      return;
+    }
+    try {
+      final hasDownloaded = await resourceCache.hasCachedFilesUnderPrefix(
+        'ambient/moodist',
+      );
+      if (!hasDownloaded) {
+        _log.d('ambient', 'no downloaded ambient sources found');
+        return;
+      }
+      final ambientRoot = 'ambient/moodist/noise';
+      final noiseDir = Directory(await _getCachePath(ambientRoot));
+      if (await noiseDir.exists()) {
+        await for (final entity in noiseDir.list(
+          recursive: false,
+          followLinks: false,
+        )) {
+          if (entity is! File) {
+            continue;
+          }
+          final fileName = p.basename(entity.path);
+          if (!fileName.endsWith('.wav') && !fileName.endsWith('.mp3')) {
+            continue;
+          }
+          final slug = fileName.replaceFirst(RegExp(r'\.(wav|mp3)$'), '');
+          final id = 'downloaded_noise_$slug';
+          if (_sources.any((s) => s.id == id)) {
+            continue;
+          }
+          _log.d(
+            'ambient',
+            'found downloaded ambient source',
+            data: <String, Object?>{'id': id, 'path': entity.path},
+          );
+          _sources = <AmbientSource>[
+            ..._sources,
+            AmbientSource(
+              id: id,
+              name: _humanizeSlug(slug),
+              filePath: entity.path,
+              enabled: false,
+              volume: 0.5,
+              categoryKey: 'ambientCategoryNoise',
+            ),
+          ];
+        }
+      }
+    } catch (error, stackTrace) {
+      _log.w(
+        'ambient',
+        'failed to scan downloaded ambient sources: $error',
+        data: <String, Object?>{'error': '$error', 'stackTrace': '$stackTrace'},
+      );
+    }
+  }
+
+  Future<String> _getCachePath(String relativePath) async {
+    final supportDir = await getApplicationSupportDirectory();
+    return p.join(supportDir.path, 'remote_resource_cache', relativePath);
+  }
+
+  String _humanizeSlug(String slug) {
+    return slug
+        .split('-')
+        .where((part) => part.trim().isNotEmpty)
+        .map(
+          (part) =>
+              '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
+        )
+        .join(' ');
+  }
 
   static const List<AmbientSource> _builtInPresets = <AmbientSource>[
     AmbientSource(
