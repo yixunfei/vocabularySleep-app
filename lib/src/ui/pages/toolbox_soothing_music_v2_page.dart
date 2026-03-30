@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -201,6 +200,14 @@ class _SoothingVisualPalette {
 class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     with SingleTickerProviderStateMixin {
   final AppLogService _log = AppLogService.instance;
+  static const List<double> _defaultStageBands = <double>[
+    0.18,
+    0.22,
+    0.26,
+    0.24,
+    0.18,
+    0.14,
+  ];
   static const List<_SoothingModeTheme> _modes = <_SoothingModeTheme>[
     _SoothingModeTheme(
       id: 'chill',
@@ -446,7 +453,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
   late final AudioPlayer _player;
   late final AnimationController _orbitController;
-  Timer? _visualRefreshTimer;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<Duration>? _durationSubscription;
   StreamSubscription<PlayerState>? _stateSubscription;
@@ -470,6 +476,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   Duration _position = Duration.zero;
   Duration _duration = const Duration(minutes: 2);
   Duration? _sleepRemaining;
+  int _spectrumFrameIndex = -1;
+  List<double> _stageBands = _defaultStageBands;
   String? _audioErrorLabelKey;
   String? _trackLoadLabelKey;
   double? _trackLoadProgress;
@@ -513,6 +521,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (!mounted) return;
       setState(() {
         _position = value;
+        _updateStageSpectrum();
       });
       _SoothingRuntimeStore.activePosition = value;
       _SoothingRuntimeStore.notifyChanged();
@@ -521,6 +530,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (!mounted || value.inMilliseconds <= 0) return;
       setState(() {
         _duration = value;
+        _updateStageSpectrum(force: true);
       });
       _SoothingRuntimeStore.activeDuration = value;
       _SoothingRuntimeStore.notifyChanged();
@@ -544,18 +554,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       unawaited(_handlePlaybackCompletion());
     });
     unawaited(_initAudio());
-    _startVisualRefreshTimer();
-  }
-
-  void _startVisualRefreshTimer() {
-    _visualRefreshTimer?.cancel();
-    _visualRefreshTimer = Timer.periodic(const Duration(milliseconds: 100), (
-      timer,
-    ) {
-      if (mounted && _playing) {
-        setState(() {});
-      }
-    });
   }
 
   @override
@@ -565,7 +563,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _stateSubscription?.cancel();
     _completeSubscription?.cancel();
     _sleepTimer?.cancel();
-    _visualRefreshTimer?.cancel();
     _orbitController.dispose();
     if (_fullscreen) {
       unawaited(_exitImmersiveMode());
@@ -670,6 +667,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       _duration = _SoothingRuntimeStore.activeDuration;
       _playing = _SoothingRuntimeStore.activePlaying;
       _scene = await ToolboxSoothingAudioService.load(_mode.id);
+      _updateStageSpectrum(force: true);
       if (_playing) {
         _orbitController.repeat();
       }
@@ -786,6 +784,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       _loading = true;
       _position = Duration.zero;
       _draggingRatio = null;
+      _resetStageSpectrum();
       _clearAudioError();
     });
 
@@ -815,6 +814,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (duration != null) {
         _duration = duration;
       }
+      _updateStageSpectrum(force: true);
       _SoothingRuntimeStore.activeDuration = _duration;
       await _player.setVolume(_muted ? 0 : _volume);
       if (!mounted || loadToken != _asyncLoadToken) return;
@@ -826,6 +826,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (!mounted || loadToken != _asyncLoadToken) return;
       setState(() {
         _scene = scene;
+        _updateStageSpectrum(force: true);
       });
       _SoothingRuntimeStore.activeModeId = mode.id;
       _SoothingRuntimeStore.activeTrackIndex = _trackIndex;
@@ -903,6 +904,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
           if (mounted) {
             setState(() {
               _position = Duration.zero;
+              _updateStageSpectrum(force: true);
             });
           }
           return;
@@ -1005,6 +1007,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       _loading = true;
       _position = Duration.zero;
       _draggingRatio = null;
+      _resetStageSpectrum();
       _clearAudioError();
     });
 
@@ -1032,6 +1035,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (duration != null) {
         _duration = duration;
       }
+      _updateStageSpectrum(force: true);
       _SoothingRuntimeStore.activeDuration = _duration;
       await _player.setVolume(_muted ? 0 : _volume);
       if (!mounted || loadToken != _asyncLoadToken) return;
@@ -1137,28 +1141,36 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     return (_position.inMilliseconds / durationMs).clamp(0.0, 1.0);
   }
 
-  List<double> get _currentSpectrum {
+  void _resetStageSpectrum() {
+    _spectrumFrameIndex = -1;
+    _stageBands = _defaultStageBands;
+  }
+
+  int _resolvedSpectrumFrameIndex() {
     final frames = _scene?.spectrumFrames;
-    final base = (frames == null || frames.isEmpty)
-        ? const <double>[0.18, 0.22, 0.26, 0.24, 0.18, 0.14]
-        : frames[(_progressRatio * (frames.length - 1)).round().clamp(
-            0,
-            frames.length - 1,
-          )];
-    final seed = _currentTrack.seed.toDouble();
-    final time = DateTime.now().millisecondsSinceEpoch / 1000.0;
-    final playingBoost = _playing ? 1.0 : 0.3;
-    return List<double>.generate(base.length, (index) {
-      final mod1 =
-          math.sin(_progressRatio * math.pi * 6 + seed * 0.013 + index * 0.4) *
-          0.08;
-      final mod2 = math.sin(time * 2.5 + index * 0.6) * 0.12 * playingBoost;
-      final mod3 = math.cos(time * 1.8 - index * 0.3) * 0.06 * playingBoost;
-      final combined = base[index] + mod1 + mod2 + mod3;
-      final minVal = 0.04 + (playingBoost * 0.08);
-      final maxVal = 0.85 + (playingBoost * 0.15);
-      return combined.clamp(minVal, maxVal);
-    }, growable: false);
+    if (frames == null || frames.isEmpty) {
+      return -1;
+    }
+    return (_progressRatio * (frames.length - 1)).round().clamp(
+      0,
+      frames.length - 1,
+    );
+  }
+
+  void _updateStageSpectrum({bool force = false}) {
+    final frames = _scene?.spectrumFrames;
+    if (frames == null || frames.isEmpty) {
+      if (force || !identical(_stageBands, _defaultStageBands)) {
+        _resetStageSpectrum();
+      }
+      return;
+    }
+    final nextFrameIndex = _resolvedSpectrumFrameIndex();
+    if (!force && nextFrameIndex == _spectrumFrameIndex) {
+      return;
+    }
+    _spectrumFrameIndex = nextFrameIndex;
+    _stageBands = List<double>.unmodifiable(frames[nextFrameIndex]);
   }
 
   List<_SoothingModeTheme> _modesForFilter(_ModeLibraryFilter filter) {
@@ -1313,7 +1325,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   Future<void> _seekToRatio(double ratio) async {
     final durationMs = _duration.inMilliseconds;
     if (durationMs <= 0) return;
-    await _player.seek(Duration(milliseconds: (durationMs * ratio).round()));
+    final nextPosition = Duration(milliseconds: (durationMs * ratio).round());
+    await _player.seek(nextPosition);
+    if (!mounted) return;
+    setState(() {
+      _position = nextPosition;
+      _updateStageSpectrum(force: true);
+    });
   }
 
   Future<void> _persistPrefs() {
@@ -2113,8 +2131,11 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     final narrow = compact && MediaQuery.of(context).size.width < 430;
     final screenSize = MediaQuery.of(context).size;
     final effectiveCompact = compact && !_fullscreen;
-    final bands = _currentSpectrum;
-    final playbackGain = _playing ? (_fullscreen ? 1.48 : 1.28) : 0.82;
+    final bands = _stageBands;
+    final playbackGain = _playing ? (_fullscreen ? 1.58 : 1.28) : 0.82;
+    final fullscreenStageTopPadding =
+        MediaQuery.of(context).padding.top + (_fullscreen ? 8 : 0);
+    final phaseOffset = _currentTrack.seed.toDouble() * 0.013;
 
     return Column(
       children: <Widget>[
@@ -2128,10 +2149,12 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       center: const Alignment(0, -0.08),
-                      radius: 0.96,
+                      radius: _fullscreen ? 1.2 : 0.96,
                       colors: <Color>[
                         palette.glowA.withValues(
-                          alpha: palette.isDark ? 0.44 : 0.3,
+                          alpha: _fullscreen
+                              ? (palette.isDark ? 0.62 : 0.42)
+                              : (palette.isDark ? 0.44 : 0.3),
                         ),
                         Colors.transparent,
                       ],
@@ -2147,23 +2170,41 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                       end: Alignment.bottomCenter,
                       colors: <Color>[
                         palette.accent.withValues(
-                          alpha: palette.isDark ? 0.08 : 0.1,
+                          alpha: _fullscreen
+                              ? (palette.isDark ? 0.14 : 0.16)
+                              : (palette.isDark ? 0.08 : 0.1),
                         ),
                         Colors.transparent,
                         palette.orbitAccent.withValues(
-                          alpha: palette.isDark ? 0.06 : 0.08,
+                          alpha: _fullscreen
+                              ? (palette.isDark ? 0.12 : 0.14)
+                              : (palette.isDark ? 0.06 : 0.08),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
+              if (_fullscreen)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(0, 0),
+                          radius: 1.08,
+                          colors: <Color>[
+                            Colors.white.withValues(
+                              alpha: palette.isDark ? 0.08 : 0.05,
+                            ),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
-                left: _fullscreen
-                    ? -96
-                    : compact
-                    ? -54
-                    : 72,
                 top: _fullscreen
                     ? 24
                     : compact
@@ -2199,54 +2240,59 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                 ),
               ),
               Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _orbitController,
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: _SoothingSpectrumPainter(
-                        accent: palette.accent,
-                        orbitAccent: palette.orbitAccent,
-                        phase: _orbitController.value * math.pi * 2,
-                        bands: bands,
-                        barGain:
-                            (_mode.id == 'motion'
-                                ? 1
-                                : _mode.id == 'study' || _mode.id == 'jazz'
-                                ? 0.82
-                                : 0.56) *
-                            effectBoost *
-                            playbackGain,
-                        particleGain:
-                            (_mode.id == 'dreaming'
-                                ? 1
-                                : _mode.id == 'motion'
-                                ? 0.9
-                                : _mode.id == 'sleep'
-                                ? 0.35
-                                : 0.6) *
-                            effectBoost *
-                            playbackGain,
-                        breathingGain:
-                            (_mode.id == 'sleep'
-                                ? 1
-                                : _mode.id == 'music_box' || _mode.id == 'harp'
-                                ? 0.86
-                                : 0.62) *
-                            waveBoost *
-                            playbackGain,
-                        rippleGain: waveBoost * playbackGain,
-                        waveGain:
-                            (1.04 + effectBoost * 0.34) *
-                            playbackGain *
-                            (_mode.id == 'dreaming' ? 1.1 : 1),
-                        compact: effectiveCompact,
-                        isDark: palette.isDark,
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, stageConstraints) {
-                          final cramped = stageConstraints.maxHeight < 250;
-                          final veryCramped = stageConstraints.maxHeight < 180;
-                          return Center(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: _SoothingSpectrumPainter(
+                      accent: palette.accent,
+                      orbitAccent: palette.orbitAccent,
+                      orbit: _orbitController,
+                      phaseOffset: phaseOffset,
+                      bands: bands,
+                      barGain:
+                          (_mode.id == 'motion'
+                              ? 1
+                              : _mode.id == 'study' || _mode.id == 'jazz'
+                              ? 0.82
+                              : 0.56) *
+                          effectBoost *
+                          playbackGain,
+                      particleGain:
+                          (_mode.id == 'dreaming'
+                              ? 1
+                              : _mode.id == 'motion'
+                              ? 0.9
+                              : _mode.id == 'sleep'
+                              ? 0.35
+                              : 0.6) *
+                          effectBoost *
+                          playbackGain,
+                      breathingGain:
+                          (_mode.id == 'sleep'
+                              ? 1
+                              : _mode.id == 'music_box' || _mode.id == 'harp'
+                              ? 0.86
+                              : 0.62) *
+                          waveBoost *
+                          playbackGain,
+                      rippleGain: waveBoost * playbackGain,
+                      waveGain:
+                          (1.04 + effectBoost * 0.34) *
+                          playbackGain *
+                          (_mode.id == 'dreaming' ? 1.1 : 1),
+                      compact: effectiveCompact,
+                      isDark: palette.isDark,
+                      fullscreen: _fullscreen,
+                      animate: _playing,
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, stageConstraints) {
+                        final cramped = stageConstraints.maxHeight < 250;
+                        final veryCramped = stageConstraints.maxHeight < 180;
+                        return Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top: _fullscreen ? fullscreenStageTopPadding : 0,
+                            ),
                             child: SingleChildScrollView(
                               padding: EdgeInsets.symmetric(
                                 horizontal: _fullscreen
@@ -2278,7 +2324,12 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                         color: palette.isDark
                                             ? Colors.white
                                             : const Color(0xFF10263A),
-                                        fontSize: veryCramped
+                                        fontSize: _fullscreen
+                                            ? math.min(
+                                                screenSize.width * 0.16,
+                                                76,
+                                              )
+                                            : veryCramped
                                             ? 26
                                             : cramped
                                             ? 30
@@ -2303,29 +2354,46 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                     ),
                                     const SizedBox(height: 12),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 8,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: _fullscreen ? 18 : 14,
+                                        vertical: _fullscreen ? 10 : 8,
                                       ),
                                       decoration: BoxDecoration(
                                         color: palette.panelSurface.withValues(
-                                          alpha: 0.7,
+                                          alpha: _fullscreen ? 0.58 : 0.7,
                                         ),
                                         borderRadius: BorderRadius.circular(
                                           999,
                                         ),
                                         border: Border.all(
                                           color: palette.accent.withValues(
-                                            alpha: 0.54,
+                                            alpha: _fullscreen ? 0.72 : 0.54,
                                           ),
                                         ),
+                                        boxShadow: _fullscreen
+                                            ? <BoxShadow>[
+                                                BoxShadow(
+                                                  color: palette.accent
+                                                      .withValues(alpha: 0.22),
+                                                  blurRadius: 30,
+                                                  spreadRadius: 2,
+                                                ),
+                                              ]
+                                            : const <BoxShadow>[],
                                       ),
                                       child: Text(
                                         _currentTrack.label(i18n),
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           color: palette.accent,
-                                          fontSize: narrow ? 12 : 13,
+                                          fontSize: _fullscreen
+                                              ? math.min(
+                                                  screenSize.width * 0.038,
+                                                  18,
+                                                )
+                                              : narrow
+                                              ? 12
+                                              : 13,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
@@ -2418,11 +2486,11 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    );
-                  },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -2607,13 +2675,39 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: palette.controlSurface,
-        border: Border(top: BorderSide(color: palette.border)),
+        color: _fullscreen
+            ? palette.controlSurface.withValues(alpha: 0.76)
+            : palette.controlSurface,
+        border: Border(
+          top: BorderSide(
+            color: _fullscreen
+                ? palette.border.withValues(alpha: 0.38)
+                : palette.border,
+          ),
+        ),
+        boxShadow: _fullscreen
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.24),
+                  blurRadius: 28,
+                  offset: const Offset(0, -8),
+                ),
+              ]
+            : const <BoxShadow>[],
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.fromLTRB(18, compact ? 10 : 14, 18, 10),
+          padding: EdgeInsets.fromLTRB(
+            _fullscreen ? 14 : 18,
+            compact
+                ? 10
+                : _fullscreen
+                ? 8
+                : 14,
+            _fullscreen ? 14 : 18,
+            _fullscreen ? 6 : 10,
+          ),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final progress = _progressRatio;
@@ -2626,9 +2720,12 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
               );
               final totalLabel = _format(_duration);
               final narrow = compact && MediaQuery.of(context).size.width < 430;
-              final stacked = compact || constraints.maxWidth < 1000;
+              final screenSize = MediaQuery.of(context).size;
+              final stacked =
+                  _fullscreen || compact || constraints.maxWidth < 1000;
               final ultraNarrow = constraints.maxWidth < 360;
-              final sideBySideControls = stacked && !ultraNarrow;
+              final sideBySideControls =
+                  !_fullscreen && stacked && !ultraNarrow;
 
               final sliderTheme = SliderTheme.of(context).copyWith(
                 trackHeight: 3.2,
@@ -2664,6 +2761,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                           ? (narrow ? 64 : 84)
                           : narrow
                           ? 96
+                          : _fullscreen
+                          ? 110
                           : stacked
                           ? 128
                           : 176,
@@ -2701,7 +2800,18 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                       foregroundColor: palette.isDark
                           ? const Color(0xFF051C2B)
                           : const Color(0xFF082337),
-                      minimumSize: Size(stacked ? 54 : 70, stacked ? 54 : 70),
+                      minimumSize: Size(
+                        _fullscreen
+                            ? 68
+                            : stacked
+                            ? 54
+                            : 70,
+                        _fullscreen
+                            ? 68
+                            : stacked
+                            ? 54
+                            : 70,
+                      ),
                       shape: const CircleBorder(),
                       padding: EdgeInsets.zero,
                     ),
@@ -2720,7 +2830,11 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                             _playing
                                 ? Icons.pause_rounded
                                 : Icons.play_arrow_rounded,
-                            size: stacked ? 26 : 34,
+                            size: _fullscreen
+                                ? 32
+                                : stacked
+                                ? 26
+                                : 34,
                           ),
                   ),
                   SizedBox(width: stacked ? 4 : 8),
@@ -2753,6 +2867,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                   SizedBox(
                     width: narrow
                         ? double.infinity
+                        : _fullscreen
+                        ? screenSize.width * 0.74
                         : stacked
                         ? 260
                         : 240,
@@ -2765,11 +2881,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                         onChangeStart: (value) {
                           setState(() {
                             _draggingRatio = value;
+                            _updateStageSpectrum(force: true);
                           });
                         },
                         onChanged: (value) {
                           setState(() {
                             _draggingRatio = value;
+                            _updateStageSpectrum(force: true);
                           });
                         },
                         onChangeEnd: (value) async {
@@ -2784,7 +2902,11 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                   const SizedBox(height: 2),
                   Text(
                     _mode.footer(i18n),
-                    maxLines: narrow ? 2 : 1,
+                    maxLines: _fullscreen
+                        ? 1
+                        : narrow
+                        ? 2
+                        : 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: palette.textSecondary,
@@ -2799,7 +2921,15 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        if (sideBySideControls)
+                        if (_fullscreen)
+                          Row(
+                            children: <Widget>[
+                              Expanded(child: Center(child: transportControls)),
+                              const SizedBox(width: 12),
+                              volumeControl,
+                            ],
+                          )
+                        else if (sideBySideControls)
                           Row(
                             children: <Widget>[
                               Expanded(child: volumeControl),
@@ -3532,6 +3662,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                               draftSteps.isEmpty) {
                             return;
                           }
+                          final sheetNavigator = Navigator.of(sheetContext);
                           setState(() {
                             _SoothingRuntimeStore.playbackMode = selectedMode;
                             _SoothingRuntimeStore.arrangementSteps =
@@ -3547,7 +3678,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                           if (!mounted) {
                             return;
                           }
-                          Navigator.of(sheetContext).pop();
+                          sheetNavigator.pop();
                           if (selectedMode ==
                               SoothingPlaybackMode.arrangement) {
                             await _startArrangementPlayback(
@@ -4360,10 +4491,11 @@ class _GlowBlob extends StatelessWidget {
 }
 
 class _SoothingSpectrumPainter extends CustomPainter {
-  const _SoothingSpectrumPainter({
+  _SoothingSpectrumPainter({
     required this.accent,
     required this.orbitAccent,
-    required this.phase,
+    required this.orbit,
+    required this.phaseOffset,
     required this.bands,
     required this.barGain,
     required this.particleGain,
@@ -4372,11 +4504,14 @@ class _SoothingSpectrumPainter extends CustomPainter {
     required this.waveGain,
     required this.compact,
     required this.isDark,
-  });
+    required this.animate,
+    this.fullscreen = false,
+  }) : super(repaint: orbit);
 
   final Color accent;
   final Color orbitAccent;
-  final double phase;
+  final Animation<double> orbit;
+  final double phaseOffset;
   final List<double> bands;
   final double barGain;
   final double particleGain;
@@ -4385,13 +4520,25 @@ class _SoothingSpectrumPainter extends CustomPainter {
   final double waveGain;
   final bool compact;
   final bool isDark;
+  final bool fullscreen;
+  final bool animate;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final phase =
+        (animate ? orbit.value : orbit.value.roundToDouble()) * math.pi * 2 +
+        phaseOffset;
     final center = size.center(Offset.zero);
     final shortest = math.min(size.width, size.height);
     final compactBoost = compact ? 1.16 : 1.0;
-    final innerRadius = shortest * (compact ? 0.17 : 0.14);
+    final fullscreenBoost = fullscreen ? 1.22 : 1.0;
+    final innerRadius =
+        shortest *
+        (compact
+            ? 0.17
+            : fullscreen
+            ? 0.19
+            : 0.14);
     final expandedBands = _expandBands(bands, 24);
     final energy =
         bands.fold<double>(0, (sum, item) => sum + item) / bands.length;
@@ -4402,7 +4549,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
       center,
       color: accent.withValues(alpha: isDark ? 0.34 : 0.24),
       phase: phase,
-      amplitude: shortest * 0.046 * waveGain,
+      amplitude: shortest * 0.046 * waveGain * fullscreenBoost,
       verticalOffset: -shortest * 0.06,
       direction: 1,
     );
@@ -4412,12 +4559,12 @@ class _SoothingSpectrumPainter extends CustomPainter {
       center,
       color: orbitAccent.withValues(alpha: isDark ? 0.28 : 0.2),
       phase: phase + 1.6,
-      amplitude: shortest * 0.036 * waveGain,
+      amplitude: shortest * 0.036 * waveGain * fullscreenBoost,
       verticalOffset: shortest * 0.08,
       direction: -1,
     );
 
-    for (var ring = 0; ring < 4; ring += 1) {
+    for (var ring = 0; ring < (fullscreen ? 6 : 4); ring += 1) {
       final progress = ((phase / (math.pi * 2)) + ring * 0.32) % 1;
       final radius =
           innerRadius * (1.04 + progress * (1.75 + rippleGain * 0.18));
@@ -4429,13 +4576,21 @@ class _SoothingSpectrumPainter extends CustomPainter {
             alpha: (1 - progress) * (isDark ? 0.18 : 0.14) * rippleGain,
           )
           ..style = PaintingStyle.stroke
-          ..strokeWidth = compact ? 2.0 : 2.8,
+          ..strokeWidth = fullscreen
+              ? 3.2
+              : compact
+              ? 2.0
+              : 2.8,
       );
     }
 
     for (
       var i = 0;
-      i < (16 + particleGain * 34 * compactBoost).round();
+      i <
+          (fullscreen
+                  ? 26 + particleGain * 48 * compactBoost
+                  : 16 + particleGain * 34 * compactBoost)
+              .round();
       i += 1
     ) {
       final drift = phase + i * 0.47;
@@ -4446,7 +4601,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
       );
       canvas.drawCircle(
         point,
-        1.6 + (i % 3) * 0.9,
+        1.6 + (i % 3) * (fullscreen ? 1.2 : 0.9),
         Paint()
           ..color = orbitAccent.withValues(
             alpha: (0.14 + (i % 5) * 0.04).clamp(0.14, 0.42),
@@ -4454,7 +4609,13 @@ class _SoothingSpectrumPainter extends CustomPainter {
       );
     }
 
-    for (var i = 0; i < (10 + particleGain * 20).round(); i += 1) {
+    for (
+      var i = 0;
+      i <
+          (fullscreen ? 18 + particleGain * 30 : 10 + particleGain * 20)
+              .round();
+      i += 1
+    ) {
       final drift = phase * 1.24 + i * 1.34;
       final radius =
           innerRadius * (0.72 + (i % 4) * 0.18 + math.sin(drift) * 0.08);
@@ -4464,7 +4625,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
       );
       canvas.drawCircle(
         point,
-        2.0 + (i % 2) * 0.8,
+        2.0 + (i % 2) * (fullscreen ? 1.2 : 0.8),
         Paint()..color = accent.withValues(alpha: isDark ? 0.34 : 0.24),
       );
     }
@@ -4520,7 +4681,11 @@ class _SoothingSpectrumPainter extends CustomPainter {
           ).createShader(
             Rect.fromCircle(center: center, radius: innerRadius * 2.2),
           );
-    canvas.drawCircle(center, innerRadius * 1.8, glowPaint);
+    canvas.drawCircle(
+      center,
+      innerRadius * (fullscreen ? 2.05 : 1.8),
+      glowPaint,
+    );
 
     for (var ring = 0; ring < 5; ring += 1) {
       final breath =
@@ -4552,8 +4717,9 @@ class _SoothingSpectrumPainter extends CustomPainter {
       baseRadius: innerRadius * 2.72,
       phase: phase + 1.4,
       color: orbitAccent.withValues(alpha: 0.94),
-      bands: bands.reversed.toList(growable: false),
+      bands: bands,
       direction: -1,
+      reverseBands: true,
     );
   }
 
@@ -4618,6 +4784,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
     required Color color,
     required List<double> bands,
     required double direction,
+    bool reverseBands = false,
   }) {
     final path = Path();
     const steps = 240;
@@ -4625,7 +4792,10 @@ class _SoothingSpectrumPainter extends CustomPainter {
       final t = i / steps;
       final angle = t * math.pi * 2;
       final bandIndex = ((t * bands.length).floor()).clamp(0, bands.length - 1);
-      final band = bands[bandIndex];
+      final sourceIndex = reverseBands
+          ? bands.length - 1 - bandIndex
+          : bandIndex;
+      final band = bands[sourceIndex];
       final modulation =
           math.sin(angle * 4 + phase * direction) * (0.08 + band * 0.1) +
           math.cos(angle * 7 - phase * 0.35) * (0.03 + band * 0.05);
@@ -4653,16 +4823,18 @@ class _SoothingSpectrumPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SoothingSpectrumPainter oldDelegate) {
-    return oldDelegate.phase != phase ||
-        oldDelegate.accent != accent ||
+    return oldDelegate.accent != accent ||
         oldDelegate.orbitAccent != orbitAccent ||
-        oldDelegate.bands != bands ||
+        !identical(oldDelegate.bands, bands) ||
         oldDelegate.barGain != barGain ||
         oldDelegate.particleGain != particleGain ||
         oldDelegate.breathingGain != breathingGain ||
         oldDelegate.rippleGain != rippleGain ||
         oldDelegate.waveGain != waveGain ||
         oldDelegate.compact != compact ||
-        oldDelegate.isDark != isDark;
+        oldDelegate.isDark != isDark ||
+        oldDelegate.fullscreen != fullscreen ||
+        oldDelegate.animate != animate ||
+        oldDelegate.phaseOffset != phaseOffset;
   }
 }
