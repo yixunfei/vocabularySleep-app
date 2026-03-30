@@ -89,7 +89,6 @@ class AudioPlayerAmbientLoopPlayer implements AmbientLoopPlayer {
     : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
-  final AppLogService _log = AppLogService.instance;
   bool _audioContextConfigured = false;
 
   Future<void> _ensureAudioContext() async {
@@ -676,6 +675,7 @@ class AmbientService {
     String? name,
     String? categoryKey,
     double volume = 0.5,
+    bool enabled = true,
   }) {
     final fileName = name ?? path.split(RegExp(r'[\\/]')).last;
     final sourceId = id ?? 'file_${_uuid.v4()}';
@@ -684,7 +684,7 @@ class AmbientService {
       name: fileName,
       filePath: path,
       categoryKey: categoryKey,
-      enabled: true,
+      enabled: enabled,
       volume: volume.clamp(0.0, 1.0),
     );
     final existingIndex = _sources.indexWhere((item) => item.id == sourceId);

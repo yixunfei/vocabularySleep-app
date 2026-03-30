@@ -1772,6 +1772,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
             name: sound.name,
             categoryKey: sound.categoryKey,
             volume: 0.5,
+            enabled: false,
           );
           _database.updateDownloadedAmbientSoundAccess(sound.soundId);
         } else {

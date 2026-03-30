@@ -70,6 +70,65 @@ class SoothingPlaybackArrangementStep {
   }
 }
 
+class SoothingPlaybackArrangementTemplate {
+  const SoothingPlaybackArrangementTemplate({
+    required this.id,
+    required this.name,
+    required this.steps,
+  });
+
+  final String id;
+  final String name;
+  final List<SoothingPlaybackArrangementStep> steps;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'name': name,
+      'steps': steps.map((step) => step.toJson()).toList(growable: false),
+    };
+  }
+
+  SoothingPlaybackArrangementTemplate copyWith({
+    String? id,
+    String? name,
+    List<SoothingPlaybackArrangementStep>? steps,
+  }) {
+    return SoothingPlaybackArrangementTemplate(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      steps: steps ?? this.steps,
+    );
+  }
+
+  static SoothingPlaybackArrangementTemplate? fromJsonValue(Object? value) {
+    if (value is! Map) {
+      return null;
+    }
+    final map = value.cast<Object?, Object?>();
+    final id = '${map['id'] ?? ''}'.trim();
+    final name = '${map['name'] ?? ''}'.trim();
+    if (id.isEmpty || name.isEmpty) {
+      return null;
+    }
+    final stepsRaw = map['steps'];
+    final steps = stepsRaw is List
+        ? stepsRaw
+              .map(SoothingPlaybackArrangementStep.fromJsonValue)
+              .whereType<SoothingPlaybackArrangementStep>()
+              .toList(growable: false)
+        : const <SoothingPlaybackArrangementStep>[];
+    if (steps.isEmpty) {
+      return null;
+    }
+    return SoothingPlaybackArrangementTemplate(
+      id: id,
+      name: name,
+      steps: steps,
+    );
+  }
+}
+
 class SoothingPrefsState {
   const SoothingPrefsState({
     this.favoriteModeIds = const <String>{},
@@ -79,6 +138,8 @@ class SoothingPrefsState {
     this.continuePlaybackOnExit = false,
     this.playbackMode = SoothingPlaybackMode.singleLoop,
     this.arrangementSteps = const <SoothingPlaybackArrangementStep>[],
+    this.arrangementTemplates = const <SoothingPlaybackArrangementTemplate>[],
+    this.activeArrangementTemplateId,
   });
 
   final Set<String> favoriteModeIds;
@@ -88,6 +149,8 @@ class SoothingPrefsState {
   final bool continuePlaybackOnExit;
   final SoothingPlaybackMode playbackMode;
   final List<SoothingPlaybackArrangementStep> arrangementSteps;
+  final List<SoothingPlaybackArrangementTemplate> arrangementTemplates;
+  final String? activeArrangementTemplateId;
 
   Map<String, Object?> toJson() {
     final favorites = favoriteModeIds.toList(growable: false)..sort();
@@ -101,6 +164,10 @@ class SoothingPrefsState {
       'arrangement_steps': arrangementSteps
           .map((step) => step.toJson())
           .toList(growable: false),
+      'arrangement_templates': arrangementTemplates
+          .map((template) => template.toJson())
+          .toList(growable: false),
+      'active_arrangement_template_id': activeArrangementTemplateId,
     };
   }
 
@@ -113,6 +180,7 @@ class SoothingPrefsState {
     final recentRaw = map['recent_mode_ids'];
     final tracksRaw = map['last_track_index_by_mode'];
     final arrangementRaw = map['arrangement_steps'];
+    final arrangementTemplatesRaw = map['arrangement_templates'];
     return SoothingPrefsState(
       favoriteModeIds: favoriteRaw is List
           ? favoriteRaw
@@ -147,6 +215,16 @@ class SoothingPrefsState {
                 .whereType<SoothingPlaybackArrangementStep>()
                 .toList(growable: false)
           : const <SoothingPlaybackArrangementStep>[],
+      arrangementTemplates: arrangementTemplatesRaw is List
+          ? arrangementTemplatesRaw
+                .map(SoothingPlaybackArrangementTemplate.fromJsonValue)
+                .whereType<SoothingPlaybackArrangementTemplate>()
+                .toList(growable: false)
+          : const <SoothingPlaybackArrangementTemplate>[],
+      activeArrangementTemplateId:
+          '${map['active_arrangement_template_id'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${map['active_arrangement_template_id']}'.trim(),
     );
   }
 }

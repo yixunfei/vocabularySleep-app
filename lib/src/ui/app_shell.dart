@@ -14,12 +14,15 @@ import 'pages/more_page.dart';
 import 'pages/practice_page.dart';
 import 'pages/study_page.dart';
 import 'pages/toolbox_page.dart';
+import 'pages/toolbox_soothing_music/runtime_store.dart';
+import 'pages/toolbox_soothing_music_v2_page.dart';
 import 'ui_copy.dart';
 import 'widgets/app_background.dart';
 import 'widgets/ambient_floating_dock.dart';
 import 'widgets/busy_overlay.dart';
 import 'widgets/focus_lock_overlay.dart';
 import 'widgets/mini_player.dart';
+import 'widgets/soothing_mini_player.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -34,6 +37,7 @@ class _AppShellState extends State<AppShell> {
   int _index = 0;
   StudyStartupTab _studyTab = StudyStartupTab.play;
   double _miniPlayerReservedHeight = 0;
+  double _soothingMiniPlayerReservedHeight = 0;
   VoidCallback? _scrollLibraryToTop;
   bool _exitDialogVisible = false;
   bool _startupPromptShown = false;
@@ -200,6 +204,19 @@ class _AppShellState extends State<AppShell> {
     }
     setState(() {
       _miniPlayerReservedHeight = nextHeight;
+    });
+  }
+
+  void _handleSoothingMiniPlayerPresentation(
+    bool visible,
+    double reservedHeight,
+  ) {
+    final nextHeight = visible ? reservedHeight : 0.0;
+    if ((_soothingMiniPlayerReservedHeight - nextHeight).abs() < 0.5) {
+      return;
+    }
+    setState(() {
+      _soothingMiniPlayerReservedHeight = nextHeight;
     });
   }
 
@@ -675,11 +692,14 @@ class _AppShellState extends State<AppShell> {
     final media = MediaQuery.of(context);
     final bottomInset = media.padding.bottom;
     final navigationChromeHeight = _navigationBarHeight + bottomInset;
+    final combinedMiniPlayerHeight =
+        _miniPlayerReservedHeight + _soothingMiniPlayerReservedHeight;
     final ambientLauncherBottomClearance =
         navigationChromeHeight +
-        (_miniPlayerReservedHeight > 0 ? _miniPlayerReservedHeight + 18 : 18);
+        (combinedMiniPlayerHeight > 0 ? combinedMiniPlayerHeight + 18 : 18);
     final message = state.error;
     final isInitializing = state.initializing && !state.initialized;
+    final shellRouteIsCurrent = ModalRoute.of(context)?.isCurrent ?? true;
     if (message != null && message.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -714,7 +734,7 @@ class _AppShellState extends State<AppShell> {
                         duration: const Duration(milliseconds: 240),
                         curve: Curves.easeOutCubic,
                         padding: EdgeInsets.only(
-                          bottom: _miniPlayerReservedHeight,
+                          bottom: combinedMiniPlayerHeight,
                         ),
                         child: isInitializing
                             ? _buildInitializingView(context, i18n)
@@ -797,6 +817,65 @@ class _AppShellState extends State<AppShell> {
                   onPresentationChanged: _handleMiniPlayerPresentation,
                 ),
               ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom:
+                    bottomInset +
+                    _navigationBarHeight +
+                    (_miniPlayerReservedHeight > 0
+                        ? _miniPlayerReservedHeight + 16
+                        : 8),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: SoothingMusicRuntimeStore.revision,
+                  builder: (context, _, _) {
+                    final visible =
+                        !isInitializing &&
+                        shellRouteIsCurrent &&
+                        _index != 3 &&
+                        SoothingMiniPlayer.isVisible;
+                    final reservedHeight = visible ? 86.0 : 0.0;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      _handleSoothingMiniPlayerPresentation(
+                        visible,
+                        reservedHeight,
+                      );
+                    });
+                    if (!visible) {
+                      return const SizedBox.shrink();
+                    }
+                    return SoothingMiniPlayer(
+                      i18n: i18n,
+                      onOpen: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const SoothingMusicV2Page(),
+                            settings: const RouteSettings(
+                              name: 'soothing_music',
+                            ),
+                          ),
+                        );
+                      },
+                      onTogglePlayback: () async {
+                        final player = SoothingMusicRuntimeStore.retainedPlayer;
+                        if (player == null) {
+                          _setIndex(3);
+                          return;
+                        }
+                        if (SoothingMusicRuntimeStore.activePlaying) {
+                          await player.pause();
+                          SoothingMusicRuntimeStore.activePlaying = false;
+                        } else {
+                          await player.resume();
+                          SoothingMusicRuntimeStore.activePlaying = true;
+                        }
+                        SoothingMusicRuntimeStore.notifyChanged();
+                      },
+                    );
+                  },
+                ),
+              ),
               if (!isInitializing)
                 Positioned.fill(
                   child: AmbientFloatingDock(
@@ -819,9 +898,11 @@ class _AppShellState extends State<AppShell> {
                       if (state.wordbookImportActive)
                         _buildWordbookImportBanner(i18n, state),
                       if (state.wordbookImportActive &&
-                          (state.remotePrewarmActive || state.remotePrewarmFailed))
+                          (state.remotePrewarmActive ||
+                              state.remotePrewarmFailed))
                         const SizedBox(height: 8),
-                      if (state.remotePrewarmActive || state.remotePrewarmFailed)
+                      if (state.remotePrewarmActive ||
+                          state.remotePrewarmFailed)
                         _buildRemotePrewarmBanner(i18n, state),
                     ],
                   ),
@@ -916,7 +997,11 @@ class _AppShellState extends State<AppShell> {
     final processed = state.wordbookImportProcessedEntries;
     final total = state.wordbookImportTotalEntries;
     final subtitle = total == null || total <= 0
-        ? pickUiText(i18n, zh: '正在解析并导入，请稍候…', en: 'Parsing and importing, please wait...')
+        ? pickUiText(
+            i18n,
+            zh: '正在解析并导入，请稍候…',
+            en: 'Parsing and importing, please wait...',
+          )
         : pickUiText(
             i18n,
             zh: '已处理 $processed / $total',
@@ -929,7 +1014,9 @@ class _AppShellState extends State<AppShell> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
