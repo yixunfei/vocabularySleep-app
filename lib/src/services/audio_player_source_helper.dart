@@ -31,7 +31,7 @@ class AudioPlayerSourceHelper {
     Map<String, Object?> data = const <String, Object?>{},
   }) async {
     _ensureDiagnostics(player, tag);
-switch (source) {
+    switch (source) {
       case DeviceFileSource():
         await _setLocalFile(
           player,
@@ -110,7 +110,7 @@ switch (source) {
       default:
         await player.setSource(source);
     }
-}
+  }
 
   static Future<void> play(
     AudioPlayer player,
@@ -122,7 +122,7 @@ switch (source) {
     Map<String, Object?> data = const <String, Object?>{},
   }) async {
     _ensureDiagnostics(player, tag);
-if (mode != null) {
+    if (mode != null) {
       await player.setPlayerMode(mode);
     }
     if (ctx != null) {
@@ -131,7 +131,7 @@ if (mode != null) {
     await player.setVolume(volume.clamp(0.0, 1.0));
     await setSource(player, source, tag: tag, data: data);
     await player.resume();
-}
+  }
 
   static Future<Duration?> waitForDuration(
     AudioPlayer player, {
@@ -158,7 +158,7 @@ if (mode != null) {
       if (completer.isCompleted) {
         return;
       }
-completer.complete(value);
+      completer.complete(value);
     }
 
     subscription = player.onDurationChanged.listen(
@@ -410,7 +410,7 @@ completer.complete(value);
       return;
     }
     try {
-      final result = await Future.any<Object?>(<Future<Object?>>[
+      await Future.any<Object?>(<Future<Object?>>[
         player.eventStream
             .where(
               (event) =>
@@ -423,7 +423,7 @@ completer.complete(value);
             .firstWhere((duration) => duration.inMilliseconds > 0)
             .then<Object?>((duration) => duration),
       ]).timeout(timeout);
-} on TimeoutException {
+    } on TimeoutException {
       _log.w(tag, 'prepared wait timed out', data: payload);
     }
   }

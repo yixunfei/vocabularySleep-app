@@ -9,7 +9,6 @@ class WeatherService {
   WeatherService({http.Client? client}) : _client = client;
 
   final http.Client? _client;
-  final AppLogService _log = AppLogService.instance;
 
   Future<WeatherSnapshot> fetchCurrentWeather() async {
     final client = _client ?? http.Client();
