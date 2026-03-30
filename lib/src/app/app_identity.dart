@@ -5,5 +5,5 @@ class AppIdentity {
   static const String organizationId = 'group.zn';
   static const String applicationId = 'group.zn.xianyushengxi';
   static const String desktopBinaryName = 'xianyushengxi';
-  static const String logoAssetPath = 'assets/branding/logo.jpg';
+  static const String logoAssetPath = 'assets/branding/logo.webp';
 }

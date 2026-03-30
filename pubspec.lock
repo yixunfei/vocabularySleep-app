@@ -5,10 +5,10 @@ packages:
     dependency: "direct main"
     description:
       name: archive
-      sha256: cb6a278ef2dbb298455e1a713bda08524a175630ec643a242c399c932a0a1f7d
+      sha256: a96e8b390886ee8abb49b7bd3ac8df6f451c621619f52a26e815fdcf568959ff
       url: "https://pub.dev"
     source: hosted
-    version: "3.6.1"
+    version: "4.0.9"
   args:
     dependency: transitive
     description:
@@ -58,7 +58,7 @@ packages:
     source: hosted
     version: "4.2.1"
   audioplayers_platform_interface:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: audioplayers_platform_interface
       sha256: "0e2f6a919ab56d0fec272e801abc07b26ae7f31980f912f24af4748763e5a656"
@@ -146,7 +146,7 @@ packages:
     source: hosted
     version: "1.0.0"
   collection:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: collection
       sha256: "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
@@ -173,18 +173,18 @@ packages:
     dependency: "direct main"
     description:
       name: csv
-      sha256: e122a402b966b93a4e98925da241ecb3d58d2e62c0aa6486b0c8de4bd405dad5
+      sha256: "2e0a52fb729f2faacd19c9c0c954ff450bba37aa8ab999410309e2342e7013a2"
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.0"
+    version: "8.0.0"
   cupertino_icons:
     dependency: "direct main"
     description:
       name: cupertino_icons
-      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
+      sha256: "41e005c33bd814be4d3096aff55b1908d419fde52ca656c8c47719ec745873cd"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.8"
+    version: "1.0.9"
   dbus:
     dependency: transitive
     description:
@@ -246,6 +246,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_dotenv:
+    dependency: "direct main"
+    description:
+      name: flutter_dotenv
+      sha256: b7c7be5cd9f6ef7a78429cabd2774d3c4af50e79cb2b7593e3d5d763ef95c61b
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.2.1"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
@@ -337,12 +345,12 @@ packages:
     dependency: transitive
     description:
       name: image
-      sha256: f31d52537dc417fdcde36088fdf11d191026fd5e4fae742491ebd40e5a8bea7d
+      sha256: f9881ff4998044947ec38d098bc7c8316ae1186fa786eddffdb867b9bc94dfce
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0"
+    version: "4.8.0"
   intl:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: intl
       sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
@@ -486,7 +494,7 @@ packages:
     source: hosted
     version: "2.2.1"
   path_provider_platform_interface:
-    dependency: "direct dev"
+    dependency: transitive
     description:
       name: path_provider_platform_interface
       sha256: "88f5779f72ba699763fa3a3b06aa4bf6de76c8e5de842cf6f29e2e06476c2334"
@@ -518,13 +526,21 @@ packages:
     source: hosted
     version: "3.1.6"
   plugin_platform_interface:
-    dependency: "direct dev"
+    dependency: transitive
     description:
       name: plugin_platform_interface
       sha256: "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  posix:
+    dependency: transitive
+    description:
+      name: posix
+      sha256: "185ef7606574f789b40f289c233efa52e96dead518aed988e040a10737febb07"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.5.0"
   provider:
     dependency: "direct main"
     description:
@@ -609,50 +625,50 @@ packages:
     dependency: "direct main"
     description:
       name: sherpa_onnx
-      sha256: "3e864a08018656f1c51d17a0aa43d021a2f78a7bb5cff15476d5a0dc4dff2956"
+      sha256: "0e2d256711952e9e5c9d0d77deb66f9a63085c949f248fba3f8c48c3ec57c1fd"
       url: "https://pub.dev"
     source: hosted
-    version: "1.12.28"
+    version: "1.12.34"
   sherpa_onnx_android:
     dependency: transitive
     description:
       name: sherpa_onnx_android
-      sha256: bc690be549b33ff0bc5d518ca9b4df1013a175ef84c25646298d1bedd3a6e305
+      sha256: b0c1f489daf32fba17b602bac4b5eaa7f1f95b6c0c520830a87dd25fe1fe20d8
       url: "https://pub.dev"
     source: hosted
-    version: "1.12.28"
+    version: "1.12.34"
   sherpa_onnx_ios:
     dependency: transitive
     description:
       name: sherpa_onnx_ios
-      sha256: "4f0bba765dafd9c9062a3be062aa11f7a012a0b34964244e3588c824d5fd6bbc"
+      sha256: "19032ec56c4b80e0c1106548aae32fa117633445dbce051c70febeff5857dc6a"
       url: "https://pub.dev"
     source: hosted
-    version: "1.12.28"
+    version: "1.12.34"
   sherpa_onnx_linux:
     dependency: transitive
     description:
       name: sherpa_onnx_linux
-      sha256: bcad6925062f7a79a4f3b4b672d2485f5b02074e31d5b7f0a4f1ddf718a8a821
+      sha256: e9febe73fecf248b337f819616f2d00c86837330379471c3715cb814b9dfee74
       url: "https://pub.dev"
     source: hosted
-    version: "1.12.28"
+    version: "1.12.34"
   sherpa_onnx_macos:
     dependency: transitive
     description:
       name: sherpa_onnx_macos
-      sha256: d6718808d4384e2babca6718b9bac668e98ed8d00a1492ac4d09ecf2b406f6e6
+      sha256: "7a6352c8bdaeca95ed18bc43c77ba4ee0cc3951abd66648ae353d21f0b255bae"
       url: "https://pub.dev"
     source: hosted
-    version: "1.12.28"
+    version: "1.12.34"
   sherpa_onnx_windows:
     dependency: transitive
     description:
       name: sherpa_onnx_windows
-      sha256: ef6bc7a4c313d8ca710513a206fb650c4527e955068d8b4137b5a846f4809ead
+      sha256: da26d97fdeff6cebc06b482e02149e5104b3d1e0c88ebb47b6aa8e15638e6aec
       url: "https://pub.dev"
     source: hosted
-    version: "1.12.28"
+    version: "1.12.34"
   sky_engine:
     dependency: transitive
     description: flutter

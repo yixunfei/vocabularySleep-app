@@ -63,10 +63,19 @@ class TrackingPlaybackService implements PlaybackService {
 
 class StubAmbientService implements AmbientService {
   @override
+  Future<void> init() async {}
+
+  @override
   List<AmbientSource> get sources => const <AmbientSource>[];
 
   @override
+  bool get isEnabled => true;
+
+  @override
   double get masterVolume => 0;
+
+  @override
+  void setEnabled(bool value) {}
 
   @override
   void setMasterVolume(double value) {}
@@ -86,6 +95,7 @@ class StubAmbientService implements AmbientService {
     String? id,
     String? name,
     String? categoryKey,
+    bool enabled = true,
     double volume = 0.5,
   }) {}
 

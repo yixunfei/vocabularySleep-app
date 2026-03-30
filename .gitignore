@@ -85,7 +85,8 @@ app.*.map.json
 # Secrets / private config
 # ------------------------------
 .env
-.env.*
+.env.local
+!.env.template
 *.jks
 *.keystore
 android/key.properties

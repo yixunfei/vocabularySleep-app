@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
+import 'package:vocabulary_sleep_app/src/models/ambient_preset.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/export_dto.dart';
@@ -24,6 +25,7 @@ import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
 import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/asr_service.dart';
+import 'package:vocabulary_sleep_app/src/services/cstcloud_resource_cache_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/services/online_ambient_catalog_service.dart';
@@ -42,6 +44,8 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_notebook_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music_v2_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/sheets/ambient_sheet.dart';
@@ -701,6 +705,146 @@ void main() {
       await tester.pumpAndSettle();
       expect(state.deletedDownloadedOnlineAmbientId, isNotNull);
     });
+
+    testWidgets('toolbox page shows aggregated local tools', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      expect(find.text('Multi-tool toolbox'), findsOneWidget);
+      expect(find.text('Soothing music'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Schulte grid'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Schulte grid'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Daily decision'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Daily decision'), findsOneWidget);
+    });
+
+    testWidgets('toolbox page opens schulte grid and advances target', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Schulte grid'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Schulte grid'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Grid size'), findsOneWidget);
+      expect(find.text('Target'), findsOneWidget);
+
+      await tester.tap(find.text('1').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('2'), findsWidgets);
+    });
+
+    testWidgets('soothing music page shows extended modes', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await tester.binding.setSurfaceSize(const Size(1280, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const SoothingMusicV2Page(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Soothing music'), findsWidgets);
+      expect(find.text('Relax'), findsOneWidget);
+      expect(find.text('Study'), findsWidgets);
+      expect(find.text('Motion'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Music Box').first,
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Music Box'), findsWidgets);
+    });
+
+    testWidgets('soothing music page keeps compact mobile layout readable', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await tester.binding.setSurfaceSize(const Size(412, 915));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AppState>.value(
+          value: state,
+          child: MaterialApp(
+            theme: buildAppTheme(state.config.appearance),
+            home: const SoothingMusicV2Page(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Modes'), findsOneWidget);
+      expect(find.text('专注底色'), findsWidgets);
+      expect(find.text('Study'), findsWidgets);
+    });
+
+    testWidgets(
+      'soothing music arrangement sheet saves a template and shows playback state',
+      (tester) async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await tester.binding.setSurfaceSize(const Size(1280, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          ChangeNotifierProvider<AppState>.value(
+            value: state,
+            child: MaterialApp(
+              theme: buildAppTheme(state.config.appearance),
+              home: const SoothingMusicV2Page(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byTooltip('Playback settings'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Edit arrangement'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Arrangement'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save current'));
+        await tester.pumpAndSettle();
+
+        await tester.enterText(find.byType(TextField), 'Wind Down Mix');
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Apply'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 600));
+
+        expect(find.textContaining('Template: Wind Down Mix'), findsWidgets);
+        final hasPlaybackState =
+            find.textContaining('Paused').evaluate().isNotEmpty ||
+            find.textContaining('Ready').evaluate().isNotEmpty ||
+            find.textContaining('Loading').evaluate().isNotEmpty;
+        expect(hasPlaybackState, isTrue);
+      },
+    );
 
     testWidgets('focus page opens notes in a bottom sheet on phones', (
       tester,
@@ -2346,6 +2490,7 @@ class _FakeAppState extends ChangeNotifier
     List<DatabaseBackupInfo>? backups,
     FocusService? focusService,
     List<AmbientSource>? ambientSources,
+    bool ambientEnabled = true,
     AppHomeTab startupPage = AppHomeTab.study,
     StudyStartupTab studyStartupTab = StudyStartupTab.play,
     FocusStartupTab focusStartupTab = FocusStartupTab.todo,
@@ -2416,6 +2561,7 @@ class _FakeAppState extends ChangeNotifier
       .._startupPage = startupPage
       .._studyStartupTab = studyStartupTab
       .._focusStartupTab = focusStartupTab
+      .._ambientEnabled = ambientEnabled
       .._weatherEnabled = weatherEnabled
       .._weatherSnapshot = weatherSnapshot
       .._weatherLoading = weatherLoading
@@ -2460,6 +2606,8 @@ class _FakeAppState extends ChangeNotifier
   final List<DatabaseBackupInfo> _backups;
   final FocusService _focusService;
   List<AmbientSource> _ambientSources;
+  List<AmbientPreset> _ambientPresets = <AmbientPreset>[];
+  bool _ambientEnabled = true;
   double _ambientMasterVolume;
   final String? _asrRecordingPath;
   final String? _asrStoppedRecordingPath;
@@ -2579,7 +2727,14 @@ class _FakeAppState extends ChangeNotifier
   List<AmbientSource> get ambientSources => _ambientSources;
 
   @override
+  bool get ambientEnabled => _ambientEnabled;
+
+  @override
   double get ambientMasterVolume => _ambientMasterVolume;
+
+  @override
+  List<AmbientPreset> get ambientPresets =>
+      List<AmbientPreset>.unmodifiable(_ambientPresets);
 
   @override
   bool get busy => false;
@@ -2589,6 +2744,27 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   String? get busyMessageKey => null;
+
+  @override
+  String? get busyDetail => null;
+
+  @override
+  double? get busyProgress => null;
+
+  @override
+  bool get wordbookImportActive => false;
+
+  @override
+  String get wordbookImportName => '';
+
+  @override
+  int get wordbookImportProcessedEntries => 0;
+
+  @override
+  int? get wordbookImportTotalEntries => null;
+
+  @override
+  double? get wordbookImportProgress => null;
 
   @override
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;
@@ -2646,6 +2822,27 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   String? get lastBackupPath => _lastBackupPath;
+
+  @override
+  bool get remotePrewarmActive => false;
+
+  @override
+  bool get remotePrewarmCompleted => false;
+
+  @override
+  bool get remotePrewarmFailed => false;
+
+  @override
+  int get remotePrewarmCompletedCount => 0;
+
+  @override
+  int get remotePrewarmTotalCount => 0;
+
+  @override
+  String get remotePrewarmCurrentLabel => '';
+
+  @override
+  double get remotePrewarmProgress => 0;
 
   @override
   String get practiceLastSessionTitle => _practiceLastSessionTitle;
@@ -3050,6 +3247,14 @@ class _FakeAppState extends ChangeNotifier
   Future<String?> downloadOnlineAmbientSource(
     OnlineAmbientSoundOption option,
   ) async {
+    return downloadOnlineAmbientSourceWithProgress(option, null);
+  }
+
+  @override
+  Future<String?> downloadOnlineAmbientSourceWithProgress(
+    OnlineAmbientSoundOption option,
+    void Function(ResourceDownloadProgress progress)? onProgress,
+  ) async {
     downloadedOnlineAmbientId = option.id;
     _downloadedOnlineAmbientRelativePaths.add(option.relativePath);
     final path = '/tmp/${option.id}.mp3';
@@ -3110,8 +3315,82 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
+  Future<void> saveAmbientPresetFromCurrentMix(String name) async {
+    _ambientPresets = <AmbientPreset>[
+      AmbientPreset(
+        id: 'preset_${_ambientPresets.length + 1}',
+        name: name,
+        createdAt: DateTime(2026, 3, 30, 9),
+        masterVolume: _ambientMasterVolume,
+        entries: _ambientSources
+            .where((source) => source.enabled)
+            .map(
+              (source) => AmbientPresetEntry(
+                sourceId: source.id,
+                name: source.name,
+                volume: source.volume,
+                assetPath: source.assetPath,
+                filePath: source.filePath,
+                remoteUrl: source.remoteUrl,
+                remoteKey: source.remoteKey,
+                categoryKey: source.categoryKey,
+                builtIn: source.builtIn,
+              ),
+            )
+            .toList(growable: false),
+      ),
+      ..._ambientPresets,
+    ];
+    notifyListeners();
+  }
+
+  @override
+  Future<void> applyAmbientPreset(String presetId) async {
+    final preset = _ambientPresets
+        .where((item) => item.id == presetId)
+        .cast<AmbientPreset?>()
+        .firstOrNull;
+    if (preset == null) {
+      return;
+    }
+    _ambientMasterVolume = preset.masterVolume;
+    _ambientSources = preset.entries
+        .map(
+          (entry) => AmbientSource(
+            id: entry.sourceId,
+            name: entry.name,
+            assetPath: entry.assetPath,
+            filePath: entry.filePath,
+            remoteUrl: entry.remoteUrl,
+            remoteKey: entry.remoteKey,
+            categoryKey: entry.categoryKey,
+            builtIn: entry.builtIn,
+            enabled: true,
+            volume: entry.volume,
+          ),
+        )
+        .toList(growable: false);
+    _ambientEnabled = _ambientSources.isNotEmpty;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> deleteAmbientPreset(String presetId) async {
+    _ambientPresets = _ambientPresets
+        .where((preset) => preset.id != presetId)
+        .toList(growable: false);
+    notifyListeners();
+  }
+
+  @override
   Future<void> setAmbientMasterVolume(double value) async {
     _ambientMasterVolume = value;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> setAmbientEnabled(bool value) async {
+    _ambientEnabled = value;
     notifyListeners();
   }
 
@@ -3941,6 +4220,12 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   Future<void> removeVoiceInputOfflineModel() async {}
+
+  @override
+  Future<void> ensureRemoteResourcePrewarmOnDemand() async {}
+
+  @override
+  Future<void> refreshBuiltInWordbookCatalog() async {}
 
   @override
   PronunciationComparison comparePronunciation(

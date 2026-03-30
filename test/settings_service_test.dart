@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vocabulary_sleep_app/src/models/ambient_preset.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
@@ -44,7 +45,7 @@ void main() {
     final database = _MemoryDatabaseService();
     final settings = SettingsService(database);
 
-    expect(settings.loadStartupPage(), AppHomeTab.study);
+    expect(settings.loadStartupPage(), AppHomeTab.focus);
 
     settings.saveStartupPage(AppHomeTab.focus);
 
@@ -113,5 +114,39 @@ void main() {
 
     final restored = SettingsService(database).loadRememberedWords();
     expect(restored, <String>{'alpha', 'beta'});
+  });
+
+  test('ambient presets persist through SettingsService', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+
+    final presets = <AmbientPreset>[
+      AmbientPreset(
+        id: 'preset-1',
+        name: 'Cafe Mix',
+        createdAt: DateTime(2026, 3, 30),
+        masterVolume: 0.72,
+        entries: <AmbientPresetEntry>[
+          AmbientPresetEntry(
+            sourceId: 'downloaded_ambient_noise_white',
+            name: 'White Noise',
+            volume: 0.4,
+            filePath: 'C:/ambient/white.wav',
+            categoryKey: 'ambientCategoryNoise',
+          ),
+        ],
+      ),
+    ];
+
+    settings.saveAmbientPresets(presets);
+
+    final restored = SettingsService(database).loadAmbientPresets();
+    expect(restored.length, 1);
+    expect(restored.first.name, 'Cafe Mix');
+    expect(restored.first.masterVolume, closeTo(0.72, 0.0001));
+    expect(
+      restored.first.entries.single.sourceId,
+      'downloaded_ambient_noise_white',
+    );
   });
 }
