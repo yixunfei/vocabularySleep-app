@@ -39,7 +39,13 @@ class SoothingMusicV2Page extends StatefulWidget {
 
 enum _ModeLibraryFilter { all, favorites, recent }
 
-enum _SoothingPageMenuAction { toggleContinuePlayback }
+enum _SoothingPageMenuAction {
+  toggleContinuePlayback,
+  playbackSingleLoop,
+  playbackModeCycle,
+  playbackArrangement,
+  editArrangement,
+}
 
 class _SoothingModeTheme {
   const _SoothingModeTheme({
@@ -441,6 +447,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<Duration>? _durationSubscription;
   StreamSubscription<PlayerState>? _stateSubscription;
+  StreamSubscription<void>? _completeSubscription;
   Timer? _sleepTimer;
   CstCloudResourceCacheService? _remoteResourceCache;
   SoothingMusicTrackLoader? _trackLoader;
@@ -464,6 +471,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   double? _trackLoadProgress;
   int _trackLoadReceivedBytes = 0;
   int _trackLoadTotalBytes = 0;
+  int _asyncLoadToken = 0;
+  bool _handlingPlaybackCompletion = false;
 
   @override
   void initState() {
@@ -501,6 +510,9 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         _orbitController.stop();
       }
     });
+    _completeSubscription = _player.onPlayerComplete.listen((_) {
+      unawaited(_handlePlaybackCompletion());
+    });
     unawaited(_initAudio());
     _startVisualRefreshTimer();
   }
@@ -521,11 +533,19 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _positionSubscription?.cancel();
     _durationSubscription?.cancel();
     _stateSubscription?.cancel();
+    _completeSubscription?.cancel();
     _sleepTimer?.cancel();
     _visualRefreshTimer?.cancel();
     _orbitController.dispose();
     final shouldRetainPlayer = _continuePlaybackOnExit && _playing;
     if (shouldRetainPlayer) {
+      unawaited(
+        _player.setReleaseMode(
+          _playbackMode == SoothingPlaybackMode.singleLoop
+              ? ReleaseMode.loop
+              : ReleaseMode.stop,
+        ),
+      );
       _SoothingRuntimeStore.retainedPlayer = _player;
       _SoothingRuntimeStore.activeModeId = _mode.id;
       _SoothingRuntimeStore.activeTrackIndex = _trackIndex;
@@ -566,6 +586,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
   Future<void> _initAudio() async {
     final prefs = await ToolboxSoothingPrefsService.load();
+    if (!mounted) return;
     _SoothingRuntimeStore.favoriteModeIds = Set<String>.from(
       prefs.favoriteModeIds,
     );
@@ -577,6 +598,10 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     );
     _SoothingRuntimeStore.lastModeId = prefs.lastModeId;
     _SoothingRuntimeStore.continuePlaybackOnExit = prefs.continuePlaybackOnExit;
+    _SoothingRuntimeStore.playbackMode = prefs.playbackMode;
+    _SoothingRuntimeStore.arrangementSteps = List<SoothingPlaybackArrangementStep>.from(
+      prefs.arrangementSteps,
+    );
     _continuePlaybackOnExit = prefs.continuePlaybackOnExit;
     _mode = _modes.firstWhere(
       (mode) => mode.id == _SoothingRuntimeStore.lastModeId,
@@ -585,10 +610,12 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _trackIndex = _restoredTrackIndexForMode(_mode.id);
 
     await _player.setAudioContext(_soothingAudioContext);
-    await _player.setReleaseMode(ReleaseMode.loop);
+    await _player.setReleaseMode(ReleaseMode.stop);
+    if (!mounted) return;
     _volume = _SoothingRuntimeStore.activeVolume;
     _muted = _SoothingRuntimeStore.activeMuted;
     await _player.setVolume(_muted ? 0 : _volume);
+    if (!mounted) return;
     if (_SoothingRuntimeStore.retainedPlayer != null &&
         _SoothingRuntimeStore.activeModeId != null) {
       final retainedModeId = _SoothingRuntimeStore.activeModeId!;
@@ -617,7 +644,9 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     }
 
     await _preloadModeAssets(_mode.id);
+    if (!mounted) return;
     await _loadMode(_mode, autoplay: false);
+    if (!mounted) return;
     for (final mode in _modes.where((item) => item.id != _mode.id).take(2)) {
       unawaited(_preloadModeAssets(mode.id));
     }
@@ -662,8 +691,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   Future<void> _loadMode(
     _SoothingModeTheme mode, {
     required bool autoplay,
+    int? preferredTrackIndex,
   }) async {
-    final restoredTrackIndex = _restoredTrackIndexForMode(mode.id);
+    if (!mounted) return;
+    final loadToken = ++_asyncLoadToken;
+    final restoredTrackIndex =
+        preferredTrackIndex?.clamp(0, _tracksForMode(mode.id).length - 1).toInt() ??
+        _restoredTrackIndexForMode(mode.id);
     setState(() {
       _mode = mode;
       _trackIndex = restoredTrackIndex;
@@ -700,12 +734,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         _duration = duration;
       }
       await _player.setVolume(_muted ? 0 : _volume);
+      if (!mounted || loadToken != _asyncLoadToken) return;
       if (autoplay) {
         await _player.resume();
       } else {
         await _player.stop();
       }
-      if (!mounted) return;
+      if (!mounted || loadToken != _asyncLoadToken) return;
       setState(() {
         _scene = scene;
       });
@@ -731,7 +766,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         _audioErrorLabelKey = 'mode:${mode.id}';
       });
     } finally {
-      if (mounted) {
+      if (mounted && loadToken == _asyncLoadToken) {
         setState(() {
           _loading = false;
         });
@@ -766,14 +801,114 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _orbitController.repeat();
   }
 
-  Future<void> _setMode(_SoothingModeTheme mode) async {
-    if (_mode.id == mode.id && _scene != null) return;
-    await _loadMode(mode, autoplay: _playing);
+  Future<void> _handlePlaybackCompletion() async {
+    if (_handlingPlaybackCompletion) {
+      return;
+    }
+    _handlingPlaybackCompletion = true;
+    try {
+      switch (_playbackMode) {
+        case SoothingPlaybackMode.singleLoop:
+          await _seekToRatio(0);
+          await _player.resume();
+          _SoothingRuntimeStore.activePlaying = true;
+          if (mounted) {
+            setState(() {
+              _position = Duration.zero;
+            });
+          }
+          return;
+        case SoothingPlaybackMode.modeCycle:
+          if (_tracks.length <= 1) {
+            await _seekToRatio(0);
+            await _player.resume();
+            _SoothingRuntimeStore.activePlaying = true;
+            return;
+          }
+          await _stepTrack(1, autoplayOverride: true);
+          return;
+        case SoothingPlaybackMode.arrangement:
+          await _advanceArrangement();
+          return;
+      }
+    } finally {
+      _handlingPlaybackCompletion = false;
+    }
   }
 
-  Future<void> _setTrackIndex(int index) async {
+  Future<void> _advanceArrangement() async {
+    if (_arrangementSteps.isEmpty) {
+      _setPlaybackMode(SoothingPlaybackMode.singleLoop);
+      await _handlePlaybackCompletion();
+      return;
+    }
+    final currentIndex = _SoothingRuntimeStore.arrangementStepIndex.clamp(
+      0,
+      _arrangementSteps.length - 1,
+    );
+    final currentStep = _arrangementSteps[currentIndex];
+    final playedCount = _SoothingRuntimeStore.arrangementStepPlayCount + 1;
+    if (playedCount < currentStep.repeatCount) {
+      _SoothingRuntimeStore.arrangementStepPlayCount = playedCount;
+      await _seekToRatio(0);
+      await _player.resume();
+      _SoothingRuntimeStore.activePlaying = true;
+      if (mounted) {
+        setState(() {
+          _position = Duration.zero;
+        });
+      }
+      return;
+    }
+
+    final nextIndex = (currentIndex + 1) % _arrangementSteps.length;
+    final nextStep = _arrangementSteps[nextIndex];
+    _SoothingRuntimeStore.arrangementStepIndex = nextIndex;
+    _SoothingRuntimeStore.arrangementStepPlayCount = 0;
+
+    final nextMode = _modes.firstWhere(
+      (mode) => mode.id == nextStep.modeId,
+      orElse: () => _mode,
+    );
+    if (_mode.id != nextMode.id) {
+      await _loadMode(
+        nextMode,
+        autoplay: true,
+        preferredTrackIndex: nextStep.trackIndex,
+      );
+      return;
+    }
+    if (_trackIndex == nextStep.trackIndex) {
+      await _seekToRatio(0);
+      await _player.resume();
+      _SoothingRuntimeStore.activePlaying = true;
+      if (mounted) {
+        setState(() {
+          _position = Duration.zero;
+        });
+      }
+      return;
+    }
+    await _setTrackIndex(nextStep.trackIndex, autoplayOverride: true);
+  }
+
+  Future<void> _setMode(
+    _SoothingModeTheme mode, {
+    bool? autoplayOverride,
+    int? preferredTrackIndex,
+  }) async {
+    if (_mode.id == mode.id && _scene != null) return;
+    await _loadMode(
+      mode,
+      autoplay: autoplayOverride ?? _playing,
+      preferredTrackIndex: preferredTrackIndex,
+    );
+  }
+
+  Future<void> _setTrackIndex(int index, {bool? autoplayOverride}) async {
     if (index == _trackIndex) return;
-    final nextTrack = _tracks[index];
+    if (!mounted) return;
+    final loadToken = ++_asyncLoadToken;
     setState(() {
       _trackIndex = index;
       _loading = true;
@@ -807,7 +942,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         _duration = duration;
       }
       await _player.setVolume(_muted ? 0 : _volume);
-      if (_playing) {
+      if (!mounted || loadToken != _asyncLoadToken) return;
+      if (autoplayOverride ?? _playing) {
         await _player.resume();
       } else {
         await _player.stop();
@@ -830,7 +966,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         _audioErrorLabelKey = 'track:${_currentTrack.labelKey}';
       });
     } finally {
-      if (mounted) {
+      if (mounted && loadToken == _asyncLoadToken) {
         setState(() {
           _loading = false;
         });
@@ -843,11 +979,12 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     unawaited(_persistPrefs());
   }
 
-  Future<void> _stepTrack(int delta) async {
+  Future<void> _stepTrack(int delta, {bool? autoplayOverride}) async {
     if (_tracks.length <= 1) return;
     final nextIndex = (_trackIndex + delta) % _tracks.length;
     await _setTrackIndex(
       nextIndex < 0 ? nextIndex + _tracks.length : nextIndex,
+      autoplayOverride: autoplayOverride,
     );
   }
 
@@ -950,10 +1087,61 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         .toList(growable: false);
   }
 
+  SoothingPlaybackMode get _playbackMode => _SoothingRuntimeStore.playbackMode;
+  List<SoothingPlaybackArrangementStep> get _arrangementSteps =>
+      _SoothingRuntimeStore.arrangementSteps;
+
   int _restoredTrackIndexForMode(String modeId) {
     final tracks = _tracksForMode(modeId);
     final saved = _SoothingRuntimeStore.lastTrackIndexByMode[modeId] ?? 0;
     return saved.clamp(0, tracks.length - 1).toInt();
+  }
+
+  String _playbackModeLabel(AppI18n i18n, SoothingPlaybackMode mode) {
+    return switch (mode) {
+      SoothingPlaybackMode.singleLoop =>
+        pickUiText(i18n, zh: '单曲循环', en: 'Single loop'),
+      SoothingPlaybackMode.modeCycle =>
+        pickUiText(i18n, zh: '主题内顺播', en: 'Mode cycle'),
+      SoothingPlaybackMode.arrangement =>
+        pickUiText(i18n, zh: '编排播放', en: 'Arrangement'),
+    };
+  }
+
+  String _playbackModeSummary(AppI18n i18n) {
+    if (_playbackMode != SoothingPlaybackMode.arrangement) {
+      return _playbackModeLabel(i18n, _playbackMode);
+    }
+    final steps = _arrangementSteps.length;
+    if (steps <= 0) {
+      return pickUiText(i18n, zh: '编排播放（未配置）', en: 'Arrangement (not configured)');
+    }
+    return pickUiText(
+      i18n,
+      zh: '编排播放 · $steps 段',
+      en: 'Arrangement · $steps steps',
+    );
+  }
+
+  void _setPlaybackMode(SoothingPlaybackMode mode) {
+    if (_playbackMode == mode) {
+      return;
+    }
+    if (mode == SoothingPlaybackMode.arrangement && _arrangementSteps.isEmpty) {
+      _SoothingRuntimeStore.arrangementSteps = <SoothingPlaybackArrangementStep>[
+        SoothingPlaybackArrangementStep(
+          modeId: _mode.id,
+          trackIndex: _trackIndex,
+          repeatCount: 1,
+        ),
+      ];
+      _SoothingRuntimeStore.arrangementStepIndex = 0;
+      _SoothingRuntimeStore.arrangementStepPlayCount = 0;
+    }
+    setState(() {
+      _SoothingRuntimeStore.playbackMode = mode;
+    });
+    unawaited(_persistPrefs());
   }
 
   Future<void> _seekToRatio(double ratio) async {
@@ -970,6 +1158,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         lastTrackIndexByMode: _SoothingRuntimeStore.lastTrackIndexByMode,
         lastModeId: _SoothingRuntimeStore.lastModeId,
         continuePlaybackOnExit: _continuePlaybackOnExit,
+        playbackMode: _SoothingRuntimeStore.playbackMode,
+        arrangementSteps: _SoothingRuntimeStore.arrangementSteps,
       ),
     );
   }
@@ -1119,18 +1309,61 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
             icon: const Icon(Icons.timer_outlined),
           ),
           PopupMenuButton<_SoothingPageMenuAction>(
-            tooltip: SoothingMusicCopy.text(i18n, 'setting.keep_playing'),
+            tooltip: pickUiText(i18n, zh: '播放设置', en: 'Playback settings'),
             onSelected: (value) {
-              if (value == _SoothingPageMenuAction.toggleContinuePlayback) {
-                setState(() {
-                  _continuePlaybackOnExit = !_continuePlaybackOnExit;
-                  _SoothingRuntimeStore.continuePlaybackOnExit =
-                      _continuePlaybackOnExit;
-                });
-                unawaited(_persistPrefs());
+              switch (value) {
+                case _SoothingPageMenuAction.toggleContinuePlayback:
+                  setState(() {
+                    _continuePlaybackOnExit = !_continuePlaybackOnExit;
+                    _SoothingRuntimeStore.continuePlaybackOnExit =
+                        _continuePlaybackOnExit;
+                  });
+                  unawaited(_persistPrefs());
+                  return;
+                case _SoothingPageMenuAction.playbackSingleLoop:
+                  _setPlaybackMode(SoothingPlaybackMode.singleLoop);
+                  return;
+                case _SoothingPageMenuAction.playbackModeCycle:
+                  _setPlaybackMode(SoothingPlaybackMode.modeCycle);
+                  return;
+                case _SoothingPageMenuAction.playbackArrangement:
+                  _setPlaybackMode(SoothingPlaybackMode.arrangement);
+                  return;
+                case _SoothingPageMenuAction.editArrangement:
+                  unawaited(_showArrangementSheet(context, i18n));
+                  return;
               }
             },
             itemBuilder: (context) => <PopupMenuEntry<_SoothingPageMenuAction>>[
+              CheckedPopupMenuItem<_SoothingPageMenuAction>(
+                value: _SoothingPageMenuAction.playbackSingleLoop,
+                checked: _playbackMode == SoothingPlaybackMode.singleLoop,
+                child: Text(
+                  pickUiText(i18n, zh: '单曲循环', en: 'Single loop'),
+                ),
+              ),
+              CheckedPopupMenuItem<_SoothingPageMenuAction>(
+                value: _SoothingPageMenuAction.playbackModeCycle,
+                checked: _playbackMode == SoothingPlaybackMode.modeCycle,
+                child: Text(
+                  pickUiText(i18n, zh: '主题内顺播', en: 'Mode cycle'),
+                ),
+              ),
+              CheckedPopupMenuItem<_SoothingPageMenuAction>(
+                value: _SoothingPageMenuAction.playbackArrangement,
+                checked: _playbackMode == SoothingPlaybackMode.arrangement,
+                child: Text(
+                  pickUiText(i18n, zh: '编排播放', en: 'Arrangement'),
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<_SoothingPageMenuAction>(
+                value: _SoothingPageMenuAction.editArrangement,
+                child: Text(
+                  pickUiText(i18n, zh: '编辑编排', en: 'Edit arrangement'),
+                ),
+              ),
+              const PopupMenuDivider(),
               CheckedPopupMenuItem<_SoothingPageMenuAction>(
                 value: _SoothingPageMenuAction.toggleContinuePlayback,
                 checked: _continuePlaybackOnExit,
@@ -1311,6 +1544,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
               accent: palette.accent,
             ),
           ],
+          const SizedBox(height: 10),
+          _InfoPill(
+            icon: Icons.repeat_rounded,
+            label: _playbackModeSummary(i18n),
+            palette: palette,
+            accent: palette.orbitAccent,
+          ),
         ],
       ),
     );
@@ -1365,6 +1605,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
               accent: palette.accent,
             ),
           ],
+          const SizedBox(height: 12),
+          _InfoPill(
+            icon: Icons.repeat_rounded,
+            label: _playbackModeSummary(i18n),
+            palette: palette,
+            accent: palette.orbitAccent,
+          ),
           const SizedBox(height: 14),
           Expanded(
             child: visibleModes.isEmpty
@@ -2356,6 +2603,300 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     );
     if (!mounted) return;
     _startSleepTimer(selection);
+  }
+
+  Future<void> _showArrangementSheet(BuildContext context, AppI18n i18n) async {
+    var selectedMode = _playbackMode;
+    var draftSteps = List<SoothingPlaybackArrangementStep>.from(_arrangementSteps);
+    if (draftSteps.isEmpty) {
+      draftSteps = <SoothingPlaybackArrangementStep>[
+        SoothingPlaybackArrangementStep(
+          modeId: _mode.id,
+          trackIndex: _trackIndex,
+          repeatCount: 1,
+        ),
+      ];
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    pickUiText(i18n, zh: '播放顺序与编排', en: 'Playback order'),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '默认使用单曲循环。切到编排播放后，可按设定顺序自动切换主题和曲目。',
+                      en: 'Single loop is the default. Switch to arrangement mode to auto-advance across themes and tracks.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 14),
+                  SegmentedButton<SoothingPlaybackMode>(
+                    segments: <ButtonSegment<SoothingPlaybackMode>>[
+                      ButtonSegment<SoothingPlaybackMode>(
+                        value: SoothingPlaybackMode.singleLoop,
+                        label: Text(
+                          _playbackModeLabel(i18n, SoothingPlaybackMode.singleLoop),
+                        ),
+                      ),
+                      ButtonSegment<SoothingPlaybackMode>(
+                        value: SoothingPlaybackMode.modeCycle,
+                        label: Text(
+                          _playbackModeLabel(i18n, SoothingPlaybackMode.modeCycle),
+                        ),
+                      ),
+                      ButtonSegment<SoothingPlaybackMode>(
+                        value: SoothingPlaybackMode.arrangement,
+                        label: Text(
+                          _playbackModeLabel(i18n, SoothingPlaybackMode.arrangement),
+                        ),
+                      ),
+                    ],
+                    selected: <SoothingPlaybackMode>{selectedMode},
+                    onSelectionChanged: (selection) {
+                      final nextMode = selection.firstOrNull;
+                      if (nextMode == null) return;
+                      setModalState(() {
+                        selectedMode = nextMode;
+                      });
+                    },
+                  ),
+                  if (selectedMode == SoothingPlaybackMode.arrangement) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            pickUiText(i18n, zh: '编排步骤', en: 'Arrangement steps'),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            setModalState(() {
+                              draftSteps.add(
+                                SoothingPlaybackArrangementStep(
+                                  modeId: _mode.id,
+                                  trackIndex: _trackIndex,
+                                  repeatCount: 1,
+                                ),
+                              );
+                            });
+                          },
+                          icon: const Icon(Icons.add_rounded),
+                          label: Text(pickUiText(i18n, zh: '添加当前曲目', en: 'Add current')),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: draftSteps.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final step = draftSteps[index];
+                          final stepMode = _modes.firstWhere(
+                            (mode) => mode.id == step.modeId,
+                            orElse: () => _mode,
+                          );
+                          final tracks = _tracksForMode(stepMode.id);
+                          final safeTrackIndex = step.trackIndex.clamp(0, tracks.length - 1);
+                          final track = tracks[safeTrackIndex];
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                children: <Widget>[
+                                  Row(
+                                    children: <Widget>[
+                                      Expanded(
+                                        child: Text(
+                                          '${index + 1}. ${stepMode.title(i18n)} · ${SoothingMusicCopy.trackLabel(i18n, track.labelKey)}',
+                                          style: Theme.of(context).textTheme.titleSmall,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: index > 0
+                                            ? () {
+                                                setModalState(() {
+                                                  final item = draftSteps.removeAt(index);
+                                                  draftSteps.insert(index - 1, item);
+                                                });
+                                              }
+                                            : null,
+                                        icon: const Icon(Icons.arrow_upward_rounded),
+                                      ),
+                                      IconButton(
+                                        onPressed: index < draftSteps.length - 1
+                                            ? () {
+                                                setModalState(() {
+                                                  final item = draftSteps.removeAt(index);
+                                                  draftSteps.insert(index + 1, item);
+                                                });
+                                              }
+                                            : null,
+                                        icon: const Icon(Icons.arrow_downward_rounded),
+                                      ),
+                                      IconButton(
+                                        onPressed: draftSteps.length > 1
+                                            ? () {
+                                                setModalState(() {
+                                                  draftSteps.removeAt(index);
+                                                });
+                                              }
+                                            : null,
+                                        icon: const Icon(Icons.delete_outline_rounded),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  DropdownButtonFormField<String>(
+                                    initialValue: stepMode.id,
+                                    decoration: InputDecoration(
+                                      labelText: pickUiText(i18n, zh: '主题', en: 'Theme'),
+                                    ),
+                                    items: _modes
+                                        .map(
+                                          (mode) => DropdownMenuItem<String>(
+                                            value: mode.id,
+                                            child: Text(mode.title(i18n)),
+                                          ),
+                                        )
+                                        .toList(growable: false),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setModalState(() {
+                                        draftSteps[index] = draftSteps[index].copyWith(
+                                          modeId: value,
+                                          trackIndex: 0,
+                                        );
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 10),
+                                  DropdownButtonFormField<int>(
+                                    initialValue: safeTrackIndex,
+                                    decoration: InputDecoration(
+                                      labelText: pickUiText(i18n, zh: '曲目', en: 'Track'),
+                                    ),
+                                    items: List<DropdownMenuItem<int>>.generate(
+                                      tracks.length,
+                                      (trackIndex) => DropdownMenuItem<int>(
+                                        value: trackIndex,
+                                        child: Text(
+                                          SoothingMusicCopy.trackLabel(
+                                            i18n,
+                                            tracks[trackIndex].labelKey,
+                                          ),
+                                        ),
+                                      ),
+                                      growable: false,
+                                    ),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setModalState(() {
+                                        draftSteps[index] = draftSteps[index].copyWith(
+                                          trackIndex: value,
+                                        );
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: <Widget>[
+                                      Text(
+                                        pickUiText(i18n, zh: '重复次数', en: 'Repeats'),
+                                      ),
+                                      const Spacer(),
+                                      IconButton(
+                                        onPressed: step.repeatCount > 1
+                                            ? () {
+                                                setModalState(() {
+                                                  draftSteps[index] = draftSteps[index].copyWith(
+                                                    repeatCount: step.repeatCount - 1,
+                                                  );
+                                                });
+                                              }
+                                            : null,
+                                        icon: const Icon(Icons.remove_circle_outline_rounded),
+                                      ),
+                                      Text('${step.repeatCount}'),
+                                      IconButton(
+                                        onPressed: step.repeatCount < 99
+                                            ? () {
+                                                setModalState(() {
+                                                  draftSteps[index] = draftSteps[index].copyWith(
+                                                    repeatCount: step.repeatCount + 1,
+                                                  );
+                                                });
+                                              }
+                                            : null,
+                                        icon: const Icon(Icons.add_circle_outline_rounded),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+                      ),
+                      const Spacer(),
+                      FilledButton(
+                        onPressed: () {
+                          if (selectedMode == SoothingPlaybackMode.arrangement &&
+                              draftSteps.isEmpty) {
+                            return;
+                          }
+                          setState(() {
+                            _SoothingRuntimeStore.playbackMode = selectedMode;
+                            _SoothingRuntimeStore.arrangementSteps =
+                                List<SoothingPlaybackArrangementStep>.from(draftSteps);
+                            _SoothingRuntimeStore.arrangementStepIndex = 0;
+                            _SoothingRuntimeStore.arrangementStepPlayCount = 0;
+                          });
+                          unawaited(_persistPrefs());
+                          Navigator.of(sheetContext).pop();
+                        },
+                        child: Text(pickUiText(i18n, zh: '应用', en: 'Apply')),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _showModeSheet(

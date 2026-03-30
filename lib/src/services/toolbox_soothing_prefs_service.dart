@@ -4,6 +4,72 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+enum SoothingPlaybackMode { singleLoop, modeCycle, arrangement }
+
+extension SoothingPlaybackModeStorage on SoothingPlaybackMode {
+  String get storageValue => switch (this) {
+    SoothingPlaybackMode.singleLoop => 'single_loop',
+    SoothingPlaybackMode.modeCycle => 'mode_cycle',
+    SoothingPlaybackMode.arrangement => 'arrangement',
+  };
+
+  static SoothingPlaybackMode fromStorage(String? value) {
+    return switch ((value ?? '').trim()) {
+      'mode_cycle' => SoothingPlaybackMode.modeCycle,
+      'arrangement' => SoothingPlaybackMode.arrangement,
+      _ => SoothingPlaybackMode.singleLoop,
+    };
+  }
+}
+
+class SoothingPlaybackArrangementStep {
+  const SoothingPlaybackArrangementStep({
+    required this.modeId,
+    required this.trackIndex,
+    this.repeatCount = 1,
+  });
+
+  final String modeId;
+  final int trackIndex;
+  final int repeatCount;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'mode_id': modeId,
+      'track_index': trackIndex,
+      'repeat_count': repeatCount,
+    };
+  }
+
+  SoothingPlaybackArrangementStep copyWith({
+    String? modeId,
+    int? trackIndex,
+    int? repeatCount,
+  }) {
+    return SoothingPlaybackArrangementStep(
+      modeId: modeId ?? this.modeId,
+      trackIndex: trackIndex ?? this.trackIndex,
+      repeatCount: repeatCount ?? this.repeatCount,
+    );
+  }
+
+  static SoothingPlaybackArrangementStep? fromJsonValue(Object? value) {
+    if (value is! Map) {
+      return null;
+    }
+    final map = value.cast<Object?, Object?>();
+    final modeId = '${map['mode_id'] ?? ''}'.trim();
+    if (modeId.isEmpty) {
+      return null;
+    }
+    return SoothingPlaybackArrangementStep(
+      modeId: modeId,
+      trackIndex: (map['track_index'] as num?)?.toInt() ?? 0,
+      repeatCount: ((map['repeat_count'] as num?)?.toInt() ?? 1).clamp(1, 99),
+    );
+  }
+}
+
 class SoothingPrefsState {
   const SoothingPrefsState({
     this.favoriteModeIds = const <String>{},
@@ -11,6 +77,8 @@ class SoothingPrefsState {
     this.lastTrackIndexByMode = const <String, int>{},
     this.lastModeId,
     this.continuePlaybackOnExit = false,
+    this.playbackMode = SoothingPlaybackMode.singleLoop,
+    this.arrangementSteps = const <SoothingPlaybackArrangementStep>[],
   });
 
   final Set<String> favoriteModeIds;
@@ -18,6 +86,8 @@ class SoothingPrefsState {
   final Map<String, int> lastTrackIndexByMode;
   final String? lastModeId;
   final bool continuePlaybackOnExit;
+  final SoothingPlaybackMode playbackMode;
+  final List<SoothingPlaybackArrangementStep> arrangementSteps;
 
   Map<String, Object?> toJson() {
     final favorites = favoriteModeIds.toList(growable: false)..sort();
@@ -27,6 +97,10 @@ class SoothingPrefsState {
       'last_track_index_by_mode': lastTrackIndexByMode,
       'last_mode_id': lastModeId,
       'continue_playback_on_exit': continuePlaybackOnExit,
+      'playback_mode': playbackMode.storageValue,
+      'arrangement_steps': arrangementSteps
+          .map((step) => step.toJson())
+          .toList(growable: false),
     };
   }
 
@@ -38,6 +112,7 @@ class SoothingPrefsState {
     final favoriteRaw = map['favorite_mode_ids'];
     final recentRaw = map['recent_mode_ids'];
     final tracksRaw = map['last_track_index_by_mode'];
+    final arrangementRaw = map['arrangement_steps'];
     return SoothingPrefsState(
       favoriteModeIds: favoriteRaw is List
           ? favoriteRaw
@@ -63,6 +138,15 @@ class SoothingPrefsState {
           : '${map['last_mode_id']}'.trim(),
       continuePlaybackOnExit:
           map['continue_playback_on_exit'] as bool? ?? false,
+      playbackMode: SoothingPlaybackModeStorage.fromStorage(
+        '${map['playback_mode'] ?? ''}',
+      ),
+      arrangementSteps: arrangementRaw is List
+          ? arrangementRaw
+                .map(SoothingPlaybackArrangementStep.fromJsonValue)
+                .whereType<SoothingPlaybackArrangementStep>()
+                .toList(growable: false)
+          : const <SoothingPlaybackArrangementStep>[],
     );
   }
 }
