@@ -23,20 +23,6 @@ extension _AppStatePlayback on AppState {
     final words = List<WordEntry>.from(scopeWords);
     final safeStart = startIndex.clamp(0, words.length - 1);
     final syncToken = ++_wordbookPlaybackSyncToken;
-
-    _log.i(
-      'app_state',
-      'sync playback to selected wordbook',
-      data: <String, Object?>{
-        'selectedWordbookId': wordbook.id,
-        'selectedWordbookName': wordbook.name,
-        'playingWordbookId': _playingWordbookId,
-        'startIndex': safeStart,
-        'startWordId': words[safeStart].id,
-        'startWord': words[safeStart].word,
-      },
-    );
-
     _playingWordbookId = wordbook.id;
     _playingWordbookName = wordbook.name;
     _playingScopeWords = words;
@@ -85,23 +71,6 @@ extension _AppStatePlayback on AppState {
       final scopedIndex = _indexOfWordEntry(scopeWords, activeWord);
       if (scopedIndex >= 0) startIndex = scopedIndex;
     }
-    _log.i(
-      'app_state',
-      'play requested',
-      data: <String, Object?>{
-        'wordbookId': selected.id,
-        'wordbookName': selected.name,
-        'scopeWords': scopeWords.length,
-        'startIndex': startIndex,
-        'activeWord': activeWord?.word,
-        'searchMode': _searchMode.name,
-        'searchQuery': _searchQuery,
-        'provider': _config.tts.provider.name,
-        'model': _config.tts.model,
-        'voice': _config.tts.activeVoice,
-      },
-    );
-
     await _startPlaySession(
       scopeWords: scopeWords,
       startIndex: startIndex,
@@ -167,14 +136,6 @@ extension _AppStatePlayback on AppState {
         },
         onFinished: () {
           if (sessionId != _playSessionId) return;
-          _log.i(
-            'app_state',
-            'playback finished callback',
-            data: <String, Object?>{
-              'wordbookId': _playingWordbookId,
-              'scopeWords': words.length,
-            },
-          );
           _clearPlaybackSession(notify: true);
         },
       );
@@ -204,15 +165,6 @@ extension _AppStatePlayback on AppState {
       _log.w('app_state', 'pauseOrResume ignored because not playing');
       return;
     }
-    _log.i(
-      'app_state',
-      _isPaused ? 'resume requested' : 'pause requested',
-      data: <String, Object?>{
-        'provider': _config.tts.provider.name,
-        'currentUnit': _currentUnit,
-        'totalUnits': _totalUnits,
-      },
-    );
     try {
       if (_isPaused) {
         await _playback.resume();
@@ -238,16 +190,6 @@ extension _AppStatePlayback on AppState {
   }
 
   Future<void> _stopPlaybackImpl() async {
-    _log.i(
-      'app_state',
-      'stop requested',
-      data: <String, Object?>{
-        'isPlaying': _isPlaying,
-        'isPaused': _isPaused,
-        'currentUnit': _currentUnit,
-        'totalUnits': _totalUnits,
-      },
-    );
     try {
       _playSessionId += 1;
       await _playback.stop();
@@ -273,15 +215,6 @@ extension _AppStatePlayback on AppState {
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
     _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
-    _log.i(
-      'app_state',
-      'browse previous requested',
-      data: <String, Object?>{
-        'fromIndex': safeIndex,
-        'toIndex': nextScopeIndex,
-        'word': scopeWords[nextScopeIndex].word,
-      },
-    );
     _notifyStateChanged();
   }
 
@@ -297,15 +230,6 @@ extension _AppStatePlayback on AppState {
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
     _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
-    _log.i(
-      'app_state',
-      'browse next requested',
-      data: <String, Object?>{
-        'fromIndex': safeIndex,
-        'toIndex': nextScopeIndex,
-        'word': scopeWords[nextScopeIndex].word,
-      },
-    );
     _notifyStateChanged();
   }
 
@@ -370,14 +294,6 @@ extension _AppStatePlayback on AppState {
   Future<void> _restartPlaybackFromPlayingScope(int targetIndex) async {
     _queuedPlaybackScopeTarget = targetIndex;
     if (_playbackScopeRestarting) {
-      _log.d(
-        'app_state',
-        'restart playback queued',
-        data: <String, Object?>{
-          'queuedTarget': _queuedPlaybackScopeTarget,
-          'playingScopeSize': _playingScopeWords.length,
-        },
-      );
       return;
     }
     _playbackScopeRestarting = true;
@@ -403,16 +319,6 @@ extension _AppStatePlayback on AppState {
     }
     final words = List<WordEntry>.from(_playingScopeWords);
     final safeTarget = targetIndex.clamp(0, words.length - 1);
-    _log.i(
-      'app_state',
-      'restart playback from scope index',
-      data: <String, Object?>{
-        'wordbookId': playingId,
-        'targetIndex': safeTarget,
-        'targetWordId': words[safeTarget].id,
-        'targetWord': words[safeTarget].word,
-      },
-    );
     _playingScopeIndex = safeTarget;
     _playingWord = words[safeTarget].word;
     _rememberPlaybackProgressImpl(words[safeTarget]);

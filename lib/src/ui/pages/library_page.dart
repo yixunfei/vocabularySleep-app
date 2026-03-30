@@ -814,8 +814,10 @@ class _LibraryPageState extends State<LibraryPage> {
                         book,
                       );
                       if (!confirmed) return;
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
                       await state.selectWordbook(book);
-                      if (context.mounted) Navigator.of(context).pop();
                     },
                   ),
                 ),

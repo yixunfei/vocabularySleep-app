@@ -50,14 +50,6 @@ class SoothingMusicTrackLoader {
     SoothingMusicTrackLoadProgressCallback? onProgress,
   }) async {
     if (_cache[track.assetPath] case final Uint8List cached) {
-      _log.d(
-        'soothing_track_loader',
-        'track cache hit',
-        data: <String, Object?>{
-          'track': track.assetPath,
-          'bytes': cached.length,
-        },
-      );
       onProgress?.call(
         SoothingMusicTrackLoadProgress(
           receivedBytes: cached.length,
@@ -85,14 +77,6 @@ class SoothingMusicTrackLoader {
                 },
         );
         _cache[track.assetPath] = bytes;
-        _log.d(
-          'soothing_track_loader',
-          'track loaded from remote cache service',
-          data: <String, Object?>{
-            'track': track.assetPath,
-            'bytes': bytes.length,
-          },
-        );
         return bytes;
       } catch (error, stackTrace) {
         _log.w(
@@ -119,14 +103,6 @@ class SoothingMusicTrackLoader {
     final desktopFallback = await _tryLoadDesktopWorkspaceFile(track.assetPath);
     if (desktopFallback != null) {
       _cache[track.assetPath] = desktopFallback;
-      _log.d(
-        'soothing_track_loader',
-        'track loaded from desktop workspace fallback',
-        data: <String, Object?>{
-          'track': track.assetPath,
-          'bytes': desktopFallback.length,
-        },
-      );
       onProgress?.call(
         SoothingMusicTrackLoadProgress(
           receivedBytes: desktopFallback.length,
@@ -139,11 +115,6 @@ class SoothingMusicTrackLoader {
     final bundleData = await rootBundle.load(track.assetPath);
     final bytes = bundleData.buffer.asUint8List();
     _cache[track.assetPath] = bytes;
-    _log.d(
-      'soothing_track_loader',
-      'track loaded from flutter bundle',
-      data: <String, Object?>{'track': track.assetPath, 'bytes': bytes.length},
-    );
     onProgress?.call(
       SoothingMusicTrackLoadProgress(
         receivedBytes: bytes.length,

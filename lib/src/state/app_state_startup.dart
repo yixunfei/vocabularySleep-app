@@ -5,7 +5,6 @@ extension _AppStateStartup on AppState {
     if (_initialized || _initializing) return;
     _initializing = true;
     _message = null;
-    _log.i('app_state', 'init start');
     _notifyStateChanged();
 
     try {
@@ -25,6 +24,7 @@ extension _AppStateStartup on AppState {
         _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
       }
       _rememberedWords = _settings.loadRememberedWords();
+      _ambientPresets = _settings.loadAmbientPresets();
       _playbackProgressByWordbookPath = _settings
           .loadPlaybackProgressByWordbook();
       _startupPage = _settings.loadStartupPage();
@@ -43,26 +43,6 @@ extension _AppStateStartup on AppState {
       await _reloadWordbooks(keepCurrentSelection: false);
       await _syncSpecialWordbooks();
       _initialized = true;
-      final logFilePath = await _log.getLogFilePath();
-      _log.i(
-        'app_state',
-        'init success',
-        data: <String, Object?>{
-          'wordbooks': _wordbooks.length,
-          'selectedWordbookId': _selectedWordbook?.id,
-          'selectedWordbookName': _selectedWordbook?.name,
-          'words': _words.length,
-          'uiLanguage': _uiLanguage,
-          'uiLanguageFollowsSystem': _uiLanguageFollowsSystem,
-          'startupPage': _startupPage.storageValue,
-          'focusStartupTab': _focusStartupTab.storageValue,
-          'weatherEnabled': _weatherEnabled,
-          'logFile': logFilePath,
-          'ttsProvider': _config.tts.provider.name,
-          'ttsModel': _config.tts.model,
-          'ttsVoice': _config.tts.activeVoice,
-        },
-      );
       if (_weatherEnabled) {
         unawaited(refreshWeather(force: true));
       }
@@ -88,15 +68,6 @@ extension _AppStateStartup on AppState {
         (normalized == _uiLanguage && !_uiLanguageFollowsSystem)) {
       return;
     }
-    _log.i(
-      'app_state',
-      'set ui language',
-      data: <String, Object?>{
-        'from': _uiLanguage,
-        'to': normalized,
-        'followSystem': false,
-      },
-    );
     _uiLanguage = normalized;
     _uiLanguageFollowsSystem = false;
     _settings.saveUiLanguage(_uiLanguage);
@@ -108,11 +79,6 @@ extension _AppStateStartup on AppState {
     final resolved = AppState._resolveSystemUiLanguage();
     final changed = !_uiLanguageFollowsSystem || _uiLanguage != resolved;
     if (!changed) return;
-    _log.i(
-      'app_state',
-      'set ui language follow system',
-      data: <String, Object?>{'from': _uiLanguage, 'to': resolved},
-    );
     _uiLanguageFollowsSystem = true;
     _uiLanguage = resolved;
     _settings.saveUiLanguage(SettingsService.uiLanguageSystem);
@@ -122,14 +88,6 @@ extension _AppStateStartup on AppState {
 
   void _setStartupPageImpl(AppHomeTab page) {
     if (_startupPage == page) return;
-    _log.i(
-      'app_state',
-      'set startup page',
-      data: <String, Object?>{
-        'from': _startupPage.storageValue,
-        'to': page.storageValue,
-      },
-    );
     _startupPage = page;
     _settings.saveStartupPage(page);
     _notifyStateChanged();
@@ -137,14 +95,6 @@ extension _AppStateStartup on AppState {
 
   void _setFocusStartupTabImpl(FocusStartupTab tab) {
     if (_focusStartupTab == tab) return;
-    _log.i(
-      'app_state',
-      'set focus startup tab',
-      data: <String, Object?>{
-        'from': _focusStartupTab.storageValue,
-        'to': tab.storageValue,
-      },
-    );
     _focusStartupTab = tab;
     _settings.saveFocusStartupTab(tab);
     _notifyStateChanged();
@@ -152,14 +102,6 @@ extension _AppStateStartup on AppState {
 
   void _setStudyStartupTabImpl(StudyStartupTab tab) {
     if (_studyStartupTab == tab) return;
-    _log.i(
-      'app_state',
-      'set study startup tab',
-      data: <String, Object?>{
-        'from': _studyStartupTab.storageValue,
-        'to': tab.storageValue,
-      },
-    );
     _studyStartupTab = tab;
     _settings.saveStudyStartupTab(tab);
     _notifyStateChanged();
@@ -221,11 +163,6 @@ extension _AppStateStartup on AppState {
     if (!_uiLanguageFollowsSystem) return;
     final resolved = AppState._resolveSystemUiLanguage();
     if (_uiLanguage == resolved) return;
-    _log.i(
-      'app_state',
-      'sync ui language from system locale change',
-      data: <String, Object?>{'from': _uiLanguage, 'to': resolved},
-    );
     _uiLanguage = resolved;
     _refreshLocalizedWordbookNames();
     _notifyStateChanged();

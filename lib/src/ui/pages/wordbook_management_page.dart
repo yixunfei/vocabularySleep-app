@@ -231,9 +231,50 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
       return;
     }
 
-    setState(() {
-      _onlineBusy = true;
-    });
+    Navigator.of(context).pop();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useSafeArea: true,
+      builder: (dialogContext) => WillPopScope(
+        onWillPop: () async => false,
+        child: AlertDialog(
+          title: Row(
+            children: <Widget>[
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  pickUiText(i18n, zh: '正在下载', en: 'Downloading'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '正在下载词本文件，请稍候...',
+                  en: 'Downloading wordbook file, please wait...',
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              const LinearProgressIndicator(),
+            ],
+          ),
+        ),
+      ),
+    );
 
     File? tempFile;
     try {
@@ -251,8 +292,16 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
         '${tempDir.path}${Platform.pathSeparator}${DateTime.now().microsecondsSinceEpoch}_$safeName',
       );
       await tempFile.writeAsBytes(response.bodyBytes, flush: true);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
       await state.importWordbookFile(tempFile.path, importName.trim());
     } catch (error) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
       if (context.mounted) {
         _showMessage(
           context,
@@ -274,11 +323,6 @@ class _WordbookManagementPageState extends State<WordbookManagementPage> {
             await tempFile!.delete();
           } catch (_) {}
         }());
-      }
-      if (mounted) {
-        setState(() {
-          _onlineBusy = false;
-        });
       }
     }
   }
@@ -630,11 +674,7 @@ class _QuickActionCard extends StatelessWidget {
                   onPressed: onRefreshBuiltInCatalog,
                   icon: const Icon(Icons.sync_rounded),
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '刷新内置词本',
-                      en: 'Refresh built-ins',
-                    ),
+                    pickUiText(i18n, zh: '刷新内置词本', en: 'Refresh built-ins'),
                   ),
                 ),
               ],

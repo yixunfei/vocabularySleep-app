@@ -31,16 +31,7 @@ class AudioPlayerSourceHelper {
     Map<String, Object?> data = const <String, Object?>{},
   }) async {
     _ensureDiagnostics(player, tag);
-    _log.d(
-      tag,
-      'setSource start',
-      data: <String, Object?>{
-        'playerId': player.playerId,
-        'sourceType': source.runtimeType.toString(),
-        ...data,
-      },
-    );
-    switch (source) {
+switch (source) {
       case DeviceFileSource():
         await _setLocalFile(
           player,
@@ -119,16 +110,7 @@ class AudioPlayerSourceHelper {
       default:
         await player.setSource(source);
     }
-    _log.d(
-      tag,
-      'setSource complete',
-      data: <String, Object?>{
-        'playerId': player.playerId,
-        'sourceType': source.runtimeType.toString(),
-        ...data,
-      },
-    );
-  }
+}
 
   static Future<void> play(
     AudioPlayer player,
@@ -140,18 +122,7 @@ class AudioPlayerSourceHelper {
     Map<String, Object?> data = const <String, Object?>{},
   }) async {
     _ensureDiagnostics(player, tag);
-    _log.d(
-      tag,
-      'play start',
-      data: <String, Object?>{
-        'playerId': player.playerId,
-        'sourceType': source.runtimeType.toString(),
-        'volume': volume.clamp(0.0, 1.0),
-        if (mode != null) 'mode': mode.name,
-        ...data,
-      },
-    );
-    if (mode != null) {
+if (mode != null) {
       await player.setPlayerMode(mode);
     }
     if (ctx != null) {
@@ -160,16 +131,7 @@ class AudioPlayerSourceHelper {
     await player.setVolume(volume.clamp(0.0, 1.0));
     await setSource(player, source, tag: tag, data: data);
     await player.resume();
-    _log.d(
-      tag,
-      'play resume complete',
-      data: <String, Object?>{
-        'playerId': player.playerId,
-        'sourceType': source.runtimeType.toString(),
-        ...data,
-      },
-    );
-  }
+}
 
   static Future<Duration?> waitForDuration(
     AudioPlayer player, {
@@ -187,18 +149,8 @@ class AudioPlayerSourceHelper {
     };
     final immediate = await player.getDuration();
     if (_hasPositiveDuration(immediate)) {
-      _log.d(
-        tag,
-        'waitForDuration immediate hit',
-        data: <String, Object?>{
-          ...baseData,
-          'durationMs': immediate!.inMilliseconds,
-        },
-      );
       return immediate;
     }
-
-    _log.d(tag, 'waitForDuration start', data: baseData);
     final completer = Completer<Duration?>();
     late final StreamSubscription<Duration> subscription;
 
@@ -206,16 +158,7 @@ class AudioPlayerSourceHelper {
       if (completer.isCompleted) {
         return;
       }
-      _log.d(
-        tag,
-        'waitForDuration resolved',
-        data: <String, Object?>{
-          ...baseData,
-          'reason': reason,
-          if (value != null) 'durationMs': value.inMilliseconds,
-        },
-      );
-      completer.complete(value);
+completer.complete(value);
     }
 
     subscription = player.onDurationChanged.listen(
@@ -296,16 +239,6 @@ class AudioPlayerSourceHelper {
     }
 
     final hasNonAsciiPath = _hasNonAsciiCharacters(file.path);
-    _log.d(
-      tag,
-      'setLocalFile path analysis',
-      data: <String, Object?>{
-        'path': file.path,
-        'hasNonAsciiPath': hasNonAsciiPath,
-        'useBytes': hasNonAsciiPath && _useWindowsNonBlockingSourceSet,
-      },
-    );
-
     final strategies = <_AudioSourceAttempt>[
       if (!hasNonAsciiPath) ...<_AudioSourceAttempt>[
         _AudioSourceAttempt(
@@ -334,11 +267,6 @@ class AudioPlayerSourceHelper {
         _AudioSourceAttempt(
           label: 'desktop_bytes_non_ascii',
           run: () async {
-            _log.d(
-              tag,
-              'using bytes strategy for non-ASCII path',
-              data: <String, Object?>{'path': file.path},
-            );
             final bytes = await file.readAsBytes();
             if (_useWindowsNonBlockingSourceSet) {
               await _setSourceBytesNonBlocking(
@@ -479,18 +407,8 @@ class AudioPlayerSourceHelper {
     };
     final immediateDuration = await player.getDuration();
     if (_hasPositiveDuration(immediateDuration)) {
-      _log.d(
-        tag,
-        'player already prepared via duration',
-        data: <String, Object?>{
-          ...payload,
-          'durationMs': immediateDuration!.inMilliseconds,
-        },
-      );
       return;
     }
-
-    _log.d(tag, 'waiting for prepared event', data: payload);
     try {
       final result = await Future.any<Object?>(<Future<Object?>>[
         player.eventStream
@@ -505,16 +423,7 @@ class AudioPlayerSourceHelper {
             .firstWhere((duration) => duration.inMilliseconds > 0)
             .then<Object?>((duration) => duration),
       ]).timeout(timeout);
-      _log.d(
-        tag,
-        'prepared wait complete',
-        data: <String, Object?>{
-          ...payload,
-          'result': result is Duration ? 'duration' : '$result',
-          if (result is Duration) 'durationMs': result.inMilliseconds,
-        },
-      );
-    } on TimeoutException {
+} on TimeoutException {
       _log.w(tag, 'prepared wait timed out', data: payload);
     }
   }
@@ -579,17 +488,6 @@ class AudioPlayerSourceHelper {
       final strategy = strategies[index];
       try {
         await strategy.run();
-        _log.d(
-          tag,
-          index > 0
-              ? 'audio source fallback strategy recovered playback'
-              : 'audio source strategy succeeded',
-          data: <String, Object?>{
-            ...data,
-            'strategy': strategy.label,
-            'attempt': index + 1,
-          },
-        );
         return;
       } catch (error, stackTrace) {
         lastError = error;

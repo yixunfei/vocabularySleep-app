@@ -121,16 +121,6 @@ class WeatherService {
       fetchedAt: DateTime.now(),
       forecastDays: forecastDays,
     );
-    _log.d(
-      'weather',
-      'current weather updated',
-      data: <String, Object?>{
-        'city': snapshot.city,
-        'countryCode': snapshot.countryCode,
-        'temperatureCelsius': snapshot.temperatureCelsius,
-        'weatherCode': snapshot.weatherCode,
-      },
-    );
     return snapshot;
   }
 

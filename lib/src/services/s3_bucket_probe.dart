@@ -83,10 +83,7 @@ class S3RangeObjectResult {
 }
 
 class S3GetObjectResult {
-  const S3GetObjectResult({
-    required this.bytes,
-    required this.contentType,
-  });
+  const S3GetObjectResult({required this.bytes, required this.contentType});
 
   final List<int> bytes;
   final String contentType;
@@ -409,18 +406,22 @@ class S3BucketProbeClient {
   }) async {
     final chunks = BytesBuilder(copy: false);
     var receivedBytes = 0;
-    var lastReportedPercent = -1;
+    var lastReportedBytes = 0;
+    const reportInterval = 64 * 1024; // Report every 64KB
     void report({bool force = false}) {
       if (onProgress == null) return;
       if (!force && totalBytes > 0) {
-        final currentPercent =
-            (receivedBytes * 100 ~/ totalBytes).clamp(0, 100);
+        // Report either every 64KB or every 5% progress
+        final percentProgress = receivedBytes * 100 ~/ totalBytes;
+        final lastPercentProgress = lastReportedBytes * 100 ~/ totalBytes;
+        final bytesProgress = receivedBytes - lastReportedBytes;
         if (receivedBytes < totalBytes &&
-            currentPercent == lastReportedPercent) {
+            bytesProgress < reportInterval &&
+            percentProgress == lastPercentProgress) {
           return;
         }
-        lastReportedPercent = currentPercent;
       }
+      lastReportedBytes = receivedBytes;
       onProgress(receivedBytes, totalBytes);
     }
 

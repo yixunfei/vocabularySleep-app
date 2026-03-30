@@ -1108,11 +1108,6 @@ class AppDatabaseService {
 
   Future<void> syncBuiltInWordbooksCatalogIfNeeded() async {
     if (!_shouldSyncBuiltInCatalogOnStartup()) {
-      _log.i(
-        'database',
-        'skip built-in wordbook catalog sync on startup',
-        data: <String, Object?>{'reason': 'non_special_wordbooks_exist'},
-      );
       return;
     }
     await syncBuiltInWordbooksCatalog();
@@ -1167,16 +1162,6 @@ class AppDatabaseService {
       ]);
       renamed += 1;
     }
-    _log.i(
-      'database',
-      'built-in wordbook catalog synced',
-      data: <String, Object?>{
-        'count': visibleBuiltins.length,
-        'created': created,
-        'hidden': hiddenPaths.length,
-        'renamed': renamed,
-      },
-    );
   }
 
   bool isLazyBuiltInPath(String path) =>
@@ -1222,12 +1207,6 @@ class AppDatabaseService {
       );
       return loadedCount;
     }
-
-    _log.i(
-      'database',
-      'loading built-in wordbook on demand',
-      data: <String, Object?>{'path': path, 'sourcePath': target.sourcePath},
-    );
     // Historical local bundle loading is kept below as a reference because the
     // app now prefers first-use S3 download + local cache for built-in wordbooks.
     // final bundleData = await rootBundle.load(target.assetPath);
@@ -1287,15 +1266,6 @@ class AppDatabaseService {
         processedEntries: imported,
         totalEntries: imported,
       ),
-    );
-    _log.i(
-      'database',
-      'built-in wordbook loaded',
-      data: <String, Object?>{
-        'path': path,
-        'sourcePath': target.sourcePath,
-        'count': imported,
-      },
     );
     return imported;
   }
@@ -2899,11 +2869,6 @@ class AppDatabaseService {
   void _applySchemaMigrations() {
     var version = _readSchemaVersion();
     if (version < 1) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 1},
-      );
       _migrateTimerRecordsSchema();
       _migrateProgressSchema();
       _migrateTodosSchema();
@@ -2912,71 +2877,36 @@ class AppDatabaseService {
       version = 1;
     }
     if (version < 2) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 2},
-      );
       _migrateWordsStorageSchema();
       _setSchemaVersion(2);
       version = 2;
     }
     if (version < 3) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 3},
-      );
       _migrateWordFieldsSchema();
       _setSchemaVersion(3);
       version = 3;
     }
     if (version < 4) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 4},
-      );
       _migrateWordFieldSubtablesSchema();
       _setSchemaVersion(4);
       version = 4;
     }
     if (version < 5) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 5},
-      );
       _migrateWordExtensionSchema();
       _setSchemaVersion(5);
       version = 5;
     }
     if (version < 6) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 6},
-      );
       _migrateWordCompatibilityCacheSchema();
       _setSchemaVersion(6);
       version = 6;
     }
     if (version < 7) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 7},
-      );
       _migrateWordEntryRecoverySchema();
       _setSchemaVersion(7);
       version = 7;
     }
     if (version < 8) {
-      _log.i(
-        'database',
-        'apply schema migration',
-        data: <String, Object?>{'from': version, 'to': 8},
-      );
       _migrateDownloadedAmbientSoundsSchema();
       _setSchemaVersion(8);
       version = 8;

@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/online_ambient_catalog_service.dart';
-import '../../services/cstcloud_resource_cache_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
 
@@ -30,33 +29,132 @@ class _OnlineAmbientCatalogSheet extends StatefulWidget {
 class _OnlineAmbientCatalogSheetState
     extends State<_OnlineAmbientCatalogSheet> {
   late Future<List<OnlineAmbientSoundOption>> _catalogFuture;
-  late Future<Set<String>> _downloadedPathsFuture;
   Set<String> _downloadedPaths = <String>{};
+  final Map<String, double?> _downloadProgressById = <String, double?>{};
+  final Set<String> _downloadingIds = <String>{};
+  final Set<String> _deletingIds = <String>{};
 
   @override
   void initState() {
     super.initState();
     final state = context.read<AppState>();
     _catalogFuture = state.fetchOnlineAmbientCatalog();
-    _downloadedPathsFuture = state.fetchDownloadedOnlineAmbientRelativePaths();
-    _downloadedPathsFuture.then((paths) {
-      if (mounted) {
-        setState(() {
-          _downloadedPaths = paths;
-        });
-      }
+    _refreshDownloadedPaths();
+  }
+
+  Future<void> _refreshDownloadedPaths() async {
+    final state = context.read<AppState>();
+    final paths = await state.fetchDownloadedOnlineAmbientRelativePaths();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _downloadedPaths = paths;
     });
   }
 
-  void _refreshDownloadedPaths() {
-    final state = context.read<AppState>();
-    state.fetchDownloadedOnlineAmbientRelativePaths().then((paths) {
+  Future<void> _handleDownload(
+    AppState state,
+    AppI18n i18n,
+    OnlineAmbientSoundOption option,
+    String localizedName,
+  ) async {
+    if (_downloadingIds.contains(option.id)) {
+      return;
+    }
+    setState(() {
+      _downloadingIds.add(option.id);
+      _downloadProgressById[option.id] = null;
+    });
+
+    try {
+      final path = await state.downloadOnlineAmbientSourceWithProgress(
+        option,
+        (progress) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _downloadProgressById[option.id] = progress.progress;
+          });
+        },
+      );
+      await _refreshDownloadedPaths();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            path == null
+                ? pickUiText(
+                    i18n,
+                    zh: '下载失败，请稍后重试。',
+                    en: 'Download failed. Please try again later.',
+                  )
+                : pickUiText(
+                    i18n,
+                    zh: '已下载到本地：$localizedName',
+                    en: 'Downloaded locally: $localizedName',
+                  ),
+          ),
+        ),
+      );
+    } finally {
       if (mounted) {
         setState(() {
-          _downloadedPaths = paths;
+          _downloadingIds.remove(option.id);
+          _downloadProgressById.remove(option.id);
         });
       }
+    }
+  }
+
+  Future<void> _handleDelete(
+    AppState state,
+    AppI18n i18n,
+    OnlineAmbientSoundOption option,
+    String localizedName,
+  ) async {
+    if (_deletingIds.contains(option.id)) {
+      return;
+    }
+    setState(() {
+      _deletingIds.add(option.id);
+      _downloadProgressById[option.id] = null;
     });
+
+    try {
+      final deleted = await state.deleteDownloadedOnlineAmbientSource(option);
+      await _refreshDownloadedPaths();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            deleted
+                ? pickUiText(
+                    i18n,
+                    zh: '已删除本地音频：$localizedName',
+                    en: 'Deleted local audio: $localizedName',
+                  )
+                : pickUiText(
+                    i18n,
+                    zh: '删除失败，请稍后重试。',
+                    en: 'Delete failed. Please try again later.',
+                  ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingIds.remove(option.id);
+          _downloadProgressById.remove(option.id);
+        });
+      }
+    }
   }
 
   @override
@@ -64,7 +162,6 @@ class _OnlineAmbientCatalogSheetState
     return Consumer<AppState>(
       builder: (context, state, _) {
         final i18n = AppI18n(state.uiLanguage);
-
         return Padding(
           padding: EdgeInsets.fromLTRB(
             16,
@@ -82,19 +179,15 @@ class _OnlineAmbientCatalogSheetState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '白噪音资源',
-                            en: 'Ambient sound catalog',
-                          ),
+                          pickUiText(i18n, zh: '环境音资源库', en: 'Ambient sound catalog'),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           pickUiText(
                             i18n,
-                            zh: '从远程资源库下载并缓存环境音，已缓存的音频可直接删除。',
-                            en: 'Browse ambient sounds from the remote library and cache them locally. Delete any cached file directly.',
+                            zh: '从远程资源库下载并缓存环境音，下载完成后可直接加入当前播放组合。',
+                            en: 'Download ambient sounds from the remote library and cache them locally for instant reuse.',
                           ),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
@@ -109,99 +202,106 @@ class _OnlineAmbientCatalogSheetState
               ),
               const SizedBox(height: 12),
               Expanded(
-                child: FutureBuilder<Object>(
-                  future: Future.wait<Object>(<Future<Object>>[_catalogFuture]),
+                child: FutureBuilder<List<OnlineAmbientSoundOption>>(
+                  future: _catalogFuture,
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done ||
-                        snapshot.data is! List<Object>) {
+                    if (snapshot.connectionState != ConnectionState.done) {
                       return const Center(child: CircularProgressIndicator());
                     }
-
-                    final data = snapshot.data! as List<Object>;
-                    final options =
-                        data[0] as List<OnlineAmbientSoundOption>? ??
-                        OnlineAmbientCatalogService.fallbackOptions;
-
+                    final options = snapshot.data ?? OnlineAmbientCatalogService.fallbackOptions;
                     final grouped = <String, List<OnlineAmbientSoundOption>>{};
                     for (final item in options) {
-                      grouped
-                          .putIfAbsent(
-                            item.categoryKey,
-                            () => <OnlineAmbientSoundOption>[],
-                          )
-                          .add(item);
+                      grouped.putIfAbsent(item.categoryKey, () => <OnlineAmbientSoundOption>[]).add(item);
                     }
-
                     return ListView(
-                      children: grouped.entries
-                          .map((entry) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 18),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(
-                                    i18n.t(entry.key),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ...entry.value.map((option) {
-                                    final downloaded = _downloadedPaths
-                                        .contains(option.relativePath);
-                                    final localizedName =
-                                        localizedOnlineAmbientOptionName(
-                                          i18n,
-                                          option,
-                                        );
-
-                                    return Card(
-                                      margin: const EdgeInsets.only(bottom: 8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12),
-                                        child: Row(
-                                          children: <Widget>[
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: <Widget>[
-                                                  Text(
-                                                    localizedName,
-                                                    style: Theme.of(
-                                                      context,
-                                                    ).textTheme.titleSmall,
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    option.relativePath,
-                                                    style: Theme.of(
-                                                      context,
-                                                    ).textTheme.bodySmall,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            AmbientActionBuilder(
-                                              option: option,
-                                              downloaded: downloaded,
-                                              localizedName: localizedName,
-                                              onActionComplete: () {
-                                                _refreshDownloadedPaths();
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }),
-                                ],
+                      children: grouped.entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                i18n.t(entry.key),
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
-                            );
-                          })
-                          .toList(growable: false),
+                              const SizedBox(height: 8),
+                              ...entry.value.map((option) {
+                                final downloaded = _downloadedPaths.contains(option.relativePath);
+                                final localizedName = localizedOnlineAmbientOptionName(i18n, option);
+                                final progress = _downloadProgressById[option.id];
+                                final downloading = _downloadingIds.contains(option.id);
+                                final deleting = _deletingIds.contains(option.id);
+                                final busy = downloading || deleting;
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Text(
+                                                localizedName,
+                                                style: Theme.of(context).textTheme.titleSmall,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                option.relativePath,
+                                                style: Theme.of(context).textTheme.bodySmall,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        SizedBox(
+                                          width: 118,
+                                          child: downloaded
+                                              ? OutlinedButton.icon(
+                                                  onPressed: busy
+                                                      ? null
+                                                      : () => _handleDelete(state, i18n, option, localizedName),
+                                                  style: OutlinedButton.styleFrom(
+                                                    foregroundColor: Colors.red,
+                                                    side: const BorderSide(color: Colors.red),
+                                                  ),
+                                                  icon: _ProgressIcon(
+                                                    progress: progress,
+                                                    busy: deleting,
+                                                    idleIcon: Icons.delete_outline_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    deleting
+                                                        ? pickUiText(i18n, zh: '删除中', en: 'Deleting')
+                                                        : pickUiText(i18n, zh: '删除', en: 'Delete'),
+                                                  ),
+                                                )
+                                              : FilledButton.icon(
+                                                  onPressed: busy
+                                                      ? null
+                                                      : () => _handleDownload(state, i18n, option, localizedName),
+                                                  icon: _ProgressIcon(
+                                                    progress: progress,
+                                                    busy: downloading,
+                                                    idleIcon: Icons.download_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    downloading
+                                                        ? pickUiText(i18n, zh: '下载中', en: 'Downloading')
+                                                        : pickUiText(i18n, zh: '下载', en: 'Download'),
+                                                  ),
+                                                ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        );
+                      }).toList(growable: false),
                     );
                   },
                 ),
@@ -214,193 +314,29 @@ class _OnlineAmbientCatalogSheetState
   }
 }
 
-class AmbientActionBuilder extends StatefulWidget {
-  const AmbientActionBuilder({
-    super.key,
-    required this.option,
-    required this.downloaded,
-    required this.localizedName,
-    required this.onActionComplete,
+class _ProgressIcon extends StatelessWidget {
+  const _ProgressIcon({
+    required this.progress,
+    required this.busy,
+    required this.idleIcon,
   });
 
-  final OnlineAmbientSoundOption option;
-  final bool downloaded;
-  final String localizedName;
-  final VoidCallback onActionComplete;
-
-  @override
-  State<AmbientActionBuilder> createState() => _AmbientActionBuilderState();
-}
-
-class _AmbientActionBuilderState extends State<AmbientActionBuilder> {
-  bool _isPending = false;
-  double? _progress;
-  bool _isDownloading = false;
+  final double? progress;
+  final bool busy;
+  final IconData idleIcon;
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(context.read<AppState>().uiLanguage);
-    final buttonWidth = 100.0;
-
-    return SizedBox(width: buttonWidth, child: _buildButton(context, i18n));
-  }
-
-  Widget _buildButton(BuildContext context, AppI18n i18n) {
-    if (widget.downloaded) {
-      return _buildDeleteButton(context, i18n);
-    } else {
-      return _buildDownloadButton(context, i18n);
+    if (!busy) {
+      return Icon(idleIcon, size: 18);
     }
-  }
-
-  Widget _buildDeleteButton(BuildContext context, AppI18n i18n) {
-    final isDeleting = _isPending && _isDownloading;
-    final progress = isDeleting ? _progress : null;
-
-    return OutlinedButton.icon(
-      icon: progress != null
-          ? SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, value: progress),
-            )
-          : const Icon(Icons.delete_outline_rounded, size: 18),
-      label: Text(
-        isDeleting
-            ? pickUiText(i18n, zh: '删除中', en: 'Deleting')
-            : pickUiText(i18n, zh: '删除', en: 'Delete'),
+    return SizedBox(
+      width: 16,
+      height: 16,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        value: progress,
       ),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.red,
-        side: const BorderSide(color: Colors.red),
-      ),
-      onPressed: isDeleting ? null : _handleDelete,
     );
-  }
-
-  Widget _buildDownloadButton(BuildContext context, AppI18n i18n) {
-    final isDownloadingNow = _isPending && _isDownloading;
-    final progress = isDownloadingNow ? _progress : null;
-
-    return FilledButton.icon(
-      icon: progress != null
-          ? SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, value: progress),
-            )
-          : const Icon(Icons.download_rounded, size: 18),
-      label: Text(
-        isDownloadingNow
-            ? pickUiText(i18n, zh: '下载中', en: 'Downloading')
-            : pickUiText(i18n, zh: '下载', en: 'Download'),
-      ),
-      onPressed: isDownloadingNow ? null : _handleDownload,
-    );
-  }
-
-  Future<void> _handleDelete() async {
-    if (!mounted) return;
-    setState(() {
-      _isPending = true;
-      _isDownloading = true;
-      _progress = 0.1;
-    });
-
-    try {
-      final state = context.read<AppState>();
-      final i18n = AppI18n(state.uiLanguage);
-      final deleted = await state.deleteDownloadedOnlineAmbientSource(
-        widget.option,
-      );
-
-      if (!mounted) return;
-
-      widget.onActionComplete();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              deleted
-                  ? pickUiText(
-                      i18n,
-                      zh: '已删除本地音频：${widget.localizedName}',
-                      en: 'Deleted local audio: ${widget.localizedName}',
-                    )
-                  : pickUiText(
-                      i18n,
-                      zh: '删除失败，请稍后重试。',
-                      en: 'Delete failed. Please try again later.',
-                    ),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isPending = false;
-          _isDownloading = false;
-          _progress = null;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleDownload() async {
-    if (!mounted) return;
-    setState(() {
-      _isPending = true;
-      _isDownloading = true;
-      _progress = 0.1;
-    });
-
-    try {
-      final state = context.read<AppState>();
-      final i18n = AppI18n(state.uiLanguage);
-      final path = await state.downloadOnlineAmbientSourceWithProgress(
-        widget.option,
-        (progress) {
-          if (mounted) {
-            setState(() {
-              _progress = progress.progress;
-            });
-          }
-        },
-      );
-
-      if (!mounted) return;
-
-      widget.onActionComplete();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              path == null
-                  ? pickUiText(
-                      i18n,
-                      zh: '下载失败，请稍后重试。',
-                      en: 'Download failed. Please try again later.',
-                    )
-                  : pickUiText(
-                      i18n,
-                      zh: '已下载到本地：${widget.localizedName}',
-                      en: 'Downloaded locally: ${widget.localizedName}',
-                    ),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isPending = false;
-          _isDownloading = false;
-          _progress = null;
-        });
-      }
-    }
   }
 }

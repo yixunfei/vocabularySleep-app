@@ -17,11 +17,9 @@ import 'app_log_service.dart';
 class TtsService {
   TtsService() {
     _flutterTts.setCompletionHandler(() {
-      _log.d('tts', 'local completion handler fired');
       _completeLocalSpeak();
     });
     _flutterTts.setCancelHandler(() {
-      _log.d('tts', 'local cancel handler fired');
       _completeLocalSpeak();
     });
     _flutterTts.setErrorHandler((message) {
@@ -32,7 +30,6 @@ class TtsService {
       );
       _completeLocalSpeak(error: StateError('Local TTS playback failed.'));
     });
-    _log.i('tts', 'service initialized');
   }
 
   final FlutterTts _flutterTts = FlutterTts();
@@ -79,7 +76,6 @@ class TtsService {
     );
     await _configureLocalAudioSession();
     _localInitialized = true;
-    _log.d('tts', 'local initialized');
   }
 
   Future<void> _configureLocalAudioSession() async {
@@ -157,15 +153,7 @@ class TtsService {
       }
     }
     final output = names.toList()..sort();
-    _log.i(
-      'tts',
-      'local voices loaded',
-      data: <String, Object?>{
-        'count': output.length,
-        'sample': output.take(8).join(', '),
-      },
-    );
-    return output;
+return output;
   }
 
   Future<int> getApiCacheSizeBytes() async {
@@ -188,53 +176,20 @@ class TtsService {
         );
       }
     }
-    _log.i(
-      'tts',
-      'api cache cleared',
-      data: <String, Object?>{'path': dir.path},
-    );
   }
 
   Future<void> speak(String text, TtsConfig config) async {
     final content = text.trim();
     if (content.isEmpty) return;
-    _log.i(
-      'tts',
-      'speak requested',
-      data: <String, Object?>{
-        'provider': config.provider.name,
-        'endpoint': _resolveApiEndpoint(config),
-        'model': config.model,
-        'activeVoice': config.activeVoice,
-        'localVoice': config.localVoice,
-        'remoteVoice': config.remoteVoice,
-        'baseUrl': config.baseUrl,
-        'language': config.language,
-        'speed': config.speed,
-        'volume': config.volume,
-        'textPreview': _preview(content),
-      },
-    );
-
-    try {
+try {
       if (config.provider == TtsProviderType.local) {
         await _speakByLocal(content, config);
       } else {
         await _speakByApi(content, config);
       }
-      _log.i('tts', 'speak finished');
     } catch (error, stackTrace) {
       if (error is _ApiSpeakInterrupted) {
-        _log.i(
-          'tts',
-          'speak interrupted',
-          data: <String, Object?>{
-            'provider': config.provider.name,
-            'reason': error.reason,
-            'textPreview': _preview(content),
-          },
-        );
-        return;
+return;
       }
       _log.e(
         'tts',
@@ -251,7 +206,6 @@ class TtsService {
   }
 
   Future<void> stop() async {
-    _log.i('tts', 'stop requested');
     _interruptApiRequest(reason: 'stop');
     await _runOp<dynamic>(
       'local.stop',
@@ -261,15 +215,9 @@ class TtsService {
     await _runOp<void>('api.stop', () => _apiPlayer.stop(), swallowError: true);
     _completeLocalSpeak();
     _completeApiSpeak(error: _ApiSpeakInterrupted('stop'));
-    _log.d('tts', 'stop done');
   }
 
   Future<void> pause(TtsProviderType provider) async {
-    _log.i(
-      'tts',
-      'pause requested',
-      data: <String, Object?>{'provider': provider.name},
-    );
     if (provider != TtsProviderType.local) {
       await _runOp<void>(
         'api.pause',
@@ -287,11 +235,6 @@ class TtsService {
   }
 
   Future<void> resume(TtsProviderType provider) async {
-    _log.i(
-      'tts',
-      'resume requested',
-      data: <String, Object?>{'provider': provider.name},
-    );
     if (provider != TtsProviderType.local) {
       await _runOp<void>(
         'api.resume',
@@ -454,21 +397,7 @@ class TtsService {
       'response_format': 'mp3',
       'speed': config.speed,
     };
-    _log.i(
-      'tts',
-      'api speak start',
-      data: <String, Object?>{
-        'speakToken': speakToken,
-        'provider': config.provider.name,
-        'endpoint': endpointPreview,
-        'model': model,
-        'voice': voice,
-        'cacheEnabled': _shouldUseApiCache(config),
-        'textPreview': _preview(text),
-      },
-    );
-
-    await _runOp<dynamic>(
+await _runOp<dynamic>(
       'local.stop.beforeApi',
       () => _flutterTts.stop(),
       swallowError: true,
@@ -546,17 +475,6 @@ class TtsService {
       speakToken: speakToken,
     );
     _throwIfApiInterrupted(speakToken, stage: 'after_http');
-
-    _log.i(
-      'tts',
-      'api response',
-      data: <String, Object?>{
-        'speakToken': speakToken,
-        'statusCode': response.statusCode,
-        'bytes': response.bodyBytes.length,
-        'contentType': response.headers['content-type'],
-      },
-    );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw StateError(
         'TTS API request failed: ${response.statusCode}, body=${_preview(response.body)}',
@@ -618,14 +536,6 @@ class TtsService {
     _apiCompletionToken = speakToken;
     late final StreamSubscription<void> sub;
     sub = _apiPlayer.onPlayerComplete.listen((_) {
-      _log.d(
-        'tts',
-        'api playback completed',
-        data: <String, Object?>{
-          'speakToken': speakToken,
-          'source': sourceLabel,
-        },
-      );
       if (_apiCompletionToken != speakToken) return;
       _completeApiSpeak();
       sub.cancel();
@@ -718,15 +628,9 @@ class TtsService {
       swallowError: true,
     );
     if (exists != true) {
-      _log.d('tts', 'api cache miss', data: <String, Object?>{'key': cacheKey});
       return null;
     }
     await _touchApiCacheFile(file);
-    _log.i(
-      'tts',
-      'api cache hit',
-      data: <String, Object?>{'key': cacheKey, 'path': file.path},
-    );
     return file;
   }
 
@@ -857,16 +761,6 @@ class TtsService {
       );
       remainingBytes -= item.stat.size;
     }
-
-    _log.i(
-      'tts',
-      'api cache trimmed',
-      data: <String, Object?>{
-        'maxBytes': maxBytes,
-        'beforeBytes': totalBytes,
-        'afterBytes': remainingBytes,
-      },
-    );
   }
 
   String _resolveApiEndpoint(TtsConfig config) {
@@ -919,11 +813,6 @@ class TtsService {
     final client = _activeApiClient;
     _activeApiClient = null;
     if (client != null) {
-      _log.d(
-        'tts',
-        'api request interrupted',
-        data: <String, Object?>{'reason': reason},
-      );
       client.close();
     }
   }
@@ -954,7 +843,6 @@ class TtsService {
       'speed': config.speed,
       'speakToken': speakToken,
     };
-    _log.d('tts', 'api.http.post.start', data: data);
     try {
       final response = await client
           .post(
@@ -966,28 +854,10 @@ class TtsService {
             body: jsonEncode(requestBody),
           )
           .timeout(const Duration(seconds: 30));
-      _log.d(
-        'tts',
-        'api.http.post.done',
-        data: <String, Object?>{
-          ...data,
-          'elapsedMs': watch.elapsedMilliseconds,
-          'result': response.runtimeType.toString(),
-        },
-      );
-      return response;
+return response;
     } catch (error, stackTrace) {
       final interrupted = !_isApiSpeakTokenActive(speakToken);
       if (interrupted) {
-        _log.i(
-          'tts',
-          'api.http.post.interrupted',
-          data: <String, Object?>{
-            ...data,
-            'elapsedMs': watch.elapsedMilliseconds,
-            'error': '$error',
-          },
-        );
         throw const _ApiSpeakInterrupted('http_post_interrupted');
       }
       _log.e(
@@ -1011,21 +881,9 @@ class TtsService {
     bool swallowError = false,
   }) async {
     final watch = Stopwatch()..start();
-    _log.d('tts', '$operation.start', data: data);
     try {
       final result = await task();
       final resultValue = _encodeResultValue(result);
-      _log.d(
-        'tts',
-        '$operation.done',
-        data: <String, Object?>{
-          ...data,
-          'elapsedMs': watch.elapsedMilliseconds,
-          ...?resultValue == null
-              ? null
-              : <String, Object?>{'result': resultValue},
-        },
-      );
       return result;
     } catch (error, stackTrace) {
       if (swallowError) {

@@ -565,7 +565,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }
 
   Future<void> _initAudio() async {
-    _log.d('soothing_audio', 'init start');
     final prefs = await ToolboxSoothingPrefsService.load();
     _SoothingRuntimeStore.favoriteModeIds = Set<String>.from(
       prefs.favoriteModeIds,
@@ -590,18 +589,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _volume = _SoothingRuntimeStore.activeVolume;
     _muted = _SoothingRuntimeStore.activeMuted;
     await _player.setVolume(_muted ? 0 : _volume);
-    _log.d(
-      'soothing_audio',
-      'player bootstrap configured',
-      data: <String, Object?>{
-        'playerId': _player.playerId,
-        'modeId': _mode.id,
-        'trackIndex': _trackIndex,
-        'volume': _volume,
-        'muted': _muted,
-      },
-    );
-
     if (_SoothingRuntimeStore.retainedPlayer != null &&
         _SoothingRuntimeStore.activeModeId != null) {
       final retainedModeId = _SoothingRuntimeStore.activeModeId!;
@@ -623,18 +610,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (mounted) {
         setState(() {});
       }
-      _log.d(
-        'soothing_audio',
-        'restored retained player',
-        data: <String, Object?>{
-          'playerId': _player.playerId,
-          'modeId': _mode.id,
-          'trackIndex': _trackIndex,
-          'playing': _playing,
-          'positionMs': _position.inMilliseconds,
-          'durationMs': _duration.inMilliseconds,
-        },
-      );
       for (final mode in _modes.where((item) => item.id != _mode.id).take(2)) {
         unawaited(_preloadModeAssets(mode.id));
       }
@@ -649,17 +624,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }
 
   Future<void> _preloadModeAssets(String modeId) async {
-    _log.d(
-      'soothing_audio',
-      'preload mode assets start',
-      data: <String, Object?>{'modeId': modeId},
-    );
     await _resolvedTrackLoader.preloadMode(modeId);
-    _log.d(
-      'soothing_audio',
-      'preload mode assets complete',
-      data: <String, Object?>{'modeId': modeId},
-    );
   }
 
   Future<Uint8List> _loadTrackBytes(_SoothingTrack track) async {
@@ -699,16 +664,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     required bool autoplay,
   }) async {
     final restoredTrackIndex = _restoredTrackIndexForMode(mode.id);
-    _log.d(
-      'soothing_audio',
-      'load mode start',
-      data: <String, Object?>{
-        'modeId': mode.id,
-        'restoredTrackIndex': restoredTrackIndex,
-        'autoplay': autoplay,
-        'playerId': _player.playerId,
-      },
-    );
     setState(() {
       _mode = mode;
       _trackIndex = restoredTrackIndex;
@@ -722,15 +677,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       final scene = await ToolboxSoothingAudioService.load(mode.id);
       final track = _tracksForMode(mode.id)[restoredTrackIndex];
       final bytes = await _loadTrackBytes(track);
-      _log.d(
-        'soothing_audio',
-        'track bytes loaded',
-        data: <String, Object?>{
-          'modeId': mode.id,
-          'trackAssetPath': track.assetPath,
-          'bytes': bytes.length,
-        },
-      );
       await AudioPlayerSourceHelper.setSource(
         _player,
         BytesSource(bytes, mimeType: 'audio/mp4'),
@@ -756,27 +702,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       await _player.setVolume(_muted ? 0 : _volume);
       if (autoplay) {
         await _player.resume();
-        _log.d(
-          'soothing_audio',
-          'load mode resumed playback',
-          data: <String, Object?>{
-            'modeId': mode.id,
-            'trackAssetPath': track.assetPath,
-            'durationMs': duration?.inMilliseconds,
-            'volume': _muted ? 0 : _volume,
-          },
-        );
       } else {
         await _player.stop();
-        _log.d(
-          'soothing_audio',
-          'load mode primed without autoplay',
-          data: <String, Object?>{
-            'modeId': mode.id,
-            'trackAssetPath': track.assetPath,
-            'durationMs': duration?.inMilliseconds,
-          },
-        );
       }
       if (!mounted) return;
       setState(() {
@@ -787,16 +714,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       _SoothingRuntimeStore.activeVolume = _volume;
       _SoothingRuntimeStore.activeMuted = _muted;
       _rememberRecent(mode.id);
-      _log.d(
-        'soothing_audio',
-        'load mode complete',
-        data: <String, Object?>{
-          'modeId': mode.id,
-          'trackAssetPath': track.assetPath,
-          'sceneId': scene.id,
-          'durationMs': duration?.inMilliseconds,
-        },
-      );
     } catch (error, stackTrace) {
       _log.e(
         'soothing_audio',
@@ -823,17 +740,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }
 
   Future<void> _togglePlayback() async {
-    _log.d(
-      'soothing_audio',
-      'toggle playback requested',
-      data: <String, Object?>{
-        'playerId': _player.playerId,
-        'playing': _playing,
-        'loading': _loading,
-        'modeId': _mode.id,
-        'trackIndex': _trackIndex,
-      },
-    );
     if (_loading) return;
     if (_scene == null) {
       await _loadMode(_mode, autoplay: true);
@@ -843,14 +749,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       await _player.pause();
       _SoothingRuntimeStore.activePlaying = false;
       _orbitController.stop();
-      _log.d(
-        'soothing_audio',
-        'playback paused',
-        data: <String, Object?>{
-          'playerId': _player.playerId,
-          'modeId': _mode.id,
-        },
-      );
       return;
     }
     // CRITICAL FIX: Wait for player to be ready before resuming.
@@ -866,11 +764,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _rememberRecent(_mode.id);
     _SoothingRuntimeStore.activePlaying = true;
     _orbitController.repeat();
-    _log.d(
-      'soothing_audio',
-      'playback resumed',
-      data: <String, Object?>{'playerId': _player.playerId, 'modeId': _mode.id},
-    );
   }
 
   Future<void> _setMode(_SoothingModeTheme mode) async {
@@ -881,17 +774,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   Future<void> _setTrackIndex(int index) async {
     if (index == _trackIndex) return;
     final nextTrack = _tracks[index];
-    _log.d(
-      'soothing_audio',
-      'set track start',
-      data: <String, Object?>{
-        'modeId': _mode.id,
-        'previousTrackIndex': _trackIndex,
-        'nextTrackIndex': index,
-        'nextTrackAssetPath': nextTrack.assetPath,
-        'playerId': _player.playerId,
-      },
-    );
     setState(() {
       _trackIndex = index;
       _loading = true;
@@ -927,26 +809,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       await _player.setVolume(_muted ? 0 : _volume);
       if (_playing) {
         await _player.resume();
-        _log.d(
-          'soothing_audio',
-          'set track resumed playback',
-          data: <String, Object?>{
-            'modeId': _mode.id,
-            'trackAssetPath': _currentTrack.assetPath,
-            'durationMs': duration?.inMilliseconds,
-          },
-        );
       } else {
         await _player.stop();
-        _log.d(
-          'soothing_audio',
-          'set track primed while paused',
-          data: <String, Object?>{
-            'modeId': _mode.id,
-            'trackAssetPath': _currentTrack.assetPath,
-            'durationMs': duration?.inMilliseconds,
-          },
-        );
       }
     } catch (error, stackTrace) {
       _log.e(
@@ -1017,15 +881,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     });
     _SoothingRuntimeStore.activeMuted = value;
     await _player.setVolume(value ? 0 : _volume);
-    _log.d(
-      'soothing_audio',
-      'muted updated',
-      data: <String, Object?>{
-        'playerId': _player.playerId,
-        'muted': value,
-        'effectiveVolume': value ? 0 : _volume,
-      },
-    );
     unawaited(_persistPrefs());
   }
 
@@ -1037,16 +892,6 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     if (!_muted) {
       await _player.setVolume(value);
     }
-    _log.d(
-      'soothing_audio',
-      'volume updated',
-      data: <String, Object?>{
-        'playerId': _player.playerId,
-        'volume': value,
-        'muted': _muted,
-        'effectiveVolume': _muted ? 0 : value,
-      },
-    );
     unawaited(_persistPrefs());
   }
 

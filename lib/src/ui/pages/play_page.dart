@@ -242,8 +242,10 @@ class _PlayPageState extends State<PlayPage> {
                         book,
                       );
                       if (!confirmed) return;
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
                       await state.selectWordbook(book);
-                      if (context.mounted) Navigator.of(context).pop();
                     },
                   ),
                 ),

@@ -6,8 +6,10 @@ import 'dart:math' as math;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:uuid/uuid.dart';
 
 import '../i18n/app_i18n.dart';
+import '../models/ambient_preset.dart';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/export_dto.dart';
@@ -105,6 +107,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final AppLogService _log = AppLogService.instance;
   final OnlineAmbientCatalogService _onlineAmbientCatalogService =
       OnlineAmbientCatalogService();
+  final Uuid _uuid = const Uuid();
 
   FocusService get focusService => _focusService;
 
@@ -115,6 +118,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Map<String, Object?> _busyMessageParams = const <String, Object?>{};
   String? _busyDetail;
   double? _busyProgress;
+  List<AmbientPreset> _ambientPresets = const <AmbientPreset>[];
   bool _wordbookImportActive = false;
   String _wordbookImportName = '';
   int _wordbookImportProcessedEntries = 0;
@@ -341,6 +345,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<AmbientSource> get ambientSources => _ambient.sources;
   bool get ambientEnabled => _ambient.isEnabled;
   double get ambientMasterVolume => _ambient.masterVolume;
+  List<AmbientPreset> get ambientPresets =>
+      List<AmbientPreset>.unmodifiable(_ambientPresets);
 
   List<WordEntry> get visibleWords {
     if (_visibleWordsCache != null &&
@@ -753,6 +759,103 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void selectWordByText(String word) => _selectWordByTextImpl(word);
 
   void selectWordEntry(WordEntry entry) => _selectWordEntryImpl(entry);
+
+  Future<void> saveAmbientPresetFromCurrentMix(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+    final entries = _ambient.sources
+        .where((source) => source.enabled)
+        .map(
+          (source) => AmbientPresetEntry(
+            sourceId: source.id,
+            name: source.name,
+            volume: source.volume,
+            assetPath: source.assetPath,
+            filePath: source.filePath,
+            remoteUrl: source.remoteUrl,
+            remoteKey: source.remoteKey,
+            categoryKey: source.categoryKey,
+            builtIn: source.isBuiltIn,
+          ),
+        )
+        .toList(growable: false);
+    if (entries.isEmpty) {
+      return;
+    }
+    _ambientPresets = <AmbientPreset>[
+      AmbientPreset(
+        id: _uuid.v4(),
+        name: trimmed,
+        createdAt: DateTime.now(),
+        masterVolume: _ambient.masterVolume,
+        entries: entries,
+      ),
+      ..._ambientPresets,
+    ];
+    _settings.saveAmbientPresets(_ambientPresets);
+    notifyListeners();
+  }
+
+  Future<void> deleteAmbientPreset(String presetId) async {
+    final filtered = _ambientPresets
+        .where((preset) => preset.id != presetId)
+        .toList(growable: false);
+    if (filtered.length == _ambientPresets.length) {
+      return;
+    }
+    _ambientPresets = filtered;
+    _settings.saveAmbientPresets(_ambientPresets);
+    notifyListeners();
+  }
+
+  Future<void> applyAmbientPreset(String presetId) async {
+    final preset = _ambientPresets
+        .where((item) => item.id == presetId)
+        .cast<AmbientPreset?>()
+        .firstOrNull;
+    if (preset == null) {
+      return;
+    }
+
+    for (final entry in preset.entries) {
+      final existing = _ambient.sources
+          .where((source) => _ambientSourceMatchesPreset(source, entry))
+          .cast<AmbientSource?>()
+          .firstOrNull;
+      if (existing != null) {
+        continue;
+      }
+      if (_canMaterializeAmbientPresetEntry(entry)) {
+        _ambient.addFileSourceWithMetadata(
+          entry.filePath!,
+          id: entry.sourceId,
+          name: entry.name,
+          categoryKey: entry.categoryKey,
+          volume: entry.volume,
+        );
+      }
+    }
+
+    for (final source in _ambient.sources) {
+      final matchingEntry = preset.entries
+          .where((entry) => _ambientSourceMatchesPreset(source, entry))
+          .cast<AmbientPresetEntry?>()
+          .firstOrNull;
+      if (matchingEntry != null) {
+        _ambient.setSourceEnabled(source.id, true);
+        _ambient.setSourceVolume(source.id, matchingEntry.volume);
+      } else {
+        _ambient.setSourceEnabled(source.id, false);
+      }
+    }
+
+    _ambient.setEnabled(true);
+    _ambient.setMasterVolume(preset.masterVolume);
+    _scheduleAmbientSync();
+    notifyListeners();
+  }
 
   Future<void> createWordbook(String name) async {
     if (name.trim().isEmpty) return;
@@ -1393,27 +1496,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void updateConfig(PlayConfig config) {
-    _log.i(
-      'app_state',
-      'update config',
-      data: <String, Object?>{
-        'ttsProvider': config.tts.provider.name,
-        'ttsModel': config.tts.model,
-        'ttsVoice': config.tts.activeVoice,
-        'ttsSpeed': config.tts.speed,
-        'ttsVolume': config.tts.volume,
-        'voiceInputProvider': config.voiceInput.provider.name,
-        'voiceInputLanguage': config.voiceInput.language,
-        'voiceInputModel': config.voiceInput.model,
-        'asrProvider': config.asr.provider.name,
-        'asrEnabled': config.asr.enabled,
-        'appearanceTheme': config.appearance.normalizedTheme,
-        'appearanceCompact': config.appearance.compactLayout,
-        'appearanceHighContrast': config.appearance.highContrastText,
-        'appearanceGradient': config.appearance.normalizedGradientIntensity,
-        'appearanceEffects': config.appearance.normalizedEffectIntensity,
-      },
-    );
     _config = config;
     _settings.savePlayConfig(config);
     _playback.updateRuntimeConfig(config);
@@ -1613,6 +1695,39 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  bool _ambientSourceMatchesPreset(
+    AmbientSource source,
+    AmbientPresetEntry entry,
+  ) {
+    if (source.id == entry.sourceId) {
+      return true;
+    }
+    final sourceFilePath = source.filePath?.trim();
+    final entryFilePath = entry.filePath?.trim();
+    if (sourceFilePath != null &&
+        sourceFilePath.isNotEmpty &&
+        sourceFilePath == entryFilePath) {
+      return true;
+    }
+    final sourceAssetPath = source.assetPath?.trim();
+    final entryAssetPath = entry.assetPath?.trim();
+    if (sourceAssetPath != null &&
+        sourceAssetPath.isNotEmpty &&
+        sourceAssetPath == entryAssetPath) {
+      return true;
+    }
+    final sourceRemoteUrl = source.remoteUrl?.trim();
+    final entryRemoteUrl = entry.remoteUrl?.trim();
+    return sourceRemoteUrl != null &&
+        sourceRemoteUrl.isNotEmpty &&
+        sourceRemoteUrl == entryRemoteUrl;
+  }
+
+  bool _canMaterializeAmbientPresetEntry(AmbientPresetEntry entry) {
+    final path = entry.filePath?.trim();
+    return path != null && path.isNotEmpty && File(path).existsSync();
+  }
+
   Future<String?> pickBackgroundImageByPicker() async {
     final picked = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -1740,15 +1855,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<List<String>> fetchLocalTtsVoices() async {
     try {
       final voices = await _playback.getLocalVoices();
-      _log.i(
-        'app_state',
-        'local voices fetched',
-        data: <String, Object?>{
-          'count': voices.length,
-          'sample': voices.take(5).join(', '),
-        },
-      );
-      return voices;
+return voices;
     } catch (error, stackTrace) {
       _log.e(
         'app_state',
@@ -2883,7 +2990,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _log.i('app_state', 'dispose start');
     _ambientSyncDebounceTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _playback.stop();
@@ -2891,7 +2997,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _ambient.stopAll();
     _asr.dispose();
     _database.dispose();
-    _log.i('app_state', 'dispose done');
     super.dispose();
   }
 }

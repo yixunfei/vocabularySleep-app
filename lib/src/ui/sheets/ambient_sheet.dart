@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../services/ambient_service.dart';
 import '../../state/app_state.dart';
+import '../pages/ambient_presets_page.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'online_ambient_sheet.dart';
@@ -23,7 +25,7 @@ class _AmbientSheetState extends State<AmbientSheet> {
 
   Future<void> _toggleSource(String sourceId, bool value) async {
     if (_togglingSourceIds.contains(sourceId)) {
-      return; // Prevent duplicate toggles
+      return;
     }
     setState(() {
       _togglingSourceIds.add(sourceId);
@@ -61,8 +63,11 @@ class _AmbientSheetState extends State<AmbientSheet> {
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, liveState, _) {
-        final liveI18n = AppI18n(liveState.uiLanguage);
+        final i18n = AppI18n(liveState.uiLanguage);
         final ambientEnabled = liveState.ambientEnabled;
+        final enabledCount = liveState.ambientSources
+            .where((item) => item.enabled)
+            .length;
         final builtInSources = liveState.ambientSources
             .where((source) => source.isBuiltIn)
             .toList(growable: false);
@@ -73,73 +78,11 @@ class _AmbientSheetState extends State<AmbientSheet> {
             .where((source) => source.isFile && !source.isBuiltIn)
             .toList(growable: false);
 
-        Widget buildSourceCard(source, {bool removable = false}) {
-          final isToggling = _togglingSourceIds.contains(source.id);
-          return Opacity(
-            opacity: ambientEnabled ? 1 : 0.72,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            localizedAmbientName(liveI18n, source),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        if (isToggling)
-                          const SizedBox(
-                            width: 44,
-                            height: 24,
-                            child: Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          )
-                        else
-                          Switch(
-                            value: source.enabled,
-                            onChanged: (value) => _toggleSource(source.id, value),
-                          ),
-                        if (removable && !isToggling)
-                          IconButton(
-                            onPressed: () =>
-                                liveState.removeAmbientSource(source.id),
-                            icon: const Icon(Icons.delete_outline_rounded),
-                          ),
-                        if (removable && isToggling)
-                          const SizedBox(width: 48), // Placeholder space
-                      ],
-                    ),
-                    Slider(
-                      value: source.volume,
-                      onChanged: (source.enabled && !isToggling)
-                          ? (value) => liveState.setAmbientSourceVolume(
-                                source.id,
-                                value,
-                              )
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-
         return SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Column(
-              mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Center(
@@ -147,171 +90,29 @@ class _AmbientSheetState extends State<AmbientSheet> {
                     width: 42,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outline.withValues(alpha: 0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 SectionHeader(
-                  title: pickUiText(liveI18n, zh: '环境音', en: 'Ambient sound'),
+                  title: pickUiText(i18n, zh: '环境音', en: 'Ambient sound'),
                   subtitle: pickUiText(
-                    liveI18n,
-                    zh: '把环境音放在播放流程附近，可直接管理本地与下载资源。',
-                    en: 'Keep ambient sound close to playback, with direct access to online and local sounds.',
+                    i18n,
+                    zh: '把常用环境音、下载资源和预设放在一起，切换更顺手。',
+                    en: 'Keep local sounds, downloads, and presets together for faster switching.',
                   ),
                 ),
                 const SizedBox(height: 12),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final narrow = constraints.maxWidth < 380;
-                    final statusText = ambientEnabled
-                        ? pickUiText(
-                            liveI18n,
-                            zh: '已开启，可一键静音全部环境音。',
-                            en: 'On. Mute every ambient source at once.',
-                          )
-                        : pickUiText(
-                            liveI18n,
-                            zh: '已关闭，重新开启后恢复当前组合。',
-                            en: 'Off. Restore the current mix when enabled.',
-                          );
-
-                    return DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerLow
-                            .withValues(alpha: 0.88),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          12,
-                          narrow ? 8 : 10,
-                          8,
-                          narrow ? 8 : 10,
-                        ),
-                        child: narrow
-                            ? Row(
-                                children: <Widget>[
-                                  Icon(
-                                    ambientEnabled
-                                        ? Icons.volume_up_rounded
-                                        : Icons.volume_off_rounded,
-                                    size: 18,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      ambientEnabled
-                                          ? pickUiText(
-                                              liveI18n,
-                                              zh: '总开关已开启',
-                                              en: 'Master switch on',
-                                            )
-                                          : pickUiText(
-                                              liveI18n,
-                                              zh: '总开关已关闭',
-                                              en: 'Master switch off',
-                                            ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.labelLarge,
-                                    ),
-                                  ),
-                                  if (_isTogglingMaster)
-                                    const SizedBox(
-                                      width: 40,
-                                      height: 24,
-                                      child: Center(
-                                        child: SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    Switch.adaptive(
-                                      value: ambientEnabled,
-                                      onChanged: _isTogglingMaster
-                                          ? null
-                                          : (value) => _toggleMaster(value),
-                                    ),
-                                ],
-                              )
-                            : Row(
-                                children: <Widget>[
-                                  Icon(
-                                    ambientEnabled
-                                        ? Icons.volume_up_rounded
-                                        : Icons.volume_off_rounded,
-                                    size: 20,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text(
-                                          pickUiText(
-                                            liveI18n,
-                                            zh: '总开关',
-                                            en: 'Master switch',
-                                          ),
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.labelLarge,
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          statusText,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (_isTogglingMaster)
-                                    const SizedBox(
-                                      width: 50,
-                                      height: 28,
-                                      child: Center(
-                                        child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    Switch.adaptive(
-                                      value: ambientEnabled,
-                                      onChanged: _isTogglingMaster
-                                          ? null
-                                          : (value) => _toggleMaster(value),
-                                    ),
-                                ],
-                              ),
-                      ),
-                    );
-                  },
+                _AmbientMasterCard(
+                  ambientEnabled: ambientEnabled,
+                  isBusy: _isTogglingMaster,
+                  onChanged: _isTogglingMaster ? null : _toggleMaster,
+                  i18n: i18n,
                 ),
                 const SizedBox(height: 14),
                 Wrap(
@@ -321,22 +122,38 @@ class _AmbientSheetState extends State<AmbientSheet> {
                     OutlinedButton.icon(
                       onPressed: liveState.addAmbientFileSource,
                       icon: const Icon(Icons.library_music_rounded, size: 18),
-                      label: Text(
-                        pickUiText(liveI18n, zh: '导入音频', en: 'Add audio'),
-                      ),
+                      label: Text(pickUiText(i18n, zh: '导入音频', en: 'Add audio')),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => showOnlineAmbientCatalogSheet(context),
-                      icon: const Icon(Icons.cloud_rounded, size: 18),
-                      label: Text(
-                        pickUiText(liveI18n, zh: '资源库', en: 'Ambient catalog'),
-                      ),
+                      icon: const Icon(Icons.cloud_download_rounded, size: 18),
+                      label: Text(pickUiText(i18n, zh: '资源库', en: 'Catalog')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const AmbientPresetsPage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.bookmarks_rounded, size: 18),
+                      label: Text(pickUiText(i18n, zh: '预设管理', en: 'Presets')),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  pickUiText(liveI18n, zh: '总音量', en: 'Master volume'),
+                  pickUiText(
+                    i18n,
+                    zh: '当前已启用 $enabledCount 个环境音，可在预设里保存这一组组合。',
+                    en: '$enabledCount ambient sounds enabled. Save this mix as a preset for quick recall.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  pickUiText(i18n, zh: '总音量', en: 'Master volume'),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 Slider(
@@ -347,28 +164,37 @@ class _AmbientSheetState extends State<AmbientSheet> {
                   child: ListView(
                     children: <Widget>[
                       ...builtInSources.map(
-                        (source) => buildSourceCard(source),
+                        (source) => _buildSourceCard(
+                          context,
+                          i18n,
+                          liveState,
+                          ambientEnabled,
+                          source,
+                        ),
                       ),
                       if (onlineSources.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 10),
                         Text(
-                          pickUiText(
-                            liveI18n,
-                            zh: '在线音源',
-                            en: 'Online sources',
-                          ),
+                          pickUiText(i18n, zh: '在线资源', en: 'Online sources'),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         ...onlineSources.map(
-                          (source) => buildSourceCard(source, removable: true),
+                          (source) => _buildSourceCard(
+                            context,
+                            i18n,
+                            liveState,
+                            ambientEnabled,
+                            source,
+                            removable: true,
+                          ),
                         ),
                       ],
                       if (localSources.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 10),
                         Text(
                           pickUiText(
-                            liveI18n,
+                            i18n,
                             zh: '已下载 / 本地音频',
                             en: 'Downloaded / local audio',
                           ),
@@ -376,7 +202,14 @@ class _AmbientSheetState extends State<AmbientSheet> {
                         ),
                         const SizedBox(height: 8),
                         ...localSources.map(
-                          (source) => buildSourceCard(source, removable: true),
+                          (source) => _buildSourceCard(
+                            context,
+                            i18n,
+                            liveState,
+                            ambientEnabled,
+                            source,
+                            removable: true,
+                          ),
                         ),
                       ],
                     ],
@@ -387,6 +220,153 @@ class _AmbientSheetState extends State<AmbientSheet> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSourceCard(
+    BuildContext context,
+    AppI18n i18n,
+    AppState liveState,
+    bool ambientEnabled,
+    AmbientSource source, {
+    bool removable = false,
+  }) {
+    final isToggling = _togglingSourceIds.contains(source.id);
+    return Opacity(
+      opacity: ambientEnabled ? 1 : 0.72,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      localizedAmbientName(i18n, source),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (isToggling)
+                    const SizedBox(
+                      width: 44,
+                      height: 24,
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    )
+                  else
+                    Switch(
+                      value: source.enabled,
+                      onChanged: (value) => _toggleSource(source.id, value),
+                    ),
+                  if (removable && !isToggling)
+                    IconButton(
+                      onPressed: () => liveState.removeAmbientSource(source.id),
+                      icon: const Icon(Icons.delete_outline_rounded),
+                    ),
+                  if (removable && isToggling) const SizedBox(width: 48),
+                ],
+              ),
+              Slider(
+                value: source.volume,
+                onChanged: (source.enabled && !isToggling)
+                    ? (value) => liveState.setAmbientSourceVolume(source.id, value)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AmbientMasterCard extends StatelessWidget {
+  const _AmbientMasterCard({
+    required this.ambientEnabled,
+    required this.isBusy,
+    required this.onChanged,
+    required this.i18n,
+  });
+
+  final bool ambientEnabled;
+  final bool isBusy;
+  final ValueChanged<bool>? onChanged;
+  final AppI18n i18n;
+
+  @override
+  Widget build(BuildContext context) {
+    final statusText = ambientEnabled
+        ? pickUiText(
+            i18n,
+            zh: '已开启，可一键静音全部环境音。',
+            en: 'On. Mute every ambient source at once.',
+          )
+        : pickUiText(
+            i18n,
+            zh: '已关闭，重新开启后恢复当前组合。',
+            en: 'Off. Restore the current mix when enabled.',
+          );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerLow
+            .withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        child: Row(
+          children: <Widget>[
+            Icon(
+              ambientEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+              size: 20,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    pickUiText(i18n, zh: '总开关', en: 'Master switch'),
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    statusText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            if (isBusy)
+              const SizedBox(
+                width: 50,
+                height: 28,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            else
+              Switch.adaptive(value: ambientEnabled, onChanged: onChanged),
+          ],
+        ),
+      ),
     );
   }
 }

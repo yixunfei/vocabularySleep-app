@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../models/ambient_preset.dart';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
@@ -216,6 +217,34 @@ class SettingsService {
       jsonEncode(<String, Object?>{
         for (final key in keys) key: snapshots[key]!.toJsonMap(),
       }),
+    );
+  }
+
+  List<AmbientPreset> loadAmbientPresets() {
+    final raw = _database.getSetting('ambientPresets');
+    if (raw == null || raw.trim().isEmpty) {
+      return const <AmbientPreset>[];
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return const <AmbientPreset>[];
+      }
+      return decoded
+          .map(AmbientPreset.fromJsonValue)
+          .whereType<AmbientPreset>()
+          .toList(growable: false);
+    } catch (_) {
+      return const <AmbientPreset>[];
+    }
+  }
+
+  void saveAmbientPresets(List<AmbientPreset> presets) {
+    _database.setSetting(
+      'ambientPresets',
+      jsonEncode(
+        presets.map((preset) => preset.toJson()).toList(growable: false),
+      ),
     );
   }
 

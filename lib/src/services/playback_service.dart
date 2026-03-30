@@ -34,17 +34,6 @@ class PlaybackService {
 
   void updateRuntimeConfig(PlayConfig config) {
     _activeConfig = config;
-    _log.d(
-      'playback',
-      'runtime config updated',
-      data: <String, Object?>{
-        'provider': config.tts.provider.name,
-        'model': config.tts.model,
-        'activeVoice': config.tts.activeVoice,
-        'speed': config.tts.speed,
-        'volume': config.tts.volume,
-      },
-    );
   }
 
   Future<void> playWords({
@@ -59,21 +48,6 @@ class PlaybackService {
     if (_playLoop) await stop();
     final runId = ++_runId;
     _activeConfig = config;
-    _log.i(
-      'playback',
-      'playWords started',
-      data: <String, Object?>{
-        'words': words.length,
-        'startIndex': startIndex,
-        'order': config.order.name,
-        'provider': config.tts.provider.name,
-        'model': config.tts.model,
-        'voice': config.tts.activeVoice,
-        'speed': config.tts.speed,
-        'volume': config.tts.volume,
-      },
-    );
-
     _playLoop = true;
     _paused = false;
     _skipCurrentWord = false;
@@ -83,55 +57,22 @@ class PlaybackService {
       startIndex: startIndex,
       order: config.order,
     );
-    _log.d(
-      'playback',
-      'play order built',
-      data: <String, Object?>{
-        'totalIndices': indices.length,
-        'firstIndex': indices.isEmpty ? null : indices.first,
-      },
-    );
-
     for (final index in indices) {
       if (!_isRunActive(runId)) break;
       await _waitIfPaused(runId);
       if (!_isRunActive(runId)) break;
 
       final word = words[index];
-      _log.i(
-        'playback',
-        'play word',
-        data: <String, Object?>{
-          'index': index,
-          'wordId': word.id,
-          'word': word.word,
-        },
-      );
       onWordChanged?.call(index, word);
       await _playSingleWord(word, onUnitChanged, runId);
-      _log.d(
-        'playback',
-        'word finished',
-        data: <String, Object?>{
-          'index': index,
-          'wordId': word.id,
-          'word': word.word,
-        },
-      );
     }
 
     if (runId != _runId) {
-      _log.d(
-        'playback',
-        'playWords stale run completed',
-        data: <String, Object?>{'runId': runId, 'activeRunId': _runId},
-      );
       return;
     }
     _playLoop = false;
     _paused = false;
     _skipCurrentWord = false;
-    _log.i('playback', 'playWords finished');
     onFinished?.call();
   }
 
@@ -141,27 +82,13 @@ class PlaybackService {
     final provider = _unitSpeakInProgress
         ? _activeSpeakProvider
         : _activeConfig.tts.provider;
-    _log.i(
-      'playback',
-      'pause requested',
-      data: <String, Object?>{
-        'provider': provider.name,
-        'unitSpeakInProgress': _unitSpeakInProgress,
-      },
-    );
     if (_unitSpeakInProgress) {
       _replayCurrentUnitAfterResume = true;
       // Interrupt in-flight unit (including remote HTTP fetch) so pause is immediate.
       await _ttsService.stop();
-      _log.d(
-        'playback',
-        'pause interrupted in-flight unit',
-        data: <String, Object?>{'provider': provider.name},
-      );
       return;
     }
     await _ttsService.pause(provider);
-    _log.d('playback', 'pause done');
   }
 
   Future<void> resume() async {
@@ -169,18 +96,11 @@ class PlaybackService {
     final provider = _unitSpeakInProgress
         ? _activeSpeakProvider
         : _activeConfig.tts.provider;
-    _log.i(
-      'playback',
-      'resume requested',
-      data: <String, Object?>{'provider': provider.name},
-    );
     _paused = false;
     await _ttsService.resume(provider);
-    _log.d('playback', 'resume done');
   }
 
   Future<void> stop() async {
-    _log.i('playback', 'stop requested');
     _runId += 1;
     _playLoop = false;
     _paused = false;
@@ -189,31 +109,19 @@ class PlaybackService {
     _replayCurrentUnitAfterResume = false;
     _activeSpeakProvider = TtsProviderType.local;
     await _ttsService.stop();
-    _log.d('playback', 'stop done');
   }
 
   Future<void> skipCurrentWord() async {
     if (!_playLoop) return;
-    _log.i('playback', 'skip current word requested');
     _skipCurrentWord = true;
     _replayCurrentUnitAfterResume = false;
     await _ttsService.stop();
-    _log.d('playback', 'skip current word done');
   }
 
   Future<void> speakText(String text, PlayConfig config) async {
     final content = text.trim();
     if (content.isEmpty) return;
-    _log.i(
-      'playback',
-      'speak single text',
-      data: <String, Object?>{
-        'provider': config.tts.provider.name,
-        'textPreview': _preview(content),
-      },
-    );
-    await _ttsService.speak(content, config.tts);
-    _log.d('playback', 'speak single text done');
+await _ttsService.speak(content, config.tts);
   }
 
   Future<void> _playSingleWord(
@@ -223,15 +131,6 @@ class PlaybackService {
   ) async {
     final config = _activeConfig;
     final queue = buildPlayQueue(word, config);
-    _log.d(
-      'playback',
-      'word queue ready',
-      data: <String, Object?>{
-        'wordId': word.id,
-        'word': word.word,
-        'units': queue.length,
-      },
-    );
     var i = 0;
     while (i < queue.length) {
       if (!_isRunActive(runId)) break;
@@ -244,34 +143,12 @@ class PlaybackService {
       }
 
       final unit = queue[i];
-      _log.d(
-        'playback',
-        'unit start',
-        data: <String, Object?>{
-          'wordId': word.id,
-          'word': word.word,
-          'unitIndex': i + 1,
-          'unitTotal': queue.length,
-          'unitType': unit.type,
-          'unitPreview': _preview(unit.text),
-        },
-      );
-      onUnitChanged?.call(i + 1, queue.length, unit);
+onUnitChanged?.call(i + 1, queue.length, unit);
       _unitSpeakInProgress = true;
       try {
         final ttsConfig = _activeConfig.tts;
         _activeSpeakProvider = ttsConfig.provider;
         await _ttsService.speak(unit.text, ttsConfig);
-        _log.d(
-          'playback',
-          'unit done',
-          data: <String, Object?>{
-            'wordId': word.id,
-            'word': word.word,
-            'unitIndex': i + 1,
-            'unitType': unit.type,
-          },
-        );
       } catch (error, stackTrace) {
         _log.e(
           'playback',

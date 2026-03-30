@@ -6,15 +6,6 @@ extension _AppStateWordbook on AppState {
     _searchQuery = value;
     _invalidateVisibleWordsCache();
     _ensureCurrentWordInScope();
-    _log.d(
-      'app_state',
-      'set search query',
-      data: <String, Object?>{
-        'query': value,
-        'mode': _searchMode.name,
-        'visibleCount': visibleWordCount,
-      },
-    );
     _notifyStateChanged();
   }
 
@@ -23,15 +14,6 @@ extension _AppStateWordbook on AppState {
     _searchMode = mode;
     _invalidateVisibleWordsCache();
     _ensureCurrentWordInScope();
-    _log.d(
-      'app_state',
-      'set search mode',
-      data: <String, Object?>{
-        'mode': mode.name,
-        'query': _searchQuery,
-        'visibleCount': visibleWordCount,
-      },
-    );
     _notifyStateChanged();
   }
 
@@ -58,17 +40,6 @@ extension _AppStateWordbook on AppState {
     }
     final normalizedFocusWord = focusWord?.trim();
     final previousSelection = _selectedWordbook;
-    _log.i(
-      'app_state',
-      'select wordbook',
-      data: <String, Object?>{
-        'id': wordbook.id,
-        'name': wordbook.name,
-        'path': wordbook.path,
-        'focusWordId': focusWordId,
-        'focusWord': focusWord,
-      },
-    );
     if (_database.isLazyBuiltInPath(wordbook.path) && wordbook.wordCount <= 0) {
       final lazyWordbookId = wordbook.id;
       final lazyWordbookName = wordbook.name;
