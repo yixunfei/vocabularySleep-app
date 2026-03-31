@@ -36,6 +36,33 @@ class _FluteToolState extends State<_FluteTool> {
     _PianoKey(id: 'B5', label: 'B', frequency: 987.77),
     _PianoKey(id: 'C6', label: 'C6', frequency: 1046.5),
   ];
+  static const List<_PianoKey> _minorNotes = <_PianoKey>[
+    _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
+    _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
+    _PianoKey(id: 'Eb5', label: 'Eb', frequency: 622.25),
+    _PianoKey(id: 'F5', label: 'F', frequency: 698.46),
+    _PianoKey(id: 'G5', label: 'G', frequency: 783.99),
+    _PianoKey(id: 'Ab5', label: 'Ab', frequency: 830.61),
+    _PianoKey(id: 'Bb5', label: 'Bb', frequency: 932.33),
+  ];
+  static const List<_PianoKey> _mixolydianNotes = <_PianoKey>[
+    _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
+    _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
+    _PianoKey(id: 'E5', label: 'E', frequency: 659.25),
+    _PianoKey(id: 'F5', label: 'F', frequency: 698.46),
+    _PianoKey(id: 'G5', label: 'G', frequency: 783.99),
+    _PianoKey(id: 'A5', label: 'A', frequency: 880.0),
+    _PianoKey(id: 'Bb5', label: 'Bb', frequency: 932.33),
+  ];
+  static const List<_PianoKey> _lydianNotes = <_PianoKey>[
+    _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
+    _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
+    _PianoKey(id: 'E5', label: 'E', frequency: 659.25),
+    _PianoKey(id: 'F#5', label: 'F#', frequency: 739.99),
+    _PianoKey(id: 'G5', label: 'G', frequency: 783.99),
+    _PianoKey(id: 'A5', label: 'A', frequency: 880.0),
+    _PianoKey(id: 'B5', label: 'B', frequency: 987.77),
+  ];
   static const List<_FlutePreset> _presets = <_FlutePreset>[
     _FlutePreset(
       id: 'airy_flow',
@@ -112,6 +139,9 @@ class _FluteToolState extends State<_FluteTool> {
     return switch (_scale) {
       'pentatonic' => _pentatonicNotes,
       'dorian' => _dorianNotes,
+      'minor' => _minorNotes,
+      'mixolydian' => _mixolydianNotes,
+      'lydian' => _lydianNotes,
       _ => _majorNotes,
     };
   }
@@ -186,6 +216,7 @@ class _FluteToolState extends State<_FluteTool> {
     };
   }
 
+  // ignore: unused_element
   String _scaleLabel(AppI18n i18n, String scaleId) {
     return switch (scaleId) {
       'pentatonic' => pickUiText(
@@ -221,6 +252,7 @@ class _FluteToolState extends State<_FluteTool> {
     };
   }
 
+  // ignore: unused_element
   String _styleLabel(AppI18n i18n, String styleId) {
     return switch (styleId) {
       'lead' => pickUiText(
@@ -266,68 +298,158 @@ class _FluteToolState extends State<_FluteTool> {
     };
   }
 
+  String _displayScaleLabel(AppI18n i18n, String scaleId) {
+    return switch (scaleId) {
+      'pentatonic' => pickUiText(i18n, zh: '五声音阶', en: 'Pentatonic'),
+      'dorian' => pickUiText(i18n, zh: '多利亚', en: 'Dorian'),
+      'minor' => pickUiText(i18n, zh: '自然小调', en: 'Natural minor'),
+      'mixolydian' => pickUiText(i18n, zh: '混合利底亚', en: 'Mixolydian'),
+      'lydian' => pickUiText(i18n, zh: '利底亚', en: 'Lydian'),
+      _ => pickUiText(i18n, zh: '大调', en: 'Major'),
+    };
+  }
+
+  String _displayStyleLabel(AppI18n i18n, String styleId) {
+    return switch (styleId) {
+      'lead' => pickUiText(i18n, zh: '领奏', en: 'Lead'),
+      'alto' => pickUiText(i18n, zh: '中音', en: 'Alto'),
+      'velvet' => pickUiText(i18n, zh: '绒感', en: 'Velvet'),
+      'hollow' => pickUiText(i18n, zh: '空腔', en: 'Hollow'),
+      'bamboo' => pickUiText(i18n, zh: '竹感', en: 'Bamboo'),
+      _ => pickUiText(i18n, zh: '空气', en: 'Airy'),
+    };
+  }
+
   double get _performanceBreathLevel {
-    final micContribution = _blowSensorEnabled ? _micLevel * 0.7 : 0.0;
-    final baseContribution = _breath * (_blowSensorEnabled ? 0.55 : 1.0);
-    return (baseContribution + micContribution).clamp(0.18, 1.0).toDouble();
+    final materialFactor = switch (_material) {
+      'metal_short' => 1.08,
+      'metal_long' => 1.04,
+      'jade' => 0.96,
+      'clay' => 0.92,
+      _ => 1.0,
+    };
+    final micContribution = _blowSensorEnabled
+        ? (_micLevel * _micLevel) * 0.65
+        : 0.0;
+    final baseContribution =
+        _breath * (_blowSensorEnabled ? 0.45 : 1.0) +
+        (_blowSensorEnabled ? 0.12 : 0.0);
+    final combined = (baseContribution + micContribution) * materialFactor;
+    return combined.clamp(0.15, 1.0).toDouble();
   }
 
   double _sustainFrequencyFor(_PianoKey note) {
     final breathLevel = _performanceBreathLevel;
-    final cents = switch (_material) {
-      'metal_short' => 2.5,
-      'metal_long' => -1.5,
-      'jade' => 1.2,
-      'clay' => -3.0,
-      _ => 0.6,
+    final baseCents = switch (_material) {
+      'metal_short' => 3.2,
+      'metal_long' => -2.0,
+      'jade' => 1.5,
+      'clay' => -3.5,
+      _ => 0.8,
     };
-    final dynamicLift = (breathLevel - 0.5) * cents;
-    final overblow = breathLevel >= 0.86 && _pressedHoles.length <= 2 ? 12 : 0;
+    final styleShift = switch (_style) {
+      'lead' => 1.2,
+      'alto' => -0.8,
+      'bamboo' => -0.5,
+      'velvet' => -0.9,
+      'hollow' => -1.15,
+      _ => 0.0,
+    };
+    final dynamicLift = (breathLevel - 0.5) * (baseCents + styleShift);
+    final overblowThreshold = switch (_material) {
+      'metal_short' => 0.82,
+      'metal_long' => 0.84,
+      'jade' => 0.88,
+      'clay' => 0.90,
+      _ => 0.86,
+    };
+    final holeFactor = _pressedHoles.length <= 2 ? 1.0 : 0.0;
+    final breathOverThreshold =
+        (breathLevel - overblowThreshold) / (1.0 - overblowThreshold);
+    final overblowBlend = (breathOverThreshold * holeFactor).clamp(0.0, 1.0);
+    final overblow = overblowBlend * 12.0;
     final shifted = note.frequency * math.pow(2, overblow / 12).toDouble();
     return shifted * math.pow(2, dynamicLift / 1200).toDouble();
   }
 
   String _sustainSignatureFor(_PianoKey note) {
-    final overblowRegister =
-        _performanceBreathLevel >= 0.86 && _pressedHoles.length <= 2 ? 1 : 0;
+    final breathLevel = _performanceBreathLevel;
+    final overblowThreshold = switch (_material) {
+      'metal_short' => 0.82,
+      'metal_long' => 0.84,
+      'jade' => 0.88,
+      'clay' => 0.90,
+      _ => 0.86,
+    };
+    final holeFactor = _pressedHoles.length <= 2 ? 1 : 0;
+    final breathOverThreshold = breathLevel >= overblowThreshold ? 1 : 0;
+    final overblowRegister = breathOverThreshold * holeFactor;
     return '${note.id}:$_style:$_material:$overblowRegister';
   }
 
   ({double core, double air, double edge}) _sustainLayerMix() {
     final breathLevel = _performanceBreathLevel;
-    final core = (0.18 + breathLevel * 0.52).clamp(0.0, 1.0).toDouble();
+    final styleFactor = switch (_style) {
+      'lead' => 1.15,
+      'alto' => 0.92,
+      'bamboo' => 0.88,
+      'velvet' => 0.82,
+      'hollow' => 0.9,
+      _ => 1.0,
+    };
+    final core = ((0.22 + breathLevel * 0.48) * styleFactor)
+        .clamp(0.15, 0.95)
+        .toDouble();
     final air = switch (_material) {
-      'metal_short' => (0.04 + breathLevel * 0.16).clamp(0.0, 0.4).toDouble(),
-      'metal_long' => (0.04 + breathLevel * 0.14).clamp(0.0, 0.38).toDouble(),
-      'jade' => (0.03 + breathLevel * 0.1).clamp(0.0, 0.28).toDouble(),
-      'clay' => (0.02 + breathLevel * 0.08).clamp(0.0, 0.24).toDouble(),
-      _ => (0.05 + breathLevel * 0.2).clamp(0.0, 0.44).toDouble(),
+      'metal_short' =>
+        ((0.06 + breathLevel * 0.18) * styleFactor)
+            .clamp(0.02, 0.45)
+            .toDouble(),
+      'metal_long' =>
+        ((0.05 + breathLevel * 0.16) * styleFactor)
+            .clamp(0.02, 0.42)
+            .toDouble(),
+      'jade' =>
+        ((0.04 + breathLevel * 0.12) * styleFactor)
+            .clamp(0.01, 0.32)
+            .toDouble(),
+      'clay' =>
+        ((0.03 + breathLevel * 0.1) * styleFactor).clamp(0.01, 0.28).toDouble(),
+      _ =>
+        ((0.07 + breathLevel * 0.22) * styleFactor).clamp(0.03, 0.5).toDouble(),
     };
     final edge = switch (_material) {
-      'metal_short' => (0.08 + breathLevel * 0.24).clamp(0.0, 0.5).toDouble(),
-      'metal_long' => (0.06 + breathLevel * 0.2).clamp(0.0, 0.42).toDouble(),
-      'jade' => (0.03 + breathLevel * 0.12).clamp(0.0, 0.28).toDouble(),
-      'clay' => (0.02 + breathLevel * 0.08).clamp(0.0, 0.2).toDouble(),
-      _ => (0.04 + breathLevel * 0.14).clamp(0.0, 0.32).toDouble(),
+      'metal_short' =>
+        ((0.1 + breathLevel * 0.28) * styleFactor).clamp(0.04, 0.55).toDouble(),
+      'metal_long' =>
+        ((0.08 + breathLevel * 0.24) * styleFactor)
+            .clamp(0.03, 0.48)
+            .toDouble(),
+      'jade' =>
+        ((0.04 + breathLevel * 0.14) * styleFactor)
+            .clamp(0.02, 0.32)
+            .toDouble(),
+      'clay' =>
+        ((0.03 + breathLevel * 0.1) * styleFactor).clamp(0.01, 0.24).toDouble(),
+      _ =>
+        ((0.06 + breathLevel * 0.18) * styleFactor)
+            .clamp(0.02, 0.38)
+            .toDouble(),
     };
     return (core: core, air: air, edge: edge);
   }
 
   Future<void> _setSustainLayerVolumes() async {
     final mix = _sustainLayerMix();
-    await Future.wait<void>(<Future<void>>[
-      _sustainCoreLoop.setVolume(mix.core),
-      _sustainAirLoop.setVolume(mix.air),
-      _sustainEdgeLoop.setVolume(mix.edge),
-    ]);
+    await _sustainCoreLoop.setVolume(mix.core);
+    await _sustainAirLoop.setVolume(mix.air);
+    await _sustainEdgeLoop.setVolume(mix.edge);
   }
 
   Future<void> _stopSustainLayers() async {
-    await Future.wait<void>(<Future<void>>[
-      _sustainCoreLoop.stop(),
-      _sustainAirLoop.stop(),
-      _sustainEdgeLoop.stop(),
-    ]);
+    await _sustainCoreLoop.stop();
+    await _sustainAirLoop.stop();
+    await _sustainEdgeLoop.stop();
   }
 
   double _normalizedMicLevel(Amplitude amplitude) {
@@ -340,12 +462,12 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   double _filteredBreathLevel(double rawLevel) {
-    final floor = _blowThreshold * 0.58;
+    final floor = _blowThreshold * 0.62;
     if (rawLevel <= floor) {
       return 0;
     }
-    final normalized = ((rawLevel - floor) / (1 - floor)).clamp(0.0, 1.0);
-    return math.pow(normalized, 1.35).toDouble();
+    final normalized = ((rawLevel - floor) / (1.0 - floor)).clamp(0.0, 1.0);
+    return math.pow(normalized, 1.25).toDouble();
   }
 
   String _fingeringSignature(Set<int> holes) {
@@ -354,41 +476,35 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   List<_FluteFingering> get _activeFingerings {
-    return switch (_scale) {
-      'pentatonic' => const <_FluteFingering>[
+    if (_scale == 'pentatonic') {
+      return const <_FluteFingering>[
         _FluteFingering(signature: '1-2-3-4-5-6', noteIndex: 0),
         _FluteFingering(signature: '1-2-3-4-5', noteIndex: 1),
         _FluteFingering(signature: '1-2-3-4', noteIndex: 2),
         _FluteFingering(signature: '1-2', noteIndex: 3),
         _FluteFingering(signature: '1', noteIndex: 4),
         _FluteFingering(signature: '', noteIndex: 5),
-      ],
-      'dorian' => const <_FluteFingering>[
-        _FluteFingering(signature: '1-2-3-4-5-6', noteIndex: 0),
-        _FluteFingering(signature: '1-2-3-4-5', noteIndex: 1),
-        _FluteFingering(signature: '1-2-3-4', noteIndex: 2),
-        _FluteFingering(signature: '1-2-3', noteIndex: 3),
-        _FluteFingering(signature: '1-2', noteIndex: 4),
-        _FluteFingering(signature: '1', noteIndex: 5),
-        _FluteFingering(signature: '', noteIndex: 6),
-      ],
-      _ => const <_FluteFingering>[
-        _FluteFingering(signature: '1-2-3-4-5-6', noteIndex: 0),
-        _FluteFingering(signature: '1-2-3-4-5', noteIndex: 1),
-        _FluteFingering(signature: '1-2-3-4', noteIndex: 2),
-        _FluteFingering(signature: '1-2-3', noteIndex: 3),
-        _FluteFingering(signature: '1-2', noteIndex: 4),
-        _FluteFingering(signature: '1', noteIndex: 5),
-        _FluteFingering(signature: '', noteIndex: 6),
-      ],
-    };
+      ];
+    }
+    return const <_FluteFingering>[
+      _FluteFingering(signature: '1-2-3-4-5-6', noteIndex: 0),
+      _FluteFingering(signature: '1-2-3-4-5', noteIndex: 1),
+      _FluteFingering(signature: '1-2-3-4', noteIndex: 2),
+      _FluteFingering(signature: '1-2-3', noteIndex: 3),
+      _FluteFingering(signature: '1-2', noteIndex: 4),
+      _FluteFingering(signature: '1', noteIndex: 5),
+      _FluteFingering(signature: '', noteIndex: 6),
+    ];
   }
 
   int? _noteIndexFromHoles() {
     final notes = _activeNotes;
-    if (notes.isEmpty) return null;
+    final fingerings = _activeFingerings;
+    if (notes.isEmpty || fingerings.isEmpty || _pressedHoles.isEmpty) {
+      return null;
+    }
     final signature = _fingeringSignature(_pressedHoles);
-    for (final fingering in _activeFingerings) {
+    for (final fingering in fingerings) {
       if (fingering.signature == signature) {
         return fingering.noteIndex.clamp(0, notes.length - 1);
       }
@@ -408,46 +524,53 @@ class _FluteToolState extends State<_FluteTool> {
       }
       return;
     }
-    final note = _activeNotes[nextIndex];
+    final notes = _activeNotes;
+    if (nextIndex < 0 || nextIndex >= notes.length) {
+      return;
+    }
+    final note = notes[nextIndex];
     final nextSignature = _sustainSignatureFor(note);
-    if (_sustainedNoteIndex == nextIndex && _sustainSignature == nextSignature) {
+    final needsRefresh =
+        _sustainedNoteIndex != nextIndex || _sustainSignature != nextSignature;
+    _sustainedNoteIndex = nextIndex;
+    _sustainSignature = nextSignature;
+    if (_lastNote != note.label) {
+      _lastNote = note.label;
+      if (mounted) {
+        setState(() {});
+      }
+    }
+    if (!needsRefresh) {
       await _setSustainLayerVolumes();
       return;
     }
-    _sustainedNoteIndex = nextIndex;
-    _sustainSignature = nextSignature;
-    _lastNote = note.label;
+    await _stopSustainLayers();
     final sustainFrequency = _sustainFrequencyFor(note);
     final mix = _sustainLayerMix();
-    await Future.wait<void>(<Future<void>>[
-      _sustainCoreLoop.play(
-        ToolboxAudioBank.fluteSustainCore(
-          sustainFrequency,
-          style: _style,
-          material: _material,
-        ),
-        volume: mix.core,
+    await _sustainCoreLoop.play(
+      ToolboxAudioBank.fluteSustainCore(
+        sustainFrequency,
+        style: _style,
+        material: _material,
       ),
-      _sustainAirLoop.play(
-        ToolboxAudioBank.fluteSustainAir(
-          sustainFrequency,
-          style: _style,
-          material: _material,
-        ),
-        volume: mix.air,
+      volume: mix.core,
+    );
+    await _sustainAirLoop.play(
+      ToolboxAudioBank.fluteSustainAir(
+        sustainFrequency,
+        style: _style,
+        material: _material,
       ),
-      _sustainEdgeLoop.play(
-        ToolboxAudioBank.fluteSustainEdge(
-          sustainFrequency,
-          style: _style,
-          material: _material,
-        ),
-        volume: mix.edge,
+      volume: mix.air,
+    );
+    await _sustainEdgeLoop.play(
+      ToolboxAudioBank.fluteSustainEdge(
+        sustainFrequency,
+        style: _style,
+        material: _material,
       ),
-    ]);
-    if (mounted) {
-      setState(() {});
-    }
+      volume: mix.edge,
+    );
   }
 
   void _setHolePressed(int index, bool pressed) {
@@ -461,7 +584,10 @@ class _FluteToolState extends State<_FluteTool> {
     if (mounted) {
       setState(() {});
     }
-    unawaited(_syncBreathSustain());
+    if (_blowSensorEnabled && _isBlowing) {
+      HapticFeedback.lightImpact();
+      unawaited(_syncBreathSustain());
+    }
   }
 
   void _bindHolePointer(int holeNumber, PointerDownEvent event) {
@@ -506,26 +632,28 @@ class _FluteToolState extends State<_FluteTool> {
       await _amplitudeSub?.cancel();
       await _stopSustainLayers();
       _amplitudeSub = _micRecorder
-          .onAmplitudeChanged(const Duration(milliseconds: 60))
+          .onAmplitudeChanged(const Duration(milliseconds: 50))
           .listen((amplitude) {
             final rawLevel = _normalizedMicLevel(amplitude);
             final filtered = _filteredBreathLevel(rawLevel);
-            final level = (_micLevel * 0.7 + filtered * 0.3).clamp(0.0, 1.0);
-            final onsetCandidate = level >= (_blowThreshold + 0.03);
-            final confidence = (_breathConfidence * 0.72 +
-                    (onsetCandidate ? 1.0 : 0.0) * 0.28)
+            final smoothing = 0.65;
+            final level = (_micLevel * smoothing + filtered * (1.0 - smoothing))
                 .clamp(0.0, 1.0);
-            final hysteresis = 0.05;
+            final onsetCandidate = level >= (_blowThreshold * 0.92);
+            final confidence =
+                (_breathConfidence * 0.68 + (onsetCandidate ? 1.0 : 0.0) * 0.32)
+                    .clamp(0.0, 1.0);
+            final hysteresis = 0.04;
             final blowing = _isBlowing
-                ? level >= (_blowThreshold - hysteresis) || confidence >= 0.42
-                : confidence >= 0.58 && level >= (_blowThreshold - 0.01);
+                ? level >= (_blowThreshold - hysteresis) || confidence >= 0.38
+                : confidence >= 0.52 && level >= (_blowThreshold * 0.88);
             var shouldRefresh = false;
-            final levelChanged = (_micLevel - level).abs() > 0.018;
+            final levelChanged = (_micLevel - level).abs() > 0.015;
             if (levelChanged) {
               _micLevel = level;
               shouldRefresh = true;
             }
-            if ((_breathConfidence - confidence).abs() > 0.03) {
+            if ((_breathConfidence - confidence).abs() > 0.025) {
               _breathConfidence = confidence;
               shouldRefresh = true;
             }
@@ -608,11 +736,11 @@ class _FluteToolState extends State<_FluteTool> {
 
   Future<void> _warmUpActivePreset() async {
     final serial = ++_warmUpSerial;
-    await Future<void>.delayed(const Duration(milliseconds: 140));
+    await Future<void>.delayed(const Duration(milliseconds: 80));
     if (!mounted || serial != _warmUpSerial) {
       return;
     }
-    for (final note in _activeNotes.take(2)) {
+    for (final note in _activeNotes.take(3)) {
       if (!mounted || serial != _warmUpSerial) {
         return;
       }
@@ -635,7 +763,10 @@ class _FluteToolState extends State<_FluteTool> {
       _tail = preset.tail;
     });
     _invalidatePlayers();
-    unawaited(_syncBreathSustain());
+    unawaited(_stopSustainLayers());
+    _sustainedNoteIndex = null;
+    _sustainSignature = null;
+    _lastNote = null;
     unawaited(_warmUpActivePreset());
   }
 
@@ -661,19 +792,27 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   Future<void> _play(_PianoKey key) async {
-    HapticFeedback.selectionClick();
-    unawaited(_playerFor(key).play(volume: _performanceBreathLevel.clamp(0.18, 1.0)));
     if (!mounted) return;
-    setState(() {
-      _lastNote = key.label;
-    });
+    HapticFeedback.selectionClick();
+    final player = _playerFor(key);
+    await player.warmUp();
+    await player.play(volume: _performanceBreathLevel.clamp(0.15, 1.0));
+    if (mounted) {
+      setState(() {
+        _lastNote = key.label;
+      });
+    }
   }
 
   void _refreshSound() {
     _warmUpSerial += 1;
     _invalidatePlayers();
     unawaited(_stopSustainLayers());
-    unawaited(_syncBreathSustain());
+    _sustainedNoteIndex = null;
+    _sustainSignature = null;
+    if (_blowSensorEnabled && _isBlowing) {
+      unawaited(_syncBreathSustain());
+    }
     unawaited(_warmUpActivePreset());
   }
 
@@ -682,6 +821,8 @@ class _FluteToolState extends State<_FluteTool> {
     setState(() {
       _scale = value;
     });
+    _sustainedNoteIndex = null;
+    _sustainSignature = null;
     _refreshSound();
   }
 
@@ -690,6 +831,8 @@ class _FluteToolState extends State<_FluteTool> {
     setState(() {
       _style = value;
     });
+    _sustainedNoteIndex = null;
+    _sustainSignature = null;
     _refreshSound();
   }
 
@@ -960,9 +1103,7 @@ class _FluteToolState extends State<_FluteTool> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(24),
                             color: const Color(0xFFD8E6F7),
-                            border: Border.all(
-                              color: const Color(0xFFACC3E0),
-                            ),
+                            border: Border.all(color: const Color(0xFFACC3E0)),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -996,7 +1137,12 @@ class _FluteToolState extends State<_FluteTool> {
     );
   }
 
-  Widget _buildFluteSettingsContent(BuildContext context, AppI18n i18n) {
+  Widget _buildFluteSettingsContent(
+    BuildContext context,
+    AppI18n i18n, {
+    required VoidCallback refreshSheet,
+    required void Function(VoidCallback mutation) applySettings,
+  }) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1004,22 +1150,39 @@ class _FluteToolState extends State<_FluteTool> {
       children: <Widget>[
         Text(
           pickUiText(i18n, zh: '长笛设置', en: 'Flute settings'),
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 14),
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: <Widget>[
-            ToolboxMetricCard(label: 'Preset', value: _presetLabel(i18n, _activePreset)),
-            ToolboxMetricCard(label: 'Scale', value: _scaleLabel(i18n, _scale)),
-            ToolboxMetricCard(label: 'Tone', value: _styleLabel(i18n, _style)),
-            ToolboxMetricCard(label: 'Material', value: _materialLabel(i18n, _material)),
+            ToolboxMetricCard(
+              label: 'Preset',
+              value: _presetLabel(i18n, _activePreset),
+            ),
+            ToolboxMetricCard(
+              label: 'Scale',
+              value: _displayScaleLabel(i18n, _scale),
+            ),
+            ToolboxMetricCard(
+              label: 'Tone',
+              value: _displayStyleLabel(i18n, _style),
+            ),
+            ToolboxMetricCard(
+              label: 'Material',
+              value: _materialLabel(i18n, _material),
+            ),
             ToolboxMetricCard(label: 'Last', value: _lastNote ?? '--'),
           ],
         ),
         const SizedBox(height: 20),
-        _buildSettingsSectionTitle(context, pickUiText(i18n, zh: '预设包', en: 'Preset pack')),
+        _buildSettingsSectionTitle(
+          context,
+          pickUiText(i18n, zh: '预设包', en: 'Preset pack'),
+        ),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1028,68 +1191,107 @@ class _FluteToolState extends State<_FluteTool> {
                 (item) => ChoiceChip(
                   label: Text(_presetLabel(i18n, item)),
                   selected: item.id == _presetId,
-                  onSelected: (_) => _applyPreset(item.id),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        const SizedBox(height: 8),
-        Text(_presetSubtitle(i18n, _activePreset), style: theme.textTheme.bodySmall),
-        const SizedBox(height: 20),
-        _buildSettingsSectionTitle(context, pickUiText(i18n, zh: '调式', en: 'Scale')),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <String>['major', 'pentatonic', 'dorian']
-              .map(
-                (item) => ChoiceChip(
-                  label: Text(_scaleLabel(i18n, item)),
-                  selected: _scale == item,
-                  onSelected: (_) => _setScale(item),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        const SizedBox(height: 20),
-        _buildSettingsSectionTitle(context, pickUiText(i18n, zh: '音色拟真', en: 'Timbre')),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <String>['airy', 'lead', 'alto', 'bamboo']
-              .map(
-                (item) => ChoiceChip(
-                  label: Text(_styleLabel(i18n, item)),
-                  selected: _style == item,
-                  onSelected: (_) => _setStyle(item),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        const SizedBox(height: 20),
-        _buildSettingsSectionTitle(context, pickUiText(i18n, zh: '材质音色', en: 'Material')),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <String>['wood', 'metal_short', 'metal_long', 'jade', 'clay']
-              .map(
-                (item) => ChoiceChip(
-                  label: Text(_materialLabel(i18n, item)),
-                  selected: _material == item,
                   onSelected: (_) {
-                    if (_material == item) return;
-                    setState(() {
-                      _material = item;
-                    });
-                    _refreshSound();
+                    _applyPreset(item.id);
+                    refreshSheet();
                   },
                 ),
               )
               .toList(growable: false),
         ),
-        const SizedBox(height: 20),
-        _buildSettingsSectionTitle(context, pickUiText(i18n, zh: '气息与空间', en: 'Breath and space')),
+        const SizedBox(height: 8),
         Text(
-          pickUiText(i18n, zh: '气息 ${(_breath * 100).round()}%', en: 'Breath ${(_breath * 100).round()}%'),
+          _presetSubtitle(i18n, _activePreset),
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 20),
+        _buildSettingsSectionTitle(
+          context,
+          pickUiText(i18n, zh: '调式', en: 'Scale'),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              <String>[
+                    'major',
+                    'pentatonic',
+                    'dorian',
+                    'minor',
+                    'mixolydian',
+                    'lydian',
+                  ]
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_displayScaleLabel(i18n, item)),
+                      selected: _scale == item,
+                      onSelected: (_) {
+                        _setScale(item);
+                        refreshSheet();
+                      },
+                    ),
+                  )
+                  .toList(growable: false),
+        ),
+        const SizedBox(height: 20),
+        _buildSettingsSectionTitle(
+          context,
+          pickUiText(i18n, zh: '音色拟真', en: 'Timbre'),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              <String>['airy', 'lead', 'alto', 'velvet', 'hollow', 'bamboo']
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_displayStyleLabel(i18n, item)),
+                      selected: _style == item,
+                      onSelected: (_) {
+                        _setStyle(item);
+                        refreshSheet();
+                      },
+                    ),
+                  )
+                  .toList(growable: false),
+        ),
+        const SizedBox(height: 20),
+        _buildSettingsSectionTitle(
+          context,
+          pickUiText(i18n, zh: '材质音色', en: 'Material'),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              <String>['wood', 'metal_short', 'metal_long', 'jade', 'clay']
+                  .map(
+                    (item) => ChoiceChip(
+                      label: Text(_materialLabel(i18n, item)),
+                      selected: _material == item,
+                      onSelected: (_) {
+                        if (_material == item) return;
+                        applySettings(() {
+                          _material = item;
+                        });
+                        _refreshSound();
+                        refreshSheet();
+                      },
+                    ),
+                  )
+                  .toList(growable: false),
+        ),
+        const SizedBox(height: 20),
+        _buildSettingsSectionTitle(
+          context,
+          pickUiText(i18n, zh: '气息与空间', en: 'Breath and space'),
+        ),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '气息 ${(_breath * 100).round()}%',
+            en: 'Breath ${(_breath * 100).round()}%',
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1098,12 +1300,16 @@ class _FluteToolState extends State<_FluteTool> {
           max: 1.0,
           divisions: 16,
           onChanged: (value) {
-            setState(() => _breath = value);
+            applySettings(() => _breath = value);
             unawaited(_syncBreathSustain());
           },
         ),
         Text(
-          pickUiText(i18n, zh: '空间 ${(_airSpace * 100).round()}%', en: 'Space ${(_airSpace * 100).round()}%'),
+          pickUiText(
+            i18n,
+            zh: '空间 ${(_airSpace * 100).round()}%',
+            en: 'Space ${(_airSpace * 100).round()}%',
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1111,11 +1317,21 @@ class _FluteToolState extends State<_FluteTool> {
           min: 0.0,
           max: 0.5,
           divisions: 10,
-          onChanged: (value) => setState(() => _airSpace = value),
-          onChangeEnd: (_) => _refreshSound(),
+          onChanged: (value) {
+            applySettings(() => _airSpace = value);
+            _invalidatePlayers();
+          },
+          onChangeEnd: (_) {
+            _refreshSound();
+            refreshSheet();
+          },
         ),
         Text(
-          pickUiText(i18n, zh: '尾音 ${(_tail * 100).round()}%', en: 'Tail ${(_tail * 100).round()}%'),
+          pickUiText(
+            i18n,
+            zh: '尾音 ${(_tail * 100).round()}%',
+            en: 'Tail ${(_tail * 100).round()}%',
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1123,14 +1339,28 @@ class _FluteToolState extends State<_FluteTool> {
           min: 0.15,
           max: 1.0,
           divisions: 17,
-          onChanged: (value) => setState(() => _tail = value),
-          onChangeEnd: (_) => _refreshSound(),
+          onChanged: (value) {
+            applySettings(() => _tail = value);
+            _invalidatePlayers();
+          },
+          onChangeEnd: (_) {
+            _refreshSound();
+            refreshSheet();
+          },
         ),
         const SizedBox(height: 20),
-        _buildSettingsSectionTitle(context, pickUiText(i18n, zh: '吹气检测', en: 'Blow sensor')),
+        _buildSettingsSectionTitle(
+          context,
+          pickUiText(i18n, zh: '吹气检测', en: 'Blow sensor'),
+        ),
         FilledButton.tonalIcon(
-          onPressed: _toggleBlowSensor,
-          icon: Icon(_blowSensorEnabled ? Icons.mic_rounded : Icons.mic_off_rounded),
+          onPressed: () async {
+            await _toggleBlowSensor();
+            refreshSheet();
+          },
+          icon: Icon(
+            _blowSensorEnabled ? Icons.mic_rounded : Icons.mic_off_rounded,
+          ),
           label: Text(
             _blowSensorEnabled
                 ? pickUiText(i18n, zh: '关闭吹气检测', en: 'Disable blow sensor')
@@ -1140,8 +1370,14 @@ class _FluteToolState extends State<_FluteTool> {
         if (_blowPermissionDenied) ...<Widget>[
           const SizedBox(height: 8),
           Text(
-            pickUiText(i18n, zh: '麦克风权限不可用', en: 'Microphone permission unavailable'),
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+            pickUiText(
+              i18n,
+              zh: '麦克风权限不可用',
+              en: 'Microphone permission unavailable',
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
           ),
         ],
         const SizedBox(height: 12),
@@ -1158,7 +1394,10 @@ class _FluteToolState extends State<_FluteTool> {
           min: 0.12,
           max: 0.75,
           divisions: 21,
-          onChanged: (value) => setState(() => _blowThreshold = value),
+          onChanged: (value) {
+            applySettings(() => _blowThreshold = value);
+            unawaited(_syncBreathSustain());
+          },
         ),
       ],
     );
@@ -1171,16 +1410,40 @@ class _FluteToolState extends State<_FluteTool> {
       useSafeArea: true,
       showDragHandle: true,
       builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            4,
-            16,
-            16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
-          ),
-          child: SingleChildScrollView(
-            child: _buildFluteSettingsContent(sheetContext, i18n),
-          ),
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            void applySettings(VoidCallback mutation) {
+              if (!mounted) {
+                return;
+              }
+              setState(mutation);
+              setSheetState(() {});
+            }
+
+            void refreshSheet() {
+              if (!mounted) {
+                return;
+              }
+              setSheetState(() {});
+            }
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                4,
+                16,
+                16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+              ),
+              child: SingleChildScrollView(
+                child: _buildFluteSettingsContent(
+                  sheetContext,
+                  i18n,
+                  refreshSheet: refreshSheet,
+                  applySettings: applySettings,
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -1256,9 +1519,9 @@ class _FluteToolState extends State<_FluteTool> {
       padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w800,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
       ),
     );
   }
@@ -1297,10 +1560,22 @@ class _FluteToolState extends State<_FluteTool> {
             spacing: 10,
             runSpacing: 10,
             children: <Widget>[
-              ToolboxMetricCard(label: 'Preset', value: _presetLabel(i18n, preset)),
-              ToolboxMetricCard(label: 'Scale', value: _scaleLabel(i18n, _scale)),
-              ToolboxMetricCard(label: 'Tone', value: _styleLabel(i18n, _style)),
-              ToolboxMetricCard(label: 'Material', value: _materialLabel(i18n, _material)),
+              ToolboxMetricCard(
+                label: 'Preset',
+                value: _presetLabel(i18n, preset),
+              ),
+              ToolboxMetricCard(
+                label: 'Scale',
+                value: _displayScaleLabel(i18n, _scale),
+              ),
+              ToolboxMetricCard(
+                label: 'Tone',
+                value: _displayStyleLabel(i18n, _style),
+              ),
+              ToolboxMetricCard(
+                label: 'Material',
+                value: _materialLabel(i18n, _material),
+              ),
               ToolboxMetricCard(label: 'Last note', value: _lastNote ?? '--'),
             ],
           ),
@@ -1335,7 +1610,11 @@ class _FluteToolState extends State<_FluteTool> {
               children: <Widget>[
                 FilledButton.tonalIcon(
                   onPressed: _toggleBlowSensor,
-                  icon: Icon(_blowSensorEnabled ? Icons.mic_rounded : Icons.mic_off_rounded),
+                  icon: Icon(
+                    _blowSensorEnabled
+                        ? Icons.mic_rounded
+                        : Icons.mic_off_rounded,
+                  ),
                   label: Text(
                     _blowSensorEnabled
                         ? pickUiText(i18n, zh: '吹气开启', en: 'Blow on')
@@ -1388,15 +1667,18 @@ class _FluteToolState extends State<_FluteTool> {
           if (_blowPermissionDenied) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              pickUiText(i18n, zh: '麦克风权限不可用，当前仅可使用触控演奏。', en: 'Microphone permission unavailable. Touch play is still available.'),
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+              pickUiText(
+                i18n,
+                zh: '麦克风权限不可用，当前仅可使用触控演奏。',
+                en: 'Microphone permission unavailable. Touch play is still available.',
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
             ),
           ],
           const SizedBox(height: 10),
-          Text(
-            _presetSubtitle(i18n, preset),
-            style: theme.textTheme.bodySmall,
-          ),
+          Text(_presetSubtitle(i18n, preset), style: theme.textTheme.bodySmall),
         ],
       ),
     );
