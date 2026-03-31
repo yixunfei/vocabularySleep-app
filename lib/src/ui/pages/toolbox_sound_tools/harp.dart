@@ -292,6 +292,15 @@ class _HarpToolState extends State<_HarpTool>
   ];
   static const List<_HarpPalettePreset> _palettePresets = <_HarpPalettePreset>[
     _HarpPalettePreset(
+      id: 'ivory_wood',
+      label: 'Ivory Wood',
+      colors: <Color>[
+        Color(0xFFF6F0E2),
+        Color(0xFFD8C1A0),
+        Color(0xFFB48857),
+      ],
+    ),
+    _HarpPalettePreset(
       id: 'moon',
       label: 'Moon',
       colors: <Color>[Color(0xFF8B5CF6), Color(0xFF60A5FA), Color(0xFF22D3EE)],
@@ -321,7 +330,7 @@ class _HarpToolState extends State<_HarpTool>
       chordId: 'major',
       pluckStyleId: 'nylon',
       patternId: 'glide',
-      paletteId: 'jade',
+      paletteId: 'ivory_wood',
       reverb: 0.2,
       damping: 11.8,
       swipeThreshold: 1.0,
@@ -423,7 +432,7 @@ class _HarpToolState extends State<_HarpTool>
 
   List<double> get _activeNotes => _activeScale.notes;
 
-  bool get _isHorizontalLayout => false;
+  bool get _isHorizontalLayout => true;
 
   String _scaleLabel(AppI18n i18n, _HarpScalePreset preset) {
     return switch (preset.id) {
@@ -524,6 +533,7 @@ class _HarpToolState extends State<_HarpTool>
 
   String _paletteLabel(AppI18n i18n, _HarpPalettePreset preset) {
     return switch (preset.id) {
+      'ivory_wood' => pickUiText(i18n, zh: '象牙木质', en: 'Ivory Wood'),
       'aurora' => pickUiText(i18n, zh: '极光', en: 'Aurora'),
       'ember' => pickUiText(i18n, zh: '余烬', en: 'Ember'),
       'jade' => pickUiText(i18n, zh: '翡翠', en: 'Jade'),
@@ -642,8 +652,8 @@ class _HarpToolState extends State<_HarpTool>
     required bool horizontalLayout,
   }) {
     final totalSpan = horizontalLayout ? size.height : size.width;
-    final adaptiveInset = totalSpan * (horizontalLayout ? 0.12 : 0.11);
-    final minInset = horizontalLayout ? 28.0 : 22.0;
+    final adaptiveInset = totalSpan * (horizontalLayout ? 0.07 : 0.16);
+    final minInset = horizontalLayout ? 18.0 : 34.0;
     final leadingInset = math.max(minInset, adaptiveInset);
     final trailingInset = math.max(minInset, adaptiveInset);
     final usableSpan = math.max(1.0, totalSpan - leadingInset - trailingInset);
@@ -1106,6 +1116,7 @@ class _HarpToolState extends State<_HarpTool>
   Widget _buildFullScreenBody(BuildContext context) {
     final i18n = _toolboxI18n(context);
     final reverbPercent = (_reverbUi * 100).round();
+    final topInset = MediaQuery.viewPaddingOf(context).top;
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     final activePreset = _realismPresets.where((preset) {
       return preset.id == _activeRealismPresetId;
@@ -1117,60 +1128,69 @@ class _HarpToolState extends State<_HarpTool>
     return Stack(
       children: <Widget>[
         Positioned.fill(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final size = Size(constraints.maxWidth, constraints.maxHeight);
-              return _buildHarpSurface(
-                context: context,
-                size: size,
-                rounded: false,
-              );
-            },
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(0, topInset + 8, 0, bottomInset + 88),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final size = Size(
+                  constraints.maxWidth,
+                  math.max(320.0, constraints.maxHeight),
+                );
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: _buildHarpSurface(
+                    context: context,
+                    size: size,
+                    rounded: true,
+                  ),
+                );
+              },
+            ),
           ),
         ),
         Positioned(
-          left: 16,
-          right: 16,
+          left: 12,
+          top: topInset + 10,
+          child: Row(
+            children: <Widget>[
+              FilledButton.tonal(
+                onPressed:
+                    widget.onExitFullScreen ?? () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.black.withValues(alpha: 0.38),
+                  foregroundColor: Colors.white,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Icon(Icons.arrow_back_rounded, size: 20),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.tonal(
+                onPressed: () => setState(() => _muted = !_muted),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.black.withValues(alpha: 0.38),
+                  foregroundColor: Colors.white,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Icon(
+                  _muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 12,
+          right: 12,
           bottom: bottomInset + 10,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  FilledButton.tonal(
-                    onPressed:
-                        widget.onExitFullScreen ??
-                        () => Navigator.of(context).pop(),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.black.withValues(alpha: 0.38),
-                      foregroundColor: Colors.white,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    child: const Icon(Icons.arrow_back_rounded, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  FilledButton.tonal(
-                    onPressed: () => setState(() => _muted = !_muted),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.black.withValues(alpha: 0.38),
-                      foregroundColor: Colors.white,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    child: Icon(
-                      _muted
-                          ? Icons.volume_off_rounded
-                          : Icons.volume_up_rounded,
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: <Widget>[
                   _CompactMetric(
                     label: pickUiText(i18n, zh: '布局', en: 'Layout'),
-                    value: pickUiText(i18n, zh: '横向', en: 'Horizontal'),
+                    value: pickUiText(i18n, zh: '竖向', en: 'Vertical'),
                   ),
                   const SizedBox(width: 8),
                   _CompactMetric(
@@ -1319,14 +1339,21 @@ class _HarpToolState extends State<_HarpTool>
             Divider(color: theme.colorScheme.outlineVariant),
             const SizedBox(height: 12),
             SectionHeader(
-              title: pickUiText(i18n, zh: '音色与配色', en: 'Tone & Palette'),
+              title: pickUiText(i18n, zh: '音色与视觉', en: 'Tone & Visual'),
               subtitle: pickUiText(
                 i18n,
-                zh: '弦色、拨弦音色与残响均为本地实时渲染。',
-                en: 'String color, pluck timbre, and reverb are all local and real-time.',
+                zh: '将拨弦音色拟真与主题配色拆分，分别独立调整。',
+                en: 'Split pluck timbre realism and theme palette into separate controls.',
               ),
             ),
             const SizedBox(height: 10),
+            Text(
+              pickUiText(i18n, zh: '音色拟真', en: 'Timbre'),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -1347,6 +1374,13 @@ class _HarpToolState extends State<_HarpTool>
                     ),
                   )
                   .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              pickUiText(i18n, zh: '主题配色', en: 'Palette'),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -1618,8 +1652,8 @@ class _HarpPainter extends CustomPainter {
 
   double _stringTrackAt(int index, Size size) {
     final totalSpan = horizontalLayout ? size.height : size.width;
-    final adaptiveInset = totalSpan * (horizontalLayout ? 0.12 : 0.11);
-    final minInset = horizontalLayout ? 28.0 : 22.0;
+    final adaptiveInset = totalSpan * (horizontalLayout ? 0.07 : 0.16);
+    final minInset = horizontalLayout ? 18.0 : 34.0;
     final leadingInset = math.max(minInset, adaptiveInset);
     final trailingInset = math.max(minInset, adaptiveInset);
     final usableSpan = math.max(1.0, totalSpan - leadingInset - trailingInset);

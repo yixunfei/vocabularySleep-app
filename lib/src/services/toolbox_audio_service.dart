@@ -474,15 +474,25 @@ class ToolboxAudioBank {
     String style = 'silk',
     double reverb = 0.24,
   }) {
+    final normalizedStyle = switch (style) {
+      'warm' => 'warm',
+      'crystal' => 'crystal',
+      'bright' => 'bright',
+      'nylon' => 'nylon',
+      'glass' => 'glass',
+      'concert' => 'concert',
+      'steel' => 'steel',
+      _ => 'silk',
+    };
     final normalizedReverb = reverb.clamp(0.0, 0.8).toDouble();
     final key =
-        'harp:${frequency.toStringAsFixed(2)}:$style:${normalizedReverb.toStringAsFixed(2)}';
+        'harp:${frequency.toStringAsFixed(2)}:$normalizedStyle:${normalizedReverb.toStringAsFixed(2)}';
     return _cache.putIfAbsent(
       key,
       () => _buildPluckNote(
         frequency: frequency,
         durationSeconds: 2.4,
-        style: style,
+        style: normalizedStyle,
         reverb: normalizedReverb,
       ),
     );
@@ -848,22 +858,40 @@ class ToolboxAudioBank {
               math.sin(math.pi * 2 * frequency * 7.4 * t + 0.65) * 0.45) *
           math.exp(-45 * t) *
           tone.transient;
+      final pickNoise =
+          (math.sin((i + 1) * 11.173 + frequency * 0.002) +
+              math.cos((i + 1) * 63.917 + frequency * 0.004)) *
+          tone.noise *
+          math.exp(-34 * t);
       final bodyResonance =
-          math.sin(math.pi * 2 * frequency * t) * 0.2 +
-          math.sin(math.pi * 2 * frequency * 2.01 * t + 0.36) * 0.1 +
-          math.sin(math.pi * 2 * frequency * 3.07 * t + 1.1) * 0.05;
+          math.sin(math.pi * 2 * frequency * t) * (0.16 + tone.bodyMix * 0.08) +
+          math.sin(math.pi * 2 * frequency * (2.0 + tone.bodyDetune) * t + 0.36) *
+              tone.overtoneMix +
+          math.sin(math.pi * 2 * frequency * (3.05 + tone.bodyDetune * 1.7) * t + 1.1) *
+              (0.03 + tone.brightness * 0.05);
+      final octaveBloom =
+          math.sin(math.pi * 2 * frequency * 0.5 * t + 0.12) *
+          tone.octaveBloom *
+          math.exp(-tone.bodyDecay * t);
       final shimmer =
           math.sin(math.pi * 2 * frequency * 5.2 * t + 0.7) *
           tone.shimmer *
           math.exp(-3.4 * t);
+      final air =
+          math.sin(math.pi * 2 * frequency * (6.4 + tone.brightness) * t + 0.24) *
+          tone.air *
+          math.exp(-5.2 * t);
 
       final value =
           (stringSample +
               pickTransient +
+              pickNoise +
               bodyResonance * tone.bodyMix +
-              shimmer) *
+              octaveBloom +
+              shimmer +
+              air) *
           env;
-      samples[i] = _softClip(value * 1.55);
+      samples[i] = _softClip(value * tone.outputGain);
     }
     _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
     return _encodeWav(samples, sampleRate: sampleRate, gain: 0.92);
@@ -1651,76 +1679,132 @@ class ToolboxAudioBank {
   static _HarpPluckTone _pluckTone(String style) {
     return switch (style) {
       'warm' => const _HarpPluckTone(
-        attack: 36,
-        decay: 2.0,
-        feedback: 0.9935,
-        brightness: 0.48,
-        transient: 0.2,
-        bodyMix: 0.95,
-        shimmer: 0.018,
+        attack: 28,
+        decay: 1.7,
+        feedback: 0.9946,
+        brightness: 0.34,
+        transient: 0.14,
+        bodyMix: 1.02,
+        shimmer: 0.01,
+        noise: 0.012,
+        overtoneMix: 0.072,
+        octaveBloom: 0.07,
+        air: 0.008,
+        bodyDetune: 0.008,
+        bodyDecay: 2.1,
+        outputGain: 1.46,
       ),
       'crystal' => const _HarpPluckTone(
-        attack: 52,
-        decay: 3.0,
-        feedback: 0.9915,
-        brightness: 0.78,
-        transient: 0.36,
-        bodyMix: 0.68,
-        shimmer: 0.07,
+        attack: 60,
+        decay: 3.35,
+        feedback: 0.9908,
+        brightness: 0.9,
+        transient: 0.44,
+        bodyMix: 0.58,
+        shimmer: 0.11,
+        noise: 0.03,
+        overtoneMix: 0.17,
+        octaveBloom: 0.016,
+        air: 0.052,
+        bodyDetune: 0.034,
+        bodyDecay: 4.6,
+        outputGain: 1.64,
       ),
       'bright' => const _HarpPluckTone(
-        attack: 44,
-        decay: 2.9,
-        feedback: 0.9922,
-        brightness: 0.66,
-        transient: 0.28,
-        bodyMix: 0.74,
-        shimmer: 0.055,
+        attack: 48,
+        decay: 3.05,
+        feedback: 0.9919,
+        brightness: 0.76,
+        transient: 0.34,
+        bodyMix: 0.7,
+        shimmer: 0.075,
+        noise: 0.026,
+        overtoneMix: 0.14,
+        octaveBloom: 0.022,
+        air: 0.04,
+        bodyDetune: 0.028,
+        bodyDecay: 4.0,
+        outputGain: 1.6,
       ),
       'nylon' => const _HarpPluckTone(
-        attack: 34,
-        decay: 2.3,
-        feedback: 0.9932,
-        brightness: 0.45,
-        transient: 0.18,
-        bodyMix: 0.9,
-        shimmer: 0.015,
+        attack: 30,
+        decay: 2.1,
+        feedback: 0.994,
+        brightness: 0.38,
+        transient: 0.12,
+        bodyMix: 0.98,
+        shimmer: 0.008,
+        noise: 0.01,
+        overtoneMix: 0.064,
+        octaveBloom: 0.055,
+        air: 0.006,
+        bodyDetune: 0.01,
+        bodyDecay: 2.4,
+        outputGain: 1.44,
       ),
       'glass' => const _HarpPluckTone(
-        attack: 56,
-        decay: 3.3,
-        feedback: 0.9908,
-        brightness: 0.84,
-        transient: 0.42,
-        bodyMix: 0.58,
-        shimmer: 0.085,
+        attack: 64,
+        decay: 3.5,
+        feedback: 0.9899,
+        brightness: 0.97,
+        transient: 0.52,
+        bodyMix: 0.46,
+        shimmer: 0.14,
+        noise: 0.04,
+        overtoneMix: 0.21,
+        octaveBloom: 0.008,
+        air: 0.072,
+        bodyDetune: 0.04,
+        bodyDecay: 5.4,
+        outputGain: 1.68,
       ),
       'concert' => const _HarpPluckTone(
-        attack: 38,
-        decay: 2.7,
-        feedback: 0.9933,
-        brightness: 0.56,
+        attack: 36,
+        decay: 2.85,
+        feedback: 0.9936,
+        brightness: 0.52,
         transient: 0.24,
-        bodyMix: 0.88,
-        shimmer: 0.028,
+        bodyMix: 0.92,
+        shimmer: 0.026,
+        noise: 0.016,
+        overtoneMix: 0.1,
+        octaveBloom: 0.04,
+        air: 0.016,
+        bodyDetune: 0.018,
+        bodyDecay: 3.0,
+        outputGain: 1.52,
       ),
       'steel' => const _HarpPluckTone(
-        attack: 46,
-        decay: 2.8,
-        feedback: 0.9924,
-        brightness: 0.7,
-        transient: 0.31,
-        bodyMix: 0.76,
-        shimmer: 0.048,
+        attack: 52,
+        decay: 3.1,
+        feedback: 0.9914,
+        brightness: 0.82,
+        transient: 0.39,
+        bodyMix: 0.62,
+        shimmer: 0.082,
+        noise: 0.034,
+        overtoneMix: 0.18,
+        octaveBloom: 0.014,
+        air: 0.048,
+        bodyDetune: 0.032,
+        bodyDecay: 4.4,
+        outputGain: 1.66,
       ),
       _ => const _HarpPluckTone(
-        attack: 40,
-        decay: 2.5,
-        feedback: 0.9927,
-        brightness: 0.58,
-        transient: 0.24,
-        bodyMix: 0.82,
-        shimmer: 0.036,
+        attack: 34,
+        decay: 2.45,
+        feedback: 0.9931,
+        brightness: 0.5,
+        transient: 0.18,
+        bodyMix: 0.9,
+        shimmer: 0.02,
+        noise: 0.014,
+        overtoneMix: 0.086,
+        octaveBloom: 0.048,
+        air: 0.012,
+        bodyDetune: 0.014,
+        bodyDecay: 2.8,
+        outputGain: 1.48,
       ),
     };
   }
@@ -2060,6 +2144,13 @@ class _HarpPluckTone {
     required this.transient,
     required this.bodyMix,
     required this.shimmer,
+    required this.noise,
+    required this.overtoneMix,
+    required this.octaveBloom,
+    required this.air,
+    required this.bodyDetune,
+    required this.bodyDecay,
+    required this.outputGain,
   });
 
   final double attack;
@@ -2069,4 +2160,11 @@ class _HarpPluckTone {
   final double transient;
   final double bodyMix;
   final double shimmer;
+  final double noise;
+  final double overtoneMix;
+  final double octaveBloom;
+  final double air;
+  final double bodyDetune;
+  final double bodyDecay;
+  final double outputGain;
 }
