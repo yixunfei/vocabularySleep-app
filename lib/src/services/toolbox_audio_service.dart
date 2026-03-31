@@ -130,6 +130,19 @@ class ToolboxEffectPlayer {
     }
   }
 
+  Future<void> stop() async {
+    final voices = _voices.toList(growable: false);
+    for (final voice in voices) {
+      await voice.stop();
+    }
+    final overflowPlayers = _overflowPlayers.toList(growable: false);
+    for (final player in overflowPlayers) {
+      try {
+        await player.stop();
+      } catch (_) {}
+    }
+  }
+
   Future<void> dispose() async {
     final voices = _voices.toList(growable: false);
     _voices.clear();
@@ -350,6 +363,16 @@ class _ToolboxReusableEffectVoice {
     _disposed = true;
     release();
     await _player.dispose();
+  }
+
+  Future<void> stop() async {
+    if (_disposed) {
+      return;
+    }
+    release();
+    try {
+      await _player.stop();
+    } catch (_) {}
   }
 
   Future<void> _waitForPlaybackEndOrTimeout() async {
@@ -661,6 +684,8 @@ class ToolboxAudioBank {
       'kick' => 'kick',
       'snare' => 'snare',
       'hihat' => 'hihat',
+      'openhat' => 'openhat',
+      'clap' => 'clap',
       'tom' => 'tom',
       _ => 'kick',
     };
@@ -1106,9 +1131,9 @@ class ToolboxAudioBank {
     final materialBreathMul = switch (material) {
       'metal_short' => 0.76,
       'metal_long' => 0.72,
-      'jade' => 0.56,
+      'jade' => 0.42,
       'clay' => 0.44,
-      _ => 1.08,
+      _ => 1.18,
     };
     final breathNoise =
         (switch (style) {
@@ -1124,9 +1149,9 @@ class ToolboxAudioBank {
     final materialOvertoneMul = switch (material) {
       'metal_short' => 1.34,
       'metal_long' => 1.18,
-      'jade' => 0.84,
+      'jade' => 0.8,
       'clay' => 0.72,
-      _ => 0.92,
+      _ => 0.88,
     };
     final overtoneMul =
         (switch (style) {
@@ -1155,9 +1180,9 @@ class ToolboxAudioBank {
     final bodyMul = switch (material) {
       'metal_short' => 0.86,
       'metal_long' => 0.92,
-      'jade' => 1.08,
+      'jade' => 1.12,
       'clay' => 1.18,
-      _ => 1.04,
+      _ => 1.08,
     };
     final steadyDecay =
         (switch (style) {
@@ -1216,9 +1241,9 @@ class ToolboxAudioBank {
     final shimmerMul = switch (material) {
       'metal_short' => 1.18,
       'metal_long' => 1.1,
-      'jade' => 0.84,
+      'jade' => 0.76,
       'clay' => 0.84,
-      _ => 0.88,
+      _ => 0.8,
     };
 
     for (var i = 0; i < totalSamples; i += 1) {
@@ -1306,9 +1331,9 @@ class ToolboxAudioBank {
           (switch (material) {
             'metal_short' => 1.14,
             'metal_long' => 1.08,
-            'jade' => 0.82,
+            'jade' => 0.78,
             'clay' => 0.72,
-            _ => 0.88,
+            _ => 0.84,
           });
       final formantB =
           math.sin(math.pi * 2 * (pitched * 3.84) * t + 0.47) *
@@ -1356,9 +1381,9 @@ class ToolboxAudioBank {
           (switch (material) {
             'metal_short' => 0.03,
             'metal_long' => 0.024,
-            'jade' => 0.01,
+            'jade' => 0.008,
             'clay' => 0.008,
-            _ => 0.014,
+            _ => 0.012,
           }) *
           shimmerMul *
           math.exp(-3.4 * t);
@@ -1410,9 +1435,9 @@ class ToolboxAudioBank {
         (switch (material) {
           'metal_short' => 0.02,
           'metal_long' => 0.03,
-          'jade' => 0.015,
+          'jade' => 0.02,
           'clay' => -0.03,
-          _ => 0.02,
+          _ => 0.04,
         });
     _applySchroederReverb(
       samples,
@@ -1477,13 +1502,13 @@ class ToolboxAudioBank {
         tailDecay: 1.18,
       ),
       'jade' => (
-        shellMix: 0.017,
-        shellDecay: 0.94,
-        shellPartial: 5.06,
-        bloomMix: 0.022,
-        bloomPartial: 2.28,
-        tailMix: 0.03,
-        tailDecay: 0.86,
+        shellMix: 0.015,
+        shellDecay: 0.82,
+        shellPartial: 5.32,
+        bloomMix: 0.024,
+        bloomPartial: 2.42,
+        tailMix: 0.036,
+        tailDecay: 0.68,
       ),
       'clay' => (
         shellMix: 0.026,
@@ -1495,13 +1520,13 @@ class ToolboxAudioBank {
         tailDecay: 0.88,
       ),
       _ => (
-        shellMix: 0.028,
-        shellDecay: 0.92,
-        shellPartial: 4.36,
-        bloomMix: 0.024,
-        bloomPartial: 1.94,
-        tailMix: 0.034,
-        tailDecay: 0.82,
+        shellMix: 0.03,
+        shellDecay: 0.78,
+        shellPartial: 4.02,
+        bloomMix: 0.026,
+        bloomPartial: 1.78,
+        tailMix: 0.038,
+        tailDecay: 0.74,
       ),
     };
   }
@@ -1583,9 +1608,9 @@ class ToolboxAudioBank {
     final bodyMul = switch (material) {
       'metal_short' => 0.88,
       'metal_long' => 0.92,
-      'jade' => 1.06,
+      'jade' => 1.12,
       'clay' => 1.08,
-      _ => 1.02,
+      _ => 1.08,
     };
     final overtone = switch (style) {
       'lead' => 0.18,
@@ -1598,9 +1623,9 @@ class ToolboxAudioBank {
     final shimmerMul = switch (material) {
       'metal_short' => 1.14,
       'metal_long' => 1.08,
-      'jade' => 0.86,
+      'jade' => 0.78,
       'clay' => 0.82,
-      _ => 0.86,
+      _ => 0.78,
     };
     return math.sin(math.pi * 2 * pitched * t) * 0.6 +
         math.sin(math.pi * 2 * pitched * 2.0 * t + 0.12) * overtone +
@@ -1622,9 +1647,9 @@ class ToolboxAudioBank {
     final breathMul = switch (material) {
       'metal_short' => 0.68,
       'metal_long' => 0.62,
-      'jade' => 0.44,
+      'jade' => 0.34,
       'clay' => 0.4,
-      _ => 0.76,
+      _ => 0.88,
     };
     final jetMul = switch (style) {
       'lead' => 0.1,
@@ -1657,9 +1682,9 @@ class ToolboxAudioBank {
     final edgeMul = switch (material) {
       'metal_short' => 0.1,
       'metal_long' => 0.08,
-      'jade' => 0.04,
+      'jade' => 0.028,
       'clay' => 0.03,
-      _ => 0.045,
+      _ => 0.038,
     };
     final formantMul = switch (style) {
       'lead' => 0.11,
@@ -1890,6 +1915,8 @@ class ToolboxAudioBank {
     return switch (kind) {
       'snare' => _buildSnareHit(kit, tone, tail, material),
       'hihat' => _buildHiHatHit(kit, tone, tail, material),
+      'openhat' => _buildOpenHatHit(kit, tone, tail, material),
+      'clap' => _buildClapHit(kit, tone, tail, material),
       'tom' => _buildTomHit(kit, tone, tail, material),
       _ => _buildKickHit(kit, tone, tail, material),
     };
@@ -1902,23 +1929,23 @@ class ToolboxAudioBank {
     String material,
   ) {
     const sampleRate = 24000;
-    const durationSeconds = 0.58;
+    const durationSeconds = 0.62;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
     final bodyMul = switch (kit) {
-      'electro' => 1.26,
-      'lofi' => 0.86,
-      _ => 1.0,
+      'electro' => 1.3,
+      'lofi' => 0.9,
+      _ => 1.04,
     };
     final clickMul = switch (kit) {
-      'electro' => 1.42,
-      'lofi' => 0.72,
-      _ => 1.0,
+      'electro' => 1.34,
+      'lofi' => 0.66,
+      _ => 0.92,
     };
     final materialMul = _drumMaterialBrightness(material);
-    final tailDecay = 10.4 - tail * 5.1;
-    final startSweep = 124 + tone * 52;
-    final endSweep = 33 + tone * 24;
+    final tailDecay = 10.8 - tail * 5.6;
+    final startSweep = 118 + tone * 48;
+    final endSweep = 34 + tone * 22;
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
       final sweep =
@@ -1931,23 +1958,31 @@ class ToolboxAudioBank {
           math.sin(math.pi * 2 * (sweep * 0.52) * t + 0.2) *
           (0.19 + tail * 0.18) *
           math.exp(-4.6 * t);
+      final shell =
+          math.sin(math.pi * 2 * (sweep * 1.04) * t + 0.18) *
+          (0.08 + tail * 0.06) *
+          math.exp(-6.4 * t);
+      final airPush =
+          math.sin(math.pi * 2 * (sweep * 0.24) * t + 0.64) *
+          (0.06 + materialMul * 0.02) *
+          math.exp(-3.5 * t);
       final click = math.exp(-115 * t) * (0.09 * clickMul * materialMul);
       final beaterNoise =
           (math.sin((i + 1) * 30.41) + math.cos((i + 1) * 51.22)) *
           (0.018 + tone * 0.014) *
           math.exp(-46 * t);
       samples[i] = _softClip(
-        (sub + subTail + click + beaterNoise) * env * 1.34,
+        (sub + subTail + shell + airPush + click + beaterNoise) * env * 1.28,
       );
     }
     if (kit != 'electro') {
       _applySchroederReverb(
         samples,
         sampleRate: sampleRate,
-        amount: 0.02 + tail * 0.06,
+        amount: 0.018 + tail * 0.05,
       );
     }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.93);
   }
 
   static Uint8List _buildSnareHit(
@@ -1971,9 +2006,9 @@ class ToolboxAudioBank {
       _ => 1.0,
     };
     final materialMul = _drumMaterialBrightness(material);
-    final toneFrequency = 146 + tone * 110;
-    final decay = 16.8 - tail * 7.8;
-    final wireDecay = 30 - tail * 13;
+    final toneFrequency = 154 + tone * 98;
+    final decay = 17.4 - tail * 7.2;
+    final wireDecay = 32 - tail * 13.5;
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
       final env = math.exp(-decay * t);
@@ -1995,16 +2030,20 @@ class ToolboxAudioBank {
           math.sin(math.pi * 2 * (4100 + tone * 1100) * t) *
           (0.04 * materialMul) *
           math.exp(-80 * t);
+      final roomBody =
+          math.sin(math.pi * 2 * toneFrequency * 0.52 * t + 0.72) *
+          (0.05 + tail * 0.04) *
+          math.exp(-5.8 * t);
       samples[i] = _softClip(
-        (shell + overtone + wireNoise + snap) * env * 1.06,
+        (shell + overtone + wireNoise + snap + roomBody) * env * 1.04,
       );
     }
     _applySchroederReverb(
       samples,
       sampleRate: sampleRate,
-      amount: kit == 'electro' ? (0.08 + tail * 0.05) : (0.03 + tail * 0.04),
+      amount: kit == 'electro' ? (0.06 + tail * 0.04) : (0.025 + tail * 0.035),
     );
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.93);
   }
 
   static Uint8List _buildHiHatHit(
@@ -2023,11 +2062,11 @@ class ToolboxAudioBank {
       _ => 1.0,
     };
     final materialMul = _drumMaterialBrightness(material);
-    final decay = 30 - tail * 14;
+    final decay = 31 - tail * 12;
     final modes = <double>[
-      5100 + tone * 2600,
-      6800 + tone * 3100,
-      8600 + tone * 3600,
+      4700 + tone * 2200,
+      6350 + tone * 2700,
+      8120 + tone * 3000,
     ];
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
@@ -2049,9 +2088,130 @@ class ToolboxAudioBank {
           math.sin(math.pi * 2 * (9500 + tone * 2000) * t) *
           0.014 *
           math.exp(-120 * t);
-      samples[i] = _softClip((noise + metal + stick) * env * 1.08);
+      final airTail =
+          math.sin(math.pi * 2 * 3100 * t + 0.4) * 0.012 * math.exp(-20 * t);
+      samples[i] = _softClip((noise + metal + stick + airTail) * env * 1.0);
     }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
+    if (kit != 'electro') {
+      _applySchroederReverb(
+        samples,
+        sampleRate: sampleRate,
+        amount: 0.008 + tail * 0.012,
+      );
+    }
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
+  }
+
+  static Uint8List _buildOpenHatHit(
+    String kit,
+    double tone,
+    double tail,
+    String material,
+  ) {
+    const sampleRate = 24000;
+    const durationSeconds = 0.62;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    final noiseMul = switch (kit) {
+      'electro' => 1.26,
+      'lofi' => 0.84,
+      _ => 1.0,
+    };
+    final materialMul = _drumMaterialBrightness(material);
+    final decay = 8.9 - tail * 3.8;
+    final modes = <double>[
+      3720 + tone * 1560,
+      5180 + tone * 2140,
+      6810 + tone * 2560,
+      8720 + tone * 2820,
+    ];
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final env = math.exp(-decay * t);
+      final washNoise =
+          (math.sin((i + 1) * 173.2) +
+              math.cos((i + 1) * 117.6) +
+              math.sin((i + 1) * 87.9)) *
+          (0.18 * noiseMul) *
+          math.exp(-(6.8 + (1 - tail) * 4.2) * t);
+      var metal = 0.0;
+      for (var mode = 0; mode < modes.length; mode += 1) {
+        metal +=
+            math.sin(math.pi * 2 * modes[mode] * t + mode * 0.36) *
+            (0.032 + mode * 0.01) *
+            materialMul *
+            math.exp(-(11.5 - tail * 3.5) * t);
+      }
+      final sizzle =
+          math.sin(math.pi * 2 * (9800 + tone * 1400) * t) *
+          (0.014 + materialMul * 0.005) *
+          math.exp(-44 * t);
+      final shimmer =
+          math.sin(math.pi * 2 * 2560 * t + 0.5) * 0.014 * math.exp(-8.5 * t);
+      samples[i] = _softClip(
+        (washNoise + metal + sizzle + shimmer) * env * 1.06,
+      );
+    }
+    if (kit != 'electro') {
+      _applySchroederReverb(
+        samples,
+        sampleRate: sampleRate,
+        amount: 0.018 + tail * 0.05,
+      );
+    }
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.91);
+  }
+
+  static Uint8List _buildClapHit(
+    String kit,
+    double tone,
+    double tail,
+    String material,
+  ) {
+    const sampleRate = 24000;
+    const durationSeconds = 0.34;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    final airMul = switch (kit) {
+      'electro' => 1.14,
+      'lofi' => 0.88,
+      _ => 1.0,
+    };
+    final materialMul = _drumMaterialBrightness(material);
+    final decay = 17.2 - tail * 6.4;
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final env = math.exp(-decay * t);
+      final burstA = math.exp(-math.pow((t - 0.0) / 0.0048, 2).toDouble());
+      final burstB = math.exp(-math.pow((t - 0.011) / 0.0055, 2).toDouble());
+      final burstC = math.exp(-math.pow((t - 0.023) / 0.0065, 2).toDouble());
+      final burstEnv = burstA + burstB * 0.84 + burstC * 0.68;
+      final noise =
+          (math.sin((i + 1) * 153.7) +
+              math.cos((i + 1) * 101.8) +
+              math.sin((i + 1) * 69.4)) *
+          (0.24 * airMul) *
+          burstEnv;
+      final body =
+          math.sin(math.pi * 2 * (920 + tone * 340) * t) *
+          (0.09 + materialMul * 0.02) *
+          math.exp(-26 * t);
+      final snap =
+          math.sin(math.pi * 2 * (3400 + tone * 1600) * t) *
+          (0.032 * materialMul) *
+          math.exp(-72 * t);
+      final palmBody =
+          math.sin(math.pi * 2 * (560 + tone * 180) * t + 0.8) *
+          0.04 *
+          math.exp(-14 * t);
+      samples[i] = _softClip((noise + body + snap + palmBody) * env * 1.12);
+    }
+    _applySchroederReverb(
+      samples,
+      sampleRate: sampleRate,
+      amount: kit == 'lofi' ? (0.026 + tail * 0.04) : (0.016 + tail * 0.028),
+    );
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.91);
   }
 
   static Uint8List _buildTomHit(
@@ -2070,9 +2230,9 @@ class ToolboxAudioBank {
       _ => 1.0,
     };
     final materialMul = _drumMaterialBrightness(material);
-    final rootStart = 126 + tone * 74;
-    final rootEnd = 94 + tone * 52;
-    final decay = 10.8 - tail * 4.6;
+    final rootStart = 122 + tone * 68;
+    final rootEnd = 92 + tone * 48;
+    final decay = 11.2 - tail * 4.2;
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
       final pitch =
@@ -2088,15 +2248,26 @@ class ToolboxAudioBank {
           math.sin(math.pi * 2 * pitch * 0.52 * t + 0.7) *
           0.16 *
           math.exp(-3.8 * t);
+      final bloom =
+          math.sin(math.pi * 2 * pitch * 1.48 * t + 0.44) *
+          0.08 *
+          math.exp(-5.4 * t);
       final knock =
           (math.sin((i + 1) * 32.7) + math.cos((i + 1) * 53.2)) *
           (0.048 + tone * 0.018) *
           math.exp(-40 * t);
       samples[i] = _softClip(
-        (fundamental + overtone + shell + knock) * env * 1.14,
+        (fundamental + overtone + shell + bloom + knock) * env * 1.1,
       );
     }
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
+    if (kit != 'electro') {
+      _applySchroederReverb(
+        samples,
+        sampleRate: sampleRate,
+        amount: 0.012 + tail * 0.026,
+      );
+    }
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.92);
   }
 
   static Uint8List _buildTriangleHit(

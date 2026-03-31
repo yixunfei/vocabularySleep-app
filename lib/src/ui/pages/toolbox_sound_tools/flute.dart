@@ -119,6 +119,7 @@ class _FluteToolState extends State<_FluteTool> {
   String? _sustainSignature;
   String? _lastNote;
   int _warmUpSerial = 0;
+  int _sustainSyncSerial = 0;
 
   @override
   void initState() {
@@ -452,6 +453,14 @@ class _FluteToolState extends State<_FluteTool> {
     await _sustainEdgeLoop.stop();
   }
 
+  void _invalidateSustainSync() {
+    _sustainSyncSerial += 1;
+  }
+
+  bool _isLatestSustainSync(int serial) {
+    return serial == _sustainSyncSerial;
+  }
+
   double _normalizedMicLevel(Amplitude amplitude) {
     final value = amplitude.current;
     if (value.isNaN || value.isInfinite) return 0;
@@ -513,6 +522,7 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   Future<void> _syncBreathSustain() async {
+    final serial = ++_sustainSyncSerial;
     final nextIndex = (_blowSensorEnabled && _isBlowing)
         ? _noteIndexFromHoles()
         : null;
@@ -545,6 +555,9 @@ class _FluteToolState extends State<_FluteTool> {
       return;
     }
     await _stopSustainLayers();
+    if (!_isLatestSustainSync(serial)) {
+      return;
+    }
     final sustainFrequency = _sustainFrequencyFor(note);
     final mix = _sustainLayerMix();
     await _sustainCoreLoop.play(
@@ -555,6 +568,10 @@ class _FluteToolState extends State<_FluteTool> {
       ),
       volume: mix.core,
     );
+    if (!_isLatestSustainSync(serial)) {
+      await _stopSustainLayers();
+      return;
+    }
     await _sustainAirLoop.play(
       ToolboxAudioBank.fluteSustainAir(
         sustainFrequency,
@@ -563,6 +580,10 @@ class _FluteToolState extends State<_FluteTool> {
       ),
       volume: mix.air,
     );
+    if (!_isLatestSustainSync(serial)) {
+      await _stopSustainLayers();
+      return;
+    }
     await _sustainEdgeLoop.play(
       ToolboxAudioBank.fluteSustainEdge(
         sustainFrequency,
@@ -630,6 +651,7 @@ class _FluteToolState extends State<_FluteTool> {
             'flute_blow_meter_${DateTime.now().microsecondsSinceEpoch}.wav',
       );
       await _amplitudeSub?.cancel();
+      _invalidateSustainSync();
       await _stopSustainLayers();
       _amplitudeSub = _micRecorder
           .onAmplitudeChanged(const Duration(milliseconds: 50))
@@ -704,6 +726,7 @@ class _FluteToolState extends State<_FluteTool> {
       _micLevel = 0;
       _breathConfidence = 0;
     }
+    _invalidateSustainSync();
     await _syncBreathSustain();
     if (resetUi && mounted) {
       setState(() {});
@@ -763,6 +786,7 @@ class _FluteToolState extends State<_FluteTool> {
       _tail = preset.tail;
     });
     _invalidatePlayers();
+    _invalidateSustainSync();
     unawaited(_stopSustainLayers());
     _sustainedNoteIndex = null;
     _sustainSignature = null;
@@ -807,6 +831,7 @@ class _FluteToolState extends State<_FluteTool> {
   void _refreshSound() {
     _warmUpSerial += 1;
     _invalidatePlayers();
+    _invalidateSustainSync();
     unawaited(_stopSustainLayers());
     _sustainedNoteIndex = null;
     _sustainSignature = null;
@@ -1533,6 +1558,7 @@ class _FluteToolState extends State<_FluteTool> {
     if (amplitudeSub != null) {
       unawaited(amplitudeSub.cancel());
     }
+    _invalidateSustainSync();
     unawaited(_disposeMicRecorder());
     unawaited(_sustainCoreLoop.dispose());
     unawaited(_sustainAirLoop.dispose());
