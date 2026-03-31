@@ -192,7 +192,6 @@ class _PianoToolState extends State<_PianoTool> {
   String _chordId = _chordSets.first.id;
   String _rootPitchClass = 'C';
   double? _twoFingerOriginY;
-  bool _twoFingerGestureConsumed = false;
   int _highlightVersion = 0;
   bool _rangeNavigatorExpanded = false;
 
@@ -321,14 +320,6 @@ class _PianoToolState extends State<_PianoTool> {
     );
   }
 
-  String _displayRootLabel(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '根音 $_rootPitchClass',
-      en: 'Root $_rootPitchClass',
-    );
-  }
-
   String _rangeLeadingLabel(int startOctave) {
     if (startOctave <= 0) {
       return 'A0';
@@ -390,33 +381,6 @@ class _PianoToolState extends State<_PianoTool> {
       _decay = preset.decay;
     });
     _invalidatePlayers();
-  }
-
-  void _cyclePreset() {
-    final currentIndex = _presets.indexWhere((item) => item.id == _presetId);
-    final nextIndex =
-        ((currentIndex < 0 ? 0 : currentIndex) + 1) % _presets.length;
-    _applyPreset(_presets[nextIndex].id);
-  }
-
-  void _cycleKeyboardStyle() {
-    final currentIndex = _keyboardStyles.indexWhere(
-      (item) => item.id == _keyboardStyleId,
-    );
-    final nextIndex =
-        ((currentIndex < 0 ? 0 : currentIndex) + 1) % _keyboardStyles.length;
-    setState(() {
-      _keyboardStyleId = _keyboardStyles[nextIndex].id;
-    });
-  }
-
-  void _cycleRootPitchClass() {
-    final currentIndex = _rootPitchClasses.indexOf(_rootPitchClass);
-    final nextIndex = ((currentIndex < 0 ? 0 : currentIndex) + 1) %
-        _rootPitchClasses.length;
-    setState(() {
-      _rootPitchClass = _rootPitchClasses[nextIndex];
-    });
   }
 
   void _toggleRangeNavigatorLayout() {
@@ -602,7 +566,6 @@ class _PianoToolState extends State<_PianoTool> {
               .map((offset) => offset.dy)
               .reduce((a, b) => a + b) /
           _activePointers.length;
-      _twoFingerGestureConsumed = false;
     }
   }
 
@@ -624,9 +587,15 @@ class _PianoToolState extends State<_PianoTool> {
           _activePointers.length;
       final origin = _twoFingerOriginY ?? centerY;
       final delta = centerY - origin;
-      if (!_twoFingerGestureConsumed && delta.abs() >= 54) {
-        _twoFingerGestureConsumed = true;
-        _updateRangeStart(_rangeStartOctave + (delta < 0 ? 1 : -1), octaveSpan);
+      final stepThreshold = widget.fullScreen ? 34.0 : 54.0;
+      if (delta.abs() >= stepThreshold) {
+        final stepCount = (delta.abs() / stepThreshold).floor();
+        final direction = delta < 0 ? 1 : -1;
+        _updateRangeStart(
+          _rangeStartOctave + direction * stepCount,
+          octaveSpan,
+        );
+        _twoFingerOriginY = centerY;
       }
       return;
     }
@@ -644,7 +613,6 @@ class _PianoToolState extends State<_PianoTool> {
     _activePointerKeyIds.remove(event.pointer);
     if (_activePointers.length < 2) {
       _twoFingerOriginY = null;
-      _twoFingerGestureConsumed = false;
     }
   }
 
@@ -685,14 +653,20 @@ class _PianoToolState extends State<_PianoTool> {
     final viewPadding = MediaQuery.viewPaddingOf(context);
     final width = constraints.maxWidth;
     final targetHeight = widget.fullScreen
-        ? math.max(380.0, screenHeight - viewPadding.vertical - 176)
+        ? math.max(420.0, screenHeight - viewPadding.vertical - 40)
         : math.min(math.max(320.0, screenHeight * 0.46), 520.0);
-    var octaveSpan = width >= 940
+    var octaveSpan = widget.fullScreen
+        ? width >= 940
+            ? 5
+            : width >= 680
+            ? 4
+            : 3
+        : width >= 940
         ? 4
         : width >= 680
         ? 3
         : 2;
-    final minWhiteExtent = widget.fullScreen ? 42.0 : 40.0;
+    final minWhiteExtent = widget.fullScreen ? 34.0 : 40.0;
     while (octaveSpan > 1) {
       final whiteCount = octaveSpan * 7 + 1;
       if (targetHeight / whiteCount >= minWhiteExtent) {
@@ -1429,7 +1403,8 @@ class _PianoToolState extends State<_PianoTool> {
     required _PianoKeyboardSlice slice,
     required int rangeStart,
   }) {
-    final theme = Theme.of(context);
+    final topInset = MediaQuery.viewPaddingOf(context).top;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     final overlayButtonStyle = FilledButton.styleFrom(
       backgroundColor: Colors.white.withValues(alpha: 0.10),
       foregroundColor: Colors.white,
@@ -1447,168 +1422,49 @@ class _PianoToolState extends State<_PianoTool> {
           ],
         ),
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  FilledButton.tonal(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: overlayButtonStyle,
-                    child: const Icon(Icons.arrow_back_rounded),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          pickUiText(i18n, zh: '沉浸钢琴', en: 'Immersive piano'),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          pickUiText(
-                            i18n,
-                            zh: '纵向键盘按手机高度重排，支持双指快速切换音域与分行显示。',
-                            en: 'Vertical keyboard rebuilt for phone height with quick range shifting and row display.',
-                          ),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  FilledButton.tonalIcon(
-                    onPressed: () => _openPianoSettingsSheet(
-                      context,
-                      i18n,
-                      viewport: viewport,
-                      slice: slice,
-                    ),
-                    style: overlayButtonStyle,
-                    icon: const Icon(Icons.tune_rounded),
-                    label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: <Widget>[
-                  _PianoOverlayChip(
-                    label: 'Range',
-                    value:
-                        '${_rangeRegisterName(i18n, rangeStart, viewport.octaveSpan)} · ${slice.label}',
-                  ),
-                  _PianoOverlayChip(
-                    label: 'Preset',
-                    value: _displayPresetLabel(i18n, _activePreset),
-                  ),
-                  _PianoOverlayChip(
-                    label: 'Harmony',
-                    value: _displayChordLabel(i18n, _chordId),
-                  ),
-                  _PianoOverlayChip(
-                    label: 'Style',
-                    value: _displayKeyboardStyleLabel(i18n, _activeKeyboardStyle),
-                  ),
-                  _PianoOverlayChip(label: 'Root', value: _rootPitchClass),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _buildRangeNavigator(context, i18n, octaveSpan: viewport.octaveSpan, rangeStart: rangeStart, slice: slice, immersive: true),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: _buildKeyboardStage(context, slice, viewport: viewport, immersive: true),
+      child: Stack(
+        children: <Widget>[
+          Positioned.fill(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(12, topInset + 8, 12, bottomInset + 8),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: _buildKeyboardStage(
+                  context,
+                  slice,
+                  viewport: viewport,
+                  immersive: true,
                 ),
               ),
-              const SizedBox(height: 12),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white24),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: <Widget>[
-                            FilledButton.tonalIcon(
-                              onPressed: _cyclePreset,
-                              style: overlayButtonStyle,
-                              icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                              label: Text(pickUiText(i18n, zh: '切换预设', en: 'Cycle preset')),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton.tonalIcon(
-                              onPressed: _cycleKeyboardStyle,
-                              style: overlayButtonStyle,
-                              icon: const Icon(Icons.palette_outlined, size: 18),
-                              label: Text(pickUiText(i18n, zh: '切换样式', en: 'Cycle style')),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton.tonalIcon(
-                              onPressed: _cycleRootPitchClass,
-                              style: overlayButtonStyle,
-                              icon: const Icon(Icons.music_note_rounded, size: 18),
-                              label: Text(pickUiText(i18n, zh: '切换根音', en: 'Cycle root')),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton.tonalIcon(
-                              onPressed: _toggleRangeNavigatorLayout,
-                              style: overlayButtonStyle,
-                              icon: Icon(
-                                _rangeNavigatorExpanded
-                                    ? Icons.view_stream_rounded
-                                    : Icons.view_day_rounded,
-                                size: 18,
-                              ),
-                              label: Text(pickUiText(i18n, zh: '分行显示', en: 'Rows')),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: <Widget>[
-                          _PianoOverlayChip(label: 'Scale', value: _displayScaleLabel(i18n, _scaleId)),
-                          _PianoOverlayChip(label: 'Harmony', value: _displayChordLabel(i18n, _chordId)),
-                          _PianoOverlayChip(label: 'Touch', value: '${(_touch * 100).round()}%'),
-                          _PianoOverlayChip(label: 'Space', value: '${(_reverb * 100).round()}%'),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        '${_displayRootLabel(i18n)} · ${_displaySpaceLabel(i18n)}',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            left: 12,
+            top: topInset + 10,
+            right: 12,
+            child: Row(
+              children: <Widget>[
+                FilledButton.tonal(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: overlayButtonStyle,
+                  child: const Icon(Icons.arrow_back_rounded),
+                ),
+                const Spacer(),
+                FilledButton.tonalIcon(
+                  onPressed: () => _openPianoSettingsSheet(
+                    context,
+                    i18n,
+                    viewport: viewport,
+                    slice: slice,
+                  ),
+                  style: overlayButtonStyle,
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
