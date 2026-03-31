@@ -485,6 +485,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   int _trackLoadTotalBytes = 0;
   int _asyncLoadToken = 0;
   bool _handlingPlaybackCompletion = false;
+  bool _disposed = false;
+  Future<void> _playerMutationQueue = Future<void>.value();
 
   Future<void> _enterImmersiveMode() async {
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -558,6 +560,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
   @override
   void dispose() {
+    _disposed = true;
+    _asyncLoadToken += 1;
     _positionSubscription?.cancel();
     _durationSubscription?.cancel();
     _stateSubscription?.cancel();
@@ -659,10 +663,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         (mode) => mode.id == retainedModeId,
         orElse: () => _mode,
       );
-      _trackIndex = _SoothingRuntimeStore.activeTrackIndex.clamp(
-        0,
-        _tracksForMode(_mode.id).length - 1,
-      );
+      final retainedTracks = _tracksForMode(_mode.id);
+      _trackIndex = retainedTracks.isEmpty
+          ? 0
+          : _SoothingRuntimeStore.activeTrackIndex.clamp(
+              0,
+              retainedTracks.length - 1,
+            );
       _position = _SoothingRuntimeStore.activePosition;
       _duration = _SoothingRuntimeStore.activeDuration;
       _playing = _SoothingRuntimeStore.activePlaying;
@@ -681,7 +688,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       return;
     }
 
-    await _preloadModeAssets(_mode.id);
+    unawaited(_preloadModeAssets(_mode.id));
     if (!mounted) return;
     await _loadMode(_mode, autoplay: false);
     if (!mounted) return;
@@ -691,10 +698,28 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   }
 
   Future<void> _preloadModeAssets(String modeId) async {
-    await _resolvedTrackLoader.preloadMode(modeId);
+    try {
+      await _resolvedTrackLoader.preloadMode(modeId);
+    } catch (error, stackTrace) {
+      _log.w(
+        'soothing_audio',
+        'preload mode assets failed',
+        data: <String, Object?>{'modeId': modeId},
+      );
+      _log.e(
+        'soothing_audio',
+        'preload mode assets failure detail',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{'modeId': modeId},
+      );
+    }
   }
 
-  Future<Uint8List> _loadTrackBytes(_SoothingTrack track) async {
+  Future<Uint8List> _loadTrackBytes(
+    _SoothingTrack track, {
+    int? loadToken,
+  }) async {
     _trackLoadLabelKey = track.labelKey;
     _trackLoadProgress = null;
     _trackLoadReceivedBytes = 0;
@@ -706,7 +731,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       return await _resolvedTrackLoader.load(
         track,
         onProgress: (progress) {
-          if (!mounted) return;
+          if (!mounted || !_isLoadTokenActive(loadToken)) return;
           setState(() {
             _trackLoadLabelKey = track.labelKey;
             _trackLoadProgress = progress.progress;
@@ -716,7 +741,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         },
       );
     } finally {
-      _clearTrackLoadState();
+      _clearTrackLoadState(loadToken: loadToken);
     }
   }
 
@@ -725,6 +750,23 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
   List<_SoothingTrack> get _tracks => _tracksForMode(_mode.id);
   _SoothingTrack get _currentTrack => _tracks[_trackIndex];
+
+  bool _isLoadTokenActive(int? loadToken) {
+    return !_disposed &&
+        mounted &&
+        (loadToken == null || loadToken == _asyncLoadToken);
+  }
+
+  Future<T> _runSerializedPlayerMutation<T>(Future<T> Function() action) {
+    final previous = _playerMutationQueue;
+    final completer = Completer<void>();
+    _playerMutationQueue = completer.future;
+    return previous.catchError((_) {}).then((_) => action()).whenComplete(() {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+  }
 
   Future<void> _startArrangementPlayback({bool autoplay = true}) async {
     if (_arrangementSteps.isEmpty) {
@@ -770,11 +812,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     int? preferredTrackIndex,
   }) async {
     if (!mounted) return;
+    final tracks = _tracksForMode(mode.id);
+    if (tracks.isEmpty) {
+      return;
+    }
     final loadToken = ++_asyncLoadToken;
     final restoredTrackIndex =
-        preferredTrackIndex
-            ?.clamp(0, _tracksForMode(mode.id).length - 1)
-            .toInt() ??
+        preferredTrackIndex?.clamp(0, tracks.length - 1).toInt() ??
         _restoredTrackIndexForMode(mode.id);
     final shouldAutoplay =
         autoplay || _playbackMode == SoothingPlaybackMode.arrangement;
@@ -790,46 +834,61 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
     try {
       final scene = await ToolboxSoothingAudioService.load(mode.id);
-      final track = _tracksForMode(mode.id)[restoredTrackIndex];
-      final bytes = await _loadTrackBytes(track);
-      await AudioPlayerSourceHelper.setSource(
-        _player,
-        BytesSource(bytes, mimeType: 'audio/mp4'),
-        tag: 'soothing_audio',
-        data: <String, Object?>{
-          'modeId': mode.id,
-          'trackAssetPath': track.assetPath,
-          'bytes': bytes.length,
-        },
-      );
-      final duration = await AudioPlayerSourceHelper.waitForDuration(
-        _player,
-        tag: 'soothing_audio',
-        data: <String, Object?>{
-          'modeId': mode.id,
-          'trackAssetPath': track.assetPath,
-          'playerId': _player.playerId,
-        },
-      );
+      if (!_isLoadTokenActive(loadToken)) {
+        return;
+      }
+      final track = tracks[restoredTrackIndex];
+      final bytes = await _loadTrackBytes(track, loadToken: loadToken);
+      if (!_isLoadTokenActive(loadToken)) {
+        return;
+      }
+      final duration = await _runSerializedPlayerMutation<Duration?>(() async {
+        if (!_isLoadTokenActive(loadToken)) {
+          return null;
+        }
+        await AudioPlayerSourceHelper.setSource(
+          _player,
+          BytesSource(bytes, mimeType: 'audio/mp4'),
+          tag: 'soothing_audio',
+          data: <String, Object?>{
+            'modeId': mode.id,
+            'trackAssetPath': track.assetPath,
+            'bytes': bytes.length,
+          },
+        );
+        final resolvedDuration = await AudioPlayerSourceHelper.waitForDuration(
+          _player,
+          tag: 'soothing_audio',
+          data: <String, Object?>{
+            'modeId': mode.id,
+            'trackAssetPath': track.assetPath,
+            'playerId': _player.playerId,
+          },
+        );
+        await _player.setVolume(_muted ? 0 : _volume);
+        if (_isLoadTokenActive(loadToken)) {
+          if (shouldAutoplay) {
+            await _player.resume();
+          } else {
+            await _player.stop();
+          }
+        }
+        return resolvedDuration;
+      });
       if (duration != null) {
         _duration = duration;
       }
       _updateStageSpectrum(force: true);
       _SoothingRuntimeStore.activeDuration = _duration;
-      await _player.setVolume(_muted ? 0 : _volume);
-      if (!mounted || loadToken != _asyncLoadToken) return;
-      if (shouldAutoplay) {
-        await _player.resume();
-      } else {
-        await _player.stop();
-      }
-      if (!mounted || loadToken != _asyncLoadToken) return;
+      if (!_isLoadTokenActive(loadToken)) return;
       setState(() {
         _scene = scene;
         _updateStageSpectrum(force: true);
       });
+      _SoothingRuntimeStore.lastTrackIndexByMode[mode.id] = restoredTrackIndex;
+      _SoothingRuntimeStore.lastModeId = mode.id;
       _SoothingRuntimeStore.activeModeId = mode.id;
-      _SoothingRuntimeStore.activeTrackIndex = _trackIndex;
+      _SoothingRuntimeStore.activeTrackIndex = restoredTrackIndex;
       _SoothingRuntimeStore.activeVolume = _volume;
       _SoothingRuntimeStore.activeMuted = _muted;
       _SoothingRuntimeStore.activePlaying = shouldAutoplay;
@@ -847,7 +906,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
           'playerId': _player.playerId,
         },
       );
-      if (!mounted) return;
+      if (!_isLoadTokenActive(loadToken)) return;
       setState(() {
         _audioErrorLabelKey = 'mode:${mode.id}';
       });
@@ -1001,9 +1060,12 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
   Future<void> _setTrackIndex(int index, {bool? autoplayOverride}) async {
     if (index == _trackIndex) return;
     if (!mounted) return;
+    if (_tracks.isEmpty) return;
     final loadToken = ++_asyncLoadToken;
+    final nextTrackIndex = index.clamp(0, _tracks.length - 1);
+    late final _SoothingTrack track;
     setState(() {
-      _trackIndex = index;
+      _trackIndex = nextTrackIndex;
       _loading = true;
       _position = Duration.zero;
       _draggingRatio = null;
@@ -1012,39 +1074,52 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     });
 
     try {
-      final bytes = await _loadTrackBytes(_currentTrack);
-      await AudioPlayerSourceHelper.setSource(
-        _player,
-        BytesSource(bytes, mimeType: 'audio/mp4'),
-        tag: 'soothing_audio',
-        data: <String, Object?>{
-          'modeId': _mode.id,
-          'trackAssetPath': _currentTrack.assetPath,
-          'bytes': bytes.length,
-        },
-      );
-      final duration = await AudioPlayerSourceHelper.waitForDuration(
-        _player,
-        tag: 'soothing_audio',
-        data: <String, Object?>{
-          'modeId': _mode.id,
-          'trackAssetPath': _currentTrack.assetPath,
-          'playerId': _player.playerId,
-        },
-      );
+      track = _currentTrack;
+      final bytes = await _loadTrackBytes(track, loadToken: loadToken);
+      if (!_isLoadTokenActive(loadToken)) {
+        return;
+      }
+      final duration = await _runSerializedPlayerMutation<Duration?>(() async {
+        if (!_isLoadTokenActive(loadToken)) {
+          return null;
+        }
+        await AudioPlayerSourceHelper.setSource(
+          _player,
+          BytesSource(bytes, mimeType: 'audio/mp4'),
+          tag: 'soothing_audio',
+          data: <String, Object?>{
+            'modeId': _mode.id,
+            'trackAssetPath': track.assetPath,
+            'bytes': bytes.length,
+          },
+        );
+        final resolvedDuration = await AudioPlayerSourceHelper.waitForDuration(
+          _player,
+          tag: 'soothing_audio',
+          data: <String, Object?>{
+            'modeId': _mode.id,
+            'trackAssetPath': track.assetPath,
+            'playerId': _player.playerId,
+          },
+        );
+        await _player.setVolume(_muted ? 0 : _volume);
+        final shouldResume = autoplayOverride ?? _playing;
+        if (_isLoadTokenActive(loadToken)) {
+          if (shouldResume) {
+            await _player.resume();
+          } else {
+            await _player.stop();
+          }
+        }
+        return resolvedDuration;
+      });
       if (duration != null) {
         _duration = duration;
       }
       _updateStageSpectrum(force: true);
       _SoothingRuntimeStore.activeDuration = _duration;
-      await _player.setVolume(_muted ? 0 : _volume);
-      if (!mounted || loadToken != _asyncLoadToken) return;
+      if (!_isLoadTokenActive(loadToken)) return;
       final shouldResume = autoplayOverride ?? _playing;
-      if (shouldResume) {
-        await _player.resume();
-      } else {
-        await _player.stop();
-      }
       _SoothingRuntimeStore.activePlaying = shouldResume;
     } catch (error, stackTrace) {
       _log.e(
@@ -1055,13 +1130,13 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         data: <String, Object?>{
           'modeId': _mode.id,
           'trackIndex': _trackIndex,
-          'trackAssetPath': _currentTrack.assetPath,
+          'trackAssetPath': track.assetPath,
           'playerId': _player.playerId,
         },
       );
-      if (!mounted) return;
+      if (!_isLoadTokenActive(loadToken)) return;
       setState(() {
-        _audioErrorLabelKey = 'track:${_currentTrack.labelKey}';
+        _audioErrorLabelKey = 'track:${track.labelKey}';
       });
     } finally {
       if (mounted && loadToken == _asyncLoadToken) {
@@ -1203,6 +1278,9 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
 
   int _restoredTrackIndexForMode(String modeId) {
     final tracks = _tracksForMode(modeId);
+    if (tracks.isEmpty) {
+      return 0;
+    }
     final saved = _SoothingRuntimeStore.lastTrackIndexByMode[modeId] ?? 0;
     return saved.clamp(0, tracks.length - 1).toInt();
   }
@@ -1355,7 +1433,10 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     _audioErrorLabelKey = null;
   }
 
-  void _clearTrackLoadState() {
+  void _clearTrackLoadState({int? loadToken}) {
+    if (!_isLoadTokenActive(loadToken)) {
+      return;
+    }
     if (!mounted) {
       _trackLoadLabelKey = null;
       _trackLoadProgress = null;
@@ -1442,6 +1523,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
       if (remaining <= const Duration(seconds: 1)) {
         timer.cancel();
         await _player.pause();
+        _SoothingRuntimeStore.activePlaying = false;
+        _SoothingRuntimeStore.notifyChanged();
         if (!mounted) return;
         setState(() {
           _sleepRemaining = null;

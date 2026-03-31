@@ -423,7 +423,7 @@ class _HarpToolState extends State<_HarpTool>
 
   List<double> get _activeNotes => _activeScale.notes;
 
-  bool get _isHorizontalLayout => widget.fullScreen;
+  bool get _isHorizontalLayout => false;
 
   String _scaleLabel(AppI18n i18n, _HarpScalePreset preset) {
     return switch (preset.id) {
@@ -566,12 +566,11 @@ class _HarpToolState extends State<_HarpTool>
   }
 
   Future<void> _enterImmersiveMode() async {
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+    await _enterToolboxPortraitMode();
   }
 
   Future<void> _exitImmersiveMode() async {
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await _exitToolboxLandscapeMode();
   }
 
   void _markRealismCustom() {
@@ -1254,7 +1253,12 @@ class _HarpToolState extends State<_HarpTool>
             LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
-                final size = Size(width, math.max(260, width * 0.86));
+                final viewportHeight = MediaQuery.sizeOf(context).height;
+                final stageHeight = math.min(
+                  math.max(380, viewportHeight * 0.68),
+                  620,
+                ).toDouble();
+                final size = Size(width, stageHeight);
                 return _buildHarpSurface(
                   context: context,
                   size: size,
