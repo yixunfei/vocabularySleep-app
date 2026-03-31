@@ -530,28 +530,92 @@ class ToolboxAudioBank {
   static Uint8List fluteNote(
     double frequency, {
     String style = 'airy',
+    String material = 'wood',
+    double breath = 0.6,
     double reverb = 0.22,
     double tail = 0.5,
+    bool sustained = false,
   }) {
-    final normalizedStyle = switch (style) {
-      'lead' => 'lead',
-      'alto' => 'alto',
-      'bamboo' => 'bamboo',
-      _ => 'airy',
-    };
+    final normalizedStyle = _normalizeFluteStyle(style);
+    final normalizedMaterial = _normalizeFluteMaterial(material);
+    final normalizedBreath = (breath.clamp(0.18, 1.0) * 20).round() / 20;
     final normalizedReverb = (reverb.clamp(0.0, 0.5) * 20).round() / 20;
     final normalizedTail = (tail.clamp(0.15, 1.0) * 20).round() / 20;
     final key =
         'flute:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '$normalizedMaterial:${normalizedBreath.toStringAsFixed(2)}:'
         '${normalizedReverb.toStringAsFixed(2)}:'
-        '${normalizedTail.toStringAsFixed(2)}';
+        '${normalizedTail.toStringAsFixed(2)}:${sustained ? 'sus' : 'shot'}';
     return _cache.putIfAbsent(
       key,
       () => _buildFluteNote(
         frequency,
         normalizedStyle,
+        material: normalizedMaterial,
+        breath: normalizedBreath.toDouble(),
         reverb: normalizedReverb.toDouble(),
         tail: normalizedTail.toDouble(),
+        sustained: sustained,
+      ),
+    );
+  }
+
+  static Uint8List fluteSustainCore(
+    double frequency, {
+    String style = 'airy',
+    String material = 'wood',
+  }) {
+    final normalizedStyle = _normalizeFluteStyle(style);
+    final normalizedMaterial = _normalizeFluteMaterial(material);
+    final key =
+        'flute:sustain:core:${frequency.toStringAsFixed(2)}:$normalizedStyle:$normalizedMaterial';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildFluteSustainLayer(
+        frequency,
+        normalizedStyle,
+        material: normalizedMaterial,
+        layer: 'core',
+      ),
+    );
+  }
+
+  static Uint8List fluteSustainAir(
+    double frequency, {
+    String style = 'airy',
+    String material = 'wood',
+  }) {
+    final normalizedStyle = _normalizeFluteStyle(style);
+    final normalizedMaterial = _normalizeFluteMaterial(material);
+    final key =
+        'flute:sustain:air:${frequency.toStringAsFixed(2)}:$normalizedStyle:$normalizedMaterial';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildFluteSustainLayer(
+        frequency,
+        normalizedStyle,
+        material: normalizedMaterial,
+        layer: 'air',
+      ),
+    );
+  }
+
+  static Uint8List fluteSustainEdge(
+    double frequency, {
+    String style = 'airy',
+    String material = 'wood',
+  }) {
+    final normalizedStyle = _normalizeFluteStyle(style);
+    final normalizedMaterial = _normalizeFluteMaterial(material);
+    final key =
+        'flute:sustain:edge:${frequency.toStringAsFixed(2)}:$normalizedStyle:$normalizedMaterial';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildFluteSustainLayer(
+        frequency,
+        normalizedStyle,
+        material: normalizedMaterial,
+        layer: 'edge',
       ),
     );
   }
@@ -995,43 +1059,75 @@ class ToolboxAudioBank {
   static Uint8List _buildFluteNote(
     double frequency,
     String style, {
+    required String material,
+    required double breath,
     required double reverb,
     required double tail,
+    required bool sustained,
   }) {
     const sampleRate = 32000;
-    const durationSeconds = 2.85;
+    final durationSeconds = sustained ? 4.8 : 2.85;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
+    final breathEnergy = breath.clamp(0.18, 1.0).toDouble();
 
-    final vibratoDepth = switch (style) {
+    final materialVibratoMul = switch (material) {
+      'metal_short' => 0.82,
+      'metal_long' => 1.08,
+      'jade' => 0.92,
+      'clay' => 0.74,
+      _ => 1.0,
+    };
+    final vibratoDepth = (switch (style) {
       'lead' => 0.0028,
       'alto' => 0.0048,
       'bamboo' => 0.0032,
       _ => 0.004,
-    };
+    }) * materialVibratoMul;
     final vibratoRate = switch (style) {
       'lead' => 5.8,
       'alto' => 4.9,
       'bamboo' => 5.1,
       _ => 5.2,
     };
-    final breathNoise = switch (style) {
+    final materialBreathMul = switch (material) {
+      'metal_short' => 0.76,
+      'metal_long' => 0.72,
+      'jade' => 0.64,
+      'clay' => 0.44,
+      _ => 1.0,
+    };
+    final breathNoise = (switch (style) {
       'lead' => 0.012,
       'alto' => 0.024,
       'bamboo' => 0.028,
       _ => 0.018,
+    }) * materialBreathMul * (0.75 + breath * 0.6);
+    final materialOvertoneMul = switch (material) {
+      'metal_short' => 1.34,
+      'metal_long' => 1.18,
+      'jade' => 0.9,
+      'clay' => 0.72,
+      _ => 1.0,
     };
-    final overtoneMul = switch (style) {
+    final overtoneMul = (switch (style) {
       'lead' => 1.3,
       'alto' => 0.84,
       'bamboo' => 0.9,
       _ => 1.0,
-    };
-    final attackSeconds = switch (style) {
+    }) * materialOvertoneMul * (0.84 + breath * 0.34);
+    final attackSeconds = (switch (style) {
       'lead' => 0.03,
       'alto' => 0.055,
       'bamboo' => 0.062,
       _ => 0.048,
+    }) * (sustained ? 1.16 : 1.0) * (1.05 - breath * 0.18);
+    final bodyMul = switch (material) {
+      'metal_short' => 0.86,
+      'metal_long' => 0.92,
+      'jade' => 1.02,
+      'clay' => 1.18,
+      _ => 0.98,
     };
     final steadyDecay =
         (switch (style) {
@@ -1040,7 +1136,7 @@ class ToolboxAudioBank {
           'bamboo' => 0.78,
           _ => 0.84,
         }) /
-        (0.72 + tail * 0.86);
+        (0.72 + tail * 0.86 + (sustained ? 0.36 : 0.0));
     final releaseStartBase = switch (style) {
       'lead' => durationSeconds * 0.66,
       'alto' => durationSeconds * 0.6,
@@ -1079,6 +1175,14 @@ class ToolboxAudioBank {
         math.pi * 2 * vibratoRate * t + math.sin(math.pi * 2 * 0.38 * t) * 0.34,
       );
       final pitched = frequency * (1 + vibratoDepth * vibLfo);
+      final embouchureJet =
+          math.sin(math.pi * 2 * pitched * (1.02 + breathEnergy * 0.02) * t + 0.07) *
+          (0.12 + breathEnergy * 0.08) *
+          math.exp(-2.6 * t);
+      final airColumn =
+          math.sin(math.pi * 2 * pitched * (0.5 + tail * 0.08) * t + 0.52) *
+          (0.06 + tail * 0.05) *
+          math.exp(-0.9 * t);
 
       final jetNoise =
           (math.sin((i + 1) * 23.17) +
@@ -1091,7 +1195,7 @@ class ToolboxAudioBank {
           (0.016 + breathNoise * 0.45) *
           math.exp(-58 * t);
 
-      var tone = math.sin(math.pi * 2 * pitched * t) * 0.7;
+      var tone = math.sin(math.pi * 2 * pitched * t) * (0.56 + breathEnergy * 0.18);
       tone +=
           math.sin(math.pi * 2 * pitched * 2.01 * t + 0.11) *
           (0.17 * overtoneMul);
@@ -1101,28 +1205,223 @@ class ToolboxAudioBank {
       tone +=
           math.sin(math.pi * 2 * pitched * 4.07 * t + 0.63) *
           (0.04 * overtoneMul);
+      final formantA =
+          math.sin(math.pi * 2 * (pitched * 1.96) * t + 0.18) *
+          (0.05 + breathEnergy * 0.05) *
+          (switch (material) {
+            'metal_short' => 1.14,
+            'metal_long' => 1.08,
+            'jade' => 0.9,
+            'clay' => 0.72,
+            _ => 0.96,
+          });
+      final formantB =
+          math.sin(math.pi * 2 * (pitched * 3.84) * t + 0.47) *
+          (0.028 + breathEnergy * 0.032) *
+          (switch (style) {
+            'lead' => 1.16,
+            'alto' => 0.88,
+            'bamboo' => 0.82,
+            _ => 1.0,
+          });
+      final bodyResonance =
+          math.sin(math.pi * 2 * pitched * 0.5 * t + 0.28) *
+              (0.032 + tail * 0.05) *
+              bodyMul *
+              math.exp(-1.1 * t) +
+          math.sin(math.pi * 2 * pitched * 1.48 * t + 0.76) *
+              (0.018 + breath * 0.03) *
+              bodyMul *
+              math.exp(-1.8 * t);
+      final edge =
+          math.sin(math.pi * 2 * pitched * (5.4 + breath * 0.8) * t + 0.19) *
+          (switch (material) {
+            'metal_short' => 0.03,
+            'metal_long' => 0.024,
+            'jade' => 0.014,
+            'clay' => 0.008,
+            _ => 0.018,
+          }) *
+          math.exp(-3.4 * t);
 
       final tailResonance =
           math.sin(math.pi * 2 * pitched * 0.5 * t + 0.82) *
           (0.05 + tailFloor * 0.18) *
           math.exp(-1.55 * math.max(0.0, t - releaseStart));
       samples[i] = _softClip(
-        (tone + jetNoise + chiff + tailResonance) * env * 1.3,
+        (embouchureJet +
+                airColumn +
+                tone +
+                formantA +
+                formantB +
+                jetNoise +
+                chiff +
+                bodyResonance +
+                edge +
+                tailResonance) *
+            env *
+            (1.02 + breathEnergy * 0.22),
       );
     }
 
-    final baseReverb = switch (style) {
+    final baseReverb = (switch (style) {
       'lead' => 0.16,
       'alto' => 0.27,
       'bamboo' => 0.24,
       _ => 0.22,
-    };
+    }) +
+        (switch (material) {
+          'metal_short' => 0.02,
+          'metal_long' => 0.03,
+          'jade' => 0.01,
+          'clay' => -0.03,
+          _ => 0.0,
+        });
     _applySchroederReverb(
       samples,
       sampleRate: sampleRate,
-      amount: ((baseReverb + reverb) / 2).clamp(0.0, 0.5),
+      amount: ((baseReverb + reverb) / 2).clamp(0.0, 0.42),
     );
-    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
+    return _encodeWav(
+      samples,
+      sampleRate: sampleRate,
+      gain: sustained ? 0.82 : 0.86,
+    );
+  }
+
+  static String _normalizeFluteStyle(String style) {
+    return switch (style) {
+      'lead' => 'lead',
+      'alto' => 'alto',
+      'bamboo' => 'bamboo',
+      _ => 'airy',
+    };
+  }
+
+  static String _normalizeFluteMaterial(String material) {
+    return switch (material) {
+      'metal_short' => 'metal_short',
+      'metal_long' => 'metal_long',
+      'jade' => 'jade',
+      'clay' => 'clay',
+      _ => 'wood',
+    };
+  }
+
+  static Uint8List _buildFluteSustainLayer(
+    double frequency,
+    String style, {
+    required String material,
+    required String layer,
+  }) {
+    const sampleRate = 32000;
+    const durationSeconds = 6.0;
+    final totalSamples = (sampleRate * durationSeconds).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    final loopFrequency = (frequency * durationSeconds).round() / durationSeconds;
+    final vibratoRate = switch (style) {
+      'lead' => 5.0,
+      'alto' => 4.0,
+      'bamboo' => 4.0,
+      _ => 4.0,
+    };
+    final vibratoDepth = switch (layer) {
+      'core' => 0.0016,
+      'air' => 0.0004,
+      _ => 0.0009,
+    };
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final loopPhase = t / durationSeconds;
+      final loopEnv =
+          0.9 + 0.1 * math.cos(math.pi * 2 * loopPhase);
+      final vib =
+          math.sin(math.pi * 2 * vibratoRate * loopPhase) * vibratoDepth;
+      final pitched = loopFrequency * (1 + vib);
+      samples[i] = switch (layer) {
+        'air' => _buildFluteAirLayerSample(t, pitched, style, material),
+        'edge' => _buildFluteEdgeLayerSample(t, pitched, style, material),
+        _ => _buildFluteCoreLayerSample(t, pitched, style, material),
+      } *
+      loopEnv;
+    }
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.78);
+  }
+
+  static double _buildFluteCoreLayerSample(
+    double t,
+    double pitched,
+    String style,
+    String material,
+  ) {
+    final bodyMul = switch (material) {
+      'metal_short' => 0.88,
+      'metal_long' => 0.92,
+      'jade' => 1.0,
+      'clay' => 1.08,
+      _ => 0.96,
+    };
+    final overtone = switch (style) {
+      'lead' => 0.18,
+      'alto' => 0.1,
+      'bamboo' => 0.09,
+      _ => 0.13,
+    };
+    return math.sin(math.pi * 2 * pitched * t) * 0.62 +
+        math.sin(math.pi * 2 * pitched * 2.0 * t + 0.12) * overtone +
+        math.sin(math.pi * 2 * pitched * 3.0 * t + 0.38) * 0.06 * bodyMul +
+        math.sin(math.pi * 2 * pitched * 0.5 * t + 0.84) * 0.04 * bodyMul;
+  }
+
+  static double _buildFluteAirLayerSample(
+    double t,
+    double pitched,
+    String style,
+    String material,
+  ) {
+    final breathMul = switch (material) {
+      'metal_short' => 0.68,
+      'metal_long' => 0.62,
+      'jade' => 0.52,
+      'clay' => 0.4,
+      _ => 0.84,
+    };
+    final jetMul = switch (style) {
+      'lead' => 0.1,
+      'alto' => 0.08,
+      'bamboo' => 0.11,
+      _ => 0.09,
+    };
+    final pseudoNoise =
+        math.sin(math.pi * 2 * pitched * 5.0 * t + 0.31) * 0.04 +
+        math.sin(math.pi * 2 * pitched * 7.0 * t + 0.57) * 0.03 +
+        math.sin(math.pi * 2 * pitched * 11.0 * t + 0.18) * 0.015;
+    return pseudoNoise * breathMul +
+        math.sin(math.pi * 2 * pitched * 1.02 * t + 0.08) * jetMul;
+  }
+
+  static double _buildFluteEdgeLayerSample(
+    double t,
+    double pitched,
+    String style,
+    String material,
+  ) {
+    final edgeMul = switch (material) {
+      'metal_short' => 0.1,
+      'metal_long' => 0.08,
+      'jade' => 0.05,
+      'clay' => 0.03,
+      _ => 0.06,
+    };
+    final formantMul = switch (style) {
+      'lead' => 0.11,
+      'alto' => 0.07,
+      'bamboo' => 0.06,
+      _ => 0.08,
+    };
+    return math.sin(math.pi * 2 * pitched * 1.92 * t + 0.16) * formantMul +
+        math.sin(math.pi * 2 * pitched * 3.86 * t + 0.43) * (formantMul * 0.56) +
+        math.sin(math.pi * 2 * pitched * 5.35 * t + 0.22) * edgeMul;
   }
 
   static Uint8List _buildGuitarNote({

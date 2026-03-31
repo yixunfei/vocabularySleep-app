@@ -61,6 +61,7 @@ class _FlutePreset {
   const _FlutePreset({
     required this.id,
     required this.styleId,
+    required this.materialId,
     required this.scaleId,
     required this.breath,
     required this.reverb,
@@ -69,6 +70,7 @@ class _FlutePreset {
 
   final String id;
   final String styleId;
+  final String materialId;
   final String scaleId;
   final double breath;
   final double reverb;
