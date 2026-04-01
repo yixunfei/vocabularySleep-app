@@ -94,6 +94,11 @@ class _HarpInstrumentDeck extends StatefulWidget {
 
 class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
   _HarpDeckInstrument _selected = _HarpDeckInstrument.harp;
+  _HarpConfig _harpConfig = const _HarpConfig();
+
+  void _onHarpConfigChanged(_HarpConfig config) {
+    _harpConfig = config;
+  }
 
   String _label(AppI18n i18n, _HarpDeckInstrument instrument) {
     return switch (instrument) {
@@ -260,14 +265,21 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.guitar => const _GuitarTool(),
       _HarpDeckInstrument.triangle => const _TriangleTool(),
       _HarpDeckInstrument.violin => const _ViolinTool(),
-      _ => const _HarpTool(),
+      _ => _HarpTool(
+        initialConfig: _harpConfig,
+        onConfigChanged: _onHarpConfigChanged,
+      ),
     };
   }
 
   void _openInstrumentFullScreen() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _DeckInstrumentFullScreenPage(instrument: _selected),
+        builder: (_) => _DeckInstrumentFullScreenPage(
+          instrument: _selected,
+          harpConfig: _harpConfig,
+          onHarpConfigChanged: _onHarpConfigChanged,
+        ),
       ),
     );
   }
@@ -352,9 +364,15 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
 }
 
 class _DeckInstrumentFullScreenPage extends StatefulWidget {
-  const _DeckInstrumentFullScreenPage({required this.instrument});
+  const _DeckInstrumentFullScreenPage({
+    required this.instrument,
+    this.harpConfig,
+    this.onHarpConfigChanged,
+  });
 
   final _HarpDeckInstrument instrument;
+  final _HarpConfig? harpConfig;
+  final void Function(_HarpConfig config)? onHarpConfigChanged;
 
   @override
   State<_DeckInstrumentFullScreenPage> createState() =>
@@ -389,6 +407,8 @@ class _DeckInstrumentFullScreenPageState
       _HarpDeckInstrument.violin => const _ViolinTool(fullScreen: true),
       _ => _HarpTool(
         fullScreen: true,
+        initialConfig: widget.harpConfig,
+        onConfigChanged: widget.onHarpConfigChanged,
         onExitFullScreen: () => Navigator.of(context).pop(),
       ),
     };

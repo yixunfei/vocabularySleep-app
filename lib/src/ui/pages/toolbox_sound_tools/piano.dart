@@ -201,6 +201,7 @@ class _PianoToolState extends State<_PianoTool> {
   String _rootPitchClass = 'C';
   Offset? _twoFingerOrigin;
   bool _rangeNavigatorExpanded = false;
+  bool _dualKeyboardMode = true;
 
   @override
   void initState() {
@@ -516,6 +517,12 @@ class _PianoToolState extends State<_PianoTool> {
   void _toggleRangeNavigatorLayout() {
     setState(() {
       _rangeNavigatorExpanded = !_rangeNavigatorExpanded;
+    });
+  }
+
+  void _toggleDualKeyboardMode() {
+    setState(() {
+      _dualKeyboardMode = !_dualKeyboardMode;
     });
   }
 
@@ -1251,6 +1258,94 @@ class _PianoToolState extends State<_PianoTool> {
     );
   }
 
+  Widget _buildDualKeyboardStage(
+    BuildContext context, {
+    required _PianoViewportSpec viewport,
+    required bool immersive,
+  }) {
+    final i18n = _toolboxI18n(context);
+    final lowerOctaveSpan = viewport.octaveSpan;
+    final lowerStart = _rangeStartOctave;
+    final upperStart = math.min(
+      lowerStart + lowerOctaveSpan,
+      _maxRangeStart(lowerOctaveSpan),
+    );
+
+    final lowerSlice = _sliceFor(lowerStart, lowerOctaveSpan);
+    final upperSlice = _sliceFor(upperStart, lowerOctaveSpan);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final keyboardWidth = (constraints.maxWidth - 8) / 2;
+        final dualViewport = _PianoViewportSpec(
+          octaveSpan: viewport.octaveSpan,
+          whiteKeyExtent: viewport.whiteKeyExtent,
+          stageHeight: viewport.stageHeight,
+          compactLabels: viewport.compactLabels || keyboardWidth < 140,
+        );
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      pickUiText(i18n, zh: '高音区', en: 'High'),
+                      style: TextStyle(
+                        color: immersive ? Colors.white70 : null,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: _buildKeyboardStage(
+                      context,
+                      upperSlice,
+                      viewport: dualViewport,
+                      immersive: immersive,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      pickUiText(i18n, zh: '低音区', en: 'Low'),
+                      style: TextStyle(
+                        color: immersive ? Colors.white70 : null,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: _buildKeyboardStage(
+                      context,
+                      lowerSlice,
+                      viewport: dualViewport,
+                      immersive: immersive,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildSettingsSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -1653,18 +1748,24 @@ class _PianoToolState extends State<_PianoTool> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 12,
-                topInset + 8,
+                topInset + 56,
                 12,
                 bottomInset + 8,
               ),
               child: Align(
                 alignment: Alignment.topCenter,
-                child: _buildKeyboardStage(
-                  context,
-                  slice,
-                  viewport: viewport,
-                  immersive: true,
-                ),
+                child: _dualKeyboardMode
+                    ? _buildDualKeyboardStage(
+                        context,
+                        viewport: viewport,
+                        immersive: true,
+                      )
+                    : _buildKeyboardStage(
+                        context,
+                        slice,
+                        viewport: viewport,
+                        immersive: true,
+                      ),
               ),
             ),
           ),
@@ -1693,6 +1794,16 @@ class _PianoToolState extends State<_PianoTool> {
                       onPressed: () => Navigator.of(context).pop(),
                       style: overlayButtonStyle,
                       child: const Icon(Icons.arrow_back_rounded),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.tonal(
+                      onPressed: _toggleDualKeyboardMode,
+                      style: overlayButtonStyle,
+                      child: Icon(
+                        _dualKeyboardMode
+                            ? Icons.view_day_rounded
+                            : Icons.view_stream_rounded,
+                      ),
                     ),
                     const Spacer(),
                     FilledButton.tonalIcon(
@@ -1813,6 +1924,16 @@ class _PianoToolState extends State<_PianoTool> {
                       label: Text(pickUiText(i18n, zh: '分行显示', en: 'Rows')),
                     ),
                     OutlinedButton.icon(
+                      onPressed: _toggleDualKeyboardMode,
+                      icon: Icon(
+                        _dualKeyboardMode
+                            ? Icons.view_stream_rounded
+                            : Icons.view_day_rounded,
+                      ),
+                      label: Text(pickUiText(i18n, zh: '双键盘', en: 'Dual')),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
                       onPressed: () => _openFullScreen(context),
                       icon: const Icon(Icons.open_in_full_rounded),
                       label: Text(
@@ -1832,12 +1953,18 @@ class _PianoToolState extends State<_PianoTool> {
                 immersive: false,
               ),
               const SizedBox(height: 12),
-              _buildKeyboardStage(
-                context,
-                slice,
-                viewport: viewport,
-                immersive: false,
-              ),
+              _dualKeyboardMode
+                  ? _buildDualKeyboardStage(
+                      context,
+                      viewport: viewport,
+                      immersive: false,
+                    )
+                  : _buildKeyboardStage(
+                      context,
+                      slice,
+                      viewport: viewport,
+                      immersive: false,
+                    ),
               const SizedBox(height: 10),
               Text(
                 pickUiText(

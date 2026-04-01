@@ -1293,38 +1293,41 @@ class ToolboxAudioBank {
           math.exp(-0.9 * t);
 
       final turbulence =
-          math.sin(math.pi * 2 * (pitched * 5.6 + 17) * t + 0.31) * 0.48 +
-          math.sin(math.pi * 2 * (pitched * 8.8 + 43) * t + 1.07) * 0.32 +
-          math.cos(math.pi * 2 * (pitched * 12.4 + 71) * t + 0.53) * 0.2;
+          math.sin(math.pi * 2 * (pitched * 5.6 + 17) * t + 0.31) * 0.32 +
+          math.sin(math.pi * 2 * (pitched * 8.8 + 43) * t + 1.07) * 0.22 +
+          math.cos(math.pi * 2 * (pitched * 12.4 + 71) * t + 0.53) * 0.12;
       final jetNoise =
           turbulence *
           breathNoise *
-          (0.74 + breathEnergy * 0.42) *
+          (0.52 + breathEnergy * 0.32) *
           breathPulse *
           airFlutter *
-          (0.58 + 0.42 * math.exp(-1.6 * t));
+          (0.45 + 0.55 * math.exp(-1.8 * t));
       final chiff =
           (math.sin((i + 1) * 111.3) + math.cos((i + 1) * 87.7)) *
-          (0.016 + breathNoise * 0.45) *
-          math.exp(-50 * t) *
-          (0.84 + breathEnergy * 0.2);
+          (0.008 + breathNoise * 0.28) *
+          math.exp(-55 * t) *
+          (0.72 + breathEnergy * 0.18);
 
       var tone =
           math.sin(math.pi * 2 * pitched * t) *
-          (0.56 + breathEnergy * 0.18) *
+          (0.68 + breathEnergy * 0.22) *
           breathPulse;
       tone +=
-          math.sin(math.pi * 2 * pitched * 2.01 * t + 0.11) *
-          (0.17 * overtoneMul);
+          math.sin(math.pi * 2 * pitched * 2.006 * t + 0.08) *
+          (0.22 * overtoneMul);
       tone +=
-          math.sin(math.pi * 2 * pitched * 2.98 * t + 0.36) *
-          (0.08 * overtoneMul);
+          math.sin(math.pi * 2 * pitched * 2.995 * t + 0.31) *
+          (0.12 * overtoneMul);
       tone +=
-          math.sin(math.pi * 2 * pitched * 4.07 * t + 0.63) *
-          (0.04 * overtoneMul);
+          math.sin(math.pi * 2 * pitched * 3.98 * t + 0.52) *
+          (0.06 * overtoneMul);
       tone +=
-          math.sin(math.pi * 2 * pitched * 5.11 * t + 0.51) *
-          (0.022 * overtoneMul * shimmerMul);
+          math.sin(math.pi * 2 * pitched * 5.02 * t + 0.41) *
+          (0.035 * overtoneMul * shimmerMul);
+      tone +=
+          math.sin(math.pi * 2 * pitched * 6.01 * t + 0.68) *
+          (0.018 * overtoneMul * shimmerMul);
       final formantA =
           math.sin(math.pi * 2 * (pitched * 1.96) * t + 0.18) *
           (0.05 + breathEnergy * 0.05) *
@@ -1410,7 +1413,7 @@ class ToolboxAudioBank {
       samples[i] = _softClip(
         (embouchureJet +
                 airColumn +
-                tone +
+                tone * 1.15 +
                 formantA +
                 formantB +
                 jetNoise +
@@ -1419,7 +1422,7 @@ class ToolboxAudioBank {
                 edge +
                 tailResonance) *
             env *
-            (1.02 + breathEnergy * 0.22),
+            (1.08 + breathEnergy * 0.18),
       );
     }
 

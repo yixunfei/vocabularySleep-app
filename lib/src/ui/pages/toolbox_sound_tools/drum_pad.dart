@@ -1285,23 +1285,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
         final width = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final crossAxisCount = widget.fullScreen
-            ? (width >= 1040
-                  ? 3
-                  : width >= 560
-                  ? 2
-                  : 1)
-            : (width >= 880
-                  ? 3
-                  : width >= 340
-                  ? 2
-                  : 1);
+        final crossAxisCount = 2;
         final mainAxisExtent = widget.fullScreen
-            ? (width >= 1040
-                  ? 186.0
-                  : width >= 560
-                  ? 166.0
-                  : 144.0)
+            ? (width >= 760 ? 180.0 : (width >= 560 ? 160.0 : 140.0))
             : (width < 400 ? 120.0 : (width < 560 ? 128.0 : 148.0));
         return GridView.builder(
           shrinkWrap: true,
@@ -2285,40 +2271,6 @@ class _DrumPadToolState extends State<_DrumPadTool>
     );
   }
 
-  Widget _buildFullScreenStatusItemV2({
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-  }) {
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        children: <Widget>[
-          Icon(icon, size: 14, color: iconColor),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              label,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDrumLiveOverviewCard(BuildContext context, AppI18n i18n) {
     final theme = Theme.of(context);
     final presetLabel = _presetId.isEmpty
@@ -2650,158 +2602,471 @@ class _DrumPadToolState extends State<_DrumPadTool>
     );
   }
 
-  Widget _buildDrumFullScreenV2(BuildContext context, AppI18n i18n) {
+  Widget _buildDrumImmersiveFullScreen(BuildContext context, AppI18n i18n) {
     final topInset = MediaQuery.viewPaddingOf(context).top;
-    final overlayButtonStyle = FilledButton.styleFrom(
-      backgroundColor: Colors.black.withValues(alpha: 0.55),
-      foregroundColor: Colors.white,
-      elevation: 0,
-      side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final leftInset = MediaQuery.viewPaddingOf(context).left;
+    final rightInset = MediaQuery.viewPaddingOf(context).right;
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            Color(0xFF0A0A14),
+            Color(0xFF12121F),
+            Color(0xFF0A0A14),
+          ],
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        bottom: false,
+        child: Stack(
+          children: <Widget>[
+            if (_stageLightsEnabled)
+              Positioned.fill(child: _buildLaserOverlay()),
+            Column(
+              children: <Widget>[
+                SizedBox(height: topInset + 8),
+                _buildLandscapeTopBar(context, i18n),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: leftInset + 12,
+                      right: rightInset + 12,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          flex: 3,
+                          child: _buildLandscapePadDeck(context, i18n),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 2,
+                          child: _buildLandscapeSidebar(context, i18n),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: bottomInset + 8),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
-    return _buildInstrumentPanelShell(
-      context,
-      fullScreen: true,
-      scrollable: false,
+  }
+
+  Widget _buildLandscapeTopBar(BuildContext context, AppI18n i18n) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                IconButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.white,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 20,
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+                IconButton(
+                  onPressed: () => _openDrumSettingsSheet(context, i18n),
+                  icon: const Icon(Icons.tune_rounded, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          _buildLandscapeStatusChip(
+            icon: Icons.speed_rounded,
+            label: '$_bpm BPM',
+            color: const Color(0xFF38BDF8),
+          ),
+          const SizedBox(width: 8),
+          _buildLandscapeStatusChip(
+            icon: _metronomeEnabled
+                ? Icons.music_note_rounded
+                : Icons.music_off_rounded,
+            label: _metronomeEnabled
+                ? pickUiText(i18n, zh: '节拍', en: 'Metro')
+                : pickUiText(i18n, zh: '静音', en: 'Off'),
+            color: _metronomeEnabled ? const Color(0xFF7DD3FC) : Colors.white54,
+          ),
+          const SizedBox(width: 8),
+          _buildLandscapeStatusChip(
+            icon: Icons.grid_view_rounded,
+            label: _patternId.isEmpty
+                ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+                : _patternLabel(i18n, _activePattern),
+            color: const Color(0xFF86EFAC),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapeStatusChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapePadDeck(BuildContext context, AppI18n i18n) {
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: Row(
+            children: <Widget>[
+              Expanded(child: _buildLandscapePadTile(context, i18n, _pads[0])),
+              const SizedBox(width: 8),
+              Expanded(child: _buildLandscapePadTile(context, i18n, _pads[1])),
+              const SizedBox(width: 8),
+              Expanded(child: _buildLandscapePadTile(context, i18n, _pads[2])),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Row(
+            children: <Widget>[
+              Expanded(child: _buildLandscapePadTile(context, i18n, _pads[3])),
+              const SizedBox(width: 8),
+              Expanded(child: _buildLandscapePadTile(context, i18n, _pads[4])),
+              const SizedBox(width: 8),
+              Expanded(child: _buildLandscapePadTile(context, i18n, _pads[5])),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLandscapePadTile(
+    BuildContext context,
+    AppI18n i18n,
+    _DrumPadSpec pad,
+  ) {
+    final held = _isPadHeld(pad.id);
+    final active = held || _activePadIds.contains(pad.id);
+
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (event) =>
+          _handlePadPointerDown(pad, event, hitSize: Size.zero),
+      onPointerUp: _handlePadPointerEnd,
+      onPointerCancel: _handlePadPointerEnd,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: <Color>[
+              pad.color.withValues(alpha: active ? 1.0 : 0.85),
+              pad.color.withValues(alpha: active ? 0.85 : 0.65),
+            ],
+          ),
+          border: Border.all(
+            color: active
+                ? Colors.white.withValues(alpha: 0.5)
+                : pad.color.withValues(alpha: 0.3),
+            width: active ? 2 : 1,
+          ),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: pad.color.withValues(alpha: active ? 0.6 : 0.3),
+              blurRadius: active ? 24 : 16,
+              spreadRadius: active ? 1 : 0,
+            ),
+          ],
+        ),
+        child: Stack(
+          children: <Widget>[
+            if (_stageLightsEnabled && active)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: RadialGradient(
+                      center: Alignment.center,
+                      radius: 1.2,
+                      colors: <Color>[
+                        Colors.white.withValues(alpha: 0.25),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(pad.icon, color: Colors.white, size: 32),
+                  const SizedBox(height: 6),
+                  Text(
+                    _padLabel(i18n, pad.id),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLandscapeSidebar(BuildContext context, AppI18n i18n) {
+    return Column(
+      children: <Widget>[
+        _buildLandscapeTransportPanel(context, i18n),
+        const SizedBox(height: 12),
+        Expanded(child: _buildLandscapeMetronomePanel(context, i18n)),
+      ],
+    );
+  }
+
+  Widget _buildLandscapeTransportPanel(BuildContext context, AppI18n i18n) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _transportRunning
+                      ? _stopTransport
+                      : _startTransport,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _transportRunning
+                        ? const Color(0xFFEF4444)
+                        : const Color(0xFF22C55E),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: Icon(
+                    _transportRunning
+                        ? Icons.stop_rounded
+                        : Icons.play_arrow_rounded,
+                    size: 20,
+                  ),
+                  label: Text(
+                    _transportRunning
+                        ? pickUiText(i18n, zh: '停止', en: 'Stop')
+                        : pickUiText(i18n, zh: '播放', en: 'Play'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: _metronomeEnabled
+                      ? const Color(0xFF38BDF8).withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _metronomeEnabled
+                        ? const Color(0xFF38BDF8).withValues(alpha: 0.4)
+                        : Colors.white.withValues(alpha: 0.10),
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: () =>
+                      setState(() => _metronomeEnabled = !_metronomeEnabled),
+                  icon: Icon(
+                    _metronomeEnabled
+                        ? Icons.music_note_rounded
+                        : Icons.music_off_rounded,
+                    color: _metronomeEnabled
+                        ? const Color(0xFF7DD3FC)
+                        : Colors.white54,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              const Icon(
+                Icons.speed_rounded,
+                color: Color(0xFF38BDF8),
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderThemeData(
+                    activeTrackColor: const Color(0xFF38BDF8),
+                    inactiveTrackColor: const Color(
+                      0xFF38BDF8,
+                    ).withValues(alpha: 0.2),
+                    thumbColor: const Color(0xFF38BDF8),
+                    overlayColor: const Color(
+                      0xFF38BDF8,
+                    ).withValues(alpha: 0.2),
+                  ),
+                  child: Slider(
+                    value: _bpm.toDouble(),
+                    min: 60,
+                    max: 156,
+                    divisions: 96,
+                    onChanged: (value) {
+                      setState(() {
+                        _bpm = value.round();
+                        _patternId = '';
+                      });
+                      _restartTransportIfNeeded();
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$_bpm',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapeMetronomePanel(BuildContext context, AppI18n i18n) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SizedBox(height: topInset > 0 ? 4 : 0),
-          Container(
-            decoration: _immersivePanelDecoration(alpha: 0.07, radius: 18),
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compactButtons = constraints.maxWidth < 560;
-                final compactHeader = constraints.maxWidth < 760;
-                final statusColumns = constraints.maxWidth >= 1120
-                    ? 4
-                    : (constraints.maxWidth >= 720 ? 2 : 1);
-                const gap = 8.0;
-                final itemWidth = statusColumns == 1
-                    ? constraints.maxWidth
-                    : (constraints.maxWidth - gap * (statusColumns - 1)) /
-                          statusColumns;
-                final statusItems = <Widget>[
-                  SizedBox(
-                    width: itemWidth,
-                    child: _buildFullScreenStatusItemV2(
-                      icon: Icons.speed_rounded,
-                      iconColor: const Color(0xFF38BDF8),
-                      label: '$_bpm BPM',
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                pickUiText(i18n, zh: '步进器', en: 'Sequencer'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                _currentStep < 0 ? '--' : '${_currentStep + 1}/$_stepCount',
+                style: const TextStyle(
+                  color: Color(0xFF7DD3FC),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 4,
+              ),
+              itemCount: _stepCount,
+              itemBuilder: (context, index) {
+                final isActive = _currentStep == index;
+                final isBeat = index % 4 == 0;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    color: isActive
+                        ? const Color(0xFF38BDF8)
+                        : isBeat
+                        ? Colors.white.withValues(alpha: 0.35)
+                        : Colors.white.withValues(alpha: 0.12),
+                    border: Border.all(
+                      color: isActive
+                          ? Colors.white.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.08),
                     ),
                   ),
-                  SizedBox(
-                    width: itemWidth,
-                    child: _buildFullScreenStatusItemV2(
-                      icon: _metronomeEnabled
-                          ? Icons.music_note_rounded
-                          : Icons.music_off_rounded,
-                      iconColor: _metronomeEnabled
-                          ? const Color(0xFF7DD3FC)
-                          : Colors.white54,
-                      label: _metronomeEnabled
-                          ? pickUiText(i18n, zh: '节拍器开启', en: 'Metronome on')
-                          : pickUiText(i18n, zh: '节拍器关闭', en: 'Metronome off'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: itemWidth,
-                    child: _buildFullScreenStatusItemV2(
-                      icon: Icons.flash_on_rounded,
-                      iconColor: const Color(0xFFFDE68A),
-                      label: pickUiText(
-                        i18n,
-                        zh: '命中 $_hits',
-                        en: 'Hits $_hits',
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: itemWidth,
-                    child: _buildFullScreenStatusItemV2(
-                      icon: Icons.grid_view_rounded,
-                      iconColor: const Color(0xFF86EFAC),
-                      label: _patternId.isEmpty
-                          ? pickUiText(i18n, zh: '自定义步进', en: 'Custom steps')
-                          : _patternLabel(i18n, _activePattern),
-                    ),
-                  ),
-                ];
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        FilledButton.tonal(
-                          onPressed: () => Navigator.of(context).maybePop(),
-                          style: overlayButtonStyle,
-                          child: const Icon(Icons.arrow_back_rounded),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '鼓垫现场模式',
-                                  en: 'Drum Pad Live',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '更大的演奏区、独立的 transport 与步进器侧栏，方便现场手打与 loop 叠加。',
-                                  en: 'A larger pad deck with dedicated transport and sequencer panels for live layering.',
-                                ),
-                                maxLines: compactHeader ? 2 : 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        if (compactButtons)
-                          FilledButton.tonal(
-                            onPressed: () =>
-                                _openDrumSettingsSheet(context, i18n),
-                            style: overlayButtonStyle,
-                            child: const Icon(Icons.tune_rounded),
-                          )
-                        else
-                          FilledButton.tonalIcon(
-                            onPressed: () =>
-                                _openDrumSettingsSheet(context, i18n),
-                            style: overlayButtonStyle,
-                            icon: const Icon(Icons.tune_rounded),
-                            label: Text(
-                              pickUiText(i18n, zh: '设置', en: 'Settings'),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(spacing: gap, runSpacing: gap, children: statusItems),
-                  ],
                 );
               },
             ),
           ),
-          const SizedBox(height: 14),
-          Expanded(child: _buildDrumLiveWorkspace(context, i18n)),
         ],
       ),
     );
@@ -2811,7 +3076,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
   Widget build(BuildContext context) {
     final i18n = _toolboxI18n(context);
     if (widget.fullScreen) {
-      return _buildDrumFullScreenV2(context, i18n);
+      return _buildDrumImmersiveFullScreen(context, i18n);
     }
     return _buildInstrumentPanelShell(
       context,

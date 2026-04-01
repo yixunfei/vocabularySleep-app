@@ -1,10 +1,75 @@
 part of '../toolbox_sound_tools.dart';
 
+class _HarpConfig {
+  const _HarpConfig({
+    this.scaleId = 'c_major',
+    this.chordId = 'major',
+    this.pluckStyleId = 'silk',
+    this.patternId = 'glide',
+    this.paletteId = 'ivory_wood',
+    this.chordRootIndex = 0,
+    this.chordResonanceEnabled = false,
+    this.reverb = 0.24,
+    this.damping = 10,
+    this.swipeThreshold = 1.2,
+    this.activeRealismPresetId,
+  });
+
+  final String scaleId;
+  final String chordId;
+  final String pluckStyleId;
+  final String patternId;
+  final String paletteId;
+  final int chordRootIndex;
+  final bool chordResonanceEnabled;
+  final double reverb;
+  final double damping;
+  final double swipeThreshold;
+  final String? activeRealismPresetId;
+
+  _HarpConfig copyWith({
+    String? scaleId,
+    String? chordId,
+    String? pluckStyleId,
+    String? patternId,
+    String? paletteId,
+    int? chordRootIndex,
+    bool? chordResonanceEnabled,
+    double? reverb,
+    double? damping,
+    double? swipeThreshold,
+    String? activeRealismPresetId,
+  }) {
+    return _HarpConfig(
+      scaleId: scaleId ?? this.scaleId,
+      chordId: chordId ?? this.chordId,
+      pluckStyleId: pluckStyleId ?? this.pluckStyleId,
+      patternId: patternId ?? this.patternId,
+      paletteId: paletteId ?? this.paletteId,
+      chordRootIndex: chordRootIndex ?? this.chordRootIndex,
+      chordResonanceEnabled:
+          chordResonanceEnabled ?? this.chordResonanceEnabled,
+      reverb: reverb ?? this.reverb,
+      damping: damping ?? this.damping,
+      swipeThreshold: swipeThreshold ?? this.swipeThreshold,
+      activeRealismPresetId:
+          activeRealismPresetId ?? this.activeRealismPresetId,
+    );
+  }
+}
+
 class _HarpTool extends StatefulWidget {
-  const _HarpTool({this.fullScreen = false, this.onExitFullScreen});
+  const _HarpTool({
+    this.fullScreen = false,
+    this.onExitFullScreen,
+    this.initialConfig,
+    this.onConfigChanged,
+  });
 
   final bool fullScreen;
   final VoidCallback? onExitFullScreen;
+  final _HarpConfig? initialConfig;
+  final void Function(_HarpConfig config)? onConfigChanged;
 
   @override
   State<_HarpTool> createState() => _HarpToolState();
@@ -387,30 +452,76 @@ class _HarpToolState extends State<_HarpTool>
   int? _focusedString;
   int? _lastTickMicros;
   bool _muted = false;
-  String _scaleId = _scalePresets.first.id;
-  String _chordId = _chordPresets.first.id;
-  String _pluckStyleId = _pluckPresets.first.id;
-  String _patternId = _patternPresets.first.id;
-  String _paletteId = _palettePresets.first.id;
-  int _chordRootIndex = 0;
-  bool _chordResonanceEnabled = false;
-  double _reverbUi = 0.24;
-  double _reverbForAudio = 0.24;
-  double _damping = 10;
-  double _swipeThreshold = 1.2;
+  late String _scaleId;
+  late String _chordId;
+  late String _pluckStyleId;
+  late String _patternId;
+  late String _paletteId;
+  late int _chordRootIndex;
+  late bool _chordResonanceEnabled;
+  late double _reverbUi;
+  late double _reverbForAudio;
+  late double _damping;
+  late double _swipeThreshold;
   String? _activeRealismPresetId;
 
   @override
   void initState() {
     super.initState();
+    final config = widget.initialConfig;
+    if (config != null) {
+      _scaleId = config.scaleId;
+      _chordId = config.chordId;
+      _pluckStyleId = config.pluckStyleId;
+      _patternId = config.patternId;
+      _paletteId = config.paletteId;
+      _chordRootIndex = config.chordRootIndex;
+      _chordResonanceEnabled = config.chordResonanceEnabled;
+      _reverbUi = config.reverb;
+      _reverbForAudio = config.reverb;
+      _damping = config.damping;
+      _swipeThreshold = config.swipeThreshold;
+      _activeRealismPresetId = config.activeRealismPresetId;
+    } else {
+      _scaleId = _scalePresets.first.id;
+      _chordId = _chordPresets.first.id;
+      _pluckStyleId = _pluckPresets.first.id;
+      _patternId = _patternPresets.first.id;
+      _paletteId = _palettePresets.first.id;
+      _chordRootIndex = 0;
+      _chordResonanceEnabled = false;
+      _reverbUi = 0.24;
+      _reverbForAudio = 0.24;
+      _damping = 10;
+      _swipeThreshold = 1.2;
+      _activeRealismPresetId = null;
+      _applyRealismPreset(_realismPresets.first, withSetState: false);
+    }
     _vibrationTicker = createTicker(_tickStrings);
-    _applyRealismPreset(_realismPresets.first, withSetState: false);
     if (widget.fullScreen) {
       unawaited(_enterImmersiveMode());
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_warmUpActiveTone());
     });
+  }
+
+  void _notifyConfigChanged() {
+    widget.onConfigChanged?.call(
+      _HarpConfig(
+        scaleId: _scaleId,
+        chordId: _chordId,
+        pluckStyleId: _pluckStyleId,
+        patternId: _patternId,
+        paletteId: _paletteId,
+        chordRootIndex: _chordRootIndex,
+        chordResonanceEnabled: _chordResonanceEnabled,
+        reverb: _reverbUi,
+        damping: _damping,
+        swipeThreshold: _swipeThreshold,
+        activeRealismPresetId: _activeRealismPresetId,
+      ),
+    );
   }
 
   _HarpScalePreset get _activeScale =>
@@ -603,6 +714,7 @@ class _HarpToolState extends State<_HarpTool>
       applyValues();
     }
     _invalidateAudioPlayers();
+    _notifyConfigChanged();
   }
 
   void _invalidateAudioPlayers({bool warmUp = true}) {
@@ -1184,6 +1296,16 @@ class _HarpToolState extends State<_HarpTool>
                   size: 20,
                 ),
               ),
+              const SizedBox(width: 10),
+              FilledButton.tonal(
+                onPressed: () => _openHarpSettingsSheet(context, i18n),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.black.withValues(alpha: 0.38),
+                  foregroundColor: Colors.white,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Icon(Icons.tune_rounded, size: 20),
+              ),
             ],
           ),
         ),
@@ -1216,6 +1338,206 @@ class _HarpToolState extends State<_HarpTool>
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _openHarpSettingsSheet(BuildContext context, AppI18n i18n) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            void applySettings(VoidCallback mutation) {
+              if (!mounted) return;
+              setState(mutation);
+              setSheetState(() {});
+            }
+
+            return _buildHarpSettingsSheetContent(
+              context,
+              i18n,
+              applySettings: applySettings,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildHarpSettingsSheetContent(
+    BuildContext context,
+    AppI18n i18n, {
+    required void Function(VoidCallback mutation) applySettings,
+  }) {
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            pickUiText(i18n, zh: '高真实度预设', en: 'High Realism Presets'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _realismPresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_realismLabel(i18n, preset)),
+                    selected: _activeRealismPresetId == preset.id,
+                    tooltip: _realismDescription(i18n, preset),
+                    onSelected: (_) {
+                      _applyRealismPreset(preset);
+                      applySettings(() {});
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            pickUiText(i18n, zh: '音色拟真', en: 'Timbre'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _pluckPresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_pluckLabel(i18n, preset)),
+                    selected: _pluckStyleId == preset.id,
+                    tooltip: _pluckDescription(i18n, preset),
+                    onSelected: (_) {
+                      if (_pluckStyleId == preset.id) return;
+                      setState(() {
+                        _pluckStyleId = preset.id;
+                        _markRealismCustom();
+                      });
+                      _invalidateAudioPlayers();
+                      applySettings(() {});
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            pickUiText(i18n, zh: '主题配色', en: 'Palette'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _palettePresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_paletteLabel(i18n, preset)),
+                    selected: _paletteId == preset.id,
+                    onSelected: (_) {
+                      if (_paletteId == preset.id) return;
+                      applySettings(() {
+                        _paletteId = preset.id;
+                        _markRealismCustom();
+                      });
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            pickUiText(i18n, zh: '调式', en: 'Scale'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _scalePresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_scaleLabel(i18n, preset)),
+                    selected: _scaleId == preset.id,
+                    onSelected: (_) {
+                      if (_scaleId == preset.id) return;
+                      applySettings(() {
+                        _scaleId = preset.id;
+                        _markRealismCustom();
+                      });
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            pickUiText(i18n, zh: '残响', en: 'Reverb'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Slider(
+            value: _reverbUi,
+            min: 0.0,
+            max: 0.8,
+            divisions: 16,
+            onChanged: (value) {
+              setState(() {
+                _reverbUi = value;
+                _markRealismCustom();
+              });
+            },
+            onChangeEnd: (value) {
+              final quantized = (value * 20).round() / 20;
+              setState(() {
+                _reverbUi = quantized;
+                _reverbForAudio = quantized;
+                _markRealismCustom();
+              });
+              _invalidateAudioPlayers();
+              applySettings(() {});
+            },
+          ),
+          const SizedBox(height: 20),
+          Text(
+            pickUiText(i18n, zh: '阻尼', en: 'Damping'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Slider(
+            value: _damping,
+            min: 4,
+            max: 18,
+            divisions: 28,
+            onChanged: (value) {
+              applySettings(() {
+                _damping = value;
+                _markRealismCustom();
+              });
+            },
+          ),
+        ],
+      ),
     );
   }
 
