@@ -294,11 +294,7 @@ class _HarpToolState extends State<_HarpTool>
     _HarpPalettePreset(
       id: 'ivory_wood',
       label: 'Ivory Wood',
-      colors: <Color>[
-        Color(0xFFF6F0E2),
-        Color(0xFFD8C1A0),
-        Color(0xFFB48857),
-      ],
+      colors: <Color>[Color(0xFFF6F0E2), Color(0xFFD8C1A0), Color(0xFFB48857)],
     ),
     _HarpPalettePreset(
       id: 'moon',
@@ -385,13 +381,9 @@ class _HarpToolState extends State<_HarpTool>
   final List<double> _stringOffsets = List<double>.filled(_stringCount, 0);
   final List<double> _stringVelocities = List<double>.filled(_stringCount, 0);
   final List<int> _lastPluckAtMillis = List<int>.filled(_stringCount, 0);
+  final Map<int, _HarpPointerState> _pointerStates = <int, _HarpPointerState>{};
   late final Ticker _vibrationTicker;
 
-  Offset? _lastDragPoint;
-  int? _lastDragStringIndex;
-  int? _activePointerId;
-  Offset? _pointerDownPosition;
-  bool _pointerDragActive = false;
   int? _focusedString;
   int? _lastTickMicros;
   bool _muted = false;
@@ -835,14 +827,18 @@ class _HarpToolState extends State<_HarpTool>
     );
   }
 
-  void _handlePanStart(Offset localPosition, Size size) {
-    _lastDragPoint = localPosition;
+  void _handlePanStart(
+    _HarpPointerState pointerState,
+    Offset localPosition,
+    Size size,
+  ) {
+    pointerState.lastDragPoint = localPosition;
     final startIndex = _nearestStringByPosition(
       localPosition,
       size,
       horizontalLayout: _isHorizontalLayout,
     );
-    _lastDragStringIndex = startIndex;
+    pointerState.lastDragStringIndex = startIndex;
     _pluckString(
       startIndex,
       intensity: 0.32,
@@ -852,10 +848,14 @@ class _HarpToolState extends State<_HarpTool>
     );
   }
 
-  void _handlePanUpdate(Offset localPosition, Size size) {
+  void _handlePanUpdate(
+    _HarpPointerState pointerState,
+    Offset localPosition,
+    Size size,
+  ) {
     final current = localPosition;
-    final previous = _lastDragPoint;
-    _lastDragPoint = current;
+    final previous = pointerState.lastDragPoint;
+    pointerState.lastDragPoint = current;
     if (previous == null) return;
 
     final delta = current - previous;
@@ -878,8 +878,8 @@ class _HarpToolState extends State<_HarpTool>
         size,
         horizontalLayout: _isHorizontalLayout,
       );
-      if (nearest == _lastDragStringIndex) return;
-      _lastDragStringIndex = nearest;
+      if (nearest == pointerState.lastDragStringIndex) return;
+      pointerState.lastDragStringIndex = nearest;
       _pluckString(
         nearest,
         intensity: intensity,
@@ -889,8 +889,8 @@ class _HarpToolState extends State<_HarpTool>
       return;
     }
     for (final index in crossed) {
-      if (index == _lastDragStringIndex) continue;
-      _lastDragStringIndex = index;
+      if (index == pointerState.lastDragStringIndex) continue;
+      pointerState.lastDragStringIndex = index;
       _pluckString(
         index,
         intensity: intensity,
@@ -900,9 +900,9 @@ class _HarpToolState extends State<_HarpTool>
     }
   }
 
-  void _handlePanEnd() {
-    _lastDragPoint = null;
-    _lastDragStringIndex = null;
+  void _handlePanEnd(_HarpPointerState pointerState) {
+    pointerState.lastDragPoint = null;
+    pointerState.lastDragStringIndex = null;
   }
 
   bool _shouldEnterSweepMode(Offset delta) {
@@ -913,46 +913,39 @@ class _HarpToolState extends State<_HarpTool>
   }
 
   void _handlePointerDown(PointerDownEvent event) {
-    if (_activePointerId != null) return;
-    _activePointerId = event.pointer;
-    _pointerDownPosition = event.localPosition;
-    _pointerDragActive = false;
-    _lastDragPoint = null;
-    _lastDragStringIndex = null;
+    _pointerStates[event.pointer] = _HarpPointerState(
+      downPosition: event.localPosition,
+    );
   }
 
   void _handlePointerMove(PointerMoveEvent event, Size size) {
-    if (_activePointerId != event.pointer) return;
-    final start = _pointerDownPosition;
-    if (start == null) return;
+    final pointerState = _pointerStates[event.pointer];
+    if (pointerState == null) return;
+    final start = pointerState.downPosition;
     final current = event.localPosition;
-    if (!_pointerDragActive) {
+    if (!pointerState.dragActive) {
       final delta = current - start;
       if (!_shouldEnterSweepMode(delta)) return;
-      _pointerDragActive = true;
-      _handlePanStart(start, size);
+      pointerState.dragActive = true;
+      _handlePanStart(pointerState, start, size);
     }
-    _handlePanUpdate(current, size);
+    _handlePanUpdate(pointerState, current, size);
   }
 
   void _handlePointerUp(PointerUpEvent event, Size size) {
-    if (_activePointerId != event.pointer) return;
-    if (_pointerDragActive) {
-      _handlePanEnd();
+    final pointerState = _pointerStates.remove(event.pointer);
+    if (pointerState == null) return;
+    if (pointerState.dragActive) {
+      _handlePanEnd(pointerState);
     } else {
       _handleTap(event.localPosition, size);
     }
-    _activePointerId = null;
-    _pointerDownPosition = null;
-    _pointerDragActive = false;
   }
 
   void _handlePointerCancel(PointerCancelEvent event) {
-    if (_activePointerId != event.pointer) return;
-    _handlePanEnd();
-    _activePointerId = null;
-    _pointerDownPosition = null;
-    _pointerDragActive = false;
+    final pointerState = _pointerStates.remove(event.pointer);
+    if (pointerState == null) return;
+    _handlePanEnd(pointerState);
   }
 
   int _nearestStringByFrequency(double frequency) {
@@ -1081,25 +1074,27 @@ class _HarpToolState extends State<_HarpTool>
     required Size size,
     required bool rounded,
   }) {
-    Widget content = Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: _handlePointerDown,
-      onPointerMove: (event) => _handlePointerMove(event, size),
-      onPointerUp: (event) => _handlePointerUp(event, size),
-      onPointerCancel: _handlePointerCancel,
-      child: SizedBox(
-        width: size.width,
-        height: size.height,
-        child: CustomPaint(
-          painter: _HarpPainter(
-            stringCount: _stringCount,
-            noteFrequencies: _activeNotes,
-            stringOffsets: _stringOffsets,
-            focusedString: _focusedString,
-            colorScheme: Theme.of(context).colorScheme,
-            paletteColors: _activePalette.colors,
-            pluckStyleId: _pluckStyleId,
-            horizontalLayout: _isHorizontalLayout,
+    Widget content = _ToolboxScrollLockSurface(
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _handlePointerDown,
+        onPointerMove: (event) => _handlePointerMove(event, size),
+        onPointerUp: (event) => _handlePointerUp(event, size),
+        onPointerCancel: _handlePointerCancel,
+        child: SizedBox(
+          width: size.width,
+          height: size.height,
+          child: CustomPaint(
+            painter: _HarpPainter(
+              stringCount: _stringCount,
+              noteFrequencies: _activeNotes,
+              stringOffsets: _stringOffsets,
+              focusedString: _focusedString,
+              colorScheme: Theme.of(context).colorScheme,
+              paletteColors: _activePalette.colors,
+              pluckStyleId: _pluckStyleId,
+              horizontalLayout: _isHorizontalLayout,
+            ),
           ),
         ),
       ),
@@ -1155,7 +1150,8 @@ class _HarpToolState extends State<_HarpTool>
             children: <Widget>[
               FilledButton.tonal(
                 onPressed:
-                    widget.onExitFullScreen ?? () => Navigator.of(context).pop(),
+                    widget.onExitFullScreen ??
+                    () => Navigator.of(context).pop(),
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.black.withValues(alpha: 0.38),
                   foregroundColor: Colors.white,
@@ -1274,10 +1270,9 @@ class _HarpToolState extends State<_HarpTool>
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
                 final viewportHeight = MediaQuery.sizeOf(context).height;
-                final stageHeight = math.min(
-                  math.max(380, viewportHeight * 0.68),
-                  620,
-                ).toDouble();
+                final stageHeight = math
+                    .min(math.max(380, viewportHeight * 0.68), 620)
+                    .toDouble();
                 final size = Size(width, stageHeight);
                 return _buildHarpSurface(
                   context: context,
@@ -1585,6 +1580,15 @@ class _HarpToolState extends State<_HarpTool>
       ),
     );
   }
+}
+
+class _HarpPointerState {
+  _HarpPointerState({required this.downPosition});
+
+  final Offset downPosition;
+  bool dragActive = false;
+  Offset? lastDragPoint;
+  int? lastDragStringIndex;
 }
 
 class _CompactMetric extends StatelessWidget {

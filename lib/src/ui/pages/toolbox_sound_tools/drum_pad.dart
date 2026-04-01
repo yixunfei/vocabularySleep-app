@@ -26,6 +26,30 @@ class _DrumPatternTemplate {
   final Map<String, List<int>> stepsByPad;
 }
 
+class _DrumLaserBeam {
+  const _DrumLaserBeam({
+    required this.id,
+    required this.color,
+    required this.coneWidthFactor,
+    required this.startAngle,
+    required this.endAngle,
+    required this.wobblePhase,
+    required this.startedAtMs,
+    required this.durationMs,
+    required this.opacity,
+  });
+
+  final int id;
+  final Color color;
+  final double coneWidthFactor;
+  final double startAngle;
+  final double endAngle;
+  final double wobblePhase;
+  final int startedAtMs;
+  final int durationMs;
+  final double opacity;
+}
+
 class _DrumPadTool extends StatefulWidget {
   const _DrumPadTool({this.fullScreen = false});
 
@@ -35,8 +59,10 @@ class _DrumPadTool extends StatefulWidget {
   State<_DrumPadTool> createState() => _DrumPadToolState();
 }
 
-class _DrumPadToolState extends State<_DrumPadTool> {
+class _DrumPadToolState extends State<_DrumPadTool>
+    with SingleTickerProviderStateMixin {
   static const int _stepCount = 16;
+  static final double _laserSweepHalfArc = math.pi * 0.75;
 
   static const List<_DrumPadSpec> _pads = <_DrumPadSpec>[
     _DrumPadSpec(
@@ -144,13 +170,19 @@ class _DrumPadToolState extends State<_DrumPadTool> {
       <String, ToolboxEffectPlayer>{};
   late final ToolboxEffectPlayer _metronomeAccentPlayer;
   late final ToolboxEffectPlayer _metronomeRegularPlayer;
+  late final AnimationController _laserController;
   late final Map<String, List<bool>> _sequence;
   late final Map<String, double> _mixLevels;
   final Map<String, int> _padFlashEpoch = <String, int>{};
+  final Map<int, String> _activePadPointers = <int, String>{};
+  final Map<String, int> _heldPadCounts = <String, int>{};
   final Set<String> _activePadIds = <String>{};
+  final List<_DrumLaserBeam> _laserBeams = <_DrumLaserBeam>[];
+  final math.Random _random = math.Random();
 
   Timer? _transportTimer;
   int _warmUpSerial = 0;
+  int _laserSerial = 0;
   String _presetId = _presets.first.id;
   String _kit = _presets.first.kitId;
   String _material = _presets.first.material;
@@ -165,6 +197,7 @@ class _DrumPadToolState extends State<_DrumPadTool> {
   int _hits = 0;
   bool _transportRunning = false;
   bool _metronomeEnabled = true;
+  bool _stageLightsEnabled = true;
   String? _lastHitId;
 
   @override
@@ -184,6 +217,10 @@ class _DrumPadToolState extends State<_DrumPadTool> {
       ToolboxAudioBank.metronomeClick(accent: false),
       maxPlayers: 4,
     );
+    _laserController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..addListener(_pruneLaserBeams);
     _applyPreset(_presets.first.id, seedPattern: true, warmUp: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_warmUpActivePreset());
@@ -193,8 +230,13 @@ class _DrumPadToolState extends State<_DrumPadTool> {
   @override
   void dispose() {
     _transportTimer?.cancel();
+    _activePadPointers.clear();
+    _heldPadCounts.clear();
     unawaited(_metronomeAccentPlayer.dispose());
     unawaited(_metronomeRegularPlayer.dispose());
+    _laserController
+      ..removeListener(_pruneLaserBeams)
+      ..dispose();
     _invalidatePlayers();
     super.dispose();
   }
@@ -467,6 +509,114 @@ class _DrumPadToolState extends State<_DrumPadTool> {
     }
   }
 
+  void _pruneLaserBeams() {
+    if (_laserBeams.isEmpty) {
+      if (_laserController.isAnimating) {
+        _laserController.stop();
+      }
+      return;
+    }
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final retained = _laserBeams
+        .where((beam) => nowMs - beam.startedAtMs < beam.durationMs)
+        .toList(growable: false);
+    if (retained.length != _laserBeams.length && mounted) {
+      setState(() {
+        _laserBeams
+          ..clear()
+          ..addAll(retained);
+      });
+    }
+    if (_laserBeams.isEmpty && _laserController.isAnimating) {
+      _laserController.stop();
+    }
+  }
+
+  void _setStageLightsEnabled(bool value, {bool notify = true}) {
+    if (_stageLightsEnabled == value) {
+      return;
+    }
+    _stageLightsEnabled = value;
+    if (!value) {
+      _laserBeams.clear();
+    }
+    if (notify && mounted) {
+      setState(() {});
+    }
+    if (!value && _laserController.isAnimating) {
+      _laserController.stop();
+    }
+  }
+
+  void _spawnLaserBeam(
+    Color color, {
+    double opacity = 1.0,
+    double widthBias = 0.0,
+    int durationBaseMs = 760,
+  }) {
+    if (!mounted || !_stageLightsEnabled) {
+      return;
+    }
+    final normalizedOpacity = opacity.clamp(0.35, 1.0);
+    final startAngle =
+        -_laserSweepHalfArc + _random.nextDouble() * (_laserSweepHalfArc * 2);
+    final endAngle =
+        (startAngle +
+                (-_laserSweepHalfArc * 0.42 +
+                    _random.nextDouble() * (_laserSweepHalfArc * 0.84)))
+            .clamp(-_laserSweepHalfArc, _laserSweepHalfArc);
+    setState(() {
+      _laserBeams.add(
+        _DrumLaserBeam(
+          id: ++_laserSerial,
+          color: color,
+          coneWidthFactor: (0.12 + _random.nextDouble() * 0.08 + widthBias)
+              .clamp(0.11, 0.28),
+          startAngle: startAngle,
+          endAngle: endAngle,
+          wobblePhase: _random.nextDouble() * math.pi * 2,
+          startedAtMs: DateTime.now().millisecondsSinceEpoch,
+          durationMs: durationBaseMs + _random.nextInt(420),
+          opacity: normalizedOpacity,
+        ),
+      );
+      if (_laserBeams.length > 8) {
+        _laserBeams.removeAt(0);
+      }
+    });
+    if (!_laserController.isAnimating) {
+      _laserController.repeat(period: const Duration(milliseconds: 16));
+    }
+  }
+
+  void _spawnMetronomeLaser({required bool accent}) {
+    final color = accent ? const Color(0xFF38BDF8) : const Color(0xFF93C5FD);
+    _spawnLaserBeam(
+      color,
+      opacity: accent ? 0.92 : 0.68,
+      widthBias: accent ? 0.03 : 0.0,
+      durationBaseMs: accent ? 840 : 760,
+    );
+  }
+
+  void _spawnPadLaser(String padId) {
+    final pad = _pads.firstWhere((item) => item.id == padId);
+    final profile = switch (padId) {
+      'kick' => (opacity: 1.0, width: 0.07, duration: 980),
+      'snare' => (opacity: 0.96, width: 0.03, duration: 860),
+      'hihat' => (opacity: 0.78, width: -0.01, duration: 700),
+      'openhat' => (opacity: 0.88, width: 0.01, duration: 760),
+      'clap' => (opacity: 0.94, width: 0.02, duration: 820),
+      _ => (opacity: 0.9, width: 0.04, duration: 900),
+    };
+    _spawnLaserBeam(
+      pad.color,
+      opacity: widget.fullScreen ? profile.opacity : profile.opacity * 0.82,
+      widthBias: profile.width,
+      durationBaseMs: profile.duration,
+    );
+  }
+
   void _flashPad(String padId) {
     final nextEpoch = (_padFlashEpoch[padId] ?? 0) + 1;
     _padFlashEpoch[padId] = nextEpoch;
@@ -488,6 +638,49 @@ class _DrumPadToolState extends State<_DrumPadTool> {
     });
   }
 
+  bool _isPadHeld(String padId) {
+    return (_heldPadCounts[padId] ?? 0) > 0;
+  }
+
+  void _releaseHeldPad(String padId) {
+    final count = _heldPadCounts[padId];
+    if (count == null) {
+      return;
+    }
+    if (count <= 1) {
+      _heldPadCounts.remove(padId);
+    } else {
+      _heldPadCounts[padId] = count - 1;
+    }
+  }
+
+  void _handlePadPointerDown(_DrumPadSpec pad, PointerDownEvent event) {
+    final previousPadId = _activePadPointers[event.pointer];
+    if (previousPadId == pad.id) {
+      return;
+    }
+    if (previousPadId != null) {
+      _releaseHeldPad(previousPadId);
+    }
+    _activePadPointers[event.pointer] = pad.id;
+    _heldPadCounts.update(pad.id, (count) => count + 1, ifAbsent: () => 1);
+    if (mounted) {
+      setState(() {});
+    }
+    unawaited(_playPad(pad.id));
+  }
+
+  void _handlePadPointerEnd(PointerEvent event) {
+    final padId = _activePadPointers.remove(event.pointer);
+    if (padId == null) {
+      return;
+    }
+    _releaseHeldPad(padId);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   Future<void> _playPad(String padId, {bool manual = true}) async {
     if (manual) {
       HapticFeedback.selectionClick();
@@ -505,6 +698,7 @@ class _DrumPadToolState extends State<_DrumPadTool> {
     if (!mounted) {
       return;
     }
+    _spawnPadLaser(padId);
     _flashPad(padId);
     setState(() {
       _lastHitId = padId;
@@ -518,6 +712,7 @@ class _DrumPadToolState extends State<_DrumPadTool> {
       (pad) => _sequence[pad.id]?[nextStep] ?? false,
     );
     if (_metronomeEnabled && nextStep % 4 == 0) {
+      final isAccent = nextStep == 0;
       final player = nextStep == 0
           ? _metronomeAccentPlayer
           : _metronomeRegularPlayer;
@@ -525,6 +720,7 @@ class _DrumPadToolState extends State<_DrumPadTool> {
           ? (stepHasDrums ? 0.52 : 0.68)
           : (stepHasDrums ? 0.34 : 0.46);
       unawaited(player.play(volume: metronomeVolume));
+      _spawnMetronomeLaser(accent: isAccent);
     }
     if (nextStep == 0) {
       _barsPlayed += 1;
@@ -615,9 +811,402 @@ class _DrumPadToolState extends State<_DrumPadTool> {
     );
   }
 
+  BoxDecoration _immersivePanelDecoration({
+    double alpha = 0.06,
+    double radius = 22,
+  }) {
+    return BoxDecoration(
+      color: Colors.white.withValues(alpha: alpha),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+      boxShadow: <BoxShadow>[
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.16),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImmersiveStatusPill(
+    String label, {
+    IconData? icon,
+    Color? iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (icon != null) ...<Widget>[
+            Icon(icon, size: 15, color: iconColor ?? Colors.white70),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFullScreenSectionCard(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    required Widget child,
+    bool fillChild = false,
+  }) {
+    final titleStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+      color: Colors.white,
+      fontWeight: FontWeight.w800,
+    );
+    final subtitleStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: Colors.white70);
+    return Container(
+      decoration: _immersivePanelDecoration(alpha: 0.055, radius: 18),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(child: Text(title, style: titleStyle)),
+              if (trailing != null) trailing,
+            ],
+          ),
+          if (subtitle != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(subtitle, style: subtitleStyle),
+          ],
+          const SizedBox(height: 10),
+          if (fillChild) Expanded(child: child) else child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFullScreenTransportPanel(BuildContext context, AppI18n i18n) {
+    return _buildFullScreenSectionCard(
+      context,
+      title: pickUiText(i18n, zh: '传输控制', en: 'Transport'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '播放、节拍器与速度',
+        en: 'Play, metronome and tempo',
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _transportRunning
+                      ? _stopTransport
+                      : _startTransport,
+                  icon: Icon(
+                    _transportRunning
+                        ? Icons.stop_rounded
+                        : Icons.play_arrow_rounded,
+                  ),
+                  label: Text(
+                    _transportRunning
+                        ? pickUiText(i18n, zh: '停止', en: 'Stop')
+                        : pickUiText(i18n, zh: '播放', en: 'Play'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: () {
+                    setState(() {
+                      _metronomeEnabled = !_metronomeEnabled;
+                    });
+                  },
+                  icon: Icon(
+                    _metronomeEnabled
+                        ? Icons.music_note_rounded
+                        : Icons.music_off_rounded,
+                  ),
+                  label: Text(
+                    _metronomeEnabled
+                        ? pickUiText(i18n, zh: '节拍开', en: 'Metro on')
+                        : pickUiText(i18n, zh: '节拍关', en: 'Metro off'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            pickUiText(i18n, zh: '速度 $_bpm BPM', en: 'Tempo $_bpm BPM'),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Slider(
+            value: _bpm.toDouble(),
+            min: 60,
+            max: 156,
+            divisions: 96,
+            label: '$_bpm',
+            onChanged: (value) {
+              setState(() {
+                _bpm = value.round();
+                _patternId = '';
+              });
+              _restartTransportIfNeeded();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRotatedHorizontalMetronome(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    final activeStep = _currentStep;
+    final activeBeat = activeStep < 0 ? -1 : (activeStep ~/ 4) % 4;
+    return _buildFullScreenSectionCard(
+      context,
+      title: pickUiText(i18n, zh: '节拍器', en: 'Metronome'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '旋转标签 + 水平节拍轨道',
+        en: 'Rotated label + horizontal beat rail',
+      ),
+      fillChild: true,
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  width: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.10),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: RotatedBox(
+                    quarterTurns: 3,
+                    child: Text(
+                      'METRO',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white70,
+                        letterSpacing: 1.1,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Row(
+                    children: List<Widget>.generate(_stepCount, (index) {
+                      final isAccent = index % 4 == 0;
+                      final isCurrent = activeStep == index;
+                      final isCurrentBeat =
+                          _metronomeEnabled &&
+                          activeBeat >= 0 &&
+                          index ~/ 4 == activeBeat;
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: index == _stepCount - 1 ? 0 : 3,
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 130),
+                            curve: Curves.easeOutCubic,
+                            height: isCurrent
+                                ? 34
+                                : isAccent
+                                ? 28
+                                : (isCurrentBeat ? 24 : 18),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              color: isCurrent
+                                  ? const Color(0xFF38BDF8)
+                                  : isCurrentBeat
+                                  ? Colors.white.withValues(alpha: 0.74)
+                                  : isAccent
+                                  ? Colors.white.withValues(alpha: 0.40)
+                                  : Colors.white.withValues(alpha: 0.18),
+                              border: Border.all(
+                                color: isCurrent
+                                    ? Colors.white.withValues(alpha: 0.70)
+                                    : Colors.white.withValues(alpha: 0.08),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              const SizedBox(width: 38),
+              ...List<Widget>.generate(4, (beatIndex) {
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '拍 ${beatIndex + 1}',
+                        en: 'Beat ${beatIndex + 1}',
+                      ),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: beatIndex == activeBeat
+                            ? const Color(0xFF7DD3FC)
+                            : Colors.white60,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrumFullScreenWorkspace(BuildContext context, AppI18n i18n) {
+    return Stack(
+      children: <Widget>[
+        Positioned.fill(child: _buildLaserOverlay()),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 980;
+            if (compact) {
+              return _ToolboxScrollLockSurface(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      _buildFullScreenTransportPanel(context, i18n),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 160,
+                        child: _buildRotatedHorizontalMetronome(context, i18n),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFullScreenSectionCard(
+                        context,
+                        title: pickUiText(i18n, zh: '鼓件面板', en: 'Pad bank'),
+                        child: _buildPadGrid(context, i18n),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildFullScreenSectionCard(
+                        context,
+                        title: pickUiText(
+                          i18n,
+                          zh: '16 步步进器',
+                          en: '16-step sequencer',
+                        ),
+                        child: _buildSequencerGrid(context, i18n),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                SizedBox(
+                  width: 320,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      _buildFullScreenTransportPanel(context, i18n),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: _buildRotatedHorizontalMetronome(context, i18n),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Expanded(
+                        flex: 5,
+                        child: _buildFullScreenSectionCard(
+                          context,
+                          title: pickUiText(i18n, zh: '鼓件面板', en: 'Pad bank'),
+                          fillChild: true,
+                          child: _ToolboxScrollLockSurface(
+                            child: SingleChildScrollView(
+                              child: _buildPadGrid(context, i18n),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        flex: 6,
+                        child: _buildFullScreenSectionCard(
+                          context,
+                          title: pickUiText(
+                            i18n,
+                            zh: '16 步步进器',
+                            en: '16-step sequencer',
+                          ),
+                          fillChild: true,
+                          child: _ToolboxScrollLockSurface(
+                            child: SingleChildScrollView(
+                              child: Align(
+                                alignment: Alignment.topLeft,
+                                child: _buildSequencerGrid(context, i18n),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildPadTile(BuildContext context, AppI18n i18n, _DrumPadSpec pad) {
     final theme = Theme.of(context);
-    final active = _activePadIds.contains(pad.id);
+    final held = _isPadHeld(pad.id);
+    final active = held || _activePadIds.contains(pad.id);
     final isLast = _lastHitId == pad.id;
     final surface = widget.fullScreen
         ? Colors.white.withValues(alpha: active ? 0.16 : 0.07)
@@ -627,17 +1216,30 @@ class _DrumPadToolState extends State<_DrumPadTool> {
         : theme.colorScheme.onSurface;
     return LayoutBuilder(
       builder: (context, constraints) {
+        final ultraCompact =
+            constraints.maxHeight < 130 || constraints.maxWidth < 150;
         final compact =
-            constraints.maxHeight < 168 || constraints.maxWidth < 190;
-        final tilePadding = compact ? 12.0 : (widget.fullScreen ? 18.0 : 16.0);
-        final iconSize = compact ? 20.0 : 24.0;
-        final badgeSize = compact ? 38.0 : 46.0;
-        final titleStyle = compact
-            ? theme.textTheme.titleSmall
-            : theme.textTheme.titleMedium;
-        final subtitleStyle = compact
+            ultraCompact ||
+            constraints.maxHeight < 168 ||
+            constraints.maxWidth < 190;
+        final tilePadding = ultraCompact
+            ? 10.0
+            : (compact ? 12.0 : (widget.fullScreen ? 18.0 : 16.0));
+        final iconSize = ultraCompact ? 18.0 : (compact ? 20.0 : 24.0);
+        final badgeSize = ultraCompact ? 32.0 : (compact ? 38.0 : 46.0);
+        final titleStyle = ultraCompact
+            ? theme.textTheme.labelLarge
+            : (compact
+                  ? theme.textTheme.titleSmall
+                  : theme.textTheme.titleMedium);
+        final subtitleStyle = ultraCompact
             ? theme.textTheme.labelSmall
-            : theme.textTheme.bodySmall;
+            : (compact
+                  ? theme.textTheme.labelSmall
+                  : theme.textTheme.bodySmall);
+        final mixLabelStyle = ultraCompact
+            ? theme.textTheme.labelSmall
+            : theme.textTheme.labelLarge;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           curve: Curves.easeOutCubic,
@@ -670,67 +1272,73 @@ class _DrumPadToolState extends State<_DrumPadTool> {
           ),
           child: Material(
             color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(22),
-              onTap: () => unawaited(_playPad(pad.id)),
-              child: Padding(
-                padding: EdgeInsets.all(tilePadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          width: badgeSize,
-                          height: badgeSize,
-                          decoration: BoxDecoration(
-                            color: surface,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            pad.icon,
-                            color: foreground,
-                            size: iconSize,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${((_mixLevels[pad.id] ?? pad.defaultMix) * 100).round()}%',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      _padLabel(i18n, pad.id),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(height: compact ? 4 : 6),
-                    Text(
-                      isLast
-                          ? pickUiText(i18n, zh: '刚刚击中', en: 'Just hit')
-                          : pickUiText(
-                              i18n,
-                              zh: '点击触发鼓件',
-                              en: 'Tap to trigger voice',
+            child: _ToolboxScrollLockSurface(
+              child: Listener(
+                behavior: HitTestBehavior.opaque,
+                onPointerDown: (event) => _handlePadPointerDown(pad, event),
+                onPointerUp: _handlePadPointerEnd,
+                onPointerCancel: _handlePadPointerEnd,
+                child: Padding(
+                  padding: EdgeInsets.all(tilePadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Container(
+                            width: badgeSize,
+                            height: badgeSize,
+                            decoration: BoxDecoration(
+                              color: surface,
+                              shape: BoxShape.circle,
                             ),
-                      maxLines: compact ? 1 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: subtitleStyle?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.82),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              pad.icon,
+                              color: foreground,
+                              size: iconSize,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${((_mixLevels[pad.id] ?? pad.defaultMix) * 100).round()}%',
+                            style: mixLabelStyle?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const Spacer(),
+                      Text(
+                        _padLabel(i18n, pad.id),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: titleStyle?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: ultraCompact ? 2 : (compact ? 4 : 6)),
+                      Text(
+                        held
+                            ? pickUiText(i18n, zh: '按住中', en: 'Held')
+                            : isLast
+                            ? pickUiText(i18n, zh: '刚刚击中', en: 'Just hit')
+                            : pickUiText(
+                                i18n,
+                                zh: '点击触发鼓件',
+                                en: 'Tap to trigger voice',
+                              ),
+                        maxLines: ultraCompact ? 1 : (compact ? 1 : 2),
+                        overflow: TextOverflow.ellipsis,
+                        style: subtitleStyle?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.82),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -750,12 +1358,12 @@ class _DrumPadToolState extends State<_DrumPadTool> {
               : 2)
         : (width >= 880
               ? 3
-              : width >= 560
+              : width >= 340
               ? 2
               : 1);
     final mainAxisExtent = widget.fullScreen
-        ? (width < 760 ? 138.0 : 156.0)
-        : (width < 400 ? 132.0 : 148.0);
+        ? (width < 760 ? 128.0 : 156.0)
+        : (width < 400 ? 120.0 : (width < 560 ? 128.0 : 148.0));
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -827,64 +1435,70 @@ class _DrumPadToolState extends State<_DrumPadTool> {
 
   Widget _buildSequencerGrid(BuildContext context, AppI18n i18n) {
     final theme = Theme.of(context);
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Column(
-        children: _pads
-            .map((pad) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                      width: widget.fullScreen ? 126 : 112,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: widget.fullScreen
-                            ? Colors.white.withValues(alpha: 0.06)
-                            : theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: widget.fullScreen
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : theme.colorScheme.outlineVariant,
+    return _ToolboxScrollLockSurface(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Column(
+          children: _pads
+              .map((pad) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                        width: widget.fullScreen ? 126 : 112,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
                         ),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(pad.icon, color: pad.color, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _padLabel(i18n, pad.id),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: widget.fullScreen ? Colors.white : null,
-                                fontWeight: FontWeight.w700,
+                        decoration: BoxDecoration(
+                          color: widget.fullScreen
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : theme.colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: widget.fullScreen
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : theme.colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: Row(
+                          children: <Widget>[
+                            Icon(pad.icon, color: pad.color, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _padLabel(i18n, pad.id),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: widget.fullScreen
+                                      ? Colors.white
+                                      : null,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Row(
-                      children: List<Widget>.generate(_stepCount, (stepIndex) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            right: stepIndex == _stepCount - 1 ? 0 : 6,
-                          ),
-                          child: _buildStepCell(context, pad, stepIndex),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              );
-            })
-            .toList(growable: false),
+                      const SizedBox(width: 10),
+                      Row(
+                        children: List<Widget>.generate(_stepCount, (
+                          stepIndex,
+                        ) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: stepIndex == _stepCount - 1 ? 0 : 6,
+                            ),
+                            child: _buildStepCell(context, pad, stepIndex),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                );
+              })
+              .toList(growable: false),
+        ),
       ),
     );
   }
@@ -893,17 +1507,13 @@ class _DrumPadToolState extends State<_DrumPadTool> {
     final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(widget.fullScreen ? 18 : 16),
-      decoration: BoxDecoration(
-        color: widget.fullScreen
-            ? Colors.white.withValues(alpha: 0.06)
-            : theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: widget.fullScreen
-              ? Colors.white.withValues(alpha: 0.08)
-              : theme.colorScheme.outlineVariant,
-        ),
-      ),
+      decoration: widget.fullScreen
+          ? _immersivePanelDecoration(alpha: 0.06, radius: 22)
+          : BoxDecoration(
+              color: theme.colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -942,11 +1552,12 @@ class _DrumPadToolState extends State<_DrumPadTool> {
                       : pickUiText(i18n, zh: '节拍器关', en: 'Metronome off'),
                 ),
               ),
-              FilledButton.tonalIcon(
-                onPressed: () => _openDrumSettingsSheet(context, i18n),
-                icon: const Icon(Icons.tune_rounded),
-                label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
-              ),
+              if (!widget.fullScreen)
+                FilledButton.tonalIcon(
+                  onPressed: () => _openDrumSettingsSheet(context, i18n),
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                ),
               if (!widget.fullScreen)
                 OutlinedButton.icon(
                   onPressed: () => unawaited(_openFullScreen(context)),
@@ -977,117 +1588,334 @@ class _DrumPadToolState extends State<_DrumPadTool> {
               _restartTransportIfNeeded();
             },
           ),
+          if (widget.fullScreen) ...<Widget>[
+            const SizedBox(height: 8),
+            _buildHorizontalMetronomeMatrix(context, i18n),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildWorkspaceContent(BuildContext context, AppI18n i18n) {
+  Widget _buildHorizontalMetronomeMatrix(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    final activeBeat = _currentStep < 0 ? -1 : (_currentStep ~/ 4) % 4;
+    final headers = List<String>.generate(4, (index) => '${index + 1}');
+    final rowStates = <List<bool>>[
+      List<bool>.generate(4, (index) => _metronomeEnabled && index == 0),
+      List<bool>.generate(
+        4,
+        (index) => _metronomeEnabled && index == activeBeat,
+      ),
+      List<bool>.generate(
+        4,
+        (index) =>
+            _metronomeEnabled &&
+            _currentStep >= 0 &&
+            index == ((_currentStep % _stepCount) ~/ 4),
+      ),
+    ];
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: _immersivePanelDecoration(alpha: 0.05, radius: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: _metronomeEnabled
+                      ? const Color(0xFF0EA5E9).withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  _metronomeEnabled
+                      ? Icons.music_note_rounded
+                      : Icons.music_off_rounded,
+                  color: _metronomeEnabled
+                      ? const Color(0xFF7DD3FC)
+                      : Colors.white54,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _metronomeEnabled
+                      ? pickUiText(i18n, zh: '节拍矩阵', en: 'Beat matrix')
+                      : pickUiText(i18n, zh: '节拍关闭', en: 'Metro off'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List<Widget>.generate(headers.length, (columnIndex) {
+              final accent = columnIndex == 0;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: columnIndex == headers.length - 1 ? 0 : 8,
+                  ),
+                  child: Column(
+                    children: <Widget>[
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '类型${headers[columnIndex]}',
+                          en: 'Beat ${headers[columnIndex]}',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...List<Widget>.generate(rowStates.length, (rowIndex) {
+                        final active = rowStates[rowIndex][columnIndex];
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: rowIndex == rowStates.length - 1 ? 0 : 7,
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 140),
+                            width: double.infinity,
+                            height: active ? 18 : 14,
+                            decoration: BoxDecoration(
+                              color: active
+                                  ? (accent
+                                        ? const Color(0xFF38BDF8)
+                                        : Colors.white.withValues(alpha: 0.88))
+                                  : Colors.white.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: active
+                                    ? Colors.white.withValues(alpha: 0.5)
+                                    : Colors.white.withValues(alpha: 0.08),
+                              ),
+                              boxShadow: active
+                                  ? <BoxShadow>[
+                                      BoxShadow(
+                                        color:
+                                            (accent
+                                                    ? const Color(0xFF38BDF8)
+                                                    : Colors.white)
+                                                .withValues(alpha: 0.32),
+                                        blurRadius: 12,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : const <BoxShadow>[],
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLaserOverlay() {
+    if (!_stageLightsEnabled || _laserBeams.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _laserController,
+        builder: (context, _) {
+          final nowMs = DateTime.now().millisecondsSinceEpoch;
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: _laserBeams
+                    .map((beam) {
+                      final elapsedMs = nowMs - beam.startedAtMs;
+                      final progress = (elapsedMs / beam.durationMs).clamp(
+                        0.0,
+                        1.0,
+                      );
+                      final fade = (1 - progress).clamp(0.0, 1.0);
+                      return Positioned.fill(
+                        key: ValueKey<int>(beam.id),
+                        child: Opacity(
+                          opacity: beam.opacity * fade,
+                          child: CustomPaint(
+                            painter: _DrumSpotlightPainter(
+                              beam: beam,
+                              progress: progress.toDouble(),
+                              fullScreen: widget.fullScreen,
+                            ),
+                          ),
+                        ),
+                      );
+                    })
+                    .toList(growable: false),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceContent(
+    BuildContext context,
+    AppI18n i18n, {
+    bool immersiveMinimal = false,
+  }) {
     final theme = Theme.of(context);
     final statusColor = widget.fullScreen ? Colors.white70 : theme.hintColor;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: <Widget>[
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: <Widget>[
-            ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '预设', en: 'Preset'),
-              value: _presetId.isEmpty
-                  ? pickUiText(i18n, zh: '自定义', en: 'Custom')
-                  : _presetLabel(i18n, _activePreset),
-            ),
-            ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '模板', en: 'Pattern'),
-              value: _patternId.isEmpty
-                  ? pickUiText(i18n, zh: '自编步进', en: 'Custom steps')
-                  : _patternLabel(i18n, _activePattern),
-            ),
-            ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '音色', en: 'Kit'),
-              value: _kitLabel(i18n, _kit),
-            ),
-            ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '材质', en: 'Material'),
-              value: _materialLabel(i18n, _material),
-            ),
-            ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '命中', en: 'Hits'),
-              value: '$_hits',
-            ),
-            ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '当前步', en: 'Step'),
-              value: _currentStep < 0 ? '--' : '${_currentStep + 1}',
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildTransportBar(context, i18n),
-        const SizedBox(height: 16),
-        Text(
-          pickUiText(i18n, zh: '鼓件面板', en: 'Pad bank'),
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: widget.fullScreen ? Colors.white : null,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 10),
-        _buildPadGrid(context, i18n),
-        const SizedBox(height: 20),
-        Text(
-          pickUiText(i18n, zh: '16 步节拍器', en: '16-step sequencer'),
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: widget.fullScreen ? Colors.white : null,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          pickUiText(
-            i18n,
-            zh: '点击格子编辑步进；每 4 步为一拍，适合快速落地鼓型和 loop。',
-            en: 'Tap cells to edit steps. Every 4 steps form a beat for fast groove building.',
-          ),
-          style: theme.textTheme.bodySmall?.copyWith(color: statusColor),
-        ),
-        const SizedBox(height: 12),
-        _buildSequencerGrid(context, i18n),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <Widget>[
-            Chip(
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '激活步数 $_activeStepCount',
-                  en: 'Active steps $_activeStepCount',
-                ),
+        Positioned.fill(child: _buildLaserOverlay()),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final content = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (!immersiveMinimal) ...<Widget>[
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: <Widget>[
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                        value: _presetId.isEmpty
+                            ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+                            : _presetLabel(i18n, _activePreset),
+                      ),
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '模板', en: 'Pattern'),
+                        value: _patternId.isEmpty
+                            ? pickUiText(i18n, zh: '自编步进', en: 'Custom steps')
+                            : _patternLabel(i18n, _activePattern),
+                      ),
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '音色', en: 'Kit'),
+                        value: _kitLabel(i18n, _kit),
+                      ),
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '材质', en: 'Material'),
+                        value: _materialLabel(i18n, _material),
+                      ),
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '命中', en: 'Hits'),
+                        value: '$_hits',
+                      ),
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '当前步', en: 'Step'),
+                        value: _currentStep < 0 ? '--' : '${_currentStep + 1}',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                _buildTransportBar(context, i18n),
+                SizedBox(height: immersiveMinimal ? 12 : 16),
+                if (!immersiveMinimal)
+                  Text(
+                    pickUiText(i18n, zh: '鼓件面板', en: 'Pad bank'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: widget.fullScreen ? Colors.white : null,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                if (!immersiveMinimal) const SizedBox(height: 10),
+                _buildPadGrid(context, i18n),
+                SizedBox(height: immersiveMinimal ? 14 : 20),
+                if (!immersiveMinimal)
+                  Text(
+                    pickUiText(i18n, zh: '16 步节拍器', en: '16-step sequencer'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: widget.fullScreen ? Colors.white : null,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                if (!immersiveMinimal) const SizedBox(height: 8),
+                if (!immersiveMinimal)
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '点击格子编辑步进；每 4 步为一拍，适合快速落地鼓型和 loop。',
+                      en: 'Tap cells to edit steps. Every 4 steps form a beat for fast groove building.',
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: statusColor,
+                    ),
+                  ),
+                SizedBox(height: immersiveMinimal ? 8 : 12),
+                _buildSequencerGrid(context, i18n),
+                if (!immersiveMinimal) ...<Widget>[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      Chip(
+                        label: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '激活步数 $_activeStepCount',
+                            en: 'Active steps $_activeStepCount',
+                          ),
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '已播小节 $_barsPlayed',
+                            en: 'Bars played $_barsPlayed',
+                          ),
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '主混音 ${(_masterVolume * 100).round()}%',
+                            en: 'Master mix ${(_masterVolume * 100).round()}%',
+                          ),
+                        ),
+                      ),
+                      if (_lastHitId != null)
+                        Chip(label: Text(_padLabel(i18n, _lastHitId!))),
+                    ],
+                  ),
+                ],
+              ],
+            );
+            if (!widget.fullScreen) {
+              return content;
+            }
+            return SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: content,
               ),
-            ),
-            Chip(
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '已播小节 $_barsPlayed',
-                  en: 'Bars played $_barsPlayed',
-                ),
-              ),
-            ),
-            Chip(
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '主混音 ${(_masterVolume * 100).round()}%',
-                  en: 'Master mix ${(_masterVolume * 100).round()}%',
-                ),
-              ),
-            ),
-            if (_lastHitId != null)
-              Chip(label: Text(_padLabel(i18n, _lastHitId!))),
-          ],
+            );
+          },
         ),
       ],
     );
@@ -1384,6 +2212,26 @@ class _DrumPadToolState extends State<_DrumPadTool> {
           const SizedBox(height: 20),
           _buildSettingsSectionTitle(
             context,
+            pickUiText(i18n, zh: '舞台灯效', en: 'Stage lights'),
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            value: _stageLightsEnabled,
+            onChanged: (value) => applySettings(() {
+              _setStageLightsEnabled(value, notify: false);
+            }),
+            title: Text(pickUiText(i18n, zh: '启用探照灯', en: 'Enable spotlights')),
+            subtitle: Text(
+              pickUiText(
+                i18n,
+                zh: '按鼓件类型分层强度，并在触发鼓点与节拍时进行随机迂回扫灯。',
+                en: 'Layer intensity by drum voice and trigger random roaming spotlights on hits and metronome beats.',
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildSettingsSectionTitle(
+            context,
             pickUiText(i18n, zh: '混音', en: 'Mixer'),
           ),
           _buildMixerSection(context, i18n, applySettings: applySettings),
@@ -1421,15 +2269,20 @@ class _DrumPadToolState extends State<_DrumPadTool> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildDrumFullScreen(BuildContext context, AppI18n i18n) {
     final topInset = MediaQuery.viewPaddingOf(context).top;
     final overlayButtonStyle = FilledButton.styleFrom(
-      backgroundColor: Colors.white.withValues(alpha: 0.08),
+      backgroundColor: Colors.black.withValues(alpha: 0.55),
       foregroundColor: Colors.white,
+      elevation: 0,
+      side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     );
     return _buildInstrumentPanelShell(
       context,
       fullScreen: true,
+      scrollable: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -1451,8 +2304,165 @@ class _DrumPadToolState extends State<_DrumPadTool> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _buildImmersiveStatusPill(
+                '$_bpm BPM',
+                icon: Icons.speed_rounded,
+                iconColor: const Color(0xFF38BDF8),
+              ),
+              _buildImmersiveStatusPill(
+                _metronomeEnabled
+                    ? pickUiText(i18n, zh: '节拍器开启', en: 'Metronome on')
+                    : pickUiText(i18n, zh: '节拍器关闭', en: 'Metronome off'),
+                icon: _metronomeEnabled
+                    ? Icons.music_note_rounded
+                    : Icons.music_off_rounded,
+                iconColor: _metronomeEnabled
+                    ? const Color(0xFF7DD3FC)
+                    : Colors.white54,
+              ),
+              _buildImmersiveStatusPill(
+                pickUiText(i18n, zh: '命中 $_hits', en: 'Hits $_hits'),
+                icon: Icons.flash_on_rounded,
+                iconColor: const Color(0xFFFDE68A),
+              ),
+              _buildImmersiveStatusPill(
+                _patternId.isEmpty
+                    ? pickUiText(i18n, zh: '自定义步进', en: 'Custom steps')
+                    : _patternLabel(i18n, _activePattern),
+              ),
+            ],
+          ),
           const SizedBox(height: 18),
-          _buildWorkspaceContent(context, i18n),
+          Expanded(child: _buildDrumFullScreenWorkspace(context, i18n)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFullScreenStatusItemV2({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+  }) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, size: 14, color: iconColor),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrumFullScreenV2(BuildContext context, AppI18n i18n) {
+    final topInset = MediaQuery.viewPaddingOf(context).top;
+    final overlayButtonStyle = FilledButton.styleFrom(
+      backgroundColor: Colors.black.withValues(alpha: 0.55),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    );
+    return _buildInstrumentPanelShell(
+      context,
+      fullScreen: true,
+      scrollable: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(height: topInset > 0 ? 4 : 0),
+          Container(
+            decoration: _immersivePanelDecoration(alpha: 0.07, radius: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              children: <Widget>[
+                FilledButton.tonal(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  style: overlayButtonStyle,
+                  child: const Icon(Icons.arrow_back_rounded),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    pickUiText(i18n, zh: '鼓垫现场模式', en: 'Drum Pad Live'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                FilledButton.tonalIcon(
+                  onPressed: () => _openDrumSettingsSheet(context, i18n),
+                  style: overlayButtonStyle,
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _buildFullScreenStatusItemV2(
+                  icon: Icons.speed_rounded,
+                  iconColor: const Color(0xFF38BDF8),
+                  label: '$_bpm BPM',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildFullScreenStatusItemV2(
+                  icon: _metronomeEnabled
+                      ? Icons.music_note_rounded
+                      : Icons.music_off_rounded,
+                  iconColor: _metronomeEnabled
+                      ? const Color(0xFF7DD3FC)
+                      : Colors.white54,
+                  label: _metronomeEnabled
+                      ? pickUiText(i18n, zh: '节拍器开启', en: 'Metronome on')
+                      : pickUiText(i18n, zh: '节拍器关闭', en: 'Metronome off'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildFullScreenStatusItemV2(
+                  icon: Icons.flash_on_rounded,
+                  iconColor: const Color(0xFFFDE68A),
+                  label: pickUiText(i18n, zh: '命中 $_hits', en: 'Hits $_hits'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Expanded(child: _buildDrumFullScreenWorkspace(context, i18n)),
         ],
       ),
     );
@@ -1462,12 +2472,137 @@ class _DrumPadToolState extends State<_DrumPadTool> {
   Widget build(BuildContext context) {
     final i18n = _toolboxI18n(context);
     if (widget.fullScreen) {
-      return _buildDrumFullScreen(context, i18n);
+      return _buildDrumFullScreenV2(context, i18n);
     }
     return _buildInstrumentPanelShell(
       context,
       fullScreen: false,
       child: _buildWorkspaceContent(context, i18n),
     );
+  }
+}
+
+class _DrumSpotlightPainter extends CustomPainter {
+  const _DrumSpotlightPainter({
+    required this.beam,
+    required this.progress,
+    required this.fullScreen,
+  });
+
+  final _DrumLaserBeam beam;
+  final double progress;
+  final bool fullScreen;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) {
+      return;
+    }
+    final eased = Curves.easeInOutSine.transform(progress.clamp(0.0, 1.0));
+    final apexX = size.width * 0.5;
+    final angleBase =
+        beam.startAngle + (beam.endAngle - beam.startAngle) * eased;
+    final angleWobble =
+        math.sin(progress * math.pi * 8.4 + beam.wobblePhase) * 0.32;
+    final beamAngle = angleBase + angleWobble;
+    final targetDrift =
+        math.sin(progress * math.pi * 9.6 + beam.wobblePhase * 1.3) *
+        size.width *
+        0.08;
+    final coneHeight = size.height * (fullScreen ? 0.92 : 0.74);
+    final coneHalfWidth = (size.width * beam.coneWidthFactor)
+        .clamp(size.width * 0.09, size.width * 0.3)
+        .toDouble();
+    final flareRadius = math.max(size.width * 0.05, coneHalfWidth * 0.72);
+    final minTargetX = coneHalfWidth;
+    final maxTargetX = math.max(minTargetX, size.width - coneHalfWidth);
+    final sweepHalfArc = _DrumPadToolState._laserSweepHalfArc;
+    final normalizedAngle = (beamAngle / sweepHalfArc).clamp(-1.0, 1.0);
+    final rawTargetX =
+        apexX + normalizedAngle * size.width * 0.46 + targetDrift;
+    final targetX = rawTargetX.clamp(minTargetX, maxTargetX).toDouble();
+
+    final path = Path()
+      ..moveTo(apexX, -24)
+      ..quadraticBezierTo(
+        apexX - coneHalfWidth * 0.22,
+        coneHeight * 0.18,
+        targetX - coneHalfWidth,
+        coneHeight,
+      )
+      ..quadraticBezierTo(
+        targetX,
+        coneHeight * 0.82,
+        targetX + coneHalfWidth,
+        coneHeight,
+      )
+      ..quadraticBezierTo(
+        apexX + coneHalfWidth * 0.24,
+        coneHeight * 0.18,
+        apexX,
+        -24,
+      )
+      ..close();
+
+    final beamPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          beam.color.withValues(alpha: 0),
+          beam.color.withValues(alpha: 0.28),
+          beam.color.withValues(alpha: 0.52),
+          beam.color.withValues(alpha: 0),
+        ],
+        stops: const <double>[0, 0.18, 0.78, 1],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, coneHeight))
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 26);
+    canvas.drawPath(path, beamPaint);
+
+    final corePaint = Paint()
+      ..shader =
+          LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              beam.color.withValues(alpha: 0),
+              beam.color.withValues(alpha: 0.42),
+              beam.color.withValues(alpha: 0.78),
+              beam.color.withValues(alpha: 0),
+            ],
+            stops: const <double>[0, 0.28, 0.72, 1],
+          ).createShader(
+            Rect.fromLTWH(
+              targetX - coneHalfWidth * 0.46,
+              0,
+              coneHalfWidth * 0.92,
+              coneHeight,
+            ),
+          )
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.drawPath(path, corePaint);
+
+    final glowRect = Rect.fromCircle(
+      center: Offset(targetX, coneHeight),
+      radius: flareRadius,
+    );
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: <Color>[
+          beam.color.withValues(alpha: 1),
+          beam.color.withValues(alpha: 0.58),
+          beam.color.withValues(alpha: 0),
+        ],
+        stops: const <double>[0, 0.3, 1],
+      ).createShader(glowRect)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+    canvas.drawCircle(Offset(targetX, coneHeight), flareRadius, glowPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DrumSpotlightPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.beam != beam ||
+        oldDelegate.fullScreen != fullScreen;
   }
 }

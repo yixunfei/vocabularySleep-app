@@ -102,6 +102,7 @@ class _FluteToolState extends State<_FluteTool> {
   StreamSubscription<Amplitude>? _amplitudeSub;
   final Set<int> _pressedHoles = <int>{};
   final Map<int, int> _activeHolePointers = <int, int>{};
+  final Map<int, int> _holePressCounts = <int, int>{};
   String _presetId = _presets.first.id;
   String _scale = _presets.first.scaleId;
   String _style = _presets.first.styleId;
@@ -113,6 +114,7 @@ class _FluteToolState extends State<_FluteTool> {
   bool _blowPermissionDenied = false;
   bool _isBlowing = false;
   double _micLevel = 0;
+  double _ambientNoiseFloor = 0;
   double _breathConfidence = 0;
   double _blowThreshold = 0.34;
   int? _sustainedNoteIndex;
@@ -321,6 +323,10 @@ class _FluteToolState extends State<_FluteTool> {
     };
   }
 
+  double get _manualBreathLevel {
+    return (_breath * 0.78 + 0.18).clamp(0.18, 1.0).toDouble();
+  }
+
   double get _performanceBreathLevel {
     final materialFactor = switch (_material) {
       'metal_short' => 1.08,
@@ -329,14 +335,28 @@ class _FluteToolState extends State<_FluteTool> {
       'clay' => 0.92,
       _ => 1.0,
     };
-    final micContribution = _blowSensorEnabled
-        ? (_micLevel * _micLevel) * 0.65
-        : 0.0;
-    final baseContribution =
-        _breath * (_blowSensorEnabled ? 0.45 : 1.0) +
-        (_blowSensorEnabled ? 0.12 : 0.0);
-    final combined = (baseContribution + micContribution) * materialFactor;
-    return combined.clamp(0.15, 1.0).toDouble();
+    final manualLevel = _manualBreathLevel;
+    final sensedLevel =
+        (_micLevel * (0.76 + _breath * 0.18) + _breathConfidence * 0.14)
+            .clamp(0.0, 1.0)
+            .toDouble();
+    final combined = _blowSensorEnabled
+        ? (_isBlowing
+              ? sensedLevel * 0.82 + manualLevel * 0.18
+              : manualLevel * 0.42 + sensedLevel * 0.18)
+        : manualLevel;
+    final minimum = _blowSensorEnabled && !_isBlowing ? 0.0 : 0.14;
+    return (combined * materialFactor).clamp(minimum, 1.0).toDouble();
+  }
+
+  double get _oneShotBreathLevel {
+    if (!_blowSensorEnabled) {
+      return _manualBreathLevel;
+    }
+    return math
+        .max(_manualBreathLevel * 0.74, _performanceBreathLevel)
+        .clamp(0.18, 1.0)
+        .toDouble();
   }
 
   double _sustainFrequencyFor(_PianoKey note) {
@@ -358,17 +378,31 @@ class _FluteToolState extends State<_FluteTool> {
     };
     final dynamicLift = (breathLevel - 0.5) * (baseCents + styleShift);
     final overblowThreshold = switch (_material) {
-      'metal_short' => 0.82,
-      'metal_long' => 0.84,
-      'jade' => 0.88,
-      'clay' => 0.90,
-      _ => 0.86,
+      'metal_short' => 0.90,
+      'metal_long' => 0.92,
+      'jade' => 0.95,
+      'clay' => 0.96,
+      _ => 0.93,
     };
-    final holeFactor = _pressedHoles.length <= 2 ? 1.0 : 0.0;
+    final holeFactor = switch (_pressedHoles.length) {
+      <= 1 => 1.0,
+      2 => 0.45,
+      _ => 0.0,
+    };
     final breathOverThreshold =
         (breathLevel - overblowThreshold) / (1.0 - overblowThreshold);
-    final overblowBlend = (breathOverThreshold * holeFactor).clamp(0.0, 1.0);
-    final overblow = overblowBlend * 12.0;
+    final overblowBlend = math
+        .pow((breathOverThreshold * holeFactor).clamp(0.0, 1.0), 1.35)
+        .toDouble();
+    final overblow =
+        overblowBlend *
+        (switch (_material) {
+          'metal_short' => 5.0,
+          'metal_long' => 4.2,
+          'jade' => 2.8,
+          'clay' => 2.2,
+          _ => 3.6,
+        });
     final shifted = note.frequency * math.pow(2, overblow / 12).toDouble();
     return shifted * math.pow(2, dynamicLift / 1200).toDouble();
   }
@@ -376,15 +410,28 @@ class _FluteToolState extends State<_FluteTool> {
   String _sustainSignatureFor(_PianoKey note) {
     final breathLevel = _performanceBreathLevel;
     final overblowThreshold = switch (_material) {
-      'metal_short' => 0.82,
-      'metal_long' => 0.84,
-      'jade' => 0.88,
-      'clay' => 0.90,
-      _ => 0.86,
+      'metal_short' => 0.90,
+      'metal_long' => 0.92,
+      'jade' => 0.95,
+      'clay' => 0.96,
+      _ => 0.93,
     };
-    final holeFactor = _pressedHoles.length <= 2 ? 1 : 0;
-    final breathOverThreshold = breathLevel >= overblowThreshold ? 1 : 0;
-    final overblowRegister = breathOverThreshold * holeFactor;
+    final holeFactor = switch (_pressedHoles.length) {
+      <= 1 => 1.0,
+      2 => 0.45,
+      _ => 0.0,
+    };
+    final overblowBlend =
+        ((breathLevel - overblowThreshold) / (1.0 - overblowThreshold)).clamp(
+          0.0,
+          1.0,
+        ) *
+        holeFactor;
+    final overblowRegister = switch (overblowBlend) {
+      >= 0.72 => 2,
+      >= 0.24 => 1,
+      _ => 0,
+    };
     return '${note.id}:$_style:$_material:$overblowRegister';
   }
 
@@ -470,13 +517,16 @@ class _FluteToolState extends State<_FluteTool> {
     return ((value + 60) / 60).clamp(0.0, 1.0).toDouble();
   }
 
-  double _filteredBreathLevel(double rawLevel) {
-    final floor = _blowThreshold * 0.62;
+  double _filteredBreathLevel(double rawLevel, {double? noiseFloor}) {
+    final floor =
+        ((noiseFloor ?? _ambientNoiseFloor) + 0.018 + _blowThreshold * 0.12)
+            .clamp(0.02, 0.88)
+            .toDouble();
     if (rawLevel <= floor) {
       return 0;
     }
     final normalized = ((rawLevel - floor) / (1.0 - floor)).clamp(0.0, 1.0);
-    return math.pow(normalized, 1.25).toDouble();
+    return math.pow(normalized, 1.12).toDouble();
   }
 
   String _fingeringSignature(Set<int> holes) {
@@ -612,16 +662,40 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   void _bindHolePointer(int holeNumber, PointerDownEvent event) {
-    _activeHolePointers[event.pointer] = holeNumber;
-    _setHolePressed(holeNumber, true);
-  }
-
-  void _releaseHolePointer(PointerEvent event, int holeNumber) {
-    final boundHole = _activeHolePointers.remove(event.pointer);
-    if (boundHole != holeNumber) {
+    final previousHole = _activeHolePointers[event.pointer];
+    if (previousHole == holeNumber) {
       return;
     }
-    _setHolePressed(holeNumber, false);
+    if (previousHole != null) {
+      _releaseHolePress(previousHole);
+    }
+    _activeHolePointers[event.pointer] = holeNumber;
+    final nextCount = (_holePressCounts[holeNumber] ?? 0) + 1;
+    _holePressCounts[holeNumber] = nextCount;
+    if (nextCount == 1) {
+      _setHolePressed(holeNumber, true);
+    }
+  }
+
+  void _releaseHolePress(int holeNumber) {
+    final currentCount = _holePressCounts[holeNumber];
+    if (currentCount == null) {
+      return;
+    }
+    if (currentCount <= 1) {
+      _holePressCounts.remove(holeNumber);
+      _setHolePressed(holeNumber, false);
+      return;
+    }
+    _holePressCounts[holeNumber] = currentCount - 1;
+  }
+
+  void _releaseHolePointer(PointerEvent event) {
+    final boundHole = _activeHolePointers.remove(event.pointer);
+    if (boundHole == null) {
+      return;
+    }
+    _releaseHolePress(boundHole);
   }
 
   Future<void> _startBlowSensor() async {
@@ -635,6 +709,7 @@ class _FluteToolState extends State<_FluteTool> {
             _blowSensorEnabled = false;
             _isBlowing = false;
             _micLevel = 0;
+            _ambientNoiseFloor = 0;
           });
         }
         await _syncBreathSustain();
@@ -657,20 +732,45 @@ class _FluteToolState extends State<_FluteTool> {
           .onAmplitudeChanged(const Duration(milliseconds: 50))
           .listen((amplitude) {
             final rawLevel = _normalizedMicLevel(amplitude);
-            final filtered = _filteredBreathLevel(rawLevel);
-            final smoothing = 0.65;
+            final ambientTarget = _isBlowing
+                ? math.min(rawLevel, _ambientNoiseFloor + 0.02)
+                : rawLevel;
+            final ambientSmoothing = _isBlowing ? 0.985 : 0.92;
+            final ambientFloor =
+                (_ambientNoiseFloor * ambientSmoothing +
+                        ambientTarget * (1.0 - ambientSmoothing))
+                    .clamp(0.0, 0.45)
+                    .toDouble();
+            final filtered = _filteredBreathLevel(
+              rawLevel,
+              noiseFloor: ambientFloor,
+            );
+            final smoothing = filtered > _micLevel ? 0.42 : 0.78;
             final level = (_micLevel * smoothing + filtered * (1.0 - smoothing))
                 .clamp(0.0, 1.0);
-            final onsetCandidate = level >= (_blowThreshold * 0.92);
+            final onsetEnergy = math.max(0.0, filtered - _micLevel);
+            final startThreshold =
+                (_blowThreshold * 0.74 + ambientFloor * 0.9 + 0.04)
+                    .clamp(0.08, 0.92)
+                    .toDouble();
+            final holdThreshold = math
+                .max(0.04, startThreshold - 0.08)
+                .toDouble();
+            final onsetCandidate =
+                level >= startThreshold || onsetEnergy >= 0.06;
             final confidence =
-                (_breathConfidence * 0.68 + (onsetCandidate ? 1.0 : 0.0) * 0.32)
+                (_breathConfidence * 0.7 + (onsetCandidate ? 1.0 : 0.0) * 0.3)
                     .clamp(0.0, 1.0);
-            final hysteresis = 0.04;
             final blowing = _isBlowing
-                ? level >= (_blowThreshold - hysteresis) || confidence >= 0.38
-                : confidence >= 0.52 && level >= (_blowThreshold * 0.88);
+                ? level >= holdThreshold ||
+                      (confidence >= 0.36 && level >= holdThreshold * 0.85)
+                : level >= startThreshold &&
+                      (confidence >= 0.48 || onsetEnergy >= 0.08);
             var shouldRefresh = false;
             final levelChanged = (_micLevel - level).abs() > 0.015;
+            if ((_ambientNoiseFloor - ambientFloor).abs() > 0.004) {
+              _ambientNoiseFloor = ambientFloor;
+            }
             if (levelChanged) {
               _micLevel = level;
               shouldRefresh = true;
@@ -696,6 +796,7 @@ class _FluteToolState extends State<_FluteTool> {
           _blowPermissionDenied = false;
           _isBlowing = false;
           _micLevel = 0;
+          _ambientNoiseFloor = 0;
           _breathConfidence = 0;
         });
       }
@@ -707,6 +808,7 @@ class _FluteToolState extends State<_FluteTool> {
           _blowSensorEnabled = false;
           _isBlowing = false;
           _micLevel = 0;
+          _ambientNoiseFloor = 0;
           _breathConfidence = 0;
         });
       }
@@ -724,6 +826,7 @@ class _FluteToolState extends State<_FluteTool> {
     _blowSensorEnabled = false;
     if (resetUi) {
       _micLevel = 0;
+      _ambientNoiseFloor = 0;
       _breathConfidence = 0;
     }
     _invalidateSustainSync();
@@ -795,7 +898,7 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   ToolboxEffectPlayer _playerFor(_PianoKey key) {
-    final breathLevel = _performanceBreathLevel;
+    final breathLevel = _oneShotBreathLevel;
     final cacheKey =
         'flute:${key.id}:$_style:$_material:${breathLevel.toStringAsFixed(2)}:${_airSpace.toStringAsFixed(2)}:${_tail.toStringAsFixed(2)}';
     final existing = _players[cacheKey];
@@ -820,7 +923,7 @@ class _FluteToolState extends State<_FluteTool> {
     HapticFeedback.selectionClick();
     final player = _playerFor(key);
     await player.warmUp();
-    await player.play(volume: _performanceBreathLevel.clamp(0.15, 1.0));
+    await player.play(volume: _oneShotBreathLevel.clamp(0.18, 1.0));
     if (mounted) {
       setState(() {
         _lastNote = key.label;
@@ -885,8 +988,8 @@ class _FluteToolState extends State<_FluteTool> {
     return Listener(
       behavior: HitTestBehavior.opaque,
       onPointerDown: (event) => _bindHolePointer(holeNumber, event),
-      onPointerUp: (event) => _releaseHolePointer(event, holeNumber),
-      onPointerCancel: (event) => _releaseHolePointer(event, holeNumber),
+      onPointerUp: _releaseHolePointer,
+      onPointerCancel: _releaseHolePointer,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         width: diameter,
@@ -932,16 +1035,43 @@ class _FluteToolState extends State<_FluteTool> {
     required bool immersive,
   }) {
     final active = _lastNote == note.label;
-    return FilledButton.tonal(
-      onPressed: () => unawaited(_play(note)),
-      style: FilledButton.styleFrom(
-        backgroundColor: active
-            ? const Color(0xFFDBEAFE)
-            : Colors.white.withValues(alpha: immersive ? 0.12 : 1),
-        foregroundColor: active ? const Color(0xFF1D4ED8) : null,
-        visualDensity: VisualDensity.compact,
+    final theme = Theme.of(context);
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: (_) => unawaited(_play(note)),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 110),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: active
+              ? const Color(0xFFDBEAFE)
+              : Colors.white.withValues(alpha: immersive ? 0.12 : 0.94),
+          border: Border.all(
+            color: active
+                ? const Color(0xFF60A5FA)
+                : Colors.white.withValues(alpha: immersive ? 0.18 : 0.66),
+          ),
+          boxShadow: active
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: const Color(0xFF60A5FA).withValues(alpha: 0.24),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : const <BoxShadow>[],
+        ),
+        child: Text(
+          note.label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: active
+                ? const Color(0xFF1D4ED8)
+                : (immersive ? Colors.white : const Color(0xFF0F172A)),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
-      child: Text(note.label),
     );
   }
 
@@ -1029,134 +1159,138 @@ class _FluteToolState extends State<_FluteTool> {
         )
         .toList(growable: false);
     final stageHeight = widget.fullScreen ? null : 620.0;
-    return Container(
-      width: double.infinity,
-      height: stageHeight,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(widget.fullScreen ? 30 : 28),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[
-            widget.fullScreen
-                ? const Color(0xFF07111F)
-                : const Color(0xFFEAF5FF),
-            widget.fullScreen
-                ? const Color(0xFF0F2137)
-                : const Color(0xFFD8EBFF),
-            widget.fullScreen
-                ? const Color(0xFF122945)
-                : const Color(0xFFC4DFFF),
+    return _ToolboxScrollLockSurface(
+      child: Container(
+        width: double.infinity,
+        height: stageHeight,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.fullScreen ? 30 : 28),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              widget.fullScreen
+                  ? const Color(0xFF07111F)
+                  : const Color(0xFFEAF5FF),
+              widget.fullScreen
+                  ? const Color(0xFF0F2137)
+                  : const Color(0xFFD8EBFF),
+              widget.fullScreen
+                  ? const Color(0xFF122945)
+                  : const Color(0xFFC4DFFF),
+            ],
+          ),
+          border: Border.all(
+            color: widget.fullScreen
+                ? Colors.white.withValues(alpha: 0.12)
+                : Colors.white.withValues(alpha: 0.72),
+          ),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: immersive ? 0.32 : 0.12),
+              blurRadius: immersive ? 28 : 18,
+              offset: const Offset(0, 14),
+            ),
           ],
         ),
-        border: Border.all(
-          color: widget.fullScreen
-              ? Colors.white.withValues(alpha: 0.12)
-              : Colors.white.withValues(alpha: 0.72),
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: immersive ? 0.32 : 0.12),
-            blurRadius: immersive ? 28 : 18,
-            offset: const Offset(0, 14),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            widget.fullScreen ? 18 : 16,
+            widget.fullScreen ? 18 : 16,
+            widget.fullScreen ? 18 : 16,
+            widget.fullScreen ? 18 : 16,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          widget.fullScreen ? 18 : 16,
-          widget.fullScreen ? 18 : 16,
-          widget.fullScreen ? 18 : 16,
-          widget.fullScreen ? 18 : 16,
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final tubeWidth = math.min(164.0, constraints.maxWidth * 0.42);
-            final holeSize = widget.fullScreen ? 72.0 : 62.0;
-            return Stack(
-              children: <Widget>[
-                Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: tubeWidth,
-                    height: constraints.maxHeight,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: <Color>[
-                          widget.fullScreen
-                              ? const Color(0xFFF8FBFF)
-                              : const Color(0xFFFFFFFF),
-                          widget.fullScreen
-                              ? const Color(0xFFD5E3F7)
-                              : const Color(0xFFE8F1FB),
-                          widget.fullScreen
-                              ? const Color(0xFFABC4E5)
-                              : const Color(0xFFC9DCF5),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tubeWidth = math.min(164.0, constraints.maxWidth * 0.42);
+              final holeSize = widget.fullScreen ? 72.0 : 62.0;
+              return Stack(
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: tubeWidth,
+                      height: constraints.maxHeight,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: <Color>[
+                            widget.fullScreen
+                                ? const Color(0xFFF8FBFF)
+                                : const Color(0xFFFFFFFF),
+                            widget.fullScreen
+                                ? const Color(0xFFD5E3F7)
+                                : const Color(0xFFE8F1FB),
+                            widget.fullScreen
+                                ? const Color(0xFFABC4E5)
+                                : const Color(0xFFC9DCF5),
+                          ],
+                        ),
+                      ),
+                      child: Column(
+                        children: <Widget>[
+                          const SizedBox(height: 32),
+                          Container(
+                            width: tubeWidth * 0.56,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              color: const Color(0xFF274060),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: List<Widget>.generate(6, (index) {
+                                return _buildFingerHole(
+                                  context,
+                                  index + 1,
+                                  diameter: holeSize,
+                                );
+                              }),
+                            ),
+                          ),
+                          Container(
+                            width: tubeWidth * 0.68,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              color: const Color(0xFFD8E6F7),
+                              border: Border.all(
+                                color: const Color(0xFFACC3E0),
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              _lastNote ?? '--',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: const Color(0xFF0F172A),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
-                    child: Column(
-                      children: <Widget>[
-                        const SizedBox(height: 32),
-                        Container(
-                          width: tubeWidth * 0.56,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
-                            color: const Color(0xFF274060),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List<Widget>.generate(6, (index) {
-                              return _buildFingerHole(
-                                context,
-                                index + 1,
-                                diameter: holeSize,
-                              );
-                            }),
-                          ),
-                        ),
-                        Container(
-                          width: tubeWidth * 0.68,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            color: const Color(0xFFD8E6F7),
-                            border: Border.all(color: const Color(0xFFACC3E0)),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            _lastNote ?? '--',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              color: const Color(0xFF0F172A),
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: noteButtons,
+                      ),
                     ),
                   ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: noteButtons,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -1563,6 +1697,8 @@ class _FluteToolState extends State<_FluteTool> {
     unawaited(_sustainCoreLoop.dispose());
     unawaited(_sustainAirLoop.dispose());
     unawaited(_sustainEdgeLoop.dispose());
+    _activeHolePointers.clear();
+    _holePressCounts.clear();
     _invalidatePlayers();
     super.dispose();
   }

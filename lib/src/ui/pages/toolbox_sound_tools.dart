@@ -82,10 +82,73 @@ Future<void> _exitToolboxLandscapeMode() async {
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 }
 
+class _ToolboxScrollLockSurface extends StatefulWidget {
+  const _ToolboxScrollLockSurface({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_ToolboxScrollLockSurface> createState() =>
+      _ToolboxScrollLockSurfaceState();
+}
+
+class _ToolboxScrollLockSurfaceState extends State<_ToolboxScrollLockSurface> {
+  final Map<int, ScrollHoldController> _scrollHolds =
+      <int, ScrollHoldController>{};
+  ScrollableState? _ancestorScrollable;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _ancestorScrollable = Scrollable.maybeOf(context);
+  }
+
+  @override
+  void dispose() {
+    for (final hold in _scrollHolds.values) {
+      hold.cancel();
+    }
+    _scrollHolds.clear();
+    super.dispose();
+  }
+
+  void _holdScroll(int pointer) {
+    final scrollable = _ancestorScrollable;
+    if (scrollable == null || _scrollHolds.containsKey(pointer)) {
+      return;
+    }
+    _scrollHolds[pointer] = scrollable.position.hold(() {});
+  }
+
+  void _releaseScroll(int pointer) {
+    _scrollHolds.remove(pointer)?.cancel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragDown: (_) {},
+      onVerticalDragStart: (_) {},
+      onVerticalDragUpdate: (_) {},
+      onVerticalDragEnd: (_) {},
+      onVerticalDragCancel: () {},
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: (event) => _holdScroll(event.pointer),
+        onPointerUp: (event) => _releaseScroll(event.pointer),
+        onPointerCancel: (event) => _releaseScroll(event.pointer),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 Widget _buildInstrumentPanelShell(
   BuildContext context, {
   required bool fullScreen,
   required Widget child,
+  bool scrollable = true,
 }) {
   final content = Padding(
     padding: EdgeInsets.all(fullScreen ? 14 : 18),
@@ -113,30 +176,57 @@ Widget _buildInstrumentPanelShell(
       ),
     ),
     child: SafeArea(
-      child: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: math.max(0, minHeight)),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.surface.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outlineVariant,
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.24),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
+        child: scrollable
+            ? SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: math.max(0, minHeight),
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surface.withValues(alpha: 0.96),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.24),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: content,
+                  ),
                 ),
-              ],
-            ),
-            child: content,
-          ),
-        ),
+              )
+            : ConstrainedBox(
+                constraints: BoxConstraints(minHeight: math.max(0, minHeight)),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surface.withValues(alpha: 0.96),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.24),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: content,
+                ),
+              ),
       ),
     ),
   );
