@@ -51,7 +51,7 @@ class _ViolinToolState extends State<_ViolinTool> {
       id: 'warm_legato',
       styleId: 'warm',
       bow: 0.58,
-      reverb: 0.3,
+      reverb: 0.30,
       scaleId: 'minor',
     ),
     _ViolinPreset(
@@ -98,6 +98,10 @@ class _ViolinToolState extends State<_ViolinTool> {
   int? _activeNoteMidi;
   String? _lastNoteLabel;
 
+  bool _isCompactPhoneWidth(double width) {
+    return width < (widget.fullScreen ? 480 : 430);
+  }
+
   _ViolinPreset get _activePreset {
     return _presets.firstWhere(
       (item) => item.id == _presetId,
@@ -107,9 +111,9 @@ class _ViolinToolState extends State<_ViolinTool> {
 
   String _presetLabel(AppI18n i18n, _ViolinPreset preset) {
     return switch (preset.id) {
-      'warm_legato' => pickUiText(i18n, zh: '温暖连奏', en: 'Warm legato'),
-      'glass_harmonic' => pickUiText(i18n, zh: '泛音晶辉', en: 'Glass harmonic'),
-      _ => pickUiText(i18n, zh: '独奏弓法', en: 'Solo bow'),
+      'warm_legato' => pickUiText(i18n, zh: '温暖连弓', en: 'Warm legato'),
+      'glass_harmonic' => pickUiText(i18n, zh: '空灵泛音', en: 'Glass harmonic'),
+      _ => pickUiText(i18n, zh: '独奏运弓', en: 'Solo bow'),
     };
   }
 
@@ -117,7 +121,7 @@ class _ViolinToolState extends State<_ViolinTool> {
     return switch (preset.id) {
       'warm_legato' => pickUiText(
         i18n,
-        zh: '更柔和的弓压和更长的尾音，适合慢速歌唱线。',
+        zh: '更柔和的弓压和更长的尾音，适合慢速歌唱性旋律。',
         en: 'Softer bow pressure with a longer tail for lyrical lines.',
       ),
       'glass_harmonic' => pickUiText(
@@ -288,6 +292,10 @@ class _ViolinToolState extends State<_ViolinTool> {
       onPointerUp: _handlePointerUp,
       onPointerCancel: _handlePointerUp,
       child: GestureDetector(
+        onTapDown: (details) =>
+            _handleFingerboardTouch(details.localPosition, Size(width, height)),
+        onTapUp: (_) => unawaited(_stopSustain()),
+        onTapCancel: () => unawaited(_stopSustain()),
         onPanStart: (details) =>
             _handleFingerboardTouch(details.localPosition, Size(width, height)),
         onPanUpdate: (details) =>
@@ -653,149 +661,170 @@ class _ViolinToolState extends State<_ViolinTool> {
     return _buildInstrumentPanelShell(
       context,
       fullScreen: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = _isCompactPhoneWidth(constraints.maxWidth);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              ToolboxMetricCard(
-                label: pickUiText(i18n, zh: '弦数', en: 'Strings'),
-                value: '${_strings.length}',
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: <Widget>[
+                  ToolboxMetricCard(
+                    label: pickUiText(i18n, zh: '弦数', en: 'Strings'),
+                    value: '${_strings.length}',
+                  ),
+                  ToolboxMetricCard(
+                    label: pickUiText(i18n, zh: '调式', en: 'Scale'),
+                    value: _scaleLabel(i18n, _scaleId),
+                  ),
+                  ToolboxMetricCard(
+                    label: pickUiText(i18n, zh: '把位', en: 'Position'),
+                    value: _positionLabel(i18n, _positionIndex),
+                  ),
+                  ToolboxMetricCard(
+                    label: pickUiText(i18n, zh: '最近音符', en: 'Last note'),
+                    value: _lastNoteLabel ?? '--',
+                  ),
+                ],
               ),
-              ToolboxMetricCard(
-                label: pickUiText(i18n, zh: '调式', en: 'Scale'),
-                value: _scaleLabel(i18n, _scaleId),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: SectionHeader(
+                      title: pickUiText(
+                        i18n,
+                        zh: '指板舞台',
+                        en: 'Fingerboard stage',
+                      ),
+                      subtitle: pickUiText(
+                        i18n,
+                        zh: compact
+                            ? '手机上支持点按起弓、滑动换音，抬手即停，优先保证演奏连贯。'
+                            : '横向滑动改变量高，纵向切换弦位；现在支持点按即发声、抬手即停。',
+                        en: compact
+                            ? 'Tap to start the bow, slide for pitch, and release to stop on phones.'
+                            : 'Slide horizontally for pitch, vertically for strings, and now start instantly on tap.',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton.tonalIcon(
+                    onPressed: () =>
+                        _openViolinSettingsSheet(context, i18n, theme),
+                    icon: const Icon(Icons.tune_rounded),
+                    label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                  ),
+                ],
               ),
-              ToolboxMetricCard(
-                label: pickUiText(i18n, zh: '把位', en: 'Position'),
-                value: _positionLabel(i18n, _positionIndex),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _presets
+                    .map(
+                      (item) => ChoiceChip(
+                        label: Text(_presetLabel(i18n, item)),
+                        selected: item.id == _presetId,
+                        onSelected: (_) => _applyPreset(item.id),
+                      ),
+                    )
+                    .toList(growable: false),
               ),
-              ToolboxMetricCard(
-                label: pickUiText(i18n, zh: '最近音符', en: 'Last note'),
-                value: _lastNoteLabel ?? '--',
+              const SizedBox(height: 8),
+              Text(
+                _presetSubtitle(i18n, preset),
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 10),
+              _buildFingerboardStage(
+                context,
+                i18n,
+                theme,
+                width: constraints.maxWidth,
+                height: compact ? 204 : 220,
+              ),
+              const SizedBox(height: 14),
+              SectionHeader(
+                title: pickUiText(i18n, zh: '调式与把位', en: 'Scale and position'),
+                subtitle: pickUiText(
+                  i18n,
+                  zh: '用调式分类和把位窗口控制手机屏幕中的有效演奏区间。',
+                  en: 'Use scale categories and position windows to keep the fingerboard playable on phones.',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _scaleIntervals.keys
+                    .map(
+                      (scaleId) => ChoiceChip(
+                        label: Text(_scaleLabel(i18n, scaleId)),
+                        selected: _scaleId == scaleId,
+                        onSelected: (_) => setState(() => _scaleId = scaleId),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List<Widget>.generate(_positionOffsets.length, (
+                  index,
+                ) {
+                  return ChoiceChip(
+                    label: Text(_positionLabel(i18n, index)),
+                    selected: _positionIndex == index,
+                    onSelected: (_) => setState(() => _positionIndex = index),
+                  );
+                }),
+              ),
+              const SizedBox(height: 14),
+              SectionHeader(
+                title: pickUiText(i18n, zh: '弓压与空间', en: 'Bow and space'),
+                subtitle: pickUiText(
+                  i18n,
+                  zh: '开放弓压和残响参数，方便把独奏感与空间感拆开控制。',
+                  en: 'Expose bow pressure and reverb separately for better solo and room control.',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)}',
+                  en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)}',
+                ),
+              ),
+              Slider(
+                value: _bow,
+                min: 0.15,
+                max: 1.0,
+                divisions: 17,
+                onChanged: (value) => setState(() => _bow = value),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '残响 ${(_reverb * 100).round()}%',
+                  en: 'Reverb ${(_reverb * 100).round()}%',
+                ),
+              ),
+              Slider(
+                value: _reverb,
+                min: 0.0,
+                max: 0.5,
+                divisions: 10,
+                onChanged: (value) => setState(() => _reverb = value),
               ),
             ],
-          ),
-          const SizedBox(height: 14),
-          SectionHeader(
-            title: pickUiText(i18n, zh: '预设包', en: 'Preset pack'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '同步切换弓法音色、空间感和默认调式。',
-              en: 'Switch bow tone, room feel, and default scale together.',
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _presets
-                .map(
-                  (item) => ChoiceChip(
-                    label: Text(_presetLabel(i18n, item)),
-                    selected: item.id == _presetId,
-                    onSelected: (_) => _applyPreset(item.id),
-                  ),
-                )
-                .toList(growable: false),
-          ),
-          const SizedBox(height: 8),
-          Text(_presetSubtitle(i18n, preset), style: theme.textTheme.bodySmall),
-          const SizedBox(height: 14),
-          SectionHeader(
-            title: pickUiText(i18n, zh: '指板舞台', en: 'Fingerboard stage'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '横向滑动改变音高，纵向切换弦位；优先保证滑动演奏区完整。',
-              en: 'Slide horizontally for pitch and vertically for strings while keeping the playing stage intact.',
-            ),
-          ),
-          const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) => _buildFingerboardStage(
-              context,
-              i18n,
-              theme,
-              width: constraints.maxWidth,
-              height: 220,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SectionHeader(
-            title: pickUiText(i18n, zh: '调式与把位', en: 'Scale and position'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '用调式分类和把位窗口控制手机屏幕中的有效演奏区域。',
-              en: 'Use scale categories and position windows to keep the fingerboard playable on phones.',
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _scaleIntervals.keys
-                .map(
-                  (scaleId) => ChoiceChip(
-                    label: Text(_scaleLabel(i18n, scaleId)),
-                    selected: _scaleId == scaleId,
-                    onSelected: (_) => setState(() => _scaleId = scaleId),
-                  ),
-                )
-                .toList(growable: false),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List<Widget>.generate(_positionOffsets.length, (index) {
-              return ChoiceChip(
-                label: Text(_positionLabel(i18n, index)),
-                selected: _positionIndex == index,
-                onSelected: (_) => setState(() => _positionIndex = index),
-              );
-            }),
-          ),
-          const SizedBox(height: 14),
-          SectionHeader(
-            title: pickUiText(i18n, zh: '弓压与空间', en: 'Bow and space'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '像竖琴一样开放弓压和残响参数。',
-              en: 'Expose bow pressure and reverb controls like the harp module.',
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            pickUiText(
-              i18n,
-              zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)}',
-              en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)}',
-            ),
-          ),
-          Slider(
-            value: _bow,
-            min: 0.15,
-            max: 1.0,
-            divisions: 17,
-            onChanged: (value) => setState(() => _bow = value),
-          ),
-          Text(
-            pickUiText(
-              i18n,
-              zh: '残响 ${(_reverb * 100).round()}%',
-              en: 'Reverb ${(_reverb * 100).round()}%',
-            ),
-          ),
-          Slider(
-            value: _reverb,
-            min: 0.0,
-            max: 0.5,
-            divisions: 10,
-            onChanged: (value) => setState(() => _reverb = value),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

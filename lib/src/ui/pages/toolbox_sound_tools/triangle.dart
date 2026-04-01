@@ -9,6 +9,8 @@ class _TriangleTool extends StatefulWidget {
   State<_TriangleTool> createState() => _TriangleToolState();
 }
 
+enum _TrianglePlayMode { single, accent, roll }
+
 class _TriangleToolState extends State<_TriangleTool> {
   static const List<_TrianglePreset> _presets = <_TrianglePreset>[
     _TrianglePreset(
@@ -38,6 +40,7 @@ class _TriangleToolState extends State<_TriangleTool> {
   ];
   final Map<String, ToolboxEffectPlayer> _players =
       <String, ToolboxEffectPlayer>{};
+
   String _presetId = _presets.first.id;
   int _hits = 0;
   double _ring = _presets.first.ring;
@@ -45,6 +48,9 @@ class _TriangleToolState extends State<_TriangleTool> {
   String _material = _presets.first.material;
   double _strikePoint = _presets.first.strike;
   double _damping = _presets.first.damping;
+  _TrianglePlayMode _playMode = _TrianglePlayMode.single;
+  String _lastGesture = 'Single';
+  bool _rollInFlight = false;
 
   @override
   void initState() {
@@ -63,36 +69,9 @@ class _TriangleToolState extends State<_TriangleTool> {
 
   String _presetLabel(AppI18n i18n, _TrianglePreset preset) {
     return switch (preset.id) {
-      'soft_ring' => pickUiText(
-        i18n,
-        zh: '柔和振铃',
-        en: 'Soft ring',
-        ja: 'ソフトリング',
-        de: 'Sanfter Ring',
-        fr: 'Résonance douce',
-        es: 'Resonancia suave',
-        ru: 'Мягкий звон',
-      ),
-      'bright_ring' => pickUiText(
-        i18n,
-        zh: '明亮振铃',
-        en: 'Bright ring',
-        ja: 'ブライトリング',
-        de: 'Heller Ring',
-        fr: 'Résonance brillante',
-        es: 'Resonancia brillante',
-        ru: 'Яркий звон',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '管弦振铃',
-        en: 'Orchestral ring',
-        ja: 'オーケストラリング',
-        de: 'Orchestraler Ring',
-        fr: 'Résonance orchestrale',
-        es: 'Resonancia orquestal',
-        ru: 'Оркестровый звон',
-      ),
+      'soft_ring' => pickUiText(i18n, zh: '柔和振铃', en: 'Soft ring'),
+      'bright_ring' => pickUiText(i18n, zh: '明亮振铃', en: 'Bright ring'),
+      _ => pickUiText(i18n, zh: '管弦振铃', en: 'Orchestral ring'),
     };
   }
 
@@ -100,33 +79,18 @@ class _TriangleToolState extends State<_TriangleTool> {
     return switch (preset.id) {
       'soft_ring' => pickUiText(
         i18n,
-        zh: '更柔和的高频和更短的余音，适合轻节奏。',
-        en: 'Softer highs and shorter tail for gentle rhythm support.',
-        ja: '高域を抑えた短めの余韻で、軽いリズム向け。',
-        de: 'Sanftere Höhen und kürzeres Ausklingen für leichte Patterns.',
-        fr: 'Aigus adoucis et queue plus courte pour un rythme léger.',
-        es: 'Agudos suaves y cola corta para ritmos ligeros.',
-        ru: 'Мягкие верха и короткий хвост для лёгкого ритма.',
+        zh: '更柔和的高频和更短的尾音，适合轻节奏点缀。',
+        en: 'Softer highs and a shorter tail for gentle rhythm support.',
       ),
       'bright_ring' => pickUiText(
         i18n,
-        zh: '更亮更脆，余音更明显，适合强调节拍。',
+        zh: '更亮更脆，尾音更明显，适合强调拍点。',
         en: 'Brighter attack and stronger ring to mark accents.',
-        ja: '明るく鋭いアタックで、アクセントを強調。',
-        de: 'Hellerer Anschlag und stärkerer Ring für Akzente.',
-        fr: 'Attaque plus brillante et résonance marquée.',
-        es: 'Ataque brillante y resonancia más marcada para acentos.',
-        ru: 'Более яркая атака и выраженный звон для акцентов.',
       ),
       _ => pickUiText(
         i18n,
-        zh: '均衡明亮与延音，接近管弦乐中的三角铁表现。',
+        zh: '明亮与延音更平衡，更接近管弦语境。',
         en: 'Balanced brightness and decay close to orchestral behavior.',
-        ja: '明るさと余韻のバランスが良い標準オーケストラ音。',
-        de: 'Ausgewogene Helligkeit und Decay wie im Orchester.',
-        fr: 'Équilibre entre brillance et décroissance orchestral.',
-        es: 'Equilibrio entre brillo y decaimiento de estilo orquestal.',
-        ru: 'Сбалансированная яркость и затухание в оркестровом стиле.',
       ),
     };
   }
@@ -139,19 +103,29 @@ class _TriangleToolState extends State<_TriangleTool> {
     };
   }
 
-  ToolboxEffectPlayer _playerFor(String styleId) {
+  String _playModeLabel(AppI18n i18n, _TrianglePlayMode mode) {
+    return switch (mode) {
+      _TrianglePlayMode.accent => pickUiText(i18n, zh: '重击', en: 'Accent'),
+      _TrianglePlayMode.roll => pickUiText(i18n, zh: '滚奏', en: 'Roll'),
+      _ => pickUiText(i18n, zh: '单击', en: 'Single'),
+    };
+  }
+
+  ToolboxEffectPlayer _playerFor({double? strike, double? damping}) {
+    final resolvedStrike = strike ?? _strikePoint;
+    final resolvedDamping = damping ?? _damping;
     final cacheKey =
-        '$styleId:$_material:${_strikePoint.toStringAsFixed(2)}:${_damping.toStringAsFixed(2)}';
+        '${_activePreset.styleId}:$_material:${resolvedStrike.toStringAsFixed(2)}:${resolvedDamping.toStringAsFixed(2)}';
     final existing = _players[cacheKey];
     if (existing != null) return existing;
     final created = ToolboxEffectPlayer(
       ToolboxAudioBank.triangleHit(
-        style: styleId,
+        style: _activePreset.styleId,
         material: _material,
-        strike: _strikePoint,
-        damping: _damping,
+        strike: resolvedStrike,
+        damping: resolvedDamping,
       ),
-      maxPlayers: 6,
+      maxPlayers: 8,
     );
     _players[cacheKey] = created;
     return created;
@@ -181,7 +155,476 @@ class _TriangleToolState extends State<_TriangleTool> {
   }
 
   Future<void> _warmUpActivePreset() async {
-    await _playerFor(_activePreset.styleId).warmUp();
+    await _playerFor().warmUp();
+  }
+
+  Future<void> _performHit({
+    double? strike,
+    double? damping,
+    double? volume,
+    required String gesture,
+  }) async {
+    HapticFeedback.lightImpact();
+    unawaited(
+      _playerFor(
+        strike: strike,
+        damping: damping,
+      ).play(volume: (volume ?? _ring).clamp(0.2, 1.0)),
+    );
+    if (!mounted) return;
+    setState(() {
+      _hits += 1;
+      _flash = 1;
+      _lastGesture = gesture;
+    });
+    Future<void>.delayed(const Duration(milliseconds: 160), () {
+      if (!mounted) return;
+      setState(() => _flash = 0);
+    });
+  }
+
+  Future<void> _strikeFromStage(Offset localPosition, Size size) async {
+    final xRatio = (localPosition.dx / size.width).clamp(0.0, 1.0);
+    final yRatio = (localPosition.dy / size.height).clamp(0.0, 1.0);
+    switch (_playMode) {
+      case _TrianglePlayMode.accent:
+        await _performHit(
+          strike: (0.45 + xRatio * 0.5).clamp(0.0, 1.0),
+          damping: (_damping * 0.72).clamp(0.0, 1.0),
+          volume: (_ring + 0.12).clamp(0.0, 1.0),
+          gesture: 'Accent',
+        );
+      case _TrianglePlayMode.roll:
+        if (_rollInFlight) return;
+        _rollInFlight = true;
+        final baseStrike = (0.25 + xRatio * 0.6).clamp(0.0, 1.0);
+        final baseDamping = (_damping + yRatio * 0.16).clamp(0.0, 1.0);
+        for (var index = 0; index < 7; index += 1) {
+          await _performHit(
+            strike: (baseStrike + index * 0.02).clamp(0.0, 1.0),
+            damping: baseDamping,
+            volume: (_ring * (0.72 + index * 0.04)).clamp(0.0, 1.0),
+            gesture: 'Roll',
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 70));
+        }
+        _rollInFlight = false;
+      case _TrianglePlayMode.single:
+        await _performHit(
+          strike: (0.2 + xRatio * 0.7).clamp(0.0, 1.0),
+          damping: (_damping + (yRatio - 0.5).abs() * 0.12).clamp(0.0, 1.0),
+          volume: (_ring * (0.88 + xRatio * 0.12)).clamp(0.0, 1.0),
+          gesture: 'Single',
+        );
+    }
+  }
+
+  Widget _buildTriangleStage(
+    BuildContext context,
+    AppI18n i18n, {
+    required double height,
+    required bool immersive,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, height);
+        return GestureDetector(
+          onTapDown: (details) =>
+              unawaited(_strikeFromStage(details.localPosition, size)),
+          onPanStart: (details) =>
+              unawaited(_strikeFromStage(details.localPosition, size)),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            height: height,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.fullScreen ? 24 : 18),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[
+                  immersive ? const Color(0xFF0F172A) : const Color(0xFFE6EEF9),
+                  Color.lerp(
+                    immersive
+                        ? const Color(0xFF172554)
+                        : const Color(0xFFC9DDF8),
+                    const Color(0xFFEAB308),
+                    _flash * 0.24,
+                  )!,
+                ],
+              ),
+              border: Border.all(
+                color: immersive
+                    ? Colors.white.withValues(alpha: 0.14)
+                    : const Color(0xFF98B6DE),
+              ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: immersive ? 0.30 : 0.14,
+                  ),
+                  blurRadius: immersive ? 24 : 14,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: <Widget>[
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _TriangleInstrumentPainter(intensity: _flash),
+                  ),
+                ),
+                Positioned(
+                  left: 14,
+                  right: 14,
+                  bottom: 12,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        pickUiText(i18n, zh: '左侧更柔', en: 'Left softer'),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: immersive
+                              ? Colors.white70
+                              : const Color(0xFF334155),
+                        ),
+                      ),
+                      Text(
+                        pickUiText(i18n, zh: '右侧更亮', en: 'Right brighter'),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: immersive
+                              ? Colors.white70
+                              : const Color(0xFF334155),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTriangleSettingsContent(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    final preset = _activePreset;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          pickUiText(i18n, zh: '三角铁设置', en: 'Triangle settings'),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: <Widget>[
+            ToolboxMetricCard(
+              label: 'Preset',
+              value: _presetLabel(i18n, preset),
+            ),
+            ToolboxMetricCard(
+              label: 'Mode',
+              value: _playModeLabel(i18n, _playMode),
+            ),
+            ToolboxMetricCard(
+              label: 'Material',
+              value: _materialLabel(i18n, _material),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _presets
+              .map(
+                (item) => ChoiceChip(
+                  label: Text(_presetLabel(i18n, item)),
+                  selected: item.id == _presetId,
+                  onSelected: (_) => _applyPreset(item.id),
+                ),
+              )
+              .toList(growable: false),
+        ),
+        const SizedBox(height: 8),
+        Text(_presetSubtitle(i18n, preset), style: theme.textTheme.bodySmall),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _TrianglePlayMode.values
+              .map(
+                (mode) => ChoiceChip(
+                  label: Text(_playModeLabel(i18n, mode)),
+                  selected: _playMode == mode,
+                  onSelected: (_) => setState(() => _playMode = mode),
+                ),
+              )
+              .toList(growable: false),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <String>['steel', 'brass', 'aluminum']
+              .map(
+                (item) => ChoiceChip(
+                  label: Text(_materialLabel(i18n, item)),
+                  selected: item == _material,
+                  onSelected: (_) {
+                    if (item == _material) return;
+                    setState(() => _material = item);
+                    _disposePlayers();
+                    unawaited(_warmUpActivePreset());
+                  },
+                ),
+              )
+              .toList(growable: false),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '振铃 ${(_ring * 100).round()}%',
+            en: 'Ring ${(_ring * 100).round()}%',
+          ),
+        ),
+        Slider(
+          value: _ring,
+          min: 0.2,
+          max: 1,
+          divisions: 16,
+          onChanged: (value) => setState(() => _ring = value),
+        ),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '敲击点 ${(_strikePoint * 100).round()}%',
+            en: 'Strike ${(_strikePoint * 100).round()}%',
+          ),
+        ),
+        Slider(
+          value: _strikePoint,
+          min: 0.1,
+          max: 1.0,
+          divisions: 18,
+          onChanged: (value) => setState(() => _strikePoint = value),
+          onChangeEnd: (_) {
+            _disposePlayers();
+            unawaited(_warmUpActivePreset());
+          },
+        ),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '阻尼 ${(_damping * 100).round()}%',
+            en: 'Damping ${(_damping * 100).round()}%',
+          ),
+        ),
+        Slider(
+          value: _damping,
+          min: 0.0,
+          max: 1.0,
+          divisions: 20,
+          onChanged: (value) => setState(() => _damping = value),
+          onChangeEnd: (_) {
+            _disposePlayers();
+            unawaited(_warmUpActivePreset());
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openTriangleSettingsSheet(BuildContext context, AppI18n i18n) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          4,
+          16,
+          16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: SingleChildScrollView(
+          child: _buildTriangleSettingsContent(sheetContext, i18n),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickControls(
+    BuildContext context,
+    AppI18n i18n, {
+    required bool immersive,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: <Widget>[
+        FilledButton.tonalIcon(
+          onPressed: () => setState(() => _playMode = _TrianglePlayMode.single),
+          icon: const Icon(Icons.radio_button_checked_rounded),
+          label: Text(_playModeLabel(i18n, _TrianglePlayMode.single)),
+        ),
+        FilledButton.tonalIcon(
+          onPressed: () => setState(() => _playMode = _TrianglePlayMode.accent),
+          icon: const Icon(Icons.bolt_rounded),
+          label: Text(_playModeLabel(i18n, _TrianglePlayMode.accent)),
+        ),
+        FilledButton.tonalIcon(
+          onPressed: () => setState(() => _playMode = _TrianglePlayMode.roll),
+          icon: const Icon(Icons.multitrack_audio_rounded),
+          label: Text(_playModeLabel(i18n, _TrianglePlayMode.roll)),
+        ),
+        if (!immersive)
+          OutlinedButton.icon(
+            onPressed: () => _openTriangleSettingsSheet(context, i18n),
+            icon: const Icon(Icons.tune_rounded),
+            label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildFullScreen(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            Color(0xFF020617),
+            Color(0xFF172554),
+            Color(0xFF0F172A),
+          ],
+        ),
+      ),
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final stageHeight = math.min(420.0, constraints.maxHeight - 220);
+            return Stack(
+              children: <Widget>[
+                Positioned.fill(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 54, 16, bottomInset + 114),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: <Widget>[
+                            _PianoOverlayChip(
+                              label: 'Preset',
+                              value: _presetLabel(i18n, _activePreset),
+                            ),
+                            _PianoOverlayChip(
+                              label: 'Mode',
+                              value: _playModeLabel(i18n, _playMode),
+                            ),
+                            _PianoOverlayChip(
+                              label: 'Material',
+                              value: _materialLabel(i18n, _material),
+                            ),
+                            _PianoOverlayChip(label: 'Hits', value: '$_hits'),
+                          ],
+                        ),
+                        const Spacer(),
+                        _buildTriangleStage(
+                          context,
+                          i18n,
+                          height: stageHeight,
+                          immersive: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: 8,
+                  child: Row(
+                    children: <Widget>[
+                      FilledButton.tonal(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.black.withValues(alpha: 0.34),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Icon(Icons.arrow_back_rounded),
+                      ),
+                      const Spacer(),
+                      FilledButton.tonalIcon(
+                        onPressed: () =>
+                            _openTriangleSettingsSheet(context, i18n),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.black.withValues(alpha: 0.34),
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(Icons.tune_rounded),
+                        label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: bottomInset + 12,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.28),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.10),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            pickUiText(
+                              i18n,
+                              zh: '左侧更柔，右侧更亮；滚奏模式适合连续紧凑的强调。',
+                              en: 'Left is softer, right is brighter; roll mode creates tight repeated accents.',
+                            ),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          _buildQuickControls(context, i18n, immersive: true),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -190,29 +633,16 @@ class _TriangleToolState extends State<_TriangleTool> {
     super.dispose();
   }
 
-  Future<void> _strike() async {
-    HapticFeedback.lightImpact();
-    unawaited(
-      _playerFor(_activePreset.styleId).play(volume: _ring.clamp(0.2, 1.0)),
-    );
-    if (!mounted) return;
-    setState(() {
-      _hits += 1;
-      _flash = 1;
-    });
-    Future<void>.delayed(const Duration(milliseconds: 160), () {
-      if (!mounted) return;
-      setState(() => _flash = 0);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final i18n = _toolboxI18n(context);
+    if (widget.fullScreen) {
+      return _buildFullScreen(context, i18n);
+    }
     final preset = _activePreset;
     return _buildInstrumentPanelShell(
       context,
-      fullScreen: widget.fullScreen,
+      fullScreen: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -220,68 +650,29 @@ class _TriangleToolState extends State<_TriangleTool> {
             spacing: 10,
             runSpacing: 10,
             children: <Widget>[
+              ToolboxMetricCard(label: 'Hits', value: '$_hits'),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '击打',
-                  en: 'Hits',
-                  ja: 'ヒット',
-                  de: 'Treffer',
-                  fr: 'Coups',
-                  es: 'Golpes',
-                  ru: 'Удары',
-                ),
-                value: '$_hits',
+                label: 'Mode',
+                value: _playModeLabel(i18n, _playMode),
               ),
+              ToolboxMetricCard(label: 'Gesture', value: _lastGesture),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '振铃',
-                  en: 'Ring',
-                  ja: 'リング',
-                  de: 'Ring',
-                  fr: 'Résonance',
-                  es: 'Resonancia',
-                  ru: 'Звон',
-                ),
+                label: 'Ring',
                 value: '${(_ring * 100).round()}%',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '材质',
-                  en: 'Material',
-                  ja: 'プリセット',
-                  de: 'Preset',
-                  fr: 'Préréglage',
-                  es: 'Preajuste',
-                  ru: 'Пресет',
-                ),
+                label: 'Material',
                 value: _materialLabel(i18n, _material),
               ),
             ],
           ),
           const SizedBox(height: 12),
           SectionHeader(
-            title: pickUiText(
-              i18n,
-              zh: '预设包',
-              en: 'Preset pack',
-              ja: 'プリセットパック',
-              de: 'Preset-Paket',
-              fr: 'Pack de préréglages',
-              es: 'Paquete de presets',
-              ru: 'Пакет пресетов',
-            ),
+            title: pickUiText(i18n, zh: '预设包', en: 'Preset pack'),
             subtitle: pickUiText(
               i18n,
-              zh: '预设会同步调整三角铁音色与默认振铃长度。',
-              en: 'Presets change triangle tone and default ring length together.',
-              ja: 'プリセットで音色と余韻長を同時に切り替えます。',
-              de: 'Presets ändern Klangfarbe und Nachklanglänge gemeinsam.',
-              fr: 'Les presets ajustent timbre et longueur de résonance.',
-              es: 'Los presets ajustan timbre y longitud de resonancia.',
-              ru: 'Пресеты одновременно меняют тембр и длину звона.',
+              zh: '预设会联动音色、默认材质和延音长度。',
+              en: 'Presets move tone, material, and default ring length together.',
             ),
           ),
           const SizedBox(height: 10),
@@ -303,61 +694,26 @@ class _TriangleToolState extends State<_TriangleTool> {
             _presetSubtitle(i18n, preset),
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => unawaited(_strike()),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              height: widget.fullScreen ? 260 : 210,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    const Color(0xFFE6EEF9),
-                    Color.lerp(
-                      const Color(0xFFC9DDF8),
-                      const Color(0xFFEAB308),
-                      _flash * 0.24,
-                    )!,
-                  ],
-                ),
-                border: Border.all(color: const Color(0xFF98B6DE)),
-              ),
-              child: CustomPaint(
-                painter: _TriangleInstrumentPainter(intensity: _flash),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            pickUiText(
-              i18n,
-              zh: '振铃 ${(_ring * 100).round()}%',
-              en: 'Ring ${(_ring * 100).round()}%',
-              ja: 'リング ${(_ring * 100).round()}%',
-              de: 'Ring ${(_ring * 100).round()}%',
-              fr: 'Résonance ${(_ring * 100).round()}%',
-              es: 'Resonancia ${(_ring * 100).round()}%',
-              ru: 'Звон ${(_ring * 100).round()}%',
-            ),
-          ),
-          Slider(
-            value: _ring,
-            min: 0.2,
-            max: 1,
-            divisions: 16,
-            onChanged: (value) => setState(() => _ring = value),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           SectionHeader(
-            title: pickUiText(i18n, zh: '音色与残响', en: 'Tone and decay'),
+            title: pickUiText(i18n, zh: '击打舞台', en: 'Strike stage'),
             subtitle: pickUiText(
               i18n,
-              zh: '开放材质、敲击点和阻尼，让全屏时依然保持沉浸式演奏。',
-              en: 'Expose material, strike point, and damping while keeping fullscreen play immersive.',
+              zh: '直接在三角铁画面上点按：左柔右亮，模式决定是单击、重击还是滚奏。',
+              en: 'Tap directly on the triangle: left is softer, right is brighter, and the mode changes the gesture output.',
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildTriangleStage(context, i18n, height: 240, immersive: false),
+          const SizedBox(height: 12),
+          _buildQuickControls(context, i18n, immersive: false),
+          const SizedBox(height: 14),
+          SectionHeader(
+            title: pickUiText(i18n, zh: '音色与衰减', en: 'Tone and decay'),
+            subtitle: pickUiText(
+              i18n,
+              zh: '材质决定泛音质感，敲击点和阻尼决定脆度与尾音长度。',
+              en: 'Material shapes overtones while strike point and damping control attack and tail.',
             ),
           ),
           const SizedBox(height: 10),
@@ -380,6 +736,20 @@ class _TriangleToolState extends State<_TriangleTool> {
                 .toList(growable: false),
           ),
           const SizedBox(height: 10),
+          Text(
+            pickUiText(
+              i18n,
+              zh: '振铃 ${(_ring * 100).round()}%',
+              en: 'Ring ${(_ring * 100).round()}%',
+            ),
+          ),
+          Slider(
+            value: _ring,
+            min: 0.2,
+            max: 1,
+            divisions: 16,
+            onChanged: (value) => setState(() => _ring = value),
+          ),
           Text(
             pickUiText(
               i18n,
@@ -416,22 +786,11 @@ class _TriangleToolState extends State<_TriangleTool> {
               unawaited(_warmUpActivePreset());
             },
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           FilledButton.icon(
-            onPressed: () => unawaited(_strike()),
+            onPressed: () => unawaited(_performHit(gesture: 'Single')),
             icon: const Icon(Icons.music_video_rounded),
-            label: Text(
-              pickUiText(
-                i18n,
-                zh: '敲击三角铁',
-                en: 'Strike triangle',
-                ja: 'トライアングルを鳴らす',
-                de: 'Triangel anschlagen',
-                fr: 'Frapper le triangle',
-                es: 'Golpear triángulo',
-                ru: 'Ударить треугольник',
-              ),
-            ),
+            label: Text(pickUiText(i18n, zh: '立即击打', en: 'Strike now')),
           ),
         ],
       ),

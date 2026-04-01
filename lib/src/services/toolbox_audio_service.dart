@@ -2340,73 +2340,126 @@ class ToolboxAudioBank {
     required double reverb,
   }) {
     const sampleRate = 32000;
-    const durationSeconds = 3.8;
+    const durationSeconds = 4.6;
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
     final brightness = switch (style) {
-      'warm' => 0.82,
-      'glass' => 1.18,
-      _ => 1.0,
+      'warm' => 0.88,
+      'glass' => 1.22,
+      _ => 1.02,
     };
-    final body = switch (style) {
-      'warm' => 1.12,
-      'glass' => 0.78,
-      _ => 0.94,
+    final bodyGain = switch (style) {
+      'warm' => 1.18,
+      'glass' => 0.84,
+      _ => 0.98,
     };
     final vibratoDepth = switch (style) {
-      'warm' => 0.0048,
-      'glass' => 0.0034,
-      _ => 0.004,
+      'warm' => 0.0052,
+      'glass' => 0.0033,
+      _ => 0.0044,
     };
     final vibratoRate = switch (style) {
-      'warm' => 5.0,
-      'glass' => 6.2,
-      _ => 5.6,
+      'warm' => 4.9,
+      'glass' => 6.1,
+      _ => 5.4,
     };
+    final rosinAmount = (0.011 + bow * 0.02) * (style == 'glass' ? 1.18 : 1.0);
+    final bodyFormantAmount = 0.04 + bodyGain * 0.036;
+    var phase = 0.0;
 
     for (var i = 0; i < totalSamples; i += 1) {
       final t = i / sampleRate;
-      final attack = (1 - math.exp(-(18 + bow * 22) * t));
-      final sustain = math.exp(-(0.42 + (1 - bow) * 0.34) * t);
-      final release = ((durationSeconds - t) / 0.9).clamp(0.0, 1.0).toDouble();
-      final env = (attack * sustain * math.pow(release, 1.2)).clamp(0.0, 1.0);
+      final attack = 1 - math.exp(-(13 + bow * 14) * t);
+      final settle = 0.84 + 0.16 * math.exp(-(0.18 + (1 - bow) * 0.1) * t);
+      final loopEdge =
+          0.97 + 0.03 * math.cos(math.pi * 2 * t / durationSeconds);
+      final env = (attack * settle * loopEdge).clamp(0.0, 1.0);
+      final vibratoIntro = ((t - 0.16) / 0.42).clamp(0.0, 1.0).toDouble();
+      final vibratoShape = vibratoIntro * vibratoIntro * (3 - 2 * vibratoIntro);
       final vibrato =
           math.sin(
             math.pi * 2 * vibratoRate * t +
-                math.sin(math.pi * 2 * 0.28 * t) * 0.24,
+                math.sin(math.pi * 2 * 0.33 * t) * 0.21,
           ) *
-          vibratoDepth;
-      final bowedFrequency = frequency * (1 + vibrato);
-      var tone = math.sin(math.pi * 2 * bowedFrequency * t) * 0.54;
-      tone +=
-          math.sin(math.pi * 2 * bowedFrequency * 2.01 * t + 0.18) *
-          (0.22 * brightness);
-      tone +=
-          math.sin(math.pi * 2 * bowedFrequency * 3.03 * t + 0.44) *
-          (0.11 * brightness);
-      tone +=
-          math.sin(math.pi * 2 * bowedFrequency * 4.08 * t + 0.82) *
-          (0.06 * brightness);
-      final bowNoise =
-          (math.sin((i + 1) * 24.71) +
-              math.cos((i + 1) * 41.33) +
-              math.sin((i + 1) * 73.19 + 0.5)) *
-          (0.012 + bow * 0.024) *
-          math.exp(-0.55 * t);
-      final bodyResonance =
-          math.sin(math.pi * 2 * bowedFrequency * 0.5 * t + 0.7) *
-          (0.08 + body * 0.04) *
-          math.exp(-1.6 * t);
-      final scrape =
-          math.sin(math.pi * 2 * bowedFrequency * 6.7 * t + 0.3) *
-          (0.018 + bow * 0.016) *
-          math.exp(-4.2 * t);
+          vibratoDepth *
+          vibratoShape;
+      final microDetune =
+          math.sin(math.pi * 2 * 9.2 * t + 0.6) * (0.00045 + bow * 0.0004);
+      final bowedFrequency = frequency * (1 + vibrato + microDetune);
+      phase += bowedFrequency / sampleRate;
+      final basePhase = math.pi * 2 * phase;
+      final slip =
+          0.5 + 0.5 * math.sin(basePhase + math.sin(basePhase * 0.5) * 0.18);
+
+      var tone = math.sin(basePhase) * 0.44;
+      tone += math.sin(basePhase * 2 + 0.12) * (0.24 * brightness);
+      tone += math.sin(basePhase * 3 + 0.31) * (0.16 * brightness);
+      tone += math.sin(basePhase * 4 + 0.56) * (0.10 * brightness);
+      tone += math.sin(basePhase * 5 + 0.88) * (0.068 * brightness);
+      tone += math.sin(basePhase * 6 + 1.18) * (0.044 * brightness);
+      tone += math.sin(basePhase * 7 + 1.47) * (0.026 * brightness);
+      tone += math.sin(basePhase * 8 + 1.92) * (0.018 * brightness);
+
+      final edgeHarmonics =
+          math.sin(basePhase * 2.7 + 0.42) * (0.018 + bow * 0.01) +
+          math.sin(basePhase * 5.4 + 0.16) * (0.012 + bow * 0.008);
+
+      final rosinNoise =
+          (math.sin((i + 1) * 0.91) +
+              math.sin((i + 1) * 1.73 + 0.3) * 0.8 +
+              math.cos((i + 1) * 2.41 + 0.9) * 0.55) *
+          rosinAmount *
+          (0.3 + slip * 0.7) *
+          (0.68 + 0.32 * math.exp(-0.12 * t));
+
+      final bowChiff =
+          math.sin(basePhase * (6.4 + bow * 0.8) + 0.18) *
+          (0.012 + bow * 0.008) *
+          math.exp(-(2.2 - bow * 0.7) * t);
+
+      final bodyEnvelope = 0.55 + 0.45 * math.exp(-0.32 * t);
+      final formantA =
+          math.sin(math.pi * 2 * 290 * t + 0.15) *
+          bodyFormantAmount *
+          bodyEnvelope;
+      final formantB =
+          math.sin(math.pi * 2 * 520 * t + 0.51) *
+          (bodyFormantAmount * 0.72) *
+          bodyEnvelope;
+      final formantC =
+          math.sin(math.pi * 2 * 920 * t + 0.84) *
+          (bodyFormantAmount * 0.42 * brightness) *
+          (0.5 + 0.5 * math.sin(basePhase * 0.5 + 0.2));
+      final airBody =
+          math.sin(math.pi * 2 * 1480 * t + 1.2) *
+          (0.009 + (brightness - 0.7).clamp(0.0, 1.0) * 0.006) *
+          (0.4 + slip * 0.6);
+
+      final onsetScrape =
+          (math.sin((i + 1) * 3.6) + math.cos((i + 1) * 5.2 + 0.3)) *
+          (0.01 + bow * 0.016) *
+          math.exp(-8.0 * t);
+
       samples[i] = _softClip(
-        (tone + bowNoise + bodyResonance + scrape) * env * 1.28,
+        (tone +
+                edgeHarmonics +
+                rosinNoise +
+                bowChiff +
+                formantA +
+                formantB +
+                formantC +
+                airBody +
+                onsetScrape) *
+            env *
+            1.18,
       );
     }
 
-    _applySchroederReverb(samples, sampleRate: sampleRate, amount: reverb);
+    _applySchroederReverb(
+      samples,
+      sampleRate: sampleRate,
+      amount: (reverb * 0.78).clamp(0.0, 0.35),
+    );
     return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
   }
 
