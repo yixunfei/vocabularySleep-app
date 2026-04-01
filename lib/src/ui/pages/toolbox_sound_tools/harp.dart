@@ -327,10 +327,10 @@ class _HarpToolState extends State<_HarpTool>
       pluckStyleId: 'nylon',
       patternId: 'glide',
       paletteId: 'ivory_wood',
-      reverb: 0.2,
-      damping: 11.8,
+      reverb: 0.18,
+      damping: 10.8,
       swipeThreshold: 1.0,
-      chordResonanceEnabled: false,
+      chordResonanceEnabled: true,
     ),
     _HarpRealismPreset(
       id: 'pedal_harp',
@@ -341,10 +341,10 @@ class _HarpToolState extends State<_HarpTool>
       pluckStyleId: 'concert',
       patternId: 'cascade',
       paletteId: 'moon',
-      reverb: 0.26,
-      damping: 10.4,
-      swipeThreshold: 1.2,
-      chordResonanceEnabled: false,
+      reverb: 0.22,
+      damping: 10.0,
+      swipeThreshold: 1.1,
+      chordResonanceEnabled: true,
     ),
     _HarpRealismPreset(
       id: 'steel_studio',
@@ -369,10 +369,10 @@ class _HarpToolState extends State<_HarpTool>
       pluckStyleId: 'warm',
       patternId: 'chord',
       paletteId: 'ember',
-      reverb: 0.3,
-      damping: 9.6,
-      swipeThreshold: 1.4,
-      chordResonanceEnabled: false,
+      reverb: 0.28,
+      damping: 9.2,
+      swipeThreshold: 1.3,
+      chordResonanceEnabled: true,
     ),
   ];
 
@@ -818,10 +818,16 @@ class _HarpToolState extends State<_HarpTool>
                 axis)
             .abs();
     if (distance > spacing * 0.45) return;
+    final stringTrack = _stringTrackAt(
+      index,
+      size,
+      horizontalLayout: _isHorizontalLayout,
+    );
+    final proximity = (1 - distance / (spacing * 0.45)).clamp(0.0, 1.0);
     _pluckString(
       index,
-      intensity: 0.46,
-      direction: 1,
+      intensity: (0.34 + proximity * 0.34).clamp(0.32, 0.78).toDouble(),
+      direction: axis >= stringTrack ? 1 : -1,
       force: true,
       applyChordResonance: false,
     );
@@ -838,11 +844,17 @@ class _HarpToolState extends State<_HarpTool>
       size,
       horizontalLayout: _isHorizontalLayout,
     );
+    final startAxis = _isHorizontalLayout ? localPosition.dy : localPosition.dx;
+    final startTrack = _stringTrackAt(
+      startIndex,
+      size,
+      horizontalLayout: _isHorizontalLayout,
+    );
     pointerState.lastDragStringIndex = startIndex;
     _pluckString(
       startIndex,
-      intensity: 0.32,
-      direction: 1,
+      intensity: 0.36,
+      direction: startAxis >= startTrack ? 1 : -1,
       force: true,
       applyChordResonance: false,
     );

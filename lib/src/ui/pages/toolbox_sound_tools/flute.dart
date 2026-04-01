@@ -91,6 +91,15 @@ class _FluteToolState extends State<_FluteTool> {
       reverb: 0.28,
       tail: 0.78,
     ),
+    _FlutePreset(
+      id: 'bamboo_breath',
+      styleId: 'bamboo',
+      materialId: 'wood',
+      scaleId: 'pentatonic',
+      breath: 0.72,
+      reverb: 0.2,
+      tail: 0.7,
+    ),
   ];
 
   final Map<String, ToolboxEffectPlayer> _players =
@@ -151,6 +160,16 @@ class _FluteToolState extends State<_FluteTool> {
 
   String _presetLabel(AppI18n i18n, _FlutePreset preset) {
     return switch (preset.id) {
+      'bamboo_breath' => pickUiText(
+        i18n,
+        zh: '竹韵呼吸',
+        en: 'Bamboo breath',
+        ja: '竹の息吹',
+        de: 'Bambusatem',
+        fr: 'Souffle de bambou',
+        es: 'Aliento de bambú',
+        ru: 'Бамбуковое дыхание',
+      ),
       'lead_solo' => pickUiText(
         i18n,
         zh: '独奏领奏',
@@ -186,6 +205,16 @@ class _FluteToolState extends State<_FluteTool> {
 
   String _presetSubtitle(AppI18n i18n, _FlutePreset preset) {
     return switch (preset.id) {
+      'bamboo_breath' => pickUiText(
+        i18n,
+        zh: '竹感更强，起音更柔，适合安静的五声音阶即兴。',
+        en: 'Gentler attacks and a more bamboo-like body for calm pentatonic phrases.',
+        ja: '竹らしい胴鳴りと柔らかな立ち上がりで、静かなペンタトニックに向きます。',
+        de: 'Mehr Bambus-Resonanz und weicherer Einsatz für ruhige pentatonische Phrasen.',
+        fr: 'Plus de résonance de bambou et une attaque plus douce pour des phrases pentatoniques calmes.',
+        es: 'Más resonancia de bambú y un ataque más suave para frases pentatónicas tranquilas.',
+        ru: 'Более бамбуковый корпус и мягкая атака для спокойных пентатонических фраз.',
+      ),
       'lead_solo' => pickUiText(
         i18n,
         zh: '更亮、更靠前，适合旋律句的突出。',

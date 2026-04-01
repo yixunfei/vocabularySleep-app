@@ -62,7 +62,7 @@ class HarpToolPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在同一乐器台中切换竖琴、钢琴、长笛、鼓垫、吉他和三角铁。',
+        zh: '在同一乐器台中切换竖琴、钢琴、长笛、鼓垫、吉他、三角铁和小提琴。',
         en: 'Switch harp, piano, flute, drum pad, guitar, triangle, and violin in one instrument deck.',
         ja: '1つのデッキでハープ、ピアノ、フルート、ドラム、ギター、トライアングルを切替。',
         de: 'Harfe, Klavier, Flöte, Drum-Pad, Gitarre und Triangel in einem Deck umschalten.',
