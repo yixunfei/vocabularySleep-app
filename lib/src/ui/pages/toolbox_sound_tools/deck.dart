@@ -163,6 +163,16 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
         es: 'Violin',
         ru: 'Скрипка',
       ),
+      _HarpDeckInstrument.pickup => pickUiText(
+        i18n,
+        zh: '拾音器',
+        en: 'Pickup',
+        ja: 'ピックアップ',
+        de: 'Pickup',
+        fr: 'Pickup',
+        es: 'Pastilla',
+        ru: 'Пьезо',
+      ),
       _ => pickUiText(
         i18n,
         zh: '竖琴',
