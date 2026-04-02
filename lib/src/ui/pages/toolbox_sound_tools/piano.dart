@@ -84,6 +84,15 @@ class _PianoToolState extends State<_PianoTool> {
     'A#',
     'B',
   ];
+  static const List<_PianoKeyLayoutPreset> _keyLayouts =
+      <_PianoKeyLayoutPreset>[
+        _PianoKeyLayoutPreset(id: '25', keyCount: 25, startMidi: 48),
+        _PianoKeyLayoutPreset(id: '37', keyCount: 37, startMidi: 36),
+        _PianoKeyLayoutPreset(id: '49', keyCount: 49, startMidi: 36),
+        _PianoKeyLayoutPreset(id: '61', keyCount: 61, startMidi: 36),
+        _PianoKeyLayoutPreset(id: '76', keyCount: 76, startMidi: 28),
+        _PianoKeyLayoutPreset(id: '88', keyCount: 88, startMidi: 21),
+      ];
   static const List<_PianoPreset> _presets = <_PianoPreset>[
     _PianoPreset(
       id: 'concert_hall',
@@ -195,14 +204,19 @@ class _PianoToolState extends State<_PianoTool> {
   double _blackKeyHeightRatio = 0.66;
   double _chordSpreadScale = 1.15;
   double _chordFalloff = 0.13;
+  double _gestureThresholdScale = 1.0;
   int _rangeStartOctave = 2;
   String _scaleId = _scaleSets.first.id;
   String _chordId = _chordSets.first.id;
   String _rootPitchClass = 'C';
+  String _keyLayoutId = '88';
   Offset? _twoFingerOrigin;
   bool _rangeNavigatorExpanded = false;
   bool _dualKeyboardMode = true;
+  bool _compactKeyboardMode = false;
+  bool _aggressiveOneHandMode = true;
   bool _didApplyResponsiveDefaults = false;
+  DateTime? _lastRangeGestureAt;
   _PianoCompactDeckFocus _compactDualFocus = _PianoCompactDeckFocus.low;
 
   @override
@@ -241,123 +255,104 @@ class _PianoToolState extends State<_PianoTool> {
     );
   }
 
+  _PianoKeyLayoutPreset get _activeKeyLayout {
+    return _keyLayouts.firstWhere(
+      (item) => item.id == _keyLayoutId,
+      orElse: () => _keyLayouts.last,
+    );
+  }
+
+  List<_PianoKey> get _activeKeyPool {
+    final layout = _activeKeyLayout;
+    final endMidi = layout.startMidi + layout.keyCount - 1;
+    return _allKeys
+        .where((key) => key.midi >= layout.startMidi && key.midi <= endMidi)
+        .toList(growable: false);
+  }
+
+  List<int> _windowStartWhiteIndices(int octaveSpan) {
+    final whiteKeys = _activeKeyPool
+        .where((key) => !key.isSharp)
+        .toList(growable: false);
+    final windowWhiteCount = octaveSpan * 7 + 1;
+    if (whiteKeys.length <= windowWhiteCount) {
+      return const <int>[0];
+    }
+    final maxStartWhite = whiteKeys.length - windowWhiteCount;
+    final indices = <int>[0];
+    for (var index = 7; index <= maxStartWhite; index += 7) {
+      indices.add(index);
+    }
+    if (indices.last != maxStartWhite) {
+      indices.add(maxStartWhite);
+    }
+    return indices;
+  }
+
+  String _windowLabelForIndex(int startIndex, int octaveSpan) {
+    final whiteKeys = _activeKeyPool
+        .where((key) => !key.isSharp)
+        .toList(growable: false);
+    if (whiteKeys.isEmpty) {
+      return '--';
+    }
+    final starts = _windowStartWhiteIndices(octaveSpan);
+    final normalized = startIndex.clamp(0, starts.length - 1);
+    final startWhite = starts[normalized];
+    final endWhite = (startWhite + octaveSpan * 7).clamp(
+      0,
+      whiteKeys.length - 1,
+    );
+    return '${whiteKeys[startWhite].label}-${whiteKeys[endWhite].label}';
+  }
+
+  String _noteLabelForMidi(int midi) {
+    for (final key in _allKeys) {
+      if (key.midi == midi) {
+        return key.label;
+      }
+    }
+    return _allKeys.first.label;
+  }
+
+  String _displayKeyLayoutLabel(AppI18n i18n, _PianoKeyLayoutPreset layout) {
+    final endMidi = layout.startMidi + layout.keyCount - 1;
+    return pickUiText(
+      i18n,
+      zh: '${layout.keyCount}键 ${_noteLabelForMidi(layout.startMidi)}-${_noteLabelForMidi(endMidi)}',
+      en: '${layout.keyCount} keys ${_noteLabelForMidi(layout.startMidi)}-${_noteLabelForMidi(endMidi)}',
+    );
+  }
+
   String _displayPresetLabel(AppI18n i18n, _PianoPreset preset) {
     return switch (preset.id) {
-      'upright_studio' => pickUiText(i18n, zh: '录音室立式钢琴', en: 'Studio upright'),
+      'upright_studio' => pickUiText(i18n, zh: '录音室立式', en: 'Studio upright'),
       'bright_stage' => pickUiText(i18n, zh: '明亮舞台', en: 'Bright stage'),
       'felt_room' => pickUiText(i18n, zh: '毛毡房间', en: 'Felt room'),
       _ => pickUiText(i18n, zh: '音乐厅', en: 'Concert hall'),
     };
   }
 
-  // ignore: unused_element
-  String _displayPresetSubtitle(AppI18n i18n, _PianoPreset preset) {
-    return switch (preset.id) {
-      'bright_stage' => pickUiText(
-        i18n,
-        zh: '更清晰的击弦边缘，适合突出旋律和明亮起音。',
-        en: 'Sharper hammer edge for lead lines and brighter attacks.',
-      ),
-      'felt_room' => pickUiText(
-        i18n,
-        zh: '毛毡包裹感更强，适合亲密和安静的演奏。',
-        en: 'Softer felt body for intimate and quiet playing.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '延音与空间感更均衡，适合日常练习与编配。',
-        en: 'Balanced sustain and room feel for all-purpose playing.',
-      ),
-    };
-  }
-
-  // ignore: unused_element
-  String _displayScaleLabel(AppI18n i18n, String scaleId) {
-    return switch (scaleId) {
-      'minor' => pickUiText(i18n, zh: '灏忚皟', en: 'Minor'),
-      'dorian' => pickUiText(i18n, zh: '多利亚', en: 'Dorian'),
-      'lydian' => pickUiText(i18n, zh: '利底亚', en: 'Lydian'),
-      'harmonic_minor' => pickUiText(i18n, zh: '鍜屽０灏忚皟', en: 'Harmonic minor'),
-      'pentatonic' => pickUiText(i18n, zh: '浜斿０闊抽樁', en: 'Pentatonic'),
-      'chromatic' => pickUiText(i18n, zh: '半音阶', en: 'Chromatic'),
-      _ => pickUiText(i18n, zh: '澶ц皟', en: 'Major'),
-    };
-  }
-
-  // ignore: unused_element
-  String _displayChordLabel(AppI18n i18n, String chordId) {
-    return switch (chordId) {
-      'major' => pickUiText(i18n, zh: '澶т笁鍜屽鸡', en: 'Major'),
-      'minor' => pickUiText(i18n, zh: '灏忎笁鍜屽鸡', en: 'Minor'),
-      'sus2' => pickUiText(i18n, zh: '鎸備簩', en: 'Sus2'),
-      'maj7' => pickUiText(i18n, zh: '澶т竷', en: 'Maj7'),
-      'm7' => pickUiText(i18n, zh: '灏忎竷', en: 'm7'),
-      'add9' => pickUiText(i18n, zh: '鍔犱節', en: 'Add9'),
-      _ => pickUiText(i18n, zh: '鍗曢煶', en: 'Single note'),
-    };
-  }
-
-  // ignore: unused_element
-  String _displayKeyboardStyleLabel(AppI18n i18n, _PianoKeyboardStyle style) {
-    return switch (style.id) {
-      'classic_bw' => pickUiText(
-        i18n,
-        zh: '缁忓吀榛戠櫧',
-        en: 'Classic black & white',
-      ),
-      'midnight' => pickUiText(i18n, zh: '娣卞', en: 'Midnight'),
-      'mist' => pickUiText(i18n, zh: '钖勯浘', en: 'Mist'),
-      _ => pickUiText(i18n, zh: '璞＄墮', en: 'Ivory'),
-    };
-  }
-
-  // ignore: unused_element
-  String _displayTouchLabel(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '瑙﹂敭 ${(100 * _touch).round()}%',
-      en: 'Touch ${(100 * _touch).round()}%',
-    );
-  }
-
-  // ignore: unused_element
-  String _displaySpaceLabel(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '绌洪棿 ${(_reverb * 100).round()}%',
-      en: 'Space ${(_reverb * 100).round()}%',
-    );
-  }
-
-  // ignore: unused_element
-  String _displayDecayLabel(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '寤堕煶 ${_decay.toStringAsFixed(2)}x',
-      en: 'Decay ${_decay.toStringAsFixed(2)}x',
-    );
-  }
-
   String _displayPresetSubtitleFixed(AppI18n i18n, _PianoPreset preset) {
     return switch (preset.id) {
       'upright_studio' => pickUiText(
         i18n,
-        zh: '更贴近真实立式钢琴的木质共鸣与干净起音，适合日常练习。',
+        zh: '更接近真实立式钢琴的木质共鸣与干净起音，适合日常练习。',
         en: 'Dryer wood resonance and cleaner attacks, closer to a real upright piano.',
       ),
       'bright_stage' => pickUiText(
         i18n,
-        zh: '更锐利的击弦边缘，适合突出旋律和清晰起音。',
+        zh: '更锋利的击弦边缘，适合突出旋律和明亮起音。',
         en: 'Sharper hammer edge for lead lines and brighter attacks.',
       ),
       'felt_room' => pickUiText(
         i18n,
-        zh: '毛毡包裹感更强，适合亲密和安静的演奏。',
+        zh: '毛毡包裹感更强，适合安静和亲密的演奏氛围。',
         en: 'Softer felt body for intimate and quiet playing.',
       ),
       _ => pickUiText(
         i18n,
-        zh: '延音与空间感更均衡，适合日常练习与编配。',
+        zh: '延音与空间感更均衡，适合通用演奏和编配。',
         en: 'Balanced sustain and room feel for all-purpose playing.',
       ),
     };
@@ -393,7 +388,7 @@ class _PianoToolState extends State<_PianoTool> {
   ) {
     return switch (style.id) {
       'classic_bw' => pickUiText(i18n, zh: '经典黑白', en: 'Classic black & white'),
-      'midnight' => pickUiText(i18n, zh: '深夜', en: 'Midnight'),
+      'midnight' => pickUiText(i18n, zh: '午夜', en: 'Midnight'),
       'mist' => pickUiText(i18n, zh: '薄雾', en: 'Mist'),
       _ => pickUiText(i18n, zh: '象牙', en: 'Ivory'),
     };
@@ -423,70 +418,23 @@ class _PianoToolState extends State<_PianoTool> {
     );
   }
 
-  String _rangeRegisterNameFixed(
-    AppI18n i18n,
-    int startOctave,
-    int octaveSpan,
-  ) {
-    final endOctave = startOctave + octaveSpan;
-    if (endOctave <= 2) {
-      return pickUiText(i18n, zh: '低音区', en: 'Bass');
-    }
-    if (startOctave <= 1 && endOctave <= 4) {
-      return pickUiText(i18n, zh: '次中音区', en: 'Baritone');
-    }
-    if (startOctave <= 3 && endOctave <= 5) {
-      return pickUiText(i18n, zh: '中音区', en: 'Tenor');
-    }
-    if (startOctave <= 4 && endOctave <= 6) {
-      return pickUiText(i18n, zh: '次高音区', en: 'Alto');
-    }
-    return pickUiText(i18n, zh: '高音区', en: 'Soprano');
+  String _displayGestureThresholdLabelFixed(AppI18n i18n) {
+    return pickUiText(
+      i18n,
+      zh: '双指切窗灵敏度 ${(_gestureThresholdScale * 100).round()}%',
+      en: 'Two-finger range sensitivity ${(_gestureThresholdScale * 100).round()}%',
+    );
   }
 
-  String _rangeWindowLabelFixed(AppI18n i18n, int startOctave, int octaveSpan) {
-    return '${_rangeRegisterNameFixed(i18n, startOctave, octaveSpan)} · '
-        '${_rangeLeadingLabel(startOctave)}-${_rangeTrailingLabel(startOctave, octaveSpan)}';
-  }
-
-  String _rangeLeadingLabel(int startOctave) {
-    if (startOctave <= 0) {
-      return 'A0';
+  void _applyKeyLayoutById(String layoutId) {
+    if (_keyLayoutId == layoutId) {
+      return;
     }
-    return 'C$startOctave';
-  }
-
-  String _rangeTrailingLabel(int startOctave, int octaveSpan) {
-    final endOctave = (startOctave + octaveSpan).clamp(0, 8);
-    return 'C$endOctave';
-  }
-
-  // ignore: unused_element
-  String _rangeRegisterName(AppI18n i18n, int startOctave, int octaveSpan) {
-    final endOctave = startOctave + octaveSpan;
-    if (endOctave <= 2) {
-      return pickUiText(i18n, zh: '低音区', en: 'Bass');
-    }
-    if (startOctave <= 1 && endOctave <= 4) {
-      return pickUiText(i18n, zh: '娆′腑闊冲尯', en: 'Baritone');
-    }
-    if (startOctave <= 3 && endOctave <= 5) {
-      return pickUiText(i18n, zh: '中音区', en: 'Tenor');
-    }
-    if (startOctave <= 4 && endOctave <= 6) {
-      return pickUiText(i18n, zh: '娆￠珮闊冲尯', en: 'Alto');
-    }
-    return pickUiText(i18n, zh: '高音区', en: 'Soprano');
-  }
-
-  // ignore: unused_element
-  String _rangeWindowLabel(AppI18n i18n, int startOctave, int octaveSpan) {
-    return '${_rangeRegisterNameFixed(i18n, startOctave, octaveSpan)} · '
-        '${_rangeLeadingLabel(startOctave)}-${_rangeTrailingLabel(startOctave, octaveSpan)}';
-  }
-
-  String _rangeWindowLabelPlain(int startOctave, int octaveSpan) {
-    return '${_rangeLeadingLabel(startOctave)}-${_rangeTrailingLabel(startOctave, octaveSpan)}';
+    _keyLayoutId = layoutId;
+    _rangeStartOctave = 0;
+    _dualKeyboardMode = false;
+    _compactDualFocus = _PianoCompactDeckFocus.low;
+    _invalidatePlayers();
   }
 
   void _invalidatePlayers({bool warmUp = true}) {
@@ -528,12 +476,28 @@ class _PianoToolState extends State<_PianoTool> {
     });
   }
 
+  void _toggleCompactKeyboardMode() {
+    setState(() {
+      _compactKeyboardMode = !_compactKeyboardMode;
+    });
+  }
+
   bool _isCompactPhoneWidth(double width) {
     return width < (widget.fullScreen ? 480 : 430);
   }
 
   bool _isUltraCompactPhoneWidth(double width) {
     return width < 380;
+  }
+
+  bool _isAggressiveOneHandWidth(double width) {
+    return width >= 320 && width <= 390;
+  }
+
+  List<int> _quickRangeStarts(int octaveSpan) {
+    final maxStart = _maxRangeStart(octaveSpan);
+    final starts = <int>{0, (maxStart / 2).round(), maxStart};
+    return starts.toList()..sort();
   }
 
   void _maybeApplyResponsiveDefaults(double width) {
@@ -550,6 +514,11 @@ class _PianoToolState extends State<_PianoTool> {
       }
       setState(() {
         _dualKeyboardMode = false;
+        _compactKeyboardMode = true;
+        _aggressiveOneHandMode = _isAggressiveOneHandWidth(width);
+        if (_aggressiveOneHandMode) {
+          _gestureThresholdScale = 0.9;
+        }
         _compactDualFocus = _PianoCompactDeckFocus.low;
       });
     });
@@ -615,7 +584,7 @@ class _PianoToolState extends State<_PianoTool> {
   }
 
   int _maxRangeStart(int octaveSpan) {
-    return math.max(0, 8 - octaveSpan);
+    return math.max(0, _windowStartWhiteIndices(octaveSpan).length - 1);
   }
 
   void _updateRangeStart(int nextStart, int octaveSpan) {
@@ -645,6 +614,34 @@ class _PianoToolState extends State<_PianoTool> {
     return Offset(sumX / values.length, sumY / values.length);
   }
 
+  double _activePointerSpread() {
+    final values = _activePointers.values.toList(growable: false);
+    if (values.length < 2) {
+      return 0.0;
+    }
+    var minX = values.first.dx;
+    var maxX = values.first.dx;
+    var minY = values.first.dy;
+    var maxY = values.first.dy;
+    for (final offset in values.skip(1)) {
+      if (offset.dx < minX) {
+        minX = offset.dx;
+      }
+      if (offset.dx > maxX) {
+        maxX = offset.dx;
+      }
+      if (offset.dy < minY) {
+        minY = offset.dy;
+      }
+      if (offset.dy > maxY) {
+        maxY = offset.dy;
+      }
+    }
+    final deltaX = maxX - minX;
+    final deltaY = maxY - minY;
+    return math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  }
+
   Set<String> _highlightedPitchClasses() {
     final rootIndex = _rootPitchClasses.indexOf(_rootPitchClass);
     final highlights = <String>{};
@@ -663,7 +660,16 @@ class _PianoToolState extends State<_PianoTool> {
     for (final interval in _activeChordSpec.voicedIntervals) {
       final midi = rootKey.midi + interval;
       _PianoKey? key;
+      for (final candidate in _activeKeyPool) {
+        if (candidate.midi == midi) {
+          key = candidate;
+          break;
+        }
+      }
       for (final candidate in _allKeys) {
+        if (key != null) {
+          break;
+        }
         if (candidate.midi == midi) {
           key = candidate;
           break;
@@ -781,14 +787,51 @@ class _PianoToolState extends State<_PianoTool> {
     }
     _activePointers[event.pointer] = event.localPosition;
     if (_activePointers.length >= 2) {
+      final stageWidth = metrics.size.width;
+      final aggressiveOneHand =
+          _aggressiveOneHandMode && _isAggressiveOneHandWidth(stageWidth);
+      final spread = _activePointerSpread();
+      final minSpread = aggressiveOneHand ? 18.0 : 24.0;
+      if (spread < minSpread) {
+        return;
+      }
       final centroid = _activePointerCentroid();
       final origin = _twoFingerOrigin ?? centroid;
       final delta = centroid - origin;
-      final verticalThreshold = widget.fullScreen ? 34.0 : 54.0;
-      final horizontalThreshold = widget.fullScreen ? 56.0 : 72.0;
+      final thresholdScale = _gestureThresholdScale.clamp(0.78, 1.28);
+      final verticalThreshold = widget.fullScreen
+          ? (aggressiveOneHand ? 22.0 : 28.0) * thresholdScale
+          : (aggressiveOneHand ? 26.0 : 40.0) * thresholdScale;
+      final horizontalThreshold = widget.fullScreen
+          ? (aggressiveOneHand ? 34.0 : 42.0) *
+                thresholdScale *
+                (aggressiveOneHand ? 0.9 : 1.0)
+          : (aggressiveOneHand ? 42.0 : 56.0) *
+                thresholdScale *
+                (aggressiveOneHand ? 0.9 : 1.0);
+      final axisBias =
+          ((aggressiveOneHand ? 0.76 : 0.9) +
+                  (_gestureThresholdScale - 1.0) * 0.08)
+              .clamp(0.7, 1.04)
+              .toDouble();
+      final rangeSwitchCooldownMs = aggressiveOneHand ? 68 : 86;
+      bool allowSwitch() {
+        final now = DateTime.now();
+        final last = _lastRangeGestureAt;
+        if (last != null &&
+            now.difference(last).inMilliseconds < rangeSwitchCooldownMs) {
+          return false;
+        }
+        _lastRangeGestureAt = now;
+        return true;
+      }
+
       if (delta.dy.abs() >= verticalThreshold &&
-          delta.dy.abs() >= delta.dx.abs() * 0.9) {
+          delta.dy.abs() >= delta.dx.abs() * axisBias) {
         final stepCount = (delta.dy.abs() / verticalThreshold).floor();
+        if (stepCount <= 0 || !allowSwitch()) {
+          return;
+        }
         final direction = delta.dy < 0 ? 1 : -1;
         _updateRangeStart(
           _rangeStartOctave + direction * stepCount,
@@ -797,6 +840,9 @@ class _PianoToolState extends State<_PianoTool> {
         _twoFingerOrigin = centroid;
       } else if (delta.dx.abs() >= horizontalThreshold) {
         final stepCount = (delta.dx.abs() / horizontalThreshold).floor();
+        if (stepCount <= 0 || !allowSwitch()) {
+          return;
+        }
         final direction = delta.dx < 0 ? 1 : -1;
         _updateRangeStart(
           _rangeStartOctave + direction * stepCount,
@@ -831,6 +877,7 @@ class _PianoToolState extends State<_PianoTool> {
     _activePointerKeyIds.remove(event.pointer);
     if (_activePointers.length < 2) {
       _twoFingerOrigin = null;
+      _lastRangeGestureAt = null;
     }
   }
 
@@ -861,17 +908,33 @@ class _PianoToolState extends State<_PianoTool> {
 
   String _compactFocusLabel(AppI18n i18n, _PianoCompactDeckFocus focus) {
     return switch (focus) {
-      _PianoCompactDeckFocus.high => pickUiText(i18n, zh: '高音区', en: 'High'),
-      _ => pickUiText(i18n, zh: '低音区', en: 'Low'),
+      _PianoCompactDeckFocus.high => pickUiText(i18n, zh: '高音', en: 'High'),
+      _ => pickUiText(i18n, zh: '低音', en: 'Low'),
     };
   }
 
   _PianoKeyboardSlice _sliceFor(int startOctave, int octaveSpan) {
-    final normalizedStart = startOctave.clamp(0, _maxRangeStart(octaveSpan));
-    final startMidi = normalizedStart <= 0 ? 21 : _midiForC(normalizedStart);
-    final endOctave = normalizedStart + octaveSpan;
-    final endMidi = endOctave >= 8 ? 108 : _midiForC(endOctave);
-    final chromatic = _allKeys
+    final chromaticPool = _activeKeyPool;
+    final whitePool = chromaticPool
+        .where((key) => !key.isSharp)
+        .toList(growable: false);
+    if (whitePool.isEmpty) {
+      return const _PianoKeyboardSlice(
+        whiteKeys: <_PianoKey>[],
+        blackKeys: <_PianoBlackKeyPlacement>[],
+        label: '--',
+      );
+    }
+    final starts = _windowStartWhiteIndices(octaveSpan);
+    final normalizedStart = startOctave.clamp(0, starts.length - 1);
+    final startWhite = starts[normalizedStart];
+    final endWhite = (startWhite + octaveSpan * 7).clamp(
+      0,
+      whitePool.length - 1,
+    );
+    final startMidi = whitePool[startWhite].midi;
+    final endMidi = whitePool[endWhite].midi;
+    final chromatic = chromaticPool
         .where((key) => key.midi >= startMidi && key.midi <= endMidi)
         .toList(growable: false);
     final whiteKeys = chromatic
@@ -891,7 +954,7 @@ class _PianoToolState extends State<_PianoTool> {
     return _PianoKeyboardSlice(
       whiteKeys: whiteKeys,
       blackKeys: blackKeys,
-      label: _rangeWindowLabelPlain(normalizedStart, octaveSpan),
+      label: '${whitePool[startWhite].label}-${whitePool[endWhite].label}',
     );
   }
 
@@ -902,8 +965,16 @@ class _PianoToolState extends State<_PianoTool> {
     final screenHeight = MediaQuery.sizeOf(context).height;
     final viewPadding = MediaQuery.viewPaddingOf(context);
     final width = constraints.maxWidth;
+    final aggressiveOneHand =
+        _aggressiveOneHandMode && _isAggressiveOneHandWidth(width);
+    final compactWidth = _isCompactPhoneWidth(width);
+    final denseMode =
+        (_compactKeyboardMode || (compactWidth && widget.fullScreen)) &&
+        !aggressiveOneHand;
     final targetHeight = widget.fullScreen
         ? math.max(420.0, screenHeight - viewPadding.vertical - 40)
+        : aggressiveOneHand
+        ? math.min(math.max(360.0, screenHeight * 0.52), 560.0)
         : math.min(math.max(320.0, screenHeight * 0.46), 520.0);
     var octaveSpan = widget.fullScreen
         ? width >= 940
@@ -911,12 +982,25 @@ class _PianoToolState extends State<_PianoTool> {
               : width >= 680
               ? 4
               : 3
-        : width >= 940
-        ? 4
-        : width >= 680
-        ? 3
-        : 2;
-    final minWhiteExtent = widget.fullScreen ? 34.0 : 40.0;
+        : denseMode
+        ? (width >= 940
+              ? 5
+              : width >= 680
+              ? 4
+              : 3)
+        : (width >= 940
+              ? 4
+              : width >= 680
+              ? 3
+              : 2);
+    if (aggressiveOneHand) {
+      octaveSpan = math.min(octaveSpan, 2);
+    }
+    final minWhiteExtent = widget.fullScreen
+        ? (denseMode ? 28.0 : 34.0)
+        : aggressiveOneHand
+        ? 46.0
+        : (denseMode ? 28.0 : 40.0);
     while (octaveSpan > 1) {
       final whiteCount = octaveSpan * 7 + 1;
       if (targetHeight / whiteCount >= minWhiteExtent) {
@@ -925,13 +1009,15 @@ class _PianoToolState extends State<_PianoTool> {
       octaveSpan -= 1;
     }
     final whiteCount = octaveSpan * 7 + 1;
-    final whiteKeyExtent = ((targetHeight / whiteCount) * _keyHeightScale)
-        .clamp(minWhiteExtent, widget.fullScreen ? 76.0 : 64.0);
+    final scaledKeyHeight = _keyHeightScale * (denseMode ? 0.88 : 1.0);
+    final whiteKeyExtent = ((targetHeight / whiteCount) * scaledKeyHeight)
+        .clamp(minWhiteExtent, widget.fullScreen ? 72.0 : 64.0);
+    final ultraCompact = _isUltraCompactPhoneWidth(width);
     return _PianoViewportSpec(
       octaveSpan: octaveSpan,
       whiteKeyExtent: whiteKeyExtent.toDouble(),
       stageHeight: whiteKeyExtent * whiteCount,
-      compactLabels: width < 360 || whiteKeyExtent < 44,
+      compactLabels: ultraCompact || width < 360 || whiteKeyExtent < 44,
     );
   }
 
@@ -942,6 +1028,87 @@ class _PianoToolState extends State<_PianoTool> {
     return key.label;
   }
 
+  Widget _buildKeyLayoutPickerButton(
+    BuildContext context,
+    AppI18n i18n, {
+    bool immersive = false,
+    bool compact = false,
+  }) {
+    final theme = Theme.of(context);
+    final foregroundColor = immersive
+        ? Colors.white
+        : theme.colorScheme.onSurface;
+    final borderColor = immersive
+        ? Colors.white.withValues(alpha: 0.24)
+        : theme.colorScheme.outlineVariant;
+    final backgroundColor = immersive
+        ? Colors.white.withValues(alpha: 0.08)
+        : theme.colorScheme.surfaceContainerHighest;
+    return PopupMenuButton<String>(
+      tooltip: pickUiText(i18n, zh: '切换键盘键数', en: 'Change key layout'),
+      onSelected: (layoutId) {
+        setState(() {
+          _applyKeyLayoutById(layoutId);
+        });
+      },
+      itemBuilder: (menuContext) {
+        return _keyLayouts
+            .map(
+              (layout) => PopupMenuItem<String>(
+                value: layout.id,
+                child: Text(_displayKeyLayoutLabel(i18n, layout)),
+              ),
+            )
+            .toList(growable: false);
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
+          color: backgroundColor,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 9 : 11,
+            vertical: compact ? 7 : 9,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.piano_rounded,
+                size: compact ? 16 : 18,
+                color: foregroundColor,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '${_activeKeyLayout.keyCount}键',
+                  en: '${_activeKeyLayout.keyCount} keys',
+                ),
+                style:
+                    (compact
+                            ? theme.textTheme.labelLarge
+                            : theme.textTheme.bodyMedium)
+                        ?.copyWith(
+                          color: foregroundColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_drop_down_rounded,
+                color: foregroundColor,
+                size: compact ? 18 : 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRangeNavigator(
     BuildContext context,
     AppI18n i18n, {
@@ -949,25 +1116,31 @@ class _PianoToolState extends State<_PianoTool> {
     required int rangeStart,
     required _PianoKeyboardSlice slice,
     required bool immersive,
+    bool aggressiveOneHand = false,
   }) {
     final ultraCompact = _isUltraCompactPhoneWidth(
       MediaQuery.sizeOf(context).width,
     );
-    final starts = List<int>.generate(
-      _maxRangeStart(octaveSpan) + 1,
-      (index) => index,
-    );
+    final theme = Theme.of(context);
+    final maxStart = _maxRangeStart(octaveSpan);
+    final quickStarts = _quickRangeStarts(octaveSpan);
+    final starts = List<int>.generate(maxStart + 1, (index) => index);
     final labelColor = immersive ? Colors.white70 : null;
+    final pickerTextColor = immersive
+        ? Colors.white
+        : theme.colorScheme.onSurface;
+    final pickerBorderColor = immersive
+        ? Colors.white.withValues(alpha: 0.24)
+        : theme.colorScheme.outlineVariant;
+    final pickerBackgroundColor = immersive
+        ? Colors.white.withValues(alpha: 0.08)
+        : theme.colorScheme.surfaceContainerHighest;
     final chipChildren = starts
         .map(
           (start) => Padding(
             padding: const EdgeInsets.only(right: 8, bottom: 8),
             child: ChoiceChip(
-              label: Text(
-                ultraCompact
-                    ? _rangeWindowLabelPlain(start, octaveSpan)
-                    : _rangeWindowLabelFixed(i18n, start, octaveSpan),
-              ),
+              label: Text(_windowLabelForIndex(start, octaveSpan)),
               selected: start == rangeStart,
               onSelected: (_) => _updateRangeStart(start, octaveSpan),
             ),
@@ -997,14 +1170,16 @@ class _PianoToolState extends State<_PianoTool> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '褰撳墠闊冲煙', en: 'Current window'),
+                    pickUiText(i18n, zh: '当前窗口', en: 'Current window'),
                     style: Theme.of(
                       context,
                     ).textTheme.labelMedium?.copyWith(color: labelColor),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${_rangeRegisterNameFixed(i18n, rangeStart, octaveSpan)} · ${slice.label}',
+                    ultraCompact
+                        ? slice.label
+                        : '${slice.label} · ${rangeStart + 1}/${maxStart + 1}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: immersive ? Colors.white : null,
@@ -1015,7 +1190,7 @@ class _PianoToolState extends State<_PianoTool> {
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              onPressed: rangeStart < _maxRangeStart(octaveSpan)
+              onPressed: rangeStart < maxStart
                   ? () => _updateRangeStart(rangeStart + 1, octaveSpan)
                   : null,
               style: immersive
@@ -1043,20 +1218,121 @@ class _PianoToolState extends State<_PianoTool> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: _rangeNavigatorExpanded
-              ? Wrap(
-                  key: const ValueKey<String>('range-wrap'),
-                  children: chipChildren,
-                )
-              : SingleChildScrollView(
-                  key: const ValueKey<String>('range-scroll'),
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: chipChildren),
+        if (maxStart > 0) ...<Widget>[
+          const SizedBox(height: 6),
+          if (aggressiveOneHand)
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    pickUiText(i18n, zh: '快速跳转', en: 'Quick jump'),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: labelColor),
+                  ),
                 ),
-        ),
+                PopupMenuButton<int>(
+                  onSelected: (value) => _updateRangeStart(value, octaveSpan),
+                  itemBuilder: (menuContext) {
+                    return starts
+                        .map(
+                          (start) => PopupMenuItem<int>(
+                            value: start,
+                            child: Text(
+                              _windowLabelForIndex(start, octaveSpan),
+                            ),
+                          ),
+                        )
+                        .toList(growable: false);
+                  },
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: pickerBorderColor),
+                      color: pickerBackgroundColor,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Icon(
+                            Icons.swap_vert_rounded,
+                            size: 18,
+                            color: pickerTextColor,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            pickUiText(i18n, zh: '选择窗口', en: 'Choose window'),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: pickerTextColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: <Widget>[
+                Text(
+                  pickUiText(i18n, zh: '快速跳转', en: 'Quick jump'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: labelColor),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Slider(
+                    value: rangeStart.toDouble(),
+                    min: 0,
+                    max: maxStart.toDouble(),
+                    divisions: maxStart,
+                    label: slice.label,
+                    onChanged: (value) =>
+                        _updateRangeStart(value.round(), octaveSpan),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 2),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: quickStarts
+                .map(
+                  (start) => ChoiceChip(
+                    label: Text(_windowLabelForIndex(start, octaveSpan)),
+                    selected: start == rangeStart,
+                    onSelected: (_) => _updateRangeStart(start, octaveSpan),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ],
+        if (!aggressiveOneHand) ...<Widget>[
+          const SizedBox(height: 8),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: _rangeNavigatorExpanded
+                ? Wrap(
+                    key: const ValueKey<String>('range-wrap'),
+                    children: chipChildren,
+                  )
+                : SingleChildScrollView(
+                    key: const ValueKey<String>('range-scroll'),
+                    scrollDirection: Axis.horizontal,
+                    child: Row(children: chipChildren),
+                  ),
+          ),
+        ],
       ],
     );
   }
@@ -1066,46 +1342,93 @@ class _PianoToolState extends State<_PianoTool> {
     _PianoKeyboardSlice slice, {
     required _PianoViewportSpec viewport,
     required bool immersive,
+    bool hideWhiteLabels = false,
+    bool hideBlackLabels = false,
+    double shellOpacity = 1.0,
+    bool highlightFrame = false,
+    bool isDualMode = false,
+    bool aggressiveOneHand = false,
   }) {
     final style = _activeKeyboardStyle;
     final highlightedPitchClasses = _highlightedPitchClasses();
     final theme = Theme.of(context);
+    final compactPhone = _isCompactPhoneWidth(MediaQuery.sizeOf(context).width);
+
+    final shellGradientColors = isDualMode
+        ? <Color>[Colors.transparent, Colors.transparent]
+        : <Color>[
+            style.shellTop.withValues(alpha: shellOpacity),
+            style.shellBottom.withValues(alpha: shellOpacity),
+          ];
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(widget.fullScreen ? 28 : 24),
+        borderRadius: BorderRadius.circular(
+          widget.fullScreen ? 28 : (isDualMode ? 20 : 24),
+        ),
+        border: highlightFrame
+            ? Border.all(color: const Color(0xFFBFD6FF), width: 1.6)
+            : Border.all(
+                color: Colors.white.withValues(alpha: isDualMode ? 0.20 : 0.10),
+                width: isDualMode ? 1.0 : 1.0,
+              ),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[style.shellTop, style.shellBottom],
+          colors: shellGradientColors,
         ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: style.sideGlow,
-            blurRadius: immersive ? 28 : 18,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        boxShadow: isDualMode
+            ? null
+            : <BoxShadow>[
+                BoxShadow(
+                  color: style.sideGlow.withValues(alpha: shellOpacity * 0.9),
+                  blurRadius: immersive ? 28 : 18,
+                  offset: const Offset(0, 12),
+                ),
+              ],
       ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          widget.fullScreen ? 8 : 10,
-          widget.fullScreen ? 10 : 12,
-          widget.fullScreen ? 8 : 10,
-          widget.fullScreen ? 10 : 12,
+          widget.fullScreen ? 8 : (isDualMode ? 8 : 10),
+          widget.fullScreen ? 10 : (isDualMode ? 8 : 12),
+          widget.fullScreen ? 8 : (isDualMode ? 8 : 10),
+          widget.fullScreen ? 10 : (isDualMode ? 8 : 12),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final narrowStage = _isCompactPhoneWidth(constraints.maxWidth);
+            final adaptiveBlackWidthRatio = isDualMode
+                ? (narrowStage ? 0.30 : _blackKeyWidthRatio.clamp(0.30, 0.40))
+                : aggressiveOneHand
+                ? _blackKeyWidthRatio.clamp(0.38, 0.46)
+                : _blackKeyWidthRatio;
+            final adaptiveBlackHeightRatio = (isDualMode && narrowStage)
+                ? (_blackKeyHeightRatio * 0.90).clamp(0.44, 0.70)
+                : aggressiveOneHand
+                ? _blackKeyHeightRatio.clamp(0.72, 0.86)
+                : _blackKeyHeightRatio;
             final metrics = _PianoStageMetrics(
               size: Size(constraints.maxWidth, viewport.stageHeight),
               whiteKeyExtent: viewport.whiteKeyExtent,
-              blackKeyWidth: math.max(
-                62.0,
-                constraints.maxWidth * _blackKeyWidthRatio,
-              ),
-              blackKeyHeight: viewport.whiteKeyExtent * _blackKeyHeightRatio,
-              blackKeyInset: math.max(4.0, constraints.maxWidth * 0.018),
-              blackKeyHitPadding: _isCompactPhoneWidth(constraints.maxWidth)
-                  ? 10
+              blackKeyWidth: (constraints.maxWidth * adaptiveBlackWidthRatio)
+                  .clamp(
+                    aggressiveOneHand ? 58.0 : (narrowStage ? 44.0 : 54.0),
+                    aggressiveOneHand ? 132.0 : (narrowStage ? 86.0 : 108.0),
+                  ),
+              blackKeyHeight:
+                  (viewport.whiteKeyExtent * adaptiveBlackHeightRatio).clamp(
+                    16.0,
+                    viewport.whiteKeyExtent,
+                  ),
+              blackKeyInset: aggressiveOneHand
+                  ? 2.0
+                  : narrowStage
+                  ? 3.0
+                  : math.max(4.0, constraints.maxWidth * 0.018),
+              blackKeyHitPadding: aggressiveOneHand
+                  ? 16
+                  : narrowStage
+                  ? 12
                   : 6,
             );
             return SizedBox(
@@ -1148,6 +1471,23 @@ class _PianoToolState extends State<_PianoTool> {
                         final isHighlighted = highlightedPitchClasses.contains(
                           key.pitchClass,
                         );
+                        final keyBorderRadius = isDualMode ? 14.0 : 18.0;
+                        final keyMargin = isDualMode
+                            ? (compactPhone ? 0.35 : 0.5)
+                            : 1.0;
+                        final labelPadding = EdgeInsets.fromLTRB(
+                          isDualMode ? (compactPhone ? 8 : 10) : 14,
+                          widget.fullScreen ? 10 : (isDualMode ? 6 : 8),
+                          math.max(
+                            isDualMode ? 52 : 84,
+                            metrics.blackKeyWidth +
+                                (isDualMode
+                                    ? (compactPhone ? 8 : 10)
+                                    : (aggressiveOneHand ? 20 : 14)),
+                          ),
+                          widget.fullScreen ? 10 : (isDualMode ? 6 : 8),
+                        );
+
                         return Positioned(
                           left: 0,
                           right: 0,
@@ -1156,17 +1496,16 @@ class _PianoToolState extends State<_PianoTool> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 100),
                             curve: Curves.easeOutCubic,
-                            margin: const EdgeInsets.only(bottom: 1),
-                            padding: EdgeInsets.fromLTRB(
-                              14,
-                              widget.fullScreen ? 10 : 8,
-                              math.max(84, metrics.blackKeyWidth + 14),
-                              widget.fullScreen ? 10 : 8,
-                            ),
+                            margin: EdgeInsets.only(bottom: keyMargin),
+                            padding: labelPadding,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(
+                                keyBorderRadius,
+                              ),
                               border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.10),
+                                color: Colors.black.withValues(
+                                  alpha: isDualMode ? 0.08 : 0.10,
+                                ),
                               ),
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
@@ -1186,38 +1525,71 @@ class _PianoToolState extends State<_PianoTool> {
                                       : style.whiteBottom,
                                 ],
                               ),
+                              boxShadow: isActive
+                                  ? <BoxShadow>[
+                                      BoxShadow(
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: Row(
                               children: <Widget>[
                                 Container(
-                                  width: 5,
+                                  width: isDualMode
+                                      ? (compactPhone ? 2.5 : 3)
+                                      : 5,
                                   decoration: BoxDecoration(
                                     color: isActive
                                         ? theme.colorScheme.primary
                                         : isHighlighted
                                         ? style.blackAccentTop
-                                        : Colors.black.withValues(alpha: 0.12),
+                                        : Colors.black.withValues(
+                                            alpha: isDualMode ? 0.08 : 0.12,
+                                          ),
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                 ),
-                                const SizedBox(width: 10),
+                                SizedBox(width: isDualMode ? 6 : 10),
                                 Expanded(
-                                  child: Text(
-                                    _displayLabelForKey(key, viewport),
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF0F172A),
-                                    ),
-                                  ),
+                                  child: hideWhiteLabels
+                                      ? const SizedBox.shrink()
+                                      : Text(
+                                          _displayLabelForKey(key, viewport),
+                                          style:
+                                              (isDualMode
+                                                      ? theme
+                                                            .textTheme
+                                                            .bodySmall
+                                                      : theme
+                                                            .textTheme
+                                                            .titleSmall)
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w800,
+                                                    color: const Color(
+                                                      0xFF0F172A,
+                                                    ),
+                                                    fontSize: isDualMode
+                                                        ? 11
+                                                        : null,
+                                                  ),
+                                        ),
                                 ),
-                                if (!viewport.compactLabels)
+                                if (!viewport.compactLabels && !hideWhiteLabels)
                                   Text(
                                     key.pitchClass,
-                                    style: theme.textTheme.labelMedium
-                                        ?.copyWith(
-                                          color: const Color(0xFF475569),
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                    style:
+                                        (isDualMode
+                                                ? theme.textTheme.labelSmall
+                                                : theme.textTheme.labelMedium)
+                                            ?.copyWith(
+                                              color: const Color(0xFF475569),
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: isDualMode ? 10 : null,
+                                            ),
                                   ),
                               ],
                             ),
@@ -1230,6 +1602,11 @@ class _PianoToolState extends State<_PianoTool> {
                         final isHighlighted = highlightedPitchClasses.contains(
                           key.pitchClass,
                         );
+                        final blackKeyRadius = isDualMode ? 12.0 : 16.0;
+                        final blackKeyPadding = EdgeInsets.symmetric(
+                          horizontal: isDualMode ? 8 : 12,
+                        );
+
                         return Positioned(
                           right: metrics.blackKeyInset,
                           top: metrics.blackTopFor(placement.slot),
@@ -1238,11 +1615,16 @@ class _PianoToolState extends State<_PianoTool> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 100),
                             curve: Curves.easeOutCubic,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            padding: blackKeyPadding,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(
+                                blackKeyRadius,
+                              ),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.10),
+                                color: Colors.white.withValues(
+                                  alpha: isDualMode ? 0.15 : 0.10,
+                                ),
+                                width: isDualMode ? 0.8 : 1.0,
                               ),
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
@@ -1262,22 +1644,39 @@ class _PianoToolState extends State<_PianoTool> {
                               ),
                               boxShadow: <BoxShadow>[
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.28),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
+                                  color: Colors.black.withValues(
+                                    alpha: isDualMode ? 0.35 : 0.28,
+                                  ),
+                                  blurRadius: isDualMode ? 8 : 10,
+                                  offset: Offset(0, isDualMode ? 3 : 5),
                                 ),
+                                if (isActive)
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF2F56A6,
+                                    ).withValues(alpha: 0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 2),
+                                  ),
                               ],
                             ),
                             alignment: Alignment.centerLeft,
-                            child: Text(
-                              viewport.compactLabels
-                                  ? key.pitchClass
-                                  : key.label,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                            child: hideBlackLabels
+                                ? const SizedBox.shrink()
+                                : Text(
+                                    viewport.compactLabels
+                                        ? key.pitchClass
+                                        : key.label,
+                                    style:
+                                        (isDualMode
+                                                ? theme.textTheme.labelSmall
+                                                : theme.textTheme.labelLarge)
+                                            ?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: isDualMode ? 10 : null,
+                                            ),
+                                  ),
                           ),
                         );
                       }),
@@ -1333,9 +1732,62 @@ class _PianoToolState extends State<_PianoTool> {
           compactLabels: viewport.compactLabels || keyboardWidth < 140,
         );
         if (compactSwitcher) {
-          final activeSlice = _compactDualFocus == _PianoCompactDeckFocus.high
+          final compactWhiteExtent = (viewport.whiteKeyExtent * 0.90).clamp(
+            26.0,
+            viewport.whiteKeyExtent,
+          );
+          final compactViewport = _PianoViewportSpec(
+            octaveSpan: viewport.octaveSpan,
+            whiteKeyExtent: compactWhiteExtent.toDouble(),
+            stageHeight: compactWhiteExtent * (viewport.octaveSpan * 7 + 1),
+            compactLabels: true,
+          );
+          Widget buildLane(
+            _PianoKeyboardSlice laneSlice, {
+            required _PianoCompactDeckFocus focus,
+            required bool active,
+          }) {
+            return Column(
+              key: ValueKey<String>('compact-lane-${focus.name}'),
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    _compactFocusLabel(i18n, focus),
+                    style: TextStyle(
+                      color: immersive ? Colors.white70 : null,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                _buildKeyboardStage(
+                  context,
+                  laneSlice,
+                  viewport: compactViewport,
+                  immersive: immersive,
+                  hideWhiteLabels: !active,
+                  hideBlackLabels: !active,
+                  shellOpacity: active ? 1.0 : 0.70,
+                  highlightFrame: active,
+                  isDualMode: true,
+                ),
+              ],
+            );
+          }
+
+          final activeFocus = _compactDualFocus;
+          final activeSlice = activeFocus == _PianoCompactDeckFocus.high
               ? upperSlice
               : lowerSlice;
+          final inactiveFocus = activeFocus == _PianoCompactDeckFocus.high
+              ? _PianoCompactDeckFocus.low
+              : _PianoCompactDeckFocus.high;
+          final inactiveSlice = activeFocus == _PianoCompactDeckFocus.high
+              ? lowerSlice
+              : upperSlice;
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -1366,11 +1818,27 @@ class _PianoToolState extends State<_PianoTool> {
                 ],
               ),
               const SizedBox(height: 8),
-              _buildKeyboardStage(
-                context,
-                activeSlice,
-                viewport: dualViewport,
-                immersive: immersive,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                child: buildLane(activeSlice, focus: activeFocus, active: true),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _compactDualFocus = inactiveFocus;
+                  });
+                },
+                icon: const Icon(Icons.swap_vert_rounded),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '切换到另一组键盘',
+                    en: 'Switch to ${inactiveFocus == _PianoCompactDeckFocus.high ? 'high' : 'low'} (${inactiveSlice.label})',
+                  ),
+                ),
               ),
             ],
           );
@@ -1386,7 +1854,7 @@ class _PianoToolState extends State<_PianoTool> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      pickUiText(i18n, zh: '高音区', en: 'High'),
+                      pickUiText(i18n, zh: '高音', en: 'High'),
                       style: TextStyle(
                         color: immersive ? Colors.white70 : null,
                         fontSize: 11,
@@ -1400,6 +1868,7 @@ class _PianoToolState extends State<_PianoTool> {
                       upperSlice,
                       viewport: dualViewport,
                       immersive: immersive,
+                      isDualMode: true,
                     ),
                   ),
                 ],
@@ -1413,7 +1882,7 @@ class _PianoToolState extends State<_PianoTool> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      pickUiText(i18n, zh: '低音区', en: 'Low'),
+                      pickUiText(i18n, zh: '低音', en: 'Low'),
                       style: TextStyle(
                         color: immersive ? Colors.white70 : null,
                         fontSize: 11,
@@ -1427,6 +1896,7 @@ class _PianoToolState extends State<_PianoTool> {
                       lowerSlice,
                       viewport: dualViewport,
                       immersive: immersive,
+                      isDualMode: true,
                     ),
                   ),
                 ],
@@ -1543,17 +2013,24 @@ class _PianoToolState extends State<_PianoTool> {
           spacing: 10,
           runSpacing: 10,
           children: <Widget>[
-            ToolboxMetricCard(label: 'Range', value: slice.label),
             ToolboxMetricCard(
-              label: 'Scale',
+              label: pickUiText(i18n, zh: '键盘规格', en: 'Layout'),
+              value: _displayKeyLayoutLabel(i18n, _activeKeyLayout),
+            ),
+            ToolboxMetricCard(
+              label: pickUiText(i18n, zh: '音域', en: 'Range'),
+              value: slice.label,
+            ),
+            ToolboxMetricCard(
+              label: pickUiText(i18n, zh: '调式', en: 'Scale'),
               value: _displayScaleLabelFixed(i18n, _scaleId),
             ),
             ToolboxMetricCard(
-              label: 'Harmony',
+              label: pickUiText(i18n, zh: '和声', en: 'Harmony'),
               value: _displayChordLabelFixed(i18n, _chordId),
             ),
             ToolboxMetricCard(
-              label: 'Style',
+              label: pickUiText(i18n, zh: '风格', en: 'Style'),
               value: _displayKeyboardStyleLabelFixed(
                 i18n,
                 _activeKeyboardStyle,
@@ -1564,7 +2041,32 @@ class _PianoToolState extends State<_PianoTool> {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '预设包', en: 'Preset pack'),
+          pickUiText(i18n, zh: '键盘键数', en: 'Key layout'),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _keyLayouts
+              .map(
+                (layout) => ChoiceChip(
+                  label: Text('${layout.keyCount}'),
+                  selected: layout.id == _keyLayoutId,
+                  onSelected: (_) => applySettings(() {
+                    _applyKeyLayoutById(layout.id);
+                  }),
+                ),
+              )
+              .toList(growable: false),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _displayKeyLayoutLabel(i18n, _activeKeyLayout),
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 20),
+        _buildSettingsSectionTitle(
+          context,
+          pickUiText(i18n, zh: '预设音色包', en: 'Preset pack'),
         ),
         Wrap(
           spacing: 8,
@@ -1645,6 +2147,68 @@ class _PianoToolState extends State<_PianoTool> {
         _buildSettingsSectionTitle(
           context,
           pickUiText(i18n, zh: '手机适配', en: 'Phone tuning'),
+        ),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _compactKeyboardMode,
+          onChanged: (value) => applySettings(() {
+            _compactKeyboardMode = value;
+          }),
+          title: Text(
+            pickUiText(i18n, zh: '紧凑键盘模式', en: 'Compact keyboard mode'),
+          ),
+          subtitle: Text(
+            pickUiText(
+              i18n,
+              zh: '缩小键位并尽量显示更多八度，减少频繁切换音域。',
+              en: 'Shrink key height and show more octaves to reduce frequent range switching.',
+            ),
+          ),
+        ),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _aggressiveOneHandMode,
+          onChanged: (value) => applySettings(() {
+            _aggressiveOneHandMode = value;
+            if (value) {
+              _dualKeyboardMode = false;
+            }
+          }),
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '激进单手模式（320-390dp）',
+              en: 'Aggressive one-hand mode (320-390dp)',
+            ),
+          ),
+          subtitle: Text(
+            pickUiText(
+              i18n,
+              zh: '窄屏自动放大黑键触控区、减少控件干扰，并优先单键盘演奏。',
+              en: 'On narrow phones, enlarge black-key hit zones, reduce control density, and prefer a single keyboard.',
+            ),
+          ),
+        ),
+        Text(
+          _displayGestureThresholdLabelFixed(i18n),
+          style: theme.textTheme.labelLarge,
+        ),
+        Slider(
+          value: _gestureThresholdScale,
+          min: 0.8,
+          max: 1.25,
+          divisions: 9,
+          onChanged: (value) => applySettings(() {
+            _gestureThresholdScale = value;
+          }),
+        ),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '值越小越灵敏，越大越稳。建议真机按手势习惯微调。',
+            en: 'Lower values are more sensitive, higher values are steadier. Fine-tune on a real device.',
+          ),
+          style: theme.textTheme.bodySmall,
         ),
         Text(
           pickUiText(
@@ -1768,24 +2332,20 @@ class _PianoToolState extends State<_PianoTool> {
               .toList(growable: false),
         ),
         const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _rootPitchClasses
-                .map(
-                  (pitchClass) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(pitchClass),
-                      selected: pitchClass == _rootPitchClass,
-                      onSelected: (_) => applySettings(() {
-                        _rootPitchClass = pitchClass;
-                      }),
-                    ),
-                  ),
-                )
-                .toList(growable: false),
-          ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _rootPitchClasses
+              .map(
+                (pitchClass) => ChoiceChip(
+                  label: Text(pitchClass),
+                  selected: pitchClass == _rootPitchClass,
+                  onSelected: (_) => applySettings(() {
+                    _rootPitchClass = pitchClass;
+                  }),
+                ),
+              )
+              .toList(growable: false),
         ),
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
@@ -1795,7 +2355,7 @@ class _PianoToolState extends State<_PianoTool> {
         Text(
           pickUiText(
             i18n,
-            zh: '当前竖向舞台一次显示 ${viewport.octaveSpan} 个八度，支持快速切换音域，也支持分行展示全部窗口。',
+            zh: '当前纵向舞台一次显示 ${viewport.octaveSpan} 个八度，支持快速切换音域与分行展示窗口。',
             en: 'The vertical stage currently shows ${viewport.octaveSpan} octaves and supports quick range switching and wrapped rows.',
           ),
           style: theme.textTheme.bodySmall,
@@ -1811,6 +2371,9 @@ class _PianoToolState extends State<_PianoTool> {
           ),
           slice: slice,
           immersive: false,
+          aggressiveOneHand:
+              _aggressiveOneHandMode &&
+              _isAggressiveOneHandWidth(MediaQuery.sizeOf(context).width),
         ),
       ],
     );
@@ -1882,8 +2445,13 @@ class _PianoToolState extends State<_PianoTool> {
     required _PianoKeyboardSlice slice,
     required int rangeStart,
   }) {
+    final width = MediaQuery.sizeOf(context).width;
+    final aggressiveOneHand =
+        _aggressiveOneHandMode && _isAggressiveOneHandWidth(width);
+    final effectiveDualMode = _dualKeyboardMode && !aggressiveOneHand;
     final topInset = MediaQuery.viewPaddingOf(context).top;
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final compactTopBar = width < 430;
     final overlayButtonStyle = FilledButton.styleFrom(
       backgroundColor: Colors.black.withValues(alpha: 0.58),
       foregroundColor: Colors.white,
@@ -1916,7 +2484,7 @@ class _PianoToolState extends State<_PianoTool> {
               ),
               child: Align(
                 alignment: Alignment.topCenter,
-                child: _dualKeyboardMode
+                child: effectiveDualMode
                     ? _buildDualKeyboardStage(
                         context,
                         viewport: viewport,
@@ -1927,6 +2495,7 @@ class _PianoToolState extends State<_PianoTool> {
                         slice,
                         viewport: viewport,
                         immersive: true,
+                        aggressiveOneHand: aggressiveOneHand,
                       ),
               ),
             ),
@@ -1959,26 +2528,106 @@ class _PianoToolState extends State<_PianoTool> {
                     ),
                     const SizedBox(width: 8),
                     FilledButton.tonal(
-                      onPressed: _toggleDualKeyboardMode,
+                      onPressed: aggressiveOneHand
+                          ? null
+                          : _toggleDualKeyboardMode,
                       style: overlayButtonStyle,
                       child: Icon(
-                        _dualKeyboardMode
+                        effectiveDualMode
                             ? Icons.view_day_rounded
                             : Icons.view_stream_rounded,
                       ),
                     ),
-                    const Spacer(),
-                    FilledButton.tonalIcon(
-                      onPressed: () => _openPianoSettingsSheet(
-                        context,
-                        i18n,
-                        viewport: viewport,
-                        slice: slice,
+                    const SizedBox(width: 8),
+                    if (!compactTopBar)
+                      FilledButton.tonal(
+                        onPressed: _toggleCompactKeyboardMode,
+                        style: overlayButtonStyle,
+                        child: Icon(
+                          _compactKeyboardMode
+                              ? Icons.compress_rounded
+                              : Icons.expand_rounded,
+                        ),
                       ),
-                      style: overlayButtonStyle,
-                      icon: const Icon(Icons.tune_rounded),
-                      label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
-                    ),
+                    if (compactTopBar)
+                      PopupMenuButton<_PianoTopBarAction>(
+                        tooltip: pickUiText(
+                          i18n,
+                          zh: '更多操作',
+                          en: 'More actions',
+                        ),
+                        color: Colors.black.withValues(alpha: 0.92),
+                        onSelected: (action) {
+                          switch (action) {
+                            case _PianoTopBarAction.toggleCompact:
+                              _toggleCompactKeyboardMode();
+                            case _PianoTopBarAction.openSettings:
+                              _openPianoSettingsSheet(
+                                context,
+                                i18n,
+                                viewport: viewport,
+                                slice: slice,
+                              );
+                          }
+                        },
+                        itemBuilder: (menuContext) {
+                          return <PopupMenuEntry<_PianoTopBarAction>>[
+                            PopupMenuItem<_PianoTopBarAction>(
+                              value: _PianoTopBarAction.toggleCompact,
+                              child: Text(
+                                _compactKeyboardMode
+                                    ? pickUiText(
+                                        i18n,
+                                        zh: '关闭紧凑键盘',
+                                        en: 'Disable compact keys',
+                                      )
+                                    : pickUiText(
+                                        i18n,
+                                        zh: '开启紧凑键盘',
+                                        en: 'Enable compact keys',
+                                      ),
+                              ),
+                            ),
+                            PopupMenuItem<_PianoTopBarAction>(
+                              value: _PianoTopBarAction.openSettings,
+                              child: Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '键盘设置',
+                                  en: 'Keyboard settings',
+                                ),
+                              ),
+                            ),
+                          ];
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.58),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.24),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.more_horiz_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    const Spacer(),
+                    if (!compactTopBar)
+                      FilledButton.tonalIcon(
+                        onPressed: () => _openPianoSettingsSheet(
+                          context,
+                          i18n,
+                          viewport: viewport,
+                          slice: slice,
+                        ),
+                        style: overlayButtonStyle,
+                        icon: const Icon(Icons.tune_rounded),
+                        label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                      ),
                   ],
                 ),
               ),
@@ -2009,7 +2658,11 @@ class _PianoToolState extends State<_PianoTool> {
     required _PianoKeyboardSlice slice,
   }) {
     final theme = Theme.of(context);
-    final compactPhone = _isCompactPhoneWidth(MediaQuery.sizeOf(context).width);
+    final width = MediaQuery.sizeOf(context).width;
+    final compactPhone = _isCompactPhoneWidth(width);
+    final aggressiveOneHand =
+        _aggressiveOneHandMode && _isAggressiveOneHandWidth(width);
+    final effectiveDualMode = _dualKeyboardMode && !aggressiveOneHand;
     final overlayButtonStyle = FilledButton.styleFrom(
       backgroundColor: Colors.black.withValues(alpha: 0.56),
       foregroundColor: Colors.white,
@@ -2057,11 +2710,18 @@ class _PianoToolState extends State<_PianoTool> {
                   const SizedBox(width: 8),
                   _PianoOverlayChip(
                     label: pickUiText(i18n, zh: '模式', en: 'Mode'),
-                    value: _dualKeyboardMode
+                    value: effectiveDualMode
                         ? compactPhone
                               ? '${pickUiText(i18n, zh: '双键盘', en: 'Dual')} · $activeCompactSlice'
                               : pickUiText(i18n, zh: '双键盘', en: 'Dual')
                         : pickUiText(i18n, zh: '单键盘', en: 'Single'),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildKeyLayoutPickerButton(
+                    context,
+                    i18n,
+                    immersive: true,
+                    compact: true,
                   ),
                 ],
               ),
@@ -2085,12 +2745,12 @@ class _PianoToolState extends State<_PianoTool> {
                     compactPhone
                         ? pickUiText(
                             i18n,
-                            zh: '单指滑奏；双指切换音域',
+                            zh: '单指滑奏，双指切换音域。',
                             en: 'Gliss with one finger; shift range with two.',
                           )
                         : pickUiText(
                             i18n,
-                            zh: '单指滑奏，双指上下或左右切换音域',
+                            zh: '单指滑奏，双指上下或左右切换音域。',
                             en: 'Gliss with one finger; use two fingers to shift range.',
                           ),
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -2133,6 +2793,10 @@ class _PianoToolState extends State<_PianoTool> {
         final ultraCompactPhone = _isUltraCompactPhoneWidth(
           constraints.maxWidth,
         );
+        final aggressiveOneHand =
+            _aggressiveOneHandMode &&
+            _isAggressiveOneHandWidth(constraints.maxWidth);
+        final effectiveDualMode = _dualKeyboardMode && !aggressiveOneHand;
         final viewport = _viewportFor(context, constraints);
         final rangeStart = _rangeStartOctave.clamp(
           0,
@@ -2158,15 +2822,25 @@ class _PianoToolState extends State<_PianoTool> {
                 spacing: 10,
                 runSpacing: 10,
                 children: <Widget>[
-                  ToolboxMetricCard(label: 'Keys', value: '${_allKeys.length}'),
-                  const ToolboxMetricCard(label: 'Total range', value: 'A0-C8'),
-                  ToolboxMetricCard(label: 'Window', value: slice.label),
                   ToolboxMetricCard(
-                    label: 'Preset',
+                    label: pickUiText(i18n, zh: '键数', en: 'Keys'),
+                    value: '${_activeKeyLayout.keyCount}',
+                  ),
+                  ToolboxMetricCard(
+                    label: pickUiText(i18n, zh: '总音域', en: 'Total range'),
+                    value:
+                        '${_noteLabelForMidi(_activeKeyLayout.startMidi)}-${_noteLabelForMidi(_activeKeyLayout.startMidi + _activeKeyLayout.keyCount - 1)}',
+                  ),
+                  ToolboxMetricCard(
+                    label: pickUiText(i18n, zh: '当前窗口', en: 'Window'),
+                    value: slice.label,
+                  ),
+                  ToolboxMetricCard(
+                    label: pickUiText(i18n, zh: '预设', en: 'Preset'),
                     value: _displayPresetLabel(i18n, _activePreset),
                   ),
                   ToolboxMetricCard(
-                    label: 'Harmony',
+                    label: pickUiText(i18n, zh: '和声', en: 'Harmony'),
                     value: _displayChordLabelFixed(i18n, _chordId),
                   ),
                 ],
@@ -2177,7 +2851,7 @@ class _PianoToolState extends State<_PianoTool> {
                   title: pickUiText(i18n, zh: '纵向键盘', en: 'Vertical keyboard'),
                   subtitle: pickUiText(
                     i18n,
-                    zh: '手机上优先保证单手点击与滑奏空间，默认先展示单键盘，再按需切换到双键盘。',
+                    zh: '手机布局优先保证单手点击和滑奏，再按需切换双键盘。',
                     en: 'Phone layout prioritizes one-hand taps and glissando before exposing the dual keyboard.',
                   ),
                 ),
@@ -2193,7 +2867,7 @@ class _PianoToolState extends State<_PianoTool> {
                     ),
                     icon: const Icon(Icons.tune_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '设置键盘', en: 'Keyboard settings'),
+                      pickUiText(i18n, zh: '键盘设置', en: 'Keyboard settings'),
                     ),
                   ),
                 ),
@@ -2210,7 +2884,7 @@ class _PianoToolState extends State<_PianoTool> {
                         ),
                         subtitle: pickUiText(
                           i18n,
-                          zh: '键盘按手机竖屏高度展开，不再横向压缩，音域按真实阶位分段显示。',
+                          zh: '键盘沿屏幕高度展开，避免横向压缩。',
                           en: 'The keyboard now expands down the phone height instead of being crushed horizontally.',
                         ),
                       ),
@@ -2229,55 +2903,58 @@ class _PianoToolState extends State<_PianoTool> {
                   ],
                 ),
               const SizedBox(height: 10),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: <Widget>[
-                    OutlinedButton.icon(
-                      onPressed: _toggleRangeNavigatorLayout,
-                      icon: Icon(
-                        _rangeNavigatorExpanded
-                            ? Icons.view_stream_rounded
-                            : Icons.view_day_rounded,
-                      ),
-                      label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: ultraCompactPhone ? '窗口' : '窗口列表',
-                          en: ultraCompactPhone ? 'Window' : 'Window list',
-                        ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _buildKeyLayoutPickerButton(
+                    context,
+                    i18n,
+                    compact: ultraCompactPhone,
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _toggleRangeNavigatorLayout,
+                    icon: Icon(
+                      _rangeNavigatorExpanded
+                          ? Icons.view_stream_rounded
+                          : Icons.view_day_rounded,
+                    ),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: ultraCompactPhone ? '窗口' : '窗口列表',
+                        en: ultraCompactPhone ? 'Window' : 'Window list',
                       ),
                     ),
-                    const SizedBox(width: 8),
+                  ),
+                  if (!aggressiveOneHand)
                     OutlinedButton.icon(
                       onPressed: _toggleDualKeyboardMode,
                       icon: Icon(
-                        _dualKeyboardMode
+                        effectiveDualMode
                             ? Icons.view_stream_rounded
                             : Icons.view_day_rounded,
                       ),
                       label: Text(
                         pickUiText(
                           i18n,
-                          zh: '双键盘',
+                          zh: ultraCompactPhone ? '双键盘' : '双键盘',
                           en: ultraCompactPhone ? 'Dual' : 'Dual keyboard',
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () => _openFullScreen(context),
-                      icon: const Icon(Icons.open_in_full_rounded),
-                      label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '全屏',
-                          en: ultraCompactPhone ? 'Full' : 'Full screen',
-                        ),
+                  OutlinedButton.icon(
+                    onPressed: () => _openFullScreen(context),
+                    icon: const Icon(Icons.open_in_full_rounded),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: ultraCompactPhone ? '全屏' : '全屏',
+                        en: ultraCompactPhone ? 'Full' : 'Full screen',
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               _buildRangeNavigator(
@@ -2287,9 +2964,10 @@ class _PianoToolState extends State<_PianoTool> {
                 rangeStart: rangeStart,
                 slice: slice,
                 immersive: false,
+                aggressiveOneHand: aggressiveOneHand,
               ),
               const SizedBox(height: 12),
-              _dualKeyboardMode
+              effectiveDualMode
                   ? _buildDualKeyboardStage(
                       context,
                       viewport: viewport,
@@ -2300,13 +2978,14 @@ class _PianoToolState extends State<_PianoTool> {
                       slice,
                       viewport: viewport,
                       immersive: false,
+                      aggressiveOneHand: aggressiveOneHand,
                     ),
               const SizedBox(height: 10),
               Text(
                 pickUiText(
                   i18n,
                   zh: compactPhone
-                      ? '单指可连续滑奏；双指上下或左右滑动可切换音域窗口；开启双键盘后，手机上会改成高低音一键切换。'
+                      ? '单指可连续滑奏；双指上下或左右滑动可切换音域窗口；窄屏优先单键盘。'
                       : '单指可连续滑奏；双指上下滑动可跳转音域，双指左右滑动可快速切窗。',
                   en: compactPhone
                       ? 'Use one finger for glissando, two fingers to change range, and tap once to switch high or low rows in phone dual mode.'
@@ -2339,6 +3018,18 @@ class _PianoPitchSet {
 
   final String id;
   final List<int> intervals;
+}
+
+class _PianoKeyLayoutPreset {
+  const _PianoKeyLayoutPreset({
+    required this.id,
+    required this.keyCount,
+    required this.startMidi,
+  });
+
+  final String id;
+  final int keyCount;
+  final int startMidi;
 }
 
 class _PianoBlackKeyPlacement {
@@ -2535,6 +3226,8 @@ class _PianoOverlayChip extends StatelessWidget {
 
 enum _PianoCompactDeckFocus { low, high }
 
+enum _PianoTopBarAction { toggleCompact, openSettings }
+
 List<_PianoKey> _buildChromaticKeys() {
   const pitchClasses = <String>[
     'C',
@@ -2595,8 +3288,6 @@ List<_PianoKey> _buildChromaticKeys() {
   );
   return keys;
 }
-
-int _midiForC(int octave) => _midiFromParts('C', octave);
 
 int _midiFromParts(String pitchClass, int octave) {
   const offsets = <String, int>{
