@@ -63,7 +63,7 @@ class HarpToolPage extends StatelessWidget {
       subtitle: pickUiText(
         i18n,
         zh: '在同一乐器台中切换竖琴、钢琴、长笛、鼓垫、吉他、三角铁和小提琴。',
-        en: 'Switch harp, piano, flute, drum pad, guitar, triangle, and violin in one instrument deck.',
+        en: 'Switch harp, piano, flute, drum pad, guitar, triangle, violin, and pickup in one instrument deck.',
         ja: '1つのデッキでハープ、ピアノ、フルート、ドラム、ギター、トライアングルを切替。',
         de: 'Harfe, Klavier, Flöte, Drum-Pad, Gitarre und Triangel in einem Deck umschalten.',
         fr: 'Basculez harpe, piano, flûte, pad de batterie, guitare et triangle dans un même deck.',
@@ -83,6 +83,7 @@ enum _HarpDeckInstrument {
   guitar,
   triangle,
   violin,
+  pickup,
 }
 
 class _HarpInstrumentDeck extends StatefulWidget {
@@ -232,6 +233,11 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
         zh: '以触摸滑动发音的小提琴舞台，可按调式分区演奏。',
         en: 'Touch-slide violin stage with playable scale regions.',
       ),
+      _HarpDeckInstrument.pickup => pickUiText(
+        i18n,
+        zh: '用麦克风实时分析电平、峰值、音高与音色倾向，辅助完成拾音调校。',
+        en: 'Use the microphone to calibrate pickup level, peaks, pitch, and tonal balance in real time.',
+      ),
       _ => pickUiText(
         i18n,
         zh: '保留竖琴二阶段调音与手势能力。',
@@ -253,6 +259,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.guitar => Icons.queue_music_rounded,
       _HarpDeckInstrument.triangle => Icons.change_history_rounded,
       _HarpDeckInstrument.violin => Icons.multitrack_audio_rounded,
+      _HarpDeckInstrument.pickup => Icons.graphic_eq_rounded,
       _ => Icons.music_note_rounded,
     };
   }
@@ -265,6 +272,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.guitar => const _GuitarTool(),
       _HarpDeckInstrument.triangle => const _TriangleTool(),
       _HarpDeckInstrument.violin => const _ViolinTool(),
+      _HarpDeckInstrument.pickup => const _PickupTool(),
       _ => _HarpTool(
         initialConfig: _harpConfig,
         onConfigChanged: _onHarpConfigChanged,
@@ -310,7 +318,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
                   subtitle: pickUiText(
                     i18n,
                     zh: '在竖琴模块中集中使用 7 种乐器。',
-                    en: 'Use all 7 instruments inside the harp module.',
+                    en: 'Use all 8 instruments inside the harp module.',
                     ja: 'ハープモジュール内で6種の楽器を集中使用。',
                     de: 'Alle 6 Instrumente direkt im Harfenmodul nutzen.',
                     fr: 'Utilisez les 6 instruments dans le module harpe.',
@@ -405,6 +413,7 @@ class _DeckInstrumentFullScreenPageState
       _HarpDeckInstrument.guitar => const _GuitarTool(fullScreen: true),
       _HarpDeckInstrument.triangle => const _TriangleTool(fullScreen: true),
       _HarpDeckInstrument.violin => const _ViolinTool(fullScreen: true),
+      _HarpDeckInstrument.pickup => const _PickupTool(fullScreen: true),
       _ => _HarpTool(
         fullScreen: true,
         initialConfig: widget.harpConfig,
@@ -640,6 +649,24 @@ class TriangleToolPage extends StatelessWidget {
         ru: 'Чистый металлический удар с регулировкой звона и пресетами.',
       ),
       child: const _TriangleTool(),
+    );
+  }
+}
+
+class PickupToolPage extends StatelessWidget {
+  const PickupToolPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
+    return ToolboxToolPage(
+      title: pickUiText(i18n, zh: '拾音器', en: 'Pickup'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '通过手机麦克风分析拾音电平、峰值、音高与亮度，辅助完成拾音调校。',
+        en: 'Use the phone microphone to analyze pickup level, peaks, pitch, and brightness.',
+      ),
+      child: const _PickupTool(),
     );
   }
 }

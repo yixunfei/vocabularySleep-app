@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -26,6 +27,7 @@ part 'toolbox_sound_tools/drum_pad.dart';
 part 'toolbox_sound_tools/guitar.dart';
 part 'toolbox_sound_tools/triangle.dart';
 part 'toolbox_sound_tools/violin.dart';
+part 'toolbox_sound_tools/pickup.dart';
 
 AppI18n _toolboxI18n(BuildContext context, {bool listen = true}) {
   final state = listen

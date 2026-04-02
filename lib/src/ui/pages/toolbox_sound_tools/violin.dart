@@ -93,6 +93,7 @@ class _ViolinToolState extends State<_ViolinTool> {
   String _scaleId = _presets.first.scaleId;
   double _bow = _presets.first.bow;
   double _reverb = _presets.first.reverb;
+  String _toneVariant = 'a';
   int _positionIndex = 0;
   int? _activeStringIndex;
   int? _activeNoteMidi;
@@ -163,6 +164,27 @@ class _ViolinToolState extends State<_ViolinTool> {
     );
   }
 
+  String _variantLabel(AppI18n i18n, String variant) {
+    return switch (variant) {
+      'b' => pickUiText(i18n, zh: 'B 亮弓', en: 'B Bright'),
+      _ => pickUiText(i18n, zh: 'A 木质', en: 'A Woody'),
+    };
+  }
+
+  String _variantSubtitle(AppI18n i18n) {
+    return _toneVariant == 'b'
+        ? pickUiText(
+            i18n,
+            zh: 'B 版前缘更亮、更靠前，适合穿透感更强的独奏。',
+            en: 'Variant B is brighter and more forward for cutting solo lines.',
+          )
+        : pickUiText(
+            i18n,
+            zh: 'A 版琴体更厚、更木质，适合自然独奏与慢速旋律。',
+            en: 'Variant A is woodier and fuller for natural solo phrases.',
+          );
+  }
+
   List<int> _notesForString(_ViolinString string) {
     final offset = _positionOffsets[_positionIndex];
     final intervals = _scaleIntervals[_scaleId] ?? _scaleIntervals['major']!;
@@ -191,6 +213,7 @@ class _ViolinToolState extends State<_ViolinTool> {
       ToolboxAudioBank.violinNote(
         _frequencyFromMidi(midi),
         style: _activePreset.styleId,
+        variant: _toneVariant,
         bow: _bow,
         reverb: _reverb,
       ),
@@ -207,6 +230,7 @@ class _ViolinToolState extends State<_ViolinTool> {
           ToolboxAudioBank.violinNote(
             _frequencyFromMidi(secondMidi),
             style: _activePreset.styleId,
+            variant: _toneVariant,
             bow: (_bow * 0.92).clamp(0.15, 1.0),
             reverb: _reverb,
           ),
@@ -455,6 +479,10 @@ class _ViolinToolState extends State<_ViolinTool> {
               label: 'Preset',
               value: _presetLabel(i18n, preset),
             ),
+            ToolboxMetricCard(
+              label: 'AB',
+              value: _variantLabel(i18n, _toneVariant),
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -473,6 +501,28 @@ class _ViolinToolState extends State<_ViolinTool> {
         ),
         const SizedBox(height: 8),
         Text(_presetSubtitle(i18n, preset), style: theme.textTheme.bodySmall),
+        const SizedBox(height: 12),
+        SectionHeader(
+          title: pickUiText(i18n, zh: 'A/B 微调', en: 'A/B voicing'),
+          subtitle: _variantSubtitle(i18n),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            ChoiceChip(
+              label: Text(_variantLabel(i18n, 'a')),
+              selected: _toneVariant == 'a',
+              onSelected: (_) => setState(() => _toneVariant = 'a'),
+            ),
+            ChoiceChip(
+              label: Text(_variantLabel(i18n, 'b')),
+              selected: _toneVariant == 'b',
+              onSelected: (_) => setState(() => _toneVariant = 'b'),
+            ),
+          ],
+        ),
         const SizedBox(height: 14),
         Wrap(
           spacing: 8,
@@ -503,8 +553,8 @@ class _ViolinToolState extends State<_ViolinTool> {
         Text(
           pickUiText(
             i18n,
-            zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)}',
-            en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)}',
+            zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
+            en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
           ),
         ),
         Slider(
@@ -606,11 +656,18 @@ class _ViolinToolState extends State<_ViolinTool> {
                                 label: 'Preset',
                                 value: _presetLabel(i18n, preset),
                               ),
-                              const _PianoOverlayChip(
-                                label: 'Gesture',
-                                value: '2-finger double-stop',
+                              _PianoOverlayChip(
+                                label: 'AB',
+                                value: _variantLabel(i18n, _toneVariant),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _variantSubtitle(i18n),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white70,
+                            ),
                           ),
                           const Spacer(),
                           _buildFingerboardStage(
@@ -684,6 +741,10 @@ class _ViolinToolState extends State<_ViolinTool> {
                     value: _positionLabel(i18n, _positionIndex),
                   ),
                   ToolboxMetricCard(
+                    label: 'AB',
+                    value: _variantLabel(i18n, _toneVariant),
+                  ),
+                  ToolboxMetricCard(
                     label: pickUiText(i18n, zh: '最近音符', en: 'Last note'),
                     value: _lastNoteLabel ?? '--',
                   ),
@@ -738,6 +799,28 @@ class _ViolinToolState extends State<_ViolinTool> {
               Text(
                 _presetSubtitle(i18n, preset),
                 style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              SectionHeader(
+                title: pickUiText(i18n, zh: 'A/B 微调', en: 'A/B voicing'),
+                subtitle: _variantSubtitle(i18n),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  ChoiceChip(
+                    label: Text(_variantLabel(i18n, 'a')),
+                    selected: _toneVariant == 'a',
+                    onSelected: (_) => setState(() => _toneVariant = 'a'),
+                  ),
+                  ChoiceChip(
+                    label: Text(_variantLabel(i18n, 'b')),
+                    selected: _toneVariant == 'b',
+                    onSelected: (_) => setState(() => _toneVariant = 'b'),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               _buildFingerboardStage(
@@ -797,8 +880,8 @@ class _ViolinToolState extends State<_ViolinTool> {
               Text(
                 pickUiText(
                   i18n,
-                  zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)}',
-                  en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)}',
+                  zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
+                  en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
                 ),
               ),
               Slider(

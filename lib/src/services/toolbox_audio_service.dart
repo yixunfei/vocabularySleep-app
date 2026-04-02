@@ -781,6 +781,7 @@ class ToolboxAudioBank {
   static Uint8List violinNote(
     double frequency, {
     String style = 'solo',
+    String variant = 'a',
     double bow = 0.65,
     double reverb = 0.24,
   }) {
@@ -789,10 +790,11 @@ class ToolboxAudioBank {
       'glass' => 'glass',
       _ => 'solo',
     };
+    final normalizedVariant = variant == 'b' ? 'b' : 'a';
     final normalizedBow = (bow.clamp(0.15, 1.0) * 20).round() / 20;
     final normalizedReverb = (reverb.clamp(0.0, 0.5) * 20).round() / 20;
     final key =
-        'violin:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        'violin:${frequency.toStringAsFixed(2)}:$normalizedStyle:$normalizedVariant:'
         '${normalizedBow.toStringAsFixed(2)}:'
         '${normalizedReverb.toStringAsFixed(2)}';
     return _cache.putIfAbsent(
@@ -800,6 +802,7 @@ class ToolboxAudioBank {
       () => _buildViolinNote(
         frequency: frequency,
         style: normalizedStyle,
+        variant: normalizedVariant,
         bow: normalizedBow.toDouble(),
         reverb: normalizedReverb.toDouble(),
       ),
@@ -2336,6 +2339,7 @@ class ToolboxAudioBank {
   static Uint8List _buildViolinNote({
     required double frequency,
     required String style,
+    required String variant,
     required double bow,
     required double reverb,
   }) {
@@ -2363,8 +2367,15 @@ class ToolboxAudioBank {
       'glass' => 6.1,
       _ => 5.4,
     };
-    final rosinAmount = (0.011 + bow * 0.02) * (style == 'glass' ? 1.18 : 1.0);
-    final bodyFormantAmount = 0.04 + bodyGain * 0.036;
+    final variantBrightness = variant == 'b' ? 1.14 : 0.94;
+    final variantBody = variant == 'b' ? 0.92 : 1.12;
+    final variantEdge = variant == 'b' ? 1.28 : 0.88;
+    final variantReverb = variant == 'b' ? 0.92 : 0.84;
+    final rosinAmount =
+        (0.011 + bow * 0.02) *
+        (style == 'glass' ? 1.18 : 1.0) *
+        (variant == 'b' ? 1.08 : 0.92);
+    final bodyFormantAmount = 0.04 + bodyGain * 0.036 * variantBody;
     var phase = 0.0;
 
     for (var i = 0; i < totalSamples; i += 1) {
@@ -2391,18 +2402,36 @@ class ToolboxAudioBank {
       final slip =
           0.5 + 0.5 * math.sin(basePhase + math.sin(basePhase * 0.5) * 0.18);
 
-      var tone = math.sin(basePhase) * 0.44;
-      tone += math.sin(basePhase * 2 + 0.12) * (0.24 * brightness);
-      tone += math.sin(basePhase * 3 + 0.31) * (0.16 * brightness);
-      tone += math.sin(basePhase * 4 + 0.56) * (0.10 * brightness);
-      tone += math.sin(basePhase * 5 + 0.88) * (0.068 * brightness);
-      tone += math.sin(basePhase * 6 + 1.18) * (0.044 * brightness);
-      tone += math.sin(basePhase * 7 + 1.47) * (0.026 * brightness);
-      tone += math.sin(basePhase * 8 + 1.92) * (0.018 * brightness);
+      var tone = math.sin(basePhase) * (0.44 * variantBody);
+      tone +=
+          math.sin(basePhase * 2 + 0.12) *
+          (0.24 * brightness * variantBrightness);
+      tone +=
+          math.sin(basePhase * 3 + 0.31) *
+          (0.16 * brightness * variantBrightness);
+      tone +=
+          math.sin(basePhase * 4 + 0.56) *
+          (0.10 * brightness * variantBrightness);
+      tone +=
+          math.sin(basePhase * 5 + 0.88) *
+          (0.068 * brightness * variantBrightness);
+      tone +=
+          math.sin(basePhase * 6 + 1.18) *
+          (0.044 * brightness * variantBrightness);
+      tone +=
+          math.sin(basePhase * 7 + 1.47) *
+          (0.026 * brightness * variantBrightness);
+      tone +=
+          math.sin(basePhase * 8 + 1.92) *
+          (0.018 * brightness * variantBrightness);
 
       final edgeHarmonics =
-          math.sin(basePhase * 2.7 + 0.42) * (0.018 + bow * 0.01) +
-          math.sin(basePhase * 5.4 + 0.16) * (0.012 + bow * 0.008);
+          math.sin(basePhase * 2.7 + 0.42) *
+              (0.018 + bow * 0.01) *
+              variantEdge +
+          math.sin(basePhase * 5.4 + 0.16) *
+              (0.012 + bow * 0.008) *
+              variantEdge;
 
       final rosinNoise =
           (math.sin((i + 1) * 0.91) +
@@ -2415,6 +2444,7 @@ class ToolboxAudioBank {
       final bowChiff =
           math.sin(basePhase * (6.4 + bow * 0.8) + 0.18) *
           (0.012 + bow * 0.008) *
+          variantEdge *
           math.exp(-(2.2 - bow * 0.7) * t);
 
       final bodyEnvelope = 0.55 + 0.45 * math.exp(-0.32 * t);
@@ -2428,7 +2458,7 @@ class ToolboxAudioBank {
           bodyEnvelope;
       final formantC =
           math.sin(math.pi * 2 * 920 * t + 0.84) *
-          (bodyFormantAmount * 0.42 * brightness) *
+          (bodyFormantAmount * 0.42 * brightness * variantBrightness) *
           (0.5 + 0.5 * math.sin(basePhase * 0.5 + 0.2));
       final airBody =
           math.sin(math.pi * 2 * 1480 * t + 1.2) *
@@ -2458,7 +2488,7 @@ class ToolboxAudioBank {
     _applySchroederReverb(
       samples,
       sampleRate: sampleRate,
-      amount: (reverb * 0.78).clamp(0.0, 0.35),
+      amount: (reverb * 0.78 * variantReverb).clamp(0.0, 0.35),
     );
     return _encodeWav(samples, sampleRate: sampleRate, gain: 0.9);
   }
