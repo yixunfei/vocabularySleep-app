@@ -476,47 +476,50 @@ class _MiniPlayerState extends State<MiniPlayer> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        child: _collapsed
-            ? _CollapsedMiniPlayer(
-                key: const ValueKey<String>('collapsed-mini-player'),
-                i18n: i18n,
-                isPaused: state.isPaused,
-                hasSleepTimer: _hasSleepTimer,
-                onTap: _toggleCollapsed,
-              )
-            : _ExpandedMiniPlayer(
-                key: const ValueKey<String>('expanded-mini-player'),
-                i18n: i18n,
-                title: currentWord.isEmpty ? wordbookName : currentWord,
-                subtitle: subtitle,
-                progress: progress,
-                isPlaying: state.isPlaying,
-                isPaused: state.isPaused,
-                hasSleepTimer: _hasSleepTimer,
-                sleepTimerLabel: _sleepTimerLabel(i18n),
-                onCollapse: _toggleCollapsed,
-                onPrevious: state.isPlaying
-                    ? state.movePlaybackPreviousWord
-                    : null,
-                onPlayPause: state.isPlaying
-                    ? state.pauseOrResume
-                    : state.playCurrentWordbook,
-                onNext: state.isPlaying ? state.movePlaybackNextWord : null,
-                onStop: state.isPlaying ? state.stop : null,
-                onAmbient: () {
-                  showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (_) => AmbientSheet(state: state, i18n: i18n),
-                  );
-                },
-                onSleepTimer: _openSleepTimerSheet,
-                onTools: _openToolsSheet,
-              ),
+      child: Align(
+        alignment: Alignment.center,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: _collapsed
+              ? _CollapsedMiniPlayer(
+                  key: const ValueKey<String>('collapsed-mini-player'),
+                  i18n: i18n,
+                  isPaused: state.isPaused,
+                  hasSleepTimer: _hasSleepTimer,
+                  onTap: _toggleCollapsed,
+                )
+              : _ExpandedMiniPlayer(
+                  key: const ValueKey<String>('expanded-mini-player'),
+                  i18n: i18n,
+                  title: currentWord.isEmpty ? wordbookName : currentWord,
+                  subtitle: subtitle,
+                  progress: progress,
+                  isPlaying: state.isPlaying,
+                  isPaused: state.isPaused,
+                  hasSleepTimer: _hasSleepTimer,
+                  sleepTimerLabel: _sleepTimerLabel(i18n),
+                  onCollapse: _toggleCollapsed,
+                  onPrevious: state.isPlaying
+                      ? state.movePlaybackPreviousWord
+                      : null,
+                  onPlayPause: state.isPlaying
+                      ? state.pauseOrResume
+                      : state.playCurrentWordbook,
+                  onNext: state.isPlaying ? state.movePlaybackNextWord : null,
+                  onStop: state.isPlaying ? state.stop : null,
+                  onAmbient: () {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => AmbientSheet(state: state, i18n: i18n),
+                    );
+                  },
+                  onSleepTimer: _openSleepTimerSheet,
+                  onTools: _openToolsSheet,
+                ),
+        ),
       ),
     );
   }

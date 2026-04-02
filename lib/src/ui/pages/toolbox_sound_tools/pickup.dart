@@ -200,7 +200,7 @@ class _PickupToolState extends State<_PickupTool>
   bool _starting = false;
   bool _phaseReverse = false;
   String? _error;
-  bool _showGuide = true;
+  bool _showGuide = false;
   bool _showStats = false;
 
   double _preamp = 0.54;

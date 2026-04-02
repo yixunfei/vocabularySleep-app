@@ -252,6 +252,18 @@ class _DrumPadToolState extends State<_DrumPadTool>
     return Duration(milliseconds: (60000 / _bpm / 4).round());
   }
 
+  int get _activeStepCount {
+    var count = 0;
+    for (final row in _sequence.values) {
+      for (final active in row) {
+        if (active) {
+          count += 1;
+        }
+      }
+    }
+    return count;
+  }
+
   _DrumPatternTemplate get _activePattern {
     return _patternTemplates.firstWhere(
       (item) => item.id == _patternId,
@@ -428,6 +440,28 @@ class _DrumPadToolState extends State<_DrumPadTool>
     if (restartTransport) {
       _restartTransportIfNeeded();
     }
+  }
+
+  void _clearSequence() {
+    setState(() {
+      for (final row in _sequence.values) {
+        row.fillRange(0, row.length, false);
+      }
+      _patternId = '';
+      _currentStep = -1;
+      _barsPlayed = 0;
+    });
+  }
+
+  void _toggleStep(String padId, int stepIndex) {
+    final row = _sequence[padId];
+    if (row == null || stepIndex < 0 || stepIndex >= row.length) {
+      return;
+    }
+    setState(() {
+      row[stepIndex] = !row[stepIndex];
+      _patternId = '';
+    });
   }
 
   ToolboxEffectPlayer _playerFor(String padId) {
@@ -776,12 +810,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
     if (widget.fullScreen) {
       return;
     }
-    final usePortraitFullScreen = MediaQuery.sizeOf(context).shortestSide < 600;
-    if (usePortraitFullScreen) {
-      await _enterToolboxPortraitMode();
-    } else {
-      await _enterToolboxLandscapeMode();
-    }
+    await _enterToolboxLandscapeMode();
     try {
       if (!context.mounted) {
         return;
@@ -1160,6 +1189,129 @@ class _DrumPadToolState extends State<_DrumPadTool>
     );
   }
 
+  Widget _buildStepCell(BuildContext context, _DrumPadSpec pad, int stepIndex) {
+    final active = _sequence[pad.id]?[stepIndex] ?? false;
+    final playing = _currentStep == stepIndex;
+    final quarter = stepIndex % 4 == 0;
+    final background = active
+        ? pad.color.withValues(alpha: playing ? 0.96 : 0.82)
+        : (widget.fullScreen
+              ? Colors.white.withValues(alpha: playing ? 0.12 : 0.05)
+              : Theme.of(context).colorScheme.surfaceContainerLowest);
+    final border = playing
+        ? Colors.white.withValues(alpha: 0.72)
+        : active
+        ? pad.color.withValues(alpha: 0.42)
+        : Theme.of(context).colorScheme.outlineVariant;
+    return GestureDetector(
+      onTap: () => _toggleStep(pad.id, stepIndex),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        width: widget.fullScreen ? 32 : 28,
+        height: widget.fullScreen ? 50 : 44,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: border,
+            width: playing || quarter ? 1.4 : 1,
+          ),
+          boxShadow: active
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: pad.color.withValues(alpha: 0.18),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : const <BoxShadow>[],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '${stepIndex + 1}',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: active
+                ? Colors.white
+                : (widget.fullScreen
+                      ? Colors.white70
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
+            fontWeight: quarter ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSequencerGrid(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    return _ToolboxScrollLockSurface(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Column(
+          children: _pads
+              .map((pad) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                        width: widget.fullScreen ? 126 : 112,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: widget.fullScreen
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : theme.colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: widget.fullScreen
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : theme.colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: Row(
+                          children: <Widget>[
+                            Icon(pad.icon, color: pad.color, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _padLabel(i18n, pad.id),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: widget.fullScreen
+                                      ? Colors.white
+                                      : null,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Row(
+                        children: List<Widget>.generate(_stepCount, (
+                          stepIndex,
+                        ) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: stepIndex == _stepCount - 1 ? 0 : 6,
+                            ),
+                            child: _buildStepCell(context, pad, stepIndex),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                );
+              })
+              .toList(growable: false),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTransportBar(BuildContext context, AppI18n i18n) {
     final theme = Theme.of(context);
     return Container(
@@ -1441,6 +1593,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
     bool immersiveMinimal = false,
   }) {
     final theme = Theme.of(context);
+    final statusColor = widget.fullScreen ? Colors.white70 : theme.hintColor;
     return Stack(
       children: <Widget>[
         Positioned.fill(child: _buildLaserOverlay()),
@@ -1461,6 +1614,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
                             : _presetLabel(i18n, _activePreset),
                       ),
                       ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '模板', en: 'Pattern'),
+                        value: _patternId.isEmpty
+                            ? pickUiText(i18n, zh: '自编步进', en: 'Custom steps')
+                            : _patternLabel(i18n, _activePattern),
+                      ),
+                      ToolboxMetricCard(
                         label: pickUiText(i18n, zh: '音色', en: 'Kit'),
                         value: _kitLabel(i18n, _kit),
                       ),
@@ -1471,6 +1630,10 @@ class _DrumPadToolState extends State<_DrumPadTool>
                       ToolboxMetricCard(
                         label: pickUiText(i18n, zh: '命中', en: 'Hits'),
                         value: '$_hits',
+                      ),
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '当前步', en: 'Step'),
+                        value: _currentStep < 0 ? '--' : '${_currentStep + 1}',
                       ),
                     ],
                   ),
@@ -1489,12 +1652,43 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 if (!immersiveMinimal) const SizedBox(height: 10),
                 _buildPadGrid(context, i18n),
                 SizedBox(height: immersiveMinimal ? 14 : 20),
+                if (!immersiveMinimal)
+                  Text(
+                    pickUiText(i18n, zh: '16 步节拍器', en: '16-step sequencer'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: widget.fullScreen ? Colors.white : null,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                if (!immersiveMinimal) const SizedBox(height: 8),
+                if (!immersiveMinimal)
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '点击格子编辑步进；每 4 步为一拍，适合快速落地鼓型和 loop。',
+                      en: 'Tap cells to edit steps. Every 4 steps form a beat for fast groove building.',
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: statusColor,
+                    ),
+                  ),
+                SizedBox(height: immersiveMinimal ? 8 : 12),
+                _buildSequencerGrid(context, i18n),
                 if (!immersiveMinimal) ...<Widget>[
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: <Widget>[
+                      Chip(
+                        label: Text(
+                          pickUiText(
+                            i18n,
+                            zh: '激活步数 $_activeStepCount',
+                            en: 'Active steps $_activeStepCount',
+                          ),
+                        ),
+                      ),
                       Chip(
                         label: Text(
                           pickUiText(
@@ -1612,6 +1806,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 label: pickUiText(i18n, zh: '材质', en: 'Material'),
                 value: _materialLabel(i18n, _material),
               ),
+              ToolboxMetricCard(
+                label: pickUiText(i18n, zh: '模板', en: 'Pattern'),
+                value: _patternId.isEmpty
+                    ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+                    : _patternLabel(i18n, _activePattern),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -1647,10 +1847,39 @@ class _DrumPadToolState extends State<_DrumPadTool>
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 20),
+          _buildSettingsSectionTitle(
+            context,
+            pickUiText(i18n, zh: '鼓型模板', en: 'Pattern template'),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _patternTemplates
+                .map(
+                  (item) => ChoiceChip(
+                    label: Text(_patternLabel(i18n, item)),
+                    selected: item.id == _patternId,
+                    onSelected: (_) {
+                      _applyPatternTemplate(item.id);
+                      applySettings(() {});
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
+              FilledButton.tonalIcon(
+                onPressed: () {
+                  _clearSequence();
+                  applySettings(() {});
+                },
+                icon: const Icon(Icons.cleaning_services_rounded),
+                label: Text(pickUiText(i18n, zh: '清空步进', en: 'Clear sequence')),
+              ),
               FilledButton.tonalIcon(
                 onPressed: () {
                   setState(() {
@@ -1936,6 +2165,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
             en: 'The current parameters have drifted away from the preset, so the kit is now tuned for custom shaping.',
           )
         : _presetSubtitle(i18n, _activePreset);
+    final patternLabel = _patternId.isEmpty
+        ? pickUiText(i18n, zh: '自定义步进', en: 'Custom steps')
+        : _patternLabel(i18n, _activePattern);
     final lastPad = _lastHitId == null
         ? null
         : _pads.firstWhere(
@@ -1979,6 +2211,20 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 _materialLabel(i18n, _material),
                 icon: Icons.album_rounded,
                 iconColor: const Color(0xFFFDA4AF),
+              ),
+              _buildImmersiveStatusPill(
+                patternLabel,
+                icon: Icons.grid_view_rounded,
+                iconColor: const Color(0xFFFDE68A),
+              ),
+              _buildImmersiveStatusPill(
+                pickUiText(
+                  i18n,
+                  zh: '激活 $_activeStepCount 步',
+                  en: '$_activeStepCount active steps',
+                ),
+                icon: Icons.multitrack_audio_rounded,
+                iconColor: const Color(0xFF7DD3FC),
               ),
               _buildImmersiveStatusPill(
                 pickUiText(
@@ -2135,9 +2381,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
     AppI18n i18n,
     BoxConstraints constraints,
   ) {
+    final screenHeight = constraints.maxHeight;
     final viewPadding = MediaQuery.viewPaddingOf(context);
-    final compact = constraints.maxHeight < 760 || constraints.maxWidth < 390;
-    final transportHeight = compact ? 156.0 : 172.0;
+    final safeHeight = screenHeight - viewPadding.top - viewPadding.bottom - 16;
+
+    final transportHeight = 140.0;
+    final padHeight = safeHeight - transportHeight - 20;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -2147,9 +2396,11 @@ class _DrumPadToolState extends State<_DrumPadTool>
         bottom: viewPadding.bottom + 8,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Expanded(child: _buildDrumLivePadDeck(context, i18n)),
+          SizedBox(
+            height: padHeight,
+            child: _buildDrumLivePadDeck(context, i18n),
+          ),
           const SizedBox(height: 10),
           SizedBox(
             height: transportHeight,
@@ -2162,9 +2413,6 @@ class _DrumPadToolState extends State<_DrumPadTool>
 
   Widget _buildPhoneTransportPanel(BuildContext context, AppI18n i18n) {
     final theme = Theme.of(context);
-    final compact = MediaQuery.sizeOf(context).width < 360;
-    final actionButtonSize = compact ? const Size(40, 40) : const Size(44, 44);
-    final actionSpacing = compact ? 4.0 : 6.0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -2183,12 +2431,6 @@ class _DrumPadToolState extends State<_DrumPadTool>
                   onPressed: _transportRunning
                       ? _stopTransport
                       : _startTransport,
-                  style: FilledButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: compact ? 12 : 14,
-                      vertical: compact ? 10 : 12,
-                    ),
-                  ),
                   icon: Icon(
                     _transportRunning
                         ? Icons.stop_rounded
@@ -2203,7 +2445,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                   ),
                 ),
               ),
-              SizedBox(width: actionSpacing),
+              const SizedBox(width: 6),
               IconButton.filled(
                 onPressed: () =>
                     setState(() => _metronomeEnabled = !_metronomeEnabled),
@@ -2217,20 +2459,14 @@ class _DrumPadToolState extends State<_DrumPadTool>
                   backgroundColor: _metronomeEnabled
                       ? const Color(0xFF0EA5E9).withValues(alpha: 0.3)
                       : Colors.white.withValues(alpha: 0.1),
-                  minimumSize: actionButtonSize,
+                  minimumSize: const Size(44, 44),
                 ),
               ),
-              SizedBox(width: actionSpacing),
-              IconButton.outlined(
-                onPressed: () => _openDrumSettingsSheet(context, i18n),
-                icon: const Icon(Icons.tune_rounded, size: 20),
-                style: IconButton.styleFrom(minimumSize: actionButtonSize),
-              ),
-              SizedBox(width: actionSpacing),
+              const SizedBox(width: 6),
               IconButton.outlined(
                 onPressed: () => Navigator.of(context).maybePop(),
                 icon: const Icon(Icons.close_rounded, size: 20),
-                style: IconButton.styleFrom(minimumSize: actionButtonSize),
+                style: IconButton.styleFrom(minimumSize: const Size(44, 44)),
               ),
             ],
           ),
@@ -2385,9 +2621,11 @@ class _DrumPadToolState extends State<_DrumPadTool>
           ),
           const SizedBox(width: 8),
           _buildLandscapeStatusChip(
-            icon: Icons.flash_on_rounded,
-            label: pickUiText(i18n, zh: '命中 $_hits', en: 'Hits $_hits'),
-            color: const Color(0xFFFDE68A),
+            icon: Icons.grid_view_rounded,
+            label: _patternId.isEmpty
+                ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+                : _patternLabel(i18n, _activePattern),
+            color: const Color(0xFF86EFAC),
           ),
         ],
       ),
@@ -2673,12 +2911,6 @@ class _DrumPadToolState extends State<_DrumPadTool>
   }
 
   Widget _buildLandscapeMetronomePanel(BuildContext context, AppI18n i18n) {
-    final lastPad = _lastHitId == null
-        ? null
-        : _pads.firstWhere(
-            (pad) => pad.id == _lastHitId,
-            orElse: () => _pads.first,
-          );
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -2693,7 +2925,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '节拍监看', en: 'Beat monitor'),
+                pickUiText(i18n, zh: '步进器', en: 'Sequencer'),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -2701,9 +2933,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 ),
               ),
               Text(
-                _transportRunning
-                    ? pickUiText(i18n, zh: '运行中', en: 'Running')
-                    : pickUiText(i18n, zh: '待机', en: 'Ready'),
+                _currentStep < 0 ? '--' : '${_currentStep + 1}/$_stepCount',
                 style: const TextStyle(
                   color: Color(0xFF7DD3FC),
                   fontSize: 12,
@@ -2713,76 +2943,38 @@ class _DrumPadToolState extends State<_DrumPadTool>
             ],
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              _buildLandscapeStatusChip(
-                icon: Icons.repeat_rounded,
-                label: pickUiText(
-                  i18n,
-                  zh: '小节 $_barsPlayed',
-                  en: 'Bars $_barsPlayed',
-                ),
-                color: const Color(0xFF86EFAC),
+          Expanded(
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 4,
               ),
-              _buildLandscapeStatusChip(
-                icon: Icons.tune_rounded,
-                label: pickUiText(
-                  i18n,
-                  zh: '混音 ${(_masterVolume * 100).round()}%',
-                  en: 'Mix ${(_masterVolume * 100).round()}%',
-                ),
-                color: const Color(0xFFC4B5FD),
-              ),
-              if (lastPad != null)
-                _buildLandscapeStatusChip(
-                  icon: lastPad.icon,
-                  label: _padLabel(i18n, lastPad.id),
-                  color: lastPad.color,
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildHorizontalMetronomeMatrix(context, i18n),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhoneImmersiveFullScreen(BuildContext context, AppI18n i18n) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[
-            Color(0xFF0A0A14),
-            Color(0xFF12121F),
-            Color(0xFF0A0A14),
-          ],
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        bottom: false,
-        child: Stack(
-          children: <Widget>[
-            if (_stageLightsEnabled)
-              Positioned.fill(child: _buildLaserOverlay()),
-            Positioned.fill(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return _buildPhoneFullScreenLayout(
-                    context,
-                    i18n,
-                    constraints,
-                  );
-                },
-              ),
+              itemCount: _stepCount,
+              itemBuilder: (context, index) {
+                final isActive = _currentStep == index;
+                final isBeat = index % 4 == 0;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 100),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    color: isActive
+                        ? const Color(0xFF38BDF8)
+                        : isBeat
+                        ? Colors.white.withValues(alpha: 0.35)
+                        : Colors.white.withValues(alpha: 0.12),
+                    border: Border.all(
+                      color: isActive
+                          ? Colors.white.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -2791,10 +2983,6 @@ class _DrumPadToolState extends State<_DrumPadTool>
   Widget build(BuildContext context) {
     final i18n = _toolboxI18n(context);
     if (widget.fullScreen) {
-      final usePhoneFullScreen = MediaQuery.sizeOf(context).shortestSide < 600;
-      if (usePhoneFullScreen) {
-        return _buildPhoneImmersiveFullScreen(context, i18n);
-      }
       return _buildDrumImmersiveFullScreen(context, i18n);
     }
     return _buildInstrumentPanelShell(

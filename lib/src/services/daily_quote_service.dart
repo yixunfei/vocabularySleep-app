@@ -10,9 +10,7 @@ class DailyQuoteService {
   Future<String> fetchQuote() async {
     final client = _client ?? http.Client();
     try {
-      final uri = Uri.parse(
-        'https://v.api.aa1.cn/api/yiyan/index.php?type=json',
-      );
+      final uri = Uri.parse('https://international.v1.hitokoto.cn/');
       final response = await client.get(uri);
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw StateError(
@@ -36,7 +34,7 @@ class DailyQuoteService {
     }
 
     final payload = decoded.cast<String, Object?>();
-    final quote = cleanQuoteBody('${payload['yiyan'] ?? ''}');
+    final quote = cleanQuoteBody('${payload['hitokoto'] ?? ''}');
     final source = cleanQuoteBody('${payload['from'] ?? ''}');
     if (quote.isEmpty) {
       throw const FormatException('Daily quote payload is empty.');

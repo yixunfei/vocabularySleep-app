@@ -92,87 +92,95 @@ class SoothingMiniPlayer extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Material(
-            elevation: 6,
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: onOpen,
-              child: Ink(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(alpha: 0.97),
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Material(
+                elevation: 6,
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-                  child: Row(
-                    children: <Widget>[
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.spa_rounded,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
+                  onTap: onOpen,
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.97),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              modeTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                      child: Row(
+                        children: <Widget>[
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              trackLabel,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall,
+                            child: Icon(
+                              Icons.spa_rounded,
+                              color: theme.colorScheme.onPrimaryContainer,
                             ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                _MiniBadge(label: playbackLabel),
-                                if (arrangementLabel != null)
-                                  _MiniBadge(label: arrangementLabel),
+                                Text(
+                                  modeTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  trackLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: <Widget>[
+                                    _MiniBadge(label: playbackLabel),
+                                    if (arrangementLabel != null)
+                                      _MiniBadge(label: arrangementLabel),
+                                  ],
+                                ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: SoothingMusicRuntimeStore.activePlaying
+                                ? pickUiText(i18n, zh: '暂停', en: 'Pause')
+                                : pickUiText(i18n, zh: '播放', en: 'Play'),
+                            onPressed: onTogglePlayback == null
+                                ? null
+                                : () {
+                                    onTogglePlayback!.call();
+                                  },
+                            icon: Icon(
+                              SoothingMusicRuntimeStore.activePlaying
+                                  ? Icons.pause_circle_filled_rounded
+                                  : Icons.play_circle_fill_rounded,
+                              size: 32,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: SoothingMusicRuntimeStore.activePlaying
-                            ? pickUiText(i18n, zh: '暂停', en: 'Pause')
-                            : pickUiText(i18n, zh: '播放', en: 'Play'),
-                        onPressed: onTogglePlayback == null
-                            ? null
-                            : () {
-                                onTogglePlayback!.call();
-                              },
-                        icon: Icon(
-                          SoothingMusicRuntimeStore.activePlaying
-                              ? Icons.pause_circle_filled_rounded
-                              : Icons.play_circle_fill_rounded,
-                          size: 32,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
