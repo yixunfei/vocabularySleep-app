@@ -137,6 +137,116 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     };
   }
 
+  String _gestureHint(AppI18n i18n, _HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.piano => pickUiText(
+        i18n,
+        zh: 'Use two thumbs for chord + melody.',
+        en: 'Use two thumbs for chord + melody.',
+      ),
+      _HarpDeckInstrument.flute => pickUiText(
+        i18n,
+        zh: 'Hold holes first, then tap note buttons.',
+        en: 'Hold holes first, then tap note buttons.',
+      ),
+      _HarpDeckInstrument.drumPad => pickUiText(
+        i18n,
+        zh: 'Multi-touch on pads for fuller groove.',
+        en: 'Multi-touch on pads for fuller groove.',
+      ),
+      _HarpDeckInstrument.guitar => pickUiText(
+        i18n,
+        zh: 'Tap for pluck, swipe across strings for strum.',
+        en: 'Tap for pluck, swipe across strings for strum.',
+      ),
+      _HarpDeckInstrument.triangle => pickUiText(
+        i18n,
+        zh: 'Light taps for accents, leave ring for ambience.',
+        en: 'Light taps for accents, leave ring for ambience.',
+      ),
+      _HarpDeckInstrument.violin => pickUiText(
+        i18n,
+        zh: 'Slow drag for stable tone, fast drag for expression.',
+        en: 'Slow drag for stable tone, fast drag for expression.',
+      ),
+      _HarpDeckInstrument.pickup => pickUiText(
+        i18n,
+        zh: 'Tune in a quiet room before real-time pickup check.',
+        en: 'Tune in a quiet room before real-time pickup check.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: 'Tap a single string or swipe to sweep.',
+        en: 'Tap a single string or swipe to sweep.',
+      ),
+    };
+  }
+
+  String _mixHint(AppI18n i18n, _HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.piano => pickUiText(
+        i18n,
+        zh: 'Start with medium reverb for clearer runs.',
+        en: 'Start with medium reverb for clearer runs.',
+      ),
+      _HarpDeckInstrument.flute => pickUiText(
+        i18n,
+        zh: 'Breath around 50-60% is usually easiest to control.',
+        en: 'Breath around 50-60% is usually easiest to control.',
+      ),
+      _HarpDeckInstrument.drumPad => pickUiText(
+        i18n,
+        zh: 'Keep drive moderate to avoid clipping on phones.',
+        en: 'Keep drive moderate to avoid clipping on phones.',
+      ),
+      _HarpDeckInstrument.guitar => pickUiText(
+        i18n,
+        zh: 'Raise strum volume only after pluck level is balanced.',
+        en: 'Raise strum volume only after pluck level is balanced.',
+      ),
+      _HarpDeckInstrument.triangle => pickUiText(
+        i18n,
+        zh: 'High ring + low damping works best for sleep ambience.',
+        en: 'High ring + low damping works best for sleep ambience.',
+      ),
+      _HarpDeckInstrument.violin => pickUiText(
+        i18n,
+        zh: 'Use shorter reverb to keep pitch center focused.',
+        en: 'Use shorter reverb to keep pitch center focused.',
+      ),
+      _HarpDeckInstrument.pickup => pickUiText(
+        i18n,
+        zh: 'Set gain just below clipping for stable monitoring.',
+        en: 'Set gain just below clipping for stable monitoring.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: 'Try realism presets first, then fine-tune damping.',
+        en: 'Try realism presets first, then fine-tune damping.',
+      ),
+    };
+  }
+
+  String _layoutHint(AppI18n i18n, _HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.piano => pickUiText(
+        i18n,
+        zh: 'Portrait recommended.',
+        en: 'Portrait recommended.',
+      ),
+      _HarpDeckInstrument.pickup => pickUiText(
+        i18n,
+        zh: 'Portrait recommended.',
+        en: 'Portrait recommended.',
+      ),
+      _ => pickUiText(
+        i18n,
+        zh: 'Landscape recommended.',
+        en: 'Landscape recommended.',
+      ),
+    };
+  }
+
   IconData _icon(_HarpDeckInstrument instrument) {
     return switch (instrument) {
       _HarpDeckInstrument.piano => Icons.piano_rounded,
@@ -207,27 +317,44 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Wrap(
-                      spacing: 8,
+                      spacing: 6,
                       runSpacing: 8,
-                      children: _HarpDeckInstrument.values
-                          .map(
-                            (item) => ChoiceChip(
-                              avatar: Icon(_icon(item), size: 16),
-                              label: Text(_label(i18n, item)),
-                              selected: item == _selected,
-                              onSelected: (_) =>
-                                  setState(() => _selected = item),
+                      children: <Widget>[
+                        for (final item in _HarpDeckInstrument.values)
+                          ChoiceChip(
+                            avatar: Icon(_icon(item), size: 16),
+                            label: Text(_label(i18n, item)),
+                            selected: item == _selected,
+                            materialTapTargetSize: MaterialTapTargetSize.padded,
+                            labelPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
                             ),
-                          )
-                          .toList(growable: false),
+                            onSelected: (_) => setState(() => _selected = item),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 10),
-                    OutlinedButton.icon(
+                    FilledButton.tonalIcon(
                       onPressed: _openInstrumentFullScreen,
                       icon: const Icon(Icons.open_in_full_rounded),
                       label: Text(
                         pickUiText(i18n, zh: '全屏', en: 'Full screen'),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _infoSectionExpanded = true;
+                        });
+                      },
+                      icon: const Icon(Icons.tips_and_updates_rounded),
+                      label: const Text('Quick tips'),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Current: ${_label(i18n, _selected)}',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
@@ -248,16 +375,40 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Icon(_icon(_selected), size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _subtitle(i18n, _selected),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Icon(_icon(_selected), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _subtitle(i18n, _selected),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        _DeckHintChip(
+                          icon: Icons.touch_app_rounded,
+                          text: _gestureHint(i18n, _selected),
+                        ),
+                        _DeckHintChip(
+                          icon: Icons.tune_rounded,
+                          text: _mixHint(i18n, _selected),
+                        ),
+                        _DeckHintChip(
+                          icon: Icons.screen_rotation_alt_rounded,
+                          text: _layoutHint(i18n, _selected),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -276,6 +427,36 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DeckHintChip extends StatelessWidget {
+  const _DeckHintChip({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 16),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Text(text, style: Theme.of(context).textTheme.bodySmall),
+          ),
+        ],
+      ),
     );
   }
 }

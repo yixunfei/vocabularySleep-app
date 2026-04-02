@@ -464,6 +464,7 @@ class _HarpToolState extends State<_HarpTool>
   late double _damping;
   late double _swipeThreshold;
   String? _activeRealismPresetId;
+  bool _showGestureCoach = true;
 
   @override
   void initState() {
@@ -936,6 +937,7 @@ class _HarpToolState extends State<_HarpTool>
       horizontalLayout: _isHorizontalLayout,
     );
     final proximity = (1 - distance / (spacing * 0.45)).clamp(0.0, 1.0);
+    _dismissGestureCoach();
     _pluckString(
       index,
       intensity: (0.34 + proximity * 0.34).clamp(0.32, 0.78).toDouble(),
@@ -950,6 +952,7 @@ class _HarpToolState extends State<_HarpTool>
     Offset localPosition,
     Size size,
   ) {
+    _dismissGestureCoach();
     pointerState.lastDragPoint = localPosition;
     final startIndex = _nearestStringByPosition(
       localPosition,
@@ -1072,6 +1075,13 @@ class _HarpToolState extends State<_HarpTool>
     _handlePanEnd(pointerState);
   }
 
+  void _dismissGestureCoach() {
+    if (!_showGestureCoach || !mounted) return;
+    setState(() {
+      _showGestureCoach = false;
+    });
+  }
+
   int _nearestStringByFrequency(double frequency) {
     var bestIndex = 0;
     var bestDistance = double.infinity;
@@ -1123,6 +1133,7 @@ class _HarpToolState extends State<_HarpTool>
   }
 
   Future<void> _playArpeggio() async {
+    _dismissGestureCoach();
     if (_patternId == 'chord') {
       final chordNotes = _activeChordFrequencies();
       final extended = <double>[...chordNotes, chordNotes.first * 2];
@@ -1232,6 +1243,16 @@ class _HarpToolState extends State<_HarpTool>
     return content;
   }
 
+  ButtonStyle _fullScreenActionButtonStyle() {
+    return FilledButton.styleFrom(
+      backgroundColor: Colors.black.withValues(alpha: 0.38),
+      foregroundColor: Colors.white,
+      minimumSize: const Size(44, 44),
+      tapTargetSize: MaterialTapTargetSize.padded,
+      visualDensity: VisualDensity.standard,
+    );
+  }
+
   Widget _buildFullScreenBody(BuildContext context) {
     final i18n = _toolboxI18n(context);
     final reverbPercent = (_reverbUi * 100).round();
@@ -1247,8 +1268,44 @@ class _HarpToolState extends State<_HarpTool>
     return Stack(
       children: <Widget>[
         Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[
+                  Color.lerp(
+                        _activePalette.colors.first,
+                        const Color(0xFF020617),
+                        0.72,
+                      ) ??
+                      const Color(0xFF020617),
+                  Color.lerp(
+                        _activePalette.colors[_activePalette.colors.length ~/
+                            2],
+                        const Color(0xFF0F172A),
+                        0.74,
+                      ) ??
+                      const Color(0xFF0F172A),
+                  Color.lerp(
+                        _activePalette.colors.last,
+                        const Color(0xFF111827),
+                        0.78,
+                      ) ??
+                      const Color(0xFF111827),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned.fill(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(0, topInset + 8, 0, bottomInset + 88),
+            padding: EdgeInsets.fromLTRB(
+              0,
+              topInset + 66,
+              0,
+              bottomInset + 132,
+            ),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final size = Size(
@@ -1270,40 +1327,33 @@ class _HarpToolState extends State<_HarpTool>
         Positioned(
           left: 12,
           top: topInset + 10,
-          child: Row(
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 8,
             children: <Widget>[
               FilledButton.tonal(
                 onPressed:
                     widget.onExitFullScreen ??
                     () => Navigator.of(context).pop(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.black.withValues(alpha: 0.38),
-                  foregroundColor: Colors.white,
-                  visualDensity: VisualDensity.compact,
-                ),
+                style: _fullScreenActionButtonStyle(),
                 child: const Icon(Icons.arrow_back_rounded, size: 20),
               ),
-              const SizedBox(width: 10),
               FilledButton.tonal(
                 onPressed: () => setState(() => _muted = !_muted),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.black.withValues(alpha: 0.38),
-                  foregroundColor: Colors.white,
-                  visualDensity: VisualDensity.compact,
-                ),
+                style: _fullScreenActionButtonStyle(),
                 child: Icon(
                   _muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 10),
+              FilledButton.tonal(
+                onPressed: _playArpeggio,
+                style: _fullScreenActionButtonStyle(),
+                child: const Icon(Icons.auto_awesome_rounded, size: 20),
+              ),
               FilledButton.tonal(
                 onPressed: () => _openHarpSettingsSheet(context, i18n),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.black.withValues(alpha: 0.38),
-                  foregroundColor: Colors.white,
-                  visualDensity: VisualDensity.compact,
-                ),
+                style: _fullScreenActionButtonStyle(),
                 child: const Icon(Icons.tune_rounded, size: 20),
               ),
             ],
@@ -1320,7 +1370,7 @@ class _HarpToolState extends State<_HarpTool>
                 children: <Widget>[
                   _CompactMetric(
                     label: pickUiText(i18n, zh: '布局', en: 'Layout'),
-                    value: pickUiText(i18n, zh: '竖向', en: 'Vertical'),
+                    value: pickUiText(i18n, zh: '横向', en: 'Horizontal'),
                   ),
                   const SizedBox(width: 8),
                   _CompactMetric(
@@ -1333,6 +1383,65 @@ class _HarpToolState extends State<_HarpTool>
                     value: '$reverbPercent%',
                   ),
                 ],
+              ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: !_showGestureCoach
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.24),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              const Icon(
+                                Icons.pan_tool_alt_rounded,
+                                size: 16,
+                                color: Colors.white70,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  pickUiText(
+                                    i18n,
+                                    zh: 'Tap for single note, swipe for sweep.',
+                                    en: 'Tap for single note, swipe for sweep.',
+                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: Colors.white),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: _dismissGestureCoach,
+                                tooltip: pickUiText(
+                                  i18n,
+                                  zh: 'Hide tip',
+                                  en: 'Hide tip',
+                                ),
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  size: 16,
+                                  color: Colors.white70,
+                                ),
+                                constraints: const BoxConstraints.tightFor(
+                                  width: 32,
+                                  height: 32,
+                                ),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
               ),
             ],
           ),
@@ -2278,12 +2387,35 @@ class _HarpPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      final labelOffset = horizontalLayout
+      final rawLabelOffset = horizontalLayout
           ? Offset(
               leftX - labelPainter.width - 8,
               track - labelPainter.height / 2,
             )
           : Offset(track - labelPainter.width / 2, topY - 16 * textScale);
+      final labelOffset = Offset(
+        rawLabelOffset.dx
+            .clamp(4.0, size.width - labelPainter.width - 4.0)
+            .toDouble(),
+        rawLabelOffset.dy
+            .clamp(4.0, size.height - labelPainter.height - 4.0)
+            .toDouble(),
+      );
+      const labelPadX = 3.0;
+      const labelPadY = 1.5;
+      final labelBg = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          labelOffset.dx - labelPadX,
+          labelOffset.dy - labelPadY,
+          labelPainter.width + labelPadX * 2,
+          labelPainter.height + labelPadY * 2,
+        ),
+        const Radius.circular(5),
+      );
+      canvas.drawRRect(
+        labelBg,
+        Paint()..color = Colors.black.withValues(alpha: 0.3),
+      );
       labelPainter.paint(canvas, labelOffset);
     }
   }
