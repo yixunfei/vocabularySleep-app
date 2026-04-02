@@ -430,6 +430,40 @@ class _DrumPadToolState extends State<_DrumPadTool>
     }
   }
 
+  void _clearSequence() {
+    setState(() {
+      for (final row in _sequence.values) {
+        row.fillRange(0, row.length, false);
+      }
+      _patternId = '';
+      _currentStep = -1;
+      _barsPlayed = 0;
+    });
+  }
+
+  void _toggleStep(String padId, int stepIndex) {
+    final row = _sequence[padId];
+    if (row == null || stepIndex < 0 || stepIndex >= row.length) {
+      return;
+    }
+    setState(() {
+      row[stepIndex] = !row[stepIndex];
+      _patternId = '';
+    });
+  }
+
+  int get _activeStepCount {
+    var count = 0;
+    for (final row in _sequence.values) {
+      for (final value in row) {
+        if (value) {
+          count += 1;
+        }
+      }
+    }
+    return count;
+  }
+
   ToolboxEffectPlayer _playerFor(String padId) {
     final cacheKey =
         'drum:$padId:$_kit:$_material:${_tone.toStringAsFixed(2)}:${_tail.toStringAsFixed(2)}';
@@ -1160,6 +1194,143 @@ class _DrumPadToolState extends State<_DrumPadTool>
     );
   }
 
+  Widget _buildStepCell(
+    BuildContext context,
+    _DrumPadSpec pad,
+    int stepIndex, {
+    void Function(String padId, int stepIndex)? onToggleStep,
+  }) {
+    final active = _sequence[pad.id]?[stepIndex] ?? false;
+    final playing = _currentStep == stepIndex;
+    final quarter = stepIndex % 4 == 0;
+    final background = active
+        ? pad.color.withValues(alpha: playing ? 0.96 : 0.82)
+        : (widget.fullScreen
+              ? Colors.white.withValues(alpha: playing ? 0.12 : 0.05)
+              : Theme.of(context).colorScheme.surfaceContainerLowest);
+    final border = playing
+        ? Colors.white.withValues(alpha: 0.72)
+        : active
+        ? pad.color.withValues(alpha: 0.42)
+        : Theme.of(context).colorScheme.outlineVariant;
+    return GestureDetector(
+      onTap: () => (onToggleStep ?? _toggleStep)(pad.id, stepIndex),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        width: widget.fullScreen ? 32 : 28,
+        height: widget.fullScreen ? 50 : 44,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: border,
+            width: playing || quarter ? 1.4 : 1,
+          ),
+          boxShadow: active
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: pad.color.withValues(alpha: 0.18),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : const <BoxShadow>[],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '${stepIndex + 1}',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: active
+                ? Colors.white
+                : (widget.fullScreen
+                      ? Colors.white70
+                      : Theme.of(context).colorScheme.onSurfaceVariant),
+            fontWeight: quarter ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSequencerGrid(
+    BuildContext context,
+    AppI18n i18n, {
+    void Function(String padId, int stepIndex)? onToggleStep,
+  }) {
+    final theme = Theme.of(context);
+    return _ToolboxScrollLockSurface(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Column(
+          children: _pads
+              .map((pad) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: <Widget>[
+                      Container(
+                        width: widget.fullScreen ? 126 : 112,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: widget.fullScreen
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : theme.colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: widget.fullScreen
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : theme.colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: Row(
+                          children: <Widget>[
+                            Icon(pad.icon, color: pad.color, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _padLabel(i18n, pad.id),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: widget.fullScreen
+                                      ? Colors.white
+                                      : null,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Row(
+                        children: List<Widget>.generate(_stepCount, (
+                          stepIndex,
+                        ) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: stepIndex == _stepCount - 1 ? 0 : 6,
+                            ),
+                            child: _buildStepCell(
+                              context,
+                              pad,
+                              stepIndex,
+                              onToggleStep: onToggleStep,
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                );
+              })
+              .toList(growable: false),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTransportBar(BuildContext context, AppI18n i18n) {
     final theme = Theme.of(context);
     return Container(
@@ -1441,6 +1612,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
     bool immersiveMinimal = false,
   }) {
     final theme = Theme.of(context);
+    final statusColor = widget.fullScreen ? Colors.white70 : theme.hintColor;
     return Stack(
       children: <Widget>[
         Positioned.fill(child: _buildLaserOverlay()),
@@ -1465,12 +1637,22 @@ class _DrumPadToolState extends State<_DrumPadTool>
                         value: _kitLabel(i18n, _kit),
                       ),
                       ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '模板', en: 'Pattern'),
+                        value: _patternId.isEmpty
+                            ? pickUiText(i18n, zh: '自编步进', en: 'Custom steps')
+                            : _patternLabel(i18n, _activePattern),
+                      ),
+                      ToolboxMetricCard(
                         label: pickUiText(i18n, zh: '材质', en: 'Material'),
                         value: _materialLabel(i18n, _material),
                       ),
                       ToolboxMetricCard(
                         label: pickUiText(i18n, zh: '命中', en: 'Hits'),
                         value: '$_hits',
+                      ),
+                      ToolboxMetricCard(
+                        label: pickUiText(i18n, zh: '当前步', en: 'Step'),
+                        value: _currentStep < 0 ? '--' : '${_currentStep + 1}',
                       ),
                     ],
                   ),
@@ -1489,6 +1671,28 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 if (!immersiveMinimal) const SizedBox(height: 10),
                 _buildPadGrid(context, i18n),
                 SizedBox(height: immersiveMinimal ? 14 : 20),
+                if (!immersiveMinimal)
+                  Text(
+                    pickUiText(i18n, zh: '16 步进器', en: '16-step sequencer'),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: widget.fullScreen ? Colors.white : null,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                if (!immersiveMinimal) const SizedBox(height: 8),
+                if (!immersiveMinimal)
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '点击格子可编辑节奏；每 4 步为一拍，适合快速编排 loop。',
+                      en: 'Tap cells to edit steps. Every 4 steps form a beat for fast groove building.',
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: statusColor,
+                    ),
+                  ),
+                SizedBox(height: immersiveMinimal ? 8 : 12),
+                _buildSequencerGrid(context, i18n),
                 if (!immersiveMinimal) ...<Widget>[
                   const SizedBox(height: 10),
                   Wrap(
@@ -1508,9 +1712,30 @@ class _DrumPadToolState extends State<_DrumPadTool>
                         label: Text(
                           pickUiText(
                             i18n,
+                            zh: '激活步数 $_activeStepCount',
+                            en: 'Active steps $_activeStepCount',
+                          ),
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          pickUiText(
+                            i18n,
                             zh: '主混音 ${(_masterVolume * 100).round()}%',
                             en: 'Master mix ${(_masterVolume * 100).round()}%',
                           ),
+                        ),
+                      ),
+                      ActionChip(
+                        onPressed: _activeStepCount == 0
+                            ? null
+                            : _clearSequence,
+                        avatar: const Icon(
+                          Icons.cleaning_services_rounded,
+                          size: 16,
+                        ),
+                        label: Text(
+                          pickUiText(i18n, zh: '清空步进', en: 'Clear steps'),
                         ),
                       ),
                       if (_lastHitId != null)
@@ -1817,6 +2042,169 @@ class _DrumPadToolState extends State<_DrumPadTool>
           _buildMixerSection(context, i18n, applySettings: applySettings),
         ],
       ),
+    );
+  }
+
+  Widget _buildSequencerSheetContent(
+    BuildContext context,
+    AppI18n i18n, {
+    required VoidCallback onClear,
+    required void Function(String padId, int stepIndex) onToggleStep,
+    required void Function(String templateId) onApplyTemplate,
+    required VoidCallback onClose,
+  }) {
+    final theme = Theme.of(context);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset + 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Text(
+                pickUiText(i18n, zh: '16 步进器', en: '16-step sequencer'),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              Chip(
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '激活步数 $_activeStepCount',
+                    en: 'Active steps $_activeStepCount',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            pickUiText(
+              i18n,
+              zh: '点击格子可编辑节奏。每 4 步为一拍，适合移动端快速排鼓。',
+              en: 'Tap cells to edit rhythm. Every 4 steps form a beat for quick mobile groove editing.',
+            ),
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          _buildSequencerGrid(context, i18n, onToggleStep: onToggleStep),
+          const SizedBox(height: 12),
+          Text(
+            pickUiText(i18n, zh: '模板', en: 'Patterns'),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _patternTemplates
+                .map(
+                  (item) => ChoiceChip(
+                    label: Text(_patternLabel(i18n, item)),
+                    selected: item.id == _patternId,
+                    onSelected: (_) => onApplyTemplate(item.id),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              Chip(
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '已播小节 $_barsPlayed',
+                    en: 'Bars played $_barsPlayed',
+                  ),
+                ),
+              ),
+              Chip(
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '当前步 ${_currentStep < 0 ? '--' : _currentStep + 1}',
+                    en: 'Current step ${_currentStep < 0 ? '--' : _currentStep + 1}',
+                  ),
+                ),
+              ),
+              if (_lastHitId != null)
+                Chip(label: Text(_padLabel(i18n, _lastHitId!))),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  onPressed: _activeStepCount == 0 ? null : onClear,
+                  icon: const Icon(Icons.cleaning_services_rounded),
+                  label: Text(pickUiText(i18n, zh: '清空步进', en: 'Clear steps')),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onClose,
+                  icon: const Icon(Icons.check_rounded),
+                  label: Text(pickUiText(i18n, zh: '完成', en: 'Done')),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openDrumSequencerSheet(BuildContext context, AppI18n i18n) {
+    final shortest = MediaQuery.sizeOf(context).shortestSide;
+    final heightFactor = shortest < 600 ? 0.88 : 0.76;
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            void refreshSheet() {
+              if (!mounted) {
+                return;
+              }
+              setSheetState(() {});
+            }
+
+            return FractionallySizedBox(
+              heightFactor: heightFactor,
+              child: _buildSequencerSheetContent(
+                sheetContext,
+                i18n,
+                onClear: () {
+                  _clearSequence();
+                  refreshSheet();
+                },
+                onToggleStep: (padId, stepIndex) {
+                  _toggleStep(padId, stepIndex);
+                  refreshSheet();
+                },
+                onApplyTemplate: (templateId) {
+                  _applyPatternTemplate(templateId);
+                  refreshSheet();
+                },
+                onClose: () => Navigator.of(sheetContext).maybePop(),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -2228,6 +2616,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
               ),
               SizedBox(width: actionSpacing),
               IconButton.outlined(
+                onPressed: () => _openDrumSequencerSheet(context, i18n),
+                icon: const Icon(Icons.grid_view_rounded, size: 20),
+                style: IconButton.styleFrom(minimumSize: actionButtonSize),
+              ),
+              SizedBox(width: actionSpacing),
+              IconButton.outlined(
                 onPressed: () => Navigator.of(context).maybePop(),
                 icon: const Icon(Icons.close_rounded, size: 20),
                 style: IconButton.styleFrom(minimumSize: actionButtonSize),
@@ -2363,6 +2757,18 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 IconButton(
                   onPressed: () => _openDrumSettingsSheet(context, i18n),
                   icon: const Icon(Icons.tune_rounded, color: Colors.white),
+                ),
+                Container(
+                  width: 1,
+                  height: 20,
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+                IconButton(
+                  onPressed: () => _openDrumSequencerSheet(context, i18n),
+                  icon: const Icon(
+                    Icons.grid_view_rounded,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
