@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../ui_copy.dart';
-import '../widgets/section_header.dart';
 import 'toolbox_breathing_tool.dart';
 import 'toolbox_mind_tools_schulte.dart';
 import 'toolbox_tool_shell.dart';
@@ -17,27 +16,31 @@ class SchulteGridToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(
-        i18n,
-        zh: '舒尔特方格',
-        en: 'Schulte grid',
-        ja: 'シュルテ格子',
-        de: 'Schulte-Gitter',
-        fr: 'Grille de Schulte',
-        es: 'Cuadrícula Schulte',
-        ru: 'Таблица Шульте',
-      ),
+      title: pickUiText(i18n, zh: '舒尔特方格', en: 'Schulte grid'),
       subtitle: pickUiText(
         i18n,
-        zh: '按顺序点击数字或自定义内容，训练注意稳定、序列跟踪与视觉搜索速度。',
+        zh: '按顺序点击数字或自定义内容，训练视觉搜索、注意稳定和顺序跟踪。',
         en: 'Tap numbers or custom tokens in order to train steady attention, sequence tracking, and visual search speed.',
-        ja: '数字やカスタム内容を順にタップして、注意の安定、順序追跡、視覚探索の速さを鍛えます。',
-        de: 'Tippe Zahlen oder eigene Inhalte in Reihenfolge an, um Aufmerksamkeit, Sequenzverfolgung und visuelle Suchgeschwindigkeit zu trainieren.',
-        fr: 'Touchez chiffres ou contenus personnalisés dans l’ordre pour entraîner l’attention, le suivi de séquence et la vitesse de recherche visuelle.',
-        es: 'Toca números o contenido personalizado en orden para entrenar la atención, el seguimiento de secuencias y la velocidad de búsqueda visual.',
-        ru: 'Нажимайте числа или свой контент по порядку, чтобы тренировать устойчивое внимание, отслеживание последовательности и скорость зрительного поиска.',
       ),
-      child: const _SchulteGridTool(),
+      child: const SchulteGridTrainingCard(),
+    );
+  }
+}
+
+class BreathingToolPage extends StatelessWidget {
+  const BreathingToolPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    return ToolboxToolPage(
+      title: pickUiText(i18n, zh: '呼吸训练', en: 'Breathing practice'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '用移动端友好的节奏指引，做专注、放松、睡前和生理叹息练习。',
+        en: 'Mobile-first guided breathing for focus, relaxation, bedtime, and physiological sigh drills.',
+      ),
+      child: const BreathingPracticeReleaseCard(),
     );
   }
 }
@@ -60,24 +63,6 @@ class PrayerBeadsToolPage extends StatelessWidget {
   }
 }
 
-class BreathingToolPage extends StatelessWidget {
-  const BreathingToolPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '呼吸练习', en: 'Breathing practice'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '发布版呼吸训练，包含腹式、放松、专注、平息、副交感切换与进阶节律场景。',
-        en: 'Publishing-ready guided breathing with diaphragm, calming, focus, recovery, and advanced rhythm scenarios.',
-      ),
-      child: const BreathingPracticeReleaseCard(),
-    );
-  }
-}
-
 class ZenSandToolPage extends StatelessWidget {
   const ZenSandToolPage({super.key});
 
@@ -88,20 +73,11 @@ class ZenSandToolPage extends StatelessWidget {
       title: pickUiText(i18n, zh: '禅意沙盘', en: 'Zen sand tray'),
       subtitle: pickUiText(
         i18n,
-        zh: '拖动耙纹、落下一枚石子，把注意力放回手指和当下。',
+        zh: '画耙痕、落石子，把注意力带回手指和当下。',
         en: 'Draw rake lines, drop a stone, and bring attention back to your fingertips and the present.',
       ),
       child: const _ZenSandTool(),
     );
-  }
-}
-
-class _SchulteGridTool extends StatelessWidget {
-  const _SchulteGridTool();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SchulteGridTrainingCard();
   }
 }
 
@@ -123,9 +99,7 @@ class _PrayerBeadsToolState extends State<_PrayerBeadsTool> {
     setState(() {
       _total += 1;
       _currentIndex = (_currentIndex + 1) % _beadCount;
-      if (_currentIndex == 0) {
-        _rounds += 1;
-      }
+      if (_currentIndex == 0) _rounds += 1;
     });
   }
 
@@ -145,10 +119,16 @@ class _PrayerBeadsToolState extends State<_PrayerBeadsTool> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const SectionHeader(
-              title: 'Bead cycle',
-              subtitle:
-                  'Tap the circle to advance one bead and keep a steady internal count.',
+            Text(
+              'Bead cycle',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Tap the circle to advance one bead and keep a steady internal count.',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -191,10 +171,7 @@ class _PrayerBeadsToolState extends State<_PrayerBeadsTool> {
                               ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'Round $_rounds',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+                        Text('Round $_rounds'),
                       ],
                     ),
                   ),
@@ -225,221 +202,57 @@ class _PrayerBeadsToolState extends State<_PrayerBeadsTool> {
   }
 }
 
-class _BreathingPreset {
-  const _BreathingPreset({required this.name, required this.stages});
+class _BeadsPainter extends CustomPainter {
+  const _BeadsPainter({
+    required this.beadCount,
+    required this.currentIndex,
+    required this.colorScheme,
+  });
 
-  final String name;
-  final List<_BreathingStage> stages;
-}
-
-class _BreathingStage {
-  const _BreathingStage(this.label, this.durationSeconds, this.kind);
-
-  final String label;
-  final int durationSeconds;
-  final _BreathingStageKind kind;
-}
-
-enum _BreathingStageKind { inhale, holdHigh, exhale, holdLow }
-
-class _BreathingTool extends StatefulWidget {
-  const _BreathingTool();
+  final int beadCount;
+  final int currentIndex;
+  final ColorScheme colorScheme;
 
   @override
-  State<_BreathingTool> createState() => _BreathingToolState();
-}
-
-class _BreathingToolState extends State<_BreathingTool>
-    with SingleTickerProviderStateMixin {
-  static const List<_BreathingPreset> _presets = <_BreathingPreset>[
-    _BreathingPreset(
-      name: 'Box 4-4-4-4',
-      stages: <_BreathingStage>[
-        _BreathingStage('Inhale', 4, _BreathingStageKind.inhale),
-        _BreathingStage('Hold', 4, _BreathingStageKind.holdHigh),
-        _BreathingStage('Exhale', 4, _BreathingStageKind.exhale),
-        _BreathingStage('Hold', 4, _BreathingStageKind.holdLow),
-      ],
-    ),
-    _BreathingPreset(
-      name: '4-7-8',
-      stages: <_BreathingStage>[
-        _BreathingStage('Inhale', 4, _BreathingStageKind.inhale),
-        _BreathingStage('Hold', 7, _BreathingStageKind.holdHigh),
-        _BreathingStage('Exhale', 8, _BreathingStageKind.exhale),
-      ],
-    ),
-    _BreathingPreset(
-      name: 'Unwind 4-2-6',
-      stages: <_BreathingStage>[
-        _BreathingStage('Inhale', 4, _BreathingStageKind.inhale),
-        _BreathingStage('Pause', 2, _BreathingStageKind.holdHigh),
-        _BreathingStage('Exhale', 6, _BreathingStageKind.exhale),
-        _BreathingStage('Rest', 2, _BreathingStageKind.holdLow),
-      ],
-    ),
-  ];
-
-  late final AnimationController _controller;
-
-  _BreathingPreset _preset = _presets.first;
-  bool _running = false;
-  int _stageIndex = 0;
-  int _rounds = 0;
-
-  _BreathingStage get _stage => _preset.stages[_stageIndex];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this)
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed && _running) {
-          _advanceStage();
-        }
-      });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _beginStage() {
-    _controller.duration = Duration(seconds: _stage.durationSeconds);
-    _controller.forward(from: 0);
-  }
-
-  void _advanceStage() {
-    final nextIndex = (_stageIndex + 1) % _preset.stages.length;
-    setState(() {
-      _stageIndex = nextIndex;
-      if (nextIndex == 0) {
-        _rounds += 1;
-      }
-    });
-    _beginStage();
-  }
-
-  void _toggle() {
-    if (_running) {
-      _controller.stop();
-      setState(() {
-        _running = false;
-      });
-      return;
-    }
-    setState(() {
-      _running = true;
-    });
-    _beginStage();
-  }
-
-  void _selectPreset(_BreathingPreset preset) {
-    if (identical(_preset, preset)) return;
-    setState(() {
-      _preset = preset;
-      _stageIndex = 0;
-      _rounds = 0;
-      _running = false;
-    });
-    _controller.stop();
-    _controller.value = 0;
-  }
-
-  double _orbScale() {
-    final progress = _running ? _controller.value : 0.0;
-    return switch (_stage.kind) {
-      _BreathingStageKind.inhale => 0.72 + progress * 0.28,
-      _BreathingStageKind.holdHigh => 1.0,
-      _BreathingStageKind.exhale => 1.0 - progress * 0.28,
-      _BreathingStageKind.holdLow => 0.72,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _presets
-                  .map(
-                    (preset) => ChoiceChip(
-                      label: Text(preset.name),
-                      selected: identical(_preset, preset),
-                      onSelected: (_) => _selectPreset(preset),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 18),
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                final scale = _orbScale();
-                return Center(
-                  child: Transform.scale(
-                    scale: scale,
-                    child: Container(
-                      width: 180,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: <Color>[
-                            Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.26),
-                            Theme.of(context).colorScheme.primaryContainer
-                                .withValues(alpha: 0.94),
-                            Theme.of(context).colorScheme.surfaceContainerHigh,
-                          ],
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            _stage.label,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${_stage.durationSeconds}s · round $_rounds',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            LinearProgressIndicator(value: _running ? _controller.value : 0),
-            const SizedBox(height: 14),
-            FilledButton.icon(
-              onPressed: _toggle,
-              icon: Icon(
-                _running
-                    ? Icons.pause_circle_rounded
-                    : Icons.play_circle_rounded,
-              ),
-              label: Text(_running ? 'Pause cycle' : 'Start cycle'),
-            ),
-          ],
-        ),
-      ),
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.shortestSide * 0.36;
+    final beadRadius = math.max(6.0, size.shortestSide * 0.028);
+    canvas.drawCircle(
+      center,
+      radius + beadRadius * 1.8,
+      Paint()..color = colorScheme.surfaceContainerLow,
     );
+
+    for (var index = 0; index < beadCount; index += 1) {
+      final angle = -math.pi / 2 + (math.pi * 2 * index / beadCount);
+      final position = Offset(
+        center.dx + math.cos(angle) * radius,
+        center.dy + math.sin(angle) * radius,
+      );
+      final active = index == currentIndex;
+      final completed = index < currentIndex;
+      final fill = Paint()
+        ..color = active
+            ? colorScheme.primary
+            : completed
+            ? colorScheme.primary.withValues(alpha: 0.3)
+            : colorScheme.surface;
+      canvas.drawCircle(position, beadRadius, fill);
+      canvas.drawCircle(
+        position,
+        beadRadius,
+        Paint()
+          ..color = colorScheme.outlineVariant
+          ..style = PaintingStyle.stroke,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BeadsPainter oldDelegate) {
+    return oldDelegate.currentIndex != currentIndex ||
+        oldDelegate.beadCount != beadCount;
   }
 }
 
@@ -546,7 +359,6 @@ class _ZenSandToolState extends State<_ZenSandTool> {
                     height: size.height,
                     child: CustomPaint(
                       painter: _ZenSandPainter(
-                        colorScheme: Theme.of(context).colorScheme,
                         strokes: _strokes,
                         currentStroke: _currentStroke,
                         stones: _stones,
@@ -583,70 +395,13 @@ class _ZenSandToolState extends State<_ZenSandTool> {
   }
 }
 
-class _BeadsPainter extends CustomPainter {
-  const _BeadsPainter({
-    required this.beadCount,
-    required this.currentIndex,
-    required this.colorScheme,
-  });
-
-  final int beadCount;
-  final int currentIndex;
-  final ColorScheme colorScheme;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = size.shortestSide * 0.36;
-    final beadRadius = math.max(6.0, size.shortestSide * 0.028);
-
-    final ringPaint = Paint()
-      ..color = colorScheme.surfaceContainerLow
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius + beadRadius * 1.8, ringPaint);
-
-    for (var index = 0; index < beadCount; index += 1) {
-      final angle = -math.pi / 2 + (math.pi * 2 * index / beadCount);
-      final position = Offset(
-        center.dx + math.cos(angle) * radius,
-        center.dy + math.sin(angle) * radius,
-      );
-      final active = index == currentIndex;
-      final completed = index < currentIndex;
-      final paint = Paint()
-        ..color = active
-            ? colorScheme.primary
-            : completed
-            ? colorScheme.primary.withValues(alpha: 0.3)
-            : colorScheme.surface;
-      canvas.drawCircle(position, beadRadius, paint);
-      canvas.drawCircle(
-        position,
-        beadRadius,
-        Paint()
-          ..color = colorScheme.outlineVariant
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BeadsPainter oldDelegate) {
-    return oldDelegate.currentIndex != currentIndex ||
-        oldDelegate.beadCount != beadCount;
-  }
-}
-
 class _ZenSandPainter extends CustomPainter {
   const _ZenSandPainter({
-    required this.colorScheme,
     required this.strokes,
     required this.currentStroke,
     required this.stones,
   });
 
-  final ColorScheme colorScheme;
   final List<List<Offset>> strokes;
   final List<Offset> currentStroke;
   final List<Offset> stones;
@@ -701,12 +456,7 @@ class _ZenSandPainter extends CustomPainter {
     for (final stone in stones) {
       final center = Offset(stone.dx * size.width, stone.dy * size.height);
       final stoneRect = Rect.fromCenter(center: center, width: 28, height: 22);
-      canvas.drawOval(
-        stoneRect,
-        Paint()
-          ..color = const Color(0xFF6B6254)
-          ..style = PaintingStyle.fill,
-      );
+      canvas.drawOval(stoneRect, Paint()..color = const Color(0xFF6B6254));
       canvas.drawOval(
         stoneRect.shift(const Offset(2, 2)),
         Paint()..color = Colors.white.withValues(alpha: 0.08),

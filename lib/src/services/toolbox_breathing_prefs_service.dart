@@ -140,7 +140,9 @@ class ToolboxBreathingPrefsService {
       'box_4444' => 'box_4444',
       'unwind_4262' => 'relax_4262',
       'deep_36' => 'calm_36',
-      'refresh_3131' => 'energize_3131',
+      'refresh_3131' => 'focus_nasal_44',
+      'energize_3131' => 'focus_nasal_44',
+      'altitude_2442' => 'physiological_sigh_216',
       _ => normalized,
     };
   }

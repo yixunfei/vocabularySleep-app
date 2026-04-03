@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
@@ -16,7 +17,7 @@ import '../widgets/section_header.dart';
 import 'toolbox_breathing_ui_parts.dart';
 import 'toolbox_tool_shell.dart';
 
-enum _BreathingVoiceAvailability { off, checking, remote, unavailable }
+enum _BreathingVoiceAvailability { off, checking, ready, unavailable }
 
 class _BreathingSessionSummary {
   const _BreathingSessionSummary({
@@ -41,7 +42,7 @@ class BreathingPracticeReleaseCard extends StatefulWidget {
 class _BreathingPracticeReleaseCardState
     extends State<BreathingPracticeReleaseCard>
     with SingleTickerProviderStateMixin {
-  static const List<int> _targetOptions = <int>[2, 3, 5, 8, 10, 15];
+  static const List<int> _targetOptions = <int>[2, 3, 4, 5, 8, 10, 12, 15];
 
   late final AnimationController _controller;
   late final StreamSubscription<void> _previewCompleteSub;
@@ -66,10 +67,14 @@ class _BreathingPracticeReleaseCardState
   int _rounds = 0;
   int _completedSessions = 0;
   int _totalSeconds = 0;
+  int _availableCueCount = 0;
+  int _expectedCueCount = 0;
+  int _shortStageSilentCount = 0;
   Duration _elapsedBeforeRun = Duration.zero;
   DateTime? _runStartedAt;
   _BreathingVoiceAvailability _voiceAvailability =
       _BreathingVoiceAvailability.checking;
+  BreathingCueSourceKind? _voiceSourceKind;
   String? _lastVoiceLocation;
   _BreathingSessionSummary? _lastSummary;
 
@@ -188,6 +193,8 @@ class _BreathingPracticeReleaseCardState
       _voiceAvailability = _voiceOn
           ? _BreathingVoiceAvailability.checking
           : _BreathingVoiceAvailability.off;
+      _voiceSourceKind = null;
+      _lastVoiceLocation = null;
     });
     _normalizeStageIndex();
     _syncDuration();
@@ -237,16 +244,75 @@ class _BreathingPracticeReleaseCardState
     return tags.toList(growable: false);
   }
 
-  Iterable<String> _scenarioCueIds() sync* {
+  String? _effectiveCueIdForStage(BreathingStagePlan stage) {
+    if (stage.kind == BreathingStageKind.rest && !_includeRecoveryStage) {
+      return null;
+    }
+    if (stage.seconds <= 2) {
+      return switch (stage.kind) {
+        BreathingStageKind.inhale => 'inhale_soft',
+        BreathingStageKind.exhale => 'exhale_soft',
+        BreathingStageKind.hold => 'hold_soft',
+        BreathingStageKind.rest => stage.cueId,
+      };
+    }
+    return stage.cueId;
+  }
+
+  double _cuePlaybackRateForStage(BreathingStagePlan stage, String cueId) {
+    final cue = BreathingExperienceCatalog.cues[cueId];
+    if (cue == null) {
+      return 1.0;
+    }
+    final targetWindowMs = math.max(420, stage.seconds * 1000 - 180);
+    return (cue.approxDurationMs / targetWindowMs).clamp(1.0, 2.0).toDouble();
+  }
+
+  bool _canPlayCueForStage(BreathingStagePlan stage, {String? cueId}) {
+    final resolvedCueId = cueId ?? _effectiveCueIdForStage(stage);
+    if (resolvedCueId == null) {
+      return false;
+    }
+    final playbackRate = _cuePlaybackRateForStage(stage, resolvedCueId);
+    final repo = _cueRepo;
+    if (repo == null) {
+      final cue = BreathingExperienceCatalog.cues[resolvedCueId];
+      if (cue == null) {
+        return false;
+      }
+      return cue.approxDurationMs <= stage.seconds * 1000;
+    }
+    return repo.canPlayCueWithinStage(
+      resolvedCueId,
+      stageDuration: Duration(seconds: stage.seconds),
+      playbackRate: playbackRate,
+    );
+  }
+
+  Set<String> _warmUpCueIds() {
+    final cueIds = <String>{};
     if (_scenario.previewCueId != null) {
-      yield _scenario.previewCueId!;
+      cueIds.add(_scenario.previewCueId!);
     }
     for (final stage in _loopStages) {
       final cueId = _effectiveCueIdForStage(stage);
-      if (cueId != null) {
-        yield cueId;
+      if (cueId == null || !_canPlayCueForStage(stage, cueId: cueId)) {
+        continue;
+      }
+      cueIds.add(cueId);
+    }
+    return cueIds;
+  }
+
+  int _shortStageSkipCount() {
+    var count = 0;
+    for (final stage in _loopStages) {
+      final cueId = _effectiveCueIdForStage(stage);
+      if (cueId != null && !_canPlayCueForStage(stage, cueId: cueId)) {
+        count += 1;
       }
     }
+    return count;
   }
 
   Future<void> _warmScenarioCues() async {
@@ -262,9 +328,15 @@ class _BreathingPracticeReleaseCardState
     }
     final scenarioId = _scenario.id;
     final includeRecoveryStage = _includeRecoveryStage;
-    setState(() => _voiceAvailability = _BreathingVoiceAvailability.checking);
+    final warmUpCueIds = _warmUpCueIds();
+    final silentShortCueCount = _shortStageSkipCount();
+    setState(() {
+      _voiceAvailability = _BreathingVoiceAvailability.checking;
+      _expectedCueCount = warmUpCueIds.length;
+      _shortStageSilentCount = silentShortCueCount;
+    });
     final resolved = await repo.warmUpCueIds(
-      _scenarioCueIds(),
+      warmUpCueIds,
       languageTags: _localeTags(Localizations.localeOf(context)),
     );
     if (!mounted ||
@@ -273,12 +345,14 @@ class _BreathingPracticeReleaseCardState
       return;
     }
     setState(() {
+      _availableCueCount = resolved.length;
+      _expectedCueCount = warmUpCueIds.length;
+      _shortStageSilentCount = silentShortCueCount;
       _voiceAvailability = resolved.isNotEmpty
-          ? _BreathingVoiceAvailability.remote
+          ? _BreathingVoiceAvailability.ready
           : _BreathingVoiceAvailability.unavailable;
-      if (resolved.isNotEmpty) {
-        _lastVoiceLocation = resolved.first.location;
-      }
+      _voiceSourceKind = resolved.isNotEmpty ? resolved.first.kind : null;
+      _lastVoiceLocation = resolved.isNotEmpty ? resolved.first.location : null;
     });
   }
 
@@ -313,7 +387,8 @@ class _BreathingPracticeReleaseCardState
       await player.play(resolved.source);
       if (mounted) {
         setState(() {
-          _voiceAvailability = _BreathingVoiceAvailability.remote;
+          _voiceAvailability = _BreathingVoiceAvailability.ready;
+          _voiceSourceKind = resolved.kind;
           _lastVoiceLocation = resolved.location;
         });
       }
@@ -374,49 +449,17 @@ class _BreathingPracticeReleaseCardState
     }
   }
 
-  String? _effectiveCueIdForStage(BreathingStagePlan stage) {
-    if (stage.kind == BreathingStageKind.rest && !_includeRecoveryStage) {
-      return null;
-    }
-    if (stage.seconds <= 2) {
-      return switch (stage.kind) {
-        BreathingStageKind.inhale => 'inhale_soft',
-        BreathingStageKind.exhale => 'exhale_soft',
-        BreathingStageKind.hold => 'hold_soft',
-        BreathingStageKind.rest => stage.cueId,
-      };
-    }
-    return stage.cueId;
-  }
-
-  double _cuePlaybackRateForStage(BreathingStagePlan stage) {
-    if (stage.kind != BreathingStageKind.inhale &&
-        stage.kind != BreathingStageKind.exhale) {
-      return 1.0;
-    }
-    if (stage.seconds <= 1) {
-      return 2.0;
-    }
-    if (stage.seconds <= 2) {
-      return 1.85;
-    }
-    if (stage.seconds == 3) {
-      return 1.35;
-    }
-    return 1.0;
-  }
-
   Future<void> _announceStage() async {
     _performHaptic();
     final cueId = _effectiveCueIdForStage(_stage);
-    if (cueId == null) {
+    if (cueId == null || !_canPlayCueForStage(_stage, cueId: cueId)) {
       return;
     }
     await _playCueId(
       cueId,
       player: _cuePlayer,
       respectVoiceSetting: true,
-      playbackRate: _cuePlaybackRateForStage(_stage),
+      playbackRate: _cuePlaybackRateForStage(_stage, cueId),
     );
   }
 
@@ -507,6 +550,10 @@ class _BreathingPracticeReleaseCardState
       _voiceAvailability = _voiceOn
           ? _BreathingVoiceAvailability.checking
           : _BreathingVoiceAvailability.off;
+      _voiceSourceKind = null;
+      _lastVoiceLocation = null;
+      _availableCueCount = 0;
+      _expectedCueCount = 0;
     });
     _normalizeStageIndex();
     _syncDuration();
@@ -530,6 +577,10 @@ class _BreathingPracticeReleaseCardState
       _voiceAvailability = _voiceOn
           ? _BreathingVoiceAvailability.checking
           : _BreathingVoiceAvailability.off;
+      _voiceSourceKind = null;
+      _lastVoiceLocation = null;
+      _availableCueCount = 0;
+      _expectedCueCount = 0;
     });
     _normalizeStageIndex();
     _syncDuration();
@@ -611,37 +662,37 @@ class _BreathingPracticeReleaseCardState
       elapsed.inSeconds ~/ math.max(1, _loopCycleSeconds),
     );
     final nextStep = switch (_scenario.id) {
-      'sleep_478' => pickUiText(
+      'sleep_46' || 'sleep_478' => pickUiText(
         i18n,
-        zh: '下一步建议：放下屏幕，调暗环境光，直接进入休息。',
-        en: 'Next: dim the environment and move straight into rest.',
+        zh: '下一步：放下屏幕，保持环境昏暗，直接进入休息。',
+        en: 'Next: put the screen away, dim the room, and move into rest.',
       ),
-      'energize_3131' => pickUiText(
+      'box_4444' || 'focus_nasal_44' => pickUiText(
         i18n,
-        zh: '下一步建议：立刻开始下一个专注任务，把刚建立的节奏带进去。',
-        en: 'Next: start the next focus task while the rhythm is fresh.',
+        zh: '下一步：立刻开始下一段任务，把刚建立的节拍带进去。',
+        en: 'Next: begin the next task now while the rhythm is still fresh.',
       ),
-      'altitude_2442' => pickUiText(
+      'physiological_sigh_216' => pickUiText(
         i18n,
-        zh: '下一步建议：先休息 1 分钟，再决定是否继续，不要连续叠加强度。',
-        en: 'Next: rest for a minute before deciding whether to continue.',
+        zh: '下一步：恢复自然呼吸 30-60 秒，再决定是否需要再来一轮短练。',
+        en: 'Next: return to natural breathing for 30-60 seconds before deciding whether to repeat.',
       ),
       _ => pickUiText(
         i18n,
-        zh: '下一步建议：如果身体更稳更慢，可以保持当前节奏再做 1-2 分钟。',
-        en: 'Next: if the body feels steadier, stay with the rhythm for 1-2 more minutes.',
+        zh: '下一步：给身体留半分钟安静余量，再进入下一个动作。',
+        en: 'Next: give the body half a minute of quiet space before the next activity.',
       ),
     };
     return _BreathingSessionSummary(
       title: pickUiText(
         i18n,
-        zh: '练习完成：${_scenario.name.resolve(i18n)}',
+        zh: '完成：${_scenario.name.resolve(i18n)}',
         en: 'Completed: ${_scenario.name.resolve(i18n)}',
       ),
       body: pickUiText(
         i18n,
-        zh: '完成 ${_fmt(elapsed)}，约 $cycles 轮。${_scenario.scene.resolve(i18n)}。',
-        en: 'Completed ${_fmt(elapsed)} and about $cycles cycles. ${_scenario.scene.resolve(i18n)}.',
+        zh: '本次练习 ${_fmt(elapsed)}，约完成 $cycles 轮。${_scenario.scene.resolve(i18n)}',
+        en: 'Completed ${_fmt(elapsed)} and about $cycles cycles. ${_scenario.scene.resolve(i18n)}',
       ),
       nextStep: nextStep,
     );
@@ -669,49 +720,86 @@ class _BreathingPracticeReleaseCardState
     return switch (_voiceAvailability) {
       _BreathingVoiceAvailability.off => pickUiText(
         i18n,
-        zh: '\u5df2\u5173\u95ed',
-        en: 'Off',
+        zh: '语音提示已关闭',
+        en: 'Voice guidance is off',
       ),
       _BreathingVoiceAvailability.checking => pickUiText(
         i18n,
-        zh: '\u68c0\u67e5\u4e2d',
-        en: 'Checking',
+        zh: '正在检查语音资源',
+        en: 'Checking voice resources',
       ),
-      _BreathingVoiceAvailability.remote => pickUiText(
-        i18n,
-        zh: '\u4e91\u7aef\u8bed\u97f3',
-        en: 'Cloud',
-      ),
+      _BreathingVoiceAvailability.ready => switch (_voiceSourceKind) {
+        BreathingCueSourceKind.remote => pickUiText(
+          i18n,
+          zh: '云端缓存语音已就绪',
+          en: 'Cloud voice is ready',
+        ),
+        BreathingCueSourceKind.asset ||
+        null => pickUiText(i18n, zh: '内置语音已就绪', en: 'Bundled voice is ready'),
+      },
       _BreathingVoiceAvailability.unavailable => pickUiText(
         i18n,
-        zh: '\u4e0d\u53ef\u7528',
-        en: 'Unavailable',
+        zh: '当前场景没有匹配到可用语音',
+        en: 'No usable voice cue matched this scenario',
       ),
     };
   }
 
   String _voiceSubtitle(AppI18n i18n) {
-    return switch (_voiceAvailability) {
-      _BreathingVoiceAvailability.off => pickUiText(
+    switch (_voiceAvailability) {
+      case _BreathingVoiceAvailability.off:
+        return pickUiText(
+          i18n,
+          zh: '你仍可使用文字提示和轻震动跟练。',
+          en: 'Text prompts and haptics still work when voice is off.',
+        );
+      case _BreathingVoiceAvailability.checking:
+        return pickUiText(
+          i18n,
+          zh: '优先检查可用语音，并自动判断短节拍是否适合播报。',
+          en: 'Checking available cues and whether short stages can support playback.',
+        );
+      case _BreathingVoiceAvailability.ready:
+        final parts = <String>[];
+        if (_expectedCueCount > 0) {
+          parts.add(
+            pickUiText(
+              i18n,
+              zh: '$_availableCueCount/$_expectedCueCount 个节拍语音已就绪',
+              en: '$_availableCueCount/$_expectedCueCount cues ready',
+            ),
+          );
+        }
+        if (_shortStageSilentCount > 0) {
+          parts.add(
+            pickUiText(
+              i18n,
+              zh: '$_shortStageSilentCount 个短节拍自动改为静默，避免语音压拍',
+              en: '$_shortStageSilentCount short stages stay silent to protect timing',
+            ),
+          );
+        }
+        return parts.isEmpty
+            ? pickUiText(i18n, zh: '语音可用。', en: 'Voice guidance is available.')
+            : parts.join(' · ');
+      case _BreathingVoiceAvailability.unavailable:
+        return pickUiText(
+          i18n,
+          zh: '建议先使用文字和震动；如果需要语音，可检查资源包是否完整。',
+          en: 'Use text and haptics for now; check the voice assets if you need audio guidance.',
+        );
+    }
+  }
+
+  String _voiceSourceChipLabel(AppI18n i18n) {
+    return switch (_voiceSourceKind) {
+      BreathingCueSourceKind.remote => pickUiText(
         i18n,
-        zh: '\u8bed\u97f3\u63d0\u793a\u5df2\u5173\u95ed',
-        en: 'Voice guidance is off',
+        zh: '云端缓存',
+        en: 'Cloud cache',
       ),
-      _BreathingVoiceAvailability.checking => pickUiText(
-        i18n,
-        zh: '\u6b63\u5728\u9884\u70ed S3 \u8bed\u97f3',
-        en: 'Checking S3 voice files',
-      ),
-      _BreathingVoiceAvailability.remote => pickUiText(
-        i18n,
-        zh: '\u4ec5\u4f7f\u7528\u8fdc\u7a0b S3 \u4e0b\u8f7d\u8bed\u97f3\u6587\u4ef6',
-        en: 'Using remote S3 voice files only',
-      ),
-      _BreathingVoiceAvailability.unavailable => pickUiText(
-        i18n,
-        zh: '\u5f53\u524d\u573a\u666f\u672a\u627e\u5230\u5339\u914d\u97f3\u9891\u6587\u4ef6',
-        en: 'No matching cue file found',
-      ),
+      BreathingCueSourceKind.asset ||
+      null => pickUiText(i18n, zh: '内置资源', en: 'Bundled'),
     };
   }
 
@@ -719,7 +807,10 @@ class _BreathingPracticeReleaseCardState
     return switch (_voiceAvailability) {
       _BreathingVoiceAvailability.off => Icons.volume_off_rounded,
       _BreathingVoiceAvailability.checking => Icons.downloading_rounded,
-      _BreathingVoiceAvailability.remote => Icons.cloud_done_rounded,
+      _BreathingVoiceAvailability.ready => switch (_voiceSourceKind) {
+        BreathingCueSourceKind.remote => Icons.cloud_done_rounded,
+        BreathingCueSourceKind.asset || null => Icons.library_music_rounded,
+      },
       _BreathingVoiceAvailability.unavailable => Icons.error_outline_rounded,
     };
   }
@@ -730,7 +821,7 @@ class _BreathingPracticeReleaseCardState
       _BreathingVoiceAvailability.checking => Theme.of(
         context,
       ).colorScheme.primary,
-      _BreathingVoiceAvailability.remote => const Color(0xFF2E9D6A),
+      _BreathingVoiceAvailability.ready => const Color(0xFF2E9D6A),
       _BreathingVoiceAvailability.unavailable => Theme.of(
         context,
       ).colorScheme.error,
@@ -741,9 +832,29 @@ class _BreathingPracticeReleaseCardState
     return _loopStages
         .map(
           (stage) =>
-              '${stage.label.resolve(i18n)} ${stage.seconds}${pickUiText(i18n, zh: '\u79d2', en: 's')}',
+              '${stage.label.resolve(i18n)} ${stage.seconds}${pickUiText(i18n, zh: '秒', en: 's')}',
         )
-        .join(' 路 ');
+        .join(' · ');
+  }
+
+  String _paceLabel(AppI18n i18n) {
+    final value = _scenario.cyclesPerMinute;
+    final formatted = value >= 10
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(1);
+    return pickUiText(
+      i18n,
+      zh: '约 $formatted 轮/分钟',
+      en: '~$formatted cycles/min',
+    );
+  }
+
+  String _friendlyVoiceLocation() {
+    final value = (_lastVoiceLocation ?? '').trim();
+    if (value.isEmpty) {
+      return '';
+    }
+    return p.basename(value);
   }
 
   Color _stageTint(BreathingStageKind kind) {
@@ -755,13 +866,242 @@ class _BreathingPracticeReleaseCardState
     };
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final stageProgress = _controller.value;
+  Widget _buildScenarioSelector(AppI18n i18n) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: BreathingExperienceCatalog.scenarios
+            .map(
+              (scenario) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  selected: scenario.id == _scenario.id,
+                  onSelected: (_) => unawaited(_applyScenario(scenario)),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (scenario.advanced) ...<Widget>[
+                        const Icon(Icons.bolt_rounded, size: 16),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(scenario.name.resolve(i18n)),
+                    ],
+                  ),
+                ),
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
+  }
+
+  Widget _buildScenarioOverviewCard(BuildContext context, AppI18n i18n) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _scenario.scene.resolve(i18n),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(_scenario.description.resolve(i18n)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _theme.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(_theme.icon, color: _theme.orbEnd),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              ..._scenario.tags.map(
+                (tag) => ScenarioTagChip(
+                  label: tag.resolve(i18n),
+                  color: _theme.orbEnd,
+                ),
+              ),
+              ScenarioTagChip(label: _paceLabel(i18n), color: _theme.orbStart),
+              if (_scenario.advanced)
+                ScenarioTagChip(
+                  label: pickUiText(i18n, zh: '进阶', en: 'Advanced'),
+                  color: Theme.of(context).colorScheme.error,
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          BreathingInsightTile(
+            title: pickUiText(i18n, zh: '研究依据', en: 'Research basis'),
+            body: _scenario.researchBasis.resolve(i18n),
+            icon: Icons.science_outlined,
+            tint: _theme.orbEnd,
+          ),
+          const SizedBox(height: 10),
+          BreathingInsightTile(
+            title: pickUiText(i18n, zh: '作用机制', en: 'How it works'),
+            body: _scenario.mechanism.resolve(i18n),
+            icon: Icons.monitor_heart_outlined,
+            tint: _theme.orbStart,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            pickUiText(i18n, zh: '身体关注', en: 'Body focus'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(_scenario.bodyFocus.resolve(i18n)),
+          const SizedBox(height: 10),
+          Text(
+            pickUiText(i18n, zh: '适用情境', en: 'When to use'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(_scenario.whenToUse.resolve(i18n)),
+          const SizedBox(height: 12),
+          VoiceStatusPill(
+            label: _voiceLabel(i18n),
+            subtitle: _voiceSubtitle(i18n),
+            icon: _voiceStatusIcon(),
+            iconColor: _voiceStatusColor(context),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              ScenarioTagChip(
+                label: _voiceSourceChipLabel(i18n),
+                color: _voiceStatusColor(context),
+              ),
+              if (_expectedCueCount > 0)
+                ScenarioTagChip(
+                  label: pickUiText(
+                    i18n,
+                    zh: '语音覆盖 $_availableCueCount/$_expectedCueCount',
+                    en: 'Coverage $_availableCueCount/$_expectedCueCount',
+                  ),
+                  color: _theme.orbStart,
+                ),
+              if (_shortStageSilentCount > 0)
+                ScenarioTagChip(
+                  label: pickUiText(
+                    i18n,
+                    zh: '短节拍静默 $_shortStageSilentCount',
+                    en: 'Silent short $_shortStageSilentCount',
+                  ),
+                  color: _theme.accent,
+                ),
+            ],
+          ),
+          if (_friendlyVoiceLocation().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '最近匹配语音：${_friendlyVoiceLocation()}',
+                en: 'Last matched cue: ${_friendlyVoiceLocation()}',
+              ),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            pickUiText(i18n, zh: '节拍流程', en: 'Cycle flow'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _stageFlowLabel(i18n),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              FilledButton.tonalIcon(
+                onPressed: _running || _scenario.previewCueId == null
+                    ? null
+                    : () => unawaited(_previewScenarioCue()),
+                icon: Icon(
+                  _previewing
+                      ? Icons.stop_circle_outlined
+                      : Icons.volume_up_rounded,
+                ),
+                label: Text(
+                  _previewing
+                      ? pickUiText(i18n, zh: '停止预听', en: 'Stop preview')
+                      : pickUiText(i18n, zh: '预听引导', en: 'Preview guidance'),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _targetMinutes == _scenario.recommendedMinutes
+                    ? null
+                    : () {
+                        setState(
+                          () => _targetMinutes = _scenario.recommendedMinutes,
+                        );
+                        _savePrefs();
+                      },
+                icon: const Icon(Icons.schedule_rounded),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '使用建议 ${_scenario.recommendedMinutes} 分钟',
+                    en: 'Use ${_scenario.recommendedMinutes} min',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_scenario.caution != null) ...<Widget>[
+            const SizedBox(height: 12),
+            SafetyNoteCard(
+              title: pickUiText(i18n, zh: '注意', en: 'Caution'),
+              body: _scenario.caution!.resolve(i18n),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPracticeCard(BuildContext context, AppI18n i18n) {
     final remainStage = math.max(
       0,
-      (_stage.seconds - (_stage.seconds * stageProgress)).ceil(),
+      (_stage.seconds - (_stage.seconds * _controller.value)).ceil(),
     );
     final remainSession = (_targetDuration - _elapsed).inSeconds.clamp(
       0,
@@ -769,252 +1109,71 @@ class _BreathingPracticeReleaseCardState
     );
     final stageLabel = _textOn
         ? _stage.label.resolve(i18n)
-        : pickUiText(i18n, zh: '璺熼殢鍏夌悆绉诲姩', en: 'Follow the orb');
+        : pickUiText(i18n, zh: '跟随光球', en: 'Follow the orb');
     final stagePrompt = _textOn
         ? _stage.prompt.resolve(i18n)
-        : pickUiText(i18n, zh: '淇濇寔鑷劧鍛煎惛', en: 'Keep the breath natural');
+        : pickUiText(i18n, zh: '保持自然呼吸', en: 'Keep the breath natural');
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            SectionHeader(
-              title: pickUiText(i18n, zh: '鍛煎惛鍦烘櫙', en: 'Breathing scenarios'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '围绕“循环跟练”设计：默认专注吸-停-呼，恢复阶段可按需开启。',
-                en: 'Optimized for loop practice: inhale/hold/exhale by default, optional recovery stage.',
-              ),
-              trailing: VoiceStatusPill(
-                label: _voiceLabel(i18n),
-                subtitle: _voiceSubtitle(i18n),
-                icon: _voiceStatusIcon(),
-                iconColor: _voiceStatusColor(context),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: BreathingExperienceCatalog.scenarios
-                  .map(
-                    (scenario) => ChoiceChip(
-                      selected: scenario.id == _scenario.id,
-                      onSelected: (_) => unawaited(_applyScenario(scenario)),
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          if (scenario.advanced) ...<Widget>[
-                            const Icon(Icons.bolt_rounded, size: 16),
-                            const SizedBox(width: 4),
-                          ],
-                          Text(scenario.name.resolve(i18n)),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[_theme.bgStart, _theme.bgEnd],
+        ),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        children: <Widget>[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              SizedBox(
+                width: 260,
+                child: Text(
+                  _theme.mood.resolve(i18n),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.92),
+                  ),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              _scenario.scene.resolve(i18n),
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w800),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(_scenario.description.resolve(i18n)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: _theme.accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(_theme.icon, color: _theme.orbEnd),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _scenario.tags
-                        .map(
-                          (tag) => ScenarioTagChip(
-                            label: tag.resolve(i18n),
-                            color: _theme.orbEnd,
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    pickUiText(i18n, zh: '鍔ㄤ綔閲嶇偣', en: 'Body focus'),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(_scenario.bodyFocus.resolve(i18n)),
-                  const SizedBox(height: 10),
-                  Text(
-                    pickUiText(i18n, zh: '閫傜敤鍦烘櫙', en: 'When to use'),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(_scenario.whenToUse.resolve(i18n)),
-                  const SizedBox(height: 10),
-                  Text(
-                    _stageFlowLabel(i18n),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: <Widget>[
-                      FilledButton.tonalIcon(
-                        onPressed: _running || _scenario.previewCueId == null
-                            ? null
-                            : () => unawaited(_previewScenarioCue()),
-                        icon: Icon(
-                          _previewing
-                              ? Icons.stop_circle_outlined
-                              : Icons.volume_up_rounded,
-                        ),
-                        label: Text(
-                          _previewing
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '鍋滄璇曞惉',
-                                  en: 'Stop preview',
-                                )
-                              : pickUiText(
-                                  i18n,
-                                  zh: '璇曞惉寮曞',
-                                  en: 'Preview guidance',
-                                ),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed:
-                            _targetMinutes == _scenario.recommendedMinutes
-                            ? null
-                            : () {
-                                setState(
-                                  () => _targetMinutes =
-                                      _scenario.recommendedMinutes,
-                                );
-                                _savePrefs();
-                              },
-                        icon: const Icon(Icons.schedule_rounded),
-                        label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '鐢ㄦ帹鑽?${_scenario.recommendedMinutes} 鍒嗛挓',
-                            en: 'Use ${_scenario.recommendedMinutes} min',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_scenario.caution != null) ...<Widget>[
-                    const SizedBox(height: 12),
-                    SafetyNoteCard(
-                      title: pickUiText(i18n, zh: '娉ㄦ剰', en: 'Caution'),
-                      body: _scenario.caution!.resolve(i18n),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: <Color>[_theme.bgStart, _theme.bgEnd],
+              BreathingMetricPill(
+                label: pickUiText(i18n, zh: '单轮时长', en: 'Cycle'),
+                value: pickUiText(
+                  i18n,
+                  zh: '$_loopCycleSeconds 秒',
+                  en: '$_loopCycleSeconds s',
                 ),
-                borderRadius: BorderRadius.circular(28),
               ),
-              child: Column(
-                children: <Widget>[
-                  Row(
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final visualSize = math.min(
+                340.0,
+                math.max(220.0, constraints.maxWidth - 8),
+              );
+              final orbDiameter = visualSize * 0.58;
+              return AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) {
+                  final progress = _controller.value;
+                  return Column(
                     children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          _theme.mood.resolve(i18n),
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.92),
-                              ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '周期 $_loopCycleSeconds 秒',
-                            en: '$_loopCycleSeconds s cycle',
-                          ),
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, _) {
-                      final progress = _controller.value;
-                      return SizedBox(
-                        width: 300,
-                        height: 280,
+                      SizedBox(
+                        width: visualSize,
+                        height: visualSize,
                         child: Stack(
                           alignment: Alignment.center,
                           children: <Widget>[
                             CustomPaint(
-                              size: const Size.square(280),
+                              size: Size.square(visualSize),
                               painter: BreathingAuraPainter(
                                 progress: progress,
                                 stageKind: _stage.kind,
@@ -1025,8 +1184,8 @@ class _BreathingPracticeReleaseCardState
                             Transform.scale(
                               scale: _orbScale(progress),
                               child: Container(
-                                width: 166,
-                                height: 166,
+                                width: orbDiameter,
+                                height: orbDiameter,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   gradient: RadialGradient(
@@ -1045,151 +1204,373 @@ class _BreathingPracticeReleaseCardState
                                     ),
                                   ],
                                 ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Icon(
-                                      switch (_stage.kind) {
-                                        BreathingStageKind.inhale =>
-                                          Icons.south_west_rounded,
-                                        BreathingStageKind.hold =>
-                                          Icons.pause_circle_filled_rounded,
-                                        BreathingStageKind.exhale =>
-                                          Icons.north_east_rounded,
-                                        BreathingStageKind.rest =>
-                                          Icons.self_improvement_rounded,
-                                      },
-                                      color: Colors.white.withValues(
-                                        alpha: 0.96,
-                                      ),
-                                      size: 44,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      stageLabel,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      stagePrompt,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final compact = constraints.maxWidth < 148;
+                                    final showPrompt =
+                                        constraints.maxWidth >= 148;
+                                    final innerPadding = compact ? 8.0 : 18.0;
+                                    final iconSize = compact ? 24.0 : 42.0;
+                                    final labelStyle = compact
+                                        ? Theme.of(context).textTheme.titleSmall
+                                        : Theme.of(
+                                            context,
+                                          ).textTheme.titleLarge;
+                                    final promptStyle = compact
+                                        ? Theme.of(context).textTheme.labelSmall
+                                        : Theme.of(context).textTheme.bodySmall;
+                                    return Padding(
+                                      padding: EdgeInsets.all(innerPadding),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Icon(
+                                            switch (_stage.kind) {
+                                              BreathingStageKind.inhale =>
+                                                Icons.south_west_rounded,
+                                              BreathingStageKind.hold =>
+                                                Icons
+                                                    .pause_circle_filled_rounded,
+                                              BreathingStageKind.exhale =>
+                                                Icons.north_east_rounded,
+                                              BreathingStageKind.rest =>
+                                                Icons.self_improvement_rounded,
+                                            },
                                             color: Colors.white.withValues(
-                                              alpha: 0.88,
+                                              alpha: 0.96,
                                             ),
+                                            size: iconSize,
                                           ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
+                                          SizedBox(height: compact ? 4 : 8),
+                                          Text(
+                                            stageLabel,
+                                            style: labelStyle?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: compact ? 2 : 3,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          if (showPrompt) ...<Widget>[
+                                            SizedBox(height: compact ? 3 : 6),
+                                            Text(
+                                              stagePrompt,
+                                              style: promptStyle?.copyWith(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.88,
+                                                ),
+                                              ),
+                                              textAlign: TextAlign.center,
+                                              maxLines: compact ? 2 : 3,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 2,
-                              child: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '鍓╀綑 $remainStage 绉?路 绗?${_rounds + 1} 杞?路 涓嬩竴姝?${_nextStage.label.resolve(i18n)}',
-                                  en: '$remainStage s left 路 Round ${_rounds + 1} 路 Next ${_nextStage.label.resolve(i18n)}',
-                                ),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Colors.white70),
                               ),
                             ),
                           ],
                         ),
-                      );
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '本段剩 $remainStage 秒 · 第 ${_rounds + 1} 轮 · 下一步 ${_nextStage.label.resolve(i18n)}',
+                          en: '$remainStage s left · Round ${_rounds + 1} · Next ${_nextStage.label.resolve(i18n)}',
+                        ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          BreathingStageTimeline(
+            stages: _loopStages,
+            activeIndex: _stageIndex,
+            i18n: i18n,
+            stageTintBuilder: _stageTint,
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: LinearProgressIndicator(
+              minHeight: 8,
+              value: _targetProgress,
+              backgroundColor: Colors.white.withValues(alpha: 0.18),
+              valueColor: AlwaysStoppedAnimation<Color>(_theme.accent),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: <Widget>[
+              BreathingMetricPill(
+                label: pickUiText(i18n, zh: '目标', en: 'Target'),
+                value: pickUiText(
+                  i18n,
+                  zh: '$_targetMinutes 分钟',
+                  en: '$_targetMinutes min',
+                ),
+              ),
+              BreathingMetricPill(
+                label: pickUiText(i18n, zh: '已完成', en: 'Done'),
+                value: _fmt(_elapsed),
+              ),
+              BreathingMetricPill(
+                label: pickUiText(i18n, zh: '剩余', en: 'Left'),
+                value:
+                    '${remainSession ~/ 60}:${(remainSession % 60).toString().padLeft(2, '0')}',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: <Widget>[
+              FilledButton.icon(
+                onPressed: () =>
+                    unawaited(_running ? _pauseSession() : _startSession()),
+                icon: Icon(
+                  _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                ),
+                label: Text(
+                  _running
+                      ? pickUiText(i18n, zh: '暂停', en: 'Pause')
+                      : pickUiText(i18n, zh: '开始', en: 'Start'),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => unawaited(_skipStage()),
+                icon: const Icon(Icons.skip_next_rounded),
+                label: Text(pickUiText(i18n, zh: '下一阶段', en: 'Next stage')),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => unawaited(_resetSession()),
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard(BuildContext context, AppI18n i18n) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            pickUiText(i18n, zh: '训练设置', en: 'Session setup'),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            pickUiText(i18n, zh: '主题', en: 'Theme'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: BreathingExperienceCatalog.themes
+                  .map(
+                    (theme) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        selected: theme.id == _theme.id,
+                        onSelected: (_) {
+                          setState(() => _theme = theme);
+                          _savePrefs();
+                        },
+                        label: Text(theme.name.resolve(i18n)),
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            pickUiText(i18n, zh: '时长', en: 'Duration'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _targetOptions
+                .map(
+                  (minutes) => ChoiceChip(
+                    selected: _targetMinutes == minutes,
+                    onSelected: (_) {
+                      setState(() => _targetMinutes = minutes);
+                      _savePrefs();
                     },
-                  ),
-                  const SizedBox(height: 8),
-                  BreathingStageTimeline(
-                    stages: _loopStages,
-                    activeIndex: _stageIndex,
-                    i18n: i18n,
-                    stageTintBuilder: _stageTint,
-                  ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: LinearProgressIndicator(
-                      minHeight: 8,
-                      value: _targetProgress,
-                      backgroundColor: Colors.white.withValues(alpha: 0.18),
-                      valueColor: AlwaysStoppedAnimation<Color>(_theme.accent),
+                    label: Text(
+                      pickUiText(i18n, zh: '$minutes 分钟', en: '$minutes min'),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    pickUiText(
-                      i18n,
-                      zh: '鐩爣 $_targetMinutes 鍒嗛挓 路 宸插畬鎴?${_fmt(_elapsed)} 路 鍓╀綑 ${remainSession ~/ 60}:${(remainSession % 60).toString().padLeft(2, '0')}',
-                      en: 'Target $_targetMinutes min 路 Done ${_fmt(_elapsed)} 路 Left ${remainSession ~/ 60}:${(remainSession % 60).toString().padLeft(2, '0')}',
-                    ),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white),
-                  ),
-                ],
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _includeRecoveryStage,
+            onChanged: (value) => unawaited(_setIncludeRecoveryStage(value)),
+            title: Text(pickUiText(i18n, zh: '保留恢复段', en: 'Recovery stage')),
+            subtitle: Text(
+              pickUiText(
+                i18n,
+                zh: '关闭后只保留吸气/停留/呼气，更适合连续跟练。',
+                en: 'When off, loop only inhale, hold, and exhale for smoother repetition.',
               ),
             ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: <Widget>[
-                FilledButton.icon(
-                  onPressed: () =>
-                      unawaited(_running ? _pauseSession() : _startSession()),
-                  icon: Icon(
-                    _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  ),
-                  label: Text(
-                    _running
-                        ? pickUiText(i18n, zh: '鏆傚仠', en: 'Pause')
-                        : pickUiText(i18n, zh: '开始', en: 'Start'),
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => unawaited(_skipStage()),
-                  icon: const Icon(Icons.skip_next_rounded),
-                  label: Text(pickUiText(i18n, zh: '涓嬩竴闃舵', en: 'Next stage')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => unawaited(_resetSession()),
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(pickUiText(i18n, zh: '閲嶇疆', en: 'Reset')),
-                ),
-              ],
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile.adaptive(
+            value: _voiceOn,
+            onChanged: (value) {
+              setState(() {
+                _voiceOn = value;
+                _voiceAvailability = value
+                    ? _BreathingVoiceAvailability.checking
+                    : _BreathingVoiceAvailability.off;
+                if (!value) {
+                  _voiceSourceKind = null;
+                  _lastVoiceLocation = null;
+                  _availableCueCount = 0;
+                  _expectedCueCount = 0;
+                }
+              });
+              if (!value) {
+                unawaited(_cuePlayer.stop());
+              } else {
+                unawaited(_warmScenarioCues());
+              }
+              _savePrefs();
+            },
+            title: Text(pickUiText(i18n, zh: '语音提示', en: 'Voice cues')),
+            subtitle: Text(
+              pickUiText(
+                i18n,
+                zh: '优先下载并缓存云端语音；太短的节拍会自动转为文字和震动，避免语音压住节奏。',
+                en: 'Cloud cues are downloaded and cached first; very short stages automatically fall back to text and haptics.',
+              ),
             ),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile.adaptive(
+            value: _textOn,
+            onChanged: (value) {
+              setState(() => _textOn = value);
+              _savePrefs();
+            },
+            title: Text(pickUiText(i18n, zh: '文字提示', en: 'Text cues')),
+            subtitle: Text(
+              pickUiText(
+                i18n,
+                zh: '显示当前动作、身体提示和倒计时；如果想闭眼练习，可以只保留语音与震动。',
+                en: 'Show the current action, body prompt, and countdown. Turn this off for eyes-closed practice.',
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile.adaptive(
+            value: _hapticOn,
+            onChanged: (value) {
+              setState(() => _hapticOn = value);
+              _savePrefs();
+            },
+            title: Text(pickUiText(i18n, zh: '震动反馈', en: 'Haptics')),
+            subtitle: Text(
+              pickUiText(
+                i18n,
+                zh: '阶段切换时给轻微触感，适合不盯着屏幕也能跟练。',
+                en: 'Adds subtle pulses on stage changes so you can follow without staring at the screen.',
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            SectionHeader(
+              title: pickUiText(i18n, zh: '呼吸训练场景', en: 'Breathing scenarios'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '针对移动端优化：修复乱码、重做窄屏布局、改进语音播报与短节拍适配，并补充更有依据的训练场景。',
+                en: 'Optimized for mobile: cleaned copy, improved narrow-screen layout, better cue timing, and more evidence-aware breathing scenarios.',
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildScenarioSelector(i18n),
+            const SizedBox(height: 14),
+            _buildScenarioOverviewCard(context, i18n),
+            const SizedBox(height: 16),
+            _buildPracticeCard(context, i18n),
             const SizedBox(height: 14),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '杞暟', en: 'Rounds'),
+                  label: pickUiText(i18n, zh: '轮数', en: 'Rounds'),
                   value: '$_rounds',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '瀹屾垚娆℃暟', en: 'Sessions'),
+                  label: pickUiText(i18n, zh: '已完成场次', en: 'Sessions'),
                   value: '$_completedSessions',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '绱鏃堕暱', en: 'Total time'),
+                  label: pickUiText(i18n, zh: '累计时长', en: 'Total time'),
                   value: _fmt(Duration(seconds: _totalSeconds)),
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '璇煶鏉ユ簮', en: 'Voice'),
-                  value: _voiceLabel(i18n),
+                  label: pickUiText(i18n, zh: '语音来源', en: 'Voice'),
+                  value: _voiceSourceChipLabel(i18n),
                 ),
               ],
             ),
@@ -1202,151 +1583,16 @@ class _BreathingPracticeReleaseCardState
               ),
             ],
             const SizedBox(height: 14),
-            Text(
-              pickUiText(i18n, zh: '涓婚姘涘洿', en: 'Theme'),
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: BreathingExperienceCatalog.themes
-                  .map(
-                    (theme) => ChoiceChip(
-                      selected: theme.id == _theme.id,
-                      onSelected: (_) {
-                        setState(() => _theme = theme);
-                        _savePrefs();
-                      },
-                      label: Text(theme.name.resolve(i18n)),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
+            _buildSettingsCard(context, i18n),
             const SizedBox(height: 14),
-            Text(
-              pickUiText(i18n, zh: '缁冧範鏃堕暱', en: 'Session duration'),
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _targetOptions
-                  .map(
-                    (minutes) => ChoiceChip(
-                      selected: _targetMinutes == minutes,
-                      onSelected: (_) {
-                        setState(() => _targetMinutes = minutes);
-                        _savePrefs();
-                      },
-                      label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '$minutes 鍒嗛挓',
-                          en: '$minutes min',
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 10),
-            SwitchListTile.adaptive(
-              value: _includeRecoveryStage,
-              onChanged: (value) => unawaited(_setIncludeRecoveryStage(value)),
-              title: Text(pickUiText(i18n, zh: '鎭㈠闃舵', en: 'Recovery stage')),
-              subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '关闭后仅保留吸气/停留/呼气循环，更适合连续跟练（推荐）。',
-                  en: 'When off, loop only inhale/hold/exhale for continuous practice.',
-                ),
-              ),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile.adaptive(
-              value: _voiceOn,
-              onChanged: (value) {
-                setState(() {
-                  _voiceOn = value;
-                  _voiceAvailability = value
-                      ? _BreathingVoiceAvailability.checking
-                      : _BreathingVoiceAvailability.off;
-                });
-                if (!value) {
-                  unawaited(_cuePlayer.stop());
-                } else {
-                  unawaited(_warmScenarioCues());
-                }
-                _savePrefs();
-              },
-              title: Text(pickUiText(i18n, zh: '璇煶鎻愮ず', en: 'Voice cues')),
-              subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '仅使用 S3 路径 follow_this_breath/follow_this_breath 的中文音频；快速阶段自动提速并优先使用“吸气/呼气”通用音频。',
-                  en: 'Prefer Chinese cue files under follow_this_breath/follow_this_breath; fast stages auto-speed up generic inhale/exhale cues.',
-                ),
-              ),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile.adaptive(
-              value: _textOn,
-              onChanged: (value) {
-                setState(() => _textOn = value);
-                _savePrefs();
-              },
-              title: Text(pickUiText(i18n, zh: '鏂囧瓧鎻愮ず', en: 'Text cues')),
-              subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '显示当前动作、身体提示和倒计时。',
-                  en: 'Show stage labels, body prompts, and countdowns.',
-                ),
-              ),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile.adaptive(
-              value: _hapticOn,
-              onChanged: (value) {
-                setState(() => _hapticOn = value);
-                _savePrefs();
-              },
-              title: Text(pickUiText(i18n, zh: '瑙︽劅鎻愮ず', en: 'Haptics')),
-              subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '阶段切换时给轻微触觉反馈，便于闭眼跟练。',
-                  en: 'Use subtle pulses on stage changes for eyes-closed practice.',
-                ),
-              ),
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 8),
             SafetyNoteCard(
-              title: pickUiText(i18n, zh: '鍙戝竷寤鸿', en: 'Safety note'),
+              title: pickUiText(i18n, zh: '安全提醒', en: 'Safety note'),
               body: pickUiText(
                 i18n,
-                zh: '驾驶、骑行或任何需要持续警觉的场景不要使用。若出现头晕、胸闷或明显不适，请立刻停止。高海拔模拟属于进阶功能，不替代医疗或专业训练建议。',
-                en: 'Do not use while driving or in situations requiring continuous alertness. Stop immediately if you feel dizzy or uncomfortable. Altitude simulation is an advanced feature, not medical guidance.',
+                zh: '不要在驾驶、骑行或任何需要持续警觉的场景中使用。若出现头晕、胸闷、刺痛或明显不适，请立刻停止并恢复自然呼吸。睡前与长呼气模式应以舒适为先，不把自己练到缺氧感。',
+                en: 'Do not use while driving or in any situation that requires continuous alertness. Stop immediately if you feel dizzy, tight-chested, tingly, or clearly uncomfortable. Keep bedtime and long-exhale work comfortably below the point of air hunger.',
               ),
             ),
-            if ((_lastVoiceLocation ?? '').trim().isNotEmpty) ...<Widget>[
-              const SizedBox(height: 10),
-              Text(
-                pickUiText(
-                  i18n,
-                  zh: '鏈€杩戝懡涓殑璇煶璧勬簮锛?_lastVoiceLocation',
-                  en: 'Last matched cue: $_lastVoiceLocation',
-                ),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
           ],
         ),
       ),

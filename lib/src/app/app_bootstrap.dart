@@ -7,12 +7,15 @@ import '../services/app_log_service.dart';
 import 'app_dependencies.dart';
 import 'app_root.dart';
 
-void runVocabularySleepApp() {
+void runVocabularySleepApp({Future<void> Function()? beforeRunApp}) {
   final logger = AppLogService.instance;
 
   runZonedGuarded(
-    () {
+    () async {
       WidgetsFlutterBinding.ensureInitialized();
+      if (beforeRunApp != null) {
+        await beforeRunApp();
+      }
       unawaited(logger.init());
 
       FlutterError.onError = (FlutterErrorDetails details) {

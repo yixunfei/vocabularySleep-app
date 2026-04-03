@@ -5,7 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'cstcloud_resource_cache_service.dart';
 import 'toolbox_breathing_catalog.dart';
 
-enum BreathingCueSourceKind { remote }
+enum BreathingCueSourceKind { asset, remote }
 
 class BreathingResolvedCue {
   const BreathingResolvedCue({
@@ -72,6 +72,30 @@ class ToolboxBreathingAudioRepository {
     return results;
   }
 
+  Duration? effectiveCueDuration(String cueId, {double playbackRate = 1.0}) {
+    final cue = BreathingExperienceCatalog.cues[cueId];
+    if (cue == null || cue.approxDurationMs <= 0) {
+      return null;
+    }
+    final normalizedRate = playbackRate.clamp(0.75, 2.0).toDouble();
+    final durationMs = (cue.approxDurationMs / normalizedRate).round();
+    return Duration(milliseconds: durationMs);
+  }
+
+  bool canPlayCueWithinStage(
+    String cueId, {
+    required Duration stageDuration,
+    double playbackRate = 1.0,
+    Duration safetyPadding = const Duration(milliseconds: 220),
+  }) {
+    final cueDuration = effectiveCueDuration(cueId, playbackRate: playbackRate);
+    if (cueDuration == null) {
+      return false;
+    }
+    return stageDuration.inMilliseconds >=
+        cueDuration.inMilliseconds + safetyPadding.inMilliseconds;
+  }
+
   List<String> candidateRemoteKeysForCue(
     String cueId, {
     List<String> languageTags = const <String>[],
@@ -124,6 +148,16 @@ class ToolboxBreathingAudioRepository {
           location: remoteKey,
         );
       }
+    }
+
+    final assetPath = cue.assetPath?.trim() ?? '';
+    if (assetPath.isNotEmpty) {
+      return BreathingResolvedCue(
+        cue: cue,
+        source: AssetSource(assetPath),
+        kind: BreathingCueSourceKind.asset,
+        location: assetPath,
+      );
     }
     return null;
   }

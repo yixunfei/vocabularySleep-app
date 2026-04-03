@@ -23,36 +23,43 @@ class VoiceStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 220),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: <Widget>[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              if (icon != null) ...<Widget>[
-                Icon(icon, size: 16, color: iconColor),
-                const SizedBox(width: 6),
-              ],
-              Flexible(
-                child: Text(
+          if (icon != null)
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: (iconColor ?? Theme.of(context).colorScheme.primary)
+                    .withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+          if (icon != null) const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
                   label,
                   style: Theme.of(
                     context,
                   ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
           ),
-          const SizedBox(height: 2),
-          Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
@@ -83,6 +90,98 @@ class ScenarioTagChip extends StatelessWidget {
   }
 }
 
+class BreathingMetricPill extends StatelessWidget {
+  const BreathingMetricPill({
+    super.key,
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: Colors.white70),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class BreathingInsightTile extends StatelessWidget {
+  const BreathingInsightTile({
+    super.key,
+    required this.title,
+    required this.body,
+    required this.icon,
+    required this.tint,
+  });
+
+  final String title;
+  final String body;
+  final IconData icon;
+  final Color tint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tint.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(icon, size: 18, color: tint),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(body),
+        ],
+      ),
+    );
+  }
+}
+
 class BreathingStageTimeline extends StatelessWidget {
   const BreathingStageTimeline({
     super.key,
@@ -97,66 +196,97 @@ class BreathingStageTimeline extends StatelessWidget {
   final AppI18n i18n;
   final Color Function(BreathingStageKind kind) stageTintBuilder;
 
+  Widget _buildSegment(
+    BuildContext context,
+    BreathingStagePlan stage,
+    int index, {
+    double? width,
+  }) {
+    final active = index == activeIndex;
+    final child = AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: width,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: active
+            ? stageTintBuilder(stage.kind).withValues(alpha: 0.28)
+            : Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: active
+              ? stageTintBuilder(stage.kind)
+              : Colors.white.withValues(alpha: 0.14),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            stage.label.resolve(i18n),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${stage.seconds}${pickUiText(i18n, zh: '秒', en: 's')}',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+    return Padding(
+      padding: EdgeInsets.only(right: index == stages.length - 1 ? 0 : 6),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: stages
-            .asMap()
-            .entries
-            .map((entry) {
-              final index = entry.key;
-              final stage = entry.value;
-              final active = index == activeIndex;
-              final width = math.max(72.0, stage.seconds * 24.0);
-              return Padding(
-                padding: EdgeInsets.only(
-                  right: index == stages.length - 1 ? 0 : 6,
-                ),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  width: width,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: active
-                        ? stageTintBuilder(stage.kind).withValues(alpha: 0.28)
-                        : Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: active
-                          ? stageTintBuilder(stage.kind)
-                          : Colors.white.withValues(alpha: 0.14),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const minCompactWidth = 72.0;
+        final needsScroll =
+            constraints.maxWidth <
+            stages.length * minCompactWidth + 6 * stages.length;
+        if (needsScroll) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: stages
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) => _buildSegment(
+                      context,
+                      entry.value,
+                      entry.key,
+                      width: math.max(70.0, 48 + entry.value.seconds * 14),
                     ),
-                  ),
-                  child: Column(
-                    children: <Widget>[
-                      Text(
-                        stage.label.resolve(i18n),
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${stage.seconds}${pickUiText(i18n, zh: '\u79d2', en: 's')}',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                      ),
-                    ],
-                  ),
+                  )
+                  .toList(growable: false),
+            ),
+          );
+        }
+        return Row(
+          children: stages
+              .asMap()
+              .entries
+              .map(
+                (entry) => Expanded(
+                  flex: math.max(1, entry.value.seconds),
+                  child: _buildSegment(context, entry.value, entry.key),
                 ),
-              );
-            })
-            .toList(growable: false),
-      ),
+              )
+              .toList(growable: false),
+        );
+      },
     );
   }
 }

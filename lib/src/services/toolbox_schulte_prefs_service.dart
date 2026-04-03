@@ -31,6 +31,7 @@ class SchulteJumpBestRecord {
     if (value is! Map) {
       return null;
     }
+
     final map = value.cast<Object?, Object?>();
     final score = (map['score'] as num?)?.toInt();
     final rounds = (map['rounds'] as num?)?.toInt() ?? 0;
@@ -54,7 +55,7 @@ class SchulteGridPrefsState {
     this.countdownSeconds = 45,
     this.jumpSeconds = 60,
     this.highlightNextTarget = true,
-    this.showUpcomingStrip = true,
+    this.showMemoryHint = true,
     this.hapticsEnabled = true,
     this.wrongTapPenaltyEnabled = false,
     this.bestTimeMsByKey = const <String, int>{},
@@ -72,7 +73,7 @@ class SchulteGridPrefsState {
   final int countdownSeconds;
   final int jumpSeconds;
   final bool highlightNextTarget;
-  final bool showUpcomingStrip;
+  final bool showMemoryHint;
   final bool hapticsEnabled;
   final bool wrongTapPenaltyEnabled;
   final Map<String, int> bestTimeMsByKey;
@@ -90,7 +91,7 @@ class SchulteGridPrefsState {
     int? countdownSeconds,
     int? jumpSeconds,
     bool? highlightNextTarget,
-    bool? showUpcomingStrip,
+    bool? showMemoryHint,
     bool? hapticsEnabled,
     bool? wrongTapPenaltyEnabled,
     Map<String, int>? bestTimeMsByKey,
@@ -108,7 +109,7 @@ class SchulteGridPrefsState {
       countdownSeconds: countdownSeconds ?? this.countdownSeconds,
       jumpSeconds: jumpSeconds ?? this.jumpSeconds,
       highlightNextTarget: highlightNextTarget ?? this.highlightNextTarget,
-      showUpcomingStrip: showUpcomingStrip ?? this.showUpcomingStrip,
+      showMemoryHint: showMemoryHint ?? this.showMemoryHint,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       wrongTapPenaltyEnabled:
           wrongTapPenaltyEnabled ?? this.wrongTapPenaltyEnabled,
@@ -130,7 +131,7 @@ class SchulteGridPrefsState {
       'countdown_seconds': countdownSeconds,
       'jump_seconds': jumpSeconds,
       'highlight_next_target': highlightNextTarget,
-      'show_upcoming_strip': showUpcomingStrip,
+      'show_memory_hint': showMemoryHint,
       'haptics_enabled': hapticsEnabled,
       'wrong_tap_penalty_enabled': wrongTapPenaltyEnabled,
       'best_time_ms_by_key': bestTimeMsByKey,
@@ -144,14 +145,11 @@ class SchulteGridPrefsState {
     if (value is! Map) {
       return const SchulteGridPrefsState();
     }
+
     final map = value.cast<Object?, Object?>();
-
-    final bestTimeMsByKey = _readBestTimeMap(map);
-    final bestJumpRecordByKey = _readBestJumpMap(map);
-
     return SchulteGridPrefsState(
       boardSize: sanitizeSchulteBoardSize(
-        ((map['grid_size'] as num?)?.toInt() ?? 5),
+        (map['grid_size'] as num?)?.toInt() ?? 5,
       ),
       shapeId: SchulteBoardShape.fromId('${map['shape_id'] ?? 'square'}').id,
       modeId: SchultePlayMode.fromId('${map['mode_id'] ?? 'timer'}').id,
@@ -171,30 +169,34 @@ class SchulteGridPrefsState {
           map['content_ignore_punctuation'] as bool? ??
           false,
       countdownSeconds: sanitizeSchulteCountdownSeconds(
-        ((map['countdown_seconds'] as num?)?.toInt() ?? 45),
+        (map['countdown_seconds'] as num?)?.toInt() ?? 45,
       ),
       jumpSeconds: sanitizeSchulteJumpSeconds(
-        ((map['jump_seconds'] as num?)?.toInt() ??
+        (map['jump_seconds'] as num?)?.toInt() ??
             (map['time_attack_seconds'] as num?)?.toInt() ??
-            60),
+            60,
       ),
       highlightNextTarget:
           map['highlight_next_target'] as bool? ??
           map['show_target_hint'] as bool? ??
           true,
-      showUpcomingStrip: map['show_upcoming_strip'] as bool? ?? true,
+      showMemoryHint:
+          map['show_memory_hint'] as bool? ??
+          map['show_upcoming_strip'] as bool? ??
+          true,
       hapticsEnabled: map['haptics_enabled'] as bool? ?? true,
       wrongTapPenaltyEnabled:
           map['wrong_tap_penalty_enabled'] as bool? ??
           map['wrong_penalty_enabled'] as bool? ??
           false,
-      bestTimeMsByKey: bestTimeMsByKey,
-      bestJumpRecordByKey: bestJumpRecordByKey,
+      bestTimeMsByKey: _readBestTimeMap(map),
+      bestJumpRecordByKey: _readBestJumpMap(map),
     );
   }
 
   static Map<String, int> _readBestTimeMap(Map<Object?, Object?> map) {
     final result = <String, int>{};
+
     final direct = map['best_time_ms_by_key'];
     if (direct is Map) {
       for (final entry in direct.entries) {
@@ -207,9 +209,9 @@ class SchulteGridPrefsState {
       }
     }
 
-    final top3 = map['best_time_top3_ms_by_key'];
-    if (top3 is Map) {
-      for (final entry in top3.entries) {
+    final legacyTop3 = map['best_time_top3_ms_by_key'];
+    if (legacyTop3 is Map) {
+      for (final entry in legacyTop3.entries) {
         final key = '${entry.key}'.trim();
         if (key.isEmpty || entry.value is! List) {
           continue;
@@ -250,9 +252,9 @@ class SchulteGridPrefsState {
       }
     }
 
-    final legacyDirect = map['best_score_by_key'];
-    if (legacyDirect is Map) {
-      for (final entry in legacyDirect.entries) {
+    final legacyScoreMap = map['best_score_by_key'];
+    if (legacyScoreMap is Map) {
+      for (final entry in legacyScoreMap.entries) {
         final key = '${entry.key}'.trim();
         final score = (entry.value as num?)?.toInt();
         if (key.isEmpty || score == null || score < 0) {
@@ -319,10 +321,12 @@ class ToolboxSchultePrefsService {
       if (!await file.exists()) {
         return const SchulteGridPrefsState();
       }
+
       final raw = await file.readAsString();
       if (raw.trim().isEmpty) {
         return const SchulteGridPrefsState();
       }
+
       return SchulteGridPrefsState.fromJsonValue(jsonDecode(raw));
     } catch (_) {
       return const SchulteGridPrefsState();
