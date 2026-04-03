@@ -10,16 +10,18 @@ class ToolboxToolPage extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.child,
+    this.appBarActions,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
+  final List<Widget>? appBarActions;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(title: Text(title), actions: appBarActions),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: <Widget>[

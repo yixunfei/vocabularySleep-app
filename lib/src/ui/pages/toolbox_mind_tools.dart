@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,8 @@ import 'package:flutter/services.dart';
 import '../../i18n/app_i18n.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
+import 'toolbox_breathing_tool.dart';
+import 'toolbox_mind_tools_schulte.dart';
 import 'toolbox_tool_shell.dart';
 
 class SchulteGridToolPage extends StatelessWidget {
@@ -16,11 +17,25 @@ class SchulteGridToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '舒尔特方格', en: 'Schulte grid'),
+      title: pickUiText(
+        i18n,
+        zh: '舒尔特方格',
+        en: 'Schulte grid',
+        ja: 'シュルテ格子',
+        de: 'Schulte-Gitter',
+        fr: 'Grille de Schulte',
+        es: 'Cuadrícula Schulte',
+        ru: 'Таблица Шульте',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '按顺序寻找数字，训练注意稳定度与视觉检索速度。',
-        en: 'Find numbers in order to train steady attention and visual search speed.',
+        zh: '按顺序点击数字或自定义内容，训练注意稳定、序列跟踪与视觉搜索速度。',
+        en: 'Tap numbers or custom tokens in order to train steady attention, sequence tracking, and visual search speed.',
+        ja: '数字やカスタム内容を順にタップして、注意の安定、順序追跡、視覚探索の速さを鍛えます。',
+        de: 'Tippe Zahlen oder eigene Inhalte in Reihenfolge an, um Aufmerksamkeit, Sequenzverfolgung und visuelle Suchgeschwindigkeit zu trainieren.',
+        fr: 'Touchez chiffres ou contenus personnalisés dans l’ordre pour entraîner l’attention, le suivi de séquence et la vitesse de recherche visuelle.',
+        es: 'Toca números o contenido personalizado en orden para entrenar la atención, el seguimiento de secuencias y la velocidad de búsqueda visual.',
+        ru: 'Нажимайте числа или свой контент по порядку, чтобы тренировать устойчивое внимание, отслеживание последовательности и скорость зрительного поиска.',
       ),
       child: const _SchulteGridTool(),
     );
@@ -55,10 +70,10 @@ class BreathingToolPage extends StatelessWidget {
       title: pickUiText(i18n, zh: '呼吸练习', en: 'Breathing practice'),
       subtitle: pickUiText(
         i18n,
-        zh: '用简单节奏带你进入吸气、停留、呼气的循环。',
-        en: 'A guided loop for inhale, hold, and exhale with simple pacing patterns.',
+        zh: '发布版呼吸训练，包含腹式、放松、专注、平息、副交感切换与进阶节律场景。',
+        en: 'Publishing-ready guided breathing with diaphragm, calming, focus, recovery, and advanced rhythm scenarios.',
       ),
-      child: const _BreathingTool(),
+      child: const BreathingPracticeReleaseCard(),
     );
   }
 }
@@ -81,193 +96,12 @@ class ZenSandToolPage extends StatelessWidget {
   }
 }
 
-class _SchulteGridTool extends StatefulWidget {
+class _SchulteGridTool extends StatelessWidget {
   const _SchulteGridTool();
 
   @override
-  State<_SchulteGridTool> createState() => _SchulteGridToolState();
-}
-
-class _SchulteGridToolState extends State<_SchulteGridTool> {
-  final math.Random _random = math.Random();
-  final Stopwatch _stopwatch = Stopwatch();
-  Timer? _ticker;
-
-  int _size = 5;
-  late List<int> _values;
-  int _nextTarget = 1;
-  Duration _elapsed = Duration.zero;
-  Duration? _best;
-
-  @override
-  void initState() {
-    super.initState();
-    _reshuffle();
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  void _reshuffle() {
-    _ticker?.cancel();
-    _stopwatch
-      ..stop()
-      ..reset();
-    _elapsed = Duration.zero;
-    _nextTarget = 1;
-    _values = List<int>.generate(_size * _size, (index) => index + 1)
-      ..shuffle(_random);
-    setState(() {});
-  }
-
-  void _setSize(int size) {
-    if (_size == size) return;
-    _size = size;
-    _reshuffle();
-  }
-
-  void _onTap(int value) {
-    if (value != _nextTarget) return;
-    if (!_stopwatch.isRunning) {
-      _stopwatch.start();
-      _ticker = Timer.periodic(const Duration(milliseconds: 80), (_) {
-        if (!mounted) return;
-        setState(() {
-          _elapsed = _stopwatch.elapsed;
-        });
-      });
-    }
-
-    if (_nextTarget == _size * _size) {
-      _stopwatch.stop();
-      _ticker?.cancel();
-      final finalElapsed = _stopwatch.elapsed;
-      setState(() {
-        _elapsed = finalElapsed;
-        _best = _best == null || finalElapsed < _best! ? finalElapsed : _best;
-        _nextTarget += 1;
-      });
-      return;
-    }
-
-    setState(() {
-      _nextTarget += 1;
-    });
-  }
-
-  String _formatDuration(Duration value) {
-    final minutes = value.inMinutes.toString().padLeft(2, '0');
-    final seconds = (value.inSeconds % 60).toString().padLeft(2, '0');
-    final centiseconds = ((value.inMilliseconds % 1000) / 10)
-        .floor()
-        .toString()
-        .padLeft(2, '0');
-    return '$minutes:$seconds.$centiseconds';
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final done = _nextTarget > _size * _size;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const SectionHeader(
-              title: 'Grid size',
-              subtitle:
-                  'Use a larger grid when you want a denser scan challenge.',
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: <int>[4, 5, 6]
-                  .map(
-                    (size) => ChoiceChip(
-                      label: Text('$size × $size'),
-                      selected: _size == size,
-                      onSelected: (_) => _setSize(size),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: <Widget>[
-                ToolboxMetricCard(
-                  label: 'Target',
-                  value: done ? 'Done' : '$_nextTarget',
-                ),
-                ToolboxMetricCard(
-                  label: 'Time',
-                  value: _formatDuration(_elapsed),
-                ),
-                ToolboxMetricCard(
-                  label: 'Best',
-                  value: _best == null ? '--' : _formatDuration(_best!),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _values.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _size,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemBuilder: (context, index) {
-                final value = _values[index];
-                final completed = value < _nextTarget;
-                final target = value == _nextTarget && !done;
-                return InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () => _onTap(value),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: completed
-                          ? Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.12)
-                          : target
-                          ? Theme.of(context).colorScheme.primaryContainer
-                          : Theme.of(context).colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: target
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        completed ? 'OK' : '$value',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-            OutlinedButton.icon(
-              onPressed: _reshuffle,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Shuffle again'),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const SchulteGridTrainingCard();
   }
 }
 

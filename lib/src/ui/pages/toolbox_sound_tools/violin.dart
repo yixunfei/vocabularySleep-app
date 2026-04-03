@@ -449,8 +449,9 @@ class _ViolinToolState extends State<_ViolinTool> {
   Widget _buildViolinSettingsContent(
     BuildContext context,
     AppI18n i18n,
-    ThemeData theme,
-  ) {
+    ThemeData theme, {
+    required VoidCallback refreshSheet,
+  }) {
     final preset = _activePreset;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,7 +495,10 @@ class _ViolinToolState extends State<_ViolinTool> {
                 (item) => ChoiceChip(
                   label: Text(_presetLabel(i18n, item)),
                   selected: item.id == _presetId,
-                  onSelected: (_) => _applyPreset(item.id),
+                  onSelected: (_) {
+                    _applyPreset(item.id);
+                    refreshSheet();
+                  },
                 ),
               )
               .toList(growable: false),
@@ -514,12 +518,18 @@ class _ViolinToolState extends State<_ViolinTool> {
             ChoiceChip(
               label: Text(_variantLabel(i18n, 'a')),
               selected: _toneVariant == 'a',
-              onSelected: (_) => setState(() => _toneVariant = 'a'),
+              onSelected: (_) {
+                setState(() => _toneVariant = 'a');
+                refreshSheet();
+              },
             ),
             ChoiceChip(
               label: Text(_variantLabel(i18n, 'b')),
               selected: _toneVariant == 'b',
-              onSelected: (_) => setState(() => _toneVariant = 'b'),
+              onSelected: (_) {
+                setState(() => _toneVariant = 'b');
+                refreshSheet();
+              },
             ),
           ],
         ),
@@ -532,7 +542,10 @@ class _ViolinToolState extends State<_ViolinTool> {
                 (scaleId) => ChoiceChip(
                   label: Text(_scaleLabel(i18n, scaleId)),
                   selected: _scaleId == scaleId,
-                  onSelected: (_) => setState(() => _scaleId = scaleId),
+                  onSelected: (_) {
+                    setState(() => _scaleId = scaleId);
+                    refreshSheet();
+                  },
                 ),
               )
               .toList(growable: false),
@@ -545,7 +558,10 @@ class _ViolinToolState extends State<_ViolinTool> {
             return ChoiceChip(
               label: Text(_positionLabel(i18n, index)),
               selected: _positionIndex == index,
-              onSelected: (_) => setState(() => _positionIndex = index),
+              onSelected: (_) {
+                setState(() => _positionIndex = index);
+                refreshSheet();
+              },
             );
           }),
         ),
@@ -562,7 +578,16 @@ class _ViolinToolState extends State<_ViolinTool> {
           min: 0.15,
           max: 1.0,
           divisions: 17,
-          onChanged: (value) => setState(() => _bow = value),
+          onChanged: (value) {
+            _bow = value;
+            refreshSheet();
+          },
+          onChangeEnd: (_) {
+            if (mounted) {
+              setState(() {});
+            }
+            refreshSheet();
+          },
         ),
         Text(
           pickUiText(
@@ -576,7 +601,16 @@ class _ViolinToolState extends State<_ViolinTool> {
           min: 0.0,
           max: 0.5,
           divisions: 10,
-          onChanged: (value) => setState(() => _reverb = value),
+          onChanged: (value) {
+            _reverb = value;
+            refreshSheet();
+          },
+          onChangeEnd: (_) {
+            if (mounted) {
+              setState(() {});
+            }
+            refreshSheet();
+          },
         ),
       ],
     );
@@ -592,17 +626,28 @@ class _ViolinToolState extends State<_ViolinTool> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          4,
-          16,
-          16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
-        ),
-        child: SingleChildScrollView(
-          child: _buildViolinSettingsContent(sheetContext, i18n, theme),
-        ),
-      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                4,
+                16,
+                16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+              ),
+              child: SingleChildScrollView(
+                child: _buildViolinSettingsContent(
+                  sheetContext,
+                  i18n,
+                  theme,
+                  refreshSheet: () => setSheetState(() {}),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

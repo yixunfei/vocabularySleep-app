@@ -522,6 +522,21 @@ class _DeckInstrumentFullScreenPageState
 class FocusBeatsToolPage extends StatelessWidget {
   const FocusBeatsToolPage({super.key});
 
+  void _openFullScreen(
+    BuildContext context, {
+    required bool autoStart,
+    required bool immersive,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _FocusBeatsFullScreenPage(
+          autoStart: autoStart,
+          immersiveOnEnter: immersive,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final i18n = _toolboxI18n(context);
@@ -530,15 +545,120 @@ class FocusBeatsToolPage extends StatelessWidget {
       subtitle: pickUiText(
         i18n,
         zh: '可调 BPM 的本地节拍器，适合写作、学习或呼吸同步。',
-        en: 'A local BPM-adjustable metronome for writing, study, or breath syncing.',
+        en: 'Immersive mobile rhythm studio with animated guidance, custom timbre packs, and loop arrangement.',
       ),
-      child: const _FocusBeatsTool(),
+      appBarActions: <Widget>[
+        IconButton(
+          tooltip: '一键全屏启动',
+          icon: const Icon(Icons.open_in_full_rounded),
+          onPressed: () =>
+              _openFullScreen(context, autoStart: true, immersive: false),
+        ),
+      ],
+      child: _FocusBeatsTool(
+        onOpenFullScreen: ({required autoStart, required immersive}) =>
+            _openFullScreen(
+              context,
+              autoStart: autoStart,
+              immersive: immersive,
+            ),
+      ),
     );
   }
 }
 
-class WoodfishToolPage extends StatelessWidget {
+class _FocusBeatsFullScreenPage extends StatefulWidget {
+  const _FocusBeatsFullScreenPage({
+    required this.autoStart,
+    required this.immersiveOnEnter,
+  });
+
+  final bool autoStart;
+  final bool immersiveOnEnter;
+
+  @override
+  State<_FocusBeatsFullScreenPage> createState() =>
+      _FocusBeatsFullScreenPageState();
+}
+
+class _FocusBeatsFullScreenPageState extends State<_FocusBeatsFullScreenPage>
+    with WidgetsBindingObserver {
+  Future<void> _ensureImmersive() async {
+    await _enterToolboxPortraitMode();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_ensureImmersive());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_ensureImmersive());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_exitToolboxLandscapeMode());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: _FocusBeatsTool(
+        fullScreen: true,
+        autoStart: widget.autoStart,
+        initialImmersive: widget.immersiveOnEnter,
+        onExitFullScreen: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+}
+
+class WoodfishToolPage extends StatefulWidget {
   const WoodfishToolPage({super.key});
+
+  @override
+  State<WoodfishToolPage> createState() => _WoodfishToolPageState();
+}
+
+class _WoodfishToolPageState extends State<WoodfishToolPage> {
+  bool _suspendInlinePlayback = false;
+  bool _openingFullScreen = false;
+
+  Future<void> _openFullScreen({
+    required BuildContext context,
+    required bool autoStart,
+  }) async {
+    if (_openingFullScreen) {
+      return;
+    }
+    setState(() {
+      _openingFullScreen = true;
+      _suspendInlinePlayback = true;
+    });
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => _WoodfishFullScreenPage(autoStart: autoStart),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _openingFullScreen = false;
+          _suspendInlinePlayback = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -548,9 +668,71 @@ class WoodfishToolPage extends StatelessWidget {
       subtitle: pickUiText(
         i18n,
         zh: '轻敲一次记一次数，也给自己一个短暂重置。',
-        en: 'Tap once for a count and give yourself a short reset in the middle of the day.',
+        en: 'Immersive mobile woodfish with customizable rhythm, timbre, and floating blessings.',
       ),
-      child: const _WoodfishTool(),
+      appBarActions: <Widget>[
+        IconButton(
+          tooltip: pickUiText(i18n, zh: '全屏模式', en: 'Full screen'),
+          icon: const Icon(Icons.open_in_full_rounded),
+          onPressed: () =>
+              unawaited(_openFullScreen(context: context, autoStart: true)),
+        ),
+      ],
+      child: _WoodfishTool(
+        suspendPlayback: _suspendInlinePlayback,
+        onOpenFullScreen: ({required autoStart}) =>
+            unawaited(_openFullScreen(context: context, autoStart: autoStart)),
+      ),
+    );
+  }
+}
+
+class _WoodfishFullScreenPage extends StatefulWidget {
+  const _WoodfishFullScreenPage({required this.autoStart});
+
+  final bool autoStart;
+
+  @override
+  State<_WoodfishFullScreenPage> createState() =>
+      _WoodfishFullScreenPageState();
+}
+
+class _WoodfishFullScreenPageState extends State<_WoodfishFullScreenPage>
+    with WidgetsBindingObserver {
+  Future<void> _ensureImmersive() async {
+    await _enterToolboxPortraitMode();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_ensureImmersive());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_ensureImmersive());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_exitToolboxLandscapeMode());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: _WoodfishTool(
+        fullScreen: true,
+        autoStart: widget.autoStart,
+        onExitFullScreen: () => Navigator.of(context).pop(),
+      ),
     );
   }
 }

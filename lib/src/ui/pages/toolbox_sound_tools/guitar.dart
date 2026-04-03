@@ -499,7 +499,11 @@ class _GuitarToolState extends State<_GuitarTool> {
     );
   }
 
-  Widget _buildChordSection(BuildContext context, AppI18n i18n) {
+  Widget _buildChordSection(
+    BuildContext context,
+    AppI18n i18n, {
+    VoidCallback? onSelectionChanged,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -522,7 +526,10 @@ class _GuitarToolState extends State<_GuitarTool> {
                     child: ChoiceChip(
                       label: Text(item.label),
                       selected: _chordId == item.id,
-                      onSelected: (_) => _applyChord(item.id),
+                      onSelected: (_) {
+                        _applyChord(item.id);
+                        onSelectionChanged?.call();
+                      },
                     ),
                   ),
                 )
@@ -544,6 +551,7 @@ class _GuitarToolState extends State<_GuitarTool> {
                     setState(() => _capo = index);
                     _invalidatePlayers();
                     unawaited(_warmUpActivePreset());
+                    onSelectionChanged?.call();
                   },
                 ),
               );
@@ -554,7 +562,11 @@ class _GuitarToolState extends State<_GuitarTool> {
     );
   }
 
-  Widget _buildGuitarSettingsContent(BuildContext context, AppI18n i18n) {
+  Widget _buildGuitarSettingsContent(
+    BuildContext context,
+    AppI18n i18n, {
+    required VoidCallback refreshSheet,
+  }) {
     final theme = Theme.of(context);
     final preset = _activePreset;
     return Column(
@@ -589,7 +601,10 @@ class _GuitarToolState extends State<_GuitarTool> {
                 (item) => ChoiceChip(
                   label: Text(_presetLabel(i18n, item)),
                   selected: _presetId == item.id,
-                  onSelected: (_) => _applyPreset(item.id),
+                  onSelected: (_) {
+                    _applyPreset(item.id);
+                    refreshSheet();
+                  },
                 ),
               )
               .toList(growable: false),
@@ -597,7 +612,7 @@ class _GuitarToolState extends State<_GuitarTool> {
         const SizedBox(height: 8),
         Text(_presetSubtitle(i18n, preset), style: theme.textTheme.bodySmall),
         const SizedBox(height: 18),
-        _buildChordSection(context, i18n),
+        _buildChordSection(context, i18n, onSelectionChanged: refreshSheet),
         const SizedBox(height: 18),
         Text(
           pickUiText(
@@ -611,10 +626,17 @@ class _GuitarToolState extends State<_GuitarTool> {
           min: 0.1,
           max: 1.0,
           divisions: 18,
-          onChanged: (value) => setState(() => _resonance = value),
+          onChanged: (value) {
+            _resonance = value;
+            refreshSheet();
+          },
           onChangeEnd: (_) {
+            if (mounted) {
+              setState(() {});
+            }
             _invalidatePlayers();
             unawaited(_warmUpActivePreset());
+            refreshSheet();
           },
         ),
         Text(
@@ -629,10 +651,17 @@ class _GuitarToolState extends State<_GuitarTool> {
           min: 0.1,
           max: 0.9,
           divisions: 16,
-          onChanged: (value) => setState(() => _pickPosition = value),
+          onChanged: (value) {
+            _pickPosition = value;
+            refreshSheet();
+          },
           onChangeEnd: (_) {
+            if (mounted) {
+              setState(() {});
+            }
             _invalidatePlayers();
             unawaited(_warmUpActivePreset());
+            refreshSheet();
           },
         ),
       ],
@@ -645,17 +674,27 @@ class _GuitarToolState extends State<_GuitarTool> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          4,
-          16,
-          16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
-        ),
-        child: SingleChildScrollView(
-          child: _buildGuitarSettingsContent(sheetContext, i18n),
-        ),
-      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                4,
+                16,
+                16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+              ),
+              child: SingleChildScrollView(
+                child: _buildGuitarSettingsContent(
+                  sheetContext,
+                  i18n,
+                  refreshSheet: () => setSheetState(() {}),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

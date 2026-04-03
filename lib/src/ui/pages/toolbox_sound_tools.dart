@@ -11,6 +11,8 @@ import 'package:record/record.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
+import '../../services/toolbox_focus_beats_prefs_service.dart';
+import '../../services/toolbox_woodfish_prefs_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
@@ -20,6 +22,7 @@ part 'toolbox_sound_tools/deck.dart';
 part 'toolbox_sound_tools/soothing.dart';
 part 'toolbox_sound_tools/harp.dart';
 part 'toolbox_sound_tools/focus.dart';
+part 'toolbox_sound_tools/woodfish.dart';
 part 'toolbox_sound_tools/models.dart';
 part 'toolbox_sound_tools/piano.dart';
 part 'toolbox_sound_tools/flute.dart';

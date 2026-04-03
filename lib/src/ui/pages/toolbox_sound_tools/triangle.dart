@@ -309,7 +309,11 @@ class _TriangleToolState extends State<_TriangleTool> {
     );
   }
 
-  Widget _buildTriangleSettingsContent(BuildContext context, AppI18n i18n) {
+  Widget _buildTriangleSettingsContent(
+    BuildContext context,
+    AppI18n i18n, {
+    required VoidCallback refreshSheet,
+  }) {
     final theme = Theme.of(context);
     final preset = _activePreset;
     return Column(
@@ -350,7 +354,10 @@ class _TriangleToolState extends State<_TriangleTool> {
                 (item) => ChoiceChip(
                   label: Text(_presetLabel(i18n, item)),
                   selected: item.id == _presetId,
-                  onSelected: (_) => _applyPreset(item.id),
+                  onSelected: (_) {
+                    _applyPreset(item.id);
+                    refreshSheet();
+                  },
                 ),
               )
               .toList(growable: false),
@@ -366,7 +373,10 @@ class _TriangleToolState extends State<_TriangleTool> {
                 (mode) => ChoiceChip(
                   label: Text(_playModeLabel(i18n, mode)),
                   selected: _playMode == mode,
-                  onSelected: (_) => setState(() => _playMode = mode),
+                  onSelected: (_) {
+                    setState(() => _playMode = mode);
+                    refreshSheet();
+                  },
                 ),
               )
               .toList(growable: false),
@@ -385,6 +395,7 @@ class _TriangleToolState extends State<_TriangleTool> {
                     setState(() => _material = item);
                     _disposePlayers();
                     unawaited(_warmUpActivePreset());
+                    refreshSheet();
                   },
                 ),
               )
@@ -403,7 +414,16 @@ class _TriangleToolState extends State<_TriangleTool> {
           min: 0.2,
           max: 1,
           divisions: 16,
-          onChanged: (value) => setState(() => _ring = value),
+          onChanged: (value) {
+            _ring = value;
+            refreshSheet();
+          },
+          onChangeEnd: (_) {
+            if (mounted) {
+              setState(() {});
+            }
+            refreshSheet();
+          },
         ),
         Text(
           pickUiText(
@@ -417,10 +437,17 @@ class _TriangleToolState extends State<_TriangleTool> {
           min: 0.1,
           max: 1.0,
           divisions: 18,
-          onChanged: (value) => setState(() => _strikePoint = value),
+          onChanged: (value) {
+            _strikePoint = value;
+            refreshSheet();
+          },
           onChangeEnd: (_) {
+            if (mounted) {
+              setState(() {});
+            }
             _disposePlayers();
             unawaited(_warmUpActivePreset());
+            refreshSheet();
           },
         ),
         Text(
@@ -435,10 +462,17 @@ class _TriangleToolState extends State<_TriangleTool> {
           min: 0.0,
           max: 1.0,
           divisions: 20,
-          onChanged: (value) => setState(() => _damping = value),
+          onChanged: (value) {
+            _damping = value;
+            refreshSheet();
+          },
           onChangeEnd: (_) {
+            if (mounted) {
+              setState(() {});
+            }
             _disposePlayers();
             unawaited(_warmUpActivePreset());
+            refreshSheet();
           },
         ),
       ],
@@ -451,17 +485,27 @@ class _TriangleToolState extends State<_TriangleTool> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          4,
-          16,
-          16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
-        ),
-        child: SingleChildScrollView(
-          child: _buildTriangleSettingsContent(sheetContext, i18n),
-        ),
-      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                4,
+                16,
+                16 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+              ),
+              child: SingleChildScrollView(
+                child: _buildTriangleSettingsContent(
+                  sheetContext,
+                  i18n,
+                  refreshSheet: () => setSheetState(() {}),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

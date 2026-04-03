@@ -133,7 +133,7 @@ class ToolboxPage extends StatelessWidget {
               subtitle: pickUiText(
                 i18n,
                 zh: '简洁本地节拍器，支持 BPM 调整。',
-                en: 'Simple local BPM metronome.',
+                en: 'Immersive mobile rhythm studio with animation, timbre packs, and cycle arrangement.',
                 ja: 'BPM調整対応のシンプルなローカルメトロノーム。',
                 de: 'Einfaches lokales BPM-Metronom.',
                 fr: 'Metronome BPM local et simple.',
@@ -232,8 +232,8 @@ class ToolboxPage extends StatelessWidget {
               ),
               subtitle: pickUiText(
                 i18n,
-                zh: '引导吸气、停顿和呼气节奏。',
-                en: 'Guide inhale, hold, and exhale with pacing.',
+                zh: '覆盖放松、专注、平息、副交感切换和高海拔模拟等场景化呼吸训练。',
+                en: 'Scenario-based breathing for calming, focus, recovery, parasympathetic downshift, and altitude-style drills.',
                 ja: '吸う・止める・吐くをペースでガイド。',
                 de: 'Einatmen, Halten und Ausatmen im Rhythmus fuhren.',
                 fr: 'Guidez inspiration, pause et expiration avec rythme.',
