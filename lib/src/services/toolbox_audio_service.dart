@@ -838,6 +838,24 @@ class ToolboxAudioBank {
     );
   }
 
+  static Uint8List prayerBeadClick({
+    String style = 'sandalwood',
+    bool accent = false,
+  }) {
+    final normalizedStyle = switch (style) {
+      'jade' => 'jade',
+      'lapis' => 'lapis',
+      'bodhi' => 'bodhi',
+      'obsidian' => 'obsidian',
+      _ => 'sandalwood',
+    };
+    final key = 'prayer_bead:$normalizedStyle:${accent ? 1 : 0}';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildPrayerBeadClick(style: normalizedStyle, accent: accent),
+    );
+  }
+
   static Uint8List woodfishClick({
     String style = 'temple',
     double resonance = 0.7,
@@ -2828,6 +2846,60 @@ class ToolboxAudioBank {
     return _encodeWav(samples, sampleRate: sampleRate, gain: 0.97);
   }
 
+  static Uint8List _buildPrayerBeadClick({
+    required String style,
+    required bool accent,
+  }) {
+    const sampleRate = 32000;
+    final (
+      primary,
+      overtone,
+      ring,
+      body,
+      decay,
+      lowDecay,
+      noiseMix,
+      transient,
+    ) = switch (style) {
+      'jade' => (1320.0, 2050.0, 2910.0, 420.0, 21.0, 10.0, 0.055, 0.34),
+      'lapis' => (940.0, 1540.0, 2280.0, 330.0, 18.0, 9.5, 0.08, 0.3),
+      'bodhi' => (710.0, 1160.0, 1660.0, 280.0, 16.2, 8.6, 0.12, 0.24),
+      'obsidian' => (620.0, 1020.0, 1510.0, 250.0, 14.0, 8.2, 0.06, 0.2),
+      _ => (560.0, 890.0, 1380.0, 220.0, 15.5, 8.8, 0.11, 0.24),
+    };
+    final pitchMul = accent ? 1.08 : 1.0;
+    final totalSamples = (sampleRate * (accent ? 0.32 : 0.24)).round();
+    final samples = List<double>.filled(totalSamples, 0);
+    for (var i = 0; i < totalSamples; i += 1) {
+      final t = i / sampleRate;
+      final attack = 1 - math.exp(-150 * t);
+      final toneEnv = attack * math.exp(-(accent ? decay * 0.88 : decay) * t);
+      final bodyEnv =
+          attack * math.exp(-(accent ? lowDecay * 0.82 : lowDecay) * t);
+      final noiseEnv = math.exp(-(accent ? 74.0 : 88.0) * t);
+      final sweep = 1.0 + 0.14 * math.exp(-180 * t);
+      final tone =
+          math.sin(math.pi * 2 * primary * pitchMul * sweep * t) * 0.70 +
+          math.sin(math.pi * 2 * overtone * pitchMul * t + 0.18) * 0.22 +
+          math.sin(math.pi * 2 * ring * pitchMul * t + 0.74) * 0.12;
+      final bodyTone =
+          math.sin(math.pi * 2 * body * pitchMul * t + 0.42) * 0.22;
+      final click =
+          math.sin(math.pi * 2 * (primary * 2.4) * pitchMul * t + 0.08) *
+          transient *
+          math.exp(-96 * t);
+      final noise =
+          (math.sin(i * 12.9898 + primary * 0.001) +
+              math.cos(i * 78.233 + overtone * 0.0008)) *
+          noiseMix *
+          noiseEnv;
+      samples[i] =
+          (tone * toneEnv + bodyTone * bodyEnv + click + noise) *
+          (accent ? 1.08 : 0.98);
+    }
+    return _encodeWav(samples, sampleRate: sampleRate, gain: 0.95);
+  }
+
   static Uint8List _buildWoodfishClick({
     required String style,
     required double resonance,
@@ -2865,24 +2937,69 @@ class ToolboxAudioBank {
       airPuffMix,
     ) = switch (style) {
       'sandal' => (
-        258.0, 726.0, 1290.0, 1840.0,
-        7.8, 13.2, 0.60, 0.40, 0.30, 0.042, 0.065,
+        258.0,
+        726.0,
+        1290.0,
+        1840.0,
+        7.8,
+        13.2,
+        0.60,
+        0.40,
+        0.30,
+        0.042,
+        0.065,
       ),
       'bright' => (
-        318.0, 892.0, 1560.0, 2340.0,
-        11.0, 18.0, 0.42, 0.54, 0.40, 0.050, 0.035,
+        318.0,
+        892.0,
+        1560.0,
+        2340.0,
+        11.0,
+        18.0,
+        0.42,
+        0.54,
+        0.40,
+        0.050,
+        0.035,
       ),
       'hollow' => (
-        224.0, 632.0, 1140.0, 1580.0,
-        6.2, 10.8, 0.68, 0.32, 0.20, 0.028, 0.10,
+        224.0,
+        632.0,
+        1140.0,
+        1580.0,
+        6.2,
+        10.8,
+        0.68,
+        0.32,
+        0.20,
+        0.028,
+        0.10,
       ),
       'night' => (
-        248.0, 678.0, 1210.0, 1680.0,
-        7.2, 12.0, 0.64, 0.34, 0.22, 0.024, 0.055,
+        248.0,
+        678.0,
+        1210.0,
+        1680.0,
+        7.2,
+        12.0,
+        0.64,
+        0.34,
+        0.22,
+        0.024,
+        0.055,
       ),
       _ => (
-        278.0, 782.0, 1380.0, 1980.0,
-        8.6, 14.8, 0.54, 0.48, 0.34, 0.044, 0.06,
+        278.0,
+        782.0,
+        1380.0,
+        1980.0,
+        8.6,
+        14.8,
+        0.54,
+        0.48,
+        0.34,
+        0.044,
+        0.06,
       ),
     };
 
@@ -2900,8 +3017,8 @@ class ToolboxAudioBank {
     final transientDecay = (320.0 + strike * 260.0).clamp(300.0, 600.0);
 
     // Duration: extended for resonance tail
-    final durationSeconds =
-        (0.34 + resonance * 0.22 + (accent ? 0.025 : 0.0)).clamp(0.32, 0.58);
+    final durationSeconds = (0.34 + resonance * 0.22 + (accent ? 0.025 : 0.0))
+        .clamp(0.32, 0.58);
     final totalSamples = (sampleRate * durationSeconds).round();
     final samples = List<double>.filled(totalSamples, 0);
 
@@ -2925,11 +3042,13 @@ class ToolboxAudioBank {
 
       // ── 1. Transient "tok" — noise burst in first ~2.5ms ──
       // Two-layer noise for richer transient texture
-      final noiseRaw = (prand(i) * 2.0 - 1.0) * 0.55 +
+      final noiseRaw =
+          (prand(i) * 2.0 - 1.0) * 0.55 +
           (prand(i + 7919) * 2.0 - 1.0) * 0.35 +
           (prand(i + 3571) * 2.0 - 1.0) * 0.10;
       final tokEnv = math.exp(-(780.0 + strike * 380.0) * t);
-      final tokBurst = noiseRaw *
+      final tokBurst =
+          noiseRaw *
           tokEnv *
           (0.26 + strike * 0.46) *
           strikeBoost *
@@ -2963,7 +3082,9 @@ class ToolboxAudioBank {
       // ── 6. High shell partial ──
       final highShellTone =
           math.sin(
-            math.pi * 2 * highShellFreq * pitchMul * t + 0.91 + brightness * 0.16,
+            math.pi * 2 * highShellFreq * pitchMul * t +
+                0.91 +
+                brightness * 0.16,
           ) *
           (overtoneMix * 0.38) *
           (0.80 + brightness * 0.40) *
@@ -2972,10 +3093,13 @@ class ToolboxAudioBank {
       // ── 7. Stick transient (high-frequency impact click) ──
       final stickTone =
           math.sin(
-            math.pi * 2 *
-                (3000.0 + brightness * 1400.0 + strike * 600.0) *
-                pitchMul * t +
-                0.13 + strike * 0.14,
+            math.pi *
+                    2 *
+                    (3000.0 + brightness * 1400.0 + strike * 600.0) *
+                    pitchMul *
+                    t +
+                0.13 +
+                strike * 0.14,
           ) *
           (0.16 + strike * 0.34) *
           fastEnv *
@@ -2986,22 +3110,26 @@ class ToolboxAudioBank {
       final airNoise =
           (prand(i + 4231) * 2.0 - 1.0) * 0.5 +
           math.sin(math.pi * 2 * (bodyFreq * 0.38) * pitchMul * t) * 0.5;
-      final airEnv = math.exp(-(48.0 + (1.0 - resonance) * 32.0) * t) *
+      final airEnv =
+          math.exp(-(48.0 + (1.0 - resonance) * 32.0) * t) *
           (1.0 - math.exp(-380.0 * t)); // slight attack delay
       final airPuff = airNoise * airPuffMix * airEnv * resonanceLift;
 
       // ── 9. Sympathetic harmonics (2×, 3×, 5× body freq) ──
       final sympathetic2 =
           math.sin(math.pi * 2 * bodyFreq * 2.0 * pitchMul * t + 0.18) *
-          0.065 * resonanceLift *
+          0.065 *
+          resonanceLift *
           math.exp(-(bodyDecay * 0.75) * t);
       final sympathetic3 =
           math.sin(math.pi * 2 * bodyFreq * 3.0 * pitchMul * t + 0.42) *
-          0.038 * brightnessLift *
+          0.038 *
+          brightnessLift *
           math.exp(-(bodyDecay * 1.05) * t);
       final sympathetic5 =
           math.sin(math.pi * 2 * bodyFreq * 5.0 * pitchMul * t + 0.71) *
-          0.020 * brightnessLift *
+          0.020 *
+          brightnessLift *
           math.exp(-(shellDecay * 1.25) * t);
 
       // ── 10. Wood bloom (sub-harmonic body resonance) ──
@@ -3023,29 +3151,27 @@ class ToolboxAudioBank {
       final reflectionT = (t - reflectionDelay).clamp(0.0, durationSeconds);
       final roomReflection = reflectionT > 0
           ? math.sin(
-              math.pi * 2 * bodyFreq * 0.98 * pitchMul * reflectionT + 1.2,
-            ) *
-            0.04 *
-            resonanceLift *
-            math.exp(-(bodyDecay * 1.3) * reflectionT)
+                  math.pi * 2 * bodyFreq * 0.98 * pitchMul * reflectionT + 1.2,
+                ) *
+                0.04 *
+                resonanceLift *
+                math.exp(-(bodyDecay * 1.3) * reflectionT)
           : 0.0;
 
       // ── Mix all components ──
-      final tonal = (bodyTone * bodyEnv +
+      final tonal =
+          (bodyTone * bodyEnv +
               shellTone * shellEnv +
               overtoneTone * shellEnv * 0.82 +
               highShellTone * attack) *
           accentLift;
-      final transients =
-          (tokBurst + stickTone + knockNoise) * accentLift;
+      final transients = (tokBurst + stickTone + knockNoise) * accentLift;
       final resonances =
           (sympathetic2 + sympathetic3 + sympathetic5) * bodyEnv * accentLift;
       final ambients =
           (airPuff + woodBloom * bodyEnv * 0.58 + roomReflection) * accentLift;
 
-      samples[i] = _softClip(
-        tonal + transients + resonances + ambients,
-      );
+      samples[i] = _softClip(tonal + transients + resonances + ambients);
     }
     return _encodeWav(samples, sampleRate: sampleRate, gain: 0.94);
   }

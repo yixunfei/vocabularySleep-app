@@ -11,6 +11,7 @@ import 'toolbox_mini_games.dart';
 import 'toolbox_mind_tools.dart';
 import 'toolbox_soothing_music_v2_page.dart';
 import 'toolbox_sound_tools.dart';
+import 'toolbox_zen_sand_tool.dart';
 
 class ToolboxPage extends StatelessWidget {
   const ToolboxPage({super.key});
@@ -182,7 +183,7 @@ class ToolboxPage extends StatelessWidget {
               ),
               icon: Icons.landscape_rounded,
               accent: const Color(0xFFC6A96A),
-              pageBuilder: () => const ZenSandToolPage(),
+              pageBuilder: () => const ZenSandStudioPage(),
             ),
           ],
         ),

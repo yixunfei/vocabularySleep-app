@@ -198,6 +198,30 @@ class _FocusArrangementPreset {
   final List<double> segmentsInBars;
 }
 
+class _FocusVisualPalette {
+  const _FocusVisualPalette({
+    required this.accent,
+    required this.accentSoft,
+    required this.accentGlow,
+    required this.stageTop,
+    required this.stageMid,
+    required this.stageBottom,
+    required this.panel,
+    required this.panelStrong,
+    required this.stroke,
+  });
+
+  final Color accent;
+  final Color accentSoft;
+  final Color accentGlow;
+  final Color stageTop;
+  final Color stageMid;
+  final Color stageBottom;
+  final Color panel;
+  final Color panelStrong;
+  final Color stroke;
+}
+
 class _FocusBeatsTool extends StatefulWidget {
   const _FocusBeatsTool({
     this.fullScreen = false,
@@ -957,41 +981,61 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     });
   }
 
-  List<Color> _stageColors() {
-    return switch (_animationKind) {
-      _FocusBeatAnimationKind.pendulum => const <Color>[
-        Color(0xFF102338),
-        Color(0xFF1B3B5C),
-      ],
-      _FocusBeatAnimationKind.hypno => const <Color>[
-        Color(0xFF2A1244),
-        Color(0xFF4D1E73),
-      ],
-      _FocusBeatAnimationKind.dew => const <Color>[
-        Color(0xFF0F2D3A),
-        Color(0xFF1B5668),
-      ],
-      _FocusBeatAnimationKind.gear => const <Color>[
-        Color(0xFF242A33),
-        Color(0xFF3D4756),
-      ],
-      _FocusBeatAnimationKind.steps => const <Color>[
-        Color(0xFF1E2A24),
-        Color(0xFF365142),
-      ],
+  Color _animationAccent(_FocusBeatAnimationKind kind) {
+    return switch (kind) {
+      _FocusBeatAnimationKind.pendulum => const Color(0xFFD7A86B),
+      _FocusBeatAnimationKind.hypno => const Color(0xFF7E90F2),
+      _FocusBeatAnimationKind.dew => const Color(0xFF59C6C0),
+      _FocusBeatAnimationKind.gear => const Color(0xFF95A6C2),
+      _FocusBeatAnimationKind.steps => const Color(0xFF78BC8E),
     };
   }
 
-  Widget _buildStage(BuildContext context) {
+  Color _soundAccent(_FocusBeatSoundKind kind) {
+    return switch (kind) {
+      _FocusBeatSoundKind.pendulum => const Color(0xFFC68F58),
+      _FocusBeatSoundKind.hypno => const Color(0xFF6E84E8),
+      _FocusBeatSoundKind.dew => const Color(0xFF4AB4D6),
+      _FocusBeatSoundKind.gear => const Color(0xFF8FA0B8),
+      _FocusBeatSoundKind.steps => const Color(0xFF84B56A),
+    };
+  }
+
+  _FocusVisualPalette _visualPalette(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final accent = Color.lerp(
+      _animationAccent(_animationKind),
+      colorScheme.primary,
+      0.22,
+    )!;
+    return _FocusVisualPalette(
+      accent: accent,
+      accentSoft: Color.lerp(accent, Colors.white, 0.72)!,
+      accentGlow: accent.withValues(alpha: 0.42),
+      stageTop: Color.lerp(const Color(0xFF08131F), accent, 0.30)!,
+      stageMid: Color.lerp(const Color(0xFF102034), accent, 0.16)!,
+      stageBottom: Color.lerp(const Color(0xFF040B14), accent, 0.12)!,
+      panel: colorScheme.surface.withValues(alpha: 0.92),
+      panelStrong: colorScheme.surfaceContainerHighest.withValues(alpha: 0.94),
+      stroke: Color.lerp(colorScheme.outlineVariant, accent, 0.34)!,
+    );
+  }
+
+  Widget _buildStage(BuildContext context) {
+    final palette = _visualPalette(context);
     final beatLabel = _activeBeat < 0 ? '--' : '${_activeBeat + 1}';
     final subLabel = _activeSubPulse == 0
         ? '--'
         : '$_activeSubPulse/$_subdivision';
+    final segmentLabel = _patternEnabled && _patternError.isEmpty
+        ? '${_currentSegmentIndex + 1}/${_segmentPulseCounts.length}'
+        : '1/1';
+    final cycleLabel = '${_cycleCount + 1}';
+    final arrangementLabel = _patternError.isEmpty ? _pattern.raw : '1bar';
     final screenWidth = MediaQuery.sizeOf(context).width;
     final stageHeight = widget.fullScreen
-        ? (screenWidth * 0.66).clamp(320.0, 430.0)
-        : (screenWidth * 0.72).clamp(280.0, 380.0);
+        ? (screenWidth * 0.64).clamp(340.0, 470.0)
+        : (screenWidth * 0.74).clamp(320.0, 430.0);
     return Container(
       width: double.infinity,
       height: stageHeight,
@@ -999,17 +1043,24 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: _stageColors(),
+          colors: <Color>[
+            palette.stageTop,
+            palette.stageMid,
+            palette.stageBottom,
+          ],
         ),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-        ),
+        borderRadius: BorderRadius.circular(widget.fullScreen ? 30 : 28),
+        border: Border.all(color: palette.stroke.withValues(alpha: 0.72)),
         boxShadow: <BoxShadow>[
           BoxShadow(
+            color: palette.accentGlow.withValues(alpha: 0.24),
+            blurRadius: 42,
+            offset: const Offset(0, 22),
+          ),
+          BoxShadow(
             color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
           ),
         ],
       ),
@@ -1022,6 +1073,38 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         builder: (context, _) {
           return Stack(
             children: <Widget>[
+              Positioned(
+                left: -48,
+                top: -36,
+                child: _FocusGlowOrb(
+                  size: 180,
+                  color: palette.accentGlow.withValues(alpha: 0.24),
+                ),
+              ),
+              Positioned(
+                right: -72,
+                bottom: -86,
+                child: _FocusGlowOrb(
+                  size: 220,
+                  color: Colors.white.withValues(alpha: 0.10),
+                ),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: <Color>[
+                        Colors.white.withValues(alpha: 0.06),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.18),
+                      ],
+                      stops: const <double>[0.0, 0.38, 1.0],
+                    ),
+                  ),
+                ),
+              ),
               Positioned.fill(
                 child: CustomPaint(
                   painter: _FocusBeatVisualizerPainter(
@@ -1037,12 +1120,16 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                 ),
               ),
               Positioned(
-                left: 16,
-                top: 14,
+                left: 18,
+                top: 18,
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: <Widget>[
+                    const _FocusStageBadge(
+                      icon: Icons.blur_on_rounded,
+                      label: 'Focus Studio',
+                    ),
                     _FocusStageBadge(
                       icon: _animationKind.icon,
                       label: _animationLabel(_animationKind),
@@ -1055,18 +1142,18 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                 ),
               ),
               Positioned(
-                right: 16,
-                top: 58,
+                right: 18,
+                top: 18,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.24),
-                    borderRadius: BorderRadius.circular(18),
+                    color: Colors.black.withValues(alpha: 0.26),
+                    borderRadius: BorderRadius.circular(22),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: Colors.white.withValues(alpha: 0.12),
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -1104,42 +1191,114 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                 ),
               ),
               Positioned(
-                left: 16,
-                right: 16,
-                bottom: 14,
-                child: DecoratedBox(
+                left: 18,
+                right: 18,
+                bottom: 18,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.22),
-                    borderRadius: BorderRadius.circular(18),
+                    color: Colors.black.withValues(alpha: 0.24),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: Colors.white.withValues(alpha: 0.10),
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          _animationSyncHint(_animationKind),
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.95),
-                                fontWeight: FontWeight.w700,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  _animationLabel(_animationKind),
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _running
+                                      ? _animationSyncHint(_animationKind)
+                                      : _animationDescription(_animationKind),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.82,
+                                        ),
+                                        height: 1.4,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: palette.accent.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: palette.accentSoft.withValues(
+                                  alpha: 0.34,
+                                ),
                               ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _soundSyncHint(_soundKind),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                height: 1.3,
-                              ),
-                        ),
-                      ],
-                    ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  'Cycle',
+                                  style: Theme.of(context).textTheme.labelMedium
+                                      ?.copyWith(
+                                        color: palette.accentSoft,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  cycleLabel,
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      _buildStagePulseRail(context, palette),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: <Widget>[
+                          _FocusStageBadge(
+                            icon: Icons.timeline_rounded,
+                            label: '编排 $arrangementLabel',
+                          ),
+                          _FocusStageBadge(
+                            icon: Icons.layers_rounded,
+                            label: '段落 $segmentLabel',
+                          ),
+                          _FocusStageBadge(
+                            icon: Icons.touch_app_rounded,
+                            label: _hapticsEnabled ? '触感已启用' : '触感已关闭',
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1147,6 +1306,92 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
           );
         },
       ),
+    );
+  }
+
+  Widget _buildStagePulseRail(
+    BuildContext context,
+    _FocusVisualPalette palette,
+  ) {
+    final activeBeat = _activeBeat;
+    final activeSub = _activeSubPulse;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            for (var index = 0; index < _beatsPerBar; index += 1)
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: index == _beatsPerBar - 1 ? 0 : 8,
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    height: 28,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: index == activeBeat
+                            ? <Color>[
+                                palette.accentSoft.withValues(alpha: 0.96),
+                                palette.accent.withValues(alpha: 0.92),
+                              ]
+                            : <Color>[
+                                Colors.white.withValues(
+                                  alpha: index == 0 ? 0.20 : 0.12,
+                                ),
+                                Colors.white.withValues(alpha: 0.04),
+                              ],
+                      ),
+                      border: Border.all(
+                        color: index == activeBeat
+                            ? palette.accentSoft.withValues(alpha: 0.78)
+                            : Colors.white.withValues(
+                                alpha: index == 0 ? 0.22 : 0.10,
+                              ),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${index + 1}',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: index == activeBeat
+                              ? const Color(0xFF09111B)
+                              : Colors.white.withValues(alpha: 0.88),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        if (_subdivision > 1) ...<Widget>[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: <Widget>[
+              for (var index = 0; index < _subdivision; index += 1)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: activeSub == index + 1 ? 26 : 14,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    color: activeSub == index + 1
+                        ? palette.accentSoft
+                        : Colors.white.withValues(alpha: 0.18),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
@@ -1761,6 +2006,213 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     );
   }
 
+  Widget _buildHeroSummary(
+    BuildContext context, {
+    required String beatLabel,
+    required String subBeatLabel,
+    required String segmentLabel,
+    required String cycleLabel,
+    required String arrangementLabel,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final palette = _visualPalette(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[palette.panelStrong, palette.panel],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: palette.stroke.withValues(alpha: 0.42)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _FocusInfoPill(
+                icon: Icons.blur_on_rounded,
+                label: '专注节拍工作台',
+                emphasized: true,
+                tone: palette.accent,
+              ),
+              _FocusInfoPill(
+                icon: Icons.motion_photos_on_rounded,
+                label: _running ? '当前正在驱动节奏' : '已准备好开始',
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '把节拍收束成一条注意力轨迹',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+              height: 1.08,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _running
+                ? '视觉、声音与拍点已经同步运行，保持动作或呼吸跟着这一条节奏线推进。'
+                : '把 BPM、编排、音色与触感反馈整理进同一块舞台，开播前的信息一眼就够。',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.45),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              _FocusHeroMetric(
+                label: '节奏',
+                value: '$_bpm BPM',
+                caption: '${(60 / _bpm).toStringAsFixed(2)} 秒/拍',
+              ),
+              _FocusHeroMetric(
+                label: '拍号',
+                value: '$_beatsPerBar/4 × $_subdivision',
+                caption: '决定强弱拍与子拍密度',
+              ),
+              _FocusHeroMetric(
+                label: '当前拍',
+                value: '$beatLabel · $subBeatLabel',
+                caption: _running ? '跟随当下脉冲' : '等待开始',
+              ),
+              _FocusHeroMetric(
+                label: '段落',
+                value: segmentLabel,
+                caption: '循环中的当前位置',
+              ),
+              _FocusHeroMetric(
+                label: '循环',
+                value: cycleLabel,
+                caption: arrangementLabel,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrimaryControls(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final palette = _visualPalette(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: palette.stroke.withValues(alpha: 0.30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: palette.accent,
+                    foregroundColor: const Color(0xFF09111B),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  onPressed: _running ? _stop : _start,
+                  icon: Icon(
+                    _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  ),
+                  label: Text(_running ? '停止节拍' : '开始节拍'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.tonalIcon(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                onPressed: _tapTempo,
+                icon: const Icon(Icons.touch_app_rounded),
+                label: const Text('Tap'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Tap 可直接敲出当前想要的速度，适合在进入朗读、呼吸或步行前快速定拍。',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: _toggleImmersiveMode,
+                icon: Icon(
+                  _immersiveMode
+                      ? Icons.fullscreen_exit_rounded
+                      : Icons.fullscreen_rounded,
+                ),
+                label: Text(_immersiveMode ? '退出沉浸模式' : '沉浸模式'),
+              ),
+              if (!widget.fullScreen && widget.onOpenFullScreen != null)
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    final shouldAutoStart = true;
+                    if (_running) {
+                      _stop();
+                    }
+                    widget.onOpenFullScreen?.call(
+                      autoStart: shouldAutoStart,
+                      immersive: false,
+                    );
+                  },
+                  icon: const Icon(Icons.open_in_full_rounded),
+                  label: const Text('全屏启动'),
+                ),
+              _FocusInfoPill(
+                icon: Icons.auto_graph_rounded,
+                label: _linkAnimationAndSound ? '动画与音色已联动' : '动画与音色自由混搭',
+                emphasized: _linkAnimationAndSound,
+                tone: palette.accent,
+              ),
+              _FocusInfoPill(
+                icon: Icons.vibration_rounded,
+                label: _hapticsEnabled ? '触感反馈已开启' : '触感反馈已关闭',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _syncActiveTemplateByPattern() {
     final key = _focusPatternMatchKey(_pattern.raw);
     String? matched;
@@ -1788,89 +2240,107 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        _buildHeroSummary(
+          context,
+          beatLabel: beatLabel,
+          subBeatLabel: subBeatLabel,
+          segmentLabel: segmentLabel,
+          cycleLabel: cycleLabel,
+          arrangementLabel: arrangementLabel,
+        ),
+        const SizedBox(height: 14),
         const SectionHeader(
           title: '专注节拍工作台',
           subtitle: '围绕手机单手操作重构了节奏、风格、编排与触感设置，首屏只保留最关键的开播信息。',
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: <Widget>[
-            ToolboxMetricCard(label: 'BPM', value: '$_bpm'),
-            ToolboxMetricCard(
-              label: 'Meter',
-              value: '$_beatsPerBar/4 ×$_subdivision',
-            ),
-            ToolboxMetricCard(
-              label: 'Beat',
-              value: '$beatLabel · $subBeatLabel',
-            ),
-            ToolboxMetricCard(label: 'Segment', value: segmentLabel),
-            ToolboxMetricCard(label: 'Cycle', value: cycleLabel),
-          ],
-        ),
+        if (false)
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              ToolboxMetricCard(label: 'BPM', value: '$_bpm'),
+              ToolboxMetricCard(
+                label: 'Meter',
+                value: '$_beatsPerBar/4 ×$_subdivision',
+              ),
+              ToolboxMetricCard(
+                label: 'Beat',
+                value: '$beatLabel · $subBeatLabel',
+              ),
+              ToolboxMetricCard(label: 'Segment', value: segmentLabel),
+              ToolboxMetricCard(label: 'Cycle', value: cycleLabel),
+            ],
+          ),
         const SizedBox(height: 14),
         _buildStage(context),
         const SizedBox(height: 14),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: _running ? _stop : _start,
-                icon: Icon(
-                  _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+        _buildPrimaryControls(context),
+        const SizedBox(height: 14),
+        Visibility(
+          visible: false,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _running ? _stop : _start,
+                  icon: Icon(
+                    _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  ),
+                  label: Text(_running ? '停止节拍' : '开始节拍'),
                 ),
-                label: Text(_running ? '停止节拍' : '开始节拍'),
               ),
-            ),
-            const SizedBox(width: 10),
-            FilledButton.tonalIcon(
-              onPressed: _tapTempo,
-              icon: const Icon(Icons.touch_app_rounded),
-              label: const Text('Tap'),
-            ),
-          ],
+              const SizedBox(width: 10),
+              FilledButton.tonalIcon(
+                onPressed: _tapTempo,
+                icon: const Icon(Icons.touch_app_rounded),
+                label: const Text('Tap'),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <Widget>[
-            OutlinedButton.icon(
-              onPressed: _toggleImmersiveMode,
-              icon: Icon(
-                _immersiveMode
-                    ? Icons.fullscreen_exit_rounded
-                    : Icons.fullscreen_rounded,
+        Visibility(
+          visible: false,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: _toggleImmersiveMode,
+                icon: Icon(
+                  _immersiveMode
+                      ? Icons.fullscreen_exit_rounded
+                      : Icons.fullscreen_rounded,
+                ),
+                label: Text(_immersiveMode ? '退出沉浸' : '沉浸模式'),
               ),
-              label: Text(_immersiveMode ? '退出沉浸' : '沉浸模式'),
-            ),
-            if (!widget.fullScreen && widget.onOpenFullScreen != null)
-              FilledButton.tonalIcon(
-                onPressed: () {
-                  final shouldAutoStart = true;
-                  if (_running) {
-                    _stop();
-                  }
-                  widget.onOpenFullScreen?.call(
-                    autoStart: shouldAutoStart,
-                    immersive: false,
-                  );
-                },
-                icon: const Icon(Icons.open_in_full_rounded),
-                label: const Text('全屏启动'),
+              if (!widget.fullScreen && widget.onOpenFullScreen != null)
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    final shouldAutoStart = true;
+                    if (_running) {
+                      _stop();
+                    }
+                    widget.onOpenFullScreen?.call(
+                      autoStart: shouldAutoStart,
+                      immersive: false,
+                    );
+                  },
+                  icon: const Icon(Icons.open_in_full_rounded),
+                  label: const Text('全屏启动'),
+                ),
+              _FocusInfoPill(
+                icon: Icons.auto_graph_rounded,
+                label: _linkAnimationAndSound ? '已结对' : '自由混搭',
+                emphasized: _linkAnimationAndSound,
               ),
-            _FocusInfoPill(
-              icon: Icons.auto_graph_rounded,
-              label: _linkAnimationAndSound ? '已结对' : '自由混搭',
-              emphasized: _linkAnimationAndSound,
-            ),
-            _FocusInfoPill(
-              icon: Icons.vibration_rounded,
-              label: _hapticsEnabled ? '触感开启' : '触感关闭',
-            ),
-          ],
+              _FocusInfoPill(
+                icon: Icons.vibration_rounded,
+                label: _hapticsEnabled ? '触感开启' : '触感关闭',
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         _FocusControlSection(
@@ -2010,11 +2480,26 @@ class _FocusControlSection extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: expanded ? colorScheme.primary : colorScheme.outlineVariant,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[colorScheme.surface, colorScheme.surfaceContainerLow],
         ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: expanded
+              ? colorScheme.primary.withValues(alpha: 0.72)
+              : colorScheme.outlineVariant.withValues(alpha: 0.92),
+        ),
+        boxShadow: expanded
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: colorScheme.primary.withValues(alpha: 0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -2022,23 +2507,30 @@ class _FocusControlSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             InkWell(
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(24),
               onTap: onToggle,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Container(
-                      width: 38,
-                      height: 38,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: <Color>[
+                            colorScheme.primary.withValues(alpha: 0.18),
+                            colorScheme.primary.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(icon, color: colorScheme.primary),
+                      child: Icon(icon, color: colorScheme.primary, size: 22),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2057,24 +2549,38 @@ class _FocusControlSection extends StatelessWidget {
                                   height: 1.3,
                                 ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            summary,
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer.withValues(
+                                alpha: 0.72,
+                              ),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              summary,
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(
-                      expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      color: colorScheme.onSurfaceVariant,
+                    AnimatedRotation(
+                      turns: expanded ? 0.5 : 0.0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -2087,7 +2593,7 @@ class _FocusControlSection extends StatelessWidget {
                   : CrossFadeState.showFirst,
               firstChild: const SizedBox(height: 0),
               secondChild: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: child,
               ),
             ),
@@ -2103,24 +2609,39 @@ class _FocusInfoPill extends StatelessWidget {
     required this.icon,
     required this.label,
     this.emphasized = false,
+    this.tone,
   });
 
   final IconData icon;
   final String label;
   final bool emphasized;
+  final Color? tone;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final emphasisTone = tone ?? colorScheme.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
-        color: emphasized
-            ? colorScheme.primaryContainer
-            : colorScheme.surfaceContainerHighest,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: emphasized
+              ? <Color>[
+                  emphasisTone.withValues(alpha: 0.16),
+                  emphasisTone.withValues(alpha: 0.08),
+                ]
+              : <Color>[
+                  colorScheme.surfaceContainerHighest,
+                  colorScheme.surfaceContainerHigh,
+                ],
+        ),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: emphasized ? colorScheme.primary : colorScheme.outlineVariant,
+          color: emphasized
+              ? emphasisTone.withValues(alpha: 0.52)
+              : colorScheme.outlineVariant,
         ),
       ),
       child: Row(
@@ -2129,15 +2650,13 @@ class _FocusInfoPill extends StatelessWidget {
           Icon(
             icon,
             size: 16,
-            color: emphasized
-                ? colorScheme.primary
-                : colorScheme.onSurfaceVariant,
+            color: emphasized ? emphasisTone : colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: emphasized ? colorScheme.primary : colorScheme.onSurface,
+              color: emphasized ? emphasisTone : colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -2156,16 +2675,16 @@ class _FocusStageBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.22),
+        color: Colors.black.withValues(alpha: 0.24),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 15, color: Colors.white.withValues(alpha: 0.95)),
+          Icon(icon, size: 15, color: Colors.white.withValues(alpha: 0.96)),
           const SizedBox(width: 6),
           Text(
             label,
@@ -2175,6 +2694,87 @@ class _FocusStageBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FocusHeroMetric extends StatelessWidget {
+  const _FocusHeroMetric({
+    required this.label,
+    required this.value,
+    required this.caption,
+  });
+
+  final String label;
+  final String value;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 136),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            caption,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FocusGlowOrb extends StatelessWidget {
+  const _FocusGlowOrb({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: color,
+              blurRadius: size * 0.34,
+              spreadRadius: size * 0.04,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2826,8 +3426,8 @@ class _FocusArrangementEditorPageState
   }
 }
 
-class _FocusBeatVisualizerPainter extends CustomPainter {
-  const _FocusBeatVisualizerPainter({
+class _LegacyFocusBeatVisualizerPainter extends CustomPainter {
+  const _LegacyFocusBeatVisualizerPainter({
     required this.kind,
     required this.pulseProgress,
     required this.ambientProgress,
@@ -2996,22 +3596,22 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
         : 1.0;
     final harmonic = math.cos(math.pi * phase);
     final motionEnergy = math.sin(math.pi * phase).abs();
-    final angle = swingDirection * harmonic * 0.44;
+    final angle = swingDirection * harmonic * 0.52;
     final frameRect = Rect.fromLTWH(
-      size.width * 0.18,
-      size.height * 0.08,
-      size.width * 0.64,
-      size.height * 0.8,
+      size.width * 0.15,
+      size.height * 0.06,
+      size.width * 0.70,
+      size.height * 0.82,
     );
     final chamberRect = Rect.fromLTWH(
-      size.width * 0.31,
-      size.height * 0.28,
-      size.width * 0.38,
-      size.height * 0.42,
+      size.width * 0.28,
+      size.height * 0.24,
+      size.width * 0.44,
+      size.height * 0.46,
     );
-    final dialCenter = Offset(size.width * 0.5, size.height * 0.19);
-    final pivot = Offset(size.width * 0.5, size.height * 0.30);
-    final length = size.height * 0.40;
+    final dialCenter = Offset(size.width * 0.5, size.height * 0.16);
+    final pivot = Offset(size.width * 0.5, size.height * 0.28);
+    final length = size.height * 0.44;
     final bob = Offset(
       pivot.dx + math.sin(angle) * length,
       pivot.dy + math.cos(angle) * length,
@@ -3019,10 +3619,10 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
 
     canvas.drawShadow(
       Path()..addRRect(
-        RRect.fromRectAndRadius(frameRect, const Radius.circular(18)),
+        RRect.fromRectAndRadius(frameRect, const Radius.circular(22)),
       ),
-      Colors.black.withValues(alpha: 0.38),
-      14,
+      Colors.black.withValues(alpha: 0.45),
+      18,
       false,
     );
 
@@ -3031,100 +3631,109 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: <Color>[
-          Color(0xFF6D4326),
-          Color(0xFF4A2B1A),
-          Color(0xFF7C5032),
+          Color(0xFF8B5A2B),
+          Color(0xFF5C3D1E),
+          Color(0xFF9A6B3F),
+          Color(0xFF6E4A28),
         ],
+        stops: <double>[0.0, 0.35, 0.7, 1.0],
       ).createShader(frameRect);
 
     final baseRect = Rect.fromLTWH(
-      size.width * 0.22,
-      size.height * 0.77,
-      size.width * 0.56,
-      size.height * 0.11,
+      size.width * 0.18,
+      size.height * 0.78,
+      size.width * 0.64,
+      size.height * 0.12,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(baseRect, const Radius.circular(16)),
+      RRect.fromRectAndRadius(baseRect, const Radius.circular(18)),
       cabinetPaint,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(baseRect, const Radius.circular(16)),
+      RRect.fromRectAndRadius(baseRect, const Radius.circular(18)),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..color = const Color(0xFFB88958).withValues(alpha: 0.38),
+        ..strokeWidth = 2.0
+        ..color = const Color(0xFFD4A56A).withValues(alpha: 0.52),
     );
 
-    final columnWidth = size.width * 0.055;
+    final columnWidth = size.width * 0.06;
     _drawPendulumColumn(
       canvas,
       rect: Rect.fromLTWH(
-        size.width * 0.22,
-        size.height * 0.22,
+        size.width * 0.18,
+        size.height * 0.18,
         columnWidth,
-        size.height * 0.56,
+        size.height * 0.60,
       ),
     );
     _drawPendulumColumn(
       canvas,
       rect: Rect.fromLTWH(
-        size.width * 0.725,
-        size.height * 0.22,
+        size.width * 0.76,
+        size.height * 0.18,
         columnWidth,
-        size.height * 0.56,
+        size.height * 0.60,
       ),
     );
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(chamberRect, const Radius.circular(22)),
+      RRect.fromRectAndRadius(chamberRect, const Radius.circular(26)),
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[Color(0xFF1B120C), Color(0xFF110A06)],
+          colors: <Color>[Color(0xFF1E1510), Color(0xFF0C0806)],
         ).createShader(chamberRect),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(chamberRect, const Radius.circular(26)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = const Color(0xFF3A2818).withValues(alpha: 0.48),
     );
 
     final headRect = Rect.fromLTWH(
-      size.width * 0.24,
-      size.height * 0.08,
-      size.width * 0.52,
-      size.height * 0.18,
+      size.width * 0.20,
+      size.height * 0.06,
+      size.width * 0.60,
+      size.height * 0.20,
     );
     canvas.drawRRect(
       RRect.fromRectAndCorners(
         headRect,
-        topLeft: const Radius.circular(34),
-        topRight: const Radius.circular(34),
-        bottomLeft: const Radius.circular(14),
-        bottomRight: const Radius.circular(14),
+        topLeft: const Radius.circular(38),
+        topRight: const Radius.circular(38),
+        bottomLeft: const Radius.circular(16),
+        bottomRight: const Radius.circular(16),
       ),
       cabinetPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndCorners(
         headRect,
-        topLeft: const Radius.circular(34),
-        topRight: const Radius.circular(34),
-        bottomLeft: const Radius.circular(14),
-        bottomRight: const Radius.circular(14),
+        topLeft: const Radius.circular(38),
+        topRight: const Radius.circular(38),
+        bottomLeft: const Radius.circular(16),
+        bottomRight: const Radius.circular(16),
       ),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2
-        ..color = const Color(0xFFB98A59).withValues(alpha: 0.4),
+        ..strokeWidth = 1.8
+        ..color = const Color(0xFFC99B5F).withValues(alpha: 0.48),
     );
 
     _drawClockDial(
       canvas,
       center: dialCenter,
-      radius: size.shortestSide * 0.14,
+      radius: size.shortestSide * 0.16,
     );
 
-    final trailStrength = (motionEnergy * 0.75).clamp(0.0, 1.0);
-    for (var i = 1; i <= 3; i += 1) {
-      final trailPhase = (phase - i * 0.12).clamp(0.0, 1.0);
-      final trailAngle = swingDirection * math.cos(math.pi * trailPhase) * 0.44;
+    final trailStrength = (motionEnergy * 0.85).clamp(0.0, 1.0);
+    for (var i = 1; i <= 5; i += 1) {
+      final trailPhase = (phase - i * 0.08).clamp(0.0, 1.0);
+      final trailAngle = swingDirection * math.cos(math.pi * trailPhase) * 0.52;
       final trailBob = Offset(
         pivot.dx + math.sin(trailAngle) * length,
         pivot.dy + math.cos(trailAngle) * length,
@@ -3134,17 +3743,18 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
         trailBob,
         Paint()
           ..color = const Color(
-            0xFFE9D7B0,
-          ).withValues(alpha: trailStrength * (0.14 - i * 0.025))
-          ..strokeWidth = 2.4 - i * 0.35,
+            0xFFE5C89E,
+          ).withValues(alpha: trailStrength * (0.18 - i * 0.03))
+          ..strokeWidth = 2.8 - i * 0.4,
       );
       canvas.drawCircle(
         trailBob,
-        15 - i * 2.5,
+        18 - i * 3,
         Paint()
           ..color = _accentColor.withValues(
-            alpha: trailStrength * (0.1 - i * 0.015),
-          ),
+            alpha: trailStrength * (0.12 - i * 0.02),
+          )
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
     }
 
@@ -3157,45 +3767,66 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
     );
 
     canvas.drawCircle(
-      bob.translate(0, 5),
-      22 + motionEnergy * 7,
-      Paint()..color = Colors.black.withValues(alpha: 0.22),
+      bob.translate(0, 8),
+      26 + motionEnergy * 10,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.28)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
-    final bobRadius = 20 + pulse * 5.5;
+    final bobRadius = 24 + pulse * 7;
     canvas.drawCircle(
       bob,
       bobRadius,
       Paint()
         ..shader = RadialGradient(
-          center: const Alignment(-0.26, -0.34),
-          radius: 0.95,
+          center: const Alignment(-0.28, -0.36),
+          radius: 1.0,
           colors: <Color>[
-            const Color(0xFFFFF2C5).withValues(alpha: 0.98),
-            const Color(0xFFD9A84F).withValues(alpha: 0.95),
-            const Color(0xFF7C4C1D).withValues(alpha: 0.95),
+            const Color(0xFFFFF8D8).withValues(alpha: 1.0),
+            const Color(0xFFF5C65A).withValues(alpha: 0.98),
+            const Color(0xFFC4872F).withValues(alpha: 0.96),
+            const Color(0xFF8B5C1D).withValues(alpha: 0.94),
           ],
-          stops: const <double>[0.0, 0.42, 1.0],
-        ).createShader(Rect.fromCircle(center: bob, radius: bobRadius + 6)),
+          stops: const <double>[0.0, 0.28, 0.58, 1.0],
+        ).createShader(Rect.fromCircle(center: bob, radius: bobRadius + 8)),
     );
     canvas.drawCircle(
       bob,
       bobRadius,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4
-        ..color = const Color(0xFFFFEDC4).withValues(alpha: 0.55),
+        ..strokeWidth = 2.0
+        ..color = const Color(0xFFFFE8B0).withValues(alpha: 0.62),
     );
     canvas.drawCircle(
-      bob.translate(-6, -8),
-      4.4,
-      Paint()..color = Colors.white.withValues(alpha: 0.72),
+      bob.translate(-8, -10),
+      5.5,
+      Paint()..color = Colors.white.withValues(alpha: 0.82),
+    );
+    canvas.drawCircle(
+      bob.translate(4, -6),
+      2.8,
+      Paint()..color = Colors.white.withValues(alpha: 0.38),
     );
     canvas.drawCircle(
       bob,
-      bobRadius + 5 + motionEnergy * 4,
+      bobRadius + 8 + motionEnergy * 6,
       Paint()
-        ..color = _accentColor.withValues(alpha: 0.16 + motionEnergy * 0.06)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
+        ..color = _accentColor.withValues(alpha: 0.22 + motionEnergy * 0.08)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+    );
+
+    final reflectionGlow = motionEnergy * 0.4;
+    canvas.drawArc(
+      Rect.fromCircle(center: bob, radius: bobRadius * 0.85),
+      -math.pi * 0.6 - angle * 0.5,
+      math.pi * 0.35 + reflectionGlow * 0.12,
+      false,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.16 + reflectionGlow * 0.08)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.2
+        ..strokeCap = StrokeCap.round,
     );
   }
 
@@ -3216,9 +3847,9 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
     canvas.rotate(angle - math.pi / 2);
 
     final stemRect = Rect.fromCenter(
-      center: Offset(0, distance * 0.17),
-      width: 4.5,
-      height: distance * 0.34,
+      center: Offset(0, distance * 0.18),
+      width: 5.2,
+      height: distance * 0.36,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(stemRect, const Radius.circular(999)),
@@ -3226,105 +3857,137 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[Color(0xFFEAD9A8), Color(0xFFA27032)],
+          colors: <Color>[
+            Color(0xFFE5C89E),
+            Color(0xFFA87842),
+            Color(0xFF8B6230),
+          ],
         ).createShader(stemRect),
     );
 
-    final lyreHeight = distance * 0.22;
-    final lyreTop = distance * 0.28;
+    final lyreHeight = distance * 0.24;
+    final lyreTop = distance * 0.30;
     final leftRail = Path()
-      ..moveTo(-10, lyreTop)
+      ..moveTo(-12, lyreTop)
       ..quadraticBezierTo(
-        -18,
-        lyreTop + lyreHeight * 0.25,
-        -10,
+        -22,
+        lyreTop + lyreHeight * 0.28,
+        -12,
         lyreTop + lyreHeight,
       )
-      ..moveTo(10, lyreTop)
+      ..moveTo(12, lyreTop)
       ..quadraticBezierTo(
-        18,
-        lyreTop + lyreHeight * 0.25,
-        10,
+        22,
+        lyreTop + lyreHeight * 0.28,
+        12,
         lyreTop + lyreHeight,
       );
     canvas.drawPath(
       leftRail,
       Paint()
-        ..color = const Color(0xFFDEB668).withValues(alpha: 0.96)
-        ..strokeWidth = 2.2
+        ..color = const Color(0xFFDAA65C).withValues(alpha: 0.98)
+        ..strokeWidth = 2.8
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
-    for (var i = 0; i < 3; i += 1) {
-      final y = lyreTop + lyreHeight * (0.18 + i * 0.24);
+    for (var i = 0; i < 4; i += 1) {
+      final y = lyreTop + lyreHeight * (0.16 + i * 0.22);
       canvas.drawLine(
-        Offset(-9.2, y),
-        Offset(9.2, y),
+        Offset(-10.5, y),
+        Offset(10.5, y),
         Paint()
-          ..color = const Color(0xFFF6E2A5).withValues(alpha: 0.74)
-          ..strokeWidth = 1.2,
+          ..color = const Color(0xFFF2D8A0).withValues(alpha: 0.82)
+          ..strokeWidth = 1.4,
       );
     }
     canvas.drawLine(
       Offset(0, lyreTop),
-      Offset(0, distance - 32),
+      Offset(0, distance - 36),
       Paint()
-        ..color = const Color(0xFFF0D287).withValues(alpha: 0.92)
-        ..strokeWidth = 1.6,
+        ..color = const Color(0xFFE8C890).withValues(alpha: 0.96)
+        ..strokeWidth = 2.0,
     );
 
     final pivotCap = Rect.fromCenter(
       center: const Offset(0, 0),
-      width: 18,
-      height: 10,
+      width: 22,
+      height: 12,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(pivotCap, const Radius.circular(999)),
       Paint()
         ..shader = const LinearGradient(
-          colors: <Color>[Color(0xFFFBE4B4), Color(0xFFAA7333)],
+          colors: <Color>[
+            Color(0xFFFCE8B8),
+            Color(0xFFB8844A),
+            Color(0xFF9A6A38),
+          ],
         ).createShader(pivotCap),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(pivotCap, const Radius.circular(999)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = const Color(0xFFE0B878).withValues(alpha: 0.48),
     );
     canvas.restore();
 
     canvas.drawCircle(
       pivot,
-      5.2,
-      Paint()..color = const Color(0xFFF6E0A4).withValues(alpha: 0.92),
+      6.2,
+      Paint()..color = const Color(0xFFF8E4A8).withValues(alpha: 0.96),
     );
     canvas.drawCircle(
-      bob.translate(0, -24),
-      6 + pulse * 1.4,
+      pivot,
+      4.0,
       Paint()
-        ..color = accentColor.withValues(alpha: 0.14)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+        ..shader = const RadialGradient(
+          colors: <Color>[Color(0xFFFEF4D8), Color(0xFFC49850)],
+        ).createShader(Rect.fromCircle(center: pivot, radius: 4)),
+    );
+    canvas.drawCircle(
+      bob.translate(0, -28),
+      8 + pulse * 2.0,
+      Paint()
+        ..color = accentColor.withValues(alpha: 0.18)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
     );
   }
 
   void _drawPendulumColumn(Canvas canvas, {required Rect rect}) {
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(12)),
+      RRect.fromRectAndRadius(rect, const Radius.circular(14)),
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: <Color>[
-            Color(0xFF704728),
-            Color(0xFF4A2B1A),
-            Color(0xFF7F5231),
+            Color(0xFF805530),
+            Color(0xFF5A3820),
+            Color(0xFF885835),
+            Color(0xFF684528),
           ],
+          stops: <double>[0.0, 0.35, 0.7, 1.0],
         ).createShader(rect),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(14)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..color = const Color(0xFFC89860).withValues(alpha: 0.42),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(
           center: rect.center,
-          width: rect.width * 0.34,
-          height: rect.height * 0.82,
+          width: rect.width * 0.36,
+          height: rect.height * 0.84,
         ),
         const Radius.circular(999),
       ),
-      Paint()..color = Colors.black.withValues(alpha: 0.14),
+      Paint()..color = Colors.black.withValues(alpha: 0.18),
     );
   }
 
@@ -3336,30 +3999,55 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
     final outerRect = Rect.fromCircle(center: center, radius: radius);
     canvas.drawCircle(
       center,
-      radius + 6,
+      radius + 8,
       Paint()
         ..shader = const RadialGradient(
-          colors: <Color>[Color(0xFFFFEAB2), Color(0xFF8C5D22)],
-        ).createShader(Rect.fromCircle(center: center, radius: radius + 6)),
+          colors: <Color>[
+            Color(0xFFFFEBB8),
+            Color(0xFF9A6830),
+            Color(0xFF724A20),
+          ],
+          stops: <double>[0.0, 0.7, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: radius + 8)),
+    );
+    canvas.drawCircle(
+      center,
+      radius + 8,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = const Color(0xFFD8A060).withValues(alpha: 0.52),
     );
     canvas.drawCircle(
       center,
       radius,
       Paint()
         ..shader = const RadialGradient(
-          center: Alignment(-0.12, -0.22),
+          center: Alignment(-0.14, -0.24),
           colors: <Color>[
-            Color(0xFFF5E9C8),
-            Color(0xFFD0B68A),
-            Color(0xFFB99863),
+            Color(0xFFF8ECC8),
+            Color(0xFFD8B88A),
+            Color(0xFFBA9868),
+            Color(0xFFA07848),
           ],
-          stops: <double>[0.0, 0.68, 1.0],
+          stops: <double>[0.0, 0.45, 0.75, 1.0],
         ).createShader(outerRect),
     );
     canvas.drawCircle(
       center,
-      radius * 0.18,
-      Paint()..color = const Color(0xFF83551C).withValues(alpha: 0.84),
+      radius * 0.85,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = const Color(0xFF7A5030).withValues(alpha: 0.38),
+    );
+    canvas.drawCircle(
+      center,
+      radius * 0.22,
+      Paint()
+        ..shader = const RadialGradient(
+          colors: <Color>[Color(0xFF7A5030), Color(0xFF583818)],
+        ).createShader(Rect.fromCircle(center: center, radius: radius * 0.22)),
     );
     for (var i = 0; i < 12; i += 1) {
       final angle = -math.pi / 2 + i * math.pi / 6;
@@ -3368,169 +4056,414 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
         center.dy + math.sin(angle) * radius * 0.72,
       );
       final end = Offset(
-        center.dx + math.cos(angle) * radius * 0.88,
-        center.dy + math.sin(angle) * radius * 0.88,
+        center.dx + math.cos(angle) * radius * 0.90,
+        center.dy + math.sin(angle) * radius * 0.90,
       );
       canvas.drawLine(
         start,
         end,
         Paint()
-          ..color = const Color(0xFF6E4B20).withValues(alpha: 0.72)
-          ..strokeWidth = i % 3 == 0 ? 2.1 : 1.1,
+          ..color = const Color(0xFF5C4020).withValues(alpha: 0.82)
+          ..strokeWidth = i % 3 == 0 ? 2.6 : 1.4,
+      );
+    }
+    for (var i = 0; i < 60; i += 1) {
+      if (i % 5 == 0) continue;
+      final angle = -math.pi / 2 + i * math.pi / 30;
+      final dot = Offset(
+        center.dx + math.cos(angle) * radius * 0.82,
+        center.dy + math.sin(angle) * radius * 0.82,
+      );
+      canvas.drawCircle(
+        dot,
+        0.8,
+        Paint()..color = const Color(0xFF6E4A28).withValues(alpha: 0.52),
       );
     }
     canvas.drawLine(
       center,
-      Offset(center.dx + radius * 0.14, center.dy - radius * 0.46),
+      Offset(center.dx + radius * 0.16, center.dy - radius * 0.52),
       Paint()
-        ..color = const Color(0xFF5C3C18)
-        ..strokeWidth = 2.1
+        ..color = const Color(0xFF4C3018)
+        ..strokeWidth = 2.6
         ..strokeCap = StrokeCap.round,
     );
     canvas.drawLine(
       center,
-      Offset(center.dx - radius * 0.34, center.dy + radius * 0.12),
+      Offset(center.dx - radius * 0.38, center.dy + radius * 0.16),
       Paint()
-        ..color = const Color(0xFF5C3C18)
-        ..strokeWidth = 1.5
+        ..color = const Color(0xFF4C3018)
+        ..strokeWidth = 1.8
         ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawCircle(
+      center,
+      radius * 0.08,
+      Paint()..color = const Color(0xFFD8A860).withValues(alpha: 0.96),
     );
   }
 
   void _paintHypno(Canvas canvas, Size size, double pulse) {
     final center = size.center(Offset.zero);
-    final baseRadius = size.shortestSide * 0.14;
+    final baseRadius = size.shortestSide * 0.12;
     final phase = ambientProgress * math.pi * 2 * 1.35;
-    for (var i = 0; i < 3; i += 1) {
-      final swirlRadius = baseRadius + size.shortestSide * (0.14 + i * 0.08);
-      final start = phase + i * 0.9;
+    final breatheCycle = math.sin(phase * 0.5).abs();
+    final breathScale = 1.0 + breatheCycle * 0.08;
+
+    for (var layer = 0; layer < 4; layer += 1) {
+      final layerPhase = phase + layer * 0.72;
+      final swirlRadius =
+          baseRadius + size.shortestSide * (0.16 + layer * 0.12) * breathScale;
+      final start = layerPhase;
+      final sweep = math.pi * 1.4 + pulse * 0.2;
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: swirlRadius),
         start,
-        math.pi * 1.2,
+        sweep,
         false,
         Paint()
-          ..color = _accentColor.withValues(alpha: 0.18 - i * 0.04)
+          ..shader = SweepGradient(
+            startAngle: start,
+            endAngle: start + sweep,
+            colors: <Color>[
+              _accentColor.withValues(alpha: 0.0),
+              _accentColor.withValues(alpha: 0.32 - layer * 0.06),
+              _accentColor.withValues(alpha: 0.18 - layer * 0.03),
+              _accentColor.withValues(alpha: 0.0),
+            ],
+            stops: const <double>[0.0, 0.3, 0.7, 1.0],
+          ).createShader(Rect.fromCircle(center: center, radius: swirlRadius))
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
-          ..strokeWidth = 4 - i * 0.8,
+          ..strokeWidth = 5.5 - layer * 1.0,
       );
     }
-    for (var i = 0; i < 7; i += 1) {
-      final ringT = i / 6;
-      final radius =
-          baseRadius +
-          size.shortestSide * (0.07 * i) +
-          pulse * 12 * (1 - ringT);
-      final alpha = _mix(0.16, 0.62, 1 - ringT) * (0.72 + pulse * 0.28);
+
+    for (var i = 0; i < 9; i += 1) {
+      final ringT = i / 8;
+      final baseRingRadius = baseRadius + size.shortestSide * (0.08 * i);
+      final waveOffset = math.sin(phase + i * 0.28) * 4;
+      final radius = baseRingRadius + pulse * 14 * (1 - ringT) + waveOffset;
+      final alpha = _mix(0.12, 0.68, 1 - ringT) * (0.68 + pulse * 0.32);
+      final strokeWidth = _mix(1.0, 4.2, 1 - ringT);
+
       canvas.drawCircle(
         center,
         radius,
         Paint()
-          ..color = _accentColor.withValues(alpha: alpha)
+          ..shader = RadialGradient(
+            center: Alignment.center,
+            radius: 0.6,
+            colors: <Color>[
+              _accentColor.withValues(alpha: alpha * 0.9),
+              _accentColor.withValues(alpha: alpha * 0.5),
+              _accentColor.withValues(alpha: alpha * 0.2),
+            ],
+            stops: const <double>[0.0, 0.5, 1.0],
+          ).createShader(Rect.fromCircle(center: center, radius: radius))
           ..style = PaintingStyle.stroke
-          ..strokeWidth = _mix(1.2, 3.6, 1 - ringT)
+          ..strokeWidth = strokeWidth,
+      );
+    }
+
+    for (var i = 0; i < 6; i += 1) {
+      final angle = phase + i * math.pi / 3;
+      final rayLength = baseRadius * 2.8 + pulse * 12;
+      final start = Offset(
+        center.dx + math.cos(angle) * (baseRadius * 1.1),
+        center.dy + math.sin(angle) * (baseRadius * 1.1),
+      );
+      final end = Offset(
+        center.dx + math.cos(angle) * rayLength,
+        center.dy + math.sin(angle) * rayLength,
+      );
+      canvas.drawLine(
+        start,
+        end,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: <Color>[
+              _accentColor.withValues(alpha: 0.32 + pulse * 0.18),
+              _accentColor.withValues(alpha: 0.0),
+            ],
+          ).createShader(Rect.fromPoints(start, end))
+          ..strokeWidth = 1.8 + pulse * 0.8
           ..strokeCap = StrokeCap.round,
       );
     }
+
+    final coreRadius = baseRadius * (1.1 + pulse * 0.6) * breathScale;
     canvas.drawCircle(
       center,
-      baseRadius * (1.05 + pulse * 0.55),
-      Paint()..color = _accentColor.withValues(alpha: 0.92),
+      coreRadius + 8,
+      Paint()
+        ..color = _accentColor.withValues(alpha: 0.18)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
+    );
+    canvas.drawCircle(
+      center,
+      coreRadius,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.18, -0.24),
+          radius: 0.85,
+          colors: <Color>[
+            Colors.white.withValues(alpha: 0.96),
+            _accentColor.withValues(alpha: 0.94),
+            _accentColor.withValues(alpha: 0.78),
+            const Color(0xFF5A3A72).withValues(alpha: 0.72),
+          ],
+          stops: const <double>[0.0, 0.28, 0.58, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: coreRadius)),
+    );
+    canvas.drawCircle(
+      center,
+      coreRadius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..color = Colors.white.withValues(alpha: 0.48),
+    );
+    canvas.drawCircle(
+      center.translate(-coreRadius * 0.32, -coreRadius * 0.38),
+      coreRadius * 0.22,
+      Paint()..color = Colors.white.withValues(alpha: 0.86),
+    );
+    canvas.drawCircle(
+      center.translate(coreRadius * 0.12, -coreRadius * 0.18),
+      coreRadius * 0.08,
+      Paint()..color = Colors.white.withValues(alpha: 0.32),
+    );
+
+    canvas.drawCircle(
+      center,
+      coreRadius * 0.42,
+      Paint()
+        ..shader =
+            const RadialGradient(
+              colors: <Color>[Color(0xFF7A4A92), Color(0xFF4A2A5A)],
+            ).createShader(
+              Rect.fromCircle(center: center, radius: coreRadius * 0.42),
+            ),
     );
   }
 
   void _paintDew(Canvas canvas, Size size, double pulse) {
     final centerX = size.width * 0.5;
-    final fall = Curves.easeIn.transform(pulseProgress.clamp(0.0, 1.0));
-    final dropY = _mix(size.height * 0.16, size.height * 0.67, fall);
-    final rippleStart = size.height * 0.74;
-    final impactProgress = ((fall - 0.78) / 0.22).clamp(0.0, 1.0);
-    final squash = impactProgress * 0.18;
-    final radius = 12 + pulse * 7;
+    final fall = Curves.easeInCubic.transform(pulseProgress.clamp(0.0, 1.0));
+    final dropY = _mix(size.height * 0.12, size.height * 0.64, fall);
+    final rippleStart = size.height * 0.72;
+    final impactProgress = ((fall - 0.82) / 0.18).clamp(0.0, 1.0);
+    final preImpactSquash = fall < 0.82
+        ? 0.0
+        : math.sin(fall * math.pi * 4) * 0.04;
+    final squash = impactProgress * 0.22 + preImpactSquash;
+    final radius = 14 + pulse * 8;
     final dropRect = Rect.fromCenter(
       center: Offset(centerX, dropY),
-      width: radius * 2.05 * (1 + squash * 0.35),
-      height: radius * 2.05 * (1 - squash),
+      width: radius * 2.4 * (1 + squash * 0.28),
+      height: radius * 2.4 * (1 - squash * 0.65),
     );
+
+    for (var i = 0; i < 4; i += 1) {
+      final trailY = dropY - (i + 1) * radius * 1.8;
+      if (trailY < size.height * 0.08) continue;
+      final trailAlpha = 0.16 - i * 0.04;
+      final trailRadius = radius * (0.65 - i * 0.12);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(
+            centerX + math.sin(ambientProgress * math.pi * 8 + i) * 3,
+            trailY,
+          ),
+          width: trailRadius * 1.8,
+          height: trailRadius * 2.2,
+        ),
+        Paint()
+          ..color = _accentColor.withValues(alpha: trailAlpha)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      );
+    }
+
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(centerX, rippleStart + 4),
-        width: 52 + impactProgress * 50,
-        height: 14 + impactProgress * 6,
+        center: Offset(centerX, rippleStart + 6),
+        width: 62 + impactProgress * 58,
+        height: 18 + impactProgress * 8,
       ),
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.12 + impactProgress * 0.08),
+        ..color = Colors.black.withValues(alpha: 0.14 + impactProgress * 0.10)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
+
+    final waterSurfaceRect = Rect.fromLTWH(
+      size.width * 0.15,
+      rippleStart - 4,
+      size.width * 0.70,
+      size.height * 0.12,
+    );
+    canvas.drawRect(
+      waterSurfaceRect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            const Color(0xFF1A4558).withValues(alpha: 0.18),
+            const Color(0xFF0F2838).withValues(alpha: 0.42),
+            const Color(0xFF081820).withValues(alpha: 0.68),
+          ],
+        ).createShader(waterSurfaceRect),
+    );
+
     canvas.drawOval(
       dropRect,
       Paint()
         ..shader = RadialGradient(
-          center: const Alignment(-0.35, -0.45),
-          radius: 0.95,
+          center: const Alignment(-0.38, -0.48),
+          radius: 1.1,
           colors: <Color>[
-            Colors.white.withValues(alpha: 0.9),
-            _accentColor.withValues(alpha: 0.4),
-            _accentColor.withValues(alpha: 0.16),
+            Colors.white.withValues(alpha: 0.96),
+            Colors.white.withValues(alpha: 0.78),
+            _accentColor.withValues(alpha: 0.52),
+            _accentColor.withValues(alpha: 0.28),
+            const Color(0xFF1A5568).withValues(alpha: 0.18),
           ],
-          stops: const <double>[0.0, 0.36, 1.0],
+          stops: const <double>[0.0, 0.18, 0.42, 0.72, 1.0],
         ).createShader(dropRect),
     );
     canvas.drawOval(
       dropRect,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2
-        ..color = Colors.white.withValues(alpha: 0.42),
+        ..strokeWidth = 1.6
+        ..color = Colors.white.withValues(alpha: 0.52),
     );
+
     canvas.drawCircle(
-      Offset(centerX - radius * 0.4, dropY - radius * 0.52),
-      radius * 0.2,
-      Paint()..color = Colors.white.withValues(alpha: 0.72),
+      Offset(centerX - radius * 0.48, dropY - radius * 0.58),
+      radius * 0.28,
+      Paint()..color = Colors.white.withValues(alpha: 0.88),
     );
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(centerX + radius * 0.18, dropY + radius * 0.16),
-        width: radius * 1.05,
-        height: radius * 0.5,
+        center: Offset(centerX + radius * 0.22, dropY + radius * 0.18),
+        width: radius * 1.2,
+        height: radius * 0.58,
       ),
-      Paint()..color = Colors.white.withValues(alpha: 0.12),
+      Paint()..color = Colors.white.withValues(alpha: 0.16),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(centerX - radius * 0.12, dropY - radius * 0.28),
+        width: radius * 0.55,
+        height: radius * 0.28,
+      ),
+      Paint()..color = Colors.white.withValues(alpha: 0.28),
     );
 
-    for (var i = 0; i < 3; i += 1) {
-      final wave = (impactProgress - i * 0.18).clamp(0.0, 1.0);
-      if (wave <= 0) {
-        continue;
-      }
-      final rippleRadius = 16 + wave * 76;
-      final alpha = (1 - wave * 0.42).clamp(0.0, 1.0) * 0.38;
+    final glowRadius = radius * 2.2 + pulse * 8;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(centerX, dropY),
+        width: glowRadius,
+        height: glowRadius * 0.8,
+      ),
+      Paint()
+        ..color = _accentColor.withValues(alpha: 0.12 + pulse * 0.06)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
+    );
+
+    for (var i = 0; i < 5; i += 1) {
+      final wave = (impactProgress - i * 0.16).clamp(0.0, 1.0);
+      if (wave <= 0) continue;
+      final rippleRadius = 22 + wave * 88;
+      final alpha = (1 - wave * 0.48).clamp(0.0, 1.0) * 0.44;
+      final rippleWidth = 2.4 - i * 0.35;
+
       canvas.drawOval(
         Rect.fromCenter(
           center: Offset(centerX, rippleStart),
           width: rippleRadius * 2,
-          height: rippleRadius * 0.42,
+          height: rippleRadius * 0.48,
         ),
         Paint()
-          ..color = _accentColor.withValues(alpha: alpha)
+          ..shader =
+              LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: <Color>[
+                  _accentColor.withValues(alpha: 0.0),
+                  _accentColor.withValues(alpha: alpha),
+                  _accentColor.withValues(alpha: alpha * 0.8),
+                  _accentColor.withValues(alpha: 0.0),
+                ],
+                stops: const <double>[0.0, 0.25, 0.75, 1.0],
+              ).createShader(
+                Rect.fromCenter(
+                  center: Offset(centerX, rippleStart),
+                  width: rippleRadius * 2,
+                  height: rippleRadius * 0.48,
+                ),
+              )
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.9 - i * 0.3,
+          ..strokeWidth = rippleWidth,
       );
     }
+
     if (impactProgress > 0) {
-      final splashT = impactProgress;
-      for (var i = 0; i < 5; i += 1) {
-        final theta = (-0.6 + i * 0.3) * math.pi;
-        final length = _mix(6, 18, splashT);
-        final start = Offset(centerX, rippleStart - 2);
+      final splashT = Curves.easeOut.transform(impactProgress);
+      for (var i = 0; i < 8; i += 1) {
+        final theta = (-0.75 + i * 0.22) * math.pi;
+        final baseLength = _mix(4, 24, splashT);
+        final length = baseLength * (1 - (i % 4) * 0.15);
+        final start = Offset(centerX, rippleStart - 4);
         final end = Offset(
           start.dx + math.cos(theta) * length,
-          start.dy + math.sin(theta) * length,
+          start.dy + math.sin(theta) * length * 0.6 - splashT * 12,
         );
+
         canvas.drawLine(
           start,
           end,
           Paint()
-            ..color = _accentColor.withValues(alpha: (1 - splashT) * 0.35)
+            ..shader = LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: <Color>[
+                _accentColor.withValues(alpha: (1 - splashT) * 0.48),
+                Colors.white.withValues(alpha: (1 - splashT) * 0.32),
+              ],
+            ).createShader(Rect.fromPoints(start, end))
+            ..strokeWidth = 1.8 - splashT * 0.6
+            ..strokeCap = StrokeCap.round,
+        );
+
+        if (splashT > 0.3) {
+          canvas.drawCircle(
+            end,
+            2.4 - splashT * 1.2,
+            Paint()
+              ..color = Colors.white.withValues(alpha: (1 - splashT) * 0.42),
+          );
+        }
+      }
+
+      for (var ring = 0; ring < 2; ring += 1) {
+        final ringT = (splashT - ring * 0.28).clamp(0.0, 1.0);
+        if (ringT <= 0) continue;
+        final secondaryRadius = 45 + ringT * 65 + ring * 28;
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(centerX, rippleStart + ring * 6),
+            width: secondaryRadius * 2,
+            height: secondaryRadius * 0.38,
+          ),
+          Paint()
+            ..color = _accentColor.withValues(alpha: (1 - ringT) * 0.22)
+            ..style = PaintingStyle.stroke
             ..strokeWidth = 1.4,
         );
       }
@@ -3543,168 +4476,301 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
         ? (activeBeat.isOdd ? -1.0 : 1.0)
         : 1.0;
     final tickImpulse =
-        Curves.easeOutCubic.transform((1 - phase).clamp(0.0, 1.0)) * 0.08;
+        Curves.easeOutCubic.transform((1 - phase).clamp(0.0, 1.0)) * 0.12;
     final mainRotation =
-        ambientProgress * math.pi * 2 * (running ? 0.42 : 0.08) +
+        ambientProgress * math.pi * 2 * (running ? 0.48 : 0.12) +
         tickImpulse * swingDirection;
     final caseCenter = Offset(size.width * 0.5, size.height * 0.48);
-    final caseRadius = size.shortestSide * 0.33;
+    final caseRadius = size.shortestSide * 0.36;
     final caseRect = Rect.fromCircle(center: caseCenter, radius: caseRadius);
 
     canvas.drawCircle(
       caseCenter,
-      caseRadius + 16,
+      caseRadius + 22,
       Paint()
         ..shader =
             const RadialGradient(
-              colors: <Color>[Color(0xFF7D3A20), Color(0xFF3B1408)],
+              colors: <Color>[
+                Color(0xFF8A4A28),
+                Color(0xFF4A2818),
+                Color(0xFF2A1408),
+              ],
+              stops: <double>[0.0, 0.6, 1.0],
             ).createShader(
-              Rect.fromCircle(center: caseCenter, radius: caseRadius + 16),
+              Rect.fromCircle(center: caseCenter, radius: caseRadius + 22),
             ),
     );
     canvas.drawCircle(
       caseCenter,
-      caseRadius + 8,
+      caseRadius + 12,
       Paint()
         ..shader =
             const RadialGradient(
-              center: Alignment(-0.14, -0.28),
+              center: Alignment(-0.16, -0.32),
               colors: <Color>[
-                Color(0xFFF7D78D),
-                Color(0xFFB88A32),
-                Color(0xFF5C3614),
+                Color(0xFFFAD88E),
+                Color(0xFFD8A048),
+                Color(0xFFB07832),
+                Color(0xFF683818),
               ],
+              stops: <double>[0.0, 0.32, 0.62, 1.0],
             ).createShader(
-              Rect.fromCircle(center: caseCenter, radius: caseRadius + 8),
+              Rect.fromCircle(center: caseCenter, radius: caseRadius + 12),
             ),
+    );
+    canvas.drawCircle(
+      caseCenter,
+      caseRadius + 12,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..color = const Color(0xFFC89858).withValues(alpha: 0.48),
     );
     canvas.drawCircle(
       caseCenter,
       caseRadius,
       Paint()
         ..shader = const RadialGradient(
-          colors: <Color>[Color(0xFF20150E), Color(0xFF0A0604)],
+          center: Alignment.center,
+          colors: <Color>[
+            Color(0xFF2A1E14),
+            Color(0xFF1A120A),
+            Color(0xFF0A0604),
+          ],
         ).createShader(caseRect),
     );
 
     _drawFocusGear(
       canvas,
-      center: caseCenter.translate(-caseRadius * 0.22, caseRadius * 0.12),
-      radius: caseRadius * 0.42 + pulse * 4,
-      teeth: 20,
+      center: caseCenter.translate(-caseRadius * 0.28, caseRadius * 0.16),
+      radius: caseRadius * 0.46 + pulse * 6,
+      teeth: 24,
       rotation: mainRotation,
       color: const Color(0xFFDAB35C),
       pulse: pulse,
     );
     _drawFocusGear(
       canvas,
-      center: caseCenter.translate(caseRadius * 0.24, -caseRadius * 0.18),
-      radius: caseRadius * 0.18 + pulse * 2.2,
-      teeth: 12,
-      rotation: -mainRotation * 1.9,
+      center: caseCenter.translate(caseRadius * 0.28, -caseRadius * 0.22),
+      radius: caseRadius * 0.20 + pulse * 3,
+      teeth: 14,
+      rotation: -mainRotation * 2.1,
       color: const Color(0xFFD0D7E0),
-      pulse: pulse * 0.8,
+      pulse: pulse * 0.85,
     );
     _drawFocusGear(
       canvas,
-      center: caseCenter.translate(-caseRadius * 0.34, -caseRadius * 0.28),
-      radius: caseRadius * 0.15,
-      teeth: 12,
-      rotation: -mainRotation * 1.35,
+      center: caseCenter.translate(-caseRadius * 0.38, -caseRadius * 0.32),
+      radius: caseRadius * 0.18,
+      teeth: 14,
+      rotation: -mainRotation * 1.48,
       color: const Color(0xFFAEB9C7),
+      pulse: pulse * 0.65,
+    );
+    _drawFocusGear(
+      canvas,
+      center: caseCenter.translate(caseRadius * 0.36, caseRadius * 0.32),
+      radius: caseRadius * 0.14,
+      teeth: 12,
+      rotation: mainRotation * 2.6,
+      color: const Color(0xFFB3BAC4),
       pulse: pulse * 0.55,
     );
     _drawFocusGear(
       canvas,
-      center: caseCenter.translate(caseRadius * 0.3, caseRadius * 0.28),
-      radius: caseRadius * 0.12,
+      center: caseCenter.translate(-caseRadius * 0.12, caseRadius * 0.38),
+      radius: caseRadius * 0.10,
       teeth: 10,
-      rotation: mainRotation * 2.2,
-      color: const Color(0xFFB3BAC4),
-      pulse: pulse * 0.5,
+      rotation: mainRotation * 3.2,
+      color: const Color(0xFFC8D0D8),
+      pulse: pulse * 0.45,
     );
 
-    final balanceAngle = swingDirection * math.cos(math.pi * phase) * 0.54;
+    final balanceAngle = swingDirection * math.cos(math.pi * phase) * 0.58;
     _drawBalanceWheel(
       canvas,
       center: caseCenter,
-      radius: caseRadius * 0.28,
+      radius: caseRadius * 0.32,
       rotation: balanceAngle,
       pulse: pulse,
     );
 
-    final bridgeColor = const Color(0xFFD8DEE8).withValues(alpha: 0.95);
+    final bridgeColor = const Color(0xFFD8DEE8).withValues(alpha: 0.98);
     final bridgePaint = Paint()
       ..color = bridgeColor
-      ..strokeWidth = 10
+      ..strokeWidth = 12
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
     canvas.drawArc(
-      Rect.fromCircle(center: caseCenter, radius: caseRadius * 0.33),
-      math.pi * 1.02,
-      math.pi * 0.95,
+      Rect.fromCircle(center: caseCenter, radius: caseRadius * 0.38),
+      math.pi * 1.05,
+      math.pi * 0.92,
       false,
       bridgePaint,
     );
-    canvas.drawLine(
-      caseCenter.translate(-caseRadius * 0.02, 0),
-      caseCenter.translate(caseRadius * 0.4, -caseRadius * 0.04),
-      bridgePaint,
+    canvas.drawArc(
+      Rect.fromCircle(center: caseCenter, radius: caseRadius * 0.38),
+      math.pi * 1.05,
+      math.pi * 0.92,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..color = Colors.white.withValues(alpha: 0.32),
     );
     canvas.drawLine(
-      caseCenter.translate(-caseRadius * 0.18, -caseRadius * 0.22),
-      caseCenter.translate(caseRadius * 0.08, -caseRadius * 0.06),
+      caseCenter.translate(-caseRadius * 0.04, 0),
+      caseCenter.translate(caseRadius * 0.42, -caseRadius * 0.06),
       Paint()
-        ..color = bridgeColor.withValues(alpha: 0.84)
-        ..strokeWidth = 6.5
+        ..color = bridgeColor
+        ..strokeWidth = 8.5
         ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawLine(
+      caseCenter.translate(-caseRadius * 0.22, -caseRadius * 0.26),
+      caseCenter.translate(caseRadius * 0.12, -caseRadius * 0.08),
+      Paint()
+        ..color = bridgeColor.withValues(alpha: 0.88)
+        ..strokeWidth = 7.0
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawLine(
+      caseCenter.translate(-caseRadius * 0.08, caseRadius * 0.28),
+      caseCenter.translate(caseRadius * 0.32, caseRadius * 0.12),
+      Paint()
+        ..color = bridgeColor.withValues(alpha: 0.82)
+        ..strokeWidth = 5.5
+        ..strokeCap = StrokeCap.round,
+    );
+
+    canvas.drawCircle(
+      caseCenter,
+      10,
+      Paint()
+        ..shader = const RadialGradient(
+          colors: <Color>[
+            Color(0xFFFCE8AA),
+            Color(0xFFD8A848),
+            Color(0xFF9A6D25),
+          ],
+        ).createShader(Rect.fromCircle(center: caseCenter, radius: 10)),
     );
     canvas.drawCircle(
       caseCenter,
-      8,
+      10,
       Paint()
-        ..shader = const RadialGradient(
-          colors: <Color>[Color(0xFFFCE8AA), Color(0xFF9A6D25)],
-        ).createShader(Rect.fromCircle(center: caseCenter, radius: 8)),
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = const Color(0xFFE8C878).withValues(alpha: 0.62),
     );
 
     for (final screw in <Offset>[
-      caseCenter.translate(-caseRadius * 0.55, -caseRadius * 0.52),
-      caseCenter.translate(caseRadius * 0.57, -caseRadius * 0.48),
-      caseCenter.translate(-caseRadius * 0.48, caseRadius * 0.58),
+      caseCenter.translate(-caseRadius * 0.58, -caseRadius * 0.56),
+      caseCenter.translate(caseRadius * 0.62, -caseRadius * 0.52),
+      caseCenter.translate(-caseRadius * 0.52, caseRadius * 0.62),
+      caseCenter.translate(caseRadius * 0.48, caseRadius * 0.58),
     ]) {
-      _drawMovementScrew(canvas, center: screw, radius: 11);
+      _drawMovementScrew(canvas, center: screw, radius: 13);
     }
     for (final jewel in <Offset>[
-      caseCenter.translate(-caseRadius * 0.23, -caseRadius * 0.1),
-      caseCenter.translate(caseRadius * 0.08, 0),
-      caseCenter.translate(caseRadius * 0.17, -caseRadius * 0.12),
+      caseCenter.translate(-caseRadius * 0.26, -caseRadius * 0.12),
+      caseCenter.translate(caseRadius * 0.12, -caseRadius * 0.02),
+      caseCenter.translate(caseRadius * 0.22, -caseRadius * 0.16),
+      caseCenter.translate(-caseRadius * 0.32, caseRadius * 0.08),
     ]) {
       canvas.drawCircle(
         jewel,
-        4.2,
-        Paint()..color = const Color(0xFF8E4DA8).withValues(alpha: 0.88),
+        5.2,
+        Paint()
+          ..shader = const RadialGradient(
+            center: Alignment(-0.24, -0.28),
+            colors: <Color>[
+              Color(0xFFE8A8FF),
+              Color(0xFF8E4DA8),
+              Color(0xFF5A2A6A),
+            ],
+          ).createShader(Rect.fromCircle(center: jewel, radius: 5.2)),
+      );
+      canvas.drawCircle(
+        jewel,
+        1.8,
+        Paint()..color = Colors.white.withValues(alpha: 0.72),
       );
     }
+
+    for (var i = 0; i < 8; i += 1) {
+      final angle = i * math.pi / 4 + mainRotation * 0.08;
+      final decorationRadius = caseRadius * 0.72;
+      final decorationPos = Offset(
+        caseCenter.dx + math.cos(angle) * decorationRadius,
+        caseCenter.dy + math.sin(angle) * decorationRadius,
+      );
+      canvas.drawCircle(
+        decorationPos,
+        2.8,
+        Paint()
+          ..shader = const RadialGradient(
+            colors: <Color>[Color(0xFFD8A858), Color(0xFF7A4828)],
+          ).createShader(Rect.fromCircle(center: decorationPos, radius: 2.8)),
+      );
+    }
+
     canvas.drawCircle(
       caseCenter,
-      caseRadius + 3 + pulse * 3,
+      caseRadius + 5 + pulse * 4,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.1
-        ..color = Colors.white.withValues(alpha: 0.18),
+        ..strokeWidth = 1.4
+        ..color = Colors.white.withValues(alpha: 0.22 + pulse * 0.08),
+    );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: caseCenter, radius: caseRadius + 8),
+      -math.pi * 0.4 + ambientProgress * math.pi * 0.8,
+      math.pi * 0.6,
+      false,
+      Paint()
+        ..shader =
+            SweepGradient(
+              colors: <Color>[
+                Colors.white.withValues(alpha: 0.0),
+                Colors.white.withValues(alpha: 0.24),
+                Colors.white.withValues(alpha: 0.0),
+              ],
+            ).createShader(
+              Rect.fromCircle(center: caseCenter, radius: caseRadius + 8),
+            )
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.8
+        ..strokeCap = StrokeCap.round,
     );
   }
 
   void _paintSteps(Canvas canvas, Size size, double pulse) {
     final phase = pulseProgress.clamp(0.0, 1.0);
     final leftActive = activeBeat >= 0 ? activeBeat.isEven : true;
-    final vanishing = Offset(size.width * 0.5, size.height * 0.18);
+    final vanishing = Offset(size.width * 0.5, size.height * 0.14);
+
+    final skyRect = Rect.fromLTWH(0, 0, size.width, vanishing.dy + 18);
+    canvas.drawRect(
+      skyRect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            const Color(0xFF1A2822).withValues(alpha: 0.28),
+            const Color(0xFF1E3A28).withValues(alpha: 0.48),
+            const Color(0xFF182818).withValues(alpha: 0.72),
+          ],
+        ).createShader(skyRect),
+    );
+
     final lanePath = Path()
-      ..moveTo(size.width * 0.18, size.height * 0.92)
-      ..lineTo(size.width * 0.82, size.height * 0.92)
-      ..lineTo(size.width * 0.58, vanishing.dy)
-      ..lineTo(size.width * 0.42, vanishing.dy)
+      ..moveTo(size.width * 0.14, size.height * 0.94)
+      ..lineTo(size.width * 0.86, size.height * 0.94)
+      ..lineTo(size.width * 0.62, vanishing.dy)
+      ..lineTo(size.width * 0.38, vanishing.dy)
       ..close();
     canvas.drawPath(
       lanePath,
@@ -3713,35 +4779,80 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: <Color>[
-            const Color(0xFF1B2D22).withValues(alpha: 0.18),
-            const Color(0xFF203A2E).withValues(alpha: 0.48),
-            const Color(0xFF0E1712).withValues(alpha: 0.82),
+            const Color(0xFF1A2822).withValues(alpha: 0.22),
+            const Color(0xFF243A32).withValues(alpha: 0.58),
+            const Color(0xFF183028).withValues(alpha: 0.85),
+            const Color(0xFF0E1812).withValues(alpha: 0.92),
           ],
+          stops: const <double>[0.0, 0.35, 0.7, 1.0],
         ).createShader(Offset.zero & size),
     );
     canvas.drawPath(
       lanePath,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.3
-        ..color = Colors.white.withValues(alpha: 0.12),
+        ..strokeWidth = 1.8
+        ..color = Colors.white.withValues(alpha: 0.16),
     );
-    for (var i = 0; i < 5; i += 1) {
-      final t = i / 4;
-      final y = _mix(vanishing.dy + 18, size.height * 0.94, t);
-      final halfWidth = _mix(10, size.width * 0.28, t);
+
+    final laneDividerPath = Path()
+      ..moveTo(size.width * 0.5, vanishing.dy)
+      ..lineTo(size.width * 0.5, size.height * 0.94);
+    canvas.drawPath(
+      laneDividerPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            Colors.white.withValues(alpha: 0.0),
+            Colors.white.withValues(alpha: 0.18),
+            Colors.white.withValues(alpha: 0.28),
+          ],
+        ).createShader(laneDividerPath.getBounds())
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round,
+    );
+
+    for (var i = 0; i < 8; i += 1) {
+      final t = i / 7;
+      final y = _mix(vanishing.dy + 22, size.height * 0.96, t);
+      final halfWidth = _mix(8, size.width * 0.32, t);
+      final alpha = 0.04 + t * 0.12;
       canvas.drawLine(
         Offset(size.width * 0.5 - halfWidth, y),
         Offset(size.width * 0.5 + halfWidth, y),
-        Paint()..color = Colors.white.withValues(alpha: 0.05 + t * 0.08),
+        Paint()
+          ..shader =
+              LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: <Color>[
+                  Colors.white.withValues(alpha: 0.0),
+                  Colors.white.withValues(alpha: alpha),
+                  Colors.white.withValues(alpha: alpha),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const <double>[0.0, 0.28, 0.72, 1.0],
+              ).createShader(
+                Rect.fromLTWH(
+                  size.width * 0.5 - halfWidth,
+                  y - 0.5,
+                  halfWidth * 2,
+                  1,
+                ),
+              )
+          ..strokeWidth = _mix(0.8, 2.2, t),
       );
     }
-    for (var i = 0; i < 6; i += 1) {
-      final t = ((ambientProgress * 1.15) + i * 0.17) % 1.0;
+
+    for (var i = 0; i < 10; i += 1) {
+      final t = ((ambientProgress * 1.25) + i * 0.12) % 1.0;
       final depth = Curves.easeIn.transform(t);
-      final y = _mix(vanishing.dy + 8, size.height * 0.94, depth);
-      final width = _mix(4, 15, depth);
-      final height = _mix(12, 32, depth);
+      final y = _mix(vanishing.dy + 12, size.height * 0.96, depth);
+      final width = _mix(3, 18, depth);
+      final height = _mix(8, 38, depth);
+      final alpha = 0.04 + depth * 0.18;
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromCenter(
@@ -3751,18 +4862,33 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
           ),
           const Radius.circular(999),
         ),
-        Paint()..color = Colors.white.withValues(alpha: 0.05 + depth * 0.12),
+        Paint()
+          ..shader =
+              LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[
+                  Colors.white.withValues(alpha: alpha),
+                  Colors.white.withValues(alpha: alpha * 0.5),
+                ],
+              ).createShader(
+                Rect.fromCenter(
+                  center: Offset(size.width * 0.5, y),
+                  width: width,
+                  height: height,
+                ),
+              ),
       );
     }
 
-    final flow = (ambientProgress * 1.6 + phase * 0.12) % 1.0;
-    for (var i = 0; i < 6; i += 1) {
-      final t = ((flow + i * 0.16) % 1.0);
+    final flow = (ambientProgress * 1.8 + phase * 0.14) % 1.0;
+    for (var i = 0; i < 8; i += 1) {
+      final t = ((flow + i * 0.14) % 1.0);
       final depth = Curves.easeIn.transform(t);
-      final scale = _mix(0.3, 1.08, depth);
-      final y = _mix(vanishing.dy + 20, size.height * 0.9, depth);
-      final x = size.width * 0.5 + (i.isEven ? -1 : 1) * _mix(8, 42, depth);
-      final opacity = _mix(0.08, 0.36, depth);
+      final scale = _mix(0.22, 1.18, depth);
+      final y = _mix(vanishing.dy + 28, size.height * 0.92, depth);
+      final x = size.width * 0.5 + (i.isEven ? -1 : 1) * _mix(6, 48, depth);
+      final opacity = _mix(0.06, 0.42, depth);
       _drawFootprint(
         canvas,
         center: Offset(x, y),
@@ -3770,36 +4896,70 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
         pulse: pulse,
         color: Colors.white.withValues(alpha: opacity),
         scale: scale,
-        rotation: (i.isEven ? -1.0 : 1.0) * _mix(0.04, 0.18, depth),
+        rotation: (i.isEven ? -1.0 : 1.0) * _mix(0.02, 0.22, depth),
       );
     }
 
     final strideLift = math.sin(math.pi * phase).abs();
-    final leadY = _mix(size.height * 0.84, size.height * 0.66, phase);
-    final trailY = _mix(size.height * 0.7, size.height * 0.84, phase);
-    _drawFootprint(
-      canvas,
-      center: Offset(
-        size.width * 0.5 + (leftActive ? -24 : 24),
-        leftActive ? leadY : trailY,
+    final impactSquash = strideLift * 0.12;
+    final leadY = _mix(size.height * 0.88, size.height * 0.62, phase);
+    final trailY = _mix(size.height * 0.68, size.height * 0.88, phase);
+
+    if (leftActive) {
+      _drawFootprint(
+        canvas,
+        center: Offset(size.width * 0.5 - 32, leadY),
+        active: true,
+        pulse: pulse + strideLift * 0.42,
+        color: _accentColor,
+        scale: 1.22 - impactSquash * 0.5,
+        rotation: -0.16,
+        squash: impactSquash,
+      );
+      _drawFootprint(
+        canvas,
+        center: Offset(size.width * 0.5 + 32, trailY),
+        active: false,
+        pulse: pulse + strideLift * 0.28,
+        color: Colors.white.withValues(alpha: 0.88),
+        scale: 0.98,
+        rotation: 0.08,
+      );
+    } else {
+      _drawFootprint(
+        canvas,
+        center: Offset(size.width * 0.5 + 32, leadY),
+        active: true,
+        pulse: pulse + strideLift * 0.42,
+        color: _accentColor,
+        scale: 1.22 - impactSquash * 0.5,
+        rotation: 0.16,
+        squash: impactSquash,
+      );
+      _drawFootprint(
+        canvas,
+        center: Offset(size.width * 0.5 - 32, trailY),
+        active: false,
+        pulse: pulse + strideLift * 0.28,
+        color: Colors.white.withValues(alpha: 0.88),
+        scale: 0.98,
+        rotation: -0.08,
+      );
+    }
+
+    final groundGlowAlpha = 0.18 + strideLift * 0.16;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(
+          size.width * 0.5 + (leftActive ? -32 : 32),
+          size.height * 0.90,
+        ),
+        width: 56 + pulse * 18,
+        height: 14 + pulse * 4,
       ),
-      active: leftActive,
-      pulse: pulse + strideLift * 0.3,
-      color: _accentColor,
-      scale: leftActive ? 1.14 : 0.98,
-      rotation: leftActive ? -0.14 : -0.04,
-    );
-    _drawFootprint(
-      canvas,
-      center: Offset(
-        size.width * 0.5 + (leftActive ? 24 : -24),
-        leftActive ? trailY : leadY,
-      ),
-      active: !leftActive,
-      pulse: pulse + strideLift * 0.3,
-      color: Colors.white.withValues(alpha: 0.9),
-      scale: leftActive ? 0.98 : 1.14,
-      rotation: leftActive ? 0.04 : 0.14,
+      Paint()
+        ..color = _accentColor.withValues(alpha: groundGlowAlpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
     );
   }
 
@@ -3811,6 +4971,7 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
     required Color color,
     double scale = 1.0,
     double rotation = 0.0,
+    double squash = 0.0,
   }) {
     final actualScale = active ? scale * (1.0 + pulse * 0.08) : scale;
     canvas.save();
@@ -3819,45 +4980,85 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
 
     final sole = Rect.fromCenter(
       center: Offset.zero,
-      width: 32 * actualScale,
-      height: 68 * actualScale,
+      width: 36 * actualScale * (1 + squash * 0.35),
+      height: 74 * actualScale * (1 - squash * 0.55),
     );
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(0, 16 * actualScale),
-        width: sole.width * 0.74,
-        height: sole.height * 0.24,
+        center: Offset(0, 18 * actualScale),
+        width: sole.width * 0.78,
+        height: sole.height * 0.28,
       ),
-      Paint()..color = Colors.black.withValues(alpha: active ? 0.22 : 0.1),
+      Paint()
+        ..shader =
+            RadialGradient(
+              colors: <Color>[
+                Colors.black.withValues(alpha: active ? 0.28 : 0.14),
+                Colors.black.withValues(alpha: 0.0),
+              ],
+            ).createShader(
+              Rect.fromCenter(
+                center: Offset(0, 18 * actualScale),
+                width: sole.width * 0.78,
+                height: sole.height * 0.28,
+              ),
+            ),
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(sole, Radius.circular(18 * actualScale)),
+      RRect.fromRectAndRadius(sole, Radius.circular(20 * actualScale)),
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: <Color>[
-            color.withValues(alpha: active ? 0.95 : 0.55),
-            color.withValues(alpha: active ? 0.72 : 0.3),
+            color.withValues(alpha: active ? 0.98 : 0.62),
+            color.withValues(alpha: active ? 0.82 : 0.38),
+            color.withValues(alpha: active ? 0.65 : 0.25),
           ],
+          stops: const <double>[0.0, 0.55, 1.0],
         ).createShader(sole),
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(sole, Radius.circular(18 * actualScale)),
+      RRect.fromRectAndRadius(sole, Radius.circular(20 * actualScale)),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.1
-        ..color = Colors.white.withValues(alpha: active ? 0.24 : 0.08),
+        ..strokeWidth = 1.6
+        ..color = Colors.white.withValues(alpha: active ? 0.32 : 0.12),
     );
     for (final toe in <Offset>[
-      Offset(-8 * actualScale, -25 * actualScale),
-      Offset(0, -29 * actualScale),
-      Offset(8 * actualScale, -24 * actualScale),
+      Offset(-9 * actualScale, -28 * actualScale),
+      Offset(0, -33 * actualScale),
+      Offset(9 * actualScale, -27 * actualScale),
     ]) {
       canvas.drawCircle(
         toe,
-        4.8 * actualScale,
-        Paint()..color = color.withValues(alpha: active ? 0.86 : 0.32),
+        5.6 * actualScale,
+        Paint()
+          ..shader =
+              RadialGradient(
+                center: const Alignment(-0.18, -0.28),
+                colors: <Color>[
+                  color.withValues(alpha: active ? 0.96 : 0.42),
+                  color.withValues(alpha: active ? 0.78 : 0.28),
+                ],
+              ).createShader(
+                Rect.fromCircle(center: toe, radius: 5.6 * actualScale),
+              ),
+      );
+    }
+    if (active) {
+      canvas.drawCircle(
+        Offset(-9 * actualScale, -28 * actualScale),
+        5.6 * actualScale,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2
+          ..color = Colors.white.withValues(alpha: 0.42),
+      );
+      canvas.drawCircle(
+        Offset(-4 * actualScale, -32 * actualScale),
+        1.8 * actualScale,
+        Paint()..color = Colors.white.withValues(alpha: 0.62),
       );
     }
     canvas.restore();
@@ -3896,7 +5097,7 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _FocusBeatVisualizerPainter oldDelegate) {
+  bool shouldRepaint(covariant _LegacyFocusBeatVisualizerPainter oldDelegate) {
     return oldDelegate.kind != kind ||
         oldDelegate.pulseProgress != pulseProgress ||
         oldDelegate.ambientProgress != ambientProgress ||
@@ -3917,8 +5118,8 @@ void _drawFocusGear(
   required Color color,
   required double pulse,
 }) {
-  final innerRadius = radius * 0.78;
-  final outerRadius = radius * 1.06;
+  final innerRadius = radius * 0.76;
+  final outerRadius = radius * 1.08;
   final gearPath = Path();
   for (var i = 0; i < teeth * 2; i += 1) {
     final isTooth = i.isEven;
@@ -3940,69 +5141,102 @@ void _drawFocusGear(
     gearPath,
     Paint()
       ..shader = RadialGradient(
-        center: const Alignment(-0.2, -0.35),
-        radius: 1.0,
+        center: const Alignment(-0.22, -0.38),
+        radius: 1.1,
         colors: <Color>[
-          Colors.white.withValues(alpha: 0.95),
-          color.withValues(alpha: 0.86),
-          const Color(0xFF3A4350).withValues(alpha: 0.92),
+          Colors.white.withValues(alpha: 1.0),
+          color.withValues(alpha: 0.92),
+          const Color(0xFF8A9AAB).withValues(alpha: 0.88),
+          const Color(0xFF3A4350).withValues(alpha: 0.94),
         ],
-        stops: const <double>[0.0, 0.32, 1.0],
+        stops: const <double>[0.0, 0.28, 0.58, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: outerRadius)),
   );
   canvas.drawPath(
     gearPath,
     Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..color = Colors.white.withValues(alpha: 0.26),
-  );
-  canvas.drawCircle(
-    center,
-    radius * 0.56,
-    Paint()
-      ..shader = RadialGradient(
-        colors: <Color>[
-          const Color(0xFFF8FAFC).withValues(alpha: 0.92),
-          const Color(0xFF6B7788).withValues(alpha: 0.92),
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * 0.56)),
-  );
-  canvas.drawCircle(
-    center,
-    radius * 0.18,
-    Paint()..color = const Color(0xFF27303A).withValues(alpha: 0.92),
+      ..strokeWidth = 2.0
+      ..color = Colors.white.withValues(alpha: 0.32),
   );
 
-  for (var i = 0; i < 4; i += 1) {
-    final angle = rotation + i * math.pi / 2;
+  final hubRadius = radius * 0.58;
+  canvas.drawCircle(
+    center,
+    hubRadius,
+    Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.18, -0.28),
+        colors: <Color>[
+          const Color(0xFFF8FAFC).withValues(alpha: 0.96),
+          const Color(0xFFB8C4D0).withValues(alpha: 0.92),
+          const Color(0xFF6B7788).withValues(alpha: 0.88),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: hubRadius)),
+  );
+  canvas.drawCircle(
+    center,
+    hubRadius,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = Colors.white.withValues(alpha: 0.28),
+  );
+  canvas.drawCircle(
+    center,
+    radius * 0.22,
+    Paint()
+      ..shader = const RadialGradient(
+        colors: <Color>[Color(0xFF2A3038), Color(0xFF181E24)],
+      ).createShader(Rect.fromCircle(center: center, radius: radius * 0.22)),
+  );
+
+  for (var i = 0; i < 6; i += 1) {
+    final angle = rotation + i * math.pi / 3;
     final start = Offset(
-      center.dx + math.cos(angle) * radius * 0.18,
-      center.dy + math.sin(angle) * radius * 0.18,
+      center.dx + math.cos(angle) * radius * 0.22,
+      center.dy + math.sin(angle) * radius * 0.22,
     );
     final end = Offset(
-      center.dx + math.cos(angle) * radius * 0.48,
-      center.dy + math.sin(angle) * radius * 0.48,
+      center.dx + math.cos(angle) * radius * 0.52,
+      center.dy + math.sin(angle) * radius * 0.52,
     );
     canvas.drawLine(
       start,
       end,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.38)
-        ..strokeWidth = 2.2
+        ..color = Colors.white.withValues(alpha: 0.45)
+        ..strokeWidth = 2.8
         ..strokeCap = StrokeCap.round,
     );
   }
 
   canvas.drawArc(
-    Rect.fromCircle(center: center, radius: outerRadius + 3),
-    rotation - 0.45,
-    0.52 + pulse * 0.18,
+    Rect.fromCircle(center: center, radius: outerRadius + 4),
+    rotation - 0.5,
+    0.58 + pulse * 0.22,
     false,
     Paint()
-      ..color = Colors.white.withValues(alpha: 0.28)
+      ..shader = SweepGradient(
+        startAngle: rotation - 0.5,
+        endAngle: rotation + 0.08 + pulse * 0.22,
+        colors: <Color>[
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: 0.38),
+          Colors.white.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: outerRadius + 4))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2,
+      ..strokeWidth = 2.4,
+  );
+
+  canvas.drawCircle(
+    center,
+    radius * 0.08,
+    Paint()
+      ..shader = const RadialGradient(
+        colors: <Color>[Color(0xFFD8A850), Color(0xFF8A5828)],
+      ).createShader(Rect.fromCircle(center: center, radius: radius * 0.08)),
   );
 }
 
@@ -4022,67 +5256,131 @@ void _drawBalanceWheel(
     radius,
     Paint()
       ..shader = const RadialGradient(
-        center: Alignment(-0.16, -0.24),
+        center: Alignment(-0.18, -0.28),
         colors: <Color>[
-          Color(0xFFF5F8FC),
-          Color(0xFF8E99A6),
+          Color(0xFFF8FCFF),
+          Color(0xFFD0D8E4),
+          Color(0xFF9EA8B6),
           Color(0xFF4C5564),
         ],
+        stops: <double>[0.0, 0.32, 0.62, 1.0],
       ).createShader(ringRect),
   );
   canvas.drawCircle(
     Offset.zero,
-    radius * 0.68,
-    Paint()..color = const Color(0xFF151A21).withValues(alpha: 0.92),
+    radius,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..color = Colors.white.withValues(alpha: 0.38),
   );
-  for (var i = 0; i < 4; i += 1) {
-    final angle = i * math.pi / 2;
+  canvas.drawCircle(
+    Offset.zero,
+    radius * 0.72,
+    Paint()
+      ..shader =
+          const RadialGradient(
+            colors: <Color>[Color(0xFF1A2028), Color(0xFF0E1418)],
+          ).createShader(
+            Rect.fromCircle(center: Offset.zero, radius: radius * 0.72),
+          ),
+  );
+  for (var i = 0; i < 6; i += 1) {
+    final angle = i * math.pi / 3;
     final end = Offset(
-      math.cos(angle) * radius * 0.74,
-      math.sin(angle) * radius * 0.74,
+      math.cos(angle) * radius * 0.78,
+      math.sin(angle) * radius * 0.78,
     );
     canvas.drawLine(
       Offset.zero,
       end,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.34)
-        ..strokeWidth = 2.1
+        ..color = Colors.white.withValues(alpha: 0.42)
+        ..strokeWidth = 2.6
         ..strokeCap = StrokeCap.round,
+    );
+  }
+  for (var i = 0; i < 12; i += 1) {
+    final angle = i * math.pi / 6;
+    final tickEnd = Offset(
+      math.cos(angle) * radius * 0.68,
+      math.sin(angle) * radius * 0.68,
+    );
+    canvas.drawCircle(
+      tickEnd,
+      1.8,
+      Paint()..color = Colors.white.withValues(alpha: 0.28),
     );
   }
   canvas.drawCircle(
     Offset.zero,
-    radius * 0.16,
+    radius * 0.18,
     Paint()
       ..shader =
           const RadialGradient(
-            colors: <Color>[Color(0xFFFEE3A4), Color(0xFF9B6C24)],
+            center: Alignment(-0.24, -0.32),
+            colors: <Color>[
+              Color(0xFFFEE8B4),
+              Color(0xFFD8A848),
+              Color(0xFF9B6C24),
+            ],
           ).createShader(
-            Rect.fromCircle(center: Offset.zero, radius: radius * 0.16),
+            Rect.fromCircle(center: Offset.zero, radius: radius * 0.18),
           ),
+  );
+  canvas.drawCircle(
+    Offset.zero,
+    radius * 0.18,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..color = const Color(0xFFE8C078).withValues(alpha: 0.48),
   );
   canvas.restore();
 
   canvas.drawArc(
     Rect.fromCircle(
-      center: center.translate(0, -radius * 0.08),
-      radius: radius * 1.12,
+      center: center.translate(0, -radius * 0.12),
+      radius: radius * 1.18,
     ),
-    math.pi * 1.04,
-    math.pi * 0.92,
+    math.pi * 1.02,
+    math.pi * 0.96,
     false,
     Paint()
-      ..color = Colors.white.withValues(alpha: 0.7)
-      ..strokeWidth = 5.6
+      ..shader =
+          SweepGradient(
+            startAngle: math.pi * 1.02,
+            endAngle: math.pi * 1.98,
+            colors: <Color>[
+              Colors.white.withValues(alpha: 0.0),
+              Colors.white.withValues(alpha: 0.82),
+              Colors.white.withValues(alpha: 0.62),
+              Colors.white.withValues(alpha: 0.0),
+            ],
+          ).createShader(
+            Rect.fromCircle(
+              center: center.translate(0, -radius * 0.12),
+              radius: radius * 1.18,
+            ),
+          )
+      ..strokeWidth = 6.8
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke,
   );
   canvas.drawCircle(
     center,
-    radius + 6 + pulse * 3,
+    radius + 8 + pulse * 4,
     Paint()
-      ..color = const Color(0xFF96D9FF).withValues(alpha: 0.08)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+      ..shader =
+          RadialGradient(
+            colors: <Color>[
+              const Color(0xFF96D9FF).withValues(alpha: 0.14),
+              const Color(0xFF96D9FF).withValues(alpha: 0.0),
+            ],
+          ).createShader(
+            Rect.fromCircle(center: center, radius: radius + 8 + pulse * 4),
+          )
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
   );
 }
 
@@ -4094,31 +5392,992 @@ void _drawMovementScrew(
   final rect = Rect.fromCircle(center: center, radius: radius);
   canvas.drawCircle(
     center,
-    radius,
+    radius + 1,
     Paint()
       ..shader = const RadialGradient(
-        center: Alignment(-0.24, -0.24),
+        center: Alignment(-0.28, -0.32),
         colors: <Color>[
-          Color(0xFFF0F4FA),
-          Color(0xFF7A8798),
-          Color(0xFF374150),
+          Color(0xFFF4F8FC),
+          Color(0xFFD0D4DA),
+          Color(0xFF8A9AA8),
+          Color(0xFF3A4A58),
         ],
+        stops: <double>[0.0, 0.32, 0.62, 1.0],
       ).createShader(rect),
   );
-  canvas.drawLine(
-    center.translate(-radius * 0.42, 0),
-    center.translate(radius * 0.42, 0),
+  canvas.drawCircle(
+    center,
+    radius,
     Paint()
-      ..color = const Color(0xFF1A1F27).withValues(alpha: 0.78)
-      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..color = Colors.white.withValues(alpha: 0.28),
+  );
+  canvas.drawLine(
+    center.translate(-radius * 0.48, 0),
+    center.translate(radius * 0.48, 0),
+    Paint()
+      ..color = const Color(0xFF1A2432).withValues(alpha: 0.85)
+      ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round,
   );
   canvas.drawLine(
-    center.translate(0, -radius * 0.42),
-    center.translate(0, radius * 0.42),
+    center.translate(0, -radius * 0.48),
+    center.translate(0, radius * 0.48),
     Paint()
-      ..color = const Color(0xFF1A1F27).withValues(alpha: 0.26)
-      ..strokeWidth = 1.2
+      ..color = const Color(0xFF1A2432).withValues(alpha: 0.32)
+      ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round,
   );
+  canvas.drawCircle(
+    center.translate(-radius * 0.18, -radius * 0.18),
+    radius * 0.15,
+    Paint()..color = Colors.white.withValues(alpha: 0.42),
+  );
+}
+
+class _FocusBeatVisualizerPainter extends CustomPainter {
+  const _FocusBeatVisualizerPainter({
+    required this.kind,
+    required this.pulseProgress,
+    required this.ambientProgress,
+    required this.accentLayer,
+    required this.running,
+    required this.activeBeat,
+    required this.activeSubPulse,
+    required this.subdivision,
+  });
+
+  final _FocusBeatAnimationKind kind;
+  final double pulseProgress;
+  final double ambientProgress;
+  final int accentLayer;
+  final bool running;
+  final int activeBeat;
+  final int activeSubPulse;
+  final int subdivision;
+
+  double _mix(double a, double b, double t) => a + (b - a) * t;
+
+  Color _mixColor(Color a, Color b, double t) => Color.lerp(a, b, t)!;
+
+  Color get _layerAccent => switch (accentLayer) {
+    0 => const Color(0xFFF3C77C),
+    1 => const Color(0xFFF2A88E),
+    2 => const Color(0xFF8CCFF8),
+    _ => const Color(0xFF8FDEC4),
+  };
+
+  _FocusVisualizerTheme get _theme => switch (kind) {
+    _FocusBeatAnimationKind.pendulum => const _FocusVisualizerTheme(
+      base: Color(0xFF0B1720),
+      mid: Color(0xFF142938),
+      surface: Color(0xFF1E4054),
+      accent: Color(0xFF82C6FF),
+      secondary: Color(0xFF78E0D1),
+      highlight: Color(0xFFF7E3B7),
+    ),
+    _FocusBeatAnimationKind.hypno => const _FocusVisualizerTheme(
+      base: Color(0xFF16111D),
+      mid: Color(0xFF291E35),
+      surface: Color(0xFF43304F),
+      accent: Color(0xFFB9A0FF),
+      secondary: Color(0xFFFFBDD0),
+      highlight: Color(0xFFF4EFFF),
+    ),
+    _FocusBeatAnimationKind.dew => const _FocusVisualizerTheme(
+      base: Color(0xFF0A171B),
+      mid: Color(0xFF13333A),
+      surface: Color(0xFF1D5560),
+      accent: Color(0xFF8DD8E5),
+      secondary: Color(0xFF6ED6BE),
+      highlight: Color(0xFFE9FFF9),
+    ),
+    _FocusBeatAnimationKind.gear => const _FocusVisualizerTheme(
+      base: Color(0xFF101419),
+      mid: Color(0xFF1D2A34),
+      surface: Color(0xFF304451),
+      accent: Color(0xFFA6CAE8),
+      secondary: Color(0xFFF1C78D),
+      highlight: Color(0xFFF2F7FB),
+    ),
+    _FocusBeatAnimationKind.steps => const _FocusVisualizerTheme(
+      base: Color(0xFF101611),
+      mid: Color(0xFF1B3121),
+      surface: Color(0xFF2E4A37),
+      accent: Color(0xFF91D39E),
+      secondary: Color(0xFFB8E4C1),
+      highlight: Color(0xFFF1F7EA),
+    ),
+  };
+
+  double get _phase => pulseProgress.clamp(0.0, 1.0);
+
+  double get _beatEnergy =>
+      running ? 1 - Curves.easeOutCubic.transform(_phase) : 0.0;
+
+  double get _ambientAngle => ambientProgress.clamp(0.0, 1.0) * math.pi * 2;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final theme = _theme;
+    final beat = _beatEnergy;
+    final ambient = _ambientAngle;
+    final breath = 0.5 + 0.5 * math.sin(ambient - math.pi / 2);
+    final accent = _mixColor(theme.accent, _layerAccent, 0.32);
+    final glow = _mixColor(theme.secondary, _layerAccent, 0.18);
+
+    _paintBackdrop(
+      canvas,
+      size,
+      theme: theme,
+      accent: accent,
+      glow: glow,
+      beat: beat,
+      breath: breath,
+      ambient: ambient,
+    );
+
+    switch (kind) {
+      case _FocusBeatAnimationKind.pendulum:
+        _paintPendulum(canvas, size, theme, accent, glow, beat, ambient);
+        break;
+      case _FocusBeatAnimationKind.hypno:
+        _paintHypno(canvas, size, theme, accent, glow, beat, ambient, breath);
+        break;
+      case _FocusBeatAnimationKind.dew:
+        _paintDew(canvas, size, theme, accent, glow, beat, ambient);
+        break;
+      case _FocusBeatAnimationKind.gear:
+        _paintGear(canvas, size, theme, accent, glow, beat, ambient);
+        break;
+      case _FocusBeatAnimationKind.steps:
+        _paintSteps(canvas, size, theme, accent, glow, beat, ambient);
+        break;
+    }
+
+    _paintPulseDock(canvas, size, theme, accent, beat);
+  }
+
+  void _paintBackdrop(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required Color glow,
+    required double beat,
+    required double breath,
+    required double ambient,
+  }) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            theme.base,
+            theme.mid,
+            _mixColor(theme.surface, Colors.black, 0.10),
+          ],
+          stops: const <double>[0.0, 0.48, 1.0],
+        ).createShader(rect),
+    );
+
+    _paintGlow(
+      canvas,
+      Offset(
+        size.width * 0.20 + math.cos(ambient * 0.9) * size.width * 0.05,
+        size.height * 0.20 + math.sin(ambient * 0.65) * size.height * 0.03,
+      ),
+      size.width * 0.30,
+      accent.withValues(alpha: 0.11 + beat * 0.05),
+      blur: 42,
+    );
+    _paintGlow(
+      canvas,
+      Offset(
+        size.width * 0.78 + math.sin(ambient * 0.55) * size.width * 0.04,
+        size.height * 0.74 + math.cos(ambient * 0.72) * size.height * 0.04,
+      ),
+      size.width * 0.36,
+      glow.withValues(alpha: 0.10 + breath * 0.05),
+      blur: 54,
+    );
+
+    _paintRibbon(
+      canvas,
+      size,
+      y: size.height * 0.26,
+      drift: math.sin(ambient * 0.72) * 18,
+      amplitude: 22,
+      thickness: 20,
+      color: theme.highlight.withValues(alpha: 0.045),
+    );
+    _paintRibbon(
+      canvas,
+      size,
+      y: size.height * 0.60,
+      drift: math.cos(ambient * 0.84) * 22,
+      amplitude: 28,
+      thickness: 28,
+      color: accent.withValues(alpha: 0.05),
+    );
+
+    final scanY = size.height * (0.34 + breath * 0.16);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment(0, (scanY / size.height) * 2 - 1),
+          end: Alignment(
+            0,
+            ((scanY + size.height * 0.22) / size.height) * 2 - 1,
+          ),
+          colors: <Color>[
+            Colors.transparent,
+            Colors.white.withValues(alpha: 0.025 + beat * 0.01),
+            Colors.transparent,
+          ],
+        ).createShader(rect),
+    );
+
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: <Color>[
+            Colors.transparent,
+            Colors.black.withValues(alpha: running ? 0.28 : 0.34),
+          ],
+          stops: const <double>[0.56, 1.0],
+        ).createShader(rect),
+    );
+  }
+
+  void _paintPendulum(
+    Canvas canvas,
+    Size size,
+    _FocusVisualizerTheme theme,
+    Color accent,
+    Color glow,
+    double beat,
+    double ambient,
+  ) {
+    final pivot = Offset(size.width * 0.5, size.height * 0.22);
+    final length = size.height * 0.36;
+    final direction = activeBeat >= 0 && activeBeat.isOdd ? -1.0 : 1.0;
+    final travel = direction * math.cos(_phase * math.pi);
+    final angle = travel * 0.64;
+    final bob =
+        pivot + Offset(math.sin(angle) * length, math.cos(angle) * length);
+
+    final arcRect = Rect.fromCircle(center: pivot, radius: length);
+    for (var i = 0; i < 3; i += 1) {
+      final radius = length + i * 12.0;
+      canvas.drawArc(
+        Rect.fromCircle(center: pivot, radius: radius),
+        math.pi / 2 - 0.70,
+        1.40,
+        false,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.06 - i * 0.015)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4,
+      );
+    }
+
+    for (var i = 1; i <= 5; i += 1) {
+      final samplePhase = (_phase - i * 0.10).clamp(0.0, 1.0);
+      final sampleTravel = direction * math.cos(samplePhase * math.pi);
+      final sampleAngle = sampleTravel * 0.64;
+      final sampleBob =
+          pivot +
+          Offset(
+            math.sin(sampleAngle) * length,
+            math.cos(sampleAngle) * length,
+          );
+      canvas.drawCircle(
+        sampleBob,
+        12 - i * 1.8,
+        Paint()
+          ..color = accent.withValues(alpha: 0.10 - i * 0.012)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+      );
+    }
+
+    canvas.drawLine(
+      pivot,
+      bob,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            theme.highlight.withValues(alpha: 0.34),
+            accent.withValues(alpha: 0.88),
+          ],
+        ).createShader(Rect.fromPoints(pivot, bob))
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round,
+    );
+
+    _paintGlow(
+      canvas,
+      pivot,
+      22 + beat * 8,
+      theme.highlight.withValues(alpha: 0.16),
+      blur: 18,
+    );
+    canvas.drawCircle(
+      pivot,
+      5.5,
+      Paint()..color = Colors.white.withValues(alpha: 0.86),
+    );
+
+    _paintGlow(
+      canvas,
+      bob,
+      34 + beat * 18,
+      glow.withValues(alpha: 0.22 + beat * 0.08),
+      blur: 28,
+    );
+    canvas.drawCircle(
+      bob,
+      19 + beat * 5,
+      Paint()
+        ..shader = RadialGradient(
+          colors: <Color>[
+            theme.highlight.withValues(alpha: 0.96),
+            accent.withValues(alpha: 0.84),
+            accent.withValues(alpha: 0.10),
+          ],
+          stops: const <double>[0.0, 0.58, 1.0],
+        ).createShader(Rect.fromCircle(center: bob, radius: 24 + beat * 8)),
+    );
+
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(bob.dx, size.height * 0.78),
+        width: 96 + beat * 26,
+        height: 18 + beat * 6,
+      ),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.18)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
+    );
+  }
+
+  void _paintHypno(
+    Canvas canvas,
+    Size size,
+    _FocusVisualizerTheme theme,
+    Color accent,
+    Color glow,
+    double beat,
+    double ambient,
+    double breath,
+  ) {
+    final center = Offset(size.width * 0.5, size.height * 0.48);
+    final baseRadius = size.shortestSide * 0.15;
+
+    for (var i = 0; i < 6; i += 1) {
+      final radius = baseRadius + size.shortestSide * 0.08 * i + breath * 6;
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.10 - i * 0.012)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2,
+      );
+    }
+
+    for (var i = 0; i < 4; i += 1) {
+      final radius = baseRadius + size.shortestSide * (0.08 + i * 0.10);
+      final rect = Rect.fromCircle(center: center, radius: radius);
+      final rotation =
+          ambient * (0.34 + i * 0.12) * (i.isEven ? 1 : -1) + i * 0.8;
+      final sweep = 0.74 + beat * 0.38 - i * 0.04;
+      canvas.drawArc(
+        rect,
+        rotation,
+        sweep,
+        false,
+        Paint()
+          ..shader = SweepGradient(
+            startAngle: rotation,
+            endAngle: rotation + sweep,
+            colors: <Color>[
+              Colors.transparent,
+              accent.withValues(alpha: 0.58 - i * 0.08),
+              theme.highlight.withValues(alpha: 0.16),
+            ],
+          ).createShader(rect)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 9 - i * 1.5
+          ..strokeCap = StrokeCap.round,
+      );
+      canvas.drawArc(
+        rect,
+        rotation + math.pi,
+        sweep * 0.72,
+        false,
+        Paint()
+          ..color = glow.withValues(alpha: 0.16 - i * 0.02)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4 - i * 0.5
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+
+    canvas.drawCircle(
+      center,
+      baseRadius * 0.54 + beat * 9,
+      Paint()
+        ..shader =
+            RadialGradient(
+              colors: <Color>[
+                theme.highlight.withValues(alpha: 0.94),
+                accent.withValues(alpha: 0.44),
+                Colors.transparent,
+              ],
+              stops: const <double>[0.0, 0.48, 1.0],
+            ).createShader(
+              Rect.fromCircle(
+                center: center,
+                radius: baseRadius * 0.92 + beat * 14,
+              ),
+            ),
+    );
+
+    if (beat > 0.02) {
+      canvas.drawCircle(
+        center,
+        baseRadius * (1.16 + beat * 1.8),
+        Paint()
+          ..color = glow.withValues(alpha: 0.22 * beat)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 8 * beat + 1.2,
+      );
+    }
+  }
+
+  void _paintDew(
+    Canvas canvas,
+    Size size,
+    _FocusVisualizerTheme theme,
+    Color accent,
+    Color glow,
+    double beat,
+    double ambient,
+  ) {
+    final surfaceY = size.height * 0.67;
+    final centerX =
+        size.width * 0.5 + math.sin(ambient * 0.62) * size.width * 0.05;
+    final surfaceCenter = Offset(centerX, surfaceY);
+
+    final poolRect = Rect.fromCenter(
+      center: surfaceCenter,
+      width: size.width * 0.42,
+      height: size.height * 0.08,
+    );
+    canvas.drawOval(
+      poolRect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: <Color>[accent.withValues(alpha: 0.18), Colors.transparent],
+        ).createShader(poolRect),
+    );
+
+    for (var i = 0; i < 4; i += 1) {
+      final radiusX = size.width * (0.10 + i * 0.07) + beat * size.width * 0.10;
+      final radiusY = radiusX * 0.16;
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: surfaceCenter,
+          width: radiusX * 2,
+          height: radiusY * 2,
+        ),
+        Paint()
+          ..color = Colors.white.withValues(
+            alpha: 0.14 - i * 0.025 + beat * 0.05,
+          )
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4,
+      );
+    }
+
+    final retract = Curves.easeOutCubic.transform(_phase);
+    final dropCenter = Offset(
+      centerX + math.sin(ambient * 1.08) * 10,
+      _mix(surfaceY - 30, size.height * 0.30 + math.cos(ambient) * 8, retract),
+    );
+    final threadTop = Offset(centerX, size.height * 0.16);
+    canvas.drawLine(
+      threadTop,
+      dropCenter.translate(0, -16),
+      Paint()
+        ..color = theme.highlight.withValues(alpha: 0.20)
+        ..strokeWidth = 1.0,
+    );
+
+    final dropPath = _buildDropletPath(
+      dropCenter,
+      18 + beat * 4,
+      28 + beat * 8,
+    );
+    final dropBounds = dropPath.getBounds();
+    _paintGlow(
+      canvas,
+      dropCenter,
+      28 + beat * 12,
+      glow.withValues(alpha: 0.18 + beat * 0.08),
+      blur: 22,
+    );
+    canvas.drawPath(
+      dropPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            theme.highlight.withValues(alpha: 0.94),
+            accent.withValues(alpha: 0.78),
+            glow.withValues(alpha: 0.24),
+          ],
+          stops: const <double>[0.0, 0.56, 1.0],
+        ).createShader(dropBounds),
+    );
+    canvas.drawPath(
+      dropPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1
+        ..color = Colors.white.withValues(alpha: 0.28),
+    );
+
+    for (var i = 0; i < 2; i += 1) {
+      final bead = Offset(
+        centerX + (i == 0 ? -1 : 1) * size.width * 0.12,
+        size.height * (0.44 + i * 0.08) + math.sin(ambient + i) * 6,
+      );
+      canvas.drawCircle(
+        bead,
+        5 + i.toDouble(),
+        Paint()
+          ..color = theme.highlight.withValues(alpha: 0.22)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+      );
+    }
+  }
+
+  void _paintGear(
+    Canvas canvas,
+    Size size,
+    _FocusVisualizerTheme theme,
+    Color accent,
+    Color glow,
+    double beat,
+    double ambient,
+  ) {
+    final center = Offset(size.width * 0.52, size.height * 0.48);
+    final radii = <double>[
+      size.shortestSide * 0.15,
+      size.shortestSide * 0.24,
+      size.shortestSide * 0.34,
+    ];
+
+    canvas.drawLine(
+      Offset(center.dx - size.width * 0.24, center.dy),
+      Offset(center.dx + size.width * 0.24, center.dy),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.08)
+        ..strokeWidth = 1.0,
+    );
+    canvas.drawLine(
+      Offset(center.dx, center.dy - size.height * 0.24),
+      Offset(center.dx, center.dy + size.height * 0.24),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.08)
+        ..strokeWidth = 1.0,
+    );
+
+    for (final radius in radii) {
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.10)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2,
+      );
+    }
+
+    for (var ring = 0; ring < radii.length; ring += 1) {
+      final radius = radii[ring];
+      final count = 4 + ring * 2;
+      final rotation =
+          ambient * (0.50 + ring * 0.20) * (ring.isEven ? 1 : -1) + ring * 0.36;
+      final polygon = Path();
+      for (var i = 0; i < count; i += 1) {
+        final angle = rotation + i * math.pi * 2 / count;
+        final point =
+            center + Offset(math.cos(angle) * radius, math.sin(angle) * radius);
+        if (i == 0) {
+          polygon.moveTo(point.dx, point.dy);
+        } else {
+          polygon.lineTo(point.dx, point.dy);
+        }
+        canvas.drawCircle(
+          point,
+          4.0 + (ring == 1 ? beat * 1.8 : beat),
+          Paint()
+            ..color = _mixColor(
+              accent,
+              theme.highlight,
+              ring * 0.22,
+            ).withValues(alpha: 0.78 - ring * 0.14),
+        );
+      }
+      polygon.close();
+      canvas.drawPath(
+        polygon,
+        Paint()
+          ..color = glow.withValues(alpha: 0.10 - ring * 0.015)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2,
+      );
+    }
+
+    final sweepRect = Rect.fromCircle(center: center, radius: radii.last + 12);
+    final start = ambient * 0.92;
+    final sweep = 0.74 + beat * 0.30;
+    canvas.drawArc(
+      sweepRect,
+      start,
+      sweep,
+      false,
+      Paint()
+        ..shader = SweepGradient(
+          startAngle: start,
+          endAngle: start + sweep,
+          colors: <Color>[
+            Colors.transparent,
+            accent.withValues(alpha: 0.58),
+            Colors.transparent,
+          ],
+        ).createShader(sweepRect)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 10
+        ..strokeCap = StrokeCap.round,
+    );
+
+    _paintGlow(
+      canvas,
+      center,
+      34 + beat * 12,
+      glow.withValues(alpha: 0.16 + beat * 0.08),
+      blur: 20,
+    );
+    canvas.drawCircle(
+      center,
+      18 + beat * 4,
+      Paint()
+        ..shader = RadialGradient(
+          colors: <Color>[
+            theme.highlight.withValues(alpha: 0.92),
+            accent.withValues(alpha: 0.74),
+            theme.base.withValues(alpha: 0.0),
+          ],
+        ).createShader(Rect.fromCircle(center: center, radius: 24 + beat * 8)),
+    );
+  }
+
+  void _paintSteps(
+    Canvas canvas,
+    Size size,
+    _FocusVisualizerTheme theme,
+    Color accent,
+    Color glow,
+    double beat,
+    double ambient,
+  ) {
+    const profile = <double>[0.28, 0.42, 0.58, 0.76, 0.58, 0.42, 0.28];
+    final bars = profile.length;
+    final barWidth = size.width * 0.075;
+    final gap = size.width * 0.028;
+    final totalWidth = bars * barWidth + (bars - 1) * gap;
+    final startX = (size.width - totalWidth) / 2;
+    final baseY = size.height * 0.74;
+    final fieldHeight = size.height * 0.42;
+    final scanT = 0.5 + 0.5 * math.sin(ambient * 0.56 - math.pi / 2);
+    final scanX = _mix(startX, startX + totalWidth, scanT);
+    final skyline = Path();
+
+    canvas.drawLine(
+      Offset(size.width * 0.16, baseY + 4),
+      Offset(size.width * 0.84, baseY + 4),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.10)
+        ..strokeWidth = 1.2,
+    );
+
+    for (var i = 0; i < bars; i += 1) {
+      final x = startX + i * (barWidth + gap);
+      final centerX = x + barWidth / 2;
+      final dist = ((centerX - scanX).abs() / (barWidth * 2.1)).clamp(0.0, 1.0);
+      final influence = 1 - dist;
+      final height = fieldHeight * profile[i] + influence * 18 + beat * 10;
+      final rect = RRect.fromLTRBR(
+        x,
+        baseY - height,
+        x + barWidth,
+        baseY,
+        Radius.circular(barWidth * 0.48),
+      );
+      final topCenter = Offset(centerX, baseY - height);
+
+      if (i == 0) {
+        skyline.moveTo(topCenter.dx, topCenter.dy);
+      } else {
+        skyline.lineTo(topCenter.dx, topCenter.dy);
+      }
+
+      if (influence > 0.02) {
+        _paintGlow(
+          canvas,
+          Offset(centerX, baseY - height * 0.56),
+          18 + influence * 12,
+          accent.withValues(alpha: influence * 0.10),
+          blur: 18,
+        );
+      }
+
+      canvas.drawRRect(
+        rect,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: <Color>[
+              theme.surface.withValues(alpha: 0.92),
+              _mixColor(
+                accent,
+                theme.highlight,
+                influence * 0.42,
+              ).withValues(alpha: 0.90),
+            ],
+          ).createShader(rect.outerRect),
+      );
+      canvas.drawRRect(
+        rect,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0
+          ..color = Colors.white.withValues(alpha: 0.16 + influence * 0.14),
+      );
+    }
+
+    canvas.drawPath(
+      skyline,
+      Paint()
+        ..color = glow.withValues(alpha: 0.24)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    final scanRect = Rect.fromLTRB(
+      scanX - barWidth * 0.72,
+      baseY - fieldHeight * 0.98,
+      scanX + barWidth * 0.72,
+      baseY + 10,
+    );
+    canvas.drawRect(
+      scanRect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            accent.withValues(alpha: 0.0),
+            accent.withValues(alpha: 0.18),
+            accent.withValues(alpha: 0.0),
+          ],
+        ).createShader(scanRect),
+    );
+  }
+
+  void _paintPulseDock(
+    Canvas canvas,
+    Size size,
+    _FocusVisualizerTheme theme,
+    Color accent,
+    double beat,
+  ) {
+    final width = math.min(size.width * 0.44, 180.0);
+    final dockRect = Rect.fromCenter(
+      center: Offset(size.width * 0.5, size.height * 0.89),
+      width: width,
+      height: 18,
+    );
+    final dock = RRect.fromRectAndRadius(dockRect, const Radius.circular(999));
+    canvas.drawRRect(
+      dock,
+      Paint()..color = Colors.black.withValues(alpha: 0.20),
+    );
+    canvas.drawRRect(
+      dock,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = Colors.white.withValues(alpha: 0.10),
+    );
+
+    final count = math.max(1, subdivision);
+    final spacing = dockRect.width / (count + 1);
+    for (var i = 0; i < count; i += 1) {
+      final active =
+          activeSubPulse > 0 && i == (activeSubPulse - 1).clamp(0, count - 1);
+      final center = Offset(
+        dockRect.left + spacing * (i + 1),
+        dockRect.center.dy,
+      );
+      final radius = active ? 4.6 + beat * 2.2 : 2.6;
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..color = (active ? accent : theme.highlight).withValues(
+            alpha: active ? 0.94 : 0.32,
+          ),
+      );
+    }
+
+    if (beat > 0.02) {
+      canvas.drawRRect(
+        dock,
+        Paint()
+          ..color = accent.withValues(alpha: 0.08 * beat)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+    }
+  }
+
+  void _paintGlow(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    Color color, {
+    double blur = 24,
+  }) {
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = color
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, blur),
+    );
+  }
+
+  void _paintRibbon(
+    Canvas canvas,
+    Size size, {
+    required double y,
+    required double drift,
+    required double amplitude,
+    required double thickness,
+    required Color color,
+  }) {
+    final path = Path()
+      ..moveTo(-size.width * 0.08, y)
+      ..cubicTo(
+        size.width * 0.14,
+        y - amplitude + drift * 0.28,
+        size.width * 0.40,
+        y + amplitude * 0.9 - drift * 0.18,
+        size.width * 0.66,
+        y + drift * 0.22,
+      )
+      ..cubicTo(
+        size.width * 0.86,
+        y - amplitude * 0.55 - drift * 0.12,
+        size.width * 1.02,
+        y + amplitude * 0.22,
+        size.width * 1.08,
+        y - drift * 0.18,
+      );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = thickness
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+    );
+  }
+
+  Path _buildDropletPath(Offset center, double width, double height) {
+    return Path()
+      ..moveTo(center.dx, center.dy - height * 0.72)
+      ..quadraticBezierTo(
+        center.dx + width * 0.56,
+        center.dy - height * 0.20,
+        center.dx + width * 0.42,
+        center.dy + height * 0.20,
+      )
+      ..quadraticBezierTo(
+        center.dx + width * 0.24,
+        center.dy + height * 0.66,
+        center.dx,
+        center.dy + height * 0.82,
+      )
+      ..quadraticBezierTo(
+        center.dx - width * 0.24,
+        center.dy + height * 0.66,
+        center.dx - width * 0.42,
+        center.dy + height * 0.20,
+      )
+      ..quadraticBezierTo(
+        center.dx - width * 0.56,
+        center.dy - height * 0.20,
+        center.dx,
+        center.dy - height * 0.72,
+      )
+      ..close();
+  }
+
+  @override
+  bool shouldRepaint(covariant _FocusBeatVisualizerPainter oldDelegate) {
+    return oldDelegate.kind != kind ||
+        oldDelegate.pulseProgress != pulseProgress ||
+        oldDelegate.ambientProgress != ambientProgress ||
+        oldDelegate.accentLayer != accentLayer ||
+        oldDelegate.running != running ||
+        oldDelegate.activeBeat != activeBeat ||
+        oldDelegate.activeSubPulse != activeSubPulse ||
+        oldDelegate.subdivision != subdivision;
+  }
+}
+
+class _FocusVisualizerTheme {
+  const _FocusVisualizerTheme({
+    required this.base,
+    required this.mid,
+    required this.surface,
+    required this.accent,
+    required this.secondary,
+    required this.highlight,
+  });
+
+  final Color base;
+  final Color mid;
+  final Color surface;
+  final Color accent;
+  final Color secondary;
+  final Color highlight;
 }

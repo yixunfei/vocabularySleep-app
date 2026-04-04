@@ -1,12 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../ui_copy.dart';
 import 'toolbox_breathing_tool.dart';
 import 'toolbox_mind_tools_schulte.dart';
+import 'toolbox_prayer_beads_tool.dart';
 import 'toolbox_tool_shell.dart';
 
 class SchulteGridToolPage extends StatelessWidget {
@@ -58,7 +58,7 @@ class PrayerBeadsToolPage extends StatelessWidget {
         zh: '一颗一颗拨动，保持节律，给自己一个安静的计数动作。',
         en: 'Advance bead by bead to keep a steady rhythm and a quiet counting gesture.',
       ),
-      child: const _PrayerBeadsTool(),
+      child: const PrayerBeadsPracticeCard(),
     );
   }
 }
@@ -78,181 +78,6 @@ class ZenSandToolPage extends StatelessWidget {
       ),
       child: const _ZenSandTool(),
     );
-  }
-}
-
-class _PrayerBeadsTool extends StatefulWidget {
-  const _PrayerBeadsTool();
-
-  @override
-  State<_PrayerBeadsTool> createState() => _PrayerBeadsToolState();
-}
-
-class _PrayerBeadsToolState extends State<_PrayerBeadsTool> {
-  int _beadCount = 27;
-  int _currentIndex = 0;
-  int _total = 0;
-  int _rounds = 0;
-
-  void _advance() {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _total += 1;
-      _currentIndex = (_currentIndex + 1) % _beadCount;
-      if (_currentIndex == 0) _rounds += 1;
-    });
-  }
-
-  void _reset() {
-    setState(() {
-      _currentIndex = 0;
-      _total = 0;
-      _rounds = 0;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Bead cycle',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Tap the circle to advance one bead and keep a steady internal count.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: <int>[18, 27, 54]
-                  .map(
-                    (count) => ChoiceChip(
-                      label: Text('$count beads'),
-                      selected: _beadCount == count,
-                      onSelected: (_) {
-                        setState(() {
-                          _beadCount = count;
-                          _currentIndex = 0;
-                          _total = 0;
-                          _rounds = 0;
-                        });
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 14),
-            GestureDetector(
-              onTap: _advance,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: CustomPaint(
-                  painter: _BeadsPainter(
-                    beadCount: _beadCount,
-                    currentIndex: _currentIndex,
-                    colorScheme: Theme.of(context).colorScheme,
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          '$_total',
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 4),
-                        Text('Round $_rounds'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: <Widget>[
-                FilledButton.icon(
-                  onPressed: _advance,
-                  icon: const Icon(Icons.touch_app_rounded),
-                  label: const Text('Advance one bead'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _reset,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Reset'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BeadsPainter extends CustomPainter {
-  const _BeadsPainter({
-    required this.beadCount,
-    required this.currentIndex,
-    required this.colorScheme,
-  });
-
-  final int beadCount;
-  final int currentIndex;
-  final ColorScheme colorScheme;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = size.shortestSide * 0.36;
-    final beadRadius = math.max(6.0, size.shortestSide * 0.028);
-    canvas.drawCircle(
-      center,
-      radius + beadRadius * 1.8,
-      Paint()..color = colorScheme.surfaceContainerLow,
-    );
-
-    for (var index = 0; index < beadCount; index += 1) {
-      final angle = -math.pi / 2 + (math.pi * 2 * index / beadCount);
-      final position = Offset(
-        center.dx + math.cos(angle) * radius,
-        center.dy + math.sin(angle) * radius,
-      );
-      final active = index == currentIndex;
-      final completed = index < currentIndex;
-      final fill = Paint()
-        ..color = active
-            ? colorScheme.primary
-            : completed
-            ? colorScheme.primary.withValues(alpha: 0.3)
-            : colorScheme.surface;
-      canvas.drawCircle(position, beadRadius, fill);
-      canvas.drawCircle(
-        position,
-        beadRadius,
-        Paint()
-          ..color = colorScheme.outlineVariant
-          ..style = PaintingStyle.stroke,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BeadsPainter oldDelegate) {
-    return oldDelegate.currentIndex != currentIndex ||
-        oldDelegate.beadCount != beadCount;
   }
 }
 
