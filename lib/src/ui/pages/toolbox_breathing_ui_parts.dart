@@ -256,22 +256,24 @@ class BreathingStageTimeline extends StatelessWidget {
             constraints.maxWidth <
             stages.length * minCompactWidth + 6 * stages.length;
         if (needsScroll) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: stages
-                  .asMap()
-                  .entries
-                  .map(
-                    (entry) => _buildSegment(
-                      context,
-                      entry.value,
-                      entry.key,
-                      width: math.max(70.0, 48 + entry.value.seconds * 14),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
+          final wrappedWidth = math.max(
+            92.0,
+            math.min(168.0, (constraints.maxWidth - 6) / 2),
+          );
+          return Wrap(
+            runSpacing: 6,
+            children: stages
+                .asMap()
+                .entries
+                .map(
+                  (entry) => _buildSegment(
+                    context,
+                    entry.value,
+                    entry.key,
+                    width: wrappedWidth,
+                  ),
+                )
+                .toList(growable: false),
           );
         }
         return Row(

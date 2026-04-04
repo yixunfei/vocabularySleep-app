@@ -867,30 +867,130 @@ class _BreathingPracticeReleaseCardState
   }
 
   Widget _buildScenarioSelector(AppI18n i18n) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: BreathingExperienceCatalog.scenarios
-            .map(
-              (scenario) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  selected: scenario.id == _scenario.id,
-                  onSelected: (_) => unawaited(_applyScenario(scenario)),
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      if (scenario.advanced) ...<Widget>[
-                        const Icon(Icons.bolt_rounded, size: 16),
-                        const SizedBox(width: 4),
-                      ],
-                      Text(scenario.name.resolve(i18n)),
-                    ],
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: BreathingExperienceCatalog.scenarios
+          .map(
+            (scenario) => ChoiceChip(
+              selected: scenario.id == _scenario.id,
+              onSelected: (_) => unawaited(_applyScenario(scenario)),
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (scenario.advanced) ...<Widget>[
+                    const Icon(Icons.bolt_rounded, size: 16),
+                    const SizedBox(width: 4),
+                  ],
+                  Flexible(
+                    child: Text(
+                      scenario.name.resolve(i18n),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                    ),
                   ),
-                ),
+                ],
               ),
-            )
-            .toList(growable: false),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildScenarioGuideCard(BuildContext context, AppI18n i18n) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: PageStorageKey<String>('breathing-guide-${_scenario.id}'),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          shape: const Border(),
+          collapsedShape: const Border(),
+          leading: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: _theme.orbEnd.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.menu_book_rounded,
+              size: 18,
+              color: _theme.orbEnd,
+            ),
+          ),
+          title: Text(
+            pickUiText(i18n, zh: '呼吸说明', en: 'Breathing guide'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          subtitle: Text(
+            pickUiText(
+              i18n,
+              zh: '展开查看研究依据、身体要点、适用时机和节拍说明。',
+              en: 'Expand for research basis, body focus, when to use, and cycle flow.',
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          children: <Widget>[
+            BreathingInsightTile(
+              title: pickUiText(i18n, zh: '研究依据', en: 'Research basis'),
+              body: _scenario.researchBasis.resolve(i18n),
+              icon: Icons.science_outlined,
+              tint: _theme.orbEnd,
+            ),
+            const SizedBox(height: 10),
+            BreathingInsightTile(
+              title: pickUiText(i18n, zh: '作用机制', en: 'How it works'),
+              body: _scenario.mechanism.resolve(i18n),
+              icon: Icons.monitor_heart_outlined,
+              tint: _theme.orbStart,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              pickUiText(i18n, zh: '身体关注', en: 'Body focus'),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(_scenario.bodyFocus.resolve(i18n)),
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(i18n, zh: '适用情境', en: 'When to use'),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(_scenario.whenToUse.resolve(i18n)),
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(i18n, zh: '节拍流程', en: 'Cycle flow'),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _stageFlowLabel(i18n),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -956,95 +1056,152 @@ class _BreathingPracticeReleaseCardState
             ],
           ),
           const SizedBox(height: 14),
-          BreathingInsightTile(
-            title: pickUiText(i18n, zh: '研究依据', en: 'Research basis'),
-            body: _scenario.researchBasis.resolve(i18n),
-            icon: Icons.science_outlined,
-            tint: _theme.orbEnd,
-          ),
-          const SizedBox(height: 10),
-          BreathingInsightTile(
-            title: pickUiText(i18n, zh: '作用机制', en: 'How it works'),
-            body: _scenario.mechanism.resolve(i18n),
-            icon: Icons.monitor_heart_outlined,
-            tint: _theme.orbStart,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            pickUiText(i18n, zh: '身体关注', en: 'Body focus'),
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(_scenario.bodyFocus.resolve(i18n)),
-          const SizedBox(height: 10),
-          Text(
-            pickUiText(i18n, zh: '适用情境', en: 'When to use'),
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(_scenario.whenToUse.resolve(i18n)),
-          const SizedBox(height: 12),
-          VoiceStatusPill(
-            label: _voiceLabel(i18n),
-            subtitle: _voiceSubtitle(i18n),
-            icon: _voiceStatusIcon(),
-            iconColor: _voiceStatusColor(context),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              ScenarioTagChip(
-                label: _voiceSourceChipLabel(i18n),
-                color: _voiceStatusColor(context),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
-              if (_expectedCueCount > 0)
-                ScenarioTagChip(
-                  label: pickUiText(
-                    i18n,
-                    zh: '语音覆盖 $_availableCueCount/$_expectedCueCount',
-                    en: 'Coverage $_availableCueCount/$_expectedCueCount',
-                  ),
-                  color: _theme.orbStart,
-                ),
-              if (_shortStageSilentCount > 0)
-                ScenarioTagChip(
-                  label: pickUiText(
-                    i18n,
-                    zh: '短节拍静默 $_shortStageSilentCount',
-                    en: 'Silent short $_shortStageSilentCount',
-                  ),
-                  color: _theme.accent,
-                ),
-            ],
-          ),
-          if (_friendlyVoiceLocation().isNotEmpty) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(
-              pickUiText(
-                i18n,
-                zh: '最近匹配语音：${_friendlyVoiceLocation()}',
-                en: 'Last matched cue: ${_friendlyVoiceLocation()}',
-              ),
-              style: Theme.of(context).textTheme.bodySmall,
             ),
-          ],
-          const SizedBox(height: 12),
-          Text(
-            pickUiText(i18n, zh: '节拍流程', en: 'Cycle flow'),
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _stageFlowLabel(i18n),
-            style: Theme.of(context).textTheme.bodySmall,
+            child: Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                key: PageStorageKey<String>('breathing-guide-${_scenario.id}'),
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 2,
+                ),
+                childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                shape: const Border(),
+                collapsedShape: const Border(),
+                leading: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: _theme.orbEnd.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.menu_book_rounded,
+                    size: 18,
+                    color: _theme.orbEnd,
+                  ),
+                ),
+                title: Text(
+                  pickUiText(i18n, zh: '呼吸说明', en: 'Breathing guide'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '展开查看研究依据、身体要点、适用时机和节拍说明。',
+                    en: 'Expand for research basis, body focus, when to use, and cycle flow.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                children: <Widget>[
+                  BreathingInsightTile(
+                    title: pickUiText(i18n, zh: '研究依据', en: 'Research basis'),
+                    body: _scenario.researchBasis.resolve(i18n),
+                    icon: Icons.science_outlined,
+                    tint: _theme.orbEnd,
+                  ),
+                  const SizedBox(height: 10),
+                  BreathingInsightTile(
+                    title: pickUiText(i18n, zh: '作用机制', en: 'How it works'),
+                    body: _scenario.mechanism.resolve(i18n),
+                    icon: Icons.monitor_heart_outlined,
+                    tint: _theme.orbStart,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    pickUiText(i18n, zh: '身体关注', en: 'Body focus'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(_scenario.bodyFocus.resolve(i18n)),
+                  const SizedBox(height: 10),
+                  Text(
+                    pickUiText(i18n, zh: '适用情境', en: 'When to use'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(_scenario.whenToUse.resolve(i18n)),
+                  const SizedBox(height: 12),
+                  VoiceStatusPill(
+                    label: _voiceLabel(i18n),
+                    subtitle: _voiceSubtitle(i18n),
+                    icon: _voiceStatusIcon(),
+                    iconColor: _voiceStatusColor(context),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      ScenarioTagChip(
+                        label: _voiceSourceChipLabel(i18n),
+                        color: _voiceStatusColor(context),
+                      ),
+                      if (_expectedCueCount > 0)
+                        ScenarioTagChip(
+                          label: pickUiText(
+                            i18n,
+                            zh: '语音覆盖 $_availableCueCount/$_expectedCueCount',
+                            en: 'Coverage $_availableCueCount/$_expectedCueCount',
+                          ),
+                          color: _theme.orbStart,
+                        ),
+                      if (_shortStageSilentCount > 0)
+                        ScenarioTagChip(
+                          label: pickUiText(
+                            i18n,
+                            zh: '短节拍静默 $_shortStageSilentCount',
+                            en: 'Silent short $_shortStageSilentCount',
+                          ),
+                          color: _theme.accent,
+                        ),
+                    ],
+                  ),
+                  if (_friendlyVoiceLocation().isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '最近匹配语音：${_friendlyVoiceLocation()}',
+                        en: 'Last matched cue: ${_friendlyVoiceLocation()}',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Text(
+                    pickUiText(i18n, zh: '节拍流程', en: 'Cycle flow'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _stageFlowLabel(i18n),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -1398,25 +1555,21 @@ class _BreathingPracticeReleaseCardState
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: BreathingExperienceCatalog.themes
-                  .map(
-                    (theme) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        selected: theme.id == _theme.id,
-                        onSelected: (_) {
-                          setState(() => _theme = theme);
-                          _savePrefs();
-                        },
-                        label: Text(theme.name.resolve(i18n)),
-                      ),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: BreathingExperienceCatalog.themes
+                .map(
+                  (theme) => ChoiceChip(
+                    selected: theme.id == _theme.id,
+                    onSelected: (_) {
+                      setState(() => _theme = theme);
+                      _savePrefs();
+                    },
+                    label: Text(theme.name.resolve(i18n)),
+                  ),
+                )
+                .toList(growable: false),
           ),
           const SizedBox(height: 14),
           Text(

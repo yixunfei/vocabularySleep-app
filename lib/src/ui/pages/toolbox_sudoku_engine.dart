@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 enum SudokuDifficulty { easy, medium, hard }
 
-enum SudokuVariant { classic, diagonal, hyper }
+enum SudokuVariant { classic, diagonal, hyper, disjoint }
 
 class SudokuPuzzle {
   const SudokuPuzzle({
@@ -278,6 +278,89 @@ const Map<SudokuVariant, List<int>> _baseSolutions = <SudokuVariant, List<int>>{
     8,
     3,
   ],
+  SudokuVariant.disjoint: <int>[
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    1,
+    2,
+    3,
+    7,
+    8,
+    9,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    1,
+    5,
+    6,
+    7,
+    8,
+    9,
+    1,
+    2,
+    3,
+    4,
+    8,
+    9,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    1,
+    2,
+    6,
+    7,
+    8,
+    9,
+    1,
+    2,
+    3,
+    4,
+    5,
+    9,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+  ],
 };
 
 final Map<SudokuVariant, List<List<int>>> _constraintGroups =
@@ -458,6 +541,18 @@ List<List<int>> _buildConstraintGroups(SudokuVariant variant) {
           for (var col = anchor.$2; col < anchor.$2 + 3; col += 1)
             row * 9 + col,
       ]);
+    }
+  }
+  if (variant == SudokuVariant.disjoint) {
+    // Disjoint groups: same relative cell across all nine 3x3 boxes.
+    for (var localRow = 0; localRow < 3; localRow += 1) {
+      for (var localCol = 0; localCol < 3; localCol += 1) {
+        groups.add(<int>[
+          for (var boxRow = 0; boxRow < 3; boxRow += 1)
+            for (var boxCol = 0; boxCol < 3; boxCol += 1)
+              (boxRow * 3 + localRow) * 9 + (boxCol * 3 + localCol),
+        ]);
+      }
     }
   }
   return groups;

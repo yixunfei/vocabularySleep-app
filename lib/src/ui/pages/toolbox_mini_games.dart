@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -556,20 +557,23 @@ class _MinesweeperGame extends StatefulWidget {
 }
 
 class _MinesweeperGameState extends State<_MinesweeperGame> {
-  static const int _rows = 9;
-  static const int _cols = 9;
-  static const int _mineCount = 12;
-
+  int _rows = 9;
+  int _cols = 9;
+  int _mineCount = 10;
+  int _draftRows = 9;
+  int _draftCols = 9;
+  int _draftMines = 10;
   late List<_MineCell> _cells;
   bool _firstMove = true;
   bool _lost = false;
   bool _won = false;
+  bool _flagMode = false;
   int _revealedSafe = 0;
 
   @override
   void initState() {
     super.initState();
-    _resetBoard();
+    _startNewGame();
   }
 
   int get _safeCellTotal => _rows * _cols - _mineCount;
@@ -592,7 +596,39 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     return list;
   }
 
-  void _resetBoard({int? safeIndex}) {
+  void _syncDraftMineCap() {
+    final maxMine = math.max(1, _draftRows * _draftCols - 1);
+    if (_draftMines > maxMine) {
+      _draftMines = maxMine;
+    }
+  }
+
+  void _applyPreset(_MinesweeperPreset preset) {
+    setState(() {
+      _draftRows = preset.rows;
+      _draftCols = preset.cols;
+      _draftMines = preset.mines;
+      _syncDraftMineCap();
+      _rows = _draftRows;
+      _cols = _draftCols;
+      _mineCount = _draftMines;
+      _flagMode = false;
+      _startNewGame();
+    });
+  }
+
+  void _applyCustom() {
+    setState(() {
+      _syncDraftMineCap();
+      _rows = _draftRows;
+      _cols = _draftCols;
+      _mineCount = _draftMines;
+      _flagMode = false;
+      _startNewGame();
+    });
+  }
+
+  void _startNewGame({int? safeIndex}) {
     final random = math.Random();
     _cells = List<_MineCell>.generate(_rows * _cols, (_) => _MineCell());
     var placed = 0;
@@ -614,25 +650,32 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     _revealedSafe = 0;
   }
 
-  void _toggleFlag(int index) {
+  void _cycleMark(int index) {
     if (_lost || _won) return;
     final cell = _cells[index];
     if (cell.revealed) return;
     setState(() {
-      cell.flagged = !cell.flagged;
+      cell.mark = switch (cell.mark) {
+        _MineMark.none => _MineMark.flag,
+        _MineMark.flag => _MineMark.question,
+        _MineMark.question => _MineMark.none,
+      };
     });
   }
 
   void _reveal(int index) {
     if (_lost || _won) return;
     final cell = _cells[index];
-    if (cell.revealed || cell.flagged) return;
+    if (cell.revealed || cell.mark == _MineMark.flag) return;
+    if (cell.mark == _MineMark.question) {
+      cell.mark = _MineMark.none;
+    }
 
     setState(() {
       if (_firstMove) {
         _firstMove = false;
         if (_cells[index].hasMine) {
-          _resetBoard(safeIndex: index);
+          _startNewGame(safeIndex: index);
           _firstMove = false;
         }
       }
@@ -640,8 +683,15 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
       if (_cells[index].hasMine) {
         _lost = true;
         for (final c in _cells) {
-          if (c.hasMine) c.revealed = true;
+          if (c.hasMine) {
+            c.revealed = true;
+          }
+          if (!c.hasMine && c.mark == _MineMark.flag) {
+            c.revealed = true;
+            c.wrongFlag = true;
+          }
         }
+        _cells[index].exploded = true;
         return;
       }
 
@@ -649,7 +699,7 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
       if (_revealedSafe >= _safeCellTotal) {
         _won = true;
         for (final c in _cells) {
-          if (c.hasMine) c.flagged = true;
+          if (c.hasMine) c.mark = _MineMark.flag;
         }
       }
     });
@@ -666,22 +716,36 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     while (queue.isNotEmpty) {
       final index = queue.removeFirst();
       final cell = _cells[index];
-      if (cell.revealed || cell.flagged) continue;
+      if (cell.revealed || cell.mark != _MineMark.none) continue;
       cell.revealed = true;
       if (!cell.hasMine) _revealedSafe += 1;
       if (cell.neighborMines > 0) continue;
       for (final neighbor in _neighbors(index)) {
         final next = _cells[neighbor];
-        if (!next.revealed && !next.flagged && !next.hasMine) {
+        if (!next.revealed && next.mark == _MineMark.none && !next.hasMine) {
           queue.add(neighbor);
         }
       }
     }
   }
 
+  void _onCellTap(int index) {
+    if (_flagMode) {
+      _cycleMark(index);
+      return;
+    }
+    _reveal(index);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final flags = _cells.where((c) => c.flagged).length;
+    final flags = _cells.where((c) => c.mark == _MineMark.flag).length;
+    final questions = _cells.where((c) => c.mark == _MineMark.question).length;
+    const presets = <_MinesweeperPreset>[
+      _MinesweeperPreset(label: 'Easy', rows: 9, cols: 9, mines: 10),
+      _MinesweeperPreset(label: 'Medium', rows: 16, cols: 16, mines: 40),
+      _MinesweeperPreset(label: 'Hard', rows: 24, cols: 24, mines: 99),
+    ];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -689,14 +753,118 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: presets
+                  .map(
+                    (preset) => ChoiceChip(
+                      label: Text(
+                        '${preset.label} ${preset.rows}x${preset.cols}/${preset.mines}',
+                      ),
+                      selected:
+                          _rows == preset.rows &&
+                          _cols == preset.cols &&
+                          _mineCount == preset.mines,
+                      onSelected: (_) => _applyPreset(preset),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Custom setup',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Rows: $_draftRows'),
+                    Slider(
+                      value: _draftRows.toDouble(),
+                      min: 5,
+                      max: 30,
+                      divisions: 25,
+                      label: '$_draftRows',
+                      onChanged: (value) {
+                        setState(() {
+                          _draftRows = value.round();
+                          _syncDraftMineCap();
+                        });
+                      },
+                    ),
+                    Text('Columns: $_draftCols'),
+                    Slider(
+                      value: _draftCols.toDouble(),
+                      min: 5,
+                      max: 30,
+                      divisions: 25,
+                      label: '$_draftCols',
+                      onChanged: (value) {
+                        setState(() {
+                          _draftCols = value.round();
+                          _syncDraftMineCap();
+                        });
+                      },
+                    ),
+                    Text('Mines: $_draftMines'),
+                    Slider(
+                      value: _draftMines.toDouble(),
+                      min: 1,
+                      max: math.max(1, _draftRows * _draftCols - 1).toDouble(),
+                      divisions: math.max(1, _draftRows * _draftCols - 2),
+                      label: '$_draftMines',
+                      onChanged: (value) {
+                        setState(() {
+                          _draftMines = value.round();
+                          _syncDraftMineCap();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        FilledButton.icon(
+                          onPressed: _applyCustom,
+                          icon: const Icon(Icons.build_rounded),
+                          label: const Text('Apply custom'),
+                        ),
+                        FilterChip(
+                          label: const Text('Flag mode'),
+                          selected: _flagMode,
+                          onSelected: (value) {
+                            setState(() {
+                              _flagMode = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
               spacing: 10,
               runSpacing: 10,
               children: <Widget>[
-                const ToolboxMetricCard(label: 'Mines', value: '12'),
+                ToolboxMetricCard(label: 'Board', value: '${_rows}x$_cols'),
+                ToolboxMetricCard(label: 'Mines', value: '$_mineCount'),
                 ToolboxMetricCard(
                   label: 'Mines left',
                   value: '${math.max(0, _mineCount - flags)}',
                 ),
+                ToolboxMetricCard(label: 'Flags', value: '$flags'),
+                ToolboxMetricCard(label: 'Question', value: '$questions'),
                 ToolboxMetricCard(
                   label: 'Progress',
                   value: '$_revealedSafe / $_safeCellTotal',
@@ -713,28 +881,30 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Tap to reveal, long press to flag.',
+              _flagMode
+                  ? 'Flag mode: tap cycles mark (flag/question/none).'
+                  : 'Tap to reveal, long press to cycle marks.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) {
-                final boardSize = math.min(430.0, constraints.maxWidth);
+                final boardWidth = math.min(640.0, constraints.maxWidth);
+                final boardHeight = boardWidth * _rows / _cols;
                 return Center(
                   child: SizedBox(
-                    width: boardSize,
-                    height: boardSize,
+                    width: boardWidth,
+                    height: boardHeight,
                     child: GridView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _cells.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: _cols,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _cols,
+                      ),
                       itemBuilder: (context, index) {
                         return GestureDetector(
-                          onTap: () => _reveal(index),
-                          onLongPress: () => _toggleFlag(index),
+                          onTap: () => _onCellTap(index),
+                          onLongPress: () => _cycleMark(index),
                           child: _MineCellTile(cell: _cells[index]),
                         );
                       },
@@ -745,7 +915,7 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () => setState(_resetBoard),
+              onPressed: () => setState(() => _startNewGame()),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('New game'),
             ),
@@ -759,8 +929,26 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
 class _MineCell {
   bool hasMine = false;
   bool revealed = false;
-  bool flagged = false;
+  _MineMark mark = _MineMark.none;
+  bool exploded = false;
+  bool wrongFlag = false;
   int neighborMines = 0;
+}
+
+enum _MineMark { none, flag, question }
+
+class _MinesweeperPreset {
+  const _MinesweeperPreset({
+    required this.label,
+    required this.rows,
+    required this.cols,
+    required this.mines,
+  });
+
+  final String label;
+  final int rows;
+  final int cols;
+  final int mines;
 }
 
 class _MineCellTile extends StatelessWidget {
@@ -783,13 +971,30 @@ class _MineCellTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     Widget child;
-    if (cell.revealed && cell.hasMine) {
-      child = Icon(Icons.circle, color: scheme.error, size: 18);
-    } else if (!cell.revealed && cell.flagged) {
+    if (cell.wrongFlag) {
+      child = const Icon(
+        Icons.close_rounded,
+        color: Color(0xFFD32F2F),
+        size: 18,
+      );
+    } else if (cell.revealed && cell.hasMine) {
+      child = Icon(
+        cell.exploded ? Icons.close_rounded : Icons.circle,
+        color: cell.exploded ? const Color(0xFFD32F2F) : scheme.error,
+        size: 18,
+      );
+    } else if (!cell.revealed && cell.mark == _MineMark.flag) {
       child = const Icon(
         Icons.flag_rounded,
         color: Color(0xFFC14E2D),
         size: 18,
+      );
+    } else if (!cell.revealed && cell.mark == _MineMark.question) {
+      child = Text(
+        '?',
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
       );
     } else if (cell.revealed && cell.neighborMines > 0) {
       child = Text(
@@ -806,7 +1011,7 @@ class _MineCellTile extends StatelessWidget {
       margin: const EdgeInsets.all(0.5),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: cell.revealed
+        color: (cell.revealed || cell.wrongFlag)
             ? scheme.surfaceContainerLow
             : scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(4),
@@ -827,16 +1032,26 @@ class _JigsawGame extends StatefulWidget {
 class _JigsawGameState extends State<_JigsawGame> {
   ui.Image? _sourceImage;
   Uint8List? _sourceBytes;
-  int _gridSize = 3;
+  int _rows = 3;
+  int _cols = 3;
   List<int> _tiles = const <int>[];
   int? _selectedTile;
+  int? _hintTargetIndex;
+  Timer? _hintTimer;
+  Timer? _ticker;
+  final Stopwatch _stopwatch = Stopwatch();
+  Duration _elapsed = Duration.zero;
   int _moves = 0;
   bool _loading = false;
   bool _solved = false;
+  bool _resultShown = false;
   String? _error;
 
   @override
   void dispose() {
+    _ticker?.cancel();
+    _hintTimer?.cancel();
+    _stopwatch.stop();
     _sourceImage?.dispose();
     super.dispose();
   }
@@ -875,12 +1090,16 @@ class _JigsawGameState extends State<_JigsawGame> {
       setState(() {
         _sourceImage = image;
         _sourceBytes = bytes;
-        _tiles = _shuffleTiles(_gridSize);
+        _tiles = _shuffleTiles(_rows, _cols);
         _selectedTile = null;
+        _hintTargetIndex = null;
         _moves = 0;
         _solved = false;
+        _resultShown = false;
         _loading = false;
+        _elapsed = Duration.zero;
       });
+      _startTimer();
       old?.dispose();
     } catch (_) {
       if (!mounted) return;
@@ -897,8 +1116,35 @@ class _JigsawGameState extends State<_JigsawGame> {
     return frame.image;
   }
 
-  List<int> _shuffleTiles(int gridSize) {
-    final total = gridSize * gridSize;
+  void _startTimer() {
+    _ticker?.cancel();
+    _stopwatch
+      ..reset()
+      ..start();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _solved || _sourceImage == null) return;
+      setState(() {
+        _elapsed = _stopwatch.elapsed;
+      });
+    });
+  }
+
+  void _stopTimer() {
+    _stopwatch.stop();
+    _ticker?.cancel();
+    _ticker = null;
+    _elapsed = _stopwatch.elapsed;
+  }
+
+  String _formatDuration(Duration value) {
+    final totalSeconds = value.inSeconds;
+    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  List<int> _shuffleTiles(int rows, int cols) {
+    final total = rows * cols;
     final list = List<int>.generate(total, (i) => i);
     if (total <= 1) return list;
     final random = math.Random();
@@ -915,25 +1161,137 @@ class _JigsawGameState extends State<_JigsawGame> {
     return true;
   }
 
-  void _changeGrid(int size) {
-    if (size == _gridSize) return;
+  void _changeRows(int value) {
     setState(() {
-      _gridSize = size;
+      _rows = value.clamp(2, 50);
       _selectedTile = null;
+      _hintTargetIndex = null;
+      _resultShown = false;
       _moves = 0;
       _solved = false;
-      _tiles = _sourceImage == null ? const <int>[] : _shuffleTiles(size);
+      _tiles = _sourceImage == null
+          ? const <int>[]
+          : _shuffleTiles(_rows, _cols);
+      _elapsed = Duration.zero;
     });
+    if (_sourceImage != null) {
+      _startTimer();
+    }
+  }
+
+  void _changeCols(int value) {
+    setState(() {
+      _cols = value.clamp(2, 50);
+      _selectedTile = null;
+      _hintTargetIndex = null;
+      _resultShown = false;
+      _moves = 0;
+      _solved = false;
+      _tiles = _sourceImage == null
+          ? const <int>[]
+          : _shuffleTiles(_rows, _cols);
+      _elapsed = Duration.zero;
+    });
+    if (_sourceImage != null) {
+      _startTimer();
+    }
+  }
+
+  void _setPresetGrid(int rows, int cols) {
+    setState(() {
+      _rows = rows;
+      _cols = cols;
+      _selectedTile = null;
+      _hintTargetIndex = null;
+      _resultShown = false;
+      _moves = 0;
+      _solved = false;
+      _tiles = _sourceImage == null
+          ? const <int>[]
+          : _shuffleTiles(_rows, _cols);
+      _elapsed = Duration.zero;
+    });
+    if (_sourceImage != null) {
+      _startTimer();
+    }
   }
 
   void _shuffle() {
     if (_sourceImage == null) return;
     setState(() {
-      _tiles = _shuffleTiles(_gridSize);
+      _tiles = _shuffleTiles(_rows, _cols);
       _selectedTile = null;
+      _hintTargetIndex = null;
+      _resultShown = false;
       _moves = 0;
       _solved = false;
+      _elapsed = Duration.zero;
     });
+    _startTimer();
+  }
+
+  void _showHint() {
+    if (_sourceImage == null || _solved || _tiles.isEmpty) return;
+    final mismatch = <int>[
+      for (var index = 0; index < _tiles.length; index += 1)
+        if (_tiles[index] != index) index,
+    ];
+    if (mismatch.isEmpty) return;
+    final targetCell = mismatch.first;
+    final pieceValue = _tiles[targetCell];
+    final correctIndex = pieceValue;
+    final correctRow = correctIndex ~/ _cols + 1;
+    final correctCol = correctIndex % _cols + 1;
+    setState(() {
+      _hintTargetIndex = correctIndex;
+    });
+    _hintTimer?.cancel();
+    _hintTimer = Timer(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() {
+        _hintTargetIndex = null;
+      });
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Hint: selected piece should go to row $correctRow, col $correctCol.',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _showSolvedDialog() async {
+    if (!mounted || _resultShown) return;
+    _resultShown = true;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Congratulations'),
+          content: Text(
+            'Puzzle solved!\n'
+            'Grid: ${_rows}x$_cols\n'
+            'Moves: $_moves\n'
+            'Time: ${_formatDuration(_elapsed)}',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _shuffle();
+              },
+              child: const Text('Play again'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _tapTile(int boardIndex) {
@@ -954,13 +1312,13 @@ class _JigsawGameState extends State<_JigsawGame> {
       next[boardIndex] = tmp;
       _tiles = next;
       _selectedTile = null;
+      _hintTargetIndex = null;
       _moves += 1;
       _solved = _isSolved(next);
     });
     if (_solved && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Puzzle complete!')));
+      _stopTimer();
+      unawaited(_showSolvedDialog());
     }
   }
 
@@ -981,16 +1339,29 @@ class _JigsawGameState extends State<_JigsawGame> {
                   icon: const Icon(Icons.image_outlined),
                   label: Text(_loading ? 'Importing...' : 'Import image'),
                 ),
+                FilledButton.tonalIcon(
+                  onPressed: _sourceImage == null || _loading
+                      ? null
+                      : _showHint,
+                  icon: const Icon(Icons.lightbulb_outline_rounded),
+                  label: const Text('Hint'),
+                ),
                 OutlinedButton.icon(
                   onPressed: _sourceImage == null || _loading ? null : _shuffle,
                   icon: const Icon(Icons.shuffle_rounded),
                   label: const Text('Shuffle'),
                 ),
-                for (final size in <int>[3, 4, 5])
+                for (final preset in const <(int, int)>[
+                  (3, 3),
+                  (4, 4),
+                  (5, 5),
+                  (8, 8),
+                  (10, 10),
+                ])
                   ChoiceChip(
-                    label: Text('${size}x$size'),
-                    selected: _gridSize == size,
-                    onSelected: (_) => _changeGrid(size),
+                    label: Text('${preset.$1}x${preset.$2}'),
+                    selected: _rows == preset.$1 && _cols == preset.$2,
+                    onSelected: (_) => _setPresetGrid(preset.$1, preset.$2),
                   ),
               ],
             ),
@@ -1008,16 +1379,47 @@ class _JigsawGameState extends State<_JigsawGame> {
               spacing: 10,
               runSpacing: 10,
               children: <Widget>[
-                ToolboxMetricCard(
-                  label: 'Grid',
-                  value: '${_gridSize}x$_gridSize',
-                ),
+                ToolboxMetricCard(label: 'Grid', value: '${_rows}x$_cols'),
                 ToolboxMetricCard(label: 'Moves', value: '$_moves'),
+                ToolboxMetricCard(
+                  label: 'Time',
+                  value: _formatDuration(_elapsed),
+                ),
                 ToolboxMetricCard(
                   label: 'Status',
                   value: _solved ? 'Solved' : 'Playing',
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            Card(
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('Rows: $_rows'),
+                    Slider(
+                      value: _rows.toDouble(),
+                      min: 2,
+                      max: 50,
+                      divisions: 48,
+                      label: '$_rows',
+                      onChanged: (value) => _changeRows(value.round()),
+                    ),
+                    Text('Columns: $_cols'),
+                    Slider(
+                      value: _cols.toDouble(),
+                      min: 2,
+                      max: 50,
+                      divisions: 48,
+                      label: '$_cols',
+                      onChanged: (value) => _changeCols(value.round()),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             if (_sourceImage == null)
@@ -1066,18 +1468,20 @@ class _JigsawGameState extends State<_JigsawGame> {
                 builder: (context, constraints) {
                   final width = math.min(440.0, constraints.maxWidth);
                   final image = _sourceImage!;
+                  final tileCount = _tiles.length;
                   return Center(
                     child: SizedBox(
                       width: width,
                       height: width,
                       child: GridView.builder(
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _tiles.length,
+                        itemCount: tileCount,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: _gridSize,
+                          crossAxisCount: _cols,
                         ),
                         itemBuilder: (context, index) {
                           final selected = _selectedTile == index;
+                          final hinted = _hintTargetIndex == index;
                           return GestureDetector(
                             onTap: () => _tapTile(index),
                             child: AnimatedContainer(
@@ -1089,17 +1493,20 @@ class _JigsawGameState extends State<_JigsawGame> {
                                 border: Border.all(
                                   color: selected
                                       ? Theme.of(context).colorScheme.primary
+                                      : hinted
+                                      ? Colors.amber.shade700
                                       : Theme.of(
                                           context,
                                         ).colorScheme.outlineVariant,
-                                  width: selected ? 2 : 1,
+                                  width: selected || hinted ? 2 : 1,
                                 ),
                               ),
                               child: CustomPaint(
                                 painter: _PuzzleTilePainter(
                                   image: image,
                                   sourceTileIndex: _tiles[index],
-                                  gridSize: _gridSize,
+                                  rowCount: _rows,
+                                  colCount: _cols,
                                 ),
                               ),
                             ),
@@ -1122,12 +1529,14 @@ class _PuzzleTilePainter extends CustomPainter {
   const _PuzzleTilePainter({
     required this.image,
     required this.sourceTileIndex,
-    required this.gridSize,
+    required this.rowCount,
+    required this.colCount,
   });
 
   final ui.Image image;
   final int sourceTileIndex;
-  final int gridSize;
+  final int rowCount;
+  final int colCount;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1136,14 +1545,15 @@ class _PuzzleTilePainter extends CustomPainter {
     final crop = math.min(imageW, imageH);
     final cropL = (imageW - crop) / 2;
     final cropT = (imageH - crop) / 2;
-    final tile = crop / gridSize;
-    final srcRow = sourceTileIndex ~/ gridSize;
-    final srcCol = sourceTileIndex % gridSize;
+    final tileWidth = crop / colCount;
+    final tileHeight = crop / rowCount;
+    final srcRow = sourceTileIndex ~/ colCount;
+    final srcCol = sourceTileIndex % colCount;
     final src = Rect.fromLTWH(
-      cropL + srcCol * tile,
-      cropT + srcRow * tile,
-      tile,
-      tile,
+      cropL + srcCol * tileWidth,
+      cropT + srcRow * tileHeight,
+      tileWidth,
+      tileHeight,
     );
     canvas.drawImageRect(image, src, Offset.zero & size, Paint());
   }
@@ -1152,7 +1562,8 @@ class _PuzzleTilePainter extends CustomPainter {
   bool shouldRepaint(covariant _PuzzleTilePainter oldDelegate) {
     return oldDelegate.image != image ||
         oldDelegate.sourceTileIndex != sourceTileIndex ||
-        oldDelegate.gridSize != gridSize;
+        oldDelegate.rowCount != rowCount ||
+        oldDelegate.colCount != colCount;
   }
 }
 
@@ -1172,6 +1583,7 @@ class _GomokuGameState extends State<_GomokuGame> {
   _GomokuStone _turn = _GomokuStone.black;
   bool _aiThinking = false;
   bool _gameOver = false;
+  bool _resultDialogOpen = false;
   int _moves = 0;
   int? _lastMove;
   String _status = 'Your turn (black)';
@@ -1196,10 +1608,55 @@ class _GomokuGameState extends State<_GomokuGame> {
       _turn = _GomokuStone.black;
       _aiThinking = false;
       _gameOver = false;
+      _resultDialogOpen = false;
       _moves = 0;
       _lastMove = null;
       _status = 'Your turn (black)';
     });
+  }
+
+  void _finishGame({
+    required String status,
+    required String title,
+    required String message,
+  }) {
+    setState(() {
+      _gameOver = true;
+      _status = status;
+      _aiThinking = false;
+    });
+    unawaited(_showGameResultDialog(title: title, message: message));
+  }
+
+  Future<void> _showGameResultDialog({
+    required String title,
+    required String message,
+  }) async {
+    if (!mounted || _resultDialogOpen) return;
+    _resultDialogOpen = true;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resetGame();
+              },
+              child: const Text('New game'),
+            ),
+          ],
+        );
+      },
+    );
+    _resultDialogOpen = false;
   }
 
   void _tapCell(int index) {
@@ -1211,17 +1668,19 @@ class _GomokuGameState extends State<_GomokuGame> {
       _lastMove = index;
     });
     if (_winAt(index, _GomokuStone.black)) {
-      setState(() {
-        _gameOver = true;
-        _status = 'You win';
-      });
+      _finishGame(
+        status: 'You win',
+        title: 'Game over',
+        message: 'You win this Gomoku game.',
+      );
       return;
     }
     if (_moves >= _total) {
-      setState(() {
-        _gameOver = true;
-        _status = 'Draw';
-      });
+      _finishGame(
+        status: 'Draw',
+        title: 'Game over',
+        message: 'Draw. No more moves.',
+      );
       return;
     }
     setState(() {
@@ -1237,11 +1696,11 @@ class _GomokuGameState extends State<_GomokuGame> {
     if (!mounted || _gameOver || !_aiThinking) return;
     final bestMove = _chooseAiMove();
     if (bestMove == null) {
-      setState(() {
-        _gameOver = true;
-        _aiThinking = false;
-        _status = 'Draw';
-      });
+      _finishGame(
+        status: 'Draw',
+        title: 'Game over',
+        message: 'Draw. No more moves.',
+      );
       return;
     }
     setState(() {
@@ -1251,17 +1710,19 @@ class _GomokuGameState extends State<_GomokuGame> {
       _aiThinking = false;
     });
     if (_winAt(bestMove, _GomokuStone.white)) {
-      setState(() {
-        _gameOver = true;
-        _status = 'AI wins';
-      });
+      _finishGame(
+        status: 'AI wins',
+        title: 'Game over',
+        message: 'AI wins this Gomoku game.',
+      );
       return;
     }
     if (_moves >= _total) {
-      setState(() {
-        _gameOver = true;
-        _status = 'Draw';
-      });
+      _finishGame(
+        status: 'Draw',
+        title: 'Game over',
+        message: 'Draw. No more moves.',
+      );
       return;
     }
     setState(() {

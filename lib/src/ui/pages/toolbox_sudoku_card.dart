@@ -31,6 +31,7 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
   bool _generating = false;
   bool _showCandidates = true;
   bool _noteMode = false;
+  bool _autoNoteBadge = false;
 
   @override
   void initState() {
@@ -51,6 +52,7 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
       _focusedDigit = null;
       _solved = false;
       _generating = true;
+      _autoNoteBadge = false;
     });
     await Future<void>.delayed(Duration.zero);
     final puzzle = generateSudokuPuzzle(
@@ -115,6 +117,13 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
     }
     setState(() {
       _selected = index;
+      final editableFilled = _board[index] != 0 && !_fixed.contains(index);
+      if (editableFilled) {
+        _noteMode = true;
+        _autoNoteBadge = true;
+      } else if (_board[index] == 0) {
+        _autoNoteBadge = false;
+      }
       if (_board[index] != 0) {
         _focusedDigit = null;
       }
@@ -229,6 +238,7 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
       SudokuVariant.classic => pickUiText(i18n, zh: '经典', en: 'Classic'),
       SudokuVariant.diagonal => pickUiText(i18n, zh: '对角线', en: 'Diagonal'),
       SudokuVariant.hyper => pickUiText(i18n, zh: '超宫', en: 'Hyper'),
+      SudokuVariant.disjoint => pickUiText(i18n, zh: '分组', en: 'Disjoint'),
     };
   }
 
@@ -248,6 +258,11 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
         i18n,
         zh: '规则：在经典数独基础上，中部四个额外 3x3 区块也必须各含 1-9。',
         en: 'Rule: the four extra inner 3x3 regions must also contain 1-9.',
+      ),
+      SudokuVariant.disjoint => pickUiText(
+        i18n,
+        zh: '规则：九宫格中同一相对位置组成的九组单元，也都必须各含 1-9。',
+        en: 'Rule: for each relative box position, the nine matching cells across boxes must also contain 1-9.',
       ),
     };
   }
@@ -433,9 +448,16 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                   onSelected: (value) {
                     setState(() {
                       _noteMode = value;
+                      if (!value) {
+                        _autoNoteBadge = false;
+                      }
                     });
                   },
                 ),
+                if (_autoNoteBadge)
+                  Chip(
+                    label: Text(pickUiText(i18n, zh: '鑷姩', en: 'Auto')),
+                  ),
                 if (_generating)
                   Chip(
                     avatar: const SizedBox(
