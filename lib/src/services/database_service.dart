@@ -163,6 +163,8 @@ class AppDatabaseService {
   bool _initialized = false;
   Future<void>? _initFuture;
   int _transactionDepth = 0;
+  final Map<String, Future<int>> _builtInWordbookLoadFutures =
+      <String, Future<int>>{};
 
   static const _specialWordbooks = <String, String>{
     'builtin:favorites': 'Favorites',
@@ -1171,8 +1173,44 @@ class AppDatabaseService {
     String path, {
     BuiltInWordbookLoadProgressCallback? onProgress,
   }) async {
-    if (!isLazyBuiltInPath(path)) return 0;
+    final normalizedPath = path.trim();
+    if (!isLazyBuiltInPath(normalizedPath)) return 0;
 
+    final inFlight = _builtInWordbookLoadFutures[normalizedPath];
+    if (inFlight != null) {
+      if (onProgress != null) {
+        inFlight
+            .then((loadedCount) {
+              onProgress(
+                BuiltInWordbookLoadProgress(
+                  stage: BuiltInWordbookLoadStage.completed,
+                  progress: 1.0,
+                  processedEntries: loadedCount,
+                  totalEntries: loadedCount,
+                ),
+              );
+            })
+            .catchError((_) {
+              // Surface the original error through the awaited in-flight future only.
+            });
+      }
+      return inFlight;
+    }
+
+    final future = _ensureBuiltInWordbookLoadedImpl(
+      normalizedPath,
+      onProgress: onProgress,
+    );
+    _builtInWordbookLoadFutures[normalizedPath] = future;
+    return future.whenComplete(() {
+      _builtInWordbookLoadFutures.remove(normalizedPath);
+    });
+  }
+
+  Future<int> _ensureBuiltInWordbookLoadedImpl(
+    String path, {
+    BuiltInWordbookLoadProgressCallback? onProgress,
+  }) async {
     final builtins = await _resolveBuiltInWordbooks();
     BuiltInWordbookConfig? target;
     for (final builtin in builtins) {
@@ -1207,43 +1245,42 @@ class AppDatabaseService {
       );
       return loadedCount;
     }
-    // Historical local bundle loading is kept below as a reference because the
-    // app now prefers first-use S3 download + local cache for built-in wordbooks.
-    // final bundleData = await rootBundle.load(target.assetPath);
-    // final bytes = bundleData.buffer.asUint8List();
-    // final content = _decodeBuiltInWordbookAsset(target.assetPath, bytes);
+
     onProgress?.call(
       const BuiltInWordbookLoadProgress(
         stage: BuiltInWordbookLoadStage.downloading,
         progress: 0,
       ),
     );
-    final content = await _builtInWordbookSource.loadBuiltInWordbookContent(
-      target,
-      onProgress: onProgress == null
-          ? null
-          : (downloadProgress) {
-              onProgress(
-                BuiltInWordbookLoadProgress(
-                  stage: BuiltInWordbookLoadStage.downloading,
-                  progress: downloadProgress.progress,
-                  receivedBytes: downloadProgress.receivedBytes,
-                  totalBytes: downloadProgress.totalBytes,
-                ),
-              );
-            },
-    );
+    final byteStream = await _builtInWordbookSource
+        .openBuiltInWordbookByteStream(
+          target,
+          onProgress: onProgress == null
+              ? null
+              : (downloadProgress) {
+                  onProgress(
+                    BuiltInWordbookLoadProgress(
+                      stage: BuiltInWordbookLoadStage.downloading,
+                      progress: downloadProgress.progress,
+                      receivedBytes: downloadProgress.receivedBytes,
+                      totalBytes: downloadProgress.totalBytes,
+                    ),
+                  );
+                },
+        );
     onProgress?.call(
       const BuiltInWordbookLoadProgress(
         stage: BuiltInWordbookLoadStage.processing,
         progress: 0,
       ),
     );
-    final imported = importWordbookJsonText(
+    final imported = await importWordbookJsonByteStreamAsync(
       sourcePath: target.path,
       name: target.name,
-      content: content,
+      byteStream: byteStream,
+      gzipped: target.sourcePath.toLowerCase().endsWith('.gz'),
       replaceExisting: true,
+      yieldEvery: 40,
       onProgress: onProgress == null
           ? null
           : (processedEntries, totalEntries) {
@@ -1330,6 +1367,33 @@ class AppDatabaseService {
         .toList(growable: false);
   }
 
+  List<WordEntry> getWordsLite(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    final rows = _selectMaps(
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC LIMIT ? OFFSET ?',
+      <Object?>[wordbookId, limit, offset],
+    );
+    return rows.map(_wordEntryLiteFromRow).toList(growable: false);
+  }
+
+  List<String> getWordTexts(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    final rows = _selectMaps(
+      'SELECT word FROM words WHERE wordbook_id = ? ORDER BY id ASC LIMIT ? OFFSET ?',
+      <Object?>[wordbookId, limit, offset],
+    );
+    return rows
+        .map((row) => sanitizeDisplayText('${row['word'] ?? ''}'))
+        .where((word) => word.isNotEmpty)
+        .toList(growable: false);
+  }
+
   List<WordEntry> searchWords(
     int wordbookId, {
     required String query,
@@ -1371,6 +1435,34 @@ class AppDatabaseService {
           return fields.isEmpty ? entry : entry.copyWith(fields: fields);
         })
         .toList(growable: false);
+  }
+
+  List<WordEntry> searchWordsLite(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    final (whereClause, params) = _buildSearchWhereClause(
+      wordbookId: wordbookId,
+      query: query,
+      mode: mode,
+    );
+    if (params.length == 1) {
+      return getWordsLite(wordbookId, limit: limit, offset: offset);
+    }
+
+    final rows = _selectMaps(
+      '''
+      SELECT * FROM words
+      WHERE $whereClause
+      ORDER BY id ASC
+      LIMIT ? OFFSET ?
+      ''',
+      <Object?>[...params, limit, offset],
+    );
+    return rows.map(_wordEntryLiteFromRow).toList(growable: false);
   }
 
   int countSearchWords(
@@ -2123,6 +2215,63 @@ class AppDatabaseService {
     });
   }
 
+  Future<int> importWordbookJsonByteStreamAsync({
+    required String sourcePath,
+    required String name,
+    required Stream<List<int>> byteStream,
+    bool gzipped = false,
+    bool replaceExisting = true,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+    int yieldEvery = 180,
+  }) async {
+    return _runInTransactionAsync<int>(() async {
+      var wordbookId = 0;
+      final existing = _selectOne(
+        'SELECT id FROM wordbooks WHERE path = ?',
+        <Object?>[sourcePath],
+      );
+      if (existing != null) {
+        wordbookId = (existing['id'] as num).toInt();
+        if (replaceExisting) {
+          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
+            wordbookId,
+          ]);
+        }
+      } else {
+        _db.execute(
+          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
+          <Object?>[name, sourcePath],
+        );
+        wordbookId = _lastInsertId();
+      }
+
+      final statements = _openWordImportInsertStatements();
+      var count = 0;
+      try {
+        await _importService.processJsonByteStreamAsync(
+          byteStream,
+          gzipped: gzipped,
+          onPayload: (payload) {
+            if (_insertWordWithStatements(
+              wordbookId,
+              payload,
+              statements: statements,
+            )) {
+              count += 1;
+            }
+          },
+          onProgress: onProgress,
+          yieldEvery: yieldEvery,
+        );
+      } finally {
+        statements.dispose();
+      }
+
+      _refreshWordbookCount(wordbookId);
+      return count;
+    });
+  }
+
   Future<int> importWordbook({
     required String sourcePath,
     required String name,
@@ -2623,13 +2772,13 @@ class AppDatabaseService {
   }) async {
     if (filePath.toLowerCase().endsWith('.json')) {
       onProgress?.call(0, null);
-      final content = await File(filePath).readAsString();
-      return importWordbookJsonTextAsync(
+      return importWordbookJsonByteStreamAsync(
         sourcePath: filePath,
         name: name,
-        content: content,
+        byteStream: File(filePath).openRead(),
         replaceExisting: true,
         onProgress: onProgress,
+        yieldEvery: 40,
       );
     }
     onProgress?.call(0, null);
@@ -3409,6 +3558,16 @@ class AppDatabaseService {
     }
     final fallbackMeaning = sanitizeDisplayText('${row['meaning'] ?? ''}');
     return fallbackMeaning;
+  }
+
+  WordEntry _wordEntryLiteFromRow(Map<String, Object?> row) {
+    return WordEntry(
+      id: (row['id'] as num?)?.toInt(),
+      wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
+      word: sanitizeDisplayText('${row['word'] ?? ''}'),
+      meaning: _sanitizeNullableText(row['meaning']),
+      rawContent: _resolveStoredRawContent(row),
+    );
   }
 
   String? _sanitizeNullableText(Object? raw) {

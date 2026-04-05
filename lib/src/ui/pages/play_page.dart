@@ -262,8 +262,9 @@ class _PlayPageState extends State<PlayPage> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    final selectedWordbook = state.selectedWordbook;
     final current = state.currentWord;
-    if (state.selectedWordbook == null || current == null) {
+    if (selectedWordbook == null) {
       return EmptyStateView(
         icon: Icons.play_circle_outline_rounded,
         title: pickUiText(i18n, zh: '还没有播放内容', en: 'Nothing to play yet'),
@@ -274,6 +275,66 @@ class _PlayPageState extends State<PlayPage> {
           en: 'Choose wordbook in Library',
         ),
         onAction: widget.onOpenLibrary,
+      );
+    }
+    if (current == null) {
+      final deferredLoad = state.selectedWordbookRequiresOnDemandLoad;
+      return EmptyStateView(
+        icon: deferredLoad
+            ? Icons.library_books_rounded
+            : Icons.play_circle_outline_rounded,
+        title: deferredLoad
+            ? pickUiText(
+                i18n,
+                zh: '当前词本待加载',
+                en: 'Wordbook ready to load',
+                ja: '単語帳を読み込む準備ができました',
+                de: 'Wortbuch kann geladen werden',
+                fr: 'Le carnet est prêt à être chargé',
+                es: 'El cuaderno está listo para cargarse',
+              )
+            : pickUiText(
+                i18n,
+                zh: '还没有播放内容',
+                en: 'Nothing to play yet',
+                ja: 'まだ再生できる内容がありません',
+                de: 'Noch nichts zum Abspielen',
+                fr: 'Rien à lire pour le moment',
+                es: 'Todavía no hay contenido para reproducir',
+              ),
+        message: deferredLoad
+            ? pickUiText(
+                i18n,
+                zh: '${localizedWordbookName(i18n, selectedWordbook)} 共有 ${state.visibleWordCount} 个词条。为保证大词库在手机上进入更稳定，会在开始播放时按需加载。',
+                en: '${localizedWordbookName(i18n, selectedWordbook)} has ${state.visibleWordCount} words. To keep relaunches stable, the app now loads it on demand when playback starts.',
+                ja: '${localizedWordbookName(i18n, selectedWordbook)} には ${state.visibleWordCount} 件の単語があります。モバイルでの再起動安定性を保つため、再生開始時に必要な分だけ読み込みます。',
+                de: '${localizedWordbookName(i18n, selectedWordbook)} enthält ${state.visibleWordCount} Wörter. Damit große Wortbücher auf Mobilgeräten stabil bleiben, werden sie erst beim Start der Wiedergabe bei Bedarf geladen.',
+                fr: '${localizedWordbookName(i18n, selectedWordbook)} contient ${state.visibleWordCount} mots. Pour garder une ouverture stable sur mobile, le chargement se fait à la demande au démarrage de la lecture.',
+                es: '${localizedWordbookName(i18n, selectedWordbook)} contiene ${state.visibleWordCount} palabras. Para mantener estable el arranque en móvil, se cargará bajo demanda al iniciar la reproducción.',
+              )
+            : i18n.t('noWordbookYet'),
+        actionLabel: deferredLoad
+            ? pickUiText(
+                i18n,
+                zh: '加载并播放',
+                en: 'Load and play',
+                ja: '読み込んで再生',
+                de: 'Laden und abspielen',
+                fr: 'Charger et lire',
+                es: 'Cargar y reproducir',
+              )
+            : pickUiText(
+                i18n,
+                zh: '去词库选择词本',
+                en: 'Choose wordbook in Library',
+                ja: 'ライブラリで単語帳を選択',
+                de: 'Wortbuch in der Bibliothek wählen',
+                fr: 'Choisir un carnet dans la bibliothèque',
+                es: 'Elegir cuaderno en la biblioteca',
+              ),
+        onAction: deferredLoad
+            ? () => state.playCurrentWordbook()
+            : widget.onOpenLibrary,
       );
     }
 

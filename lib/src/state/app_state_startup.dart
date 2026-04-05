@@ -40,7 +40,10 @@ extension _AppStateStartup on AppState {
       _testModeHintRevealed = testModeState.hintRevealed;
       _loadPracticeDashboard();
       _ensurePracticeDate(persist: true);
-      await _reloadWordbooks(keepCurrentSelection: false);
+      await _reloadWordbooks(
+        keepCurrentSelection: false,
+        preloadSelectedWords: false,
+      );
       await _syncSpecialWordbooks();
       _initialized = true;
       if (_weatherEnabled) {

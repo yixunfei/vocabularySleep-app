@@ -94,8 +94,42 @@ extension _AppStateWordbook on AppState {
         _setBusy(false);
       }
     }
-    _selectedWordbook = wordbook;
-    _setWords(_database.getWords(wordbook.id));
+    final shouldDeferLargeWordbookLoad =
+        _shouldUseLiteWordQueries(wordbook) &&
+        focusWordId == null &&
+        (normalizedFocusWord ?? '').isEmpty &&
+        !shouldFollowPlayingWord;
+    if (shouldDeferLargeWordbookLoad) {
+      _selectedWordbook = wordbook;
+      _clearSelectedWordbookWords();
+      _currentWordIndex = 0;
+      resetTestModeProgress();
+      _notifyStateChanged();
+      if (previousSelection?.id != wordbook.id) {
+        await _syncPlaybackToSelectedWordbook(wordbook);
+      }
+      return;
+    }
+    final shouldShowLocalLoadBusy =
+        !_busy &&
+        _loadedWordbookId != wordbook.id &&
+        wordbook.wordCount > AppState._startupEagerWordLoadLimit;
+    if (shouldShowLocalLoadBusy) {
+      _setBusy(
+        true,
+        messageKey: 'busyLoadingWordbook',
+        params: <String, Object?>{'name': wordbook.name},
+        detail: AppI18n(_uiLanguage).t('busyPatienceHint'),
+      );
+    }
+    try {
+      _selectedWordbook = wordbook;
+      _setWords(_queryWordbookEntries(wordbook));
+    } finally {
+      if (shouldShowLocalLoadBusy) {
+        _setBusy(false);
+      }
+    }
     final restoredProgressIndex =
         (focusWordId == null && (normalizedFocusWord ?? '').isEmpty)
         ? _playbackProgressIndexForWordbook(wordbook)

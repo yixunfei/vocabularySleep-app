@@ -62,7 +62,12 @@ class _WordDetailPageState extends State<WordDetailPage> {
     for (final item in state.words) {
       if (item.word == widget.initialWord.word) return item;
     }
-    return state.currentWord;
+    final fallback = state.currentWord;
+    if (fallback != null &&
+        fallback.wordbookId == widget.initialWord.wordbookId) {
+      return fallback;
+    }
+    return widget.initialWord;
   }
 
   void _moveToWord(

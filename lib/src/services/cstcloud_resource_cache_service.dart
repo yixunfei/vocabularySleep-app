@@ -18,9 +18,8 @@ class ResourceDownloadProgress {
   final int receivedBytes;
   final int totalBytes;
 
-  double? get progress => totalBytes <= 0
-      ? null
-      : (receivedBytes / totalBytes).clamp(0.0, 1.0);
+  double? get progress =>
+      totalBytes <= 0 ? null : (receivedBytes / totalBytes).clamp(0.0, 1.0);
 }
 
 typedef ResourceDownloadProgressCallback =
@@ -31,6 +30,7 @@ class CstCloudResourceCacheService {
     : _client = client ?? CstCloudS3CompatClient();
 
   final CstCloudS3CompatClient _client;
+  final Map<String, Future<File>> _downloadFutures = <String, Future<File>>{};
 
   Future<List<S3ObjectSummary>> listObjects(
     String prefix, {
@@ -77,8 +77,9 @@ class CstCloudResourceCacheService {
     final targetPath = cacheRelativePath?.trim().isNotEmpty == true
         ? cacheRelativePath!.trim()
         : remoteKey;
+    final normalizedTargetPath = targetPath.replaceAll('\\', '/');
     final baseDir = await _cacheBaseDir();
-    final targetFile = File(p.join(baseDir.path, targetPath));
+    final targetFile = File(p.join(baseDir.path, normalizedTargetPath));
     if (await targetFile.exists()) {
       final existingBytes = await targetFile.length();
       onProgress?.call(
@@ -89,28 +90,33 @@ class CstCloudResourceCacheService {
       );
       return targetFile;
     }
-    await targetFile.parent.create(recursive: true);
-    final bytes = await _client.getObjectBytes(
-      remoteKey,
-      onProgress: onProgress == null
-          ? null
-          : (receivedBytes, totalBytes) {
+
+    final inFlight = _downloadFutures[normalizedTargetPath];
+    if (inFlight != null) {
+      if (onProgress != null) {
+        inFlight
+            .then((file) async {
+              final size = await file.length();
               onProgress(
-                ResourceDownloadProgress(
-                  receivedBytes: receivedBytes,
-                  totalBytes: totalBytes,
-                ),
+                ResourceDownloadProgress(receivedBytes: size, totalBytes: size),
               );
-            },
+            })
+            .catchError((_) {
+              // Surface the original error through the awaited future only.
+            });
+      }
+      return inFlight;
+    }
+
+    final future = _ensureFileDownloadedImpl(
+      remoteKey,
+      targetFile,
+      onProgress: onProgress,
     );
-    await targetFile.writeAsBytes(bytes, flush: true);
-    onProgress?.call(
-      ResourceDownloadProgress(
-        receivedBytes: bytes.length,
-        totalBytes: bytes.length,
-      ),
-    );
-    return targetFile;
+    _downloadFutures[normalizedTargetPath] = future;
+    return future.whenComplete(() {
+      _downloadFutures.remove(normalizedTargetPath);
+    });
   }
 
   Future<bool> hasCachedFilesUnderPrefix(String prefix) async {
@@ -123,7 +129,10 @@ class CstCloudResourceCacheService {
     if (!await targetDir.exists()) {
       return false;
     }
-    await for (final entity in targetDir.list(recursive: true, followLinks: false)) {
+    await for (final entity in targetDir.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is File) {
         return true;
       }
@@ -138,5 +147,48 @@ class CstCloudResourceCacheService {
       await dir.create(recursive: true);
     }
     return dir;
+  }
+
+  Future<File> _ensureFileDownloadedImpl(
+    String remoteKey,
+    File targetFile, {
+    ResourceDownloadProgressCallback? onProgress,
+  }) async {
+    await targetFile.parent.create(recursive: true);
+    final tempFile = File('${targetFile.path}.part');
+    if (await tempFile.exists()) {
+      await tempFile.delete();
+    }
+
+    try {
+      await _client.downloadObjectToFile(
+        remoteKey,
+        tempFile,
+        onProgress: onProgress == null
+            ? null
+            : (receivedBytes, totalBytes) {
+                onProgress(
+                  ResourceDownloadProgress(
+                    receivedBytes: receivedBytes,
+                    totalBytes: totalBytes,
+                  ),
+                );
+              },
+      );
+      if (await targetFile.exists()) {
+        await targetFile.delete();
+      }
+      await tempFile.rename(targetFile.path);
+      final size = await targetFile.length();
+      onProgress?.call(
+        ResourceDownloadProgress(receivedBytes: size, totalBytes: size),
+      );
+      return targetFile;
+    } catch (_) {
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
+      rethrow;
+    }
   }
 }

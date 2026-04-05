@@ -99,6 +99,19 @@ class CstCloudS3CompatClient {
     return Uint8List.fromList(result.bytes);
   }
 
+  Future<File> downloadObjectToFile(
+    String objectKey,
+    File targetFile, {
+    void Function(int receivedBytes, int totalBytes)? onProgress,
+  }) async {
+    await _probeClient.downloadObjectToFile(
+      objectKey,
+      targetFile,
+      onProgress: onProgress,
+    );
+    return targetFile;
+  }
+
   /// 获取对象范围数据
   Future<Uint8List> getObjectRange(
     String objectKey, {

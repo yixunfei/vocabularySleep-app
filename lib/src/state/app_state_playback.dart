@@ -50,7 +50,42 @@ extension _AppStatePlayback on AppState {
   }
 
   Future<void> _playImpl() async {
-    final selected = _selectedWordbook;
+    var selected = _selectedWordbook;
+    if (selected != null && !selectedWordbookLoaded) {
+      final showBusy = !_busy;
+      if (showBusy) {
+        _setBusy(
+          true,
+          messageKey: 'busyLoadingWordbook',
+          params: <String, Object?>{'name': selected.name},
+          detail: AppI18n(_uiLanguage).t('busyPatienceHint'),
+        );
+      }
+      try {
+        _selectedWordbook = selected;
+        _setWords(_queryWordbookEntries(selected));
+        final restoredIndex = _playbackProgressIndexForWordbook(selected);
+        final restoredEntries = _searchQuery.trim().isEmpty
+            ? _words
+            : _scopeWords;
+        if (restoredIndex >= 0 && restoredIndex < restoredEntries.length) {
+          final target = (_searchQuery.trim().isEmpty
+              ? _words
+              : _scopeWords)[restoredIndex];
+          _setCurrentWordByEntry(target);
+        } else if (_currentWordIndex >= _words.length) {
+          _currentWordIndex = _words.isEmpty ? 0 : (_words.length - 1);
+        }
+        _ensureCurrentWordInScope();
+        resetTestModeProgress();
+        _notifyStateChanged();
+      } finally {
+        if (showBusy) {
+          _setBusy(false);
+        }
+      }
+      selected = _selectedWordbook;
+    }
     final scopeWords = _scopeWords;
     if (selected == null || scopeWords.isEmpty || _isPlaying) {
       _log.w(

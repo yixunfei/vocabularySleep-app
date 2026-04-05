@@ -89,6 +89,18 @@ class S3GetObjectResult {
   final String contentType;
 }
 
+class S3DownloadObjectResult {
+  const S3DownloadObjectResult({
+    required this.contentType,
+    required this.contentLength,
+    required this.writtenBytes,
+  });
+
+  final String contentType;
+  final int contentLength;
+  final int writtenBytes;
+}
+
 class S3BucketProbeClient {
   S3BucketProbeClient({required this.config, HttpClient? httpClient})
     : _httpClient = httpClient ?? HttpClient();
@@ -213,6 +225,82 @@ class S3BucketProbeClient {
       contentType:
           response.headers.value(HttpHeaders.contentTypeHeader) ??
           'application/octet-stream',
+    );
+  }
+
+  Future<S3DownloadObjectResult> downloadObjectToFile(
+    String objectKey,
+    File targetFile, {
+    void Function(int receivedBytes, int totalBytes)? onProgress,
+  }) async {
+    final uri = _buildObjectUri(objectKey);
+    final signed = _signRequest(uri);
+    final request = await _httpClient.getUrl(uri);
+    signed.headers.forEach(request.headers.set);
+    final response = await request.close();
+    final totalBytes =
+        int.tryParse(
+          response.headers.value(HttpHeaders.contentLengthHeader) ?? '',
+        ) ??
+        0;
+    if (response.statusCode < 200 || response.statusCode >= 299) {
+      final bytes = await _readAllBytes(
+        response,
+        onProgress: onProgress,
+        totalBytes: totalBytes,
+      );
+      throw HttpException(
+        'S3 get probe failed with ${response.statusCode}: ${utf8.decode(bytes, allowMalformed: true)}',
+        uri: uri,
+      );
+    }
+
+    IOSink? sink;
+    var writtenBytes = 0;
+    var lastReportedBytes = 0;
+    const reportInterval = 64 * 1024;
+
+    void report({bool force = false}) {
+      if (onProgress == null) return;
+      if (!force && totalBytes > 0) {
+        final percentProgress = writtenBytes * 100 ~/ totalBytes;
+        final lastPercentProgress = lastReportedBytes * 100 ~/ totalBytes;
+        final bytesProgress = writtenBytes - lastReportedBytes;
+        if (writtenBytes < totalBytes &&
+            bytesProgress < reportInterval &&
+            percentProgress == lastPercentProgress) {
+          return;
+        }
+      }
+      lastReportedBytes = writtenBytes;
+      onProgress(writtenBytes, totalBytes);
+    }
+
+    try {
+      await targetFile.parent.create(recursive: true);
+      sink = targetFile.openWrite();
+      report(force: true);
+      await for (final chunk in response) {
+        sink.add(chunk);
+        writtenBytes += chunk.length;
+        report();
+      }
+      await sink.flush();
+      await sink.close();
+      report(force: true);
+    } catch (_) {
+      try {
+        await sink?.close();
+      } catch (_) {}
+      rethrow;
+    }
+
+    return S3DownloadObjectResult(
+      contentType:
+          response.headers.value(HttpHeaders.contentTypeHeader) ??
+          'application/octet-stream',
+      contentLength: totalBytes,
+      writtenBytes: writtenBytes,
     );
   }
 

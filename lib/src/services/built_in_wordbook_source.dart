@@ -21,6 +21,10 @@ class BuiltInWordbookConfig {
 
 abstract class BuiltInWordbookSource {
   Future<List<BuiltInWordbookConfig>> listBuiltInWordbooks();
+  Future<Stream<List<int>>> openBuiltInWordbookByteStream(
+    BuiltInWordbookConfig config, {
+    ResourceDownloadProgressCallback? onProgress,
+  });
   Future<String> loadBuiltInWordbookContent(
     BuiltInWordbookConfig config, {
     ResourceDownloadProgressCallback? onProgress,
@@ -70,6 +74,22 @@ class AssetBuiltInWordbookSource implements BuiltInWordbookSource {
       ),
     );
     return decodeBuiltInWordbookBytes(config.sourcePath, bytes);
+  }
+
+  @override
+  Future<Stream<List<int>>> openBuiltInWordbookByteStream(
+    BuiltInWordbookConfig config, {
+    ResourceDownloadProgressCallback? onProgress,
+  }) async {
+    final bundleData = await rootBundle.load(config.sourcePath);
+    final bytes = bundleData.buffer.asUint8List();
+    onProgress?.call(
+      ResourceDownloadProgress(
+        receivedBytes: bytes.length,
+        totalBytes: bytes.length,
+      ),
+    );
+    return Stream<List<int>>.value(bytes);
   }
 
   BuiltInWordbookConfig _buildConfigFromAsset(String assetPath) {
@@ -140,6 +160,29 @@ class CstCloudBuiltInWordbookSource implements BuiltInWordbookSource {
     } catch (_) {
       if (_fallback != null) {
         return _fallback.loadBuiltInWordbookContent(
+          config,
+          onProgress: onProgress,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Stream<List<int>>> openBuiltInWordbookByteStream(
+    BuiltInWordbookConfig config, {
+    ResourceDownloadProgressCallback? onProgress,
+  }) async {
+    try {
+      final file = await _cacheService.ensureFileDownloaded(
+        config.sourcePath,
+        cacheRelativePath: config.sourcePath,
+        onProgress: onProgress,
+      );
+      return file.openRead();
+    } catch (_) {
+      if (_fallback != null) {
+        return _fallback.openBuiltInWordbookByteStream(
           config,
           onProgress: onProgress,
         );

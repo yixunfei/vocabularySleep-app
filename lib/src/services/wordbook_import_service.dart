@@ -407,6 +407,151 @@ class WordbookImportService {
     return count;
   }
 
+  Future<int> processJsonByteStreamAsync(
+    Stream<List<int>> byteStream, {
+    required void Function(WordEntryPayload payload) onPayload,
+    void Function(int processed, int? total)? onProgress,
+    int yieldEvery = 180,
+    bool gzipped = false,
+  }) async {
+    final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
+
+    Map<String, Object?>? asRecordMap(Object? value) {
+      if (value is Map<String, Object?>) {
+        return value;
+      }
+      if (value is Map) {
+        return value.cast<String, Object?>();
+      }
+      return null;
+    }
+
+    int emitPayload(Object? value) {
+      final record = asRecordMap(value);
+      if (record == null) return 0;
+      final payload = _recordToPayload(record);
+      if (payload == null) return 0;
+      onPayload(payload);
+      return 1;
+    }
+
+    var lastReportedProcessed = -1;
+    var processed = 0;
+    var count = 0;
+    var sinceLastYield = 0;
+    var charsSinceLastYield = 0;
+    var inString = false;
+    var escaping = false;
+    var captureStartDepth = 0;
+    StringBuffer? captureBuffer;
+    final stack = <int>[];
+
+    void reportProgress(int processed, int? total, {bool force = false}) {
+      if (onProgress == null) return;
+      if (!force && processed - lastReportedProcessed < 64) {
+        return;
+      }
+      lastReportedProcessed = processed;
+      onProgress(processed, total);
+    }
+
+    Future<void> maybeYield() async {
+      sinceLastYield += 1;
+      if (sinceLastYield < resolvedYieldEvery) return;
+      sinceLastYield = 0;
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    Future<void> maybeYieldForChars() async {
+      charsSinceLastYield += 1;
+      if (charsSinceLastYield < 131072) return;
+      charsSinceLastYield = 0;
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    Future<void> flushCapturedObject() async {
+      final chunk = captureBuffer?.toString().trim() ?? '';
+      captureBuffer = null;
+      captureStartDepth = 0;
+      if (chunk.isEmpty) {
+        return;
+      }
+      try {
+        final decoded = jsonDecode(chunk);
+        processed += 1;
+        count += emitPayload(decoded);
+        reportProgress(processed, null);
+        await maybeYield();
+      } catch (_) {
+        // Ignore malformed rows so a single broken record does not abort import.
+      }
+    }
+
+    final decodedStream =
+        (gzipped ? byteStream.transform(gzip.decoder) : byteStream).transform(
+          utf8.decoder,
+        );
+
+    reportProgress(0, null, force: true);
+
+    await for (final chunk in decodedStream) {
+      for (var index = 0; index < chunk.length; index += 1) {
+        final char = chunk[index];
+        final codeUnit = char.codeUnitAt(0);
+        final parentToken = stack.isEmpty ? null : stack.last;
+        final startsRecordObject =
+            captureBuffer == null &&
+            !inString &&
+            !escaping &&
+            codeUnit == 123 &&
+            parentToken == 91;
+
+        if (startsRecordObject) {
+          captureBuffer = StringBuffer();
+          captureStartDepth = stack.length + 1;
+        }
+
+        captureBuffer?.write(char);
+        await maybeYieldForChars();
+
+        if (escaping) {
+          escaping = false;
+          continue;
+        }
+
+        if (codeUnit == 92 && inString) {
+          escaping = true;
+          continue;
+        }
+
+        if (codeUnit == 34) {
+          inString = !inString;
+          continue;
+        }
+
+        if (inString) {
+          continue;
+        }
+
+        if (codeUnit == 123 || codeUnit == 91) {
+          stack.add(codeUnit);
+        } else if (codeUnit == 125 || codeUnit == 93) {
+          if (stack.isNotEmpty) {
+            stack.removeLast();
+          }
+          if (captureBuffer != null &&
+              codeUnit == 125 &&
+              stack.length < captureStartDepth) {
+            await flushCapturedObject();
+          }
+        }
+      }
+    }
+
+    reportProgress(processed, null, force: true);
+    return count;
+  }
+
   List<WordEntryPayload> parseCsvText(String content) {
     final rows = _parseCsvRows(content);
     if (rows.length < 2) return const <WordEntryPayload>[];

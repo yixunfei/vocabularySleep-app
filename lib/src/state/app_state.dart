@@ -63,6 +63,7 @@ enum SearchMode { all, word, meaning, fuzzy }
 
 class AppState extends ChangeNotifier with WidgetsBindingObserver {
   static const int _practiceSessionHistoryLimit = 365;
+  static const int _startupEagerWordLoadLimit = 1500;
 
   static String _resolveSystemUiLanguage() {
     final locale = PlatformDispatcher.instance.locale;
@@ -130,6 +131,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<Wordbook> _wordbooks = <Wordbook>[];
   Wordbook? _selectedWordbook;
   List<WordEntry> _words = <WordEntry>[];
+  int? _loadedWordbookId;
   int _currentWordIndex = 0;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
@@ -245,6 +247,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<Wordbook> get wordbooks => _wordbooks;
   Wordbook? get selectedWordbook => _selectedWordbook;
   List<WordEntry> get words => _words;
+  bool get selectedWordbookLoaded =>
+      _selectedWordbook != null && _loadedWordbookId == _selectedWordbook!.id;
+  bool get selectedWordbookRequiresOnDemandLoad =>
+      _selectedWordbook != null &&
+      !selectedWordbookLoaded &&
+      _selectedWordbook!.wordCount > 0;
   int get currentWordIndex => _currentWordIndex;
   bool get isPlaying => _isPlaying;
   bool get isPaused => _isPaused;
@@ -360,8 +368,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final selectedWordbook = _selectedWordbook;
     final computed = selectedWordbook == null || normalizedQuery.isEmpty
         ? _words
-        : _database.searchWords(
-            selectedWordbook.id,
+        : _searchWordbookEntries(
+            selectedWordbook,
             query: normalizedQuery,
             mode: _searchMode.name,
           );
@@ -437,7 +445,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return 0;
     }
     if (_searchQuery.trim().isEmpty) {
-      return _words.length;
+      return selectedWordbookLoaded
+          ? _words.length
+          : selectedWordbook.wordCount;
     }
     return _database.countSearchWords(
       selectedWordbook.id,
@@ -452,14 +462,60 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return const <WordEntry>[];
     }
     if (_searchQuery.trim().isEmpty) {
+      if (!selectedWordbookLoaded) {
+        return _queryWordbookEntries(
+          selectedWordbook,
+          limit: limit,
+          offset: offset,
+        );
+      }
       final start = offset.clamp(0, _words.length).toInt();
       final end = (start + limit).clamp(start, _words.length).toInt();
       return _words.sublist(start, end);
     }
-    return _database.searchWords(
-      selectedWordbook.id,
+    return _searchWordbookEntries(
+      selectedWordbook,
       query: _searchQuery,
       mode: _searchMode.name,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  List<WordEntry> _queryWordbookEntries(
+    Wordbook wordbook, {
+    int limit = 100000,
+    int offset = 0,
+    bool? includeFields,
+  }) {
+    final resolvedIncludeFields =
+        includeFields ?? !_shouldUseLiteWordQueries(wordbook);
+    if (resolvedIncludeFields) {
+      return _database.getWords(wordbook.id, limit: limit, offset: offset);
+    }
+    return _database.getWordsLite(wordbook.id, limit: limit, offset: offset);
+  }
+
+  List<WordEntry> _searchWordbookEntries(
+    Wordbook wordbook, {
+    required String query,
+    required String mode,
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    if (_shouldUseLiteWordQueries(wordbook)) {
+      return _database.searchWordsLite(
+        wordbook.id,
+        query: query,
+        mode: mode,
+        limit: limit,
+        offset: offset,
+      );
+    }
+    return _database.searchWords(
+      wordbook.id,
+      query: query,
+      mode: mode,
       limit: limit,
       offset: offset,
     );
@@ -1856,7 +1912,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<List<String>> fetchLocalTtsVoices() async {
     try {
       final voices = await _playback.getLocalVoices();
-return voices;
+      return voices;
     } catch (error, stackTrace) {
       _log.e(
         'app_state',
@@ -2476,7 +2532,10 @@ return voices;
     return differences.reversed.take(12).toList(growable: false);
   }
 
-  Future<void> _reloadWordbooks({required bool keepCurrentSelection}) async {
+  Future<void> _reloadWordbooks({
+    required bool keepCurrentSelection,
+    bool preloadSelectedWords = true,
+  }) async {
     final selectedId = keepCurrentSelection ? _selectedWordbook?.id : null;
     _wordbooks = _database
         .getWordbooks()
@@ -2497,12 +2556,20 @@ return voices;
     nextSelection ??= _wordbooks.isEmpty ? null : _wordbooks.first;
     _selectedWordbook = nextSelection;
 
-    if (_selectedWordbook != null) {
-      _setWords(_database.getWords(_selectedWordbook!.id));
-      final restoredIndex = _playbackProgressIndexForWordbook(
-        _selectedWordbook!,
-      );
-      if (restoredIndex >= 0) {
+    final selectedWordbook = _selectedWordbook;
+    final shouldLoadSelectedWords = switch (selectedWordbook) {
+      null => false,
+      _ when preloadSelectedWords => true,
+      final wordbook => _shouldEagerLoadWordbookOnStartup(wordbook),
+    };
+
+    if (selectedWordbook != null && shouldLoadSelectedWords) {
+      _setWords(_queryWordbookEntries(selectedWordbook));
+      final restoredIndex = _playbackProgressIndexForWordbook(selectedWordbook);
+      final restoredEntries = _searchQuery.trim().isEmpty
+          ? _words
+          : _scopeWords;
+      if (restoredIndex >= 0 && restoredIndex < restoredEntries.length) {
         final target = (_searchQuery.trim().isEmpty
             ? _words
             : _scopeWords)[restoredIndex];
@@ -2512,7 +2579,7 @@ return voices;
       }
       _ensureCurrentWordInScope();
     } else {
-      _setWords(<WordEntry>[]);
+      _clearSelectedWordbookWords();
       _currentWordIndex = 0;
     }
     notifyListeners();
@@ -2520,7 +2587,16 @@ return voices;
 
   void _setWords(List<WordEntry> nextWords) {
     _words = nextWords;
+    _loadedWordbookId = _selectedWordbook?.id;
     _refreshWordMemoryProgressCache(nextWords);
+    _wordsVersion += 1;
+    _invalidateVisibleWordsCache();
+  }
+
+  void _clearSelectedWordbookWords() {
+    _words = const <WordEntry>[];
+    _loadedWordbookId = null;
+    _refreshWordMemoryProgressCache(_words);
     _wordsVersion += 1;
     _invalidateVisibleWordsCache();
   }
@@ -2538,10 +2614,7 @@ return voices;
         .cast<Wordbook?>()
         .firstOrNull;
     if (favoritesBook != null) {
-      _favorites = _database
-          .getWords(favoritesBook.id)
-          .map((item) => item.word)
-          .toSet();
+      _favorites = _database.getWordTexts(favoritesBook.id).toSet();
       _persistSpecialWordSet('favorites', _favorites);
     } else {
       _favorites = <String>{};
@@ -2552,10 +2625,7 @@ return voices;
         .cast<Wordbook?>()
         .firstOrNull;
     if (taskBook != null) {
-      _taskWords = _database
-          .getWords(taskBook.id)
-          .map((item) => item.word)
-          .toSet();
+      _taskWords = _database.getWordTexts(taskBook.id).toSet();
       _persistSpecialWordSet('taskWords', _taskWords);
     } else {
       _taskWords = <String>{};
@@ -2782,6 +2852,14 @@ return voices;
     resetTestModeProgress();
     _notifyStateChanged();
     return true;
+  }
+
+  bool _shouldEagerLoadWordbookOnStartup(Wordbook wordbook) {
+    return wordbook.wordCount <= _startupEagerWordLoadLimit;
+  }
+
+  bool _shouldUseLiteWordQueries(Wordbook wordbook) {
+    return wordbook.wordCount > _startupEagerWordLoadLimit;
   }
 
   Future<void> _createSafetyBackup({required String reason}) async {
