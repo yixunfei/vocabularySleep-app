@@ -1,5 +1,7 @@
 part of '../toolbox_sound_tools.dart';
 
+// ignore_for_file: dead_code, unused_element, unused_local_variable
+
 enum _FocusBeatAnimationKind {
   pendulum,
   hypno,
@@ -270,6 +272,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   final List<int> _tapTempoIntervalsMs = <int>[];
   Timer? _transportTimer;
   Timer? _persistTimer;
+  Timer? _immersiveHudTimer;
   DateTime? _lastTapTempoAt;
   Map<int, ToolboxEffectPlayer> _players = <int, ToolboxEffectPlayer>{};
 
@@ -282,10 +285,11 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   bool _patternEnabled = false;
   bool _hapticsEnabled = true;
   bool _immersiveMode = false;
+  bool _immersiveHudVisible = true;
   bool _linkAnimationAndSound = true;
   bool _tempoExpanded = true;
   bool _meterExpanded = false;
-  bool _styleExpanded = true;
+  bool _styleExpanded = false;
   bool _arrangementExpanded = false;
   bool _advancedExpanded = false;
   _FocusBeatAnimationKind _animationKind = _FocusBeatAnimationKind.pendulum;
@@ -326,6 +330,22 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
       return _segmentPulseCounts;
     }
     return <int>[_barPulses];
+  }
+
+  AppI18n _i18nOf(BuildContext context, {bool listen = true}) =>
+      _toolboxI18n(context, listen: listen);
+
+  String _text(
+    BuildContext context, {
+    required String zh,
+    required String en,
+    bool listen = true,
+  }) {
+    return pickUiText(
+      _i18nOf(context, listen: listen),
+      zh: zh,
+      en: en,
+    );
   }
 
   FocusBeatsPrefsState get _prefsState => FocusBeatsPrefsState(
@@ -376,6 +396,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   void dispose() {
     _transportTimer?.cancel();
     _persistTimer?.cancel();
+    _immersiveHudTimer?.cancel();
     _patternController.dispose();
     _pulseController.dispose();
     _ambientController.dispose();
@@ -481,6 +502,36 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
       _FocusBeatSoundKind.dew => '露滴 Drop',
       _FocusBeatSoundKind.gear => '机械 Tick',
       _FocusBeatSoundKind.steps => '步伐 Step',
+    };
+  }
+
+  String _animationName(BuildContext context, _FocusBeatAnimationKind kind) {
+    final i18n = _i18nOf(context);
+    return switch (kind) {
+      _FocusBeatAnimationKind.pendulum => pickUiText(
+        i18n,
+        zh: '钟摆',
+        en: 'Pendulum',
+      ),
+      _FocusBeatAnimationKind.hypno => pickUiText(i18n, zh: '律环', en: 'Orbit'),
+      _FocusBeatAnimationKind.dew => pickUiText(i18n, zh: '露滴', en: 'Droplet'),
+      _FocusBeatAnimationKind.gear => pickUiText(i18n, zh: '棱轮', en: 'Rotor'),
+      _FocusBeatAnimationKind.steps => pickUiText(i18n, zh: '步进', en: 'Steps'),
+    };
+  }
+
+  String _soundName(BuildContext context, _FocusBeatSoundKind kind) {
+    final i18n = _i18nOf(context);
+    return switch (kind) {
+      _FocusBeatSoundKind.pendulum => pickUiText(
+        i18n,
+        zh: '钟摆',
+        en: 'Pendulum',
+      ),
+      _FocusBeatSoundKind.hypno => pickUiText(i18n, zh: '脉冲', en: 'Pulse'),
+      _FocusBeatSoundKind.dew => pickUiText(i18n, zh: '水滴', en: 'Drop'),
+      _FocusBeatSoundKind.gear => pickUiText(i18n, zh: '机械', en: 'Tick'),
+      _FocusBeatSoundKind.steps => pickUiText(i18n, zh: '步伐', en: 'Step'),
     };
   }
 
@@ -658,6 +709,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     if (mounted) {
       setState(() {});
     }
+    _setImmersiveHudVisible(true, autoHide: true, force: true);
   }
 
   void _scheduleNextTick() {
@@ -689,6 +741,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     _transportTick = 0;
     _resetRuntime();
     setState(() {});
+    _setImmersiveHudVisible(true, autoHide: false, force: true);
   }
 
   void _restartTransportIfRunning() {
@@ -981,6 +1034,245 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     });
   }
 
+  void _setImmersiveHudVisible(
+    bool visible, {
+    bool autoHide = true,
+    bool force = false,
+  }) {
+    if (!widget.fullScreen) {
+      return;
+    }
+    _immersiveHudTimer?.cancel();
+    if (!mounted) {
+      return;
+    }
+    if (_immersiveHudVisible != visible || force) {
+      setState(() {
+        _immersiveHudVisible = visible;
+      });
+    }
+    if (!visible || !_running || !autoHide) {
+      return;
+    }
+    _immersiveHudTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted || !_running) {
+        return;
+      }
+      setState(() {
+        _immersiveHudVisible = false;
+      });
+    });
+  }
+
+  void _toggleImmersiveHud() {
+    _setImmersiveHudVisible(!_immersiveHudVisible, autoHide: _running);
+  }
+
+  Future<void> _openImmersiveControlsSheet() async {
+    _setImmersiveHudVisible(true, autoHide: false);
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final i18n = _i18nOf(sheetContext);
+        final arrangementLabel = _patternError.isEmpty ? _pattern.raw : '1bar';
+        return FractionallySizedBox(
+          heightFactor: 0.90,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(sheetContext).colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.24),
+                  blurRadius: 32,
+                  offset: const Offset(0, -10),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Center(
+                        child: Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              sheetContext,
+                            ).colorScheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '专注节拍控制台',
+                          en: 'Focus beats controls',
+                        ),
+                        style: Theme.of(sheetContext).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        pickUiText(
+                          i18n,
+                          zh: '舞台保持全屏，只在需要时唤起控制。',
+                          en: 'Keep the stage full screen and pull controls only when needed.',
+                        ),
+                        style: Theme.of(sheetContext).textTheme.bodyMedium
+                            ?.copyWith(
+                              color: Theme.of(
+                                sheetContext,
+                              ).colorScheme.onSurfaceVariant,
+                              height: 1.4,
+                            ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildPrimaryControls(sheetContext, immersiveSheet: true),
+                      const SizedBox(height: 16),
+                      _FocusControlSection(
+                        icon: Icons.speed_rounded,
+                        title: pickUiText(i18n, zh: '节奏', en: 'Tempo'),
+                        subtitle: pickUiText(
+                          i18n,
+                          zh: '调节 BPM 与常用速度',
+                          en: 'Adjust BPM and quick tempos',
+                        ),
+                        summary: '$_bpm BPM',
+                        expanded: _tempoExpanded,
+                        onToggle: () {
+                          setState(() {
+                            _tempoExpanded = !_tempoExpanded;
+                          });
+                        },
+                        child: _buildTempoSection(sheetContext),
+                      ),
+                      const SizedBox(height: 12),
+                      _FocusControlSection(
+                        icon: Icons.tune_rounded,
+                        title: pickUiText(i18n, zh: '拍号与细分', en: 'Meter'),
+                        subtitle: pickUiText(
+                          i18n,
+                          zh: '控制重拍结构与子拍密度',
+                          en: 'Control the pulse structure and subdivisions',
+                        ),
+                        summary: '$_beatsPerBar/4 × $_subdivision',
+                        expanded: _meterExpanded,
+                        onToggle: () {
+                          setState(() {
+                            _meterExpanded = !_meterExpanded;
+                          });
+                        },
+                        child: _buildMeterSection(sheetContext),
+                      ),
+                      const SizedBox(height: 12),
+                      _FocusControlSection(
+                        icon: Icons.animation_rounded,
+                        title: pickUiText(i18n, zh: '动画与音色', en: 'Style'),
+                        subtitle: pickUiText(
+                          i18n,
+                          zh: '选择舞台动画和节拍音色',
+                          en: 'Choose the stage motion and click timbre',
+                        ),
+                        summary:
+                            '${_animationName(sheetContext, _animationKind)} · ${_soundName(sheetContext, _soundKind)}',
+                        expanded: _styleExpanded,
+                        onToggle: () {
+                          setState(() {
+                            _styleExpanded = !_styleExpanded;
+                          });
+                        },
+                        child: _buildStyleSection(sheetContext),
+                      ),
+                      const SizedBox(height: 12),
+                      _FocusControlSection(
+                        icon: Icons.view_timeline_rounded,
+                        title: pickUiText(i18n, zh: '循环编排', en: 'Arrangement'),
+                        subtitle: pickUiText(
+                          i18n,
+                          zh: '管理段落与循环模板',
+                          en: 'Manage phrases and loop templates',
+                        ),
+                        summary: _patternEnabled
+                            ? arrangementLabel
+                            : pickUiText(
+                                i18n,
+                                zh: '单小节循环',
+                                en: 'Single-bar loop',
+                              ),
+                        expanded: _arrangementExpanded,
+                        onToggle: () {
+                          setState(() {
+                            _arrangementExpanded = !_arrangementExpanded;
+                          });
+                        },
+                        child: _buildArrangementSection(
+                          sheetContext,
+                          arrangementLabel: arrangementLabel,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _FocusControlSection(
+                        icon: Icons.graphic_eq_rounded,
+                        title: pickUiText(i18n, zh: '混音与触感', en: 'Mix'),
+                        subtitle: pickUiText(
+                          i18n,
+                          zh: '调节音量分层与震动反馈',
+                          en: 'Adjust volume layers and haptics',
+                        ),
+                        summary:
+                            '${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? pickUiText(i18n, zh: '触感开', en: 'Haptics on') : pickUiText(i18n, zh: '触感关', en: 'Haptics off')}',
+                        expanded: _advancedExpanded,
+                        onToggle: () {
+                          setState(() {
+                            _advancedExpanded = !_advancedExpanded;
+                          });
+                        },
+                        child: _buildMixSection(sheetContext),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onExitFullScreen,
+                          icon: const Icon(Icons.close_rounded),
+                          label: Text(
+                            pickUiText(
+                              i18n,
+                              zh: '退出全屏舞台',
+                              en: 'Exit full-screen stage',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (!mounted) {
+      return;
+    }
+    await _enterToolboxPortraitMode();
+    _setImmersiveHudVisible(true, autoHide: _running, force: true);
+  }
+
   Color _animationAccent(_FocusBeatAnimationKind kind) {
     return switch (kind) {
       _FocusBeatAnimationKind.pendulum => const Color(0xFFD7A86B),
@@ -1115,6 +1407,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                     running: _running,
                     activeBeat: _activeBeat,
                     activeSubPulse: _activeSubPulse,
+                    beatsPerBar: _beatsPerBar,
                     subdivision: _subdivision,
                   ),
                 ),
@@ -1396,6 +1689,53 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   }
 
   Widget _buildPatternPreview(BuildContext context) {
+    final previewI18n = _i18nOf(context);
+    if (_patternEnabled && _patternError.isNotEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          _patternError,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onErrorContainer,
+          ),
+        ),
+      );
+    }
+    final previewSegmentBeats = _patternError.isEmpty
+        ? _arrangementBeats
+        : <int>[_beatsPerBar];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: <Widget>[
+        for (var index = 0; index < previewSegmentBeats.length; index += 1)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _running && index == _currentSegmentIndex
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _running && index == _currentSegmentIndex
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Text(
+              '${pickUiText(previewI18n, zh: '段', en: 'S')}${index + 1} · ${previewSegmentBeats[index]} ${pickUiText(previewI18n, zh: '拍', en: 'beats')} · '
+              '${_focusBarsLabel(previewSegmentBeats[index] / _beatsPerBar)}',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ),
+      ],
+    );
+
     if (_patternEnabled && _patternError.isNotEmpty) {
       return Container(
         width: double.infinity,
@@ -1443,7 +1783,486 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     );
   }
 
+  Widget _buildStudioSummaryStrip(BuildContext context) {
+    final i18n = _i18nOf(context);
+    final arrangementLabel = _patternError.isEmpty ? _pattern.raw : '1bar';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            _FocusInfoPill(
+              icon: _running
+                  ? Icons.graphic_eq_rounded
+                  : Icons.motion_photos_paused_rounded,
+              label: _running
+                  ? pickUiText(i18n, zh: '正在跟拍', en: 'In motion')
+                  : pickUiText(i18n, zh: '待启动', en: 'Ready'),
+              emphasized: _running,
+              tone: _visualPalette(context).accent,
+            ),
+            _FocusInfoPill(icon: Icons.speed_rounded, label: '$_bpm BPM'),
+            _FocusInfoPill(
+              icon: Icons.music_note_rounded,
+              label: '$_beatsPerBar/4 × $_subdivision',
+            ),
+            _FocusInfoPill(
+              icon: Icons.view_timeline_rounded,
+              label: arrangementLabel,
+              emphasized: _patternEnabled,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _running
+              ? pickUiText(
+                  i18n,
+                  zh: '舞台、发音与触感已经对齐，保持呼吸或动作跟着当前拍点推进。',
+                  en: 'Stage, clicks, and haptics are aligned. Let your motion follow the current beat.',
+                )
+              : pickUiText(
+                  i18n,
+                  zh: '首屏只保留开始、节奏和舞台，其他设置折叠到下方，适合手机单手快速进入状态。',
+                  en: 'The first screen keeps only start, rhythm, and stage so it is faster to enter flow on a phone.',
+                ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStageCompact(BuildContext context) {
+    final i18n = _i18nOf(context);
+    final palette = _visualPalette(context);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final stageHeight = (screenWidth * 0.92).clamp(320.0, 420.0);
+    return Container(
+      width: double.infinity,
+      height: stageHeight,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            palette.stageTop,
+            palette.stageMid,
+            palette.stageBottom,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: palette.stroke.withValues(alpha: 0.60)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: palette.accentGlow.withValues(alpha: 0.16),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 20,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: AnimatedBuilder(
+        animation: Listenable.merge(<Listenable>[
+          _pulseController,
+          _ambientController,
+        ]),
+        builder: (context, _) {
+          return Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _FocusBeatVisualizerPainter(
+                    kind: _animationKind,
+                    pulseProgress: _pulseController.value,
+                    ambientProgress: _ambientController.value,
+                    accentLayer: _lastLayer,
+                    running: _running,
+                    activeBeat: _activeBeat,
+                    activeSubPulse: _activeSubPulse,
+                    beatsPerBar: _beatsPerBar,
+                    subdivision: _subdivision,
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: <Color>[
+                        Colors.white.withValues(alpha: 0.04),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.14),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 16,
+                top: 16,
+                child: _FocusStageBadge(
+                  icon: Icons.speed_rounded,
+                  label: '$_bpm BPM · $_beatsPerBar/4 × $_subdivision',
+                ),
+              ),
+              Positioned(
+                right: 16,
+                top: 16,
+                child: _FocusStageBadge(
+                  icon: _running
+                      ? Icons.graphic_eq_rounded
+                      : Icons.motion_photos_paused_rounded,
+                  label: _running
+                      ? pickUiText(i18n, zh: '运行中', en: 'Running')
+                      : pickUiText(i18n, zh: '待启动', en: 'Ready'),
+                ),
+              ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.10),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      _buildStagePulseRailCompact(context, palette),
+                      const SizedBox(height: 10),
+                      _buildStageArrangementDots(context, palette),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStagePulseRailCompact(
+    BuildContext context,
+    _FocusVisualPalette palette,
+  ) {
+    final activeBeat = _activeBeat >= 0 ? _activeBeat : 0;
+    final activeSub = _activeSubPulse;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            for (var index = 0; index < _beatsPerBar; index += 1)
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: index == _beatsPerBar - 1 ? 0 : 8,
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    curve: Curves.easeOutCubic,
+                    height: index == activeBeat ? 12 : 6,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: index == activeBeat
+                          ? palette.accentSoft
+                          : Colors.white.withValues(
+                              alpha: index == 0 ? 0.28 : 0.14,
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        if (_subdivision > 1) ...<Widget>[
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              for (var index = 0; index < _subdivision; index += 1)
+                Padding(
+                  padding: EdgeInsets.only(
+                    right: index == _subdivision - 1 ? 0 : 6,
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 140),
+                    curve: Curves.easeOutCubic,
+                    width: activeSub == index + 1 ? 16 : 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: activeSub == index + 1
+                          ? palette.accent
+                          : Colors.white.withValues(alpha: 0.18),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStageArrangementDots(
+    BuildContext context,
+    _FocusVisualPalette palette,
+  ) {
+    final i18n = _i18nOf(context);
+    final segments = _patternEnabled && _patternError.isEmpty
+        ? _arrangementBeats
+        : <int>[_beatsPerBar];
+    return Row(
+      children: <Widget>[
+        Text(
+          pickUiText(i18n, zh: '循环', en: 'Loop'),
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: Colors.white.withValues(alpha: 0.72),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Row(
+            children: <Widget>[
+              for (var index = 0; index < segments.length; index += 1)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: index == segments.length - 1 ? 0 : 6,
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOutCubic,
+                      height: index == _currentSegmentIndex ? 10 : 6,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: index == _currentSegmentIndex
+                            ? palette.accent
+                            : Colors.white.withValues(alpha: 0.14),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildImmersiveAnimationOnly(BuildContext context) {
+    final immersiveI18n = _i18nOf(context);
+    final immersiveBeatLabel = _activeBeat < 0
+        ? '--'
+        : '${_activeBeat + 1}/$_beatsPerBar';
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _toggleImmersiveHud,
+      onVerticalDragEnd: (details) {
+        if ((details.primaryVelocity ?? 0) < -180) {
+          unawaited(_openImmersiveControlsSheet());
+        }
+      },
+      child: ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: Listenable.merge(<Listenable>[
+                  _pulseController,
+                  _ambientController,
+                ]),
+                builder: (context, _) {
+                  return CustomPaint(
+                    painter: _FocusBeatVisualizerPainter(
+                      kind: _animationKind,
+                      pulseProgress: _pulseController.value,
+                      ambientProgress: _ambientController.value,
+                      accentLayer: _lastLayer,
+                      running: _running,
+                      activeBeat: _activeBeat,
+                      activeSubPulse: _activeSubPulse,
+                      beatsPerBar: _beatsPerBar,
+                      subdivision: _subdivision,
+                    ),
+                  );
+                },
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: <Color>[
+                        Colors.black.withValues(alpha: 0.10),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: SafeArea(
+                child: AnimatedOpacity(
+                  opacity: _immersiveHudVisible ? 1 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: IgnorePointer(
+                    ignoring: !_immersiveHudVisible,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
+                      child: Column(
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              _FocusStageBadge(
+                                icon: Icons.speed_rounded,
+                                label:
+                                    '$_bpm BPM · $_beatsPerBar/4 × $_subdivision',
+                              ),
+                              const Spacer(),
+                              IconButton.filledTonal(
+                                tooltip: pickUiText(
+                                  immersiveI18n,
+                                  zh: '唤起控制',
+                                  en: 'Open controls',
+                                ),
+                                onPressed: _openImmersiveControlsSheet,
+                                icon: const Icon(Icons.tune_rounded),
+                              ),
+                              if (widget.onExitFullScreen != null) ...<Widget>[
+                                const SizedBox(width: 8),
+                                IconButton.filledTonal(
+                                  tooltip: pickUiText(
+                                    immersiveI18n,
+                                    zh: '退出全屏',
+                                    en: 'Exit full screen',
+                                  ),
+                                  onPressed: widget.onExitFullScreen,
+                                  icon: const Icon(Icons.close_rounded),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const Spacer(),
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(
+                                14,
+                                12,
+                                14,
+                                12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  IconButton.filled(
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: Colors.white.withValues(
+                                        alpha: 0.14,
+                                      ),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    onPressed: _running ? _stop : _start,
+                                    icon: Icon(
+                                      _running
+                                          ? Icons.pause_rounded
+                                          : Icons.play_arrow_rounded,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        _running
+                                            ? pickUiText(
+                                                immersiveI18n,
+                                                zh: '当前拍点 $immersiveBeatLabel',
+                                                en: 'Beat $immersiveBeatLabel',
+                                              )
+                                            : pickUiText(
+                                                immersiveI18n,
+                                                zh: '准备开始',
+                                                en: 'Ready',
+                                              ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge
+                                            ?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        pickUiText(
+                                          immersiveI18n,
+                                          zh: '轻触显示控件，上滑打开完整菜单',
+                                          en: 'Tap for HUD, swipe up for full controls',
+                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.76,
+                                              ),
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
     return ColoredBox(
       color: Colors.black,
       child: Stack(
@@ -1464,6 +2283,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                     running: _running,
                     activeBeat: _activeBeat,
                     activeSubPulse: _activeSubPulse,
+                    beatsPerBar: _beatsPerBar,
                     subdivision: _subdivision,
                   ),
                 );
@@ -1803,6 +2623,55 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   }
 
   Widget _buildTempoSection(BuildContext context) {
+    final tempoI18n = _i18nOf(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          pickUiText(
+            tempoI18n,
+            zh: '当前 $_bpm BPM，每拍 ${(60 / _bpm).toStringAsFixed(2)} 秒',
+            en: 'Current tempo: $_bpm BPM, ${(60 / _bpm).toStringAsFixed(2)} s per beat',
+          ),
+        ),
+        Slider(
+          value: _bpm.toDouble(),
+          min: 30,
+          max: 220,
+          divisions: 190,
+          onChanged: (value) => _setBpm(value.round()),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            OutlinedButton(
+              onPressed: () => _setBpm(_bpm - 5),
+              child: const Text('-5'),
+            ),
+            OutlinedButton(
+              onPressed: () => _setBpm(_bpm - 1),
+              child: const Text('-1'),
+            ),
+            OutlinedButton(
+              onPressed: () => _setBpm(_bpm + 1),
+              child: const Text('+1'),
+            ),
+            OutlinedButton(
+              onPressed: () => _setBpm(_bpm + 5),
+              child: const Text('+5'),
+            ),
+            for (final quick in <int>[60, 72, 90, 108, 120, 144])
+              ChoiceChip(
+                label: Text('$quick'),
+                selected: _bpm == quick,
+                onSelected: (_) => _setBpm(quick),
+              ),
+          ],
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1847,6 +2716,55 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   }
 
   Widget _buildMeterSection(BuildContext context) {
+    final meterI18n = _i18nOf(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          pickUiText(
+            meterI18n,
+            zh: '拍号决定重拍结构，细分决定每拍内的密度，两者都会直接影响舞台节奏。',
+            en: 'Meter defines the strong-beat structure, while subdivisions control pulse density inside each beat.',
+          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <int>[2, 3, 4, 5, 6, 7, 8]
+              .map(
+                (count) => ChoiceChip(
+                  label: Text('$count/4'),
+                  selected: _beatsPerBar == count,
+                  onSelected: (_) => _setBeatsPerBar(count),
+                ),
+              )
+              .toList(growable: false),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <int>[1, 2, 3, 4]
+              .map(
+                (division) => ChoiceChip(
+                  label: Text(
+                    pickUiText(
+                      meterI18n,
+                      zh: '子拍 ×$division',
+                      en: 'Sub ×$division',
+                    ),
+                  ),
+                  selected: _subdivision == division,
+                  onSelected: (_) => _setSubdivision(division),
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1887,6 +2805,96 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   }
 
   Widget _buildStyleSection(BuildContext context) {
+    final styleI18n = _i18nOf(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                _linkAnimationAndSound
+                    ? pickUiText(
+                        styleI18n,
+                        zh: '动画与音色保持联动，适合快速切换一致风格。',
+                        en: 'Animation and timbre are linked for fast style switching.',
+                      )
+                    : pickUiText(
+                        styleI18n,
+                        zh: '动画与音色独立选择，适合细调个人偏好。',
+                        en: 'Animation and timbre are independent for finer tuning.',
+                      ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(height: 1.35),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton.tonalIcon(
+              onPressed: _previewCurrentSound,
+              icon: const Icon(Icons.graphic_eq_rounded),
+              label: Text(pickUiText(styleI18n, zh: '试听', en: 'Preview')),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _linkAnimationAndSound,
+          onChanged: _setLinkAnimationAndSound,
+          title: Text(
+            pickUiText(
+              styleI18n,
+              zh: '联动动画与音色',
+              en: 'Link animation and timbre',
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          pickUiText(styleI18n, zh: '舞台动画', en: 'Stage animation'),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            for (final kind in _FocusBeatAnimationKind.values)
+              ChoiceChip(
+                avatar: Icon(kind.icon, size: 18),
+                label: Text(_animationName(context, kind)),
+                selected: _animationKind == kind,
+                onSelected: (_) => _setAnimationKind(kind),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          pickUiText(styleI18n, zh: '节拍音色', en: 'Beat timbre'),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            for (final kind in _FocusBeatSoundKind.values)
+              ChoiceChip(
+                avatar: Icon(kind.icon, size: 18),
+                label: Text(_soundName(context, kind)),
+                selected: _soundKind == kind,
+                onSelected: (_) => _setSoundKind(kind),
+              ),
+          ],
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1925,6 +2933,55 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     BuildContext context, {
     required String arrangementLabel,
   }) {
+    final arrangementI18n = _i18nOf(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _patternEnabled
+                ? pickUiText(
+                    arrangementI18n,
+                    zh: '循环编排已启用',
+                    en: 'Loop arrangement is enabled',
+                  )
+                : pickUiText(
+                    arrangementI18n,
+                    zh: '当前为单小节循环',
+                    en: 'Currently using a single-bar loop',
+                  ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          subtitle: Text(
+            pickUiText(
+              arrangementI18n,
+              zh: '当前编排：$arrangementLabel，共 ${_arrangementBeats.fold<int>(0, (sum, item) => sum + item)} 拍',
+              en: 'Current arrangement: $arrangementLabel, ${_arrangementBeats.fold<int>(0, (sum, item) => sum + item)} beats in total',
+            ),
+          ),
+          trailing: FilledButton.tonalIcon(
+            onPressed: _openArrangementEditor,
+            icon: const Icon(Icons.edit_note_rounded),
+            label: Text(pickUiText(arrangementI18n, zh: '编辑', en: 'Edit')),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          pickUiText(
+            arrangementI18n,
+            zh: '通过段落组合，让动画和发音在一个循环里形成更清晰的推进感。',
+            en: 'Combine phrases to create clearer motion and click progression inside each loop.',
+          ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35),
+        ),
+        const SizedBox(height: 12),
+        _buildPatternPreview(context),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1957,6 +3014,61 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   }
 
   Widget _buildMixSection(BuildContext context) {
+    final mixI18n = _i18nOf(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildMixSlider(
+          label: pickUiText(mixI18n, zh: '总音量', en: 'Master'),
+          value: _masterVolume,
+          onChanged: (value) {
+            setState(() => _masterVolume = value);
+            _scheduleSavePrefs();
+          },
+        ),
+        _buildMixSlider(
+          label: pickUiText(mixI18n, zh: '重拍', en: 'Accent'),
+          value: _accentVolume,
+          onChanged: (value) {
+            setState(() => _accentVolume = value);
+            _scheduleSavePrefs();
+          },
+        ),
+        _buildMixSlider(
+          label: pickUiText(mixI18n, zh: '常规拍', en: 'Regular'),
+          value: _regularVolume,
+          onChanged: (value) {
+            setState(() => _regularVolume = value);
+            _scheduleSavePrefs();
+          },
+        ),
+        _buildMixSlider(
+          label: pickUiText(mixI18n, zh: '子拍', en: 'Subdivision'),
+          value: _subdivisionVolume,
+          onChanged: (value) {
+            setState(() => _subdivisionVolume = value);
+            _scheduleSavePrefs();
+          },
+        ),
+        SwitchListTile.adaptive(
+          contentPadding: EdgeInsets.zero,
+          value: _hapticsEnabled,
+          onChanged: (value) {
+            setState(() => _hapticsEnabled = value);
+            _scheduleSavePrefs();
+          },
+          title: Text(pickUiText(mixI18n, zh: '触感反馈', en: 'Haptic feedback')),
+          subtitle: Text(
+            pickUiText(
+              mixI18n,
+              zh: '在重拍和段落切换时给出更清晰的手机震动提示。',
+              en: 'Add clearer vibration cues on accents and phrase changes.',
+            ),
+          ),
+        ),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -2109,7 +3221,159 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     );
   }
 
-  Widget _buildPrimaryControls(BuildContext context) {
+  Widget _buildPrimaryControls(
+    BuildContext context, {
+    bool immersiveSheet = false,
+  }) {
+    final controlI18n = _i18nOf(context);
+    final controlColorScheme = Theme.of(context).colorScheme;
+    final controlPalette = _visualPalette(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        color: controlColorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: controlPalette.stroke.withValues(alpha: 0.30),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: controlPalette.accent,
+                    foregroundColor: const Color(0xFF09111B),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  onPressed: _running ? _stop : _start,
+                  icon: Icon(
+                    _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  ),
+                  label: Text(
+                    _running
+                        ? pickUiText(controlI18n, zh: '停止节拍', en: 'Stop')
+                        : pickUiText(controlI18n, zh: '开始节拍', en: 'Start'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.tonalIcon(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                onPressed: _tapTempo,
+                icon: const Icon(Icons.touch_app_rounded),
+                label: const Text('Tap'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              FilledButton.tonalIcon(
+                onPressed: _previewCurrentSound,
+                icon: const Icon(Icons.graphic_eq_rounded),
+                label: Text(
+                  pickUiText(controlI18n, zh: '试听当前音色', en: 'Preview sound'),
+                ),
+              ),
+              if (!widget.fullScreen && widget.onOpenFullScreen != null)
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    widget.onOpenFullScreen?.call(
+                      autoStart: _running,
+                      immersive: true,
+                    );
+                  },
+                  icon: const Icon(Icons.open_in_full_rounded),
+                  label: Text(
+                    pickUiText(
+                      controlI18n,
+                      zh: '全屏舞台',
+                      en: 'Full-screen stage',
+                    ),
+                  ),
+                ),
+              if (widget.fullScreen && !immersiveSheet)
+                FilledButton.tonalIcon(
+                  onPressed: _openImmersiveControlsSheet,
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(
+                    pickUiText(controlI18n, zh: '唤起控制', en: 'Open controls'),
+                  ),
+                ),
+              if (widget.fullScreen && immersiveSheet)
+                FilledButton.tonalIcon(
+                  onPressed: widget.onExitFullScreen,
+                  icon: const Icon(Icons.close_rounded),
+                  label: Text(
+                    pickUiText(controlI18n, zh: '退出全屏', en: 'Exit full screen'),
+                  ),
+                )
+              else if (!widget.fullScreen)
+                OutlinedButton.icon(
+                  onPressed: _toggleImmersiveMode,
+                  icon: const Icon(Icons.fullscreen_rounded),
+                  label: Text(
+                    pickUiText(controlI18n, zh: '沉浸全屏', en: 'Immersive stage'),
+                  ),
+                ),
+              _FocusInfoPill(
+                icon: Icons.auto_graph_rounded,
+                label: _linkAnimationAndSound
+                    ? pickUiText(
+                        controlI18n,
+                        zh: '动画音色联动',
+                        en: 'Linked AV style',
+                      )
+                    : pickUiText(
+                        controlI18n,
+                        zh: '动画音色分离',
+                        en: 'Split AV style',
+                      ),
+                emphasized: _linkAnimationAndSound,
+                tone: controlPalette.accent,
+              ),
+              _FocusInfoPill(
+                icon: Icons.vibration_rounded,
+                label: _hapticsEnabled
+                    ? pickUiText(controlI18n, zh: '触感已开', en: 'Haptics on')
+                    : pickUiText(controlI18n, zh: '触感已关', en: 'Haptics off'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            pickUiText(
+              controlI18n,
+              zh: 'Tap 用于快速敲定速度；全屏后单击舞台呼出悬浮控件，上滑唤起完整菜单。',
+              en: 'Use Tap to capture tempo quickly. In full screen, tap the stage for HUD controls and swipe up for the full menu.',
+            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: controlColorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+
     final colorScheme = Theme.of(context).colorScheme;
     final palette = _visualPalette(context);
     return Container(
@@ -2227,6 +3491,124 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
 
   @override
   Widget build(BuildContext context) {
+    final inlineI18n = _i18nOf(context);
+    final inlineArrangementLabel = _patternError.isEmpty
+        ? _pattern.raw
+        : '1bar';
+    final mobileBody = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _buildStudioSummaryStrip(context),
+        const SizedBox(height: 16),
+        _buildStageCompact(context),
+        const SizedBox(height: 16),
+        _buildPrimaryControls(context),
+        const SizedBox(height: 16),
+        _FocusControlSection(
+          icon: Icons.speed_rounded,
+          title: pickUiText(inlineI18n, zh: '节奏', en: 'Tempo'),
+          subtitle: pickUiText(
+            inlineI18n,
+            zh: '调整 BPM 与常用速度',
+            en: 'Adjust BPM and quick tempos',
+          ),
+          summary: '$_bpm BPM · ${(60 / _bpm).toStringAsFixed(2)} s/beat',
+          expanded: _tempoExpanded,
+          onToggle: () {
+            setState(() {
+              _tempoExpanded = !_tempoExpanded;
+            });
+          },
+          child: _buildTempoSection(context),
+        ),
+        const SizedBox(height: 12),
+        _FocusControlSection(
+          icon: Icons.tune_rounded,
+          title: pickUiText(inlineI18n, zh: '拍号与细分', en: 'Meter'),
+          subtitle: pickUiText(
+            inlineI18n,
+            zh: '控制重拍结构和子拍密度',
+            en: 'Control the pulse structure and subdivisions',
+          ),
+          summary: '$_beatsPerBar/4 × $_subdivision',
+          expanded: _meterExpanded,
+          onToggle: () {
+            setState(() {
+              _meterExpanded = !_meterExpanded;
+            });
+          },
+          child: _buildMeterSection(context),
+        ),
+        const SizedBox(height: 12),
+        _FocusControlSection(
+          icon: Icons.animation_rounded,
+          title: pickUiText(inlineI18n, zh: '动画与音色', en: 'Style'),
+          subtitle: pickUiText(
+            inlineI18n,
+            zh: '选择舞台动画和节拍音色',
+            en: 'Choose the stage motion and click timbre',
+          ),
+          summary:
+              '${_animationName(context, _animationKind)} · ${_soundName(context, _soundKind)}',
+          expanded: _styleExpanded,
+          onToggle: () {
+            setState(() {
+              _styleExpanded = !_styleExpanded;
+            });
+          },
+          child: _buildStyleSection(context),
+        ),
+        const SizedBox(height: 12),
+        _FocusControlSection(
+          icon: Icons.view_timeline_rounded,
+          title: pickUiText(inlineI18n, zh: '循环编排', en: 'Arrangement'),
+          subtitle: pickUiText(
+            inlineI18n,
+            zh: '管理段落与循环模板',
+            en: 'Manage phrases and loop templates',
+          ),
+          summary: _patternEnabled
+              ? inlineArrangementLabel
+              : pickUiText(inlineI18n, zh: '单小节循环', en: 'Single-bar loop'),
+          expanded: _arrangementExpanded,
+          onToggle: () {
+            setState(() {
+              _arrangementExpanded = !_arrangementExpanded;
+            });
+          },
+          child: _buildArrangementSection(
+            context,
+            arrangementLabel: inlineArrangementLabel,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _FocusControlSection(
+          icon: Icons.graphic_eq_rounded,
+          title: pickUiText(inlineI18n, zh: '混音与触感', en: 'Mix'),
+          subtitle: pickUiText(
+            inlineI18n,
+            zh: '调节音量层级与震动反馈',
+            en: 'Adjust volume layers and haptics',
+          ),
+          summary:
+              '${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? pickUiText(inlineI18n, zh: '触感开', en: 'Haptics on') : pickUiText(inlineI18n, zh: '触感关', en: 'Haptics off')}',
+          expanded: _advancedExpanded,
+          onToggle: () {
+            setState(() {
+              _advancedExpanded = !_advancedExpanded;
+            });
+          },
+          child: _buildMixSection(context),
+        ),
+      ],
+    );
+    if (widget.fullScreen) {
+      return _buildImmersiveAnimationOnly(context);
+    }
+    return Card(
+      child: Padding(padding: const EdgeInsets.all(18), child: mobileBody),
+    );
+
     final cycleLabel = (_cycleCount + 1).toString();
     final segmentLabel = _patternEnabled && _patternError.isEmpty
         ? '${_currentSegmentIndex + 1}/${_segmentPulseCounts.length}'
@@ -5445,6 +6827,7 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
     required this.running,
     required this.activeBeat,
     required this.activeSubPulse,
+    required this.beatsPerBar,
     required this.subdivision,
   });
 
@@ -5455,6 +6838,7 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
   final bool running;
   final int activeBeat;
   final int activeSubPulse;
+  final int beatsPerBar;
   final int subdivision;
 
   double _mix(double a, double b, double t) => a + (b - a) * t;
@@ -5520,6 +6904,92 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final flatTheme = _theme;
+    final flatBeat = _beatEnergy;
+    final flatAmbient = _ambientAngle;
+    final flatAccent = _mixColor(flatTheme.accent, _layerAccent, 0.22);
+    final flatGlow = _mixColor(flatTheme.secondary, _layerAccent, 0.10);
+    final beatCount = math.max(1, beatsPerBar);
+    final currentBeat = activeBeat < 0 ? 0 : activeBeat % beatCount;
+    final nextBeat = (currentBeat + 1) % beatCount;
+    final beatTravel = running ? Curves.easeInOutCubic.transform(_phase) : 0.0;
+
+    _paintFlatBackdrop(
+      canvas,
+      size,
+      theme: flatTheme,
+      accent: flatAccent,
+      ambient: flatAmbient,
+      beat: flatBeat,
+    );
+    switch (kind) {
+      case _FocusBeatAnimationKind.pendulum:
+        _paintFlatPendulum(
+          canvas,
+          size,
+          theme: flatTheme,
+          accent: flatAccent,
+          beat: flatBeat,
+          currentBeat: currentBeat,
+          nextBeat: nextBeat,
+          beatTravel: beatTravel,
+        );
+        break;
+      case _FocusBeatAnimationKind.hypno:
+        _paintFlatOrbit(
+          canvas,
+          size,
+          theme: flatTheme,
+          accent: flatAccent,
+          glow: flatGlow,
+          beat: flatBeat,
+          ambient: flatAmbient,
+          currentBeat: currentBeat,
+          nextBeat: nextBeat,
+          beatTravel: beatTravel,
+        );
+        break;
+      case _FocusBeatAnimationKind.dew:
+        _paintFlatDroplet(
+          canvas,
+          size,
+          theme: flatTheme,
+          accent: flatAccent,
+          beat: flatBeat,
+          currentBeat: currentBeat,
+          nextBeat: nextBeat,
+          beatTravel: beatTravel,
+        );
+        break;
+      case _FocusBeatAnimationKind.gear:
+        _paintFlatRotor(
+          canvas,
+          size,
+          theme: flatTheme,
+          accent: flatAccent,
+          beat: flatBeat,
+          ambient: flatAmbient,
+          currentBeat: currentBeat,
+          nextBeat: nextBeat,
+          beatTravel: beatTravel,
+        );
+        break;
+      case _FocusBeatAnimationKind.steps:
+        _paintFlatSteps(
+          canvas,
+          size,
+          theme: flatTheme,
+          accent: flatAccent,
+          beat: flatBeat,
+          currentBeat: currentBeat,
+          nextBeat: nextBeat,
+          beatTravel: beatTravel,
+        );
+        break;
+    }
+    _paintFlatPulseDock(canvas, size, theme: flatTheme, accent: flatAccent);
+    return;
+
     final theme = _theme;
     final beat = _beatEnergy;
     final ambient = _ambientAngle;
@@ -5557,6 +7027,395 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
     }
 
     _paintPulseDock(canvas, size, theme, accent, beat);
+  }
+
+  double _beatMarker(int beat) {
+    if (beatsPerBar <= 1) {
+      return 0.0;
+    }
+    final bounded = beat.clamp(0, beatsPerBar - 1);
+    return -1 + 2 * bounded / (beatsPerBar - 1);
+  }
+
+  Offset _beatPoint(
+    Size size, {
+    required double normalized,
+    required double y,
+    double inset = 0.18,
+  }) {
+    final left = size.width * inset;
+    final right = size.width * (1 - inset);
+    return Offset(_mix(left, right, (normalized + 1) / 2), y);
+  }
+
+  void _paintFlatBackdrop(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required double ambient,
+    required double beat,
+  }) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[theme.base, theme.mid, theme.surface],
+        ).createShader(rect),
+    );
+
+    final hazeRect = Rect.fromCenter(
+      center: Offset(
+        size.width * (0.24 + math.cos(ambient * 0.24) * 0.04),
+        size.height * 0.24,
+      ),
+      width: size.width * 0.72,
+      height: size.height * 0.36,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(hazeRect, const Radius.circular(999)),
+      Paint()..color = accent.withValues(alpha: 0.10 + beat * 0.04),
+    );
+
+    for (var i = 1; i <= 3; i += 1) {
+      final y = size.height * (0.18 + i * 0.20);
+      canvas.drawLine(
+        Offset(size.width * 0.16, y),
+        Offset(size.width * 0.84, y),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.05 - i * 0.008)
+          ..strokeWidth = 1,
+      );
+    }
+  }
+
+  void _paintFlatPendulum(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required double beat,
+    required int currentBeat,
+    required int nextBeat,
+    required double beatTravel,
+  }) {
+    final pivot = Offset(size.width * 0.5, size.height * 0.18);
+    final length = size.height * 0.42;
+    final marker = _mix(
+      _beatMarker(currentBeat),
+      _beatMarker(nextBeat),
+      beatTravel,
+    );
+    final angle = marker * 0.52;
+    final bob =
+        pivot + Offset(math.sin(angle) * length, math.cos(angle) * length);
+
+    canvas.drawArc(
+      Rect.fromCircle(center: pivot, radius: length),
+      math.pi / 2 - 0.64,
+      1.28,
+      false,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.14)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    for (var beatIndex = 0; beatIndex < beatsPerBar; beatIndex += 1) {
+      final anchor = _beatPoint(
+        size,
+        normalized: _beatMarker(beatIndex),
+        y: size.height * 0.70,
+      );
+      canvas.drawCircle(
+        anchor,
+        beatIndex == currentBeat ? 5 + beat * 3 : 3,
+        Paint()
+          ..color = beatIndex == currentBeat
+              ? accent
+              : Colors.white.withValues(alpha: 0.18),
+      );
+    }
+    canvas.drawLine(
+      pivot,
+      bob,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.88)
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawCircle(
+      pivot,
+      6,
+      Paint()..color = Colors.white.withValues(alpha: 0.92),
+    );
+    canvas.drawCircle(bob, 20 + beat * 6, Paint()..color = accent);
+  }
+
+  void _paintFlatOrbit(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required Color glow,
+    required double beat,
+    required double ambient,
+    required int currentBeat,
+    required int nextBeat,
+    required double beatTravel,
+  }) {
+    final center = Offset(size.width * 0.5, size.height * 0.48);
+    final radius = size.shortestSide * 0.22;
+    final marker = _mix(
+      _beatMarker(currentBeat),
+      _beatMarker(nextBeat),
+      beatTravel,
+    );
+    final angle = -math.pi / 2 + marker * math.pi;
+
+    for (var ring = 0; ring < 4; ring += 1) {
+      canvas.drawCircle(
+        center,
+        radius + ring * 22,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.10 - ring * 0.015)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = ring == 0 ? 2.4 : 1.2,
+      );
+    }
+
+    final orbitRect = Rect.fromCircle(center: center, radius: radius + 42);
+    canvas.drawArc(
+      orbitRect,
+      ambient * 0.18 - math.pi / 2,
+      math.pi * (0.52 + beat * 0.22),
+      false,
+      Paint()
+        ..color = accent
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 10
+        ..strokeCap = StrokeCap.round,
+    );
+
+    final dot =
+        center +
+        Offset(
+          math.cos(angle) * (radius + 42),
+          math.sin(angle) * (radius + 42),
+        );
+    canvas.drawCircle(dot, 14 + beat * 4, Paint()..color = accent);
+    canvas.drawCircle(
+      center,
+      16 + beat * 8,
+      Paint()..color = glow.withValues(alpha: 0.72),
+    );
+  }
+
+  void _paintFlatDroplet(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required double beat,
+    required int currentBeat,
+    required int nextBeat,
+    required double beatTravel,
+  }) {
+    final surfaceY = size.height * 0.70;
+    final current = _beatPoint(
+      size,
+      normalized: _beatMarker(currentBeat),
+      y: surfaceY,
+    );
+    final next = _beatPoint(
+      size,
+      normalized: _beatMarker(nextBeat),
+      y: surfaceY,
+    );
+    final dropCenter = Offset(
+      _mix(current.dx, next.dx, beatTravel),
+      _mix(size.height * 0.26, surfaceY - 12, beatTravel),
+    );
+
+    canvas.drawLine(
+      Offset(size.width * 0.16, surfaceY),
+      Offset(size.width * 0.84, surfaceY),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.12)
+        ..strokeWidth = 2,
+    );
+    for (var ring = 0; ring < 3; ring += 1) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: current,
+          width: 36 + beat * 50 + ring * 20,
+          height: 10 + beat * 10 + ring * 6,
+        ),
+        Paint()
+          ..color = accent.withValues(alpha: 0.18 - ring * 0.04)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6,
+      );
+    }
+
+    final path = _buildDropletPath(dropCenter, 16 + beat * 2, 24 + beat * 6);
+    canvas.drawPath(path, Paint()..color = accent);
+  }
+
+  void _paintFlatRotor(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required double beat,
+    required double ambient,
+    required int currentBeat,
+    required int nextBeat,
+    required double beatTravel,
+  }) {
+    final center = Offset(size.width * 0.5, size.height * 0.48);
+    final outerRadius = size.shortestSide * 0.28;
+    final innerRadius = size.shortestSide * 0.14;
+    final marker = _mix(
+      _beatMarker(currentBeat),
+      _beatMarker(nextBeat),
+      beatTravel,
+    );
+    final rotation = ambient * 0.12 + marker * math.pi;
+
+    canvas.drawCircle(
+      center,
+      outerRadius,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.10)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    canvas.drawCircle(
+      center,
+      innerRadius,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.14)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    for (var tooth = 0; tooth < beatsPerBar; tooth += 1) {
+      final angle = rotation + tooth * math.pi * 2 / beatsPerBar;
+      final inner =
+          center +
+          Offset(math.cos(angle) * innerRadius, math.sin(angle) * innerRadius);
+      final outer =
+          center +
+          Offset(math.cos(angle) * outerRadius, math.sin(angle) * outerRadius);
+      canvas.drawLine(
+        inner,
+        outer,
+        Paint()
+          ..color = tooth == currentBeat
+              ? accent
+              : Colors.white.withValues(alpha: 0.22)
+          ..strokeWidth = tooth == currentBeat ? 4 : 2
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+    canvas.drawCircle(center, 16 + beat * 5, Paint()..color = accent);
+  }
+
+  void _paintFlatSteps(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required double beat,
+    required int currentBeat,
+    required int nextBeat,
+    required double beatTravel,
+  }) {
+    final bars = math.max(3, beatsPerBar);
+    final width = size.width * 0.66;
+    final barWidth = width / (bars * 1.35);
+    final gap = barWidth * 0.35;
+    final startX = (size.width - (bars * barWidth + (bars - 1) * gap)) / 2;
+    final baseY = size.height * 0.74;
+    final scanX = _mix(
+      _beatPoint(
+        size,
+        normalized: _beatMarker(currentBeat),
+        y: baseY,
+        inset: 0.22,
+      ).dx,
+      _beatPoint(
+        size,
+        normalized: _beatMarker(nextBeat),
+        y: baseY,
+        inset: 0.22,
+      ).dx,
+      beatTravel,
+    );
+
+    for (var index = 0; index < bars; index += 1) {
+      final x = startX + index * (barWidth + gap);
+      final centerX = x + barWidth / 2;
+      final isActive = index == currentBeat;
+      final distance = (centerX - scanX).abs() / (barWidth * 3);
+      final influence = (1 - distance).clamp(0.0, 1.0);
+      final height =
+          size.height * (0.16 + 0.10 * index / bars) + influence * 28;
+      final rect = RRect.fromLTRBR(
+        x,
+        baseY - height,
+        x + barWidth,
+        baseY,
+        Radius.circular(barWidth * 0.42),
+      );
+      canvas.drawRRect(
+        rect,
+        Paint()
+          ..color = isActive
+              ? accent
+              : Colors.white.withValues(alpha: 0.12 + influence * 0.20),
+      );
+    }
+
+    canvas.drawLine(
+      Offset(startX, baseY + 8),
+      Offset(startX + bars * barWidth + (bars - 1) * gap, baseY + 8),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.10)
+        ..strokeWidth = 2,
+    );
+  }
+
+  void _paintFlatPulseDock(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+  }) {
+    final width = math.min(size.width * 0.40, 180.0);
+    final rect = Rect.fromCenter(
+      center: Offset(size.width * 0.5, size.height * 0.88),
+      width: width,
+      height: 12,
+    );
+    final dock = RRect.fromRectAndRadius(rect, const Radius.circular(999));
+    canvas.drawRRect(
+      dock,
+      Paint()..color = Colors.white.withValues(alpha: 0.08),
+    );
+    final count = math.max(1, subdivision);
+    final spacing = rect.width / (count + 1);
+    for (var index = 0; index < count; index += 1) {
+      final active = activeSubPulse > 0 && activeSubPulse - 1 == index;
+      canvas.drawCircle(
+        Offset(rect.left + spacing * (index + 1), rect.center.dy),
+        active ? 4.5 : 2.5,
+        Paint()
+          ..color = active ? accent : theme.highlight.withValues(alpha: 0.26),
+      );
+    }
   }
 
   void _paintBackdrop(

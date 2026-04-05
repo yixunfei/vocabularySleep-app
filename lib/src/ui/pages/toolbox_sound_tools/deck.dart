@@ -552,7 +552,7 @@ class FocusBeatsToolPage extends StatelessWidget {
           tooltip: '一键全屏启动',
           icon: const Icon(Icons.open_in_full_rounded),
           onPressed: () =>
-              _openFullScreen(context, autoStart: true, immersive: false),
+              _openFullScreen(context, autoStart: true, immersive: true),
         ),
       ],
       child: _FocusBeatsTool(
