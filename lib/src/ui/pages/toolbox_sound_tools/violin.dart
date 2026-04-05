@@ -87,6 +87,8 @@ class _ViolinToolState extends State<_ViolinTool> {
 
   final ToolboxLoopController _sustainLoop = ToolboxLoopController();
   final ToolboxLoopController _doubleStopLoop = ToolboxLoopController();
+  final Map<String, ToolboxEffectPlayer> _transientPlayers =
+      <String, ToolboxEffectPlayer>{};
   final Map<int, Offset> _activePointers = <int, Offset>{};
 
   String _presetId = _presets.first.id;
@@ -96,8 +98,13 @@ class _ViolinToolState extends State<_ViolinTool> {
   String _toneVariant = 'a';
   int _positionIndex = 0;
   int? _activeStringIndex;
+  int? _activeNoteIndex;
   int? _activeNoteMidi;
+  int? _activeDoubleStopMidi;
   String? _lastNoteLabel;
+  double _bowGestureVolume = 0;
+  double _bowGestureRate = 1.0;
+  bool _bowing = false;
 
   bool _isCompactPhoneWidth(double width) {
     return width < (widget.fullScreen ? 480 : 430);
@@ -203,39 +210,162 @@ class _ViolinToolState extends State<_ViolinTool> {
     return (440 * math.pow(2, (midi - 69) / 12)).toDouble();
   }
 
-  Future<void> _playSustain({
-    required int stringIndex,
-    required int noteIndex,
-  }) async {
-    final notes = _notesForString(_strings[stringIndex]);
-    final midi = notes[noteIndex.clamp(0, notes.length - 1)];
-    await _sustainLoop.play(
-      ToolboxAudioBank.violinNote(
-        _frequencyFromMidi(midi),
+  ToolboxEffectPlayer _transientPlayer(String key, Uint8List bytes) {
+    final existing = _transientPlayers[key];
+    if (existing != null) {
+      return existing;
+    }
+    final created = ToolboxEffectPlayer(bytes, maxPlayers: 4);
+    _transientPlayers[key] = created;
+    return created;
+  }
+
+  ToolboxEffectPlayer _attackPlayerForMidi(int midi) {
+    final frequency = _frequencyFromMidi(midi);
+    final key =
+        'attack:${frequency.toStringAsFixed(2)}:${_activePreset.styleId}:'
+        '$_toneVariant:${_bow.toStringAsFixed(2)}';
+    return _transientPlayer(
+      key,
+      ToolboxAudioBank.violinBowAttack(
+        frequency,
+        style: _activePreset.styleId,
+        variant: _toneVariant,
+        bow: _bow,
+      ),
+    );
+  }
+
+  ToolboxEffectPlayer _tailPlayerForMidi(int midi) {
+    final frequency = _frequencyFromMidi(midi);
+    final key =
+        'tail:${frequency.toStringAsFixed(2)}:${_activePreset.styleId}:'
+        '$_toneVariant:${_bow.toStringAsFixed(2)}:${_reverb.toStringAsFixed(2)}';
+    return _transientPlayer(
+      key,
+      ToolboxAudioBank.violinRoomTail(
+        frequency,
         style: _activePreset.styleId,
         variant: _toneVariant,
         bow: _bow,
         reverb: _reverb,
       ),
-      volume: (0.42 + _bow * 0.5).clamp(0.0, 1.0),
+    );
+  }
+
+  ({int stringIndex, int noteIndex, int midi}) _fingerboardTargetFor(
+    Offset localPosition,
+    Size size,
+  ) {
+    final laneHeight = size.height / _strings.length;
+    final stringIndex = (localPosition.dy / laneHeight).floor().clamp(
+      0,
+      _strings.length - 1,
+    );
+    final notes = _notesForString(_strings[stringIndex]);
+    final cellWidth = size.width / notes.length;
+    final noteIndex = (localPosition.dx / cellWidth).floor().clamp(
+      0,
+      notes.length - 1,
+    );
+    return (
+      stringIndex: stringIndex,
+      noteIndex: noteIndex,
+      midi: notes[noteIndex],
+    );
+  }
+
+  double _bowVolumeForDelta(Offset delta, {bool start = false}) {
+    final motion = start ? 0.28 : (delta.distance / 28).clamp(0.0, 1.0);
+    return (0.18 + motion * (0.42 + _bow * 0.34)).clamp(0.16, 1.0).toDouble();
+  }
+
+  double _bowPlaybackRateForDelta(
+    Offset delta,
+    Size size, {
+    bool start = false,
+  }) {
+    final lateral = size.width <= 0 ? 0.0 : (delta.dx / size.width);
+    final vertical = size.height <= 0 ? 0.0 : (delta.dy / size.height);
+    final motion = start ? 0.0 : (delta.distance / 24).clamp(0.0, 1.0);
+    return (1.0 + lateral * 0.18 + vertical * 0.08 + motion * 0.006)
+        .clamp(0.985, 1.025)
+        .toDouble();
+  }
+
+  Future<void> _applyBowDynamics({
+    required double volume,
+    required double playbackRate,
+  }) async {
+    await _sustainLoop.setVolume(volume);
+    await _sustainLoop.setPlaybackRate(playbackRate);
+    if (_activeDoubleStopMidi != null) {
+      await _doubleStopLoop.setVolume((volume * 0.72).clamp(0.0, 1.0));
+      await _doubleStopLoop.setPlaybackRate(playbackRate);
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _bowGestureVolume = volume;
+      _bowGestureRate = playbackRate;
+      _bowing = true;
+    });
+  }
+
+  Future<void> _playSustain({
+    required int stringIndex,
+    required int noteIndex,
+    required double bowVolume,
+    required double playbackRate,
+    bool withAttack = false,
+  }) async {
+    final notes = _notesForString(_strings[stringIndex]);
+    final midi = notes[noteIndex.clamp(0, notes.length - 1)];
+    if (withAttack) {
+      unawaited(
+        _attackPlayerForMidi(midi).play(
+          volume: (0.12 + bowVolume * 0.24).clamp(0.0, 1.0),
+          playbackRate: playbackRate,
+        ),
+      );
+    }
+    await _sustainLoop.play(
+      ToolboxAudioBank.violinSustainCore(
+        _frequencyFromMidi(midi),
+        style: _activePreset.styleId,
+        variant: _toneVariant,
+        bow: _bow,
+      ),
+      volume: bowVolume,
+      playbackRate: playbackRate,
     );
 
+    int? doubleStopMidi;
     if (_activePointers.length >= 2) {
       final secondStringIndex = math.min(stringIndex + 1, _strings.length - 1);
       if (secondStringIndex != stringIndex) {
         final secondNotes = _notesForString(_strings[secondStringIndex]);
-        final secondMidi =
+        doubleStopMidi =
             secondNotes[noteIndex.clamp(0, secondNotes.length - 1)];
         await _doubleStopLoop.play(
-          ToolboxAudioBank.violinNote(
-            _frequencyFromMidi(secondMidi),
+          ToolboxAudioBank.violinSustainCore(
+            _frequencyFromMidi(doubleStopMidi),
             style: _activePreset.styleId,
             variant: _toneVariant,
             bow: (_bow * 0.92).clamp(0.15, 1.0),
-            reverb: _reverb,
           ),
-          volume: (0.32 + _bow * 0.36).clamp(0.0, 1.0),
+          volume: (bowVolume * 0.72).clamp(0.0, 1.0),
+          playbackRate: playbackRate,
         );
+        if (withAttack) {
+          unawaited(
+            _attackPlayerForMidi(doubleStopMidi).play(
+              volume: (0.08 + bowVolume * 0.16).clamp(0.0, 1.0),
+              playbackRate: playbackRate,
+            ),
+          );
+        }
       }
     } else {
       await _doubleStopLoop.stop();
@@ -244,18 +374,45 @@ class _ViolinToolState extends State<_ViolinTool> {
     if (!mounted) return;
     setState(() {
       _activeStringIndex = stringIndex;
+      _activeNoteIndex = noteIndex;
       _activeNoteMidi = midi;
+      _activeDoubleStopMidi = doubleStopMidi;
       _lastNoteLabel = _noteLabelFromMidi(midi);
+      _bowGestureVolume = bowVolume;
+      _bowGestureRate = playbackRate;
+      _bowing = true;
     });
   }
 
-  Future<void> _stopSustain() async {
+  Future<void> _stopSustain({bool withTail = true}) async {
+    final primaryMidi = _activeNoteMidi;
+    final secondMidi = _activeDoubleStopMidi;
+    final tailVolume = _bowGestureVolume;
     await _sustainLoop.stop();
     await _doubleStopLoop.stop();
+    if (withTail && primaryMidi != null) {
+      unawaited(
+        _tailPlayerForMidi(
+          primaryMidi,
+        ).play(volume: (0.1 + tailVolume * 0.18).clamp(0.0, 1.0)),
+      );
+    }
+    if (withTail && secondMidi != null) {
+      unawaited(
+        _tailPlayerForMidi(
+          secondMidi,
+        ).play(volume: (0.07 + tailVolume * 0.12).clamp(0.0, 1.0)),
+      );
+    }
     if (!mounted) return;
     setState(() {
       _activeStringIndex = null;
+      _activeNoteIndex = null;
       _activeNoteMidi = null;
+      _activeDoubleStopMidi = null;
+      _bowGestureVolume = 0;
+      _bowGestureRate = 1.0;
+      _bowing = false;
     });
   }
 
@@ -272,34 +429,69 @@ class _ViolinToolState extends State<_ViolinTool> {
     });
   }
 
-  void _handleFingerboardTouch(Offset localPosition, Size size) {
-    final laneHeight = size.height / _strings.length;
-    final stringIndex = (localPosition.dy / laneHeight).floor().clamp(
-      0,
-      _strings.length - 1,
-    );
-    final notes = _notesForString(_strings[stringIndex]);
-    final cellWidth = size.width / notes.length;
-    final noteIndex = (localPosition.dx / cellWidth).floor().clamp(
-      0,
-      notes.length - 1,
-    );
-    final midi = notes[noteIndex];
-    if (_activeStringIndex == stringIndex && _activeNoteMidi == midi) {
+  void _handleFingerboardGesture(
+    Offset localPosition,
+    Size size, {
+    Offset delta = Offset.zero,
+    bool start = false,
+  }) {
+    final target = _fingerboardTargetFor(localPosition, size);
+    final expectsDoubleStop =
+        _activePointers.length >= 2 && target.stringIndex < _strings.length - 1;
+    final sameTarget =
+        _activeStringIndex == target.stringIndex &&
+        _activeNoteIndex == target.noteIndex &&
+        _activeNoteMidi == target.midi &&
+        (_activeDoubleStopMidi != null) == expectsDoubleStop;
+    final bowVolume = _bowVolumeForDelta(delta, start: start);
+    final playbackRate = _bowPlaybackRateForDelta(delta, size, start: start);
+    if (sameTarget && _bowing) {
+      unawaited(
+        _applyBowDynamics(volume: bowVolume, playbackRate: playbackRate),
+      );
       return;
     }
-    HapticFeedback.selectionClick();
-    unawaited(_playSustain(stringIndex: stringIndex, noteIndex: noteIndex));
+    if (_activeStringIndex != target.stringIndex ||
+        _activeNoteMidi != target.midi) {
+      HapticFeedback.selectionClick();
+    }
+    unawaited(
+      _playSustain(
+        stringIndex: target.stringIndex,
+        noteIndex: target.noteIndex,
+        bowVolume: bowVolume,
+        playbackRate: playbackRate,
+        withAttack: !_bowing,
+      ),
+    );
   }
 
   void _handlePointerDown(PointerDownEvent event) {
     _activePointers[event.pointer] = event.localPosition;
+    if (_bowing &&
+        _activePointers.length >= 2 &&
+        _activeStringIndex != null &&
+        _activeNoteIndex != null) {
+      unawaited(
+        _playSustain(
+          stringIndex: _activeStringIndex!,
+          noteIndex: _activeNoteIndex!,
+          bowVolume: _bowGestureVolume.clamp(0.16, 1.0).toDouble(),
+          playbackRate: _bowGestureRate,
+        ),
+      );
+    }
   }
 
   void _handlePointerUp(PointerEvent event) {
     _activePointers.remove(event.pointer);
-    if (_activePointers.length < 2) {
+    if (_activePointers.length < 2 && _activeDoubleStopMidi != null) {
       unawaited(_doubleStopLoop.stop());
+      if (mounted) {
+        setState(() {
+          _activeDoubleStopMidi = null;
+        });
+      }
     }
   }
 
@@ -316,14 +508,23 @@ class _ViolinToolState extends State<_ViolinTool> {
       onPointerUp: _handlePointerUp,
       onPointerCancel: _handlePointerUp,
       child: GestureDetector(
-        onTapDown: (details) =>
-            _handleFingerboardTouch(details.localPosition, Size(width, height)),
+        onTapDown: (details) => _handleFingerboardGesture(
+          details.localPosition,
+          Size(width, height),
+          start: true,
+        ),
         onTapUp: (_) => unawaited(_stopSustain()),
         onTapCancel: () => unawaited(_stopSustain()),
-        onPanStart: (details) =>
-            _handleFingerboardTouch(details.localPosition, Size(width, height)),
-        onPanUpdate: (details) =>
-            _handleFingerboardTouch(details.localPosition, Size(width, height)),
+        onPanStart: (details) => _handleFingerboardGesture(
+          details.localPosition,
+          Size(width, height),
+          start: true,
+        ),
+        onPanUpdate: (details) => _handleFingerboardGesture(
+          details.localPosition,
+          Size(width, height),
+          delta: details.delta,
+        ),
         onPanEnd: (_) => unawaited(_stopSustain()),
         onPanCancel: () => unawaited(_stopSustain()),
         child: Container(
@@ -655,6 +856,10 @@ class _ViolinToolState extends State<_ViolinTool> {
   void dispose() {
     unawaited(_sustainLoop.dispose());
     unawaited(_doubleStopLoop.dispose());
+    for (final player in _transientPlayers.values) {
+      unawaited(player.dispose());
+    }
+    _transientPlayers.clear();
     super.dispose();
   }
 

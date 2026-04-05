@@ -265,6 +265,7 @@ class _WoodfishTool extends StatefulWidget {
 
 class _WoodfishToolState extends State<_WoodfishTool>
     with TickerProviderStateMixin {
+  static const List<int> _woodfishVariants = <int>[0, 5, 12, 27];
   static const List<_WoodfishRhythmPreset> _rhythmPresets =
       <_WoodfishRhythmPreset>[
         _WoodfishRhythmPreset(
@@ -310,8 +311,8 @@ class _WoodfishToolState extends State<_WoodfishTool>
       ];
 
   final Stopwatch _sessionStopwatch = Stopwatch();
-  ToolboxEffectPlayer? _regularPlayer;
-  ToolboxEffectPlayer? _accentPlayer;
+  ToolboxRealisticEffectPlayer? _regularPlayer;
+  ToolboxRealisticEffectPlayer? _accentPlayer;
   Timer? _autoTimer;
   Timer? _holdTimer;
   Timer? _persistTimer;
@@ -427,13 +428,15 @@ class _WoodfishToolState extends State<_WoodfishTool>
     _strikeController.dispose();
     _ambientController.dispose();
     _floatingTextController.dispose();
-    final regular = _regularPlayer;
-    final accent = _accentPlayer;
-    if (regular != null) {
-      unawaited(regular.dispose());
+    final regularPlayer = _regularPlayer;
+    final accentPlayer = _accentPlayer;
+    _regularPlayer = null;
+    _accentPlayer = null;
+    if (regularPlayer != null) {
+      unawaited(regularPlayer.dispose());
     }
-    if (accent != null) {
-      unawaited(accent.dispose());
+    if (accentPlayer != null) {
+      unawaited(accentPlayer.dispose());
     }
     super.dispose();
   }
@@ -670,44 +673,53 @@ class _WoodfishToolState extends State<_WoodfishTool>
 
   Future<void> _rebuildPlayers({bool preview = false}) async {
     final revision = ++_audioRevision;
-    final regular = ToolboxEffectPlayer(
-      ToolboxAudioBank.woodfishClick(
+    final regularPlayer = ToolboxRealisticEffectPlayer.build(
+      variants: _woodfishVariants,
+      bytesForVariant: (variant) => ToolboxAudioBank.woodfishClick(
         style: _soundProfile.id,
         resonance: _resonance,
         brightness: _brightness,
         pitch: _pitch,
         strike: _strikeHardness,
         accent: false,
+        variant: variant,
       ),
-      maxPlayers: 10,
+      maxPlayers: 3,
+      volumeJitter: 0.08,
     );
-    final accent = ToolboxEffectPlayer(
-      ToolboxAudioBank.woodfishClick(
+    final accentPlayer = ToolboxRealisticEffectPlayer.build(
+      variants: _woodfishVariants,
+      bytesForVariant: (variant) => ToolboxAudioBank.woodfishClick(
         style: _soundProfile.id,
         resonance: (_resonance + 0.1).clamp(0.0, 1.0),
         brightness: (_brightness + 0.08).clamp(0.0, 1.0),
         pitch: (_pitch + 0.2).clamp(-6.0, 6.0),
         strike: (_strikeHardness + 0.14).clamp(0.0, 1.0),
         accent: true,
+        variant: variant,
       ),
-      maxPlayers: 10,
+      maxPlayers: 3,
+      volumeJitter: 0.08,
     );
-    await Future.wait<void>(<Future<void>>[regular.warmUp(), accent.warmUp()]);
+    await Future.wait<void>(<Future<void>>[
+      regularPlayer.warmUp(),
+      accentPlayer.warmUp(),
+    ]);
     if (!mounted || revision != _audioRevision) {
-      await regular.dispose();
-      await accent.dispose();
+      await Future.wait<void>(<Future<void>>[
+        regularPlayer.dispose(),
+        accentPlayer.dispose(),
+      ]);
       return;
     }
-    final oldRegular = _regularPlayer;
-    final oldAccent = _accentPlayer;
-    _regularPlayer = regular;
-    _accentPlayer = accent;
-    if (oldRegular != null) {
-      await oldRegular.dispose();
-    }
-    if (oldAccent != null) {
-      await oldAccent.dispose();
-    }
+    final oldRegularPlayer = _regularPlayer;
+    final oldAccentPlayer = _accentPlayer;
+    _regularPlayer = regularPlayer;
+    _accentPlayer = accentPlayer;
+    await Future.wait<void>(<Future<void>>[
+      if (oldRegularPlayer != null) oldRegularPlayer.dispose(),
+      if (oldAccentPlayer != null) oldAccentPlayer.dispose(),
+    ]);
     if (preview) {
       _previewStrike();
     }
@@ -721,7 +733,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
     _strikeController.forward(from: 0);
     unawaited(
       player.play(
-        volume: (_masterVolume * (1 + _accentBoost * 0.5)).clamp(0.08, 1.0),
+        baseVolume: (_masterVolume * (1 + _accentBoost * 0.5)).clamp(0.08, 1.0),
       ),
     );
   }
@@ -738,10 +750,8 @@ class _WoodfishToolState extends State<_WoodfishTool>
     if (player != null) {
       unawaited(
         player.play(
-          volume: (_masterVolume * (accent ? (1 + _accentBoost) : 1.0)).clamp(
-            0.08,
-            1.0,
-          ),
+          baseVolume: (_masterVolume * (accent ? (1 + _accentBoost) : 1.0))
+              .clamp(0.08, 1.0),
         ),
       );
     }
@@ -1502,7 +1512,8 @@ class _WoodfishToolState extends State<_WoodfishTool>
 
         // ── Elastic micro-bounces in rebound (damped sine) ──
         final bounceCount = arcWide ? 2.5 : 2.0;
-        final dampedBounce = math.sin(upT * math.pi * bounceCount) *
+        final dampedBounce =
+            math.sin(upT * math.pi * bounceCount) *
             math.exp(-upT * 3.2) *
             (arcWide ? 0.09 : 0.06);
 
@@ -1523,8 +1534,10 @@ class _WoodfishToolState extends State<_WoodfishTool>
         final contactWave = strikeT <= downSplit
             ? Curves.easeIn.transform(downT)
             : (1 - Curves.easeOut.transform(upT)) * 0.5;
-        final impact = (math.sin(strikeT * math.pi) * 0.78 + contactWave)
-            .clamp(0.0, 1.0);
+        final impact = (math.sin(strikeT * math.pi) * 0.78 + contactWave).clamp(
+          0.0,
+          1.0,
+        );
 
         // ── Body squash (subtle vertical compression on impact) ──
         final squash = strikeT <= downSplit
@@ -1746,7 +1759,10 @@ class _WoodfishToolState extends State<_WoodfishTool>
                   // ── 9. Floating blessing text ──
                   Positioned(
                     top: height * 0.20,
-                    child: _buildFloatingBlessing(context, immersive: immersive),
+                    child: _buildFloatingBlessing(
+                      context,
+                      immersive: immersive,
+                    ),
                   ),
 
                   // ── 10. Pulse indicators ──
@@ -2293,7 +2309,8 @@ class _WoodfishStagePainter extends CustomPainter {
         0.8 + (i % 3) * 0.4,
         Paint()
           ..color = tokens.dust.withValues(
-            alpha: (immersive ? 0.06 : 0.1) *
+            alpha:
+                (immersive ? 0.06 : 0.1) *
                 (1 - phase * 0.6) *
                 (0.6 + impact * 0.5),
           ),
@@ -2392,8 +2409,9 @@ class _WoodfishCycleRingPainter extends CustomPainter {
     canvas.drawOval(
       ovalRect,
       Paint()
-        ..color = (immersive ? Colors.white : Colors.black)
-            .withValues(alpha: immersive ? 0.08 : 0.06)
+        ..color = (immersive ? Colors.white : Colors.black).withValues(
+          alpha: immersive ? 0.08 : 0.06,
+        )
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2,
     );
@@ -2496,20 +2514,28 @@ class _WoodfishBodyPainter extends CustomPainter {
       ..moveTo(cx - bw * 0.48, cy + bh * 0.02)
       // ── Bottom contour (belly) — gently curves right ──
       ..cubicTo(
-        cx - bw * 0.32, cy + bh * 0.38, // wide belly sag
-        cx + bw * 0.10, cy + bh * 0.40, // belly peak
-        cx + bw * 0.42, cy + bh * 0.06, // converges toward nose
+        cx - bw * 0.32,
+        cy + bh * 0.38, // wide belly sag
+        cx + bw * 0.10,
+        cy + bh * 0.40, // belly peak
+        cx + bw * 0.42,
+        cy + bh * 0.06, // converges toward nose
       )
       // ── Nose tip (rightmost, slightly above centre) ──
       ..quadraticBezierTo(
-        cx + bw * 0.52, cy - bh * 0.06,
-        cx + bw * 0.42, cy - bh * 0.18,
+        cx + bw * 0.52,
+        cy - bh * 0.06,
+        cx + bw * 0.42,
+        cy - bh * 0.18,
       )
       // ── Top contour (dome) — high arc leftward ──
       ..cubicTo(
-        cx + bw * 0.12, cy - bh * 0.50, // strong upward bulge
-        cx - bw * 0.26, cy - bh * 0.48,
-        cx - bw * 0.48, cy + bh * 0.02, // back to tail
+        cx + bw * 0.12,
+        cy - bh * 0.50, // strong upward bulge
+        cx - bw * 0.26,
+        cy - bh * 0.48,
+        cx - bw * 0.48,
+        cy + bh * 0.02, // back to tail
       )
       ..close();
 
@@ -2535,7 +2561,11 @@ class _WoodfishBodyPainter extends CustomPainter {
           begin: const Alignment(-0.5, -0.9),
           end: const Alignment(0.4, 0.8),
           colors: <Color>[
-            Color.lerp(tokens.bodyGradient[0], Colors.white, 0.22 + impact * 0.08)!,
+            Color.lerp(
+              tokens.bodyGradient[0],
+              Colors.white,
+              0.22 + impact * 0.08,
+            )!,
             tokens.bodyGradient[0],
             tokens.bodyGradient[1],
             tokens.bodyGradient[2],
@@ -2557,13 +2587,18 @@ class _WoodfishBodyPainter extends CustomPainter {
     final domePath = Path()
       ..moveTo(cx - bw * 0.38, cy - bh * 0.08)
       ..cubicTo(
-        cx - bw * 0.20, cy - bh * 0.44,
-        cx + bw * 0.18, cy - bh * 0.46,
-        cx + bw * 0.36, cy - bh * 0.12,
+        cx - bw * 0.20,
+        cy - bh * 0.44,
+        cx + bw * 0.18,
+        cy - bh * 0.46,
+        cx + bw * 0.36,
+        cy - bh * 0.12,
       )
       ..quadraticBezierTo(
-        cx + bw * 0.04, cy - bh * 0.14,
-        cx - bw * 0.38, cy - bh * 0.08,
+        cx + bw * 0.04,
+        cy - bh * 0.14,
+        cx - bw * 0.38,
+        cy - bh * 0.08,
       )
       ..close();
     canvas.drawPath(
@@ -2585,15 +2620,21 @@ class _WoodfishBodyPainter extends CustomPainter {
     final bellyPath = Path()
       ..moveTo(cx - bw * 0.36, cy + bh * 0.12)
       ..cubicTo(
-        cx - bw * 0.22, cy + bh * 0.36,
-        cx + bw * 0.12, cy + bh * 0.38,
-        cx + bw * 0.36, cy + bh * 0.10,
+        cx - bw * 0.22,
+        cy + bh * 0.36,
+        cx + bw * 0.12,
+        cy + bh * 0.38,
+        cx + bw * 0.36,
+        cy + bh * 0.10,
       )
       ..lineTo(cx + bw * 0.30, cy + bh * 0.02)
       ..cubicTo(
-        cx + bw * 0.06, cy + bh * 0.14,
-        cx - bw * 0.18, cy + bh * 0.12,
-        cx - bw * 0.36, cy + bh * 0.12,
+        cx + bw * 0.06,
+        cy + bh * 0.14,
+        cx - bw * 0.18,
+        cy + bh * 0.12,
+        cx - bw * 0.36,
+        cy + bh * 0.12,
       )
       ..close();
     canvas.drawPath(
@@ -2627,9 +2668,12 @@ class _WoodfishBodyPainter extends CustomPainter {
     final slitInteriorPath = Path()
       ..moveTo(slitLeft, slitY)
       ..cubicTo(
-        slitLeft + (slitRight - slitLeft) * 0.20, slitY - bh * 0.14,
-        slitLeft + (slitRight - slitLeft) * 0.70, slitY - bh * 0.08,
-        slitRight, slitY - bh * 0.04,
+        slitLeft + (slitRight - slitLeft) * 0.20,
+        slitY - bh * 0.14,
+        slitLeft + (slitRight - slitLeft) * 0.70,
+        slitY - bh * 0.08,
+        slitRight,
+        slitY - bh * 0.04,
       );
     canvas.drawPath(
       slitInteriorPath.shift(Offset(0, bh * 0.03)),
@@ -2665,9 +2709,12 @@ class _WoodfishBodyPainter extends CustomPainter {
     final upperLip = Path()
       ..moveTo(slitLeft + (slitRight - slitLeft) * 0.04, slitY - bh * 0.07)
       ..cubicTo(
-        slitLeft + (slitRight - slitLeft) * 0.28, slitY - bh * 0.18,
-        slitLeft + (slitRight - slitLeft) * 0.68, slitY - bh * 0.13,
-        slitRight - (slitRight - slitLeft) * 0.02, slitY - bh * 0.08,
+        slitLeft + (slitRight - slitLeft) * 0.28,
+        slitY - bh * 0.18,
+        slitLeft + (slitRight - slitLeft) * 0.68,
+        slitY - bh * 0.13,
+        slitRight - (slitRight - slitLeft) * 0.02,
+        slitY - bh * 0.08,
       );
     canvas.drawPath(
       upperLip,
@@ -2682,9 +2729,12 @@ class _WoodfishBodyPainter extends CustomPainter {
     final lowerLip = Path()
       ..moveTo(slitLeft + (slitRight - slitLeft) * 0.06, slitY + bh * 0.06)
       ..cubicTo(
-        slitLeft + (slitRight - slitLeft) * 0.30, slitY + bh * 0.12,
-        slitLeft + (slitRight - slitLeft) * 0.65, slitY + bh * 0.08,
-        slitRight - (slitRight - slitLeft) * 0.04, slitY + bh * 0.02,
+        slitLeft + (slitRight - slitLeft) * 0.30,
+        slitY + bh * 0.12,
+        slitLeft + (slitRight - slitLeft) * 0.65,
+        slitY + bh * 0.08,
+        slitRight - (slitRight - slitLeft) * 0.04,
+        slitY + bh * 0.02,
       );
     canvas.drawPath(
       lowerLip,
@@ -2724,9 +2774,12 @@ class _WoodfishBodyPainter extends CustomPainter {
       final grain = Path()
         ..moveTo(cx - bw * 0.44, gy)
         ..cubicTo(
-          cx - bw * 0.16, gy - bh * 0.05 + drift,
-          cx + bw * 0.12, gy + bh * 0.05 - drift * 0.7,
-          cx + bw * 0.40, gy - bh * 0.02 + drift * 0.3,
+          cx - bw * 0.16,
+          gy - bh * 0.05 + drift,
+          cx + bw * 0.12,
+          gy + bh * 0.05 - drift * 0.7,
+          cx + bw * 0.40,
+          gy - bh * 0.02 + drift * 0.3,
         );
       canvas.drawPath(
         grain,
@@ -2942,10 +2995,7 @@ class _WoodfishMalletPainter extends CustomPainter {
     );
 
     // Head body (round padded shape)
-    final headBounds = Rect.fromCircle(
-      center: tipCenter,
-      radius: headRadius,
-    );
+    final headBounds = Rect.fromCircle(center: tipCenter, radius: headRadius);
     canvas.drawCircle(
       tipCenter,
       headRadius,

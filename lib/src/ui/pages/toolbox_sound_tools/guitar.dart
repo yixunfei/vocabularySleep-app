@@ -79,6 +79,8 @@ class _GuitarToolState extends State<_GuitarTool> {
   int? _activeString;
   double _resonance = _presets.first.resonance;
   double _pickPosition = _presets.first.pickPosition;
+  bool _palmMute = false;
+  bool _momentaryPalmMute = false;
   String? _lastPlayedLabel;
   int _strumCount = 0;
 
@@ -167,10 +169,47 @@ class _GuitarToolState extends State<_GuitarTool> {
     return '$pitch$octave';
   }
 
-  ToolboxEffectPlayer _playerForMidi(int midi) {
+  bool get _effectivePalmMute => _palmMute || _momentaryPalmMute;
+
+  String _techniqueLabel(AppI18n i18n) {
+    return _effectivePalmMute
+        ? pickUiText(i18n, zh: '闂烽煶', en: 'Palm mute')
+        : pickUiText(i18n, zh: '寮€鏀惧欢闊?', en: 'Open ring');
+  }
+
+  double _pickPositionForStageX(Offset localPosition, Size size) {
+    if (size.width <= 0) {
+      return _pickPosition;
+    }
+    return (0.08 + (localPosition.dx / size.width) * 0.84)
+        .clamp(0.08, 0.92)
+        .toDouble();
+  }
+
+  double _velocityForGesture(Offset delta, {bool initial = false}) {
+    final distance = delta.distance;
+    final base = initial ? 0.64 : 0.38;
+    final dynamicLift = distance / (initial ? 84 : 34);
+    return (base + dynamicLift).clamp(0.28, 1.0).toDouble();
+  }
+
+  ToolboxEffectPlayer _playerForMidi(
+    int midi, {
+    double? pickPosition,
+    double velocity = 0.8,
+    bool? palmMute,
+  }) {
     final frequency = _frequencyFromMidi(midi);
+    final resolvedPickPosition = (pickPosition ?? _pickPosition)
+        .clamp(0.08, 0.92)
+        .toDouble();
+    final resolvedVelocity = velocity.clamp(0.2, 1.0).toDouble();
+    final resolvedPalmMute = palmMute ?? _effectivePalmMute;
     final key =
-        '$midi:${_activePreset.styleId}:${_resonance.toStringAsFixed(2)}:${_pickPosition.toStringAsFixed(2)}';
+        '$midi:${_activePreset.styleId}:${_resonance.toStringAsFixed(2)}:'
+        '${resolvedPickPosition.toStringAsFixed(2)}:'
+        '${resolvedVelocity.toStringAsFixed(2)}:'
+        '${resolvedPalmMute ? 'mute' : 'open'}';
     final existing = _players[key];
     if (existing != null) return existing;
     final created = ToolboxEffectPlayer(
@@ -178,7 +217,9 @@ class _GuitarToolState extends State<_GuitarTool> {
         frequency,
         style: _activePreset.styleId,
         resonance: _resonance,
-        pickPosition: _pickPosition,
+        pickPosition: resolvedPickPosition,
+        velocity: resolvedVelocity,
+        palmMute: resolvedPalmMute,
       ),
       maxPlayers: 8,
     );
@@ -227,16 +268,28 @@ class _GuitarToolState extends State<_GuitarTool> {
     unawaited(_warmUpActivePreset());
   }
 
-  Future<void> _pluck(int index, {double? volume}) async {
+  Future<void> _pluck(
+    int index, {
+    double? volume,
+    double? velocity,
+    double? pickPosition,
+    bool? palmMute,
+  }) async {
     if (index < 0 || index >= _strings.length) return;
     final midi = _frettedMidiForString(index);
     if (midi == null) {
       HapticFeedback.lightImpact();
       return;
     }
+    final resolvedVelocity = (velocity ?? 0.78).clamp(0.2, 1.0).toDouble();
     HapticFeedback.selectionClick();
     unawaited(
-      _playerForMidi(midi).play(volume: volume ?? _activePreset.pluckVolume),
+      _playerForMidi(
+        midi,
+        pickPosition: pickPosition,
+        velocity: resolvedVelocity,
+        palmMute: palmMute,
+      ).play(volume: volume ?? _activePreset.pluckVolume),
     );
     if (!mounted) return;
     setState(() {
@@ -249,13 +302,26 @@ class _GuitarToolState extends State<_GuitarTool> {
     });
   }
 
-  Future<void> _strum({required bool down}) async {
+  Future<void> _strum({
+    required bool down,
+    double? velocity,
+    double? pickPosition,
+  }) async {
     final preset = _activePreset;
+    final strumVelocity = (velocity ?? 0.82).clamp(0.2, 1.0).toDouble();
+    final strumPickPosition = (pickPosition ?? _pickPosition)
+        .clamp(0.08, 0.92)
+        .toDouble();
     final indexes = down
         ? List<int>.generate(_strings.length, (i) => i)
         : List<int>.generate(_strings.length, (i) => _strings.length - 1 - i);
     for (final index in indexes) {
-      await _pluck(index, volume: preset.strumVolume);
+      await _pluck(
+        index,
+        volume: preset.strumVolume,
+        velocity: strumVelocity,
+        pickPosition: strumPickPosition,
+      );
       await Future<void>.delayed(Duration(milliseconds: preset.strumDelayMs));
     }
     if (!mounted) return;
@@ -266,7 +332,13 @@ class _GuitarToolState extends State<_GuitarTool> {
     final index = _stringIndexForOffset(event.localPosition, size);
     if (index == null) return;
     _pointerStringIndexes[event.pointer] = index;
-    unawaited(_pluck(index));
+    unawaited(
+      _pluck(
+        index,
+        pickPosition: _pickPositionForStageX(event.localPosition, size),
+        velocity: _velocityForGesture(Offset.zero, initial: true),
+      ),
+    );
   }
 
   void _handleStagePointerMove(PointerMoveEvent event, Size size) {
@@ -275,7 +347,14 @@ class _GuitarToolState extends State<_GuitarTool> {
     final lastIndex = _pointerStringIndexes[event.pointer];
     if (lastIndex == index) return;
     _pointerStringIndexes[event.pointer] = index;
-    unawaited(_pluck(index, volume: _activePreset.strumVolume));
+    unawaited(
+      _pluck(
+        index,
+        volume: _activePreset.strumVolume,
+        pickPosition: _pickPositionForStageX(event.localPosition, size),
+        velocity: _velocityForGesture(event.delta),
+      ),
+    );
   }
 
   void _handleStagePointerUp(PointerEvent event) {
@@ -590,6 +669,7 @@ class _GuitarToolState extends State<_GuitarTool> {
             ),
             ToolboxMetricCard(label: 'Chord', value: _activeChord.label),
             ToolboxMetricCard(label: 'Capo', value: '$_capo'),
+            ToolboxMetricCard(label: 'Technique', value: _techniqueLabel(i18n)),
           ],
         ),
         const SizedBox(height: 18),
@@ -664,6 +744,25 @@ class _GuitarToolState extends State<_GuitarTool> {
             refreshSheet();
           },
         ),
+        const SizedBox(height: 12),
+        SwitchListTile.adaptive(
+          value: _palmMute,
+          contentPadding: EdgeInsets.zero,
+          title: Text(pickUiText(i18n, zh: '鎵嬫帉闂烽煶', en: 'Palm mute')),
+          subtitle: Text(
+            pickUiText(
+              i18n,
+              zh: '寮€鍚悗浼氱缉鐭欢闊筹紝鏇撮€傚悎鑺傚鍨嬫壂寮︺€?',
+              en: 'Shortens sustain and tightens upper harmonics for rhythmic strokes.',
+            ),
+          ),
+          onChanged: (value) {
+            setState(() => _palmMute = value);
+            _invalidatePlayers();
+            unawaited(_warmUpActivePreset());
+            refreshSheet();
+          },
+        ),
       ],
     );
   }
@@ -717,6 +816,21 @@ class _GuitarToolState extends State<_GuitarTool> {
           icon: const Icon(Icons.north_rounded),
           label: Text(pickUiText(i18n, zh: '上扫', en: 'Strum up')),
         ),
+        Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: (_) => setState(() => _momentaryPalmMute = true),
+          onPointerUp: (_) => setState(() => _momentaryPalmMute = false),
+          onPointerCancel: (_) => setState(() => _momentaryPalmMute = false),
+          child: FilledButton.tonalIcon(
+            onPressed: () {},
+            icon: Icon(
+              _effectivePalmMute
+                  ? Icons.music_off_rounded
+                  : Icons.music_note_outlined,
+            ),
+            label: Text(_techniqueLabel(i18n)),
+          ),
+        ),
         if (!immersive)
           OutlinedButton.icon(
             onPressed: () => _openGuitarSettingsSheet(context, i18n),
@@ -769,6 +883,10 @@ class _GuitarToolState extends State<_GuitarTool> {
                             _PianoOverlayChip(
                               label: 'Last',
                               value: _lastPlayedLabel ?? '--',
+                            ),
+                            _PianoOverlayChip(
+                              label: 'Technique',
+                              value: _techniqueLabel(i18n),
                             ),
                           ],
                         ),
@@ -885,6 +1003,10 @@ class _GuitarToolState extends State<_GuitarTool> {
                   const ToolboxMetricCard(label: 'Strings', value: '6'),
                   ToolboxMetricCard(label: 'Chord', value: _activeChord.label),
                   ToolboxMetricCard(label: 'Capo', value: '$_capo'),
+                  ToolboxMetricCard(
+                    label: 'Technique',
+                    value: _techniqueLabel(i18n),
+                  ),
                   ToolboxMetricCard(
                     label: 'Last note',
                     value: _lastPlayedLabel ?? '--',

@@ -202,6 +202,8 @@ class _PickupToolState extends State<_PickupTool>
   String? _error;
   bool _showGuide = false;
   bool _showStats = false;
+  bool _freezeFrame = false;
+  DateTime? _freezeCapturedAt;
 
   double _preamp = 0.54;
   double _gate = 0.14;
@@ -214,6 +216,7 @@ class _PickupToolState extends State<_PickupTool>
   String? _noteLabel;
   String? _previousNote;
   int _stableNoteCount = 0;
+  final List<double> _pitchMedianWindow = <double>[];
 
   final List<double> _history = List<double>.generate(48, (_) => 0);
   final List<double> _levelHistory = List<double>.generate(60, (_) => 0);
@@ -315,6 +318,9 @@ class _PickupToolState extends State<_PickupTool>
   }
 
   String _statusLabel(AppI18n i18n) {
+    if (_freezeFrame) {
+      return pickUiText(i18n, zh: '宸插喕缁?', en: 'Frozen');
+    }
     if (_starting) {
       return pickUiText(i18n, zh: '启动中', en: 'Starting');
     }
@@ -381,6 +387,13 @@ class _PickupToolState extends State<_PickupTool>
 
   String _guidance(AppI18n i18n) {
     if (_error != null) return _error!;
+    if (_freezeFrame) {
+      return pickUiText(
+        i18n,
+        zh: '宸插喕缁撳綋鍓嶅垎鏋愬揩鐓э紝鐜板湪璋冩暣鍓嶇骇銆佸櫔澹伴棬鍜屼寒搴﹀彧浼氭敼鍙樺彲瑙嗗寲鐩爣锛屼笉浼氬楹﹀厠椋庤緭鍏ュ仛瀹炴椂 DSP 澶勭悊銆?',
+        en: 'The current analysis snapshot is frozen. Preamp, gate, and presence now adjust the visual reference target only; they do not apply real-time DSP to the microphone signal.',
+      );
+    }
     if (!_hasPermission && !_monitoring) {
       return pickUiText(
         i18n,
@@ -484,6 +497,8 @@ class _PickupToolState extends State<_PickupTool>
     setState(() {
       _starting = true;
       _error = null;
+      _freezeFrame = false;
+      _freezeCapturedAt = null;
     });
     try {
       final granted = await _recorder.hasPermission();
@@ -540,6 +555,9 @@ class _PickupToolState extends State<_PickupTool>
 
       if (!mounted) return;
       _stats.reset();
+      _pitchMedianWindow.clear();
+      _stableNoteCount = 0;
+      _previousNote = null;
       _stats.startTime = DateTime.now();
       setState(() {
         _hasPermission = true;
@@ -572,7 +590,24 @@ class _PickupToolState extends State<_PickupTool>
     _pulseController.stop();
   }
 
+  void _toggleFreezeFrame() {
+    setState(() {
+      _freezeFrame = !_freezeFrame;
+      _freezeCapturedAt = _freezeFrame ? DateTime.now() : null;
+    });
+    if (_freezeFrame) {
+      _pulseController.stop();
+      return;
+    }
+    if (_monitoring) {
+      _pulseController.repeat();
+    }
+  }
+
   void _handlePcmChunk(Uint8List chunk) {
+    if (_freezeFrame) {
+      return;
+    }
     final byteData = ByteData.sublistView(chunk);
     final sampleCount = byteData.lengthInBytes ~/ 2;
     if (sampleCount < 256) return;
@@ -604,8 +639,8 @@ class _PickupToolState extends State<_PickupTool>
     _updateSpectrumBands(normalized, sampleCount);
 
     final detectedFrequency = rms > 0.012
-        ? _detectPitchAdvanced(normalized, 44100)
-        : null;
+        ? _smoothDetectedFrequency(_detectPitchAdvanced(normalized, 44100))
+        : _smoothDetectedFrequency(null);
 
     String? noteLabel;
     int? cents;
@@ -678,23 +713,133 @@ class _PickupToolState extends State<_PickupTool>
       (8000, 16000),
     ];
 
+    final windowSize = _largestPowerOfTwo(math.min(sampleCount, 2048));
+    if (windowSize < 256) {
+      for (var band = 0; band < bandCount; band += 1) {
+        final (lowHz, highHz) = bandRanges[band];
+        _spectrumBands[band] = _SpectrumBand(
+          level: 0,
+          centerHz: (lowHz + highHz) / 2,
+        );
+      }
+      return;
+    }
+
+    final start = sampleCount - windowSize;
+    final real = List<double>.filled(windowSize, 0.0);
+    final imag = List<double>.filled(windowSize, 0.0);
+    for (var i = 0; i < windowSize; i += 1) {
+      final window = 0.5 - 0.5 * math.cos(2 * math.pi * i / (windowSize - 1));
+      real[i] = samples[start + i] * window;
+    }
+    _fftInPlace(real, imag);
+
+    final halfSize = windowSize ~/ 2;
+    final magnitudes = List<double>.filled(halfSize, 0.0);
+    var maxMagnitude = 1e-9;
+    for (var bin = 1; bin < halfSize; bin += 1) {
+      final magnitude = math.sqrt(
+        real[bin] * real[bin] + imag[bin] * imag[bin],
+      );
+      magnitudes[bin] = magnitude;
+      if (magnitude > maxMagnitude) {
+        maxMagnitude = magnitude;
+      }
+    }
+    final hzPerBin = 44100 / windowSize;
+
     for (var band = 0; band < bandCount; band += 1) {
       final (lowHz, highHz) = bandRanges[band];
-      final lowSample = (lowHz * sampleCount / 44100).round();
-      final highSample = (highHz * sampleCount / 44100).round();
+      final lowSample = math.max(1, (lowHz / hzPerBin).floor());
+      final highSample = math.min(halfSize - 1, (highHz / hzPerBin).ceil());
       var bandSum = 0.0;
       var bandCountSamples = 0;
-      for (var i = lowSample; i < highSample && i < sampleCount; i += 4) {
-        bandSum += samples[i].abs();
+      for (var i = lowSample; i <= highSample; i += 1) {
+        bandSum += magnitudes[i];
         bandCountSamples += 1;
       }
       final bandLevel = bandCountSamples > 0
-          ? (bandSum / bandCountSamples * 3.2).clamp(0.0, 1.0)
+          ? (math.sqrt((bandSum / bandCountSamples) / maxMagnitude) * 1.2)
+                .clamp(0.0, 1.0)
           : 0.0;
       _spectrumBands[band] = _SpectrumBand(
         level: bandLevel,
         centerHz: (lowHz + highHz) / 2,
       );
+    }
+  }
+
+  double? _smoothDetectedFrequency(double? frequency) {
+    if (frequency == null || frequency.isNaN || frequency.isInfinite) {
+      _pitchMedianWindow.clear();
+      return null;
+    }
+    _pitchMedianWindow.add(frequency);
+    if (_pitchMedianWindow.length > 5) {
+      _pitchMedianWindow.removeAt(0);
+    }
+    final sorted = List<double>.of(_pitchMedianWindow)..sort();
+    return sorted[sorted.length ~/ 2];
+  }
+
+  int _largestPowerOfTwo(int value) {
+    var power = 1;
+    while (power * 2 <= value) {
+      power *= 2;
+    }
+    return power;
+  }
+
+  void _fftInPlace(List<double> real, List<double> imag) {
+    final length = real.length;
+    var j = 0;
+    for (var i = 1; i < length; i += 1) {
+      var bit = length >> 1;
+      while ((j & bit) != 0) {
+        j ^= bit;
+        bit >>= 1;
+      }
+      j ^= bit;
+      if (i < j) {
+        final realTemp = real[i];
+        real[i] = real[j];
+        real[j] = realTemp;
+        final imagTemp = imag[i];
+        imag[i] = imag[j];
+        imag[j] = imagTemp;
+      }
+    }
+
+    for (var size = 2; size <= length; size <<= 1) {
+      final halfSize = size >> 1;
+      final angle = -2 * math.pi / size;
+      final phaseStepReal = math.cos(angle);
+      final phaseStepImag = math.sin(angle);
+      for (var start = 0; start < length; start += size) {
+        var currentReal = 1.0;
+        var currentImag = 0.0;
+        for (var offset = 0; offset < halfSize; offset += 1) {
+          final evenIndex = start + offset;
+          final oddIndex = evenIndex + halfSize;
+          final oddReal =
+              real[oddIndex] * currentReal - imag[oddIndex] * currentImag;
+          final oddImag =
+              real[oddIndex] * currentImag + imag[oddIndex] * currentReal;
+          final evenReal = real[evenIndex];
+          final evenImag = imag[evenIndex];
+
+          real[evenIndex] = evenReal + oddReal;
+          imag[evenIndex] = evenImag + oddImag;
+          real[oddIndex] = evenReal - oddReal;
+          imag[oddIndex] = evenImag - oddImag;
+
+          final nextReal =
+              currentReal * phaseStepReal - currentImag * phaseStepImag;
+          currentImag =
+              currentReal * phaseStepImag + currentImag * phaseStepReal;
+          currentReal = nextReal;
+        }
+      }
     }
   }
 
@@ -964,6 +1109,27 @@ class _PickupToolState extends State<_PickupTool>
                     ),
                   ),
                   const SizedBox(width: 8),
+                  if (_freezeFrame)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF38BDF8).withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        child: Text(
+                          pickUiText(i18n, zh: '蹇収', en: 'Snapshot'),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: const Color(0xFF7DD3FC),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_freezeFrame) const SizedBox(width: 8),
                   DecoratedBox(
                     decoration: BoxDecoration(
                       color: _pitchAccuracyColor().withValues(alpha: 0.2),
@@ -1772,6 +1938,14 @@ class _PickupToolState extends State<_PickupTool>
                 runSpacing: 10,
                 children: <Widget>[
                   ToolboxMetricCard(label: 'Status', value: _statusLabel(i18n)),
+                  if (_freezeCapturedAt != null)
+                    ToolboxMetricCard(
+                      label: pickUiText(i18n, zh: '蹇収', en: 'Snapshot'),
+                      value:
+                          '${_freezeCapturedAt!.hour.toString().padLeft(2, '0')}:'
+                          '${_freezeCapturedAt!.minute.toString().padLeft(2, '0')}:'
+                          '${_freezeCapturedAt!.second.toString().padLeft(2, '0')}',
+                    ),
                   ToolboxMetricCard(
                     label: 'Profile',
                     value: _profileLabel(i18n, _profileId),
@@ -1827,29 +2001,58 @@ class _PickupToolState extends State<_PickupTool>
                     ),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () => setState(() {
-                      _history
-                        ..clear()
-                        ..addAll(List<double>.filled(48, 0));
-                      _levelHistory
-                        ..clear()
-                        ..addAll(List<double>.filled(60, 0));
-                      _peakHistory
-                        ..clear()
-                        ..addAll(List<double>.filled(60, 0));
-                      _spectrumBands
-                        ..clear()
-                        ..addAll(
-                          List<_SpectrumBand>.filled(8, _SpectrumBand.empty),
-                        );
-                      _frequency = null;
-                      _noteLabel = null;
-                      _cents = null;
-                      _inputLevel = 0;
-                      _peakLevel = 0;
-                      _brightness = _activeProfile.targetBrightness;
-                      _stats.reset();
-                    }),
+                    onPressed: (_monitoring || _freezeFrame)
+                        ? _toggleFreezeFrame
+                        : null,
+                    icon: Icon(
+                      _freezeFrame
+                          ? Icons.play_circle_outline_rounded
+                          : Icons.ac_unit_rounded,
+                    ),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: _freezeFrame ? '鎭㈠瀹炴椂' : '鍐荤粨蹇収',
+                        en: _freezeFrame ? 'Resume live' : 'Freeze snapshot',
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _freezeFrame = false;
+                        _freezeCapturedAt = null;
+                        _pitchMedianWindow.clear();
+                        _history
+                          ..clear()
+                          ..addAll(List<double>.filled(48, 0));
+                        _levelHistory
+                          ..clear()
+                          ..addAll(List<double>.filled(60, 0));
+                        _peakHistory
+                          ..clear()
+                          ..addAll(List<double>.filled(60, 0));
+                        _spectrumBands
+                          ..clear()
+                          ..addAll(
+                            List<_SpectrumBand>.filled(8, _SpectrumBand.empty),
+                          );
+                        _frequency = null;
+                        _noteLabel = null;
+                        _cents = null;
+                        _inputLevel = 0;
+                        _peakLevel = 0;
+                        _brightness = _activeProfile.targetBrightness;
+                        _previousNote = null;
+                        _stableNoteCount = 0;
+                        _stats.reset();
+                      });
+                      if (_monitoring) {
+                        _pulseController.repeat();
+                      } else {
+                        _pulseController.stop();
+                      }
+                    },
                     icon: const Icon(Icons.refresh_rounded),
                     label: Text(pickUiText(i18n, zh: '重置读数', en: 'Reset')),
                   ),
@@ -1938,6 +2141,18 @@ class _PickupToolState extends State<_PickupTool>
                   i18n,
                   zh: '前级增益用于预估输入余量，噪声门控制静音底噪，亮度补偿用于观察音色趋势。',
                   en: 'Preamp estimates headroom, gate controls noise floor, and presence tracks tonal brightness.',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '鎻愮ず锛氳繖浜涘弬鏁板彧鐢ㄤ簬鏍″噯鐩爣鍜屽彲瑙嗗寲鍙傝€冿紝涓嶄細鐩存帴鏀瑰彉楹﹀厠椋庣殑瀹炴椂澹伴煶杈撳嚭銆?',
+                  en: 'Note: these controls act as calibration targets and visual references only. They do not directly process the live microphone signal.',
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4,
                 ),
               ),
               const SizedBox(height: 10),

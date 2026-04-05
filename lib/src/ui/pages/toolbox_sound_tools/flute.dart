@@ -131,6 +131,12 @@ class _FluteToolState extends State<_FluteTool> {
   String? _lastNote;
   int _warmUpSerial = 0;
   int _sustainSyncSerial = 0;
+  int? _manualBreathPointer;
+  int? _manualBreathNoteIndex;
+  int? _lastNoteIndex;
+  double _manualBreathGesture = 0;
+  bool _manualBreathActive = false;
+  bool _manualBreathLocksNote = false;
 
   @override
   void initState() {
@@ -356,6 +362,21 @@ class _FluteToolState extends State<_FluteTool> {
     return (_breath * 0.78 + 0.18).clamp(0.18, 1.0).toDouble();
   }
 
+  double get _currentManualBreathLevel {
+    if (!_manualBreathActive) {
+      return _manualBreathLevel;
+    }
+    return (_manualBreathLevel * 0.34 + _manualBreathGesture * 0.66)
+        .clamp(0.18, 1.0)
+        .toDouble();
+  }
+
+  double get _visualBreathLevel {
+    return (_manualBreathActive ? _currentManualBreathLevel : _micLevel)
+        .clamp(0.0, 1.0)
+        .toDouble();
+  }
+
   double get _performanceBreathLevel {
     final materialFactor = switch (_material) {
       'metal_short' => 1.08,
@@ -364,17 +385,21 @@ class _FluteToolState extends State<_FluteTool> {
       'clay' => 0.92,
       _ => 1.0,
     };
-    final manualLevel = _manualBreathLevel;
+    final manualLevel = _currentManualBreathLevel;
     final sensedLevel =
         (_micLevel * (0.76 + _breath * 0.18) + _breathConfidence * 0.14)
             .clamp(0.0, 1.0)
             .toDouble();
-    final combined = _blowSensorEnabled
+    final combined = _manualBreathActive
+        ? (manualLevel * 0.88 + sensedLevel * 0.12)
+        : _blowSensorEnabled
         ? (_isBlowing
               ? sensedLevel * 0.82 + manualLevel * 0.18
               : manualLevel * 0.42 + sensedLevel * 0.18)
         : manualLevel;
-    final minimum = _blowSensorEnabled && !_isBlowing ? 0.0 : 0.14;
+    final minimum = _blowSensorEnabled && !_isBlowing && !_manualBreathActive
+        ? 0.0
+        : 0.14;
     return (combined * materialFactor).clamp(minimum, 1.0).toDouble();
   }
 
@@ -386,6 +411,109 @@ class _FluteToolState extends State<_FluteTool> {
         .max(_manualBreathLevel * 0.74, _performanceBreathLevel)
         .clamp(0.18, 1.0)
         .toDouble();
+  }
+
+  int? _noteIndexForQuickNote(_PianoKey note) {
+    final notes = _activeNotes;
+    final index = notes.indexWhere((item) => item.id == note.id);
+    return index >= 0 ? index : null;
+  }
+
+  double _manualBreathLevelForExtent(double dy, double height) {
+    if (height <= 0) {
+      return _manualBreathLevel;
+    }
+    final normalized = 1 - (dy / height).clamp(0.0, 1.0);
+    return (0.18 + normalized * 0.82).clamp(0.18, 1.0).toDouble();
+  }
+
+  Future<void> _playManualOnsetForNoteIndex(int noteIndex) async {
+    final notes = _activeNotes;
+    if (noteIndex < 0 || noteIndex >= notes.length) {
+      return;
+    }
+    final note = notes[noteIndex];
+    final player = _playerFor(note);
+    await player.warmUp();
+    await player.play(
+      volume: (_currentManualBreathLevel * 0.28).clamp(0.14, 0.38),
+    );
+  }
+
+  void _startManualBreath({
+    required int pointer,
+    int? noteIndex,
+    bool lockNote = false,
+    required double level,
+  }) {
+    final resolvedIndex = lockNote
+        ? (noteIndex ?? _lastNoteIndex)
+        : (_noteIndexFromHoles() ?? _lastNoteIndex);
+    final previousActive = _manualBreathActive;
+    final previousIndex = _manualBreathNoteIndex;
+    _manualBreathPointer = pointer;
+    _manualBreathActive = true;
+    _manualBreathLocksNote = lockNote;
+    _manualBreathGesture = level.clamp(0.18, 1.0).toDouble();
+    _manualBreathNoteIndex = resolvedIndex;
+    if (mounted) {
+      setState(() {});
+    }
+    if (resolvedIndex != null &&
+        (!previousActive || previousIndex != resolvedIndex)) {
+      HapticFeedback.lightImpact();
+      unawaited(_playManualOnsetForNoteIndex(resolvedIndex));
+    }
+    unawaited(_syncBreathSustain());
+  }
+
+  void _updateManualBreath({
+    required int pointer,
+    int? noteIndex,
+    bool lockNote = false,
+    required double level,
+  }) {
+    if (_manualBreathPointer != null && _manualBreathPointer != pointer) {
+      return;
+    }
+    final resolvedIndex = lockNote
+        ? (noteIndex ?? _manualBreathNoteIndex ?? _lastNoteIndex)
+        : (_noteIndexFromHoles() ?? _lastNoteIndex);
+    final normalizedLevel = level.clamp(0.18, 1.0).toDouble();
+    final levelChanged = (_manualBreathGesture - normalizedLevel).abs() > 0.015;
+    final noteChanged =
+        _manualBreathNoteIndex != resolvedIndex ||
+        _manualBreathLocksNote != lockNote;
+    if (!levelChanged && !noteChanged && _manualBreathActive) {
+      return;
+    }
+    _manualBreathPointer = pointer;
+    _manualBreathActive = true;
+    _manualBreathLocksNote = lockNote;
+    _manualBreathGesture = normalizedLevel;
+    _manualBreathNoteIndex = resolvedIndex;
+    if (mounted) {
+      setState(() {});
+    }
+    unawaited(_syncBreathSustain());
+  }
+
+  void _stopManualBreath({int? pointer}) {
+    if (pointer != null && _manualBreathPointer != pointer) {
+      return;
+    }
+    if (!_manualBreathActive && _manualBreathPointer == null) {
+      return;
+    }
+    _manualBreathPointer = null;
+    _manualBreathActive = false;
+    _manualBreathLocksNote = false;
+    _manualBreathGesture = 0;
+    _manualBreathNoteIndex = null;
+    if (mounted) {
+      setState(() {});
+    }
+    unawaited(_syncBreathSustain());
   }
 
   double _sustainFrequencyFor(_PianoKey note) {
@@ -602,19 +730,18 @@ class _FluteToolState extends State<_FluteTool> {
 
   Future<void> _syncBreathSustain() async {
     final serial = ++_sustainSyncSerial;
-    final nextIndex = (_blowSensorEnabled && _isBlowing)
-        ? _noteIndexFromHoles()
-        : null;
-    if (nextIndex == null) {
+    final notes = _activeNotes;
+    final nextIndex = _manualBreathActive
+        ? (_manualBreathLocksNote
+              ? (_manualBreathNoteIndex ?? _lastNoteIndex)
+              : (_noteIndexFromHoles() ?? _lastNoteIndex))
+        : (_blowSensorEnabled && _isBlowing ? _noteIndexFromHoles() : null);
+    if (nextIndex == null || nextIndex < 0 || nextIndex >= notes.length) {
       if (_sustainedNoteIndex != null) {
         _sustainedNoteIndex = null;
         _sustainSignature = null;
         await _stopSustainLayers();
       }
-      return;
-    }
-    final notes = _activeNotes;
-    if (nextIndex < 0 || nextIndex >= notes.length) {
       return;
     }
     final note = notes[nextIndex];
@@ -623,8 +750,9 @@ class _FluteToolState extends State<_FluteTool> {
         _sustainedNoteIndex != nextIndex || _sustainSignature != nextSignature;
     _sustainedNoteIndex = nextIndex;
     _sustainSignature = nextSignature;
-    if (_lastNote != note.label) {
+    if (_lastNote != note.label || _lastNoteIndex != nextIndex) {
       _lastNote = note.label;
+      _lastNoteIndex = nextIndex;
       if (mounted) {
         setState(() {});
       }
@@ -684,7 +812,7 @@ class _FluteToolState extends State<_FluteTool> {
     if (mounted) {
       setState(() {});
     }
-    if (_blowSensorEnabled && _isBlowing) {
+    if (_manualBreathActive || (_blowSensorEnabled && _isBlowing)) {
       HapticFeedback.lightImpact();
       unawaited(_syncBreathSustain());
     }
@@ -956,6 +1084,7 @@ class _FluteToolState extends State<_FluteTool> {
     if (mounted) {
       setState(() {
         _lastNote = key.label;
+        _lastNoteIndex = _noteIndexForQuickNote(key);
       });
     }
   }
@@ -967,7 +1096,7 @@ class _FluteToolState extends State<_FluteTool> {
     unawaited(_stopSustainLayers());
     _sustainedNoteIndex = null;
     _sustainSignature = null;
-    if (_blowSensorEnabled && _isBlowing) {
+    if (_manualBreathActive || (_blowSensorEnabled && _isBlowing)) {
       unawaited(_syncBreathSustain());
     }
     unawaited(_warmUpActivePreset());
@@ -1063,11 +1192,38 @@ class _FluteToolState extends State<_FluteTool> {
     _PianoKey note, {
     required bool immersive,
   }) {
-    final active = _lastNote == note.label;
+    final noteIndex = _noteIndexForQuickNote(note);
+    final active =
+        _lastNote == note.label ||
+        (_manualBreathActive && _manualBreathNoteIndex == noteIndex);
     final theme = Theme.of(context);
     return Listener(
       behavior: HitTestBehavior.opaque,
-      onPointerDown: (_) => unawaited(_play(note)),
+      onPointerDown: (event) {
+        if (noteIndex == null) {
+          unawaited(_play(note));
+          return;
+        }
+        _startManualBreath(
+          pointer: event.pointer,
+          noteIndex: noteIndex,
+          lockNote: true,
+          level: _manualBreathLevelForExtent(event.localPosition.dy, 44),
+        );
+      },
+      onPointerMove: (event) {
+        if (noteIndex == null) {
+          return;
+        }
+        _updateManualBreath(
+          pointer: event.pointer,
+          noteIndex: noteIndex,
+          lockNote: true,
+          level: _manualBreathLevelForExtent(event.localPosition.dy, 44),
+        );
+      },
+      onPointerUp: (event) => _stopManualBreath(pointer: event.pointer),
+      onPointerCancel: (event) => _stopManualBreath(pointer: event.pointer),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 110),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1104,6 +1260,7 @@ class _FluteToolState extends State<_FluteTool> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildBreathStatusRail(
     BuildContext context,
     AppI18n i18n, {
@@ -1169,6 +1326,120 @@ class _FluteToolState extends State<_FluteTool> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInteractiveBreathStatusRail(
+    BuildContext context,
+    AppI18n i18n, {
+    required bool immersive,
+  }) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 64,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final railHeight = constraints.maxHeight > 0
+              ? constraints.maxHeight
+              : 240.0;
+          final meterValue = _visualBreathLevel;
+          return Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) => _startManualBreath(
+              pointer: event.pointer,
+              level: _manualBreathLevelForExtent(
+                event.localPosition.dy,
+                railHeight,
+              ),
+            ),
+            onPointerMove: (event) => _updateManualBreath(
+              pointer: event.pointer,
+              level: _manualBreathLevelForExtent(
+                event.localPosition.dy,
+                railHeight,
+              ),
+            ),
+            onPointerUp: (event) => _stopManualBreath(pointer: event.pointer),
+            onPointerCancel: (event) =>
+                _stopManualBreath(pointer: event.pointer),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: immersive ? 0.28 : 0.08),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withValues(
+                    alpha: immersive ? 0.14 : 0.36,
+                  ),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      pickUiText(i18n, zh: '气息', en: 'Breath'),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: immersive
+                            ? Colors.white70
+                            : const Color(0xFF475569),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    RotatedBox(
+                      quarterTurns: 3,
+                      child: SizedBox(
+                        width: 112,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: meterValue,
+                            minHeight: 8,
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _manualBreathActive
+                          ? 'Touch'
+                          : _blowSensorEnabled
+                          ? '${(100 * _blowThreshold).round()}%'
+                          : 'Off',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: immersive
+                            ? Colors.white70
+                            : const Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _manualBreathActive
+                          ? '${(meterValue * 100).round()}%'
+                          : _materialLabel(i18n, _material),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: immersive
+                            ? Colors.white70
+                            : const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -1665,7 +1936,11 @@ class _FluteToolState extends State<_FluteTool> {
             bottom: 20,
             child: Align(
               alignment: Alignment.center,
-              child: _buildBreathStatusRail(context, i18n, immersive: true),
+              child: _buildInteractiveBreathStatusRail(
+                context,
+                i18n,
+                immersive: true,
+              ),
             ),
           ),
           Positioned(
@@ -1826,7 +2101,11 @@ class _FluteToolState extends State<_FluteTool> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                _buildBreathStatusRail(context, i18n, immersive: false),
+                _buildInteractiveBreathStatusRail(
+                  context,
+                  i18n,
+                  immersive: false,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildFluteStage(
