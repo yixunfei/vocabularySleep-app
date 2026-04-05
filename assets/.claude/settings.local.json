@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/yixun/.claude/plans/**)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\yixun\\\\.claude\\\\plans\")"
+    ]
+  }
+}
