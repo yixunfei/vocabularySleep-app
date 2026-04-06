@@ -40,6 +40,7 @@ extension _AppStateStartup on AppState {
       _testModeHintRevealed = testModeState.hintRevealed;
       _loadPracticeDashboard();
       _ensurePracticeDate(persist: true);
+      await _loadSleepAssistantDataImpl();
       await _reloadWordbooks(
         keepCurrentSelection: false,
         preloadSelectedWords: false,

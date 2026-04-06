@@ -124,7 +124,7 @@ class BreathingScenario {
 class BreathingExperienceCatalog {
   const BreathingExperienceCatalog._();
 
-  static const String remotePrefix = 'follow_this_breath/follow_this_breath';
+  static const String remotePrefix = '音效：呼吸引导';
 
   static const List<BreathingThemeSpec> themes = <BreathingThemeSpec>[
     BreathingThemeSpec(
@@ -290,6 +290,48 @@ class BreathingExperienceCatalog {
       remoteFileNames: <String>['快速嘴吸气屏气.wav'],
       approxDurationMs: 4000,
       assetPath: 'follow_this_breath/快速嘴吸气屏气.wav',
+    ),
+    'bolt_prepare': BreathingCueSpec(
+      id: 'bolt_prepare',
+      name: BreathingCopy('BOLT 准备', 'BOLT prepare'),
+      remoteFileNames: <String>['breathing_bolt_prepare.wav'],
+      approxDurationMs: 2320,
+    ),
+    'bolt_start': BreathingCueSpec(
+      id: 'bolt_start',
+      name: BreathingCopy('BOLT 开始', 'BOLT start'),
+      remoteFileNames: <String>['breathing_bolt_start.wav'],
+      approxDurationMs: 2960,
+    ),
+    'bolt_stop': BreathingCueSpec(
+      id: 'bolt_stop',
+      name: BreathingCopy('BOLT 停止', 'BOLT stop'),
+      remoteFileNames: <String>['breathing_bolt_stop.wav'],
+      approxDurationMs: 2480,
+    ),
+    'bolt_recover': BreathingCueSpec(
+      id: 'bolt_recover',
+      name: BreathingCopy('BOLT 恢复', 'BOLT recover'),
+      remoteFileNames: <String>['breathing_bolt_recover.wav'],
+      approxDurationMs: 2560,
+    ),
+    'session_start': BreathingCueSpec(
+      id: 'session_start',
+      name: BreathingCopy('训练开始', 'Session start'),
+      remoteFileNames: <String>['breathing_session_start.wav'],
+      approxDurationMs: 1840,
+    ),
+    'session_complete': BreathingCueSpec(
+      id: 'session_complete',
+      name: BreathingCopy('训练完成', 'Session complete'),
+      remoteFileNames: <String>['breathing_session_complete.wav'],
+      approxDurationMs: 2480,
+    ),
+    'altitude_warning_short': BreathingCueSpec(
+      id: 'altitude_warning_short',
+      name: BreathingCopy('高海拔提醒', 'Altitude warning'),
+      remoteFileNames: <String>['breathing_altitude_warning_short.wav'],
+      approxDurationMs: 4160,
     ),
   };
 

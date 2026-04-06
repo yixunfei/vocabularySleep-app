@@ -18,6 +18,10 @@ import '../models/practice_export_format.dart';
 import '../models/practice_question_type.dart';
 import '../models/practice_session_record.dart';
 import '../models/settings_dto.dart';
+import '../models/sleep_daily_log.dart';
+import '../models/sleep_plan.dart';
+import '../models/sleep_profile.dart';
+import '../models/sleep_routine_template.dart';
 import '../models/study_startup_tab.dart';
 import '../models/todo_item.dart';
 import '../models/user_data_export.dart';
@@ -45,6 +49,7 @@ import '../utils/search_text_normalizer.dart' as search_text;
 part 'app_state_practice.dart';
 part 'app_state_playback.dart';
 part 'app_state_startup.dart';
+part 'app_state_sleep.dart';
 part 'app_state_wordbook.dart';
 
 class PronunciationComparison {
@@ -187,6 +192,21 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       PracticeQuestionType.flashcard;
   PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
   int? _pendingTodoReminderLaunchId;
+  bool _sleepLoading = false;
+  SleepProfile? _sleepProfile;
+  SleepPlan? _sleepCurrentPlan;
+  SleepDashboardState _sleepDashboardState = const SleepDashboardState();
+  SleepAssessmentDraftState _sleepAssessmentDraft =
+      const SleepAssessmentDraftState();
+  SleepRoutineRunnerState _sleepRoutineRunnerState =
+      const SleepRoutineRunnerState();
+  SleepNightRescueState _sleepNightRescueState =
+      const SleepNightRescueState();
+  List<SleepDailyLog> _sleepDailyLogs = <SleepDailyLog>[];
+  List<SleepNightEvent> _sleepNightEvents = <SleepNightEvent>[];
+  List<SleepThoughtEntry> _sleepThoughtEntries = <SleepThoughtEntry>[];
+  List<SleepRoutineTemplate> _sleepRoutineTemplates = <SleepRoutineTemplate>[];
+  SleepProgramProgress? _sleepProgramProgress;
 
   // Ambient sync debounce to prevent race conditions from rapid state changes
   Timer? _ambientSyncDebounceTimer;
@@ -297,6 +317,52 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           0.0,
           1.0,
         );
+  bool get sleepLoading => _sleepLoading;
+  SleepProfile? get sleepProfile => _sleepProfile;
+  SleepPlan? get sleepCurrentPlan => _sleepCurrentPlan;
+  SleepDashboardState get sleepDashboardState => _sleepDashboardState;
+  SleepAssessmentDraftState get sleepAssessmentDraft => _sleepAssessmentDraft;
+  SleepRoutineRunnerState get sleepRoutineRunnerState =>
+      _sleepRoutineRunnerState;
+  SleepNightRescueState get sleepNightRescueState => _sleepNightRescueState;
+  List<SleepDailyLog> get sleepDailyLogs => List<SleepDailyLog>.unmodifiable(
+    _sleepDailyLogs,
+  );
+  List<SleepNightEvent> get sleepNightEvents =>
+      List<SleepNightEvent>.unmodifiable(_sleepNightEvents);
+  List<SleepThoughtEntry> get sleepThoughtEntries =>
+      List<SleepThoughtEntry>.unmodifiable(_sleepThoughtEntries);
+  List<SleepRoutineTemplate> get sleepRoutineTemplates =>
+      List<SleepRoutineTemplate>.unmodifiable(_sleepRoutineTemplates);
+  SleepProgramProgress? get sleepProgramProgress => _sleepProgramProgress;
+  SleepDailyLog? get latestSleepDailyLog => _sleepDailyLogs.firstOrNull;
+  SleepRoutineStep? get currentSleepRoutineStep {
+    final template = activeSleepRoutineTemplate;
+    final index = _sleepRoutineRunnerState.currentStepIndex;
+    if (template == null || index < 0 || index >= template.steps.length) {
+      return null;
+    }
+    return template.steps[index];
+  }
+  double get sleepRoutineProgress {
+    final template = activeSleepRoutineTemplate;
+    if (template == null || template.steps.isEmpty) {
+      return 0;
+    }
+    return ((_sleepRoutineRunnerState.currentStepIndex + 1) / template.steps.length)
+        .clamp(0.0, 1.0);
+  }
+  SleepRoutineTemplate? get activeSleepRoutineTemplate {
+    final activeId = _sleepRoutineRunnerState.activeTemplateId;
+    if (activeId != null) {
+      for (final template in _sleepRoutineTemplates) {
+        if (template.id == activeId) {
+          return template;
+        }
+      }
+    }
+    return _sleepRoutineTemplates.firstOrNull;
+  }
   List<TodoItem> get todayActiveTodos {
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
@@ -681,6 +747,69 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> ensureRemoteResourcePrewarmOnDemand() =>
       _ensureRemoteResourcePrewarmOnDemandImpl();
+
+  Future<void> loadSleepAssistantData() => _loadSleepAssistantDataImpl();
+
+  void saveSleepProfile(SleepProfile profile) => _saveSleepProfileImpl(profile);
+
+  void updateSleepAssessmentDraft(SleepAssessmentDraftState draft) =>
+      _updateSleepAssessmentDraftImpl(draft);
+
+  void saveSleepDailyLog(SleepDailyLog log) => _saveSleepDailyLogImpl(log);
+
+  void saveSleepNightEvent(SleepNightEvent event) =>
+      _saveSleepNightEventImpl(event);
+
+  void saveSleepThoughtEntry(SleepThoughtEntry entry) =>
+      _saveSleepThoughtEntryImpl(entry);
+
+  SleepDailyLog? sleepDailyLogByDateKey(String dateKey) =>
+      _sleepDailyLogByDateKeyImpl(dateKey);
+
+  void setSleepActiveRoutineTemplate(String templateId) =>
+      _setSleepActiveRoutineTemplateImpl(templateId);
+
+  void replaceSleepRoutineTemplates(List<SleepRoutineTemplate> templates) =>
+      _replaceSleepRoutineTemplatesImpl(templates);
+
+  void saveSleepRoutineTemplate(SleepRoutineTemplate template) =>
+      _saveSleepRoutineTemplateImpl(template);
+
+  void deleteSleepRoutineTemplate(String templateId) =>
+      _deleteSleepRoutineTemplateImpl(templateId);
+
+  void startSleepRoutine([String? templateId]) =>
+      _startSleepRoutineImpl(templateId);
+
+  void pauseSleepRoutine() => _pauseSleepRoutineImpl();
+
+  void resumeSleepRoutine() => _resumeSleepRoutineImpl();
+
+  void advanceSleepRoutine() => _advanceSleepRoutineImpl();
+
+  void tickSleepRoutine() => _tickSleepRoutineImpl();
+
+  void stopSleepRoutine() => _stopSleepRoutineImpl();
+
+  void setSleepCurrentPlan(SleepPlan? plan) => _setSleepCurrentPlanImpl(plan);
+
+  void updateSleepDashboardState(SleepDashboardState state) =>
+      _updateSleepDashboardStateImpl(state);
+
+  void startSleepProgram(SleepProgramType type) => _startSleepProgramImpl(type);
+
+  void completeSleepProgramDay(int day) => _completeSleepProgramDayImpl(day);
+
+  void startSleepNightRescue(SleepNightRescueMode mode) =>
+      _startSleepNightRescueImpl(mode);
+
+  void finishSleepNightRescue({
+    String? suggestedAction,
+    bool hasLeftBed = false,
+  }) => _finishSleepNightRescueImpl(
+    suggestedAction: suggestedAction,
+    hasLeftBed: hasLeftBed,
+  );
 
   @override
   void didChangeLocales(List<Locale>? locales) {
@@ -2922,6 +3051,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _invalidateVisibleWordsCache();
     _loadPracticeDashboard();
     _ensurePracticeDate(persist: true);
+    await _loadSleepAssistantDataImpl();
     await _focusService.init();
     await _reloadWordbooks(keepCurrentSelection: false);
     await _syncSpecialWordbooks();

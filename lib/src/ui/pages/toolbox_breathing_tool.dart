@@ -67,6 +67,7 @@ class _BreathingPracticeReleaseCardState
   late final StreamSubscription<void> _previewCompleteSub;
   final AudioPlayer _cuePlayer = AudioPlayer();
   final AudioPlayer _previewPlayer = AudioPlayer();
+  final AudioPlayer _systemPlayer = AudioPlayer();
   final Stopwatch _boltStopwatch = Stopwatch();
   Timer? _clock;
   Timer? _boltClock;
@@ -85,7 +86,9 @@ class _BreathingPracticeReleaseCardState
   bool _previewing = false;
   bool _finishing = false;
   bool _boltRunning = false;
+  bool _boltPreparing = false;
   bool _boltExpanded = false;
+  bool _sessionPreparing = false;
   int _targetMinutes = 5;
   int _stageIndex = 0;
   int _rounds = 0;
@@ -103,6 +106,9 @@ class _BreathingPracticeReleaseCardState
   BreathingCueSourceKind? _voiceSourceKind;
   String? _lastVoiceLocation;
   _BreathingSessionSummary? _lastSummary;
+  bool _voiceLocaleNoticeShown = false;
+  bool _voiceLocaleDialogOpen = false;
+  int _systemCueSequenceToken = 0;
 
   List<BreathingStagePlan> get _loopStages {
     final filtered = _scenario.stages
@@ -191,6 +197,7 @@ class _BreathingPracticeReleaseCardState
       _resourceCache = nextCache;
       _cueRepo = ToolboxBreathingAudioRepository(nextCache);
       if (_voiceOn) {
+        unawaited(_maybeShowNonChineseVoiceNotice());
         unawaited(_warmScenarioCues());
       }
     }
@@ -203,6 +210,7 @@ class _BreathingPracticeReleaseCardState
     unawaited(_previewCompleteSub.cancel());
     unawaited(_cuePlayer.dispose());
     unawaited(_previewPlayer.dispose());
+    unawaited(_systemPlayer.dispose());
     _controller.dispose();
     super.dispose();
   }
@@ -234,6 +242,7 @@ class _BreathingPracticeReleaseCardState
     _normalizeStageIndex();
     _syncDuration();
     if (_voiceOn) {
+      unawaited(_maybeShowNonChineseVoiceNotice());
       unawaited(_warmScenarioCues());
     }
   }
@@ -282,6 +291,67 @@ class _BreathingPracticeReleaseCardState
     return tags.toList(growable: false);
   }
 
+  bool _localeUsesChineseVoice(Locale locale) {
+    return locale.languageCode.trim().toLowerCase() == 'zh';
+  }
+
+  Future<void> _maybeShowNonChineseVoiceNotice() async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted ||
+        !_voiceOn ||
+        _voiceLocaleDialogOpen ||
+        _voiceLocaleNoticeShown) {
+      return;
+    }
+    final locale = Localizations.maybeLocaleOf(context);
+    if (locale == null || _localeUsesChineseVoice(locale)) {
+      return;
+    }
+    final i18n = AppI18n(locale.languageCode);
+    _voiceLocaleDialogOpen = true;
+    final keepVoice = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '当前语音仅支持中文',
+              en: 'Voice is Chinese-only for now',
+            ),
+          ),
+          content: Text(
+            pickUiText(
+              i18n,
+              zh: '呼吸阶段语音目前只提供中文录音。你仍可继续使用当前界面语言的文案与计时，但语音会播放中文引导。',
+              en: 'Breathing voice guidance is currently recorded in Chinese only. The interface can stay in your current language, but spoken cues will play in Chinese.',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(pickUiText(i18n, zh: '关闭语音', en: 'Turn voice off')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                pickUiText(i18n, zh: '继续使用中文语音', en: 'Keep Chinese voice'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    _voiceLocaleDialogOpen = false;
+    if (!mounted) {
+      return;
+    }
+    setState(() => _voiceLocaleNoticeShown = true);
+    if (keepVoice == false) {
+      await _setVoiceEnabled(false, showLocaleNotice: false);
+    }
+  }
+
   String? _effectiveCueIdForStage(BreathingStagePlan stage) {
     if (stage.kind == BreathingStageKind.rest) {
       return null;
@@ -300,6 +370,14 @@ class _BreathingPracticeReleaseCardState
     return stage.cueId;
   }
 
+  int _scenarioStageIndex(BreathingStagePlan stage) {
+    final originalIndex = _scenario.stages.indexOf(stage);
+    if (originalIndex >= 0) {
+      return originalIndex;
+    }
+    return _stageIndex;
+  }
+
   Duration _cueSafetyPaddingForStage(BreathingStagePlan stage) {
     if (stage.seconds <= 2) {
       return Duration.zero;
@@ -310,62 +388,62 @@ class _BreathingPracticeReleaseCardState
     return const Duration(milliseconds: 180);
   }
 
-  double _cuePlaybackRateForStage(BreathingStagePlan stage, String cueId) {
-    final cue = BreathingExperienceCatalog.cues[cueId];
-    if (cue == null) {
+  Duration? _resolvedCueDuration(BreathingResolvedCue resolved) {
+    return resolved.duration ??
+        (resolved.cue.approxDurationMs > 0
+            ? Duration(milliseconds: resolved.cue.approxDurationMs)
+            : null);
+  }
+
+  double _cuePlaybackRateForStage(
+    BreathingStagePlan stage,
+    BreathingResolvedCue resolved,
+  ) {
+    final cueDuration = _resolvedCueDuration(resolved);
+    if (cueDuration == null || cueDuration <= Duration.zero) {
       return 1.0;
     }
     final paddingMs = _cueSafetyPaddingForStage(stage).inMilliseconds;
     final targetWindowMs = math.max(240, stage.seconds * 1000 - paddingMs);
-    return (cue.approxDurationMs / targetWindowMs).clamp(1.0, 2.0).toDouble();
+    return (cueDuration.inMilliseconds / targetWindowMs)
+        .clamp(1.0, 2.0)
+        .toDouble();
   }
 
-  bool _canPlayCueForStage(BreathingStagePlan stage, {String? cueId}) {
-    final resolvedCueId = cueId ?? _effectiveCueIdForStage(stage);
-    if (resolvedCueId == null) {
+  bool _canPlayResolvedCueForStage(
+    BreathingStagePlan stage,
+    BreathingResolvedCue resolved,
+  ) {
+    final cueDuration = _resolvedCueDuration(resolved);
+    if (cueDuration == null) {
       return false;
     }
-    final playbackRate = _cuePlaybackRateForStage(stage, resolvedCueId);
+    final playbackRate = _cuePlaybackRateForStage(stage, resolved);
+    final adjustedDurationMs =
+        cueDuration.inMilliseconds / playbackRate.clamp(0.75, 2.0);
+    return stage.seconds * 1000 >=
+        adjustedDurationMs.round() +
+            _cueSafetyPaddingForStage(stage).inMilliseconds;
+  }
+
+  Future<BreathingResolvedCue?> _resolveStageCueForStage(
+    BreathingStagePlan stage,
+  ) async {
+    final cueId = _effectiveCueIdForStage(stage);
+    if (cueId == null) {
+      return null;
+    }
     final repo = _cueRepo;
-    if (repo == null) {
-      final cue = BreathingExperienceCatalog.cues[resolvedCueId];
-      if (cue == null) {
-        return false;
-      }
-      return cue.approxDurationMs <= stage.seconds * 1000;
+    if (repo == null || !mounted) {
+      return null;
     }
-    return repo.canPlayCueWithinStage(
-      resolvedCueId,
-      stageDuration: Duration(seconds: stage.seconds),
-      playbackRate: playbackRate,
-      safetyPadding: _cueSafetyPaddingForStage(stage),
+    return repo.resolveScenarioStage(
+      _scenario.id,
+      stageIndex: _scenarioStageIndex(stage),
+      stageKind: stage.kind,
+      fallbackCueId: cueId,
+      languageTags: _localeTags(Localizations.localeOf(context)),
     );
-  }
-
-  Set<String> _warmUpCueIds() {
-    final cueIds = <String>{};
-    if (_scenario.previewCueId != null) {
-      cueIds.add(_scenario.previewCueId!);
-    }
-    for (final stage in _loopStages) {
-      final cueId = _effectiveCueIdForStage(stage);
-      if (cueId == null || !_canPlayCueForStage(stage, cueId: cueId)) {
-        continue;
-      }
-      cueIds.add(cueId);
-    }
-    return cueIds;
-  }
-
-  int _shortStageSkipCount() {
-    var count = 0;
-    for (final stage in _loopStages) {
-      final cueId = _effectiveCueIdForStage(stage);
-      if (cueId != null && !_canPlayCueForStage(stage, cueId: cueId)) {
-        count += 1;
-      }
-    }
-    return count;
   }
 
   Future<void> _warmScenarioCues() async {
@@ -379,27 +457,62 @@ class _BreathingPracticeReleaseCardState
     if (repo == null) {
       return;
     }
+    final localeTags = _localeTags(Localizations.localeOf(context));
     final scenarioId = _scenario.id;
     final includeRecoveryStage = _includeRecoveryStage;
-    final warmUpCueIds = _warmUpCueIds();
-    final silentShortCueCount = _shortStageSkipCount();
+    final includeHoldStage = _includeHoldStage;
+    const flowCueIds = <String>[
+      'session_start',
+      'session_complete',
+      'bolt_prepare',
+      'bolt_start',
+      'bolt_stop',
+      'bolt_recover',
+    ];
+    final expectedCueCount =
+        _loopStages
+            .where((stage) => _effectiveCueIdForStage(stage) != null)
+            .length +
+        (_scenario.previewCueId == null ? 0 : 1);
     setState(() {
       _voiceAvailability = _BreathingVoiceAvailability.checking;
-      _expectedCueCount = warmUpCueIds.length;
-      _shortStageSilentCount = silentShortCueCount;
+      _expectedCueCount = expectedCueCount;
+      _shortStageSilentCount = 0;
     });
-    final resolved = await repo.warmUpCueIds(
-      warmUpCueIds,
-      languageTags: _localeTags(Localizations.localeOf(context)),
-    );
+    final resolved = <BreathingResolvedCue>[];
+    var silentShortCueCount = 0;
+    final previewCueId = _scenario.previewCueId;
+    if (previewCueId != null) {
+      final preview = await repo.resolve(
+        previewCueId,
+        languageTags: localeTags,
+      );
+      if (preview != null) {
+        resolved.add(preview);
+      }
+    }
+    for (final stage in _loopStages) {
+      final stageCue = await _resolveStageCueForStage(stage);
+      if (stageCue == null) {
+        continue;
+      }
+      if (_canPlayResolvedCueForStage(stage, stageCue)) {
+        resolved.add(stageCue);
+      } else {
+        silentShortCueCount += 1;
+      }
+    }
+    await repo.warmUpCueIds(flowCueIds, languageTags: localeTags);
     if (!mounted ||
+        !_voiceOn ||
         _scenario.id != scenarioId ||
-        _includeRecoveryStage != includeRecoveryStage) {
+        _includeRecoveryStage != includeRecoveryStage ||
+        _includeHoldStage != includeHoldStage) {
       return;
     }
     setState(() {
       _availableCueCount = resolved.length;
-      _expectedCueCount = warmUpCueIds.length;
+      _expectedCueCount = expectedCueCount;
       _shortStageSilentCount = silentShortCueCount;
       _voiceAvailability = resolved.isNotEmpty
           ? _BreathingVoiceAvailability.ready
@@ -409,8 +522,8 @@ class _BreathingPracticeReleaseCardState
     });
   }
 
-  Future<bool> _playCueId(
-    String cueId, {
+  Future<bool> _playResolvedCue(
+    BreathingResolvedCue resolved, {
     required AudioPlayer player,
     required bool respectVoiceSetting,
     double playbackRate = 1.0,
@@ -423,16 +536,7 @@ class _BreathingPracticeReleaseCardState
       return false;
     }
     try {
-      final resolved = await repo.resolve(
-        cueId,
-        languageTags: _localeTags(Localizations.localeOf(context)),
-      );
-      if (resolved == null) {
-        if (mounted && respectVoiceSetting) {
-          setState(
-            () => _voiceAvailability = _BreathingVoiceAvailability.unavailable,
-          );
-        }
+      if (respectVoiceSetting && !_voiceOn) {
         return false;
       }
       await player.stop();
@@ -453,6 +557,93 @@ class _BreathingPracticeReleaseCardState
         );
       }
       return false;
+    }
+  }
+
+  Future<bool> _playCueId(
+    String cueId, {
+    required AudioPlayer player,
+    required bool respectVoiceSetting,
+    double playbackRate = 1.0,
+  }) async {
+    if (respectVoiceSetting && !_voiceOn) {
+      return false;
+    }
+    if (_cueRepo == null || !mounted) {
+      return false;
+    }
+    final resolved = await _cueRepo!.resolve(
+      cueId,
+      languageTags: _localeTags(Localizations.localeOf(context)),
+    );
+    if (resolved == null) {
+      if (mounted && respectVoiceSetting) {
+        setState(
+          () => _voiceAvailability = _BreathingVoiceAvailability.unavailable,
+        );
+      }
+      return false;
+    }
+    return _playResolvedCue(
+      resolved,
+      player: player,
+      respectVoiceSetting: respectVoiceSetting,
+      playbackRate: playbackRate,
+    );
+  }
+
+  Duration _resolvedCueDurationOrFallback(
+    BreathingResolvedCue resolved, {
+    Duration fallback = const Duration(milliseconds: 1200),
+  }) {
+    return _resolvedCueDuration(resolved) ?? fallback;
+  }
+
+  Future<void> _stopSystemCue() async {
+    _systemCueSequenceToken += 1;
+    try {
+      await _systemPlayer.stop();
+    } catch (_) {}
+  }
+
+  Future<void> _playSystemCueSequence(
+    List<String> cueIds, {
+    bool respectVoiceSetting = true,
+    Duration gap = const Duration(milliseconds: 140),
+  }) async {
+    if (respectVoiceSetting && !_voiceOn) {
+      return;
+    }
+    if (_cueRepo == null || !mounted) {
+      return;
+    }
+    final sequenceToken = _systemCueSequenceToken + 1;
+    _systemCueSequenceToken = sequenceToken;
+    await _stopPreview();
+    try {
+      await _systemPlayer.stop();
+    } catch (_) {}
+    for (final cueId in cueIds) {
+      if (!mounted || _systemCueSequenceToken != sequenceToken) {
+        return;
+      }
+      final resolved = await _cueRepo!.resolve(
+        cueId,
+        languageTags: _localeTags(Localizations.localeOf(context)),
+      );
+      if (resolved == null) {
+        continue;
+      }
+      final played = await _playResolvedCue(
+        resolved,
+        player: _systemPlayer,
+        respectVoiceSetting: respectVoiceSetting,
+      );
+      if (!played) {
+        continue;
+      }
+      final waitDuration = _resolvedCueDurationOrFallback(resolved) + gap;
+      await Future<void>.delayed(waitDuration);
     }
   }
 
@@ -504,15 +695,15 @@ class _BreathingPracticeReleaseCardState
 
   Future<void> _announceStage() async {
     _performHaptic();
-    final cueId = _effectiveCueIdForStage(_stage);
-    if (cueId == null || !_canPlayCueForStage(_stage, cueId: cueId)) {
+    final resolved = await _resolveStageCueForStage(_stage);
+    if (resolved == null || !_canPlayResolvedCueForStage(_stage, resolved)) {
       return;
     }
-    await _playCueId(
-      cueId,
+    await _playResolvedCue(
+      resolved,
       player: _cuePlayer,
       respectVoiceSetting: true,
-      playbackRate: _cuePlaybackRateForStage(_stage, cueId),
+      playbackRate: _cuePlaybackRateForStage(_stage, resolved),
     );
   }
 
@@ -531,21 +722,41 @@ class _BreathingPracticeReleaseCardState
   }
 
   Future<void> _startBoltTest() async {
-    if (_running || _boltRunning) {
+    if (_running || _boltRunning || _boltPreparing || _sessionPreparing) {
       return;
     }
+    await _stopSystemCue();
     await _stopPreview();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _boltPreparing = true;
+      _boltExpanded = true;
+    });
+    await _playSystemCueSequence(<String>['bolt_prepare', 'bolt_start']);
+    if (!mounted || !_boltPreparing) {
+      return;
+    }
     _boltStopwatch
       ..reset()
       ..start();
     setState(() {
+      _boltPreparing = false;
       _boltRunning = true;
-      _boltExpanded = true;
     });
     _tickBolt();
   }
 
-  void _stopBoltTest() {
+  Future<void> _stopBoltTest() async {
+    if (_boltPreparing) {
+      await _stopSystemCue();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _boltPreparing = false);
+      return;
+    }
     if (!_boltRunning) {
       return;
     }
@@ -560,9 +771,11 @@ class _BreathingPracticeReleaseCardState
       }
     });
     _savePrefs();
+    unawaited(_playSystemCueSequence(<String>['bolt_stop', 'bolt_recover']));
   }
 
-  void _resetBoltTest() {
+  Future<void> _resetBoltTest() async {
+    await _stopSystemCue();
     _boltClock?.cancel();
     _boltStopwatch
       ..stop()
@@ -570,7 +783,10 @@ class _BreathingPracticeReleaseCardState
     if (!mounted) {
       return;
     }
-    setState(() => _boltRunning = false);
+    setState(() {
+      _boltRunning = false;
+      _boltPreparing = false;
+    });
   }
 
   void _tickStart() {
@@ -588,14 +804,26 @@ class _BreathingPracticeReleaseCardState
   }
 
   Future<void> _startSession() async {
-    if (_running || _boltRunning) {
+    if (_running || _boltRunning || _boltPreparing || _sessionPreparing) {
       return;
     }
+    await _stopSystemCue();
     await _stopPreview();
+    if (!mounted) {
+      return;
+    }
     setState(() {
+      _sessionPreparing = true;
+      _lastSummary = null;
+    });
+    await _playSystemCueSequence(<String>['session_start']);
+    if (!mounted || !_sessionPreparing) {
+      return;
+    }
+    setState(() {
+      _sessionPreparing = false;
       _running = true;
       _runStartedAt = DateTime.now();
-      _lastSummary = null;
     });
     if (_controller.value <= 0 || _controller.value >= 1) {
       _syncDuration();
@@ -615,6 +843,7 @@ class _BreathingPracticeReleaseCardState
     _controller.stop(canceled: false);
     _clock?.cancel();
     await _cuePlayer.stop();
+    await _stopSystemCue();
     if (!mounted) {
       return;
     }
@@ -630,12 +859,14 @@ class _BreathingPracticeReleaseCardState
     _controller.stop();
     _controller.value = 0;
     await _cuePlayer.stop();
+    await _stopSystemCue();
     await _stopPreview();
     if (!mounted) {
       return;
     }
     setState(() {
       _running = false;
+      _sessionPreparing = false;
       _stageIndex = 0;
       _rounds = 0;
       _elapsedBeforeRun = Duration.zero;
@@ -805,6 +1036,46 @@ class _BreathingPracticeReleaseCardState
     }
   }
 
+  Future<void> _setVoiceEnabled(
+    bool value, {
+    bool showLocaleNotice = true,
+  }) async {
+    if (_voiceOn == value) {
+      if (value && showLocaleNotice) {
+        unawaited(_maybeShowNonChineseVoiceNotice());
+      }
+      return;
+    }
+    if (!value) {
+      await _cuePlayer.stop();
+      await _stopSystemCue();
+      await _stopPreview();
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _voiceOn = value;
+      _voiceAvailability = value
+          ? _BreathingVoiceAvailability.checking
+          : _BreathingVoiceAvailability.off;
+      if (!value) {
+        _voiceSourceKind = null;
+        _lastVoiceLocation = null;
+        _availableCueCount = 0;
+        _expectedCueCount = 0;
+        _shortStageSilentCount = 0;
+      }
+    });
+    if (value) {
+      if (showLocaleNotice) {
+        unawaited(_maybeShowNonChineseVoiceNotice());
+      }
+      unawaited(_warmScenarioCues());
+    }
+    _savePrefs();
+  }
+
   void _onStageDone() {
     final nextIndex = (_stageIndex + 1) % _loopStages.length;
     setState(() {
@@ -847,6 +1118,7 @@ class _BreathingPracticeReleaseCardState
     _clock?.cancel();
     _controller.stop(canceled: false);
     await _cuePlayer.stop();
+    await _stopSystemCue();
     await _stopPreview();
     if (!mounted) {
       _finishing = false;
@@ -868,6 +1140,7 @@ class _BreathingPracticeReleaseCardState
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(summary.title)));
+    unawaited(_playSystemCueSequence(<String>['session_complete']));
     _finishing = false;
   }
 
@@ -1801,11 +2074,8 @@ class _BreathingPracticeReleaseCardState
                       children: <Widget>[
                         Text(
                           pickUiText(i18n, zh: 'BOLT 测试', en: 'BOLT test'),
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -1850,8 +2120,7 @@ class _BreathingPracticeReleaseCardState
                 color: _theme.orbEnd,
               ),
               ScenarioTagChip(
-                label:
-                    '${pickUiText(i18n, zh: '最佳', en: 'Best')} $bestValue',
+                label: '${pickUiText(i18n, zh: '最佳', en: 'Best')} $bestValue',
                 color: _theme.orbStart,
               ),
             ],
@@ -1862,28 +2131,33 @@ class _BreathingPracticeReleaseCardState
             runSpacing: 10,
             children: <Widget>[
               FilledButton.tonalIcon(
-                onPressed: _running
+                onPressed: (_running || _sessionPreparing)
                     ? null
                     : () => _boltRunning
-                          ? _stopBoltTest()
+                          ? unawaited(_stopBoltTest())
                           : unawaited(_startBoltTest()),
                 icon: Icon(
-                  _boltRunning
+                  _boltPreparing
+                      ? Icons.hourglass_top_rounded
+                      : _boltRunning
                       ? Icons.stop_circle_rounded
                       : Icons.play_arrow_rounded,
                 ),
                 label: Text(
-                  _boltRunning
+                  _boltPreparing
+                      ? pickUiText(i18n, zh: '准备中', en: 'Preparing')
+                      : _boltRunning
                       ? pickUiText(i18n, zh: '记录结果', en: 'Save result')
                       : pickUiText(i18n, zh: '开始测试', en: 'Start test'),
                 ),
               ),
               OutlinedButton.icon(
                 onPressed:
-                    (_boltRunning ||
+                    (_boltPreparing ||
+                        _boltRunning ||
                         _lastBoltSeconds > 0 ||
                         _boltElapsed > Duration.zero)
-                    ? _resetBoltTest
+                    ? () => unawaited(_resetBoltTest())
                     : null,
                 icon: const Icon(Icons.restart_alt_rounded),
                 label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
@@ -1930,10 +2204,8 @@ class _BreathingPracticeReleaseCardState
                         ? '${assessment.body} ${assessment.nextStep}'
                         : pickUiText(
                             i18n,
-                            zh:
-                                'BOLT 常被用来粗略判断你当前对空气饥饿的耐受度，以及更适合做轻柔练习还是进阶屏息。',
-                            en:
-                                'BOLT is often used as a rough read on your current tolerance to air hunger and whether you should emphasize gentle work or more advanced breath holds.',
+                            zh: 'BOLT 常被用来粗略判断你当前对空气饥饿的耐受度，以及更适合做轻柔练习还是进阶屏息。',
+                            en: 'BOLT is often used as a rough read on your current tolerance to air hunger and whether you should emphasize gentle work or more advanced breath holds.',
                           ),
                     icon: Icons.insights_rounded,
                     tint: assessment.tint,
@@ -1941,9 +2213,7 @@ class _BreathingPracticeReleaseCardState
                   const SizedBox(height: 12),
                   Text(
                     pickUiText(i18n, zh: '测试步骤', en: 'Test steps'),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelLarge?.copyWith(
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1957,9 +2227,7 @@ class _BreathingPracticeReleaseCardState
                   const SizedBox(height: 8),
                   Text(
                     pickUiText(i18n, zh: '推荐练习', en: 'Recommended drills'),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelLarge?.copyWith(
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1981,7 +2249,8 @@ class _BreathingPracticeReleaseCardState
                               size: 16,
                             ),
                             label: Text(_scenarioNameById(scenario.id, i18n)),
-                            onPressed: () => unawaited(_applyScenario(scenario)),
+                            onPressed: () =>
+                                unawaited(_applyScenario(scenario)),
                           );
                         })
                         .toList(growable: false),
@@ -1991,10 +2260,8 @@ class _BreathingPracticeReleaseCardState
                     Text(
                       pickUiText(
                         i18n,
-                        zh:
-                            '当前结果不建议直接进入高海拔模拟，先把鼻呼吸和安静恢复练稳。',
-                        en:
-                            'This score does not suggest going straight into altitude simulation yet. Build nasal breathing and calm recovery first.',
+                        zh: '当前结果不建议直接进入高海拔模拟，先把鼻呼吸和安静恢复练稳。',
+                        en: 'This score does not suggest going straight into altitude simulation yet. Build nasal breathing and calm recovery first.',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -2254,27 +2521,37 @@ class _BreathingPracticeReleaseCardState
             alignment: WrapAlignment.center,
             children: <Widget>[
               FilledButton.icon(
-                onPressed: _boltRunning
+                onPressed: (_boltRunning || _boltPreparing || _sessionPreparing)
                     ? null
                     : () => unawaited(
                         _running ? _pauseSession() : _startSession(),
                       ),
                 icon: Icon(
-                  _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  _sessionPreparing
+                      ? Icons.hourglass_top_rounded
+                      : _running
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
                 ),
                 label: Text(
-                  _running
+                  _sessionPreparing
+                      ? pickUiText(i18n, zh: '准备中', en: 'Preparing')
+                      : _running
                       ? pickUiText(i18n, zh: '暂停', en: 'Pause')
                       : pickUiText(i18n, zh: '开始', en: 'Start'),
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: () => unawaited(_skipStage()),
+                onPressed: _sessionPreparing
+                    ? null
+                    : () => unawaited(_skipStage()),
                 icon: const Icon(Icons.skip_next_rounded),
                 label: Text(pickUiText(i18n, zh: '下一阶段', en: 'Next stage')),
               ),
               OutlinedButton.icon(
-                onPressed: () => unawaited(_resetSession()),
+                onPressed: _sessionPreparing
+                    ? null
+                    : () => unawaited(_resetSession()),
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
               ),
@@ -2382,26 +2659,7 @@ class _BreathingPracticeReleaseCardState
           ),
           SwitchListTile.adaptive(
             value: _voiceOn,
-            onChanged: (value) {
-              setState(() {
-                _voiceOn = value;
-                _voiceAvailability = value
-                    ? _BreathingVoiceAvailability.checking
-                    : _BreathingVoiceAvailability.off;
-                if (!value) {
-                  _voiceSourceKind = null;
-                  _lastVoiceLocation = null;
-                  _availableCueCount = 0;
-                  _expectedCueCount = 0;
-                }
-              });
-              if (!value) {
-                unawaited(_cuePlayer.stop());
-              } else {
-                unawaited(_warmScenarioCues());
-              }
-              _savePrefs();
-            },
+            onChanged: (value) => unawaited(_setVoiceEnabled(value)),
             title: Text(pickUiText(i18n, zh: '语音提示', en: 'Voice cues')),
             subtitle: Text(
               pickUiText(
