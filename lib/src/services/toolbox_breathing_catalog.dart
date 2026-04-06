@@ -129,9 +129,9 @@ class BreathingExperienceCatalog {
   static const List<BreathingThemeSpec> themes = <BreathingThemeSpec>[
     BreathingThemeSpec(
       id: 'ocean',
-      name: BreathingCopy('潮汐蓝', 'Ocean glow'),
+      name: BreathingCopy('潮汐蓝光', 'Ocean glow'),
       mood: BreathingCopy(
-        '像潮水一样慢慢拉长呼气。',
+        '像潮水一样慢慢把呼气拉长。',
         'Stretch the exhale like a slow tide.',
       ),
       bgStart: Color(0xFF081C34),
@@ -143,7 +143,7 @@ class BreathingExperienceCatalog {
     ),
     BreathingThemeSpec(
       id: 'forest',
-      name: BreathingCopy('林雾绿', 'Forest mist'),
+      name: BreathingCopy('林雾绿意', 'Forest mist'),
       mood: BreathingCopy(
         '让吸气和呼气像走进安静树林那样稳定。',
         'Steady inhale and exhale like entering a quiet forest.',
@@ -157,7 +157,7 @@ class BreathingExperienceCatalog {
     ),
     BreathingThemeSpec(
       id: 'ember',
-      name: BreathingCopy('余烬橙', 'Ember calm'),
+      name: BreathingCopy('余烬安定', 'Ember calm'),
       mood: BreathingCopy(
         '把身体里的热和急一点点放出去。',
         'Let emotional heat leave a little at a time.',
@@ -185,7 +185,7 @@ class BreathingExperienceCatalog {
     ),
     BreathingThemeSpec(
       id: 'aurora',
-      name: BreathingCopy('极光绿', 'Aurora focus'),
+      name: BreathingCopy('极光专注', 'Aurora focus'),
       mood: BreathingCopy(
         '把注意力带回一进一出的稳定脉冲。',
         'Pull attention back into the pulse of breathing.',
@@ -896,6 +896,86 @@ class BreathingExperienceCatalog {
           label: BreathingCopy('长呼气', 'Long exhale'),
           prompt: BreathingCopy('像叹气一样慢慢放掉', 'Let it out like a long sigh'),
           cueId: 'mouth_exhale',
+        ),
+      ],
+    ),
+
+    BreathingScenario(
+      id: 'altitude_sim_3663',
+      name: BreathingCopy('高海拔模拟 3-6-6-3', 'Altitude sim 3-6-6-3'),
+      scene: BreathingCopy(
+        '给已经能舒适鼻呼吸的人做的短时低氧耐受练习。',
+        'A short hypoxic-tolerance drill for users who already handle nasal breathing comfortably.',
+      ),
+      description: BreathingCopy(
+        '先慢慢呼出，再做短时间屏息，模拟“空气更稀薄、呼吸更克制”的节律。只建议短练，不建议长时间连续做。',
+        'A slower exhale followed by a short hold simulates a thinner-air, lower-volume rhythm. Keep it brief rather than turning it into a long session.',
+      ),
+      bodyFocus: BreathingCopy(
+        '全程保持肩颈松开、嘴唇轻闭，恢复吸气时不要猛吸，只让下一口气安静回来。',
+        'Keep the neck and jaw soft, lips lightly closed, and let the recovery inhale return quietly instead of gasping.',
+      ),
+      whenToUse: BreathingCopy(
+        '只适合白天、静坐或安全站立时短练；更适合已经完成过 BOLT 测试且知道自己余量的人。',
+        'Use only as a brief daytime drill while seated or standing safely, ideally after a recent BOLT check so you know your margin.',
+      ),
+      researchBasis: BreathingCopy(
+        '《学会呼吸》将屏息训练归类为低海拔下模拟高海拔刺激的方法，但强调要按健康状况和 BOLT 余量循序渐进。',
+        'The Oxygen Advantage frames breath-hold work as a way to simulate altitude stress at low altitude, while emphasizing progression by health status and BOLT margin.',
+      ),
+      mechanism: BreathingCopy(
+        '较长呼气加短时间屏息会提高对空气饥饿的耐受度，把注意力拉回到更安静、更节制的呼吸效率上。',
+        'The longer exhale and short hold raise tolerance to air hunger and redirect attention toward quieter, more efficient breathing.',
+      ),
+      themeId: 'alpine',
+      previewCueId: 'preview_altitude',
+      recommendedMinutes: 2,
+      advanced: true,
+      caution: BreathingCopy(
+        '如果你有头晕、胸闷、孕期、心血管不适，或最近状态不稳，请不要练。出现明显不适时立刻停止并恢复自然呼吸。',
+        'Skip this if you feel dizzy, tight-chested, pregnant, cardiovascularly unwell, or generally unstable. Stop immediately and return to natural breathing if symptoms appear.',
+      ),
+      tags: <BreathingCopy>[
+        BreathingCopy('高海拔模拟', 'Altitude sim'),
+        BreathingCopy('空气饥饿', 'Air hunger'),
+        BreathingCopy('进阶', 'Advanced'),
+      ],
+      stages: <BreathingStagePlan>[
+        BreathingStagePlan(
+          kind: BreathingStageKind.inhale,
+          seconds: 3,
+          label: BreathingCopy('鼻吸', 'Nasal inhale'),
+          prompt: BreathingCopy(
+            '只吸到七成满，不追求大口',
+            'Inhale only to about seventy percent',
+          ),
+          cueId: 'nose_inhale',
+        ),
+        BreathingStagePlan(
+          kind: BreathingStageKind.exhale,
+          seconds: 6,
+          label: BreathingCopy('长呼', 'Long exhale'),
+          prompt: BreathingCopy('慢慢把气送出去，保持安静', 'Exhale slowly and quietly'),
+          cueId: 'nose_exhale',
+        ),
+        BreathingStagePlan(
+          kind: BreathingStageKind.hold,
+          seconds: 6,
+          label: BreathingCopy('呼后屏息', 'Exhale hold'),
+          prompt: BreathingCopy(
+            '停在第一次明确呼吸欲望前后，不要硬扛',
+            'Pause around the first clear urge, not beyond',
+          ),
+          cueId: 'hold_soft',
+        ),
+        BreathingStagePlan(
+          kind: BreathingStageKind.rest,
+          seconds: 3,
+          label: BreathingCopy('恢复', 'Recover'),
+          prompt: BreathingCopy(
+            '让下一口气安静回来',
+            'Let the next inhale return quietly',
+          ),
         ),
       ],
     ),

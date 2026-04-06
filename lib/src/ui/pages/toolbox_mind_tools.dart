@@ -37,8 +37,8 @@ class BreathingToolPage extends StatelessWidget {
       title: pickUiText(i18n, zh: '呼吸训练', en: 'Breathing practice'),
       subtitle: pickUiText(
         i18n,
-        zh: '用移动端友好的节奏指引，做专注、放松、睡前和生理叹息练习。',
-        en: 'Mobile-first guided breathing for focus, relaxation, bedtime, and physiological sigh drills.',
+        zh: '移动端优先的呼吸训练，覆盖专注、放松、睡前、BOLT 测试与高海拔模拟等场景。',
+        en: 'Mobile-first breathing practice for focus, relaxation, bedtime, BOLT testing, and altitude-simulation drills.',
       ),
       child: const BreathingPracticeReleaseCard(),
     );
