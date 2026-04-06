@@ -31,6 +31,24 @@ class _BreathingSessionSummary {
   final String nextStep;
 }
 
+class _BoltAssessment {
+  const _BoltAssessment({
+    required this.label,
+    required this.body,
+    required this.nextStep,
+    required this.recommendedScenarioIds,
+    required this.tint,
+    required this.altitudeReady,
+  });
+
+  final String label;
+  final String body;
+  final String nextStep;
+  final List<String> recommendedScenarioIds;
+  final Color tint;
+  final bool altitudeReady;
+}
+
 class BreathingPracticeReleaseCard extends StatefulWidget {
   const BreathingPracticeReleaseCard({super.key});
 
@@ -43,18 +61,23 @@ class _BreathingPracticeReleaseCardState
     extends State<BreathingPracticeReleaseCard>
     with SingleTickerProviderStateMixin {
   static const List<int> _targetOptions = <int>[2, 3, 4, 5, 8, 10, 12, 15];
+  static const String _altitudeScenarioId = 'altitude_sim_3663';
 
   late final AnimationController _controller;
   late final StreamSubscription<void> _previewCompleteSub;
   final AudioPlayer _cuePlayer = AudioPlayer();
   final AudioPlayer _previewPlayer = AudioPlayer();
+  final AudioPlayer _systemPlayer = AudioPlayer();
+  final Stopwatch _boltStopwatch = Stopwatch();
   Timer? _clock;
+  Timer? _boltClock;
 
   CstCloudResourceCacheService? _resourceCache;
   ToolboxBreathingAudioRepository? _cueRepo;
   late BreathingScenario _scenario;
   late BreathingThemeSpec _theme;
 
+  bool _includeHoldStage = true;
   bool _voiceOn = true;
   bool _textOn = true;
   bool _hapticOn = true;
@@ -62,6 +85,10 @@ class _BreathingPracticeReleaseCardState
   bool _running = false;
   bool _previewing = false;
   bool _finishing = false;
+  bool _boltRunning = false;
+  bool _boltPreparing = false;
+  bool _boltExpanded = false;
+  bool _sessionPreparing = false;
   int _targetMinutes = 5;
   int _stageIndex = 0;
   int _rounds = 0;
@@ -70,6 +97,8 @@ class _BreathingPracticeReleaseCardState
   int _availableCueCount = 0;
   int _expectedCueCount = 0;
   int _shortStageSilentCount = 0;
+  int _lastBoltSeconds = 0;
+  int _bestBoltSeconds = 0;
   Duration _elapsedBeforeRun = Duration.zero;
   DateTime? _runStartedAt;
   _BreathingVoiceAvailability _voiceAvailability =
@@ -77,13 +106,21 @@ class _BreathingPracticeReleaseCardState
   BreathingCueSourceKind? _voiceSourceKind;
   String? _lastVoiceLocation;
   _BreathingSessionSummary? _lastSummary;
+  bool _voiceLocaleNoticeShown = false;
+  bool _voiceLocaleDialogOpen = false;
+  int _systemCueSequenceToken = 0;
 
   List<BreathingStagePlan> get _loopStages {
-    if (_includeRecoveryStage) {
-      return _scenario.stages;
-    }
     final filtered = _scenario.stages
-        .where((stage) => stage.kind != BreathingStageKind.rest)
+        .where((stage) {
+          if (!_includeHoldStage && stage.kind == BreathingStageKind.hold) {
+            return false;
+          }
+          if (!_includeRecoveryStage && stage.kind == BreathingStageKind.rest) {
+            return false;
+          }
+          return true;
+        })
         .toList(growable: false);
     return filtered.isEmpty ? _scenario.stages : filtered;
   }
@@ -160,6 +197,7 @@ class _BreathingPracticeReleaseCardState
       _resourceCache = nextCache;
       _cueRepo = ToolboxBreathingAudioRepository(nextCache);
       if (_voiceOn) {
+        unawaited(_maybeShowNonChineseVoiceNotice());
         unawaited(_warmScenarioCues());
       }
     }
@@ -168,9 +206,11 @@ class _BreathingPracticeReleaseCardState
   @override
   void dispose() {
     _clock?.cancel();
+    _boltClock?.cancel();
     unawaited(_previewCompleteSub.cancel());
     unawaited(_cuePlayer.dispose());
     unawaited(_previewPlayer.dispose());
+    unawaited(_systemPlayer.dispose());
     _controller.dispose();
     super.dispose();
   }
@@ -184,12 +224,15 @@ class _BreathingPracticeReleaseCardState
       _scenario = BreathingExperienceCatalog.scenarioById(prefs.presetId);
       _theme = BreathingExperienceCatalog.themeById(prefs.themeId);
       _targetMinutes = prefs.targetMinutes;
+      _includeHoldStage = prefs.breathHoldEnabled;
       _includeRecoveryStage = prefs.includeRecoveryStage;
       _voiceOn = prefs.voiceGuidanceEnabled;
       _textOn = prefs.textGuidanceEnabled;
       _hapticOn = prefs.hapticsEnabled;
       _completedSessions = prefs.completedSessions;
       _totalSeconds = prefs.totalPracticeSeconds;
+      _lastBoltSeconds = prefs.lastBoltSeconds;
+      _bestBoltSeconds = prefs.bestBoltSeconds;
       _voiceAvailability = _voiceOn
           ? _BreathingVoiceAvailability.checking
           : _BreathingVoiceAvailability.off;
@@ -199,6 +242,7 @@ class _BreathingPracticeReleaseCardState
     _normalizeStageIndex();
     _syncDuration();
     if (_voiceOn) {
+      unawaited(_maybeShowNonChineseVoiceNotice());
       unawaited(_warmScenarioCues());
     }
   }
@@ -210,12 +254,15 @@ class _BreathingPracticeReleaseCardState
           presetId: _scenario.id,
           themeId: _theme.id,
           targetMinutes: _targetMinutes,
+          breathHoldEnabled: _includeHoldStage,
           includeRecoveryStage: _includeRecoveryStage,
           voiceGuidanceEnabled: _voiceOn,
           textGuidanceEnabled: _textOn,
           hapticsEnabled: _hapticOn,
           completedSessions: _completedSessions,
           totalPracticeSeconds: _totalSeconds,
+          lastBoltSeconds: _lastBoltSeconds,
+          bestBoltSeconds: _bestBoltSeconds,
         ),
       ),
     );
@@ -244,8 +291,72 @@ class _BreathingPracticeReleaseCardState
     return tags.toList(growable: false);
   }
 
+  bool _localeUsesChineseVoice(Locale locale) {
+    return locale.languageCode.trim().toLowerCase() == 'zh';
+  }
+
+  Future<void> _maybeShowNonChineseVoiceNotice() async {
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted ||
+        !_voiceOn ||
+        _voiceLocaleDialogOpen ||
+        _voiceLocaleNoticeShown) {
+      return;
+    }
+    final locale = Localizations.maybeLocaleOf(context);
+    if (locale == null || _localeUsesChineseVoice(locale)) {
+      return;
+    }
+    final i18n = AppI18n(locale.languageCode);
+    _voiceLocaleDialogOpen = true;
+    final keepVoice = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '当前语音仅支持中文',
+              en: 'Voice is Chinese-only for now',
+            ),
+          ),
+          content: Text(
+            pickUiText(
+              i18n,
+              zh: '呼吸阶段语音目前只提供中文录音。你仍可继续使用当前界面语言的文案与计时，但语音会播放中文引导。',
+              en: 'Breathing voice guidance is currently recorded in Chinese only. The interface can stay in your current language, but spoken cues will play in Chinese.',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(pickUiText(i18n, zh: '关闭语音', en: 'Turn voice off')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                pickUiText(i18n, zh: '继续使用中文语音', en: 'Keep Chinese voice'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    _voiceLocaleDialogOpen = false;
+    if (!mounted) {
+      return;
+    }
+    setState(() => _voiceLocaleNoticeShown = true);
+    if (keepVoice == false) {
+      await _setVoiceEnabled(false, showLocaleNotice: false);
+    }
+  }
+
   String? _effectiveCueIdForStage(BreathingStagePlan stage) {
-    if (stage.kind == BreathingStageKind.rest && !_includeRecoveryStage) {
+    if (stage.kind == BreathingStageKind.rest) {
+      return null;
+    }
+    if (stage.kind == BreathingStageKind.hold && !_includeHoldStage) {
       return null;
     }
     if (stage.seconds <= 2) {
@@ -253,66 +364,86 @@ class _BreathingPracticeReleaseCardState
         BreathingStageKind.inhale => 'inhale_soft',
         BreathingStageKind.exhale => 'exhale_soft',
         BreathingStageKind.hold => 'hold_soft',
-        BreathingStageKind.rest => stage.cueId,
+        BreathingStageKind.rest => null,
       };
     }
     return stage.cueId;
   }
 
-  double _cuePlaybackRateForStage(BreathingStagePlan stage, String cueId) {
-    final cue = BreathingExperienceCatalog.cues[cueId];
-    if (cue == null) {
+  int _scenarioStageIndex(BreathingStagePlan stage) {
+    final originalIndex = _scenario.stages.indexOf(stage);
+    if (originalIndex >= 0) {
+      return originalIndex;
+    }
+    return _stageIndex;
+  }
+
+  Duration _cueSafetyPaddingForStage(BreathingStagePlan stage) {
+    if (stage.seconds <= 2) {
+      return Duration.zero;
+    }
+    if (stage.seconds <= 4) {
+      return const Duration(milliseconds: 80);
+    }
+    return const Duration(milliseconds: 180);
+  }
+
+  Duration? _resolvedCueDuration(BreathingResolvedCue resolved) {
+    return resolved.duration ??
+        (resolved.cue.approxDurationMs > 0
+            ? Duration(milliseconds: resolved.cue.approxDurationMs)
+            : null);
+  }
+
+  double _cuePlaybackRateForStage(
+    BreathingStagePlan stage,
+    BreathingResolvedCue resolved,
+  ) {
+    final cueDuration = _resolvedCueDuration(resolved);
+    if (cueDuration == null || cueDuration <= Duration.zero) {
       return 1.0;
     }
-    final targetWindowMs = math.max(420, stage.seconds * 1000 - 180);
-    return (cue.approxDurationMs / targetWindowMs).clamp(1.0, 2.0).toDouble();
+    final paddingMs = _cueSafetyPaddingForStage(stage).inMilliseconds;
+    final targetWindowMs = math.max(240, stage.seconds * 1000 - paddingMs);
+    return (cueDuration.inMilliseconds / targetWindowMs)
+        .clamp(1.0, 2.0)
+        .toDouble();
   }
 
-  bool _canPlayCueForStage(BreathingStagePlan stage, {String? cueId}) {
-    final resolvedCueId = cueId ?? _effectiveCueIdForStage(stage);
-    if (resolvedCueId == null) {
+  bool _canPlayResolvedCueForStage(
+    BreathingStagePlan stage,
+    BreathingResolvedCue resolved,
+  ) {
+    final cueDuration = _resolvedCueDuration(resolved);
+    if (cueDuration == null) {
       return false;
     }
-    final playbackRate = _cuePlaybackRateForStage(stage, resolvedCueId);
+    final playbackRate = _cuePlaybackRateForStage(stage, resolved);
+    final adjustedDurationMs =
+        cueDuration.inMilliseconds / playbackRate.clamp(0.75, 2.0);
+    return stage.seconds * 1000 >=
+        adjustedDurationMs.round() +
+            _cueSafetyPaddingForStage(stage).inMilliseconds;
+  }
+
+  Future<BreathingResolvedCue?> _resolveStageCueForStage(
+    BreathingStagePlan stage,
+  ) async {
+    final cueId = _effectiveCueIdForStage(stage);
+    if (cueId == null) {
+      return null;
+    }
     final repo = _cueRepo;
-    if (repo == null) {
-      final cue = BreathingExperienceCatalog.cues[resolvedCueId];
-      if (cue == null) {
-        return false;
-      }
-      return cue.approxDurationMs <= stage.seconds * 1000;
+    if (repo == null || !mounted) {
+      return null;
     }
-    return repo.canPlayCueWithinStage(
-      resolvedCueId,
-      stageDuration: Duration(seconds: stage.seconds),
-      playbackRate: playbackRate,
+    return repo.resolveScenarioStage(
+      _scenario.id,
+      stageIndex: _scenarioStageIndex(stage),
+      stageKind: stage.kind,
+      fallbackCueId: cueId,
+      languageTags: _localeTags(Localizations.localeOf(context)),
     );
-  }
-
-  Set<String> _warmUpCueIds() {
-    final cueIds = <String>{};
-    if (_scenario.previewCueId != null) {
-      cueIds.add(_scenario.previewCueId!);
-    }
-    for (final stage in _loopStages) {
-      final cueId = _effectiveCueIdForStage(stage);
-      if (cueId == null || !_canPlayCueForStage(stage, cueId: cueId)) {
-        continue;
-      }
-      cueIds.add(cueId);
-    }
-    return cueIds;
-  }
-
-  int _shortStageSkipCount() {
-    var count = 0;
-    for (final stage in _loopStages) {
-      final cueId = _effectiveCueIdForStage(stage);
-      if (cueId != null && !_canPlayCueForStage(stage, cueId: cueId)) {
-        count += 1;
-      }
-    }
-    return count;
   }
 
   Future<void> _warmScenarioCues() async {
@@ -326,27 +457,62 @@ class _BreathingPracticeReleaseCardState
     if (repo == null) {
       return;
     }
+    final localeTags = _localeTags(Localizations.localeOf(context));
     final scenarioId = _scenario.id;
     final includeRecoveryStage = _includeRecoveryStage;
-    final warmUpCueIds = _warmUpCueIds();
-    final silentShortCueCount = _shortStageSkipCount();
+    final includeHoldStage = _includeHoldStage;
+    const flowCueIds = <String>[
+      'session_start',
+      'session_complete',
+      'bolt_prepare',
+      'bolt_start',
+      'bolt_stop',
+      'bolt_recover',
+    ];
+    final expectedCueCount =
+        _loopStages
+            .where((stage) => _effectiveCueIdForStage(stage) != null)
+            .length +
+        (_scenario.previewCueId == null ? 0 : 1);
     setState(() {
       _voiceAvailability = _BreathingVoiceAvailability.checking;
-      _expectedCueCount = warmUpCueIds.length;
-      _shortStageSilentCount = silentShortCueCount;
+      _expectedCueCount = expectedCueCount;
+      _shortStageSilentCount = 0;
     });
-    final resolved = await repo.warmUpCueIds(
-      warmUpCueIds,
-      languageTags: _localeTags(Localizations.localeOf(context)),
-    );
+    final resolved = <BreathingResolvedCue>[];
+    var silentShortCueCount = 0;
+    final previewCueId = _scenario.previewCueId;
+    if (previewCueId != null) {
+      final preview = await repo.resolve(
+        previewCueId,
+        languageTags: localeTags,
+      );
+      if (preview != null) {
+        resolved.add(preview);
+      }
+    }
+    for (final stage in _loopStages) {
+      final stageCue = await _resolveStageCueForStage(stage);
+      if (stageCue == null) {
+        continue;
+      }
+      if (_canPlayResolvedCueForStage(stage, stageCue)) {
+        resolved.add(stageCue);
+      } else {
+        silentShortCueCount += 1;
+      }
+    }
+    await repo.warmUpCueIds(flowCueIds, languageTags: localeTags);
     if (!mounted ||
+        !_voiceOn ||
         _scenario.id != scenarioId ||
-        _includeRecoveryStage != includeRecoveryStage) {
+        _includeRecoveryStage != includeRecoveryStage ||
+        _includeHoldStage != includeHoldStage) {
       return;
     }
     setState(() {
       _availableCueCount = resolved.length;
-      _expectedCueCount = warmUpCueIds.length;
+      _expectedCueCount = expectedCueCount;
       _shortStageSilentCount = silentShortCueCount;
       _voiceAvailability = resolved.isNotEmpty
           ? _BreathingVoiceAvailability.ready
@@ -356,8 +522,8 @@ class _BreathingPracticeReleaseCardState
     });
   }
 
-  Future<bool> _playCueId(
-    String cueId, {
+  Future<bool> _playResolvedCue(
+    BreathingResolvedCue resolved, {
     required AudioPlayer player,
     required bool respectVoiceSetting,
     double playbackRate = 1.0,
@@ -370,16 +536,7 @@ class _BreathingPracticeReleaseCardState
       return false;
     }
     try {
-      final resolved = await repo.resolve(
-        cueId,
-        languageTags: _localeTags(Localizations.localeOf(context)),
-      );
-      if (resolved == null) {
-        if (mounted && respectVoiceSetting) {
-          setState(
-            () => _voiceAvailability = _BreathingVoiceAvailability.unavailable,
-          );
-        }
+      if (respectVoiceSetting && !_voiceOn) {
         return false;
       }
       await player.stop();
@@ -400,6 +557,93 @@ class _BreathingPracticeReleaseCardState
         );
       }
       return false;
+    }
+  }
+
+  Future<bool> _playCueId(
+    String cueId, {
+    required AudioPlayer player,
+    required bool respectVoiceSetting,
+    double playbackRate = 1.0,
+  }) async {
+    if (respectVoiceSetting && !_voiceOn) {
+      return false;
+    }
+    if (_cueRepo == null || !mounted) {
+      return false;
+    }
+    final resolved = await _cueRepo!.resolve(
+      cueId,
+      languageTags: _localeTags(Localizations.localeOf(context)),
+    );
+    if (resolved == null) {
+      if (mounted && respectVoiceSetting) {
+        setState(
+          () => _voiceAvailability = _BreathingVoiceAvailability.unavailable,
+        );
+      }
+      return false;
+    }
+    return _playResolvedCue(
+      resolved,
+      player: player,
+      respectVoiceSetting: respectVoiceSetting,
+      playbackRate: playbackRate,
+    );
+  }
+
+  Duration _resolvedCueDurationOrFallback(
+    BreathingResolvedCue resolved, {
+    Duration fallback = const Duration(milliseconds: 1200),
+  }) {
+    return _resolvedCueDuration(resolved) ?? fallback;
+  }
+
+  Future<void> _stopSystemCue() async {
+    _systemCueSequenceToken += 1;
+    try {
+      await _systemPlayer.stop();
+    } catch (_) {}
+  }
+
+  Future<void> _playSystemCueSequence(
+    List<String> cueIds, {
+    bool respectVoiceSetting = true,
+    Duration gap = const Duration(milliseconds: 140),
+  }) async {
+    if (respectVoiceSetting && !_voiceOn) {
+      return;
+    }
+    if (_cueRepo == null || !mounted) {
+      return;
+    }
+    final sequenceToken = _systemCueSequenceToken + 1;
+    _systemCueSequenceToken = sequenceToken;
+    await _stopPreview();
+    try {
+      await _systemPlayer.stop();
+    } catch (_) {}
+    for (final cueId in cueIds) {
+      if (!mounted || _systemCueSequenceToken != sequenceToken) {
+        return;
+      }
+      final resolved = await _cueRepo!.resolve(
+        cueId,
+        languageTags: _localeTags(Localizations.localeOf(context)),
+      );
+      if (resolved == null) {
+        continue;
+      }
+      final played = await _playResolvedCue(
+        resolved,
+        player: _systemPlayer,
+        respectVoiceSetting: respectVoiceSetting,
+      );
+      if (!played) {
+        continue;
+      }
+      final waitDuration = _resolvedCueDurationOrFallback(resolved) + gap;
+      await Future<void>.delayed(waitDuration);
     }
   }
 
@@ -451,16 +695,98 @@ class _BreathingPracticeReleaseCardState
 
   Future<void> _announceStage() async {
     _performHaptic();
-    final cueId = _effectiveCueIdForStage(_stage);
-    if (cueId == null || !_canPlayCueForStage(_stage, cueId: cueId)) {
+    final resolved = await _resolveStageCueForStage(_stage);
+    if (resolved == null || !_canPlayResolvedCueForStage(_stage, resolved)) {
       return;
     }
-    await _playCueId(
-      cueId,
+    await _playResolvedCue(
+      resolved,
       player: _cuePlayer,
       respectVoiceSetting: true,
-      playbackRate: _cuePlaybackRateForStage(_stage, cueId),
+      playbackRate: _cuePlaybackRateForStage(_stage, resolved),
     );
+  }
+
+  Duration get _boltElapsed =>
+      Duration(milliseconds: _boltStopwatch.elapsedMilliseconds);
+
+  void _tickBolt() {
+    _boltClock?.cancel();
+    _boltClock = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      if (!mounted || !_boltRunning) {
+        _boltClock?.cancel();
+        return;
+      }
+      setState(() {});
+    });
+  }
+
+  Future<void> _startBoltTest() async {
+    if (_running || _boltRunning || _boltPreparing || _sessionPreparing) {
+      return;
+    }
+    await _stopSystemCue();
+    await _stopPreview();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _boltPreparing = true;
+      _boltExpanded = true;
+    });
+    await _playSystemCueSequence(<String>['bolt_prepare', 'bolt_start']);
+    if (!mounted || !_boltPreparing) {
+      return;
+    }
+    _boltStopwatch
+      ..reset()
+      ..start();
+    setState(() {
+      _boltPreparing = false;
+      _boltRunning = true;
+    });
+    _tickBolt();
+  }
+
+  Future<void> _stopBoltTest() async {
+    if (_boltPreparing) {
+      await _stopSystemCue();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _boltPreparing = false);
+      return;
+    }
+    if (!_boltRunning) {
+      return;
+    }
+    _boltStopwatch.stop();
+    _boltClock?.cancel();
+    final seconds = (_boltStopwatch.elapsedMilliseconds / 1000).floor();
+    setState(() {
+      _boltRunning = false;
+      if (seconds > 0) {
+        _lastBoltSeconds = seconds;
+        _bestBoltSeconds = math.max(_bestBoltSeconds, seconds);
+      }
+    });
+    _savePrefs();
+    unawaited(_playSystemCueSequence(<String>['bolt_stop', 'bolt_recover']));
+  }
+
+  Future<void> _resetBoltTest() async {
+    await _stopSystemCue();
+    _boltClock?.cancel();
+    _boltStopwatch
+      ..stop()
+      ..reset();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _boltRunning = false;
+      _boltPreparing = false;
+    });
   }
 
   void _tickStart() {
@@ -478,14 +804,26 @@ class _BreathingPracticeReleaseCardState
   }
 
   Future<void> _startSession() async {
-    if (_running) {
+    if (_running || _boltRunning || _boltPreparing || _sessionPreparing) {
       return;
     }
+    await _stopSystemCue();
     await _stopPreview();
+    if (!mounted) {
+      return;
+    }
     setState(() {
+      _sessionPreparing = true;
+      _lastSummary = null;
+    });
+    await _playSystemCueSequence(<String>['session_start']);
+    if (!mounted || !_sessionPreparing) {
+      return;
+    }
+    setState(() {
+      _sessionPreparing = false;
       _running = true;
       _runStartedAt = DateTime.now();
-      _lastSummary = null;
     });
     if (_controller.value <= 0 || _controller.value >= 1) {
       _syncDuration();
@@ -505,6 +843,7 @@ class _BreathingPracticeReleaseCardState
     _controller.stop(canceled: false);
     _clock?.cancel();
     await _cuePlayer.stop();
+    await _stopSystemCue();
     if (!mounted) {
       return;
     }
@@ -520,12 +859,14 @@ class _BreathingPracticeReleaseCardState
     _controller.stop();
     _controller.value = 0;
     await _cuePlayer.stop();
+    await _stopSystemCue();
     await _stopPreview();
     if (!mounted) {
       return;
     }
     setState(() {
       _running = false;
+      _sessionPreparing = false;
       _stageIndex = 0;
       _rounds = 0;
       _elapsedBeforeRun = Duration.zero;
@@ -534,8 +875,86 @@ class _BreathingPracticeReleaseCardState
     });
   }
 
+  Future<bool> _confirmScenarioSelection(BreathingScenario scenario) async {
+    if (!mounted || scenario.id != _altitudeScenarioId) {
+      return true;
+    }
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final boltHint = _lastBoltSeconds <= 0
+        ? pickUiText(
+            i18n,
+            zh: '建议先做一次 BOLT 测试，确认自己在第一次明确呼吸欲望出现前能稳定停留的秒数。',
+            en: 'Run a BOLT check first so you know how many seconds you can comfortably stay before the first clear urge to breathe.',
+          )
+        : _lastBoltSeconds < 20
+        ? pickUiText(
+            i18n,
+            zh: '你最近的 BOLT 是 $_lastBoltSeconds 秒。一般建议先把 BOLT 稳定到 20 秒左右，再尝试高海拔模拟。',
+            en: 'Your recent BOLT is $_lastBoltSeconds s. It is usually better to build toward roughly 20 seconds before trying altitude simulation.',
+          )
+        : pickUiText(
+            i18n,
+            zh: '你最近的 BOLT 是 $_lastBoltSeconds 秒。练习时仍然只停在舒适边界，不要硬扛。',
+            en: 'Your recent BOLT is $_lastBoltSeconds s. Still stay inside comfort and do not force the hold.',
+          );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            pickUiText(i18n, zh: '启用高海拔模拟？', en: 'Use altitude simulation?'),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '这是进阶练习，会加入“长呼气 + 呼后屏息”来模拟更稀薄空气下的呼吸约束。请只在白天、静坐或安全站立时短练。',
+                    en: 'This advanced drill adds a long exhale plus an exhale hold to simulate a thinner-air constraint. Use it only briefly during the day while seated or standing safely.',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  boltHint,
+                  style: Theme.of(dialogContext).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '如果出现头晕、胸闷、刺麻或恢复吸气明显失控，请立刻停止并恢复自然呼吸。',
+                    en: 'Stop immediately and return to natural breathing if you get dizzy, tight-chested, tingly, or lose control of the recovery breath.',
+                  ),
+                  style: Theme.of(dialogContext).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(pickUiText(i18n, zh: '继续选择', en: 'Continue')),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
+  }
+
   Future<void> _applyScenario(BreathingScenario scenario) async {
     if (_scenario.id == scenario.id) {
+      return;
+    }
+    final confirmed = await _confirmScenarioSelection(scenario);
+    if (!confirmed) {
       return;
     }
     await _resetSession();
@@ -590,6 +1009,73 @@ class _BreathingPracticeReleaseCardState
     }
   }
 
+  Future<void> _setIncludeHoldStage(bool value) async {
+    if (_includeHoldStage == value) {
+      return;
+    }
+    await _resetSession();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _includeHoldStage = value;
+      _stageIndex = 0;
+      _voiceAvailability = _voiceOn
+          ? _BreathingVoiceAvailability.checking
+          : _BreathingVoiceAvailability.off;
+      _voiceSourceKind = null;
+      _lastVoiceLocation = null;
+      _availableCueCount = 0;
+      _expectedCueCount = 0;
+    });
+    _normalizeStageIndex();
+    _syncDuration();
+    _savePrefs();
+    if (_voiceOn) {
+      unawaited(_warmScenarioCues());
+    }
+  }
+
+  Future<void> _setVoiceEnabled(
+    bool value, {
+    bool showLocaleNotice = true,
+  }) async {
+    if (_voiceOn == value) {
+      if (value && showLocaleNotice) {
+        unawaited(_maybeShowNonChineseVoiceNotice());
+      }
+      return;
+    }
+    if (!value) {
+      await _cuePlayer.stop();
+      await _stopSystemCue();
+      await _stopPreview();
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _voiceOn = value;
+      _voiceAvailability = value
+          ? _BreathingVoiceAvailability.checking
+          : _BreathingVoiceAvailability.off;
+      if (!value) {
+        _voiceSourceKind = null;
+        _lastVoiceLocation = null;
+        _availableCueCount = 0;
+        _expectedCueCount = 0;
+        _shortStageSilentCount = 0;
+      }
+    });
+    if (value) {
+      if (showLocaleNotice) {
+        unawaited(_maybeShowNonChineseVoiceNotice());
+      }
+      unawaited(_warmScenarioCues());
+    }
+    _savePrefs();
+  }
+
   void _onStageDone() {
     final nextIndex = (_stageIndex + 1) % _loopStages.length;
     setState(() {
@@ -632,6 +1118,7 @@ class _BreathingPracticeReleaseCardState
     _clock?.cancel();
     _controller.stop(canceled: false);
     await _cuePlayer.stop();
+    await _stopSystemCue();
     await _stopPreview();
     if (!mounted) {
       _finishing = false;
@@ -653,6 +1140,7 @@ class _BreathingPracticeReleaseCardState
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(summary.title)));
+    unawaited(_playSystemCueSequence(<String>['session_complete']));
     _finishing = false;
   }
 
@@ -676,6 +1164,11 @@ class _BreathingPracticeReleaseCardState
         i18n,
         zh: '下一步：恢复自然呼吸 30-60 秒，再决定是否需要再来一轮短练。',
         en: 'Next: return to natural breathing for 30-60 seconds before deciding whether to repeat.',
+      ),
+      _altitudeScenarioId => pickUiText(
+        i18n,
+        zh: '下一步：先让呼吸完全恢复安静，再决定是否继续；高海拔模拟之间宁可少做，也不要硬顶。',
+        en: 'Next: let the breath fully settle before deciding whether to continue; with altitude simulation, less is better than forcing another round.',
       ),
       _ => pickUiText(
         i18n,
@@ -757,7 +1250,7 @@ class _BreathingPracticeReleaseCardState
         return pickUiText(
           i18n,
           zh: '优先检查可用语音，并自动判断短节拍是否适合播报。',
-          en: 'Checking available cues and whether short stages can support playback.',
+          en: 'Checking available cues, adapting short stages, and keeping pause stages silent by default.',
         );
       case _BreathingVoiceAvailability.ready:
         final parts = <String>[];
@@ -779,6 +1272,7 @@ class _BreathingPracticeReleaseCardState
             ),
           );
         }
+        parts.add(pickUiText(i18n, zh: '停顿阶段保持静音', en: 'Pause stays silent'));
         return parts.isEmpty
             ? pickUiText(i18n, zh: '语音可用。', en: 'Voice guidance is available.')
             : parts.join(' · ');
@@ -838,7 +1332,7 @@ class _BreathingPracticeReleaseCardState
   }
 
   String _paceLabel(AppI18n i18n) {
-    final value = _scenario.cyclesPerMinute;
+    final value = _loopCycleSeconds <= 0 ? 0 : 60 / _loopCycleSeconds;
     final formatted = value >= 10
         ? value.toStringAsFixed(0)
         : value.toStringAsFixed(1);
@@ -855,6 +1349,233 @@ class _BreathingPracticeReleaseCardState
       return '';
     }
     return p.basename(value);
+  }
+
+  String _scenarioNameById(String id, AppI18n i18n) =>
+      BreathingExperienceCatalog.scenarioById(id).name.resolve(i18n);
+
+  _BoltAssessment _boltAssessmentFor(AppI18n i18n, int seconds) {
+    if (seconds <= 0) {
+      return _BoltAssessment(
+        label: pickUiText(i18n, zh: '尚未测试', en: 'Not tested yet'),
+        body: pickUiText(
+          i18n,
+          zh: '先做一次 BOLT 测试，再根据结果决定是该优先练轻柔鼻呼吸、稳态慢呼吸，还是可以进入更进阶的屏息练习。',
+          en: 'Run one BOLT check first so you can decide whether to prioritize gentle nasal work, steady slow breathing, or more advanced hold work.',
+        ),
+        nextStep: pickUiText(
+          i18n,
+          zh: '先从腹式 4-2-6-2、平息长呼 3-6 这类低刺激练习开始。',
+          en: 'Start with lower-intensity drills such as Diaphragm 4-2-6-2 or Calm 3-6.',
+        ),
+        recommendedScenarioIds: const <String>[
+          'diaphragm_4262',
+          'calm_36',
+          'sleep_46',
+        ],
+        tint: const Color(0xFF6B7A8C),
+        altitudeReady: false,
+      );
+    }
+    if (seconds < 10) {
+      return _BoltAssessment(
+        label: pickUiText(i18n, zh: 'BOLT 偏低', en: 'Low BOLT'),
+        body: pickUiText(
+          i18n,
+          zh: '先把重点放在鼻呼吸、放松和轻柔呼气，不要追求长时间屏息或高强度空气饥饿。',
+          en: 'Focus first on nasal breathing, relaxation, and gentle exhales rather than long holds or strong air hunger.',
+        ),
+        nextStep: pickUiText(
+          i18n,
+          zh: '优先做低刺激练习，并把“停在第一次明确呼吸欲望前后”当作上限。',
+          en: 'Stay with low-intensity drills and treat the first clear urge to breathe as the ceiling.',
+        ),
+        recommendedScenarioIds: const <String>[
+          'diaphragm_4262',
+          'calm_36',
+          'sleep_46',
+        ],
+        tint: const Color(0xFFC56A4A),
+        altitudeReady: false,
+      );
+    }
+    if (seconds < 20) {
+      return _BoltAssessment(
+        label: pickUiText(i18n, zh: 'BOLT 建设期', en: 'BOLT building'),
+        body: pickUiText(
+          i18n,
+          zh: '已经可以做稳态慢呼吸和短屏息，但仍应把重点放在安静、鼻吸鼻呼与稳定节律上。',
+          en: 'You can start using steady slow breathing and short holds, but the priority is still quiet nasal rhythm rather than hard breath-hold work.',
+        ),
+        nextStep: pickUiText(
+          i18n,
+          zh: '先把 BOLT 稳到 20 秒左右，再考虑高海拔模拟。',
+          en: 'Build toward roughly 20 seconds before considering altitude simulation.',
+        ),
+        recommendedScenarioIds: const <String>[
+          'coherent_55',
+          'relax_4262',
+          'focus_nasal_44',
+        ],
+        tint: const Color(0xFFB58B2C),
+        altitudeReady: false,
+      );
+    }
+    if (seconds < 30) {
+      return _BoltAssessment(
+        label: pickUiText(i18n, zh: 'BOLT 稳定区', en: 'Stable BOLT'),
+        body: pickUiText(
+          i18n,
+          zh: '你通常已经能承受轻到中等的空气饥饿，可以尝试更明确的节律控制和短时进阶练习。',
+          en: 'You can usually tolerate mild to moderate air hunger now, which opens the door to clearer pacing work and short advanced drills.',
+        ),
+        nextStep: pickUiText(
+          i18n,
+          zh: '可以少量尝试高海拔模拟，但恢复吸气仍要安静、可控。',
+          en: 'You can sample altitude simulation briefly, but the recovery inhale still needs to stay calm and controlled.',
+        ),
+        recommendedScenarioIds: const <String>[
+          'box_4444',
+          'parasym_4462',
+          _altitudeScenarioId,
+        ],
+        tint: const Color(0xFF2E8B57),
+        altitudeReady: true,
+      );
+    }
+    return _BoltAssessment(
+      label: pickUiText(i18n, zh: 'BOLT 进阶区', en: 'Advanced BOLT'),
+      body: pickUiText(
+        i18n,
+        zh: '你已经有不错的空气饥饿耐受度，可以把短时高海拔模拟、经典 4-7-8 等更进阶节律作为补充，而不是主训练。',
+        en: 'You have a solid tolerance to air hunger now, so brief altitude simulation and advanced rhythms like Classic 4-7-8 can work as supplemental drills rather than the main practice.',
+      ),
+      nextStep: pickUiText(
+        i18n,
+        zh: '继续把鼻呼吸、低刺激恢复和高强度短练搭配使用，不要把每次都练到极限。',
+        en: 'Keep combining nasal recovery work with short advanced drills, and avoid pushing every session to the limit.',
+      ),
+      recommendedScenarioIds: const <String>[
+        _altitudeScenarioId,
+        'sleep_478',
+        'physiological_sigh_216',
+      ],
+      tint: const Color(0xFF3478C0),
+      altitudeReady: true,
+    );
+  }
+
+  List<String> _generalTechniqueTips(AppI18n i18n) {
+    return <String>[
+      pickUiText(
+        i18n,
+        zh: '基础原则先看鼻呼吸与轻柔呼吸，嘴巴更适合吃饭而不是日常换气。',
+        en: 'Start with nasal and gentle breathing. The mouth is better for eating than for routine ventilation.',
+      ),
+      pickUiText(
+        i18n,
+        zh: '呼吸要安静、平顺、像水流一样连续，不要用力“深吸一大口”。',
+        en: 'Keep the breath quiet, smooth, and continuous like flowing water instead of forcing a giant inhale.',
+      ),
+      pickUiText(
+        i18n,
+        zh: 'BOLT 和屏息都停在第一次明确呼吸欲望附近，不做最大憋气测试。',
+        en: 'For both BOLT and breath holds, stop around the first clear urge to breathe rather than testing a maximal hold.',
+      ),
+    ];
+  }
+
+  List<String> _scenarioTutorialSteps(AppI18n i18n) {
+    final steps = <String>[
+      for (final entry in _loopStages.asMap().entries)
+        '${entry.key + 1}. ${entry.value.label.resolve(i18n)} ${entry.value.seconds}${pickUiText(i18n, zh: '秒', en: 's')}: ${entry.value.prompt.resolve(i18n)}',
+    ];
+    switch (_scenario.id) {
+      case 'diaphragm_4262':
+        steps.add(
+          pickUiText(
+            i18n,
+            zh: '用腹部带动节律，肩膀不要跟着抬起；如果一开始不习惯，就先让动作小一点。',
+            en: 'Let the belly drive the rhythm and keep the shoulders out of it; make the motion smaller if you are just learning.',
+          ),
+        );
+        break;
+      case 'focus_nasal_44' || 'box_4444':
+        steps.add(
+          pickUiText(
+            i18n,
+            zh: '把计数感放在节律一致，而不是吸得更大；练完后立刻进入下一段专注任务。',
+            en: 'Keep the count consistent instead of making the breath bigger, then move straight into the next focus task.',
+          ),
+        );
+        break;
+      case 'sleep_46' || 'sleep_478':
+        steps.add(
+          pickUiText(
+            i18n,
+            zh: '睡前模式宁可小口、安静，也不要把自己练清醒；如果越练越精神，就退回 4-6。',
+            en: 'At bedtime, smaller and quieter is better than waking yourself up; step back to 4-6 if the practice makes you more alert.',
+          ),
+        );
+        break;
+      case 'physiological_sigh_216':
+        steps.add(
+          pickUiText(
+            i18n,
+            zh: '把它当作 1 到 2 分钟的短练，练完先恢复自然呼吸 30 到 60 秒，再决定要不要继续。',
+            en: 'Treat it as a 1-2 minute drill, then return to natural breathing for 30-60 seconds before deciding whether to continue.',
+          ),
+        );
+        break;
+      case _altitudeScenarioId:
+        steps.add(
+          pickUiText(
+            i18n,
+            zh: '高海拔模拟只停在“明确想呼吸但还能稳住”的边界；恢复吸气必须安静，不能猛吸。',
+            en: 'In altitude simulation, stop at the edge where the urge to breathe is clear but still controlled, and keep the recovery inhale quiet rather than sharp.',
+          ),
+        );
+        break;
+      default:
+        steps.add(
+          pickUiText(
+            i18n,
+            zh: '如果某一段开始费力、发紧或想追求更大口，先把幅度减小，再继续跟节律。',
+            en: 'If any phase starts to feel effortful or tight, shrink the breath before trying to continue the rhythm.',
+          ),
+        );
+        break;
+    }
+    return steps;
+  }
+
+  Widget _buildBulletList(
+    BuildContext context,
+    List<String> items, {
+    required Color tint,
+    IconData icon = Icons.check_circle_outline_rounded,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items
+          .map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(icon, size: 16, color: tint),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(item)),
+                ],
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
   }
 
   Color _stageTint(BreathingStageKind kind) {
@@ -1141,6 +1862,20 @@ class _BreathingPracticeReleaseCardState
                   const SizedBox(height: 4),
                   Text(_scenario.whenToUse.resolve(i18n)),
                   const SizedBox(height: 12),
+                  Text(
+                    pickUiText(i18n, zh: '练习步骤', en: 'Practice steps'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildBulletList(
+                    context,
+                    _scenarioTutorialSteps(i18n),
+                    tint: _theme.orbEnd,
+                    icon: Icons.route_rounded,
+                  ),
+                  const SizedBox(height: 12),
                   VoiceStatusPill(
                     label: _voiceLabel(i18n),
                     subtitle: _voiceSubtitle(i18n),
@@ -1199,6 +1934,20 @@ class _BreathingPracticeReleaseCardState
                     _stageFlowLabel(i18n),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    pickUiText(i18n, zh: '通用技巧', en: 'Core technique'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildBulletList(
+                    context,
+                    _generalTechniqueTips(i18n),
+                    tint: _theme.orbStart,
+                    icon: Icons.air_rounded,
+                  ),
                 ],
               ),
             ),
@@ -1250,6 +1999,277 @@ class _BreathingPracticeReleaseCardState
               body: _scenario.caution!.resolve(i18n),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBoltCard(BuildContext context, AppI18n i18n) {
+    final assessment = _boltAssessmentFor(i18n, _lastBoltSeconds);
+    final liveSeconds = (_boltElapsed.inMilliseconds / 1000).toStringAsFixed(1);
+    final currentValue = _boltRunning
+        ? '$liveSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+        : _lastBoltSeconds > 0
+        ? '$_lastBoltSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+        : '--';
+    final bestValue = _bestBoltSeconds > 0
+        ? '$_bestBoltSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+        : '--';
+    final boltSteps = <String>[
+      pickUiText(
+        i18n,
+        zh: '先坐稳 30 到 60 秒，让呼吸恢复安静，再开始测试。',
+        en: 'Sit quietly for 30-60 seconds first so the breath settles before you test.',
+      ),
+      pickUiText(
+        i18n,
+        zh: '用鼻子轻轻小吸、轻轻小呼，然后开始计时并捏住鼻子。',
+        en: 'Take a small inhale and small exhale through the nose, then start timing and pinch the nose.',
+      ),
+      pickUiText(
+        i18n,
+        zh: '在第一次明确想呼吸时就停止，不做最大憋气挑战。',
+        en: 'Stop at the first clear urge to breathe rather than turning this into a maximal-hold challenge.',
+      ),
+      pickUiText(
+        i18n,
+        zh: '测试后用安静鼻呼吸恢复；如果恢复时想猛吸，说明这次憋得太久了。',
+        en: 'Recover with quiet nasal breathing. If you need to gasp on recovery, you held too long.',
+      ),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => setState(() => _boltExpanded = !_boltExpanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: assessment.tint.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(Icons.speed_rounded, color: assessment.tint),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          pickUiText(i18n, zh: 'BOLT 测试', en: 'BOLT test'),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          pickUiText(
+                            i18n,
+                            zh: _boltExpanded
+                                ? '测的是第一次明确呼吸欲望前的舒适停留，不是拼最长憋气。'
+                                : '默认折叠显示摘要，展开后查看步骤、结果解读与推荐练习。',
+                            en: _boltExpanded
+                                ? 'This measures your comfortable pause before the first clear urge to breathe, not the longest possible hold.'
+                                : 'Collapsed by default for a compact summary. Expand for steps, interpretation, and drill recommendations.',
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    _boltExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              ScenarioTagChip(
+                label:
+                    '${pickUiText(i18n, zh: '当前', en: 'Current')} $currentValue',
+                color: assessment.tint,
+              ),
+              ScenarioTagChip(
+                label:
+                    '${pickUiText(i18n, zh: '区间', en: 'Band')} ${assessment.label}',
+                color: _theme.orbEnd,
+              ),
+              ScenarioTagChip(
+                label: '${pickUiText(i18n, zh: '最佳', en: 'Best')} $bestValue',
+                color: _theme.orbStart,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              FilledButton.tonalIcon(
+                onPressed: (_running || _sessionPreparing)
+                    ? null
+                    : () => _boltRunning
+                          ? unawaited(_stopBoltTest())
+                          : unawaited(_startBoltTest()),
+                icon: Icon(
+                  _boltPreparing
+                      ? Icons.hourglass_top_rounded
+                      : _boltRunning
+                      ? Icons.stop_circle_rounded
+                      : Icons.play_arrow_rounded,
+                ),
+                label: Text(
+                  _boltPreparing
+                      ? pickUiText(i18n, zh: '准备中', en: 'Preparing')
+                      : _boltRunning
+                      ? pickUiText(i18n, zh: '记录结果', en: 'Save result')
+                      : pickUiText(i18n, zh: '开始测试', en: 'Start test'),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed:
+                    (_boltPreparing ||
+                        _boltRunning ||
+                        _lastBoltSeconds > 0 ||
+                        _boltElapsed > Duration.zero)
+                    ? () => unawaited(_resetBoltTest())
+                    : null,
+                icon: const Icon(Icons.restart_alt_rounded),
+                label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+              ),
+              TextButton.icon(
+                onPressed: () => setState(() => _boltExpanded = !_boltExpanded),
+                icon: Icon(
+                  _boltExpanded
+                      ? Icons.unfold_less_rounded
+                      : Icons.unfold_more_rounded,
+                ),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: _boltExpanded ? '收起详情' : '展开详情',
+                    en: _boltExpanded ? 'Collapse' : 'Expand',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 220),
+            crossFadeState: _boltExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  BreathingInsightTile(
+                    title: pickUiText(
+                      i18n,
+                      zh: _lastBoltSeconds > 0
+                          ? '结果解读：${assessment.label}'
+                          : '怎么理解 BOLT',
+                      en: _lastBoltSeconds > 0
+                          ? 'Interpretation: ${assessment.label}'
+                          : 'How to read BOLT',
+                    ),
+                    body: _lastBoltSeconds > 0
+                        ? '${assessment.body} ${assessment.nextStep}'
+                        : pickUiText(
+                            i18n,
+                            zh: 'BOLT 常被用来粗略判断你当前对空气饥饿的耐受度，以及更适合做轻柔练习还是进阶屏息。',
+                            en: 'BOLT is often used as a rough read on your current tolerance to air hunger and whether you should emphasize gentle work or more advanced breath holds.',
+                          ),
+                    icon: Icons.insights_rounded,
+                    tint: assessment.tint,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    pickUiText(i18n, zh: '测试步骤', en: 'Test steps'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildBulletList(
+                    context,
+                    boltSteps,
+                    tint: assessment.tint,
+                    icon: Icons.timer_outlined,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    pickUiText(i18n, zh: '推荐练习', en: 'Recommended drills'),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: assessment.recommendedScenarioIds
+                        .map((scenarioId) {
+                          final scenario =
+                              BreathingExperienceCatalog.scenarioById(
+                                scenarioId,
+                              );
+                          return ActionChip(
+                            avatar: Icon(
+                              scenario.id == _altitudeScenarioId
+                                  ? Icons.terrain_rounded
+                                  : Icons.self_improvement_rounded,
+                              size: 16,
+                            ),
+                            label: Text(_scenarioNameById(scenario.id, i18n)),
+                            onPressed: () =>
+                                unawaited(_applyScenario(scenario)),
+                          );
+                        })
+                        .toList(growable: false),
+                  ),
+                  if (!assessment.altitudeReady) ...<Widget>[
+                    const SizedBox(height: 10),
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '当前结果不建议直接进入高海拔模拟，先把鼻呼吸和安静恢复练稳。',
+                        en: 'This score does not suggest going straight into altitude simulation yet. Build nasal breathing and calm recovery first.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1501,24 +2521,37 @@ class _BreathingPracticeReleaseCardState
             alignment: WrapAlignment.center,
             children: <Widget>[
               FilledButton.icon(
-                onPressed: () =>
-                    unawaited(_running ? _pauseSession() : _startSession()),
+                onPressed: (_boltRunning || _boltPreparing || _sessionPreparing)
+                    ? null
+                    : () => unawaited(
+                        _running ? _pauseSession() : _startSession(),
+                      ),
                 icon: Icon(
-                  _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  _sessionPreparing
+                      ? Icons.hourglass_top_rounded
+                      : _running
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
                 ),
                 label: Text(
-                  _running
+                  _sessionPreparing
+                      ? pickUiText(i18n, zh: '准备中', en: 'Preparing')
+                      : _running
                       ? pickUiText(i18n, zh: '暂停', en: 'Pause')
                       : pickUiText(i18n, zh: '开始', en: 'Start'),
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: () => unawaited(_skipStage()),
+                onPressed: _sessionPreparing
+                    ? null
+                    : () => unawaited(_skipStage()),
                 icon: const Icon(Icons.skip_next_rounded),
                 label: Text(pickUiText(i18n, zh: '下一阶段', en: 'Next stage')),
               ),
               OutlinedButton.icon(
-                onPressed: () => unawaited(_resetSession()),
+                onPressed: _sessionPreparing
+                    ? null
+                    : () => unawaited(_resetSession()),
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
               ),
@@ -1599,46 +2632,40 @@ class _BreathingPracticeReleaseCardState
           ),
           const SizedBox(height: 8),
           SwitchListTile.adaptive(
+            value: _includeHoldStage,
+            onChanged: (value) => unawaited(_setIncludeHoldStage(value)),
+            title: Text(pickUiText(i18n, zh: '屏息阶段', en: 'Breath-hold stage')),
+            subtitle: Text(
+              pickUiText(
+                i18n,
+                zh: '默认开启。关闭后会跳过所有屏息步骤，只保留吸气/呼气/停顿。',
+                en: 'On by default. Turn this off to skip all hold phases and keep only inhale, exhale, and pause.',
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+          ),
+          SwitchListTile.adaptive(
             value: _includeRecoveryStage,
             onChanged: (value) => unawaited(_setIncludeRecoveryStage(value)),
             title: Text(pickUiText(i18n, zh: '保留恢复段', en: 'Recovery stage')),
             subtitle: Text(
               pickUiText(
                 i18n,
-                zh: '关闭后只保留吸气/停留/呼气，更适合连续跟练。',
-                en: 'When off, loop only inhale, hold, and exhale for smoother repetition.',
+                zh: '关闭后只保留主要呼吸步骤，更适合连续跟练；停顿阶段也不会播报语音。',
+                en: 'When off, the loop keeps only the main breathing phases for smoother repetition, and pause stages stay silent.',
               ),
             ),
             contentPadding: EdgeInsets.zero,
           ),
           SwitchListTile.adaptive(
             value: _voiceOn,
-            onChanged: (value) {
-              setState(() {
-                _voiceOn = value;
-                _voiceAvailability = value
-                    ? _BreathingVoiceAvailability.checking
-                    : _BreathingVoiceAvailability.off;
-                if (!value) {
-                  _voiceSourceKind = null;
-                  _lastVoiceLocation = null;
-                  _availableCueCount = 0;
-                  _expectedCueCount = 0;
-                }
-              });
-              if (!value) {
-                unawaited(_cuePlayer.stop());
-              } else {
-                unawaited(_warmScenarioCues());
-              }
-              _savePrefs();
-            },
+            onChanged: (value) => unawaited(_setVoiceEnabled(value)),
             title: Text(pickUiText(i18n, zh: '语音提示', en: 'Voice cues')),
             subtitle: Text(
               pickUiText(
                 i18n,
-                zh: '优先下载并缓存云端语音；太短的节拍会自动转为文字和震动，避免语音压住节奏。',
-                en: 'Cloud cues are downloaded and cached first; very short stages automatically fall back to text and haptics.',
+                zh: '优先下载并缓存云端语音；语音会跟随吸气/呼气/屏息阶段，停顿阶段默认保持静音。',
+                en: 'Cloud cues are downloaded and cached first. Voice follows inhale, exhale, and hold phases, while pause stays silent by default.',
               ),
             ),
             contentPadding: EdgeInsets.zero,
@@ -1703,6 +2730,8 @@ class _BreathingPracticeReleaseCardState
             const SizedBox(height: 14),
             _buildScenarioOverviewCard(context, i18n),
             const SizedBox(height: 16),
+            _buildBoltCard(context, i18n),
+            const SizedBox(height: 16),
             _buildPracticeCard(context, i18n),
             const SizedBox(height: 14),
             Wrap(
@@ -1724,6 +2753,12 @@ class _BreathingPracticeReleaseCardState
                 ToolboxMetricCard(
                   label: pickUiText(i18n, zh: '语音来源', en: 'Voice'),
                   value: _voiceSourceChipLabel(i18n),
+                ),
+                ToolboxMetricCard(
+                  label: pickUiText(i18n, zh: 'BOLT', en: 'BOLT'),
+                  value: _lastBoltSeconds > 0
+                      ? '$_lastBoltSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+                      : '--',
                 ),
               ],
             ),

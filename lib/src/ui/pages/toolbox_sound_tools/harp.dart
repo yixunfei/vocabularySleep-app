@@ -168,6 +168,7 @@ class _HarpRealismPreset {
 class _HarpToolState extends State<_HarpTool>
     with SingleTickerProviderStateMixin {
   static const int _stringCount = 12;
+  static const List<int> _harpVariants = <int>[0, 9, 21];
   static const double _springStiffness = 34;
   static const List<_HarpScalePreset> _scalePresets = <_HarpScalePreset>[
     _HarpScalePreset(
@@ -441,12 +442,17 @@ class _HarpToolState extends State<_HarpTool>
     ),
   ];
 
-  final Map<String, ToolboxEffectPlayer> _playersByKey =
-      <String, ToolboxEffectPlayer>{};
+  final Map<String, ToolboxRealisticEffectPlayer> _playersByKey =
+      <String, ToolboxRealisticEffectPlayer>{};
   final List<double> _stringOffsets = List<double>.filled(_stringCount, 0);
   final List<double> _stringVelocities = List<double>.filled(_stringCount, 0);
+  final List<double> _stringAudioFrequencies = List<double>.filled(
+    _stringCount,
+    0,
+  );
   final List<int> _lastPluckAtMillis = List<int>.filled(_stringCount, 0);
   final Map<int, _HarpPointerState> _pointerStates = <int, _HarpPointerState>{};
+  final List<_HarpSweepTrail> _sweepTrails = <_HarpSweepTrail>[];
   late final Ticker _vibrationTicker;
 
   int? _focusedString;
@@ -465,6 +471,7 @@ class _HarpToolState extends State<_HarpTool>
   late double _swipeThreshold;
   String? _activeRealismPresetId;
   bool _showGestureCoach = true;
+  bool _advancedSettingsExpanded = false;
 
   @override
   void initState() {
@@ -536,7 +543,47 @@ class _HarpToolState extends State<_HarpTool>
 
   List<double> get _activeNotes => _activeScale.notes;
 
-  bool get _isHorizontalLayout => true;
+  double get _audioDecayFromDamping {
+    final normalized = ((_damping - 4.0) / 14.0).clamp(0.0, 1.0).toDouble();
+    return (1.28 - normalized * 0.62).clamp(0.66, 1.28).toDouble();
+  }
+
+  bool get _isHorizontalLayout {
+    if (!mounted) {
+      return true;
+    }
+    final size = MediaQuery.sizeOf(context);
+    final narrowPortrait = size.height > size.width * 1.08 && size.width < 720;
+    return narrowPortrait;
+  }
+
+  String _layoutLabel(AppI18n i18n) {
+    return _isHorizontalLayout
+        ? pickUiText(i18n, zh: '横弦', en: 'Horizontal')
+        : pickUiText(i18n, zh: '竖弦', en: 'Vertical');
+  }
+
+  String _playerKeyForFrequency(double frequency) {
+    return '${frequency.toStringAsFixed(2)}|$_pluckStyleId:'
+        '${_reverbForAudio.toStringAsFixed(2)}:'
+        '${_audioDecayFromDamping.toStringAsFixed(2)}';
+  }
+
+  double _playbackRateForIntensity(double intensity, {bool resonance = false}) {
+    final clamped = intensity.clamp(0.0, 1.0).toDouble();
+    final bloom = resonance
+        ? 0.998 + math.pow(clamped, 1.2).toDouble() * 0.008
+        : 0.996 + math.pow(clamped, 1.35).toDouble() * 0.018;
+    return bloom.clamp(0.992, 1.02).toDouble();
+  }
+
+  Set<int> _activeChordStringIndexes() {
+    final indexes = <int>{};
+    for (final frequency in _activeChordFrequencies()) {
+      indexes.add(_nearestStringByFrequency(frequency));
+    }
+    return indexes;
+  }
 
   String _scaleLabel(AppI18n i18n, _HarpScalePreset preset) {
     return switch (preset.id) {
@@ -680,7 +727,7 @@ class _HarpToolState extends State<_HarpTool>
   }
 
   Future<void> _enterImmersiveMode() async {
-    await _enterToolboxPortraitMode();
+    await _enterToolboxImmersiveMode(orientations: _toolboxAllOrientations);
   }
 
   Future<void> _exitImmersiveMode() async {
@@ -734,18 +781,21 @@ class _HarpToolState extends State<_HarpTool>
     }
   }
 
-  ToolboxEffectPlayer _playerForFrequency(double frequency) {
-    final key =
-        '${frequency.toStringAsFixed(2)}|$_pluckStyleId|${_reverbForAudio.toStringAsFixed(2)}';
+  ToolboxRealisticEffectPlayer _playerForFrequency(double frequency) {
+    final key = _playerKeyForFrequency(frequency);
     final existing = _playersByKey[key];
     if (existing != null) return existing;
-    final created = ToolboxEffectPlayer(
-      ToolboxAudioBank.harpNote(
+    final created = ToolboxRealisticEffectPlayer.build(
+      variants: _harpVariants,
+      bytesForVariant: (variant) => ToolboxAudioBank.harpNote(
         frequency,
         style: _pluckStyleId,
         reverb: _reverbForAudio,
+        decay: _audioDecayFromDamping,
+        variant: variant,
       ),
-      maxPlayers: 8,
+      maxPlayers: 4,
+      volumeJitter: 0.06,
     );
     _playersByKey[key] = created;
     return created;
@@ -795,6 +845,39 @@ class _HarpToolState extends State<_HarpTool>
     Size size, {
     required bool horizontalLayout,
   }) {
+    final primaryPrevious = horizontalLayout ? previous.dy : previous.dx;
+    final primaryCurrent = horizontalLayout ? current.dy : current.dx;
+    final totalSpan = horizontalLayout ? size.height : size.width;
+    final adaptiveInset = totalSpan * (horizontalLayout ? 0.07 : 0.16);
+    final minInset = horizontalLayout ? 18.0 : 34.0;
+    final leadingInset = math.max(minInset, adaptiveInset);
+    final trailingInset = math.max(minInset, adaptiveInset);
+    final usableSpan = math.max(1.0, totalSpan - leadingInset - trailingInset);
+    final spacing = _stringCount <= 1
+        ? usableSpan
+        : usableSpan / (_stringCount - 1);
+    final sweepDistance = (current - previous).distance;
+    final hitPadding = (spacing * 0.22 + sweepDistance * 0.14).clamp(
+      2.0,
+      spacing * 0.75,
+    );
+    final minAxis = math.min(primaryPrevious, primaryCurrent) - hitPadding;
+    final maxAxis = math.max(primaryPrevious, primaryCurrent) + hitPadding;
+    final indexes = <int>[
+      for (var i = 0; i < _stringCount; i += 1)
+        if (_stringTrackAt(i, size, horizontalLayout: horizontalLayout) >=
+                minAxis &&
+            _stringTrackAt(i, size, horizontalLayout: horizontalLayout) <=
+                maxAxis)
+          i,
+    ];
+    if (indexes.isNotEmpty) {
+      if (primaryCurrent < primaryPrevious) {
+        return indexes.reversed.toList(growable: false);
+      }
+      return indexes;
+    }
+
     final startIndex = _nearestStringByPosition(
       previous,
       size,
@@ -809,11 +892,11 @@ class _HarpToolState extends State<_HarpTool>
       return const <int>[];
     }
     final step = endIndex > startIndex ? 1 : -1;
-    final indexes = <int>[];
+    final fallbackIndexes = <int>[];
     for (var i = startIndex + step; i != endIndex + step; i += step) {
-      indexes.add(i);
+      fallbackIndexes.add(i);
     }
-    return indexes;
+    return fallbackIndexes;
   }
 
   double _swipeIntensity(Offset delta) {
@@ -826,6 +909,43 @@ class _HarpToolState extends State<_HarpTool>
     return axisDelta >= 0 ? 1.0 : -1.0;
   }
 
+  void _addSweepTrail(Offset position, Offset delta) {
+    final strength = (delta.distance / 78).clamp(0.2, 1.0).toDouble();
+    _sweepTrails.add(
+      _HarpSweepTrail(
+        position: position,
+        velocity: delta,
+        createdAtMicros: DateTime.now().microsecondsSinceEpoch,
+        strength: strength,
+      ),
+    );
+    if (_sweepTrails.length > 24) {
+      _sweepTrails.removeRange(0, _sweepTrails.length - 24);
+    }
+    _startVibrationTicker();
+  }
+
+  void _pruneSweepTrails(int nowMicros) {
+    _sweepTrails.removeWhere(
+      (trail) => nowMicros - trail.createdAtMicros > 280000,
+    );
+  }
+
+  void _stopStringAudio(int index) {
+    if (index < 0 || index >= _stringAudioFrequencies.length) {
+      return;
+    }
+    final frequency = _stringAudioFrequencies[index];
+    if (frequency <= 0) {
+      return;
+    }
+    _stringAudioFrequencies[index] = 0;
+    final player = _playersByKey[_playerKeyForFrequency(frequency)];
+    if (player != null) {
+      unawaited(player.stop());
+    }
+  }
+
   void _startVibrationTicker() {
     if (_vibrationTicker.isActive) return;
     _lastTickMicros = null;
@@ -834,6 +954,7 @@ class _HarpToolState extends State<_HarpTool>
 
   void _tickStrings(Duration elapsed) {
     final currentMicros = elapsed.inMicroseconds;
+    final wallClockMicros = DateTime.now().microsecondsSinceEpoch;
     final previousMicros = _lastTickMicros;
     _lastTickMicros = currentMicros;
     if (previousMicros == null) return;
@@ -844,6 +965,7 @@ class _HarpToolState extends State<_HarpTool>
       deltaSeconds = 1 / 60;
     }
 
+    _pruneSweepTrails(wallClockMicros);
     var hasMotion = false;
     for (var i = 0; i < _stringOffsets.length; i += 1) {
       final offset = _stringOffsets[i];
@@ -853,6 +975,9 @@ class _HarpToolState extends State<_HarpTool>
       final nextOffset = offset + nextVelocity * deltaSeconds;
 
       if (nextOffset.abs() < 0.02 && nextVelocity.abs() < 0.02) {
+        if (_stringOffsets[i] != 0 || _stringVelocities[i] != 0) {
+          _stopStringAudio(i);
+        }
         _stringOffsets[i] = 0;
         _stringVelocities[i] = 0;
         continue;
@@ -860,6 +985,10 @@ class _HarpToolState extends State<_HarpTool>
 
       _stringOffsets[i] = nextOffset;
       _stringVelocities[i] = nextVelocity;
+      hasMotion = true;
+    }
+
+    if (_sweepTrails.isNotEmpty) {
       hasMotion = true;
     }
 
@@ -894,9 +1023,15 @@ class _HarpToolState extends State<_HarpTool>
 
     final frequency = frequencyOverride ?? _activeNotes[index];
     final clampedIntensity = intensity.clamp(0.18, 1.0).toDouble();
+    _stringAudioFrequencies[index] = frequency;
     if (!_muted) {
       final volume = (0.22 + clampedIntensity * 0.78).clamp(0.0, 1.0);
-      unawaited(_playerForFrequency(frequency).play(volume: volume.toDouble()));
+      final playbackRate = _playbackRateForIntensity(clampedIntensity);
+      unawaited(
+        _playerForFrequency(
+          frequency,
+        ).play(volume: volume.toDouble(), playbackRate: playbackRate),
+      );
     }
 
     _stringOffsets[index] += direction * (1.8 + clampedIntensity * 2.4);
@@ -988,6 +1123,7 @@ class _HarpToolState extends State<_HarpTool>
     final delta = current - previous;
     if (delta.distance <= _swipeThreshold) return;
 
+    _addSweepTrail(current, delta);
     final intensity = _swipeIntensity(delta);
     final direction = _swipeDirection(
       delta,
@@ -1114,20 +1250,36 @@ class _HarpToolState extends State<_HarpTool>
     final resonanceIntervals = _activeChord.intervals.where((step) => step > 0);
     var slot = 0;
     for (final step in resonanceIntervals) {
-      if (slot >= 1) break;
+      if (slot >= 2) break;
       final frequency = baseFrequency * math.pow(2.0, step / 12.0).toDouble();
       final index = _nearestStringByFrequency(frequency);
       if (index == sourceIndex) continue;
       final strength = (0.035 + intensity * 0.08) / (slot + 1);
-      if (!_muted) {
-        unawaited(
-          _playerForFrequency(
-            frequency,
-          ).play(volume: strength.clamp(0.02, 0.12).toDouble()),
-        );
-      }
-      _stringOffsets[index] += direction * (0.16 + strength * 0.8);
-      _stringVelocities[index] += direction * (3 + strength * 12);
+      final playbackRate = _playbackRateForIntensity(
+        strength * 4,
+        resonance: true,
+      );
+      final delayMs = 16 + slot * 18;
+      Future<void>.delayed(Duration(milliseconds: delayMs), () {
+        if (!mounted) return;
+        _stringAudioFrequencies[index] = frequency;
+        if (!_muted) {
+          unawaited(
+            _playerForFrequency(frequency).play(
+              volume: strength.clamp(0.02, 0.12).toDouble(),
+              playbackRate: playbackRate,
+            ),
+          );
+        }
+        _stringOffsets[index] += direction * (0.16 + strength * 0.8);
+        _stringVelocities[index] += direction * (3 + strength * 12);
+        _startVibrationTicker();
+        if (mounted) {
+          setState(() {
+            _focusedString = index;
+          });
+        }
+      });
       slot += 1;
     }
   }
@@ -1228,6 +1380,8 @@ class _HarpToolState extends State<_HarpTool>
               colorScheme: Theme.of(context).colorScheme,
               paletteColors: _activePalette.colors,
               pluckStyleId: _pluckStyleId,
+              chordStringIndexes: _activeChordStringIndexes(),
+              sweepTrails: _sweepTrails,
               horizontalLayout: _isHorizontalLayout,
             ),
           ),
@@ -1370,7 +1524,7 @@ class _HarpToolState extends State<_HarpTool>
                 children: <Widget>[
                   _CompactMetric(
                     label: pickUiText(i18n, zh: '布局', en: 'Layout'),
-                    value: pickUiText(i18n, zh: '横向', en: 'Horizontal'),
+                    value: _layoutLabel(i18n),
                   ),
                   const SizedBox(width: 8),
                   _CompactMetric(
@@ -1463,9 +1617,10 @@ class _HarpToolState extends State<_HarpTool>
               if (!mounted) return;
               setState(mutation);
               setSheetState(() {});
+              _notifyConfigChanged();
             }
 
-            return _buildHarpSettingsSheetContent(
+            return _buildHarpSettingsSheetContentV2(
               context,
               i18n,
               applySettings: applySettings,
@@ -1476,12 +1631,15 @@ class _HarpToolState extends State<_HarpTool>
     );
   }
 
+  // ignore: unused_element
   Widget _buildHarpSettingsSheetContent(
     BuildContext context,
     AppI18n i18n, {
     required void Function(VoidCallback mutation) applySettings,
   }) {
     final theme = Theme.of(context);
+    TextStyle? titleStyle() =>
+        theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
       child: Column(
@@ -1489,9 +1647,7 @@ class _HarpToolState extends State<_HarpTool>
         children: <Widget>[
           Text(
             pickUiText(i18n, zh: '高真实度预设', en: 'High Realism Presets'),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+            style: titleStyle(),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -1644,6 +1800,331 @@ class _HarpToolState extends State<_HarpTool>
                 _markRealismCustom();
               });
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHarpSettingsSheetContentV2(
+    BuildContext context,
+    AppI18n i18n, {
+    required void Function(VoidCallback mutation) applySettings,
+  }) {
+    final theme = Theme.of(context);
+    TextStyle? titleStyle() =>
+        theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            pickUiText(i18n, zh: '高真实度预设', en: 'High Realism Presets'),
+            style: titleStyle(),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _realismPresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_realismLabel(i18n, preset)),
+                    selected: _activeRealismPresetId == preset.id,
+                    tooltip: _realismDescription(i18n, preset),
+                    onSelected: (_) {
+                      _applyRealismPreset(preset);
+                      applySettings(() {});
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            pickUiText(i18n, zh: '主题与音色', en: 'Theme & Timbre'),
+            style: titleStyle(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            pickUiText(i18n, zh: '音色', en: 'Timbre'),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _pluckPresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_pluckLabel(i18n, preset)),
+                    selected: _pluckStyleId == preset.id,
+                    tooltip: _pluckDescription(i18n, preset),
+                    onSelected: (_) {
+                      if (_pluckStyleId == preset.id) return;
+                      applySettings(() {
+                        _pluckStyleId = preset.id;
+                        _markRealismCustom();
+                      });
+                      _invalidateAudioPlayers();
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            pickUiText(i18n, zh: '主题', en: 'Palette'),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _palettePresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_paletteLabel(i18n, preset)),
+                    selected: _paletteId == preset.id,
+                    onSelected: (_) {
+                      if (_paletteId == preset.id) return;
+                      applySettings(() {
+                        _paletteId = preset.id;
+                        _markRealismCustom();
+                      });
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            pickUiText(
+              i18n,
+              zh: '残响 ${(_reverbUi * 100).round()}%',
+              en: 'Reverb ${(_reverbUi * 100).round()}%',
+            ),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Slider(
+            value: _reverbUi,
+            min: 0.0,
+            max: 0.8,
+            divisions: 16,
+            onChanged: (value) {
+              applySettings(() {
+                _reverbUi = value;
+                _markRealismCustom();
+              });
+            },
+            onChangeEnd: (value) {
+              final quantized = (value * 20).round() / 20;
+              applySettings(() {
+                _reverbUi = quantized;
+                _reverbForAudio = quantized;
+                _markRealismCustom();
+              });
+              _invalidateAudioPlayers();
+            },
+          ),
+          const SizedBox(height: 20),
+          Text(
+            pickUiText(i18n, zh: '调式与和声', en: 'Scale & Harmony'),
+            style: titleStyle(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            pickUiText(i18n, zh: '调式', en: 'Scale'),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _scalePresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_scaleLabel(i18n, preset)),
+                    selected: _scaleId == preset.id,
+                    onSelected: (_) {
+                      if (_scaleId == preset.id) return;
+                      applySettings(() {
+                        _scaleId = preset.id;
+                        _markRealismCustom();
+                      });
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            pickUiText(i18n, zh: '和弦', en: 'Chord'),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _chordPresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_chordLabel(i18n, preset)),
+                    selected: _chordId == preset.id,
+                    onSelected: (_) {
+                      if (_chordId == preset.id) return;
+                      applySettings(() {
+                        _chordId = preset.id;
+                        _markRealismCustom();
+                      });
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            pickUiText(i18n, zh: '琶音模式', en: 'Arpeggio'),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _patternPresets
+                .map(
+                  (preset) => ChoiceChip(
+                    label: Text(_patternLabel(i18n, preset)),
+                    selected: _patternId == preset.id,
+                    tooltip: _patternDescription(i18n, preset),
+                    onSelected: (_) {
+                      if (_patternId == preset.id) return;
+                      applySettings(() {
+                        _patternId = preset.id;
+                        _markRealismCustom();
+                      });
+                    },
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 8),
+          FilterChip(
+            label: Text(pickUiText(i18n, zh: '和弦共振', en: 'Chord resonance')),
+            selected: _chordResonanceEnabled,
+            onSelected: (selected) {
+              applySettings(() {
+                _chordResonanceEnabled = selected;
+                _markRealismCustom();
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          Theme(
+            data: theme.copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              initiallyExpanded: _advancedSettingsExpanded,
+              onExpansionChanged: (expanded) {
+                applySettings(() {
+                  _advancedSettingsExpanded = expanded;
+                });
+              },
+              title: Text(
+                pickUiText(i18n, zh: '高级微调', en: 'Advanced'),
+                style: titleStyle(),
+              ),
+              subtitle: Text(
+                pickUiText(
+                  i18n,
+                  zh: '阻尼、扫弦死区与和弦根音。',
+                  en: 'Damping, sweep deadzone, and chord root.',
+                ),
+              ),
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              children: <Widget>[
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '和弦根音 ${_chordRootIndex + 1} / $_stringCount',
+                    en: 'Chord root ${_chordRootIndex + 1} / $_stringCount',
+                  ),
+                ),
+                Slider(
+                  value: _chordRootIndex.toDouble(),
+                  min: 0,
+                  max: (_stringCount - 1).toDouble(),
+                  divisions: _stringCount - 1,
+                  onChanged: (value) {
+                    applySettings(() {
+                      _chordRootIndex = value.round();
+                      _markRealismCustom();
+                    });
+                  },
+                ),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '阻尼 ${_damping.toStringAsFixed(1)}',
+                    en: 'Damping ${_damping.toStringAsFixed(1)}',
+                  ),
+                ),
+                Slider(
+                  value: _damping,
+                  min: 4,
+                  max: 18,
+                  divisions: 28,
+                  onChanged: (value) {
+                    applySettings(() {
+                      _damping = value;
+                      _markRealismCustom();
+                    });
+                  },
+                  onChangeEnd: (value) {
+                    final quantized = (value * 10).round() / 10;
+                    applySettings(() {
+                      _damping = quantized;
+                      _markRealismCustom();
+                    });
+                    _invalidateAudioPlayers();
+                  },
+                ),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '扫弦死区 ${_swipeThreshold.toStringAsFixed(1)} px',
+                    en: 'Sweep deadzone ${_swipeThreshold.toStringAsFixed(1)} px',
+                  ),
+                ),
+                Slider(
+                  value: _swipeThreshold,
+                  min: 0.4,
+                  max: 8,
+                  divisions: 38,
+                  onChanged: (value) {
+                    applySettings(() {
+                      _swipeThreshold = value;
+                      _markRealismCustom();
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -2034,6 +2515,20 @@ class _HarpPointerState {
   int? lastDragStringIndex;
 }
 
+class _HarpSweepTrail {
+  const _HarpSweepTrail({
+    required this.position,
+    required this.velocity,
+    required this.createdAtMicros,
+    required this.strength,
+  });
+
+  final Offset position;
+  final Offset velocity;
+  final int createdAtMicros;
+  final double strength;
+}
+
 class _CompactMetric extends StatelessWidget {
   const _CompactMetric({required this.label, required this.value});
 
@@ -2085,6 +2580,8 @@ class _HarpPainter extends CustomPainter {
     required this.colorScheme,
     required this.paletteColors,
     required this.pluckStyleId,
+    required this.chordStringIndexes,
+    required this.sweepTrails,
     required this.horizontalLayout,
   });
 
@@ -2095,6 +2592,8 @@ class _HarpPainter extends CustomPainter {
   final ColorScheme colorScheme;
   final List<Color> paletteColors;
   final String pluckStyleId;
+  final Set<int> chordStringIndexes;
+  final List<_HarpSweepTrail> sweepTrails;
   final bool horizontalLayout;
 
   double _stringTrackAt(int index, Size size) {
@@ -2251,6 +2750,30 @@ class _HarpPainter extends CustomPainter {
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, auroraPaint);
 
+    final nowMicros = DateTime.now().microsecondsSinceEpoch;
+    for (final trail in sweepTrails) {
+      final ageT = ((nowMicros - trail.createdAtMicros) / 280000)
+          .clamp(0.0, 1.0)
+          .toDouble();
+      if (ageT >= 1.0) {
+        continue;
+      }
+      final fade = 1.0 - ageT;
+      final trailColor = _paletteColorAt(
+        (0.24 + trail.strength * 0.52).clamp(0.0, 1.0).toDouble(),
+      );
+      final radius = 10 + trail.strength * 16;
+      final stretched = trail.velocity / math.max(1.0, trail.velocity.distance);
+      final center = trail.position - stretched * (trail.strength * 6);
+      final trailPaint = Paint()
+        ..color = trailColor.withValues(alpha: 0.14 * fade)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      canvas.drawCircle(center, radius * fade, trailPaint);
+      final corePaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.18 * fade);
+      canvas.drawCircle(center, math.max(1.5, radius * 0.18 * fade), corePaint);
+    }
+
     final topY = size.height * 0.06;
     final bottomY = size.height * 0.94;
     final leftX = size.width * 0.06;
@@ -2270,23 +2793,29 @@ class _HarpPainter extends CustomPainter {
           .toDouble();
       final activity = (sway.abs() / 22).clamp(0.0, 1.0).toDouble();
       final active = focusedString == index || activity > 0.04;
+      final chordTone = chordStringIndexes.contains(index);
+      final harmonyAlpha = chordTone || active ? 1.0 : 0.42;
       final paletteColor = _paletteColorAt(index / (stringCount - 1));
       final baseColor = Color.lerp(noteColor, paletteColor, 0.22) ?? noteColor;
       final idleColor =
-          Color.lerp(baseColor.withValues(alpha: 0.92), Colors.white, 0.42) ??
-          baseColor.withValues(alpha: 0.92);
+          Color.lerp(
+            baseColor.withValues(alpha: 0.92 * harmonyAlpha),
+            Colors.white,
+            chordTone ? 0.48 : 0.32,
+          ) ??
+          baseColor.withValues(alpha: 0.92 * harmonyAlpha);
       final strokeColor = Color.lerp(
         idleColor,
         Colors.white,
         active ? (0.52 + activity * 0.48).clamp(0.0, 1.0) : 0.0,
       );
       final skeletonPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.26)
+        ..color = Colors.white.withValues(alpha: 0.26 * harmonyAlpha)
         ..strokeWidth = math.max(1.35, idleStroke - 0.72)
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
       final basePaint = Paint()
-        ..color = baseColor.withValues(alpha: 0.86)
+        ..color = baseColor.withValues(alpha: 0.86 * harmonyAlpha)
         ..strokeWidth = math.max(1.5, idleStroke - 0.42)
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
@@ -2301,7 +2830,9 @@ class _HarpPainter extends CustomPainter {
       canvas.drawPath(basePath, basePaint);
       final paint = Paint()
         ..color = strokeColor ?? colorScheme.primary
-        ..strokeWidth = active ? idleStroke + 1.2 + activity * 0.95 : idleStroke
+        ..strokeWidth = active || chordTone
+            ? idleStroke + (active ? 1.2 + activity * 0.95 : 0.28)
+            : idleStroke
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
 
@@ -2360,7 +2891,9 @@ class _HarpPainter extends CustomPainter {
       canvas.drawPath(path, paint);
 
       final anchorPaint = Paint()
-        ..color = (strokeColor ?? colorScheme.primary).withValues(alpha: 0.75);
+        ..color = (strokeColor ?? colorScheme.primary).withValues(
+          alpha: chordTone ? 0.9 : 0.75 * harmonyAlpha,
+        );
       if (horizontalLayout) {
         canvas.drawCircle(Offset(leftX, track), 2.5, anchorPaint);
         canvas.drawCircle(Offset(rightX, track), 2.2, anchorPaint);
@@ -2369,8 +2902,28 @@ class _HarpPainter extends CustomPainter {
         canvas.drawCircle(Offset(track, bottomY), 2.2, anchorPaint);
       }
 
+      if (chordTone) {
+        final runePaint = Paint()
+          ..color = (strokeColor ?? colorScheme.primary).withValues(alpha: 0.32)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+        final runeA = horizontalLayout
+            ? Offset(leftX, track)
+            : Offset(track, topY);
+        final runeB = horizontalLayout
+            ? Offset(rightX, track)
+            : Offset(track, bottomY);
+        canvas.drawCircle(runeA, 6.2, runePaint);
+        canvas.drawCircle(runeB, 5.2, runePaint);
+      }
+
       final activeDot = Paint()
-        ..color = baseColor.withValues(alpha: active ? 0.96 : 0.5);
+        ..color = baseColor.withValues(
+          alpha: active
+              ? 0.96
+              : chordTone
+              ? 0.72
+              : 0.5 * harmonyAlpha,
+        );
       final activeDotOffset = horizontalLayout
           ? Offset(rightX, track)
           : Offset(track, bottomY);
@@ -2380,7 +2933,9 @@ class _HarpPainter extends CustomPainter {
         text: TextSpan(
           text: _noteName(pitchClass),
           style: TextStyle(
-            color: (strokeColor ?? noteColor).withValues(alpha: 0.9),
+            color: (strokeColor ?? noteColor).withValues(
+              alpha: chordTone ? 0.96 : 0.9 * harmonyAlpha,
+            ),
             fontSize: 9.5 * textScale,
             fontWeight: FontWeight.w700,
           ),
@@ -2414,7 +2969,7 @@ class _HarpPainter extends CustomPainter {
       );
       canvas.drawRRect(
         labelBg,
-        Paint()..color = Colors.black.withValues(alpha: 0.3),
+        Paint()..color = Colors.black.withValues(alpha: chordTone ? 0.38 : 0.3),
       );
       labelPainter.paint(canvas, labelOffset);
     }

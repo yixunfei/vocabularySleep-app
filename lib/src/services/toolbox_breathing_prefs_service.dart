@@ -9,45 +9,57 @@ class BreathingPracticePrefsState {
     this.presetId = 'diaphragm_4262',
     this.themeId = 'ocean',
     this.targetMinutes = 5,
+    this.breathHoldEnabled = true,
     this.includeRecoveryStage = false,
     this.voiceGuidanceEnabled = true,
     this.textGuidanceEnabled = true,
     this.hapticsEnabled = true,
     this.completedSessions = 0,
     this.totalPracticeSeconds = 0,
+    this.lastBoltSeconds = 0,
+    this.bestBoltSeconds = 0,
   });
 
   final String presetId;
   final String themeId;
   final int targetMinutes;
+  final bool breathHoldEnabled;
   final bool includeRecoveryStage;
   final bool voiceGuidanceEnabled;
   final bool textGuidanceEnabled;
   final bool hapticsEnabled;
   final int completedSessions;
   final int totalPracticeSeconds;
+  final int lastBoltSeconds;
+  final int bestBoltSeconds;
 
   BreathingPracticePrefsState copyWith({
     String? presetId,
     String? themeId,
     int? targetMinutes,
+    bool? breathHoldEnabled,
     bool? includeRecoveryStage,
     bool? voiceGuidanceEnabled,
     bool? textGuidanceEnabled,
     bool? hapticsEnabled,
     int? completedSessions,
     int? totalPracticeSeconds,
+    int? lastBoltSeconds,
+    int? bestBoltSeconds,
   }) {
     return BreathingPracticePrefsState(
       presetId: presetId ?? this.presetId,
       themeId: themeId ?? this.themeId,
       targetMinutes: targetMinutes ?? this.targetMinutes,
+      breathHoldEnabled: breathHoldEnabled ?? this.breathHoldEnabled,
       includeRecoveryStage: includeRecoveryStage ?? this.includeRecoveryStage,
       voiceGuidanceEnabled: voiceGuidanceEnabled ?? this.voiceGuidanceEnabled,
       textGuidanceEnabled: textGuidanceEnabled ?? this.textGuidanceEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       completedSessions: completedSessions ?? this.completedSessions,
       totalPracticeSeconds: totalPracticeSeconds ?? this.totalPracticeSeconds,
+      lastBoltSeconds: lastBoltSeconds ?? this.lastBoltSeconds,
+      bestBoltSeconds: bestBoltSeconds ?? this.bestBoltSeconds,
     );
   }
 
@@ -56,12 +68,15 @@ class BreathingPracticePrefsState {
       'preset_id': presetId,
       'theme_id': themeId,
       'target_minutes': targetMinutes,
+      'breath_hold_enabled': breathHoldEnabled,
       'include_recovery_stage': includeRecoveryStage,
       'voice_guidance_enabled': voiceGuidanceEnabled,
       'text_guidance_enabled': textGuidanceEnabled,
       'haptics_enabled': hapticsEnabled,
       'completed_sessions': completedSessions,
       'total_practice_seconds': totalPracticeSeconds,
+      'last_bolt_seconds': lastBoltSeconds,
+      'best_bolt_seconds': bestBoltSeconds,
     };
   }
 
@@ -78,6 +93,7 @@ class BreathingPracticePrefsState {
       targetMinutes: ((map['target_minutes'] as num?)?.toInt() ?? 5)
           .clamp(2, 20)
           .toInt(),
+      breathHoldEnabled: map['breath_hold_enabled'] as bool? ?? true,
       includeRecoveryStage: map['include_recovery_stage'] as bool? ?? false,
       voiceGuidanceEnabled: map['voice_guidance_enabled'] as bool? ?? true,
       textGuidanceEnabled: map['text_guidance_enabled'] as bool? ?? true,
@@ -89,6 +105,12 @@ class BreathingPracticePrefsState {
           ((map['total_practice_seconds'] as num?)?.toInt() ?? 0)
               .clamp(0, 2147483647)
               .toInt(),
+      lastBoltSeconds: ((map['last_bolt_seconds'] as num?)?.toInt() ?? 0)
+          .clamp(0, 300)
+          .toInt(),
+      bestBoltSeconds: ((map['best_bolt_seconds'] as num?)?.toInt() ?? 0)
+          .clamp(0, 300)
+          .toInt(),
     );
   }
 }
@@ -142,7 +164,7 @@ class ToolboxBreathingPrefsService {
       'deep_36' => 'calm_36',
       'refresh_3131' => 'focus_nasal_44',
       'energize_3131' => 'focus_nasal_44',
-      'altitude_2442' => 'physiological_sigh_216',
+      'altitude_2442' => 'altitude_sim_3663',
       _ => normalized,
     };
   }

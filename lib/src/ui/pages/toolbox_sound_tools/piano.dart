@@ -10,6 +10,16 @@ class _PianoTool extends StatefulWidget {
 }
 
 class _PianoToolState extends State<_PianoTool> {
+  static const List<double> _velocityBuckets = <double>[
+    0.28,
+    0.42,
+    0.58,
+    0.74,
+    0.88,
+    1.0,
+  ];
+
+  static const List<int> _pianoVariants = <int>[0, 9, 21];
   static final List<_PianoKey> _allKeys = _buildChromaticKeys();
   static const List<_PianoPitchSet> _scaleSets = <_PianoPitchSet>[
     _PianoPitchSet(id: 'major', intervals: <int>[0, 2, 4, 5, 7, 9, 11]),
@@ -187,11 +197,12 @@ class _PianoToolState extends State<_PianoTool> {
         ),
       ];
 
-  final Map<String, ToolboxEffectPlayer> _players =
-      <String, ToolboxEffectPlayer>{};
+  final Map<String, ToolboxRealisticEffectPlayer> _players =
+      <String, ToolboxRealisticEffectPlayer>{};
   final Map<int, Offset> _activePointers = <int, Offset>{};
   final Map<int, String> _activePointerKeyIds = <int, String>{};
   final Map<String, int> _activeKeyPulseCounts = <String, int>{};
+  final math.Random _humanizeRandom = math.Random();
 
   Set<String> _activeKeyIds = <String>{};
   String _presetId = _presets.first.id;
@@ -217,6 +228,10 @@ class _PianoToolState extends State<_PianoTool> {
   bool _aggressiveOneHandMode = true;
   bool _didApplyResponsiveDefaults = false;
   DateTime? _lastRangeGestureAt;
+  Timer? _rangeWarmUpTimer;
+  int _rangeWarmUpVersion = 0;
+  int _visibleOctaveSpan = 1;
+  bool _isRangeWindowPreparing = false;
   _PianoCompactDeckFocus _compactDualFocus = _PianoCompactDeckFocus.low;
 
   @override
@@ -443,7 +458,13 @@ class _PianoToolState extends State<_PianoTool> {
     }
     _players.clear();
     if (warmUp) {
-      unawaited(_warmUpVisibleWindow());
+      _scheduleRangeWarmUp(
+        octaveSpan: _visibleOctaveSpan,
+        rangeStart: _rangeStartOctave,
+        immediate: true,
+        preloadAllKeys: true,
+        indicate: false,
+      );
     }
   }
 
@@ -538,23 +559,88 @@ class _PianoToolState extends State<_PianoTool> {
     );
   }
 
-  Future<void> _warmUpVisibleWindow({int? octaveSpan, int? rangeStart}) async {
-    final span = octaveSpan ?? 1;
+  void _setRangePreparing(bool value) {
+    if (!mounted || _isRangeWindowPreparing == value) {
+      return;
+    }
+    setState(() {
+      _isRangeWindowPreparing = value;
+    });
+  }
+
+  void _scheduleRangeWarmUp({
+    required int octaveSpan,
+    required int rangeStart,
+    bool immediate = false,
+    bool preloadAllKeys = false,
+    bool indicate = true,
+  }) {
+    _rangeWarmUpTimer?.cancel();
+    _rangeWarmUpTimer = null;
+    final normalizedStart = rangeStart.clamp(0, _maxRangeStart(octaveSpan));
+    final version = ++_rangeWarmUpVersion;
+    if (indicate) {
+      _setRangePreparing(true);
+    } else {
+      _setRangePreparing(false);
+    }
+
+    Future<void> runWarmUp() async {
+      try {
+        await _warmUpVisibleWindow(
+          octaveSpan: octaveSpan,
+          rangeStart: normalizedStart,
+          preloadAllKeys: preloadAllKeys,
+          stopIfStale: () => version != _rangeWarmUpVersion,
+        );
+      } finally {
+        if (mounted && version == _rangeWarmUpVersion) {
+          _setRangePreparing(false);
+        }
+      }
+    }
+
+    if (immediate) {
+      unawaited(runWarmUp());
+      return;
+    }
+
+    _rangeWarmUpTimer = Timer(const Duration(milliseconds: 120), () {
+      _rangeWarmUpTimer = null;
+      unawaited(runWarmUp());
+    });
+  }
+
+  Future<void> _warmUpVisibleWindow({
+    int? octaveSpan,
+    int? rangeStart,
+    bool preloadAllKeys = false,
+    bool Function()? stopIfStale,
+  }) async {
+    final span = octaveSpan ?? _visibleOctaveSpan;
     final start = (rangeStart ?? _rangeStartOctave).clamp(
       0,
       _maxRangeStart(span),
     );
     final slice = _sliceFor(start, span);
-    final candidates = <_PianoKey>[
-      if (slice.whiteKeys.isNotEmpty) slice.whiteKeys.first,
-      if (slice.whiteKeys.isNotEmpty)
-        slice.whiteKeys[slice.whiteKeys.length ~/ 2],
-      if (slice.blackKeys.isNotEmpty)
-        slice.blackKeys[slice.blackKeys.length ~/ 2].key,
-      if (slice.whiteKeys.isNotEmpty) slice.whiteKeys.last,
-    ];
+    final candidates = preloadAllKeys
+        ? <_PianoKey>[
+            ...slice.whiteKeys,
+            ...slice.blackKeys.map((placement) => placement.key),
+          ]
+        : <_PianoKey>[
+            if (slice.whiteKeys.isNotEmpty) slice.whiteKeys.first,
+            if (slice.whiteKeys.isNotEmpty)
+              slice.whiteKeys[slice.whiteKeys.length ~/ 2],
+            if (slice.blackKeys.isNotEmpty)
+              slice.blackKeys[slice.blackKeys.length ~/ 2].key,
+            if (slice.whiteKeys.isNotEmpty) slice.whiteKeys.last,
+          ];
     final visited = <String>{};
     for (final key in candidates) {
+      if (stopIfStale?.call() ?? false) {
+        return;
+      }
       if (!visited.add(key.id)) {
         continue;
       }
@@ -562,22 +648,45 @@ class _PianoToolState extends State<_PianoTool> {
     }
   }
 
-  ToolboxEffectPlayer _playerFor(_PianoKey key) {
+  double _velocityBucket(double velocity) {
+    final normalized = velocity.clamp(0.22, 1.0).toDouble();
+    var best = _velocityBuckets.first;
+    var bestDistance = (best - normalized).abs();
+    for (final candidate in _velocityBuckets.skip(1)) {
+      final distance = (candidate - normalized).abs();
+      if (distance < bestDistance) {
+        best = candidate;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  }
+
+  ToolboxRealisticEffectPlayer _playerFor(
+    _PianoKey key, {
+    double velocity = 0.74,
+  }) {
     final styleId = _activePreset.styleId;
+    final velocityBucket = _velocityBucket(velocity);
     final cacheKey =
-        '${key.id}:$styleId:${_reverb.toStringAsFixed(2)}:${_decay.toStringAsFixed(2)}';
+        '${key.id}:$styleId:${_reverb.toStringAsFixed(2)}:'
+        '${_decay.toStringAsFixed(2)}:${velocityBucket.toStringAsFixed(2)}';
     final existing = _players[cacheKey];
     if (existing != null) {
       return existing;
     }
-    final created = ToolboxEffectPlayer(
-      ToolboxAudioBank.pianoNote(
+    final created = ToolboxRealisticEffectPlayer.build(
+      variants: _pianoVariants,
+      bytesForVariant: (variant) => ToolboxAudioBank.pianoNote(
         key.frequency,
         style: styleId,
         reverb: _reverb,
         decay: _decay,
+        velocity: velocityBucket,
+        variant: variant,
       ),
-      maxPlayers: 8,
+      maxPlayers: 4,
+      volumeJitter: 0.04,
     );
     _players[cacheKey] = created;
     return created;
@@ -587,16 +696,41 @@ class _PianoToolState extends State<_PianoTool> {
     return math.max(0, _windowStartWhiteIndices(octaveSpan).length - 1);
   }
 
-  void _updateRangeStart(int nextStart, int octaveSpan) {
+  void _updateRangeStart(
+    int nextStart,
+    int octaveSpan, {
+    bool immediateWarmUp = true,
+    bool preloadAllKeys = true,
+    bool indicateWarmUp = true,
+  }) {
     final normalized = nextStart.clamp(0, _maxRangeStart(octaveSpan));
     if (_rangeStartOctave == normalized) {
+      if (immediateWarmUp) {
+        _scheduleRangeWarmUp(
+          octaveSpan: octaveSpan,
+          rangeStart: normalized,
+          immediate: true,
+          preloadAllKeys: preloadAllKeys,
+          indicate: indicateWarmUp,
+        );
+      }
       return;
     }
     setState(() {
       _rangeStartOctave = normalized;
+      _activePointers.clear();
+      _activePointerKeyIds.clear();
+      _activeKeyPulseCounts.clear();
+      _activeKeyIds = <String>{};
+      _twoFingerOrigin = null;
+      _lastRangeGestureAt = null;
     });
-    unawaited(
-      _warmUpVisibleWindow(octaveSpan: octaveSpan, rangeStart: normalized),
+    _scheduleRangeWarmUp(
+      octaveSpan: octaveSpan,
+      rangeStart: normalized,
+      immediate: immediateWarmUp,
+      preloadAllKeys: preloadAllKeys,
+      indicate: indicateWarmUp,
     );
   }
 
@@ -696,23 +830,109 @@ class _PianoToolState extends State<_PianoTool> {
     return (baseVolume * attenuation).clamp(0.0, 1.0).toDouble();
   }
 
-  Future<void> _playKey(_PianoKey key, {double? volume}) async {
+  double _velocityForVoicedIndex(int index, int total, double baseVelocity) {
+    if (total <= 1) {
+      return baseVelocity.clamp(0.22, 1.0).toDouble();
+    }
+    final attenuation = index == 0 ? 1.0 : math.max(0.78, 0.94 - index * 0.08);
+    return (baseVelocity * attenuation).clamp(0.22, 1.0).toDouble();
+  }
+
+  double _humanizedVolume(double volume, {required bool rootVoice}) {
+    final spread = rootVoice ? 0.04 : 0.07;
+    final jitter = (_humanizeRandom.nextDouble() - 0.5) * spread;
+    return (volume * (1 + jitter)).clamp(0.0, 1.0).toDouble();
+  }
+
+  double _velocityForVolume(double volume) {
+    final normalized = volume.clamp(0.18, 1.0).toDouble();
+    return (0.2 + math.pow(normalized, 0.92) * 0.8).clamp(0.22, 1.0).toDouble();
+  }
+
+  ({double volume, double velocity}) _touchDynamicsForEvent(
+    PointerEvent event,
+    _PianoKey key,
+    _PianoStageMetrics metrics,
+    _PianoKeyboardSlice slice, {
+    bool glissando = false,
+  }) {
+    final volume = _touchVolumeForPosition(
+      key,
+      event.localPosition,
+      metrics,
+      slice,
+      glissando: glissando,
+    );
+    final rect = metrics.rectForKey(slice, key);
+    if (rect == null || rect.width <= 0 || rect.height <= 0) {
+      return (volume: volume, velocity: _velocityForVolume(volume));
+    }
+    final depth = ((event.localPosition.dx - rect.left) / rect.width)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final heightRatio = ((event.localPosition.dy - rect.top) / rect.height)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final pressureSpan = (event.pressureMax - event.pressureMin).abs();
+    final pressureEnergy = pressureSpan > 0.05
+        ? ((event.pressure - event.pressureMin) / pressureSpan)
+              .clamp(0.0, 1.0)
+              .toDouble()
+        : 0.0;
+    final lipEnergy =
+        (key.isSharp ? 0.52 + heightRatio * 0.28 : 0.48 + heightRatio * 0.4)
+            .clamp(0.0, 1.0)
+            .toDouble();
+    final depthEnergy = (key.isSharp ? 0.58 + depth * 0.22 : 0.52 + depth * 0.3)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final glideEnergy = glissando
+        ? (event.delta.distance / 42).clamp(0.0, 0.18).toDouble()
+        : 0.0;
+    final velocity =
+        (0.16 +
+            pressureEnergy * 0.34 +
+            lipEnergy * 0.24 +
+            depthEnergy * 0.18 +
+            _velocityForVolume(volume) * 0.22 +
+            glideEnergy) *
+        (glissando ? 0.96 : 1.0);
+    return (volume: volume, velocity: velocity.clamp(0.22, 1.0).toDouble());
+  }
+
+  Future<void> _playKey(
+    _PianoKey key, {
+    double? volume,
+    double? velocity,
+  }) async {
     final voicedKeys = _voicedKeysFor(key);
     final baseVolume = volume ?? _touch;
+    final baseVelocity = velocity ?? _velocityForVolume(baseVolume);
     HapticFeedback.selectionClick();
     for (var index = 0; index < voicedKeys.length; index += 1) {
       final note = voicedKeys[index];
-      final waitMs = (_activeChordSpec.staggerMs * _chordSpreadScale * index)
-          .round();
-      final noteVolume = _volumeForVoicedIndex(
+      final waitMs =
+          (_activeChordSpec.staggerMs * _chordSpreadScale * index).round() +
+          ((_humanizeRandom.nextDouble() - 0.5) * 6).round();
+      final noteVolume = _humanizedVolume(
+        _volumeForVoicedIndex(index, voicedKeys.length, baseVolume),
+        rootVoice: index == 0,
+      );
+      final noteVelocity = _velocityForVoicedIndex(
         index,
         voicedKeys.length,
-        baseVolume,
+        baseVelocity,
       );
       unawaited(
-        Future<void>.delayed(Duration(milliseconds: waitMs), () async {
-          await _playerFor(note).play(volume: noteVolume);
-        }),
+        Future<void>.delayed(
+          Duration(milliseconds: math.max(0, waitMs)),
+          () async {
+            await _playerFor(
+              note,
+              velocity: noteVelocity,
+            ).play(volume: noteVolume);
+          },
+        ),
       );
     }
     if (!mounted) {
@@ -758,17 +978,10 @@ class _PianoToolState extends State<_PianoTool> {
     _activePointers[event.pointer] = event.localPosition;
     final key = metrics.hitTest(slice, event.localPosition);
     if (key != null) {
+      final dynamics = _touchDynamicsForEvent(event, key, metrics, slice);
       _activePointerKeyIds[event.pointer] = key.id;
       unawaited(
-        _playKey(
-          key,
-          volume: _touchVolumeForPosition(
-            key,
-            event.localPosition,
-            metrics,
-            slice,
-          ),
-        ),
+        _playKey(key, volume: dynamics.volume, velocity: dynamics.velocity),
       );
     }
     if (_activePointers.length >= 2) {
@@ -836,6 +1049,9 @@ class _PianoToolState extends State<_PianoTool> {
         _updateRangeStart(
           _rangeStartOctave + direction * stepCount,
           octaveSpan,
+          immediateWarmUp: false,
+          preloadAllKeys: false,
+          indicateWarmUp: false,
         );
         _twoFingerOrigin = centroid;
       } else if (delta.dx.abs() >= horizontalThreshold) {
@@ -847,6 +1063,9 @@ class _PianoToolState extends State<_PianoTool> {
         _updateRangeStart(
           _rangeStartOctave + direction * stepCount,
           octaveSpan,
+          immediateWarmUp: false,
+          preloadAllKeys: false,
+          indicateWarmUp: false,
         );
         _twoFingerOrigin = centroid;
       }
@@ -858,17 +1077,15 @@ class _PianoToolState extends State<_PianoTool> {
       return;
     }
     _activePointerKeyIds[event.pointer] = key.id;
+    final dynamics = _touchDynamicsForEvent(
+      event,
+      key,
+      metrics,
+      slice,
+      glissando: true,
+    );
     unawaited(
-      _playKey(
-        key,
-        volume: _touchVolumeForPosition(
-          key,
-          event.localPosition,
-          metrics,
-          slice,
-          glissando: true,
-        ),
-      ),
+      _playKey(key, volume: dynamics.volume, velocity: dynamics.velocity),
     );
   }
 
@@ -1142,7 +1359,12 @@ class _PianoToolState extends State<_PianoTool> {
             child: ChoiceChip(
               label: Text(_windowLabelForIndex(start, octaveSpan)),
               selected: start == rangeStart,
-              onSelected: (_) => _updateRangeStart(start, octaveSpan),
+              onSelected: (_) => _updateRangeStart(
+                start,
+                octaveSpan,
+                immediateWarmUp: true,
+                preloadAllKeys: true,
+              ),
             ),
           ),
         )
@@ -1154,8 +1376,14 @@ class _PianoToolState extends State<_PianoTool> {
           children: <Widget>[
             IconButton.filledTonal(
               onPressed: rangeStart > 0
-                  ? () => _updateRangeStart(rangeStart - 1, octaveSpan)
+                  ? () => _updateRangeStart(
+                      rangeStart - 1,
+                      octaveSpan,
+                      immediateWarmUp: true,
+                      preloadAllKeys: true,
+                    )
                   : null,
+              tooltip: pickUiText(i18n, zh: '上一窗口', en: 'Previous window'),
               style: immersive
                   ? IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.10),
@@ -1185,14 +1413,72 @@ class _PianoToolState extends State<_PianoTool> {
                       color: immersive ? Colors.white : null,
                     ),
                   ),
+                  const SizedBox(height: 2),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 160),
+                    child: _isRangeWindowPreparing
+                        ? Row(
+                            key: const ValueKey<String>('range-preparing'),
+                            children: <Widget>[
+                              SizedBox(
+                                height: 14,
+                                width: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: immersive
+                                      ? Colors.white70
+                                      : theme.colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '音域音色准备中',
+                                  en: 'Preparing note voices',
+                                ),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: labelColor),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            key: const ValueKey<String>('range-ready'),
+                            children: <Widget>[
+                              Icon(
+                                Icons.done_rounded,
+                                size: 14,
+                                color: immersive
+                                    ? Colors.white70
+                                    : theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '音域就绪',
+                                  en: 'Window ready',
+                                ),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: labelColor),
+                              ),
+                            ],
+                          ),
+                  ),
                 ],
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
               onPressed: rangeStart < maxStart
-                  ? () => _updateRangeStart(rangeStart + 1, octaveSpan)
+                  ? () => _updateRangeStart(
+                      rangeStart + 1,
+                      octaveSpan,
+                      immediateWarmUp: true,
+                      preloadAllKeys: true,
+                    )
                   : null,
+              tooltip: pickUiText(i18n, zh: '下一窗口', en: 'Next window'),
               style: immersive
                   ? IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.10),
@@ -1204,6 +1490,11 @@ class _PianoToolState extends State<_PianoTool> {
             const SizedBox(width: 8),
             IconButton.filledTonal(
               onPressed: _toggleRangeNavigatorLayout,
+              tooltip: pickUiText(
+                i18n,
+                zh: '切换窗口列表布局',
+                en: 'Toggle window list layout',
+              ),
               style: immersive
                   ? IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.10),
@@ -1232,12 +1523,18 @@ class _PianoToolState extends State<_PianoTool> {
                   ),
                 ),
                 PopupMenuButton<int>(
-                  onSelected: (value) => _updateRangeStart(value, octaveSpan),
+                  onSelected: (value) => _updateRangeStart(
+                    value,
+                    octaveSpan,
+                    immediateWarmUp: true,
+                    preloadAllKeys: true,
+                  ),
                   itemBuilder: (menuContext) {
                     return starts
                         .map(
-                          (start) => PopupMenuItem<int>(
+                          (start) => CheckedPopupMenuItem<int>(
                             value: start,
+                            checked: start == rangeStart,
                             child: Text(
                               _windowLabelForIndex(start, octaveSpan),
                             ),
@@ -1272,6 +1569,13 @@ class _PianoToolState extends State<_PianoTool> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Text(
+                            slice.label,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: pickerTextColor.withValues(alpha: 0.82),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1296,8 +1600,18 @@ class _PianoToolState extends State<_PianoTool> {
                     max: maxStart.toDouble(),
                     divisions: maxStart,
                     label: slice.label,
-                    onChanged: (value) =>
-                        _updateRangeStart(value.round(), octaveSpan),
+                    onChanged: (value) => _updateRangeStart(
+                      value.round(),
+                      octaveSpan,
+                      immediateWarmUp: false,
+                      preloadAllKeys: false,
+                    ),
+                    onChangeEnd: (value) => _updateRangeStart(
+                      value.round(),
+                      octaveSpan,
+                      immediateWarmUp: true,
+                      preloadAllKeys: true,
+                    ),
                   ),
                 ),
               ],
@@ -1311,7 +1625,12 @@ class _PianoToolState extends State<_PianoTool> {
                   (start) => ChoiceChip(
                     label: Text(_windowLabelForIndex(start, octaveSpan)),
                     selected: start == rangeStart,
-                    onSelected: (_) => _updateRangeStart(start, octaveSpan),
+                    onSelected: (_) => _updateRangeStart(
+                      start,
+                      octaveSpan,
+                      immediateWarmUp: true,
+                      preloadAllKeys: true,
+                    ),
                   ),
                 )
                 .toList(growable: false),
@@ -2779,6 +3098,9 @@ class _PianoToolState extends State<_PianoTool> {
 
   @override
   void dispose() {
+    _rangeWarmUpTimer?.cancel();
+    _rangeWarmUpTimer = null;
+    _rangeWarmUpVersion += 1;
     _invalidatePlayers(warmUp: false);
     super.dispose();
   }
@@ -2798,6 +3120,7 @@ class _PianoToolState extends State<_PianoTool> {
             _isAggressiveOneHandWidth(constraints.maxWidth);
         final effectiveDualMode = _dualKeyboardMode && !aggressiveOneHand;
         final viewport = _viewportFor(context, constraints);
+        _visibleOctaveSpan = viewport.octaveSpan;
         final rangeStart = _rangeStartOctave.clamp(
           0,
           _maxRangeStart(viewport.octaveSpan),

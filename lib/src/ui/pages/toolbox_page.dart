@@ -9,6 +9,7 @@ import '../widgets/section_header.dart';
 import 'toolbox_daily_choice_tool.dart';
 import 'toolbox_mini_games.dart';
 import 'toolbox_mind_tools.dart';
+import 'toolbox_sleep_assistant_page.dart';
 import 'toolbox_soothing_music_v2_page.dart';
 import 'toolbox_sound_tools.dart';
 import 'toolbox_zen_sand_tool.dart';
@@ -43,6 +44,28 @@ class ToolboxPage extends StatelessWidget {
               ),
             ),
           ),
+        ),
+        const SizedBox(height: 20),
+        _ToolboxSection(
+          title: pickUiText(i18n, zh: '睡眠支持', en: 'Sleep support'),
+          subtitle: pickUiText(
+            i18n,
+            zh: '从评估、记录、减压到夜醒救援的一体化睡眠模块。',
+            en: 'An integrated sleep module spanning assessment, logging, wind-down, and rescue.',
+          ),
+          entries: <_ToolboxEntry>[
+            _ToolboxEntry(
+              title: pickUiText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '睡眠评估、昨夜记录、睡前流程、夜醒救援与周报。',
+                en: 'Assessment, sleep logs, wind-down, night rescue, and reports.',
+              ),
+              icon: Icons.bedtime_rounded,
+              accent: const Color(0xFF547A95),
+              pageBuilder: () => const ToolboxSleepAssistantPage(),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
         _ToolboxSection(

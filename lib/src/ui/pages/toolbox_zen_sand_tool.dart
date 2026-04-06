@@ -7,8 +7,11 @@ import 'package:flutter/services.dart';
 import '../../services/toolbox_zen_sand_prefs_service.dart';
 
 const int _maxCanvasActions = 220;
+const double _maxViewportScale = 3.6;
 
 enum _ZenPatternKind { parallel, tidal, orbital, contour }
+
+enum _ZenGestureMode { idle, draw, transform }
 
 class _ZenBackgroundSpec {
   const _ZenBackgroundSpec({
@@ -60,6 +63,7 @@ class _ZenToolSpec {
     required this.helpEn,
     required this.tint,
     this.isPlacement = false,
+    this.supportsColor = false,
   });
 
   final String id;
@@ -70,10 +74,27 @@ class _ZenToolSpec {
   final String helpEn;
   final Color tint;
   final bool isPlacement;
+  final bool supportsColor;
 
   String label(bool isZh) => isZh ? labelZh : labelEn;
 
   String help(bool isZh) => isZh ? helpZh : helpEn;
+}
+
+class _ZenColorSpec {
+  const _ZenColorSpec({
+    required this.value,
+    required this.labelZh,
+    required this.labelEn,
+  });
+
+  final int value;
+  final String labelZh;
+  final String labelEn;
+
+  Color get color => Color(value);
+
+  String label(bool isZh) => isZh ? labelZh : labelEn;
 }
 
 const List<_ZenBackgroundSpec> _backgrounds = <_ZenBackgroundSpec>[
@@ -163,6 +184,26 @@ const List<_ZenToolSpec> _tools = <_ZenToolSpec>[
     tint: Color(0xFFB45D4B),
   ),
   _ZenToolSpec(
+    id: 'paint',
+    icon: Icons.format_paint_rounded,
+    labelZh: '涂料',
+    labelEn: 'Pigment',
+    helpZh: '用可调色颜料做涂抹和涂鸦，适合创作主题色层。',
+    helpEn: 'Lay down colored pigment for doodles and themed accents.',
+    tint: Color(0xFF4E6F52),
+    supportsColor: true,
+  ),
+  _ZenToolSpec(
+    id: 'water',
+    icon: Icons.water_drop_rounded,
+    labelZh: '水迹',
+    labelEn: 'Water',
+    helpZh: '半透明水痕会顺着路径铺开，适合做流动质感。',
+    helpEn: 'Spread translucent water trails for a fluid texture.',
+    tint: Color(0xFF4E8FA8),
+    supportsColor: true,
+  ),
+  _ZenToolSpec(
     id: 'wave',
     icon: Icons.waves_rounded,
     labelZh: '波纹',
@@ -170,6 +211,24 @@ const List<_ZenToolSpec> _tools = <_ZenToolSpec>[
     helpZh: '生成起伏曲线，适合呼吸节奏与水波感。',
     helpEn: 'Paint rhythmic waves for breathing and water-like motion.',
     tint: Color(0xFF4E8FA8),
+  ),
+  _ZenToolSpec(
+    id: 'shovel',
+    icon: Icons.construction_rounded,
+    labelZh: '沙铲',
+    labelEn: 'Shovel',
+    helpZh: '宽面推开沙层，在两侧留下起伏堆线。',
+    helpEn: 'Push sand aside with a broad shovel and raised banks.',
+    tint: Color(0xFF9D744B),
+  ),
+  _ZenToolSpec(
+    id: 'gravel',
+    icon: Icons.blur_on_rounded,
+    labelZh: '沙砾',
+    labelEn: 'Gravel',
+    helpZh: '沿着笔迹堆出颗粒沙砾，适合铺路与点缀。',
+    helpEn: 'Build granular gravel trails for paths and texture accents.',
+    tint: Color(0xFF7B7468),
   ),
   _ZenToolSpec(
     id: 'smooth',
@@ -192,6 +251,15 @@ const List<_ZenToolSpec> _tools = <_ZenToolSpec>[
   ),
 ];
 
+const List<_ZenColorSpec> _paintPalette = <_ZenColorSpec>[
+  _ZenColorSpec(value: 0xFF4E6F52, labelZh: '苔绿', labelEn: 'Moss'),
+  _ZenColorSpec(value: 0xFF6D5D8C, labelZh: '暮紫', labelEn: 'Dusk'),
+  _ZenColorSpec(value: 0xFF9B5A56, labelZh: '陶红', labelEn: 'Clay'),
+  _ZenColorSpec(value: 0xFF3A7CA5, labelZh: '湖蓝', labelEn: 'Lake'),
+  _ZenColorSpec(value: 0xFFC58A3A, labelZh: '暖金', labelEn: 'Amber'),
+  _ZenColorSpec(value: 0xFF5C677D, labelZh: '雾蓝灰', labelEn: 'Slate'),
+];
+
 final Map<String, _ZenBackgroundSpec> _backgroundById =
     <String, _ZenBackgroundSpec>{
       for (final background in _backgrounds) background.id: background,
@@ -199,6 +267,10 @@ final Map<String, _ZenBackgroundSpec> _backgroundById =
 
 final Map<String, _ZenToolSpec> _toolById = <String, _ZenToolSpec>{
   for (final tool in _tools) tool.id: tool,
+};
+
+final Map<int, _ZenColorSpec> _colorByValue = <int, _ZenColorSpec>{
+  for (final color in _paintPalette) color.value: color,
 };
 
 class ZenSandStudioPage extends StatefulWidget {
@@ -215,8 +287,16 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   String _backgroundId = zenSandDefaultBackgroundId;
   String _toolId = zenSandDefaultToolId;
   double _brushSize = zenSandDefaultBrushSize;
+  int _colorValue = zenSandDefaultColorValue;
   bool _hapticsEnabled = true;
   bool _guideEnabled = true;
+  bool _immersiveMode = false;
+  double _viewportScale = 1;
+  Offset _viewportOffset = Offset.zero;
+  _ZenGestureMode _gestureMode = _ZenGestureMode.idle;
+  double _gestureScaleStart = 1;
+  Offset _gestureWorldAnchor = Offset.zero;
+  final Set<int> _activePointers = <int>{};
 
   bool get _isZh => Localizations.localeOf(
     context,
@@ -229,6 +309,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   _ZenToolSpec get _tool => _toolById[_toolId] ?? _tools.first;
 
+  _ZenColorSpec get _activeColorSpec =>
+      _colorByValue[_colorValue] ?? _paintPalette.first;
+
   int get _strokeCount => _actions.where((action) => action.isStroke).length;
 
   int get _stoneCount => _actions.where((action) => action.isStone).length;
@@ -239,6 +322,14 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _restorePrefs();
   }
 
+  @override
+  void dispose() {
+    if (_immersiveMode) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    super.dispose();
+  }
+
   Future<void> _restorePrefs() async {
     final prefs = await ToolboxZenSandPrefsService.load();
     if (!mounted) return;
@@ -246,6 +337,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       _backgroundId = prefs.backgroundId;
       _toolId = prefs.toolId;
       _brushSize = prefs.brushSize;
+      _colorValue = prefs.colorValue;
       _hapticsEnabled = prefs.hapticsEnabled;
       _guideEnabled = prefs.guidanceEnabled;
       _actions = prefs.actions.take(_maxCanvasActions).toList(growable: false);
@@ -261,6 +353,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           backgroundId: _backgroundId,
           toolId: _toolId,
           brushSize: _brushSize,
+          colorValue: _colorValue,
           hapticsEnabled: _hapticsEnabled,
           guidanceEnabled: _guideEnabled,
           actions: _actions.take(_maxCanvasActions).toList(growable: false),
@@ -281,6 +374,55 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     }
   }
 
+  bool get _toolSupportsColor => _tool.supportsColor;
+
+  Offset _clampViewportOffset(Offset offset, Size size, double scale) {
+    final minDx = size.width - size.width * scale;
+    final minDy = size.height - size.height * scale;
+    return Offset(
+      offset.dx.clamp(minDx, 0.0).toDouble(),
+      offset.dy.clamp(minDy, 0.0).toDouble(),
+    );
+  }
+
+  void _setImmersiveMode(bool value) {
+    if (_immersiveMode == value) return;
+    if (value) {
+      _impactHaptic();
+    }
+    setState(() {
+      _immersiveMode = value;
+    });
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(
+        value ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+      ),
+    );
+  }
+
+  void _toggleImmersiveMode() {
+    _setImmersiveMode(!_immersiveMode);
+  }
+
+  void _setColorValue(int value) {
+    if (_colorValue == value) return;
+    setState(() {
+      _colorValue = value;
+    });
+    _persist();
+  }
+
+  void _resetViewport({bool withHaptic = true}) {
+    if (_viewportScale == 1 && _viewportOffset == Offset.zero) return;
+    if (withHaptic) {
+      _tapHaptic();
+    }
+    setState(() {
+      _viewportScale = 1;
+      _viewportOffset = Offset.zero;
+    });
+  }
+
   void _appendAction(ZenSandAction action) {
     final nextActions = <ZenSandAction>[..._actions, action];
     if (nextActions.length > _maxCanvasActions) {
@@ -289,6 +431,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     setState(() {
       _actions = nextActions;
       _redoStack = <ZenSandAction>[];
+      _gestureMode = _ZenGestureMode.idle;
       _workingStroke = <Offset>[];
     });
     _persist();
@@ -300,6 +443,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     setState(() {
       _toolId = id;
       _workingStroke = <Offset>[];
+      _gestureMode = _ZenGestureMode.idle;
     });
     _persist();
   }
@@ -334,15 +478,17 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 
   Offset _normalize(Offset local, Size size) {
+    final world = (local - _viewportOffset) / _viewportScale;
     return Offset(
-      (local.dx / size.width).clamp(0.0, 1.0),
-      (local.dy / size.height).clamp(0.0, 1.0),
+      (world.dx / size.width).clamp(0.0, 1.0),
+      (world.dy / size.height).clamp(0.0, 1.0),
     );
   }
 
   void _handlePanStart(Offset local, Size size) {
     if (_tool.isPlacement) return;
     setState(() {
+      _gestureMode = _ZenGestureMode.draw;
       _workingStroke = <Offset>[_normalize(local, size)];
     });
   }
@@ -363,6 +509,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     if (_tool.isPlacement) return;
     if (_workingStroke.length < 2) {
       setState(() {
+        _gestureMode = _ZenGestureMode.idle;
         _workingStroke = <Offset>[];
       });
       return;
@@ -372,18 +519,97 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       ZenSandAction.stroke(
         toolId: _toolId,
         size: _brushSize,
+        colorValue: _toolSupportsColor ? _colorValue : null,
         points: _workingStroke
             .map((point) => ZenSandPoint(point.dx, point.dy))
             .toList(growable: false),
       ),
     );
+    _gestureMode = _ZenGestureMode.idle;
   }
 
   void _handlePanCancel() {
     if (_workingStroke.isEmpty) return;
     setState(() {
+      _gestureMode = _ZenGestureMode.idle;
       _workingStroke = <Offset>[];
     });
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    _activePointers.add(event.pointer);
+    if (_activePointers.length >= 2 && _gestureMode == _ZenGestureMode.draw) {
+      _handlePanCancel();
+    }
+  }
+
+  void _handlePointerUp(PointerEvent event) {
+    _activePointers.remove(event.pointer);
+  }
+
+  void _startTransform(Offset focalPoint, Size size) {
+    _gestureMode = _ZenGestureMode.transform;
+    _gestureScaleStart = _viewportScale;
+    final worldFocal = (focalPoint - _viewportOffset) / _viewportScale;
+    _gestureWorldAnchor = Offset(
+      worldFocal.dx.clamp(0.0, size.width).toDouble(),
+      worldFocal.dy.clamp(0.0, size.height).toDouble(),
+    );
+  }
+
+  void _updateTransform(Offset focalPoint, double scale, Size size) {
+    final nextScale = (_gestureScaleStart * scale).clamp(
+      1.0,
+      _maxViewportScale,
+    );
+    final rawOffset = focalPoint - (_gestureWorldAnchor * nextScale);
+    final nextOffset = _clampViewportOffset(rawOffset, size, nextScale);
+    if (_viewportScale == nextScale && _viewportOffset == nextOffset) return;
+    setState(() {
+      _viewportScale = nextScale;
+      _viewportOffset = nextOffset;
+    });
+  }
+
+  void _handleScaleStart(ScaleStartDetails details, Size size) {
+    if (_activePointers.length >= 2) {
+      _startTransform(details.localFocalPoint, size);
+      return;
+    }
+    if (_tool.isPlacement) {
+      _gestureMode = _ZenGestureMode.idle;
+      return;
+    }
+    _handlePanStart(details.localFocalPoint, size);
+  }
+
+  void _handleScaleUpdate(ScaleUpdateDetails details, Size size) {
+    final isTransforming =
+        _activePointers.length >= 2 ||
+        details.scale != 1 ||
+        _gestureMode == _ZenGestureMode.transform;
+    if (isTransforming) {
+      if (_gestureMode != _ZenGestureMode.transform) {
+        _handlePanCancel();
+        _startTransform(details.localFocalPoint, size);
+      }
+      _updateTransform(details.localFocalPoint, details.scale, size);
+      return;
+    }
+    if (_tool.isPlacement) return;
+    if (_gestureMode != _ZenGestureMode.draw) {
+      _handlePanStart(details.localFocalPoint, size);
+      return;
+    }
+    _handlePanUpdate(details.localFocalPoint, size);
+  }
+
+  void _handleScaleEnd(ScaleEndDetails details) {
+    if (_gestureMode == _ZenGestureMode.draw) {
+      _handlePanEnd();
+      return;
+    }
+    _gestureMode = _ZenGestureMode.idle;
   }
 
   void _placeStone(Offset local, Size size) {
@@ -410,6 +636,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       final removed = actions.removeLast();
       _actions = actions;
       _redoStack = <ZenSandAction>[removed, ..._redoStack];
+      _gestureMode = _ZenGestureMode.idle;
       _workingStroke = <Offset>[];
     });
     _persist();
@@ -427,6 +654,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         actions.removeRange(0, actions.length - _maxCanvasActions);
       }
       _actions = actions;
+      _gestureMode = _ZenGestureMode.idle;
       _workingStroke = <Offset>[];
     });
     _persist();
@@ -440,6 +668,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           .where((action) => action.isStone)
           .toList(growable: false);
       _redoStack = <ZenSandAction>[];
+      _gestureMode = _ZenGestureMode.idle;
       _workingStroke = <Offset>[];
     });
     _persist();
@@ -476,6 +705,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     setState(() {
       _actions = <ZenSandAction>[];
       _redoStack = <ZenSandAction>[];
+      _gestureMode = _ZenGestureMode.idle;
       _workingStroke = <Offset>[];
     });
     _persist();
@@ -599,6 +829,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                   background: _background,
                                   tool: _tool,
                                   brushSize: _brushSize,
+                                  colorValue: _toolSupportsColor
+                                      ? _colorValue
+                                      : null,
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -625,6 +858,28 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
+                    if (_toolSupportsColor) ...<Widget>[
+                      const SizedBox(height: 14),
+                      _ZenSectionCard(
+                        title: _text('????', 'Color palette'),
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: _paintPalette
+                              .map((color) {
+                                return _ZenColorChip(
+                                  color: color.color,
+                                  label: color.label(_isZh),
+                                  selected: color.value == _colorValue,
+                                  onTap: () => refresh(
+                                    () => _setColorValue(color.value),
+                                  ),
+                                );
+                              })
+                              .toList(growable: false),
+                        ),
+                      ),
+                    ],
                     _ZenSectionCard(
                       title: _text('体验设置', 'Experience'),
                       child: Column(
@@ -657,35 +912,43 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     ),
                     const SizedBox(height: 14),
                     _ZenSectionCard(
-                      title: _text('沙盘管理', 'Tray actions'),
-                      child: Row(
+                      title: _text('?????', 'Gestures & zoom'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _strokeCount == 0
-                                  ? null
-                                  : () {
-                                      _smoothAll();
-                                      setSheetState(() {});
-                                    },
-                              icon: const Icon(Icons.auto_fix_high_rounded),
-                              label: Text(_text('一键抚平', 'Smooth all')),
+                          Text(
+                            _text(
+                              '??????????????????????????????????????',
+                              'Single-finger input keeps drawing or placing stones, while two fingers handle zoom and pan for detail work.',
                             ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: const Color(0xFF655949),
+                                  height: 1.4,
+                                ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: FilledButton.tonalIcon(
-                              onPressed: _actions.isEmpty
-                                  ? null
-                                  : () async {
-                                      await _clearAll();
-                                      if (context.mounted) {
-                                        setSheetState(() {});
-                                      }
-                                    },
-                              icon: const Icon(Icons.delete_sweep_rounded),
-                              label: Text(_text('清空画布', 'Clear tray')),
-                            ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: <Widget>[
+                              _ZenCompactActionChip(
+                                icon: Icons.zoom_out_map_rounded,
+                                label: '${_viewportScale.toStringAsFixed(1)}x',
+                                accent: _background.accent,
+                                onTap: _viewportScale > 1.01
+                                    ? () => refresh(_resetViewport)
+                                    : null,
+                              ),
+                              _ZenCompactActionChip(
+                                icon: _immersiveMode
+                                    ? Icons.fullscreen_exit_rounded
+                                    : Icons.fullscreen_rounded,
+                                label: _text('????', 'Immersive'),
+                                accent: _tool.tint,
+                                onTap: () => refresh(_toggleImmersiveMode),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -712,38 +975,104 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       ],
     );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4EFE7),
-      body: DecoratedBox(
-        decoration: BoxDecoration(gradient: shellGradient),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Column(
+    return PopScope(
+      canPop: !_immersiveMode,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _immersiveMode) {
+          _setImmersiveMode(false);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF4EFE7),
+        body: DecoratedBox(
+          decoration: BoxDecoration(gradient: shellGradient),
+          child: _immersiveMode
+              ? _buildImmersiveBody(theme)
+              : _buildRegularBody(theme),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegularBody(ThemeData theme) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          children: <Widget>[
+            _buildHeader(theme),
+            const SizedBox(height: 14),
+            _buildStats(theme),
+            const SizedBox(height: 12),
+            if (_guideEnabled) ...<Widget>[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _ZenGlassPill(
+                  icon: _tool.icon,
+                  accent: _tool.tint,
+                  label: _tool.help(_isZh),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Expanded(child: _buildCanvas(theme, immersive: false)),
+            const SizedBox(height: 14),
+            _buildBottomDock(theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImmersiveBody(ThemeData theme) {
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        SafeArea(
+          minimum: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+          child: _buildCanvas(theme, immersive: true),
+        ),
+        SafeArea(
+          minimum: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Row(
               children: <Widget>[
-                _buildHeader(theme),
-                const SizedBox(height: 14),
-                _buildStats(theme),
-                const SizedBox(height: 12),
-                if (_guideEnabled) ...<Widget>[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _ZenGlassPill(
-                      icon: _tool.icon,
-                      accent: _tool.tint,
-                      label: _tool.help(_isZh),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                Expanded(child: _buildCanvas(theme)),
-                const SizedBox(height: 14),
-                _buildBottomDock(theme),
+                _ZenQuickIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: _text('返回', 'Back'),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+                const SizedBox(width: 8),
+                _ZenQuickIconButton(
+                  icon: Icons.fullscreen_exit_rounded,
+                  tooltip: _text('退出全屏', 'Exit full screen'),
+                  onPressed: _toggleImmersiveMode,
+                ),
+                const Spacer(),
+                _ZenQuickIconButton(
+                  icon: Icons.landscape_rounded,
+                  tooltip: _text('切换场景', 'Scenes'),
+                  onPressed: _openSceneSheet,
+                ),
+                const SizedBox(width: 8),
+                _ZenQuickIconButton(
+                  icon: Icons.tune_rounded,
+                  tooltip: _text('工具与控制', 'Tools & controls'),
+                  onPressed: _openControlSheet,
+                ),
               ],
             ),
           ),
         ),
-      ),
+        SafeArea(
+          minimum: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildBottomDock(theme, compact: true),
+          ),
+        ),
+      ],
     );
   }
 
@@ -826,17 +1155,33 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             value: _brushSize.round().toString(),
             accent: Color.lerp(_tool.tint, Colors.white, 0.15)!,
           ),
+          const SizedBox(width: 10),
+          _ZenActionBadge(
+            label: _text('缩放', 'Zoom'),
+            value: '${_viewportScale.toStringAsFixed(1)}x',
+            accent: _background.accent,
+          ),
+          if (_toolSupportsColor) ...<Widget>[
+            const SizedBox(width: 10),
+            _ZenActionBadge(
+              label: _text('颜色', 'Color'),
+              value: _activeColorSpec.label(_isZh),
+              accent: Color(_colorValue),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildCanvas(ThemeData theme) {
+  Widget _buildCanvas(ThemeData theme, {required bool immersive}) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final maxHeight = constraints.maxHeight;
-        final canvasHeight = math.min(maxHeight, width * 1.18);
+        final canvasHeight = immersive
+            ? maxHeight
+            : math.min(maxHeight, width * 1.18);
         final canvasSize = Size(width, canvasHeight);
 
         return Center(
@@ -844,9 +1189,10 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             width: width,
-            padding: const EdgeInsets.all(12),
+            height: immersive ? maxHeight : null,
+            padding: EdgeInsets.all(immersive ? 10 : 12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(immersive ? 34 : 30),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -857,72 +1203,95 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 26,
-                  offset: const Offset(0, 16),
+                  color: Colors.black.withValues(
+                    alpha: immersive ? 0.16 : 0.12,
+                  ),
+                  blurRadius: immersive ? 32 : 26,
+                  offset: Offset(0, immersive ? 18 : 16),
                 ),
               ],
             ),
             child: Column(
               children: <Widget>[
-                _buildCanvasChrome(theme),
+                _buildCanvasChrome(theme, immersive: immersive),
+                const SizedBox(height: 12),
+                _buildCanvasActionStrip(),
                 const SizedBox(height: 12),
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapDown: _tool.isPlacement
-                          ? (details) {
-                              _placeStone(details.localPosition, canvasSize);
-                            }
-                          : null,
-                      onPanStart: (details) {
-                        _handlePanStart(details.localPosition, canvasSize);
-                      },
-                      onPanUpdate: (details) {
-                        _handlePanUpdate(details.localPosition, canvasSize);
-                      },
-                      onPanCancel: _handlePanCancel,
-                      onPanEnd: (_) => _handlePanEnd(),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: <Widget>[
-                          RepaintBoundary(
-                            child: CustomPaint(
-                              painter: _ZenSurfacePainter(
-                                background: _background,
+                    borderRadius: BorderRadius.circular(immersive ? 28 : 24),
+                    child: Listener(
+                      onPointerDown: _handlePointerDown,
+                      onPointerUp: _handlePointerUp,
+                      onPointerCancel: _handlePointerUp,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTapUp: _tool.isPlacement
+                            ? (details) {
+                                _placeStone(details.localPosition, canvasSize);
+                              }
+                            : null,
+                        onScaleStart: (details) {
+                          _handleScaleStart(details, canvasSize);
+                        },
+                        onScaleUpdate: (details) {
+                          _handleScaleUpdate(details, canvasSize);
+                        },
+                        onScaleEnd: _handleScaleEnd,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: <Widget>[
+                            RepaintBoundary(
+                              child: CustomPaint(
+                                painter: _ZenSurfacePainter(
+                                  background: _background,
+                                  viewportScale: _viewportScale,
+                                  viewportOffset: _viewportOffset,
+                                ),
+                                foregroundPainter: _ZenSandPainter(
+                                  background: _background,
+                                  actions: _actions,
+                                  currentStroke: _workingStroke,
+                                  currentToolId: _toolId,
+                                  currentBrushSize: _brushSize,
+                                  currentColorValue: _toolSupportsColor
+                                      ? _colorValue
+                                      : null,
+                                  viewportScale: _viewportScale,
+                                  viewportOffset: _viewportOffset,
+                                ),
                               ),
-                              foregroundPainter: _ZenSandPainter(
-                                background: _background,
-                                actions: _actions,
-                                currentStroke: _workingStroke,
-                                currentToolId: _toolId,
-                                currentBrushSize: _brushSize,
+                            ),
+                            if (_guideEnabled)
+                              Positioned(
+                                left: 12,
+                                top: 12,
+                                child: _ZenCanvasHint(
+                                  label: _tool.isPlacement
+                                      ? _text('??????', 'Tap to place stones')
+                                      : _text(
+                                          '?????????/??',
+                                          'One finger draws, two fingers zoom/pan',
+                                        ),
+                                  accent: _tool.tint,
+                                ),
+                              ),
+                            Positioned(
+                              right: 12,
+                              bottom: 12,
+                              child: _ZenCanvasHint(
+                                label: _toolSupportsColor
+                                    ? _activeColorSpec.label(_isZh)
+                                    : _tool.label(_isZh),
+                                accent: _toolSupportsColor
+                                    ? Color(_colorValue)
+                                    : _tool.tint,
+                                trailing:
+                                    '${_brushSize.round()} px ? ${_viewportScale.toStringAsFixed(1)}x',
                               ),
                             ),
-                          ),
-                          Positioned(
-                            left: 12,
-                            top: 12,
-                            child: _ZenCanvasHint(
-                              label: _tool.isPlacement
-                                  ? _text('轻点安放景石', 'Tap to place stones')
-                                  : _text('拖动在沙面上作画', 'Drag to draw on sand'),
-                              accent: _tool.tint,
-                            ),
-                          ),
-                          Positioned(
-                            right: 12,
-                            bottom: 12,
-                            child: _ZenCanvasHint(
-                              label: _tool.label(_isZh),
-                              accent: _tool.tint,
-                              trailing:
-                                  '${_brushSize.round()} ${_text('号', 'px')}',
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -935,7 +1304,52 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     );
   }
 
-  Widget _buildCanvasChrome(ThemeData theme) {
+  Widget _buildCanvasActionStrip() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: <Widget>[
+          _ZenCompactActionChip(
+            icon: Icons.auto_fix_high_rounded,
+            label: _text('????', 'Smooth all'),
+            accent: _background.accent,
+            onTap: _strokeCount == 0 ? null : _smoothAll,
+          ),
+          const SizedBox(width: 10),
+          _ZenCompactActionChip(
+            icon: Icons.delete_sweep_rounded,
+            label: _text('????', 'Clear tray'),
+            accent: const Color(0xFF8B6651),
+            onTap: _actions.isEmpty
+                ? null
+                : () {
+                    unawaited(_clearAll());
+                  },
+          ),
+          const SizedBox(width: 10),
+          _ZenCompactActionChip(
+            icon: Icons.center_focus_strong_rounded,
+            label: _text('????', 'Reset view'),
+            accent: _background.accent,
+            onTap: _viewportScale > 1.01 ? _resetViewport : null,
+          ),
+          const SizedBox(width: 10),
+          _ZenCompactActionChip(
+            icon: _immersiveMode
+                ? Icons.fullscreen_exit_rounded
+                : Icons.fullscreen_rounded,
+            label: _immersiveMode
+                ? _text('????', 'Exit full screen')
+                : _text('????', 'Immersive'),
+            accent: _tool.tint,
+            onTap: _toggleImmersiveMode,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCanvasChrome(ThemeData theme, {required bool immersive}) {
     const color = Color(0xFF2C241E);
     return Row(
       children: <Widget>[
@@ -953,7 +1367,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               const SizedBox(height: 2),
               Text(
                 _background.description(_isZh),
-                maxLines: 2,
+                maxLines: immersive ? 1 : 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: color.withValues(alpha: 0.72),
@@ -973,7 +1387,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     );
   }
 
-  Widget _buildBottomDock(ThemeData theme) {
+  Widget _buildBottomDock(ThemeData theme, {bool compact = false}) {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
@@ -988,67 +1402,68 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        padding: EdgeInsets.fromLTRB(
+          14,
+          compact ? 12 : 14,
+          14,
+          compact ? 10 : 12,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    _tool.help(_isZh),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF5F554A),
-                      height: 1.35,
-                    ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _tool.help(_isZh),
+                maxLines: compact ? 1 : 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF5F554A),
+                  height: 1.35,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: <Widget>[
+                  _ZenDockButton(
+                    icon: Icons.landscape_rounded,
+                    label: _text('场景', 'Scenes'),
+                    onPressed: _openSceneSheet,
                   ),
-                ),
-                const SizedBox(width: 12),
-                _ZenDockButton(
-                  icon: Icons.landscape_rounded,
-                  label: _text('场景', 'Scenes'),
-                  onPressed: _openSceneSheet,
-                ),
-                const SizedBox(width: 8),
-                _ZenDockButton(
-                  icon: Icons.tune_rounded,
-                  label: _text('控制', 'Control'),
-                  onPressed: _openControlSheet,
-                ),
-                const SizedBox(width: 8),
-                _ZenDockButton(
-                  icon: Icons.undo_rounded,
-                  label: _text('撤销', 'Undo'),
-                  enabled: _actions.isNotEmpty,
-                  onPressed: _undo,
-                ),
-                const SizedBox(width: 8),
-                _ZenDockButton(
-                  icon: Icons.redo_rounded,
-                  label: _text('重做', 'Redo'),
-                  enabled: _redoStack.isNotEmpty,
-                  onPressed: _redo,
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  _ZenDockButton(
+                    icon: Icons.tune_rounded,
+                    label: _text('控制', 'Control'),
+                    onPressed: _openControlSheet,
+                  ),
+                  const SizedBox(width: 8),
+                  _ZenDockButton(
+                    icon: Icons.undo_rounded,
+                    label: _text('撤销', 'Undo'),
+                    enabled: _actions.isNotEmpty,
+                    onPressed: _undo,
+                  ),
+                  const SizedBox(width: 8),
+                  _ZenDockButton(
+                    icon: Icons.redo_rounded,
+                    label: _text('重做', 'Redo'),
+                    enabled: _redoStack.isNotEmpty,
+                    onPressed: _redo,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
               height: 58,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _tools.length + 1,
+                itemCount: _tools.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
-                  if (index == _tools.length) {
-                    return _ZenCompactActionChip(
-                      icon: Icons.delete_sweep_rounded,
-                      label: _text('清空', 'Clear'),
-                      accent: const Color(0xFF8B6651),
-                      onTap: _actions.isEmpty ? null : _clearAll,
-                    );
-                  }
                   final tool = _tools[index];
                   return _ZenCompactToolChip(
                     tool: tool,
@@ -1414,7 +1829,7 @@ class _ZenCompactActionChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color accent;
-  final Future<void> Function()? onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1424,7 +1839,7 @@ class _ZenCompactActionChip extends StatelessWidget {
       opacity: enabled ? 1 : 0.42,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: enabled ? () => onTap!.call() : null,
+        onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
@@ -1447,6 +1862,68 @@ class _ZenCompactActionChip extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ZenColorChip extends StatelessWidget {
+  const _ZenColorChip({
+    required this.color,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Color color;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? color.withValues(alpha: 0.14) : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected
+                  ? color.withValues(alpha: 0.76)
+                  : const Color(0xFFE3D8CC),
+              width: selected ? 1.6 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.72),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: const Color(0xFF31261D),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1774,11 +2251,13 @@ class _ZenToolPreview extends StatelessWidget {
     required this.background,
     required this.tool,
     required this.brushSize,
+    this.colorValue,
   });
 
   final _ZenBackgroundSpec background;
   final _ZenToolSpec tool;
   final double brushSize;
+  final int? colorValue;
 
   @override
   Widget build(BuildContext context) {
@@ -1791,6 +2270,7 @@ class _ZenToolPreview extends StatelessWidget {
             background: background,
             tool: tool,
             brushSize: brushSize,
+            colorValue: colorValue,
           ),
         ),
       ),
@@ -1834,6 +2314,7 @@ class _ZenScenePreviewPainter extends CustomPainter {
       currentStroke: const <Offset>[],
       currentToolId: 'rake',
       currentBrushSize: 26,
+      currentColorValue: null,
     );
   }
 
@@ -1848,11 +2329,13 @@ class _ZenToolPreviewPainter extends CustomPainter {
     required this.background,
     required this.tool,
     required this.brushSize,
+    this.colorValue,
   });
 
   final _ZenBackgroundSpec background;
   final _ZenToolSpec tool;
   final double brushSize;
+  final int? colorValue;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1880,6 +2363,7 @@ class _ZenToolPreviewPainter extends CustomPainter {
         ZenSandAction.stroke(
           toolId: tool.id,
           size: brushSize,
+          colorValue: tool.supportsColor ? colorValue : null,
           points: const <ZenSandPoint>[
             ZenSandPoint(0.12, 0.62),
             ZenSandPoint(0.28, 0.48),
@@ -1898,6 +2382,7 @@ class _ZenToolPreviewPainter extends CustomPainter {
       currentStroke: const <Offset>[],
       currentToolId: tool.id,
       currentBrushSize: brushSize,
+      currentColorValue: tool.supportsColor ? colorValue : null,
     );
   }
 
@@ -1905,23 +2390,36 @@ class _ZenToolPreviewPainter extends CustomPainter {
   bool shouldRepaint(covariant _ZenToolPreviewPainter oldDelegate) {
     return oldDelegate.background != background ||
         oldDelegate.tool != tool ||
-        oldDelegate.brushSize != brushSize;
+        oldDelegate.brushSize != brushSize ||
+        oldDelegate.colorValue != colorValue;
   }
 }
 
 class _ZenSurfacePainter extends CustomPainter {
-  const _ZenSurfacePainter({required this.background});
+  const _ZenSurfacePainter({
+    required this.background,
+    required this.viewportScale,
+    required this.viewportOffset,
+  });
 
   final _ZenBackgroundSpec background;
+  final double viewportScale;
+  final Offset viewportOffset;
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.translate(viewportOffset.dx, viewportOffset.dy);
+    canvas.scale(viewportScale);
     _paintTraySurface(canvas, Offset.zero & size, background);
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _ZenSurfacePainter oldDelegate) {
-    return oldDelegate.background != background;
+    return oldDelegate.background != background ||
+        oldDelegate.viewportScale != viewportScale ||
+        oldDelegate.viewportOffset != viewportOffset;
   }
 }
 
@@ -1932,6 +2430,9 @@ class _ZenSandPainter extends CustomPainter {
     required this.currentStroke,
     required this.currentToolId,
     required this.currentBrushSize,
+    required this.currentColorValue,
+    required this.viewportScale,
+    required this.viewportOffset,
   });
 
   final _ZenBackgroundSpec background;
@@ -1939,9 +2440,15 @@ class _ZenSandPainter extends CustomPainter {
   final List<Offset> currentStroke;
   final String currentToolId;
   final double currentBrushSize;
+  final int? currentColorValue;
+  final double viewportScale;
+  final Offset viewportOffset;
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.translate(viewportOffset.dx, viewportOffset.dy);
+    canvas.scale(viewportScale);
     _paintSandActions(
       canvas,
       size,
@@ -1950,7 +2457,9 @@ class _ZenSandPainter extends CustomPainter {
       currentStroke: currentStroke,
       currentToolId: currentToolId,
       currentBrushSize: currentBrushSize,
+      currentColorValue: currentColorValue,
     );
+    canvas.restore();
   }
 
   @override
@@ -1959,7 +2468,10 @@ class _ZenSandPainter extends CustomPainter {
         oldDelegate.actions != actions ||
         oldDelegate.currentStroke != currentStroke ||
         oldDelegate.currentToolId != currentToolId ||
-        oldDelegate.currentBrushSize != currentBrushSize;
+        oldDelegate.currentBrushSize != currentBrushSize ||
+        oldDelegate.currentColorValue != currentColorValue ||
+        oldDelegate.viewportScale != viewportScale ||
+        oldDelegate.viewportOffset != viewportOffset;
   }
 }
 
@@ -2211,6 +2723,7 @@ void _paintSandActions(
   required List<Offset> currentStroke,
   required String currentToolId,
   required double currentBrushSize,
+  required int? currentColorValue,
 }) {
   for (final action in actions) {
     if (action.isStone) {
@@ -2226,6 +2739,7 @@ void _paintSandActions(
           .map((point) => Offset(point.x, point.y))
           .toList(growable: false),
       background,
+      colorValue: action.colorValue,
       isPreview: false,
     );
   }
@@ -2238,6 +2752,7 @@ void _paintSandActions(
       currentBrushSize,
       currentStroke,
       background,
+      colorValue: currentColorValue,
       isPreview: true,
     );
   }
@@ -2250,6 +2765,7 @@ void _paintStroke(
   double brushSize,
   List<Offset> normalizedPoints,
   _ZenBackgroundSpec background, {
+  required int? colorValue,
   required bool isPreview,
 }) {
   final points = normalizedPoints
@@ -2258,6 +2774,7 @@ void _paintStroke(
   if (points.length < 2) return;
 
   final alphaScale = isPreview ? 0.72 : 1.0;
+  final tintColor = colorValue == null ? null : Color(colorValue);
 
   switch (toolId) {
     case 'rake':
@@ -2266,8 +2783,34 @@ void _paintStroke(
     case 'finger':
       _paintFingerStroke(canvas, points, brushSize, background, alphaScale);
       break;
+    case 'paint':
+      _paintPigmentStroke(
+        canvas,
+        points,
+        brushSize,
+        background,
+        tintColor ?? const Color(zenSandDefaultColorValue),
+        alphaScale,
+      );
+      break;
+    case 'water':
+      _paintWaterStroke(
+        canvas,
+        points,
+        brushSize,
+        background,
+        tintColor ?? background.accent,
+        alphaScale,
+      );
+      break;
     case 'wave':
       _paintWaveStroke(canvas, points, brushSize, background, alphaScale);
+      break;
+    case 'shovel':
+      _paintShovelStroke(canvas, points, brushSize, background, alphaScale);
+      break;
+    case 'gravel':
+      _paintGravelStroke(canvas, points, brushSize, background, alphaScale);
       break;
     case 'smooth':
       _paintSmoothStroke(canvas, points, brushSize, background, alphaScale);
@@ -2346,6 +2889,111 @@ void _paintFingerStroke(
   canvas.restore();
 }
 
+void _paintPigmentStroke(
+  Canvas canvas,
+  List<Offset> points,
+  double brushSize,
+  _ZenBackgroundSpec background,
+  Color tintColor,
+  double alphaScale,
+) {
+  final path = _smoothPath(points);
+  final glow = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.48
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6.2)
+    ..color = tintColor.withValues(alpha: 0.18 * alphaScale);
+  final body = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.28
+    ..color = Color.lerp(
+      tintColor,
+      background.fillColor,
+      0.08,
+    )!.withValues(alpha: 0.78 * alphaScale);
+  final highlight = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.12
+    ..color = Color.lerp(
+      tintColor,
+      Colors.white,
+      0.46,
+    )!.withValues(alpha: 0.36 * alphaScale);
+
+  canvas.drawPath(path, glow);
+  canvas.drawPath(path, body);
+  canvas.save();
+  canvas.translate(-1.0, -1.0);
+  canvas.drawPath(path, highlight);
+  canvas.restore();
+}
+
+void _paintWaterStroke(
+  Canvas canvas,
+  List<Offset> points,
+  double brushSize,
+  _ZenBackgroundSpec background,
+  Color tintColor,
+  double alphaScale,
+) {
+  final waved = _wavePolyline(points, brushSize * 0.08);
+  final path = _smoothPath(waved);
+  final bloom = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.82
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9)
+    ..color = tintColor.withValues(alpha: 0.10 * alphaScale);
+  final trail = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.24
+    ..color = Color.lerp(
+      tintColor,
+      background.grooveLight,
+      0.22,
+    )!.withValues(alpha: 0.44 * alphaScale);
+  final light = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.08
+    ..color = Colors.white.withValues(alpha: 0.42 * alphaScale);
+
+  canvas.drawPath(path, bloom);
+  canvas.drawPath(path, trail);
+  canvas.save();
+  canvas.translate(-0.8, -0.8);
+  canvas.drawPath(path, light);
+  canvas.restore();
+
+  final dropletPaint = Paint()..style = PaintingStyle.fill;
+  final droplets = _samplePolyline(
+    points,
+    (brushSize * 0.22).clamp(10.0, 20.0),
+  );
+  for (int i = 0; i < droplets.length; i += 2) {
+    final offset = droplets[i];
+    final radius = brushSize * (0.04 + (i % 4) * 0.012);
+    dropletPaint.color = tintColor.withValues(alpha: 0.16 * alphaScale);
+    canvas.drawCircle(offset, radius, dropletPaint);
+    dropletPaint.color = Colors.white.withValues(alpha: 0.12 * alphaScale);
+    canvas.drawCircle(
+      offset.translate(-radius * 0.28, -radius * 0.32),
+      radius * 0.46,
+      dropletPaint,
+    );
+  }
+}
+
 void _paintWaveStroke(
   Canvas canvas,
   List<Offset> points,
@@ -2384,6 +3032,80 @@ void _paintWaveStroke(
   canvas.translate(0, -1.0);
   canvas.drawPath(path, light);
   canvas.restore();
+}
+
+void _paintShovelStroke(
+  Canvas canvas,
+  List<Offset> points,
+  double brushSize,
+  _ZenBackgroundSpec background,
+  double alphaScale,
+) {
+  final path = _smoothPath(points);
+  final ridgeOffset = (brushSize * 0.24).clamp(6.0, 18.0);
+  final leftPath = _smoothPath(_offsetPolyline(points, ridgeOffset));
+  final rightPath = _smoothPath(_offsetPolyline(points, -ridgeOffset));
+  final base = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.64
+    ..color = background.fillColor.withValues(alpha: 0.76 * alphaScale);
+  final scrape = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.18
+    ..color = background.grooveDark.withValues(alpha: 0.32 * alphaScale);
+  final ridge = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.12
+    ..color = background.grooveLight.withValues(alpha: 0.28 * alphaScale);
+
+  canvas.drawPath(path, base);
+  canvas.drawPath(path, scrape);
+  canvas.drawPath(leftPath, ridge);
+  canvas.drawPath(rightPath, ridge);
+}
+
+void _paintGravelStroke(
+  Canvas canvas,
+  List<Offset> points,
+  double brushSize,
+  _ZenBackgroundSpec background,
+  double alphaScale,
+) {
+  final shadow = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..strokeWidth = brushSize * 0.22
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
+    ..color = background.grooveDark.withValues(alpha: 0.10 * alphaScale);
+  canvas.drawPath(_smoothPath(points), shadow);
+
+  final random = math.Random(points.length * 31 + brushSize.round());
+  final pebblePaint = Paint()..style = PaintingStyle.fill;
+  final pebbleShadow = Paint()
+    ..style = PaintingStyle.fill
+    ..color = Colors.black.withValues(alpha: 0.10 * alphaScale);
+  final samples = _samplePolyline(points, (brushSize * 0.16).clamp(8.0, 18.0));
+  for (final sample in samples) {
+    final pebble = sample.translate(
+      (random.nextDouble() - 0.5) * brushSize * 0.18,
+      (random.nextDouble() - 0.5) * brushSize * 0.22,
+    );
+    final radius = brushSize * (0.045 + random.nextDouble() * 0.035);
+    canvas.drawCircle(pebble.translate(1.2, 1.6), radius, pebbleShadow);
+    pebblePaint.color = Color.lerp(
+      random.nextBool() ? background.grooveDark : background.grooveLight,
+      background.fillColor,
+      0.38 + random.nextDouble() * 0.28,
+    )!.withValues(alpha: 0.84 * alphaScale);
+    canvas.drawCircle(pebble, radius, pebblePaint);
+  }
 }
 
 void _paintSmoothStroke(
@@ -2503,6 +3225,32 @@ List<Offset> _offsetPolyline(List<Offset> points, double distance) {
     shifted.add(points[i] + normal * distance);
   }
   return shifted;
+}
+
+List<Offset> _samplePolyline(List<Offset> points, double spacing) {
+  if (points.isEmpty) return const <Offset>[];
+  if (points.length == 1) return <Offset>[points.first];
+
+  final samples = <Offset>[points.first];
+  double remainder = spacing;
+  for (int i = 0; i < points.length - 1; i++) {
+    final start = points[i];
+    final end = points[i + 1];
+    final vector = end - start;
+    final length = vector.distance;
+    if (length == 0) continue;
+    var travelled = remainder;
+    while (travelled < length) {
+      final t = travelled / length;
+      samples.add(Offset.lerp(start, end, t)!);
+      travelled += spacing;
+    }
+    remainder = travelled - length;
+  }
+  if (samples.last != points.last) {
+    samples.add(points.last);
+  }
+  return samples;
 }
 
 List<Offset> _wavePolyline(List<Offset> points, double amplitude) {

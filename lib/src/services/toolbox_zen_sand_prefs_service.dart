@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 const String zenSandDefaultBackgroundId = 'sunlit_garden';
 const String zenSandDefaultToolId = 'rake';
 const double zenSandDefaultBrushSize = 34.0;
+const int zenSandDefaultColorValue = 0xFF4E6F52;
 
 const int _maxSavedActions = 220;
 const int _maxStrokePoints = 260;
@@ -47,6 +48,7 @@ class ZenSandAction {
     required this.toolId,
     required this.size,
     required this.points,
+    required this.colorValue,
     required this.x,
     required this.y,
     required this.rotation,
@@ -57,6 +59,7 @@ class ZenSandAction {
     required String toolId,
     required double size,
     required List<ZenSandPoint> points,
+    int? colorValue,
   }) {
     final normalizedPoints = points
         .take(_maxStrokePoints)
@@ -67,6 +70,7 @@ class ZenSandAction {
       toolId: toolId.trim().isEmpty ? zenSandDefaultToolId : toolId.trim(),
       size: size.clamp(14.0, 96.0),
       points: normalizedPoints,
+      colorValue: colorValue,
       x: 0.0,
       y: 0.0,
       rotation: 0.0,
@@ -86,6 +90,7 @@ class ZenSandAction {
       toolId: 'stone',
       size: size.clamp(18.0, 96.0),
       points: const <ZenSandPoint>[],
+      colorValue: null,
       x: x.clamp(0.0, 1.0),
       y: y.clamp(0.0, 1.0),
       rotation: rotation.clamp(-1.2, 1.2),
@@ -97,6 +102,7 @@ class ZenSandAction {
   final String toolId;
   final double size;
   final List<ZenSandPoint> points;
+  final int? colorValue;
   final double x;
   final double y;
   final double rotation;
@@ -111,6 +117,7 @@ class ZenSandAction {
       'tool_id': toolId,
       'size': size,
       'points': points.map((point) => point.toJson()).toList(growable: false),
+      'color': colorValue,
       'x': x,
       'y': y,
       'rotation': rotation,
@@ -154,6 +161,7 @@ class ZenSandAction {
       toolId: '${map['tool_id'] ?? zenSandDefaultToolId}',
       size: ((map['size'] as num?)?.toDouble() ?? zenSandDefaultBrushSize)
           .clamp(14.0, 96.0),
+      colorValue: (map['color'] as num?)?.toInt(),
       points: points,
     );
   }
@@ -164,6 +172,7 @@ class ZenSandPrefsState {
     this.backgroundId = zenSandDefaultBackgroundId,
     this.toolId = zenSandDefaultToolId,
     this.brushSize = zenSandDefaultBrushSize,
+    this.colorValue = zenSandDefaultColorValue,
     this.hapticsEnabled = true,
     this.guidanceEnabled = true,
     this.actions = const <ZenSandAction>[],
@@ -172,6 +181,7 @@ class ZenSandPrefsState {
   final String backgroundId;
   final String toolId;
   final double brushSize;
+  final int colorValue;
   final bool hapticsEnabled;
   final bool guidanceEnabled;
   final List<ZenSandAction> actions;
@@ -180,6 +190,7 @@ class ZenSandPrefsState {
     String? backgroundId,
     String? toolId,
     double? brushSize,
+    int? colorValue,
     bool? hapticsEnabled,
     bool? guidanceEnabled,
     List<ZenSandAction>? actions,
@@ -188,6 +199,7 @@ class ZenSandPrefsState {
       backgroundId: backgroundId ?? this.backgroundId,
       toolId: toolId ?? this.toolId,
       brushSize: brushSize ?? this.brushSize,
+      colorValue: colorValue ?? this.colorValue,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       guidanceEnabled: guidanceEnabled ?? this.guidanceEnabled,
       actions: actions ?? this.actions,
@@ -199,6 +211,7 @@ class ZenSandPrefsState {
       'background_id': backgroundId,
       'tool_id': toolId,
       'brush_size': brushSize,
+      'color': colorValue,
       'haptics_enabled': hapticsEnabled,
       'guidance_enabled': guidanceEnabled,
       'actions': actions
@@ -232,6 +245,7 @@ class ZenSandPrefsState {
       brushSize:
           ((map['brush_size'] as num?)?.toDouble() ?? zenSandDefaultBrushSize)
               .clamp(14.0, 96.0),
+      colorValue: ((map['color'] as num?)?.toInt() ?? zenSandDefaultColorValue),
       hapticsEnabled: map['haptics_enabled'] as bool? ?? true,
       guidanceEnabled: map['guidance_enabled'] as bool? ?? true,
       actions: actions,

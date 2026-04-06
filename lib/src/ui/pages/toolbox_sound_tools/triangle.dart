@@ -51,6 +51,18 @@ class _TriangleToolState extends State<_TriangleTool> {
   _TrianglePlayMode _playMode = _TrianglePlayMode.single;
   String _lastGesture = 'Single';
   bool _rollInFlight = false;
+  int _activeTouchCount = 0;
+  int? _rollPointer;
+  Timer? _rollTimer;
+  Offset _rollPosition = Offset.zero;
+  double _rollIntervalMs = 70;
+  double _rollStrike = 0.5;
+  double _rollDamping = 0.2;
+  double _rollVolume = 0.72;
+  double _rollEnergy = 0;
+  double _strikerX = 0.78;
+  double _strikerY = 0.28;
+  double _strikerRecoil = 0;
 
   @override
   void initState() {
@@ -138,6 +150,41 @@ class _TriangleToolState extends State<_TriangleTool> {
     _players.clear();
   }
 
+  Future<void> _stopAllVoices() async {
+    for (final player in _players.values) {
+      await player.stop();
+    }
+  }
+
+  double _rollIntervalForDelta(Offset delta) {
+    final speed = delta.distance;
+    return (90 - speed * 0.9).clamp(40.0, 90.0).toDouble();
+  }
+
+  void _updateStrikerVisual(
+    Offset localPosition,
+    Size size, {
+    double recoil = 0.18,
+  }) {
+    final xRatio = size.width <= 0
+        ? 0.5
+        : (localPosition.dx / size.width).clamp(0.0, 1.0).toDouble();
+    final yRatio = size.height <= 0
+        ? 0.4
+        : (localPosition.dy / size.height).clamp(0.0, 1.0).toDouble();
+    _strikerX = (0.62 + xRatio * 0.2).clamp(0.58, 0.9).toDouble();
+    _strikerY = (0.18 + yRatio * 0.18).clamp(0.18, 0.5).toDouble();
+    _strikerRecoil = recoil.clamp(0.0, 0.42).toDouble();
+  }
+
+  void _stopRollEngine() {
+    _rollTimer?.cancel();
+    _rollTimer = null;
+    _rollInFlight = false;
+    _rollPointer = null;
+    _rollEnergy = 0;
+  }
+
   void _applyPreset(String presetId) {
     final preset = _presets.firstWhere(
       (item) => item.id == presetId,
@@ -163,6 +210,8 @@ class _TriangleToolState extends State<_TriangleTool> {
     double? damping,
     double? volume,
     required String gesture,
+    Offset? localPosition,
+    Size? stageSize,
   }) async {
     HapticFeedback.lightImpact();
     unawaited(
@@ -176,10 +225,22 @@ class _TriangleToolState extends State<_TriangleTool> {
       _hits += 1;
       _flash = 1;
       _lastGesture = gesture;
+      if (localPosition != null && stageSize != null) {
+        _updateStrikerVisual(
+          localPosition,
+          stageSize,
+          recoil: 0.16 + (volume ?? _ring) * 0.18,
+        );
+      } else {
+        _strikerRecoil = 0.18 + (volume ?? _ring) * 0.12;
+      }
     });
     Future<void>.delayed(const Duration(milliseconds: 160), () {
       if (!mounted) return;
-      setState(() => _flash = 0);
+      setState(() {
+        _flash = 0;
+        _strikerRecoil = 0;
+      });
     });
   }
 
@@ -193,29 +254,113 @@ class _TriangleToolState extends State<_TriangleTool> {
           damping: (_damping * 0.72).clamp(0.0, 1.0),
           volume: (_ring + 0.12).clamp(0.0, 1.0),
           gesture: 'Accent',
+          localPosition: localPosition,
+          stageSize: size,
         );
       case _TrianglePlayMode.roll:
         if (_rollInFlight) return;
+        _rollPosition = localPosition;
+        _rollStrike = (0.25 + xRatio * 0.6).clamp(0.0, 1.0);
+        _rollDamping = (_damping + yRatio * 0.16).clamp(0.0, 1.0);
+        _rollVolume = (_ring * 0.74).clamp(0.0, 1.0);
+        _rollIntervalMs = 70;
+        _rollEnergy = 0.12;
         _rollInFlight = true;
-        final baseStrike = (0.25 + xRatio * 0.6).clamp(0.0, 1.0);
-        final baseDamping = (_damping + yRatio * 0.16).clamp(0.0, 1.0);
-        for (var index = 0; index < 7; index += 1) {
-          await _performHit(
-            strike: (baseStrike + index * 0.02).clamp(0.0, 1.0),
-            damping: baseDamping,
-            volume: (_ring * (0.72 + index * 0.04)).clamp(0.0, 1.0),
-            gesture: 'Roll',
-          );
-          await Future<void>.delayed(const Duration(milliseconds: 70));
-        }
-        _rollInFlight = false;
+        await _performHit(
+          strike: _rollStrike,
+          damping: _rollDamping,
+          volume: _rollVolume,
+          gesture: 'Roll',
+          localPosition: localPosition,
+          stageSize: size,
+        );
+        _rollTimer = Timer(
+          Duration(milliseconds: _rollIntervalMs.round()),
+          () => _scheduleRollStep(size),
+        );
       case _TrianglePlayMode.single:
         await _performHit(
           strike: (0.2 + xRatio * 0.7).clamp(0.0, 1.0),
           damping: (_damping + (yRatio - 0.5).abs() * 0.12).clamp(0.0, 1.0),
           volume: (_ring * (0.88 + xRatio * 0.12)).clamp(0.0, 1.0),
           gesture: 'Single',
+          localPosition: localPosition,
+          stageSize: size,
         );
+    }
+  }
+
+  void _scheduleRollStep(Size size) {
+    if (!_rollInFlight) {
+      return;
+    }
+    unawaited(
+      _performHit(
+        strike: (_rollStrike + _rollEnergy * 0.08).clamp(0.0, 1.0),
+        damping: _rollDamping,
+        volume: (_rollVolume * (0.86 + _rollEnergy * 0.3)).clamp(0.2, 1.0),
+        gesture: 'Roll',
+        localPosition: _rollPosition,
+        stageSize: size,
+      ),
+    );
+    _rollEnergy = (_rollEnergy + 0.08).clamp(0.0, 1.0);
+    _rollTimer?.cancel();
+    _rollTimer = Timer(
+      Duration(milliseconds: _rollIntervalMs.round()),
+      () => _scheduleRollStep(size),
+    );
+  }
+
+  void _updateRollDynamics(Offset localPosition, Offset delta, Size size) {
+    _rollPosition = localPosition;
+    final xRatio = (localPosition.dx / size.width).clamp(0.0, 1.0);
+    final yRatio = (localPosition.dy / size.height).clamp(0.0, 1.0);
+    _rollStrike = (0.24 + xRatio * 0.62).clamp(0.0, 1.0);
+    _rollDamping = (_damping + yRatio * 0.16).clamp(0.0, 1.0);
+    _rollVolume = (_ring * (0.68 + delta.distance / 48))
+        .clamp(0.2, 1.0)
+        .toDouble();
+    _rollIntervalMs = _rollIntervalForDelta(delta);
+  }
+
+  Future<void> _chokeTriangle() async {
+    _stopRollEngine();
+    await _stopAllVoices();
+    if (!mounted) {
+      return;
+    }
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _flash = 0.2;
+      _lastGesture = 'Choke';
+      _strikerRecoil = 0.1;
+    });
+  }
+
+  void _handleStagePointerDown(PointerDownEvent event, Size size) {
+    _activeTouchCount += 1;
+    if (_activeTouchCount >= 2) {
+      unawaited(_chokeTriangle());
+      return;
+    }
+    if (_playMode == _TrianglePlayMode.roll) {
+      _rollPointer = event.pointer;
+    }
+    unawaited(_strikeFromStage(event.localPosition, size));
+  }
+
+  void _handleStagePointerMove(PointerMoveEvent event, Size size) {
+    if (_playMode != _TrianglePlayMode.roll || _rollPointer != event.pointer) {
+      return;
+    }
+    _updateRollDynamics(event.localPosition, event.delta, size);
+  }
+
+  void _handleStagePointerUp(PointerEvent event) {
+    _activeTouchCount = math.max(0, _activeTouchCount - 1);
+    if (_rollPointer == event.pointer) {
+      _stopRollEngine();
     }
   }
 
@@ -228,11 +373,12 @@ class _TriangleToolState extends State<_TriangleTool> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, height);
-        return GestureDetector(
-          onTapDown: (details) =>
-              unawaited(_strikeFromStage(details.localPosition, size)),
-          onPanStart: (details) =>
-              unawaited(_strikeFromStage(details.localPosition, size)),
+        return Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: (event) => _handleStagePointerDown(event, size),
+          onPointerMove: (event) => _handleStagePointerMove(event, size),
+          onPointerUp: _handleStagePointerUp,
+          onPointerCancel: _handleStagePointerUp,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             height: height,
@@ -272,7 +418,12 @@ class _TriangleToolState extends State<_TriangleTool> {
               children: <Widget>[
                 Positioned.fill(
                   child: CustomPaint(
-                    painter: _TriangleInstrumentPainter(intensity: _flash),
+                    painter: _TriangleInstrumentPainter(
+                      intensity: _flash,
+                      strikerX: _strikerX,
+                      strikerY: _strikerY,
+                      strikerRecoil: _strikerRecoil,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -374,6 +525,7 @@ class _TriangleToolState extends State<_TriangleTool> {
                   label: Text(_playModeLabel(i18n, mode)),
                   selected: _playMode == mode,
                   onSelected: (_) {
+                    _stopRollEngine();
                     setState(() => _playMode = mode);
                     refreshSheet();
                   },
@@ -519,17 +671,26 @@ class _TriangleToolState extends State<_TriangleTool> {
       runSpacing: 8,
       children: <Widget>[
         FilledButton.tonalIcon(
-          onPressed: () => setState(() => _playMode = _TrianglePlayMode.single),
+          onPressed: () {
+            _stopRollEngine();
+            setState(() => _playMode = _TrianglePlayMode.single);
+          },
           icon: const Icon(Icons.radio_button_checked_rounded),
           label: Text(_playModeLabel(i18n, _TrianglePlayMode.single)),
         ),
         FilledButton.tonalIcon(
-          onPressed: () => setState(() => _playMode = _TrianglePlayMode.accent),
+          onPressed: () {
+            _stopRollEngine();
+            setState(() => _playMode = _TrianglePlayMode.accent);
+          },
           icon: const Icon(Icons.bolt_rounded),
           label: Text(_playModeLabel(i18n, _TrianglePlayMode.accent)),
         ),
         FilledButton.tonalIcon(
-          onPressed: () => setState(() => _playMode = _TrianglePlayMode.roll),
+          onPressed: () {
+            _stopRollEngine();
+            setState(() => _playMode = _TrianglePlayMode.roll);
+          },
           icon: const Icon(Icons.multitrack_audio_rounded),
           label: Text(_playModeLabel(i18n, _TrianglePlayMode.roll)),
         ),
@@ -673,6 +834,7 @@ class _TriangleToolState extends State<_TriangleTool> {
 
   @override
   void dispose() {
+    _stopRollEngine();
     _disposePlayers();
     super.dispose();
   }
@@ -843,9 +1005,17 @@ class _TriangleToolState extends State<_TriangleTool> {
 }
 
 class _TriangleInstrumentPainter extends CustomPainter {
-  const _TriangleInstrumentPainter({required this.intensity});
+  const _TriangleInstrumentPainter({
+    required this.intensity,
+    required this.strikerX,
+    required this.strikerY,
+    required this.strikerRecoil,
+  });
 
   final double intensity;
+  final double strikerX;
+  final double strikerY;
+  final double strikerRecoil;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -887,15 +1057,17 @@ class _TriangleInstrumentPainter extends CustomPainter {
       ..color = const Color(0xFF243447)
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
-    final strikerX = size.width * 0.78;
-    final strikerY = size.height * (0.28 + intensity * 0.02);
-    canvas.drawLine(
-      Offset(strikerX, strikerY),
-      Offset(strikerX + 34, strikerY + 50),
-      striker,
+    final strikerBase = Offset(
+      size.width * strikerX - strikerRecoil * 28,
+      size.height * strikerY - strikerRecoil * 10,
     );
+    final strikerTip = Offset(
+      size.width * strikerX + 34 + strikerRecoil * 12,
+      size.height * strikerY + 50 + strikerRecoil * 18,
+    );
+    canvas.drawLine(strikerBase, strikerTip, striker);
     canvas.drawCircle(
-      Offset(strikerX + 34, strikerY + 50),
+      strikerTip,
       5,
       Paint()..color = const Color(0xFFF59E0B).withValues(alpha: 0.8),
     );
@@ -903,6 +1075,9 @@ class _TriangleInstrumentPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TriangleInstrumentPainter oldDelegate) {
-    return oldDelegate.intensity != intensity;
+    return oldDelegate.intensity != intensity ||
+        oldDelegate.strikerX != strikerX ||
+        oldDelegate.strikerY != strikerY ||
+        oldDelegate.strikerRecoil != strikerRecoil;
   }
 }

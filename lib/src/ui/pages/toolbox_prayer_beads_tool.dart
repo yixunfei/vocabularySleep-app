@@ -204,11 +204,17 @@ class PrayerBeadsPracticeCard extends StatefulWidget {
 class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     with TickerProviderStateMixin {
   static const List<int> _beadPresets = <int>[27, 54, 108];
+  static const List<int> _beadVariants = <int>[0, 9, 21];
   static const List<int> _visibleSlots = <int>[-4, -3, -2, -1, 0, 1, 2, 3, 4];
   static const SpringDescription _strandSpring = SpringDescription(
     mass: 1,
     stiffness: 360,
     damping: 34,
+  );
+  static const SpringDescription _postAdvanceSpring = SpringDescription(
+    mass: 1.05,
+    stiffness: 248,
+    damping: 30,
   );
 
   final Stopwatch _sessionStopwatch = Stopwatch();
@@ -219,8 +225,8 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
   late final AnimationController _interactionController;
   late final AnimationController _strandController;
 
-  ToolboxEffectPlayer? _regularPlayer;
-  ToolboxEffectPlayer? _accentPlayer;
+  ToolboxRealisticEffectPlayer? _regularPlayer;
+  ToolboxRealisticEffectPlayer? _accentPlayer;
 
   _PrayerBeadsMaterial _material = _PrayerBeadsMaterial.sandalwood;
   int _beadCount = 108;
@@ -336,14 +342,24 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
 
   Future<void> _rebuildPlayers() async {
     try {
-      final regular = ToolboxEffectPlayer(
-        ToolboxAudioBank.prayerBeadClick(style: _palette.soundStyle),
+      final regular = ToolboxRealisticEffectPlayer.build(
+        variants: _beadVariants,
+        bytesForVariant: (variant) => ToolboxAudioBank.prayerBeadClick(
+          style: _palette.soundStyle,
+          variant: variant,
+        ),
+        maxPlayers: 3,
+        volumeJitter: 0.06,
       );
-      final accent = ToolboxEffectPlayer(
-        ToolboxAudioBank.prayerBeadClick(
+      final accent = ToolboxRealisticEffectPlayer.build(
+        variants: _beadVariants,
+        bytesForVariant: (variant) => ToolboxAudioBank.prayerBeadClick(
           style: _palette.soundStyle,
           accent: true,
+          variant: variant,
         ),
+        maxPlayers: 3,
+        volumeJitter: 0.07,
       );
       await Future.wait(<Future<void>>[regular.warmUp(), accent.warmUp()]);
       final oldRegular = _regularPlayer;
@@ -404,7 +420,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     }
     try {
       final player = accent ? _accentPlayer : _regularPlayer;
-      await player?.play(volume: accent ? 0.92 : 0.82);
+      await player?.play(baseVolume: accent ? 0.92 : 0.82);
     } catch (_) {}
   }
 
@@ -424,18 +440,24 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     _setStrandOffset(offset);
   }
 
-  void _animateStrandToRest({double releaseVelocity = 0}) {
+  void _animateStrandToRest({
+    double releaseVelocity = 0,
+    bool afterAdvance = false,
+  }) {
     final currentOffset = _strandOffset;
     if (currentOffset.abs() < 0.35 && releaseVelocity.abs() < 14) {
       _setStrandOffset(0);
       return;
     }
     final simulation = SpringSimulation(
-      _strandSpring,
+      afterAdvance ? _postAdvanceSpring : _strandSpring,
       currentOffset,
       0,
       releaseVelocity,
-      tolerance: const Tolerance(distance: 0.3, velocity: 12),
+      tolerance: Tolerance(
+        distance: afterAdvance ? 0.24 : 0.3,
+        velocity: afterAdvance ? 9 : 12,
+      ),
     );
     _strandController.animateWith(simulation);
   }
@@ -445,11 +467,23 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
   }
 
   double _releaseVelocityFactorFor(int direction) {
-    return direction > 0 ? 0.24 : 0.34;
+    return direction > 0 ? 0.18 : 0.31;
   }
 
   double _completionThresholdFor(int direction) {
-    return direction > 0 ? 0.74 : 0.62;
+    return direction > 0 ? 0.79 : 0.64;
+  }
+
+  double _projectedCompletionFactorFor(int direction) {
+    return direction > 0 ? 0.72 : 0.58;
+  }
+
+  double _distanceCompletionFactorFor(int direction) {
+    return direction > 0 ? 0.97 : 0.88;
+  }
+
+  double _velocityThresholdFor(int direction) {
+    return direction > 0 ? 860 : 620;
   }
 
   double _clampPostAdvanceOffset(double offset, {required int direction}) {
@@ -491,7 +525,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     _handleAdvance(source: 'tap');
     final slideInOffset = (_dragStep * 0.28).clamp(18.0, 34.0);
     _setStrandOffset(-slideInOffset);
-    _animateStrandToRest(releaseVelocity: _dragStep * 7.2);
+    _animateStrandToRest(releaseVelocity: _dragStep * 5.4, afterAdvance: true);
     _didAdvanceThisGesture = false;
   }
 
@@ -634,16 +668,18 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
       );
       final projectedOffset = currentOffset + velocityY * 0.07;
       final velocityAligned = direction > 0
-          ? velocityY > 780
-          : velocityY < -620;
+          ? velocityY > _velocityThresholdFor(direction)
+          : velocityY < -_velocityThresholdFor(direction);
       final projectedAligned = direction > 0
-          ? projectedOffset > _dragStep * 0.66
-          : projectedOffset < -_dragStep * 0.58;
+          ? projectedOffset >
+                _dragStep * _projectedCompletionFactorFor(direction)
+          : projectedOffset <
+                -_dragStep * _projectedCompletionFactorFor(direction);
       if (progress > _completionThresholdFor(direction) ||
           projectedAligned ||
           velocityAligned ||
           currentOffset.abs() >=
-              (direction > 0 ? _dragStep * 0.94 : _dragStep * 0.88)) {
+              (_dragStep * _distanceCompletionFactorFor(direction))) {
         _advanceDirection = direction;
         _didAdvanceThisGesture = true;
         _handleAdvance(source: 'drag');
@@ -661,6 +697,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
           _releaseVelocityFactorFor(
             _didAdvanceThisGesture ? _advanceDirection : direction,
           ),
+      afterAdvance: _didAdvanceThisGesture,
     );
     _didAdvanceThisGesture = false;
   }
@@ -1300,6 +1337,22 @@ class _PrayerBeadWidget extends StatelessWidget {
     final emphasis = (focus * 0.86 + (active ? 0.18 : 0.0)).clamp(0.0, 1.0);
     final glow = (focus * 0.22 + interaction * 0.18).clamp(0.0, 0.42);
     final labelOpacity = (0.28 + focus * 0.72).clamp(0.0, 1.0);
+    final labelSurface = Color.lerp(
+      palette.beadColors[0],
+      palette.beadColors[1],
+      0.52,
+    )!;
+    final labelBrightness = ThemeData.estimateBrightnessForColor(labelSurface);
+    final labelColor = labelBrightness == Brightness.light
+        ? Color.lerp(
+            palette.beadBorder,
+            Colors.black,
+            0.28,
+          )!.withValues(alpha: 0.92)
+        : palette.threadLight.withValues(alpha: 0.9);
+    final labelShadowColor = labelBrightness == Brightness.light
+        ? Colors.white.withValues(alpha: 0.14)
+        : Colors.black.withValues(alpha: 0.24);
     final holeRim = Color.lerp(palette.threadLight, palette.beadBorder, 0.38)!;
     final holeCavity = Color.lerp(palette.beadBorder, Colors.black, 0.54)!;
 
@@ -1444,8 +1497,15 @@ class _PrayerBeadWidget extends StatelessWidget {
                   child: Text(
                     '$label',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.86),
+                      color: labelColor,
                       fontWeight: FontWeight.w800,
+                      shadows: <Shadow>[
+                        Shadow(
+                          color: labelShadowColor,
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
                 ),

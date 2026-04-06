@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -786,7 +787,7 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
       _fullscreen = value;
     });
     if (value) {
-      await _enterMiniGameFullscreen(landscape: true);
+      await _enterMiniGameFullscreen();
     } else {
       await _exitMiniGameFullscreen();
     }
@@ -855,13 +856,17 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportWidth = constraints.maxWidth;
-        final targetCell = fullscreen
-            ? 30.0
-            : _miniGameCompactLayout(context)
-            ? 22.0
-            : 26.0;
-        final boardWidth = math.max(viewportWidth, _cols * targetCell);
-        final boardHeight = boardWidth * _rows / _cols;
+        final viewportHeight = constraints.maxHeight;
+        final targetCell = _miniGameCompactLayout(context) ? 22.0 : 26.0;
+        final boardWidth = fullscreen
+            ? _cols *
+                  (math.min(viewportWidth / _cols, viewportHeight / _rows) *
+                          0.96)
+                      .clamp(8.0, 36.0)
+            : math.max(viewportWidth, _cols * targetCell);
+        final boardHeight = fullscreen
+            ? _rows * (boardWidth / _cols)
+            : boardWidth * _rows / _cols;
         final cellExtent = boardWidth / _cols;
         return _MiniGameScrollLockSurface(
           child: InteractiveViewer(
@@ -1309,8 +1314,8 @@ class _MineCellTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final iconSize = extent.clamp(11, 18).toDouble();
-    final fontSize = (extent * 0.58).clamp(9, 18).toDouble();
+    final iconSize = (extent * 0.62).clamp(7.0, 18.0);
+    final fontSize = (extent * 0.56).clamp(6.0, 18.0);
     Widget child;
     if (cell.wrongFlag) {
       child = Icon(
@@ -1331,20 +1336,26 @@ class _MineCellTile extends StatelessWidget {
         size: iconSize,
       );
     } else if (!cell.revealed && cell.mark == _MineMark.question) {
-      child = Text(
-        '?',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w900,
-          fontSize: fontSize,
+      child = FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          '?',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            fontSize: fontSize,
+          ),
         ),
       );
     } else if (cell.revealed && cell.neighborMines > 0) {
-      child = Text(
-        '${cell.neighborMines}',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w900,
-          fontSize: fontSize,
-          color: _numbers[cell.neighborMines],
+      child = FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          '${cell.neighborMines}',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            fontSize: fontSize,
+            color: _numbers[cell.neighborMines],
+          ),
         ),
       );
     } else {
@@ -1418,7 +1429,7 @@ class _JigsawGameState extends State<_JigsawGame> {
       _fullscreen = value;
     });
     if (value) {
-      await _enterMiniGameFullscreen(landscape: true);
+      await _enterMiniGameFullscreen();
     } else {
       await _exitMiniGameFullscreen();
     }
@@ -1717,12 +1728,17 @@ class _JigsawGameState extends State<_JigsawGame> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportWidth = constraints.maxWidth;
-        final targetTile = fullscreen
-            ? 72.0
-            : _miniGameCompactLayout(context)
-            ? 54.0
-            : 64.0;
-        final boardWidth = math.max(viewportWidth, _cols * targetTile);
+        final viewportHeight = constraints.maxHeight;
+        final targetTile = _miniGameCompactLayout(context) ? 54.0 : 64.0;
+        final boardWidth = fullscreen
+            ? _cols *
+                  (math.min(viewportWidth / _cols, viewportHeight / _rows) *
+                          0.96)
+                      .clamp(24.0, 96.0)
+            : math.max(viewportWidth, _cols * targetTile);
+        final boardHeight = fullscreen
+            ? _rows * (boardWidth / _cols)
+            : boardWidth * _rows / _cols;
         return _MiniGameScrollLockSurface(
           child: InteractiveViewer(
             minScale: 0.6,
@@ -1731,7 +1747,7 @@ class _JigsawGameState extends State<_JigsawGame> {
             child: Center(
               child: SizedBox(
                 width: boardWidth,
-                height: boardWidth,
+                height: boardHeight,
                 child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: tileCount,
@@ -2084,6 +2100,8 @@ class _PuzzleTilePainter extends CustomPainter {
 
 enum _GomokuStone { empty, black, white }
 
+enum _GomokuDifficulty { easy, medium, hard }
+
 class _GomokuGame extends StatefulWidget {
   const _GomokuGame();
 
@@ -2093,9 +2111,12 @@ class _GomokuGame extends StatefulWidget {
 
 class _GomokuGameState extends State<_GomokuGame> {
   static const int _size = 15;
+  static const double _terminalScore = 1000000000;
 
   late List<_GomokuStone> _board;
   _GomokuStone _turn = _GomokuStone.black;
+  _GomokuDifficulty _difficulty = _GomokuDifficulty.medium;
+  final math.Random _random = math.Random();
   bool _aiThinking = false;
   bool _gameOver = false;
   bool _resultDialogOpen = false;
@@ -2129,6 +2150,41 @@ class _GomokuGameState extends State<_GomokuGame> {
 
   String _text(AppI18n i18n, {required String zh, required String en}) {
     return pickUiText(i18n, zh: zh, en: en);
+  }
+
+  _GomokuStone _opponent(_GomokuStone stone) {
+    return stone == _GomokuStone.black
+        ? _GomokuStone.white
+        : _GomokuStone.black;
+  }
+
+  String _difficultyLabel(AppI18n i18n, _GomokuDifficulty difficulty) {
+    return switch (difficulty) {
+      _GomokuDifficulty.easy => _text(i18n, zh: '简单', en: 'Easy'),
+      _GomokuDifficulty.medium => _text(i18n, zh: '标准', en: 'Medium'),
+      _GomokuDifficulty.hard => _text(i18n, zh: '困难', en: 'Hard'),
+    };
+  }
+
+  Widget _buildDifficultySelector(AppI18n i18n) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: <Widget>[
+        for (final level in _GomokuDifficulty.values)
+          ChoiceChip(
+            label: Text(_difficultyLabel(i18n, level)),
+            selected: _difficulty == level,
+            onSelected: (_) {
+              if (_difficulty == level) return;
+              setState(() {
+                _difficulty = level;
+                _suggestedMove = null;
+              });
+            },
+          ),
+      ],
+    );
   }
 
   Future<void> _setFullscreen(bool value) async {
@@ -2289,8 +2345,19 @@ class _GomokuGameState extends State<_GomokuGame> {
     final candidates = _candidateMoves();
     if (candidates.isEmpty) return null;
 
-    for (final c in candidates) {
-      if (_wouldWin(c, _GomokuStone.white)) return c;
+    final wins = <int>[
+      for (final c in candidates)
+        if (_wouldWin(c, _GomokuStone.white)) c,
+    ];
+    if (wins.isNotEmpty) {
+      return _rankedCandidates(
+        wins,
+        offenseStone: _GomokuStone.white,
+        defenseStone: _GomokuStone.black,
+        offenseWeight: 1.3,
+        defenseWeight: 1.0,
+        limit: 1,
+      ).first;
     }
 
     final blocks = <int>[
@@ -2298,34 +2365,217 @@ class _GomokuGameState extends State<_GomokuGame> {
         if (_wouldWin(c, _GomokuStone.black)) c,
     ];
     if (blocks.isNotEmpty) {
-      return _bestScored(blocks, attackWeight: 0.85, defenseWeight: 1.2);
+      if (_difficulty == _GomokuDifficulty.easy && _random.nextDouble() < 0.2) {
+        return _chooseEasyMove(candidates);
+      }
+      return _rankedCandidates(
+        blocks,
+        offenseStone: _GomokuStone.white,
+        defenseStone: _GomokuStone.black,
+        offenseWeight: 0.9,
+        defenseWeight: 1.8,
+        limit: 1,
+      ).first;
     }
-    return _bestScored(candidates, attackWeight: 1.0, defenseWeight: 0.95);
+
+    return switch (_difficulty) {
+      _GomokuDifficulty.easy => _chooseEasyMove(candidates),
+      _GomokuDifficulty.medium => _chooseMediumMove(candidates),
+      _GomokuDifficulty.hard => _chooseHardMove(candidates),
+    };
   }
 
-  int _bestScored(
+  int _chooseEasyMove(List<int> candidates) {
+    final ranked = _rankedCandidates(
+      candidates,
+      offenseStone: _GomokuStone.white,
+      defenseStone: _GomokuStone.black,
+      offenseWeight: 1.0,
+      defenseWeight: 0.95,
+      limit: 7,
+    );
+    final pool = ranked
+        .take(math.min(4, ranked.length))
+        .toList(growable: false);
+    return pool[_random.nextInt(pool.length)];
+  }
+
+  int _chooseMediumMove(List<int> candidates) {
+    final ranked = _rankedCandidates(
+      candidates,
+      offenseStone: _GomokuStone.white,
+      defenseStone: _GomokuStone.black,
+      offenseWeight: 1.12,
+      defenseWeight: 1.2,
+      limit: 6,
+    );
+    if (ranked.length > 1 && _random.nextDouble() < 0.2) {
+      return ranked[1];
+    }
+    return ranked.first;
+  }
+
+  int _chooseHardMove(List<int> candidates) {
+    final ranked = _rankedCandidates(
+      candidates,
+      offenseStone: _GomokuStone.white,
+      defenseStone: _GomokuStone.black,
+      offenseWeight: 1.2,
+      defenseWeight: 1.3,
+      limit: 10,
+    );
+    var bestMove = ranked.first;
+    var bestScore = double.negativeInfinity;
+    var alpha = double.negativeInfinity;
+    for (final move in ranked) {
+      _board[move] = _GomokuStone.white;
+      final score = _winAt(move, _GomokuStone.white)
+          ? _terminalScore
+          : _minimaxScore(
+              depth: 2,
+              maximizingForAi: false,
+              alpha: alpha,
+              beta: double.infinity,
+            );
+      _board[move] = _GomokuStone.empty;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+      if (score > alpha) {
+        alpha = score;
+      }
+    }
+    return bestMove;
+  }
+
+  List<int> _rankedCandidates(
     List<int> candidates, {
-    required double attackWeight,
+    required _GomokuStone offenseStone,
+    required _GomokuStone defenseStone,
+    required double offenseWeight,
     required double defenseWeight,
+    int? limit,
   }) {
-    final random = math.Random();
-    var best = candidates.first;
-    var scoreBest = -1.0;
+    final scored = <(int, double)>[];
     for (final c in candidates) {
-      final attack = _evaluateMove(c, _GomokuStone.white);
-      final defense = _evaluateMove(c, _GomokuStone.black);
+      final attack = _evaluateMove(c, offenseStone);
+      final defense = _evaluateMove(c, defenseStone);
       final center = _centerBias(c);
       final score =
-          attack * attackWeight +
+          attack * offenseWeight +
           defense * defenseWeight +
           center +
-          random.nextDouble() * 0.001;
-      if (score > scoreBest) {
-        scoreBest = score;
-        best = c;
+          _random.nextDouble() * 0.001;
+      scored.add((c, score));
+    }
+    scored.sort((a, b) => b.$2.compareTo(a.$2));
+    final ranked = <int>[for (final item in scored) item.$1];
+    if (limit == null || ranked.length <= limit) {
+      return ranked;
+    }
+    return ranked.sublist(0, limit);
+  }
+
+  double _minimaxScore({
+    required int depth,
+    required bool maximizingForAi,
+    required double alpha,
+    required double beta,
+  }) {
+    if (depth <= 0) {
+      return _boardHeuristicScore();
+    }
+    final candidates = _candidateMoves();
+    if (candidates.isEmpty) {
+      return _boardHeuristicScore();
+    }
+    final stone = maximizingForAi ? _GomokuStone.white : _GomokuStone.black;
+    final ranked = _rankedCandidates(
+      candidates,
+      offenseStone: stone,
+      defenseStone: _opponent(stone),
+      offenseWeight: maximizingForAi ? 1.15 : 1.2,
+      defenseWeight: maximizingForAi ? 1.1 : 1.28,
+      limit: maximizingForAi ? 8 : 7,
+    );
+
+    if (maximizingForAi) {
+      var best = double.negativeInfinity;
+      for (final move in ranked) {
+        _board[move] = _GomokuStone.white;
+        final score = _winAt(move, _GomokuStone.white)
+            ? _terminalScore - (2 - depth)
+            : _minimaxScore(
+                depth: depth - 1,
+                maximizingForAi: false,
+                alpha: alpha,
+                beta: beta,
+              );
+        _board[move] = _GomokuStone.empty;
+        if (score > best) {
+          best = score;
+        }
+        if (score > alpha) {
+          alpha = score;
+        }
+        if (alpha >= beta) {
+          break;
+        }
+      }
+      return best;
+    }
+
+    var best = double.infinity;
+    for (final move in ranked) {
+      _board[move] = _GomokuStone.black;
+      final score = _winAt(move, _GomokuStone.black)
+          ? -_terminalScore + (2 - depth)
+          : _minimaxScore(
+              depth: depth - 1,
+              maximizingForAi: true,
+              alpha: alpha,
+              beta: beta,
+            );
+      _board[move] = _GomokuStone.empty;
+      if (score < best) {
+        best = score;
+      }
+      if (score < beta) {
+        beta = score;
+      }
+      if (beta <= alpha) {
+        break;
       }
     }
     return best;
+  }
+
+  double _boardHeuristicScore() {
+    final candidates = _candidateMoves();
+    if (candidates.isEmpty) {
+      return 0;
+    }
+    final ranked = _rankedCandidates(
+      candidates,
+      offenseStone: _GomokuStone.white,
+      defenseStone: _GomokuStone.black,
+      offenseWeight: 1.0,
+      defenseWeight: 1.0,
+      limit: 12,
+    );
+    var aiBest = double.negativeInfinity;
+    var playerBest = double.negativeInfinity;
+    for (final move in ranked) {
+      aiBest = math.max(aiBest, _evaluateMove(move, _GomokuStone.white));
+      playerBest = math.max(
+        playerBest,
+        _evaluateMove(move, _GomokuStone.black),
+      );
+    }
+    if (aiBest.isInfinite) aiBest = 0;
+    if (playerBest.isInfinite) playerBest = 0;
+    return aiBest * 1.16 - playerBest * 1.22;
   }
 
   List<int> _candidateMoves() {
@@ -2470,18 +2720,14 @@ class _GomokuGameState extends State<_GomokuGame> {
     if (candidates.isEmpty) {
       return null;
     }
-    var best = candidates.first;
-    var bestScore = double.negativeInfinity;
-    for (final candidate in candidates) {
-      final attack = _evaluateMove(candidate, _GomokuStone.black);
-      final defense = _evaluateMove(candidate, _GomokuStone.white);
-      final score = attack * 1.08 + defense * 1.14 + _centerBias(candidate);
-      if (score > bestScore) {
-        bestScore = score;
-        best = candidate;
-      }
-    }
-    return best;
+    return _rankedCandidates(
+      candidates,
+      offenseStone: _GomokuStone.black,
+      defenseStone: _GomokuStone.white,
+      offenseWeight: 1.1,
+      defenseWeight: 1.18,
+      limit: 1,
+    ).first;
   }
 
   void _showHint() {
@@ -2663,8 +2909,14 @@ class _GomokuGameState extends State<_GomokuGame> {
                       label: _text(i18n, zh: '状态', en: 'Status'),
                       value: displayStatus,
                     ),
+                    ToolboxMetricCard(
+                      label: _text(i18n, zh: 'AI 难度', en: 'AI level'),
+                      value: _difficultyLabel(i18n, _difficulty),
+                    ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                _buildDifficultySelector(i18n),
                 const SizedBox(height: 12),
                 Expanded(child: _buildBoard(context, fullscreen: true)),
               ],
@@ -2695,8 +2947,14 @@ class _GomokuGameState extends State<_GomokuGame> {
                   label: _text(i18n, zh: '状态', en: 'Status'),
                   value: displayStatus,
                 ),
+                ToolboxMetricCard(
+                  label: _text(i18n, zh: 'AI 难度', en: 'AI level'),
+                  value: _difficultyLabel(i18n, _difficulty),
+                ),
               ],
             ),
+            const SizedBox(height: 12),
+            _buildDifficultySelector(i18n),
             const SizedBox(height: 12),
             Text(
               _text(
@@ -2864,16 +3122,16 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
     _board[index] = _random.nextDouble() < 0.9 ? 2 : 4;
   }
 
-  void _handlePanStart(DragStartDetails details) {
-    _dragStart = details.localPosition;
+  void _handleDragStart(Offset position) {
+    _dragStart = position;
     _dragConsumed = false;
   }
 
-  void _handlePanUpdate(DragUpdateDetails details) {
+  void _handleDragUpdate(Offset position) {
     if (_dragConsumed || _dragStart == null) {
       return;
     }
-    final delta = details.localPosition - _dragStart!;
+    final delta = position - _dragStart!;
     if (delta.distance < 18) {
       return;
     }
@@ -2885,7 +3143,19 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
     }
   }
 
-  void _handlePanEnd([DragEndDetails? _]) {
+  void _handleVerticalDragStart(DragStartDetails details) =>
+      _handleDragStart(details.localPosition);
+
+  void _handleHorizontalDragStart(DragStartDetails details) =>
+      _handleDragStart(details.localPosition);
+
+  void _handleVerticalDragUpdate(DragUpdateDetails details) =>
+      _handleDragUpdate(details.localPosition);
+
+  void _handleHorizontalDragUpdate(DragUpdateDetails details) =>
+      _handleDragUpdate(details.localPosition);
+
+  void _handleDragEnd([DragEndDetails? _]) {
     _dragStart = null;
     _dragConsumed = false;
   }
@@ -3103,10 +3373,15 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
                   child: _MiniGameScrollLockSurface(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onPanStart: _handlePanStart,
-                      onPanUpdate: _handlePanUpdate,
-                      onPanEnd: _handlePanEnd,
-                      onPanCancel: () => _handlePanEnd(),
+                      dragStartBehavior: DragStartBehavior.down,
+                      onVerticalDragStart: _handleVerticalDragStart,
+                      onVerticalDragUpdate: _handleVerticalDragUpdate,
+                      onVerticalDragEnd: _handleDragEnd,
+                      onVerticalDragCancel: () => _handleDragEnd(),
+                      onHorizontalDragStart: _handleHorizontalDragStart,
+                      onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+                      onHorizontalDragEnd: _handleDragEnd,
+                      onHorizontalDragCancel: () => _handleDragEnd(),
                       child: Container(
                         width: boardSize,
                         height: boardSize,

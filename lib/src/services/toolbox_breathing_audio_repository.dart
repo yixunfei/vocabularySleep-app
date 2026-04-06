@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 
 import 'cstcloud_resource_cache_service.dart';
 import 'toolbox_breathing_catalog.dart';
@@ -13,12 +15,14 @@ class BreathingResolvedCue {
     required this.source,
     required this.kind,
     required this.location,
+    this.duration,
   });
 
   final BreathingCueSpec cue;
   final Source source;
   final BreathingCueSourceKind kind;
   final String location;
+  final Duration? duration;
 }
 
 class ToolboxBreathingAudioRepository {
@@ -27,23 +31,31 @@ class ToolboxBreathingAudioRepository {
   final CstCloudResourceCacheService? _resourceCache;
   final Map<String, Future<BreathingResolvedCue?>> _resolvedCache =
       <String, Future<BreathingResolvedCue?>>{};
+  final Map<String, Future<Duration?>> _durationCache =
+      <String, Future<Duration?>>{};
 
   static const Map<String, String> _exactRemoteFileNameByCueId =
       <String, String>{
-        'inhale_soft': '\u5438\u6c14.wav',
-        'exhale_soft': '\u547c\u6c14.wav',
-        'hold_soft': '\u5c4f\u606f.wav',
-        'nose_inhale': '\u9f3b\u5b50\u5438\u6c14.wav',
-        'nose_exhale': '\u9f3b\u5b50\u547c\u6c14.wav',
-        'mouth_inhale': '\u5634\u5438\u6c14.wav',
-        'mouth_exhale': '\u5634\u547c\u6c14.wav',
-        'preview_relax': '\u653e\u677e.wav',
-        'preview_intro_1': '\u547c\u5438\u5f15\u5bfc1.wav',
-        'preview_intro_2': '\u547c\u5438\u5f15\u5bfc2.wav',
-        'preview_nose_slow':
-            '\u5f00\u59cb\u7528\u9f3b\u5b50\u7f13\u7f13\u5438\u6c14.wav',
-        'preview_parasym': '\u526f\u4ea4\u611f\u4ea4\u66ff.wav',
-        'preview_altitude': '\u5feb\u901f\u5634\u5438\u6c14\u5c4f\u6c14.wav',
+        'inhale_soft': '吸气.wav',
+        'exhale_soft': '呼气.wav',
+        'hold_soft': '屏息.wav',
+        'nose_inhale': '鼻子吸气.wav',
+        'nose_exhale': '鼻子呼气.wav',
+        'mouth_inhale': '嘴吸气.wav',
+        'mouth_exhale': '嘴呼气.wav',
+        'preview_relax': '放松.wav',
+        'preview_intro_1': '呼吸引导1.wav',
+        'preview_intro_2': '呼吸引导2.wav',
+        'preview_nose_slow': '开始用鼻子缓缓吸气.wav',
+        'preview_parasym': '副交感交替.wav',
+        'preview_altitude': '快速嘴吸气屏气.wav',
+        'bolt_prepare': 'breathing_bolt_prepare.wav',
+        'bolt_start': 'breathing_bolt_start.wav',
+        'bolt_stop': 'breathing_bolt_stop.wav',
+        'bolt_recover': 'breathing_bolt_recover.wav',
+        'session_start': 'breathing_session_start.wav',
+        'session_complete': 'breathing_session_complete.wav',
+        'altitude_warning_short': 'breathing_altitude_warning_short.wav',
       };
 
   Future<BreathingResolvedCue?> resolve(
@@ -55,6 +67,30 @@ class ToolboxBreathingAudioRepository {
     return _resolvedCache.putIfAbsent(
       cacheKey,
       () => _resolveInternal(cueId, normalizedTags),
+    );
+  }
+
+  Future<BreathingResolvedCue?> resolveScenarioStage(
+    String scenarioId, {
+    required int stageIndex,
+    required BreathingStageKind stageKind,
+    String? fallbackCueId,
+    List<String> languageTags = const <String>[],
+  }) {
+    final normalizedTags = _normalizedLanguageTags(languageTags);
+    final normalizedFallback = fallbackCueId?.trim() ?? '';
+    final cacheKey =
+        'stage|$scenarioId|$stageIndex|${stageKind.name}|$normalizedFallback|'
+        '${normalizedTags.join(",")}';
+    return _resolvedCache.putIfAbsent(
+      cacheKey,
+      () => _resolveScenarioStageInternal(
+        scenarioId,
+        stageIndex: stageIndex,
+        stageKind: stageKind,
+        fallbackCueId: normalizedFallback,
+        languageTags: normalizedTags,
+      ),
     );
   }
 
@@ -122,6 +158,26 @@ class ToolboxBreathingAudioRepository {
     return candidates.toList(growable: false);
   }
 
+  List<String> candidateRemoteKeysForScenarioStage(
+    String scenarioId, {
+    required int stageIndex,
+    required BreathingStageKind stageKind,
+  }) {
+    final normalizedScenarioId = scenarioId.trim();
+    final normalizedPrefix = BreathingExperienceCatalog.remotePrefix.trim();
+    if (normalizedScenarioId.isEmpty ||
+        normalizedPrefix.isEmpty ||
+        stageIndex < 0) {
+      return const <String>[];
+    }
+    final stepToken = (stageIndex + 1).toString().padLeft(2, '0');
+    final stageSuffix = _scenarioStageFileSuffix(stageKind);
+    return <String>[
+      '$normalizedPrefix/breathing_${normalizedScenarioId}_'
+          '${stepToken}_$stageSuffix.wav',
+    ];
+  }
+
   Future<BreathingResolvedCue?> _resolveInternal(
     String cueId,
     List<String> languageTags,
@@ -141,25 +197,195 @@ class ToolboxBreathingAudioRepository {
         if (file == null) {
           continue;
         }
-        return BreathingResolvedCue(
-          cue: cue,
-          source: DeviceFileSource(file.path),
-          kind: BreathingCueSourceKind.remote,
-          location: remoteKey,
-        );
+        return _resolvedRemoteCue(cue, remoteKey, file);
       }
     }
 
     final assetPath = cue.assetPath?.trim() ?? '';
-    if (assetPath.isNotEmpty) {
-      return BreathingResolvedCue(
-        cue: cue,
-        source: AssetSource(assetPath),
-        kind: BreathingCueSourceKind.asset,
-        location: assetPath,
-      );
+    if (assetPath.isEmpty) {
+      return null;
     }
-    return null;
+    final duration =
+        await _durationForAsset(assetPath, cacheKey: assetPath) ??
+        _approxCueDuration(cue);
+    return BreathingResolvedCue(
+      cue: cue,
+      source: AssetSource(assetPath),
+      kind: BreathingCueSourceKind.asset,
+      location: assetPath,
+      duration: duration,
+    );
+  }
+
+  Future<BreathingResolvedCue?> _resolveScenarioStageInternal(
+    String scenarioId, {
+    required int stageIndex,
+    required BreathingStageKind stageKind,
+    required String fallbackCueId,
+    required List<String> languageTags,
+  }) async {
+    final fallbackCue = fallbackCueId.isEmpty
+        ? null
+        : BreathingExperienceCatalog.cues[fallbackCueId];
+    final resourceCache = _resourceCache;
+    if (resourceCache != null && fallbackCue != null) {
+      for (final remoteKey in candidateRemoteKeysForScenarioStage(
+        scenarioId,
+        stageIndex: stageIndex,
+        stageKind: stageKind,
+      )) {
+        final file = await _tryDownload(resourceCache, remoteKey);
+        if (file == null) {
+          continue;
+        }
+        return _resolvedRemoteCue(fallbackCue, remoteKey, file);
+      }
+    }
+
+    if (fallbackCueId.isEmpty) {
+      return null;
+    }
+    return _resolveInternal(fallbackCueId, languageTags);
+  }
+
+  Future<BreathingResolvedCue> _resolvedRemoteCue(
+    BreathingCueSpec cue,
+    String remoteKey,
+    File file,
+  ) async {
+    final duration =
+        await _durationForFile(file, cacheKey: remoteKey) ??
+        _approxCueDuration(cue);
+    return BreathingResolvedCue(
+      cue: cue,
+      source: DeviceFileSource(file.path),
+      kind: BreathingCueSourceKind.remote,
+      location: remoteKey,
+      duration: duration,
+    );
+  }
+
+  String _scenarioStageFileSuffix(BreathingStageKind stageKind) {
+    return switch (stageKind) {
+      BreathingStageKind.inhale => 'inhale',
+      BreathingStageKind.hold => 'hold',
+      BreathingStageKind.exhale => 'exhale',
+      BreathingStageKind.rest => 'rest',
+    };
+  }
+
+  Duration? _approxCueDuration(BreathingCueSpec cue) {
+    if (cue.approxDurationMs <= 0) {
+      return null;
+    }
+    return Duration(milliseconds: cue.approxDurationMs);
+  }
+
+  Future<Duration?> _durationForFile(File file, {required String cacheKey}) {
+    return _durationCache.putIfAbsent('file|$cacheKey', () async {
+      try {
+        final totalLength = await file.length();
+        if (totalLength <= 0) {
+          return null;
+        }
+        final headerLength = totalLength < 4096 ? totalLength : 4096;
+        final buffer = BytesBuilder(copy: false);
+        await for (final chunk in file.openRead(0, headerLength)) {
+          buffer.add(chunk);
+        }
+        return _tryParseWavDuration(
+          buffer.takeBytes(),
+          totalLength: totalLength,
+        );
+      } catch (_) {
+        return null;
+      }
+    });
+  }
+
+  Future<Duration?> _durationForAsset(
+    String assetPath, {
+    required String cacheKey,
+  }) {
+    return _durationCache.putIfAbsent('asset|$cacheKey', () async {
+      try {
+        final data = await rootBundle.load('assets/$assetPath');
+        return _tryParseWavDuration(
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+          totalLength: data.lengthInBytes,
+        );
+      } catch (_) {
+        return null;
+      }
+    });
+  }
+
+  Duration? _tryParseWavDuration(Uint8List bytes, {int? totalLength}) {
+    if (bytes.length < 12 ||
+        _readAscii(bytes, 0, 4) != 'RIFF' ||
+        _readAscii(bytes, 8, 4) != 'WAVE') {
+      return null;
+    }
+
+    var offset = 12;
+    int? byteRate;
+    int? dataSize;
+    while (offset + 8 <= bytes.length) {
+      final chunkId = _readAscii(bytes, offset, 4);
+      final chunkSize = _readUint32LE(bytes, offset + 4);
+      final chunkDataOffset = offset + 8;
+      final paddedChunkSize = chunkSize + (chunkSize.isOdd ? 1 : 0);
+      final nextOffset = chunkDataOffset + paddedChunkSize;
+      if (chunkId == 'fmt ' && chunkDataOffset + 16 <= bytes.length) {
+        byteRate = _readUint32LE(bytes, chunkDataOffset + 8);
+      } else if (chunkId == 'data') {
+        dataSize = chunkSize;
+        break;
+      }
+      if (nextOffset <= offset) {
+        break;
+      }
+      offset = nextOffset;
+    }
+
+    final resolvedByteRate = byteRate;
+    if (resolvedByteRate == null || resolvedByteRate <= 0) {
+      return null;
+    }
+    final resolvedDataSize = dataSize ?? _fallbackDataSize(totalLength);
+    if (resolvedDataSize == null || resolvedDataSize <= 0) {
+      return null;
+    }
+    final durationMs = ((resolvedDataSize / resolvedByteRate) * 1000).round();
+    if (durationMs <= 0) {
+      return null;
+    }
+    return Duration(milliseconds: durationMs);
+  }
+
+  int? _fallbackDataSize(int? totalLength) {
+    if (totalLength == null || totalLength <= 44) {
+      return null;
+    }
+    return totalLength - 44;
+  }
+
+  String _readAscii(Uint8List bytes, int start, int length) {
+    if (start < 0 || start + length > bytes.length) {
+      return '';
+    }
+    return String.fromCharCodes(bytes.sublist(start, start + length));
+  }
+
+  int _readUint32LE(Uint8List bytes, int start) {
+    if (start < 0 || start + 4 > bytes.length) {
+      return 0;
+    }
+    return ByteData.sublistView(
+      bytes,
+      start,
+      start + 4,
+    ).getUint32(0, Endian.little);
   }
 
   String _normalizeFileName(String fileName) {

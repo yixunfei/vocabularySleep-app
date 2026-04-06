@@ -224,6 +224,22 @@ class _FocusVisualPalette {
   final Color stroke;
 }
 
+class _FocusTickFrame {
+  const _FocusTickFrame({
+    required this.segmentLength,
+    required this.layer,
+    required this.nextLayer,
+    required this.beat,
+    required this.subPulse,
+  });
+
+  final int segmentLength;
+  final int layer;
+  final int nextLayer;
+  final int beat;
+  final int subPulse;
+}
+
 class _FocusBeatsTool extends StatefulWidget {
   const _FocusBeatsTool({
     this.fullScreen = false,
@@ -247,6 +263,7 @@ class _FocusBeatsTool extends StatefulWidget {
 class _FocusBeatsToolState extends State<_FocusBeatsTool>
     with TickerProviderStateMixin {
   static _FocusBeatsToolState? _runningInstance;
+  static const List<int> _focusBeatVariants = <int>[0, 11, 23];
   static const List<_FocusArrangementPreset> _patternPresets =
       <_FocusArrangementPreset>[
         _FocusArrangementPreset(name: '单段 1bar', segmentsInBars: <double>[1]),
@@ -274,7 +291,8 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   Timer? _persistTimer;
   Timer? _immersiveHudTimer;
   DateTime? _lastTapTempoAt;
-  Map<int, ToolboxEffectPlayer> _players = <int, ToolboxEffectPlayer>{};
+  Map<int, ToolboxRealisticEffectPlayer> _players =
+      <int, ToolboxRealisticEffectPlayer>{};
 
   int _bpm = 72;
   int _beatsPerBar = 4;
@@ -319,6 +337,11 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   int _transportTick = 0;
   int? _transportAnchorUs;
   int _lastLayer = 2;
+  int _lastPrimedLayer = -1;
+  int _lastPrimedTransportTick = -9999;
+
+  static const int _timingCompensationUs = 1200;
+  static const int _maxCatchUpTicks = 3;
 
   int get _barPulses => _beatsPerBar * _subdivision;
 
@@ -454,11 +477,17 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
 
   Future<void> _rebuildPlayers() async {
     final oldPlayers = _players.values.toList(growable: false);
-    _players = <int, ToolboxEffectPlayer>{
+    _players = <int, ToolboxRealisticEffectPlayer>{
       for (final layer in <int>[0, 1, 2, 3])
-        layer: ToolboxEffectPlayer(
-          ToolboxAudioBank.focusBeatClick(style: _soundKind.id, layer: layer),
-          maxPlayers: 6,
+        layer: ToolboxRealisticEffectPlayer.build(
+          variants: _focusBeatVariants,
+          bytesForVariant: (variant) => ToolboxAudioBank.focusBeatClick(
+            style: _soundKind.id,
+            layer: layer,
+            variant: variant,
+          ),
+          maxPlayers: 3,
+          volumeJitter: 0.05,
         ),
     };
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -479,10 +508,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   }
 
   void _syncPulseAnimationDuration() {
-    final intervalMs = (60000 / _bpm).round();
-    _pulseController.duration = Duration(
-      milliseconds: intervalMs.clamp(180, 2000),
-    );
+    _pulseController.duration = Duration(microseconds: _pulseIntervalUs);
   }
 
   String _animationLabel(_FocusBeatAnimationKind kind) {
@@ -717,15 +743,28 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
       return;
     }
     final anchor = _transportAnchorUs ?? DateTime.now().microsecondsSinceEpoch;
-    _transportTick += 1;
-    final targetUs = anchor + _transportTick * _pulseIntervalUs;
+    final nextTick = _transportTick + 1;
+    final targetUs = anchor + nextTick * _pulseIntervalUs;
     final nowUs = DateTime.now().microsecondsSinceEpoch;
-    final waitUs = math.max(0, targetUs - nowUs);
+    final waitUs = math.max(0, targetUs - nowUs - _timingCompensationUs);
     _transportTimer = Timer(Duration(microseconds: waitUs), () {
       if (!mounted || !_running) {
         return;
       }
+      _transportTick = nextTick;
       _tick();
+      var catchUpCount = 0;
+      while (catchUpCount < _maxCatchUpTicks && mounted && _running) {
+        final now = DateTime.now().microsecondsSinceEpoch;
+        final followTick = _transportTick + 1;
+        final followTargetUs = anchor + followTick * _pulseIntervalUs;
+        if (now + _timingCompensationUs < followTargetUs) {
+          break;
+        }
+        _transportTick = followTick;
+        _tick();
+        catchUpCount += 1;
+      }
       _scheduleNextTick();
     });
   }
@@ -751,42 +790,20 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   }
 
   void _tick() {
-    final segments = _effectiveSegmentPulses;
-    final boundedSegmentIndex = _currentSegmentIndex.clamp(
-      0,
-      segments.length - 1,
-    );
-    final segmentLength = segments[boundedSegmentIndex];
+    final frame = _buildTickFrame();
+    _maybePrimeLayer(frame.nextLayer);
+    _maybeHaptic(frame.layer);
+    _playLayer(frame.layer);
 
-    final isCycleStart = _cyclePulse == 0;
-    final isSegmentStart = _pulseInSegment == 0;
-    final isOnBeat = _pulseInBar % _subdivision == 0;
-
-    final layer = isCycleStart
-        ? 0
-        : isSegmentStart
-        ? 1
-        : isOnBeat
-        ? 2
-        : 3;
-
-    final beat = _pulseInBar ~/ _subdivision;
-    final subPulse = (_pulseInBar % _subdivision) + 1;
-
-    _playLayer(layer);
-    _maybeHaptic(layer);
-
-    if (isOnBeat) {
-      _pulseController
-        ..stop()
-        ..forward(from: 0);
-    }
+    _pulseController
+      ..stop()
+      ..forward(from: 0);
 
     if (mounted) {
       setState(() {
-        _lastLayer = layer;
-        _activeBeat = beat;
-        _activeSubPulse = subPulse;
+        _lastLayer = frame.layer;
+        _activeBeat = frame.beat;
+        _activeSubPulse = frame.subPulse;
       });
     }
 
@@ -794,15 +811,87 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     _pulseInBar = (_pulseInBar + 1) % _barPulses;
     _cyclePulse += 1;
 
-    if (_pulseInSegment >= segmentLength) {
+    if (_pulseInSegment >= frame.segmentLength) {
       _pulseInSegment = 0;
       _currentSegmentIndex += 1;
-      if (_currentSegmentIndex >= segments.length) {
+      if (_currentSegmentIndex >= _effectiveSegmentPulses.length) {
         _currentSegmentIndex = 0;
         _cycleCount += 1;
         _cyclePulse = 0;
       }
     }
+  }
+
+  _FocusTickFrame _buildTickFrame() {
+    final segments = _effectiveSegmentPulses;
+    final boundedSegmentIndex = _currentSegmentIndex.clamp(
+      0,
+      segments.length - 1,
+    );
+    final segmentLength = segments[boundedSegmentIndex];
+    final currentLayer = _layerForPulse(
+      cyclePulse: _cyclePulse,
+      pulseInSegment: _pulseInSegment,
+      pulseInBar: _pulseInBar,
+    );
+    final beat = _pulseInBar ~/ _subdivision;
+    final subPulse = (_pulseInBar % _subdivision) + 1;
+
+    var nextPulseInSegment = _pulseInSegment + 1;
+    var nextPulseInBar = (_pulseInBar + 1) % _barPulses;
+    var nextCyclePulse = _cyclePulse + 1;
+    var nextSegmentIndex = _currentSegmentIndex;
+    if (nextPulseInSegment >= segmentLength) {
+      nextPulseInSegment = 0;
+      nextSegmentIndex += 1;
+      if (nextSegmentIndex >= segments.length) {
+        nextSegmentIndex = 0;
+        nextCyclePulse = 0;
+      }
+    }
+    final nextLayer = _layerForPulse(
+      cyclePulse: nextCyclePulse,
+      pulseInSegment: nextPulseInSegment,
+      pulseInBar: nextPulseInBar,
+    );
+    return _FocusTickFrame(
+      segmentLength: segmentLength,
+      layer: currentLayer,
+      nextLayer: nextLayer,
+      beat: beat,
+      subPulse: subPulse,
+    );
+  }
+
+  int _layerForPulse({
+    required int cyclePulse,
+    required int pulseInSegment,
+    required int pulseInBar,
+  }) {
+    final isCycleStart = cyclePulse == 0;
+    final isSegmentStart = pulseInSegment == 0;
+    final isOnBeat = pulseInBar % _subdivision == 0;
+    return isCycleStart
+        ? 0
+        : isSegmentStart
+        ? 1
+        : isOnBeat
+        ? 2
+        : 3;
+  }
+
+  void _maybePrimeLayer(int layer) {
+    if (layer == _lastPrimedLayer &&
+        _transportTick - _lastPrimedTransportTick < 2) {
+      return;
+    }
+    _lastPrimedLayer = layer;
+    _lastPrimedTransportTick = _transportTick;
+    final player = _players[layer];
+    if (player == null) {
+      return;
+    }
+    unawaited(player.warmUp());
   }
 
   double _volumeForLayer(int layer) {
@@ -818,7 +907,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   void _playLayer(int layer) {
     final player = _players[layer];
     if (player == null) return;
-    unawaited(player.play(volume: _volumeForLayer(layer)));
+    unawaited(player.play(baseVolume: _volumeForLayer(layer)));
   }
 
   void _maybeHaptic(int layer) {
@@ -1401,6 +1490,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                 child: CustomPaint(
                   painter: _FocusBeatVisualizerPainter(
                     kind: _animationKind,
+                    bpm: _bpm,
                     pulseProgress: _pulseController.value,
                     ambientProgress: _ambientController.value,
                     accentLayer: _lastLayer,
@@ -1883,6 +1973,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                 child: CustomPaint(
                   painter: _FocusBeatVisualizerPainter(
                     kind: _animationKind,
+                    bpm: _bpm,
                     pulseProgress: _pulseController.value,
                     ambientProgress: _ambientController.value,
                     accentLayer: _lastLayer,
@@ -2097,6 +2188,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                   return CustomPaint(
                     painter: _FocusBeatVisualizerPainter(
                       kind: _animationKind,
+                      bpm: _bpm,
                       pulseProgress: _pulseController.value,
                       ambientProgress: _ambientController.value,
                       accentLayer: _lastLayer,
@@ -2277,6 +2369,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                 return CustomPaint(
                   painter: _FocusBeatVisualizerPainter(
                     kind: _animationKind,
+                    bpm: _bpm,
                     pulseProgress: _pulseController.value,
                     ambientProgress: _ambientController.value,
                     accentLayer: _lastLayer,
@@ -6821,6 +6914,7 @@ void _drawMovementScrew(
 class _FocusBeatVisualizerPainter extends CustomPainter {
   const _FocusBeatVisualizerPainter({
     required this.kind,
+    required this.bpm,
     required this.pulseProgress,
     required this.ambientProgress,
     required this.accentLayer,
@@ -6832,6 +6926,7 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
   });
 
   final _FocusBeatAnimationKind kind;
+  final int bpm;
   final double pulseProgress;
   final double ambientProgress;
   final int accentLayer;
@@ -6897,136 +6992,465 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
 
   double get _phase => pulseProgress.clamp(0.0, 1.0);
 
-  double get _beatEnergy =>
+  double get _pulseEnergy =>
       running ? 1 - Curves.easeOutCubic.transform(_phase) : 0.0;
 
   double get _ambientAngle => ambientProgress.clamp(0.0, 1.0) * math.pi * 2;
 
+  int get _barPulseCount => math.max(1, beatsPerBar * subdivision);
+
+  int get _currentPulseIndex {
+    if (activeBeat < 0 || activeSubPulse <= 0) {
+      return 0;
+    }
+    return (activeBeat * subdivision + activeSubPulse - 1).clamp(
+      0,
+      _barPulseCount - 1,
+    );
+  }
+
+  bool get _isBeatPulse => subdivision <= 1 || activeSubPulse <= 1;
+
+  double get _accentStrength => switch (accentLayer) {
+    0 => 1.0,
+    1 => 0.82,
+    2 => 0.62,
+    _ => 0.45,
+  };
+
   @override
   void paint(Canvas canvas, Size size) {
-    final flatTheme = _theme;
-    final flatBeat = _beatEnergy;
-    final flatAmbient = _ambientAngle;
-    final flatAccent = _mixColor(flatTheme.accent, _layerAccent, 0.22);
-    final flatGlow = _mixColor(flatTheme.secondary, _layerAccent, 0.10);
-    final beatCount = math.max(1, beatsPerBar);
-    final currentBeat = activeBeat < 0 ? 0 : activeBeat % beatCount;
-    final nextBeat = (currentBeat + 1) % beatCount;
-    final beatTravel = running ? Curves.easeInOutCubic.transform(_phase) : 0.0;
-
-    _paintFlatBackdrop(
-      canvas,
-      size,
-      theme: flatTheme,
-      accent: flatAccent,
-      ambient: flatAmbient,
-      beat: flatBeat,
-    );
-    switch (kind) {
-      case _FocusBeatAnimationKind.pendulum:
-        _paintFlatPendulum(
-          canvas,
-          size,
-          theme: flatTheme,
-          accent: flatAccent,
-          beat: flatBeat,
-          currentBeat: currentBeat,
-          nextBeat: nextBeat,
-          beatTravel: beatTravel,
-        );
-        break;
-      case _FocusBeatAnimationKind.hypno:
-        _paintFlatOrbit(
-          canvas,
-          size,
-          theme: flatTheme,
-          accent: flatAccent,
-          glow: flatGlow,
-          beat: flatBeat,
-          ambient: flatAmbient,
-          currentBeat: currentBeat,
-          nextBeat: nextBeat,
-          beatTravel: beatTravel,
-        );
-        break;
-      case _FocusBeatAnimationKind.dew:
-        _paintFlatDroplet(
-          canvas,
-          size,
-          theme: flatTheme,
-          accent: flatAccent,
-          beat: flatBeat,
-          currentBeat: currentBeat,
-          nextBeat: nextBeat,
-          beatTravel: beatTravel,
-        );
-        break;
-      case _FocusBeatAnimationKind.gear:
-        _paintFlatRotor(
-          canvas,
-          size,
-          theme: flatTheme,
-          accent: flatAccent,
-          beat: flatBeat,
-          ambient: flatAmbient,
-          currentBeat: currentBeat,
-          nextBeat: nextBeat,
-          beatTravel: beatTravel,
-        );
-        break;
-      case _FocusBeatAnimationKind.steps:
-        _paintFlatSteps(
-          canvas,
-          size,
-          theme: flatTheme,
-          accent: flatAccent,
-          beat: flatBeat,
-          currentBeat: currentBeat,
-          nextBeat: nextBeat,
-          beatTravel: beatTravel,
-        );
-        break;
-    }
-    _paintFlatPulseDock(canvas, size, theme: flatTheme, accent: flatAccent);
-    return;
-
     final theme = _theme;
-    final beat = _beatEnergy;
     final ambient = _ambientAngle;
-    final breath = 0.5 + 0.5 * math.sin(ambient - math.pi / 2);
-    final accent = _mixColor(theme.accent, _layerAccent, 0.32);
-    final glow = _mixColor(theme.secondary, _layerAccent, 0.18);
+    final pulse = _pulseEnergy;
+    final accent = _mixColor(theme.accent, _layerAccent, 0.28);
+    final guideColor = _mixColor(theme.highlight, Colors.white, 0.50);
+    final contrastBoost = kind == _FocusBeatAnimationKind.hypno
+        ? (_isBeatPulse ? pulse * 0.10 : pulse * 0.05)
+        : 0.0;
 
-    _paintBackdrop(
+    _paintMetronomeBackdrop(
       canvas,
       size,
       theme: theme,
       accent: accent,
-      glow: glow,
-      beat: beat,
-      breath: breath,
       ambient: ambient,
+      pulse: pulse,
+      contrastBoost: contrastBoost,
     );
-
-    switch (kind) {
-      case _FocusBeatAnimationKind.pendulum:
-        _paintPendulum(canvas, size, theme, accent, glow, beat, ambient);
-        break;
-      case _FocusBeatAnimationKind.hypno:
-        _paintHypno(canvas, size, theme, accent, glow, beat, ambient, breath);
-        break;
-      case _FocusBeatAnimationKind.dew:
-        _paintDew(canvas, size, theme, accent, glow, beat, ambient);
-        break;
-      case _FocusBeatAnimationKind.gear:
-        _paintGear(canvas, size, theme, accent, glow, beat, ambient);
-        break;
-      case _FocusBeatAnimationKind.steps:
-        _paintSteps(canvas, size, theme, accent, glow, beat, ambient);
-        break;
+    if (kind == _FocusBeatAnimationKind.steps) {
+      _paintStepsGuideFlow(
+        canvas,
+        size,
+        accent: accent,
+        guideColor: guideColor,
+        pulse: pulse,
+      );
     }
 
-    _paintPulseDock(canvas, size, theme, accent, beat);
+    final pivot = Offset(size.width * 0.5, size.height * 0.18);
+    final armLength = size.height * 0.55;
+    final beatDirection = activeBeat >= 0 && activeBeat.isOdd ? -1.0 : 1.0;
+    final pulseDirection = _currentPulseIndex.isEven ? -1.0 : 1.0;
+    final sign = kind == _FocusBeatAnimationKind.pendulum
+        ? beatDirection
+        : pulseDirection;
+    final amplitude =
+        (_isBeatPulse ? 0.64 : 0.44) * (0.74 + _accentStrength * 0.26);
+    final easedPhase = Curves.easeInOutCubic.transform(_phase);
+    final swing = math.sin(
+      easedPhase * math.pi - math.pi / 2,
+    ); // gravity-like easing
+    final angle = running ? sign * swing * amplitude : 0.0;
+    final angularVelocity = running
+        ? sign *
+              math.cos(easedPhase * math.pi - math.pi / 2) *
+              math.pi *
+              amplitude
+        : 0.0;
+    final bob = Offset(
+      pivot.dx + math.sin(angle) * armLength,
+      pivot.dy + math.cos(angle) * armLength,
+    );
+
+    _paintMetronomeTicks(
+      canvas,
+      size,
+      pivot: pivot,
+      armLength: armLength,
+      guideColor: guideColor,
+      accent: accent,
+      pulse: pulse,
+    );
+
+    if (running && kind == _FocusBeatAnimationKind.pendulum && pulse > 0.03) {
+      _paintPendulumMotionBlur(
+        canvas,
+        pivot: pivot,
+        armLength: armLength,
+        angle: angle,
+        angularVelocity: angularVelocity,
+        accent: accent,
+        pulse: pulse,
+      );
+    }
+
+    final armPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          guideColor.withValues(alpha: 0.95),
+          accent.withValues(alpha: 0.88),
+        ],
+      ).createShader(Rect.fromPoints(pivot, bob))
+      ..strokeWidth = size.shortestSide * 0.010
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(pivot, bob, armPaint);
+
+    final bobRadius =
+        size.shortestSide * 0.060 + (_isBeatPulse ? 3.5 : 1.5) + pulse * 4;
+    canvas.drawCircle(
+      bob.translate(0, 10),
+      bobRadius,
+      Paint()..color = Colors.black.withValues(alpha: 0.24),
+    );
+    canvas.drawCircle(
+      bob,
+      bobRadius,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.34, -0.36),
+          colors: <Color>[
+            theme.highlight.withValues(alpha: 0.95),
+            accent.withValues(alpha: 0.96),
+            _mixColor(theme.surface, accent, 0.34),
+          ],
+          stops: const <double>[0.0, 0.34, 1.0],
+        ).createShader(Rect.fromCircle(center: bob, radius: bobRadius)),
+    );
+    canvas.drawCircle(
+      bob.translate(-bobRadius * 0.26, -bobRadius * 0.24),
+      bobRadius * 0.22,
+      Paint()..color = Colors.white.withValues(alpha: 0.42),
+    );
+
+    canvas.drawCircle(
+      pivot,
+      size.shortestSide * 0.024,
+      Paint()
+        ..color = _mixColor(theme.surface, accent, 0.40)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      pivot,
+      size.shortestSide * 0.015,
+      Paint()..color = guideColor.withValues(alpha: 0.94),
+    );
+
+    if (kind == _FocusBeatAnimationKind.hypno) {
+      _paintHypnoPulseHalo(canvas, pivot: pivot, accent: accent, pulse: pulse);
+    }
+
+    _paintPulseRail(
+      canvas,
+      size,
+      accent: accent,
+      pulse: pulse,
+      guideColor: guideColor,
+    );
+    _paintBeatMarkers(canvas, size, accent: accent, pulse: pulse);
+  }
+
+  void _paintMetronomeBackdrop(
+    Canvas canvas,
+    Size size, {
+    required _FocusVisualizerTheme theme,
+    required Color accent,
+    required double ambient,
+    required double pulse,
+    double contrastBoost = 0.0,
+  }) {
+    final boosted = contrastBoost.clamp(0.0, 0.18);
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            _mixColor(
+              _mixColor(theme.base, theme.mid, 0.34),
+              Colors.white,
+              boosted * 0.30,
+            ),
+            _mixColor(
+              _mixColor(theme.mid, theme.surface, 0.26),
+              theme.highlight,
+              boosted * 0.22,
+            ),
+            _mixColor(
+              _mixColor(theme.surface, theme.base, 0.18),
+              Colors.black,
+              boosted * 0.14,
+            ),
+          ],
+        ).createShader(rect),
+    );
+
+    final glow = Rect.fromCenter(
+      center: Offset(
+        size.width * (0.50 + math.sin(ambient * 0.18) * 0.03),
+        size.height * 0.30,
+      ),
+      width: size.width * 0.72,
+      height: size.height * 0.40,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(glow, const Radius.circular(999)),
+      Paint()..color = accent.withValues(alpha: 0.08 + pulse * 0.05),
+    );
+
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.10),
+      Offset(size.width * 0.5, size.height * 0.84),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.08)
+        ..strokeWidth = 1,
+    );
+  }
+
+  void _paintPendulumMotionBlur(
+    Canvas canvas, {
+    required Offset pivot,
+    required double armLength,
+    required double angle,
+    required double angularVelocity,
+    required Color accent,
+    required double pulse,
+  }) {
+    final velocity = angularVelocity.abs();
+    final blurGain = (velocity * 0.34).clamp(0.0, 1.0) * (0.58 + pulse * 0.42);
+    for (var i = 1; i <= 4; i += 1) {
+      final lag = i * 0.030;
+      final ghostAngle = angle - angularVelocity * lag;
+      final ghostEnd = Offset(
+        pivot.dx + math.sin(ghostAngle) * armLength,
+        pivot.dy + math.cos(ghostAngle) * armLength,
+      );
+      final alpha = (0.14 - i * 0.025) * blurGain;
+      if (alpha <= 0.001) {
+        continue;
+      }
+      canvas.drawLine(
+        pivot,
+        ghostEnd,
+        Paint()
+          ..color = accent.withValues(alpha: alpha)
+          ..strokeWidth = 1.4 + (4 - i) * 0.32
+          ..strokeCap = StrokeCap.round,
+      );
+      canvas.drawCircle(
+        ghostEnd,
+        8.0 + (4 - i) * 0.8,
+        Paint()..color = accent.withValues(alpha: alpha * 0.56),
+      );
+    }
+  }
+
+  void _paintHypnoPulseHalo(
+    Canvas canvas, {
+    required Offset pivot,
+    required Color accent,
+    required double pulse,
+  }) {
+    for (var i = 0; i < 3; i += 1) {
+      final radius = 26.0 + i * 18 + pulse * (22 - i * 4);
+      canvas.drawCircle(
+        pivot,
+        radius,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = accent.withValues(
+            alpha: (0.16 - i * 0.045) * (0.5 + pulse),
+          ),
+      );
+    }
+  }
+
+  void _paintStepsGuideFlow(
+    Canvas canvas,
+    Size size, {
+    required Color accent,
+    required Color guideColor,
+    required double pulse,
+  }) {
+    final speed = (bpm / 60).clamp(0.6, 3.4);
+    final flow = (ambientProgress * speed) % 1.0;
+    final vanish = Offset(size.width * 0.5, size.height * 0.30);
+    final floorY = size.height * 0.90;
+
+    canvas.drawLine(
+      Offset(size.width * 0.20, floorY),
+      vanish,
+      Paint()
+        ..color = guideColor.withValues(alpha: 0.20)
+        ..strokeWidth = 1.2,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.80, floorY),
+      vanish,
+      Paint()
+        ..color = guideColor.withValues(alpha: 0.20)
+        ..strokeWidth = 1.2,
+    );
+
+    for (var i = 0; i < 7; i += 1) {
+      final t = ((flow + i * 0.14) % 1.0);
+      final eased = Curves.easeIn.transform(t);
+      final y = _mix(size.height * 0.38, floorY, eased);
+      final half = _mix(size.width * 0.03, size.width * 0.32, eased);
+      final alpha = (0.08 + eased * 0.20) * (0.75 + pulse * 0.25);
+      canvas.drawLine(
+        Offset(size.width * 0.5 - half, y),
+        Offset(size.width * 0.5 + half, y),
+        Paint()
+          ..color = accent.withValues(alpha: alpha)
+          ..strokeWidth = 1.0 + eased * 0.8,
+      );
+    }
+  }
+
+  void _paintMetronomeTicks(
+    Canvas canvas,
+    Size size, {
+    required Offset pivot,
+    required double armLength,
+    required Color guideColor,
+    required Color accent,
+    required double pulse,
+  }) {
+    const start = math.pi / 2 - 0.86;
+    const sweep = 1.72;
+    final arcPaint = Paint()
+      ..color = guideColor.withValues(alpha: 0.30)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: pivot, radius: armLength),
+      start,
+      sweep,
+      false,
+      arcPaint,
+    );
+
+    for (var i = 0; i <= 8; i += 1) {
+      final t = i / 8;
+      final angle = start + sweep * t;
+      final outer = Offset(
+        pivot.dx + math.cos(angle) * (armLength + 12),
+        pivot.dy + math.sin(angle) * (armLength + 12),
+      );
+      final inner = Offset(
+        pivot.dx + math.cos(angle) * (armLength - (i.isEven ? 10 : 5)),
+        pivot.dy + math.sin(angle) * (armLength - (i.isEven ? 10 : 5)),
+      );
+      canvas.drawLine(
+        inner,
+        outer,
+        Paint()
+          ..color = i == 4
+              ? accent.withValues(alpha: 0.90)
+              : guideColor.withValues(alpha: 0.50),
+      );
+    }
+
+    if (pulse > 0.02) {
+      canvas.drawArc(
+        Rect.fromCircle(center: pivot, radius: armLength),
+        start + sweep * 0.48,
+        sweep * 0.04,
+        false,
+        Paint()
+          ..color = accent.withValues(alpha: pulse * 0.48)
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 4,
+      );
+    }
+  }
+
+  void _paintPulseRail(
+    Canvas canvas,
+    Size size, {
+    required Color accent,
+    required Color guideColor,
+    required double pulse,
+  }) {
+    final railY = size.height * 0.82;
+    final railLeft = size.width * 0.20;
+    final railRight = size.width * 0.80;
+    final visibleCount = _barPulseCount.clamp(1, 24);
+    final active = visibleCount == 1
+        ? 0
+        : ((_currentPulseIndex / (_barPulseCount - 1)) * (visibleCount - 1))
+              .round();
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(railLeft, railY - 6, railRight, railY + 6),
+        const Radius.circular(999),
+      ),
+      Paint()..color = Colors.white.withValues(alpha: 0.07),
+    );
+
+    for (var i = 0; i < visibleCount; i += 1) {
+      final x = _mix(
+        railLeft + 8,
+        railRight - 8,
+        visibleCount == 1 ? 0.5 : i / (visibleCount - 1),
+      );
+      final isActive = i == active;
+      canvas.drawCircle(
+        Offset(x, railY),
+        isActive ? 3.6 + pulse * 1.8 : 2.2,
+        Paint()
+          ..color = isActive
+              ? accent.withValues(alpha: 0.96)
+              : guideColor.withValues(alpha: 0.34),
+      );
+    }
+  }
+
+  void _paintBeatMarkers(
+    Canvas canvas,
+    Size size, {
+    required Color accent,
+    required double pulse,
+  }) {
+    final count = math.max(1, beatsPerBar);
+    final active = activeBeat < 0 ? 0 : activeBeat % count;
+    final y = size.height * 0.91;
+    final left = size.width * 0.24;
+    final right = size.width * 0.76;
+
+    for (var i = 0; i < count; i += 1) {
+      final x = _mix(left, right, count == 1 ? 0.5 : i / (count - 1));
+      final isActive = i == active;
+      final radius = isActive
+          ? 5.2 + (_isBeatPulse ? pulse * 2.2 : pulse * 1.0)
+          : 3.0;
+      canvas.drawCircle(
+        Offset(x, y),
+        radius,
+        Paint()
+          ..color = isActive
+              ? accent.withValues(alpha: 0.98)
+              : Colors.white.withValues(alpha: 0.26),
+      );
+    }
   }
 
   double _beatMarker(int beat) {
@@ -8213,12 +8637,14 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _FocusBeatVisualizerPainter oldDelegate) {
     return oldDelegate.kind != kind ||
+        oldDelegate.bpm != bpm ||
         oldDelegate.pulseProgress != pulseProgress ||
         oldDelegate.ambientProgress != ambientProgress ||
         oldDelegate.accentLayer != accentLayer ||
         oldDelegate.running != running ||
         oldDelegate.activeBeat != activeBeat ||
         oldDelegate.activeSubPulse != activeSubPulse ||
+        oldDelegate.beatsPerBar != beatsPerBar ||
         oldDelegate.subdivision != subdivision;
   }
 }
