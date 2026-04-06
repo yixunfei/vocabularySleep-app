@@ -4,6 +4,8 @@ import 'package:vocabulary_sleep_app/src/services/toolbox_soothing_prefs_service
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music/runtime_store.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Soothing runtime store', () {
     tearDown(() {
       SoothingMusicRuntimeStore.playbackMode = SoothingPlaybackMode.singleLoop;

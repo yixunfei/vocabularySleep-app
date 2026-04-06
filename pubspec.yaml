@@ -97,6 +97,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/ambient/
+    - assets/follow_this_breath/
     - assets/toolbox/beads/
     - assets/wordbooks/
 

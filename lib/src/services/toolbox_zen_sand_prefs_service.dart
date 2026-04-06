@@ -8,6 +8,9 @@ const String zenSandDefaultBackgroundId = 'sunlit_garden';
 const String zenSandDefaultToolId = 'rake';
 const double zenSandDefaultBrushSize = 34.0;
 const int zenSandDefaultColorValue = 0xFF4E6F52;
+const bool zenSandDefaultSoundEnabled = true;
+const bool zenSandDefaultDrawFromContactPoint = true;
+const double zenSandDefaultTouchOffset = 0.55;
 
 const int _maxSavedActions = 220;
 const int _maxStrokePoints = 260;
@@ -175,6 +178,9 @@ class ZenSandPrefsState {
     this.colorValue = zenSandDefaultColorValue,
     this.hapticsEnabled = true,
     this.guidanceEnabled = true,
+    this.soundEnabled = zenSandDefaultSoundEnabled,
+    this.drawFromContactPoint = zenSandDefaultDrawFromContactPoint,
+    this.touchOffset = zenSandDefaultTouchOffset,
     this.actions = const <ZenSandAction>[],
   });
 
@@ -184,6 +190,9 @@ class ZenSandPrefsState {
   final int colorValue;
   final bool hapticsEnabled;
   final bool guidanceEnabled;
+  final bool soundEnabled;
+  final bool drawFromContactPoint;
+  final double touchOffset;
   final List<ZenSandAction> actions;
 
   ZenSandPrefsState copyWith({
@@ -193,6 +202,9 @@ class ZenSandPrefsState {
     int? colorValue,
     bool? hapticsEnabled,
     bool? guidanceEnabled,
+    bool? soundEnabled,
+    bool? drawFromContactPoint,
+    double? touchOffset,
     List<ZenSandAction>? actions,
   }) {
     return ZenSandPrefsState(
@@ -202,6 +214,10 @@ class ZenSandPrefsState {
       colorValue: colorValue ?? this.colorValue,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       guidanceEnabled: guidanceEnabled ?? this.guidanceEnabled,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
+      drawFromContactPoint:
+          drawFromContactPoint ?? this.drawFromContactPoint,
+      touchOffset: (touchOffset ?? this.touchOffset).clamp(0.0, 1.0),
       actions: actions ?? this.actions,
     );
   }
@@ -214,6 +230,9 @@ class ZenSandPrefsState {
       'color': colorValue,
       'haptics_enabled': hapticsEnabled,
       'guidance_enabled': guidanceEnabled,
+      'sound_enabled': soundEnabled,
+      'draw_from_contact_point': drawFromContactPoint,
+      'touch_offset': touchOffset,
       'actions': actions
           .take(_maxSavedActions)
           .map((action) => action.toJson())
@@ -248,6 +267,14 @@ class ZenSandPrefsState {
       colorValue: ((map['color'] as num?)?.toInt() ?? zenSandDefaultColorValue),
       hapticsEnabled: map['haptics_enabled'] as bool? ?? true,
       guidanceEnabled: map['guidance_enabled'] as bool? ?? true,
+      soundEnabled: map['sound_enabled'] as bool? ?? zenSandDefaultSoundEnabled,
+      drawFromContactPoint:
+          map['draw_from_contact_point'] as bool? ??
+          zenSandDefaultDrawFromContactPoint,
+      touchOffset:
+          ((map['touch_offset'] as num?)?.toDouble() ??
+                  zenSandDefaultTouchOffset)
+              .clamp(0.0, 1.0),
       actions: actions,
     );
   }

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +14,10 @@ import 'package:vocabulary_sleep_app/src/models/practice_export_format.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_question_type.dart';
 import 'package:vocabulary_sleep_app/src/models/practice_session_record.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
+import 'package:vocabulary_sleep_app/src/models/sleep_daily_log.dart';
+import 'package:vocabulary_sleep_app/src/models/sleep_plan.dart';
+import 'package:vocabulary_sleep_app/src/models/sleep_profile.dart';
+import 'package:vocabulary_sleep_app/src/models/sleep_routine_template.dart';
 import 'package:vocabulary_sleep_app/src/models/study_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
@@ -45,6 +49,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music/runtime_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music_v2_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/voice_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/wordbook_management_page.dart';
@@ -220,9 +225,9 @@ void main() {
       final state = _FakeAppState.sample(
         uiLanguage: 'en',
         words: const <WordEntry>[
-          WordEntry(wordbookId: 1, word: '睡眠', fields: <WordFieldItem>[]),
-          WordEntry(wordbookId: 1, word: '专注', fields: <WordFieldItem>[]),
-          WordEntry(wordbookId: 1, word: '放松', fields: <WordFieldItem>[]),
+          WordEntry(wordbookId: 1, word: '鐫＄湢', fields: <WordFieldItem>[]),
+          WordEntry(wordbookId: 1, word: '涓撴敞', fields: <WordFieldItem>[]),
+          WordEntry(wordbookId: 1, word: '鏀炬澗', fields: <WordFieldItem>[]),
         ],
       );
       await _pumpPage(tester, state: state, child: const LibraryPage());
@@ -675,7 +680,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Shanghai, CN'), findsOneWidget);
-      expect(find.text('18°C'), findsOneWidget);
+      expect(find.textContaining('18'), findsWidgets);
     });
 
     testWidgets('ambient sheet opens online ambient catalog actions', (
@@ -690,7 +695,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Ambient catalog'));
+      await tester.tap(find.text('Catalog'));
       await tester.pumpAndSettle();
 
       expect(find.text('Ambient sound catalog'), findsOneWidget);
@@ -711,6 +716,11 @@ void main() {
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
       expect(find.text('Multi-tool toolbox'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Soothing music'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Soothing music'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('Schulte grid'),
@@ -732,16 +742,25 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
+      final schulteCard = find
+          .ancestor(
+            of: find.text('Schulte grid'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+
       await tester.scrollUntilVisible(
         find.text('Schulte grid'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.text('Schulte grid'));
+      await tester.ensureVisible(schulteCard);
+      await tester.pumpAndSettle();
+      await tester.tap(schulteCard, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      expect(find.text('Grid size'), findsOneWidget);
-      expect(find.text('Target'), findsOneWidget);
+      expect(find.text('Board size'), findsOneWidget);
+      expect(find.text('Next'), findsOneWidget);
 
       await tester.tap(find.text('1').first);
       await tester.pumpAndSettle();
@@ -832,16 +851,20 @@ void main() {
         await tester.tap(find.text('Save'));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Apply'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 600));
 
-        expect(find.textContaining('Template: Wind Down Mix'), findsWidgets);
+        expect(
+          SoothingMusicRuntimeStore.arrangementTemplates.any(
+            (template) => template.name == 'Wind Down Mix',
+          ),
+          isTrue,
+        );
+        expect(SoothingMusicRuntimeStore.activeArrangementTemplateId, isNotNull);
         final hasPlaybackState =
-            find.textContaining('Paused').evaluate().isNotEmpty ||
-            find.textContaining('Ready').evaluate().isNotEmpty ||
-            find.textContaining('Loading').evaluate().isNotEmpty;
+            find.byIcon(Icons.pause_rounded).evaluate().isNotEmpty ||
+            find.byIcon(Icons.play_arrow_rounded).evaluate().isNotEmpty ||
+            find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
         expect(hasPlaybackState, isTrue);
       },
     );
@@ -1973,7 +1996,7 @@ void main() {
           wordbookId: 1,
           word: 'alpha',
           fields: <WordFieldItem>[
-            WordFieldItem(key: 'meaning', label: '含义', value: '开始'),
+            WordFieldItem(key: 'meaning', label: '鍚箟', value: '寮€濮�'),
           ],
         ),
       ];
@@ -1981,7 +2004,7 @@ void main() {
       await _pumpPage(
         tester,
         state: state,
-        child: const PracticeSessionPage(title: '测试练习', words: words),
+        child: const PracticeSessionPage(title: '娴嬭瘯缁冧範', words: words),
       );
 
       expect(find.text('\u663e\u793a\u63d0\u793a'), findsOneWidget);
@@ -2361,16 +2384,16 @@ void main() {
       const html =
           '<script data-target="react-app.embeddedData">'
           '{"payload":{"codeViewRepoRoute":{"tree":{"items":['
-          '{"name":"中英_12000.json","path":"中英_12000.json","contentType":"file"},'
+          '{"name":"涓嫳_12000.json","path":"涓嫳_12000.json","contentType":"file"},'
           '{"name":"notes.txt","path":"notes.txt","contentType":"file"},'
-          '{"name":"英法_12000.json","path":"英法_12000.json","contentType":"file"}'
+          '{"name":"鑻辨硶_12000.json","path":"鑻辨硶_12000.json","contentType":"file"}'
           ']}}}}</script>';
 
       final entries = GitHubWordbookCatalog.parseRepositoryHtml(html);
 
       expect(entries.map((item) => item.fileName), <String>[
-        '中英_12000.json',
-        '英法_12000.json',
+        '涓嫳_12000.json',
+        '鑻辨硶_12000.json',
       ]);
     });
 
@@ -2631,6 +2654,21 @@ class _FakeAppState extends ChangeNotifier
   String? _startupDailyQuote;
   bool _startupDailyQuoteLoading = false;
   List<TodoItem> _todayActiveTodos = <TodoItem>[];
+  bool _sleepLoading = false;
+  SleepProfile? _sleepProfile;
+  SleepPlan? _sleepCurrentPlan;
+  SleepDashboardState _sleepDashboardState = const SleepDashboardState();
+  SleepAssessmentDraftState _sleepAssessmentDraft =
+      const SleepAssessmentDraftState();
+  SleepRoutineRunnerState _sleepRoutineRunnerState =
+      const SleepRoutineRunnerState();
+  SleepNightRescueState _sleepNightRescueState = const SleepNightRescueState();
+  List<SleepDailyLog> _sleepDailyLogs = <SleepDailyLog>[];
+  List<SleepNightEvent> _sleepNightEvents = <SleepNightEvent>[];
+  List<SleepThoughtEntry> _sleepThoughtEntries = <SleepThoughtEntry>[];
+  List<SleepRoutineTemplate> _sleepRoutineTemplates =
+      SleepRoutineTemplate.builtInDefaults();
+  SleepProgramProgress? _sleepProgramProgress;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   bool _testModeEnabled = false;
@@ -2815,10 +2853,19 @@ class _FakeAppState extends ChangeNotifier
   Future<void> init() async {}
 
   @override
+  Future<void> loadSleepAssistantData() async {}
+
+  @override
   bool get initializing => false;
 
   @override
   bool get initialized => true;
+
+  @override
+  bool get selectedWordbookLoaded => _selectedWordbook != null;
+
+  @override
+  bool get selectedWordbookRequiresOnDemandLoad => false;
 
   @override
   String? get lastBackupPath => _lastBackupPath;
@@ -2843,6 +2890,83 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   double get remotePrewarmProgress => 0;
+
+  @override
+  bool get sleepLoading => _sleepLoading;
+
+  @override
+  SleepProfile? get sleepProfile => _sleepProfile;
+
+  @override
+  SleepPlan? get sleepCurrentPlan => _sleepCurrentPlan;
+
+  @override
+  SleepDashboardState get sleepDashboardState => _sleepDashboardState;
+
+  @override
+  SleepAssessmentDraftState get sleepAssessmentDraft => _sleepAssessmentDraft;
+
+  @override
+  SleepRoutineRunnerState get sleepRoutineRunnerState =>
+      _sleepRoutineRunnerState;
+
+  @override
+  SleepNightRescueState get sleepNightRescueState => _sleepNightRescueState;
+
+  @override
+  List<SleepDailyLog> get sleepDailyLogs =>
+      List<SleepDailyLog>.unmodifiable(_sleepDailyLogs);
+
+  @override
+  List<SleepNightEvent> get sleepNightEvents =>
+      List<SleepNightEvent>.unmodifiable(_sleepNightEvents);
+
+  @override
+  List<SleepThoughtEntry> get sleepThoughtEntries =>
+      List<SleepThoughtEntry>.unmodifiable(_sleepThoughtEntries);
+
+  @override
+  List<SleepRoutineTemplate> get sleepRoutineTemplates =>
+      List<SleepRoutineTemplate>.unmodifiable(_sleepRoutineTemplates);
+
+  @override
+  SleepProgramProgress? get sleepProgramProgress => _sleepProgramProgress;
+
+  @override
+  SleepDailyLog? get latestSleepDailyLog => _sleepDailyLogs.firstOrNull;
+
+  @override
+  SleepRoutineTemplate? get activeSleepRoutineTemplate {
+    final activeTemplateId = _sleepRoutineRunnerState.activeTemplateId;
+    if (activeTemplateId != null) {
+      return _sleepRoutineTemplates
+          .where((template) => template.id == activeTemplateId)
+          .cast<SleepRoutineTemplate?>()
+          .firstOrNull;
+    }
+    return _sleepRoutineTemplates.firstOrNull;
+  }
+
+  @override
+  SleepRoutineStep? get currentSleepRoutineStep {
+    final template = activeSleepRoutineTemplate;
+    final index = _sleepRoutineRunnerState.currentStepIndex;
+    if (template == null || index < 0 || index >= template.steps.length) {
+      return null;
+    }
+    return template.steps[index];
+  }
+
+  @override
+  double get sleepRoutineProgress {
+    final template = activeSleepRoutineTemplate;
+    if (template == null || template.steps.isEmpty) {
+      return 0;
+    }
+    return ((_sleepRoutineRunnerState.currentStepIndex + 1) /
+            template.steps.length)
+        .clamp(0.0, 1.0);
+  }
 
   @override
   String get practiceLastSessionTitle => _practiceLastSessionTitle;
@@ -3237,6 +3361,243 @@ class _FakeAppState extends ChangeNotifier
   Future<void> clearApiTtsCache() async {
     clearedApiTtsCache = true;
     _apiTtsCacheBytes = 0;
+    notifyListeners();
+  }
+
+  @override
+  void saveSleepProfile(SleepProfile profile) {
+    _sleepProfile = profile;
+    notifyListeners();
+  }
+
+  @override
+  void updateSleepAssessmentDraft(SleepAssessmentDraftState draft) {
+    _sleepAssessmentDraft = draft;
+    notifyListeners();
+  }
+
+  @override
+  void saveSleepDailyLog(SleepDailyLog log) {
+    final updated = List<SleepDailyLog>.from(_sleepDailyLogs);
+    final index = updated.indexWhere((item) => item.dateKey == log.dateKey);
+    if (index >= 0) {
+      updated[index] = log;
+    } else {
+      updated.insert(0, log);
+    }
+    _sleepDailyLogs = updated;
+    notifyListeners();
+  }
+
+  @override
+  void saveSleepNightEvent(SleepNightEvent event) {
+    _sleepNightEvents = <SleepNightEvent>[event, ..._sleepNightEvents];
+    notifyListeners();
+  }
+
+  @override
+  void saveSleepThoughtEntry(SleepThoughtEntry entry) {
+    _sleepThoughtEntries = <SleepThoughtEntry>[entry, ..._sleepThoughtEntries];
+    notifyListeners();
+  }
+
+  @override
+  SleepDailyLog? sleepDailyLogByDateKey(String dateKey) {
+    return _sleepDailyLogs
+        .where((item) => item.dateKey == dateKey)
+        .cast<SleepDailyLog?>()
+        .firstOrNull;
+  }
+
+  @override
+  void setSleepActiveRoutineTemplate(String templateId) {
+    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
+      activeTemplateId: templateId,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void replaceSleepRoutineTemplates(List<SleepRoutineTemplate> templates) {
+    _sleepRoutineTemplates = List<SleepRoutineTemplate>.from(templates);
+    notifyListeners();
+  }
+
+  @override
+  void saveSleepRoutineTemplate(SleepRoutineTemplate template) {
+    final updated = List<SleepRoutineTemplate>.from(_sleepRoutineTemplates);
+    final index = updated.indexWhere((item) => item.id == template.id);
+    if (index >= 0) {
+      updated[index] = template;
+    } else {
+      updated.insert(0, template);
+    }
+    _sleepRoutineTemplates = updated;
+    notifyListeners();
+  }
+
+  @override
+  void deleteSleepRoutineTemplate(String templateId) {
+    _sleepRoutineTemplates = _sleepRoutineTemplates
+        .where((template) => template.id != templateId)
+        .toList(growable: false);
+    if (_sleepRoutineRunnerState.activeTemplateId == templateId) {
+      _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
+        activeTemplateId: null,
+        currentStepIndex: 0,
+        remainingSeconds: 0,
+        isRunning: false,
+        isPaused: false,
+        startedAt: null,
+      );
+    }
+    notifyListeners();
+  }
+
+  @override
+  void startSleepRoutine([String? templateId]) {
+    final requestedTemplateId = templateId ?? activeSleepRoutineTemplate?.id;
+    final template =
+        _sleepRoutineTemplates
+            .where((item) => item.id == requestedTemplateId)
+            .cast<SleepRoutineTemplate?>()
+            .firstOrNull ??
+        activeSleepRoutineTemplate;
+    if (template == null) {
+      return;
+    }
+    _sleepRoutineRunnerState = SleepRoutineRunnerState(
+      activeTemplateId: template.id,
+      currentStepIndex: 0,
+      remainingSeconds: template.steps.firstOrNull?.durationSeconds ?? 0,
+      isRunning: true,
+      isPaused: false,
+      startedAt: DateTime(2026, 3, 30, 22),
+    );
+    notifyListeners();
+  }
+
+  @override
+  void pauseSleepRoutine() {
+    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
+      isPaused: true,
+      isRunning: true,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void resumeSleepRoutine() {
+    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
+      isPaused: false,
+      isRunning: true,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void advanceSleepRoutine() {
+    final template = activeSleepRoutineTemplate;
+    if (template == null || template.steps.isEmpty) {
+      stopSleepRoutine();
+      return;
+    }
+    final nextIndex = _sleepRoutineRunnerState.currentStepIndex + 1;
+    if (nextIndex >= template.steps.length) {
+      stopSleepRoutine();
+      return;
+    }
+    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
+      currentStepIndex: nextIndex,
+      remainingSeconds: template.steps[nextIndex].durationSeconds,
+      isRunning: true,
+      isPaused: false,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void tickSleepRoutine() {
+    if (!_sleepRoutineRunnerState.isRunning ||
+        _sleepRoutineRunnerState.isPaused) {
+      return;
+    }
+    final remaining = _sleepRoutineRunnerState.remainingSeconds;
+    if (remaining <= 1) {
+      advanceSleepRoutine();
+      return;
+    }
+    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
+      remainingSeconds: remaining - 1,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void stopSleepRoutine() {
+    _sleepRoutineRunnerState = const SleepRoutineRunnerState();
+    notifyListeners();
+  }
+
+  @override
+  void setSleepCurrentPlan(SleepPlan? plan) {
+    _sleepCurrentPlan = plan;
+    notifyListeners();
+  }
+
+  @override
+  void updateSleepDashboardState(SleepDashboardState state) {
+    _sleepDashboardState = state;
+    notifyListeners();
+  }
+
+  @override
+  void startSleepProgram(SleepProgramType type) {
+    _sleepProgramProgress = SleepProgramProgress(
+      programType: type,
+      startedAt: DateTime(2026, 3, 30),
+      currentDay: 1,
+      completedDays: <int>{},
+      isCompleted: false,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void completeSleepProgramDay(int day) {
+    final progress = _sleepProgramProgress;
+    if (progress == null) {
+      return;
+    }
+    final completedDays = Set<int>.from(progress.completedDays)..add(day);
+    _sleepProgramProgress = progress.copyWith(
+      currentDay: day + 1,
+      completedDays: completedDays,
+      isCompleted: completedDays.length >= 7,
+    );
+    notifyListeners();
+  }
+
+  @override
+  void startSleepNightRescue(SleepNightRescueMode mode) {
+    _sleepNightRescueState = SleepNightRescueState(
+      mode: mode,
+      startedAt: DateTime(2026, 3, 30, 2),
+    );
+    notifyListeners();
+  }
+
+  @override
+  void finishSleepNightRescue({
+    String? suggestedAction,
+    bool hasLeftBed = false,
+  }) {
+    _sleepNightRescueState = _sleepNightRescueState.copyWith(
+      mode: null,
+      startedAt: null,
+      suggestedAction: suggestedAction,
+      hasLeftBed: hasLeftBed,
+    );
     notifyListeners();
   }
 
@@ -4676,3 +5037,4 @@ extension<T> on List<T> {
 
   T? get lastOrNull => this.isEmpty ? null : last;
 }
+

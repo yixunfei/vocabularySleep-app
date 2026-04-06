@@ -3,6 +3,8 @@ package xyz.luan.audioplayers.player
 import android.content.Context
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.os.Handler
+import android.os.Looper
 import xyz.luan.audioplayers.AudioContextAndroid
 import xyz.luan.audioplayers.AudioplayersPlugin
 import xyz.luan.audioplayers.EventHandler
@@ -23,6 +25,15 @@ class WrappedPlayer internal constructor(
     private val soundPoolManager: SoundPoolManager,
 ) {
     private var player: PlayerWrapper? = null
+    private val platformHandler = Handler(Looper.getMainLooper())
+
+    private fun runOnPlatformThread(block: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            block()
+        } else {
+            platformHandler.post(block)
+        }
+    }
 
     var source: Source? = null
         set(value) {
@@ -39,7 +50,9 @@ class WrappedPlayer internal constructor(
                 }
                 field = value
             } else {
-                ref.handlePrepared(this, true)
+                runOnPlatformThread {
+                    ref.handlePrepared(this, true)
+                }
             }
         }
 
@@ -108,7 +121,9 @@ class WrappedPlayer internal constructor(
         set(value) {
             if (field != value) {
                 field = value
-                ref.handlePrepared(this, value)
+                runOnPlatformThread {
+                    ref.handlePrepared(this, value)
+                }
             }
         }
 
@@ -285,21 +300,25 @@ class WrappedPlayer internal constructor(
      * Player callbacks
      */
     fun onPrepared() {
-        prepared = true
-        ref.handleDuration(this)
-        if (playing) {
-            requestFocusAndStart()
-        }
-        if (shouldSeekTo >= 0 && player?.isLiveStream() != true) {
-            player?.seekTo(shouldSeekTo)
+        runOnPlatformThread {
+            prepared = true
+            ref.handleDuration(this)
+            if (playing) {
+                requestFocusAndStart()
+            }
+            if (shouldSeekTo >= 0 && player?.isLiveStream() != true) {
+                player?.seekTo(shouldSeekTo)
+            }
         }
     }
 
     fun onCompletion() {
-        if (releaseMode != ReleaseMode.LOOP) {
-            stop()
+        runOnPlatformThread {
+            if (releaseMode != ReleaseMode.LOOP) {
+                stop()
+            }
+            ref.handleComplete(this)
         }
-        ref.handleComplete(this)
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -308,15 +327,21 @@ class WrappedPlayer internal constructor(
     }
 
     fun onSeekComplete() {
-        ref.handleSeekComplete(this)
+        runOnPlatformThread {
+            ref.handleSeekComplete(this)
+        }
     }
 
     fun handleLog(message: String) {
-        ref.handleLog(this, message)
+        runOnPlatformThread {
+            ref.handleLog(this, message)
+        }
     }
 
     fun handleError(errorCode: String?, errorMessage: String?, errorDetails: Any?) {
-        ref.handleError(this, errorCode, errorMessage, errorDetails)
+        runOnPlatformThread {
+            ref.handleError(this, errorCode, errorMessage, errorDetails)
+        }
     }
 
     fun onError(what: Int, extra: Int): Boolean {

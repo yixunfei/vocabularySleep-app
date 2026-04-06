@@ -33,6 +33,10 @@ class ToolboxBreathingAudioRepository {
       <String, Future<BreathingResolvedCue?>>{};
   final Map<String, Future<Duration?>> _durationCache =
       <String, Future<Duration?>>{};
+  final Map<String, Future<ByteData?>> _assetDataCache =
+      <String, Future<ByteData?>>{};
+  final Map<String, Future<Uint8List?>> _assetBytesCache =
+      <String, Future<Uint8List?>>{};
 
   static const Map<String, String> _exactRemoteFileNameByCueId =
       <String, String>{
@@ -208,9 +212,13 @@ class ToolboxBreathingAudioRepository {
     final duration =
         await _durationForAsset(assetPath, cacheKey: assetPath) ??
         _approxCueDuration(cue);
+    final assetBytes = await _assetBytesFor(assetPath);
+    if (assetBytes == null || assetBytes.isEmpty) {
+      return null;
+    }
     return BreathingResolvedCue(
       cue: cue,
-      source: AssetSource(assetPath),
+      source: BytesSource(assetBytes, mimeType: _mimeTypeForAsset(assetPath)),
       kind: BreathingCueSourceKind.asset,
       location: assetPath,
       duration: duration,
@@ -308,16 +316,87 @@ class ToolboxBreathingAudioRepository {
     required String cacheKey,
   }) {
     return _durationCache.putIfAbsent('asset|$cacheKey', () async {
-      try {
-        final data = await rootBundle.load('assets/$assetPath');
-        return _tryParseWavDuration(
-          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-          totalLength: data.lengthInBytes,
-        );
-      } catch (_) {
+      final data = await _assetDataFor(assetPath);
+      if (data == null) {
         return null;
       }
+      return _tryParseWavDuration(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        totalLength: data.lengthInBytes,
+      );
     });
+  }
+
+  Future<ByteData?> _assetDataFor(String assetPath) {
+    return _assetDataCache.putIfAbsent(assetPath, () async {
+      for (final bundleKey in _candidateBundleKeysForAsset(assetPath)) {
+        try {
+          return await rootBundle.load(bundleKey);
+        } catch (_) {
+          continue;
+        }
+      }
+      return null;
+    });
+  }
+
+  Future<Uint8List?> _assetBytesFor(String assetPath) {
+    return _assetBytesCache.putIfAbsent(assetPath, () async {
+      final data = await _assetDataFor(assetPath);
+      if (data == null) {
+        return null;
+      }
+      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    });
+  }
+
+  Iterable<String> _candidateBundleKeysForAsset(String assetPath) sync* {
+    final normalizedPath = assetPath.trim().replaceAll('\\', '/');
+    if (normalizedPath.isEmpty) {
+      return;
+    }
+
+    final withPrefix = normalizedPath.startsWith('assets/')
+        ? normalizedPath
+        : 'assets/$normalizedPath';
+    final segments = withPrefix
+        .split('/')
+        .where((segment) => segment.trim().isNotEmpty)
+        .toList(growable: false);
+    final candidates = <String>{withPrefix};
+    if (segments.isNotEmpty) {
+      candidates.add(segments.map(Uri.encodeComponent).join('/'));
+      if (segments.length > 1) {
+        candidates.add(
+          <String>[
+            ...segments.take(segments.length - 1),
+            Uri.encodeComponent(segments.last),
+          ].join('/'),
+        );
+      }
+    }
+    candidates.add(Uri.encodeFull(withPrefix));
+
+    for (final candidate in candidates) {
+      final key = candidate.trim();
+      if (key.isNotEmpty) {
+        yield key;
+      }
+    }
+  }
+
+  String _mimeTypeForAsset(String assetPath) {
+    final normalized = assetPath.trim().toLowerCase();
+    if (normalized.endsWith('.wav')) {
+      return 'audio/wav';
+    }
+    if (normalized.endsWith('.mp3')) {
+      return 'audio/mpeg';
+    }
+    if (normalized.endsWith('.m4a')) {
+      return 'audio/mp4';
+    }
+    return 'application/octet-stream';
   }
 
   Duration? _tryParseWavDuration(Uint8List bytes, {int? totalLength}) {

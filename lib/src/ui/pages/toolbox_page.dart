@@ -11,6 +11,7 @@ import 'toolbox_mini_games.dart';
 import 'toolbox_mind_tools.dart';
 import 'toolbox_sleep_assistant_page.dart';
 import 'toolbox_soothing_music_v2_page.dart';
+import 'toolbox_singing_bowls_tool.dart';
 import 'toolbox_sound_tools.dart';
 import 'toolbox_zen_sand_tool.dart';
 
@@ -121,6 +122,17 @@ class ToolboxPage extends StatelessWidget {
               pageBuilder: () => const HarpToolPage(),
             ),
             _ToolboxEntry(
+              title: pickUiText(i18n, zh: '疗愈音钵', en: 'Healing bowls'),
+              subtitle: pickUiText(
+                i18n,
+                zh: '参考站频率体系、移动端抽屉交互与沉静共振尾韵。',
+                en: 'Reference-matched tones, mobile drawer controls, and spacious resonance.',
+              ),
+              icon: Icons.blur_circular_rounded,
+              accent: const Color(0xFF6D8E7A),
+              pageBuilder: () => const SingingBowlsToolPage(),
+            ),
+            _ToolboxEntry(
               title: pickUiText(i18n, zh: '专注节拍', en: 'Focus beats'),
               subtitle: pickUiText(
                 i18n,
@@ -202,7 +214,7 @@ class ToolboxPage extends StatelessWidget {
               subtitle: pickUiText(
                 i18n,
                 zh: '画耙痕、摆石子，做一个迷你沙盘。',
-                en: 'Draw rake lines and place stones in a tiny sand tray.',
+                en: 'Mobile-friendly sand drawing with synced textures, quick rituals, and calm focus resets.',
               ),
               icon: Icons.landscape_rounded,
               accent: const Color(0xFFC6A96A),

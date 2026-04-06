@@ -63,6 +63,25 @@ class _MemoryDatabaseService extends AppDatabaseService {
   ) {
     return const <int, WordMemoryProgress>{};
   }
+
+  @override
+  List<DownloadedAmbientSoundInfo> getDownloadedAmbientSounds() {
+    return const <DownloadedAmbientSoundInfo>[];
+  }
+
+  @override
+  List<String> getWordTexts(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    final words = _wordsByWordbookId[wordbookId] ?? const <WordEntry>[];
+    return words
+        .skip(offset)
+        .take(limit)
+        .map((item) => item.word)
+        .toList(growable: false);
+  }
 }
 
 class _FakeWeatherService extends WeatherService {

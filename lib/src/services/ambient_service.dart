@@ -102,13 +102,13 @@ class AudioPlayerAmbientLoopPlayer implements AmbientLoopPlayer {
   @override
   Future<void> setSource(Source source) async {
     await _ensureAudioContext();
-await AudioPlayerSourceHelper.setSource(
+    await AudioPlayerSourceHelper.setSource(
       _player,
       source,
       tag: 'ambient_audio',
       data: <String, Object?>{'playerId': _player.playerId},
     );
-}
+  }
 
   @override
   Future<Duration?> getDuration() async {
@@ -620,7 +620,112 @@ class AmbientService {
         .join(' ');
   }
 
-  static const List<AmbientSource> _builtInPresets = <AmbientSource>[];
+  static const List<AmbientSource> _builtInPresets = <AmbientSource>[
+    AmbientSource(
+      id: 'noise_white',
+      name: 'White Noise',
+      assetPath: 'assets/ambient/noise/white-noise.wav',
+      remoteKey: 'ambient/moodist/noise/white-noise.wav',
+      categoryKey: 'ambientCategoryNoise',
+      builtIn: true,
+      volume: 0.36,
+    ),
+    AmbientSource(
+      id: 'noise_pink',
+      name: 'Pink Noise',
+      assetPath: 'assets/ambient/noise/pink-noise.wav',
+      remoteKey: 'ambient/moodist/noise/pink-noise.wav',
+      categoryKey: 'ambientCategoryNoise',
+      builtIn: true,
+      volume: 0.34,
+    ),
+    AmbientSource(
+      id: 'noise_brown',
+      name: 'Brown Noise',
+      assetPath: 'assets/ambient/noise/brown-noise.wav',
+      remoteKey: 'ambient/moodist/noise/brown-noise.wav',
+      categoryKey: 'ambientCategoryNoise',
+      builtIn: true,
+      volume: 0.38,
+    ),
+    AmbientSource(
+      id: 'nature_wind',
+      name: 'Wind',
+      assetPath: 'assets/ambient/nature/wind.mp3',
+      remoteKey: 'ambient/moodist/nature/wind.mp3',
+      categoryKey: 'ambientCategoryNature',
+      builtIn: true,
+      volume: 0.4,
+    ),
+    AmbientSource(
+      id: 'nature_forest',
+      name: 'Forest',
+      remoteKey: 'ambient/moodist/nature/wind-in-trees.mp3',
+      categoryKey: 'ambientCategoryNature',
+      builtIn: true,
+      volume: 0.4,
+    ),
+    AmbientSource(
+      id: 'nature_fire',
+      name: 'Campfire',
+      assetPath: 'assets/ambient/nature/campfire.mp3',
+      remoteKey: 'ambient/moodist/nature/campfire.mp3',
+      categoryKey: 'ambientCategoryNature',
+      builtIn: true,
+      volume: 0.42,
+    ),
+    AmbientSource(
+      id: 'nature_ocean',
+      name: 'Waves',
+      assetPath: 'assets/ambient/nature/waves.mp3',
+      remoteKey: 'ambient/moodist/nature/waves.mp3',
+      categoryKey: 'ambientCategoryNature',
+      builtIn: true,
+      volume: 0.42,
+    ),
+    AmbientSource(
+      id: 'rain_light',
+      name: 'Light Rain',
+      remoteKey: 'ambient/moodist/rain/light-rain.mp3',
+      categoryKey: 'ambientCategoryRain',
+      builtIn: true,
+      volume: 0.36,
+    ),
+    AmbientSource(
+      id: 'rain_heavy',
+      name: 'Heavy Rain',
+      assetPath: 'assets/ambient/rain/heavy-rain.mp3',
+      remoteKey: 'ambient/moodist/rain/heavy-rain.mp3',
+      categoryKey: 'ambientCategoryRain',
+      builtIn: true,
+      volume: 0.38,
+    ),
+    AmbientSource(
+      id: 'focus_library',
+      name: 'Library',
+      assetPath: 'assets/ambient/places/library.mp3',
+      remoteKey: 'ambient/moodist/places/library.mp3',
+      categoryKey: 'ambientCategoryFocus',
+      builtIn: true,
+      volume: 0.35,
+    ),
+    AmbientSource(
+      id: 'focus_cafe',
+      name: 'Cafe',
+      remoteKey: 'ambient/moodist/places/cafe.mp3',
+      categoryKey: 'ambientCategoryFocus',
+      builtIn: true,
+      volume: 0.36,
+    ),
+    AmbientSource(
+      id: 'focus_night',
+      name: 'Night Village',
+      assetPath: 'assets/ambient/places/night-village.mp3',
+      categoryKey: 'ambientCategoryFocus',
+      builtIn: true,
+      volume: 0.34,
+    ),
+  ];
 
   List<AmbientSource> get sources => List<AmbientSource>.from(_sources);
   bool get isEnabled => _enabled;
@@ -732,7 +837,7 @@ class AmbientService {
   }
 
   Future<void> syncPlayback() async {
-if (!_enabled) {
+    if (!_enabled) {
       await stopAll();
       return;
     }
@@ -789,7 +894,7 @@ if (!_enabled) {
           },
         );
         _loops[source.id] = loop;
-} on TimeoutException catch (error, stackTrace) {
+      } on TimeoutException catch (error, stackTrace) {
         await loop.dispose();
         _log.e(
           'ambient',
@@ -848,7 +953,7 @@ if (!_enabled) {
         if (await file.exists() && await file.length() > 0) {
           final filePath = file.path;
           _rememberResolvedFilePath(source.id, filePath);
-return DeviceFileSource(filePath);
+          return DeviceFileSource(filePath);
         } else {
           _log.w(
             'ambient',

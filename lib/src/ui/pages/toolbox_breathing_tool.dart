@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../services/audio_player_source_helper.dart';
 import '../../services/cstcloud_resource_cache_service.dart';
 import '../../services/toolbox_breathing_audio_repository.dart';
 import '../../services/toolbox_breathing_catalog.dart';
@@ -541,7 +542,19 @@ class _BreathingPracticeReleaseCardState
       }
       await player.stop();
       await player.setPlaybackRate(playbackRate.clamp(0.75, 2.0).toDouble());
-      await player.play(resolved.source);
+      await AudioPlayerSourceHelper.play(
+        player,
+        resolved.source,
+        volume: 1.0,
+        tag: 'breathing_voice',
+        data: <String, Object?>{
+          'cueId': resolved.cue.id,
+          'sourceKind': resolved.kind.name,
+          'location': resolved.location,
+          'respectVoiceSetting': respectVoiceSetting,
+          'playbackRate': playbackRate,
+        },
+      );
       if (mounted) {
         setState(() {
           _voiceAvailability = _BreathingVoiceAvailability.ready;

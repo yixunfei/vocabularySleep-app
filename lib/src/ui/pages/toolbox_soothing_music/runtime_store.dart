@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../../services/audio_player_source_helper.dart';
 import '../../../services/cstcloud_resource_cache_service.dart';
@@ -37,8 +38,27 @@ class SoothingMusicRuntimeStore {
   static SoothingMusicTrackLoader? _trackLoader;
   static StreamSubscription<void>? _completionSubscription;
   static bool _advancing = false;
+  static bool _notificationQueued = false;
 
   static void notifyChanged() {
+    final scheduler = SchedulerBinding.instance;
+    final phase = scheduler.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      _flushNotification();
+      return;
+    }
+    if (_notificationQueued) {
+      return;
+    }
+    _notificationQueued = true;
+    scheduler.addPostFrameCallback((_) {
+      _notificationQueued = false;
+      _flushNotification();
+    });
+  }
+
+  static void _flushNotification() {
     revision.value = revision.value + 1;
   }
 
