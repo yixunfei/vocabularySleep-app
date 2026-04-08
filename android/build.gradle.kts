@@ -1,7 +1,23 @@
+val flutterSdkPath: String = run {
+    val properties = java.util.Properties()
+    file("local.properties").inputStream().use { properties.load(it) }
+    properties.getProperty("flutter.sdk")
+}
+
 allprojects {
     repositories {
-        maven("https://maven.aliyun.com/repository/google")
-        maven("https://maven.aliyun.com/repository/public")
+        maven {
+            url = uri("https://maven.aliyun.com/repository/google")
+        }
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
+        maven {
+            url = uri("https://mirrors.tencent.com/nexus/repository/maven-public/")
+        }
+        maven {
+            url = uri("https://storage.googleapis.com/download.flutter.io")
+        }
         google()
         mavenCentral()
     }
