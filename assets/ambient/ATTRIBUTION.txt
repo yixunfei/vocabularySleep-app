@@ -1,7 +1,0 @@
-Built-in ambient audio assets were sourced from:
-https://github.com/remvze/moodist
-
-Please follow the upstream project license and attribution requirements.
-
-Bundled offline files: 9
-Online download catalog: Moodist website first, GitHub source tree as fallback

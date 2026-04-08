@@ -32,56 +32,7 @@ class OnlineAmbientCatalogService {
   List<OnlineAmbientSoundOption>? _cachedCatalog;
 
   static const List<OnlineAmbientSoundOption> fallbackOptions =
-      <OnlineAmbientSoundOption>[
-        OnlineAmbientSoundOption(
-          id: 'ambient_noise_white_noise',
-          name: 'White Noise',
-          categoryKey: 'ambientCategoryNoise',
-          relativePath: 'noise/white-noise.wav',
-          remoteKey: '${remotePrefix}noise/white-noise.wav',
-          defaultVolume: 0.36,
-        ),
-        OnlineAmbientSoundOption(
-          id: 'ambient_noise_pink_noise',
-          name: 'Pink Noise',
-          categoryKey: 'ambientCategoryNoise',
-          relativePath: 'noise/pink-noise.wav',
-          remoteKey: '${remotePrefix}noise/pink-noise.wav',
-          defaultVolume: 0.34,
-        ),
-        OnlineAmbientSoundOption(
-          id: 'ambient_noise_brown_noise',
-          name: 'Brown Noise',
-          categoryKey: 'ambientCategoryNoise',
-          relativePath: 'noise/brown-noise.wav',
-          remoteKey: '${remotePrefix}noise/brown-noise.wav',
-          defaultVolume: 0.38,
-        ),
-        OnlineAmbientSoundOption(
-          id: 'ambient_rain_rain_on_window',
-          name: 'Rain on Window',
-          categoryKey: 'ambientCategoryRain',
-          relativePath: 'rain/rain-on-window.mp3',
-          remoteKey: '${remotePrefix}rain/rain-on-window.mp3',
-          defaultVolume: 0.38,
-        ),
-        OnlineAmbientSoundOption(
-          id: 'ambient_nature_waterfall',
-          name: 'Waterfall',
-          categoryKey: 'ambientCategoryNature',
-          relativePath: 'nature/waterfall.mp3',
-          remoteKey: '${remotePrefix}nature/waterfall.mp3',
-          defaultVolume: 0.42,
-        ),
-        OnlineAmbientSoundOption(
-          id: 'ambient_places_airport',
-          name: 'Airport',
-          categoryKey: 'ambientCategoryFocus',
-          relativePath: 'places/airport.mp3',
-          remoteKey: '${remotePrefix}places/airport.mp3',
-          defaultVolume: 0.4,
-        ),
-      ];
+      <OnlineAmbientSoundOption>[];
 
   Future<List<OnlineAmbientSoundOption>> fetchCatalog({
     bool forceRefresh = false,
