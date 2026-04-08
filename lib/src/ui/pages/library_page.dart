@@ -860,9 +860,12 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Future<void> _openFollowAlong(AppState state, WordEntry word) async {
-    state.selectWordEntry(word);
+    final updatedWord = state.currentWord ?? word;
+    state.selectWordEntry(updatedWord);
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
+      MaterialPageRoute<void>(
+        builder: (_) => FollowAlongPage(word: updatedWord),
+      ),
     );
   }
 }

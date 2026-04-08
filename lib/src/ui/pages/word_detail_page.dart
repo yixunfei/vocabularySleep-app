@@ -89,10 +89,13 @@ class _WordDetailPageState extends State<WordDetailPage> {
     AppState state,
     WordEntry word,
   ) async {
-    state.selectWordEntry(word);
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)));
+    final updatedWord = state.currentWord ?? word;
+    state.selectWordEntry(updatedWord);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => FollowAlongPage(word: updatedWord),
+      ),
+    );
   }
 
   @override
@@ -292,9 +295,7 @@ class _WordDetailPageState extends State<WordDetailPage> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      '点击右上角的可见性按钮，可以重新显示释义和字段内容。',
-                    ),
+                    const Text('点击右上角的可见性按钮，可以重新显示释义和字段内容。'),
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
                       onPressed: () {

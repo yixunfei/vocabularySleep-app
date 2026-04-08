@@ -698,9 +698,33 @@ class WordbookImportService {
     }
 
     final recordFields = buildFieldItemsFromRecord(normalizedRecord);
-    final contentFields = content.isNotEmpty
-        ? parseSectionedContent(content)
-        : const <WordFieldItem>[];
+
+    final legacyKeysInRecord = <String>{};
+    for (final field in recordFields) {
+      if (const <String>{
+        'meaning',
+        'examples',
+        'etymology',
+        'roots',
+        'affixes',
+        'variations',
+        'memory',
+        'story',
+      }.contains(field.key)) {
+        legacyKeysInRecord.add(field.key);
+      }
+    }
+
+    List<WordFieldItem> contentFields = <WordFieldItem>[];
+    if (content.isNotEmpty) {
+      final parsed = parseSectionedContent(content);
+      for (final field in parsed) {
+        if (!legacyKeysInRecord.contains(field.key)) {
+          contentFields.add(field);
+        }
+      }
+    }
+
     final fields = mergeFieldItems(<WordFieldItem>[
       ...recordFields,
       ...contentFields,

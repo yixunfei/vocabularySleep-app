@@ -1171,6 +1171,13 @@ int _resolveFieldRepeat(String key, PlayConfig config) {
 
   final repeatKey = _fieldToRepeatKey[key];
   if (repeatKey != null) return max(0, config.repeats[repeatKey] ?? 0);
+  final normalizedKey = normalizeFieldKey(key);
+  if (normalizedKey != key && config.repeats.containsKey(normalizedKey)) {
+    return max(0, config.repeats[normalizedKey] ?? 0);
+  }
+  if (config.repeats.containsKey(key)) {
+    return max(0, config.repeats[key] ?? 0);
+  }
   return 0;
 }
 

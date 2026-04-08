@@ -244,21 +244,26 @@ const Map<String, String> _legacyKeyAliases = <String, String>{
   '中文释义': 'meaning',
   '中文含义': 'meaning',
   '含义': 'meaning',
+  '分析词义': 'meaning',
   'examples': 'examples',
   'example': 'examples',
   'sentences': 'examples',
   'sentence': 'examples',
   '例句': 'examples',
+  '列举例句': 'examples',
   '场景化例句': 'examples',
   '使用示例': 'examples',
   'etymology': 'etymology',
   'origin': 'etymology',
   '词源': 'etymology',
   '词根词源': 'etymology',
-  '词根溯源': 'etymology',
+  '发展历史和文化背景': 'etymology',
+  '发展历史与文化背景': 'etymology',
   'roots': 'roots',
   'root': 'roots',
   '词根': 'roots',
+  '词根分析': 'roots',
+  '词根溯源': 'etymology',
   'affixes': 'affixes',
   'affix': 'affixes',
   'suffix': 'affixes',
@@ -271,14 +276,17 @@ const Map<String, String> _legacyKeyAliases = <String, String>{
   'form': 'variations',
   '变形': 'variations',
   '形态变形': 'variations',
+  '单词变形': 'variations',
   'memory': 'memory',
   'mnemonic': 'memory',
   '记忆技巧': 'memory',
+  '记忆辅助': 'memory',
   '记忆辅助策略': 'memory',
   '记忆': 'memory',
   'story': 'story',
   '文化小故事': 'story',
   '趣味文化小故事': 'story',
+  '小故事': 'story',
   '故事': 'story',
 };
 
@@ -393,20 +401,7 @@ WordFieldValue? normalizeFieldValue(Object? value) {
 }
 
 WordFieldValue _mergeFieldValues(WordFieldValue base, WordFieldValue next) {
-  final merged = <String>[
-    ..._toList(base),
-    ..._toList(next),
-  ].map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
-
-  final deduplicated = <String>[];
-  for (final item in merged) {
-    if (!deduplicated.contains(item)) deduplicated.add(item);
-  }
-
-  if (deduplicated.length <= 1) {
-    return deduplicated.isEmpty ? '' : deduplicated.first;
-  }
-  return deduplicated;
+  return next;
 }
 
 List<String> _mergeFieldTags(List<String> base, List<String> next) {
@@ -439,11 +434,6 @@ List<WordFieldMediaItem> _mergeFieldMedia(
     merged.add(item);
   }
   return merged;
-}
-
-List<String> _toList(Object value) {
-  if (value is List) return value.map((item) => '$item').toList();
-  return ['$value'];
 }
 
 WordFieldValue _coerceExamples(WordFieldValue value) {
@@ -656,13 +646,7 @@ List<WordFieldItem> parseSectionedContent(String content) {
 
   if (items.isNotEmpty) return mergeFieldItems(items);
 
-  return <WordFieldItem>[
-    WordFieldItem(
-      key: 'meaning',
-      label: legacyFieldLabels['meaning'] ?? 'Meaning',
-      value: text,
-    ),
-  ];
+  return const <WordFieldItem>[];
 }
 
 extension<T> on Iterable<T> {

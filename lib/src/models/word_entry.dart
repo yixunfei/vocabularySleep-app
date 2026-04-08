@@ -119,7 +119,7 @@ class WordEntry {
       variations: variations ?? this.variations,
       memory: memory ?? this.memory,
       story: story ?? this.story,
-      fields: fields ?? _fields,
+      fields: fields == null || fields.isEmpty ? _fields : fields,
       rawContent: rawContent ?? this.rawContent,
       rawFieldsJson: fields == null ? (rawFieldsJson ?? _rawFieldsJson) : '',
     );

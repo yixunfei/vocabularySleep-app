@@ -869,6 +869,7 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
         if (_isLoadTokenActive(loadToken)) {
           if (shouldAutoplay) {
             await _player.resume();
+            await Future<void>.delayed(const Duration(milliseconds: 50));
           } else {
             await _player.stop();
           }
@@ -982,6 +983,12 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
           return;
       }
     } finally {
+      if (_playbackMode == SoothingPlaybackMode.arrangement && _loading) {
+        final deadline = DateTime.now().add(const Duration(seconds: 10));
+        while (_loading && DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+      }
       _handlingPlaybackCompletion = false;
     }
   }
