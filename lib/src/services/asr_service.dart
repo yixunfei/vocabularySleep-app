@@ -16,6 +16,7 @@ import 'package:sherpa_onnx/sherpa_onnx.dart';
 
 import '../models/play_config.dart';
 import '../utils/asr_language.dart';
+import 'cstcloud_resource_cache_service.dart';
 
 class AsrResult {
   const AsrResult({
@@ -84,6 +85,7 @@ class PronScoringPackStatus {
 class _OfflineModelProfile {
   const _OfflineModelProfile({
     required this.variant,
+    required this.remoteKey,
     required this.archiveUrl,
     required this.dirName,
     required this.encoderFile,
@@ -92,6 +94,7 @@ class _OfflineModelProfile {
   });
 
   final String variant;
+  final String remoteKey;
   final String archiveUrl;
   final String dirName;
   final String encoderFile;
@@ -105,12 +108,16 @@ class _ScoringPackProfile {
     required this.variant,
     required this.dirName,
     required this.estimatedBytes,
+    this.remoteKey,
+    this.archiveUrl,
   });
 
   final PronScoringMethod method;
   final String variant;
   final String dirName;
   final int estimatedBytes;
+  final String? remoteKey;
+  final String? archiveUrl;
 }
 
 class _CanceledAsrException implements Exception {
@@ -171,6 +178,7 @@ class AsrService {
   _offlineProfiles = <AsrProviderType, _OfflineModelProfile>{
     AsrProviderType.offline: _OfflineModelProfile(
       variant: 'base',
+      remoteKey: 'asr/models/sherpa-onnx-whisper-base.en.tar.bz2',
       archiveUrl:
           'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-base.en.tar.bz2',
       dirName: 'sherpa-onnx-whisper-base.en',
@@ -180,6 +188,7 @@ class AsrService {
     ),
     AsrProviderType.offlineSmall: _OfflineModelProfile(
       variant: 'small',
+      remoteKey: 'asr/models/sherpa-onnx-whisper-small.en.tar.bz2',
       archiveUrl:
           'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-small.en.tar.bz2',
       dirName: 'sherpa-onnx-whisper-small.en',
@@ -222,6 +231,8 @@ class AsrService {
       <AsrProviderType, OfflineRecognizer>{};
   final Map<AsrProviderType, Future<void>> _offlineLoadFutures =
       <AsrProviderType, Future<void>>{};
+  final CstCloudResourceCacheService _cacheService =
+      CstCloudResourceCacheService();
   http.Client? _activeApiClient;
   int _apiRequestToken = 0;
   String? _activeRecordingPath;
@@ -3332,11 +3343,26 @@ class AsrService {
 
     try {
       await _safeDeleteDirectory(stagingDir);
-      await _downloadFile(
-        sourceUrl: profile.archiveUrl,
-        destination: archiveFile,
-        onProgress: onProgress,
-      );
+
+      bool downloaded = false;
+      try {
+        downloaded = await _downloadFromS3(
+          remoteKey: profile.remoteKey,
+          destination: archiveFile,
+          onProgress: onProgress,
+        );
+      } catch (_) {
+        // S3 download failed, will try GitHub fallback below
+      }
+
+      if (!downloaded) {
+        await _downloadFile(
+          sourceUrl: profile.archiveUrl,
+          destination: archiveFile,
+          onProgress: onProgress,
+        );
+      }
+
       _checkCanceled();
       await _extractArchive(
         archiveFile: archiveFile,
@@ -3363,6 +3389,50 @@ class AsrService {
       if (await stagingDir.exists()) {
         await _safeDeleteDirectory(stagingDir);
       }
+    }
+  }
+
+  Future<bool> _downloadFromS3({
+    required String remoteKey,
+    required File destination,
+    AsrProgressCallback? onProgress,
+  }) async {
+    onProgress?.call(
+      const AsrProgress(
+        stage: 'download',
+        messageKey: 'asrProgressDownloading',
+        progress: 0,
+      ),
+    );
+
+    try {
+      final file = await _cacheService.ensureFileDownloaded(
+        remoteKey,
+        cacheRelativePath: remoteKey,
+        onProgress: onProgress != null
+            ? (progress) {
+                onProgress(
+                  AsrProgress(
+                    stage: 'download',
+                    messageKey: 'asrProgressDownloading',
+                    progress: progress.progress,
+                  ),
+                );
+              }
+            : null,
+      );
+
+      await file.copy(destination.path);
+      onProgress?.call(
+        const AsrProgress(
+          stage: 'download',
+          messageKey: 'asrProgressDownloadDone',
+          progress: 1,
+        ),
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
