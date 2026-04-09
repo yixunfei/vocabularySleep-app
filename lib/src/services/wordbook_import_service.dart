@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
+import 'app_log_service.dart';
 
 const Set<String> _jsonRecordContainerKeys = <String>{
   'words',
@@ -109,12 +110,12 @@ class WordbookImportService {
     'content',
     'raw_content',
     'definition',
+    'body',
+    'definition_content',
     'meaning',
     'translation',
     '中文释义',
     '释义',
-    'definition_content',
-    'body',
   ];
 
   Future<List<WordEntryPayload>> parseFile(String filePath) async {
@@ -675,6 +676,20 @@ class WordbookImportService {
 
   WordEntryPayload? _recordToPayload(Map<String, Object?> record) {
     final normalizedRecord = _normalizeRecord(record);
+
+    AppLogService.instance.d(
+      'wordbook_import',
+      '_recordToPayload input',
+      data: <String, Object?>{
+        'word': normalizedRecord['word'],
+        'content': normalizedRecord['content'],
+        'contentLength': '${normalizedRecord['content']}'.length,
+        'contentHasNewlines': '${normalizedRecord['content']}'.contains('\n'),
+        'meaning': normalizedRecord['meaning'],
+        'meaningLength': '${normalizedRecord['meaning']}'.length,
+      },
+    );
+
     String word = '';
     for (final entry in normalizedRecord.entries) {
       if (_wordAliases.contains(entry.key.trim().toLowerCase())) {

@@ -82,13 +82,22 @@ class AssetBuiltInWordbookSource implements BuiltInWordbookSource {
     ResourceDownloadProgressCallback? onProgress,
   }) async {
     final bundleData = await rootBundle.load(config.sourcePath);
-    final bytes = bundleData.buffer.asUint8List();
+    var bytes = bundleData.buffer.asUint8List();
     onProgress?.call(
       ResourceDownloadProgress(
         receivedBytes: bytes.length,
         totalBytes: bytes.length,
       ),
     );
+    if (config.sourcePath.toLowerCase().endsWith('.gz')) {
+      bytes = Uint8List.fromList(GZipCodec().decode(bytes));
+      onProgress?.call(
+        ResourceDownloadProgress(
+          receivedBytes: bytes.length,
+          totalBytes: bytes.length,
+        ),
+      );
+    }
     return Stream<List<int>>.value(bytes);
   }
 

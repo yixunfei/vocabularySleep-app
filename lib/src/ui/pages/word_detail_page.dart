@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../models/word_field.dart';
+import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
@@ -117,6 +118,37 @@ class _WordDetailPageState extends State<WordDetailPage> {
         ),
       );
     }
+
+    AppLogService.instance.d(
+      'word_detail',
+      'Displaying word details',
+      data: <String, Object?>{
+        'word': word.word,
+        'wordId': word.id,
+        'wordbookId': word.wordbookId,
+        'meaning': word.meaning,
+        'meaningLength': word.meaning?.length ?? 0,
+        'rawContent': word.rawContent,
+        'rawContentLength': word.rawContent.length,
+        'rawContentHasNewlines': word.rawContent.contains('\n'),
+        'rawContentHasDoubleNewlines': word.rawContent.contains('\n\n'),
+        'rawContentFirst200': word.rawContent.length > 200
+            ? word.rawContent.substring(0, 200)
+            : word.rawContent,
+        'fields': word.fields.map((f) => f.toJsonMap()).toList(),
+        'fieldsCount': word.fields.length,
+        'legacyFields': <String, Object?>{
+          'examples': word.examples,
+          'examplesCount': word.examples?.length ?? 0,
+          'etymology': word.etymology,
+          'roots': word.roots,
+          'affixes': word.affixes,
+          'variations': word.variations,
+          'memory': word.memory,
+          'story': word.story,
+        },
+      },
+    );
 
     final fields = word.fields.isNotEmpty
         ? word.fields

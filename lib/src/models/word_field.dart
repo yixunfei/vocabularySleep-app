@@ -316,6 +316,8 @@ String normalizeFieldKey(String rawKey) {
   final normalized = trimmed.toLowerCase();
   final legacy = _legacyKeyAliases[normalized];
   if (legacy != null) return legacy;
+  final legacyLabel = legacyFieldLabels[normalized];
+  if (legacyLabel != null) return legacyLabel;
 
   final simplePattern = RegExp(r'^[\u4e00-\u9fff_a-zA-Z0-9-]+$');
   if (simplePattern.hasMatch(trimmed)) return trimmed;
@@ -622,7 +624,8 @@ List<WordFieldItem> parseSectionedContent(String content) {
   final items = <WordFieldItem>[];
 
   final markdownPattern = RegExp(
-    r'(?:^|\n)#{1,6}\s+([^\n]+)\n([\s\S]*?)(?=\n#{1,6}\s+|$)',
+    r'(?:^|\r?\n)#{1,6}\s+([^\r\n]+)\r?\n\r?\n([\s\S]*?)(?=\r?\n\r?\n#{1,6}\s+|$)',
+    multiLine: true,
   );
   final markdownMatches = markdownPattern.allMatches(text);
   for (final match in markdownMatches) {
