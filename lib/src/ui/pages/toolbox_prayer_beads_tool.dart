@@ -9,6 +9,7 @@ import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
 import '../../services/toolbox_prayer_beads_prefs_service.dart';
 import '../ui_copy.dart';
+import 'toolbox/toolbox_ui_components.dart';
 import 'toolbox_tool_shell.dart';
 
 const String _beadTextureAsset = 'assets/toolbox/beads/wood_texture.webp';
@@ -751,6 +752,18 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     return '$minutes:$seconds';
   }
 
+  Widget _buildPresetChip(BuildContext context, int count) {
+    final selected = _beadCount == count;
+    return ToolboxSelectablePill(
+      key: Key('prayer-beads-preset-$count'),
+      label: Text('$count'),
+      selected: selected,
+      onTap: () => _setBeadCount(count),
+      tint: _palette.accent,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -789,39 +802,31 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
   }
 
   Widget _buildHeroCard(BuildContext context) {
-    return Container(
+    return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: _palette.stageGradient,
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: _palette.stageGlow.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
+      radius: 28,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          _palette.stageGradient[0],
+          _palette.stageGradient[1],
+          _palette.stageGradient[2].withValues(alpha: 0.96),
         ],
       ),
+      borderColor: _palette.accent.withValues(alpha: 0.18),
+      shadowColor: _palette.stageGlow,
+      shadowOpacity: 0.12,
+      shadowBlur: 18,
+      shadowOffsetY: 8,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.54),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              _materialLabel(_material),
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: _palette.accent,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+          ToolboxInfoPill(
+            text: _materialLabel(_material),
+            accent: _palette.accent,
+            backgroundColor: Colors.white.withValues(alpha: 0.54),
+            textColor: _palette.accent,
           ),
           const SizedBox(height: 12),
           Text(
@@ -1137,109 +1142,113 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
   }
 
   Widget _buildSettingsCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              _t(zh: '练习设置', en: 'Practice settings'),
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(18),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          Theme.of(context).colorScheme.surfaceContainerLow,
+          Theme.of(context).colorScheme.surface,
+        ],
+      ),
+      borderColor: Theme.of(context).colorScheme.outlineVariant,
+      shadowColor: _palette.stageGlow,
+      shadowOpacity: 0.09,
+      shadowBlur: 18,
+      shadowOffsetY: 8,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            _t(zh: '练习设置', en: 'Practice settings'),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _t(
+              zh: '念珠颗数决定一圈长度，材质同时影响视觉和拨珠声的质感。',
+              en: 'Bead count changes the cycle length, and material changes both visuals and click character.',
             ),
-            const SizedBox(height: 6),
-            Text(
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _t(zh: '圈数规格', en: 'Cycle size'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _beadPresets
+                .map((count) => _buildPresetChip(context, count))
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            _t(zh: '材质主题', en: 'Material'),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            children: _PrayerBeadsMaterial.values
+                .map((material) => _buildMaterialTile(context, material))
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 14),
+          SwitchListTile.adaptive(
+            key: const Key('prayer-beads-sound-switch'),
+            value: _soundEnabled,
+            contentPadding: EdgeInsets.zero,
+            title: Text(_t(zh: '拨珠声音', en: 'Bead sound')),
+            subtitle: Text(
               _t(
-                zh: '念珠颗数决定一圈长度，材质同时影响视觉和拨珠声的质感。',
-                en: 'Bead count changes the cycle length, and material changes both visuals and click character.',
+                zh: '每次推进一颗时播放短促拨动声。',
+                en: 'Play a short tactile click on each advance.',
               ),
-              style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 16),
-            Text(
-              _t(zh: '圈数规格', en: 'Cycle size'),
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _beadPresets
-                  .map(
-                    (count) => ChoiceChip(
-                      key: Key('prayer-beads-preset-$count'),
-                      label: Text('$count'),
-                      selected: _beadCount == count,
-                      onSelected: (_) => _setBeadCount(count),
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              _t(zh: '材质主题', en: 'Material'),
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Column(
-              children: _PrayerBeadsMaterial.values
-                  .map((material) => _buildMaterialTile(context, material))
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 14),
-            SwitchListTile.adaptive(
-              key: const Key('prayer-beads-sound-switch'),
-              value: _soundEnabled,
-              contentPadding: EdgeInsets.zero,
-              title: Text(_t(zh: '拨珠声音', en: 'Bead sound')),
-              subtitle: Text(
-                _t(
-                  zh: '每次推进一颗时播放短促拨动声。',
-                  en: 'Play a short tactile click on each advance.',
-                ),
+            onChanged: _toggleSound,
+          ),
+          SwitchListTile.adaptive(
+            key: const Key('prayer-beads-haptics-switch'),
+            value: _hapticsEnabled,
+            contentPadding: EdgeInsets.zero,
+            title: Text(_t(zh: '触觉反馈', en: 'Haptics')),
+            subtitle: Text(
+              _t(
+                zh: '完整一圈时会给更明显的完成反馈。',
+                en: 'A stronger haptic is used when a cycle completes.',
               ),
-              onChanged: _toggleSound,
             ),
-            SwitchListTile.adaptive(
-              key: const Key('prayer-beads-haptics-switch'),
-              value: _hapticsEnabled,
-              contentPadding: EdgeInsets.zero,
-              title: Text(_t(zh: '触觉反馈', en: 'Haptics')),
-              subtitle: Text(
-                _t(
-                  zh: '完整一圈时会给更明显的完成反馈。',
-                  en: 'A stronger haptic is used when a cycle completes.',
-                ),
+            onChanged: _toggleHaptics,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              FilledButton.tonalIcon(
+                key: const Key('prayer-beads-undo'),
+                onPressed: _sessionCount == 0 ? null : _undo,
+                icon: const Icon(Icons.undo_rounded),
+                label: Text(_t(zh: '撤回一颗', en: 'Undo one')),
               ),
-              onChanged: _toggleHaptics,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: <Widget>[
-                FilledButton.tonalIcon(
-                  key: const Key('prayer-beads-undo'),
-                  onPressed: _sessionCount == 0 ? null : _undo,
-                  icon: const Icon(Icons.undo_rounded),
-                  label: Text(_t(zh: '撤回一颗', en: 'Undo one')),
-                ),
-                OutlinedButton.icon(
-                  key: const Key('prayer-beads-reset'),
-                  onPressed: _sessionCount == 0 ? null : _resetSession,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(_t(zh: '重置本轮', en: 'Reset session')),
-                ),
-              ],
-            ),
-          ],
-        ),
+              OutlinedButton.icon(
+                key: const Key('prayer-beads-reset'),
+                onPressed: _sessionCount == 0 ? null : _resetSession,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(_t(zh: '重置本轮', en: 'Reset session')),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1262,15 +1271,33 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  selected
+                      ? palette.accent.withValues(alpha: 0.12)
+                      : Theme.of(context).colorScheme.surfaceContainerLow,
+                  selected
+                      ? palette.secondaryAccent.withValues(alpha: 0.05)
+                      : Theme.of(context).colorScheme.surface,
+                ],
+              ),
               border: Border.all(
                 color: selected
                     ? palette.accent
                     : Theme.of(context).colorScheme.outlineVariant,
                 width: selected ? 1.6 : 1,
               ),
-              color: selected
-                  ? palette.accent.withValues(alpha: 0.08)
-                  : Theme.of(context).colorScheme.surfaceContainerLow,
+              boxShadow: selected
+                  ? <BoxShadow>[
+                      BoxShadow(
+                        color: palette.accent.withValues(alpha: 0.12),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : const <BoxShadow>[],
             ),
             child: Row(
               children: <Widget>[

@@ -99,5 +99,55 @@ void main() {
         expect(pronunciationField.asText(), contains('美式音标: /the-us/'));
       },
     );
+
+    test(
+      'parseJsonTextAsync parses separate meaning/examples/etymology fields correctly',
+      () async {
+        final service = WordbookImportService();
+        final entries = await service.parseJsonTextAsync(
+          jsonEncode(<Map<String, Object?>>[
+            <String, Object?>{
+              'word': 'of',
+              'content':
+                  '### 分析词义\n\n"of" content here.\n\n### 列举例句\n\n1. Example sentence.\n\n### 词根\n\nroots content.\n',
+              'meaning': '"of" meaning text.',
+              'examples': <String>[
+                'Example 1 from examples field.',
+                'Example 2 from examples field.',
+              ],
+              'etymology': 'Etymology from separate field.',
+              'roots': 'Roots from separate field.',
+              'affixes': 'Affixes from separate field.',
+            },
+          ]),
+        );
+
+        expect(entries.length, 1);
+        expect(entries.first.word, 'of');
+        expect(entries.first.rawContent, contains('分析词义'));
+
+        final fields = entries.first.fields;
+        expect(fields.any((f) => f.key == 'meaning'), isTrue);
+        expect(fields.any((f) => f.key == 'examples'), isTrue);
+        expect(fields.any((f) => f.key == 'etymology'), isTrue);
+        expect(fields.any((f) => f.key == 'roots'), isTrue);
+        expect(fields.any((f) => f.key == 'affixes'), isTrue);
+
+        final examplesField = fields.firstWhere((f) => f.key == 'examples');
+        expect(examplesField.value, isA<List>());
+        expect((examplesField.value as List).length, 2);
+
+        final legacy = toLegacyFields(fields);
+        expect(legacy.examples, isNotNull);
+        expect(legacy.examples!.length, 2);
+        expect(
+          legacy.examples!.first,
+          contains('Example 1 from examples field.'),
+        );
+        expect(legacy.etymology, contains('Etymology from separate field.'));
+        expect(legacy.roots, contains('Roots from separate field.'));
+        expect(legacy.affixes, contains('Affixes from separate field.'));
+      },
+    );
   });
 }

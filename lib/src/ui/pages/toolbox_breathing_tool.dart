@@ -1602,29 +1602,28 @@ class _BreathingPracticeReleaseCardState
 
   Widget _buildScenarioSelector(AppI18n i18n) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 10,
+      runSpacing: 10,
       children: BreathingExperienceCatalog.scenarios
           .map(
-            (scenario) => ChoiceChip(
+            (scenario) => BreathingSelectableChip(
               selected: scenario.id == _scenario.id,
-              onSelected: (_) => unawaited(_applyScenario(scenario)),
-              label: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (scenario.advanced) ...<Widget>[
-                    const Icon(Icons.bolt_rounded, size: 16),
-                    const SizedBox(width: 4),
-                  ],
-                  Flexible(
-                    child: Text(
-                      scenario.name.resolve(i18n),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
-                    ),
-                  ),
-                ],
+              onTap: () => unawaited(_applyScenario(scenario)),
+              tint: scenario.id == _scenario.id ? _theme.orbEnd : _theme.orbStart,
+              leading: scenario.advanced
+                  ? Icon(
+                      Icons.bolt_rounded,
+                      size: 16,
+                      color: scenario.id == _scenario.id
+                          ? _theme.orbEnd
+                          : _theme.orbStart,
+                    )
+                  : null,
+              label: Text(
+                scenario.name.resolve(i18n),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
               ),
             ),
           )
@@ -1730,13 +1729,18 @@ class _BreathingPracticeReleaseCardState
   }
 
   Widget _buildScenarioOverviewCard(BuildContext context, AppI18n i18n) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+    return BreathingPanelCard(
+      tint: _theme.orbEnd,
+      fillAlpha: 0.06,
+      borderAlpha: 0.18,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          _theme.orbStart.withValues(alpha: 0.12),
+          Theme.of(context).colorScheme.surface.withValues(alpha: 0.96),
+          _theme.orbEnd.withValues(alpha: 0.08),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1790,17 +1794,12 @@ class _BreathingPracticeReleaseCardState
             ],
           ),
           const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outlineVariant,
-              ),
-            ),
+          BreathingPanelCard(
+            padding: EdgeInsets.zero,
+            tint: _theme.orbEnd,
+            fillAlpha: 0.05,
+            borderAlpha: 0.14,
+            radius: 18,
             child: Theme(
               data: Theme.of(
                 context,
@@ -2576,14 +2575,10 @@ class _BreathingPracticeReleaseCardState
   }
 
   Widget _buildSettingsCard(BuildContext context, AppI18n i18n) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
+    return BreathingPanelCard(
+      tint: _theme.orbStart,
+      fillAlpha: 0.05,
+      borderAlpha: 0.14,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -2606,12 +2601,13 @@ class _BreathingPracticeReleaseCardState
             runSpacing: 8,
             children: BreathingExperienceCatalog.themes
                 .map(
-                  (theme) => ChoiceChip(
+                  (theme) => BreathingSelectableChip(
                     selected: theme.id == _theme.id,
-                    onSelected: (_) {
+                    onTap: () {
                       setState(() => _theme = theme);
                       _savePrefs();
                     },
+                    tint: theme.orbEnd,
                     label: Text(theme.name.resolve(i18n)),
                   ),
                 )
@@ -2630,12 +2626,13 @@ class _BreathingPracticeReleaseCardState
             runSpacing: 8,
             children: _targetOptions
                 .map(
-                  (minutes) => ChoiceChip(
+                  (minutes) => BreathingSelectableChip(
                     selected: _targetMinutes == minutes,
-                    onSelected: (_) {
+                    onTap: () {
                       setState(() => _targetMinutes = minutes);
                       _savePrefs();
                     },
+                    tint: _theme.accent,
                     label: Text(
                       pickUiText(i18n, zh: '$minutes 分钟', en: '$minutes min'),
                     ),

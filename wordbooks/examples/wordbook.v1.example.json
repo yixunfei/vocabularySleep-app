@@ -1,0 +1,166 @@
+{
+  "schema_version": "wordbook.v1",
+  "book": {
+    "id": "zh-en-demo-basic",
+    "name": "中文-英语演示词本",
+    "source_language": "zh-Hans",
+    "target_language": "en",
+    "direction": "source_to_target",
+    "entry_count": 2,
+    "created_at": "2026-04-09",
+    "updated_at": "2026-04-09",
+    "sources": [
+      "manual normalization demo"
+    ],
+    "tags": [
+      "demo",
+      "standardized"
+    ],
+    "description": "用于验证 wordbook.v1 结构的最小演示词本",
+    "license": "",
+    "extra": {}
+  },
+  "entries": [
+    {
+      "entry_id": "zh-en-demo-the",
+      "lemma": {
+        "text": "the",
+        "normalized": "the",
+        "language": "en",
+        "script": "Latn"
+      },
+      "glosses": [
+        {
+          "lang": "zh-Hans",
+          "text": "定冠词",
+          "type": "primary"
+        }
+      ],
+      "pronunciations": [
+        {
+          "locale": "en-GB",
+          "ipa": "/ðə/",
+          "note": "weak form before consonants",
+          "audio": ""
+        },
+        {
+          "locale": "en-US",
+          "ipa": "/ðə/",
+          "note": "common weak form",
+          "audio": ""
+        }
+      ],
+      "parts_of_speech": [
+        "article"
+      ],
+      "examples": [
+        {
+          "category": "daily",
+          "source_text": "I’m reading the book Mary reviewed.",
+          "translation": "我正在读 Mary 评论过的那本书。"
+        }
+      ],
+      "collocations": [
+        "read the book",
+        "go to the office"
+      ],
+      "morphology": [
+        {
+          "type": "spelling_variant",
+          "value": "ye"
+        }
+      ],
+      "notes": {
+        "etymology": "From Middle English and Old English demonstrative forms.",
+        "roots": "",
+        "affixes": "",
+        "usage": "用于特指已经明确或上下文中可识别的名词。",
+        "confusions": "与不定冠词 a/an 在特指与泛指上的使用场景不同。",
+        "memory": "可和固定搭配一起记忆，如 go to the office。",
+        "culture": "",
+        "story": ""
+      },
+      "tags": [
+        "high_frequency"
+      ],
+      "media": [],
+      "source": {
+        "provider": "demo",
+        "license": "",
+        "record_hash": "",
+        "raw_ref": "example/the"
+      },
+      "extra": {}
+    },
+    {
+      "entry_id": "zh-en-demo-go",
+      "lemma": {
+        "text": "go",
+        "normalized": "go",
+        "language": "en",
+        "script": "Latn"
+      },
+      "glosses": [
+        {
+          "lang": "zh-Hans",
+          "text": "去；前往；运行",
+          "type": "primary"
+        }
+      ],
+      "pronunciations": [
+        {
+          "locale": "en-US",
+          "ipa": "/goʊ/",
+          "note": "",
+          "audio": ""
+        }
+      ],
+      "parts_of_speech": [
+        "verb"
+      ],
+      "examples": [
+        {
+          "category": "daily",
+          "source_text": "I need to go home now.",
+          "translation": "我现在得回家了。"
+        }
+      ],
+      "collocations": [
+        "go home",
+        "go out",
+        "go well"
+      ],
+      "morphology": [
+        {
+          "type": "past_tense",
+          "value": "went"
+        },
+        {
+          "type": "past_participle",
+          "value": "gone"
+        }
+      ],
+      "notes": {
+        "etymology": "",
+        "roots": "",
+        "affixes": "",
+        "usage": "常与地点、副词或状态补语连用。",
+        "confusions": "与 come 的方向感不同，go 通常表示离开当前参照点。",
+        "memory": "",
+        "culture": "",
+        "story": ""
+      },
+      "tags": [
+        "high_frequency"
+      ],
+      "media": [],
+      "source": {
+        "provider": "demo",
+        "license": "",
+        "record_hash": "",
+        "raw_ref": "example/go"
+      },
+      "extra": {}
+    }
+  ]
+}

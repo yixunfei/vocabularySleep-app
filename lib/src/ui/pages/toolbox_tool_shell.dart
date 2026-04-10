@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../i18n/app_i18n.dart';
 import '../ui_copy.dart';
 import '../widgets/page_header.dart';
+import 'toolbox/toolbox_ui_tokens.dart';
 
 class ToolboxToolPage extends StatelessWidget {
   const ToolboxToolPage({
@@ -23,19 +24,36 @@ class ToolboxToolPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(title), actions: appBarActions),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(
+          ToolboxUiTokens.pageHorizontalPadding,
+          ToolboxUiTokens.pageTopPadding,
+          ToolboxUiTokens.pageHorizontalPadding,
+          ToolboxUiTokens.pageBottomPadding,
+        ),
         children: <Widget>[
-          PageHeader(
-            eyebrow: pickUiText(
-              AppI18n(Localizations.localeOf(context).languageCode),
-              zh: '工具箱',
-              en: 'Toolbox',
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: ToolboxUiTokens.contentMaxWidth,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  PageHeader(
+                    eyebrow: pickUiText(
+                      AppI18n(Localizations.localeOf(context).languageCode),
+                      zh: '工具箱',
+                      en: 'Toolbox',
+                    ),
+                    title: title,
+                    subtitle: subtitle,
+                  ),
+                  const SizedBox(height: 18),
+                  child,
+                ],
+              ),
             ),
-            title: title,
-            subtitle: subtitle,
           ),
-          const SizedBox(height: 18),
-          child,
         ],
       ),
     );
@@ -54,25 +72,26 @@ class ToolboxMetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       constraints: const BoxConstraints(minWidth: 92),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(ToolboxUiTokens.shellCardRadius),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
+          Text(label, style: theme.textTheme.labelMedium),
           const SizedBox(height: 4),
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),

@@ -1,0 +1,33 @@
+{
+  "profiles": {
+    "minimax_m27": {
+      "model": "minimax-cn-coding-plan/MiniMax-M2.7",
+      "description": "MiniMax M2.7，适合通用中文编码和方案草拟。"
+    },
+    "minimax_m27_fast": {
+      "model": "minimax-cn-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "MiniMax M2.7 高速版，适合快速并行对比。"
+    },
+    "minimax_m25": {
+      "model": "minimax-cn-coding-plan/MiniMax-M2.5",
+      "description": "MiniMax M2.5，适合作为次优平衡模型。"
+    },
+    "qwen3_coder_plus": {
+      "model": "alibaba-coding-plan-cn/qwen3-coder-plus",
+      "description": "Qwen3 Coder Plus，适合补充不同实现视角。"
+    },
+    "glm_5": {
+      "model": "alibaba-coding-plan-cn/glm-5",
+      "description": "GLM-5，适合作为额外交叉验证模型。"
+    },
+    "free_probe": {
+      "model": "opencode/minimax-m2.5-free",
+      "description": "免费探测模型，适合低成本可用性检查。"
+    }
+  },
+  "defaultProfiles": [
+    "minimax_m27",
+    "qwen3_coder_plus",
+    "glm_5"
+  ]
+}

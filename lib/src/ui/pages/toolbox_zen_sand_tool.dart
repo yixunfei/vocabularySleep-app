@@ -406,11 +406,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   Offset? _lastTouchContactPoint;
   Offset? _lastResolvedInputPoint;
   Timer? _waterHoldTimer;
+  Timer? _transformIntentTimer;
   double _strokeTravelDistance = 0;
   double _lastAccentDistance = 0;
   int _waterHoldTicks = 0;
   DateTime _lastSoundAccentAt = DateTime.fromMillisecondsSinceEpoch(0);
   String? _lastPresetId;
+  bool _transformHintVisible = false;
 
   bool get _isZh => Localizations.localeOf(
     context,
@@ -442,6 +444,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   @override
   void dispose() {
     _stopWaterHoldPainter();
+    _transformIntentTimer?.cancel();
     unawaited(_soundService.stopLoop(immediate: true));
     if (_immersiveMode) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -976,10 +979,42 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _lastResolvedInputPoint = null;
   }
 
+  void _setTransformHintVisible(bool value) {
+    if (!mounted || _transformHintVisible == value) {
+      return;
+    }
+    setState(() {
+      _transformHintVisible = value;
+    });
+  }
+
+  void _cancelPendingTransformIntent({bool hideHint = true}) {
+    _transformIntentTimer?.cancel();
+    _transformIntentTimer = null;
+    if (hideHint) {
+      _setTransformHintVisible(false);
+    }
+  }
+
+  void _armTransformIntent() {
+    _transformIntentTimer?.cancel();
+    _setTransformHintVisible(true);
+    _transformIntentTimer = Timer(const Duration(milliseconds: 260), () {
+      _transformIntentTimer = null;
+      if (!mounted || _activePointers.length < 2) {
+        _cancelPendingTransformIntent();
+        return;
+      }
+      if (_gestureMode == _ZenGestureMode.draw) {
+        _handlePanCancel();
+      }
+    });
+  }
+
   void _handlePointerDown(PointerDownEvent event) {
     _activePointers.add(event.pointer);
     if (_activePointers.length >= 2 && _gestureMode == _ZenGestureMode.draw) {
-      _handlePanCancel();
+      _armTransformIntent();
     }
     if (_activePointers.length >= 2) {
       _stopWaterHoldPainter();
@@ -992,6 +1027,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   void _handlePointerUp(PointerEvent event) {
     _activePointers.remove(event.pointer);
+    if (_activePointers.length < 2) {
+      _cancelPendingTransformIntent();
+    }
     if (_activePointers.isEmpty) {
       _lastTouchContactPoint = null;
       _lastResolvedInputPoint = null;
@@ -999,6 +1037,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 
   void _startTransform(Offset focalPoint, Size size) {
+    _cancelPendingTransformIntent();
     _stopWaterHoldPainter();
     _stopSandLoop(immediate: true);
     _resetStrokeAudioSync();
@@ -1028,6 +1067,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   void _handleScaleStart(ScaleStartDetails details, Size size) {
     _currentCanvasSize = size;
     if (_activePointers.length >= 2) {
+      _cancelPendingTransformIntent();
       _lastTouchContactPoint = null;
       _lastResolvedInputPoint = null;
       _startTransform(details.localFocalPoint, size);
@@ -1048,6 +1088,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         details.scale != 1 ||
         _gestureMode == _ZenGestureMode.transform;
     if (isTransforming) {
+      _cancelPendingTransformIntent();
       if (_gestureMode != _ZenGestureMode.transform) {
         _handlePanCancel();
         _startTransform(details.localFocalPoint, size);
@@ -1064,6 +1105,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
+    _cancelPendingTransformIntent();
     if (_gestureMode == _ZenGestureMode.draw) {
       _handlePanEnd();
       return;
@@ -2176,6 +2218,18 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                           'One finger draws, two fingers zoom/pan',
                                         ),
                                   accent: _tool.tint,
+                                ),
+                              ),
+                            if (_transformHintVisible)
+                              Positioned(
+                                left: 12,
+                                top: _guideEnabled ? 56 : 12,
+                                child: _ZenCanvasHint(
+                                  label: _text(
+                                    '双指已识别，停顿后进入缩放/平移',
+                                    'Two fingers detected. Hold briefly to zoom/pan',
+                                  ),
+                                  accent: _background.accent,
                                 ),
                               ),
                             Positioned(

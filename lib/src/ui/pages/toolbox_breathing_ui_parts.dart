@@ -5,6 +5,92 @@ import 'package:flutter/material.dart';
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_breathing_catalog.dart';
 import '../ui_copy.dart';
+import 'toolbox/toolbox_ui_components.dart';
+
+BoxDecoration breathingPanelDecoration({
+  required Color tint,
+  double fillAlpha = 0.08,
+  double borderAlpha = 0.16,
+  double radius = 20,
+}) {
+  return BoxDecoration(
+    color: tint.withValues(alpha: fillAlpha),
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(color: tint.withValues(alpha: borderAlpha)),
+  );
+}
+
+class BreathingPanelCard extends StatelessWidget {
+  const BreathingPanelCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.tint,
+    this.fillAlpha = 0.08,
+    this.borderAlpha = 0.16,
+    this.radius = 20,
+    this.gradient,
+    this.width = double.infinity,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final Color? tint;
+  final double fillAlpha;
+  final double borderAlpha;
+  final double radius;
+  final Gradient? gradient;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseTint = tint ?? Theme.of(context).colorScheme.surfaceContainerLow;
+    return SizedBox(
+      width: width,
+      child: ToolboxSurfaceCard(
+        padding: padding,
+        color: gradient == null ? baseTint.withValues(alpha: fillAlpha) : null,
+        gradient: gradient,
+        radius: radius,
+        borderColor: baseTint.withValues(alpha: borderAlpha),
+        shadowColor: baseTint,
+        shadowOpacity: 0.06,
+        shadowBlur: 16,
+        shadowOffsetY: 8,
+        child: child,
+      ),
+    );
+  }
+}
+
+class BreathingSelectableChip extends StatelessWidget {
+  const BreathingSelectableChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.tint,
+    this.leading,
+  });
+
+  final Widget label;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color tint;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    return ToolboxSelectablePill(
+      label: label,
+      selected: selected,
+      onTap: onTap,
+      tint: tint,
+      leading: leading,
+      radius: 18,
+    );
+  }
+}
 
 class VoiceStatusPill extends StatelessWidget {
   const VoiceStatusPill({
@@ -25,10 +111,11 @@ class VoiceStatusPill extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      decoration: breathingPanelDecoration(
+        tint: Theme.of(context).colorScheme.surfaceContainerLow,
+        fillAlpha: 1,
+        borderAlpha: 0.3,
+        radius: 18,
       ),
       child: Row(
         children: <Widget>[
@@ -79,6 +166,7 @@ class ScenarioTagChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Text(
         label,
@@ -152,11 +240,7 @@ class BreathingInsightTile extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: tint.withValues(alpha: 0.16)),
-      ),
+      decoration: breathingPanelDecoration(tint: tint, radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -307,6 +391,11 @@ class SafetyNoteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.secondaryContainer,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(
+            context,
+          ).colorScheme.secondary.withValues(alpha: 0.18),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,12 +431,8 @@ class SessionSummaryCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
-        ),
+      decoration: breathingPanelDecoration(
+        tint: Theme.of(context).colorScheme.primary,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

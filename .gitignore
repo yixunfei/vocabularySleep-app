@@ -36,6 +36,11 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
+.tmp_appdata/
+.tmp_home/
+.tmp_localappdata/
+.tmp_model_runs/
+.tooling/
 .build/
 .buildlog/
 migrate_working_dir/

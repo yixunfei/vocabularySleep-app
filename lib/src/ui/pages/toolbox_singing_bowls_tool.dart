@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 
 import '../../services/toolbox_audio_service.dart';
 import '../../services/toolbox_singing_bowls_prefs_service.dart';
+import '../motion/app_motion.dart';
+import 'toolbox/toolbox_ui_components.dart';
 
 class SingingBowlsToolPage extends StatelessWidget {
   const SingingBowlsToolPage({super.key});
@@ -332,7 +334,8 @@ class SingingBowlsPracticeCard extends StatefulWidget {
 
 class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     with TickerProviderStateMixin {
-  static const Duration _strikeMotionDuration = Duration(milliseconds: 1400);
+  static const Duration _strikeMotionDuration = Duration(milliseconds: 800);
+  static const Duration _ambientMotionDuration = Duration(seconds: 8);
   static const int _minAutoPlayMs = 2000;
   static const int _maxAutoPlayMs = 30000;
   static const List<int> _audioVariants = <int>[0, 1, 2, 3];
@@ -378,7 +381,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     super.initState();
     _ambientController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 18),
+      duration: _ambientMotionDuration,
     )..repeat();
     _strikeController = AnimationController(
       vsync: this,
@@ -1023,7 +1026,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
                               _strikeController,
                             ]),
                             builder: (BuildContext context, Widget? child) {
-                              final strike = Curves.easeOutCubic.transform(
+                              final strike = AppEasing.bounce.transform(
                                 _strikeController.value,
                               );
                               final pulse =
@@ -1034,8 +1037,8 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
                                       );
                               final scale =
                                   1 -
-                                  strike * 0.042 -
-                                  (_pressing ? 0.02 : 0) +
+                                  strike * 0.056 -
+                                  (_pressing ? 0.025 : 0) +
                                   pulse * 0.004;
                               final yOffset = strike * 8.5;
                               return Transform.translate(
@@ -1326,7 +1329,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
             ],
           ),
           const SizedBox(height: 12),
-          SizedBox(height: 72, child: _buildFrequencyStrip(context)),
+          SizedBox(height: 84, child: _buildFrequencyStrip(context)),
           if (_controlsExpanded) ...<Widget>[
             const SizedBox(height: 12),
             Expanded(
@@ -1462,62 +1465,97 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   Widget _buildFrequencyStrip(BuildContext context) {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       itemCount: _bowlFrequencySpecs.length,
       separatorBuilder: (_, _) => const SizedBox(width: 10),
       itemBuilder: (BuildContext context, int index) {
         final spec = _bowlFrequencySpecs[index];
         final selected = spec.id == _frequencyId;
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () => _setFrequency(spec.id),
-            child: Ink(
-              width: selected ? 82 : 62,
-              decoration: BoxDecoration(
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.96)
-                    : Colors.white.withValues(alpha: 0.52),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: selected
-                      ? spec.accent
-                      : Colors.white.withValues(alpha: 0.82),
+        return AnimatedScale(
+          scale: selected ? 1 : 0.94,
+          duration: AppDurations.quick,
+          curve: AppEasing.quickBounce,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(22),
+              onTap: () => _setFrequency(spec.id),
+              child: AnimatedContainer(
+                duration: AppDurations.standard,
+                curve: AppEasing.standard,
+                width: selected ? 92 : 70,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 10,
                 ),
-                boxShadow: <BoxShadow>[
-                  if (selected)
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Colors.white.withValues(alpha: selected ? 0.98 : 0.68),
+                      spec.gradient.first.withValues(
+                        alpha: selected ? 0.52 : 0.18,
+                      ),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: selected
+                        ? spec.accent.withValues(alpha: 0.88)
+                        : Colors.white.withValues(alpha: 0.82),
+                  ),
+                  boxShadow: <BoxShadow>[
                     BoxShadow(
-                      color: spec.glow.withValues(alpha: 0.24),
-                      blurRadius: 18,
-                      offset: const Offset(0, 10),
+                      color: (selected ? spec.glow : spec.accent).withValues(
+                        alpha: selected ? 0.24 : 0.08,
+                      ),
+                      blurRadius: selected ? 18 : 10,
+                      offset: Offset(0, selected ? 10 : 4),
                     ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    spec.note,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: selected
-                          ? spec.accent
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      spec.note,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: selected
+                            ? spec.accent
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    selected
-                        ? _formatFrequency(spec.frequency)
-                        : '${spec.frequency.round()}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: selected
-                          ? spec.accent
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 4),
+                    Text(
+                      selected
+                          ? _formatFrequency(spec.frequency)
+                          : '${spec.frequency.round()}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: selected
+                            ? spec.accent
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    AnimatedOpacity(
+                      duration: AppDurations.quick,
+                      opacity: selected ? 1 : 0.42,
+                      child: Container(
+                        width: selected ? 22 : 14,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: spec.accent.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1746,22 +1784,22 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     required String subtitle,
     required Widget child,
   }) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.56),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _buildSectionTitle(context, title: title, subtitle: subtitle),
-            const SizedBox(height: 12),
-            child,
-          ],
-        ),
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white.withValues(alpha: 0.56),
+      radius: 24,
+      borderColor: Colors.white.withValues(alpha: 0.78),
+      shadowColor: _frequencySpec.glow,
+      shadowOpacity: 0.05,
+      shadowBlur: 14,
+      shadowOffsetY: 6,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildSectionTitle(context, title: title, subtitle: subtitle),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
     );
   }
@@ -1798,14 +1836,12 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     required String tooltip,
     required VoidCallback onTap,
   }) {
-    return Tooltip(
-      message: tooltip,
-      child: _buildPillIconButton(
-        context,
-        icon: icon,
-        active: active,
-        onTap: onTap,
-      ),
+    return ToolboxIconPillButton(
+      icon: icon,
+      active: active,
+      onTap: onTap,
+      tint: _frequencySpec.accent,
+      tooltip: tooltip,
     );
   }
 
@@ -1815,40 +1851,11 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     required bool active,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Ink(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: active
-                ? _frequencySpec.accent.withValues(alpha: 0.92)
-                : Colors.white.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: active
-                  ? _frequencySpec.accent
-                  : Colors.white.withValues(alpha: 0.82),
-            ),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            color: active
-                ? Colors.white
-                : Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
+    return ToolboxIconPillButton(
+      icon: icon,
+      active: active,
+      onTap: onTap,
+      tint: _frequencySpec.accent,
     );
   }
 
@@ -1857,20 +1864,11 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     required String text,
     required Color accent,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.24)),
-      ),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
+    return ToolboxInfoPill(
+      text: text,
+      accent: accent,
+      backgroundColor: Colors.white.withValues(alpha: 0.6),
+      textColor: Theme.of(context).colorScheme.onSurfaceVariant,
     );
   }
 
@@ -2095,7 +2093,7 @@ class _SingingBowlPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final center = rect.center.translate(0, size.height * 0.02);
     final pulse = 0.5 + 0.5 * math.sin(ambientValue * math.pi * 2);
-    final strike = Curves.easeOutCubic.transform(strikeValue);
+    final strike = AppEasing.bounce.transform(strikeValue);
     final width = size.width * 0.76;
     final height = size.height * 0.42;
     final rimTop = center.dy - height * 0.34;

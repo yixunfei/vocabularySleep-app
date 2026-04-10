@@ -19,6 +19,7 @@ import 'toolbox_soothing_music/runtime_store.dart';
 import 'toolbox_soothing_music/track_catalog.dart';
 import 'toolbox_soothing_music/track_loader.dart';
 import 'toolbox_soothing_music_v2_copy.dart';
+import '../motion/app_motion.dart';
 import '../legacy_style.dart';
 import '../modal_helpers.dart';
 import '../theme/app_theme.dart';
@@ -1668,12 +1669,10 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               shadowColor: Colors.transparent,
-              flexibleSpace: DecoratedBox(
+              flexibleSpace: const DecoratedBox(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(color: const Color(0xFFE4EBF0)),
-                  ),
+                  border: Border(bottom: BorderSide(color: Color(0xFFE4EBF0))),
                 ),
               ),
               title: Text(
@@ -2301,12 +2300,15 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                     ? 70
                     : 90,
                 child: _GlowBlob(
+                  animation: _orbitController,
                   color: palette.glowA,
                   size: _fullscreen
                       ? screenSize.width * 0.72
                       : compact
                       ? 220
                       : 290,
+                  seed: 0.18,
+                  drift: compact ? 18 : 26,
                 ),
               ),
               Positioned(
@@ -2321,12 +2323,15 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                     ? 86
                     : 66,
                 child: _GlowBlob(
+                  animation: _orbitController,
                   color: palette.glowB,
                   size: _fullscreen
                       ? screenSize.width * 0.66
                       : compact
                       ? 210
                       : 270,
+                  seed: 1.64,
+                  drift: compact ? 16 : 24,
                 ),
               ),
               Positioned.fill(
@@ -2407,171 +2412,16 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: <Widget>[
-                                    Text(
-                                      _mode.title(i18n),
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: palette.isDark
-                                            ? Colors.white
-                                            : const Color(0xFF10263A),
-                                        fontSize: _fullscreen
-                                            ? math.min(
-                                                screenSize.width * 0.16,
-                                                76,
-                                              )
-                                            : veryCramped
-                                            ? 26
-                                            : cramped
-                                            ? 30
-                                            : narrow
-                                            ? 34
-                                            : compact
-                                            ? 40
-                                            : 54,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.8,
-                                        shadows: <Shadow>[
-                                          Shadow(
-                                            color: palette.accent.withValues(
-                                              alpha: palette.isDark
-                                                  ? 0.24
-                                                  : 0.12,
-                                            ),
-                                            blurRadius: 24,
-                                          ),
-                                        ],
-                                      ),
+                                    _buildStageHeaderCluster(
+                                      context,
+                                      i18n,
+                                      palette: palette,
+                                      narrow: narrow,
+                                      compact: compact,
+                                      cramped: cramped,
+                                      veryCramped: veryCramped,
+                                      screenSize: screenSize,
                                     ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: _fullscreen ? 18 : 14,
-                                        vertical: _fullscreen ? 10 : 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: palette.panelSurface.withValues(
-                                          alpha: _fullscreen ? 0.58 : 0.7,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          999,
-                                        ),
-                                        border: Border.all(
-                                          color: palette.accent.withValues(
-                                            alpha: _fullscreen ? 0.72 : 0.54,
-                                          ),
-                                        ),
-                                        boxShadow: _fullscreen
-                                            ? <BoxShadow>[
-                                                BoxShadow(
-                                                  color: palette.accent
-                                                      .withValues(alpha: 0.22),
-                                                  blurRadius: 30,
-                                                  spreadRadius: 2,
-                                                ),
-                                              ]
-                                            : const <BoxShadow>[],
-                                      ),
-                                      child: Text(
-                                        _currentTrack.label(i18n),
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: palette.accent,
-                                          fontSize: _fullscreen
-                                              ? math.min(
-                                                  screenSize.width * 0.038,
-                                                  18,
-                                                )
-                                              : narrow
-                                              ? 12
-                                              : 13,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                    if (!cramped && !_fullscreen) ...<Widget>[
-                                      const SizedBox(height: 18),
-                                      Text(
-                                        _mode.description(i18n),
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: palette.textSecondary,
-                                          fontSize: narrow ? 12 : 13,
-                                          height: 1.45,
-                                        ),
-                                      ),
-                                    ],
-                                    if (_trackLoadText(i18n)
-                                        case final String
-                                            loadingText) ...<Widget>[
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: palette.panelSurface
-                                              .withValues(alpha: 0.9),
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          border: Border.all(
-                                            color: palette.border,
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            Text(
-                                              loadingText,
-                                              style: TextStyle(
-                                                color: palette.textPrimary,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            if (_trackLoadProgress !=
-                                                null) ...<Widget>[
-                                              const SizedBox(height: 8),
-                                              LinearProgressIndicator(
-                                                value: _trackLoadProgress,
-                                                minHeight: 4,
-                                                backgroundColor: palette.border
-                                                    .withValues(alpha: 0.3),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                    if (_audioErrorText(i18n)
-                                        case final String
-                                            errorText) ...<Widget>[
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: palette.dangerBg.withValues(
-                                            alpha: 0.9,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            999,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          errorText,
-                                          style: TextStyle(
-                                            color: palette.dangerFg,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
                                   ],
                                 ),
                               ),
@@ -2593,6 +2443,213 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
           compact: effectiveCompact,
         ),
       ],
+    );
+  }
+
+  Widget _buildStageHeaderCluster(
+    BuildContext context,
+    AppI18n i18n, {
+    required _SoothingVisualPalette palette,
+    required bool narrow,
+    required bool compact,
+    required bool cramped,
+    required bool veryCramped,
+    required Size screenSize,
+  }) {
+    final double titleSize = _fullscreen
+        ? math.min(screenSize.width * 0.16, 76)
+        : veryCramped
+        ? 26.0
+        : cramped
+        ? 30.0
+        : narrow
+        ? 34.0
+        : compact
+        ? 40.0
+        : 54.0;
+    final titleColor = palette.isDark ? Colors.white : const Color(0xFF10263A);
+    final subtitleText = _mode.subtitle(i18n);
+    final trackLabel = _currentTrack.label(i18n);
+    final loadingText = _trackLoadText(i18n);
+    final errorText = _audioErrorText(i18n);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        _fullscreen ? 18 : 16,
+        _fullscreen ? 18 : 16,
+        _fullscreen ? 18 : 16,
+        _fullscreen ? 16 : 14,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            palette.panelSurface.withValues(alpha: _fullscreen ? 0.54 : 0.7),
+            palette.panelSurfaceMuted.withValues(
+              alpha: _fullscreen ? 0.52 : 0.72,
+            ),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(_fullscreen ? 28 : 24),
+        border: Border.all(
+          color: palette.border.withValues(alpha: _fullscreen ? 0.78 : 0.9),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: palette.accent.withValues(
+              alpha: palette.isDark ? 0.16 : 0.08,
+            ),
+            blurRadius: _fullscreen ? 28 : 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _InfoPill(
+                icon: _mode.icon,
+                label: subtitleText,
+                palette: palette,
+                accent: palette.accent,
+              ),
+              _InfoPill(
+                icon: Icons.album_rounded,
+                label: trackLabel,
+                palette: palette,
+                accent: palette.orbitAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _mode.title(i18n),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: titleSize,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              shadows: <Shadow>[
+                Shadow(
+                  color: palette.accent.withValues(
+                    alpha: palette.isDark ? 0.24 : 0.12,
+                  ),
+                  blurRadius: 24,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: _fullscreen ? 18 : 14,
+              vertical: _fullscreen ? 10 : 8,
+            ),
+            decoration: BoxDecoration(
+              color: palette.panelSurface.withValues(
+                alpha: _fullscreen ? 0.66 : 0.82,
+              ),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: palette.accent.withValues(
+                  alpha: _fullscreen ? 0.72 : 0.54,
+                ),
+              ),
+            ),
+            child: Text(
+              trackLabel,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: palette.accent,
+                fontSize: _fullscreen
+                    ? math.min(screenSize.width * 0.038, 18)
+                    : narrow
+                    ? 12
+                    : 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          if (!cramped && !_fullscreen) ...<Widget>[
+            const SizedBox(height: 14),
+            Text(
+              _mode.description(i18n),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: palette.textSecondary,
+                fontSize: narrow ? 12 : 13,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _mode.footer(i18n),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: palette.textSecondary.withValues(alpha: 0.88),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+          ],
+          if (loadingText != null) ...<Widget>[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: palette.panelSurface.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: palette.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    loadingText,
+                    style: TextStyle(
+                      color: palette.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (_trackLoadProgress != null) ...<Widget>[
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: _trackLoadProgress,
+                      minHeight: 4,
+                      backgroundColor: palette.border.withValues(alpha: 0.3),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          if (errorText != null) ...<Widget>[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: palette.dangerBg.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                errorText,
+                style: TextStyle(color: palette.dangerFg, fontSize: 12),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -4359,18 +4416,43 @@ class _ModeFilterChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: AppDurations.quick,
+          curve: AppEasing.snappy,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: selected
-                ? palette.accent.withValues(alpha: palette.isDark ? 0.18 : 0.12)
-                : palette.panelSurfaceMuted,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                selected
+                    ? palette.accent.withValues(
+                        alpha: palette.isDark ? 0.22 : 0.14,
+                      )
+                    : palette.panelSurfaceMuted,
+                selected
+                    ? palette.orbitAccent.withValues(
+                        alpha: palette.isDark ? 0.12 : 0.08,
+                      )
+                    : palette.panelSurfaceMuted.withValues(alpha: 0.92),
+              ],
+            ),
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
                   ? palette.accent.withValues(alpha: 0.76)
                   : palette.border,
             ),
+            boxShadow: selected
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: palette.accent.withValues(
+                        alpha: palette.isDark ? 0.16 : 0.08,
+                      ),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : const <BoxShadow>[],
           ),
           child: Text(
             label,
@@ -4409,16 +4491,30 @@ class _TrackPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppDurations.standard,
+          curve: AppEasing.standard,
           constraints: BoxConstraints(
             minHeight: 38,
             maxWidth: compact ? 176 : 240,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: selected
-                ? palette.accent.withValues(alpha: palette.isDark ? 0.18 : 0.12)
-                : palette.panelSurfaceMuted,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                selected
+                    ? palette.accent.withValues(
+                        alpha: palette.isDark ? 0.2 : 0.14,
+                      )
+                    : palette.panelSurfaceMuted,
+                selected
+                    ? palette.orbitAccent.withValues(
+                        alpha: palette.isDark ? 0.08 : 0.06,
+                      )
+                    : palette.panelSurfaceMuted.withValues(alpha: 0.92),
+              ],
+            ),
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
@@ -4533,11 +4629,31 @@ class _TransportIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: AppDurations.quick,
+      curve: AppEasing.snappy,
       decoration: BoxDecoration(
-        color: palette.panelSurfaceMuted,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            palette.panelSurfaceMuted,
+            palette.panelSurface.withValues(
+              alpha: palette.isDark ? 0.92 : 0.98,
+            ),
+          ],
+        ),
         shape: BoxShape.circle,
         border: Border.all(color: palette.border),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: palette.accent.withValues(
+              alpha: palette.isDark ? 0.12 : 0.06,
+            ),
+            blurRadius: compact ? 10 : 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: IconButton(
         tooltip: tooltip,
@@ -4556,25 +4672,68 @@ class _TransportIconButton extends StatelessWidget {
 }
 
 class _GlowBlob extends StatelessWidget {
-  const _GlowBlob({required this.color, required this.size});
+  const _GlowBlob({
+    required this.animation,
+    required this.color,
+    required this.size,
+    required this.seed,
+    required this.drift,
+  });
 
+  final Animation<double> animation;
   final Color color;
   final double size;
+  final double seed;
+  final double drift;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: color.withValues(alpha: 0.22),
-            blurRadius: size * 0.36,
-            spreadRadius: size * 0.06,
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (BuildContext context, Widget? child) {
+        final phase = animation.value * math.pi * 2;
+        final dx = math.sin(phase * 0.82 + seed) * drift;
+        final dy = math.cos(phase * 0.58 + seed * 1.3) * drift * 0.56;
+        final scale = 0.96 + math.sin(phase * 0.46 + seed * 0.7) * 0.05;
+        final rotation = math.pi / 10 + math.sin(phase * 0.34 + seed) * 0.11;
+        return Transform.translate(
+          offset: Offset(dx, dy),
+          child: Transform.rotate(
+            angle: rotation,
+            child: Transform.scale(scale: scale, child: child),
           ),
-        ],
+        );
+      },
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size * 0.42),
+          gradient: RadialGradient(
+            center: const Alignment(-0.18, -0.24),
+            radius: 0.72,
+            colors: <Color>[
+              color.withValues(alpha: 0.28),
+              color.withValues(alpha: 0.18),
+              color.withValues(alpha: 0.04),
+              Colors.transparent,
+            ],
+            stops: const <double>[0.0, 0.34, 0.72, 1.0],
+          ),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: color.withValues(alpha: 0.22),
+              blurRadius: size * 0.36,
+              spreadRadius: size * 0.06,
+            ),
+            BoxShadow(
+              color: color.withValues(alpha: 0.12),
+              blurRadius: size * 0.18,
+              spreadRadius: size * 0.02,
+              offset: Offset(size * 0.04, size * 0.06),
+            ),
+          ],
+        ),
       ),
     );
   }
