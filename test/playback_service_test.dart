@@ -11,7 +11,14 @@ class _FakeTtsService extends TtsService {
   final List<String> spoken = <String>[];
 
   @override
-  Future<void> speak(String text, TtsConfig config) async {
+  Future<void> speak(
+    String text,
+    TtsConfig config, {
+    bool preCacheOnly = false,
+  }) async {
+    if (preCacheOnly) {
+      return;
+    }
     spoken.add(text);
   }
 

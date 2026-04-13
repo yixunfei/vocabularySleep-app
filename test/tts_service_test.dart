@@ -252,6 +252,100 @@ void main() {
     },
   );
 
+  test(
+    'windows local tts completes from callback even if isSpeaking stays true',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      var isSpeakingCalls = 0;
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(ttsChannel, (call) async {
+            switch (call.method) {
+              case 'awaitSpeakCompletion':
+              case 'setSpeechRate':
+              case 'setVolume':
+              case 'setPitch':
+              case 'stop':
+                return 1;
+              case 'getVoices':
+                return <Map<String, String>>[
+                  <String, String>{'name': 'Zira', 'locale': 'en-US'},
+                ];
+              case 'setVoice':
+                return 1;
+              case 'isSpeaking':
+                isSpeakingCalls += 1;
+                return true;
+              case 'speak':
+                Future<void>.delayed(const Duration(milliseconds: 20), () {
+                  unawaited(emitTtsCallback('speak.onComplete'));
+                });
+                return 1;
+            }
+            return 1;
+          });
+
+      final service = TtsService();
+      addTearDown(service.stop);
+      final config = PlayConfig.defaults.tts.copyWith(
+        provider: TtsProviderType.local,
+        localVoice: '',
+        language: 'auto',
+      );
+
+      final stopwatch = Stopwatch()..start();
+      await service.speak('abbot', config).timeout(const Duration(seconds: 2));
+      stopwatch.stop();
+
+      expect(stopwatch.elapsed, lessThan(const Duration(seconds: 1)));
+      expect(isSpeakingCalls, lessThanOrEqualTo(1));
+    },
+  );
+
+  test(
+    'windows local tts falls back to isSpeaking polling when callback is missing',
+    () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      var isSpeakingCalls = 0;
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(ttsChannel, (call) async {
+            switch (call.method) {
+              case 'awaitSpeakCompletion':
+              case 'setSpeechRate':
+              case 'setVolume':
+              case 'setPitch':
+              case 'stop':
+                return 1;
+              case 'getVoices':
+                return <Map<String, String>>[
+                  <String, String>{'name': 'Zira', 'locale': 'en-US'},
+                ];
+              case 'setVoice':
+                return 1;
+              case 'isSpeaking':
+                isSpeakingCalls += 1;
+                return isSpeakingCalls < 3;
+              case 'speak':
+                return 1;
+            }
+            return 1;
+          });
+
+      final service = TtsService();
+      addTearDown(service.stop);
+      final config = PlayConfig.defaults.tts.copyWith(
+        provider: TtsProviderType.local,
+        localVoice: '',
+        language: 'auto',
+      );
+
+      await service.speak('abbot', config).timeout(const Duration(seconds: 2));
+
+      expect(isSpeakingCalls, 3);
+    },
+  );
+
   test('windows local tts keeps explicit local voice selection', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     final voicePayloads = <Map<String, String>>[];

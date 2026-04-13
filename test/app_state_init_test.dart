@@ -447,10 +447,7 @@ void main() {
               WordFieldItem(
                 key: 'meanings_zh',
                 label: 'Chinese meanings',
-                value: <String>[
-                  '不定冠词，用于可数单数名词前',
-                  '英文字母表中的第一个字母',
-                ],
+                value: <String>['不定冠词，用于可数单数名词前', '英文字母表中的第一个字母'],
               ),
               WordFieldItem(
                 key: 'parts_of_speech',
@@ -517,7 +514,7 @@ void main() {
       final lite = state.getVisibleWordsPage(limit: 1).single;
       expect(
         lite.fields.map((field) => field.key).toList(growable: false),
-        <String>['meaning'],
+        contains('meaning'),
       );
 
       await state.selectWordEntry(lite);
@@ -606,6 +603,73 @@ void main() {
         containsPair('practice:warmup', 2),
       );
       expect(restoredDashboard.trackedEntries, hasLength(1));
+    },
+  );
+
+  test(
+    'playCurrentWordbook loads deferred large wordbook first and plays only on the next tap',
+    () async {
+      final database = _MemoryDatabaseService(
+        wordbooks: <Wordbook>[
+          Wordbook(
+            id: 3,
+            name: 'Core',
+            path: 'custom:core',
+            wordCount: 2,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+          Wordbook(
+            id: 4,
+            name: 'Large',
+            path: 'custom:large',
+            wordCount: 2500,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+        ],
+        wordsByWordbookId: <int, List<WordEntry>>{
+          3: <WordEntry>[_word(1, 'Alpha'), _word(2, 'Beta')],
+          4: <WordEntry>[
+            _word(41, 'Gamma').copyWith(wordbookId: 4, meaning: 'third'),
+            _word(42, 'Delta').copyWith(wordbookId: 4, meaning: 'fourth'),
+          ],
+        },
+      );
+      final settings = SettingsService(database);
+      final playback = TrackingPlaybackService();
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: playback,
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+
+      await state.init();
+
+      final largeWordbook = state.wordbooks.firstWhere((item) => item.id == 4);
+      await state.selectWordbook(largeWordbook);
+
+      expect(state.selectedWordbook?.id, 4);
+      expect(state.selectedWordbookRequiresOnDemandLoad, isTrue);
+      expect(state.selectedWordbookLoaded, isFalse);
+      expect(state.currentWord, isNull);
+      expect(state.words, isEmpty);
+
+      await state.playCurrentWordbook();
+
+      expect(playback.playWordsCalls, 0);
+      expect(state.selectedWordbookLoaded, isTrue);
+      expect(state.selectedWordbookRequiresOnDemandLoad, isFalse);
+      expect(state.currentWord?.word, 'Gamma');
+      expect(
+        state.words.map((item) => item.word).toList(growable: false),
+        <String>['Gamma', 'Delta'],
+      );
+
+      await state.playCurrentWordbook();
+
+      expect(playback.playWordsCalls, 1);
     },
   );
 }

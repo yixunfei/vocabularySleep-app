@@ -209,7 +209,14 @@ class _FakeTtsService extends TtsService {
   String? lastLanguage;
 
   @override
-  Future<void> speak(String text, TtsConfig config) async {
+  Future<void> speak(
+    String text,
+    TtsConfig config, {
+    bool preCacheOnly = false,
+  }) async {
+    if (preCacheOnly) {
+      return;
+    }
     lastText = text;
     lastLanguage = config.language;
   }

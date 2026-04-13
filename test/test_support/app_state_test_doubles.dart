@@ -15,8 +15,15 @@ class TrackingPlaybackService implements PlaybackService {
   @override
   bool get isPlaying => false;
 
+  @override
+  bool get isPrepared => _prepared;
+
   int updateCalls = 0;
+  int playWordsCalls = 0;
+  int prepareCalls = 0;
+  int startPreparedCalls = 0;
   PlayConfig? lastConfig;
+  bool _prepared = false;
 
   @override
   void updateRuntimeConfig(PlayConfig config) {
@@ -43,7 +50,42 @@ class TrackingPlaybackService implements PlaybackService {
     UnitChangeCallback? onUnitChanged,
     void Function()? onFinished,
   }) async {
+    playWordsCalls += 1;
+    _prepared = false;
     onFinished?.call();
+  }
+
+  @override
+  Future<PreparedPlaySession> preparePlay({
+    required List<WordEntry> words,
+    required int startIndex,
+    required PlayConfig config,
+    WordResolveCallback? resolveWord,
+    WordChangeCallback? onWordChanged,
+    UnitChangeCallback? onUnitChanged,
+    void Function()? onFinished,
+  }) async {
+    prepareCalls += 1;
+    _prepared = true;
+    return PreparedPlaySession(
+      words: words,
+      startIndex: startIndex,
+      config: config,
+      resolveWord: resolveWord,
+      onWordChanged: onWordChanged,
+      onUnitChanged: onUnitChanged,
+      onFinished: onFinished,
+      indices: const <int>[],
+      resolvedWords: const <WordEntry>[],
+      prebuiltQueues: const <List<PlayUnit>>[],
+      runId: 0,
+    );
+  }
+
+  @override
+  Future<void> startPreparedPlay() async {
+    startPreparedCalls += 1;
+    _prepared = false;
   }
 
   @override
@@ -53,7 +95,9 @@ class TrackingPlaybackService implements PlaybackService {
   Future<void> resume() async {}
 
   @override
-  Future<void> stop() async {}
+  Future<void> stop() async {
+    _prepared = false;
+  }
 
   @override
   Future<void> skipCurrentWord() async {}

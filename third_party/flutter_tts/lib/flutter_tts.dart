@@ -484,6 +484,13 @@ class FlutterTts {
   /// [Future] which invokes the platform specific method for stop
   Future<dynamic> stop() async => await _channel.invokeMethod('stop');
 
+  /// [Future] which checks whether the engine is currently speaking.
+  /// Returns `true` if speaking, `false` otherwise.
+  Future<bool> get isSpeaking async {
+    final result = await _channel.invokeMethod<bool>('isSpeaking');
+    return result ?? false;
+  }
+
   /// [Future] which invokes the platform specific method for getLanguages
   /// Android issues with API 21 & 22
   /// Returns a list of available languages

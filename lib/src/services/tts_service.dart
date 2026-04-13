@@ -17,9 +17,11 @@ import 'app_log_service.dart';
 class TtsService {
   TtsService() {
     _flutterTts.setCompletionHandler(() {
+      _log.i('tts', 'completionHandler fired');
       _completeLocalSpeak();
     });
     _flutterTts.setCancelHandler(() {
+      _log.i('tts', 'cancelHandler fired');
       _completeLocalSpeak();
     });
     _flutterTts.setErrorHandler((message) {
@@ -29,6 +31,9 @@ class TtsService {
         data: <String, Object?>{'message': '$message'},
       );
       _completeLocalSpeak(error: StateError('Local TTS playback failed.'));
+    });
+    _flutterTts.setStartHandler(() {
+      _log.i('tts', 'startHandler fired');
     });
   }
 
@@ -72,9 +77,11 @@ class TtsService {
 
   Future<void> _ensureLocalInitialized() async {
     if (_localInitialized) return;
+    // Keep platform speak() returning immediately and coordinate completion in
+    // Dart via callbacks, with Windows-specific polling only as a fallback.
     await _runOp<dynamic>(
       'local.awaitSpeakCompletion',
-      () => _flutterTts.awaitSpeakCompletion(true),
+      () => _flutterTts.awaitSpeakCompletion(false),
       swallowError: true,
     );
     await _configureLocalAudioSession();
@@ -162,14 +169,21 @@ class TtsService {
     }
   }
 
-  Future<void> speak(String text, TtsConfig config) async {
+  Future<void> speak(
+    String text,
+    TtsConfig config, {
+    bool preCacheOnly = false,
+  }) async {
     final content = text.trim();
     if (content.isEmpty) return;
     try {
       if (config.provider == TtsProviderType.local) {
-        await _speakByLocal(content, config);
+        // No pre-cache needed for local TTS
+        if (!preCacheOnly) {
+          await _speakByLocal(content, config);
+        }
       } else {
-        await _speakByApi(content, config);
+        await _speakByApi(content, config, preCacheOnly: preCacheOnly);
       }
     } catch (error, stackTrace) {
       if (error is _ApiSpeakInterrupted) {
@@ -183,6 +197,7 @@ class TtsService {
         data: <String, Object?>{
           'provider': config.provider.name,
           'textPreview': _preview(content),
+          'preCacheOnly': preCacheOnly,
         },
       );
       rethrow;
@@ -231,6 +246,19 @@ class TtsService {
   }
 
   Future<void> _speakByLocal(String text, TtsConfig config) async {
+    _log.i(
+      'tts',
+      'speakByLocal: BEGIN',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'textLength': text.length,
+        'language': config.language,
+        'localVoice': config.localVoice,
+        'speed': config.speed,
+        'volume': config.volume,
+        'platform': defaultTargetPlatform.toString(),
+      },
+    );
     await _ensureLocalInitialized();
     _interruptApiRequest(reason: 'switch_to_local');
     await _runOp<void>(
@@ -267,28 +295,244 @@ class TtsService {
     );
 
     await _configureLocalVoiceAndLanguage(text, config);
+    _log.i(
+      'tts',
+      'speakByLocal: voice/language configured',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'lastLocalLanguage': _lastLocalLanguage,
+        'lastLocalVoiceSignature': _lastLocalVoiceSignature,
+      },
+    );
 
     final completer = Completer<void>();
     _localCompletionCompleter = completer;
+
+    // On Windows, prefer completion callbacks and keep polling as a fallback.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      _log.i(
+        'tts',
+        'local speak [win]: invoking platform speak',
+        data: <String, Object?>{'textPreview': _preview(text)},
+      );
+      final result = await _runOp<dynamic>(
+        'local.speak',
+        () => _flutterTts.speak(text, focus: false),
+        data: <String, Object?>{'textPreview': _preview(text)},
+      );
+      _log.i(
+        'tts',
+        'local speak [win]: platform returned',
+        data: <String, Object?>{
+          'textPreview': _preview(text),
+          'result': '$result',
+          'success': _isPlatformCallSuccess(result),
+        },
+      );
+      if (!_isPlatformCallSuccess(result)) {
+        _completeLocalSpeak(error: StateError('Local TTS failed to start.'));
+        throw StateError('Local TTS failed to start.');
+      }
+      final pollFuture = _pollWindowsSpeakDone(text, completer);
+      try {
+        await _awaitLocalCompletion(
+          completer,
+          text,
+          timeout: const Duration(seconds: 40),
+        );
+      } finally {
+        await pollFuture;
+      }
+      return;
+    }
+
     final requestFocus =
         !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    _log.i(
+      'tts',
+      'local speak: invoking platform',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'language': config.language,
+        'localVoice': config.localVoice,
+      },
+    );
     final result = await _runOp<dynamic>(
       'local.speak',
       () => _flutterTts.speak(text, focus: requestFocus),
       data: <String, Object?>{'textPreview': _preview(text)},
     );
+    _log.i(
+      'tts',
+      'local speak: platform returned',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'result': '$result',
+        'success': _isPlatformCallSuccess(result),
+      },
+    );
     if (!_isPlatformCallSuccess(result)) {
-      _localCompletionCompleter = null;
+      _completeLocalSpeak(error: StateError('Local TTS failed to start.'));
       throw StateError('Local TTS failed to start.');
     }
+    await _awaitLocalCompletion(
+      completer,
+      text,
+      timeout: const Duration(seconds: 40),
+    );
+  }
 
+  /// Windows-only: poll SAPI engine speaking status directly.
+  /// Completion callbacks remain the primary signal; polling only fills the
+  /// gap if the callback is delayed or lost.
+  Future<void> _pollWindowsSpeakDone(
+    String text,
+    Completer<void> completion,
+  ) async {
+    const pollInterval = Duration(milliseconds: 80);
+    const maxWait = Duration(seconds: 30);
+    const maxConsecutiveErrors = 10;
+    final stopwatch = Stopwatch()..start();
+
+    // Initial delay: let SAPI begin rendering audio.
+    _log.i(
+      'tts',
+      'pollWindowsSpeakDone: START (200ms initial delay)',
+      data: <String, Object?>{'textPreview': _preview(text)},
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+
+    var pollCount = 0;
+    var consecutiveErrors = 0;
+    while (!completion.isCompleted && stopwatch.elapsed < maxWait) {
+      pollCount++;
+      try {
+        final dynamic stillRaw = await _flutterTts.isSpeaking;
+        bool still;
+        if (stillRaw is bool) {
+          still = stillRaw;
+        } else if (stillRaw is int) {
+          still = stillRaw == 1;
+        } else {
+          throw StateError(
+            'Unexpected isSpeaking type: ${stillRaw.runtimeType}',
+          );
+        }
+
+        consecutiveErrors = 0; // Reset error count on success
+
+        if (pollCount <= 5 || pollCount % 10 == 0) {
+          _log.i(
+            'tts',
+            'pollWindowsSpeakDone: poll #$pollCount',
+            data: <String, Object?>{
+              'textPreview': _preview(text),
+              'isSpeaking': still,
+              'elapsedMs': stopwatch.elapsedMilliseconds,
+            },
+          );
+        }
+        if (!still) {
+          _completeLocalSpeak();
+          _log.i(
+            'tts',
+            'pollWindowsSpeakDone: DONE (poll #$pollCount)',
+            data: <String, Object?>{
+              'textPreview': _preview(text),
+              'elapsedMs': stopwatch.elapsedMilliseconds,
+            },
+          );
+          return;
+        }
+      } catch (e) {
+        consecutiveErrors++;
+        _log.w(
+          'tts',
+          'pollWindowsSpeakDone: poll error (consecutive: $consecutiveErrors)',
+          data: <String, Object?>{
+            'textPreview': _preview(text),
+            'error': '$e',
+            'pollCount': pollCount,
+          },
+        );
+
+        // If too many consecutive errors, assume playback is done
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          _log.e(
+            'tts',
+            'pollWindowsSpeakDone: Too many consecutive errors, forcing completion',
+            data: <String, Object?>{
+              'textPreview': _preview(text),
+              'errorCount': consecutiveErrors,
+            },
+          );
+          await _runOp<dynamic>(
+            'local.stop.consecutive_errors',
+            () => _flutterTts.stop(),
+            swallowError: true,
+          );
+          _completeLocalSpeak(
+            error: StateError(
+              'Windows local TTS status polling failed repeatedly.',
+            ),
+          );
+          return;
+        }
+      }
+      await Future<void>.delayed(pollInterval);
+    }
+    if (completion.isCompleted) {
+      _log.i(
+        'tts',
+        'pollWindowsSpeakDone: completion already resolved by callback',
+        data: <String, Object?>{
+          'textPreview': _preview(text),
+          'pollCount': pollCount,
+          'elapsedMs': stopwatch.elapsedMilliseconds,
+        },
+      );
+      return;
+    }
+    _log.e(
+      'tts',
+      'pollWindowsSpeakDone: TIMEOUT after $pollCount polls',
+      data: <String, Object?>{'textPreview': _preview(text)},
+    );
+    _completeLocalSpeak(
+      error: TimeoutException('Windows local TTS playback timeout.'),
+    );
+    unawaited(
+      _runOp<dynamic>(
+        'local.stop.pollTimeout',
+        () => _flutterTts.stop(),
+        swallowError: true,
+      ),
+    );
+  }
+
+  Future<void> _awaitLocalCompletion(
+    Completer<void> completer,
+    String text, {
+    required Duration timeout,
+  }) async {
+    _log.i(
+      'tts',
+      'local speak: waiting for completion',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'platform': defaultTargetPlatform.toString(),
+      },
+    );
     await completer.future.timeout(
-      const Duration(seconds: 40),
+      timeout,
       onTimeout: () {
         _log.e(
           'tts',
           'local speak timeout',
           data: <String, Object?>{'textPreview': _preview(text)},
+        );
+        _completeLocalSpeak(
+          error: TimeoutException('Local TTS playback timeout.'),
         );
         unawaited(
           _runOp<dynamic>(
@@ -299,6 +543,11 @@ class TtsService {
         );
         throw TimeoutException('Local TTS playback timeout.');
       },
+    );
+    _log.i(
+      'tts',
+      'local speak: completion resolved',
+      data: <String, Object?>{'textPreview': _preview(text)},
     );
   }
 
@@ -631,7 +880,11 @@ class TtsService {
     return true;
   }
 
-  Future<void> _speakByApi(String text, TtsConfig config) async {
+  Future<void> _speakByApi(
+    String text,
+    TtsConfig config, {
+    bool preCacheOnly = false,
+  }) async {
     await _ensureApiAudioConfigured();
     final speakToken = ++_apiSpeakToken;
     final model = (config.model?.trim().isNotEmpty ?? false)

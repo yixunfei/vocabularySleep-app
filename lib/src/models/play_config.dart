@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'word_entry.dart';
 import 'word_field.dart';
+import '../services/app_log_service.dart';
 
 enum PlayOrder { sequential, random }
 
@@ -940,12 +941,19 @@ class PlayConfig {
     repeats: <String, int>{
       'word': 1,
       'meaning': 1,
+      'meanings_zh': 0,
       'example': 1,
       'pronunciations': 0,
       'parts_of_speech': 0,
       'collocations': 0,
+      'phrases': 0,
       'usage': 0,
       'confusions': 0,
+      'synonyms': 0,
+      'antonyms': 0,
+      'related': 0,
+      'derived': 0,
+      'similar_words': 0,
       'spelling': 0,
       'story': 0,
       'culture': 0,
@@ -1152,12 +1160,19 @@ class PlayUnit {
 
 const Map<String, String> _fieldToRepeatKey = <String, String>{
   'meaning': 'meaning',
+  'meanings_zh': 'meanings_zh',
   'pronunciations': 'pronunciations',
   'parts_of_speech': 'parts_of_speech',
   'examples': 'example',
   'collocations': 'collocations',
+  'phrases': 'phrases',
   'usage': 'usage',
   'confusions': 'confusions',
+  'synonyms': 'synonyms',
+  'antonyms': 'antonyms',
+  'related': 'related',
+  'derived': 'derived',
+  'similar_words': 'similar_words',
   'etymology': 'etymology',
   'roots': 'roots',
   'affixes': 'affixes',
@@ -1170,12 +1185,19 @@ const Map<String, String> _fieldToRepeatKey = <String, String>{
 
 const Map<String, String> _fieldToUnitType = <String, String>{
   'meaning': 'meaning',
+  'meanings_zh': 'meanings_zh',
   'pronunciations': 'pronunciation',
   'parts_of_speech': 'part_of_speech',
   'examples': 'example',
   'collocations': 'collocation',
+  'phrases': 'phrase',
   'usage': 'usage',
   'confusions': 'confusion',
+  'synonyms': 'synonym',
+  'antonyms': 'antonym',
+  'related': 'related',
+  'derived': 'derived',
+  'similar_words': 'similar_word',
   'etymology': 'etymology',
   'roots': 'roots',
   'affixes': 'affixes',
@@ -1208,7 +1230,7 @@ bool _isFieldEnabled(String key, PlayConfig config) {
   }
   final setting = _fieldPlaybackSettingForKey(key, config);
   if (setting?.enabled != null) return setting!.enabled!;
-  return _resolveFieldRepeat(key, config) > 0;
+  return false;
 }
 
 FieldPlaybackSetting? _fieldPlaybackSettingForKey(
@@ -1282,15 +1304,39 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
   final fields = word.playbackFields;
   for (final field in fields) {
     if (field.key.isEmpty) continue;
-    if (!_isFieldEnabled(field.key, config)) continue;
+    final enabled = _isFieldEnabled(field.key, config);
+    if (!enabled) {
+      AppLogService.instance.i(
+        'playback',
+        'Field disabled: ${field.key}',
+        data: {'word': word.word},
+      );
+      continue;
+    }
 
     final repeat = _resolveFieldRepeat(field.key, config);
-    if (repeat <= 0) continue;
+    if (repeat <= 0) {
+      AppLogService.instance.i(
+        'playback',
+        'Field has 0 repeat: ${field.key}',
+        data: {'word': word.word},
+      );
+      continue;
+    }
 
     final unitType = _fieldToUnitType[field.key] ?? 'custom';
     final label =
         _fieldPlaybackSettingForKey(field.key, config)?.label ?? field.label;
-    for (final value in field.asList()) {
+    final values = field.asList();
+    if (values.isEmpty) {
+      AppLogService.instance.i(
+        'playback',
+        'Field has no values: ${field.key}',
+        data: {'word': word.word},
+      );
+      continue;
+    }
+    for (final value in values) {
       final text = value.trim();
       if (text.isEmpty) continue;
       for (var i = 0; i < repeat; i++) {

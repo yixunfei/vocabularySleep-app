@@ -370,21 +370,68 @@ class WordEntry {
 
   LegacyWordFields get legacyFields => toLegacyFields(fields);
 
+  /// Fields that should never be sent to TTS (metadata-only, not spoken text).
+  static const Set<String> _nonSpokenFieldKeys = <String>{
+    'frequency_rank',
+    'tags',
+    'media',
+    'normalized_word',
+  };
+
+  /// Returns true if [text] looks like content that should not be spoken aloud
+  /// (URLs, purely numeric, contains "null", etc.).
+  static bool _isNonSpokenText(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return true;
+    // URLs / paths
+    if (trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('//')) {
+      return true;
+    }
+    // "null" literal
+    if (trimmed.toLowerCase() == 'null') return true;
+    // Purely numeric (e.g. frequency_rank "11190")
+    if (RegExp(r'^\d+$').hasMatch(trimmed)) return true;
+    return false;
+  }
+
   List<WordFieldItem> get playbackFields {
     final output = <WordFieldItem>[];
     for (final field in fields) {
+      // Skip metadata fields that are never meant to be spoken.
+      if (_nonSpokenFieldKeys.contains(field.key)) continue;
+
       final values = field.asList();
       if (values.isEmpty) continue;
+
       if (field.key == 'pronunciations') {
         final spoken = values
             .map(_extractIpaForPlayback)
             .where((item) => item.isNotEmpty)
+            .where((item) => !_isNonSpokenText(item))
             .toList(growable: false);
         if (spoken.isEmpty) continue;
         output.add(field.copyWith(value: spoken));
         continue;
       }
-      output.add(field);
+
+      // For all other fields, strip out individual values that are not
+      // speakable (URLs, "null", pure numbers, etc.).
+      final cleaned = values
+          .where((item) => !_isNonSpokenText(item))
+          .toList(growable: false);
+      if (cleaned.isEmpty) continue;
+
+      // If the cleaned list differs from the original, create a new field
+      // with only the cleaned values.
+      if (cleaned.length == values.length) {
+        output.add(field);
+      } else {
+        output.add(field.copyWith(
+          value: cleaned.length == 1 ? cleaned.first : cleaned,
+        ));
+      }
     }
     return output;
   }

@@ -1758,6 +1758,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> play() => _playImpl();
 
+  Future<void> preparePlay() => _preparePlayImpl();
+
+  Future<void> startPreparedPlay() => _startPreparedPlayImpl();
+
   Future<void> pauseOrResume() => _pauseOrResumeImpl();
 
   Future<void> stop() => _stopPlaybackImpl();
