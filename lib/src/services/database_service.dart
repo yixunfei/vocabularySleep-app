@@ -1715,7 +1715,21 @@ class AppDatabaseService {
     int offset = 0,
   }) {
     final rows = _selectMaps(
-      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY $_wordOrderClause LIMIT ? OFFSET ?',
+      '''
+      SELECT
+        id,
+        wordbook_id,
+        word,
+        meaning,
+        entry_uid,
+        primary_gloss,
+        schema_version,
+        sort_index
+      FROM words
+      WHERE wordbook_id = ?
+      ORDER BY $_wordOrderClause
+      LIMIT ? OFFSET ?
+      ''',
       <Object?>[wordbookId, limit, offset],
     );
     return rows.map(_wordEntryLiteFromRow).toList(growable: false);
@@ -1754,7 +1768,16 @@ class AppDatabaseService {
 
     final rows = _selectMaps(
       '''
-      SELECT * FROM words
+      SELECT
+        id,
+        wordbook_id,
+        word,
+        meaning,
+        entry_uid,
+        primary_gloss,
+        schema_version,
+        sort_index
+      FROM words
       WHERE $whereClause
       ORDER BY $_wordOrderClause
       LIMIT ? OFFSET ?
@@ -4287,14 +4310,24 @@ class AppDatabaseService {
   }
 
   WordEntry _wordEntryLiteFromRow(Map<String, Object?> row) {
-    // Use the full fromMap parser so that fields_json, extension_json,
-    // entry_json, and all legacy columns (examples, etymology, roots, etc.)
-    // are loaded.  Without this, lite entries only carry the word + meaning
-    // and playback of other configured fields silently produces nothing.
-    final entry = WordEntry.fromMap(row);
-    final resolvedMeaning = entry.summaryMeaningText.trim();
+    final resolvedMeaning =
+        _sanitizeNullableText(row['primary_gloss']) ??
+        _sanitizeNullableText(row['meaning']);
+    final entry = WordEntry(
+      id: (row['id'] as num?)?.toInt(),
+      wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
+      word: sanitizeDisplayText('${row['word'] ?? ''}'),
+      meaning: resolvedMeaning,
+      entryUid: _sanitizeNullableText(row['entry_uid']),
+      primaryGloss: _sanitizeNullableText(row['primary_gloss']),
+      schemaVersion: _sanitizeNullableText(row['schema_version']),
+      sortIndex: (row['sort_index'] as num?)?.toInt(),
+      rawContent: resolvedMeaning ?? '',
+    );
+    final summaryMeaning = entry.summaryMeaningText.trim();
     return entry.copyWith(
-      meaning: resolvedMeaning.isEmpty ? entry.meaning : resolvedMeaning,
+      meaning: summaryMeaning.isEmpty ? entry.meaning : summaryMeaning,
+      rawContent: summaryMeaning.isEmpty ? entry.rawContent : summaryMeaning,
     );
   }
 

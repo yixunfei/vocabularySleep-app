@@ -514,7 +514,7 @@ void main() {
       final lite = state.getVisibleWordsPage(limit: 1).single;
       expect(
         lite.fields.map((field) => field.key).toList(growable: false),
-        contains('meaning'),
+        <String>['meaning'],
       );
 
       await state.selectWordEntry(lite);

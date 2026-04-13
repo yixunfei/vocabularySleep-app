@@ -266,7 +266,7 @@ void main() {
           .toList(growable: false),
       <String>['Bravo'],
     );
-    expect(settings.loadRememberedWords(), <String>{'alpha'});
+    expect(settings.loadRememberedWords(), <String>{'word:alpha'});
     expect(database.progressByWordId[1]?.timesPlayed, 1);
     expect(database.progressByWordId[1]?.timesCorrect, 1);
     expect(database.progressByWordId[2]?.timesPlayed, 1);
@@ -274,7 +274,7 @@ void main() {
 
     final dashboard = settings.loadPracticeDashboard();
     expect(dashboard.lastSessionTitle, 'Memory lane');
-    expect(dashboard.rememberedWords, <String>['Alpha']);
-    expect(dashboard.weakWords, <String>['Bravo']);
+    expect(dashboard.rememberedWords, <String>['word:alpha']);
+    expect(dashboard.weakWords, <String>['word:bravo']);
   });
 }
