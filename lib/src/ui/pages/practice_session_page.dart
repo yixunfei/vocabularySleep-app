@@ -16,6 +16,7 @@ import '../widgets/word_card.dart';
 import 'practice_support.dart';
 
 const int _practiceAnswerTransitionWarnThresholdMs = 120;
+const int _practiceTaskWordSyncWarnThresholdMs = 120;
 
 class PracticeSessionPage extends StatefulWidget {
   const PracticeSessionPage({
@@ -79,9 +80,22 @@ class _PendingPracticeAnswerFeedback {
   }
 }
 
+class _PracticeMeaningCandidate {
+  const _PracticeMeaningCandidate({
+    required this.meaning,
+    required this.normalizedMeaning,
+  });
+
+  final String meaning;
+  final String normalizedMeaning;
+}
+
 class _PracticeSessionPageState extends State<PracticeSessionPage> {
   final AppLogService _log = AppLogService.instance;
   late List<WordEntry> _sessionWords;
+  Map<String, String> _sessionMeaningByEntryKey = <String, String>{};
+  List<_PracticeMeaningCandidate> _sessionMeaningCandidates =
+      const <_PracticeMeaningCandidate>[];
   final List<WordEntry> _rememberedWords = <WordEntry>[];
   final List<WordEntry> _weakWords = <WordEntry>[];
   final Map<String, List<String>> _weakReasonIdsByWord =
@@ -128,6 +142,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (widget.shuffle) {
       _sessionWords.shuffle();
     }
+    _rebuildSessionDerivedCaches();
   }
 
   @override
@@ -211,7 +226,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (_sessionWords.any(_canBuildMeaningChoice)) {
       available.add(PracticeQuestionType.meaningChoice);
     }
-    if (_sessionWords.any((word) => practiceMeaningText(word).isNotEmpty)) {
+    if (_sessionWords.any(
+      (word) => _practiceMeaningForEntry(word).isNotEmpty,
+    )) {
       available.add(PracticeQuestionType.spelling);
     }
     if (available.length >= 2) {
@@ -227,39 +244,26 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (_canBuildMeaningChoice(word)) {
       supported.add(PracticeQuestionType.meaningChoice);
     }
-    if (practiceMeaningText(word).isNotEmpty) {
+    if (_practiceMeaningForEntry(word).isNotEmpty) {
       supported.add(PracticeQuestionType.spelling);
     }
     return supported;
   }
 
   bool _canBuildMeaningChoice(WordEntry word) {
-    final currentMeaning = practiceMeaningText(word);
+    final currentMeaning = _practiceMeaningForEntry(word);
     if (currentMeaning.isEmpty) {
       return false;
     }
-    final distractorCount = _meaningPoolEntries()
+    final currentNormalizedMeaning = normalizePracticeAnswer(currentMeaning);
+    final distractorCount = _sessionMeaningCandidates
         .where(
-          (entry) =>
-              !_isSameWord(entry, word) &&
-              practiceMeaningText(entry).isNotEmpty &&
-              normalizePracticeAnswer(practiceMeaningText(entry)) !=
-                  normalizePracticeAnswer(currentMeaning),
+          (candidate) =>
+              candidate.normalizedMeaning != currentNormalizedMeaning,
         )
-        .map(practiceMeaningText)
-        .toSet()
+        .take(2)
         .length;
     return distractorCount >= 2;
-  }
-
-  Iterable<WordEntry> _meaningPoolEntries() sync* {
-    final seen = <String>{};
-    for (final entry in _sessionWords) {
-      final identity = _entryKey(entry);
-      if (seen.add(identity)) {
-        yield entry;
-      }
-    }
   }
 
   List<Widget> _buildSession(
@@ -893,7 +897,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     required _PendingPracticeAnswerFeedback feedback,
   }) {
     final theme = Theme.of(context);
-    final meaning = practiceMeaningText(feedback.current);
+    final meaning = _practiceMeaningForEntry(feedback.current);
     final isLastItem = _index + 1 >= _sessionWords.length;
     final selectedReasons = feedback.weakReasonIds.toSet();
 
@@ -1065,7 +1069,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     AppI18n i18n,
     WordEntry current,
   ) {
-    final correctMeaning = practiceMeaningText(current);
+    final correctMeaning = _practiceMeaningForEntry(current);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -1149,9 +1153,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
           children: <Widget>[
             Expanded(
               child: Text(
-                practiceMeaningText(current).isEmpty
+                _practiceMeaningForEntry(current).isEmpty
                     ? current.word
-                    : practiceMeaningText(current),
+                    : _practiceMeaningForEntry(current),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -1361,7 +1365,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     });
 
     if (shouldAddToTask) {
-      unawaited(state.toggleTaskWord(current));
+      _scheduleTaskWordAutoAdd(state, current);
     }
 
     if (nextIndex >= _sessionWords.length) {
@@ -1434,6 +1438,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       if (shuffle) {
         _sessionWords.shuffle();
       }
+      _rebuildSessionDerivedCaches();
       _rememberedWords.clear();
       _weakWords.clear();
       _weakReasonIdsByWord.clear();
@@ -1516,7 +1521,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     List<String> weakReasonIds = const <String>[],
   }) {
     final i18n = AppI18n(state.uiLanguage);
-    final meaning = practiceMeaningText(current);
+    final meaning = _practiceMeaningForEntry(current);
     final isLastItem = _index + 1 >= _sessionWords.length;
     final initialReasons = weakReasonIds.isNotEmpty
         ? weakReasonIds
@@ -1720,20 +1725,17 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   }
 
   List<String> _buildMeaningOptions(WordEntry current) {
-    final currentMeaning = practiceMeaningText(current);
+    final currentMeaning = _practiceMeaningForEntry(current);
     if (currentMeaning.isEmpty) {
       return const <String>[];
     }
-    final distractors = _meaningPoolEntries()
+    final currentNormalizedMeaning = normalizePracticeAnswer(currentMeaning);
+    final distractors = _sessionMeaningCandidates
         .where(
-          (entry) =>
-              !_isSameWord(entry, current) &&
-              practiceMeaningText(entry).isNotEmpty &&
-              normalizePracticeAnswer(practiceMeaningText(entry)) !=
-                  normalizePracticeAnswer(currentMeaning),
+          (candidate) =>
+              candidate.normalizedMeaning != currentNormalizedMeaning,
         )
-        .map(practiceMeaningText)
-        .toSet()
+        .map((candidate) => candidate.meaning)
         .toList(growable: false);
     distractors.shuffle();
     final options = <String>[currentMeaning, ...distractors.take(3)]..shuffle();
@@ -1749,7 +1751,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       return;
     }
     final isCorrect =
-        selectedMeaning.trim() == practiceMeaningText(current).trim();
+        selectedMeaning.trim() == _practiceMeaningForEntry(current).trim();
     setState(() {
       _objectiveAnswered = true;
       _objectiveCorrect = isCorrect;
@@ -1819,6 +1821,72 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
 
   bool _isSameWord(WordEntry a, WordEntry b) {
     return a.sameEntryAs(b);
+  }
+
+  void _rebuildSessionDerivedCaches() {
+    final nextMeaningsByEntryKey = <String, String>{};
+    final nextMeaningCandidates = <_PracticeMeaningCandidate>[];
+    final seenNormalizedMeanings = <String>{};
+
+    for (final entry in _sessionWords) {
+      final meaning = practiceMeaningText(entry);
+      nextMeaningsByEntryKey[_entryKey(entry)] = meaning;
+      final normalizedMeaning = normalizePracticeAnswer(meaning);
+      if (normalizedMeaning.isEmpty ||
+          !seenNormalizedMeanings.add(normalizedMeaning)) {
+        continue;
+      }
+      nextMeaningCandidates.add(
+        _PracticeMeaningCandidate(
+          meaning: meaning,
+          normalizedMeaning: normalizedMeaning,
+        ),
+      );
+    }
+
+    _sessionMeaningByEntryKey = nextMeaningsByEntryKey;
+    _sessionMeaningCandidates = nextMeaningCandidates;
+  }
+
+  String _practiceMeaningForEntry(WordEntry entry) {
+    return _sessionMeaningByEntryKey[_entryKey(entry)] ??
+        practiceMeaningText(entry);
+  }
+
+  void _scheduleTaskWordAutoAdd(AppState state, WordEntry current) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final watch = Stopwatch()..start();
+      final future = state.toggleTaskWord(current);
+      unawaited(
+        future
+            .then((_) {
+              if (watch.elapsedMilliseconds <
+                  _practiceTaskWordSyncWarnThresholdMs) {
+                return;
+              }
+              _log.w(
+                'practice',
+                'practice auto-add task word slow',
+                data: <String, Object?>{
+                  'word': current.word,
+                  'elapsedMs': watch.elapsedMilliseconds,
+                },
+              );
+            })
+            .catchError((Object error, StackTrace stackTrace) {
+              _log.e(
+                'practice',
+                'practice auto-add task word failed',
+                error: error,
+                stackTrace: stackTrace,
+                data: <String, Object?>{'word': current.word},
+              );
+            }),
+      );
+    });
   }
 
   void _logAnswerTransitionIfSlow({
