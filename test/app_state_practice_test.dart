@@ -133,6 +133,45 @@ void main() {
     },
   );
 
+  test('recordPracticeAnswer keeps tracked practice snapshot lightweight', () {
+    final database = _MemoryDatabaseService();
+    final settings = SettingsService(database);
+    final state = AppState(
+      database: database,
+      settings: settings,
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
+    );
+    const entry = WordEntry(
+      id: 9,
+      wordbookId: 1,
+      word: 'anchor',
+      entryUid: 'anchor-entry',
+      primaryGloss: '固定',
+      rawContent: '这是一段不该跟着每题答题一起反复落盘的大块原始内容。',
+      fields: <WordFieldItem>[
+        WordFieldItem(key: 'meaning', label: 'Meaning', value: '固定'),
+        WordFieldItem(key: 'example', label: 'Example', value: 'drop anchor'),
+      ],
+    );
+
+    state.startPracticeSession(title: 'Snapshot');
+    state.recordPracticeAnswer(
+      entry: entry,
+      remembered: false,
+      weakReasonIds: const <String>['meaning'],
+    );
+
+    final dashboard = settings.loadPracticeDashboard();
+    expect(dashboard.trackedEntries, hasLength(1));
+    expect(dashboard.trackedEntries.first.word, 'anchor');
+    expect(dashboard.trackedEntries.first.meaning, '固定');
+    expect(dashboard.trackedEntries.first.fields, isEmpty);
+    expect(dashboard.trackedEntries.first.rawContent, isEmpty);
+  });
+
   test('beginPracticeBatch advances cursor and honors anchor words', () {
     final database = _MemoryDatabaseService();
     final settings = SettingsService(database);

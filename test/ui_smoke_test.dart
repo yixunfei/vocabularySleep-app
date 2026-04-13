@@ -2218,6 +2218,69 @@ void main() {
       expect(find.widgetWithText(ChoiceChip, 'Meaning choice'), findsOneWidget);
     });
 
+    testWidgets('practice session marks wrong meaning choice as weak', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      const words = <WordEntry>[
+        WordEntry(
+          wordbookId: 1,
+          word: 'alpha',
+          meaning: 'first',
+          fields: <WordFieldItem>[],
+        ),
+        WordEntry(
+          wordbookId: 1,
+          word: 'bravo',
+          meaning: 'second',
+          fields: <WordFieldItem>[],
+        ),
+        WordEntry(
+          wordbookId: 1,
+          word: 'charlie',
+          meaning: 'third',
+          fields: <WordFieldItem>[],
+        ),
+      ];
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeSessionPage(
+          title: 'Meaning feedback',
+          words: words,
+        ),
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.widgetWithText(ChoiceChip, 'Meaning choice'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Meaning choice'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('second').first,
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('second').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Not quite. Correct answer: first'), findsOneWidget);
+      expect(find.text('Continue as weak'), findsOneWidget);
+    });
+
     testWidgets('wrong notebook supports search and reason filter', (
       tester,
     ) async {

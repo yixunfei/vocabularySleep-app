@@ -7,12 +7,15 @@ import 'package:provider/provider.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/practice_question_type.dart';
 import '../../models/word_entry.dart';
+import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
 import '../widgets/word_card.dart';
 import 'practice_support.dart';
+
+const int _practiceAnswerTransitionWarnThresholdMs = 120;
 
 class PracticeSessionPage extends StatefulWidget {
   const PracticeSessionPage({
@@ -77,6 +80,7 @@ class _PendingPracticeAnswerFeedback {
 }
 
 class _PracticeSessionPageState extends State<PracticeSessionPage> {
+  final AppLogService _log = AppLogService.instance;
   late List<WordEntry> _sessionWords;
   final List<WordEntry> _rememberedWords = <WordEntry>[];
   final List<WordEntry> _weakWords = <WordEntry>[];
@@ -151,8 +155,11 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
-    final i18n = AppI18n(state.uiLanguage);
+    final uiLanguage = context.select<AppState, String>(
+      (state) => state.uiLanguage,
+    );
+    final state = context.read<AppState>();
+    final i18n = AppI18n(uiLanguage);
     if (_sessionWords.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.title)),
@@ -171,7 +178,6 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     final current = _currentWord;
     final total = _sessionWords.length;
     final progress = total == 0 ? 0.0 : (_index / total).clamp(0.0, 1.0);
-    _maybeAutoPlayCurrentWord(state);
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
@@ -1080,13 +1086,12 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         ),
         const SizedBox(height: 14),
         ..._meaningOptions.map((option) {
+          final trimmedOption = option.trim();
+          final trimmedCorrectMeaning = correctMeaning.trim();
           final selected =
-              _objectiveSubmittedAnswer != null &&
-              normalizePracticeAnswer(_objectiveSubmittedAnswer!) ==
-                  normalizePracticeAnswer(option);
-          final isCorrectOption =
-              normalizePracticeAnswer(option) ==
-              normalizePracticeAnswer(correctMeaning);
+              _objectiveSubmittedAnswer?.trim().isNotEmpty == true &&
+              _objectiveSubmittedAnswer!.trim() == trimmedOption;
+          final isCorrectOption = trimmedOption == trimmedCorrectMeaning;
           final color = !_objectiveAnswered
               ? null
               : isCorrectOption
@@ -1123,8 +1128,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                 ? pickUiText(i18n, zh: '回答正确。', en: 'Correct.')
                 : pickUiText(
                     i18n,
-                    zh: '正确答案：$correctMeaning',
-                    en: 'Correct answer: $correctMeaning',
+                    zh: '回答错误。正确答案：$correctMeaning',
+                    en: 'Not quite. Correct answer: $correctMeaning',
                   ),
           ),
       ],
@@ -1177,8 +1182,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                 ? pickUiText(i18n, zh: '拼写正确。', en: 'Correct spelling.')
                 : pickUiText(
                     i18n,
-                    zh: '正确拼写：${current.word}',
-                    en: 'Correct spelling: ${current.word}',
+                    zh: '拼写错误。正确拼写：${current.word}',
+                    en: 'Not quite. Correct spelling: ${current.word}',
                   ),
           ),
         ],
@@ -1300,6 +1305,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     required List<String> weakReasonIds,
     required bool addToWrongNotebook,
   }) {
+    final transitionWatch = Stopwatch()..start();
+    var stateWriteElapsedMs = 0;
+    var prepareElapsedMs = 0;
     var nextRemembered = _remembered;
     final nextRememberedWords = List<WordEntry>.from(_rememberedWords);
     final nextWeakWords = List<WordEntry>.from(_weakWords);
@@ -1327,6 +1335,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _sessionStarted = true;
       state.startPracticeSession(title: widget.title);
     }
+    final stateWriteWatch = Stopwatch()..start();
     state.recordPracticeAnswer(
       entry: current,
       remembered: remembered,
@@ -1334,6 +1343,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       addToWrongNotebook: addToWrongNotebook,
       sessionTitle: widget.title,
     );
+    stateWriteElapsedMs = stateWriteWatch.elapsedMilliseconds;
 
     final nextIndex = _index + 1;
     setState(() {
@@ -1362,9 +1372,25 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
           _weakReasonIdsByWord,
         ),
       );
+      _logAnswerTransitionIfSlow(
+        current: current,
+        remembered: remembered,
+        totalElapsedMs: transitionWatch.elapsedMilliseconds,
+        stateWriteElapsedMs: stateWriteElapsedMs,
+        prepareElapsedMs: prepareElapsedMs,
+      );
       return;
     }
+    final prepareWatch = Stopwatch()..start();
     _prepareCurrentQuestion();
+    prepareElapsedMs = prepareWatch.elapsedMilliseconds;
+    _logAnswerTransitionIfSlow(
+      current: current,
+      remembered: remembered,
+      totalElapsedMs: transitionWatch.elapsedMilliseconds,
+      stateWriteElapsedMs: stateWriteElapsedMs,
+      prepareElapsedMs: prepareElapsedMs,
+    );
   }
 
   Future<void> _continueObjectiveQuestion(AppState state) async {
@@ -1690,6 +1716,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         _spellingFocusNode.requestFocus();
       });
     }
+    _maybeAutoPlayCurrentWord(context.read<AppState>());
   }
 
   List<String> _buildMeaningOptions(WordEntry current) {
@@ -1722,8 +1749,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       return;
     }
     final isCorrect =
-        normalizePracticeAnswer(selectedMeaning) ==
-        normalizePracticeAnswer(practiceMeaningText(current));
+        selectedMeaning.trim() == practiceMeaningText(current).trim();
     setState(() {
       _objectiveAnswered = true;
       _objectiveCorrect = isCorrect;
@@ -1793,6 +1819,32 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
 
   bool _isSameWord(WordEntry a, WordEntry b) {
     return a.sameEntryAs(b);
+  }
+
+  void _logAnswerTransitionIfSlow({
+    required WordEntry current,
+    required bool remembered,
+    required int totalElapsedMs,
+    required int stateWriteElapsedMs,
+    required int prepareElapsedMs,
+  }) {
+    if (totalElapsedMs < _practiceAnswerTransitionWarnThresholdMs) {
+      return;
+    }
+    _log.w(
+      'practice',
+      'practice answer transition slow',
+      data: <String, Object?>{
+        'word': current.word,
+        'remembered': remembered,
+        'questionType': _resolvedQuestionType.name,
+        'elapsedMs': totalElapsedMs,
+        'stateWriteElapsedMs': stateWriteElapsedMs,
+        'prepareElapsedMs': prepareElapsedMs,
+        'sessionIndex': _index,
+        'sessionSize': _sessionWords.length,
+      },
+    );
   }
 
   String _reasonKey(WordEntry entry) => entry.stableIdentityKey;

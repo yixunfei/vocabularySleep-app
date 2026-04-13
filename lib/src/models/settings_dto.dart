@@ -113,17 +113,20 @@ class PracticeTrackedEntrySnapshot {
   final List<WordFieldItem> fields;
 
   factory PracticeTrackedEntrySnapshot.fromWordEntry(WordEntry entry) {
+    final summaryMeaning = entry.summaryMeaningText.trim();
+    final needsRawContentFallback =
+        entry.entryUid?.trim().isNotEmpty != true &&
+        (entry.primaryGloss?.trim().isNotEmpty != true &&
+            summaryMeaning.isEmpty);
     return PracticeTrackedEntrySnapshot(
       id: entry.id,
       wordbookId: entry.wordbookId,
       word: entry.word,
       entryUid: entry.entryUid,
       primaryGloss: entry.primaryGloss,
-      meaning: entry.summaryMeaningText.trim().isEmpty
-          ? entry.meaning
-          : entry.summaryMeaningText,
-      rawContent: entry.rawContent,
-      fields: entry.fields,
+      meaning: summaryMeaning.isEmpty ? entry.meaning : summaryMeaning,
+      rawContent: needsRawContentFallback ? entry.rawContent : '',
+      fields: const <WordFieldItem>[],
     );
   }
 
@@ -218,10 +221,11 @@ class PracticeTrackedEntrySnapshot {
       'entryUid': entryUid,
       'primaryGloss': primaryGloss,
       'meaning': meaning,
-      'rawContent': rawContent,
-      'fields': fields
-          .map((field) => field.toJsonMap())
-          .toList(growable: false),
+      if (rawContent.trim().isNotEmpty) 'rawContent': rawContent,
+      if (fields.isNotEmpty)
+        'fields': fields
+            .map((field) => field.toJsonMap())
+            .toList(growable: false),
     };
   }
 

@@ -1,5 +1,8 @@
 part of 'app_state.dart';
 
+const int _practiceDashboardPersistWarnThresholdMs = 80;
+const int _practiceAnswerWriteWarnThresholdMs = 120;
+
 extension _AppStatePractice on AppState {
   void _updatePracticeSessionPreferencesImpl({
     bool? autoAddWeakWordsToTask,
@@ -217,6 +220,7 @@ extension _AppStatePractice on AppState {
     bool addToWrongNotebook = true,
     String? sessionTitle,
   }) {
+    final writeWatch = Stopwatch()..start();
     _ensurePracticeDate();
     _practiceTodayReviewed += 1;
     _practiceTotalReviewed += 1;
@@ -294,6 +298,22 @@ extension _AppStatePractice on AppState {
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
     _persistPracticeDashboard();
+    if (writeWatch.elapsedMilliseconds >= _practiceAnswerWriteWarnThresholdMs) {
+      _log.w(
+        'practice',
+        'recordPracticeAnswer slow',
+        data: <String, Object?>{
+          'word': entry.word,
+          'remembered': remembered,
+          'addToWrongNotebook': addToWrongNotebook,
+          'elapsedMs': writeWatch.elapsedMilliseconds,
+          'trackedEntries': _practiceTrackedEntriesByWord.length,
+          'history': _practiceSessionHistory.length,
+          'rememberedWords': _practiceRememberedWords.length,
+          'weakWords': _practiceWeakWords.length,
+        },
+      );
+    }
     _notifyStateChanged();
   }
 
@@ -683,6 +703,12 @@ extension _AppStatePractice on AppState {
     final trackedEntries = data.trackedEntries
         .map((entry) => entry.toWordEntry())
         .toList(growable: false);
+    final trackedEntriesByKey = <String, WordEntry>{
+      for (var index = 0; index < trackedEntries.length; index += 1)
+        if (data.trackedEntries[index].wordbookId > 0)
+          _practiceTrackingKeyForEntry(trackedEntries[index]):
+              trackedEntries[index],
+    }..removeWhere((key, _) => key.isEmpty);
     _practiceRememberedWords = _normalizePracticeTrackingKeys(
       data.rememberedWords,
       preferredEntries: trackedEntries,
@@ -710,15 +736,7 @@ extension _AppStatePractice on AppState {
     _practiceLaunchCursors = data.launchCursors;
     _practiceTrackedEntriesByWord
       ..clear()
-      ..addEntries(
-        <String, WordEntry>{
-          for (final entry in data.trackedEntries)
-            if (_practiceTrackingKeyForEntry(entry.toWordEntry()).isNotEmpty &&
-                entry.wordbookId > 0)
-              _practiceTrackingKeyForEntry(entry.toWordEntry()): entry
-                  .toWordEntry(),
-        }.entries,
-      );
+      ..addEntries(trackedEntriesByKey.entries);
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
   }
@@ -743,6 +761,10 @@ extension _AppStatePractice on AppState {
   }
 
   void _persistPracticeDashboard() {
+    final watch = Stopwatch()..start();
+    final trackedEntries = _practiceTrackedEntriesByWord.values
+        .map(PracticeTrackedEntrySnapshot.fromWordEntry)
+        .toList(growable: false);
     _settings.savePracticeDashboard(
       PracticeDashboardState(
         date: _practiceDateKey,
@@ -766,11 +788,22 @@ extension _AppStatePractice on AppState {
         ),
         roundSettings: _practiceRoundSettings,
         launchCursors: _practiceLaunchCursors,
-        trackedEntries: _practiceTrackedEntriesByWord.values
-            .map(PracticeTrackedEntrySnapshot.fromWordEntry)
-            .toList(growable: false),
+        trackedEntries: trackedEntries,
       ),
     );
+    if (watch.elapsedMilliseconds >= _practiceDashboardPersistWarnThresholdMs) {
+      _log.w(
+        'practice',
+        'practice dashboard persist slow',
+        data: <String, Object?>{
+          'elapsedMs': watch.elapsedMilliseconds,
+          'trackedEntries': trackedEntries.length,
+          'history': _practiceSessionHistory.length,
+          'rememberedWords': _practiceRememberedWords.length,
+          'weakWords': _practiceWeakWords.length,
+        },
+      );
+    }
   }
 
   List<WordEntry> _practiceEntriesFromWords(List<String> trackedWords) {
@@ -793,9 +826,9 @@ extension _AppStatePractice on AppState {
       }
     }
 
-    addEntries(_practiceTrackedEntriesByWord.values);
     addEntries(_scopeWords);
     addEntries(_words);
+    addEntries(_practiceTrackedEntriesByWord.values);
     if (byTrackingKey.isEmpty && byLegacyWord.isEmpty) {
       return const <WordEntry>[];
     }
@@ -899,9 +932,29 @@ extension _AppStatePractice on AppState {
       if (key.isEmpty) {
         continue;
       }
-      _practiceTrackedEntriesByWord[key] = entry;
+      _practiceTrackedEntriesByWord[key] = _buildPracticeTrackedEntryLite(
+        entry,
+      );
     }
     _prunePracticeTrackedEntries();
+  }
+
+  WordEntry _buildPracticeTrackedEntryLite(WordEntry entry) {
+    final summaryMeaning = entry.summaryMeaningText.trim();
+    final needsRawContentFallback =
+        entry.entryUid?.trim().isNotEmpty != true &&
+        (entry.primaryGloss?.trim().isNotEmpty != true &&
+            summaryMeaning.isEmpty);
+    return WordEntry(
+      id: entry.id,
+      wordbookId: entry.wordbookId,
+      word: entry.word,
+      entryUid: entry.entryUid,
+      primaryGloss: entry.primaryGloss,
+      meaning: summaryMeaning.isEmpty ? entry.meaning : summaryMeaning,
+      rawContent: needsRawContentFallback ? entry.rawContent : '',
+      fields: const <WordFieldItem>[],
+    );
   }
 
   int _removePracticeWeakKeys(Set<String> keys) {
