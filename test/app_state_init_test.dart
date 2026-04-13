@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
@@ -55,6 +56,33 @@ class _MemoryDatabaseService extends AppDatabaseService {
   }) {
     final words = _wordsByWordbookId[wordbookId] ?? const <WordEntry>[];
     return words.skip(offset).take(limit).toList(growable: false);
+  }
+
+  @override
+  List<WordEntry> getWordsLite(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    return getWords(wordbookId, limit: limit, offset: offset)
+        .map(
+          (entry) => entry.copyWith(
+            fields: const <WordFieldItem>[],
+            rawContent: entry.summaryMeaningText,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  WordEntry? hydrateWordEntry(WordEntry entry) {
+    final words = _wordsByWordbookId[entry.wordbookId] ?? const <WordEntry>[];
+    for (final candidate in words) {
+      if (candidate.sameEntryAs(entry)) {
+        return candidate;
+      }
+    }
+    return null;
   }
 
   @override
@@ -232,8 +260,8 @@ void main() {
         <String>['Alpha', 'Beta'],
       );
       expect(state.currentWord?.word, 'Alpha');
-      expect(state.favorites, <String>{'Star'});
-      expect(state.taskWords, <String>{'Plan'});
+      expect(state.favorites, <String>{'word:Star'});
+      expect(state.taskWords, <String>{'word:Plan'});
       expect(
         state.recentRememberedWordEntries
             .map((item) => item.word)
@@ -308,7 +336,7 @@ void main() {
         focusService: StubFocusService(database, settings: initialSettings),
       );
       await initialState.init();
-      initialState.selectWordEntry(initialState.words.last);
+      await initialState.selectWordEntry(initialState.words.last);
       initialState.rememberPlaybackProgress(initialState.words.last);
 
       final restoredSettings = SettingsService(database);
@@ -328,6 +356,181 @@ void main() {
         'custom:test_playback_progress_restore',
       );
       expect(restoredState.currentWord?.word, 'Bravo');
+    },
+  );
+
+  test(
+    'init restores playback progress by standard identity when headwords repeat',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbook(
+        sourcePath: 'custom:test_playback_progress_standard_identity',
+        name: 'Playback identity restore test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'set',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: '放置'),
+            ],
+            rawContent: '放置',
+            entryUid: 'set-put',
+            primaryGloss: '放置',
+            schemaVersion: 'wordbook.v1',
+          ),
+          WordEntryPayload(
+            word: 'set',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: '集合'),
+            ],
+            rawContent: '集合',
+            entryUid: 'set-collection',
+            primaryGloss: '集合',
+            schemaVersion: 'wordbook.v1',
+          ),
+        ],
+      );
+
+      final initialSettings = SettingsService(database);
+      final initialState = AppState(
+        database: database,
+        settings: initialSettings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: initialSettings),
+      );
+      await initialState.init();
+      final targetEntry = initialState.words.last;
+      await initialState.selectWordEntry(targetEntry);
+      initialState.rememberPlaybackProgress(targetEntry);
+
+      final restoredSettings = SettingsService(database);
+      final restoredState = AppState(
+        database: database,
+        settings: restoredSettings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: restoredSettings),
+      );
+
+      await restoredState.init();
+
+      expect(restoredState.words, hasLength(2));
+      expect(restoredState.currentWord?.entryUid, 'set-collection');
+      expect(restoredState.currentWord?.primaryGloss, '集合');
+    },
+  );
+
+  test(
+    'selectWordEntry hydrates full fields for deferred large wordbooks',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbook(
+        sourcePath: 'custom:test_large_wordbook_hydration',
+        name: 'Large hydration test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'a',
+            fields: <WordFieldItem>[
+              WordFieldItem(
+                key: 'meaning',
+                label: 'Meaning',
+                value: '不定冠词，用于可数单数名词前',
+              ),
+              WordFieldItem(
+                key: 'meanings_zh',
+                label: 'Chinese meanings',
+                value: <String>['不定冠词，用于可数单数名词前', '英文字母表中的第一个字母'],
+              ),
+              WordFieldItem(
+                key: 'parts_of_speech',
+                label: 'Parts of speech',
+                value: <Map<String, Object?>>[
+                  <String, Object?>{
+                    'pos': 'article',
+                    'zh': <String>['不定冠词，用于可数单数名词前'],
+                  },
+                ],
+              ),
+              WordFieldItem(
+                key: 'pronunciations',
+                label: 'Pronunciations',
+                value: <Map<String, Object?>>[
+                  <String, Object?>{
+                    'ipa': '/eɪ/',
+                    'tags': <String>['US'],
+                  },
+                ],
+              ),
+              WordFieldItem(
+                key: 'frequency_rank',
+                label: 'Frequency rank',
+                value: 5,
+              ),
+            ],
+            rawContent: '不定冠词，用于可数单数名词前',
+            entryUid: 'large-book-a',
+            primaryGloss: '不定冠词，用于可数单数名词前',
+            schemaVersion: 'wordbook.v1',
+          ),
+        ],
+      );
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_large_wordbook_hydration',
+      );
+      final sqlite = sqlite3.open(database.dbPath);
+      addTearDown(sqlite.dispose);
+      sqlite.execute(
+        'UPDATE wordbooks SET word_count = 2000 WHERE id = ?',
+        <Object?>[wordbook.id],
+      );
+
+      final settings = SettingsService(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+      await state.init();
+      addTearDown(state.dispose);
+
+      final largeWordbook = state.wordbooks.firstWhere(
+        (item) => item.path == 'custom:test_large_wordbook_hydration',
+      );
+      await state.selectWordbook(largeWordbook);
+
+      expect(state.selectedWordbookLoaded, isFalse);
+      final lite = state.getVisibleWordsPage(limit: 1).single;
+      expect(
+        lite.fields.map((field) => field.key).toList(growable: false),
+        <String>['meaning'],
+      );
+
+      await state.selectWordEntry(lite);
+
+      final current = state.currentWord;
+      expect(current, isNotNull);
+      expect(
+        current!.fields.map((field) => field.key).toList(growable: false),
+        containsAll(<String>[
+          'meaning',
+          'meanings_zh',
+          'parts_of_speech',
+          'pronunciations',
+          'frequency_rank',
+        ]),
+      );
     },
   );
 
@@ -400,6 +603,73 @@ void main() {
         containsPair('practice:warmup', 2),
       );
       expect(restoredDashboard.trackedEntries, hasLength(1));
+    },
+  );
+
+  test(
+    'playCurrentWordbook loads deferred large wordbook first and plays only on the next tap',
+    () async {
+      final database = _MemoryDatabaseService(
+        wordbooks: <Wordbook>[
+          Wordbook(
+            id: 3,
+            name: 'Core',
+            path: 'custom:core',
+            wordCount: 2,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+          Wordbook(
+            id: 4,
+            name: 'Large',
+            path: 'custom:large',
+            wordCount: 2500,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+        ],
+        wordsByWordbookId: <int, List<WordEntry>>{
+          3: <WordEntry>[_word(1, 'Alpha'), _word(2, 'Beta')],
+          4: <WordEntry>[
+            _word(41, 'Gamma').copyWith(wordbookId: 4, meaning: 'third'),
+            _word(42, 'Delta').copyWith(wordbookId: 4, meaning: 'fourth'),
+          ],
+        },
+      );
+      final settings = SettingsService(database);
+      final playback = TrackingPlaybackService();
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: playback,
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+
+      await state.init();
+
+      final largeWordbook = state.wordbooks.firstWhere((item) => item.id == 4);
+      await state.selectWordbook(largeWordbook);
+
+      expect(state.selectedWordbook?.id, 4);
+      expect(state.selectedWordbookRequiresOnDemandLoad, isTrue);
+      expect(state.selectedWordbookLoaded, isFalse);
+      expect(state.currentWord, isNull);
+      expect(state.words, isEmpty);
+
+      await state.playCurrentWordbook();
+
+      expect(playback.playWordsCalls, 0);
+      expect(state.selectedWordbookLoaded, isTrue);
+      expect(state.selectedWordbookRequiresOnDemandLoad, isFalse);
+      expect(state.currentWord?.word, 'Gamma');
+      expect(
+        state.words.map((item) => item.word).toList(growable: false),
+        <String>['Gamma', 'Delta'],
+      );
+
+      await state.playCurrentWordbook();
+
+      expect(playback.playWordsCalls, 1);
     },
   );
 }

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'word_entry.dart';
 import 'word_field.dart';
+import '../services/app_log_service.dart';
 
 enum PlayOrder { sequential, random }
 
@@ -936,23 +937,37 @@ class PlayConfig {
   final AppearanceConfig appearance;
   final List<AppearanceThemePreset> appearancePresets;
 
-  static PlayConfig get defaults => PlayConfig(
-    repeats: const <String, int>{
+  static PlayConfig get defaults => const PlayConfig(
+    repeats: <String, int>{
       'word': 1,
       'meaning': 1,
+      'meanings_zh': 0,
       'example': 1,
+      'pronunciations': 0,
+      'parts_of_speech': 0,
+      'collocations': 0,
+      'phrases': 0,
+      'usage': 0,
+      'confusions': 0,
+      'synonyms': 0,
+      'antonyms': 0,
+      'related': 0,
+      'derived': 0,
+      'similar_words': 0,
       'spelling': 0,
       'story': 0,
+      'culture': 0,
       'etymology': 0,
       'roots': 0,
       'affixes': 0,
+      'morphology': 0,
       'variations': 0,
       'memory': 0,
     },
-    fieldSettings: const <String, FieldPlaybackSetting>{},
+    fieldSettings: <String, FieldPlaybackSetting>{},
     overallRepeat: 1,
     order: PlayOrder.sequential,
-    tts: const TtsConfig(
+    tts: TtsConfig(
       provider: TtsProviderType.local,
       voice: '',
       localVoice: '',
@@ -965,12 +980,12 @@ class PlayConfig {
       maxApiCacheMb: 128,
       model: 'FunAudioLLM/CosyVoice2-0.5B',
     ),
-    voiceInput: const VoiceInputConfig(
+    voiceInput: VoiceInputConfig(
       provider: VoiceInputProviderType.system,
       language: 'auto',
       model: 'FunAudioLLM/SenseVoiceSmall',
     ),
-    asr: const AsrConfig(
+    asr: AsrConfig(
       enabled: false,
       provider: AsrProviderType.api,
       engineOrder: <AsrProviderType>[
@@ -984,7 +999,7 @@ class PlayConfig {
     showText: true,
     delayBetweenUnitsMs: 500,
     appearance: AppearanceConfig.defaults,
-    appearancePresets: const <AppearanceThemePreset>[],
+    appearancePresets: <AppearanceThemePreset>[],
   );
 
   PlayConfig copyWith({
@@ -1145,28 +1160,56 @@ class PlayUnit {
 
 const Map<String, String> _fieldToRepeatKey = <String, String>{
   'meaning': 'meaning',
+  'meanings_zh': 'meanings_zh',
+  'pronunciations': 'pronunciations',
+  'parts_of_speech': 'parts_of_speech',
   'examples': 'example',
+  'collocations': 'collocations',
+  'phrases': 'phrases',
+  'usage': 'usage',
+  'confusions': 'confusions',
+  'synonyms': 'synonyms',
+  'antonyms': 'antonyms',
+  'related': 'related',
+  'derived': 'derived',
+  'similar_words': 'similar_words',
   'etymology': 'etymology',
   'roots': 'roots',
   'affixes': 'affixes',
+  'morphology': 'morphology',
   'variations': 'variations',
   'memory': 'memory',
+  'culture': 'culture',
   'story': 'story',
 };
 
 const Map<String, String> _fieldToUnitType = <String, String>{
   'meaning': 'meaning',
+  'meanings_zh': 'meanings_zh',
+  'pronunciations': 'pronunciation',
+  'parts_of_speech': 'part_of_speech',
   'examples': 'example',
+  'collocations': 'collocation',
+  'phrases': 'phrase',
+  'usage': 'usage',
+  'confusions': 'confusion',
+  'synonyms': 'synonym',
+  'antonyms': 'antonym',
+  'related': 'related',
+  'derived': 'derived',
+  'similar_words': 'similar_word',
   'etymology': 'etymology',
   'roots': 'roots',
   'affixes': 'affixes',
+  'morphology': 'morphology',
   'variations': 'variations',
   'memory': 'memory',
+  'culture': 'culture',
   'story': 'story',
 };
 
 int _resolveFieldRepeat(String key, PlayConfig config) {
-  final setting = config.fieldSettings[key];
+  final setting = _fieldPlaybackSettingForKey(key, config);
   if (setting?.repeat != null) return max(0, setting!.repeat!);
 
   final repeatKey = _fieldToRepeatKey[key];
@@ -1182,9 +1225,30 @@ int _resolveFieldRepeat(String key, PlayConfig config) {
 }
 
 bool _isFieldEnabled(String key, PlayConfig config) {
-  final setting = config.fieldSettings[key];
+  if (_resolveFieldRepeat(key, config) > 0) {
+    return true;
+  }
+  final setting = _fieldPlaybackSettingForKey(key, config);
   if (setting?.enabled != null) return setting!.enabled!;
-  return _resolveFieldRepeat(key, config) > 0;
+  return false;
+}
+
+FieldPlaybackSetting? _fieldPlaybackSettingForKey(
+  String key,
+  PlayConfig config,
+) {
+  final candidates = <String>{
+    key,
+    normalizeFieldKey(key),
+    _fieldToRepeatKey[key] ?? '',
+  }.where((item) => item.trim().isNotEmpty);
+  for (final candidate in candidates) {
+    final setting = config.fieldSettings[candidate];
+    if (setting != null) {
+      return setting;
+    }
+  }
+  return null;
 }
 
 String spellWord(
@@ -1237,28 +1301,42 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
     }
   }
 
-  final fallbackFields = buildFieldItemsFromRecord(<String, Object?>{
-    'meaning': word.meaning,
-    'examples': word.examples,
-    'etymology': word.etymology,
-    'roots': word.roots,
-    'affixes': word.affixes,
-    'variations': word.variations,
-    'memory': word.memory,
-    'story': word.story,
-  });
-
-  final fields = word.fields.isNotEmpty ? word.fields : fallbackFields;
+  final fields = word.playbackFields;
   for (final field in fields) {
     if (field.key.isEmpty) continue;
-    if (!_isFieldEnabled(field.key, config)) continue;
+    final enabled = _isFieldEnabled(field.key, config);
+    if (!enabled) {
+      AppLogService.instance.i(
+        'playback',
+        'Field disabled: ${field.key}',
+        data: {'word': word.word},
+      );
+      continue;
+    }
 
     final repeat = _resolveFieldRepeat(field.key, config);
-    if (repeat <= 0) continue;
+    if (repeat <= 0) {
+      AppLogService.instance.i(
+        'playback',
+        'Field has 0 repeat: ${field.key}',
+        data: {'word': word.word},
+      );
+      continue;
+    }
 
     final unitType = _fieldToUnitType[field.key] ?? 'custom';
-    final label = config.fieldSettings[field.key]?.label ?? field.label;
-    for (final value in field.asList()) {
+    final label =
+        _fieldPlaybackSettingForKey(field.key, config)?.label ?? field.label;
+    final values = field.asList();
+    if (values.isEmpty) {
+      AppLogService.instance.i(
+        'playback',
+        'Field has no values: ${field.key}',
+        data: {'word': word.word},
+      );
+      continue;
+    }
+    for (final value in values) {
       final text = value.trim();
       if (text.isEmpty) continue;
       for (var i = 0; i < repeat; i++) {

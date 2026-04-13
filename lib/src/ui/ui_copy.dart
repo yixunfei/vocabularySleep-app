@@ -155,14 +155,31 @@ String localizedFieldLabel(AppI18n i18n, WordFieldItem item) {
   final key = normalizeFieldKey(item.key);
   return switch (key) {
     'meaning' => i18n.t('fieldMeaning'),
+    'pronunciations' => pickUiText(i18n, zh: '发音', en: 'Pronunciations'),
+    'parts_of_speech' => pickUiText(i18n, zh: '词性', en: 'Parts of speech'),
     'examples' => i18n.t('fieldExamples'),
+    'collocations' => pickUiText(i18n, zh: '搭配', en: 'Collocations'),
+    'usage' => pickUiText(i18n, zh: '用法说明', en: 'Usage'),
+    'confusions' => pickUiText(i18n, zh: '易混辨析', en: 'Confusions'),
     'etymology' => i18n.t('fieldEtymology'),
     'roots' => i18n.t('fieldRoots'),
     'affixes' => i18n.t('fieldAffixes'),
+    'morphology' => pickUiText(i18n, zh: '形态信息', en: 'Morphology'),
     'variations' => i18n.t('fieldVariations'),
     'memory' => i18n.t('fieldMemory'),
+    'culture' => pickUiText(i18n, zh: '文化背景', en: 'Culture'),
     'story' => i18n.t('fieldStory'),
     _ => item.label.trim().isEmpty ? key : item.label.trim(),
+  };
+}
+
+String localizedWordFieldGroupLabel(AppI18n i18n, String groupKey) {
+  return switch (groupKey) {
+    'core' => pickUiText(i18n, zh: '核心', en: 'Core'),
+    'usage' => pickUiText(i18n, zh: '用法', en: 'Usage'),
+    'linguistics' => pickUiText(i18n, zh: '语言学', en: 'Linguistics'),
+    'memory' => pickUiText(i18n, zh: '记忆', en: 'Memory'),
+    _ => pickUiText(i18n, zh: '其他字段', en: 'Other fields'),
   };
 }
 

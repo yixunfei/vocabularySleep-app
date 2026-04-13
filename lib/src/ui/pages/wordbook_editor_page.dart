@@ -71,15 +71,7 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
   }
 
   String _buildWordSubtitle(WordEntry word) {
-    final meaning = word.meaning?.trim() ?? '';
-    if (meaning.isNotEmpty) return meaning;
-    final raw = word.rawContent.trim();
-    if (raw.isEmpty) return '';
-    for (final line in raw.split(RegExp(r'\r?\n'))) {
-      final text = line.trim();
-      if (text.isNotEmpty) return text;
-    }
-    return '';
+    return word.listSubtitleText;
   }
 
   List<WordEntry> _filterWords(List<WordEntry> words) {
@@ -90,8 +82,8 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
     return words
         .where((word) {
           final wordText = _normalizeSearchText(word.word);
-          final meaningText = _normalizeSearchText(word.meaning ?? '');
-          final detailsText = _normalizeSearchText(word.rawContent);
+          final meaningText = _normalizeSearchText(word.searchMeaningText);
+          final detailsText = _normalizeSearchText(word.searchDetailsText);
           final compactWordText = wordText.replaceAll(' ', '');
           final compactDetailsText = detailsText.replaceAll(' ', '');
 
@@ -129,10 +121,12 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
 
   Future<void> _openWordDetail(BuildContext context, WordEntry word) async {
     final state = context.read<AppState>();
-    state.selectWordEntry(word);
+    await state.selectWordEntry(word);
+    if (!context.mounted) return;
+    final resolvedWord = state.currentWord ?? word;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => WordDetailPage(initialWord: word),
+        builder: (_) => WordDetailPage(initialWord: resolvedWord),
       ),
     );
   }

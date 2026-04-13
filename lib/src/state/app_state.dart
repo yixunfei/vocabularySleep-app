@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../i18n/app_i18n.dart';
@@ -138,6 +139,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<WordEntry> _words = <WordEntry>[];
   int? _loadedWordbookId;
   int _currentWordIndex = 0;
+  WordEntry? _transientCurrentWord;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
   Set<String> _favorites = <String>{};
@@ -200,8 +202,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       const SleepAssessmentDraftState();
   SleepRoutineRunnerState _sleepRoutineRunnerState =
       const SleepRoutineRunnerState();
-  SleepNightRescueState _sleepNightRescueState =
-      const SleepNightRescueState();
+  SleepNightRescueState _sleepNightRescueState = const SleepNightRescueState();
   List<SleepDailyLog> _sleepDailyLogs = <SleepDailyLog>[];
   List<SleepNightEvent> _sleepNightEvents = <SleepNightEvent>[];
   List<SleepThoughtEntry> _sleepThoughtEntries = <SleepThoughtEntry>[];
@@ -288,6 +289,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _selectedWordbook?.id != _playingWordbookId;
   Set<String> get favorites => _favorites;
   Set<String> get taskWords => _taskWords;
+  bool isFavoriteEntry(WordEntry entry) =>
+      _favorites.contains(entry.collectionReferenceKey);
+  bool isTaskEntry(WordEntry entry) =>
+      _taskWords.contains(entry.collectionReferenceKey);
   String get searchQuery => _searchQuery;
   SearchMode get searchMode => _searchMode;
   String get uiLanguage => _uiLanguage;
@@ -325,9 +330,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SleepRoutineRunnerState get sleepRoutineRunnerState =>
       _sleepRoutineRunnerState;
   SleepNightRescueState get sleepNightRescueState => _sleepNightRescueState;
-  List<SleepDailyLog> get sleepDailyLogs => List<SleepDailyLog>.unmodifiable(
-    _sleepDailyLogs,
-  );
+  List<SleepDailyLog> get sleepDailyLogs =>
+      List<SleepDailyLog>.unmodifiable(_sleepDailyLogs);
   List<SleepNightEvent> get sleepNightEvents =>
       List<SleepNightEvent>.unmodifiable(_sleepNightEvents);
   List<SleepThoughtEntry> get sleepThoughtEntries =>
@@ -344,14 +348,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     return template.steps[index];
   }
+
   double get sleepRoutineProgress {
     final template = activeSleepRoutineTemplate;
     if (template == null || template.steps.isEmpty) {
       return 0;
     }
-    return ((_sleepRoutineRunnerState.currentStepIndex + 1) / template.steps.length)
+    return ((_sleepRoutineRunnerState.currentStepIndex + 1) /
+            template.steps.length)
         .clamp(0.0, 1.0);
   }
+
   SleepRoutineTemplate? get activeSleepRoutineTemplate {
     final activeId = _sleepRoutineRunnerState.activeTemplateId;
     if (activeId != null) {
@@ -363,6 +370,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     return _sleepRoutineTemplates.firstOrNull;
   }
+
   List<TodoItem> get todayActiveTodos {
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
@@ -393,8 +401,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int get practiceTotalReviewed => _practiceTotalReviewed;
   int get practiceTotalRemembered => _practiceTotalRemembered;
   String get practiceLastSessionTitle => _practiceLastSessionTitle;
-  List<String> get practiceRememberedWords => _practiceRememberedWords;
-  List<String> get practiceWeakWords => _practiceWeakWords;
+  List<String> get practiceRememberedWords =>
+      _practiceDisplayWords(_practiceRememberedWords);
+  List<String> get practiceWeakWords =>
+      _practiceDisplayWords(_practiceWeakWords);
   List<PracticeSessionRecord> get practiceSessionHistory =>
       List<PracticeSessionRecord>.unmodifiable(_practiceSessionHistory);
   bool get practiceAutoAddWeakWordsToTask => _practiceAutoAddWeakWordsToTask;
@@ -447,8 +457,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   bool requiresWordbookLoadConfirmation(Wordbook wordbook) {
-    return _database.isLazyBuiltInPath(wordbook.path) &&
-        wordbook.wordCount <= 0;
+    return false;
   }
 
   List<WordEntry> get recentWeakWordEntries {
@@ -468,7 +477,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   List<String> practiceWeakReasonsForWord(WordEntry entry) {
-    final key = _normalizeTrackedWord(entry.word);
+    final key = _practiceTrackingKeyForEntry(entry);
     final reasons = _practiceWeakWordReasons[key];
     if (reasons == null || reasons.isEmpty) {
       return const <String>[];
@@ -641,11 +650,24 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   WordEntry? get currentWord {
+    final transient = _transientCurrentWord;
+    final searchActive = _searchQuery.trim().isNotEmpty;
+    if (transient != null &&
+        (_selectedWordbook == null ||
+            transient.wordbookId == _selectedWordbook!.id)) {
+      if (!searchActive) {
+        if (_words.isEmpty || _indexOfWordEntry(_words, transient) < 0) {
+          return transient;
+        }
+      } else if (visibleWords.any((item) => _isSameWordEntry(item, transient))) {
+        return transient;
+      }
+    }
     if (_currentWordIndex < 0 || _currentWordIndex >= _words.length) {
       return _scopeWords.isEmpty ? null : _scopeWords.first;
     }
     final current = _words[_currentWordIndex];
-    if (_searchQuery.trim().isEmpty) return current;
+    if (!searchActive) return current;
     if (visibleWords.any((item) => _isSameWordEntry(item, current))) {
       return current;
     }
@@ -943,7 +965,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void selectWordByText(String word) => _selectWordByTextImpl(word);
 
-  void selectWordEntry(WordEntry entry) => _selectWordEntryImpl(entry);
+  Future<void> selectWordEntry(WordEntry entry) => _selectWordEntryImpl(entry);
 
   Future<void> saveAmbientPresetFromCurrentMix(String name) async {
     final trimmed = name.trim();
@@ -1066,7 +1088,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> refreshBuiltInWordbookCatalog() async {
-    _setBusy(true);
+    _setBusy(true, messageKey: 'busyLoadingWordbook');
     try {
       await _database.syncBuiltInWordbooksCatalog();
       await _reloadWordbooks(keepCurrentSelection: true);
@@ -1115,57 +1137,81 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> importWordbookByPicker({
     Future<String?> Function(String suggestedName)? requestName,
   }) async {
-    final picked = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: <String>['json', 'csv', 'mdx', 'mdd'],
+      allowedExtensions: const <String>['json', 'jsonl', 'csv', 'mdx', 'gz'],
     );
-    if (picked == null || picked.files.isEmpty) return;
-    final file = picked.files.first;
-    if (file.path == null || file.path!.trim().isEmpty) return;
-    var name = file.name.replaceAll(RegExp(r'\.[^.]+$'), '');
-    if (requestName != null) {
-      final provided = await requestName(name);
-      if (provided == null) return;
-      final trimmed = provided.trim();
-      if (trimmed.isNotEmpty) {
-        name = trimmed;
-      }
+    if (result == null || result.files.isEmpty) {
+      return;
     }
-    await importWordbookFile(file.path!, name);
+    final filePath = result.files.single.path?.trim() ?? '';
+    if (filePath.isEmpty) {
+      return;
+    }
+
+    final suggestedName = _deriveImportedWordbookNameFromPath(filePath);
+    final requested = await requestName?.call(suggestedName);
+    final resolvedName = (requested ?? suggestedName).trim();
+    if (resolvedName.isEmpty) {
+      return;
+    }
+    await importWordbookFile(filePath, resolvedName);
   }
 
   Future<void> importWordbookFile(String filePath, String name) async {
-    if (_wordbookImportActive) {
-      _setMessage('processing');
+    final normalizedPath = filePath.trim();
+    final normalizedName = name.trim().isEmpty
+        ? _deriveImportedWordbookNameFromPath(filePath)
+        : name.trim();
+    if (normalizedPath.isEmpty || normalizedName.isEmpty) {
       return;
     }
-    final normalizedName = name.trim().isEmpty
-        ? AppI18n(_uiLanguage).t('importedWordbookName')
-        : name.trim();
+
     _wordbookImportActive = true;
     _wordbookImportName = normalizedName;
     _wordbookImportProcessedEntries = 0;
     _wordbookImportTotalEntries = null;
-    _notifyStateChanged();
+    _setBusy(
+      true,
+      messageKey: 'busyImportingWordbook',
+      detail: normalizedName,
+      progress: null,
+    );
     try {
-      await _createSafetyBackup(reason: 'import_wordbook');
-      final count = await _database.importWordbookFileAsync(
-        filePath: filePath,
+      final imported = await _database.importWordbookFileAsync(
+        filePath: normalizedPath,
         name: normalizedName,
         onProgress: (processedEntries, totalEntries) {
+          _wordbookImportActive = true;
+          _wordbookImportName = normalizedName;
           _wordbookImportProcessedEntries = processedEntries;
           _wordbookImportTotalEntries = totalEntries;
-          _notifyStateChanged();
+          final progress = totalEntries == null || totalEntries <= 0
+              ? null
+              : (processedEntries / totalEntries).clamp(0.0, 1.0);
+          final detail = totalEntries == null
+              ? '$processedEntries'
+              : '$processedEntries / $totalEntries';
+          _setBusy(
+            true,
+            messageKey: 'busyImportingWordbook',
+            detail: detail,
+            progress: progress,
+          );
         },
       );
       await _reloadWordbooks(keepCurrentSelection: false);
+      final importedWordbook = _wordbooks
+          .where((item) => item.path == normalizedPath)
+          .cast<Wordbook?>()
+          .firstOrNull;
+      if (importedWordbook != null) {
+        await selectWordbook(importedWordbook);
+      }
       await _syncSpecialWordbooks();
       _setMessage(
-        _lastBackupPath == null
-            ? 'importWordbookSuccess'
-            : 'importWordbookSuccessWithBackup',
-        params: <String, Object?>{'count': count},
+        'importWordbookSuccess',
+        params: <String, Object?>{'count': imported},
       );
     } catch (error) {
       _setMessage(
@@ -1177,40 +1223,52 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _wordbookImportName = '';
       _wordbookImportProcessedEntries = 0;
       _wordbookImportTotalEntries = null;
-      _notifyStateChanged();
+      _setBusy(false);
     }
   }
 
   Future<void> importLegacyDatabaseByPicker() async {
-    final picked = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: <String>['db', 'sqlite', 'sqlite3'],
+      allowedExtensions: const <String>['db'],
     );
-    if (picked == null || picked.files.isEmpty) return;
-    final path = picked.files.first.path;
-    if (path == null || path.trim().isEmpty) return;
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+    final filePath = result.files.single.path?.trim() ?? '';
+    if (filePath.isEmpty) {
+      return;
+    }
 
     _setBusy(true, messageKey: 'busyMigratingLegacyData');
     try {
-      await _createSafetyBackup(reason: 'legacy_migration');
-      final count = await _database.importLegacyDatabase(path);
+      final imported = await _database.importLegacyDatabase(filePath);
       await _reloadWordbooks(keepCurrentSelection: false);
       await _syncSpecialWordbooks();
       _setMessage(
-        _lastBackupPath == null
-            ? 'migrationSuccess'
-            : 'migrationSuccessWithBackup',
-        params: <String, Object?>{'count': count},
+        'migrationSuccess',
+        params: <String, Object?>{'count': imported},
       );
     } catch (error) {
       _setMessage(
-        'errorMigrationFailed',
+        'errorImportFailed',
         params: <String, Object?>{'error': error},
       );
     } finally {
       _setBusy(false);
     }
+  }
+
+  String _deriveImportedWordbookNameFromPath(String filePath) {
+    final basename = p.basename(filePath.trim());
+    final lower = basename.toLowerCase();
+    if (lower.endsWith('.json.gz')) {
+      return basename.substring(0, basename.length - '.json.gz'.length);
+    }
+    if (lower.endsWith('.jsonl')) {
+      return basename.substring(0, basename.length - '.jsonl'.length);
+    }
+    return p.basenameWithoutExtension(basename);
   }
 
   Future<bool> saveWord({
@@ -1227,10 +1285,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return false;
     }
 
+    String? derivePrimaryGloss(List<WordFieldItem> fields, String rawContent) {
+      for (final field in fields) {
+        if (field.key != 'meaning') {
+          continue;
+        }
+        final text = field.asText().trim();
+        if (text.isNotEmpty) {
+          return text;
+        }
+      }
+      final normalizedRaw = rawContent.trim();
+      return normalizedRaw.isEmpty ? null : normalizedRaw;
+    }
+
     final payload = WordEntryPayload(
       word: word.trim(),
       fields: fields,
       rawContent: rawContent,
+      entryUid: original?.entryUid,
+      primaryGloss:
+          derivePrimaryGloss(fields, rawContent) ?? original?.primaryGloss,
+      schemaVersion: original?.schemaVersion,
+      sortIndex: original?.sortIndex,
+      sourcePayloadJson: original?.sourcePayloadJson,
     );
 
     _setBusy(true);
@@ -1241,6 +1319,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         _database.updateWord(
           wordbookId: selected.id,
           sourceWord: original.word,
+          sourceWordId: original.id,
+          sourceEntryUid: original.entryUid,
+          sourcePrimaryGloss:
+              original.primaryGloss ?? original.summaryMeaningText,
           payload: payload,
         );
       }
@@ -1319,7 +1401,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .firstOrNull;
     if (favoritesBook == null) return;
 
-    final wasFavorite = _favorites.contains(word.word);
+    final referenceKey = word.collectionReferenceKey;
+    final wasFavorite = _favorites.contains(referenceKey);
     final previousFavorites = Set<String>.from(_favorites);
     final previousWordbooks = List<Wordbook>.from(_wordbooks);
     final previousSelectedWordbook = _selectedWordbook;
@@ -1328,9 +1411,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     final nextFavorites = Set<String>.from(_favorites);
     if (wasFavorite) {
-      nextFavorites.remove(word.word);
+      nextFavorites.remove(referenceKey);
     } else {
-      nextFavorites.add(word.word);
+      nextFavorites.add(referenceKey);
     }
     _favorites = nextFavorites;
     _persistSpecialWordSet('favorites', _favorites);
@@ -1344,7 +1427,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       if (wasFavorite) {
-        _database.deleteWord(favoritesBook.id, word.word);
+        _database.deleteWordByEntryIdentity(favoritesBook.id, word);
       } else {
         _database.upsertWord(favoritesBook.id, word.toPayload());
       }
@@ -1375,7 +1458,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .firstOrNull;
     if (taskBook == null) return;
 
-    final wasTaskWord = _taskWords.contains(word.word);
+    final referenceKey = word.collectionReferenceKey;
+    final wasTaskWord = _taskWords.contains(referenceKey);
     final previousTaskWords = Set<String>.from(_taskWords);
     final previousWordbooks = List<Wordbook>.from(_wordbooks);
     final previousSelectedWordbook = _selectedWordbook;
@@ -1384,9 +1468,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     final nextTaskWords = Set<String>.from(_taskWords);
     if (wasTaskWord) {
-      nextTaskWords.remove(word.word);
+      nextTaskWords.remove(referenceKey);
     } else {
-      nextTaskWords.add(word.word);
+      nextTaskWords.add(referenceKey);
     }
     _taskWords = nextTaskWords;
     _persistSpecialWordSet('taskWords', _taskWords);
@@ -1400,7 +1484,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       if (wasTaskWord) {
-        _database.deleteWord(taskBook.id, word.word);
+        _database.deleteWordByEntryIdentity(taskBook.id, word);
       } else {
         _database.upsertWord(taskBook.id, word.toPayload());
       }
@@ -1572,28 +1656,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     String? directoryPath,
     String? fileName,
   }) async {
-    _setBusy(true, messageKey: 'processing');
-    try {
-      return await _database.exportUserData(
-        sections: sections,
-        directoryPath: directoryPath,
-        fileName: fileName,
-      );
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'export user data failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      _setMessage(
-        'errorExportFailed',
-        params: <String, Object?>{'error': error},
-      );
-      return null;
-    } finally {
-      _setBusy(false);
-    }
+    _setMessage('processing');
+    return null;
+  }
+
+  Future<bool> restoreUserDataExport(String filePath) async {
+    _setMessage('processing');
+    return false;
   }
 
   PracticeReviewExportPayload buildPracticeReviewExportPayload({
@@ -1688,6 +1757,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> play() => _playImpl();
+
+  Future<void> preparePlay() => _preparePlayImpl();
+
+  Future<void> startPreparedPlay() => _startPreparedPlayImpl();
 
   Future<void> pauseOrResume() => _pauseOrResumeImpl();
 
@@ -2254,10 +2327,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         MapEntry(RegExp(r"\bthey're\b"), 'they are'),
         MapEntry(RegExp(r"\bwe're\b"), 'we are'),
         MapEntry(RegExp(r"\byou're\b"), 'you are'),
-        MapEntry(RegExp(r"\bgonna\b"), 'going to'),
-        MapEntry(RegExp(r"\bwanna\b"), 'want to'),
-        MapEntry(RegExp(r"\bkinda\b"), 'kind of'),
-        MapEntry(RegExp(r"\bsorta\b"), 'sort of'),
+        MapEntry(RegExp(r'\bgonna\b'), 'going to'),
+        MapEntry(RegExp(r'\bwanna\b'), 'want to'),
+        MapEntry(RegExp(r'\bkinda\b'), 'kind of'),
+        MapEntry(RegExp(r'\bsorta\b'), 'sort of'),
       ];
   static final RegExp _pronunciationTokenCharPattern = RegExp(
     r"[\p{L}\p{N}']",
@@ -2294,9 +2367,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .where((word) {
           final wordText = search_text.normalizeSearchText(word.word);
           final meaningText = search_text.normalizeSearchText(
-            word.meaning ?? '',
+            word.searchMeaningText,
           );
-          final detailsText = search_text.normalizeSearchText(word.rawContent);
+          final detailsText = search_text.normalizeSearchText(
+            word.searchDetailsText,
+          );
           final compactWordText = wordText.replaceAll(' ', '');
           final compactDetailsText = detailsText.replaceAll(' ', '');
 
@@ -2417,7 +2492,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   static List<String> _normalizePronunciationText(String text) {
     var normalized = _foldLatinDiacritics(
-      text.toLowerCase().replaceAll(RegExp(r"[’`´]"), "'"),
+      text.toLowerCase().replaceAll(RegExp(r'[’`´]'), "'"),
     );
     for (final replacement in _pronunciationReplacements) {
       normalized = normalized.replaceAll(replacement.key, replacement.value);
@@ -2715,8 +2790,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _setWords(List<WordEntry> nextWords) {
+    final transient = _transientCurrentWord;
     _words = nextWords;
     _loadedWordbookId = _selectedWordbook?.id;
+    if (transient != null) {
+      final index = _indexOfWordEntry(nextWords, transient);
+      if (index >= 0) {
+        _currentWordIndex = index;
+      }
+    }
+    _transientCurrentWord = null;
     _refreshWordMemoryProgressCache(nextWords);
     _wordsVersion += 1;
     _invalidateVisibleWordsCache();
@@ -2725,6 +2808,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void _clearSelectedWordbookWords() {
     _words = const <WordEntry>[];
     _loadedWordbookId = null;
+    _transientCurrentWord = null;
     _refreshWordMemoryProgressCache(_words);
     _wordsVersion += 1;
     _invalidateVisibleWordsCache();
@@ -2743,7 +2827,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .cast<Wordbook?>()
         .firstOrNull;
     if (favoritesBook != null) {
-      _favorites = _database.getWordTexts(favoritesBook.id).toSet();
+      _favorites = _database
+          .getWords(favoritesBook.id)
+          .map((item) => item.collectionReferenceKey)
+          .toSet();
       _persistSpecialWordSet('favorites', _favorites);
     } else {
       _favorites = <String>{};
@@ -2754,7 +2841,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .cast<Wordbook?>()
         .firstOrNull;
     if (taskBook != null) {
-      _taskWords = _database.getWordTexts(taskBook.id).toSet();
+      _taskWords = _database
+          .getWords(taskBook.id)
+          .map((item) => item.collectionReferenceKey)
+          .toSet();
       _persistSpecialWordSet('taskWords', _taskWords);
     } else {
       _taskWords = <String>{};
@@ -2800,7 +2890,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       final nextWords = List<WordEntry>.from(_words);
       if (optimisticAdded) {
         final alreadyExists = nextWords.any(
-          (item) => item.word == optimisticWord.word,
+          (item) =>
+              item.collectionReferenceKey ==
+              optimisticWord.collectionReferenceKey,
         );
         if (!alreadyExists) {
           nextWords.insert(
@@ -2809,7 +2901,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           );
         }
       } else {
-        nextWords.removeWhere((item) => item.word == optimisticWord.word);
+        nextWords.removeWhere(
+          (item) =>
+              item.collectionReferenceKey ==
+              optimisticWord.collectionReferenceKey,
+        );
       }
       _setWords(nextWords);
     } else {
@@ -2846,13 +2942,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final index = _indexOfWordEntry(_words, entry);
     if (index >= 0) {
       _currentWordIndex = index;
+      _transientCurrentWord = null;
       return;
     }
     // Fallback for legacy records without stable ids/content.
     final fallback = _words.indexWhere((item) => item.word == entry.word);
     if (fallback >= 0) {
       _currentWordIndex = fallback;
+      return;
     }
+    _transientCurrentWord = entry;
   }
 
   void _ensureCurrentWordInScope() {
@@ -2883,21 +2982,46 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   bool _isSameWordEntry(WordEntry a, WordEntry b) {
-    if (identical(a, b)) return true;
-    final aId = a.id;
-    final bId = b.id;
-    if (aId != null && bId != null) {
-      return aId == bId;
+    return a.sameEntryAs(b);
+  }
+
+  WordEntry _hydrateWordEntryIfNeeded(WordEntry entry) {
+    final wordbook = _resolveWordbookForEntry(entry);
+    if (wordbook == null || !_shouldUseLiteWordQueries(wordbook)) {
+      return entry;
     }
-    if (a.wordbookId != b.wordbookId) return false;
-    final sameWord = a.word.trim() == b.word.trim();
-    if (!sameWord) return false;
-    final aRaw = a.rawContent.trim();
-    final bRaw = b.rawContent.trim();
-    if (aRaw.isNotEmpty || bRaw.isNotEmpty) {
-      return aRaw == bRaw;
+    final hydrated = _database.hydrateWordEntry(entry);
+    if (hydrated == null) {
+      return entry;
     }
-    return true;
+    _replaceLoadedWordEntryIfNeeded(hydrated);
+    return hydrated;
+  }
+
+  void _replaceLoadedWordEntryIfNeeded(WordEntry entry) {
+    final index = _indexOfWordEntry(_words, entry);
+    if (index < 0) {
+      return;
+    }
+    final existing = _words[index];
+    if (_isWordEntryHydrationEquivalent(existing, entry)) {
+      return;
+    }
+    final nextWords = List<WordEntry>.from(_words);
+    nextWords[index] = entry;
+    _words = nextWords;
+    _loadedWordbookId = _selectedWordbook?.id;
+    _transientCurrentWord = null;
+    _refreshWordMemoryProgressCache(nextWords);
+    _wordsVersion += 1;
+    _invalidateVisibleWordsCache();
+  }
+
+  bool _isWordEntryHydrationEquivalent(WordEntry current, WordEntry next) {
+    return _isSameWordEntry(current, next) &&
+        current.summaryMeaningText == next.summaryMeaningText &&
+        current.rawContent == next.rawContent &&
+        current.fields.length == next.fields.length;
   }
 
   Wordbook? _resolveWordbookForEntry(WordEntry entry) {
@@ -2925,6 +3049,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final previous = _playbackProgressByWordbookPath[path];
     if (previous != null &&
         previous.wordId == resolvedEntry.id &&
+        previous.entryUid == resolvedEntry.entryUid &&
+        previous.primaryGloss == resolvedEntry.primaryGloss &&
         previous.word == resolvedEntry.word) {
       return;
     }
@@ -2933,6 +3059,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       path: PlaybackProgressSnapshot(
         wordbookPath: path,
         wordId: resolvedEntry.id,
+        entryUid: resolvedEntry.entryUid,
+        primaryGloss: resolvedEntry.primaryGloss,
         word: resolvedEntry.word,
         updatedAt: DateTime.now(),
       ),
@@ -2953,6 +3081,25 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final byId = snapshot.wordId;
     if (byId != null) {
       final index = entries.indexWhere((item) => item.id == byId);
+      if (index >= 0) {
+        return index;
+      }
+    }
+    final entryUid = snapshot.entryUid?.trim() ?? '';
+    if (entryUid.isNotEmpty) {
+      final index = entries.indexWhere((item) => item.entryUid == entryUid);
+      if (index >= 0) {
+        return index;
+      }
+    }
+    final primaryGloss = snapshot.primaryGloss?.trim() ?? '';
+    if (primaryGloss.isNotEmpty) {
+      final index = entries.indexWhere(
+        (item) =>
+            item.word == snapshot.word &&
+            (item.primaryGloss?.trim() ?? item.summaryMeaningText.trim()) ==
+                primaryGloss,
+      );
       if (index >= 0) {
         return index;
       }

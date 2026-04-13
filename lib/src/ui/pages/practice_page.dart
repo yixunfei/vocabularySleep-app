@@ -37,10 +37,10 @@ class PracticePage extends StatelessWidget {
     final wordbookWords = state.words;
     final scopedWords = state.visibleWords;
     final taskWords = wordbookWords
-        .where((word) => state.taskWords.contains(word.word))
+        .where((word) => state.isTaskEntry(word))
         .toList(growable: false);
     final favoriteWords = wordbookWords
-        .where((word) => state.favorites.contains(word.word))
+        .where((word) => state.isFavoriteEntry(word))
         .toList(growable: false);
     final rememberedWords = state.recentRememberedWordEntries;
     final weakWords = state.recentWeakWordEntries;
@@ -1803,12 +1803,7 @@ class PracticePage extends StatelessWidget {
   }
 
   bool _isSameWordEntry(WordEntry a, WordEntry b) {
-    final aId = a.id;
-    final bId = b.id;
-    if (aId != null && bId != null) {
-      return aId == bId;
-    }
-    return a.wordbookId == b.wordbookId && a.word == b.word;
+    return a.sameEntryAs(b);
   }
 
   Future<void> _openPracticeSession(

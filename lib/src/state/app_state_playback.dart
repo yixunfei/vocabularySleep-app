@@ -1,6 +1,44 @@
 part of 'app_state.dart';
 
 extension _AppStatePlayback on AppState {
+  Future<Wordbook?> _ensureSelectedWordbookLoadedForPlayback() async {
+    var selected = _selectedWordbook;
+    if (selected == null || selectedWordbookLoaded) {
+      return selected;
+    }
+
+    final showBusy = !_busy;
+    if (showBusy) {
+      _setBusy(
+        true,
+        messageKey: 'busyLoadingWordbook',
+        params: <String, Object?>{'name': selected.name},
+        detail: AppI18n(_uiLanguage).t('busyPatienceHint'),
+      );
+    }
+    try {
+      _selectedWordbook = selected;
+      _setWords(_queryWordbookEntries(selected));
+      final restoredIndex = _playbackProgressIndexForWordbook(selected);
+      final restoredEntries = _searchQuery.trim().isEmpty
+          ? _words
+          : _scopeWords;
+      if (restoredIndex >= 0 && restoredIndex < restoredEntries.length) {
+        _setCurrentWordByEntry(restoredEntries[restoredIndex]);
+      } else if (_currentWordIndex >= _words.length) {
+        _currentWordIndex = _words.isEmpty ? 0 : (_words.length - 1);
+      }
+      _ensureCurrentWordInScope();
+      resetTestModeProgress();
+      _notifyStateChanged();
+    } finally {
+      if (showBusy) {
+        _setBusy(false);
+      }
+    }
+    return _selectedWordbook;
+  }
+
   Future<void> _syncPlaybackToSelectedWordbook(Wordbook wordbook) async {
     if (!_isPlaying || _isPaused || _playingWordbookId == wordbook.id) {
       return;
@@ -49,43 +87,141 @@ extension _AppStatePlayback on AppState {
     );
   }
 
-  Future<void> _playImpl() async {
-    var selected = _selectedWordbook;
-    if (selected != null && !selectedWordbookLoaded) {
-      final showBusy = !_busy;
-      if (showBusy) {
-        _setBusy(
-          true,
-          messageKey: 'busyLoadingWordbook',
-          params: <String, Object?>{'name': selected.name},
-          detail: AppI18n(_uiLanguage).t('busyPatienceHint'),
-        );
-      }
-      try {
-        _selectedWordbook = selected;
-        _setWords(_queryWordbookEntries(selected));
-        final restoredIndex = _playbackProgressIndexForWordbook(selected);
-        final restoredEntries = _searchQuery.trim().isEmpty
-            ? _words
-            : _scopeWords;
-        if (restoredIndex >= 0 && restoredIndex < restoredEntries.length) {
-          final target = (_searchQuery.trim().isEmpty
-              ? _words
-              : _scopeWords)[restoredIndex];
-          _setCurrentWordByEntry(target);
-        } else if (_currentWordIndex >= _words.length) {
-          _currentWordIndex = _words.isEmpty ? 0 : (_words.length - 1);
-        }
-        _ensureCurrentWordInScope();
-        resetTestModeProgress();
-        _notifyStateChanged();
-      } finally {
-        if (showBusy) {
-          _setBusy(false);
-        }
-      }
-      selected = _selectedWordbook;
+  Future<void> _preparePlayImpl() async {
+    final selected = await _ensureSelectedWordbookLoadedForPlayback();
+    final scopeWords = _scopeWords;
+    if (selected == null || scopeWords.isEmpty || _isPlaying) {
+      _log.w(
+        'app_state',
+        'prepare play ignored',
+        data: <String, Object?>{
+          'selectedWordbook': selected?.id,
+          'scopeWords': scopeWords.length,
+          'isPlaying': _isPlaying,
+        },
+      );
+      return;
     }
+
+    final activeWord = currentWord;
+    var startIndex = 0;
+    if (activeWord != null) {
+      final scopedIndex = _indexOfWordEntry(scopeWords, activeWord);
+      if (scopedIndex >= 0) startIndex = scopedIndex;
+    }
+    final words = List<WordEntry>.from(scopeWords);
+    final safeStart = startIndex.clamp(0, words.length - 1);
+    final sessionId = ++_playSessionId;
+
+    _isPlaying = false;
+    _isPaused = true;
+    _playingWordbookId = selected.id;
+    _playingWordbookName = selected.name;
+    _playingScopeWords = words;
+    _playingScopeIndex = safeStart;
+    _playingWord = words[safeStart].word;
+    _rememberPlaybackProgressImpl(words[safeStart]);
+    _currentUnit = 0;
+    _totalUnits = 0;
+    _activeUnit = null;
+    _notifyStateChanged();
+
+    try {
+      await _playback.preparePlay(
+        words: words,
+        startIndex: safeStart,
+        config: _config,
+        resolveWord: (index, word) {
+          final resolved = _hydrateWordEntryIfNeeded(word);
+          if (index >= 0 && index < words.length) {
+            words[index] = resolved;
+          }
+          return resolved;
+        },
+        onWordChanged: (index, word) {
+          if (sessionId != _playSessionId) return;
+          final nextWord = (index >= 0 && index < words.length)
+              ? words[index]
+              : word;
+          final mappedIndex = _indexOfWordEntry(words, nextWord);
+          if (mappedIndex >= 0) {
+            _playingScopeIndex = mappedIndex;
+          } else if (index >= 0 && index < words.length) {
+            _playingScopeIndex = index;
+          }
+          _playingWord = nextWord.word;
+          _rememberPlaybackProgressImpl(nextWord);
+          if (_selectedWordbook?.id == _playingWordbookId) {
+            _setCurrentWordByEntry(nextWord);
+            resetTestModeProgress();
+          }
+          _notifyStateChanged();
+        },
+        onUnitChanged: (current, total, unit) {
+          if (sessionId != _playSessionId) return;
+          _currentUnit = current;
+          _totalUnits = total;
+          _activeUnit = unit;
+          _notifyStateChanged();
+        },
+        onFinished: () {
+          if (sessionId != _playSessionId) return;
+          _clearPlaybackSession(notify: true);
+        },
+      );
+      _log.i('app_state', 'Playback prepared successfully');
+    } catch (error, stackTrace) {
+      if (sessionId != _playSessionId) return;
+      _log.e(
+        'app_state',
+        'playback prepare failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'wordbookId': _playingWordbookId,
+          'scopeWords': words.length,
+          'startIndex': safeStart,
+        },
+      );
+      _setMessage(
+        'errorInitFailed',
+        params: <String, Object?>{'error': 'prepare playback: $error'},
+      );
+      _clearPlaybackSession(notify: true);
+    }
+  }
+
+  Future<void> _startPreparedPlayImpl() async {
+    if (_isPlaying || !_playback.isPrepared) {
+      _log.w(
+        'app_state',
+        'start prepared play ignored',
+        data: {'isPlaying': _isPlaying, 'isPrepared': _playback.isPrepared},
+      );
+      return;
+    }
+    _isPlaying = true;
+    _isPaused = false;
+    _notifyStateChanged();
+    try {
+      await _playback.startPreparedPlay();
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'start prepared play failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _setMessage(
+        'errorInitFailed',
+        params: <String, Object?>{'error': 'start playback: $error'},
+      );
+      _clearPlaybackSession(notify: true);
+    }
+  }
+
+  Future<void> _playImpl() async {
+    final selected = await _ensureSelectedWordbookLoadedForPlayback();
     final scopeWords = _scopeWords;
     if (selected == null || scopeWords.isEmpty || _isPlaying) {
       _log.w(
@@ -143,6 +279,13 @@ extension _AppStatePlayback on AppState {
         words: words,
         startIndex: safeStart,
         config: _config,
+        resolveWord: (index, word) {
+          final resolved = _hydrateWordEntryIfNeeded(word);
+          if (index >= 0 && index < words.length) {
+            words[index] = resolved;
+          }
+          return resolved;
+        },
         onWordChanged: (index, word) {
           if (sessionId != _playSessionId) return;
           final nextWord = (index >= 0 && index < words.length)
@@ -305,6 +448,10 @@ extension _AppStatePlayback on AppState {
 
   Future<void> _playCurrentWordbookImpl() async {
     if (_selectedWordbook == null) return;
+    if (!selectedWordbookLoaded) {
+      await _ensureSelectedWordbookLoadedForPlayback();
+      return;
+    }
     if (_isPlaying) {
       await stop();
     }

@@ -7,7 +7,8 @@ import 'package:flutter/foundation.dart';
 
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
-import 'app_log_service.dart';
+import '../models/wordbook_import_audit.dart';
+import '../models/wordbook_schema_v1.dart';
 
 const Set<String> _jsonRecordContainerKeys = <String>{
   'words',
@@ -18,6 +19,33 @@ const Set<String> _jsonRecordContainerKeys = <String>{
   '单词列表',
   '词汇列表',
 };
+
+const Set<String> _metadataContainerKeys = <String>{
+  'metadata',
+  'meta',
+  'book',
+  '元数据',
+};
+
+class WordbookImportDescriptor {
+  const WordbookImportDescriptor({
+    required this.format,
+    this.schemaVersion,
+    this.bookName,
+    this.metadataJson,
+    this.totalRecords,
+  });
+
+  final String format;
+  final String? schemaVersion;
+  final String? bookName;
+  final String? metadataJson;
+  final int? totalRecords;
+
+  bool get hasStructuredMetadata =>
+      (metadataJson ?? '').trim().isNotEmpty ||
+      (schemaVersion ?? '').trim().isNotEmpty;
+}
 
 List<Map<String, Object?>> _parseJsonRecords(String content) {
   final records = <Map<String, Object?>>[];
@@ -42,14 +70,9 @@ List<Map<String, Object?>> _parseJsonRecords(String content) {
     }
 
     if (decoded is Map) {
-      List? container;
-      for (final key in _jsonRecordContainerKeys) {
-        final value = decoded[key];
-        if (value is List) {
-          container = value;
-          break;
-        }
-      }
+      final container = _resolveRecordContainer(
+        decoded.cast<String, Object?>(),
+      );
       if (container != null) {
         for (final item in container) {
           push(item);
@@ -60,7 +83,7 @@ List<Map<String, Object?>> _parseJsonRecords(String content) {
       return records;
     }
   } catch (_) {
-    // Fall back to JSONL / concatenated object parser.
+    // Fall back to JSONL / concatenated object parsing below.
   }
 
   final lines = content.split(RegExp(r'\r?\n'));
@@ -92,6 +115,16 @@ List<Map<String, Object?>> _parseJsonRecords(String content) {
   return records;
 }
 
+List<Object?>? _resolveRecordContainer(Map<String, Object?> decoded) {
+  for (final key in _jsonRecordContainerKeys) {
+    final value = decoded[key];
+    if (value is List) {
+      return value.cast<Object?>();
+    }
+  }
+  return null;
+}
+
 class WordbookImportService {
   static const Set<String> _wordAliases = <String>{
     'word',
@@ -110,12 +143,12 @@ class WordbookImportService {
     'content',
     'raw_content',
     'definition',
-    'body',
-    'definition_content',
     'meaning',
     'translation',
     '中文释义',
     '释义',
+    'definition_content',
+    'body',
   ];
 
   Future<List<WordEntryPayload>> parseFile(String filePath) async {
@@ -146,6 +179,35 @@ class WordbookImportService {
     }
   }
 
+  WordbookImportDescriptor inspectJsonText(
+    String content, {
+    String fallbackName = '',
+  }) {
+    try {
+      final decoded = jsonDecode(content);
+      if (decoded is List) {
+        return WordbookImportDescriptor(
+          format: 'json_array',
+          totalRecords: decoded.length,
+        );
+      }
+      if (decoded is Map) {
+        return _describeJsonMap(
+          decoded.cast<String, Object?>(),
+          fallbackName: fallbackName,
+        );
+      }
+    } catch (_) {
+      // Fall back to record counting below.
+    }
+
+    final records = _parseJsonRecords(content);
+    return WordbookImportDescriptor(
+      format: 'json_records',
+      totalRecords: records.length,
+    );
+  }
+
   List<WordEntryPayload> parseJsonText(String content) {
     final payloads = <WordEntryPayload>[];
     processJsonText(content, onPayload: payloads.add);
@@ -153,11 +215,19 @@ class WordbookImportService {
   }
 
   Future<List<WordEntryPayload>> parseJsonTextAsync(String content) async {
+    final standard = tryParseStandardWordbook(content);
+    if (standard != null) {
+      _ensureStandardWordbookValid(standard);
+      return standard.toPayloads();
+    }
+
     final payloads = <WordEntryPayload>[];
     final records = await compute(_parseJsonRecords, content);
-    for (final record in records) {
-      final payload = _recordToPayload(record);
-      if (payload != null) payloads.add(payload);
+    for (var index = 0; index < records.length; index += 1) {
+      final payload = _recordToPayload(records[index], sortIndex: index);
+      if (payload != null) {
+        payloads.add(payload);
+      }
     }
     return payloads;
   }
@@ -167,6 +237,18 @@ class WordbookImportService {
     required void Function(WordEntryPayload payload) onPayload,
     void Function(int processed, int? total)? onProgress,
   }) {
+    final standard = tryParseStandardWordbook(content);
+    if (standard != null) {
+      _ensureStandardWordbookValid(standard);
+      final payloads = standard.toPayloads();
+      onProgress?.call(0, payloads.length);
+      for (var index = 0; index < payloads.length; index += 1) {
+        onPayload(payloads[index]);
+        onProgress?.call(index + 1, payloads.length);
+      }
+      return payloads.length;
+    }
+
     Map<String, Object?>? asRecordMap(Object? value) {
       if (value is Map<String, Object?>) {
         return value;
@@ -177,10 +259,10 @@ class WordbookImportService {
       return null;
     }
 
-    int emitPayload(Object? value) {
+    int emitPayload(Object? value, int sortIndex) {
       final record = asRecordMap(value);
       if (record == null) return 0;
-      final payload = _recordToPayload(record);
+      final payload = _recordToPayload(record, sortIndex: sortIndex);
       if (payload == null) return 0;
       onPayload(payload);
       return 1;
@@ -213,7 +295,7 @@ class WordbookImportService {
         final total = decoded.length;
         reportProgress(0, total, force: true);
         for (var index = 0; index < total; index += 1) {
-          count += emitPayload(decoded[index]);
+          count += emitPayload(decoded[index], index);
           reportProgress(index + 1, total);
         }
         reportProgress(total, total, force: true);
@@ -221,21 +303,22 @@ class WordbookImportService {
       }
 
       if (decoded is Map) {
-        for (final key in _jsonRecordContainerKeys) {
-          final container = decoded[key];
-          if (container is! List) continue;
+        final container = _resolveRecordContainer(
+          decoded.cast<String, Object?>(),
+        );
+        if (container != null) {
           var count = 0;
           final total = container.length;
           reportProgress(0, total, force: true);
           for (var index = 0; index < total; index += 1) {
-            count += emitPayload(container[index]);
+            count += emitPayload(container[index], index);
             reportProgress(index + 1, total);
           }
           reportProgress(total, total, force: true);
           return count;
         }
         reportProgress(0, 1, force: true);
-        final count = emitPayload(decoded);
+        final count = emitPayload(decoded, 0);
         reportProgress(1, 1, force: true);
         return count;
       }
@@ -266,8 +349,8 @@ class WordbookImportService {
 
       try {
         final decoded = jsonDecode(chunk);
+        count += emitPayload(decoded, processed);
         processed += 1;
-        count += emitPayload(decoded);
         reportProgress(processed, null);
       } catch (_) {
         // Ignore malformed rows.
@@ -284,6 +367,22 @@ class WordbookImportService {
     void Function(int processed, int? total)? onProgress,
     int yieldEvery = 180,
   }) async {
+    final standard = tryParseStandardWordbook(content);
+    if (standard != null) {
+      _ensureStandardWordbookValid(standard);
+      final payloads = standard.toPayloads();
+      onProgress?.call(0, payloads.length);
+      final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
+      for (var index = 0; index < payloads.length; index += 1) {
+        onPayload(payloads[index]);
+        onProgress?.call(index + 1, payloads.length);
+        if ((index + 1) % resolvedYieldEvery == 0) {
+          await Future<void>.delayed(Duration.zero);
+        }
+      }
+      return payloads.length;
+    }
+
     final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
 
     Map<String, Object?>? asRecordMap(Object? value) {
@@ -296,10 +395,10 @@ class WordbookImportService {
       return null;
     }
 
-    int emitPayload(Object? value) {
+    int emitPayload(Object? value, int sortIndex) {
       final record = asRecordMap(value);
       if (record == null) return 0;
-      final payload = _recordToPayload(record);
+      final payload = _recordToPayload(record, sortIndex: sortIndex);
       if (payload == null) return 0;
       onPayload(payload);
       return 1;
@@ -340,7 +439,7 @@ class WordbookImportService {
         final total = decoded.length;
         reportProgress(0, total, force: true);
         for (var index = 0; index < total; index += 1) {
-          count += emitPayload(decoded[index]);
+          count += emitPayload(decoded[index], index);
           reportProgress(index + 1, total);
           await maybeYield();
         }
@@ -349,14 +448,15 @@ class WordbookImportService {
       }
 
       if (decoded is Map) {
-        for (final key in _jsonRecordContainerKeys) {
-          final container = decoded[key];
-          if (container is! List) continue;
+        final container = _resolveRecordContainer(
+          decoded.cast<String, Object?>(),
+        );
+        if (container != null) {
           var count = 0;
           final total = container.length;
           reportProgress(0, total, force: true);
           for (var index = 0; index < total; index += 1) {
-            count += emitPayload(container[index]);
+            count += emitPayload(container[index], index);
             reportProgress(index + 1, total);
             await maybeYield();
           }
@@ -364,7 +464,7 @@ class WordbookImportService {
           return count;
         }
         reportProgress(0, 1, force: true);
-        final count = emitPayload(decoded);
+        final count = emitPayload(decoded, 0);
         reportProgress(1, 1, force: true);
         return count;
       }
@@ -395,8 +495,8 @@ class WordbookImportService {
 
       try {
         final decoded = jsonDecode(chunk);
+        count += emitPayload(decoded, processed);
         processed += 1;
-        count += emitPayload(decoded);
         reportProgress(processed, null);
         await maybeYield();
       } catch (_) {
@@ -415,163 +515,88 @@ class WordbookImportService {
     int yieldEvery = 180,
     bool gzipped = false,
   }) async {
-    final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
+    final content = await readJsonByteStreamAsString(
+      byteStream,
+      gzipped: gzipped,
+    );
+    return processJsonTextAsync(
+      content,
+      onPayload: onPayload,
+      onProgress: onProgress,
+      yieldEvery: yieldEvery,
+    );
+  }
 
-    Map<String, Object?>? asRecordMap(Object? value) {
-      if (value is Map<String, Object?>) {
-        return value;
+  WordbookImportAudit auditJsonText(String content) {
+    try {
+      final standard = tryParseStandardWordbook(content);
+      if (standard != null) {
+        return standard.validate();
       }
-      if (value is Map) {
-        return value.cast<String, Object?>();
+
+      final payloads = parseJsonText(content);
+      return WordbookImportAudit(
+        format: 'dynamic_json',
+        schemaVersion: '',
+        totalRecords: payloads.length,
+        acceptedRecords: payloads.length,
+        issues: const <WordbookImportIssue>[],
+        note: payloads.isEmpty ? '未识别到可导入词条' : '已按兼容动态词本结构解析',
+      );
+    } catch (error) {
+      return WordbookImportAudit(
+        format: 'invalid',
+        schemaVersion: '',
+        totalRecords: 0,
+        acceptedRecords: 0,
+        issues: <WordbookImportIssue>[
+          WordbookImportIssue(
+            severity: 'error',
+            code: 'parse_failed',
+            path: r'$',
+            message: '$error',
+          ),
+        ],
+        note: '导入审计失败',
+      );
+    }
+  }
+
+  WordbookSchemaV1? tryParseStandardWordbook(String content) {
+    try {
+      final decoded = jsonDecode(content);
+      if (decoded is! Map) return null;
+      final map = decoded.cast<String, Object?>();
+      if (!WordbookSchemaV1.looksLikeStandardWordbook(map)) {
+        return null;
       }
+      return WordbookSchemaV1.fromJsonMap(map);
+    } catch (_) {
       return null;
     }
-
-    int emitPayload(Object? value) {
-      final record = asRecordMap(value);
-      if (record == null) return 0;
-      final payload = _recordToPayload(record);
-      if (payload == null) return 0;
-      onPayload(payload);
-      return 1;
-    }
-
-    var lastReportedProcessed = -1;
-    var processed = 0;
-    var count = 0;
-    var sinceLastYield = 0;
-    var charsSinceLastYield = 0;
-    var inString = false;
-    var escaping = false;
-    var captureStartDepth = 0;
-    StringBuffer? captureBuffer;
-    final stack = <int>[];
-
-    void reportProgress(int processed, int? total, {bool force = false}) {
-      if (onProgress == null) return;
-      if (!force && processed - lastReportedProcessed < 64) {
-        return;
-      }
-      lastReportedProcessed = processed;
-      onProgress(processed, total);
-    }
-
-    Future<void> maybeYield() async {
-      sinceLastYield += 1;
-      if (sinceLastYield < resolvedYieldEvery) return;
-      sinceLastYield = 0;
-      await Future<void>.delayed(Duration.zero);
-    }
-
-    Future<void> maybeYieldForChars() async {
-      charsSinceLastYield += 1;
-      if (charsSinceLastYield < 131072) return;
-      charsSinceLastYield = 0;
-      await Future<void>.delayed(Duration.zero);
-    }
-
-    Future<void> flushCapturedObject() async {
-      final chunk = captureBuffer?.toString().trim() ?? '';
-      captureBuffer = null;
-      captureStartDepth = 0;
-      if (chunk.isEmpty) {
-        return;
-      }
-      try {
-        final decoded = jsonDecode(chunk);
-        processed += 1;
-        count += emitPayload(decoded);
-        reportProgress(processed, null);
-        await maybeYield();
-      } catch (_) {
-        // Ignore malformed rows so a single broken record does not abort import.
-      }
-    }
-
-    final decodedStream =
-        (gzipped ? byteStream.transform(gzip.decoder) : byteStream).transform(
-          utf8.decoder,
-        );
-
-    reportProgress(0, null, force: true);
-
-    await for (final chunk in decodedStream) {
-      for (var index = 0; index < chunk.length; index += 1) {
-        final char = chunk[index];
-        final codeUnit = char.codeUnitAt(0);
-        final parentToken = stack.isEmpty ? null : stack.last;
-        final startsRecordObject =
-            captureBuffer == null &&
-            !inString &&
-            !escaping &&
-            codeUnit == 123 &&
-            parentToken == 91;
-
-        if (startsRecordObject) {
-          captureBuffer = StringBuffer();
-          captureStartDepth = stack.length + 1;
-        }
-
-        captureBuffer?.write(char);
-        await maybeYieldForChars();
-
-        if (escaping) {
-          escaping = false;
-          continue;
-        }
-
-        if (codeUnit == 92 && inString) {
-          escaping = true;
-          continue;
-        }
-
-        if (codeUnit == 34) {
-          inString = !inString;
-          continue;
-        }
-
-        if (inString) {
-          continue;
-        }
-
-        if (codeUnit == 123 || codeUnit == 91) {
-          stack.add(codeUnit);
-        } else if (codeUnit == 125 || codeUnit == 93) {
-          if (stack.isNotEmpty) {
-            stack.removeLast();
-          }
-          if (captureBuffer != null &&
-              codeUnit == 125 &&
-              stack.length < captureStartDepth) {
-            await flushCapturedObject();
-          }
-        }
-      }
-    }
-
-    reportProgress(processed, null, force: true);
-    return count;
   }
 
   List<WordEntryPayload> parseCsvText(String content) {
     final rows = _parseCsvRows(content);
     if (rows.length < 2) return const <WordEntryPayload>[];
 
-    final headers = rows.first.map((item) => item.trim()).toList();
+    final headers = rows.first
+        .map((item) => item.trim())
+        .toList(growable: false);
     final wordIndex = headers.indexWhere(
       (header) => _wordAliases.contains(header.toLowerCase()),
     );
     if (wordIndex < 0) return const <WordEntryPayload>[];
 
     final payloads = <WordEntryPayload>[];
-    for (var i = 1; i < rows.length; i++) {
-      final row = rows[i];
+    for (var rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
+      final row = rows[rowIndex];
       if (wordIndex >= row.length) continue;
       final word = row[wordIndex].trim();
       if (word.isEmpty) continue;
 
       final map = <String, Object?>{headers[wordIndex]: word};
-      for (var col = 0; col < headers.length; col++) {
+      for (var col = 0; col < headers.length; col += 1) {
         if (col == wordIndex || col >= row.length) continue;
         final key = headers[col].trim();
         if (key.isEmpty) continue;
@@ -580,11 +605,95 @@ class WordbookImportService {
         map[key] = value;
       }
 
-      final payload = _recordToPayload(map);
-      if (payload != null) payloads.add(payload);
+      final payload = _recordToPayload(map, sortIndex: rowIndex - 1);
+      if (payload != null) {
+        payloads.add(payload);
+      }
     }
 
     return payloads;
+  }
+
+  Future<String> readJsonByteStreamAsString(
+    Stream<List<int>> byteStream, {
+    bool gzipped = false,
+  }) async {
+    final decodedStream =
+        (gzipped ? byteStream.transform(gzip.decoder) : byteStream).transform(
+          utf8.decoder,
+        );
+    final buffer = StringBuffer();
+    await for (final chunk in decodedStream) {
+      buffer.write(chunk);
+    }
+    return buffer.toString();
+  }
+
+  WordbookImportDescriptor _describeJsonMap(
+    Map<String, Object?> map, {
+    String fallbackName = '',
+  }) {
+    if (WordbookSchemaV1.looksLikeStandardWordbook(map)) {
+      final schema = WordbookSchemaV1.fromJsonMap(map);
+      return WordbookImportDescriptor(
+        format: wordbookSchemaV1,
+        schemaVersion: schema.schemaVersion,
+        bookName: schema.book.name,
+        metadataJson: jsonEncode(schema.book.toJsonMap()),
+        totalRecords: schema.entries.length,
+      );
+    }
+
+    final metadata = _resolveMetadata(map);
+    final container = _resolveRecordContainer(map);
+    final metadataJson = metadata == null ? null : jsonEncode(metadata);
+    final bookName =
+        _readMetadataName(metadata) ??
+        (fallbackName.trim().isEmpty ? null : fallbackName.trim());
+    return WordbookImportDescriptor(
+      format: container == null ? 'json_record' : 'dynamic_json',
+      bookName: bookName,
+      metadataJson: metadataJson,
+      totalRecords: container?.length ?? 1,
+    );
+  }
+
+  void _ensureStandardWordbookValid(WordbookSchemaV1 schema) {
+    final audit = schema.validate();
+    if (audit.isValid) {
+      return;
+    }
+    final errors = audit.issues
+        .where((item) => item.severity.toLowerCase() == 'error')
+        .map((item) => '${item.path}: ${item.message}')
+        .toList(growable: false);
+    throw FormatException(
+      errors.isEmpty ? 'wordbook.v1 校验失败' : errors.join('；'),
+    );
+  }
+
+  Map<String, Object?>? _resolveMetadata(Map<String, Object?> map) {
+    for (final key in _metadataContainerKeys) {
+      final value = map[key];
+      if (value is Map<String, Object?>) {
+        return value;
+      }
+      if (value is Map) {
+        return value.cast<String, Object?>();
+      }
+    }
+    return null;
+  }
+
+  String? _readMetadataName(Map<String, Object?>? metadata) {
+    if (metadata == null) return null;
+    for (final key in <String>['name', 'title', 'book_name', '词本名称', '名称']) {
+      final value = sanitizeDisplayText('${metadata[key] ?? ''}');
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return null;
   }
 
   Future<List<WordEntryPayload>> _parseMdxFile(String filePath) async {
@@ -593,6 +702,7 @@ class WordbookImportService {
 
     try {
       await dict.initDict(readKeys: true, readRecordBlockInfo: false);
+      var sortIndex = 0;
       await for (final record in dict.readWithMdxData()) {
         final key = record.keyText.trim();
         if (key.isEmpty) continue;
@@ -601,8 +711,11 @@ class WordbookImportService {
         final payload = _recordToPayload(<String, Object?>{
           'word': key,
           'content': content,
-        });
-        if (payload != null) payloads.add(payload);
+        }, sortIndex: sortIndex);
+        if (payload != null) {
+          payloads.add(payload);
+          sortIndex += 1;
+        }
       }
     } finally {
       await dict.close();
@@ -628,7 +741,7 @@ class WordbookImportService {
     }
 
     final normalized = content.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-    for (var i = 0; i < normalized.length; i++) {
+    for (var i = 0; i < normalized.length; i += 1) {
       final char = normalized[i];
       if (char == '"') {
         final nextIsQuote =
@@ -674,78 +787,462 @@ class WordbookImportService {
     return filePath.substring(index);
   }
 
-  WordEntryPayload? _recordToPayload(Map<String, Object?> record) {
+  WordEntryPayload? _recordToPayload(
+    Map<String, Object?> record, {
+    int? sortIndex,
+  }) {
     final normalizedRecord = _normalizeRecord(record);
+    final word = _extractWord(normalizedRecord);
+    if (word.isEmpty) {
+      return null;
+    }
 
-    AppLogService.instance.d(
-      'wordbook_import',
-      '_recordToPayload input',
-      data: <String, Object?>{
-        'word': normalizedRecord['word'],
-        'content': normalizedRecord['content'],
-        'contentLength': '${normalizedRecord['content']}'.length,
-        'contentHasNewlines': '${normalizedRecord['content']}'.contains('\n'),
-        'meaning': normalizedRecord['meaning'],
-        'meaningLength': '${normalizedRecord['meaning']}'.length,
-      },
+    final content = _extractContent(normalizedRecord);
+    final fields = _buildFieldsFromDynamicRecord(normalizedRecord);
+    final primaryGloss = _derivePrimaryGloss(fields, content);
+    final entryUid = _deriveEntryUid(normalizedRecord, word);
+
+    return WordEntryPayload(
+      word: word,
+      fields: fields,
+      rawContent: content.isNotEmpty ? content : (primaryGloss ?? ''),
+      entryUid: entryUid,
+      primaryGloss: primaryGloss,
+      sortIndex: sortIndex,
     );
+  }
 
-    String word = '';
-    for (final entry in normalizedRecord.entries) {
-      if (_wordAliases.contains(entry.key.trim().toLowerCase())) {
+  String _extractWord(Map<String, Object?> record) {
+    for (final entry in record.entries) {
+      final key = entry.key.trim().toLowerCase();
+      if (_wordAliases.contains(key)) {
         final text = sanitizeDisplayText('${entry.value ?? ''}');
         if (text.isNotEmpty) {
-          word = text;
-          break;
+          return text;
         }
       }
     }
-    if (word.isEmpty) return null;
 
-    String content = '';
+    final lemma = record['lemma'];
+    if (lemma is Map) {
+      final lemmaText = sanitizeDisplayText('${lemma['text'] ?? ''}');
+      if (lemmaText.isNotEmpty) {
+        return lemmaText;
+      }
+    }
+
+    return '';
+  }
+
+  String _extractContent(Map<String, Object?> record) {
     for (final key in _contentFields) {
-      final value = normalizedRecord[key];
+      final value = record[key];
       if (value == null) continue;
       final text = sanitizeDisplayText('$value');
-      if (text.isEmpty) continue;
-      content = text;
-      break;
-    }
-
-    final recordFields = buildFieldItemsFromRecord(normalizedRecord);
-
-    final legacyKeysInRecord = <String>{};
-    for (final field in recordFields) {
-      if (const <String>{
-        'meaning',
-        'examples',
-        'etymology',
-        'roots',
-        'affixes',
-        'variations',
-        'memory',
-        'story',
-      }.contains(field.key)) {
-        legacyKeysInRecord.add(field.key);
+      if (text.isNotEmpty) {
+        return text;
       }
     }
 
-    List<WordFieldItem> contentFields = <WordFieldItem>[];
-    if (content.isNotEmpty) {
-      final parsed = parseSectionedContent(content);
-      for (final field in parsed) {
-        if (!legacyKeysInRecord.contains(field.key)) {
-          contentFields.add(field);
+    final glossText = _flattenGlosses(record['glosses']);
+    if (glossText.isNotEmpty) {
+      return glossText;
+    }
+    return '';
+  }
+
+  List<WordFieldItem> _buildFieldsFromDynamicRecord(
+    Map<String, Object?> record,
+  ) {
+    final dynamicRecord = <String, Object?>{};
+    for (final entry in record.entries) {
+      final key = entry.key.trim();
+      if (key.isEmpty || isWordKey(key) || isContentKey(key)) {
+        continue;
+      }
+      dynamicRecord[key] = entry.value;
+    }
+
+    final output = <WordFieldItem>[];
+    for (final entry in dynamicRecord.entries) {
+      final field = _buildStructuredField(entry.key, entry.value);
+      if (field != null) {
+        output.add(field);
+      }
+    }
+
+    return mergeFieldItems(output);
+  }
+
+  WordFieldItem? _buildStructuredField(String rawKey, Object? rawValue) {
+    final key = normalizeFieldKey(rawKey);
+    if (key.isEmpty) {
+      return null;
+    }
+
+    switch (key) {
+      case 'meaning':
+        final meaning = _flattenMeaningValue(rawValue);
+        if (meaning.isEmpty) return null;
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? 'Meaning',
+          value: meaning,
+        );
+      case 'pronunciations':
+        final pronunciation = _flattenPronunciations(rawValue);
+        if (pronunciation.item1.isEmpty && pronunciation.item2.isEmpty) {
+          return null;
+        }
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? 'Pronunciations',
+          value: pronunciation.item1,
+          media: pronunciation.item2,
+        );
+      case 'parts_of_speech':
+        final rows = _flattenPartsOfSpeech(rawValue);
+        if (rows.isEmpty) return null;
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? 'Parts of Speech',
+          value: rows,
+        );
+      case 'examples':
+        final rows = _flattenExamples(rawValue);
+        if (rows.isEmpty) return null;
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? 'Examples',
+          value: rows,
+        );
+      case 'variations':
+        final rows = _flattenForms(rawValue);
+        if (rows.isEmpty) return null;
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? 'Variations',
+          value: rows,
+        );
+      case 'glosses':
+        final meaning = _flattenGlosses(rawValue);
+        if (meaning.isEmpty) return null;
+        return WordFieldItem(
+          key: 'meaning',
+          label: legacyFieldLabels['meaning'] ?? 'Meaning',
+          value: meaning,
+        );
+      case 'collocations':
+      case 'phrases':
+      case 'synonyms':
+      case 'antonyms':
+      case 'related':
+      case 'derived':
+      case 'similar_words':
+      case 'morphology':
+      case 'tags':
+        final rows = _flattenStringList(rawValue);
+        if (rows.isEmpty) return null;
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? rawKey.trim(),
+          value: rows,
+          tags: key == 'tags' ? rows : const <String>[],
+        );
+      case 'affixes':
+        final affixes = _flattenAffixes(rawValue);
+        if (affixes.isEmpty) return null;
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? 'Affixes',
+          value: affixes,
+        );
+      default:
+        final value = normalizeFieldValue(rawValue);
+        if (value == null) return null;
+        return WordFieldItem(
+          key: key,
+          label: legacyFieldLabels[key] ?? rawKey.trim(),
+          value: key == 'examples' ? _normalizeExamplesValue(value) : value,
+        );
+    }
+  }
+
+  String _flattenMeaningValue(Object? rawValue) {
+    if (rawValue is List) {
+      final rows = rawValue
+          .map((item) => sanitizeDisplayText('$item'))
+          .where((item) => item.isNotEmpty)
+          .toList(growable: false);
+      return rows.join('；');
+    }
+    return sanitizeDisplayText('$rawValue');
+  }
+
+  ({List<String> item1, List<WordFieldMediaItem> item2}) _flattenPronunciations(
+    Object? rawValue,
+  ) {
+    final lines = <String>[];
+    final media = <WordFieldMediaItem>[];
+
+    void addLine(String line) {
+      final normalized = sanitizeDisplayText(line);
+      if (normalized.isEmpty || lines.contains(normalized)) {
+        return;
+      }
+      lines.add(normalized);
+    }
+
+    void addMedia(String source, {String label = ''}) {
+      final normalized = sanitizeDisplayText(source);
+      if (normalized.isEmpty) return;
+      media.add(
+        WordFieldMediaItem(
+          type: WordFieldMediaType.audio,
+          source: normalized,
+          label: sanitizeDisplayText(label),
+        ),
+      );
+    }
+
+    if (rawValue is List) {
+      for (final item in rawValue) {
+        if (item is Map) {
+          final tags = _flattenStringList(item['tags']);
+          final locale = sanitizeDisplayText('${item['locale'] ?? ''}');
+          final ipa = sanitizeDisplayText('${item['ipa'] ?? ''}');
+          final note = sanitizeDisplayText('${item['note'] ?? ''}');
+          final audio = sanitizeDisplayText('${item['audio'] ?? ''}');
+          final rhymes = sanitizeDisplayText('${item['rhymes'] ?? ''}');
+          final parts = <String>[];
+          if (locale.isNotEmpty) parts.add(locale);
+          if (ipa.isNotEmpty) parts.add(ipa);
+          if (note.isNotEmpty) parts.add(note);
+          if (rhymes.isNotEmpty) parts.add('rhymes: $rhymes');
+          if (tags.isNotEmpty) parts.add(tags.join(', '));
+          if (parts.isNotEmpty) {
+            addLine(parts.join(' | '));
+          }
+          if (audio.isNotEmpty) {
+            final mediaLabel = tags.isNotEmpty ? tags.join(', ') : locale;
+            addLine([if (mediaLabel.isNotEmpty) mediaLabel, audio].join(': '));
+            addMedia(audio, label: mediaLabel);
+          }
+          continue;
+        }
+        final text = sanitizeDisplayText('$item');
+        if (text.isNotEmpty) {
+          addLine(text);
+        }
+      }
+    } else {
+      final text = sanitizeDisplayText('$rawValue');
+      if (text.isNotEmpty) {
+        addLine(text);
+      }
+    }
+
+    return (item1: lines, item2: _dedupeMedia(media));
+  }
+
+  List<String> _flattenPartsOfSpeech(Object? rawValue) {
+    if (rawValue is! List) {
+      final text = sanitizeDisplayText('$rawValue');
+      return text.isEmpty ? const <String>[] : <String>[text];
+    }
+
+    final rows = <String>[];
+    for (final item in rawValue) {
+      if (item is Map) {
+        final pos = sanitizeDisplayText('${item['pos'] ?? item['type'] ?? ''}');
+        final zh = _flattenStringList(item['zh']);
+        final glosses = _flattenGlossGroups(item['sense_groups']);
+        final examples = _flattenExamples(item['examples']);
+        final segments = <String>[
+          if (pos.isNotEmpty) pos,
+          if (zh.isNotEmpty) zh.join('；'),
+          if (glosses.isNotEmpty) glosses.join('；'),
+        ];
+        final head = segments.join(' | ').trim();
+        if (head.isNotEmpty) {
+          rows.add(head);
+        }
+        for (final example in examples.take(2)) {
+          rows.add('例：$example');
+        }
+        continue;
+      }
+
+      final text = sanitizeDisplayText('$item');
+      if (text.isNotEmpty) {
+        rows.add(text);
+      }
+    }
+
+    return rows;
+  }
+
+  List<String> _flattenExamples(Object? rawValue) {
+    if (rawValue is! List) {
+      final text = sanitizeDisplayText('$rawValue');
+      return text.isEmpty ? const <String>[] : <String>[text];
+    }
+
+    final rows = <String>[];
+    for (final item in rawValue) {
+      if (item is Map) {
+        final category = sanitizeDisplayText(
+          '${item['category'] ?? item['含义类别'] ?? item['场景类别'] ?? item['类别'] ?? ''}',
+        );
+        final sourceText = sanitizeDisplayText(
+          '${item['source_text'] ?? item['text'] ?? item['例句原文'] ?? item['英文例句'] ?? item['example'] ?? ''}',
+        );
+        final translation = sanitizeDisplayText(
+          '${item['translation'] ?? item['中文翻译'] ?? item['译文'] ?? ''}',
+        );
+        final parts = <String>[];
+        if (sourceText.isNotEmpty) {
+          parts.add(category.isEmpty ? sourceText : '[$category] $sourceText');
+        }
+        if (translation.isNotEmpty) {
+          parts.add('中文：$translation');
+        }
+        final row = parts.join('\n').trim();
+        if (row.isNotEmpty) {
+          rows.add(row);
+        }
+        continue;
+      }
+
+      final text = sanitizeDisplayText('$item');
+      if (text.isNotEmpty) {
+        rows.add(text);
+      }
+    }
+    return rows;
+  }
+
+  List<String> _flattenStringList(Object? rawValue) {
+    if (rawValue is List) {
+      return rawValue
+          .map((item) => sanitizeDisplayText('$item'))
+          .where((item) => item.isNotEmpty)
+          .toList(growable: false);
+    }
+    final text = sanitizeDisplayText('$rawValue');
+    return text.isEmpty ? const <String>[] : <String>[text];
+  }
+
+  List<String> _flattenForms(Object? rawValue) {
+    if (rawValue is! List) {
+      final text = sanitizeDisplayText('$rawValue');
+      return text.isEmpty ? const <String>[] : <String>[text];
+    }
+
+    final rows = <String>[];
+    for (final item in rawValue) {
+      if (item is Map) {
+        final form = sanitizeDisplayText(
+          '${item['form'] ?? item['text'] ?? item['value'] ?? ''}',
+        );
+        final tags = _flattenStringList(item['tags']);
+        final note = sanitizeDisplayText('${item['note'] ?? ''}');
+        final parts = <String>[
+          if (form.isNotEmpty) form,
+          if (tags.isNotEmpty) 'tags: ${tags.join(', ')}',
+          if (note.isNotEmpty) note,
+        ];
+        final row = parts.join(' | ').trim();
+        if (row.isNotEmpty) {
+          rows.add(row);
+        }
+        continue;
+      }
+
+      final text = sanitizeDisplayText('$item');
+      if (text.isNotEmpty) {
+        rows.add(text);
+      }
+    }
+    return rows;
+  }
+
+  String _flattenAffixes(Object? rawValue) {
+    if (rawValue is Map) {
+      final prefixes = _flattenStringList(rawValue['prefixes']);
+      final suffixes = _flattenStringList(rawValue['suffixes']);
+      final rows = <String>[];
+      if (prefixes.isNotEmpty) {
+        rows.add('prefixes: ${prefixes.join(', ')}');
+      }
+      if (suffixes.isNotEmpty) {
+        rows.add('suffixes: ${suffixes.join(', ')}');
+      }
+      return rows.join('\n').trim();
+    }
+    return sanitizeDisplayText('$rawValue');
+  }
+
+  List<String> _flattenGlossGroups(Object? rawValue) {
+    if (rawValue is! List) {
+      return const <String>[];
+    }
+    final rows = <String>[];
+    for (final item in rawValue) {
+      if (item is! Map) continue;
+      final glosses = item['glosses'];
+      if (glosses is! List) continue;
+      for (final gloss in glosses) {
+        final text = sanitizeDisplayText('$gloss');
+        if (text.isNotEmpty) {
+          rows.add(text);
         }
       }
     }
+    return rows;
+  }
 
-    final fields = mergeFieldItems(<WordFieldItem>[
-      ...recordFields,
-      ...contentFields,
-    ]);
+  String _flattenGlosses(Object? rawValue) {
+    if (rawValue is! List) {
+      return '';
+    }
+    final texts = <String>[];
+    for (final item in rawValue) {
+      if (item is! Map) continue;
+      final text = sanitizeDisplayText('${item['text'] ?? ''}');
+      if (text.isNotEmpty) {
+        texts.add(text);
+      }
+    }
+    return texts.join('；');
+  }
 
-    return WordEntryPayload(word: word, fields: fields, rawContent: content);
+  String? _derivePrimaryGloss(List<WordFieldItem> fields, String rawContent) {
+    for (final field in fields) {
+      if (field.key != 'meaning') continue;
+      final text = field.asText().trim();
+      if (text.isNotEmpty) {
+        return text;
+      }
+    }
+    final normalizedRaw = rawContent.trim();
+    return normalizedRaw.isEmpty ? null : normalizedRaw;
+  }
+
+  String? _deriveEntryUid(Map<String, Object?> record, String word) {
+    final rawEntryId = sanitizeDisplayText(
+      '${record['entry_id'] ?? record['entryUid'] ?? record['id'] ?? ''}',
+    );
+    if (rawEntryId.isNotEmpty) {
+      return rawEntryId;
+    }
+    final normalizedWord = sanitizeDisplayText(
+      '${record['normalized_word'] ?? ''}',
+    );
+    if (normalizedWord.isNotEmpty && normalizedWord != word) {
+      return '$word::$normalizedWord';
+    }
+    return null;
   }
 
   Map<String, Object?> _normalizeRecord(Map<String, Object?> record) {
@@ -763,7 +1260,7 @@ class WordbookImportService {
   Object? _normalizeRecordValue(String key, Object? value) {
     return switch (key) {
       '音标/发音标注' => _flattenLabeledMap(value),
-      '场景化例句' => _flattenScenarioExamples(value),
+      '场景化例句' => _flattenExamples(value),
       _ => value,
     };
   }
@@ -781,35 +1278,30 @@ class WordbookImportService {
     return lines.join('\n');
   }
 
-  List<String>? _flattenScenarioExamples(Object? value) {
-    if (value is! List) return null;
-    final rows = <String>[];
-    for (final item in value) {
-      if (item is Map) {
-        final category = sanitizeDisplayText(
-          '${item['含义类别'] ?? item['场景类别'] ?? item['类别'] ?? ''}',
-        );
-        final sentence = sanitizeDisplayText(
-          '${item['例句原文'] ?? item['英文例句'] ?? item['example'] ?? ''}',
-        );
-        final translation = sanitizeDisplayText(
-          '${item['中文翻译'] ?? item['译文'] ?? item['translation'] ?? ''}',
-        );
-        final parts = <String>[];
-        if (sentence.isNotEmpty) {
-          parts.add(category.isEmpty ? sentence : '[$category] $sentence');
-        }
-        if (translation.isNotEmpty) {
-          parts.add('中文：$translation');
-        }
-        final row = parts.join('\n').trim();
-        if (row.isNotEmpty) rows.add(row);
-        continue;
-      }
-
-      final text = sanitizeDisplayText('$item');
-      if (text.isNotEmpty) rows.add(text);
+  List<WordFieldMediaItem> _dedupeMedia(List<WordFieldMediaItem> items) {
+    final seen = <String>{};
+    final output = <WordFieldMediaItem>[];
+    for (final item in items) {
+      final key = '${item.type.name}:${item.source}:${item.label}';
+      if (!seen.add(key)) continue;
+      output.add(item);
     }
-    return rows.isEmpty ? null : rows;
+    return output;
   }
+}
+
+WordFieldValue _normalizeExamplesValue(WordFieldValue value) {
+  if (value is List) {
+    return value;
+  }
+  final text = '$value';
+  if (!text.contains('\n')) {
+    return sanitizeDisplayText(text);
+  }
+  final rows = text
+      .split(RegExp(r'\r?\n'))
+      .map((line) => sanitizeDisplayText(line))
+      .where((line) => line.isNotEmpty)
+      .toList(growable: false);
+  return rows.length <= 1 ? sanitizeDisplayText(text) : rows;
 }

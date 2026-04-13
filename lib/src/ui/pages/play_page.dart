@@ -84,7 +84,7 @@ class _PlayPageState extends State<PlayPage> {
     final base = currentIndex < 0 ? 0 : currentIndex;
     final target = (base - 1 + visibleWords.length) % visibleWords.length;
     final targetWord = visibleWords[target];
-    state.selectWordEntry(targetWord);
+    await state.selectWordEntry(targetWord);
     state.rememberPlaybackProgress(targetWord);
   }
 
@@ -102,7 +102,7 @@ class _PlayPageState extends State<PlayPage> {
     final base = currentIndex < 0 ? 0 : currentIndex;
     final target = (base + 1) % visibleWords.length;
     final targetWord = visibleWords[target];
-    state.selectWordEntry(targetWord);
+    await state.selectWordEntry(targetWord);
     state.rememberPlaybackProgress(targetWord);
   }
 
@@ -130,12 +130,12 @@ class _PlayPageState extends State<PlayPage> {
     return 5;
   }
 
-  void _jumpToIndex(
+  Future<void> _jumpToIndex(
     AppState state, {
     required List<WordEntry> visibleWords,
     required int currentIndex,
     required int targetIndex,
-  }) {
+  }) async {
     if (visibleWords.isEmpty) {
       return;
     }
@@ -143,7 +143,7 @@ class _PlayPageState extends State<PlayPage> {
     final normalizedCurrent = currentIndex < 0 ? 0 : currentIndex;
     _setTransitionDirection(normalizedTarget >= normalizedCurrent ? 1 : -1);
     final targetWord = visibleWords[normalizedTarget];
-    state.selectWordEntry(targetWord);
+    await state.selectWordEntry(targetWord);
     state.rememberPlaybackProgress(targetWord);
   }
 
@@ -199,9 +199,13 @@ class _PlayPageState extends State<PlayPage> {
     AppState state,
     WordEntry word,
   ) async {
-    state.selectWordEntry(word);
+    await state.selectWordEntry(word);
+    if (!context.mounted) return;
+    final resolvedWord = state.currentWord ?? word;
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
+      MaterialPageRoute<void>(
+        builder: (_) => FollowAlongPage(word: resolvedWord),
+      ),
     );
   }
 
@@ -305,23 +309,23 @@ class _PlayPageState extends State<PlayPage> {
         message: deferredLoad
             ? pickUiText(
                 i18n,
-                zh: '${localizedWordbookName(i18n, selectedWordbook)} 共有 ${state.visibleWordCount} 个词条。为保证大词库在手机上进入更稳定，会在开始播放时按需加载。',
-                en: '${localizedWordbookName(i18n, selectedWordbook)} has ${state.visibleWordCount} words. To keep relaunches stable, the app now loads it on demand when playback starts.',
-                ja: '${localizedWordbookName(i18n, selectedWordbook)} には ${state.visibleWordCount} 件の単語があります。モバイルでの再起動安定性を保つため、再生開始時に必要な分だけ読み込みます。',
-                de: '${localizedWordbookName(i18n, selectedWordbook)} enthält ${state.visibleWordCount} Wörter. Damit große Wortbücher auf Mobilgeräten stabil bleiben, werden sie erst beim Start der Wiedergabe bei Bedarf geladen.',
-                fr: '${localizedWordbookName(i18n, selectedWordbook)} contient ${state.visibleWordCount} mots. Pour garder une ouverture stable sur mobile, le chargement se fait à la demande au démarrage de la lecture.',
-                es: '${localizedWordbookName(i18n, selectedWordbook)} contiene ${state.visibleWordCount} palabras. Para mantener estable el arranque en móvil, se cargará bajo demanda al iniciar la reproducción.',
+                zh: '${localizedWordbookName(i18n, selectedWordbook)} 共有 ${state.visibleWordCount} 个词条。为保证大词库在手机上进入更稳定，请先按需加载，再由你决定何时开始播放。',
+                en: '${localizedWordbookName(i18n, selectedWordbook)} has ${state.visibleWordCount} words. To keep large wordbooks stable on mobile, load it first and start playback only when you are ready.',
+                ja: '${localizedWordbookName(i18n, selectedWordbook)} には ${state.visibleWordCount} 件の単語があります。モバイルで安定して使えるよう、まず必要分だけ読み込み、その後に好きなタイミングで再生を始められます。',
+                de: '${localizedWordbookName(i18n, selectedWordbook)} enthält ${state.visibleWordCount} Wörter. Damit große Wortbücher mobil stabil bleiben, laden Sie es zuerst und starten die Wiedergabe erst dann, wenn Sie bereit sind.',
+                fr: '${localizedWordbookName(i18n, selectedWordbook)} contient ${state.visibleWordCount} mots. Pour garder les grands carnets stables sur mobile, chargez-les d’abord puis lancez la lecture quand vous le souhaitez.',
+                es: '${localizedWordbookName(i18n, selectedWordbook)} contiene ${state.visibleWordCount} palabras. Para mantener estables los cuadernos grandes en móvil, primero cárgalo y empieza la reproducción solo cuando quieras.',
               )
             : i18n.t('noWordbookYet'),
         actionLabel: deferredLoad
             ? pickUiText(
                 i18n,
-                zh: '加载并播放',
-                en: 'Load and play',
-                ja: '読み込んで再生',
-                de: 'Laden und abspielen',
-                fr: 'Charger et lire',
-                es: 'Cargar y reproducir',
+                zh: '加载',
+                en: 'Load',
+                ja: '読み込む',
+                de: 'Laden',
+                fr: 'Charger',
+                es: 'Cargar',
               )
             : pickUiText(
                 i18n,
@@ -597,8 +601,8 @@ class _PlayPageState extends State<PlayPage> {
           transitionDirection: _transitionDirection,
           showMeaning: state.config.showText,
           showFields: mode == AppExperienceMode.focus,
-          isFavorite: state.favorites.contains(current.word),
-          isTaskWord: state.taskWords.contains(current.word),
+          isFavorite: state.isFavoriteEntry(current),
+          isTaskWord: state.isTaskEntry(current),
           onToggleFavorite: () => state.toggleFavorite(current),
           onToggleTask: () => state.toggleTaskWord(current),
           onPlayPronunciation: () => state.previewPronunciation(current.word),

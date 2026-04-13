@@ -67,6 +67,8 @@ dev_dependencies:
 dependency_overrides:
   audioplayers_android:
     path: third_party/audioplayers_android
+  flutter_tts:
+    path: third_party/flutter_tts
 
 flutter_launcher_icons:
   android: true
@@ -97,6 +99,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/en_zh_15000_wordbook.json
     - assets/toolbox/beads/
 
   # To add assets to your application, add an assets section, like this:

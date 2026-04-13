@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -701,12 +701,22 @@ void main() {
       expect(find.text('Ambient sound catalog'), findsOneWidget);
       expect(find.text('Play online'), findsNothing);
 
-      await tester.tap(find.text('Download').first);
+      await tester.pump();
+      final downloadFinder = find
+          .widgetWithText(FilledButton, 'Download')
+          .first;
+      expect(downloadFinder, findsOneWidget);
+      await tester.ensureVisible(downloadFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(downloadFinder);
       await tester.pumpAndSettle();
       expect(state.downloadedOnlineAmbientId, isNotNull);
-      expect(find.text('Delete').first, findsOneWidget);
+      final deleteFinder = find.widgetWithText(OutlinedButton, 'Delete').first;
+      expect(deleteFinder, findsOneWidget);
+      await tester.ensureVisible(deleteFinder);
+      await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Delete').first);
+      await tester.tap(deleteFinder);
       await tester.pumpAndSettle();
       expect(state.deletedDownloadedOnlineAmbientId, isNotNull);
     });
@@ -860,7 +870,10 @@ void main() {
           ),
           isTrue,
         );
-        expect(SoothingMusicRuntimeStore.activeArrangementTemplateId, isNotNull);
+        expect(
+          SoothingMusicRuntimeStore.activeArrangementTemplateId,
+          isNotNull,
+        );
         final hasPlaybackState =
             find.byIcon(Icons.pause_rounded).evaluate().isNotEmpty ||
             find.byIcon(Icons.play_arrow_rounded).evaluate().isNotEmpty ||
@@ -1682,57 +1695,33 @@ void main() {
       expect(state.restoredBackupPath, backup.path);
     });
 
-    testWidgets('data management page wires export user data action', (
+    testWidgets('data management page wires export task wordbook action', (
       tester,
     ) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const DataManagementPage());
 
-      await tester.tap(find.text('Export user data'));
+      await tester.tap(find.text('Export task wordbook'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).at(0), 'manual_backup');
-      await tester.enterText(
-        find.byType(TextField).at(1),
-        '/tmp/manual-exports',
-      );
-      await tester.tap(find.text('Export'));
+      await tester.enterText(find.byType(TextField).first, 'task_bundle');
+      await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
-      expect(
-        state.exportedUserDataPath,
-        '/tmp/manual-exports/manual_backup.json',
-      );
-      expect(
-        state.exportedUserDataSections,
-        contains(UserDataExportSection.settings),
-      );
+      expect(state.exportedTaskWordbookName, 'task_bundle');
     });
 
     testWidgets(
-      'data management export dialog disables folder chooser on windows',
+      'data management page explains import and restore flows are offline',
       (tester) async {
-        debugDefaultTargetPlatformOverride = TargetPlatform.windows;
-        try {
-          final state = _FakeAppState.sample(uiLanguage: 'en');
-          await _pumpPage(
-            tester,
-            state: state,
-            child: const DataManagementPage(),
-          );
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const DataManagementPage(),
+        );
 
-          await tester.tap(find.text('Export user data'));
-          await tester.pumpAndSettle();
-
-          expect(find.byIcon(Icons.folder_open_outlined), findsNothing);
-          expect(
-            find.text(
-              'On Windows, the folder chooser is disabled to avoid system instability. Enter the export path directly.',
-            ),
-            findsOneWidget,
-          );
-        } finally {
-          debugDefaultTargetPlatformOverride = null;
-        }
+        expect(find.text('Current status'), findsOneWidget);
+        expect(find.textContaining('temporarily offline'), findsOneWidget);
       },
     );
 
@@ -2026,6 +2015,46 @@ void main() {
       expect(find.textContaining('\u5bb8\u8336'), findsNothing);
     });
 
+    testWidgets('practice session keeps answer feedback inline on windows', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      try {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        const words = <WordEntry>[
+          WordEntry(wordbookId: 1, word: 'alpha', fields: <WordFieldItem>[]),
+        ];
+
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const PracticeSessionPage(
+            title: 'Windows feedback',
+            words: words,
+          ),
+        );
+
+        await tester.scrollUntilVisible(
+          find.text('Remembered'),
+          220,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Remembered'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(
+          find.byKey(const ValueKey<String>('practice-answer-feedback-card')),
+          findsOneWidget,
+        );
+        expect(find.text('Finish round'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
     testWidgets('practice session can auto-add missed words to task list', (
       tester,
     ) async {
@@ -2090,8 +2119,8 @@ void main() {
       await tester.tap(find.text('Finish round'));
       await tester.pumpAndSettle();
 
-      expect(state.taskWords.contains('alpha'), isFalse);
-      expect(state.taskWords.contains('bravo'), isTrue);
+      expect(state.taskWords.contains('word:alpha'), isFalse);
+      expect(state.taskWords.contains('word:bravo'), isTrue);
     });
 
     testWidgets('practice session updates practice stats and memory lanes', (
@@ -2187,6 +2216,69 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(ChoiceChip, 'Meaning choice'), findsOneWidget);
+    });
+
+    testWidgets('practice session marks wrong meaning choice as weak', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      const words = <WordEntry>[
+        WordEntry(
+          wordbookId: 1,
+          word: 'alpha',
+          meaning: 'first',
+          fields: <WordFieldItem>[],
+        ),
+        WordEntry(
+          wordbookId: 1,
+          word: 'bravo',
+          meaning: 'second',
+          fields: <WordFieldItem>[],
+        ),
+        WordEntry(
+          wordbookId: 1,
+          word: 'charlie',
+          meaning: 'third',
+          fields: <WordFieldItem>[],
+        ),
+      ];
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticeSessionPage(
+          title: 'Meaning feedback',
+          words: words,
+        ),
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('practice-session-settings-toggle')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.widgetWithText(ChoiceChip, 'Meaning choice'),
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Meaning choice'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('second').first,
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('second').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Not quite. Correct answer: first'), findsOneWidget);
+      expect(find.text('Continue as weak'), findsOneWidget);
     });
 
     testWidgets('wrong notebook supports search and reason filter', (
@@ -2380,23 +2472,6 @@ void main() {
       );
     });
 
-    test('online wordbook catalog parses repo html payload', () {
-      const html =
-          '<script data-target="react-app.embeddedData">'
-          '{"payload":{"codeViewRepoRoute":{"tree":{"items":['
-          '{"name":"涓嫳_12000.json","path":"涓嫳_12000.json","contentType":"file"},'
-          '{"name":"notes.txt","path":"notes.txt","contentType":"file"},'
-          '{"name":"鑻辨硶_12000.json","path":"鑻辨硶_12000.json","contentType":"file"}'
-          ']}}}}</script>';
-
-      final entries = GitHubWordbookCatalog.parseRepositoryHtml(html);
-
-      expect(entries.map((item) => item.fileName), <String>[
-        '涓嫳_12000.json',
-        '鑻辨硶_12000.json',
-      ]);
-    });
-
     testWidgets('word card renders visible appearance effects', (tester) async {
       final appearance = PlayConfig.defaults.appearance.copyWith(
         rainbowText: true,
@@ -2483,6 +2558,7 @@ class _FakeAppState extends ChangeNotifier
     required List<DatabaseBackupInfo> backups,
     required FocusService focusService,
     required List<AmbientSource> ambientSources,
+    required List<OnlineAmbientSoundOption> onlineAmbientCatalog,
     required double ambientMasterVolume,
     required String? asrRecordingPath,
     required String? asrStoppedRecordingPath,
@@ -2498,6 +2574,7 @@ class _FakeAppState extends ChangeNotifier
        _backups = backups,
        _focusService = focusService,
        _ambientSources = ambientSources,
+       _onlineAmbientCatalog = onlineAmbientCatalog,
        _ambientMasterVolume = ambientMasterVolume,
        _asrRecordingPath = asrRecordingPath,
        _asrStoppedRecordingPath = asrStoppedRecordingPath,
@@ -2513,6 +2590,7 @@ class _FakeAppState extends ChangeNotifier
     List<DatabaseBackupInfo>? backups,
     FocusService? focusService,
     List<AmbientSource>? ambientSources,
+    List<OnlineAmbientSoundOption>? onlineAmbientCatalog,
     bool ambientEnabled = true,
     AppHomeTab startupPage = AppHomeTab.study,
     StudyStartupTab studyStartupTab = StudyStartupTab.play,
@@ -2573,6 +2651,26 @@ class _FakeAppState extends ChangeNotifier
                 assetPath: 'assets/audio/rain.mp3',
               ),
             ],
+        onlineAmbientCatalog:
+            onlineAmbientCatalog ??
+            const <OnlineAmbientSoundOption>[
+              OnlineAmbientSoundOption(
+                id: 'ambient_nature_forest-birds',
+                name: 'Forest Birds',
+                categoryKey: 'ambientCategoryNature',
+                relativePath: 'nature/forest-birds.mp3',
+                remoteKey: 'ambient/moodist/nature/forest-birds.mp3',
+                defaultVolume: 0.42,
+              ),
+              OnlineAmbientSoundOption(
+                id: 'ambient_rain_window-rain',
+                name: 'Window Rain',
+                categoryKey: 'ambientCategoryRain',
+                relativePath: 'rain/window-rain.mp3',
+                remoteKey: 'ambient/moodist/rain/window-rain.mp3',
+                defaultVolume: 0.38,
+              ),
+            ],
         ambientMasterVolume: 0.55,
         asrRecordingPath: asrRecordingPath,
         asrStoppedRecordingPath: asrStoppedRecordingPath,
@@ -2629,6 +2727,7 @@ class _FakeAppState extends ChangeNotifier
   final List<DatabaseBackupInfo> _backups;
   final FocusService _focusService;
   List<AmbientSource> _ambientSources;
+  final List<OnlineAmbientSoundOption> _onlineAmbientCatalog;
   List<AmbientPreset> _ambientPresets = <AmbientPreset>[];
   bool _ambientEnabled = true;
   double _ambientMasterVolume;
@@ -2682,6 +2781,7 @@ class _FakeAppState extends ChangeNotifier
   String? exportedUserDataDirectoryPath;
   String? exportedUserDataFileName;
   Set<UserDataExportSection>? exportedUserDataSections;
+  String? exportedTaskWordbookName;
   String? exportedPracticeReviewPath;
   String? exportedWrongNotebookPath;
   String? downloadedOnlineAmbientId;
@@ -3275,6 +3375,21 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
+  Future<void> preparePlay() async {
+    _isPlaying = false;
+    _isPaused = true;
+    _playingWordbookId = _selectedWordbook?.id;
+    _playingWordbookName = _selectedWordbook?.name;
+    _playingWord = currentWord?.word;
+    _currentUnit = 0;
+    _totalUnits = _visibleWords.length;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> startPreparedPlay() => play();
+
+  @override
   Future<void> pauseOrResume() async {
     if (!_isPlaying) {
       await play();
@@ -3655,7 +3770,7 @@ class _FakeAppState extends ChangeNotifier
   Future<List<OnlineAmbientSoundOption>> fetchOnlineAmbientCatalog({
     bool forceRefresh = false,
   }) async {
-    return OnlineAmbientCatalogService.fallbackOptions;
+    return List<OnlineAmbientSoundOption>.from(_onlineAmbientCatalog);
   }
 
   @override
@@ -4050,7 +4165,9 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
-  Future<void> exportTaskWordbook(String name) async {}
+  Future<void> exportTaskWordbook(String name) async {
+    exportedTaskWordbookName = name;
+  }
 
   @override
   Future<void> renameWordbook(Wordbook wordbook, String newName) async {
@@ -4078,7 +4195,7 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
-  void selectWordEntry(WordEntry entry) {
+  Future<void> selectWordEntry(WordEntry entry) async {
     _currentWord = entry;
     final index = _visibleWords.indexWhere((item) => item.word == entry.word);
     if (index >= 0) {
@@ -4137,22 +4254,39 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   Future<void> toggleFavorite(WordEntry word) async {
-    if (_favorites.contains(word.word)) {
-      _favorites.remove(word.word);
+    final key = word.collectionReferenceKey;
+    if (_favorites.contains(key)) {
+      _favorites.remove(key);
     } else {
-      _favorites.add(word.word);
+      _favorites.add(key);
     }
     notifyListeners();
   }
 
   @override
   Future<void> toggleTaskWord(WordEntry word) async {
-    if (_taskWords.contains(word.word)) {
-      _taskWords.remove(word.word);
+    final key = word.collectionReferenceKey;
+    if (_taskWords.contains(key)) {
+      _taskWords.remove(key);
     } else {
-      _taskWords.add(word.word);
+      _taskWords.add(key);
     }
     notifyListeners();
+  }
+
+  @override
+  bool isFavoriteEntry(WordEntry entry) {
+    return _favorites.contains(entry.collectionReferenceKey);
+  }
+
+  @override
+  bool isTaskEntry(WordEntry entry) {
+    return _taskWords.contains(entry.collectionReferenceKey);
+  }
+
+  @override
+  Future<bool> restoreUserDataExport(String filePath) async {
+    return false;
   }
 
   @override
@@ -5037,4 +5171,3 @@ extension<T> on List<T> {
 
   T? get lastOrNull => this.isEmpty ? null : last;
 }
-

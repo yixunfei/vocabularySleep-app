@@ -6,10 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
+import 'package:vocabulary_sleep_app/src/models/export_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/user_data_export.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
+import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
+import 'package:vocabulary_sleep_app/src/models/wordbook_schema_v1.dart';
 import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
@@ -122,6 +125,10 @@ void main() {
               WordFieldItem(key: 'meaning', label: 'Meaning', value: '123'),
             ],
             rawContent: '123',
+            entryUid: 'alpha-entry',
+            schemaVersion: wordbookSchemaV1,
+            sourcePayloadJson: '{"entry_id":"alpha-entry"}',
+            sortIndex: 7,
           ),
         ],
       );
@@ -133,6 +140,7 @@ void main() {
       database.updateWord(
         wordbookId: wordbook.id,
         sourceWord: 'alpha',
+        sourceWordId: database.getWords(wordbook.id).single.id,
         payload: const WordEntryPayload(
           word: 'alpha',
           fields: <WordFieldItem>[
@@ -146,6 +154,10 @@ void main() {
       final updated = database.getWords(wordbook.id).single;
       expect(updated.meaning, '321');
       expect(updated.rawContent, '321');
+      expect(updated.entryUid, 'alpha-entry');
+      expect(updated.schemaVersion, wordbookSchemaV1);
+      expect(updated.sortIndex, 7);
+      expect(updated.sourcePayloadJson, contains('alpha-entry'));
       expect(
         updated.fields.firstWhere((item) => item.key == 'meaning').asText(),
         '321',
@@ -161,6 +173,147 @@ void main() {
     },
   );
 
+  test('getWords orders entries by sort_index before row id', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_sort_index_order',
+      name: 'Sort index order test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'charlie',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'third'),
+          ],
+          rawContent: 'third',
+          sortIndex: 20,
+        ),
+        WordEntryPayload(
+          word: 'alpha',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'first'),
+          ],
+          rawContent: 'first',
+          sortIndex: 0,
+        ),
+        WordEntryPayload(
+          word: 'bravo',
+          fields: <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'second'),
+          ],
+          rawContent: 'second',
+          sortIndex: 10,
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_sort_index_order',
+    );
+
+    expect(
+      database.getWords(wordbook.id).map((item) => item.word).toList(),
+      <String>['alpha', 'bravo', 'charlie'],
+    );
+    expect(
+      database.getWordsLite(wordbook.id).map((item) => item.word).toList(),
+      <String>['alpha', 'bravo', 'charlie'],
+    );
+  });
+
+  test('hydrateWordEntry restores dynamic fields for lite rows', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    await database.importWordbook(
+      sourcePath: 'custom:test_hydrate_word_entry',
+      name: 'Hydrate lite entry test',
+      entries: const <WordEntryPayload>[
+        WordEntryPayload(
+          word: 'a',
+          fields: <WordFieldItem>[
+            WordFieldItem(
+              key: 'meaning',
+              label: 'Meaning',
+              value: '不定冠词，用于可数单数名词前',
+            ),
+            WordFieldItem(
+              key: 'meanings_zh',
+              label: 'Chinese meanings',
+              value: <String>[
+                '不定冠词，用于可数单数名词前',
+                '英文字母表中的第一个字母',
+              ],
+            ),
+            WordFieldItem(
+              key: 'parts_of_speech',
+              label: 'Parts of speech',
+              value: <Map<String, Object?>>[
+                <String, Object?>{
+                  'pos': 'article',
+                  'zh': <String>['不定冠词，用于可数单数名词前'],
+                },
+              ],
+            ),
+            WordFieldItem(
+              key: 'pronunciations',
+              label: 'Pronunciations',
+              value: <Map<String, Object?>>[
+                <String, Object?>{
+                  'ipa': '/eɪ/',
+                  'tags': <String>['US'],
+                },
+              ],
+            ),
+            WordFieldItem(
+              key: 'frequency_rank',
+              label: 'Frequency rank',
+              value: 5,
+            ),
+          ],
+          rawContent: '不定冠词，用于可数单数名词前',
+          entryUid: 'entry-a',
+          primaryGloss: '不定冠词，用于可数单数名词前',
+          schemaVersion: wordbookSchemaV1,
+          sortIndex: 0,
+        ),
+      ],
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_hydrate_word_entry',
+    );
+
+    final lite = database.getWordsLite(wordbook.id).single;
+    expect(
+      lite.fields.map((field) => field.key).toList(growable: false),
+      <String>['meaning'],
+    );
+
+    final hydrated = database.hydrateWordEntry(lite);
+    expect(hydrated, isNotNull);
+    expect(
+      hydrated!.fields.map((field) => field.key).toList(growable: false),
+      containsAll(<String>[
+        'meaning',
+        'meanings_zh',
+        'parts_of_speech',
+        'pronunciations',
+        'frequency_rank',
+      ]),
+    );
+    expect(hydrated.groupedFields, isNotEmpty);
+    expect(
+      hydrated.groupedFields
+          .expand((group) => group.fields)
+          .any((field) => field.key == 'pronunciations'),
+      isTrue,
+    );
+  });
+
   test('database schema version is upgraded for future migrations', () async {
     final database = AppDatabaseService(WordbookImportService());
     await database.init();
@@ -170,8 +323,281 @@ void main() {
     addTearDown(sqlite.dispose);
     final row = sqlite.select('PRAGMA user_version;').single;
 
-    expect((row['user_version'] as int?) ?? 0, greaterThanOrEqualTo(7));
+    expect((row['user_version'] as int?) ?? 0, greaterThanOrEqualTo(9));
   });
+
+  test(
+    'standard wordbook import persists schema metadata and source payload',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      final imported = await database.importWordbookJsonTextAsync(
+        sourcePath: 'custom:test_standard_wordbook',
+        name: 'Standard import test',
+        content: jsonEncode(<String, Object?>{
+          'schema_version': wordbookSchemaV1,
+          'book': <String, Object?>{
+            'id': 'zh-en-standard-demo',
+            'name': 'Standard Demo',
+            'source_language': 'zh-Hans',
+            'target_language': 'en',
+            'direction': 'source_to_target',
+            'entry_count': 1,
+            'tags': <String>['standardized'],
+          },
+          'entries': <Map<String, Object?>>[
+            <String, Object?>{
+              'entry_id': 'zh-en-standard-demo-the',
+              'lemma': <String, Object?>{
+                'text': 'the',
+                'normalized': 'the',
+                'language': 'en',
+              },
+              'glosses': <Map<String, Object?>>[
+                <String, Object?>{
+                  'lang': 'zh-Hans',
+                  'text': '定冠词',
+                  'type': 'primary',
+                },
+              ],
+              'examples': <Map<String, Object?>>[
+                <String, Object?>{
+                  'category': 'daily',
+                  'source_text': 'Read the book.',
+                  'translation': '读这本书。',
+                },
+              ],
+              'notes': <String, Object?>{'usage': 'Used for specific nouns.'},
+              'tags': <String>['article', 'high_frequency'],
+              'media': <Map<String, Object?>>[
+                <String, Object?>{
+                  'type': 'audio',
+                  'source': 'https://example.com/audio/the.mp3',
+                  'label': 'US',
+                },
+              ],
+              'source': <String, Object?>{
+                'provider': 'demo',
+                'record_hash': 'hash-1',
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(imported, 1);
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_standard_wordbook',
+      );
+      expect(wordbook.schemaVersion, wordbookSchemaV1);
+      expect(wordbook.metadataJson, isNotNull);
+      expect(wordbook.metadataJson, contains('zh-en-standard-demo'));
+
+      final sqlite = sqlite3.open(database.dbPath);
+      addTearDown(sqlite.dispose);
+
+      final row = sqlite
+          .select(
+            '''
+      SELECT entry_uid, primary_gloss, schema_version, source_payload_json, sort_index, entry_json, extension_json
+      FROM words
+      WHERE wordbook_id = ?
+      ''',
+            <Object?>[wordbook.id],
+          )
+          .single;
+
+      expect(row['entry_uid'], 'zh-en-standard-demo-the');
+      expect(row['primary_gloss'], '定冠词');
+      expect(row['schema_version'], wordbookSchemaV1);
+      expect('${row['source_payload_json']}', contains('entry_id'));
+      expect((row['sort_index'] as int?) ?? 0, 0);
+      expect(jsonDecode('${row['entry_json']}'), <String, Object?>{
+        'rawContent': '定冠词',
+      });
+      final extensionFields =
+          (jsonDecode('${row['extension_json']}')
+                  as Map<String, Object?>)['fields']
+              as List<Object?>;
+      expect(
+        extensionFields.any((item) => item is Map && item['key'] == 'usage'),
+        isTrue,
+      );
+
+      final fieldRows = sqlite.select(
+        '''
+        SELECT wf.field_key, wft.tag, wfm.media_source
+        FROM word_fields wf
+        LEFT JOIN word_field_tags wft ON wft.word_field_id = wf.id
+        LEFT JOIN word_field_media wfm ON wfm.word_field_id = wf.id
+        WHERE wf.word_id = (SELECT id FROM words WHERE wordbook_id = ? LIMIT 1)
+        ORDER BY wf.sort_order ASC, wft.sort_order ASC, wfm.sort_order ASC
+        ''',
+        <Object?>[wordbook.id],
+      );
+      expect(
+        fieldRows.any(
+          (row) => row['field_key'] == 'tags' && row['tag'] == 'article',
+        ),
+        isTrue,
+      );
+      expect(
+        fieldRows.any(
+          (row) =>
+              row['field_key'] == 'media' &&
+              row['media_source'] == 'https://example.com/audio/the.mp3',
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'standard wordbook byte stream import persists schema metadata and words',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      final imported = await database.importWordbookJsonByteStreamAsync(
+        sourcePath: 'custom:test_standard_wordbook_stream',
+        name: 'Standard stream import test',
+        byteStream: Stream<List<int>>.fromIterable(<List<int>>[
+          utf8.encode(
+            jsonEncode(<String, Object?>{
+              'schema_version': wordbookSchemaV1,
+              'book': <String, Object?>{
+                'id': 'zh-en-standard-stream-demo',
+                'name': 'Standard Stream Demo',
+                'source_language': 'zh-Hans',
+                'target_language': 'en',
+                'direction': 'source_to_target',
+                'entry_count': 1,
+                'tags': <String>['stream'],
+              },
+              'entries': <Map<String, Object?>>[
+                <String, Object?>{
+                  'entry_id': 'zh-en-standard-stream-demo-the',
+                  'lemma': <String, Object?>{
+                    'text': 'the',
+                    'normalized': 'the',
+                    'language': 'en',
+                  },
+                  'glosses': <Map<String, Object?>>[
+                    <String, Object?>{
+                      'lang': 'zh-Hans',
+                      'text': '定冠词',
+                      'type': 'primary',
+                    },
+                  ],
+                  'notes': <String, Object?>{
+                    'usage': 'Used for specific nouns.',
+                  },
+                  'source': <String, Object?>{
+                    'provider': 'demo',
+                    'record_hash': 'stream-hash-1',
+                  },
+                },
+              ],
+            }),
+          ),
+        ]),
+      );
+
+      expect(imported, 1);
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_standard_wordbook_stream',
+      );
+      expect(wordbook.schemaVersion, wordbookSchemaV1);
+      expect(wordbook.metadataJson, isNotNull);
+      expect(wordbook.metadataJson, contains('zh-en-standard-stream-demo'));
+
+      final words = database.getWords(wordbook.id);
+      expect(words, hasLength(1));
+      expect(words.single.word, 'the');
+      expect(words.single.entryUid, 'zh-en-standard-stream-demo-the');
+      expect(words.single.primaryGloss, '定冠词');
+      expect(words.single.schemaVersion, wordbookSchemaV1);
+      expect(words.single.sourcePayloadJson, contains('entry_id'));
+      expect(words.single.displayMeaning, '定冠词');
+    },
+  );
+
+  test(
+    'lite reads and export payloads fall back to primary_gloss when meaning cache is empty',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbookJsonTextAsync(
+        sourcePath: 'custom:test_primary_gloss_fallback',
+        name: 'Primary gloss fallback test',
+        content: jsonEncode(<String, Object?>{
+          'schema_version': wordbookSchemaV1,
+          'book': <String, Object?>{
+            'id': 'primary-gloss-demo',
+            'name': 'Primary Gloss Demo',
+            'source_language': 'zh-Hans',
+            'target_language': 'en',
+            'direction': 'source_to_target',
+            'entry_count': 1,
+          },
+          'entries': <Map<String, Object?>>[
+            <String, Object?>{
+              'entry_id': 'primary-gloss-alpha',
+              'lemma': <String, Object?>{
+                'text': 'alpha',
+                'normalized': 'alpha',
+                'language': 'en',
+              },
+              'glosses': <Map<String, Object?>>[
+                <String, Object?>{
+                  'lang': 'zh-Hans',
+                  'text': '首项',
+                  'type': 'primary',
+                },
+              ],
+              'notes': <String, Object?>{
+                'usage': 'Used to mark the first item.',
+              },
+            },
+          ],
+        }),
+      );
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_primary_gloss_fallback',
+      );
+
+      final sqlite = sqlite3.open(database.dbPath);
+      addTearDown(sqlite.dispose);
+      sqlite.execute(
+        'UPDATE words SET meaning = NULL WHERE wordbook_id = ?',
+        <Object?>[wordbook.id],
+      );
+
+      final lite = database.getWordsLite(wordbook.id).single;
+      expect(lite.summaryMeaningText, '首项');
+      expect(lite.listSubtitleText, '首项');
+      expect(lite.rawContent, '首项');
+
+      final exportPayload = database.buildUserDataExportPayload(
+        sections: const <UserDataExportSection>{
+          UserDataExportSection.wordbooks,
+        },
+      );
+      final exportedWordbook = exportPayload.wordbooks.firstWhere(
+        (item) => item.wordbook.id == wordbook.id,
+      );
+      expect(exportedWordbook.words.single.meaning, '首项');
+      expect(exportedWordbook.words.single.primaryGloss, '首项');
+    },
+  );
 
   test(
     'words persist only minimal entry_json recovery fields in sqlite',
@@ -313,6 +739,65 @@ void main() {
       <String>['Alpha'],
     );
   });
+
+  test(
+    'special wordbooks can keep duplicate headwords apart by entry_uid and delete a single referenced entry',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      final favoritesBook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'builtin:favorites',
+      );
+
+      const firstPayload = WordEntryPayload(
+        word: 'set',
+        fields: <WordFieldItem>[
+          WordFieldItem(key: 'meaning', label: 'Meaning', value: '放置'),
+        ],
+        rawContent: '放置',
+        entryUid: 'demo-set-put',
+        primaryGloss: '放置',
+        schemaVersion: wordbookSchemaV1,
+      );
+      const secondPayload = WordEntryPayload(
+        word: 'set',
+        fields: <WordFieldItem>[
+          WordFieldItem(key: 'meaning', label: 'Meaning', value: '集合'),
+        ],
+        rawContent: '集合',
+        entryUid: 'demo-set-collection',
+        primaryGloss: '集合',
+        schemaVersion: wordbookSchemaV1,
+      );
+
+      database.upsertWord(favoritesBook.id, firstPayload);
+      database.upsertWord(favoritesBook.id, secondPayload);
+
+      final inserted = database.getWords(favoritesBook.id);
+      expect(inserted, hasLength(2));
+      expect(inserted.map((item) => item.entryUid).toSet(), <String?>{
+        'demo-set-put',
+        'demo-set-collection',
+      });
+
+      database.deleteWordByEntryIdentity(
+        favoritesBook.id,
+        const WordEntry(
+          wordbookId: 999,
+          word: 'set',
+          entryUid: 'demo-set-put',
+          primaryGloss: '放置',
+        ),
+      );
+
+      final remaining = database.getWords(favoritesBook.id);
+      expect(remaining, hasLength(1));
+      expect(remaining.single.entryUid, 'demo-set-collection');
+      expect(remaining.single.primaryGloss, '集合');
+    },
+  );
 
   test(
     'searchWords normalizes diacritics and fuzzy order like in-memory search',
@@ -871,6 +1356,285 @@ void main() {
       isTrue,
     );
   });
+
+  test(
+    'restoreUserDataExportFromFile preserves exported standard wordbook fields, progress, and settings',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbookJsonTextAsync(
+        sourcePath: 'custom:test_export_restore_roundtrip',
+        name: 'Roundtrip standard wordbook',
+        content: jsonEncode(<String, Object?>{
+          'schema_version': wordbookSchemaV1,
+          'book': <String, Object?>{
+            'id': 'roundtrip-standard-book',
+            'name': 'Roundtrip standard wordbook',
+            'source_language': 'zh-Hans',
+            'target_language': 'en',
+            'direction': 'source_to_target',
+            'entry_count': 1,
+            'tags': <String>['roundtrip'],
+          },
+          'entries': <Map<String, Object?>>[
+            <String, Object?>{
+              'entry_id': 'roundtrip-alpha',
+              'lemma': <String, Object?>{
+                'text': 'alpha',
+                'normalized': 'alpha',
+                'language': 'en',
+                'script': 'Latn',
+              },
+              'glosses': <Map<String, Object?>>[
+                <String, Object?>{
+                  'lang': 'zh-Hans',
+                  'text': '第一项',
+                  'type': 'primary',
+                },
+              ],
+              'examples': <Map<String, Object?>>[
+                <String, Object?>{
+                  'category': 'daily',
+                  'source_text': 'Alpha leads the list.',
+                  'translation': 'Alpha 排在列表第一。',
+                },
+              ],
+              'notes': <String, Object?>{
+                'usage': 'Used as the first marker.',
+                'memory': 'Remember the leading role.',
+              },
+            },
+          ],
+        }),
+      );
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_export_restore_roundtrip',
+      );
+      final word = database.getWords(wordbook.id).single;
+      database.upsertWordMemoryProgress(
+        WordMemoryProgress(
+          wordId: word.id!,
+          timesPlayed: 5,
+          timesCorrect: 4,
+          familiarity: 0.8,
+          easeFactor: 2.5,
+          intervalDays: 7,
+          consecutiveCorrect: 3,
+          memoryState: 'familiar',
+          nextReview: DateTime.utc(2026, 4, 18, 8),
+        ),
+      );
+      database.setSetting('theme', 'mono');
+
+      final exportPath = await database.exportUserData();
+      final exportedJson =
+          jsonDecode(await File(exportPath).readAsString())
+              as Map<String, dynamic>;
+      expect(exportedJson['schema'], userDataExportSchema);
+      expect(exportedJson['schema_version'], userDataExportSchemaVersion);
+      final exportedWordbookJson = (exportedJson['wordbooks'] as List<Object?>)
+          .whereType<Map>()
+          .firstWhere(
+            (item) =>
+                '${item['path'] ?? ''}' ==
+                'custom:test_export_restore_roundtrip',
+          );
+      expect(exportedWordbookJson['standard_book'], isA<Map>());
+      expect(
+        (exportedWordbookJson['standard_book'] as Map)['id'],
+        'roundtrip-standard-book',
+      );
+
+      await database.resetUserData();
+
+      expect(
+        database.getWordbooks().any(
+          (item) => item.path == 'custom:test_export_restore_roundtrip',
+        ),
+        isFalse,
+      );
+      expect(database.getSetting('theme'), isNull);
+
+      await database.restoreUserDataExportFromFile(exportPath);
+
+      final restoredWordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_export_restore_roundtrip',
+      );
+      expect(restoredWordbook.schemaVersion, wordbookSchemaV1);
+      expect(restoredWordbook.metadataJson, contains('source_language'));
+
+      final restoredWord = database.getWords(restoredWordbook.id).single;
+      expect(restoredWord.word, 'alpha');
+      expect(restoredWord.entryUid, 'roundtrip-alpha');
+      expect(restoredWord.primaryGloss, '第一项');
+      expect(restoredWord.schemaVersion, wordbookSchemaV1);
+      expect(restoredWord.sourcePayloadJson, contains('entry_id'));
+      expect(restoredWord.displayMeaning, '第一项');
+      expect(
+        restoredWord.fields
+            .firstWhere((field) => field.key == 'examples')
+            .asText(),
+        contains('Alpha leads the list.'),
+      );
+      expect(
+        restoredWord.fields
+            .firstWhere((field) => field.key == 'usage')
+            .asText(),
+        'Used as the first marker.',
+      );
+      expect(
+        restoredWord.fields
+            .firstWhere((field) => field.key == 'memory')
+            .asText(),
+        'Remember the leading role.',
+      );
+
+      final restoredProgress = database.getWordMemoryProgress(restoredWord.id!);
+      expect(restoredProgress, isNotNull);
+      expect(restoredProgress!.timesPlayed, 5);
+      expect(restoredProgress.timesCorrect, 4);
+      expect(restoredProgress.easeFactor, closeTo(2.5, 0.0001));
+      expect(restoredProgress.intervalDays, 7);
+      expect(restoredProgress.consecutiveCorrect, 3);
+      expect(restoredProgress.memoryState, 'familiar');
+      expect(restoredProgress.nextReview, DateTime.utc(2026, 4, 18, 8));
+      expect(database.getSetting('theme'), 'mono');
+    },
+  );
+
+  test(
+    'restoreUserDataExportFromFile can rebuild standard metadata from structured standard_book without metadata_json',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      final exportPath =
+          '${tempDir.path}${Platform.pathSeparator}structured-standard-book.json';
+      final payload = UserDataExportPayload(
+        exportedAt: DateTime.utc(2026, 4, 10, 9),
+        sections: const <String>['wordbooks'],
+        wordbooks: <UserDataExportWordbook>[
+          UserDataExportWordbook(
+            wordbook: const Wordbook(
+              id: 101,
+              name: 'Structured Standard Book',
+              path: 'custom:test_structured_standard_book',
+              wordCount: 1,
+              createdAt: null,
+              schemaVersion: wordbookSchemaV1,
+              metadataJson: null,
+            ),
+            standardBook: const WordbookBookMetaV1(
+              id: 'structured-standard-book',
+              name: 'Structured Standard Book',
+              sourceLanguage: 'zh-Hans',
+              targetLanguage: 'en',
+              direction: 'source_to_target',
+              entryCount: 1,
+              tags: <String>['structured'],
+            ),
+            words: <UserDataExportWordRecord>[
+              UserDataExportWordRecord(
+                id: 1001,
+                wordbookId: 101,
+                word: 'alpha',
+                entryUid: 'structured-alpha',
+                primaryGloss: '结构化首项',
+                schemaVersion: wordbookSchemaV1,
+                sourcePayloadJson: jsonEncode(<String, Object?>{
+                  'entry_id': 'structured-alpha',
+                  'lemma': <String, Object?>{
+                    'text': 'alpha',
+                    'normalized': 'alpha',
+                    'language': 'en',
+                  },
+                  'glosses': <Map<String, Object?>>[
+                    <String, Object?>{
+                      'lang': 'zh-Hans',
+                      'text': '结构化首项',
+                      'type': 'primary',
+                    },
+                  ],
+                  'notes': <String, Object?>{
+                    'usage': 'Recovered from structured standard_book.',
+                  },
+                }),
+                fields: const <WordFieldItem>[
+                  WordFieldItem(
+                    key: 'usage',
+                    label: 'Usage',
+                    value: 'Recovered from structured standard_book.',
+                  ),
+                ],
+                rawContent: '结构化首项',
+              ),
+            ],
+          ),
+        ],
+      );
+      await File(exportPath).writeAsString(
+        const JsonEncoder.withIndent('  ').convert(payload.toJsonMap()),
+      );
+
+      await database.restoreUserDataExportFromFile(exportPath);
+
+      final restoredWordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_structured_standard_book',
+      );
+      expect(restoredWordbook.schemaVersion, wordbookSchemaV1);
+      expect(restoredWordbook.metadataJson, isNotNull);
+      expect(
+        restoredWordbook.metadataJson,
+        contains('structured-standard-book'),
+      );
+      expect(restoredWordbook.metadataJson, contains('source_language'));
+
+      final restoredWord = database.getWords(restoredWordbook.id).single;
+      expect(restoredWord.entryUid, 'structured-alpha');
+      expect(restoredWord.primaryGloss, '结构化首项');
+      expect(
+        restoredWord.fields
+            .firstWhere((field) => field.key == 'usage')
+            .asText(),
+        'Recovered from structured standard_book.',
+      );
+    },
+  );
+
+  test(
+    'restoreUserDataExportFromFile rejects unsupported export schema and version with a clear error',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      final invalidExportPath =
+          '${tempDir.path}${Platform.pathSeparator}invalid-user-data-export.json';
+      await File(invalidExportPath).writeAsString(
+        const JsonEncoder.withIndent('  ').convert(<String, Object?>{
+          'schema': 'custom.invalid_export',
+          'schema_version': 99,
+          'sections': <String>['settings'],
+          'settings': <String, String>{'theme': 'mono'},
+        }),
+      );
+
+      await expectLater(
+        () => database.restoreUserDataExportFromFile(invalidExportPath),
+        throwsA(
+          isA<UserDataExportValidationException>().having(
+            (error) => error.message,
+            'message',
+            contains('schema'),
+          ),
+        ),
+      );
+    },
+  );
 
   test('deleteSafetyBackup removes an existing backup file', () async {
     final database = AppDatabaseService(WordbookImportService());

@@ -99,7 +99,7 @@ class _LibraryPageState extends State<LibraryPage> {
       return '${word.wordbookId}|$rawId';
     }
     final fallbackSeed =
-        '${word.wordbookId}|${word.word}|${word.meaning ?? ''}|${word.rawContent}';
+        '${word.wordbookId}|${word.word}|${word.searchMeaningText}|${word.rawContent}';
     return '${word.wordbookId}|${fallbackSeed.hashCode}';
   }
 
@@ -702,8 +702,8 @@ class _LibraryPageState extends State<LibraryPage> {
                             selected: selectedIdentity == _wordIdentity(word),
                             showMeaning: previewVisible,
                             showFields: previewVisible,
-                            isFavorite: state.favorites.contains(word.word),
-                            isTaskWord: state.taskWords.contains(word.word),
+                            isFavorite: state.isFavoriteEntry(word),
+                            isTaskWord: state.isTaskEntry(word),
                             onTap: () => _openDetail(state, word),
                             onPlay: () => state.previewPronunciation(word.word),
                             onFollowAlong: () => _openFollowAlong(state, word),
@@ -831,10 +831,12 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Future<void> _openDetail(AppState state, WordEntry word) async {
-    state.selectWordEntry(word);
+    await state.selectWordEntry(word);
+    if (!mounted) return;
+    final resolvedWord = state.currentWord ?? word;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => WordDetailPage(initialWord: word),
+        builder: (_) => WordDetailPage(initialWord: resolvedWord),
       ),
     );
   }
@@ -860,8 +862,9 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Future<void> _openFollowAlong(AppState state, WordEntry word) async {
+    await state.selectWordEntry(word);
+    if (!mounted) return;
     final updatedWord = state.currentWord ?? word;
-    state.selectWordEntry(updatedWord);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => FollowAlongPage(word: updatedWord),

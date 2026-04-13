@@ -890,8 +890,8 @@ class _PracticeNotebookPageState extends State<PracticeNotebookPage> {
           selected: false,
           showMeaning: state.config.showText,
           showFields: state.config.showText,
-          isFavorite: state.favorites.contains(word.word),
-          isTaskWord: state.taskWords.contains(word.word),
+          isFavorite: state.isFavoriteEntry(word),
+          isTaskWord: state.isTaskEntry(word),
           onTap: onTapOverride ?? () => state.selectWordEntry(word),
           onPlay: () => state.previewPronunciation(word.word),
           onFollowAlong: () => _openFollowAlong(context, state, word),
@@ -1208,9 +1208,13 @@ class _PracticeNotebookPageState extends State<PracticeNotebookPage> {
     AppState state,
     WordEntry word,
   ) async {
-    state.selectWordEntry(word);
+    await state.selectWordEntry(word);
+    if (!context.mounted) return;
+    final resolvedWord = state.currentWord ?? word;
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
+      MaterialPageRoute<void>(
+        builder: (_) => FollowAlongPage(word: resolvedWord),
+      ),
     );
   }
 

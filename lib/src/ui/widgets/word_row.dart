@@ -46,17 +46,14 @@ class WordRow extends StatelessWidget {
     final appearance = LegacyStyle.appearance;
     final rowAccent = appearance.randomEntryColors
         ? seededAccentColor(
-            '${word.wordbookId}:${word.word}',
+            word.stableIdentityKey,
             fallback: tokens.accent,
             saturation: 0.52,
             value: tokens.isDark ? 0.9 : 0.8,
           )
         : tokens.accent;
-    final subtitle = word.meaning?.trim().isNotEmpty == true
-        ? word.meaning!
-        : (word.fields.isEmpty ? '' : word.fields.first.asText());
-    final extraFields = word.fields
-        .where((item) => item.key != 'meaning')
+    final subtitle = word.listSubtitleText;
+    final extraFields = word.previewSupplementaryFields
         .take(showFields ? 2 : 0)
         .toList(growable: false);
     final hasMenuActions = onToggleFavorite != null || onToggleTask != null;

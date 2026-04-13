@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
-import '../../models/word_field.dart';
 import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import '../widgets/word_card.dart';
+import '../widgets/word_detail_sections.dart';
 import 'follow_along_page.dart';
 import 'word_editor_page.dart';
 
@@ -25,6 +25,8 @@ class WordDetailPage extends StatefulWidget {
 class _WordDetailPageState extends State<WordDetailPage> {
   int _transitionDirection = 1;
 
+  static const double _contentMaxWidth = 600;
+
   void _setTransitionDirection(int direction) {
     if (_transitionDirection == direction) return;
     setState(() {
@@ -35,14 +37,13 @@ class _WordDetailPageState extends State<WordDetailPage> {
   int _indexOfWord(List<WordEntry> words, WordEntry target) {
     for (var index = 0; index < words.length; index += 1) {
       final item = words[index];
-      if (item.id != null && target.id != null && item.id == target.id) {
-        return index;
-      }
-      if (item.word == target.word && item.wordbookId == target.wordbookId) {
+      if (item.sameEntryAs(target)) {
         return index;
       }
     }
-    return words.indexWhere((item) => item.word == target.word);
+    return words.indexWhere(
+      (item) => item.sameEntryAs(target, ignoreWordbook: true),
+    );
   }
 
   WordEntry? _resolveWord(AppState state) {
@@ -61,7 +62,9 @@ class _WordDetailPageState extends State<WordDetailPage> {
     }
 
     for (final item in state.words) {
-      if (item.word == widget.initialWord.word) return item;
+      if (item.sameEntryAs(widget.initialWord, ignoreWordbook: true)) {
+        return item;
+      }
     }
     final fallback = state.currentWord;
     if (fallback != null &&
@@ -71,18 +74,18 @@ class _WordDetailPageState extends State<WordDetailPage> {
     return widget.initialWord;
   }
 
-  void _moveToWord(
+  Future<void> _moveToWord(
     AppState state, {
     required List<WordEntry> visibleWords,
     required int currentIndex,
     required int offset,
-  }) {
+  }) async {
     if (visibleWords.isEmpty) return;
     _setTransitionDirection(offset >= 0 ? 1 : -1);
     final safeIndex = currentIndex < 0 ? 0 : currentIndex;
     final nextIndex =
         (safeIndex + offset + visibleWords.length) % visibleWords.length;
-    state.selectWordEntry(visibleWords[nextIndex]);
+    await state.selectWordEntry(visibleWords[nextIndex]);
   }
 
   Future<void> _openFollowAlong(
@@ -90,8 +93,9 @@ class _WordDetailPageState extends State<WordDetailPage> {
     AppState state,
     WordEntry word,
   ) async {
+    await state.selectWordEntry(word);
+    if (!context.mounted) return;
     final updatedWord = state.currentWord ?? word;
-    state.selectWordEntry(updatedWord);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => FollowAlongPage(word: updatedWord),
@@ -126,8 +130,8 @@ class _WordDetailPageState extends State<WordDetailPage> {
         'word': word.word,
         'wordId': word.id,
         'wordbookId': word.wordbookId,
-        'meaning': word.meaning,
-        'meaningLength': word.meaning?.length ?? 0,
+        'meaning': word.displayMeaning,
+        'meaningLength': word.displayMeaning.length,
         'rawContent': word.rawContent,
         'rawContentLength': word.rawContent.length,
         'rawContentHasNewlines': word.rawContent.contains('\n'),
@@ -137,31 +141,21 @@ class _WordDetailPageState extends State<WordDetailPage> {
             : word.rawContent,
         'fields': word.fields.map((f) => f.toJsonMap()).toList(),
         'fieldsCount': word.fields.length,
-        'legacyFields': <String, Object?>{
-          'examples': word.examples,
-          'examplesCount': word.examples?.length ?? 0,
-          'etymology': word.etymology,
-          'roots': word.roots,
-          'affixes': word.affixes,
-          'variations': word.variations,
-          'memory': word.memory,
-          'story': word.story,
-        },
+        'groupedFields': word.groupedFields
+            .map(
+              (group) => <String, Object?>{
+                'groupKey': group.groupKey,
+                'count': group.fields.length,
+              },
+            )
+            .toList(growable: false),
+        'entryUid': word.entryUid,
+        'schemaVersion': word.schemaVersion,
+        'primaryGloss': word.primaryGloss,
       },
     );
 
-    final fields = word.fields.isNotEmpty
-        ? word.fields
-        : buildFieldItemsFromRecord(<String, Object?>{
-            'meaning': word.meaning,
-            'examples': word.examples,
-            'etymology': word.etymology,
-            'roots': word.roots,
-            'affixes': word.affixes,
-            'variations': word.variations,
-            'memory': word.memory,
-            'story': word.story,
-          });
+    final groupedFields = word.groupedFields;
     final visibleWords = state.visibleWords;
     final currentIndex = _indexOfWord(visibleWords, word);
 
@@ -220,129 +214,158 @@ class _WordDetailPageState extends State<WordDetailPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        children: <Widget>[
-          WordCard(
-            word: word,
-            i18n: i18n,
-            density: WordCardDensity.immersive,
-            transitionStyle: state.config.wordPageTransitionStyle,
-            transitionDirection: _transitionDirection,
-            showMeaning: state.config.showText,
-            showFields: state.config.showText,
-            isFavorite: state.favorites.contains(word.word),
-            isTaskWord: state.taskWords.contains(word.word),
-            onToggleFavorite: () => state.toggleFavorite(word),
-            onToggleTask: () => state.toggleTaskWord(word),
-            onPlayPronunciation: () => state.previewPronunciation(word.word),
-            onFollowAlong: () => _openFollowAlong(context, state, word),
-            onPreviousWord: visibleWords.length <= 1
-                ? null
-                : () => _moveToWord(
-                    state,
-                    visibleWords: visibleWords,
-                    currentIndex: currentIndex,
-                    offset: -1,
-                  ),
-            onNextWord: visibleWords.length <= 1
-                ? null
-                : () => _moveToWord(
-                    state,
-                    visibleWords: visibleWords,
-                    currentIndex: currentIndex,
-                    offset: 1,
-                  ),
-            onSwipePrevious: visibleWords.length <= 1
-                ? null
-                : () => _moveToWord(
-                    state,
-                    visibleWords: visibleWords,
-                    currentIndex: currentIndex,
-                    offset: -1,
-                  ),
-            onSwipeNext: visibleWords.length <= 1
-                ? null
-                : () => _moveToWord(
-                    state,
-                    visibleWords: visibleWords,
-                    currentIndex: currentIndex,
-                    offset: 1,
-                  ),
-          ),
-          const SizedBox(height: 16),
-          if (state.config.showText)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    SectionHeader(
-                      title: pickUiText(i18n, zh: '全部字段', en: 'All fields'),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '阅读态默认展示，管理操作收在右上角菜单',
-                        en: 'Reading stays primary; management moves into the overflow menu.',
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            children: <Widget>[
+              WordCard(
+                word: word,
+                i18n: i18n,
+                density: WordCardDensity.immersive,
+                transitionStyle: state.config.wordPageTransitionStyle,
+                transitionDirection: _transitionDirection,
+                showMeaning: state.config.showText,
+                showFields: state.config.showText,
+                isFavorite: state.isFavoriteEntry(word),
+                isTaskWord: state.isTaskEntry(word),
+                onToggleFavorite: () => state.toggleFavorite(word),
+                onToggleTask: () => state.toggleTaskWord(word),
+                onPlayPronunciation: () =>
+                    state.previewPronunciation(word.word),
+                onFollowAlong: () => _openFollowAlong(context, state, word),
+                onPreviousWord: visibleWords.length <= 1
+                    ? null
+                    : () => _moveToWord(
+                        state,
+                        visibleWords: visibleWords,
+                        currentIndex: currentIndex,
+                        offset: -1,
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    for (final field in fields) ...<Widget>[
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outline,
+                onNextWord: visibleWords.length <= 1
+                    ? null
+                    : () => _moveToWord(
+                        state,
+                        visibleWords: visibleWords,
+                        currentIndex: currentIndex,
+                        offset: 1,
+                      ),
+                onSwipePrevious: visibleWords.length <= 1
+                    ? null
+                    : () => _moveToWord(
+                        state,
+                        visibleWords: visibleWords,
+                        currentIndex: currentIndex,
+                        offset: -1,
+                      ),
+                onSwipeNext: visibleWords.length <= 1
+                    ? null
+                    : () => _moveToWord(
+                        state,
+                        visibleWords: visibleWords,
+                        currentIndex: currentIndex,
+                        offset: 1,
+                      ),
+              ),
+              const SizedBox(height: 16),
+              if (state.config.showText) ...<Widget>[
+                KeyedSubtree(
+                  key: ValueKey<String>('detail:${word.stableIdentityKey}'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      WordDetailOverviewCard(
+                        i18n: i18n,
+                        word: word,
+                        groupedFields: groupedFields,
+                      ),
+                      const SizedBox(height: 16),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              SectionHeader(
+                                title: pickUiText(
+                                  i18n,
+                                  zh: '字段详情',
+                                  en: 'Field details',
+                                ),
+                                subtitle: pickUiText(
+                                  i18n,
+                                  zh: '按核心、用法、语言学、记忆与其他分组展示；长内容支持折叠，避免移动端一屏信息冲突。',
+                                  en: 'Fields are grouped into core, usage, linguistics, memory, and other sections, with long text collapsed for mobile readability.',
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              if (groupedFields.isEmpty)
+                                Text(
+                                  pickUiText(
+                                    i18n,
+                                    zh: '当前没有可展示的结构化字段，已回退到词卡摘要视图。',
+                                    en: 'No structured fields are available right now, so the card summary is used as the fallback view.',
+                                  ),
+                                )
+                              else
+                                for (final group in groupedFields) ...<Widget>[
+                                  WordFieldGroupCard(
+                                    key: ValueKey<String>(
+                                      '${word.stableIdentityKey}:${group.groupKey}',
+                                    ),
+                                    i18n: i18n,
+                                    group: group,
+                                  ),
+                                  if (group != groupedFields.last)
+                                    const SizedBox(height: 12),
+                                ],
+                            ],
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              localizedFieldLabel(i18n, field),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(field.asText()),
-                          ],
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            )
-          else
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      '文本当前已隐藏',
-                      style: Theme.of(context).textTheme.titleMedium,
+              ] else
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          pickUiText(i18n, zh: '文本当前已隐藏', en: 'Text is hidden'),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          pickUiText(
+                            i18n,
+                            zh: '点击右上角的可见性按钮，可以重新显示释义和字段内容。',
+                            en: 'Use the visibility button in the top bar to reveal meanings and field content again.',
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            state.updateConfig(
+                              state.config.copyWith(showText: true),
+                            );
+                          },
+                          icon: const Icon(Icons.visibility_rounded),
+                          label: Text(
+                            pickUiText(i18n, zh: '显示文本', en: 'Show text'),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    const Text('点击右上角的可见性按钮，可以重新显示释义和字段内容。'),
-                    const SizedBox(height: 14),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        state.updateConfig(
-                          state.config.copyWith(showText: true),
-                        );
-                      },
-                      icon: const Icon(Icons.visibility_rounded),
-                      label: const Text('显示文本'),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

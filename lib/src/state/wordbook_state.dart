@@ -8,7 +8,6 @@ import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/wordbook.dart';
 import '../services/database_service.dart';
-import '../services/wordbook_import_service.dart';
 import '../utils/search_text_normalizer.dart' as search_text;
 import 'app_state.dart' show SearchMode;
 
@@ -91,13 +90,22 @@ class WordbookState extends ChangeNotifier {
             .contains(normalizedQuery);
       }
       if (_searchMode == SearchMode.meaning) {
-        return (word.meaning ?? '').toLowerCase().contains(query.toLowerCase());
+        return search_text
+            .normalizeSearchText(word.searchMeaningText)
+            .contains(normalizedQuery);
       }
       if (_searchMode == SearchMode.fuzzy) {
         return _matchesFuzzy(word, normalizedQuery);
       }
-      return word.word.toLowerCase().contains(query.toLowerCase()) ||
-          (word.meaning ?? '').toLowerCase().contains(query.toLowerCase());
+      return search_text
+              .normalizeSearchText(word.word)
+              .contains(normalizedQuery) ||
+          search_text
+              .normalizeSearchText(word.searchMeaningText)
+              .contains(normalizedQuery) ||
+          search_text
+              .normalizeSearchText(word.searchDetailsText)
+              .contains(normalizedQuery);
     }).toList();
   }
 
@@ -491,7 +499,7 @@ class WordbookState extends ChangeNotifier {
     ]);
 
     return WordEntryPayload(
-      word: word!.trim(),
+      word: word.trim(),
       fields: allFields,
       rawContent: jsonEncode(entry),
     );

@@ -5,6 +5,8 @@ import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('play config spelling', () {
     test('defaults ASR language to auto for system-aware speech input', () {
       expect(PlayConfig.defaults.asr.language, 'auto');
@@ -79,6 +81,41 @@ void main() {
       ]);
       expect(queue[1].text, 'w - o - r - d');
     });
+
+    test(
+      'repeat count keeps meaning playable despite legacy disabled toggle',
+      () {
+        final word = WordEntry(
+          wordbookId: 1,
+          word: 'abandon',
+          fields: const <WordFieldItem>[
+            WordFieldItem(
+              key: 'meaning',
+              label: 'Meaning',
+              value: 'to leave behind',
+            ),
+          ],
+        );
+        final config = PlayConfig.defaults.copyWith(
+          fieldSettings: const <String, FieldPlaybackSetting>{
+            'meaning': FieldPlaybackSetting(enabled: false),
+          },
+          repeats: <String, int>{
+            ...PlayConfig.defaults.repeats,
+            'word': 1,
+            'meaning': 1,
+          },
+        );
+
+        final queue = buildPlayQueue(word, config);
+
+        expect(queue.map((item) => item.type).toList(growable: false), <String>[
+          'word',
+          'meaning',
+        ]);
+        expect(queue.last.text, 'to leave behind');
+      },
+    );
 
     test('json round-trip preserves spelling and transition settings', () {
       final config = PlayConfig.defaults.copyWith(

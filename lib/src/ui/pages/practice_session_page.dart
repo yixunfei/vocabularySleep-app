@@ -1,17 +1,22 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/practice_question_type.dart';
 import '../../models/word_entry.dart';
+import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
 import '../widgets/word_card.dart';
 import 'practice_support.dart';
+
+const int _practiceAnswerTransitionWarnThresholdMs = 120;
+const int _practiceTaskWordSyncWarnThresholdMs = 120;
 
 class PracticeSessionPage extends StatefulWidget {
   const PracticeSessionPage({
@@ -49,8 +54,48 @@ class _PracticeAnswerDecision {
   final List<String> weakReasonIds;
 }
 
+class _PendingPracticeAnswerFeedback {
+  const _PendingPracticeAnswerFeedback({
+    required this.current,
+    required this.remembered,
+    required this.addToWrongNotebook,
+    required this.weakReasonIds,
+  });
+
+  final WordEntry current;
+  final bool remembered;
+  final bool addToWrongNotebook;
+  final List<String> weakReasonIds;
+
+  _PendingPracticeAnswerFeedback copyWith({
+    bool? addToWrongNotebook,
+    List<String>? weakReasonIds,
+  }) {
+    return _PendingPracticeAnswerFeedback(
+      current: current,
+      remembered: remembered,
+      addToWrongNotebook: addToWrongNotebook ?? this.addToWrongNotebook,
+      weakReasonIds: weakReasonIds ?? this.weakReasonIds,
+    );
+  }
+}
+
+class _PracticeMeaningCandidate {
+  const _PracticeMeaningCandidate({
+    required this.meaning,
+    required this.normalizedMeaning,
+  });
+
+  final String meaning;
+  final String normalizedMeaning;
+}
+
 class _PracticeSessionPageState extends State<PracticeSessionPage> {
+  final AppLogService _log = AppLogService.instance;
   late List<WordEntry> _sessionWords;
+  Map<String, String> _sessionMeaningByEntryKey = <String, String>{};
+  List<_PracticeMeaningCandidate> _sessionMeaningCandidates =
+      const <_PracticeMeaningCandidate>[];
   final List<WordEntry> _rememberedWords = <WordEntry>[];
   final List<WordEntry> _weakWords = <WordEntry>[];
   final Map<String, List<String>> _weakReasonIdsByWord =
@@ -77,8 +122,11 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
   bool _objectiveCorrect = false;
   String? _objectiveSubmittedAnswer;
   String? _lastAutoPlayedKey;
+  _PendingPracticeAnswerFeedback? _pendingAnswerFeedback;
 
   bool get _isCompleted => _index >= _sessionWords.length;
+  bool get _usesInlineAnswerFeedback =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
 
   WordEntry? get _currentWord {
     if (_sessionWords.isEmpty || _isCompleted) {
@@ -94,6 +142,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (widget.shuffle) {
       _sessionWords.shuffle();
     }
+    _rebuildSessionDerivedCaches();
   }
 
   @override
@@ -121,8 +170,11 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
-    final i18n = AppI18n(state.uiLanguage);
+    final uiLanguage = context.select<AppState, String>(
+      (state) => state.uiLanguage,
+    );
+    final state = context.read<AppState>();
+    final i18n = AppI18n(uiLanguage);
     if (_sessionWords.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.title)),
@@ -141,7 +193,6 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     final current = _currentWord;
     final total = _sessionWords.length;
     final progress = total == 0 ? 0.0 : (_index / total).clamp(0.0, 1.0);
-    _maybeAutoPlayCurrentWord(state);
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
@@ -175,7 +226,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (_sessionWords.any(_canBuildMeaningChoice)) {
       available.add(PracticeQuestionType.meaningChoice);
     }
-    if (_sessionWords.any((word) => practiceMeaningText(word).isNotEmpty)) {
+    if (_sessionWords.any(
+      (word) => _practiceMeaningForEntry(word).isNotEmpty,
+    )) {
       available.add(PracticeQuestionType.spelling);
     }
     if (available.length >= 2) {
@@ -191,39 +244,26 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (_canBuildMeaningChoice(word)) {
       supported.add(PracticeQuestionType.meaningChoice);
     }
-    if (practiceMeaningText(word).isNotEmpty) {
+    if (_practiceMeaningForEntry(word).isNotEmpty) {
       supported.add(PracticeQuestionType.spelling);
     }
     return supported;
   }
 
   bool _canBuildMeaningChoice(WordEntry word) {
-    final currentMeaning = practiceMeaningText(word);
+    final currentMeaning = _practiceMeaningForEntry(word);
     if (currentMeaning.isEmpty) {
       return false;
     }
-    final distractorCount = _meaningPoolEntries()
+    final currentNormalizedMeaning = normalizePracticeAnswer(currentMeaning);
+    final distractorCount = _sessionMeaningCandidates
         .where(
-          (entry) =>
-              !_isSameWord(entry, word) &&
-              practiceMeaningText(entry).isNotEmpty &&
-              normalizePracticeAnswer(practiceMeaningText(entry)) !=
-                  normalizePracticeAnswer(currentMeaning),
+          (candidate) =>
+              candidate.normalizedMeaning != currentNormalizedMeaning,
         )
-        .map(practiceMeaningText)
-        .toSet()
+        .take(2)
         .length;
     return distractorCount >= 2;
-  }
-
-  Iterable<WordEntry> _meaningPoolEntries() sync* {
-    final seen = <String>{};
-    for (final entry in _sessionWords) {
-      final identity = _entryKey(entry);
-      if (seen.add(identity)) {
-        yield entry;
-      }
-    }
   }
 
   List<Widget> _buildSession(
@@ -428,7 +468,17 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                   ),
             ),
             const SizedBox(height: 12),
-            LinearProgressIndicator(value: progress),
+            Semantics(
+              label: pickUiText(i18n, zh: '练习进度', en: 'Session progress'),
+              value: pickUiText(
+                i18n,
+                zh: '第 ${_index + 1} 题，共 $total 题',
+                en: 'Item ${_index + 1} of $total',
+              ),
+              child: ExcludeSemantics(
+                child: LinearProgressIndicator(value: progress),
+              ),
+            ),
             const SizedBox(height: 12),
             Row(
               children: <Widget>[
@@ -676,6 +726,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     AppI18n i18n,
     WordEntry current,
   ) {
+    final pendingFeedback = _pendingFeedbackForCurrent(current);
     return <Widget>[
       WordCard(
         word: current,
@@ -683,8 +734,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         density: WordCardDensity.practice,
         revealPracticeAnswer: _revealed,
         showFields: _hintRevealed,
-        isFavorite: state.favorites.contains(current.word),
-        isTaskWord: state.taskWords.contains(current.word),
+        isFavorite: state.isFavoriteEntry(current),
+        isTaskWord: state.isTaskEntry(current),
         onPlayPronunciation: () => state.previewPronunciation(current.word),
         footer: Wrap(
           spacing: 12,
@@ -726,7 +777,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         children: <Widget>[
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () => _markResult(state, false),
+              onPressed: pendingFeedback == null
+                  ? () => _markResult(state, false)
+                  : null,
               icon: const Icon(Icons.refresh_rounded),
               label: Text(pickUiText(i18n, zh: '没记住', en: 'Not yet')),
             ),
@@ -734,13 +787,24 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
           const SizedBox(width: 12),
           Expanded(
             child: FilledButton.icon(
-              onPressed: () => _markResult(state, true),
+              onPressed: pendingFeedback == null
+                  ? () => _markResult(state, true)
+                  : null,
               icon: const Icon(Icons.check_rounded),
               label: Text(pickUiText(i18n, zh: '记住了', en: 'Remembered')),
             ),
           ),
         ],
       ),
+      if (pendingFeedback != null) ...<Widget>[
+        const SizedBox(height: 16),
+        _buildInlineAnswerFeedbackCard(
+          context,
+          state: state,
+          i18n: i18n,
+          feedback: pendingFeedback,
+        ),
+      ],
     ];
   }
 
@@ -750,6 +814,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     AppI18n i18n,
     WordEntry current,
   ) {
+    final pendingFeedback = _pendingFeedbackForCurrent(current);
     return <Widget>[
       Card(
         child: Padding(
@@ -785,7 +850,14 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         ),
       ),
       const SizedBox(height: 16),
-      if (_objectiveAnswered)
+      if (pendingFeedback != null)
+        _buildInlineAnswerFeedbackCard(
+          context,
+          state: state,
+          i18n: i18n,
+          feedback: pendingFeedback,
+        )
+      else if (_objectiveAnswered)
         FilledButton.icon(
           onPressed: () => _continueObjectiveQuestion(state),
           icon: Icon(
@@ -808,13 +880,196 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     ];
   }
 
+  _PendingPracticeAnswerFeedback? _pendingFeedbackForCurrent(
+    WordEntry current,
+  ) {
+    final pending = _pendingAnswerFeedback;
+    if (pending == null || !_isSameWord(pending.current, current)) {
+      return null;
+    }
+    return pending;
+  }
+
+  Widget _buildInlineAnswerFeedbackCard(
+    BuildContext context, {
+    required AppState state,
+    required AppI18n i18n,
+    required _PendingPracticeAnswerFeedback feedback,
+  }) {
+    final theme = Theme.of(context);
+    final meaning = _practiceMeaningForEntry(feedback.current);
+    final isLastItem = _index + 1 >= _sessionWords.length;
+    final selectedReasons = feedback.weakReasonIds.toSet();
+
+    return Semantics(
+      container: true,
+      child: Card(
+        key: const ValueKey<String>('practice-answer-feedback-card'),
+        color: theme.colorScheme.surfaceContainerLow,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                feedback.remembered
+                    ? pickUiText(i18n, zh: '答得漂亮', en: 'Nice work')
+                    : pickUiText(i18n, zh: '没关系，再来一次', en: 'Keep going'),
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                feedback.remembered
+                    ? pickUiText(
+                        i18n,
+                        zh: '这题已经拿下了，继续保持。',
+                        en: 'You have this one. Keep the momentum going.',
+                      )
+                    : pickUiText(
+                        i18n,
+                        zh: '给这次卡壳补一个原因，下一轮会更准。',
+                        en: 'Tag the blocker and the next round will be more focused.',
+                      ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      feedback.current.word,
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    if (meaning.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(meaning),
+                    ],
+                  ],
+                ),
+              ),
+              if (!feedback.remembered) ...<Widget>[
+                const SizedBox(height: 12),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    pickUiText(i18n, zh: '加入错题本', en: 'Add to wrong notebook'),
+                  ),
+                  subtitle: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '这一轮结束前也会立刻落地到错题本和记忆轨道。',
+                      en: 'This will persist to the wrong notebook and memory lanes right away.',
+                    ),
+                  ),
+                  value: feedback.addToWrongNotebook,
+                  onChanged: (value) {
+                    setState(() {
+                      _pendingAnswerFeedback = feedback.copyWith(
+                        addToWrongNotebook: value,
+                      );
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  pickUiText(i18n, zh: '没记住的主要原因', en: 'Main blocker'),
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: practiceWeakReasonIds
+                      .map(
+                        (reasonId) => FilterChip(
+                          selected: selectedReasons.contains(reasonId),
+                          avatar: Icon(
+                            practiceWeakReasonIcon(reasonId),
+                            size: 16,
+                          ),
+                          label: Text(practiceWeakReasonLabel(i18n, reasonId)),
+                          onSelected: (selected) {
+                            final nextReasons = Set<String>.from(
+                              feedback.weakReasonIds,
+                            );
+                            if (selected) {
+                              nextReasons.add(reasonId);
+                            } else {
+                              nextReasons.remove(reasonId);
+                            }
+                            setState(() {
+                              _pendingAnswerFeedback = feedback.copyWith(
+                                weakReasonIds: nextReasons.toList(
+                                  growable: false,
+                                ),
+                              );
+                            });
+                          },
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+                if (_autoAddWeakWordsToTask &&
+                    !state.isTaskEntry(feedback.current)) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '本题还会同步加入任务词，方便稍后回捞。',
+                      en: 'This word will also be added to your task list for follow-up practice.',
+                    ),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ],
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _pendingAnswerFeedback = null;
+                      });
+                    },
+                    child: Text(pickUiText(i18n, zh: '返回', en: 'Back')),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => _commitInlineAnswerFeedback(state),
+                    icon: Icon(
+                      isLastItem
+                          ? Icons.flag_rounded
+                          : Icons.navigate_next_rounded,
+                    ),
+                    label: Text(
+                      isLastItem
+                          ? pickUiText(i18n, zh: '完成这一轮', en: 'Finish round')
+                          : pickUiText(i18n, zh: '继续下一题', en: 'Next word'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMeaningChoiceBody(
     BuildContext context,
     AppState state,
     AppI18n i18n,
     WordEntry current,
   ) {
-    final correctMeaning = practiceMeaningText(current);
+    final correctMeaning = _practiceMeaningForEntry(current);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -835,13 +1090,12 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         ),
         const SizedBox(height: 14),
         ..._meaningOptions.map((option) {
+          final trimmedOption = option.trim();
+          final trimmedCorrectMeaning = correctMeaning.trim();
           final selected =
-              _objectiveSubmittedAnswer != null &&
-              normalizePracticeAnswer(_objectiveSubmittedAnswer!) ==
-                  normalizePracticeAnswer(option);
-          final isCorrectOption =
-              normalizePracticeAnswer(option) ==
-              normalizePracticeAnswer(correctMeaning);
+              _objectiveSubmittedAnswer?.trim().isNotEmpty == true &&
+              _objectiveSubmittedAnswer!.trim() == trimmedOption;
+          final isCorrectOption = trimmedOption == trimmedCorrectMeaning;
           final color = !_objectiveAnswered
               ? null
               : isCorrectOption
@@ -878,8 +1132,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                 ? pickUiText(i18n, zh: '回答正确。', en: 'Correct.')
                 : pickUiText(
                     i18n,
-                    zh: '正确答案：$correctMeaning',
-                    en: 'Correct answer: $correctMeaning',
+                    zh: '回答错误。正确答案：$correctMeaning',
+                    en: 'Not quite. Correct answer: $correctMeaning',
                   ),
           ),
       ],
@@ -899,9 +1153,9 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
           children: <Widget>[
             Expanded(
               child: Text(
-                practiceMeaningText(current).isEmpty
+                _practiceMeaningForEntry(current).isEmpty
                     ? current.word
-                    : practiceMeaningText(current),
+                    : _practiceMeaningForEntry(current),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -932,8 +1186,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                 ? pickUiText(i18n, zh: '拼写正确。', en: 'Correct spelling.')
                 : pickUiText(
                     i18n,
-                    zh: '正确拼写：${current.word}',
-                    en: 'Correct spelling: ${current.word}',
+                    zh: '拼写错误。正确拼写：${current.word}',
+                    en: 'Not quite. Correct spelling: ${current.word}',
                   ),
           ),
         ],
@@ -1002,14 +1256,14 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (current == null) {
       return;
     }
+    final resolvedWeakReasonIds = remembered
+        ? const <String>[]
+        : (weakReasonIds.isNotEmpty
+              ? weakReasonIds
+              : (_selectedWeakReasons.isEmpty
+                    ? const <String>['recall']
+                    : _selectedWeakReasons.toList(growable: false)));
     if (!_answerFeedbackDialogEnabled) {
-      final resolvedWeakReasonIds = remembered
-          ? const <String>[]
-          : (weakReasonIds.isNotEmpty
-                ? weakReasonIds
-                : (_selectedWeakReasons.isEmpty
-                      ? const <String>['recall']
-                      : _selectedWeakReasons.toList(growable: false)));
       _applyAnswerResult(
         state,
         current: current,
@@ -1019,11 +1273,22 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       );
       return;
     }
+    if (_usesInlineAnswerFeedback) {
+      setState(() {
+        _pendingAnswerFeedback = _PendingPracticeAnswerFeedback(
+          current: current,
+          remembered: remembered,
+          addToWrongNotebook: !remembered,
+          weakReasonIds: resolvedWeakReasonIds,
+        );
+      });
+      return;
+    }
     final decision = await _showAnswerFeedbackDialog(
       state,
       current: current,
       remembered: remembered,
-      weakReasonIds: weakReasonIds,
+      weakReasonIds: resolvedWeakReasonIds,
     );
     if (!mounted || decision == null) {
       return;
@@ -1044,13 +1309,14 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     required List<String> weakReasonIds,
     required bool addToWrongNotebook,
   }) {
+    final transitionWatch = Stopwatch()..start();
+    var stateWriteElapsedMs = 0;
+    var prepareElapsedMs = 0;
     var nextRemembered = _remembered;
     final nextRememberedWords = List<WordEntry>.from(_rememberedWords);
     final nextWeakWords = List<WordEntry>.from(_weakWords);
     final shouldAddToTask =
-        !remembered &&
-        _autoAddWeakWordsToTask &&
-        !state.taskWords.contains(current.word);
+        !remembered && _autoAddWeakWordsToTask && !state.isTaskEntry(current);
 
     if (remembered) {
       nextRemembered += 1;
@@ -1073,6 +1339,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _sessionStarted = true;
       state.startPracticeSession(title: widget.title);
     }
+    final stateWriteWatch = Stopwatch()..start();
     state.recordPracticeAnswer(
       entry: current,
       remembered: remembered,
@@ -1080,6 +1347,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       addToWrongNotebook: addToWrongNotebook,
       sessionTitle: widget.title,
     );
+    stateWriteElapsedMs = stateWriteWatch.elapsedMilliseconds;
 
     final nextIndex = _index + 1;
     setState(() {
@@ -1093,10 +1361,11 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _index = nextIndex;
       _revealed = false;
       _hintRevealed = state.practiceShowHintsByDefault;
+      _pendingAnswerFeedback = null;
     });
 
     if (shouldAddToTask) {
-      unawaited(state.toggleTaskWord(current));
+      _scheduleTaskWordAutoAdd(state, current);
     }
 
     if (nextIndex >= _sessionWords.length) {
@@ -1107,9 +1376,25 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
           _weakReasonIdsByWord,
         ),
       );
+      _logAnswerTransitionIfSlow(
+        current: current,
+        remembered: remembered,
+        totalElapsedMs: transitionWatch.elapsedMilliseconds,
+        stateWriteElapsedMs: stateWriteElapsedMs,
+        prepareElapsedMs: prepareElapsedMs,
+      );
       return;
     }
+    final prepareWatch = Stopwatch()..start();
     _prepareCurrentQuestion();
+    prepareElapsedMs = prepareWatch.elapsedMilliseconds;
+    _logAnswerTransitionIfSlow(
+      current: current,
+      remembered: remembered,
+      totalElapsedMs: transitionWatch.elapsedMilliseconds,
+      stateWriteElapsedMs: stateWriteElapsedMs,
+      prepareElapsedMs: prepareElapsedMs,
+    );
   }
 
   Future<void> _continueObjectiveQuestion(AppState state) async {
@@ -1153,6 +1438,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       if (shuffle) {
         _sessionWords.shuffle();
       }
+      _rebuildSessionDerivedCaches();
       _rememberedWords.clear();
       _weakWords.clear();
       _weakReasonIdsByWord.clear();
@@ -1162,6 +1448,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _hintRevealed = context.read<AppState>().practiceShowHintsByDefault;
       _reported = false;
       _sessionStarted = false;
+      _pendingAnswerFeedback = null;
     });
     _prepareCurrentQuestion();
   }
@@ -1234,7 +1521,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     List<String> weakReasonIds = const <String>[],
   }) {
     final i18n = AppI18n(state.uiLanguage);
-    final meaning = practiceMeaningText(current);
+    final meaning = _practiceMeaningForEntry(current);
     final isLastItem = _index + 1 >= _sessionWords.length;
     final initialReasons = weakReasonIds.isNotEmpty
         ? weakReasonIds
@@ -1357,7 +1644,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                             .toList(growable: false),
                       ),
                       if (_autoAddWeakWordsToTask &&
-                          !state.taskWords.contains(current.word)) ...<Widget>[
+                          !state.isTaskEntry(current)) ...<Widget>[
                         const SizedBox(height: 12),
                         Text(
                           pickUiText(
@@ -1411,6 +1698,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
 
   void _prepareCurrentQuestion() {
     final current = _currentWord;
+    _pendingAnswerFeedback = null;
     _selectedWeakReasons.clear();
     _objectiveAnswered = false;
     _objectiveCorrect = false;
@@ -1433,23 +1721,21 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         _spellingFocusNode.requestFocus();
       });
     }
+    _maybeAutoPlayCurrentWord(context.read<AppState>());
   }
 
   List<String> _buildMeaningOptions(WordEntry current) {
-    final currentMeaning = practiceMeaningText(current);
+    final currentMeaning = _practiceMeaningForEntry(current);
     if (currentMeaning.isEmpty) {
       return const <String>[];
     }
-    final distractors = _meaningPoolEntries()
+    final currentNormalizedMeaning = normalizePracticeAnswer(currentMeaning);
+    final distractors = _sessionMeaningCandidates
         .where(
-          (entry) =>
-              !_isSameWord(entry, current) &&
-              practiceMeaningText(entry).isNotEmpty &&
-              normalizePracticeAnswer(practiceMeaningText(entry)) !=
-                  normalizePracticeAnswer(currentMeaning),
+          (candidate) =>
+              candidate.normalizedMeaning != currentNormalizedMeaning,
         )
-        .map(practiceMeaningText)
-        .toSet()
+        .map((candidate) => candidate.meaning)
         .toList(growable: false);
     distractors.shuffle();
     final options = <String>[currentMeaning, ...distractors.take(3)]..shuffle();
@@ -1465,8 +1751,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       return;
     }
     final isCorrect =
-        normalizePracticeAnswer(selectedMeaning) ==
-        normalizePracticeAnswer(practiceMeaningText(current));
+        selectedMeaning.trim() == _practiceMeaningForEntry(current).trim();
     setState(() {
       _objectiveAnswered = true;
       _objectiveCorrect = isCorrect;
@@ -1491,6 +1776,26 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     });
   }
 
+  void _commitInlineAnswerFeedback(AppState state) {
+    final feedback = _pendingAnswerFeedback;
+    if (feedback == null) {
+      return;
+    }
+    _applyAnswerResult(
+      state,
+      current: feedback.current,
+      remembered: feedback.remembered,
+      weakReasonIds: feedback.remembered
+          ? const <String>[]
+          : (feedback.weakReasonIds.isEmpty
+                ? const <String>['recall']
+                : feedback.weakReasonIds),
+      addToWrongNotebook: feedback.remembered
+          ? false
+          : feedback.addToWrongNotebook,
+    );
+  }
+
   void _maybeAutoPlayCurrentWord(AppState state, {bool force = false}) {
     if (!_autoPlayPronunciation) {
       return;
@@ -1512,17 +1817,103 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     });
   }
 
-  String _entryKey(WordEntry entry) =>
-      '${entry.wordbookId}:${entry.id ?? entry.word}';
+  String _entryKey(WordEntry entry) => entry.stableIdentityKey;
 
   bool _isSameWord(WordEntry a, WordEntry b) {
-    final aId = a.id;
-    final bId = b.id;
-    if (aId != null && bId != null) {
-      return aId == bId;
-    }
-    return a.wordbookId == b.wordbookId && a.word == b.word;
+    return a.sameEntryAs(b);
   }
 
-  String _reasonKey(WordEntry entry) => entry.word.trim().toLowerCase();
+  void _rebuildSessionDerivedCaches() {
+    final nextMeaningsByEntryKey = <String, String>{};
+    final nextMeaningCandidates = <_PracticeMeaningCandidate>[];
+    final seenNormalizedMeanings = <String>{};
+
+    for (final entry in _sessionWords) {
+      final meaning = practiceMeaningText(entry);
+      nextMeaningsByEntryKey[_entryKey(entry)] = meaning;
+      final normalizedMeaning = normalizePracticeAnswer(meaning);
+      if (normalizedMeaning.isEmpty ||
+          !seenNormalizedMeanings.add(normalizedMeaning)) {
+        continue;
+      }
+      nextMeaningCandidates.add(
+        _PracticeMeaningCandidate(
+          meaning: meaning,
+          normalizedMeaning: normalizedMeaning,
+        ),
+      );
+    }
+
+    _sessionMeaningByEntryKey = nextMeaningsByEntryKey;
+    _sessionMeaningCandidates = nextMeaningCandidates;
+  }
+
+  String _practiceMeaningForEntry(WordEntry entry) {
+    return _sessionMeaningByEntryKey[_entryKey(entry)] ??
+        practiceMeaningText(entry);
+  }
+
+  void _scheduleTaskWordAutoAdd(AppState state, WordEntry current) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final watch = Stopwatch()..start();
+      final future = state.toggleTaskWord(current);
+      unawaited(
+        future
+            .then((_) {
+              if (watch.elapsedMilliseconds <
+                  _practiceTaskWordSyncWarnThresholdMs) {
+                return;
+              }
+              _log.w(
+                'practice',
+                'practice auto-add task word slow',
+                data: <String, Object?>{
+                  'word': current.word,
+                  'elapsedMs': watch.elapsedMilliseconds,
+                },
+              );
+            })
+            .catchError((Object error, StackTrace stackTrace) {
+              _log.e(
+                'practice',
+                'practice auto-add task word failed',
+                error: error,
+                stackTrace: stackTrace,
+                data: <String, Object?>{'word': current.word},
+              );
+            }),
+      );
+    });
+  }
+
+  void _logAnswerTransitionIfSlow({
+    required WordEntry current,
+    required bool remembered,
+    required int totalElapsedMs,
+    required int stateWriteElapsedMs,
+    required int prepareElapsedMs,
+  }) {
+    if (totalElapsedMs < _practiceAnswerTransitionWarnThresholdMs) {
+      return;
+    }
+    _log.w(
+      'practice',
+      'practice answer transition slow',
+      data: <String, Object?>{
+        'word': current.word,
+        'remembered': remembered,
+        'questionType': _resolvedQuestionType.name,
+        'elapsedMs': totalElapsedMs,
+        'stateWriteElapsedMs': stateWriteElapsedMs,
+        'prepareElapsedMs': prepareElapsedMs,
+        'sessionIndex': _index,
+        'sessionSize': _sessionWords.length,
+      },
+    );
+  }
+
+  String _reasonKey(WordEntry entry) => entry.stableIdentityKey;
 }

@@ -17,9 +17,11 @@ import 'app_log_service.dart';
 class TtsService {
   TtsService() {
     _flutterTts.setCompletionHandler(() {
+      _log.i('tts', 'completionHandler fired');
       _completeLocalSpeak();
     });
     _flutterTts.setCancelHandler(() {
+      _log.i('tts', 'cancelHandler fired');
       _completeLocalSpeak();
     });
     _flutterTts.setErrorHandler((message) {
@@ -29,6 +31,9 @@ class TtsService {
         data: <String, Object?>{'message': '$message'},
       );
       _completeLocalSpeak(error: StateError('Local TTS playback failed.'));
+    });
+    _flutterTts.setStartHandler(() {
+      _log.i('tts', 'startHandler fired');
     });
   }
 
@@ -64,14 +69,19 @@ class TtsService {
   bool _localInitialized = false;
   bool _localAudioConfigured = false;
   bool _apiAudioConfigured = false;
+  List<_LocalTtsVoice>? _cachedLocalVoices;
+  Future<List<_LocalTtsVoice>>? _localVoicesLoadFuture;
   String? _lastLocalLanguage;
+  String? _lastLocalVoiceSignature;
   int _apiSpeakToken = 0;
 
   Future<void> _ensureLocalInitialized() async {
     if (_localInitialized) return;
+    // Keep platform speak() returning immediately and coordinate completion in
+    // Dart via callbacks, with Windows-specific polling only as a fallback.
     await _runOp<dynamic>(
       'local.awaitSpeakCompletion',
-      () => _flutterTts.awaitSpeakCompletion(true),
+      () => _flutterTts.awaitSpeakCompletion(false),
       swallowError: true,
     );
     await _configureLocalAudioSession();
@@ -126,34 +136,15 @@ class TtsService {
   }
 
   Future<List<String>> getLocalVoices() async {
-    final dynamic voicesRaw = await _runOp<dynamic>(
-      'local.getVoices',
-      () => _flutterTts.getVoices,
-      swallowError: true,
-    );
-    if (voicesRaw is! List) {
-      _log.w(
-        'tts',
-        'local.getVoices returned unexpected payload',
-        data: <String, Object?>{
-          'runtimeType': voicesRaw.runtimeType.toString(),
-        },
-      );
-      return const <String>[];
-    }
-
+    final voices = await _loadLocalVoiceOptions();
     final names = <String>{};
-    for (final voice in voicesRaw) {
-      if (voice is Map) {
-        final value = voice['name']?.toString() ?? '';
-        if (value.isNotEmpty) names.add(value);
-      } else {
-        final value = '$voice'.trim();
-        if (value.isNotEmpty) names.add(value);
+    for (final voice in voices) {
+      if (voice.name.isNotEmpty) {
+        names.add(voice.name);
       }
     }
     final output = names.toList()..sort();
-return output;
+    return output;
   }
 
   Future<int> getApiCacheSizeBytes() async {
@@ -178,18 +169,25 @@ return output;
     }
   }
 
-  Future<void> speak(String text, TtsConfig config) async {
+  Future<void> speak(
+    String text,
+    TtsConfig config, {
+    bool preCacheOnly = false,
+  }) async {
     final content = text.trim();
     if (content.isEmpty) return;
-try {
+    try {
       if (config.provider == TtsProviderType.local) {
-        await _speakByLocal(content, config);
+        // No pre-cache needed for local TTS
+        if (!preCacheOnly) {
+          await _speakByLocal(content, config);
+        }
       } else {
-        await _speakByApi(content, config);
+        await _speakByApi(content, config, preCacheOnly: preCacheOnly);
       }
     } catch (error, stackTrace) {
       if (error is _ApiSpeakInterrupted) {
-return;
+        return;
       }
       _log.e(
         'tts',
@@ -199,6 +197,7 @@ return;
         data: <String, Object?>{
           'provider': config.provider.name,
           'textPreview': _preview(content),
+          'preCacheOnly': preCacheOnly,
         },
       );
       rethrow;
@@ -247,6 +246,19 @@ return;
   }
 
   Future<void> _speakByLocal(String text, TtsConfig config) async {
+    _log.i(
+      'tts',
+      'speakByLocal: BEGIN',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'textLength': text.length,
+        'language': config.language,
+        'localVoice': config.localVoice,
+        'speed': config.speed,
+        'volume': config.volume,
+        'platform': defaultTargetPlatform.toString(),
+      },
+    );
     await _ensureLocalInitialized();
     _interruptApiRequest(reason: 'switch_to_local');
     await _runOp<void>(
@@ -282,61 +294,245 @@ return;
       swallowError: true,
     );
 
-    final skipVoiceAndLanguageConfig =
-        !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
-    if (skipVoiceAndLanguageConfig) {
-      _log.w(
-        'tts',
-        'windows safe mode enabled, skip setLanguage/setVoice',
-        data: <String, Object?>{
-          'language': config.language,
-          'voice': config.localVoice,
-        },
-      );
-    } else {
-      final language = _normalizeLanguage(config.language);
-      if (language != null && language != _lastLocalLanguage) {
-        await _runOp<dynamic>(
-          'local.setLanguage',
-          () => _flutterTts.setLanguage(language),
-          data: <String, Object?>{'value': language},
-          swallowError: true,
-        );
-        _lastLocalLanguage = language;
-      }
-
-      final voice = config.localVoice.trim();
-      if (voice.isNotEmpty) {
-        await _runOp<dynamic>(
-          'local.setVoice',
-          () => _flutterTts.setVoice(<String, String>{'name': voice}),
-          data: <String, Object?>{'value': voice},
-          swallowError: true,
-        );
-      }
-    }
+    await _configureLocalVoiceAndLanguage(text, config);
+    _log.i(
+      'tts',
+      'speakByLocal: voice/language configured',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'lastLocalLanguage': _lastLocalLanguage,
+        'lastLocalVoiceSignature': _lastLocalVoiceSignature,
+      },
+    );
 
     final completer = Completer<void>();
     _localCompletionCompleter = completer;
+
+    // On Windows, prefer completion callbacks and keep polling as a fallback.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      _log.i(
+        'tts',
+        'local speak [win]: invoking platform speak',
+        data: <String, Object?>{'textPreview': _preview(text)},
+      );
+      final result = await _runOp<dynamic>(
+        'local.speak',
+        () => _flutterTts.speak(text, focus: false),
+        data: <String, Object?>{'textPreview': _preview(text)},
+      );
+      _log.i(
+        'tts',
+        'local speak [win]: platform returned',
+        data: <String, Object?>{
+          'textPreview': _preview(text),
+          'result': '$result',
+          'success': _isPlatformCallSuccess(result),
+        },
+      );
+      if (!_isPlatformCallSuccess(result)) {
+        _completeLocalSpeak(error: StateError('Local TTS failed to start.'));
+        throw StateError('Local TTS failed to start.');
+      }
+      final pollFuture = _pollWindowsSpeakDone(text, completer);
+      try {
+        await _awaitLocalCompletion(
+          completer,
+          text,
+          timeout: const Duration(seconds: 40),
+        );
+      } finally {
+        await pollFuture;
+      }
+      return;
+    }
+
     final requestFocus =
         !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    _log.i(
+      'tts',
+      'local speak: invoking platform',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'language': config.language,
+        'localVoice': config.localVoice,
+      },
+    );
     final result = await _runOp<dynamic>(
       'local.speak',
       () => _flutterTts.speak(text, focus: requestFocus),
       data: <String, Object?>{'textPreview': _preview(text)},
     );
-    if (!_isSpeakResultSuccess(result)) {
-      _localCompletionCompleter = null;
+    _log.i(
+      'tts',
+      'local speak: platform returned',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'result': '$result',
+        'success': _isPlatformCallSuccess(result),
+      },
+    );
+    if (!_isPlatformCallSuccess(result)) {
+      _completeLocalSpeak(error: StateError('Local TTS failed to start.'));
       throw StateError('Local TTS failed to start.');
     }
+    await _awaitLocalCompletion(
+      completer,
+      text,
+      timeout: const Duration(seconds: 40),
+    );
+  }
 
+  /// Windows-only: poll SAPI engine speaking status directly.
+  /// Completion callbacks remain the primary signal; polling only fills the
+  /// gap if the callback is delayed or lost.
+  Future<void> _pollWindowsSpeakDone(
+    String text,
+    Completer<void> completion,
+  ) async {
+    const pollInterval = Duration(milliseconds: 80);
+    const maxWait = Duration(seconds: 30);
+    const maxConsecutiveErrors = 10;
+    final stopwatch = Stopwatch()..start();
+
+    // Initial delay: let SAPI begin rendering audio.
+    _log.i(
+      'tts',
+      'pollWindowsSpeakDone: START (200ms initial delay)',
+      data: <String, Object?>{'textPreview': _preview(text)},
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+
+    var pollCount = 0;
+    var consecutiveErrors = 0;
+    while (!completion.isCompleted && stopwatch.elapsed < maxWait) {
+      pollCount++;
+      try {
+        final dynamic stillRaw = await _flutterTts.isSpeaking;
+        bool still;
+        if (stillRaw is bool) {
+          still = stillRaw;
+        } else if (stillRaw is int) {
+          still = stillRaw == 1;
+        } else {
+          throw StateError(
+            'Unexpected isSpeaking type: ${stillRaw.runtimeType}',
+          );
+        }
+
+        consecutiveErrors = 0; // Reset error count on success
+
+        if (pollCount <= 5 || pollCount % 10 == 0) {
+          _log.i(
+            'tts',
+            'pollWindowsSpeakDone: poll #$pollCount',
+            data: <String, Object?>{
+              'textPreview': _preview(text),
+              'isSpeaking': still,
+              'elapsedMs': stopwatch.elapsedMilliseconds,
+            },
+          );
+        }
+        if (!still) {
+          _completeLocalSpeak();
+          _log.i(
+            'tts',
+            'pollWindowsSpeakDone: DONE (poll #$pollCount)',
+            data: <String, Object?>{
+              'textPreview': _preview(text),
+              'elapsedMs': stopwatch.elapsedMilliseconds,
+            },
+          );
+          return;
+        }
+      } catch (e) {
+        consecutiveErrors++;
+        _log.w(
+          'tts',
+          'pollWindowsSpeakDone: poll error (consecutive: $consecutiveErrors)',
+          data: <String, Object?>{
+            'textPreview': _preview(text),
+            'error': '$e',
+            'pollCount': pollCount,
+          },
+        );
+
+        // If too many consecutive errors, assume playback is done
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          _log.e(
+            'tts',
+            'pollWindowsSpeakDone: Too many consecutive errors, forcing completion',
+            data: <String, Object?>{
+              'textPreview': _preview(text),
+              'errorCount': consecutiveErrors,
+            },
+          );
+          await _runOp<dynamic>(
+            'local.stop.consecutive_errors',
+            () => _flutterTts.stop(),
+            swallowError: true,
+          );
+          _completeLocalSpeak(
+            error: StateError(
+              'Windows local TTS status polling failed repeatedly.',
+            ),
+          );
+          return;
+        }
+      }
+      await Future<void>.delayed(pollInterval);
+    }
+    if (completion.isCompleted) {
+      _log.i(
+        'tts',
+        'pollWindowsSpeakDone: completion already resolved by callback',
+        data: <String, Object?>{
+          'textPreview': _preview(text),
+          'pollCount': pollCount,
+          'elapsedMs': stopwatch.elapsedMilliseconds,
+        },
+      );
+      return;
+    }
+    _log.e(
+      'tts',
+      'pollWindowsSpeakDone: TIMEOUT after $pollCount polls',
+      data: <String, Object?>{'textPreview': _preview(text)},
+    );
+    _completeLocalSpeak(
+      error: TimeoutException('Windows local TTS playback timeout.'),
+    );
+    unawaited(
+      _runOp<dynamic>(
+        'local.stop.pollTimeout',
+        () => _flutterTts.stop(),
+        swallowError: true,
+      ),
+    );
+  }
+
+  Future<void> _awaitLocalCompletion(
+    Completer<void> completer,
+    String text, {
+    required Duration timeout,
+  }) async {
+    _log.i(
+      'tts',
+      'local speak: waiting for completion',
+      data: <String, Object?>{
+        'textPreview': _preview(text),
+        'platform': defaultTargetPlatform.toString(),
+      },
+    );
     await completer.future.timeout(
-      const Duration(seconds: 40),
+      timeout,
       onTimeout: () {
         _log.e(
           'tts',
           'local speak timeout',
           data: <String, Object?>{'textPreview': _preview(text)},
+        );
+        _completeLocalSpeak(
+          error: TimeoutException('Local TTS playback timeout.'),
         );
         unawaited(
           _runOp<dynamic>(
@@ -347,6 +543,11 @@ return;
         );
         throw TimeoutException('Local TTS playback timeout.');
       },
+    );
+    _log.i(
+      'tts',
+      'local speak: completion resolved',
+      data: <String, Object?>{'textPreview': _preview(text)},
     );
   }
 
@@ -363,14 +564,327 @@ return;
     return value;
   }
 
-  bool _isSpeakResultSuccess(dynamic result) {
+  Future<void> _configureLocalVoiceAndLanguage(
+    String text,
+    TtsConfig config,
+  ) async {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      await _configureWindowsLocalVoiceAndLanguage(text, config);
+      return;
+    }
+
+    final language = _normalizeLanguage(config.language);
+    if (language != null && language != _lastLocalLanguage) {
+      final result = await _runOp<dynamic>(
+        'local.setLanguage',
+        () => _flutterTts.setLanguage(language),
+        data: <String, Object?>{'value': language},
+        swallowError: true,
+      );
+      if (_isPlatformCallSuccess(result)) {
+        _lastLocalLanguage = language;
+        _lastLocalVoiceSignature = 'lang:${_normalizedLocaleKey(language)}';
+      }
+    }
+
+    final voice = config.localVoice.trim();
+    if (voice.isNotEmpty) {
+      final result = await _runOp<dynamic>(
+        'local.setVoice',
+        () => _flutterTts.setVoice(<String, String>{'name': voice}),
+        data: <String, Object?>{'value': voice},
+        swallowError: true,
+      );
+      if (_isPlatformCallSuccess(result)) {
+        _lastLocalVoiceSignature = 'name:${voice.toLowerCase()}';
+      }
+    }
+  }
+
+  Future<void> _configureWindowsLocalVoiceAndLanguage(
+    String text,
+    TtsConfig config,
+  ) async {
+    final target = await _resolveWindowsLocalVoiceTarget(text, config);
+    if (target == null) {
+      return;
+    }
+
+    if (target.voice != null) {
+      final voice = target.voice!;
+      if (_lastLocalVoiceSignature == target.signature) {
+        _lastLocalLanguage = voice.locale;
+        return;
+      }
+      final result = await _runOp<dynamic>(
+        'local.setVoice',
+        () => _flutterTts.setVoice(voice.toPayload()),
+        data: <String, Object?>{
+          'value': voice.name,
+          'locale': voice.locale,
+          'reason': target.reason,
+        },
+        swallowError: true,
+      );
+      if (_isPlatformCallSuccess(result)) {
+        _lastLocalVoiceSignature = target.signature;
+        _lastLocalLanguage = voice.locale;
+        _log.i(
+          'tts',
+          'windows local voice resolved',
+          data: <String, Object?>{
+            'voice': voice.name,
+            'locale': voice.locale,
+            'reason': target.reason,
+            'textPreview': _preview(text),
+          },
+        );
+        return;
+      }
+    }
+
+    final language = target.language ?? target.voice?.locale;
+    if (language == null || language == _lastLocalLanguage) {
+      return;
+    }
+    final result = await _runOp<dynamic>(
+      'local.setLanguage',
+      () => _flutterTts.setLanguage(language),
+      data: <String, Object?>{'value': language, 'reason': target.reason},
+      swallowError: true,
+    );
+    if (_isPlatformCallSuccess(result)) {
+      _lastLocalLanguage = language;
+      _lastLocalVoiceSignature = 'lang:${_normalizedLocaleKey(language)}';
+      _log.i(
+        'tts',
+        'windows local language fallback applied',
+        data: <String, Object?>{
+          'language': language,
+          'reason': target.reason,
+          'textPreview': _preview(text),
+        },
+      );
+    }
+  }
+
+  Future<_ResolvedWindowsLocalVoiceTarget?> _resolveWindowsLocalVoiceTarget(
+    String text,
+    TtsConfig config,
+  ) async {
+    final preferredLanguage = _preferredWindowsLocalLanguage(text, config);
+    final preferredVoiceName = config.localVoice.trim();
+    final voices = await _loadLocalVoiceOptions();
+
+    if (preferredVoiceName.isNotEmpty) {
+      final matchedVoice = _pickVoiceByName(
+        voices,
+        preferredVoiceName,
+        preferredLanguage: preferredLanguage,
+      );
+      if (matchedVoice != null) {
+        return _ResolvedWindowsLocalVoiceTarget.voice(
+          matchedVoice,
+          reason: 'explicit_voice',
+        );
+      }
+    }
+
+    if (preferredLanguage != null) {
+      final matchedByLanguage = _pickVoiceByLanguage(voices, preferredLanguage);
+      if (matchedByLanguage != null) {
+        return _ResolvedWindowsLocalVoiceTarget.voice(
+          matchedByLanguage,
+          reason: config.localVoice.trim().isEmpty
+              ? 'auto_text_language'
+              : 'explicit_language',
+        );
+      }
+      return _ResolvedWindowsLocalVoiceTarget.language(
+        preferredLanguage,
+        reason: 'language_fallback',
+      );
+    }
+
+    return null;
+  }
+
+  String? _preferredWindowsLocalLanguage(String text, TtsConfig config) {
+    final configured = _normalizeLanguage(config.language);
+    if (configured != null) {
+      return configured;
+    }
+    return _inferWindowsTextLanguage(text);
+  }
+
+  String? _inferWindowsTextLanguage(String text) {
+    var hanCount = 0;
+    var kanaCount = 0;
+    var latinCount = 0;
+
+    for (final rune in text.runes) {
+      if (_isKanaRune(rune)) {
+        kanaCount += 1;
+        continue;
+      }
+      if (_isHanRune(rune)) {
+        hanCount += 1;
+        continue;
+      }
+      if (_isLatinRune(rune)) {
+        latinCount += 1;
+      }
+    }
+
+    if (kanaCount > 0) {
+      return 'ja-JP';
+    }
+    if (hanCount > 0 && hanCount >= latinCount) {
+      return 'zh-CN';
+    }
+    if (latinCount > 0) {
+      return 'en-US';
+    }
+    if (hanCount > 0) {
+      return 'zh-CN';
+    }
+    return null;
+  }
+
+  Future<List<_LocalTtsVoice>> _loadLocalVoiceOptions() async {
+    final cached = _cachedLocalVoices;
+    if (cached != null) {
+      return cached;
+    }
+
+    final pending = _localVoicesLoadFuture;
+    if (pending != null) {
+      return pending;
+    }
+
+    final future = _fetchLocalVoiceOptions();
+    _localVoicesLoadFuture = future;
+    try {
+      final voices = await future;
+      if (voices.isNotEmpty) {
+        _cachedLocalVoices = voices;
+      }
+      return voices;
+    } finally {
+      if (identical(_localVoicesLoadFuture, future)) {
+        _localVoicesLoadFuture = null;
+      }
+    }
+  }
+
+  Future<List<_LocalTtsVoice>> _fetchLocalVoiceOptions() async {
+    final dynamic voicesRaw = await _runOp<dynamic>(
+      'local.getVoices',
+      () => _flutterTts.getVoices,
+      swallowError: true,
+    );
+    if (voicesRaw is! List) {
+      _log.w(
+        'tts',
+        'local.getVoices returned unexpected payload',
+        data: <String, Object?>{
+          'runtimeType': voicesRaw.runtimeType.toString(),
+        },
+      );
+      return const <_LocalTtsVoice>[];
+    }
+
+    final unique = <String, _LocalTtsVoice>{};
+    for (final rawVoice in voicesRaw) {
+      final voice = _LocalTtsVoice.fromRaw(rawVoice);
+      if (voice == null) {
+        continue;
+      }
+      unique.putIfAbsent(voice.signature, () => voice);
+    }
+
+    final output = unique.values.toList()
+      ..sort((left, right) {
+        final localeCompare = left.localeKey.compareTo(right.localeKey);
+        if (localeCompare != 0) {
+          return localeCompare;
+        }
+        return left.name.toLowerCase().compareTo(right.name.toLowerCase());
+      });
+    return output;
+  }
+
+  _LocalTtsVoice? _pickVoiceByName(
+    List<_LocalTtsVoice> voices,
+    String preferredName, {
+    String? preferredLanguage,
+  }) {
+    final nameKey = preferredName.trim().toLowerCase();
+    if (nameKey.isEmpty) {
+      return null;
+    }
+    final matches = voices
+        .where(
+          (voice) =>
+              voice.name.toLowerCase() == nameKey &&
+              voice.locale.trim().isNotEmpty,
+        )
+        .toList(growable: false);
+    if (matches.isEmpty) {
+      return null;
+    }
+    if (preferredLanguage != null) {
+      final matchedByLanguage = _pickVoiceByLanguage(
+        matches,
+        preferredLanguage,
+      );
+      if (matchedByLanguage != null) {
+        return matchedByLanguage;
+      }
+    }
+    return matches.first;
+  }
+
+  _LocalTtsVoice? _pickVoiceByLanguage(
+    List<_LocalTtsVoice> voices,
+    String preferredLanguage,
+  ) {
+    if (voices.isEmpty) {
+      return null;
+    }
+    final localeKey = _normalizedLocaleKey(preferredLanguage);
+    for (final voice in voices) {
+      if (voice.locale.trim().isEmpty) {
+        continue;
+      }
+      if (voice.localeKey == localeKey) {
+        return voice;
+      }
+    }
+    final primaryLanguage = _primaryLanguageCode(preferredLanguage);
+    for (final voice in voices) {
+      if (voice.locale.trim().isEmpty) {
+        continue;
+      }
+      if (voice.primaryLanguageCode == primaryLanguage) {
+        return voice;
+      }
+    }
+    return null;
+  }
+
+  bool _isPlatformCallSuccess(dynamic result) {
     if (result == null) return true;
     if (result is bool) return result;
     if (result is int) return result == 1;
     return true;
   }
 
-  Future<void> _speakByApi(String text, TtsConfig config) async {
+  Future<void> _speakByApi(
+    String text,
+    TtsConfig config, {
+    bool preCacheOnly = false,
+  }) async {
     await _ensureApiAudioConfigured();
     final speakToken = ++_apiSpeakToken;
     final model = (config.model?.trim().isNotEmpty ?? false)
@@ -397,7 +911,7 @@ return;
       'response_format': 'mp3',
       'speed': config.speed,
     };
-await _runOp<dynamic>(
+    await _runOp<dynamic>(
       'local.stop.beforeApi',
       () => _flutterTts.stop(),
       swallowError: true,
@@ -854,7 +1368,7 @@ await _runOp<dynamic>(
             body: jsonEncode(requestBody),
           )
           .timeout(const Duration(seconds: 30));
-return response;
+      return response;
     } catch (error, stackTrace) {
       final interrupted = !_isApiSpeakTokenActive(speakToken);
       if (interrupted) {
@@ -934,3 +1448,94 @@ class _ApiSpeakInterrupted implements Exception {
   @override
   String toString() => 'ApiSpeakInterrupted($reason)';
 }
+
+class _LocalTtsVoice {
+  const _LocalTtsVoice({required this.name, required this.locale});
+
+  final String name;
+  final String locale;
+
+  String get localeKey => _normalizedLocaleKey(locale);
+  String get primaryLanguageCode => _primaryLanguageCode(locale);
+  String get signature => '$localeKey::${name.toLowerCase()}';
+
+  Map<String, String> toPayload() => <String, String>{
+    'name': name,
+    'locale': locale,
+  };
+
+  static _LocalTtsVoice? fromRaw(dynamic raw) {
+    if (raw is Map) {
+      final name = raw['name']?.toString().trim() ?? '';
+      final locale = raw['locale']?.toString().trim() ?? '';
+      if (name.isEmpty) {
+        return null;
+      }
+      return _LocalTtsVoice(name: name, locale: locale);
+    }
+    final name = '$raw'.trim();
+    if (name.isEmpty) {
+      return null;
+    }
+    return _LocalTtsVoice(name: name, locale: '');
+  }
+}
+
+class _ResolvedWindowsLocalVoiceTarget {
+  const _ResolvedWindowsLocalVoiceTarget._({
+    required this.reason,
+    this.voice,
+    this.language,
+  });
+
+  final String reason;
+  final _LocalTtsVoice? voice;
+  final String? language;
+
+  String get signature => voice != null
+      ? 'voice:${voice!.signature}'
+      : 'lang:${_normalizedLocaleKey(language ?? '')}';
+
+  factory _ResolvedWindowsLocalVoiceTarget.voice(
+    _LocalTtsVoice voice, {
+    required String reason,
+  }) {
+    return _ResolvedWindowsLocalVoiceTarget._(reason: reason, voice: voice);
+  }
+
+  factory _ResolvedWindowsLocalVoiceTarget.language(
+    String language, {
+    required String reason,
+  }) {
+    return _ResolvedWindowsLocalVoiceTarget._(
+      reason: reason,
+      language: language,
+    );
+  }
+}
+
+String _normalizedLocaleKey(String raw) =>
+    raw.trim().replaceAll('_', '-').toLowerCase();
+
+String _primaryLanguageCode(String raw) {
+  final key = _normalizedLocaleKey(raw);
+  if (key.isEmpty) {
+    return '';
+  }
+  final separator = key.indexOf('-');
+  if (separator < 0) {
+    return key;
+  }
+  return key.substring(0, separator);
+}
+
+bool _isHanRune(int rune) =>
+    (rune >= 0x4E00 && rune <= 0x9FFF) ||
+    (rune >= 0x3400 && rune <= 0x4DBF) ||
+    (rune >= 0xF900 && rune <= 0xFAFF);
+
+bool _isKanaRune(int rune) =>
+    (rune >= 0x3040 && rune <= 0x309F) || (rune >= 0x30A0 && rune <= 0x30FF);
+
+bool _isLatinRune(int rune) =>
+    (rune >= 0x0041 && rune <= 0x005A) || (rune >= 0x0061 && rune <= 0x007A);

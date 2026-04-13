@@ -1,5 +1,8 @@
 part of 'app_state.dart';
 
+const int _practiceDashboardPersistWarnThresholdMs = 80;
+const int _practiceAnswerWriteWarnThresholdMs = 120;
+
 extension _AppStatePractice on AppState {
   void _updatePracticeSessionPreferencesImpl({
     bool? autoAddWeakWordsToTask,
@@ -36,7 +39,7 @@ extension _AppStatePractice on AppState {
   }
 
   bool _dismissPracticeWeakWordImpl(WordEntry entry) {
-    final key = _normalizeTrackedWord(entry.word);
+    final key = _practiceTrackingKeyForEntry(entry);
     if (key.isEmpty) {
       return false;
     }
@@ -45,7 +48,7 @@ extension _AppStatePractice on AppState {
 
   int _dismissPracticeWeakWordsImpl(Iterable<WordEntry> entries) {
     final keys = entries
-        .map((entry) => _normalizeTrackedWord(entry.word))
+        .map(_practiceTrackingKeyForEntry)
         .where((item) => item.isNotEmpty)
         .toSet();
     return _removePracticeWeakKeys(keys);
@@ -55,7 +58,7 @@ extension _AppStatePractice on AppState {
     final uniqueEntries = _dedupePracticeEntries(entries);
     var added = 0;
     for (final entry in uniqueEntries) {
-      if (_taskWords.contains(entry.word)) {
+      if (isTaskEntry(entry)) {
         continue;
       }
       await toggleTaskWord(entry);
@@ -70,7 +73,7 @@ extension _AppStatePractice on AppState {
     final uniqueEntries = _dedupePracticeEntries(entries);
     var added = 0;
     for (final entry in uniqueEntries) {
-      if (_favorites.contains(entry.word)) {
+      if (isFavoriteEntry(entry)) {
         continue;
       }
       await toggleFavorite(entry);
@@ -101,7 +104,7 @@ extension _AppStatePractice on AppState {
     };
     final removableKeys = <String>{};
     for (final entry in practiceWrongNotebookEntries) {
-      final key = _normalizeTrackedWord(entry.word);
+      final key = _practiceTrackingKeyForEntry(entry);
       if (key.isEmpty) {
         continue;
       }
@@ -139,23 +142,29 @@ extension _AppStatePractice on AppState {
     _practiceTotalReviewed += safeTotal;
     _practiceTotalRemembered += safeRemembered;
     _practiceLastSessionTitle = title.trim();
-    final normalizedRememberedWords = _normalizePracticeWords(rememberedWords);
-    final normalizedWeakWords = _normalizePracticeWords(
-      weakWords,
-    ).where((word) => !normalizedRememberedWords.contains(word)).toList();
-    final rememberedSet = normalizedRememberedWords.toSet();
-    final weakSet = normalizedWeakWords.toSet();
     final resolvedRememberedEntries = _resolveTrackedPracticeEntries(
       preferredEntries: rememberedEntries,
-      fallbackWords: normalizedRememberedWords,
+      fallbackWords: _normalizePracticeWords(rememberedWords),
     );
     final resolvedWeakEntries = _resolveTrackedPracticeEntries(
       preferredEntries: weakEntries,
-      fallbackWords: normalizedWeakWords,
+      fallbackWords: _normalizePracticeWords(weakWords),
     );
+    final normalizedRememberedWords = resolvedRememberedEntries.isNotEmpty
+        ? _trackingKeysFromEntries(resolvedRememberedEntries)
+        : _normalizePracticeTrackingKeys(rememberedWords);
+    final normalizedWeakWords =
+        (resolvedWeakEntries.isNotEmpty
+                ? _trackingKeysFromEntries(resolvedWeakEntries)
+                : _normalizePracticeTrackingKeys(weakWords))
+            .where((word) => !normalizedRememberedWords.contains(word))
+            .toList();
+    final rememberedSet = normalizedRememberedWords.toSet();
+    final weakSet = normalizedWeakWords.toSet();
     final normalizedWeakReasonsByWord = _normalizePracticeWeakReasonMap(
       weakReasonIdsByWord,
       normalizedWeakWords,
+      preferredEntries: resolvedWeakEntries,
     );
     _updateRememberedWordsStatus(
       rememberedWords: normalizedRememberedWords,
@@ -211,6 +220,7 @@ extension _AppStatePractice on AppState {
     bool addToWrongNotebook = true,
     String? sessionTitle,
   }) {
+    final writeWatch = Stopwatch()..start();
     _ensurePracticeDate();
     _practiceTodayReviewed += 1;
     _practiceTotalReviewed += 1;
@@ -219,9 +229,9 @@ extension _AppStatePractice on AppState {
       _practiceTotalRemembered += 1;
     }
 
-    final normalizedWord = _normalizeTrackedWord(entry.word);
+    final normalizedWord = _practiceTrackingKeyForEntry(entry);
     final rememberedWords = remembered
-        ? <String>[entry.word]
+        ? <String>[normalizedWord]
         : const <String>[];
     final sanitizedWeakReasons = _sanitizePracticeWeakReasons(weakReasonIds);
 
@@ -242,7 +252,7 @@ extension _AppStatePractice on AppState {
           .toList(growable: false);
       if (addToWrongNotebook) {
         _practiceWeakWords = _mergePracticeWords(
-          primary: <String>[entry.word],
+          primary: <String>[normalizedWord],
           existing: _practiceWeakWords,
         );
         if (normalizedWord.isNotEmpty) {
@@ -263,7 +273,7 @@ extension _AppStatePractice on AppState {
 
     _updateRememberedWordsStatus(
       rememberedWords: rememberedWords,
-      weakWords: remembered ? const <String>[] : <String>[entry.word],
+      weakWords: remembered ? const <String>[] : <String>[normalizedWord],
     );
     _cachePracticeTrackedEntries(
       rememberedEntries: remembered ? <WordEntry>[entry] : const <WordEntry>[],
@@ -288,6 +298,22 @@ extension _AppStatePractice on AppState {
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
     _persistPracticeDashboard();
+    if (writeWatch.elapsedMilliseconds >= _practiceAnswerWriteWarnThresholdMs) {
+      _log.w(
+        'practice',
+        'recordPracticeAnswer slow',
+        data: <String, Object?>{
+          'word': entry.word,
+          'remembered': remembered,
+          'addToWrongNotebook': addToWrongNotebook,
+          'elapsedMs': writeWatch.elapsedMilliseconds,
+          'trackedEntries': _practiceTrackedEntriesByWord.length,
+          'history': _practiceSessionHistory.length,
+          'rememberedWords': _practiceRememberedWords.length,
+          'weakWords': _practiceWeakWords.length,
+        },
+      );
+    }
     _notifyStateChanged();
   }
 
@@ -674,13 +700,30 @@ extension _AppStatePractice on AppState {
     _practiceTotalReviewed = data.totalReviewed;
     _practiceTotalRemembered = data.totalRemembered;
     _practiceLastSessionTitle = data.lastSessionTitle.trim();
-    _practiceRememberedWords = _normalizePracticeWords(data.rememberedWords);
-    _practiceWeakWords = _normalizePracticeWords(data.weakWords)
-        .where((word) => !_practiceRememberedWords.contains(word))
+    final trackedEntries = data.trackedEntries
+        .map((entry) => entry.toWordEntry())
         .toList(growable: false);
+    final trackedEntriesByKey = <String, WordEntry>{
+      for (var index = 0; index < trackedEntries.length; index += 1)
+        if (data.trackedEntries[index].wordbookId > 0)
+          _practiceTrackingKeyForEntry(trackedEntries[index]):
+              trackedEntries[index],
+    }..removeWhere((key, _) => key.isEmpty);
+    _practiceRememberedWords = _normalizePracticeTrackingKeys(
+      data.rememberedWords,
+      preferredEntries: trackedEntries,
+    );
+    _practiceWeakWords =
+        _normalizePracticeTrackingKeys(
+              data.weakWords,
+              preferredEntries: trackedEntries,
+            )
+            .where((word) => !_practiceRememberedWords.contains(word))
+            .toList(growable: false);
     _practiceWeakWordReasons = _normalizePracticeWeakReasonMap(
       data.weakReasonIdsByWord,
       _practiceWeakWords,
+      preferredEntries: trackedEntries,
     );
     _practiceAutoAddWeakWordsToTask = data.sessionPrefs.autoAddWeakWordsToTask;
     _practiceAutoPlayPronunciation = data.sessionPrefs.autoPlayPronunciation;
@@ -693,14 +736,7 @@ extension _AppStatePractice on AppState {
     _practiceLaunchCursors = data.launchCursors;
     _practiceTrackedEntriesByWord
       ..clear()
-      ..addEntries(
-        <String, WordEntry>{
-          for (final entry in data.trackedEntries)
-            if (_normalizeTrackedWord(entry.word).isNotEmpty &&
-                entry.wordbookId > 0)
-              _normalizeTrackedWord(entry.word): entry.toWordEntry(),
-        }.entries,
-      );
+      ..addEntries(trackedEntriesByKey.entries);
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
   }
@@ -725,6 +761,10 @@ extension _AppStatePractice on AppState {
   }
 
   void _persistPracticeDashboard() {
+    final watch = Stopwatch()..start();
+    final trackedEntries = _practiceTrackedEntriesByWord.values
+        .map(PracticeTrackedEntrySnapshot.fromWordEntry)
+        .toList(growable: false);
     _settings.savePracticeDashboard(
       PracticeDashboardState(
         date: _practiceDateKey,
@@ -748,39 +788,55 @@ extension _AppStatePractice on AppState {
         ),
         roundSettings: _practiceRoundSettings,
         launchCursors: _practiceLaunchCursors,
-        trackedEntries: _practiceTrackedEntriesByWord.values
-            .map(PracticeTrackedEntrySnapshot.fromWordEntry)
-            .toList(growable: false),
+        trackedEntries: trackedEntries,
       ),
     );
+    if (watch.elapsedMilliseconds >= _practiceDashboardPersistWarnThresholdMs) {
+      _log.w(
+        'practice',
+        'practice dashboard persist slow',
+        data: <String, Object?>{
+          'elapsedMs': watch.elapsedMilliseconds,
+          'trackedEntries': trackedEntries.length,
+          'history': _practiceSessionHistory.length,
+          'rememberedWords': _practiceRememberedWords.length,
+          'weakWords': _practiceWeakWords.length,
+        },
+      );
+    }
   }
 
   List<WordEntry> _practiceEntriesFromWords(List<String> trackedWords) {
     if (trackedWords.isEmpty) {
       return const <WordEntry>[];
     }
-    final byWord = <String, WordEntry>{};
+    final byTrackingKey = <String, WordEntry>{};
+    final byLegacyWord = <String, WordEntry>{};
 
     void addEntries(Iterable<WordEntry> entries) {
       for (final entry in entries) {
-        final key = _normalizeTrackedWord(entry.word);
-        if (key.isEmpty || byWord.containsKey(key)) {
-          continue;
+        final trackingKey = _practiceTrackingKeyForEntry(entry);
+        if (trackingKey.isNotEmpty) {
+          byTrackingKey.putIfAbsent(trackingKey, () => entry);
         }
-        byWord[key] = entry;
+        final legacyKey = _normalizeTrackedWord(entry.word);
+        if (legacyKey.isNotEmpty) {
+          byLegacyWord.putIfAbsent(legacyKey, () => entry);
+        }
       }
     }
 
-    addEntries(_practiceTrackedEntriesByWord.values);
     addEntries(_scopeWords);
     addEntries(_words);
-    if (byWord.isEmpty) {
+    addEntries(_practiceTrackedEntriesByWord.values);
+    if (byTrackingKey.isEmpty && byLegacyWord.isEmpty) {
       return const <WordEntry>[];
     }
 
     final output = <WordEntry>[];
     for (final word in trackedWords) {
-      final entry = byWord[_normalizeTrackedWord(word)];
+      final normalized = _normalizeTrackedWord(word);
+      final entry = byTrackingKey[normalized] ?? byLegacyWord[normalized];
       if (entry != null) {
         output.add(entry);
       }
@@ -824,7 +880,7 @@ extension _AppStatePractice on AppState {
     return merged
         .where(
           (entry) =>
-              !rememberedKeys.contains(_normalizeTrackedWord(entry.word)),
+              !rememberedKeys.contains(_practiceTrackingKeyForEntry(entry)),
         )
         .toList(growable: false);
   }
@@ -872,13 +928,33 @@ extension _AppStatePractice on AppState {
     }
 
     for (final entry in <WordEntry>[...rememberedEntries, ...weakEntries]) {
-      final key = _normalizeTrackedWord(entry.word);
+      final key = _practiceTrackingKeyForEntry(entry);
       if (key.isEmpty) {
         continue;
       }
-      _practiceTrackedEntriesByWord[key] = entry;
+      _practiceTrackedEntriesByWord[key] = _buildPracticeTrackedEntryLite(
+        entry,
+      );
     }
     _prunePracticeTrackedEntries();
+  }
+
+  WordEntry _buildPracticeTrackedEntryLite(WordEntry entry) {
+    final summaryMeaning = entry.summaryMeaningText.trim();
+    final needsRawContentFallback =
+        entry.entryUid?.trim().isNotEmpty != true &&
+        (entry.primaryGloss?.trim().isNotEmpty != true &&
+            summaryMeaning.isEmpty);
+    return WordEntry(
+      id: entry.id,
+      wordbookId: entry.wordbookId,
+      word: entry.word,
+      entryUid: entry.entryUid,
+      primaryGloss: entry.primaryGloss,
+      meaning: summaryMeaning.isEmpty ? entry.meaning : summaryMeaning,
+      rawContent: needsRawContentFallback ? entry.rawContent : '',
+      fields: const <WordFieldItem>[],
+    );
   }
 
   int _removePracticeWeakKeys(Set<String> keys) {
@@ -927,18 +1003,29 @@ extension _AppStatePractice on AppState {
 
   Map<String, List<String>> _normalizePracticeWeakReasonMap(
     Map<String, List<String>> raw,
-    List<String> weakWords,
-  ) {
+    List<String> weakWords, {
+    List<WordEntry>? preferredEntries,
+  }) {
     if (weakWords.isEmpty) {
       return <String, List<String>>{};
     }
+    final tokenToLegacyWord = <String, String>{
+      for (final entry in preferredEntries ?? const <WordEntry>[])
+        if (_practiceTrackingKeyForEntry(entry).isNotEmpty)
+          _practiceTrackingKeyForEntry(entry): _normalizeTrackedWord(
+            entry.word,
+          ),
+    };
     final output = <String, List<String>>{};
     for (final word in weakWords) {
       final key = _normalizeTrackedWord(word);
+      final normalizedWord = tokenToLegacyWord[key] ?? key;
       if (key.isEmpty) {
         continue;
       }
-      output[key] = _sanitizePracticeWeakReasons(raw[key]);
+      output[key] = _sanitizePracticeWeakReasons(
+        raw[key] ?? raw[normalizedWord] ?? raw[word],
+      );
     }
     return output;
   }
@@ -1025,19 +1112,7 @@ extension _AppStatePractice on AppState {
   }
 
   String _practiceMeaningText(WordEntry entry) {
-    final direct = entry.meaning?.trim() ?? '';
-    if (direct.isNotEmpty) {
-      return direct;
-    }
-    for (final field in entry.fields) {
-      if (field.key == 'meaning') {
-        final text = field.asText().trim();
-        if (text.isNotEmpty) {
-          return text;
-        }
-      }
-    }
-    return '';
+    return entry.displayMeaning.trim();
   }
 
   bool _isStablePracticeProgress(WordMemoryProgress? progress, DateTime now) {
@@ -1106,15 +1181,11 @@ extension _AppStatePractice on AppState {
   }
 
   String? _wordEntryIdentity(WordEntry entry) {
-    final id = entry.id;
-    if (id != null && id > 0) {
-      return 'id:$id';
-    }
-    final word = entry.word.trim();
-    if (word.isEmpty) {
+    final identity = entry.stableIdentityKey.trim();
+    if (identity.isEmpty) {
       return null;
     }
-    return 'word:${word.toLowerCase()}';
+    return identity;
   }
 
   List<String> _normalizePracticeWords(Object? value) {
@@ -1128,6 +1199,34 @@ extension _AppStatePractice on AppState {
         continue;
       }
       normalized.add(word);
+    }
+    return normalized.take(40).toList(growable: false);
+  }
+
+  List<String> _normalizePracticeTrackingKeys(
+    Object? value, {
+    List<WordEntry>? preferredEntries,
+  }) {
+    final words = _normalizePracticeWords(value);
+    if (preferredEntries == null || preferredEntries.isEmpty) {
+      return words;
+    }
+    final byLegacyWord = <String, String>{
+      for (final entry in preferredEntries)
+        if (_normalizeTrackedWord(entry.word).isNotEmpty)
+          _normalizeTrackedWord(entry.word): _practiceTrackingKeyForEntry(
+            entry,
+          ),
+    };
+    final normalized = <String>[];
+    for (final word in words) {
+      final legacyKey = _normalizeTrackedWord(word);
+      final resolved = byLegacyWord[legacyKey] ?? word.trim();
+      if (resolved.isEmpty ||
+          normalized.any((item) => _normalizeTrackedWord(item) == legacyKey)) {
+        continue;
+      }
+      normalized.add(resolved);
     }
     return normalized.take(40).toList(growable: false);
   }
@@ -1200,5 +1299,41 @@ extension _AppStatePractice on AppState {
 
   String _normalizeTrackedWord(String value) {
     return value.trim().toLowerCase();
+  }
+
+  String _practiceTrackingKeyForEntry(WordEntry entry) {
+    return _normalizeTrackedWord(entry.collectionReferenceKey);
+  }
+
+  List<String> _trackingKeysFromEntries(List<WordEntry> entries) {
+    final normalized = <String>[];
+    for (final entry in entries) {
+      final key = _practiceTrackingKeyForEntry(entry);
+      if (key.isEmpty || normalized.contains(key)) {
+        continue;
+      }
+      normalized.add(key);
+    }
+    return normalized.take(40).toList(growable: false);
+  }
+
+  List<String> _practiceDisplayWords(List<String> trackedWords) {
+    final resolvedEntries = _practiceEntriesFromWords(trackedWords);
+    if (resolvedEntries.isNotEmpty) {
+      return resolvedEntries.map((entry) => entry.word).toList(growable: false);
+    }
+    final output = <String>[];
+    for (final tracked in trackedWords) {
+      final text = tracked.trim();
+      if (text.isEmpty) {
+        continue;
+      }
+      final fallback = text.startsWith('word:') ? text.substring(5) : text;
+      if (fallback.isEmpty || output.contains(fallback)) {
+        continue;
+      }
+      output.add(fallback);
+    }
+    return output;
   }
 }
