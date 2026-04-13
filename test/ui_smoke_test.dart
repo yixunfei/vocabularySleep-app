@@ -2015,6 +2015,46 @@ void main() {
       expect(find.textContaining('\u5bb8\u8336'), findsNothing);
     });
 
+    testWidgets('practice session keeps answer feedback inline on windows', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      try {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        const words = <WordEntry>[
+          WordEntry(wordbookId: 1, word: 'alpha', fields: <WordFieldItem>[]),
+        ];
+
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const PracticeSessionPage(
+            title: 'Windows feedback',
+            words: words,
+          ),
+        );
+
+        await tester.scrollUntilVisible(
+          find.text('Remembered'),
+          220,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Remembered'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(
+          find.byKey(const ValueKey<String>('practice-answer-feedback-card')),
+          findsOneWidget,
+        );
+        expect(find.text('Finish round'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
     testWidgets('practice session can auto-add missed words to task list', (
       tester,
     ) async {

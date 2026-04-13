@@ -416,17 +416,23 @@ class _WordHeaderBlock extends StatelessWidget {
           Wrap(spacing: 8, runSpacing: 8, children: controls),
           const SizedBox(height: 14),
         ],
-        EffectfulText(
-          word,
-          style: titleStyle?.copyWith(
-            color: appearance.rainbowText ? Colors.white : titleColor,
-            fontWeight: FontWeight.w800,
+        Semantics(
+          header: density != WordCardDensity.compact,
+          label: word,
+          child: ExcludeSemantics(
+            child: EffectfulText(
+              word,
+              style: titleStyle?.copyWith(
+                color: appearance.rainbowText ? Colors.white : titleColor,
+                fontWeight: FontWeight.w800,
+              ),
+              maxLines: appearance.marqueeText ? null : 2,
+              rainbowText: appearance.rainbowText,
+              marqueeText: appearance.marqueeText,
+              breathingEffect: appearance.breathingEffect,
+              flowingEffect: appearance.flowingEffect,
+            ),
           ),
-          maxLines: appearance.marqueeText ? null : 2,
-          rainbowText: appearance.rainbowText,
-          marqueeText: appearance.marqueeText,
-          breathingEffect: appearance.breathingEffect,
-          flowingEffect: appearance.flowingEffect,
         ),
         if (!canReveal) ...<Widget>[
           const SizedBox(height: 10),
