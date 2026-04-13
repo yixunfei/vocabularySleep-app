@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-04-13
-- **状态**: 进行中
+- **状态**: 已完成
 - **负责人**: Codex
 
 ## 目标
@@ -30,3 +30,8 @@
 - 当前分支 `codex/wordbook-core-refactor` 可正常提交。
 - 学习播放相关代码与测试位于 `lib/src/services/`、`lib/src/state/` 与 `test/` 中。
 
+## 执行结果
+- 已创建保险提交 `68454a6`（`chore: backup before study playback field fix`），用于保留修复前安全点。
+- 已修复播放配置中旧版字段禁用标记覆盖当前重复次数设置的问题，避免学习播放只播 `word`。
+- 已补充回归测试，覆盖“重复次数开启但旧字段开关仍为禁用”时仍应继续播放释义的场景。
+- 已验证 `flutter test test/playback_service_test.dart` 与 `flutter test test/database_service_test.dart` 通过。

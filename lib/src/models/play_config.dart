@@ -1187,7 +1187,7 @@ const Map<String, String> _fieldToUnitType = <String, String>{
 };
 
 int _resolveFieldRepeat(String key, PlayConfig config) {
-  final setting = config.fieldSettings[key];
+  final setting = _fieldPlaybackSettingForKey(key, config);
   if (setting?.repeat != null) return max(0, setting!.repeat!);
 
   final repeatKey = _fieldToRepeatKey[key];
@@ -1203,9 +1203,30 @@ int _resolveFieldRepeat(String key, PlayConfig config) {
 }
 
 bool _isFieldEnabled(String key, PlayConfig config) {
-  final setting = config.fieldSettings[key];
+  if (_resolveFieldRepeat(key, config) > 0) {
+    return true;
+  }
+  final setting = _fieldPlaybackSettingForKey(key, config);
   if (setting?.enabled != null) return setting!.enabled!;
   return _resolveFieldRepeat(key, config) > 0;
+}
+
+FieldPlaybackSetting? _fieldPlaybackSettingForKey(
+  String key,
+  PlayConfig config,
+) {
+  final candidates = <String>{
+    key,
+    normalizeFieldKey(key),
+    _fieldToRepeatKey[key] ?? '',
+  }.where((item) => item.trim().isNotEmpty);
+  for (final candidate in candidates) {
+    final setting = config.fieldSettings[candidate];
+    if (setting != null) {
+      return setting;
+    }
+  }
+  return null;
 }
 
 String spellWord(
@@ -1267,7 +1288,8 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
     if (repeat <= 0) continue;
 
     final unitType = _fieldToUnitType[field.key] ?? 'custom';
-    final label = config.fieldSettings[field.key]?.label ?? field.label;
+    final label =
+        _fieldPlaybackSettingForKey(field.key, config)?.label ?? field.label;
     for (final value in field.asList()) {
       final text = value.trim();
       if (text.isEmpty) continue;
