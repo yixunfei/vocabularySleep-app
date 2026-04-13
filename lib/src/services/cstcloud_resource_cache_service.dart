@@ -64,7 +64,7 @@ class CstCloudResourceCacheService {
     );
     final normalized = remoteKey.toLowerCase();
     final decodedBytes = normalized.endsWith('.gz')
-        ? GZipDecoder().decodeBytes(bytes)
+        ? const GZipDecoder().decodeBytes(bytes)
         : bytes;
     return utf8.decode(decodedBytes);
   }

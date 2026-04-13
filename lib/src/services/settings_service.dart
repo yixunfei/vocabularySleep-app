@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../core/module_system/module_toggle_state.dart';
 import '../models/ambient_preset.dart';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
@@ -18,6 +19,7 @@ class SettingsService {
   static const String uiLanguageSystem = 'system';
   static const String remotePrewarmCompletedKey =
       'remoteResourcePrewarmCompletedV1';
+  static const String moduleTogglesKey = 'module_toggles_v1';
 
   final AppDatabaseService _database;
 
@@ -260,6 +262,22 @@ class SettingsService {
     _database.setSetting(remotePrewarmCompletedKey, value ? '1' : '0');
   }
 
+  ModuleToggleState loadModuleToggleState() {
+    final raw = _database.getSetting(moduleTogglesKey);
+    if (raw == null || raw.trim().isEmpty) {
+      return ModuleToggleState.defaults;
+    }
+    try {
+      return ModuleToggleState.fromJsonValue(jsonDecode(raw));
+    } catch (_) {
+      return ModuleToggleState.defaults;
+    }
+  }
+
+  void saveModuleToggleState(ModuleToggleState value) {
+    _database.setSetting(moduleTogglesKey, jsonEncode(value.toJsonMap()));
+  }
+
   SleepProfile? loadSleepProfile() {
     final decoded = _loadJsonValue('sleepProfile');
     return SleepProfile.fromJsonValue(decoded);
@@ -324,9 +342,7 @@ class SettingsService {
   void saveSleepRoutineTemplates(List<SleepRoutineTemplate> templates) {
     _saveJsonValue(
       'sleepRoutineTemplates',
-      templates
-          .map((template) => template.toJsonMap())
-          .toList(growable: false),
+      templates.map((template) => template.toJsonMap()).toList(growable: false),
     );
   }
 

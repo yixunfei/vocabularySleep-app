@@ -108,16 +108,12 @@ class _ScoringPackProfile {
     required this.variant,
     required this.dirName,
     required this.estimatedBytes,
-    this.remoteKey,
-    this.archiveUrl,
   });
 
   final PronScoringMethod method;
   final String variant;
   final String dirName;
   final int estimatedBytes;
-  final String? remoteKey;
-  final String? archiveUrl;
 }
 
 class _CanceledAsrException implements Exception {
@@ -2707,7 +2703,7 @@ class AsrService {
   List<String> _pseudoPhoneSequence(String text) {
     final lowered = text.toLowerCase();
     final filtered = lowered.replaceAll(
-      RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true),
+      RegExp(r'[^\p{L}\p{N}\u4e00-\u9fff]+', unicode: true),
       '',
     );
     if (filtered.isEmpty) return const <String>[];
@@ -3187,7 +3183,7 @@ class AsrService {
 
   String _normalizeRecognitionText(String value) {
     return value.toLowerCase().replaceAll(
-      RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true),
+      RegExp(r'[^\p{L}\p{N}\u4e00-\u9fff]+', unicode: true),
       '',
     );
   }

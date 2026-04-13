@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/module_system/module_id.dart';
 import '../../../i18n/app_i18n.dart';
 import '../../theme/toolbox_colors.dart';
 import '../../ui_copy.dart';
@@ -13,8 +14,11 @@ import '../toolbox_sound_tools.dart';
 import '../toolbox_zen_sand_tool.dart';
 import 'toolbox_page_models.dart';
 
-List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
-  return <ToolboxSectionData>[
+List<ToolboxSectionData> buildToolboxSections(
+  AppI18n i18n, {
+  required bool Function(String moduleId) isModuleEnabled,
+}) {
+  final sections = <ToolboxSectionData>[
     ToolboxSectionData(
       title: pickUiText(i18n, zh: '睡眠支持', en: 'Sleep support'),
       subtitle: pickUiText(
@@ -24,6 +28,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxSleepAssistant,
           title: pickUiText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
           subtitle: pickUiText(
             i18n,
@@ -45,6 +50,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxMiniGames,
           title: pickUiText(i18n, zh: '游戏中心', en: 'Game hub'),
           subtitle: pickUiText(
             i18n,
@@ -66,6 +72,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxSoothingMusic,
           title: pickUiText(i18n, zh: '舒缓音乐', en: 'Soothing music'),
           subtitle: pickUiText(
             i18n,
@@ -77,6 +84,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
           pageBuilder: () => const SoothingMusicV2Page(),
         ),
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxSoundDeck,
           title: pickUiText(i18n, zh: '空灵竖琴', en: 'Ethereal harp'),
           subtitle: pickUiText(
             i18n,
@@ -88,6 +96,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
           pageBuilder: () => const HarpToolPage(),
         ),
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxSingingBowls,
           title: pickUiText(i18n, zh: '疗愈音钵', en: 'Healing bowls'),
           subtitle: pickUiText(
             i18n,
@@ -99,6 +108,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
           pageBuilder: () => const SingingBowlsToolPage(),
         ),
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxFocusBeats,
           title: pickUiText(i18n, zh: '专注节拍', en: 'Focus beats'),
           subtitle: pickUiText(
             i18n,
@@ -110,6 +120,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
           pageBuilder: () => const FocusBeatsToolPage(),
         ),
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxWoodfish,
           title: pickUiText(i18n, zh: '电子木鱼', en: 'Digital woodfish'),
           subtitle: pickUiText(
             i18n,
@@ -131,6 +142,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxSchulteGrid,
           title: pickUiText(i18n, zh: '舒尔特方格', en: 'Schulte grid'),
           subtitle: pickUiText(
             i18n,
@@ -142,6 +154,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
           pageBuilder: () => const SchulteGridToolPage(),
         ),
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxBreathing,
           title: pickUiText(i18n, zh: '呼吸训练', en: 'Breathing practice'),
           subtitle: pickUiText(
             i18n,
@@ -163,6 +176,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxPrayerBeads,
           title: pickUiText(i18n, zh: '静心念珠', en: 'Prayer beads'),
           subtitle: pickUiText(
             i18n,
@@ -174,6 +188,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
           pageBuilder: () => const PrayerBeadsToolPage(),
         ),
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxZenSand,
           title: pickUiText(i18n, zh: '禅意沙盘', en: 'Zen sand tray'),
           subtitle: pickUiText(
             i18n,
@@ -195,6 +210,7 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
+          moduleId: ModuleIds.toolboxDailyDecision,
           title: pickUiText(i18n, zh: '每日决策', en: 'Daily decision'),
           subtitle: pickUiText(
             i18n,
@@ -208,4 +224,16 @@ List<ToolboxSectionData> buildToolboxSections(AppI18n i18n) {
       ],
     ),
   ];
+  return sections
+      .map(
+        (section) => ToolboxSectionData(
+          title: section.title,
+          subtitle: section.subtitle,
+          entries: section.entries
+              .where((entry) => isModuleEnabled(entry.moduleId))
+              .toList(growable: false),
+        ),
+      )
+      .where((section) => section.entries.isNotEmpty)
+      .toList(growable: false);
 }

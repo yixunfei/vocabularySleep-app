@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/app_log_service.dart';
 import 'app_dependencies.dart';
@@ -53,10 +54,14 @@ void runVocabularySleepApp({Future<void> Function()? beforeRunApp}) {
               stackTrace: stackTrace,
             );
             return false;
-          };
+      };
 
       final dependencies = AppDependencies.create();
-      runApp(dependencies.wrapWithProviders(const VocabularySleepApp()));
+      runApp(
+        ProviderScope(
+          child: dependencies.wrapWithProviders(const VocabularySleepApp()),
+        ),
+      );
     },
     (Object error, StackTrace stackTrace) {
       if (_isKnownBenignFrameworkIssue(error)) {

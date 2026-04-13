@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../state/app_state.dart';
 import '../ui_copy.dart';
@@ -14,8 +15,28 @@ class ToolboxPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(context.watch<AppState>().uiLanguage);
-    final sections = buildToolboxSections(i18n);
+    final state = context.watch<AppState>();
+    final i18n = AppI18n(state.uiLanguage);
+    if (!state.isModuleEnabled(ModuleIds.toolbox)) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '工具箱模块当前已停用，请在设置中心的模块管理中重新开启。',
+              en: 'Toolbox is currently disabled. Re-enable it in module management.',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    final sections = buildToolboxSections(
+      i18n,
+      isModuleEnabled: state.isModuleEnabled,
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(

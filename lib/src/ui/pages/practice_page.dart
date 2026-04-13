@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/settings_dto.dart';
 import '../../models/practice_session_record.dart';
@@ -25,6 +26,21 @@ class PracticePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    if (!state.isModuleEnabled(ModuleIds.practice)) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '练习模块当前已停用，请在设置中心的模块管理中重新开启。',
+              en: 'Practice is currently disabled. Re-enable it in module management.',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
     final current = state.currentWord;
     if (state.selectedWordbook == null || current == null) {
       return EmptyStateView(

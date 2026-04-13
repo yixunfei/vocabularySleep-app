@@ -14,6 +14,7 @@ class ToolboxSectionData {
 
 class ToolboxEntryData {
   const ToolboxEntryData({
+    required this.moduleId,
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -21,6 +22,7 @@ class ToolboxEntryData {
     required this.pageBuilder,
   });
 
+  final String moduleId;
   final String title;
   final String subtitle;
   final IconData icon;

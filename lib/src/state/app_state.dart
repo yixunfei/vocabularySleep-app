@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import '../core/module_system/module_system.dart';
 import '../i18n/app_i18n.dart';
 import '../models/ambient_preset.dart';
 import '../models/app_home_tab.dart';
@@ -31,6 +32,7 @@ import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';
+import '../repositories/repositories.dart';
 import '../services/ambient_service.dart';
 import '../services/app_log_service.dart';
 import '../services/asr_service.dart';
@@ -87,10 +89,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required AmbientService ambient,
     required AsrService asr,
     required FocusService focusService,
+    WordbookRepository? wordbookRepository,
+    PracticeRepository? practiceRepository,
     CstCloudResourcePrewarmService? remoteResourcePrewarm,
     WeatherService? weatherService,
     DailyQuoteService? dailyQuoteService,
   }) : _database = database,
+       _wordbookRepository =
+           wordbookRepository ?? DatabaseWordbookRepository(database),
+       _practiceRepository =
+           practiceRepository ?? DatabasePracticeRepository(database),
        _settings = settings,
        _playback = playback,
        _ambient = ambient,
@@ -103,6 +111,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   final AppDatabaseService _database;
+  final WordbookRepository _wordbookRepository;
+  final PracticeRepository _practiceRepository;
   final SettingsService _settings;
   final PlaybackService _playback;
   final AmbientService _ambient;
@@ -147,6 +157,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Set<String> _rememberedWords = <String>{};
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
+  ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
   AppHomeTab _startupPage = AppHomeTab.focus;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   StudyStartupTab _studyStartupTab = StudyStartupTab.play;
@@ -297,6 +308,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SearchMode get searchMode => _searchMode;
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
+  ModuleToggleState get moduleToggleState => _moduleToggleState;
   AppHomeTab get startupPage => _startupPage;
   FocusStartupTab get focusStartupTab => _focusStartupTab;
   StudyStartupTab get studyStartupTab => _studyStartupTab;
@@ -524,7 +536,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           ? _words.length
           : selectedWordbook.wordCount;
     }
-    return _database.countSearchWords(
+    return _wordbookRepository.countSearchWords(
       selectedWordbook.id,
       query: _searchQuery,
       mode: _searchMode.name,
@@ -566,9 +578,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final resolvedIncludeFields =
         includeFields ?? !_shouldUseLiteWordQueries(wordbook);
     if (resolvedIncludeFields) {
-      return _database.getWords(wordbook.id, limit: limit, offset: offset);
+      return _wordbookRepository.getWords(
+        wordbook.id,
+        limit: limit,
+        offset: offset,
+      );
     }
-    return _database.getWordsLite(wordbook.id, limit: limit, offset: offset);
+    return _wordbookRepository.getWordsLite(
+      wordbook.id,
+      limit: limit,
+      offset: offset,
+    );
   }
 
   List<WordEntry> _searchWordbookEntries(
@@ -579,7 +599,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     int offset = 0,
   }) {
     if (_shouldUseLiteWordQueries(wordbook)) {
-      return _database.searchWordsLite(
+      return _wordbookRepository.searchWordsLite(
         wordbook.id,
         query: query,
         mode: mode,
@@ -587,7 +607,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         offset: offset,
       );
     }
-    return _database.searchWords(
+    return _wordbookRepository.searchWords(
       wordbook.id,
       query: query,
       mode: mode,
@@ -601,7 +621,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (selectedWordbook == null) {
       return null;
     }
-    return _database.findSearchOffsetByPrefix(
+    return _wordbookRepository.findSearchOffsetByPrefix(
       selectedWordbook.id,
       prefix: prefix,
       query: _searchQuery,
@@ -614,7 +634,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (selectedWordbook == null) {
       return null;
     }
-    return _database.findSearchOffsetByInitial(
+    return _wordbookRepository.findSearchOffsetByInitial(
       selectedWordbook.id,
       initial: initial,
       query: _searchQuery,
@@ -634,7 +654,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       );
       return index < 0 ? null : index;
     }
-    final offset = _database.findSearchOffsetByWordId(
+    final offset = _wordbookRepository.findSearchOffsetByWordId(
       selectedWordbook.id,
       wordId: wordId,
       query: _searchQuery,
@@ -659,7 +679,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         if (_words.isEmpty || _indexOfWordEntry(_words, transient) < 0) {
           return transient;
         }
-      } else if (visibleWords.any((item) => _isSameWordEntry(item, transient))) {
+      } else if (visibleWords.any(
+        (item) => _isSameWordEntry(item, transient),
+      )) {
         return transient;
       }
     }
@@ -750,6 +772,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void setFocusStartupTab(FocusStartupTab tab) => _setFocusStartupTabImpl(tab);
 
   void setStudyStartupTab(StudyStartupTab tab) => _setStudyStartupTabImpl(tab);
+
+  bool isModuleEnabled(String moduleId) {
+    return ModuleRuntimeGuard(_moduleToggleState).canAccess(moduleId);
+  }
+
+  void setModuleEnabled(String moduleId, bool enabled) =>
+      _setModuleEnabledImpl(moduleId, enabled);
 
   void setWeatherEnabled(bool enabled) => _setWeatherEnabledImpl(enabled);
 
@@ -1068,7 +1097,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (name.trim().isEmpty) return;
     _setBusy(true);
     try {
-      final id = _database.createWordbook(name.trim());
+      final id = _wordbookRepository.createWordbook(name.trim());
       await _reloadWordbooks(keepCurrentSelection: false);
       final created = _wordbooks
           .where((item) => item.id == id)
@@ -1090,7 +1119,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> refreshBuiltInWordbookCatalog() async {
     _setBusy(true, messageKey: 'busyLoadingWordbook');
     try {
-      await _database.syncBuiltInWordbooksCatalog();
+      await _wordbookRepository.syncBuiltInWordbooksCatalog();
       await _reloadWordbooks(keepCurrentSelection: true);
       await _syncSpecialWordbooks();
     } catch (error) {
@@ -1106,7 +1135,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> renameWordbook(Wordbook wordbook, String newName) async {
     _setBusy(true);
     try {
-      _database.renameWordbook(wordbook.id, newName.trim());
+      _wordbookRepository.renameWordbook(wordbook.id, newName.trim());
       await _reloadWordbooks(keepCurrentSelection: true);
     } catch (error) {
       _setMessage(
@@ -1121,7 +1150,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> deleteWordbook(Wordbook wordbook) async {
     _setBusy(true);
     try {
-      _database.deleteManagedWordbook(wordbook.id);
+      _wordbookRepository.deleteManagedWordbook(wordbook.id);
       await _reloadWordbooks(keepCurrentSelection: true);
       await _syncSpecialWordbooks();
     } catch (error) {
@@ -1178,7 +1207,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       progress: null,
     );
     try {
-      final imported = await _database.importWordbookFileAsync(
+      final imported = await _wordbookRepository.importWordbookFileAsync(
         filePath: normalizedPath,
         name: normalizedName,
         onProgress: (processedEntries, totalEntries) {
@@ -1242,7 +1271,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     _setBusy(true, messageKey: 'busyMigratingLegacyData');
     try {
-      final imported = await _database.importLegacyDatabase(filePath);
+      final imported = await _wordbookRepository.importLegacyDatabase(filePath);
       await _reloadWordbooks(keepCurrentSelection: false);
       await _syncSpecialWordbooks();
       _setMessage(
@@ -1314,9 +1343,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _setBusy(true);
     try {
       if (original == null) {
-        _database.addWord(selected.id, payload);
+        _wordbookRepository.addWord(selected.id, payload);
       } else {
-        _database.updateWord(
+        _wordbookRepository.updateWord(
           wordbookId: selected.id,
           sourceWord: original.word,
           sourceWordId: original.id,
@@ -1350,7 +1379,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       for (final payload in payloads) {
         final word = payload.word.trim();
         if (word.isEmpty) continue;
-        _database.upsertWord(
+        _wordbookRepository.upsertWord(
           selected.id,
           payload.copyWith(word: word, fields: mergeFieldItems(payload.fields)),
         );
@@ -1380,7 +1409,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (selected == null) return;
     _setBusy(true);
     try {
-      _database.deleteWord(selected.id, word.word);
+      _wordbookRepository.deleteWord(selected.id, word.word);
       await _reloadWordbooks(keepCurrentSelection: true);
       await selectWordbook(selected);
       await _syncSpecialWordbooks();
@@ -1427,9 +1456,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       if (wasFavorite) {
-        _database.deleteWordByEntryIdentity(favoritesBook.id, word);
+        _wordbookRepository.deleteWordByEntryIdentity(favoritesBook.id, word);
       } else {
-        _database.upsertWord(favoritesBook.id, word.toPayload());
+        _wordbookRepository.upsertWord(favoritesBook.id, word.toPayload());
       }
       _refreshSelectedSpecialWordbook(favoritesBook);
       _persistSpecialWordSet('favorites', _favorites);
@@ -1484,9 +1513,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     try {
       if (wasTaskWord) {
-        _database.deleteWordByEntryIdentity(taskBook.id, word);
+        _wordbookRepository.deleteWordByEntryIdentity(taskBook.id, word);
       } else {
-        _database.upsertWord(taskBook.id, word.toPayload());
+        _wordbookRepository.upsertWord(taskBook.id, word.toPayload());
       }
       _refreshSelectedSpecialWordbook(taskBook);
       _persistSpecialWordSet('taskWords', _taskWords);
@@ -1516,7 +1545,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (taskBook == null) return;
     _setBusy(true);
     try {
-      _database.clearWordbook(taskBook.id);
+      _wordbookRepository.clearWordbook(taskBook.id);
       await _syncSpecialWordbooks();
       await _reloadWordbooks(keepCurrentSelection: true);
     } catch (error) {
@@ -1537,7 +1566,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (taskBook == null) return;
     _setBusy(true);
     try {
-      final exportedId = _database.exportWordbook(taskBook.id, name);
+      final exportedId = _wordbookRepository.exportWordbook(taskBook.id, name);
       await _reloadWordbooks(keepCurrentSelection: false);
       final exported = _wordbooks
           .where((item) => item.id == exportedId)
@@ -1565,7 +1594,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _setBusy(true, messageKey: 'busyMergingWordbooks');
     try {
       await _createSafetyBackup(reason: 'merge_wordbooks');
-      _database.mergeWordbooks(
+      _wordbookRepository.mergeWordbooks(
         sourceWordbookId: sourceWordbookId,
         targetWordbookId: targetWordbookId,
         deleteSourceAfterMerge: deleteSourceAfterMerge,
@@ -1789,7 +1818,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool jumpByInitial(String initial) {
     final selectedWordbook = _selectedWordbook;
     if (selectedWordbook == null) return false;
-    final entry = _database.findJumpWordByInitial(
+    final entry = _wordbookRepository.findJumpWordByInitial(
       selectedWordbook.id,
       initial: initial,
       query: _searchQuery,
@@ -1805,7 +1834,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool jumpByPrefix(String rawPrefix) {
     final selectedWordbook = _selectedWordbook;
     if (selectedWordbook == null) return false;
-    final entry = _database.findJumpWordByPrefix(
+    final entry = _wordbookRepository.findJumpWordByPrefix(
       selectedWordbook.id,
       prefix: rawPrefix,
       query: _searchQuery,
@@ -2741,7 +2770,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     bool preloadSelectedWords = true,
   }) async {
     final selectedId = keepCurrentSelection ? _selectedWordbook?.id : null;
-    _wordbooks = _database
+    _wordbooks = _wordbookRepository
         .getWordbooks()
         .map(_withLocalizedBuiltinName)
         .toList(growable: false);
@@ -2841,7 +2870,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .cast<Wordbook?>()
         .firstOrNull;
     if (taskBook != null) {
-      _taskWords = _database
+      _taskWords = _wordbookRepository
           .getWords(taskBook.id)
           .map((item) => item.collectionReferenceKey)
           .toSet();
@@ -2909,7 +2938,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }
       _setWords(nextWords);
     } else {
-      _setWords(_database.getWords(specialWordbook.id));
+      _setWords(_wordbookRepository.getWords(specialWordbook.id));
     }
 
     if (_currentWordIndex >= _words.length) {
@@ -2990,7 +3019,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (wordbook == null || !_shouldUseLiteWordQueries(wordbook)) {
       return entry;
     }
-    final hydrated = _database.hydrateWordEntry(entry);
+    final hydrated = _wordbookRepository.hydrateWordEntry(entry);
     if (hydrated == null) {
       return entry;
     }

@@ -315,6 +315,7 @@ class AudioPlayerSourceHelper {
     String? mimeType,
   }) async {
     try {
+      // ignore: invalid_use_of_visible_for_testing_member
       await player.creatingCompleter.future;
       await _platform.setSourceUrl(
         player.playerId,
@@ -342,6 +343,7 @@ class AudioPlayerSourceHelper {
     String? mimeType,
   }) async {
     try {
+      // ignore: invalid_use_of_visible_for_testing_member
       await player.creatingCompleter.future;
       await _platform.setSourceBytes(
         player.playerId,

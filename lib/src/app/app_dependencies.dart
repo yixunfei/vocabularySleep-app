@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
+import '../repositories/repositories.dart';
 import '../services/ambient_service.dart';
 import '../services/asr_service.dart';
 import '../services/built_in_wordbook_source.dart';
@@ -20,6 +21,8 @@ import '../state/app_state.dart';
 class AppDependencies {
   AppDependencies._({
     required this.database,
+    required this.wordbookRepository,
+    required this.practiceRepository,
     required this.cstCloudResourceCache,
     required this.cstCloudResourcePrewarm,
     required this.settings,
@@ -30,6 +33,8 @@ class AppDependencies {
   });
 
   final AppDatabaseService database;
+  final WordbookRepository wordbookRepository;
+  final PracticeRepository practiceRepository;
   final CstCloudResourceCacheService cstCloudResourceCache;
   final CstCloudResourcePrewarmService cstCloudResourcePrewarm;
   final SettingsService settings;
@@ -52,6 +57,8 @@ class AppDependencies {
       ),
     );
     final settings = SettingsService(database);
+    final wordbookRepository = DatabaseWordbookRepository(database);
+    final practiceRepository = DatabasePracticeRepository(database);
     final tts = TtsService();
     final playback = PlaybackService(tts);
     final ambient = AmbientService(resourceCache: cstCloudResourceCache);
@@ -69,6 +76,8 @@ class AppDependencies {
 
     return AppDependencies._(
       database: database,
+      wordbookRepository: wordbookRepository,
+      practiceRepository: practiceRepository,
       cstCloudResourceCache: cstCloudResourceCache,
       cstCloudResourcePrewarm: cstCloudResourcePrewarm,
       settings: settings,
@@ -93,6 +102,8 @@ class AppDependencies {
             ambient: ambient,
             asr: asr,
             focusService: focusService,
+            wordbookRepository: wordbookRepository,
+            practiceRepository: practiceRepository,
             remoteResourcePrewarm: cstCloudResourcePrewarm,
           ),
         ),

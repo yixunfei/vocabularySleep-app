@@ -29,9 +29,9 @@ class WordbookState extends ChangeNotifier {
   String _visibleWordsCacheQuery = '';
   SearchMode _visibleWordsCacheMode = SearchMode.all;
 
-  Set<String> _favorites = <String>{};
-  Set<String> _taskWords = <String>{};
-  Set<String> _rememberedWords = <String>{};
+  final Set<String> _favorites = <String>{};
+  final Set<String> _taskWords = <String>{};
+  final Set<String> _rememberedWords = <String>{};
 
   bool _wordbookImportActive = false;
   String _wordbookImportName = '';
@@ -315,7 +315,9 @@ class WordbookState extends ChangeNotifier {
       final data = jsonDecode(content);
 
       if (data is! List) {
-        throw FormatException('Invalid kaikki.org JSON format: expected array');
+        throw const FormatException(
+          'Invalid kaikki.org JSON format: expected array',
+        );
       }
 
       final wordbook = await _createOrUpdateWordbook(
@@ -421,7 +423,7 @@ class WordbookState extends ChangeNotifier {
 
         final glosses = sense['glosses'] as List?;
         if (glosses != null) {
-          meanings.addAll(glosses.where((g) => g is String).cast<String>());
+          meanings.addAll(glosses.whereType<String>());
         }
 
         final senseExamples = sense['examples'] as List?;
@@ -522,7 +524,7 @@ class WordbookState extends ChangeNotifier {
       } else if (data is Map) {
         entries = [data];
       } else {
-        throw FormatException('Unsupported JSON structure');
+        throw const FormatException('Unsupported JSON structure');
       }
 
       final wordbook = await _createOrUpdateWordbook(

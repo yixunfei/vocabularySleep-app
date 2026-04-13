@@ -40,7 +40,8 @@ extension _AppStateWordbook on AppState {
     }
     final normalizedFocusWord = focusWord?.trim();
     final previousSelection = _selectedWordbook;
-    if (_database.isLazyBuiltInPath(wordbook.path) && wordbook.wordCount <= 0) {
+    if (_wordbookRepository.isLazyBuiltInPath(wordbook.path) &&
+        wordbook.wordCount <= 0) {
       final lazyWordbookId = wordbook.id;
       final lazyWordbookName = wordbook.name;
       final lazyPath = wordbook.path;
@@ -53,7 +54,7 @@ extension _AppStateWordbook on AppState {
         progress: 0,
       );
       try {
-        await _database.ensureBuiltInWordbookLoaded(
+        await _wordbookRepository.ensureBuiltInWordbookLoaded(
           lazyPath,
           onProgress: (progress) {
             _setBusy(

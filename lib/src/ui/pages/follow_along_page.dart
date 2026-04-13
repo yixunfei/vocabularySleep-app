@@ -304,7 +304,7 @@ class _FollowAlongPageState extends State<FollowAlongPage> {
   String _normalizeForHardMatch(String value) {
     return value
         .toLowerCase()
-        .replaceAll(RegExp(r"[^\p{L}\p{N}\u4e00-\u9fff]+", unicode: true), ' ')
+        .replaceAll(RegExp(r'[^\p{L}\p{N}\u4e00-\u9fff]+', unicode: true), ' ')
         .trim();
   }
 

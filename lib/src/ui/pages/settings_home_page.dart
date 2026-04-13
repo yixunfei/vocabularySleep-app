@@ -10,6 +10,7 @@ import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
 import 'appearance_studio_page.dart';
 import 'language_settings_page.dart';
+import 'module_management_page.dart';
 import 'playback_advanced_page.dart';
 import 'recognition_settings_page.dart';
 import 'voice_input_settings_page.dart';
@@ -407,6 +408,17 @@ class SettingsHomePage extends StatelessWidget {
               ru: 'Плотность интерфейса, фон и стиль панелей.',
             ),
             onTap: () => _open(context, const AppearanceStudioPage()),
+          ),
+          const SizedBox(height: 12),
+          SettingTile(
+            icon: Icons.extension_rounded,
+            title: pickUiText(i18n, zh: '模块管理', en: 'Module management'),
+            subtitle: pickUiText(
+              i18n,
+              zh: '按模块启用或停用功能入口。',
+              en: 'Enable or disable feature entry points by module.',
+            ),
+            onTap: () => _open(context, const ModuleManagementPage()),
           ),
           const SizedBox(height: 12),
           SettingTile(

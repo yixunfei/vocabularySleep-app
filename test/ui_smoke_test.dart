@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:vocabulary_sleep_app/src/core/module_system/module_system.dart';
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/models/ambient_preset.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
@@ -2746,6 +2747,7 @@ class _FakeAppState extends ChangeNotifier
   AppHomeTab _startupPage = AppHomeTab.study;
   StudyStartupTab _studyStartupTab = StudyStartupTab.play;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
+  ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
@@ -3177,6 +3179,9 @@ class _FakeAppState extends ChangeNotifier
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
 
   @override
+  ModuleToggleState get moduleToggleState => _moduleToggleState;
+
+  @override
   AppHomeTab get startupPage => _startupPage;
 
   @override
@@ -3231,6 +3236,17 @@ class _FakeAppState extends ChangeNotifier
   @override
   void setStudyStartupTab(StudyStartupTab tab) {
     _studyStartupTab = tab;
+    notifyListeners();
+  }
+
+  @override
+  bool isModuleEnabled(String moduleId) {
+    return ModuleRuntimeGuard(_moduleToggleState).canAccess(moduleId);
+  }
+
+  @override
+  void setModuleEnabled(String moduleId, bool enabled) {
+    _moduleToggleState = _moduleToggleState.copyWithModule(moduleId, enabled);
     notifyListeners();
   }
 

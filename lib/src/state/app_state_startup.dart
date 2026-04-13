@@ -9,10 +9,22 @@ extension _AppStateStartup on AppState {
 
     try {
       await _database.init();
-      await _focusService.init();
-      await _ambient.init();
-      await _restoreDownloadedAmbientSounds();
-      await _pollPendingTodoReminderLaunchImpl();
+      _moduleToggleState = _settings.loadModuleToggleState();
+
+      if (isModuleEnabled(ModuleIds.focus)) {
+        await _focusService.init();
+        await _pollPendingTodoReminderLaunchImpl();
+      }
+
+      final shouldInitAmbient =
+          isModuleEnabled(ModuleIds.study) ||
+          isModuleEnabled(ModuleIds.focus) ||
+          isModuleEnabled(ModuleIds.toolbox);
+      if (shouldInitAmbient) {
+        await _ambient.init();
+        await _restoreDownloadedAmbientSounds();
+      }
+
       _config = _settings.loadPlayConfig();
       _playback.updateRuntimeConfig(_config);
       final languageSetting = _settings.loadUiLanguage();
@@ -109,6 +121,119 @@ extension _AppStateStartup on AppState {
     _studyStartupTab = tab;
     _settings.saveStudyStartupTab(tab);
     _notifyStateChanged();
+  }
+
+  void _setModuleEnabledImpl(String moduleId, bool enabled) {
+    final descriptor = ModuleRegistry.find(moduleId);
+    if (descriptor == null) {
+      return;
+    }
+    if (!descriptor.canDisable && !enabled) {
+      return;
+    }
+    if (_moduleToggleState.isEnabled(moduleId) == enabled) {
+      return;
+    }
+
+    final previousState = _moduleToggleState;
+    var next = _moduleToggleState.copyWithModule(moduleId, enabled);
+    if (!enabled) {
+      for (final child in ModuleRegistry.descriptors.where(
+        (item) => item.parentId == moduleId,
+      )) {
+        next = next.copyWithModule(child.id, false);
+      }
+    } else {
+      final parentId = descriptor.parentId;
+      if (parentId != null && !next.isEnabled(parentId)) {
+        next = next.copyWithModule(parentId, true);
+      }
+    }
+
+    _moduleToggleState = next;
+    _settings.saveModuleToggleState(next);
+    _normalizeStartupPageForModuleToggles();
+    _syncModuleRuntimeTransition(previous: previousState, next: next);
+
+    if (!isModuleEnabled(ModuleIds.focus)) {
+      _pendingTodoReminderLaunchId = null;
+    }
+
+    _notifyStateChanged();
+  }
+
+  void _normalizeStartupPageForModuleToggles() {
+    if (isModuleEnabled(_moduleIdForHomeTab(_startupPage))) {
+      return;
+    }
+    for (final tab in const <AppHomeTab>[
+      AppHomeTab.focus,
+      AppHomeTab.study,
+      AppHomeTab.practice,
+      AppHomeTab.toolbox,
+      AppHomeTab.more,
+    ]) {
+      if (!isModuleEnabled(_moduleIdForHomeTab(tab))) {
+        continue;
+      }
+      _startupPage = tab;
+      _settings.saveStartupPage(tab);
+      return;
+    }
+  }
+
+  String _moduleIdForHomeTab(AppHomeTab tab) {
+    return switch (tab) {
+      AppHomeTab.study => ModuleIds.study,
+      AppHomeTab.practice => ModuleIds.practice,
+      AppHomeTab.focus => ModuleIds.focus,
+      AppHomeTab.toolbox => ModuleIds.toolbox,
+      AppHomeTab.more => ModuleIds.more,
+    };
+  }
+
+  bool _isAmbientRuntimeRequired(ModuleToggleState state) {
+    final guard = ModuleRuntimeGuard(state);
+    return guard.canAccess(ModuleIds.study) ||
+        guard.canAccess(ModuleIds.focus) ||
+        guard.canAccess(ModuleIds.toolbox);
+  }
+
+  void _syncModuleRuntimeTransition({
+    required ModuleToggleState previous,
+    required ModuleToggleState next,
+  }) {
+    final previousGuard = ModuleRuntimeGuard(previous);
+    final nextGuard = ModuleRuntimeGuard(next);
+    final wasFocusEnabled = previousGuard.canAccess(ModuleIds.focus);
+    final focusEnabled = nextGuard.canAccess(ModuleIds.focus);
+    if (wasFocusEnabled && !focusEnabled) {
+      _focusService.stop();
+      _pendingTodoReminderLaunchId = null;
+    } else if (!wasFocusEnabled && focusEnabled && _initialized) {
+      unawaited(() async {
+        await _focusService.init();
+        await _pollPendingTodoReminderLaunchImpl();
+        _notifyStateChanged();
+      }());
+    }
+
+    final wasAmbientRequired = _isAmbientRuntimeRequired(previous);
+    final ambientRequired = _isAmbientRuntimeRequired(next);
+    if (wasAmbientRequired && !ambientRequired) {
+      _ambient.setEnabled(false);
+      unawaited(_ambient.stopAll());
+    } else if (!wasAmbientRequired && ambientRequired) {
+      _ambient.setEnabled(true);
+      if (_initialized) {
+        unawaited(() async {
+          await _ambient.init();
+          await _restoreDownloadedAmbientSounds();
+          _scheduleAmbientSync();
+          _notifyStateChanged();
+        }());
+      }
+    }
   }
 
   void _setWeatherEnabledImpl(bool enabled) {

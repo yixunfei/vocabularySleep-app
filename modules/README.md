@@ -49,7 +49,8 @@ modules/
 
 ## 已创建的模块
 
-暂无 - 模块文档在相应模块开发时创建
+- `module_system`：模块注册、开关状态、运行时守卫。
+- `practice`：练习会话与统计域（阶段 2 优先试点，已接入 `PracticeRepository`）。
 
 ---
 

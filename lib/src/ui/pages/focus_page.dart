@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/focus_startup_tab.dart';
 import '../../models/play_config.dart';
@@ -305,8 +306,23 @@ class _FocusPageState extends State<FocusPage>
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    _syncConfiguredStartupTab(state.focusStartupTab);
     final i18n = AppI18n(state.uiLanguage);
+    if (!state.isModuleEnabled(ModuleIds.focus)) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '专注模块当前已停用，请在设置中心的模块管理中重新开启。',
+              en: 'Focus is currently disabled. Re-enable it in module management.',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    _syncConfiguredStartupTab(state.focusStartupTab);
     final focus = state.focusService;
     final timerListenable = Listenable.merge(<Listenable>[
       focus.timerListenable,

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/weather_snapshot.dart';
-import 'app_log_service.dart';
 
 class WeatherService {
   WeatherService({http.Client? client}) : _client = client;

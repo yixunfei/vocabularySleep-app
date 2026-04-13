@@ -213,7 +213,7 @@ class TtsService {
     );
     await _runOp<void>('api.stop', () => _apiPlayer.stop(), swallowError: true);
     _completeLocalSpeak();
-    _completeApiSpeak(error: _ApiSpeakInterrupted('stop'));
+    _completeApiSpeak(error: const _ApiSpeakInterrupted('stop'));
   }
 
   Future<void> pause(TtsProviderType provider) async {
@@ -1397,7 +1397,6 @@ class TtsService {
     final watch = Stopwatch()..start();
     try {
       final result = await task();
-      final resultValue = _encodeResultValue(result);
       return result;
     } catch (error, stackTrace) {
       if (swallowError) {
@@ -1424,13 +1423,6 @@ class TtsService {
       );
       rethrow;
     }
-  }
-
-  Object? _encodeResultValue(Object? value) {
-    if (value == null || value is num || value is bool || value is String) {
-      return value;
-    }
-    return value.runtimeType.toString();
   }
 
   String _preview(String text) {

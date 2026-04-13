@@ -287,7 +287,7 @@ extension _AppStatePractice on AppState {
     );
     final wordId = entry.id;
     if (wordId != null && wordId > 0) {
-      _database.insertWordMemoryEvent(
+      _practiceRepository.insertWordMemoryEvent(
         wordId: wordId,
         eventKind: remembered ? 'remembered' : 'weak',
         quality: remembered ? 4 : 1,
@@ -507,7 +507,7 @@ extension _AppStatePractice on AppState {
         ),
         PracticeExportFormat.csv => _buildPracticeReviewCsv(records: records),
       };
-      return await _database.writeTextExport(
+      return await _practiceRepository.writeTextExport(
         contents: contents,
         defaultFileStem: 'xianyushengxi_practice_review',
         extension: format.extension,
@@ -577,7 +577,7 @@ extension _AppStatePractice on AppState {
           resolvedEntries,
         ),
       };
-      return await _database.writeTextExport(
+      return await _practiceRepository.writeTextExport(
         contents: contents,
         defaultFileStem: 'xianyushengxi_wrong_notebook',
         extension: format.extension,
@@ -893,9 +893,8 @@ extension _AppStatePractice on AppState {
           .whereType<int>()
           .where((id) => id > 0),
     };
-    _wordMemoryProgressByWordId = _database.getWordMemoryProgressByWordIds(
-      wordIds,
-    );
+    _wordMemoryProgressByWordId = _practiceRepository
+        .getWordMemoryProgressByWordIds(wordIds);
   }
 
   List<WordEntry> _resolveTrackedPracticeEntries({
@@ -1166,7 +1165,7 @@ extension _AppStatePractice on AppState {
         consecutiveCorrect: result.consecutiveCorrect,
         memoryState: result.memoryState,
       );
-      _database.upsertWordMemoryProgress(nextProgress);
+      _practiceRepository.upsertWordMemoryProgress(nextProgress);
       nextProgressByWordId[wordId] = nextProgress;
     }
 

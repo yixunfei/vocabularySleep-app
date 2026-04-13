@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/module_system/module_id.dart';
 import '../i18n/app_i18n.dart';
+import '../models/app_home_tab.dart';
 import '../models/study_startup_tab.dart';
 import '../models/todo_item.dart';
 import '../models/weather_snapshot.dart';
@@ -35,6 +37,7 @@ class _AppShellState extends State<AppShell> {
   static const double _navigationBarHeight = 80;
 
   int _index = 0;
+  List<AppHomeTab> _visibleTabs = List<AppHomeTab>.from(AppHomeTab.values);
   StudyStartupTab _studyTab = StudyStartupTab.play;
   double _miniPlayerReservedHeight = 0;
   double _soothingMiniPlayerReservedHeight = 0;
@@ -51,8 +54,10 @@ class _AppShellState extends State<AppShell> {
       final state = context.read<AppState>();
       state.init().then((_) {
         if (!mounted) return;
-        final nextIndex = state.startupPage.index;
+        final visibleTabs = _resolveVisibleTabs(state);
+        final nextIndex = _resolveStartupIndex(state, visibleTabs);
         setState(() {
+          _visibleTabs = visibleTabs;
           _index = nextIndex;
           _studyTab = state.studyStartupTab;
         });
@@ -62,6 +67,60 @@ class _AppShellState extends State<AppShell> {
         });
       });
     });
+  }
+
+  List<AppHomeTab> _resolveVisibleTabs(AppState state) {
+    final visible = <AppHomeTab>[
+      for (final tab in AppHomeTab.values)
+        if (state.isModuleEnabled(_moduleIdForTab(tab))) tab,
+    ];
+    if (!visible.contains(AppHomeTab.more)) {
+      visible.add(AppHomeTab.more);
+    }
+    return visible;
+  }
+
+  int _resolveStartupIndex(AppState state, List<AppHomeTab> visibleTabs) {
+    if (visibleTabs.isEmpty) {
+      return 0;
+    }
+    final desired = state.startupPage;
+    final desiredIndex = visibleTabs.indexOf(desired);
+    if (desiredIndex >= 0) {
+      return desiredIndex;
+    }
+    final focusIndex = visibleTabs.indexOf(AppHomeTab.focus);
+    if (focusIndex >= 0) {
+      return focusIndex;
+    }
+    return 0;
+  }
+
+  String _moduleIdForTab(AppHomeTab tab) {
+    return switch (tab) {
+      AppHomeTab.study => ModuleIds.study,
+      AppHomeTab.practice => ModuleIds.practice,
+      AppHomeTab.focus => ModuleIds.focus,
+      AppHomeTab.toolbox => ModuleIds.toolbox,
+      AppHomeTab.more => ModuleIds.more,
+    };
+  }
+
+  int _indexForTab(AppHomeTab tab) => _visibleTabs.indexOf(tab);
+
+  AppHomeTab _tabAt(int index) {
+    if (index >= 0 && index < _visibleTabs.length) {
+      return _visibleTabs[index];
+    }
+    return _visibleTabs.isEmpty ? AppHomeTab.more : _visibleTabs.first;
+  }
+
+  void _setTab(AppHomeTab tab) {
+    final index = _indexForTab(tab);
+    if (index < 0) {
+      return;
+    }
+    _setIndex(index);
   }
 
   Future<void> _maybeShowStartupTodoPrompt() async {
@@ -148,8 +207,10 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _setIndex(int index) {
+    final currentTab = _tabAt(_index);
+    final nextTab = _tabAt(index);
     if (_index == index) {
-      if (index == 0 && _studyTab == StudyStartupTab.library) {
+      if (nextTab == AppHomeTab.study && _studyTab == StudyStartupTab.library) {
         _scrollLibraryToTop?.call();
       }
       return;
@@ -157,6 +218,9 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _index = index;
     });
+    if (currentTab != nextTab) {
+      context.read<AppState>().setStartupPage(nextTab);
+    }
   }
 
   void _setStudyTab(StudyStartupTab tab) {
@@ -181,16 +245,66 @@ class _AppShellState extends State<AppShell> {
       return;
     }
     _lastHandledTodoReminderLaunchId = pendingTodoId;
-    if (_index != 2) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _index = 2;
-        });
-      });
+    if (_indexForTab(AppHomeTab.focus) < 0 ||
+        _tabAt(_index) == AppHomeTab.focus) {
+      return;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _setTab(AppHomeTab.focus);
+    });
+  }
+
+  Widget _buildPageForTab(AppHomeTab tab) {
+    return switch (tab) {
+      AppHomeTab.study => StudyPage(
+        selectedTab: _studyTab,
+        onSelectTab: _setStudyTab,
+        onOpenPractice: () => _setTab(AppHomeTab.practice),
+        onAttachLibraryScrollToTop: (callback) {
+          _scrollLibraryToTop = callback;
+        },
+      ),
+      AppHomeTab.practice => const PracticePage(),
+      AppHomeTab.focus => const FocusPage(),
+      AppHomeTab.toolbox => const ToolboxPage(),
+      AppHomeTab.more => const MorePage(),
+    };
+  }
+
+  NavigationDestination _buildNavigationDestination(
+    AppHomeTab tab,
+    AppI18n i18n,
+  ) {
+    return switch (tab) {
+      AppHomeTab.study => NavigationDestination(
+        icon: const Icon(Icons.auto_stories_outlined),
+        selectedIcon: const Icon(Icons.auto_stories_rounded),
+        label: pageLabelStudy(i18n),
+      ),
+      AppHomeTab.practice => NavigationDestination(
+        icon: const Icon(Icons.fitness_center_outlined),
+        selectedIcon: const Icon(Icons.fitness_center_rounded),
+        label: pageLabelPractice(i18n),
+      ),
+      AppHomeTab.focus => NavigationDestination(
+        icon: const Icon(Icons.timer_outlined),
+        selectedIcon: const Icon(Icons.timer_rounded),
+        label: pageLabelFocus(i18n),
+      ),
+      AppHomeTab.toolbox => NavigationDestination(
+        icon: const Icon(Icons.handyman_outlined),
+        selectedIcon: const Icon(Icons.handyman_rounded),
+        label: pageLabelToolbox(i18n),
+      ),
+      AppHomeTab.more => NavigationDestination(
+        icon: const Icon(Icons.widgets_outlined),
+        selectedIcon: const Icon(Icons.widgets_rounded),
+        label: pageLabelMore(i18n),
+      ),
+    };
   }
 
   void _handleMiniPlayerPresentation(
@@ -687,8 +801,23 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final visibleTabs = _resolveVisibleTabs(state);
+    if (visibleTabs.length != _visibleTabs.length ||
+        visibleTabs.any((tab) => !_visibleTabs.contains(tab))) {
+      _visibleTabs = visibleTabs;
+    }
+    final safeIndex = _index.clamp(0, (_visibleTabs.length - 1).clamp(0, 999));
+    if (safeIndex != _index) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _index = safeIndex;
+        });
+      });
+    }
     _handlePendingTodoReminderLaunch(state);
     final i18n = AppI18n(state.uiLanguage);
+    final currentTab = _tabAt(safeIndex);
     final media = MediaQuery.of(context);
     final bottomInset = media.padding.bottom;
     final navigationChromeHeight = _navigationBarHeight + bottomInset;
@@ -739,21 +868,10 @@ class _AppShellState extends State<AppShell> {
                         child: isInitializing
                             ? _buildInitializingView(context, i18n)
                             : IndexedStack(
-                                index: _index,
-                                children: <Widget>[
-                                  StudyPage(
-                                    selectedTab: _studyTab,
-                                    onSelectTab: _setStudyTab,
-                                    onOpenPractice: () => _setIndex(1),
-                                    onAttachLibraryScrollToTop: (callback) {
-                                      _scrollLibraryToTop = callback;
-                                    },
-                                  ),
-                                  const PracticePage(),
-                                  const FocusPage(),
-                                  const ToolboxPage(),
-                                  const MorePage(),
-                                ],
+                                index: safeIndex,
+                                children: _visibleTabs
+                                    .map(_buildPageForTab)
+                                    .toList(growable: false),
                               ),
                       ),
                     ),
@@ -763,39 +881,13 @@ class _AppShellState extends State<AppShell> {
                         padding: EdgeInsets.only(bottom: bottomInset),
                         child: NavigationBar(
                           height: _navigationBarHeight,
-                          selectedIndex: _index,
+                          selectedIndex: safeIndex,
                           onDestinationSelected: _setIndex,
-                          destinations: <NavigationDestination>[
-                            NavigationDestination(
-                              icon: const Icon(Icons.auto_stories_outlined),
-                              selectedIcon: const Icon(
-                                Icons.auto_stories_rounded,
-                              ),
-                              label: pageLabelStudy(i18n),
-                            ),
-                            NavigationDestination(
-                              icon: const Icon(Icons.fitness_center_outlined),
-                              selectedIcon: const Icon(
-                                Icons.fitness_center_rounded,
-                              ),
-                              label: pageLabelPractice(i18n),
-                            ),
-                            NavigationDestination(
-                              icon: const Icon(Icons.timer_outlined),
-                              selectedIcon: const Icon(Icons.timer_rounded),
-                              label: pageLabelFocus(i18n),
-                            ),
-                            NavigationDestination(
-                              icon: const Icon(Icons.handyman_outlined),
-                              selectedIcon: const Icon(Icons.handyman_rounded),
-                              label: pageLabelToolbox(i18n),
-                            ),
-                            NavigationDestination(
-                              icon: const Icon(Icons.widgets_outlined),
-                              selectedIcon: const Icon(Icons.widgets_rounded),
-                              label: pageLabelMore(i18n),
-                            ),
-                          ],
+                          destinations: _visibleTabs
+                              .map(
+                                (tab) => _buildNavigationDestination(tab, i18n),
+                              )
+                              .toList(growable: false),
                         ),
                       ),
                     ),
@@ -809,9 +901,9 @@ class _AppShellState extends State<AppShell> {
                 child: MiniPlayer(
                   state: state,
                   i18n: i18n,
-                  onOpenPractice: () => _setIndex(1),
+                  onOpenPractice: () => _setTab(AppHomeTab.practice),
                   onOpenLibrary: () {
-                    _setIndex(0);
+                    _setTab(AppHomeTab.study);
                     _setStudyTab(StudyStartupTab.library);
                   },
                   onPresentationChanged: _handleMiniPlayerPresentation,
@@ -832,7 +924,7 @@ class _AppShellState extends State<AppShell> {
                     final visible =
                         !isInitializing &&
                         shellRouteIsCurrent &&
-                        _index != 3 &&
+                        currentTab != AppHomeTab.toolbox &&
                         SoothingMiniPlayer.isVisible;
                     final reservedHeight = visible ? 86.0 : 0.0;
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -860,7 +952,7 @@ class _AppShellState extends State<AppShell> {
                       onTogglePlayback: () async {
                         final player = SoothingMusicRuntimeStore.retainedPlayer;
                         if (player == null) {
-                          _setIndex(3);
+                          _setTab(AppHomeTab.toolbox);
                           return;
                         }
                         if (SoothingMusicRuntimeStore.activePlaying) {

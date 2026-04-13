@@ -49,6 +49,7 @@ dependencies:
   record: ^6.2.0
   uuid: ^4.5.3
   provider: ^6.1.5+1
+  flutter_riverpod: ^2.6.1
   dict_reader: ^1.6.0
   sherpa_onnx: ^1.12.34
   archive: ^4.0.9
