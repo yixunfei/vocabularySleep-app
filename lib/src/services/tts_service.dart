@@ -64,7 +64,10 @@ class TtsService {
   bool _localInitialized = false;
   bool _localAudioConfigured = false;
   bool _apiAudioConfigured = false;
+  List<_LocalTtsVoice>? _cachedLocalVoices;
+  Future<List<_LocalTtsVoice>>? _localVoicesLoadFuture;
   String? _lastLocalLanguage;
+  String? _lastLocalVoiceSignature;
   int _apiSpeakToken = 0;
 
   Future<void> _ensureLocalInitialized() async {
@@ -126,34 +129,15 @@ class TtsService {
   }
 
   Future<List<String>> getLocalVoices() async {
-    final dynamic voicesRaw = await _runOp<dynamic>(
-      'local.getVoices',
-      () => _flutterTts.getVoices,
-      swallowError: true,
-    );
-    if (voicesRaw is! List) {
-      _log.w(
-        'tts',
-        'local.getVoices returned unexpected payload',
-        data: <String, Object?>{
-          'runtimeType': voicesRaw.runtimeType.toString(),
-        },
-      );
-      return const <String>[];
-    }
-
+    final voices = await _loadLocalVoiceOptions();
     final names = <String>{};
-    for (final voice in voicesRaw) {
-      if (voice is Map) {
-        final value = voice['name']?.toString() ?? '';
-        if (value.isNotEmpty) names.add(value);
-      } else {
-        final value = '$voice'.trim();
-        if (value.isNotEmpty) names.add(value);
+    for (final voice in voices) {
+      if (voice.name.isNotEmpty) {
+        names.add(voice.name);
       }
     }
     final output = names.toList()..sort();
-return output;
+    return output;
   }
 
   Future<int> getApiCacheSizeBytes() async {
@@ -181,7 +165,7 @@ return output;
   Future<void> speak(String text, TtsConfig config) async {
     final content = text.trim();
     if (content.isEmpty) return;
-try {
+    try {
       if (config.provider == TtsProviderType.local) {
         await _speakByLocal(content, config);
       } else {
@@ -189,7 +173,7 @@ try {
       }
     } catch (error, stackTrace) {
       if (error is _ApiSpeakInterrupted) {
-return;
+        return;
       }
       _log.e(
         'tts',
@@ -282,39 +266,7 @@ return;
       swallowError: true,
     );
 
-    final skipVoiceAndLanguageConfig =
-        !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
-    if (skipVoiceAndLanguageConfig) {
-      _log.w(
-        'tts',
-        'windows safe mode enabled, skip setLanguage/setVoice',
-        data: <String, Object?>{
-          'language': config.language,
-          'voice': config.localVoice,
-        },
-      );
-    } else {
-      final language = _normalizeLanguage(config.language);
-      if (language != null && language != _lastLocalLanguage) {
-        await _runOp<dynamic>(
-          'local.setLanguage',
-          () => _flutterTts.setLanguage(language),
-          data: <String, Object?>{'value': language},
-          swallowError: true,
-        );
-        _lastLocalLanguage = language;
-      }
-
-      final voice = config.localVoice.trim();
-      if (voice.isNotEmpty) {
-        await _runOp<dynamic>(
-          'local.setVoice',
-          () => _flutterTts.setVoice(<String, String>{'name': voice}),
-          data: <String, Object?>{'value': voice},
-          swallowError: true,
-        );
-      }
-    }
+    await _configureLocalVoiceAndLanguage(text, config);
 
     final completer = Completer<void>();
     _localCompletionCompleter = completer;
@@ -325,7 +277,7 @@ return;
       () => _flutterTts.speak(text, focus: requestFocus),
       data: <String, Object?>{'textPreview': _preview(text)},
     );
-    if (!_isSpeakResultSuccess(result)) {
+    if (!_isPlatformCallSuccess(result)) {
       _localCompletionCompleter = null;
       throw StateError('Local TTS failed to start.');
     }
@@ -363,7 +315,316 @@ return;
     return value;
   }
 
-  bool _isSpeakResultSuccess(dynamic result) {
+  Future<void> _configureLocalVoiceAndLanguage(
+    String text,
+    TtsConfig config,
+  ) async {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      await _configureWindowsLocalVoiceAndLanguage(text, config);
+      return;
+    }
+
+    final language = _normalizeLanguage(config.language);
+    if (language != null && language != _lastLocalLanguage) {
+      final result = await _runOp<dynamic>(
+        'local.setLanguage',
+        () => _flutterTts.setLanguage(language),
+        data: <String, Object?>{'value': language},
+        swallowError: true,
+      );
+      if (_isPlatformCallSuccess(result)) {
+        _lastLocalLanguage = language;
+        _lastLocalVoiceSignature = 'lang:${_normalizedLocaleKey(language)}';
+      }
+    }
+
+    final voice = config.localVoice.trim();
+    if (voice.isNotEmpty) {
+      final result = await _runOp<dynamic>(
+        'local.setVoice',
+        () => _flutterTts.setVoice(<String, String>{'name': voice}),
+        data: <String, Object?>{'value': voice},
+        swallowError: true,
+      );
+      if (_isPlatformCallSuccess(result)) {
+        _lastLocalVoiceSignature = 'name:${voice.toLowerCase()}';
+      }
+    }
+  }
+
+  Future<void> _configureWindowsLocalVoiceAndLanguage(
+    String text,
+    TtsConfig config,
+  ) async {
+    final target = await _resolveWindowsLocalVoiceTarget(text, config);
+    if (target == null) {
+      return;
+    }
+
+    if (target.voice != null) {
+      final voice = target.voice!;
+      if (_lastLocalVoiceSignature == target.signature) {
+        _lastLocalLanguage = voice.locale;
+        return;
+      }
+      final result = await _runOp<dynamic>(
+        'local.setVoice',
+        () => _flutterTts.setVoice(voice.toPayload()),
+        data: <String, Object?>{
+          'value': voice.name,
+          'locale': voice.locale,
+          'reason': target.reason,
+        },
+        swallowError: true,
+      );
+      if (_isPlatformCallSuccess(result)) {
+        _lastLocalVoiceSignature = target.signature;
+        _lastLocalLanguage = voice.locale;
+        _log.i(
+          'tts',
+          'windows local voice resolved',
+          data: <String, Object?>{
+            'voice': voice.name,
+            'locale': voice.locale,
+            'reason': target.reason,
+            'textPreview': _preview(text),
+          },
+        );
+        return;
+      }
+    }
+
+    final language = target.language ?? target.voice?.locale;
+    if (language == null || language == _lastLocalLanguage) {
+      return;
+    }
+    final result = await _runOp<dynamic>(
+      'local.setLanguage',
+      () => _flutterTts.setLanguage(language),
+      data: <String, Object?>{'value': language, 'reason': target.reason},
+      swallowError: true,
+    );
+    if (_isPlatformCallSuccess(result)) {
+      _lastLocalLanguage = language;
+      _lastLocalVoiceSignature = 'lang:${_normalizedLocaleKey(language)}';
+      _log.i(
+        'tts',
+        'windows local language fallback applied',
+        data: <String, Object?>{
+          'language': language,
+          'reason': target.reason,
+          'textPreview': _preview(text),
+        },
+      );
+    }
+  }
+
+  Future<_ResolvedWindowsLocalVoiceTarget?> _resolveWindowsLocalVoiceTarget(
+    String text,
+    TtsConfig config,
+  ) async {
+    final preferredLanguage = _preferredWindowsLocalLanguage(text, config);
+    final preferredVoiceName = config.localVoice.trim();
+    final voices = await _loadLocalVoiceOptions();
+
+    if (preferredVoiceName.isNotEmpty) {
+      final matchedVoice = _pickVoiceByName(
+        voices,
+        preferredVoiceName,
+        preferredLanguage: preferredLanguage,
+      );
+      if (matchedVoice != null) {
+        return _ResolvedWindowsLocalVoiceTarget.voice(
+          matchedVoice,
+          reason: 'explicit_voice',
+        );
+      }
+    }
+
+    if (preferredLanguage != null) {
+      final matchedByLanguage = _pickVoiceByLanguage(voices, preferredLanguage);
+      if (matchedByLanguage != null) {
+        return _ResolvedWindowsLocalVoiceTarget.voice(
+          matchedByLanguage,
+          reason: config.localVoice.trim().isEmpty
+              ? 'auto_text_language'
+              : 'explicit_language',
+        );
+      }
+      return _ResolvedWindowsLocalVoiceTarget.language(
+        preferredLanguage,
+        reason: 'language_fallback',
+      );
+    }
+
+    return null;
+  }
+
+  String? _preferredWindowsLocalLanguage(String text, TtsConfig config) {
+    final configured = _normalizeLanguage(config.language);
+    if (configured != null) {
+      return configured;
+    }
+    return _inferWindowsTextLanguage(text);
+  }
+
+  String? _inferWindowsTextLanguage(String text) {
+    var hanCount = 0;
+    var kanaCount = 0;
+    var latinCount = 0;
+
+    for (final rune in text.runes) {
+      if (_isKanaRune(rune)) {
+        kanaCount += 1;
+        continue;
+      }
+      if (_isHanRune(rune)) {
+        hanCount += 1;
+        continue;
+      }
+      if (_isLatinRune(rune)) {
+        latinCount += 1;
+      }
+    }
+
+    if (kanaCount > 0) {
+      return 'ja-JP';
+    }
+    if (hanCount > 0 && hanCount >= latinCount) {
+      return 'zh-CN';
+    }
+    if (latinCount > 0) {
+      return 'en-US';
+    }
+    if (hanCount > 0) {
+      return 'zh-CN';
+    }
+    return null;
+  }
+
+  Future<List<_LocalTtsVoice>> _loadLocalVoiceOptions() async {
+    final cached = _cachedLocalVoices;
+    if (cached != null) {
+      return cached;
+    }
+
+    final pending = _localVoicesLoadFuture;
+    if (pending != null) {
+      return pending;
+    }
+
+    final future = _fetchLocalVoiceOptions();
+    _localVoicesLoadFuture = future;
+    try {
+      final voices = await future;
+      if (voices.isNotEmpty) {
+        _cachedLocalVoices = voices;
+      }
+      return voices;
+    } finally {
+      if (identical(_localVoicesLoadFuture, future)) {
+        _localVoicesLoadFuture = null;
+      }
+    }
+  }
+
+  Future<List<_LocalTtsVoice>> _fetchLocalVoiceOptions() async {
+    final dynamic voicesRaw = await _runOp<dynamic>(
+      'local.getVoices',
+      () => _flutterTts.getVoices,
+      swallowError: true,
+    );
+    if (voicesRaw is! List) {
+      _log.w(
+        'tts',
+        'local.getVoices returned unexpected payload',
+        data: <String, Object?>{
+          'runtimeType': voicesRaw.runtimeType.toString(),
+        },
+      );
+      return const <_LocalTtsVoice>[];
+    }
+
+    final unique = <String, _LocalTtsVoice>{};
+    for (final rawVoice in voicesRaw) {
+      final voice = _LocalTtsVoice.fromRaw(rawVoice);
+      if (voice == null) {
+        continue;
+      }
+      unique.putIfAbsent(voice.signature, () => voice);
+    }
+
+    final output = unique.values.toList()
+      ..sort((left, right) {
+        final localeCompare = left.localeKey.compareTo(right.localeKey);
+        if (localeCompare != 0) {
+          return localeCompare;
+        }
+        return left.name.toLowerCase().compareTo(right.name.toLowerCase());
+      });
+    return output;
+  }
+
+  _LocalTtsVoice? _pickVoiceByName(
+    List<_LocalTtsVoice> voices,
+    String preferredName, {
+    String? preferredLanguage,
+  }) {
+    final nameKey = preferredName.trim().toLowerCase();
+    if (nameKey.isEmpty) {
+      return null;
+    }
+    final matches = voices
+        .where(
+          (voice) =>
+              voice.name.toLowerCase() == nameKey &&
+              voice.locale.trim().isNotEmpty,
+        )
+        .toList(growable: false);
+    if (matches.isEmpty) {
+      return null;
+    }
+    if (preferredLanguage != null) {
+      final matchedByLanguage = _pickVoiceByLanguage(
+        matches,
+        preferredLanguage,
+      );
+      if (matchedByLanguage != null) {
+        return matchedByLanguage;
+      }
+    }
+    return matches.first;
+  }
+
+  _LocalTtsVoice? _pickVoiceByLanguage(
+    List<_LocalTtsVoice> voices,
+    String preferredLanguage,
+  ) {
+    if (voices.isEmpty) {
+      return null;
+    }
+    final localeKey = _normalizedLocaleKey(preferredLanguage);
+    for (final voice in voices) {
+      if (voice.locale.trim().isEmpty) {
+        continue;
+      }
+      if (voice.localeKey == localeKey) {
+        return voice;
+      }
+    }
+    final primaryLanguage = _primaryLanguageCode(preferredLanguage);
+    for (final voice in voices) {
+      if (voice.locale.trim().isEmpty) {
+        continue;
+      }
+      if (voice.primaryLanguageCode == primaryLanguage) {
+        return voice;
+      }
+    }
+    return null;
+  }
+
+  bool _isPlatformCallSuccess(dynamic result) {
     if (result == null) return true;
     if (result is bool) return result;
     if (result is int) return result == 1;
@@ -397,7 +658,7 @@ return;
       'response_format': 'mp3',
       'speed': config.speed,
     };
-await _runOp<dynamic>(
+    await _runOp<dynamic>(
       'local.stop.beforeApi',
       () => _flutterTts.stop(),
       swallowError: true,
@@ -854,7 +1115,7 @@ await _runOp<dynamic>(
             body: jsonEncode(requestBody),
           )
           .timeout(const Duration(seconds: 30));
-return response;
+      return response;
     } catch (error, stackTrace) {
       final interrupted = !_isApiSpeakTokenActive(speakToken);
       if (interrupted) {
@@ -934,3 +1195,94 @@ class _ApiSpeakInterrupted implements Exception {
   @override
   String toString() => 'ApiSpeakInterrupted($reason)';
 }
+
+class _LocalTtsVoice {
+  const _LocalTtsVoice({required this.name, required this.locale});
+
+  final String name;
+  final String locale;
+
+  String get localeKey => _normalizedLocaleKey(locale);
+  String get primaryLanguageCode => _primaryLanguageCode(locale);
+  String get signature => '$localeKey::${name.toLowerCase()}';
+
+  Map<String, String> toPayload() => <String, String>{
+    'name': name,
+    'locale': locale,
+  };
+
+  static _LocalTtsVoice? fromRaw(dynamic raw) {
+    if (raw is Map) {
+      final name = raw['name']?.toString().trim() ?? '';
+      final locale = raw['locale']?.toString().trim() ?? '';
+      if (name.isEmpty) {
+        return null;
+      }
+      return _LocalTtsVoice(name: name, locale: locale);
+    }
+    final name = '$raw'.trim();
+    if (name.isEmpty) {
+      return null;
+    }
+    return _LocalTtsVoice(name: name, locale: '');
+  }
+}
+
+class _ResolvedWindowsLocalVoiceTarget {
+  const _ResolvedWindowsLocalVoiceTarget._({
+    required this.reason,
+    this.voice,
+    this.language,
+  });
+
+  final String reason;
+  final _LocalTtsVoice? voice;
+  final String? language;
+
+  String get signature => voice != null
+      ? 'voice:${voice!.signature}'
+      : 'lang:${_normalizedLocaleKey(language ?? '')}';
+
+  factory _ResolvedWindowsLocalVoiceTarget.voice(
+    _LocalTtsVoice voice, {
+    required String reason,
+  }) {
+    return _ResolvedWindowsLocalVoiceTarget._(reason: reason, voice: voice);
+  }
+
+  factory _ResolvedWindowsLocalVoiceTarget.language(
+    String language, {
+    required String reason,
+  }) {
+    return _ResolvedWindowsLocalVoiceTarget._(
+      reason: reason,
+      language: language,
+    );
+  }
+}
+
+String _normalizedLocaleKey(String raw) =>
+    raw.trim().replaceAll('_', '-').toLowerCase();
+
+String _primaryLanguageCode(String raw) {
+  final key = _normalizedLocaleKey(raw);
+  if (key.isEmpty) {
+    return '';
+  }
+  final separator = key.indexOf('-');
+  if (separator < 0) {
+    return key;
+  }
+  return key.substring(0, separator);
+}
+
+bool _isHanRune(int rune) =>
+    (rune >= 0x4E00 && rune <= 0x9FFF) ||
+    (rune >= 0x3400 && rune <= 0x4DBF) ||
+    (rune >= 0xF900 && rune <= 0xFAFF);
+
+bool _isKanaRune(int rune) =>
+    (rune >= 0x3040 && rune <= 0x309F) || (rune >= 0x30A0 && rune <= 0x30FF);
+
+bool _isLatinRune(int rune) =>
+    (rune >= 0x0041 && rune <= 0x005A) || (rune >= 0x0061 && rune <= 0x007A);
