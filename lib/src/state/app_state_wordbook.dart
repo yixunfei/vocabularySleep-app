@@ -192,8 +192,9 @@ extension _AppStateWordbook on AppState {
     }
   }
 
-  void _selectWordEntryImpl(WordEntry entry) {
-    _setCurrentWordByEntry(entry);
+  Future<void> _selectWordEntryImpl(WordEntry entry) async {
+    final resolved = _hydrateWordEntryIfNeeded(entry);
+    _setCurrentWordByEntry(resolved);
     resetTestModeProgress();
     _notifyStateChanged();
   }

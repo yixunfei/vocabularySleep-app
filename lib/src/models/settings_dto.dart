@@ -96,6 +96,8 @@ class PracticeTrackedEntrySnapshot {
     required this.wordbookId,
     required this.word,
     this.id,
+    this.entryUid,
+    this.primaryGloss,
     this.meaning,
     this.rawContent = '',
     this.fields = const <WordFieldItem>[],
@@ -104,6 +106,8 @@ class PracticeTrackedEntrySnapshot {
   final int? id;
   final int wordbookId;
   final String word;
+  final String? entryUid;
+  final String? primaryGloss;
   final String? meaning;
   final String rawContent;
   final List<WordFieldItem> fields;
@@ -113,7 +117,11 @@ class PracticeTrackedEntrySnapshot {
       id: entry.id,
       wordbookId: entry.wordbookId,
       word: entry.word,
-      meaning: entry.meaning,
+      entryUid: entry.entryUid,
+      primaryGloss: entry.primaryGloss,
+      meaning: entry.summaryMeaningText.trim().isEmpty
+          ? entry.meaning
+          : entry.summaryMeaningText,
       rawContent: entry.rawContent,
       fields: entry.fields,
     );
@@ -188,6 +196,12 @@ class PracticeTrackedEntrySnapshot {
       id: readId(map['id']),
       wordbookId: ((map['wordbookId'] as num?) ?? 0).toInt(),
       word: '${map['word'] ?? ''}'.trim(),
+      entryUid: '${map['entryUid'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${map['entryUid']}'.trim(),
+      primaryGloss: '${map['primaryGloss'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${map['primaryGloss']}'.trim(),
       meaning: '${map['meaning'] ?? ''}'.trim().isEmpty
           ? null
           : '${map['meaning']}'.trim(),
@@ -201,6 +215,8 @@ class PracticeTrackedEntrySnapshot {
       'id': id,
       'wordbookId': wordbookId,
       'word': word,
+      'entryUid': entryUid,
+      'primaryGloss': primaryGloss,
       'meaning': meaning,
       'rawContent': rawContent,
       'fields': fields
@@ -214,6 +230,8 @@ class PracticeTrackedEntrySnapshot {
       id: id,
       wordbookId: wordbookId,
       word: word,
+      entryUid: entryUid,
+      primaryGloss: primaryGloss,
       meaning: meaning,
       rawContent: rawContent,
       fields: fields,
@@ -545,12 +563,16 @@ class PlaybackProgressSnapshot {
   const PlaybackProgressSnapshot({
     required this.wordbookPath,
     this.wordId,
+    this.entryUid,
+    this.primaryGloss,
     required this.word,
     required this.updatedAt,
   });
 
   final String wordbookPath;
   final int? wordId;
+  final String? entryUid;
+  final String? primaryGloss;
   final String word;
   final DateTime updatedAt;
 
@@ -569,6 +591,12 @@ class PlaybackProgressSnapshot {
     return PlaybackProgressSnapshot(
       wordbookPath: '${map['wordbookPath'] ?? ''}'.trim(),
       wordId: readId(map['wordId']),
+      entryUid: '${map['entryUid'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${map['entryUid']}'.trim(),
+      primaryGloss: '${map['primaryGloss'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${map['primaryGloss']}'.trim(),
       word: '${map['word'] ?? ''}'.trim(),
       updatedAt:
           DateTime.tryParse('${map['updatedAt'] ?? ''}') ?? DateTime.now(),
@@ -579,6 +607,8 @@ class PlaybackProgressSnapshot {
     return <String, Object?>{
       'wordbookPath': wordbookPath,
       'wordId': wordId,
+      'entryUid': entryUid,
+      'primaryGloss': primaryGloss,
       'word': word,
       'updatedAt': updatedAt.toIso8601String(),
     };

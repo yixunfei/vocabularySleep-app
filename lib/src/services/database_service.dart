@@ -14,8 +14,8 @@ import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';
 import '../models/export_dto.dart';
+import '../models/wordbook_schema_v1.dart';
 import '../utils/search_text_normalizer.dart' as search_text;
-import 'app_log_service.dart';
 import 'built_in_wordbook_source.dart';
 import 'wordbook_import_service.dart';
 
@@ -117,10 +117,23 @@ typedef BuiltInWordbookLoadProgressCallback =
     void Function(BuiltInWordbookLoadProgress progress);
 
 class _PreparedWordRecord {
-  const _PreparedWordRecord({required this.row, required this.fields});
+  const _PreparedWordRecord({
+    required this.row,
+    required this.fields,
+    required this.entryUid,
+    required this.primaryGloss,
+    required this.schemaVersion,
+    required this.sourcePayloadJson,
+    required this.sortIndex,
+  });
 
   final Map<String, Object?> row;
   final List<WordFieldItem> fields;
+  final String? entryUid;
+  final String? primaryGloss;
+  final String? schemaVersion;
+  final String? sourcePayloadJson;
+  final int sortIndex;
 }
 
 class _WordImportInsertStatements {
@@ -149,30 +162,27 @@ class _WordImportInsertStatements {
 
 class AppDatabaseService {
   AppDatabaseService(
-    this._importService, {
+    WordbookImportService importService, {
     BuiltInWordbookSource? builtInWordbookSource,
-  }) : _builtInWordbookSource =
+  }) : _importService = importService,
+       _builtInWordbookSource =
            builtInWordbookSource ?? const AssetBuiltInWordbookSource();
 
   final WordbookImportService _importService;
   final BuiltInWordbookSource _builtInWordbookSource;
-  final AppLogService _log = AppLogService.instance;
+  final Map<String, Future<int>> _builtInWordbookLoadFutures =
+      <String, Future<int>>{};
 
   late Database _db;
   late final String dbPath;
   bool _initialized = false;
   Future<void>? _initFuture;
   int _transactionDepth = 0;
-  final Map<String, Future<int>> _builtInWordbookLoadFutures =
-      <String, Future<int>>{};
 
   static const _specialWordbooks = <String, String>{
     'builtin:favorites': 'Favorites',
     'builtin:task': 'Task',
   };
-  static const String _dictBuiltinPathPrefix = 'builtin:dict:';
-  static const String _hiddenBuiltInWordbooksSettingKey =
-      'hidden_built_in_wordbooks';
   static final RegExp _backupFilePattern = RegExp(
     r'^vocabulary_(.+)_(\d{4}-\d{2}-\d{2}T.+)\.db$',
   );
@@ -181,7 +191,11 @@ class AppDatabaseService {
     caseSensitive: false,
   );
   static const int _maxSqlVariablesPerStatement = 900;
-  static const int _currentSchemaVersion = 8;
+  static const int _currentSchemaVersion = 9;
+  static const String _wordOrderClause = 'sort_index ASC, id ASC';
+  static const String _dictBuiltinPathPrefix = 'builtin:dict:';
+  static const String _hiddenBuiltInWordbooksSettingKey =
+      'hidden_built_in_wordbooks';
 
   Future<void> init() {
     if (_initialized) {
@@ -301,25 +315,200 @@ class AppDatabaseService {
     String? fileName,
   }) async {
     await init();
+    final payload = buildUserDataExportPayload(sections: sections);
+    final contents = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(payload.toJsonMap());
+    return writeTextExport(
+      contents: contents,
+      defaultFileStem: 'user_data_export',
+      extension: 'json',
+      directoryPath: directoryPath,
+      fileName: fileName,
+    );
+  }
 
-    final resolvedSections = _resolveUserDataExportSections(sections);
-    final exportDir = (directoryPath ?? '').trim().isEmpty
-        ? await _ensureExportDirectory()
-        : Directory(directoryPath!.trim());
-    if (!await exportDir.exists()) {
-      await exportDir.create(recursive: true);
+  Future<void> restoreUserDataExportFromFile(String filePath) async {
+    await init();
+
+    final file = File(filePath);
+    if (!await file.exists()) {
+      throw FileSystemException('导出文件不存在', filePath);
     }
-    final exportPath = p.join(
-      exportDir.path,
-      _normalizeUserDataExportFileName(fileName),
-    );
-    final payload = buildUserDataExportPayload(sections: resolvedSections);
 
-    await File(exportPath).writeAsString(
-      const JsonEncoder.withIndent('  ').convert(payload.toJsonMap()),
-      flush: true,
+    final raw = await file.readAsString();
+    Map<String, Object?> jsonMap;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, Object?>) {
+        jsonMap = decoded;
+      } else if (decoded is Map) {
+        jsonMap = decoded.cast<String, Object?>();
+      } else {
+        throw const UserDataExportValidationException(
+          '导出文件根节点必须是对象，无法识别 schema。',
+        );
+      }
+    } on UserDataExportValidationException {
+      rethrow;
+    } catch (error) {
+      throw UserDataExportValidationException(
+        '导出文件解析失败，无法识别 schema 或 JSON 结构：$error',
+      );
+    }
+
+    final payload = UserDataExportPayload.validatedFromJsonMap(jsonMap);
+    await restoreUserDataExportPayload(payload);
+  }
+
+  Future<void> restoreUserDataExportPayload(
+    UserDataExportPayload payload,
+  ) async {
+    await init();
+
+    final selectedSections = _resolveSelectedExportSections(
+      storageKeys: payload.sections,
     );
-    return exportPath;
+    final restoredWordIds = <int, int>{};
+
+    await _runInTransactionAsync(() async {
+      if (selectedSections.contains(UserDataExportSection.wordbooks)) {
+        final wordIdMap = await _restoreWordbooksFromExport(payload.wordbooks);
+        restoredWordIds.addAll(wordIdMap);
+      }
+
+      if (selectedSections.contains(UserDataExportSection.todos)) {
+        _db.execute('DELETE FROM todos;');
+        for (final item in payload.todos) {
+          _db.execute(
+            '''
+            INSERT INTO todos (
+              content,
+              completed,
+              deferred,
+              priority,
+              category,
+              note,
+              color,
+              sort_order,
+              due_at,
+              alarm_enabled,
+              sync_to_system_calendar,
+              system_calendar_notification_enabled,
+              system_calendar_notification_minutes_before,
+              system_calendar_alarm_enabled,
+              system_calendar_alarm_minutes_before,
+              created_at,
+              completed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            <Object?>[
+              item.content,
+              item.completed ? 1 : 0,
+              item.isDeferred ? 1 : 0,
+              item.priority,
+              item.category,
+              item.note,
+              item.color,
+              item.sortOrder,
+              item.dueAt?.toIso8601String(),
+              item.alarmEnabled ? 1 : 0,
+              item.syncToSystemCalendar ? 1 : 0,
+              item.systemCalendarAlertMode ==
+                      TodoSystemCalendarAlertMode.notification
+                  ? 1
+                  : 0,
+              item.systemCalendarNotificationMinutesBefore,
+              item.systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm
+                  ? 1
+                  : 0,
+              item.systemCalendarAlarmMinutesBefore,
+              item.createdAt?.toIso8601String(),
+              item.completedAt?.toIso8601String(),
+            ],
+          );
+        }
+      }
+
+      if (selectedSections.contains(UserDataExportSection.notes)) {
+        _db.execute('DELETE FROM notes;');
+        for (final note in payload.notes) {
+          _db.execute(
+            '''
+            INSERT INTO notes (
+              title,
+              content,
+              color,
+              sort_order,
+              created_at,
+              updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ''',
+            <Object?>[
+              note.title,
+              note.content,
+              note.color,
+              note.sortOrder,
+              note.createdAt?.toIso8601String(),
+              note.updatedAt?.toIso8601String(),
+            ],
+          );
+        }
+      }
+
+      if (selectedSections.contains(UserDataExportSection.timerRecords)) {
+        _db.execute('DELETE FROM timer_records;');
+        for (final record in payload.timerRecords) {
+          _db.execute(
+            '''
+            INSERT INTO timer_records (
+              start_time,
+              duration_minutes,
+              focus_duration_minutes,
+              break_duration_minutes,
+              rounds_completed,
+              focus_minutes,
+              break_minutes,
+              is_partial
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            <Object?>[
+              record.startTime.toIso8601String(),
+              record.durationMinutes,
+              record.focusDurationMinutes,
+              record.breakDurationMinutes,
+              record.roundsCompleted,
+              record.focusMinutes,
+              record.breakMinutes,
+              record.partial ? 1 : 0,
+            ],
+          );
+        }
+      }
+
+      if (selectedSections.contains(UserDataExportSection.settings)) {
+        _db.execute('DELETE FROM settings;');
+        for (final entry in payload.settings.entries) {
+          setSetting(entry.key, entry.value);
+        }
+      }
+
+      if (selectedSections.contains(UserDataExportSection.progress)) {
+        _db.execute('DELETE FROM progress;');
+        for (final progress in payload.progress) {
+          final restoredWordId =
+              restoredWordIds[progress.wordId] ??
+              _resolveExistingRestoredWordId(progress.wordId);
+          if (restoredWordId == null || restoredWordId <= 0) {
+            continue;
+          }
+          upsertWordMemoryProgress(progress.copyWith(wordId: restoredWordId));
+        }
+      }
+    });
+
+    ensureSpecialWordbooks();
+    await syncBuiltInWordbooksCatalog();
   }
 
   Future<String> writeTextExport({
@@ -350,38 +539,157 @@ class AppDatabaseService {
   UserDataExportPayload buildUserDataExportPayload({
     Iterable<UserDataExportSection>? sections,
   }) {
-    if (!_initialized) {
-      throw StateError('Database is not initialized');
-    }
+    final selectedSections = _resolveSelectedExportSections(sections: sections);
+    final orderedSectionKeys = UserDataExportSection.values
+        .where(selectedSections.contains)
+        .map((item) => item.storageKey)
+        .toList(growable: false);
 
-    final resolvedSections = _resolveUserDataExportSections(sections);
+    final wordbooks = selectedSections.contains(UserDataExportSection.wordbooks)
+        ? _buildWordbooksExportPayload()
+        : const <UserDataExportWordbook>[];
+    final todos = selectedSections.contains(UserDataExportSection.todos)
+        ? getTodos()
+        : const <TodoItem>[];
+    final notes = selectedSections.contains(UserDataExportSection.notes)
+        ? getNotes()
+        : const <PlanNote>[];
+    final progress = selectedSections.contains(UserDataExportSection.progress)
+        ? _selectMaps(
+            'SELECT * FROM progress ORDER BY word_id ASC, id ASC',
+          ).map(WordMemoryProgress.fromMap).toList(growable: false)
+        : const <WordMemoryProgress>[];
+    final timerRecords =
+        selectedSections.contains(UserDataExportSection.timerRecords)
+        ? getTimerRecords(limit: 100000)
+        : const <TomatoTimerRecord>[];
+    final settings = selectedSections.contains(UserDataExportSection.settings)
+        ? <String, String>{
+            for (final row in _selectMaps(
+              'SELECT key, value FROM settings ORDER BY key ASC',
+            ))
+              '${row['key'] ?? ''}': '${row['value'] ?? ''}',
+          }
+        : const <String, String>{};
+
     return UserDataExportPayload(
-      exportedAt: DateTime.now(),
-      sections: resolvedSections
-          .map((section) => section.storageKey)
-          .toList(growable: false),
-      wordbooks: resolvedSections.contains(UserDataExportSection.wordbooks)
-          ? _buildWordbooksExportPayload()
-          : const <UserDataExportWordbook>[],
-      todos: resolvedSections.contains(UserDataExportSection.todos)
-          ? getTodos()
-          : const <TodoItem>[],
-      notes: resolvedSections.contains(UserDataExportSection.notes)
-          ? getNotes()
-          : const <PlanNote>[],
-      progress: resolvedSections.contains(UserDataExportSection.progress)
-          ? _selectMaps(
-              'SELECT * FROM progress ORDER BY word_id ASC',
-            ).map(WordMemoryProgress.fromMap).toList(growable: false)
-          : const <WordMemoryProgress>[],
-      timerRecords:
-          resolvedSections.contains(UserDataExportSection.timerRecords)
-          ? getTimerRecords(limit: 100000)
-          : const <TomatoTimerRecord>[],
-      settings: resolvedSections.contains(UserDataExportSection.settings)
-          ? _buildSettingsExportPayload()
-          : const <String, String>{},
+      exportedAt: DateTime.now().toUtc(),
+      sections: orderedSectionKeys,
+      wordbooks: wordbooks,
+      todos: todos,
+      notes: notes,
+      progress: progress,
+      timerRecords: timerRecords,
+      settings: settings,
     );
+  }
+
+  Set<UserDataExportSection> _resolveSelectedExportSections({
+    Iterable<UserDataExportSection>? sections,
+    Iterable<String>? storageKeys,
+  }) {
+    if (sections != null) {
+      final selected = sections.toSet();
+      return selected.isEmpty ? UserDataExportSection.values.toSet() : selected;
+    }
+    if (storageKeys != null) {
+      final keys = storageKeys.map((item) => item.trim()).toSet();
+      final selected = UserDataExportSection.values
+          .where((item) => keys.contains(item.storageKey))
+          .toSet();
+      return selected.isEmpty ? UserDataExportSection.values.toSet() : selected;
+    }
+    return UserDataExportSection.values.toSet();
+  }
+
+  List<UserDataExportWordbook> _buildWordbooksExportPayload() {
+    final books = getWordbooks()
+        .where(
+          (wordbook) =>
+              !wordbook.path.startsWith(_dictBuiltinPathPrefix) &&
+              wordbook.path.trim().isNotEmpty,
+        )
+        .toList(growable: false);
+
+    return books
+        .map((wordbook) {
+          final standardBook = _tryBuildStandardBookMetaFromWordbook(wordbook);
+          return UserDataExportWordbook(
+            wordbook: wordbook,
+            words: _buildWordbookExportWords(wordbook.id),
+            standardBook: standardBook,
+          );
+        })
+        .toList(growable: false);
+  }
+
+  List<UserDataExportWordRecord> _buildWordbookExportWords(int wordbookId) {
+    final rows = _selectMaps(
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY $_wordOrderClause',
+      <Object?>[wordbookId],
+    );
+    final wordIds = rows
+        .map((row) => (row['id'] as num?)?.toInt())
+        .whereType<int>()
+        .where((id) => id > 0)
+        .toList(growable: false);
+    final fieldsByWordId = _getWordFieldsByWordIds(wordIds);
+
+    return rows
+        .map((row) {
+          final wordId = (row['id'] as num?)?.toInt();
+          final storedFields = wordId == null
+              ? const <WordFieldItem>[]
+              : (fieldsByWordId[wordId] ?? const <WordFieldItem>[]);
+          final entry = WordEntry.fromMap(row).copyWith(fields: storedFields);
+          final legacy = entry.legacyFields;
+          final resolvedMeaning = sanitizeDisplayText(entry.summaryMeaningText);
+          return UserDataExportWordRecord(
+            id: wordId,
+            wordbookId: wordbookId,
+            word: entry.word,
+            entryUid: entry.entryUid,
+            meaning: resolvedMeaning.isEmpty ? entry.meaning : resolvedMeaning,
+            primaryGloss:
+                entry.primaryGloss ??
+                (resolvedMeaning.isEmpty ? entry.meaning : resolvedMeaning),
+            schemaVersion: entry.schemaVersion,
+            sortIndex: entry.sortIndex,
+            examples: legacy.examples,
+            etymology: legacy.etymology,
+            roots: legacy.roots,
+            affixes: legacy.affixes,
+            variations: legacy.variations,
+            memory: legacy.memory,
+            story: legacy.story,
+            sourcePayloadJson: entry.sourcePayloadJson,
+            fields: storedFields,
+            rawContent: _resolveStoredRawContent(row),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  WordbookBookMetaV1? _tryBuildStandardBookMetaFromWordbook(Wordbook wordbook) {
+    if ((wordbook.schemaVersion ?? '').trim() != wordbookSchemaV1) {
+      return null;
+    }
+    final metadata = _tryDecodeJsonObjectMap(wordbook.metadataJson);
+    if (metadata == null) {
+      return null;
+    }
+    try {
+      final book = WordbookBookMetaV1.fromJsonMap(metadata);
+      if (book.id.trim().isEmpty ||
+          book.sourceLanguage.trim().isEmpty ||
+          book.targetLanguage.trim().isEmpty ||
+          book.direction.trim().isEmpty) {
+        return null;
+      }
+      return book;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<String> getDefaultUserDataExportDirectoryPath() async {
@@ -516,6 +824,8 @@ class AppDatabaseService {
         name TEXT NOT NULL,
         path TEXT UNIQUE,
         word_count INTEGER DEFAULT 0,
+        schema_version TEXT,
+        metadata_json TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     ''');
@@ -524,13 +834,18 @@ class AppDatabaseService {
       CREATE TABLE IF NOT EXISTS words (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         wordbook_id INTEGER NOT NULL,
+        entry_uid TEXT,
         word TEXT NOT NULL,
         meaning TEXT,
+        primary_gloss TEXT,
         search_word TEXT NOT NULL,
         search_meaning TEXT,
         search_details TEXT,
         search_word_compact TEXT NOT NULL,
         search_details_compact TEXT,
+        schema_version TEXT,
+        source_payload_json TEXT,
+        sort_index INTEGER DEFAULT 0,
         extension_json TEXT,
         entry_json TEXT,
         FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id) ON DELETE CASCADE
@@ -717,6 +1032,12 @@ class AppDatabaseService {
       'CREATE INDEX IF NOT EXISTS idx_words_search_details_compact ON words(wordbook_id, search_details_compact);',
     );
     _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_entry_uid ON words(wordbook_id, entry_uid);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_sort_index ON words(wordbook_id, sort_index, id);',
+    );
+    _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_word_fields_word ON word_fields(word_id);',
     );
     _db.execute(
@@ -829,13 +1150,18 @@ class AppDatabaseService {
         CREATE TABLE words (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           wordbook_id INTEGER NOT NULL,
+          entry_uid TEXT,
           word TEXT NOT NULL,
           meaning TEXT,
+          primary_gloss TEXT,
           search_word TEXT NOT NULL,
           search_meaning TEXT,
           search_details TEXT,
           search_word_compact TEXT NOT NULL,
           search_details_compact TEXT,
+          schema_version TEXT,
+          source_payload_json TEXT,
+          sort_index INTEGER DEFAULT 0,
           extension_json TEXT,
           entry_json TEXT,
           FOREIGN KEY (wordbook_id) REFERENCES wordbooks(id) ON DELETE CASCADE
@@ -862,27 +1188,37 @@ class AppDatabaseService {
           INSERT INTO words (
             id,
             wordbook_id,
+            entry_uid,
             word,
             meaning,
+            primary_gloss,
             search_word,
             search_meaning,
             search_details,
             search_word_compact,
             search_details_compact,
+            schema_version,
+            source_payload_json,
+            sort_index,
             extension_json,
             entry_json
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ''',
           <Object?>[
             entry.id,
             entry.wordbookId,
+            row['entry_uid'],
             prepared.row['word'],
             prepared.row['meaning'],
+            row['primary_gloss'],
             prepared.row['search_word'],
             prepared.row['search_meaning'],
             prepared.row['search_details'],
             prepared.row['search_word_compact'],
             prepared.row['search_details_compact'],
+            row['schema_version'],
+            row['source_payload_json'],
+            row['sort_index'] ?? 0,
             prepared.row['extension_json'],
             prepared.row['entry_json'],
           ],
@@ -1109,61 +1445,67 @@ class AppDatabaseService {
   }
 
   Future<void> syncBuiltInWordbooksCatalogIfNeeded() async {
-    if (!_shouldSyncBuiltInCatalogOnStartup()) {
-      return;
-    }
     await syncBuiltInWordbooksCatalog();
   }
 
-  bool _shouldSyncBuiltInCatalogOnStartup() {
-    final row = _selectOne('''
-      SELECT COUNT(*) AS count
-      FROM wordbooks
-      WHERE path NOT IN ('builtin:favorites', 'builtin:task')
-      ''', const <Object?>[]);
-    final count = (row?['count'] as num?)?.toInt() ?? 0;
-    return count <= 0;
-  }
-
   Future<void> syncBuiltInWordbooksCatalog() async {
-    final builtins = await _resolveBuiltInWordbooks();
-    if (builtins.isEmpty) return;
-    final builtinPaths = builtins.map((item) => item.path).toSet();
-    final hiddenPaths = _hiddenBuiltInWordbookPaths()
-      ..removeWhere((path) => !builtinPaths.contains(path));
-    _saveHiddenBuiltInWordbookPaths(hiddenPaths);
-    final visibleBuiltins = builtins
-        .where((item) => !hiddenPaths.contains(item.path))
-        .toList(growable: false);
-
-    _removeObsoleteBuiltInWordbooks(
-      visibleBuiltins.map((item) => item.path).toSet(),
+    final hiddenPaths = _readHiddenBuiltInWordbookPaths();
+    final configs = await _builtInWordbookSource.listBuiltInWordbooks();
+    final visibleConfigs = <String, BuiltInWordbookConfig>{
+      for (final config in configs)
+        if (!hiddenPaths.contains(config.path)) config.path: config,
+    };
+    final existingRows = _selectMaps(
+      '''
+      SELECT *
+      FROM wordbooks
+      WHERE path LIKE ?
+      ORDER BY id ASC
+      ''',
+      <Object?>['$_dictBuiltinPathPrefix%'],
     );
-    var created = 0;
-    var renamed = 0;
-    for (final builtin in visibleBuiltins) {
-      final existing = _selectOne(
-        'SELECT id, name, word_count FROM wordbooks WHERE path = ?',
-        <Object?>[builtin.path],
-      );
 
-      if (existing == null) {
-        _db.execute(
-          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
-          <Object?>[builtin.name, builtin.path],
-        );
-        created += 1;
-        continue;
+    _runInTransaction<void>(() {
+      final existingByPath = <String, Map<String, Object?>>{
+        for (final row in existingRows) '${row['path'] ?? ''}': row,
+      };
+
+      for (final entry in visibleConfigs.entries) {
+        final path = entry.key;
+        final config = entry.value;
+        final existing = existingByPath[path];
+        if (existing == null) {
+          _db.execute(
+            '''
+            INSERT INTO wordbooks (name, path, word_count, schema_version, metadata_json)
+            VALUES (?, ?, 0, NULL, NULL)
+            ''',
+            <Object?>[config.name, config.path],
+          );
+          continue;
+        }
+
+        final currentName = sanitizeDisplayText('${existing['name'] ?? ''}');
+        final hasLoadedMetadata =
+            _sanitizeNullableText(existing['metadata_json']) != null &&
+            ((existing['word_count'] as num?)?.toInt() ?? 0) > 0;
+        final nextName = hasLoadedMetadata ? currentName : config.name;
+        if (nextName != currentName) {
+          _db.execute('UPDATE wordbooks SET name = ? WHERE id = ?', <Object?>[
+            nextName,
+            existing['id'],
+          ]);
+        }
       }
 
-      final currentName = existing['name']?.toString().trim() ?? '';
-      if (currentName == builtin.name) continue;
-      _db.execute('UPDATE wordbooks SET name = ? WHERE path = ?', <Object?>[
-        builtin.name,
-        builtin.path,
-      ]);
-      renamed += 1;
-    }
+      for (final row in existingRows) {
+        final path = '${row['path'] ?? ''}';
+        if (visibleConfigs.containsKey(path)) {
+          continue;
+        }
+        _db.execute('DELETE FROM wordbooks WHERE id = ?', <Object?>[row['id']]);
+      }
+    });
   }
 
   bool isLazyBuiltInPath(String path) =>
@@ -1173,138 +1515,138 @@ class AppDatabaseService {
     String path, {
     BuiltInWordbookLoadProgressCallback? onProgress,
   }) async {
-    final normalizedPath = path.trim();
-    if (!isLazyBuiltInPath(normalizedPath)) return 0;
-
-    final inFlight = _builtInWordbookLoadFutures[normalizedPath];
-    if (inFlight != null) {
-      if (onProgress != null) {
-        inFlight
-            .then((loadedCount) {
-              onProgress(
-                BuiltInWordbookLoadProgress(
-                  stage: BuiltInWordbookLoadStage.completed,
-                  progress: 1.0,
-                  processedEntries: loadedCount,
-                  totalEntries: loadedCount,
-                ),
-              );
-            })
-            .catchError((_) {
-              // Surface the original error through the awaited in-flight future only.
-            });
-      }
-      return inFlight;
+    final existingFuture = _builtInWordbookLoadFutures[path];
+    if (existingFuture != null) {
+      return existingFuture;
     }
 
-    final future = _ensureBuiltInWordbookLoadedImpl(
-      normalizedPath,
-      onProgress: onProgress,
-    );
-    _builtInWordbookLoadFutures[normalizedPath] = future;
-    return future.whenComplete(() {
-      _builtInWordbookLoadFutures.remove(normalizedPath);
-    });
-  }
-
-  Future<int> _ensureBuiltInWordbookLoadedImpl(
-    String path, {
-    BuiltInWordbookLoadProgressCallback? onProgress,
-  }) async {
-    final builtins = await _resolveBuiltInWordbooks();
-    BuiltInWordbookConfig? target;
-    for (final builtin in builtins) {
-      if (builtin.path == path) {
-        target = builtin;
-        break;
-      }
-    }
-
-    if (target == null) {
-      throw StateError('Built-in wordbook asset missing: $path');
-    }
-
-    final existing = _selectOne(
-      'SELECT word_count FROM wordbooks WHERE path = ?',
-      <Object?>[path],
-    );
-    if (existing == null) {
-      _db.execute(
-        'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
-        <Object?>[target.name, target.path],
+    final future = () async {
+      final existing = _selectOne(
+        'SELECT id, word_count FROM wordbooks WHERE path = ?',
+        <Object?>[path],
       );
-    } else if (((existing['word_count'] as num?) ?? 0).toInt() > 0) {
-      final loadedCount = ((existing['word_count'] as num?) ?? 0).toInt();
-      onProgress?.call(
-        BuiltInWordbookLoadProgress(
-          stage: BuiltInWordbookLoadStage.completed,
-          progress: 1.0,
-          processedEntries: loadedCount,
-          totalEntries: loadedCount,
-        ),
-      );
-      return loadedCount;
-    }
-
-    onProgress?.call(
-      const BuiltInWordbookLoadProgress(
-        stage: BuiltInWordbookLoadStage.downloading,
-        progress: 0,
-      ),
-    );
-    final byteStream = await _builtInWordbookSource
-        .openBuiltInWordbookByteStream(
-          target,
-          onProgress: onProgress == null
-              ? null
-              : (downloadProgress) {
-                  onProgress(
-                    BuiltInWordbookLoadProgress(
-                      stage: BuiltInWordbookLoadStage.downloading,
-                      progress: downloadProgress.progress,
-                      receivedBytes: downloadProgress.receivedBytes,
-                      totalBytes: downloadProgress.totalBytes,
-                    ),
-                  );
-                },
+      final existingId = (existing?['id'] as num?)?.toInt();
+      final existingWordCount = ((existing?['word_count'] as num?) ?? 0)
+          .toInt();
+      if (existingId != null && existingId > 0 && existingWordCount > 0) {
+        onProgress?.call(
+          const BuiltInWordbookLoadProgress(
+            stage: BuiltInWordbookLoadStage.completed,
+            progress: 1,
+          ),
         );
-    onProgress?.call(
-      const BuiltInWordbookLoadProgress(
-        stage: BuiltInWordbookLoadStage.processing,
-        progress: 0,
-      ),
-    );
-    final imported = await importWordbookJsonByteStreamAsync(
-      sourcePath: target.path,
-      name: target.name,
-      byteStream: byteStream,
-      gzipped: target.sourcePath.toLowerCase().endsWith('.gz'),
-      replaceExisting: true,
-      yieldEvery: 40,
-      onProgress: onProgress == null
-          ? null
-          : (processedEntries, totalEntries) {
-              onProgress(
+        return existingId;
+      }
+
+      final configs = await _builtInWordbookSource.listBuiltInWordbooks();
+      BuiltInWordbookConfig? config;
+      for (final item in configs) {
+        if (item.path == path) {
+          config = item;
+          break;
+        }
+      }
+      if (config == null) {
+        throw StateError('未找到内置词本资源: $path');
+      }
+
+      final byteStream = await _builtInWordbookSource
+          .openBuiltInWordbookByteStream(
+            config,
+            onProgress: (progress) {
+              final totalBytes = progress.totalBytes;
+              final ratio = totalBytes <= 0
+                  ? null
+                  : (progress.receivedBytes / totalBytes).clamp(0.0, 1.0);
+              onProgress?.call(
                 BuiltInWordbookLoadProgress(
-                  stage: BuiltInWordbookLoadStage.processing,
-                  progress: totalEntries == null || totalEntries <= 0
-                      ? null
-                      : (processedEntries / totalEntries).clamp(0.0, 1.0),
-                  processedEntries: processedEntries,
-                  totalEntries: totalEntries,
+                  stage: BuiltInWordbookLoadStage.downloading,
+                  progress: ratio,
+                  receivedBytes: progress.receivedBytes,
+                  totalBytes: progress.totalBytes,
                 ),
               );
             },
-    );
-    onProgress?.call(
-      BuiltInWordbookLoadProgress(
-        stage: BuiltInWordbookLoadStage.completed,
-        progress: 1.0,
-        processedEntries: imported,
-        totalEntries: imported,
-      ),
-    );
-    return imported;
+          );
+
+      await importWordbookJsonByteStreamAsync(
+        sourcePath: path,
+        name: config.name,
+        byteStream: byteStream,
+        gzipped: config.sourcePath.toLowerCase().endsWith('.gz'),
+        onProgress: (processedEntries, totalEntries) {
+          final ratio = totalEntries == null || totalEntries <= 0
+              ? null
+              : (processedEntries / totalEntries).clamp(0.0, 1.0);
+          onProgress?.call(
+            BuiltInWordbookLoadProgress(
+              stage: BuiltInWordbookLoadStage.processing,
+              progress: ratio,
+              processedEntries: processedEntries,
+              totalEntries: totalEntries,
+            ),
+          );
+        },
+      );
+
+      onProgress?.call(
+        const BuiltInWordbookLoadProgress(
+          stage: BuiltInWordbookLoadStage.completed,
+          progress: 1,
+        ),
+      );
+      final importedRow = _selectOne(
+        'SELECT id FROM wordbooks WHERE path = ?',
+        <Object?>[path],
+      );
+      final importedId = (importedRow?['id'] as num?)?.toInt();
+      if (importedId == null || importedId <= 0) {
+        throw StateError('内置词本导入完成后未找到词本记录: $path');
+      }
+      return importedId;
+    }();
+
+    _builtInWordbookLoadFutures[path] = future;
+    try {
+      return await future;
+    } finally {
+      _builtInWordbookLoadFutures.remove(path);
+    }
+  }
+
+  Set<String> _readHiddenBuiltInWordbookPaths() {
+    final raw = getSetting(_hiddenBuiltInWordbooksSettingKey);
+    if ((raw ?? '').trim().isEmpty) {
+      return <String>{};
+    }
+    try {
+      final decoded = jsonDecode(raw!);
+      if (decoded is! List) {
+        return <String>{};
+      }
+      return decoded
+          .map((item) => sanitizeDisplayText('$item'))
+          .where(
+            (item) =>
+                item.isNotEmpty && item.startsWith(_dictBuiltinPathPrefix),
+          )
+          .toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  void _writeHiddenBuiltInWordbookPaths(Set<String> hiddenPaths) {
+    final normalized =
+        hiddenPaths
+            .map(sanitizeDisplayText)
+            .where(
+              (item) =>
+                  item.isNotEmpty && item.startsWith(_dictBuiltinPathPrefix),
+            )
+            .toList(growable: false)
+          ..sort();
+    setSetting(_hiddenBuiltInWordbooksSettingKey, jsonEncode(normalized));
   }
 
   List<Wordbook> getWordbooks() {
@@ -1343,7 +1685,7 @@ class AppDatabaseService {
     int offset = 0,
   }) {
     final rows = _selectMaps(
-      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC LIMIT ? OFFSET ?',
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY $_wordOrderClause LIMIT ? OFFSET ?',
       <Object?>[wordbookId, limit, offset],
     );
     final wordIds = rows
@@ -1373,7 +1715,7 @@ class AppDatabaseService {
     int offset = 0,
   }) {
     final rows = _selectMaps(
-      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC LIMIT ? OFFSET ?',
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY $_wordOrderClause LIMIT ? OFFSET ?',
       <Object?>[wordbookId, limit, offset],
     );
     return rows.map(_wordEntryLiteFromRow).toList(growable: false);
@@ -1385,7 +1727,7 @@ class AppDatabaseService {
     int offset = 0,
   }) {
     final rows = _selectMaps(
-      'SELECT word FROM words WHERE wordbook_id = ? ORDER BY id ASC LIMIT ? OFFSET ?',
+      'SELECT word FROM words WHERE wordbook_id = ? ORDER BY $_wordOrderClause LIMIT ? OFFSET ?',
       <Object?>[wordbookId, limit, offset],
     );
     return rows
@@ -1414,7 +1756,7 @@ class AppDatabaseService {
       '''
       SELECT * FROM words
       WHERE $whereClause
-      ORDER BY id ASC
+      ORDER BY $_wordOrderClause
       LIMIT ? OFFSET ?
       ''',
       <Object?>[...params, limit, offset],
@@ -1457,12 +1799,74 @@ class AppDatabaseService {
       '''
       SELECT * FROM words
       WHERE $whereClause
-      ORDER BY id ASC
+      ORDER BY $_wordOrderClause
       LIMIT ? OFFSET ?
       ''',
       <Object?>[...params, limit, offset],
     );
     return rows.map(_wordEntryLiteFromRow).toList(growable: false);
+  }
+
+  WordEntry? hydrateWordEntry(WordEntry entry) {
+    final wordId = entry.id;
+    if (wordId != null && wordId > 0) {
+      final row = _selectOne(
+        'SELECT * FROM words WHERE id = ? LIMIT 1',
+        <Object?>[wordId],
+      );
+      if (row != null) {
+        return _inflateWordEntry(row);
+      }
+    }
+
+    final wordbookId = entry.wordbookId;
+    if (wordbookId <= 0) {
+      return null;
+    }
+
+    final normalizedEntryUid = _sanitizeNullableText(entry.entryUid);
+    if (normalizedEntryUid != null) {
+      final row = _selectOne(
+        '''
+        SELECT *
+        FROM words
+        WHERE wordbook_id = ? AND entry_uid = ?
+        ORDER BY $_wordOrderClause
+        LIMIT 1
+        ''',
+        <Object?>[wordbookId, normalizedEntryUid],
+      );
+      if (row != null) {
+        return _inflateWordEntry(row);
+      }
+    }
+
+    final normalizedWord = sanitizeDisplayText(entry.word);
+    if (normalizedWord.isEmpty) {
+      return null;
+    }
+
+    final rows = _selectMaps(
+      '''
+      SELECT *
+      FROM words
+      WHERE wordbook_id = ? AND word = ?
+      ORDER BY $_wordOrderClause
+      LIMIT 32
+      ''',
+      <Object?>[wordbookId, normalizedWord],
+    );
+    for (final row in rows) {
+      final candidate = _inflateWordEntry(row);
+      if (candidate.sameEntryAs(entry)) {
+        return candidate;
+      }
+    }
+
+    if (rows.length == 1) {
+      return _inflateWordEntry(rows.first);
+    }
+    return null;
   }
 
   int countSearchWords(
@@ -1503,7 +1907,7 @@ class AppDatabaseService {
       FROM words
       WHERE $whereClause
         AND search_word_compact LIKE ?
-      ORDER BY id ASC
+      ORDER BY $_wordOrderClause
       LIMIT 1
       ''',
       <Object?>[
@@ -1547,7 +1951,7 @@ class AppDatabaseService {
                 OR substr(search_word_compact, 1, 1) < 'a'
                 OR substr(search_word_compact, 1, 1) > 'z'
               )
-            ORDER BY id ASC
+            ORDER BY $_wordOrderClause
             LIMIT 1
             ''', params)
         : _selectOne(
@@ -1556,7 +1960,7 @@ class AppDatabaseService {
             FROM words
             WHERE $whereClause
               AND substr(search_word_compact, 1, 1) = ?
-            ORDER BY id ASC
+            ORDER BY $_wordOrderClause
             LIMIT 1
             ''',
             <Object?>[...params, normalized.toLowerCase()],
@@ -1655,7 +2059,7 @@ class AppDatabaseService {
       FROM words
       WHERE $whereClause
         AND search_word_compact LIKE ?
-      ORDER BY id ASC
+      ORDER BY $_wordOrderClause
       LIMIT 1
       ''',
       <Object?>[
@@ -1694,7 +2098,7 @@ class AppDatabaseService {
                 OR substr(search_word_compact, 1, 1) < 'a'
                 OR substr(search_word_compact, 1, 1) > 'z'
               )
-            ORDER BY id ASC
+            ORDER BY $_wordOrderClause
             LIMIT 1
             ''', params)
         : _selectOne(
@@ -1703,7 +2107,7 @@ class AppDatabaseService {
             FROM words
             WHERE $whereClause
               AND substr(search_word_compact, 1, 1) = ?
-            ORDER BY id ASC
+            ORDER BY $_wordOrderClause
             LIMIT 1
             ''',
             <Object?>[...params, normalized.toLowerCase()],
@@ -2114,49 +2518,49 @@ class AppDatabaseService {
     bool replaceExisting = true,
     void Function(int processedEntries, int? totalEntries)? onProgress,
   }) {
+    final descriptor = _importService.inspectJsonText(
+      content,
+      fallbackName: name,
+    );
+    final resolvedName = _resolveImportedWordbookName(
+      sourcePath: sourcePath,
+      requestedName: name,
+      descriptorName: descriptor.bookName,
+    );
     return _runInTransaction<int>(() {
-      var wordbookId = 0;
-      final existing = _selectOne(
-        'SELECT id FROM wordbooks WHERE path = ?',
-        <Object?>[sourcePath],
+      final wordbookId = _upsertImportedWordbookRow(
+        sourcePath: sourcePath,
+        name: resolvedName,
+        schemaVersion: descriptor.schemaVersion,
+        metadataJson: descriptor.metadataJson,
+        replaceExisting: replaceExisting,
       );
-      if (existing != null) {
-        wordbookId = (existing['id'] as num).toInt();
-        if (replaceExisting) {
-          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
-            wordbookId,
-          ]);
-        }
-      } else {
-        _db.execute(
-          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
-          <Object?>[name, sourcePath],
-        );
-        wordbookId = _lastInsertId();
-      }
-
-      final statements = _openWordImportInsertStatements();
-      var count = 0;
+      final statements = replaceExisting
+          ? _openWordImportInsertStatements()
+          : null;
+      var imported = 0;
       try {
         _importService.processJsonText(
           content,
           onPayload: (payload) {
-            if (_insertWordWithStatements(
-              wordbookId,
-              payload,
-              statements: statements,
-            )) {
-              count += 1;
+            final accepted = replaceExisting
+                ? _insertWordWithStatements(
+                    wordbookId,
+                    payload,
+                    statements: statements!,
+                  )
+                : upsertWord(wordbookId, payload, refreshWordbookCount: false);
+            if (accepted) {
+              imported += 1;
             }
           },
           onProgress: onProgress,
         );
       } finally {
-        statements.dispose();
+        statements?.dispose();
       }
-
       _refreshWordbookCount(wordbookId);
-      return count;
+      return imported;
     });
   }
 
@@ -2168,50 +2572,50 @@ class AppDatabaseService {
     void Function(int processedEntries, int? totalEntries)? onProgress,
     int yieldEvery = 180,
   }) async {
+    final descriptor = _importService.inspectJsonText(
+      content,
+      fallbackName: name,
+    );
+    final resolvedName = _resolveImportedWordbookName(
+      sourcePath: sourcePath,
+      requestedName: name,
+      descriptorName: descriptor.bookName,
+    );
     return _runInTransactionAsync<int>(() async {
-      var wordbookId = 0;
-      final existing = _selectOne(
-        'SELECT id FROM wordbooks WHERE path = ?',
-        <Object?>[sourcePath],
+      final wordbookId = _upsertImportedWordbookRow(
+        sourcePath: sourcePath,
+        name: resolvedName,
+        schemaVersion: descriptor.schemaVersion,
+        metadataJson: descriptor.metadataJson,
+        replaceExisting: replaceExisting,
       );
-      if (existing != null) {
-        wordbookId = (existing['id'] as num).toInt();
-        if (replaceExisting) {
-          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
-            wordbookId,
-          ]);
-        }
-      } else {
-        _db.execute(
-          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
-          <Object?>[name, sourcePath],
-        );
-        wordbookId = _lastInsertId();
-      }
-
-      final statements = _openWordImportInsertStatements();
-      var count = 0;
+      final statements = replaceExisting
+          ? _openWordImportInsertStatements()
+          : null;
+      var imported = 0;
       try {
         await _importService.processJsonTextAsync(
           content,
           onPayload: (payload) {
-            if (_insertWordWithStatements(
-              wordbookId,
-              payload,
-              statements: statements,
-            )) {
-              count += 1;
+            final accepted = replaceExisting
+                ? _insertWordWithStatements(
+                    wordbookId,
+                    payload,
+                    statements: statements!,
+                  )
+                : upsertWord(wordbookId, payload, refreshWordbookCount: false);
+            if (accepted) {
+              imported += 1;
             }
           },
           onProgress: onProgress,
           yieldEvery: yieldEvery,
         );
       } finally {
-        statements.dispose();
+        statements?.dispose();
       }
-
       _refreshWordbookCount(wordbookId);
-      return count;
+      return imported;
     });
   }
 
@@ -2224,52 +2628,18 @@ class AppDatabaseService {
     void Function(int processedEntries, int? totalEntries)? onProgress,
     int yieldEvery = 180,
   }) async {
-    return _runInTransactionAsync<int>(() async {
-      var wordbookId = 0;
-      final existing = _selectOne(
-        'SELECT id FROM wordbooks WHERE path = ?',
-        <Object?>[sourcePath],
-      );
-      if (existing != null) {
-        wordbookId = (existing['id'] as num).toInt();
-        if (replaceExisting) {
-          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
-            wordbookId,
-          ]);
-        }
-      } else {
-        _db.execute(
-          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
-          <Object?>[name, sourcePath],
-        );
-        wordbookId = _lastInsertId();
-      }
-
-      final statements = _openWordImportInsertStatements();
-      var count = 0;
-      try {
-        await _importService.processJsonByteStreamAsync(
-          byteStream,
-          gzipped: gzipped,
-          onPayload: (payload) {
-            if (_insertWordWithStatements(
-              wordbookId,
-              payload,
-              statements: statements,
-            )) {
-              count += 1;
-            }
-          },
-          onProgress: onProgress,
-          yieldEvery: yieldEvery,
-        );
-      } finally {
-        statements.dispose();
-      }
-
-      _refreshWordbookCount(wordbookId);
-      return count;
-    });
+    final content = await _importService.readJsonByteStreamAsString(
+      byteStream,
+      gzipped: gzipped,
+    );
+    return importWordbookJsonTextAsync(
+      sourcePath: sourcePath,
+      name: name,
+      content: content,
+      replaceExisting: replaceExisting,
+      onProgress: onProgress,
+      yieldEvery: yieldEvery,
+    );
   }
 
   Future<int> importWordbook({
@@ -2279,68 +2649,44 @@ class AppDatabaseService {
     bool replaceExisting = true,
     void Function(int processedEntries, int? totalEntries)? onProgress,
   }) async {
-    return _runInTransaction<int>(() {
-      var wordbookId = 0;
-      final existing = _selectOne(
-        'SELECT id FROM wordbooks WHERE path = ?',
-        <Object?>[sourcePath],
+    return _runInTransactionAsync<int>(() async {
+      final wordbookId = _upsertImportedWordbookRow(
+        sourcePath: sourcePath,
+        name: _resolveImportedWordbookName(
+          sourcePath: sourcePath,
+          requestedName: name,
+          descriptorName: null,
+        ),
+        schemaVersion: _deriveSchemaVersionFromPayloads(entries),
+        metadataJson: null,
+        replaceExisting: replaceExisting,
       );
-      if (existing != null) {
-        wordbookId = (existing['id'] as num).toInt();
-        if (replaceExisting) {
-          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
-            wordbookId,
-          ]);
-        }
-      } else {
-        _db.execute(
-          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
-          <Object?>[name, sourcePath],
-        );
-        wordbookId = _lastInsertId();
-      }
-
-      final totalEntries = entries.length;
-      var processedEntries = 0;
-      var lastReportedPercent = -1;
-      void reportProgress({bool force = false}) {
-        if (onProgress == null) return;
-        if (!force && totalEntries > 0) {
-          final percent = (processedEntries * 100 ~/ totalEntries).clamp(
-            0,
-            100,
-          );
-          if (processedEntries < totalEntries &&
-              percent == lastReportedPercent) {
-            return;
-          }
-          lastReportedPercent = percent;
-        }
-        onProgress(processedEntries, totalEntries);
-      }
-
-      final statements = _openWordImportInsertStatements();
-      var count = 0;
-      reportProgress(force: true);
+      final total = entries.length;
+      onProgress?.call(0, total);
+      final statements = replaceExisting
+          ? _openWordImportInsertStatements()
+          : null;
+      var imported = 0;
       try {
-        for (final entry in entries) {
-          processedEntries += 1;
-          if (_insertWordWithStatements(
-            wordbookId,
-            entry,
-            statements: statements,
-          )) {
-            count += 1;
+        for (var index = 0; index < entries.length; index += 1) {
+          final payload = entries[index];
+          final accepted = replaceExisting
+              ? _insertWordWithStatements(
+                  wordbookId,
+                  payload,
+                  statements: statements!,
+                )
+              : upsertWord(wordbookId, payload, refreshWordbookCount: false);
+          if (accepted) {
+            imported += 1;
           }
-          reportProgress();
+          onProgress?.call(index + 1, total);
         }
       } finally {
-        statements.dispose();
+        statements?.dispose();
       }
-      reportProgress(force: true);
-
       _refreshWordbookCount(wordbookId);
-      return count;
+      return imported;
     });
   }
 
@@ -2353,53 +2699,47 @@ class AppDatabaseService {
     int yieldEvery = 180,
   }) async {
     return _runInTransactionAsync<int>(() async {
-      var wordbookId = 0;
-      final existing = _selectOne(
-        'SELECT id FROM wordbooks WHERE path = ?',
-        <Object?>[sourcePath],
+      final wordbookId = _upsertImportedWordbookRow(
+        sourcePath: sourcePath,
+        name: _resolveImportedWordbookName(
+          sourcePath: sourcePath,
+          requestedName: name,
+          descriptorName: null,
+        ),
+        schemaVersion: _deriveSchemaVersionFromPayloads(entries),
+        metadataJson: null,
+        replaceExisting: replaceExisting,
       );
-      if (existing != null) {
-        wordbookId = (existing['id'] as num).toInt();
-        if (replaceExisting) {
-          _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
-            wordbookId,
-          ]);
-        }
-      } else {
-        _db.execute(
-          'INSERT INTO wordbooks (name, path, word_count) VALUES (?, ?, 0)',
-          <Object?>[name, sourcePath],
-        );
-        wordbookId = _lastInsertId();
-      }
-
-      final totalEntries = entries.length;
-      onProgress?.call(0, totalEntries);
-      final statements = _openWordImportInsertStatements();
-      var count = 0;
+      final total = entries.length;
+      final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
+      onProgress?.call(0, total);
+      final statements = replaceExisting
+          ? _openWordImportInsertStatements()
+          : null;
+      var imported = 0;
       try {
-        for (var index = 0; index < totalEntries; index += 1) {
-          final entry = entries[index];
-          if (_insertWordWithStatements(
-            wordbookId,
-            entry,
-            statements: statements,
-          )) {
-            count += 1;
+        for (var index = 0; index < entries.length; index += 1) {
+          final payload = entries[index];
+          final accepted = replaceExisting
+              ? _insertWordWithStatements(
+                  wordbookId,
+                  payload,
+                  statements: statements!,
+                )
+              : upsertWord(wordbookId, payload, refreshWordbookCount: false);
+          if (accepted) {
+            imported += 1;
           }
-          final processed = index + 1;
-          if (processed == totalEntries || processed % yieldEvery == 0) {
-            onProgress?.call(processed, totalEntries);
+          onProgress?.call(index + 1, total);
+          if ((index + 1) % resolvedYieldEvery == 0) {
             await Future<void>.delayed(Duration.zero);
           }
         }
       } finally {
-        statements.dispose();
+        statements?.dispose();
       }
-
       _refreshWordbookCount(wordbookId);
-      onProgress?.call(totalEntries, totalEntries);
-      return count;
+      return imported;
     });
   }
 
@@ -2447,24 +2787,27 @@ class AppDatabaseService {
 
   void deleteManagedWordbook(int wordbookId) {
     final wordbook = _selectOne(
-      'SELECT path FROM wordbooks WHERE id = ?',
+      'SELECT id, path FROM wordbooks WHERE id = ?',
       <Object?>[wordbookId],
     );
-    if (wordbook == null) throw StateError('Wordbook not found');
-
-    final path = wordbook['path']?.toString() ?? '';
-    if (_isBuiltInPath(path)) {
-      if (!_isDeletableBuiltInPath(path)) {
-        throw StateError('Protected built-in wordbooks cannot be deleted');
-      }
-      final hiddenPaths = _hiddenBuiltInWordbookPaths()..add(path);
-      _saveHiddenBuiltInWordbookPaths(hiddenPaths);
+    if (wordbook == null) {
+      throw StateError('单词本不存在');
     }
-
-    _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
-      wordbookId,
-    ]);
-    _db.execute('DELETE FROM wordbooks WHERE id = ?', <Object?>[wordbookId]);
+    final path = '${wordbook['path'] ?? ''}';
+    if (path == 'builtin:favorites' || path == 'builtin:task') {
+      throw StateError('系统单词本不允许删除');
+    }
+    if (path.startsWith(_dictBuiltinPathPrefix)) {
+      final hiddenPaths = _readHiddenBuiltInWordbookPaths()..add(path);
+      _runInTransaction<void>(() {
+        _writeHiddenBuiltInWordbookPaths(hiddenPaths);
+        _db.execute('DELETE FROM wordbooks WHERE id = ?', <Object?>[
+          wordbookId,
+        ]);
+      });
+      return;
+    }
+    deleteWordbook(wordbookId);
   }
 
   bool upsertWord(
@@ -2475,9 +2818,10 @@ class AppDatabaseService {
     final word = payload.word.trim();
     if (word.isEmpty) throw ArgumentError('单词不能为空');
 
-    final existing = _selectOne(
-      'SELECT * FROM words WHERE wordbook_id = ? AND word = ?',
-      <Object?>[wordbookId, word],
+    final existing = _findExistingWordRow(
+      wordbookId,
+      word: word,
+      entryUid: payload.entryUid,
     );
 
     if (existing == null) {
@@ -2505,28 +2849,44 @@ class AppDatabaseService {
       word: word,
       fields: normalizedFields,
       rawContent: normalizedRawContent,
+      entryUid: payload.entryUid ?? existingEntry.entryUid,
+      primaryGloss: payload.primaryGloss ?? existingEntry.primaryGloss,
+      schemaVersion: payload.schemaVersion ?? existingEntry.schemaVersion,
+      sourcePayloadJson:
+          payload.sourcePayloadJson ?? existingEntry.sourcePayloadJson,
+      sortIndex: payload.sortIndex ?? existingEntry.sortIndex,
     );
 
     _db.execute(
       '''
       UPDATE words SET
         meaning = ?,
+        entry_uid = ?,
+        primary_gloss = ?,
         search_word = ?,
         search_meaning = ?,
         search_details = ?,
         search_word_compact = ?,
         search_details_compact = ?,
+        schema_version = ?,
+        source_payload_json = ?,
+        sort_index = ?,
         extension_json = ?,
         entry_json = ?
       WHERE id = ?
       ''',
       <Object?>[
         prepared.row['meaning'],
+        prepared.entryUid,
+        prepared.primaryGloss,
         prepared.row['search_word'],
         prepared.row['search_meaning'],
         prepared.row['search_details'],
         prepared.row['search_word_compact'],
         prepared.row['search_details_compact'],
+        prepared.schemaVersion,
+        prepared.sourcePayloadJson,
+        prepared.sortIndex,
         prepared.row['extension_json'],
         prepared.row['entry_json'],
         (existing['id'] as num).toInt(),
@@ -2540,9 +2900,10 @@ class AppDatabaseService {
   }
 
   void addWord(int wordbookId, WordEntryPayload payload) {
-    final existing = _selectOne(
-      'SELECT id FROM words WHERE wordbook_id = ? AND word = ?',
-      <Object?>[wordbookId, payload.word.trim()],
+    final existing = _findExistingWordRow(
+      wordbookId,
+      word: payload.word.trim(),
+      entryUid: payload.entryUid,
     );
     if (existing != null) throw StateError('该单词已存在');
     upsertWord(wordbookId, payload);
@@ -2551,6 +2912,9 @@ class AppDatabaseService {
   void updateWord({
     required int wordbookId,
     required String sourceWord,
+    int? sourceWordId,
+    String? sourceEntryUid,
+    String? sourcePrimaryGloss,
     required WordEntryPayload payload,
   }) {
     final oldWord = sourceWord.trim();
@@ -2559,18 +2923,32 @@ class AppDatabaseService {
         : payload.word.trim();
     if (oldWord.isEmpty || nextWord.isEmpty) throw ArgumentError('单词不能为空');
 
-    final existing = _selectOne(
-      'SELECT id FROM words WHERE wordbook_id = ? AND word = ?',
-      <Object?>[wordbookId, oldWord],
+    Map<String, Object?>? existing;
+    if ((sourceWordId ?? 0) > 0) {
+      existing = _selectOne(
+        'SELECT * FROM words WHERE wordbook_id = ? AND id = ?',
+        <Object?>[wordbookId, sourceWordId],
+      );
+    }
+    existing ??= _findExistingWordRow(
+      wordbookId,
+      word: oldWord,
+      entryUid: sourceEntryUid,
+      primaryGloss: sourcePrimaryGloss,
     );
     if (existing == null) throw StateError('单词不存在');
+    final existingId = (existing['id'] as num).toInt();
 
     if (oldWord != nextWord) {
-      final conflict = _selectOne(
-        'SELECT id FROM words WHERE wordbook_id = ? AND word = ?',
-        <Object?>[wordbookId, nextWord],
+      final conflict = _findExistingWordRow(
+        wordbookId,
+        word: nextWord,
+        entryUid: payload.entryUid ?? sourceEntryUid,
       );
-      if (conflict != null) throw StateError('目标单词已存在');
+      final conflictId = (conflict?['id'] as num?)?.toInt();
+      if (conflictId != null && conflictId != existingId) {
+        throw StateError('目标单词已存在');
+      }
     }
 
     final incomingRawContent = sanitizeDisplayText(payload.rawContent);
@@ -2580,11 +2958,23 @@ class AppDatabaseService {
         ...parseSectionedContent(incomingRawContent),
     ]);
     final prepared = _buildStoredWordRecord(
-      id: (existing['id'] as num).toInt(),
+      id: existingId,
       wordbookId: wordbookId,
       word: nextWord,
       fields: normalizedFields,
       rawContent: incomingRawContent,
+      entryUid:
+          payload.entryUid ?? _sanitizeNullableText(existing['entry_uid']),
+      primaryGloss:
+          payload.primaryGloss ??
+          _sanitizeNullableText(existing['primary_gloss']),
+      schemaVersion:
+          payload.schemaVersion ??
+          _sanitizeNullableText(existing['schema_version']),
+      sourcePayloadJson:
+          payload.sourcePayloadJson ??
+          _sanitizeNullableText(existing['source_payload_json']),
+      sortIndex: payload.sortIndex ?? (existing['sort_index'] as num?)?.toInt(),
     );
 
     _db.execute(
@@ -2592,11 +2982,16 @@ class AppDatabaseService {
       UPDATE words SET
         word = ?,
         meaning = ?,
+        entry_uid = ?,
+        primary_gloss = ?,
         search_word = ?,
         search_meaning = ?,
         search_details = ?,
         search_word_compact = ?,
         search_details_compact = ?,
+        schema_version = ?,
+        source_payload_json = ?,
+        sort_index = ?,
         extension_json = ?,
         entry_json = ?
       WHERE id = ?
@@ -2604,17 +2999,22 @@ class AppDatabaseService {
       <Object?>[
         prepared.row['word'],
         prepared.row['meaning'],
+        prepared.entryUid,
+        prepared.primaryGloss,
         prepared.row['search_word'],
         prepared.row['search_meaning'],
         prepared.row['search_details'],
         prepared.row['search_word_compact'],
         prepared.row['search_details_compact'],
+        prepared.schemaVersion,
+        prepared.sourcePayloadJson,
+        prepared.sortIndex,
         prepared.row['extension_json'],
         prepared.row['entry_json'],
-        (existing['id'] as num).toInt(),
+        existingId,
       ],
     );
-    _replaceWordFields((existing['id'] as num).toInt(), prepared.fields);
+    _replaceWordFields(existingId, prepared.fields);
 
     _refreshWordbookCount(wordbookId);
   }
@@ -2625,6 +3025,35 @@ class AppDatabaseService {
       <Object?>[wordbookId, word],
     );
     _refreshWordbookCount(wordbookId);
+  }
+
+  void deleteWordByEntryIdentity(int wordbookId, WordEntry entry) {
+    final normalizedEntryUid = sanitizeDisplayText(entry.entryUid ?? '');
+    if (normalizedEntryUid.isNotEmpty) {
+      _db.execute(
+        'DELETE FROM words WHERE wordbook_id = ? AND entry_uid = ?',
+        <Object?>[wordbookId, normalizedEntryUid],
+      );
+      _refreshWordbookCount(wordbookId);
+      return;
+    }
+
+    final primaryGloss = sanitizeDisplayText(
+      entry.primaryGloss ?? entry.summaryMeaningText,
+    );
+    if (primaryGloss.isNotEmpty) {
+      _db.execute(
+        '''
+        DELETE FROM words
+        WHERE wordbook_id = ? AND word = ? AND COALESCE(primary_gloss, meaning, '') = ?
+        ''',
+        <Object?>[wordbookId, entry.word, primaryGloss],
+      );
+      _refreshWordbookCount(wordbookId);
+      return;
+    }
+
+    deleteWord(wordbookId, entry.word);
   }
 
   void clearWordbook(int wordbookId) {
@@ -2650,6 +3079,35 @@ class AppDatabaseService {
       _refreshWordbookCount(insertedId);
       return insertedId;
     });
+  }
+
+  Map<String, Object?>? _findExistingWordRow(
+    int wordbookId, {
+    required String word,
+    String? entryUid,
+    String? primaryGloss,
+  }) {
+    final normalizedEntryUid = sanitizeDisplayText(entryUid ?? '');
+    if (normalizedEntryUid.isNotEmpty) {
+      return _selectOne(
+        'SELECT * FROM words WHERE wordbook_id = ? AND entry_uid = ?',
+        <Object?>[wordbookId, normalizedEntryUid],
+      );
+    }
+    final normalizedPrimaryGloss = sanitizeDisplayText(primaryGloss ?? '');
+    if (normalizedPrimaryGloss.isNotEmpty) {
+      return _selectOne(
+        '''
+        SELECT * FROM words
+        WHERE wordbook_id = ? AND word = ? AND COALESCE(primary_gloss, meaning, '') = ?
+        ''',
+        <Object?>[wordbookId, word, normalizedPrimaryGloss],
+      );
+    }
+    return _selectOne(
+      'SELECT * FROM words WHERE wordbook_id = ? AND word = ?',
+      <Object?>[wordbookId, word],
+    );
   }
 
   WordbookMergeResult mergeWordbooks({
@@ -2743,24 +3201,9 @@ class AppDatabaseService {
     required String name,
     void Function(int processedEntries, int? totalEntries)? onProgress,
   }) async {
-    if (filePath.toLowerCase().endsWith('.json')) {
-      final content = await File(filePath).readAsString();
-      return importWordbookJsonText(
-        sourcePath: filePath,
-        name: name,
-        content: content,
-        replaceExisting: true,
-        onProgress: onProgress,
-      );
-    }
-
-    onProgress?.call(0, null);
-    final entries = await _importService.parseFile(filePath);
-    return importWordbook(
-      sourcePath: filePath,
+    return importWordbookFileAsync(
+      filePath: filePath,
       name: name,
-      entries: entries,
-      replaceExisting: true,
       onProgress: onProgress,
     );
   }
@@ -2770,172 +3213,489 @@ class AppDatabaseService {
     required String name,
     void Function(int processedEntries, int? totalEntries)? onProgress,
   }) async {
-    if (filePath.toLowerCase().endsWith('.json')) {
-      onProgress?.call(0, null);
+    final normalizedPath = filePath.trim();
+    if (normalizedPath.isEmpty) {
+      throw ArgumentError('文件路径不能为空');
+    }
+
+    final normalizedLower = normalizedPath.toLowerCase();
+    if (normalizedLower.endsWith('.json.gz') ||
+        normalizedLower.endsWith('.gz')) {
       return importWordbookJsonByteStreamAsync(
-        sourcePath: filePath,
+        sourcePath: normalizedPath,
         name: name,
-        byteStream: File(filePath).openRead(),
-        replaceExisting: true,
+        byteStream: File(normalizedPath).openRead(),
+        gzipped: true,
         onProgress: onProgress,
-        yieldEvery: 40,
       );
     }
-    onProgress?.call(0, null);
-    final entries = await _importService.parseFile(filePath);
+
+    if (normalizedLower.endsWith('.json') ||
+        normalizedLower.endsWith('.jsonl')) {
+      final content = await File(normalizedPath).readAsString();
+      return importWordbookJsonTextAsync(
+        sourcePath: normalizedPath,
+        name: name,
+        content: content,
+        onProgress: onProgress,
+      );
+    }
+
+    final entries = await _importService.parseFile(normalizedPath);
     return importWordbookAsync(
-      sourcePath: filePath,
+      sourcePath: normalizedPath,
       name: name,
       entries: entries,
-      replaceExisting: true,
       onProgress: onProgress,
     );
   }
 
   Future<int> importLegacyDatabase(String legacyDbPath) async {
-    final legacyFile = File(legacyDbPath);
-    if (!await legacyFile.exists()) {
-      throw FileSystemException('数据库文件不存在', legacyDbPath);
+    final normalizedPath = legacyDbPath.trim();
+    if (normalizedPath.isEmpty) {
+      throw ArgumentError('旧数据库路径不能为空');
+    }
+    final sourceFile = File(normalizedPath);
+    if (!await sourceFile.exists()) {
+      throw FileSystemException('旧数据库文件不存在', normalizedPath);
     }
 
-    final legacyDb = sqlite3.open(legacyDbPath);
+    final legacyDb = sqlite3.open(normalizedPath);
     try {
-      final legacyWordbooks = _rowsAsMaps(
-        legacyDb.select('SELECT * FROM wordbooks'),
+      final tables = legacyDb
+          .select(
+            "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name ASC",
+          )
+          .map((row) => '${row['name'] ?? ''}'.trim())
+          .where((name) => name.isNotEmpty)
+          .toSet();
+      if (!tables.contains('words')) {
+        throw StateError('旧数据库缺少 words 表，无法迁移');
+      }
+
+      final wordsTableInfo = legacyDb.select('PRAGMA table_info(words);');
+      final wordsColumns = <String>{
+        for (final row in wordsTableInfo) '${row['name'] ?? ''}'.trim(),
+      };
+      final allWordRows = _rowsAsMaps(legacyDb.select('SELECT * FROM words'));
+      allWordRows.sort(_compareLegacyWordRows);
+
+      final baseName = _deriveWordbookNameFromSourcePath(normalizedPath);
+      var imported = 0;
+
+      if (tables.contains('wordbooks') &&
+          wordsColumns.contains('wordbook_id')) {
+        final groupedRows = <int, List<Map<String, Object?>>>{};
+        for (final row in allWordRows) {
+          final legacyWordbookId = (row['wordbook_id'] as num?)?.toInt() ?? 0;
+          groupedRows
+              .putIfAbsent(legacyWordbookId, () => <Map<String, Object?>>[])
+              .add(row);
+        }
+        final legacyWordbooks = _rowsAsMaps(
+          legacyDb.select('SELECT * FROM wordbooks ORDER BY id ASC'),
+        );
+        for (final legacyWordbook in legacyWordbooks) {
+          final legacyId = (legacyWordbook['id'] as num?)?.toInt() ?? 0;
+          final payloads =
+              (groupedRows[legacyId] ?? const <Map<String, Object?>>[])
+                  .map(_legacyWordPayloadFromRow)
+                  .whereType<WordEntryPayload>()
+                  .toList(growable: false);
+          if (payloads.isEmpty) {
+            continue;
+          }
+          final legacyName = sanitizeDisplayText(
+            '${legacyWordbook['name'] ?? ''}',
+          );
+          await importWordbookAsync(
+            sourcePath:
+                'legacy:${p.basenameWithoutExtension(normalizedPath)}:$legacyId',
+            name: legacyName.isEmpty ? '$baseName-$legacyId' : legacyName,
+            entries: payloads,
+          );
+          imported += payloads.length;
+        }
+      }
+
+      if (imported > 0) {
+        return imported;
+      }
+
+      final payloads = allWordRows
+          .map(_legacyWordPayloadFromRow)
+          .whereType<WordEntryPayload>()
+          .toList(growable: false);
+      if (payloads.isEmpty) {
+        return 0;
+      }
+      await importWordbookAsync(
+        sourcePath: 'legacy:${p.basenameWithoutExtension(normalizedPath)}',
+        name: baseName.isEmpty ? 'Legacy Import' : baseName,
+        entries: payloads,
       );
-      final legacyWords = _rowsAsMaps(legacyDb.select('SELECT * FROM words'));
-
-      _runInTransaction<void>(() {
-        _db.execute('DELETE FROM word_fields;');
-        _db.execute('DELETE FROM words;');
-        _db.execute('DELETE FROM wordbooks;');
-
-        for (final wb in legacyWordbooks) {
-          _db.execute(
-            '''
-            INSERT INTO wordbooks (id, name, path, word_count, created_at)
-            VALUES (?, ?, ?, ?, ?)
-            ''',
-            <Object?>[
-              wb['id'],
-              wb['name'],
-              wb['path'],
-              wb['word_count'],
-              wb['created_at'],
-            ],
-          );
-        }
-
-        for (final word in legacyWords) {
-          final entry = WordEntry.fromMap(word);
-          final prepared = _buildStoredWordRecord(
-            id: entry.id,
-            wordbookId: entry.wordbookId,
-            word: entry.word,
-            fields: entry.fields,
-            rawContent: entry.rawContent,
-          );
-          _db.execute(
-            '''
-            INSERT INTO words (
-              id,
-              wordbook_id,
-              word,
-              meaning,
-              search_word,
-              search_meaning,
-              search_details,
-              search_word_compact,
-              search_details_compact,
-              extension_json,
-              entry_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''',
-            <Object?>[
-              entry.id,
-              entry.wordbookId,
-              prepared.row['word'],
-              prepared.row['meaning'],
-              prepared.row['search_word'],
-              prepared.row['search_meaning'],
-              prepared.row['search_details'],
-              prepared.row['search_word_compact'],
-              prepared.row['search_details_compact'],
-              prepared.row['extension_json'],
-              prepared.row['entry_json'],
-            ],
-          );
-        }
-
-        _db.execute('''
-          UPDATE wordbooks
-          SET word_count = (
-            SELECT COUNT(*)
-            FROM words
-            WHERE words.wordbook_id = wordbooks.id
-          );
-          ''');
-      });
-      _migrateWordFieldsSchema();
-      ensureSpecialWordbooks();
-      await syncBuiltInWordbooksCatalog();
-      return legacyWords.length;
+      return payloads.length;
     } finally {
       legacyDb.dispose();
     }
   }
 
-  Future<List<BuiltInWordbookConfig>> _resolveBuiltInWordbooks() async {
-    // Historical local asset scan is retained here as commented reference. The
-    // active path now comes from the injected built-in wordbook source so the
-    // app can bootstrap dictionaries from CSTCloud on first use.
-    // final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-    // final assets = manifest.listAssets().where((path) =>
-    //     path.startsWith(_dictAssetPrefix) && _isBuiltInWordbookAsset(path));
-    return _builtInWordbookSource.listBuiltInWordbooks();
-  }
-
-  void _removeObsoleteBuiltInWordbooks(Set<String> targetBuiltinPaths) {
-    final rows = _selectMaps(
-      'SELECT id, path FROM wordbooks WHERE path LIKE ?;',
-      <Object?>['builtin:%'],
+  int _upsertImportedWordbookRow({
+    required String sourcePath,
+    required String name,
+    required bool replaceExisting,
+    String? schemaVersion,
+    String? metadataJson,
+  }) {
+    final normalizedPath = sourcePath.trim();
+    if (normalizedPath.isEmpty) {
+      throw ArgumentError('sourcePath 不能为空');
+    }
+    final normalizedName = sanitizeDisplayText(name).trim().isEmpty
+        ? _deriveWordbookNameFromSourcePath(normalizedPath)
+        : sanitizeDisplayText(name).trim();
+    final nextSchemaVersion = _sanitizeNullableText(schemaVersion);
+    final nextMetadataJson = _sanitizeNullableText(metadataJson);
+    final existing = _selectOne(
+      'SELECT * FROM wordbooks WHERE path = ?',
+      <Object?>[normalizedPath],
     );
-    for (final row in rows) {
-      final path = row['path']?.toString() ?? '';
-      if (_specialWordbooks.containsKey(path)) continue;
-      if (targetBuiltinPaths.contains(path)) continue;
-      final wordbookId = (row['id'] as num?)?.toInt();
-      if (wordbookId == null) continue;
+
+    if (existing == null) {
+      _db.execute(
+        '''
+        INSERT INTO wordbooks (name, path, word_count, schema_version, metadata_json)
+        VALUES (?, ?, 0, ?, ?)
+        ''',
+        <Object?>[
+          normalizedName,
+          normalizedPath,
+          nextSchemaVersion,
+          nextMetadataJson,
+        ],
+      );
+      if (normalizedPath.startsWith(_dictBuiltinPathPrefix)) {
+        final hiddenPaths = _readHiddenBuiltInWordbookPaths();
+        if (hiddenPaths.remove(normalizedPath)) {
+          _writeHiddenBuiltInWordbookPaths(hiddenPaths);
+        }
+      }
+      return _lastInsertId();
+    }
+
+    final wordbookId = (existing['id'] as num).toInt();
+    final resolvedSchemaVersion =
+        nextSchemaVersion ?? _sanitizeNullableText(existing['schema_version']);
+    final resolvedMetadataJson =
+        nextMetadataJson ?? _sanitizeNullableText(existing['metadata_json']);
+    _db.execute(
+      '''
+      UPDATE wordbooks
+      SET name = ?, schema_version = ?, metadata_json = ?
+      WHERE id = ?
+      ''',
+      <Object?>[
+        normalizedName,
+        resolvedSchemaVersion,
+        resolvedMetadataJson,
+        wordbookId,
+      ],
+    );
+    if (replaceExisting) {
       _db.execute('DELETE FROM words WHERE wordbook_id = ?', <Object?>[
         wordbookId,
       ]);
-      _db.execute('DELETE FROM wordbooks WHERE id = ?', <Object?>[wordbookId]);
+      _db.execute('UPDATE wordbooks SET word_count = 0 WHERE id = ?', <Object?>[
+        wordbookId,
+      ]);
     }
-  }
-
-  Set<String> _hiddenBuiltInWordbookPaths() {
-    final raw = getSetting(_hiddenBuiltInWordbooksSettingKey)?.trim();
-    if (raw == null || raw.isEmpty) {
-      return <String>{};
-    }
-
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) {
-        return <String>{};
+    if (normalizedPath.startsWith(_dictBuiltinPathPrefix)) {
+      final hiddenPaths = _readHiddenBuiltInWordbookPaths();
+      if (hiddenPaths.remove(normalizedPath)) {
+        _writeHiddenBuiltInWordbookPaths(hiddenPaths);
       }
-      return decoded
-          .map((item) => '$item'.trim())
-          .where((path) => _isDeletableBuiltInPath(path))
-          .toSet();
-    } catch (_) {
-      return <String>{};
     }
+    return wordbookId;
   }
 
-  void _saveHiddenBuiltInWordbookPaths(Set<String> paths) {
-    final sortedPaths = paths.toList(growable: false)..sort();
-    setSetting(_hiddenBuiltInWordbooksSettingKey, jsonEncode(sortedPaths));
+  String _resolveImportedWordbookName({
+    required String sourcePath,
+    required String requestedName,
+    required String? descriptorName,
+  }) {
+    final normalizedRequested = sanitizeDisplayText(requestedName).trim();
+    final normalizedDescriptor = sanitizeDisplayText(
+      descriptorName ?? '',
+    ).trim();
+    if (sourcePath.startsWith(_dictBuiltinPathPrefix)) {
+      if (normalizedDescriptor.isNotEmpty) {
+        return normalizedDescriptor;
+      }
+      if (normalizedRequested.isNotEmpty) {
+        return normalizedRequested;
+      }
+      return _deriveWordbookNameFromSourcePath(sourcePath);
+    }
+    if (normalizedRequested.isNotEmpty) {
+      return normalizedRequested;
+    }
+    if (normalizedDescriptor.isNotEmpty) {
+      return normalizedDescriptor;
+    }
+    return _deriveWordbookNameFromSourcePath(sourcePath);
+  }
+
+  String _deriveWordbookNameFromSourcePath(String sourcePath) {
+    final trimmed = sourcePath.trim();
+    if (trimmed.isEmpty) {
+      return 'Wordbook';
+    }
+    final basename = p.basename(trimmed);
+    if (basename.trim().isEmpty) {
+      return trimmed;
+    }
+    final lower = basename.toLowerCase();
+    if (lower.endsWith('.json.gz')) {
+      return basename.substring(0, basename.length - '.json.gz'.length);
+    }
+    if (lower.endsWith('.jsonl')) {
+      return basename.substring(0, basename.length - '.jsonl'.length);
+    }
+    return p.basenameWithoutExtension(basename);
+  }
+
+  String? _deriveSchemaVersionFromPayloads(List<WordEntryPayload> entries) {
+    final versions = entries
+        .map((entry) => sanitizeDisplayText(entry.schemaVersion ?? ''))
+        .where((item) => item.isNotEmpty)
+        .toSet();
+    if (versions.length != 1) {
+      return null;
+    }
+    return versions.first;
+  }
+
+  Future<Map<int, int>> _restoreWordbooksFromExport(
+    List<UserDataExportWordbook> wordbooks,
+  ) async {
+    final restoredWordIds = <int, int>{};
+    for (final exportedWordbook in wordbooks) {
+      final sourcePath = sanitizeDisplayText(exportedWordbook.wordbook.path);
+      if (sourcePath.isEmpty) {
+        continue;
+      }
+      final metadataJson =
+          _sanitizeNullableText(exportedWordbook.wordbook.metadataJson) ??
+          (exportedWordbook.standardBook == null
+              ? null
+              : jsonEncode(exportedWordbook.standardBook!.toJsonMap()));
+      final schemaVersion = _sanitizeNullableText(
+        exportedWordbook.wordbook.schemaVersion,
+      );
+      final payloads = exportedWordbook.words
+          .map((word) => word.toRestorablePayload())
+          .toList(growable: false);
+      final wordbookId = _upsertImportedWordbookRow(
+        sourcePath: sourcePath,
+        name: sanitizeDisplayText(exportedWordbook.wordbook.name),
+        schemaVersion: schemaVersion,
+        metadataJson: metadataJson,
+        replaceExisting: true,
+      );
+
+      final statements = _openWordImportInsertStatements();
+      try {
+        for (final payload in payloads) {
+          _insertWordWithStatements(
+            wordbookId,
+            payload,
+            statements: statements,
+          );
+        }
+      } finally {
+        statements.dispose();
+      }
+      _refreshWordbookCount(wordbookId);
+      restoredWordIds.addAll(
+        _mapRestoredWordIds(
+          exportedWords: exportedWordbook.words,
+          restoredWordbookId: wordbookId,
+        ),
+      );
+    }
+    return restoredWordIds;
+  }
+
+  Map<int, int> _mapRestoredWordIds({
+    required List<UserDataExportWordRecord> exportedWords,
+    required int restoredWordbookId,
+  }) {
+    final restoredRows = _selectMaps(
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY $_wordOrderClause',
+      <Object?>[restoredWordbookId],
+    );
+    final restoredEntries = restoredRows
+        .map(_inflateWordEntry)
+        .toList(growable: false);
+
+    final entryUidMap = <String, WordEntry>{};
+    final wordGlossMap = <String, List<WordEntry>>{};
+    final wordRawMap = <String, List<WordEntry>>{};
+    final wordOnlyMap = <String, List<WordEntry>>{};
+
+    void push(
+      Map<String, List<WordEntry>> target,
+      String key,
+      WordEntry entry,
+    ) {
+      if (key.isEmpty) {
+        return;
+      }
+      target.putIfAbsent(key, () => <WordEntry>[]).add(entry);
+    }
+
+    for (final entry in restoredEntries) {
+      final normalizedEntryUid = sanitizeDisplayText(entry.entryUid ?? '');
+      if (normalizedEntryUid.isNotEmpty) {
+        entryUidMap[normalizedEntryUid] = entry;
+      }
+      final normalizedWord = sanitizeDisplayText(entry.word);
+      final normalizedGloss = sanitizeDisplayText(
+        entry.primaryGloss ?? entry.summaryMeaningText,
+      );
+      final normalizedRaw = sanitizeDisplayText(entry.rawContent);
+      push(wordGlossMap, '$normalizedWord::$normalizedGloss', entry);
+      push(wordRawMap, '$normalizedWord::$normalizedRaw', entry);
+      push(wordOnlyMap, normalizedWord, entry);
+    }
+
+    final restoredIds = <int, int>{};
+    final consumedIds = <int>{};
+
+    WordEntry? takeFirstUnused(List<WordEntry>? entries) {
+      if (entries == null) {
+        return null;
+      }
+      for (final entry in entries) {
+        final id = entry.id;
+        if (id == null || consumedIds.contains(id)) {
+          continue;
+        }
+        consumedIds.add(id);
+        return entry;
+      }
+      return null;
+    }
+
+    for (final exportedWord in exportedWords) {
+      final legacyId = exportedWord.id;
+      if (legacyId == null || legacyId <= 0) {
+        continue;
+      }
+
+      final normalizedEntryUid = sanitizeDisplayText(
+        exportedWord.entryUid ?? '',
+      );
+      WordEntry? match;
+      if (normalizedEntryUid.isNotEmpty) {
+        final direct = entryUidMap[normalizedEntryUid];
+        final directId = direct?.id;
+        if (directId != null && !consumedIds.contains(directId)) {
+          consumedIds.add(directId);
+          match = direct;
+        }
+      }
+
+      match ??= takeFirstUnused(
+        wordGlossMap['${sanitizeDisplayText(exportedWord.word)}::${sanitizeDisplayText(exportedWord.primaryGloss ?? exportedWord.meaning ?? '')}'],
+      );
+      match ??= takeFirstUnused(
+        wordRawMap['${sanitizeDisplayText(exportedWord.word)}::${sanitizeDisplayText(exportedWord.rawContent)}'],
+      );
+      match ??= takeFirstUnused(
+        wordOnlyMap[sanitizeDisplayText(exportedWord.word)],
+      );
+
+      final restoredId = match?.id;
+      if (restoredId != null && restoredId > 0) {
+        restoredIds[legacyId] = restoredId;
+      }
+    }
+
+    return restoredIds;
+  }
+
+  int? _resolveExistingRestoredWordId(int legacyWordId) {
+    final row = _selectOne(
+      'SELECT id FROM words WHERE id = ? LIMIT 1',
+      <Object?>[legacyWordId],
+    );
+    return (row?['id'] as num?)?.toInt();
+  }
+
+  Map<String, Object?>? _tryDecodeJsonObjectMap(String? raw) {
+    final normalized = sanitizeDisplayText(raw ?? '');
+    if (normalized.isEmpty) {
+      return null;
+    }
+    try {
+      final decoded = jsonDecode(normalized);
+      if (decoded is Map<String, Object?>) {
+        return decoded;
+      }
+      if (decoded is Map) {
+        return decoded.cast<String, Object?>();
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  WordEntryPayload? _legacyWordPayloadFromRow(Map<String, Object?> row) {
+    final inferredWord = sanitizeDisplayText(
+      '${row['word'] ?? row['term'] ?? row['title'] ?? row['headword'] ?? ''}',
+    );
+    if (inferredWord.isEmpty) {
+      return null;
+    }
+
+    final entry = WordEntry.fromMap(<String, Object?>{
+      ...row,
+      'word': inferredWord,
+    });
+    final payload = entry.toPayload();
+    if (payload.word.trim().isNotEmpty) {
+      return payload;
+    }
+
+    final fallbackMeaning = sanitizeDisplayText(
+      '${row['meaning'] ?? row['content'] ?? row['raw_content'] ?? ''}',
+    );
+    return WordEntryPayload(
+      word: inferredWord,
+      fields: fallbackMeaning.isEmpty
+          ? const <WordFieldItem>[]
+          : <WordFieldItem>[
+              WordFieldItem(
+                key: 'meaning',
+                label: legacyFieldLabels['meaning'] ?? 'Meaning',
+                value: fallbackMeaning,
+              ),
+            ],
+      rawContent: fallbackMeaning,
+    );
+  }
+
+  int _compareLegacyWordRows(Map<String, Object?> a, Map<String, Object?> b) {
+    final sortIndexA = (a['sort_index'] as num?)?.toInt() ?? 0;
+    final sortIndexB = (b['sort_index'] as num?)?.toInt() ?? 0;
+    if (sortIndexA != sortIndexB) {
+      return sortIndexA.compareTo(sortIndexB);
+    }
+    final idA = (a['id'] as num?)?.toInt() ?? 0;
+    final idB = (b['id'] as num?)?.toInt() ?? 0;
+    return idA.compareTo(idB);
   }
 
   T _runInTransaction<T>(T Function() action) {
@@ -3060,6 +3820,11 @@ class AppDatabaseService {
       _setSchemaVersion(8);
       version = 8;
     }
+    if (version < 9) {
+      _migrateWordbookStandardStorageSchema();
+      _setSchemaVersion(9);
+      version = 9;
+    }
     if (version != _currentSchemaVersion) {
       _setSchemaVersion(_currentSchemaVersion);
     }
@@ -3156,8 +3921,55 @@ class AppDatabaseService {
     // The migration is mainly for upgrading from schema version 7 to 8.
   }
 
+  void _migrateWordbookStandardStorageSchema() {
+    final wordbookTableInfo = _db.select('PRAGMA table_info(wordbooks);');
+    final wordbookColumns = <String>{
+      for (final row in wordbookTableInfo) row['name'].toString(),
+    };
+    if (!wordbookColumns.contains('schema_version')) {
+      _db.execute('ALTER TABLE wordbooks ADD COLUMN schema_version TEXT;');
+    }
+    if (!wordbookColumns.contains('metadata_json')) {
+      _db.execute('ALTER TABLE wordbooks ADD COLUMN metadata_json TEXT;');
+    }
+
+    final wordTableInfo = _db.select('PRAGMA table_info(words);');
+    final wordColumns = <String>{
+      for (final row in wordTableInfo) row['name'].toString(),
+    };
+    if (!wordColumns.contains('entry_uid')) {
+      _db.execute('ALTER TABLE words ADD COLUMN entry_uid TEXT;');
+    }
+    if (!wordColumns.contains('primary_gloss')) {
+      _db.execute('ALTER TABLE words ADD COLUMN primary_gloss TEXT;');
+    }
+    if (!wordColumns.contains('schema_version')) {
+      _db.execute('ALTER TABLE words ADD COLUMN schema_version TEXT;');
+    }
+    if (!wordColumns.contains('source_payload_json')) {
+      _db.execute('ALTER TABLE words ADD COLUMN source_payload_json TEXT;');
+    }
+    if (!wordColumns.contains('sort_index')) {
+      _db.execute('ALTER TABLE words ADD COLUMN sort_index INTEGER DEFAULT 0;');
+    }
+
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_entry_uid ON words(wordbook_id, entry_uid);',
+    );
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_words_sort_index ON words(wordbook_id, sort_index, id);',
+    );
+  }
+
   void _rebuildWordCompatibilityCaches() {
-    final rows = _selectMaps('SELECT * FROM words ORDER BY id ASC');
+    final rows = _selectMaps('SELECT * FROM words ORDER BY $_wordOrderClause');
+    _updateWordCompatibilityCaches(rows);
+  }
+
+  void _updateWordCompatibilityCaches(List<Map<String, Object?>> rows) {
+    if (rows.isEmpty) {
+      return;
+    }
     final wordIds = rows
         .map((row) => (row['id'] as num?)?.toInt())
         .whereType<int>()
@@ -3216,26 +4028,9 @@ class AppDatabaseService {
     return match?.group(1) ?? 'manual';
   }
 
-  List<UserDataExportWordbook> _buildWordbooksExportPayload() {
-    final rows = _selectMaps('''
-      SELECT id, name, path, word_count, created_at
-      FROM wordbooks
-      ORDER BY id ASC
-    ''');
-    return rows
-        .map((row) {
-          final wordbookId = ((row['id'] as num?) ?? 0).toInt();
-          return UserDataExportWordbook(
-            wordbook: Wordbook.fromMap(row),
-            words: _buildWordbookExportWords(wordbookId),
-          );
-        })
-        .toList(growable: false);
-  }
-
   List<WordEntryPayload> _buildWordEntryPayloadsForWordbook(int wordbookId) {
     final rows = _selectMaps(
-      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC',
+      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY $_wordOrderClause',
       <Object?>[wordbookId],
     );
     final wordIds = rows
@@ -3261,92 +4056,6 @@ class AppDatabaseService {
           );
         })
         .toList(growable: false);
-  }
-
-  List<UserDataExportWordRecord> _buildWordbookExportWords(int wordbookId) {
-    final rows = _selectMaps(
-      'SELECT * FROM words WHERE wordbook_id = ? ORDER BY id ASC',
-      <Object?>[wordbookId],
-    );
-    final wordIds = rows
-        .map((row) => (row['id'] as num?)?.toInt())
-        .whereType<int>()
-        .where((id) => id > 0)
-        .toList(growable: false);
-    final fieldsByWordId = _getWordFieldsByWordIds(wordIds);
-
-    return rows
-        .map((row) {
-          final wordId = (row['id'] as num?)?.toInt();
-          final fields = wordId == null
-              ? const <WordFieldItem>[]
-              : (fieldsByWordId[wordId] ?? const <WordFieldItem>[]);
-          if (fields.isEmpty) {
-            final fallback = WordEntry.fromMap(row);
-            return UserDataExportWordRecord(
-              id: fallback.id,
-              wordbookId: fallback.wordbookId,
-              word: fallback.word,
-              meaning: fallback.meaning,
-              examples: fallback.examples,
-              etymology: fallback.etymology,
-              roots: fallback.roots,
-              affixes: fallback.affixes,
-              variations: fallback.variations,
-              memory: fallback.memory,
-              story: fallback.story,
-              fields: fallback.fields,
-              rawContent: fallback.rawContent,
-            );
-          }
-
-          final legacy = toLegacyFields(fields);
-          return UserDataExportWordRecord(
-            id: wordId,
-            wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
-            word: sanitizeDisplayText('${row['word'] ?? ''}'),
-            meaning: legacy.meaning ?? _sanitizeNullableText(row['meaning']),
-            examples: legacy.examples,
-            etymology: legacy.etymology,
-            roots: legacy.roots,
-            affixes: legacy.affixes,
-            variations: legacy.variations,
-            memory: legacy.memory,
-            story: legacy.story,
-            fields: fields,
-            rawContent: _resolveStoredRawContent(row),
-          );
-        })
-        .toList(growable: false);
-  }
-
-  Map<String, String> _buildSettingsExportPayload() {
-    final rows = _selectMaps(
-      'SELECT key, value FROM settings ORDER BY key ASC',
-    );
-    return <String, String>{
-      for (final row in rows) '${row['key'] ?? ''}': '${row['value'] ?? ''}',
-    };
-  }
-
-  Set<UserDataExportSection> _resolveUserDataExportSections(
-    Iterable<UserDataExportSection>? sections,
-  ) {
-    final resolved = sections == null
-        ? UserDataExportSection.values.toSet()
-        : sections.toSet();
-    if (resolved.isEmpty) {
-      throw ArgumentError('At least one export section must be selected');
-    }
-    return resolved;
-  }
-
-  String _normalizeUserDataExportFileName(String? rawFileName) {
-    return _normalizeExportFileName(
-      rawFileName: rawFileName,
-      defaultFileStem: 'xianyushengxi_user_data',
-      extension: 'json',
-    );
   }
 
   String _normalizeExportFileName({
@@ -3512,13 +4221,26 @@ class AppDatabaseService {
 
   String? _buildExtensionJson(List<WordFieldItem> fields) {
     final extensions = fields
-        .where((field) => !isLegacyFieldKey(field.key))
+        .where((field) => !_isWordCompatibilityColumnBackedFieldKey(field.key))
         .map((field) => field.toJsonMap())
         .toList(growable: false);
     if (extensions.isEmpty) {
       return null;
     }
     return jsonEncode(<String, Object?>{'fields': extensions});
+  }
+
+  bool _isWordCompatibilityColumnBackedFieldKey(String key) {
+    return const <String>{
+      'meaning',
+      'examples',
+      'etymology',
+      'roots',
+      'affixes',
+      'variations',
+      'memory',
+      'story',
+    }.contains(normalizeFieldKey(key));
   }
 
   String? _buildEntryRecoveryJson({required String rawContent}) {
@@ -3556,17 +4278,33 @@ class AppDatabaseService {
     if (cachedRawContent.isNotEmpty) {
       return cachedRawContent;
     }
+    final fallbackGloss = sanitizeDisplayText('${row['primary_gloss'] ?? ''}');
+    if (fallbackGloss.isNotEmpty) {
+      return fallbackGloss;
+    }
     final fallbackMeaning = sanitizeDisplayText('${row['meaning'] ?? ''}');
     return fallbackMeaning;
   }
 
   WordEntry _wordEntryLiteFromRow(Map<String, Object?> row) {
-    return WordEntry(
+    final entry = WordEntry(
       id: (row['id'] as num?)?.toInt(),
       wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
       word: sanitizeDisplayText('${row['word'] ?? ''}'),
-      meaning: _sanitizeNullableText(row['meaning']),
+      meaning:
+          _sanitizeNullableText(row['primary_gloss']) ??
+          _sanitizeNullableText(row['meaning']),
+      entryUid: _sanitizeNullableText(row['entry_uid']),
+      primaryGloss: _sanitizeNullableText(row['primary_gloss']),
+      schemaVersion: _sanitizeNullableText(row['schema_version']),
+      sortIndex: (row['sort_index'] as num?)?.toInt(),
+      sourcePayloadJson: _sanitizeNullableText(row['source_payload_json']),
       rawContent: _resolveStoredRawContent(row),
+    );
+    return entry.copyWith(
+      meaning: entry.summaryMeaningText.trim().isEmpty
+          ? entry.meaning
+          : entry.summaryMeaningText,
     );
   }
 
@@ -3581,6 +4319,11 @@ class AppDatabaseService {
     required String word,
     required List<WordFieldItem> fields,
     required String rawContent,
+    String? entryUid,
+    String? primaryGloss,
+    String? schemaVersion,
+    String? sourcePayloadJson,
+    int? sortIndex,
   }) {
     final normalizedWord = sanitizeDisplayText(word).trim();
     final normalizedRawContent = sanitizeDisplayText(rawContent);
@@ -3589,14 +4332,26 @@ class AppDatabaseService {
       if (normalizedRawContent.isNotEmpty)
         ...parseSectionedContent(normalizedRawContent),
     ]);
-    final legacy = toLegacyFields(normalizedFields);
+    final previewEntry = WordEntry(
+      id: id,
+      wordbookId: wordbookId,
+      word: normalizedWord,
+      fields: normalizedFields,
+      rawContent: normalizedRawContent,
+      entryUid: entryUid,
+      primaryGloss: primaryGloss,
+      schemaVersion: schemaVersion,
+      sortIndex: sortIndex,
+      sourcePayloadJson: sourcePayloadJson,
+    );
+    final legacy = previewEntry.legacyFields;
+    final resolvedMeaning = previewEntry.displayMeaning.trim().isEmpty
+        ? legacy.meaning
+        : previewEntry.displayMeaning;
     final persistedRawContent = normalizedRawContent.isNotEmpty
         ? normalizedRawContent
-        : (legacy.meaning ?? '');
-    final detailsText = normalizedFields
-        .map((item) => item.asText().trim())
-        .where((item) => item.isNotEmpty)
-        .join('\n');
+        : resolvedMeaning ?? '';
+    final detailsText = previewEntry.searchDetailsText;
     final extensionJson = _buildExtensionJson(normalizedFields);
     final compactEntryJson = _buildEntryRecoveryJson(
       rawContent: persistedRawContent,
@@ -3605,9 +4360,11 @@ class AppDatabaseService {
     return _PreparedWordRecord(
       row: <String, Object?>{
         'word': normalizedWord,
-        'meaning': legacy.meaning,
+        'meaning': resolvedMeaning,
         'search_word': search_text.normalizeSearchText(normalizedWord),
-        'search_meaning': search_text.normalizeSearchText(legacy.meaning ?? ''),
+        'search_meaning': search_text.normalizeSearchText(
+          resolvedMeaning ?? '',
+        ),
         'search_details': search_text.normalizeSearchText(detailsText),
         'search_word_compact': search_text.normalizeFuzzyCompactText(
           normalizedWord,
@@ -3619,6 +4376,11 @@ class AppDatabaseService {
         'entry_json': compactEntryJson,
       },
       fields: normalizedFields,
+      entryUid: _sanitizeNullableText(entryUid),
+      primaryGloss: _sanitizeNullableText(primaryGloss) ?? resolvedMeaning,
+      schemaVersion: _sanitizeNullableText(schemaVersion),
+      sourcePayloadJson: _sanitizeNullableText(sourcePayloadJson),
+      sortIndex: sortIndex ?? 0,
     );
   }
 
@@ -3627,17 +4389,22 @@ class AppDatabaseService {
       wordInsert: _db.prepare('''
         INSERT INTO words (
           wordbook_id,
+          entry_uid,
           word,
           meaning,
+          primary_gloss,
           search_word,
           search_meaning,
           search_details,
           search_word_compact,
           search_details_compact,
+          schema_version,
+          source_payload_json,
+          sort_index,
           extension_json,
           entry_json
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''),
       fieldInsert: _db.prepare('''
         INSERT INTO word_fields (
@@ -3688,17 +4455,27 @@ class AppDatabaseService {
       word: payload.word,
       fields: payload.fields,
       rawContent: payload.rawContent,
+      entryUid: payload.entryUid,
+      primaryGloss: payload.primaryGloss,
+      schemaVersion: payload.schemaVersion,
+      sourcePayloadJson: payload.sourcePayloadJson,
+      sortIndex: payload.sortIndex,
     );
 
     statements.wordInsert.execute(<Object?>[
       wordbookId,
+      prepared.entryUid,
       prepared.row['word'],
       prepared.row['meaning'],
+      prepared.primaryGloss,
       prepared.row['search_word'],
       prepared.row['search_meaning'],
       prepared.row['search_details'],
       prepared.row['search_word_compact'],
       prepared.row['search_details_compact'],
+      prepared.schemaVersion,
+      prepared.sourcePayloadJson,
+      prepared.sortIndex,
       prepared.row['extension_json'],
       prepared.row['entry_json'],
     ]);
@@ -3765,33 +4542,48 @@ class AppDatabaseService {
       word: payload.word,
       fields: payload.fields,
       rawContent: payload.rawContent,
+      entryUid: payload.entryUid,
+      primaryGloss: payload.primaryGloss,
+      schemaVersion: payload.schemaVersion,
+      sourcePayloadJson: payload.sourcePayloadJson,
+      sortIndex: payload.sortIndex,
     );
 
     _db.execute(
       '''
       INSERT INTO words (
         wordbook_id,
+        entry_uid,
         word,
         meaning,
+        primary_gloss,
         search_word,
         search_meaning,
         search_details,
         search_word_compact,
         search_details_compact,
+        schema_version,
+        source_payload_json,
+        sort_index,
         extension_json,
         entry_json
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       <Object?>[
         wordbookId,
+        prepared.entryUid,
         prepared.row['word'],
         prepared.row['meaning'],
+        prepared.primaryGloss,
         prepared.row['search_word'],
         prepared.row['search_meaning'],
         prepared.row['search_details'],
         prepared.row['search_word_compact'],
         prepared.row['search_details_compact'],
+        prepared.schemaVersion,
+        prepared.sourcePayloadJson,
+        prepared.sortIndex,
         prepared.row['extension_json'],
         prepared.row['entry_json'],
       ],
@@ -3812,8 +4604,6 @@ class AppDatabaseService {
   }
 
   bool _isBuiltInPath(String path) => path.startsWith('builtin:');
-  bool _isDeletableBuiltInPath(String path) =>
-      path.startsWith(_dictBuiltinPathPrefix);
 
   int _lastInsertId() {
     final row = _db.select('SELECT last_insert_rowid() AS id');

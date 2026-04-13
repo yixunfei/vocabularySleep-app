@@ -683,8 +683,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         density: WordCardDensity.practice,
         revealPracticeAnswer: _revealed,
         showFields: _hintRevealed,
-        isFavorite: state.favorites.contains(current.word),
-        isTaskWord: state.taskWords.contains(current.word),
+        isFavorite: state.isFavoriteEntry(current),
+        isTaskWord: state.isTaskEntry(current),
         onPlayPronunciation: () => state.previewPronunciation(current.word),
         footer: Wrap(
           spacing: 12,
@@ -1048,9 +1048,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     final nextRememberedWords = List<WordEntry>.from(_rememberedWords);
     final nextWeakWords = List<WordEntry>.from(_weakWords);
     final shouldAddToTask =
-        !remembered &&
-        _autoAddWeakWordsToTask &&
-        !state.taskWords.contains(current.word);
+        !remembered && _autoAddWeakWordsToTask && !state.isTaskEntry(current);
 
     if (remembered) {
       nextRemembered += 1;
@@ -1357,7 +1355,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
                             .toList(growable: false),
                       ),
                       if (_autoAddWeakWordsToTask &&
-                          !state.taskWords.contains(current.word)) ...<Widget>[
+                          !state.isTaskEntry(current)) ...<Widget>[
                         const SizedBox(height: 12),
                         Text(
                           pickUiText(
@@ -1512,17 +1510,11 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     });
   }
 
-  String _entryKey(WordEntry entry) =>
-      '${entry.wordbookId}:${entry.id ?? entry.word}';
+  String _entryKey(WordEntry entry) => entry.stableIdentityKey;
 
   bool _isSameWord(WordEntry a, WordEntry b) {
-    final aId = a.id;
-    final bId = b.id;
-    if (aId != null && bId != null) {
-      return aId == bId;
-    }
-    return a.wordbookId == b.wordbookId && a.word == b.word;
+    return a.sameEntryAs(b);
   }
 
-  String _reasonKey(WordEntry entry) => entry.word.trim().toLowerCase();
+  String _reasonKey(WordEntry entry) => entry.stableIdentityKey;
 }

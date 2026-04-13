@@ -5,6 +5,8 @@ class Wordbook {
     required this.path,
     required this.wordCount,
     required this.createdAt,
+    this.schemaVersion,
+    this.metadataJson,
   });
 
   final int id;
@@ -12,6 +14,8 @@ class Wordbook {
   final String path;
   final int wordCount;
   final DateTime? createdAt;
+  final String? schemaVersion;
+  final String? metadataJson;
 
   bool get isSystem => path.startsWith('builtin:');
   bool get isSpecial => path == 'builtin:favorites' || path == 'builtin:task';
@@ -31,6 +35,8 @@ class Wordbook {
       path: map['path']?.toString() ?? '',
       wordCount: ((map['word_count'] as num?) ?? 0).toInt(),
       createdAt: createdAt,
+      schemaVersion: map['schema_version']?.toString(),
+      metadataJson: map['metadata_json']?.toString(),
     );
   }
 }

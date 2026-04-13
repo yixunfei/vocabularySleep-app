@@ -77,19 +77,7 @@ IconData practiceQuestionTypeIcon(PracticeQuestionType questionType) {
 }
 
 String practiceMeaningText(WordEntry entry) {
-  final directMeaning = entry.meaning?.trim() ?? '';
-  if (directMeaning.isNotEmpty) {
-    return directMeaning;
-  }
-  for (final field in entry.fields) {
-    if (field.key == 'meaning') {
-      final text = field.asText().trim();
-      if (text.isNotEmpty) {
-        return text;
-      }
-    }
-  }
-  return '';
+  return entry.displayMeaning.trim();
 }
 
 String normalizePracticeAnswer(String value) {

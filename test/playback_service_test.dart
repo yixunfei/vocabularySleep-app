@@ -95,4 +95,38 @@ void main() {
       expect(seenIndices.toSet().length, words.length);
     }
   });
+
+  test('playback resolves lite entries before building the play queue', () async {
+    final tts = _FakeTtsService();
+    final service = PlaybackService(tts);
+    addTearDown(service.stop);
+    const liteEntry = WordEntry(
+      wordbookId: 1,
+      word: 'abandon',
+      fields: <WordFieldItem>[],
+    );
+    const hydratedEntry = WordEntry(
+      wordbookId: 1,
+      word: 'abandon',
+      meaning: 'to leave behind',
+      rawContent: 'to leave behind',
+      fields: <WordFieldItem>[
+        WordFieldItem(
+          key: 'meaning',
+          label: 'Meaning',
+          value: 'to leave behind',
+        ),
+      ],
+    );
+    final config = PlayConfig.defaults.copyWith(delayBetweenUnitsMs: 0);
+
+    await service.playWords(
+      words: <WordEntry>[liteEntry],
+      startIndex: 0,
+      config: config,
+      resolveWord: (_, _) => hydratedEntry,
+    );
+
+    expect(tts.spoken, <String>['abandon', 'to leave behind']);
+  });
 }

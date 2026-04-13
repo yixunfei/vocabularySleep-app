@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -860,7 +860,10 @@ void main() {
           ),
           isTrue,
         );
-        expect(SoothingMusicRuntimeStore.activeArrangementTemplateId, isNotNull);
+        expect(
+          SoothingMusicRuntimeStore.activeArrangementTemplateId,
+          isNotNull,
+        );
         final hasPlaybackState =
             find.byIcon(Icons.pause_rounded).evaluate().isNotEmpty ||
             find.byIcon(Icons.play_arrow_rounded).evaluate().isNotEmpty ||
@@ -2090,8 +2093,8 @@ void main() {
       await tester.tap(find.text('Finish round'));
       await tester.pumpAndSettle();
 
-      expect(state.taskWords.contains('alpha'), isFalse);
-      expect(state.taskWords.contains('bravo'), isTrue);
+      expect(state.taskWords.contains('word:alpha'), isFalse);
+      expect(state.taskWords.contains('word:bravo'), isTrue);
     });
 
     testWidgets('practice session updates practice stats and memory lanes', (
@@ -4137,22 +4140,39 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   Future<void> toggleFavorite(WordEntry word) async {
-    if (_favorites.contains(word.word)) {
-      _favorites.remove(word.word);
+    final key = word.collectionReferenceKey;
+    if (_favorites.contains(key)) {
+      _favorites.remove(key);
     } else {
-      _favorites.add(word.word);
+      _favorites.add(key);
     }
     notifyListeners();
   }
 
   @override
   Future<void> toggleTaskWord(WordEntry word) async {
-    if (_taskWords.contains(word.word)) {
-      _taskWords.remove(word.word);
+    final key = word.collectionReferenceKey;
+    if (_taskWords.contains(key)) {
+      _taskWords.remove(key);
     } else {
-      _taskWords.add(word.word);
+      _taskWords.add(key);
     }
     notifyListeners();
+  }
+
+  @override
+  bool isFavoriteEntry(WordEntry entry) {
+    return _favorites.contains(entry.collectionReferenceKey);
+  }
+
+  @override
+  bool isTaskEntry(WordEntry entry) {
+    return _taskWords.contains(entry.collectionReferenceKey);
+  }
+
+  @override
+  Future<bool> restoreUserDataExport(String filePath) async {
+    return false;
   }
 
   @override
@@ -5037,4 +5057,3 @@ extension<T> on List<T> {
 
   T? get lastOrNull => this.isEmpty ? null : last;
 }
-

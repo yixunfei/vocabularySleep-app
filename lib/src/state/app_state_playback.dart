@@ -143,6 +143,13 @@ extension _AppStatePlayback on AppState {
         words: words,
         startIndex: safeStart,
         config: _config,
+        resolveWord: (index, word) {
+          final resolved = _hydrateWordEntryIfNeeded(word);
+          if (index >= 0 && index < words.length) {
+            words[index] = resolved;
+          }
+          return resolved;
+        },
         onWordChanged: (index, word) {
           if (sessionId != _playSessionId) return;
           final nextWord = (index >= 0 && index < words.length)

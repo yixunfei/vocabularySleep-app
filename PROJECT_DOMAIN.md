@@ -1,8 +1,8 @@
 # 项目整体说明文档
 
 ## 文档版本
-- **版本**: v0.0.3
-- **更新日期**: 2026-04-10
+- **版本**: v0.0.6
+- **更新日期**: 2026-04-11
 - **状态**: 待完善
 
 ---
@@ -125,6 +125,11 @@ scripts/
 - 外部模型输出仅作为辅助参考，不应直接替代对业务代码、架构边界和实际仓库上下文的本地判断。
 - 多模型调度默认将结果写入工作区 `.tmp_model_runs/`，便于后续复查与归档。
 
+### toolbox 设计文档
+- `docs/toolbox_design/TOOLBOX_DESIGN_REVIEW.md`: 工具箱模块设计评审与问题清单。
+- `docs/toolbox_design/TOOLBOX_ANIMATION_SPEC.md`: 工具箱动效规范与节奏建议。
+- `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`: 当前生效的 toolbox UI 设计基线，用于约束后续“只动 UI、不动逻辑”的精修方向。
+
 ---
 
 ## 功能模块
@@ -204,7 +209,10 @@ const apiTimeout = Duration(seconds: 30);
 ### 单词本数据规范
 - 新的标准化单词本统一采用 `wordbook.v1` 结构。
 - 标准文档位于 `docs/wordbooks/WORDBOOK_STANDARD.md`。
-- 新词本处理应优先生成标准文件，再进入导入、分析和 SQL 落库流程。
+- 2026-04-11 起，单词本主链路已按“核心字段 + 动态扩展字段”重建：`word + meaning` 为核心字段，其他字段按每条词的实际内容动态入库、展示和播放。
+- 当前词本数据库承载已经支持 `wordbooks.schema_version / metadata_json` 以及 `words.entry_uid / primary_gloss / schema_version / source_payload_json / sort_index`，并配套 `word_fields / word_field_tags / word_field_media` 子表承载灵活扩展字段。
+- 内置词本目录现已恢复，可从本地 asset 目录发现并建立懒加载占位；真实导入时支持从本地文件或字节流解析，后续可平滑切换到 S3/远端词本源。
+- 大词本运行态继续采用“轻量列表 + 按需详情 + 懒加载 built-in”的策略，避免在移动端启动时无条件把整本词典一次性加载进 UI 内存。
 
 ---
 
@@ -246,6 +254,9 @@ const apiTimeout = Duration(seconds: 30);
 | 2026-04-08 | v0.0.1 | 初始创建文档 |
 | 2026-04-09 | v0.0.2 | 补充单词本标准化规范入口 |
 | 2026-04-10 | v0.0.3 | 补充 `opencode` 多模型协作脚本与开发辅助工具说明 |
+| 2026-04-10 | v0.0.4 | 新增 toolbox UI 设计规范基线文档入口 |
+| 2026-04-10 | v0.0.5 | 标记旧单词本导入解析与导出恢复链路已临时下线，等待整体重写 |
+| 2026-04-11 | v0.0.6 | 同步单词本与播放模块重建结果，恢复导入、导出恢复、built-in 目录和动态字段播放说明 |
 
 ---
 

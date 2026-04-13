@@ -9,6 +9,8 @@ import 'tts_service.dart';
 typedef WordChangeCallback = void Function(int index, WordEntry word);
 typedef UnitChangeCallback =
     void Function(int current, int total, PlayUnit unit);
+typedef WordResolveCallback =
+    FutureOr<WordEntry> Function(int index, WordEntry word);
 
 class PlaybackService {
   PlaybackService(this._ttsService);
@@ -40,6 +42,7 @@ class PlaybackService {
     required List<WordEntry> words,
     required int startIndex,
     required PlayConfig config,
+    WordResolveCallback? resolveWord,
     WordChangeCallback? onWordChanged,
     UnitChangeCallback? onUnitChanged,
     VoidCallback? onFinished,
@@ -62,7 +65,25 @@ class PlaybackService {
       await _waitIfPaused(runId);
       if (!_isRunActive(runId)) break;
 
-      final word = words[index];
+      final sourceWord = words[index];
+      var word = sourceWord;
+      if (resolveWord != null) {
+        try {
+          word = await Future<WordEntry>.value(resolveWord(index, sourceWord));
+        } catch (error, stackTrace) {
+          _log.e(
+            'playback',
+            'resolve word failed',
+            error: error,
+            stackTrace: stackTrace,
+            data: <String, Object?>{
+              'wordId': sourceWord.id,
+              'word': sourceWord.word,
+              'index': index,
+            },
+          );
+        }
+      }
       onWordChanged?.call(index, word);
       await _playSingleWord(word, onUnitChanged, runId);
     }

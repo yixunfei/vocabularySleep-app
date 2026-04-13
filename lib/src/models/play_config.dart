@@ -936,23 +936,30 @@ class PlayConfig {
   final AppearanceConfig appearance;
   final List<AppearanceThemePreset> appearancePresets;
 
-  static PlayConfig get defaults => PlayConfig(
-    repeats: const <String, int>{
+  static PlayConfig get defaults => const PlayConfig(
+    repeats: <String, int>{
       'word': 1,
       'meaning': 1,
       'example': 1,
+      'pronunciations': 0,
+      'parts_of_speech': 0,
+      'collocations': 0,
+      'usage': 0,
+      'confusions': 0,
       'spelling': 0,
       'story': 0,
+      'culture': 0,
       'etymology': 0,
       'roots': 0,
       'affixes': 0,
+      'morphology': 0,
       'variations': 0,
       'memory': 0,
     },
-    fieldSettings: const <String, FieldPlaybackSetting>{},
+    fieldSettings: <String, FieldPlaybackSetting>{},
     overallRepeat: 1,
     order: PlayOrder.sequential,
-    tts: const TtsConfig(
+    tts: TtsConfig(
       provider: TtsProviderType.local,
       voice: '',
       localVoice: '',
@@ -965,12 +972,12 @@ class PlayConfig {
       maxApiCacheMb: 128,
       model: 'FunAudioLLM/CosyVoice2-0.5B',
     ),
-    voiceInput: const VoiceInputConfig(
+    voiceInput: VoiceInputConfig(
       provider: VoiceInputProviderType.system,
       language: 'auto',
       model: 'FunAudioLLM/SenseVoiceSmall',
     ),
-    asr: const AsrConfig(
+    asr: AsrConfig(
       enabled: false,
       provider: AsrProviderType.api,
       engineOrder: <AsrProviderType>[
@@ -984,7 +991,7 @@ class PlayConfig {
     showText: true,
     delayBetweenUnitsMs: 500,
     appearance: AppearanceConfig.defaults,
-    appearancePresets: const <AppearanceThemePreset>[],
+    appearancePresets: <AppearanceThemePreset>[],
   );
 
   PlayConfig copyWith({
@@ -1145,23 +1152,37 @@ class PlayUnit {
 
 const Map<String, String> _fieldToRepeatKey = <String, String>{
   'meaning': 'meaning',
+  'pronunciations': 'pronunciations',
+  'parts_of_speech': 'parts_of_speech',
   'examples': 'example',
+  'collocations': 'collocations',
+  'usage': 'usage',
+  'confusions': 'confusions',
   'etymology': 'etymology',
   'roots': 'roots',
   'affixes': 'affixes',
+  'morphology': 'morphology',
   'variations': 'variations',
   'memory': 'memory',
+  'culture': 'culture',
   'story': 'story',
 };
 
 const Map<String, String> _fieldToUnitType = <String, String>{
   'meaning': 'meaning',
+  'pronunciations': 'pronunciation',
+  'parts_of_speech': 'part_of_speech',
   'examples': 'example',
+  'collocations': 'collocation',
+  'usage': 'usage',
+  'confusions': 'confusion',
   'etymology': 'etymology',
   'roots': 'roots',
   'affixes': 'affixes',
+  'morphology': 'morphology',
   'variations': 'variations',
   'memory': 'memory',
+  'culture': 'culture',
   'story': 'story',
 };
 
@@ -1237,18 +1258,7 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
     }
   }
 
-  final fallbackFields = buildFieldItemsFromRecord(<String, Object?>{
-    'meaning': word.meaning,
-    'examples': word.examples,
-    'etymology': word.etymology,
-    'roots': word.roots,
-    'affixes': word.affixes,
-    'variations': word.variations,
-    'memory': word.memory,
-    'story': word.story,
-  });
-
-  final fields = word.fields.isNotEmpty ? word.fields : fallbackFields;
+  final fields = word.playbackFields;
   for (final field in fields) {
     if (field.key.isEmpty) continue;
     if (!_isFieldEnabled(field.key, config)) continue;

@@ -34,10 +34,12 @@ abstract class BuiltInWordbookSource {
 class AssetBuiltInWordbookSource implements BuiltInWordbookSource {
   const AssetBuiltInWordbookSource({
     this.dictAssetPrefix = 'assets/wordbooks/',
+    this.assetRootPrefix = 'assets/',
     this.dictBuiltinPathPrefix = 'builtin:dict:',
   });
 
   final String dictAssetPrefix;
+  final String assetRootPrefix;
   final String dictBuiltinPathPrefix;
 
   @override
@@ -47,11 +49,7 @@ class AssetBuiltInWordbookSource implements BuiltInWordbookSource {
       final assets =
           manifest
               .listAssets()
-              .where(
-                (path) =>
-                    path.startsWith(dictAssetPrefix) &&
-                    _isBuiltInWordbookAsset(path),
-              )
+              .where(_shouldIncludeAsset)
               .toList(growable: false)
             ..sort();
       return assets.map(_buildConfigFromAsset).toList(growable: false);
@@ -82,22 +80,13 @@ class AssetBuiltInWordbookSource implements BuiltInWordbookSource {
     ResourceDownloadProgressCallback? onProgress,
   }) async {
     final bundleData = await rootBundle.load(config.sourcePath);
-    var bytes = bundleData.buffer.asUint8List();
+    final bytes = bundleData.buffer.asUint8List();
     onProgress?.call(
       ResourceDownloadProgress(
         receivedBytes: bytes.length,
         totalBytes: bytes.length,
       ),
     );
-    if (config.sourcePath.toLowerCase().endsWith('.gz')) {
-      bytes = Uint8List.fromList(GZipCodec().decode(bytes));
-      onProgress?.call(
-        ResourceDownloadProgress(
-          receivedBytes: bytes.length,
-          totalBytes: bytes.length,
-        ),
-      );
-    }
     return Stream<List<int>>.value(bytes);
   }
 
@@ -119,6 +108,23 @@ class AssetBuiltInWordbookSource implements BuiltInWordbookSource {
   bool _isBuiltInWordbookAsset(String assetPath) {
     final normalized = assetPath.toLowerCase();
     return normalized.endsWith('.json') || normalized.endsWith('.json.gz');
+  }
+
+  bool _shouldIncludeAsset(String assetPath) {
+    if (!_isBuiltInWordbookAsset(assetPath)) {
+      return false;
+    }
+    if (assetPath.startsWith(dictAssetPrefix)) {
+      return true;
+    }
+    if (!assetPath.startsWith(assetRootPrefix)) {
+      return false;
+    }
+    final relativePath = assetPath.substring(assetRootPrefix.length);
+    if (relativePath.contains('/')) {
+      return false;
+    }
+    return p.basename(relativePath).toLowerCase().contains('wordbook');
   }
 }
 

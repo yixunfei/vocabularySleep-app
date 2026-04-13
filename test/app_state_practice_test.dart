@@ -361,4 +361,62 @@ void main() {
       expect(dashboard.weakWords, isEmpty);
     },
   );
+
+  test(
+    'wrong notebook keeps duplicate headwords distinct when tracked entries have stable identity',
+    () {
+      final database = _MemoryDatabaseService();
+      final settings = SettingsService(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+
+      const setPut = WordEntry(
+        id: 11,
+        wordbookId: 1,
+        word: 'set',
+        entryUid: 'set-put',
+        primaryGloss: '放置',
+        fields: <WordFieldItem>[
+          WordFieldItem(key: 'meaning', label: 'Meaning', value: '放置'),
+        ],
+        rawContent: '放置',
+      );
+      const setCollection = WordEntry(
+        id: 12,
+        wordbookId: 1,
+        word: 'set',
+        entryUid: 'set-collection',
+        primaryGloss: '集合',
+        fields: <WordFieldItem>[
+          WordFieldItem(key: 'meaning', label: 'Meaning', value: '集合'),
+        ],
+        rawContent: '集合',
+      );
+
+      state.recordPracticeSession(
+        title: 'Identity round',
+        total: 2,
+        remembered: 0,
+        rememberedWords: const <String>[],
+        weakWords: const <String>['set', 'set'],
+        weakEntries: const <WordEntry>[setPut, setCollection],
+        weakReasonIdsByWord: const <String, List<String>>{
+          'set': <String>['meaning'],
+        },
+      );
+
+      final wrongNotebook = state.practiceWrongNotebookEntries;
+      expect(wrongNotebook, hasLength(2));
+      expect(
+        wrongNotebook.map((entry) => entry.entryUid).toList(growable: false),
+        <String?>['set-put', 'set-collection'],
+      );
+    },
+  );
 }

@@ -38,6 +38,7 @@ class TrackingPlaybackService implements PlaybackService {
     required List<WordEntry> words,
     required int startIndex,
     required PlayConfig config,
+    WordResolveCallback? resolveWord,
     WordChangeCallback? onWordChanged,
     UnitChangeCallback? onUnitChanged,
     void Function()? onFinished,

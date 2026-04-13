@@ -84,7 +84,7 @@ class _PlayPageState extends State<PlayPage> {
     final base = currentIndex < 0 ? 0 : currentIndex;
     final target = (base - 1 + visibleWords.length) % visibleWords.length;
     final targetWord = visibleWords[target];
-    state.selectWordEntry(targetWord);
+    await state.selectWordEntry(targetWord);
     state.rememberPlaybackProgress(targetWord);
   }
 
@@ -102,7 +102,7 @@ class _PlayPageState extends State<PlayPage> {
     final base = currentIndex < 0 ? 0 : currentIndex;
     final target = (base + 1) % visibleWords.length;
     final targetWord = visibleWords[target];
-    state.selectWordEntry(targetWord);
+    await state.selectWordEntry(targetWord);
     state.rememberPlaybackProgress(targetWord);
   }
 
@@ -130,12 +130,12 @@ class _PlayPageState extends State<PlayPage> {
     return 5;
   }
 
-  void _jumpToIndex(
+  Future<void> _jumpToIndex(
     AppState state, {
     required List<WordEntry> visibleWords,
     required int currentIndex,
     required int targetIndex,
-  }) {
+  }) async {
     if (visibleWords.isEmpty) {
       return;
     }
@@ -143,7 +143,7 @@ class _PlayPageState extends State<PlayPage> {
     final normalizedCurrent = currentIndex < 0 ? 0 : currentIndex;
     _setTransitionDirection(normalizedTarget >= normalizedCurrent ? 1 : -1);
     final targetWord = visibleWords[normalizedTarget];
-    state.selectWordEntry(targetWord);
+    await state.selectWordEntry(targetWord);
     state.rememberPlaybackProgress(targetWord);
   }
 
@@ -199,9 +199,13 @@ class _PlayPageState extends State<PlayPage> {
     AppState state,
     WordEntry word,
   ) async {
-    state.selectWordEntry(word);
+    await state.selectWordEntry(word);
+    if (!context.mounted) return;
+    final resolvedWord = state.currentWord ?? word;
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => FollowAlongPage(word: word)),
+      MaterialPageRoute<void>(
+        builder: (_) => FollowAlongPage(word: resolvedWord),
+      ),
     );
   }
 
@@ -597,8 +601,8 @@ class _PlayPageState extends State<PlayPage> {
           transitionDirection: _transitionDirection,
           showMeaning: state.config.showText,
           showFields: mode == AppExperienceMode.focus,
-          isFavorite: state.favorites.contains(current.word),
-          isTaskWord: state.taskWords.contains(current.word),
+          isFavorite: state.isFavoriteEntry(current),
+          isTaskWord: state.isTaskEntry(current),
           onToggleFavorite: () => state.toggleFavorite(current),
           onToggleTask: () => state.toggleTaskWord(current),
           onPlayPronunciation: () => state.previewPronunciation(current.word),

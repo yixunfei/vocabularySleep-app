@@ -63,8 +63,7 @@ class WordCard extends StatelessWidget {
     WordPageTransitionStyle.pageFlip => const Duration(milliseconds: 340),
   };
 
-  String _wordIdentity(WordEntry entry) =>
-      '${entry.wordbookId}:${entry.id ?? entry.word}';
+  String _wordIdentity(WordEntry entry) => entry.stableIdentityKey;
 
   String _favoriteLabel() {
     if (isFavorite) {
@@ -81,17 +80,7 @@ class WordCard extends StatelessWidget {
   }
 
   List<WordFieldItem> _displayFields(WordEntry entry) {
-    if (entry.fields.isNotEmpty) return entry.fields;
-    return buildFieldItemsFromRecord(<String, Object?>{
-      'meaning': entry.meaning,
-      'examples': entry.examples,
-      'etymology': entry.etymology,
-      'roots': entry.roots,
-      'affixes': entry.affixes,
-      'variations': entry.variations,
-      'memory': entry.memory,
-      'story': entry.story,
-    });
+    return entry.previewSupplementaryFields;
   }
 
   Widget _buildTransition(Widget child, Animation<double> animation) {
@@ -156,14 +145,6 @@ class WordCard extends StatelessWidget {
     final tokens = AppThemeTokens.of(context);
     final appearance = LegacyStyle.appearance;
     final fields = _displayFields(word);
-    final meaning = fields
-        .where((item) => item.key == 'meaning')
-        .cast<WordFieldItem?>()
-        .firstOrNull;
-    final examples = fields
-        .where((item) => item.key == 'examples')
-        .cast<WordFieldItem?>()
-        .firstOrNull;
     final titleStyle = switch (density) {
       WordCardDensity.compact => theme.textTheme.titleLarge,
       WordCardDensity.practice => theme.textTheme.headlineSmall,
@@ -171,11 +152,9 @@ class WordCard extends StatelessWidget {
     };
     final canReveal =
         density != WordCardDensity.practice || revealPracticeAnswer;
-    final visibleMeaning = showMeaning && canReveal
-        ? meaning?.asText() ?? ''
-        : '';
+    final visibleMeaning = showMeaning && canReveal ? word.displayMeaning : '';
     final visibleExamples = showFields && canReveal
-        ? (examples?.asList() ?? const <String>[])
+        ? word.displayExamples
         : const <String>[];
     final enableWordSwipe = onSwipePrevious != null || onSwipeNext != null;
 
@@ -557,13 +536,5 @@ class _WordSwipeRegionState extends State<_WordSwipeRegion> {
       onHorizontalDragEnd: _handleHorizontalDragEnd,
       child: widget.child,
     );
-  }
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull {
-    final iterator = this.iterator;
-    if (!iterator.moveNext()) return null;
-    return iterator.current;
   }
 }
