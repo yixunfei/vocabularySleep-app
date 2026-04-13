@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/study_startup_tab.dart';
 import '../../state/app_state.dart';
@@ -27,6 +28,21 @@ class StudyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    if (!state.isModuleEnabled(ModuleIds.study)) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '学习模块当前已停用，请在设置中心的模块管理中重新开启。',
+              en: 'Study is currently disabled. Re-enable it in module management.',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
     final studyLocked = state.wordbookImportActive;
     final selectedWordbookName = localizedWordbookName(
       i18n,
@@ -106,7 +122,9 @@ class StudyPage extends StatelessWidget {
                       onOpenPractice: onOpenPractice,
                       onOpenLibrary: () => onSelectTab(StudyStartupTab.library),
                     ),
-                    LibraryPage(onAttachScrollToTop: onAttachLibraryScrollToTop),
+                    LibraryPage(
+                      onAttachScrollToTop: onAttachLibraryScrollToTop,
+                    ),
                   ],
                 ),
         ),
@@ -340,7 +358,11 @@ class _StudyImportLockPanel extends StatelessWidget {
     final processed = state.wordbookImportProcessedEntries;
     final total = state.wordbookImportTotalEntries;
     final detail = total == null || total <= 0
-        ? pickUiText(i18n, zh: '正在解析并导入，请稍候…', en: 'Parsing and importing, please wait...')
+        ? pickUiText(
+            i18n,
+            zh: '正在解析并导入，请稍候…',
+            en: 'Parsing and importing, please wait...',
+          )
         : pickUiText(
             i18n,
             zh: '已处理 $processed / $total',

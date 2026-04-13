@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show Override, ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -36,6 +38,7 @@ import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/services/online_ambient_catalog_service.dart';
 import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
+import 'package:vocabulary_sleep_app/src/state/app_state_provider.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/data_management_page.dart';
@@ -455,16 +458,7 @@ void main() {
         uiLanguage: 'en',
         focusService: _FakeFocusService(lockScreenActive: true),
       );
-      await tester.pumpWidget(
-        ChangeNotifierProvider<AppState>.value(
-          value: state,
-          child: MaterialApp(
-            theme: buildAppTheme(state.config.appearance),
-            home: const AppShell(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpAppShell(tester, state: state);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -483,16 +477,7 @@ void main() {
         uiLanguage: 'en',
         focusService: _FakeFocusService(lockScreenActive: false),
       );
-      await tester.pumpWidget(
-        ChangeNotifierProvider<AppState>.value(
-          value: state,
-          child: MaterialApp(
-            theme: buildAppTheme(state.config.appearance),
-            home: const AppShell(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpAppShell(tester, state: state);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -512,16 +497,7 @@ void main() {
         startupPage: AppHomeTab.focus,
         focusService: _FakeFocusService.sample(),
       );
-      await tester.pumpWidget(
-        ChangeNotifierProvider<AppState>.value(
-          value: state,
-          child: MaterialApp(
-            theme: buildAppTheme(state.config.appearance),
-            home: const AppShell(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpAppShell(tester, state: state);
 
       expect(
         find.byKey(const ValueKey<String>('focus-workspace-tab')),
@@ -541,16 +517,7 @@ void main() {
         focusStartupTab: FocusStartupTab.timer,
         focusService: _FakeFocusService.sample(),
       );
-      await tester.pumpWidget(
-        ChangeNotifierProvider<AppState>.value(
-          value: state,
-          child: MaterialApp(
-            theme: buildAppTheme(state.config.appearance),
-            home: const AppShell(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpAppShell(tester, state: state);
 
       expect(
         find.byKey(const ValueKey<String>('focus-timer-tab')),
@@ -600,16 +567,7 @@ void main() {
           ),
         ],
       );
-      await tester.pumpWidget(
-        ChangeNotifierProvider<AppState>.value(
-          value: state,
-          child: MaterialApp(
-            theme: buildAppTheme(state.config.appearance),
-            home: const AppShell(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpAppShell(tester, state: state);
 
       expect(
         find.byKey(const ValueKey<String>('startup-todo-prompt-dialog')),
@@ -628,16 +586,7 @@ void main() {
         uiLanguage: 'en',
         startupTodoPromptEnabled: true,
       );
-      await tester.pumpWidget(
-        ChangeNotifierProvider<AppState>.value(
-          value: state,
-          child: MaterialApp(
-            theme: buildAppTheme(state.config.appearance),
-            home: const AppShell(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpAppShell(tester, state: state);
 
       await tester.tap(
         find.byKey(const ValueKey<String>('startup-todo-prompt-dont-show')),
@@ -2535,11 +2484,33 @@ Future<void> _pumpPage(
   required Widget child,
 }) async {
   await tester.pumpWidget(
-    ChangeNotifierProvider<AppState>.value(
-      value: state,
-      child: MaterialApp(
-        theme: buildAppTheme(state.config.appearance),
-        home: Scaffold(body: child),
+    ProviderScope(
+      overrides: <Override>[appStateProvider.overrideWith((ref) => state)],
+      child: ChangeNotifierProvider<AppState>.value(
+        value: state,
+        child: MaterialApp(
+          theme: buildAppTheme(state.config.appearance),
+          home: Scaffold(body: child),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpAppShell(
+  WidgetTester tester, {
+  required _FakeAppState state,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: <Override>[appStateProvider.overrideWith((ref) => state)],
+      child: ChangeNotifierProvider<AppState>.value(
+        value: state,
+        child: MaterialApp(
+          theme: buildAppTheme(state.config.appearance),
+          home: const AppShell(),
+        ),
       ),
     ),
   );

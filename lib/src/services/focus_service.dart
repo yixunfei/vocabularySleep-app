@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 import '../i18n/app_i18n.dart';
 import '../models/todo_item.dart';
 import '../models/tomato_timer.dart';
+import '../repositories/focus_repository.dart';
 import 'ambient_service.dart';
 import 'database_service.dart';
 import 'reminder_service.dart';
@@ -21,13 +22,14 @@ enum _PendingReminderFollowUp { none, startBreak, startFocus, completeSession }
 class FocusService extends ChangeNotifier {
   FocusService(
     AppDatabaseService database, {
+    FocusRepository? repository,
     SettingsService? settings,
     AmbientService? ambient,
     ReminderService? reminder,
     SystemCalendarService? systemCalendar,
     TodoReminderService? todoReminder,
     TtsService? tts,
-  }) : _database = database,
+  }) : _repository = repository ?? DatabaseFocusRepository(database),
        _settings = settings ?? SettingsService(database),
        _ambient = ambient,
        _reminder = reminder,
@@ -36,7 +38,7 @@ class FocusService extends ChangeNotifier {
        _todoReminder = todoReminder ?? PlatformTodoReminderService(),
        _tts = tts;
 
-  final AppDatabaseService _database;
+  final FocusRepository _repository;
   final SettingsService _settings;
   final AmbientService? _ambient;
   final ReminderService? _reminder;
@@ -108,17 +110,19 @@ class FocusService extends ChangeNotifier {
 
   Future<TomatoTimerConfig> _loadConfig() async {
     final map = <String, Object?>{};
-    final focusSecondsStr = _database.getSetting('tomato_focus_seconds');
-    final breakSecondsStr = _database.getSetting('tomato_break_seconds');
-    final focusMinutesStr = _database.getSetting('tomato_focus_minutes');
-    final breakMinutesStr = _database.getSetting('tomato_break_minutes');
-    final roundsStr = _database.getSetting('tomato_rounds');
-    final autoBreakStr = _database.getSetting('tomato_auto_start_break');
+    final focusSecondsStr = _repository.getSetting('tomato_focus_seconds');
+    final breakSecondsStr = _repository.getSetting('tomato_break_seconds');
+    final focusMinutesStr = _repository.getSetting('tomato_focus_minutes');
+    final breakMinutesStr = _repository.getSetting('tomato_break_minutes');
+    final roundsStr = _repository.getSetting('tomato_rounds');
+    final autoBreakStr = _repository.getSetting('tomato_auto_start_break');
     final autoNextStr =
-        _database.getSetting('tomato_auto_start_next_round') ??
-        _database.getSetting('tomato_auto_start_next');
-    final splitRatioStr = _database.getSetting('tomato_workspace_split_ratio');
-    final reminderStr = _database.getSetting('tomato_reminder_config');
+        _repository.getSetting('tomato_auto_start_next_round') ??
+        _repository.getSetting('tomato_auto_start_next');
+    final splitRatioStr = _repository.getSetting(
+      'tomato_workspace_split_ratio',
+    );
+    final reminderStr = _repository.getSetting('tomato_reminder_config');
 
     if (focusSecondsStr != null) {
       map['focus_seconds'] = int.tryParse(focusSecondsStr);
@@ -164,40 +168,40 @@ class FocusService extends ChangeNotifier {
     _timerConfig = config.copyWith(
       workspaceSplitRatio: config.normalizedWorkspaceSplitRatio,
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_focus_seconds',
       _timerConfig.focusDurationSeconds.toString(),
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_break_seconds',
       _timerConfig.breakDurationSeconds.toString(),
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_focus_minutes',
       _timerConfig.focusMinutes.toString(),
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_break_minutes',
       _timerConfig.breakMinutes.toString(),
     );
-    _database.setSetting('tomato_rounds', _timerConfig.rounds.toString());
-    _database.setSetting(
+    _repository.setSetting('tomato_rounds', _timerConfig.rounds.toString());
+    _repository.setSetting(
       'tomato_auto_start_break',
       _timerConfig.autoStartBreak ? '1' : '0',
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_auto_start_next',
       _timerConfig.autoStartNextRound ? '1' : '0',
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_auto_start_next_round',
       _timerConfig.autoStartNextRound ? '1' : '0',
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_workspace_split_ratio',
       _timerConfig.normalizedWorkspaceSplitRatio.toStringAsFixed(4),
     );
-    _database.setSetting(
+    _repository.setSetting(
       'tomato_reminder_config',
       jsonEncode(_timerConfig.reminder.toMap()),
     );
@@ -630,7 +634,7 @@ class FocusService extends ChangeNotifier {
       breakMinutes: _timerConfig.breakMinutes,
       partial: partial,
     );
-    _database.insertTimerRecord(record);
+    _repository.insertTimerRecord(record);
     _invalidateTodayStatsCache();
     _bumpViewRevision();
   }
@@ -703,7 +707,7 @@ class FocusService extends ChangeNotifier {
     if (cached != null) {
       return cached;
     }
-    final todos = List<TodoItem>.unmodifiable(_database.getTodos());
+    final todos = List<TodoItem>.unmodifiable(_repository.getTodos());
     _todosCache = todos;
     return todos;
   }
@@ -751,10 +755,10 @@ class FocusService extends ChangeNotifier {
       final inserted = normalized.copyWith(
         createdAt: normalized.createdAt ?? DateTime.now(),
       );
-      final insertedId = _database.insertTodo(inserted);
+      final insertedId = _repository.insertTodo(inserted);
       persisted = inserted.copyWith(id: insertedId);
     } else {
-      _database.updateTodo(normalized);
+      _repository.updateTodo(normalized);
     }
     _invalidateTodosCache();
     _bumpViewRevision();
@@ -765,7 +769,7 @@ class FocusService extends ChangeNotifier {
   void updateTodo(TodoItem item) {
     if (!_initialized) return;
     final normalized = _normalizeTodoItem(item);
-    _database.updateTodo(normalized);
+    _repository.updateTodo(normalized);
     _invalidateTodosCache();
     _bumpViewRevision();
     notifyListeners();
@@ -783,7 +787,7 @@ class FocusService extends ChangeNotifier {
         completedAt: !item.completed ? DateTime.now() : null,
       ),
     );
-    _database.updateTodo(updated);
+    _repository.updateTodo(updated);
     _invalidateTodosCache();
     _bumpViewRevision();
     notifyListeners();
@@ -799,7 +803,7 @@ class FocusService extends ChangeNotifier {
 
   void deleteTodo(int id) {
     if (!_initialized) return;
-    _database.deleteTodo(id);
+    _repository.deleteTodo(id);
     _invalidateTodosCache();
     _bumpViewRevision();
     notifyListeners();
@@ -817,7 +821,7 @@ class FocusService extends ChangeNotifier {
         completedAt: DateTime.now(),
       ),
     );
-    _database.updateTodo(updated);
+    _repository.updateTodo(updated);
     _invalidateTodosCache();
     _bumpViewRevision();
     notifyListeners();
@@ -838,7 +842,7 @@ class FocusService extends ChangeNotifier {
         completedAt: null,
       ),
     );
-    _database.updateTodo(updated);
+    _repository.updateTodo(updated);
     _invalidateTodosCache();
     _bumpViewRevision();
     notifyListeners();
@@ -851,7 +855,7 @@ class FocusService extends ChangeNotifier {
         .where((item) => item.completed && item.id != null)
         .map((item) => item.id!)
         .toList(growable: false);
-    _database.clearCompletedTodos();
+    _repository.clearCompletedTodos();
     _invalidateTodosCache();
     _bumpViewRevision();
     notifyListeners();
@@ -869,7 +873,7 @@ class FocusService extends ChangeNotifier {
       }
     }
     if (ids.isEmpty) return;
-    _database.reorderTodos(ids);
+    _repository.reorderTodos(ids);
     _invalidateTodosCache();
     _bumpViewRevision();
     notifyListeners();
@@ -881,7 +885,7 @@ class FocusService extends ChangeNotifier {
     if (cached != null) {
       return cached;
     }
-    final notes = List<PlanNote>.unmodifiable(_database.getNotes());
+    final notes = List<PlanNote>.unmodifiable(_repository.getNotes());
     _notesCache = notes;
     return notes;
   }
@@ -889,7 +893,7 @@ class FocusService extends ChangeNotifier {
   void addNote(String title, String? content, String? color) {
     if (!_initialized || title.trim().isEmpty) return;
     final now = DateTime.now();
-    _database.insertNote(
+    _repository.insertNote(
       PlanNote(
         title: title.trim(),
         content: content?.trim().isNotEmpty == true ? content!.trim() : null,
@@ -905,7 +909,7 @@ class FocusService extends ChangeNotifier {
 
   void updateNote(PlanNote note) {
     if (!_initialized) return;
-    _database.updateNote(note.copyWith(updatedAt: DateTime.now()));
+    _repository.updateNote(note.copyWith(updatedAt: DateTime.now()));
     _invalidateNotesCache();
     _bumpViewRevision();
     notifyListeners();
@@ -913,7 +917,7 @@ class FocusService extends ChangeNotifier {
 
   void deleteNote(int id) {
     if (!_initialized) return;
-    _database.deleteNote(id);
+    _repository.deleteNote(id);
     _invalidateNotesCache();
     _bumpViewRevision();
     notifyListeners();
@@ -921,7 +925,7 @@ class FocusService extends ChangeNotifier {
 
   void deleteNotes(List<int> ids) {
     if (!_initialized || ids.isEmpty) return;
-    _database.deleteNotes(ids);
+    _repository.deleteNotes(ids);
     _invalidateNotesCache();
     _bumpViewRevision();
     notifyListeners();
@@ -936,7 +940,7 @@ class FocusService extends ChangeNotifier {
       }
     }
     if (ids.isEmpty) return;
-    _database.reorderNotes(ids);
+    _repository.reorderNotes(ids);
     _invalidateNotesCache();
     _bumpViewRevision();
     notifyListeners();
@@ -944,7 +948,7 @@ class FocusService extends ChangeNotifier {
 
   List<TomatoTimerRecord> getTimerRecords({int limit = 30}) {
     if (!_initialized) return const <TomatoTimerRecord>[];
-    return _database.getTimerRecords(limit: limit);
+    return _repository.getTimerRecords(limit: limit);
   }
 
   int getTodayFocusMinutes() {

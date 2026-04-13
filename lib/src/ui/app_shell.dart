@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/module_system/module_id.dart';
 import '../i18n/app_i18n.dart';
@@ -11,6 +11,7 @@ import '../models/study_startup_tab.dart';
 import '../models/todo_item.dart';
 import '../models/weather_snapshot.dart';
 import '../state/app_state.dart';
+import '../state/app_state_provider.dart';
 import 'pages/focus_page.dart';
 import 'pages/more_page.dart';
 import 'pages/practice_page.dart';
@@ -26,14 +27,14 @@ import 'widgets/focus_lock_overlay.dart';
 import 'widgets/mini_player.dart';
 import 'widgets/soothing_mini_player.dart';
 
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   static const double _navigationBarHeight = 80;
 
   int _index = 0;
@@ -51,7 +52,7 @@ class _AppShellState extends State<AppShell> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final state = context.read<AppState>();
+      final state = ref.read(appStateProvider);
       state.init().then((_) {
         if (!mounted) return;
         final visibleTabs = _resolveVisibleTabs(state);
@@ -127,7 +128,7 @@ class _AppShellState extends State<AppShell> {
     if (_startupPromptShown || !mounted) {
       return;
     }
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     if (!state.shouldShowStartupTodoPromptToday) {
       return;
     }
@@ -142,8 +143,9 @@ class _AppShellState extends State<AppShell> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
-            return Consumer<AppState>(
-              builder: (dialogContext, state, _) {
+            return Consumer(
+              builder: (dialogContext, ref, _) {
+                final state = ref.watch(appStateProvider);
                 final i18n = AppI18n(state.uiLanguage);
                 return AlertDialog(
                   key: const ValueKey<String>('startup-todo-prompt-dialog'),
@@ -219,7 +221,7 @@ class _AppShellState extends State<AppShell> {
       _index = index;
     });
     if (currentTab != nextTab) {
-      context.read<AppState>().setStartupPage(nextTab);
+      ref.read(appStateProvider).setStartupPage(nextTab);
     }
   }
 
@@ -233,7 +235,7 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _studyTab = tab;
     });
-    context.read<AppState>().setStudyStartupTab(tab);
+    ref.read(appStateProvider).setStudyStartupTab(tab);
   }
 
   void _handlePendingTodoReminderLaunch(AppState state) {
@@ -800,7 +802,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final visibleTabs = _resolveVisibleTabs(state);
     if (visibleTabs.length != _visibleTabs.length ||
         visibleTabs.any((tab) => !_visibleTabs.contains(tab))) {

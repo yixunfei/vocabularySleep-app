@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/module_system/module_id.dart';
@@ -7,6 +8,7 @@ import '../../models/settings_dto.dart';
 import '../../models/practice_session_record.dart';
 import '../../models/word_entry.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 import '../wordbook_localization.dart';
 import '../widgets/empty_state_view.dart';
@@ -19,12 +21,12 @@ import 'practice_support.dart';
 import 'practice_session_page.dart';
 import 'review_session_page.dart';
 
-class PracticePage extends StatelessWidget {
+class PracticePage extends ConsumerWidget {
   const PracticePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return Center(

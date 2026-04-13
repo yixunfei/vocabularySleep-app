@@ -205,6 +205,12 @@ extension _AppStateStartup on AppState {
   }) {
     final previousGuard = ModuleRuntimeGuard(previous);
     final nextGuard = ModuleRuntimeGuard(next);
+    final wasStudyEnabled = previousGuard.canAccess(ModuleIds.study);
+    final studyEnabled = nextGuard.canAccess(ModuleIds.study);
+    if (wasStudyEnabled && !studyEnabled) {
+      unawaited(stop());
+    }
+
     final wasFocusEnabled = previousGuard.canAccess(ModuleIds.focus);
     final focusEnabled = nextGuard.canAccess(ModuleIds.focus);
     if (wasFocusEnabled && !focusEnabled) {

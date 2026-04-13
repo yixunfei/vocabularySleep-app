@@ -91,6 +91,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required FocusService focusService,
     WordbookRepository? wordbookRepository,
     PracticeRepository? practiceRepository,
+    AmbientRepository? ambientRepository,
     CstCloudResourcePrewarmService? remoteResourcePrewarm,
     WeatherService? weatherService,
     DailyQuoteService? dailyQuoteService,
@@ -99,6 +100,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
            wordbookRepository ?? DatabaseWordbookRepository(database),
        _practiceRepository =
            practiceRepository ?? DatabasePracticeRepository(database),
+       _ambientRepository =
+           ambientRepository ?? DatabaseAmbientRepository(database),
        _settings = settings,
        _playback = playback,
        _ambient = ambient,
@@ -113,6 +116,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final AppDatabaseService _database;
   final WordbookRepository _wordbookRepository;
   final PracticeRepository _practiceRepository;
+  final AmbientRepository _ambientRepository;
   final SettingsService _settings;
   final PlaybackService _playback;
   final AmbientService _ambient;
@@ -1918,7 +1922,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         categoryKey: option.categoryKey,
         volume: option.defaultVolume,
       );
-      _database.insertDownloadedAmbientSound(
+      _ambientRepository.insertDownloadedAmbientSound(
         soundId: option.id,
         remoteKey: option.remoteKey,
         relativePath: option.relativePath,
@@ -1951,7 +1955,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     try {
       final path = await _onlineAmbientCatalogService.localPathFor(option);
       await _onlineAmbientCatalogService.deleteLocal(option);
-      _database.deleteDownloadedAmbientSound(option.id);
+      _ambientRepository.deleteDownloadedAmbientSound(option.id);
       final matchingIds = _ambient.sources
           .where(
             (source) =>
@@ -2049,7 +2053,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   /// Restore downloaded ambient sounds from database on app startup
   Future<void> _restoreDownloadedAmbientSounds() async {
     try {
-      final downloadedSounds = _database.getDownloadedAmbientSounds();
+      final downloadedSounds = _ambientRepository.getDownloadedAmbientSounds();
       for (final sound in downloadedSounds) {
         final file = File(sound.filePath);
         if (await file.exists()) {
@@ -2061,9 +2065,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
             volume: 0.5,
             enabled: false,
           );
-          _database.updateDownloadedAmbientSoundAccess(sound.soundId);
+          _ambientRepository.updateDownloadedAmbientSoundAccess(sound.soundId);
         } else {
-          _database.deleteDownloadedAmbientSound(sound.soundId);
+          _ambientRepository.deleteDownloadedAmbientSound(sound.soundId);
         }
       }
       if (downloadedSounds.isNotEmpty) {

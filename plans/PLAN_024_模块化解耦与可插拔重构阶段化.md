@@ -64,7 +64,32 @@
 - `./scripts/verify-local-analysis.ps1 -Task analyze -Target lib test` ✅
 - `flutter test` ✅
 
-## 下一步（阶段 1 深化 / 阶段 2 起步）
-1. 推进 `provider -> Riverpod` 真正迁移（先从 `AppShell / Settings / Practice` 页面读写开始）。
-2. 继续拆分 `DatabaseService` 非词本域能力（settings/ambient/focus/sleep）到分域仓库。
-3. 扩展“关闭模块彻底停用”到更多入口链路与后台服务初始化路径。
+## 本轮增量（备份后执行：下一步 1/2/3）
+1. **下一步 1：Riverpod 一次切换的第一批页面落地**
+   - 新增 `lib/src/state/app_state_provider.dart`，统一提供 `appStateProvider` 与 `cstCloudResourceCacheProvider`。
+   - `AppBootstrap` 在 `ProviderScope` 中接入 `dependencies.riverpodOverrides`。
+   - `AppDependencies` 改为创建单例 `AppState`，并同时注入 Riverpod 与 legacy provider，保证迁移期行为一致。
+   - 页面读取改造：
+     - `AppShell` -> `ConsumerStatefulWidget`。
+     - `SettingsHomePage` -> `ConsumerWidget`。
+     - `PracticePage` -> `ConsumerWidget`。
+2. **下一步 2：仓库分层继续拆分（settings/focus/ambient）**
+   - 新增仓库：
+     - `SettingsStoreRepository`
+     - `FocusRepository`
+     - `AmbientRepository`
+   - `SettingsService` 调整为 `fromRepository` 主构造，数据库构造保留兼容工厂。
+   - `FocusService` 引入 `FocusRepository` 抽象，内部数据库读写改走仓库。
+   - `AppState` 下载环境音持久化改走 `AmbientRepository`。
+3. **下一步 3：停用语义扩展**
+   - `StudyPage` 增加模块直达守卫（模块关闭时展示恢复指引）。
+   - 模块切换运行时联动补充：`study` 从开启 -> 关闭时主动触发 `stop()`，阻断继续播放。
+
+## 验证结果（增量）
+- `./scripts/verify-local-analysis.ps1 -Task analyze -Target lib test` ✅
+- `flutter test` ✅
+
+## 下一步（阶段 2 深化 / 阶段 3 扩展）
+1. 继续将高频页面从 `provider` 读取迁移到 Riverpod（优先 `app_root.dart` 与其直接子树）。
+2. 继续审计 `sleep` 与其余服务的数据访问边界，减少 `AppDatabaseService` 直连面。
+3. 扩展模块停用守卫到更多直接路由入口，并补齐禁用状态回归测试矩阵。

@@ -54,11 +54,12 @@ void runVocabularySleepApp({Future<void> Function()? beforeRunApp}) {
               stackTrace: stackTrace,
             );
             return false;
-      };
+          };
 
       final dependencies = AppDependencies.create();
       runApp(
         ProviderScope(
+          overrides: dependencies.riverpodOverrides,
           child: dependencies.wrapWithProviders(const VocabularySleepApp()),
         ),
       );

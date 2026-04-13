@@ -11,20 +11,27 @@ import '../models/sleep_profile.dart';
 import '../models/sleep_routine_template.dart';
 import '../models/settings_dto.dart';
 import '../models/study_startup_tab.dart';
+import '../repositories/settings_store_repository.dart';
 import 'database_service.dart';
 
 class SettingsService {
-  const SettingsService(this._database);
+  const SettingsService.fromRepository(this._store);
+
+  factory SettingsService(AppDatabaseService database) {
+    return SettingsService.fromRepository(
+      DatabaseSettingsStoreRepository(database),
+    );
+  }
 
   static const String uiLanguageSystem = 'system';
   static const String remotePrewarmCompletedKey =
       'remoteResourcePrewarmCompletedV1';
   static const String moduleTogglesKey = 'module_toggles_v1';
 
-  final AppDatabaseService _database;
+  final SettingsStoreRepository _store;
 
   PlayConfig loadPlayConfig() {
-    final raw = _database.getSetting('playConfig');
+    final raw = _store.getSetting('playConfig');
     if (raw == null || raw.trim().isEmpty) return PlayConfig.defaults;
     try {
       final decoded = jsonDecode(raw);
@@ -38,11 +45,11 @@ class SettingsService {
   }
 
   void savePlayConfig(PlayConfig config) {
-    _database.setSetting('playConfig', jsonEncode(config.toJson()));
+    _store.setSetting('playConfig', jsonEncode(config.toJson()));
   }
 
   String loadUiLanguage() {
-    final raw = _database.getSetting('uiLanguage');
+    final raw = _store.getSetting('uiLanguage');
     if (raw == null) return uiLanguageSystem;
     final normalized = raw.trim();
     return normalized.isEmpty ? uiLanguageSystem : normalized;
@@ -50,36 +57,34 @@ class SettingsService {
 
   void saveUiLanguage(String language) {
     final normalized = language.trim();
-    _database.setSetting(
+    _store.setSetting(
       'uiLanguage',
       normalized.isEmpty ? uiLanguageSystem : normalized,
     );
   }
 
   AppHomeTab loadStartupPage() {
-    return AppHomeTabX.fromStorage(_database.getSetting('startupPage'));
+    return AppHomeTabX.fromStorage(_store.getSetting('startupPage'));
   }
 
   void saveStartupPage(AppHomeTab page) {
-    _database.setSetting('startupPage', page.storageValue);
+    _store.setSetting('startupPage', page.storageValue);
   }
 
   FocusStartupTab loadFocusStartupTab() {
-    return FocusStartupTabX.fromStorage(
-      _database.getSetting('focusStartupTab'),
-    );
+    return FocusStartupTabX.fromStorage(_store.getSetting('focusStartupTab'));
   }
 
   void saveFocusStartupTab(FocusStartupTab tab) {
-    _database.setSetting('focusStartupTab', tab.storageValue);
+    _store.setSetting('focusStartupTab', tab.storageValue);
   }
 
   StudyStartupTab loadStudyStartupTab() {
-    final stored = _database.getSetting('studyStartupTab');
+    final stored = _store.getSetting('studyStartupTab');
     if (stored != null && stored.trim().isNotEmpty) {
       return StudyStartupTabX.fromStorage(stored);
     }
-    final legacyStartup = _database.getSetting('startupPage');
+    final legacyStartup = _store.getSetting('startupPage');
     if ((legacyStartup ?? '').trim() == 'library') {
       return StudyStartupTab.library;
     }
@@ -87,19 +92,19 @@ class SettingsService {
   }
 
   void saveStudyStartupTab(StudyStartupTab tab) {
-    _database.setSetting('studyStartupTab', tab.storageValue);
+    _store.setSetting('studyStartupTab', tab.storageValue);
   }
 
   bool loadWeatherEnabled() {
-    return _database.getSetting('weatherEnabled') == '1';
+    return _store.getSetting('weatherEnabled') == '1';
   }
 
   void saveWeatherEnabled(bool enabled) {
-    _database.setSetting('weatherEnabled', enabled ? '1' : '0');
+    _store.setSetting('weatherEnabled', enabled ? '1' : '0');
   }
 
   bool loadStartupTodoPromptEnabled() {
-    final raw = _database.getSetting('startupTodoPromptEnabled');
+    final raw = _store.getSetting('startupTodoPromptEnabled');
     if (raw == null || raw.trim().isEmpty) {
       return true;
     }
@@ -107,11 +112,11 @@ class SettingsService {
   }
 
   void saveStartupTodoPromptEnabled(bool enabled) {
-    _database.setSetting('startupTodoPromptEnabled', enabled ? '1' : '0');
+    _store.setSetting('startupTodoPromptEnabled', enabled ? '1' : '0');
   }
 
   String? loadStartupTodoPromptSuppressedDate() {
-    final raw = _database.getSetting('startupTodoPromptSuppressedDate');
+    final raw = _store.getSetting('startupTodoPromptSuppressedDate');
     if (raw == null) {
       return null;
     }
@@ -120,14 +125,11 @@ class SettingsService {
   }
 
   void saveStartupTodoPromptSuppressedDate(String? dateKey) {
-    _database.setSetting(
-      'startupTodoPromptSuppressedDate',
-      dateKey?.trim() ?? '',
-    );
+    _store.setSetting('startupTodoPromptSuppressedDate', dateKey?.trim() ?? '');
   }
 
   TestModeState loadTestModeState() {
-    final raw = _database.getSetting('testModeState');
+    final raw = _store.getSetting('testModeState');
     if (raw == null || raw.trim().isEmpty) {
       return TestModeState.defaults;
     }
@@ -143,11 +145,11 @@ class SettingsService {
   }
 
   void saveTestModeState(TestModeState state) {
-    _database.setSetting('testModeState', jsonEncode(state.toJsonMap()));
+    _store.setSetting('testModeState', jsonEncode(state.toJsonMap()));
   }
 
   PracticeDashboardState loadPracticeDashboard() {
-    final raw = _database.getSetting('practiceDashboard');
+    final raw = _store.getSetting('practiceDashboard');
     if (raw == null || raw.trim().isEmpty) {
       return PracticeDashboardState.defaults;
     }
@@ -161,11 +163,11 @@ class SettingsService {
   }
 
   void savePracticeDashboard(PracticeDashboardState data) {
-    _database.setSetting('practiceDashboard', jsonEncode(data.toJsonMap()));
+    _store.setSetting('practiceDashboard', jsonEncode(data.toJsonMap()));
   }
 
   Set<String> loadRememberedWords() {
-    final raw = _database.getSetting('rememberedWords');
+    final raw = _store.getSetting('rememberedWords');
     if (raw == null || raw.trim().isEmpty) {
       return <String>{};
     }
@@ -185,11 +187,11 @@ class SettingsService {
 
   void saveRememberedWords(Set<String> words) {
     final sorted = words.toList(growable: false)..sort();
-    _database.setSetting('rememberedWords', jsonEncode(sorted));
+    _store.setSetting('rememberedWords', jsonEncode(sorted));
   }
 
   Map<String, PlaybackProgressSnapshot> loadPlaybackProgressByWordbook() {
-    final raw = _database.getSetting('playbackProgressByWordbook');
+    final raw = _store.getSetting('playbackProgressByWordbook');
     if (raw == null || raw.trim().isEmpty) {
       return const <String, PlaybackProgressSnapshot>{};
     }
@@ -218,7 +220,7 @@ class SettingsService {
     Map<String, PlaybackProgressSnapshot> snapshots,
   ) {
     final keys = snapshots.keys.toList(growable: false)..sort();
-    _database.setSetting(
+    _store.setSetting(
       'playbackProgressByWordbook',
       jsonEncode(<String, Object?>{
         for (final key in keys) key: snapshots[key]!.toJsonMap(),
@@ -227,7 +229,7 @@ class SettingsService {
   }
 
   List<AmbientPreset> loadAmbientPresets() {
-    final raw = _database.getSetting('ambientPresets');
+    final raw = _store.getSetting('ambientPresets');
     if (raw == null || raw.trim().isEmpty) {
       return const <AmbientPreset>[];
     }
@@ -246,7 +248,7 @@ class SettingsService {
   }
 
   void saveAmbientPresets(List<AmbientPreset> presets) {
-    _database.setSetting(
+    _store.setSetting(
       'ambientPresets',
       jsonEncode(
         presets.map((preset) => preset.toJson()).toList(growable: false),
@@ -255,15 +257,15 @@ class SettingsService {
   }
 
   bool loadRemoteResourcePrewarmCompleted() {
-    return _database.getSetting(remotePrewarmCompletedKey) == '1';
+    return _store.getSetting(remotePrewarmCompletedKey) == '1';
   }
 
   void saveRemoteResourcePrewarmCompleted(bool value) {
-    _database.setSetting(remotePrewarmCompletedKey, value ? '1' : '0');
+    _store.setSetting(remotePrewarmCompletedKey, value ? '1' : '0');
   }
 
   ModuleToggleState loadModuleToggleState() {
-    final raw = _database.getSetting(moduleTogglesKey);
+    final raw = _store.getSetting(moduleTogglesKey);
     if (raw == null || raw.trim().isEmpty) {
       return ModuleToggleState.defaults;
     }
@@ -275,7 +277,7 @@ class SettingsService {
   }
 
   void saveModuleToggleState(ModuleToggleState value) {
-    _database.setSetting(moduleTogglesKey, jsonEncode(value.toJsonMap()));
+    _store.setSetting(moduleTogglesKey, jsonEncode(value.toJsonMap()));
   }
 
   SleepProfile? loadSleepProfile() {
@@ -347,7 +349,7 @@ class SettingsService {
   }
 
   String? loadSleepActiveRoutineTemplateId() {
-    final raw = _database.getSetting('sleepActiveRoutineTemplateId');
+    final raw = _store.getSetting('sleepActiveRoutineTemplateId');
     if (raw == null) {
       return null;
     }
@@ -356,7 +358,7 @@ class SettingsService {
   }
 
   void saveSleepActiveRoutineTemplateId(String? id) {
-    _database.setSetting('sleepActiveRoutineTemplateId', id?.trim() ?? '');
+    _store.setSetting('sleepActiveRoutineTemplateId', id?.trim() ?? '');
   }
 
   SleepDashboardState loadSleepDashboardState() {
@@ -378,7 +380,7 @@ class SettingsService {
   }
 
   Object? _loadJsonValue(String key) {
-    final raw = _database.getSetting(key);
+    final raw = _store.getSetting(key);
     if (raw == null || raw.trim().isEmpty) {
       return null;
     }
@@ -399,9 +401,9 @@ class SettingsService {
 
   void _saveJsonValue(String key, Object? value) {
     if (value == null) {
-      _database.setSetting(key, '');
+      _store.setSetting(key, '');
       return;
     }
-    _database.setSetting(key, jsonEncode(value));
+    _store.setSetting(key, jsonEncode(value));
   }
 }
