@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../models/word_field.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 
-class WordEditorPage extends StatefulWidget {
+class WordEditorPage extends ConsumerStatefulWidget {
   const WordEditorPage({super.key, this.original});
 
   final WordEntry? original;
 
   @override
-  State<WordEditorPage> createState() => _WordEditorPageState();
+  ConsumerState<WordEditorPage> createState() => _WordEditorPageState();
 }
 
-class _WordEditorPageState extends State<WordEditorPage> {
+class _WordEditorPageState extends ConsumerState<WordEditorPage> {
   late final TextEditingController _wordController;
   late final List<_FieldDraft> _drafts;
 
@@ -46,7 +46,7 @@ class _WordEditorPageState extends State<WordEditorPage> {
   }
 
   Future<void> _save() async {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     if (_wordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -143,7 +143,7 @@ class _WordEditorPageState extends State<WordEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     return Scaffold(
       appBar: AppBar(

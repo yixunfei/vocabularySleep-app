@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../models/wordbook.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
@@ -14,16 +15,16 @@ import 'word_editor_page.dart';
 
 enum _WordbookWordAction { edit, delete }
 
-class WordbookEditorPage extends StatefulWidget {
+class WordbookEditorPage extends ConsumerStatefulWidget {
   const WordbookEditorPage({super.key, required this.wordbookId});
 
   final int wordbookId;
 
   @override
-  State<WordbookEditorPage> createState() => _WordbookEditorPageState();
+  ConsumerState<WordbookEditorPage> createState() => _WordbookEditorPageState();
 }
 
-class _WordbookEditorPageState extends State<WordbookEditorPage> {
+class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
   final TextEditingController _searchController = TextEditingController();
   SearchMode _searchMode = SearchMode.all;
   bool _selectionRequested = false;
@@ -42,7 +43,7 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
 
   void _ensureSelectedWordbook() {
     if (_selectionRequested) return;
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     if (state.selectedWordbook?.id == widget.wordbookId) return;
     final book = _resolveBook(state);
     if (book == null) return;
@@ -120,7 +121,7 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
   }
 
   Future<void> _openWordDetail(BuildContext context, WordEntry word) async {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     await state.selectWordEntry(word);
     if (!context.mounted) return;
     final resolvedWord = state.currentWord ?? word;
@@ -164,7 +165,7 @@ class _WordbookEditorPageState extends State<WordbookEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final book = _resolveBook(state);
     final selectionReady = state.selectedWordbook?.id == widget.wordbookId;

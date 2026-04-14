@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
@@ -13,16 +14,16 @@ import '../widgets/word_detail_sections.dart';
 import 'follow_along_page.dart';
 import 'word_editor_page.dart';
 
-class WordDetailPage extends StatefulWidget {
+class WordDetailPage extends ConsumerStatefulWidget {
   const WordDetailPage({super.key, required this.initialWord});
 
   final WordEntry initialWord;
 
   @override
-  State<WordDetailPage> createState() => _WordDetailPageState();
+  ConsumerState<WordDetailPage> createState() => _WordDetailPageState();
 }
 
-class _WordDetailPageState extends State<WordDetailPage> {
+class _WordDetailPageState extends ConsumerState<WordDetailPage> {
   int _transitionDirection = 1;
 
   static const double _contentMaxWidth = 600;
@@ -105,7 +106,7 @@ class _WordDetailPageState extends State<WordDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final word = _resolveWord(state);
     if (word == null) {
