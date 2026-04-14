@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
@@ -10,6 +10,7 @@ import '../../models/practice_question_type.dart';
 import '../../models/word_entry.dart';
 import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
@@ -17,10 +18,12 @@ import '../widgets/section_header.dart';
 import '../widgets/word_card.dart';
 import 'practice_support.dart';
 
+part 'practice_session_page_models.dart';
+
 const int _practiceAnswerTransitionWarnThresholdMs = 120;
 const int _practiceTaskWordSyncWarnThresholdMs = 120;
 
-class PracticeSessionPage extends StatefulWidget {
+class PracticeSessionPage extends ConsumerStatefulWidget {
   const PracticeSessionPage({
     super.key,
     required this.title,
@@ -43,56 +46,11 @@ class PracticeSessionPage extends StatefulWidget {
   final int? rotationCursorAdvance;
 
   @override
-  State<PracticeSessionPage> createState() => _PracticeSessionPageState();
+  ConsumerState<PracticeSessionPage> createState() =>
+      _PracticeSessionPageState();
 }
 
-class _PracticeAnswerDecision {
-  const _PracticeAnswerDecision({
-    this.addToWrongNotebook = true,
-    this.weakReasonIds = const <String>[],
-  });
-
-  final bool addToWrongNotebook;
-  final List<String> weakReasonIds;
-}
-
-class _PendingPracticeAnswerFeedback {
-  const _PendingPracticeAnswerFeedback({
-    required this.current,
-    required this.remembered,
-    required this.addToWrongNotebook,
-    required this.weakReasonIds,
-  });
-
-  final WordEntry current;
-  final bool remembered;
-  final bool addToWrongNotebook;
-  final List<String> weakReasonIds;
-
-  _PendingPracticeAnswerFeedback copyWith({
-    bool? addToWrongNotebook,
-    List<String>? weakReasonIds,
-  }) {
-    return _PendingPracticeAnswerFeedback(
-      current: current,
-      remembered: remembered,
-      addToWrongNotebook: addToWrongNotebook ?? this.addToWrongNotebook,
-      weakReasonIds: weakReasonIds ?? this.weakReasonIds,
-    );
-  }
-}
-
-class _PracticeMeaningCandidate {
-  const _PracticeMeaningCandidate({
-    required this.meaning,
-    required this.normalizedMeaning,
-  });
-
-  final String meaning;
-  final String normalizedMeaning;
-}
-
-class _PracticeSessionPageState extends State<PracticeSessionPage> {
+class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
   final AppLogService _log = AppLogService.instance;
   late List<WordEntry> _sessionWords;
   Map<String, String> _sessionMeaningByEntryKey = <String, String>{};
@@ -153,7 +111,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     if (_sessionPreferencesLoaded) {
       return;
     }
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     _autoAddWeakWordsToTask = state.practiceAutoAddWeakWordsToTask;
     _autoPlayPronunciation = state.practiceAutoPlayPronunciation;
     _hintRevealed = state.practiceShowHintsByDefault;
@@ -172,11 +130,8 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final uiLanguage = context.select<AppState, String>(
-      (state) => state.uiLanguage,
-    );
-    final state = context.read<AppState>();
-    final i18n = AppI18n(uiLanguage);
+    final state = ref.watch(appStateProvider);
+    final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.title)),
@@ -422,7 +377,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         runSpacing: 12,
         children: <Widget>[
           FilledButton.icon(
-            onPressed: () => _handlePrimaryAction(context.read<AppState>()),
+            onPressed: () => _handlePrimaryAction(ref.read(appStateProvider)),
             icon: Icon(_primaryActionIcon),
             label: Text(_primaryActionLabel(i18n)),
           ),
@@ -1453,7 +1408,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       _index = 0;
       _remembered = 0;
       _revealed = false;
-      _hintRevealed = context.read<AppState>().practiceShowHintsByDefault;
+      _hintRevealed = ref.read(appStateProvider).practiceShowHintsByDefault;
       _reported = false;
       _sessionStarted = false;
       _pendingAnswerFeedback = null;
@@ -1514,12 +1469,14 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
       return;
     }
     _reported = true;
-    context.read<AppState>().finishPracticeSession(
-      title: widget.title,
-      total: total,
-      remembered: remembered,
-      weakReasonIdsByWord: weakReasonIdsByWord,
-    );
+    ref
+        .read(appStateProvider)
+        .finishPracticeSession(
+          title: widget.title,
+          total: total,
+          remembered: remembered,
+          weakReasonIdsByWord: weakReasonIdsByWord,
+        );
   }
 
   Future<_PracticeAnswerDecision?> _showAnswerFeedbackDialog(
@@ -1729,7 +1686,7 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
         _spellingFocusNode.requestFocus();
       });
     }
-    _maybeAutoPlayCurrentWord(context.read<AppState>());
+    _maybeAutoPlayCurrentWord(ref.read(appStateProvider));
   }
 
   List<String> _buildMeaningOptions(WordEntry current) {
