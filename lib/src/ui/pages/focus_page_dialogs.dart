@@ -1,6 +1,6 @@
 part of 'focus_page.dart';
 
-mixin _FocusPageDialogsMixin on State<FocusPage> {
+mixin _FocusPageDialogsMixin on ConsumerState<FocusPage> {
   Widget _buildNotesSheetContent(
     FocusService focus,
     List<PlanNote> notes,
@@ -117,16 +117,14 @@ mixin _FocusPageDialogsMixin on State<FocusPage> {
   }
 
   Future<void> _openAmbientAudioSheet(BuildContext context) async {
+    final state = ref.read(appStateProvider);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => FractionallySizedBox(
         heightFactor: 0.92,
-        child: AmbientSheet(
-          state: context.read<AppState>(),
-          i18n: AppI18n(context.read<AppState>().uiLanguage),
-        ),
+        child: AmbientSheet(state: state, i18n: AppI18n(state.uiLanguage)),
       ),
     );
   }
