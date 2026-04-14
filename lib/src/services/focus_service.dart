@@ -29,12 +29,30 @@ class FocusService extends ChangeNotifier {
     SystemCalendarService? systemCalendar,
     TodoReminderService? todoReminder,
     TtsService? tts,
-  }) : _repository = repository ?? DatabaseFocusRepository(database),
-       _settings = settings ?? SettingsService(database),
+  }) : this.fromRepository(
+         repository: repository ?? DatabaseFocusRepository(database),
+         settings: settings ?? SettingsService(database),
+         ambient: ambient,
+         reminder: reminder,
+         systemCalendar:
+             systemCalendar ?? PlatformSystemCalendarService(database),
+         todoReminder: todoReminder,
+         tts: tts,
+       );
+
+  FocusService.fromRepository({
+    required FocusRepository repository,
+    required SettingsService settings,
+    AmbientService? ambient,
+    ReminderService? reminder,
+    SystemCalendarService? systemCalendar,
+    TodoReminderService? todoReminder,
+    TtsService? tts,
+  }) : _repository = repository,
+       _settings = settings,
        _ambient = ambient,
        _reminder = reminder,
-       _systemCalendar =
-           systemCalendar ?? PlatformSystemCalendarService(database),
+       _systemCalendar = systemCalendar,
        _todoReminder = todoReminder ?? PlatformTodoReminderService(),
        _tts = tts;
 

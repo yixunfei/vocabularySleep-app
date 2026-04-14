@@ -5,10 +5,6 @@ import '../models/ambient_preset.dart';
 import '../models/app_home_tab.dart';
 import '../models/focus_startup_tab.dart';
 import '../models/play_config.dart';
-import '../models/sleep_daily_log.dart';
-import '../models/sleep_plan.dart';
-import '../models/sleep_profile.dart';
-import '../models/sleep_routine_template.dart';
 import '../models/settings_dto.dart';
 import '../models/study_startup_tab.dart';
 import '../repositories/settings_store_repository.dart';
@@ -190,6 +186,36 @@ class SettingsService {
     _store.setSetting('rememberedWords', jsonEncode(sorted));
   }
 
+  Set<String> loadStringSet(String key) {
+    final raw = _store.getSetting(key);
+    if (raw == null || raw.trim().isEmpty) {
+      return <String>{};
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return <String>{};
+      }
+      return decoded
+          .map((item) => '$item'.trim())
+          .where((item) => item.isNotEmpty)
+          .toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  void saveStringSet(String key, Set<String> values) {
+    final sorted =
+        values
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toSet()
+            .toList(growable: false)
+          ..sort();
+    _store.setSetting(key, jsonEncode(sorted));
+  }
+
   Map<String, PlaybackProgressSnapshot> loadPlaybackProgressByWordbook() {
     final raw = _store.getSetting('playbackProgressByWordbook');
     if (raw == null || raw.trim().isEmpty) {
@@ -278,132 +304,5 @@ class SettingsService {
 
   void saveModuleToggleState(ModuleToggleState value) {
     _store.setSetting(moduleTogglesKey, jsonEncode(value.toJsonMap()));
-  }
-
-  SleepProfile? loadSleepProfile() {
-    final decoded = _loadJsonValue('sleepProfile');
-    return SleepProfile.fromJsonValue(decoded);
-  }
-
-  void saveSleepProfile(SleepProfile? profile) {
-    _saveJsonValue('sleepProfile', profile?.toJsonMap());
-  }
-
-  List<SleepDailyLog> loadSleepDailyLogs() {
-    return _loadJsonList('sleepDailyLogs', SleepDailyLog.fromJsonValue);
-  }
-
-  void saveSleepDailyLogs(List<SleepDailyLog> logs) {
-    _saveJsonValue(
-      'sleepDailyLogs',
-      logs.map((log) => log.toJsonMap()).toList(growable: false),
-    );
-  }
-
-  List<SleepNightEvent> loadSleepNightEvents() {
-    return _loadJsonList('sleepNightEvents', SleepNightEvent.fromJsonValue);
-  }
-
-  void saveSleepNightEvents(List<SleepNightEvent> events) {
-    _saveJsonValue(
-      'sleepNightEvents',
-      events.map((event) => event.toJsonMap()).toList(growable: false),
-    );
-  }
-
-  List<SleepThoughtEntry> loadSleepThoughtEntries() {
-    return _loadJsonList(
-      'sleepThoughtEntries',
-      SleepThoughtEntry.fromJsonValue,
-    );
-  }
-
-  void saveSleepThoughtEntries(List<SleepThoughtEntry> entries) {
-    _saveJsonValue(
-      'sleepThoughtEntries',
-      entries.map((entry) => entry.toJsonMap()).toList(growable: false),
-    );
-  }
-
-  SleepPlan? loadSleepCurrentPlan() {
-    final decoded = _loadJsonValue('sleepCurrentPlan');
-    return SleepPlan.fromJsonValue(decoded);
-  }
-
-  void saveSleepCurrentPlan(SleepPlan? plan) {
-    _saveJsonValue('sleepCurrentPlan', plan?.toJsonMap());
-  }
-
-  List<SleepRoutineTemplate> loadSleepRoutineTemplates() {
-    return _loadJsonList(
-      'sleepRoutineTemplates',
-      SleepRoutineTemplate.fromJsonValue,
-    );
-  }
-
-  void saveSleepRoutineTemplates(List<SleepRoutineTemplate> templates) {
-    _saveJsonValue(
-      'sleepRoutineTemplates',
-      templates.map((template) => template.toJsonMap()).toList(growable: false),
-    );
-  }
-
-  String? loadSleepActiveRoutineTemplateId() {
-    final raw = _store.getSetting('sleepActiveRoutineTemplateId');
-    if (raw == null) {
-      return null;
-    }
-    final normalized = raw.trim();
-    return normalized.isEmpty ? null : normalized;
-  }
-
-  void saveSleepActiveRoutineTemplateId(String? id) {
-    _store.setSetting('sleepActiveRoutineTemplateId', id?.trim() ?? '');
-  }
-
-  SleepDashboardState loadSleepDashboardState() {
-    final decoded = _loadJsonValue('sleepDashboardState');
-    return SleepDashboardState.fromJsonValue(decoded);
-  }
-
-  void saveSleepDashboardState(SleepDashboardState state) {
-    _saveJsonValue('sleepDashboardState', state.toJsonMap());
-  }
-
-  SleepProgramProgress? loadSleepProgramProgress() {
-    final decoded = _loadJsonValue('sleepProgramProgress');
-    return SleepProgramProgress.fromJsonValue(decoded);
-  }
-
-  void saveSleepProgramProgress(SleepProgramProgress? progress) {
-    _saveJsonValue('sleepProgramProgress', progress?.toJsonMap());
-  }
-
-  Object? _loadJsonValue(String key) {
-    final raw = _store.getSetting(key);
-    if (raw == null || raw.trim().isEmpty) {
-      return null;
-    }
-    try {
-      return jsonDecode(raw);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  List<T> _loadJsonList<T>(String key, T? Function(Object?) decoder) {
-    final decoded = _loadJsonValue(key);
-    if (decoded is! List) {
-      return <T>[];
-    }
-    return decoded.map(decoder).whereType<T>().toList(growable: false);
-  }
-
-  void _saveJsonValue(String key, Object? value) {
-    if (value == null) {
-      _store.setSetting(key, '');
-      return;
-    }
-    _store.setSetting(key, jsonEncode(value));
   }
 }

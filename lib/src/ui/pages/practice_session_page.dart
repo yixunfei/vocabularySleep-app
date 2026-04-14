@@ -4,11 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/practice_question_type.dart';
 import '../../models/word_entry.dart';
 import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
@@ -175,6 +177,12 @@ class _PracticeSessionPageState extends State<PracticeSessionPage> {
     );
     final state = context.read<AppState>();
     final i18n = AppI18n(uiLanguage);
+    if (!state.isModuleEnabled(ModuleIds.practice)) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
+        body: ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice),
+      );
+    }
     if (_sessionWords.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.title)),

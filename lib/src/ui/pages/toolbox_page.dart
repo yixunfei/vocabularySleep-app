@@ -1,36 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
+import '../module/module_access.dart';
 import '../ui_copy.dart';
 import '../widgets/page_header.dart';
 import 'toolbox/toolbox_page_content.dart';
 import 'toolbox/toolbox_page_widgets.dart';
 import 'toolbox/toolbox_ui_tokens.dart';
 
-class ToolboxPage extends StatelessWidget {
+class ToolboxPage extends ConsumerWidget {
   const ToolboxPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.toolbox)) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            pickUiText(
-              i18n,
-              zh: '工具箱模块当前已停用，请在设置中心的模块管理中重新开启。',
-              en: 'Toolbox is currently disabled. Re-enable it in module management.',
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
+      return ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.toolbox);
     }
 
     final sections = buildToolboxSections(

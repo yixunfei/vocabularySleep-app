@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_daily_log.dart';
 import '../../models/sleep_routine_template.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import '../widgets/section_header.dart';
 import 'sleep_assistant_ui_support.dart';
 import 'sleep_quick_tools.dart';
@@ -99,12 +101,26 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+      return ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '模块已停用，无法继续访问睡眠助手页面。',
+          en: 'This module is disabled and unavailable right now.',
+        ),
+        child: ModuleDisabledView(
+          i18n: i18n,
+          moduleId: ModuleIds.toolboxSleepAssistant,
+        ),
+      );
+    }
     final templates = appState.sleepRoutineTemplates;
     final activeTemplate = appState.activeSleepRoutineTemplate;
     final currentStep = appState.currentSleepRoutineStep;
-    final recentThoughts = appState.sleepThoughtEntries.take(4).toList(
-      growable: false,
-    );
+    final recentThoughts = appState.sleepThoughtEntries
+        .take(4)
+        .toList(growable: false);
 
     return ToolboxToolPage(
       title: pickSleepText(i18n, zh: '今晚流程', en: 'Tonight routine'),
@@ -137,10 +153,9 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                 template: template,
                 i18n: i18n,
                 selected: activeTemplate?.id == template.id,
-                onTap: () =>
-                    context.read<AppState>().setSleepActiveRoutineTemplate(
-                      template.id,
-                    ),
+                onTap: () => context
+                    .read<AppState>()
+                    .setSleepActiveRoutineTemplate(template.id),
                 onEdit: () => _openEditor(template),
               ),
             ),
@@ -165,11 +180,17 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    LinearProgressIndicator(value: appState.sleepRoutineProgress),
+                    LinearProgressIndicator(
+                      value: appState.sleepRoutineProgress,
+                    ),
                     const SizedBox(height: 10),
                     Text(
                       currentStep == null
-                          ? pickSleepText(i18n, zh: '还未开始', en: 'Not started yet')
+                          ? pickSleepText(
+                              i18n,
+                              zh: '还未开始',
+                              en: 'Not started yet',
+                            )
                           : '${currentStep.label} · ${sleepSecondsLabel(appState.sleepRoutineRunnerState.remainingSeconds, i18n: i18n)}',
                     ),
                     const SizedBox(height: 12),
@@ -178,40 +199,67 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       runSpacing: 10,
                       children: <Widget>[
                         FilledButton.icon(
-                          onPressed: appState.sleepRoutineRunnerState.isRunning ||
+                          onPressed:
+                              appState.sleepRoutineRunnerState.isRunning ||
                                   appState.sleepRoutineRunnerState.isPaused
                               ? null
-                              : () => context.read<AppState>().startSleepRoutine(),
+                              : () => context
+                                    .read<AppState>()
+                                    .startSleepRoutine(),
                           icon: const Icon(Icons.play_arrow_rounded),
-                          label: Text(pickSleepText(i18n, zh: '开始', en: 'Start')),
+                          label: Text(
+                            pickSleepText(i18n, zh: '开始', en: 'Start'),
+                          ),
                         ),
                         OutlinedButton.icon(
                           onPressed: appState.sleepRoutineRunnerState.isRunning
-                              ? () => context.read<AppState>().pauseSleepRoutine()
+                              ? () =>
+                                    context.read<AppState>().pauseSleepRoutine()
                               : null,
                           icon: const Icon(Icons.pause_rounded),
-                          label: Text(pickSleepText(i18n, zh: '暂停', en: 'Pause')),
+                          label: Text(
+                            pickSleepText(i18n, zh: '暂停', en: 'Pause'),
+                          ),
                         ),
                         OutlinedButton.icon(
                           onPressed: appState.sleepRoutineRunnerState.isPaused
-                              ? () => context.read<AppState>().resumeSleepRoutine()
+                              ? () => context
+                                    .read<AppState>()
+                                    .resumeSleepRoutine()
                               : null,
                           icon: const Icon(Icons.play_circle_outline_rounded),
-                          label: Text(pickSleepText(i18n, zh: '继续', en: 'Resume')),
+                          label: Text(
+                            pickSleepText(i18n, zh: '继续', en: 'Resume'),
+                          ),
                         ),
                         OutlinedButton.icon(
-                          onPressed: appState.sleepRoutineRunnerState.activeTemplateId == null
+                          onPressed:
+                              appState
+                                      .sleepRoutineRunnerState
+                                      .activeTemplateId ==
+                                  null
                               ? null
-                              : () => context.read<AppState>().advanceSleepRoutine(),
+                              : () => context
+                                    .read<AppState>()
+                                    .advanceSleepRoutine(),
                           icon: const Icon(Icons.skip_next_rounded),
-                          label: Text(pickSleepText(i18n, zh: '下一步', en: 'Next')),
+                          label: Text(
+                            pickSleepText(i18n, zh: '下一步', en: 'Next'),
+                          ),
                         ),
                         OutlinedButton.icon(
-                          onPressed: appState.sleepRoutineRunnerState.activeTemplateId == null
+                          onPressed:
+                              appState
+                                      .sleepRoutineRunnerState
+                                      .activeTemplateId ==
+                                  null
                               ? null
-                              : () => context.read<AppState>().stopSleepRoutine(),
+                              : () =>
+                                    context.read<AppState>().stopSleepRoutine(),
                           icon: const Icon(Icons.stop_rounded),
-                          label: Text(pickSleepText(i18n, zh: '停止', en: 'Stop')),
+                          label: Text(
+                            pickSleepText(i18n, zh: '停止', en: 'Stop'),
+                          ),
                         ),
                       ],
                     ),
@@ -236,7 +284,11 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                     controller: _thoughtController,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      labelText: pickSleepText(i18n, zh: '此刻最占脑子的念头', en: 'Most active thought right now'),
+                      labelText: pickSleepText(
+                        i18n,
+                        zh: '此刻最占脑子的念头',
+                        en: 'Most active thought right now',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -244,11 +296,17 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                     controller: _reframeController,
                     maxLines: 2,
                     decoration: InputDecoration(
-                      labelText: pickSleepText(i18n, zh: '更温和的替代表述', en: 'Gentler reframe'),
+                      labelText: pickSleepText(
+                        i18n,
+                        zh: '更温和的替代表述',
+                        en: 'Gentler reframe',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('${pickSleepText(i18n, zh: '强度', en: 'Intensity')} ${_intensity.round()}/5'),
+                  Text(
+                    '${pickSleepText(i18n, zh: '强度', en: 'Intensity')} ${_intensity.round()}/5',
+                  ),
                   Slider(
                     value: _intensity,
                     min: 1,
@@ -259,7 +317,13 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                   FilledButton.icon(
                     onPressed: _saveThought,
                     icon: const Icon(Icons.edit_note_rounded),
-                    label: Text(pickSleepText(i18n, zh: '保存卸载条目', en: 'Save unload entry')),
+                    label: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '保存卸载条目',
+                        en: 'Save unload entry',
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -282,12 +346,20 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                     runSpacing: 10,
                     children: <Widget>[
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '白噪音', en: 'White noise'),
+                        title: pickSleepText(
+                          i18n,
+                          zh: '白噪音',
+                          en: 'White noise',
+                        ),
                         icon: Icons.graphic_eq_rounded,
                         onTap: () => showSleepWhiteNoiseSheet(context),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '咖啡因截止线', en: 'Caffeine cutoff'),
+                        title: pickSleepText(
+                          i18n,
+                          zh: '咖啡因截止线',
+                          en: 'Caffeine cutoff',
+                        ),
                         icon: Icons.local_cafe_rounded,
                         onTap: () => showCaffeineCutoffCalculatorSheet(context),
                       ),
@@ -303,7 +375,11 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                         },
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '舒缓声音', en: 'Soothing audio'),
+                        title: pickSleepText(
+                          i18n,
+                          zh: '舒缓声音',
+                          en: 'Soothing audio',
+                        ),
                         icon: Icons.spa_rounded,
                         onTap: () {
                           Navigator.of(context).push(
@@ -328,7 +404,11 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '最近卸载内容', en: 'Recent unload entries'),
+                      pickSleepText(
+                        i18n,
+                        zh: '最近卸载内容',
+                        en: 'Recent unload entries',
+                      ),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
@@ -340,13 +420,17 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
-                            color: Theme.of(context).colorScheme.surfaceContainerLow,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerLow,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Text(entry.content),
-                              if ((entry.reframedContent ?? '').trim().isNotEmpty) ...<Widget>[
+                              if ((entry.reframedContent ?? '')
+                                  .trim()
+                                  .isNotEmpty) ...<Widget>[
                                 const SizedBox(height: 6),
                                 Text(
                                   '${pickSleepText(i18n, zh: '替代表述', en: 'Reframe')}: ${entry.reframedContent}',
@@ -406,7 +490,11 @@ class _RoutineTemplateCard extends StatelessWidget {
                     ),
                   ),
                   if (template.builtIn)
-                    Chip(label: Text(pickSleepText(i18n, zh: '内置', en: 'Built-in'))),
+                    Chip(
+                      label: Text(
+                        pickSleepText(i18n, zh: '内置', en: 'Built-in'),
+                      ),
+                    ),
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: onEdit,

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_daily_log.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import '../widgets/setting_tile.dart';
 import 'sleep_assistant_ui_support.dart';
 import 'sleep_quick_tools.dart';
@@ -84,12 +86,14 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     final profile = appState.sleepProfile;
     setState(() {
       _dateKey = dateKey;
-      _bedtime = timeOfDayFromDateTime(log?.bedtimeAt) ??
+      _bedtime =
+          timeOfDayFromDateTime(log?.bedtimeAt) ??
           tryParseTimeOfDay(profile?.typicalBedtime ?? '');
       _lightsOff = timeOfDayFromDateTime(log?.lightsOffAt);
       _sleepOnset = timeOfDayFromDateTime(log?.sleepOnsetAt);
       _finalWake = timeOfDayFromDateTime(log?.finalWakeAt);
-      _outOfBed = timeOfDayFromDateTime(log?.outOfBedAt) ??
+      _outOfBed =
+          timeOfDayFromDateTime(log?.outOfBedAt) ??
           tryParseTimeOfDay(profile?.typicalWakeTime ?? '');
       _sleepMinutesController.text =
           log?.estimatedTotalSleepMinutes?.toString() ?? '';
@@ -101,8 +105,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
       _windDownMinutesController.text = log?.windDownMinutes?.toString() ?? '';
       _notesController.text = log?.notes ?? '';
       _morningEnergy = (log?.morningEnergy ?? 3).toDouble().clamp(1, 5);
-      _daytimeSleepiness =
-          (log?.daytimeSleepiness ?? 3).toDouble().clamp(1, 5);
+      _daytimeSleepiness = (log?.daytimeSleepiness ?? 3).toDouble().clamp(1, 5);
       _stressPeakLevel = (log?.stressPeakLevel ?? 2).toDouble().clamp(0, 5);
       _worryLoadLevel = (log?.worryLoadLevel ?? 2).toDouble().clamp(0, 5);
       _caffeineAfterCutoff = log?.caffeineAfterCutoff ?? false;
@@ -153,8 +156,8 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
 
   SleepDailyLog _draftLog() {
     final appState = context.read<AppState>();
-    final preferredNoiseId =
-        appState.sleepDashboardState.preferredWhiteNoiseId?.trim();
+    final preferredNoiseId = appState.sleepDashboardState.preferredWhiteNoiseId
+        ?.trim();
     return SleepDailyLog(
       dateKey: _dateKey,
       bedtimeAt: sleepDateTimeFromTimeOfDay(
@@ -208,7 +211,9 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
       worryLoadLevel: _worryLoadLevel.round(),
       windDownMinutes: _parseInt(_windDownMinutesController.text),
       napMinutes: _parseInt(_napMinutesController.text) ?? 0,
-      notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      notes: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
     );
   }
 
@@ -229,6 +234,20 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+      return ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '模块已停用，无法继续访问睡眠助手页面。',
+          en: 'This module is disabled and unavailable right now.',
+        ),
+        child: ModuleDisabledView(
+          i18n: i18n,
+          moduleId: ModuleIds.toolboxSleepAssistant,
+        ),
+      );
+    }
     final currentLog = _draftLog();
     final adviceItems = buildSleepDailyAdvice(
       i18n,
@@ -256,9 +275,21 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   runSpacing: 8,
                   children: <Widget>[
                     Chip(label: Text(sleepDateLabel(latest.dateKey))),
-                    Chip(label: Text('${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(latest.estimatedTotalSleepMinutes)}')),
-                    Chip(label: Text('${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(latest.sleepEfficiency)}')),
-                    Chip(label: Text('${pickSleepText(i18n, zh: '晨间精神', en: 'Energy')} ${sleepScoreLabel(latest.morningEnergy)}')),
+                    Chip(
+                      label: Text(
+                        '${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(latest.estimatedTotalSleepMinutes)}',
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        '${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(latest.sleepEfficiency)}',
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        '${pickSleepText(i18n, zh: '晨间精神', en: 'Energy')} ${sleepScoreLabel(latest.morningEnergy)}',
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -367,12 +398,20 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                 children: <Widget>[
                   _NumberField(
                     controller: _sleepMinutesController,
-                    label: pickSleepText(i18n, zh: '估计总睡眠分钟数', en: 'Estimated sleep minutes'),
+                    label: pickSleepText(
+                      i18n,
+                      zh: '估计总睡眠分钟数',
+                      en: 'Estimated sleep minutes',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _NumberField(
                     controller: _latencyController,
-                    label: pickSleepText(i18n, zh: '入睡潜伏期（分钟）', en: 'Sleep latency (minutes)'),
+                    label: pickSleepText(
+                      i18n,
+                      zh: '入睡潜伏期（分钟）',
+                      en: 'Sleep latency (minutes)',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _NumberField(
@@ -382,7 +421,11 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   const SizedBox(height: 12),
                   _NumberField(
                     controller: _wakeMinutesController,
-                    label: pickSleepText(i18n, zh: '夜醒总时长（分钟）', en: 'Wake time total (minutes)'),
+                    label: pickSleepText(
+                      i18n,
+                      zh: '夜醒总时长（分钟）',
+                      en: 'Wake time total (minutes)',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _NumberField(
@@ -392,7 +435,11 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   const SizedBox(height: 12),
                   _NumberField(
                     controller: _windDownMinutesController,
-                    label: pickSleepText(i18n, zh: '睡前减压时长（分钟）', en: 'Wind-down minutes'),
+                    label: pickSleepText(
+                      i18n,
+                      zh: '睡前减压时长（分钟）',
+                      en: 'Wind-down minutes',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -423,37 +470,49 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
-                  Text('${pickSleepText(i18n, zh: '晨间精神', en: 'Morning energy')} ${_morningEnergy.round()}/5'),
+                  Text(
+                    '${pickSleepText(i18n, zh: '晨间精神', en: 'Morning energy')} ${_morningEnergy.round()}/5',
+                  ),
                   Slider(
                     value: _morningEnergy,
                     min: 1,
                     max: 5,
                     divisions: 4,
-                    onChanged: (value) => setState(() => _morningEnergy = value),
+                    onChanged: (value) =>
+                        setState(() => _morningEnergy = value),
                   ),
-                  Text('${pickSleepText(i18n, zh: '白天困倦', en: 'Daytime sleepiness')} ${_daytimeSleepiness.round()}/5'),
+                  Text(
+                    '${pickSleepText(i18n, zh: '白天困倦', en: 'Daytime sleepiness')} ${_daytimeSleepiness.round()}/5',
+                  ),
                   Slider(
                     value: _daytimeSleepiness,
                     min: 1,
                     max: 5,
                     divisions: 4,
-                    onChanged: (value) => setState(() => _daytimeSleepiness = value),
+                    onChanged: (value) =>
+                        setState(() => _daytimeSleepiness = value),
                   ),
-                  Text('${pickSleepText(i18n, zh: '当日压力峰值', en: 'Stress peak')} ${_stressPeakLevel.round()}/5'),
+                  Text(
+                    '${pickSleepText(i18n, zh: '当日压力峰值', en: 'Stress peak')} ${_stressPeakLevel.round()}/5',
+                  ),
                   Slider(
                     value: _stressPeakLevel,
                     min: 0,
                     max: 5,
                     divisions: 5,
-                    onChanged: (value) => setState(() => _stressPeakLevel = value),
+                    onChanged: (value) =>
+                        setState(() => _stressPeakLevel = value),
                   ),
-                  Text('${pickSleepText(i18n, zh: '担忧负荷', en: 'Worry load')} ${_worryLoadLevel.round()}/5'),
+                  Text(
+                    '${pickSleepText(i18n, zh: '担忧负荷', en: 'Worry load')} ${_worryLoadLevel.round()}/5',
+                  ),
                   Slider(
                     value: _worryLoadLevel,
                     min: 0,
                     max: 5,
                     divisions: 5,
-                    onChanged: (value) => setState(() => _worryLoadLevel = value),
+                    onChanged: (value) =>
+                        setState(() => _worryLoadLevel = value),
                   ),
                 ],
               ),
@@ -461,19 +520,25 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
           ),
           const SizedBox(height: 12),
           _DailySwitchGroup(
-            title: pickSleepText(i18n, zh: '行为与环境因子', en: 'Behavior and environment'),
+            title: pickSleepText(
+              i18n,
+              zh: '行为与环境因子',
+              en: 'Behavior and environment',
+            ),
             children: <Widget>[
               _FactorSwitch(
                 value: _caffeineAfterCutoff,
                 title: sleepDailyFactorTitle(i18n, 'caffeineAfterCutoff'),
                 subtitle: sleepDailyFactorHint(i18n, 'caffeineAfterCutoff'),
-                onChanged: (value) => setState(() => _caffeineAfterCutoff = value),
+                onChanged: (value) =>
+                    setState(() => _caffeineAfterCutoff = value),
               ),
               _FactorSwitch(
                 value: _lateScreenExposure,
                 title: sleepDailyFactorTitle(i18n, 'lateScreenExposure'),
                 subtitle: sleepDailyFactorHint(i18n, 'lateScreenExposure'),
-                onChanged: (value) => setState(() => _lateScreenExposure = value),
+                onChanged: (value) =>
+                    setState(() => _lateScreenExposure = value),
               ),
               _FactorSwitch(
                 value: _alcoholAtNight,
@@ -490,25 +555,42 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
               _FactorSwitch(
                 value: _heavyDinner,
                 title: sleepDailyFactorTitle(i18n, 'heavyDinner'),
-                subtitle: pickSleepText(i18n, zh: '太晚、太重或太撑都会拖慢入睡。', en: 'A heavy or late dinner can slow down sleep onset.'),
+                subtitle: pickSleepText(
+                  i18n,
+                  zh: '太晚、太重或太撑都会拖慢入睡。',
+                  en: 'A heavy or late dinner can slow down sleep onset.',
+                ),
                 onChanged: (value) => setState(() => _heavyDinner = value),
               ),
               _FactorSwitch(
                 value: _intenseExerciseLate,
                 title: sleepDailyFactorTitle(i18n, 'intenseExerciseLate'),
-                subtitle: pickSleepText(i18n, zh: '太晚高强度运动可能让身体还没降下来。', en: 'Very late intense exercise can keep the body activated.'),
-                onChanged: (value) => setState(() => _intenseExerciseLate = value),
+                subtitle: pickSleepText(
+                  i18n,
+                  zh: '太晚高强度运动可能让身体还没降下来。',
+                  en: 'Very late intense exercise can keep the body activated.',
+                ),
+                onChanged: (value) =>
+                    setState(() => _intenseExerciseLate = value),
               ),
               _FactorSwitch(
                 value: _hotBathDone,
                 title: sleepDailyFactorTitle(i18n, 'hotBathDone'),
-                subtitle: pickSleepText(i18n, zh: '如果配合更安静的过渡，通常比硬躺更有帮助。', en: 'Used as a transition, it can help more than simply forcing bed.'),
+                subtitle: pickSleepText(
+                  i18n,
+                  zh: '如果配合更安静的过渡，通常比硬躺更有帮助。',
+                  en: 'Used as a transition, it can help more than simply forcing bed.',
+                ),
                 onChanged: (value) => setState(() => _hotBathDone = value),
               ),
               _FactorSwitch(
                 value: _stretchingDone,
                 title: sleepDailyFactorTitle(i18n, 'stretchingDone'),
-                subtitle: pickSleepText(i18n, zh: '轻柔拉伸适合降低身体残余紧绷。', en: 'Gentle stretching can lower residual tension.'),
+                subtitle: pickSleepText(
+                  i18n,
+                  zh: '轻柔拉伸适合降低身体残余紧绷。',
+                  en: 'Gentle stretching can lower residual tension.',
+                ),
                 onChanged: (value) => setState(() => _stretchingDone = value),
               ),
               _FactorSwitch(
@@ -520,19 +602,31 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
               _FactorSwitch(
                 value: _bedroomTooHot,
                 title: sleepDailyFactorTitle(i18n, 'bedroomTooHot'),
-                subtitle: pickSleepText(i18n, zh: '卧室偏热很容易拖慢入睡并增加夜醒。', en: 'A hot room can delay sleep and increase awakenings.'),
+                subtitle: pickSleepText(
+                  i18n,
+                  zh: '卧室偏热很容易拖慢入睡并增加夜醒。',
+                  en: 'A hot room can delay sleep and increase awakenings.',
+                ),
                 onChanged: (value) => setState(() => _bedroomTooHot = value),
               ),
               _FactorSwitch(
                 value: _bedroomTooBright,
                 title: sleepDailyFactorTitle(i18n, 'bedroomTooBright'),
-                subtitle: pickSleepText(i18n, zh: '亮度过高会让睡意更难稳定下来。', en: 'A bright room can make sleepiness less stable.'),
+                subtitle: pickSleepText(
+                  i18n,
+                  zh: '亮度过高会让睡意更难稳定下来。',
+                  en: 'A bright room can make sleepiness less stable.',
+                ),
                 onChanged: (value) => setState(() => _bedroomTooBright = value),
               ),
               _FactorSwitch(
                 value: _bedroomTooNoisy,
                 title: sleepDailyFactorTitle(i18n, 'bedroomTooNoisy'),
-                subtitle: pickSleepText(i18n, zh: '若是噪声不稳定，白噪音可能比忍耐更有效。', en: 'If noise is inconsistent, white noise may help more than tolerating it.'),
+                subtitle: pickSleepText(
+                  i18n,
+                  zh: '若是噪声不稳定，白噪音可能比忍耐更有效。',
+                  en: 'If noise is inconsistent, white noise may help more than tolerating it.',
+                ),
                 onChanged: (value) => setState(() => _bedroomTooNoisy = value),
               ),
               _FactorSwitch(
@@ -560,12 +654,20 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     runSpacing: 10,
                     children: <Widget>[
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '白噪音', en: 'White noise'),
+                        title: pickSleepText(
+                          i18n,
+                          zh: '白噪音',
+                          en: 'White noise',
+                        ),
                         icon: Icons.graphic_eq_rounded,
                         onTap: () => showSleepWhiteNoiseSheet(context),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '咖啡因截止线', en: 'Caffeine cutoff'),
+                        title: pickSleepText(
+                          i18n,
+                          zh: '咖啡因截止线',
+                          en: 'Caffeine cutoff',
+                        ),
                         icon: Icons.local_cafe_rounded,
                         onTap: () => showCaffeineCutoffCalculatorSheet(
                           context,
@@ -635,10 +737,7 @@ class _TimeRow extends StatelessWidget {
 }
 
 class _NumberField extends StatelessWidget {
-  const _NumberField({
-    required this.controller,
-    required this.label,
-  });
+  const _NumberField({required this.controller, required this.label});
 
   final TextEditingController controller;
   final String label;
@@ -654,10 +753,7 @@ class _NumberField extends StatelessWidget {
 }
 
 class _DailySwitchGroup extends StatelessWidget {
-  const _DailySwitchGroup({
-    required this.title,
-    required this.children,
-  });
+  const _DailySwitchGroup({required this.title, required this.children});
 
   final String title;
   final List<Widget> children;

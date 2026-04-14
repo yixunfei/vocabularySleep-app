@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../models/word_memory_progress.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
@@ -37,6 +39,12 @@ class _ReviewSessionPageState extends State<ReviewSessionPage> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = AppI18n(state.uiLanguage);
+    if (!state.isModuleEnabled(ModuleIds.practice)) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
+        body: ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice),
+      );
+    }
     if (widget.words.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.title)),

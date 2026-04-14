@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/setting_tile.dart';
 import 'sleep_assistant_ui_support.dart';
@@ -17,10 +19,24 @@ class SleepReportPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+      return ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '模块已停用，无法继续访问睡眠助手页面。',
+          en: 'This module is disabled and unavailable right now.',
+        ),
+        child: ModuleDisabledView(
+          i18n: i18n,
+          moduleId: ModuleIds.toolboxSleepAssistant,
+        ),
+      );
+    }
     final rangeDays = appState.sleepDashboardState.lastReportRangeDays;
-    final recentLogs = appState.sleepDailyLogs.take(rangeDays).toList(
-      growable: false,
-    );
+    final recentLogs = appState.sleepDailyLogs
+        .take(rangeDays)
+        .toList(growable: false);
 
     if (recentLogs.isEmpty) {
       return ToolboxToolPage(
@@ -49,7 +65,9 @@ class SleepReportPage extends StatelessWidget {
     final avgEfficiency = averageSleepDouble(
       recentLogs.map((item) => item.sleepEfficiency),
     );
-    final avgEnergy = averageSleepInt(recentLogs.map((item) => item.morningEnergy));
+    final avgEnergy = averageSleepInt(
+      recentLogs.map((item) => item.morningEnergy),
+    );
     final avgSleepiness = averageSleepInt(
       recentLogs.map((item) => item.daytimeSleepiness),
     );
@@ -62,7 +80,9 @@ class SleepReportPage extends StatelessWidget {
     final noisyDays = recentLogs
         .where(
           (item) =>
-              item.bedroomTooNoisy || item.bedroomTooBright || item.bedroomTooHot,
+              item.bedroomTooNoisy ||
+              item.bedroomTooBright ||
+              item.bedroomTooHot,
         )
         .length;
     final morningLightDays = recentLogs
@@ -101,11 +121,15 @@ class SleepReportPage extends StatelessWidget {
                         segments: <ButtonSegment<int>>[
                           ButtonSegment<int>(
                             value: 7,
-                            label: Text(pickSleepText(i18n, zh: '7天', en: '7d')),
+                            label: Text(
+                              pickSleepText(i18n, zh: '7天', en: '7d'),
+                            ),
                           ),
                           ButtonSegment<int>(
                             value: 14,
-                            label: Text(pickSleepText(i18n, zh: '14天', en: '14d')),
+                            label: Text(
+                              pickSleepText(i18n, zh: '14天', en: '14d'),
+                            ),
                           ),
                         ],
                         selected: <int>{rangeDays},
@@ -130,15 +154,27 @@ class SleepReportPage extends StatelessWidget {
                         value: sleepMinutesLabel(avgSleep),
                       ),
                       ToolboxMetricCard(
-                        label: pickSleepText(i18n, zh: '平均效率', en: 'Avg efficiency'),
+                        label: pickSleepText(
+                          i18n,
+                          zh: '平均效率',
+                          en: 'Avg efficiency',
+                        ),
                         value: sleepPercentLabel(avgEfficiency),
                       ),
                       ToolboxMetricCard(
-                        label: pickSleepText(i18n, zh: '晨间精神', en: 'Morning energy'),
+                        label: pickSleepText(
+                          i18n,
+                          zh: '晨间精神',
+                          en: 'Morning energy',
+                        ),
                         value: sleepScoreLabel(avgEnergy),
                       ),
                       ToolboxMetricCard(
-                        label: pickSleepText(i18n, zh: '白天困倦', en: 'Daytime sleepiness'),
+                        label: pickSleepText(
+                          i18n,
+                          zh: '白天困倦',
+                          en: 'Daytime sleepiness',
+                        ),
                         value: sleepScoreLabel(avgSleepiness),
                       ),
                     ],
@@ -149,15 +185,25 @@ class SleepReportPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           SleepMetricChartCard(
-            title: pickSleepText(i18n, zh: '睡眠时长趋势', en: 'Sleep duration trend'),
-            subtitle: pickSleepText(i18n, zh: '看总量是否在回升或继续缩水。', en: 'Check whether total sleep is recovering or shrinking.'),
+            title: pickSleepText(
+              i18n,
+              zh: '睡眠时长趋势',
+              en: 'Sleep duration trend',
+            ),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '看总量是否在回升或继续缩水。',
+              en: 'Check whether total sleep is recovering or shrinking.',
+            ),
             i18n: i18n,
             points: chartLogs
                 .map(
                   (log) => SleepChartPoint(
                     label: sleepDateLabel(log.dateKey).substring(5),
                     value: log.estimatedTotalSleepMinutes?.toDouble(),
-                    valueLabel: sleepMinutesLabel(log.estimatedTotalSleepMinutes),
+                    valueLabel: sleepMinutesLabel(
+                      log.estimatedTotalSleepMinutes,
+                    ),
                   ),
                 )
                 .toList(growable: false),
@@ -165,8 +211,16 @@ class SleepReportPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           SleepMetricChartCard(
-            title: pickSleepText(i18n, zh: '睡眠效率趋势', en: 'Sleep efficiency trend'),
-            subtitle: pickSleepText(i18n, zh: '看在床上的时间有多少真的转成了睡眠。', en: 'Track how much time in bed turns into actual sleep.'),
+            title: pickSleepText(
+              i18n,
+              zh: '睡眠效率趋势',
+              en: 'Sleep efficiency trend',
+            ),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '看在床上的时间有多少真的转成了睡眠。',
+              en: 'Track how much time in bed turns into actual sleep.',
+            ),
             i18n: i18n,
             points: chartLogs
                 .map(
@@ -183,8 +237,16 @@ class SleepReportPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           SleepMetricChartCard(
-            title: pickSleepText(i18n, zh: '晨间精神趋势', en: 'Morning energy trend'),
-            subtitle: pickSleepText(i18n, zh: '比单次睡得长不长，更值得看恢复感有没有稳住。', en: 'Recovery stability often matters more than a single long night.'),
+            title: pickSleepText(
+              i18n,
+              zh: '晨间精神趋势',
+              en: 'Morning energy trend',
+            ),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '比单次睡得长不长，更值得看恢复感有没有稳住。',
+              en: 'Recovery stability often matters more than a single long night.',
+            ),
             i18n: i18n,
             points: chartLogs
                 .map(
@@ -200,7 +262,11 @@ class SleepReportPage extends StatelessWidget {
           const SizedBox(height: 12),
           SleepMetricChartCard(
             title: pickSleepText(i18n, zh: '夜醒负担趋势', en: 'Wake burden trend'),
-            subtitle: pickSleepText(i18n, zh: '综合夜醒次数和总时长，判断是否该优先练夜醒脚本。', en: 'Combine wake count and wake minutes to see if rescue work should come first.'),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '综合夜醒次数和总时长，判断是否该优先练夜醒脚本。',
+              en: 'Combine wake count and wake minutes to see if rescue work should come first.',
+            ),
             i18n: i18n,
             points: chartLogs
                 .map(
@@ -217,28 +283,48 @@ class SleepReportPage extends StatelessWidget {
           SettingTile(
             icon: Icons.local_cafe_rounded,
             title: pickSleepText(i18n, zh: '晚咖啡因天数', en: 'Late caffeine days'),
-            subtitle: pickSleepText(i18n, zh: '这个数偏高时，通常是最值得先改的变量。', en: 'A high count often signals the cleanest variable to fix first.'),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '这个数偏高时，通常是最值得先改的变量。',
+              en: 'A high count often signals the cleanest variable to fix first.',
+            ),
             trailing: Text('$lateCaffeineDays/${recentLogs.length}'),
           ),
           const SizedBox(height: 8),
           SettingTile(
             icon: Icons.phone_android_rounded,
             title: pickSleepText(i18n, zh: '晚间看屏天数', en: 'Late screen days'),
-            subtitle: pickSleepText(i18n, zh: '如果接近一半以上，优先整理最后一小时。', en: 'If this approaches half the range, clean up the final pre-bed hour first.'),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '如果接近一半以上，优先整理最后一小时。',
+              en: 'If this approaches half the range, clean up the final pre-bed hour first.',
+            ),
             trailing: Text('$lateScreenDays/${recentLogs.length}'),
           ),
           const SizedBox(height: 8),
           SettingTile(
             icon: Icons.wb_sunny_rounded,
             title: pickSleepText(i18n, zh: '完成晨光天数', en: 'Morning light days'),
-            subtitle: pickSleepText(i18n, zh: '节律想稳，晨光完成率通常比单次晚睡更关键。', en: 'For rhythm stability, morning light consistency often matters more than a single late night.'),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '节律想稳，晨光完成率通常比单次晚睡更关键。',
+              en: 'For rhythm stability, morning light consistency often matters more than a single late night.',
+            ),
             trailing: Text('$morningLightDays/${recentLogs.length}'),
           ),
           const SizedBox(height: 8),
           SettingTile(
             icon: Icons.meeting_room_rounded,
-            title: pickSleepText(i18n, zh: '环境干扰天数', en: 'Environment issue days'),
-            subtitle: pickSleepText(i18n, zh: '亮、热、吵反复出现时，要先改卧室再谈技巧。', en: 'When light, heat, or noise repeat, fix the bedroom before adding more tricks.'),
+            title: pickSleepText(
+              i18n,
+              zh: '环境干扰天数',
+              en: 'Environment issue days',
+            ),
+            subtitle: pickSleepText(
+              i18n,
+              zh: '亮、热、吵反复出现时，要先改卧室再谈技巧。',
+              en: 'When light, heat, or noise repeat, fix the bedroom before adding more tricks.',
+            ),
             trailing: Text('$noisyDays/${recentLogs.length}'),
           ),
           const SizedBox(height: 12),

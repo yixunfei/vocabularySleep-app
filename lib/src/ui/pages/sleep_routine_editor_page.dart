@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_routine_template.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import 'sleep_assistant_ui_support.dart';
 import 'toolbox_tool_shell.dart';
 
 class SleepRoutineEditorPage extends StatefulWidget {
-  const SleepRoutineEditorPage({
-    super.key,
-    this.template,
-  });
+  const SleepRoutineEditorPage({super.key, this.template});
 
   final SleepRoutineTemplate? template;
 
@@ -99,6 +98,20 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+      return ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '模块已停用，无法继续访问睡眠助手页面。',
+          en: 'This module is disabled and unavailable right now.',
+        ),
+        child: ModuleDisabledView(
+          i18n: i18n,
+          moduleId: ModuleIds.toolboxSleepAssistant,
+        ),
+      );
+    }
     return ToolboxToolPage(
       title: pickSleepText(i18n, zh: '流程编辑器', en: 'Routine editor'),
       subtitle: pickSleepText(
@@ -167,7 +180,9 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
               FilledButton.icon(
                 onPressed: _steps.isEmpty ? null : _save,
                 icon: const Icon(Icons.save_rounded),
-                label: Text(pickSleepText(i18n, zh: '保存模板', en: 'Save template')),
+                label: Text(
+                  pickSleepText(i18n, zh: '保存模板', en: 'Save template'),
+                ),
               ),
               const SizedBox(width: 12),
               if (_editingCustom)
@@ -223,9 +238,9 @@ class _RoutineEditorStepCard extends StatelessWidget {
                     zh: '步骤 ${index + 1}',
                     en: 'Step ${index + 1}',
                   ),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const Spacer(),
                 IconButton(
@@ -283,9 +298,8 @@ class _RoutineEditorStepCard extends StatelessWidget {
               min: 30,
               max: 900,
               divisions: 29,
-              onChanged: (value) => onChanged(
-                step.copyWith(durationSeconds: value.round()),
-              ),
+              onChanged: (value) =>
+                  onChanged(step.copyWith(durationSeconds: value.round())),
             ),
           ],
         ),

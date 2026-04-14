@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_profile.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
 import 'sleep_assessment_page.dart';
@@ -34,6 +36,9 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
         return;
       }
       final appState = context.read<AppState>();
+      if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+        return;
+      }
       if (!_hasLoadedSleepData(appState)) {
         appState.loadSleepAssistantData();
       }
@@ -50,6 +55,12 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+      return ModuleDisabledView(
+        i18n: i18n,
+        moduleId: ModuleIds.toolboxSleepAssistant,
+      );
+    }
     final recentLogs = appState.sleepDailyLogs.take(7).toList(growable: false);
     final latestLog = appState.latestSleepDailyLog;
     final profile = appState.sleepProfile;
@@ -59,7 +70,9 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
     final avgEfficiency = averageSleepDouble(
       recentLogs.map((item) => item.sleepEfficiency),
     );
-    final avgEnergy = averageSleepInt(recentLogs.map((item) => item.morningEnergy));
+    final avgEnergy = averageSleepInt(
+      recentLogs.map((item) => item.morningEnergy),
+    );
     final advice = latestLog != null
         ? buildSleepDailyAdvice(i18n, profile: profile, log: latestLog)
         : buildSleepAssessmentAdvice(
@@ -78,22 +91,7 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           if (appState.sleepLoading && !_hasLoadedSleepData(appState))
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(18),
-                child: Row(
-                  children: <Widget>[
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(child: Text('Loading sleep assistant...')),
-                  ],
-                ),
-              ),
-            )
+            const Card(child: _SleepAssistantLoadingState())
           else ...<Widget>[
             if (profile?.snoringRisk == SleepRiskLevel.medium ||
                 profile?.snoringRisk == SleepRiskLevel.high)
@@ -134,17 +132,28 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                       value: sleepMinutesLabel(avgSleep),
                     ),
                     ToolboxMetricCard(
-                      label: pickSleepText(i18n, zh: '平均效率', en: 'Avg efficiency'),
+                      label: pickSleepText(
+                        i18n,
+                        zh: '平均效率',
+                        en: 'Avg efficiency',
+                      ),
                       value: sleepPercentLabel(avgEfficiency),
                     ),
                     ToolboxMetricCard(
-                      label: pickSleepText(i18n, zh: '晨间精神', en: 'Morning energy'),
+                      label: pickSleepText(
+                        i18n,
+                        zh: '晨间精神',
+                        en: 'Morning energy',
+                      ),
                       value: sleepScoreLabel(avgEnergy),
                     ),
                     if (appState.sleepCurrentPlan != null)
                       ToolboxMetricCard(
                         label: pickSleepText(i18n, zh: '主线', en: 'Track'),
-                        value: sleepTrackLabel(i18n, appState.sleepCurrentPlan!.track),
+                        value: sleepTrackLabel(
+                          i18n,
+                          appState.sleepCurrentPlan!.track,
+                        ),
                       ),
                   ],
                 ),
@@ -177,42 +186,66 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
               children: <Widget>[
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '睡眠评估', en: 'Assessment'),
-                  subtitle: pickSleepText(i18n, zh: '识别问题类型和风险线索。', en: 'Assess issues and risk signals.'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '识别问题类型和风险线索。',
+                    en: 'Assess issues and risk signals.',
+                  ),
                   icon: Icons.fact_check_rounded,
                   accent: const Color(0xFF517D6E),
                   onTap: () => _open(context, const SleepAssessmentPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '连续日志', en: 'Continuous log'),
-                  subtitle: pickSleepText(i18n, zh: '按日期持续编辑睡眠日志。', en: 'Continuously edit sleep logs by date.'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '按日期持续编辑睡眠日志。',
+                    en: 'Continuously edit sleep logs by date.',
+                  ),
                   icon: Icons.bedtime_rounded,
                   accent: const Color(0xFF4E74A8),
                   onTap: () => _open(context, const SleepDailyLogPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '今晚流程', en: 'Tonight routine'),
-                  subtitle: pickSleepText(i18n, zh: '模板、执行器和担忧卸载。', en: 'Templates, runner, and thought unload.'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '模板、执行器和担忧卸载。',
+                    en: 'Templates, runner, and thought unload.',
+                  ),
                   icon: Icons.nights_stay_rounded,
                   accent: const Color(0xFF805C92),
                   onTap: () => _open(context, const SleepWindDownPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
-                  subtitle: pickSleepText(i18n, zh: '按夜醒类型走低刺激脚本。', en: 'Use low-stim scripts for awakenings.'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '按夜醒类型走低刺激脚本。',
+                    en: 'Use low-stim scripts for awakenings.',
+                  ),
                   icon: Icons.self_improvement_rounded,
                   accent: const Color(0xFF9A6A52),
                   onTap: () => _open(context, const SleepNightRescuePage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '白天节律', en: 'Day rhythm'),
-                  subtitle: pickSleepText(i18n, zh: '晨光、咖啡因、午睡和计划。', en: 'Light, caffeine, naps, and structured plans.'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '晨光、咖啡因、午睡和计划。',
+                    en: 'Light, caffeine, naps, and structured plans.',
+                  ),
                   icon: Icons.wb_sunny_rounded,
                   accent: const Color(0xFFB08B33),
                   onTap: () => _open(context, const SleepDayRhythmPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '睡眠周报', en: 'Sleep report'),
-                  subtitle: pickSleepText(i18n, zh: '看图表、影响因子和下周建议。', en: 'Review charts, factors, and next-cycle advice.'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '看图表、影响因子和下周建议。',
+                    en: 'Review charts, factors, and next-cycle advice.',
+                  ),
                   icon: Icons.insights_rounded,
                   accent: const Color(0xFF6A7F9E),
                   onTap: () => _open(context, const SleepReportPage()),
@@ -239,12 +272,20 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   onTap: () => showSleepWhiteNoiseSheet(context),
                 ),
                 SleepQuickToolButton(
-                  title: pickSleepText(i18n, zh: '晨光计时器', en: 'Morning light timer'),
+                  title: pickSleepText(
+                    i18n,
+                    zh: '晨光计时器',
+                    en: 'Morning light timer',
+                  ),
                   icon: Icons.wb_sunny_rounded,
                   onTap: () => showMorningLightTimerSheet(context),
                 ),
                 SleepQuickToolButton(
-                  title: pickSleepText(i18n, zh: '咖啡因截止线', en: 'Caffeine cutoff'),
+                  title: pickSleepText(
+                    i18n,
+                    zh: '咖啡因截止线',
+                    en: 'Caffeine cutoff',
+                  ),
                   icon: Icons.local_cafe_rounded,
                   onTap: () => showCaffeineCutoffCalculatorSheet(context),
                 ),
@@ -260,7 +301,10 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
               ),
             ),
             const SizedBox(height: 12),
-            SleepAdviceList(items: advice.take(4).toList(growable: false), i18n: i18n),
+            SleepAdviceList(
+              items: advice.take(4).toList(growable: false),
+              i18n: i18n,
+            ),
             const SizedBox(height: 20),
             SectionHeader(
               title: pickSleepText(i18n, zh: '近 7 天趋势', en: '7-day trend'),
@@ -274,13 +318,21 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
             if (recentLogs.isEmpty)
               EmptyStateView(
                 icon: Icons.hotel_rounded,
-                title: pickSleepText(i18n, zh: '还没有睡眠日志', en: 'No sleep logs yet'),
+                title: pickSleepText(
+                  i18n,
+                  zh: '还没有睡眠日志',
+                  en: 'No sleep logs yet',
+                ),
                 message: pickSleepText(
                   i18n,
                   zh: '先从连续日志开始，至少记录 3 到 7 天，趋势和建议才会更可靠。',
                   en: 'Start the continuous log and collect at least 3 to 7 days first.',
                 ),
-                actionLabel: pickSleepText(i18n, zh: '去记录', en: 'Start logging'),
+                actionLabel: pickSleepText(
+                  i18n,
+                  zh: '去记录',
+                  en: 'Start logging',
+                ),
                 onAction: () => _open(context, const SleepDailyLogPage()),
               )
             else
@@ -297,16 +349,31 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                         runSpacing: 10,
                         children: <Widget>[
                           ToolboxMetricCard(
-                            label: pickSleepText(i18n, zh: '晚咖啡因', en: 'Late caffeine'),
-                            value: '${recentLogs.where((item) => item.caffeineAfterCutoff).length}/${recentLogs.length}',
+                            label: pickSleepText(
+                              i18n,
+                              zh: '晚咖啡因',
+                              en: 'Late caffeine',
+                            ),
+                            value:
+                                '${recentLogs.where((item) => item.caffeineAfterCutoff).length}/${recentLogs.length}',
                           ),
                           ToolboxMetricCard(
-                            label: pickSleepText(i18n, zh: '晚间看屏', en: 'Late screens'),
-                            value: '${recentLogs.where((item) => item.lateScreenExposure).length}/${recentLogs.length}',
+                            label: pickSleepText(
+                              i18n,
+                              zh: '晚间看屏',
+                              en: 'Late screens',
+                            ),
+                            value:
+                                '${recentLogs.where((item) => item.lateScreenExposure).length}/${recentLogs.length}',
                           ),
                           ToolboxMetricCard(
-                            label: pickSleepText(i18n, zh: '晨光完成', en: 'Morning light'),
-                            value: '${recentLogs.where((item) => item.morningLightDone).length}/${recentLogs.length}',
+                            label: pickSleepText(
+                              i18n,
+                              zh: '晨光完成',
+                              en: 'Morning light',
+                            ),
+                            value:
+                                '${recentLogs.where((item) => item.morningLightDone).length}/${recentLogs.length}',
                           ),
                         ],
                       ),
@@ -331,8 +398,44 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
   }
 
   static void _open(BuildContext context, Widget page) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => page),
+    final appState = context.read<AppState>();
+    pushModuleRoute<void>(
+      context,
+      state: appState,
+      moduleId: ModuleIds.toolboxSleepAssistant,
+      builder: (_) => page,
+    );
+  }
+}
+
+class _SleepAssistantLoadingState extends StatelessWidget {
+  const _SleepAssistantLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    final i18n = AppI18n(appState.uiLanguage);
+    return Padding(
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: <Widget>[
+          const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              pickSleepText(
+                i18n,
+                zh: '正在加载睡眠助手...',
+                en: 'Loading sleep assistant...',
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -376,7 +479,9 @@ class _CurrentPlanCard extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.fact_check_rounded),
-                label: Text(pickSleepText(i18n, zh: '开始评估', en: 'Start assessment')),
+                label: Text(
+                  pickSleepText(i18n, zh: '开始评估', en: 'Start assessment'),
+                ),
               ),
             ],
           ),
@@ -392,9 +497,9 @@ class _CurrentPlanCard extends StatelessWidget {
           children: <Widget>[
             Text(
               plan.title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(plan.summary),
@@ -452,19 +557,35 @@ class _LatestLogRow extends StatelessWidget {
         children: <Widget>[
           Text(
             '${pickSleepText(i18n, zh: '最近一晚', en: 'Latest night')} · ${sleepDateLabel(log.dateKey)}',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
-              Chip(label: Text('${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(log.estimatedTotalSleepMinutes)}')),
-              Chip(label: Text('${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(log.sleepEfficiency)}')),
-              Chip(label: Text('${pickSleepText(i18n, zh: '夜醒', en: 'Wake-ups')} ${log.nightWakeCount}')),
-              Chip(label: Text('${pickSleepText(i18n, zh: '精神', en: 'Energy')} ${sleepScoreLabel(log.morningEnergy)}')),
+              Chip(
+                label: Text(
+                  '${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(log.estimatedTotalSleepMinutes)}',
+                ),
+              ),
+              Chip(
+                label: Text(
+                  '${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(log.sleepEfficiency)}',
+                ),
+              ),
+              Chip(
+                label: Text(
+                  '${pickSleepText(i18n, zh: '夜醒', en: 'Wake-ups')} ${log.nightWakeCount}',
+                ),
+              ),
+              Chip(
+                label: Text(
+                  '${pickSleepText(i18n, zh: '精神', en: 'Energy')} ${sleepScoreLabel(log.morningEnergy)}',
+                ),
+              ),
             ],
           ),
         ],

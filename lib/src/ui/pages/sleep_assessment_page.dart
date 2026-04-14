@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_profile.dart';
 import '../../state/app_state.dart';
+import '../module/module_access.dart';
 import 'sleep_assistant_ui_support.dart';
 import 'sleep_research_library.dart';
 import 'toolbox_tool_shell.dart';
@@ -150,6 +152,20 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+      return ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '模块已停用，无法继续访问睡眠助手页面。',
+          en: 'This module is disabled and unavailable right now.',
+        ),
+        child: ModuleDisabledView(
+          i18n: i18n,
+          moduleId: ModuleIds.toolboxSleepAssistant,
+        ),
+      );
+    }
     final adviceItems = buildSleepAssessmentAdvice(i18n, draft: _draft);
     return ToolboxToolPage(
       title: pickSleepText(i18n, zh: '睡眠评估', en: 'Sleep assessment'),
@@ -212,14 +228,22 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   const SizedBox(height: 12),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '通常上床时间', en: 'Typical bedtime')),
+                    title: Text(
+                      pickSleepText(i18n, zh: '通常上床时间', en: 'Typical bedtime'),
+                    ),
                     subtitle: Text(sleepTimeOfDayLabel(_bedtime)),
                     trailing: const Icon(Icons.schedule_rounded),
                     onTap: () => _pickTime(bedtime: true),
                   ),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '通常起床时间', en: 'Typical wake time')),
+                    title: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '通常起床时间',
+                        en: 'Typical wake time',
+                      ),
+                    ),
                     subtitle: Text(sleepTimeOfDayLabel(_wakeTime)),
                     trailing: const Icon(Icons.alarm_rounded),
                     onTap: () => _pickTime(bedtime: false),
@@ -229,7 +253,11 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     controller: _goalController,
                     maxLines: 2,
                     decoration: InputDecoration(
-                      labelText: pickSleepText(i18n, zh: '当前目标', en: 'Current goal'),
+                      labelText: pickSleepText(
+                        i18n,
+                        zh: '当前目标',
+                        en: 'Current goal',
+                      ),
                       hintText: pickSleepText(
                         i18n,
                         zh: '例如：先连续 7 天固定起床并减少夜醒挣扎',
@@ -315,7 +343,13 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   const SizedBox(height: 12),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '睡前经常脑内停不下来', en: 'Racing thoughts at night')),
+                    title: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '睡前经常脑内停不下来',
+                        en: 'Racing thoughts at night',
+                      ),
+                    ),
                     value: _hasRacingThoughts,
                     onChanged: (value) {
                       setState(() => _hasRacingThoughts = value);
@@ -324,7 +358,13 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '自觉对咖啡因更敏感', en: 'Sensitive to caffeine')),
+                    title: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '自觉对咖啡因更敏感',
+                        en: 'Sensitive to caffeine',
+                      ),
+                    ),
                     value: _caffeineSensitive,
                     onChanged: (value) {
                       setState(() => _caffeineSensitive = value);
@@ -334,7 +374,11 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   DropdownButtonFormField<SleepRiskLevel>(
                     initialValue: _snoringRisk,
                     decoration: InputDecoration(
-                      labelText: pickSleepText(i18n, zh: '打鼾风险', en: 'Snoring risk'),
+                      labelText: pickSleepText(
+                        i18n,
+                        zh: '打鼾风险',
+                        en: 'Snoring risk',
+                      ),
                     ),
                     items: SleepRiskLevel.values
                         .map(
@@ -355,7 +399,9 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   const SizedBox(height: 12),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '卧室偏亮', en: 'Bedroom too bright')),
+                    title: Text(
+                      pickSleepText(i18n, zh: '卧室偏亮', en: 'Bedroom too bright'),
+                    ),
                     value: _bedroomLightIssue,
                     onChanged: (value) {
                       setState(() => _bedroomLightIssue = value);
@@ -364,7 +410,9 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '卧室偏吵', en: 'Bedroom too noisy')),
+                    title: Text(
+                      pickSleepText(i18n, zh: '卧室偏吵', en: 'Bedroom too noisy'),
+                    ),
                     value: _bedroomNoiseIssue,
                     onChanged: (value) {
                       setState(() => _bedroomNoiseIssue = value);
@@ -373,7 +421,13 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '卧室温度不舒服', en: 'Bedroom temperature issue')),
+                    title: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '卧室温度不舒服',
+                        en: 'Bedroom temperature issue',
+                      ),
+                    ),
                     value: _bedroomTempIssue,
                     onChanged: (value) {
                       setState(() => _bedroomTempIssue = value);
@@ -382,7 +436,13 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '近期有轮班或时差', en: 'Shift work or jet lag')),
+                    title: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '近期有轮班或时差',
+                        en: 'Shift work or jet lag',
+                      ),
+                    ),
                     value: _shiftWorkOrJetLag,
                     onChanged: (value) {
                       setState(() => _shiftWorkOrJetLag = value);
@@ -391,7 +451,13 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '反酸或消化不适影响睡眠', en: 'Digestive discomfort affects sleep')),
+                    title: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '反酸或消化不适影响睡眠',
+                        en: 'Digestive discomfort affects sleep',
+                      ),
+                    ),
                     value: _refluxOrDigestiveDiscomfort,
                     onChanged: (value) {
                       setState(() => _refluxOrDigestiveDiscomfort = value);
@@ -400,7 +466,13 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(pickSleepText(i18n, zh: '噩梦或梦境困扰明显', en: 'Nightmares or dream distress')),
+                    title: Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '噩梦或梦境困扰明显',
+                        en: 'Nightmares or dream distress',
+                      ),
+                    ),
                     value: _nightmaresOrDreamDistress,
                     onChanged: (value) {
                       setState(() => _nightmaresOrDreamDistress = value);

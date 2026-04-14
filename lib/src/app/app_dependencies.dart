@@ -13,6 +13,7 @@ import '../services/focus_service.dart';
 import '../services/playback_service.dart';
 import '../services/reminder_service.dart';
 import '../services/settings_service.dart';
+import '../services/system_calendar_service.dart';
 import '../services/todo_reminder_service.dart';
 import '../services/tts_service.dart';
 import '../services/wordbook_import_service.dart';
@@ -28,6 +29,7 @@ class AppDependencies {
     required this.practiceRepository,
     required this.ambientRepository,
     required this.focusRepository,
+    required this.sleepRepository,
     required this.cstCloudResourceCache,
     required this.cstCloudResourcePrewarm,
     required this.settings,
@@ -44,6 +46,7 @@ class AppDependencies {
   final PracticeRepository practiceRepository;
   final AmbientRepository ambientRepository;
   final FocusRepository focusRepository;
+  final SleepRepository sleepRepository;
   final CstCloudResourceCacheService cstCloudResourceCache;
   final CstCloudResourcePrewarmService cstCloudResourcePrewarm;
   final SettingsService settings;
@@ -72,18 +75,22 @@ class AppDependencies {
     final practiceRepository = DatabasePracticeRepository(database);
     final ambientRepository = DatabaseAmbientRepository(database);
     final focusRepository = DatabaseFocusRepository(database);
+    final sleepRepository = SettingsStoreSleepRepository(
+      settingsStoreRepository,
+    );
     final tts = TtsService();
     final playback = PlaybackService(tts);
     final ambient = AmbientService(resourceCache: cstCloudResourceCache);
     final asr = AsrService();
     final reminder = PlatformReminderService();
     final todoReminder = PlatformTodoReminderService();
-    final focusService = FocusService(
-      database,
+    final systemCalendar = PlatformSystemCalendarService(database);
+    final focusService = FocusService.fromRepository(
       repository: focusRepository,
       settings: settings,
       ambient: ambient,
       reminder: reminder,
+      systemCalendar: systemCalendar,
       todoReminder: todoReminder,
       tts: tts,
     );
@@ -97,6 +104,7 @@ class AppDependencies {
       wordbookRepository: wordbookRepository,
       practiceRepository: practiceRepository,
       ambientRepository: ambientRepository,
+      sleepRepository: sleepRepository,
       remoteResourcePrewarm: cstCloudResourcePrewarm,
     );
 
@@ -107,6 +115,7 @@ class AppDependencies {
       practiceRepository: practiceRepository,
       ambientRepository: ambientRepository,
       focusRepository: focusRepository,
+      sleepRepository: sleepRepository,
       cstCloudResourceCache: cstCloudResourceCache,
       cstCloudResourcePrewarm: cstCloudResourcePrewarm,
       settings: settings,
