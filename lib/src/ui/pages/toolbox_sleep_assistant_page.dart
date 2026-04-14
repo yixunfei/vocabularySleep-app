@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_profile.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
@@ -19,15 +20,16 @@ import 'sleep_report_page.dart';
 import 'sleep_wind_down_page.dart';
 import 'toolbox_tool_shell.dart';
 
-class ToolboxSleepAssistantPage extends StatefulWidget {
+class ToolboxSleepAssistantPage extends ConsumerStatefulWidget {
   const ToolboxSleepAssistantPage({super.key});
 
   @override
-  State<ToolboxSleepAssistantPage> createState() =>
+  ConsumerState<ToolboxSleepAssistantPage> createState() =>
       _ToolboxSleepAssistantPageState();
 }
 
-class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
+class _ToolboxSleepAssistantPageState
+    extends ConsumerState<ToolboxSleepAssistantPage> {
   @override
   void initState() {
     super.initState();
@@ -35,7 +37,7 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
       if (!mounted) {
         return;
       }
-      final appState = context.read<AppState>();
+      final appState = ref.read(appStateProvider);
       if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
         return;
       }
@@ -53,7 +55,7 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
+    final appState = ref.watch(appStateProvider);
     final i18n = AppI18n(appState.uiLanguage);
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
       return ModuleDisabledView(
@@ -193,7 +195,8 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   ),
                   icon: Icons.fact_check_rounded,
                   accent: const Color(0xFF517D6E),
-                  onTap: () => _open(context, const SleepAssessmentPage()),
+                  onTap: () =>
+                      _open(context, appState, const SleepAssessmentPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '连续日志', en: 'Continuous log'),
@@ -204,7 +207,8 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   ),
                   icon: Icons.bedtime_rounded,
                   accent: const Color(0xFF4E74A8),
-                  onTap: () => _open(context, const SleepDailyLogPage()),
+                  onTap: () =>
+                      _open(context, appState, const SleepDailyLogPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '今晚流程', en: 'Tonight routine'),
@@ -215,7 +219,8 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   ),
                   icon: Icons.nights_stay_rounded,
                   accent: const Color(0xFF805C92),
-                  onTap: () => _open(context, const SleepWindDownPage()),
+                  onTap: () =>
+                      _open(context, appState, const SleepWindDownPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
@@ -226,7 +231,8 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   ),
                   icon: Icons.self_improvement_rounded,
                   accent: const Color(0xFF9A6A52),
-                  onTap: () => _open(context, const SleepNightRescuePage()),
+                  onTap: () =>
+                      _open(context, appState, const SleepNightRescuePage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '白天节律', en: 'Day rhythm'),
@@ -237,7 +243,8 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   ),
                   icon: Icons.wb_sunny_rounded,
                   accent: const Color(0xFFB08B33),
-                  onTap: () => _open(context, const SleepDayRhythmPage()),
+                  onTap: () =>
+                      _open(context, appState, const SleepDayRhythmPage()),
                 ),
                 _SleepQuickActionCard(
                   title: pickSleepText(i18n, zh: '睡眠周报', en: 'Sleep report'),
@@ -248,7 +255,8 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   ),
                   icon: Icons.insights_rounded,
                   accent: const Color(0xFF6A7F9E),
-                  onTap: () => _open(context, const SleepReportPage()),
+                  onTap: () =>
+                      _open(context, appState, const SleepReportPage()),
                 ),
               ],
             ),
@@ -333,7 +341,8 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
                   zh: '去记录',
                   en: 'Start logging',
                 ),
-                onAction: () => _open(context, const SleepDailyLogPage()),
+                onAction: () =>
+                    _open(context, appState, const SleepDailyLogPage()),
               )
             else
               Card(
@@ -397,8 +406,7 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
         appState.sleepProgramProgress != null;
   }
 
-  static void _open(BuildContext context, Widget page) {
-    final appState = context.read<AppState>();
+  static void _open(BuildContext context, AppState appState, Widget page) {
     pushModuleRoute<void>(
       context,
       state: appState,
@@ -408,12 +416,12 @@ class _ToolboxSleepAssistantPageState extends State<ToolboxSleepAssistantPage> {
   }
 }
 
-class _SleepAssistantLoadingState extends StatelessWidget {
+class _SleepAssistantLoadingState extends ConsumerWidget {
   const _SleepAssistantLoadingState();
 
   @override
-  Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(appStateProvider);
     final i18n = AppI18n(appState.uiLanguage);
     return Padding(
       padding: const EdgeInsets.all(18),
@@ -440,12 +448,12 @@ class _SleepAssistantLoadingState extends StatelessWidget {
   }
 }
 
-class _CurrentPlanCard extends StatelessWidget {
+class _CurrentPlanCard extends ConsumerWidget {
   const _CurrentPlanCard();
 
   @override
-  Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(appStateProvider);
     final i18n = AppI18n(appState.uiLanguage);
     final plan = appState.sleepCurrentPlan;
     final profile = appState.sleepProfile;
@@ -537,10 +545,10 @@ class _CurrentPlanCard extends StatelessWidget {
   }
 }
 
-class _LatestLogRow extends StatelessWidget {
+class _LatestLogRow extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(appStateProvider);
     final i18n = AppI18n(appState.uiLanguage);
     final log = appState.latestSleepDailyLog;
     if (log == null) {

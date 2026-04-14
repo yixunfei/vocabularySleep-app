@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../state/app_state_provider.dart';
+import '../../module/module_access.dart';
 import '../../layout/app_width_tier.dart';
 import '../../motion/app_motion.dart';
 import '../../widgets/section_header.dart';
@@ -111,16 +114,16 @@ class ToolboxSection extends StatelessWidget {
   }
 }
 
-class ToolboxEntryCard extends StatefulWidget {
+class ToolboxEntryCard extends ConsumerStatefulWidget {
   const ToolboxEntryCard({super.key, required this.entry});
 
   final ToolboxEntryData entry;
 
   @override
-  State<ToolboxEntryCard> createState() => _ToolboxEntryCardState();
+  ConsumerState<ToolboxEntryCard> createState() => _ToolboxEntryCardState();
 }
 
-class _ToolboxEntryCardState extends State<ToolboxEntryCard> {
+class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
   bool _pressed = false;
 
   @override
@@ -170,8 +173,12 @@ class _ToolboxEntryCardState extends State<ToolboxEntryCard> {
               });
             },
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => entry.pageBuilder()),
+              final appState = ref.read(appStateProvider);
+              pushModuleRoute<void>(
+                context,
+                state: appState,
+                moduleId: entry.moduleId,
+                builder: (_) => entry.pageBuilder(),
               );
             },
             child: Padding(
