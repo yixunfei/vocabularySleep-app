@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../services/asr_service.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../../utils/asr_language.dart';
 import '../../utils/speech_api_model_options.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
-class VoiceInputSettingsPage extends StatefulWidget {
+class VoiceInputSettingsPage extends ConsumerStatefulWidget {
   const VoiceInputSettingsPage({super.key});
 
   @override
-  State<VoiceInputSettingsPage> createState() => _VoiceInputSettingsPageState();
+  ConsumerState<VoiceInputSettingsPage> createState() =>
+      _VoiceInputSettingsPageState();
 }
 
-class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
+class _VoiceInputSettingsPageState
+    extends ConsumerState<VoiceInputSettingsPage> {
   static const String _offlineModelSizeHint = '~150 MB';
 
   AsrOfflineModelStatus? _offlineStatus;
@@ -33,8 +35,8 @@ class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
   }
 
   Future<void> _refreshOfflineStatus() async {
-    final status = await context
-        .read<AppState>()
+    final status = await ref
+        .read(appStateProvider)
         .getVoiceInputOfflineModelStatus();
     if (!mounted) return;
     setState(() {
@@ -47,7 +49,7 @@ class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
       _offlineBusy = true;
     });
     try {
-      final state = context.read<AppState>();
+      final state = ref.read(appStateProvider);
       if (install) {
         await state.prepareVoiceInputOfflineModel();
       } else {
@@ -56,7 +58,7 @@ class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
       await _refreshOfflineStatus();
     } catch (error) {
       if (!mounted) return;
-      final i18n = AppI18n(context.read<AppState>().uiLanguage);
+      final i18n = AppI18n(ref.read(appStateProvider).uiLanguage);
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
           content: Text(
@@ -79,7 +81,7 @@ class _VoiceInputSettingsPageState extends State<VoiceInputSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final voiceInput = config.voiceInput;

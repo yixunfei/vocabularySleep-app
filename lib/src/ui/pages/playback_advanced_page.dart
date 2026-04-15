@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../models/word_field.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import '../widgets/playback_repeat_group_card.dart';
 
-class PlaybackAdvancedPage extends StatelessWidget {
+class PlaybackAdvancedPage extends ConsumerWidget {
   const PlaybackAdvancedPage({super.key});
 
   static const List<String> _usageKeys = <String>[
@@ -40,8 +41,8 @@ class PlaybackAdvancedPage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final repeats = config.repeats;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
@@ -13,12 +13,12 @@ import 'voice_input_settings_page.dart';
 import 'voice_settings_page.dart';
 import 'wordbook_management_page.dart';
 
-class HelpCenterPage extends StatelessWidget {
+class HelpCenterPage extends ConsumerWidget {
   const HelpCenterPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
 
     return Scaffold(
