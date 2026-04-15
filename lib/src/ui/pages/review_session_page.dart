@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../models/word_memory_progress.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
@@ -16,7 +17,7 @@ import 'practice_session_page.dart';
 
 enum _ReviewOrder { source, dueFirst, weakFirst, alphabetical }
 
-class ReviewSessionPage extends StatefulWidget {
+class ReviewSessionPage extends ConsumerStatefulWidget {
   const ReviewSessionPage({
     super.key,
     required this.title,
@@ -29,15 +30,15 @@ class ReviewSessionPage extends StatefulWidget {
   final String? subtitle;
 
   @override
-  State<ReviewSessionPage> createState() => _ReviewSessionPageState();
+  ConsumerState<ReviewSessionPage> createState() => _ReviewSessionPageState();
 }
 
-class _ReviewSessionPageState extends State<ReviewSessionPage> {
+class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
   _ReviewOrder _order = _ReviewOrder.source;
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return Scaffold(

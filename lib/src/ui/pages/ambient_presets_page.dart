@@ -1,87 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/ambient_preset.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 
-class AmbientPresetsPage extends StatelessWidget {
+class AmbientPresetsPage extends ConsumerWidget {
   const AmbientPresetsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, state, _) {
-        final i18n = AppI18n(state.uiLanguage);
-        final presets = state.ambientPresets;
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(pickUiText(i18n, zh: '环境音预设', en: 'Ambient presets')),
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _createPreset(context, state, i18n),
-            icon: const Icon(Icons.add_rounded),
-            label: Text(pickUiText(i18n, zh: '保存当前组合', en: 'Save current mix')),
-          ),
-          body: presets.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '先在环境音面板里打开想要的声音并调整音量，再来保存为预设。',
-                        en: 'Turn on the sounds you want in the ambient panel, adjust their volumes, then save them as a preset here.',
-                      ),
-                      textAlign: TextAlign.center,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
+    final i18n = AppI18n(state.uiLanguage);
+    final presets = state.ambientPresets;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(pickUiText(i18n, zh: '环境音预设', en: 'Ambient presets')),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _createPreset(context, state, i18n),
+        icon: const Icon(Icons.add_rounded),
+        label: Text(pickUiText(i18n, zh: '保存当前组合', en: 'Save current mix')),
+      ),
+      body: presets.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '先在环境音面板里打开想要的声音并调整音量，再来保存为预设。',
+                    en: 'Turn on the sounds you want in the ambient panel, adjust their volumes, then save them as a preset here.',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+              itemBuilder: (context, index) {
+                final preset = presets[index];
+                return Card(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    leading: const Icon(Icons.tune_rounded),
+                    title: Text(preset.name),
+                    subtitle: Text(_subtitle(i18n, preset)),
+                    onTap: () async {
+                      await state.applyAmbientPreset(preset.id);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            pickUiText(
+                              i18n,
+                              zh: '已应用预设：${preset.name}',
+                              en: 'Applied preset: ${preset.name}',
+                            ),
+                          ),
+                        ),
+                      );
+                      Navigator.of(context).pop();
+                    },
+                    trailing: IconButton(
+                      onPressed: () =>
+                          _deletePreset(context, state, i18n, preset),
+                      icon: const Icon(Icons.delete_outline_rounded),
                     ),
                   ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                  itemBuilder: (context, index) {
-                    final preset = presets[index];
-                    return Card(
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        leading: const Icon(Icons.tune_rounded),
-                        title: Text(preset.name),
-                        subtitle: Text(_subtitle(i18n, preset)),
-                        onTap: () async {
-                          await state.applyAmbientPreset(preset.id);
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '已应用预设：${preset.name}',
-                                  en: 'Applied preset: ${preset.name}',
-                                ),
-                              ),
-                            ),
-                          );
-                          Navigator.of(context).pop();
-                        },
-                        trailing: IconButton(
-                          onPressed: () =>
-                              _deletePreset(context, state, i18n, preset),
-                          icon: const Icon(Icons.delete_outline_rounded),
-                        ),
-                      ),
-                    );
-                  },
-                  separatorBuilder: (_, unusedIndex) =>
-                      const SizedBox(height: 10),
-                  itemCount: presets.length,
-                ),
-        );
-      },
+                );
+              },
+              separatorBuilder: (_, unusedIndex) => const SizedBox(height: 10),
+              itemCount: presets.length,
+            ),
     );
   }
 
