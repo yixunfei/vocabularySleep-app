@@ -4,16 +4,16 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
 import '../../services/toolbox_focus_beats_prefs_service.dart';
 import '../../services/toolbox_woodfish_prefs_service.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
@@ -33,11 +33,15 @@ part 'toolbox_sound_tools/violin.dart';
 part 'toolbox_sound_tools/pickup.dart';
 
 AppI18n _toolboxI18n(BuildContext context, {bool listen = true}) {
-  final state = listen
-      ? context.watch<AppState?>()
-      : Provider.of<AppState?>(context, listen: false);
-  final language =
-      state?.uiLanguage ?? Localizations.localeOf(context).languageCode;
+  String language;
+  try {
+    language = ProviderScope.containerOf(
+      context,
+      listen: listen,
+    ).read(appStateProvider).uiLanguage;
+  } on StateError {
+    language = Localizations.localeOf(context).languageCode;
+  }
   return AppI18n(language);
 }
 

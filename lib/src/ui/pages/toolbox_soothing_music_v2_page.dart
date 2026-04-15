@@ -5,8 +5,8 @@ import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
@@ -15,6 +15,7 @@ import '../../services/audio_player_source_helper.dart';
 import '../../services/cstcloud_resource_cache_service.dart';
 import '../../services/toolbox_soothing_audio_service.dart';
 import '../../services/toolbox_soothing_prefs_service.dart';
+import '../../state/app_state_provider.dart';
 import 'toolbox_soothing_music/runtime_store.dart';
 import 'toolbox_soothing_music/track_catalog.dart';
 import 'toolbox_soothing_music/track_loader.dart';
@@ -32,11 +33,12 @@ final AudioContext _soothingAudioContext = AudioContextConfig(
 typedef _SoothingTrack = SoothingMusicTrack;
 typedef _SoothingRuntimeStore = SoothingMusicRuntimeStore;
 
-class SoothingMusicV2Page extends StatefulWidget {
+class SoothingMusicV2Page extends ConsumerStatefulWidget {
   const SoothingMusicV2Page({super.key});
 
   @override
-  State<SoothingMusicV2Page> createState() => _SoothingMusicV2PageState();
+  ConsumerState<SoothingMusicV2Page> createState() =>
+      _SoothingMusicV2PageState();
 }
 
 enum _ModeLibraryFilter { all, favorites, recent }
@@ -198,7 +200,7 @@ class _SoothingVisualPalette {
   }
 }
 
-class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
+class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
     with SingleTickerProviderStateMixin {
   final AppLogService _log = AppLogService.instance;
   static const List<double> _defaultStageBands = <double>[
@@ -603,11 +605,8 @@ class _SoothingMusicV2PageState extends State<SoothingMusicV2Page>
     super.didChangeDependencies();
     CstCloudResourceCacheService? nextCache;
     try {
-      nextCache = Provider.of<CstCloudResourceCacheService>(
-        context,
-        listen: false,
-      );
-    } on ProviderNotFoundException {
+      nextCache = ref.read(cstCloudResourceCacheProvider);
+    } on StateError {
       nextCache = null;
     }
     if (!identical(_remoteResourceCache, nextCache) || _trackLoader == null) {
