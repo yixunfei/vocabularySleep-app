@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../services/asr_service.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../../utils/asr_language.dart';
 import '../../utils/speech_api_model_options.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
-class RecognitionSettingsPage extends StatefulWidget {
+class RecognitionSettingsPage extends ConsumerStatefulWidget {
   const RecognitionSettingsPage({super.key});
 
   @override
-  State<RecognitionSettingsPage> createState() =>
+  ConsumerState<RecognitionSettingsPage> createState() =>
       _RecognitionSettingsPageState();
 }
 
-class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
+class _RecognitionSettingsPageState
+    extends ConsumerState<RecognitionSettingsPage> {
   static const List<AsrProviderType> _multiEngineCandidates = <AsrProviderType>[
     AsrProviderType.offline,
     AsrProviderType.offlineSmall,
@@ -85,7 +86,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     setState(() {
       _loadingPackages = true;
     });
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     final offlineResults = <AsrProviderType, AsrOfflineModelStatus>{};
     final scoringResults = <PronScoringMethod, PronScoringPackStatus>{};
 
@@ -120,7 +121,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     AsrProviderType provider, {
     required bool install,
   }) async {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     if (install) {
       final confirmed = await _confirmOfflineModelInstall(provider);
       if (!confirmed) return;
@@ -173,7 +174,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
     PronScoringMethod method, {
     required bool install,
   }) async {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     if (install) {
       final confirmed = await _confirmScoringPackInstall(method);
       if (!confirmed) return;
@@ -243,7 +244,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
   }
 
   Future<bool> _confirmOfflineModelInstall(AsrProviderType provider) {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final sizeText = _resolveOfflineSizeText(provider);
     return showConfirmDialog(
@@ -263,7 +264,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
   }
 
   Future<bool> _confirmScoringPackInstall(PronScoringMethod method) {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final sizeText = _resolveScoringSizeText(method);
     return showConfirmDialog(
@@ -299,7 +300,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
   }
 
   Future<bool> _confirmLocalAsrSwitch(AsrProviderType provider) {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     return showConfirmDialog(
       context: context,
@@ -337,7 +338,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
           )
         : asr.engineOrder;
 
-    context.read<AppState>().updateConfig(
+    ref.read(appStateProvider).updateConfig(
       config.copyWith(
         asr: asr.copyWith(provider: value, engineOrder: nextEngineOrder),
       ),
@@ -346,7 +347,7 @@ class _RecognitionSettingsPageState extends State<RecognitionSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final asr = config.asr;

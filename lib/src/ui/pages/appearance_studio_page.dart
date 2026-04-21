@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../layout/app_width_tier.dart';
 import '../legacy_style.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
-class AppearanceStudioPage extends StatelessWidget {
+class AppearanceStudioPage extends ConsumerWidget {
   const AppearanceStudioPage({super.key});
 
   static const List<String> _themes = <String>[
@@ -25,8 +26,8 @@ class AppearanceStudioPage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final appearance = config.appearance;

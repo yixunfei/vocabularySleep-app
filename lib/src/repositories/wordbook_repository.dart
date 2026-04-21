@@ -3,6 +3,8 @@ import '../models/wordbook.dart';
 import '../services/database_service.dart';
 
 abstract class WordbookRepository {
+  String get databasePath;
+
   bool isLazyBuiltInPath(String path);
 
   Future<int> ensureBuiltInWordbookLoaded(
@@ -91,6 +93,25 @@ abstract class WordbookRepository {
 
   Future<int> importLegacyDatabase(String legacyDbPath);
 
+  void ensureSpecialWordbooks();
+
+  Future<int> importWordbook({
+    required String sourcePath,
+    required String name,
+    required List<WordEntryPayload> entries,
+    bool replaceExisting,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+  });
+
+  Future<int> importWordbookAsync({
+    required String sourcePath,
+    required String name,
+    required List<WordEntryPayload> entries,
+    bool replaceExisting,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+    int yieldEvery,
+  });
+
   void addWord(int wordbookId, WordEntryPayload payload);
 
   void updateWord({
@@ -127,6 +148,9 @@ class DatabaseWordbookRepository implements WordbookRepository {
   DatabaseWordbookRepository(this._database);
 
   final AppDatabaseService _database;
+
+  @override
+  String get databasePath => _database.dbPath;
 
   @override
   bool isLazyBuiltInPath(String path) => _database.isLazyBuiltInPath(path);
@@ -317,6 +341,47 @@ class DatabaseWordbookRepository implements WordbookRepository {
   @override
   Future<int> importLegacyDatabase(String legacyDbPath) {
     return _database.importLegacyDatabase(legacyDbPath);
+  }
+
+  @override
+  void ensureSpecialWordbooks() {
+    _database.ensureSpecialWordbooks();
+  }
+
+  @override
+  Future<int> importWordbook({
+    required String sourcePath,
+    required String name,
+    required List<WordEntryPayload> entries,
+    bool replaceExisting = true,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+  }) {
+    return _database.importWordbook(
+      sourcePath: sourcePath,
+      name: name,
+      entries: entries,
+      replaceExisting: replaceExisting,
+      onProgress: onProgress,
+    );
+  }
+
+  @override
+  Future<int> importWordbookAsync({
+    required String sourcePath,
+    required String name,
+    required List<WordEntryPayload> entries,
+    bool replaceExisting = true,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+    int yieldEvery = 180,
+  }) {
+    return _database.importWordbookAsync(
+      sourcePath: sourcePath,
+      name: name,
+      entries: entries,
+      replaceExisting: replaceExisting,
+      onProgress: onProgress,
+      yieldEvery: yieldEvery,
+    );
   }
 
   @override

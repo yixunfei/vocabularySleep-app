@@ -47,6 +47,9 @@ import '../services/online_ambient_catalog_service.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 import '../services/weather_service.dart';
+import 'weather_store.dart';
+import 'test_mode_store.dart';
+import 'startup_store.dart';
 import '../utils/search_text_normalizer.dart' as search_text;
 
 part 'app_state_practice.dart';
@@ -54,6 +57,10 @@ part 'app_state_playback.dart';
 part 'app_state_startup.dart';
 part 'app_state_sleep.dart';
 part 'app_state_wordbook.dart';
+part 'app_state_ambient.dart';
+part 'app_state_asr.dart';
+part 'app_state_weather.dart';
+part 'app_state_export.dart';
 
 class PronunciationComparison {
   const PronunciationComparison({
@@ -87,21 +94,32 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     required SettingsService settings,
     required PlaybackService playback,
     required AmbientService ambient,
-    required AsrService asr,
+    required AsrServiceContract asr,
     required FocusService focusService,
+    MaintenanceRepository? maintenanceRepository,
     WordbookRepository? wordbookRepository,
     PracticeRepository? practiceRepository,
     AmbientRepository? ambientRepository,
+    SleepRepository? sleepRepository,
     CstCloudResourcePrewarmService? remoteResourcePrewarm,
     WeatherService? weatherService,
+    WeatherStore? weatherStore,
+    TestModeStore? testModeStore,
+    StartupStore? startupStore,
     DailyQuoteService? dailyQuoteService,
-  }) : _database = database,
+  }) : _maintenanceRepository =
+           maintenanceRepository ?? DatabaseMaintenanceRepository(database),
        _wordbookRepository =
            wordbookRepository ?? DatabaseWordbookRepository(database),
        _practiceRepository =
            practiceRepository ?? DatabasePracticeRepository(database),
        _ambientRepository =
            ambientRepository ?? DatabaseAmbientRepository(database),
+       _sleepRepository =
+           sleepRepository ??
+           SettingsStoreSleepRepository(
+             DatabaseSettingsStoreRepository(database),
+           ),
        _settings = settings,
        _playback = playback,
        _ambient = ambient,
@@ -110,17 +128,33 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
        _remoteResourcePrewarm = remoteResourcePrewarm,
        _weatherService = weatherService ?? WeatherService(),
        _dailyQuoteService = dailyQuoteService ?? DailyQuoteService() {
+    _weatherStore =
+        weatherStore ??
+        WeatherStore(
+          settings: settings,
+          weatherService: _weatherService,
+          log: _log,
+        );
+    _ownsWeatherStore = weatherStore == null;
+    _weatherStore.addListener(_onWeatherStoreChanged);
+    _testModeStore = testModeStore ?? TestModeStore(settings: settings);
+    _ownsTestModeStore = testModeStore == null;
+    _testModeStore.addListener(_onTestModeStoreChanged);
+    _startupStore = startupStore ?? StartupStore(settings: settings);
+    _ownsStartupStore = startupStore == null;
+    _startupStore.addListener(_onStartupStoreChanged);
     WidgetsBinding.instance.addObserver(this);
   }
 
-  final AppDatabaseService _database;
+  final MaintenanceRepository _maintenanceRepository;
   final WordbookRepository _wordbookRepository;
   final PracticeRepository _practiceRepository;
   final AmbientRepository _ambientRepository;
+  final SleepRepository _sleepRepository;
   final SettingsService _settings;
   final PlaybackService _playback;
   final AmbientService _ambient;
-  final AsrService _asr;
+  final AsrServiceContract _asr;
   final FocusService _focusService;
   final CstCloudResourcePrewarmService? _remoteResourcePrewarm;
   final WeatherService _weatherService;
@@ -129,6 +163,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final OnlineAmbientCatalogService _onlineAmbientCatalogService =
       OnlineAmbientCatalogService();
   final Uuid _uuid = const Uuid();
+  late final WeatherStore _weatherStore;
+  late final bool _ownsWeatherStore;
+  late final TestModeStore _testModeStore;
+  late final bool _ownsTestModeStore;
+  late final StartupStore _startupStore;
+  late final bool _ownsStartupStore;
 
   FocusService get focusService => _focusService;
 
@@ -162,26 +202,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
   ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
-  AppHomeTab _startupPage = AppHomeTab.focus;
-  FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
-  StudyStartupTab _studyStartupTab = StudyStartupTab.play;
-  bool _weatherEnabled = false;
-  WeatherSnapshot? _weatherSnapshot;
-  bool _weatherLoading = false;
-  bool _startupTodoPromptEnabled = false;
-  String? _startupTodoPromptSuppressedDate;
-  String? _startupDailyQuote;
-  String _startupDailyQuoteDateKey = '';
-  bool _startupDailyQuoteLoading = false;
   bool _remotePrewarmActive = false;
   bool _remotePrewarmCompleted = false;
   bool _remotePrewarmFailed = false;
   int _remotePrewarmCompletedCount = 0;
   int _remotePrewarmTotalCount = 0;
   String _remotePrewarmCurrentLabel = '';
-  bool _testModeEnabled = false;
-  bool _testModeRevealed = false;
-  bool _testModeHintRevealed = false;
   String? _lastBackupPath;
   String _practiceDateKey = '';
   int _practiceTodaySessions = 0;
@@ -208,7 +234,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   PracticeQuestionType _practiceDefaultQuestionType =
       PracticeQuestionType.flashcard;
   PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
-  int? _pendingTodoReminderLaunchId;
   bool _sleepLoading = false;
   SleepProfile? _sleepProfile;
   SleepPlan? _sleepCurrentPlan;
@@ -313,19 +338,21 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
   ModuleToggleState get moduleToggleState => _moduleToggleState;
-  AppHomeTab get startupPage => _startupPage;
-  FocusStartupTab get focusStartupTab => _focusStartupTab;
-  StudyStartupTab get studyStartupTab => _studyStartupTab;
-  bool get weatherEnabled => _weatherEnabled;
-  WeatherSnapshot? get weatherSnapshot => _weatherSnapshot;
-  bool get weatherLoading => _weatherLoading;
-  bool get startupTodoPromptEnabled => _startupTodoPromptEnabled;
+  AppHomeTab get startupPage => _startupStore.startupPage;
+  FocusStartupTab get focusStartupTab => _startupStore.focusStartupTab;
+  StudyStartupTab get studyStartupTab => _startupStore.studyStartupTab;
+  bool get weatherEnabled => _weatherStore.enabled;
+  WeatherSnapshot? get weatherSnapshot => _weatherStore.snapshot;
+  bool get weatherLoading => _weatherStore.loading;
+  bool get startupTodoPromptEnabled => _startupStore.startupTodoPromptEnabled;
   bool get shouldShowStartupTodoPromptToday =>
-      _startupTodoPromptEnabled &&
-      _startupTodoPromptSuppressedDate != _todayDateKey();
+      _startupStore.startupTodoPromptEnabled &&
+      _startupStore.startupTodoPromptSuppressedDate != _todayDateKey();
   String? get startupDailyQuote =>
-      _startupDailyQuoteDateKey == _todayDateKey() ? _startupDailyQuote : null;
-  bool get startupDailyQuoteLoading => _startupDailyQuoteLoading;
+      _startupStore.startupDailyQuoteDateKey == _todayDateKey()
+      ? _startupStore.startupDailyQuote
+      : null;
+  bool get startupDailyQuoteLoading => _startupStore.startupDailyQuoteLoading;
   bool get remotePrewarmActive => _remotePrewarmActive;
   bool get remotePrewarmCompleted => _remotePrewarmCompleted;
   bool get remotePrewarmFailed => _remotePrewarmFailed;
@@ -406,9 +433,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   String get uiLanguageSelection =>
       _uiLanguageFollowsSystem ? SettingsService.uiLanguageSystem : _uiLanguage;
-  bool get testModeEnabled => _testModeEnabled;
-  bool get testModeRevealed => _testModeRevealed;
-  bool get testModeHintRevealed => _testModeHintRevealed;
+  bool get testModeEnabled => _testModeStore.enabled;
+  bool get testModeRevealed => _testModeStore.revealed;
+  bool get testModeHintRevealed => _testModeStore.hintRevealed;
   String? get lastBackupPath => _lastBackupPath;
   int get practiceTodaySessions => _practiceTodaySessions;
   int get practiceTodayReviewed => _practiceTodayReviewed;
@@ -431,7 +458,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   PracticeQuestionType get practiceDefaultQuestionType =>
       _practiceDefaultQuestionType;
   PracticeRoundSettings get practiceRoundSettings => _practiceRoundSettings;
-  int? get pendingTodoReminderLaunchId => _pendingTodoReminderLaunchId;
+  int? get pendingTodoReminderLaunchId =>
+      _startupStore.pendingTodoReminderLaunchId;
   List<WordEntry> get practiceWrongNotebookEntries {
     return _practiceEntriesFromWords(_practiceWeakWords);
   }
@@ -800,6 +828,222 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void refreshWeatherIfStale() => _refreshWeatherIfStaleImpl();
 
+  Future<void> saveAmbientPresetFromCurrentMix(String name) =>
+      AppStateAmbientDomain(this).saveAmbientPresetFromCurrentMix(name);
+
+  Future<void> deleteAmbientPreset(String presetId) =>
+      AppStateAmbientDomain(this).deleteAmbientPreset(presetId);
+
+  Future<void> applyAmbientPreset(String presetId) =>
+      AppStateAmbientDomain(this).applyAmbientPreset(presetId);
+
+  Future<void> setAmbientMasterVolume(double value) =>
+      AppStateAmbientDomain(this).setAmbientMasterVolume(value);
+
+  Future<void> setAmbientEnabled(bool value) =>
+      AppStateAmbientDomain(this).setAmbientEnabled(value);
+
+  Future<void> setAmbientSourceEnabled(String sourceId, bool enabled) =>
+      AppStateAmbientDomain(this).setAmbientSourceEnabled(sourceId, enabled);
+
+  Future<void> setAmbientSourceVolume(String sourceId, double value) =>
+      AppStateAmbientDomain(this).setAmbientSourceVolume(sourceId, value);
+
+  Future<void> addAmbientFileSource() =>
+      AppStateAmbientDomain(this).addAmbientFileSource();
+
+  Future<List<OnlineAmbientSoundOption>> fetchOnlineAmbientCatalog({
+    bool forceRefresh = false,
+  }) => AppStateAmbientDomain(
+    this,
+  ).fetchOnlineAmbientCatalog(forceRefresh: forceRefresh);
+
+  Future<Set<String>> fetchDownloadedOnlineAmbientRelativePaths() =>
+      AppStateAmbientDomain(this).fetchDownloadedOnlineAmbientRelativePaths();
+
+  Future<String?> downloadOnlineAmbientSource(
+    OnlineAmbientSoundOption option,
+  ) => AppStateAmbientDomain(this).downloadOnlineAmbientSource(option);
+
+  Future<String?> downloadOnlineAmbientSourceWithProgress(
+    OnlineAmbientSoundOption option,
+    void Function(ResourceDownloadProgress progress)? onProgress,
+  ) => AppStateAmbientDomain(
+    this,
+  ).downloadOnlineAmbientSourceWithProgress(option, onProgress);
+
+  Future<bool> deleteDownloadedOnlineAmbientSource(
+    OnlineAmbientSoundOption option,
+  ) => AppStateAmbientDomain(this).deleteDownloadedOnlineAmbientSource(option);
+
+  Future<String?> pickBackgroundImageByPicker() =>
+      AppStateAmbientDomain(this).pickBackgroundImageByPicker();
+
+  Future<void> removeAmbientSource(String sourceId) =>
+      AppStateAmbientDomain(this).removeAmbientSource(sourceId);
+
+  Future<AsrResult> transcribeRecording(
+    String audioPath, {
+    String? expectedText,
+    AsrProviderType? provider,
+    AsrProgressCallback? onProgress,
+  }) => AppStateAsrDomain(this).transcribeRecording(
+    audioPath,
+    expectedText: expectedText,
+    provider: provider,
+    onProgress: onProgress,
+  );
+
+  Future<String?> startAsrRecording({AsrProviderType? provider}) =>
+      AppStateAsrDomain(this).startAsrRecording(provider: provider);
+
+  Future<String?> stopAsrRecording() =>
+      AppStateAsrDomain(this).stopAsrRecording();
+
+  Future<void> cancelAsrRecording() =>
+      AppStateAsrDomain(this).cancelAsrRecording();
+
+  void stopAsrProcessing() => AppStateAsrDomain(this).stopAsrProcessing();
+
+  Future<String?> startVoiceInputRecording({bool forceRecorder = false}) =>
+      AppStateAsrDomain(
+        this,
+      ).startVoiceInputRecording(forceRecorder: forceRecorder);
+
+  Future<String?> stopVoiceInputRecording() =>
+      AppStateAsrDomain(this).stopVoiceInputRecording();
+
+  Future<void> cancelVoiceInputRecording() =>
+      AppStateAsrDomain(this).cancelVoiceInputRecording();
+
+  void stopVoiceInputProcessing() =>
+      AppStateAsrDomain(this).stopVoiceInputProcessing();
+
+  Future<AsrResult> transcribeVoiceInputRecording(
+    String audioPath, {
+    AsrProgressCallback? onProgress,
+  }) => AppStateAsrDomain(
+    this,
+  ).transcribeVoiceInputRecording(audioPath, onProgress: onProgress);
+
+  Future<AsrOfflineModelStatus> getVoiceInputOfflineModelStatus() =>
+      AppStateAsrDomain(this).getVoiceInputOfflineModelStatus();
+
+  Future<void> prepareVoiceInputOfflineModel({
+    AsrProgressCallback? onProgress,
+  }) => AppStateAsrDomain(
+    this,
+  ).prepareVoiceInputOfflineModel(onProgress: onProgress);
+
+  Future<void> removeVoiceInputOfflineModel() =>
+      AppStateAsrDomain(this).removeVoiceInputOfflineModel();
+
+  Future<AsrOfflineModelStatus> getAsrOfflineModelStatus(
+    AsrProviderType provider,
+  ) => AppStateAsrDomain(this).getAsrOfflineModelStatus(provider);
+
+  Future<void> prepareAsrOfflineModel(
+    AsrProviderType provider, {
+    AsrProgressCallback? onProgress,
+  }) => AppStateAsrDomain(
+    this,
+  ).prepareAsrOfflineModel(provider, onProgress: onProgress);
+
+  Future<void> removeAsrOfflineModel(AsrProviderType provider) =>
+      AppStateAsrDomain(this).removeAsrOfflineModel(provider);
+
+  Future<PronScoringPackStatus> getPronScoringPackStatus(
+    PronScoringMethod method,
+  ) => AppStateAsrDomain(this).getPronScoringPackStatus(method);
+
+  Future<void> preparePronScoringPack(
+    PronScoringMethod method, {
+    AsrProgressCallback? onProgress,
+  }) => AppStateAsrDomain(
+    this,
+  ).preparePronScoringPack(method, onProgress: onProgress);
+
+  Future<void> removePronScoringPack(PronScoringMethod method) =>
+      AppStateAsrDomain(this).removePronScoringPack(method);
+
+  PronunciationComparison comparePronunciation(
+    String expected,
+    String recognized,
+  ) => AppStateAsrDomain(this).comparePronunciation(expected, recognized);
+
+  Future<List<DatabaseBackupInfo>> listDatabaseBackups() =>
+      AppStateExportDomain(this).listDatabaseBackups();
+
+  Future<bool> deleteDatabaseBackup(DatabaseBackupInfo backup) =>
+      AppStateExportDomain(this).deleteDatabaseBackup(backup);
+
+  Future<String> getDefaultUserDataExportDirectoryPath() =>
+      AppStateExportDomain(this).getDefaultUserDataExportDirectoryPath();
+
+  Future<String?> exportUserData({
+    Iterable<UserDataExportSection>? sections,
+    String? directoryPath,
+    String? fileName,
+  }) => AppStateExportDomain(this).exportUserData(
+    sections: sections,
+    directoryPath: directoryPath,
+    fileName: fileName,
+  );
+
+  Future<bool> restoreUserDataExport(String filePath) =>
+      AppStateExportDomain(this).restoreUserDataExport(filePath);
+
+  PracticeReviewExportPayload buildPracticeReviewExportPayload({
+    Iterable<PracticeSessionRecord>? records,
+    Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) => AppStateExportDomain(this).buildPracticeReviewExportPayload(
+    records: records,
+    wrongNotebookEntries: wrongNotebookEntries,
+    metadata: metadata,
+  );
+
+  Future<String?> exportPracticeReviewData({
+    required PracticeExportFormat format,
+    String? directoryPath,
+    String? fileName,
+    Iterable<PracticeSessionRecord>? records,
+    Iterable<WordEntry>? wrongNotebookEntries,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) => AppStateExportDomain(this).exportPracticeReviewData(
+    format: format,
+    directoryPath: directoryPath,
+    fileName: fileName,
+    records: records,
+    wrongNotebookEntries: wrongNotebookEntries,
+    metadata: metadata,
+  );
+
+  PracticeWrongNotebookExportPayload buildPracticeWrongNotebookExportPayload({
+    required Iterable<WordEntry> entries,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) => AppStateExportDomain(this).buildPracticeWrongNotebookExportPayload(
+    entries: entries,
+    metadata: metadata,
+  );
+
+  Future<String?> exportPracticeWrongNotebookData({
+    required Iterable<WordEntry> entries,
+    required PracticeExportFormat format,
+    String? directoryPath,
+    String? fileName,
+    Map<String, Object?> metadata = const <String, Object?>{},
+  }) => AppStateExportDomain(this).exportPracticeWrongNotebookData(
+    entries: entries,
+    format: format,
+    directoryPath: directoryPath,
+    fileName: fileName,
+    metadata: metadata,
+  );
+
+  Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) =>
+      AppStateExportDomain(this).restoreDatabaseBackup(backup);
+
   Future<void> ensureRemoteResourcePrewarmOnDemand() =>
       _ensureRemoteResourcePrewarmOnDemandImpl();
 
@@ -999,103 +1243,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void selectWordByText(String word) => _selectWordByTextImpl(word);
 
   Future<void> selectWordEntry(WordEntry entry) => _selectWordEntryImpl(entry);
-
-  Future<void> saveAmbientPresetFromCurrentMix(String name) async {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) {
-      return;
-    }
-    final entries = _ambient.sources
-        .where((source) => source.enabled)
-        .map(
-          (source) => AmbientPresetEntry(
-            sourceId: source.id,
-            name: source.name,
-            volume: source.volume,
-            assetPath: source.assetPath,
-            filePath: source.filePath,
-            remoteUrl: source.remoteUrl,
-            remoteKey: source.remoteKey,
-            categoryKey: source.categoryKey,
-            builtIn: source.isBuiltIn,
-          ),
-        )
-        .toList(growable: false);
-    if (entries.isEmpty) {
-      return;
-    }
-    _ambientPresets = <AmbientPreset>[
-      AmbientPreset(
-        id: _uuid.v4(),
-        name: trimmed,
-        createdAt: DateTime.now(),
-        masterVolume: _ambient.masterVolume,
-        entries: entries,
-      ),
-      ..._ambientPresets,
-    ];
-    _settings.saveAmbientPresets(_ambientPresets);
-    notifyListeners();
-  }
-
-  Future<void> deleteAmbientPreset(String presetId) async {
-    final filtered = _ambientPresets
-        .where((preset) => preset.id != presetId)
-        .toList(growable: false);
-    if (filtered.length == _ambientPresets.length) {
-      return;
-    }
-    _ambientPresets = filtered;
-    _settings.saveAmbientPresets(_ambientPresets);
-    notifyListeners();
-  }
-
-  Future<void> applyAmbientPreset(String presetId) async {
-    final preset = _ambientPresets
-        .where((item) => item.id == presetId)
-        .cast<AmbientPreset?>()
-        .firstOrNull;
-    if (preset == null) {
-      return;
-    }
-
-    for (final entry in preset.entries) {
-      final existing = _ambient.sources
-          .where((source) => _ambientSourceMatchesPreset(source, entry))
-          .cast<AmbientSource?>()
-          .firstOrNull;
-      if (existing != null) {
-        continue;
-      }
-      if (_canMaterializeAmbientPresetEntry(entry)) {
-        _ambient.addFileSourceWithMetadata(
-          entry.filePath!,
-          id: entry.sourceId,
-          name: entry.name,
-          categoryKey: entry.categoryKey,
-          volume: entry.volume,
-        );
-      }
-    }
-
-    for (final source in _ambient.sources) {
-      final matchingEntry = preset.entries
-          .where((entry) => _ambientSourceMatchesPreset(source, entry))
-          .cast<AmbientPresetEntry?>()
-          .firstOrNull;
-      if (matchingEntry != null) {
-        _ambient.setSourceEnabled(source.id, true);
-        _ambient.setSourceVolume(source.id, matchingEntry.volume);
-      } else {
-        _ambient.setSourceEnabled(source.id, false);
-      }
-    }
-
-    _ambient.setEnabled(true);
-    _ambient.setMasterVolume(preset.masterVolume);
-    _scheduleAmbientSync();
-    notifyListeners();
-  }
 
   Future<void> createWordbook(String name) async {
     if (name.trim().isEmpty) return;
@@ -1622,7 +1769,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       await stop();
       _focusService.stop(saveProgress: false);
       await _ambient.reset();
-      await _database.resetUserData();
+      await _maintenanceRepository.resetUserData();
 
       _message = null;
       _messageParams = const <String, Object?>{};
@@ -1643,137 +1790,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _setMessage(
         'errorResetUserDataFailed',
         params: <String, Object?>{'error': error},
-      );
-      notifyListeners();
-      return false;
-    } finally {
-      _setBusy(false);
-    }
-  }
-
-  Future<List<DatabaseBackupInfo>> listDatabaseBackups() {
-    return _database.listSafetyBackups();
-  }
-
-  Future<bool> deleteDatabaseBackup(DatabaseBackupInfo backup) async {
-    try {
-      await _database.deleteSafetyBackup(backup.path);
-      if (_lastBackupPath == backup.path) {
-        _lastBackupPath = null;
-      }
-      notifyListeners();
-      return true;
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'delete backup failed',
-        error: error,
-        stackTrace: stackTrace,
-        data: <String, Object?>{'path': backup.path},
-      );
-      _setMessage(
-        'errorInitFailed',
-        params: <String, Object?>{'error': 'delete backup: $error'},
-      );
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<String> getDefaultUserDataExportDirectoryPath() async {
-    return _database.getDefaultUserDataExportDirectoryPath();
-  }
-
-  Future<String?> exportUserData({
-    Iterable<UserDataExportSection>? sections,
-    String? directoryPath,
-    String? fileName,
-  }) async {
-    _setMessage('processing');
-    return null;
-  }
-
-  Future<bool> restoreUserDataExport(String filePath) async {
-    _setMessage('processing');
-    return false;
-  }
-
-  PracticeReviewExportPayload buildPracticeReviewExportPayload({
-    Iterable<PracticeSessionRecord>? records,
-    Iterable<WordEntry>? wrongNotebookEntries,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) => _buildPracticeReviewExportPayloadImpl(
-    records: records,
-    wrongNotebookEntries: wrongNotebookEntries,
-    metadata: metadata,
-  );
-
-  Future<String?> exportPracticeReviewData({
-    required PracticeExportFormat format,
-    String? directoryPath,
-    String? fileName,
-    Iterable<PracticeSessionRecord>? records,
-    Iterable<WordEntry>? wrongNotebookEntries,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) => _exportPracticeReviewDataImpl(
-    format: format,
-    directoryPath: directoryPath,
-    fileName: fileName,
-    records: records,
-    wrongNotebookEntries: wrongNotebookEntries,
-    metadata: metadata,
-  );
-
-  PracticeWrongNotebookExportPayload buildPracticeWrongNotebookExportPayload({
-    required Iterable<WordEntry> entries,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) => _buildPracticeWrongNotebookExportPayloadImpl(
-    entries: entries,
-    metadata: metadata,
-  );
-
-  Future<String?> exportPracticeWrongNotebookData({
-    required Iterable<WordEntry> entries,
-    required PracticeExportFormat format,
-    String? directoryPath,
-    String? fileName,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) => _exportPracticeWrongNotebookDataImpl(
-    entries: entries,
-    format: format,
-    directoryPath: directoryPath,
-    fileName: fileName,
-    metadata: metadata,
-  );
-
-  Future<bool> restoreDatabaseBackup(DatabaseBackupInfo backup) async {
-    _setBusy(
-      true,
-      messageKey: 'busyRestoringBackup',
-      params: <String, Object?>{'name': backup.name},
-    );
-    try {
-      await _createSafetyBackup(reason: 'before_restore');
-      await stop();
-      _focusService.stop(saveProgress: false);
-      await _ambient.stopAll();
-      await _database.restoreSafetyBackup(backup.path);
-      _message = null;
-      _messageParams = const <String, Object?>{};
-      await _reloadPersistentStateAfterDatabaseChange();
-      notifyListeners();
-      return true;
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'restore backup failed',
-        error: error,
-        stackTrace: stackTrace,
-        data: <String, Object?>{'path': backup.path},
-      );
-      _setMessage(
-        'errorInitFailed',
-        params: <String, Object?>{'error': 'restore backup: $error'},
       );
       notifyListeners();
       return false;
@@ -1849,238 +1865,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     resetTestModeProgress();
     notifyListeners();
     return true;
-  }
-
-  Future<void> setAmbientMasterVolume(double value) async {
-    _ambient.setMasterVolume(value);
-    _scheduleAmbientSync();
-    notifyListeners();
-  }
-
-  Future<void> setAmbientEnabled(bool value) async {
-    _ambient.setEnabled(value);
-    _scheduleAmbientSync();
-    notifyListeners();
-  }
-
-  Future<void> setAmbientSourceEnabled(String sourceId, bool enabled) async {
-    _ambient.setSourceEnabled(sourceId, enabled);
-    _scheduleAmbientSync();
-    notifyListeners();
-  }
-
-  Future<void> setAmbientSourceVolume(String sourceId, double value) async {
-    _ambient.setSourceVolume(sourceId, value);
-    _scheduleAmbientSync();
-    notifyListeners();
-  }
-
-  Future<void> addAmbientFileSource() async {
-    final picked = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      type: FileType.custom,
-      allowedExtensions: <String>['mp3', 'wav', 'ogg', 'm4a', 'flac'],
-    );
-    if (picked == null || picked.files.isEmpty) return;
-    final file = picked.files.first;
-    if (file.path == null || file.path!.trim().isEmpty) return;
-
-    _ambient.addFileSource(file.path!, name: file.name);
-    _scheduleAmbientSync();
-    notifyListeners();
-  }
-
-  Future<List<OnlineAmbientSoundOption>> fetchOnlineAmbientCatalog({
-    bool forceRefresh = false,
-  }) {
-    return _onlineAmbientCatalogService.fetchCatalog(
-      forceRefresh: forceRefresh,
-    );
-  }
-
-  Future<Set<String>> fetchDownloadedOnlineAmbientRelativePaths() {
-    return _onlineAmbientCatalogService.listDownloadedRelativePaths();
-  }
-
-  Future<String?> downloadOnlineAmbientSource(
-    OnlineAmbientSoundOption option,
-  ) async {
-    return downloadOnlineAmbientSourceWithProgress(option, null);
-  }
-
-  Future<String?> downloadOnlineAmbientSourceWithProgress(
-    OnlineAmbientSoundOption option,
-    void Function(ResourceDownloadProgress progress)? onProgress,
-  ) async {
-    try {
-      final path = await _onlineAmbientCatalogService
-          .downloadToLocalWithProgress(option, onProgress);
-      _ambient.addFileSourceWithMetadata(
-        path,
-        id: 'downloaded_${option.id}',
-        name: option.name,
-        categoryKey: option.categoryKey,
-        volume: option.defaultVolume,
-      );
-      _ambientRepository.insertDownloadedAmbientSound(
-        soundId: option.id,
-        remoteKey: option.remoteKey,
-        relativePath: option.relativePath,
-        categoryKey: option.categoryKey,
-        name: option.name,
-        filePath: path,
-      );
-      _scheduleAmbientSync();
-      notifyListeners();
-      return path;
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'download online ambient failed',
-        error: error,
-        stackTrace: stackTrace,
-        data: <String, Object?>{
-          'id': option.id,
-          'name': option.name,
-          'remoteKey': option.remoteKey,
-        },
-      );
-      return null;
-    }
-  }
-
-  Future<bool> deleteDownloadedOnlineAmbientSource(
-    OnlineAmbientSoundOption option,
-  ) async {
-    try {
-      final path = await _onlineAmbientCatalogService.localPathFor(option);
-      await _onlineAmbientCatalogService.deleteLocal(option);
-      _ambientRepository.deleteDownloadedAmbientSound(option.id);
-      final matchingIds = _ambient.sources
-          .where(
-            (source) =>
-                source.id == 'downloaded_${option.id}' ||
-                (source.filePath?.trim() ?? '') == path.trim(),
-          )
-          .map((source) => source.id)
-          .toList(growable: false);
-      for (final sourceId in matchingIds) {
-        _ambient.removeSource(sourceId);
-      }
-      _scheduleAmbientSync();
-      notifyListeners();
-      return true;
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'delete downloaded ambient failed',
-        error: error,
-        stackTrace: stackTrace,
-        data: <String, Object?>{
-          'id': option.id,
-          'name': option.name,
-          'relativePath': option.relativePath,
-        },
-      );
-      return false;
-    }
-  }
-
-  bool _ambientSourceMatchesPreset(
-    AmbientSource source,
-    AmbientPresetEntry entry,
-  ) {
-    if (source.id == entry.sourceId) {
-      return true;
-    }
-    final sourceFilePath = source.filePath?.trim();
-    final entryFilePath = entry.filePath?.trim();
-    if (sourceFilePath != null &&
-        sourceFilePath.isNotEmpty &&
-        sourceFilePath == entryFilePath) {
-      return true;
-    }
-    final sourceAssetPath = source.assetPath?.trim();
-    final entryAssetPath = entry.assetPath?.trim();
-    if (sourceAssetPath != null &&
-        sourceAssetPath.isNotEmpty &&
-        sourceAssetPath == entryAssetPath) {
-      return true;
-    }
-    final sourceRemoteUrl = source.remoteUrl?.trim();
-    final entryRemoteUrl = entry.remoteUrl?.trim();
-    return sourceRemoteUrl != null &&
-        sourceRemoteUrl.isNotEmpty &&
-        sourceRemoteUrl == entryRemoteUrl;
-  }
-
-  bool _canMaterializeAmbientPresetEntry(AmbientPresetEntry entry) {
-    final path = entry.filePath?.trim();
-    return path != null && path.isNotEmpty && File(path).existsSync();
-  }
-
-  Future<String?> pickBackgroundImageByPicker() async {
-    final picked = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      type: FileType.image,
-    );
-    if (picked == null || picked.files.isEmpty) return null;
-    final file = picked.files.first;
-    final path = file.path;
-    if (path == null || path.trim().isEmpty) return null;
-    return path;
-  }
-
-  Future<void> removeAmbientSource(String sourceId) async {
-    _ambient.removeSource(sourceId);
-    _scheduleAmbientSync();
-    notifyListeners();
-  }
-
-  /// Schedule a debounced ambient sync playback to avoid race conditions
-  /// from multiple rapid state changes. This consolidates multiple rapid
-  /// ambient state changes into a single sync call.
-  void _scheduleAmbientSync() {
-    _ambientSyncDebounceTimer?.cancel();
-    _ambientSyncDebounceTimer = Timer(
-      const Duration(milliseconds: 200),
-      () async {
-        await _ambient.syncPlayback();
-      },
-    );
-  }
-
-  /// Restore downloaded ambient sounds from database on app startup
-  Future<void> _restoreDownloadedAmbientSounds() async {
-    try {
-      final downloadedSounds = _ambientRepository.getDownloadedAmbientSounds();
-      for (final sound in downloadedSounds) {
-        final file = File(sound.filePath);
-        if (await file.exists()) {
-          _ambient.addFileSourceWithMetadata(
-            sound.filePath,
-            id: 'downloaded_${sound.soundId}',
-            name: sound.name,
-            categoryKey: sound.categoryKey,
-            volume: 0.5,
-            enabled: false,
-          );
-          _ambientRepository.updateDownloadedAmbientSoundAccess(sound.soundId);
-        } else {
-          _ambientRepository.deleteDownloadedAmbientSound(sound.soundId);
-        }
-      }
-      if (downloadedSounds.isNotEmpty) {
-        _scheduleAmbientSync();
-      }
-    } catch (error, stackTrace) {
-      _log.e(
-        'app_state',
-        'restore downloaded ambient sounds failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
   }
 
   Future<void> previewPronunciation(String word) async {
@@ -2185,131 +1969,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       );
       rethrow;
     }
-  }
-
-  Future<AsrResult> transcribeRecording(
-    String audioPath, {
-    String? expectedText,
-    AsrProviderType? provider,
-    AsrProgressCallback? onProgress,
-  }) {
-    final config = provider == null
-        ? _config.asr
-        : _config.asr.copyWith(provider: provider);
-    return _asr.transcribeFile(
-      audioPath: audioPath,
-      config: config,
-      expectedText: expectedText,
-      ttsConfig: _config.tts,
-      onProgress: onProgress,
-    );
-  }
-
-  Future<String?> startAsrRecording({AsrProviderType? provider}) {
-    final selected = provider ?? _config.asr.provider;
-    final recordingProvider = selected == AsrProviderType.multiEngine
-        ? _config.asr.normalizedEngineOrder.first
-        : selected;
-    return _asr.startRecording(provider: recordingProvider);
-  }
-
-  Future<String?> stopAsrRecording() {
-    return _asr.stopRecording();
-  }
-
-  Future<void> cancelAsrRecording() => _asr.cancelRecording();
-
-  void stopAsrProcessing() => _asr.stopOfflineRecognition();
-
-  Future<String?> startVoiceInputRecording({bool forceRecorder = false}) {
-    if (_config.voiceInput.usesSystemSpeech && !forceRecorder) {
-      return Future<String?>.value(null);
-    }
-    return _asr.startRecording(provider: _config.voiceInput.recordingProvider);
-  }
-
-  Future<String?> stopVoiceInputRecording() => _asr.stopRecording();
-
-  Future<void> cancelVoiceInputRecording() => _asr.cancelRecording();
-
-  void stopVoiceInputProcessing() => _asr.stopOfflineRecognition();
-
-  Future<AsrResult> transcribeVoiceInputRecording(
-    String audioPath, {
-    AsrProgressCallback? onProgress,
-  }) {
-    return _asr.transcribeFile(
-      audioPath: audioPath,
-      config: _config.voiceInput.toAsrConfig(fallback: _config.asr),
-      ttsConfig: _config.tts,
-      onProgress: onProgress,
-    );
-  }
-
-  Future<AsrOfflineModelStatus> getVoiceInputOfflineModelStatus() {
-    return _asr.getOfflineModelStatus(AsrProviderType.offline);
-  }
-
-  Future<void> prepareVoiceInputOfflineModel({
-    AsrProgressCallback? onProgress,
-  }) async {
-    await _asr.prepareOfflineModel(
-      provider: AsrProviderType.offline,
-      language: _config.voiceInput.language,
-      onProgress: onProgress,
-    );
-  }
-
-  Future<void> removeVoiceInputOfflineModel() async {
-    await _asr.removeOfflineModel(AsrProviderType.offline);
-  }
-
-  Future<AsrOfflineModelStatus> getAsrOfflineModelStatus(
-    AsrProviderType provider,
-  ) {
-    return _asr.getOfflineModelStatus(provider);
-  }
-
-  Future<void> prepareAsrOfflineModel(
-    AsrProviderType provider, {
-    AsrProgressCallback? onProgress,
-  }) async {
-    await _asr.prepareOfflineModel(
-      provider: provider,
-      language: _config.asr.language,
-      onProgress: onProgress,
-    );
-  }
-
-  Future<void> removeAsrOfflineModel(AsrProviderType provider) async {
-    await _asr.removeOfflineModel(provider);
-  }
-
-  Future<PronScoringPackStatus> getPronScoringPackStatus(
-    PronScoringMethod method,
-  ) {
-    return _asr.getPronScoringPackStatus(method);
-  }
-
-  Future<void> preparePronScoringPack(
-    PronScoringMethod method, {
-    AsrProgressCallback? onProgress,
-  }) async {
-    await _asr.preparePronScoringPack(method: method, onProgress: onProgress);
-  }
-
-  Future<void> removePronScoringPack(PronScoringMethod method) async {
-    await _asr.removePronScoringPack(method);
-  }
-
-  PronunciationComparison comparePronunciation(
-    String expected,
-    String recognized,
-  ) {
-    return comparePronunciationTexts(
-      expected: expected,
-      recognized: recognized,
-    );
   }
 
   static final List<MapEntry<RegExp, String>> _latinFoldRules =
@@ -2860,7 +2519,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         .cast<Wordbook?>()
         .firstOrNull;
     if (favoritesBook != null) {
-      _favorites = _database
+      _favorites = _wordbookRepository
           .getWords(favoritesBook.id)
           .map((item) => item.collectionReferenceKey)
           .toSet();
@@ -2886,10 +2545,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _persistSpecialWordSet(String settingKey, Set<String> values) {
-    _database.setSetting(
-      settingKey,
-      jsonEncode(values.toList(growable: false)),
-    );
+    _settings.saveStringSet(settingKey, values);
   }
 
   void _updateWordbookCount(String path, int delta) {
@@ -3171,14 +2827,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return wordbook.wordCount > _startupEagerWordLoadLimit;
   }
 
-  Future<void> _createSafetyBackup({required String reason}) async {
-    try {
-      _lastBackupPath = await _database.createSafetyBackup(reason: reason);
-    } catch (_) {
-      _lastBackupPath = null;
-    }
-  }
-
   Future<void> _reloadPersistentStateAfterDatabaseChange() async {
     _config = _settings.loadPlayConfig();
     _playback.updateRuntimeConfig(_config);
@@ -3191,20 +2839,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _uiLanguageFollowsSystem = false;
       _uiLanguage = AppI18n.normalizeLanguageCode(languageSetting);
     }
-    _startupPage = _settings.loadStartupPage();
-    _focusStartupTab = _settings.loadFocusStartupTab();
-    _weatherEnabled = _settings.loadWeatherEnabled();
-    _startupTodoPromptEnabled = _settings.loadStartupTodoPromptEnabled();
-    _startupTodoPromptSuppressedDate = _settings
-        .loadStartupTodoPromptSuppressedDate();
+    _startupStore.syncPersistentStateFromSettings();
+    _weatherStore.syncEnabledFromSettings();
     _rememberedWords = _settings.loadRememberedWords();
     _playbackProgressByWordbookPath = _settings
         .loadPlaybackProgressByWordbook();
 
-    final testModeState = _settings.loadTestModeState();
-    _testModeEnabled = testModeState.enabled;
-    _testModeRevealed = testModeState.revealed;
-    _testModeHintRevealed = testModeState.hintRevealed;
+    _testModeStore.syncFromSettings();
 
     _practiceDateKey = '';
     _practiceTodaySessions = 0;
@@ -3236,19 +2877,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     await _reloadWordbooks(keepCurrentSelection: false);
     await _syncSpecialWordbooks();
     _refreshLocalizedWordbookNames();
-    if (_weatherEnabled) {
+    if (_weatherStore.enabled) {
       unawaited(refreshWeather(force: true));
     }
-  }
-
-  void _persistTestModeState() {
-    _settings.saveTestModeState(
-      TestModeState(
-        enabled: _testModeEnabled,
-        revealed: _testModeRevealed,
-        hintRevealed: _testModeHintRevealed,
-      ),
-    );
   }
 
   void _setMessage(
@@ -3373,6 +3004,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return '${size.toStringAsFixed(precision)} ${units[unitIndex]}';
   }
 
+  void _onWeatherStoreChanged() {
+    _notifyStateChanged();
+  }
+
+  void _onTestModeStoreChanged() {
+    _notifyStateChanged();
+  }
+
+  void _onStartupStoreChanged() {
+    _notifyStateChanged();
+  }
+
   void _notifyStateChanged() {
     notifyListeners();
   }
@@ -3380,12 +3023,24 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     _ambientSyncDebounceTimer?.cancel();
+    _weatherStore.removeListener(_onWeatherStoreChanged);
+    _testModeStore.removeListener(_onTestModeStoreChanged);
+    _startupStore.removeListener(_onStartupStoreChanged);
+    if (_ownsWeatherStore) {
+      _weatherStore.dispose();
+    }
+    if (_ownsTestModeStore) {
+      _testModeStore.dispose();
+    }
+    if (_ownsStartupStore) {
+      _startupStore.dispose();
+    }
     WidgetsBinding.instance.removeObserver(this);
     _playback.stop();
     _focusService.dispose();
     _ambient.stopAll();
     _asr.dispose();
-    _database.dispose();
+    _maintenanceRepository.dispose();
     super.dispose();
   }
 }

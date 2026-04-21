@@ -7,132 +7,9 @@ import 'package:flutter/services.dart';
 import '../../services/toolbox_zen_sand_prefs_service.dart';
 import '../../services/toolbox_zen_sand_sound_service.dart';
 
-const int _maxCanvasActions = 220;
-const double _maxViewportScale = 3.6;
-
-enum _ZenPatternKind { parallel, tidal, orbital, contour }
-
-enum _ZenGestureMode { idle, draw, transform }
-
-enum _ZenDrawerSection { tools, brush, experience, gestures }
-
-enum _ZenRitualApplyMode { append, replace }
-
-class _ZenBackgroundSpec {
-  const _ZenBackgroundSpec({
-    required this.id,
-    required this.labelZh,
-    required this.labelEn,
-    required this.descriptionZh,
-    required this.descriptionEn,
-    required this.startColor,
-    required this.endColor,
-    required this.accent,
-    required this.grooveDark,
-    required this.grooveLight,
-    required this.patternKind,
-    required this.patternSeed,
-    required this.lineSpacing,
-    required this.waveAmplitude,
-  });
-
-  final String id;
-  final String labelZh;
-  final String labelEn;
-  final String descriptionZh;
-  final String descriptionEn;
-  final Color startColor;
-  final Color endColor;
-  final Color accent;
-  final Color grooveDark;
-  final Color grooveLight;
-  final _ZenPatternKind patternKind;
-  final int patternSeed;
-  final double lineSpacing;
-  final double waveAmplitude;
-
-  String label(bool isZh) => isZh ? labelZh : labelEn;
-
-  String description(bool isZh) => isZh ? descriptionZh : descriptionEn;
-
-  Color get fillColor => Color.lerp(startColor, endColor, 0.52)!;
-}
-
-class _ZenToolSpec {
-  const _ZenToolSpec({
-    required this.id,
-    required this.icon,
-    required this.labelZh,
-    required this.labelEn,
-    required this.helpZh,
-    required this.helpEn,
-    required this.tint,
-    this.isPlacement = false,
-    this.supportsColor = false,
-  });
-
-  final String id;
-  final IconData icon;
-  final String labelZh;
-  final String labelEn;
-  final String helpZh;
-  final String helpEn;
-  final Color tint;
-  final bool isPlacement;
-  final bool supportsColor;
-
-  String label(bool isZh) => isZh ? labelZh : labelEn;
-
-  String help(bool isZh) => isZh ? helpZh : helpEn;
-}
-
-class _ZenColorSpec {
-  const _ZenColorSpec({
-    required this.value,
-    required this.labelZh,
-    required this.labelEn,
-  });
-
-  final int value;
-  final String labelZh;
-  final String labelEn;
-
-  Color get color => Color(value);
-
-  String label(bool isZh) => isZh ? labelZh : labelEn;
-}
-
-class _ZenRitualPresetSpec {
-  const _ZenRitualPresetSpec({
-    required this.id,
-    required this.icon,
-    required this.titleZh,
-    required this.titleEn,
-    required this.descriptionZh,
-    required this.descriptionEn,
-    required this.backgroundId,
-    required this.toolId,
-    required this.brushSize,
-    required this.accent,
-    this.colorValue,
-  });
-
-  final String id;
-  final IconData icon;
-  final String titleZh;
-  final String titleEn;
-  final String descriptionZh;
-  final String descriptionEn;
-  final String backgroundId;
-  final String toolId;
-  final double brushSize;
-  final Color accent;
-  final int? colorValue;
-
-  String title(bool isZh) => isZh ? titleZh : titleEn;
-
-  String description(bool isZh) => isZh ? descriptionZh : descriptionEn;
-}
+part 'toolbox_zen_sand_tool_config.dart';
+part 'toolbox_zen_sand_tool_render.dart';
+part 'toolbox_zen_sand_tool_state.dart';
 
 const List<_ZenBackgroundSpec> _backgrounds = <_ZenBackgroundSpec>[
   _ZenBackgroundSpec(
@@ -353,24 +230,6 @@ const List<_ZenRitualPresetSpec> _ritualPresets = <_ZenRitualPresetSpec>[
   ),
 ];
 
-final Map<String, _ZenBackgroundSpec> _backgroundById =
-    <String, _ZenBackgroundSpec>{
-      for (final background in _backgrounds) background.id: background,
-    };
-
-final Map<String, _ZenToolSpec> _toolById = <String, _ZenToolSpec>{
-  for (final tool in _tools) tool.id: tool,
-};
-
-final Map<int, _ZenColorSpec> _colorByValue = <int, _ZenColorSpec>{
-  for (final color in _paintPalette) color.value: color,
-};
-
-final Map<String, _ZenRitualPresetSpec> _ritualById =
-    <String, _ZenRitualPresetSpec>{
-      for (final preset in _ritualPresets) preset.id: preset,
-    };
-
 class ZenSandStudioPage extends StatefulWidget {
   const ZenSandStudioPage({super.key});
 
@@ -379,40 +238,78 @@ class ZenSandStudioPage extends StatefulWidget {
 }
 
 class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
-  List<ZenSandAction> _actions = <ZenSandAction>[];
-  List<ZenSandAction> _redoStack = <ZenSandAction>[];
-  List<Offset> _workingStroke = <Offset>[];
-  String _backgroundId = zenSandDefaultBackgroundId;
-  String _toolId = zenSandDefaultToolId;
-  double _brushSize = zenSandDefaultBrushSize;
-  int _colorValue = zenSandDefaultColorValue;
-  bool _hapticsEnabled = true;
-  bool _guideEnabled = true;
-  bool _soundEnabled = zenSandDefaultSoundEnabled;
-  bool _drawFromContactPoint = zenSandDefaultDrawFromContactPoint;
-  double _touchOffset = zenSandDefaultTouchOffset;
-  bool _immersiveMode = false;
-  double _viewportScale = 1;
-  Offset _viewportOffset = Offset.zero;
-  _ZenGestureMode _gestureMode = _ZenGestureMode.idle;
-  double _gestureScaleStart = 1;
-  Offset _gestureWorldAnchor = Offset.zero;
-  final Set<int> _activePointers = <int>{};
+  final _ZenSandCanvasStore _canvasStore = _ZenSandCanvasStore();
+  List<ZenSandAction> get _actions => _canvasStore.actions;
+  set _actions(List<ZenSandAction> value) => _canvasStore.actions = value;
+
+  List<ZenSandAction> get _redoStack => _canvasStore.redoStack;
+  set _redoStack(List<ZenSandAction> value) => _canvasStore.redoStack = value;
+
+  List<Offset> get _workingStroke => _canvasStore.workingStroke;
+  set _workingStroke(List<Offset> value) => _canvasStore.workingStroke = value;
+
+  String get _backgroundId => _canvasStore.backgroundId;
+  set _backgroundId(String value) => _canvasStore.backgroundId = value;
+
+  String get _toolId => _canvasStore.toolId;
+  set _toolId(String value) => _canvasStore.toolId = value;
+
+  double get _brushSize => _canvasStore.brushSize;
+  set _brushSize(double value) => _canvasStore.brushSize = value;
+
+  int get _colorValue => _canvasStore.colorValue;
+  set _colorValue(int value) => _canvasStore.colorValue = value;
+
+  bool get _hapticsEnabled => _canvasStore.hapticsEnabled;
+  set _hapticsEnabled(bool value) => _canvasStore.hapticsEnabled = value;
+
+  bool get _guideEnabled => _canvasStore.guideEnabled;
+  set _guideEnabled(bool value) => _canvasStore.guideEnabled = value;
+
+  bool get _soundEnabled => _canvasStore.soundEnabled;
+  set _soundEnabled(bool value) => _canvasStore.soundEnabled = value;
+
+  bool get _drawFromContactPoint => _canvasStore.drawFromContactPoint;
+  set _drawFromContactPoint(bool value) =>
+      _canvasStore.drawFromContactPoint = value;
+
+  double get _touchOffset => _canvasStore.touchOffset;
+  set _touchOffset(double value) => _canvasStore.touchOffset = value;
+
+  bool get _immersiveMode => _canvasStore.immersiveMode;
+  set _immersiveMode(bool value) => _canvasStore.immersiveMode = value;
+
+  double get _viewportScale => _canvasStore.viewportScale;
+  set _viewportScale(double value) => _canvasStore.viewportScale = value;
+
+  Offset get _viewportOffset => _canvasStore.viewportOffset;
+  set _viewportOffset(Offset value) => _canvasStore.viewportOffset = value;
+
+  _ZenGestureMode get _gestureMode => _canvasStore.gestureMode;
+  set _gestureMode(_ZenGestureMode value) => _canvasStore.gestureMode = value;
+  final _ZenSandInteractionStore _interactionStore = _ZenSandInteractionStore();
+  final _ZenSandInteractionController _interactionController =
+      _ZenSandInteractionController();
+
+  Size? get _currentCanvasSize => _interactionStore.currentCanvasSize;
+  set _currentCanvasSize(Size? value) => _interactionStore.currentCanvasSize = value;
+
+  Offset? get _lastTouchContactPoint => _interactionStore.lastTouchContactPoint;
+  set _lastTouchContactPoint(Offset? value) =>
+      _interactionStore.lastTouchContactPoint = value;
+
+  Offset? get _lastResolvedInputPoint => _interactionStore.lastResolvedInputPoint;
+  set _lastResolvedInputPoint(Offset? value) =>
+      _interactionStore.lastResolvedInputPoint = value;
+
+  bool get _transformHintVisible => _interactionStore.transformHintVisible;
+
   final Set<_ZenDrawerSection> _expandedDrawerSections = <_ZenDrawerSection>{
     _ZenDrawerSection.tools,
   };
   final ToolboxZenSandSoundService _soundService = ToolboxZenSandSoundService();
-  Size? _currentCanvasSize;
-  Offset? _lastTouchContactPoint;
-  Offset? _lastResolvedInputPoint;
-  Timer? _waterHoldTimer;
-  Timer? _transformIntentTimer;
-  double _strokeTravelDistance = 0;
-  double _lastAccentDistance = 0;
-  int _waterHoldTicks = 0;
-  DateTime _lastSoundAccentAt = DateTime.fromMillisecondsSinceEpoch(0);
-  String? _lastPresetId;
-  bool _transformHintVisible = false;
+  String? get _lastPresetId => _canvasStore.lastPresetId;
+  set _lastPresetId(String? value) => _canvasStore.lastPresetId = value;
 
   bool get _isZh => Localizations.localeOf(
     context,
@@ -443,8 +340,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   @override
   void dispose() {
-    _stopWaterHoldPainter();
-    _transformIntentTimer?.cancel();
+    _interactionController.dispose();
     unawaited(_soundService.stopLoop(immediate: true));
     if (_immersiveMode) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -457,36 +353,14 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     final prefs = await ToolboxZenSandPrefsService.load();
     if (!mounted) return;
     setState(() {
-      _backgroundId = prefs.backgroundId;
-      _toolId = prefs.toolId;
-      _brushSize = prefs.brushSize;
-      _colorValue = prefs.colorValue;
-      _hapticsEnabled = prefs.hapticsEnabled;
-      _guideEnabled = prefs.guidanceEnabled;
-      _soundEnabled = prefs.soundEnabled;
-      _drawFromContactPoint = prefs.drawFromContactPoint;
-      _touchOffset = prefs.touchOffset;
-      _actions = prefs.actions.take(_maxCanvasActions).toList(growable: false);
-      _redoStack = <ZenSandAction>[];
-      _workingStroke = <Offset>[];
+      _canvasStore.restoreFromPrefs(prefs, maxActions: _maxCanvasActions);
     });
   }
 
   void _persist() {
     unawaited(
       ToolboxZenSandPrefsService.save(
-        ZenSandPrefsState(
-          backgroundId: _backgroundId,
-          toolId: _toolId,
-          brushSize: _brushSize,
-          colorValue: _colorValue,
-          hapticsEnabled: _hapticsEnabled,
-          guidanceEnabled: _guideEnabled,
-          soundEnabled: _soundEnabled,
-          drawFromContactPoint: _drawFromContactPoint,
-          touchOffset: _touchOffset,
-          actions: _actions.take(_maxCanvasActions).toList(growable: false),
-        ),
+        _canvasStore.toPrefsState(maxActions: _maxCanvasActions),
       ),
     );
   }
@@ -584,10 +458,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 
   void _resetStrokeAudioSync() {
-    _strokeTravelDistance = 0;
-    _lastAccentDistance = 0;
-    _waterHoldTicks = 0;
-    _lastSoundAccentAt = DateTime.fromMillisecondsSinceEpoch(0);
+    _interactionStore.resetStrokeAudioSync();
   }
 
   double _accentStrideFor(ZenSandSoundKind kind) {
@@ -628,13 +499,14 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     if (kind == null || kind == ZenSandSoundKind.stone) {
       return;
     }
-    _strokeTravelDistance += gestureDistance;
     final now = DateTime.now();
-    final shouldPlay =
-        force ||
-        (_strokeTravelDistance - _lastAccentDistance >=
-                _accentStrideFor(kind) &&
-            now.difference(_lastSoundAccentAt) >= _accentGapFor(kind));
+    final shouldPlay = _interactionStore.shouldPlayAccent(
+      gestureDistance: gestureDistance,
+      accentStride: _accentStrideFor(kind),
+      accentGap: _accentGapFor(kind),
+      force: force,
+      now: now,
+    );
     if (!shouldPlay) {
       return;
     }
@@ -644,8 +516,6 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     final intensity = (0.34 + normalizedDistance * 0.34 + intensityBias)
         .clamp(0.22, 0.92)
         .toDouble();
-    _lastAccentDistance = _strokeTravelDistance;
-    _lastSoundAccentAt = now;
     _soundService.tap(kind, brushSize: _brushSize, intensity: intensity);
   }
 
@@ -693,19 +563,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       _tapHaptic();
     }
     setState(() {
-      _viewportScale = 1;
-      _viewportOffset = Offset.zero;
+      _canvasStore.resetViewport();
     });
   }
 
   void _appendAction(ZenSandAction action) {
-    final nextActions = <ZenSandAction>[..._actions, action];
-    if (nextActions.length > _maxCanvasActions) {
-      nextActions.removeRange(0, nextActions.length - _maxCanvasActions);
-    }
     setState(() {
-      _actions = nextActions;
-      _redoStack = <ZenSandAction>[];
+      _canvasStore.appendAction(action, maxActions: _maxCanvasActions);
       _gestureMode = _ZenGestureMode.idle;
       _workingStroke = <Offset>[];
     });
@@ -737,7 +601,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   void _setBrushSize(double value) {
     setState(() {
-      _brushSize = value.clamp(14.0, 96.0);
+      _canvasStore.setBrushSize(value);
     });
   }
 
@@ -834,36 +698,48 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     if (_toolId != 'water') {
       return;
     }
-    _waterHoldTicks = 0;
-    _waterHoldTimer = Timer.periodic(const Duration(milliseconds: 55), (_) {
-      final canvasSize = _currentCanvasSize;
-      if (!mounted ||
-          _gestureMode != _ZenGestureMode.draw ||
-          _toolId != 'water' ||
-          _workingStroke.isEmpty ||
-          _lastResolvedInputPoint == null ||
-          canvasSize == null) {
-        _stopWaterHoldPainter();
-        return;
-      }
-      final point = _normalize(_lastResolvedInputPoint!, canvasSize);
-      setState(() {
-        _workingStroke = <Offset>[..._workingStroke, point];
-      });
-      _updateSandLoop(gestureDistance: _brushSize * 0.18);
-      _waterHoldTicks += 1;
-      if (_waterHoldTicks % 4 == 0) {
-        _playSandAccent(
-          gestureDistance: _brushSize * 0.32,
-          intensityBias: 0.08,
-        );
-      }
-    });
+    _interactionStore.beginWaterHoldCycle();
+    _interactionController.startWaterHoldFlow(
+      period: const Duration(milliseconds: 55),
+      shouldContinue: _canDriveWaterHoldTick,
+      onTick: _applyWaterHoldTick,
+      onStop: _stopWaterHoldPainter,
+    );
   }
 
   void _stopWaterHoldPainter() {
-    _waterHoldTimer?.cancel();
-    _waterHoldTimer = null;
+    _interactionController.cancelWaterHoldTimer();
+  }
+
+  bool _canDriveWaterHoldTick() {
+    return _interactionStore.canDriveWaterHold(
+      mounted: mounted,
+      gestureMode: _gestureMode,
+      toolId: _toolId,
+      workingStroke: _workingStroke,
+      lastResolvedInputPoint: _lastResolvedInputPoint,
+      canvasSize: _currentCanvasSize,
+    );
+  }
+
+  void _applyWaterHoldTick() {
+    final canvasSize = _currentCanvasSize;
+    final lastResolvedInputPoint = _lastResolvedInputPoint;
+    if (canvasSize == null || lastResolvedInputPoint == null) {
+      return;
+    }
+    final point = _normalize(lastResolvedInputPoint, canvasSize);
+    setState(() {
+      _workingStroke = <Offset>[..._workingStroke, point];
+    });
+    _updateSandLoop(gestureDistance: _brushSize * 0.18);
+    final holdTicks = _interactionStore.incrementWaterHoldTicks();
+    if (holdTicks % 4 == 0) {
+      _playSandAccent(
+        gestureDistance: _brushSize * 0.32,
+        intensityBias: 0.08,
+      );
+    }
   }
 
   Offset _normalize(Offset local, Size size) {
@@ -940,8 +816,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       _stopWaterHoldPainter();
       _stopSandLoop();
       _resetStrokeAudioSync();
-      _lastTouchContactPoint = null;
-      _lastResolvedInputPoint = null;
+      _interactionStore.clearTouchPoints();
       return;
     }
     _tapHaptic();
@@ -959,8 +834,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _stopWaterHoldPainter();
     _stopSandLoop();
     _resetStrokeAudioSync();
-    _lastTouchContactPoint = null;
-    _lastResolvedInputPoint = null;
+    _interactionStore.clearTouchPoints();
   }
 
   void _handlePanCancel() {
@@ -975,64 +849,62 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _stopWaterHoldPainter();
     _stopSandLoop(immediate: true);
     _resetStrokeAudioSync();
-    _lastTouchContactPoint = null;
-    _lastResolvedInputPoint = null;
+    _interactionStore.clearTouchPoints();
   }
 
   void _setTransformHintVisible(bool value) {
-    if (!mounted || _transformHintVisible == value) {
+    if (!mounted) {
       return;
     }
-    setState(() {
-      _transformHintVisible = value;
-    });
+    final didChange = _interactionStore.updateTransformHintVisible(value);
+    if (!didChange) {
+      return;
+    }
+    setState(() {});
   }
 
   void _cancelPendingTransformIntent({bool hideHint = true}) {
-    _transformIntentTimer?.cancel();
-    _transformIntentTimer = null;
+    _interactionController.cancelTransformIntent();
     if (hideHint) {
       _setTransformHintVisible(false);
     }
   }
 
   void _armTransformIntent() {
-    _transformIntentTimer?.cancel();
     _setTransformHintVisible(true);
-    _transformIntentTimer = Timer(const Duration(milliseconds: 260), () {
-      _transformIntentTimer = null;
-      if (!mounted || _activePointers.length < 2) {
-        _cancelPendingTransformIntent();
-        return;
-      }
-      if (_gestureMode == _ZenGestureMode.draw) {
-        _handlePanCancel();
-      }
-    });
+    _interactionController.scheduleTransformIntent(
+      delay: const Duration(milliseconds: 260),
+      shouldFire: () => _interactionStore.canFireTransformIntent(mounted: mounted),
+      onFire: () {
+        if (_gestureMode == _ZenGestureMode.draw) {
+          _handlePanCancel();
+        }
+      },
+      onCancel: _cancelPendingTransformIntent,
+    );
   }
 
   void _handlePointerDown(PointerDownEvent event) {
-    _activePointers.add(event.pointer);
-    if (_activePointers.length >= 2 && _gestureMode == _ZenGestureMode.draw) {
+    _interactionStore.addActivePointer(event.pointer);
+    if (_interactionStore.hasTransformPointers &&
+        _gestureMode == _ZenGestureMode.draw) {
       _armTransformIntent();
     }
-    if (_activePointers.length >= 2) {
+    if (_interactionStore.hasTransformPointers) {
       _stopWaterHoldPainter();
       _stopSandLoop(immediate: true);
       _resetStrokeAudioSync();
-      _lastTouchContactPoint = null;
-      _lastResolvedInputPoint = null;
+      _interactionStore.clearTouchPoints();
     }
   }
 
   void _handlePointerUp(PointerEvent event) {
-    _activePointers.remove(event.pointer);
-    if (_activePointers.length < 2) {
+    _interactionStore.removeActivePointer(event.pointer);
+    if (_interactionStore.hasLessThanTransformPointers) {
       _cancelPendingTransformIntent();
     }
-    if (_activePointers.isEmpty) {
-      _lastTouchContactPoint = null;
-      _lastResolvedInputPoint = null;
+    if (_interactionStore.hasNoPointers) {
+      _interactionStore.clearTouchPoints();
     }
   }
 
@@ -1041,41 +913,32 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _stopWaterHoldPainter();
     _stopSandLoop(immediate: true);
     _resetStrokeAudioSync();
-    _gestureMode = _ZenGestureMode.transform;
-    _gestureScaleStart = _viewportScale;
-    final worldFocal = (focalPoint - _viewportOffset) / _viewportScale;
-    _gestureWorldAnchor = Offset(
-      worldFocal.dx.clamp(0.0, size.width).toDouble(),
-      worldFocal.dy.clamp(0.0, size.height).toDouble(),
-    );
+    _canvasStore.startTransform(focalPoint: focalPoint, size: size);
   }
 
   void _updateTransform(Offset focalPoint, double scale, Size size) {
-    final nextScale = (_gestureScaleStart * scale).clamp(
-      1.0,
-      _maxViewportScale,
+    final didUpdate = _canvasStore.updateTransform(
+      focalPoint: focalPoint,
+      scale: scale,
+      size: size,
+      clampViewportOffset: _clampViewportOffset,
     );
-    final rawOffset = focalPoint - (_gestureWorldAnchor * nextScale);
-    final nextOffset = _clampViewportOffset(rawOffset, size, nextScale);
-    if (_viewportScale == nextScale && _viewportOffset == nextOffset) return;
-    setState(() {
-      _viewportScale = nextScale;
-      _viewportOffset = nextOffset;
-    });
+    if (!didUpdate) {
+      return;
+    }
+    setState(() {});
   }
 
   void _handleScaleStart(ScaleStartDetails details, Size size) {
     _currentCanvasSize = size;
-    if (_activePointers.length >= 2) {
+    if (_interactionStore.hasTransformPointers) {
       _cancelPendingTransformIntent();
-      _lastTouchContactPoint = null;
-      _lastResolvedInputPoint = null;
+      _interactionStore.clearTouchPoints();
       _startTransform(details.localFocalPoint, size);
       return;
     }
     if (_tool.isPlacement) {
-      _lastTouchContactPoint = null;
-      _lastResolvedInputPoint = null;
+      _interactionStore.clearTouchPoints();
       _gestureMode = _ZenGestureMode.idle;
       return;
     }
@@ -1084,7 +947,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   void _handleScaleUpdate(ScaleUpdateDetails details, Size size) {
     final isTransforming =
-        _activePointers.length >= 2 ||
+        _interactionStore.hasTransformPointers ||
         details.scale != 1 ||
         _gestureMode == _ZenGestureMode.transform;
     if (isTransforming) {
@@ -1114,8 +977,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _stopWaterHoldPainter();
     _stopSandLoop(immediate: true);
     _resetStrokeAudioSync();
-    _lastTouchContactPoint = null;
-    _lastResolvedInputPoint = null;
+    _interactionStore.clearTouchPoints();
   }
 
   void _placeStone(Offset local, Size size) {
@@ -1142,49 +1004,26 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 
   void _undo() {
-    if (_actions.isEmpty) return;
+    final didUndo = _canvasStore.undo();
+    if (!didUndo) return;
     _tapHaptic();
-    setState(() {
-      final actions = <ZenSandAction>[..._actions];
-      final removed = actions.removeLast();
-      _actions = actions;
-      _redoStack = <ZenSandAction>[removed, ..._redoStack];
-      _gestureMode = _ZenGestureMode.idle;
-      _workingStroke = <Offset>[];
-    });
+    setState(() {});
     _persist();
   }
 
   void _redo() {
-    if (_redoStack.isEmpty) return;
+    final didRedo = _canvasStore.redo(maxActions: _maxCanvasActions);
+    if (!didRedo) return;
     _tapHaptic();
-    setState(() {
-      final redo = <ZenSandAction>[..._redoStack];
-      final restored = redo.removeAt(0);
-      _redoStack = redo;
-      final actions = <ZenSandAction>[..._actions, restored];
-      if (actions.length > _maxCanvasActions) {
-        actions.removeRange(0, actions.length - _maxCanvasActions);
-      }
-      _actions = actions;
-      _gestureMode = _ZenGestureMode.idle;
-      _workingStroke = <Offset>[];
-    });
+    setState(() {});
     _persist();
   }
 
   void _smoothAll() {
-    if (_strokeCount == 0) return;
+    final didSmooth = _canvasStore.keepOnlyStones();
+    if (!didSmooth) return;
     _impactHaptic();
-    setState(() {
-      _actions = _actions
-          .where((action) => action.isStone)
-          .toList(growable: false);
-      _redoStack = <ZenSandAction>[];
-      _gestureMode = _ZenGestureMode.idle;
-      _workingStroke = <Offset>[];
-      _lastPresetId = null;
-    });
+    setState(() {});
     if (_soundEnabled) {
       _soundService.tap(
         ZenSandSoundKind.smooth,
@@ -1222,14 +1061,10 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       },
     );
     if (confirmed != true || !mounted) return;
+    final didClear = _canvasStore.clearAllActions();
+    if (!didClear) return;
     _impactHaptic();
-    setState(() {
-      _actions = <ZenSandAction>[];
-      _redoStack = <ZenSandAction>[];
-      _gestureMode = _ZenGestureMode.idle;
-      _workingStroke = <Offset>[];
-      _lastPresetId = null;
-    });
+    setState(() {});
     if (_soundEnabled) {
       _soundService.tap(
         ZenSandSoundKind.smooth,
@@ -1261,31 +1096,16 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     required bool replace,
   }) {
     final presetActions = _buildZenRitualActions(preset.id);
-    final nextActions = replace
-        ? presetActions
-        : <ZenSandAction>[..._actions, ...presetActions];
-    if (nextActions.length > _maxCanvasActions) {
-      nextActions.removeRange(0, nextActions.length - _maxCanvasActions);
-    }
 
     _impactHaptic();
     _resetStrokeAudioSync();
     setState(() {
-      if (replace) {
-        _backgroundId = preset.backgroundId;
-        _viewportScale = 1;
-        _viewportOffset = Offset.zero;
-      }
-      _toolId = preset.toolId;
-      _brushSize = preset.brushSize;
-      if (preset.colorValue != null) {
-        _colorValue = preset.colorValue!;
-      }
-      _actions = nextActions;
-      _redoStack = <ZenSandAction>[];
-      _workingStroke = <Offset>[];
-      _gestureMode = _ZenGestureMode.idle;
-      _lastPresetId = preset.id;
+      _canvasStore.applyRitualPreset(
+        preset: preset,
+        presetActions: presetActions,
+        replace: replace,
+        maxActions: _maxCanvasActions,
+      );
     });
     if (_soundEnabled) {
       final impactKind = replace
@@ -2920,232 +2740,6 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 }
 
-ZenSandAction _ritualStroke({
-  required String toolId,
-  required double size,
-  required List<Offset> points,
-  int? colorValue,
-}) {
-  return ZenSandAction.stroke(
-    toolId: toolId,
-    size: size,
-    colorValue: colorValue,
-    points: points
-        .map((point) => ZenSandPoint(point.dx, point.dy))
-        .toList(growable: false),
-  );
-}
-
-List<ZenSandAction> _buildZenRitualActions(String presetId) {
-  switch (presetId) {
-    case 'breath_tides':
-      return <ZenSandAction>[
-        _ritualStroke(
-          toolId: 'wave',
-          size: 24,
-          points: const <Offset>[
-            Offset(0.08, 0.24),
-            Offset(0.26, 0.28),
-            Offset(0.44, 0.22),
-            Offset(0.62, 0.26),
-            Offset(0.88, 0.22),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'wave',
-          size: 22,
-          points: const <Offset>[
-            Offset(0.1, 0.4),
-            Offset(0.28, 0.44),
-            Offset(0.46, 0.38),
-            Offset(0.66, 0.42),
-            Offset(0.9, 0.36),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'wave',
-          size: 22,
-          points: const <Offset>[
-            Offset(0.12, 0.58),
-            Offset(0.32, 0.62),
-            Offset(0.5, 0.55),
-            Offset(0.7, 0.6),
-            Offset(0.9, 0.54),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'finger',
-          size: 20,
-          points: const <Offset>[
-            Offset(0.22, 0.16),
-            Offset(0.34, 0.28),
-            Offset(0.48, 0.44),
-            Offset(0.56, 0.58),
-            Offset(0.64, 0.7),
-          ],
-        ),
-        ZenSandAction.stone(
-          x: 0.76,
-          y: 0.3,
-          size: 28,
-          rotation: 0.24,
-          variant: 2,
-        ),
-      ];
-    case 'stone_balance':
-      return <ZenSandAction>[
-        _ritualStroke(
-          toolId: 'rake',
-          size: 26,
-          points: const <Offset>[
-            Offset(0.12, 0.2),
-            Offset(0.34, 0.24),
-            Offset(0.56, 0.22),
-            Offset(0.84, 0.18),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'rake',
-          size: 24,
-          points: const <Offset>[
-            Offset(0.12, 0.62),
-            Offset(0.34, 0.58),
-            Offset(0.58, 0.6),
-            Offset(0.86, 0.66),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'wave',
-          size: 18,
-          points: const <Offset>[
-            Offset(0.26, 0.34),
-            Offset(0.34, 0.38),
-            Offset(0.44, 0.36),
-            Offset(0.54, 0.4),
-            Offset(0.66, 0.36),
-          ],
-        ),
-        ZenSandAction.stone(
-          x: 0.3,
-          y: 0.48,
-          size: 30,
-          rotation: -0.2,
-          variant: 1,
-        ),
-        ZenSandAction.stone(
-          x: 0.56,
-          y: 0.34,
-          size: 24,
-          rotation: 0.18,
-          variant: 5,
-        ),
-        ZenSandAction.stone(
-          x: 0.72,
-          y: 0.58,
-          size: 34,
-          rotation: -0.12,
-          variant: 7,
-        ),
-      ];
-    case 'water_path':
-      return <ZenSandAction>[
-        _ritualStroke(
-          toolId: 'water',
-          size: 28,
-          colorValue: 0xFF3A7CA5,
-          points: const <Offset>[
-            Offset(0.18, 0.16),
-            Offset(0.32, 0.26),
-            Offset(0.48, 0.42),
-            Offset(0.6, 0.58),
-            Offset(0.72, 0.74),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'gravel',
-          size: 22,
-          points: const <Offset>[
-            Offset(0.12, 0.26),
-            Offset(0.28, 0.34),
-            Offset(0.42, 0.5),
-            Offset(0.54, 0.66),
-            Offset(0.66, 0.82),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'gravel',
-          size: 18,
-          points: const <Offset>[
-            Offset(0.3, 0.12),
-            Offset(0.46, 0.2),
-            Offset(0.6, 0.34),
-            Offset(0.76, 0.48),
-            Offset(0.88, 0.64),
-          ],
-        ),
-        ZenSandAction.stone(
-          x: 0.74,
-          y: 0.24,
-          size: 24,
-          rotation: 0.18,
-          variant: 3,
-        ),
-      ];
-    case 'focus_furrows':
-      return <ZenSandAction>[
-        _ritualStroke(
-          toolId: 'rake',
-          size: 26,
-          points: const <Offset>[
-            Offset(0.18, 0.14),
-            Offset(0.22, 0.34),
-            Offset(0.18, 0.56),
-            Offset(0.22, 0.84),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'rake',
-          size: 24,
-          points: const <Offset>[
-            Offset(0.46, 0.12),
-            Offset(0.5, 0.32),
-            Offset(0.48, 0.56),
-            Offset(0.52, 0.84),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'rake',
-          size: 26,
-          points: const <Offset>[
-            Offset(0.74, 0.14),
-            Offset(0.78, 0.36),
-            Offset(0.74, 0.58),
-            Offset(0.78, 0.86),
-          ],
-        ),
-        _ritualStroke(
-          toolId: 'finger',
-          size: 18,
-          points: const <Offset>[
-            Offset(0.32, 0.22),
-            Offset(0.44, 0.38),
-            Offset(0.56, 0.52),
-            Offset(0.68, 0.66),
-          ],
-        ),
-        ZenSandAction.stone(
-          x: 0.52,
-          y: 0.42,
-          size: 24,
-          rotation: 0.12,
-          variant: 4,
-        ),
-      ];
-    default:
-      return const <ZenSandAction>[];
-  }
-}
-
 class _ZenSheetFrame extends StatelessWidget {
   const _ZenSheetFrame({required this.child});
 
@@ -4239,231 +3833,6 @@ class _ZenToolPreview extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _ZenScenePreviewPainter extends CustomPainter {
-  const _ZenScenePreviewPainter({required this.background});
-
-  final _ZenBackgroundSpec background;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _paintTraySurface(canvas, Offset.zero & size, background, cornerRadius: 18);
-    final previewActions = <ZenSandAction>[
-      ZenSandAction.stroke(
-        toolId: 'rake',
-        size: 26,
-        points: const <ZenSandPoint>[
-          ZenSandPoint(0.12, 0.22),
-          ZenSandPoint(0.28, 0.30),
-          ZenSandPoint(0.46, 0.52),
-          ZenSandPoint(0.68, 0.60),
-          ZenSandPoint(0.88, 0.74),
-        ],
-      ),
-      ZenSandAction.stone(
-        x: 0.72,
-        y: 0.36,
-        size: 28,
-        rotation: 0.3,
-        variant: background.patternSeed % 5,
-      ),
-    ];
-    _paintSandActions(
-      canvas,
-      size,
-      background: background,
-      actions: previewActions,
-      currentStroke: const <Offset>[],
-      currentToolId: 'rake',
-      currentBrushSize: 26,
-      currentColorValue: null,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _ZenScenePreviewPainter oldDelegate) {
-    return oldDelegate.background != background;
-  }
-}
-
-class _ZenRitualPreviewPainter extends CustomPainter {
-  const _ZenRitualPreviewPainter({required this.preset});
-
-  final _ZenRitualPresetSpec preset;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final background =
-        _backgroundById[preset.backgroundId] ?? _backgrounds.first;
-    _paintTraySurface(canvas, Offset.zero & size, background, cornerRadius: 18);
-    _paintSandActions(
-      canvas,
-      size,
-      background: background,
-      actions: _buildZenRitualActions(preset.id),
-      currentStroke: const <Offset>[],
-      currentToolId: preset.toolId,
-      currentBrushSize: preset.brushSize,
-      currentColorValue: preset.colorValue,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _ZenRitualPreviewPainter oldDelegate) {
-    return oldDelegate.preset != preset;
-  }
-}
-
-class _ZenToolPreviewPainter extends CustomPainter {
-  const _ZenToolPreviewPainter({
-    required this.background,
-    required this.tool,
-    required this.brushSize,
-    this.colorValue,
-  });
-
-  final _ZenBackgroundSpec background;
-  final _ZenToolSpec tool;
-  final double brushSize;
-  final int? colorValue;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _paintTraySurface(canvas, Offset.zero & size, background, cornerRadius: 18);
-    final List<ZenSandAction> actions;
-    if (tool.isPlacement) {
-      actions = <ZenSandAction>[
-        ZenSandAction.stone(
-          x: 0.36,
-          y: 0.52,
-          size: brushSize,
-          rotation: -0.28,
-          variant: 2,
-        ),
-        ZenSandAction.stone(
-          x: 0.68,
-          y: 0.42,
-          size: brushSize * 0.78,
-          rotation: 0.22,
-          variant: 5,
-        ),
-      ];
-    } else {
-      actions = <ZenSandAction>[
-        ZenSandAction.stroke(
-          toolId: tool.id,
-          size: brushSize,
-          colorValue: tool.supportsColor ? colorValue : null,
-          points: const <ZenSandPoint>[
-            ZenSandPoint(0.12, 0.62),
-            ZenSandPoint(0.28, 0.48),
-            ZenSandPoint(0.48, 0.58),
-            ZenSandPoint(0.72, 0.36),
-            ZenSandPoint(0.90, 0.44),
-          ],
-        ),
-      ];
-    }
-    _paintSandActions(
-      canvas,
-      size,
-      background: background,
-      actions: actions,
-      currentStroke: const <Offset>[],
-      currentToolId: tool.id,
-      currentBrushSize: brushSize,
-      currentColorValue: tool.supportsColor ? colorValue : null,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _ZenToolPreviewPainter oldDelegate) {
-    return oldDelegate.background != background ||
-        oldDelegate.tool != tool ||
-        oldDelegate.brushSize != brushSize ||
-        oldDelegate.colorValue != colorValue;
-  }
-}
-
-class _ZenSurfacePainter extends CustomPainter {
-  const _ZenSurfacePainter({
-    required this.background,
-    required this.viewportScale,
-    required this.viewportOffset,
-  });
-
-  final _ZenBackgroundSpec background;
-  final double viewportScale;
-  final Offset viewportOffset;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.translate(viewportOffset.dx, viewportOffset.dy);
-    canvas.scale(viewportScale);
-    _paintTraySurface(canvas, Offset.zero & size, background);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _ZenSurfacePainter oldDelegate) {
-    return oldDelegate.background != background ||
-        oldDelegate.viewportScale != viewportScale ||
-        oldDelegate.viewportOffset != viewportOffset;
-  }
-}
-
-class _ZenSandPainter extends CustomPainter {
-  const _ZenSandPainter({
-    required this.background,
-    required this.actions,
-    required this.currentStroke,
-    required this.currentToolId,
-    required this.currentBrushSize,
-    required this.currentColorValue,
-    required this.viewportScale,
-    required this.viewportOffset,
-  });
-
-  final _ZenBackgroundSpec background;
-  final List<ZenSandAction> actions;
-  final List<Offset> currentStroke;
-  final String currentToolId;
-  final double currentBrushSize;
-  final int? currentColorValue;
-  final double viewportScale;
-  final Offset viewportOffset;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.translate(viewportOffset.dx, viewportOffset.dy);
-    canvas.scale(viewportScale);
-    _paintSandActions(
-      canvas,
-      size,
-      background: background,
-      actions: actions,
-      currentStroke: currentStroke,
-      currentToolId: currentToolId,
-      currentBrushSize: currentBrushSize,
-      currentColorValue: currentColorValue,
-    );
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _ZenSandPainter oldDelegate) {
-    return oldDelegate.background != background ||
-        oldDelegate.actions != actions ||
-        oldDelegate.currentStroke != currentStroke ||
-        oldDelegate.currentToolId != currentToolId ||
-        oldDelegate.currentBrushSize != currentBrushSize ||
-        oldDelegate.currentColorValue != currentColorValue ||
-        oldDelegate.viewportScale != viewportScale ||
-        oldDelegate.viewportOffset != viewportOffset;
   }
 }
 

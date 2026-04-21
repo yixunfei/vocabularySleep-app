@@ -12,6 +12,7 @@ import '../models/todo_item.dart';
 import '../models/weather_snapshot.dart';
 import '../state/app_state.dart';
 import '../state/app_state_provider.dart';
+import 'module/module_access.dart';
 import 'pages/focus_page.dart';
 import 'pages/more_page.dart';
 import 'pages/practice_page.dart';
@@ -942,13 +943,12 @@ class _AppShellState extends ConsumerState<AppShell> {
                     return SoothingMiniPlayer(
                       i18n: i18n,
                       onOpen: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const SoothingMusicV2Page(),
-                            settings: const RouteSettings(
-                              name: 'soothing_music',
-                            ),
-                          ),
+                        pushModuleRoute<void>(
+                          context,
+                          state: state,
+                          moduleId: ModuleIds.toolboxSoothingMusic,
+                          settings: const RouteSettings(name: 'soothing_music'),
+                          builder: (_) => const SoothingMusicV2Page(),
                         );
                       },
                       onTogglePlayback: () async {

@@ -1,61 +1,46 @@
 # 模块文档说明
 
-本目录用于存放各模块专属的详细文档。
+本目录用于维护 `PLAN_024` 的模块化推进记录。当前文档按“模块模板四件套”统一描述：
+
+1. 状态独立（state boundary）
+2. 仓库独立（repository boundary）
+3. 注册驱动（registry-driven entry）
+4. 启停守卫（runtime guard）
 
 ---
 
-## 目录结构
+## 当前目录结构
 
-```
+```text
 modules/
-├── auth/              # 认证模块
+├── module_system/
 │   └── README.md
-├── network/           # 网络模块
+├── practice/
 │   └── README.md
-├── storage/           # 存储模块
+├── focus/
 │   └── README.md
-└── ui/                # UI组件模块
+├── toolbox/
+│   └── README.md
+└── sleep/
     └── README.md
 ```
 
 ---
 
-## 命名规范
+## 模块 README 最小模板
 
-每个模块的文档应遵循以下结构：
+每个模块文档至少包含以下章节：
 
-```
-{module_name}/
-├── README.md              # 模块说明（必须）
-├── API.md                 # API接口文档（如适用）
-├── MODULE_CHANGELOG.md    # 模块变更日志
-└── assets/                # 模块相关资源
-    └── diagrams/          # 架构图等
-```
+1. 模块概述（职责边界）
+2. 四件套落地状态（状态/仓库/注册/守卫）
+3. 当前依赖与入口
+4. 风险与后续拆分路线
+5. 更新历史
 
 ---
 
-## 模块文档要求
+## 维护规则
 
-每个模块的 README.md 应包含：
-
-1. **模块概述**: 职责和范围
-2. **架构设计**: 核心组件和关系
-3. **使用指南**: 如何使用该模块
-4. **注意事项**: 潜在风险和注意点
-5. **更新历史**: MODULE_CHANGELOG
-
----
-
-## 已创建的模块
-
-- `module_system`：模块注册、开关状态、运行时守卫。
-- `practice`：练习会话与统计域（阶段 2 优先试点，已接入 `PracticeRepository`）。
-
----
-
-## 维护指南
-
-- 模块文档应与代码同步更新
-- 每次模块重大变更后更新 MODULE_CHANGELOG
-- 保持文档简洁，链接到代码中的详细注释
+- 模块行为或边界调整后，同步更新对应 `modules/<module>/README.md`。
+- 跨模块共享能力（例如模块守卫、注册表、共享仓库接口）变更时，先更新 `modules/module_system/README.md`。
+- 阶段化推进遵循“先可验证再扩面”：先补测试和验收记录，再标记模块状态为“完成”。

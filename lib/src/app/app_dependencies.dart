@@ -24,6 +24,7 @@ import '../state/app_state_provider.dart';
 class AppDependencies {
   AppDependencies._({
     required this.database,
+    required this.maintenanceRepository,
     required this.settingsStoreRepository,
     required this.wordbookRepository,
     required this.practiceRepository,
@@ -41,6 +42,7 @@ class AppDependencies {
   });
 
   final AppDatabaseService database;
+  final MaintenanceRepository maintenanceRepository;
   final SettingsStoreRepository settingsStoreRepository;
   final WordbookRepository wordbookRepository;
   final PracticeRepository practiceRepository;
@@ -52,7 +54,7 @@ class AppDependencies {
   final SettingsService settings;
   final PlaybackService playback;
   final AmbientService ambient;
-  final AsrService asr;
+  final AsrServiceContract asr;
   final FocusService focusService;
   final AppState appState;
 
@@ -70,6 +72,7 @@ class AppDependencies {
       ),
     );
     final settingsStoreRepository = DatabaseSettingsStoreRepository(database);
+    final maintenanceRepository = DatabaseMaintenanceRepository(database);
     final settings = SettingsService.fromRepository(settingsStoreRepository);
     final wordbookRepository = DatabaseWordbookRepository(database);
     final practiceRepository = DatabasePracticeRepository(database);
@@ -101,6 +104,7 @@ class AppDependencies {
       ambient: ambient,
       asr: asr,
       focusService: focusService,
+      maintenanceRepository: maintenanceRepository,
       wordbookRepository: wordbookRepository,
       practiceRepository: practiceRepository,
       ambientRepository: ambientRepository,
@@ -110,6 +114,7 @@ class AppDependencies {
 
     return AppDependencies._(
       database: database,
+      maintenanceRepository: maintenanceRepository,
       settingsStoreRepository: settingsStoreRepository,
       wordbookRepository: wordbookRepository,
       practiceRepository: practiceRepository,

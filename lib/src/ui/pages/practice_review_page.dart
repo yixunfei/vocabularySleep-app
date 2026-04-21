@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/practice_export_format.dart';
 import '../../models/practice_session_record.dart';
 import '../../models/word_entry.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import 'practice_support.dart';
@@ -18,14 +18,14 @@ enum _PracticeTrendMetric { accuracy, reviewed, weak }
 
 enum _PracticeTrendGrouping { session, weekly, monthly }
 
-class PracticeReviewPage extends StatefulWidget {
+class PracticeReviewPage extends ConsumerStatefulWidget {
   const PracticeReviewPage({super.key});
 
   @override
-  State<PracticeReviewPage> createState() => _PracticeReviewPageState();
+  ConsumerState<PracticeReviewPage> createState() => _PracticeReviewPageState();
 }
 
-class _PracticeReviewPageState extends State<PracticeReviewPage> {
+class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
   _PracticeReviewRange _range = _PracticeReviewRange.last7Days;
   _PracticeTrendGrouping _grouping = _PracticeTrendGrouping.session;
   final Set<_PracticeTrendMetric> _trendMetrics = <_PracticeTrendMetric>{
@@ -36,7 +36,7 @@ class _PracticeReviewPageState extends State<PracticeReviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final now = DateTime.now();
     final filteredHistory = _filterHistory(state.practiceSessionHistory, now);
@@ -718,7 +718,7 @@ class _PracticeReviewPageState extends State<PracticeReviewPage> {
     List<WordEntry> filteredNotebook, {
     required Map<String, Object?> metadata,
   }) async {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     final defaultDirectory = await state
         .getDefaultUserDataExportDirectoryPath();
     if (!context.mounted) {

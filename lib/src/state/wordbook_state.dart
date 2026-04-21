@@ -7,14 +7,15 @@ import 'package:path/path.dart' as path;
 import '../models/word_entry.dart';
 import '../models/word_field.dart';
 import '../models/wordbook.dart';
-import '../services/database_service.dart';
+import '../repositories/wordbook_repository.dart';
 import '../utils/search_text_normalizer.dart' as search_text;
 import 'app_state.dart' show SearchMode;
 
 class WordbookState extends ChangeNotifier {
-  WordbookState({required AppDatabaseService database}) : _database = database;
+  WordbookState({required WordbookRepository wordbookRepository})
+    : _wordbookRepository = wordbookRepository;
 
-  final AppDatabaseService _database;
+  final WordbookRepository _wordbookRepository;
 
   List<Wordbook> _wordbooks = <Wordbook>[];
   Wordbook? _selectedWordbook;
@@ -124,7 +125,7 @@ class WordbookState extends ChangeNotifier {
   }
 
   Future<void> loadWordbooks() async {
-    _wordbooks = _database.getWordbooks();
+    _wordbooks = _wordbookRepository.getWordbooks();
     notifyListeners();
   }
 
@@ -135,7 +136,8 @@ class WordbookState extends ChangeNotifier {
   }) async {
     if (wordbook == null) return false;
 
-    if (_database.isLazyBuiltInPath(wordbook.path) && wordbook.wordCount <= 0) {
+    if (_wordbookRepository.isLazyBuiltInPath(wordbook.path) &&
+        wordbook.wordCount <= 0) {
       final lazyWordbookName = wordbook.name;
       final lazyPath = wordbook.path;
 
@@ -145,7 +147,7 @@ class WordbookState extends ChangeNotifier {
       notifyListeners();
 
       try {
-        await _database.ensureBuiltInWordbookLoaded(
+        await _wordbookRepository.ensureBuiltInWordbookLoaded(
           lazyPath,
           onProgress: (progress) {
             _wordbookImportProcessedEntries =
@@ -175,7 +177,7 @@ class WordbookState extends ChangeNotifier {
     }
 
     _selectedWordbook = wordbook;
-    _words = _database.getWords(wordbook.id);
+    _words = _wordbookRepository.getWords(wordbook.id);
     _currentWordIndex = 0;
     _wordsVersion++;
 
@@ -221,7 +223,7 @@ class WordbookState extends ChangeNotifier {
     final wasFavorite = _favorites.contains(word);
     if (wasFavorite) {
       _favorites.remove(word);
-      _database.deleteWord(favoritesBook.id, word);
+      _wordbookRepository.deleteWord(favoritesBook.id, word);
     } else {
       _favorites.add(word);
     }
@@ -240,7 +242,7 @@ class WordbookState extends ChangeNotifier {
     final wasTaskWord = _taskWords.contains(word);
     if (wasTaskWord) {
       _taskWords.remove(word);
-      _database.deleteWord(taskBook.id, word);
+      _wordbookRepository.deleteWord(taskBook.id, word);
     } else {
       _taskWords.add(word);
     }
@@ -251,7 +253,9 @@ class WordbookState extends ChangeNotifier {
 
   void _persistSpecialWordSet(String type, Set<String> words) {
     final filename = type == 'favorites' ? 'favorites.txt' : 'task.txt';
-    final file = File(path.join(path.dirname(_database.dbPath), filename));
+    final file = File(
+      path.join(path.dirname(_wordbookRepository.databasePath), filename),
+    );
     file.writeAsStringSync(words.join('\n'));
   }
 
@@ -345,10 +349,10 @@ class WordbookState extends ChangeNotifier {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final newPath = 'imported/$name-$timestamp';
 
-    _database.ensureSpecialWordbooks();
+    _wordbookRepository.ensureSpecialWordbooks();
 
     final entries = <WordEntryPayload>[];
-    await _database.importWordbook(
+    await _wordbookRepository.importWordbook(
       sourcePath: newPath,
       name: name,
       entries: entries,
@@ -392,7 +396,7 @@ class WordbookState extends ChangeNotifier {
     Wordbook wordbook,
     List<WordEntryPayload> payloads,
   ) async {
-    await _database.importWordbookAsync(
+    await _wordbookRepository.importWordbookAsync(
       sourcePath: wordbook.path,
       name: wordbook.name,
       entries: payloads,

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/database_service.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/setting_tile.dart';
 
-class DataManagementPage extends StatelessWidget {
+class DataManagementPage extends ConsumerWidget {
   const DataManagementPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
 
     return Scaffold(

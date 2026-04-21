@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../theme/app_theme.dart';
 import '../ui_copy.dart';
 import '../wordbook_localization.dart';
@@ -13,12 +13,12 @@ import 'help_center_page.dart';
 import 'settings_home_page.dart';
 import 'wordbook_management_page.dart';
 
-class MorePage extends StatelessWidget {
+class MorePage extends ConsumerWidget {
   const MorePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final mode = experienceModeFromAppearance(state.config.appearance);
 

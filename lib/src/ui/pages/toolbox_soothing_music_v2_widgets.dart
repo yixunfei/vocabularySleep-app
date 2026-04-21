@@ -482,18 +482,19 @@ class _SoothingSpectrumPainter extends CustomPainter {
         phaseOffset;
     final center = size.center(Offset.zero);
     final shortest = math.min(size.width, size.height);
-    final compactBoost = compact ? 1.16 : 1.0;
+    final compactBoost = compact ? 1.38 : 1.0;
     final fullscreenBoost = fullscreen ? 1.22 : 1.0;
     final innerRadius =
         shortest *
         (compact
-            ? 0.17
+            ? 0.19
             : fullscreen
             ? 0.19
             : 0.14);
     final expandedBands = _expandBands(bands, 24);
     final energy =
         bands.fold<double>(0, (sum, item) => sum + item) / bands.length;
+    final visibleEnergy = compact ? math.max(energy, 0.24) : energy;
 
     _drawWaveRibbon(
       canvas,
@@ -501,7 +502,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
       center,
       color: accent.withValues(alpha: isDark ? 0.34 : 0.24),
       phase: phase,
-      amplitude: shortest * 0.046 * waveGain * fullscreenBoost,
+      amplitude: shortest * 0.052 * waveGain * fullscreenBoost * compactBoost,
       verticalOffset: -shortest * 0.06,
       direction: 1,
     );
@@ -511,7 +512,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
       center,
       color: orbitAccent.withValues(alpha: isDark ? 0.28 : 0.2),
       phase: phase + 1.6,
-      amplitude: shortest * 0.036 * waveGain * fullscreenBoost,
+      amplitude: shortest * 0.042 * waveGain * fullscreenBoost * compactBoost,
       verticalOffset: shortest * 0.08,
       direction: -1,
     );
@@ -598,13 +599,17 @@ class _SoothingSpectrumPainter extends CustomPainter {
     for (var i = 0; i < expandedBands.length; i += 1) {
       final angle = -math.pi / 2 + (math.pi * 2 * i / expandedBands.length);
       final amplitude = expandedBands[i];
+      final visualAmplitude = compact
+          ? (0.2 + amplitude * 0.9).clamp(0.2, 1.0)
+          : amplitude;
       final pulse =
-          0.84 + 0.38 * math.sin(phase * 1.8 + i * 0.42 + amplitude * 3.2);
+          0.84 +
+          0.38 * math.sin(phase * 1.8 + i * 0.42 + visualAmplitude * 3.2);
       final length =
-          (22 + amplitude * shortest * 0.08 * barGain * compactBoost)
+          (24 + visualAmplitude * shortest * 0.1 * barGain * compactBoost)
               .toDouble() *
           pulse.clamp(0.72, 1.28);
-      final barWidth = 3.4 + barGain * 1.4;
+      final barWidth = compact ? 4.2 + barGain * 1.6 : 3.4 + barGain * 1.4;
       final barCenter = Offset(
         center.dx + math.cos(angle) * (innerRadius * 2.08 + length * 0.5),
         center.dy + math.sin(angle) * (innerRadius * 2.08 + length * 0.5),
@@ -648,7 +653,12 @@ class _SoothingSpectrumPainter extends CustomPainter {
         center,
         radius,
         Paint()
-          ..color = accent.withValues(alpha: 0.028 * (5 - ring))
+          ..color = accent.withValues(
+            alpha:
+                (compact ? 0.04 : 0.028) *
+                (5 - ring) *
+                (0.9 + visibleEnergy * 0.4),
+          )
           ..style = PaintingStyle.stroke
           ..strokeWidth = 16,
       );
@@ -721,7 +731,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = compact ? 2.8 : 3.6
+      ..strokeWidth = compact ? 3.4 : 3.6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
@@ -766,7 +776,7 @@ class _SoothingSpectrumPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.6
+      ..strokeWidth = compact ? 5.2 : 4.6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 13);

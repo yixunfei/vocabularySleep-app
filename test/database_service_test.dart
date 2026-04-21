@@ -314,7 +314,7 @@ void main() {
     );
   });
 
-  test('database schema version is upgraded for future migrations', () async {
+  test('database schema version is aligned to current migration target', () async {
     final database = AppDatabaseService(WordbookImportService());
     await database.init();
     addTearDown(database.dispose);
@@ -323,7 +323,27 @@ void main() {
     addTearDown(sqlite.dispose);
     final row = sqlite.select('PRAGMA user_version;').single;
 
-    expect((row['user_version'] as int?) ?? 0, greaterThanOrEqualTo(9));
+    expect((row['user_version'] as int?) ?? 0, 9);
+  });
+
+  test('database init rejects unsupported future schema versions', () async {
+    final dbPath = '${tempDir.path}${Platform.pathSeparator}vocabulary.db';
+    final sqlite = sqlite3.open(dbPath);
+    sqlite.execute('PRAGMA user_version = 999;');
+    sqlite.dispose();
+
+    final database = AppDatabaseService(WordbookImportService());
+
+    await expectLater(
+      database.init(),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('newer than supported'),
+        ),
+      ),
+    );
   });
 
   test(

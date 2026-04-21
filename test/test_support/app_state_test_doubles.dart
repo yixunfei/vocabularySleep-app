@@ -166,21 +166,24 @@ class StubAmbientService implements AmbientService {
   Future<void> syncPlayback() async {}
 }
 
-class StubAsrService implements AsrService {
-  // AsrService public APIs are provided by extensions. These methods are
-  // test-only helpers and intentionally do not use @override.
+class StubAsrService implements AsrServiceContract {
+  @override
   Future<String?> startRecording({required AsrProviderType provider}) async {
     return null;
   }
 
+  @override
   Future<String?> stopRecording() async {
     return null;
   }
 
+  @override
   Future<void> cancelRecording() async {}
 
+  @override
   void stopOfflineRecognition() {}
 
+  @override
   Future<AsrResult> transcribeFile({
     required String audioPath,
     required AsrConfig config,
@@ -191,33 +194,44 @@ class StubAsrService implements AsrService {
     return const AsrResult(success: false, error: 'stubAsrNotConfigured');
   }
 
+  @override
   Future<AsrOfflineModelStatus> getOfflineModelStatus(
     AsrProviderType provider,
   ) async {
-    return AsrOfflineModelStatus(provider: provider, installed: false, bytes: 0);
+    return AsrOfflineModelStatus(
+      provider: provider,
+      installed: false,
+      bytes: 0,
+    );
   }
 
+  @override
   Future<void> prepareOfflineModel({
     required AsrProviderType provider,
     required String language,
     AsrProgressCallback? onProgress,
   }) async {}
 
+  @override
   Future<void> removeOfflineModel(AsrProviderType provider) async {}
 
+  @override
   Future<PronScoringPackStatus> getPronScoringPackStatus(
     PronScoringMethod method,
   ) async {
     return PronScoringPackStatus(method: method, installed: false, bytes: 0);
   }
 
+  @override
   Future<void> preparePronScoringPack({
     required PronScoringMethod method,
     AsrProgressCallback? onProgress,
   }) async {}
 
+  @override
   Future<void> removePronScoringPack(PronScoringMethod method) async {}
 
+  @override
   Future<void> dispose() async {}
 }
 

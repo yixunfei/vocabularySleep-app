@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/online_ambient_catalog_service.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 
 Future<void> showOnlineAmbientCatalogSheet(BuildContext context) {
@@ -18,16 +19,16 @@ Future<void> showOnlineAmbientCatalogSheet(BuildContext context) {
   );
 }
 
-class _OnlineAmbientCatalogSheet extends StatefulWidget {
+class _OnlineAmbientCatalogSheet extends ConsumerStatefulWidget {
   const _OnlineAmbientCatalogSheet();
 
   @override
-  State<_OnlineAmbientCatalogSheet> createState() =>
+  ConsumerState<_OnlineAmbientCatalogSheet> createState() =>
       _OnlineAmbientCatalogSheetState();
 }
 
 class _OnlineAmbientCatalogSheetState
-    extends State<_OnlineAmbientCatalogSheet> {
+    extends ConsumerState<_OnlineAmbientCatalogSheet> {
   late Future<List<OnlineAmbientSoundOption>> _catalogFuture;
   Set<String> _downloadedPaths = <String>{};
   final Map<String, double?> _downloadProgressById = <String, double?>{};
@@ -37,13 +38,13 @@ class _OnlineAmbientCatalogSheetState
   @override
   void initState() {
     super.initState();
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     _catalogFuture = state.fetchOnlineAmbientCatalog();
     _refreshDownloadedPaths();
   }
 
   Future<void> _refreshDownloadedPaths() async {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     final paths = await state.fetchDownloadedOnlineAmbientRelativePaths();
     if (!mounted) {
       return;
@@ -68,17 +69,16 @@ class _OnlineAmbientCatalogSheetState
     });
 
     try {
-      final path = await state.downloadOnlineAmbientSourceWithProgress(
-        option,
-        (progress) {
-          if (!mounted) {
-            return;
-          }
-          setState(() {
-            _downloadProgressById[option.id] = progress.progress;
-          });
-        },
-      );
+      final path = await state.downloadOnlineAmbientSourceWithProgress(option, (
+        progress,
+      ) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _downloadProgressById[option.id] = progress.progress;
+        });
+      });
       await _refreshDownloadedPaths();
       if (!mounted) {
         return;
@@ -159,62 +159,73 @@ class _OnlineAmbientCatalogSheetState
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, state, _) {
-        final i18n = AppI18n(state.uiLanguage);
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            16 + MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final state = ref.watch(appStateProvider);
+    final i18n = AppI18n(state.uiLanguage);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        16 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          pickUiText(i18n, zh: '环境音资源库', en: 'Ambient sound catalog'),
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          pickUiText(
-                            i18n,
-                            zh: '从远程资源库下载并缓存环境音，下载完成后可直接加入当前播放组合。',
-                            en: 'Download ambient sounds from the remote library and cache them locally for instant reuse.',
-                          ),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
               Expanded(
-                child: FutureBuilder<List<OnlineAmbientSoundOption>>(
-                  future: _catalogFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    final options = snapshot.data ?? OnlineAmbientCatalogService.fallbackOptions;
-                    final grouped = <String, List<OnlineAmbientSoundOption>>{};
-                    for (final item in options) {
-                      grouped.putIfAbsent(item.categoryKey, () => <OnlineAmbientSoundOption>[]).add(item);
-                    }
-                    return ListView(
-                      children: grouped.entries.map((entry) {
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '环境音资源库',
+                        en: 'Ambient sound catalog',
+                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '从远程资源库下载并缓存环境音，下载完成后可直接加入当前播放组合。',
+                        en: 'Download ambient sounds from the remote library and cache them locally for instant reuse.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: FutureBuilder<List<OnlineAmbientSoundOption>>(
+              future: _catalogFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final options =
+                    snapshot.data ??
+                    OnlineAmbientCatalogService.fallbackOptions;
+                final grouped = <String, List<OnlineAmbientSoundOption>>{};
+                for (final item in options) {
+                  grouped
+                      .putIfAbsent(
+                        item.categoryKey,
+                        () => <OnlineAmbientSoundOption>[],
+                      )
+                      .add(item);
+                }
+                return ListView(
+                  children: grouped.entries
+                      .map((entry) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 18),
                           child: Column(
@@ -226,11 +237,22 @@ class _OnlineAmbientCatalogSheetState
                               ),
                               const SizedBox(height: 8),
                               ...entry.value.map((option) {
-                                final downloaded = _downloadedPaths.contains(option.relativePath);
-                                final localizedName = localizedOnlineAmbientOptionName(i18n, option);
-                                final progress = _downloadProgressById[option.id];
-                                final downloading = _downloadingIds.contains(option.id);
-                                final deleting = _deletingIds.contains(option.id);
+                                final downloaded = _downloadedPaths.contains(
+                                  option.relativePath,
+                                );
+                                final localizedName =
+                                    localizedOnlineAmbientOptionName(
+                                      i18n,
+                                      option,
+                                    );
+                                final progress =
+                                    _downloadProgressById[option.id];
+                                final downloading = _downloadingIds.contains(
+                                  option.id,
+                                );
+                                final deleting = _deletingIds.contains(
+                                  option.id,
+                                );
                                 final busy = downloading || deleting;
                                 return Card(
                                   margin: const EdgeInsets.only(bottom: 8),
@@ -240,16 +262,21 @@ class _OnlineAmbientCatalogSheetState
                                       children: <Widget>[
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: <Widget>[
                                               Text(
                                                 localizedName,
-                                                style: Theme.of(context).textTheme.titleSmall,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.titleSmall,
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
                                                 option.relativePath,
-                                                style: Theme.of(context).textTheme.bodySmall,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall,
                                               ),
                                             ],
                                           ),
@@ -261,35 +288,67 @@ class _OnlineAmbientCatalogSheetState
                                               ? OutlinedButton.icon(
                                                   onPressed: busy
                                                       ? null
-                                                      : () => _handleDelete(state, i18n, option, localizedName),
-                                                  style: OutlinedButton.styleFrom(
-                                                    foregroundColor: Colors.red,
-                                                    side: const BorderSide(color: Colors.red),
-                                                  ),
+                                                      : () => _handleDelete(
+                                                          state,
+                                                          i18n,
+                                                          option,
+                                                          localizedName,
+                                                        ),
+                                                  style:
+                                                      OutlinedButton.styleFrom(
+                                                        foregroundColor:
+                                                            Colors.red,
+                                                        side: const BorderSide(
+                                                          color: Colors.red,
+                                                        ),
+                                                      ),
                                                   icon: _ProgressIcon(
                                                     progress: progress,
                                                     busy: deleting,
-                                                    idleIcon: Icons.delete_outline_rounded,
+                                                    idleIcon: Icons
+                                                        .delete_outline_rounded,
                                                   ),
                                                   label: Text(
                                                     deleting
-                                                        ? pickUiText(i18n, zh: '删除中', en: 'Deleting')
-                                                        : pickUiText(i18n, zh: '删除', en: 'Delete'),
+                                                        ? pickUiText(
+                                                            i18n,
+                                                            zh: '删除中',
+                                                            en: 'Deleting',
+                                                          )
+                                                        : pickUiText(
+                                                            i18n,
+                                                            zh: '删除',
+                                                            en: 'Delete',
+                                                          ),
                                                   ),
                                                 )
                                               : FilledButton.icon(
                                                   onPressed: busy
                                                       ? null
-                                                      : () => _handleDownload(state, i18n, option, localizedName),
+                                                      : () => _handleDownload(
+                                                          state,
+                                                          i18n,
+                                                          option,
+                                                          localizedName,
+                                                        ),
                                                   icon: _ProgressIcon(
                                                     progress: progress,
                                                     busy: downloading,
-                                                    idleIcon: Icons.download_rounded,
+                                                    idleIcon:
+                                                        Icons.download_rounded,
                                                   ),
                                                   label: Text(
                                                     downloading
-                                                        ? pickUiText(i18n, zh: '下载中', en: 'Downloading')
-                                                        : pickUiText(i18n, zh: '下载', en: 'Download'),
+                                                        ? pickUiText(
+                                                            i18n,
+                                                            zh: '下载中',
+                                                            en: 'Downloading',
+                                                          )
+                                                        : pickUiText(
+                                                            i18n,
+                                                            zh: '下载',
+                                                            en: 'Download',
+                                                          ),
                                                   ),
                                                 ),
                                         ),
@@ -301,15 +360,14 @@ class _OnlineAmbientCatalogSheetState
                             ],
                           ),
                         );
-                      }).toList(growable: false),
-                    );
-                  },
-                ),
-              ),
-            ],
+                      })
+                      .toList(growable: false),
+                );
+              },
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
@@ -333,10 +391,7 @@ class _ProgressIcon extends StatelessWidget {
     return SizedBox(
       width: 16,
       height: 16,
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        value: progress,
-      ),
+      child: CircularProgressIndicator(strokeWidth: 2, value: progress),
     );
   }
 }

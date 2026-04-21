@@ -3,12 +3,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../../models/wordbook.dart';
 import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
@@ -20,16 +21,16 @@ import 'follow_along_page.dart';
 import 'word_detail_page.dart';
 import 'word_editor_page.dart';
 
-class LibraryPage extends StatefulWidget {
+class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key, this.onAttachScrollToTop});
 
   final ValueChanged<VoidCallback>? onAttachScrollToTop;
 
   @override
-  State<LibraryPage> createState() => _LibraryPageState();
+  ConsumerState<LibraryPage> createState() => _LibraryPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
+class _LibraryPageState extends ConsumerState<LibraryPage> {
   static const int _pageSize = 20;
   static const Duration _searchDebounceDuration = Duration(milliseconds: 160);
 
@@ -427,7 +428,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     _syncSearchField(state);
 

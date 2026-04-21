@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/app_home_tab.dart';
 import '../../models/focus_startup_tab.dart';
 import '../../models/study_startup_tab.dart';
 import '../../services/settings_service.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 
-class LanguageSettingsPage extends StatelessWidget {
+class LanguageSettingsPage extends ConsumerWidget {
   const LanguageSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final currentLanguageName = i18n.languageName(state.uiLanguage);
 

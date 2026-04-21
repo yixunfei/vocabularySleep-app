@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../widgets/section_header.dart';
 
-class VoiceSettingsPage extends StatefulWidget {
+class VoiceSettingsPage extends ConsumerStatefulWidget {
   const VoiceSettingsPage({super.key});
 
   @override
-  State<VoiceSettingsPage> createState() => _VoiceSettingsPageState();
+  ConsumerState<VoiceSettingsPage> createState() => _VoiceSettingsPageState();
 }
 
-class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
+class _VoiceSettingsPageState extends ConsumerState<VoiceSettingsPage> {
   static const List<_TtsApiModelOption> _apiModels = <_TtsApiModelOption>[
     _TtsApiModelOption(
       id: 'FunAudioLLM/CosyVoice2-0.5B',
@@ -313,7 +313,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
     setState(() {
       _loadingLocalVoices = true;
     });
-    final voices = await context.read<AppState>().fetchLocalTtsVoices();
+    final voices = await ref.read(appStateProvider).fetchLocalTtsVoices();
     if (!mounted) return;
     setState(() {
       _loadingLocalVoices = false;
@@ -325,7 +325,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
     setState(() {
       _loadingApiCache = true;
     });
-    final bytes = await context.read<AppState>().getApiTtsCacheSizeBytes();
+    final bytes = await ref.read(appStateProvider).getApiTtsCacheSizeBytes();
     if (!mounted) return;
     setState(() {
       _loadingApiCache = false;
@@ -396,7 +396,7 @@ class _VoiceSettingsPageState extends State<VoiceSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final tts = config.tts;

@@ -8,7 +8,7 @@ extension _AppStateStartup on AppState {
     _notifyStateChanged();
 
     try {
-      await _database.init();
+      await _maintenanceRepository.init();
       _moduleToggleState = _settings.loadModuleToggleState();
 
       if (isModuleEnabled(ModuleIds.focus)) {
@@ -39,27 +39,21 @@ extension _AppStateStartup on AppState {
       _ambientPresets = _settings.loadAmbientPresets();
       _playbackProgressByWordbookPath = _settings
           .loadPlaybackProgressByWordbook();
-      _startupPage = _settings.loadStartupPage();
-      _focusStartupTab = _settings.loadFocusStartupTab();
-      _studyStartupTab = _settings.loadStudyStartupTab();
-      _weatherEnabled = _settings.loadWeatherEnabled();
-      _startupTodoPromptEnabled = _settings.loadStartupTodoPromptEnabled();
-      _startupTodoPromptSuppressedDate = _settings
-          .loadStartupTodoPromptSuppressedDate();
-      final testModeState = _settings.loadTestModeState();
-      _testModeEnabled = testModeState.enabled;
-      _testModeRevealed = testModeState.revealed;
-      _testModeHintRevealed = testModeState.hintRevealed;
+      _startupStore.syncPersistentStateFromSettings();
+      _weatherStore.syncEnabledFromSettings();
+      _testModeStore.syncFromSettings();
       _loadPracticeDashboard();
       _ensurePracticeDate(persist: true);
-      await _loadSleepAssistantDataImpl();
+      if (isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
+        await _loadSleepAssistantDataImpl();
+      }
       await _reloadWordbooks(
         keepCurrentSelection: false,
         preloadSelectedWords: false,
       );
       await _syncSpecialWordbooks();
       _initialized = true;
-      if (_weatherEnabled) {
+      if (_weatherStore.enabled) {
         unawaited(refreshWeather(force: true));
       }
       _remotePrewarmCompleted = _settings.loadRemoteResourcePrewarmCompleted();
@@ -103,24 +97,15 @@ extension _AppStateStartup on AppState {
   }
 
   void _setStartupPageImpl(AppHomeTab page) {
-    if (_startupPage == page) return;
-    _startupPage = page;
-    _settings.saveStartupPage(page);
-    _notifyStateChanged();
+    _startupStore.setStartupPage(page);
   }
 
   void _setFocusStartupTabImpl(FocusStartupTab tab) {
-    if (_focusStartupTab == tab) return;
-    _focusStartupTab = tab;
-    _settings.saveFocusStartupTab(tab);
-    _notifyStateChanged();
+    _startupStore.setFocusStartupTab(tab);
   }
 
   void _setStudyStartupTabImpl(StudyStartupTab tab) {
-    if (_studyStartupTab == tab) return;
-    _studyStartupTab = tab;
-    _settings.saveStudyStartupTab(tab);
-    _notifyStateChanged();
+    _startupStore.setStudyStartupTab(tab);
   }
 
   void _setModuleEnabledImpl(String moduleId, bool enabled) {
@@ -156,14 +141,14 @@ extension _AppStateStartup on AppState {
     _syncModuleRuntimeTransition(previous: previousState, next: next);
 
     if (!isModuleEnabled(ModuleIds.focus)) {
-      _pendingTodoReminderLaunchId = null;
+      _startupStore.setPendingTodoReminderLaunchId(null);
     }
 
     _notifyStateChanged();
   }
 
   void _normalizeStartupPageForModuleToggles() {
-    if (isModuleEnabled(_moduleIdForHomeTab(_startupPage))) {
+    if (isModuleEnabled(_moduleIdForHomeTab(_startupStore.startupPage))) {
       return;
     }
     for (final tab in const <AppHomeTab>[
@@ -176,8 +161,7 @@ extension _AppStateStartup on AppState {
       if (!isModuleEnabled(_moduleIdForHomeTab(tab))) {
         continue;
       }
-      _startupPage = tab;
-      _settings.saveStartupPage(tab);
+      _startupStore.setStartupPage(tab);
       return;
     }
   }
@@ -215,13 +199,29 @@ extension _AppStateStartup on AppState {
     final focusEnabled = nextGuard.canAccess(ModuleIds.focus);
     if (wasFocusEnabled && !focusEnabled) {
       _focusService.stop();
-      _pendingTodoReminderLaunchId = null;
+      _startupStore.setPendingTodoReminderLaunchId(null);
     } else if (!wasFocusEnabled && focusEnabled && _initialized) {
       unawaited(() async {
         await _focusService.init();
         await _pollPendingTodoReminderLaunchImpl();
         _notifyStateChanged();
       }());
+    }
+
+    final wasSleepAssistantEnabled = previousGuard.canAccess(
+      ModuleIds.toolboxSleepAssistant,
+    );
+    final sleepAssistantEnabled = nextGuard.canAccess(
+      ModuleIds.toolboxSleepAssistant,
+    );
+    if (wasSleepAssistantEnabled && !sleepAssistantEnabled) {
+      _stopSleepRoutineImpl();
+      _sleepNightRescueState = const SleepNightRescueState();
+    } else if (!wasSleepAssistantEnabled &&
+        sleepAssistantEnabled &&
+        _initialized &&
+        !_hasSleepAssistantDataLoaded()) {
+      unawaited(_loadSleepAssistantDataImpl());
     }
 
     final wasAmbientRequired = _isAmbientRuntimeRequired(previous);
@@ -242,35 +242,13 @@ extension _AppStateStartup on AppState {
     }
   }
 
-  void _setWeatherEnabledImpl(bool enabled) {
-    if (_weatherEnabled == enabled) return;
-    _weatherEnabled = enabled;
-    _settings.saveWeatherEnabled(enabled);
-    if (!enabled) {
-      _notifyStateChanged();
-      return;
-    }
-    _notifyStateChanged();
-    unawaited(refreshWeather(force: true));
-  }
-
   void _setStartupTodoPromptEnabledImpl(bool enabled) {
-    if (_startupTodoPromptEnabled == enabled) {
-      return;
-    }
-    _startupTodoPromptEnabled = enabled;
-    _settings.saveStartupTodoPromptEnabled(enabled);
-    _notifyStateChanged();
+    _startupStore.setStartupTodoPromptEnabled(enabled);
   }
 
   void _suppressStartupTodoPromptForTodayImpl() {
     final today = _todayDateKey();
-    if (_startupTodoPromptSuppressedDate == today) {
-      return;
-    }
-    _startupTodoPromptSuppressedDate = today;
-    _settings.saveStartupTodoPromptSuppressedDate(today);
-    _notifyStateChanged();
+    _startupStore.suppressStartupTodoPromptForDate(today);
   }
 
   Future<void> _refreshStartupTodoPromptContentImpl({
@@ -278,20 +256,8 @@ extension _AppStateStartup on AppState {
   }) async {
     await Future.wait(<Future<void>>[
       _refreshStartupDailyQuoteImpl(force: force),
-      _refreshWeatherSnapshotImpl(force: force),
+      _weatherStore.refresh(force: force, bypassEnabled: true),
     ]);
-  }
-
-  Future<void> _refreshWeatherImpl({bool force = false}) async {
-    if (!_weatherEnabled) return;
-    await _refreshWeatherSnapshotImpl(force: force);
-  }
-
-  void _refreshWeatherIfStaleImpl() {
-    if (!_weatherEnabled || _weatherLoading || !_isWeatherStaleImpl()) {
-      return;
-    }
-    unawaited(refreshWeather());
   }
 
   void _didChangeLocalesImpl(List<Locale>? locales) {
@@ -310,88 +276,41 @@ extension _AppStateStartup on AppState {
   }
 
   int? _consumePendingTodoReminderLaunchIdImpl() {
-    final pending = _pendingTodoReminderLaunchId;
-    _pendingTodoReminderLaunchId = null;
-    return pending;
+    return _startupStore.consumePendingTodoReminderLaunchId();
   }
 
   void _setTestModeEnabledImpl(bool enabled) {
-    _testModeEnabled = enabled;
-    _testModeRevealed = false;
-    _testModeHintRevealed = false;
-    _persistTestModeState();
-    _notifyStateChanged();
+    _testModeStore.setEnabled(enabled);
   }
 
   void _toggleTestModeRevealImpl() {
-    if (!_testModeEnabled) return;
-    _testModeRevealed = !_testModeRevealed;
-    _persistTestModeState();
-    _notifyStateChanged();
+    _testModeStore.toggleReveal();
   }
 
   void _toggleTestModeHintImpl() {
-    if (!_testModeEnabled) return;
-    _testModeHintRevealed = !_testModeHintRevealed;
-    _persistTestModeState();
-    _notifyStateChanged();
+    _testModeStore.toggleHint();
   }
 
   void _resetTestModeProgressImpl() {
-    if (!_testModeEnabled) return;
-    if (!_testModeRevealed && !_testModeHintRevealed) return;
-    _testModeRevealed = false;
-    _testModeHintRevealed = false;
-    _persistTestModeState();
-    _notifyStateChanged();
-  }
-
-  bool _isWeatherStaleImpl() {
-    final snapshot = _weatherSnapshot;
-    if (snapshot == null) {
-      return true;
-    }
-    return DateTime.now().difference(snapshot.fetchedAt) >=
-        const Duration(minutes: 30);
-  }
-
-  Future<void> _refreshWeatherSnapshotImpl({bool force = false}) async {
-    if (_weatherLoading) return;
-    if (!force && !_isWeatherStaleImpl()) return;
-
-    _weatherLoading = true;
-    _notifyStateChanged();
-    try {
-      _weatherSnapshot = await _weatherService.fetchCurrentWeather();
-    } catch (error) {
-      _log.w(
-        'app_state',
-        'weather refresh failed',
-        data: <String, Object?>{'error': '$error'},
-      );
-    } finally {
-      _weatherLoading = false;
-      _notifyStateChanged();
-    }
+    _testModeStore.resetProgress();
   }
 
   Future<void> _refreshStartupDailyQuoteImpl({bool force = false}) async {
-    if (_startupDailyQuoteLoading) {
+    if (_startupStore.startupDailyQuoteLoading) {
       return;
     }
     final today = _todayDateKey();
     final hasFreshQuote =
-        _startupDailyQuoteDateKey == today &&
-        (_startupDailyQuote?.trim().isNotEmpty ?? false);
+        _startupStore.startupDailyQuoteDateKey == today &&
+        (_startupStore.startupDailyQuote?.trim().isNotEmpty ?? false);
     if (!force && hasFreshQuote) {
       return;
     }
 
-    _startupDailyQuoteLoading = true;
-    _notifyStateChanged();
+    _startupStore.setStartupDailyQuoteLoading(true);
     try {
-      _startupDailyQuote = await _dailyQuoteService.fetchQuote();
-      _startupDailyQuoteDateKey = today;
+      final quote = await _dailyQuoteService.fetchQuote();
+      _startupStore.setStartupDailyQuote(quote: quote, dateKey: today);
     } catch (error) {
       _log.w(
         'app_state',
@@ -399,8 +318,7 @@ extension _AppStateStartup on AppState {
         data: <String, Object?>{'error': '$error'},
       );
     } finally {
-      _startupDailyQuoteLoading = false;
-      _notifyStateChanged();
+      _startupStore.setStartupDailyQuoteLoading(false);
     }
   }
 
@@ -420,11 +338,7 @@ extension _AppStateStartup on AppState {
     if (todoId == null || todoId <= 0) {
       return;
     }
-    if (_pendingTodoReminderLaunchId == todoId) {
-      return;
-    }
-    _pendingTodoReminderLaunchId = todoId;
-    _notifyStateChanged();
+    _startupStore.setPendingTodoReminderLaunchId(todoId);
   }
 
   Future<void> _startRemoteResourcePrewarmImpl() async {

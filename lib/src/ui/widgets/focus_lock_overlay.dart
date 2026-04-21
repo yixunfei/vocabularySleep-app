@@ -1,26 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/tomato_timer.dart';
-import '../../state/app_state.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 
 /// Full-screen immersive overlay shown during focus sessions.
 ///
 /// Covers the entire app, shows timer countdown and minimal controls.
 /// Prevents accidental exit via back button (requires long-press to unlock).
-class FocusLockOverlay extends StatefulWidget {
+class FocusLockOverlay extends ConsumerStatefulWidget {
   const FocusLockOverlay({super.key});
 
   @override
-  State<FocusLockOverlay> createState() => _FocusLockOverlayState();
+  ConsumerState<FocusLockOverlay> createState() => _FocusLockOverlayState();
 }
 
-class _FocusLockOverlayState extends State<FocusLockOverlay> {
+class _FocusLockOverlayState extends ConsumerState<FocusLockOverlay> {
   bool _unlockConfirming = false;
   double _unlockProgress = 0;
   Timer? _unlockTimer;
@@ -65,7 +65,7 @@ class _FocusLockOverlayState extends State<FocusLockOverlay> {
   }
 
   void _exitLockScreen() {
-    final state = context.read<AppState>();
+    final state = ref.read(appStateProvider);
     state.focusService.setLockScreenActive(false);
   }
 
@@ -95,7 +95,7 @@ class _FocusLockOverlayState extends State<FocusLockOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     final focus = state.focusService;
     final overlayListenable = Listenable.merge(<Listenable>[

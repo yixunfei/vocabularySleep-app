@@ -1,249 +1,5 @@
 part of '../toolbox_sound_tools.dart';
 
-enum _WoodfishSoundProfile {
-  temple,
-  sandal,
-  bright,
-  hollow,
-  night;
-
-  String get id => name;
-
-  String get label => switch (this) {
-    _WoodfishSoundProfile.temple => 'Temple',
-    _WoodfishSoundProfile.sandal => 'Sandal',
-    _WoodfishSoundProfile.bright => 'Bright',
-    _WoodfishSoundProfile.hollow => 'Hollow',
-    _WoodfishSoundProfile.night => 'Night',
-  };
-
-  static _WoodfishSoundProfile fromId(String? value) {
-    for (final item in _WoodfishSoundProfile.values) {
-      if (item.id == value) {
-        return item;
-      }
-    }
-    return _WoodfishSoundProfile.temple;
-  }
-}
-
-enum _WoodfishVisualStyle {
-  zenAmber,
-  inkSandal,
-  nightLantern;
-
-  String get id => switch (this) {
-    _WoodfishVisualStyle.zenAmber => 'zen_amber',
-    _WoodfishVisualStyle.inkSandal => 'ink_sandal',
-    _WoodfishVisualStyle.nightLantern => 'night_lantern',
-  };
-
-  static _WoodfishVisualStyle fromId(String? value) {
-    return switch (value) {
-      'ink_sandal' => _WoodfishVisualStyle.inkSandal,
-      'night_lantern' => _WoodfishVisualStyle.nightLantern,
-      _ => _WoodfishVisualStyle.zenAmber,
-    };
-  }
-}
-
-enum _WoodfishReboundArcPreset {
-  compact,
-  wide;
-
-  String get id => switch (this) {
-    _WoodfishReboundArcPreset.compact => 'compact',
-    _WoodfishReboundArcPreset.wide => 'wide',
-  };
-
-  static _WoodfishReboundArcPreset fromId(String? value) {
-    return switch (value) {
-      'wide' => _WoodfishReboundArcPreset.wide,
-      _ => _WoodfishReboundArcPreset.compact,
-    };
-  }
-}
-
-class _WoodfishVisualTokens {
-  const _WoodfishVisualTokens({
-    required this.primaryAccent,
-    required this.secondaryAccent,
-    required this.screenGradient,
-    required this.immersiveStageGradient,
-    required this.normalStageGradient,
-    required this.bodyGradient,
-    required this.bodyStroke,
-    required this.grooveDark,
-    required this.grooveLight,
-    required this.grain,
-    required this.dust,
-    required this.accentWarm,
-    required this.accentCool,
-    required this.malletShaftGradient,
-    required this.malletHeadGradient,
-    required this.malletBand,
-    required this.malletGlow,
-  });
-
-  final Color primaryAccent;
-  final Color secondaryAccent;
-  final List<Color> screenGradient;
-  final List<Color> immersiveStageGradient;
-  final List<Color> normalStageGradient;
-  final List<Color> bodyGradient;
-  final Color bodyStroke;
-  final Color grooveDark;
-  final Color grooveLight;
-  final Color grain;
-  final Color dust;
-  final Color accentWarm;
-  final Color accentCool;
-  final List<Color> malletShaftGradient;
-  final List<Color> malletHeadGradient;
-  final Color malletBand;
-  final Color malletGlow;
-}
-
-_WoodfishVisualTokens _visualTokens(_WoodfishVisualStyle style) {
-  return switch (style) {
-    _WoodfishVisualStyle.inkSandal => const _WoodfishVisualTokens(
-      primaryAccent: Color(0xFF9CB7D1),
-      secondaryAccent: Color(0xFF6EA5C8),
-      screenGradient: <Color>[
-        Color(0xFF090D16),
-        Color(0xFF121B2C),
-        Color(0xFF0D131F),
-      ],
-      immersiveStageGradient: <Color>[
-        Color(0xFF080D15),
-        Color(0xFF121A28),
-        Color(0xFF0B1019),
-      ],
-      normalStageGradient: <Color>[
-        Color(0xFFE6E8EB),
-        Color(0xFFD7DDE3),
-        Color(0xFFC4CCD5),
-      ],
-      bodyGradient: <Color>[
-        Color(0xFFB8A892),
-        Color(0xFF8B745B),
-        Color(0xFF5B4A39),
-      ],
-      bodyStroke: Color(0xFF2D2520),
-      grooveDark: Color(0xFF25211D),
-      grooveLight: Color(0xFFEDE7DE),
-      grain: Color(0xFF3A322C),
-      dust: Color(0xFFCED7E2),
-      accentWarm: Color(0xFFCAA36A),
-      accentCool: Color(0xFF7BB3CF),
-      malletShaftGradient: <Color>[Color(0xFF8C7A62), Color(0xFF5E5343)],
-      malletHeadGradient: <Color>[
-        Color(0xFFD2C3AA),
-        Color(0xFF9D8769),
-        Color(0xFF6D5C48),
-      ],
-      malletBand: Color(0xFF617489),
-      malletGlow: Color(0xFFA9C5DA),
-    ),
-    _WoodfishVisualStyle.nightLantern => const _WoodfishVisualTokens(
-      primaryAccent: Color(0xFFF5B25E),
-      secondaryAccent: Color(0xFFE68A7B),
-      screenGradient: <Color>[
-        Color(0xFF1F102A),
-        Color(0xFF3D1F2E),
-        Color(0xFF1A1326),
-      ],
-      immersiveStageGradient: <Color>[
-        Color(0xFF160E22),
-        Color(0xFF2A1830),
-        Color(0xFF130C1C),
-      ],
-      normalStageGradient: <Color>[
-        Color(0xFFF3DACC),
-        Color(0xFFE7C2AF),
-        Color(0xFFD19F86),
-      ],
-      bodyGradient: <Color>[
-        Color(0xFFDA9C61),
-        Color(0xFFA05A37),
-        Color(0xFF6A3529),
-      ],
-      bodyStroke: Color(0xFF3E1F18),
-      grooveDark: Color(0xFF2E1814),
-      grooveLight: Color(0xFFF8D1B8),
-      grain: Color(0xFF4A2921),
-      dust: Color(0xFFF7C89E),
-      accentWarm: Color(0xFFF59E0B),
-      accentCool: Color(0xFFE8796D),
-      malletShaftGradient: <Color>[Color(0xFF9A4E37), Color(0xFF6D3326)],
-      malletHeadGradient: <Color>[
-        Color(0xFFE6A06A),
-        Color(0xFFBA653A),
-        Color(0xFF7D3A2B),
-      ],
-      malletBand: Color(0xFFA52B40),
-      malletGlow: Color(0xFFF9BE6B),
-    ),
-    _ => const _WoodfishVisualTokens(
-      primaryAccent: Color(0xFFD9A441),
-      secondaryAccent: Color(0xFF6BAF92),
-      screenGradient: <Color>[
-        Color(0xFF050608),
-        Color(0xFF0B0F14),
-        Color(0xFF090C12),
-      ],
-      immersiveStageGradient: <Color>[
-        Color(0xFF070A0F),
-        Color(0xFF121821),
-        Color(0xFF0A0E14),
-      ],
-      normalStageGradient: <Color>[
-        Color(0xFFF7EBD8),
-        Color(0xFFEBD6B8),
-        Color(0xFFD7B98E),
-      ],
-      bodyGradient: <Color>[
-        Color(0xFFEFDFBC),
-        Color(0xFFD6BA8D),
-        Color(0xFFB58A58),
-      ],
-      bodyStroke: Color(0xFF4A2A11),
-      grooveDark: Color(0xFF3D2414),
-      grooveLight: Color(0xFFF8EACB),
-      grain: Color(0xFF5A391F),
-      dust: Color(0xFFFCEFD2),
-      accentWarm: Color(0xFFF2B35B),
-      accentCool: Color(0xFF8CBF9C),
-      malletShaftGradient: <Color>[Color(0xFFE7C793), Color(0xFFC3945C)],
-      malletHeadGradient: <Color>[
-        Color(0xFFF5DEB3),
-        Color(0xFFD9B27A),
-        Color(0xFFB2834E),
-      ],
-      malletBand: Color(0xFFB45F2B),
-      malletGlow: Color(0xFFF7D289),
-    ),
-  };
-}
-
-class _WoodfishRhythmPreset {
-  const _WoodfishRhythmPreset({
-    required this.id,
-    required this.bpm,
-    required this.beatsPerCycle,
-    required this.subdivision,
-    required this.accentEvery,
-    required this.targetCount,
-  });
-
-  final String id;
-  final int bpm;
-  final int beatsPerCycle;
-  final int subdivision;
-  final int accentEvery;
-  final int targetCount;
-}
-
 class _WoodfishTool extends StatefulWidget {
   const _WoodfishTool({
     this.fullScreen = false,
@@ -320,46 +76,88 @@ class _WoodfishToolState extends State<_WoodfishTool>
   Timer? _floatingHideTimer;
   int _audioRevision = 0;
   int? _transportAnchorUs;
+  final _WoodfishStateStore _stateStore = _WoodfishStateStore();
 
   late final AnimationController _strikeController;
   late final AnimationController _ambientController;
 
-  int _sessionCount = 0;
-  int _allTimeCount = 0;
-  int _pulseInCycle = 0;
-  int _targetCount = 108;
+  int get _sessionCount => _stateStore.sessionCount;
+  set _sessionCount(int value) => _stateStore.sessionCount = value;
+  int get _allTimeCount => _stateStore.allTimeCount;
+  set _allTimeCount(int value) => _stateStore.allTimeCount = value;
 
-  int _bpm = 68;
-  int _beatsPerCycle = 4;
-  int _subdivision = 1;
-  int _accentEvery = 4;
+  int get _pulseInCycle => _stateStore.pulseInCycle;
+  set _pulseInCycle(int value) => _stateStore.pulseInCycle = value;
 
-  double _masterVolume = 0.9;
-  double _accentBoost = 0.18;
-  double _resonance = 0.7;
-  double _brightness = 0.48;
-  double _pitch = 0.0;
-  double _strikeHardness = 0.55;
+  int get _targetCount => _stateStore.targetCount;
+  set _targetCount(int value) => _stateStore.targetCount = value;
 
-  bool _hapticsEnabled = true;
-  bool _autoStopAtGoal = true;
-  bool _autoRunning = false;
-  bool _lastWasAccent = false;
+  int get _bpm => _stateStore.bpm;
+  set _bpm(int value) => _stateStore.bpm = value;
 
-  String _activeRhythmPresetId = 'calm_four';
-  String _lastGesture = 'Tap';
+  int get _beatsPerCycle => _stateStore.beatsPerCycle;
+  set _beatsPerCycle(int value) => _stateStore.beatsPerCycle = value;
+
+  int get _subdivision => _stateStore.subdivision;
+  set _subdivision(int value) => _stateStore.subdivision = value;
+
+  int get _accentEvery => _stateStore.accentEvery;
+  set _accentEvery(int value) => _stateStore.accentEvery = value;
+
+  double get _masterVolume => _stateStore.masterVolume;
+  set _masterVolume(double value) => _stateStore.masterVolume = value;
+
+  double get _accentBoost => _stateStore.accentBoost;
+  set _accentBoost(double value) => _stateStore.accentBoost = value;
+
+  double get _resonance => _stateStore.resonance;
+  set _resonance(double value) => _stateStore.resonance = value;
+
+  double get _brightness => _stateStore.brightness;
+  set _brightness(double value) => _stateStore.brightness = value;
+
+  double get _pitch => _stateStore.pitch;
+  set _pitch(double value) => _stateStore.pitch = value;
+
+  double get _strikeHardness => _stateStore.strikeHardness;
+  set _strikeHardness(double value) => _stateStore.strikeHardness = value;
+
+  bool get _hapticsEnabled => _stateStore.hapticsEnabled;
+  set _hapticsEnabled(bool value) => _stateStore.hapticsEnabled = value;
+
+  bool get _autoStopAtGoal => _stateStore.autoStopAtGoal;
+  set _autoStopAtGoal(bool value) => _stateStore.autoStopAtGoal = value;
+
+  bool get _autoRunning => _stateStore.autoRunning;
+  set _autoRunning(bool value) => _stateStore.autoRunning = value;
+
+  bool get _lastWasAccent => _stateStore.lastWasAccent;
+  set _lastWasAccent(bool value) => _stateStore.lastWasAccent = value;
+
+  String get _activeRhythmPresetId => _stateStore.activeRhythmPresetId;
+  set _activeRhythmPresetId(String value) =>
+      _stateStore.activeRhythmPresetId = value;
+
+  String get _lastGesture => _stateStore.lastGesture;
+  set _lastGesture(String value) => _stateStore.lastGesture = value;
   String _floatingText = '功德 +1';
   _WoodfishSoundProfile _soundProfile = _WoodfishSoundProfile.temple;
   _WoodfishVisualStyle _visualStyle = _WoodfishVisualStyle.zenAmber;
   _WoodfishReboundArcPreset _reboundArcPreset =
       _WoodfishReboundArcPreset.compact;
-  Duration _elapsed = Duration.zero;
-  int _floatingSerial = 0;
-  int? _activeFloatingSerial;
+  Duration get _elapsed => _stateStore.elapsed;
+  set _elapsed(Duration value) => _stateStore.elapsed = value;
+
+  int get _floatingSerial => _stateStore.floatingSerial;
+  set _floatingSerial(int value) => _stateStore.floatingSerial = value;
+
+  int? get _activeFloatingSerial => _stateStore.activeFloatingSerial;
+  set _activeFloatingSerial(int? value) =>
+      _stateStore.activeFloatingSerial = value;
 
   late final TextEditingController _floatingTextController;
 
-  int get _cyclePulses => math.max(1, _beatsPerCycle * _subdivision);
+  int get _cyclePulses => _stateStore.cyclePulses;
   String get _resolvedFloatingText =>
       _floatingText.trim().isEmpty ? '功德 +1' : _floatingText.trim();
 
@@ -441,15 +239,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
     super.dispose();
   }
 
-  bool _isAccentPulse(int pulseIndex) {
-    if (pulseIndex == 0) {
-      return true;
-    }
-    if (_accentEvery <= 1) {
-      return true;
-    }
-    return pulseIndex % _accentEvery == 0;
-  }
+  bool _isAccentPulse(int pulseIndex) => _stateStore.isAccentPulse(pulseIndex);
 
   void _suspendForOverlay() {
     _stopHoldRoll();
@@ -639,30 +429,14 @@ class _WoodfishToolState extends State<_WoodfishTool>
     if (!mounted) {
       return;
     }
-    final cyclePulses = (prefs.beatsPerCycle * prefs.subdivision).clamp(1, 96);
     setState(() {
       _soundProfile = _WoodfishSoundProfile.fromId(prefs.soundId);
       _visualStyle = _WoodfishVisualStyle.fromId(prefs.visualStyleId);
       _reboundArcPreset = _WoodfishReboundArcPreset.fromId(prefs.reboundArcId);
-      _activeRhythmPresetId = prefs.rhythmPresetId;
-      _bpm = prefs.bpm;
-      _beatsPerCycle = prefs.beatsPerCycle;
-      _subdivision = prefs.subdivision;
-      _accentEvery = prefs.accentEvery.clamp(1, cyclePulses);
-      _masterVolume = prefs.masterVolume;
-      _accentBoost = prefs.accentBoost;
-      _resonance = prefs.resonance;
-      _brightness = prefs.brightness;
-      _pitch = prefs.pitch;
-      _strikeHardness = prefs.strike;
-      _targetCount = prefs.targetCount;
-      _hapticsEnabled = prefs.hapticsEnabled;
-      _autoStopAtGoal = prefs.autoStopAtGoal;
-      _allTimeCount = prefs.allTimeCount;
+      _stateStore.applyPrefs(prefs);
       _floatingText = prefs.floatingText.trim().isEmpty
           ? '功德 +1'
           : prefs.floatingText.trim();
-      _pulseInCycle = _pulseInCycle % _cyclePulses;
     });
     _floatingTextController.value = TextEditingValue(
       text: _floatingText,
@@ -771,14 +545,11 @@ class _WoodfishToolState extends State<_WoodfishTool>
       return;
     }
     setState(() {
-      _sessionCount += 1;
-      _allTimeCount += 1;
-      _lastWasAccent = accent;
-      _lastGesture = gesture;
-      _pulseInCycle = (_pulseInCycle + 1) % _cyclePulses;
-      _elapsed = _sessionStopwatch.elapsed;
-      _floatingSerial += 1;
-      _activeFloatingSerial = _floatingSerial;
+      _stateStore.registerStrike(
+        accent: accent,
+        gesture: gesture,
+        elapsedValue: _sessionStopwatch.elapsed,
+      );
     });
     _floatingHideTimer?.cancel();
     _floatingHideTimer = Timer(const Duration(milliseconds: 920), () {
@@ -841,8 +612,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
       return;
     }
     setState(() {
-      _autoRunning = true;
-      _lastGesture = 'Auto';
+      _stateStore.startAuto();
     });
     _transportAnchorUs = DateTime.now().microsecondsSinceEpoch;
     unawaited(_performStrike(gesture: 'Auto', fromAuto: true));
@@ -857,7 +627,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
       return;
     }
     setState(() {
-      _autoRunning = false;
+      _stateStore.stopAuto();
     });
   }
 
@@ -879,38 +649,21 @@ class _WoodfishToolState extends State<_WoodfishTool>
     _sessionTicker?.cancel();
     _sessionTicker = null;
     setState(() {
-      _sessionCount = 0;
-      _pulseInCycle = 0;
-      _elapsed = Duration.zero;
-      _lastGesture = 'Reset';
-      _activeFloatingSerial = null;
+      _stateStore.resetSession();
     });
     _schedulePersist();
   }
 
   void _resetAllTime() {
     setState(() {
-      _allTimeCount = 0;
+      _stateStore.resetAllTime();
     });
     _schedulePersist();
   }
 
-  void _markCustomRhythm() {
-    if (_activeRhythmPresetId != 'custom') {
-      _activeRhythmPresetId = 'custom';
-    }
-  }
-
   void _applyRhythmPreset(_WoodfishRhythmPreset preset) {
-    final cyclePulses = math.max(1, preset.beatsPerCycle * preset.subdivision);
     setState(() {
-      _activeRhythmPresetId = preset.id;
-      _bpm = preset.bpm;
-      _beatsPerCycle = preset.beatsPerCycle;
-      _subdivision = preset.subdivision;
-      _accentEvery = preset.accentEvery.clamp(1, cyclePulses);
-      _targetCount = preset.targetCount;
-      _pulseInCycle = _pulseInCycle % cyclePulses;
+      _stateStore.applyRhythmPreset(preset);
     });
     _resyncAutoScheduler();
     _schedulePersist();
@@ -1001,8 +754,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
           divisions: 132,
           onChanged: (value) {
             setState(() {
-              _bpm = value.round();
-              _markCustomRhythm();
+              _stateStore.updateBpm(value.round());
             });
             _resyncAutoScheduler();
             refreshSheet();
@@ -1022,13 +774,8 @@ class _WoodfishToolState extends State<_WoodfishTool>
           max: 12,
           divisions: 10,
           onChanged: (value) {
-            final beats = value.round();
-            final cyclePulses = math.max(1, beats * _subdivision);
             setState(() {
-              _beatsPerCycle = beats;
-              _accentEvery = _accentEvery.clamp(1, cyclePulses);
-              _pulseInCycle = _pulseInCycle % cyclePulses;
-              _markCustomRhythm();
+              _stateStore.updateBeatsPerCycle(value.round());
             });
             _resyncAutoScheduler();
             refreshSheet();
@@ -1048,13 +795,8 @@ class _WoodfishToolState extends State<_WoodfishTool>
           max: 4,
           divisions: 3,
           onChanged: (value) {
-            final subdivision = value.round();
-            final cyclePulses = math.max(1, _beatsPerCycle * subdivision);
             setState(() {
-              _subdivision = subdivision;
-              _accentEvery = _accentEvery.clamp(1, cyclePulses);
-              _pulseInCycle = _pulseInCycle % cyclePulses;
-              _markCustomRhythm();
+              _stateStore.updateSubdivision(value.round());
             });
             _resyncAutoScheduler();
             refreshSheet();
@@ -1075,8 +817,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
           divisions: math.max(0, _cyclePulses - 1),
           onChanged: (value) {
             setState(() {
-              _accentEvery = value.round().clamp(1, _cyclePulses);
-              _markCustomRhythm();
+              _stateStore.updateAccentEvery(value.round());
             });
             refreshSheet();
           },
@@ -2200,132 +1941,6 @@ class _WoodfishToolState extends State<_WoodfishTool>
       return _buildFullScreen(context);
     }
     return _buildNormal(context);
-  }
-}
-
-class _WoodfishStagePainter extends CustomPainter {
-  const _WoodfishStagePainter({
-    required this.colorScheme,
-    required this.impact,
-    required this.ambient,
-    required this.cycleProgress,
-    required this.accent,
-    required this.immersive,
-    required this.visualStyle,
-  });
-
-  final ColorScheme colorScheme;
-  final double impact;
-  final double ambient;
-  final double cycleProgress;
-  final bool accent;
-  final bool immersive;
-  final _WoodfishVisualStyle visualStyle;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final tokens = _visualTokens(visualStyle);
-    final rect = Offset.zero & size;
-
-    // ── Stage background gradient ──
-    final stageColors = immersive
-        ? tokens.immersiveStageGradient
-        : tokens.normalStageGradient;
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[
-            stageColors[0],
-            Color.lerp(stageColors[1], stageColors[2], ambient * 0.7)!,
-            stageColors[2],
-          ],
-        ).createShader(rect),
-    );
-
-    // ── Subtle vignette ──
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(0, 0.2),
-          radius: 1.1,
-          colors: <Color>[
-            Colors.transparent,
-            Colors.black.withValues(alpha: immersive ? 0.32 : 0.12),
-          ],
-          stops: const <double>[0.5, 1.0],
-        ).createShader(rect),
-    );
-
-    // ── Ambient haze / dust overlay ──
-    if (immersive) {
-      // Subtle warm glow at center
-      canvas.drawRect(
-        rect,
-        Paint()
-          ..shader = RadialGradient(
-            center: const Alignment(0, 0.3),
-            radius: 0.9,
-            colors: <Color>[
-              tokens.accentWarm.withValues(alpha: 0.04 + impact * 0.03),
-              Colors.transparent,
-            ],
-          ).createShader(rect),
-      );
-    } else {
-      // Light-mode wood-grain texture lines
-      final texturePaint = Paint()
-        ..color = tokens.grain.withValues(alpha: 0.1)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8;
-      for (var index = 0; index < 5; index += 1) {
-        final y = rect.top + rect.height * (0.18 + index * 0.14);
-        final sway = math.sin((ambient + index * 0.2) * math.pi * 2) * 6;
-        final path = Path()
-          ..moveTo(rect.left - 20, y + sway * 0.2)
-          ..cubicTo(
-            rect.width * 0.24,
-            y - 6 + sway,
-            rect.width * 0.56,
-            y + 10 - sway * 0.7,
-            rect.right + 20,
-            y - 3 + sway * 0.25,
-          );
-        canvas.drawPath(path, texturePaint);
-      }
-    }
-
-    // ── Floating dust particles ──
-    for (var i = 0; i < 8; i += 1) {
-      final phase = (ambient + i * 0.14) % 1.0;
-      final px = rect.left + rect.width * (0.1 + i * 0.11);
-      final py = rect.top + rect.height * (0.15 + phase * 0.65);
-      final drift = math.sin((ambient * 2 + i * 0.3) * math.pi) * 8;
-      canvas.drawCircle(
-        Offset(px + drift, py),
-        0.8 + (i % 3) * 0.4,
-        Paint()
-          ..color = tokens.dust.withValues(
-            alpha:
-                (immersive ? 0.06 : 0.1) *
-                (1 - phase * 0.6) *
-                (0.6 + impact * 0.5),
-          ),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _WoodfishStagePainter oldDelegate) {
-    return oldDelegate.impact != impact ||
-        oldDelegate.ambient != ambient ||
-        oldDelegate.cycleProgress != cycleProgress ||
-        oldDelegate.accent != accent ||
-        oldDelegate.immersive != immersive ||
-        oldDelegate.visualStyle != visualStyle;
   }
 }
 
