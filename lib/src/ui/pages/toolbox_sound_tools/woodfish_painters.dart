@@ -745,4 +745,3 @@ class _WoodfishMalletPainter extends CustomPainter {
         oldDelegate.visualStyle != visualStyle;
   }
 }
-
