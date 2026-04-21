@@ -35,6 +35,7 @@ part 'toolbox_sound_tools/woodfish_config.dart';
 part 'toolbox_sound_tools/woodfish_state.dart';
 part 'toolbox_sound_tools/woodfish.dart';
 part 'toolbox_sound_tools/woodfish_render.dart';
+part 'toolbox_sound_tools/woodfish_painters.dart';
 part 'toolbox_sound_tools/models.dart';
 part 'toolbox_sound_tools/piano.dart';
 part 'toolbox_sound_tools/piano_state_logic.dart';

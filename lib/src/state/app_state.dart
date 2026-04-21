@@ -47,6 +47,8 @@ import '../services/online_ambient_catalog_service.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 import '../services/weather_service.dart';
+import 'playback_store.dart';
+import 'practice_store.dart';
 import 'weather_store.dart';
 import 'test_mode_store.dart';
 import 'startup_store.dart';
@@ -106,6 +108,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     WeatherStore? weatherStore,
     TestModeStore? testModeStore,
     StartupStore? startupStore,
+    PracticeStore? practiceStore,
+    PlaybackStore? playbackStore,
     DailyQuoteService? dailyQuoteService,
   }) : _maintenanceRepository =
            maintenanceRepository ?? DatabaseMaintenanceRepository(database),
@@ -124,10 +128,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
        _playback = playback,
        _ambient = ambient,
        _asr = asr,
-       _focusService = focusService,
-       _remoteResourcePrewarm = remoteResourcePrewarm,
-       _weatherService = weatherService ?? WeatherService(),
-       _dailyQuoteService = dailyQuoteService ?? DailyQuoteService() {
+        _focusService = focusService,
+        _remoteResourcePrewarm = remoteResourcePrewarm,
+        _weatherService = weatherService ?? WeatherService(),
+        _dailyQuoteService = dailyQuoteService ?? DailyQuoteService(),
+        _practiceStore = practiceStore ?? PracticeStore(),
+        _playbackStore = playbackStore ?? PlaybackStore() {
     _weatherStore =
         weatherStore ??
         WeatherStore(
@@ -169,6 +175,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   late final bool _ownsTestModeStore;
   late final StartupStore _startupStore;
   late final bool _ownsStartupStore;
+  final PracticeStore _practiceStore;
+  final PlaybackStore _playbackStore;
 
   FocusService get focusService => _focusService;
 
@@ -209,31 +217,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int _remotePrewarmTotalCount = 0;
   String _remotePrewarmCurrentLabel = '';
   String? _lastBackupPath;
-  String _practiceDateKey = '';
-  int _practiceTodaySessions = 0;
-  int _practiceTodayReviewed = 0;
-  int _practiceTodayRemembered = 0;
-  int _practiceTotalSessions = 0;
-  int _practiceTotalReviewed = 0;
-  int _practiceTotalRemembered = 0;
-  String _practiceLastSessionTitle = '';
-  List<String> _practiceRememberedWords = <String>[];
-  List<String> _practiceWeakWords = <String>[];
-  Map<String, List<String>> _practiceWeakWordReasons = <String, List<String>>{};
-  List<PracticeSessionRecord> _practiceSessionHistory =
-      <PracticeSessionRecord>[];
-  Map<String, int> _practiceLaunchCursors = <String, int>{};
-  final Map<String, WordEntry> _practiceTrackedEntriesByWord =
-      <String, WordEntry>{};
-  Map<int, WordMemoryProgress> _wordMemoryProgressByWordId =
-      <int, WordMemoryProgress>{};
-  bool _practiceAutoAddWeakWordsToTask = false;
-  bool _practiceAutoPlayPronunciation = false;
-  bool _practiceShowHintsByDefault = false;
-  bool _practiceShowAnswerFeedbackDialog = true;
-  PracticeQuestionType _practiceDefaultQuestionType =
-      PracticeQuestionType.flashcard;
-  PracticeRoundSettings _practiceRoundSettings = PracticeRoundSettings.defaults;
   bool _sleepLoading = false;
   SleepProfile? _sleepProfile;
   SleepPlan? _sleepCurrentPlan;
@@ -252,27 +235,117 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   // Ambient sync debounce to prevent race conditions from rapid state changes
   Timer? _ambientSyncDebounceTimer;
 
-  bool _isPlaying = false;
-  bool _isPaused = false;
-  int _currentUnit = 0;
-  int _totalUnits = 0;
-  PlayUnit? _activeUnit;
-  int? _playingWordbookId;
-  String? _playingWordbookName;
-  String? _playingWord;
-  List<WordEntry> _playingScopeWords = <WordEntry>[];
-  int _playingScopeIndex = 0;
-  int _playSessionId = 0;
-  bool _playbackScopeRestarting = false;
-  int? _queuedPlaybackScopeTarget;
-  int _wordbookPlaybackSyncToken = 0;
   int _wordsVersion = 0;
-  Map<String, PlaybackProgressSnapshot> _playbackProgressByWordbookPath =
-      <String, PlaybackProgressSnapshot>{};
   List<WordEntry>? _visibleWordsCache;
   int _visibleWordsCacheVersion = -1;
   String _visibleWordsCacheQuery = '';
   SearchMode _visibleWordsCacheMode = SearchMode.all;
+
+  // Practice-domain state ownership is delegated to _practiceStore.
+  String get _practiceDateKey => _practiceStore.dateKey;
+  set _practiceDateKey(String value) => _practiceStore.dateKey = value;
+  int get _practiceTodaySessions => _practiceStore.todaySessions;
+  set _practiceTodaySessions(int value) => _practiceStore.todaySessions = value;
+  int get _practiceTodayReviewed => _practiceStore.todayReviewed;
+  set _practiceTodayReviewed(int value) => _practiceStore.todayReviewed = value;
+  int get _practiceTodayRemembered => _practiceStore.todayRemembered;
+  set _practiceTodayRemembered(int value) =>
+      _practiceStore.todayRemembered = value;
+  int get _practiceTotalSessions => _practiceStore.totalSessions;
+  set _practiceTotalSessions(int value) => _practiceStore.totalSessions = value;
+  int get _practiceTotalReviewed => _practiceStore.totalReviewed;
+  set _practiceTotalReviewed(int value) => _practiceStore.totalReviewed = value;
+  int get _practiceTotalRemembered => _practiceStore.totalRemembered;
+  set _practiceTotalRemembered(int value) =>
+      _practiceStore.totalRemembered = value;
+  String get _practiceLastSessionTitle => _practiceStore.lastSessionTitle;
+  set _practiceLastSessionTitle(String value) =>
+      _practiceStore.lastSessionTitle = value;
+  List<String> get _practiceRememberedWords => _practiceStore.rememberedWords;
+  set _practiceRememberedWords(List<String> value) =>
+      _practiceStore.rememberedWords = value;
+  List<String> get _practiceWeakWords => _practiceStore.weakWords;
+  set _practiceWeakWords(List<String> value) => _practiceStore.weakWords = value;
+  Map<String, List<String>> get _practiceWeakWordReasons =>
+      _practiceStore.weakWordReasons;
+  set _practiceWeakWordReasons(Map<String, List<String>> value) =>
+      _practiceStore.weakWordReasons = value;
+  List<PracticeSessionRecord> get _practiceSessionHistory =>
+      _practiceStore.sessionHistory;
+  set _practiceSessionHistory(List<PracticeSessionRecord> value) =>
+      _practiceStore.sessionHistory = value;
+  Map<String, int> get _practiceLaunchCursors => _practiceStore.launchCursors;
+  set _practiceLaunchCursors(Map<String, int> value) =>
+      _practiceStore.launchCursors = value;
+  Map<String, WordEntry> get _practiceTrackedEntriesByWord =>
+      _practiceStore.trackedEntriesByWord;
+  Map<int, WordMemoryProgress> get _wordMemoryProgressByWordId =>
+      _practiceStore.wordMemoryProgressByWordId;
+  set _wordMemoryProgressByWordId(Map<int, WordMemoryProgress> value) =>
+      _practiceStore.wordMemoryProgressByWordId = value;
+  bool get _practiceAutoAddWeakWordsToTask =>
+      _practiceStore.autoAddWeakWordsToTask;
+  set _practiceAutoAddWeakWordsToTask(bool value) =>
+      _practiceStore.autoAddWeakWordsToTask = value;
+  bool get _practiceAutoPlayPronunciation =>
+      _practiceStore.autoPlayPronunciation;
+  set _practiceAutoPlayPronunciation(bool value) =>
+      _practiceStore.autoPlayPronunciation = value;
+  bool get _practiceShowHintsByDefault => _practiceStore.showHintsByDefault;
+  set _practiceShowHintsByDefault(bool value) =>
+      _practiceStore.showHintsByDefault = value;
+  bool get _practiceShowAnswerFeedbackDialog =>
+      _practiceStore.showAnswerFeedbackDialog;
+  set _practiceShowAnswerFeedbackDialog(bool value) =>
+      _practiceStore.showAnswerFeedbackDialog = value;
+  PracticeQuestionType get _practiceDefaultQuestionType =>
+      _practiceStore.defaultQuestionType;
+  set _practiceDefaultQuestionType(PracticeQuestionType value) =>
+      _practiceStore.defaultQuestionType = value;
+  PracticeRoundSettings get _practiceRoundSettings =>
+      _practiceStore.roundSettings;
+  set _practiceRoundSettings(PracticeRoundSettings value) =>
+      _practiceStore.roundSettings = value;
+
+  // Playback-domain state ownership is delegated to _playbackStore.
+  bool get _isPlaying => _playbackStore.isPlaying;
+  set _isPlaying(bool value) => _playbackStore.isPlaying = value;
+  bool get _isPaused => _playbackStore.isPaused;
+  set _isPaused(bool value) => _playbackStore.isPaused = value;
+  int get _currentUnit => _playbackStore.currentUnit;
+  set _currentUnit(int value) => _playbackStore.currentUnit = value;
+  int get _totalUnits => _playbackStore.totalUnits;
+  set _totalUnits(int value) => _playbackStore.totalUnits = value;
+  PlayUnit? get _activeUnit => _playbackStore.activeUnit;
+  set _activeUnit(PlayUnit? value) => _playbackStore.activeUnit = value;
+  int? get _playingWordbookId => _playbackStore.playingWordbookId;
+  set _playingWordbookId(int? value) => _playbackStore.playingWordbookId = value;
+  String? get _playingWordbookName => _playbackStore.playingWordbookName;
+  set _playingWordbookName(String? value) =>
+      _playbackStore.playingWordbookName = value;
+  String? get _playingWord => _playbackStore.playingWord;
+  set _playingWord(String? value) => _playbackStore.playingWord = value;
+  List<WordEntry> get _playingScopeWords => _playbackStore.playingScopeWords;
+  set _playingScopeWords(List<WordEntry> value) =>
+      _playbackStore.playingScopeWords = value;
+  int get _playingScopeIndex => _playbackStore.playingScopeIndex;
+  set _playingScopeIndex(int value) => _playbackStore.playingScopeIndex = value;
+  int get _playSessionId => _playbackStore.playSessionId;
+  set _playSessionId(int value) => _playbackStore.playSessionId = value;
+  bool get _playbackScopeRestarting => _playbackStore.playbackScopeRestarting;
+  set _playbackScopeRestarting(bool value) =>
+      _playbackStore.playbackScopeRestarting = value;
+  int? get _queuedPlaybackScopeTarget => _playbackStore.queuedPlaybackScopeTarget;
+  set _queuedPlaybackScopeTarget(int? value) =>
+      _playbackStore.queuedPlaybackScopeTarget = value;
+  int get _wordbookPlaybackSyncToken => _playbackStore.wordbookPlaybackSyncToken;
+  set _wordbookPlaybackSyncToken(int value) =>
+      _playbackStore.wordbookPlaybackSyncToken = value;
+  Map<String, PlaybackProgressSnapshot> get _playbackProgressByWordbookPath =>
+      _playbackStore.playbackProgressByWordbookPath;
+  set _playbackProgressByWordbookPath(
+    Map<String, PlaybackProgressSnapshot> value,
+  ) => _playbackStore.playbackProgressByWordbookPath = value;
 
   bool get initializing => _initializing;
   bool get initialized => _initialized;
