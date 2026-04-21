@@ -108,3 +108,18 @@ ios/Runner/GoogleService-Info.plist
 # ------------------------------
 .metadata
 vocabularySleep-app/
+
+# ------------------------------
+# Local workflow drafts / assistant artifacts
+# ------------------------------
+.claude/
+modules/focus/
+modules/sleep/
+modules/toolbox/
+plans/PLAN_02[5-9]_*.md
+plans/PLAN_0[3-9][0-9]_*.md
+records/record_02[5-9]_*.md
+records/record_0[3-9][0-9]_*.md
+records/record_024_阶段1续迁_*.md
+records/record_024_阶段234推进_*.md
+records/record_024_阶段门评估与阶段5启动.md
