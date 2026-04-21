@@ -26,15 +26,15 @@ extension _AppStateWordbook on AppState {
     final shouldFollowPlayingWord =
         (focusWordId == null) &&
         ((focusWord ?? '').trim().isEmpty) &&
-        _isPlaying &&
-        _playingWordbookId == wordbook.id &&
-        _playingScopeWords.isNotEmpty;
+        _playbackStore.isPlaying &&
+        _playbackStore.playingWordbookId == wordbook.id &&
+        _playbackStore.playingScopeWords.isNotEmpty;
     if (shouldFollowPlayingWord) {
-      final playingIndex = _playingScopeIndex.clamp(
+      final playingIndex = _playbackStore.playingScopeIndex.clamp(
         0,
-        _playingScopeWords.length - 1,
+        _playbackStore.playingScopeWords.length - 1,
       );
-      final playingEntry = _playingScopeWords[playingIndex];
+      final playingEntry = _playbackStore.playingScopeWords[playingIndex];
       focusWordId = playingEntry.id;
       focusWord = playingEntry.word;
     }

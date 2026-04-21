@@ -37,7 +37,7 @@ extension _AppStateStartup on AppState {
       }
       _rememberedWords = _settings.loadRememberedWords();
       _ambientPresets = _settings.loadAmbientPresets();
-      _playbackProgressByWordbookPath = _settings
+      _playbackStore.playbackProgressByWordbookPath = _settings
           .loadPlaybackProgressByWordbook();
       _startupStore.syncPersistentStateFromSettings();
       _weatherStore.syncEnabledFromSettings();

@@ -12,28 +12,28 @@ extension _AppStatePractice on AppState {
     PracticeQuestionType? defaultQuestionType,
   }) {
     final nextAutoAdd =
-        autoAddWeakWordsToTask ?? _practiceAutoAddWeakWordsToTask;
+        autoAddWeakWordsToTask ?? _practiceStore.autoAddWeakWordsToTask;
     final nextAutoPlay =
-        autoPlayPronunciation ?? _practiceAutoPlayPronunciation;
-    final nextShowHints = showHintsByDefault ?? _practiceShowHintsByDefault;
+        autoPlayPronunciation ?? _practiceStore.autoPlayPronunciation;
+    final nextShowHints = showHintsByDefault ?? _practiceStore.showHintsByDefault;
     final nextShowAnswerFeedbackDialog =
-        showAnswerFeedbackDialog ?? _practiceShowAnswerFeedbackDialog;
+        showAnswerFeedbackDialog ?? _practiceStore.showAnswerFeedbackDialog;
     final nextQuestionType =
-        defaultQuestionType ?? _practiceDefaultQuestionType;
+        defaultQuestionType ?? _practiceStore.defaultQuestionType;
     final changed =
-        nextAutoAdd != _practiceAutoAddWeakWordsToTask ||
-        nextAutoPlay != _practiceAutoPlayPronunciation ||
-        nextShowHints != _practiceShowHintsByDefault ||
-        nextShowAnswerFeedbackDialog != _practiceShowAnswerFeedbackDialog ||
-        nextQuestionType != _practiceDefaultQuestionType;
+        nextAutoAdd != _practiceStore.autoAddWeakWordsToTask ||
+        nextAutoPlay != _practiceStore.autoPlayPronunciation ||
+        nextShowHints != _practiceStore.showHintsByDefault ||
+        nextShowAnswerFeedbackDialog != _practiceStore.showAnswerFeedbackDialog ||
+        nextQuestionType != _practiceStore.defaultQuestionType;
     if (!changed) {
       return;
     }
-    _practiceAutoAddWeakWordsToTask = nextAutoAdd;
-    _practiceAutoPlayPronunciation = nextAutoPlay;
-    _practiceShowHintsByDefault = nextShowHints;
-    _practiceShowAnswerFeedbackDialog = nextShowAnswerFeedbackDialog;
-    _practiceDefaultQuestionType = nextQuestionType;
+    _practiceStore.autoAddWeakWordsToTask = nextAutoAdd;
+    _practiceStore.autoPlayPronunciation = nextAutoPlay;
+    _practiceStore.showHintsByDefault = nextShowHints;
+    _practiceStore.showAnswerFeedbackDialog = nextShowAnswerFeedbackDialog;
+    _practiceStore.defaultQuestionType = nextQuestionType;
     _persistPracticeDashboard();
     _notifyStateChanged();
   }
@@ -83,12 +83,12 @@ extension _AppStatePractice on AppState {
   }
 
   int _clearPracticeWeakWordsImpl({bool masteredOnly = false}) {
-    if (_practiceWeakWords.isEmpty) {
+    if (_practiceStore.weakWords.isEmpty) {
       return 0;
     }
     if (!masteredOnly) {
       return _removePracticeWeakKeys(
-        _practiceWeakWords
+        _practiceStore.weakWords
             .map(_normalizeTrackedWord)
             .where((item) => item.isNotEmpty)
             .toSet(),
@@ -98,7 +98,7 @@ extension _AppStatePractice on AppState {
     final now = DateTime.now();
     final rememberedKeys = <String>{
       ..._rememberedWords,
-      ..._practiceRememberedWords
+      ..._practiceStore.rememberedWords
           .map(_normalizeTrackedWord)
           .where((item) => item.isNotEmpty),
     };
@@ -135,13 +135,13 @@ extension _AppStatePractice on AppState {
     if (safeTotal <= 0) return;
 
     _ensurePracticeDate();
-    _practiceTodaySessions += 1;
-    _practiceTodayReviewed += safeTotal;
-    _practiceTodayRemembered += safeRemembered;
-    _practiceTotalSessions += 1;
-    _practiceTotalReviewed += safeTotal;
-    _practiceTotalRemembered += safeRemembered;
-    _practiceLastSessionTitle = title.trim();
+    _practiceStore.todaySessions += 1;
+    _practiceStore.todayReviewed += safeTotal;
+    _practiceStore.todayRemembered += safeRemembered;
+    _practiceStore.totalSessions += 1;
+    _practiceStore.totalReviewed += safeTotal;
+    _practiceStore.totalRemembered += safeRemembered;
+    _practiceStore.lastSessionTitle = title.trim();
     final resolvedRememberedEntries = _resolveTrackedPracticeEntries(
       preferredEntries: rememberedEntries,
       fallbackWords: _normalizePracticeWords(rememberedWords),
@@ -171,14 +171,14 @@ extension _AppStatePractice on AppState {
       weakWords: normalizedWeakWords,
     );
 
-    _practiceRememberedWords = _mergePracticeWords(
+    _practiceStore.rememberedWords = _mergePracticeWords(
       primary: normalizedRememberedWords,
-      existing: _practiceRememberedWords,
+      existing: _practiceStore.rememberedWords,
       excluded: weakSet,
     );
-    _practiceWeakWords = _mergePracticeWords(
+    _practiceStore.weakWords = _mergePracticeWords(
       primary: normalizedWeakWords,
-      existing: _practiceWeakWords,
+      existing: _practiceStore.weakWords,
       excluded: rememberedSet,
     );
     _cachePracticeTrackedEntries(
@@ -206,9 +206,9 @@ extension _AppStatePractice on AppState {
 
   void _startPracticeSessionImpl({required String title}) {
     _ensurePracticeDate();
-    _practiceTodaySessions += 1;
-    _practiceTotalSessions += 1;
-    _practiceLastSessionTitle = title.trim();
+    _practiceStore.todaySessions += 1;
+    _practiceStore.totalSessions += 1;
+    _practiceStore.lastSessionTitle = title.trim();
     _persistPracticeDashboard();
     _notifyStateChanged();
   }
@@ -222,11 +222,11 @@ extension _AppStatePractice on AppState {
   }) {
     final writeWatch = Stopwatch()..start();
     _ensurePracticeDate();
-    _practiceTodayReviewed += 1;
-    _practiceTotalReviewed += 1;
+    _practiceStore.todayReviewed += 1;
+    _practiceStore.totalReviewed += 1;
     if (remembered) {
-      _practiceTodayRemembered += 1;
-      _practiceTotalRemembered += 1;
+      _practiceStore.todayRemembered += 1;
+      _practiceStore.totalRemembered += 1;
     }
 
     final normalizedWord = _practiceTrackingKeyForEntry(entry);
@@ -236,37 +236,37 @@ extension _AppStatePractice on AppState {
     final sanitizedWeakReasons = _sanitizePracticeWeakReasons(weakReasonIds);
 
     if (remembered) {
-      _practiceRememberedWords = _mergePracticeWords(
+      _practiceStore.rememberedWords = _mergePracticeWords(
         primary: rememberedWords,
-        existing: _practiceRememberedWords,
+        existing: _practiceStore.rememberedWords,
       );
-      _practiceWeakWords = _practiceWeakWords
+      _practiceStore.weakWords = _practiceStore.weakWords
           .where((word) => _normalizeTrackedWord(word) != normalizedWord)
           .toList(growable: false);
       if (normalizedWord.isNotEmpty) {
-        _practiceWeakWordReasons.remove(normalizedWord);
+        _practiceStore.weakWordReasons.remove(normalizedWord);
       }
     } else {
-      _practiceRememberedWords = _practiceRememberedWords
+      _practiceStore.rememberedWords = _practiceStore.rememberedWords
           .where((word) => _normalizeTrackedWord(word) != normalizedWord)
           .toList(growable: false);
       if (addToWrongNotebook) {
-        _practiceWeakWords = _mergePracticeWords(
+        _practiceStore.weakWords = _mergePracticeWords(
           primary: <String>[normalizedWord],
-          existing: _practiceWeakWords,
+          existing: _practiceStore.weakWords,
         );
         if (normalizedWord.isNotEmpty) {
-          _practiceWeakWordReasons[normalizedWord] = List<String>.from(
+          _practiceStore.weakWordReasons[normalizedWord] = List<String>.from(
             sanitizedWeakReasons,
             growable: false,
           );
         }
       } else {
-        _practiceWeakWords = _practiceWeakWords
+        _practiceStore.weakWords = _practiceStore.weakWords
             .where((word) => _normalizeTrackedWord(word) != normalizedWord)
             .toList(growable: false);
         if (normalizedWord.isNotEmpty) {
-          _practiceWeakWordReasons.remove(normalizedWord);
+          _practiceStore.weakWordReasons.remove(normalizedWord);
         }
       }
     }
@@ -292,7 +292,7 @@ extension _AppStatePractice on AppState {
         eventKind: remembered ? 'remembered' : 'weak',
         quality: remembered ? 4 : 1,
         weakReasonIds: remembered ? const <String>[] : sanitizedWeakReasons,
-        sessionTitle: sessionTitle ?? _practiceLastSessionTitle,
+        sessionTitle: sessionTitle ?? _practiceStore.lastSessionTitle,
       );
     }
     _prunePracticeTrackedEntries();
@@ -307,10 +307,10 @@ extension _AppStatePractice on AppState {
           'remembered': remembered,
           'addToWrongNotebook': addToWrongNotebook,
           'elapsedMs': writeWatch.elapsedMilliseconds,
-          'trackedEntries': _practiceTrackedEntriesByWord.length,
-          'history': _practiceSessionHistory.length,
-          'rememberedWords': _practiceRememberedWords.length,
-          'weakWords': _practiceWeakWords.length,
+          'trackedEntries': _practiceStore.trackedEntriesByWord.length,
+          'history': _practiceStore.sessionHistory.length,
+          'rememberedWords': _practiceStore.rememberedWords.length,
+          'weakWords': _practiceStore.weakWords.length,
         },
       );
     }
@@ -328,7 +328,7 @@ extension _AppStatePractice on AppState {
     if (safeTotal <= 0) {
       return;
     }
-    _practiceLastSessionTitle = title.trim();
+    _practiceStore.lastSessionTitle = title.trim();
     _appendPracticeSessionHistory(
       title: title,
       total: safeTotal,
@@ -349,21 +349,21 @@ extension _AppStatePractice on AppState {
     bool? shuffle,
     bool? collapsed,
   }) {
-    final nextSettings = _practiceRoundSettings.copyWith(
+    final nextSettings = _practiceStore.roundSettings.copyWith(
       source: source,
       startMode: startMode,
       roundSize: roundSize,
       shuffle: shuffle,
       collapsed: collapsed,
     );
-    if (nextSettings.source == _practiceRoundSettings.source &&
-        nextSettings.startMode == _practiceRoundSettings.startMode &&
-        nextSettings.roundSize == _practiceRoundSettings.roundSize &&
-        nextSettings.shuffle == _practiceRoundSettings.shuffle &&
-        nextSettings.collapsed == _practiceRoundSettings.collapsed) {
+    if (nextSettings.source == _practiceStore.roundSettings.source &&
+        nextSettings.startMode == _practiceStore.roundSettings.startMode &&
+        nextSettings.roundSize == _practiceStore.roundSettings.roundSize &&
+        nextSettings.shuffle == _practiceStore.roundSettings.shuffle &&
+        nextSettings.collapsed == _practiceStore.roundSettings.collapsed) {
       return;
     }
-    _practiceRoundSettings = nextSettings;
+    _practiceStore.roundSettings = nextSettings;
     _persistPracticeDashboard();
     _notifyStateChanged();
   }
@@ -377,7 +377,7 @@ extension _AppStatePractice on AppState {
     if (sourceWords.isEmpty) {
       return 0;
     }
-    final resolvedStartMode = startMode ?? _practiceRoundSettings.startMode;
+    final resolvedStartMode = startMode ?? _practiceStore.roundSettings.startMode;
     return switch (resolvedStartMode) {
       PracticeRoundStartMode.fromStart => 0,
       PracticeRoundStartMode.currentWord => math.max(
@@ -387,7 +387,7 @@ extension _AppStatePractice on AppState {
       PracticeRoundStartMode.resumeCursor =>
         cursorKey.trim().isEmpty
             ? 0
-            : (_practiceLaunchCursors[cursorKey.trim()] ?? 0) %
+            : (_practiceStore.launchCursors[cursorKey.trim()] ?? 0) %
                   sourceWords.length,
     };
   }
@@ -414,7 +414,7 @@ extension _AppStatePractice on AppState {
         : _indexOfWordEntry(sourceWords, anchorWord);
     final storedCursor = normalizedKey.isEmpty
         ? 0
-        : (_practiceLaunchCursors[normalizedKey] ?? 0) % sourceWords.length;
+        : (_practiceStore.launchCursors[normalizedKey] ?? 0) % sourceWords.length;
     final startIndex = anchorIndex >= 0 ? anchorIndex : storedCursor;
     final batch = <WordEntry>[];
     for (var offset = 0; offset < safeBatchSize; offset += 1) {
@@ -424,7 +424,7 @@ extension _AppStatePractice on AppState {
 
     if (normalizedKey.isNotEmpty) {
       _ensurePracticeDate();
-      _practiceLaunchCursors[normalizedKey] =
+      _practiceStore.launchCursors[normalizedKey] =
           (startIndex + safeCursorAdvance) % sourceWords.length;
       _persistPracticeDashboard();
     }
@@ -458,16 +458,16 @@ extension _AppStatePractice on AppState {
     return PracticeReviewExportPayload(
       exportedAt: now,
       summary: PracticeReviewExportSummary(
-        todaySessions: _practiceTodaySessions,
-        todayReviewed: _practiceTodayReviewed,
-        todayRemembered: _practiceTodayRemembered,
-        totalSessions: _practiceTotalSessions,
-        totalReviewed: _practiceTotalReviewed,
-        totalRemembered: _practiceTotalRemembered,
+        todaySessions: _practiceStore.todaySessions,
+        todayReviewed: _practiceStore.todayReviewed,
+        todayRemembered: _practiceStore.todayRemembered,
+        totalSessions: _practiceStore.totalSessions,
+        totalReviewed: _practiceStore.totalReviewed,
+        totalRemembered: _practiceStore.totalRemembered,
         todayAccuracy: practiceTodayAccuracy,
         totalAccuracy: practiceTotalAccuracy,
-        lastSessionTitle: _practiceLastSessionTitle,
-        defaultQuestionType: _practiceDefaultQuestionType.storageValue,
+        lastSessionTitle: _practiceStore.lastSessionTitle,
+        defaultQuestionType: _practiceStore.defaultQuestionType.storageValue,
       ),
       metadata: metadata,
       weakReasonCounts: overallReasonCounts,
@@ -602,7 +602,7 @@ extension _AppStatePractice on AppState {
   }
 
   String _buildPracticeReviewCsv({Iterable<PracticeSessionRecord>? records}) {
-    final sessions = (records ?? _practiceSessionHistory).toList(
+    final sessions = (records ?? _practiceStore.sessionHistory).toList(
       growable: false,
     );
     final rows = <List<String>>[
@@ -691,15 +691,15 @@ extension _AppStatePractice on AppState {
 
   void _loadPracticeDashboard() {
     final data = _settings.loadPracticeDashboard();
-    _practiceTrackedEntriesByWord.clear();
-    _practiceDateKey = data.date.trim();
-    _practiceTodaySessions = data.todaySessions;
-    _practiceTodayReviewed = data.todayReviewed;
-    _practiceTodayRemembered = data.todayRemembered;
-    _practiceTotalSessions = data.totalSessions;
-    _practiceTotalReviewed = data.totalReviewed;
-    _practiceTotalRemembered = data.totalRemembered;
-    _practiceLastSessionTitle = data.lastSessionTitle.trim();
+    _practiceStore.trackedEntriesByWord.clear();
+    _practiceStore.dateKey = data.date.trim();
+    _practiceStore.todaySessions = data.todaySessions;
+    _practiceStore.todayReviewed = data.todayReviewed;
+    _practiceStore.todayRemembered = data.todayRemembered;
+    _practiceStore.totalSessions = data.totalSessions;
+    _practiceStore.totalReviewed = data.totalReviewed;
+    _practiceStore.totalRemembered = data.totalRemembered;
+    _practiceStore.lastSessionTitle = data.lastSessionTitle.trim();
     final trackedEntries = data.trackedEntries
         .map((entry) => entry.toWordEntry())
         .toList(growable: false);
@@ -709,32 +709,32 @@ extension _AppStatePractice on AppState {
           _practiceTrackingKeyForEntry(trackedEntries[index]):
               trackedEntries[index],
     }..removeWhere((key, _) => key.isEmpty);
-    _practiceRememberedWords = _normalizePracticeTrackingKeys(
+    _practiceStore.rememberedWords = _normalizePracticeTrackingKeys(
       data.rememberedWords,
       preferredEntries: trackedEntries,
     );
-    _practiceWeakWords =
+    _practiceStore.weakWords =
         _normalizePracticeTrackingKeys(
               data.weakWords,
               preferredEntries: trackedEntries,
             )
-            .where((word) => !_practiceRememberedWords.contains(word))
+            .where((word) => !_practiceStore.rememberedWords.contains(word))
             .toList(growable: false);
-    _practiceWeakWordReasons = _normalizePracticeWeakReasonMap(
+    _practiceStore.weakWordReasons = _normalizePracticeWeakReasonMap(
       data.weakReasonIdsByWord,
-      _practiceWeakWords,
+      _practiceStore.weakWords,
       preferredEntries: trackedEntries,
     );
-    _practiceAutoAddWeakWordsToTask = data.sessionPrefs.autoAddWeakWordsToTask;
-    _practiceAutoPlayPronunciation = data.sessionPrefs.autoPlayPronunciation;
-    _practiceShowHintsByDefault = data.sessionPrefs.showHintsByDefault;
-    _practiceShowAnswerFeedbackDialog =
+    _practiceStore.autoAddWeakWordsToTask = data.sessionPrefs.autoAddWeakWordsToTask;
+    _practiceStore.autoPlayPronunciation = data.sessionPrefs.autoPlayPronunciation;
+    _practiceStore.showHintsByDefault = data.sessionPrefs.showHintsByDefault;
+    _practiceStore.showAnswerFeedbackDialog =
         data.sessionPrefs.showAnswerFeedbackDialog;
-    _practiceDefaultQuestionType = data.sessionPrefs.defaultQuestionType;
-    _practiceRoundSettings = data.roundSettings;
-    _practiceSessionHistory = data.history;
-    _practiceLaunchCursors = data.launchCursors;
-    _practiceTrackedEntriesByWord
+    _practiceStore.defaultQuestionType = data.sessionPrefs.defaultQuestionType;
+    _practiceStore.roundSettings = data.roundSettings;
+    _practiceStore.sessionHistory = data.history;
+    _practiceStore.launchCursors = data.launchCursors;
+    _practiceStore.trackedEntriesByWord
       ..clear()
       ..addEntries(trackedEntriesByKey.entries);
     _prunePracticeTrackedEntries();
@@ -743,11 +743,11 @@ extension _AppStatePractice on AppState {
 
   void _ensurePracticeDate({bool persist = false}) {
     final today = _todayDateKey();
-    if (_practiceDateKey == today) return;
-    _practiceDateKey = today;
-    _practiceTodaySessions = 0;
-    _practiceTodayReviewed = 0;
-    _practiceTodayRemembered = 0;
+    if (_practiceStore.dateKey == today) return;
+    _practiceStore.dateKey = today;
+    _practiceStore.todaySessions = 0;
+    _practiceStore.todayReviewed = 0;
+    _practiceStore.todayRemembered = 0;
     if (persist) {
       _persistPracticeDashboard();
     }
@@ -762,32 +762,32 @@ extension _AppStatePractice on AppState {
 
   void _persistPracticeDashboard() {
     final watch = Stopwatch()..start();
-    final trackedEntries = _practiceTrackedEntriesByWord.values
+    final trackedEntries = _practiceStore.trackedEntriesByWord.values
         .map(PracticeTrackedEntrySnapshot.fromWordEntry)
         .toList(growable: false);
     _settings.savePracticeDashboard(
       PracticeDashboardState(
-        date: _practiceDateKey,
-        todaySessions: _practiceTodaySessions,
-        todayReviewed: _practiceTodayReviewed,
-        todayRemembered: _practiceTodayRemembered,
-        totalSessions: _practiceTotalSessions,
-        totalReviewed: _practiceTotalReviewed,
-        totalRemembered: _practiceTotalRemembered,
-        lastSessionTitle: _practiceLastSessionTitle,
-        rememberedWords: _practiceRememberedWords,
-        weakWords: _practiceWeakWords,
-        weakReasonIdsByWord: _practiceWeakWordReasons,
-        history: _practiceSessionHistory,
+        date: _practiceStore.dateKey,
+        todaySessions: _practiceStore.todaySessions,
+        todayReviewed: _practiceStore.todayReviewed,
+        todayRemembered: _practiceStore.todayRemembered,
+        totalSessions: _practiceStore.totalSessions,
+        totalReviewed: _practiceStore.totalReviewed,
+        totalRemembered: _practiceStore.totalRemembered,
+        lastSessionTitle: _practiceStore.lastSessionTitle,
+        rememberedWords: _practiceStore.rememberedWords,
+        weakWords: _practiceStore.weakWords,
+        weakReasonIdsByWord: _practiceStore.weakWordReasons,
+        history: _practiceStore.sessionHistory,
         sessionPrefs: PracticeSessionPreferences(
-          autoAddWeakWordsToTask: _practiceAutoAddWeakWordsToTask,
-          autoPlayPronunciation: _practiceAutoPlayPronunciation,
-          showHintsByDefault: _practiceShowHintsByDefault,
-          showAnswerFeedbackDialog: _practiceShowAnswerFeedbackDialog,
-          defaultQuestionType: _practiceDefaultQuestionType,
+          autoAddWeakWordsToTask: _practiceStore.autoAddWeakWordsToTask,
+          autoPlayPronunciation: _practiceStore.autoPlayPronunciation,
+          showHintsByDefault: _practiceStore.showHintsByDefault,
+          showAnswerFeedbackDialog: _practiceStore.showAnswerFeedbackDialog,
+          defaultQuestionType: _practiceStore.defaultQuestionType,
         ),
-        roundSettings: _practiceRoundSettings,
-        launchCursors: _practiceLaunchCursors,
+        roundSettings: _practiceStore.roundSettings,
+        launchCursors: _practiceStore.launchCursors,
         trackedEntries: trackedEntries,
       ),
     );
@@ -798,9 +798,9 @@ extension _AppStatePractice on AppState {
         data: <String, Object?>{
           'elapsedMs': watch.elapsedMilliseconds,
           'trackedEntries': trackedEntries.length,
-          'history': _practiceSessionHistory.length,
-          'rememberedWords': _practiceRememberedWords.length,
-          'weakWords': _practiceWeakWords.length,
+          'history': _practiceStore.sessionHistory.length,
+          'rememberedWords': _practiceStore.rememberedWords.length,
+          'weakWords': _practiceStore.weakWords.length,
         },
       );
     }
@@ -828,7 +828,7 @@ extension _AppStatePractice on AppState {
 
     addEntries(_scopeWords);
     addEntries(_words);
-    addEntries(_practiceTrackedEntriesByWord.values);
+    addEntries(_practiceStore.trackedEntriesByWord.values);
     if (byTrackingKey.isEmpty && byLegacyWord.isEmpty) {
       return const <WordEntry>[];
     }
@@ -847,12 +847,12 @@ extension _AppStatePractice on AppState {
   List<WordEntry> _memoryStableEntries(List<WordEntry> words) {
     final tracked = MemoryLaneSelector.selectStableEntries(
       words: words,
-      progressByWordId: _wordMemoryProgressByWordId,
+      progressByWordId: _practiceStore.wordMemoryProgressByWordId,
     );
     final remembered = _practiceEntriesFromWords(
       _rememberedWords.toList(growable: false),
     );
-    final practice = _practiceEntriesFromWords(_practiceRememberedWords);
+    final practice = _practiceEntriesFromWords(_practiceStore.rememberedWords);
     return _mergeTrackedWordEntries(<List<WordEntry>>[
       tracked,
       remembered,
@@ -863,9 +863,9 @@ extension _AppStatePractice on AppState {
   List<WordEntry> _memoryRecoveryEntries(List<WordEntry> words) {
     final tracked = MemoryLaneSelector.selectRecoveryEntries(
       words: words,
-      progressByWordId: _wordMemoryProgressByWordId,
+      progressByWordId: _practiceStore.wordMemoryProgressByWordId,
     );
-    final practice = _practiceEntriesFromWords(_practiceWeakWords);
+    final practice = _practiceEntriesFromWords(_practiceStore.weakWords);
     final merged = _mergeTrackedWordEntries(<List<WordEntry>>[
       tracked,
       practice,
@@ -888,12 +888,12 @@ extension _AppStatePractice on AppState {
   void _refreshWordMemoryProgressCache(List<WordEntry> words) {
     final wordIds = <int>{
       ...words.map((item) => item.id).whereType<int>().where((id) => id > 0),
-      ..._practiceTrackedEntriesByWord.values
+      ..._practiceStore.trackedEntriesByWord.values
           .map((item) => item.id)
           .whereType<int>()
           .where((id) => id > 0),
     };
-    _wordMemoryProgressByWordId = _practiceRepository
+    _practiceStore.wordMemoryProgressByWordId = _practiceRepository
         .getWordMemoryProgressByWordIds(wordIds);
   }
 
@@ -931,7 +931,7 @@ extension _AppStatePractice on AppState {
       if (key.isEmpty) {
         continue;
       }
-      _practiceTrackedEntriesByWord[key] = _buildPracticeTrackedEntryLite(
+      _practiceStore.trackedEntriesByWord[key] = _buildPracticeTrackedEntryLite(
         entry,
       );
     }
@@ -957,21 +957,21 @@ extension _AppStatePractice on AppState {
   }
 
   int _removePracticeWeakKeys(Set<String> keys) {
-    if (keys.isEmpty || _practiceWeakWords.isEmpty) {
+    if (keys.isEmpty || _practiceStore.weakWords.isEmpty) {
       return 0;
     }
 
-    final nextWeakWords = _practiceWeakWords
+    final nextWeakWords = _practiceStore.weakWords
         .where((word) => !keys.contains(_normalizeTrackedWord(word)))
         .toList(growable: false);
-    final removed = _practiceWeakWords.length - nextWeakWords.length;
+    final removed = _practiceStore.weakWords.length - nextWeakWords.length;
     if (removed <= 0) {
       return 0;
     }
 
-    _practiceWeakWords = nextWeakWords;
+    _practiceStore.weakWords = nextWeakWords;
     for (final key in keys) {
-      _practiceWeakWordReasons.remove(key);
+      _practiceStore.weakWordReasons.remove(key);
     }
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
@@ -982,20 +982,20 @@ extension _AppStatePractice on AppState {
 
   void _prunePracticeTrackedEntries() {
     final activeKeys = <String>{
-      ..._practiceRememberedWords.map(_normalizeTrackedWord),
-      ..._practiceWeakWords.map(_normalizeTrackedWord),
+      ..._practiceStore.rememberedWords.map(_normalizeTrackedWord),
+      ..._practiceStore.weakWords.map(_normalizeTrackedWord),
     }.where((item) => item.isNotEmpty).toSet();
-    _practiceTrackedEntriesByWord.removeWhere(
+    _practiceStore.trackedEntriesByWord.removeWhere(
       (key, _) => !activeKeys.contains(key),
     );
   }
 
   void _prunePracticeWeakReasons() {
-    final activeWeakKeys = _practiceWeakWords
+    final activeWeakKeys = _practiceStore.weakWords
         .map(_normalizeTrackedWord)
         .where((item) => item.isNotEmpty)
         .toSet();
-    _practiceWeakWordReasons.removeWhere(
+    _practiceStore.weakWordReasons.removeWhere(
       (key, _) => !activeWeakKeys.contains(key),
     );
   }
@@ -1054,7 +1054,7 @@ extension _AppStatePractice on AppState {
     for (final word in rememberedWords) {
       final key = _normalizeTrackedWord(word);
       if (key.isNotEmpty) {
-        _practiceWeakWordReasons.remove(key);
+        _practiceStore.weakWordReasons.remove(key);
       }
     }
     for (final word in weakWords) {
@@ -1062,7 +1062,7 @@ extension _AppStatePractice on AppState {
       if (key.isEmpty) {
         continue;
       }
-      _practiceWeakWordReasons[key] = List<String>.from(
+      _practiceStore.weakWordReasons[key] = List<String>.from(
         weakReasonsByWord[key] ?? const <String>['recall'],
         growable: false,
       );
@@ -1090,9 +1090,9 @@ extension _AppStatePractice on AppState {
         remembered: remembered,
         weakReasonCounts: reasonCounts,
       ),
-      ..._practiceSessionHistory,
+      ..._practiceStore.sessionHistory,
     ];
-    _practiceSessionHistory = nextHistory
+    _practiceStore.sessionHistory = nextHistory
         .take(AppState._practiceSessionHistoryLimit)
         .toList(growable: false);
   }
@@ -1137,7 +1137,7 @@ extension _AppStatePractice on AppState {
     }
 
     final nextProgressByWordId = Map<int, WordMemoryProgress>.from(
-      _wordMemoryProgressByWordId,
+      _practiceStore.wordMemoryProgressByWordId,
     );
     final updatedAt = DateTime.now();
 
@@ -1176,7 +1176,7 @@ extension _AppStatePractice on AppState {
       persistProgress(entry, remembered: false);
     }
 
-    _wordMemoryProgressByWordId = nextProgressByWordId;
+    _practiceStore.wordMemoryProgressByWordId = nextProgressByWordId;
   }
 
   String? _wordEntryIdentity(WordEntry entry) {

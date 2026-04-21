@@ -22,6 +22,7 @@ part 'toolbox_sound_tools/deck.dart';
 part 'toolbox_sound_tools/soothing.dart';
 part 'toolbox_sound_tools/harp_config.dart';
 part 'toolbox_sound_tools/harp.dart';
+part 'toolbox_sound_tools/harp_settings_sheet.dart';
 part 'toolbox_sound_tools/harp_render.dart';
 part 'toolbox_sound_tools/focus.dart';
 part 'toolbox_sound_tools/focus_state_logic.dart';
