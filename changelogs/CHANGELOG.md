@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_043-MERGE-READY] - 2026-04-21
+
+### Reason
+- Finalize branch `codex/plan024-backup` for merge readiness after AppState ownership split and large toolbox page decoupling.
+
+### Changed
+- AppState practice/playback domain state now reads/writes directly through `PracticeStore` and `PlaybackStore` ownership boundaries, removing bridge-style private alias indirection.
+- Harp settings sheet large UI block was extracted from `toolbox_sound_tools/harp.dart` into `toolbox_sound_tools/harp_settings_sheet.dart`, keeping page-layer file focused on lifecycle and UI entry orchestration.
+- `toolbox_sound_tools.dart` part registry updated for the new harp settings sheet part file.
+
+### Verification
+- Full regression passed with `flutter.bat test --reporter compact` (all tests passed).
+- Regression rerun after fixing a temporary refactor replacement issue to ensure stable merge gate.
+
+### Residual Risks
+- `app_state.dart` and some toolbox page files are still above preferred file-size targets; next iteration should continue domain-by-domain extraction for sleep/wordbook/export ownership boundaries.
+
 ## [Unreleased-PLAN_043] - 2026-04-21
 
 ### 原因
