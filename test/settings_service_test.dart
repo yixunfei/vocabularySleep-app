@@ -5,13 +5,10 @@ import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/study_startup_tab.dart';
-import 'package:vocabulary_sleep_app/src/services/database_service.dart';
+import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
-import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
-class _MemoryDatabaseService extends AppDatabaseService {
-  _MemoryDatabaseService() : super(WordbookImportService());
-
+class _MemorySettingsStoreRepository implements SettingsStoreRepository {
   final Map<String, String> _settings = <String, String>{};
 
   @override
@@ -24,9 +21,13 @@ class _MemoryDatabaseService extends AppDatabaseService {
 }
 
 void main() {
+  SettingsService createSettings(_MemorySettingsStoreRepository store) {
+    return SettingsService.fromRepository(store);
+  }
+
   test('P1-2 test mode state persists through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     expect(settings.loadTestModeState(), TestModeState.defaults);
 
@@ -34,7 +35,7 @@ void main() {
       const TestModeState(enabled: true, revealed: true, hintRevealed: false),
     );
 
-    final restored = SettingsService(database).loadTestModeState();
+    final restored = createSettings(store).loadTestModeState();
     expect(
       restored,
       const TestModeState(enabled: true, revealed: true, hintRevealed: false),
@@ -42,56 +43,56 @@ void main() {
   });
 
   test('startup page persists through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     expect(settings.loadStartupPage(), AppHomeTab.focus);
 
     settings.saveStartupPage(AppHomeTab.focus);
 
-    final restored = SettingsService(database).loadStartupPage();
+    final restored = createSettings(store).loadStartupPage();
     expect(restored, AppHomeTab.focus);
   });
 
   test('study startup section persists through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     expect(settings.loadStudyStartupTab(), StudyStartupTab.play);
 
     settings.saveStudyStartupTab(StudyStartupTab.library);
 
-    final restored = SettingsService(database).loadStudyStartupTab();
+    final restored = createSettings(store).loadStudyStartupTab();
     expect(restored, StudyStartupTab.library);
   });
 
   test('focus startup section persists through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     expect(settings.loadFocusStartupTab(), FocusStartupTab.todo);
 
     settings.saveFocusStartupTab(FocusStartupTab.timer);
 
-    final restored = SettingsService(database).loadFocusStartupTab();
+    final restored = createSettings(store).loadFocusStartupTab();
     expect(restored, FocusStartupTab.timer);
   });
 
   test('weather toggle persists through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     expect(settings.loadWeatherEnabled(), isFalse);
 
     settings.saveWeatherEnabled(true);
 
-    final restored = SettingsService(database).loadWeatherEnabled();
+    final restored = createSettings(store).loadWeatherEnabled();
     expect(restored, isTrue);
   });
 
   test('startup todo prompt settings persist through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     expect(settings.loadStartupTodoPromptEnabled(), isTrue);
     expect(settings.loadStartupTodoPromptSuppressedDate(), isNull);
@@ -99,26 +100,26 @@ void main() {
     settings.saveStartupTodoPromptEnabled(false);
     settings.saveStartupTodoPromptSuppressedDate('2026-03-16');
 
-    final restored = SettingsService(database);
+    final restored = createSettings(store);
     expect(restored.loadStartupTodoPromptEnabled(), isFalse);
     expect(restored.loadStartupTodoPromptSuppressedDate(), '2026-03-16');
   });
 
   test('remembered words persist through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     expect(settings.loadRememberedWords(), isEmpty);
 
     settings.saveRememberedWords(<String>{'Alpha', 'beta'});
 
-    final restored = SettingsService(database).loadRememberedWords();
+    final restored = createSettings(store).loadRememberedWords();
     expect(restored, <String>{'alpha', 'beta'});
   });
 
   test('ambient presets persist through SettingsService', () {
-    final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
 
     final presets = <AmbientPreset>[
       AmbientPreset(
@@ -140,7 +141,7 @@ void main() {
 
     settings.saveAmbientPresets(presets);
 
-    final restored = SettingsService(database).loadAmbientPresets();
+    final restored = createSettings(store).loadAmbientPresets();
     expect(restored.length, 1);
     expect(restored.first.name, 'Cafe Mix');
     expect(restored.first.masterVolume, closeTo(0.72, 0.0001));

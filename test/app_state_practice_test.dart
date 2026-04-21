@@ -4,6 +4,8 @@ import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
+import 'package:vocabulary_sleep_app/src/repositories/practice_repository.dart';
+import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
@@ -17,15 +19,12 @@ class _MemoryDatabaseService extends AppDatabaseService {
   final Map<int, WordMemoryProgress> _progressByWordId =
       <int, WordMemoryProgress>{};
 
-  @override
   String? getSetting(String key) => _settings[key];
 
-  @override
   void setSetting(String key, String value) {
     _settings[key] = value;
   }
 
-  @override
   Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
     Iterable<int> wordIds,
   ) {
@@ -39,9 +38,68 @@ class _MemoryDatabaseService extends AppDatabaseService {
     return output;
   }
 
-  @override
   void upsertWordMemoryProgress(WordMemoryProgress progress) {
     _progressByWordId[progress.wordId] = progress;
+  }
+}
+
+class _MapSettingsStoreRepository implements SettingsStoreRepository {
+  const _MapSettingsStoreRepository(this._values);
+
+  final Map<String, String> _values;
+
+  @override
+  String? getSetting(String key) => _values[key];
+
+  @override
+  void setSetting(String key, String value) {
+    _values[key] = value;
+  }
+}
+
+class _MemoryPracticeRepository implements PracticeRepository {
+  const _MemoryPracticeRepository(this._database);
+
+  final _MemoryDatabaseService _database;
+
+  @override
+  Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
+    Iterable<int> wordIds,
+  ) {
+    final output = <int, WordMemoryProgress>{};
+    for (final wordId in wordIds) {
+      final progress = _database._progressByWordId[wordId];
+      if (progress != null) {
+        output[wordId] = progress;
+      }
+    }
+    return output;
+  }
+
+  @override
+  void upsertWordMemoryProgress(WordMemoryProgress progress) {
+    _database._progressByWordId[progress.wordId] = progress;
+  }
+
+  @override
+  void insertWordMemoryEvent({
+    required int wordId,
+    required String eventKind,
+    required int quality,
+    List<String> weakReasonIds = const <String>[],
+    String? sessionTitle,
+    DateTime? createdAt,
+  }) {}
+
+  @override
+  Future<String> writeTextExport({
+    required String contents,
+    required String defaultFileStem,
+    required String extension,
+    String? directoryPath,
+    String? fileName,
+  }) async {
+    return fileName ?? '$defaultFileStem.$extension';
   }
 }
 
@@ -57,9 +115,15 @@ WordEntry _word(String value, {int? id}) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  SettingsService settingsFor(_MemoryDatabaseService database) {
+    return SettingsService.fromRepository(
+      _MapSettingsStoreRepository(database._settings),
+    );
+  }
+
   test('recordPracticeSession keeps practice lists writable-safe', () {
     final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final settings = settingsFor(database);
     final state = AppState(
       database: database,
       settings: settings,
@@ -67,6 +131,7 @@ void main() {
       ambient: StubAmbientService(),
       asr: StubAsrService(),
       focusService: StubFocusService(database, settings: settings),
+      practiceRepository: _MemoryPracticeRepository(database),
     );
 
     expect(
@@ -93,7 +158,7 @@ void main() {
     'recordPracticeAnswer persists weak notebook and counters immediately',
     () {
       final database = _MemoryDatabaseService();
-      final settings = SettingsService(database);
+      final settings = settingsFor(database);
       final state = AppState(
         database: database,
         settings: settings,
@@ -101,6 +166,7 @@ void main() {
         ambient: StubAmbientService(),
         asr: StubAsrService(),
         focusService: StubFocusService(database, settings: settings),
+        practiceRepository: _MemoryPracticeRepository(database),
       );
       final alpha = _word('alpha', id: 1);
       final bravo = _word('bravo', id: 2);
@@ -135,7 +201,7 @@ void main() {
 
   test('recordPracticeAnswer keeps tracked practice snapshot lightweight', () {
     final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final settings = settingsFor(database);
     final state = AppState(
       database: database,
       settings: settings,
@@ -143,6 +209,7 @@ void main() {
       ambient: StubAmbientService(),
       asr: StubAsrService(),
       focusService: StubFocusService(database, settings: settings),
+      practiceRepository: _MemoryPracticeRepository(database),
     );
     const entry = WordEntry(
       id: 9,
@@ -174,7 +241,7 @@ void main() {
 
   test('beginPracticeBatch advances cursor and honors anchor words', () {
     final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final settings = settingsFor(database);
     final state = AppState(
       database: database,
       settings: settings,
@@ -182,6 +249,7 @@ void main() {
       ambient: StubAmbientService(),
       asr: StubAsrService(),
       focusService: StubFocusService(database, settings: settings),
+      practiceRepository: _MemoryPracticeRepository(database),
     );
     final words = <WordEntry>[_word('alpha'), _word('bravo'), _word('charlie')];
 
@@ -233,7 +301,7 @@ void main() {
     'beginPracticeBatch can rotate full rounds with custom cursor advance',
     () {
       final database = _MemoryDatabaseService();
-      final settings = SettingsService(database);
+      final settings = settingsFor(database);
       final state = AppState(
         database: database,
         settings: settings,
@@ -241,6 +309,7 @@ void main() {
         ambient: StubAmbientService(),
         asr: StubAsrService(),
         focusService: StubFocusService(database, settings: settings),
+        practiceRepository: _MemoryPracticeRepository(database),
       );
       final words = <WordEntry>[
         _word('alpha'),
@@ -288,7 +357,7 @@ void main() {
 
   test('practice round settings persist and preview the saved cursor', () {
     final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final settings = settingsFor(database);
     final state = AppState(
       database: database,
       settings: settings,
@@ -296,6 +365,7 @@ void main() {
       ambient: StubAmbientService(),
       asr: StubAsrService(),
       focusService: StubFocusService(database, settings: settings),
+      practiceRepository: _MemoryPracticeRepository(database),
     );
     final words = <WordEntry>[_word('alpha'), _word('bravo'), _word('charlie')];
 
@@ -336,7 +406,7 @@ void main() {
     'wrong notebook keeps weak words in stored order and supports cleanup',
     () {
       final database = _MemoryDatabaseService();
-      final settings = SettingsService(database);
+      final settings = settingsFor(database);
       final state = AppState(
         database: database,
         settings: settings,
@@ -344,6 +414,7 @@ void main() {
         ambient: StubAmbientService(),
         asr: StubAsrService(),
         focusService: StubFocusService(database, settings: settings),
+        practiceRepository: _MemoryPracticeRepository(database),
       );
 
       state.recordPracticeSession(
@@ -405,7 +476,7 @@ void main() {
     'wrong notebook keeps duplicate headwords distinct when tracked entries have stable identity',
     () {
       final database = _MemoryDatabaseService();
-      final settings = SettingsService(database);
+      final settings = settingsFor(database);
       final state = AppState(
         database: database,
         settings: settings,
@@ -413,6 +484,7 @@ void main() {
         ambient: StubAmbientService(),
         asr: StubAsrService(),
         focusService: StubFocusService(database, settings: settings),
+        practiceRepository: _MemoryPracticeRepository(database),
       );
 
       const setPut = WordEntry(

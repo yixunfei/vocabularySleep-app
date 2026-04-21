@@ -6,22 +6,23 @@ import 'package:flutter/widgets.dart';
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/tomato_timer.dart';
-import 'package:vocabulary_sleep_app/src/services/database_service.dart';
+import 'package:vocabulary_sleep_app/src/repositories/focus_repository.dart';
+import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/focus_service.dart';
 import 'package:vocabulary_sleep_app/src/services/reminder_service.dart';
+import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/system_calendar_service.dart';
 import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/services/tts_service.dart';
-import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
-class _MemoryDatabaseService extends AppDatabaseService {
-  _MemoryDatabaseService() : super(WordbookImportService());
-
+class _MemoryFocusRepository implements FocusRepository {
   final Map<String, String> _settings = <String, String>{};
   final List<TomatoTimerRecord> records = <TomatoTimerRecord>[];
   final List<TodoItem> todos = <TodoItem>[];
+  final List<PlanNote> notes = <PlanNote>[];
   int getTimerRecordsCalls = 0;
   int _nextTodoId = 1;
+  int _nextNoteId = 1;
 
   @override
   String? getSetting(String key) => _settings[key];
@@ -92,12 +93,91 @@ class _MemoryDatabaseService extends AppDatabaseService {
   }
 
   @override
+  List<PlanNote> getNotes() {
+    final ordered = List<PlanNote>.from(notes);
+    ordered.sort((left, right) {
+      final order = left.sortOrder.compareTo(right.sortOrder);
+      if (order != 0) {
+        return order;
+      }
+      final leftUpdated =
+          left.updatedAt?.millisecondsSinceEpoch ??
+          left.createdAt?.millisecondsSinceEpoch ??
+          0;
+      final rightUpdated =
+          right.updatedAt?.millisecondsSinceEpoch ??
+          right.createdAt?.millisecondsSinceEpoch ??
+          0;
+      return rightUpdated.compareTo(leftUpdated);
+    });
+    return ordered;
+  }
+
+  @override
+  void insertNote(PlanNote note) {
+    notes.add(
+      note.copyWith(
+        id: _nextNoteId++,
+        sortOrder: note.sortOrder > 0 ? note.sortOrder : notes.length,
+      ),
+    );
+  }
+
+  @override
+  void updateNote(PlanNote note) {
+    final index = notes.indexWhere((item) => item.id == note.id);
+    if (index < 0) {
+      return;
+    }
+    notes[index] = note;
+  }
+
+  @override
+  void deleteNote(int id) {
+    notes.removeWhere((item) => item.id == id);
+  }
+
+  @override
+  void deleteNotes(List<int> ids) {
+    if (ids.isEmpty) {
+      return;
+    }
+    final idSet = ids.toSet();
+    notes.removeWhere((item) => item.id != null && idSet.contains(item.id));
+  }
+
+  @override
+  void reorderNotes(List<int> orderedIds) {
+    for (var index = 0; index < orderedIds.length; index += 1) {
+      final noteIndex = notes.indexWhere(
+        (item) => item.id == orderedIds[index],
+      );
+      if (noteIndex < 0) {
+        continue;
+      }
+      notes[noteIndex] = notes[noteIndex].copyWith(sortOrder: index);
+    }
+  }
+
+  @override
   List<TomatoTimerRecord> getTimerRecords({int limit = 30}) {
     getTimerRecordsCalls += 1;
     if (limit >= records.length) {
       return List<TomatoTimerRecord>.from(records);
     }
     return records.take(limit).toList(growable: false);
+  }
+}
+
+class _MemorySettingsStoreRepository implements SettingsStoreRepository {
+  final Map<String, String> _settings = <String, String>{};
+
+  @override
+  String? getSetting(String key) => _settings[key];
+
+  @override
+  void setSetting(String key, String value) {
+    _settings[key] = value;
   }
 }
 
@@ -204,66 +284,106 @@ class _FakeTodoReminderService implements TodoReminderService {
   Future<void> dispose() async {}
 }
 
-class _FakeTtsService extends TtsService {
-  String? lastText;
+class _TtsMethodSpy {
+  final List<String> spoken = <String>[];
   String? lastLanguage;
 
-  @override
-  Future<void> speak(
-    String text,
-    TtsConfig config, {
-    bool preCacheOnly = false,
-  }) async {
-    if (preCacheOnly) {
-      return;
+  Future<dynamic> handle(MethodCall call) async {
+    switch (call.method) {
+      case 'speak':
+        spoken.add(call.arguments?.toString() ?? '');
+        return 1;
+      case 'setLanguage':
+        lastLanguage = call.arguments?.toString();
+        return 1;
+      case 'setVoice':
+      case 'setSpeechRate':
+      case 'setVolume':
+      case 'setPitch':
+      case 'awaitSpeakCompletion':
+      case 'setAudioAttributesForNavigation':
+      case 'stop':
+        return 1;
+      default:
+        return 1;
     }
-    lastText = text;
-    lastLanguage = config.language;
   }
+}
 
-  @override
-  Future<void> stop() async {}
-
-  @override
-  Future<void> pause(TtsProviderType provider) async {}
-
-  @override
-  Future<void> resume(TtsProviderType provider) async {}
+FocusService _createService(
+  _MemoryFocusRepository repository,
+  _MemorySettingsStoreRepository store, {
+  ReminderService? reminder,
+  SystemCalendarService? systemCalendar,
+  TodoReminderService? todoReminder,
+  TtsService? tts,
+  Future<void> Function(String text, TtsConfig config)? ttsSpeakOverride,
+}) {
+  return FocusService.fromRepository(
+    repository: repository,
+    settings: SettingsService.fromRepository(store),
+    reminder: reminder,
+    systemCalendar: systemCalendar,
+    todoReminder: todoReminder ?? _FakeTodoReminderService(),
+    tts: tts,
+    ttsSpeakOverride: ttsSpeakOverride,
+  );
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const audioChannel = MethodChannel('xyz.luan/audioplayers');
   const audioGlobalChannel = MethodChannel('xyz.luan/audioplayers.global');
+  const audioEventsChannel = MethodChannel('xyz.luan/audioplayers/events');
   const audioGlobalEventsChannel = MethodChannel(
     'xyz.luan/audioplayers.global/events',
   );
+  const ttsChannel = MethodChannel('flutter_tts');
+  late _TtsMethodSpy ttsSpy;
 
   setUp(() {
+    ttsSpy = _TtsMethodSpy();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(audioChannel, (call) async => null);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(audioGlobalChannel, (call) async => null);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioEventsChannel, (call) async => null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           audioGlobalEventsChannel,
           (call) async => null,
         );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(ttsChannel, ttsSpy.handle);
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioChannel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioGlobalChannel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioEventsChannel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioGlobalEventsChannel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(ttsChannel, null);
   });
 
   group('FocusService', () {
     test('loads defaults and keeps auto-start-next key compatible', () async {
-      final database = _MemoryDatabaseService();
-
-      final defaults = FocusService(database);
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
+      final defaults = _createService(repository, store);
       await defaults.init();
       expect(defaults.config.autoStartBreak, true);
       expect(defaults.config.autoStartNextRound, false);
       expect(defaults.config.focusDurationSeconds, 25 * 60);
       expect(defaults.config.breakDurationSeconds, 5 * 60);
 
-      database.setSetting('tomato_auto_start_next', '1');
-      final legacy = FocusService(database);
+      repository.setSetting('tomato_auto_start_next', '1');
+      final legacy = _createService(repository, store);
       await legacy.init();
       expect(legacy.config.autoStartNextRound, true);
 
@@ -275,16 +395,20 @@ void main() {
           reminder: const TimerReminderConfig(voice: true),
         ),
       );
-      expect(database.getSetting('tomato_auto_start_break'), '0');
-      expect(database.getSetting('tomato_auto_start_next'), '1');
-      expect(database.getSetting('tomato_auto_start_next_round'), '1');
-      expect(database.getSetting('tomato_workspace_split_ratio'), isNotNull);
-      expect(database.getSetting('tomato_reminder_config'), contains('voice'));
+      expect(repository.getSetting('tomato_auto_start_break'), '0');
+      expect(repository.getSetting('tomato_auto_start_next'), '1');
+      expect(repository.getSetting('tomato_auto_start_next_round'), '1');
+      expect(repository.getSetting('tomato_workspace_split_ratio'), isNotNull);
+      expect(
+        repository.getSetting('tomato_reminder_config'),
+        contains('voice'),
+      );
     });
 
     test('manual phase transitions require explicit advance action', () async {
-      final database = _MemoryDatabaseService();
-      final service = FocusService(database);
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
+      final service = _createService(repository, store);
       await service.init();
       service.saveConfig(
         const TomatoTimerConfig(
@@ -324,8 +448,9 @@ void main() {
     });
 
     test('today stats separate focus minutes and session minutes', () async {
-      final database = _MemoryDatabaseService();
-      final service = FocusService(database);
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
+      final service = _createService(repository, store);
       await service.init();
       service.saveConfig(
         const TomatoTimerConfig(
@@ -352,14 +477,15 @@ void main() {
       expect(service.getTodayFocusMinutes(), 1);
       expect(service.getTodaySessionMinutes(), 2);
       expect(service.getTodayRoundsCompleted(), 1);
-      expect(database.records.first.partial, false);
+      expect(repository.records.first.partial, false);
     });
 
     test(
       'today stats cache avoids repeated database reads until invalidated',
       () async {
-        final database = _MemoryDatabaseService();
-        database.records.addAll(<TomatoTimerRecord>[
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
+        repository.records.addAll(<TomatoTimerRecord>[
           TomatoTimerRecord(
             startTime: DateTime.now(),
             durationMinutes: 30,
@@ -380,22 +506,22 @@ void main() {
           ),
         ]);
 
-        final service = FocusService(database);
+        final service = _createService(repository, store);
         await service.init();
 
         expect(service.getTodayFocusMinutes(), 35);
         expect(service.getTodaySessionMinutes(), 45);
         expect(service.getTodayRoundsCompleted(), 3);
-        expect(database.getTimerRecordsCalls, 1);
+        expect(repository.getTimerRecordsCalls, 1);
 
         expect(service.getTodayFocusMinutes(), 35);
         expect(service.getTodaySessionMinutes(), 45);
         expect(service.getTodayRoundsCompleted(), 3);
-        expect(database.getTimerRecordsCalls, 1);
+        expect(repository.getTimerRecordsCalls, 1);
 
         service.stop();
         expect(service.getTodayFocusMinutes(), 35);
-        expect(database.getTimerRecordsCalls, 1);
+        expect(repository.getTimerRecordsCalls, 1);
 
         fakeAsync((async) {
           service.start(
@@ -408,13 +534,14 @@ void main() {
         });
 
         expect(service.getTodayFocusMinutes(), greaterThanOrEqualTo(35));
-        expect(database.getTimerRecordsCalls, 2);
+        expect(repository.getTimerRecordsCalls, 2);
       },
     );
 
     test('stop stores a partial session record', () async {
-      final database = _MemoryDatabaseService();
-      final service = FocusService(database);
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
+      final service = _createService(repository, store);
       await service.init();
       service.saveConfig(
         const TomatoTimerConfig(
@@ -430,16 +557,17 @@ void main() {
         service.stop();
       });
 
-      expect(database.records, isNotEmpty);
-      expect(database.records.first.partial, true);
-      expect(database.records.first.focusDurationMinutes, greaterThan(0));
+      expect(repository.records, isNotEmpty);
+      expect(repository.records.first.partial, true);
+      expect(repository.records.first.focusDurationMinutes, greaterThan(0));
     });
 
     test(
       'lock screen state clears when stopping or completing a session',
       () async {
-        final database = _MemoryDatabaseService();
-        final service = FocusService(database);
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
+        final service = _createService(repository, store);
         await service.init();
         service.saveConfig(
           const TomatoTimerConfig(
@@ -476,9 +604,10 @@ void main() {
     test(
       'phase completion waits for reminder acknowledgement before auto advance',
       () async {
-        final database = _MemoryDatabaseService();
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
         final reminder = _FakeReminderService();
-        final service = FocusService(database, reminder: reminder);
+        final service = _createService(repository, store, reminder: reminder);
         await service.init();
         service.saveConfig(
           const TomatoTimerConfig(
@@ -523,10 +652,11 @@ void main() {
         final binding = TestWidgetsFlutterBinding.ensureInitialized();
         binding.platformDispatcher.localeTestValue = const Locale('zh', 'CN');
         addTearDown(binding.platformDispatcher.clearAllTestValues);
-        final database = _MemoryDatabaseService();
-        database.setSetting('uiLanguage', 'en');
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
+        store.setSetting('uiLanguage', 'en');
         final reminder = _FakeReminderService();
-        final service = FocusService(database, reminder: reminder);
+        final service = _createService(repository, store, reminder: reminder);
         await service.init();
         service.saveConfig(
           const TomatoTimerConfig(
@@ -562,10 +692,19 @@ void main() {
       binding.platformDispatcher.localeTestValue = const Locale('ja', 'JP');
       addTearDown(binding.platformDispatcher.clearAllTestValues);
 
-      final database = _MemoryDatabaseService();
-      database.setSetting('uiLanguage', 'en');
-      final tts = _FakeTtsService();
-      final service = FocusService(database, tts: tts);
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
+      store.setSetting('uiLanguage', 'en');
+      String? spokenText;
+      String? spokenLanguage;
+      final service = _createService(
+        repository,
+        store,
+        ttsSpeakOverride: (text, config) async {
+          spokenText = text;
+          spokenLanguage = config.language;
+        },
+      );
       await service.init();
       service.saveConfig(
         const TomatoTimerConfig(
@@ -585,18 +724,21 @@ void main() {
       fakeAsync((async) {
         service.start();
         async.elapse(const Duration(seconds: 2));
+        async.flushMicrotasks();
       });
 
-      expect(tts.lastText, isNotNull);
-      expect(tts.lastLanguage, startsWith('ja'));
+      expect(spokenText, isNotNull);
+      expect(spokenLanguage, startsWith('ja'));
     });
 
     test('saving a reminder todo syncs it to the system calendar', () async {
-      final database = _MemoryDatabaseService();
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
       final systemCalendar = _FakeSystemCalendarService();
       final todoReminder = _FakeTodoReminderService();
-      final service = FocusService(
-        database,
+      final service = _createService(
+        repository,
+        store,
         systemCalendar: systemCalendar,
         todoReminder: todoReminder,
       );
@@ -633,11 +775,13 @@ void main() {
     test(
       'saving a local-only reminder todo does not sync it to the system calendar',
       () async {
-        final database = _MemoryDatabaseService();
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
         final systemCalendar = _FakeSystemCalendarService();
         final todoReminder = _FakeTodoReminderService();
-        final service = FocusService(
-          database,
+        final service = _createService(
+          repository,
+          store,
           systemCalendar: systemCalendar,
           todoReminder: todoReminder,
         );
@@ -660,11 +804,13 @@ void main() {
     test(
       'deleting a reminder todo removes its system calendar event',
       () async {
-        final database = _MemoryDatabaseService();
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
         final systemCalendar = _FakeSystemCalendarService();
         final todoReminder = _FakeTodoReminderService();
-        final service = FocusService(
-          database,
+        final service = _createService(
+          repository,
+          store,
           systemCalendar: systemCalendar,
           todoReminder: todoReminder,
         );

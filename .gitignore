@@ -39,12 +39,17 @@ Thumbs.db
 .tmp_appdata/
 .tmp_home/
 .tmp_localappdata/
+.tmp_pub_cache/
 .tmp_model_runs/
 .tooling/
 .build/
 .buildlog/
 migrate_working_dir/
 run_windows_verbose.log
+*.bak
+*.bak2
+*.safe.bak
+*.safe.bak2
 
 # ------------------------------
 # Android

@@ -5,6 +5,8 @@ import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
+import 'package:vocabulary_sleep_app/src/repositories/practice_repository.dart';
+import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/daily_quote_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
@@ -20,15 +22,12 @@ class _MemoryDatabaseService extends AppDatabaseService {
   final Map<int, WordMemoryProgress> progressByWordId =
       <int, WordMemoryProgress>{};
 
-  @override
   String? getSetting(String key) => _settings[key];
 
-  @override
   void setSetting(String key, String value) {
     _settings[key] = value;
   }
 
-  @override
   Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
     Iterable<int> wordIds,
   ) {
@@ -39,9 +38,65 @@ class _MemoryDatabaseService extends AppDatabaseService {
     };
   }
 
-  @override
   void upsertWordMemoryProgress(WordMemoryProgress progress) {
     progressByWordId[progress.wordId] = progress;
+  }
+}
+
+class _MapSettingsStoreRepository implements SettingsStoreRepository {
+  const _MapSettingsStoreRepository(this._values);
+
+  final Map<String, String> _values;
+
+  @override
+  String? getSetting(String key) => _values[key];
+
+  @override
+  void setSetting(String key, String value) {
+    _values[key] = value;
+  }
+}
+
+class _MemoryPracticeRepository implements PracticeRepository {
+  const _MemoryPracticeRepository(this._database);
+
+  final _MemoryDatabaseService _database;
+
+  @override
+  Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
+    Iterable<int> wordIds,
+  ) {
+    return <int, WordMemoryProgress>{
+      for (final wordId in wordIds)
+        if (_database.progressByWordId.containsKey(wordId))
+          wordId: _database.progressByWordId[wordId]!,
+    };
+  }
+
+  @override
+  void upsertWordMemoryProgress(WordMemoryProgress progress) {
+    _database.progressByWordId[progress.wordId] = progress;
+  }
+
+  @override
+  void insertWordMemoryEvent({
+    required int wordId,
+    required String eventKind,
+    required int quality,
+    List<String> weakReasonIds = const <String>[],
+    String? sessionTitle,
+    DateTime? createdAt,
+  }) {}
+
+  @override
+  Future<String> writeTextExport({
+    required String contents,
+    required String defaultFileStem,
+    required String extension,
+    String? directoryPath,
+    String? fileName,
+  }) async {
+    return fileName ?? '$defaultFileStem.$extension';
   }
 }
 
@@ -102,7 +157,9 @@ AppState _createState({
   _FakeDailyQuoteService? dailyQuoteService,
 }) {
   final resolvedDatabase = database ?? _MemoryDatabaseService();
-  final resolvedSettings = SettingsService(resolvedDatabase);
+  final resolvedSettings = SettingsService.fromRepository(
+    _MapSettingsStoreRepository(resolvedDatabase._settings),
+  );
   return AppState(
     database: resolvedDatabase,
     settings: resolvedSettings,
@@ -112,6 +169,7 @@ AppState _createState({
     focusService:
         focusService ??
         StubFocusService(resolvedDatabase, settings: resolvedSettings),
+    practiceRepository: _MemoryPracticeRepository(resolvedDatabase),
     weatherService: weatherService,
     dailyQuoteService: dailyQuoteService,
   );
@@ -199,7 +257,9 @@ void main() {
 
   test('startup todo prompt suppression persists for today', () {
     final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final settings = SettingsService.fromRepository(
+      _MapSettingsStoreRepository(database._settings),
+    );
     final state = _createState(database: database);
 
     expect(state.startupTodoPromptEnabled, isFalse);
@@ -241,7 +301,9 @@ void main() {
 
   test('recordPracticeSession feeds memory lanes and remembered status', () {
     final database = _MemoryDatabaseService();
-    final settings = SettingsService(database);
+    final settings = SettingsService.fromRepository(
+      _MapSettingsStoreRepository(database._settings),
+    );
     final state = _createState(database: database);
 
     state.recordPracticeSession(

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../i18n/app_i18n.dart';
+import '../models/play_config.dart';
 import '../models/todo_item.dart';
 import '../models/tomato_timer.dart';
 import '../repositories/focus_repository.dart';
@@ -29,6 +30,7 @@ class FocusService extends ChangeNotifier {
     SystemCalendarService? systemCalendar,
     TodoReminderService? todoReminder,
     TtsService? tts,
+    Future<void> Function(String text, TtsConfig config)? ttsSpeakOverride,
   }) : this.fromRepository(
          repository: repository ?? DatabaseFocusRepository(database),
          settings: settings ?? SettingsService(database),
@@ -38,6 +40,7 @@ class FocusService extends ChangeNotifier {
              systemCalendar ?? PlatformSystemCalendarService(database),
          todoReminder: todoReminder,
          tts: tts,
+         ttsSpeakOverride: ttsSpeakOverride,
        );
 
   FocusService.fromRepository({
@@ -48,13 +51,15 @@ class FocusService extends ChangeNotifier {
     SystemCalendarService? systemCalendar,
     TodoReminderService? todoReminder,
     TtsService? tts,
+    Future<void> Function(String text, TtsConfig config)? ttsSpeakOverride,
   }) : _repository = repository,
        _settings = settings,
        _ambient = ambient,
        _reminder = reminder,
        _systemCalendar = systemCalendar,
        _todoReminder = todoReminder ?? PlatformTodoReminderService(),
-       _tts = tts;
+       _tts = tts,
+       _ttsSpeakOverride = ttsSpeakOverride;
 
   final FocusRepository _repository;
   final SettingsService _settings;
@@ -63,6 +68,7 @@ class FocusService extends ChangeNotifier {
   final SystemCalendarService? _systemCalendar;
   final TodoReminderService _todoReminder;
   final TtsService? _tts;
+  final Future<void> Function(String text, TtsConfig config)? _ttsSpeakOverride;
 
   bool _initialized = false;
   bool _lockScreenActive = false;
@@ -497,7 +503,7 @@ class FocusService extends ChangeNotifier {
       }
     }
 
-    if (reminder.voice && _tts != null) {
+    if (reminder.voice && (_tts != null || _ttsSpeakOverride != null)) {
       final voiceHandledNatively =
           persistent &&
           handledPersistentAlert &&
@@ -507,10 +513,14 @@ class FocusService extends ChangeNotifier {
         return;
       }
       try {
-        await _tts.speak(
-          voiceMessage,
-          _settings.loadPlayConfig().tts.copyWith(language: systemLanguageTag),
+        final ttsConfig = _settings.loadPlayConfig().tts.copyWith(
+          language: systemLanguageTag,
         );
+        if (_ttsSpeakOverride != null) {
+          await _ttsSpeakOverride(voiceMessage, ttsConfig);
+        } else {
+          await _tts!.speak(voiceMessage, ttsConfig);
+        }
       } catch (_) {
         // Avoid breaking timer flow for reminder failures.
       }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'package:vocabulary_sleep_app/src/core/module_system/module_system.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
@@ -12,6 +13,7 @@ import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
+import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
@@ -30,25 +32,74 @@ class _MemoryDatabaseService extends AppDatabaseService {
   final List<Wordbook> wordbooks;
   final Map<int, List<WordEntry>> _wordsByWordbookId;
   final Map<String, String> _settings = <String, String>{};
+  bool _seeded = false;
   int initCalls = 0;
+
+  Map<String, String> get settingsValues => _settings;
 
   @override
   Future<void> init() async {
     initCalls += 1;
+    await super.init();
+    if (_seeded) {
+      return;
+    }
+    _seeded = true;
+    await _seedWordbooks();
   }
 
-  @override
+  Future<void> _seedWordbooks() async {
+    final existingByPath = <String, Wordbook>{
+      for (final item in AppDatabaseServiceWordbookQuery(this).getWordbooks())
+        item.path: item,
+    };
+
+    for (final expected in wordbooks) {
+      final words = _wordsByWordbookId[expected.id] ?? const <WordEntry>[];
+      if (expected.path == 'builtin:favorites' ||
+          expected.path == 'builtin:task') {
+        final existing = existingByPath[expected.path];
+        if (existing == null) {
+          continue;
+        }
+        clearWordbook(existing.id);
+        for (final entry in words) {
+          upsertWord(existing.id, entry.toPayload());
+        }
+        continue;
+      }
+
+      await importWordbook(
+        sourcePath: expected.path,
+        name: expected.name,
+        entries: words.map((item) => item.toPayload()).toList(growable: false),
+      );
+    }
+
+    if (wordbooks.isEmpty) {
+      return;
+    }
+    final sqlite = sqlite3.open(dbPath);
+    try {
+      for (final expected in wordbooks) {
+        sqlite.execute(
+          'UPDATE wordbooks SET name = ?, word_count = ? WHERE path = ?',
+          <Object?>[expected.name, expected.wordCount, expected.path],
+        );
+      }
+    } finally {
+      sqlite.dispose();
+    }
+  }
+
   String? getSetting(String key) => _settings[key];
 
-  @override
   void setSetting(String key, String value) {
     _settings[key] = value;
   }
 
-  @override
   List<Wordbook> getWordbooks() => List<Wordbook>.from(wordbooks);
 
-  @override
   List<WordEntry> getWords(
     int wordbookId, {
     int limit = 100000,
@@ -58,7 +109,6 @@ class _MemoryDatabaseService extends AppDatabaseService {
     return words.skip(offset).take(limit).toList(growable: false);
   }
 
-  @override
   List<WordEntry> getWordsLite(
     int wordbookId, {
     int limit = 100000,
@@ -74,7 +124,6 @@ class _MemoryDatabaseService extends AppDatabaseService {
         .toList(growable: false);
   }
 
-  @override
   WordEntry? hydrateWordEntry(WordEntry entry) {
     final words = _wordsByWordbookId[entry.wordbookId] ?? const <WordEntry>[];
     for (final candidate in words) {
@@ -85,19 +134,16 @@ class _MemoryDatabaseService extends AppDatabaseService {
     return null;
   }
 
-  @override
   Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
     Iterable<int> wordIds,
   ) {
     return const <int, WordMemoryProgress>{};
   }
 
-  @override
   List<DownloadedAmbientSoundInfo> getDownloadedAmbientSounds() {
     return const <DownloadedAmbientSoundInfo>[];
   }
 
-  @override
   List<String> getWordTexts(
     int wordbookId, {
     int limit = 100000,
@@ -109,6 +155,20 @@ class _MemoryDatabaseService extends AppDatabaseService {
         .take(limit)
         .map((item) => item.word)
         .toList(growable: false);
+  }
+}
+
+class _MapSettingsStoreRepository implements SettingsStoreRepository {
+  const _MapSettingsStoreRepository(this._values);
+
+  final Map<String, String> _values;
+
+  @override
+  String? getSetting(String key) => _values[key];
+
+  @override
+  void setSetting(String key, String value) {
+    _values[key] = value;
   }
 }
 
@@ -152,6 +212,15 @@ String _dateKey(DateTime value) {
   final month = value.month.toString().padLeft(2, '0');
   final day = value.day.toString().padLeft(2, '0');
   return '${value.year}-$month-$day';
+}
+
+SettingsService _settingsFor(AppDatabaseService database) {
+  if (database is _MemoryDatabaseService) {
+    return SettingsService.fromRepository(
+      _MapSettingsStoreRepository(database.settingsValues),
+    );
+  }
+  return SettingsService(database);
 }
 
 void main() {
@@ -213,7 +282,8 @@ void main() {
           3: <WordEntry>[_word(1, 'Alpha'), _word(2, 'Beta')],
         },
       );
-      final settings = SettingsService(database);
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
       final playback = TrackingPlaybackService();
       final focus = StubFocusService(database, settings: settings);
       final weather = _FakeWeatherService();
@@ -254,7 +324,7 @@ void main() {
       expect(state.testModeEnabled, isTrue);
       expect(state.testModeRevealed, isTrue);
       expect(state.testModeHintRevealed, isFalse);
-      expect(state.selectedWordbook?.id, 3);
+      expect(state.selectedWordbook?.path, 'custom:core');
       expect(
         state.words.map((item) => item.word).toList(growable: false),
         <String>['Alpha', 'Beta'],
@@ -273,9 +343,67 @@ void main() {
     },
   );
 
+  test(
+    'init skips sleep assistant preload when module is disabled, then lazy-loads after re-enable',
+    () async {
+      final database = _MemoryDatabaseService();
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
+      settings.saveModuleToggleState(
+        ModuleToggleState.defaults.copyWithModule(
+          ModuleIds.toolboxSleepAssistant,
+          false,
+        ),
+      );
+
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+
+      await state.init();
+
+      expect(state.isModuleEnabled(ModuleIds.toolboxSleepAssistant), isFalse);
+      expect(state.sleepRoutineTemplates, isEmpty);
+
+      state.setModuleEnabled(ModuleIds.toolboxSleepAssistant, true);
+      await pumpEventQueue();
+
+      expect(state.isModuleEnabled(ModuleIds.toolboxSleepAssistant), isTrue);
+      expect(state.sleepRoutineTemplates, isNotEmpty);
+    },
+  );
+
+  test('disabling sleep assistant stops running sleep routine', () async {
+    final database = _MemoryDatabaseService();
+    addTearDown(database.dispose);
+    final settings = _settingsFor(database);
+    final state = AppState(
+      database: database,
+      settings: settings,
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
+    );
+
+    await state.init();
+    state.startSleepRoutine();
+    expect(state.sleepRoutineRunnerState.isRunning, isTrue);
+
+    state.setModuleEnabled(ModuleIds.toolboxSleepAssistant, false);
+
+    expect(state.isModuleEnabled(ModuleIds.toolboxSleepAssistant), isFalse);
+    expect(state.sleepRoutineRunnerState.isRunning, isFalse);
+  });
+
   test('resetUserData auto-initializes database before reset flow', () async {
     final database = AppDatabaseService(WordbookImportService());
-    final settings = SettingsService(database);
+    final settings = _settingsFor(database);
     final state = AppState(
       database: database,
       settings: settings,
@@ -326,7 +454,7 @@ void main() {
         ],
       );
 
-      final initialSettings = SettingsService(database);
+      final initialSettings = _settingsFor(database);
       final initialState = AppState(
         database: database,
         settings: initialSettings,
@@ -339,7 +467,7 @@ void main() {
       await initialState.selectWordEntry(initialState.words.last);
       initialState.rememberPlaybackProgress(initialState.words.last);
 
-      final restoredSettings = SettingsService(database);
+      final restoredSettings = _settingsFor(database);
       final restoredState = AppState(
         database: database,
         settings: restoredSettings,
@@ -393,7 +521,7 @@ void main() {
         ],
       );
 
-      final initialSettings = SettingsService(database);
+      final initialSettings = _settingsFor(database);
       final initialState = AppState(
         database: database,
         settings: initialSettings,
@@ -407,7 +535,7 @@ void main() {
       await initialState.selectWordEntry(targetEntry);
       initialState.rememberPlaybackProgress(targetEntry);
 
-      final restoredSettings = SettingsService(database);
+      final restoredSettings = _settingsFor(database);
       final restoredState = AppState(
         database: database,
         settings: restoredSettings,
@@ -493,7 +621,7 @@ void main() {
         <Object?>[wordbook.id],
       );
 
-      final settings = SettingsService(database);
+      final settings = _settingsFor(database);
       final state = AppState(
         database: database,
         settings: settings,
@@ -503,7 +631,6 @@ void main() {
         focusService: StubFocusService(database, settings: settings),
       );
       await state.init();
-      addTearDown(state.dispose);
 
       final largeWordbook = state.wordbooks.firstWhere(
         (item) => item.path == 'custom:test_large_wordbook_hydration',
@@ -538,7 +665,8 @@ void main() {
     'init resets stale practice day counters but keeps totals and cursors',
     () async {
       final database = _MemoryDatabaseService();
-      final settings = SettingsService(database);
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
 
       settings.savePracticeDashboard(
@@ -634,7 +762,8 @@ void main() {
           ],
         },
       );
-      final settings = SettingsService(database);
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
       final playback = TrackingPlaybackService();
       final state = AppState(
         database: database,
@@ -647,10 +776,12 @@ void main() {
 
       await state.init();
 
-      final largeWordbook = state.wordbooks.firstWhere((item) => item.id == 4);
+      final largeWordbook = state.wordbooks.firstWhere(
+        (item) => item.path == 'custom:large',
+      );
       await state.selectWordbook(largeWordbook);
 
-      expect(state.selectedWordbook?.id, 4);
+      expect(state.selectedWordbook?.path, 'custom:large');
       expect(state.selectedWordbookRequiresOnDemandLoad, isTrue);
       expect(state.selectedWordbookLoaded, isFalse);
       expect(state.currentWord, isNull);
