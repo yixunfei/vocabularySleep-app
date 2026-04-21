@@ -60,7 +60,6 @@ class _ZenSheetHeader extends StatelessWidget {
     );
   }
 }
-
 class _ZenSectionCard extends StatelessWidget {
   const _ZenSectionCard({required this.title, required this.child});
 
@@ -1094,4 +1093,3 @@ class _ZenToolPreview extends StatelessWidget {
     );
   }
 }
-
