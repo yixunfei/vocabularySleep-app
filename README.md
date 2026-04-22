@@ -1,48 +1,96 @@
-# 咸鱼声息 Flutter App
+# Vocabulary Sleep App
 
-咸鱼声息是一个围绕「词汇学习、播放输入、练习巩固、专注计时、待办笔记、环境音助眠」构建的 Flutter 多平台应用。  
-项目当前以桌面端和安卓打包为主，核心目标是把“听、练、记、专注”串成一条连续学习路径。
+一个以「学习 + 训练 + 专注 + 睡眠支持 + 工具箱」为核心的 Flutter 综合性项目。  
+项目目标不是单一功能 App，而是一个可持续扩展、可模块化插拔的多域能力平台。
 
-## 应用简介
+## 项目定位
 
-当前版本包含这些核心能力：
+- 面向移动端优先的综合应用，覆盖学习、练习、专注、放松、睡眠等连续场景。
+- 采用模块化能力开关机制，支持按域启停、按需演进和逐步解耦。
+- 以本地优先为主线，兼顾在线资源下载与缓存预热。
 
-- 学习页：将“播放”和“词库”合并为二级页，便于在同一入口内切换听词与查词
-- 播放页：支持连续播放、上次播放进度恢复、大词库精确跳转、环境音混音
-- 词库页：支持 SQL 搜索、分页、前缀跳转，并默认定位到当前单词
-- 练习页：支持多种题型、错题本、练习历史、轮次设置与答题反馈
-- 专注页：支持番茄钟、待办、笔记、环境音、提醒与锁屏专注模式
-- 数据管理：支持导入/导出、备份/恢复、词本迁移与用户数据重置
-- 环境音：内置离线环境音 + Moodist 在线资源目录解析下载
-- 语音能力：TTS、跟读识别、离线 ASR / 本地评分包准备与管理
+## 顶层模块（导航层）
 
-## 截图
+| 模块 | 作用 | 当前能力概览 |
+| --- | --- | --- |
+| `study` | 学习中枢 | 播放与词库双入口、词条浏览、学习路径衔接 |
+| `practice` | 训练中枢 | 多题型练习、错题与历史、练习会话管理 |
+| `focus` | 专注中枢 | 专注计时、待办与笔记、提醒与锁屏专注流程 |
+| `toolbox` | 工具中枢 | 睡眠支持、声音工具、减压训练、小游戏与决策工具 |
+| `more` | 配置中枢 | 设置、数据管理、模块管理、语言与语音能力入口 |
 
-> 当前仓库已包含几张界面截图，下面直接引用现有文件。
+> 模块 ID、注册关系、父子边界定义见：`lib/src/core/module_system/`
 
-### 学习 / 播放
-![学习页预览](image.png)
+## Toolbox 子模块能力
 
-### 练习 / 专注
-![练习页预览](image-1.png)
+Toolbox 当前按「场景分组 + 子模块独立入口」组织，主要能力如下：
 
-### 数据与设置
-![设置页预览](image-2.png)
+| 模块 ID | 名称 | 功能说明 |
+| --- | --- | --- |
+| `toolbox.sleep_assistant` | 睡眠助手 | 评估、记录、睡前流程、夜醒救援、报告 |
+| `toolbox.mini_games` | 小游戏中心 | 数独、扫雷、拼图等轻量训练 |
+| `toolbox.soothing_music` | 舒缓音乐 | 本地曲目与沉浸式视觉组合 |
+| `toolbox.sound_deck` | 乐器工具集 | 竖琴/钢琴/长笛/鼓垫/吉他/三角铁/小提琴等 |
+| `toolbox.singing_bowls` | 疗愈音钵 | 共振音色与移动端操作面板 |
+| `toolbox.focus_beats` | 专注节拍 | 节拍训练与循环编排 |
+| `toolbox.woodfish` | 电子木鱼 | 触发、计数、反馈与轻仪式化 reset |
+| `toolbox.schulte_grid` | 舒尔特方格 | 视觉搜索与注意力训练 |
+| `toolbox.breathing` | 呼吸训练 | 专注/放松/睡前等场景呼吸流程 |
+| `toolbox.prayer_beads` | 静心念珠 | 节奏化计数与减压 |
+| `toolbox.zen_sand` | 禅意沙盘 | 触控绘制、沙纹反馈与静心交互 |
+| `toolbox.daily_decision` | 每日决策 | 转盘式快速决策工具 |
 
-### 其他界面
-![其他界面预览](image-3.png)
+## 架构与模块化设计
 
-## 编译与打包
+### 1. 模块系统（Module System）
+
+- `ModuleIds`：统一管理模块标识。
+- `ModuleRegistry`：注册模块元数据（分组、父子关系、可禁用性）。
+- `ModuleRuntimeGuard` + UI 路由守卫：确保禁用模块不可进入。
+- `module_access.dart`：统一禁用态文案与导航拦截入口。
+
+### 2. 应用装配（App Bootstrap）
+
+- `main.dart` 负责启动与环境变量初始化（`.env` 可选）。
+- `AppDependencies` 统一装配数据库、服务、仓储、状态实例。
+- `AppState` 作为当前主状态入口，正在持续推进域级拥有权拆分。
+
+### 3. 数据与能力层
+
+- 数据层：SQLite（`sqlite3` + `sqlite3_flutter_libs`）为主。
+- 服务层：播放、TTS、ASR、环境音、提醒、日历、专注服务等。
+- 仓储层：按实践域拆分（wordbook/practice/ambient/focus/sleep 等）。
+- 状态管理：`ChangeNotifier` + `Provider` + `Riverpod` 组合接入。
+
+## 目录概览
+
+```text
+lib/
+  main.dart
+  src/
+    app/                # 启动装配与依赖注入
+    core/module_system/ # 模块系统
+    repositories/       # 数据仓储边界
+    services/           # 业务服务能力
+    state/              # 应用状态层
+    ui/                 # 页面、组件、主题、文案
+assets/                 # 静态资源（品牌、词本、toolbox 资源）
+dict/                   # 词典与词本数据
+docs/                   # 设计规范与工程文档
+modules/                # 分域模块说明文档（模块化推进记录）
+plans/                  # 计划文档
+records/                # 过程记录与回归记录
+changelogs/             # 变更日志
+scripts/                # 构建、运行与验证脚本
+test/                   # 单元/Widget/集成相关测试
+```
+
+## 快速开始
 
 ### 环境要求
 
-- Flutter SDK
-- Dart SDK
-- 对应平台的原生构建环境
-  - Windows: Visual Studio C++ Build Tools, CMake
-  - Android: Android SDK / Android Studio
-  - macOS / iOS: Xcode
-  - Linux: clang / ninja / GTK 相关依赖
+- Flutter SDK（Dart 3.11+）
+- Android Studio / Xcode / Visual Studio（按目标平台准备）
 
 ### 本地运行
 
@@ -51,15 +99,15 @@ flutter pub get
 flutter run -d windows
 ```
 
-Windows 下也可以使用辅助脚本：
+PowerShell 快捷方式：
 
 ```powershell
 .\scripts\dev-run.ps1
 ```
 
-### 标准打包脚本
+## 构建命令
 
-PowerShell:
+PowerShell：
 
 ```powershell
 .\scripts\build.ps1 -Target windows
@@ -67,7 +115,7 @@ PowerShell:
 .\scripts\build.ps1 -Target android-apk,android-appbundle,windows
 ```
 
-Bash:
+Bash：
 
 ```bash
 ./scripts/build.sh --target linux
@@ -75,146 +123,35 @@ Bash:
 ./scripts/build.sh --target android-apk --target android-appbundle
 ```
 
-### `scripts/build.*` 当前支持的目标
+## 回归与质量验证
 
-按宿主平台区分：
+```bash
+flutter test --reporter compact
+```
 
-- Windows 主机：`android-apk` / `android-appbundle` / `windows` / `web`
-- macOS 主机：`android-apk` / `android-appbundle` / `ios` / `macos` / `web`
-- Linux 主机：`android-apk` / `android-appbundle` / `linux` / `web`
+本地静态检查辅助脚本：
 
-打包产物会复制到 [dist](D:/workspace/opensource/vocabularySleep-app/flutter_app/dist) 目录。
+```powershell
+.\scripts\verify-local-analysis.ps1
+```
 
-## 用户指南
+## 相关文档
 
-### 1. 学习页
+- 项目域说明：`PROJECT_DOMAIN.md`
+- 代理协作规范：`AGENTS.md`
+- 模块化记录：`modules/README.md`
+- toolbox 设计规范：
+  - `docs/toolbox_design/TOOLBOX_DESIGN_REVIEW.md`
+  - `docs/toolbox_design/TOOLBOX_ANIMATION_SPEC.md`
+  - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
+- 变更日志：`changelogs/CHANGELOG.md`
 
-- 顶部二级切换为“播放 / 词库”
-- 词库页默认会定位到当前单词
-- 播放页会默认恢复到上次播放进度附近的单词
-- 播放页下方提供更适合大词库的进度控制：
-  - 归一化滑动条
-  - 粗步长快跳
-  - 精确跳转输入框
+## 协作与提交建议
 
-### 2. 练习页
+- 提交信息建议遵循：`feat` / `fix` / `refactor` / `docs` / `test` / `chore`
+- 涉及结构性改动时，优先补充 `plans/` 与 `records/` 文档
+- 涉及 toolbox UI 收敛时，请同步遵守 `docs/toolbox_design/` 规范
 
-- 可以从当前范围、整本词库、错题本、任务词、收藏词等来源发起练习
-- 支持题型切换、自动发音、错题加入、练习轮次与起始位置设置
-- 完成答题后可根据反馈继续下一题或回收错题
+## License
 
-### 3. 专注页
-
-- 支持番茄钟、待办与笔记
-- 支持提醒、语音播报、环境音、锁屏专注
-- 环境音入口中可以：
-  - 导入本地音频
-  - 打开白噪音资源目录
-  - 下载资源到本地
-  - 若本地已存在则直接删除
-
-### 4. 工具箱页
-
-- 当前为预留空白页
-- 现阶段显示 `TODO`
-- 预期后续承载各类独立工具能力
-
-### 5. 数据管理与安全
-
-- 支持导入词本、在线词本下载导入、旧数据库迁移
-- 支持导出用户数据与任务词本
-- 支持安全备份、恢复备份、删除备份
-- 重置用户数据前会优先尝试创建安全备份
-
-## 项目结构
-
-主要目录：
-
-- [lib/main.dart](D:/workspace/opensource/vocabularySleep-app/flutter_app/lib/main.dart)：应用入口
-- [lib/src/app](D:/workspace/opensource/vocabularySleep-app/flutter_app/lib/src/app)：依赖装配与根应用
-- [lib/src/state](D:/workspace/opensource/vocabularySleep-app/flutter_app/lib/src/state)：全局状态与业务编排
-- [lib/src/services](D:/workspace/opensource/vocabularySleep-app/flutter_app/lib/src/services)：数据库、播放、环境音、识别、提醒等服务
-- [lib/src/ui](D:/workspace/opensource/vocabularySleep-app/flutter_app/lib/src/ui)：页面、组件、主题与界面文案
-- [assets](D:/workspace/opensource/vocabularySleep-app/flutter_app/assets)：品牌资源、环境音与静态词本资源
-- [dict](D:/workspace/opensource/vocabularySleep-app/flutter_app/dict)：内置词库 JSON
-- [scripts](D:/workspace/opensource/vocabularySleep-app/flutter_app/scripts)：运行、构建、日志辅助脚本
-- [test](D:/workspace/opensource/vocabularySleep-app/flutter_app/test)：状态逻辑、数据库与 UI 烟测
-
-## 外部开源资源与使用位置
-
-### 运行时依赖
-
-| 资源 | 用途 | 使用位置 |
-| --- | --- | --- |
-| Flutter | UI 框架与跨平台运行时 | 整个项目 |
-| provider | 状态注入与界面监听 | `lib/src/app`、`lib/src/ui` |
-| sqlite3 / sqlite3_flutter_libs | 本地 SQLite 存储 | `lib/src/services/database_service.dart` |
-| path_provider / path | 应用目录、缓存与导出路径管理 | `database_service.dart`、`tts_service.dart`、`online_ambient_catalog_service.dart` |
-| http | 在线词本、天气、白噪音目录与下载请求 | `wordbook_management_page.dart`、`weather_service.dart`、`online_ambient_catalog_service.dart` |
-| file_picker | 导入词本、导入音频、导入背景图等 | `app_state.dart`、各设置/管理页面 |
-| flutter_tts | 本地 TTS | `lib/src/services/tts_service.dart` |
-| audioplayers | 音频播放与环境音循环 | `lib/src/services/ambient_service.dart`、`tts_service.dart` |
-| record | 录音 | `lib/src/services/asr_service.dart` |
-| sherpa_onnx | 离线 ASR / 语音评分底层 | `lib/src/services/asr_service.dart` |
-| dict_reader | MDX 词典导入 | `lib/src/services/wordbook_import_service.dart` |
-| csv | CSV 词本解析 | `wordbook_import_service.dart` |
-| intl | 本地化与格式辅助 | 多页面日期/文本处理 |
-| collection | 集合辅助扩展 | 多个 state/service 模块 |
-| uuid | 环境音与临时资源唯一 ID | `ambient_service.dart` |
-| archive | 模型包解压 | `asr_service.dart` |
-| crypto | 缓存与资源校验 | `asr_service.dart`、`tts_service.dart` |
-| flutter_localizations | Flutter 官方多语言支持 | `app_root.dart` |
-| cupertino_icons | iOS 风格图标 | 全局 UI |
-
-### 开发与构建依赖
-
-| 资源 | 用途 | 使用位置 |
-| --- | --- | --- |
-| flutter_test | 单元测试 / Widget 测试 | `test/` |
-| flutter_lints | 代码规范 | 项目静态检查 |
-| flutter_launcher_icons | 多平台图标生成 | `pubspec.yaml` |
-| fake_async | 测试中的时间控制 | 测试代码 |
-| path_provider_platform_interface / plugin_platform_interface | 插件测试与平台接口支撑 | 测试 / 构建依赖 |
-
-### 外部开源内容资源
-
-| 资源 | 地址 | 使用位置 |
-| --- | --- | --- |
-| Moodist | [moodist.mvze.net](https://moodist.mvze.net/) / [GitHub](https://github.com/remvze/moodist) | 内置环境音素材来源、在线白噪音目录解析、下载回退源 |
-| GPT-WordBooks | [GitHub / yixunfei / GPT-WordBooks](https://github.com/yixunfei/GPT-WordBooks) | 在线词本选择与下载导入，部分词库整理参考 |
-| sherpa-onnx 模型与发布 | [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | 离线识别模型与评分包下载 |
-
-### 公开在线服务接口
-
-> 下列接口被项目调用，但不视为“项目内置开源资源”。
-
-| 服务 | 用途 | 使用位置 |
-| --- | --- | --- |
-| ipwho.is | 近似城市定位 | `lib/src/services/weather_service.dart` |
-| Open-Meteo | 天气查询 | `weather_service.dart` |
-| SiliconFlow API | 远程 TTS / ASR（按用户配置启用） | `tts_service.dart`、`asr_service.dart` |
-
-## 特别鸣谢
-
-- [Flutter](https://flutter.dev/) 与 Dart 生态
-- [remvze/moodist](https://github.com/remvze/moodist) 提供高质量环境音素材与在线资源目录参考
-- [yixunfei/GPT-WordBooks](https://github.com/yixunfei/GPT-WordBooks) 提供词本来源参考
-- [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) 提供离线语音识别能力
-- 所有依赖库的维护者与贡献者
-
-## AI 协作说明
-
-本项目在持续开发过程中使用了 AI 辅助工具参与以下工作：
-
-- 代码重构与页面拆分
-- SQLite 结构迁移与表驱动改造
-- 播放/练习/环境音交互流程设计
-- 文案整理与 README 编写
-- 测试补全与回归检查
-
-当前主要协作方式为本地仓库内的人机协同开发，AI 负责提出补丁、编写测试与整理文档，人类开发者负责需求判断、结果验收与最终合并。
-
-## 当前说明
-
-- 当前仓库的 Git 历史仍处于一次未完成的 interactive rebase 中，但工作树可以保持干净并继续开发
-- 若继续整理提交历史，请在确认当前代码稳定后自行处理 `git rebase --continue`
+See `LICENSE`.
