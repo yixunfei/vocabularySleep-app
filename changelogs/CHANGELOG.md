@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_054] - 2026-04-24
+
+### 原因
+- 进入睡眠连续日志页时，`SleepDailyLogPage.initState()` 同步调用 `_loadDate()`，而 `_loadDate()` 会更新 `AppState.sleepDashboardState` 并触发 provider 通知。
+- Riverpod 不允许在 widget tree 构建/挂载期间修改 provider，因此报错 “Tried to modify a provider while the widget tree was building”。
+
+### 修复
+- 将睡眠日志页的日期字段加载与 dashboard 选中日期同步拆开。
+- 初始化时先加载页面本地表单字段，首帧结束后再同步 `selectedLogDateKey`。
+- 用户通过日期选择器切换日志日期时仍保持即时同步 dashboard 状态。
+
+### 风险变更
+- 首帧期间 dashboard 的选中日期可能短暂保持旧值，但页面本地日期和表单字段立即可用；首帧后会补齐同步。
+- 本轮只调整睡眠日志页初始化通知时机，不改变日志保存、字段含义、仓库持久化或首页推荐逻辑。
+
+### 验证
+- `dart format lib/src/ui/pages/sleep_daily_log_page.dart`（通过）
+- `dart analyze lib/src/ui/pages/sleep_daily_log_page.dart`（通过，No issues found）
+- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
+- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/sleep_daily_log_page.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+
 ## [Unreleased-PLAN_053] - 2026-04-24
 
 ### 原因

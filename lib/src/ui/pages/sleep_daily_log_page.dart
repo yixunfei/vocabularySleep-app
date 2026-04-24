@@ -65,7 +65,13 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     final appState = context.read<AppState>();
     final selected = appState.sleepDashboardState.selectedLogDateKey.trim();
     _dateKey = selected.isEmpty ? todaySleepDateKey() : selected;
-    _loadDate(_dateKey);
+    _loadDate(_dateKey, updateDashboard: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _updateSelectedLogDate(_dateKey);
+    });
   }
 
   @override
@@ -80,7 +86,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     super.dispose();
   }
 
-  void _loadDate(String dateKey) {
+  void _loadDate(String dateKey, {bool updateDashboard = true}) {
     final appState = context.read<AppState>();
     final log = appState.sleepDailyLogByDateKey(dateKey);
     final profile = appState.sleepProfile;
@@ -122,6 +128,17 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
       _bedroomTooNoisy = log?.bedroomTooNoisy ?? false;
       _clockChecking = log?.clockChecking ?? false;
     });
+    if (!updateDashboard) {
+      return;
+    }
+    _updateSelectedLogDate(dateKey);
+  }
+
+  void _updateSelectedLogDate(String dateKey) {
+    final appState = context.read<AppState>();
+    if (appState.sleepDashboardState.selectedLogDateKey == dateKey) {
+      return;
+    }
     appState.updateSleepDashboardState(
       appState.sleepDashboardState.copyWith(selectedLogDateKey: dateKey),
     );
