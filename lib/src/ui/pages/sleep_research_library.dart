@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_daily_log.dart';
 import '../../models/sleep_guidance.dart';
 import '../../models/sleep_profile.dart';
+import '../../state/app_state.dart';
 import 'sleep_assistant_ui_support.dart';
 
 const String sleepTopicMorningLight = 'morning_light';
@@ -565,73 +567,82 @@ Future<void> showSleepResearchTopicSheet(
     isScrollControlled: true,
     showDragHandle: true,
     builder: (context) {
-      final theme = Theme.of(context);
-      final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-      return SafeArea(
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.82,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            children: <Widget>[
-              Text(
-                topic.title,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(topic.summary, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 16),
-              Text(topic.detail, style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text(
-                  topic.actionHint,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                pickSleepText(i18n, zh: '参考来源', en: 'Reference sources'),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...topic.sources.map(
-                (source) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: theme.colorScheme.surfaceContainerHighest,
+      final appState = context.watch<AppState>();
+      return sleepModuleTheme(
+        context: context,
+        enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
+        child: Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.82,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  children: <Widget>[
+                    Text(
+                      topic.title,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          source.bookTitle,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
+                    const SizedBox(height: 12),
+                    Text(topic.summary, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 16),
+                    Text(topic.detail, style: theme.textTheme.bodyMedium),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(
+                        topic.actionHint,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      pickSleepText(i18n, zh: '参考来源', en: 'Reference sources'),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...topic.sources.map(
+                      (source) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            color: theme.colorScheme.surfaceContainerHighest,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                source.bookTitle,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(source.relevance),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(source.relevance),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       );
     },

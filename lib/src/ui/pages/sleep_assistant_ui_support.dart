@@ -21,6 +21,17 @@ String pickSleepText(AppI18n i18n, {required String zh, required String en}) {
   return AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh' ? zh : en;
 }
 
+Color sleepReadableAccent(
+  BuildContext context,
+  Color color, {
+  double darkBlend = 0.30,
+}) {
+  if (Theme.of(context).colorScheme.brightness != Brightness.dark) {
+    return color;
+  }
+  return Color.lerp(color, Colors.white, darkBlend) ?? color;
+}
+
 Widget sleepModuleTheme({
   required BuildContext context,
   required bool enabled,
@@ -30,20 +41,155 @@ Widget sleepModuleTheme({
     return child;
   }
   final base = Theme.of(context);
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF8FB9A8),
-    brightness: Brightness.dark,
-  );
+  final colorScheme =
+      ColorScheme.fromSeed(
+        seedColor: const Color(0xFF8FB9A8),
+        brightness: Brightness.dark,
+      ).copyWith(
+        primary: const Color(0xFFA9D7C2),
+        onPrimary: const Color(0xFF0F2B23),
+        primaryContainer: const Color(0xFF214A3C),
+        onPrimaryContainer: const Color(0xFFE1F6EC),
+        secondary: const Color(0xFFC3C9E8),
+        onSecondary: const Color(0xFF24283F),
+        tertiary: const Color(0xFFE2C49E),
+        onTertiary: const Color(0xFF382A16),
+        surface: const Color(0xFF0C1216),
+        onSurface: const Color(0xFFE8EEF0),
+        surfaceContainerLowest: const Color(0xFF080D10),
+        surfaceContainerLow: const Color(0xFF121B20),
+        surfaceContainer: const Color(0xFF172229),
+        surfaceContainerHigh: const Color(0xFF1D2A31),
+        surfaceContainerHighest: const Color(0xFF26353D),
+        onSurfaceVariant: const Color(0xFFC3CED2),
+        outline: const Color(0xFF789098),
+        outlineVariant: const Color(0xFF32454D),
+        errorContainer: const Color(0xFF5E282D),
+        onErrorContainer: const Color(0xFFFFDADC),
+      );
+  final textTheme = _sleepDarkTextTheme(base.textTheme, colorScheme);
   return Theme(
     data: base.copyWith(
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: base.textTheme.apply(
-        bodyColor: colorScheme.onSurface,
-        displayColor: colorScheme.onSurface,
+      scaffoldBackgroundColor: const Color(0xFF090F12),
+      canvasColor: colorScheme.surface,
+      textTheme: textTheme,
+      primaryTextTheme: textTheme,
+      appBarTheme: base.appBarTheme.copyWith(
+        backgroundColor: const Color(0xFF090F12),
+        foregroundColor: colorScheme.onSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+      ),
+      cardTheme: base.cardTheme.copyWith(
+        color: colorScheme.surfaceContainer,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.black.withValues(alpha: 0.28),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        selectedColor: colorScheme.primaryContainer,
+        disabledColor: colorScheme.surfaceContainerLow,
+        checkmarkColor: colorScheme.onPrimaryContainer,
+        labelStyle: textTheme.labelMedium?.copyWith(
+          color: colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+        secondaryLabelStyle: textTheme.labelMedium?.copyWith(
+          color: colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.w700,
+        ),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      listTileTheme: base.listTileTheme.copyWith(
+        iconColor: colorScheme.primary,
+        textColor: colorScheme.onSurface,
+        subtitleTextStyle: textTheme.bodyMedium?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerLow,
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        hintStyle: TextStyle(
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.72),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          disabledBackgroundColor: colorScheme.surfaceContainerHighest,
+          disabledForegroundColor: colorScheme.onSurfaceVariant,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
+        ),
+      ),
+      bottomSheetTheme: base.bottomSheetTheme.copyWith(
+        backgroundColor: colorScheme.surfaceContainer,
+        modalBackgroundColor: colorScheme.surfaceContainer,
+        surfaceTintColor: Colors.transparent,
+        dragHandleColor: colorScheme.outline,
+      ),
+      dividerTheme: base.dividerTheme.copyWith(
+        color: colorScheme.outlineVariant,
+      ),
+      snackBarTheme: base.snackBarTheme.copyWith(
+        backgroundColor: colorScheme.surfaceContainerHighest,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: colorScheme.onSurface,
+        ),
+      ),
+      timePickerTheme: base.timePickerTheme.copyWith(
+        backgroundColor: colorScheme.surfaceContainer,
+        dialBackgroundColor: colorScheme.surfaceContainerLow,
+        hourMinuteColor: colorScheme.surfaceContainerHigh,
+        hourMinuteTextColor: colorScheme.onSurface,
       ),
     ),
     child: child,
+  );
+}
+
+TextTheme _sleepDarkTextTheme(TextTheme base, ColorScheme colorScheme) {
+  TextStyle? primary(TextStyle? style) =>
+      style?.copyWith(color: colorScheme.onSurface);
+  TextStyle? secondary(TextStyle? style) =>
+      style?.copyWith(color: colorScheme.onSurfaceVariant);
+  return base.copyWith(
+    displayLarge: primary(base.displayLarge),
+    displayMedium: primary(base.displayMedium),
+    displaySmall: primary(base.displaySmall),
+    headlineLarge: primary(base.headlineLarge),
+    headlineMedium: primary(base.headlineMedium),
+    headlineSmall: primary(base.headlineSmall),
+    titleLarge: primary(base.titleLarge),
+    titleMedium: primary(base.titleMedium),
+    titleSmall: primary(base.titleSmall),
+    bodyLarge: primary(base.bodyLarge),
+    bodyMedium: primary(base.bodyMedium),
+    bodySmall: secondary(base.bodySmall),
+    labelLarge: primary(base.labelLarge),
+    labelMedium: secondary(base.labelMedium),
+    labelSmall: secondary(base.labelSmall),
   );
 }
 

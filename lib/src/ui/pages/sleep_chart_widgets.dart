@@ -35,7 +35,11 @@ class SleepMetricChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedColor = color ?? Theme.of(context).colorScheme.primary;
+    final resolvedColor = sleepReadableAccent(
+      context,
+      color ?? Theme.of(context).colorScheme.primary,
+      darkBlend: 0.24,
+    );
     final hasValues = points.any((item) => item.value != null);
     return Card(
       child: Padding(
@@ -45,9 +49,9 @@ class SleepMetricChartCard extends StatelessWidget {
           children: <Widget>[
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
             Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
@@ -94,7 +98,9 @@ class SleepMetricChartCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
                       ),
                       child: Text(
                         '${point.label} ${point.valueLabel ?? '--'}',
@@ -132,7 +138,10 @@ class _SleepLineChartPainter extends CustomPainter {
     const rightPadding = 8.0;
     final usableHeight = size.height - topPadding - bottomPadding;
     final usableWidth = size.width - leftPadding - rightPadding;
-    final values = points.map((item) => item.value).whereType<double>().toList();
+    final values = points
+        .map((item) => item.value)
+        .whereType<double>()
+        .toList();
     if (values.isEmpty || usableHeight <= 0 || usableWidth <= 0) {
       return;
     }
@@ -155,7 +164,9 @@ class _SleepLineChartPainter extends CustomPainter {
     }
 
     final pointOffsets = <Offset?>[];
-    final stepX = points.length <= 1 ? usableWidth : usableWidth / (points.length - 1);
+    final stepX = points.length <= 1
+        ? usableWidth
+        : usableWidth / (points.length - 1);
     for (var i = 0; i < points.length; i += 1) {
       final value = points[i].value;
       if (value == null) {
@@ -215,7 +226,10 @@ class _SleepLineChartPainter extends CustomPainter {
     }
 
     final dotPaint = Paint()..color = color;
-    final dotFillPaint = Paint()..color = Colors.white;
+    final dotFillPaint = Paint()
+      ..color = textColor.computeLuminance() > 0.5
+          ? const Color(0xFF0C1216)
+          : Colors.white;
     for (final point in pointOffsets) {
       if (point == null) {
         continue;
@@ -241,10 +255,7 @@ class _SleepLineChartPainter extends CustomPainter {
       )..layout();
       textPainter.paint(
         canvas,
-        Offset(
-          x - textPainter.width / 2,
-          size.height - bottomPadding + 6,
-        ),
+        Offset(x - textPainter.width / 2, size.height - bottomPadding + 6),
       );
     }
   }

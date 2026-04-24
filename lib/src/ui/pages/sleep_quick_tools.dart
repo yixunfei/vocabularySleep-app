@@ -16,7 +16,7 @@ Future<void> showSleepWhiteNoiseSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => const _SleepWhiteNoiseSheet(),
+    builder: (_) => const _SleepQuickToolTheme(child: _SleepWhiteNoiseSheet()),
   );
 }
 
@@ -27,7 +27,9 @@ Future<void> showCaffeineCutoffCalculatorSheet(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (_) => _CaffeineCutoffSheet(initialBedtime: bedtime),
+    builder: (_) => _SleepQuickToolTheme(
+      child: _CaffeineCutoffSheet(initialBedtime: bedtime),
+    ),
   );
 }
 
@@ -35,7 +37,8 @@ Future<void> showMorningLightTimerSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (_) => const _MorningLightTimerSheet(),
+    builder: (_) =>
+        const _SleepQuickToolTheme(child: _MorningLightTimerSheet()),
   );
 }
 
@@ -44,7 +47,8 @@ Future<void> showSleepCyclePlannerSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => const _SleepCyclePlannerSheet(),
+    builder: (_) =>
+        const _SleepQuickToolTheme(child: _SleepCyclePlannerSheet()),
   );
 }
 
@@ -52,8 +56,25 @@ Future<void> showSleepinessDecisionSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (_) => const _SleepinessDecisionSheet(),
+    builder: (_) =>
+        const _SleepQuickToolTheme(child: _SleepinessDecisionSheet()),
   );
+}
+
+class _SleepQuickToolTheme extends ConsumerWidget {
+  const _SleepQuickToolTheme({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(appStateProvider);
+    return sleepModuleTheme(
+      context: context,
+      enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
+      child: child,
+    );
+  }
 }
 
 class SleepQuickToolButton extends StatelessWidget {

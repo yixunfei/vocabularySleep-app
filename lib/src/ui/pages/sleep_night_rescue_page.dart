@@ -12,7 +12,9 @@ import 'sleep_research_library.dart';
 import 'toolbox_tool_shell.dart';
 
 class SleepNightRescuePage extends StatefulWidget {
-  const SleepNightRescuePage({super.key});
+  const SleepNightRescuePage({super.key, this.initialMode});
+
+  final SleepNightRescueMode? initialMode;
 
   @override
   State<SleepNightRescuePage> createState() => _SleepNightRescuePageState();
@@ -29,7 +31,8 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
   void initState() {
     super.initState();
     final current = context.read<AppState>().sleepNightRescueState.mode;
-    _selectedMode = current ?? SleepNightRescueMode.fullyAwake;
+    _selectedMode =
+        widget.initialMode ?? current ?? SleepNightRescueMode.fullyAwake;
     _triggerController = TextEditingController();
     _actionController = TextEditingController();
     _notesController = TextEditingController();
@@ -90,17 +93,27 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    Widget themed(Widget child) {
+      return sleepModuleTheme(
+        context: context,
+        enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
+        child: child,
+      );
+    }
+
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
-      return ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '模块已停用，无法继续访问睡眠助手页面。',
-          en: 'This module is disabled and unavailable right now.',
-        ),
-        child: ModuleDisabledView(
-          i18n: i18n,
-          moduleId: ModuleIds.toolboxSleepAssistant,
+      return themed(
+        ToolboxToolPage(
+          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+          subtitle: pickSleepText(
+            i18n,
+            zh: '模块已停用，无法继续访问睡眠助手页面。',
+            en: 'This module is disabled and unavailable right now.',
+          ),
+          child: ModuleDisabledView(
+            i18n: i18n,
+            moduleId: ModuleIds.toolboxSleepAssistant,
+          ),
         ),
       );
     }
@@ -117,206 +130,17 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
       _ => sleepTopicStimulusControl,
     };
 
-    return ToolboxToolPage(
-      title: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
-      subtitle: pickSleepText(
-        i18n,
-        zh: '夜里不需要复杂分析，只需要判断当前状态，然后只做下一步。',
-        en: 'You do not need complex analysis at night. Judge the state, then do only the next step.',
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    pickSleepText(
-                      i18n,
-                      zh: '选择当前状态',
-                      en: 'Choose the current state',
-                    ),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  ...SleepNightRescueMode.values.map(
-                    (mode) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => setState(() => _selectedMode = mode),
-                        child: Ink(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: _selectedMode == mode
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerLow,
-                            border: Border.all(
-                              color: _selectedMode == mode
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.outlineVariant,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Row(
-                                children: <Widget>[
-                                  Expanded(
-                                    child: Text(
-                                      sleepNightModeLabel(i18n, mode),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                    ),
-                                  ),
-                                  Icon(
-                                    _selectedMode == mode
-                                        ? Icons.check_circle_rounded
-                                        : Icons.circle_outlined,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(sleepNightModeBody(i18n, mode)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          pickSleepText(
-                            i18n,
-                            zh: '当前指导',
-                            en: 'Current guidance',
-                          ),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () =>
-                            showSleepResearchTopicById(context, i18n, topicId),
-                        icon: const Icon(Icons.info_outline_rounded),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    suggestedAction ??
-                        pickSleepText(
-                          i18n,
-                          zh: '先选择当前状态，再启动夜醒脚本。',
-                          en: 'Choose the current state and start the guide.',
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: <Widget>[
-                      FilledButton.icon(
-                        onPressed: _startGuide,
-                        icon: const Icon(Icons.play_circle_outline_rounded),
-                        label: Text(
-                          pickSleepText(i18n, zh: '启动指导', en: 'Start guide'),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => showSleepinessDecisionSheet(context),
-                        icon: const Icon(Icons.rule_folder_rounded),
-                        label: Text(
-                          pickSleepText(i18n, zh: '离床判断', en: 'Leave-bed aid'),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _saveEvent,
-                        icon: const Icon(Icons.save_rounded),
-                        label: Text(
-                          pickSleepText(i18n, zh: '保存事件', en: 'Save event'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: <Widget>[
-                  TextField(
-                    controller: _triggerController,
-                    decoration: InputDecoration(
-                      labelText: pickSleepText(
-                        i18n,
-                        zh: '你猜测的触发因素',
-                        en: 'Guessed trigger',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _actionController,
-                    decoration: InputDecoration(
-                      labelText: pickSleepText(
-                        i18n,
-                        zh: '实际采取动作',
-                        en: 'Action taken',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _notesController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: pickSleepText(i18n, zh: '补充说明', en: 'Notes'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      pickSleepText(i18n, zh: '这次有离床', en: 'I left the bed'),
-                    ),
-                    value: _hasLeftBed,
-                    onChanged: (value) => setState(() => _hasLeftBed = value),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (recentEvents.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 12),
+    return themed(
+      ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '夜里不需要复杂分析，只需要判断当前状态，然后只做下一步。',
+          en: 'You do not need complex analysis at night. Judge the state, then do only the next step.',
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -324,40 +148,66 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '最近夜醒事件', en: 'Recent events'),
+                      pickSleepText(
+                        i18n,
+                        zh: '选择当前状态',
+                        en: 'Choose the current state',
+                      ),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 10),
-                    ...recentEvents.map(
-                      (event) => Padding(
+                    const SizedBox(height: 12),
+                    ...SleepNightRescueMode.values.map(
+                      (mode) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerLow,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                '${sleepDateLabel(event.dateKey)} · ${sleepNightModeLabel(i18n, event.mode)}',
-                                style: Theme.of(context).textTheme.titleSmall,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => setState(() => _selectedMode = mode),
+                          child: Ink(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: _selectedMode == mode
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerLow,
+                              border: Border.all(
+                                color: _selectedMode == mode
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.outlineVariant,
                               ),
-                              const SizedBox(height: 4),
-                              if ((event.actionTaken ?? '').trim().isNotEmpty)
-                                Text(
-                                  '${pickSleepText(i18n, zh: '动作', en: 'Action')}: ${event.actionTaken}',
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: Text(
+                                        sleepNightModeLabel(i18n, mode),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      _selectedMode == mode
+                                          ? Icons.check_circle_rounded
+                                          : Icons.circle_outlined,
+                                    ),
+                                  ],
                                 ),
-                              if ((event.guessedTrigger ?? '')
-                                  .trim()
-                                  .isNotEmpty)
-                                Text(
-                                  '${pickSleepText(i18n, zh: '触发', en: 'Trigger')}: ${event.guessedTrigger}',
-                                ),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(sleepNightModeBody(i18n, mode)),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -366,8 +216,182 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            pickSleepText(
+                              i18n,
+                              zh: '当前指导',
+                              en: 'Current guidance',
+                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => showSleepResearchTopicById(
+                            context,
+                            i18n,
+                            topicId,
+                          ),
+                          icon: const Icon(Icons.info_outline_rounded),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      suggestedAction ??
+                          pickSleepText(
+                            i18n,
+                            zh: '先选择当前状态，再启动夜醒脚本。',
+                            en: 'Choose the current state and start the guide.',
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: <Widget>[
+                        FilledButton.icon(
+                          onPressed: _startGuide,
+                          icon: const Icon(Icons.play_circle_outline_rounded),
+                          label: Text(
+                            pickSleepText(i18n, zh: '启动指导', en: 'Start guide'),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => showSleepinessDecisionSheet(context),
+                          icon: const Icon(Icons.rule_folder_rounded),
+                          label: Text(
+                            pickSleepText(
+                              i18n,
+                              zh: '离床判断',
+                              en: 'Leave-bed aid',
+                            ),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _saveEvent,
+                          icon: const Icon(Icons.save_rounded),
+                          label: Text(
+                            pickSleepText(i18n, zh: '保存事件', en: 'Save event'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: <Widget>[
+                    TextField(
+                      controller: _triggerController,
+                      decoration: InputDecoration(
+                        labelText: pickSleepText(
+                          i18n,
+                          zh: '你猜测的触发因素',
+                          en: 'Guessed trigger',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _actionController,
+                      decoration: InputDecoration(
+                        labelText: pickSleepText(
+                          i18n,
+                          zh: '实际采取动作',
+                          en: 'Action taken',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _notesController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: pickSleepText(i18n, zh: '补充说明', en: 'Notes'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        pickSleepText(i18n, zh: '这次有离床', en: 'I left the bed'),
+                      ),
+                      value: _hasLeftBed,
+                      onChanged: (value) => setState(() => _hasLeftBed = value),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (recentEvents.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        pickSleepText(i18n, zh: '最近夜醒事件', en: 'Recent events'),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 10),
+                      ...recentEvents.map(
+                        (event) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerLow,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  '${sleepDateLabel(event.dateKey)} · ${sleepNightModeLabel(i18n, event.mode)}',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: 4),
+                                if ((event.actionTaken ?? '').trim().isNotEmpty)
+                                  Text(
+                                    '${pickSleepText(i18n, zh: '动作', en: 'Action')}: ${event.actionTaken}',
+                                  ),
+                                if ((event.guessedTrigger ?? '')
+                                    .trim()
+                                    .isNotEmpty)
+                                  Text(
+                                    '${pickSleepText(i18n, zh: '触发', en: 'Trigger')}: ${event.guessedTrigger}',
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

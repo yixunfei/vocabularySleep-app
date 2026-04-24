@@ -1,5 +1,120 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_059] - 2026-04-24
+
+### 原因
+- 用户要求继续完成前面建议中的其他实用项，让睡眠助手在睡前、夜醒、醒来和跨工具放松之间形成更完整的低阻力路径。
+- 这些功能应继续保持手机端压缩，不把首页重新拉长，也不绕过模块启停边界。
+
+### 新增
+- 睡眠首页新增“睡前一键场景”确认抽屉，一次确认后打开睡眠暗色模式并启动最低能量流程。
+- 晨间三按钮快记新增推断提示，可展示最近夜醒记录、最低能量流程和晚间看屏线索，并保留“补详细日志”入口。
+- 免输入场景启动面板新增夜醒分支 chip，可直接进入“完全清醒、思绪停不下来、身体太兴奋”等夜醒救援状态。
+- 更多入口折叠区新增跨 toolbox 放松入口：呼吸训练、舒缓音乐、疗愈音钵和禅意沙盘。
+
+### 修改
+- `SleepNightRescuePage` 新增可选 `initialMode` 参数，用于从首页分支直接进入对应夜醒状态；既有启动、保存和结束逻辑不变。
+- 睡前一键场景只自动处理睡眠暗色与最低能量流程，背景音和其他工具仍由用户主动选择，避免夜间误播放。
+- 跨 toolbox 入口统一使用 `pushModuleRoute` 与目标 moduleId，保持模块关闭时的访问守卫。
+- `modules/sleep/README.md` 补充本轮睡前一键场景、晨间推断、夜醒分支和跨工具联动说明。
+
+### 风险变更
+- 本轮不新增睡眠持久化字段，不改变夜醒事件、日志保存或流程执行状态机。
+- 睡前一键场景会主动打开睡眠助手暗色模式；这是明确确认后的模块内偏好更新。
+- 跨 toolbox 链接只提供入口，不接管其他工具的播放状态或偏好。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`（通过，No issues found）
+- `flutter test test/sleep_repository_test.dart --reporter compact`（通过，All tests passed）
+- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+
+## [Unreleased-PLAN_058] - 2026-04-24
+
+### 原因
+- 用户希望按照低意志力体验方案继续完善睡眠助手，重点解决睡眠不足、烦躁、容易中断习惯时的驱动力不足。
+- 首页需要加入具有鼓励、抚慰和支持性的目标文案，但仍要保持手机端紧凑，不再堆长页面。
+
+### 新增
+- 新增 `sleep_low_effort_widgets.dart`，承载睡眠首页的低意志力组件：支持性目标提示、疲惫模式抽屉和晨间三按钮快记。
+- 睡眠首页主舞台新增“今晚目标”提示条，文案强调不追求完美睡眠，只先完成一个小动作，降低自责和选择负担。
+- 睡眠首页新增“更短版本 / 我现在很累”入口，拉起疲惫模式底部抽屉，直接提供调暗灯光、放远手机、停放担心三步，并保留 8 分钟流程、背景音和夜醒救援。
+- 早晨时段新增“醒来只点一下”三按钮快记，可用“差不多 / 更差 / 更好”记录晨间精神、白天困倦和必要备注。
+
+### 修改
+- 将支持性文案收进主舞台内部提示条，而不是额外新增长卡片，减少手机端首屏长度增长。
+- 免输入场景启动面板增加“我现在很累”高优先级按钮，让疲惫用户不必先理解四个场景按钮。
+- 晨间快记复用 `SleepDailyLog` 和 `AppState.saveSleepDailyLog`，不新增仓库字段或持久化结构。
+- `modules/sleep/README.md` 补充低意志力体验、疲惫模式抽屉和晨间三按钮快记说明。
+
+### 风险变更
+- 晨间快记会更新当天日志的晨间精神和白天困倦；已有睡眠时长、时间轴、环境因子等详细字段会保留。
+- 疲惫模式抽屉只复用既有流程、白噪音和夜醒救援入口，不改变睡前流程状态机。
+- 本轮继续将新交互限制在睡眠助手首页展示与轻量日志保存层，不新增医疗判断或诊断承诺。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`（通过，No issues found）
+- `flutter test test/sleep_repository_test.dart --reporter compact`（通过，All tests passed）
+- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+
+## [Unreleased-PLAN_057] - 2026-04-24
+
+### 原因
+- 用户反馈睡眠助手首页仍然偏长，需要在手机端用折叠抽屉、下拉和子页面压缩信息密度。
+- 用户要求新增“科学睡眠”子模块，参考 `D:\vocabularySleep-resources\睡眠参考` 中的资料，提炼高度实用的精简手册。
+- 睡眠暗色模式下首页上部提示文字仍可能呈黑色，影响可读性。
+
+### 新增
+- 新增 `SleepSciencePage` 科学睡眠页，作为睡眠助手子页面入口。
+- 科学睡眠页新增一分钟原则、风险优先、白天锚点、睡前收口、夜醒处理、易误用规则和参考资料索引，全部使用折叠标题组织。
+- 睡眠首页新增“快速定位”抽屉，可直接跳到当前主线、闭环路线、更多入口、直接建议、7 天趋势，或打开科学睡眠页。
+
+### 修改
+- 睡眠首页进一步压缩手机端长度：移除重复的“低能量快速开始”展开区，将更多入口与即时工具合并为折叠面板。
+- 当前主线、睡眠闭环路线、更多入口、直接建议、近 7 天趋势均改为折叠式面板，首屏保留下一步、免输入场景启动、指标与定位入口。
+- `sleepModuleTheme` 改为显式覆盖 headline/title/body/label 全部文字层级，修复暗色模式下顶部提示文字仍可能黑字不可见的问题。
+- 睡眠首页打鼾风险提示卡改为独立组件，在暗色主题内部读取 `errorContainer/onErrorContainer` 并显式设置正文颜色，避免浅色背景配浅色文字。
+- `modules/sleep/README.md` 补充移动端压缩首页和科学睡眠页能力说明。
+
+### 风险变更
+- 科学睡眠页是健康教育和行为辅助，不替代医疗诊断；风险信号仍单独提示专业评估。
+- 本轮不改睡眠状态机、仓库持久化结构或流程执行语义。
+- `plans/` 与 `modules/sleep/` 当前被 `.gitignore` 忽略，本轮文档仍按项目规范在本地更新。
+
+### 验证
+- `dart format lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_science_page.dart`（通过）
+- `dart analyze lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_science_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_assessment_page.dart`（通过，No issues found）
+- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_science_page.dart`（补充验证通过，No issues found）
+- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_056] - 2026-04-24
+
+### 原因
+- 用户要求继续聚焦工具箱睡眠助手，修复睡眠暗色模式效果，并降低疲惫状态下的启动阻力。
+- 当前睡眠助手已有评估、日志、今晚流程、夜醒救援、白天节律和周报，但首页仍需要更明确的场景化入口和闭环串联。
+
+### 新增
+- 睡眠首页新增“免输入场景启动”面板，提供“现在就睡、半夜醒了、放背景音、明早补记”四个低摩擦入口。
+- 睡眠首页新增“睡眠闭环路线”，把评估、今晚流程、夜醒救援、白天节律、最小日志和周报复盘串成可点击路径。
+
+### 修改
+- 强化 `sleepModuleTheme` 暗色主题，覆盖 Scaffold、AppBar、Card、Chip、ListTile、输入框、按钮、BottomSheet、SnackBar 和 TimePicker 等常见组件。
+- 将睡眠暗色主题扩展到睡眠评估、夜醒救援、白天节律、睡眠周报和流程编辑器，并补齐快速工具弹层与研究说明弹层的暗色主题。
+- 睡眠图表在暗色模式下会提升 accent 对比，并根据亮暗环境调整折线点内部颜色。
+- `modules/sleep/README.md` 记录本轮免输入入口、闭环路线，以及后续“零输入晨间补记、睡前一键场景、夜醒分支脚本、跨 toolbox 联动”等实用功能设计。
+
+### 风险变更
+- 本轮没有新增睡眠数据模型，也没有改变 `SleepRepository` 的持久化结构。
+- 新场景入口仅复用既有路由、bottom sheet 与 `startSleepRoutine()`，不改变睡前流程状态机。
+- `plans/` 与 `modules/sleep/` 当前被 `.gitignore` 忽略，本轮文档仍按项目规范在本地更新。
+
+### 验证
+- `dart format lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`（通过）
+- `dart analyze lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`（通过，No issues found）
+- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
+- `git diff --check -- changelogs/CHANGELOG.md plans/PLAN_056_睡眠助手暗色模式与场景闭环精修.md modules/sleep/README.md lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+
 ## [Unreleased-PLAN_055] - 2026-04-24
 
 ### 原因

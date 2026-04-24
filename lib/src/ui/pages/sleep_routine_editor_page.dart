@@ -98,102 +98,114 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    Widget themed(Widget child) {
+      return sleepModuleTheme(
+        context: context,
+        enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
+        child: child,
+      );
+    }
+
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
-      return ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '模块已停用，无法继续访问睡眠助手页面。',
-          en: 'This module is disabled and unavailable right now.',
-        ),
-        child: ModuleDisabledView(
-          i18n: i18n,
-          moduleId: ModuleIds.toolboxSleepAssistant,
+      return themed(
+        ToolboxToolPage(
+          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+          subtitle: pickSleepText(
+            i18n,
+            zh: '模块已停用，无法继续访问睡眠助手页面。',
+            en: 'This module is disabled and unavailable right now.',
+          ),
+          child: ModuleDisabledView(
+            i18n: i18n,
+            moduleId: ModuleIds.toolboxSleepAssistant,
+          ),
         ),
       );
     }
-    return ToolboxToolPage(
-      title: pickSleepText(i18n, zh: '流程编辑器', en: 'Routine editor'),
-      subtitle: pickSleepText(
-        i18n,
-        zh: '把今晚流程拆成更短、更具体、可执行的小步骤。',
-        en: 'Split the routine into smaller, more executable steps.',
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          TextField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: pickSleepText(i18n, zh: '模板名称', en: 'Template name'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ..._steps.asMap().entries.map(
-            (entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _RoutineEditorStepCard(
-                index: entry.key,
-                step: entry.value,
-                i18n: i18n,
-                canMoveUp: entry.key > 0,
-                canMoveDown: entry.key < _steps.length - 1,
-                onChanged: (step) {
-                  setState(() => _steps[entry.key] = step);
-                },
-                onMoveUp: () {
-                  setState(() {
-                    final current = _steps.removeAt(entry.key);
-                    _steps.insert(entry.key - 1, current);
-                  });
-                },
-                onMoveDown: () {
-                  setState(() {
-                    final current = _steps.removeAt(entry.key);
-                    _steps.insert(entry.key + 1, current);
-                  });
-                },
-                onDelete: () {
-                  setState(() => _steps.removeAt(entry.key));
-                },
+    return themed(
+      ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '流程编辑器', en: 'Routine editor'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '把今晚流程拆成更短、更具体、可执行的小步骤。',
+          en: 'Split the routine into smaller, more executable steps.',
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: pickSleepText(i18n, zh: '模板名称', en: 'Template name'),
               ),
             ),
-          ),
-          OutlinedButton.icon(
-            onPressed: () {
-              setState(() {
-                _steps.add(
-                  SleepRoutineStep(
-                    type: SleepRoutineStepType.whiteNoise,
-                    label: pickSleepText(i18n, zh: '新增步骤', en: 'New step'),
-                    durationSeconds: 180,
+            const SizedBox(height: 16),
+            ..._steps.asMap().entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _RoutineEditorStepCard(
+                  index: entry.key,
+                  step: entry.value,
+                  i18n: i18n,
+                  canMoveUp: entry.key > 0,
+                  canMoveDown: entry.key < _steps.length - 1,
+                  onChanged: (step) {
+                    setState(() => _steps[entry.key] = step);
+                  },
+                  onMoveUp: () {
+                    setState(() {
+                      final current = _steps.removeAt(entry.key);
+                      _steps.insert(entry.key - 1, current);
+                    });
+                  },
+                  onMoveDown: () {
+                    setState(() {
+                      final current = _steps.removeAt(entry.key);
+                      _steps.insert(entry.key + 1, current);
+                    });
+                  },
+                  onDelete: () {
+                    setState(() => _steps.removeAt(entry.key));
+                  },
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _steps.add(
+                    SleepRoutineStep(
+                      type: SleepRoutineStepType.whiteNoise,
+                      label: pickSleepText(i18n, zh: '新增步骤', en: 'New step'),
+                      durationSeconds: 180,
+                    ),
+                  );
+                });
+              },
+              icon: const Icon(Icons.add_rounded),
+              label: Text(pickSleepText(i18n, zh: '添加步骤', en: 'Add step')),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: <Widget>[
+                FilledButton.icon(
+                  onPressed: _steps.isEmpty ? null : _save,
+                  icon: const Icon(Icons.save_rounded),
+                  label: Text(
+                    pickSleepText(i18n, zh: '保存模板', en: 'Save template'),
                   ),
-                );
-              });
-            },
-            icon: const Icon(Icons.add_rounded),
-            label: Text(pickSleepText(i18n, zh: '添加步骤', en: 'Add step')),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: <Widget>[
-              FilledButton.icon(
-                onPressed: _steps.isEmpty ? null : _save,
-                icon: const Icon(Icons.save_rounded),
-                label: Text(
-                  pickSleepText(i18n, zh: '保存模板', en: 'Save template'),
                 ),
-              ),
-              const SizedBox(width: 12),
-              if (_editingCustom)
-                OutlinedButton.icon(
-                  onPressed: _delete,
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  label: Text(pickSleepText(i18n, zh: '删除', en: 'Delete')),
-                ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 12),
+                if (_editingCustom)
+                  OutlinedButton.icon(
+                    onPressed: _delete,
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    label: Text(pickSleepText(i18n, zh: '删除', en: 'Delete')),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

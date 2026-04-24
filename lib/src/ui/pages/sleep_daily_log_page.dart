@@ -284,17 +284,27 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
+    Widget themed(Widget child) {
+      return sleepModuleTheme(
+        context: context,
+        enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
+        child: child,
+      );
+    }
+
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
-      return ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '模块已停用，无法继续访问睡眠助手页面。',
-          en: 'This module is disabled and unavailable right now.',
-        ),
-        child: ModuleDisabledView(
-          i18n: i18n,
-          moduleId: ModuleIds.toolboxSleepAssistant,
+      return themed(
+        ToolboxToolPage(
+          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
+          subtitle: pickSleepText(
+            i18n,
+            zh: '模块已停用，无法继续访问睡眠助手页面。',
+            en: 'This module is disabled and unavailable right now.',
+          ),
+          child: ModuleDisabledView(
+            i18n: i18n,
+            moduleId: ModuleIds.toolboxSleepAssistant,
+          ),
         ),
       );
     }
@@ -306,10 +316,8 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     );
     final recentKeys = recentSleepDateKeys(count: 7);
     final latest = appState.latestSleepDailyLog;
-    return sleepModuleTheme(
-      context: context,
-      enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
-      child: ToolboxToolPage(
+    return themed(
+      ToolboxToolPage(
         title: pickSleepText(i18n, zh: '连续睡眠日志', en: 'Continuous sleep log'),
         subtitle: pickSleepText(
           i18n,
