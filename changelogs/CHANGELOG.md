@@ -1,5 +1,190 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_049] - 2026-04-24
+
+### 原因
+- 当前沙盘音效已接近真实沙沙声，但仍需要进一步轻柔化，并且需要随滑动节奏变化：加速滑动略增强、匀速滑动稳定、不动时应无声。
+
+### 修改
+- 在 `toolbox_zen_sand_sound_service.dart` 中重写循环声量映射：
+  - `intensity <= 0.01` 时返回 0 音量，确保按住不动或停住时真正静音。
+  - 整体基础音量和上限下调，使沙声更轻、更贴近背景触感。
+  - 新增运动强度计算：根据位移、时间间隔、平滑速度和正向加速度计算 loop intensity。
+- 在 `toolbox_zen_sand_tool.dart` 中接入运动联动：
+  - 起笔只预热并以 0 音量启动 loop，不再触摸即响。
+  - 滑动更新时按速度/加速度驱动沙声强度。
+  - 停止移动约 `130ms` 后淡到 0，继续滑动时快速恢复。
+  - 水迹长按扩散不再模拟滑动音，避免“没动也有声”。
+- 在沙盘音效测试中新增运动联动断言，覆盖静止为 0、加速强于匀速、峰值保持轻柔。
+
+### 风险变更
+- 本轮只改变音效强度映射与手势运动到音量的联动，不改变绘制、落石、持久化或路由语义。
+
+### 验证
+- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`（通过）
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`（仍有 `toolbox_zen_sand_tool.dart` 既有 6 条 unused_element warning）
+
+## [Unreleased-PLAN_048] - 2026-04-24
+
+### 原因
+- 用户进一步明确：创意沙盘音效核心应模拟手指在沙面滑动时沙砾发出的细密“悉沙声”，用于解压放松，而不是泛白噪声或电子噪音。
+- 参考网页 `https://www.ppbzy.com/tools/zen/` 的沙盘实现采用平滑随机噪声、约 800Hz 中频带通和拖动速度控制音量的思路，方向更接近真实砂面摩擦。
+
+### 修改
+- 重写 `toolbox_zen_sand_sound_service.dart` 的现代循环底噪生成器：
+  - 去除正弦 partial 堆叠，避免听感出现固定音高或电子调制感。
+  - 改为确定性有色颗粒噪声：中频摩擦带负责“悉沙”，细粒脉冲负责砂粒感，慢压力漂移负责随手指移动的自然起伏。
+  - 为木耙、指尖、水迹、沙铲、沙砾、抚平保留不同材质参数，但统一收口到“贴着沙面轻轻滑动”的声音方向。
+  - 对循环首尾做短融合，并按目标峰值归一化，降低拼接点击声和刺耳峰值。
+
+### 修复
+- 修复上一版循环底噪仍偏“合成噪声/电子噪声”的听感问题，使滑动声更接近真实沙砾摩擦。
+
+### 风险变更
+- 音色主观听感变化较明显，但仅改动运行时合成音色，不改变手势语义、播放 API、持久化结构或 UI 行为。
+
+### 验证
+- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart test/toolbox_zen_sand_sound_service_test.dart`（通过）
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_047] - 2026-04-24
+
+### 原因
+- 用户反馈创意沙盘滑动时音效卡顿严重，听感只有一声、不持续播放，期望连续滑动时有不停顿、无空白的沙沙声。
+- 同时要求面向手机小屏重新优化一版 UX/UI，优先保留画布空间、当前状态和主操作热区。
+
+### 新增
+- 新增 `plans/PLAN_047_创意沙盘连续音效与移动端UX优化.md`，承接本轮音效连续性与移动端 UX/UI 优化。
+- 在 `toolbox_zen_sand_sound_service.dart` 中补齐现代循环沙沙声 PCM 生成器，为木耙、指尖、水迹、沙铲、沙砾、抚平等连续工具提供 4.8s 周期底噪。
+- 在音效回归测试中新增循环声时长、最小窗口 RMS 和动态稳定性断言，防止后续再次出现首尾空白或中段掉音。
+
+### 修改
+- 调整循环播放器起播判定：播放器进入 `PlayerState.playing` 即可视为已启动，不再强依赖 position 立刻前进，避免部分平台 position 回报慢时被误判失败并反复重启。
+- 将循环 source ready 等待从长超时收敛为 `420ms` 短等待；源设置完成后优先快速尝试 `resume()`，减少首次滑动空白。
+- 连续型工具继续采用 loop 主导策略，减少滑动过程中短促 impact 反复切源造成的卡顿感。
+- 窄屏下压缩顶部标题区：保留返回、标题、场景和工具入口，说明文案收敛为一行，减少首屏高度占用。
+- 窄屏状态区由横向滚动 badge 改为可换行短 pill，优先展示场景、工具、音效和笔触，避免 375dp 手机上横向滑动。
+- 底部 Dock 按钮增加最小 `48dp` 触控约束，并限制按钮文本单行省略，提升手机端稳定性。
+
+### 修复
+- 修复当前代码中 `_tryBuildModernZenSandLoopPcm(...)` 被调用但未定义导致分析失败的缺口。
+- 修复滑动音效可能因播放进度回报慢而进入“启动-误判失败-再次启动”的循环，降低只有首声、后续发空的概率。
+
+### 风险变更
+- 本轮音效改动集中在合成循环声与播放器启动判定，不改变工具语义、手势语义、持久化结构和路由行为。
+- 小屏 UI 调整仅改变展示密度与控件布局，辅助设置仍通过场景/工具与控制面板进入。
+
+### 验证
+- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart test/toolbox_zen_sand_sound_service_test.dart`
+- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart test/toolbox_zen_sand_sound_service_test.dart`（仍有 `toolbox_zen_sand_tool.dart` 既有 6 条 unused_element warning）
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_046] - 2026-04-23
+
+- Follow-up: hardened the Zen Sand loop startup path so it now waits for the loop source to become ready before `resume()`, tracks in-flight startup state, and retries once if playback position does not advance after resume.
+- Follow-up: switched the Zen Sand sustained loop from in-memory `BytesSource` playback to cached temp-file `DeviceFileSource` playback, matching the project's already-stable loop controller path on device.
+- Follow-up verification: `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart` returned `No issues found`.
+
+### 原因
+- 用户反馈禅意沙盘当前音效在起播和停后再播时存在明显空白与延迟，听感像“先出一声，随后发空”，需要确认问题来自音频本体还是播放链路。
+- 经代码排查，禅意沙盘音效并非静态 `assets` 文件，而是 `toolbox_zen_sand_sound_service.dart` 运行时合成的 WAV；因此需要同时检查合成波形与播放器切源/预热策略。
+
+### 修改
+- 在 `toolbox_zen_sand_sound_service.dart` 中新增 `prewarm(...)` 预热入口：
+  - 当前工具切换、笔触大小变化、偏好恢复、音效重新开启后，会提前准备循环底噪 source，减少首次 `setSource` 的等待空白。
+  - 同时预热当前工具首个常用击发音 source，并把 impact player 游标重置到已预热播放器，降低首响延迟。
+- 优化 impact 播放链路：
+  - 为 3 个 impact player 增加已加载 `cacheKey` 跟踪。
+  - 当同参数击发音再次触发时，优先 `seek(Duration.zero) + resume()` 复用已加载 source，而不是每次重新切源。
+- 根据用户实机日志进一步收口为“loop 主导”的连续沙声策略：
+  - 连续型沙盘工具在绘制过程中不再高频插入 `zen_sand_sfx_impact`，避免 100ms 级短击发音把听感切成“卡壳”片段。
+  - 提升 `zen_sand_sfx_loop` 基础音量与动态范围，并将非立即停播缓冲从 `240ms` 延长到 `420ms`，减少短抬手和触点抖动造成的断续感。
+  - 下调非石子类 impact 音量，使保留的操作反馈不再压过持续底噪。
+- 在 `toolbox_zen_sand_tool.dart` 中接入当前工具音频预热：
+  - `restore prefs`
+  - `select tool`
+  - `set brush size`
+  - `toggle sound(true)`
+  - `apply ritual preset`
+
+### 修复
+- 修复禅意沙盘循环底噪首次起播容易落在 impact 声之后、导致“只有一声随后发空”的问题。
+- 修复相同工具/参数连续绘制时反复切源带来的重复延迟，提升停后再播和短间隔连画的连续性。
+- 新增波形回归检查，确认当前合成音频不存在“大段前导空白”：
+  - 循环声 `leadingQuietMs = 0ms`，`longestQuietMs = 0-20ms`
+  - 击发声 `leadingQuietMs = 0ms`
+
+### 风险变更
+- 本轮调整集中在播放器预热与 source 复用策略，不改变手势语义、工具语义、持久化结构和页面业务逻辑。
+- 预热会让空闲状态下多保留少量已生成 WAV/已加载 source；范围仅限当前工具常用 bucket，风险可控。
+
+### 验证
+- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`（通过）
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_045] - 2026-04-23
+
+### 原因
+- 空灵音钵（疗愈音钵）模块单文件 2255 行严重违反 500 行硬顶；视觉上七脉轮霓虹彩虹色与 toolbox「柔和、克制、舒缓」基线不一致；移动端底部 188dp 常驻抽屉挤压主舞台，音钵失去首屏视觉焦点。
+
+### 新增
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_specs.dart`：频率/音色 spec + 11 组自然色 palette。
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_painters.dart`：三组 CustomPainter（背景 / 音钵 / 余振扩散）。
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_stage.dart`：音钵主舞台（`bowlSize` 上限 296→360，新自然色轻触提示 pill）。
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_layout.dart`：移动端 Header(48dp) + Stage + SummaryBar(60dp) 三段结构；摘要条即把手，点击打开上拉 Sheet。
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_wide.dart` + `_wide_tiles.dart`：宽屏 ≥ 760dp 布局保留原骨架，换为新自然色。
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_sheet.dart` + `_sheet_controls.dart`：`DraggableScrollableSheet` 上拉抽屉，承载频率菜单（chakra/resonance 分组）+ 音色 2×2 网格 + 自动播放 slider + 触感 switch + 停止余振按钮。
+- `plans/PLAN_045_空灵音钵自然舒适移动端精修.md`：本轮计划文档。
+
+### 修改
+- `lib/src/ui/pages/toolbox_singing_bowls_tool.dart`：从 2255 行收缩到 373 行，仅保留 `SingingBowlsToolPage` / `SingingBowlsPracticeCard` / `_SingingBowlsPracticeCardState` 的 lifecycle 与事件方法，其余通过 `part` 分片。
+- 11 组脉轮/共振频率的 `accent / glow / gradient` 重写为自然低饱和色系（陶土 / 苔藓 / 晨雾 / 檀褐 / 薰衣灰紫 等），保留 `id / note / frequency / 文案` 语义不变。
+- 背景线性纹理 alpha 从 0.026 降到 0.018，背景辉光轻度柔化，符合"自然舒适"气质。
+- 移动端头部删除冗长副标题"频率、音色与空间尾韵的移动端重构"（文案已迁入 Sheet 内）。
+
+### 风险变更
+- 严格遵守「只动 UI、不动逻辑」边界：所有 `ToolboxSingingBowlsPrefsService` 调用、`ToolboxAudioBank.singingBowlTone` 调用方式、`_frequencyId/_voiceId/_autoPlayIntervalMs` 默认值与持久化结构、事件触发语义均未改动。
+- `part of` 拆分后所有原私有类（`_SingingBowlFrequencySpec` / `_SingingBowlPainter` 等）继续文件私有；新增 `setPressing(bool)` 公开方法以支持 stage extension 触发 setState，未暴露内部字段。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_singing_bowls_tool*.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_singing_bowls_tool*.dart`（No issues found）
+- 所有 9 个子文件 ≤ 500 行硬顶：主 373 / specs 309 / painters 364 / stage 164 / layout 263 / wide 385 / wide_tiles 189 / sheet 267 / sheet_controls 324。
+
+## [Unreleased-PLAN_044] - 2026-04-23
+
+### 原因
+- 当前程序可运行，但禅意沙盘存在两类体验问题：单指绘制偶发误触缩放、背景效果音在一笔绘制过程中间歇性"掉一下"（听感断断续续）。
+- 用户反馈此前的 PLAN_044 改动只修到一半未提交；本次在同一 PLAN 下续补。
+
+### 修改
+- 在 `toolbox_zen_sand_tool.dart` 中收紧缩放判定：
+  - 单指绘制状态下忽略 `|details.scale - 1| <= 0.02` 的微抖动，不再误切换到 transform 模式。
+- 在 `toolbox_zen_sand_tool.dart` 中做移动端窄屏抛光（纯 UI）：
+  - 在 <390dp 窄屏下收缩 padding、提升 headerGap/sectionGap 压缩、在 <380dp 将 Header 折叠为上下两行（返回+标题 / 描述 / 快捷入口 chip 行）。
+  - 两个抽屉卡片（场景 / 工具与控制）在可用宽度 <360dp 时改为单列；160-420 卡宽改为 170-360 更紧致。
+  - 底部 dock 折叠态删除"底部菜单已折叠"冗余副标题，腾出宽度给主操作按钮；compact 态外层冗余 `SingleChildScrollView` 改为 `Padding`，移除嵌套纵向滚动。
+- 在 `toolbox_zen_sand_sound_service.dart` 中彻底修复循环底噪"一笔中空音"：
+  - **根因**：此前合成混用了 `phase`（0→1 循环）与 `t`（绝对秒）两套自变量，在 phase=1 处以 `t` 驱动的波形不会闭合，叠加的 `loopWindow = 0.92 + 0.08 sin(2π phase) sin(4π phase)` 在 phase=0/0.25/0.5/0.75 又周期性压 8% 振幅，被人耳感知为"一笔画画隔一会儿就掉一下"。
+  - **修复**：`_buildLoopWav` 所有分量重写为纯 `phase` 基、整数频率倍数（`rustle/low/shimmer/motion/wash`），使波形在 phase 0↔1 处严格闭合；去除 `loopWindow`（= 1.0），消除内部周期性凹陷；`_seamBlendLoopPcm` 保留为保险带（从 96ms 降到 48ms）。
+  - 循环底噪长度从 `880ms` 延长到 `3200ms`；非立即停止延时从 `140ms` 调整到 `240ms`，减少短抬手造成的断续感。
+
+### 修复
+- 修复禅意沙盘单指绘制时偶发"界面误判为缩放/平移"的问题。
+- 修复禅意沙盘背景效果音"一笔绘制过程中间隔一会儿就掉一下"的根因（相位不闭合 + loopWindow 周期性压幅）。
+- 提升 375dp/iPhone SE 等窄屏下 Header、dock、抽屉卡片的触达与阅读舒适度。
+
+### 风险变更
+- 音频合成分量数学表达变化，会改变底噪的纹理细节（仍在同一听感家族内）；未改变服务 API/事件语义/持久化。
+- 所有 UI 改动严格遵守"只动 UI、不动逻辑"边界。
+
+### 验证
+- `dart format`（通过）
+- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart`（仅既有 6 条 unused_element warning，无新增）
+- `flutter build windows --debug`（通过）
+- `flutter test --reporter compact`（All 231 tests passed）
+
 ## [Unreleased-PLAN_043-MERGE-READY] - 2026-04-21
 
 ### Reason

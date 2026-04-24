@@ -29,6 +29,7 @@ class _ZenSheetFrame extends StatelessWidget {
     );
   }
 }
+
 class _ZenSheetHeader extends StatelessWidget {
   const _ZenSheetHeader({required this.title, required this.subtitle});
 
@@ -60,6 +61,7 @@ class _ZenSheetHeader extends StatelessWidget {
     );
   }
 }
+
 class _ZenSectionCard extends StatelessWidget {
   const _ZenSectionCard({required this.title, required this.child});
 
@@ -326,6 +328,66 @@ class _ZenActionBadge extends StatelessWidget {
   }
 }
 
+class _ZenMiniStatusPill extends StatelessWidget {
+  const _ZenMiniStatusPill({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Colors.white.withValues(alpha: 0.78),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              '$label ',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: const Color(0xFF6A5B4C),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 112),
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: const Color(0xFF2C241E),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ZenQuickIconButton extends StatelessWidget {
   const _ZenQuickIconButton({
     required this.icon,
@@ -379,21 +441,27 @@ class _ZenDockButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: enabled ? onPressed : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, size: 20, color: foreground),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: foreground,
-                fontWeight: FontWeight.w700,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(icon, size: 20, color: foreground),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: foreground,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

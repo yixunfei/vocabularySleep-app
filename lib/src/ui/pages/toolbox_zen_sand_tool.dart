@@ -293,13 +293,15 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       _ZenSandInteractionController();
 
   Size? get _currentCanvasSize => _interactionStore.currentCanvasSize;
-  set _currentCanvasSize(Size? value) => _interactionStore.currentCanvasSize = value;
+  set _currentCanvasSize(Size? value) =>
+      _interactionStore.currentCanvasSize = value;
 
   Offset? get _lastTouchContactPoint => _interactionStore.lastTouchContactPoint;
   set _lastTouchContactPoint(Offset? value) =>
       _interactionStore.lastTouchContactPoint = value;
 
-  Offset? get _lastResolvedInputPoint => _interactionStore.lastResolvedInputPoint;
+  Offset? get _lastResolvedInputPoint =>
+      _interactionStore.lastResolvedInputPoint;
   set _lastResolvedInputPoint(Offset? value) =>
       _interactionStore.lastResolvedInputPoint = value;
 
@@ -309,6 +311,10 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _ZenDrawerSection.tools,
   };
   final ToolboxZenSandSoundService _soundService = ToolboxZenSandSoundService();
+  Timer? _sandMotionIdleTimer;
+  DateTime? _lastSandMotionAt;
+  double _lastSandMotionSpeed = 0;
+  double _smoothedSandMotionSpeed = 0;
   String? get _lastPresetId => _canvasStore.lastPresetId;
   set _lastPresetId(String? value) => _canvasStore.lastPresetId = value;
 
@@ -341,6 +347,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   @override
   void dispose() {
+    _sandMotionIdleTimer?.cancel();
     _interactionController.dispose();
     unawaited(_soundService.stopLoop(immediate: true));
     if (_immersiveMode) {
@@ -356,6 +363,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     setState(() {
       _canvasStore.restoreFromPrefs(prefs, maxActions: _maxCanvasActions);
     });
+    _prewarmActiveSandAudio();
   }
 
   void _persist() {
@@ -414,7 +422,24 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     };
   }
 
-  void _startSandLoop({double intensity = 0.82}) {
+  void _prewarmActiveSandAudio({double impactIntensity = 0.52}) {
+    if (!_soundEnabled) {
+      return;
+    }
+    final kind = _activeSoundKind;
+    if (kind == null) {
+      return;
+    }
+    unawaited(
+      _soundService.prewarm(
+        kind,
+        brushSize: _brushSize,
+        impactIntensity: impactIntensity,
+      ),
+    );
+  }
+
+  void _startSandLoop({double intensity = 0}) {
     if (!_soundEnabled) {
       return;
     }
@@ -439,27 +464,62 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     if (kind == null || kind == ZenSandSoundKind.stone) {
       return;
     }
-    final normalizedDistance = (gestureDistance / math.max(10.0, _brushSize))
-        .clamp(0.0, 1.0)
-        .toDouble();
-    final intensity = (0.48 + normalizedDistance * 0.42)
-        .clamp(0.18, 1.0)
-        .toDouble();
+    final now = DateTime.now();
+    final elapsedMs = _lastSandMotionAt == null
+        ? 16.0
+        : now.difference(_lastSandMotionAt!).inMicroseconds / 1000;
+    _lastSandMotionAt = now;
     unawaited(
-      _soundService.updateLoop(
+      _soundService.setLoopMotion(
         kind,
         brushSize: _brushSize,
-        intensity: intensity,
+        distance: gestureDistance,
+        elapsedMs: elapsedMs,
+        previousSpeed: _lastSandMotionSpeed,
+        smoothedSpeed: _smoothedSandMotionSpeed,
+        onMotionState: (speed, smoothedSpeed) {
+          _lastSandMotionSpeed = speed;
+          _smoothedSandMotionSpeed = smoothedSpeed;
+        },
       ),
     );
+    _scheduleSandMotionIdleFade();
   }
 
   void _stopSandLoop({bool immediate = false}) {
+    _resetSandMotionAudio();
     unawaited(_soundService.stopLoop(immediate: immediate));
   }
 
   void _resetStrokeAudioSync() {
     _interactionStore.resetStrokeAudioSync();
+  }
+
+  void _resetSandMotionAudio() {
+    _sandMotionIdleTimer?.cancel();
+    _sandMotionIdleTimer = null;
+    _lastSandMotionAt = null;
+    _lastSandMotionSpeed = 0;
+    _smoothedSandMotionSpeed = 0;
+  }
+
+  void _scheduleSandMotionIdleFade() {
+    _sandMotionIdleTimer?.cancel();
+    _sandMotionIdleTimer = Timer(const Duration(milliseconds: 130), () {
+      _sandMotionIdleTimer = null;
+      _fadeSandMotionToRest();
+    });
+  }
+
+  void _fadeSandMotionToRest() {
+    final kind = _activeSoundKind;
+    if (!_soundEnabled || kind == null || kind == ZenSandSoundKind.stone) {
+      return;
+    }
+    _lastSandMotionAt = null;
+    _lastSandMotionSpeed = 0;
+    _smoothedSandMotionSpeed = 0;
+    unawaited(_soundService.muteLoopMotion(kind, brushSize: _brushSize));
   }
 
   double _accentStrideFor(ZenSandSoundKind kind) {
@@ -488,6 +548,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     };
   }
 
+  bool _shouldUseLoopDominantSandAudio(ZenSandSoundKind kind) {
+    return switch (kind) {
+      ZenSandSoundKind.stone => false,
+      _ => true,
+    };
+  }
+
   void _playSandAccent({
     double gestureDistance = 0.0,
     double intensityBias = 0.0,
@@ -498,6 +565,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     }
     final kind = _activeSoundKind;
     if (kind == null || kind == ZenSandSoundKind.stone) {
+      return;
+    }
+    // Continuous sand tools should read as a sustained rustle layer.
+    // High-frequency impact retriggers sound choppy and "stuck" on device.
+    if (_shouldUseLoopDominantSandAudio(kind) && !force) {
       return;
     }
     final now = DateTime.now();
@@ -588,6 +660,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       _workingStroke = <Offset>[];
       _gestureMode = _ZenGestureMode.idle;
     });
+    _prewarmActiveSandAudio();
     _persist();
   }
 
@@ -604,6 +677,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     setState(() {
       _canvasStore.setBrushSize(value);
     });
+    _prewarmActiveSandAudio();
   }
 
   void _toggleHaptics(bool value) {
@@ -628,6 +702,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       _stopWaterHoldPainter();
       _stopSandLoop(immediate: true);
       _resetStrokeAudioSync();
+    } else {
+      _prewarmActiveSandAudio();
     }
     _persist();
   }
@@ -733,13 +809,10 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     setState(() {
       _workingStroke = <Offset>[..._workingStroke, point];
     });
-    _updateSandLoop(gestureDistance: _brushSize * 0.18);
+    _fadeSandMotionToRest();
     final holdTicks = _interactionStore.incrementWaterHoldTicks();
     if (holdTicks % 4 == 0) {
-      _playSandAccent(
-        gestureDistance: _brushSize * 0.32,
-        intensityBias: 0.08,
-      );
+      _playSandAccent(gestureDistance: _brushSize * 0.32, intensityBias: 0.08);
     }
   }
 
@@ -758,16 +831,20 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _lastTouchContactPoint = local;
     _lastResolvedInputPoint = resolvedLocal;
     _resetStrokeAudioSync();
+    _resetSandMotionAudio();
     setState(() {
       _gestureMode = _ZenGestureMode.draw;
       _workingStroke = <Offset>[_normalize(resolvedLocal, size)];
     });
-    _startSandLoop(intensity: 0.86);
-    _playSandAccent(
-      gestureDistance: _brushSize * 0.32,
-      intensityBias: 0.06,
-      force: true,
-    );
+    _startSandLoop();
+    final kind = _activeSoundKind;
+    if (kind != null && !_shouldUseLoopDominantSandAudio(kind)) {
+      _playSandAccent(
+        gestureDistance: _brushSize * 0.32,
+        intensityBias: 0.06,
+        force: true,
+      );
+    }
     _startWaterHoldPainter();
   }
 
@@ -875,7 +952,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _setTransformHintVisible(true);
     _interactionController.scheduleTransformIntent(
       delay: const Duration(milliseconds: 260),
-      shouldFire: () => _interactionStore.canFireTransformIntent(mounted: mounted),
+      shouldFire: () =>
+          _interactionStore.canFireTransformIntent(mounted: mounted),
       onFire: () {
         if (_gestureMode == _ZenGestureMode.draw) {
           _handlePanCancel();
@@ -947,10 +1025,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 
   void _handleScaleUpdate(ScaleUpdateDetails details, Size size) {
+    // Keep one-finger drawing stable: tiny scale jitter from gesture
+    // recognizer should not switch into transform mode.
+    final hasMeaningfulScaleDelta = (details.scale - 1.0).abs() > 0.02;
     final isTransforming =
         _interactionStore.hasTransformPointers ||
-        details.scale != 1 ||
-        _gestureMode == _ZenGestureMode.transform;
+        _gestureMode == _ZenGestureMode.transform ||
+        (hasMeaningfulScaleDelta && _gestureMode != _ZenGestureMode.draw);
     if (isTransforming) {
       _cancelPendingTransformIntent();
       if (_gestureMode != _ZenGestureMode.transform) {
@@ -1117,6 +1198,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         brushSize: preset.brushSize,
         intensity: replace ? 0.54 : 0.74,
       );
+      _prewarmActiveSandAudio(impactIntensity: replace ? 0.54 : 0.74);
     }
     _persist();
     _showFloatingMessage(
@@ -1183,8 +1265,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         return StatefulBuilder(
           builder: (context, _) {
             final screenWidth = MediaQuery.sizeOf(context).width;
-            final cardWidth =
-                (screenWidth - 16 * 2 - 12).clamp(160.0, 420.0) / 2;
+            final availableWidth = (screenWidth - 16 * 2)
+                .clamp(220.0, 720.0)
+                .toDouble();
+            final useSingleColumn = availableWidth < 360;
+            final cardWidth = useSingleColumn
+                ? availableWidth
+                : ((availableWidth - 12) / 2).clamp(170.0, 360.0).toDouble();
             return _ZenSheetFrame(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1244,8 +1331,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final screenWidth = MediaQuery.sizeOf(context).width;
-            final cardWidth =
-                (screenWidth - 16 * 2 - 12).clamp(160.0, 420.0) / 2;
+            final availableWidth = (screenWidth - 16 * 2)
+                .clamp(220.0, 720.0)
+                .toDouble();
+            final useSingleColumn = availableWidth < 360;
+            final cardWidth = useSingleColumn
+                ? availableWidth
+                : ((availableWidth - 12) / 2).clamp(170.0, 360.0).toDouble();
             return _ZenSheetFrame(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1599,13 +1691,17 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final isNarrowViewport = constraints.maxWidth < 390;
+          final isCompactWidth = constraints.maxWidth < 350;
           final isShortViewport = constraints.maxHeight < 820;
-          final collapseDock = constraints.maxHeight < 900;
-          final foldBottomDock = constraints.maxHeight < 760;
-          final hideRitualRow = constraints.maxHeight < 700;
-          final hideInlinePalette = constraints.maxHeight < 740;
-          final headerGap = isShortViewport ? 10.0 : 14.0;
-          final sectionGap = isShortViewport ? 8.0 : 12.0;
+          final collapseDock = constraints.maxHeight < 900 || isNarrowViewport;
+          final foldBottomDock = constraints.maxHeight < 760 || isCompactWidth;
+          final hideRitualRow = constraints.maxHeight < 700 || isCompactWidth;
+          final hideInlinePalette =
+              constraints.maxHeight < 740 || isNarrowViewport;
+          final headerGap = isShortViewport || isNarrowViewport ? 10.0 : 14.0;
+          final sectionGap = isShortViewport || isNarrowViewport ? 8.0 : 12.0;
+          final horizontalPadding = isCompactWidth ? 12.0 : 16.0;
           final bottomDockMaxHeight = math
               .min(
                 foldBottomDock
@@ -1626,7 +1722,12 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               .toDouble();
 
           return Padding(
-            padding: EdgeInsets.fromLTRB(16, isShortViewport ? 6 : 8, 16, 16),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              isShortViewport ? 6 : 8,
+              horizontalPadding,
+              16,
+            ),
             child: Column(
               children: <Widget>[
                 _buildHeader(theme),
@@ -1723,100 +1824,194 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   }
 
   Widget _buildHeader(ThemeData theme) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _ZenQuickIconButton(
-          icon: Icons.arrow_back_rounded,
-          tooltip: _text('返回', 'Back'),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 380;
+        if (!compact) {
+          return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                _text('禅意沙盘', 'Zen sand tray'),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF1E1813),
+              _ZenQuickIconButton(
+                icon: Icons.arrow_back_rounded,
+                tooltip: _text('返回', 'Back'),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _text('禅意沙盘', 'Zen sand tray'),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1E1813),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _text(
+                        '像在沙面上作画一样，自由涂鸦、铺陈留白、安放景石。',
+                        'Sketch freely as if drawing on sand, leaving space and placing stones.',
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF4D443A),
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                _text(
-                  '像在沙面上作画一样，自由涂鸦、铺陈留白、安放景石。',
-                  'Sketch freely as if drawing on sand, leaving space and placing stones.',
-                ),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF4D443A),
-                  height: 1.35,
-                ),
+              const SizedBox(width: 12),
+              _ZenQuickIconButton(
+                icon: Icons.landscape_rounded,
+                tooltip: _text('切换场景', 'Scenes'),
+                onPressed: _openSceneSheet,
+              ),
+              const SizedBox(width: 8),
+              _ZenQuickIconButton(
+                icon: Icons.tune_rounded,
+                tooltip: _text('工具与控制', 'Tools & controls'),
+                onPressed: _openControlSheet,
               ),
             ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        _ZenQuickIconButton(
-          icon: Icons.landscape_rounded,
-          tooltip: _text('切换场景', 'Scenes'),
-          onPressed: _openSceneSheet,
-        ),
-        const SizedBox(width: 8),
-        _ZenQuickIconButton(
-          icon: Icons.tune_rounded,
-          tooltip: _text('工具与控制', 'Tools & controls'),
-          onPressed: _openControlSheet,
-        ),
-      ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            _ZenQuickIconButton(
+              icon: Icons.arrow_back_rounded,
+              tooltip: _text('返回', 'Back'),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    _text('禅意沙盘', 'Zen sand tray'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1E1813),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _text(
+                      '拖动即可留下连续沙纹。',
+                      'Drag to leave continuous sand trails.',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF4D443A),
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            _ZenQuickIconButton(
+              icon: Icons.landscape_rounded,
+              tooltip: _text('切换场景', 'Scenes'),
+              onPressed: _openSceneSheet,
+            ),
+            const SizedBox(width: 8),
+            _ZenQuickIconButton(
+              icon: Icons.tune_rounded,
+              tooltip: _text('工具与控制', 'Tools & controls'),
+              onPressed: _openControlSheet,
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildStats(ThemeData theme) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: <Widget>[
-          _ZenActionBadge(
-            label: _text('场景', 'Scene'),
-            value: _background.label(_isZh),
-            accent: _background.accent,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 390;
+        if (compact) {
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _ZenMiniStatusPill(
+                label: _text('场景', 'Scene'),
+                value: _background.label(_isZh),
+                accent: _background.accent,
+              ),
+              _ZenMiniStatusPill(
+                label: _text('工具', 'Tool'),
+                value: _tool.label(_isZh),
+                accent: _tool.tint,
+              ),
+              _ZenMiniStatusPill(
+                label: _text('音效', 'Sound'),
+                value: _soundDescriptor,
+                accent: _soundEnabled ? _tool.tint : const Color(0xFF9D8D7E),
+              ),
+              _ZenMiniStatusPill(
+                label: _text('笔触', 'Brush'),
+                value: _brushSize.round().toString(),
+                accent: Color.lerp(_tool.tint, Colors.white, 0.15)!,
+              ),
+            ],
+          );
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: <Widget>[
+              _ZenActionBadge(
+                label: _text('场景', 'Scene'),
+                value: _background.label(_isZh),
+                accent: _background.accent,
+              ),
+              const SizedBox(width: 10),
+              _ZenActionBadge(
+                label: _text('笔触', 'Strokes'),
+                value: _strokeCount.toString(),
+                accent: _tool.tint,
+              ),
+              const SizedBox(width: 10),
+              _ZenActionBadge(
+                label: _text('景石', 'Stones'),
+                value: _stoneCount.toString(),
+                accent: const Color(0xFF6A6670),
+              ),
+              const SizedBox(width: 10),
+              _ZenActionBadge(
+                label: _text('宽度', 'Brush'),
+                value: _brushSize.round().toString(),
+                accent: Color.lerp(_tool.tint, Colors.white, 0.15)!,
+              ),
+              const SizedBox(width: 10),
+              _ZenActionBadge(
+                label: _text('缩放', 'Zoom'),
+                value: '${_viewportScale.toStringAsFixed(1)}x',
+                accent: _background.accent,
+              ),
+              if (_toolSupportsColor) ...<Widget>[
+                const SizedBox(width: 10),
+                _ZenActionBadge(
+                  label: _text('颜色', 'Color'),
+                  value: _activeColorSpec.label(_isZh),
+                  accent: Color(_colorValue),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(width: 10),
-          _ZenActionBadge(
-            label: _text('笔触', 'Strokes'),
-            value: _strokeCount.toString(),
-            accent: _tool.tint,
-          ),
-          const SizedBox(width: 10),
-          _ZenActionBadge(
-            label: _text('景石', 'Stones'),
-            value: _stoneCount.toString(),
-            accent: const Color(0xFF6A6670),
-          ),
-          const SizedBox(width: 10),
-          _ZenActionBadge(
-            label: _text('宽度', 'Brush'),
-            value: _brushSize.round().toString(),
-            accent: Color.lerp(_tool.tint, Colors.white, 0.15)!,
-          ),
-          const SizedBox(width: 10),
-          _ZenActionBadge(
-            label: _text('缩放', 'Zoom'),
-            value: '${_viewportScale.toStringAsFixed(1)}x',
-            accent: _background.accent,
-          ),
-          if (_toolSupportsColor) ...<Widget>[
-            const SizedBox(width: 10),
-            _ZenActionBadge(
-              label: _text('颜色', 'Color'),
-              value: _activeColorSpec.label(_isZh),
-              accent: Color(_colorValue),
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -2276,28 +2471,14 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            _tool.label(_isZh),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: const Color(0xFF2C241E),
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            _text('底部菜单已折叠', 'Bottom menu folded'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: const Color(0xFF6A5B4C),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        _tool.label(_isZh),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: const Color(0xFF2C241E),
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
@@ -2358,7 +2539,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             ),
           ],
         ),
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
