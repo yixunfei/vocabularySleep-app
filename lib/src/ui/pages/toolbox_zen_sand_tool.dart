@@ -315,6 +315,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   DateTime? _lastSandMotionAt;
   double _lastSandMotionSpeed = 0;
   double _smoothedSandMotionSpeed = 0;
+  bool _immersiveLockedLandscape = false;
   String? get _lastPresetId => _canvasStore.lastPresetId;
   set _lastPresetId(String? value) => _canvasStore.lastPresetId = value;
 
@@ -350,8 +351,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _sandMotionIdleTimer?.cancel();
     _interactionController.dispose();
     unawaited(_soundService.stopLoop(immediate: true));
-    if (_immersiveMode) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    if (_immersiveMode || _immersiveLockedLandscape) {
+      unawaited(_restoreImmersiveSystemUi());
     }
     unawaited(_soundService.dispose());
     super.dispose();
@@ -603,6 +604,45 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     );
   }
 
+  bool get _shouldLockImmersiveLandscape {
+    final media = MediaQuery.maybeOf(context);
+    if (media == null) {
+      return false;
+    }
+    return media.size.shortestSide < 600;
+  }
+
+  Future<void> _applyImmersiveSystemUi(bool value) async {
+    final lockLandscape = value && _shouldLockImmersiveLandscape;
+    await SystemChrome.setEnabledSystemUIMode(
+      value ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+    );
+    if (value) {
+      _immersiveLockedLandscape = lockLandscape;
+      if (lockLandscape) {
+        await SystemChrome.setPreferredOrientations(const <DeviceOrientation>[
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      }
+      return;
+    }
+    await _restoreImmersiveOrientation();
+  }
+
+  Future<void> _restoreImmersiveSystemUi() async {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    await _restoreImmersiveOrientation();
+  }
+
+  Future<void> _restoreImmersiveOrientation() async {
+    if (!_immersiveLockedLandscape) {
+      return;
+    }
+    _immersiveLockedLandscape = false;
+    await SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+  }
+
   void _setImmersiveMode(bool value) {
     if (_immersiveMode == value) return;
     if (value) {
@@ -611,11 +651,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     setState(() {
       _immersiveMode = value;
     });
-    unawaited(
-      SystemChrome.setEnabledSystemUIMode(
-        value ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
-      ),
-    );
+    unawaited(_applyImmersiveSystemUi(value));
   }
 
   void _toggleImmersiveMode() {
@@ -1656,6 +1692,106 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     );
   }
 
+  Future<void> _openImmersiveMenuSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        void closeAndRun(VoidCallback action) {
+          Navigator.of(sheetContext).pop();
+          action();
+        }
+
+        void closeAndOpen(Future<void> Function() action) {
+          Navigator.of(sheetContext).pop();
+          unawaited(Future<void>.delayed(Duration.zero, action));
+        }
+
+        return _ZenSheetFrame(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _ZenSheetHeader(
+                title: _text('沉浸控制', 'Immersive controls'),
+                subtitle: _text(
+                  '画布保持全屏，常用操作收在这里。',
+                  'Keep the tray full screen; controls stay folded here.',
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: <Widget>[
+                  _ZenCompactActionChip(
+                    icon: Icons.fullscreen_exit_rounded,
+                    label: _text('退出全屏', 'Exit full screen'),
+                    accent: _tool.tint,
+                    onTap: () => closeAndRun(() => _setImmersiveMode(false)),
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.landscape_rounded,
+                    label: _text('场景', 'Scenes'),
+                    accent: _background.accent,
+                    onTap: () => closeAndOpen(_openSceneSheet),
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.tune_rounded,
+                    label: _text('工具', 'Tools'),
+                    accent: _tool.tint,
+                    onTap: () => closeAndOpen(_openControlSheet),
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.auto_awesome_rounded,
+                    label: _text('预设', 'Rituals'),
+                    accent: _background.accent,
+                    onTap: () => closeAndOpen(_openRitualSheet),
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.undo_rounded,
+                    label: _text('撤销', 'Undo'),
+                    accent: _tool.tint,
+                    onTap: _actions.isNotEmpty
+                        ? () => closeAndRun(_undo)
+                        : null,
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.redo_rounded,
+                    label: _text('重做', 'Redo'),
+                    accent: _tool.tint,
+                    onTap: _redoStack.isNotEmpty
+                        ? () => closeAndRun(_redo)
+                        : null,
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.center_focus_strong_rounded,
+                    label: _text('重置视角', 'Reset view'),
+                    accent: _background.accent,
+                    onTap: _viewportScale > 1.01
+                        ? () => closeAndRun(() => _resetViewport())
+                        : null,
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.delete_sweep_rounded,
+                    label: _text('清空沙盘', 'Clear tray'),
+                    accent: const Color(0xFF8B6651),
+                    onTap: _actions.isEmpty
+                        ? null
+                        : () => closeAndOpen(_clearAll),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1775,51 +1911,36 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
+        Positioned.fill(child: _buildCanvas(theme, immersive: true)),
         SafeArea(
-          minimum: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-          child: _buildCanvas(theme, immersive: true),
-        ),
-        SafeArea(
-          minimum: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          minimum: const EdgeInsets.all(12),
           child: Align(
-            alignment: Alignment.topCenter,
-            child: Row(
-              children: <Widget>[
-                _ZenQuickIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: _text('返回', 'Back'),
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-                const SizedBox(width: 8),
-                _ZenQuickIconButton(
-                  icon: Icons.fullscreen_exit_rounded,
-                  tooltip: _text('退出全屏', 'Exit full screen'),
-                  onPressed: _toggleImmersiveMode,
-                ),
-                const Spacer(),
-                _ZenQuickIconButton(
-                  icon: Icons.landscape_rounded,
-                  tooltip: _text('切换场景', 'Scenes'),
-                  onPressed: _openSceneSheet,
-                ),
-                const SizedBox(width: 8),
-                _ZenQuickIconButton(
-                  icon: Icons.tune_rounded,
-                  tooltip: _text('工具与控制', 'Tools & controls'),
-                  onPressed: _openControlSheet,
-                ),
-              ],
-            ),
-          ),
-        ),
-        SafeArea(
-          minimum: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: _buildBottomDock(theme, compact: true),
+            alignment: Alignment.bottomRight,
+            child: _buildImmersiveMenuButton(),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildImmersiveMenuButton() {
+    return Tooltip(
+      message: _text('沉浸控制', 'Immersive controls'),
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(20),
+        elevation: 8,
+        shadowColor: Colors.black.withValues(alpha: 0.18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: _openImmersiveMenuSheet,
+          child: const SizedBox(
+            width: 52,
+            height: 52,
+            child: Icon(Icons.menu_rounded, color: Color(0xFF2A241D)),
+          ),
+        ),
+      ),
     );
   }
 
@@ -2121,8 +2242,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final maxHeight = constraints.maxHeight;
-        final hideCanvasActionStrip = !immersive && maxHeight < 290;
-        final hideCanvasChrome = !immersive && maxHeight < 220;
+        final hideCanvasActionStrip = immersive || maxHeight < 290;
+        final hideCanvasChrome = immersive || maxHeight < 220;
         final canvasGap = hideCanvasChrome
             ? 0.0
             : hideCanvasActionStrip
@@ -2131,42 +2252,35 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         final canvasHeight = immersive
             ? maxHeight
             : math.min(maxHeight, width * 1.18);
-        final canvasSize = Size(width, canvasHeight);
-        _currentCanvasSize = canvasSize;
-
         return Center(
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             width: width,
             height: immersive ? maxHeight : null,
-            padding: EdgeInsets.all(
-              immersive
-                  ? 10
-                  : hideCanvasChrome
-                  ? 8
-                  : 12,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(immersive ? 34 : 30),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[
-                  Color.lerp(_background.accent, Colors.white, 0.82)!,
-                  Color.lerp(_background.endColor, Colors.black, 0.22)!,
-                ],
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: immersive ? 0.16 : 0.12,
+            padding: immersive
+                ? EdgeInsets.zero
+                : EdgeInsets.all(hideCanvasChrome ? 8 : 12),
+            decoration: immersive
+                ? null
+                : BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: <Color>[
+                        Color.lerp(_background.accent, Colors.white, 0.82)!,
+                        Color.lerp(_background.endColor, Colors.black, 0.22)!,
+                      ],
+                    ),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 26,
+                        offset: const Offset(0, 16),
+                      ),
+                    ],
                   ),
-                  blurRadius: immersive ? 32 : 26,
-                  offset: Offset(0, immersive ? 18 : 16),
-                ),
-              ],
-            ),
             child: Column(
               children: <Widget>[
                 if (!hideCanvasChrome) ...<Widget>[
@@ -2178,94 +2292,115 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   SizedBox(height: canvasGap),
                 ],
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(immersive ? 28 : 24),
-                    child: Listener(
-                      onPointerDown: _handlePointerDown,
-                      onPointerUp: _handlePointerUp,
-                      onPointerCancel: _handlePointerUp,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTapUp: _tool.isPlacement
-                            ? (details) {
-                                _placeStone(details.localPosition, canvasSize);
-                              }
-                            : null,
-                        onScaleStart: (details) {
-                          _handleScaleStart(details, canvasSize);
-                        },
-                        onScaleUpdate: (details) {
-                          _handleScaleUpdate(details, canvasSize);
-                        },
-                        onScaleEnd: _handleScaleEnd,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: <Widget>[
-                            RepaintBoundary(
-                              child: CustomPaint(
-                                painter: _ZenSurfacePainter(
-                                  background: _background,
-                                  viewportScale: _viewportScale,
-                                  viewportOffset: _viewportOffset,
-                                ),
-                                foregroundPainter: _ZenSandPainter(
-                                  background: _background,
-                                  actions: _actions,
-                                  currentStroke: _workingStroke,
-                                  currentToolId: _toolId,
-                                  currentBrushSize: _brushSize,
-                                  currentColorValue: _toolSupportsColor
-                                      ? _colorValue
-                                      : null,
-                                  viewportScale: _viewportScale,
-                                  viewportOffset: _viewportOffset,
-                                ),
-                              ),
-                            ),
-                            if (_guideEnabled)
-                              Positioned(
-                                left: 12,
-                                top: 12,
-                                child: _ZenCanvasHint(
-                                  label: _tool.isPlacement
-                                      ? _text('轻点放置景石', 'Tap to place stones')
-                                      : _text(
-                                          '单指绘制，双指缩放/平移',
-                                          'One finger draws, two fingers zoom/pan',
-                                        ),
-                                  accent: _tool.tint,
-                                ),
-                              ),
-                            if (_transformHintVisible)
-                              Positioned(
-                                left: 12,
-                                top: _guideEnabled ? 56 : 12,
-                                child: _ZenCanvasHint(
-                                  label: _text(
-                                    '双指已识别，停顿后进入缩放/平移',
-                                    'Two fingers detected. Hold briefly to zoom/pan',
+                  child: LayoutBuilder(
+                    builder: (context, canvasConstraints) {
+                      final canvasSize = Size(
+                        canvasConstraints.maxWidth.isFinite
+                            ? canvasConstraints.maxWidth
+                            : width,
+                        canvasConstraints.maxHeight.isFinite
+                            ? canvasConstraints.maxHeight
+                            : canvasHeight,
+                      );
+                      _currentCanvasSize = canvasSize;
+
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(immersive ? 0 : 24),
+                        child: Listener(
+                          onPointerDown: _handlePointerDown,
+                          onPointerUp: _handlePointerUp,
+                          onPointerCancel: _handlePointerUp,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTapUp: _tool.isPlacement
+                                ? (details) {
+                                    _placeStone(
+                                      details.localPosition,
+                                      canvasSize,
+                                    );
+                                  }
+                                : null,
+                            onScaleStart: (details) {
+                              _handleScaleStart(details, canvasSize);
+                            },
+                            onScaleUpdate: (details) {
+                              _handleScaleUpdate(details, canvasSize);
+                            },
+                            onScaleEnd: _handleScaleEnd,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: <Widget>[
+                                RepaintBoundary(
+                                  child: CustomPaint(
+                                    painter: _ZenSurfacePainter(
+                                      background: _background,
+                                      viewportScale: _viewportScale,
+                                      viewportOffset: _viewportOffset,
+                                    ),
+                                    foregroundPainter: _ZenSandPainter(
+                                      background: _background,
+                                      actions: _actions,
+                                      currentStroke: _workingStroke,
+                                      currentToolId: _toolId,
+                                      currentBrushSize: _brushSize,
+                                      currentColorValue: _toolSupportsColor
+                                          ? _colorValue
+                                          : null,
+                                      viewportScale: _viewportScale,
+                                      viewportOffset: _viewportOffset,
+                                    ),
                                   ),
-                                  accent: _background.accent,
                                 ),
-                              ),
-                            Positioned(
-                              right: 12,
-                              bottom: 12,
-                              child: _ZenCanvasHint(
-                                label: _toolSupportsColor
-                                    ? _activeColorSpec.label(_isZh)
-                                    : _tool.label(_isZh),
-                                accent: _toolSupportsColor
-                                    ? Color(_colorValue)
-                                    : _tool.tint,
-                                trailing:
-                                    '${_brushSize.round()} px / ${_viewportScale.toStringAsFixed(1)}x',
-                              ),
+                                if (!immersive && _guideEnabled)
+                                  Positioned(
+                                    left: 12,
+                                    top: 12,
+                                    child: _ZenCanvasHint(
+                                      label: _tool.isPlacement
+                                          ? _text(
+                                              '轻点放置景石',
+                                              'Tap to place stones',
+                                            )
+                                          : _text(
+                                              '单指绘制，双指缩放/平移',
+                                              'One finger draws, two fingers zoom/pan',
+                                            ),
+                                      accent: _tool.tint,
+                                    ),
+                                  ),
+                                if (!immersive && _transformHintVisible)
+                                  Positioned(
+                                    left: 12,
+                                    top: _guideEnabled ? 56 : 12,
+                                    child: _ZenCanvasHint(
+                                      label: _text(
+                                        '双指已识别，停顿后进入缩放/平移',
+                                        'Two fingers detected. Hold briefly to zoom/pan',
+                                      ),
+                                      accent: _background.accent,
+                                    ),
+                                  ),
+                                if (!immersive)
+                                  Positioned(
+                                    right: 12,
+                                    bottom: 12,
+                                    child: _ZenCanvasHint(
+                                      label: _toolSupportsColor
+                                          ? _activeColorSpec.label(_isZh)
+                                          : _tool.label(_isZh),
+                                      accent: _toolSupportsColor
+                                          ? Color(_colorValue)
+                                          : _tool.tint,
+                                      trailing:
+                                          '${_brushSize.round()} px / ${_viewportScale.toStringAsFixed(1)}x',
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],

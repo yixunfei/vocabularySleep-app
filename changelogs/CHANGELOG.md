@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_050] - 2026-04-24
+
+### 原因
+- 用户反馈创意沙盘“贴合触点”模式下，手指触点与实际画出的沙痕位置仍有错位，需要真实贴合。
+- 当前全屏沉浸模式仍保留顶部按钮和底部 dock，手机横屏时画布空间没有被充分释放。
+
+### 修改
+- 修正沙盘画布手势坐标基准：
+  - 原先使用外层容器尺寸计算落笔位置，容易被 padding、画布标题条和快捷操作条影响。
+  - 改为在真实绘制区域内部用 `LayoutBuilder` 获取画布尺寸，并将手势、归一化、缩放/平移反变换统一到同一尺寸基准。
+- 重构沉浸模式：
+  - 沉浸态隐藏画布标题、快捷 action strip、底部 dock 和常驻提示，让沙盘画布直接铺满屏幕。
+  - 仅保留一个 52dp 浮动菜单按钮，菜单中折叠提供退出全屏、场景、工具、预设、撤销、重做、重置视角和清空沙盘。
+  - 手机尺寸进入沉浸模式时尝试切换到横屏方向，并在退出或销毁页面时恢复系统 UI 与方向偏好。
+
+### 修复
+- 修复“贴合触点”开启后仍因外层尺寸与真实绘制面不一致导致的落笔偏移。
+- 修复沉浸模式控件占位过多、手机横屏不够沉浸的问题。
+
+### 风险变更
+- 坐标链路只修正画布尺寸来源，不改变现有 viewport 缩放/平移公式。
+- 沉浸模式会在手机尺寸下请求横屏方向，退出沉浸或离开页面时恢复。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_zen_sand_tool.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_zen_sand_tool.dart`（仍有既有 6 条 `unused_element` warning）
+- `git diff --check -- lib/src/ui/pages/toolbox_zen_sand_tool.dart changelogs/CHANGELOG.md`（通过）
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+
 ## [Unreleased-PLAN_049] - 2026-04-24
 
 ### 原因
