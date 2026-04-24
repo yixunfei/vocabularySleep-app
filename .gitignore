@@ -110,12 +110,37 @@ ios/Runner/GoogleService-Info.plist
 vocabularySleep-app/
 
 # ------------------------------
+# Repository-trimmed local-only project files
+# ------------------------------
+AGENTS.md
+BRANCH_README.md
+CLAUDE.md
+docs/
+ios/
+linux/
+macos/
+plans/
+records/
+web/
+windows/
+wordbooks/
+
+# ------------------------------
 # Non-project runtime resources / large local artifacts
 # ------------------------------
 ASR/
 third_party/flutter_tts/example/
 models/
 model_cache/
+*.apk
+*.aab
+*.ipa
+*.msix
+*.dmg
+*.pkg
+*.app
+*.appx
+*.appxbundle
 *.tar
 *.tar.gz
 *.tar.bz2
