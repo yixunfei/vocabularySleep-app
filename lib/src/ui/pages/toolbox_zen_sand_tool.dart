@@ -241,10 +241,8 @@ class ZenSandStudioPage extends StatefulWidget {
 class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   final _ZenSandCanvasStore _canvasStore = _ZenSandCanvasStore();
   List<ZenSandAction> get _actions => _canvasStore.actions;
-  set _actions(List<ZenSandAction> value) => _canvasStore.actions = value;
 
   List<ZenSandAction> get _redoStack => _canvasStore.redoStack;
-  set _redoStack(List<ZenSandAction> value) => _canvasStore.redoStack = value;
 
   List<Offset> get _workingStroke => _canvasStore.workingStroke;
   set _workingStroke(List<Offset> value) => _canvasStore.workingStroke = value;
@@ -256,7 +254,6 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   set _toolId(String value) => _canvasStore.toolId = value;
 
   double get _brushSize => _canvasStore.brushSize;
-  set _brushSize(double value) => _canvasStore.brushSize = value;
 
   int get _colorValue => _canvasStore.colorValue;
   set _colorValue(int value) => _canvasStore.colorValue = value;
@@ -281,10 +278,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   set _immersiveMode(bool value) => _canvasStore.immersiveMode = value;
 
   double get _viewportScale => _canvasStore.viewportScale;
-  set _viewportScale(double value) => _canvasStore.viewportScale = value;
 
   Offset get _viewportOffset => _canvasStore.viewportOffset;
-  set _viewportOffset(Offset value) => _canvasStore.viewportOffset = value;
 
   _ZenGestureMode get _gestureMode => _canvasStore.gestureMode;
   set _gestureMode(_ZenGestureMode value) => _canvasStore.gestureMode = value;
@@ -317,7 +312,6 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   double _smoothedSandMotionSpeed = 0;
   bool _immersiveLockedLandscape = false;
   String? get _lastPresetId => _canvasStore.lastPresetId;
-  set _lastPresetId(String? value) => _canvasStore.lastPresetId = value;
 
   bool get _isZh => Localizations.localeOf(
     context,
@@ -339,6 +333,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   int get _strokeCount => _actions.where((action) => action.isStroke).length;
 
   int get _stoneCount => _actions.where((action) => action.isStone).length;
+
+  bool get _canSmoothAll => _strokeCount > 0;
 
   @override
   void initState() {
@@ -1150,6 +1146,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       );
     }
     _persist();
+    _showFloatingMessage(_text('已一键抹平笔触。', 'Smoothed all strokes.'));
   }
 
   Future<void> _clearAll() async {
@@ -1750,6 +1747,12 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     label: _text('预设', 'Rituals'),
                     accent: _background.accent,
                     onTap: () => closeAndOpen(_openRitualSheet),
+                  ),
+                  _ZenCompactActionChip(
+                    icon: Icons.auto_fix_high_rounded,
+                    label: _text('一键抹平', 'Smooth all'),
+                    accent: _background.accent,
+                    onTap: _canSmoothAll ? () => closeAndRun(_smoothAll) : null,
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.undo_rounded,
@@ -2439,9 +2442,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           const SizedBox(width: 10),
           _ZenCompactActionChip(
             icon: Icons.auto_fix_high_rounded,
-            label: _text('一键抚平', 'Smooth all'),
+            label: _text('一键抹平', 'Smooth all'),
             accent: _background.accent,
-            onTap: _strokeCount == 0 ? null : _smoothAll,
+            onTap: _canSmoothAll ? _smoothAll : null,
           ),
           const SizedBox(width: 10),
           _ZenCompactActionChip(
@@ -2650,6 +2653,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                         enabled: _redoStack.isNotEmpty,
                         onPressed: _redo,
                       ),
+                      const SizedBox(width: 4),
+                      _ZenDockButton(
+                        icon: Icons.auto_fix_high_rounded,
+                        label: _text('抹平', 'Smooth'),
+                        enabled: _canSmoothAll,
+                        onPressed: _smoothAll,
+                      ),
                     ],
                   ),
                 ),
@@ -2720,6 +2730,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                       label: _text('重做', 'Redo'),
                       enabled: _redoStack.isNotEmpty,
                       onPressed: _redo,
+                    ),
+                    const SizedBox(width: 8),
+                    _ZenDockButton(
+                      icon: Icons.auto_fix_high_rounded,
+                      label: _text('抹平', 'Smooth'),
+                      enabled: _canSmoothAll,
+                      onPressed: _smoothAll,
                     ),
                   ],
                 ),
@@ -2801,6 +2818,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     label: _text('重做', 'Redo'),
                     enabled: _redoStack.isNotEmpty,
                     onPressed: _redo,
+                  ),
+                  const SizedBox(width: 8),
+                  _ZenDockButton(
+                    icon: Icons.auto_fix_high_rounded,
+                    label: _text('抹平', 'Smooth'),
+                    enabled: _canSmoothAll,
+                    onPressed: _smoothAll,
                   ),
                   const SizedBox(width: 8),
                   _ZenDockButton(

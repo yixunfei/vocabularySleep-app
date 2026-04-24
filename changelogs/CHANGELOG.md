@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_051] - 2026-04-24
+
+### 原因
+- 用户要求完成沙盘模块最后一轮收尾：将“一键抹平”加入页面底部菜单栏，并提交推送。
+- 收尾审核中发现沉浸模式折叠菜单也应补齐同一操作，且页面中存在一组未使用 setter warning。
+
+### 修改
+- 将“一键抹平”加入底部菜单栏的折叠、紧凑和常规三种形态，复用现有横向滚动结构，不增加底部栏高度。
+- 将画布快捷条文案统一为“一键抹平”，并复用 `_canSmoothAll` 禁用判断。
+- 在沉浸模式折叠菜单中补齐“一键抹平”，避免全屏状态下必须退出才能完成抹平。
+- 抹平成功后增加轻量提示，明确反馈笔触已被抹平。
+- 清理沙盘页面中未使用的私有 setter，消除沙盘相关 `unused_element` 分析警告。
+
+### 风险变更
+- 本轮不改变 `_smoothAll()` 的数据语义：仍然只清除笔触并保留景石。
+- 底部菜单新增按钮会增加横向滚动内容，但继续复用 48dp 触控按钮和现有滚动容器。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_zen_sand_tool.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_config.dart lib/src/ui/pages/toolbox_zen_sand_tool_render.dart lib/src/ui/pages/toolbox_zen_sand_tool_state.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart`（通过，No issues found）
+- `git diff --check -- lib/src/ui/pages/toolbox_zen_sand_tool.dart changelogs/CHANGELOG.md plans/PLAN_051_创意沙盘底部抹平入口与收尾审核.md`（通过）
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+
 ## [Unreleased-PLAN_050] - 2026-04-24
 
 ### 原因
