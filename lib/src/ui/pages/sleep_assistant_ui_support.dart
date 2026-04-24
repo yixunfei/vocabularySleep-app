@@ -21,6 +21,32 @@ String pickSleepText(AppI18n i18n, {required String zh, required String en}) {
   return AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh' ? zh : en;
 }
 
+Widget sleepModuleTheme({
+  required BuildContext context,
+  required bool enabled,
+  required Widget child,
+}) {
+  if (!enabled) {
+    return child;
+  }
+  final base = Theme.of(context);
+  final colorScheme = ColorScheme.fromSeed(
+    seedColor: const Color(0xFF8FB9A8),
+    brightness: Brightness.dark,
+  );
+  return Theme(
+    data: base.copyWith(
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: colorScheme.surface,
+      textTheme: base.textTheme.apply(
+        bodyColor: colorScheme.onSurface,
+        displayColor: colorScheme.onSurface,
+      ),
+    ),
+    child: child,
+  );
+}
+
 String sleepIssueLabel(AppI18n i18n, SleepIssueType issue) {
   return switch (issue) {
     SleepIssueType.difficultyFallingAsleep => pickSleepText(

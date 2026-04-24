@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_055] - 2026-04-24
+
+### 原因
+- 用户反馈当前睡眠模块仍依赖大量人工输入，疲惫状态下启动阻力高。
+- 模块内流程串联不足，今晚流程选中模板后缺少可勾选、可确认的进一步交互。
+- 需要增加模块内睡眠暗色模式，并优先复用现有系统通知/闹钟联动能力。
+
+### 新增
+- 连续睡眠日志页新增“30 秒最小日志”预设，可一键填入常见睡眠时长、入睡潜伏期、夜醒、精神/困倦和压力负荷。
+- 日志页数值字段新增常见选项 chips，备注新增常见标签，保留自定义输入。
+- 今晚流程页新增步骤清单，当前步骤勾选后会直接推进到下一步。
+- 睡眠首页新增“睡眠暗色模式”开关，并在睡眠首页、连续日志、今晚流程内局部应用暗色主题。
+- 今晚流程页新增睡前提醒和起床闹钟入口，复用现有待办提醒与系统日历/闹钟字段。
+
+### 修改
+- `SleepDashboardState` 增加 `sleepDarkModeEnabled` 持久化字段，旧数据默认关闭。
+- 睡眠仓库测试增加 dashboard 暗色模式持久化断言。
+
+### 风险变更
+- 快速填充只在用户点击预设或 chips 时生效，不自动覆盖输入。
+- 步骤清单只复用既有 `advanceSleepRoutine()` 推进当前步骤，不新增独立流程状态机。
+- 系统提醒联动依赖既有待办提醒和平台能力，不新增新的平台插件。
+
+### 验证
+- `dart format lib/src/models/sleep_plan.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart test/sleep_repository_test.dart`（通过）
+- `dart analyze lib/src/models/sleep_plan.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart test/sleep_repository_test.dart`（通过，No issues found）
+- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
+
 ## [Unreleased-PLAN_054] - 2026-04-24
 
 ### 原因

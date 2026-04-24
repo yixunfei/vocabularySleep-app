@@ -178,10 +178,7 @@ class SleepProgramProgress {
       startedAt: _readDateTime(map['started_at']) ?? DateTime.now(),
       currentDay: _readInt(map['current_day']) ?? 1,
       completedDays: completedDaysRaw is List
-          ? completedDaysRaw
-                .map(_readInt)
-                .whereType<int>()
-                .toSet()
+          ? completedDaysRaw.map(_readInt).whereType<int>().toSet()
           : <int>{},
       isCompleted: map['is_completed'] == true,
     );
@@ -196,6 +193,7 @@ class SleepDashboardState {
     this.selectedLogDateKey = '',
     this.lastReportRangeDays = 7,
     this.preferredWhiteNoiseId,
+    this.sleepDarkModeEnabled = false,
   });
 
   final String lastOpenedDateKey;
@@ -204,6 +202,7 @@ class SleepDashboardState {
   final String selectedLogDateKey;
   final int lastReportRangeDays;
   final String? preferredWhiteNoiseId;
+  final bool sleepDarkModeEnabled;
 
   SleepDashboardState copyWith({
     String? lastOpenedDateKey,
@@ -212,6 +211,7 @@ class SleepDashboardState {
     String? selectedLogDateKey,
     int? lastReportRangeDays,
     String? preferredWhiteNoiseId,
+    bool? sleepDarkModeEnabled,
   }) {
     return SleepDashboardState(
       lastOpenedDateKey: lastOpenedDateKey ?? this.lastOpenedDateKey,
@@ -222,6 +222,7 @@ class SleepDashboardState {
       lastReportRangeDays: lastReportRangeDays ?? this.lastReportRangeDays,
       preferredWhiteNoiseId:
           preferredWhiteNoiseId ?? this.preferredWhiteNoiseId,
+      sleepDarkModeEnabled: sleepDarkModeEnabled ?? this.sleepDarkModeEnabled,
     );
   }
 
@@ -233,6 +234,7 @@ class SleepDashboardState {
       'selected_log_date_key': selectedLogDateKey,
       'last_report_range_days': lastReportRangeDays,
       'preferred_white_noise_id': preferredWhiteNoiseId,
+      'sleep_dark_mode_enabled': sleepDarkModeEnabled,
     };
   }
 
@@ -249,6 +251,7 @@ class SleepDashboardState {
       selectedLogDateKey: '${map['selected_log_date_key'] ?? ''}'.trim(),
       lastReportRangeDays: _readInt(map['last_report_range_days']) ?? 7,
       preferredWhiteNoiseId: _readString(map['preferred_white_noise_id']),
+      sleepDarkModeEnabled: map['sleep_dark_mode_enabled'] == true,
     );
   }
 }

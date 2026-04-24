@@ -133,6 +133,7 @@ void main() {
       lastReportRangeDays: 14,
       preferredQuickAction: 'wind_down',
       preferredWhiteNoiseId: 'rain',
+      sleepDarkModeEnabled: true,
     );
     final progress = SleepProgramProgress(
       programType: SleepProgramType.sevenDayRhythmReset,
@@ -169,6 +170,7 @@ void main() {
     expect(repository.loadSleepRoutineTemplates().single.id, 'test-template');
     expect(repository.loadSleepActiveRoutineTemplateId(), 'test-template');
     expect(repository.loadSleepDashboardState().lastReportRangeDays, 14);
+    expect(repository.loadSleepDashboardState().sleepDarkModeEnabled, isTrue);
     expect(repository.loadSleepProgramProgress()?.currentDay, 3);
   });
 }

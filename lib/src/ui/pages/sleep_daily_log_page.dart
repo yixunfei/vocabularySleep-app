@@ -247,6 +247,39 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     );
   }
 
+  void _applyLogPreset(_SleepLogPreset preset) {
+    setState(() {
+      _sleepMinutesController.text = preset.sleepMinutes.toString();
+      _latencyController.text = preset.latencyMinutes.toString();
+      _wakeCountController.text = preset.wakeCount.toString();
+      _wakeMinutesController.text = preset.wakeMinutes.toString();
+      _morningEnergy = preset.morningEnergy.toDouble();
+      _daytimeSleepiness = preset.daytimeSleepiness.toDouble();
+      _stressPeakLevel = preset.stressPeakLevel.toDouble();
+      _worryLoadLevel = preset.worryLoadLevel.toDouble();
+      if (preset.lateScreenExposure) {
+        _lateScreenExposure = true;
+      }
+      if (preset.clockChecking) {
+        _clockChecking = true;
+      }
+    });
+  }
+
+  void _setNumber(TextEditingController controller, int value) {
+    setState(() => controller.text = value.toString());
+  }
+
+  void _appendNoteTag(String tag) {
+    final current = _notesController.text.trim();
+    setState(() {
+      _notesController.text = current.isEmpty ? tag : '$current；$tag';
+      _notesController.selection = TextSelection.collapsed(
+        offset: _notesController.text.length,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
@@ -273,460 +306,701 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     );
     final recentKeys = recentSleepDateKeys(count: 7);
     final latest = appState.latestSleepDailyLog;
-    return ToolboxToolPage(
-      title: pickSleepText(i18n, zh: '连续睡眠日志', en: 'Continuous sleep log'),
-      subtitle: pickSleepText(
-        i18n,
-        zh: '围绕日期连续编辑同一份日志，用更细的时间点和影响因子复盘昨晚。',
-        en: 'Edit logs continuously by date with finer time points and behavior factors.',
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          if (latest != null)
+    return sleepModuleTheme(
+      context: context,
+      enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
+      child: ToolboxToolPage(
+        title: pickSleepText(i18n, zh: '连续睡眠日志', en: 'Continuous sleep log'),
+        subtitle: pickSleepText(
+          i18n,
+          zh: '围绕日期连续编辑同一份日志，用更细的时间点和影响因子复盘昨晚。',
+          en: 'Edit logs continuously by date with finer time points and behavior factors.',
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            if (latest != null)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      Chip(label: Text(sleepDateLabel(latest.dateKey))),
+                      Chip(
+                        label: Text(
+                          '${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(latest.estimatedTotalSleepMinutes)}',
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          '${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(latest.sleepEfficiency)}',
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          '${pickSleepText(i18n, zh: '晨间精神', en: 'Energy')} ${sleepScoreLabel(latest.morningEnergy)}',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Chip(label: Text(sleepDateLabel(latest.dateKey))),
-                    Chip(
-                      label: Text(
-                        '${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(latest.estimatedTotalSleepMinutes)}',
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            pickSleepText(i18n, zh: '编辑日期', en: 'Editing date'),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _pickDate,
+                          icon: const Icon(Icons.calendar_month_rounded),
+                          label: Text(sleepDateLabel(_dateKey)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: recentKeys
+                          .map(
+                            (dateKey) => ChoiceChip(
+                              label: Text(sleepDateLabel(dateKey).substring(5)),
+                              selected: _dateKey == dateKey,
+                              onSelected: (_) => _loadDate(dateKey),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickSleepText(i18n, zh: '30 秒最小日志', en: '30-second log'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      pickSleepText(
+                        i18n,
+                        zh: '先点一个最接近昨晚的状态，再补一两个细节即可。',
+                        en: 'Tap the closest state first, then add one or two details.',
                       ),
                     ),
-                    Chip(
-                      label: Text(
-                        '${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(latest.sleepEfficiency)}',
-                      ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children:
+                          <_SleepLogPreset>[
+                                _SleepLogPreset(
+                                  label: pickSleepText(
+                                    i18n,
+                                    zh: '还可以',
+                                    en: 'Okay',
+                                  ),
+                                  sleepMinutes: 420,
+                                  latencyMinutes: 20,
+                                  wakeCount: 1,
+                                  wakeMinutes: 10,
+                                  morningEnergy: 3,
+                                  daytimeSleepiness: 3,
+                                  stressPeakLevel: 2,
+                                  worryLoadLevel: 2,
+                                ),
+                                _SleepLogPreset(
+                                  label: pickSleepText(
+                                    i18n,
+                                    zh: '睡得少',
+                                    en: 'Short',
+                                  ),
+                                  sleepMinutes: 330,
+                                  latencyMinutes: 45,
+                                  wakeCount: 2,
+                                  wakeMinutes: 35,
+                                  morningEnergy: 2,
+                                  daytimeSleepiness: 4,
+                                  stressPeakLevel: 3,
+                                  worryLoadLevel: 3,
+                                  lateScreenExposure: true,
+                                ),
+                                _SleepLogPreset(
+                                  label: pickSleepText(
+                                    i18n,
+                                    zh: '夜醒多',
+                                    en: 'Woke often',
+                                  ),
+                                  sleepMinutes: 390,
+                                  latencyMinutes: 20,
+                                  wakeCount: 3,
+                                  wakeMinutes: 60,
+                                  morningEnergy: 2,
+                                  daytimeSleepiness: 4,
+                                  stressPeakLevel: 2,
+                                  worryLoadLevel: 3,
+                                  clockChecking: true,
+                                ),
+                              ]
+                              .map(
+                                (preset) => ActionChip(
+                                  avatar: const Icon(
+                                    Icons.bolt_rounded,
+                                    size: 18,
+                                  ),
+                                  label: Text(preset.label),
+                                  onPressed: () => _applyLogPreset(preset),
+                                ),
+                              )
+                              .toList(growable: false),
                     ),
-                    Chip(
+                    const SizedBox(height: 12),
+                    FilledButton.tonalIcon(
+                      onPressed: _save,
+                      icon: const Icon(Icons.done_rounded),
                       label: Text(
-                        '${pickSleepText(i18n, zh: '晨间精神', en: 'Energy')} ${sleepScoreLabel(latest.morningEnergy)}',
+                        pickSleepText(
+                          i18n,
+                          zh: '用当前内容保存',
+                          en: 'Save current log',
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          pickSleepText(i18n, zh: '编辑日期', en: 'Editing date'),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickSleepText(i18n, zh: '时间轴', en: 'Timeline'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    _TimeRow(
+                      label: pickSleepText(i18n, zh: '上床', en: 'Bedtime'),
+                      value: _bedtime,
+                      onTap: () => _pickTime(
+                        initial: _bedtime,
+                        onPicked: (value) => _bedtime = value,
                       ),
-                      OutlinedButton.icon(
-                        onPressed: _pickDate,
-                        icon: const Icon(Icons.calendar_month_rounded),
-                        label: Text(sleepDateLabel(_dateKey)),
+                    ),
+                    _TimeRow(
+                      label: pickSleepText(i18n, zh: '熄灯', en: 'Lights off'),
+                      value: _lightsOff,
+                      onTap: () => _pickTime(
+                        initial: _lightsOff,
+                        onPicked: (value) => _lightsOff = value,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: recentKeys
-                        .map(
-                          (dateKey) => ChoiceChip(
-                            label: Text(sleepDateLabel(dateKey).substring(5)),
-                            selected: _dateKey == dateKey,
-                            onSelected: (_) => _loadDate(dateKey),
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
-                ],
+                    ),
+                    _TimeRow(
+                      label: pickSleepText(i18n, zh: '估计入睡', en: 'Sleep onset'),
+                      value: _sleepOnset,
+                      onTap: () => _pickTime(
+                        initial: _sleepOnset,
+                        onPicked: (value) => _sleepOnset = value,
+                      ),
+                    ),
+                    _TimeRow(
+                      label: pickSleepText(i18n, zh: '最后醒来', en: 'Final wake'),
+                      value: _finalWake,
+                      onTap: () => _pickTime(
+                        initial: _finalWake,
+                        onPicked: (value) => _finalWake = value,
+                      ),
+                    ),
+                    _TimeRow(
+                      label: pickSleepText(i18n, zh: '离床', en: 'Out of bed'),
+                      value: _outOfBed,
+                      onTap: () => _pickTime(
+                        initial: _outOfBed,
+                        onPicked: (value) => _outOfBed = value,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    pickSleepText(i18n, zh: '时间轴', en: 'Timeline'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  _TimeRow(
-                    label: pickSleepText(i18n, zh: '上床', en: 'Bedtime'),
-                    value: _bedtime,
-                    onTap: () => _pickTime(
-                      initial: _bedtime,
-                      onPicked: (value) => _bedtime = value,
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickSleepText(i18n, zh: '常见数值', en: 'Common values'),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                  _TimeRow(
-                    label: pickSleepText(i18n, zh: '熄灯', en: 'Lights off'),
-                    value: _lightsOff,
-                    onTap: () => _pickTime(
-                      initial: _lightsOff,
-                      onPicked: (value) => _lightsOff = value,
-                    ),
-                  ),
-                  _TimeRow(
-                    label: pickSleepText(i18n, zh: '估计入睡', en: 'Sleep onset'),
-                    value: _sleepOnset,
-                    onTap: () => _pickTime(
-                      initial: _sleepOnset,
-                      onPicked: (value) => _sleepOnset = value,
-                    ),
-                  ),
-                  _TimeRow(
-                    label: pickSleepText(i18n, zh: '最后醒来', en: 'Final wake'),
-                    value: _finalWake,
-                    onTap: () => _pickTime(
-                      initial: _finalWake,
-                      onPicked: (value) => _finalWake = value,
-                    ),
-                  ),
-                  _TimeRow(
-                    label: pickSleepText(i18n, zh: '离床', en: 'Out of bed'),
-                    value: _outOfBed,
-                    onTap: () => _pickTime(
-                      initial: _outOfBed,
-                      onPicked: (value) => _outOfBed = value,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: <Widget>[
-                  _NumberField(
-                    controller: _sleepMinutesController,
-                    label: pickSleepText(
-                      i18n,
-                      zh: '估计总睡眠分钟数',
-                      en: 'Estimated sleep minutes',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _NumberField(
-                    controller: _latencyController,
-                    label: pickSleepText(
-                      i18n,
-                      zh: '入睡潜伏期（分钟）',
-                      en: 'Sleep latency (minutes)',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _NumberField(
-                    controller: _wakeCountController,
-                    label: pickSleepText(i18n, zh: '夜醒次数', en: 'Wake count'),
-                  ),
-                  const SizedBox(height: 12),
-                  _NumberField(
-                    controller: _wakeMinutesController,
-                    label: pickSleepText(
-                      i18n,
-                      zh: '夜醒总时长（分钟）',
-                      en: 'Wake time total (minutes)',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _NumberField(
-                    controller: _napMinutesController,
-                    label: pickSleepText(i18n, zh: '午睡分钟数', en: 'Nap minutes'),
-                  ),
-                  const SizedBox(height: 12),
-                  _NumberField(
-                    controller: _windDownMinutesController,
-                    label: pickSleepText(
-                      i18n,
-                      zh: '睡前减压时长（分钟）',
-                      en: 'Wind-down minutes',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _notesController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: pickSleepText(i18n, zh: '备注', en: 'Notes'),
-                      hintText: pickSleepText(
+                    const SizedBox(height: 10),
+                    _NumberField(
+                      controller: _sleepMinutesController,
+                      label: pickSleepText(
                         i18n,
-                        zh: '例如：加班、出差、反酸、房间太热、被噪声拉醒',
-                        en: 'Example: overtime, travel, reflux, room too hot, woken by noise',
+                        zh: '估计总睡眠分钟数',
+                        en: 'Estimated sleep minutes',
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    pickSleepText(i18n, zh: '主观评分', en: 'Subjective scores'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${pickSleepText(i18n, zh: '晨间精神', en: 'Morning energy')} ${_morningEnergy.round()}/5',
-                  ),
-                  Slider(
-                    value: _morningEnergy,
-                    min: 1,
-                    max: 5,
-                    divisions: 4,
-                    onChanged: (value) =>
-                        setState(() => _morningEnergy = value),
-                  ),
-                  Text(
-                    '${pickSleepText(i18n, zh: '白天困倦', en: 'Daytime sleepiness')} ${_daytimeSleepiness.round()}/5',
-                  ),
-                  Slider(
-                    value: _daytimeSleepiness,
-                    min: 1,
-                    max: 5,
-                    divisions: 4,
-                    onChanged: (value) =>
-                        setState(() => _daytimeSleepiness = value),
-                  ),
-                  Text(
-                    '${pickSleepText(i18n, zh: '当日压力峰值', en: 'Stress peak')} ${_stressPeakLevel.round()}/5',
-                  ),
-                  Slider(
-                    value: _stressPeakLevel,
-                    min: 0,
-                    max: 5,
-                    divisions: 5,
-                    onChanged: (value) =>
-                        setState(() => _stressPeakLevel = value),
-                  ),
-                  Text(
-                    '${pickSleepText(i18n, zh: '担忧负荷', en: 'Worry load')} ${_worryLoadLevel.round()}/5',
-                  ),
-                  Slider(
-                    value: _worryLoadLevel,
-                    min: 0,
-                    max: 5,
-                    divisions: 5,
-                    onChanged: (value) =>
-                        setState(() => _worryLoadLevel = value),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _DailySwitchGroup(
-            title: pickSleepText(
-              i18n,
-              zh: '行为与环境因子',
-              en: 'Behavior and environment',
-            ),
-            children: <Widget>[
-              _FactorSwitch(
-                value: _caffeineAfterCutoff,
-                title: sleepDailyFactorTitle(i18n, 'caffeineAfterCutoff'),
-                subtitle: sleepDailyFactorHint(i18n, 'caffeineAfterCutoff'),
-                onChanged: (value) =>
-                    setState(() => _caffeineAfterCutoff = value),
-              ),
-              _FactorSwitch(
-                value: _lateScreenExposure,
-                title: sleepDailyFactorTitle(i18n, 'lateScreenExposure'),
-                subtitle: sleepDailyFactorHint(i18n, 'lateScreenExposure'),
-                onChanged: (value) =>
-                    setState(() => _lateScreenExposure = value),
-              ),
-              _FactorSwitch(
-                value: _alcoholAtNight,
-                title: sleepDailyFactorTitle(i18n, 'alcoholAtNight'),
-                subtitle: sleepDailyFactorHint(i18n, 'alcoholAtNight'),
-                onChanged: (value) => setState(() => _alcoholAtNight = value),
-              ),
-              _FactorSwitch(
-                value: _morningLightDone,
-                title: sleepDailyFactorTitle(i18n, 'morningLightDone'),
-                subtitle: sleepDailyFactorHint(i18n, 'morningLightDone'),
-                onChanged: (value) => setState(() => _morningLightDone = value),
-              ),
-              _FactorSwitch(
-                value: _heavyDinner,
-                title: sleepDailyFactorTitle(i18n, 'heavyDinner'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '太晚、太重或太撑都会拖慢入睡。',
-                  en: 'A heavy or late dinner can slow down sleep onset.',
-                ),
-                onChanged: (value) => setState(() => _heavyDinner = value),
-              ),
-              _FactorSwitch(
-                value: _intenseExerciseLate,
-                title: sleepDailyFactorTitle(i18n, 'intenseExerciseLate'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '太晚高强度运动可能让身体还没降下来。',
-                  en: 'Very late intense exercise can keep the body activated.',
-                ),
-                onChanged: (value) =>
-                    setState(() => _intenseExerciseLate = value),
-              ),
-              _FactorSwitch(
-                value: _hotBathDone,
-                title: sleepDailyFactorTitle(i18n, 'hotBathDone'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '如果配合更安静的过渡，通常比硬躺更有帮助。',
-                  en: 'Used as a transition, it can help more than simply forcing bed.',
-                ),
-                onChanged: (value) => setState(() => _hotBathDone = value),
-              ),
-              _FactorSwitch(
-                value: _stretchingDone,
-                title: sleepDailyFactorTitle(i18n, 'stretchingDone'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '轻柔拉伸适合降低身体残余紧绷。',
-                  en: 'Gentle stretching can lower residual tension.',
-                ),
-                onChanged: (value) => setState(() => _stretchingDone = value),
-              ),
-              _FactorSwitch(
-                value: _whiteNoiseUsed,
-                title: sleepDailyFactorTitle(i18n, 'whiteNoiseUsed'),
-                subtitle: sleepDailyFactorHint(i18n, 'whiteNoiseUsed'),
-                onChanged: (value) => setState(() => _whiteNoiseUsed = value),
-              ),
-              _FactorSwitch(
-                value: _bedroomTooHot,
-                title: sleepDailyFactorTitle(i18n, 'bedroomTooHot'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '卧室偏热很容易拖慢入睡并增加夜醒。',
-                  en: 'A hot room can delay sleep and increase awakenings.',
-                ),
-                onChanged: (value) => setState(() => _bedroomTooHot = value),
-              ),
-              _FactorSwitch(
-                value: _bedroomTooBright,
-                title: sleepDailyFactorTitle(i18n, 'bedroomTooBright'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '亮度过高会让睡意更难稳定下来。',
-                  en: 'A bright room can make sleepiness less stable.',
-                ),
-                onChanged: (value) => setState(() => _bedroomTooBright = value),
-              ),
-              _FactorSwitch(
-                value: _bedroomTooNoisy,
-                title: sleepDailyFactorTitle(i18n, 'bedroomTooNoisy'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '若是噪声不稳定，白噪音可能比忍耐更有效。',
-                  en: 'If noise is inconsistent, white noise may help more than tolerating it.',
-                ),
-                onChanged: (value) => setState(() => _bedroomTooNoisy = value),
-              ),
-              _FactorSwitch(
-                value: _clockChecking,
-                title: sleepDailyFactorTitle(i18n, 'clockChecking'),
-                subtitle: sleepDailyFactorHint(i18n, 'clockChecking'),
-                onChanged: (value) => setState(() => _clockChecking = value),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    pickSleepText(i18n, zh: '实用工具', en: 'Practical tools'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: <Widget>[
-                      SleepQuickToolButton(
-                        title: pickSleepText(
-                          i18n,
-                          zh: '白噪音',
-                          en: 'White noise',
-                        ),
-                        icon: Icons.graphic_eq_rounded,
-                        onTap: () => showSleepWhiteNoiseSheet(context),
+                    _QuickValueChips(
+                      values: const <int>[330, 360, 390, 420, 450, 480],
+                      labelFor: (value) =>
+                          sleepMinutesLabel(value, long: true, i18n: i18n),
+                      onSelected: (value) =>
+                          _setNumber(_sleepMinutesController, value),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberField(
+                      controller: _latencyController,
+                      label: pickSleepText(
+                        i18n,
+                        zh: '入睡潜伏期（分钟）',
+                        en: 'Sleep latency (minutes)',
                       ),
-                      SleepQuickToolButton(
-                        title: pickSleepText(
+                    ),
+                    _QuickValueChips(
+                      values: const <int>[10, 20, 30, 45, 60],
+                      labelFor: (value) => '$value min',
+                      onSelected: (value) =>
+                          _setNumber(_latencyController, value),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberField(
+                      controller: _wakeCountController,
+                      label: pickSleepText(i18n, zh: '夜醒次数', en: 'Wake count'),
+                    ),
+                    _QuickValueChips(
+                      values: const <int>[0, 1, 2, 3, 4],
+                      labelFor: (value) => value == 4
+                          ? pickSleepText(i18n, zh: '4+', en: '4+')
+                          : '$value',
+                      onSelected: (value) =>
+                          _setNumber(_wakeCountController, value),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberField(
+                      controller: _wakeMinutesController,
+                      label: pickSleepText(
+                        i18n,
+                        zh: '夜醒总时长（分钟）',
+                        en: 'Wake time total (minutes)',
+                      ),
+                    ),
+                    _QuickValueChips(
+                      values: const <int>[0, 10, 20, 40, 60],
+                      labelFor: (value) => '$value min',
+                      onSelected: (value) =>
+                          _setNumber(_wakeMinutesController, value),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberField(
+                      controller: _napMinutesController,
+                      label: pickSleepText(
+                        i18n,
+                        zh: '午睡分钟数',
+                        en: 'Nap minutes',
+                      ),
+                    ),
+                    _QuickValueChips(
+                      values: const <int>[0, 10, 20, 30, 45],
+                      labelFor: (value) => '$value min',
+                      onSelected: (value) =>
+                          _setNumber(_napMinutesController, value),
+                    ),
+                    const SizedBox(height: 12),
+                    _NumberField(
+                      controller: _windDownMinutesController,
+                      label: pickSleepText(
+                        i18n,
+                        zh: '睡前减压时长（分钟）',
+                        en: 'Wind-down minutes',
+                      ),
+                    ),
+                    _QuickValueChips(
+                      values: const <int>[0, 8, 15, 30, 45],
+                      labelFor: (value) => '$value min',
+                      onSelected: (value) =>
+                          _setNumber(_windDownMinutesController, value),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _notesController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: pickSleepText(i18n, zh: '备注', en: 'Notes'),
+                        hintText: pickSleepText(
                           i18n,
-                          zh: '咖啡因截止线',
-                          en: 'Caffeine cutoff',
-                        ),
-                        icon: Icons.local_cafe_rounded,
-                        onTap: () => showCaffeineCutoffCalculatorSheet(
-                          context,
-                          bedtime: _bedtime,
+                          zh: '例如：加班、出差、反酸、房间太热、被噪声拉醒',
+                          en: 'Example: overtime, travel, reflux, room too hot, woken by noise',
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children:
+                          <String>[
+                                pickSleepText(i18n, zh: '加班', en: 'Overtime'),
+                                pickSleepText(i18n, zh: '房间太热', en: 'Room hot'),
+                                pickSleepText(i18n, zh: '噪声', en: 'Noise'),
+                                pickSleepText(i18n, zh: '出差', en: 'Travel'),
+                                pickSleepText(i18n, zh: '反酸', en: 'Reflux'),
+                                pickSleepText(
+                                  i18n,
+                                  zh: '梦多',
+                                  en: 'Busy dreams',
+                                ),
+                              ]
+                              .map(
+                                (tag) => ActionChip(
+                                  label: Text(tag),
+                                  onPressed: () => _appendNoteTag(tag),
+                                ),
+                              )
+                              .toList(growable: false),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    pickSleepText(i18n, zh: '直接建议', en: 'Direct advice'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  SleepAdviceList(items: adviceItems, i18n: i18n),
-                ],
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickSleepText(i18n, zh: '主观评分', en: 'Subjective scores'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${pickSleepText(i18n, zh: '晨间精神', en: 'Morning energy')} ${_morningEnergy.round()}/5',
+                    ),
+                    Slider(
+                      value: _morningEnergy,
+                      min: 1,
+                      max: 5,
+                      divisions: 4,
+                      onChanged: (value) =>
+                          setState(() => _morningEnergy = value),
+                    ),
+                    Text(
+                      '${pickSleepText(i18n, zh: '白天困倦', en: 'Daytime sleepiness')} ${_daytimeSleepiness.round()}/5',
+                    ),
+                    Slider(
+                      value: _daytimeSleepiness,
+                      min: 1,
+                      max: 5,
+                      divisions: 4,
+                      onChanged: (value) =>
+                          setState(() => _daytimeSleepiness = value),
+                    ),
+                    Text(
+                      '${pickSleepText(i18n, zh: '当日压力峰值', en: 'Stress peak')} ${_stressPeakLevel.round()}/5',
+                    ),
+                    Slider(
+                      value: _stressPeakLevel,
+                      min: 0,
+                      max: 5,
+                      divisions: 5,
+                      onChanged: (value) =>
+                          setState(() => _stressPeakLevel = value),
+                    ),
+                    Text(
+                      '${pickSleepText(i18n, zh: '担忧负荷', en: 'Worry load')} ${_worryLoadLevel.round()}/5',
+                    ),
+                    Slider(
+                      value: _worryLoadLevel,
+                      min: 0,
+                      max: 5,
+                      divisions: 5,
+                      onChanged: (value) =>
+                          setState(() => _worryLoadLevel = value),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _save,
-            icon: const Icon(Icons.save_rounded),
-            label: Text(pickSleepText(i18n, zh: '保存日志', en: 'Save log')),
-          ),
-        ],
+            const SizedBox(height: 12),
+            _DailySwitchGroup(
+              title: pickSleepText(
+                i18n,
+                zh: '行为与环境因子',
+                en: 'Behavior and environment',
+              ),
+              children: <Widget>[
+                _FactorSwitch(
+                  value: _caffeineAfterCutoff,
+                  title: sleepDailyFactorTitle(i18n, 'caffeineAfterCutoff'),
+                  subtitle: sleepDailyFactorHint(i18n, 'caffeineAfterCutoff'),
+                  onChanged: (value) =>
+                      setState(() => _caffeineAfterCutoff = value),
+                ),
+                _FactorSwitch(
+                  value: _lateScreenExposure,
+                  title: sleepDailyFactorTitle(i18n, 'lateScreenExposure'),
+                  subtitle: sleepDailyFactorHint(i18n, 'lateScreenExposure'),
+                  onChanged: (value) =>
+                      setState(() => _lateScreenExposure = value),
+                ),
+                _FactorSwitch(
+                  value: _alcoholAtNight,
+                  title: sleepDailyFactorTitle(i18n, 'alcoholAtNight'),
+                  subtitle: sleepDailyFactorHint(i18n, 'alcoholAtNight'),
+                  onChanged: (value) => setState(() => _alcoholAtNight = value),
+                ),
+                _FactorSwitch(
+                  value: _morningLightDone,
+                  title: sleepDailyFactorTitle(i18n, 'morningLightDone'),
+                  subtitle: sleepDailyFactorHint(i18n, 'morningLightDone'),
+                  onChanged: (value) =>
+                      setState(() => _morningLightDone = value),
+                ),
+                _FactorSwitch(
+                  value: _heavyDinner,
+                  title: sleepDailyFactorTitle(i18n, 'heavyDinner'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '太晚、太重或太撑都会拖慢入睡。',
+                    en: 'A heavy or late dinner can slow down sleep onset.',
+                  ),
+                  onChanged: (value) => setState(() => _heavyDinner = value),
+                ),
+                _FactorSwitch(
+                  value: _intenseExerciseLate,
+                  title: sleepDailyFactorTitle(i18n, 'intenseExerciseLate'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '太晚高强度运动可能让身体还没降下来。',
+                    en: 'Very late intense exercise can keep the body activated.',
+                  ),
+                  onChanged: (value) =>
+                      setState(() => _intenseExerciseLate = value),
+                ),
+                _FactorSwitch(
+                  value: _hotBathDone,
+                  title: sleepDailyFactorTitle(i18n, 'hotBathDone'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '如果配合更安静的过渡，通常比硬躺更有帮助。',
+                    en: 'Used as a transition, it can help more than simply forcing bed.',
+                  ),
+                  onChanged: (value) => setState(() => _hotBathDone = value),
+                ),
+                _FactorSwitch(
+                  value: _stretchingDone,
+                  title: sleepDailyFactorTitle(i18n, 'stretchingDone'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '轻柔拉伸适合降低身体残余紧绷。',
+                    en: 'Gentle stretching can lower residual tension.',
+                  ),
+                  onChanged: (value) => setState(() => _stretchingDone = value),
+                ),
+                _FactorSwitch(
+                  value: _whiteNoiseUsed,
+                  title: sleepDailyFactorTitle(i18n, 'whiteNoiseUsed'),
+                  subtitle: sleepDailyFactorHint(i18n, 'whiteNoiseUsed'),
+                  onChanged: (value) => setState(() => _whiteNoiseUsed = value),
+                ),
+                _FactorSwitch(
+                  value: _bedroomTooHot,
+                  title: sleepDailyFactorTitle(i18n, 'bedroomTooHot'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '卧室偏热很容易拖慢入睡并增加夜醒。',
+                    en: 'A hot room can delay sleep and increase awakenings.',
+                  ),
+                  onChanged: (value) => setState(() => _bedroomTooHot = value),
+                ),
+                _FactorSwitch(
+                  value: _bedroomTooBright,
+                  title: sleepDailyFactorTitle(i18n, 'bedroomTooBright'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '亮度过高会让睡意更难稳定下来。',
+                    en: 'A bright room can make sleepiness less stable.',
+                  ),
+                  onChanged: (value) =>
+                      setState(() => _bedroomTooBright = value),
+                ),
+                _FactorSwitch(
+                  value: _bedroomTooNoisy,
+                  title: sleepDailyFactorTitle(i18n, 'bedroomTooNoisy'),
+                  subtitle: pickSleepText(
+                    i18n,
+                    zh: '若是噪声不稳定，白噪音可能比忍耐更有效。',
+                    en: 'If noise is inconsistent, white noise may help more than tolerating it.',
+                  ),
+                  onChanged: (value) =>
+                      setState(() => _bedroomTooNoisy = value),
+                ),
+                _FactorSwitch(
+                  value: _clockChecking,
+                  title: sleepDailyFactorTitle(i18n, 'clockChecking'),
+                  subtitle: sleepDailyFactorHint(i18n, 'clockChecking'),
+                  onChanged: (value) => setState(() => _clockChecking = value),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickSleepText(i18n, zh: '实用工具', en: 'Practical tools'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: <Widget>[
+                        SleepQuickToolButton(
+                          title: pickSleepText(
+                            i18n,
+                            zh: '白噪音',
+                            en: 'White noise',
+                          ),
+                          icon: Icons.graphic_eq_rounded,
+                          onTap: () => showSleepWhiteNoiseSheet(context),
+                        ),
+                        SleepQuickToolButton(
+                          title: pickSleepText(
+                            i18n,
+                            zh: '咖啡因截止线',
+                            en: 'Caffeine cutoff',
+                          ),
+                          icon: Icons.local_cafe_rounded,
+                          onTap: () => showCaffeineCutoffCalculatorSheet(
+                            context,
+                            bedtime: _bedtime,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickSleepText(i18n, zh: '直接建议', en: 'Direct advice'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    SleepAdviceList(items: adviceItems, i18n: i18n),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.save_rounded),
+              label: Text(pickSleepText(i18n, zh: '保存日志', en: 'Save log')),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   static int? _parseInt(String raw) {
     return int.tryParse(raw.trim());
+  }
+}
+
+class _SleepLogPreset {
+  const _SleepLogPreset({
+    required this.label,
+    required this.sleepMinutes,
+    required this.latencyMinutes,
+    required this.wakeCount,
+    required this.wakeMinutes,
+    required this.morningEnergy,
+    required this.daytimeSleepiness,
+    required this.stressPeakLevel,
+    required this.worryLoadLevel,
+    this.lateScreenExposure = false,
+    this.clockChecking = false,
+  });
+
+  final String label;
+  final int sleepMinutes;
+  final int latencyMinutes;
+  final int wakeCount;
+  final int wakeMinutes;
+  final int morningEnergy;
+  final int daytimeSleepiness;
+  final int stressPeakLevel;
+  final int worryLoadLevel;
+  final bool lateScreenExposure;
+  final bool clockChecking;
+}
+
+class _QuickValueChips extends StatelessWidget {
+  const _QuickValueChips({
+    required this.values,
+    required this.labelFor,
+    required this.onSelected,
+  });
+
+  final List<int> values;
+  final String Function(int value) labelFor;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: values
+            .map(
+              (value) => ActionChip(
+                label: Text(labelFor(value)),
+                onPressed: () => onSelected(value),
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
   }
 }
 
