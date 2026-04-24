@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_052] - 2026-04-24
+
+### 原因
+- 用户确认 `ASR/sherpa-onnx-whisper-small.en.tar.bz2` 等 ASR 资源不是项目必须内容，要求整理 `.gitignore`，清除与项目代码无关的已跟踪文件，并保留最小提交。
+- GitHub 推送已被两个超过 100MB 的 ASR 压缩包拒绝，需要从本地未推送历史中彻底移除。
+
+### 修改
+- 从 `origin/main..main` 的本地未推送历史中移除 `ASR/` 大模型压缩包和 `third_party/flutter_tts/example/` 第三方示例工程。
+- 更新 `.gitignore`，忽略 ASR 本地资源、第三方示例工程、常见模型文件和压缩包产物，避免再次误加入版本库。
+- 保留 `assets/branding/`、`assets/en_zh_15000_wordbook.json`、`assets/toolbox/` 等项目运行资产不变。
+
+### 风险变更
+- 本轮重写了本地尚未推送的 45 个提交哈希；远端 `origin/main` 未改写，当前 `main` 仍以远端分支为祖先。
+- 本轮仅清理非必需资源与忽略规则，不改动 Flutter 运行代码和沙盘功能逻辑。
+
+### 验证
+- `git merge-base --is-ancestor origin/main main`（通过）
+- `git filter-branch --force --index-filter "git rm -r --cached --ignore-unmatch ASR third_party/flutter_tts/example" --prune-empty --tag-name-filter cat -- origin/main..main`（通过）
+- `git ls-files ASR third_party/flutter_tts/example`（通过，无输出）
+- `git rev-list --objects main | Select-String -Pattern "sherpa-onnx-whisper|third_party/flutter_tts/example"`（通过，无输出）
+
 ## [Unreleased-PLAN_051] - 2026-04-24
 
 ### 原因

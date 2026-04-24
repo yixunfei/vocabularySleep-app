@@ -110,6 +110,27 @@ ios/Runner/GoogleService-Info.plist
 vocabularySleep-app/
 
 # ------------------------------
+# Non-project runtime resources / large local artifacts
+# ------------------------------
+ASR/
+third_party/flutter_tts/example/
+models/
+model_cache/
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tgz
+*.zip
+*.7z
+*.rar
+*.onnx
+*.ckpt
+*.pt
+*.pth
+*.gguf
+*.safetensors
+
+# ------------------------------
 # Local workflow drafts / assistant artifacts
 # ------------------------------
 .claude/
