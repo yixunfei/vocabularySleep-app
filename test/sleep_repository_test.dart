@@ -20,6 +20,18 @@ class _MemorySettingsStoreRepository implements SettingsStoreRepository {
 }
 
 void main() {
+  test('built-in sleep routines include a low-energy shutdown path', () {
+    final templates = SleepRoutineTemplate.builtInDefaults();
+    final lowEnergy = templates.singleWhere(
+      (template) => template.id == 'minimum_energy_shutdown',
+    );
+
+    expect(lowEnergy.builtIn, isTrue);
+    expect(lowEnergy.totalMinutes, lessThanOrEqualTo(10));
+    expect(lowEnergy.steps.first.type, SleepRoutineStepType.dimLights);
+    expect(lowEnergy.steps.last.type, SleepRoutineStepType.goToBed);
+  });
+
   test('sleep repository returns empty defaults for blank store', () {
     final repository = SettingsStoreSleepRepository(
       _MemorySettingsStoreRepository(),
@@ -115,7 +127,7 @@ void main() {
       builtIn: false,
       updatedAt: now,
     );
-    final dashboardState = SleepDashboardState(
+    const dashboardState = SleepDashboardState(
       lastOpenedDateKey: '2026-04-14',
       selectedLogDateKey: '2026-04-13',
       lastReportRangeDays: 14,

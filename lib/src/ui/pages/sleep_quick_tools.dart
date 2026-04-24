@@ -39,6 +39,15 @@ Future<void> showMorningLightTimerSheet(BuildContext context) {
   );
 }
 
+Future<void> showSleepCyclePlannerSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => const _SleepCyclePlannerSheet(),
+  );
+}
+
 Future<void> showSleepinessDecisionSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,

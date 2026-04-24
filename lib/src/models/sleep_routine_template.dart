@@ -157,6 +157,40 @@ class SleepRoutineTemplate {
     final epoch = DateTime.fromMillisecondsSinceEpoch(0);
     return <SleepRoutineTemplate>[
       SleepRoutineTemplate(
+        id: 'minimum_energy_shutdown',
+        name: 'Minimum energy shutdown',
+        totalMinutes: 8,
+        steps: const <SleepRoutineStep>[
+          SleepRoutineStep(
+            type: SleepRoutineStepType.dimLights,
+            label: 'Dim only the lights you can reach',
+            durationSeconds: 60,
+          ),
+          SleepRoutineStep(
+            type: SleepRoutineStepType.stopScreens,
+            label: 'Put the screen face down',
+            durationSeconds: 60,
+          ),
+          SleepRoutineStep(
+            type: SleepRoutineStepType.unloadThoughts,
+            label: 'Park one loud thought',
+            durationSeconds: 120,
+          ),
+          SleepRoutineStep(
+            type: SleepRoutineStepType.breathing,
+            label: 'Longer exhale breathing',
+            durationSeconds: 180,
+          ),
+          SleepRoutineStep(
+            type: SleepRoutineStepType.goToBed,
+            label: 'Get into bed without adding tasks',
+            durationSeconds: 60,
+          ),
+        ],
+        builtIn: true,
+        updatedAt: epoch,
+      ),
+      SleepRoutineTemplate(
         id: 'quick_reset',
         name: 'Quick reset',
         totalMinutes: 15,

@@ -174,7 +174,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                   const SizedBox(height: 10),
                   if (activeTemplate != null) ...<Widget>[
                     Text(
-                      activeTemplate.name,
+                      sleepRoutineTemplateName(i18n, activeTemplate),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -191,7 +191,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                               zh: '还未开始',
                               en: 'Not started yet',
                             )
-                          : '${currentStep.label} · ${sleepSecondsLabel(appState.sleepRoutineRunnerState.remainingSeconds, i18n: i18n)}',
+                          : '${sleepRoutineStepLabel(i18n, currentStep)} · ${sleepSecondsLabel(appState.sleepRoutineRunnerState.remainingSeconds, i18n: i18n)}',
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -364,6 +364,15 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                         onTap: () => showCaffeineCutoffCalculatorSheet(context),
                       ),
                       SleepQuickToolButton(
+                        title: pickSleepText(
+                          i18n,
+                          zh: '90 分钟周期',
+                          en: '90-min cycles',
+                        ),
+                        icon: Icons.more_time_rounded,
+                        onTap: () => showSleepCyclePlannerSheet(context),
+                      ),
+                      SleepQuickToolButton(
                         title: pickSleepText(i18n, zh: '呼吸练习', en: 'Breathing'),
                         icon: Icons.air_rounded,
                         onTap: () {
@@ -483,7 +492,7 @@ class _RoutineTemplateCard extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      template.name,
+                      sleepRoutineTemplateName(i18n, template),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),

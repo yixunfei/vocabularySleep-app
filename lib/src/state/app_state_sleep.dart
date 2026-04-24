@@ -28,9 +28,9 @@ extension _AppStateSleep on AppState {
       _sleepThoughtEntries = _sortSleepThoughtEntries(
         _sleepRepository.loadSleepThoughtEntries(),
       );
-      _sleepRoutineTemplates = _sleepRepository.loadSleepRoutineTemplates();
-      if (_sleepRoutineTemplates.isEmpty) {
-        _sleepRoutineTemplates = SleepRoutineTemplate.builtInDefaults();
+      final loadedTemplates = _sleepRepository.loadSleepRoutineTemplates();
+      _sleepRoutineTemplates = _mergeSleepRoutineDefaults(loadedTemplates);
+      if (loadedTemplates.length != _sleepRoutineTemplates.length) {
         _sleepRepository.saveSleepRoutineTemplates(_sleepRoutineTemplates);
       }
       final activeTemplateId = _resolveSleepRoutineTemplateId(
@@ -504,6 +504,29 @@ extension _AppStateSleep on AppState {
       return bTime.compareTo(aTime);
     });
     return list;
+  }
+
+  List<SleepRoutineTemplate> _mergeSleepRoutineDefaults(
+    List<SleepRoutineTemplate> templates,
+  ) {
+    final defaults = SleepRoutineTemplate.builtInDefaults();
+    if (templates.isEmpty) {
+      return defaults;
+    }
+    final next = List<SleepRoutineTemplate>.from(templates);
+    final existingIds = templates.map((item) => item.id).toSet();
+    for (final template in defaults) {
+      if (!existingIds.contains(template.id)) {
+        next.add(template);
+      }
+    }
+    next.sort((a, b) {
+      if (a.builtIn != b.builtIn) {
+        return a.builtIn ? -1 : 1;
+      }
+      return a.updatedAt.compareTo(b.updatedAt);
+    });
+    return next.toList(growable: false);
   }
 
   List<SleepThoughtEntry> _sortSleepThoughtEntries(

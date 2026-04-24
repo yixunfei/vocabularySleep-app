@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
+import '../../models/sleep_daily_log.dart';
+import '../../models/sleep_plan.dart';
 import '../../models/sleep_profile.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
@@ -81,6 +83,13 @@ class _ToolboxSleepAssistantPageState
             i18n,
             draft: appState.sleepAssessmentDraft,
           );
+    final nextStep = _buildNextStep(
+      context: context,
+      appState: appState,
+      i18n: i18n,
+      latestLog: latestLog,
+      profile: profile,
+    );
 
     return ToolboxToolPage(
       title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
@@ -125,6 +134,13 @@ class _ToolboxSleepAssistantPageState
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
+                child: _SleepNowPanel(step: nextStep),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -160,6 +176,52 @@ class _ToolboxSleepAssistantPageState
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 20),
+            SectionHeader(
+              title: pickSleepText(i18n, zh: '低能量快速开始', en: 'Low-energy start'),
+              subtitle: pickSleepText(
+                i18n,
+                zh: '只放最常用的一步工具：睡前、夜醒、晨光、咖啡因和 90 分钟周期。',
+                en: 'Only the one-step tools: wind-down, rescue, light, caffeine, and 90-minute cycles.',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                SleepQuickToolButton(
+                  title: pickSleepText(
+                    i18n,
+                    zh: '最低能量睡前',
+                    en: 'Tiny wind-down',
+                  ),
+                  icon: Icons.bedtime_rounded,
+                  onTap: () => _startTinyRoutine(context, appState),
+                ),
+                SleepQuickToolButton(
+                  title: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
+                  icon: Icons.self_improvement_rounded,
+                  onTap: () =>
+                      _open(context, appState, const SleepNightRescuePage()),
+                ),
+                SleepQuickToolButton(
+                  title: pickSleepText(i18n, zh: '晨光', en: 'Morning light'),
+                  icon: Icons.wb_sunny_rounded,
+                  onTap: () => showMorningLightTimerSheet(context),
+                ),
+                SleepQuickToolButton(
+                  title: pickSleepText(i18n, zh: '咖啡因线', en: 'Caffeine'),
+                  icon: Icons.local_cafe_rounded,
+                  onTap: () => showCaffeineCutoffCalculatorSheet(context),
+                ),
+                SleepQuickToolButton(
+                  title: pickSleepText(i18n, zh: '90 分钟', en: '90 min'),
+                  icon: Icons.more_time_rounded,
+                  onTap: () => showSleepCyclePlannerSheet(context),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             SectionHeader(
@@ -396,6 +458,245 @@ class _ToolboxSleepAssistantPageState
     );
   }
 
+  static _SleepHomeNextStep _buildNextStep({
+    required BuildContext context,
+    required AppState appState,
+    required AppI18n i18n,
+    required SleepDailyLog? latestLog,
+    required SleepProfile? profile,
+  }) {
+    final now = DateTime.now();
+    final hour = now.hour;
+    final routine = appState.sleepRoutineRunnerState;
+    final latestIsToday = latestLog?.dateKey == todaySleepDateKey();
+    final lowEnergySignals = <String>[
+      if (appState.sleepDailyLogs.length < 3)
+        pickSleepText(i18n, zh: '先收集 3 晚', en: 'Collect 3 nights'),
+      if (profile?.hasRacingThoughts == true)
+        pickSleepText(i18n, zh: '思绪偏活跃', en: 'Busy mind'),
+      if (latestLog?.lateScreenExposure == true)
+        pickSleepText(i18n, zh: '昨晚看屏', en: 'Late screens'),
+    ];
+
+    if (profile == null) {
+      return _SleepHomeNextStep(
+        eyebrow: pickSleepText(i18n, zh: '先定主线', en: 'Set direction'),
+        title: pickSleepText(
+          i18n,
+          zh: '用 2 分钟做一次睡眠评估',
+          en: 'Take a 2-minute assessment',
+        ),
+        body: pickSleepText(
+          i18n,
+          zh: '先识别你更像是节律、压力、夜醒、环境还是白天恢复问题，系统才不会一次塞给你太多技巧。',
+          en: 'Identify whether rhythm, stress, awakenings, environment, or recovery should come first.',
+        ),
+        icon: Icons.fact_check_rounded,
+        accent: const Color(0xFF517D6E),
+        primaryLabel: pickSleepText(i18n, zh: '开始评估', en: 'Start'),
+        onPrimary: () => _open(context, appState, const SleepAssessmentPage()),
+        secondaryLabel: pickSleepText(i18n, zh: '先看夜醒救援', en: 'Rescue first'),
+        onSecondary: () =>
+            _open(context, appState, const SleepNightRescuePage()),
+        signals: <String>[
+          pickSleepText(i18n, zh: '先少后多', en: 'Small first'),
+          pickSleepText(i18n, zh: '自动生成主线', en: 'Auto plan'),
+        ],
+      );
+    }
+
+    if (routine.isRunning || routine.isPaused) {
+      return _SleepHomeNextStep(
+        eyebrow: pickSleepText(i18n, zh: '正在进行', en: 'In progress'),
+        title: pickSleepText(
+          i18n,
+          zh: '继续今晚流程',
+          en: 'Continue tonight routine',
+        ),
+        body: pickSleepText(
+          i18n,
+          zh: '不要重新选择，也不要再加任务。回到当前步骤，把它做完就够了。',
+          en: 'Do not re-plan or add tasks. Return to the current step and finish it.',
+        ),
+        icon: Icons.play_circle_fill_rounded,
+        accent: const Color(0xFF805C92),
+        primaryLabel: pickSleepText(i18n, zh: '回到流程', en: 'Open routine'),
+        onPrimary: () => _open(context, appState, const SleepWindDownPage()),
+        secondaryLabel: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
+        onSecondary: () =>
+            _open(context, appState, const SleepNightRescuePage()),
+        signals: <String>[
+          sleepSecondsLabel(routine.remainingSeconds, i18n: i18n),
+          pickSleepText(i18n, zh: '不加新任务', en: 'No extra task'),
+        ],
+      );
+    }
+
+    if (hour < 5) {
+      return _SleepHomeNextStep(
+        eyebrow: pickSleepText(i18n, zh: '夜里模式', en: 'Night mode'),
+        title: pickSleepText(
+          i18n,
+          zh: '只判断：留床还是离床',
+          en: 'Only decide: stay or leave bed',
+        ),
+        body: pickSleepText(
+          i18n,
+          zh: '夜里不做复盘，不追求立刻睡着。先按当前状态走一个低刺激脚本。',
+          en: 'Do not analyze at night. Use one low-stimulation script for the current state.',
+        ),
+        icon: Icons.self_improvement_rounded,
+        accent: const Color(0xFF9A6A52),
+        primaryLabel: pickSleepText(i18n, zh: '打开夜醒救援', en: 'Open rescue'),
+        onPrimary: () => _open(context, appState, const SleepNightRescuePage()),
+        secondaryLabel: pickSleepText(i18n, zh: '离床判断', en: 'Leave-bed aid'),
+        onSecondary: () => showSleepinessDecisionSheet(context),
+        signals: <String>[
+          pickSleepText(i18n, zh: '低刺激', en: 'Low stimulation'),
+          pickSleepText(i18n, zh: '不看时间', en: 'No clock checking'),
+        ],
+      );
+    }
+
+    if (hour >= 20) {
+      return _SleepHomeNextStep(
+        eyebrow: pickSleepText(i18n, zh: '今晚一步', en: 'Tonight step'),
+        title: pickSleepText(
+          i18n,
+          zh: '启动 8 分钟最低能量流程',
+          en: 'Start the 8-minute tiny routine',
+        ),
+        body: pickSleepText(
+          i18n,
+          zh: '已经累的时候，不需要完整仪式。调暗、放下屏幕、停放一个念头，然后进床。',
+          en: 'When you are already tired, skip the full ritual. Dim, park one thought, and get into bed.',
+        ),
+        icon: Icons.bedtime_rounded,
+        accent: const Color(0xFF805C92),
+        primaryLabel: pickSleepText(i18n, zh: '一键开始', en: 'Start tiny routine'),
+        onPrimary: () => _startTinyRoutine(context, appState),
+        secondaryLabel: pickSleepText(i18n, zh: '90 分钟参考', en: '90-min guide'),
+        onSecondary: () => showSleepCyclePlannerSheet(context),
+        signals: lowEnergySignals.isEmpty
+            ? <String>[pickSleepText(i18n, zh: '8 分钟', en: '8 min')]
+            : lowEnergySignals,
+      );
+    }
+
+    if (hour < 11 && latestLog?.morningLightDone != true) {
+      return _SleepHomeNextStep(
+        eyebrow: pickSleepText(i18n, zh: '白天锚点', en: 'Day anchor'),
+        title: pickSleepText(
+          i18n,
+          zh: '先补晨光，不纠结昨晚',
+          en: 'Get morning light before replaying last night',
+        ),
+        body: pickSleepText(
+          i18n,
+          zh: '晨光和固定起床是最稳的节律锚点之一。先做这个，再决定要不要记录昨晚。',
+          en: 'Morning light and stable wake time are strong rhythm anchors. Do this before overthinking last night.',
+        ),
+        icon: Icons.wb_sunny_rounded,
+        accent: const Color(0xFFB08B33),
+        primaryLabel: pickSleepText(
+          i18n,
+          zh: '开始晨光计时',
+          en: 'Start light timer',
+        ),
+        onPrimary: () => showMorningLightTimerSheet(context),
+        secondaryLabel: pickSleepText(i18n, zh: '记录昨晚', en: 'Log last night'),
+        onSecondary: () => _open(context, appState, const SleepDailyLogPage()),
+        signals: <String>[
+          pickSleepText(i18n, zh: '10-20 分钟', en: '10-20 min'),
+          if (!latestIsToday)
+            pickSleepText(i18n, zh: '日志待补', en: 'Log pending'),
+        ],
+      );
+    }
+
+    if (latestLog == null || !latestIsToday) {
+      return _SleepHomeNextStep(
+        eyebrow: pickSleepText(i18n, zh: '补最小日志', en: 'Minimal log'),
+        title: pickSleepText(
+          i18n,
+          zh: '只记 4 个数就够开始',
+          en: 'Start with only four values',
+        ),
+        body: pickSleepText(
+          i18n,
+          zh: '先记录睡了多久、夜醒、晨间精神和关键因子。完整时间轴可以以后再补。',
+          en: 'Log sleep time, awakenings, morning energy, and key factors first. Fill the full timeline later.',
+        ),
+        icon: Icons.edit_note_rounded,
+        accent: const Color(0xFF4E74A8),
+        primaryLabel: pickSleepText(i18n, zh: '去记录', en: 'Log now'),
+        onPrimary: () => _open(context, appState, const SleepDailyLogPage()),
+        secondaryLabel: pickSleepText(i18n, zh: '咖啡因线', en: 'Caffeine cutoff'),
+        onSecondary: () => showCaffeineCutoffCalculatorSheet(context),
+        signals: <String>[
+          pickSleepText(i18n, zh: '低负担', en: 'Low effort'),
+          pickSleepText(i18n, zh: '趋势优先', en: 'Trend first'),
+        ],
+      );
+    }
+
+    if (latestLog.caffeineAfterCutoff ||
+        (profile.caffeineSensitive && hour >= 11 && hour < 17)) {
+      return _SleepHomeNextStep(
+        eyebrow: pickSleepText(i18n, zh: '今天先控变量', en: 'Control one variable'),
+        title: pickSleepText(
+          i18n,
+          zh: '把最后一杯往前挪',
+          en: 'Move the last caffeine earlier',
+        ),
+        body: pickSleepText(
+          i18n,
+          zh: '咖啡因是最容易先收紧的变量之一。先定今天的截止线，不等晚上再补救。',
+          en: 'Caffeine is one of the cleanest variables to tighten. Set today’s cutoff before nighttime.',
+        ),
+        icon: Icons.local_cafe_rounded,
+        accent: const Color(0xFF7E6A3A),
+        primaryLabel: pickSleepText(i18n, zh: '计算截止线', en: 'Calculate cutoff'),
+        onPrimary: () => showCaffeineCutoffCalculatorSheet(context),
+        secondaryLabel: pickSleepText(i18n, zh: '白天节律', en: 'Day rhythm'),
+        onSecondary: () => _open(context, appState, const SleepDayRhythmPage()),
+        signals: <String>[
+          if (latestLog.caffeineAfterCutoff)
+            pickSleepText(i18n, zh: '昨晚超线', en: 'Late yesterday'),
+          if (profile.caffeineSensitive)
+            pickSleepText(i18n, zh: '咖啡因敏感', en: 'Sensitive'),
+        ],
+      );
+    }
+
+    return _SleepHomeNextStep(
+      eyebrow: pickSleepText(i18n, zh: '下一周期', en: 'Next cycle'),
+      title: pickSleepText(
+        i18n,
+        zh: '只选一件事维持到下周',
+        en: 'Choose one thing to hold until next week',
+      ),
+      body: pickSleepText(
+        i18n,
+        zh: '睡眠改善最怕同时改太多。看一眼趋势，再决定下一周优先晨光、咖啡因、夜醒还是卧室。',
+        en: 'Sleep work breaks down when everything changes at once. Check the trend and pick one next variable.',
+      ),
+      icon: Icons.insights_rounded,
+      accent: const Color(0xFF6A7F9E),
+      primaryLabel: pickSleepText(i18n, zh: '查看周报', en: 'Open report'),
+      onPrimary: () => _open(context, appState, const SleepReportPage()),
+      secondaryLabel: pickSleepText(i18n, zh: '今晚流程', en: 'Tonight routine'),
+      onSecondary: () => _open(context, appState, const SleepWindDownPage()),
+      signals: <String>[
+        '${appState.sleepDailyLogs.length}/7',
+        sleepTrackLabel(
+          i18n,
+          appState.sleepCurrentPlan?.track ?? SleepPlanTrack.observation,
+        ),
+      ],
+    );
+  }
+
   static bool _hasLoadedSleepData(AppState appState) {
     return appState.sleepProfile != null ||
         appState.sleepCurrentPlan != null ||
@@ -406,12 +707,150 @@ class _ToolboxSleepAssistantPageState
         appState.sleepProgramProgress != null;
   }
 
+  static void _startTinyRoutine(BuildContext context, AppState appState) {
+    appState.setSleepActiveRoutineTemplate('minimum_energy_shutdown');
+    appState.startSleepRoutine('minimum_energy_shutdown');
+    _open(context, appState, const SleepWindDownPage());
+  }
+
   static void _open(BuildContext context, AppState appState, Widget page) {
     pushModuleRoute<void>(
       context,
       state: appState,
       moduleId: ModuleIds.toolboxSleepAssistant,
       builder: (_) => page,
+    );
+  }
+}
+
+class _SleepHomeNextStep {
+  const _SleepHomeNextStep({
+    required this.eyebrow,
+    required this.title,
+    required this.body,
+    required this.icon,
+    required this.accent,
+    required this.primaryLabel,
+    required this.onPrimary,
+    required this.signals,
+    this.secondaryLabel,
+    this.onSecondary,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String body;
+  final IconData icon;
+  final Color accent;
+  final String primaryLabel;
+  final VoidCallback onPrimary;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
+  final List<String> signals;
+}
+
+class _SleepNowPanel extends StatelessWidget {
+  const _SleepNowPanel({required this.step});
+
+  final _SleepHomeNextStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: LinearGradient(
+                  colors: <Color>[
+                    step.accent.withValues(alpha: 0.20),
+                    step.accent.withValues(alpha: 0.08),
+                  ],
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(step.icon, color: step.accent),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: step.accent.withValues(alpha: 0.12),
+                      border: Border.all(
+                        color: step.accent.withValues(alpha: 0.20),
+                      ),
+                    ),
+                    child: Text(
+                      step.eyebrow,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: step.accent,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    step.title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(step.body),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (step.signals.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: step.signals
+                .where((item) => item.trim().isNotEmpty)
+                .map(
+                  (item) => Chip(
+                    label: Text(item),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ],
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: <Widget>[
+            FilledButton.icon(
+              onPressed: step.onPrimary,
+              icon: Icon(step.icon),
+              label: Text(step.primaryLabel),
+            ),
+            if (step.secondaryLabel != null && step.onSecondary != null)
+              OutlinedButton(
+                onPressed: step.onSecondary,
+                child: Text(step.secondaryLabel!),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

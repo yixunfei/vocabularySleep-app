@@ -17,11 +17,7 @@ String sleepDateKeyFromDateTime(DateTime value) {
   return '$year-$month-$day';
 }
 
-String pickSleepText(
-  AppI18n i18n, {
-  required String zh,
-  required String en,
-}) {
+String pickSleepText(AppI18n i18n, {required String zh, required String en}) {
   return AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh' ? zh : en;
 }
 
@@ -151,11 +147,7 @@ String sleepTrackLabel(AppI18n i18n, SleepPlanTrack track) {
       zh: '观察计划',
       en: 'Observation',
     ),
-    SleepPlanTrack.windDown => pickSleepText(
-      i18n,
-      zh: '睡前减压',
-      en: 'Wind-down',
-    ),
+    SleepPlanTrack.windDown => pickSleepText(i18n, zh: '睡前减压', en: 'Wind-down'),
     SleepPlanTrack.insomniaSupport => pickSleepText(
       i18n,
       zh: '失眠支持',
@@ -279,11 +271,58 @@ String sleepRoutineStepTypeLabel(AppI18n i18n, SleepRoutineStepType type) {
   };
 }
 
-String sleepMinutesLabel(
-  int? minutes, {
-  bool long = false,
-  AppI18n? i18n,
-}) {
+String sleepRoutineTemplateName(AppI18n i18n, SleepRoutineTemplate template) {
+  return switch (template.id) {
+    'minimum_energy_shutdown' => pickSleepText(
+      i18n,
+      zh: '最低能量睡前流程',
+      en: 'Tiny wind-down',
+    ),
+    'quick_reset' => pickSleepText(i18n, zh: '快速重置', en: 'Quick reset'),
+    'standard_wind_down' => pickSleepText(
+      i18n,
+      zh: '标准睡前放松',
+      en: 'Standard wind-down',
+    ),
+    _ => template.name,
+  };
+}
+
+String sleepRoutineStepLabel(AppI18n i18n, SleepRoutineStep step) {
+  return switch (step.label) {
+    'Dim only the lights you can reach' => pickSleepText(
+      i18n,
+      zh: '只调暗伸手够得到的灯',
+      en: 'Dim only the lights you can reach',
+    ),
+    'Put the screen face down' => pickSleepText(
+      i18n,
+      zh: '把屏幕朝下放好',
+      en: 'Put the screen face down',
+    ),
+    'Park one loud thought' => pickSleepText(
+      i18n,
+      zh: '停放一个最吵的念头',
+      en: 'Park one loud thought',
+    ),
+    'Longer exhale breathing' => pickSleepText(
+      i18n,
+      zh: '做更长呼气的呼吸',
+      en: 'Longer exhale breathing',
+    ),
+    'Get into bed without adding tasks' => pickSleepText(
+      i18n,
+      zh: '进床，不再加任务',
+      en: 'Get into bed without adding tasks',
+    ),
+    _ =>
+      step.label.trim().isEmpty
+          ? sleepRoutineStepTypeLabel(i18n, step.type)
+          : step.label,
+  };
+}
+
+String sleepMinutesLabel(int? minutes, {bool long = false, AppI18n? i18n}) {
   if (minutes == null || minutes <= 0) {
     return '--';
   }
@@ -574,16 +613,8 @@ String sleepDailyFactorTitle(AppI18n i18n, String factorId) {
       zh: '临睡前看屏',
       en: 'Late screens',
     ),
-    'alcoholAtNight' => pickSleepText(
-      i18n,
-      zh: '夜间饮酒',
-      en: 'Alcohol at night',
-    ),
-    'morningLightDone' => pickSleepText(
-      i18n,
-      zh: '晨光暴露',
-      en: 'Morning light',
-    ),
+    'alcoholAtNight' => pickSleepText(i18n, zh: '夜间饮酒', en: 'Alcohol at night'),
+    'morningLightDone' => pickSleepText(i18n, zh: '晨光暴露', en: 'Morning light'),
     'heavyDinner' => pickSleepText(i18n, zh: '晚餐偏重', en: 'Heavy dinner'),
     'intenseExerciseLate' => pickSleepText(
       i18n,
@@ -591,11 +622,7 @@ String sleepDailyFactorTitle(AppI18n i18n, String factorId) {
       en: 'Late intense exercise',
     ),
     'hotBathDone' => pickSleepText(i18n, zh: '热水澡/泡脚', en: 'Warm bath'),
-    'stretchingDone' => pickSleepText(
-      i18n,
-      zh: '拉伸放松',
-      en: 'Stretching',
-    ),
+    'stretchingDone' => pickSleepText(i18n, zh: '拉伸放松', en: 'Stretching'),
     'whiteNoiseUsed' => pickSleepText(i18n, zh: '白噪音', en: 'White noise'),
     'bedroomTooHot' => pickSleepText(i18n, zh: '卧室太热', en: 'Room too hot'),
     'bedroomTooBright' => pickSleepText(
@@ -603,11 +630,7 @@ String sleepDailyFactorTitle(AppI18n i18n, String factorId) {
       zh: '卧室太亮',
       en: 'Room too bright',
     ),
-    'bedroomTooNoisy' => pickSleepText(
-      i18n,
-      zh: '卧室太吵',
-      en: 'Room too noisy',
-    ),
+    'bedroomTooNoisy' => pickSleepText(i18n, zh: '卧室太吵', en: 'Room too noisy'),
     'clockChecking' => pickSleepText(i18n, zh: '反复看时间', en: 'Clock checking'),
     _ => factorId,
   };
@@ -649,10 +672,7 @@ String sleepDailyFactorHint(AppI18n i18n, String factorId) {
   };
 }
 
-List<String> recentSleepDateKeys({
-  DateTime? anchor,
-  int count = 7,
-}) {
+List<String> recentSleepDateKeys({DateTime? anchor, int count = 7}) {
   final base = anchor ?? DateTime.now();
   return List<String>.generate(
     count,

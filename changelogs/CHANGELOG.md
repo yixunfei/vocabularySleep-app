@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_053] - 2026-04-24
+
+### 原因
+- 用户要求继续推进 toolbox 睡眠助手模块，将当前半完成示例扩展为完整、实用、科学且低启动成本的睡眠辅助闭环。
+- 本轮参考 `D:\vocabularySleep-resources\睡眠参考` 中的 CBT-I、睡眠日志、R90/90 分钟周期、晨光节律、咖啡因、夜醒和睡眠医学风险边界资料，将其产品化为可直接执行的工具。
+
+### 新增
+- 新增睡眠助手首页“当前一步”主舞台，根据当前时间、评估、日志、晨光、咖啡因和流程运行状态推荐最值得做的一步。
+- 新增“低能量快速开始”工具区，集中睡前、夜醒、晨光、咖啡因和 90 分钟周期入口。
+- 新增 8 分钟内置 `minimum_energy_shutdown` 最低能量睡前流程，并在首页一键选中和启动。
+- 新增 90 分钟睡眠周期规划器，支持反推今晚关灯时间与“现在就睡”的参考醒来时间。
+- 新增睡眠日志/睡眠效率、90 分钟周期/R90 两类研究说明，并接入最小日志优先建议。
+
+### 修改
+- 读取睡前流程模板时会合并缺失的内置默认模板，让已有用户也能获得新增最低能量流程。
+- 睡前流程页对内置模板和新增步骤增加本地化显示名，降低中文界面中的英文流程名暴露。
+- 模块文档补充当前睡眠闭环能力、实用边界和更新历史。
+
+### 风险变更
+- 睡眠建议继续保持行为辅助、记录和风险提示定位，不替代医疗诊断；打鼾、憋醒和严重白天嗜睡等仍只提示进一步评估。
+- 90 分钟周期工具仅作为规划辅助，文案避免暗示必须精确卡点。
+- 本轮复用既有 `AppState`、`SleepRepository`、页面路由和模块开关，不新增独立强侵入式状态机。
+
+### 验证
+- `dart format lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`（通过）
+- `dart analyze lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`（通过，No issues found）
+- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
+- `git diff --check -- plans/PLAN_053_睡眠助手实用闭环完善.md modules/sleep/README.md changelogs/CHANGELOG.md lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+
 ## [Unreleased-PLAN_052] - 2026-04-24
 
 ### 原因
