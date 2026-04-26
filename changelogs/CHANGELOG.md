@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_070-EAT-OVERHAUL-TAKEOVER] - 2026-04-27
+
+### 原因
+- 用户反馈工具箱「每日决策 - 吃什么」子模块存在数据源错乱、筛选字段不准、严重性能瓶颈、随机体验异常、加载阻塞、管理 UI 强聚合、分页体验差和 `TextEditingController` 生命周期崩溃等系统性问题。
+- 用户要求先对当前工作区做备份式提交，再创建可持续接手的完整任务工作流与计划，便于后续会话继续推进。
+
+### 新增
+- 新增 `plans/PLAN_070_每日决策吃什么子模块全面接管与数据UI重构.md`，记录接管分支、备份提交、阶段拆分、13 个问题验收标准、数据重建原则、schema 优化方向、UI 拆分边界和后续验证策略。
+
+### 修改
+- 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
+- 明确下一轮优先处理 P0 稳定性：每日决策入口不被吃什么菜谱库加载阻塞、管理 sheet controller 生命周期崩溃、随机面板停止按钮位置跳动和明显卡顿入口。
+
+### 风险变更
+- 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
+- `plans/` 目录在当前仓库 `.gitignore` 中默认忽略，本计划需要作为本次接管凭据强制纳入提交。
+
+### 验证
+- `git switch -c codex/daily-choice-overhaul`（通过）
+- `git commit -m "chore: backup current workspace before daily choice overhaul"`（通过，备份提交 `735b95a`）
+
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 
 ### 原因
