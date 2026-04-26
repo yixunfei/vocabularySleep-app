@@ -55,6 +55,7 @@ run_windows_verbose.log
 # Android
 # ------------------------------
 android/.gradle/
+android/.gradle-user-home/
 android/local.properties
 android/**/build/
 android/captures/

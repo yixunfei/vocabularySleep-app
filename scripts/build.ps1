@@ -14,6 +14,8 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $distRoot = Join-Path $projectRoot 'dist'
 $artifactName = 'xianyushengxi'
 $script:FlutterCommand = $null
+$script:GradleUserHomeOverridden = $false
+$script:OriginalGradleUserHome = $null
 
 Push-Location $projectRoot
 
@@ -32,9 +34,9 @@ function Get-SupportedTargets {
   param([string]$Platform)
 
   switch ($Platform) {
-    'windows' { return @('android-apk', 'android-appbundle', 'windows', 'web') }
-    'macos' { return @('android-apk', 'android-appbundle', 'ios', 'macos', 'web') }
-    'linux' { return @('android-apk', 'android-appbundle', 'linux', 'web') }
+    'windows' { return @('android-apk', 'android-appbundle', 'windows') }
+    'macos' { return @('android-apk', 'android-appbundle', 'ios', 'macos') }
+    'linux' { return @('android-apk', 'android-appbundle', 'linux') }
     default { throw "Unsupported platform: $Platform" }
   }
 }
@@ -51,6 +53,9 @@ function Resolve-Targets {
   }
 
   foreach ($item in $RequestedTargets) {
+    if ($item -eq 'web') {
+      throw "Target 'web' is disabled because the current app depends on dart:ffi packages such as sherpa_onnx, sqlite3, and ffi, which do not compile to Flutter Web. Re-enable it only after adding web-specific implementations."
+    }
     if ($supportedTargets -notcontains $item) {
       throw "Target '$item' is not supported on host '$Platform'."
     }
@@ -214,7 +219,12 @@ function Reset-StaleGradleWrapperState {
   }
 
   $distributionKey = $distributionFileName -replace '\.zip$', ''
-  $wrapperDistRoot = Join-Path $env:USERPROFILE ".gradle\wrapper\dists\$distributionKey"
+  $gradleUserHome = if ($env:GRADLE_USER_HOME) {
+    $env:GRADLE_USER_HOME
+  } else {
+    Join-Path $env:USERPROFILE '.gradle'
+  }
+  $wrapperDistRoot = Join-Path $gradleUserHome "wrapper\dists\$distributionKey"
   if (-not (Test-Path $wrapperDistRoot)) {
     return
   }
@@ -224,6 +234,31 @@ function Reset-StaleGradleWrapperState {
   } | ForEach-Object {
     Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
   }
+}
+
+function Use-ProjectGradleUserHome {
+  if ($script:GradleUserHomeOverridden) {
+    return
+  }
+
+  $script:OriginalGradleUserHome = $env:GRADLE_USER_HOME
+  $script:GradleUserHomeOverridden = $true
+  $localGradleUserHome = Join-Path $projectRoot 'android\.gradle-user-home'
+  Ensure-Directory -Path $localGradleUserHome
+  $env:GRADLE_USER_HOME = $localGradleUserHome
+}
+
+function Restore-GradleUserHome {
+  if (-not $script:GradleUserHomeOverridden) {
+    return
+  }
+
+  if ([string]::IsNullOrWhiteSpace($script:OriginalGradleUserHome)) {
+    Remove-Item Env:GRADLE_USER_HOME -ErrorAction SilentlyContinue
+  } else {
+    $env:GRADLE_USER_HOME = $script:OriginalGradleUserHome
+  }
+  $script:GradleUserHomeOverridden = $false
 }
 
 function Invoke-Flutter {
@@ -320,13 +355,6 @@ function Build-Linux {
     -Destination (Join-Path $distRoot 'linux')
 }
 
-function Build-Web {
-  Invoke-Flutter -Arguments (New-BuildArgumentList -BaseArguments @('build', 'web', '--release', '--no-wasm-dry-run'))
-  Copy-Artifact `
-    -Source (Join-Path $projectRoot 'build\web') `
-    -Destination (Join-Path $distRoot 'web')
-}
-
 try {
   $hostPlatform = Get-HostPlatform
   $requestedTargets = Normalize-RequestedTargets -Values $Target
@@ -344,6 +372,7 @@ try {
 
   if ($resolvedTargets -contains 'android-apk' -or $resolvedTargets -contains 'android-appbundle') {
     Ensure-AndroidSdkEnvironment
+    Use-ProjectGradleUserHome
     Reset-StaleGradleWrapperState
   }
 
@@ -355,12 +384,12 @@ try {
       'macos' { Build-Macos }
       'windows' { Build-Windows }
       'linux' { Build-Linux }
-      'web' { Build-Web }
       default { throw "Unsupported target: $item" }
     }
   }
 
   Write-Host "Build outputs are ready in $distRoot"
 } finally {
+  Restore-GradleUserHome
   Pop-Location
 }
