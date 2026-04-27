@@ -482,6 +482,182 @@ void main() {
     },
   );
 
+  testWidgets('eat manager shows per-item detail loading and local failure', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final options = <DailyChoiceOption>[
+      eatOption(
+        id: 'mushroom_soup',
+        title: 'Mushroom Soup',
+        materials: const <String>['mushroom', 'tofu'],
+        tags: const <String>['soup'],
+      ),
+    ];
+    final result = DailyChoiceCookLoadResult(
+      options: options,
+      source: DailyChoiceCookDataSource.remote,
+      localLibraryCount: options.length,
+      updatedAt: DateTime(2026, 4, 27, 19, 10),
+    );
+    final document = DailyChoiceRecipeLibraryDocument(
+      libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+      libraryVersion: '2026-04-27',
+      schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+      schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+      generatedAt: result.updatedAt,
+      stats: <String, Object?>{'recipeCount': options.length},
+      recipes: options,
+    );
+    final libraryStore = _FakeEatLibraryStore(
+      document,
+      hideSummariesOnLoad: true,
+      detailDelay: const Duration(milliseconds: 350),
+    );
+
+    await pumpEatHub(
+      tester,
+      cookService: _FakeCookService(result, document),
+      libraryStore: libraryStore,
+    );
+    await pumpUntilVisible(tester, find.text('Load recipe library'));
+    await tester.tap(find.text('Load recipe library'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    await tester.tap(find.text('Manage'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final managerSheet = find.byType(DraggableScrollableSheet).first;
+    await tester.ensureVisible(
+      find.descendant(of: managerSheet, matching: find.text('Built-in items')),
+    );
+    await tester.tap(
+      find.descendant(of: managerSheet, matching: find.text('Built-in items')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final adjustButton = find.descendant(
+      of: managerSheet,
+      matching: find.text('Adjust'),
+    );
+    await tester.ensureVisible(adjustButton.first);
+    await tester.tap(adjustButton.first);
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: managerSheet,
+        matching: find.text('Preparing adjustment...'),
+      ),
+      findsOneWidget,
+    );
+    expect(libraryStore.detailRequests, <String>['mushroom_soup']);
+
+    await tester.tap(adjustButton.first);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(libraryStore.detailRequests, <String>['mushroom_soup']);
+
+    await tester.pump(const Duration(milliseconds: 500));
+    await pumpUntilVisible(tester, find.text('Save'));
+    expect(find.text('Save'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Save'))).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('eat manager keeps SQL browser open when detail loading fails', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final options = <DailyChoiceOption>[
+      eatOption(
+        id: 'mushroom_soup',
+        title: 'Mushroom Soup',
+        materials: const <String>['mushroom', 'tofu'],
+        tags: const <String>['soup'],
+      ),
+    ];
+    final result = DailyChoiceCookLoadResult(
+      options: options,
+      source: DailyChoiceCookDataSource.remote,
+      localLibraryCount: options.length,
+      updatedAt: DateTime(2026, 4, 27, 19, 15),
+    );
+    final document = DailyChoiceRecipeLibraryDocument(
+      libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+      libraryVersion: '2026-04-27',
+      schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+      schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+      generatedAt: result.updatedAt,
+      stats: <String, Object?>{'recipeCount': options.length},
+      recipes: options,
+    );
+    final failingStore = _FakeEatLibraryStore(
+      document,
+      hideSummariesOnLoad: true,
+      failingDetailIds: const <String>{'mushroom_soup'},
+    );
+    await pumpEatHub(
+      tester,
+      cookService: _FakeCookService(result, document),
+      libraryStore: failingStore,
+    );
+    await pumpUntilVisible(tester, find.text('Load recipe library'));
+    await tester.tap(find.text('Load recipe library'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.tap(find.text('Manage'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final failingManagerSheet = find.byType(DraggableScrollableSheet).first;
+    await tester.ensureVisible(
+      find.descendant(
+        of: failingManagerSheet,
+        matching: find.text('Built-in items'),
+      ),
+    );
+    await tester.tap(
+      find.descendant(
+        of: failingManagerSheet,
+        matching: find.text('Built-in items'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(
+      find
+          .descendant(
+            of: failingManagerSheet,
+            matching: find.text('Mushroom Soup'),
+          )
+          .first,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(failingStore.detailRequests, <String>['mushroom_soup']);
+    expect(
+      find.descendant(
+        of: failingManagerSheet,
+        matching: find.textContaining('Details could not be loaded'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Materials'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('eat recipe editor tolerates duplicated all context entries', (
     WidgetTester tester,
   ) async {
@@ -619,10 +795,17 @@ class _FakeCookService extends DailyChoiceCookService {
 }
 
 class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
-  _FakeEatLibraryStore(this.document, {this.hideSummariesOnLoad = false});
+  _FakeEatLibraryStore(
+    this.document, {
+    this.hideSummariesOnLoad = false,
+    this.detailDelay = Duration.zero,
+    this.failingDetailIds = const <String>{},
+  });
 
   final DailyChoiceRecipeLibraryDocument document;
   final bool hideSummariesOnLoad;
+  final Duration detailDelay;
+  final Set<String> failingDetailIds;
   final List<String> detailRequests = <String>[];
   final List<DailyChoiceEatLibraryQuery> randomRequests =
       <DailyChoiceEatLibraryQuery>[];
@@ -739,6 +922,12 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
   @override
   Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
     detailRequests.add(recipeId);
+    if (detailDelay > Duration.zero) {
+      await Future<void>.delayed(detailDelay);
+    }
+    if (failingDetailIds.contains(recipeId)) {
+      throw StateError('Forced detail failure for $recipeId');
+    }
     for (final option in _options) {
       if (option.id == recipeId) {
         return option;

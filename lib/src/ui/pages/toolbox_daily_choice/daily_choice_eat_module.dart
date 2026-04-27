@@ -500,13 +500,17 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       contextLabelZh: '厨具',
       contextLabelEn: 'Tool',
       eatLibraryStore: widget.libraryStore,
-      onInspectOption: _openOptionDetail,
+      onInspectOption: (option) =>
+          _openOptionDetail(option, reportErrors: false),
       onAdjustBuiltInOption: _openAdjustmentEditor,
       onSaveBuiltInAsCustom: _openSaveAsCustomEditor,
     );
   }
 
-  Future<void> _openOptionDetail(DailyChoiceOption option) async {
+  Future<void> _openOptionDetail(
+    DailyChoiceOption option, {
+    bool reportErrors = true,
+  }) async {
     if (_openingDetail) {
       return;
     }
@@ -528,17 +532,22 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            pickUiText(
-              widget.i18n,
-              zh: '读取菜谱详情失败：$error',
-              en: 'Failed to load recipe details: $error',
+      if (reportErrors) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              pickUiText(
+                widget.i18n,
+                zh: '读取菜谱详情失败：$error',
+                en: 'Failed to load recipe details: $error',
+              ),
             ),
           ),
-        ),
-      );
+        );
+      }
+      if (!reportErrors) {
+        rethrow;
+      }
     } finally {
       if (mounted) {
         setState(() {

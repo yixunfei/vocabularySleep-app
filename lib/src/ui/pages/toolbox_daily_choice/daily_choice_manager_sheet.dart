@@ -80,6 +80,8 @@ Future<void> showDailyChoiceManagerSheet({
   var managerStateVersion = 0;
   var builtInFilterCacheKey = '';
   List<DailyChoiceOption> builtInFilterCache = const <DailyChoiceOption>[];
+  final managerBusyActionKeys = <String>{};
+  final managerActionErrorByOptionId = <String, String>{};
 
   try {
     await showModalBottomSheet<void>(
@@ -262,6 +264,59 @@ Future<void> showDailyChoiceManagerSheet({
                     .where((value) => value != 'all')
                     .length;
 
+            bool actionBusy(String actionId, DailyChoiceOption option) {
+              return managerBusyActionKeys.contains(
+                _managerActionKey(actionId, option.id),
+              );
+            }
+
+            bool itemBusy(DailyChoiceOption option) {
+              return _managerDetailActionIds.any(
+                (actionId) => actionBusy(actionId, option),
+              );
+            }
+
+            String? itemBusyMessage(DailyChoiceOption option) {
+              for (final actionId in _managerDetailActionIds) {
+                if (actionBusy(actionId, option)) {
+                  return _managerActionLoadingText(i18n, actionId);
+                }
+              }
+              return null;
+            }
+
+            Future<T?> runBuiltInItemAction<T>({
+              required DailyChoiceOption option,
+              required String actionId,
+              required Future<T?> Function() action,
+            }) async {
+              final key = _managerActionKey(actionId, option.id);
+              if (managerBusyActionKeys.contains(key)) {
+                return null;
+              }
+              setSheetState(() {
+                managerBusyActionKeys.add(key);
+                managerActionErrorByOptionId.remove(option.id);
+              });
+              try {
+                return await action();
+              } catch (error) {
+                if (!managerSheetClosed) {
+                  setSheetState(() {
+                    managerActionErrorByOptionId[option.id] =
+                        _managerActionErrorText(i18n, actionId, error);
+                  });
+                }
+                return null;
+              } finally {
+                if (!managerSheetClosed) {
+                  setSheetState(() {
+                    managerBusyActionKeys.remove(key);
+                  });
+                }
+              }
+            }
+
             Future<void> openEditor([DailyChoiceOption? option]) async {
               final editorCategories = filterCategories
                   .where((item) => item.id != 'all')
@@ -305,11 +360,29 @@ Future<void> showDailyChoiceManagerSheet({
               publish(nextState);
             }
 
+            Future<void> inspectBuiltInOption(DailyChoiceOption option) async {
+              if (onInspectOption == null) {
+                return;
+              }
+              await runBuiltInItemAction<bool>(
+                option: option,
+                actionId: _managerActionInspect,
+                action: () async {
+                  await onInspectOption(option);
+                  return true;
+                },
+              );
+            }
+
             Future<void> openAdjustmentEditor(DailyChoiceOption option) async {
               if (onAdjustBuiltInOption == null) {
                 return;
               }
-              final result = await onAdjustBuiltInOption(option);
+              final result = await runBuiltInItemAction<DailyChoiceOption>(
+                option: option,
+                actionId: _managerActionAdjust,
+                action: () => onAdjustBuiltInOption(option),
+              );
               if (result == null) {
                 return;
               }
@@ -320,7 +393,11 @@ Future<void> showDailyChoiceManagerSheet({
               if (onSaveBuiltInAsCustom == null) {
                 return;
               }
-              final result = await onSaveBuiltInAsCustom(option);
+              final result = await runBuiltInItemAction<DailyChoiceOption>(
+                option: option,
+                actionId: _managerActionSaveAs,
+                action: () => onSaveBuiltInAsCustom(option),
+              );
               if (result == null) {
                 return;
               }
@@ -869,17 +946,32 @@ Future<void> showDailyChoiceManagerSheet({
                                 )
                               : Column(
                                   children: adjustedItems
-                                      .map(
-                                        (item) => _ManagerTile(
+                                      .map((item) {
+                                        final busy = itemBusy(item);
+                                        final loadingMessage = itemBusyMessage(
+                                          item,
+                                        );
+                                        return _ManagerTile(
                                           title: item.title(i18n),
                                           subtitle: item.subtitle(i18n),
                                           accent: accent,
                                           leading: hidden.contains(item.id)
                                               ? Icons.visibility_off_rounded
                                               : Icons.tune_rounded,
-                                          onTap: onInspectOption == null
+                                          onTap: onInspectOption == null || busy
                                               ? null
-                                              : () => onInspectOption(item),
+                                              : () =>
+                                                    inspectBuiltInOption(item),
+                                          statusMessage:
+                                              loadingMessage ??
+                                              managerActionErrorByOptionId[item
+                                                  .id],
+                                          statusIsLoading:
+                                              loadingMessage != null,
+                                          statusIsError:
+                                              loadingMessage == null &&
+                                              managerActionErrorByOptionId
+                                                  .containsKey(item.id),
                                           chips: <String>[
                                             pickUiText(
                                               i18n,
@@ -901,34 +993,32 @@ Future<void> showDailyChoiceManagerSheet({
                                           ],
                                           actions: <Widget>[
                                             if (onAdjustBuiltInOption != null)
-                                              TextButton.icon(
+                                              _managerAsyncActionButton(
+                                                i18n: i18n,
+                                                icon: Icons.tune_rounded,
+                                                labelZh: '继续调整',
+                                                labelEn: 'Adjust',
+                                                loading: actionBusy(
+                                                  _managerActionAdjust,
+                                                  item,
+                                                ),
+                                                enabled: !busy,
                                                 onPressed: () =>
                                                     openAdjustmentEditor(item),
-                                                icon: const Icon(
-                                                  Icons.tune_rounded,
-                                                ),
-                                                label: Text(
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '继续调整',
-                                                    en: 'Adjust',
-                                                  ),
-                                                ),
                                               ),
                                             if (onSaveBuiltInAsCustom != null)
-                                              TextButton.icon(
+                                              _managerAsyncActionButton(
+                                                i18n: i18n,
+                                                icon: Icons.copy_rounded,
+                                                labelZh: '另存',
+                                                labelEn: 'Save as',
+                                                loading: actionBusy(
+                                                  _managerActionSaveAs,
+                                                  item,
+                                                ),
+                                                enabled: !busy,
                                                 onPressed: () =>
                                                     saveBuiltInAsCustom(item),
-                                                icon: const Icon(
-                                                  Icons.copy_rounded,
-                                                ),
-                                                label: Text(
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '另存',
-                                                    en: 'Save as',
-                                                  ),
-                                                ),
                                               ),
                                             ..._managerCollectionActions(
                                               i18n: i18n,
@@ -959,14 +1049,16 @@ Future<void> showDailyChoiceManagerSheet({
                                               },
                                             ),
                                             TextButton.icon(
-                                              onPressed: () {
-                                                publish(
-                                                  localState
-                                                      .restoreAdjustedBuiltIn(
-                                                        item.id,
-                                                      ),
-                                                );
-                                              },
+                                              onPressed: busy
+                                                  ? null
+                                                  : () {
+                                                      publish(
+                                                        localState
+                                                            .restoreAdjustedBuiltIn(
+                                                              item.id,
+                                                            ),
+                                                      );
+                                                    },
                                               icon: const Icon(
                                                 Icons.restart_alt_rounded,
                                               ),
@@ -979,8 +1071,8 @@ Future<void> showDailyChoiceManagerSheet({
                                               ),
                                             ),
                                           ],
-                                        ),
-                                      )
+                                        );
+                                      })
                                       .toList(growable: false),
                                 ),
                         ),
@@ -1046,6 +1138,10 @@ Future<void> showDailyChoiceManagerSheet({
                                     );
                                     final hasAdjustment = adjustedById
                                         .containsKey(baseItem.id);
+                                    final busy = itemBusy(displayItem);
+                                    final loadingMessage = itemBusyMessage(
+                                      displayItem,
+                                    );
                                     return _ManagerTile(
                                       title: displayItem.title(i18n),
                                       subtitle: isHidden
@@ -1059,9 +1155,20 @@ Future<void> showDailyChoiceManagerSheet({
                                       leading: isHidden
                                           ? Icons.visibility_off_rounded
                                           : Icons.dataset_rounded,
-                                      onTap: onInspectOption == null
+                                      onTap: onInspectOption == null || busy
                                           ? null
-                                          : () => onInspectOption(displayItem),
+                                          : () => inspectBuiltInOption(
+                                              displayItem,
+                                            ),
+                                      statusMessage:
+                                          loadingMessage ??
+                                          managerActionErrorByOptionId[displayItem
+                                              .id],
+                                      statusIsLoading: loadingMessage != null,
+                                      statusIsError:
+                                          loadingMessage == null &&
+                                          managerActionErrorByOptionId
+                                              .containsKey(displayItem.id),
                                       chips: <String>[
                                         if (hasAdjustment)
                                           pickUiText(
@@ -1084,42 +1191,40 @@ Future<void> showDailyChoiceManagerSheet({
                                       ],
                                       actions: <Widget>[
                                         if (onAdjustBuiltInOption != null)
-                                          TextButton.icon(
+                                          _managerAsyncActionButton(
+                                            i18n: i18n,
+                                            icon: Icons.tune_rounded,
+                                            labelZh: hasAdjustment
+                                                ? '继续调整'
+                                                : '个人调整',
+                                            labelEn: hasAdjustment
+                                                ? 'Adjust more'
+                                                : 'Adjust',
+                                            loading: actionBusy(
+                                              _managerActionAdjust,
+                                              displayItem,
+                                            ),
+                                            enabled: !busy,
                                             onPressed: () =>
                                                 openAdjustmentEditor(
                                                   displayItem,
                                                 ),
-                                            icon: const Icon(
-                                              Icons.tune_rounded,
-                                            ),
-                                            label: Text(
-                                              pickUiText(
-                                                i18n,
-                                                zh: hasAdjustment
-                                                    ? '继续调整'
-                                                    : '个人调整',
-                                                en: hasAdjustment
-                                                    ? 'Adjust more'
-                                                    : 'Adjust',
-                                              ),
-                                            ),
                                           ),
                                         if (onSaveBuiltInAsCustom != null)
-                                          TextButton.icon(
+                                          _managerAsyncActionButton(
+                                            i18n: i18n,
+                                            icon: Icons.copy_rounded,
+                                            labelZh: '另存',
+                                            labelEn: 'Save as',
+                                            loading: actionBusy(
+                                              _managerActionSaveAs,
+                                              displayItem,
+                                            ),
+                                            enabled: !busy,
                                             onPressed: () =>
                                                 saveBuiltInAsCustom(
                                                   displayItem,
                                                 ),
-                                            icon: const Icon(
-                                              Icons.copy_rounded,
-                                            ),
-                                            label: Text(
-                                              pickUiText(
-                                                i18n,
-                                                zh: '另存',
-                                                en: 'Save as',
-                                              ),
-                                            ),
                                           ),
                                         ..._managerCollectionActions(
                                           i18n: i18n,
@@ -1149,14 +1254,16 @@ Future<void> showDailyChoiceManagerSheet({
                                         ),
                                         if (hasAdjustment)
                                           TextButton.icon(
-                                            onPressed: () {
-                                              publish(
-                                                localState
-                                                    .restoreAdjustedBuiltIn(
-                                                      baseItem.id,
-                                                    ),
-                                              );
-                                            },
+                                            onPressed: busy
+                                                ? null
+                                                : () {
+                                                    publish(
+                                                      localState
+                                                          .restoreAdjustedBuiltIn(
+                                                            baseItem.id,
+                                                          ),
+                                                    );
+                                                  },
                                             icon: const Icon(
                                               Icons.restart_alt_rounded,
                                             ),
@@ -1169,17 +1276,21 @@ Future<void> showDailyChoiceManagerSheet({
                                             ),
                                           ),
                                         TextButton.icon(
-                                          onPressed: () {
-                                            publish(
-                                              isHidden
-                                                  ? localState.restoreBuiltIn(
-                                                      baseItem.id,
-                                                    )
-                                                  : localState.hideBuiltIn(
-                                                      baseItem.id,
-                                                    ),
-                                            );
-                                          },
+                                          onPressed: busy
+                                              ? null
+                                              : () {
+                                                  publish(
+                                                    isHidden
+                                                        ? localState
+                                                              .restoreBuiltIn(
+                                                                baseItem.id,
+                                                              )
+                                                        : localState
+                                                              .hideBuiltIn(
+                                                                baseItem.id,
+                                                              ),
+                                                  );
+                                                },
                                           icon: Icon(
                                             isHidden
                                                 ? Icons.restore_rounded
@@ -1680,6 +1791,9 @@ class _ManagerTile extends StatelessWidget {
     required this.leading,
     required this.actions,
     this.chips = const <String>[],
+    this.statusMessage,
+    this.statusIsLoading = false,
+    this.statusIsError = false,
     this.onTap,
   });
 
@@ -1689,6 +1803,9 @@ class _ManagerTile extends StatelessWidget {
   final IconData leading;
   final List<Widget> actions;
   final List<String> chips;
+  final String? statusMessage;
+  final bool statusIsLoading;
+  final bool statusIsError;
   final VoidCallback? onTap;
 
   @override
@@ -1753,6 +1870,15 @@ class _ManagerTile extends StatelessWidget {
                                     .toList(growable: false),
                               ),
                             ],
+                            if (statusMessage != null) ...<Widget>[
+                              const SizedBox(height: 8),
+                              _ManagerTileStatus(
+                                message: statusMessage!,
+                                accent: accent,
+                                isLoading: statusIsLoading,
+                                isError: statusIsError,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1772,6 +1898,64 @@ class _ManagerTile extends StatelessWidget {
   }
 }
 
+class _ManagerTileStatus extends StatelessWidget {
+  const _ManagerTileStatus({
+    required this.message,
+    required this.accent,
+    required this.isLoading,
+    required this.isError,
+  });
+
+  final String message;
+  final Color accent;
+  final bool isLoading;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = isError ? theme.colorScheme.error : accent;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: isError
+            ? theme.colorScheme.errorContainer.withValues(alpha: 0.42)
+            : accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (isLoading)
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+            )
+          else
+            Icon(
+              isError ? Icons.error_outline_rounded : Icons.info_outline,
+              size: 16,
+              color: color,
+            ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isError ? theme.colorScheme.onErrorContainer : color,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 int _managerInitialBuiltInLimit(bool isEatModule) => isEatModule ? 80 : 120;
 
 int _managerBuiltInPageSize(bool isEatModule) => isEatModule ? 80 : 120;
@@ -1783,6 +1967,83 @@ int _managerNextPageCount(int total, int visible, bool isEatModule) {
   }
   final pageSize = _managerBuiltInPageSize(isEatModule);
   return remaining < pageSize ? remaining : pageSize;
+}
+
+const _managerActionInspect = 'inspect';
+const _managerActionAdjust = 'adjust';
+const _managerActionSaveAs = 'save_as';
+const _managerDetailActionIds = <String>[
+  _managerActionInspect,
+  _managerActionAdjust,
+  _managerActionSaveAs,
+];
+
+String _managerActionKey(String actionId, String optionId) {
+  return '$actionId\u0001$optionId';
+}
+
+String _managerActionLoadingText(AppI18n i18n, String actionId) {
+  return switch (actionId) {
+    _managerActionInspect => pickUiText(
+      i18n,
+      zh: '正在读取菜谱详情...',
+      en: 'Loading recipe details...',
+    ),
+    _managerActionAdjust => pickUiText(
+      i18n,
+      zh: '正在准备个人调整...',
+      en: 'Preparing adjustment...',
+    ),
+    _managerActionSaveAs => pickUiText(
+      i18n,
+      zh: '正在准备另存副本...',
+      en: 'Preparing a copy...',
+    ),
+    _ => pickUiText(i18n, zh: '正在处理...', en: 'Working...'),
+  };
+}
+
+String _managerActionErrorText(AppI18n i18n, String actionId, Object error) {
+  return switch (actionId) {
+    _managerActionInspect => pickUiText(
+      i18n,
+      zh: '详情读取失败：$error',
+      en: 'Details could not be loaded: $error',
+    ),
+    _managerActionAdjust => pickUiText(
+      i18n,
+      zh: '个人调整准备失败：$error',
+      en: 'Adjustment could not be prepared: $error',
+    ),
+    _managerActionSaveAs => pickUiText(
+      i18n,
+      zh: '另存前读取失败：$error',
+      en: 'Copy could not be prepared: $error',
+    ),
+    _ => pickUiText(i18n, zh: '操作失败：$error', en: 'Action failed: $error'),
+  };
+}
+
+Widget _managerAsyncActionButton({
+  required AppI18n i18n,
+  required IconData icon,
+  required String labelZh,
+  required String labelEn,
+  required bool loading,
+  required bool enabled,
+  required VoidCallback onPressed,
+}) {
+  return TextButton.icon(
+    onPressed: enabled ? onPressed : null,
+    icon: loading
+        ? const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : Icon(icon),
+    label: Text(pickUiText(i18n, zh: labelZh, en: labelEn)),
+  );
 }
 
 List<Widget> _managerCollectionActions({

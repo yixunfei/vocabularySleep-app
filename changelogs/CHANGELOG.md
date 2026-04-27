@@ -35,6 +35,8 @@
 - 新增 `DailyChoiceEatLibraryQuery.searchText`，为管理页吃什么内置库搜索下沉到 v2 SQLite search table 提供查询字段。
 - 新增 `records/record_070_daily_choice_manager_sql_search.md`，记录管理页内置库搜索下沉范围、验证和后续 FTS/拆页方向。
 - 新增管理页 SQL 内置摘要详情懒加载回归测试，覆盖内存全量摘要为空时仍可从 store 打开详情。
+- 新增 `records/record_070_daily_choice_manager_item_action_states.md`，记录管理页内置菜谱逐项 loading / disabled / error 状态的实现边界和验证。
+- 新增管理页内置菜谱逐项动作回归测试，覆盖 detail 慢读取期间不重复触发请求，以及 detail 失败时保留当前 sheet 并显示局部错误。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -77,6 +79,8 @@
 - 管理页吃什么内置库使用 `queryBuiltInSummaries(...)` 分页读取；搜索词非空时同步传给 store，并优先使用 v2 `daily_choice_recipe_search_text` 查询。
 - 管理页异步 SQL 查询在 sheet 关闭后不再调用 `setSheetState`，且失败时记录当前查询 key，降低关闭/返回和失败重试的生命周期风险。
 - 吃什么详情/个人调整/另存入口的内置菜谱判断改为基于模块、安装状态和轻量摘要内容，不再要求当前内存 `builtInOptions` 全量列表包含该 id。
+- 管理页吃什么内置菜谱的详情、个人调整、另存入口统一接入条目级异步动作状态；动作进行中会禁用同一条目的 detail/edit/copy 入口，并在条目内展示 loading 或错误反馈。
+- 吃什么管理页内触发详情读取时由 manager sheet 承接局部错误；主 UI 的详情按钮仍沿用 SnackBar 错误反馈。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -111,8 +115,14 @@
 - 修复后续分页接入时随机可能只落在当前分页窗口的问题基础：store 层 random pivot 现在忽略 `limit` / `offset`，始终按完整候选池抽取。
 - 修复管理页内置库浏览和搜索仍同步过滤完整吃什么内置列表的性能路径，改为按当前筛选与搜索词分页查询 SQLite。
 - 修复管理页 SQL 分页返回的内置摘要在内存全量摘要缺失时无法按需读取完整详情的隐性依赖。
+- 修复管理页内置菜谱详情/个人调整/另存可重复点击导致重复 detail 读取的问题。
+- 修复管理页内置菜谱 detail 读取失败时只能走全局提示、缺少条目级错误反馈的问题；现在失败不会关闭管理 sheet 或清空当前搜索/分页状态。
 
 ### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 - `git switch -c codex/daily-choice-overhaul`（通过）
 - `git commit -m "chore: backup current workspace before daily choice overhaul"`（通过，备份提交 `735b95a`）
 - `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`（通过）

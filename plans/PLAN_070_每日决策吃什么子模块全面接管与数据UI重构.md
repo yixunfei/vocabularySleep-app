@@ -37,7 +37,7 @@
 | 2. 数据源审计与规范 | 进行中 | 从 cook 项目、本地做菜资料和现有 `cook_data` 生成可信字段规范 |
 | 3. 数据库与索引重构 | 进行中 | 建立菜谱集、摘要表、详情表、字段索引、不可用标记和迁移兼容 |
 | 4. 筛选与随机引擎重构 | 进行中 | 精确食材匹配、餐段默认全部、忌口精简、随机池去顺序偏差 |
-| 5. 管理 UI 拆分 | 待开始 | 管理 sheet 拆出子页面/子窗口，完善食谱集管理和自动分页 |
+| 5. 管理 UI 拆分 | 进行中 | 管理 sheet 拆出子页面/子窗口，完善食谱集管理和自动分页 |
 | 6. 数据包生成与交付 | 进行中 | 产出可重新上传的本地数据包、校验报告和上传前清单 |
 | 7. 回归验证与收尾 | 待开始 | 单测、widget smoke、性能采样、构建验证、changelog 和计划归档 |
 
@@ -127,9 +127,9 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮推进管理页吃什么内置库详情/编辑按需加载解耦：从 SQL 分页/搜索返回的轻量摘要进入详情、个人调整、另存时，不再依赖 `builtInOptions` 全量摘要列表判断是否可加载 detail。
-- 仅调整吃什么内置菜谱 detail 解析边界和测试覆盖；本地自定义、个人调整已有完整内容时继续直接使用本地对象。
-- 本轮不拆管理 sheet，不改 v2 DB 生成器，不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据。
+- 本轮启动阶段 5 的管理 UI 稳定性拆分前置工作：为吃什么管理页内置菜谱列表增加逐项详情/个人调整/另存 loading、disabled 与局部错误状态。
+- detail 读取失败时保留当前管理 sheet，不关闭、不清空当前分页/搜索状态，并在对应菜谱条目内展示可读错误。
+- 本轮不改变菜谱保存语义、不改 v2 DB 生成器、不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；管理 sheet 子页面拆分和自动滚动分页留待下一轮继续推进。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -181,6 +181,9 @@
 47. 2026-04-27: 已新增 `records/record_070_daily_choice_manager_sql_search.md`，记录管理页内置库搜索下沉范围、风险和后续 FTS/拆页方向。
 48. 2026-04-27: 已将吃什么详情解析从内存 `builtInOptions` 全量摘要依赖中解耦，SQL 分页/搜索返回的轻量内置摘要可直接按 id 懒加载 detail。
 49. 2026-04-27: 已新增 `records/record_070_daily_choice_manager_detail_lazy_load.md`，记录管理页内置摘要详情按需加载解耦范围和风险。
+50. 2026-04-27: 已为管理页吃什么内置菜谱条目增加详情、个人调整、另存的逐项 loading / disabled / error 状态，避免同一条目重复触发 detail 读取。
+51. 2026-04-27: detail 读取失败时，管理页会保留当前 sheet、分页和搜索状态，并在对应菜谱条目内显示局部错误；主 UI 详情按钮仍保留 SnackBar 错误反馈。
+52. 2026-04-27: 已新增 `records/record_070_daily_choice_manager_item_action_states.md`，记录本轮管理页逐项动作状态的实现边界、风险和验证。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -227,6 +230,10 @@
 - 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）。
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页 SQL 摘要 detail 解耦后无静态问题）。
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖内存摘要为空时管理页 SQL 摘要仍可打开详情，以及个人调整前 detail 懒加载）。
+- 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页逐项动作状态接入后无静态问题）。
+- 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖管理页 detail 慢读取期间禁用重复点击，以及 detail 失败时保留 sheet 并显示局部错误）。
 - 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，主 UI random pivot 与管理页 SQL 分页接入后无静态问题）。
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机触发 store pivot、管理页展开内置库触发 SQL 查询、候选池变化后旧异步抽取不回写）。
