@@ -1714,8 +1714,15 @@ def ingredient_family_value(token: str) -> str | None:
     return None
 
 
-def write_sqlite_v2_export(cursor: sqlite3.Cursor, dataset: dict[str, object]) -> None:
-    cursor.executescript(V2_SCHEMA_SQL.read_text(encoding="utf-8"))
+def write_sqlite_v2_export(
+    cursor: sqlite3.Cursor,
+    dataset: dict[str, object],
+    *,
+    create_schema: bool = True,
+) -> None:
+    if create_schema:
+        cursor.executescript(V2_SCHEMA_SQL.read_text(encoding="utf-8"))
+    cursor.execute("PRAGMA user_version = 2;")
     recipes = dataset["recipes"]
     assert isinstance(recipes, list)
     generated_at = str(dataset["generatedAt"])
@@ -1985,13 +1992,26 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
         json.dump(payload, handle, ensure_ascii=False, indent=2)
 
 
-def write_sqlite_export(path: Path, dataset: dict[str, object]) -> None:
+def write_sqlite_export(
+    path: Path,
+    dataset: dict[str, object],
+    *,
+    sqlite_mode: str = "v2",
+) -> None:
+    if sqlite_mode not in {"v2", "v1-v2"}:
+        raise ValueError(f"Unsupported sqlite export mode: {sqlite_mode}")
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         path.unlink()
     connection = sqlite3.connect(path)
     try:
         cursor = connection.cursor()
+        if sqlite_mode == "v2":
+            cursor.execute("PRAGMA journal_mode = DELETE;")
+            cursor.execute("PRAGMA synchronous = OFF;")
+            write_sqlite_v2_export(cursor, dataset)
+            connection.commit()
+            return
         cursor.executescript(
             """
             PRAGMA journal_mode = DELETE;
@@ -2150,14 +2170,23 @@ def write_sqlite_export(path: Path, dataset: dict[str, object]) -> None:
         connection.close()
 
 
-def write_export_bundle(export_dir: Path, dataset: dict[str, object]) -> None:
+def write_export_bundle(
+    export_dir: Path,
+    dataset: dict[str, object],
+    *,
+    sqlite_mode: str,
+) -> None:
     export_dir.mkdir(parents=True, exist_ok=True)
     write_json(export_dir / "daily_choice_recipe_library.json", dataset)
     write_json(
         export_dir / "daily_choice_recipe_library_summary.json",
         build_summary_manifest(dataset),
     )
-    write_sqlite_export(export_dir / "daily_choice_recipe_library.db", dataset)
+    write_sqlite_export(
+        export_dir / "daily_choice_recipe_library.db",
+        dataset,
+        sqlite_mode=sqlite_mode,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -2207,6 +2236,15 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Skip importing YunYouJun/cook recipe.csv rows.",
     )
+    parser.add_argument(
+        "--sqlite-mode",
+        choices=("v2", "v1-v2"),
+        default="v2",
+        help=(
+            "SQLite export mode. v2 writes only the PLAN_070 v2 schema; "
+            "v1-v2 also writes legacy runtime compatibility tables."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -2219,7 +2257,7 @@ def main() -> None:
     )
     dataset = build_dataset(args.source_dir, cook_rows=cook_rows)
     write_json(args.output, dataset)
-    write_export_bundle(args.export_dir, dataset)
+    write_export_bundle(args.export_dir, dataset, sqlite_mode=args.sqlite_mode)
     print(
         f"Generated {dataset['stats']['dedupedRecipeCount']} recipes "
         f"from {dataset['stats']['rawRecipeCount']} extracted entries."

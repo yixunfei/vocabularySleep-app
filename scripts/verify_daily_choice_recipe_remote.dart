@@ -80,62 +80,140 @@ Future<void> main(List<String> args) async {
         'daily_choice_eat_recipe_summaries',
       );
       final hasV1Detail = _tableExists(db, 'daily_choice_eat_recipe_details');
-      _require(hasV1Summary, 'Missing v1 summary table.');
-      _require(hasV1Detail, 'Missing v1 detail table.');
+      final hasV2Recipes = _tableExists(db, 'daily_choice_recipes');
+      final hasV2Detail = _tableExists(db, 'daily_choice_recipe_details');
+      _require(
+        (hasV1Summary && hasV1Detail) || (hasV2Recipes && hasV2Detail),
+        'DB contains neither a complete v1 schema nor a complete v2 schema.',
+      );
 
-      final summaryCount = _countRows(db, 'daily_choice_eat_recipe_summaries');
-      final detailCount = _countRows(db, 'daily_choice_eat_recipe_details');
-      _require(summaryCount > 0, 'No recipe summaries found.');
-      _require(detailCount > 0, 'No recipe details found.');
-      if (expectedCount != null && expectedCount > 0) {
-        _require(
-          summaryCount == expectedCount,
-          'Expected $expectedCount summaries but found $summaryCount.',
+      final userVersion = db
+          .select('PRAGMA user_version')
+          .first['user_version'];
+      stdout.writeln('user_version: $userVersion');
+
+      if (hasV1Summary && hasV1Detail) {
+        final summaryCount = _countRows(
+          db,
+          'daily_choice_eat_recipe_summaries',
+        );
+        final detailCount = _countRows(db, 'daily_choice_eat_recipe_details');
+        _require(summaryCount > 0, 'No v1 recipe summaries found.');
+        _require(detailCount > 0, 'No v1 recipe details found.');
+        if (expectedCount != null && expectedCount > 0) {
+          _require(
+            summaryCount == expectedCount,
+            'Expected $expectedCount v1 summaries but found $summaryCount.',
+          );
+        }
+        stdout.writeln('v1 summaries: $summaryCount');
+        stdout.writeln('v1 details: $detailCount');
+
+        final meta = _readMeta(db, 'daily_choice_eat_recipe_meta');
+        stdout.writeln('library_id: ${meta['library_id'] ?? ''}');
+        stdout.writeln('library_version: ${meta['library_version'] ?? ''}');
+        stdout.writeln('schema_version: ${meta['schema_version'] ?? ''}');
+        stdout.writeln(
+          'book_recipe_count: ${meta['local_library_count'] ?? ''}',
+        );
+        stdout.writeln('cook_recipe_count: ${meta['cook_recipe_count'] ?? ''}');
+
+        final sample = db.select('''
+          SELECT id, title_zh
+          FROM daily_choice_eat_recipe_summaries
+          ORDER BY sort_key ASC, id ASC
+          LIMIT 1
+        ''').first;
+        final sampleId = '${sample['id'] ?? ''}';
+        final detailRows = db.select(
+          '''
+          SELECT materials_zh_json, steps_zh_json
+          FROM daily_choice_eat_recipe_details
+          WHERE recipe_id = ?
+          LIMIT 1
+          ''',
+          <Object?>[sampleId],
+        );
+        _require(detailRows.isNotEmpty, 'Sample v1 detail row is missing.');
+        stdout.writeln('v1 sample: $sampleId / ${sample['title_zh'] ?? ''}');
+        stdout.writeln(
+          'v1 sample_detail_bytes: '
+          '${'${detailRows.first['materials_zh_json'] ?? ''}'.length + '${detailRows.first['steps_zh_json'] ?? ''}'.length}',
         );
       }
-      stdout.writeln('v1 summaries: $summaryCount');
-      stdout.writeln('v1 details: $detailCount');
 
-      final meta = _readMeta(db);
-      stdout.writeln('library_id: ${meta['library_id'] ?? ''}');
-      stdout.writeln('library_version: ${meta['library_version'] ?? ''}');
-      stdout.writeln('schema_version: ${meta['schema_version'] ?? ''}');
-      stdout.writeln('book_recipe_count: ${meta['local_library_count'] ?? ''}');
-      stdout.writeln('cook_recipe_count: ${meta['cook_recipe_count'] ?? ''}');
+      if (hasV2Recipes && hasV2Detail) {
+        _require(
+          _tableExists(db, 'daily_choice_recipe_sets'),
+          'Missing v2 recipe set table.',
+        );
+        _require(
+          _tableExists(db, 'daily_choice_recipe_summaries'),
+          'Missing v2 summary table.',
+        );
+        _require(
+          _tableExists(db, 'daily_choice_recipe_filter_index'),
+          'Missing v2 filter index table.',
+        );
+        _require(
+          _tableExists(db, 'daily_choice_recipe_ingredient_index'),
+          'Missing v2 ingredient index table.',
+        );
 
-      final sample = db.select('''
-        SELECT id, title_zh
-        FROM daily_choice_eat_recipe_summaries
-        ORDER BY sort_key ASC, id ASC
-        LIMIT 1
-      ''').first;
-      final sampleId = '${sample['id'] ?? ''}';
-      final detailRows = db.select(
-        '''
-        SELECT materials_zh_json, steps_zh_json
-        FROM daily_choice_eat_recipe_details
-        WHERE recipe_id = ?
-        LIMIT 1
-        ''',
-        <Object?>[sampleId],
-      );
-      _require(detailRows.isNotEmpty, 'Sample detail row is missing.');
-      stdout.writeln('sample: $sampleId / ${sample['title_zh'] ?? ''}');
-      stdout.writeln(
-        'sample_detail_bytes: '
-        '${'${detailRows.first['materials_zh_json'] ?? ''}'.length + '${detailRows.first['steps_zh_json'] ?? ''}'.length}',
-      );
+        final recipeCount = _countRows(db, 'daily_choice_recipes');
+        final detailCount = _countRows(db, 'daily_choice_recipe_details');
+        final summaryCount = _countRows(db, 'daily_choice_recipe_summaries');
+        _require(recipeCount > 0, 'No v2 recipes found.');
+        _require(detailCount == recipeCount, 'v2 detail count mismatch.');
+        _require(summaryCount == recipeCount, 'v2 summary count mismatch.');
+        if (expectedCount != null && expectedCount > 0) {
+          _require(
+            recipeCount == expectedCount,
+            'Expected $expectedCount v2 recipes but found $recipeCount.',
+          );
+        }
 
-      final hasV2Recipes = _tableExists(db, 'daily_choice_recipes');
-      stdout.writeln('v2 detected: $hasV2Recipes');
-      if (hasV2Recipes) {
-        stdout.writeln('v2 recipes: ${_countRows(db, 'daily_choice_recipes')}');
+        stdout.writeln('v2 recipes: $recipeCount');
+        stdout.writeln('v2 summaries: $summaryCount');
+        stdout.writeln('v2 details: $detailCount');
         stdout.writeln(
           'v2 sets: ${_countRows(db, 'daily_choice_recipe_sets')}',
         );
         stdout.writeln(
+          'v2 filters: ${_countRows(db, 'daily_choice_recipe_filter_index')}',
+        );
+        stdout.writeln(
           'v2 ingredients: '
           '${_countRows(db, 'daily_choice_recipe_ingredient_index')}',
+        );
+
+        final meta = _readMeta(db, 'daily_choice_recipe_schema_meta');
+        stdout.writeln('v2 library_id: ${meta['library_id'] ?? ''}');
+        stdout.writeln('v2 library_version: ${meta['library_version'] ?? ''}');
+        stdout.writeln('v2 schema_version: ${meta['schema_version'] ?? ''}');
+
+        final sample = db.select('''
+          SELECT recipe_id, title_zh
+          FROM daily_choice_recipes
+          WHERE status = 'active' AND is_available = 1
+          ORDER BY sort_key ASC, recipe_id ASC
+          LIMIT 1
+        ''').first;
+        final sampleId = '${sample['recipe_id'] ?? ''}';
+        final detailRows = db.select(
+          '''
+          SELECT materials_zh_json, steps_zh_json
+          FROM daily_choice_recipe_details
+          WHERE recipe_id = ?
+          LIMIT 1
+          ''',
+          <Object?>[sampleId],
+        );
+        _require(detailRows.isNotEmpty, 'Sample v2 detail row is missing.');
+        stdout.writeln('v2 sample: $sampleId / ${sample['title_zh'] ?? ''}');
+        stdout.writeln(
+          'v2 sample_detail_bytes: '
+          '${'${detailRows.first['materials_zh_json'] ?? ''}'.length + '${detailRows.first['steps_zh_json'] ?? ''}'.length}',
         );
       }
 
@@ -196,14 +274,12 @@ int _countRows(Database db, String tableName) {
   return (rows.first['total'] as num).toInt();
 }
 
-Map<String, String> _readMeta(Database db) {
-  if (!_tableExists(db, 'daily_choice_eat_recipe_meta')) {
+Map<String, String> _readMeta(Database db, String tableName) {
+  if (!_tableExists(db, tableName)) {
     return const <String, String>{};
   }
   return <String, String>{
-    for (final row in db.select(
-      'SELECT key, value FROM daily_choice_eat_recipe_meta',
-    ))
+    for (final row in db.select('SELECT key, value FROM $tableName'))
       '${row['key'] ?? ''}': '${row['value'] ?? ''}',
   };
 }

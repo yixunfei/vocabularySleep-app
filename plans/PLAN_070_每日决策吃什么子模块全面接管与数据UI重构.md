@@ -127,10 +127,9 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮从已上传到 S3 `/cook_data` 的验证包开始，优先确认运行时默认 key `cook_data/daily_choice_recipe_library.db` 与 `CstCloudS3CompatClient` 配置一致，并做真实远端 HEAD / range / 下载后 SQLite smoke。
-- 不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；如需重新生成验证包，仅写入 `D:\vocabularySleep-resources\cook_data_plan070_validation`，也不把外部数据包提交进仓库。
-- 继续推进阶段 3 的运行时性能铺垫：生成器先对 SQLite 导出双写 v1 兼容表与 v2 分层表，app 现有读取链路仍以 v1 表为主，避免一次性破坏已上传远端库和当前运行时。
-- 继续推进阶段 4 的筛选与随机基础收口：餐段默认增加并使用“全部”，忌口预设先收敛到香菜、海鲜、花生坚果、酒精、辣椒；食材匹配默认保留 raw / canonical 精确优先，不再把 `排骨` 自动退化成全猪肉。
+- 本轮按用户要求重新生成上传用新版 DB，输出目录限定为 `D:\vocabularySleep-resources\cook_data_plan070_validation`，不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据。
+- 新版 DB 不再保留 v1 兼容表，仅写入 v2 分层 schema；JSON 文件可随生成器输出保留为人工审计材料，但本轮上传主件为 `daily_choice_recipe_library.db`。
+- 运行时若直接上传 v2-only DB，当前 v1 store 读取链路需要后续接入 v2 查询层后才能安装读取；本轮先完成数据包生成、schema 验证和审计，不改 app 运行时安装逻辑。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -159,6 +158,8 @@
 24. 2026-04-27: 已新增 `scripts/verify_daily_choice_recipe_remote.dart`，用于通过纯 Dart S3 probe 下载远端 DB 并验证 v1/v2 表计数、meta 和 sample detail。
 25. 2026-04-27: 已将 `scripts/generate_daily_choice_recipe_dataset.py` 的 SQLite 导出改为 v1/v2 双写：保留现有 v1 runtime 表，同时写入 `daily_choice_recipe_sets`、`daily_choice_recipes`、summary/detail、filter index、ingredient index、search text 和 set stats 等 v2 表。
 26. 2026-04-27: 已开始阶段 4 筛选基础收口：吃什么餐段默认改为“全部”，catalog 支持 `mealId == 'all'`；忌口预设精简为香菜、海鲜、花生坚果、酒精、辣椒；`排骨` 等具体猪肉项不再在运行时自动折叠成通用 `pork` 食材 token。
+27. 2026-04-27: 已按用户要求重新生成 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，不再包含 v1 兼容表；新 DB 大小 142,467,072 bytes，SHA256 为 `9B769482EEA198E233263EB41E8FA01ECAA3C058E25F68377ED8E468F62C6FFE`。
+28. 2026-04-27: 已新增 `records/record_070_daily_choice_v2_only_db_package.md`、`records/record_070_daily_choice_recipe_v2_only_db_audit.md` 与 JSON 审计记录，记录 v2-only 上传包、schema 计数、哈希和审计结果。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -185,3 +186,9 @@
 - 2026-04-27: `dart analyze scripts/verify_daily_choice_recipe_remote.dart lib/src/ui/pages/toolbox_daily_choice test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`（通过）。
 - 2026-04-27: `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
 - 2026-04-27: `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）。
+- 2026-04-27: `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过，确认 v2-only 导出与审计脚本语法有效）。
+- 2026-04-27: `dart format scripts\verify_daily_choice_recipe_remote.dart`（通过）。
+- 2026-04-27: `dart analyze scripts\verify_daily_choice_recipe_remote.dart`（通过）。
+- 2026-04-27: `python -X utf8` 从验证包 `daily_choice_recipe_library.json` 调用 `write_sqlite_export(..., sqlite_mode='v2')`（通过，重写 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db`，7,772 条）。
+- 2026-04-27: `python -X utf8` 检查 v2-only DB（通过，`PRAGMA integrity_check=ok`、`user_version=2`、v1 summary/detail 表不存在、v2 recipes/summaries/details 均为 7,772 行）。
+- 2026-04-27: `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv build\_external\cook\app\data\recipe.csv --output-md records\record_070_daily_choice_recipe_v2_only_db_audit.md --output-json records\record_070_daily_choice_recipe_v2_only_db_audit.json`（通过，10 个审计问题桶均为 0，cook CSV 599 行全部标题命中）。

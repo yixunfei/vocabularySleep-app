@@ -224,30 +224,64 @@ def inspect_sqlite(path: Path) -> dict[str, Any]:
             counts[table_name] = conn.execute(
                 f"SELECT COUNT(*) FROM {table_name}"
             ).fetchone()[0]
-        source_rows = conn.execute(
-            """
-            SELECT
-              SUM(CASE WHEN source_label IS NOT NULL AND source_label <> '' THEN 1 ELSE 0 END),
-              SUM(CASE WHEN source_url IS NOT NULL AND source_url <> '' THEN 1 ELSE 0 END)
-            FROM daily_choice_eat_recipe_summaries
-            """
-        ).fetchone()
-        reference_rows = conn.execute(
-            """
-            SELECT COUNT(*)
-            FROM daily_choice_eat_recipe_details
-            WHERE references_json IS NOT NULL
-              AND references_json <> ''
-              AND references_json <> '[]'
-            """
-        ).fetchone()[0]
-        return {
+        has_v1 = (
+            "daily_choice_eat_recipe_summaries" in tables
+            and "daily_choice_eat_recipe_details" in tables
+        )
+        has_v2 = (
+            "daily_choice_recipes" in tables
+            and "daily_choice_recipe_details" in tables
+        )
+        if has_v1 and has_v2:
+            schema_mode = "v1-v2"
+        elif has_v2:
+            schema_mode = "v2"
+        elif has_v1:
+            schema_mode = "v1"
+        else:
+            schema_mode = "unknown"
+        result: dict[str, Any] = {
             "exists": True,
+            "schemaMode": schema_mode,
+            "userVersion": conn.execute("PRAGMA user_version").fetchone()[0],
             "tables": counts,
-            "summaryRowsWithSourceLabel": source_rows[0] or 0,
-            "summaryRowsWithSourceUrl": source_rows[1] or 0,
-            "detailRowsWithReferences": reference_rows,
+            "summaryRowsWithSourceLabel": 0,
+            "summaryRowsWithSourceUrl": 0,
+            "detailRowsWithReferences": 0,
         }
+        if has_v1:
+            source_rows = conn.execute(
+                """
+                SELECT
+                  SUM(CASE WHEN source_label IS NOT NULL AND source_label <> '' THEN 1 ELSE 0 END),
+                  SUM(CASE WHEN source_url IS NOT NULL AND source_url <> '' THEN 1 ELSE 0 END)
+                FROM daily_choice_eat_recipe_summaries
+                """
+            ).fetchone()
+            reference_rows = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM daily_choice_eat_recipe_details
+                WHERE references_json IS NOT NULL
+                  AND references_json <> ''
+                  AND references_json <> '[]'
+                """
+            ).fetchone()[0]
+            result.update(
+                {
+                    "summaryRowsWithSourceLabel": source_rows[0] or 0,
+                    "summaryRowsWithSourceUrl": source_rows[1] or 0,
+                    "detailRowsWithReferences": reference_rows,
+                }
+            )
+        if has_v2 and "daily_choice_recipe_schema_meta" in tables:
+            result["v2Meta"] = {
+                str(row[0]): str(row[1])
+                for row in conn.execute(
+                    "SELECT key, value FROM daily_choice_recipe_schema_meta"
+                )
+            }
+        return result
     finally:
         conn.close()
 
@@ -525,6 +559,11 @@ def render_markdown(report: dict[str, Any]) -> str:
     stats = report["stats"]
     source = report["sourceCoverage"]
     issues = report["issues"]
+    sqlite_tables = stats["sqlite"].get("tables", {})
+    sqlite_summary_rows = sqlite_tables.get(
+        "daily_choice_eat_recipe_summaries",
+        sqlite_tables.get("daily_choice_recipes", "n/a"),
+    )
     if source["cookCsvRows"] and source["cookCsvMissingExactTitles"] == 0:
         cook_coverage_line = (
             f"1. `YunYouJun/cook` 已作为默认 cook 数据来源导入：recipe.csv 共 "
@@ -549,7 +588,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- **菜谱总数**: {stats['recipeCount']}",
         f"- **摘要总数**: {stats['summaryRecipeCount']}",
         f"- **cook recipe.csv 行数**: {stats['cookCsvRowCount']}",
-        f"- **SQLite 摘要行数**: {stats['sqlite'].get('tables', {}).get('daily_choice_eat_recipe_summaries', 'n/a')}",
+        f"- **SQLite 摘要行数**: {sqlite_summary_rows}",
         "",
         "## 关键结论",
         cook_coverage_line,

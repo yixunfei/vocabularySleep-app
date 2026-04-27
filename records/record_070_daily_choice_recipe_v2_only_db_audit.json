@@ -1,0 +1,179 @@
+{
+  "generatedAt": "2026-04-27T02:41:47.190495+00:00",
+  "inputs": {
+    "libraryJson": "D:\\vocabularySleep-resources\\cook_data_plan070_validation\\daily_choice_recipe_library.json",
+    "summaryJson": "D:\\vocabularySleep-resources\\cook_data_plan070_validation\\daily_choice_recipe_library_summary.json",
+    "sqliteDb": "D:\\vocabularySleep-resources\\cook_data_plan070_validation\\daily_choice_recipe_library.db",
+    "cookCsv": "build\\_external\\cook\\app\\data\\recipe.csv",
+    "cookCsvUrl": "https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv",
+    "cookCsvError": null
+  },
+  "stats": {
+    "recipeCount": 7772,
+    "summaryRecipeCount": 7772,
+    "cookCsvRowCount": 599,
+    "sqlite": {
+      "exists": true,
+      "schemaMode": "v2",
+      "userVersion": 2,
+      "tables": {
+        "daily_choice_recipe_details": 7772,
+        "daily_choice_recipe_filter_index": 122825,
+        "daily_choice_recipe_ingredient_index": 118882,
+        "daily_choice_recipe_materials": 63970,
+        "daily_choice_recipe_schema_meta": 6,
+        "daily_choice_recipe_search_text": 7772,
+        "daily_choice_recipe_set_stats": 2,
+        "daily_choice_recipe_sets": 2,
+        "daily_choice_recipe_steps": 23043,
+        "daily_choice_recipe_summaries": 7772,
+        "daily_choice_recipe_user_collection_members": 0,
+        "daily_choice_recipe_user_collections": 0,
+        "daily_choice_recipe_user_state": 0,
+        "daily_choice_recipes": 7772
+      },
+      "summaryRowsWithSourceLabel": 0,
+      "summaryRowsWithSourceUrl": 0,
+      "detailRowsWithReferences": 0,
+      "v2Meta": {
+        "schema_id": "vocabulary_sleep.daily_choice.recipe_library.v2",
+        "schema_version": "2",
+        "compatible_v1_schema_version": "1",
+        "library_id": "toolbox_daily_choice_recipe_library",
+        "library_version": "2026-04-25",
+        "generated_at": "2026-04-27T01:13:42.150768+00:00"
+      }
+    },
+    "libraryStats": {
+      "rawRecipeCount": 7364,
+      "bookRecipeCount": 7179,
+      "cookRecipeCount": 593,
+      "dedupedRecipeCount": 7772,
+      "perBookCounts": {
+        "Nourishing Recipes for Elderly (David Kane) .epub": 29,
+        "The Italian Pantry (Theo Randall).epub": 91,
+        "一学就会做家常菜1688例(高清版) (最实用的家庭美食菜谱) (犀文图书) .epub": 473,
+        "专业烘焙 第3版 (韦恩·吉斯伦) .epub": 0,
+        "凉拌美食菜谱 (严锴) .epub": 419,
+        "博古斯学院法式西餐烹饪宝典 (保罗·博古斯厨艺学院).epub": 0,
+        "台北人情味小吃，挑剔老饕的美食地圖60+ (吳家輝) .epub": 0,
+        "家常小炒139例 (小菜谱) (小菜谱编委会) .epub": 129,
+        "小菜谱一定要学会的家常简易刀工 (《小菜谱》编委会).epub": 89,
+        "意大利菜谱 (Gabriele Napolitano) .epub": 19,
+        "我的獨享宵夜 (繁體中文) ((日) 金丸繪里加 著 沈亮慧 譯) .epub": 0,
+        "日本料理制作大全 (吴琪, 双福) .epub": 63,
+        "最牛的菜谱：6744道菜谱大全 (菜谱大全) (z-library.sk, 1lib.sk, z-lib.sk).epub": 5475,
+        "正確洗菜，擺脫農藥陰影：家庭必備！學會洗泡刷，減少蔬果農藥殘留，確保全家人健康 (顏瑞泓)..epub": 0,
+        "汤煲美食菜谱 (Soup and Casserole Recipes) (严锴) (z-library.sk, 1lib.sk, z-lib.sk).epub": 461,
+        "法国蓝带西餐烹饪宝典 (莱特,朱莉) .epub": 0,
+        "百变营养米饭139例 (小菜谱) (《小菜谱》编委会).epub": 45,
+        "請用，西班牙海鮮飯：66道大廚家常菜，從肉類到海鮮，從米飯‧麵包到馬鈴薯‧橄欖油，從湯品‧甜點到飲料，西班牙料理精髓完全掌握，一學就會... .epub": 0,
+        "食趣：欧文的无国界创意厨房（融合东西方厨艺，荟聚中餐、西餐、日式料理、东南亚菜，世界美食尽在一间厨房） (欧文).epub": 71
+      }
+    }
+  },
+  "sourceCoverage": {
+    "cookCsvRows": 599,
+    "cookCsvExactTitleMatches": 599,
+    "cookCsvMissingExactTitles": 0,
+    "cookCsvMissingSamples": [],
+    "zeroExtractedBooks": [
+      {
+        "book": "专业烘焙 第3版 (韦恩·吉斯伦) .epub",
+        "count": 0
+      },
+      {
+        "book": "博古斯学院法式西餐烹饪宝典 (保罗·博古斯厨艺学院).epub",
+        "count": 0
+      },
+      {
+        "book": "台北人情味小吃，挑剔老饕的美食地圖60+ (吳家輝) .epub",
+        "count": 0
+      },
+      {
+        "book": "我的獨享宵夜 (繁體中文) ((日) 金丸繪里加 著 沈亮慧 譯) .epub",
+        "count": 0
+      },
+      {
+        "book": "正確洗菜，擺脫農藥陰影：家庭必備！學會洗泡刷，減少蔬果農藥殘留，確保全家人健康 (顏瑞泓)..epub",
+        "count": 0
+      },
+      {
+        "book": "法国蓝带西餐烹饪宝典 (莱特,朱莉) .epub",
+        "count": 0
+      },
+      {
+        "book": "請用，西班牙海鮮飯：66道大廚家常菜，從肉類到海鮮，從米飯‧麵包到馬鈴薯‧橄欖油，從湯品‧甜點到飲料，西班牙料理精髓完全掌握，一學就會... .epub",
+        "count": 0
+      }
+    ],
+    "summaryRowsWithSourceLabelOrUrl": 0,
+    "summaryRowsWithReferences": 0,
+    "referenceTitles": [],
+    "finding": "YunYouJun/cook recipe.csv rows are present in the generated library."
+  },
+  "issues": {
+    "vegetarian_profile_conflicts_with_meat_or_seafood": {
+      "priority": "P0",
+      "description": "profile contains vegetarian while contains includes meat or seafood.",
+      "count": 0,
+      "samples": []
+    },
+    "vegan_friendly_conflicts_with_animal_contains": {
+      "priority": "P0",
+      "description": "diet contains vegan_friendly while contains includes animal ingredients.",
+      "count": 0,
+      "samples": []
+    },
+    "halal_friendly_conflicts_with_pork_or_alcohol": {
+      "priority": "P0",
+      "description": "diet contains halal_friendly while contains includes pork or alcohol.",
+      "count": 0,
+      "samples": []
+    },
+    "vegetarian_profile_with_unmodeled_animal_terms": {
+      "priority": "P0",
+      "description": "profile vegetarian was inferred even though raw text includes animal terms not modeled in canonical meat detection.",
+      "count": 0,
+      "samples": []
+    },
+    "recipe_notes_contain_halal_explanation": {
+      "priority": "P1",
+      "description": "Generated halal disclaimer was written into recipe notes instead of staying in UI/help copy.",
+      "count": 0,
+      "samples": []
+    },
+    "recipe_notes_contain_cuisine_labels": {
+      "priority": "P1",
+      "description": "Cuisine labels appear in free-form notes; they are not structured or source-confidence tracked.",
+      "count": 0,
+      "samples": [],
+      "breakdown": {}
+    },
+    "western_marker_with_chinese_cuisine_note": {
+      "priority": "P1",
+      "description": "Recipe title/materials look western or non-Chinese while notes contain a Chinese cuisine label.",
+      "count": 0,
+      "samples": []
+    },
+    "onion_alias_also_indexes_scallion": {
+      "priority": "P2",
+      "description": "Ingredient alias matching adds 葱 when only 洋葱 appears.",
+      "count": 0,
+      "samples": []
+    },
+    "specific_pork_cut_collapsed_to_generic_pork": {
+      "priority": "P2",
+      "description": "Specific pork cuts are collapsed into generic 猪肉, which explains broad matches like 排骨 -> 猪肉.",
+      "count": 0,
+      "samples": [],
+      "specificPorkTextCount": 1567
+    },
+    "garbled_text_markers": {
+      "priority": "P1",
+      "description": "Materials, steps, or notes contain extraction artifacts such as ?? or replacement glyphs.",
+      "count": 0,
+      "samples": []
+    }
+  }
+}
