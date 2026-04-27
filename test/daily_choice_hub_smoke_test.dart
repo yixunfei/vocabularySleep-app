@@ -58,6 +58,7 @@ void main() {
     WidgetTester tester, {
     required _FakeCookService cookService,
     required DailyChoiceEatLibraryStore libraryStore,
+    DailyChoiceStorageService? storage,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -71,7 +72,7 @@ void main() {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: DailyChoiceHub(
-                    storage: _FakeStorageService(),
+                    storage: storage ?? _FakeStorageService(),
                     cookService: cookService,
                     eatLibraryStore: libraryStore,
                     weatherStateOverride: DailyChoiceHubWeatherState(
@@ -211,6 +212,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 250));
 
       expect(libraryStore.randomRequests, isNotEmpty);
+      expect(libraryStore.randomRequests.single.allowedOptionIds, isNull);
 
       await tester.tap(find.text('Details'));
       await tester.pump();
@@ -745,6 +747,78 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'eat random stop falls back locally for large exact visible pools',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final options = List<DailyChoiceOption>.generate(
+        360,
+        (index) => eatOption(
+          id: 'recipe_${index.toString().padLeft(3, '0')}',
+          title: 'Recipe ${index.toString().padLeft(3, '0')}',
+          materials: const <String>['tofu'],
+          steps: const <String>['Cook it'],
+          tags: const <String>['home style'],
+        ),
+      );
+      final result = DailyChoiceCookLoadResult(
+        options: options,
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: options.length,
+        referenceTitles: const <String>['Large test reference'],
+        updatedAt: DateTime(2026, 4, 27, 12),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        referenceTitles: result.referenceTitles,
+        stats: <String, Object?>{'recipeCount': options.length},
+        recipes: options,
+      );
+      final libraryStore = _FakeEatLibraryStore(document);
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+        storage: _FakeStorageService(
+          const DailyChoiceCustomState(
+            hiddenBuiltInIds: <String>{'recipe_000'},
+          ),
+        ),
+      );
+      await pumpUntilVisible(tester, find.text('Load recipe library'));
+      await tester.tap(find.text('Load recipe library'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+
+      await tester.ensureVisible(find.text('Randomize'));
+      await tester.tap(find.text('Randomize'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.text('Stop'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(libraryStore.randomRequests, isEmpty);
+      expect(find.text('Picking'), findsNothing);
+      expect(find.text('Recipe 000'), findsNothing);
+
+      await tester.tap(find.text('Details'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(libraryStore.detailRequests, isNotEmpty);
+      expect(libraryStore.detailRequests.single, isNot('recipe_000'));
+      expect(find.text('Materials'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('eat recipe editor tolerates duplicated all context entries', (
     WidgetTester tester,
   ) async {
@@ -846,14 +920,62 @@ void main() {
     expect(find.text('First Recipe'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('random panel clears picking state when async pick times out', (
+    WidgetTester tester,
+  ) async {
+    final first = eatOption(id: 'first_recipe', title: 'First Recipe');
+    final pendingPick = Completer<DailyChoiceOption?>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: Scaffold(
+          body: DailyChoiceRandomPanel(
+            i18n: AppI18n('en'),
+            accent: Colors.orange,
+            title: 'Random',
+            subtitle: 'Pick one',
+            options: <DailyChoiceOption>[first],
+            emptyText: 'Empty',
+            onDetail: (_) {},
+            onManage: () {},
+            onGuide: () {},
+            onPickRandomOption: () => pendingPick.future,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Randomize'));
+    await tester.pump(const Duration(milliseconds: 140));
+    await tester.tap(find.text('Stop'));
+    await tester.pump();
+    expect(find.text('Picking'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1300));
+
+    expect(find.text('Picking'), findsNothing);
+    expect(find.text('Randomize'), findsOneWidget);
+    expect(find.text('First Recipe'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FakeStorageService extends DailyChoiceStorageService {
-  @override
-  Future<DailyChoiceCustomState> load() async => DailyChoiceCustomState.empty;
+  _FakeStorageService([this.state = DailyChoiceCustomState.empty]);
+
+  DailyChoiceCustomState state;
 
   @override
-  Future<void> save(DailyChoiceCustomState state) async {}
+  Future<DailyChoiceCustomState> load() async => state;
+
+  @override
+  Future<void> save(DailyChoiceCustomState state) async {
+    this.state = state;
+  }
 }
 
 class _FakeCookService extends DailyChoiceCookService {

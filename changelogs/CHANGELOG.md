@@ -39,6 +39,8 @@
 - 新增管理页内置菜谱逐项动作回归测试，覆盖 detail 慢读取期间不重复触发请求，以及 detail 失败时保留当前 sheet 并显示局部错误。
 - 新增 `records/record_070_daily_choice_manager_auto_paging_and_search_commit.md`，记录管理页自动分页、搜索提交边界和后续 FTS/倒排表风险。
 - 新增管理页自动分页与搜索提交回归测试，覆盖滚动触底自动扩大 SQL 分页 limit，以及输入搜索词期间不查询、失焦后才提交 `searchText`。
+- 新增 `records/record_070_daily_choice_random_stop_timeout_and_pivot_guard.md`，记录随机停止超时兜底、大候选池 SQL guard 和本轮验证。
+- 新增随机停止回归测试，覆盖异步最终抽取超时后退出 `Picking`，以及隐藏项导致需要精确可见池且候选过大时不触发重 SQL pivot。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -85,6 +87,8 @@
 - 吃什么管理页内触发详情读取时由 manager sheet 承接局部错误；主 UI 的详情按钮仍沿用 SnackBar 错误反馈。
 - 管理页吃什么内置库移除“继续加载”按钮，改为滚动接近底部时自动递增 SQL 查询 limit，并在加载下一页时保留当前已显示摘要。
 - 管理页搜索框改为组件级 `TextEditingController` / `FocusNode` 管理；输入只更新 draft，离开输入框或提交搜索后才刷新 SQL 搜索词。
+- 吃什么主 UI 停止随机时，无隐藏/个人调整/食谱集约束的内置候选池不再把全量 id 列表传给 `pickBuiltInRandomSummary(...)`，改为直接复用当前 SQL 筛选条件。
+- 需要精确可见池的随机停止场景若候选 id 超过 300 个，会跳过 store random pivot 并保留当前锁定候选，避免构造大 `IN (...)` 查询。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -104,6 +108,7 @@
 - random pivot 在主 UI 中只覆盖随机池全为可见内置菜谱的场景；legacy v1 fallback 使用候选 id 列表取模抽取，不具备 v2 `random_key` 的稳定全局分布。
 - 管理页吃什么内置库搜索已接入 SQLite `daily_choice_recipe_search_text`；本地自定义和个人调整搜索仍走内存过滤，后续若要统一语义需单独处理 overlay 搜索。
 - 当前搜索仍是 `instr`/substring 查询，不是 FTS；拼音、分词、多关键词相关性排序需后续单独引入 FTS5 或倒排表。
+- 大候选池且存在隐藏/个人调整/食谱集约束时，最终随机分布会回退到当前 UI 随机过程锁定的候选；这是为避免停止按钮等待重 SQL 的性能兜底。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
@@ -123,6 +128,8 @@
 - 修复管理页内置菜谱详情/个人调整/另存可重复点击导致重复 detail 读取的问题。
 - 修复管理页内置菜谱 detail 读取失败时只能走全局提示、缺少条目级错误反馈的问题；现在失败不会关闭管理 sheet 或清空当前搜索/分页状态。
 - 修复管理页搜索框每次输入字符都触发 SQL 查询的问题；现在只在失焦或提交时触发搜索。
+- 修复随机停止后因最终抽取耗时过长可能长时间卡在“选中中 / Picking”，且无法稳定显示最终菜谱的问题。
+- 修复主 UI 停止随机时对大候选池传入全量 `allowedOptionIds`，导致 v2 SQL random pivot 构造大 `IN (...)` 查询并拖慢交互的问题。
 
 ### 验证
 - `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）
@@ -189,6 +196,10 @@
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
 - `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机触发 store pivot、管理页展开内置库触发 SQL 查询、候选池变化后旧异步抽取不回写）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖随机停止超时兜底和大可见池本地 fallback）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
 - `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26

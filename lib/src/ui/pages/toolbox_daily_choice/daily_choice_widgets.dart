@@ -194,6 +194,7 @@ class DailyChoiceRandomPanel extends StatefulWidget {
 }
 
 class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
+  static const Duration _finalPickTimeout = Duration(milliseconds: 1200);
   static const double _randomStageHeight = 224;
   final math.Random _random = math.Random();
   Timer? _timer;
@@ -298,7 +299,10 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
     int generation,
   ) async {
     try {
-      final picked = await picker();
+      final picked = await picker().timeout(
+        _finalPickTimeout,
+        onTimeout: () => null,
+      );
       if (!mounted || _running || generation != _pickGeneration) {
         return;
       }
