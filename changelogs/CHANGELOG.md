@@ -22,6 +22,8 @@
 - 新增吃什么 catalog 回归测试，覆盖“全部餐段”默认候选池、花生坚果组合忌口，以及 `排骨` 不再退化成通用 `pork` 食材 token。
 - 新增 `records/record_070_daily_choice_v2_only_db_package.md`，记录新版 v2-only 上传 DB 的输出路径、大小、SHA256、schema/meta、表计数和运行时边界。
 - 新增 `records/record_070_daily_choice_recipe_v2_only_db_audit.md` 与 JSON 审计结果，记录 v2-only DB 与验证包 JSON 的一致性、cook CSV 覆盖和 10 个数据问题桶结果。
+- 新增 `records/record_070_daily_choice_remote_v2_runtime_smoke.md`，记录用户更新 S3 后的远端 v2-only DB 完整下载 smoke 和运行时读取验证。
+- 新增 `DailyChoiceEatLibraryStore installs v2-only SQLite and lazy loads details` 单测，覆盖 v2-only DB 的安装、book/cook 计数、摘要轻量读取和详情懒加载。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -51,6 +53,10 @@
 - v2 SQLite 导出写入 `PRAGMA user_version=2`，便于上传后快速识别 schema 版本。
 - `scripts/audit_daily_choice_recipe_dataset.py` 支持自动识别 v2-only DB，不再强依赖 v1 summary/detail 表。
 - `scripts/verify_daily_choice_recipe_remote.dart` 支持 v1、v2 或 v1/v2 双写 DB 的远端 smoke 验证。
+- 已验证用户更新后的 S3 `cook_data/daily_choice_recipe_library.db` 为 v2-only DB：远端大小 142,467,072 bytes，`user_version=2`，v2 recipes/summaries/details 均为 7,772 行。
+- `DailyChoiceEatLibraryStore` 增加 schema 自动识别，优先读取 v2 表，同时保留 v1 旧库读取能力。
+- `DailyChoiceEatLibraryStore` 的远端 DB 安装归一化按 schema 写入 meta：v2 写入 `daily_choice_recipe_schema_meta`，v1 继续写入 `daily_choice_eat_recipe_meta`。
+- 吃什么内置菜谱摘要读取新增 v2 查询路径：从 `daily_choice_recipes` + `daily_choice_recipe_summaries` 读取轻量摘要，详情、材料、步骤继续按需从 `daily_choice_recipe_details` 懒加载。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -58,13 +64,13 @@
 - 吃什么摘要加载改为模块级后台任务后，摘要未完成前吃什么候选池会保持为空并显示资源准备状态；这是有意降级，用来换取每日决策其他模块不被阻塞。
 - 本轮生成的验证包位于 `D:\vocabularySleep-resources\cook_data_plan070_validation`，尚未覆盖 `D:\vocabularySleep-resources\cook_data`；后续确认后再执行替换或上传。
 - cook CSV 原始 599 行中按标题/厨具去重导入 593 条菜谱，但审计按标题确认 599 行全部可在新库中命中。
-- v2 schema 已接入生成器 SQLite 双写，但尚未接入 app 运行时查询层；后续仍需要新增 store v2 查询层单测并分批切换读取路径。
+- v2 schema 已接入 app 运行时的安装、状态、摘要和详情读取路径；后续仍需要把分页、筛选索引查询和 random pivot 下沉到 v2 SQL。
 - SQLite 仍需要下载到应用支持目录后才能查询；本轮“不保留本地”收口为不再保留或生成 JSON 兜底缓存，而不是流式查询远端 SQLite。
 - 吃什么远端首装失败且无旧库时会返回错误状态和空候选池，不再静默生成 fallback 菜谱库；这是有意让数据可信度优先于离线兜底。
-- 当前已上传远端 DB 仍为 v1 兼容库，`daily_choice_recipes` 等 v2 表尚不存在；v2 双写将在下一次重新生成并上传 DB 后进入远端包。
+- 当前已上传远端 DB 已切换为 v2-only，不再包含 v1 兼容表；旧版本 app 若只支持 v1 表将无法读取新版远端包。
 - `scripts/verify_daily_choice_recipe_remote.dart` 为纯 Dart S3 smoke 工具，需要通过环境变量或命令行参数提供 S3 配置；本轮验证时配置从现有 `CstCloudS3CompatClient` 默认值读取后注入环境变量。
-- 本轮重新生成的 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，大小 142,467,072 bytes，SHA256 为 `9B769482EEA198E233263EB41E8FA01ECAA3C058E25F68377ED8E468F62C6FFE`；上传到 S3 后需等 PLAN_070 后续 v2 查询层接入后才能切换当前 app 安装读取。
-- 本轮未覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据，也未重新上传 S3；用户确认后手动上传验证目录中的新版 DB。
+- 本轮重新生成的 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，大小 142,467,072 bytes，SHA256 为 `9B769482EEA198E233263EB41E8FA01ECAA3C058E25F68377ED8E468F62C6FFE`；当前 app 已接入基础 v2 读取，但筛选和随机仍基于安装后加载的摘要集合。
+- 本轮未覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；S3 远端 DB 已由用户更新，本轮仅做远端 smoke 和运行时读取修复。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
@@ -75,6 +81,8 @@
 - 修复远端刷新失败时可能直接覆盖现有 SQLite 库的风险；现在候选 DB 校验通过后才替换旧库。
 - 修复吃什么默认餐段过早收窄候选池的问题；默认现在从全部餐段候选中随机。
 - 修复 `排骨` 等具体食材在运行时食材匹配中被自动折叠为通用猪肉 token，导致输入排骨可能扩大到全猪肉菜谱的问题。
+- 修复新版 v2-only 远端 DB 因 `PRAGMA user_version=2` 被当前 store 判定为不支持新 schema，导致安装或读取失败的问题。
+- 修复 v2-only DB 缺少 v1 summary/detail 表时，吃什么摘要和详情读取 SQL 仍固定查询 v1 表的问题。
 
 ### 验证
 - `git switch -c codex/daily-choice-overhaul`（通过）
@@ -107,6 +115,11 @@
 - `python -X utf8` 从验证包 JSON 调用 `write_sqlite_export(..., sqlite_mode='v2')` 重写 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db`（通过，7,772 条）
 - `python -X utf8` 检查 v2-only DB：`PRAGMA integrity_check=ok`、`user_version=2`、v1 summary/detail 表不存在、v2 recipes/summaries/details 均为 7,772 行（通过）
 - `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv build\_external\cook\app\data\recipe.csv --output-md records\record_070_daily_choice_recipe_v2_only_db_audit.md --output-json records\record_070_daily_choice_recipe_v2_only_db_audit.json`（通过，10 个审计问题桶均为 0，cook CSV 599 行全部标题命中）
+- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过，完整下载用户更新后的远端 v2-only DB，v2 recipes/summaries/details 均为 7,772 行）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart scripts\verify_daily_choice_recipe_remote.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 

@@ -95,6 +95,8 @@ typedef DailyChoiceEatLibrarySupportDirectoryProvider =
 typedef DailyChoiceEatLibraryRemoteDatabaseInstaller =
     Future<DateTime?> Function(File targetFile);
 
+enum _DailyChoiceEatLibrarySchema { empty, legacyV1, v2 }
+
 class DailyChoiceEatLibraryStore {
   DailyChoiceEatLibraryStore({
     DailyChoiceCookService? cookService,
@@ -120,11 +122,19 @@ class DailyChoiceEatLibraryStore {
 
   Database? _db;
 
-  static const int _schemaVersion = 1;
+  static const int _legacySchemaVersion = 1;
+  static const int _v2SchemaVersion = 2;
   static const String _recipesTable = 'daily_choice_eat_recipe_summaries';
   static const String _detailsTable = 'daily_choice_eat_recipe_details';
   static const String _indexTermsTable = 'daily_choice_eat_recipe_index_terms';
   static const String _metaTable = 'daily_choice_eat_recipe_meta';
+  static const String _v2RecipesTable = 'daily_choice_recipes';
+  static const String _v2SummariesTable = 'daily_choice_recipe_summaries';
+  static const String _v2DetailsTable = 'daily_choice_recipe_details';
+  static const String _v2SetsTable = 'daily_choice_recipe_sets';
+  static const String _v2MetaTable = 'daily_choice_recipe_schema_meta';
+  static const String _v2BookSetId = 'book_library';
+  static const String _v2CookSetId = 'cook_csv';
 
   Future<DailyChoiceEatLibraryStatus> inspectStatus() async {
     final file = await _databaseFile();
@@ -136,17 +146,22 @@ class DailyChoiceEatLibraryStore {
   }
 
   DailyChoiceEatLibraryStatus _inspectOpenDatabase(Database db) {
-    final hasTable = _tableExists(db, _recipesTable);
-    if (!hasTable) {
-      return const DailyChoiceEatLibraryStatus.empty();
-    }
+    return switch (_detectLibrarySchema(db)) {
+      _DailyChoiceEatLibrarySchema.v2 => _inspectV2Database(db),
+      _DailyChoiceEatLibrarySchema.legacyV1 => _inspectLegacyDatabase(db),
+      _DailyChoiceEatLibrarySchema.empty =>
+        const DailyChoiceEatLibraryStatus.empty(),
+    };
+  }
+
+  DailyChoiceEatLibraryStatus _inspectLegacyDatabase(Database db) {
     final countRow = db.select('SELECT COUNT(*) AS total FROM $_recipesTable');
     final recipeCount = (countRow.firstOrNull?['total'] as num?)?.toInt() ?? 0;
     if (recipeCount <= 0) {
       return const DailyChoiceEatLibraryStatus.empty();
     }
 
-    final meta = _metaMap(db);
+    final meta = _metaMap(db, tableName: _metaTable);
     return DailyChoiceEatLibraryStatus(
       hasInstalledLibrary: true,
       recipeCount: recipeCount,
@@ -164,11 +179,69 @@ class DailyChoiceEatLibraryStore {
     );
   }
 
+  DailyChoiceEatLibraryStatus _inspectV2Database(Database db) {
+    final countRow = db.select('''
+      SELECT COUNT(*) AS total
+      FROM $_v2RecipesTable
+      WHERE status = 'active' AND is_available = 1
+      ''');
+    final recipeCount = (countRow.firstOrNull?['total'] as num?)?.toInt() ?? 0;
+    if (recipeCount <= 0) {
+      return const DailyChoiceEatLibraryStatus.empty();
+    }
+
+    final meta = _metaMap(db, tableName: _v2MetaTable);
+    return DailyChoiceEatLibraryStatus(
+      hasInstalledLibrary: true,
+      recipeCount: recipeCount,
+      localLibraryCount: _v2SetRecipeCount(db, _v2BookSetId),
+      cookRecipeCount: _v2SetRecipeCount(db, _v2CookSetId),
+      referenceTitles: _stringListMeta(meta, 'reference_titles_json'),
+      libraryId: _stringMeta(meta, 'library_id'),
+      libraryVersion: _stringMeta(meta, 'library_version'),
+      schemaId: _stringMeta(meta, 'schema_id'),
+      schemaVersion: _intMeta(meta, 'schema_version'),
+      source: _sourceMeta(meta, 'install_source'),
+      installedAt: _dateTimeMeta(meta, 'installed_at'),
+      updatedAt: _dateTimeMeta(meta, 'updated_at'),
+      errorMessage: _nullableMeta(meta, 'error_message'),
+    );
+  }
+
+  int _v2SetRecipeCount(Database db, String setId) {
+    if (_tableExists(db, _v2SetsTable)) {
+      final rows = db.select(
+        '''
+        SELECT recipe_count
+        FROM $_v2SetsTable
+        WHERE set_id = ?
+        LIMIT 1
+        ''',
+        <Object?>[setId],
+      );
+      final count = (rows.firstOrNull?['recipe_count'] as num?)?.toInt();
+      if (count != null && count > 0) {
+        return count;
+      }
+    }
+    final rows = db.select(
+      '''
+      SELECT COUNT(*) AS total
+      FROM $_v2RecipesTable
+      WHERE primary_set_id = ?
+        AND status = 'active'
+        AND is_available = 1
+      ''',
+      <Object?>[setId],
+    );
+    return (rows.firstOrNull?['total'] as num?)?.toInt() ?? 0;
+  }
+
   DailyChoiceEatLibraryStatus _inspectDatabaseFile(File file) {
     final db = sqlite3.open(file.path);
     try {
       db.execute('PRAGMA foreign_keys = ON;');
-      _ensureSchema(db);
+      _ensureReadableSchema(db);
       return _inspectOpenDatabase(db);
     } finally {
       db.dispose();
@@ -233,14 +306,18 @@ class DailyChoiceEatLibraryStore {
 
   Future<List<DailyChoiceOption>> _loadBuiltInSummariesFromDatabase() async {
     final db = await _database();
-    return _loadBuiltInSummariesFromDatabaseConnection(
-      db,
-      recipesTable: _recipesTable,
-    );
+    return _loadBuiltInSummariesFromDatabaseConnection(db);
   }
 
   Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
     final db = await _database();
+    if (_detectLibrarySchema(db) == _DailyChoiceEatLibrarySchema.v2) {
+      return _loadBuiltInV2Detail(db, recipeId);
+    }
+    return _loadBuiltInLegacyDetail(db, recipeId);
+  }
+
+  DailyChoiceOption? _loadBuiltInLegacyDetail(Database db, String recipeId) {
     final rows = db.select(
       '''
       SELECT
@@ -278,7 +355,46 @@ class DailyChoiceEatLibraryStore {
     if (rows.isEmpty) {
       return null;
     }
-    return _detailOptionFromRow(rows.first);
+    return _detailOptionFromLegacyRow(rows.first);
+  }
+
+  DailyChoiceOption? _loadBuiltInV2Detail(Database db, String recipeId) {
+    final rows = db.select(
+      '''
+      SELECT
+        r.recipe_id,
+        r.title_zh,
+        r.title_en,
+        r.primary_meal_id,
+        r.primary_tool_id,
+        s.subtitle_zh,
+        s.subtitle_en,
+        s.tags_zh_json,
+        s.tags_en_json,
+        s.summary_attributes_json,
+        d.details_zh,
+        d.details_en,
+        d.materials_zh_json,
+        d.materials_en_json,
+        d.steps_zh_json,
+        d.steps_en_json,
+        d.notes_zh_json,
+        d.notes_en_json,
+        d.raw_payload_json
+      FROM $_v2RecipesTable r
+      LEFT JOIN $_v2SummariesTable s
+        ON s.recipe_id = r.recipe_id
+      LEFT JOIN $_v2DetailsTable d
+        ON d.recipe_id = r.recipe_id
+      WHERE r.recipe_id = ?
+      LIMIT 1
+      ''',
+      <Object?>[recipeId],
+    );
+    if (rows.isEmpty) {
+      return null;
+    }
+    return _detailOptionFromV2Row(rows.first);
   }
 
   Future<void> close() async {
@@ -345,18 +461,30 @@ class DailyChoiceEatLibraryStore {
   }) async {
     final db = sqlite3.open(databaseFile.path);
     try {
-      _ensureSchema(db);
-      final previousMeta = _metaMap(db);
+      _ensureReadableSchema(db);
+      final schema = _detectLibrarySchema(db);
+      final metaTable = schema == _DailyChoiceEatLibrarySchema.v2
+          ? _v2MetaTable
+          : _metaTable;
+      final schemaVersion = schema == _DailyChoiceEatLibrarySchema.v2
+          ? _v2SchemaVersion
+          : _legacySchemaVersion;
+      final previousMeta = _metaMap(db, tableName: metaTable);
       final now = DateTime.now().toIso8601String();
       final previousUpdatedAt = _stringMeta(previousMeta, 'updated_at');
       final normalizedUpdatedAt =
           remoteUpdatedAt?.toIso8601String() ??
           (previousUpdatedAt.trim().isNotEmpty ? previousUpdatedAt : now);
-      _upsertMeta(db, 'install_source', DailyChoiceCookDataSource.remote.name);
-      _upsertMeta(db, 'installed_at', now);
-      _upsertMeta(db, 'updated_at', normalizedUpdatedAt);
-      _upsertMeta(db, 'error_message', '');
-      db.execute('PRAGMA user_version = $_schemaVersion;');
+      _upsertMeta(
+        db,
+        'install_source',
+        DailyChoiceCookDataSource.remote.name,
+        tableName: metaTable,
+      );
+      _upsertMeta(db, 'installed_at', now, tableName: metaTable);
+      _upsertMeta(db, 'updated_at', normalizedUpdatedAt, tableName: metaTable);
+      _upsertMeta(db, 'error_message', '', tableName: metaTable);
+      db.execute('PRAGMA user_version = $schemaVersion;');
       db.execute('PRAGMA wal_checkpoint(TRUNCATE);');
     } finally {
       db.dispose();
@@ -402,19 +530,46 @@ class DailyChoiceEatLibraryStore {
     db.execute('PRAGMA foreign_keys = ON;');
     db.execute('PRAGMA journal_mode = WAL;');
     db.execute('PRAGMA synchronous = NORMAL;');
-    _ensureSchema(db);
+    _ensureReadableSchema(db);
     _db = db;
     return db;
   }
 
-  void _ensureSchema(Database db) {
+  void _ensureReadableSchema(Database db) {
+    if (_detectLibrarySchema(db) == _DailyChoiceEatLibrarySchema.v2) {
+      _ensureV2SchemaSupported(db);
+      return;
+    }
+    _ensureLegacySchema(db);
+  }
+
+  void _ensureV2SchemaSupported(Database db) {
     final currentVersion = _readSchemaVersion(db);
-    if (currentVersion > _schemaVersion) {
+    if (currentVersion > _v2SchemaVersion) {
       throw StateError(
-        'Eat recipe library schema version $currentVersion is newer than supported $_schemaVersion.',
+        'Eat recipe library schema version $currentVersion is newer than supported $_v2SchemaVersion.',
       );
     }
-    if (currentVersion != 0 && currentVersion != _schemaVersion) {
+    for (final tableName in <String>[
+      _v2RecipesTable,
+      _v2SummariesTable,
+      _v2DetailsTable,
+      _v2MetaTable,
+    ]) {
+      if (!_tableExists(db, tableName)) {
+        throw StateError('Eat recipe v2 library is missing $tableName.');
+      }
+    }
+  }
+
+  void _ensureLegacySchema(Database db) {
+    final currentVersion = _readSchemaVersion(db);
+    if (currentVersion > _legacySchemaVersion) {
+      throw StateError(
+        'Eat recipe library schema version $currentVersion is newer than supported $_legacySchemaVersion.',
+      );
+    }
+    if (currentVersion != 0 && currentVersion != _legacySchemaVersion) {
       _resetTables(db);
     }
     db.execute('''
@@ -482,7 +637,7 @@ class DailyChoiceEatLibraryStore {
     db.execute(
       'CREATE INDEX IF NOT EXISTS idx_daily_choice_eat_recipe_index_terms ON $_indexTermsTable(term_group, term_value, recipe_id)',
     );
-    db.execute('PRAGMA user_version = $_schemaVersion;');
+    db.execute('PRAGMA user_version = $_legacySchemaVersion;');
   }
 
   void _resetTables(Database db) {
@@ -493,20 +648,14 @@ class DailyChoiceEatLibraryStore {
   }
 
   bool _tableExists(Database db, String tableName) {
-    final rows = db.select(
-      '''
-      SELECT name
-      FROM sqlite_master
-      WHERE type = 'table' AND name = ?
-      LIMIT 1
-      ''',
-      <Object?>[tableName],
-    );
-    return rows.isNotEmpty;
+    return _databaseTableExists(db, tableName);
   }
 
-  Map<String, String> _metaMap(Database db) {
-    final rows = db.select('SELECT key, value FROM $_metaTable');
+  Map<String, String> _metaMap(Database db, {required String tableName}) {
+    if (!_tableExists(db, tableName)) {
+      return const <String, String>{};
+    }
+    final rows = db.select('SELECT key, value FROM $tableName');
     return <String, String>{
       for (final row in rows) '${row['key'] ?? ''}': '${row['value'] ?? ''}',
     };
@@ -517,10 +666,15 @@ class DailyChoiceEatLibraryStore {
     return (rows.firstOrNull?['user_version'] as num?)?.toInt() ?? 0;
   }
 
-  void _upsertMeta(Database db, String key, String value) {
+  void _upsertMeta(
+    Database db,
+    String key,
+    String value, {
+    required String tableName,
+  }) {
     db.execute(
       '''
-      INSERT INTO $_metaTable (key, value)
+      INSERT INTO $tableName (key, value)
       VALUES (?, ?)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
       ''',
@@ -528,7 +682,7 @@ class DailyChoiceEatLibraryStore {
     );
   }
 
-  DailyChoiceOption _detailOptionFromRow(Row row) {
+  DailyChoiceOption _detailOptionFromLegacyRow(Row row) {
     return ensureEatOptionAttributes(
       DailyChoiceOption(
         id: '${row['id'] ?? ''}',
@@ -554,6 +708,44 @@ class DailyChoiceEatLibraryStore {
         sourceLabel: _nullableString(row['source_label']),
         sourceUrl: _nullableString(row['source_url']),
         references: _jsonReferenceList(row['references_json']),
+      ),
+    );
+  }
+
+  DailyChoiceOption _detailOptionFromV2Row(Row row) {
+    final attributes = _jsonStringListMap(row['summary_attributes_json']);
+    final contextId = _v2ContextId(row, attributes);
+    return ensureEatOptionAttributes(
+      DailyChoiceOption(
+        id: '${row['recipe_id'] ?? ''}',
+        moduleId: DailyChoiceModuleId.eat.storageValue,
+        categoryId: _v2MealId(row),
+        contextId: contextId,
+        contextIds: _v2ContextIds(row, attributes),
+        titleZh: '${row['title_zh'] ?? ''}',
+        titleEn: '${row['title_en'] ?? ''}',
+        subtitleZh: '${row['subtitle_zh'] ?? ''}',
+        subtitleEn: '${row['subtitle_en'] ?? ''}',
+        detailsZh: '${row['details_zh'] ?? ''}',
+        detailsEn: '${row['details_en'] ?? ''}',
+        materialsZh: _jsonStringList(row['materials_zh_json']),
+        materialsEn: _jsonStringList(row['materials_en_json']),
+        stepsZh: _jsonStringList(row['steps_zh_json']),
+        stepsEn: _jsonStringList(row['steps_en_json']),
+        notesZh: _jsonStringList(row['notes_zh_json']),
+        notesEn: _jsonStringList(row['notes_en_json']),
+        tagsZh: _jsonStringList(row['tags_zh_json']),
+        tagsEn: _jsonStringList(row['tags_en_json']),
+        attributes: attributes,
+        sourceLabel: _rawPayloadNullableString(
+          row['raw_payload_json'],
+          'sourceLabel',
+        ),
+        sourceUrl: _rawPayloadNullableString(
+          row['raw_payload_json'],
+          'sourceUrl',
+        ),
+        references: _rawPayloadReferences(row['raw_payload_json']),
       ),
     );
   }
@@ -603,19 +795,27 @@ class DailyChoiceEatLibraryStore {
 List<DailyChoiceOption> _loadBuiltInSummariesFromDatabaseFile(String dbPath) {
   final db = sqlite3.open(dbPath);
   try {
-    return _loadBuiltInSummariesFromDatabaseConnection(
-      db,
-      recipesTable: 'daily_choice_eat_recipe_summaries',
-    );
+    return _loadBuiltInSummariesFromDatabaseConnection(db);
   } finally {
     db.dispose();
   }
 }
 
 List<DailyChoiceOption> _loadBuiltInSummariesFromDatabaseConnection(
-  Database db, {
-  required String recipesTable,
-}) {
+  Database db,
+) {
+  return switch (_detectLibrarySchema(db)) {
+    _DailyChoiceEatLibrarySchema.v2 =>
+      _loadBuiltInV2SummariesFromDatabaseConnection(db),
+    _DailyChoiceEatLibrarySchema.legacyV1 =>
+      _loadBuiltInLegacySummariesFromDatabaseConnection(db),
+    _DailyChoiceEatLibrarySchema.empty => const <DailyChoiceOption>[],
+  };
+}
+
+List<DailyChoiceOption> _loadBuiltInLegacySummariesFromDatabaseConnection(
+  Database db,
+) {
   final rows = db.select('''
     SELECT
       id,
@@ -632,15 +832,42 @@ List<DailyChoiceOption> _loadBuiltInSummariesFromDatabaseConnection(
       attributes_json,
       source_label,
       source_url
-    FROM $recipesTable
+    FROM daily_choice_eat_recipe_summaries
     ORDER BY sort_key ASC, id ASC
   ''');
   return List<DailyChoiceOption>.unmodifiable(
-    rows.map(_summaryOptionFromDatabaseRow),
+    rows.map(_summaryOptionFromLegacyDatabaseRow),
   );
 }
 
-DailyChoiceOption _summaryOptionFromDatabaseRow(Row row) {
+List<DailyChoiceOption> _loadBuiltInV2SummariesFromDatabaseConnection(
+  Database db,
+) {
+  final rows = db.select('''
+    SELECT
+      r.recipe_id,
+      r.title_zh,
+      r.title_en,
+      r.primary_meal_id,
+      r.primary_tool_id,
+      s.subtitle_zh,
+      s.subtitle_en,
+      s.tags_zh_json,
+      s.tags_en_json,
+      s.summary_attributes_json
+    FROM daily_choice_recipes r
+    LEFT JOIN daily_choice_recipe_summaries s
+      ON s.recipe_id = r.recipe_id
+    WHERE r.status = 'active'
+      AND r.is_available = 1
+    ORDER BY r.sort_key ASC, r.recipe_id ASC
+  ''');
+  return List<DailyChoiceOption>.unmodifiable(
+    rows.map(_summaryOptionFromV2DatabaseRow),
+  );
+}
+
+DailyChoiceOption _summaryOptionFromLegacyDatabaseRow(Row row) {
   return ensureEatOptionAttributes(
     DailyChoiceOption(
       id: '${row['id'] ?? ''}',
@@ -661,6 +888,88 @@ DailyChoiceOption _summaryOptionFromDatabaseRow(Row row) {
       sourceUrl: _nullableString(row['source_url']),
     ),
   );
+}
+
+DailyChoiceOption _summaryOptionFromV2DatabaseRow(Row row) {
+  final attributes = _jsonStringListMap(row['summary_attributes_json']);
+  final contextId = _v2ContextId(row, attributes);
+  return ensureEatOptionAttributes(
+    DailyChoiceOption(
+      id: '${row['recipe_id'] ?? ''}',
+      moduleId: DailyChoiceModuleId.eat.storageValue,
+      categoryId: _v2MealId(row),
+      contextId: contextId,
+      contextIds: _v2ContextIds(row, attributes),
+      titleZh: '${row['title_zh'] ?? ''}',
+      titleEn: '${row['title_en'] ?? ''}',
+      subtitleZh: '${row['subtitle_zh'] ?? ''}',
+      subtitleEn: '${row['subtitle_en'] ?? ''}',
+      detailsZh: '',
+      detailsEn: '',
+      tagsZh: _jsonStringList(row['tags_zh_json']),
+      tagsEn: _jsonStringList(row['tags_en_json']),
+      attributes: attributes,
+    ),
+  );
+}
+
+_DailyChoiceEatLibrarySchema _detectLibrarySchema(Database db) {
+  if (_databaseTableExists(db, 'daily_choice_recipes') &&
+      _databaseTableExists(db, 'daily_choice_recipe_summaries') &&
+      _databaseTableExists(db, 'daily_choice_recipe_details')) {
+    return _DailyChoiceEatLibrarySchema.v2;
+  }
+  if (_databaseTableExists(db, 'daily_choice_eat_recipe_summaries') &&
+      _databaseTableExists(db, 'daily_choice_eat_recipe_details')) {
+    return _DailyChoiceEatLibrarySchema.legacyV1;
+  }
+  return _DailyChoiceEatLibrarySchema.empty;
+}
+
+bool _databaseTableExists(Database db, String tableName) {
+  final rows = db.select(
+    '''
+    SELECT name
+    FROM sqlite_master
+    WHERE type = 'table' AND name = ?
+    LIMIT 1
+    ''',
+    <Object?>[tableName],
+  );
+  return rows.isNotEmpty;
+}
+
+String _v2MealId(Row row) {
+  final value = '${row['primary_meal_id'] ?? ''}'.trim();
+  return value.isEmpty ? 'all' : value;
+}
+
+String? _v2ContextId(Row row, Map<String, List<String>> attributes) {
+  final primaryTool = _nullableString(row['primary_tool_id']);
+  if (primaryTool != null) {
+    return primaryTool;
+  }
+  return attributes[eatAttributeTool]?.firstOrNull;
+}
+
+List<String> _v2ContextIds(Row row, Map<String, List<String>> attributes) {
+  final primaryTool = _nullableString(row['primary_tool_id']);
+  return _dedupeNonEmptyStrings(<String>[
+    ?primaryTool,
+    ...(attributes[eatAttributeTool] ?? const <String>[]),
+  ]);
+}
+
+List<String> _dedupeNonEmptyStrings(List<String> values) {
+  final seen = <String>{};
+  final result = <String>[];
+  for (final value in values) {
+    final normalized = value.trim();
+    if (normalized.isNotEmpty && seen.add(normalized)) {
+      result.add(normalized);
+    }
+  }
+  return List<String>.unmodifiable(result);
 }
 
 String? _nullableString(Object? value) {
@@ -738,4 +1047,31 @@ List<DailyChoiceReferenceLink> _jsonReferenceList(Object? value) {
   } catch (_) {
     return const <DailyChoiceReferenceLink>[];
   }
+}
+
+Map<String, Object?> _jsonObjectMap(Object? value) {
+  final raw = '${value ?? ''}'.trim();
+  if (raw.isEmpty) {
+    return const <String, Object?>{};
+  }
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is Map<String, Object?>) {
+      return decoded;
+    }
+    if (decoded is Map) {
+      return decoded.cast<String, Object?>();
+    }
+  } catch (_) {
+    return const <String, Object?>{};
+  }
+  return const <String, Object?>{};
+}
+
+String? _rawPayloadNullableString(Object? value, String key) {
+  return _nullableString(_jsonObjectMap(value)[key]);
+}
+
+List<DailyChoiceReferenceLink> _rawPayloadReferences(Object? value) {
+  return _jsonReferenceList(_jsonObjectMap(value)['references']);
 }

@@ -47,6 +47,90 @@ void main() {
   }
 
   test(
+    'DailyChoiceEatLibraryStore installs v2-only SQLite and lazy loads details',
+    () async {
+      final options = <DailyChoiceOption>[
+        eatOption(
+          id: 'library_tomato_egg',
+          title: '番茄鸡蛋',
+          materials: const <String>['番茄', '鸡蛋'],
+        ),
+        eatOption(
+          id: 'cook_csv_tofu_soup',
+          title: '豆腐汤',
+          materials: const <String>['豆腐', '香菇'],
+          tags: const <String>['汤'],
+          categoryId: 'dinner',
+        ),
+      ];
+      final updatedAt = DateTime(2026, 4, 27, 10, 54);
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-25',
+        schemaId: 'vocabulary_sleep.daily_choice.recipe_library.v2',
+        schemaVersion: 2,
+        generatedAt: updatedAt,
+        stats: <String, Object?>{
+          'bookRecipeCount': 1,
+          'cookRecipeCount': 1,
+          'dedupedRecipeCount': options.length,
+        },
+        recipes: options,
+      );
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'daily_choice_eat_library_store_test_',
+      );
+
+      final store = DailyChoiceEatLibraryStore(
+        supportDirectoryProvider: () async => tempDirectory,
+        remoteDatabaseInstaller: (targetFile) async {
+          await _writeV2LibraryDatabase(
+            targetFile,
+            document,
+            updatedAt: updatedAt,
+          );
+          return updatedAt;
+        },
+      );
+      addTearDown(() async {
+        await store.close();
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final installedStatus = await store.installLibrary();
+      expect(installedStatus.hasInstalledLibrary, isTrue);
+      expect(installedStatus.recipeCount, options.length);
+      expect(installedStatus.localLibraryCount, 1);
+      expect(installedStatus.cookRecipeCount, 1);
+      expect(installedStatus.schemaVersion, 2);
+      expect(installedStatus.source, DailyChoiceCookDataSource.remote);
+      expect(installedStatus.updatedAt, updatedAt);
+
+      final summaries = await store.loadBuiltInSummaries();
+      expect(summaries, hasLength(options.length));
+      expect(summaries.map((item) => item.id), contains('cook_csv_tofu_soup'));
+      final summary = summaries.firstWhere(
+        (item) => item.id == 'cook_csv_tofu_soup',
+      );
+      expect(summary.detailsZh, isEmpty);
+      expect(summary.materialsZh, isEmpty);
+      expect(summary.stepsZh, isEmpty);
+      expect(summary.categoryId, 'dinner');
+      expect(summary.contextIds, contains('pot'));
+      expect(summary.attributeValues(eatAttributeIngredient), contains('tofu'));
+
+      final detail = await store.loadBuiltInDetail('cook_csv_tofu_soup');
+      expect(detail, isNotNull);
+      expect(detail!.detailsZh, contains('豆腐汤'));
+      expect(detail.materialsZh, containsAll(<String>['豆腐', '香菇']));
+      expect(detail.stepsZh, isNotEmpty);
+      expect(detail.categoryId, 'dinner');
+    },
+  );
+
+  test(
     'DailyChoiceEatLibraryStore installs remote SQLite summaries and lazy loads details',
     () async {
       final options = <DailyChoiceOption>[
@@ -259,6 +343,186 @@ void main() {
       expect(await legacyCookCacheFile.exists(), isFalse);
     },
   );
+}
+
+Future<void> _writeV2LibraryDatabase(
+  File file,
+  DailyChoiceRecipeLibraryDocument document, {
+  required DateTime updatedAt,
+}) async {
+  await file.parent.create(recursive: true);
+  final db = sqlite3.open(file.path);
+  try {
+    db.execute('PRAGMA foreign_keys = ON;');
+    db.execute('PRAGMA user_version = 2;');
+    db.execute('''
+      CREATE TABLE daily_choice_recipe_schema_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+    db.execute('''
+      CREATE TABLE daily_choice_recipe_sets (
+        set_id TEXT PRIMARY KEY,
+        recipe_count INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    db.execute('''
+      CREATE TABLE daily_choice_recipes (
+        recipe_id TEXT PRIMARY KEY,
+        primary_set_id TEXT NOT NULL,
+        title_zh TEXT NOT NULL,
+        title_en TEXT NOT NULL,
+        primary_meal_id TEXT NOT NULL,
+        primary_tool_id TEXT,
+        sort_key TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        is_available INTEGER NOT NULL DEFAULT 1
+      )
+    ''');
+    db.execute('''
+      CREATE TABLE daily_choice_recipe_summaries (
+        recipe_id TEXT PRIMARY KEY,
+        subtitle_zh TEXT NOT NULL DEFAULT '',
+        subtitle_en TEXT NOT NULL DEFAULT '',
+        tags_zh_json TEXT NOT NULL DEFAULT '[]',
+        tags_en_json TEXT NOT NULL DEFAULT '[]',
+        summary_attributes_json TEXT NOT NULL DEFAULT '{}'
+      )
+    ''');
+    db.execute('''
+      CREATE TABLE daily_choice_recipe_details (
+        recipe_id TEXT PRIMARY KEY,
+        details_zh TEXT NOT NULL DEFAULT '',
+        details_en TEXT NOT NULL DEFAULT '',
+        materials_zh_json TEXT NOT NULL DEFAULT '[]',
+        materials_en_json TEXT NOT NULL DEFAULT '[]',
+        steps_zh_json TEXT NOT NULL DEFAULT '[]',
+        steps_en_json TEXT NOT NULL DEFAULT '[]',
+        notes_zh_json TEXT NOT NULL DEFAULT '[]',
+        notes_en_json TEXT NOT NULL DEFAULT '[]',
+        raw_payload_json TEXT NOT NULL DEFAULT '{}'
+      )
+    ''');
+
+    final setCounts = <String, int>{'book_library': 0, 'cook_csv': 0};
+    for (final option in document.recipes) {
+      final setId = option.id.startsWith('cook_csv_')
+          ? 'cook_csv'
+          : 'book_library';
+      setCounts[setId] = (setCounts[setId] ?? 0) + 1;
+    }
+    for (final entry in setCounts.entries) {
+      db.execute(
+        '''
+        INSERT INTO daily_choice_recipe_sets (set_id, recipe_count)
+        VALUES (?, ?)
+        ''',
+        <Object?>[entry.key, entry.value],
+      );
+    }
+
+    final metaInsert = db.prepare('''
+      INSERT INTO daily_choice_recipe_schema_meta (key, value)
+      VALUES (?, ?)
+    ''');
+    try {
+      final metaEntries = <String, String>{
+        'schema_id': document.schemaId,
+        'schema_version': '${document.schemaVersion}',
+        'library_id': document.libraryId,
+        'library_version': document.libraryVersion,
+        'generated_at': updatedAt.toIso8601String(),
+      };
+      for (final entry in metaEntries.entries) {
+        metaInsert.execute(<Object?>[entry.key, entry.value]);
+      }
+    } finally {
+      metaInsert.dispose();
+    }
+
+    final recipeInsert = db.prepare('''
+      INSERT INTO daily_choice_recipes (
+        recipe_id,
+        primary_set_id,
+        title_zh,
+        title_en,
+        primary_meal_id,
+        primary_tool_id,
+        sort_key,
+        status,
+        is_available
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1)
+    ''');
+    final summaryInsert = db.prepare('''
+      INSERT INTO daily_choice_recipe_summaries (
+        recipe_id,
+        subtitle_zh,
+        subtitle_en,
+        tags_zh_json,
+        tags_en_json,
+        summary_attributes_json
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    ''');
+    final detailInsert = db.prepare('''
+      INSERT INTO daily_choice_recipe_details (
+        recipe_id,
+        details_zh,
+        details_en,
+        materials_zh_json,
+        materials_en_json,
+        steps_zh_json,
+        steps_en_json,
+        notes_zh_json,
+        notes_en_json,
+        raw_payload_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''');
+
+    try {
+      for (final rawOption in document.recipes) {
+        final option = ensureEatOptionAttributes(rawOption);
+        final setId = option.id.startsWith('cook_csv_')
+            ? 'cook_csv'
+            : 'book_library';
+        recipeInsert.execute(<Object?>[
+          option.id,
+          setId,
+          option.titleZh,
+          option.titleEn,
+          option.categoryId,
+          option.contextId,
+          '${option.categoryId}|${option.contextId ?? ''}|${option.titleZh}',
+        ]);
+        summaryInsert.execute(<Object?>[
+          option.id,
+          option.subtitleZh,
+          option.subtitleEn,
+          jsonEncode(option.tagsZh),
+          jsonEncode(option.tagsEn),
+          jsonEncode(option.attributes),
+        ]);
+        detailInsert.execute(<Object?>[
+          option.id,
+          option.detailsZh,
+          option.detailsEn,
+          jsonEncode(option.materialsZh),
+          jsonEncode(option.materialsEn),
+          jsonEncode(option.stepsZh),
+          jsonEncode(option.stepsEn),
+          jsonEncode(option.notesZh),
+          jsonEncode(option.notesEn),
+          jsonEncode(option.toJson()),
+        ]);
+      }
+    } finally {
+      recipeInsert.dispose();
+      summaryInsert.dispose();
+      detailInsert.dispose();
+    }
+  } finally {
+    db.dispose();
+  }
 }
 
 Future<void> _writeLibraryDatabase(
