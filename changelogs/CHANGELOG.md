@@ -12,6 +12,9 @@
 - 新增 `scripts/audit_daily_choice_recipe_dataset.py`，审计当前 `D:\vocabularySleep-resources\cook_data` JSON/SQLite 与 YunYouJun/cook `recipe.csv` 的字段冲突、来源覆盖、菜系 notes 污染、食材别名过宽匹配和抽取乱码。
 - 新增 `records/record_070_daily_choice_recipe_data_audit.md` 与 `records/record_070_daily_choice_recipe_data_audit.json`，记录首轮数据源审计结果。
 - 新增 `records/record_070_daily_choice_recipe_data_audit_after_generation.md` 与 `records/record_070_daily_choice_recipe_data_audit_after_generation.json`，记录修正生成规则后的隔离验证包审计结果。
+- 新增 `records/record_070_daily_choice_recipe_schema_design.md`，记录吃什么 v2 数据库表设计、索引策略、典型查询、迁移顺序和验收标准。
+- 新增 `scripts/daily_choice_recipe_schema_v2.sql`，作为后续生成器与 Flutter store 迁移的可执行 SQLite schema 草案。
+- 新增 `decisions/ADR_070_daily_choice_recipe_schema_v2.md`，记录 v2 分层 schema 的技术决策。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -26,6 +29,9 @@
 - 动物性风险判断补充兔肉、龟肉、甲鱼、鸽、鹌鹑、鹅肉、田鸡、牛蛙、牡蛎、蛤、蚌等词，`profile:vegetarian` 只在原始文本未命中肉类/水产风险时写入。
 - 将 YunYouJun/cook `recipe.csv` 导入生成器作为 `cook_csv` 数据来源，保留 difficulty、tags、methods、tools、bv、stuff 到结构化 attributes，并避免写入用户可见 sourceLabel、sourceUrl 和 references。
 - SQLite 导出 meta 现在写入真实 `bookRecipeCount` 与 `cookRecipeCount`，便于后续菜谱集分表和管理页展示。
+- 将 `PLAN_070` 阶段 3 标记为进行中，并明确本轮边界为数据库与索引设计，不直接迁移 Flutter 读取逻辑。
+- v2 schema 设计为 14 张表、18 个索引：菜谱集、基础索引、摘要、详情、材料/步骤行表、通用筛选索引、食材专用索引、搜索文本、本地用户状态和集合成员表。
+- 食材匹配索引拆为 `raw`、`canonical`、`family` 三层，并增加 `idx_dcr_ingredient_value_lookup` 保障默认 raw/canonical 查询。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -33,6 +39,7 @@
 - 吃什么摘要加载改为模块级后台任务后，摘要未完成前吃什么候选池会保持为空并显示资源准备状态；这是有意降级，用来换取每日决策其他模块不被阻塞。
 - 本轮生成的验证包位于 `D:\vocabularySleep-resources\cook_data_plan070_validation`，尚未覆盖 `D:\vocabularySleep-resources\cook_data`；后续确认后再执行替换或上传。
 - cook CSV 原始 599 行中按标题/厨具去重导入 593 条菜谱，但审计按标题确认 599 行全部可在新库中命中。
+- v2 schema 当前仅为设计与 SQL 草案，尚未接入 app 运行时；后续实现需要生成器双写 v1/v2，并新增 store 查询层单测。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
@@ -51,6 +58,8 @@
 - `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
 - `python -X utf8 scripts\generate_daily_choice_recipe_dataset.py --cook-csv .tmp_plan070_recipe.csv --output D:\vocabularySleep-resources\cook_data_plan070_validation\recipe_library_asset.json --export-dir D:\vocabularySleep-resources\cook_data_plan070_validation`（通过）
 - `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv .tmp_plan070_recipe.csv --output-md records\record_070_daily_choice_recipe_data_audit_after_generation.md --output-json records\record_070_daily_choice_recipe_data_audit_after_generation.json`（通过，10 个审计问题桶均为 0）
+- `python -X utf8` 内存 SQLite 执行 `scripts\daily_choice_recipe_schema_v2.sql`（通过，创建 14 张表和 18 个索引）
+- `EXPLAIN QUERY PLAN` 验证 v2 摘要分页、通用筛选、食材匹配和随机 pivot 查询（通过，命中目标索引）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 
