@@ -9,6 +9,8 @@
 ### 新增
 - 新增 `plans/PLAN_070_每日决策吃什么子模块全面接管与数据UI重构.md`，记录接管分支、备份提交、阶段拆分、13 个问题验收标准、数据重建原则、schema 优化方向、UI 拆分边界和后续验证策略。
 - 新增 `DailyChoiceHub keeps other modules usable while eat library loads` smoke 测试，锁定吃什么摘要加载未完成时仍可切换并使用其他每日决策模块。
+- 新增 `scripts/audit_daily_choice_recipe_dataset.py`，审计当前 `D:\vocabularySleep-resources\cook_data` JSON/SQLite 与 YunYouJun/cook `recipe.csv` 的字段冲突、来源覆盖、菜系 notes 污染、食材别名过宽匹配和抽取乱码。
+- 新增 `records/record_070_daily_choice_recipe_data_audit.md` 与 `records/record_070_daily_choice_recipe_data_audit.json`，记录首轮数据源审计结果。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -16,6 +18,7 @@
 - `DailyChoiceHub` 初始化不再等待吃什么菜谱库摘要加载完成；首屏只等待轻量自定义状态，吃什么菜谱库在进入吃什么模块后后台读取。
 - 吃什么资源状态面板区分后台读取和安装加载，读取期间只影响吃什么模块自身，不阻塞穿什么、去哪儿、干什么和决策助手。
 - 随机面板候选舞台固定高度，随机时限制标题、简介和标签行数，让停止按钮位置保持稳定。
+- 将 `PLAN_070` 阶段 2 标记为进行中，并写入首轮数据审计发现：`vegetarian` 与肉类/海鲜冲突 530 条，`vegan_friendly` 与动物性食材冲突 496 条，菜系标签混入 notes 2221 条，`清真友好` 规则说明混入 notes 3416 条，cook CSV 599 行中 569 行未在当前库标题精确命中。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -33,6 +36,8 @@
 - `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
 - `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
 - `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --cook-csv .tmp_recipe_csv_head.txt`（通过）
+- `python -m py_compile scripts\audit_daily_choice_recipe_dataset.py`（通过）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 

@@ -1,0 +1,5151 @@
+{
+  "generatedAt": "2026-04-27T00:39:40.415866+00:00",
+  "inputs": {
+    "libraryJson": "D:\\vocabularySleep-resources\\cook_data\\daily_choice_recipe_library.json",
+    "summaryJson": "D:\\vocabularySleep-resources\\cook_data\\daily_choice_recipe_library_summary.json",
+    "sqliteDb": "D:\\vocabularySleep-resources\\cook_data\\daily_choice_recipe_library.db",
+    "cookCsv": ".tmp_recipe_csv_head.txt",
+    "cookCsvUrl": "https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv",
+    "cookCsvError": null
+  },
+  "stats": {
+    "recipeCount": 7179,
+    "summaryRecipeCount": 7179,
+    "cookCsvRowCount": 599,
+    "sqlite": {
+      "exists": true,
+      "tables": {
+        "daily_choice_eat_recipe_details": 7179,
+        "daily_choice_eat_recipe_index_terms": 119370,
+        "daily_choice_eat_recipe_meta": 12,
+        "daily_choice_eat_recipe_summaries": 7179
+      },
+      "summaryRowsWithSourceLabel": 0,
+      "summaryRowsWithSourceUrl": 0,
+      "detailRowsWithReferences": 0
+    },
+    "libraryStats": {
+      "rawRecipeCount": 7364,
+      "dedupedRecipeCount": 7179,
+      "perBookCounts": {
+        "Nourishing Recipes for Elderly (David Kane) .epub": 29,
+        "The Italian Pantry (Theo Randall).epub": 91,
+        "一学就会做家常菜1688例(高清版) (最实用的家庭美食菜谱) (犀文图书) .epub": 473,
+        "专业烘焙 第3版 (韦恩·吉斯伦) .epub": 0,
+        "凉拌美食菜谱 (严锴) .epub": 419,
+        "博古斯学院法式西餐烹饪宝典 (保罗·博古斯厨艺学院).epub": 0,
+        "台北人情味小吃，挑剔老饕的美食地圖60+ (吳家輝) .epub": 0,
+        "家常小炒139例 (小菜谱) (小菜谱编委会) .epub": 129,
+        "小菜谱一定要学会的家常简易刀工 (《小菜谱》编委会).epub": 89,
+        "意大利菜谱 (Gabriele Napolitano) .epub": 19,
+        "我的獨享宵夜 (繁體中文) ((日) 金丸繪里加 著 沈亮慧 譯) .epub": 0,
+        "日本料理制作大全 (吴琪, 双福) .epub": 63,
+        "最牛的菜谱：6744道菜谱大全 (菜谱大全) (z-library.sk, 1lib.sk, z-lib.sk).epub": 5475,
+        "正確洗菜，擺脫農藥陰影：家庭必備！學會洗泡刷，減少蔬果農藥殘留，確保全家人健康 (顏瑞泓)..epub": 0,
+        "汤煲美食菜谱 (Soup and Casserole Recipes) (严锴) (z-library.sk, 1lib.sk, z-lib.sk).epub": 461,
+        "法国蓝带西餐烹饪宝典 (莱特,朱莉) .epub": 0,
+        "百变营养米饭139例 (小菜谱) (《小菜谱》编委会).epub": 45,
+        "請用，西班牙海鮮飯：66道大廚家常菜，從肉類到海鮮，從米飯‧麵包到馬鈴薯‧橄欖油，從湯品‧甜點到飲料，西班牙料理精髓完全掌握，一學就會... .epub": 0,
+        "食趣：欧文的无国界创意厨房（融合东西方厨艺，荟聚中餐、西餐、日式料理、东南亚菜，世界美食尽在一间厨房） (欧文).epub": 71
+      }
+    }
+  },
+  "sourceCoverage": {
+    "cookCsvRows": 599,
+    "cookCsvExactTitleMatches": 30,
+    "cookCsvMissingExactTitles": 569,
+    "cookCsvMissingSamples": [
+      "电饭煲版广式腊肠煲饭",
+      "电饭煲版烧鸡",
+      "电饭煲焖面",
+      "电饭煲版番茄牛腩焖饭",
+      "电饭煲版蜜汁鸡翅",
+      "电饭煲版南瓜鸡腿焖饭",
+      "电饭煲版土豆排骨焖饭",
+      "电饭煲版香菇腊肠焖饭",
+      "电饭煲版香卤牛肉",
+      "电饭煲叉烧排骨",
+      "电饭煲版红烧肉",
+      "电饭煲版可乐鸡翅"
+    ],
+    "zeroExtractedBooks": [
+      {
+        "book": "专业烘焙 第3版 (韦恩·吉斯伦) .epub",
+        "count": 0
+      },
+      {
+        "book": "博古斯学院法式西餐烹饪宝典 (保罗·博古斯厨艺学院).epub",
+        "count": 0
+      },
+      {
+        "book": "台北人情味小吃，挑剔老饕的美食地圖60+ (吳家輝) .epub",
+        "count": 0
+      },
+      {
+        "book": "我的獨享宵夜 (繁體中文) ((日) 金丸繪里加 著 沈亮慧 譯) .epub",
+        "count": 0
+      },
+      {
+        "book": "正確洗菜，擺脫農藥陰影：家庭必備！學會洗泡刷，減少蔬果農藥殘留，確保全家人健康 (顏瑞泓)..epub",
+        "count": 0
+      },
+      {
+        "book": "法国蓝带西餐烹饪宝典 (莱特,朱莉) .epub",
+        "count": 0
+      },
+      {
+        "book": "請用，西班牙海鮮飯：66道大廚家常菜，從肉類到海鮮，從米飯‧麵包到馬鈴薯‧橄欖油，從湯品‧甜點到飲料，西班牙料理精髓完全掌握，一學就會... .epub",
+        "count": 0
+      }
+    ],
+    "summaryRowsWithSourceLabelOrUrl": 0,
+    "summaryRowsWithReferences": 0,
+    "referenceTitles": [
+      "YunYouJun/cook（recipe.csv / 做菜之前）",
+      "一学就会做家常菜1688例",
+      "凉拌美食菜谱",
+      "家常小炒139例",
+      "小菜谱一定要学会的家常简易刀工",
+      "意大利菜谱",
+      "最牛的菜谱：6744道菜谱大全",
+      "汤煲美食菜谱",
+      "百变营养米饭139例",
+      "Nourishing Recipes for Elderly",
+      "The Italian Pantry",
+      "食趣：欧文的无国界创意厨房",
+      "专业烘焙 第3版",
+      "正確洗菜，擺脫農藥陰影",
+      "超完美地中海飲食指南",
+      "博古斯学院法式西餐烹饪宝典",
+      "請用，西班牙海鮮飯",
+      "我的獨享宵夜"
+    ],
+    "finding": "The current generator advertises YunYouJun/cook in reference titles, but build_dataset only scans local EPUB files; recipe.csv rows are not imported as a default set."
+  },
+  "issues": {
+    "vegetarian_profile_conflicts_with_meat_or_seafood": {
+      "priority": "P0",
+      "description": "profile contains vegetarian while contains includes meat or seafood.",
+      "count": 530,
+      "samples": [
+        {
+          "id": "library_八宝锅蒸",
+          "title": "八宝锅蒸",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "蒸",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "steam"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "gluten",
+              "nut"
+            ],
+            "ingredient": [
+              "米饭",
+              "面粉",
+              "蜜瓜片",
+              "蜜枣",
+              "坚果",
+              "莲子",
+              "扁豆各",
+              "蜜樱桃",
+              "橘红",
+              "猪油",
+              "白糖各"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "大米粉 面粉各45克 蜜瓜片 蜜枣 核桃仁各10克 莲子 扁豆各15克 蜜樱桃15个 橘红6克 熟猪油 白糖各120克"
+        },
+        {
+          "id": "library_兔肉粥",
+          "title": "兔肉粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "兔肉",
+              "米饭",
+              "马蹄各",
+              "香菇",
+              "精盐",
+              "味精",
+              "胡椒",
+              "猪油",
+              "生姜",
+              "葱"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "兔肉 粳米 马蹄各100克 水发香菇50克 精盐 味精 胡椒 猪油 葱姜末各少许"
+        },
+        {
+          "id": "library_八卦粥",
+          "title": "八卦粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "nut",
+              "sesame",
+              "spicy"
+            ],
+            "ingredient": [
+              "活龟肉",
+              "米饭",
+              "坚果",
+              "猪油",
+              "香油",
+              "葱",
+              "花椒",
+              "生姜",
+              "味精各"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "活龟肉100克 粳米200克 核桃仁50克 猪油 香油 葱白 花椒 姜 盐 味精各少许"
+        },
+        {
+          "id": "library_牡蛎粥",
+          "title": "牡蛎粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "alcohol"
+            ],
+            "ingredient": [
+              "牡蛎肉",
+              "米饭",
+              "猪瘦肉",
+              "料酒",
+              "猪油",
+              "大蒜",
+              "葱",
+              "味精",
+              "胡椒粉各"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "鲜牡蛎肉60克 糯米60克 猪瘦肉30克 料酒 盐 猪油 大蒜末 葱头末 味精 胡椒粉各适量"
+        },
+        {
+          "id": "library_胡萝卜粥",
+          "title": "胡萝卜粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "胡萝卜",
+              "米饭",
+              "香菜二钱",
+              "猪油三钱",
+              "精盐一钱",
+              "味精二分",
+              "清水二斤"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "胡萝卜二两 糯米二两 香菜二钱 猪油三钱 精盐一钱 味精二分 清水二斤"
+        },
+        {
+          "id": "library_冰糖肘子",
+          "title": "冰糖肘子",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "soy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "去骨猪前蹄膀"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "去骨猪前蹄膀500克"
+        },
+        {
+          "id": "library_烂糊白菜",
+          "title": "烂糊白菜",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "seafood",
+              "sesame",
+              "alcohol"
+            ],
+            "ingredient": [
+              "白菜"
+            ]
+          },
+          "conflict": [
+            "pork",
+            "seafood"
+          ],
+          "materials": "·白菜1000克"
+        },
+        {
+          "id": "library_xo酱烤生蚝",
+          "title": "XO酱烤生蚝",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烧",
+            "烤",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "braise",
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "beef",
+              "seafood",
+              "egg",
+              "dairy"
+            ],
+            "ingredient": [
+              "生蚝",
+              "葱",
+              "生姜",
+              "温水",
+              "柠檬的汁",
+              "清水"
+            ]
+          },
+          "conflict": [
+            "beef",
+            "pork",
+            "seafood"
+          ],
+          "materials": "生蚝5只 XO酱20克 小葱20克 生姜10克 温水100毫升 1/4只柠檬的汁 清水500毫升"
+        },
+        {
+          "id": "library_乌狼鲞烤肉",
+          "title": "乌狼鲞烤肉",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "seafood",
+              "alcohol"
+            ],
+            "ingredient": [
+              "乌狼鲞",
+              "猪五花肉",
+              "配料毛笋",
+              "葱",
+              "生姜",
+              "绍酒",
+              "味精",
+              "菜油"
+            ]
+          },
+          "conflict": [
+            "pork",
+            "seafood"
+          ],
+          "materials": "乌狼鲞(中段)1250克 熟猪五花肉200克 配料:水发毛笋干100克 调料:葱段10克 姜片2.5克 绍酒50克 味精1克 熟菜油25克"
+        },
+        {
+          "id": "library_叉烧",
+          "title": "叉　烧",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烧",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "braise"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "soy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "猪腿肉",
+              "酱油",
+              "麦芽糖",
+              "料酒",
+              "五香粉",
+              "红糟各"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "猪腿肉500克 酱油 麦芽糖 糖 盐 料酒 五香粉 红糟各适量"
+        },
+        {
+          "id": "library_坚果火鸡沙拉",
+          "title": "坚果火鸡沙拉",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "凉拌",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "cold_dish"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "seafood",
+              "egg",
+              "dairy",
+              "gluten",
+              "soy",
+              "nut",
+              "sesame"
+            ],
+            "ingredient": [
+              "鸡胸",
+              "青椒",
+              "罗马生菜",
+              "细叶生菜)",
+              "芝士块",
+              "坚果",
+              "黑胡椒粉",
+              "橄榄油",
+              "✔油醋汁原料",
+              "洋葱",
+              "葱",
+              "意大利黑醋",
+              "混合香料"
+            ]
+          },
+          "conflict": [
+            "seafood"
+          ],
+          "materials": "鸡胸1块 红椒粉10克 混合生菜(红叶生菜 罗马生菜 细叶生菜)适量 芝士块 核桃 盐 黑胡椒粉 橄榄油适量 ✔油醋汁原料 洋葱末20克 意大利黑醋100毫升 橄榄油60毫升 混合香料5克"
+        },
+        {
+          "id": "library_大漠孜香烤羊架",
+          "title": "大漠孜香烤羊架",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "mutton",
+              "nut",
+              "sesame",
+              "spicy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "羊肋排",
+              "香叶",
+              "料酒",
+              "葱",
+              "生姜",
+              "大蒜",
+              "青椒",
+              "孜然粉",
+              "五香粉",
+              "花生",
+              "温水",
+              "芝麻",
+              "色拉油"
+            ]
+          },
+          "conflict": [
+            "mutton"
+          ],
+          "materials": "羊肋排1块 香叶2片 料酒20毫升 盐适量 葱 姜 蒜适量 辣椒碎15克 孜然粉20克 盐5克 五香粉3克 花生酱15克 温水20毫升 芝麻酱10克 白芝麻10克 色拉油50毫升"
+        }
+      ]
+    },
+    "vegan_friendly_conflicts_with_animal_contains": {
+      "priority": "P0",
+      "description": "diet contains vegan_friendly while contains includes animal ingredients.",
+      "count": 496,
+      "samples": [
+        {
+          "id": "library_八宝锅蒸",
+          "title": "八宝锅蒸",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "蒸",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "steam"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "gluten",
+              "nut"
+            ],
+            "ingredient": [
+              "米饭",
+              "面粉",
+              "蜜瓜片",
+              "蜜枣",
+              "坚果",
+              "莲子",
+              "扁豆各",
+              "蜜樱桃",
+              "橘红",
+              "猪油",
+              "白糖各"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "大米粉 面粉各45克 蜜瓜片 蜜枣 核桃仁各10克 莲子 扁豆各15克 蜜樱桃15个 橘红6克 熟猪油 白糖各120克"
+        },
+        {
+          "id": "library_五谷豆糙米粥",
+          "title": "五谷豆糙米粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "egg",
+              "soy"
+            ],
+            "ingredient": [
+              "黑豆",
+              "红豆",
+              "黄豆",
+              "绿豆",
+              "米饭",
+              "调味料糖--大匙"
+            ]
+          },
+          "conflict": [
+            "egg"
+          ],
+          "materials": "黑豆 红豆 黄豆 绿豆 米豆 糙米各1/2杯 调味料:糖1--2大匙"
+        },
+        {
+          "id": "library_什锦甜粥",
+          "title": "什锦甜粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "egg",
+              "nut"
+            ],
+            "ingredient": [
+              "米饭",
+              "绿豆",
+              "花生",
+              "红枣",
+              "坚果",
+              "葡萄",
+              "辅料红糖或白糖"
+            ]
+          },
+          "conflict": [
+            "egg"
+          ],
+          "materials": "小米100克 大米50克 绿豆30克 花生米25克 红枣50克 核桃仁25克 葡萄干50克 辅料:红糖或白糖适量"
+        },
+        {
+          "id": "library_兔肉粥",
+          "title": "兔肉粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "兔肉",
+              "米饭",
+              "马蹄各",
+              "香菇",
+              "精盐",
+              "味精",
+              "胡椒",
+              "猪油",
+              "生姜",
+              "葱"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "兔肉 粳米 马蹄各100克 水发香菇50克 精盐 味精 胡椒 猪油 葱姜末各少许"
+        },
+        {
+          "id": "library_八卦粥",
+          "title": "八卦粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "nut",
+              "sesame",
+              "spicy"
+            ],
+            "ingredient": [
+              "活龟肉",
+              "米饭",
+              "坚果",
+              "猪油",
+              "香油",
+              "葱",
+              "花椒",
+              "生姜",
+              "味精各"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "活龟肉100克 粳米200克 核桃仁50克 猪油 香油 葱白 花椒 姜 盐 味精各少许"
+        },
+        {
+          "id": "library_天花粉粥",
+          "title": "天花粉粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "egg"
+            ],
+            "ingredient": [
+              "天花粉",
+              "米饭"
+            ]
+          },
+          "conflict": [
+            "egg"
+          ],
+          "materials": "天花粉20克 粳米100克"
+        },
+        {
+          "id": "library_牡蛎粥",
+          "title": "牡蛎粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "alcohol"
+            ],
+            "ingredient": [
+              "牡蛎肉",
+              "米饭",
+              "猪瘦肉",
+              "料酒",
+              "猪油",
+              "大蒜",
+              "葱",
+              "味精",
+              "胡椒粉各"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "鲜牡蛎肉60克 糯米60克 猪瘦肉30克 料酒 盐 猪油 大蒜末 葱头末 味精 胡椒粉各适量"
+        },
+        {
+          "id": "library_红小豆粥",
+          "title": "红小豆粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "egg"
+            ],
+            "ingredient": [
+              "米饭",
+              "红小豆辅料红糖",
+              "糖桂花"
+            ]
+          },
+          "conflict": [
+            "egg"
+          ],
+          "materials": "大米50克 红小豆15克辅料:红糖适量 糖桂花少许"
+        },
+        {
+          "id": "library_胡萝卜粥",
+          "title": "胡萝卜粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "胡萝卜",
+              "米饭",
+              "香菜二钱",
+              "猪油三钱",
+              "精盐一钱",
+              "味精二分",
+              "清水二斤"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "胡萝卜二两 糯米二两 香菜二钱 猪油三钱 精盐一钱 味精二分 清水二斤"
+        },
+        {
+          "id": "library_黑豆牡蛎粥",
+          "title": "黑豆牡蛎粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "egg"
+            ],
+            "ingredient": [
+              "牡蛎",
+              "葱",
+              "黑豆",
+              "米饭",
+              "调味料盐小匙",
+              "麻油小匙"
+            ]
+          },
+          "conflict": [
+            "egg"
+          ],
+          "materials": "牡蛎20个 葱1/2根 黑豆 白米各1/2杯 调味料:盐1小匙 麻油1/2小匙"
+        },
+        {
+          "id": "library_冰糖肘子",
+          "title": "冰糖肘子",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "soy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "去骨猪前蹄膀"
+            ]
+          },
+          "conflict": [
+            "pork"
+          ],
+          "materials": "去骨猪前蹄膀500克"
+        },
+        {
+          "id": "library_奶油烤蛤蜊",
+          "title": "奶油烤蛤蜊",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "dairy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "蛤蜊一碗",
+              "黄油",
+              "白葡萄酒各一大匙",
+              "白菜"
+            ]
+          },
+          "conflict": [
+            "dairy"
+          ],
+          "materials": "蛤蜊(连壳)一碗 黄油 白葡萄酒各一大匙 圆白菜4~5片"
+        }
+      ]
+    },
+    "halal_friendly_conflicts_with_pork_or_alcohol": {
+      "priority": "P0",
+      "description": "diet contains halal_friendly while contains includes pork or alcohol.",
+      "count": 0,
+      "samples": []
+    },
+    "vegetarian_profile_with_unmodeled_animal_terms": {
+      "priority": "P0",
+      "description": "profile vegetarian was inferred even though raw text includes animal terms not modeled in canonical meat detection.",
+      "count": 230,
+      "samples": [
+        {
+          "id": "library_兔肉粥",
+          "title": "兔肉粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "兔肉",
+              "米饭",
+              "马蹄各",
+              "香菇",
+              "精盐",
+              "味精",
+              "胡椒",
+              "猪油",
+              "生姜",
+              "葱"
+            ]
+          },
+          "materials": "兔肉 粳米 马蹄各100克 水发香菇50克 精盐 味精 胡椒 猪油 葱姜末各少许",
+          "matchedTerms": [
+            "兔肉"
+          ]
+        },
+        {
+          "id": "library_八卦粥",
+          "title": "八卦粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "nut",
+              "sesame",
+              "spicy"
+            ],
+            "ingredient": [
+              "活龟肉",
+              "米饭",
+              "坚果",
+              "猪油",
+              "香油",
+              "葱",
+              "花椒",
+              "生姜",
+              "味精各"
+            ]
+          },
+          "materials": "活龟肉100克 粳米200克 核桃仁50克 猪油 香油 葱白 花椒 姜 盐 味精各少许",
+          "matchedTerms": [
+            "龟肉"
+          ]
+        },
+        {
+          "id": "library_牡蛎粥",
+          "title": "牡蛎粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "alcohol"
+            ],
+            "ingredient": [
+              "牡蛎肉",
+              "米饭",
+              "猪瘦肉",
+              "料酒",
+              "猪油",
+              "大蒜",
+              "葱",
+              "味精",
+              "胡椒粉各"
+            ]
+          },
+          "materials": "鲜牡蛎肉60克 糯米60克 猪瘦肉30克 料酒 盐 猪油 大蒜末 葱头末 味精 胡椒粉各适量",
+          "matchedTerms": [
+            "牡蛎"
+          ]
+        },
+        {
+          "id": "library_百合田鸡粥",
+          "title": "百合田鸡粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "田鸡",
+              "猪瘦肉",
+              "太子参",
+              "百合",
+              "米饭",
+              "葱",
+              "青豆",
+              "麻油"
+            ]
+          },
+          "materials": "田鸡500克 猪瘦肉100克 太子参60克 百合30克 普通大米(或粳米)150克 葱 青豆少许 盐 麻油少许",
+          "matchedTerms": [
+            "牛蛙",
+            "田鸡"
+          ]
+        },
+        {
+          "id": "library_鹌鹑山药粥",
+          "title": "鹌鹑山药粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "鹌鹑",
+              "山药",
+              "米饭",
+              "生姜",
+              "葱",
+              "盐各"
+            ]
+          },
+          "materials": "鹌鹑2只 山药50克 粳米100克 姜 葱 盐各适量",
+          "matchedTerms": [
+            "鹌鹑"
+          ]
+        },
+        {
+          "id": "library_黑豆牡蛎粥",
+          "title": "黑豆牡蛎粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "egg"
+            ],
+            "ingredient": [
+              "牡蛎",
+              "葱",
+              "黑豆",
+              "米饭",
+              "调味料盐小匙",
+              "麻油小匙"
+            ]
+          },
+          "materials": "牡蛎20个 葱1/2根 黑豆 白米各1/2杯 调味料:盐1小匙 麻油1/2小匙",
+          "matchedTerms": [
+            "牡蛎"
+          ]
+        },
+        {
+          "id": "library_龟肉粥",
+          "title": "龟肉粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "alcohol"
+            ],
+            "ingredient": [
+              "活龟",
+              "米饭",
+              "肉汤",
+              "精盐",
+              "葱",
+              "生姜",
+              "料酒",
+              "味精",
+              "胡椒粉各"
+            ]
+          },
+          "materials": "活龟1只 糯米150克 肉汤1000克 精盐 葱 姜 料酒 味精 胡椒粉各少许",
+          "matchedTerms": [
+            "龟肉"
+          ]
+        },
+        {
+          "id": "library_奶油烤蛤蜊",
+          "title": "奶油烤蛤蜊",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "dairy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "蛤蜊一碗",
+              "黄油",
+              "白葡萄酒各一大匙",
+              "白菜"
+            ]
+          },
+          "materials": "蛤蜊(连壳)一碗 黄油 白葡萄酒各一大匙 圆白菜4~5片",
+          "matchedTerms": [
+            "蛤"
+          ]
+        },
+        {
+          "id": "library_酸梅乳鸽",
+          "title": "酸梅乳鸽",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "乳鸽(",
+              "即约半)",
+              "调味料梅",
+              "黄糖平汤匙",
+              "柱侯酱汤匙",
+              "老抽汤匙半",
+              "玫瑰露酒",
+              "生姜",
+              "大蒜"
+            ]
+          },
+          "materials": "乳鸽2只(350克 即约9两半) 调味料:梅300克(约8两) 黄糖4平汤匙 柱侯酱3汤匙 老抽2汤匙半 玫瑰露酒 姜汁 蒜茸各1汤匙",
+          "matchedTerms": [
+            "鸽"
+          ]
+        },
+        {
+          "id": "library_姜葱烤双鸽",
+          "title": "姜葱烤双鸽",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "alcohol"
+            ],
+            "ingredient": [
+              "乳鸽",
+              "生姜",
+              "葱",
+              "调味料油",
+              "米饭",
+              "生抽汤匙半",
+              "蚝油",
+              "糖各汤匙",
+              "老抽半汤匙"
+            ]
+          },
+          "materials": "乳鸽2只 姜10片 葱70克(约2两) 调味料:油 黑糯米酒各3汤匙 生抽1汤匙半 蚝油 糖各1汤匙 老抽半汤匙",
+          "matchedTerms": [
+            "鸽"
+          ]
+        },
+        {
+          "id": "library_广州腊兔",
+          "title": "广州腊兔",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "soy",
+              "alcohol"
+            ],
+            "ingredient": []
+          },
+          "materials": "兔肉100千克 食盐5千克 黄酒2~2.2千克 蔗糖4.3千克 酱油3.12千克 硝酸钠50克",
+          "matchedTerms": [
+            "兔肉"
+          ]
+        },
+        {
+          "id": "library_炸鹑排",
+          "title": "炸鹑排",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "炸",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "deep_fry"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "egg",
+              "gluten",
+              "soy",
+              "nut",
+              "spicy"
+            ],
+            "ingredient": [
+              "鹑脯肉",
+              "花生",
+              "面包",
+              "甜酒酿",
+              "鸡蛋",
+              "五香粉",
+              "辣酱油",
+              "精盐",
+              "葱",
+              "青椒",
+              "生姜"
+            ]
+          },
+          "materials": "鹑脯肉250克 花生油500克(实耗60克) 咸面包150克 甜酒酿20克 蛋清150克 五香粉1克 辣酱油15克 精盐1.5克 葱段15克 辣椒酱25克 姜片10克",
+          "matchedTerms": [
+            "鹌鹑"
+          ]
+        }
+      ]
+    },
+    "recipe_notes_contain_halal_explanation": {
+      "priority": "P1",
+      "description": "Generated halal disclaimer was written into recipe notes instead of staying in UI/help copy.",
+      "count": 3416,
+      "samples": [
+        {
+          "id": "library_茄片吐司",
+          "title": "茄片吐司",
+          "categoryId": "breakfast",
+          "contextId": "microwave",
+          "tags": [
+            "早餐",
+            "烤",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten"
+            ],
+            "ingredient": [
+              "茄子四只",
+              "橄榄油",
+              "大蒜",
+              "洋葱",
+              "葱",
+              "胡椒粉"
+            ]
+          },
+          "notes": "回味微甜色泽宜人, 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_五谷蛋包饭",
+          "title": "五谷蛋包饭",
+          "categoryId": "breakfast",
+          "contextId": "oven",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "egg",
+              "gluten"
+            ],
+            "ingredient": [
+              "五谷饭",
+              "鸡蛋",
+              "冰糖大勺",
+              "苹果醋大勺",
+              "沙拉油—..",
+              "莴苣",
+              "毛豆",
+              "面粉",
+              "胡椒",
+              "番茄",
+              "香才",
+              "红扁豆"
+            ]
+          },
+          "notes": "鲜咸适口,好吃好看不油腻. 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_三仙糕",
+          "title": "三仙糕",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "人参",
+              "山药",
+              "米饭",
+              "白茯苓",
+              "芡实各",
+              "白糖各"
+            ]
+          },
+          "notes": "健脾胃,补元气。 用法:可作早餐酌量用。 应用:适用于脾胃虚弱食少便溏者。 俞小平、黄志杰主编 科学技术文献出版社出版 健脾胃,补元气 其它菜系 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_人参薯蓣糕",
+          "title": "人参薯蓣糕",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "人参",
+              "米饭",
+              "白糖各",
+              "淮山药",
+              "白茯苓",
+              "芡实各"
+            ]
+          },
+          "notes": "健脾胃,补元气。 用法:可作早餐随量食用。 应用:适用于脾虚食少乏力之人。 俞小平、黄志杰主编 科学技术文献出版社出版 健脾胃,补元气 其它菜系 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_八仙糕",
+          "title": "八仙糕",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "炒芡实",
+              "土炒白术",
+              "山药",
+              "山楂",
+              "白茯苓",
+              "莲子",
+              "党参各",
+              "炒陈皮",
+              "米饭",
+              "白糖"
+            ]
+          },
+          "notes": "益脾胃,止泄泻。 用法:作早餐酌量食用。 应用:适用于脾胃虚弱之人。 俞小平、黄志杰主编 科学技术文献出版社出版 益脾胃,止泄泻 其它菜系 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_姜末拌卷心菜",
+          "title": "姜末拌卷心菜",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "凉拌",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [
+              "cold_dish"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "sesame",
+              "spicy"
+            ],
+            "ingredient": [
+              "白菜",
+              "香油",
+              "精盐",
+              "白糖",
+              "生姜",
+              "青椒",
+              "味精",
+              "植物油各"
+            ]
+          },
+          "notes": "甜辣香脆,佐酒小菜,喝粥尤佳。 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_杏仁羹",
+          "title": "杏仁羹",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "宵夜",
+            "汤",
+            "炖煲",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "night"
+            ],
+            "type": [
+              "soup",
+              "stew"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "nut",
+              "sesame"
+            ],
+            "ingredient": [
+              "坚果",
+              "米饭"
+            ]
+          },
+          "notes": "本羹虽名“杏仁羹”,实为杏仁粥。大米虽是煮粥的主料,但也是作羹的重要原料之一。从营养学的角度看,大米主含淀粉,而淀粉正是作羹的主要基质。因此,大米磨粉或煮成稠粥都适宜作羹食用。 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_杏仁芝麻奶茶",
+          "title": "杏仁芝麻奶茶",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "dairy",
+              "nut",
+              "sesame"
+            ],
+            "ingredient": [
+              "牛奶",
+              "茶叶",
+              "白砂糖",
+              "蜂蜜",
+              "坚果",
+              "芝麻"
+            ]
+          },
+          "notes": "补益脾肾,健脑增智。 用法:每日1次,作早餐食用。 应用:适用于记忆力减退者,脑力劳动者。 俞小平、黄志杰主编 科学技术文献出版社出版 补益脾肾,健脑增智 其它菜系 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_海参炖瘦肉",
+          "title": "海参炖瘦肉",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "炖煲",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "stew"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "seafood",
+              "egg"
+            ],
+            "ingredient": [
+              "猪瘦肉",
+              "贝类",
+              "红枣"
+            ]
+          },
+          "notes": "补肾益精,滋润肠燥。精血亏损,症见虚赢瘦弱,津枯便秘;或妇女闭经,或肾虚阳萎;或产后体虚血少之倦怠乏力,大便燥结等。亦可用于高血压、动脉粥样硬化症属阴液不足者。 粤菜 海鲜类食材需要以完全熟透为准,处理后尽量尽快烹调。 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_百花酿椒子",
+          "title": "百花酿椒子",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "seafood",
+              "egg",
+              "spicy"
+            ],
+            "ingredient": [
+              "虾",
+              "精盐",
+              "肥肉",
+              "鸡蛋",
+              "味粉",
+              "白糖",
+              "豆豉",
+              "圆椒",
+              "生粉"
+            ]
+          },
+          "notes": "香鲜咸辣甜,佐粥作菜两相宜 小吃 海鲜类食材需要以完全熟透为准,处理后尽量尽快烹调。 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_绍兴鸡",
+          "title": "绍兴鸡",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "soy",
+              "sesame"
+            ],
+            "ingredient": [
+              "活母鸡白糖",
+              "味精各",
+              "酱油",
+              "精盐",
+              "葱",
+              "生姜",
+              "香油"
+            ]
+          },
+          "notes": "著名上海菜,因上海小绍兴鸡粥点所创而得名。选用上海名产“三黄鸡”,不加任何调料,全凭白水煮成,熟后白 沪菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_苡米山楂散",
+          "title": "苡米山楂散",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "米饭",
+              "炒扁豆",
+              "山楂各",
+              "红糖"
+            ]
+          },
+          "notes": "补脾益胃,利湿化食。 用法:食粥,每日1次。 应用:适用于中老年人脾胃虚弱者。 俞小平、黄志杰主编 科学技术文献出版社出版 补脾益胃,利湿化食 其它菜系 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        }
+      ]
+    },
+    "recipe_notes_contain_cuisine_labels": {
+      "priority": "P1",
+      "description": "Cuisine labels appear in free-form notes; they are not structured or source-confidence tracked.",
+      "count": 2221,
+      "samples": [
+        {
+          "id": "library_茄片吐司",
+          "title": "茄片吐司",
+          "categoryId": "breakfast",
+          "contextId": "microwave",
+          "tags": [
+            "早餐",
+            "烤",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten"
+            ],
+            "ingredient": [
+              "茄子四只",
+              "橄榄油",
+              "大蒜",
+              "洋葱",
+              "葱",
+              "胡椒粉"
+            ]
+          },
+          "cuisines": [
+            "浙江菜"
+          ],
+          "notes": "回味微甜色泽宜人, 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_五谷蛋包饭",
+          "title": "五谷蛋包饭",
+          "categoryId": "breakfast",
+          "contextId": "oven",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "egg",
+              "gluten"
+            ],
+            "ingredient": [
+              "五谷饭",
+              "鸡蛋",
+              "冰糖大勺",
+              "苹果醋大勺",
+              "沙拉油—..",
+              "莴苣",
+              "毛豆",
+              "面粉",
+              "胡椒",
+              "番茄",
+              "香才",
+              "红扁豆"
+            ]
+          },
+          "cuisines": [
+            "浙江菜"
+          ],
+          "notes": "鲜咸适口,好吃好看不油腻. 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_海参炖瘦肉",
+          "title": "海参炖瘦肉",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "炖煲",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "stew"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "seafood",
+              "egg"
+            ],
+            "ingredient": [
+              "猪瘦肉",
+              "贝类",
+              "红枣"
+            ]
+          },
+          "cuisines": [
+            "粤菜"
+          ],
+          "notes": "补肾益精,滋润肠燥。精血亏损,症见虚赢瘦弱,津枯便秘;或妇女闭经,或肾虚阳萎;或产后体虚血少之倦怠乏力,大便燥结等。亦可用于高血压、动脉粥样硬化症属阴液不足者。 粤菜 海鲜类食材需要以完全熟透为准,处理后尽量尽快烹调。 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_炒茄丝",
+          "title": "炒茄丝",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "炒",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "stir_fry"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "nut",
+              "alcohol"
+            ],
+            "ingredient": [
+              "番茄",
+              "大蒜",
+              "葱",
+              "花生"
+            ]
+          },
+          "cuisines": [
+            "浙江菜"
+          ],
+          "notes": "咸香,略带酸味,清素利口,适用于家庭早餐或午餐下酒。 浙江菜"
+        },
+        {
+          "id": "library_决明子粥",
+          "title": "决明子粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "决明子",
+              "米饭",
+              "冰糖少量"
+            ]
+          },
+          "cuisines": [
+            "粤菜"
+          ],
+          "notes": "该粥清肝、明目、通便。对于目赤红肿、畏光多泪、高血压、高血脂、习惯性便秘等症效果明显 粤菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_合红枣粥",
+          "title": "合红枣粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "米饭",
+              "百合",
+              "红枣",
+              "白糖"
+            ]
+          },
+          "cuisines": [
+            "粤菜"
+          ],
+          "notes": "粤菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_地黄花粥",
+          "title": "地黄花粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "米饭"
+            ]
+          },
+          "cuisines": [
+            "浙江菜"
+          ],
+          "notes": "滋肾,清热,除烦,止渴。适用于消渴及肾虚腰痛。 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_杂豆小麦粥",
+          "title": "杂豆小麦粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "soy"
+            ],
+            "ingredient": [
+              "小麦",
+              "绿豆",
+              "眉豆",
+              "米饭",
+              "赤小豆"
+            ]
+          },
+          "cuisines": [
+            "粤菜"
+          ],
+          "notes": "清热解毒,去湿利尿。 粤菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_枸杞豉汁粥",
+          "title": "枸杞豉汁粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "米饭"
+            ]
+          },
+          "cuisines": [
+            "浙江菜"
+          ],
+          "notes": "补益肝肾,和养胃气。适用于体虚久并五劳七伤,房事衰弱、腰膝无力等症。 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_核桃仁粥",
+          "title": "核桃仁粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "nut"
+            ],
+            "ingredient": [
+              "米饭",
+              "坚果"
+            ]
+          },
+          "cuisines": [
+            "浙江菜"
+          ],
+          "notes": "补肾,健脑,通淋。适用于失眠健忘、痛虚腰痛、泌尿系结石、小便余沥不净、小便白浊。 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_桑葚粥",
+          "title": "桑葚粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "桑葚",
+              "米饭",
+              "冰糖"
+            ]
+          },
+          "cuisines": [
+            "粤菜"
+          ],
+          "notes": "该粥可以滋补肝阴,养血明目。适合于肝肾亏虚引起的头晕眼花、失眠多梦、耳鸣腰酸、须发早白等症。 粤菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_猪肝绿豆粥",
+          "title": "猪肝绿豆粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "猪肉",
+              "绿豆",
+              "米饭",
+              "食盐",
+              "味精各"
+            ]
+          },
+          "cuisines": [
+            "粤菜"
+          ],
+          "notes": "此粥补肝养血、清热明目、美容润肤,可使人容光焕发,特别适合那些面色蜡黄、视力减退、视物模糊的体弱者。 粤菜 肉类建议按厚薄尽量切匀,先确认熟透再调最终口味。"
+        }
+      ],
+      "breakdown": {
+        "浙江菜": 840,
+        "粤菜": 421,
+        "川菜": 278,
+        "鲁菜": 229,
+        "苏菜": 210,
+        "闽菜": 91,
+        "湘菜": 59,
+        "东北菜": 39,
+        "西餐": 30,
+        "徽菜": 22,
+        "意大利": 4,
+        "法式": 3,
+        "西班牙": 1
+      }
+    },
+    "western_marker_with_chinese_cuisine_note": {
+      "priority": "P1",
+      "description": "Recipe title/materials look western or non-Chinese while notes contain a Chinese cuisine label.",
+      "count": 30,
+      "samples": [
+        {
+          "id": "library_茄片吐司",
+          "title": "茄片吐司",
+          "categoryId": "breakfast",
+          "contextId": "microwave",
+          "tags": [
+            "早餐",
+            "烤",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten"
+            ],
+            "ingredient": [
+              "茄子四只",
+              "橄榄油",
+              "大蒜",
+              "洋葱",
+              "葱",
+              "胡椒粉"
+            ]
+          },
+          "notes": "回味微甜色泽宜人, 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "茄子四只 橄榄油150毫升 蒜瓣一枚 洋葱一或两只 盐 胡椒粉"
+        },
+        {
+          "id": "library_五谷蛋包饭",
+          "title": "五谷蛋包饭",
+          "categoryId": "breakfast",
+          "contextId": "oven",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "egg",
+              "gluten"
+            ],
+            "ingredient": [
+              "五谷饭",
+              "鸡蛋",
+              "冰糖大勺",
+              "苹果醋大勺",
+              "沙拉油—..",
+              "莴苣",
+              "毛豆",
+              "面粉",
+              "胡椒",
+              "番茄",
+              "香才",
+              "红扁豆"
+            ]
+          },
+          "notes": "鲜咸适口,好吃好看不油腻. 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "五谷饭1碗 鸡蛋3个 冰糖2大勺 苹果醋1大勺 盐少许 沙拉油260—300c.c. 莴苣1片 毛豆200g 面粉1大匙 盐 胡椒少许 番茄(大)2粒 香才适量 红扁豆10g"
+        },
+        {
+          "id": "library_果酱三明治",
+          "title": "果酱三明治",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烧",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "braise"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten"
+            ],
+            "ingredient": [
+              "主料咸方包",
+              "辅料什锦果酱"
+            ]
+          },
+          "notes": "香甜、松软。 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "主料 咸方包(或土司面包)250克 辅料 什锦果酱100克"
+        },
+        {
+          "id": "library_烤奶酪水饺皮",
+          "title": "烤奶酪水饺皮",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "dairy"
+            ],
+            "ingredient": [
+              "水饺皮",
+              "牛奶",
+              "葡萄大匙"
+            ]
+          },
+          "notes": "口味独特,香脆爽口。 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "水饺皮10张 奶酪酥片3片 葡萄干2大匙"
+        },
+        {
+          "id": "library_芦笋手卷",
+          "title": "芦笋手卷",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "nut",
+              "sesame"
+            ],
+            "ingredient": [
+              "青芦笋",
+              "沙拉",
+              "花生",
+              "芝麻",
+              "烧海苔片"
+            ]
+          },
+          "notes": "补虚,养液,润肺,滑肠。适用于中老年及体弱早衰、产后体虚、头晕目眩、肺燥咳嗽咳血、慢性便秘等症 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "青芦笋 1斤 沙拉 1包 花生粉 少许 炒熟白芝麻 少许美生菜 半粒 烧海苔片1包"
+        },
+        {
+          "id": "library_薯条手卷",
+          "title": "薯条手卷",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "sesame"
+            ],
+            "ingredient": [
+              "薯条",
+              "生菜",
+              "海苔",
+              "芦笋调味料沙拉酱",
+              "芝麻"
+            ]
+          },
+          "notes": "外脆里嫩,还有营养丰富的海苔,芦笋等. 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "薯条100克 生菜3片 海苔2片 芦笋15根调味料沙拉酱2匙 白芝麻1大匙"
+        },
+        {
+          "id": "library_酱味烤海鱼",
+          "title": "酱味烤海鱼",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烧",
+            "烤",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "braise",
+              "bake"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "seafood",
+              "soy"
+            ],
+            "ingredient": [
+              "鱼",
+              "竹签—支",
+              "调料豆瓣酱",
+              "沙拉油各汤匙",
+              "白糖",
+              "酱油",
+              "清水各汤匙",
+              "大蒜",
+              "生姜",
+              "味精",
+              "精盐各茶匙",
+              "植物油汤匙"
+            ]
+          },
+          "notes": "此菜咸鲜味香,营养价高。 浙江菜 海鲜类食材需要以完全熟透为准,处理后尽量尽快烹调。 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "用料:小海鱼4—6条 竹签4—6支 调料:豆瓣酱 沙拉油各2汤匙 白糖 酱油 清水各1汤匙 蒜茸 姜汁各0.5汤匙 味精 精盐各1茶匙 植物油2汤匙"
+        },
+        {
+          "id": "library_馄饨香蕉卷",
+          "title": "馄饨香蕉卷",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten"
+            ],
+            "ingredient": [
+              "馄饨皮",
+              "香蕉",
+              "面粉",
+              "番茄"
+            ]
+          },
+          "notes": "外脆里嫩,鲜咸适宜,有些味甜 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "馄饨皮12张 香蕉1根 面粉1大匙 水2大匙调味料沙拉酱2大匙 番茄酱0.5大匙"
+        },
+        {
+          "id": "library_三鲜蘑菇",
+          "title": "三鲜蘑菇",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten",
+              "soy"
+            ],
+            "ingredient": [
+              "米饭",
+              "大洋芋",
+              "很薄的鹅肝",
+              "橄榄油",
+              "柠檬汁",
+              "日本酱油",
+              "胡椒粉"
+            ]
+          },
+          "notes": "香味浓,风味独特 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "直径约8厘米的上好牛肝菌8只 大洋芋4只 很薄的鹅肝8片 橄榄油 柠檬汁 日本酱油 胡椒粉"
+        },
+        {
+          "id": "library_串煎馄饨",
+          "title": "串煎馄饨",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "煎",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "pan_fry"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "soy",
+              "sesame",
+              "spicy"
+            ],
+            "ingredient": [
+              "青椒"
+            ]
+          },
+          "notes": "外焦里嫩,有些微辣. 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "馄饨1盒调味料法国香菜末2小匙 辣椒粉2小匙"
+        },
+        {
+          "id": "library_凉拌馄饨皮",
+          "title": "凉拌馄饨皮",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "凉拌",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "cold_dish"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "馄饨皮",
+              "黄瓜",
+              "番茄",
+              "橄榄油大匙",
+              "糖大匙"
+            ]
+          },
+          "notes": "鲜咸适宜,风味独特,口感润滑。 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "馄饨皮20张 小黄瓜1条 西红柿1个 柠檬1个调味料白醋2大匙 橄榄油1大匙 糖1大匙"
+        },
+        {
+          "id": "library_木耳顺风",
+          "title": "木耳顺风",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "泡发木耳",
+              "莴苣",
+              "凤梨",
+              "沙拉油汤匙",
+              "湿淀粉汤匙",
+              "粗盐",
+              "味精各茶匙",
+              "白糖汤匙",
+              "植物油汤匙"
+            ]
+          },
+          "notes": "此菜微酸带甜,爽口开胃。 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。",
+          "materials": "泡发木耳200克 莴苣1个 凤梨1个 沙拉油1.5汤匙 湿淀粉1汤匙 粗盐 味精各1茶匙 白糖0.5汤匙 植物油1汤匙"
+        }
+      ]
+    },
+    "onion_alias_also_indexes_scallion": {
+      "priority": "P2",
+      "description": "Ingredient alias matching adds 葱 when only 洋葱 appears.",
+      "count": 143,
+      "samples": [
+        {
+          "id": "library_茄片吐司",
+          "title": "茄片吐司",
+          "categoryId": "breakfast",
+          "contextId": "microwave",
+          "tags": [
+            "早餐",
+            "烤",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten"
+            ],
+            "ingredient": [
+              "茄子四只",
+              "橄榄油",
+              "大蒜",
+              "洋葱",
+              "葱",
+              "胡椒粉"
+            ]
+          },
+          "materials": "茄子四只 橄榄油150毫升 蒜瓣一枚 洋葱一或两只 盐 胡椒粉",
+          "ingredients": [
+            "大蒜",
+            "橄榄油",
+            "洋葱",
+            "胡椒粉",
+            "茄子四只",
+            "葱"
+          ]
+        },
+        {
+          "id": "library_咖喱蛋包饭",
+          "title": "咖喱蛋包饭",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "beef",
+              "egg",
+              "dairy"
+            ],
+            "ingredient": [
+              "米饭",
+              "牛肉",
+              "洋葱",
+              "葱",
+              "香菇",
+              "鸡蛋",
+              "牛奶",
+              "苹果泥",
+              "植物油",
+              "咖喱粉",
+              "咖喱块"
+            ]
+          },
+          "materials": "米饭100克 牛肉薄片70克 洋葱1/2个 蘑菇4朵 鸡蛋2个 酸奶20克 苹果泥10克 鲜汤 植物油 咖喱粉 咖喱块 奶油各适量",
+          "ingredients": [
+            "咖喱块",
+            "咖喱粉",
+            "植物油",
+            "洋葱",
+            "牛奶",
+            "牛肉",
+            "米饭",
+            "苹果泥",
+            "葱",
+            "香菇",
+            "鸡蛋"
+          ]
+        },
+        {
+          "id": "library_泰国辣味烤魚",
+          "title": "泰国辣味烤魚",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "seafood",
+              "spicy"
+            ],
+            "ingredient": [
+              "鱼",
+              "大蒜",
+              "青椒",
+              "芫荽茎各大匙",
+              "洋葱",
+              "葱",
+              "糖.大匙",
+              "高汤大匙"
+            ]
+          },
+          "materials": "鱼肉8两 (1)蒜 辣椒 芫荽茎(切碎)各1/2大匙 洋葱末.4大匙 (2)鱼露.酸子汁各2大匙 糖.1大匙 高汤4大匙",
+          "ingredients": [
+            "大蒜",
+            "洋葱",
+            "糖.大匙",
+            "芫荽茎各大匙",
+            "葱",
+            "青椒",
+            "高汤大匙",
+            "鱼"
+          ]
+        },
+        {
+          "id": "library_番茄芙蓉饭",
+          "title": "番茄芙蓉饭",
+          "categoryId": "lunch",
+          "contextId": "microwave",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork",
+              "egg",
+              "dairy",
+              "soy"
+            ],
+            "ingredient": [
+              "米饭",
+              "豆腐",
+              "番茄",
+              "猪肉",
+              "洋葱",
+              "葱",
+              "鸡蛋",
+              "牛奶",
+              ".酱油",
+              "白糖",
+              "水淀粉各"
+            ]
+          },
+          "materials": "米饭150克 豆腐150克 番茄100克 猪里脊肉片50克 洋葱半个 鸡蛋1个 奶酪丝40克 A.奶油 B.酱油 番茄酱 白糖 水淀粉各适量",
+          "ingredients": [
+            ".酱油",
+            "水淀粉各",
+            "洋葱",
+            "牛奶",
+            "猪肉",
+            "番茄",
+            "白糖",
+            "米饭",
+            "葱",
+            "豆腐",
+            "鸡蛋"
+          ]
+        },
+        {
+          "id": "library_focaccia",
+          "title": "Focaccia",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "gluten"
+            ],
+            "ingredient": [
+              "面粉",
+              "酵母",
+              "冰水",
+              "披萨草叶",
+              "番茄",
+              "黑橄榄",
+              "洋葱",
+              "葱",
+              "海盐",
+              "橄榄油"
+            ]
+          },
+          "materials": "高筋面粉400克 低筋面粉100克 盐10克 酵母10克 冰水350克 披萨草叶50克 小番茄 黑橄榄 洋葱适量 海盐 橄榄油适量",
+          "ingredients": [
+            "冰水",
+            "披萨草叶",
+            "橄榄油",
+            "洋葱",
+            "海盐",
+            "番茄",
+            "葱",
+            "酵母",
+            "面粉",
+            "黑橄榄"
+          ]
+        },
+        {
+          "id": "library_roastedsalmon",
+          "title": "Roasted salmon",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [],
+            "contains": [
+              "seafood",
+              "dairy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "鱼",
+              "白胡椒",
+              "白葡萄酒",
+              "刁草",
+              "豆苗",
+              "黄油",
+              "海盐",
+              "牛奶",
+              "无盐黄油",
+              "洋葱",
+              "葱",
+              "法国芥末"
+            ]
+          },
+          "materials": "三文鱼柳200克 白胡椒2克 白葡萄酒3毫升 刁草1根 豆苗100克 黄油20克 海盐少许 ✔淡奶油白酒刁草汁原料 无盐黄油30克 洋葱碎20克 淡奶油100克 白葡萄酒20克 法国芥末5克",
+          "ingredients": [
+            "刁草",
+            "无盐黄油",
+            "法国芥末",
+            "洋葱",
+            "海盐",
+            "牛奶",
+            "白胡椒",
+            "白葡萄酒",
+            "葱",
+            "豆苗",
+            "鱼",
+            "黄油"
+          ]
+        },
+        {
+          "id": "library_ryesandwich",
+          "title": "Rye sandwich",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [],
+            "contains": [
+              "pork",
+              "beef",
+              "seafood",
+              "egg",
+              "dairy",
+              "gluten"
+            ],
+            "ingredient": [
+              "面包",
+              "洋葱",
+              "葱",
+              "生菜",
+              "黄瓜",
+              "番茄",
+              "车达芝士",
+              "牛肉",
+              "芦笋",
+              "虾",
+              "黄油",
+              "原味沙拉酱",
+              "黑胡椒",
+              "橄榄油"
+            ]
+          },
+          "materials": "黑麦面包 洋葱适量 生菜适量 黄瓜适量 小番茄适量 车达芝士1片 牛排适量 芦笋适量 虾仁适量 黄油适量 原味沙拉酱适量 盐 黑胡椒适量 橄榄油适量",
+          "ingredients": [
+            "原味沙拉酱",
+            "橄榄油",
+            "洋葱",
+            "牛肉",
+            "生菜",
+            "番茄",
+            "芦笋",
+            "葱",
+            "虾",
+            "车达芝士",
+            "面包",
+            "黄油",
+            "黄瓜",
+            "黑胡椒"
+          ]
+        },
+        {
+          "id": "library_串烧海鲜",
+          "title": "串烧海鲜",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烧",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "braise"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "seafood"
+            ],
+            "ingredient": [
+              "鱼",
+              "青口",
+              "虾",
+              "青椒",
+              "洋葱",
+              "葱"
+            ]
+          },
+          "materials": "鱿鱼1只 青口6只 大虾6只 急冻虾丸6粒 青椒1只 甜红椒1只 洋葱1/2个",
+          "ingredients": [
+            "洋葱",
+            "葱",
+            "虾",
+            "青口",
+            "青椒",
+            "鱼"
+          ]
+        },
+        {
+          "id": "library_坚果火鸡沙拉",
+          "title": "坚果火鸡沙拉",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "凉拌",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "cold_dish"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "seafood",
+              "egg",
+              "dairy",
+              "gluten",
+              "soy",
+              "nut",
+              "sesame"
+            ],
+            "ingredient": [
+              "鸡胸",
+              "青椒",
+              "罗马生菜",
+              "细叶生菜)",
+              "芝士块",
+              "坚果",
+              "黑胡椒粉",
+              "橄榄油",
+              "✔油醋汁原料",
+              "洋葱",
+              "葱",
+              "意大利黑醋",
+              "混合香料"
+            ]
+          },
+          "materials": "鸡胸1块 红椒粉10克 混合生菜(红叶生菜 罗马生菜 细叶生菜)适量 芝士块 核桃 盐 黑胡椒粉 橄榄油适量 ✔油醋汁原料 洋葱末20克 意大利黑醋100毫升 橄榄油60毫升 混合香料5克",
+          "ingredients": [
+            "✔油醋汁原料",
+            "坚果",
+            "意大利黑醋",
+            "橄榄油",
+            "洋葱",
+            "混合香料",
+            "细叶生菜)",
+            "罗马生菜",
+            "芝士块",
+            "葱",
+            "青椒",
+            "鸡胸",
+            "黑胡椒粉"
+          ]
+        },
+        {
+          "id": "library_奶酪汉堡包",
+          "title": "奶酪汉堡包",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "dairy",
+              "gluten"
+            ],
+            "ingredient": [
+              "面包",
+              "牛脊",
+              "并弄成圆筒状",
+              "生菜",
+              "番茄",
+              "时萝酸菜片",
+              "洋葱",
+              "葱",
+              "菜丝沙拉",
+              "椰榄",
+              "薯条",
+              "牛奶",
+              "黄油",
+              "盐调至够味",
+              "白胡椒调至够味",
+              "法香枝"
+            ]
+          },
+          "materials": "汉堡面包1个 牛脊(本地) 并弄成圆筒状180克 生菜30克 番茄片 40克 时萝酸菜片25克 洋葱片 去皮40克 菜丝沙拉30克 椰榄5 克 薯条1包 瑞士奶酪40克 黄油20克 盐调至够味 白胡椒调至够 味 法香枝1个",
+          "ingredients": [
+            "并弄成圆筒状",
+            "时萝酸菜片",
+            "椰榄",
+            "法香枝",
+            "洋葱",
+            "牛奶",
+            "牛脊",
+            "生菜",
+            "番茄",
+            "白胡椒调至够味",
+            "盐调至够味",
+            "菜丝沙拉",
+            "葱",
+            "薯条",
+            "面包",
+            "黄油"
+          ]
+        },
+        {
+          "id": "library_德克萨斯烧烤肋排",
+          "title": "德克萨斯烧烤肋排",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烧",
+            "烤",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "braise",
+              "bake"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "spicy"
+            ],
+            "ingredient": [
+              "猪肋排",
+              "新菠萝片",
+              "香叶",
+              "八角",
+              "西芹小根",
+              "胡萝卜",
+              "洋葱",
+              "葱",
+              "白胡椒籽",
+              "✔酱汁原料",
+              "番茄",
+              "烧烤酱",
+              "青椒",
+              "菠萝汁",
+              "黑胡椒碎",
+              "大蒜",
+              "香菜碎"
+            ]
+          },
+          "materials": "猪肋排500克(3根) 新鲜菠萝片200克 香叶2张 八角2克 西芹1小根 胡萝卜1根 洋葱1个 白胡椒籽10克 盐少许 ✔BBQ酱汁原料 番茄莎司300克 HP烧烤酱200克 美国辣椒仔3滴 菠萝汁30毫升 黑胡椒碎10克 洋葱碎100克 大蒜碎30克 香菜碎20克 干辣椒3…",
+          "ingredients": [
+            "✔酱汁原料",
+            "八角",
+            "大蒜",
+            "新菠萝片",
+            "洋葱",
+            "烧烤酱",
+            "猪肋排",
+            "番茄",
+            "白胡椒籽",
+            "胡萝卜",
+            "菠萝汁",
+            "葱",
+            "西芹小根",
+            "青椒",
+            "香叶",
+            "香菜碎",
+            "黑胡椒碎"
+          ]
+        },
+        {
+          "id": "library_德芥蜜汁烤猪肘",
+          "title": "德芥蜜汁烤猪肘",
+          "categoryId": "lunch",
+          "contextId": "oven",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "烤",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "bake"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [],
+            "contains": [
+              "pork",
+              "alcohol"
+            ],
+            "ingredient": [
+              "猪肉",
+              "德国芥末",
+              "蜂蜜",
+              "洋葱",
+              "葱",
+              "西芹",
+              "胡萝卜",
+              "香叶",
+              "茴香籽",
+              "白胡椒粒",
+              "德国黑啤罐",
+              "清水",
+              "✔酸椰菜原料",
+              "椰菜",
+              "青苹果",
+              "白葡萄酒",
+              "白醋"
+            ]
+          },
+          "materials": "德国咸猪肘1只 德国芥末20克 蜂蜜20克 洋葱100克 西芹100克 胡萝卜100克 香叶2片 茴香籽5克 白胡椒粒10克 德国黑啤1罐(350~400毫升) 清水适量 ✔酸椰菜原料 椰菜(卷心菜约600克)1棵 培根200克 洋葱30克 青苹果1只 白葡萄酒30毫升 白醋1…",
+          "ingredients": [
+            "✔酸椰菜原料",
+            "德国芥末",
+            "德国黑啤罐",
+            "椰菜",
+            "洋葱",
+            "清水",
+            "猪肉",
+            "白胡椒粒",
+            "白葡萄酒",
+            "白醋",
+            "胡萝卜",
+            "茴香籽",
+            "葱",
+            "蜂蜜",
+            "西芹",
+            "青苹果",
+            "香叶"
+          ]
+        }
+      ]
+    },
+    "specific_pork_cut_collapsed_to_generic_pork": {
+      "priority": "P2",
+      "description": "Specific pork cuts are collapsed into generic 猪肉, which explains broad matches like 排骨 -> 猪肉.",
+      "count": 1529,
+      "samples": [
+        {
+          "id": "library_马蹄松子鸭丁",
+          "title": "马蹄松子鸭丁",
+          "categoryId": "breakfast",
+          "contextId": "oven",
+          "tags": [
+            "早餐",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [],
+            "contains": [
+              "pork",
+              "alcohol"
+            ],
+            "ingredient": [
+              "鸭肉",
+              "马蹄",
+              "松子",
+              "猪肉",
+              "黑木耳",
+              "料酒",
+              "鸡汤",
+              "味精各"
+            ]
+          },
+          "materials": "烤鸭500克 马蹄100克 松子(炒)30克 火腿 黑木耳 盐 料酒 鸡汤 味精各适量",
+          "ingredients": [
+            "味精各",
+            "料酒",
+            "松子",
+            "猪肉",
+            "马蹄",
+            "鸡汤",
+            "鸭肉",
+            "黑木耳"
+          ],
+          "contains": [
+            "alcohol",
+            "pork"
+          ]
+        },
+        {
+          "id": "library_八宝锅蒸",
+          "title": "八宝锅蒸",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "蒸",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "steam"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "gluten",
+              "nut"
+            ],
+            "ingredient": [
+              "米饭",
+              "面粉",
+              "蜜瓜片",
+              "蜜枣",
+              "坚果",
+              "莲子",
+              "扁豆各",
+              "蜜樱桃",
+              "橘红",
+              "猪油",
+              "白糖各"
+            ]
+          },
+          "materials": "大米粉 面粉各45克 蜜瓜片 蜜枣 核桃仁各10克 莲子 扁豆各15克 蜜樱桃15个 橘红6克 熟猪油 白糖各120克",
+          "ingredients": [
+            "坚果",
+            "扁豆各",
+            "橘红",
+            "猪油",
+            "白糖各",
+            "米饭",
+            "莲子",
+            "蜜枣",
+            "蜜樱桃",
+            "蜜瓜片",
+            "面粉"
+          ],
+          "contains": [
+            "gluten",
+            "nut",
+            "pork"
+          ]
+        },
+        {
+          "id": "library_有益补气血的材料",
+          "title": "有益补气血的材料",
+          "categoryId": "breakfast",
+          "contextId": "pot",
+          "tags": [
+            "早餐",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast"
+            ],
+            "type": [],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [],
+            "contains": [
+              "pork",
+              "beef",
+              "egg",
+              "dairy",
+              "soy"
+            ],
+            "ingredient": [
+              "白木耳",
+              "生姜",
+              "牛肉",
+              "猪肉",
+              "牡蛎",
+              "蜂蜜",
+              "芥菜",
+              "昆布",
+              "葡萄",
+              "金针",
+              "五谷",
+              "鸡蛋",
+              "坚果类",
+              "红豆",
+              "牛奶",
+              "药材红枣",
+              "桂圆",
+              "胡桃仁"
+            ]
+          },
+          "materials": "白木耳 姜 牛肉 猪肝 牡蛎 蜂蜜 芥菜 昆布 葡萄干 金针 五谷 蛋黄 坚果类 红豆 牛奶 药材:红枣 桂圆 胡桃仁 人参 生地黄 熟地黄 当归 白芍 川芎 肉桂 玫瑰花 菊花",
+          "ingredients": [
+            "五谷",
+            "坚果类",
+            "昆布",
+            "桂圆",
+            "牛奶",
+            "牛肉",
+            "牡蛎",
+            "猪肉",
+            "生姜",
+            "白木耳",
+            "红豆",
+            "胡桃仁",
+            "芥菜",
+            "药材红枣",
+            "葡萄",
+            "蜂蜜",
+            "金针",
+            "鸡蛋"
+          ],
+          "contains": [
+            "beef",
+            "dairy",
+            "egg",
+            "pork",
+            "soy"
+          ]
+        },
+        {
+          "id": "library_兔肉粥",
+          "title": "兔肉粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "兔肉",
+              "米饭",
+              "马蹄各",
+              "香菇",
+              "精盐",
+              "味精",
+              "胡椒",
+              "猪油",
+              "生姜",
+              "葱"
+            ]
+          },
+          "materials": "兔肉 粳米 马蹄各100克 水发香菇50克 精盐 味精 胡椒 猪油 葱姜末各少许",
+          "ingredients": [
+            "兔肉",
+            "味精",
+            "猪油",
+            "生姜",
+            "米饭",
+            "精盐",
+            "胡椒",
+            "葱",
+            "香菇",
+            "马蹄各"
+          ],
+          "contains": [
+            "pork"
+          ]
+        },
+        {
+          "id": "library_八卦粥",
+          "title": "八卦粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "nut",
+              "sesame",
+              "spicy"
+            ],
+            "ingredient": [
+              "活龟肉",
+              "米饭",
+              "坚果",
+              "猪油",
+              "香油",
+              "葱",
+              "花椒",
+              "生姜",
+              "味精各"
+            ]
+          },
+          "materials": "活龟肉100克 粳米200克 核桃仁50克 猪油 香油 葱白 花椒 姜 盐 味精各少许",
+          "ingredients": [
+            "味精各",
+            "坚果",
+            "活龟肉",
+            "猪油",
+            "生姜",
+            "米饭",
+            "花椒",
+            "葱",
+            "香油"
+          ],
+          "contains": [
+            "nut",
+            "pork",
+            "sesame",
+            "spicy"
+          ]
+        },
+        {
+          "id": "library_春季养生十大药粥",
+          "title": "春季养生十大药粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork",
+              "egg",
+              "spicy"
+            ],
+            "ingredient": [
+              "米饭",
+              "荠菜",
+              "韭菜",
+              "芹菜",
+              "猪肉",
+              "红枣",
+              "薄荷",
+              "枸杞",
+              "胡萝卜",
+              "菊花",
+              "山药片或山药"
+            ]
+          },
+          "materials": "粳米 荠菜 韭菜 芹菜 猪肝 红枣 薄荷 枸杞 胡萝卜 菊花 干山药片或鲜山药",
+          "ingredients": [
+            "山药片或山药",
+            "枸杞",
+            "猪肉",
+            "米饭",
+            "红枣",
+            "胡萝卜",
+            "芹菜",
+            "荠菜",
+            "菊花",
+            "薄荷",
+            "韭菜"
+          ],
+          "contains": [
+            "egg",
+            "pork",
+            "spicy"
+          ]
+        },
+        {
+          "id": "library_牡蛎粥",
+          "title": "牡蛎粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "vegetarian",
+              "staple"
+            ],
+            "diet": [
+              "vegan_friendly"
+            ],
+            "contains": [
+              "pork",
+              "alcohol"
+            ],
+            "ingredient": [
+              "牡蛎肉",
+              "米饭",
+              "猪瘦肉",
+              "料酒",
+              "猪油",
+              "大蒜",
+              "葱",
+              "味精",
+              "胡椒粉各"
+            ]
+          },
+          "materials": "鲜牡蛎肉60克 糯米60克 猪瘦肉30克 料酒 盐 猪油 大蒜末 葱头末 味精 胡椒粉各适量",
+          "ingredients": [
+            "味精",
+            "大蒜",
+            "料酒",
+            "牡蛎肉",
+            "猪油",
+            "猪瘦肉",
+            "米饭",
+            "胡椒粉各",
+            "葱"
+          ],
+          "contains": [
+            "alcohol",
+            "pork"
+          ]
+        },
+        {
+          "id": "library_猪肚粥",
+          "title": "猪肚粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "宵夜",
+            "汤",
+            "炖煲",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "night"
+            ],
+            "type": [
+              "soup",
+              "stew",
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "猪肉",
+              "米饭",
+              "白术",
+              "槟榔",
+              "生姜",
+              "茴香",
+              "胡椒面",
+              "葱"
+            ]
+          },
+          "materials": "猪肚1只 粳米50克 白术60克 槟榔1颗 生姜45克 茴香 胡椒面 盐 葱段各适量",
+          "ingredients": [
+            "槟榔",
+            "猪肉",
+            "生姜",
+            "白术",
+            "米饭",
+            "胡椒面",
+            "茴香",
+            "葱"
+          ],
+          "contains": [
+            "pork"
+          ]
+        },
+        {
+          "id": "library_猪肝绿豆粥",
+          "title": "猪肝绿豆粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "猪肉",
+              "绿豆",
+              "米饭",
+              "食盐",
+              "味精各"
+            ]
+          },
+          "materials": "新鲜猪肝100克 绿豆60克 大米100克 食盐 味精各适量",
+          "ingredients": [
+            "味精各",
+            "猪肉",
+            "米饭",
+            "绿豆",
+            "食盐"
+          ],
+          "contains": [
+            "pork"
+          ]
+        },
+        {
+          "id": "library_猪肝菠菜粥",
+          "title": "猪肝菠菜粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "宵夜",
+            "汤",
+            "炖煲",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "night"
+            ],
+            "type": [
+              "soup",
+              "stew",
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "猪肉",
+              "米饭",
+              "菠菜",
+              "生姜",
+              "葱"
+            ]
+          },
+          "materials": "猪肝 大米各100克 菠菜150克 盐 姜 葱各适量",
+          "ingredients": [
+            "猪肉",
+            "生姜",
+            "米饭",
+            "菠菜",
+            "葱"
+          ],
+          "contains": [
+            "pork"
+          ]
+        },
+        {
+          "id": "library_猪腰粥",
+          "title": "猪腰粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "宵夜",
+            "汤",
+            "炖煲",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "night"
+            ],
+            "type": [
+              "soup",
+              "stew",
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork"
+            ],
+            "ingredient": [
+              "猪肉",
+              "米饭",
+              "葱",
+              "五香粉",
+              "生姜",
+              "盐各"
+            ]
+          },
+          "materials": "猪腰2只 粳米50克 葱白 五香粉 姜 盐各适量",
+          "ingredients": [
+            "五香粉",
+            "猪肉",
+            "生姜",
+            "盐各",
+            "米饭",
+            "葱"
+          ],
+          "contains": [
+            "pork"
+          ]
+        },
+        {
+          "id": "library_猪腰薏米粥",
+          "title": "猪腰薏米粥",
+          "categoryId": "breakfast",
+          "contextId": "rice_cooker",
+          "tags": [
+            "早餐",
+            "午餐",
+            "晚餐",
+            "饭食",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "breakfast",
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "rice"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed",
+              "staple"
+            ],
+            "diet": [],
+            "contains": [
+              "pork",
+              "alcohol"
+            ],
+            "ingredient": [
+              "猪肉",
+              "米饭",
+              "黄芪",
+              "香菇",
+              "葱",
+              "调味料盐小匙"
+            ]
+          },
+          "materials": "猪腰1/2副 薏米225克 黄芪4克 香菇3朵 葱1根 调味料:盐1小匙 米酒1大匙",
+          "ingredients": [
+            "猪肉",
+            "米饭",
+            "葱",
+            "调味料盐小匙",
+            "香菇",
+            "黄芪"
+          ],
+          "contains": [
+            "alcohol",
+            "pork"
+          ]
+        }
+      ],
+      "specificPorkTextCount": 1529
+    },
+    "garbled_text_markers": {
+      "priority": "P1",
+      "description": "Materials, steps, or notes contain extraction artifacts such as ?? or replacement glyphs.",
+      "count": 8,
+      "samples": [
+        {
+          "id": "library_万子酥鸭",
+          "title": "万子酥鸭",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "炸",
+            "荤",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "deep_fry"
+            ],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [
+              "halal_friendly"
+            ],
+            "contains": [
+              "egg",
+              "gluten",
+              "sesame"
+            ],
+            "ingredient": [
+              "鸭肉",
+              "芝麻",
+              "鸡蛋",
+              "调料植物油",
+              "面粉"
+            ]
+          },
+          "materials": "五香蒸鸭1只 白芝麻100克 鸡蛋200克 调料:植物油900克(实耗约80克) 面粉50克",
+          "notes": "色金黄,外形美,肉酥脆,味浓香 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_什锦果盅",
+          "title": "什锦果盅",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "dairy"
+            ],
+            "ingredient": [
+              "草蓉",
+              "菠萝",
+              "葡萄",
+              "西瓜等)",
+              "牛奶"
+            ]
+          },
+          "materials": "各种时令鲜果(如苹果 草蓉 菠萝 葡萄 西瓜等) 酸奶",
+          "notes": "富含多种维生素,果香浓郁,色彩清新柔和,开胃爽,口。既可作为饭后甜食,也可当作冷饮随时享用。 其他 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_凤尾虾排",
+          "title": "凤尾虾排",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [],
+            "contains": [
+              "seafood",
+              "spicy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "虾",
+              "料酒",
+              "葱",
+              "生姜"
+            ]
+          },
+          "materials": "大青虾750克 精盐2克 料酒25克 葱 姜汁30克 花椒盐5克",
+          "notes": "安徽名菜。淮河横贯安徽,湖泽众多??产大青虾。安徽名厨善制河虾,凤尾虾排较为著名。此菜造型美观,肉质 徽菜 海鲜类食材需要以完全熟透为准,处理后尽量尽快烹调。"
+        },
+        {
+          "id": "library_松鼠桂鱼",
+          "title": "松鼠桂鱼",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "荤"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "meat_based",
+              "mixed"
+            ],
+            "diet": [],
+            "contains": [
+              "seafood",
+              "egg",
+              "gluten",
+              "soy",
+              "alcohol"
+            ],
+            "ingredient": [
+              "鱼",
+              "玉兰片",
+              "香菇",
+              "豌豆",
+              "鸡蛋",
+              "调料植物油",
+              "料酒",
+              "葱",
+              "生姜",
+              "大蒜",
+              "面??",
+              "味精",
+              "白糖",
+              "米饭",
+              "酱油",
+              "菱粉",
+              "湿淀粉",
+              "鸡汤"
+            ]
+          },
+          "materials": "桂鱼1条(约1.2公斤) 玉兰片50克 香菇50克 鲜豌豆25克 鸡蛋清90克 调料: 植物油800克(实耗约200克) 料酒25克 葱 姜 蒜各15克 盐 面??10克 味精4克 白糖120克 米醋50克 酱油25克 干菱粉100克 湿淀粉15克 鸡汤150克",
+          "notes": "色泽金黄,形似松鼠,外焦里嫩,味浓醇香。 浙江菜 海鲜类食材需要以完全熟透为准,处理后尽量尽快烹调。"
+        },
+        {
+          "id": "library_海南椰子盅",
+          "title": "海南椰子盅",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "大椰子",
+              "银耳",
+              "冰糖"
+            ]
+          },
+          "materials": "大椰子1个 水发银耳100克 冰糖100克",
+          "notes": "粤菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_玉竹炖鹧鸪",
+          "title": "玉竹炖鹧鸪",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "炖煲",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "stew"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [],
+            "ingredient": [
+              "鹧鸪",
+              "玉竹",
+              "红枣",
+              "生姜"
+            ]
+          },
+          "materials": "鹧鸪1只 玉竹30克 红枣6个 生姜1片",
+          "notes": "滋补养阴。肺胃阴虚,症见咳嗽痰稠,咽干口渴,午后潮热。亦可用于肺结核久病咳嗽、冠心病等属阴虚燥热者。 粤菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        },
+        {
+          "id": "library_银耳蒸鸽蛋",
+          "title": "银耳蒸鸽蛋",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "蒸",
+            "素"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [
+              "steam"
+            ],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "vegetarian_friendly"
+            ],
+            "contains": [
+              "egg",
+              "alcohol"
+            ],
+            "ingredient": [
+              "茯苓",
+              "银耳",
+              "鸡蛋",
+              "鸡汤",
+              "味精",
+              "料酒",
+              "鸡油",
+              "淀粉各"
+            ]
+          },
+          "materials": "茯苓15克 银耳50克 鸽蛋20个 鸡汤 味精 料酒 鸡油 淀粉各少许",
+          "notes": "补益脾肾,健脑增智。 用法:佐餐用,每周1--2次。 应用:适用于老年人记忆力减退者及脑力劳动者。 俞小平、黄志杰主编 科学技术文献出版社出版 其它菜系"
+        },
+        {
+          "id": "library_麻辣萝卜丝",
+          "title": "麻辣萝卜丝",
+          "categoryId": "lunch",
+          "contextId": "pot",
+          "tags": [
+            "午餐",
+            "晚餐",
+            "素",
+            "清真友好"
+          ],
+          "attributes": {
+            "meal": [
+              "lunch",
+              "dinner"
+            ],
+            "type": [],
+            "profile": [
+              "vegetarian"
+            ],
+            "diet": [
+              "halal_friendly",
+              "vegan_friendly"
+            ],
+            "contains": [
+              "soy",
+              "sesame",
+              "spicy"
+            ],
+            "ingredient": [
+              "萝卜",
+              "青椒",
+              "香油汤匙",
+              "酱油",
+              "??",
+              "花椒油各"
+            ]
+          },
+          "materials": "萝卜500克 辣椒油1汤匙 香油1汤匙 酱油10克 盐 ?? 花椒油各适量",
+          "notes": "香辣脆口,口味适宜. 浙江菜 “清真友好”仅按配方中的猪肉和酒精风险做启发式筛选,不代表宗教或供应链认证。"
+        }
+      ]
+    }
+  }
+}

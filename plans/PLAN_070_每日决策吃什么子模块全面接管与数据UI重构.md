@@ -34,7 +34,7 @@
 |------|------|------|
 | 0. 备份与接管计划 | 已完成 | 建立分支、备份提交、创建可延续计划 |
 | 1. P0 稳定性止血 | 已完成 | 修复加载阻塞、controller 崩溃、随机按钮跳动和明显卡顿入口 |
-| 2. 数据源审计与规范 | 待开始 | 从 cook 项目、本地做菜资料和现有 `cook_data` 生成可信字段规范 |
+| 2. 数据源审计与规范 | 进行中 | 从 cook 项目、本地做菜资料和现有 `cook_data` 生成可信字段规范 |
 | 3. 数据库与索引重构 | 待开始 | 建立菜谱集、摘要表、详情表、字段索引、不可用标记和迁移兼容 |
 | 4. 筛选与随机引擎重构 | 待开始 | 精确食材匹配、餐段默认全部、忌口精简、随机池去顺序偏差 |
 | 5. 管理 UI 拆分 | 待开始 | 管理 sheet 拆出子页面/子窗口，完善食谱集管理和自动分页 |
@@ -141,6 +141,9 @@
 7. 2026-04-27: 已移除管理 sheet 新建食谱集输入框的函数级 `TextEditingController`，改为 `TextFormField` 内部状态，避免关闭/重建时使用已释放 controller。
 8. 2026-04-27: 已固定随机面板候选舞台高度，并限制随机中的标题、简介和标签行数，停止按钮不再随菜品文本换行上下跳动。
 9. 2026-04-27: 已新增 smoke 测试覆盖“吃什么摘要加载未完成时仍可切换并使用穿什么模块”。
+10. 2026-04-27: 已新增 `scripts/audit_daily_choice_recipe_dataset.py`，用于审计当前 `cook_data` JSON/SQLite 与 YunYouJun/cook `recipe.csv` 的字段冲突和数据源覆盖。
+11. 2026-04-27: 已生成首轮审计报告 `records/record_070_daily_choice_recipe_data_audit.md` 与机器可读报告 `records/record_070_daily_choice_recipe_data_audit.json`。
+12. 2026-04-27: 首轮审计确认：当前 7179 条菜谱中，`vegetarian` 与肉类/海鲜冲突 530 条，`vegan_friendly` 与动物性食材冲突 496 条，菜系标签混入 notes 2221 条，`清真友好` 规则说明混入 notes 3416 条，cook CSV 599 行中 569 行未在当前库标题精确命中。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -148,3 +151,5 @@
 - 2026-04-27: `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`（通过）。
 - 2026-04-27: `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）。
 - 2026-04-27: `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --cook-csv .tmp_recipe_csv_head.txt`（通过，生成审计报告）。
+- 2026-04-27: `python -m py_compile scripts\audit_daily_choice_recipe_dataset.py`（通过）。
