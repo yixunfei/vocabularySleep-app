@@ -127,9 +127,9 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮只推进管理页吃什么内置库搜索下沉：`DailyChoiceEatLibraryQuery` 增加搜索字段，v2 store 通过 `daily_choice_recipe_search_text` 查询，管理页搜索内置菜谱继续走 `queryBuiltInSummaries(...)`。
-- 搜索语义先收口为内置库摘要搜索，不改本地自定义、个人调整、隐藏/恢复、食谱集操作和非吃什么模块的现有内存过滤路径。
-- 主 UI 随机、详情懒加载和管理 sheet 拆页不在本轮扩大范围；不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据，不重新生成 DB。
+- 本轮推进管理页吃什么内置库详情/编辑按需加载解耦：从 SQL 分页/搜索返回的轻量摘要进入详情、个人调整、另存时，不再依赖 `builtInOptions` 全量摘要列表判断是否可加载 detail。
+- 仅调整吃什么内置菜谱 detail 解析边界和测试覆盖；本地自定义、个人调整已有完整内容时继续直接使用本地对象。
+- 本轮不拆管理 sheet，不改 v2 DB 生成器，不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -179,6 +179,8 @@
 45. 2026-04-27: 已新增 `DailyChoiceEatLibraryQuery.searchText`，并让 v2 store 通过 `daily_choice_recipe_search_text` 下沉管理页吃什么内置库搜索。
 46. 2026-04-27: 已让管理页吃什么内置库搜索词非空时继续使用 `queryBuiltInSummaries(...)`，本地自定义和个人调整搜索仍沿用内存路径。
 47. 2026-04-27: 已新增 `records/record_070_daily_choice_manager_sql_search.md`，记录管理页内置库搜索下沉范围、风险和后续 FTS/拆页方向。
+48. 2026-04-27: 已将吃什么详情解析从内存 `builtInOptions` 全量摘要依赖中解耦，SQL 分页/搜索返回的轻量内置摘要可直接按 id 懒加载 detail。
+49. 2026-04-27: 已新增 `records/record_070_daily_choice_manager_detail_lazy_load.md`，记录管理页内置摘要详情按需加载解耦范围和风险。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -221,6 +223,10 @@
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页内置库搜索下沉后无静态问题）。
 - 2026-04-27: `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 v2 search table 查询）。
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖管理页搜索词传入 store 查询并只展示命中内置菜）。
+- 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页 SQL 摘要 detail 解耦后无静态问题）。
+- 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖内存摘要为空时管理页 SQL 摘要仍可打开详情，以及个人调整前 detail 懒加载）。
 - 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，主 UI random pivot 与管理页 SQL 分页接入后无静态问题）。
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机触发 store pivot、管理页展开内置库触发 SQL 查询、候选池变化后旧异步抽取不回写）。

@@ -300,12 +300,14 @@ void main() {
         findsNothing,
       );
 
+      libraryStore.detailRequests.clear();
       await tester.tap(
         find.descendant(of: managerSheet, matching: find.text('Adjust')).first,
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
+      expect(libraryStore.detailRequests, contains('mushroom_soup'));
       expect(find.text('Save'), findsOneWidget);
       await tester.tap(find.text('Save'));
       await tester.pump();
@@ -385,6 +387,98 @@ void main() {
       libraryStore.completeSummaries();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+    },
+  );
+
+  testWidgets(
+    'eat manager opens SQL built-in detail without loaded summary list',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final options = <DailyChoiceOption>[
+        eatOption(
+          id: 'tomato_egg',
+          title: 'Tomato Egg',
+          materials: const <String>['tomato', 'egg'],
+        ),
+        eatOption(
+          id: 'mushroom_soup',
+          title: 'Mushroom Soup',
+          materials: const <String>['mushroom', 'tofu'],
+          tags: const <String>['soup'],
+        ),
+      ];
+      final result = DailyChoiceCookLoadResult(
+        options: options,
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: options.length,
+        updatedAt: DateTime(2026, 4, 27, 18, 20),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        stats: <String, Object?>{'recipeCount': options.length},
+        recipes: options,
+      );
+      final libraryStore = _FakeEatLibraryStore(
+        document,
+        hideSummariesOnLoad: true,
+      );
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+      );
+      await pumpUntilVisible(tester, find.text('Load recipe library'));
+      await tester.tap(find.text('Load recipe library'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+
+      await tester.tap(find.text('Manage'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final managerSheet = find.byType(DraggableScrollableSheet).first;
+      await tester.ensureVisible(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in items'),
+        ),
+      );
+      await tester.tap(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in items'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(libraryStore.queryRequests, isNotEmpty);
+      expect(
+        find.descendant(of: managerSheet, matching: find.text('Mushroom Soup')),
+        findsWidgets,
+      );
+      expect(libraryStore.detailRequests, isEmpty);
+
+      await tester.tap(
+        find
+            .descendant(of: managerSheet, matching: find.text('Mushroom Soup'))
+            .first,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(libraryStore.detailRequests, <String>['mushroom_soup']);
+      expect(find.text('Materials'), findsOneWidget);
+      expect(find.textContaining('Mushroom Soup full detail'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -525,9 +619,10 @@ class _FakeCookService extends DailyChoiceCookService {
 }
 
 class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
-  _FakeEatLibraryStore(this.document);
+  _FakeEatLibraryStore(this.document, {this.hideSummariesOnLoad = false});
 
   final DailyChoiceRecipeLibraryDocument document;
+  final bool hideSummariesOnLoad;
   final List<String> detailRequests = <String>[];
   final List<DailyChoiceEatLibraryQuery> randomRequests =
       <DailyChoiceEatLibraryQuery>[];
@@ -567,6 +662,9 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
   @override
   Future<List<DailyChoiceOption>> loadBuiltInSummaries() async {
     if (!_installed) {
+      return const <DailyChoiceOption>[];
+    }
+    if (hideSummariesOnLoad) {
       return const <DailyChoiceOption>[];
     }
     return List<DailyChoiceOption>.unmodifiable(

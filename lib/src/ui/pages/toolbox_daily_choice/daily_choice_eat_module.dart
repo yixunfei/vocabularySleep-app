@@ -560,8 +560,12 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       return option;
     }
 
-    final isBuiltIn = widget.builtInOptions.any((item) => item.id == option.id);
-    if (!isBuiltIn) {
+    final shouldLoadBuiltInDetail =
+        option.moduleId == DailyChoiceModuleId.eat.storageValue &&
+        !option.custom &&
+        widget.libraryStatus.hasInstalledLibrary &&
+        option.id.trim().isNotEmpty;
+    if (!shouldLoadBuiltInDetail) {
       return option;
     }
     return await widget.libraryStore.loadBuiltInDetail(option.id) ?? option;
