@@ -53,6 +53,8 @@
 - 新增管理页结构拆分 part：查询 helper、section widgets、集合导入导出、确认弹窗从主 `daily_choice_manager_sheet.dart` 移出。
 - 新增 `records/record_070_daily_choice_p1_p4_closure.md`，记录 PLAN_070 P1-P4 收尾、分页追加模型、计划状态校准和验证结果。
 - 新增 `records/record_070_daily_choice_copy_cleanup_and_main_merge.md`，记录每日决策文案收口、开发说明删除、来源展示隐藏和合回主分支边界。
+- 新增吃什么自定义菜谱编辑器“保存到食谱集”多选区，新增、编辑和另存个人菜谱时可同步选择多个个人食谱集。
+- 新增 `records/record_070_daily_choice_custom_recipe_collection_editor.md`，记录自定义菜谱编辑时的食谱集多选入口、成员关系重写语义和验证结果。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -121,6 +123,7 @@
 - PLAN_070 阶段 7 已完成本轮收尾验证；全量 `flutter analyze` 仍保留本轮外既有 lint 债，Android release APK 构建通过。
 - 每日决策模块文案完成一轮产品化收口：吃什么资源状态改为菜谱库准备提示，去哪儿、穿什么、做菜指南和决策助手移除“本轮 / 后续 / 扩展边界 / 资料来源”类开发说明。
 - 详情页不再渲染 sourceLabel、sourceUrl 或 references 来源块，保留菜品画像、材料/条件、步骤、关键提示和地图搜索词复制等用户直接需要的内容。
+- 吃什么管理页新增/编辑个人菜谱、另存内置菜谱为个人菜谱时，会把编辑器返回的食谱集选择精确写回集合成员关系；不勾选任何集合时仅保存为个人菜谱。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -138,6 +141,7 @@
 - 当前 UI 仍保留内存 catalog 作为本地自定义、个人调整和旧库回退路径；吃什么内置库随机、管理页浏览和内置库搜索已逐步接入 store 查询。
 - 已有食材优先的 SQL 版本先采用 raw/canonical 任一命中收口，尚未完整复刻内存 catalog 的 exact/strong/broad 分层扩池策略。
 - random pivot 在主 UI 中只覆盖随机池全为可见内置菜谱的场景；legacy v1 fallback 使用候选 id 列表取模抽取，不具备 v2 `random_key` 的稳定全局分布。
+- 自定义菜谱保存时的食谱集选择采用精确重写语义：取消某个集合勾选会把该菜从对应集合移除，这是为了让编辑器状态与保存结果一致。
 - 管理页吃什么内置库搜索已接入 SQLite `daily_choice_recipe_search_text`；本地自定义和个人调整搜索仍走内存过滤，后续若要统一语义需单独处理 overlay 搜索。
 - 当前搜索仍是 `instr`/substring 查询，不是 FTS；拼音、分词、多关键词相关性排序需后续单独引入 FTS5 或倒排表。
 - 大候选池且存在隐藏/个人调整/食谱集约束时，最终随机分布会回退到当前 UI 随机过程锁定的候选；这是为避免停止按钮等待重 SQL 的性能兜底。

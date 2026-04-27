@@ -544,7 +544,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
     if (!mounted) {
       return null;
     }
-    return showDailyChoiceEditorSheet(
+    final result = await showDailyChoiceEditorSheet(
       context: context,
       i18n: widget.i18n,
       accent: widget.accent,
@@ -557,11 +557,14 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       contextLabelEn: 'Tool',
       option: resolved,
     );
+    return result?.option;
   }
 
-  Future<DailyChoiceOption?> _openSaveAsCustomEditor(
-    DailyChoiceOption option,
-  ) async {
+  Future<DailyChoiceEditorResult?> _openSaveAsCustomEditor(
+    DailyChoiceOption option, {
+    required List<DailyChoiceEatCollection> collections,
+    required Set<String> initialCollectionIds,
+  }) async {
     final resolved = await _resolveDetailOption(option);
     if (!mounted) {
       return null;
@@ -579,6 +582,8 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       contextLabelEn: 'Tool',
       option: resolved,
       forceNewId: true,
+      eatCollections: collections,
+      initialEatCollectionIds: initialCollectionIds,
     );
   }
 }

@@ -685,6 +685,26 @@ class DailyChoiceCustomState {
     );
   }
 
+  DailyChoiceCustomState setOptionEatCollections({
+    required String optionId,
+    required Set<String> collectionIds,
+  }) {
+    final state = withDefaultEatCollections();
+    final normalizedIds = collectionIds
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toSet();
+    return state.copyWith(
+      eatCollections: state.eatCollections
+          .map(
+            (collection) => normalizedIds.contains(collection.id)
+                ? collection.addOption(optionId)
+                : collection.removeOption(optionId),
+          )
+          .toList(growable: false),
+    );
+  }
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'hiddenBuiltInIds': hiddenBuiltInIds.toList(growable: false)..sort(),

@@ -127,9 +127,9 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮按用户要求做每日决策模块文案收口：删除或改写面向开发流程的“本轮 / 后续 / 扩展边界 / 来源说明”类文本，让用户界面只保留可执行、可理解的使用提示。
-- 本轮不改动菜谱 SQL 分页、随机、集合、导入导出和数据生成逻辑；只触达用户可见 copy、指南模块展示和详情页来源展示边界。
-- 本轮完成后更新 changelog 与记录文件，运行每日决策定向 analyze/test，再将 `codex/daily-choice-overhaul` 合并提交回 `main`。
+- 本轮按用户补充要求完善自定义菜谱编辑体验：吃什么编辑器增加“保存到哪个食谱集”的多选入口。
+- 本轮只同步个人菜谱保存后的集合成员关系；不改动内置菜谱 SQL 分页、随机算法、远端 v2 DB 和验证包数据。
+- 本轮覆盖新增自定义菜谱、编辑已有自定义菜谱、另存内置菜为个人食谱的集合选择链路，并补充模型/组件回归测试。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -319,3 +319,15 @@
 - 2026-04-27: `flutter test test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart --reporter compact`（通过，覆盖指南文案不再展示开发说明、来源模块和路线图文案）。
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）。
 - 2026-04-27: `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+
+## 本轮补充完成记录
+- 2026-04-27: 已在吃什么自定义菜谱编辑器增加“保存到食谱集”多选区，支持新增、编辑和另存个人菜谱时同步选择多个个人食谱集。
+- 2026-04-27: 已新增 `DailyChoiceEditorResult`，让编辑器返回菜谱本体与食谱集选择结果，并让管理页保存链路统一写回集合成员关系。
+- 2026-04-27: 已新增 `DailyChoiceCustomState.setOptionEatCollections(...)`，用精确重写语义保证编辑器勾选状态与最终集合成员关系一致。
+- 2026-04-27: 已新增 `records/record_070_daily_choice_custom_recipe_collection_editor.md`，记录本轮实现边界、回归约束和验证命令。
+
+## 本轮补充验证记录
+- 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_editor_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_models.dart test\daily_choice_custom_state_test.dart test\daily_choice_hub_smoke_test.dart`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_state_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖集合成员精确重写和编辑器返回多选食谱集）。
+- 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。

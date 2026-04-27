@@ -75,4 +75,33 @@ void main() {
       same(restored),
     );
   });
+
+  test('setting recipe collections rewrites membership exactly', () {
+    final state = DailyChoiceCustomState(
+      customOptions: <DailyChoiceOption>[customEatOption('custom_eat_1')],
+      eatCollections: const <DailyChoiceEatCollection>[
+        DailyChoiceEatCollection(
+          id: 'set_a',
+          titleZh: '清淡',
+          titleEn: 'Light',
+          optionIds: <String>['custom_eat_1'],
+        ),
+        DailyChoiceEatCollection(
+          id: 'set_b',
+          titleZh: '下饭',
+          titleEn: 'Rice-friendly',
+        ),
+      ],
+    );
+
+    final next = state.setOptionEatCollections(
+      optionId: 'custom_eat_1',
+      collectionIds: <String>{'set_b'},
+    );
+
+    expect(next.eatCollectionById('set_a')?.optionIds, isEmpty);
+    expect(next.eatCollectionById('set_b')?.optionIds, <String>[
+      'custom_eat_1',
+    ]);
+  });
 }

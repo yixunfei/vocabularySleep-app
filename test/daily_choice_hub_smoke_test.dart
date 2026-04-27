@@ -884,6 +884,78 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('eat recipe editor returns selected recipe sets', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    DailyChoiceEditorResult? savedResult;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return FilledButton(
+                onPressed: () async {
+                  savedResult = await showDailyChoiceEditorSheet(
+                    context: context,
+                    i18n: AppI18n('en'),
+                    accent: Colors.orange,
+                    moduleId: DailyChoiceModuleId.eat.storageValue,
+                    categories: mealCategories,
+                    initialCategoryId: 'lunch',
+                    contexts: cookToolCategories,
+                    initialContextId: 'pot',
+                    contextLabelZh: '厨具',
+                    contextLabelEn: 'Tool',
+                    eatCollections: const <DailyChoiceEatCollection>[
+                      dailyChoiceFavoriteEatCollection,
+                      DailyChoiceEatCollection(
+                        id: 'set_weeknight',
+                        titleZh: '一周晚餐',
+                        titleEn: 'Weeknight dinners',
+                      ),
+                    ],
+                    initialEatCollectionIds: <String>{
+                      dailyChoiceFavoriteEatCollectionId,
+                    },
+                  );
+                },
+                child: const Text('Open editor'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open editor'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Save to recipe sets'), findsOneWidget);
+    await tester.tap(find.text('Weeknight dinners'));
+    await tester.enterText(find.byType(TextField).first, 'Mapo tofu');
+    final saveButton = find.widgetWithText(FilledButton, 'Save');
+    await tester.ensureVisible(saveButton);
+    await tester.pump();
+    await tester.tap(saveButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(savedResult?.option.titleEn, 'Mapo tofu');
+    expect(savedResult?.eatCollectionIds, <String>{
+      dailyChoiceFavoriteEatCollectionId,
+      'set_weeknight',
+    });
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('random panel ignores stale async pick after options change', (
     WidgetTester tester,
   ) async {

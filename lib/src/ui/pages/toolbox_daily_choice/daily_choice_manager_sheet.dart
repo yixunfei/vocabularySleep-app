@@ -1,5 +1,12 @@
 part of 'daily_choice_widgets.dart';
 
+typedef DailyChoiceSaveAsCustomEditor =
+    Future<DailyChoiceEditorResult?> Function(
+      DailyChoiceOption option, {
+      required List<DailyChoiceEatCollection> collections,
+      required Set<String> initialCollectionIds,
+    });
+
 Future<void> showDailyChoiceManagerSheet({
   required BuildContext context,
   required AppI18n i18n,
@@ -18,8 +25,7 @@ Future<void> showDailyChoiceManagerSheet({
   Future<void> Function(DailyChoiceOption option)? onInspectOption,
   Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
   onAdjustBuiltInOption,
-  Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
-  onSaveBuiltInAsCustom,
+  DailyChoiceSaveAsCustomEditor? onSaveBuiltInAsCustom,
 }) async {
   var localState = state.withDefaultEatCollections();
   final filterCategories = <DailyChoiceCategory>[
@@ -423,7 +429,7 @@ Future<void> showDailyChoiceManagerSheet({
                 option: option,
                 selectedContextId: selectedContextId,
               );
-              final result = await showDailyChoiceEditorSheet(
+              final editorResult = await showDailyChoiceEditorSheet(
                 context: context,
                 i18n: i18n,
                 accent: accent,
@@ -435,15 +441,27 @@ Future<void> showDailyChoiceManagerSheet({
                 contextLabelZh: contextLabelZh,
                 contextLabelEn: contextLabelEn,
                 option: option,
+                eatCollections: isEatModule
+                    ? localState.eatCollections
+                    : const <DailyChoiceEatCollection>[],
+                initialEatCollectionIds: isEatModule
+                    ? _managerInitialEatCollectionIds(
+                        collections: localState.eatCollections,
+                        option: option,
+                        selectedCollection: selectedCollection,
+                        defaultFavoriteWhenEmpty: option == null,
+                      )
+                    : const <String>{},
               );
-              if (result == null) {
+              if (editorResult == null) {
                 return;
               }
+              final result = editorResult.option;
               var nextState = localState.upsertCustom(result);
-              if (selectedCollection != null) {
-                nextState = nextState.addOptionToEatCollection(
-                  collectionId: selectedCollection.id,
+              if (isEatModule) {
+                nextState = nextState.setOptionEatCollections(
                   optionId: result.id,
+                  collectionIds: editorResult.eatCollectionIds,
                 );
               }
               await publishWithProcessing(
@@ -488,21 +506,30 @@ Future<void> showDailyChoiceManagerSheet({
               if (onSaveBuiltInAsCustom == null) {
                 return;
               }
-              final result = await runBuiltInItemAction<DailyChoiceOption>(
-                option: option,
-                actionId: _managerActionSaveAs,
-                action: () => onSaveBuiltInAsCustom(option),
-              );
-              if (result == null) {
+              final editorResult =
+                  await runBuiltInItemAction<DailyChoiceEditorResult>(
+                    option: option,
+                    actionId: _managerActionSaveAs,
+                    action: () => onSaveBuiltInAsCustom(
+                      option,
+                      collections: localState.eatCollections,
+                      initialCollectionIds: _managerInitialEatCollectionIds(
+                        collections: localState.eatCollections,
+                        option: option,
+                        selectedCollection: selectedCollection,
+                        defaultFavoriteWhenEmpty: true,
+                      ),
+                    ),
+                  );
+              if (editorResult == null) {
                 return;
               }
+              final result = editorResult.option;
               var nextState = localState.upsertCustom(result);
-              if (selectedCollection != null) {
-                nextState = nextState.addOptionToEatCollection(
-                  collectionId: selectedCollection.id,
-                  optionId: result.id,
-                );
-              }
+              nextState = nextState.setOptionEatCollections(
+                optionId: result.id,
+                collectionIds: editorResult.eatCollectionIds,
+              );
               await publishWithProcessing(
                 nextState,
                 pickUiText(i18n, zh: '正在保存副本...', en: 'Saving copy...'),
@@ -1782,4 +1809,32 @@ Future<void> showDailyChoiceManagerSheet({
     managerSheetClosed = true;
     collectionNameDraft = '';
   }
+}
+
+Set<String> _managerInitialEatCollectionIds({
+  required List<DailyChoiceEatCollection> collections,
+  required DailyChoiceOption? option,
+  required DailyChoiceEatCollection? selectedCollection,
+  required bool defaultFavoriteWhenEmpty,
+}) {
+  final ids = <String>{};
+  final optionId = option?.id.trim();
+  if (optionId != null && optionId.isNotEmpty) {
+    for (final collection in collections) {
+      if (collection.containsOption(optionId)) {
+        ids.add(collection.id);
+      }
+    }
+  }
+  if (selectedCollection != null) {
+    ids.add(selectedCollection.id);
+  }
+  if (ids.isEmpty &&
+      defaultFavoriteWhenEmpty &&
+      collections.any(
+        (item) => item.id == dailyChoiceFavoriteEatCollectionId,
+      )) {
+    ids.add(dailyChoiceFavoriteEatCollectionId);
+  }
+  return ids;
 }

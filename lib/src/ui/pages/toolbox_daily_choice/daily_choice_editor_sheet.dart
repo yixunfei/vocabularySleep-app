@@ -1,6 +1,16 @@
 part of 'daily_choice_widgets.dart';
 
-Future<DailyChoiceOption?> showDailyChoiceEditorSheet({
+class DailyChoiceEditorResult {
+  const DailyChoiceEditorResult({
+    required this.option,
+    this.eatCollectionIds = const <String>{},
+  });
+
+  final DailyChoiceOption option;
+  final Set<String> eatCollectionIds;
+}
+
+Future<DailyChoiceEditorResult?> showDailyChoiceEditorSheet({
   required BuildContext context,
   required AppI18n i18n,
   required Color accent,
@@ -13,8 +23,11 @@ Future<DailyChoiceOption?> showDailyChoiceEditorSheet({
   String contextLabelEn = 'Scene',
   DailyChoiceOption? option,
   bool forceNewId = false,
+  List<DailyChoiceEatCollection> eatCollections =
+      const <DailyChoiceEatCollection>[],
+  Set<String> initialEatCollectionIds = const <String>{},
 }) {
-  return showModalBottomSheet<DailyChoiceOption>(
+  return showModalBottomSheet<DailyChoiceEditorResult>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
@@ -31,6 +44,8 @@ Future<DailyChoiceOption?> showDailyChoiceEditorSheet({
         contextLabelEn: contextLabelEn,
         option: option,
         forceNewId: forceNewId,
+        eatCollections: eatCollections,
+        initialEatCollectionIds: initialEatCollectionIds,
       );
     },
   );
@@ -50,6 +65,8 @@ class DailyChoiceEditorSheet extends StatefulWidget {
     this.contextLabelEn = 'Scene',
     this.option,
     this.forceNewId = false,
+    this.eatCollections = const <DailyChoiceEatCollection>[],
+    this.initialEatCollectionIds = const <String>{},
   });
 
   final AppI18n i18n;
@@ -63,6 +80,8 @@ class DailyChoiceEditorSheet extends StatefulWidget {
   final String contextLabelEn;
   final DailyChoiceOption? option;
   final bool forceNewId;
+  final List<DailyChoiceEatCollection> eatCollections;
+  final Set<String> initialEatCollectionIds;
 
   @override
   State<DailyChoiceEditorSheet> createState() => _DailyChoiceEditorSheetState();
@@ -81,6 +100,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
   late String _categoryId;
   String? _contextId;
   late final Map<String, Set<String>> _selectedAttributes;
+  late Set<String> _selectedEatCollectionIds;
   bool _saving = false;
 
   bool get _isEatModule =>
@@ -115,6 +135,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
       for (final group in wearTraitGroups)
         group.id: option?.attributeValues(group.id).toSet() ?? <String>{},
     };
+    _selectedEatCollectionIds = _resolveInitialEatCollectionIds();
   }
 
   @override
@@ -154,6 +175,14 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
       }
     }
     return _contextChoices.first.id;
+  }
+
+  Set<String> _resolveInitialEatCollectionIds() {
+    if (!_isEatModule || widget.eatCollections.isEmpty) {
+      return <String>{};
+    }
+    final validIds = widget.eatCollections.map((item) => item.id).toSet();
+    return widget.initialEatCollectionIds.where(validIds.contains).toSet();
   }
 
   void _save() {
@@ -255,9 +284,17 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
       attributes: attributes,
       custom: true,
     );
-    Navigator.of(
-      context,
-    ).pop(_isEatModule ? ensureEatOptionAttributes(option) : option);
+    final normalizedOption = _isEatModule
+        ? ensureEatOptionAttributes(option)
+        : option;
+    Navigator.of(context).pop(
+      DailyChoiceEditorResult(
+        option: normalizedOption,
+        eatCollectionIds: _isEatModule
+            ? Set<String>.unmodifiable(_selectedEatCollectionIds)
+            : const <String>{},
+      ),
+    );
   }
 
   Map<String, List<String>> _buildAttributes({
@@ -296,6 +333,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
         values.add(optionId);
       }
       _selectedAttributes[groupId] = values;
+    });
+  }
+
+  void _toggleEatCollection(String collectionId) {
+    setState(() {
+      if (_selectedEatCollectionIds.contains(collectionId)) {
+        _selectedEatCollectionIds.remove(collectionId);
+      } else {
+        _selectedEatCollectionIds.add(collectionId);
+      }
     });
   }
 
@@ -524,6 +571,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     height: 1.35,
                   ),
                 ),
+                if (widget.eatCollections.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 12),
+                  _EditorEatCollectionSection(
+                    i18n: widget.i18n,
+                    accent: widget.accent,
+                    collections: widget.eatCollections,
+                    selectedIds: _selectedEatCollectionIds,
+                    onToggle: _toggleEatCollection,
+                  ),
+                ],
               ],
               const SizedBox(height: 10),
               TextField(
@@ -678,6 +735,79 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _EditorEatCollectionSection extends StatelessWidget {
+  const _EditorEatCollectionSection({
+    required this.i18n,
+    required this.accent,
+    required this.collections,
+    required this.selectedIds,
+    required this.onToggle,
+  });
+
+  final AppI18n i18n;
+  final Color accent;
+  final List<DailyChoiceEatCollection> collections;
+  final Set<String> selectedIds;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(14),
+      borderColor: accent.withValues(alpha: 0.16),
+      shadowOpacity: 0.03,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.playlist_add_check_rounded, size: 18, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                pickUiText(i18n, zh: '保存到食谱集', en: 'Save to recipe sets'),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            pickUiText(
+              i18n,
+              zh: '可以多选；不选则只保存为个人菜谱，不加入任何集合。',
+              en: 'Select one or more sets. Leave all unchecked to save only as a personal recipe.',
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final collection in collections)
+            CheckboxListTile(
+              value: selectedIds.contains(collection.id),
+              onChanged: (_) => onToggle(collection.id),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(collection.title(i18n)),
+              subtitle: Text(
+                pickUiText(
+                  i18n,
+                  zh: '${collection.optionIds.length} 道菜',
+                  en: '${collection.optionIds.length} recipes',
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
