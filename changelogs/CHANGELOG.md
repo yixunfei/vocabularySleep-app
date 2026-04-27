@@ -46,6 +46,8 @@
 - 新增管理页内置菜谱“喜欢/加入”多选弹窗：点击时默认加入“我喜欢的菜”，也可同时加入其他个人菜谱集。
 - 新增管理页右侧固定“一键回到页首”浮动按钮，以及保存、调整、加入集合等写入动作的处理中遮罩反馈。
 - 新增 `records/record_070_daily_choice_collection_favorites_and_risk_cleanup.md`，记录本轮集合入口、喜欢集合、风险字段清理和验证包重建结果。
+- 新增食谱集 JSON 分享包导出/导入能力：用户可为当前个人食谱集选择保存位置导出，也可从本地 JSON 文件导入他人分享的集合、自定义菜谱和个人调整。
+- 新增 `records/record_070_daily_choice_collection_dropdown_import_export.md`，记录管理页集合入口去重、重命名/删除下拉操作和食谱集导入导出边界。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -103,6 +105,10 @@
 - 搜索输入框高度收紧为与旁边按钮更接近，减少管理页顶部工具区的视觉错位。
 - 吃什么 UI 移除饮食友好的辅助筛选入口，做菜指南不再展示清真等需要用户自行判断的关键提示。
 - 生成器和 v2 schema 移除菜谱起源地字段，验证包 JSON/SQLite 不再写入 `origin` 或 `diet` 字段；审计脚本继续保留风险检查桶用于确认这些字段没有回流。
+- 管理页“我的食谱集”不再同时展示选择 chip 和集合卡片，改为单一下拉框选择当前范围；重命名、删除按钮固定在下拉框旁边。
+- 默认“我喜欢的菜”集合继续受保护，不能通过管理页重命名或删除；其他个人集合可在下拉框旁执行重命名和删除。
+- 食谱集导出包包含集合元数据、集合内本地自定义菜谱、个人调整菜谱和内置菜谱 id 引用；导入时生成新的集合 id，避免覆盖已有集合。
+- 食谱集导入会校验分享包格式版本，文件内容无法读取时会显示导入失败提示，不再静默无响应。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -149,8 +155,14 @@
 - 修复管理页内置库滑到底部后，若 SQL 结果返回时用户已停在底部，后续页不会自动加载的问题。
 - 修复个人调整保存后 smoke 测试过早点击仍在退出动画后的 sheet 内容导致的误判；测试现在等待保存回写和 modal 动画完成后再继续点击详情。
 - 修复管理页内置库“喜欢/加入”只能隐式操作单一集合、缺少多集合选择入口的问题。
+- 修复管理页食谱集选择入口重复导致同一集合既在 chip 又在卡片中出现的问题。
+- 修复食谱集导入在文件选择器未返回内容时可能没有任何反馈的问题。
 
 ### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 - `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_models.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_catalog.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_support.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_editor_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_hub_smoke_test.dart`（通过）
 - `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
 - `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）

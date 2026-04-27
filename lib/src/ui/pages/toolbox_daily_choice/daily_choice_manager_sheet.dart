@@ -521,6 +521,174 @@ Future<void> showDailyChoiceManagerSheet({
               publish(localState.upsertEatCollection(collection));
             }
 
+            void showManagerMessage({required String zh, required String en}) {
+              if (managerSheetClosed) {
+                return;
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(pickUiText(i18n, zh: zh, en: en)),
+                ),
+              );
+            }
+
+            Future<void> renameSelectedCollection() async {
+              final collection = localState.eatCollectionById(
+                selectedCollectionId,
+              );
+              if (collection == null ||
+                  collection.id == dailyChoiceFavoriteEatCollectionId) {
+                return;
+              }
+              final title = await _promptEatCollectionName(
+                context: context,
+                i18n: i18n,
+                accent: accent,
+                initialTitle: collection.title(i18n),
+              );
+              if (title == null || title.trim().isEmpty) {
+                return;
+              }
+              await publishWithProcessing(
+                localState.upsertEatCollection(
+                  collection.copyWith(
+                    titleZh: title.trim(),
+                    titleEn: title.trim(),
+                  ),
+                ),
+                pickUiText(
+                  i18n,
+                  zh: '正在重命名食谱集...',
+                  en: 'Renaming recipe set...',
+                ),
+              );
+            }
+
+            Future<void> deleteSelectedCollection() async {
+              final collection = localState.eatCollectionById(
+                selectedCollectionId,
+              );
+              if (collection == null ||
+                  collection.id == dailyChoiceFavoriteEatCollectionId) {
+                return;
+              }
+              final confirmed = await _confirmDeleteEatCollection(
+                context: context,
+                i18n: i18n,
+                collection: collection,
+              );
+              if (confirmed != true) {
+                return;
+              }
+              selectedCollectionId = 'all';
+              resetBuiltInPaging();
+              await publishWithProcessing(
+                localState.deleteEatCollection(collection.id),
+                pickUiText(
+                  i18n,
+                  zh: '正在删除食谱集...',
+                  en: 'Deleting recipe set...',
+                ),
+              );
+            }
+
+            Future<void> exportSelectedCollection() async {
+              final collection = localState.eatCollectionById(
+                selectedCollectionId,
+              );
+              if (collection == null) {
+                showManagerMessage(
+                  zh: '请先选择一个个人食谱集。',
+                  en: 'Choose a personal recipe set first.',
+                );
+                return;
+              }
+              try {
+                final payload = _buildEatCollectionExportPackage(
+                  state: localState,
+                  collection: collection,
+                );
+                final encoded = const JsonEncoder.withIndent(
+                  '  ',
+                ).convert(payload);
+                final fileName =
+                    '${_safeEatCollectionExportFileName(collection.title(i18n))}.daily-choice-recipes.json';
+                final path = await FilePicker.platform.saveFile(
+                  dialogTitle: pickUiText(
+                    i18n,
+                    zh: '导出食谱集',
+                    en: 'Export recipe set',
+                  ),
+                  fileName: fileName,
+                  type: FileType.custom,
+                  allowedExtensions: const <String>['json'],
+                  bytes: Uint8List.fromList(utf8.encode(encoded)),
+                  lockParentWindow: true,
+                );
+                if (path == null) {
+                  return;
+                }
+                showManagerMessage(zh: '食谱集已导出。', en: 'Recipe set exported.');
+              } catch (error) {
+                showManagerMessage(
+                  zh: '导出失败：$error',
+                  en: 'Export failed: $error',
+                );
+              }
+            }
+
+            Future<void> importCollections() async {
+              try {
+                final result = await FilePicker.platform.pickFiles(
+                  dialogTitle: pickUiText(
+                    i18n,
+                    zh: '导入食谱集',
+                    en: 'Import recipe set',
+                  ),
+                  type: FileType.custom,
+                  allowedExtensions: const <String>['json'],
+                  withData: true,
+                  lockParentWindow: true,
+                );
+                if (result == null || result.files.isEmpty) {
+                  return;
+                }
+                final bytes = result.files.single.bytes;
+                if (bytes == null || bytes.isEmpty) {
+                  throw const FormatException(
+                    'Selected recipe set file could not be read.',
+                  );
+                }
+                final decoded = jsonDecode(utf8.decode(bytes));
+                if (decoded is! Map) {
+                  throw const FormatException('Invalid recipe set package.');
+                }
+                final imported = _importEatCollectionExportPackage(
+                  state: localState,
+                  payload: decoded.cast<String, Object?>(),
+                );
+                selectedCollectionId = imported.selectedCollectionId;
+                resetBuiltInPaging();
+                await publishWithProcessing(
+                  imported.state,
+                  pickUiText(
+                    i18n,
+                    zh: '正在导入食谱集...',
+                    en: 'Importing recipe set...',
+                  ),
+                );
+                showManagerMessage(
+                  zh: '已导入 ${imported.collectionCount} 个食谱集。',
+                  en: '${imported.collectionCount} recipe set(s) imported.',
+                );
+              } catch (error) {
+                showManagerMessage(
+                  zh: '导入失败：$error',
+                  en: 'Import failed: $error',
+                );
+              }
+            }
+
             bool maybeAutoLoadBuiltInsFromMetrics(ScrollMetrics metrics) {
               if (!builtInExpanded ||
                   builtInSqlLoading ||
@@ -687,149 +855,137 @@ Future<void> showDailyChoiceManagerSheet({
                                       ),
                                     ),
                                     const SizedBox(height: 12),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: <Widget>[
-                                        ToolboxSelectablePill(
-                                          selected:
-                                              selectedCollectionId == 'all',
-                                          tint: accent,
-                                          onTap: () {
-                                            setSheetState(() {
-                                              selectedCollectionId = 'all';
-                                              resetBuiltInPaging();
-                                            });
-                                          },
-                                          leading: const Icon(
-                                            Icons.all_inclusive_rounded,
-                                            size: 18,
-                                          ),
-                                          label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '内置菜谱',
-                                              en: 'Built-in recipes',
+                                        Expanded(
+                                          child: DropdownButtonFormField<String>(
+                                            key: ValueKey<String>(
+                                              'eat-collection-scope-$selectedCollectionId',
                                             ),
-                                          ),
-                                        ),
-                                        ...localState.eatCollections.map(
-                                          (collection) => ToolboxSelectablePill(
-                                            selected:
-                                                selectedCollectionId ==
-                                                collection.id,
-                                            tint: accent,
-                                            onTap: () {
+                                            initialValue: selectedCollectionId,
+                                            isExpanded: true,
+                                            decoration: InputDecoration(
+                                              prefixIcon: const Icon(
+                                                Icons.filter_list_rounded,
+                                              ),
+                                              labelText: pickUiText(
+                                                i18n,
+                                                zh: '当前随机范围',
+                                                en: 'Random pool',
+                                              ),
+                                            ),
+                                            items: <DropdownMenuItem<String>>[
+                                              DropdownMenuItem<String>(
+                                                value: 'all',
+                                                child: Text(
+                                                  pickUiText(
+                                                    i18n,
+                                                    zh: '内置菜谱',
+                                                    en: 'Built-in recipes',
+                                                  ),
+                                                ),
+                                              ),
+                                              ...localState.eatCollections.map(
+                                                (
+                                                  collection,
+                                                ) => DropdownMenuItem<String>(
+                                                  value: collection.id,
+                                                  child: Text(
+                                                    '${collection.title(i18n)} · ${collection.optionIds.length}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                            onChanged: (value) {
+                                              if (value == null) {
+                                                return;
+                                              }
                                               setSheetState(() {
-                                                selectedCollectionId =
-                                                    collection.id;
+                                                selectedCollectionId = value;
                                                 resetBuiltInPaging();
                                               });
                                             },
-                                            leading: const Icon(
-                                              Icons.bookmarks_rounded,
-                                              size: 18,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Tooltip(
+                                          message: pickUiText(
+                                            i18n,
+                                            zh: '重命名食谱集',
+                                            en: 'Rename set',
+                                          ),
+                                          child: IconButton.filledTonal(
+                                            onPressed:
+                                                selectedCollection == null ||
+                                                    selectedCollection.id ==
+                                                        dailyChoiceFavoriteEatCollectionId
+                                                ? null
+                                                : renameSelectedCollection,
+                                            icon: const Icon(
+                                              Icons.drive_file_rename_outline,
                                             ),
-                                            label: Text(
-                                              '${collection.title(i18n)} · ${collection.optionIds.length}',
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Tooltip(
+                                          message: pickUiText(
+                                            i18n,
+                                            zh: '删除食谱集',
+                                            en: 'Delete set',
+                                          ),
+                                          child: IconButton.filledTonal(
+                                            onPressed:
+                                                selectedCollection == null ||
+                                                    selectedCollection.id ==
+                                                        dailyChoiceFavoriteEatCollectionId
+                                                ? null
+                                                : deleteSelectedCollection,
+                                            icon: const Icon(
+                                              Icons.delete_outline_rounded,
                                             ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    if (localState
-                                        .eatCollections
-                                        .isNotEmpty) ...<Widget>[
-                                      const SizedBox(height: 12),
-                                      Column(
-                                        children: localState.eatCollections
-                                            .map(
-                                              (collection) => _ManagerTile(
-                                                title: collection.title(i18n),
-                                                subtitle: pickUiText(
-                                                  i18n,
-                                                  zh: '${collection.optionIds.length} 道菜',
-                                                  en: '${collection.optionIds.length} recipes',
-                                                ),
-                                                accent: accent,
-                                                leading:
-                                                    Icons.bookmarks_rounded,
-                                                chips:
-                                                    selectedCollectionId ==
-                                                        collection.id
-                                                    ? <String>[
-                                                        pickUiText(
-                                                          i18n,
-                                                          zh: '当前范围',
-                                                          en: 'Active',
-                                                        ),
-                                                      ]
-                                                    : const <String>[],
-                                                actions: <Widget>[
-                                                  TextButton.icon(
-                                                    onPressed: () {
-                                                      setSheetState(() {
-                                                        selectedCollectionId =
-                                                            selectedCollectionId ==
-                                                                collection.id
-                                                            ? 'all'
-                                                            : collection.id;
-                                                        resetBuiltInPaging();
-                                                      });
-                                                    },
-                                                    icon: const Icon(
-                                                      Icons.filter_list_rounded,
-                                                    ),
-                                                    label: Text(
-                                                      selectedCollectionId ==
-                                                              collection.id
-                                                          ? pickUiText(
-                                                              i18n,
-                                                              zh: '取消只看',
-                                                              en: 'Show all',
-                                                            )
-                                                          : pickUiText(
-                                                              i18n,
-                                                              zh: '只看',
-                                                              en: 'Filter',
-                                                            ),
-                                                    ),
-                                                  ),
-                                                  if (collection.id !=
-                                                      dailyChoiceFavoriteEatCollectionId)
-                                                    TextButton.icon(
-                                                      onPressed: () {
-                                                        if (selectedCollectionId ==
-                                                            collection.id) {
-                                                          selectedCollectionId =
-                                                              'all';
-                                                        }
-                                                        resetBuiltInPaging();
-                                                        publish(
-                                                          localState
-                                                              .deleteEatCollection(
-                                                                collection.id,
-                                                              ),
-                                                        );
-                                                      },
-                                                      icon: const Icon(
-                                                        Icons
-                                                            .delete_outline_rounded,
-                                                      ),
-                                                      label: Text(
-                                                        pickUiText(
-                                                          i18n,
-                                                          zh: '删除',
-                                                          en: 'Delete',
-                                                        ),
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                            )
-                                            .toList(growable: false),
-                                      ),
-                                    ],
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: <Widget>[
+                                        OutlinedButton.icon(
+                                          onPressed: selectedCollection == null
+                                              ? null
+                                              : exportSelectedCollection,
+                                          icon: const Icon(
+                                            Icons.ios_share_rounded,
+                                          ),
+                                          label: Text(
+                                            pickUiText(
+                                              i18n,
+                                              zh: '导出当前',
+                                              en: 'Export current',
+                                            ),
+                                          ),
+                                        ),
+                                        OutlinedButton.icon(
+                                          onPressed: importCollections,
+                                          icon: const Icon(
+                                            Icons.file_upload_outlined,
+                                          ),
+                                          label: Text(
+                                            pickUiText(
+                                              i18n,
+                                              zh: '导入分享包',
+                                              en: 'Import package',
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -2519,6 +2675,266 @@ Future<Set<String>?> _showEatCollectionPicker({
       );
     },
   );
+}
+
+Future<String?> _promptEatCollectionName({
+  required BuildContext context,
+  required AppI18n i18n,
+  required Color accent,
+  required String initialTitle,
+}) async {
+  final controller = TextEditingController(text: initialTitle);
+  try {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(pickUiText(i18n, zh: '重命名食谱集', en: 'Rename set')),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.bookmarks_rounded),
+              labelText: pickUiText(i18n, zh: '食谱集名称', en: 'Set name'),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: accent),
+              ),
+            ),
+            onSubmitted: (value) {
+              final title = value.trim();
+              if (title.isNotEmpty) {
+                Navigator.of(context).pop(title);
+              }
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                final title = controller.text.trim();
+                if (title.isNotEmpty) {
+                  Navigator.of(context).pop(title);
+                }
+              },
+              icon: const Icon(Icons.check_rounded),
+              label: Text(pickUiText(i18n, zh: '保存', en: 'Save')),
+            ),
+          ],
+        );
+      },
+    );
+  } finally {
+    controller.dispose();
+  }
+}
+
+Future<bool?> _confirmDeleteEatCollection({
+  required BuildContext context,
+  required AppI18n i18n,
+  required DailyChoiceEatCollection collection,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(pickUiText(i18n, zh: '删除食谱集？', en: 'Delete recipe set?')),
+        content: Text(
+          pickUiText(
+            i18n,
+            zh: '「${collection.title(i18n)}」只会删除这个集合，不会删除集合里的个人菜谱或内置菜谱。',
+            en: '"${collection.title(i18n)}" will be removed as a set. Recipes inside it will not be deleted.',
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+const _eatCollectionExportFormat =
+    'vocabulary_sleep_daily_choice_eat_collection';
+const _eatCollectionExportFormatVersion = 1;
+
+Map<String, Object?> _buildEatCollectionExportPackage({
+  required DailyChoiceCustomState state,
+  required DailyChoiceEatCollection collection,
+}) {
+  final optionIds = collection.optionIds.toSet();
+  final customOptions = state.customOptions
+      .where(
+        (option) =>
+            option.moduleId == DailyChoiceModuleId.eat.storageValue &&
+            optionIds.contains(option.id),
+      )
+      .map((option) => option.toJson())
+      .toList(growable: false);
+  final adjustedBuiltIns = state.adjustedBuiltInOptions
+      .where(
+        (option) =>
+            option.moduleId == DailyChoiceModuleId.eat.storageValue &&
+            optionIds.contains(option.id),
+      )
+      .map((option) => option.toJson())
+      .toList(growable: false);
+  return <String, Object?>{
+    'format': _eatCollectionExportFormat,
+    'formatVersion': _eatCollectionExportFormatVersion,
+    'exportedAt': DateTime.now().toIso8601String(),
+    'collections': <Object?>[collection.toJson()],
+    'customOptions': customOptions,
+    'adjustedBuiltInOptions': adjustedBuiltIns,
+  };
+}
+
+_EatCollectionImportResult _importEatCollectionExportPackage({
+  required DailyChoiceCustomState state,
+  required Map<String, Object?> payload,
+}) {
+  if (payload['format'] != _eatCollectionExportFormat) {
+    throw const FormatException('Unsupported recipe set package.');
+  }
+  if (payload['formatVersion'] != _eatCollectionExportFormatVersion) {
+    throw const FormatException('Unsupported recipe set package version.');
+  }
+  final collections = _eatCollectionJsonList(payload['collections'])
+      .map(DailyChoiceEatCollection.fromJson)
+      .where((collection) {
+        return collection.id.trim().isNotEmpty ||
+            collection.titleZh.trim().isNotEmpty ||
+            collection.titleEn.trim().isNotEmpty;
+      })
+      .toList(growable: false);
+  if (collections.isEmpty) {
+    throw const FormatException('Recipe set package has no collections.');
+  }
+
+  var next = state.withDefaultEatCollections();
+  final existingCustomIds = next.customOptions.map((item) => item.id).toSet();
+  final importedOptionIdByOriginalId = <String, String>{};
+  var uniqueSeed = DateTime.now().microsecondsSinceEpoch;
+  var customCount = 0;
+  var adjustedCount = 0;
+
+  for (final raw in _eatCollectionJsonList(payload['customOptions'])) {
+    final option = DailyChoiceOption.fromJson(
+      raw,
+    ).copyWith(moduleId: DailyChoiceModuleId.eat.storageValue, custom: true);
+    final originalId = option.id.trim();
+    if (originalId.isEmpty) {
+      continue;
+    }
+    var nextId = originalId;
+    if (existingCustomIds.contains(nextId)) {
+      nextId = 'custom_eat_import_${uniqueSeed++}';
+    }
+    importedOptionIdByOriginalId[originalId] = nextId;
+    existingCustomIds.add(nextId);
+    next = next.upsertCustom(
+      ensureEatOptionAttributes(option.copyWith(id: nextId, custom: true)),
+    );
+    customCount += 1;
+  }
+
+  for (final raw in _eatCollectionJsonList(payload['adjustedBuiltInOptions'])) {
+    final option = DailyChoiceOption.fromJson(
+      raw,
+    ).copyWith(moduleId: DailyChoiceModuleId.eat.storageValue, custom: false);
+    if (option.id.trim().isEmpty) {
+      continue;
+    }
+    next = next.upsertAdjustedBuiltIn(ensureEatOptionAttributes(option));
+    adjustedCount += 1;
+  }
+
+  var importedCollectionCount = 0;
+  var selectedCollectionId = 'all';
+  for (final collection in collections) {
+    final fallbackTitle = collection.titleZh.trim().isNotEmpty
+        ? collection.titleZh.trim()
+        : collection.titleEn.trim();
+    if (fallbackTitle.isEmpty) {
+      continue;
+    }
+    final collectionId = 'eat_collection_import_${uniqueSeed++}';
+    final optionIds = collection.optionIds
+        .map((id) => importedOptionIdByOriginalId[id] ?? id)
+        .where((id) => id.trim().isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    next = next.upsertEatCollection(
+      collection.copyWith(
+        id: collectionId,
+        titleZh: collection.titleZh.trim().isEmpty
+            ? fallbackTitle
+            : collection.titleZh.trim(),
+        titleEn: collection.titleEn.trim().isEmpty
+            ? fallbackTitle
+            : collection.titleEn.trim(),
+        optionIds: optionIds,
+      ),
+    );
+    selectedCollectionId = collectionId;
+    importedCollectionCount += 1;
+  }
+
+  if (importedCollectionCount == 0) {
+    throw const FormatException('Recipe set package has no valid collections.');
+  }
+  return _EatCollectionImportResult(
+    state: next,
+    selectedCollectionId: selectedCollectionId,
+    collectionCount: importedCollectionCount,
+    customCount: customCount,
+    adjustedCount: adjustedCount,
+  );
+}
+
+List<Map<String, Object?>> _eatCollectionJsonList(Object? raw) {
+  if (raw is! List) {
+    return const <Map<String, Object?>>[];
+  }
+  return raw
+      .whereType<Map>()
+      .map((item) => item.cast<String, Object?>())
+      .toList(growable: false);
+}
+
+String _safeEatCollectionExportFileName(String title) {
+  final normalized = title.trim().replaceAll(RegExp(r'[\\/:*?"<>|]+'), '_');
+  if (normalized.isEmpty) {
+    return 'daily_choice_recipe_set';
+  }
+  return normalized.length > 40 ? normalized.substring(0, 40) : normalized;
+}
+
+class _EatCollectionImportResult {
+  const _EatCollectionImportResult({
+    required this.state,
+    required this.selectedCollectionId,
+    required this.collectionCount,
+    required this.customCount,
+    required this.adjustedCount,
+  });
+
+  final DailyChoiceCustomState state;
+  final String selectedCollectionId;
+  final int collectionCount;
+  final int customCount;
+  final int adjustedCount;
 }
 
 Future<bool?> _confirmHideBuiltInRecipe({
