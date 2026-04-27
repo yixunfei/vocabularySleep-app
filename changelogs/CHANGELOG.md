@@ -48,6 +48,8 @@
 - 新增 `records/record_070_daily_choice_collection_favorites_and_risk_cleanup.md`，记录本轮集合入口、喜欢集合、风险字段清理和验证包重建结果。
 - 新增食谱集 JSON 分享包导出/导入能力：用户可为当前个人食谱集选择保存位置导出，也可从本地 JSON 文件导入他人分享的集合、自定义菜谱和个人调整。
 - 新增 `records/record_070_daily_choice_collection_dropdown_import_export.md`，记录管理页集合入口去重、重命名/删除下拉操作和食谱集导入导出边界。
+- 新增筛选项紧凑展示：分类、场景、厨具、高级筛选和管理页筛选中，未选中项仅显示图标，选中项显示选项名。
+- 新增 `records/record_070_daily_choice_compact_filter_controls.md`，记录筛选项紧凑展示和展开入口增强。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -109,6 +111,8 @@
 - 默认“我喜欢的菜”集合继续受保护，不能通过管理页重命名或删除；其他个人集合可在下拉框旁执行重命名和删除。
 - 食谱集导出包包含集合元数据、集合内本地自定义菜谱、个人调整菜谱和内置菜谱 id 引用；导入时生成新的集合 id，避免覆盖已有集合。
 - 食谱集导入会校验分享包格式版本，文件内容无法读取时会显示导入失败提示，不再静默无响应。
+- `ToolboxSelectablePill` 支持隐藏文字标签并保留 tooltip/语义标签，便于移动端把筛选项尽量压在一行内。
+- 吃什么资源准备、高级设置和管理页可展开区的展开/收起按钮增加浅色背景、边框和 accent 色，提升可点击识别度。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -159,6 +163,10 @@
 - 修复食谱集导入在文件选择器未返回内容时可能没有任何反馈的问题。
 
 ### 验证
+- `dart format lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_modules.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_wear_module.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 - `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart`（通过）
 - `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）

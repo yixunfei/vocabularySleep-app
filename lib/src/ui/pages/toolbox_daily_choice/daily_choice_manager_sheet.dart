@@ -1035,6 +1035,7 @@ Future<void> showDailyChoiceManagerSheet({
                                     categories: filterCategories,
                                     selectedId: selectedCategoryId,
                                     accent: accent,
+                                    compactUnselected: true,
                                     onSelected: (value) {
                                       setSheetState(() {
                                         selectedCategoryId = value;
@@ -1056,6 +1057,7 @@ Future<void> showDailyChoiceManagerSheet({
                                           selectedContextId ??
                                           filterContexts.first.id,
                                       accent: accent,
+                                      compactUnselected: true,
                                       onSelected: (value) {
                                         setSheetState(() {
                                           selectedContextId = value;
@@ -2162,10 +2164,24 @@ class _ManagerExpandableSection extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(width: 8),
-                    Icon(
-                      expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
+                    AnimatedContainer(
+                      duration: AppDurations.quick,
+                      curve: AppEasing.standard,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: expanded ? 0.16 : 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: Icon(
+                        expanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        color: accent,
+                        size: 22,
+                      ),
                     ),
                   ],
                 ),
@@ -2239,25 +2255,36 @@ class _ManagerTraitFilterSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: <Widget>[
             ToolboxSelectablePill(
               selected: selectedId == 'all',
               tint: accent,
               onTap: () => onSelected('all'),
               leading: const Icon(Icons.grid_view_rounded, size: 18),
+              showLabel: selectedId == 'all',
+              tooltip: pickUiText(i18n, zh: '全部', en: 'All'),
+              padding: selectedId == 'all'
+                  ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+                  : const EdgeInsets.all(12),
               label: Text(pickUiText(i18n, zh: '全部', en: 'All')),
             ),
-            ...group.options.map(
-              (option) => ToolboxSelectablePill(
-                selected: selectedId == option.id,
+            ...group.options.map((option) {
+              final selected = selectedId == option.id;
+              return ToolboxSelectablePill(
+                selected: selected,
                 tint: accent,
                 onTap: () => onSelected(option.id),
                 leading: Icon(option.icon, size: 18),
+                showLabel: selected,
+                tooltip: option.title(i18n),
+                padding: selected
+                    ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+                    : const EdgeInsets.all(12),
                 label: Text(option.title(i18n)),
-              ),
-            ),
+              );
+            }),
           ],
         ),
       ],

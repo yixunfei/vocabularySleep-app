@@ -126,6 +126,7 @@ class DailyChoiceCategorySelector extends StatelessWidget {
     required this.selectedId,
     required this.accent,
     required this.onSelected,
+    this.compactUnselected = false,
   });
   final AppI18n i18n;
   final String title;
@@ -133,6 +134,7 @@ class DailyChoiceCategorySelector extends StatelessWidget {
   final String selectedId;
   final Color accent;
   final ValueChanged<String> onSelected;
+  final bool compactUnselected;
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -148,15 +150,24 @@ class DailyChoiceCategorySelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: compactUnselected ? 6 : 8,
+          runSpacing: compactUnselected ? 6 : 8,
           children: categories
               .map((category) {
+                final selected = selectedId == category.id;
                 return ToolboxSelectablePill(
-                  selected: selectedId == category.id,
+                  selected: selected,
                   tint: accent,
                   onTap: () => onSelected(category.id),
                   leading: Icon(category.icon, size: 18),
+                  showLabel: !compactUnselected || selected,
+                  tooltip: compactUnselected ? category.title(i18n) : null,
+                  padding: compactUnselected && !selected
+                      ? const EdgeInsets.all(12)
+                      : const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                   label: Text(category.title(i18n)),
                 );
               })

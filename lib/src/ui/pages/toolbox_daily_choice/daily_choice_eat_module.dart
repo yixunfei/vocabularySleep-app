@@ -136,6 +136,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
           categories: eatMealFilterCategories,
           selectedId: _mealId,
           accent: widget.accent,
+          compactUnselected: true,
           onSelected: (value) => _applyFilterUpdate(() {
             _mealId = value;
           }),
@@ -147,6 +148,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
           categories: cookToolCategories,
           selectedId: _toolId,
           accent: widget.accent,
+          compactUnselected: true,
           onSelected: (value) => _applyFilterUpdate(() {
             _toolId = value;
           }),
@@ -653,6 +655,11 @@ class _EatLibraryStatusPanel extends StatelessWidget {
                   en: expanded ? 'Collapse' : 'Expand',
                 ),
                 onPressed: onToggleExpanded,
+                style: IconButton.styleFrom(
+                  backgroundColor: accent.withValues(alpha: 0.1),
+                  foregroundColor: accent,
+                  side: BorderSide(color: accent.withValues(alpha: 0.24)),
+                ),
                 icon: Icon(
                   expanded
                       ? Icons.keyboard_arrow_up_rounded
@@ -943,6 +950,15 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
                     ),
                   TextButton.icon(
                     onPressed: onExpandedChanged,
+                    style: TextButton.styleFrom(
+                      foregroundColor: accent,
+                      backgroundColor: accent.withValues(alpha: 0.1),
+                      side: BorderSide(color: accent.withValues(alpha: 0.24)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
                     icon: Icon(
                       expanded
                           ? Icons.keyboard_arrow_up_rounded
@@ -1223,18 +1239,24 @@ class _EatAdvancedChipSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: options
-              .map(
-                (option) => ToolboxSelectablePill(
-                  selected: selectedIds.contains(option.id),
+              .map((option) {
+                final selected = selectedIds.contains(option.id);
+                return ToolboxSelectablePill(
+                  selected: selected,
                   tint: accent,
                   onTap: () => onToggle(option.id),
                   leading: Icon(option.icon, size: 18),
+                  showLabel: selected,
+                  tooltip: option.title(i18n),
+                  padding: selected
+                      ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+                      : const EdgeInsets.all(12),
                   label: Text(option.title(i18n)),
-                ),
-              )
+                );
+              })
               .toList(growable: false),
         ),
       ],
