@@ -351,7 +351,7 @@ namespace {
 #pragma warning(default: 4996)
 namespace {
 
-	// SAPI path — uses ISpVoice::SetNotifyWindowMessage() so that the
+	// SAPI path - uses ISpVoice::SetNotifyWindowMessage() so that the
 	// SPEI_END_INPUT_STREAM event is delivered directly as a Windows
 	// message on the platform/UI thread.  No thread-pool threads, no
 	// RegisterWaitForSingleObject, no COM threading issues.
@@ -463,7 +463,7 @@ namespace {
 		// NOTE: We do NOT call SetNotifyWindowMessage here.
 		// At construction time the Flutter view HWND has not been parented
 		// to the top-level window yet, so GetAncestor(child, GA_ROOT) returns
-		// the child itself — the wrong HWND.  Instead, we lazily bind on the
+		// the child itself - the wrong HWND.  Instead, we lazily bind on the
 		// first HandleWindowMessage call (which gives us the real top-level HWND).
 		DbgLog("[flutter_tts] CONSTRUCTOR: done (SAPI notify will be bound lazily)\n");
 	}
@@ -519,7 +519,7 @@ namespace {
 
 		if (message == kSapiNotifyMessage) {
 			DbgLog("[flutter_tts] HandleWindowMessage: GOT kSapiNotifyMessage hwnd=%p\n", hwnd);
-			// SAPI sent us a notification — drain and process events.
+			// SAPI sent us a notification - drain and process events.
 			drainSapiEvents();
 			return 0;
 		}

@@ -6,18 +6,6 @@ val flutterSdkPath: String = run {
 
 allprojects {
     repositories {
-        maven {
-            url = uri("https://maven.aliyun.com/repository/google")
-        }
-        maven {
-            url = uri("https://maven.aliyun.com/repository/public")
-        }
-        maven {
-            url = uri("https://mirrors.tencent.com/nexus/repository/maven-public/")
-        }
-        maven {
-            url = uri("https://storage.googleapis.com/download.flutter.io")
-        }
         google()
         mavenCentral()
     }

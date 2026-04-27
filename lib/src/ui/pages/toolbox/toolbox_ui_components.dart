@@ -66,6 +66,8 @@ class ToolboxSelectablePill extends StatelessWidget {
     required this.onTap,
     required this.tint,
     this.leading,
+    this.showLabel = true,
+    this.tooltip,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     this.radius = ToolboxUiTokens.pillRadius,
   });
@@ -75,13 +77,15 @@ class ToolboxSelectablePill extends StatelessWidget {
   final VoidCallback onTap;
   final Color tint;
   final Widget? leading;
+  final bool showLabel;
+  final String? tooltip;
   final EdgeInsetsGeometry padding;
   final double radius;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AnimatedScale(
+    final pill = AnimatedScale(
       scale: selected ? 1 : 0.985,
       duration: AppDurations.quick,
       curve: AppEasing.snappy,
@@ -129,25 +133,35 @@ class ToolboxSelectablePill extends StatelessWidget {
               children: <Widget>[
                 if (leading != null) ...<Widget>[
                   leading!,
-                  const SizedBox(width: 6),
+                  if (showLabel) const SizedBox(width: 6),
                 ],
-                Flexible(
-                  child: DefaultTextStyle(
-                    style: theme.textTheme.labelLarge!.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: selected
-                          ? tint
-                          : theme.colorScheme.onSurfaceVariant,
+                if (showLabel)
+                  Flexible(
+                    child: DefaultTextStyle(
+                      style: theme.textTheme.labelLarge!.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: selected
+                            ? tint
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                      child: label,
                     ),
-                    child: label,
                   ),
-                ),
               ],
             ),
           ),
         ),
       ),
     );
+    final semanticPill = Semantics(
+      button: true,
+      selected: selected,
+      label: tooltip,
+      child: pill,
+    );
+    return tooltip == null
+        ? semanticPill
+        : Tooltip(message: tooltip!, child: semanticPill);
   }
 }
 

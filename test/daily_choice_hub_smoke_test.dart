@@ -1,0 +1,1283 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
+import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_recipe_library.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_storage.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart';
+
+void main() {
+  DailyChoiceOption eatOption({
+    required String id,
+    required String title,
+    String categoryId = 'lunch',
+    String? contextId = 'pot',
+    List<String> contextIds = const <String>['pot'],
+    List<String> materials = const <String>[],
+    List<String> steps = const <String>['Step 1'],
+    List<String> notes = const <String>[],
+    List<String> tags = const <String>[],
+  }) {
+    return ensureEatOptionAttributes(
+      DailyChoiceOption(
+        id: id,
+        moduleId: DailyChoiceModuleId.eat.storageValue,
+        categoryId: categoryId,
+        contextId: contextId,
+        contextIds: contextIds,
+        titleZh: title,
+        titleEn: title,
+        subtitleZh: '$title summary',
+        subtitleEn: '$title summary',
+        detailsZh: '$title full detail',
+        detailsEn: '$title full detail',
+        materialsZh: materials,
+        materialsEn: materials,
+        stepsZh: steps,
+        stepsEn: steps,
+        notesZh: notes,
+        notesEn: notes,
+        tagsZh: tags,
+        tagsEn: tags,
+      ),
+    );
+  }
+
+  Future<void> pumpEatHub(
+    WidgetTester tester, {
+    required _FakeCookService cookService,
+    required DailyChoiceEatLibraryStore libraryStore,
+    DailyChoiceStorageService? storage,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          locale: const Locale('en'),
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: Scaffold(
+            body: SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: DailyChoiceHub(
+                    storage: storage ?? _FakeStorageService(),
+                    cookService: cookService,
+                    eatLibraryStore: libraryStore,
+                    weatherStateOverride: DailyChoiceHubWeatherState(
+                      weatherEnabled: false,
+                      weatherLoading: false,
+                      weatherSnapshot: WeatherSnapshot(
+                        city: 'Test',
+                        countryCode: 'CN',
+                        temperatureCelsius: 22,
+                        apparentTemperatureCelsius: 22,
+                        windSpeedKph: 0,
+                        weatherCode: 1,
+                        isDay: true,
+                        fetchedAt: DateTime(2026, 4, 25, 17, 0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  Future<void> pumpUntilVisible(
+    WidgetTester tester,
+    Finder finder, {
+    int maxTicks = 40,
+    Duration step = const Duration(milliseconds: 100),
+  }) async {
+    for (var index = 0; index < maxTicks; index += 1) {
+      if (finder.evaluate().isNotEmpty) {
+        return;
+      }
+      await tester.pump(step);
+    }
+  }
+
+  testWidgets(
+    'DailyChoiceHub eat page stays interactive with lightweight install and lazy details',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final options = <DailyChoiceOption>[
+        eatOption(
+          id: 'tomato_egg',
+          title: 'Tomato Egg',
+          materials: const <String>['tomato', 'egg'],
+          steps: const <String>['Beat the egg', 'Cook tomato and egg'],
+          tags: const <String>['home style'],
+        ),
+        eatOption(
+          id: 'mushroom_soup',
+          title: 'Mushroom Soup',
+          materials: const <String>['mushroom', 'tofu'],
+          steps: const <String>['Boil soup base', 'Simmer mushroom and tofu'],
+          tags: const <String>['soup'],
+        ),
+        eatOption(
+          id: 'cilantro_beef',
+          title: 'Cilantro Beef',
+          materials: const <String>['cilantro', 'beef'],
+          steps: const <String>['Slice beef', 'Stir fry with cilantro'],
+          tags: const <String>['stir fry'],
+        ),
+      ];
+      final result = DailyChoiceCookLoadResult(
+        options: options,
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: options.length,
+        referenceTitles: const <String>['Test reference'],
+        updatedAt: DateTime(2026, 4, 25, 16, 30),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-25',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        referenceTitles: result.referenceTitles,
+        stats: <String, Object?>{'recipeCount': options.length},
+        recipes: options,
+      );
+      final cookService = _FakeCookService(result, document);
+      final libraryStore = _FakeEatLibraryStore(document);
+
+      await pumpEatHub(
+        tester,
+        cookService: cookService,
+        libraryStore: libraryStore,
+      );
+      await pumpUntilVisible(tester, find.text('Load recipe library'));
+
+      expect(find.text('Load recipe library'), findsOneWidget);
+
+      await tester.tap(find.text('Load recipe library'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+
+      expect(find.text('Advanced settings'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Advanced settings')).dy,
+        lessThan(tester.getTopLeft(find.text('Randomize')).dy),
+      );
+      expect(tester.takeException(), isNull);
+
+      await tester.ensureVisible(find.text('Expand'));
+      await tester.tap(find.text('Expand'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      final textFields = find.byType(TextField);
+      expect(textFields, findsNWidgets(2));
+
+      await tester.enterText(textFields.first, 'tomato, egg, tofu');
+      await tester.tap(find.text('Add ingredient'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(find.byType(InputChip), findsNWidgets(3));
+
+      await tester.enterText(textFields.at(1), 'cilantro');
+      await tester.tap(find.text('Add avoid'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(find.byType(InputChip), findsNWidgets(4));
+
+      await tester.ensureVisible(find.text('Randomize'));
+      await tester.tap(find.text('Randomize'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.text('Stop'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(libraryStore.randomRequests, isEmpty);
+      expect(find.text('Picking'), findsNothing);
+
+      await tester.tap(find.text('Details'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Materials'), findsOneWidget);
+      expect(find.text('Steps'), findsOneWidget);
+      expect(find.textContaining('full detail'), findsOneWidget);
+      expect(libraryStore.detailRequests, isNotEmpty);
+
+      Navigator.of(tester.element(find.text('Materials'))).pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.text('Manage'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Search recipe name'), findsOneWidget);
+      final managerSheet = find.byType(DraggableScrollableSheet).first;
+      final queryCountBeforeManagerBuiltIns = libraryStore.queryRequests.length;
+      await tester.ensureVisible(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in browser'),
+        ),
+      );
+      await tester.tap(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in browser'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(
+        libraryStore.queryRequests.length,
+        greaterThan(queryCountBeforeManagerBuiltIns),
+      );
+      expect(
+        find.descendant(of: managerSheet, matching: find.text('Tomato Egg')),
+        findsWidgets,
+      );
+
+      await tester.ensureVisible(
+        find.descendant(of: managerSheet, matching: find.text('Add recipe')),
+      );
+      await tester.tap(
+        find.descendant(of: managerSheet, matching: find.text('Add recipe')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Save'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      Navigator.of(tester.element(find.text('Save'))).pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.byTooltip('Back to top'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final searchField = find.descendant(
+        of: managerSheet,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.decoration?.labelText == 'Search recipe name',
+        ),
+      );
+      await tester.enterText(searchField, 'mushroom');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(libraryStore.queryRequests.last.searchText, isEmpty);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(libraryStore.queryRequests.last.searchText, 'mushroom');
+
+      await tester.ensureVisible(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in browser'),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.descendant(of: managerSheet, matching: find.text('Mushroom Soup')),
+        findsWidgets,
+      );
+      expect(
+        find.descendant(of: managerSheet, matching: find.text('Tomato Egg')),
+        findsNothing,
+      );
+
+      libraryStore.detailRequests.clear();
+      await tester.tap(
+        find.descendant(of: managerSheet, matching: find.text('Adjust')).first,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(libraryStore.detailRequests, contains('mushroom_soup'));
+      expect(find.text('Save'), findsOneWidget);
+      await tester.tap(find.text('Save'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final restoreOriginalButton = find.descendant(
+        of: managerSheet,
+        matching: find.text('Restore original'),
+      );
+      await pumpUntilVisible(tester, restoreOriginalButton);
+      expect(restoreOriginalButton, findsWidgets);
+      await tester.pumpAndSettle(const Duration(milliseconds: 100));
+
+      final mushroomInManager = find.descendant(
+        of: managerSheet,
+        matching: find.text('Mushroom Soup'),
+      );
+      await tester.ensureVisible(mushroomInManager.first);
+      await tester.pump();
+      await tester.tap(mushroomInManager.first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Mushroom Soup'), findsWidgets);
+      expect(find.text('Materials'), findsOneWidget);
+      expect(find.textContaining('Mushroom Soup full detail'), findsOneWidget);
+      expect(libraryStore.detailRequests, contains('mushroom_soup'));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'DailyChoiceHub keeps other modules usable while eat library loads',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final option = eatOption(
+        id: 'slow_summary_recipe',
+        title: 'Slow Summary Recipe',
+        materials: const <String>['tofu'],
+      );
+      final result = DailyChoiceCookLoadResult(
+        options: <DailyChoiceOption>[option],
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: 1,
+        updatedAt: DateTime(2026, 4, 27, 9, 0),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        stats: const <String, Object?>{'recipeCount': 1},
+        recipes: <DailyChoiceOption>[option],
+      );
+      final libraryStore = _BlockingEatLibraryStore(document);
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+      );
+      await pumpUntilVisible(tester, find.text('Wear'));
+
+      expect(libraryStore.summaryRequested, isTrue);
+      expect(libraryStore.summaryCompleted, isFalse);
+
+      await tester.tap(find.text('Wear'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.text('Temperature'), findsOneWidget);
+      expect(libraryStore.summaryCompleted, isFalse);
+      expect(tester.takeException(), isNull);
+
+      libraryStore.completeSummaries();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    },
+  );
+
+  testWidgets(
+    'eat manager auto-loads built-in pages while keeping SQL paging',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final options = List<DailyChoiceOption>.generate(
+        95,
+        (index) => eatOption(
+          id: 'recipe_$index',
+          title: 'Recipe $index',
+          materials: const <String>['tofu'],
+        ),
+      );
+      final result = DailyChoiceCookLoadResult(
+        options: options,
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: options.length,
+        updatedAt: DateTime(2026, 4, 27, 20, 10),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        stats: <String, Object?>{'recipeCount': options.length},
+        recipes: options,
+      );
+      final libraryStore = _FakeEatLibraryStore(
+        document,
+        hideSummariesOnLoad: true,
+      );
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+      );
+      await pumpUntilVisible(tester, find.text('Load recipe library'));
+      await tester.tap(find.text('Load recipe library'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+
+      await tester.tap(find.text('Manage'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final managerSheet = find.byType(DraggableScrollableSheet).first;
+      await tester.ensureVisible(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in browser'),
+        ),
+      );
+      await tester.tap(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in browser'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(libraryStore.queryRequests.last.limit, 80);
+      expect(libraryStore.queryRequests.last.offset, 0);
+
+      await tester.ensureVisible(
+        find.descendant(of: managerSheet, matching: find.text('Recipe 79')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(
+        libraryStore.queryRequests.any((query) => query.offset >= 80),
+        isTrue,
+      );
+      expect(libraryStore.queryRequests.last.limit, 80);
+      expect(libraryStore.queryRequests.last.offset, greaterThanOrEqualTo(80));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'eat manager opens SQL built-in detail without loaded summary list',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final options = <DailyChoiceOption>[
+        eatOption(
+          id: 'tomato_egg',
+          title: 'Tomato Egg',
+          materials: const <String>['tomato', 'egg'],
+        ),
+        eatOption(
+          id: 'mushroom_soup',
+          title: 'Mushroom Soup',
+          materials: const <String>['mushroom', 'tofu'],
+          tags: const <String>['soup'],
+        ),
+      ];
+      final result = DailyChoiceCookLoadResult(
+        options: options,
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: options.length,
+        updatedAt: DateTime(2026, 4, 27, 18, 20),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        stats: <String, Object?>{'recipeCount': options.length},
+        recipes: options,
+      );
+      final libraryStore = _FakeEatLibraryStore(
+        document,
+        hideSummariesOnLoad: true,
+      );
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+      );
+      await pumpUntilVisible(tester, find.text('Load recipe library'));
+      await tester.tap(find.text('Load recipe library'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+
+      await tester.tap(find.text('Manage'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final managerSheet = find.byType(DraggableScrollableSheet).first;
+      await tester.ensureVisible(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in browser'),
+        ),
+      );
+      await tester.tap(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in browser'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(libraryStore.queryRequests, isNotEmpty);
+      expect(
+        find.descendant(of: managerSheet, matching: find.text('Mushroom Soup')),
+        findsWidgets,
+      );
+      expect(libraryStore.detailRequests, isEmpty);
+
+      await tester.tap(
+        find
+            .descendant(of: managerSheet, matching: find.text('Mushroom Soup'))
+            .first,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(libraryStore.detailRequests, <String>['mushroom_soup']);
+      expect(find.text('Materials'), findsOneWidget);
+      expect(find.textContaining('Mushroom Soup full detail'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('eat manager shows per-item detail loading and local failure', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final options = <DailyChoiceOption>[
+      eatOption(
+        id: 'mushroom_soup',
+        title: 'Mushroom Soup',
+        materials: const <String>['mushroom', 'tofu'],
+        tags: const <String>['soup'],
+      ),
+    ];
+    final result = DailyChoiceCookLoadResult(
+      options: options,
+      source: DailyChoiceCookDataSource.remote,
+      localLibraryCount: options.length,
+      updatedAt: DateTime(2026, 4, 27, 19, 10),
+    );
+    final document = DailyChoiceRecipeLibraryDocument(
+      libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+      libraryVersion: '2026-04-27',
+      schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+      schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+      generatedAt: result.updatedAt,
+      stats: <String, Object?>{'recipeCount': options.length},
+      recipes: options,
+    );
+    final libraryStore = _FakeEatLibraryStore(
+      document,
+      hideSummariesOnLoad: true,
+      detailDelay: const Duration(milliseconds: 350),
+    );
+
+    await pumpEatHub(
+      tester,
+      cookService: _FakeCookService(result, document),
+      libraryStore: libraryStore,
+    );
+    await pumpUntilVisible(tester, find.text('Load recipe library'));
+    await tester.tap(find.text('Load recipe library'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    await tester.tap(find.text('Manage'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final managerSheet = find.byType(DraggableScrollableSheet).first;
+    await tester.ensureVisible(
+      find.descendant(
+        of: managerSheet,
+        matching: find.text('Built-in browser'),
+      ),
+    );
+    await tester.tap(
+      find.descendant(
+        of: managerSheet,
+        matching: find.text('Built-in browser'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final adjustButton = find.descendant(
+      of: managerSheet,
+      matching: find.text('Adjust'),
+    );
+    await tester.ensureVisible(adjustButton.first);
+    await tester.tap(adjustButton.first);
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: managerSheet,
+        matching: find.text('Preparing adjustment...'),
+      ),
+      findsOneWidget,
+    );
+    expect(libraryStore.detailRequests, <String>['mushroom_soup']);
+
+    await tester.tap(adjustButton.first);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(libraryStore.detailRequests, <String>['mushroom_soup']);
+
+    await tester.pump(const Duration(milliseconds: 500));
+    await pumpUntilVisible(tester, find.text('Save'));
+    expect(find.text('Save'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Save'))).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('eat manager keeps SQL browser open when detail loading fails', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final options = <DailyChoiceOption>[
+      eatOption(
+        id: 'mushroom_soup',
+        title: 'Mushroom Soup',
+        materials: const <String>['mushroom', 'tofu'],
+        tags: const <String>['soup'],
+      ),
+    ];
+    final result = DailyChoiceCookLoadResult(
+      options: options,
+      source: DailyChoiceCookDataSource.remote,
+      localLibraryCount: options.length,
+      updatedAt: DateTime(2026, 4, 27, 19, 15),
+    );
+    final document = DailyChoiceRecipeLibraryDocument(
+      libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+      libraryVersion: '2026-04-27',
+      schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+      schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+      generatedAt: result.updatedAt,
+      stats: <String, Object?>{'recipeCount': options.length},
+      recipes: options,
+    );
+    final failingStore = _FakeEatLibraryStore(
+      document,
+      hideSummariesOnLoad: true,
+      failingDetailIds: const <String>{'mushroom_soup'},
+    );
+    await pumpEatHub(
+      tester,
+      cookService: _FakeCookService(result, document),
+      libraryStore: failingStore,
+    );
+    await pumpUntilVisible(tester, find.text('Load recipe library'));
+    await tester.tap(find.text('Load recipe library'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.tap(find.text('Manage'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final failingManagerSheet = find.byType(DraggableScrollableSheet).first;
+    await tester.ensureVisible(
+      find.descendant(
+        of: failingManagerSheet,
+        matching: find.text('Built-in browser'),
+      ),
+    );
+    await tester.tap(
+      find.descendant(
+        of: failingManagerSheet,
+        matching: find.text('Built-in browser'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(
+      find
+          .descendant(
+            of: failingManagerSheet,
+            matching: find.text('Mushroom Soup'),
+          )
+          .first,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(failingStore.detailRequests, <String>['mushroom_soup']);
+    expect(
+      find.descendant(
+        of: failingManagerSheet,
+        matching: find.textContaining('Details could not be loaded'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Materials'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'eat random stop does not start SQL pivot for large visible pools',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final options = List<DailyChoiceOption>.generate(
+        360,
+        (index) => eatOption(
+          id: 'recipe_${index.toString().padLeft(3, '0')}',
+          title: 'Recipe ${index.toString().padLeft(3, '0')}',
+          materials: const <String>['tofu'],
+          steps: const <String>['Cook it'],
+          tags: const <String>['home style'],
+        ),
+      );
+      final result = DailyChoiceCookLoadResult(
+        options: options,
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: options.length,
+        referenceTitles: const <String>['Large test reference'],
+        updatedAt: DateTime(2026, 4, 27, 12),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        referenceTitles: result.referenceTitles,
+        stats: <String, Object?>{'recipeCount': options.length},
+        recipes: options,
+      );
+      final libraryStore = _FakeEatLibraryStore(document);
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+        storage: _FakeStorageService(
+          const DailyChoiceCustomState(
+            hiddenBuiltInIds: <String>{'recipe_000'},
+          ),
+        ),
+      );
+      await pumpUntilVisible(tester, find.text('Load recipe library'));
+      await tester.tap(find.text('Load recipe library'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+
+      await tester.ensureVisible(find.text('Randomize'));
+      await tester.tap(find.text('Randomize'));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.text('Stop'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(libraryStore.randomRequests, isEmpty);
+      expect(find.text('Picking'), findsNothing);
+      expect(find.text('Recipe 000'), findsNothing);
+
+      await tester.tap(find.text('Details'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(libraryStore.detailRequests, isNotEmpty);
+      expect(libraryStore.detailRequests.single, isNot('recipe_000'));
+      expect(find.text('Materials'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('eat recipe editor tolerates duplicated all context entries', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return FilledButton(
+                onPressed: () {
+                  unawaited(
+                    showDailyChoiceEditorSheet(
+                      context: context,
+                      i18n: AppI18n('en'),
+                      accent: Colors.orange,
+                      moduleId: DailyChoiceModuleId.eat.storageValue,
+                      categories: mealCategories,
+                      initialCategoryId: 'lunch',
+                      contexts: <DailyChoiceCategory>[
+                        cookToolCategories.first,
+                        ...cookToolCategories,
+                      ],
+                      initialContextId: 'all',
+                      contextLabelZh: '厨具',
+                      contextLabelEn: 'Tool',
+                    ),
+                  );
+                },
+                child: const Text('Open editor'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open editor'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Save'), findsOneWidget);
+    expect(find.text('All tools'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('random panel ignores stale async pick after options change', (
+    WidgetTester tester,
+  ) async {
+    final first = eatOption(id: 'first_recipe', title: 'First Recipe');
+    final second = eatOption(id: 'second_recipe', title: 'Second Recipe');
+    var options = <DailyChoiceOption>[first];
+    late StateSetter hostSetState;
+    final pendingPick = Completer<DailyChoiceOption?>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              hostSetState = setState;
+              return DailyChoiceRandomPanel(
+                i18n: AppI18n('en'),
+                accent: Colors.orange,
+                title: 'Random',
+                subtitle: 'Pick one',
+                options: options,
+                emptyText: 'Empty',
+                onDetail: (_) {},
+                onManage: () {},
+                onGuide: () {},
+                onPickRandomOption: () => pendingPick.future,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Randomize'));
+    await tester.pump(const Duration(milliseconds: 140));
+    await tester.tap(find.text('Stop'));
+    await tester.pump();
+    expect(find.text('Picking'), findsOneWidget);
+
+    hostSetState(() {
+      options = <DailyChoiceOption>[second];
+    });
+    await tester.pump(const Duration(milliseconds: 400));
+    pendingPick.complete(first);
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Second Recipe'), findsOneWidget);
+    expect(find.text('First Recipe'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('random panel clears picking state when async pick times out', (
+    WidgetTester tester,
+  ) async {
+    final first = eatOption(id: 'first_recipe', title: 'First Recipe');
+    final pendingPick = Completer<DailyChoiceOption?>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: Scaffold(
+          body: DailyChoiceRandomPanel(
+            i18n: AppI18n('en'),
+            accent: Colors.orange,
+            title: 'Random',
+            subtitle: 'Pick one',
+            options: <DailyChoiceOption>[first],
+            emptyText: 'Empty',
+            onDetail: (_) {},
+            onManage: () {},
+            onGuide: () {},
+            onPickRandomOption: () => pendingPick.future,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Randomize'));
+    await tester.pump(const Duration(milliseconds: 140));
+    await tester.tap(find.text('Stop'));
+    await tester.pump();
+    expect(find.text('Picking'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1300));
+
+    expect(find.text('Picking'), findsNothing);
+    expect(find.text('Randomize'), findsOneWidget);
+    expect(find.text('First Recipe'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+class _FakeStorageService extends DailyChoiceStorageService {
+  _FakeStorageService([this.state = DailyChoiceCustomState.empty]);
+
+  DailyChoiceCustomState state;
+
+  @override
+  Future<DailyChoiceCustomState> load() async => state;
+
+  @override
+  Future<void> save(DailyChoiceCustomState state) async {
+    this.state = state;
+  }
+}
+
+class _FakeCookService extends DailyChoiceCookService {
+  _FakeCookService(this.result, this.document);
+
+  final DailyChoiceCookLoadResult result;
+  final DailyChoiceRecipeLibraryDocument document;
+
+  @override
+  Future<DailyChoiceCookLoadResult?> loadBundled() async => result;
+
+  @override
+  Future<DailyChoiceCookLoadResult?> loadCached() async => null;
+
+  @override
+  Future<bool> shouldRefreshRemote() async => false;
+
+  @override
+  Future<DailyChoiceCookLoadResult> refresh() async => result;
+
+  @override
+  Future<DailyChoiceRecipeLibraryDocument?>
+  exportBundledLibraryDocument() async {
+    return document;
+  }
+}
+
+class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
+  _FakeEatLibraryStore(
+    this.document, {
+    this.hideSummariesOnLoad = false,
+    this.detailDelay = Duration.zero,
+    this.failingDetailIds = const <String>{},
+  });
+
+  final DailyChoiceRecipeLibraryDocument document;
+  final bool hideSummariesOnLoad;
+  final Duration detailDelay;
+  final Set<String> failingDetailIds;
+  final List<String> detailRequests = <String>[];
+  final List<DailyChoiceEatLibraryQuery> randomRequests =
+      <DailyChoiceEatLibraryQuery>[];
+  final List<DailyChoiceEatLibraryQuery> queryRequests =
+      <DailyChoiceEatLibraryQuery>[];
+  bool _installed = false;
+
+  List<DailyChoiceOption> get _options =>
+      document.recipes.map(ensureEatOptionAttributes).toList(growable: false);
+
+  @override
+  Future<DailyChoiceEatLibraryStatus> inspectStatus() async {
+    if (!_installed) {
+      return const DailyChoiceEatLibraryStatus.empty();
+    }
+    return DailyChoiceEatLibraryStatus(
+      hasInstalledLibrary: true,
+      recipeCount: _options.length,
+      localLibraryCount: _options.length,
+      referenceTitles: document.referenceTitles,
+      libraryId: document.libraryId,
+      libraryVersion: document.libraryVersion,
+      schemaId: document.schemaId,
+      schemaVersion: document.schemaVersion,
+      source: DailyChoiceCookDataSource.remote,
+      installedAt: document.generatedAt,
+      updatedAt: document.generatedAt,
+    );
+  }
+
+  @override
+  Future<DailyChoiceEatLibraryStatus> installLibrary() async {
+    _installed = true;
+    return inspectStatus();
+  }
+
+  @override
+  Future<List<DailyChoiceOption>> loadBuiltInSummaries() async {
+    if (!_installed) {
+      return const <DailyChoiceOption>[];
+    }
+    if (hideSummariesOnLoad) {
+      return const <DailyChoiceOption>[];
+    }
+    return List<DailyChoiceOption>.unmodifiable(
+      _options.map(
+        (option) => ensureEatOptionAttributes(
+          option.copyWith(
+            detailsZh: '',
+            detailsEn: '',
+            materialsZh: const <String>[],
+            materialsEn: const <String>[],
+            stepsZh: const <String>[],
+            stepsEn: const <String>[],
+            notesZh: const <String>[],
+            notesEn: const <String>[],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<DailyChoiceEatLibraryQueryResult> queryBuiltInSummaries(
+    DailyChoiceEatLibraryQuery query,
+  ) async {
+    queryRequests.add(query);
+    final searchableOptions = _filterSummaryOptionsBySearch(
+      _summaryOptions,
+      query.searchText,
+    );
+    final filtered = DailyChoiceEatCatalog.fromOptions(searchableOptions)
+        .filter(
+          mealId: query.mealId,
+          toolId: query.toolId,
+          selectedTraitFilters: query.selectedTraitFilters,
+          excludedContains: query.excludedContains,
+          customExcludedIngredients: query.customExcludedIngredients,
+          availableIngredients: query.availableIngredients,
+          preferAvailableIngredients: query.preferAvailableIngredients,
+          allowedOptionIds: query.allowedOptionIds,
+        );
+    final offset = query.offset < 0 ? 0 : query.offset;
+    final limit = query.limit <= 0 ? 50 : query.limit;
+    return DailyChoiceEatLibraryQueryResult(
+      options: List<DailyChoiceOption>.unmodifiable(
+        filtered.eligibleOptions.skip(offset).take(limit),
+      ),
+      totalCount: filtered.eligibleOptions.length,
+      randomCandidateIds: List<String>.unmodifiable(
+        filtered.randomPool.map((item) => item.id),
+      ),
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  @override
+  Future<DailyChoiceOption?> pickBuiltInRandomSummary(
+    DailyChoiceEatLibraryQuery query, {
+    int? pivotKey,
+  }) async {
+    randomRequests.add(query);
+    final result = await queryBuiltInSummaries(query);
+    if (result.randomCandidateIds.isEmpty) {
+      return null;
+    }
+    final preferredId = result.randomCandidateIds.contains('mushroom_soup')
+        ? 'mushroom_soup'
+        : result.randomCandidateIds.first;
+    return _summaryOptions.firstWhere((item) => item.id == preferredId);
+  }
+
+  @override
+  Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
+    detailRequests.add(recipeId);
+    if (detailDelay > Duration.zero) {
+      await Future<void>.delayed(detailDelay);
+    }
+    if (failingDetailIds.contains(recipeId)) {
+      throw StateError('Forced detail failure for $recipeId');
+    }
+    for (final option in _options) {
+      if (option.id == recipeId) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<void> close() async {}
+
+  List<DailyChoiceOption> get _summaryOptions =>
+      List<DailyChoiceOption>.unmodifiable(
+        _options.map(
+          (option) => ensureEatOptionAttributes(
+            option.copyWith(
+              detailsZh: '',
+              detailsEn: '',
+              materialsZh: const <String>[],
+              materialsEn: const <String>[],
+              stepsZh: const <String>[],
+              stepsEn: const <String>[],
+              notesZh: const <String>[],
+              notesEn: const <String>[],
+            ),
+          ),
+        ),
+      );
+}
+
+List<DailyChoiceOption> _filterSummaryOptionsBySearch(
+  List<DailyChoiceOption> options,
+  String searchText,
+) {
+  final normalizedSearchText = searchText.trim().toLowerCase();
+  if (normalizedSearchText.isEmpty) {
+    return options;
+  }
+  return options
+      .where((option) {
+        final haystack = <String>[
+          option.id,
+          option.titleZh,
+          option.titleEn,
+          option.subtitleZh,
+          option.subtitleEn,
+          ...option.tagsZh,
+          ...option.tagsEn,
+        ].join(' ').toLowerCase();
+        return haystack.contains(normalizedSearchText);
+      })
+      .toList(growable: false);
+}
+
+class _BlockingEatLibraryStore extends DailyChoiceEatLibraryStore {
+  _BlockingEatLibraryStore(this.document);
+
+  final DailyChoiceRecipeLibraryDocument document;
+  final Completer<List<DailyChoiceOption>> _summaryCompleter =
+      Completer<List<DailyChoiceOption>>();
+  bool summaryRequested = false;
+  bool summaryCompleted = false;
+
+  @override
+  Future<DailyChoiceEatLibraryStatus> inspectStatus() async {
+    return DailyChoiceEatLibraryStatus(
+      hasInstalledLibrary: true,
+      recipeCount: document.recipes.length,
+      localLibraryCount: document.recipes.length,
+      libraryId: document.libraryId,
+      libraryVersion: document.libraryVersion,
+      schemaId: document.schemaId,
+      schemaVersion: document.schemaVersion,
+      source: DailyChoiceCookDataSource.remote,
+      installedAt: document.generatedAt,
+      updatedAt: document.generatedAt,
+    );
+  }
+
+  @override
+  Future<DailyChoiceEatLibraryStatus> installLibrary() async => inspectStatus();
+
+  @override
+  Future<List<DailyChoiceOption>> loadBuiltInSummaries() async {
+    summaryRequested = true;
+    final summaries = await _summaryCompleter.future;
+    summaryCompleted = true;
+    return summaries;
+  }
+
+  void completeSummaries() {
+    if (_summaryCompleter.isCompleted) {
+      return;
+    }
+    _summaryCompleter.complete(
+      List<DailyChoiceOption>.unmodifiable(
+        document.recipes.map(
+          (option) => ensureEatOptionAttributes(
+            option.copyWith(
+              detailsZh: '',
+              detailsEn: '',
+              materialsZh: const <String>[],
+              materialsEn: const <String>[],
+              stepsZh: const <String>[],
+              stepsEn: const <String>[],
+              notesZh: const <String>[],
+              notesEn: const <String>[],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
+    for (final option in document.recipes) {
+      if (option.id == recipeId) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<void> close() async {}
+}

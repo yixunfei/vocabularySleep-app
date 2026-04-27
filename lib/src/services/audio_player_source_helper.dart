@@ -458,6 +458,14 @@ class AudioPlayerSourceHelper {
     String? mimeType,
     Map<String, Object?> data = const <String, Object?>{},
   }) {
+    return tempFilePathForBytes(bytes, mimeType: mimeType, data: data);
+  }
+
+  static Future<String> tempFilePathForBytes(
+    Uint8List bytes, {
+    String? mimeType,
+    Map<String, Object?> data = const <String, Object?>{},
+  }) {
     return _bytesTempStore.pathFor(
       bytes,
       mimeType: mimeType,

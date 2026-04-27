@@ -1,5 +1,750 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_070-EAT-OVERHAUL-TAKEOVER] - 2026-04-27
+
+### 原因
+- 用户反馈工具箱「每日决策 - 吃什么」子模块存在数据源错乱、筛选字段不准、严重性能瓶颈、随机体验异常、加载阻塞、管理 UI 强聚合、分页体验差和 `TextEditingController` 生命周期崩溃等系统性问题。
+- 用户要求先对当前工作区做备份式提交，再创建可持续接手的完整任务工作流与计划，便于后续会话继续推进。
+
+### 新增
+- 新增 `plans/PLAN_070_每日决策吃什么子模块全面接管与数据UI重构.md`，记录接管分支、备份提交、阶段拆分、13 个问题验收标准、数据重建原则、schema 优化方向、UI 拆分边界和后续验证策略。
+- 新增 `DailyChoiceHub keeps other modules usable while eat library loads` smoke 测试，锁定吃什么摘要加载未完成时仍可切换并使用其他每日决策模块。
+- 新增 `scripts/audit_daily_choice_recipe_dataset.py`，审计当前 `D:\vocabularySleep-resources\cook_data` JSON/SQLite 与 YunYouJun/cook `recipe.csv` 的字段冲突、来源覆盖、菜系 notes 污染、食材别名过宽匹配和抽取乱码。
+- 新增 `records/record_070_daily_choice_recipe_data_audit.md` 与 `records/record_070_daily_choice_recipe_data_audit.json`，记录首轮数据源审计结果。
+- 新增 `records/record_070_daily_choice_recipe_data_audit_after_generation.md` 与 `records/record_070_daily_choice_recipe_data_audit_after_generation.json`，记录修正生成规则后的隔离验证包审计结果。
+- 新增 `records/record_070_daily_choice_recipe_schema_design.md`，记录吃什么 v2 数据库表设计、索引策略、典型查询、迁移顺序和验收标准。
+- 新增 `scripts/daily_choice_recipe_schema_v2.sql`，作为后续生成器与 Flutter store 迁移的可执行 SQLite schema 草案。
+- 新增 `decisions/ADR_070_daily_choice_recipe_schema_v2.md`，记录 v2 分层 schema 的技术决策。
+- 新增 `records/record_070_daily_choice_s3_upload_package.md`，记录 `cook_data_plan070_validation` 压缩后文件大小、建议 S3 key、远端安装边界和验证命令。
+- 新增 `DailyChoiceEatLibraryStore` 远端失败边界测试，覆盖“已有 SQLite 库时刷新失败不覆盖旧库”和“首次远端失败不生成 bundled JSON fallback”。
+- 新增 `scripts/verify_daily_choice_recipe_remote.dart`，用于通过 S3 远端完整下载吃什么 SQLite DB，并验证 v1/v2 表计数、meta 和 sample detail。
+- 新增 `records/record_070_daily_choice_remote_db_smoke.md`，记录 S3 `/cook_data` 上传后远端 key、文件大小、完整下载 smoke、meta 与 v2 当前状态。
+- 新增吃什么 catalog 回归测试，覆盖“全部餐段”默认候选池、花生坚果组合忌口，以及 `排骨` 不再退化成通用 `pork` 食材 token。
+- 新增 `records/record_070_daily_choice_v2_only_db_package.md`，记录新版 v2-only 上传 DB 的输出路径、大小、SHA256、schema/meta、表计数和运行时边界。
+- 新增 `records/record_070_daily_choice_recipe_v2_only_db_audit.md` 与 JSON 审计结果，记录 v2-only DB 与验证包 JSON 的一致性、cook CSV 覆盖和 10 个数据问题桶结果。
+- 新增 `records/record_070_daily_choice_remote_v2_runtime_smoke.md`，记录用户更新 S3 后的远端 v2-only DB 完整下载 smoke 和运行时读取验证。
+- 新增 `DailyChoiceEatLibraryStore installs v2-only SQLite and lazy loads details` 单测，覆盖 v2-only DB 的安装、book/cook 计数、摘要轻量读取和详情懒加载。
+- 新增 `DailyChoiceEatLibraryQuery` 与 `DailyChoiceEatLibraryQueryResult`，为吃什么 v2 内置库提供分页摘要、总数、完整随机候选 id 池和后续 random pivot 接入口。
+- 新增 `records/record_070_daily_choice_v2_sql_query_foundation.md`，记录 v2 SQL 查询基础、本轮边界、测试覆盖和后续 UI 接入风险。
+- 新增 v2 SQL 查询单测，覆盖索引筛选、分页摘要、`排骨` 精确食材匹配和花生坚果组合忌口。
+- 新增 `DailyChoiceEatLibraryStore.pickBuiltInRandomSummary(...)`，支持按 v2 `random_key` pivot 从完整候选池抽取轻量摘要。
+- 新增 `records/record_070_daily_choice_v2_random_pivot.md`，记录 store 层 random pivot 能力、测试覆盖和后续 UI 接入边界。
+- 新增 `DailyChoiceRandomPanel` 可选异步最终抽取入口，供吃什么主 UI 在停止随机时接入 store random pivot。
+- 新增 `records/record_070_daily_choice_ui_random_and_manager_sql_paging.md`，记录主 UI 随机与管理页内置库 SQL 分页接入边界。
+- 新增随机面板 widget 回归测试，覆盖候选池变化后旧异步抽取结果不回写当前 UI。
+- 新增 `DailyChoiceEatLibraryQuery.searchText`，为管理页吃什么内置库搜索下沉到 v2 SQLite search table 提供查询字段。
+- 新增 `records/record_070_daily_choice_manager_sql_search.md`，记录管理页内置库搜索下沉范围、验证和后续 FTS/拆页方向。
+- 新增管理页 SQL 内置摘要详情懒加载回归测试，覆盖内存全量摘要为空时仍可从 store 打开详情。
+- 新增 `records/record_070_daily_choice_manager_item_action_states.md`，记录管理页内置菜谱逐项 loading / disabled / error 状态的实现边界和验证。
+- 新增管理页内置菜谱逐项动作回归测试，覆盖 detail 慢读取期间不重复触发请求，以及 detail 失败时保留当前 sheet 并显示局部错误。
+- 新增 `records/record_070_daily_choice_manager_auto_paging_and_search_commit.md`，记录管理页自动分页、搜索提交边界和后续 FTS/倒排表风险。
+- 新增管理页自动分页与搜索提交回归测试，覆盖滚动触底自动扩大 SQL 分页 limit，以及输入搜索词期间不查询、失焦后才提交 `searchText`。
+- 新增 `records/record_070_daily_choice_random_stop_timeout_and_pivot_guard.md`，记录随机停止超时兜底、大候选池 SQL guard 和本轮验证。
+- 新增随机停止回归测试，覆盖异步最终抽取超时后退出 `Picking`，以及隐藏项导致需要精确可见池且候选过大时不触发重 SQL pivot。
+- 新增 `records/record_070_daily_choice_stop_local_and_manager_isolate_paging.md`，记录停止随机本地落点、管理页 isolate 查询和触底分页修复。
+- 新增默认空菜谱集“我喜欢的菜”，旧自定义状态在加载和保存时会自动补齐该集合，且管理页禁止删除这个默认集合。
+- 新增管理页内置菜谱“喜欢/加入”多选弹窗：点击时默认加入“我喜欢的菜”，也可同时加入其他个人菜谱集。
+- 新增管理页右侧固定“一键回到页首”浮动按钮，以及保存、调整、加入集合等写入动作的处理中遮罩反馈。
+- 新增 `records/record_070_daily_choice_collection_favorites_and_risk_cleanup.md`，记录本轮集合入口、喜欢集合、风险字段清理和验证包重建结果。
+- 新增食谱集 JSON 分享包导出/导入能力：用户可为当前个人食谱集选择保存位置导出，也可从本地 JSON 文件导入他人分享的集合、自定义菜谱和个人调整。
+- 新增 `records/record_070_daily_choice_collection_dropdown_import_export.md`，记录管理页集合入口去重、重命名/删除下拉操作和食谱集导入导出边界。
+- 新增筛选项紧凑展示：分类、场景、厨具、高级筛选和管理页筛选中，未选中项仅显示图标，选中项显示选项名。
+- 新增 `records/record_070_daily_choice_compact_filter_controls.md`，记录筛选项紧凑展示和展开入口增强。
+- 新增管理页结构拆分 part：查询 helper、section widgets、集合导入导出、确认弹窗从主 `daily_choice_manager_sheet.dart` 移出。
+- 新增 `records/record_070_daily_choice_p1_p4_closure.md`，记录 PLAN_070 P1-P4 收尾、分页追加模型、计划状态校准和验证结果。
+- 新增 `records/record_070_daily_choice_copy_cleanup_and_main_merge.md`，记录每日决策文案收口、开发说明删除、来源展示隐藏和合回主分支边界。
+
+### 修改
+- 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
+- 明确下一轮优先处理 P0 稳定性：每日决策入口不被吃什么菜谱库加载阻塞、管理 sheet controller 生命周期崩溃、随机面板停止按钮位置跳动和明显卡顿入口。
+- `DailyChoiceHub` 初始化不再等待吃什么菜谱库摘要加载完成；首屏只等待轻量自定义状态，吃什么菜谱库在进入吃什么模块后后台读取。
+- 吃什么资源状态面板区分后台读取和安装加载，读取期间只影响吃什么模块自身，不阻塞穿什么、去哪儿、干什么和决策助手。
+- 随机面板候选舞台固定高度，随机时限制标题、简介和标签行数，让停止按钮位置保持稳定。
+- 将 `PLAN_070` 阶段 2 标记为进行中，并写入首轮数据审计发现：`vegetarian` 与肉类/海鲜冲突 530 条，`vegan_friendly` 与动物性食材冲突 496 条，菜系标签混入 notes 2221 条，`清真友好` 规则说明混入 notes 3416 条，cook CSV 599 行中 569 行未在当前库标题精确命中。
+- `scripts/generate_daily_choice_recipe_dataset.py` 停用自动生成 `halal_friendly`、`vegan_friendly`、`vegetarian_friendly` diet 标签，避免无依据饮食友好标签继续进入筛选和展示。
+- 菜谱生成器不再把菜系标签或清真说明写入 notes，并统一清理 `??`、替换符等抽取乱码。
+- 食材抽取收紧高风险别名：`蛋` 不再作为鸡蛋裸词匹配，`洋葱` 不再误索引为 `葱`，`排骨`、`猪里脊`、`猪油`、`猪肝`、`猪蹄` 等具体猪肉项不再折叠成通用 `猪肉`。
+- 动物性风险判断补充兔肉、龟肉、甲鱼、鸽、鹌鹑、鹅肉、田鸡、牛蛙、牡蛎、蛤、蚌等词，`profile:vegetarian` 只在原始文本未命中肉类/水产风险时写入。
+- 将 YunYouJun/cook `recipe.csv` 导入生成器作为 `cook_csv` 数据来源，保留 difficulty、tags、methods、tools、bv、stuff 到结构化 attributes，并避免写入用户可见 sourceLabel、sourceUrl 和 references。
+- SQLite 导出 meta 现在写入真实 `bookRecipeCount` 与 `cookRecipeCount`，便于后续菜谱集分表和管理页展示。
+- 将 `PLAN_070` 阶段 3 标记为进行中，并明确本轮边界为数据库与索引设计，不直接迁移 Flutter 读取逻辑。
+- v2 schema 设计为 14 张表、18 个索引：菜谱集、基础索引、摘要、详情、材料/步骤行表、通用筛选索引、食材专用索引、搜索文本、本地用户状态和集合成员表。
+- 食材匹配索引拆为 `raw`、`canonical`、`family` 三层，并增加 `idx_dcr_ingredient_value_lookup` 保障默认 raw/canonical 查询。
+- 将 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份 JSON 压缩为上传前版本：`daily_choice_recipe_library.json` 19,614,095 bytes、`daily_choice_recipe_library_summary.json` 4,918,383 bytes、`recipe_library_asset.json` 19,614,095 bytes。
+- `DailyChoiceEatLibraryStore.installLibrary()` 改为远端 SQLite 候选文件安装：先下载到 `.remote` 候选 DB，规范 meta 并校验菜谱数，通过后才替换当前安装库。
+- `inspectStatus()` 在未安装 SQLite 文件时只返回空状态，不再为了检查状态创建空数据库文件。
+- 已验证用户上传到 S3 `/cook_data` 的远端包：运行时默认 key `cook_data/daily_choice_recipe_library.db` 可 HEAD、range 和完整下载，下载后 v1 summary/detail 均为 7,772 行。
+- `scripts/generate_daily_choice_recipe_dataset.py` 的 SQLite 导出改为 v1/v2 双写：保留现有 v1 runtime 表，同时写入菜谱集、v2 基础索引、摘要、详情、材料/步骤、筛选索引、食材 raw/canonical/family 索引、搜索文本和集合统计表。
+- 吃什么餐段默认改为“全部”，catalog 在 `mealId == 'all'` 时基于完整候选池筛选，不再按当前时间或午餐默认收窄。
+- 忌口预设精简为香菜、海鲜、花生坚果、酒精、辣椒；花生坚果在筛选层展开为 `peanut` + `nut`，保持 UI 简洁但不丢过滤语义。
+- 食材匹配继续收紧：`排骨`、猪蹄、猪肝、猪肚、猪油、火腿、培根、腊肉、腊肠等具体猪肉项不再作为默认 `pork` 食材同义词，只在 v2 family index 和 contains 排除里显式归入猪肉大类。
+- `scripts/generate_daily_choice_recipe_dataset.py` 的 SQLite 导出默认改为 v2-only；需要兼容旧 runtime 时可显式使用 `--sqlite-mode v1-v2`。
+- v2 SQLite 导出写入 `PRAGMA user_version=2`，便于上传后快速识别 schema 版本。
+- `scripts/audit_daily_choice_recipe_dataset.py` 支持自动识别 v2-only DB，不再强依赖 v1 summary/detail 表。
+- `scripts/verify_daily_choice_recipe_remote.dart` 支持 v1、v2 或 v1/v2 双写 DB 的远端 smoke 验证。
+- 已验证用户更新后的 S3 `cook_data/daily_choice_recipe_library.db` 为 v2-only DB：远端大小 142,467,072 bytes，`user_version=2`，v2 recipes/summaries/details 均为 7,772 行。
+- `DailyChoiceEatLibraryStore` 增加 schema 自动识别，优先读取 v2 表，同时保留 v1 旧库读取能力。
+- `DailyChoiceEatLibraryStore` 的远端 DB 安装归一化按 schema 写入 meta：v2 写入 `daily_choice_recipe_schema_meta`，v1 继续写入 `daily_choice_eat_recipe_meta`。
+- 吃什么内置菜谱摘要读取新增 v2 查询路径：从 `daily_choice_recipes` + `daily_choice_recipe_summaries` 读取轻量摘要，详情、材料、步骤继续按需从 `daily_choice_recipe_details` 懒加载。
+- `DailyChoiceEatLibraryStore.queryBuiltInSummaries()` 在 v2 DB 中使用 `daily_choice_recipe_filter_index` 处理餐段、厨具和 trait 筛选，并使用 `daily_choice_recipe_ingredient_index` 的 raw/canonical 层处理忌口排除和已有食材优先匹配。
+- legacy v1 库和缺少 v2 筛选索引的库继续回退到内存 `DailyChoiceEatCatalog` 过滤，避免查询入口影响已有本地库可读性。
+- v2 随机候选 id 查询按 `random_key` 排序并去重，避免 raw/canonical 同时命中时让同一菜谱在随机池中重复出现。
+- v2 random pivot 复用 `DailyChoiceEatLibraryQuery` 条件，并在 pivot 后半段无命中时回绕到候选池开头；随机抽取不读取详情字段。
+- 吃什么主 UI 在随机池全为可见内置菜谱时，停止随机会调用 `pickBuiltInRandomSummary(...)` 作为最终选中来源；随机池混入本地自定义时继续使用内存结果。
+- 随机面板在候选池变化时会让仍在进行的异步最终抽取失效，避免旧筛选结果回写到新筛选候选池。
+- 管理页吃什么内置库使用 `queryBuiltInSummaries(...)` 分页读取；搜索词非空时同步传给 store，并优先使用 v2 `daily_choice_recipe_search_text` 查询。
+- 管理页异步 SQL 查询在 sheet 关闭后不再调用 `setSheetState`，且失败时记录当前查询 key，降低关闭/返回和失败重试的生命周期风险。
+- 吃什么详情/个人调整/另存入口的内置菜谱判断改为基于模块、安装状态和轻量摘要内容，不再要求当前内存 `builtInOptions` 全量列表包含该 id。
+- 管理页吃什么内置菜谱的详情、个人调整、另存入口统一接入条目级异步动作状态；动作进行中会禁用同一条目的 detail/edit/copy 入口，并在条目内展示 loading 或错误反馈。
+- 吃什么管理页内触发详情读取时由 manager sheet 承接局部错误；主 UI 的详情按钮仍沿用 SnackBar 错误反馈。
+- 管理页吃什么内置库移除“继续加载”按钮，改为滚动接近底部时自动递增 SQL 查询 limit，并在加载下一页时保留当前已显示摘要。
+- 管理页搜索框改为组件级 `TextEditingController` / `FocusNode` 管理；输入只更新 draft，离开输入框或提交搜索后才刷新 SQL 搜索词。
+- 吃什么主 UI 停止随机时，无隐藏/个人调整/食谱集约束的内置候选池不再把全量 id 列表传给 `pickBuiltInRandomSummary(...)`，改为直接复用当前 SQL 筛选条件。
+- 需要精确可见池的随机停止场景若候选 id 超过 300 个，会跳过 store random pivot 并保留当前锁定候选，避免构造大 `IN (...)` 查询。
+- 吃什么主 UI 停止随机改为纯本地锁定当前候选，不再触发 `pickBuiltInRandomSummary(...)`；store random pivot 保留为底层能力，但不再位于停止按钮关键交互链路。
+- `DailyChoiceEatLibraryStore.queryBuiltInSummaries(...)` 优先通过 `Isolate.run` 在后台 isolate 重新打开 SQLite 文件执行分页/搜索查询，失败时回退旧同步路径。
+- 管理页内置库自动分页除监听滚动通知外，会在 SQL 返回后的下一帧检查当前滚动位置，修复已经停在底部时没有新滚动事件导致不继续加载的问题。
+- 吃什么外层随机入口现在直接展示菜谱集选择，用户开始随机前即可选择“内置菜谱”或个人菜谱集，避免默认总是在完整大库中随机。
+- 默认内置库口径正式统一为“内置菜谱”，管理页和外层入口不再使用“所有菜谱 / 全部菜谱”作为内置库名称。
+- 管理页“不喜欢”隐藏动作增加确认弹窗，避免误触；隐藏或恢复后保留当前 sheet、搜索和分页上下文。
+- 搜索输入框高度收紧为与旁边按钮更接近，减少管理页顶部工具区的视觉错位。
+- 吃什么 UI 移除饮食友好的辅助筛选入口，做菜指南不再展示清真等需要用户自行判断的关键提示。
+- 生成器和 v2 schema 移除菜谱起源地字段，验证包 JSON/SQLite 不再写入 `origin` 或 `diet` 字段；审计脚本继续保留风险检查桶用于确认这些字段没有回流。
+- 管理页“我的食谱集”不再同时展示选择 chip 和集合卡片，改为单一下拉框选择当前范围；重命名、删除按钮固定在下拉框旁边。
+- 默认“我喜欢的菜”集合继续受保护，不能通过管理页重命名或删除；其他个人集合可在下拉框旁执行重命名和删除。
+- 食谱集导出包包含集合元数据、集合内本地自定义菜谱、个人调整菜谱和内置菜谱 id 引用；导入时生成新的集合 id，避免覆盖已有集合。
+- 食谱集导入会校验分享包格式版本，文件内容无法读取时会显示导入失败提示，不再静默无响应。
+- `ToolboxSelectablePill` 支持隐藏文字标签并保留 tooltip/语义标签，便于移动端把筛选项尽量压在一行内。
+- 吃什么资源准备、高级设置和管理页可展开区的展开/收起按钮增加浅色背景、边框和 accent 色，提升可点击识别度。
+- 管理页内置菜谱 SQL 分页从“扩大 limit 重取前序摘要”改为 `offset + pageSize` 追加页，触底加载下一页时只请求新增窗口。
+- PLAN_070 阶段进度和 13 项验收表已按当前实现校准，明确主 UI 停止随机以响应性优先，路由级拆页和最近 3 个自定义忌口为后续增强。
+- PLAN_070 阶段 7 已完成本轮收尾验证；全量 `flutter analyze` 仍保留本轮外既有 lint 债，Android release APK 构建通过。
+- 每日决策模块文案完成一轮产品化收口：吃什么资源状态改为菜谱库准备提示，去哪儿、穿什么、做菜指南和决策助手移除“本轮 / 后续 / 扩展边界 / 资料来源”类开发说明。
+- 详情页不再渲染 sourceLabel、sourceUrl 或 references 来源块，保留菜品画像、材料/条件、步骤、关键提示和地图搜索词复制等用户直接需要的内容。
+
+### 风险变更
+- 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
+- `plans/` 目录在当前仓库 `.gitignore` 中默认忽略，本计划需要作为本次接管凭据强制纳入提交。
+- 吃什么摘要加载改为模块级后台任务后，摘要未完成前吃什么候选池会保持为空并显示资源准备状态；这是有意降级，用来换取每日决策其他模块不被阻塞。
+- 本轮生成的验证包位于 `D:\vocabularySleep-resources\cook_data_plan070_validation`，尚未覆盖 `D:\vocabularySleep-resources\cook_data`；后续确认后再执行替换或上传。
+- cook CSV 原始 599 行中按标题/厨具去重导入 593 条菜谱，但审计按标题确认 599 行全部可在新库中命中。
+- v2 schema 已接入 app 运行时的安装、状态、摘要和详情读取路径；后续仍需要把分页、筛选索引查询和 random pivot 下沉到 v2 SQL。
+- SQLite 仍需要下载到应用支持目录后才能查询；本轮“不保留本地”收口为不再保留或生成 JSON 兜底缓存，而不是流式查询远端 SQLite。
+- 吃什么远端首装失败且无旧库时会返回错误状态和空候选池，不再静默生成 fallback 菜谱库；这是有意让数据可信度优先于离线兜底。
+- 当前已上传远端 DB 已切换为 v2-only，不再包含 v1 兼容表；旧版本 app 若只支持 v1 表将无法读取新版远端包。
+- `scripts/verify_daily_choice_recipe_remote.dart` 为纯 Dart S3 smoke 工具，需要通过环境变量或命令行参数提供 S3 配置；本轮验证时配置从现有 `CstCloudS3CompatClient` 默认值读取后注入环境变量。
+- 本轮重新生成的 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，已移除 `origin` 列和高风险 `diet` 字段；当前大小 142,233,600 bytes，SHA256 为 `418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`。
+- 本轮未覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；S3 远端 DB 已由用户更新，本轮仅做远端 smoke 和运行时读取修复。
+- 当前 UI 仍保留内存 catalog 作为本地自定义、个人调整和旧库回退路径；吃什么内置库随机、管理页浏览和内置库搜索已逐步接入 store 查询。
+- 已有食材优先的 SQL 版本先采用 raw/canonical 任一命中收口，尚未完整复刻内存 catalog 的 exact/strong/broad 分层扩池策略。
+- random pivot 在主 UI 中只覆盖随机池全为可见内置菜谱的场景；legacy v1 fallback 使用候选 id 列表取模抽取，不具备 v2 `random_key` 的稳定全局分布。
+- 管理页吃什么内置库搜索已接入 SQLite `daily_choice_recipe_search_text`；本地自定义和个人调整搜索仍走内存过滤，后续若要统一语义需单独处理 overlay 搜索。
+- 当前搜索仍是 `instr`/substring 查询，不是 FTS；拼音、分词、多关键词相关性排序需后续单独引入 FTS5 或倒排表。
+- 大候选池且存在隐藏/个人调整/食谱集约束时，最终随机分布会回退到当前 UI 随机过程锁定的候选；这是为避免停止按钮等待重 SQL 的性能兜底。
+- 管理页分页查询现在会额外打开后台 SQLite 连接；若平台 isolate 查询不可用会自动回退同步路径，后续如要进一步压低查询成本，应推进真正的长驻查询 worker 或 keyset/offset 追加分页。
+
+### 修复
+- 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
+- 修复管理 sheet 新建食谱集输入框因函数级 `TextEditingController` 在关闭/重建时被释放后继续参与 TextField 构建的崩溃风险。
+- 修复随机过程中菜品内容换行导致停止按钮上下跳动、难以点击的问题。
+- 修复当前生成数据中素食/纯素冲突、清真说明污染 notes、菜系标签污染 notes、洋葱误索引葱、具体猪肉项折叠为通用猪肉和抽取乱码等审计问题。
+- 修复远端 DB 安装失败时可能回退到 bundled JSON / cached CSV / fallback seed 并写入本地 JSON cache 的问题。
+- 修复远端刷新失败时可能直接覆盖现有 SQLite 库的风险；现在候选 DB 校验通过后才替换旧库。
+- 修复吃什么默认餐段过早收窄候选池的问题；默认现在从全部餐段候选中随机。
+- 修复 `排骨` 等具体食材在运行时食材匹配中被自动折叠为通用猪肉 token，导致输入排骨可能扩大到全猪肉菜谱的问题。
+- 修复新版 v2-only 远端 DB 因 `PRAGMA user_version=2` 被当前 store 判定为不支持新 schema，导致安装或读取失败的问题。
+- 修复 v2-only DB 缺少 v1 summary/detail 表时，吃什么摘要和详情读取 SQL 仍固定查询 v1 表的问题。
+- 修复 v2 查询候选 id 在 raw/canonical 同时命中时可能重复返回同一菜谱，导致随机权重被意外放大的问题。
+- 修复后续分页接入时随机可能只落在当前分页窗口的问题基础：store 层 random pivot 现在忽略 `limit` / `offset`，始终按完整候选池抽取。
+- 修复管理页内置库浏览和搜索仍同步过滤完整吃什么内置列表的性能路径，改为按当前筛选与搜索词分页查询 SQLite。
+- 修复管理页 SQL 分页返回的内置摘要在内存全量摘要缺失时无法按需读取完整详情的隐性依赖。
+- 修复管理页内置菜谱详情/个人调整/另存可重复点击导致重复 detail 读取的问题。
+- 修复管理页内置菜谱 detail 读取失败时只能走全局提示、缺少条目级错误反馈的问题；现在失败不会关闭管理 sheet 或清空当前搜索/分页状态。
+- 修复管理页搜索框每次输入字符都触发 SQL 查询的问题；现在只在失焦或提交时触发搜索。
+- 修复随机停止后因最终抽取耗时过长可能长时间卡在“选中中 / Picking”，且无法稳定显示最终菜谱的问题。
+- 修复主 UI 停止随机时对大候选池传入全量 `allowedOptionIds`，导致 v2 SQL random pivot 构造大 `IN (...)` 查询并拖慢交互的问题。
+- 修复主 UI 停止随机仍可能因同步 SQLite random pivot 占用 UI isolate，导致程序接近无响应的问题。
+- 修复管理页内置库滑到底部后，若 SQL 结果返回时用户已停在底部，后续页不会自动加载的问题。
+- 修复个人调整保存后 smoke 测试过早点击仍在退出动画后的 sheet 内容导致的误判；测试现在等待保存回写和 modal 动画完成后再继续点击详情。
+- 修复管理页内置库“喜欢/加入”只能隐式操作单一集合、缺少多集合选择入口的问题。
+- 修复管理页食谱集选择入口重复导致同一集合既在 chip 又在卡片中出现的问题。
+- 修复食谱集导入在文件选择器未返回内容时可能没有任何反馈的问题。
+- 修复管理页触底加载下一页时重复查询已显示内置菜谱摘要的问题。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_content.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_detail_sheets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_place_seed.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_modules.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_wear_module.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_query_helpers.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_section_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_collection_io.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_dialogs.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter analyze`（未通过，仅剩本轮外既有 harp/woodfish/pubspec/test lint）
+- `powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Target android-apk`（通过，release APK 构建成功）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_models.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_catalog.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_support.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_editor_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `python -X utf8` 检查 `D:\vocabularySleep-resources\cook_data_plan070_validation`（通过，recipes=7772，user_version=2，integrity=ok，v2 recipes/summaries/details 均为 7,772，`hasOriginColumn=False`，JSON `diet/origin` 为 0，DB 风险 diet terms 为 0，DB SHA256=`418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `git switch -c codex/daily-choice-overhaul`（通过）
+- `git commit -m "chore: backup current workspace before daily choice overhaul"`（通过，备份提交 `735b95a`）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --cook-csv .tmp_recipe_csv_head.txt`（通过）
+- `python -m py_compile scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- `python -X utf8 scripts\generate_daily_choice_recipe_dataset.py --cook-csv .tmp_plan070_recipe.csv --output D:\vocabularySleep-resources\cook_data_plan070_validation\recipe_library_asset.json --export-dir D:\vocabularySleep-resources\cook_data_plan070_validation`（通过）
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv .tmp_plan070_recipe.csv --output-md records\record_070_daily_choice_recipe_data_audit_after_generation.md --output-json records\record_070_daily_choice_recipe_data_audit_after_generation.json`（通过，10 个审计问题桶均为 0）
+- `python -X utf8` 内存 SQLite 执行 `scripts\daily_choice_recipe_schema_v2.sql`（通过，创建 14 张表和 18 个索引）
+- `EXPLAIN QUERY PLAN` 验证 v2 摘要分页、通用筛选、食材匹配和随机 pivot 查询（通过，命中目标索引）
+- `python -X utf8` 解析 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份压缩 JSON（通过，三份 JSON 均为 7,772 条菜谱）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart run scripts/s3_resource_probe.dart --op list --prefix cook_data/ --max-keys 20`（通过）
+- `dart run scripts/s3_resource_probe.dart --op head --key cook_data/daily_choice_recipe_library.db`（通过，47,915,008 bytes）
+- `dart run scripts/s3_resource_probe.dart --op get-range --key cook_data/daily_choice_recipe_library.db`（通过，SQLite 文件头）
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py`（通过）
+- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过）
+- `python -X utf8` 最小数据集调用 `write_sqlite_export(...)` 验证 v1/v2 双写（通过）
+- `dart analyze scripts/verify_daily_choice_recipe_remote.dart lib/src/ui/pages/toolbox_daily_choice test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- `dart format scripts\verify_daily_choice_recipe_remote.dart`（通过）
+- `dart analyze scripts\verify_daily_choice_recipe_remote.dart`（通过）
+- `python -X utf8` 从验证包 JSON 调用 `write_sqlite_export(..., sqlite_mode='v2')` 重写 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db`（通过，7,772 条）
+- `python -X utf8` 检查 v2-only DB：`PRAGMA integrity_check=ok`、`user_version=2`、v1 summary/detail 表不存在、v2 recipes/summaries/details 均为 7,772 行（通过）
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv build\_external\cook\app\data\recipe.csv --output-md records\record_070_daily_choice_recipe_v2_only_db_audit.md --output-json records\record_070_daily_choice_recipe_v2_only_db_audit.json`（通过，10 个审计问题桶均为 0，cook CSV 599 行全部标题命中）
+- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过，完整下载用户更新后的远端 v2-only DB，v2 recipes/summaries/details 均为 7,772 行）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart scripts\verify_daily_choice_recipe_remote.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页内置库搜索下沉后无静态问题）
+- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 v2 search table 查询）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖管理页搜索词传入 store 查询并只展示命中内置菜）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页 SQL 摘要 detail 解耦后无静态问题）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖内存摘要为空时管理页 SQL 摘要仍可打开详情，以及个人调整前 detail 懒加载）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 v2 SQL 筛选、分页、食材精确匹配和组合忌口）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart`（通过，新增 random pivot API 后无静态问题）
+- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 pivot 命中、回绕和分页窗口外候选抽取）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机触发 store pivot、管理页展开内置库触发 SQL 查询、候选池变化后旧异步抽取不回写）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖随机停止超时兜底和大可见池本地 fallback）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机不触发 store random pivot、管理页触底自动分页）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
+
+### 原因
+- 用户反馈 `.\scripts\build.ps1` 打 Web 包时失败，错误来自 `sherpa_onnx`、`sqlite3`、`ffi` 等 `dart:ffi` 依赖在 Flutter Web / Dart2JS 下无法编译。
+- 当前项目主要目标不是 Web，暂不投入 Web 专用实现或条件导入重构。
+
+### 修改
+- `scripts/build.ps1` 的默认 `all` 目标不再包含 `web`，Windows / macOS / Linux 宿主平台均只保留当前可用的 Android 与桌面构建目标。
+- 移除脚本中的 Web 构建分支，避免默认打包跑到 `flutter build web` 后输出大量 FFI 编译错误。
+- 显式传入 `-Target web` 时，脚本会在目标解析阶段直接提示：当前因 `sherpa_onnx`、`sqlite3`、`ffi` 等 FFI 依赖禁用 Web，需要 Web 专用实现后再重新启用。
+
+### 修复
+- 修复 `.\scripts\build.ps1` 默认全量打包时被 Web 目标拖失败的问题。
+
+### 风险变更
+- `web` 不再是脚本支持目标；后续若需要恢复 Web 包，需要先处理 FFI 依赖的 Web 替代实现或条件导入隔离。
+
+### 验证
+- `.\scripts\build.ps1 -DryRun -NoPubGet`（通过，输出 Android APK / Android AppBundle / Windows，不再包含 Web）
+- `.\scripts\build.ps1 -Target web -DryRun -NoPubGet`（按预期失败，并输出 FFI 依赖导致 Web 禁用的明确提示）
+- `.\scripts\build.ps1 -Target android-apk -NoPubGet`（通过，产物输出到 `dist/android-apk/xianyushengxi.apk`）
+
+## [Unreleased-PLAN_068-EAT-COOKING-GUIDE-PERF] - 2026-04-26
+
+### 原因
+- 用户要求「每日抉择 - 吃什么」中的做菜指南改成标准、通用、可长期扩展的做菜基准手册，移除混杂的项目 / 程序帮助内容。
+- 用户要求参考 YunYouJun/cook 与本地 `D:\vocabularySleep-resources\做菜` 资料中的通用烹饪技巧、规范与安全边界。
+- 用户要求把「高级设置」上移，并继续优化电脑端和手机端都能感知到的卡顿。
+
+### 新增
+- 新增 `test/daily_choice_cooking_guide_test.dart`，覆盖做菜指南不再出现 `recipe.csv`、`SQLite`、安装、远端、数据源等项目帮助语，并确认指南包含入厨、采购、清洗、刀工、火候和翻车排查等基准章节。
+
+### 修改
+- 重写吃什么做菜指南为通用烹饪手册结构，覆盖入厨前判断、采购验收、清洗去污、刀工切配、备料顺序、调味基准、火候锅具、基础处理技法、常用烹调法、米面烘焙、保存复热和翻车排查。
+- 做菜指南参考来源改为「参考与延伸阅读」附录口吻，只保留资料标题和摘要说明，不再解释项目字段、页面行为或接入边界。
+- 吃什么页面将「高级设置」前置到随机主舞台之前，让用户先收口已有材料、忌口、荤素 / 清真等条件，再开始随机。
+- 随机面板运行中不再每 120ms 触发整块 `AnimatedSwitcher` 切换动画，只更新同一个候选舞台；停止选中时保留正常过渡，降低随机过程中的重建与合成压力。
+- 菜谱库摘要加载改为后台 isolate 打开 SQLite 并解析摘要，失败时回退主 isolate 读取，减少进入吃什么界面时主线程同步解码压力。
+- 管理页内置菜谱筛选增加缓存键，展开内置库后折叠 / 展开其他区域不再重复过滤全量内置菜谱。
+
+### 修复
+- 修复做菜指南中混入 `recipe.csv`、筛选字段、页面匹配逻辑、未接入资料等项目帮助说明的问题。
+- 修复随机滚动时因高频切换动画导致的明显卡顿风险。
+- 修复管理页展开内置库后轻量 UI 状态变化仍反复扫描完整菜谱库的性能浪费。
+
+### 风险变更
+- 摘要后台 isolate 读取依赖 SQLite 文件可被第二连接并发只读打开；若目标平台 isolate 读取失败，会自动回退既有主线程读取路径。
+- 做菜指南内容明显变丰富，但仍只在指南弹窗内按模块选择渲染，不常驻主页面。
+- 管理页筛选缓存仍基于本地摘要全集；若菜谱量继续增长到数十万级，后续应把管理搜索继续下沉到 SQLite 倒排 / FTS 查询。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_cooking_guide_test.dart test/daily_choice_hub_smoke_test.dart`（通过）
+- `flutter analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_cooking_guide_test.dart test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_cooking_guide_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart`（通过）
+- `.\scripts\build.ps1 -Target android-apk -NoPubGet`（通过，产物输出到 `dist/android-apk/xianyushengxi.apk`）
+
+## [Unreleased-PLAN_067-EAT-FREEZE-BUILD] - 2026-04-26
+
+### 原因
+- 用户反馈工具箱「每日抉择 - 吃什么」进入页面接近卡死，管理页轻量折叠交互也会明显卡顿。
+- 用户反馈新增菜谱时 `DropdownButtonFormField` 因 `all` 上下文重复和值冲突直接断言报错。
+- 用户反馈通过 `.\scripts\build.ps1` release 打包时 Gradle 在 Flutter plugin loader 阶段因仓库策略冲突失败。
+
+### 修改
+- `DailyChoiceEditorSheet` 内部统一对分类 / 上下文候选去重，并在编辑态剔除 `all` 这类筛选哨兵项，避免不同入口传入重复上下文时触发下拉断言。
+- 吃什么主页面在只变更食谱集数据且当前未选中食谱集时，不再重算当前随机池，减少管理页集合操作对底层页面的同步压力。
+- `scripts/build.ps1` 在 Android 构建阶段使用项目内隔离的 `GRADLE_USER_HOME`，避免读取用户全局 `~/.gradle/init.gradle` 后向 Flutter included build 注入项目级 Maven 仓库。
+- Android Gradle 配置移除 settings / project 两层自定义 Maven 镜像与全局 library `BuildConfig` 默认开关，分别修复 settings 仓库策略冲突和 `sherpa_onnx` 多 ABI 子包 release R8 重复类问题。
+
+### 修复
+- 修复新增 / 调整 / 另存吃什么菜谱时上下文初始值为 `all` 或上下文列表包含重复 `all` 导致的 `DropdownButton` 崩溃。
+- 修复管理页在非必要场景下因食谱集状态变化牵动吃什么随机池重算的性能浪费。
+- 修复 `.\scripts\build.ps1 -Target android-apk` 的 Android release APK 构建链路。
+
+### 风险变更
+- Android 构建脚本会在 `android/.gradle-user-home/` 下建立项目本地 Gradle 用户目录，首次构建需要重新下载 Gradle / AGP 依赖；该目录已加入 `.gitignore`。
+- 移除全局 library `BuildConfig` 默认开关后，依赖库回到 AGP 默认行为；如果未来某个旧 Android library 源码直接引用自身 `BuildConfig`，需要该库自行开启 `buildFeatures.buildConfig`。
+- 本机 Android SDK 的 `ndk;28.2.13676358` 曾处于半安装状态，本轮已通过 sdkmanager 重新安装；这是构建环境修复，不属于仓库源码变更。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart test/daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`（通过）
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `.\scripts\build.ps1 -Target android-apk -NoPubGet`（通过，产物输出到 `dist/android-apk/xianyushengxi.apk`）
+
+## [Unreleased-PLAN_066-EAT-PERFORMANCE-SETS] - 2026-04-26
+
+### 原因
+- 用户反馈工具箱「每日抉择 - 吃什么」首屏展示臃肿，「先让选择动起来」和常驻菜谱库说明缺乏实际价值。
+- 用户反馈「已有材料优先匹配」存在失效场景，连续食材短语无法稳定拆出多个可匹配 token。
+- 用户反馈点击管理页会卡死，需要针对 7000+ 菜谱规模设计更极致的性能路径。
+- 用户需要可自定义的食谱方案：把菜谱加入个人集合，并能在集合内筛选、随机、管理。
+- 用户需要内置菜谱支持覆盖式个人调整，也支持另存为独立个人菜谱。
+
+### 新增
+- `DailyChoiceEatCollection` 与 `DailyChoiceCustomState.eatCollections`，支持本地持久化吃什么专属食谱集。
+- 食谱集操作能力：创建集合、删除集合、加入菜谱、移出菜谱、删除自定义菜时自动从集合中清理。
+- 吃什么主页面新增食谱集筛选入口；选择集合后，随机池和高级筛选只在当前集合内工作。
+- 管理页新增「我的食谱集」区域，可创建集合、按集合只看、删除集合，并从内置 / 调整 / 自定义菜谱卡片加入或移出集合。
+- 内置菜和个人调整新增「另存」动作，可把菜谱复制成独立个人食谱继续编辑。
+- 新增 `test/daily_choice_custom_state_test.dart`，覆盖食谱集序列化和删除自定义菜时的集合清理。
+
+### 修改
+- 每日抉择页移除首屏大卡片「先让选择动起来」，让模块切换与当前工具内容更快进入首屏。
+- 吃什么页面不再常驻展示菜谱库说明卡；仅在未安装、加载中或异常时显示资源准备状态。
+- 吃什么页面顺序调整为餐段 / 厨具 / 食谱集 -> 随机主舞台 -> 高级筛选，减少进入页面后的视觉负担。
+- 管理页内置菜谱列表改为分页展示，默认只构建首批条目，继续加载时再追加下一页，避免打开管理页一次性构建全量卡片。
+- 管理页搜索、餐段、厨具、标签和集合筛选变更时会重置分页窗口，搜索仍覆盖完整菜谱库。
+- 食材归一化增强为可从「番茄鸡蛋豆腐汤」这类连续短语中提取多个规范 token，并对 `豆腐 / 牛奶 / 鸡蛋` 等重叠别名采用更具体项优先，避免匹配分数虚高。
+
+### 修复
+- 修复已有材料优先匹配在紧凑输入或紧凑菜名中只命中第一个食材的问题。
+- 修复管理页打开时因一次性构建数千个内置菜谱卡片导致卡死的核心瓶颈。
+
+### 风险变更
+- 食材短语拆词会让部分菜谱获得更完整的食材 token，随机池相关性会提升，但个别泛化标签命中范围也可能变化。
+- 食谱集当前仍保存在本机 `toolbox_daily_choice_v1.json`，尚未接入账号同步、备份导入导出或云端多端合并。
+- 管理页分页仅限制 UI 构建数量，搜索和筛选仍基于本地摘要全集；若未来菜谱量继续扩大到数十万级，应进一步把管理搜索迁移到 SQLite 索引查询。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`（通过）
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_065-EAT-S3] - 2026-04-25
+
+### 原因
+- 用户要求将“吃什么”菜谱库切换到远端 S3 `/cook_data` 资源，移除安装包内本地菜谱资源，避免继续增大包体并拖慢移动端首开。
+- 用户希望页面顶部进一步收口，只保留总条数与当前筛选池条数，并支持折叠。
+- 用户要求管理页在“不喜欢”之外新增“个人调整”能力，允许基于内置菜谱保存个人口味版本，并要求管理界面更适合手机端折叠浏览。
+
+### 新增
+- `DailyChoiceCustomState` 新增 `adjustedBuiltInOptions` 持久化字段，支持保存内置菜谱的个人调整版本，并提供 `upsertAdjustedBuiltIn / restoreAdjustedBuiltIn / adjustedBuiltInById` 操作。
+- `daily_choice_manager_sheet.dart` 为吃什么新增“我的调整”分区，支持继续调整、恢复原味，并把内置菜与个人调整统一纳入可搜索、可点击查看详情的移动端折叠管理界面。
+
+### 修改
+- `daily_choice_eat_library_store.dart` 接入 S3 远端库主链路，首次点击时优先下载 `cook_data/daily_choice_recipe_library.db` 到应用支持目录，本地保留标准 SQLite `summary / detail / index / meta` 表结构并复用既有 S3 兼容客户端。
+- `daily_choice_eat_library_store.dart` 安装成功后会清理旧的 `toolbox_daily_choice_recipe_library.json` 和 `toolbox_daily_choice_cook_recipe.csv` 遗留缓存；若远端安装失败且本地已有库，则继续回退使用已有库。
+- `daily_choice_hub.dart` 与 `daily_choice_eat_module.dart` 改为同时保留“原始内置菜谱”和“应用个人调整后的内置菜谱”，确保管理页可以正确执行“恢复原味”，并避免把调整后的快照错误当作原始基线。
+- `daily_choice_eat_module.dart` 清理遗留旧状态卡代码，页面顶部菜谱库信息卡收口为折叠式紧凑卡片，只保留：
+  - 总库条数
+  - 当前筛选池条数
+  - 加载 / 错误状态
+- `daily_choice_manager_sheet.dart` 重构为更适合手机端的折叠结构：
+  - 搜索保持常驻
+  - 筛选条件折叠
+  - 我的自定义 / 我的调整 / 内置条目折叠
+  - 内置菜支持“个人调整 / 恢复原味 / 不喜欢”
+- `test/daily_choice_eat_library_store_test.dart` 改为覆盖远端 SQLite 安装链路，不再依赖网络下载或 bundled 资源。
+- `test/daily_choice_hub_smoke_test.dart` 同步验证 S3 风格加载按钮文案、管理页个人调整入口，以及“恢复原味”动作在交互层的可达性。
+- 吃什么菜谱 asset 已从应用打包配置中移除，不再继续随安装包携带 `assets/toolbox/daily_choice/recipe_library.json`。
+
+### 风险变更
+- 当前远端安装仍保留“已有本地库优先继续可用”的兜底策略，但首次安装若 S3 访问失败，用户仍需要稍后重试才能拿到完整菜谱库。
+- `daily_choice_cook_service.dart` 中的 bundled 解析路径暂未完全删除，只作为兼容兜底逻辑保留；运行时主路径已经切到 S3 本地缓存库。
+- 本轮未完成仓库全量 `dart analyze`：当前桌面环境启动分析服务时遭遇 `dartaotruntime.exe` 拒绝访问，需要后续在本机权限环境下补跑。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_library_store_test.dart test/daily_choice_hub_smoke_test.dart`（通过）
+- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_064-EAT] - 2026-04-25
+
+### 原因
+- 用户继续要求完善工具箱“每日抉择”中的“吃什么”子模块，并明确指出当前菜谱量级远远不够，需要接入更大的本地菜谱库。
+- 需要把 `D:\vocabularySleep-resources\做菜` 中可稳定抽取的完整菜谱去重后接入页面，同时补齐已有材料优先、高级筛选、管理搜索、指南整合和个人食谱能力。
+- 用户额外要求对古籍资料保持克制：只有在识别质量可靠时才单独接入“食疗与禁忌”子页，不能为了覆盖率强行识别。
+- 用户在继续体验时反馈“吃什么”页面首开非常卡、已有材料优先几乎只剩一种，要求把性能、匹配算法、多食材编辑和自定义忌口一起收口到可用状态。
+
+### 新增
+- 新增离线抽取脚本 `scripts/generate_daily_choice_recipe_dataset.py`，用于从 `D:\vocabularySleep-resources\做菜` 提取完整菜谱并生成项目内结构化数据集。
+- 新增打包资源 `assets/toolbox/daily_choice/recipe_library.json`，当前包含 `7179` 条去重后的本地菜谱，并附带统一参考书目元数据。
+- 新增本地导出目录 `D:\vocabularySleep-resources\cook_data`，同步生成：
+  - `daily_choice_recipe_library.json`
+  - `daily_choice_recipe_library_summary.json`
+  - `daily_choice_recipe_library.db`
+- 新增 `daily_choice_eat_library_store.dart`，将 bundled / cached / remote 菜谱资源整理导入独立 SQLite，本地维护 `summary / detail / index / meta` 四类标准表与筛选索引。
+- 数据整理脚本新增多解析器管线，补齐 `The Italian Pantry`、`Nourishing Recipes for Elderly`、`食趣：欧文的无国界创意厨房` 等新版式 EPUB 的完整菜谱提取，并对低质量古籍 / 扫描资料保持跳过策略。
+- 新增标准化菜谱库顶层字段：`libraryId / libraryVersion / schemaId / schemaVersion`，为后续远端分发或 S3 托管保留统一对象格式。
+- `daily_choice_eat_support.dart` 为吃什么新增结构化属性支持：
+  - `meal / type / profile / diet / contains / ingredient / tool`
+  - 食材归一化与多来源属性补齐
+  - 已有材料匹配计数、匹配比例和最优候选收口
+  - 多来源菜谱合并去重
+- 新增 `daily_choice_eat_module.dart`，收拢吃什么专用页面结构、高级设置区和指南入口。
+- 扩充 `buildCookingGuideModules(...)`，新增“基础技能”“食材匹配与筛选说明”“参考书目”三个指南模块。
+- 扩充 `test/daily_choice_cook_service_test.dart`，覆盖：
+  - `cook` CSV 解析后的餐段/厨具映射
+  - 午餐/晚餐重叠行为
+  - bundled 菜谱库重复读取时的实例内解析缓存
+  - 多来源菜谱合并去重
+- 新增 `test/daily_choice_eat_catalog_test.dart` 与 `test/daily_choice_hub_smoke_test.dart`，分别覆盖高级筛选/多食材随机池策略，以及页面进入、展开高级设置、添加食材 chip、添加自定义忌口并完成随机停止的烟雾链路。
+
+### 修改
+- `pubspec.yaml` 接入 `assets/toolbox/daily_choice/` 资源目录，保证离线菜谱库随应用打包。
+- `daily_choice_cook_service.dart` 改为按“本地库 -> 本地缓存 -> 远端刷新 -> 兜底种子”顺序加载，并在本地库与 `cook` 数据之间做结构化合并去重。
+- `daily_choice_cook_service.dart` 为 bundled 大菜谱库增加跨实例解析缓存、`12h` 远端刷新 TTL，并避免在没有缓存文件时无意义读取整份大 bundle。
+- `daily_choice_hub.dart` 将吃什么初始化流程改为并发加载自定义状态和菜谱数据，并确保吃什么候选在进入页面前统一补齐结构化属性；首次进入若尚未安装菜谱库，则明确提示用户点击导入本地 SQLite。
+- `daily_choice_hub.dart` 在页面层只持有一次当前可见菜谱索引，进入页面和切换筛选时不再反复对 6000+ 菜谱做全量属性推断与扫描。
+- `daily_choice_eat_catalog.dart` 新增预建索引过滤路径，稳定支持多餐段重叠、厨具筛选、荤素/友好标签、常见忌口、自定义忌口和多食材优先匹配。
+- `daily_choice_eat_support.dart` 将“已有材料优先”改为 `exact -> strong -> broad` 三阶段随机池策略，并在命中太少时自动补入高相关候选，避免随机结果长期只剩 1 道菜。
+- `daily_choice_seed_data.dart` 把做菜指南升级为统一参考书目版本，整合 `cook` “做菜之前”与本地基础技能，并补充“洗菜去残留”和“烘焙先称量”两条底层操作指南；《食物辑要》继续明确标记为暂不接入。
+- `daily_choice_manager_sheet.dart` 为吃什么新增菜名搜索、餐段重叠筛选、厨具筛选和标签筛选。
+- `daily_choice_eat_module.dart` 的高级设置改为支持多食材添加/删除、多自定义忌口 chip 编辑，并补齐香菜、花生、牛奶、鱼腥草等常见调料/食材忌口入口。
+- `daily_choice_editor_sheet.dart` 为个人食谱保存逻辑补齐自动 attributes 推断、标签补齐和默认详情兜底。
+- `daily_choice_detail_sheets.dart` 对吃什么详情页隐藏逐条来源说明，改为展示结构化标签摘要、完整步骤与关键提示；管理页点击菜名时同样按菜谱 ID 读取完整详情。
+- `daily_choice_modules.dart` 清理旧的吃什么实现，仅保留 `go / activity` 公共模块，避免旧逻辑继续与新吃什么页面并存。
+- `modules/toolbox/README.md` 同步记录吃什么离线大库、筛选能力、指南整合和古籍跳过边界。
+
+### 风险变更
+- 清真友好、素食友好、常见忌口与过敏原筛选均属于启发式辅助标签，不等价于宗教、医学或专业营养认证。
+- 本地菜谱库体量已提升到约 `26.7 MB` JSON / `47.4 MB` SQLite 导出；当前通过预建索引、延后远端刷新、缓存复用与筛选收口控制首屏压力，后续若继续扩库，优先建议走 `summary manifest + detail/SQLite` 远端按需加载。
+- 《食物辑要》属于竖排古体资料，本轮明确不强行接入“食疗与禁忌”子页，后续只在识别质量稳定时再单独落地。
+- 自定义个人食谱与隐藏内置项仍保存在本地 `toolbox_daily_choice_v1.json`，当前不接入账号同步或跨端备份。
+
+### 验证
+- `python scripts\\generate_daily_choice_recipe_dataset.py`（通过，重新生成 `7179` 条去重菜谱，原始抽取 `7364` 条，并同步导出 full JSON / summary JSON / SQLite）
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_recipe_library.dart test/daily_choice_cook_service_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_hub_smoke_test.dart test/daily_choice_recipe_library_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice test`（通过；仍有全仓无关 `info`，不是本轮引入）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_recipe_library_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_061-WEAR-2] - 2026-04-25
+
+### 原因
+- 用户继续要求专注工具箱“每日抉择”中的“穿什么”子模块，并指出当前数据量仍不足以支撑更细的筛选与管理需求。
+- 需要基于新增的本地穿搭参考资料继续扩充搭配库、把穿搭指南讲得更完整，并将个人衣橱管理升级为带有风格与样式引导的一版。
+
+### 新增
+- 为 `DailyChoiceOption` 新增结构化 `attributes` 字段，用于承载穿搭特征并持久化到 `toolbox_daily_choice_v1.json`。
+- 在 `daily_choice_seed_data.dart` 中新增穿什么的结构化特征定义：
+  - `风格`
+  - `版型`
+  - `样式类型`
+  - `面料与触感`
+  - `亮点`
+- 新增模块化穿搭指南 `wearGuideModules`，按以下 8 个章节组织：
+  - `基础与风格`
+  - `版型与比例`
+  - `场合与职场`
+  - `色彩与材质`
+  - `季节与天气`
+  - `鞋履与配饰`
+  - `衣橱整理与练习`
+  - `扩展边界`
+- 新增 `test/daily_choice_wear_seed_test.dart`，验证：
+  - 穿什么条目总量达到发布级覆盖
+  - 每个 `气温 × 场景` 组合至少有两条候选
+  - 每条内置搭配都具备核心结构化特征
+
+### 修改
+- `daily_choice_wear_seed.dart`
+  - 将穿什么内置搭配扩充到 `87` 条
+  - 为原有与新增搭配补齐自动推断的结构化特征
+  - 将穿搭参考来源扩展到更多本地资料，包括 `上班穿什么`、`搭配其实很好玩2`、`风格的练习`、`穿衣的基本`、`绅士时尚` 等
+- `daily_choice_editor_sheet.dart`
+  - 自定义穿搭编辑页新增五组引导式 trait 选择
+  - 穿搭字段文案升级为更贴合衣橱管理的表达
+  - 保存时会自动把结构化特征并入标签与默认详情
+- `daily_choice_manager_sheet.dart`
+  - 穿什么管理页新增 `风格 / 版型 / 样式类型` 三组筛选
+  - 自定义和内置条目卡片改为显示结构化特征 chip
+  - 衣橱管理文案升级为更明确的个人衣橱语义
+- `daily_choice_detail_sheets.dart` 为穿什么详情补充“风格画像”模块，展示结构化特征摘要。
+- `daily_choice_wear_module.dart` 的指南入口改为拉起新的模块化穿搭指南。
+- `daily_choice_modules.dart` 做最小必要编译修补：为吃什么数据来源状态补齐 `bundle` 分支，避免 UI smoke 失败。
+- `PROJECT_DOMAIN.md` 与 `modules/toolbox/README.md` 同步补充穿什么的结构化衣橱能力、87 条候选覆盖和详细指南说明。
+
+### 风险变更
+- 穿什么仍提供的是可解释、可编辑的建议层，不替代个体体质差异、制服要求、极端天气安全判断或专业形象顾问。
+- 结构化特征目前用于本地筛选、展示和后续扩展边界，不代表已经接入图片识别、AI 试穿或购物平台。
+- 本轮未改动其他每日抉择子模块的业务逻辑，只做了一个与吃什么编译通过相关的最小分支补齐。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`（通过，No issues found）
+- `flutter test test/daily_choice_wear_seed_test.dart --reporter compact`（通过，All tests passed）
+- `flutter test test/ui_smoke_test.dart --reporter compact`（通过，All tests passed）
+- `git diff --check -- lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`（通过）
+
+## [Unreleased-PLAN_062-GO] - 2026-04-25
+
+### 原因
+- 用户要求只推进工具箱“每日抉择”中的“到哪儿去”子模块，并将其从占位级随机地点升级到可发布落地的一版。
+- 当前“去哪儿”只有极少量静态地点，缺少足够丰富的场景分类、地点覆盖、详情说明和可持续扩展边界。
+
+### 新增
+- 新增 `daily_choice_place_seed.dart`，将“去哪儿”地点种子从活动数据中独立拆出，避免 `go` 与 `activity` 继续耦合在同一份 seed 内。
+- 新增 15 个“去哪儿”场景分类：
+  - `饮食 / 娱乐 / 运动 / 文化 / 历史 / 自然 / 学习 / 购物 / 社交 / 亲子 / 夜生活 / 放松 / 出片 / 特色区域 / 纪念`
+- 基于 `3 个距离层级 × 15 个场景 × 8 个 archetype` 生成 360 条“去哪儿”内置地点条目，覆盖：
+  - 公园、绿道、湿地、山林步道、观景台
+  - 体育中心、健身房、游泳馆、球馆、攀岩馆
+  - 餐馆、咖啡甜品店、小吃街、夜宵区、景观餐厅
+  - 酒吧、精酿吧、Livehouse、KTV、网吧 / 电竞馆
+  - 博物馆、美术馆、科技馆、剧院、图书馆、书店
+  - 老街区、古镇、工业遗址、纪念馆、校史馆、城市记忆馆等
+- 新增结构化“出行指南”模块组，按“先定范围 / 按场景匹配 / 地图与检索 / 天气预算安全 / 最小准备包 / 后续扩展边界”展示。
+- 新增 `test/daily_choice_place_seed_test.dart`，验证“去哪儿”条目数量、分类覆盖、地图搜索词与引用字段完整性。
+
+### 修改
+- `daily_choice_seed_data.dart` 为“去哪儿”补齐 `placeSceneCategories` 与 `allPlaceSceneCategory`，并将原本简陋的出行指南升级为模块化指南。
+- `daily_choice_modules.dart` 中的“去哪儿”页面改为：
+  - 距离 + 场景双维筛选
+  - 当前距离层级地点数 / 当前候选数 / 覆盖场景数状态面板
+  - 更清晰的空状态和移动端首屏信息
+  - 管理页支持按距离和场景筛选自定义地点
+- `daily_choice_detail_sheets.dart` 对“去哪儿”详情页补齐地图搜索词提取逻辑，复制按钮优先复制结构化地图检索词，而不再机械复制标题。
+- `daily_choice_activity_place_seed.dart` 移除旧的“去哪儿”占位数据，仅保留“干什么”相关 seed。
+- `modules/toolbox/README.md` 补充“去哪儿”子模块的双维筛选、360 条地点覆盖和地图扩展边界说明。
+
+### 风险变更
+- 当前“去哪儿”仍属于结构化地点建议与搜索词辅助，不接入真实定位、系统地图拉起和在线 POI 动态检索。
+- 内置地点数据是按常见场所 archetype 生成的通用候选，不代表真实营业状态、实时评分或实时开放信息；出发前仍需看地图和营业时间。
+- 粗略定位、开放地理数据、系统地图与路线规划仍保留为后续独立扩展，不在本轮混入权限与平台差异处理。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart`（通过，No issues found）
+- `flutter test test/daily_choice_place_seed_test.dart --reporter compact`（通过，All tests passed）
+- `git diff --check -- lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart plans/PLAN_062_每日抉择去哪儿子模块发布级完善.md`（通过）
+
+## [Unreleased-PLAN_062] - 2026-04-25
+
+### 原因
+- 用户要求专注完善 `工具箱 -> 每日决策 -> 决策助手` 子模块，基于本地 `D:\vocabularySleep-resources\决策` 资料，把原先的轻量占位计算器升级为可发布的理性决策辅助工作台。
+- 需要补齐一套实用且科学的决策策略体系，同时增加一个提取整理后的“理性决策精要指南”拉起页，并且不侵入其他并行开发中的每日抉择子模块。
+
+### 新增
+- 新增 `daily_choice_decision_engine.dart`：
+  - 抽离决策助手的核心计算层
+  - 提供 `均匀随机 / 加权因素 / 期望收益 / 联合概率 / 情景分析 / 后悔与机会成本 / 底线守门 / 校准预测` 八类策略
+  - 增加跨策略共识、信息价值信号与守门线配置
+- 新增 `daily_choice_decision_content.dart`：
+  - 定义各决策策略的说明、公式与使用边界
+  - 增加模块化的 `理性决策精要指南`
+  - 根据当前决策情境生成“决策卫生检查”条目
+- 新增测试 `test/daily_choice_decision_engine_test.dart`，覆盖：
+  - 高风险高不确定情境下的方法推荐
+  - 底线守门优先保护风险下限
+  - 校准预测会把低把握极端值拉回均值
+  - 信息价值高时建议延后决策并优先补信息
+- 新增资料整理记录 `records/record_062_决策参考资料整理与产品映射.md`
+- 新增计划文档 `plans/PLAN_062_每日决策决策助手完善.md`
+
+### 修改
+- 重写 `daily_choice_decision_assistant.dart`，将原来的单页轻量排序器升级为完整工作台：
+  - 新增“风险级别 / 不确定性 / 全局可回头性 / 时间压力”决策情境分型
+  - 新增推荐镜头提示、方法切换与透明结果面板
+  - 新增跨策略共识、守门线通过数、信息价值提示
+  - 扩充每个选项的输入维度为：成功概率、执行概率、收益、风险、投入、可回退、把握、后悔、信息差
+  - 增加“决策卫生检查”区，帮助用户在最终拍板前做偏差与噪声校正
+- `daily_choice_hub.dart` 接入新的决策内容层与引擎层。
+- `daily_choice_modules.dart` 做最小必要编译修补：`去哪儿` 子模块的指南入口从旧的 `placeGuideEntries` 对齐到现有 `placeGuideModules`，不改变其业务语义。
+
+### 风险变更
+- 当前决策助手提供的是“结构化辅助决策”，不是医疗、法律、财务等高风险专业判断的替代品。
+- 情景分析、后悔权衡与加权因素依旧属于解释型模型，核心价值是帮助用户显式化假设、排序因素和收口行动，而不是制造虚假的确定性。
+- 本轮没有接入历史决策日志，因此“校准预测”是基于当前选项集合的均值回拉，不是基于长期样本训练出的真实回归模型。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_engine.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_content.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_assistant.dart test/daily_choice_decision_engine_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_engine.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_content.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_assistant.dart test/daily_choice_decision_engine_test.dart`（通过，No issues found）
+- `flutter test test/daily_choice_decision_engine_test.dart --reporter compact`（通过，All tests passed）
+- `flutter test test/ui_smoke_test.dart --reporter compact`（通过，All tests passed）
+
+## [Unreleased-PLAN_061] - 2026-04-25
+
+### 原因
+- 用户要求重点完善工具箱“每日抉择”中的“吃什么”子模块，不再停留在精简离线种子，而是接入 YunYouJun/cook 数据并把随机、详情、做菜指南和个人食谱管理做成可实际使用的一版。
+- 页面需要在移动端保持首屏清晰，同时支持“点击厨具图标后随机显示菜品、停止后锁定当前结果、点击菜品查看完整介绍和制作方法”的完整链路。
+
+### 新增
+- 新增 `daily_choice_cook_service.dart`：
+  - 远端读取 `https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv`
+  - 解析 CSV 为吃什么专用条目
+  - 将 cook 数据写入应用支持目录缓存
+  - 远端失败时自动回退到缓存，再失败时回退到内置吃什么种子
+- 新增吃什么模块的厨具图标筛选：`全部厨具 / 一口大锅 / 电饭煲 / 微波炉 / 空气炸锅 / 烤箱`。
+- 新增结构化“做菜之前”指南卡组，按“盘点食材、筛字段、备菜、火候调味、保存与安全、长期规划”六个模块展示详细说明。
+- 新增吃什么解析层测试 `test/daily_choice_cook_service_test.dart`，覆盖 cook CSV 到菜品条目的餐段/厨具映射和引用生成。
+
+### 修改
+- `DailyDecisionToolPage` 修复中文标题和副标题乱码。
+- 吃什么模块改为：
+  - 默认使用现有内置菜谱兜底，后台同步 cook 数据后平滑替换
+  - 按餐段和厨具筛选当前候选，再进入“开始随机 / 停止并选中”主舞台
+  - 页面展示当前数据来源状态、候选数量、同步时间和同步失败回退提示
+- 菜品详情弹层升级为显示：
+  - 结构化详细介绍
+  - 更完整的食材清单
+  - 更完整的制作步骤
+  - 关键提示
+  - cook 数据源 / B 站教程等参考链接与复制操作
+- 自定义管理升级为按当前分类与上下文筛选，避免全量 cook 数据接入后管理页过载。
+- 自定义编辑表单针对吃什么补齐更适合个人食谱的字段：餐段、厨具、菜名、介绍、食材、步骤、技巧备注和标签。
+- `modules/toolbox/README.md` 补充吃什么的数据读取、缓存策略和升级后的能力边界。
+
+### 风险变更
+- cook 官方 `recipe.csv` 只提供菜名、食材、难度、标签、做法和厨具，不提供逐字逐步原文菜谱；本页详情中的“完整详细做法”属于基于元数据的结构化扩写，并保留原始来源链接。
+- 当前 `PROJECT_DOMAIN.md` 工作树里仍存在编码异常，本轮未扩大对该文档的修改范围，避免把乱码问题和功能改动混在一起。
+- 自定义个人食谱仍保存在 `toolbox_daily_choice_v1.json`，暂不接入主数据库、账号同步或导入导出。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart test/daily_choice_cook_service_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart test/daily_choice_cook_service_test.dart`（通过，No issues found）
+- `flutter test test/daily_choice_cook_service_test.dart --reporter compact`（通过，All tests passed）
+
+## [Unreleased-PLAN_061-WEAR] - 2026-04-25
+
+### 原因
+- 用户要求只推进工具箱“每日抉择”中的“穿什么”子模块，不影响其他并行开发中的子模块。
+- 当前穿什么仍偏占位，缺少资料整理、天气驱动默认推荐和足够丰富的可发布级穿搭数据。
+
+### 新增
+- 新增 `daily_choice_wear_module.dart`，收拢穿什么的天气建议、默认档位和场景快捷逻辑。
+- 基于 `D:\\vocabularySleep-resources\\穿什么` 中的本地 EPUB 资料整理出穿搭原则，并补充到穿搭指南卡组。
+- 扩充穿什么种子数据，覆盖严寒到酷暑、通勤到雨天的 50+ 套基础穿搭条目。
+
+### 修改
+- `DailyChoiceHub` 接入当前天气状态，并只向穿什么子模块传递天气数据。
+- 穿什么默认根据 `AppState.weatherSnapshot` 的体感温度自动选中建议档位，同时保留手动覆盖与“恢复天气推荐”入口。
+- 当当前天气存在降水时，页面会给出“切到雨天场景”的快捷建议，但不会强制改写用户场景选择。
+- 当某个温度 + 场景精确条目过少时，随机结果会自动混入同温度稳妥备选，避免随机体验僵死。
+- `daily_choice_seed_data.dart` 的穿搭指南升级为“基础款优先、合身先于流行、场景先行、质胜于量、天气收尾检查”等更可执行的规则说明。
+- `PROJECT_DOMAIN.md` 与 `modules/toolbox/README.md` 补充穿什么的资料来源、天气建议和发布边界说明。
+
+### 风险变更
+- 穿什么的内置搭配仍属于可解释建议，不替代个体体质差异、严格 dress code 或极端天气安全判断。
+- 当前天气建议依赖已有天气接口与近似定位；天气不可用时会回退到默认档位并允许用户手动调整。
+- AI 数字人试穿、衣橱识别与购物网站接入仍只保留扩展边界，不在本轮实现。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart`（通过，No issues found）
+- `flutter test test/ui_smoke_test.dart --reporter compact`（通过，All tests passed）
+
+## [Unreleased-PLAN_060] - 2026-04-24
+
+### 原因
+- 用户要求专注工具箱“每日抉择”模块，将当前占位子模块扩展为“吃什么、穿什么、去哪儿、干什么、决策助手”五个大子模块。
+- 新模块需要移动端首屏清晰、支持随机选择、详情/指南、自定义增删改，并为 cook 数据、地图、AI 试穿、购物接入和数学建模预留扩展边界。
+
+### 新增
+- 每日抉择新增五模块基础版：
+  - `吃什么`: 按早饭、午餐、晚餐、下午茶、宵夜随机菜品，详情显示材料、介绍、简化制作步骤和来源。
+  - `穿什么`: 按严寒、寒冷、凉爽、温和、微热、炎热、酷暑与通勤、日常、正式、约会、运动、雨天场景随机搭配。
+  - `去哪儿`: 按出门、周边、远行随机常见目的地，并可复制地图搜索词。
+  - `干什么`: 按运动、学习、出行、整理、放松、创作、社交随机行动，也支持随机方向。
+  - `决策助手`: 提供均匀随机、期望加权、因子评分和联合概率四类透明计算。
+- 新增 `toolbox_daily_choice/` 子目录，拆分模型、种子数据、本地 JSON 存储、共享组件和页面编排。
+- 新增本地自定义管理：可隐藏内置项，新增/编辑/删除自定义菜品、搭配、地点和行动。
+- 新增吃什么、穿什么、去哪儿、干什么和决策助手的基础指南弹层。
+
+### 修改
+- `DailyDecisionToolPage` 从旧转盘占位改为五模块入口和统一轻量随机交互。
+- `modules/toolbox/README.md` 补充每日抉择数据来源、存储边界、风险和后续扩展路线。
+- `PROJECT_DOMAIN.md` 更新到 v0.0.7，补充每日抉择五模块基础版说明。
+
+### 风险变更
+- 吃什么第一版只使用参考 YunYouJun/cook `recipe.csv` 的离线种子子集，并使用本地简化步骤，不做远端实时同步。
+- 本地 `D:\vocabularySleep-resources\穿什么` 中 EPUB 不摘录原文；穿搭数据使用通用原则和生成式种子数据。
+- 自定义项存储在应用支持目录 JSON 文件中，暂不接入主数据库、账号同步或备份恢复。
+- 决策助手仅用于辅助排序和透明计算，不作为医疗、法律、财务等高风险决策依据。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_storage.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_storage.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart`（通过，No issues found）
+
 ## [Unreleased-PLAN_059] - 2026-04-24
 
 ### 原因
