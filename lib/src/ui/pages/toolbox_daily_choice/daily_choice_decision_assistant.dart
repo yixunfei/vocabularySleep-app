@@ -326,8 +326,8 @@ class _DecisionWorkbenchCard extends StatelessWidget {
                     Text(
                       pickUiText(
                         i18n,
-                        zh: '把本地决策资料里的六要素、偏差校正、概率与情景分析收成一个透明工作台，帮你把“纠结”拆成可以比较的字段。',
-                        en: 'Turn local decision references into a transparent workbench built on framing, bias control, probability, and scenario thinking.',
+                        zh: '把六要素、偏差校正、概率与情景分析收成一个透明工作台，帮你把“纠结”拆成可以比较的字段。',
+                        en: 'Turn framing, bias control, probability, and scenario thinking into a transparent workbench for comparing choices.',
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         height: 1.4,

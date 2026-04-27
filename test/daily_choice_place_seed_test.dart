@@ -37,22 +37,31 @@ void main() {
     expect(goOptions.any((item) => item.titleZh.contains('创意园区')), isTrue);
   });
 
-  test(
-    'go seed keeps map-query, notes, and references ready for detail view',
-    () {
-      final sample = buildDailyChoiceStaticSeedOptions().firstWhere(
-        (item) => item.moduleId == 'go',
-      );
+  test('go seed keeps map-query and notes ready for detail view', () {
+    final sample = buildDailyChoiceStaticSeedOptions().firstWhere(
+      (item) => item.moduleId == 'go',
+    );
 
-      expect(
-        sample.materialsZh.any((item) => item.startsWith('地图搜索词：')),
-        isTrue,
-      );
-      expect(sample.stepsZh, hasLength(3));
-      expect(sample.notesZh.length, greaterThanOrEqualTo(3));
-      expect(sample.references, isNotEmpty);
-      expect(sample.contextId, isNotNull);
-      expect(sample.contextIds, contains(sample.contextId));
-    },
-  );
+    expect(sample.materialsZh.any((item) => item.startsWith('地图搜索词：')), isTrue);
+    expect(sample.stepsZh, hasLength(3));
+    expect(sample.notesZh.length, greaterThanOrEqualTo(3));
+    expect(sample.contextId, isNotNull);
+    expect(sample.contextIds, contains(sample.contextId));
+
+    final visibleText = <String>[
+      sample.detailsZh,
+      sample.detailsEn,
+      ...sample.notesZh,
+      ...sample.notesEn,
+    ].join('\n');
+    for (final forbidden in <String>[
+      '当前版本',
+      '后续',
+      '扩展边界',
+      'Expansion path',
+      'This version',
+    ]) {
+      expect(visibleText, isNot(contains(forbidden)));
+    }
+  });
 }

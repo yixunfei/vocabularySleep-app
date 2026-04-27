@@ -253,47 +253,6 @@ Future<void> showDailyChoiceDetailSheet({
                     ),
                   ),
                 ],
-                if (option.moduleId != DailyChoiceModuleId.eat.storageValue &&
-                    option.references.isNotEmpty) ...<Widget>[
-                  const SizedBox(height: 14),
-                  Text(
-                    pickUiText(i18n, zh: '参考来源', en: 'References'),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  for (final reference in option.references) ...<Widget>[
-                    _DetailReferenceTile(
-                      i18n: i18n,
-                      accent: accent,
-                      reference: reference,
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                ] else if (option.moduleId !=
-                        DailyChoiceModuleId.eat.storageValue &&
-                    option.sourceLabel != null) ...<Widget>[
-                  const SizedBox(height: 14),
-                  Text(
-                    pickUiText(i18n, zh: '来源', en: 'Source'),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  SelectableText(
-                    option.sourceUrl == null
-                        ? option.sourceLabel!
-                        : '${option.sourceLabel}\n${option.sourceUrl}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
               ],
             );
           },
@@ -480,71 +439,6 @@ class _DetailBlock extends StatelessWidget {
                 ],
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailReferenceTile extends StatelessWidget {
-  const _DetailReferenceTile({
-    required this.i18n,
-    required this.accent,
-    required this.reference,
-  });
-
-  final AppI18n i18n;
-  final Color accent;
-  final DailyChoiceReferenceLink reference;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ToolboxSurfaceCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      borderColor: accent.withValues(alpha: 0.14),
-      shadowOpacity: 0.03,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  reference.label(i18n),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                SelectableText(
-                  reference.url,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          IconButton(
-            tooltip: pickUiText(i18n, zh: '复制链接', en: 'Copy link'),
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: reference.url));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      pickUiText(i18n, zh: '已复制链接', en: 'Link copied'),
-                    ),
-                  ),
-                );
-              }
-            },
-            icon: const Icon(Icons.content_copy_rounded),
-          ),
         ],
       ),
     );

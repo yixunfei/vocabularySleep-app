@@ -51,6 +51,34 @@ void main() {
         wearManagerTraitGroups.map((item) => item.id).toList(growable: false),
         containsAll(<String>['style', 'silhouette', 'key_piece']),
       );
+
+      final guideText = wearGuideModules
+          .expand(
+            (module) => <String>[
+              module.titleZh,
+              module.titleEn,
+              module.subtitleZh,
+              module.subtitleEn,
+              ...module.entries.expand(
+                (entry) => <String>[
+                  entry.titleZh,
+                  entry.titleEn,
+                  entry.bodyZh,
+                  entry.bodyEn,
+                ],
+              ),
+            ],
+          )
+          .join('\n');
+      for (final forbidden in <String>[
+        '扩展边界',
+        '本轮',
+        '后续',
+        'Expansion',
+        'Future work',
+      ]) {
+        expect(guideText, isNot(contains(forbidden)));
+      }
     },
   );
 }

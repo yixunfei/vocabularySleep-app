@@ -127,10 +127,9 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮推进 P1-P4 收尾：P1 先把管理页大型 sheet 中的集合、筛选、列表/浏览控件与导入导出 helper 拆到独立 part/widget，降低主文件体量和后续拆页风险。
-- 本轮推进 P2 分页追加模型：管理页内置库自动分页从“扩大 SQL limit 并重取前序结果”改为按页追加摘要，保持 SQL 分页，不回退内存全量扫描。
-- 本轮推进 P3 计划状态校准：对阶段进度、13 项验收标准和剩余增强项重新归档，明确当前已完成、降级完成和后续可选增强。
-- 本轮推进 P4 收尾验证：执行格式化、静态分析、每日决策 smoke/store/catalog/custom-state 回归，并尽量执行 Android 构建或构建脚本 smoke；若环境阻塞则记录原因。
+- 本轮按用户要求做每日决策模块文案收口：删除或改写面向开发流程的“本轮 / 后续 / 扩展边界 / 来源说明”类文本，让用户界面只保留可执行、可理解的使用提示。
+- 本轮不改动菜谱 SQL 分页、随机、集合、导入导出和数据生成逻辑；只触达用户可见 copy、指南模块展示和详情页来源展示边界。
+- 本轮完成后更新 changelog 与记录文件，运行每日决策定向 analyze/test，再将 `codex/daily-choice-overhaul` 合并提交回 `main`。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -217,6 +216,8 @@
 82. 2026-04-27: 已校准 PLAN_070 阶段进度和 13 项验收表，明确 random pivot 响应性降级、最近 3 个自定义忌口和路由级拆页的后续边界。
 83. 2026-04-27: 已新增 `records/record_070_daily_choice_p1_p4_closure.md`，记录 P1-P4 收尾范围、分页追加模型、计划状态校准和验证结果。
 84. 2026-04-27: 已完成 P4 收尾验证：每日决策定向 analyze/test 通过，Android release APK 构建通过；全量 `flutter analyze` 仍有本轮外既有 harp/woodfish/test/pubspec lint。
+85. 2026-04-27: 已完成每日决策模块文案收口：吃什么资源提示改为菜谱库准备说明，做菜/穿什么/去哪儿/决策助手指南移除开发路线图和来源说明。
+86. 2026-04-27: 已隐藏详情页 references/sourceLabel/sourceUrl 来源块，并新增文案回归断言，避免开发说明重新出现在用户指南中。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -313,3 +314,8 @@
 - 2026-04-27: `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
 - 2026-04-27: `flutter analyze`（未通过，仅剩本轮外既有 lint：`toolbox_sound_tools/harp.dart` unnecessary `this`、`toolbox_sound_tools/woodfish.dart` 多个未引用字段、`pubspec.yaml` 依赖排序和若干历史测试 lint）。
 - 2026-04-27: `powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Target android-apk`（通过，release APK 构建成功，输出 `build\app\outputs\flutter-apk\app-release.apk`，约 168.3MB，并同步到 `dist`）。
+- 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_content.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_detail_sheets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_place_seed.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart --reporter compact`（通过，覆盖指南文案不再展示开发说明、来源模块和路线图文案）。
+- 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。

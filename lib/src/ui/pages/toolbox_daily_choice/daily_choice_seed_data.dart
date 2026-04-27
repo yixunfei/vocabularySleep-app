@@ -72,8 +72,8 @@ const DailyChoiceCategory allMealCategory = DailyChoiceCategory(
   icon: Icons.grid_view_rounded,
   titleZh: '全部餐段',
   titleEn: 'All meals',
-  subtitleZh: '不按时间收口，直接从完整候选池随机',
-  subtitleEn: 'Use the full recipe pool without time-of-day narrowing',
+  subtitleZh: '不限定餐段，想吃什么都可以',
+  subtitleEn: 'Choose freely across meals',
 );
 const List<DailyChoiceCategory> mealCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
@@ -1640,61 +1640,8 @@ cookingGuideModules = <DailyChoiceGuideModule>[
     ],
   ),
 ];
-List<DailyChoiceGuideModule> buildCookingGuideModules(
-  List<String> referenceTitles,
-) {
-  final bibliography = referenceTitles.isEmpty
-      ? const <String>[
-          'YunYouJun/cook',
-          '小菜谱一定要学会的家常简易刀工',
-          '正確洗菜，擺脫農藥陰影',
-          '专业烘焙 第3版',
-          '日本料理制作大全',
-          '博古斯学院法式西餐烹饪宝典',
-          '法国蓝带西餐烹饪宝典',
-          'The Italian Pantry',
-          'Nourishing Recipes for Elderly',
-        ]
-      : referenceTitles
-            .map(_cleanCookingReferenceTitle)
-            .where((title) => title.isNotEmpty)
-            .toSet()
-            .toList(growable: false);
-  return <DailyChoiceGuideModule>[
-    ...cookingGuideModules,
-    DailyChoiceGuideModule(
-      id: 'references',
-      icon: Icons.menu_book_rounded,
-      titleZh: '参考与延伸阅读',
-      titleEn: 'References',
-      subtitleZh: '本指南只提炼通用原则，具体菜式仍以可靠菜谱和实际食材为准',
-      subtitleEn:
-          'This guide distills general principles; use reliable recipes for specific dishes',
-      entries: <DailyChoiceGuideEntry>[
-        ...bibliography.map(
-          (title) => DailyChoiceGuideEntry(
-            icon: Icons.book_rounded,
-            titleZh: title,
-            titleEn: title,
-            bodyZh: '可作为继续查阅的烹饪资料来源。本指南只做归纳，不逐字复写原书或原始资料内容。',
-            bodyEn:
-                'A source for further reading. This guide summarizes cooking principles instead of reproducing the original material.',
-          ),
-        ),
-      ],
-    ),
-  ];
-}
-
-String _cleanCookingReferenceTitle(String rawTitle) {
-  final title = rawTitle.trim();
-  if (title.isEmpty) {
-    return '';
-  }
-  if (title.startsWith('YunYouJun/cook')) {
-    return 'YunYouJun/cook';
-  }
-  return title;
+List<DailyChoiceGuideModule> buildCookingGuideModules(List<String> _) {
+  return cookingGuideModules;
 }
 
 const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
@@ -1894,35 +1841,6 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
       ),
     ],
   ),
-  DailyChoiceGuideModule(
-    id: 'expansion',
-    icon: Icons.auto_awesome_rounded,
-    titleZh: '扩展边界',
-    titleEn: 'Expansion',
-    subtitleZh: '先把人能用的一版做稳，再给 AI 和购物能力留接口',
-    subtitleEn:
-        'Ship a human-useful core first, then leave space for AI and shopping',
-    entries: <DailyChoiceGuideEntry>[
-      DailyChoiceGuideEntry(
-        icon: Icons.face_retouching_natural_rounded,
-        titleZh: '当前先做可解释的衣橱特征层',
-        titleEn: 'Start with an explainable wardrobe trait layer',
-        bodyZh:
-            '本轮的重点是把风格、版型、样式类型、面料和亮点做成可编辑、可筛选、可展示的结构化层。这样做的价值在于：今天能先服务随机推荐和个人管理，未来如果接入照片识别、真实数字人试穿或衣橱拍照建档，也能直接复用这层结构而不用推倒重来。',
-        bodyEn:
-            'The structured trait layer is useful now for filtering and editing, and later can become the bridge for photo parsing, avatar try-on, or wardrobe recognition.',
-      ),
-      DailyChoiceGuideEntry(
-        icon: Icons.shopping_cart_checkout_rounded,
-        titleZh: '购物与 AI 试穿暂不接第三方，但接口方向已明确',
-        titleEn: 'AI try-on and shopping stay deferred for now',
-        bodyZh:
-            '后续如要扩展，可在不改动当前随机逻辑的前提下，补充三条支线：一是基于用户衣橱特征的单品缺口分析，二是真实数字人或照片试穿，三是把相似风格映射到购物网站候选。本轮只保留数据和注释边界，不引入任何外部服务依赖。',
-        bodyEn:
-            'Future work can branch into wardrobe gap analysis, AI try-on, and shopping suggestions, but this release deliberately stops at the data boundary.',
-      ),
-    ],
-  ),
 ];
 const List<DailyChoiceGuideModule> placeGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
@@ -2062,33 +1980,6 @@ const List<DailyChoiceGuideModule> placeGuideModules = <DailyChoiceGuideModule>[
       ),
     ],
   ),
-  DailyChoiceGuideModule(
-    id: 'expansion',
-    icon: Icons.travel_explore_rounded,
-    titleZh: '后续扩展边界',
-    titleEn: 'Expansion path',
-    subtitleZh: '为地图、定位和开放地理数据预留接口',
-    subtitleEn: 'Leave room for maps, coarse location, and open geo data',
-    entries: <DailyChoiceGuideEntry>[
-      DailyChoiceGuideEntry(
-        icon: Icons.copy_rounded,
-        titleZh: '当前先做地图搜索词闭环',
-        titleEn: 'Start with a map-query loop',
-        bodyZh: '本轮先做到“场景筛选 -> 随机地点 -> 详情 -> 复制地图搜索词”。这个链路足够稳定，也最容易在移动端落地。',
-        bodyEn:
-            'This release focuses on the stable loop of scene filter, random place, details, and copying a map query, which lands well on mobile.',
-      ),
-      DailyChoiceGuideEntry(
-        icon: Icons.public_rounded,
-        titleZh: '后续可接入粗略定位与开放地理数据',
-        titleEn: 'Later versions can add coarse location and open geo data',
-        bodyZh:
-            '后续若单独推进，可按权限边界接入粗略定位、开放地图 POI 或系统地图拉起，把“附近 / 同城 / 远行”的候选从静态模板进一步变成动态检索结果。',
-        bodyEn:
-            'A later dedicated pass can add coarse location, open-map POIs, or system map launch so the same scene taxonomy can drive live search results.',
-      ),
-    ],
-  ),
 ];
 const List<DailyChoiceGuideEntry>
 activityGuideEntries = <DailyChoiceGuideEntry>[
@@ -2139,17 +2030,17 @@ decisionGuideEntries = <DailyChoiceGuideEntry>[
     icon: Icons.account_tree_rounded,
     titleZh: '联合概率',
     titleEn: 'Joint probability',
-    bodyZh: '当一个结果依赖多个条件同时成立时，把概率相乘会更保守。第一版只做透明计算，后续可扩展贝叶斯更新。',
+    bodyZh: '当一个结果依赖多个条件同时成立时，把概率相乘会更保守，也能提醒你哪一环最需要补信息。',
     bodyEn:
-        'When an outcome depends on several events, multiplying probabilities gives a more conservative view. Later versions can add Bayesian updates.',
+        'When an outcome depends on several events, multiplying probabilities gives a more conservative view and shows which link needs more information.',
   ),
   DailyChoiceGuideEntry(
     icon: Icons.show_chart_rounded,
-    titleZh: '建模扩展',
-    titleEn: 'Model expansion',
-    bodyZh: '回归、相关因子和多目标优化会放到独立扩展层，避免把复杂数学模型混进基础 UI。',
+    titleZh: '校准预测',
+    titleEn: 'Calibrated forecast',
+    bodyZh: '当预期特别乐观或悲观时，先和平均情况做比较，给极端判断留一点回拉空间。',
     bodyEn:
-        'Regression, correlation factors, and multi-objective optimization belong in a later extension layer.',
+        'When a forecast feels extremely optimistic or pessimistic, compare it with the average case and pull the estimate back a little.',
   ),
 ];
 List<DailyChoiceOption> buildDailyChoiceFallbackEatOptions() {

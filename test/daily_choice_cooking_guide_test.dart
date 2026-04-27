@@ -44,6 +44,8 @@ void main() {
       '字段说明',
       '页面会',
       '当前版本',
+      '参考与延伸阅读',
+      'References',
     ]) {
       expect(text, isNot(contains(forbidden)));
     }

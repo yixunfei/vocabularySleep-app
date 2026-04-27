@@ -636,7 +636,7 @@ class _EatLibraryStatusPanel extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '资源准备', en: 'Recipe resources'),
+                  pickUiText(i18n, zh: '菜谱库', en: 'Recipe library'),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -723,11 +723,11 @@ class _EatLibraryStatusPanel extends StatelessWidget {
               pickUiText(
                 i18n,
                 zh: hasInstalledLibrary
-                    ? '当前页面只保留摘要和筛选索引，完整做法在点开详情时再读取。'
-                    : '首次使用时会从远端资源库下载菜谱库到本地，之后直接读取本机 SQLite。',
+                    ? '菜谱摘要已经准备好，点开菜名时再展示完整做法。'
+                    : '首次使用需要准备菜谱库，完成后下次打开会更快。',
                 en: hasInstalledLibrary
-                    ? 'This page keeps only summaries and filter indexes. Full recipe details are loaded on demand.'
-                    : 'The first install downloads the recipe library from the remote resource store and keeps it locally for later use.',
+                    ? 'Recipe summaries are ready. Full instructions open when you view a dish.'
+                    : 'Prepare the recipe library once; future openings will be faster.',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

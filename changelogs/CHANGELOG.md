@@ -52,6 +52,7 @@
 - 新增 `records/record_070_daily_choice_compact_filter_controls.md`，记录筛选项紧凑展示和展开入口增强。
 - 新增管理页结构拆分 part：查询 helper、section widgets、集合导入导出、确认弹窗从主 `daily_choice_manager_sheet.dart` 移出。
 - 新增 `records/record_070_daily_choice_p1_p4_closure.md`，记录 PLAN_070 P1-P4 收尾、分页追加模型、计划状态校准和验证结果。
+- 新增 `records/record_070_daily_choice_copy_cleanup_and_main_merge.md`，记录每日决策文案收口、开发说明删除、来源展示隐藏和合回主分支边界。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -118,6 +119,8 @@
 - 管理页内置菜谱 SQL 分页从“扩大 limit 重取前序摘要”改为 `offset + pageSize` 追加页，触底加载下一页时只请求新增窗口。
 - PLAN_070 阶段进度和 13 项验收表已按当前实现校准，明确主 UI 停止随机以响应性优先，路由级拆页和最近 3 个自定义忌口为后续增强。
 - PLAN_070 阶段 7 已完成本轮收尾验证；全量 `flutter analyze` 仍保留本轮外既有 lint 债，Android release APK 构建通过。
+- 每日决策模块文案完成一轮产品化收口：吃什么资源状态改为菜谱库准备提示，去哪儿、穿什么、做菜指南和决策助手移除“本轮 / 后续 / 扩展边界 / 资料来源”类开发说明。
+- 详情页不再渲染 sourceLabel、sourceUrl 或 references 来源块，保留菜品画像、材料/条件、步骤、关键提示和地图搜索词复制等用户直接需要的内容。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -169,6 +172,11 @@
 - 修复管理页触底加载下一页时重复查询已显示内置菜谱摘要的问题。
 
 ### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_content.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_detail_sheets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_place_seed.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 - `dart format lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_modules.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_wear_module.dart`（通过）
 - `dart analyze lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）

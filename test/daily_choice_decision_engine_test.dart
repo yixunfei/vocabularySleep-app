@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_decision_content.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_decision_engine.dart';
 
 void main() {
@@ -29,6 +30,40 @@ void main() {
       infoGap: infoGap,
     );
   }
+
+  test('decision guide hides source and roadmap copy', () {
+    final guideText = decisionGuideModules
+        .expand(
+          (module) => <String>[
+            module.id,
+            module.titleZh,
+            module.titleEn,
+            module.subtitleZh,
+            module.subtitleEn,
+            ...module.entries.expand(
+              (entry) => <String>[
+                entry.titleZh,
+                entry.titleEn,
+                entry.bodyZh,
+                entry.bodyEn,
+              ],
+            ),
+          ],
+        )
+        .join('\n');
+
+    for (final forbidden in <String>[
+      'sources',
+      '资料来源',
+      'Sources',
+      '本地决策参考',
+      'This guide distills',
+      '第一版',
+      '后续',
+    ]) {
+      expect(guideText, isNot(contains(forbidden)));
+    }
+  });
 
   test('recommended methods adapt to high-stakes uncertain context', () {
     const context = DailyChoiceDecisionContext(

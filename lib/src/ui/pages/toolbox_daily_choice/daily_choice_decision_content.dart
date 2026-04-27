@@ -172,41 +172,6 @@ DailyChoiceDecisionMethodSpec decisionMethodSpec(
 const List<DailyChoiceGuideModule>
 decisionGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
-    id: 'sources',
-    icon: Icons.library_books_rounded,
-    titleZh: '资料来源',
-    titleEn: 'Sources',
-    subtitleZh: '本页整理自 3 份本地决策参考资料，再转写成移动端可执行工作流。',
-    subtitleEn:
-        'This guide distills three local decision references into a practical mobile workflow.',
-    entries: <DailyChoiceGuideEntry>[
-      DailyChoiceGuideEntry(
-        icon: Icons.psychology_rounded,
-        titleZh: '《不确定世界的理性选择》',
-        titleEn: 'Rational Choice in an Uncertain World',
-        bodyZh: '主要提供概率思维、锚定与调整、沉没成本、后见之明、联合概率、回归到均值和贝叶斯更新等判断框架。',
-        bodyEn:
-            'Main source for probability thinking, anchoring, sunk cost, hindsight, joint probability, regression to the mean, and Bayesian updating.',
-      ),
-      DailyChoiceGuideEntry(
-        icon: Icons.balance_rounded,
-        titleZh: '《决策思维八部曲》',
-        titleEn: 'Decision Thinking Eight-Part Set',
-        bodyZh: '重点帮助我们区分偏差和噪声，强调结构化判断、外部视角、检查清单和“决策卫生”。',
-        bodyEn:
-            'Highlights the difference between bias and noise, and stresses structured judgment, outside views, checklists, and decision hygiene.',
-      ),
-      DailyChoiceGuideEntry(
-        icon: Icons.school_rounded,
-        titleZh: '《斯坦福商业决策课》',
-        titleEn: 'Stanford Decision Quality',
-        bodyZh: '核心是优质决策的六要素：合适框架、创造选项、可靠信息、清晰价值、充分论证、付诸行动。',
-        bodyEn:
-            'The core contribution is the six elements of decision quality: framing, creative options, reliable information, clear values, sound reasoning, and action.',
-      ),
-    ],
-  ),
-  DailyChoiceGuideModule(
     id: 'flow',
     icon: Icons.route_rounded,
     titleZh: '先分型再选法',

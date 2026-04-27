@@ -45,9 +45,9 @@ DailyChoiceOption _buildPlaceOption(
     subtitleZh: '${archetype.subtitleZh}，${distance.rhythmZh}。',
     subtitleEn: '${archetype.subtitleEn}, ${distance.rhythmEn}.',
     detailsZh:
-        '当你想${scene.intentZh}时，$titleZh通常是稳妥起点。${archetype.subtitleZh}。这类地点更适合${distance.durationZh}的节奏，出发前优先确认${scene.checkpointZh}。当前版本先提供结构化筛选与地图搜索词，后续仍可继续接入粗略定位、开放地理数据和系统地图拉起。',
+        '当你想${scene.intentZh}时，$titleZh通常是稳妥起点。${archetype.subtitleZh}。这类地点更适合${distance.durationZh}的节奏，出发前优先确认${scene.checkpointZh}，再用地图搜索词挑一个最容易抵达和收尾的候选。',
     detailsEn:
-        'When you want to ${scene.intentEn}, $titleEn is a solid starting point. ${archetype.subtitleEn}. It fits a ${distance.durationEn} rhythm, and you should confirm ${scene.checkpointEn} before leaving. This version focuses on structured filtering and map queries, while leaving room for coarse location, open geo data, and system-map launch later.',
+        'When you want to ${scene.intentEn}, $titleEn is a solid starting point. ${archetype.subtitleEn}. It fits a ${distance.durationEn} rhythm, and you should confirm ${scene.checkpointEn} before leaving, then use the map query to pick a nearby option that is easy to reach and close out.',
     materialsZh: <String>[
       '建议时长：${distance.durationZh}',
       '预算预期：${scene.budgetZh(distance.id)}',
@@ -76,7 +76,7 @@ DailyChoiceOption _buildPlaceOption(
           ? '天气提醒：下雨也能执行，但先看营业时间、排队和临时闭馆信息。'
           : '天气提醒：户外点优先看气温、降水和风，天气突变时准备室内替代点。',
       _placeDistanceNoteZh(distance.id),
-      '扩展边界：详情页先提供地图搜索词复制；后续可在同一数据结构上接入粗略定位、开放地图 POI 和系统地图。',
+      '地图提醒：复制搜索词后，先看营业时间、路线和同区域替代点。',
     ],
     notesEn: <String>[
       'Best for: ${scene.intentEn}.',
@@ -84,7 +84,7 @@ DailyChoiceOption _buildPlaceOption(
           ? 'Weather note: indoor places still need opening-hour and queue checks, especially in rain.'
           : 'Weather note: outdoor spots should be checked against temperature, rain, and wind, with an indoor fallback ready.',
       _placeDistanceNoteEn(distance.id),
-      'Expansion path: this release starts with map-query copying, while leaving room for coarse location, open-map POIs, and system-map launch later.',
+      'Map note: after copying the query, check opening hours, the route, and a backup in the same area.',
     ],
     tagsZh: <String>[
       placeCategories.firstWhere((item) => item.id == distance.id).titleZh,
