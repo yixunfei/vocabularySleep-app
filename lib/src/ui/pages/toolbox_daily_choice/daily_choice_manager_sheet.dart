@@ -14,6 +14,7 @@ Future<void> showDailyChoiceManagerSheet({
   String? initialContextId,
   String contextLabelZh = '场景',
   String contextLabelEn = 'Scene',
+  DailyChoiceEatLibraryStore? eatLibraryStore,
   Future<void> Function(DailyChoiceOption option)? onInspectOption,
   Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
   onAdjustBuiltInOption,
@@ -64,6 +65,12 @@ Future<void> showDailyChoiceManagerSheet({
   var collectionInputVersion = 0;
   var selectedCollectionId = 'all';
   var builtInVisibleLimit = _managerInitialBuiltInLimit(isEatModule);
+  var builtInSqlActiveKey = '';
+  var builtInSqlLoadingKey = '';
+  var builtInSqlOptions = const <DailyChoiceOption>[];
+  var builtInSqlTotal = 0;
+  String? builtInSqlError;
+  var managerSheetClosed = false;
   final managerTraitGroups = isWearModule
       ? wearManagerTraitGroups
       : (isEatModule ? eatManagerTraitGroups : const <DailyChoiceTraitGroup>[]);
@@ -91,6 +98,45 @@ Future<void> showDailyChoiceManagerSheet({
 
             void resetBuiltInPaging() {
               builtInVisibleLimit = _managerInitialBuiltInLimit(isEatModule);
+            }
+
+            void requestBuiltInSqlPage({
+              required String key,
+              required DailyChoiceEatLibraryQuery query,
+            }) {
+              if (builtInSqlActiveKey == key || builtInSqlLoadingKey == key) {
+                return;
+              }
+              builtInSqlLoadingKey = key;
+              builtInSqlError = null;
+              unawaited(() async {
+                try {
+                  final result = await eatLibraryStore!.queryBuiltInSummaries(
+                    query,
+                  );
+                  if (managerSheetClosed || builtInSqlLoadingKey != key) {
+                    return;
+                  }
+                  setSheetState(() {
+                    builtInSqlActiveKey = key;
+                    builtInSqlLoadingKey = '';
+                    builtInSqlOptions = result.options;
+                    builtInSqlTotal = result.totalCount;
+                    builtInSqlError = null;
+                  });
+                } catch (error) {
+                  if (managerSheetClosed || builtInSqlLoadingKey != key) {
+                    return;
+                  }
+                  setSheetState(() {
+                    builtInSqlActiveKey = key;
+                    builtInSqlLoadingKey = '';
+                    builtInSqlOptions = const <DailyChoiceOption>[];
+                    builtInSqlTotal = 0;
+                    builtInSqlError = '$error';
+                  });
+                }
+              }());
             }
 
             final adjustedById = <String, DailyChoiceOption>{
@@ -140,6 +186,10 @@ Future<void> showDailyChoiceManagerSheet({
                   ),
                 )
                 .toList(growable: false);
+            final canUseSqlBuiltIns =
+                isEatModule &&
+                eatLibraryStore != null &&
+                searchQuery.trim().isEmpty;
             final nextBuiltInFilterCacheKey = _managerBuiltInFilterCacheKey(
               moduleId: moduleId,
               categoryId: selectedCategoryId,
@@ -150,8 +200,33 @@ Future<void> showDailyChoiceManagerSheet({
               stateVersion: managerStateVersion,
             );
             late final List<DailyChoiceOption> allVisibleBuiltIns;
+            late final int builtInTotalCount;
+            var builtInSqlLoading = false;
             if (!builtInExpanded) {
               allVisibleBuiltIns = const <DailyChoiceOption>[];
+              builtInTotalCount = 0;
+            } else if (canUseSqlBuiltIns) {
+              final sqlKey = _managerBuiltInSqlQueryKey(
+                cacheKey: nextBuiltInFilterCacheKey,
+                visibleLimit: builtInVisibleLimit,
+              );
+              requestBuiltInSqlPage(
+                key: sqlKey,
+                query: _managerEatBuiltInLibraryQuery(
+                  categoryId: selectedCategoryId,
+                  contextId: selectedContextId,
+                  traitFilters: selectedTraitFilters,
+                  selectedCollectionOptionIds: selectedCollectionOptionIds,
+                  limit: builtInVisibleLimit,
+                ),
+              );
+              builtInSqlLoading = builtInSqlLoadingKey == sqlKey;
+              allVisibleBuiltIns = builtInSqlActiveKey == sqlKey
+                  ? builtInSqlOptions
+                  : const <DailyChoiceOption>[];
+              builtInTotalCount = builtInSqlActiveKey == sqlKey
+                  ? builtInSqlTotal
+                  : 0;
             } else {
               if (nextBuiltInFilterCacheKey != builtInFilterCacheKey) {
                 builtInFilterCache = builtInOptions
@@ -170,10 +245,13 @@ Future<void> showDailyChoiceManagerSheet({
                 builtInFilterCacheKey = nextBuiltInFilterCacheKey;
               }
               allVisibleBuiltIns = builtInFilterCache;
+              builtInTotalCount = allVisibleBuiltIns.length;
             }
-            final visibleBuiltIns = allVisibleBuiltIns
-                .take(builtInVisibleLimit)
-                .toList(growable: false);
+            final visibleBuiltIns = canUseSqlBuiltIns
+                ? allVisibleBuiltIns
+                : allVisibleBuiltIns
+                      .take(builtInVisibleLimit)
+                      .toList(growable: false);
             final hidden = localState.hiddenBuiltInIds;
             final theme = Theme.of(context);
             final activeFilterCount =
@@ -917,13 +995,17 @@ Future<void> showDailyChoiceManagerSheet({
                         subtitle: _builtInSectionSubtitle(
                           i18n,
                           builtInExpanded: builtInExpanded,
-                          total: allVisibleBuiltIns.length,
+                          total: builtInTotalCount,
                           visible: visibleBuiltIns.length,
+                          loading: builtInSqlLoading,
+                          errorMessage: builtInSqlError,
                         ),
                         accent: accent,
                         expanded: builtInExpanded,
                         countLabel: builtInExpanded
-                            ? '${allVisibleBuiltIns.length}'
+                            ? (builtInSqlLoading && builtInTotalCount == 0
+                                  ? pickUiText(i18n, zh: '加载中', en: 'Loading')
+                                  : '$builtInTotalCount')
                             : pickUiText(i18n, zh: '展开', en: 'Open'),
                         onToggle: () {
                           setSheetState(() {
@@ -933,7 +1015,23 @@ Future<void> showDailyChoiceManagerSheet({
                             }
                           });
                         },
-                        child: allVisibleBuiltIns.isEmpty
+                        child: builtInSqlLoading && visibleBuiltIns.isEmpty
+                            ? _ManagerHint(
+                                text: pickUiText(
+                                  i18n,
+                                  zh: '正在读取内置菜谱...',
+                                  en: 'Loading built-in recipes...',
+                                ),
+                              )
+                            : builtInSqlError != null && visibleBuiltIns.isEmpty
+                            ? _ManagerHint(
+                                text: pickUiText(
+                                  i18n,
+                                  zh: '读取内置菜谱失败：$builtInSqlError',
+                                  en: 'Failed to load built-in recipes: $builtInSqlError',
+                                ),
+                              )
+                            : visibleBuiltIns.isEmpty
                             ? _ManagerHint(
                                 text: _emptyBuiltInHint(
                                   i18n,
@@ -1107,7 +1205,7 @@ Future<void> showDailyChoiceManagerSheet({
                                       ],
                                     );
                                   }),
-                                  if (allVisibleBuiltIns.length >
+                                  if (builtInTotalCount >
                                       visibleBuiltIns.length) ...<Widget>[
                                     const SizedBox(height: 10),
                                     OutlinedButton.icon(
@@ -1125,8 +1223,8 @@ Future<void> showDailyChoiceManagerSheet({
                                       label: Text(
                                         pickUiText(
                                           i18n,
-                                          zh: '继续加载 ${_managerNextPageCount(allVisibleBuiltIns.length, visibleBuiltIns.length, isEatModule)} 条',
-                                          en: 'Load ${_managerNextPageCount(allVisibleBuiltIns.length, visibleBuiltIns.length, isEatModule)} more',
+                                          zh: '继续加载 ${_managerNextPageCount(builtInTotalCount, visibleBuiltIns.length, isEatModule)} 条',
+                                          en: 'Load ${_managerNextPageCount(builtInTotalCount, visibleBuiltIns.length, isEatModule)} more',
                                         ),
                                       ),
                                     ),
@@ -1144,6 +1242,7 @@ Future<void> showDailyChoiceManagerSheet({
       },
     );
   } finally {
+    managerSheetClosed = true;
     collectionNameDraft = '';
   }
 }
@@ -1194,12 +1293,28 @@ String _builtInSectionSubtitle(
   required bool builtInExpanded,
   required int total,
   required int visible,
+  bool loading = false,
+  String? errorMessage,
 }) {
   if (!builtInExpanded) {
     return pickUiText(
       i18n,
       zh: '展开后按当前搜索和筛选查看内置菜谱。',
       en: 'Expand to show built-ins using the current search and filters.',
+    );
+  }
+  if (loading && visible == 0) {
+    return pickUiText(
+      i18n,
+      zh: '正在按当前筛选读取内置菜谱。',
+      en: 'Loading built-ins for the current filters.',
+    );
+  }
+  if (errorMessage != null) {
+    return pickUiText(
+      i18n,
+      zh: '读取内置菜谱时遇到问题，可稍后重试。',
+      en: 'Built-ins could not be loaded. Try again later.',
     );
   }
   return pickUiText(
@@ -1210,6 +1325,32 @@ String _builtInSectionSubtitle(
     en: total > visible
         ? 'Showing $visible of $total; search and filters still cover the full library.'
         : 'Hide unwanted items, save adjustments, or copy a built-in as your own recipe.',
+  );
+}
+
+String _managerBuiltInSqlQueryKey({
+  required String cacheKey,
+  required int visibleLimit,
+}) {
+  return '$cacheKey\u0001$visibleLimit';
+}
+
+DailyChoiceEatLibraryQuery _managerEatBuiltInLibraryQuery({
+  required String categoryId,
+  required String? contextId,
+  required Map<String, String> traitFilters,
+  required Set<String>? selectedCollectionOptionIds,
+  required int limit,
+}) {
+  return DailyChoiceEatLibraryQuery(
+    mealId: categoryId,
+    toolId: contextId ?? 'all',
+    selectedTraitFilters: <String, Set<String>>{
+      for (final entry in traitFilters.entries)
+        if (entry.value != 'all') entry.key: <String>{entry.value},
+    },
+    allowedOptionIds: selectedCollectionOptionIds,
+    limit: limit,
   );
 }
 

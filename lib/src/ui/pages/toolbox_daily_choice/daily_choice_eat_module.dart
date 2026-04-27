@@ -252,6 +252,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
           onDetail: (option) => unawaited(_openOptionDetail(option)),
           onGuide: () => unawaited(_openGuide()),
           onManage: () => unawaited(_openManager()),
+          onPickRandomOption: _pickBuiltInRandomOption,
         ),
       ],
     );
@@ -275,6 +276,50 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       availableIngredients: _availableIngredients,
       preferAvailableIngredients: _preferAvailableIngredients,
       allowedOptionIds: collection?.optionIds,
+    );
+  }
+
+  Future<DailyChoiceOption?> _pickBuiltInRandomOption() async {
+    final randomPool = _filterResult.randomPool;
+    if (randomPool.isEmpty || !widget.libraryStatus.hasInstalledLibrary) {
+      return null;
+    }
+    final builtInById = <String, DailyChoiceOption>{
+      for (final item in widget.builtInOptions) item.id: item,
+    };
+    final randomPoolIds = <String>[];
+    for (final item in randomPool) {
+      if (!builtInById.containsKey(item.id)) {
+        return null;
+      }
+      randomPoolIds.add(item.id);
+    }
+    final picked = await widget.libraryStore.pickBuiltInRandomSummary(
+      _buildLibraryQuery(allowedOptionIds: randomPoolIds),
+    );
+    if (picked == null) {
+      return null;
+    }
+    return builtInById[picked.id] ?? picked;
+  }
+
+  DailyChoiceEatLibraryQuery _buildLibraryQuery({
+    Iterable<String>? allowedOptionIds,
+  }) {
+    return DailyChoiceEatLibraryQuery(
+      mealId: _mealId,
+      toolId: _toolId,
+      selectedTraitFilters: <String, Set<String>>{
+        for (final entry in _selectedTraitFilters.entries)
+          if (entry.value.isNotEmpty) entry.key: Set<String>.of(entry.value),
+      },
+      excludedContains: Set<String>.of(_excludedContains),
+      customExcludedIngredients: List<String>.of(_customExcludedIngredients),
+      availableIngredients: List<String>.of(_availableIngredients),
+      preferAvailableIngredients: _preferAvailableIngredients,
+      allowedOptionIds: allowedOptionIds == null
+          ? _selectedCollection?.optionIds
+          : List<String>.of(allowedOptionIds),
     );
   }
 
@@ -454,6 +499,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       initialContextId: _toolId,
       contextLabelZh: '厨具',
       contextLabelEn: 'Tool',
+      eatLibraryStore: widget.libraryStore,
       onInspectOption: _openOptionDetail,
       onAdjustBuiltInOption: _openAdjustmentEditor,
       onSaveBuiltInAsCustom: _openSaveAsCustomEditor,

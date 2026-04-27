@@ -7,6 +7,7 @@ import '../../motion/app_motion.dart';
 import '../../ui_copy.dart';
 import '../toolbox/toolbox_ui_components.dart';
 import '../toolbox/toolbox_ui_tokens.dart';
+import 'daily_choice_eat_library_store.dart';
 import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
 import 'daily_choice_seed_data.dart';
@@ -176,6 +177,7 @@ class DailyChoiceRandomPanel extends StatefulWidget {
     required this.onDetail,
     required this.onManage,
     required this.onGuide,
+    this.onPickRandomOption,
   });
   final AppI18n i18n;
   final Color accent;
@@ -186,6 +188,7 @@ class DailyChoiceRandomPanel extends StatefulWidget {
   final ValueChanged<DailyChoiceOption> onDetail;
   final VoidCallback onManage;
   final VoidCallback onGuide;
+  final Future<DailyChoiceOption?> Function()? onPickRandomOption;
   @override
   State<DailyChoiceRandomPanel> createState() => _DailyChoiceRandomPanelState();
 }
@@ -196,6 +199,8 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
   Timer? _timer;
   DailyChoiceOption? _current;
   DailyChoiceOption? _locked;
+  bool _finalizingPick = false;
+  int _pickGeneration = 0;
   bool get _running => _timer != null;
   @override
   void initState() {
@@ -207,6 +212,8 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
   void didUpdateWidget(covariant DailyChoiceRandomPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.options != widget.options) {
+      _pickGeneration += 1;
+      _finalizingPick = false;
       _syncCurrentWithOptions();
     }
   }
@@ -249,12 +256,21 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
     if (_running) {
       _timer?.cancel();
       _timer = null;
+      _pickGeneration += 1;
+      final generation = _pickGeneration;
       setState(() {
         _locked = _current ?? widget.options.first;
+        _finalizingPick = widget.onPickRandomOption != null;
       });
+      final picker = widget.onPickRandomOption;
+      if (picker != null) {
+        unawaited(_finalizeRandomPick(picker, generation));
+      }
       return;
     }
+    _pickGeneration += 1;
     setState(() {
+      _finalizingPick = false;
       _locked = null;
       _current = widget.options[_random.nextInt(widget.options.length)];
     });
@@ -275,6 +291,32 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
         _current = widget.options[_random.nextInt(widget.options.length)];
       });
     });
+  }
+
+  Future<void> _finalizeRandomPick(
+    Future<DailyChoiceOption?> Function() picker,
+    int generation,
+  ) async {
+    try {
+      final picked = await picker();
+      if (!mounted || _running || generation != _pickGeneration) {
+        return;
+      }
+      setState(() {
+        if (picked != null) {
+          _current = picked;
+          _locked = picked;
+        }
+        _finalizingPick = false;
+      });
+    } catch (_) {
+      if (!mounted || _running || generation != _pickGeneration) {
+        return;
+      }
+      setState(() {
+        _finalizingPick = false;
+      });
+    }
   }
 
   @override
@@ -357,14 +399,22 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
             runSpacing: 10,
             children: <Widget>[
               FilledButton.icon(
-                onPressed: widget.options.isEmpty ? null : _toggleRandom,
+                onPressed: widget.options.isEmpty || _finalizingPick
+                    ? null
+                    : _toggleRandom,
                 icon: Icon(
                   _running ? Icons.stop_circle_rounded : Icons.casino_rounded,
                 ),
                 label: Text(
-                  _running
-                      ? pickUiText(widget.i18n, zh: '停止并选中', en: 'Stop')
-                      : pickUiText(widget.i18n, zh: '开始随机', en: 'Randomize'),
+                  _finalizingPick
+                      ? pickUiText(widget.i18n, zh: '选中中', en: 'Picking')
+                      : (_running
+                            ? pickUiText(widget.i18n, zh: '停止并选中', en: 'Stop')
+                            : pickUiText(
+                                widget.i18n,
+                                zh: '开始随机',
+                                en: 'Randomize',
+                              )),
                 ),
               ),
               OutlinedButton.icon(

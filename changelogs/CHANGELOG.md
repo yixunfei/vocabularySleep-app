@@ -29,6 +29,9 @@
 - 新增 v2 SQL 查询单测，覆盖索引筛选、分页摘要、`排骨` 精确食材匹配和花生坚果组合忌口。
 - 新增 `DailyChoiceEatLibraryStore.pickBuiltInRandomSummary(...)`，支持按 v2 `random_key` pivot 从完整候选池抽取轻量摘要。
 - 新增 `records/record_070_daily_choice_v2_random_pivot.md`，记录 store 层 random pivot 能力、测试覆盖和后续 UI 接入边界。
+- 新增 `DailyChoiceRandomPanel` 可选异步最终抽取入口，供吃什么主 UI 在停止随机时接入 store random pivot。
+- 新增 `records/record_070_daily_choice_ui_random_and_manager_sql_paging.md`，记录主 UI 随机与管理页内置库 SQL 分页接入边界。
+- 新增随机面板 widget 回归测试，覆盖候选池变化后旧异步抽取结果不回写当前 UI。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -66,6 +69,10 @@
 - legacy v1 库和缺少 v2 筛选索引的库继续回退到内存 `DailyChoiceEatCatalog` 过滤，避免查询入口影响已有本地库可读性。
 - v2 随机候选 id 查询按 `random_key` 排序并去重，避免 raw/canonical 同时命中时让同一菜谱在随机池中重复出现。
 - v2 random pivot 复用 `DailyChoiceEatLibraryQuery` 条件，并在 pivot 后半段无命中时回绕到候选池开头；随机抽取不读取详情字段。
+- 吃什么主 UI 在随机池全为可见内置菜谱时，停止随机会调用 `pickBuiltInRandomSummary(...)` 作为最终选中来源；随机池混入本地自定义时继续使用内存结果。
+- 随机面板在候选池变化时会让仍在进行的异步最终抽取失效，避免旧筛选结果回写到新筛选候选池。
+- 管理页吃什么内置库在未输入搜索词时使用 `queryBuiltInSummaries(...)` 分页读取；搜索词非空时继续沿用旧内存过滤，等待后续 search table 下沉。
+- 管理页异步 SQL 查询在 sheet 关闭后不再调用 `setSheetState`，且失败时记录当前查询 key，降低关闭/返回和失败重试的生命周期风险。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -80,9 +87,10 @@
 - `scripts/verify_daily_choice_recipe_remote.dart` 为纯 Dart S3 smoke 工具，需要通过环境变量或命令行参数提供 S3 配置；本轮验证时配置从现有 `CstCloudS3CompatClient` 默认值读取后注入环境变量。
 - 本轮重新生成的 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，大小 142,467,072 bytes，SHA256 为 `9B769482EEA198E233263EB41E8FA01ECAA3C058E25F68377ED8E468F62C6FFE`；当前 app 已接入基础 v2 读取，但筛选和随机仍基于安装后加载的摘要集合。
 - 本轮未覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；S3 远端 DB 已由用户更新，本轮仅做远端 smoke 和运行时读取修复。
-- 当前 UI 仍主要使用内存 catalog；本轮只是建立 store 层 SQL 查询基础。后续需要逐步把随机面板、内置库浏览和管理分页接入该查询入口。
+- 当前 UI 仍保留内存 catalog 作为本地自定义、个人调整和搜索回退路径；吃什么内置库随机和管理页无搜索浏览已逐步接入 store 查询。
 - 已有食材优先的 SQL 版本先采用 raw/canonical 任一命中收口，尚未完整复刻内存 catalog 的 exact/strong/broad 分层扩池策略。
-- random pivot 当前仍是 store 层能力，主 UI 随机面板尚未切到该路径；legacy v1 fallback 使用候选 id 列表取模抽取，不具备 v2 `random_key` 的稳定全局分布。
+- random pivot 在主 UI 中只覆盖随机池全为可见内置菜谱的场景；legacy v1 fallback 使用候选 id 列表取模抽取，不具备 v2 `random_key` 的稳定全局分布。
+- 管理页搜索尚未接入 SQLite `daily_choice_recipe_search_text`；搜索非空时仍会走旧内存路径，后续需要单独下沉搜索查询。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
@@ -97,6 +105,7 @@
 - 修复 v2-only DB 缺少 v1 summary/detail 表时，吃什么摘要和详情读取 SQL 仍固定查询 v1 表的问题。
 - 修复 v2 查询候选 id 在 raw/canonical 同时命中时可能重复返回同一菜谱，导致随机权重被意外放大的问题。
 - 修复后续分页接入时随机可能只落在当前分页窗口的问题基础：store 层 random pivot 现在忽略 `limit` / `offset`，始终按完整候选池抽取。
+- 修复管理页内置库浏览在无搜索词场景下仍同步过滤完整吃什么内置列表的性能路径，改为按当前筛选分页查询 SQLite。
 
 ### 验证
 - `git switch -c codex/daily-choice-overhaul`（通过）
@@ -144,6 +153,9 @@
 - `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
 - `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机触发 store pivot、管理页展开内置库触发 SQL 查询、候选池变化后旧异步抽取不回写）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 

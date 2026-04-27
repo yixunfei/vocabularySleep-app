@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart';
@@ -209,6 +210,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 250));
 
+      expect(libraryStore.randomRequests, isNotEmpty);
+
       await tester.tap(find.text('Details'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -228,6 +231,34 @@ void main() {
 
       expect(find.text('Search recipe name'), findsOneWidget);
       final managerSheet = find.byType(DraggableScrollableSheet).first;
+      final queryCountBeforeManagerBuiltIns = libraryStore.queryRequests.length;
+      await tester.ensureVisible(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in items'),
+        ),
+      );
+      await tester.tap(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in items'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(
+        libraryStore.queryRequests.length,
+        greaterThan(queryCountBeforeManagerBuiltIns),
+      );
+      expect(
+        find.descendant(of: managerSheet, matching: find.text('Tomato Egg')),
+        findsWidgets,
+      );
+
+      await tester.ensureVisible(
+        find.descendant(of: managerSheet, matching: find.text('Add recipe')),
+      );
       await tester.tap(
         find.descendant(of: managerSheet, matching: find.text('Add recipe')),
       );
@@ -256,13 +287,6 @@ void main() {
           matching: find.text('Built-in items'),
         ),
       );
-      await tester.tap(
-        find.descendant(
-          of: managerSheet,
-          matching: find.text('Built-in items'),
-        ),
-      );
-      await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(
@@ -409,6 +433,60 @@ void main() {
     expect(find.text('All tools'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('random panel ignores stale async pick after options change', (
+    WidgetTester tester,
+  ) async {
+    final first = eatOption(id: 'first_recipe', title: 'First Recipe');
+    final second = eatOption(id: 'second_recipe', title: 'Second Recipe');
+    var options = <DailyChoiceOption>[first];
+    late StateSetter hostSetState;
+    final pendingPick = Completer<DailyChoiceOption?>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              hostSetState = setState;
+              return DailyChoiceRandomPanel(
+                i18n: AppI18n('en'),
+                accent: Colors.orange,
+                title: 'Random',
+                subtitle: 'Pick one',
+                options: options,
+                emptyText: 'Empty',
+                onDetail: (_) {},
+                onManage: () {},
+                onGuide: () {},
+                onPickRandomOption: () => pendingPick.future,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Randomize'));
+    await tester.pump(const Duration(milliseconds: 140));
+    await tester.tap(find.text('Stop'));
+    await tester.pump();
+    expect(find.text('Picking'), findsOneWidget);
+
+    hostSetState(() {
+      options = <DailyChoiceOption>[second];
+    });
+    await tester.pump(const Duration(milliseconds: 400));
+    pendingPick.complete(first);
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Second Recipe'), findsOneWidget);
+    expect(find.text('First Recipe'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FakeStorageService extends DailyChoiceStorageService {
@@ -449,6 +527,10 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
 
   final DailyChoiceRecipeLibraryDocument document;
   final List<String> detailRequests = <String>[];
+  final List<DailyChoiceEatLibraryQuery> randomRequests =
+      <DailyChoiceEatLibraryQuery>[];
+  final List<DailyChoiceEatLibraryQuery> queryRequests =
+      <DailyChoiceEatLibraryQuery>[];
   bool _installed = false;
 
   List<DailyChoiceOption> get _options =>
@@ -504,6 +586,52 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
   }
 
   @override
+  Future<DailyChoiceEatLibraryQueryResult> queryBuiltInSummaries(
+    DailyChoiceEatLibraryQuery query,
+  ) async {
+    queryRequests.add(query);
+    final filtered = DailyChoiceEatCatalog.fromOptions(_summaryOptions).filter(
+      mealId: query.mealId,
+      toolId: query.toolId,
+      selectedTraitFilters: query.selectedTraitFilters,
+      excludedContains: query.excludedContains,
+      customExcludedIngredients: query.customExcludedIngredients,
+      availableIngredients: query.availableIngredients,
+      preferAvailableIngredients: query.preferAvailableIngredients,
+      allowedOptionIds: query.allowedOptionIds,
+    );
+    final offset = query.offset < 0 ? 0 : query.offset;
+    final limit = query.limit <= 0 ? 50 : query.limit;
+    return DailyChoiceEatLibraryQueryResult(
+      options: List<DailyChoiceOption>.unmodifiable(
+        filtered.eligibleOptions.skip(offset).take(limit),
+      ),
+      totalCount: filtered.eligibleOptions.length,
+      randomCandidateIds: List<String>.unmodifiable(
+        filtered.randomPool.map((item) => item.id),
+      ),
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  @override
+  Future<DailyChoiceOption?> pickBuiltInRandomSummary(
+    DailyChoiceEatLibraryQuery query, {
+    int? pivotKey,
+  }) async {
+    randomRequests.add(query);
+    final result = await queryBuiltInSummaries(query);
+    if (result.randomCandidateIds.isEmpty) {
+      return null;
+    }
+    final preferredId = result.randomCandidateIds.contains('mushroom_soup')
+        ? 'mushroom_soup'
+        : result.randomCandidateIds.first;
+    return _summaryOptions.firstWhere((item) => item.id == preferredId);
+  }
+
+  @override
   Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
     detailRequests.add(recipeId);
     for (final option in _options) {
@@ -516,6 +644,24 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
 
   @override
   Future<void> close() async {}
+
+  List<DailyChoiceOption> get _summaryOptions =>
+      List<DailyChoiceOption>.unmodifiable(
+        _options.map(
+          (option) => ensureEatOptionAttributes(
+            option.copyWith(
+              detailsZh: '',
+              detailsEn: '',
+              materialsZh: const <String>[],
+              materialsEn: const <String>[],
+              stepsZh: const <String>[],
+              stepsEn: const <String>[],
+              notesZh: const <String>[],
+              notesEn: const <String>[],
+            ),
+          ),
+        ),
+      );
 }
 
 class _BlockingEatLibraryStore extends DailyChoiceEatLibraryStore {
