@@ -11,6 +11,7 @@
 - 新增 `DailyChoiceHub keeps other modules usable while eat library loads` smoke 测试，锁定吃什么摘要加载未完成时仍可切换并使用其他每日决策模块。
 - 新增 `scripts/audit_daily_choice_recipe_dataset.py`，审计当前 `D:\vocabularySleep-resources\cook_data` JSON/SQLite 与 YunYouJun/cook `recipe.csv` 的字段冲突、来源覆盖、菜系 notes 污染、食材别名过宽匹配和抽取乱码。
 - 新增 `records/record_070_daily_choice_recipe_data_audit.md` 与 `records/record_070_daily_choice_recipe_data_audit.json`，记录首轮数据源审计结果。
+- 新增 `records/record_070_daily_choice_recipe_data_audit_after_generation.md` 与 `records/record_070_daily_choice_recipe_data_audit_after_generation.json`，记录修正生成规则后的隔离验证包审计结果。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -19,16 +20,25 @@
 - 吃什么资源状态面板区分后台读取和安装加载，读取期间只影响吃什么模块自身，不阻塞穿什么、去哪儿、干什么和决策助手。
 - 随机面板候选舞台固定高度，随机时限制标题、简介和标签行数，让停止按钮位置保持稳定。
 - 将 `PLAN_070` 阶段 2 标记为进行中，并写入首轮数据审计发现：`vegetarian` 与肉类/海鲜冲突 530 条，`vegan_friendly` 与动物性食材冲突 496 条，菜系标签混入 notes 2221 条，`清真友好` 规则说明混入 notes 3416 条，cook CSV 599 行中 569 行未在当前库标题精确命中。
+- `scripts/generate_daily_choice_recipe_dataset.py` 停用自动生成 `halal_friendly`、`vegan_friendly`、`vegetarian_friendly` diet 标签，避免无依据饮食友好标签继续进入筛选和展示。
+- 菜谱生成器不再把菜系标签或清真说明写入 notes，并统一清理 `??`、替换符等抽取乱码。
+- 食材抽取收紧高风险别名：`蛋` 不再作为鸡蛋裸词匹配，`洋葱` 不再误索引为 `葱`，`排骨`、`猪里脊`、`猪油`、`猪肝`、`猪蹄` 等具体猪肉项不再折叠成通用 `猪肉`。
+- 动物性风险判断补充兔肉、龟肉、甲鱼、鸽、鹌鹑、鹅肉、田鸡、牛蛙、牡蛎、蛤、蚌等词，`profile:vegetarian` 只在原始文本未命中肉类/水产风险时写入。
+- 将 YunYouJun/cook `recipe.csv` 导入生成器作为 `cook_csv` 数据来源，保留 difficulty、tags、methods、tools、bv、stuff 到结构化 attributes，并避免写入用户可见 sourceLabel、sourceUrl 和 references。
+- SQLite 导出 meta 现在写入真实 `bookRecipeCount` 与 `cookRecipeCount`，便于后续菜谱集分表和管理页展示。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
 - `plans/` 目录在当前仓库 `.gitignore` 中默认忽略，本计划需要作为本次接管凭据强制纳入提交。
 - 吃什么摘要加载改为模块级后台任务后，摘要未完成前吃什么候选池会保持为空并显示资源准备状态；这是有意降级，用来换取每日决策其他模块不被阻塞。
+- 本轮生成的验证包位于 `D:\vocabularySleep-resources\cook_data_plan070_validation`，尚未覆盖 `D:\vocabularySleep-resources\cook_data`；后续确认后再执行替换或上传。
+- cook CSV 原始 599 行中按标题/厨具去重导入 593 条菜谱，但审计按标题确认 599 行全部可在新库中命中。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
 - 修复管理 sheet 新建食谱集输入框因函数级 `TextEditingController` 在关闭/重建时被释放后继续参与 TextField 构建的崩溃风险。
 - 修复随机过程中菜品内容换行导致停止按钮上下跳动、难以点击的问题。
+- 修复当前生成数据中素食/纯素冲突、清真说明污染 notes、菜系标签污染 notes、洋葱误索引葱、具体猪肉项折叠为通用猪肉和抽取乱码等审计问题。
 
 ### 验证
 - `git switch -c codex/daily-choice-overhaul`（通过）
@@ -38,6 +48,9 @@
 - `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 - `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --cook-csv .tmp_recipe_csv_head.txt`（通过）
 - `python -m py_compile scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- `python -X utf8 scripts\generate_daily_choice_recipe_dataset.py --cook-csv .tmp_plan070_recipe.csv --output D:\vocabularySleep-resources\cook_data_plan070_validation\recipe_library_asset.json --export-dir D:\vocabularySleep-resources\cook_data_plan070_validation`（通过）
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv .tmp_plan070_recipe.csv --output-md records\record_070_daily_choice_recipe_data_audit_after_generation.md --output-json records\record_070_daily_choice_recipe_data_audit_after_generation.json`（通过，10 个审计问题桶均为 0）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 

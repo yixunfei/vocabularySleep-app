@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import html
 import json
 import re
 import sqlite3
 import unicodedata
+import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
@@ -69,6 +71,95 @@ NOTE_HEADERS = (
 LIBRARY_ID = "toolbox_daily_choice_recipe_library"
 SCHEMA_ID = "vocabulary_sleep.daily_choice.recipe_library"
 SCHEMA_VERSION = 1
+DEFAULT_COOK_CSV_URL = (
+    "https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv"
+)
+
+CUISINE_MARKERS = (
+    "浙江菜",
+    "川菜",
+    "粤菜",
+    "鲁菜",
+    "湘菜",
+    "闽菜",
+    "苏菜",
+    "徽菜",
+    "东北菜",
+    "西餐",
+    "法式",
+    "意大利",
+    "西班牙",
+    "其它菜系",
+    "其他菜系",
+)
+MEAT_OR_SEAFOOD_CONTAINS = {
+    "pork",
+    "beef",
+    "mutton",
+    "chicken",
+    "duck",
+    "seafood",
+}
+MEAT_OR_SEAFOOD_RISK_TERMS = (
+    "猪肉",
+    "猪油",
+    "猪肝",
+    "猪肚",
+    "猪蹄",
+    "猪耳",
+    "猪腰",
+    "排骨",
+    "里脊",
+    "五花肉",
+    "腊肉",
+    "腊肠",
+    "火腿",
+    "午餐肉",
+    "培根",
+    "牛肉",
+    "牛腩",
+    "牛柳",
+    "肥牛",
+    "牛排",
+    "羊肉",
+    "羊排",
+    "鸡肉",
+    "鸡翅",
+    "鸡腿",
+    "鸡胸",
+    "鸡丁",
+    "鸡丝",
+    "乌鸡",
+    "鸭肉",
+    "鸭胗",
+    "鸭腿",
+    "烤鸭",
+    "兔肉",
+    "兔丁",
+    "龟肉",
+    "甲鱼",
+    "鳖",
+    "鸽",
+    "鹌鹑",
+    "鹿肉",
+    "驴肉",
+    "鹅肉",
+    "肥肠",
+    "牛蛙",
+    "田鸡",
+    "鱼",
+    "虾",
+    "蟹",
+    "鱿鱼",
+    "章鱼",
+    "海参",
+    "牡蛎",
+    "鲜贝",
+    "干贝",
+    "海米",
+    "蛤",
+    "蚌",
+)
 
 SECTION_ALIASES = {}
 
@@ -199,7 +290,7 @@ TYPE_KEYWORDS = {
 }
 
 INGREDIENT_CANONICALS = (
-    ("鸡蛋", ("鸡蛋", "蛋", "皮蛋", "松花蛋")),
+    ("鸡蛋", ("鸡蛋", "鸭蛋", "鹅蛋", "皮蛋", "松花蛋", "咸蛋", "蛋黄", "蛋清", "蛋液")),
     ("番茄", ("番茄", "西红柿")),
     ("土豆", ("土豆", "马铃薯")),
     ("胡萝卜", ("胡萝卜",)),
@@ -216,7 +307,19 @@ INGREDIENT_CANONICALS = (
     ("米饭", ("米", "米饭", "糙米", "紫米")),
     ("面粉", ("面粉", "面包屑")),
     ("牛奶", ("牛奶", "奶油", "奶酪", "乳酪", "酸奶")),
-    ("猪肉", ("猪肉", "里脊", "猪里脊", "猪排", "排骨", "猪蹄", "肘", "肉末", "腊肉", "腊肠", "火腿", "午餐肉", "培根", "猪肝", "猪肚", "猪耳", "猪腰")),
+    ("排骨", ("排骨", "猪排骨")),
+    ("猪里脊", ("猪里脊", "猪里脊肉", "里脊肉")),
+    ("猪油", ("猪油",)),
+    ("猪肝", ("猪肝",)),
+    ("猪肚", ("猪肚",)),
+    ("猪蹄", ("猪蹄",)),
+    ("猪耳", ("猪耳",)),
+    ("猪腰", ("猪腰",)),
+    ("火腿", ("火腿",)),
+    ("培根", ("培根",)),
+    ("腊肉", ("腊肉",)),
+    ("腊肠", ("腊肠",)),
+    ("猪肉", ("猪肉", "五花肉", "肉末", "肉馅")),
     ("牛肉", ("牛肉", "牛腩", "牛柳", "牛百叶", "肥牛", "牛排")),
     ("羊肉", ("羊肉", "羊排",)),
     ("鸡肉", ("鸡肉", "鸡翅", "鸡腿", "鸡脯", "鸡丁", "鸡丝", "鸡心", "鸡胗", "鸡肝", "鸡杂", "乌鸡")),
@@ -235,8 +338,10 @@ FILTER_CONTAINS_PATTERNS = {
     "pork": ("猪肉", "排骨", "猪蹄", "肘", "里脊", "腊肉", "腊肠", "火腿", "午餐肉", "培根", "猪油", "猪肝", "猪肚", "猪耳", "猪腰"),
     "beef": ("牛肉", "牛腩", "牛柳", "牛排", "肥牛", "牛百叶"),
     "mutton": ("羊肉", "羊排"),
-    "seafood": ("鱼", "虾", "蟹", "鱿鱼", "海参", "鲜贝", "干贝", "海米", "章鱼", "金枪鱼"),
-    "egg": ("鸡蛋", "蛋", "皮蛋", "松花蛋"),
+    "chicken": ("鸡肉", "鸡翅", "鸡腿", "鸡胸", "鸡丁", "鸡丝", "鸡心", "鸡胗", "鸡肝", "鸡杂", "乌鸡"),
+    "duck": ("鸭肉", "鸭胗", "鸭腿", "烤鸭"),
+    "seafood": ("鱼", "虾", "蟹", "鱿鱼", "海参", "牡蛎", "鲜贝", "干贝", "海米", "章鱼", "金枪鱼", "蛤", "蚌"),
+    "egg": ("鸡蛋", "鸭蛋", "鹅蛋", "皮蛋", "松花蛋", "咸蛋", "蛋黄", "蛋清", "蛋液"),
     "dairy": ("牛奶", "奶油", "奶酪", "乳酪", "黄油", "酸奶"),
     "gluten": ("面粉", "面包", "面条", "吐司", "面包屑", "意面", "挂面", "饺子皮"),
     "soy": ("豆腐", "豆腐干", "豆腐皮", "腐竹", "黄豆", "酱油", "豆瓣"),
@@ -416,17 +521,24 @@ def split_steps(lines: list[str]) -> list[str]:
         for part in parts:
             cleaned = re.sub(r"^[➊➋➌➍➎➏➐➑➒➓❶❷❸❹❺❻❼❽❾❿]\s*", "", part).strip()
             cleaned = re.sub(r"^[0-9]+[.．、]\s*", "", cleaned)
+            cleaned = cleaned.replace("??", "").replace("�", "").replace("□", "").strip()
             if not cleaned:
                 continue
             steps.append(cleaned)
     return steps
 
 
+def clean_output_text(value: str) -> str:
+    text = unicodedata.normalize("NFKC", value)
+    text = text.replace("??", "").replace("�", "").replace("□", "")
+    return text.strip()
+
+
 def dedupe_strings(values: list[str], limit: int | None = None) -> list[str]:
     seen: set[str] = set()
     result: list[str] = []
     for value in values:
-        normalized = unicodedata.normalize("NFKC", value).strip()
+        normalized = clean_output_text(value)
         if not normalized or normalized in seen:
             continue
         seen.add(normalized)
@@ -791,6 +903,12 @@ def cleaned_ingredient_text(raw: str) -> str:
     return text.strip()
 
 
+def ingredient_alias_matches(cleaned: str, canonical: str, alias: str) -> bool:
+    if canonical == "葱":
+        cleaned = cleaned.replace("洋葱", "").replace("葱头", "")
+    return alias in cleaned
+
+
 def extract_ingredient_keywords(recipe: ExtractedRecipe) -> list[str]:
     keywords: list[str] = []
     for raw_material in [*recipe.materials, *recipe.seasonings]:
@@ -799,7 +917,10 @@ def extract_ingredient_keywords(recipe: ExtractedRecipe) -> list[str]:
             continue
         matched = False
         for canonical, aliases in INGREDIENT_CANONICALS:
-            if any(alias in cleaned for alias in aliases):
+            if any(
+                ingredient_alias_matches(cleaned, canonical, alias)
+                for alias in aliases
+            ):
                 keywords.append(canonical)
                 matched = True
         if not matched and 1 < len(cleaned) <= 8:
@@ -807,28 +928,129 @@ def extract_ingredient_keywords(recipe: ExtractedRecipe) -> list[str]:
     return dedupe_strings(keywords, limit=18)
 
 
+def normalized_recipe_haystack(recipe: ExtractedRecipe) -> str:
+    haystack = " ".join(
+        [
+            recipe.name,
+            *recipe.materials,
+            *recipe.seasonings,
+            *recipe.steps,
+            *recipe.notes,
+        ]
+    )
+    return (
+        unicodedata.normalize("NFKC", haystack)
+        .replace("鱼腥草", "")
+        .replace("鱼香", "")
+        .replace("蛋白质", "")
+    )
+
+
+def contains_filter_pattern(haystack: str, pattern: str) -> bool:
+    if pattern == "鱼":
+        return bool(
+            re.search(
+                r"(?:草鱼|鲤鱼|鲈鱼|黄鱼|鲫鱼|平鱼|带鱼|鳜鱼|鳕鱼|咸鱼|"
+                r"金枪鱼|桂鱼|鱼肉|鱼片|鱼块|鱼头|鱼尾|鱼丸|鱼排|"
+                r"(?:^|[\s、，,])鱼(?:$|[\s、，,]))",
+                haystack,
+            )
+        )
+    if pattern == "虾":
+        return bool(re.search(r"(?:虾|虾仁|大虾|明虾|基围虾)", haystack))
+    if pattern == "蟹":
+        return bool(re.search(r"(?:蟹|螃蟹)", haystack))
+    return pattern in haystack
+
+
+def recipe_has_meat_or_seafood_risk(
+    recipe: ExtractedRecipe,
+    filters: list[str],
+) -> bool:
+    contains = {
+        item.split(":", 1)[1]
+        for item in filters
+        if item.startswith("contains:")
+    }
+    if contains & MEAT_OR_SEAFOOD_CONTAINS:
+        return True
+    haystack = normalized_recipe_haystack(recipe)
+    return any(
+        contains_filter_pattern(haystack, term)
+        for term in MEAT_OR_SEAFOOD_RISK_TERMS
+    )
+
+
 def annotate_filter_ids(
     ingredient_keywords: list[str],
     dish_types: list[str],
     recipe: ExtractedRecipe,
 ) -> list[str]:
-    haystack = " ".join([recipe.name, *recipe.materials, *recipe.seasonings, *recipe.steps, *recipe.notes])
+    haystack = normalized_recipe_haystack(recipe)
     filters: list[str] = []
 
-    has_meat = any(item in ingredient_keywords for item in ("猪肉", "牛肉", "羊肉", "鸡肉", "鸭肉"))
-    has_seafood = any(item in ingredient_keywords for item in ("鱼", "虾", "蟹", "贝类"))
-    has_egg = "鸡蛋" in ingredient_keywords
-    has_dairy = "牛奶" in ingredient_keywords
+    for filter_id, patterns in FILTER_CONTAINS_PATTERNS.items():
+        if any(contains_filter_pattern(haystack, pattern) for pattern in patterns):
+            filters.append(f"contains:{filter_id}")
 
-    if not has_meat and not has_seafood:
+    has_meat_or_seafood_risk = recipe_has_meat_or_seafood_risk(recipe, filters)
+    has_meat = any(
+        item
+        in (
+            "猪肉",
+            "猪里脊",
+            "排骨",
+            "猪油",
+            "猪肝",
+            "猪肚",
+            "猪蹄",
+            "猪耳",
+            "猪腰",
+            "火腿",
+            "培根",
+            "腊肉",
+            "腊肠",
+            "牛肉",
+            "羊肉",
+            "鸡肉",
+            "鸭肉",
+        )
+        for item in ingredient_keywords
+    )
+    has_seafood = any(item in ingredient_keywords for item in ("鱼", "虾", "蟹", "贝类"))
+
+    if not has_meat_or_seafood_risk and not has_meat and not has_seafood:
         filters.append("profile:vegetarian")
-    elif has_meat or has_seafood:
+    else:
         filters.append("profile:meat_based")
 
-    if (has_meat or has_seafood) and any(
+    animal_ingredient_labels = {
+        "猪肉",
+        "猪里脊",
+        "排骨",
+        "猪油",
+        "猪肝",
+        "猪肚",
+        "猪蹄",
+        "猪耳",
+        "猪腰",
+        "火腿",
+        "培根",
+        "腊肉",
+        "腊肠",
+        "牛肉",
+        "羊肉",
+        "鸡肉",
+        "鸭肉",
+        "鱼",
+        "虾",
+        "蟹",
+        "贝类",
+    }
+    if (has_meat_or_seafood_risk or has_meat or has_seafood) and any(
         item
         for item in ingredient_keywords
-        if item not in ("猪肉", "牛肉", "羊肉", "鸡肉", "鸭肉", "鱼", "虾", "蟹", "贝类")
+        if item not in animal_ingredient_labels
     ):
         filters.append("profile:mixed")
 
@@ -839,25 +1061,6 @@ def annotate_filter_ids(
 
     for dish_type in dish_types:
         filters.append(f"type:{dish_type}")
-
-    for filter_id, patterns in FILTER_CONTAINS_PATTERNS.items():
-        if any(pattern in haystack for pattern in patterns):
-            filters.append(f"contains:{filter_id}")
-
-    is_halal_friendly = not any(
-        filter_tag in filters
-        for filter_tag in (
-            "contains:pork",
-            "contains:alcohol",
-        )
-    )
-    if is_halal_friendly:
-        filters.append("diet:halal_friendly")
-
-    if not has_meat and not has_seafood and not has_egg and not has_dairy:
-        filters.append("diet:vegan_friendly")
-    elif not has_meat and not has_seafood:
-        filters.append("diet:vegetarian_friendly")
 
     return dedupe_strings(filters)
 
@@ -952,16 +1155,30 @@ def build_details(recipe: ExtractedRecipe, dish_types: list[str], filters: list[
     return f"{recipe.name}以{ingredients}为主要材料，{style}，步骤完整，{audience}。"
 
 
+def clean_recipe_notes(raw_notes: list[str]) -> list[str]:
+    notes: list[str] = []
+    for raw_note in raw_notes:
+        note = unicodedata.normalize("NFKC", raw_note).strip()
+        if not note:
+            continue
+        if "清真友好" in note:
+            continue
+        for marker in CUISINE_MARKERS:
+            note = note.replace(marker, "")
+        note = re.sub(r"所属菜系[:：]?", "", note).strip(" ,，。；;、")
+        if note:
+            notes.append(note)
+    return dedupe_strings(notes, limit=8)
+
+
 def build_notes(recipe: ExtractedRecipe, filters: list[str], dish_types: list[str]) -> list[str]:
-    notes = list(recipe.notes)
+    notes = clean_recipe_notes(recipe.notes)
     if "contains:seafood" in filters:
         notes.append("海鲜类食材需要以完全熟透为准，处理后尽量尽快烹调。")
     if "contains:egg" in filters and "soup" in dish_types:
         notes.append("蛋液下锅前可先调匀，沿汤面缓慢划圈，更容易形成均匀口感。")
     if "contains:pork" in filters or "contains:beef" in filters or "contains:mutton" in filters:
         notes.append("肉类建议按厚薄尽量切匀，先确认熟透再调最终口味。")
-    if "diet:halal_friendly" in filters:
-        notes.append("“清真友好”仅按配方中的猪肉和酒精风险做启发式筛选，不代表宗教或供应链认证。")
     return dedupe_strings(notes, limit=8)
 
 
@@ -993,8 +1210,6 @@ def build_tags(meals: list[str], dish_types: list[str], filters: list[str]) -> l
         tags.append("素")
     if "profile:meat_based" in filters:
         tags.append("荤")
-    if "diet:halal_friendly" in filters:
-        tags.append("清真友好")
     return dedupe_strings(tags, limit=8)
 
 
@@ -1020,6 +1235,242 @@ def extract_from_epub(epub_path: Path) -> list[ExtractedRecipe]:
             extracted.extend(parse_recipe_blocks(lines, epub_path.name))
             extracted.extend(parse_english_recipe_blocks(lines, epub_path.name))
     return merge_duplicate_recipes(extracted)
+
+
+def split_cook_items(raw: str) -> list[str]:
+    if not raw.strip():
+        return []
+    return dedupe_strings(
+        [item.strip() for item in re.split(r"[、，,；;]", raw) if item.strip()]
+    )
+
+
+def cook_tool_id(raw: str) -> str | None:
+    if "电饭煲" in raw:
+        return "rice_cooker"
+    if "微波炉" in raw:
+        return "microwave"
+    if "空气炸锅" in raw:
+        return "air_fryer"
+    if "烤箱" in raw:
+        return "oven"
+    if "大锅" in raw or "炒锅" in raw:
+        return "pot"
+    return None
+
+
+def clean_cook_bv(raw: str) -> str:
+    return raw.strip().replace("https://www.bilibili.com/video/", "")
+
+
+def cook_specific_ingredients_from_title(name: str) -> list[str]:
+    specific_terms = (
+        "排骨",
+        "猪蹄",
+        "猪肝",
+        "猪肚",
+        "猪耳",
+        "猪腰",
+        "猪油",
+        "火腿",
+        "培根",
+        "腊肉",
+        "腊肠",
+    )
+    return [term for term in specific_terms if term in name]
+
+
+def cook_dish_types(
+    recipe: ExtractedRecipe,
+    tags: list[str],
+    methods: list[str],
+) -> list[str]:
+    dish_types = annotate_dish_types(recipe)
+    method_map = {
+        "炒": "stir_fry",
+        "爆": "stir_fry",
+        "煎": "pan_fry",
+        "炸": "deep_fry",
+        "烤": "bake",
+        "焗": "bake",
+        "蒸": "steam",
+        "煮": "soup",
+        "炖": "stew",
+        "煲": "stew",
+        "拌": "cold_dish",
+        "烧": "braise",
+        "焖": "braise",
+    }
+    for method in methods:
+        mapped = method_map.get(method.strip())
+        if mapped:
+            dish_types.append(mapped)
+    haystack = " ".join([recipe.name, *tags, *methods])
+    if any(keyword in haystack for keyword in ("饭", "米", "煲饭", "焖饭")):
+        dish_types.append("rice")
+    if any(keyword in haystack for keyword in ("面", "粉", "意面", "方便面")):
+        dish_types.append("noodle")
+    return dedupe_strings(dish_types)
+
+
+def build_cook_steps(
+    name: str,
+    ingredients: list[str],
+    methods: list[str],
+    tools: list[str],
+) -> list[str]:
+    ingredient_label = "、".join(ingredients[:6]) if ingredients else "主要食材"
+    method_label = "、".join(methods) if methods else "家常方式"
+    tool_label = "、".join(tools) if tools else "常用锅具"
+    return [
+        f"准备 {ingredient_label}，先按易熟程度和入口大小完成清洗、切配与沥水。",
+        f"使用 {tool_label}，按 {method_label} 的思路先处理需要出香或更耐煮的食材。",
+        f"主料接近成熟后再合并易熟配菜，边加热边观察水分、颜色和熟度。",
+        f"{name} 出锅前确认中心熟透、咸淡合适，再按口味补少量调味。",
+    ]
+
+
+def build_cook_notes(difficulty: str, ingredients: list[str]) -> list[str]:
+    notes: list[str] = []
+    if difficulty:
+        notes.append(f"难度：{difficulty}")
+    if any(item in " ".join(ingredients) for item in ("猪", "牛肉", "羊肉", "鸡肉", "鸭肉", "鱼", "虾", "蟹")):
+        notes.append("肉类、禽类和水产类食材需要确认中心完全熟透。")
+    return notes
+
+
+def cook_csv_row_to_option_payload(row: dict[str, str], row_index: int) -> dict[str, object] | None:
+    name = row.get("name", "").strip()
+    if not name:
+        return None
+    ingredients = split_cook_items(row.get("stuff", ""))
+    difficulty = row.get("difficulty", "").strip()
+    tags_raw = split_cook_items(row.get("tags", ""))
+    methods = split_cook_items(row.get("methods", ""))
+    tools_raw = split_cook_items(row.get("tools", ""))
+    bv = clean_cook_bv(row.get("bv", ""))
+    recipe = ExtractedRecipe(
+        name=name,
+        materials=ingredients,
+        seasonings=[],
+        steps=methods,
+        notes=[difficulty, *tags_raw],
+        book_title="YunYouJun/cook recipe.csv",
+    )
+    dish_types = cook_dish_types(recipe, tags_raw, methods)
+    ingredient_keywords = extract_ingredient_keywords(recipe)
+    specific_ingredients = cook_specific_ingredients_from_title(name)
+    if specific_ingredients and "猪肉" in ingredient_keywords:
+        ingredient_keywords = dedupe_strings(
+            [
+                *[item for item in ingredient_keywords if item != "猪肉"],
+                *specific_ingredients,
+            ],
+            limit=18,
+        )
+    filter_ids = annotate_filter_ids(ingredient_keywords, dish_types, recipe)
+    meals = infer_meals(recipe, dish_types, filter_ids)
+    tool_ids = dedupe_strings(
+        [item for item in (cook_tool_id(tool) for tool in tools_raw) if item]
+    )
+    if not tool_ids:
+        tool_ids = infer_tools(recipe, dish_types)
+    primary_tool = tool_ids[0] if tool_ids else "pot"
+    subtitle_parts = [
+        tools_raw[0] if tools_raw else "家常厨具",
+        difficulty or "家常难度",
+        *(tags_raw[:2] or ingredients[:2]),
+    ]
+    method_label = "、".join(methods) if methods else "家常做法"
+    ingredient_label = "、".join(ingredients[:4]) if ingredients else "常见食材"
+    tags = dedupe_strings(
+        [
+            *build_tags(meals, dish_types, filter_ids),
+            difficulty,
+            *tags_raw[:3],
+            *methods[:2],
+            *tools_raw[:2],
+        ],
+        limit=10,
+    )
+    attributes = {
+        "meal": meals,
+        "type": [item.split(":", 1)[1] for item in filter_ids if item.startswith("type:")],
+        "profile": [item.split(":", 1)[1] for item in filter_ids if item.startswith("profile:")],
+        "diet": [],
+        "contains": [item.split(":", 1)[1] for item in filter_ids if item.startswith("contains:")],
+        "ingredient": ingredient_keywords,
+        "tool": tool_ids,
+        "recipeSet": ["cook_csv"],
+        "cookDifficulty": [difficulty] if difficulty else [],
+        "cookTag": tags_raw,
+        "cookMethod": methods,
+        "cookTool": tools_raw,
+        "cookBv": [bv] if bv else [],
+        "cookStuff": ingredients,
+    }
+    normalized_name = normalize_name(name) or f"row_{row_index}"
+    return {
+        "id": f"cook_csv_{normalized_name}_{primary_tool}",
+        "moduleId": "eat",
+        "categoryId": meals[0] if meals else "lunch",
+        "contextId": primary_tool,
+        "contextIds": tool_ids,
+        "titleZh": name,
+        "titleEn": name,
+        "subtitleZh": " · ".join(dedupe_strings(subtitle_parts, limit=4)),
+        "subtitleEn": " · ".join(dedupe_strings(subtitle_parts, limit=4)),
+        "detailsZh": f"{name} 以 {ingredient_label} 为主，适合用 {tools_raw[0] if tools_raw else '常用锅具'} 按 {method_label} 完成。",
+        "detailsEn": f"{name} 以 {ingredient_label} 为主，适合用 {tools_raw[0] if tools_raw else '常用锅具'} 按 {method_label} 完成。",
+        "materialsZh": ingredients,
+        "materialsEn": ingredients,
+        "stepsZh": build_cook_steps(name, ingredients, methods, tools_raw),
+        "stepsEn": build_cook_steps(name, ingredients, methods, tools_raw),
+        "notesZh": build_cook_notes(difficulty, ingredients),
+        "notesEn": build_cook_notes(difficulty, ingredients),
+        "tagsZh": tags,
+        "tagsEn": tags,
+        "attributes": attributes,
+        "custom": False,
+    }
+
+
+def load_cook_csv_rows(
+    cook_csv: Path | None,
+    cook_csv_url: str,
+    *,
+    skip_cook_csv: bool,
+) -> list[dict[str, str]]:
+    if skip_cook_csv:
+        return []
+    if cook_csv is not None:
+        text = cook_csv.read_text(encoding="utf-8-sig")
+    else:
+        request = urllib.request.Request(
+            cook_csv_url,
+            headers={"User-Agent": "vocabularySleep-recipe-generator/1.0"},
+        )
+        with urllib.request.urlopen(request, timeout=45) as response:
+            text = response.read().decode("utf-8-sig")
+    return [
+        {str(key): str(value or "") for key, value in row.items() if key is not None}
+        for row in csv.DictReader(text.splitlines())
+    ]
+
+
+def cook_csv_payloads(rows: list[dict[str, str]]) -> list[dict[str, object]]:
+    payloads: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for index, row in enumerate(rows, start=1):
+        payload = cook_csv_row_to_option_payload(row, index)
+        if payload is None:
+            continue
+        key = f"{payload['titleZh']}|{payload.get('contextId') or ''}"
+        if key in seen:
+            continue
+        seen.add(key)
+        payloads.append(payload)
+    return payloads
 
 
 def recipe_to_option_payload(recipe: ExtractedRecipe) -> dict[str, object]:
@@ -1063,7 +1514,11 @@ def recipe_to_option_payload(recipe: ExtractedRecipe) -> dict[str, object]:
     }
 
 
-def build_dataset(source_dir: Path) -> dict[str, object]:
+def build_dataset(
+    source_dir: Path,
+    *,
+    cook_rows: list[dict[str, str]] | None = None,
+) -> dict[str, object]:
     all_recipes: list[ExtractedRecipe] = []
     per_book_counts: Counter[str] = Counter()
 
@@ -1073,8 +1528,10 @@ def build_dataset(source_dir: Path) -> dict[str, object]:
         all_recipes.extend(extracted)
 
     deduped_recipes = merge_duplicate_recipes(all_recipes)
+    book_payloads = [recipe_to_option_payload(recipe) for recipe in deduped_recipes]
+    cook_payload_list = cook_csv_payloads(cook_rows or [])
     payloads = sorted(
-        (recipe_to_option_payload(recipe) for recipe in deduped_recipes),
+        [*cook_payload_list, *book_payloads],
         key=lambda item: (
             item["categoryId"],
             item["contextId"],
@@ -1089,9 +1546,11 @@ def build_dataset(source_dir: Path) -> dict[str, object]:
         "schemaVersion": SCHEMA_VERSION,
         "version": "2026-04-25",
         "generatedAt": datetime.now(timezone.utc).isoformat(),
-        "referenceTitles": list(BOOK_REFERENCE_TITLES),
+        "referenceTitles": [],
         "stats": {
             "rawRecipeCount": len(all_recipes),
+            "bookRecipeCount": len(book_payloads),
+            "cookRecipeCount": len(cook_payload_list),
             "dedupedRecipeCount": len(payloads),
             "perBookCounts": dict(per_book_counts),
         },
@@ -1307,8 +1766,8 @@ def write_sqlite_export(path: Path, dataset: dict[str, object]) -> None:
             "schema_id": str(dataset["schemaId"]),
             "schema_version": str(dataset["schemaVersion"]),
             "reference_titles_json": json.dumps(dataset["referenceTitles"], ensure_ascii=False),
-            "local_library_count": str(len(recipes)),
-            "cook_recipe_count": "0",
+            "local_library_count": str(dataset["stats"].get("bookRecipeCount", len(recipes))),
+            "cook_recipe_count": str(dataset["stats"].get("cookRecipeCount", 0)),
             "install_source": "bundle",
             "installed_at": str(dataset["generatedAt"]),
             "updated_at": str(dataset["generatedAt"]),
@@ -1367,17 +1826,41 @@ def parse_args() -> argparse.Namespace:
         default=default_export_dir,
         help="Directory for externalized JSON summary/full and SQLite exports.",
     )
+    parser.add_argument(
+        "--cook-csv",
+        type=Path,
+        help="Optional local YunYouJun/cook recipe.csv path.",
+    )
+    parser.add_argument(
+        "--cook-csv-url",
+        default=DEFAULT_COOK_CSV_URL,
+        help="YunYouJun/cook recipe.csv URL used when --cook-csv is omitted.",
+    )
+    parser.add_argument(
+        "--skip-cook-csv",
+        action="store_true",
+        help="Skip importing YunYouJun/cook recipe.csv rows.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    dataset = build_dataset(args.source_dir)
+    cook_rows = load_cook_csv_rows(
+        args.cook_csv,
+        args.cook_csv_url,
+        skip_cook_csv=args.skip_cook_csv,
+    )
+    dataset = build_dataset(args.source_dir, cook_rows=cook_rows)
     write_json(args.output, dataset)
     write_export_bundle(args.export_dir, dataset)
     print(
         f"Generated {dataset['stats']['dedupedRecipeCount']} recipes "
         f"from {dataset['stats']['rawRecipeCount']} extracted entries."
+    )
+    print(
+        f"Book recipes: {dataset['stats']['bookRecipeCount']}; "
+        f"cook CSV recipes: {dataset['stats']['cookRecipeCount']}."
     )
     print(f"Output: {args.output}")
     print(f"Export directory: {args.export_dir}")

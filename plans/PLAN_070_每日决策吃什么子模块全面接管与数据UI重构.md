@@ -127,9 +127,10 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮进入 P0 稳定性止血，不直接清洗远端/本地菜谱数据包。
-- 优先处理三项可立即改善使用体验的问题：每日决策入口不被吃什么摘要加载阻塞、管理 sheet 的 `TextEditingController` 生命周期崩溃、随机面板候选内容高度变化导致停止按钮跳动。
-- 暂不重做 SQLite schema、菜谱集分页架构和数据生成脚本；这些进入阶段 2-6。
+- 本轮进入阶段 2 的数据源审计后续修正，不直接覆盖 `D:\vocabularySleep-resources\cook_data` 原始下载数据包。
+- 优先修正 `scripts/generate_daily_choice_recipe_dataset.py` 的高风险字段生成规则：停用无依据的清真/纯素/素食友好自信标签，避免菜系和清真说明继续污染 notes，补充原始动物性风险词，收紧鸡蛋与洋葱/葱等过宽别名。
+- 将 YunYouJun/cook `recipe.csv` 作为独立默认 cook 数据来源导入生成产物，保留原始食材、难度、标签、做法、厨具、BV 等字段到结构化属性，但不写入用户可见来源字段。
+- 输出到隔离验证目录并复跑审计，确认字段冲突下降后，再决定是否覆盖本地 `cook_data` 或进入 schema 分表重构。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -144,6 +145,10 @@
 10. 2026-04-27: 已新增 `scripts/audit_daily_choice_recipe_dataset.py`，用于审计当前 `cook_data` JSON/SQLite 与 YunYouJun/cook `recipe.csv` 的字段冲突和数据源覆盖。
 11. 2026-04-27: 已生成首轮审计报告 `records/record_070_daily_choice_recipe_data_audit.md` 与机器可读报告 `records/record_070_daily_choice_recipe_data_audit.json`。
 12. 2026-04-27: 首轮审计确认：当前 7179 条菜谱中，`vegetarian` 与肉类/海鲜冲突 530 条，`vegan_friendly` 与动物性食材冲突 496 条，菜系标签混入 notes 2221 条，`清真友好` 规则说明混入 notes 3416 条，cook CSV 599 行中 569 行未在当前库标题精确命中。
+13. 2026-04-27: 已修正 `scripts/generate_daily_choice_recipe_dataset.py` 的字段生成规则：停用自动清真/纯素/素食友好 diet 标签，菜系不再写入 notes，清真说明不再写入菜谱正文，动物性风险词覆盖兔、龟、鸽、鹌鹑、田鸡、牡蛎等漏标食材。
+14. 2026-04-27: 已将 YunYouJun/cook `recipe.csv` 作为 `cook_csv` 结构化数据来源导入验证包，保留 difficulty/tags/methods/tools/bv/stuff 到 attributes，不写入 sourceLabel、sourceUrl 或 references。
+15. 2026-04-27: 已输出隔离验证包 `D:\vocabularySleep-resources\cook_data_plan070_validation`，包含 7772 条菜谱、7179 条本地书籍菜谱和 593 条去重 cook CSV 菜谱；cook CSV 599 行标题精确命中 599 行。
+16. 2026-04-27: 已生成修正规则后的审计报告 `records/record_070_daily_choice_recipe_data_audit_after_generation.md` 与 `records/record_070_daily_choice_recipe_data_audit_after_generation.json`；10 个审计问题桶均为 0。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -153,3 +158,6 @@
 - 2026-04-27: `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
 - 2026-04-27: `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --cook-csv .tmp_recipe_csv_head.txt`（通过，生成审计报告）。
 - 2026-04-27: `python -m py_compile scripts\audit_daily_choice_recipe_dataset.py`（通过）。
+- 2026-04-27: `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）。
+- 2026-04-27: `python -X utf8 scripts\generate_daily_choice_recipe_dataset.py --cook-csv .tmp_plan070_recipe.csv --output D:\vocabularySleep-resources\cook_data_plan070_validation\recipe_library_asset.json --export-dir D:\vocabularySleep-resources\cook_data_plan070_validation`（通过，生成隔离验证包）。
+- 2026-04-27: `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv .tmp_plan070_recipe.csv --output-md records\record_070_daily_choice_recipe_data_audit_after_generation.md --output-json records\record_070_daily_choice_recipe_data_audit_after_generation.json`（通过，10 个审计问题桶均为 0）。

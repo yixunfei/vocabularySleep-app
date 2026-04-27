@@ -80,6 +80,20 @@ SPECIFIC_PORK_TERMS = (
     "腊肉",
     "猪油",
 )
+GENERIC_PORK_TERMS = (
+    "猪肉",
+    "瘦猪肉",
+    "肥猪肉",
+    "猪肉丝",
+    "猪肉丁",
+    "猪里脊",
+    "里脊肉",
+    "五花肉",
+    "肉末",
+    "肉馅",
+    "白膘",
+    "猪网油",
+)
 GARBLED_MARKERS = ("??", "□", "�")
 
 
@@ -379,7 +393,9 @@ def audit_recipes(
 
         if any(term in haystack for term in SPECIFIC_PORK_TERMS):
             specific_pork_count += 1
-            if "猪肉" in ingredients or "pork" in contains:
+            if "猪肉" in ingredients and not any(
+                generic_term in haystack for generic_term in GENERIC_PORK_TERMS
+            ):
                 add_sample(
                     buckets["specific_pork_cut_collapsed_to_generic_pork"],
                     sample_limit,
@@ -437,18 +453,20 @@ def audit_source_coverage(
         if recipe.get("references"):
             summary_with_reference_like_fields += 1
 
+    missing_count = len(missing_cook_names)
     return {
         "cookCsvRows": len(cook_rows),
-        "cookCsvExactTitleMatches": len(cook_names) - len(missing_cook_names),
-        "cookCsvMissingExactTitles": len(missing_cook_names),
+        "cookCsvExactTitleMatches": len(cook_names) - missing_count,
+        "cookCsvMissingExactTitles": missing_count,
         "cookCsvMissingSamples": missing_cook_names[:sample_limit],
         "zeroExtractedBooks": zero_extract_books,
         "summaryRowsWithSourceLabelOrUrl": summary_with_source,
         "summaryRowsWithReferences": summary_with_reference_like_fields,
         "referenceTitles": library.get("referenceTitles", []),
         "finding": (
-            "The current generator advertises YunYouJun/cook in reference titles, "
-            "but build_dataset only scans local EPUB files; recipe.csv rows are not imported as a default set."
+            "YunYouJun/cook recipe.csv rows are present in the generated library."
+            if cook_names and missing_count == 0
+            else "YunYouJun/cook recipe.csv rows are not fully imported into the generated library."
         ),
     }
 
@@ -507,6 +525,21 @@ def render_markdown(report: dict[str, Any]) -> str:
     stats = report["stats"]
     source = report["sourceCoverage"]
     issues = report["issues"]
+    if source["cookCsvRows"] and source["cookCsvMissingExactTitles"] == 0:
+        cook_coverage_line = (
+            f"1. `YunYouJun/cook` 已作为默认 cook 数据来源导入：recipe.csv 共 "
+            f"{source['cookCsvRows']} 行，当前库标题精确命中 "
+            f"{source['cookCsvExactTitleMatches']} 行，未命中 "
+            f"{source['cookCsvMissingExactTitles']} 行。"
+        )
+    else:
+        cook_coverage_line = (
+            f"1. `YunYouJun/cook` 尚未完整作为默认 cook 数据来源导入：recipe.csv 共 "
+            f"{source['cookCsvRows']} 行，当前库标题精确命中 "
+            f"{source['cookCsvExactTitleMatches']} 行，未命中 "
+            f"{source['cookCsvMissingExactTitles']} 行。"
+        )
+    cook_missing_samples = ", ".join(source["cookCsvMissingSamples"][:8]) or "无"
 
     lines = [
         "# 记录 070: 每日决策吃什么菜谱数据源审计",
@@ -519,14 +552,14 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- **SQLite 摘要行数**: {stats['sqlite'].get('tables', {}).get('daily_choice_eat_recipe_summaries', 'n/a')}",
         "",
         "## 关键结论",
-        f"1. `YunYouJun/cook` 当前没有作为独立默认菜谱集导入：recipe.csv 共 {source['cookCsvRows']} 行，当前库标题精确命中 {source['cookCsvExactTitleMatches']} 行，未命中 {source['cookCsvMissingExactTitles']} 行。",
+        cook_coverage_line,
         f"2. 素食/纯素字段存在高风险冲突：`vegetarian` 与肉类/海鲜冲突 {issues['vegetarian_profile_conflicts_with_meat_or_seafood']['count']} 条，`vegan_friendly` 与动物性食材冲突 {issues['vegan_friendly_conflicts_with_animal_contains']['count']} 条。",
         f"3. 菜系信息当前混在 notes 中且缺少可信度边界：含菜系标签 notes 共 {issues['recipe_notes_contain_cuisine_labels']['count']} 条，其中西式/非中式标记却带中式菜系 notes 的高疑似错配 {issues['western_marker_with_chinese_cuisine_note']['count']} 条。",
         f"4. `清真友好` 说明被写入菜谱 notes {issues['recipe_notes_contain_halal_explanation']['count']} 条，属于 UI/规则说明污染菜谱正文。",
-        f"5. 食材别名存在过宽匹配：`洋葱` 额外索引为 `葱` {issues['onion_alias_also_indexes_scallion']['count']} 条；排骨/猪油等具体猪肉项折叠到粗粒度猪肉/contains:pork {issues['specific_pork_cut_collapsed_to_generic_pork']['count']} 条。",
+        f"5. 食材别名存在过宽匹配：`洋葱` 额外索引为 `葱` {issues['onion_alias_also_indexes_scallion']['count']} 条；排骨/猪油等具体猪肉项仍折叠到粗粒度猪肉 {issues['specific_pork_cut_collapsed_to_generic_pork']['count']} 条。",
         "",
         "## 数据源覆盖",
-        f"- cook CSV 缺失样例: {', '.join(source['cookCsvMissingSamples'][:8])}",
+        f"- cook CSV 缺失样例: {cook_missing_samples}",
         f"- 0 提取书籍数: {len(source['zeroExtractedBooks'])}",
         f"- 摘要行 sourceLabel/sourceUrl: {source['summaryRowsWithSourceLabelOrUrl']}",
         f"- 摘要行 references: {source['summaryRowsWithReferences']}",
