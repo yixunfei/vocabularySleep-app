@@ -131,6 +131,148 @@ void main() {
   );
 
   test(
+    'DailyChoiceEatLibraryStore queries v2 summaries through SQL indexes',
+    () async {
+      final options = <DailyChoiceOption>[
+        eatOption(
+          id: 'cilantro_soup',
+          title: '番茄香菜豆腐汤',
+          materials: const <String>['番茄', '豆腐', '香菜'],
+        ),
+        eatOption(
+          id: 'mushroom_soup',
+          title: '香菇白菜汤',
+          materials: const <String>['香菇', '白菜'],
+        ),
+        eatOption(
+          id: 'beef_stir_fry',
+          title: '土豆牛肉炒',
+          materials: const <String>['土豆', '牛肉'],
+        ),
+        eatOption(
+          id: 'oven_dessert',
+          title: '烤布丁',
+          materials: const <String>['牛奶', '鸡蛋'],
+          categoryId: 'tea',
+          contextId: 'oven',
+          contextIds: const <String>['oven'],
+        ),
+        eatOption(id: 'ribs', title: '红烧排骨', materials: const <String>['排骨']),
+        eatOption(
+          id: 'pork',
+          title: '猪肉炒豆角',
+          materials: const <String>['猪肉', '豆角'],
+        ),
+        eatOption(
+          id: 'peanut',
+          title: '花生拌菠菜',
+          materials: const <String>['花生', '菠菜'],
+        ),
+        eatOption(
+          id: 'walnut',
+          title: '核桃拌黄瓜',
+          materials: const <String>['核桃', '黄瓜'],
+        ),
+      ];
+      final updatedAt = DateTime(2026, 4, 27, 14, 20);
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: 'vocabulary_sleep.daily_choice.recipe_library.v2',
+        schemaVersion: 2,
+        generatedAt: updatedAt,
+        stats: <String, Object?>{
+          'bookRecipeCount': options.length,
+          'cookRecipeCount': 0,
+          'dedupedRecipeCount': options.length,
+        },
+        recipes: options,
+      );
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'daily_choice_eat_library_store_test_',
+      );
+      final store = DailyChoiceEatLibraryStore(
+        supportDirectoryProvider: () async => tempDirectory,
+        remoteDatabaseInstaller: (targetFile) async {
+          await _writeV2LibraryDatabase(
+            targetFile,
+            document,
+            updatedAt: updatedAt,
+          );
+          return updatedAt;
+        },
+      );
+      addTearDown(() async {
+        await store.close();
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+      await store.installLibrary();
+
+      final traitFilters = <String, Set<String>>{
+        eatAttributeType: <String>{'soup'},
+        eatAttributeProfile: <String>{eatProfileVegetarian},
+      };
+      final soupResult = await store.queryBuiltInSummaries(
+        DailyChoiceEatLibraryQuery(
+          mealId: 'lunch',
+          toolId: 'pot',
+          selectedTraitFilters: traitFilters,
+          customExcludedIngredients: const <String>['香菜'],
+          limit: 5,
+        ),
+      );
+      expect(soupResult.totalCount, 1);
+      expect(soupResult.options.map((item) => item.id), <String>[
+        'mushroom_soup',
+      ]);
+      expect(soupResult.randomCandidateIds, <String>['mushroom_soup']);
+      expect(soupResult.options.single.detailsZh, isEmpty);
+
+      final firstPage = await store.queryBuiltInSummaries(
+        const DailyChoiceEatLibraryQuery(
+          mealId: 'all',
+          toolId: 'pot',
+          limit: 3,
+        ),
+      );
+      expect(firstPage.totalCount, 7);
+      expect(firstPage.options, hasLength(3));
+      expect(firstPage.hasMore, isTrue);
+      expect(firstPage.options.every((item) => item.detailsZh.isEmpty), isTrue);
+
+      final ribsResult = await store.queryBuiltInSummaries(
+        const DailyChoiceEatLibraryQuery(
+          mealId: 'all',
+          toolId: 'pot',
+          availableIngredients: <String>['排骨'],
+          preferAvailableIngredients: true,
+          limit: 20,
+        ),
+      );
+      expect(ribsResult.randomCandidateIds, <String>['ribs']);
+      expect(ribsResult.randomCandidateIds, isNot(contains('pork')));
+
+      final noPeanutOrNut = await store.queryBuiltInSummaries(
+        const DailyChoiceEatLibraryQuery(
+          mealId: 'all',
+          toolId: 'pot',
+          excludedContains: <String>{eatContainsPeanutNut},
+          limit: 20,
+        ),
+      );
+      final noPeanutOrNutIds = noPeanutOrNut.options
+          .map((item) => item.id)
+          .toList(growable: false);
+      expect(noPeanutOrNut.totalCount, 5);
+      expect(noPeanutOrNutIds, containsAll(<String>['ribs', 'pork']));
+      expect(noPeanutOrNutIds, isNot(contains('peanut')));
+      expect(noPeanutOrNutIds, isNot(contains('walnut')));
+    },
+  );
+
+  test(
     'DailyChoiceEatLibraryStore installs remote SQLite summaries and lazy loads details',
     () async {
       final options = <DailyChoiceOption>[
@@ -376,6 +518,7 @@ Future<void> _writeV2LibraryDatabase(
         primary_meal_id TEXT NOT NULL,
         primary_tool_id TEXT,
         sort_key TEXT NOT NULL,
+        random_key INTEGER NOT NULL DEFAULT 0,
         status TEXT NOT NULL DEFAULT 'active',
         is_available INTEGER NOT NULL DEFAULT 1
       )
@@ -402,6 +545,31 @@ Future<void> _writeV2LibraryDatabase(
         notes_zh_json TEXT NOT NULL DEFAULT '[]',
         notes_en_json TEXT NOT NULL DEFAULT '[]',
         raw_payload_json TEXT NOT NULL DEFAULT '{}'
+      )
+    ''');
+    db.execute('''
+      CREATE TABLE daily_choice_recipe_filter_index (
+        recipe_id TEXT NOT NULL,
+        set_id TEXT NOT NULL,
+        term_group TEXT NOT NULL,
+        term_value TEXT NOT NULL,
+        confidence INTEGER NOT NULL DEFAULT 100,
+        source_kind TEXT NOT NULL DEFAULT 'generated',
+        PRIMARY KEY (recipe_id, term_group, term_value, set_id)
+      )
+    ''');
+    db.execute('''
+      CREATE TABLE daily_choice_recipe_ingredient_index (
+        recipe_id TEXT NOT NULL,
+        set_id TEXT NOT NULL,
+        token_kind TEXT NOT NULL,
+        token_value TEXT NOT NULL,
+        display_text TEXT NOT NULL DEFAULT '',
+        source_text TEXT NOT NULL DEFAULT '',
+        match_level INTEGER NOT NULL DEFAULT 80,
+        is_primary INTEGER NOT NULL DEFAULT 0,
+        source_kind TEXT NOT NULL DEFAULT 'generated',
+        PRIMARY KEY (recipe_id, token_kind, token_value, set_id)
       )
     ''');
 
@@ -450,9 +618,10 @@ Future<void> _writeV2LibraryDatabase(
         primary_meal_id,
         primary_tool_id,
         sort_key,
+        random_key,
         status,
         is_available
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 1)
     ''');
     final summaryInsert = db.prepare('''
       INSERT INTO daily_choice_recipe_summaries (
@@ -478,13 +647,38 @@ Future<void> _writeV2LibraryDatabase(
         raw_payload_json
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''');
+    final filterIndexInsert = db.prepare('''
+      INSERT OR IGNORE INTO daily_choice_recipe_filter_index (
+        recipe_id,
+        set_id,
+        term_group,
+        term_value,
+        confidence,
+        source_kind
+      ) VALUES (?, ?, ?, ?, 100, 'generated')
+    ''');
+    final ingredientIndexInsert = db.prepare('''
+      INSERT OR IGNORE INTO daily_choice_recipe_ingredient_index (
+        recipe_id,
+        set_id,
+        token_kind,
+        token_value,
+        display_text,
+        source_text,
+        match_level,
+        is_primary,
+        source_kind
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'generated')
+    ''');
 
     try {
+      var randomKey = 0;
       for (final rawOption in document.recipes) {
         final option = ensureEatOptionAttributes(rawOption);
         final setId = option.id.startsWith('cook_csv_')
             ? 'cook_csv'
             : 'book_library';
+        randomKey += 1;
         recipeInsert.execute(<Object?>[
           option.id,
           setId,
@@ -493,6 +687,7 @@ Future<void> _writeV2LibraryDatabase(
           option.categoryId,
           option.contextId,
           '${option.categoryId}|${option.contextId ?? ''}|${option.titleZh}',
+          randomKey,
         ]);
         summaryInsert.execute(<Object?>[
           option.id,
@@ -514,15 +709,115 @@ Future<void> _writeV2LibraryDatabase(
           jsonEncode(option.notesEn),
           jsonEncode(option.toJson()),
         ]);
+        for (final term in _v2FilterTerms(option)) {
+          filterIndexInsert.execute(<Object?>[
+            option.id,
+            setId,
+            term.key,
+            term.value,
+          ]);
+        }
+        for (final rawToken in _v2RawIngredientTokens(option.materialsZh)) {
+          ingredientIndexInsert.execute(<Object?>[
+            option.id,
+            setId,
+            'raw',
+            rawToken,
+            rawToken,
+            rawToken,
+            100,
+            0,
+          ]);
+        }
+        final canonicalTokens = option.attributeValues(eatAttributeIngredient);
+        for (var index = 0; index < canonicalTokens.length; index += 1) {
+          final token = canonicalTokens[index];
+          ingredientIndexInsert.execute(<Object?>[
+            option.id,
+            setId,
+            'canonical',
+            token,
+            token,
+            '',
+            90,
+            index == 0 ? 1 : 0,
+          ]);
+          final family = _v2IngredientFamilyToken(token);
+          if (family != null) {
+            ingredientIndexInsert.execute(<Object?>[
+              option.id,
+              setId,
+              'family',
+              family,
+              family,
+              token,
+              45,
+              0,
+            ]);
+          }
+        }
       }
     } finally {
       recipeInsert.dispose();
       summaryInsert.dispose();
       detailInsert.dispose();
+      filterIndexInsert.dispose();
+      ingredientIndexInsert.dispose();
     }
   } finally {
     db.dispose();
   }
+}
+
+List<MapEntry<String, String>> _v2FilterTerms(DailyChoiceOption option) {
+  final terms = <MapEntry<String, String>>[];
+  final seen = <String>{};
+
+  void addTerm(String group, String? value) {
+    final normalizedGroup = group.trim();
+    final normalizedValue = (value ?? '').trim();
+    if (normalizedGroup.isEmpty || normalizedValue.isEmpty) {
+      return;
+    }
+    final key = '$normalizedGroup\t$normalizedValue';
+    if (seen.add(key)) {
+      terms.add(MapEntry<String, String>(normalizedGroup, normalizedValue));
+    }
+  }
+
+  addTerm(eatAttributeMeal, option.categoryId);
+  addTerm(eatAttributeTool, option.contextId);
+  for (final toolId in option.contextIds) {
+    addTerm(eatAttributeTool, toolId);
+  }
+  for (final entry in option.attributes.entries) {
+    for (final value in entry.value) {
+      addTerm(entry.key, value);
+    }
+  }
+  return List<MapEntry<String, String>>.unmodifiable(terms);
+}
+
+List<String> _v2RawIngredientTokens(Iterable<String> materials) {
+  final seen = <String>{};
+  final result = <String>[];
+  for (final material in materials) {
+    final normalized = material.trim();
+    if (normalized.length > 1 && seen.add(normalized)) {
+      result.add(normalized);
+    }
+  }
+  return List<String>.unmodifiable(result);
+}
+
+String? _v2IngredientFamilyToken(String token) {
+  if (<String>{'排骨', '猪肉', 'pork'}.contains(token)) {
+    return 'pork';
+  }
+  if (<String>{'花生', 'peanut', '坚果', 'nut'}.contains(token)) {
+    return 'nut';
+  }
+  return null;
 }
 
 Future<void> _writeLibraryDatabase(

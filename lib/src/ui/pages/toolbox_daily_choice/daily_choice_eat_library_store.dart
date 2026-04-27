@@ -8,6 +8,7 @@ import 'package:sqlite3/sqlite3.dart';
 
 import '../../../services/cstcloud_s3_compat_client.dart';
 import 'daily_choice_cook_service.dart';
+import 'daily_choice_eat_catalog.dart';
 import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
 
@@ -90,6 +91,59 @@ class DailyChoiceEatLibraryStatus {
   }
 }
 
+class DailyChoiceEatLibraryQuery {
+  const DailyChoiceEatLibraryQuery({
+    this.mealId = 'all',
+    this.toolId = 'all',
+    this.selectedTraitFilters = const <String, Set<String>>{},
+    this.excludedContains = const <String>{},
+    this.customExcludedIngredients = const <String>[],
+    this.availableIngredients = const <String>[],
+    this.preferAvailableIngredients = false,
+    this.allowedOptionIds,
+    this.setIds = const <String>[],
+    this.limit = 50,
+    this.offset = 0,
+  });
+
+  final String mealId;
+  final String toolId;
+  final Map<String, Set<String>> selectedTraitFilters;
+  final Set<String> excludedContains;
+  final Iterable<String> customExcludedIngredients;
+  final Iterable<String> availableIngredients;
+  final bool preferAvailableIngredients;
+  final Iterable<String>? allowedOptionIds;
+  final Iterable<String> setIds;
+  final int limit;
+  final int offset;
+}
+
+class DailyChoiceEatLibraryQueryResult {
+  const DailyChoiceEatLibraryQueryResult({
+    required this.options,
+    required this.totalCount,
+    required this.randomCandidateIds,
+    required this.limit,
+    required this.offset,
+  });
+
+  DailyChoiceEatLibraryQueryResult.empty(DailyChoiceEatLibraryQuery query)
+    : options = const <DailyChoiceOption>[],
+      totalCount = 0,
+      randomCandidateIds = const <String>[],
+      limit = _normalizedQueryLimit(query.limit),
+      offset = _normalizedQueryOffset(query.offset);
+
+  final List<DailyChoiceOption> options;
+  final int totalCount;
+  final List<String> randomCandidateIds;
+  final int limit;
+  final int offset;
+
+  bool get hasMore => offset + options.length < totalCount;
+}
+
 typedef DailyChoiceEatLibrarySupportDirectoryProvider =
     Future<Directory> Function();
 typedef DailyChoiceEatLibraryRemoteDatabaseInstaller =
@@ -133,6 +187,9 @@ class DailyChoiceEatLibraryStore {
   static const String _v2DetailsTable = 'daily_choice_recipe_details';
   static const String _v2SetsTable = 'daily_choice_recipe_sets';
   static const String _v2MetaTable = 'daily_choice_recipe_schema_meta';
+  static const String _v2FilterIndexTable = 'daily_choice_recipe_filter_index';
+  static const String _v2IngredientIndexTable =
+      'daily_choice_recipe_ingredient_index';
   static const String _v2BookSetId = 'book_library';
   static const String _v2CookSetId = 'cook_csv';
 
@@ -309,6 +366,25 @@ class DailyChoiceEatLibraryStore {
     return _loadBuiltInSummariesFromDatabaseConnection(db);
   }
 
+  Future<DailyChoiceEatLibraryQueryResult> queryBuiltInSummaries(
+    DailyChoiceEatLibraryQuery query,
+  ) async {
+    final status = await inspectStatus();
+    if (!status.hasInstalledLibrary) {
+      return DailyChoiceEatLibraryQueryResult.empty(query);
+    }
+    final db = await _database();
+    return switch (_detectLibrarySchema(db)) {
+      _DailyChoiceEatLibrarySchema.v2 => _queryBuiltInV2Summaries(db, query),
+      _DailyChoiceEatLibrarySchema.legacyV1 => _queryBuiltInInMemorySummaries(
+        _loadBuiltInLegacySummariesFromDatabaseConnection(db),
+        query,
+      ),
+      _DailyChoiceEatLibrarySchema.empty =>
+        DailyChoiceEatLibraryQueryResult.empty(query),
+    };
+  }
+
   Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
     final db = await _database();
     if (_detectLibrarySchema(db) == _DailyChoiceEatLibrarySchema.v2) {
@@ -395,6 +471,262 @@ class DailyChoiceEatLibraryStore {
       return null;
     }
     return _detailOptionFromV2Row(rows.first);
+  }
+
+  DailyChoiceEatLibraryQueryResult _queryBuiltInV2Summaries(
+    Database db,
+    DailyChoiceEatLibraryQuery query,
+  ) {
+    if (!_tableExists(db, _v2FilterIndexTable) ||
+        !_tableExists(db, _v2IngredientIndexTable)) {
+      return _queryBuiltInInMemorySummaries(
+        _loadBuiltInV2SummariesFromDatabaseConnection(db),
+        query,
+      );
+    }
+
+    final limit = _normalizedQueryLimit(query.limit);
+    final offset = _normalizedQueryOffset(query.offset);
+    final filter = _buildV2QueryFilter(query);
+    final totalCount = _countV2Recipes(db, filter);
+    final rows = db.select(
+      '''
+      SELECT
+        r.recipe_id,
+        r.title_zh,
+        r.title_en,
+        r.primary_meal_id,
+        r.primary_tool_id,
+        s.subtitle_zh,
+        s.subtitle_en,
+        s.tags_zh_json,
+        s.tags_en_json,
+        s.summary_attributes_json
+      FROM $_v2RecipesTable r
+      LEFT JOIN $_v2SummariesTable s
+        ON s.recipe_id = r.recipe_id
+      WHERE ${filter.whereClause}
+      ORDER BY r.sort_key ASC, r.recipe_id ASC
+      LIMIT ? OFFSET ?
+      ''',
+      <Object?>[...filter.args, limit, offset],
+    );
+    final options = List<DailyChoiceOption>.unmodifiable(
+      rows.map(_summaryOptionFromV2DatabaseRow),
+    );
+    final randomCandidateIds = _selectV2RandomCandidateIds(db, query, filter);
+    return DailyChoiceEatLibraryQueryResult(
+      options: options,
+      totalCount: totalCount,
+      randomCandidateIds: randomCandidateIds,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  DailyChoiceEatLibraryQueryResult _queryBuiltInInMemorySummaries(
+    List<DailyChoiceOption> summaries,
+    DailyChoiceEatLibraryQuery query,
+  ) {
+    final limit = _normalizedQueryLimit(query.limit);
+    final offset = _normalizedQueryOffset(query.offset);
+    final setIds = _normalizedStringList(query.setIds).toSet();
+    final scopedSummaries = setIds.isEmpty
+        ? summaries
+        : summaries
+              .where((item) => setIds.contains(_v2PrimarySetIdForOption(item)))
+              .toList(growable: false);
+    final catalog = DailyChoiceEatCatalog.fromOptions(scopedSummaries);
+    final filtered = catalog.filter(
+      mealId: query.mealId,
+      toolId: query.toolId,
+      selectedTraitFilters: query.selectedTraitFilters,
+      excludedContains: query.excludedContains,
+      customExcludedIngredients: query.customExcludedIngredients,
+      availableIngredients: query.availableIngredients,
+      preferAvailableIngredients: query.preferAvailableIngredients,
+      allowedOptionIds: query.allowedOptionIds,
+    );
+    return DailyChoiceEatLibraryQueryResult(
+      options: List<DailyChoiceOption>.unmodifiable(
+        filtered.eligibleOptions.skip(offset).take(limit),
+      ),
+      totalCount: filtered.eligibleOptions.length,
+      randomCandidateIds: List<String>.unmodifiable(
+        filtered.randomPool.map((item) => item.id),
+      ),
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  _V2QueryFilter _buildV2QueryFilter(
+    DailyChoiceEatLibraryQuery query, {
+    Iterable<String> requiredIngredientTokens = const <String>[],
+  }) {
+    final clauses = <String>["r.status = 'active'", 'r.is_available = 1'];
+    final args = <Object?>[];
+
+    void addInClause(
+      String column,
+      Iterable<String>? rawValues, {
+      required bool emptyMatchesNone,
+    }) {
+      if (rawValues == null) {
+        return;
+      }
+      final values = _normalizedStringList(rawValues);
+      if (values.isEmpty) {
+        if (emptyMatchesNone) {
+          clauses.add('1 = 0');
+        }
+        return;
+      }
+      clauses.add('$column IN (${_sqlPlaceholders(values.length)})');
+      args.addAll(values);
+    }
+
+    void addFilterExists(String group, Iterable<String> rawValues) {
+      final values = _normalizedStringList(rawValues);
+      final normalizedGroup = group.trim();
+      if (normalizedGroup.isEmpty || values.isEmpty) {
+        return;
+      }
+      clauses.add('''
+        EXISTS (
+          SELECT 1
+          FROM $_v2FilterIndexTable f
+          WHERE f.recipe_id = r.recipe_id
+            AND f.set_id = r.primary_set_id
+            AND f.term_group = ?
+            AND f.term_value IN (${_sqlPlaceholders(values.length)})
+        )
+        ''');
+      args.add(normalizedGroup);
+      args.addAll(values);
+    }
+
+    void addIngredientExists(
+      Iterable<String> rawValues, {
+      required bool negate,
+    }) {
+      final values = _normalizedStringList(rawValues);
+      if (values.isEmpty) {
+        return;
+      }
+      clauses.add('''
+        ${negate ? 'NOT ' : ''}EXISTS (
+          SELECT 1
+          FROM $_v2IngredientIndexTable i
+          WHERE i.recipe_id = r.recipe_id
+            AND i.set_id = r.primary_set_id
+            AND i.token_kind IN ('raw', 'canonical')
+            AND i.token_value IN (${_sqlPlaceholders(values.length)})
+        )
+        ''');
+      args.addAll(values);
+    }
+
+    addInClause('r.primary_set_id', query.setIds, emptyMatchesNone: false);
+    addInClause('r.recipe_id', query.allowedOptionIds, emptyMatchesNone: true);
+
+    final mealId = query.mealId.trim();
+    if (mealId.isNotEmpty && mealId != 'all') {
+      addFilterExists(eatAttributeMeal, <String>[mealId]);
+    }
+    final toolId = query.toolId.trim();
+    if (toolId.isNotEmpty && toolId != 'all') {
+      addFilterExists(eatAttributeTool, <String>[toolId]);
+    }
+
+    for (final entry in query.selectedTraitFilters.entries) {
+      addFilterExists(entry.key, entry.value);
+    }
+
+    final excludedTokens = _expandedExcludedIngredientTokens(
+      selectedContains: query.excludedContains,
+      customExcludedIngredients: query.customExcludedIngredients,
+    );
+    if (excludedTokens.isNotEmpty) {
+      _addFilterExistsNot(eatAttributeContains, excludedTokens, clauses, args);
+      addIngredientExists(excludedTokens, negate: true);
+    }
+
+    addIngredientExists(requiredIngredientTokens, negate: false);
+
+    return _V2QueryFilter(
+      whereClause: clauses.join('\n        AND '),
+      args: List<Object?>.unmodifiable(args),
+    );
+  }
+
+  void _addFilterExistsNot(
+    String group,
+    Iterable<String> rawValues,
+    List<String> clauses,
+    List<Object?> args,
+  ) {
+    final values = _normalizedStringList(rawValues);
+    final normalizedGroup = group.trim();
+    if (normalizedGroup.isEmpty || values.isEmpty) {
+      return;
+    }
+    clauses.add('''
+      NOT EXISTS (
+        SELECT 1
+        FROM $_v2FilterIndexTable f
+        WHERE f.recipe_id = r.recipe_id
+          AND f.set_id = r.primary_set_id
+          AND f.term_group = ?
+          AND f.term_value IN (${_sqlPlaceholders(values.length)})
+      )
+      ''');
+    args.add(normalizedGroup);
+    args.addAll(values);
+  }
+
+  int _countV2Recipes(Database db, _V2QueryFilter filter) {
+    final rows = db.select('''
+      SELECT COUNT(*) AS total
+      FROM $_v2RecipesTable r
+      WHERE ${filter.whereClause}
+      ''', filter.args);
+    return (rows.firstOrNull?['total'] as num?)?.toInt() ?? 0;
+  }
+
+  List<String> _selectV2RandomCandidateIds(
+    Database db,
+    DailyChoiceEatLibraryQuery query,
+    _V2QueryFilter eligibleFilter,
+  ) {
+    final eligibleIds = _selectV2RecipeIds(db, eligibleFilter);
+    if (!query.preferAvailableIngredients) {
+      return eligibleIds;
+    }
+    final availableTokens = normalizeEatIngredientInputs(
+      query.availableIngredients,
+    );
+    if (availableTokens.isEmpty) {
+      return eligibleIds;
+    }
+    final ingredientFilter = _buildV2QueryFilter(
+      query,
+      requiredIngredientTokens: availableTokens,
+    );
+    final matchedIds = _selectV2RecipeIds(db, ingredientFilter);
+    return matchedIds.isEmpty ? eligibleIds : matchedIds;
+  }
+
+  List<String> _selectV2RecipeIds(Database db, _V2QueryFilter filter) {
+    final rows = db.select('''
+      SELECT DISTINCT r.recipe_id
+      FROM $_v2RecipesTable r
+      WHERE ${filter.whereClause}
+      ORDER BY r.random_key ASC, r.recipe_id ASC
+      ''', filter.args);
+    return List<String>.unmodifiable(
+      _normalizedStringList(rows.map((row) => '${row['recipe_id']}')),
+    );
   }
 
   Future<void> close() async {
@@ -790,6 +1122,66 @@ class DailyChoiceEatLibraryStore {
   static List<String> _stringListMeta(Map<String, String> meta, String key) {
     return _jsonStringList(meta[key]);
   }
+}
+
+class _V2QueryFilter {
+  const _V2QueryFilter({required this.whereClause, required this.args});
+
+  final String whereClause;
+  final List<Object?> args;
+}
+
+int _normalizedQueryLimit(int value) {
+  if (value <= 0) {
+    return 50;
+  }
+  return value > 200 ? 200 : value;
+}
+
+int _normalizedQueryOffset(int value) {
+  return value < 0 ? 0 : value;
+}
+
+List<String> _normalizedStringList(Iterable<String> values) {
+  final seen = <String>{};
+  final result = <String>[];
+  for (final value in values) {
+    final normalized = value.trim();
+    if (normalized.isNotEmpty && seen.add(normalized)) {
+      result.add(normalized);
+    }
+  }
+  return List<String>.unmodifiable(result);
+}
+
+List<String> _expandedExcludedIngredientTokens({
+  required Iterable<String> selectedContains,
+  required Iterable<String> customExcludedIngredients,
+}) {
+  final tokens = <String>{};
+  for (final token in selectedContains) {
+    tokens.addAll(eatContainsExpandedTokens(token));
+  }
+  for (final token in normalizeEatIngredientInputs(customExcludedIngredients)) {
+    tokens.addAll(eatContainsExpandedTokens(token));
+  }
+  return List<String>.unmodifiable(tokens);
+}
+
+String _sqlPlaceholders(int count) {
+  return List<String>.filled(count, '?').join(', ');
+}
+
+String _v2PrimarySetIdForOption(DailyChoiceOption option) {
+  if (option.id.startsWith('${DailyChoiceEatLibraryStore._v2CookSetId}_')) {
+    return DailyChoiceEatLibraryStore._v2CookSetId;
+  }
+  if (option
+      .attributeValues('recipeSet')
+      .contains(DailyChoiceEatLibraryStore._v2CookSetId)) {
+    return DailyChoiceEatLibraryStore._v2CookSetId;
+  }
+  return DailyChoiceEatLibraryStore._v2BookSetId;
 }
 
 List<DailyChoiceOption> _loadBuiltInSummariesFromDatabaseFile(String dbPath) {

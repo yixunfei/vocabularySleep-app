@@ -127,9 +127,10 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮从用户已上传到 S3 `/cook_data` 的 v2-only DB 开始，先验证远端 key `cook_data/daily_choice_recipe_library.db` 已切换为 v2 schema。
-- 运行时修复聚焦 `DailyChoiceEatLibraryStore`：支持 v2-only DB 的安装校验、状态读取、摘要读取和详情懒加载；保留 v1 旧库读取能力，避免已有本地库立刻失效。
-- 本轮不改管理 UI、不做分页 UI 大拆分，也不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；随机与筛选的深层 SQL 下沉留到下一轮。
+- 本轮从已接入运行时的 v2-only 远端库继续推进，聚焦 `DailyChoiceEatLibraryStore` 的 v2 SQL 查询基础：摘要分页、索引筛选、精确食材匹配和候选 id 查询。
+- 筛选语义需要与当前 `DailyChoiceEatCatalog.filter(...)` 保持一致：餐段 `all` 不收窄，厨具 `all` 不收窄，同组 trait 为 OR、不同 trait 组为 AND，忌口同时排除 `contains` 与 raw/canonical 食材索引。
+- 食材匹配默认只用 raw/canonical，不自动启用 family 扩展；`排骨` 不应退化成通用 `pork` 命中，花生坚果预设继续展开为 `peanut` + `nut`。
+- 本轮不改管理 UI、不做分页 UI 大拆分，也不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；随机 pivot 和 UI 接入在查询基础稳定后继续推进。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -164,6 +165,9 @@
 30. 2026-04-27: 已让 `DailyChoiceEatLibraryStore` 支持 v2-only DB：安装校验、meta 归一化、状态读取、摘要读取和详情懒加载均可按 v2 表执行，同时保留 v1 旧库读取能力。
 31. 2026-04-27: 已新增 v2-only SQLite store 单测，覆盖远端安装后 schemaVersion=2、book/cook 计数、摘要无详情负载和详情懒加载。
 32. 2026-04-27: 已新增 `records/record_070_daily_choice_remote_v2_runtime_smoke.md`，记录远端 v2 smoke、运行时改动和验证命令。
+33. 2026-04-27: 已新增 `DailyChoiceEatLibraryQuery` / `DailyChoiceEatLibraryQueryResult`，为 v2 摘要分页、总数、完整候选 id 池和后续 random pivot 建立 store 查询入口。
+34. 2026-04-27: 已将 v2 查询下沉到 `daily_choice_recipe_filter_index` 与 `daily_choice_recipe_ingredient_index`，覆盖餐段、厨具、trait、contains 忌口、自定义忌口和 raw/canonical 食材优先匹配。
+35. 2026-04-27: 已新增 `records/record_070_daily_choice_v2_sql_query_foundation.md`，记录 v2 SQL 查询基础、本轮边界、测试覆盖和后续 UI 接入风险。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -198,6 +202,11 @@
 - 2026-04-27: `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv build\_external\cook\app\data\recipe.csv --output-md records\record_070_daily_choice_recipe_v2_only_db_audit.md --output-json records\record_070_daily_choice_recipe_v2_only_db_audit.json`（通过，10 个审计问题桶均为 0，cook CSV 599 行全部标题命中）。
 - 2026-04-27: `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过，完整下载用户更新后的远端 v2-only DB，v2 recipes/summaries/details 均为 7,772 行）。
 - 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart scripts\verify_daily_choice_recipe_remote.dart`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart`（通过，新增 v2 SQL 查询 API 后无静态问题）。
+- 2026-04-27: `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 v2 SQL 筛选、分页、`排骨` 精确食材匹配和花生坚果忌口）。
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）。
 - 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）。
