@@ -191,6 +191,7 @@ class DailyChoiceRandomPanel extends StatefulWidget {
 }
 
 class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
+  static const double _randomStageHeight = 224;
   final math.Random _random = math.Random();
   Timer? _timer;
   DailyChoiceOption? _current;
@@ -323,29 +324,32 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
             ],
           ),
           const SizedBox(height: 14),
-          AnimatedSwitcher(
-            duration: _running ? Duration.zero : AppDurations.standard,
-            switchInCurve: AppEasing.standard,
-            switchOutCurve: AppEasing.conceal,
-            child: display == null
-                ? _EmptyRandomStage(
-                    key: const ValueKey<String>('empty'),
-                    text: widget.emptyText,
-                    accent: widget.accent,
-                  )
-                : _OptionStage(
-                    key: ValueKey<String>(
-                      _running
-                          ? 'running-option-stage'
-                          : 'option-${display.id}-${_locked != null}',
+          SizedBox(
+            height: _randomStageHeight,
+            child: AnimatedSwitcher(
+              duration: _running ? Duration.zero : AppDurations.standard,
+              switchInCurve: AppEasing.standard,
+              switchOutCurve: AppEasing.conceal,
+              child: display == null
+                  ? _EmptyRandomStage(
+                      key: const ValueKey<String>('empty'),
+                      text: widget.emptyText,
+                      accent: widget.accent,
+                    )
+                  : _OptionStage(
+                      key: ValueKey<String>(
+                        _running
+                            ? 'running-option-stage'
+                            : 'option-${display.id}-${_locked != null}',
+                      ),
+                      i18n: widget.i18n,
+                      option: display,
+                      accent: widget.accent,
+                      locked: _locked != null,
+                      running: _running,
+                      onTap: () => widget.onDetail(display),
                     ),
-                    i18n: widget.i18n,
-                    option: display,
-                    accent: widget.accent,
-                    locked: _locked != null,
-                    running: _running,
-                    onTap: () => widget.onDetail(display),
-                  ),
+            ),
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -396,6 +400,8 @@ class _EmptyRandomStage extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.centerLeft,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
@@ -431,7 +437,10 @@ class _OptionStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tags = option.tags(i18n).take(4).toList(growable: false);
+    final tags = option
+        .tags(i18n)
+        .take(running ? 2 : 3)
+        .toList(growable: false);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -439,6 +448,7 @@ class _OptionStage extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           width: double.infinity,
+          height: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -514,6 +524,8 @@ class _OptionStage extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           option.title(i18n),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w900,
                             height: 1.15,
@@ -527,6 +539,8 @@ class _OptionStage extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 option.subtitle(i18n),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
               ),
               if (tags.isNotEmpty) ...<Widget>[

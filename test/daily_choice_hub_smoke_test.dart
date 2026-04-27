@@ -56,7 +56,7 @@ void main() {
   Future<void> pumpEatHub(
     WidgetTester tester, {
     required _FakeCookService cookService,
-    required _FakeEatLibraryStore libraryStore,
+    required DailyChoiceEatLibraryStore libraryStore,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -309,6 +309,59 @@ void main() {
     },
   );
 
+  testWidgets(
+    'DailyChoiceHub keeps other modules usable while eat library loads',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final option = eatOption(
+        id: 'slow_summary_recipe',
+        title: 'Slow Summary Recipe',
+        materials: const <String>['tofu'],
+      );
+      final result = DailyChoiceCookLoadResult(
+        options: <DailyChoiceOption>[option],
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: 1,
+        updatedAt: DateTime(2026, 4, 27, 9, 0),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        stats: const <String, Object?>{'recipeCount': 1},
+        recipes: <DailyChoiceOption>[option],
+      );
+      final libraryStore = _BlockingEatLibraryStore(document);
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+      );
+      await pumpUntilVisible(tester, find.text('Wear'));
+
+      expect(libraryStore.summaryRequested, isTrue);
+      expect(libraryStore.summaryCompleted, isFalse);
+
+      await tester.tap(find.text('Wear'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(find.text('Temperature'), findsOneWidget);
+      expect(libraryStore.summaryCompleted, isFalse);
+      expect(tester.takeException(), isNull);
+
+      libraryStore.completeSummaries();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    },
+  );
+
   testWidgets('eat recipe editor tolerates duplicated all context entries', (
     WidgetTester tester,
   ) async {
@@ -454,6 +507,80 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
   Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
     detailRequests.add(recipeId);
     for (final option in _options) {
+      if (option.id == recipeId) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<void> close() async {}
+}
+
+class _BlockingEatLibraryStore extends DailyChoiceEatLibraryStore {
+  _BlockingEatLibraryStore(this.document);
+
+  final DailyChoiceRecipeLibraryDocument document;
+  final Completer<List<DailyChoiceOption>> _summaryCompleter =
+      Completer<List<DailyChoiceOption>>();
+  bool summaryRequested = false;
+  bool summaryCompleted = false;
+
+  @override
+  Future<DailyChoiceEatLibraryStatus> inspectStatus() async {
+    return DailyChoiceEatLibraryStatus(
+      hasInstalledLibrary: true,
+      recipeCount: document.recipes.length,
+      localLibraryCount: document.recipes.length,
+      libraryId: document.libraryId,
+      libraryVersion: document.libraryVersion,
+      schemaId: document.schemaId,
+      schemaVersion: document.schemaVersion,
+      source: DailyChoiceCookDataSource.remote,
+      installedAt: document.generatedAt,
+      updatedAt: document.generatedAt,
+    );
+  }
+
+  @override
+  Future<DailyChoiceEatLibraryStatus> installLibrary() async => inspectStatus();
+
+  @override
+  Future<List<DailyChoiceOption>> loadBuiltInSummaries() async {
+    summaryRequested = true;
+    final summaries = await _summaryCompleter.future;
+    summaryCompleted = true;
+    return summaries;
+  }
+
+  void completeSummaries() {
+    if (_summaryCompleter.isCompleted) {
+      return;
+    }
+    _summaryCompleter.complete(
+      List<DailyChoiceOption>.unmodifiable(
+        document.recipes.map(
+          (option) => ensureEatOptionAttributes(
+            option.copyWith(
+              detailsZh: '',
+              detailsEn: '',
+              materialsZh: const <String>[],
+              materialsEn: const <String>[],
+              stepsZh: const <String>[],
+              stepsEn: const <String>[],
+              notesZh: const <String>[],
+              notesEn: const <String>[],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<DailyChoiceOption?> loadBuiltInDetail(String recipeId) async {
+    for (final option in document.recipes) {
       if (option.id == recipeId) {
         return option;
       }

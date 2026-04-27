@@ -77,19 +77,24 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
   String _selectedModuleId = 'eat';
   bool _customStateLoaded = false;
   bool _eatLibraryLoaded = false;
+  bool _eatLibraryLoading = false;
   bool _eatLibraryInstalling = false;
 
   @override
   void initState() {
     super.initState();
     unawaited(_initialize());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          _selectedModuleId != DailyChoiceModuleId.eat.storageValue) {
+        return;
+      }
+      unawaited(_ensureEatLibraryLoaded());
+    });
   }
 
   Future<void> _initialize() async {
-    await Future.wait(<Future<void>>[
-      _loadCustomState(),
-      _initializeEatLibrary(),
-    ]);
+    await _loadCustomState();
   }
 
   Future<void> _loadCustomState() async {
@@ -104,9 +109,23 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     });
   }
 
-  Future<void> _initializeEatLibrary() async {
+  Future<void> _ensureEatLibraryLoaded() async {
+    if (_eatLibraryLoaded || _eatLibraryLoading || _eatLibraryInstalling) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _eatLibraryLoading = true;
+      });
+    }
     try {
       final status = await _eatLibraryStore.inspectStatus();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _eatLibraryStatus = status;
+      });
       final builtInOptions = status.hasInstalledLibrary
           ? await _eatLibraryStore.loadBuiltInSummaries()
           : const <DailyChoiceOption>[];
@@ -117,6 +136,7 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
         _eatLibraryStatus = status;
         _rebuildEatState(builtInOptions: builtInOptions);
         _eatLibraryLoaded = true;
+        _eatLibraryLoading = false;
       });
     } catch (error) {
       if (!mounted) {
@@ -129,16 +149,18 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
         );
         _rebuildEatState(builtInOptions: const <DailyChoiceOption>[]);
         _eatLibraryLoaded = true;
+        _eatLibraryLoading = false;
       });
     }
   }
 
   Future<void> _installEatLibrary() async {
-    if (_eatLibraryInstalling) {
+    if (_eatLibraryInstalling || _eatLibraryLoading) {
       return;
     }
     setState(() {
       _eatLibraryInstalling = true;
+      _eatLibraryLoaded = false;
     });
     try {
       final status = await _eatLibraryStore.installLibrary();
@@ -278,10 +300,13 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
             setState(() {
               _selectedModuleId = value;
             });
+            if (value == DailyChoiceModuleId.eat.storageValue) {
+              unawaited(_ensureEatLibraryLoaded());
+            }
           },
         ),
         const SizedBox(height: ToolboxUiTokens.sectionSpacing),
-        if (!_customStateLoaded || !_eatLibraryLoaded)
+        if (!_customStateLoaded)
           LinearProgressIndicator(color: module.accent)
         else
           AnimatedSwitcher(
@@ -315,6 +340,7 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
         accent: module.accent,
         libraryStore: _eatLibraryStore,
         libraryStatus: _eatLibraryStatus,
+        libraryLoading: _eatLibraryLoading,
         libraryInstalling: _eatLibraryInstalling,
         onInstallLibrary: _installEatLibrary,
         catalog: _eatCatalog,

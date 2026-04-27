@@ -60,7 +60,8 @@ Future<void> showDailyChoiceManagerSheet({
   final isEatModule = moduleId == DailyChoiceModuleId.eat.storageValue;
   final isWearModule = moduleId == DailyChoiceModuleId.wear.storageValue;
   var builtInExpanded = !isEatModule;
-  final collectionNameController = TextEditingController();
+  var collectionNameDraft = '';
+  var collectionInputVersion = 0;
   var selectedCollectionId = 'all';
   var builtInVisibleLimit = _managerInitialBuiltInLimit(isEatModule);
   final managerTraitGroups = isWearModule
@@ -258,7 +259,7 @@ Future<void> showDailyChoiceManagerSheet({
             }
 
             void createCollection() {
-              final title = collectionNameController.text.trim();
+              final title = collectionNameDraft.trim();
               if (title.isEmpty) {
                 return;
               }
@@ -267,7 +268,8 @@ Future<void> showDailyChoiceManagerSheet({
                 titleZh: title,
                 titleEn: title,
               );
-              collectionNameController.clear();
+              collectionNameDraft = '';
+              collectionInputVersion += 1;
               selectedCollectionId = collection.id;
               resetBuiltInPaging();
               publish(localState.upsertEatCollection(collection));
@@ -359,9 +361,15 @@ Future<void> showDailyChoiceManagerSheet({
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              TextField(
-                                controller: collectionNameController,
-                                onSubmitted: (_) => createCollection(),
+                              TextFormField(
+                                key: ValueKey<String>(
+                                  'eat-collection-input-$collectionInputVersion',
+                                ),
+                                initialValue: collectionNameDraft,
+                                onChanged: (value) {
+                                  collectionNameDraft = value;
+                                },
+                                onFieldSubmitted: (_) => createCollection(),
                                 decoration: InputDecoration(
                                   prefixIcon: const Icon(
                                     Icons.bookmark_add_rounded,
@@ -1136,7 +1144,7 @@ Future<void> showDailyChoiceManagerSheet({
       },
     );
   } finally {
-    collectionNameController.dispose();
+    collectionNameDraft = '';
   }
 }
 

@@ -33,7 +33,7 @@
 | 阶段 | 状态 | 目标 |
 |------|------|------|
 | 0. 备份与接管计划 | 已完成 | 建立分支、备份提交、创建可延续计划 |
-| 1. P0 稳定性止血 | 待开始 | 修复加载阻塞、controller 崩溃、随机按钮跳动和明显卡顿入口 |
+| 1. P0 稳定性止血 | 已完成 | 修复加载阻塞、controller 崩溃、随机按钮跳动和明显卡顿入口 |
 | 2. 数据源审计与规范 | 待开始 | 从 cook 项目、本地做菜资料和现有 `cook_data` 生成可信字段规范 |
 | 3. 数据库与索引重构 | 待开始 | 建立菜谱集、摘要表、详情表、字段索引、不可用标记和迁移兼容 |
 | 4. 筛选与随机引擎重构 | 待开始 | 精确食材匹配、餐段默认全部、忌口精简、随机池去顺序偏差 |
@@ -127,15 +127,24 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮先完成备份、计划和工作流接管，不直接修改业务逻辑和数据包。
-- 下一轮建议优先处理 P0 稳定性：每日决策入口懒加载、管理 sheet controller 崩溃、随机面板稳定高度。
+- 本轮进入 P0 稳定性止血，不直接清洗远端/本地菜谱数据包。
+- 优先处理三项可立即改善使用体验的问题：每日决策入口不被吃什么摘要加载阻塞、管理 sheet 的 `TextEditingController` 生命周期崩溃、随机面板候选内容高度变化导致停止按钮跳动。
+- 暂不重做 SQLite schema、菜谱集分页架构和数据生成脚本；这些进入阶段 2-6。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
 2. 2026-04-27: 已完成备份式提交 `735b95a chore: backup current workspace before daily choice overhaul`。
 3. 2026-04-27: 已梳理当前关键风险文件：`daily_choice_hub.dart`、`daily_choice_manager_sheet.dart`、`daily_choice_widgets.dart`、`daily_choice_eat_library_store.dart`。
 4. 2026-04-27: 已补充 `changelogs/CHANGELOG.md` 的 PLAN_070 接管记录。
+5. 2026-04-27: 已启动阶段 1 P0 稳定性止血，范围限定为入口懒加载、管理 sheet controller 生命周期和随机面板稳定高度。
+6. 2026-04-27: 已将 `DailyChoiceHub` 改为只用自定义状态阻塞首帧；吃什么菜谱库摘要进入吃什么模块后后台加载，其他模块不再等待吃什么加载完成。
+7. 2026-04-27: 已移除管理 sheet 新建食谱集输入框的函数级 `TextEditingController`，改为 `TextFormField` 内部状态，避免关闭/重建时使用已释放 controller。
+8. 2026-04-27: 已固定随机面板候选舞台高度，并限制随机中的标题、简介和标签行数，停止按钮不再随菜品文本换行上下跳动。
+9. 2026-04-27: 已新增 smoke 测试覆盖“吃什么摘要加载未完成时仍可切换并使用穿什么模块”。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
 - 2026-04-27: `git commit -m "chore: backup current workspace before daily choice overhaul"`（通过，提交 `735b95a`）。
+- 2026-04-27: `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`（通过）。
+- 2026-04-27: `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）。
+- 2026-04-27: `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）。

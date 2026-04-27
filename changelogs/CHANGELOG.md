@@ -8,18 +8,31 @@
 
 ### 新增
 - 新增 `plans/PLAN_070_每日决策吃什么子模块全面接管与数据UI重构.md`，记录接管分支、备份提交、阶段拆分、13 个问题验收标准、数据重建原则、schema 优化方向、UI 拆分边界和后续验证策略。
+- 新增 `DailyChoiceHub keeps other modules usable while eat library loads` smoke 测试，锁定吃什么摘要加载未完成时仍可切换并使用其他每日决策模块。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
 - 明确下一轮优先处理 P0 稳定性：每日决策入口不被吃什么菜谱库加载阻塞、管理 sheet controller 生命周期崩溃、随机面板停止按钮位置跳动和明显卡顿入口。
+- `DailyChoiceHub` 初始化不再等待吃什么菜谱库摘要加载完成；首屏只等待轻量自定义状态，吃什么菜谱库在进入吃什么模块后后台读取。
+- 吃什么资源状态面板区分后台读取和安装加载，读取期间只影响吃什么模块自身，不阻塞穿什么、去哪儿、干什么和决策助手。
+- 随机面板候选舞台固定高度，随机时限制标题、简介和标签行数，让停止按钮位置保持稳定。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
 - `plans/` 目录在当前仓库 `.gitignore` 中默认忽略，本计划需要作为本次接管凭据强制纳入提交。
+- 吃什么摘要加载改为模块级后台任务后，摘要未完成前吃什么候选池会保持为空并显示资源准备状态；这是有意降级，用来换取每日决策其他模块不被阻塞。
+
+### 修复
+- 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
+- 修复管理 sheet 新建食谱集输入框因函数级 `TextEditingController` 在关闭/重建时被释放后继续参与 TextField 构建的崩溃风险。
+- 修复随机过程中菜品内容换行导致停止按钮上下跳动、难以点击的问题。
 
 ### 验证
 - `git switch -c codex/daily-choice-overhaul`（通过）
 - `git commit -m "chore: backup current workspace before daily choice overhaul"`（通过，备份提交 `735b95a`）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 

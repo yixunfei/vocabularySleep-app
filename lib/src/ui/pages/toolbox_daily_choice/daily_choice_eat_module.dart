@@ -7,6 +7,7 @@ class _EatChoiceModule extends StatefulWidget {
     required this.accent,
     required this.libraryStore,
     required this.libraryStatus,
+    required this.libraryLoading,
     required this.libraryInstalling,
     required this.onInstallLibrary,
     required this.catalog,
@@ -20,6 +21,7 @@ class _EatChoiceModule extends StatefulWidget {
   final Color accent;
   final DailyChoiceEatLibraryStore libraryStore;
   final DailyChoiceEatLibraryStatus libraryStatus;
+  final bool libraryLoading;
   final bool libraryInstalling;
   final Future<void> Function() onInstallLibrary;
   final DailyChoiceEatCatalog catalog;
@@ -117,6 +119,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
     final displayed = _filterResult.randomPool;
     final showLibraryPanel =
         !widget.libraryStatus.hasInstalledLibrary ||
+        widget.libraryLoading ||
         widget.libraryInstalling ||
         widget.libraryStatus.errorMessage != null;
 
@@ -164,6 +167,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
             i18n: widget.i18n,
             accent: widget.accent,
             libraryStatus: widget.libraryStatus,
+            libraryLoading: widget.libraryLoading,
             libraryInstalling: widget.libraryInstalling,
             onInstallLibrary: widget.onInstallLibrary,
             candidateCount: displayed.length,
@@ -566,6 +570,7 @@ class _EatLibraryStatusPanel extends StatelessWidget {
     required this.i18n,
     required this.accent,
     required this.libraryStatus,
+    required this.libraryLoading,
     required this.libraryInstalling,
     required this.onInstallLibrary,
     required this.candidateCount,
@@ -576,6 +581,7 @@ class _EatLibraryStatusPanel extends StatelessWidget {
   final AppI18n i18n;
   final Color accent;
   final DailyChoiceEatLibraryStatus libraryStatus;
+  final bool libraryLoading;
   final bool libraryInstalling;
   final Future<void> Function() onInstallLibrary;
   final int candidateCount;
@@ -586,11 +592,14 @@ class _EatLibraryStatusPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasInstalledLibrary = libraryStatus.hasInstalledLibrary;
+    final busy = libraryLoading || libraryInstalling;
     final updatedAt = libraryStatus.updatedAt ?? libraryStatus.installedAt;
     final updatedLabel = updatedAt == null
         ? null
         : '${updatedAt.year}-${updatedAt.month.toString().padLeft(2, '0')}-${updatedAt.day.toString().padLeft(2, '0')} ${updatedAt.hour.toString().padLeft(2, '0')}:${updatedAt.minute.toString().padLeft(2, '0')}';
-    final compactStatusLabel = !hasInstalledLibrary
+    final compactStatusLabel = libraryLoading
+        ? pickUiText(i18n, zh: '加载中', en: 'Loading')
+        : !hasInstalledLibrary
         ? pickUiText(i18n, zh: '尚未加载', en: 'Not installed')
         : libraryInstalling
         ? pickUiText(i18n, zh: '加载中', en: 'Loading')
@@ -666,20 +675,20 @@ class _EatLibraryStatusPanel extends StatelessWidget {
           if (!hasInstalledLibrary) ...<Widget>[
             const SizedBox(height: 10),
             FilledButton.icon(
-              onPressed: libraryInstalling
-                  ? null
-                  : () => unawaited(onInstallLibrary()),
+              onPressed: busy ? null : () => unawaited(onInstallLibrary()),
               icon: Icon(
-                libraryInstalling
+                busy
                     ? Icons.hourglass_top_rounded
                     : Icons.cloud_download_rounded,
               ),
               label: Text(
                 pickUiText(
                   i18n,
-                  zh: libraryInstalling ? '正在加载菜谱库…' : '点击加载菜谱库',
+                  zh: busy ? '正在加载菜谱库…' : '点击加载菜谱库',
                   en: libraryInstalling
                       ? 'Loading recipe library…'
+                      : libraryLoading
+                      ? 'Reading recipe library…'
                       : 'Load recipe library',
                 ),
               ),
@@ -716,7 +725,7 @@ class _EatLibraryStatusPanel extends StatelessWidget {
               ),
             ],
           ],
-          if (libraryInstalling) ...<Widget>[
+          if (busy) ...<Widget>[
             const SizedBox(height: 10),
             LinearProgressIndicator(
               color: accent,
