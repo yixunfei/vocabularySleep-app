@@ -50,6 +50,8 @@
 - 新增 `records/record_070_daily_choice_collection_dropdown_import_export.md`，记录管理页集合入口去重、重命名/删除下拉操作和食谱集导入导出边界。
 - 新增筛选项紧凑展示：分类、场景、厨具、高级筛选和管理页筛选中，未选中项仅显示图标，选中项显示选项名。
 - 新增 `records/record_070_daily_choice_compact_filter_controls.md`，记录筛选项紧凑展示和展开入口增强。
+- 新增管理页结构拆分 part：查询 helper、section widgets、集合导入导出、确认弹窗从主 `daily_choice_manager_sheet.dart` 移出。
+- 新增 `records/record_070_daily_choice_p1_p4_closure.md`，记录 PLAN_070 P1-P4 收尾、分页追加模型、计划状态校准和验证结果。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -113,6 +115,9 @@
 - 食谱集导入会校验分享包格式版本，文件内容无法读取时会显示导入失败提示，不再静默无响应。
 - `ToolboxSelectablePill` 支持隐藏文字标签并保留 tooltip/语义标签，便于移动端把筛选项尽量压在一行内。
 - 吃什么资源准备、高级设置和管理页可展开区的展开/收起按钮增加浅色背景、边框和 accent 色，提升可点击识别度。
+- 管理页内置菜谱 SQL 分页从“扩大 limit 重取前序摘要”改为 `offset + pageSize` 追加页，触底加载下一页时只请求新增窗口。
+- PLAN_070 阶段进度和 13 项验收表已按当前实现校准，明确主 UI 停止随机以响应性优先，路由级拆页和最近 3 个自定义忌口为后续增强。
+- PLAN_070 阶段 7 已完成本轮收尾验证；全量 `flutter analyze` 仍保留本轮外既有 lint 债，Android release APK 构建通过。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -161,12 +166,19 @@
 - 修复管理页内置库“喜欢/加入”只能隐式操作单一集合、缺少多集合选择入口的问题。
 - 修复管理页食谱集选择入口重复导致同一集合既在 chip 又在卡片中出现的问题。
 - 修复食谱集导入在文件选择器未返回内容时可能没有任何反馈的问题。
+- 修复管理页触底加载下一页时重复查询已显示内置菜谱摘要的问题。
 
 ### 验证
 - `dart format lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_modules.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_wear_module.dart`（通过）
 - `dart analyze lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
 - `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_query_helpers.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_section_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_collection_io.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_dialogs.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter analyze`（未通过，仅剩本轮外既有 harp/woodfish/pubspec/test lint）
+- `powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Target android-apk`（通过，release APK 构建成功）
 - `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart`（通过）
 - `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）

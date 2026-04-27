@@ -17,6 +17,10 @@ import 'daily_choice_seed_data.dart';
 part 'daily_choice_detail_sheets.dart';
 part 'daily_choice_editor_sheet.dart';
 part 'daily_choice_manager_sheet.dart';
+part 'daily_choice_manager_query_helpers.dart';
+part 'daily_choice_manager_section_widgets.dart';
+part 'daily_choice_manager_collection_io.dart';
+part 'daily_choice_manager_dialogs.dart';
 
 class DailyChoiceHeroPanel extends StatelessWidget {
   const DailyChoiceHeroPanel({

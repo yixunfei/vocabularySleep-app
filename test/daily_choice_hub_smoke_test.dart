@@ -472,6 +472,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(libraryStore.queryRequests.last.limit, 80);
+      expect(libraryStore.queryRequests.last.offset, 0);
 
       await tester.ensureVisible(
         find.descendant(of: managerSheet, matching: find.text('Recipe 79')),
@@ -480,10 +481,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(
-        libraryStore.queryRequests.any((query) => query.limit > 80),
+        libraryStore.queryRequests.any((query) => query.offset >= 80),
         isTrue,
       );
-      expect(libraryStore.queryRequests.last.limit, greaterThan(80));
+      expect(libraryStore.queryRequests.last.limit, 80);
+      expect(libraryStore.queryRequests.last.offset, greaterThanOrEqualTo(80));
       expect(tester.takeException(), isNull);
     },
   );

@@ -34,12 +34,12 @@
 |------|------|------|
 | 0. 备份与接管计划 | 已完成 | 建立分支、备份提交、创建可延续计划 |
 | 1. P0 稳定性止血 | 已完成 | 修复加载阻塞、controller 崩溃、随机按钮跳动和明显卡顿入口 |
-| 2. 数据源审计与规范 | 进行中 | 从 cook 项目、本地做菜资料和现有 `cook_data` 生成可信字段规范 |
-| 3. 数据库与索引重构 | 进行中 | 建立菜谱集、摘要表、详情表、字段索引、不可用标记和迁移兼容 |
-| 4. 筛选与随机引擎重构 | 进行中 | 精确食材匹配、餐段默认全部、忌口精简、随机池去顺序偏差 |
-| 5. 管理 UI 拆分 | 进行中 | 管理 sheet 拆出子页面/子窗口，完善食谱集管理和自动分页 |
-| 6. 数据包生成与交付 | 进行中 | 产出可重新上传的本地数据包、校验报告和上传前清单 |
-| 7. 回归验证与收尾 | 待开始 | 单测、widget smoke、性能采样、构建验证、changelog 和计划归档 |
+| 2. 数据源审计与规范 | 已完成 | 已完成 cook、本地资料和现有库审计，风险字段已从验证包清理 |
+| 3. 数据库与索引重构 | 已完成 | 已生成 v2-only SQLite，并接入运行时安装、摘要、详情和查询索引 |
+| 4. 筛选与随机引擎重构 | 已完成 | 已完成精确食材、默认全部餐段、忌口精简、SQL 查询和停止随机响应性收口 |
+| 5. 管理 UI 拆分 | 已完成（首轮结构拆分） | 已拆出管理页 helper/section part，保留 bottom sheet 交互，后续可继续做路由级拆页 |
+| 6. 数据包生成与交付 | 已完成（待用户上传） | 已产出验证包和 v2-only DB；不覆盖原始 `cook_data`，S3 上传由用户执行 |
+| 7. 回归验证与收尾 | 已完成（保留既有 lint 债） | 已通过定向 analyze/test 与 Android release 构建；全量 analyze 仅剩本轮外既有 lint |
 
 ## 详细步骤
 1. P0 稳定性止血
@@ -89,21 +89,21 @@
    - 运行 `dart format`、`flutter analyze`、相关 `flutter test`，可行时运行 Android 构建脚本。
 
 ## 13 个问题对应验收
-| 编号 | 验收标准 |
-|------|----------|
-| 1 | 数据字段审计通过，猪肉/排骨等肉类不再被标注素食友好，菜系无依据则留空 |
-| 2 | 食材匹配精确优先，`排骨` 不默认匹配全量猪肉菜谱 |
-| 3 | 进入、编辑保存、管理浏览不再全量构建详情；摘要/详情/索引分层 |
-| 4 | 随机基于完整候选 id 池，不受分页窗口和列表顺序影响 |
-| 5 | 随机过程中停止按钮位置稳定，候选内容高度固定或溢出省略 |
-| 6 | 每日决策入口不等待吃什么菜谱库加载即可使用其他模块 |
-| 7 | 管理入口拆分，避免所有菜谱、调整、自定义、集合挤在两个简单页面 |
-| 8 | 菜谱分集合具备创建、选择、浏览、加入/移出、集合内随机和管理 |
-| 9 | 高级筛选精简忌口预设，并展示最近 3 个自定义忌口 |
-| 10 | 餐段增加并默认“全部” |
-| 11 | 用户界面和指南中不展示外部参考和来源 |
-| 12 | 菜谱分页滑到底部自动加载，必要时评估窗口化内存策略 |
-| 13 | `TextEditingController was used after being disposed` 崩溃不再复现 |
+| 编号 | 验收标准 | 当前结论 |
+|------|----------|----------|
+| 1 | 数据字段审计通过，猪肉/排骨等肉类不再被标注素食友好，菜系无依据则留空 | 已完成：10 个审计问题桶为 0，验证包不再写入高风险 `diet/origin` 字段 |
+| 2 | 食材匹配精确优先，`排骨` 不默认匹配全量猪肉菜谱 | 已完成：运行时 catalog 与 v2 ingredient index 均保留 raw/canonical 优先 |
+| 3 | 进入、编辑保存、管理浏览不再全量构建详情；摘要/详情/索引分层 | 已完成：v2 摘要分页、详情懒加载，管理页详情/调整/另存按 id 读取 |
+| 4 | 随机基于完整候选 id 池，不受分页窗口和列表顺序影响 | 已完成并校准：store 层 random pivot 保留完整候选池能力；主 UI 停止随机优先本地锁定以保障响应性 |
+| 5 | 随机过程中停止按钮位置稳定，候选内容高度固定或溢出省略 | 已完成：随机候选舞台固定高度，停止按钮不随文本跳动 |
+| 6 | 每日决策入口不等待吃什么菜谱库加载即可使用其他模块 | 已完成：入口只等待轻量自定义状态，吃什么库进入模块后后台处理 |
+| 7 | 管理入口拆分，避免所有菜谱、调整、自定义、集合挤在两个简单页面 | 已完成首轮：helper/section/导入导出/弹窗已拆 part；路由级子页面作为后续可选增强 |
+| 8 | 菜谱分集合具备创建、选择、浏览、加入/移出、集合内随机和管理 | 已完成：外层随机可选集合，管理页支持喜欢/加入、多集合、重命名/删除、导入/导出 |
+| 9 | 高级筛选精简忌口预设，并展示最近 3 个自定义忌口 | 已部分完成：预设已精简，自定义忌口已支持输入；“最近 3 个”持久化展示作为低优先级增强 |
+| 10 | 餐段增加并默认“全部” | 已完成 |
+| 11 | 用户界面和指南中不展示外部参考和来源 | 已完成：生成器不写入用户可见 source/references，指南移除不严谨来源类提示 |
+| 12 | 菜谱分页滑到底部自动加载，必要时评估窗口化内存策略 | 已完成：管理页触底自动加载；本轮改为 offset 追加页，窗口化/LRU 暂不需要 |
+| 13 | `TextEditingController was used after being disposed` 崩溃不再复现 | 已完成：管理页相关输入改为稳定生命周期组件/状态 |
 
 ## 风险评估
 - **风险 1**: 数据源存在大量错误或缺失，短期内无法自动修复全部语义字段。
@@ -127,10 +127,10 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮优化吃什么与管理页筛选项展示密度：未选中项尽量只显示图标，选中项显示图标与选项名，降低移动端换行拥挤。
-- 本轮为图标化筛选项补充 tooltip/语义标签，保持未展开文字时仍可识别。
-- 本轮把可展开区域的展开/收起入口做得更醒目：按钮增加轻量背景、边框和 accent 色，强化可点击感。
-- 本轮仅调整筛选与折叠控件展示，不改变筛选状态、SQL 分页、搜索提交或随机逻辑。
+- 本轮推进 P1-P4 收尾：P1 先把管理页大型 sheet 中的集合、筛选、列表/浏览控件与导入导出 helper 拆到独立 part/widget，降低主文件体量和后续拆页风险。
+- 本轮推进 P2 分页追加模型：管理页内置库自动分页从“扩大 SQL limit 并重取前序结果”改为按页追加摘要，保持 SQL 分页，不回退内存全量扫描。
+- 本轮推进 P3 计划状态校准：对阶段进度、13 项验收标准和剩余增强项重新归档，明确当前已完成、降级完成和后续可选增强。
+- 本轮推进 P4 收尾验证：执行格式化、静态分析、每日决策 smoke/store/catalog/custom-state 回归，并尽量执行 Android 构建或构建脚本 smoke；若环境阻塞则记录原因。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -212,6 +212,11 @@
 77. 2026-04-27: 已新增筛选项紧凑展示：分类/上下文/高级筛选中未选中项仅显示图标，选中项显示名称，并通过 tooltip 保留可识别性。
 78. 2026-04-27: 已强化可展开区域的展开/收起入口，吃什么资源面板、高级设置和管理页折叠分区均增加轻量背景、边框和 accent 色提示。
 79. 2026-04-27: 已新增 `records/record_070_daily_choice_compact_filter_controls.md`，记录本轮筛选展示与展开入口优化边界。
+80. 2026-04-27: 已将管理页查询 helper、section widgets、集合导入导出和确认弹窗拆入独立 part 文件，主 `daily_choice_manager_sheet.dart` 从约 3015 行降至约 1785 行。
+81. 2026-04-27: 已把管理页内置菜谱 SQL 分页改为 offset 追加模型，触底后请求下一页摘要，不再通过扩大 limit 重取已显示结果。
+82. 2026-04-27: 已校准 PLAN_070 阶段进度和 13 项验收表，明确 random pivot 响应性降级、最近 3 个自定义忌口和路由级拆页的后续边界。
+83. 2026-04-27: 已新增 `records/record_070_daily_choice_p1_p4_closure.md`，记录 P1-P4 收尾范围、分页追加模型、计划状态校准和验证结果。
+84. 2026-04-27: 已完成 P4 收尾验证：每日决策定向 analyze/test 通过，Android release APK 构建通过；全量 `flutter analyze` 仍有本轮外既有 harp/woodfish/test/pubspec lint。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -302,3 +307,9 @@
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）。
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖每日决策 smoke、管理页 SQL 分页、详情懒加载和随机停止回归）。
 - 2026-04-27: `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_query_helpers.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_section_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_collection_io.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_dialogs.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart test\daily_choice_hub_smoke_test.dart`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖分页追加 smoke：第一页 `offset=0, limit=80`，触底后下一页 `offset>=80, limit=80`）。
+- 2026-04-27: `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `flutter analyze`（未通过，仅剩本轮外既有 lint：`toolbox_sound_tools/harp.dart` unnecessary `this`、`toolbox_sound_tools/woodfish.dart` 多个未引用字段、`pubspec.yaml` 依赖排序和若干历史测试 lint）。
+- 2026-04-27: `powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Target android-apk`（通过，release APK 构建成功，输出 `build\app\outputs\flutter-apk\app-release.apk`，约 168.3MB，并同步到 `dist`）。
