@@ -67,6 +67,14 @@ const List<DailyChoiceModuleConfig> dailyChoiceModuleConfigs =
         subtitleEn: 'Use probability, expected value, and factor weights.',
       ),
     ];
+const DailyChoiceCategory allMealCategory = DailyChoiceCategory(
+  id: 'all',
+  icon: Icons.grid_view_rounded,
+  titleZh: '全部餐段',
+  titleEn: 'All meals',
+  subtitleZh: '不按时间收口，直接从完整候选池随机',
+  subtitleEn: 'Use the full recipe pool without time-of-day narrowing',
+);
 const List<DailyChoiceCategory> mealCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'breakfast',
@@ -108,6 +116,10 @@ const List<DailyChoiceCategory> mealCategories = <DailyChoiceCategory>[
     subtitleZh: '少油、少折腾',
     subtitleEn: 'Low effort, not too heavy',
   ),
+];
+const List<DailyChoiceCategory> eatMealFilterCategories = <DailyChoiceCategory>[
+  allMealCategory,
+  ...mealCategories,
 ];
 const List<DailyChoiceCategory> cookToolCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
@@ -317,27 +329,14 @@ const DailyChoiceTraitGroup eatContainsTraitGroup = DailyChoiceTraitGroup(
   icon: Icons.report_gmailerrorred_rounded,
   titleZh: '常见忌口与过敏原',
   titleEn: 'Avoid / allergens',
-  subtitleZh: '按是否含肉类、海鲜、蛋奶、花生、香菜、鱼腥草等排除',
-  subtitleEn:
-      'Exclude meat, seafood, egg, milk, peanut, cilantro, houttuynia, and more',
+  subtitleZh: '保留最高频的快速排除项，其余口味放到自定义忌口里添加',
+  subtitleEn: 'Keep the common quick avoids and add personal ones below',
   options: <DailyChoiceTraitOption>[
     DailyChoiceTraitOption(
-      id: 'pork',
-      titleZh: '猪肉',
-      titleEn: 'Pork',
-      icon: Icons.block_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'beef',
-      titleZh: '牛肉',
-      titleEn: 'Beef',
-      icon: Icons.set_meal_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'mutton',
-      titleZh: '羊肉',
-      titleEn: 'Mutton',
-      icon: Icons.restaurant_rounded,
+      id: 'cilantro',
+      titleZh: '香菜',
+      titleEn: 'Cilantro',
+      icon: Icons.local_florist_rounded,
     ),
     DailyChoiceTraitOption(
       id: 'seafood',
@@ -346,58 +345,10 @@ const DailyChoiceTraitGroup eatContainsTraitGroup = DailyChoiceTraitGroup(
       icon: Icons.phishing_rounded,
     ),
     DailyChoiceTraitOption(
-      id: 'egg',
-      titleZh: '鸡蛋',
-      titleEn: 'Egg',
-      icon: Icons.egg_alt_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'milk',
-      titleZh: '牛奶',
-      titleEn: 'Milk',
-      icon: Icons.local_cafe_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'dairy',
-      titleZh: '奶制品',
-      titleEn: 'Dairy',
-      icon: Icons.local_drink_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'gluten',
-      titleZh: '麸质面食',
-      titleEn: 'Gluten',
-      icon: Icons.breakfast_dining_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'soy',
-      titleZh: '大豆制品',
-      titleEn: 'Soy',
-      icon: Icons.grass_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'peanut',
-      titleZh: '花生',
-      titleEn: 'Peanut',
+      id: eatContainsPeanutNut,
+      titleZh: '花生坚果',
+      titleEn: 'Peanut / nut',
       icon: Icons.spa_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'nut',
-      titleZh: '坚果',
-      titleEn: 'Nut',
-      icon: Icons.forest_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'sesame',
-      titleZh: '芝麻',
-      titleEn: 'Sesame',
-      icon: Icons.grain_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'spicy',
-      titleZh: '重辣',
-      titleEn: 'Spicy',
-      icon: Icons.local_fire_department_rounded,
     ),
     DailyChoiceTraitOption(
       id: 'alcohol',
@@ -406,16 +357,10 @@ const DailyChoiceTraitGroup eatContainsTraitGroup = DailyChoiceTraitGroup(
       icon: Icons.no_drinks_rounded,
     ),
     DailyChoiceTraitOption(
-      id: 'cilantro',
-      titleZh: '香菜',
-      titleEn: 'Cilantro',
-      icon: Icons.local_florist_rounded,
-    ),
-    DailyChoiceTraitOption(
-      id: 'houttuynia',
-      titleZh: '鱼腥草',
-      titleEn: 'Houttuynia cordata',
-      icon: Icons.grass_rounded,
+      id: 'spicy',
+      titleZh: '辣椒',
+      titleEn: 'Chili',
+      icon: Icons.local_fire_department_rounded,
     ),
   ],
 );

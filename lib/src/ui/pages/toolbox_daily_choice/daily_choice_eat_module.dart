@@ -35,7 +35,7 @@ class _EatChoiceModule extends StatefulWidget {
 }
 
 class _EatChoiceModuleState extends State<_EatChoiceModule> {
-  String _mealId = 'lunch';
+  String _mealId = 'all';
   String _toolId = 'all';
   String _collectionId = 'all';
   bool _libraryStatusExpanded = false;
@@ -112,7 +112,9 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
 
   @override
   Widget build(BuildContext context) {
-    final category = mealCategories.firstWhere((item) => item.id == _mealId);
+    final category = eatMealFilterCategories.firstWhere(
+      (item) => item.id == _mealId,
+    );
     final tool = cookToolCategories.firstWhere((item) => item.id == _toolId);
     final selectedCollection = _selectedCollection;
     final eligible = _filterResult.eligibleOptions;
@@ -129,7 +131,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
           title: pickUiText(widget.i18n, zh: '选择餐段', en: 'Meal moment'),
-          categories: mealCategories,
+          categories: eatMealFilterCategories,
           selectedId: _mealId,
           accent: widget.accent,
           onSelected: (value) => _applyFilterUpdate(() {

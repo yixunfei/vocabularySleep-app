@@ -36,7 +36,7 @@
 | 1. P0 稳定性止血 | 已完成 | 修复加载阻塞、controller 崩溃、随机按钮跳动和明显卡顿入口 |
 | 2. 数据源审计与规范 | 进行中 | 从 cook 项目、本地做菜资料和现有 `cook_data` 生成可信字段规范 |
 | 3. 数据库与索引重构 | 进行中 | 建立菜谱集、摘要表、详情表、字段索引、不可用标记和迁移兼容 |
-| 4. 筛选与随机引擎重构 | 待开始 | 精确食材匹配、餐段默认全部、忌口精简、随机池去顺序偏差 |
+| 4. 筛选与随机引擎重构 | 进行中 | 精确食材匹配、餐段默认全部、忌口精简、随机池去顺序偏差 |
 | 5. 管理 UI 拆分 | 待开始 | 管理 sheet 拆出子页面/子窗口，完善食谱集管理和自动分页 |
 | 6. 数据包生成与交付 | 进行中 | 产出可重新上传的本地数据包、校验报告和上传前清单 |
 | 7. 回归验证与收尾 | 待开始 | 单测、widget smoke、性能采样、构建验证、changelog 和计划归档 |
@@ -127,9 +127,10 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮处理 `D:\vocabularySleep-resources\cook_data_plan070_validation` 上传前 JSON 压缩与 app 远端首次安装策略，不覆盖 `D:\vocabularySleep-resources\cook_data`，也不把外部数据包提交进仓库。
-- 运行时接入收口为远端 SQLite DB 优先：首次安装不再从 bundled JSON、cook CSV cache 或 fallback seed 生成本地菜谱库；远端失败时首装返回错误，已有库保留。
-- SQLite 仍必须下载到应用支持目录后查询；这里的“不保留本地”指不再保留或生成 JSON 兜底缓存，而不是流式查询远端 SQLite。
+- 本轮从已上传到 S3 `/cook_data` 的验证包开始，优先确认运行时默认 key `cook_data/daily_choice_recipe_library.db` 与 `CstCloudS3CompatClient` 配置一致，并做真实远端 HEAD / range / 下载后 SQLite smoke。
+- 不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；如需重新生成验证包，仅写入 `D:\vocabularySleep-resources\cook_data_plan070_validation`，也不把外部数据包提交进仓库。
+- 继续推进阶段 3 的运行时性能铺垫：生成器先对 SQLite 导出双写 v1 兼容表与 v2 分层表，app 现有读取链路仍以 v1 表为主，避免一次性破坏已上传远端库和当前运行时。
+- 继续推进阶段 4 的筛选与随机基础收口：餐段默认增加并使用“全部”，忌口预设先收敛到香菜、海鲜、花生坚果、酒精、辣椒；食材匹配默认保留 raw / canonical 精确优先，不再把 `排骨` 自动退化成全猪肉。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -154,6 +155,10 @@
 20. 2026-04-27: 已新增 `records/record_070_daily_choice_s3_upload_package.md`，记录上传包文件大小、建议 S3 key、远端安装边界和验证命令。
 21. 2026-04-27: 已将 `DailyChoiceEatLibraryStore.installLibrary()` 改为远端 SQLite 候选文件安装：下载/校验通过后才替换当前 DB，远端失败时保留已有库。
 22. 2026-04-27: 已移除吃什么菜谱安装阶段的 bundled JSON / cached CSV / fallback seed 兜底导入路径；首次远端失败且无旧库时返回错误状态，并清理候选 DB、空 DB、旧 JSON cache 和旧 cook CSV cache。
+23. 2026-04-27: 已验证用户上传到 S3 `/cook_data` 的远端包：`cook_data/daily_choice_recipe_library.db` 可 HEAD、range 和完整下载，下载后 v1 summary/detail 均为 7,772 行，meta 显示 book 7,179 条、cook 593 条。
+24. 2026-04-27: 已新增 `scripts/verify_daily_choice_recipe_remote.dart`，用于通过纯 Dart S3 probe 下载远端 DB 并验证 v1/v2 表计数、meta 和 sample detail。
+25. 2026-04-27: 已将 `scripts/generate_daily_choice_recipe_dataset.py` 的 SQLite 导出改为 v1/v2 双写：保留现有 v1 runtime 表，同时写入 `daily_choice_recipe_sets`、`daily_choice_recipes`、summary/detail、filter index、ingredient index、search text 和 set stats 等 v2 表。
+26. 2026-04-27: 已开始阶段 4 筛选基础收口：吃什么餐段默认改为“全部”，catalog 支持 `mealId == 'all'`；忌口预设精简为香菜、海鲜、花生坚果、酒精、辣椒；`排骨` 等具体猪肉项不再在运行时自动折叠成通用 `pork` 食材 token。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -171,3 +176,12 @@
 - 2026-04-27: `python -X utf8` 解析 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份压缩 JSON（通过，三份 JSON 均为 7,772 条菜谱）。
 - 2026-04-27: `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart test/daily_choice_eat_library_store_test.dart`（通过）。
 - 2026-04-27: `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `dart run scripts/s3_resource_probe.dart --op list --prefix cook_data/ --max-keys 20`（通过，确认远端 4 个上传文件存在）。
+- 2026-04-27: `dart run scripts/s3_resource_probe.dart --op head --key cook_data/daily_choice_recipe_library.db`（通过，大小 47,915,008 bytes）。
+- 2026-04-27: `dart run scripts/s3_resource_probe.dart --op get-range --key cook_data/daily_choice_recipe_library.db`（通过，文件头为 SQLite format 3）。
+- 2026-04-27: `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py`（通过）。
+- 2026-04-27: `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过，远端完整下载后 v1 summary/detail 均为 7,772 行）。
+- 2026-04-27: `python -X utf8` 最小数据集调用 `write_sqlite_export(...)`（通过，验证 v1/v2 表、`排骨` canonical 与 `猪肉` family index）。
+- 2026-04-27: `dart analyze scripts/verify_daily_choice_recipe_remote.dart lib/src/ui/pages/toolbox_daily_choice test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`（通过）。
+- 2026-04-27: `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）。

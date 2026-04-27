@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import html
 import json
 import re
@@ -1614,6 +1615,370 @@ def build_index_terms(recipe: dict[str, object]) -> list[tuple[str, str]]:
     return sorted(set(terms))
 
 
+V2_BOOK_SET_ID = "book_library"
+V2_COOK_SET_ID = "cook_csv"
+V2_SCHEMA_SQL = Path(__file__).with_name("daily_choice_recipe_schema_v2.sql")
+
+PORK_FAMILY_INGREDIENTS = {
+    "排骨",
+    "猪里脊",
+    "猪油",
+    "猪肝",
+    "猪肚",
+    "猪蹄",
+    "猪耳",
+    "猪腰",
+    "火腿",
+    "培根",
+    "腊肉",
+    "腊肠",
+    "猪肉",
+}
+SEAFOOD_FAMILY_INGREDIENTS = {"鱼", "虾", "蟹", "贝类"}
+NUT_FAMILY_INGREDIENTS = {"花生", "坚果"}
+
+
+def stable_random_key(value: str) -> int:
+    digest = hashlib.sha256(value.encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big") & 0x7FFFFFFFFFFFFFFF
+
+
+def recipe_attribute_values(recipe: dict[str, object], key: str) -> list[str]:
+    attributes = recipe.get("attributes", {})
+    if not isinstance(attributes, dict):
+        return []
+    values = attributes.get(key, [])
+    if not isinstance(values, list):
+        return []
+    return dedupe_strings([str(item) for item in values])
+
+
+def recipe_primary_set_id(recipe: dict[str, object]) -> str:
+    recipe_sets = set(recipe_attribute_values(recipe, "recipeSet"))
+    recipe_id = str(recipe.get("id", ""))
+    if "cook_csv" in recipe_sets or recipe_id.startswith("cook_csv_"):
+        return V2_COOK_SET_ID
+    return V2_BOOK_SET_ID
+
+
+def recipe_origin(recipe: dict[str, object]) -> str:
+    return "cook_csv" if recipe_primary_set_id(recipe) == V2_COOK_SET_ID else "book"
+
+
+def recipe_sort_key(recipe: dict[str, object]) -> str:
+    return (
+        f"{recipe.get('categoryId', '')}|"
+        f"{recipe.get('contextId') or ''}|"
+        f"{recipe.get('titleZh', '')}"
+    )
+
+
+def recipe_search_text(recipe: dict[str, object], include_detail: bool = True) -> str:
+    parts: list[str] = [
+        str(recipe.get("id", "")).strip(),
+        str(recipe.get("titleZh", "")).strip(),
+        str(recipe.get("titleEn", "")).strip(),
+        str(recipe.get("subtitleZh", "")).strip(),
+        str(recipe.get("subtitleEn", "")).strip(),
+        *[str(item).strip() for item in recipe.get("tagsZh", []) if str(item).strip()],
+        *[str(item).strip() for item in recipe.get("tagsEn", []) if str(item).strip()],
+    ]
+    if include_detail:
+        parts.extend(
+            [
+                *[str(item).strip() for item in recipe.get("materialsZh", []) if str(item).strip()],
+                *[str(item).strip() for item in recipe.get("stepsZh", []) if str(item).strip()],
+                *[str(item).strip() for item in recipe.get("notesZh", []) if str(item).strip()],
+            ]
+        )
+    return " ".join(parts).strip().lower()
+
+
+def recipe_quality_score_from_payload(recipe: dict[str, object]) -> int:
+    return (
+        len(recipe.get("materialsZh", [])) * 3
+        + len(recipe.get("stepsZh", [])) * 4
+        + len(recipe.get("notesZh", []))
+        + len(recipe.get("tagsZh", []))
+        + len(str(recipe.get("detailsZh", ""))) // 18
+    )
+
+
+def ingredient_family_value(token: str) -> str | None:
+    if token in PORK_FAMILY_INGREDIENTS:
+        return "猪肉"
+    if token in SEAFOOD_FAMILY_INGREDIENTS:
+        return "海鲜"
+    if token in NUT_FAMILY_INGREDIENTS:
+        return "坚果"
+    return None
+
+
+def write_sqlite_v2_export(cursor: sqlite3.Cursor, dataset: dict[str, object]) -> None:
+    cursor.executescript(V2_SCHEMA_SQL.read_text(encoding="utf-8"))
+    recipes = dataset["recipes"]
+    assert isinstance(recipes, list)
+    generated_at = str(dataset["generatedAt"])
+    set_counts = Counter(
+        recipe_primary_set_id(recipe)
+        for recipe in recipes
+        if isinstance(recipe, dict)
+    )
+    recipe_sets = (
+        (
+            V2_BOOK_SET_ID,
+            "builtin",
+            "内置书籍菜谱",
+            "Built-in book recipes",
+            "从本地做菜资料抽取的内置菜谱集",
+            "Recipes extracted from the bundled cooking references",
+            10,
+        ),
+        (
+            V2_COOK_SET_ID,
+            "builtin",
+            "cook 菜谱",
+            "cook recipes",
+            "从 YunYouJun/cook recipe.csv 导入的菜谱集",
+            "Recipes imported from YunYouJun/cook recipe.csv",
+            20,
+        ),
+    )
+    for set_id, set_kind, title_zh, title_en, desc_zh, desc_en, priority in recipe_sets:
+        cursor.execute(
+            """
+            INSERT INTO daily_choice_recipe_sets (
+              set_id, set_kind, title_zh, title_en, description_zh,
+              description_en, library_version, priority, is_enabled,
+              is_readonly, recipe_count, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?)
+            """,
+            (
+                set_id,
+                set_kind,
+                title_zh,
+                title_en,
+                desc_zh,
+                desc_en,
+                str(dataset["libraryVersion"]),
+                priority,
+                set_counts.get(set_id, 0),
+                generated_at,
+                generated_at,
+            ),
+        )
+
+    meta_entries = {
+        "schema_id": "vocabulary_sleep.daily_choice.recipe_library.v2",
+        "schema_version": "2",
+        "compatible_v1_schema_version": str(dataset["schemaVersion"]),
+        "library_id": str(dataset["libraryId"]),
+        "library_version": str(dataset["libraryVersion"]),
+        "generated_at": generated_at,
+    }
+    for key, value in meta_entries.items():
+        cursor.execute(
+            "INSERT INTO daily_choice_recipe_schema_meta (key, value) VALUES (?, ?)",
+            (key, value),
+        )
+
+    for recipe in recipes:
+        assert isinstance(recipe, dict)
+        recipe_id = str(recipe["id"])
+        set_id = recipe_primary_set_id(recipe)
+        attributes = recipe.get("attributes", {})
+        if not isinstance(attributes, dict):
+            attributes = {}
+        tags_zh = recipe.get("tagsZh", [])
+        tags_en = recipe.get("tagsEn", [])
+        materials_zh = recipe.get("materialsZh", [])
+        materials_en = recipe.get("materialsEn", [])
+        steps_zh = recipe.get("stepsZh", [])
+        steps_en = recipe.get("stepsEn", [])
+        notes_zh = recipe.get("notesZh", [])
+        notes_en = recipe.get("notesEn", [])
+        primary_meal = str(recipe.get("categoryId", "") or "all")
+        cursor.execute(
+            """
+            INSERT INTO daily_choice_recipes (
+              recipe_id, primary_set_id, origin, title_zh, title_en,
+              normalized_title, primary_meal_id, primary_tool_id, sort_key,
+              random_key, quality_score, status, is_available, created_at,
+              updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?, ?)
+            """,
+            (
+                recipe_id,
+                set_id,
+                recipe_origin(recipe),
+                str(recipe["titleZh"]),
+                str(recipe["titleEn"]),
+                normalize_name(str(recipe["titleZh"])),
+                primary_meal,
+                recipe.get("contextId"),
+                recipe_sort_key(recipe),
+                stable_random_key(recipe_id),
+                recipe_quality_score_from_payload(recipe),
+                generated_at,
+                generated_at,
+            ),
+        )
+        cursor.execute(
+            """
+            INSERT INTO daily_choice_recipe_summaries (
+              recipe_id, subtitle_zh, subtitle_en, tags_zh_json,
+              tags_en_json, summary_attributes_json, display_badges_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                recipe_id,
+                str(recipe["subtitleZh"]),
+                str(recipe["subtitleEn"]),
+                json.dumps(tags_zh, ensure_ascii=False),
+                json.dumps(tags_en, ensure_ascii=False),
+                json.dumps(attributes, ensure_ascii=False),
+                json.dumps(list(tags_zh)[:4], ensure_ascii=False),
+            ),
+        )
+        cursor.execute(
+            """
+            INSERT INTO daily_choice_recipe_details (
+              recipe_id, details_zh, details_en, materials_zh_json,
+              materials_en_json, steps_zh_json, steps_en_json, notes_zh_json,
+              notes_en_json, raw_payload_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                recipe_id,
+                str(recipe["detailsZh"]),
+                str(recipe["detailsEn"]),
+                json.dumps(materials_zh, ensure_ascii=False),
+                json.dumps(materials_en, ensure_ascii=False),
+                json.dumps(steps_zh, ensure_ascii=False),
+                json.dumps(steps_en, ensure_ascii=False),
+                json.dumps(notes_zh, ensure_ascii=False),
+                json.dumps(notes_en, ensure_ascii=False),
+                json.dumps(recipe, ensure_ascii=False),
+            ),
+        )
+
+        for index, material in enumerate(materials_zh):
+            material_text = str(material).strip()
+            if not material_text:
+                continue
+            normalized = cleaned_ingredient_text(material_text) or clean_output_text(
+                material_text
+            )
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO daily_choice_recipe_materials (
+                  recipe_id, material_index, material_text, normalized_text,
+                  material_role, amount_text
+                ) VALUES (?, ?, ?, ?, 'ingredient', '')
+                """,
+                (recipe_id, index, material_text, normalized),
+            )
+            if 1 < len(normalized) <= 16:
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO daily_choice_recipe_ingredient_index (
+                      recipe_id, set_id, token_kind, token_value, display_text,
+                      source_text, match_level, is_primary, source_kind
+                    ) VALUES (?, ?, 'raw', ?, ?, ?, 100, 0, 'source')
+                    """,
+                    (recipe_id, set_id, normalized, normalized, material_text),
+                )
+
+        for index, step in enumerate(steps_zh):
+            step_text = str(step).strip()
+            if not step_text:
+                continue
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO daily_choice_recipe_steps (
+                  recipe_id, step_index, step_text, normalized_text
+                ) VALUES (?, ?, ?, ?)
+                """,
+                (recipe_id, index, step_text, clean_output_text(step_text).lower()),
+            )
+
+        for term_group, term_value in build_index_terms(recipe):
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO daily_choice_recipe_filter_index (
+                  recipe_id, set_id, term_group, term_value, confidence,
+                  source_kind
+                ) VALUES (?, ?, ?, ?, 100, 'generated')
+                """,
+                (recipe_id, set_id, term_group, term_value),
+            )
+
+        for index, token in enumerate(recipe_attribute_values(recipe, "ingredient")):
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO daily_choice_recipe_ingredient_index (
+                  recipe_id, set_id, token_kind, token_value, display_text,
+                  source_text, match_level, is_primary, source_kind
+                ) VALUES (?, ?, 'canonical', ?, ?, '', 90, ?, 'generated')
+                """,
+                (recipe_id, set_id, token, token, 1 if index == 0 else 0),
+            )
+            family = ingredient_family_value(token)
+            if family is not None:
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO daily_choice_recipe_ingredient_index (
+                      recipe_id, set_id, token_kind, token_value, display_text,
+                      source_text, match_level, is_primary, source_kind
+                    ) VALUES (?, ?, 'family', ?, ?, ?, 45, 0, 'generated')
+                    """,
+                    (recipe_id, set_id, family, family, token),
+                )
+
+        cursor.execute(
+            """
+            INSERT INTO daily_choice_recipe_search_text (
+              recipe_id, search_title, search_materials, search_tags,
+              search_all
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                recipe_id,
+                recipe_search_text(recipe, include_detail=False),
+                " ".join(str(item).strip() for item in materials_zh).lower(),
+                " ".join(str(item).strip() for item in tags_zh).lower(),
+                recipe_search_text(recipe, include_detail=True),
+            ),
+        )
+
+    for set_id in (V2_BOOK_SET_ID, V2_COOK_SET_ID):
+        active_count = cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM daily_choice_recipes
+            WHERE primary_set_id = ? AND status = 'active' AND is_available = 1
+            """,
+            (set_id,),
+        ).fetchone()[0]
+        ingredient_count = cursor.execute(
+            "SELECT COUNT(*) FROM daily_choice_recipe_ingredient_index WHERE set_id = ?",
+            (set_id,),
+        ).fetchone()[0]
+        filter_count = cursor.execute(
+            "SELECT COUNT(*) FROM daily_choice_recipe_filter_index WHERE set_id = ?",
+            (set_id,),
+        ).fetchone()[0]
+        cursor.execute(
+            """
+            INSERT INTO daily_choice_recipe_set_stats (
+              set_id, active_recipe_count, disabled_recipe_count,
+              ingredient_term_count, filter_term_count, updated_at
+            ) VALUES (?, ?, 0, ?, ?, ?)
+            """,
+            (set_id, active_count, ingredient_count, filter_count, generated_at),
+        )
+
+
 def write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
@@ -1779,6 +2144,7 @@ def write_sqlite_export(path: Path, dataset: dict[str, object]) -> None:
                 "INSERT INTO daily_choice_eat_recipe_meta (key, value) VALUES (?, ?)",
                 (key, value),
             )
+        write_sqlite_v2_export(cursor, dataset)
         connection.commit()
     finally:
         connection.close()

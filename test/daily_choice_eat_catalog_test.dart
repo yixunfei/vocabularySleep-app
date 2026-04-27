@@ -179,8 +179,78 @@ void main() {
         normalizeEatIngredientInputs(const <String>['鱼腥草']),
         contains('houttuynia'),
       );
+      expect(normalizeEatIngredientInputs(const <String>['排骨']), <String>[
+        '排骨',
+      ]);
+      expect(
+        normalizeEatIngredientInputs(const <String>['排骨']),
+        isNot(contains('pork')),
+      );
     },
   );
+
+  test('meal all and grouped avoids keep filters precise', () {
+    final ribs = eatOption(
+      id: 'ribs',
+      title: '红烧排骨',
+      materials: const <String>['排骨'],
+    );
+    final pork = eatOption(
+      id: 'pork',
+      title: '猪肉炒豆角',
+      materials: const <String>['猪肉', '豆角'],
+    );
+    final peanut = eatOption(
+      id: 'peanut',
+      title: '花生拌菠菜',
+      materials: const <String>['花生', '菠菜'],
+    );
+    final walnut = eatOption(
+      id: 'walnut',
+      title: '核桃拌菜',
+      materials: const <String>['核桃', '黄瓜'],
+    );
+    final catalog = DailyChoiceEatCatalog.fromOptions(<DailyChoiceOption>[
+      ribs,
+      pork,
+      peanut,
+      walnut,
+    ]);
+
+    final allMeals = catalog.filter(
+      mealId: 'all',
+      toolId: 'pot',
+      selectedTraitFilters: emptyTraitFilters(),
+      excludedContains: const <String>{},
+    );
+    expect(allMeals.eligibleOptions.map((item) => item.id), <String>[
+      'ribs',
+      'pork',
+      'peanut',
+      'walnut',
+    ]);
+
+    final ribsOnly = catalog.filter(
+      mealId: 'all',
+      toolId: 'pot',
+      selectedTraitFilters: emptyTraitFilters(),
+      excludedContains: const <String>{},
+      availableIngredients: const <String>['排骨'],
+      preferAvailableIngredients: true,
+    );
+    expect(ribsOnly.randomPool.map((item) => item.id), <String>['ribs']);
+
+    final noPeanutOrNut = catalog.filter(
+      mealId: 'all',
+      toolId: 'pot',
+      selectedTraitFilters: emptyTraitFilters(),
+      excludedContains: const <String>{eatContainsPeanutNut},
+    );
+    expect(noPeanutOrNut.eligibleOptions.map((item) => item.id), <String>[
+      'ribs',
+      'pork',
+    ]);
+  });
 
   test('catalog filter can restrict random pool to a custom recipe set', () {
     final tomatoEgg = eatOption(

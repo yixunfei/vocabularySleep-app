@@ -17,6 +17,9 @@
 - 新增 `decisions/ADR_070_daily_choice_recipe_schema_v2.md`，记录 v2 分层 schema 的技术决策。
 - 新增 `records/record_070_daily_choice_s3_upload_package.md`，记录 `cook_data_plan070_validation` 压缩后文件大小、建议 S3 key、远端安装边界和验证命令。
 - 新增 `DailyChoiceEatLibraryStore` 远端失败边界测试，覆盖“已有 SQLite 库时刷新失败不覆盖旧库”和“首次远端失败不生成 bundled JSON fallback”。
+- 新增 `scripts/verify_daily_choice_recipe_remote.dart`，用于通过 S3 远端完整下载吃什么 SQLite DB，并验证 v1/v2 表计数、meta 和 sample detail。
+- 新增 `records/record_070_daily_choice_remote_db_smoke.md`，记录 S3 `/cook_data` 上传后远端 key、文件大小、完整下载 smoke、meta 与 v2 当前状态。
+- 新增吃什么 catalog 回归测试，覆盖“全部餐段”默认候选池、花生坚果组合忌口，以及 `排骨` 不再退化成通用 `pork` 食材 token。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -37,6 +40,11 @@
 - 将 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份 JSON 压缩为上传前版本：`daily_choice_recipe_library.json` 19,614,095 bytes、`daily_choice_recipe_library_summary.json` 4,918,383 bytes、`recipe_library_asset.json` 19,614,095 bytes。
 - `DailyChoiceEatLibraryStore.installLibrary()` 改为远端 SQLite 候选文件安装：先下载到 `.remote` 候选 DB，规范 meta 并校验菜谱数，通过后才替换当前安装库。
 - `inspectStatus()` 在未安装 SQLite 文件时只返回空状态，不再为了检查状态创建空数据库文件。
+- 已验证用户上传到 S3 `/cook_data` 的远端包：运行时默认 key `cook_data/daily_choice_recipe_library.db` 可 HEAD、range 和完整下载，下载后 v1 summary/detail 均为 7,772 行。
+- `scripts/generate_daily_choice_recipe_dataset.py` 的 SQLite 导出改为 v1/v2 双写：保留现有 v1 runtime 表，同时写入菜谱集、v2 基础索引、摘要、详情、材料/步骤、筛选索引、食材 raw/canonical/family 索引、搜索文本和集合统计表。
+- 吃什么餐段默认改为“全部”，catalog 在 `mealId == 'all'` 时基于完整候选池筛选，不再按当前时间或午餐默认收窄。
+- 忌口预设精简为香菜、海鲜、花生坚果、酒精、辣椒；花生坚果在筛选层展开为 `peanut` + `nut`，保持 UI 简洁但不丢过滤语义。
+- 食材匹配继续收紧：`排骨`、猪蹄、猪肝、猪肚、猪油、火腿、培根、腊肉、腊肠等具体猪肉项不再作为默认 `pork` 食材同义词，只在 v2 family index 和 contains 排除里显式归入猪肉大类。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -44,9 +52,11 @@
 - 吃什么摘要加载改为模块级后台任务后，摘要未完成前吃什么候选池会保持为空并显示资源准备状态；这是有意降级，用来换取每日决策其他模块不被阻塞。
 - 本轮生成的验证包位于 `D:\vocabularySleep-resources\cook_data_plan070_validation`，尚未覆盖 `D:\vocabularySleep-resources\cook_data`；后续确认后再执行替换或上传。
 - cook CSV 原始 599 行中按标题/厨具去重导入 593 条菜谱，但审计按标题确认 599 行全部可在新库中命中。
-- v2 schema 当前仅为设计与 SQL 草案，尚未接入 app 运行时；后续实现需要生成器双写 v1/v2，并新增 store 查询层单测。
+- v2 schema 已接入生成器 SQLite 双写，但尚未接入 app 运行时查询层；后续仍需要新增 store v2 查询层单测并分批切换读取路径。
 - SQLite 仍需要下载到应用支持目录后才能查询；本轮“不保留本地”收口为不再保留或生成 JSON 兜底缓存，而不是流式查询远端 SQLite。
 - 吃什么远端首装失败且无旧库时会返回错误状态和空候选池，不再静默生成 fallback 菜谱库；这是有意让数据可信度优先于离线兜底。
+- 当前已上传远端 DB 仍为 v1 兼容库，`daily_choice_recipes` 等 v2 表尚不存在；v2 双写将在下一次重新生成并上传 DB 后进入远端包。
+- `scripts/verify_daily_choice_recipe_remote.dart` 为纯 Dart S3 smoke 工具，需要通过环境变量或命令行参数提供 S3 配置；本轮验证时配置从现有 `CstCloudS3CompatClient` 默认值读取后注入环境变量。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
@@ -55,6 +65,8 @@
 - 修复当前生成数据中素食/纯素冲突、清真说明污染 notes、菜系标签污染 notes、洋葱误索引葱、具体猪肉项折叠为通用猪肉和抽取乱码等审计问题。
 - 修复远端 DB 安装失败时可能回退到 bundled JSON / cached CSV / fallback seed 并写入本地 JSON cache 的问题。
 - 修复远端刷新失败时可能直接覆盖现有 SQLite 库的风险；现在候选 DB 校验通过后才替换旧库。
+- 修复吃什么默认餐段过早收窄候选池的问题；默认现在从全部餐段候选中随机。
+- 修复 `排骨` 等具体食材在运行时食材匹配中被自动折叠为通用猪肉 token，导致输入排骨可能扩大到全猪肉菜谱的问题。
 
 ### 验证
 - `git switch -c codex/daily-choice-overhaul`（通过）
@@ -72,6 +84,15 @@
 - `python -X utf8` 解析 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份压缩 JSON（通过，三份 JSON 均为 7,772 条菜谱）
 - `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart test/daily_choice_eat_library_store_test.dart`（通过）
 - `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `dart run scripts/s3_resource_probe.dart --op list --prefix cook_data/ --max-keys 20`（通过）
+- `dart run scripts/s3_resource_probe.dart --op head --key cook_data/daily_choice_recipe_library.db`（通过，47,915,008 bytes）
+- `dart run scripts/s3_resource_probe.dart --op get-range --key cook_data/daily_choice_recipe_library.db`（通过，SQLite 文件头）
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py`（通过）
+- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过）
+- `python -X utf8` 最小数据集调用 `write_sqlite_export(...)` 验证 v1/v2 双写（通过）
+- `dart analyze scripts/verify_daily_choice_recipe_remote.dart lib/src/ui/pages/toolbox_daily_choice test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 

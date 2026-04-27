@@ -19,6 +19,7 @@ const String eatProfileDessert = 'dessert';
 const String eatDietHalalFriendly = 'halal_friendly';
 const String eatDietVegetarianFriendly = 'vegetarian_friendly';
 const String eatDietVeganFriendly = 'vegan_friendly';
+const String eatContainsPeanutNut = 'peanut_nut';
 
 const Set<String> _eatRequiredAttributeKeys = <String>{
   eatAttributeMeal,
@@ -71,20 +72,7 @@ const Map<String, List<String>> _eatIngredientCanonicalMap =
     <String, List<String>>{
       'chicken': <String>['鸡肉', '鸡丁', '鸡丝', '鸡腿', '鸡翅', '鸡胸', '鸡块', '乌鸡'],
       'duck': <String>['鸭肉', '鸭腿', '鸭胸', '烤鸭'],
-      'pork': <String>[
-        '猪肉',
-        '里脊',
-        '排骨',
-        '猪蹄',
-        '猪肚',
-        '腊肉',
-        '腊肠',
-        '火腿',
-        '午餐肉',
-        '培根',
-        '猪油',
-        '肉末',
-      ],
+      'pork': <String>['猪肉', '五花肉', '肉末', '肉馅'],
       'beef': <String>['牛肉', '牛腩', '牛柳', '肥牛', '牛排'],
       'mutton': <String>['羊肉', '羊排'],
       'seafood': <String>[
@@ -206,6 +194,14 @@ const Map<String, String> _eatTypeFromMethodMap = <String, String>{
 List<String> eatMealIds(DailyChoiceOption option) {
   final values = option.attributeValues(eatAttributeMeal);
   return values.isEmpty ? <String>[option.categoryId] : values;
+}
+
+List<String> eatContainsExpandedTokens(String token) {
+  final normalized = token.trim();
+  if (normalized == eatContainsPeanutNut) {
+    return const <String>['peanut', 'nut'];
+  }
+  return normalized.isEmpty ? const <String>[] : <String>[normalized];
 }
 
 List<String> eatIngredientKeywords(DailyChoiceOption option) {
@@ -819,15 +815,25 @@ List<String> _collectEatProfiles(
   List<String> contains,
 ) {
   final values = <String>[];
-  final hasAnimalProtein = keywords.any(
-    (item) =>
-        item == 'pork' ||
-        item == 'beef' ||
-        item == 'mutton' ||
-        item == 'chicken' ||
-        item == 'duck' ||
-        item == 'seafood',
-  );
+  final hasAnimalProtein =
+      contains.any(
+        (item) =>
+            item == 'pork' ||
+            item == 'beef' ||
+            item == 'mutton' ||
+            item == 'chicken' ||
+            item == 'duck' ||
+            item == 'seafood',
+      ) ||
+      keywords.any(
+        (item) =>
+            item == 'pork' ||
+            item == 'beef' ||
+            item == 'mutton' ||
+            item == 'chicken' ||
+            item == 'duck' ||
+            item == 'seafood',
+      );
   final hasPlantOrEgg = keywords.any(
     (item) =>
         item == 'egg' ||

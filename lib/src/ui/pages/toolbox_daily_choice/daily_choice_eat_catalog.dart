@@ -124,7 +124,9 @@ class DailyChoiceEatCatalog {
     bool preferAvailableIngredients = false,
     Iterable<String>? allowedOptionIds,
   }) {
-    var matched = (_mealIndex[mealId] ?? const <int>{}).toSet();
+    var matched = mealId == 'all'
+        ? Set<int>.of(Iterable<int>.generate(_options.length))
+        : (_mealIndex[mealId] ?? const <int>{}).toSet();
 
     final allowed = _allowedIndices(allowedOptionIds);
     if (allowed != null) {
@@ -159,9 +161,11 @@ class DailyChoiceEatCatalog {
 
     if (matched.isNotEmpty && excludedContains.isNotEmpty) {
       final excluded = <int>{};
-      for (final token in excludedContains) {
-        excluded.addAll(_containsIndex[token] ?? const <int>{});
-        excluded.addAll(_ingredientIndex[token] ?? const <int>{});
+      for (final rawToken in excludedContains) {
+        for (final token in eatContainsExpandedTokens(rawToken)) {
+          excluded.addAll(_containsIndex[token] ?? const <int>{});
+          excluded.addAll(_ingredientIndex[token] ?? const <int>{});
+        }
       }
       matched.removeAll(excluded);
     }
