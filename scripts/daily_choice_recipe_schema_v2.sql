@@ -26,7 +26,6 @@ CREATE TABLE daily_choice_recipe_sets (
 CREATE TABLE daily_choice_recipes (
   recipe_id TEXT PRIMARY KEY,
   primary_set_id TEXT NOT NULL,
-  origin TEXT NOT NULL CHECK (origin IN ('cook_csv', 'book', 'user', 'import')),
   title_zh TEXT NOT NULL,
   title_en TEXT NOT NULL,
   normalized_title TEXT NOT NULL,

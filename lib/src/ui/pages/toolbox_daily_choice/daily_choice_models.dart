@@ -461,6 +461,15 @@ class DailyChoiceEatCollection {
   }
 }
 
+const String dailyChoiceFavoriteEatCollectionId = 'eat_collection_my_favorites';
+
+const DailyChoiceEatCollection dailyChoiceFavoriteEatCollection =
+    DailyChoiceEatCollection(
+      id: dailyChoiceFavoriteEatCollectionId,
+      titleZh: '我喜欢的菜',
+      titleEn: 'My favorite dishes',
+    );
+
 class DailyChoiceCustomState {
   const DailyChoiceCustomState({
     this.hiddenBuiltInIds = const <String>{},
@@ -474,7 +483,11 @@ class DailyChoiceCustomState {
   final List<DailyChoiceOption> adjustedBuiltInOptions;
   final List<DailyChoiceEatCollection> eatCollections;
 
-  static const DailyChoiceCustomState empty = DailyChoiceCustomState();
+  static const DailyChoiceCustomState empty = DailyChoiceCustomState(
+    eatCollections: <DailyChoiceEatCollection>[
+      dailyChoiceFavoriteEatCollection,
+    ],
+  );
 
   DailyChoiceCustomState copyWith({
     Set<String>? hiddenBuiltInIds,
@@ -489,6 +502,38 @@ class DailyChoiceCustomState {
           adjustedBuiltInOptions ?? this.adjustedBuiltInOptions,
       eatCollections: eatCollections ?? this.eatCollections,
     );
+  }
+
+  DailyChoiceCustomState withDefaultEatCollections() {
+    var hasFavorite = false;
+    var changed = false;
+    final next = <DailyChoiceEatCollection>[];
+    for (final collection in eatCollections) {
+      if (collection.id == dailyChoiceFavoriteEatCollectionId) {
+        hasFavorite = true;
+        final normalized = collection.copyWith(
+          titleZh: dailyChoiceFavoriteEatCollection.titleZh,
+          titleEn: dailyChoiceFavoriteEatCollection.titleEn,
+          optionIds: _dedupeStringList(collection.optionIds),
+        );
+        next.add(normalized);
+        changed = changed || !identical(normalized, collection);
+      } else {
+        final normalized = collection.copyWith(
+          optionIds: _dedupeStringList(collection.optionIds),
+        );
+        next.add(normalized);
+        changed = changed || !identical(normalized, collection);
+      }
+    }
+    if (!hasFavorite) {
+      next.insert(0, dailyChoiceFavoriteEatCollection);
+      changed = true;
+    }
+    if (!changed && eatCollections.isNotEmpty) {
+      return this;
+    }
+    return copyWith(eatCollections: next);
   }
 
   DailyChoiceCustomState hideBuiltIn(String optionId) {
@@ -598,6 +643,9 @@ class DailyChoiceCustomState {
   }
 
   DailyChoiceCustomState deleteEatCollection(String collectionId) {
+    if (collectionId == dailyChoiceFavoriteEatCollectionId) {
+      return this;
+    }
     return copyWith(
       eatCollections: eatCollections
           .where((item) => item.id != collectionId)
@@ -609,8 +657,9 @@ class DailyChoiceCustomState {
     required String collectionId,
     required String optionId,
   }) {
-    return copyWith(
-      eatCollections: eatCollections
+    final state = withDefaultEatCollections();
+    return state.copyWith(
+      eatCollections: state.eatCollections
           .map(
             (collection) => collection.id == collectionId
                 ? collection.addOption(optionId)
@@ -624,8 +673,9 @@ class DailyChoiceCustomState {
     required String collectionId,
     required String optionId,
   }) {
-    return copyWith(
-      eatCollections: eatCollections
+    final state = withDefaultEatCollections();
+    return state.copyWith(
+      eatCollections: state.eatCollections
           .map(
             (collection) => collection.id == collectionId
                 ? collection.removeOption(optionId)
@@ -697,7 +747,7 @@ class DailyChoiceCustomState {
       customOptions: customOptions,
       adjustedBuiltInOptions: adjustedBuiltInOptions,
       eatCollections: eatCollections,
-    );
+    ).withDefaultEatCollections();
   }
 }
 

@@ -237,13 +237,13 @@ void main() {
       await tester.ensureVisible(
         find.descendant(
           of: managerSheet,
-          matching: find.text('Built-in items'),
+          matching: find.text('Built-in browser'),
         ),
       );
       await tester.tap(
         find.descendant(
           of: managerSheet,
-          matching: find.text('Built-in items'),
+          matching: find.text('Built-in browser'),
         ),
       );
       await tester.pump();
@@ -274,12 +274,19 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      await tester.enterText(
-        find
-            .descendant(of: managerSheet, matching: find.byType(TextField))
-            .first,
-        'mushroom',
+      await tester.tap(find.byTooltip('Back to top'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final searchField = find.descendant(
+        of: managerSheet,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField &&
+              widget.decoration?.labelText == 'Search recipe name',
+        ),
       );
+      await tester.enterText(searchField, 'mushroom');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -293,7 +300,7 @@ void main() {
       await tester.ensureVisible(
         find.descendant(
           of: managerSheet,
-          matching: find.text('Built-in items'),
+          matching: find.text('Built-in browser'),
         ),
       );
       await tester.pump(const Duration(milliseconds: 300));
@@ -320,19 +327,21 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      expect(
-        find.descendant(
-          of: managerSheet,
-          matching: find.text('Restore original'),
-        ),
-        findsWidgets,
+      final restoreOriginalButton = find.descendant(
+        of: managerSheet,
+        matching: find.text('Restore original'),
       );
+      await pumpUntilVisible(tester, restoreOriginalButton);
+      expect(restoreOriginalButton, findsWidgets);
+      await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
-      await tester.tap(
-        find
-            .descendant(of: managerSheet, matching: find.text('Mushroom Soup'))
-            .first,
+      final mushroomInManager = find.descendant(
+        of: managerSheet,
+        matching: find.text('Mushroom Soup'),
       );
+      await tester.ensureVisible(mushroomInManager.first);
+      await tester.pump();
+      await tester.tap(mushroomInManager.first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
@@ -450,13 +459,13 @@ void main() {
       await tester.ensureVisible(
         find.descendant(
           of: managerSheet,
-          matching: find.text('Built-in items'),
+          matching: find.text('Built-in browser'),
         ),
       );
       await tester.tap(
         find.descendant(
           of: managerSheet,
-          matching: find.text('Built-in items'),
+          matching: find.text('Built-in browser'),
         ),
       );
       await tester.pump();
@@ -537,13 +546,13 @@ void main() {
       await tester.ensureVisible(
         find.descendant(
           of: managerSheet,
-          matching: find.text('Built-in items'),
+          matching: find.text('Built-in browser'),
         ),
       );
       await tester.tap(
         find.descendant(
           of: managerSheet,
-          matching: find.text('Built-in items'),
+          matching: find.text('Built-in browser'),
         ),
       );
       await tester.pump();
@@ -623,10 +632,16 @@ void main() {
 
     final managerSheet = find.byType(DraggableScrollableSheet).first;
     await tester.ensureVisible(
-      find.descendant(of: managerSheet, matching: find.text('Built-in items')),
+      find.descendant(
+        of: managerSheet,
+        matching: find.text('Built-in browser'),
+      ),
     );
     await tester.tap(
-      find.descendant(of: managerSheet, matching: find.text('Built-in items')),
+      find.descendant(
+        of: managerSheet,
+        matching: find.text('Built-in browser'),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
@@ -713,13 +728,13 @@ void main() {
     await tester.ensureVisible(
       find.descendant(
         of: failingManagerSheet,
-        matching: find.text('Built-in items'),
+        matching: find.text('Built-in browser'),
       ),
     );
     await tester.tap(
       find.descendant(
         of: failingManagerSheet,
-        matching: find.text('Built-in items'),
+        matching: find.text('Built-in browser'),
       ),
     );
     await tester.pump();

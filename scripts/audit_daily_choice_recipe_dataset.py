@@ -634,9 +634,9 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "## 初步修正建议",
-            "1. 数据生成阶段不要再把 `halal_friendly`、`vegan_friendly`、`vegetarian_friendly` 这类高语义字段作为默认展示标签；先降级为可选筛选候选，并在无冲突时才写入索引。",
-            "2. 肉类判断不要只依赖 canonical ingredient；`contains` 与 `profile/diet` 应来自同一套原始材料风险词表，并覆盖兔、龟、鸽、牡蛎等当前漏建模动物食材。",
+        "## 初步修正建议",
+            "1. 数据生成阶段不要再写入 `halal_friendly`、`vegan_friendly`、`vegetarian_friendly` 这类高语义饮食友好字段，UI 也不再提供对应辅助筛选。",
+            "2. 肉类判断不要只依赖 canonical ingredient；`contains` 与 `profile` 应来自同一套原始材料风险词表，并覆盖兔、龟、鸽、牡蛎等当前漏建模动物食材。",
             "3. 菜系不再写入 notes。若源资料明确给出菜系，后续迁移到 `recipe_filter_index(group=cuisine, confidence=source)`；无明确来源则留空。",
             "4. 食材索引拆成 `raw_ingredient`、`canonical_ingredient`、`family_ingredient` 三层，默认匹配 raw/canonical，只有用户显式扩展时才用 family。",
             "5. 将 YunYouJun/cook 的 `recipe.csv` 单独导入为默认 cook 菜谱集，保留 difficulty/methods/tools/tags/stuff 原始字段；本地书籍资料作为另一个可选资料集。",

@@ -127,9 +127,12 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮继续处理吃什么随机停止硬卡：停止按钮的关键交互链路不得启动同步 SQLite random pivot，必须立即回到可操作状态并显示当前锁定菜谱。
-- 修复管理页内置菜谱滑到底部未自动加载后续的问题，优先让当前 bottom sheet 的滚动控制器可靠触发分页递增。
-- 本轮只做 UI 交互链路避阻塞与分页触发修复；不改 v2 DB 生成器、不引入 FTS5/倒排表、不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据。多 isolate / 后台查询可作为后续 store 层专项评估。
+- 本轮把吃什么随机的菜谱集选择前移到外层随机入口，并将默认全集口径正式命名为“内置菜谱”，不再在用户界面使用“所有菜谱 / 全部菜谱”作为内置库名称。
+- 本轮新增默认空集合“我喜欢的菜”，管理页内置菜谱动作改为“喜欢/加入”：默认加入“我喜欢的菜”，并支持弹窗多选加入其他菜谱集合。
+- 本轮为“不喜欢”隐藏动作增加确认，避免误删；同时尽量保持管理页滚动位置不因隐藏动作刷新而回到顶部。
+- 本轮补齐管理页保存/调整/加入集合等写入动作的加载反馈，新增固定右侧“一键回到页首”浮动按钮，并修正搜索输入框高度略高于旁边按钮的问题。
+- 本轮继续保持 SQL 分页和失焦/提交后搜索，不回退全量内存扫描；筛选搜索仍暂不引入 FTS5、拼音或倒排表。
+- 本轮移除饮食友好的辅助筛选入口，并清理验证包数据中争议性的起源地与不严谨关键提示字段；只覆盖 `D:\vocabularySleep-resources\cook_data_plan070_validation`，不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -194,6 +197,14 @@
 60. 2026-04-27: 已将 `DailyChoiceEatLibraryStore.queryBuiltInSummaries(...)` 改为优先通过 `Isolate.run` 后台打开 SQLite 文件查询，失败时回退原同步路径；管理页分页/搜索查询不再优先占用 UI isolate。
 61. 2026-04-27: 已增强管理页内置库自动分页触发：除滚动通知外，在 SQL 返回并完成布局后检查当前滚动位置，修复停在底部但没有新滚动事件时不继续加载的问题。
 62. 2026-04-27: 已新增 `records/record_070_daily_choice_stop_local_and_manager_isolate_paging.md`，记录停止随机本地落点、管理页 isolate 查询和触底分页修复。
+63. 2026-04-27: 已将吃什么随机页的菜谱集选择保留在外层入口，并将默认大库口径统一命名为“内置菜谱”，用户开始随机前即可选择内置库或个人菜谱集。
+64. 2026-04-27: 已新增默认空集合“我喜欢的菜”，自定义状态加载/保存时自动补齐该集合，且删除集合时保护该默认集合不被移除。
+65. 2026-04-27: 已将管理页内置菜谱集合动作改为“喜欢/加入”，默认加入“我喜欢的菜”，并通过弹窗支持多选加入其他菜谱集。
+66. 2026-04-27: 已为“不喜欢”隐藏动作增加确认弹窗，并为保存调整、另存、加入集合等写入动作增加处理中反馈，降低误触和卡顿感知。
+67. 2026-04-27: 已新增管理页右侧固定“一键回到页首”浮动按钮，并收紧搜索输入框高度，使其与旁边按钮高度更协调。
+68. 2026-04-27: 已移除吃什么 UI 的饮食友好辅助筛选入口，生成器和 v2 schema 移除起源地字段，验证包 JSON/DB 不再写入 `origin` 或 `diet` 字段。
+69. 2026-04-27: 已重新生成 `D:\vocabularySleep-resources\cook_data_plan070_validation` 验证包；当前 v2-only DB 大小 142,233,600 bytes，SHA256 为 `418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`。
+70. 2026-04-27: 已新增 `records/record_070_daily_choice_collection_favorites_and_risk_cleanup.md`，记录本轮集合入口、喜欢集合、确认隐藏、风险字段清理和验证包输出。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -270,3 +281,9 @@
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖主 UI 停止随机不触发 store random pivot、管理页触底自动扩大 SQL 分页 limit）。
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，queryBuiltInSummaries isolate 查询与分页触发修复后无静态问题）。
 - 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 store v2 SQL 查询 isolate 路径与 catalog 筛选）。
+- 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_models.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_catalog.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_support.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_editor_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_hub_smoke_test.dart`（通过）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）。
+- 2026-04-27: `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖管理页搜索提交、自动分页、个人调整懒加载、保存回写后恢复原味入口和停止随机本地落点）。
+- 2026-04-27: `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖默认喜欢集合、catalog 筛选和 v2 store 查询）。
+- 2026-04-27: `python -X utf8` 检查 `D:\vocabularySleep-resources\cook_data_plan070_validation`（通过，recipes=7772，`user_version=2`，`integrity=ok`，v2 recipes/summaries/details 均为 7,772，`hasOriginColumn=False`，JSON `diet/origin` 为 0，DB 风险 diet terms 为 0，SHA256=`418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`）。

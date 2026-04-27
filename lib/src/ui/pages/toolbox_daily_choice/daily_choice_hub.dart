@@ -98,7 +98,7 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
   }
 
   Future<void> _loadCustomState() async {
-    final loaded = await _storage.load();
+    final loaded = (await _storage.load()).withDefaultEatCollections();
     if (!mounted) {
       return;
     }
@@ -187,14 +187,18 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
   }
 
   void _setCustomState(DailyChoiceCustomState next) {
-    final shouldRebuildEatState = !_sameEatCatalogInputs(_customState, next);
+    final normalizedNext = next.withDefaultEatCollections();
+    final shouldRebuildEatState = !_sameEatCatalogInputs(
+      _customState,
+      normalizedNext,
+    );
     setState(() {
-      _customState = next;
+      _customState = normalizedNext;
       if (shouldRebuildEatState) {
-        _rebuildEatState(customState: next);
+        _rebuildEatState(customState: normalizedNext);
       }
     });
-    unawaited(_storage.save(next));
+    unawaited(_storage.save(normalizedNext));
   }
 
   List<DailyChoiceOption> _builtInFor(String moduleId) {

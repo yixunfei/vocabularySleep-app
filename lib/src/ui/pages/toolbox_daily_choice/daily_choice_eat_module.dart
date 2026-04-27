@@ -47,7 +47,6 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
   final Map<String, Set<String>> _selectedTraitFilters = <String, Set<String>>{
     eatAttributeType: <String>{},
     eatAttributeProfile: <String>{},
-    eatAttributeDiet: <String>{},
   };
   final Set<String> _excludedContains = <String>{};
   final List<String> _availableIngredients = <String>[];
@@ -117,6 +116,9 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
     );
     final tool = cookToolCategories.firstWhere((item) => item.id == _toolId);
     final selectedCollection = _selectedCollection;
+    final eatCollections = widget.customState
+        .withDefaultEatCollections()
+        .eatCollections;
     final eligible = _filterResult.eligibleOptions;
     final displayed = _filterResult.randomPool;
     final showLibraryPanel =
@@ -149,20 +151,18 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
             _toolId = value;
           }),
         ),
-        if (widget.customState.eatCollections.isNotEmpty) ...<Widget>[
-          const SizedBox(height: ToolboxUiTokens.cardSpacing),
-          _EatCollectionSelectorPanel(
-            i18n: widget.i18n,
-            accent: widget.accent,
-            selectedCollectionId: _collectionId,
-            collections: widget.customState.eatCollections,
-            onSelected: (value) {
-              _applyFilterUpdate(() {
-                _collectionId = value;
-              });
-            },
-          ),
-        ],
+        const SizedBox(height: ToolboxUiTokens.cardSpacing),
+        _EatCollectionSelectorPanel(
+          i18n: widget.i18n,
+          accent: widget.accent,
+          selectedCollectionId: _collectionId,
+          collections: eatCollections,
+          onSelected: (value) {
+            _applyFilterUpdate(() {
+              _collectionId = value;
+            });
+          },
+        ),
         if (showLibraryPanel) ...<Widget>[
           const SizedBox(height: ToolboxUiTokens.cardSpacing),
           _EatLibraryStatusPanel(
@@ -235,14 +235,14 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
           emptyText: pickUiText(
             widget.i18n,
             zh: selectedCollection != null
-                ? '这个食谱集在当前筛选下没有可选菜品。可以放宽筛选、向集合加入菜谱，或切回全部菜谱。'
+                ? '这个食谱集在当前筛选下没有可选菜品。可以放宽筛选、向集合加入菜谱，或切回内置菜谱。'
                 : (_hasAdvancedFilters
                       ? '当前筛选条件有点严，没有找到合适菜品。可以放宽高级设置、换厨具，或在管理里新增你的个人菜谱。'
                       : (_toolId == 'all'
                             ? '这个餐段已经没有可选菜品，可以在管理里恢复内置菜或新增个人食谱。'
                             : '这个餐段和厨具组合下暂时没有菜品，可以换一个厨具、恢复隐藏菜，或补充你的个人食谱。')),
             en: selectedCollection != null
-                ? 'This recipe set has no dishes under the current filters. Relax filters, add recipes to the set, or switch back to all recipes.'
+                ? 'This recipe set has no dishes under the current filters. Relax filters, add recipes to the set, or switch back to built-in recipes.'
                 : (_hasAdvancedFilters
                       ? 'The current filters are too strict. Relax advanced settings, switch tools, or add your own recipe in Manage.'
                       : (_toolId == 'all'
@@ -820,7 +820,9 @@ class _EatCollectionSelectorPanel extends StatelessWidget {
                 tint: accent,
                 onTap: () => onSelected('all'),
                 leading: const Icon(Icons.all_inclusive_rounded, size: 18),
-                label: Text(pickUiText(i18n, zh: '全部菜谱', en: 'All recipes')),
+                label: Text(
+                  pickUiText(i18n, zh: '内置菜谱', en: 'Built-in recipes'),
+                ),
               ),
               ...collections.map(
                 (collection) => ToolboxSelectablePill(
@@ -919,8 +921,8 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
                     Text(
                       pickUiText(
                         i18n,
-                        zh: '可以按现有材料、荤素结构、饮食友好和常见忌口把菜谱库进一步收口，并支持把食材与忌口拆成可增删的列表。',
-                        en: 'Refine the recipe pool by available ingredients, profile, diet-friendly labels, and common avoid filters with editable token lists.',
+                        zh: '可以按现有材料、荤素结构和常见排除项把菜谱库进一步收口，并支持把食材与排除项拆成可增删的列表。',
+                        en: 'Refine the recipe pool by available ingredients, profile, and common avoid filters with editable token lists.',
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -1119,23 +1121,37 @@ class _EatEditableTokenSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Expanded(
               child: TextField(
                 controller: controller,
                 minLines: 1,
-                maxLines: 2,
+                maxLines: 1,
                 onSubmitted: (_) => onSubmitted(),
                 decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  constraints: const BoxConstraints(minHeight: 48),
                   hintText: emptyHint,
                   prefixIcon: Icon(prefixIcon),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 42,
+                    minHeight: 42,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 8),
             FilledButton.icon(
               onPressed: onSubmitted,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+              ),
               icon: const Icon(Icons.add_rounded),
               label: Text(addLabel),
             ),

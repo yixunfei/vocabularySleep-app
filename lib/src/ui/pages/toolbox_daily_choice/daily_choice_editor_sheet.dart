@@ -81,6 +81,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
   late String _categoryId;
   String? _contextId;
   late final Map<String, Set<String>> _selectedAttributes;
+  bool _saving = false;
 
   bool get _isEatModule =>
       widget.moduleId == DailyChoiceModuleId.eat.storageValue;
@@ -156,10 +157,24 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
   }
 
   void _save() {
+    if (_saving) {
+      return;
+    }
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       return;
     }
+    setState(() {
+      _saving = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _finishSave(title);
+      }
+    });
+  }
+
+  void _finishSave(String title) {
     final subtitle = _subtitleController.text.trim();
     final materials = _splitLines(_materialsController.text);
     final steps = _splitLines(_stepsController.text);
@@ -186,11 +201,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                   ...rawTags,
                   ...eatTraitLabelsZh(
                     attributes,
-                    groupIds: <String>[
-                      eatAttributeType,
-                      eatAttributeProfile,
-                      eatAttributeDiet,
-                    ],
+                    groupIds: <String>[eatAttributeType, eatAttributeProfile],
                     limit: 5,
                   ),
                 }.toList(growable: false)
@@ -202,11 +213,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                   ...rawTags,
                   ...eatTraitLabelsEn(
                     attributes,
-                    groupIds: <String>[
-                      eatAttributeType,
-                      eatAttributeProfile,
-                      eatAttributeDiet,
-                    ],
+                    groupIds: <String>[eatAttributeType, eatAttributeProfile],
                     limit: 5,
                   ),
                 }.toList(growable: false)
@@ -509,8 +516,8 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                 Text(
                   pickUiText(
                     widget.i18n,
-                    zh: '保存时会自动从菜名、食材、备注和主餐段推断餐段重叠、食材关键词、做法类型和常见忌口标签。',
-                    en: 'Saving automatically infers overlapping meals, ingredient keywords, dish types, and common avoid labels from the title, materials, notes, and primary meal.',
+                    zh: '保存时会自动从菜名、食材、备注和主餐段推断餐段重叠、食材关键词、做法类型和常见排除项。',
+                    en: 'Saving automatically infers overlapping meals, ingredient keywords, dish types, and common avoid terms from the title, materials, notes, and primary meal.',
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -638,7 +645,9 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                 children: <Widget>[
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       child: Text(
                         pickUiText(widget.i18n, zh: '取消', en: 'Cancel'),
                       ),
@@ -647,10 +656,20 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: _save,
-                      icon: const Icon(Icons.save_rounded),
+                      onPressed: _saving ? null : _save,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save_rounded),
                       label: Text(
-                        pickUiText(widget.i18n, zh: '保存', en: 'Save'),
+                        pickUiText(
+                          widget.i18n,
+                          zh: _saving ? '保存中' : '保存',
+                          en: _saving ? 'Saving' : 'Save',
+                        ),
                       ),
                     ),
                   ),

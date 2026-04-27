@@ -32,9 +32,13 @@ void main() {
 
     final restored = DailyChoiceCustomState.fromJson(state.toJson());
 
-    expect(restored.eatCollections, hasLength(1));
-    expect(restored.eatCollections.first.id, 'set_weeknight');
-    expect(restored.eatCollections.first.optionIds, <String>[
+    expect(restored.eatCollections, hasLength(2));
+    expect(
+      restored.eatCollections.first.id,
+      dailyChoiceFavoriteEatCollectionId,
+    );
+    expect(restored.eatCollections.last.id, 'set_weeknight');
+    expect(restored.eatCollections.last.optionIds, <String>[
       'custom_eat_1',
       'built_in_1',
     ]);
@@ -57,5 +61,18 @@ void main() {
 
     expect(next.customOptions, isEmpty);
     expect(next.eatCollections.first.optionIds, <String>['built_in_1']);
+  });
+
+  test('favorite recipe collection is restored and protected', () {
+    final restored = DailyChoiceCustomState.fromJson(const <String, Object?>{});
+
+    expect(
+      restored.eatCollections.single.id,
+      dailyChoiceFavoriteEatCollectionId,
+    );
+    expect(
+      restored.deleteEatCollection(dailyChoiceFavoriteEatCollectionId),
+      same(restored),
+    );
   });
 }

@@ -42,6 +42,10 @@
 - 新增 `records/record_070_daily_choice_random_stop_timeout_and_pivot_guard.md`，记录随机停止超时兜底、大候选池 SQL guard 和本轮验证。
 - 新增随机停止回归测试，覆盖异步最终抽取超时后退出 `Picking`，以及隐藏项导致需要精确可见池且候选过大时不触发重 SQL pivot。
 - 新增 `records/record_070_daily_choice_stop_local_and_manager_isolate_paging.md`，记录停止随机本地落点、管理页 isolate 查询和触底分页修复。
+- 新增默认空菜谱集“我喜欢的菜”，旧自定义状态在加载和保存时会自动补齐该集合，且管理页禁止删除这个默认集合。
+- 新增管理页内置菜谱“喜欢/加入”多选弹窗：点击时默认加入“我喜欢的菜”，也可同时加入其他个人菜谱集。
+- 新增管理页右侧固定“一键回到页首”浮动按钮，以及保存、调整、加入集合等写入动作的处理中遮罩反馈。
+- 新增 `records/record_070_daily_choice_collection_favorites_and_risk_cleanup.md`，记录本轮集合入口、喜欢集合、风险字段清理和验证包重建结果。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -93,6 +97,12 @@
 - 吃什么主 UI 停止随机改为纯本地锁定当前候选，不再触发 `pickBuiltInRandomSummary(...)`；store random pivot 保留为底层能力，但不再位于停止按钮关键交互链路。
 - `DailyChoiceEatLibraryStore.queryBuiltInSummaries(...)` 优先通过 `Isolate.run` 在后台 isolate 重新打开 SQLite 文件执行分页/搜索查询，失败时回退旧同步路径。
 - 管理页内置库自动分页除监听滚动通知外，会在 SQL 返回后的下一帧检查当前滚动位置，修复已经停在底部时没有新滚动事件导致不继续加载的问题。
+- 吃什么外层随机入口现在直接展示菜谱集选择，用户开始随机前即可选择“内置菜谱”或个人菜谱集，避免默认总是在完整大库中随机。
+- 默认内置库口径正式统一为“内置菜谱”，管理页和外层入口不再使用“所有菜谱 / 全部菜谱”作为内置库名称。
+- 管理页“不喜欢”隐藏动作增加确认弹窗，避免误触；隐藏或恢复后保留当前 sheet、搜索和分页上下文。
+- 搜索输入框高度收紧为与旁边按钮更接近，减少管理页顶部工具区的视觉错位。
+- 吃什么 UI 移除饮食友好的辅助筛选入口，做菜指南不再展示清真等需要用户自行判断的关键提示。
+- 生成器和 v2 schema 移除菜谱起源地字段，验证包 JSON/SQLite 不再写入 `origin` 或 `diet` 字段；审计脚本继续保留风险检查桶用于确认这些字段没有回流。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -105,7 +115,7 @@
 - 吃什么远端首装失败且无旧库时会返回错误状态和空候选池，不再静默生成 fallback 菜谱库；这是有意让数据可信度优先于离线兜底。
 - 当前已上传远端 DB 已切换为 v2-only，不再包含 v1 兼容表；旧版本 app 若只支持 v1 表将无法读取新版远端包。
 - `scripts/verify_daily_choice_recipe_remote.dart` 为纯 Dart S3 smoke 工具，需要通过环境变量或命令行参数提供 S3 配置；本轮验证时配置从现有 `CstCloudS3CompatClient` 默认值读取后注入环境变量。
-- 本轮重新生成的 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，大小 142,467,072 bytes，SHA256 为 `9B769482EEA198E233263EB41E8FA01ECAA3C058E25F68377ED8E468F62C6FFE`；当前 app 已接入基础 v2 读取，但筛选和随机仍基于安装后加载的摘要集合。
+- 本轮重新生成的 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，已移除 `origin` 列和高风险 `diet` 字段；当前大小 142,233,600 bytes，SHA256 为 `418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`。
 - 本轮未覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；S3 远端 DB 已由用户更新，本轮仅做远端 smoke 和运行时读取修复。
 - 当前 UI 仍保留内存 catalog 作为本地自定义、个人调整和旧库回退路径；吃什么内置库随机、管理页浏览和内置库搜索已逐步接入 store 查询。
 - 已有食材优先的 SQL 版本先采用 raw/canonical 任一命中收口，尚未完整复刻内存 catalog 的 exact/strong/broad 分层扩池策略。
@@ -137,8 +147,16 @@
 - 修复主 UI 停止随机时对大候选池传入全量 `allowedOptionIds`，导致 v2 SQL random pivot 构造大 `IN (...)` 查询并拖慢交互的问题。
 - 修复主 UI 停止随机仍可能因同步 SQLite random pivot 占用 UI isolate，导致程序接近无响应的问题。
 - 修复管理页内置库滑到底部后，若 SQL 结果返回时用户已停在底部，后续页不会自动加载的问题。
+- 修复个人调整保存后 smoke 测试过早点击仍在退出动画后的 sheet 内容导致的误判；测试现在等待保存回写和 modal 动画完成后再继续点击详情。
+- 修复管理页内置库“喜欢/加入”只能隐式操作单一集合、缺少多集合选择入口的问题。
 
 ### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_models.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_catalog.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_support.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_editor_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+- `python -X utf8` 检查 `D:\vocabularySleep-resources\cook_data_plan070_validation`（通过，recipes=7772，user_version=2，integrity=ok，v2 recipes/summaries/details 均为 7,772，`hasOriginColumn=False`，JSON `diet/origin` 为 0，DB 风险 diet terms 为 0，DB SHA256=`418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`）
 - `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）
 - `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）

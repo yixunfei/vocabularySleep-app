@@ -294,35 +294,6 @@ const List<DailyChoiceTraitGroup> eatTraitGroups = <DailyChoiceTraitGroup>[
       ),
     ],
   ),
-  DailyChoiceTraitGroup(
-    id: eatAttributeDiet,
-    icon: Icons.health_and_safety_rounded,
-    titleZh: '饮食友好',
-    titleEn: 'Diet-friendly',
-    subtitleZh: '用于辅助筛选，不替代宗教、营养或医学判断',
-    subtitleEn:
-        'Helpful filters, not religious, nutrition, or medical certification',
-    options: <DailyChoiceTraitOption>[
-      DailyChoiceTraitOption(
-        id: eatDietHalalFriendly,
-        titleZh: '清真友好',
-        titleEn: 'Halal-friendly',
-        icon: Icons.shield_rounded,
-      ),
-      DailyChoiceTraitOption(
-        id: eatDietVegetarianFriendly,
-        titleZh: '素食友好',
-        titleEn: 'Vegetarian-friendly',
-        icon: Icons.energy_savings_leaf_rounded,
-      ),
-      DailyChoiceTraitOption(
-        id: eatDietVeganFriendly,
-        titleZh: '纯素友好',
-        titleEn: 'Vegan-friendly',
-        icon: Icons.eco_rounded,
-      ),
-    ],
-  ),
 ];
 const DailyChoiceTraitGroup eatContainsTraitGroup = DailyChoiceTraitGroup(
   id: eatAttributeContains,
@@ -365,7 +336,7 @@ const DailyChoiceTraitGroup eatContainsTraitGroup = DailyChoiceTraitGroup(
   ],
 );
 final List<DailyChoiceTraitGroup> eatManagerTraitGroups =
-    <String>{eatAttributeType, eatAttributeProfile, eatAttributeDiet}
+    <String>{eatAttributeType, eatAttributeProfile}
         .map((id) => eatTraitGroupById(id))
         .whereType<DailyChoiceTraitGroup>()
         .toList(growable: false);
@@ -1255,10 +1226,9 @@ cookingGuideModules = <DailyChoiceGuideModule>[
         icon: Icons.warning_amber_rounded,
         titleZh: '先排除不能吃，再追求好吃',
         titleEn: 'Remove unsafe options before optimizing flavor',
-        bodyZh:
-            '过敏、宗教饮食、孕期、婴幼儿、老人吞咽能力、慢病控盐控糖都要先单独判断。清真、素食、低油、低盐这类标签只能作为第一轮筛选，真正上桌前仍要看具体食材、调味和烹调工具是否混用。',
+        bodyZh: '过敏、孕期、婴幼儿、老人吞咽能力、慢病控盐控糖等情况都要先单独判断。上桌前仍要看具体食材、调味、熟度和烹调工具是否混用。',
         bodyEn:
-            'Allergies, religious diets, pregnancy, infants, swallowing ability, and medical diets come first. Labels such as halal-friendly, vegetarian, low oil, or low salt are only first-pass filters; always check ingredients, seasoning, and tool separation.',
+            'Allergies, pregnancy, infants, swallowing ability, and medical diets come first. Always check ingredients, seasoning, doneness, and tool separation before serving.',
       ),
     ],
   ),

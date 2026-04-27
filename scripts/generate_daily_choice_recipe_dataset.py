@@ -1398,7 +1398,6 @@ def cook_csv_row_to_option_payload(row: dict[str, str], row_index: int) -> dict[
         "meal": meals,
         "type": [item.split(":", 1)[1] for item in filter_ids if item.startswith("type:")],
         "profile": [item.split(":", 1)[1] for item in filter_ids if item.startswith("profile:")],
-        "diet": [],
         "contains": [item.split(":", 1)[1] for item in filter_ids if item.startswith("contains:")],
         "ingredient": ingredient_keywords,
         "tool": tool_ids,
@@ -1486,7 +1485,6 @@ def recipe_to_option_payload(recipe: ExtractedRecipe) -> dict[str, object]:
         "meal": meals,
         "type": [item.split(":", 1)[1] for item in filter_ids if item.startswith("type:")],
         "profile": [item.split(":", 1)[1] for item in filter_ids if item.startswith("profile:")],
-        "diet": [item.split(":", 1)[1] for item in filter_ids if item.startswith("diet:")],
         "contains": [item.split(":", 1)[1] for item in filter_ids if item.startswith("contains:")],
         "ingredient": ingredient_keywords,
     }
@@ -1661,10 +1659,6 @@ def recipe_primary_set_id(recipe: dict[str, object]) -> str:
     return V2_BOOK_SET_ID
 
 
-def recipe_origin(recipe: dict[str, object]) -> str:
-    return "cook_csv" if recipe_primary_set_id(recipe) == V2_COOK_SET_ID else "book"
-
-
 def recipe_sort_key(recipe: dict[str, object]) -> str:
     return (
         f"{recipe.get('categoryId', '')}|"
@@ -1808,16 +1802,15 @@ def write_sqlite_v2_export(
         cursor.execute(
             """
             INSERT INTO daily_choice_recipes (
-              recipe_id, primary_set_id, origin, title_zh, title_en,
+              recipe_id, primary_set_id, title_zh, title_en,
               normalized_title, primary_meal_id, primary_tool_id, sort_key,
               random_key, quality_score, status, is_available, created_at,
               updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?, ?)
             """,
             (
                 recipe_id,
                 set_id,
-                recipe_origin(recipe),
                 str(recipe["titleZh"]),
                 str(recipe["titleEn"]),
                 normalize_name(str(recipe["titleZh"])),
@@ -1989,7 +1982,7 @@ def write_sqlite_v2_export(
 def write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, ensure_ascii=False, indent=2)
+        json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
 
 
 def write_sqlite_export(

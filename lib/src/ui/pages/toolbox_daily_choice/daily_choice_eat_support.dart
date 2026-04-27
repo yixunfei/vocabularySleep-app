@@ -25,7 +25,6 @@ const Set<String> _eatRequiredAttributeKeys = <String>{
   eatAttributeMeal,
   eatAttributeType,
   eatAttributeProfile,
-  eatAttributeDiet,
   eatAttributeContains,
   eatAttributeIngredient,
 };
@@ -407,7 +406,6 @@ Map<String, List<String>> buildEatAttributes({
   final contains = _collectEatContains(title, materials, notes, tags, methods);
   final types = _collectEatTypes(title, tags, methods);
   final profiles = _collectEatProfiles(types, keywords, contains);
-  final diets = _collectEatDiets(profiles, contains);
   final meals = _collectEatMeals(
     title: title,
     types: types,
@@ -425,7 +423,6 @@ Map<String, List<String>> buildEatAttributes({
     eatAttributeMeal: meals,
     eatAttributeType: types,
     eatAttributeProfile: profiles,
-    eatAttributeDiet: diets,
     eatAttributeContains: contains,
     eatAttributeIngredient: keywords,
     if (normalizedTools.isNotEmpty) eatAttributeTool: normalizedTools,
@@ -863,20 +860,6 @@ List<String> _collectEatProfiles(
   }
   if (types.contains('dessert')) {
     values.add(eatProfileDessert);
-  }
-  return _dedupeStrings(values);
-}
-
-List<String> _collectEatDiets(List<String> profiles, List<String> contains) {
-  final values = <String>[];
-  if (!contains.contains('pork') && !contains.contains('alcohol')) {
-    values.add(eatDietHalalFriendly);
-  }
-  if (profiles.contains(eatProfileVegetarian) && !contains.contains('egg')) {
-    values.add(eatDietVeganFriendly);
-  }
-  if (profiles.contains(eatProfileVegetarian)) {
-    values.add(eatDietVegetarianFriendly);
   }
   return _dedupeStrings(values);
 }

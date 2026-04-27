@@ -21,7 +21,7 @@ Future<void> showDailyChoiceManagerSheet({
   Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
   onSaveBuiltInAsCustom,
 }) async {
-  var localState = state;
+  var localState = state.withDefaultEatCollections();
   final filterCategories = <DailyChoiceCategory>[
     const DailyChoiceCategory(
       id: 'all',
@@ -78,12 +78,12 @@ Future<void> showDailyChoiceManagerSheet({
   final selectedTraitFilters = <String, String>{
     for (final group in managerTraitGroups) group.id: 'all',
   };
-  var managerStateVersion = 0;
   var builtInFilterCacheKey = '';
   List<DailyChoiceOption> builtInFilterCache = const <DailyChoiceOption>[];
   final managerBusyActionKeys = <String>{};
   final managerActionErrorByOptionId = <String, String>{};
   var builtInAutoLoadKey = '';
+  String? managerProcessingMessage;
 
   try {
     await showModalBottomSheet<void>(
@@ -94,10 +94,32 @@ Future<void> showDailyChoiceManagerSheet({
         return StatefulBuilder(
           builder: (context, setSheetState) {
             void publish(DailyChoiceCustomState next) {
-              localState = next;
-              managerStateVersion += 1;
-              onStateChanged(next);
+              localState = next.withDefaultEatCollections();
+              onStateChanged(localState);
               setSheetState(() {});
+            }
+
+            Future<void> publishWithProcessing(
+              DailyChoiceCustomState next,
+              String message,
+            ) async {
+              if (managerSheetClosed) {
+                return;
+              }
+              setSheetState(() {
+                managerProcessingMessage = message;
+              });
+              await WidgetsBinding.instance.endOfFrame;
+              if (managerSheetClosed) {
+                return;
+              }
+              publish(next);
+              if (managerSheetClosed) {
+                return;
+              }
+              setSheetState(() {
+                managerProcessingMessage = null;
+              });
             }
 
             void resetBuiltInPaging() {
@@ -211,7 +233,7 @@ Future<void> showDailyChoiceManagerSheet({
               searchQuery: searchQuery,
               traitFilters: selectedTraitFilters,
               selectedCollectionId: selectedCollectionId,
-              stateVersion: managerStateVersion,
+              selectedCollectionOptionIds: selectedCollectionOptionIds,
             );
             late final List<DailyChoiceOption> allVisibleBuiltIns;
             late final int builtInTotalCount;
@@ -374,7 +396,10 @@ Future<void> showDailyChoiceManagerSheet({
                   optionId: result.id,
                 );
               }
-              publish(nextState);
+              await publishWithProcessing(
+                nextState,
+                pickUiText(i18n, zh: '正在保存修改...', en: 'Saving changes...'),
+              );
             }
 
             Future<void> inspectBuiltInOption(DailyChoiceOption option) async {
@@ -403,7 +428,10 @@ Future<void> showDailyChoiceManagerSheet({
               if (result == null) {
                 return;
               }
-              publish(localState.upsertAdjustedBuiltIn(result));
+              await publishWithProcessing(
+                localState.upsertAdjustedBuiltIn(result),
+                pickUiText(i18n, zh: '正在保存个人调整...', en: 'Saving adjustment...'),
+              );
             }
 
             Future<void> saveBuiltInAsCustom(DailyChoiceOption option) async {
@@ -425,7 +453,55 @@ Future<void> showDailyChoiceManagerSheet({
                   optionId: result.id,
                 );
               }
-              publish(nextState);
+              await publishWithProcessing(
+                nextState,
+                pickUiText(i18n, zh: '正在保存副本...', en: 'Saving copy...'),
+              );
+            }
+
+            Future<void> addOptionToCollections({
+              required String optionId,
+              required Set<String> collectionIds,
+            }) async {
+              if (collectionIds.isEmpty) {
+                return;
+              }
+              var nextState = localState;
+              for (final collectionId in collectionIds) {
+                nextState = nextState.addOptionToEatCollection(
+                  collectionId: collectionId,
+                  optionId: optionId,
+                );
+              }
+              await publishWithProcessing(
+                nextState,
+                pickUiText(i18n, zh: '正在加入食谱集...', en: 'Adding to sets...'),
+              );
+            }
+
+            Future<void> toggleBuiltInHidden({
+              required DailyChoiceOption option,
+              required bool isHidden,
+            }) async {
+              if (isHidden) {
+                await publishWithProcessing(
+                  localState.restoreBuiltIn(option.id),
+                  pickUiText(i18n, zh: '正在恢复菜谱...', en: 'Restoring recipe...'),
+                );
+                return;
+              }
+              final confirmed = await _confirmHideBuiltInRecipe(
+                context: context,
+                i18n: i18n,
+                option: option,
+              );
+              if (confirmed != true) {
+                return;
+              }
+              await publishWithProcessing(
+                localState.hideBuiltIn(option.id),
+                pickUiText(i18n, zh: '正在加入不喜欢...', en: 'Hiding recipe...'),
+              );
             }
 
             void createCollection() {
@@ -494,543 +570,800 @@ Future<void> showDailyChoiceManagerSheet({
                 maxChildSize: 0.94,
                 builder: (context, controller) {
                   scheduleBuiltInAutoLoadCheck(controller);
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: maybeAutoLoadBuiltIns,
-                    child: ListView(
-                      controller: controller,
-                      padding: const EdgeInsets.fromLTRB(18, 4, 18, 24),
-                      children: <Widget>[
-                        Text(
-                          pickUiText(i18n, zh: '自定义管理', en: 'Custom manager'),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _managerDescription(
-                            i18n,
-                            isEatModule: isEatModule,
-                            isWearModule: isWearModule,
-                          ),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.35,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        if (isEatModule) ...<Widget>[
-                          ToolboxSurfaceCard(
-                            padding: const EdgeInsets.all(12),
-                            borderColor: accent.withValues(alpha: 0.14),
-                            shadowOpacity: 0.02,
-                            child: _ManagerSearchField(
-                              i18n: i18n,
-                              initialText: searchDraft,
-                              onDraftChanged: (value) {
-                                searchDraft = value;
-                              },
-                              onCommitted: commitSearchQuery,
+                  return Stack(
+                    children: <Widget>[
+                      NotificationListener<ScrollNotification>(
+                        onNotification: maybeAutoLoadBuiltIns,
+                        child: ListView(
+                          controller: controller,
+                          padding: const EdgeInsets.fromLTRB(18, 4, 18, 88),
+                          children: <Widget>[
+                            Text(
+                              pickUiText(
+                                i18n,
+                                zh: '自定义管理',
+                                en: 'Custom manager',
+                              ),
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          _ManagerExpandableSection(
-                            title: pickUiText(
-                              i18n,
-                              zh: '我的食谱集',
-                              en: 'My recipe sets',
+                            const SizedBox(height: 6),
+                            Text(
+                              _managerDescription(
+                                i18n,
+                                isEatModule: isEatModule,
+                                isWearModule: isWearModule,
+                              ),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                height: 1.35,
+                              ),
                             ),
-                            subtitle: selectedCollection == null
-                                ? pickUiText(
-                                    i18n,
-                                    zh: '可把常做菜、减脂餐、待尝试等集合成独立随机池。',
-                                    en: 'Group favorites, weekday meals, or recipes to try into separate pools.',
-                                  )
-                                : pickUiText(
-                                    i18n,
-                                    zh: '当前只看「${selectedCollection.title(i18n)}」。',
-                                    en: 'Showing "${selectedCollection.title(i18n)}" only.',
-                                  ),
-                            accent: accent,
-                            expanded: collectionsExpanded,
-                            countLabel: '${localState.eatCollections.length}',
-                            onToggle: () {
-                              setSheetState(() {
-                                collectionsExpanded = !collectionsExpanded;
-                              });
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                TextFormField(
-                                  key: ValueKey<String>(
-                                    'eat-collection-input-$collectionInputVersion',
-                                  ),
-                                  initialValue: collectionNameDraft,
-                                  onChanged: (value) {
-                                    collectionNameDraft = value;
+                            const SizedBox(height: 14),
+                            if (isEatModule) ...<Widget>[
+                              ToolboxSurfaceCard(
+                                padding: const EdgeInsets.all(12),
+                                borderColor: accent.withValues(alpha: 0.14),
+                                shadowOpacity: 0.02,
+                                child: _ManagerSearchField(
+                                  i18n: i18n,
+                                  initialText: searchDraft,
+                                  onDraftChanged: (value) {
+                                    searchDraft = value;
                                   },
-                                  onFieldSubmitted: (_) => createCollection(),
-                                  decoration: InputDecoration(
-                                    prefixIcon: const Icon(
-                                      Icons.bookmark_add_rounded,
-                                    ),
-                                    labelText: pickUiText(
-                                      i18n,
-                                      zh: '新建食谱集',
-                                      en: 'New recipe set',
-                                    ),
-                                    hintText: pickUiText(
-                                      i18n,
-                                      zh: '例如：一周晚餐、低油清淡、想试试',
-                                      en: 'For example: Weeknight dinners',
-                                    ),
-                                  ),
+                                  onCommitted: commitSearchQuery,
                                 ),
-                                const SizedBox(height: 10),
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: FilledButton.icon(
-                                    onPressed: createCollection,
-                                    icon: const Icon(Icons.add_rounded),
-                                    label: Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '创建食谱集',
-                                        en: 'Create set',
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: <Widget>[
-                                    ToolboxSelectablePill(
-                                      selected: selectedCollectionId == 'all',
-                                      tint: accent,
-                                      onTap: () {
-                                        setSheetState(() {
-                                          selectedCollectionId = 'all';
-                                          resetBuiltInPaging();
-                                        });
-                                      },
-                                      leading: const Icon(
-                                        Icons.all_inclusive_rounded,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        pickUiText(
-                                          i18n,
-                                          zh: '全部菜谱',
-                                          en: 'All recipes',
-                                        ),
-                                      ),
-                                    ),
-                                    ...localState.eatCollections.map(
-                                      (collection) => ToolboxSelectablePill(
-                                        selected:
-                                            selectedCollectionId ==
-                                            collection.id,
-                                        tint: accent,
-                                        onTap: () {
-                                          setSheetState(() {
-                                            selectedCollectionId =
-                                                collection.id;
-                                            resetBuiltInPaging();
-                                          });
-                                        },
-                                        leading: const Icon(
-                                          Icons.bookmarks_rounded,
-                                          size: 18,
-                                        ),
-                                        label: Text(
-                                          '${collection.title(i18n)} · ${collection.optionIds.length}',
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (localState
-                                    .eatCollections
-                                    .isNotEmpty) ...<Widget>[
-                                  const SizedBox(height: 12),
-                                  Column(
-                                    children: localState.eatCollections
-                                        .map(
-                                          (collection) => _ManagerTile(
-                                            title: collection.title(i18n),
-                                            subtitle: pickUiText(
-                                              i18n,
-                                              zh: '${collection.optionIds.length} 道菜',
-                                              en: '${collection.optionIds.length} recipes',
-                                            ),
-                                            accent: accent,
-                                            leading: Icons.bookmarks_rounded,
-                                            chips:
-                                                selectedCollectionId ==
-                                                    collection.id
-                                                ? <String>[
-                                                    pickUiText(
-                                                      i18n,
-                                                      zh: '当前范围',
-                                                      en: 'Active',
-                                                    ),
-                                                  ]
-                                                : const <String>[],
-                                            actions: <Widget>[
-                                              TextButton.icon(
-                                                onPressed: () {
-                                                  setSheetState(() {
-                                                    selectedCollectionId =
-                                                        selectedCollectionId ==
-                                                            collection.id
-                                                        ? 'all'
-                                                        : collection.id;
-                                                    resetBuiltInPaging();
-                                                  });
-                                                },
-                                                icon: const Icon(
-                                                  Icons.filter_list_rounded,
-                                                ),
-                                                label: Text(
-                                                  selectedCollectionId ==
-                                                          collection.id
-                                                      ? pickUiText(
-                                                          i18n,
-                                                          zh: '取消只看',
-                                                          en: 'Show all',
-                                                        )
-                                                      : pickUiText(
-                                                          i18n,
-                                                          zh: '只看',
-                                                          en: 'Filter',
-                                                        ),
-                                                ),
-                                              ),
-                                              TextButton.icon(
-                                                onPressed: () {
-                                                  if (selectedCollectionId ==
-                                                      collection.id) {
-                                                    selectedCollectionId =
-                                                        'all';
-                                                  }
-                                                  resetBuiltInPaging();
-                                                  publish(
-                                                    localState
-                                                        .deleteEatCollection(
-                                                          collection.id,
-                                                        ),
-                                                  );
-                                                },
-                                                icon: const Icon(
-                                                  Icons.delete_outline_rounded,
-                                                ),
-                                                label: Text(
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '删除',
-                                                    en: 'Delete',
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                        .toList(growable: false),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        _ManagerExpandableSection(
-                          title: pickUiText(i18n, zh: '筛选条件', en: 'Filters'),
-                          subtitle: activeFilterCount <= 0
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '当前显示全部范围，可折叠收起。',
-                                  en: 'Showing the full range for now.',
-                                )
-                              : pickUiText(
-                                  i18n,
-                                  zh: '已启用 $activeFilterCount 项筛选。',
-                                  en: '$activeFilterCount filters enabled.',
-                                ),
-                          accent: accent,
-                          expanded: filtersExpanded,
-                          countLabel: activeFilterCount <= 0
-                              ? pickUiText(i18n, zh: '默认', en: 'Default')
-                              : pickUiText(
-                                  i18n,
-                                  zh: '$activeFilterCount 项',
-                                  en: '$activeFilterCount active',
-                                ),
-                          onToggle: () {
-                            setSheetState(() {
-                              filtersExpanded = !filtersExpanded;
-                            });
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              DailyChoiceCategorySelector(
-                                i18n: i18n,
+                              ),
+                              const SizedBox(height: 12),
+                              _ManagerExpandableSection(
                                 title: pickUiText(
                                   i18n,
-                                  zh: '只看这个分类',
-                                  en: 'Filter by category',
+                                  zh: '我的食谱集',
+                                  en: 'My recipe sets',
                                 ),
-                                categories: filterCategories,
-                                selectedId: selectedCategoryId,
+                                subtitle: selectedCollection == null
+                                    ? pickUiText(
+                                        i18n,
+                                        zh: '可把常做菜、减脂餐、待尝试等集合成独立随机池。',
+                                        en: 'Group favorites, weekday meals, or recipes to try into separate pools.',
+                                      )
+                                    : pickUiText(
+                                        i18n,
+                                        zh: '当前只看「${selectedCollection.title(i18n)}」。',
+                                        en: 'Showing "${selectedCollection.title(i18n)}" only.',
+                                      ),
                                 accent: accent,
-                                onSelected: (value) {
+                                expanded: collectionsExpanded,
+                                countLabel:
+                                    '${localState.eatCollections.length}',
+                                onToggle: () {
                                   setSheetState(() {
-                                    selectedCategoryId = value;
-                                    resetBuiltInPaging();
+                                    collectionsExpanded = !collectionsExpanded;
                                   });
                                 },
-                              ),
-                              if (filterContexts.isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 12),
-                                DailyChoiceCategorySelector(
-                                  i18n: i18n,
-                                  title: pickUiText(
-                                    i18n,
-                                    zh: '只看这个$contextLabelZh',
-                                    en: 'Filter by $contextLabelEn',
-                                  ),
-                                  categories: filterContexts,
-                                  selectedId:
-                                      selectedContextId ??
-                                      filterContexts.first.id,
-                                  accent: accent,
-                                  onSelected: (value) {
-                                    setSheetState(() {
-                                      selectedContextId = value;
-                                      resetBuiltInPaging();
-                                    });
-                                  },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    TextFormField(
+                                      key: ValueKey<String>(
+                                        'eat-collection-input-$collectionInputVersion',
+                                      ),
+                                      initialValue: collectionNameDraft,
+                                      onChanged: (value) {
+                                        collectionNameDraft = value;
+                                      },
+                                      onFieldSubmitted: (_) =>
+                                          createCollection(),
+                                      decoration: InputDecoration(
+                                        prefixIcon: const Icon(
+                                          Icons.bookmark_add_rounded,
+                                        ),
+                                        labelText: pickUiText(
+                                          i18n,
+                                          zh: '新建食谱集',
+                                          en: 'New recipe set',
+                                        ),
+                                        hintText: pickUiText(
+                                          i18n,
+                                          zh: '例如：一周晚餐、低油清淡、想试试',
+                                          en: 'For example: Weeknight dinners',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: FilledButton.icon(
+                                        onPressed: createCollection,
+                                        icon: const Icon(Icons.add_rounded),
+                                        label: Text(
+                                          pickUiText(
+                                            i18n,
+                                            zh: '创建食谱集',
+                                            en: 'Create set',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: <Widget>[
+                                        ToolboxSelectablePill(
+                                          selected:
+                                              selectedCollectionId == 'all',
+                                          tint: accent,
+                                          onTap: () {
+                                            setSheetState(() {
+                                              selectedCollectionId = 'all';
+                                              resetBuiltInPaging();
+                                            });
+                                          },
+                                          leading: const Icon(
+                                            Icons.all_inclusive_rounded,
+                                            size: 18,
+                                          ),
+                                          label: Text(
+                                            pickUiText(
+                                              i18n,
+                                              zh: '内置菜谱',
+                                              en: 'Built-in recipes',
+                                            ),
+                                          ),
+                                        ),
+                                        ...localState.eatCollections.map(
+                                          (collection) => ToolboxSelectablePill(
+                                            selected:
+                                                selectedCollectionId ==
+                                                collection.id,
+                                            tint: accent,
+                                            onTap: () {
+                                              setSheetState(() {
+                                                selectedCollectionId =
+                                                    collection.id;
+                                                resetBuiltInPaging();
+                                              });
+                                            },
+                                            leading: const Icon(
+                                              Icons.bookmarks_rounded,
+                                              size: 18,
+                                            ),
+                                            label: Text(
+                                              '${collection.title(i18n)} · ${collection.optionIds.length}',
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (localState
+                                        .eatCollections
+                                        .isNotEmpty) ...<Widget>[
+                                      const SizedBox(height: 12),
+                                      Column(
+                                        children: localState.eatCollections
+                                            .map(
+                                              (collection) => _ManagerTile(
+                                                title: collection.title(i18n),
+                                                subtitle: pickUiText(
+                                                  i18n,
+                                                  zh: '${collection.optionIds.length} 道菜',
+                                                  en: '${collection.optionIds.length} recipes',
+                                                ),
+                                                accent: accent,
+                                                leading:
+                                                    Icons.bookmarks_rounded,
+                                                chips:
+                                                    selectedCollectionId ==
+                                                        collection.id
+                                                    ? <String>[
+                                                        pickUiText(
+                                                          i18n,
+                                                          zh: '当前范围',
+                                                          en: 'Active',
+                                                        ),
+                                                      ]
+                                                    : const <String>[],
+                                                actions: <Widget>[
+                                                  TextButton.icon(
+                                                    onPressed: () {
+                                                      setSheetState(() {
+                                                        selectedCollectionId =
+                                                            selectedCollectionId ==
+                                                                collection.id
+                                                            ? 'all'
+                                                            : collection.id;
+                                                        resetBuiltInPaging();
+                                                      });
+                                                    },
+                                                    icon: const Icon(
+                                                      Icons.filter_list_rounded,
+                                                    ),
+                                                    label: Text(
+                                                      selectedCollectionId ==
+                                                              collection.id
+                                                          ? pickUiText(
+                                                              i18n,
+                                                              zh: '取消只看',
+                                                              en: 'Show all',
+                                                            )
+                                                          : pickUiText(
+                                                              i18n,
+                                                              zh: '只看',
+                                                              en: 'Filter',
+                                                            ),
+                                                    ),
+                                                  ),
+                                                  if (collection.id !=
+                                                      dailyChoiceFavoriteEatCollectionId)
+                                                    TextButton.icon(
+                                                      onPressed: () {
+                                                        if (selectedCollectionId ==
+                                                            collection.id) {
+                                                          selectedCollectionId =
+                                                              'all';
+                                                        }
+                                                        resetBuiltInPaging();
+                                                        publish(
+                                                          localState
+                                                              .deleteEatCollection(
+                                                                collection.id,
+                                                              ),
+                                                        );
+                                                      },
+                                                      icon: const Icon(
+                                                        Icons
+                                                            .delete_outline_rounded,
+                                                      ),
+                                                      label: Text(
+                                                        pickUiText(
+                                                          i18n,
+                                                          zh: '删除',
+                                                          en: 'Delete',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            )
+                                            .toList(growable: false),
+                                      ),
+                                    ],
+                                  ],
                                 ),
-                              ],
-                              if (managerTraitGroups.isNotEmpty) ...<Widget>[
-                                const SizedBox(height: 12),
-                                for (final group
-                                    in managerTraitGroups) ...<Widget>[
-                                  _ManagerTraitFilterSection(
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            _ManagerExpandableSection(
+                              title: pickUiText(
+                                i18n,
+                                zh: '筛选条件',
+                                en: 'Filters',
+                              ),
+                              subtitle: activeFilterCount <= 0
+                                  ? pickUiText(
+                                      i18n,
+                                      zh: '当前显示全部范围，可折叠收起。',
+                                      en: 'Showing the full range for now.',
+                                    )
+                                  : pickUiText(
+                                      i18n,
+                                      zh: '已启用 $activeFilterCount 项筛选。',
+                                      en: '$activeFilterCount filters enabled.',
+                                    ),
+                              accent: accent,
+                              expanded: filtersExpanded,
+                              countLabel: activeFilterCount <= 0
+                                  ? pickUiText(i18n, zh: '默认', en: 'Default')
+                                  : pickUiText(
+                                      i18n,
+                                      zh: '$activeFilterCount 项',
+                                      en: '$activeFilterCount active',
+                                    ),
+                              onToggle: () {
+                                setSheetState(() {
+                                  filtersExpanded = !filtersExpanded;
+                                });
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  DailyChoiceCategorySelector(
                                     i18n: i18n,
+                                    title: pickUiText(
+                                      i18n,
+                                      zh: '只看这个分类',
+                                      en: 'Filter by category',
+                                    ),
+                                    categories: filterCategories,
+                                    selectedId: selectedCategoryId,
                                     accent: accent,
-                                    group: group,
-                                    selectedId:
-                                        selectedTraitFilters[group.id] ?? 'all',
                                     onSelected: (value) {
                                       setSheetState(() {
-                                        selectedTraitFilters[group.id] = value;
+                                        selectedCategoryId = value;
                                         resetBuiltInPaging();
                                       });
                                     },
                                   ),
-                                  const SizedBox(height: 12),
+                                  if (filterContexts.isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 12),
+                                    DailyChoiceCategorySelector(
+                                      i18n: i18n,
+                                      title: pickUiText(
+                                        i18n,
+                                        zh: '只看这个$contextLabelZh',
+                                        en: 'Filter by $contextLabelEn',
+                                      ),
+                                      categories: filterContexts,
+                                      selectedId:
+                                          selectedContextId ??
+                                          filterContexts.first.id,
+                                      accent: accent,
+                                      onSelected: (value) {
+                                        setSheetState(() {
+                                          selectedContextId = value;
+                                          resetBuiltInPaging();
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                  if (managerTraitGroups
+                                      .isNotEmpty) ...<Widget>[
+                                    const SizedBox(height: 12),
+                                    for (final group
+                                        in managerTraitGroups) ...<Widget>[
+                                      _ManagerTraitFilterSection(
+                                        i18n: i18n,
+                                        accent: accent,
+                                        group: group,
+                                        selectedId:
+                                            selectedTraitFilters[group.id] ??
+                                            'all',
+                                        onSelected: (value) {
+                                          setSheetState(() {
+                                            selectedTraitFilters[group.id] =
+                                                value;
+                                            resetBuiltInPaging();
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(height: 12),
+                                    ],
+                                  ],
                                 ],
-                              ],
-                            ],
-                          ),
-                        ),
-                        FilledButton.icon(
-                          onPressed: () => openEditor(),
-                          icon: const Icon(Icons.add_rounded),
-                          label: Text(
-                            pickUiText(
-                              i18n,
-                              zh: isEatModule
-                                  ? '新增个人食谱'
-                                  : (isWearModule ? '新增个人衣橱搭配' : '新增'),
-                              en: isEatModule
-                                  ? 'Add recipe'
-                                  : (isWearModule
-                                        ? 'Add wardrobe outfit'
-                                        : 'Add'),
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        _ManagerExpandableSection(
-                          title: pickUiText(
-                            i18n,
-                            zh: '我的自定义',
-                            en: 'My custom items',
-                          ),
-                          subtitle: pickUiText(
-                            i18n,
-                            zh: '完全属于你的新增条目，可直接编辑和删除。',
-                            en: 'Your own saved items that can be edited or removed.',
-                          ),
-                          accent: accent,
-                          expanded: customExpanded,
-                          countLabel: '${customItems.length}',
-                          onToggle: () {
-                            setSheetState(() {
-                              customExpanded = !customExpanded;
-                            });
-                          },
-                          child: customItems.isEmpty
-                              ? _ManagerHint(
-                                  text: _emptyCustomHint(
-                                    i18n,
-                                    isEatModule: isEatModule,
-                                    isWearModule: isWearModule,
-                                  ),
-                                )
-                              : Column(
-                                  children: customItems
-                                      .map(
-                                        (item) => _ManagerTile(
-                                          title: item.title(i18n),
-                                          subtitle: item.subtitle(i18n),
-                                          accent: accent,
-                                          leading: Icons.edit_note_rounded,
-                                          onTap: onInspectOption == null
-                                              ? null
-                                              : () => onInspectOption(item),
-                                          chips: _managerChips(
-                                            i18n,
-                                            item,
-                                            isEatModule: isEatModule,
-                                            isWearModule: isWearModule,
-                                          ),
-                                          actions: <Widget>[
-                                            TextButton.icon(
-                                              onPressed: () => openEditor(item),
-                                              icon: const Icon(
-                                                Icons.edit_rounded,
+                            FilledButton.icon(
+                              onPressed: () => openEditor(),
+                              icon: const Icon(Icons.add_rounded),
+                              label: Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: isEatModule
+                                      ? '新增个人食谱'
+                                      : (isWearModule ? '新增个人衣橱搭配' : '新增'),
+                                  en: isEatModule
+                                      ? 'Add recipe'
+                                      : (isWearModule
+                                            ? 'Add wardrobe outfit'
+                                            : 'Add'),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            _ManagerExpandableSection(
+                              title: pickUiText(
+                                i18n,
+                                zh: '我的自定义',
+                                en: 'My custom items',
+                              ),
+                              subtitle: pickUiText(
+                                i18n,
+                                zh: '完全属于你的新增条目，可直接编辑和删除。',
+                                en: 'Your own saved items that can be edited or removed.',
+                              ),
+                              accent: accent,
+                              expanded: customExpanded,
+                              countLabel: '${customItems.length}',
+                              onToggle: () {
+                                setSheetState(() {
+                                  customExpanded = !customExpanded;
+                                });
+                              },
+                              child: customItems.isEmpty
+                                  ? _ManagerHint(
+                                      text: _emptyCustomHint(
+                                        i18n,
+                                        isEatModule: isEatModule,
+                                        isWearModule: isWearModule,
+                                      ),
+                                    )
+                                  : Column(
+                                      children: customItems
+                                          .map(
+                                            (item) => _ManagerTile(
+                                              title: item.title(i18n),
+                                              subtitle: item.subtitle(i18n),
+                                              accent: accent,
+                                              leading: Icons.edit_note_rounded,
+                                              onTap: onInspectOption == null
+                                                  ? null
+                                                  : () => onInspectOption(item),
+                                              chips: _managerChips(
+                                                i18n,
+                                                item,
+                                                isEatModule: isEatModule,
+                                                isWearModule: isWearModule,
                                               ),
-                                              label: Text(
-                                                pickUiText(
-                                                  i18n,
-                                                  zh: '编辑',
-                                                  en: 'Edit',
-                                                ),
-                                              ),
-                                            ),
-                                            ..._managerCollectionActions(
-                                              i18n: i18n,
-                                              collections:
-                                                  localState.eatCollections,
-                                              selectedCollection:
-                                                  selectedCollection,
-                                              optionId: item.id,
-                                              onAdd: (collectionId) {
-                                                publish(
-                                                  localState
-                                                      .addOptionToEatCollection(
-                                                        collectionId:
-                                                            collectionId,
-                                                        optionId: item.id,
-                                                      ),
-                                                );
-                                              },
-                                              onRemove: (collectionId) {
-                                                publish(
-                                                  localState
-                                                      .removeOptionFromEatCollection(
-                                                        collectionId:
-                                                            collectionId,
-                                                        optionId: item.id,
-                                                      ),
-                                                );
-                                              },
-                                            ),
-                                            TextButton.icon(
-                                              onPressed: () {
-                                                publish(
-                                                  localState.deleteCustom(
-                                                    item.id,
+                                              actions: <Widget>[
+                                                TextButton.icon(
+                                                  onPressed: () =>
+                                                      openEditor(item),
+                                                  icon: const Icon(
+                                                    Icons.edit_rounded,
                                                   ),
-                                                );
-                                              },
-                                              icon: const Icon(
-                                                Icons.delete_outline_rounded,
-                                              ),
-                                              label: Text(
-                                                pickUiText(
-                                                  i18n,
-                                                  zh: '删除',
-                                                  en: 'Delete',
+                                                  label: Text(
+                                                    pickUiText(
+                                                      i18n,
+                                                      zh: '编辑',
+                                                      en: 'Edit',
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                                ..._managerCollectionActions(
+                                                  context: context,
+                                                  i18n: i18n,
+                                                  collections:
+                                                      localState.eatCollections,
+                                                  selectedCollection:
+                                                      selectedCollection,
+                                                  optionId: item.id,
+                                                  onAddMultiple:
+                                                      (collectionIds) {
+                                                        unawaited(
+                                                          addOptionToCollections(
+                                                            optionId: item.id,
+                                                            collectionIds:
+                                                                collectionIds,
+                                                          ),
+                                                        );
+                                                      },
+                                                  onRemove: (collectionId) {
+                                                    unawaited(
+                                                      publishWithProcessing(
+                                                        localState
+                                                            .removeOptionFromEatCollection(
+                                                              collectionId:
+                                                                  collectionId,
+                                                              optionId: item.id,
+                                                            ),
+                                                        pickUiText(
+                                                          i18n,
+                                                          zh: '正在移出食谱集...',
+                                                          en: 'Removing from set...',
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                TextButton.icon(
+                                                  onPressed: () {
+                                                    publish(
+                                                      localState.deleteCustom(
+                                                        item.id,
+                                                      ),
+                                                    );
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons
+                                                        .delete_outline_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    pickUiText(
+                                                      i18n,
+                                                      zh: '删除',
+                                                      en: 'Delete',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ],
+                                          )
+                                          .toList(growable: false),
+                                    ),
+                            ),
+                            if (isEatModule)
+                              _ManagerExpandableSection(
+                                title: pickUiText(
+                                  i18n,
+                                  zh: '我的调整',
+                                  en: 'My adjustments',
+                                ),
+                                subtitle: pickUiText(
+                                  i18n,
+                                  zh: '基于内置菜谱保存的个人口味版本，会直接参与随机与筛选。',
+                                  en: 'Your personal overrides of built-in recipes.',
+                                ),
+                                accent: accent,
+                                expanded: adjustedExpanded,
+                                countLabel: '${adjustedItems.length}',
+                                onToggle: () {
+                                  setSheetState(() {
+                                    adjustedExpanded = !adjustedExpanded;
+                                  });
+                                },
+                                child: adjustedItems.isEmpty
+                                    ? _ManagerHint(
+                                        text: pickUiText(
+                                          i18n,
+                                          zh: '当前筛选下还没有保存过个人调整。点开内置菜即可基于原菜谱做个人化微调。',
+                                          en: 'No personal adjustments in this filter yet.',
                                         ),
                                       )
-                                      .toList(growable: false),
-                                ),
-                        ),
-                        if (isEatModule)
-                          _ManagerExpandableSection(
-                            title: pickUiText(
-                              i18n,
-                              zh: '我的调整',
-                              en: 'My adjustments',
-                            ),
-                            subtitle: pickUiText(
-                              i18n,
-                              zh: '基于内置菜谱保存的个人口味版本，会直接参与随机与筛选。',
-                              en: 'Your personal overrides of built-in recipes.',
-                            ),
-                            accent: accent,
-                            expanded: adjustedExpanded,
-                            countLabel: '${adjustedItems.length}',
-                            onToggle: () {
-                              setSheetState(() {
-                                adjustedExpanded = !adjustedExpanded;
-                              });
-                            },
-                            child: adjustedItems.isEmpty
-                                ? _ManagerHint(
-                                    text: pickUiText(
-                                      i18n,
-                                      zh: '当前筛选下还没有保存过个人调整。点开内置菜即可基于原菜谱做个人化微调。',
-                                      en: 'No personal adjustments in this filter yet.',
-                                    ),
-                                  )
-                                : Column(
-                                    children: adjustedItems
-                                        .map((item) {
-                                          final busy = itemBusy(item);
+                                    : Column(
+                                        children: adjustedItems
+                                            .map((item) {
+                                              final busy = itemBusy(item);
+                                              final loadingMessage =
+                                                  itemBusyMessage(item);
+                                              return _ManagerTile(
+                                                title: item.title(i18n),
+                                                subtitle: item.subtitle(i18n),
+                                                accent: accent,
+                                                leading:
+                                                    hidden.contains(item.id)
+                                                    ? Icons
+                                                          .visibility_off_rounded
+                                                    : Icons.tune_rounded,
+                                                onTap:
+                                                    onInspectOption == null ||
+                                                        busy
+                                                    ? null
+                                                    : () =>
+                                                          inspectBuiltInOption(
+                                                            item,
+                                                          ),
+                                                statusMessage:
+                                                    loadingMessage ??
+                                                    managerActionErrorByOptionId[item
+                                                        .id],
+                                                statusIsLoading:
+                                                    loadingMessage != null,
+                                                statusIsError:
+                                                    loadingMessage == null &&
+                                                    managerActionErrorByOptionId
+                                                        .containsKey(item.id),
+                                                chips: <String>[
+                                                  pickUiText(
+                                                    i18n,
+                                                    zh: '已调整',
+                                                    en: 'Adjusted',
+                                                  ),
+                                                  if (hidden.contains(item.id))
+                                                    pickUiText(
+                                                      i18n,
+                                                      zh: '已隐藏',
+                                                      en: 'Hidden',
+                                                    ),
+                                                  ..._managerChips(
+                                                    i18n,
+                                                    item,
+                                                    isEatModule: isEatModule,
+                                                    isWearModule: isWearModule,
+                                                  ),
+                                                ],
+                                                actions: <Widget>[
+                                                  if (onAdjustBuiltInOption !=
+                                                      null)
+                                                    _managerAsyncActionButton(
+                                                      i18n: i18n,
+                                                      icon: Icons.tune_rounded,
+                                                      labelZh: '继续调整',
+                                                      labelEn: 'Adjust',
+                                                      loading: actionBusy(
+                                                        _managerActionAdjust,
+                                                        item,
+                                                      ),
+                                                      enabled: !busy,
+                                                      onPressed: () =>
+                                                          openAdjustmentEditor(
+                                                            item,
+                                                          ),
+                                                    ),
+                                                  if (onSaveBuiltInAsCustom !=
+                                                      null)
+                                                    _managerAsyncActionButton(
+                                                      i18n: i18n,
+                                                      icon: Icons.copy_rounded,
+                                                      labelZh: '另存',
+                                                      labelEn: 'Save as',
+                                                      loading: actionBusy(
+                                                        _managerActionSaveAs,
+                                                        item,
+                                                      ),
+                                                      enabled: !busy,
+                                                      onPressed: () =>
+                                                          saveBuiltInAsCustom(
+                                                            item,
+                                                          ),
+                                                    ),
+                                                  ..._managerCollectionActions(
+                                                    context: context,
+                                                    i18n: i18n,
+                                                    collections: localState
+                                                        .eatCollections,
+                                                    selectedCollection:
+                                                        selectedCollection,
+                                                    optionId: item.id,
+                                                    onAddMultiple:
+                                                        (collectionIds) {
+                                                          unawaited(
+                                                            addOptionToCollections(
+                                                              optionId: item.id,
+                                                              collectionIds:
+                                                                  collectionIds,
+                                                            ),
+                                                          );
+                                                        },
+                                                    onRemove: (collectionId) {
+                                                      unawaited(
+                                                        publishWithProcessing(
+                                                          localState
+                                                              .removeOptionFromEatCollection(
+                                                                collectionId:
+                                                                    collectionId,
+                                                                optionId:
+                                                                    item.id,
+                                                              ),
+                                                          pickUiText(
+                                                            i18n,
+                                                            zh: '正在移出食谱集...',
+                                                            en: 'Removing from set...',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                  TextButton.icon(
+                                                    onPressed: busy
+                                                        ? null
+                                                        : () {
+                                                            publish(
+                                                              localState
+                                                                  .restoreAdjustedBuiltIn(
+                                                                    item.id,
+                                                                  ),
+                                                            );
+                                                          },
+                                                    icon: const Icon(
+                                                      Icons.restart_alt_rounded,
+                                                    ),
+                                                    label: Text(
+                                                      pickUiText(
+                                                        i18n,
+                                                        zh: '恢复原味',
+                                                        en: 'Restore original',
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            })
+                                            .toList(growable: false),
+                                      ),
+                              ),
+                            _ManagerExpandableSection(
+                              title: pickUiText(
+                                i18n,
+                                zh: '内置菜谱浏览',
+                                en: 'Built-in browser',
+                              ),
+                              subtitle: _builtInSectionSubtitle(
+                                i18n,
+                                builtInExpanded: builtInExpanded,
+                                total: builtInTotalCount,
+                                visible: visibleBuiltIns.length,
+                                loading: builtInSqlLoading,
+                                errorMessage: builtInSqlError,
+                              ),
+                              accent: accent,
+                              expanded: builtInExpanded,
+                              countLabel: builtInExpanded
+                                  ? (builtInSqlLoading && builtInTotalCount == 0
+                                        ? pickUiText(
+                                            i18n,
+                                            zh: '加载中',
+                                            en: 'Loading',
+                                          )
+                                        : '$builtInTotalCount')
+                                  : pickUiText(i18n, zh: '展开', en: 'Open'),
+                              onToggle: () {
+                                setSheetState(() {
+                                  builtInExpanded = !builtInExpanded;
+                                  if (builtInExpanded) {
+                                    resetBuiltInPaging();
+                                  }
+                                });
+                              },
+                              child:
+                                  builtInSqlLoading && visibleBuiltIns.isEmpty
+                                  ? _ManagerHint(
+                                      text: pickUiText(
+                                        i18n,
+                                        zh: '正在读取内置菜谱...',
+                                        en: 'Loading built-in recipes...',
+                                      ),
+                                    )
+                                  : builtInSqlError != null &&
+                                        visibleBuiltIns.isEmpty
+                                  ? _ManagerHint(
+                                      text: pickUiText(
+                                        i18n,
+                                        zh: '读取内置菜谱失败：$builtInSqlError',
+                                        en: 'Failed to load built-in recipes: $builtInSqlError',
+                                      ),
+                                    )
+                                  : visibleBuiltIns.isEmpty
+                                  ? _ManagerHint(
+                                      text: _emptyBuiltInHint(
+                                        i18n,
+                                        isWearModule: isWearModule,
+                                      ),
+                                    )
+                                  : Column(
+                                      children: <Widget>[
+                                        ...visibleBuiltIns.map((baseItem) {
+                                          final displayItem =
+                                              adjustedById[baseItem.id] ??
+                                              baseItem;
+                                          final isHidden = hidden.contains(
+                                            baseItem.id,
+                                          );
+                                          final hasAdjustment = adjustedById
+                                              .containsKey(baseItem.id);
+                                          final busy = itemBusy(displayItem);
                                           final loadingMessage =
-                                              itemBusyMessage(item);
+                                              itemBusyMessage(displayItem);
                                           return _ManagerTile(
-                                            title: item.title(i18n),
-                                            subtitle: item.subtitle(i18n),
+                                            title: displayItem.title(i18n),
+                                            subtitle: isHidden
+                                                ? pickUiText(
+                                                    i18n,
+                                                    zh: '这道菜当前已加入不喜欢列表。',
+                                                    en: 'This item is hidden right now.',
+                                                  )
+                                                : displayItem.subtitle(i18n),
                                             accent: accent,
-                                            leading: hidden.contains(item.id)
+                                            leading: isHidden
                                                 ? Icons.visibility_off_rounded
-                                                : Icons.tune_rounded,
+                                                : Icons.dataset_rounded,
                                             onTap:
                                                 onInspectOption == null || busy
                                                 ? null
                                                 : () => inspectBuiltInOption(
-                                                    item,
+                                                    displayItem,
                                                   ),
                                             statusMessage:
                                                 loadingMessage ??
-                                                managerActionErrorByOptionId[item
+                                                managerActionErrorByOptionId[displayItem
                                                     .id],
                                             statusIsLoading:
                                                 loadingMessage != null,
                                             statusIsError:
                                                 loadingMessage == null &&
                                                 managerActionErrorByOptionId
-                                                    .containsKey(item.id),
+                                                    .containsKey(
+                                                      displayItem.id,
+                                                    ),
                                             chips: <String>[
-                                              pickUiText(
-                                                i18n,
-                                                zh: '已调整',
-                                                en: 'Adjusted',
-                                              ),
-                                              if (hidden.contains(item.id))
+                                              if (hasAdjustment)
+                                                pickUiText(
+                                                  i18n,
+                                                  zh: '已调整',
+                                                  en: 'Adjusted',
+                                                ),
+                                              if (isHidden)
                                                 pickUiText(
                                                   i18n,
                                                   zh: '已隐藏',
@@ -1038,7 +1371,7 @@ Future<void> showDailyChoiceManagerSheet({
                                                 ),
                                               ..._managerChips(
                                                 i18n,
-                                                item,
+                                                displayItem,
                                                 isEatModule: isEatModule,
                                                 isWearModule: isWearModule,
                                               ),
@@ -1048,16 +1381,20 @@ Future<void> showDailyChoiceManagerSheet({
                                                 _managerAsyncActionButton(
                                                   i18n: i18n,
                                                   icon: Icons.tune_rounded,
-                                                  labelZh: '继续调整',
-                                                  labelEn: 'Adjust',
+                                                  labelZh: hasAdjustment
+                                                      ? '继续调整'
+                                                      : '个人调整',
+                                                  labelEn: hasAdjustment
+                                                      ? 'Adjust more'
+                                                      : 'Adjust',
                                                   loading: actionBusy(
                                                     _managerActionAdjust,
-                                                    item,
+                                                    displayItem,
                                                   ),
                                                   enabled: !busy,
                                                   onPressed: () =>
                                                       openAdjustmentEditor(
-                                                        item,
+                                                        displayItem,
                                                       ),
                                                 ),
                                               if (onSaveBuiltInAsCustom != null)
@@ -1068,331 +1405,163 @@ Future<void> showDailyChoiceManagerSheet({
                                                   labelEn: 'Save as',
                                                   loading: actionBusy(
                                                     _managerActionSaveAs,
-                                                    item,
+                                                    displayItem,
                                                   ),
                                                   enabled: !busy,
                                                   onPressed: () =>
-                                                      saveBuiltInAsCustom(item),
+                                                      saveBuiltInAsCustom(
+                                                        displayItem,
+                                                      ),
                                                 ),
                                               ..._managerCollectionActions(
+                                                context: context,
                                                 i18n: i18n,
                                                 collections:
                                                     localState.eatCollections,
                                                 selectedCollection:
                                                     selectedCollection,
-                                                optionId: item.id,
-                                                onAdd: (collectionId) {
-                                                  publish(
-                                                    localState
-                                                        .addOptionToEatCollection(
-                                                          collectionId:
-                                                              collectionId,
-                                                          optionId: item.id,
-                                                        ),
+                                                optionId: baseItem.id,
+                                                onAddMultiple: (collectionIds) {
+                                                  unawaited(
+                                                    addOptionToCollections(
+                                                      optionId: baseItem.id,
+                                                      collectionIds:
+                                                          collectionIds,
+                                                    ),
                                                   );
                                                 },
                                                 onRemove: (collectionId) {
-                                                  publish(
-                                                    localState
-                                                        .removeOptionFromEatCollection(
-                                                          collectionId:
-                                                              collectionId,
-                                                          optionId: item.id,
-                                                        ),
+                                                  unawaited(
+                                                    publishWithProcessing(
+                                                      localState
+                                                          .removeOptionFromEatCollection(
+                                                            collectionId:
+                                                                collectionId,
+                                                            optionId:
+                                                                baseItem.id,
+                                                          ),
+                                                      pickUiText(
+                                                        i18n,
+                                                        zh: '正在移出食谱集...',
+                                                        en: 'Removing from set...',
+                                                      ),
+                                                    ),
                                                   );
                                                 },
                                               ),
+                                              if (hasAdjustment)
+                                                TextButton.icon(
+                                                  onPressed: busy
+                                                      ? null
+                                                      : () {
+                                                          publish(
+                                                            localState
+                                                                .restoreAdjustedBuiltIn(
+                                                                  baseItem.id,
+                                                                ),
+                                                          );
+                                                        },
+                                                  icon: const Icon(
+                                                    Icons.restart_alt_rounded,
+                                                  ),
+                                                  label: Text(
+                                                    pickUiText(
+                                                      i18n,
+                                                      zh: '恢复原味',
+                                                      en: 'Restore original',
+                                                    ),
+                                                  ),
+                                                ),
                                               TextButton.icon(
                                                 onPressed: busy
                                                     ? null
                                                     : () {
-                                                        publish(
-                                                          localState
-                                                              .restoreAdjustedBuiltIn(
-                                                                item.id,
-                                                              ),
+                                                        unawaited(
+                                                          toggleBuiltInHidden(
+                                                            option: displayItem,
+                                                            isHidden: isHidden,
+                                                          ),
                                                         );
                                                       },
-                                                icon: const Icon(
-                                                  Icons.restart_alt_rounded,
+                                                icon: Icon(
+                                                  isHidden
+                                                      ? Icons.restore_rounded
+                                                      : Icons
+                                                            .remove_circle_outline_rounded,
                                                 ),
                                                 label: Text(
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '恢复原味',
-                                                    en: 'Restore original',
-                                                  ),
+                                                  isHidden
+                                                      ? pickUiText(
+                                                          i18n,
+                                                          zh: '恢复',
+                                                          en: 'Restore',
+                                                        )
+                                                      : pickUiText(
+                                                          i18n,
+                                                          zh: '不喜欢',
+                                                          en: 'Hide',
+                                                        ),
                                                 ),
                                               ),
                                             ],
                                           );
-                                        })
-                                        .toList(growable: false),
-                                  ),
-                          ),
-                        _ManagerExpandableSection(
-                          title: pickUiText(
-                            i18n,
-                            zh: '内置条目',
-                            en: 'Built-in items',
-                          ),
-                          subtitle: _builtInSectionSubtitle(
-                            i18n,
-                            builtInExpanded: builtInExpanded,
-                            total: builtInTotalCount,
-                            visible: visibleBuiltIns.length,
-                            loading: builtInSqlLoading,
-                            errorMessage: builtInSqlError,
-                          ),
-                          accent: accent,
-                          expanded: builtInExpanded,
-                          countLabel: builtInExpanded
-                              ? (builtInSqlLoading && builtInTotalCount == 0
-                                    ? pickUiText(i18n, zh: '加载中', en: 'Loading')
-                                    : '$builtInTotalCount')
-                              : pickUiText(i18n, zh: '展开', en: 'Open'),
-                          onToggle: () {
-                            setSheetState(() {
-                              builtInExpanded = !builtInExpanded;
-                              if (builtInExpanded) {
-                                resetBuiltInPaging();
-                              }
-                            });
-                          },
-                          child: builtInSqlLoading && visibleBuiltIns.isEmpty
-                              ? _ManagerHint(
-                                  text: pickUiText(
-                                    i18n,
-                                    zh: '正在读取内置菜谱...',
-                                    en: 'Loading built-in recipes...',
-                                  ),
-                                )
-                              : builtInSqlError != null &&
-                                    visibleBuiltIns.isEmpty
-                              ? _ManagerHint(
-                                  text: pickUiText(
-                                    i18n,
-                                    zh: '读取内置菜谱失败：$builtInSqlError',
-                                    en: 'Failed to load built-in recipes: $builtInSqlError',
-                                  ),
-                                )
-                              : visibleBuiltIns.isEmpty
-                              ? _ManagerHint(
-                                  text: _emptyBuiltInHint(
-                                    i18n,
-                                    isWearModule: isWearModule,
-                                  ),
-                                )
-                              : Column(
-                                  children: <Widget>[
-                                    ...visibleBuiltIns.map((baseItem) {
-                                      final displayItem =
-                                          adjustedById[baseItem.id] ?? baseItem;
-                                      final isHidden = hidden.contains(
-                                        baseItem.id,
-                                      );
-                                      final hasAdjustment = adjustedById
-                                          .containsKey(baseItem.id);
-                                      final busy = itemBusy(displayItem);
-                                      final loadingMessage = itemBusyMessage(
-                                        displayItem,
-                                      );
-                                      return _ManagerTile(
-                                        title: displayItem.title(i18n),
-                                        subtitle: isHidden
-                                            ? pickUiText(
-                                                i18n,
-                                                zh: '这道菜当前已加入不喜欢列表。',
-                                                en: 'This item is hidden right now.',
-                                              )
-                                            : displayItem.subtitle(i18n),
-                                        accent: accent,
-                                        leading: isHidden
-                                            ? Icons.visibility_off_rounded
-                                            : Icons.dataset_rounded,
-                                        onTap: onInspectOption == null || busy
-                                            ? null
-                                            : () => inspectBuiltInOption(
-                                                displayItem,
-                                              ),
-                                        statusMessage:
-                                            loadingMessage ??
-                                            managerActionErrorByOptionId[displayItem
-                                                .id],
-                                        statusIsLoading: loadingMessage != null,
-                                        statusIsError:
-                                            loadingMessage == null &&
-                                            managerActionErrorByOptionId
-                                                .containsKey(displayItem.id),
-                                        chips: <String>[
-                                          if (hasAdjustment)
-                                            pickUiText(
-                                              i18n,
-                                              zh: '已调整',
-                                              en: 'Adjusted',
-                                            ),
-                                          if (isHidden)
-                                            pickUiText(
-                                              i18n,
-                                              zh: '已隐藏',
-                                              en: 'Hidden',
-                                            ),
-                                          ..._managerChips(
-                                            i18n,
-                                            displayItem,
-                                            isEatModule: isEatModule,
-                                            isWearModule: isWearModule,
+                                        }),
+                                        if (builtInTotalCount >
+                                            visibleBuiltIns.length) ...<Widget>[
+                                          const SizedBox(height: 10),
+                                          _ManagerHint(
+                                            text: builtInSqlLoading
+                                                ? pickUiText(
+                                                    i18n,
+                                                    zh: '正在加载更多内置菜谱...',
+                                                    en: 'Loading more built-in recipes...',
+                                                  )
+                                                : pickUiText(
+                                                    i18n,
+                                                    zh: '还有 ${builtInTotalCount - visibleBuiltIns.length} 条待加载。',
+                                                    en: '${builtInTotalCount - visibleBuiltIns.length} more recipes are ready to load.',
+                                                  ),
                                           ),
                                         ],
-                                        actions: <Widget>[
-                                          if (onAdjustBuiltInOption != null)
-                                            _managerAsyncActionButton(
-                                              i18n: i18n,
-                                              icon: Icons.tune_rounded,
-                                              labelZh: hasAdjustment
-                                                  ? '继续调整'
-                                                  : '个人调整',
-                                              labelEn: hasAdjustment
-                                                  ? 'Adjust more'
-                                                  : 'Adjust',
-                                              loading: actionBusy(
-                                                _managerActionAdjust,
-                                                displayItem,
-                                              ),
-                                              enabled: !busy,
-                                              onPressed: () =>
-                                                  openAdjustmentEditor(
-                                                    displayItem,
-                                                  ),
-                                            ),
-                                          if (onSaveBuiltInAsCustom != null)
-                                            _managerAsyncActionButton(
-                                              i18n: i18n,
-                                              icon: Icons.copy_rounded,
-                                              labelZh: '另存',
-                                              labelEn: 'Save as',
-                                              loading: actionBusy(
-                                                _managerActionSaveAs,
-                                                displayItem,
-                                              ),
-                                              enabled: !busy,
-                                              onPressed: () =>
-                                                  saveBuiltInAsCustom(
-                                                    displayItem,
-                                                  ),
-                                            ),
-                                          ..._managerCollectionActions(
-                                            i18n: i18n,
-                                            collections:
-                                                localState.eatCollections,
-                                            selectedCollection:
-                                                selectedCollection,
-                                            optionId: baseItem.id,
-                                            onAdd: (collectionId) {
-                                              publish(
-                                                localState
-                                                    .addOptionToEatCollection(
-                                                      collectionId:
-                                                          collectionId,
-                                                      optionId: baseItem.id,
-                                                    ),
-                                              );
-                                            },
-                                            onRemove: (collectionId) {
-                                              publish(
-                                                localState
-                                                    .removeOptionFromEatCollection(
-                                                      collectionId:
-                                                          collectionId,
-                                                      optionId: baseItem.id,
-                                                    ),
-                                              );
-                                            },
-                                          ),
-                                          if (hasAdjustment)
-                                            TextButton.icon(
-                                              onPressed: busy
-                                                  ? null
-                                                  : () {
-                                                      publish(
-                                                        localState
-                                                            .restoreAdjustedBuiltIn(
-                                                              baseItem.id,
-                                                            ),
-                                                      );
-                                                    },
-                                              icon: const Icon(
-                                                Icons.restart_alt_rounded,
-                                              ),
-                                              label: Text(
-                                                pickUiText(
-                                                  i18n,
-                                                  zh: '恢复原味',
-                                                  en: 'Restore original',
-                                                ),
-                                              ),
-                                            ),
-                                          TextButton.icon(
-                                            onPressed: busy
-                                                ? null
-                                                : () {
-                                                    publish(
-                                                      isHidden
-                                                          ? localState
-                                                                .restoreBuiltIn(
-                                                                  baseItem.id,
-                                                                )
-                                                          : localState
-                                                                .hideBuiltIn(
-                                                                  baseItem.id,
-                                                                ),
-                                                    );
-                                                  },
-                                            icon: Icon(
-                                              isHidden
-                                                  ? Icons.restore_rounded
-                                                  : Icons
-                                                        .remove_circle_outline_rounded,
-                                            ),
-                                            label: Text(
-                                              isHidden
-                                                  ? pickUiText(
-                                                      i18n,
-                                                      zh: '恢复',
-                                                      en: 'Restore',
-                                                    )
-                                                  : pickUiText(
-                                                      i18n,
-                                                      zh: '不喜欢',
-                                                      en: 'Hide',
-                                                    ),
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    }),
-                                    if (builtInTotalCount >
-                                        visibleBuiltIns.length) ...<Widget>[
-                                      const SizedBox(height: 10),
-                                      _ManagerHint(
-                                        text: builtInSqlLoading
-                                            ? pickUiText(
-                                                i18n,
-                                                zh: '正在加载更多内置菜谱...',
-                                                en: 'Loading more built-in recipes...',
-                                              )
-                                            : pickUiText(
-                                                i18n,
-                                                zh: '还有 ${builtInTotalCount - visibleBuiltIns.length} 条待加载。',
-                                                en: '${builtInTotalCount - visibleBuiltIns.length} more recipes are ready to load.',
-                                              ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
+                                      ],
+                                    ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      Positioned(
+                        right: 10,
+                        bottom: 12,
+                        child: FloatingActionButton.small(
+                          heroTag: null,
+                          tooltip: pickUiText(
+                            i18n,
+                            zh: '回到页首',
+                            en: 'Back to top',
+                          ),
+                          backgroundColor: accent,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          onPressed: () {
+                            if (!controller.hasClients) {
+                              return;
+                            }
+                            controller.animateTo(
+                              0,
+                              duration: const Duration(milliseconds: 320),
+                              curve: Curves.easeOutCubic,
+                            );
+                          },
+                          child: const Icon(Icons.vertical_align_top_rounded),
+                        ),
+                      ),
+                      if (managerProcessingMessage != null)
+                        Positioned.fill(
+                          child: _ManagerProcessingOverlay(
+                            message: managerProcessingMessage!,
+                            accent: accent,
+                          ),
+                        ),
+                    ],
                   );
                 },
               ),
@@ -1523,19 +1692,22 @@ String _managerBuiltInFilterCacheKey({
   required String searchQuery,
   required Map<String, String> traitFilters,
   required String selectedCollectionId,
-  required int stateVersion,
+  required Set<String>? selectedCollectionOptionIds,
 }) {
   final traitKey =
       traitFilters.entries
           .map((entry) => '${entry.key}:${entry.value}')
           .toList(growable: false)
         ..sort();
+  final collectionIds =
+      (selectedCollectionOptionIds?.toList(growable: false) ?? <String>[])
+        ..sort();
   return <String>[
-    '$stateVersion',
     moduleId,
     categoryId,
     contextId ?? '',
     selectedCollectionId,
+    collectionIds.join('|'),
     searchQuery.trim().toLowerCase(),
     traitKey.join('|'),
   ].join('\u0001');
@@ -1551,7 +1723,7 @@ String _managerDescription(
     zh: isWearModule
         ? '删除内置条目会把它加入“不喜欢”隐藏列表；自定义穿搭会保存在本机，并可按风格、版型和样式类型管理。'
         : (isEatModule
-              ? '不喜欢会隐藏内置菜；个人调整会覆盖原菜谱参与随机；个人食谱保存在本机并参与高级筛选。'
+              ? '不喜欢会先确认再隐藏内置菜；个人调整会覆盖原菜谱参与随机；个人食谱保存在本机并参与高级筛选。'
               : '删除内置条目会把它加入“不喜欢”隐藏列表；自定义条目会保存在本机。'),
     en: isWearModule
         ? 'Deleting a built-in item hides it. Custom outfits stay local and can be managed by style, silhouette, and key pieces.'
@@ -1586,10 +1758,10 @@ String _emptyBuiltInHint(AppI18n i18n, {required bool isWearModule}) {
     i18n,
     zh: isWearModule
         ? '当前筛选下没有内置穿搭，换一个气温、场景或特征标签试试。'
-        : '当前筛选下没有内置条目，换一个分类或上下文试试。',
+        : '当前筛选下没有内置菜谱，换一个分类或上下文试试。',
     en: isWearModule
         ? 'No built-in outfits match this filter.'
-        : 'No built-in items match this filter.',
+        : 'No built-in recipes match this filter.',
   );
 }
 
@@ -1732,7 +1904,17 @@ class _ManagerSearchFieldState extends State<_ManagerSearchField> {
       focusNode: _focusNode,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        constraints: const BoxConstraints(minHeight: 48),
         prefixIcon: const Icon(Icons.search_rounded),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 42,
+          minHeight: 42,
+        ),
         labelText: pickUiText(
           widget.i18n,
           zh: '搜索菜品名称',
@@ -2100,6 +2282,48 @@ class _ManagerTileStatus extends StatelessWidget {
   }
 }
 
+class _ManagerProcessingOverlay extends StatelessWidget {
+  const _ManagerProcessingOverlay({
+    required this.message,
+    required this.accent,
+  });
+
+  final String message;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: theme.colorScheme.scrim.withValues(alpha: 0.18),
+      child: Center(
+        child: ToolboxSurfaceCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          borderColor: accent.withValues(alpha: 0.18),
+          shadowOpacity: 0.08,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 int _managerInitialBuiltInLimit(bool isEatModule) => isEatModule ? 80 : 120;
 
 int _managerBuiltInPageSize(bool isEatModule) => isEatModule ? 80 : 120;
@@ -2182,59 +2406,152 @@ Widget _managerAsyncActionButton({
 }
 
 List<Widget> _managerCollectionActions({
+  required BuildContext context,
   required AppI18n i18n,
   required List<DailyChoiceEatCollection> collections,
   required DailyChoiceEatCollection? selectedCollection,
   required String optionId,
-  required ValueChanged<String> onAdd,
+  required ValueChanged<Set<String>> onAddMultiple,
   required ValueChanged<String> onRemove,
 }) {
   if (collections.isEmpty) {
     return const <Widget>[];
   }
+  final actions = <Widget>[
+    TextButton.icon(
+      onPressed: () async {
+        final selectedIds = await _showEatCollectionPicker(
+          context: context,
+          i18n: i18n,
+          collections: collections,
+          optionId: optionId,
+        );
+        if (selectedIds == null || selectedIds.isEmpty) {
+          return;
+        }
+        onAddMultiple(selectedIds);
+      },
+      icon: const Icon(Icons.favorite_border_rounded),
+      label: Text(pickUiText(i18n, zh: '喜欢/加入', en: 'Like / add')),
+    ),
+  ];
   if (selectedCollection != null &&
       selectedCollection.containsOption(optionId)) {
-    return <Widget>[
+    actions.add(
       TextButton.icon(
         onPressed: () => onRemove(selectedCollection.id),
         icon: const Icon(Icons.playlist_remove_rounded),
-        label: Text(pickUiText(i18n, zh: '移出集合', en: 'Remove from set')),
+        label: Text(pickUiText(i18n, zh: '移出当前集合', en: 'Remove from set')),
       ),
-    ];
+    );
   }
-  final availableCollections = collections
-      .where((collection) => !collection.containsOption(optionId))
-      .toList(growable: false);
-  if (availableCollections.isEmpty) {
-    return const <Widget>[];
-  }
-  return <Widget>[
-    PopupMenuButton<String>(
-      tooltip: pickUiText(i18n, zh: '加入食谱集', en: 'Add to set'),
-      onSelected: onAdd,
-      itemBuilder: (context) {
-        return availableCollections
-            .map(
-              (collection) => PopupMenuItem<String>(
-                value: collection.id,
-                child: Text(collection.title(i18n)),
+  return actions;
+}
+
+Future<Set<String>?> _showEatCollectionPicker({
+  required BuildContext context,
+  required AppI18n i18n,
+  required List<DailyChoiceEatCollection> collections,
+  required String optionId,
+}) {
+  final initialSelected = <String>{
+    dailyChoiceFavoriteEatCollectionId,
+    for (final collection in collections)
+      if (collection.containsOption(optionId)) collection.id,
+  };
+  return showDialog<Set<String>>(
+    context: context,
+    builder: (context) {
+      final selectedIds = initialSelected.toSet();
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(pickUiText(i18n, zh: '喜欢/加入', en: 'Like / add')),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: collections
+                      .map(
+                        (collection) => CheckboxListTile(
+                          value: selectedIds.contains(collection.id),
+                          onChanged: (value) {
+                            setDialogState(() {
+                              if (value == true) {
+                                selectedIds.add(collection.id);
+                              } else {
+                                selectedIds.remove(collection.id);
+                              }
+                            });
+                          },
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(collection.title(i18n)),
+                          subtitle: Text(
+                            pickUiText(
+                              i18n,
+                              zh: '${collection.optionIds.length} 道菜',
+                              en: '${collection.optionIds.length} recipes',
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
               ),
-            )
-            .toList(growable: false);
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Icon(Icons.playlist_add_rounded, size: 18),
-            const SizedBox(width: 6),
-            Text(pickUiText(i18n, zh: '加入集合', en: 'Add to set')),
-          ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              ),
+              FilledButton.icon(
+                onPressed: selectedIds.isEmpty
+                    ? null
+                    : () => Navigator.of(context).pop(selectedIds),
+                icon: const Icon(Icons.check_rounded),
+                label: Text(pickUiText(i18n, zh: '确认加入', en: 'Add')),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<bool?> _confirmHideBuiltInRecipe({
+  required BuildContext context,
+  required AppI18n i18n,
+  required DailyChoiceOption option,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(pickUiText(i18n, zh: '确认不喜欢？', en: 'Hide this recipe?')),
+        content: Text(
+          pickUiText(
+            i18n,
+            zh: '「${option.title(i18n)}」会从随机候选中隐藏，之后仍可在管理页恢复。',
+            en: '"${option.title(i18n)}" will be hidden from random picks. You can restore it later in Manage.',
+          ),
         ),
-      ),
-    ),
-  ];
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.remove_circle_outline_rounded),
+            label: Text(pickUiText(i18n, zh: '确认不喜欢', en: 'Hide')),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 List<String> _splitLines(String raw) {

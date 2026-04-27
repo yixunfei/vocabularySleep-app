@@ -44,7 +44,6 @@ void main() {
     return <String, Set<String>>{
       eatAttributeType: <String>{},
       eatAttributeProfile: <String>{},
-      eatAttributeDiet: <String>{},
     };
   }
 

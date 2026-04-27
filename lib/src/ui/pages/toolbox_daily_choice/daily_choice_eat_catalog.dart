@@ -64,11 +64,7 @@ class DailyChoiceEatCatalog {
         _indexValue(toolIndex, toolId, index);
       }
 
-      for (final groupId in <String>[
-        eatAttributeType,
-        eatAttributeProfile,
-        eatAttributeDiet,
-      ]) {
+      for (final groupId in <String>[eatAttributeType, eatAttributeProfile]) {
         final values = option.attributeValues(groupId);
         if (values.isEmpty) {
           continue;
