@@ -186,10 +186,7 @@ Future<void> showDailyChoiceManagerSheet({
                   ),
                 )
                 .toList(growable: false);
-            final canUseSqlBuiltIns =
-                isEatModule &&
-                eatLibraryStore != null &&
-                searchQuery.trim().isEmpty;
+            final canUseSqlBuiltIns = isEatModule && eatLibraryStore != null;
             final nextBuiltInFilterCacheKey = _managerBuiltInFilterCacheKey(
               moduleId: moduleId,
               categoryId: selectedCategoryId,
@@ -215,6 +212,7 @@ Future<void> showDailyChoiceManagerSheet({
                 query: _managerEatBuiltInLibraryQuery(
                   categoryId: selectedCategoryId,
                   contextId: selectedContextId,
+                  searchQuery: searchQuery,
                   traitFilters: selectedTraitFilters,
                   selectedCollectionOptionIds: selectedCollectionOptionIds,
                   limit: builtInVisibleLimit,
@@ -1338,6 +1336,7 @@ String _managerBuiltInSqlQueryKey({
 DailyChoiceEatLibraryQuery _managerEatBuiltInLibraryQuery({
   required String categoryId,
   required String? contextId,
+  required String searchQuery,
   required Map<String, String> traitFilters,
   required Set<String>? selectedCollectionOptionIds,
   required int limit,
@@ -1345,6 +1344,7 @@ DailyChoiceEatLibraryQuery _managerEatBuiltInLibraryQuery({
   return DailyChoiceEatLibraryQuery(
     mealId: categoryId,
     toolId: contextId ?? 'all',
+    searchText: searchQuery,
     selectedTraitFilters: <String, Set<String>>{
       for (final entry in traitFilters.entries)
         if (entry.value != 'all') entry.key: <String>{entry.value},

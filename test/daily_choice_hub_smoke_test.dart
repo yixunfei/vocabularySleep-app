@@ -279,7 +279,9 @@ void main() {
         'mushroom',
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(libraryStore.queryRequests.last.searchText, 'mushroom');
 
       await tester.ensureVisible(
         find.descendant(
@@ -590,16 +592,21 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
     DailyChoiceEatLibraryQuery query,
   ) async {
     queryRequests.add(query);
-    final filtered = DailyChoiceEatCatalog.fromOptions(_summaryOptions).filter(
-      mealId: query.mealId,
-      toolId: query.toolId,
-      selectedTraitFilters: query.selectedTraitFilters,
-      excludedContains: query.excludedContains,
-      customExcludedIngredients: query.customExcludedIngredients,
-      availableIngredients: query.availableIngredients,
-      preferAvailableIngredients: query.preferAvailableIngredients,
-      allowedOptionIds: query.allowedOptionIds,
+    final searchableOptions = _filterSummaryOptionsBySearch(
+      _summaryOptions,
+      query.searchText,
     );
+    final filtered = DailyChoiceEatCatalog.fromOptions(searchableOptions)
+        .filter(
+          mealId: query.mealId,
+          toolId: query.toolId,
+          selectedTraitFilters: query.selectedTraitFilters,
+          excludedContains: query.excludedContains,
+          customExcludedIngredients: query.customExcludedIngredients,
+          availableIngredients: query.availableIngredients,
+          preferAvailableIngredients: query.preferAvailableIngredients,
+          allowedOptionIds: query.allowedOptionIds,
+        );
     final offset = query.offset < 0 ? 0 : query.offset;
     final limit = query.limit <= 0 ? 50 : query.limit;
     return DailyChoiceEatLibraryQueryResult(
@@ -662,6 +669,30 @@ class _FakeEatLibraryStore extends DailyChoiceEatLibraryStore {
           ),
         ),
       );
+}
+
+List<DailyChoiceOption> _filterSummaryOptionsBySearch(
+  List<DailyChoiceOption> options,
+  String searchText,
+) {
+  final normalizedSearchText = searchText.trim().toLowerCase();
+  if (normalizedSearchText.isEmpty) {
+    return options;
+  }
+  return options
+      .where((option) {
+        final haystack = <String>[
+          option.id,
+          option.titleZh,
+          option.titleEn,
+          option.subtitleZh,
+          option.subtitleEn,
+          ...option.tagsZh,
+          ...option.tagsEn,
+        ].join(' ').toLowerCase();
+        return haystack.contains(normalizedSearchText);
+      })
+      .toList(growable: false);
 }
 
 class _BlockingEatLibraryStore extends DailyChoiceEatLibraryStore {

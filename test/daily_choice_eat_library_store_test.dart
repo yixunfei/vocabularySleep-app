@@ -242,6 +242,20 @@ void main() {
       expect(firstPage.hasMore, isTrue);
       expect(firstPage.options.every((item) => item.detailsZh.isEmpty), isTrue);
 
+      final searchResult = await store.queryBuiltInSummaries(
+        const DailyChoiceEatLibraryQuery(
+          mealId: 'all',
+          toolId: 'pot',
+          searchText: '香菇',
+          limit: 20,
+        ),
+      );
+      expect(searchResult.totalCount, 1);
+      expect(searchResult.options.map((item) => item.id), <String>[
+        'mushroom_soup',
+      ]);
+      expect(searchResult.randomCandidateIds, <String>['mushroom_soup']);
+
       final pivotQuery = const DailyChoiceEatLibraryQuery(
         mealId: 'all',
         toolId: 'pot',
@@ -602,6 +616,15 @@ Future<void> _writeV2LibraryDatabase(
         PRIMARY KEY (recipe_id, token_kind, token_value, set_id)
       )
     ''');
+    db.execute('''
+      CREATE TABLE daily_choice_recipe_search_text (
+        recipe_id TEXT PRIMARY KEY,
+        search_title TEXT NOT NULL,
+        search_materials TEXT NOT NULL DEFAULT '',
+        search_tags TEXT NOT NULL DEFAULT '',
+        search_all TEXT NOT NULL
+      )
+    ''');
 
     final setCounts = <String, int>{'book_library': 0, 'cook_csv': 0};
     for (final option in document.recipes) {
@@ -700,6 +723,15 @@ Future<void> _writeV2LibraryDatabase(
         source_kind
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'generated')
     ''');
+    final searchTextInsert = db.prepare('''
+      INSERT INTO daily_choice_recipe_search_text (
+        recipe_id,
+        search_title,
+        search_materials,
+        search_tags,
+        search_all
+      ) VALUES (?, ?, ?, ?, ?)
+    ''');
 
     try {
       var randomKey = 0;
@@ -738,6 +770,22 @@ Future<void> _writeV2LibraryDatabase(
           jsonEncode(option.notesZh),
           jsonEncode(option.notesEn),
           jsonEncode(option.toJson()),
+        ]);
+        final searchTitle = _searchText(option);
+        final searchMaterials = option.materialsZh.join(' ').toLowerCase();
+        final searchTags = option.tagsZh.join(' ').toLowerCase();
+        searchTextInsert.execute(<Object?>[
+          option.id,
+          searchTitle,
+          searchMaterials,
+          searchTags,
+          <String>[
+            searchTitle,
+            searchMaterials,
+            searchTags,
+            option.stepsZh.join(' ').toLowerCase(),
+            option.notesZh.join(' ').toLowerCase(),
+          ].join(' ').trim(),
         ]);
         for (final term in _v2FilterTerms(option)) {
           filterIndexInsert.execute(<Object?>[
@@ -793,6 +841,7 @@ Future<void> _writeV2LibraryDatabase(
       detailInsert.dispose();
       filterIndexInsert.dispose();
       ingredientIndexInsert.dispose();
+      searchTextInsert.dispose();
     }
   } finally {
     db.dispose();

@@ -101,6 +101,7 @@ class DailyChoiceEatLibraryQuery {
     this.customExcludedIngredients = const <String>[],
     this.availableIngredients = const <String>[],
     this.preferAvailableIngredients = false,
+    this.searchText = '',
     this.allowedOptionIds,
     this.setIds = const <String>[],
     this.limit = 50,
@@ -114,6 +115,7 @@ class DailyChoiceEatLibraryQuery {
   final Iterable<String> customExcludedIngredients;
   final Iterable<String> availableIngredients;
   final bool preferAvailableIngredients;
+  final String searchText;
   final Iterable<String>? allowedOptionIds;
   final Iterable<String> setIds;
   final int limit;
@@ -192,6 +194,7 @@ class DailyChoiceEatLibraryStore {
   static const String _v2FilterIndexTable = 'daily_choice_recipe_filter_index';
   static const String _v2IngredientIndexTable =
       'daily_choice_recipe_ingredient_index';
+  static const String _v2SearchTextTable = 'daily_choice_recipe_search_text';
   static const String _v2BookSetId = 'book_library';
   static const String _v2CookSetId = 'cook_csv';
 
@@ -505,8 +508,10 @@ class DailyChoiceEatLibraryStore {
     Database db,
     DailyChoiceEatLibraryQuery query,
   ) {
+    final needsSearchTable = query.searchText.trim().isNotEmpty;
     if (!_tableExists(db, _v2FilterIndexTable) ||
-        !_tableExists(db, _v2IngredientIndexTable)) {
+        !_tableExists(db, _v2IngredientIndexTable) ||
+        (needsSearchTable && !_tableExists(db, _v2SearchTextTable))) {
       return _queryBuiltInInMemorySummaries(
         _loadBuiltInV2SummariesFromDatabaseConnection(db),
         query,
@@ -564,7 +569,11 @@ class DailyChoiceEatLibraryStore {
         : summaries
               .where((item) => setIds.contains(_v2PrimarySetIdForOption(item)))
               .toList(growable: false);
-    final catalog = DailyChoiceEatCatalog.fromOptions(scopedSummaries);
+    final searchedSummaries = _filterSummariesBySearch(
+      scopedSummaries,
+      query.searchText,
+    );
+    final catalog = DailyChoiceEatCatalog.fromOptions(searchedSummaries);
     final filtered = catalog.filter(
       mealId: query.mealId,
       toolId: query.toolId,
@@ -657,6 +666,19 @@ class DailyChoiceEatLibraryStore {
 
     addInClause('r.primary_set_id', query.setIds, emptyMatchesNone: false);
     addInClause('r.recipe_id', query.allowedOptionIds, emptyMatchesNone: true);
+
+    final normalizedSearchText = query.searchText.trim().toLowerCase();
+    if (normalizedSearchText.isNotEmpty) {
+      clauses.add('''
+        EXISTS (
+          SELECT 1
+          FROM $_v2SearchTextTable st
+          WHERE st.recipe_id = r.recipe_id
+            AND instr(st.search_title, ?) > 0
+        )
+        ''');
+      args.add(normalizedSearchText);
+    }
 
     final mealId = query.mealId.trim();
     if (mealId.isNotEmpty && mealId != 'all') {
@@ -763,8 +785,10 @@ class DailyChoiceEatLibraryStore {
     DailyChoiceEatLibraryQuery query,
     int pivotKey,
   ) {
+    final needsSearchTable = query.searchText.trim().isNotEmpty;
     if (!_tableExists(db, _v2FilterIndexTable) ||
-        !_tableExists(db, _v2IngredientIndexTable)) {
+        !_tableExists(db, _v2IngredientIndexTable) ||
+        (needsSearchTable && !_tableExists(db, _v2SearchTextTable))) {
       return _pickBuiltInInMemoryRandomSummary(
         _loadBuiltInV2SummariesFromDatabaseConnection(db),
         query,
@@ -1278,6 +1302,32 @@ class _V2QueryFilter {
 
   final String whereClause;
   final List<Object?> args;
+}
+
+List<DailyChoiceOption> _filterSummariesBySearch(
+  List<DailyChoiceOption> summaries,
+  String searchText,
+) {
+  final normalizedSearchText = searchText.trim().toLowerCase();
+  if (normalizedSearchText.isEmpty) {
+    return summaries;
+  }
+  return summaries
+      .where((item) => _matchesSummarySearch(item, normalizedSearchText))
+      .toList(growable: false);
+}
+
+bool _matchesSummarySearch(DailyChoiceOption option, String searchText) {
+  final haystack = <String>[
+    option.id,
+    option.titleZh,
+    option.titleEn,
+    option.subtitleZh,
+    option.subtitleEn,
+    ...option.tagsZh,
+    ...option.tagsEn,
+  ].join(' ').toLowerCase();
+  return haystack.contains(searchText);
 }
 
 int _normalizedQueryLimit(int value) {
