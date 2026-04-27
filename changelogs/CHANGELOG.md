@@ -37,6 +37,8 @@
 - 新增管理页 SQL 内置摘要详情懒加载回归测试，覆盖内存全量摘要为空时仍可从 store 打开详情。
 - 新增 `records/record_070_daily_choice_manager_item_action_states.md`，记录管理页内置菜谱逐项 loading / disabled / error 状态的实现边界和验证。
 - 新增管理页内置菜谱逐项动作回归测试，覆盖 detail 慢读取期间不重复触发请求，以及 detail 失败时保留当前 sheet 并显示局部错误。
+- 新增 `records/record_070_daily_choice_manager_auto_paging_and_search_commit.md`，记录管理页自动分页、搜索提交边界和后续 FTS/倒排表风险。
+- 新增管理页自动分页与搜索提交回归测试，覆盖滚动触底自动扩大 SQL 分页 limit，以及输入搜索词期间不查询、失焦后才提交 `searchText`。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -81,6 +83,8 @@
 - 吃什么详情/个人调整/另存入口的内置菜谱判断改为基于模块、安装状态和轻量摘要内容，不再要求当前内存 `builtInOptions` 全量列表包含该 id。
 - 管理页吃什么内置菜谱的详情、个人调整、另存入口统一接入条目级异步动作状态；动作进行中会禁用同一条目的 detail/edit/copy 入口，并在条目内展示 loading 或错误反馈。
 - 吃什么管理页内触发详情读取时由 manager sheet 承接局部错误；主 UI 的详情按钮仍沿用 SnackBar 错误反馈。
+- 管理页吃什么内置库移除“继续加载”按钮，改为滚动接近底部时自动递增 SQL 查询 limit，并在加载下一页时保留当前已显示摘要。
+- 管理页搜索框改为组件级 `TextEditingController` / `FocusNode` 管理；输入只更新 draft，离开输入框或提交搜索后才刷新 SQL 搜索词。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -99,6 +103,7 @@
 - 已有食材优先的 SQL 版本先采用 raw/canonical 任一命中收口，尚未完整复刻内存 catalog 的 exact/strong/broad 分层扩池策略。
 - random pivot 在主 UI 中只覆盖随机池全为可见内置菜谱的场景；legacy v1 fallback 使用候选 id 列表取模抽取，不具备 v2 `random_key` 的稳定全局分布。
 - 管理页吃什么内置库搜索已接入 SQLite `daily_choice_recipe_search_text`；本地自定义和个人调整搜索仍走内存过滤，后续若要统一语义需单独处理 overlay 搜索。
+- 当前搜索仍是 `instr`/substring 查询，不是 FTS；拼音、分词、多关键词相关性排序需后续单独引入 FTS5 或倒排表。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
@@ -117,8 +122,13 @@
 - 修复管理页 SQL 分页返回的内置摘要在内存全量摘要缺失时无法按需读取完整详情的隐性依赖。
 - 修复管理页内置菜谱详情/个人调整/另存可重复点击导致重复 detail 读取的问题。
 - 修复管理页内置菜谱 detail 读取失败时只能走全局提示、缺少条目级错误反馈的问题；现在失败不会关闭管理 sheet 或清空当前搜索/分页状态。
+- 修复管理页搜索框每次输入字符都触发 SQL 查询的问题；现在只在失焦或提交时触发搜索。
 
 ### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 - `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
 - `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
 - `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）

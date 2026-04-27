@@ -281,6 +281,11 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
+      expect(libraryStore.queryRequests.last.searchText, isEmpty);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
       expect(libraryStore.queryRequests.last.searchText, 'mushroom');
 
       await tester.ensureVisible(
@@ -387,6 +392,88 @@ void main() {
       libraryStore.completeSummaries();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+    },
+  );
+
+  testWidgets(
+    'eat manager auto-loads built-in pages while keeping SQL paging',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final options = List<DailyChoiceOption>.generate(
+        95,
+        (index) => eatOption(
+          id: 'recipe_$index',
+          title: 'Recipe $index',
+          materials: const <String>['tofu'],
+        ),
+      );
+      final result = DailyChoiceCookLoadResult(
+        options: options,
+        source: DailyChoiceCookDataSource.remote,
+        localLibraryCount: options.length,
+        updatedAt: DateTime(2026, 4, 27, 20, 10),
+      );
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-27',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: result.updatedAt,
+        stats: <String, Object?>{'recipeCount': options.length},
+        recipes: options,
+      );
+      final libraryStore = _FakeEatLibraryStore(
+        document,
+        hideSummariesOnLoad: true,
+      );
+
+      await pumpEatHub(
+        tester,
+        cookService: _FakeCookService(result, document),
+        libraryStore: libraryStore,
+      );
+      await pumpUntilVisible(tester, find.text('Load recipe library'));
+      await tester.tap(find.text('Load recipe library'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+
+      await tester.tap(find.text('Manage'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final managerSheet = find.byType(DraggableScrollableSheet).first;
+      await tester.ensureVisible(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in items'),
+        ),
+      );
+      await tester.tap(
+        find.descendant(
+          of: managerSheet,
+          matching: find.text('Built-in items'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(libraryStore.queryRequests.last.limit, 80);
+
+      await tester.ensureVisible(
+        find.descendant(of: managerSheet, matching: find.text('Recipe 79')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(
+        libraryStore.queryRequests.any((query) => query.limit > 80),
+        isTrue,
+      );
+      expect(libraryStore.queryRequests.last.limit, greaterThan(80));
+      expect(tester.takeException(), isNull);
     },
   );
 
