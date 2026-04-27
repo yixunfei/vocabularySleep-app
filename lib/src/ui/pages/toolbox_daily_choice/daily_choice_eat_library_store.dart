@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math' as math;
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -174,6 +175,7 @@ class DailyChoiceEatLibraryStore {
   final String cachedLibraryFileName;
   final String remoteDatabaseKey;
 
+  final math.Random _random = math.Random();
   Database? _db;
 
   static const int _legacySchemaVersion = 1;
@@ -382,6 +384,32 @@ class DailyChoiceEatLibraryStore {
       ),
       _DailyChoiceEatLibrarySchema.empty =>
         DailyChoiceEatLibraryQueryResult.empty(query),
+    };
+  }
+
+  Future<DailyChoiceOption?> pickBuiltInRandomSummary(
+    DailyChoiceEatLibraryQuery query, {
+    int? pivotKey,
+  }) async {
+    final status = await inspectStatus();
+    if (!status.hasInstalledLibrary) {
+      return null;
+    }
+    final db = await _database();
+    final resolvedPivot = pivotKey ?? _nextRandomPivotKey();
+    return switch (_detectLibrarySchema(db)) {
+      _DailyChoiceEatLibrarySchema.v2 => _pickBuiltInV2RandomSummary(
+        db,
+        query,
+        resolvedPivot,
+      ),
+      _DailyChoiceEatLibrarySchema.legacyV1 =>
+        _pickBuiltInInMemoryRandomSummary(
+          _loadBuiltInLegacySummariesFromDatabaseConnection(db),
+          query,
+          resolvedPivot,
+        ),
+      _DailyChoiceEatLibrarySchema.empty => null,
     };
   }
 
@@ -699,22 +727,136 @@ class DailyChoiceEatLibraryStore {
     DailyChoiceEatLibraryQuery query,
     _V2QueryFilter eligibleFilter,
   ) {
-    final eligibleIds = _selectV2RecipeIds(db, eligibleFilter);
+    final randomFilter = _buildV2RandomCandidateFilter(
+      db,
+      query,
+      eligibleFilter,
+    );
+    return _selectV2RecipeIds(db, randomFilter);
+  }
+
+  _V2QueryFilter _buildV2RandomCandidateFilter(
+    Database db,
+    DailyChoiceEatLibraryQuery query,
+    _V2QueryFilter eligibleFilter,
+  ) {
     if (!query.preferAvailableIngredients) {
-      return eligibleIds;
+      return eligibleFilter;
     }
     final availableTokens = normalizeEatIngredientInputs(
       query.availableIngredients,
     );
     if (availableTokens.isEmpty) {
-      return eligibleIds;
+      return eligibleFilter;
     }
     final ingredientFilter = _buildV2QueryFilter(
       query,
       requiredIngredientTokens: availableTokens,
     );
-    final matchedIds = _selectV2RecipeIds(db, ingredientFilter);
-    return matchedIds.isEmpty ? eligibleIds : matchedIds;
+    return _countV2Recipes(db, ingredientFilter) <= 0
+        ? eligibleFilter
+        : ingredientFilter;
+  }
+
+  DailyChoiceOption? _pickBuiltInV2RandomSummary(
+    Database db,
+    DailyChoiceEatLibraryQuery query,
+    int pivotKey,
+  ) {
+    if (!_tableExists(db, _v2FilterIndexTable) ||
+        !_tableExists(db, _v2IngredientIndexTable)) {
+      return _pickBuiltInInMemoryRandomSummary(
+        _loadBuiltInV2SummariesFromDatabaseConnection(db),
+        query,
+        pivotKey,
+      );
+    }
+
+    final eligibleFilter = _buildV2QueryFilter(query);
+    final randomFilter = _buildV2RandomCandidateFilter(
+      db,
+      query,
+      eligibleFilter,
+    );
+    return _selectV2RandomSummaryAtPivot(
+          db,
+          randomFilter,
+          _normalizedV2RandomPivot(pivotKey),
+        ) ??
+        _selectV2RandomSummaryAtStart(db, randomFilter);
+  }
+
+  DailyChoiceOption? _selectV2RandomSummaryAtPivot(
+    Database db,
+    _V2QueryFilter filter,
+    int pivotKey,
+  ) {
+    final rows = _selectV2RandomSummaryRows(
+      db,
+      filter,
+      extraWhere: 'AND r.random_key >= ?',
+      extraArgs: <Object?>[pivotKey],
+    );
+    return rows.isEmpty ? null : _summaryOptionFromV2DatabaseRow(rows.first);
+  }
+
+  DailyChoiceOption? _selectV2RandomSummaryAtStart(
+    Database db,
+    _V2QueryFilter filter,
+  ) {
+    final rows = _selectV2RandomSummaryRows(db, filter);
+    return rows.isEmpty ? null : _summaryOptionFromV2DatabaseRow(rows.first);
+  }
+
+  ResultSet _selectV2RandomSummaryRows(
+    Database db,
+    _V2QueryFilter filter, {
+    String extraWhere = '',
+    List<Object?> extraArgs = const <Object?>[],
+  }) {
+    return db.select(
+      '''
+      SELECT
+        r.recipe_id,
+        r.title_zh,
+        r.title_en,
+        r.primary_meal_id,
+        r.primary_tool_id,
+        s.subtitle_zh,
+        s.subtitle_en,
+        s.tags_zh_json,
+        s.tags_en_json,
+        s.summary_attributes_json
+      FROM $_v2RecipesTable r
+      LEFT JOIN $_v2SummariesTable s
+        ON s.recipe_id = r.recipe_id
+      WHERE ${filter.whereClause}
+        $extraWhere
+      ORDER BY r.random_key ASC, r.recipe_id ASC
+      LIMIT 1
+      ''',
+      <Object?>[...filter.args, ...extraArgs],
+    );
+  }
+
+  DailyChoiceOption? _pickBuiltInInMemoryRandomSummary(
+    List<DailyChoiceOption> summaries,
+    DailyChoiceEatLibraryQuery query,
+    int pivotKey,
+  ) {
+    final result = _queryBuiltInInMemorySummaries(summaries, query);
+    if (result.randomCandidateIds.isEmpty) {
+      return null;
+    }
+    final pickedId =
+        result.randomCandidateIds[_normalizedV2RandomPivot(pivotKey) %
+            result.randomCandidateIds.length];
+    for (final summary in summaries) {
+      if (summary.id == pickedId) {
+        return summary;
+      }
+    }
+    return null;
   }
 
   List<String> _selectV2RecipeIds(Database db, _V2QueryFilter filter) {
@@ -727,6 +869,13 @@ class DailyChoiceEatLibraryStore {
     return List<String>.unmodifiable(
       _normalizedStringList(rows.map((row) => '${row['recipe_id']}')),
     );
+  }
+
+  int _nextRandomPivotKey() {
+    final high = _random.nextInt(1 << 31);
+    final middle = _random.nextInt(1 << 31);
+    final low = _random.nextInt(2);
+    return (high << 32) | (middle << 1) | low;
   }
 
   Future<void> close() async {
@@ -1140,6 +1289,14 @@ int _normalizedQueryLimit(int value) {
 
 int _normalizedQueryOffset(int value) {
   return value < 0 ? 0 : value;
+}
+
+int _normalizedV2RandomPivot(int value) {
+  if (value < 0) {
+    return 0;
+  }
+  const maxSigned63Bit = 0x7FFFFFFFFFFFFFFF;
+  return value > maxSigned63Bit ? maxSigned63Bit : value;
 }
 
 List<String> _normalizedStringList(Iterable<String> values) {

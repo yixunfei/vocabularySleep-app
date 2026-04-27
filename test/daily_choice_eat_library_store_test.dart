@@ -242,6 +242,25 @@ void main() {
       expect(firstPage.hasMore, isTrue);
       expect(firstPage.options.every((item) => item.detailsZh.isEmpty), isTrue);
 
+      final pivotQuery = const DailyChoiceEatLibraryQuery(
+        mealId: 'all',
+        toolId: 'pot',
+        limit: 3,
+      );
+      final pivotPick = await store.pickBuiltInRandomSummary(
+        pivotQuery,
+        pivotKey: 5,
+      );
+      expect(firstPage.options.map((item) => item.id), isNot(contains('ribs')));
+      expect(pivotPick?.id, 'ribs');
+      expect(pivotPick?.detailsZh, isEmpty);
+
+      final wrappedPick = await store.pickBuiltInRandomSummary(
+        pivotQuery,
+        pivotKey: 99,
+      );
+      expect(wrappedPick?.id, 'cilantro_soup');
+
       final ribsResult = await store.queryBuiltInSummaries(
         const DailyChoiceEatLibraryQuery(
           mealId: 'all',
@@ -253,6 +272,17 @@ void main() {
       );
       expect(ribsResult.randomCandidateIds, <String>['ribs']);
       expect(ribsResult.randomCandidateIds, isNot(contains('pork')));
+      final ribsPick = await store.pickBuiltInRandomSummary(
+        const DailyChoiceEatLibraryQuery(
+          mealId: 'all',
+          toolId: 'pot',
+          availableIngredients: <String>['排骨'],
+          preferAvailableIngredients: true,
+          limit: 1,
+        ),
+        pivotKey: 1,
+      );
+      expect(ribsPick?.id, 'ribs');
 
       final noPeanutOrNut = await store.queryBuiltInSummaries(
         const DailyChoiceEatLibraryQuery(
