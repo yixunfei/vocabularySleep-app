@@ -169,9 +169,18 @@ class DailyChoiceEatLibraryStore {
        _s3Client = s3Client ?? CstCloudS3CompatClient(),
        _ownsS3Client = s3Client == null;
 
+  DailyChoiceEatLibraryStore._queryWorker()
+    : _supportDirectoryProvider = (() async => Directory.current),
+      _remoteDatabaseInstaller = null,
+      _s3Client = null,
+      _ownsS3Client = false,
+      databaseFileName = '',
+      cachedLibraryFileName = '',
+      remoteDatabaseKey = '';
+
   final DailyChoiceEatLibrarySupportDirectoryProvider _supportDirectoryProvider;
   final DailyChoiceEatLibraryRemoteDatabaseInstaller? _remoteDatabaseInstaller;
-  final CstCloudS3CompatClient _s3Client;
+  final CstCloudS3CompatClient? _s3Client;
   final bool _ownsS3Client;
   final String databaseFileName;
   final String cachedLibraryFileName;
@@ -374,20 +383,27 @@ class DailyChoiceEatLibraryStore {
   Future<DailyChoiceEatLibraryQueryResult> queryBuiltInSummaries(
     DailyChoiceEatLibraryQuery query,
   ) async {
-    final status = await inspectStatus();
-    if (!status.hasInstalledLibrary) {
+    final file = await _databaseFile();
+    if (!await file.exists()) {
       return DailyChoiceEatLibraryQueryResult.empty(query);
     }
-    final db = await _database();
-    return switch (_detectLibrarySchema(db)) {
-      _DailyChoiceEatLibrarySchema.v2 => _queryBuiltInV2Summaries(db, query),
-      _DailyChoiceEatLibrarySchema.legacyV1 => _queryBuiltInInMemorySummaries(
-        _loadBuiltInLegacySummariesFromDatabaseConnection(db),
-        query,
-      ),
-      _DailyChoiceEatLibrarySchema.empty =>
-        DailyChoiceEatLibraryQueryResult.empty(query),
-    };
+    try {
+      final databasePath = file.path;
+      return await Isolate.run(
+        () => _queryBuiltInSummariesFromDatabaseFile(databasePath, query),
+      );
+    } catch (_) {
+      final db = await _database();
+      return switch (_detectLibrarySchema(db)) {
+        _DailyChoiceEatLibrarySchema.v2 => _queryBuiltInV2Summaries(db, query),
+        _DailyChoiceEatLibrarySchema.legacyV1 => _queryBuiltInInMemorySummaries(
+          _loadBuiltInLegacySummariesFromDatabaseConnection(db),
+          query,
+        ),
+        _DailyChoiceEatLibrarySchema.empty =>
+          DailyChoiceEatLibraryQueryResult.empty(query),
+      };
+    }
   }
 
   Future<DailyChoiceOption?> pickBuiltInRandomSummary(
@@ -904,8 +920,9 @@ class DailyChoiceEatLibraryStore {
 
   Future<void> close() async {
     _closeDatabase();
-    if (_ownsS3Client) {
-      await _s3Client.close();
+    final s3Client = _s3Client;
+    if (_ownsS3Client && s3Client != null) {
+      await s3Client.close();
     }
   }
 
@@ -915,14 +932,18 @@ class DailyChoiceEatLibraryStore {
   }
 
   Future<DateTime?> _downloadRemoteDatabase(File targetFile) async {
-    final remoteHead = await _s3Client.headObject(remoteDatabaseKey);
+    final s3Client = _s3Client;
+    if (s3Client == null) {
+      throw StateError('Remote database download is not available.');
+    }
+    final remoteHead = await s3Client.headObject(remoteDatabaseKey);
     await targetFile.parent.create(recursive: true);
     final tempFile = File('${targetFile.path}.part');
     if (await tempFile.exists()) {
       await tempFile.delete();
     }
     try {
-      await _s3Client.downloadObjectToFile(remoteDatabaseKey, tempFile);
+      await s3Client.downloadObjectToFile(remoteDatabaseKey, tempFile);
       if (await targetFile.exists()) {
         await targetFile.delete();
       }
@@ -1395,6 +1416,32 @@ List<DailyChoiceOption> _loadBuiltInSummariesFromDatabaseFile(String dbPath) {
   final db = sqlite3.open(dbPath);
   try {
     return _loadBuiltInSummariesFromDatabaseConnection(db);
+  } finally {
+    db.dispose();
+  }
+}
+
+DailyChoiceEatLibraryQueryResult _queryBuiltInSummariesFromDatabaseFile(
+  String dbPath,
+  DailyChoiceEatLibraryQuery query,
+) {
+  final db = sqlite3.open(dbPath);
+  final store = DailyChoiceEatLibraryStore._queryWorker();
+  try {
+    store._ensureReadableSchema(db);
+    return switch (_detectLibrarySchema(db)) {
+      _DailyChoiceEatLibrarySchema.v2 => store._queryBuiltInV2Summaries(
+        db,
+        query,
+      ),
+      _DailyChoiceEatLibrarySchema.legacyV1 =>
+        store._queryBuiltInInMemorySummaries(
+          _loadBuiltInLegacySummariesFromDatabaseConnection(db),
+          query,
+        ),
+      _DailyChoiceEatLibrarySchema.empty =>
+        DailyChoiceEatLibraryQueryResult.empty(query),
+    };
   } finally {
     db.dispose();
   }

@@ -127,9 +127,9 @@
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
 ## 本轮边界
-- 本轮处理吃什么随机停止后的性能与显示问题：停止并选中不得因内置库 detail/候选关联查询卡在“选中中”，且必须有可显示的最终菜谱。
-- 优先优化主 UI 停止随机时的 store pivot 查询边界，避免把大候选池 id 全量传入 SQL；失败或超时时回退到当前锁定候选。
-- 本轮不改 v2 DB 生成器、不引入 FTS5/倒排表、不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；管理页自动分页后续仍可继续优化为 offset/keyset 追加。
+- 本轮继续处理吃什么随机停止硬卡：停止按钮的关键交互链路不得启动同步 SQLite random pivot，必须立即回到可操作状态并显示当前锁定菜谱。
+- 修复管理页内置菜谱滑到底部未自动加载后续的问题，优先让当前 bottom sheet 的滚动控制器可靠触发分页递增。
+- 本轮只做 UI 交互链路避阻塞与分页触发修复；不改 v2 DB 生成器、不引入 FTS5/倒排表、不覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据。多 isolate / 后台查询可作为后续 store 层专项评估。
 
 ## 完成记录
 1. 2026-04-27: 已创建 `codex/daily-choice-overhaul` 分支。
@@ -190,6 +190,10 @@
 56. 2026-04-27: 已为随机面板最终异步抽取增加 1200ms 超时兜底；超时、失败或返回空结果时保留停止瞬间锁定的当前候选，避免按钮卡在“选中中”。
 57. 2026-04-27: 已优化吃什么主 UI 停止随机的 v2 random pivot 边界：无隐藏/调整/食谱集时不再传入全量候选 id 列表；需要精确可见池且候选过大时回退本地锁定候选，避免生成大 `IN (...)` 查询。
 58. 2026-04-27: 已新增 `records/record_070_daily_choice_random_stop_timeout_and_pivot_guard.md`，记录随机停止超时兜底、大候选池 SQL guard 和验证结果。
+59. 2026-04-27: 已将吃什么主 UI 停止随机改为纯本地锁定，不再在停止按钮链路触发 `pickBuiltInRandomSummary(...)` 或任何 SQLite 查询，避免 UI isolate 被同步查询占住。
+60. 2026-04-27: 已将 `DailyChoiceEatLibraryStore.queryBuiltInSummaries(...)` 改为优先通过 `Isolate.run` 后台打开 SQLite 文件查询，失败时回退原同步路径；管理页分页/搜索查询不再优先占用 UI isolate。
+61. 2026-04-27: 已增强管理页内置库自动分页触发：除滚动通知外，在 SQL 返回并完成布局后检查当前滚动位置，修复停在底部但没有新滚动事件时不继续加载的问题。
+62. 2026-04-27: 已新增 `records/record_070_daily_choice_stop_local_and_manager_isolate_paging.md`，记录停止随机本地落点、管理页 isolate 查询和触底分页修复。
 
 ## 验证记录
 - 2026-04-27: `git status --short --branch` 已确认备份前存在大量每日决策相关改动。
@@ -262,3 +266,7 @@
 - 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖随机停止超时后退出 Picking、大可见池本地兜底且不触发 random pivot 重查询）。
 - 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，随机停止兜底与 pivot guard 接入后无静态问题）。
 - 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）。
+- 2026-04-27: `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）。
+- 2026-04-27: `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖主 UI 停止随机不触发 store random pivot、管理页触底自动扩大 SQL 分页 limit）。
+- 2026-04-27: `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，queryBuiltInSummaries isolate 查询与分页触发修复后无静态问题）。
+- 2026-04-27: `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 store v2 SQL 查询 isolate 路径与 catalog 筛选）。

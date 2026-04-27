@@ -35,7 +35,6 @@ class _EatChoiceModule extends StatefulWidget {
 }
 
 class _EatChoiceModuleState extends State<_EatChoiceModule> {
-  static const int _maxExactRandomPivotIds = 300;
   String _mealId = 'all';
   String _toolId = 'all';
   String _collectionId = 'all';
@@ -253,7 +252,6 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
           onDetail: (option) => unawaited(_openOptionDetail(option)),
           onGuide: () => unawaited(_openGuide()),
           onManage: () => unawaited(_openManager()),
-          onPickRandomOption: _pickBuiltInRandomOption,
         ),
       ],
     );
@@ -277,62 +275,6 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       availableIngredients: _availableIngredients,
       preferAvailableIngredients: _preferAvailableIngredients,
       allowedOptionIds: collection?.optionIds,
-    );
-  }
-
-  Future<DailyChoiceOption?> _pickBuiltInRandomOption() async {
-    final randomPool = _filterResult.randomPool;
-    if (randomPool.isEmpty || !widget.libraryStatus.hasInstalledLibrary) {
-      return null;
-    }
-    final builtInById = <String, DailyChoiceOption>{
-      for (final item in widget.builtInOptions) item.id: item,
-    };
-    final randomPoolIds = <String>[];
-    final randomPoolIdSet = <String>{};
-    for (final item in randomPool) {
-      if (!builtInById.containsKey(item.id)) {
-        return null;
-      }
-      randomPoolIds.add(item.id);
-      randomPoolIdSet.add(item.id);
-    }
-    final needsExactVisiblePool =
-        _selectedCollection != null ||
-        widget.customState.hiddenBuiltInIds.isNotEmpty ||
-        widget.customState.adjustedBuiltInOptions.isNotEmpty;
-    if (needsExactVisiblePool &&
-        randomPoolIds.length > _maxExactRandomPivotIds) {
-      return null;
-    }
-    final picked = await widget.libraryStore.pickBuiltInRandomSummary(
-      needsExactVisiblePool
-          ? _buildLibraryQuery(allowedOptionIds: randomPoolIds)
-          : _buildLibraryQuery(),
-    );
-    if (picked == null || !randomPoolIdSet.contains(picked.id)) {
-      return null;
-    }
-    return builtInById[picked.id] ?? picked;
-  }
-
-  DailyChoiceEatLibraryQuery _buildLibraryQuery({
-    Iterable<String>? allowedOptionIds,
-  }) {
-    return DailyChoiceEatLibraryQuery(
-      mealId: _mealId,
-      toolId: _toolId,
-      selectedTraitFilters: <String, Set<String>>{
-        for (final entry in _selectedTraitFilters.entries)
-          if (entry.value.isNotEmpty) entry.key: Set<String>.of(entry.value),
-      },
-      excludedContains: Set<String>.of(_excludedContains),
-      customExcludedIngredients: List<String>.of(_customExcludedIngredients),
-      availableIngredients: List<String>.of(_availableIngredients),
-      preferAvailableIngredients: _preferAvailableIngredients,
-      allowedOptionIds: allowedOptionIds == null
-          ? _selectedCollection?.optionIds
-          : List<String>.of(allowedOptionIds),
     );
   }
 

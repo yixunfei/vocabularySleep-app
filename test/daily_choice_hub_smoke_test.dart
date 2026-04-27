@@ -211,8 +211,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 250));
 
-      expect(libraryStore.randomRequests, isNotEmpty);
-      expect(libraryStore.randomRequests.single.allowedOptionIds, isNull);
+      expect(libraryStore.randomRequests, isEmpty);
+      expect(find.text('Picking'), findsNothing);
 
       await tester.tap(find.text('Details'));
       await tester.pump();
@@ -748,7 +748,7 @@ void main() {
   });
 
   testWidgets(
-    'eat random stop falls back locally for large exact visible pools',
+    'eat random stop does not start SQL pivot for large visible pools',
     (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 2200);
       tester.view.devicePixelRatio = 1;

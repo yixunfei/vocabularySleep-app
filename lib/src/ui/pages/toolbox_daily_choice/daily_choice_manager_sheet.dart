@@ -445,13 +445,12 @@ Future<void> showDailyChoiceManagerSheet({
               publish(localState.upsertEatCollection(collection));
             }
 
-            bool maybeAutoLoadBuiltIns(ScrollNotification notification) {
+            bool maybeAutoLoadBuiltInsFromMetrics(ScrollMetrics metrics) {
               if (!builtInExpanded ||
                   builtInSqlLoading ||
                   builtInTotalCount <= visibleBuiltIns.length) {
                 return false;
               }
-              final metrics = notification.metrics;
               if (metrics.axis != Axis.vertical || metrics.extentAfter > 420) {
                 return false;
               }
@@ -467,6 +466,26 @@ Future<void> showDailyChoiceManagerSheet({
               return false;
             }
 
+            bool maybeAutoLoadBuiltIns(ScrollNotification notification) {
+              return maybeAutoLoadBuiltInsFromMetrics(notification.metrics);
+            }
+
+            void scheduleBuiltInAutoLoadCheck(
+              ScrollController scrollController,
+            ) {
+              if (!builtInExpanded ||
+                  builtInSqlLoading ||
+                  builtInTotalCount <= visibleBuiltIns.length) {
+                return;
+              }
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (managerSheetClosed || !scrollController.hasClients) {
+                  return;
+                }
+                maybeAutoLoadBuiltInsFromMetrics(scrollController.position);
+              });
+            }
+
             return SafeArea(
               child: DraggableScrollableSheet(
                 expand: false,
@@ -474,6 +493,7 @@ Future<void> showDailyChoiceManagerSheet({
                 minChildSize: 0.48,
                 maxChildSize: 0.94,
                 builder: (context, controller) {
+                  scheduleBuiltInAutoLoadCheck(controller);
                   return NotificationListener<ScrollNotification>(
                     onNotification: maybeAutoLoadBuiltIns,
                     child: ListView(
