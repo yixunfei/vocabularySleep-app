@@ -135,6 +135,130 @@ void main() {
       expect(await legacyCookCacheFile.exists(), isFalse);
     },
   );
+
+  test(
+    'DailyChoiceEatLibraryStore keeps installed SQLite when remote refresh fails',
+    () async {
+      final updatedAt = DateTime(2026, 4, 25, 15, 30);
+      final document = DailyChoiceRecipeLibraryDocument(
+        libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+        libraryVersion: '2026-04-25',
+        schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+        schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+        generatedAt: updatedAt,
+        stats: const <String, Object?>{'recipeCount': 1},
+        recipes: <DailyChoiceOption>[
+          eatOption(
+            id: 'stable_recipe',
+            title: 'Stable Recipe',
+            materials: const <String>['tofu'],
+          ),
+        ],
+      );
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'daily_choice_eat_library_store_test_',
+      );
+      final databaseFile = File(
+        p.join(tempDirectory.path, 'toolbox_daily_choice_recipes.db'),
+      );
+      final candidateFile = File('${databaseFile.path}.remote');
+      final legacyCacheFile = File(
+        p.join(tempDirectory.path, 'toolbox_daily_choice_recipe_library.json'),
+      );
+      final legacyCookCacheFile = File(
+        p.join(tempDirectory.path, 'toolbox_daily_choice_cook_recipe.csv'),
+      );
+
+      final installStore = DailyChoiceEatLibraryStore(
+        supportDirectoryProvider: () async => tempDirectory,
+        remoteDatabaseInstaller: (targetFile) async {
+          await _writeLibraryDatabase(
+            targetFile,
+            document,
+            updatedAt: updatedAt,
+          );
+          return updatedAt;
+        },
+      );
+      final failingStore = DailyChoiceEatLibraryStore(
+        supportDirectoryProvider: () async => tempDirectory,
+        remoteDatabaseInstaller: (targetFile) async {
+          await targetFile.writeAsString('partial remote db');
+          throw StateError('s3 unavailable');
+        },
+      );
+      addTearDown(() async {
+        await installStore.close();
+        await failingStore.close();
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final installedStatus = await installStore.installLibrary();
+      expect(installedStatus.hasInstalledLibrary, isTrue);
+      await installStore.close();
+      await legacyCacheFile.writeAsString('legacy');
+      await legacyCookCacheFile.writeAsString('legacy');
+
+      final failedStatus = await failingStore.installLibrary();
+      expect(failedStatus.hasInstalledLibrary, isTrue);
+      expect(failedStatus.recipeCount, 1);
+      expect(failedStatus.errorMessage, contains('s3 unavailable'));
+      expect(await databaseFile.exists(), isTrue);
+      expect(await candidateFile.exists(), isFalse);
+      expect(await legacyCacheFile.exists(), isFalse);
+      expect(await legacyCookCacheFile.exists(), isFalse);
+
+      final summaries = await failingStore.loadBuiltInSummaries();
+      expect(summaries, hasLength(1));
+      expect(summaries.single.id, 'stable_recipe');
+    },
+  );
+
+  test(
+    'DailyChoiceEatLibraryStore does not install bundled JSON fallback on first remote failure',
+    () async {
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'daily_choice_eat_library_store_test_',
+      );
+      final databaseFile = File(
+        p.join(tempDirectory.path, 'toolbox_daily_choice_recipes.db'),
+      );
+      final candidateFile = File('${databaseFile.path}.remote');
+      final legacyCacheFile = File(
+        p.join(tempDirectory.path, 'toolbox_daily_choice_recipe_library.json'),
+      );
+      final legacyCookCacheFile = File(
+        p.join(tempDirectory.path, 'toolbox_daily_choice_cook_recipe.csv'),
+      );
+      await legacyCacheFile.writeAsString('legacy');
+      await legacyCookCacheFile.writeAsString('legacy');
+
+      final store = DailyChoiceEatLibraryStore(
+        supportDirectoryProvider: () async => tempDirectory,
+        remoteDatabaseInstaller: (targetFile) async {
+          await targetFile.writeAsString('partial remote db');
+          throw StateError('s3 unavailable');
+        },
+      );
+      addTearDown(() async {
+        await store.close();
+        if (await tempDirectory.exists()) {
+          await tempDirectory.delete(recursive: true);
+        }
+      });
+
+      final status = await store.installLibrary();
+      expect(status.hasInstalledLibrary, isFalse);
+      expect(status.recipeCount, 0);
+      expect(status.errorMessage, contains('s3 unavailable'));
+      expect(await databaseFile.exists(), isFalse);
+      expect(await candidateFile.exists(), isFalse);
+      expect(await legacyCacheFile.exists(), isFalse);
+      expect(await legacyCookCacheFile.exists(), isFalse);
+    },
+  );
 }
 
 Future<void> _writeLibraryDatabase(

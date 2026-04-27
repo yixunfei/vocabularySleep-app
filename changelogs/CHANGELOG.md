@@ -15,6 +15,8 @@
 - 新增 `records/record_070_daily_choice_recipe_schema_design.md`，记录吃什么 v2 数据库表设计、索引策略、典型查询、迁移顺序和验收标准。
 - 新增 `scripts/daily_choice_recipe_schema_v2.sql`，作为后续生成器与 Flutter store 迁移的可执行 SQLite schema 草案。
 - 新增 `decisions/ADR_070_daily_choice_recipe_schema_v2.md`，记录 v2 分层 schema 的技术决策。
+- 新增 `records/record_070_daily_choice_s3_upload_package.md`，记录 `cook_data_plan070_validation` 压缩后文件大小、建议 S3 key、远端安装边界和验证命令。
+- 新增 `DailyChoiceEatLibraryStore` 远端失败边界测试，覆盖“已有 SQLite 库时刷新失败不覆盖旧库”和“首次远端失败不生成 bundled JSON fallback”。
 
 ### 修改
 - 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
@@ -32,6 +34,9 @@
 - 将 `PLAN_070` 阶段 3 标记为进行中，并明确本轮边界为数据库与索引设计，不直接迁移 Flutter 读取逻辑。
 - v2 schema 设计为 14 张表、18 个索引：菜谱集、基础索引、摘要、详情、材料/步骤行表、通用筛选索引、食材专用索引、搜索文本、本地用户状态和集合成员表。
 - 食材匹配索引拆为 `raw`、`canonical`、`family` 三层，并增加 `idx_dcr_ingredient_value_lookup` 保障默认 raw/canonical 查询。
+- 将 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份 JSON 压缩为上传前版本：`daily_choice_recipe_library.json` 19,614,095 bytes、`daily_choice_recipe_library_summary.json` 4,918,383 bytes、`recipe_library_asset.json` 19,614,095 bytes。
+- `DailyChoiceEatLibraryStore.installLibrary()` 改为远端 SQLite 候选文件安装：先下载到 `.remote` 候选 DB，规范 meta 并校验菜谱数，通过后才替换当前安装库。
+- `inspectStatus()` 在未安装 SQLite 文件时只返回空状态，不再为了检查状态创建空数据库文件。
 
 ### 风险变更
 - 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
@@ -40,12 +45,16 @@
 - 本轮生成的验证包位于 `D:\vocabularySleep-resources\cook_data_plan070_validation`，尚未覆盖 `D:\vocabularySleep-resources\cook_data`；后续确认后再执行替换或上传。
 - cook CSV 原始 599 行中按标题/厨具去重导入 593 条菜谱，但审计按标题确认 599 行全部可在新库中命中。
 - v2 schema 当前仅为设计与 SQL 草案，尚未接入 app 运行时；后续实现需要生成器双写 v1/v2，并新增 store 查询层单测。
+- SQLite 仍需要下载到应用支持目录后才能查询；本轮“不保留本地”收口为不再保留或生成 JSON 兜底缓存，而不是流式查询远端 SQLite。
+- 吃什么远端首装失败且无旧库时会返回错误状态和空候选池，不再静默生成 fallback 菜谱库；这是有意让数据可信度优先于离线兜底。
 
 ### 修复
 - 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
 - 修复管理 sheet 新建食谱集输入框因函数级 `TextEditingController` 在关闭/重建时被释放后继续参与 TextField 构建的崩溃风险。
 - 修复随机过程中菜品内容换行导致停止按钮上下跳动、难以点击的问题。
 - 修复当前生成数据中素食/纯素冲突、清真说明污染 notes、菜系标签污染 notes、洋葱误索引葱、具体猪肉项折叠为通用猪肉和抽取乱码等审计问题。
+- 修复远端 DB 安装失败时可能回退到 bundled JSON / cached CSV / fallback seed 并写入本地 JSON cache 的问题。
+- 修复远端刷新失败时可能直接覆盖现有 SQLite 库的风险；现在候选 DB 校验通过后才替换旧库。
 
 ### 验证
 - `git switch -c codex/daily-choice-overhaul`（通过）
@@ -60,6 +69,9 @@
 - `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv .tmp_plan070_recipe.csv --output-md records\record_070_daily_choice_recipe_data_audit_after_generation.md --output-json records\record_070_daily_choice_recipe_data_audit_after_generation.json`（通过，10 个审计问题桶均为 0）
 - `python -X utf8` 内存 SQLite 执行 `scripts\daily_choice_recipe_schema_v2.sql`（通过，创建 14 张表和 18 个索引）
 - `EXPLAIN QUERY PLAN` 验证 v2 摘要分页、通用筛选、食材匹配和随机 pivot 查询（通过，命中目标索引）
+- `python -X utf8` 解析 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份压缩 JSON（通过，三份 JSON 均为 7,772 条菜谱）
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart test/daily_choice_eat_library_store_test.dart`（通过）
+- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 

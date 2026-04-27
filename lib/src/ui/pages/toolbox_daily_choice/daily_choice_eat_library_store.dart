@@ -10,7 +10,6 @@ import '../../../services/cstcloud_s3_compat_client.dart';
 import 'daily_choice_cook_service.dart';
 import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
-import 'daily_choice_recipe_library.dart';
 
 class DailyChoiceEatLibraryStatus {
   const DailyChoiceEatLibraryStatus({
@@ -105,14 +104,12 @@ class DailyChoiceEatLibraryStore {
     this.databaseFileName = 'toolbox_daily_choice_recipes.db',
     this.cachedLibraryFileName = 'toolbox_daily_choice_recipe_library.json',
     this.remoteDatabaseKey = 'cook_data/daily_choice_recipe_library.db',
-  }) : _cookService = cookService ?? DailyChoiceCookService(),
-       _supportDirectoryProvider =
+  }) : _supportDirectoryProvider =
            supportDirectoryProvider ?? getApplicationSupportDirectory,
        _remoteDatabaseInstaller = remoteDatabaseInstaller,
        _s3Client = s3Client ?? CstCloudS3CompatClient(),
        _ownsS3Client = s3Client == null;
 
-  final DailyChoiceCookService _cookService;
   final DailyChoiceEatLibrarySupportDirectoryProvider _supportDirectoryProvider;
   final DailyChoiceEatLibraryRemoteDatabaseInstaller? _remoteDatabaseInstaller;
   final CstCloudS3CompatClient _s3Client;
@@ -130,7 +127,15 @@ class DailyChoiceEatLibraryStore {
   static const String _metaTable = 'daily_choice_eat_recipe_meta';
 
   Future<DailyChoiceEatLibraryStatus> inspectStatus() async {
+    final file = await _databaseFile();
+    if (!await file.exists()) {
+      return const DailyChoiceEatLibraryStatus.empty();
+    }
     final db = await _database();
+    return _inspectOpenDatabase(db);
+  }
+
+  DailyChoiceEatLibraryStatus _inspectOpenDatabase(Database db) {
     final hasTable = _tableExists(db, _recipesTable);
     if (!hasTable) {
       return const DailyChoiceEatLibraryStatus.empty();
@@ -159,29 +164,54 @@ class DailyChoiceEatLibraryStore {
     );
   }
 
+  DailyChoiceEatLibraryStatus _inspectDatabaseFile(File file) {
+    final db = sqlite3.open(file.path);
+    try {
+      db.execute('PRAGMA foreign_keys = ON;');
+      _ensureSchema(db);
+      return _inspectOpenDatabase(db);
+    } finally {
+      db.dispose();
+    }
+  }
+
   Future<DailyChoiceEatLibraryStatus> installLibrary() async {
     final previousStatus = await inspectStatus();
     _closeDatabase();
+    final targetFile = await _databaseFile();
+    final candidateFile = File('${targetFile.path}.remote');
     try {
-      final targetFile = await _databaseFile();
+      await _deleteDatabaseArtifacts(candidateFile);
       final remoteUpdatedAt =
           await (_remoteDatabaseInstaller ?? _downloadRemoteDatabase)(
-            targetFile,
+            candidateFile,
           );
       await _normalizeInstalledRemoteDatabaseMeta(
+        databaseFile: candidateFile,
         remoteUpdatedAt: remoteUpdatedAt,
       );
-      await _deleteLegacyLibraryFiles();
-      final status = await inspectStatus();
+      final status = _inspectDatabaseFile(candidateFile);
       if (!status.hasInstalledLibrary || status.recipeCount <= 0) {
         throw StateError('Remote cook_data library database is empty.');
       }
-      return status;
+      await _replaceDatabaseFile(
+        candidateFile: candidateFile,
+        targetFile: targetFile,
+      );
+      await _deleteDatabaseArtifacts(candidateFile);
+      await _deleteLegacyLibraryFiles();
+      return inspectStatus();
     } catch (error) {
+      await _deleteDatabaseArtifacts(candidateFile);
+      await _deleteLegacyLibraryFiles();
       if (previousStatus.hasInstalledLibrary) {
         return previousStatus.copyWith(errorMessage: '$error');
       }
-      return _installFallbackLibrary(errorMessage: '$error');
+      await _deleteDatabaseArtifacts(targetFile);
+      return DailyChoiceEatLibraryStatus(
+        hasInstalledLibrary: false,
+        errorMessage: '$error',
+      );
     }
   }
 
@@ -263,193 +293,6 @@ class DailyChoiceEatLibraryStore {
     _db = null;
   }
 
-  Future<DailyChoiceCookLoadResult> _resolveInstallSource() async {
-    final bundled = await _cookService.loadBundled();
-    var resolved = bundled ?? _cookService.fallback();
-    final cached = await _cookService.loadCached();
-    if (cached != null) {
-      resolved = cached;
-    }
-    final shouldRefresh = await _cookService.shouldRefreshRemote();
-    if (!shouldRefresh) {
-      return resolved;
-    }
-    return _cookService.refresh();
-  }
-
-  Future<DailyChoiceRecipeLibraryDocument> _buildLibraryDocument(
-    DailyChoiceCookLoadResult result,
-  ) async {
-    final bundledDocument = await _cookService.exportBundledLibraryDocument();
-    return DailyChoiceRecipeLibraryDocument(
-      libraryId:
-          bundledDocument?.libraryId ??
-          DailyChoiceRecipeLibraryDocument.defaultLibraryId,
-      libraryVersion: bundledDocument?.libraryVersion.isNotEmpty == true
-          ? bundledDocument!.libraryVersion
-          : (result.updatedAt ?? DateTime.now()).toIso8601String(),
-      schemaId:
-          bundledDocument?.schemaId ??
-          DailyChoiceRecipeLibraryDocument.defaultSchemaId,
-      schemaVersion:
-          bundledDocument?.schemaVersion ??
-          DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
-      generatedAt: result.updatedAt ?? bundledDocument?.generatedAt,
-      referenceTitles: result.referenceTitles,
-      stats: <String, Object?>{
-        ...?bundledDocument?.stats,
-        'recipeCount': result.options.length,
-        'localLibraryCount': result.localLibraryCount,
-        'cookRecipeCount': result.cookRecipeCount,
-        'installSource': result.source.name,
-      },
-      recipes: List<DailyChoiceOption>.unmodifiable(
-        result.options.map(ensureEatOptionAttributes),
-      ),
-    );
-  }
-
-  Future<DailyChoiceEatLibraryStatus> _installFallbackLibrary({
-    required String errorMessage,
-  }) async {
-    final result = await _resolveInstallSource();
-    final document = await _buildLibraryDocument(result);
-    await _writeCachedLibraryDocument(document);
-    await _installDocument(
-      document,
-      installSource: result.source,
-      updatedAt: result.updatedAt,
-      errorMessage: errorMessage,
-      localLibraryCount: result.localLibraryCount,
-      cookRecipeCount: result.cookRecipeCount,
-    );
-    return inspectStatus();
-  }
-
-  Future<void> _installDocument(
-    DailyChoiceRecipeLibraryDocument document, {
-    required DailyChoiceCookDataSource installSource,
-    required DateTime? updatedAt,
-    required String? errorMessage,
-    required int localLibraryCount,
-    required int cookRecipeCount,
-  }) async {
-    _closeDatabase();
-    final db = await _database();
-    _runInTransaction(db, () {
-      _resetTables(db);
-      _ensureSchema(db);
-      final summaryInsert = db.prepare('''
-        INSERT INTO $_recipesTable (
-          id,
-          module_id,
-          category_id,
-          context_id,
-          context_ids_json,
-          title_zh,
-          title_en,
-          subtitle_zh,
-          subtitle_en,
-          tags_zh_json,
-          tags_en_json,
-          attributes_json,
-          source_label,
-          source_url,
-          search_title,
-          sort_key
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''');
-      final detailInsert = db.prepare('''
-        INSERT INTO $_detailsTable (
-          recipe_id,
-          details_zh,
-          details_en,
-          materials_zh_json,
-          materials_en_json,
-          steps_zh_json,
-          steps_en_json,
-          notes_zh_json,
-          notes_en_json,
-          references_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''');
-      final indexInsert = db.prepare('''
-        INSERT OR IGNORE INTO $_indexTermsTable (
-          recipe_id,
-          term_group,
-          term_value
-        ) VALUES (?, ?, ?)
-      ''');
-
-      try {
-        for (final rawOption in document.recipes) {
-          final option = ensureEatOptionAttributes(rawOption);
-          summaryInsert.execute(<Object?>[
-            option.id,
-            option.moduleId,
-            option.categoryId,
-            option.contextId,
-            jsonEncode(option.contextIds),
-            option.titleZh,
-            option.titleEn,
-            option.subtitleZh,
-            option.subtitleEn,
-            jsonEncode(option.tagsZh),
-            jsonEncode(option.tagsEn),
-            jsonEncode(option.attributes),
-            option.sourceLabel,
-            option.sourceUrl,
-            _searchText(option),
-            '${option.categoryId}|${option.contextId ?? ''}|${option.titleZh}',
-          ]);
-          detailInsert.execute(<Object?>[
-            option.id,
-            option.detailsZh,
-            option.detailsEn,
-            jsonEncode(option.materialsZh),
-            jsonEncode(option.materialsEn),
-            jsonEncode(option.stepsZh),
-            jsonEncode(option.stepsEn),
-            jsonEncode(option.notesZh),
-            jsonEncode(option.notesEn),
-            jsonEncode(
-              option.references
-                  .map((item) => item.toJson())
-                  .toList(growable: false),
-            ),
-          ]);
-          for (final entry in _indexTerms(option)) {
-            indexInsert.execute(<Object?>[option.id, entry.$1, entry.$2]);
-          }
-        }
-      } finally {
-        summaryInsert.dispose();
-        detailInsert.dispose();
-        indexInsert.dispose();
-      }
-
-      final installedAt =
-          updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String();
-      final metaEntries = <String, String>{
-        'library_id': document.libraryId,
-        'library_version': document.libraryVersion,
-        'schema_id': document.schemaId,
-        'schema_version': '${document.schemaVersion}',
-        'reference_titles_json': jsonEncode(document.referenceTitles),
-        'local_library_count': '$localLibraryCount',
-        'cook_recipe_count': '$cookRecipeCount',
-        'install_source': installSource.name,
-        'installed_at': installedAt,
-        'updated_at': installedAt,
-        'error_message': errorMessage ?? '',
-      };
-      for (final entry in metaEntries.entries) {
-        _upsertMeta(db, entry.key, entry.value);
-      }
-      db.execute('PRAGMA user_version = $_schemaVersion;');
-    });
-  }
-
   Future<DateTime?> _downloadRemoteDatabase(File targetFile) async {
     final remoteHead = await _s3Client.headObject(remoteDatabaseKey);
     await targetFile.parent.create(recursive: true);
@@ -472,11 +315,35 @@ class DailyChoiceEatLibraryStore {
     }
   }
 
+  Future<void> _replaceDatabaseFile({
+    required File candidateFile,
+    required File targetFile,
+  }) async {
+    _closeDatabase();
+    await targetFile.parent.create(recursive: true);
+    await _deleteDatabaseArtifacts(targetFile);
+    await candidateFile.rename(targetFile.path);
+  }
+
+  Future<void> _deleteDatabaseArtifacts(File databaseFile) async {
+    for (final path in <String>[
+      databaseFile.path,
+      '${databaseFile.path}-wal',
+      '${databaseFile.path}-shm',
+      '${databaseFile.path}-journal',
+    ]) {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
+  }
+
   Future<void> _normalizeInstalledRemoteDatabaseMeta({
+    required File databaseFile,
     required DateTime? remoteUpdatedAt,
   }) async {
-    final file = await _databaseFile();
-    final db = sqlite3.open(file.path);
+    final db = sqlite3.open(databaseFile.path);
     try {
       _ensureSchema(db);
       final previousMeta = _metaMap(db);
@@ -490,6 +357,7 @@ class DailyChoiceEatLibraryStore {
       _upsertMeta(db, 'updated_at', normalizedUpdatedAt);
       _upsertMeta(db, 'error_message', '');
       db.execute('PRAGMA user_version = $_schemaVersion;');
+      db.execute('PRAGMA wal_checkpoint(TRUNCATE);');
     } finally {
       db.dispose();
     }
@@ -504,15 +372,6 @@ class DailyChoiceEatLibraryStore {
     if (await legacyCookCache.exists()) {
       await legacyCookCache.delete();
     }
-  }
-
-  Future<void> _writeCachedLibraryDocument(
-    DailyChoiceRecipeLibraryDocument document,
-  ) async {
-    final file = await _cachedLibraryFile();
-    await file.parent.create(recursive: true);
-    const encoder = JsonEncoder.withIndent('  ');
-    await file.writeAsString(encoder.convert(document.toJson()), flush: true);
   }
 
   Future<File> _cachedLibraryFile() async {
@@ -658,18 +517,6 @@ class DailyChoiceEatLibraryStore {
     return (rows.firstOrNull?['user_version'] as num?)?.toInt() ?? 0;
   }
 
-  T _runInTransaction<T>(Database db, T Function() action) {
-    db.execute('BEGIN TRANSACTION;');
-    try {
-      final result = action();
-      db.execute('COMMIT;');
-      return result;
-    } catch (_) {
-      db.execute('ROLLBACK;');
-      rethrow;
-    }
-  }
-
   void _upsertMeta(Database db, String key, String value) {
     db.execute(
       '''
@@ -709,40 +556,6 @@ class DailyChoiceEatLibraryStore {
         references: _jsonReferenceList(row['references_json']),
       ),
     );
-  }
-
-  Iterable<(String, String)> _indexTerms(DailyChoiceOption option) sync* {
-    yield ('meal', option.categoryId);
-    if (option.contextId != null && option.contextId!.trim().isNotEmpty) {
-      yield ('tool', option.contextId!.trim());
-    }
-    for (final contextId in option.contextIds) {
-      final normalized = contextId.trim();
-      if (normalized.isNotEmpty) {
-        yield ('tool', normalized);
-      }
-    }
-    for (final entry in option.attributes.entries) {
-      for (final value in entry.value) {
-        final normalized = value.trim();
-        if (normalized.isEmpty) {
-          continue;
-        }
-        yield (entry.key, normalized);
-      }
-    }
-  }
-
-  String _searchText(DailyChoiceOption option) {
-    return <String>[
-      option.id,
-      option.titleZh,
-      option.titleEn,
-      option.subtitleZh,
-      option.subtitleEn,
-      ...option.tagsZh,
-      ...option.tagsEn,
-    ].join(' ').trim().toLowerCase();
   }
 
   static int _intMeta(Map<String, String> meta, String key) {
