@@ -16,6 +16,9 @@ class _PlaceChoiceModule extends StatefulWidget {
     this.onInspectOption,
     this.onAdjustBuiltInOption,
     this.onSaveBuiltInAsCustom,
+    required this.placeMapSettings,
+    required this.onPlaceMapSettingsChanged,
+    required this.onSaveOsmPlace,
   });
 
   final AppI18n i18n;
@@ -32,6 +35,10 @@ class _PlaceChoiceModule extends StatefulWidget {
   final Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
   onAdjustBuiltInOption;
   final DailyChoiceSaveAsCustomEditor? onSaveBuiltInAsCustom;
+  final DailyChoicePlaceMapSettings placeMapSettings;
+  final ValueChanged<DailyChoicePlaceMapSettings> onPlaceMapSettingsChanged;
+  final Future<DailyChoiceOption> Function(DailyChoiceOsmPlace place)
+  onSaveOsmPlace;
 
   @override
   State<_PlaceChoiceModule> createState() => _PlaceChoiceModuleState();
@@ -123,6 +130,22 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
           onInstallLibrary: widget.onInstallLibrary,
           onToggleExpanded: () =>
               setState(() => _libraryStatusExpanded = !_libraryStatusExpanded),
+        ),
+        const SizedBox(height: ToolboxUiTokens.cardSpacing),
+        DailyChoicePlaceMapPanel(
+          i18n: widget.i18n,
+          accent: widget.accent,
+          settings: widget.placeMapSettings,
+          onSettingsChanged: widget.onPlaceMapSettingsChanged,
+          onSavePlace: widget.onSaveOsmPlace,
+          savedOptionIds: widget.customState.customOptions
+              .where(
+                (item) =>
+                    item.moduleId == DailyChoiceModuleId.go.storageValue &&
+                    item.id.startsWith('go_osm_'),
+              )
+              .map((item) => item.id)
+              .toSet(),
         ),
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         DailyChoiceRandomPanel(

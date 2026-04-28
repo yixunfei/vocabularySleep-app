@@ -395,6 +395,61 @@ class DailyChoiceOption {
   }
 }
 
+class DailyChoicePlaceMapSettings {
+  const DailyChoicePlaceMapSettings({
+    this.consentGranted = false,
+    this.useApproximateLocation = true,
+    this.radiusMeters = defaultRadiusMeters,
+  });
+
+  static const int minRadiusMeters = 500;
+  static const int maxRadiusMeters = 5000;
+  static const int defaultRadiusMeters = 1500;
+  static const DailyChoicePlaceMapSettings defaults =
+      DailyChoicePlaceMapSettings();
+
+  final bool consentGranted;
+  final bool useApproximateLocation;
+  final int radiusMeters;
+
+  int get normalizedRadiusMeters {
+    return radiusMeters.clamp(minRadiusMeters, maxRadiusMeters).toInt();
+  }
+
+  DailyChoicePlaceMapSettings copyWith({
+    bool? consentGranted,
+    bool? useApproximateLocation,
+    int? radiusMeters,
+  }) {
+    return DailyChoicePlaceMapSettings(
+      consentGranted: consentGranted ?? this.consentGranted,
+      useApproximateLocation:
+          useApproximateLocation ?? this.useApproximateLocation,
+      radiusMeters: radiusMeters ?? this.radiusMeters,
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'consentGranted': consentGranted,
+      'useApproximateLocation': useApproximateLocation,
+      'radiusMeters': normalizedRadiusMeters,
+    };
+  }
+
+  factory DailyChoicePlaceMapSettings.fromJson(Map<String, Object?> json) {
+    return DailyChoicePlaceMapSettings(
+      consentGranted: _boolValue(json['consentGranted']),
+      useApproximateLocation: _boolValue(
+        json['useApproximateLocation'],
+        defaultValue: true,
+      ),
+      radiusMeters:
+          int.tryParse('${json['radiusMeters'] ?? ''}') ?? defaultRadiusMeters,
+    );
+  }
+}
+
 class DailyChoiceEatCollection {
   const DailyChoiceEatCollection({
     required this.id,
@@ -615,6 +670,7 @@ class DailyChoiceCustomState {
     this.adjustedBuiltInOptions = const <DailyChoiceOption>[],
     this.eatCollections = const <DailyChoiceEatCollection>[],
     this.wearCollections = const <DailyChoiceWearCollection>[],
+    this.placeMapSettings = DailyChoicePlaceMapSettings.defaults,
   });
 
   final Set<String> hiddenBuiltInIds;
@@ -622,6 +678,7 @@ class DailyChoiceCustomState {
   final List<DailyChoiceOption> adjustedBuiltInOptions;
   final List<DailyChoiceEatCollection> eatCollections;
   final List<DailyChoiceWearCollection> wearCollections;
+  final DailyChoicePlaceMapSettings placeMapSettings;
 
   static const DailyChoiceCustomState empty = DailyChoiceCustomState(
     eatCollections: <DailyChoiceEatCollection>[
@@ -638,6 +695,7 @@ class DailyChoiceCustomState {
     List<DailyChoiceOption>? adjustedBuiltInOptions,
     List<DailyChoiceEatCollection>? eatCollections,
     List<DailyChoiceWearCollection>? wearCollections,
+    DailyChoicePlaceMapSettings? placeMapSettings,
   }) {
     return DailyChoiceCustomState(
       hiddenBuiltInIds: hiddenBuiltInIds ?? this.hiddenBuiltInIds,
@@ -646,6 +704,7 @@ class DailyChoiceCustomState {
           adjustedBuiltInOptions ?? this.adjustedBuiltInOptions,
       eatCollections: eatCollections ?? this.eatCollections,
       wearCollections: wearCollections ?? this.wearCollections,
+      placeMapSettings: placeMapSettings ?? this.placeMapSettings,
     );
   }
 
@@ -1004,6 +1063,7 @@ class DailyChoiceCustomState {
       'wearCollections': wearCollections
           .map((item) => item.toJson())
           .toList(growable: false),
+      'placeMapSettings': placeMapSettings.toJson(),
     };
   }
 
@@ -1012,6 +1072,7 @@ class DailyChoiceCustomState {
     final customRaw = json['customOptions'];
     final adjustedRaw = json['adjustedBuiltInOptions'];
     final eatCollectionsRaw = json['eatCollections'];
+    final placeMapSettingsRaw = json['placeMapSettings'];
     final customOptions = <DailyChoiceOption>[];
     final adjustedBuiltInOptions = <DailyChoiceOption>[];
     final eatCollections = <DailyChoiceEatCollection>[];
@@ -1069,11 +1130,30 @@ class DailyChoiceCustomState {
       adjustedBuiltInOptions: adjustedBuiltInOptions,
       eatCollections: eatCollections,
       wearCollections: wearCollections,
+      placeMapSettings: placeMapSettingsRaw is Map
+          ? DailyChoicePlaceMapSettings.fromJson(
+              placeMapSettingsRaw.cast<String, Object?>(),
+            )
+          : DailyChoicePlaceMapSettings.defaults,
     ).withDefaultEatCollections().withDefaultWearCollections();
   }
 }
 
 String _stringValue(Object? value) => value == null ? '' : '$value'.trim();
+
+bool _boolValue(Object? value, {bool defaultValue = false}) {
+  if (value is bool) {
+    return value;
+  }
+  final normalized = '${value ?? ''}'.trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+    return false;
+  }
+  return defaultValue;
+}
 
 String? _nullableString(Object? value) {
   if (value == null) {

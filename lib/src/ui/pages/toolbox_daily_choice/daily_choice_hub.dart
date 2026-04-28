@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../i18n/app_i18n.dart';
 import '../../../models/weather_snapshot.dart';
 import '../../../state/app_state_provider.dart';
@@ -17,6 +19,7 @@ import 'daily_choice_eat_library_store.dart';
 import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
 import 'daily_choice_place_library_store.dart';
+import 'daily_choice_place_map_service.dart';
 import 'daily_choice_seed_data.dart';
 import 'daily_choice_storage.dart';
 import 'daily_choice_wear_library_store.dart';
@@ -24,6 +27,7 @@ import 'daily_choice_widgets.dart';
 
 part 'daily_choice_eat_module.dart';
 part 'daily_choice_modules.dart';
+part 'daily_choice_place_map_panel.dart';
 part 'daily_choice_wear_module.dart';
 part 'daily_choice_decision_assistant.dart';
 
@@ -787,6 +791,18 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     );
   }
 
+  void _setPlaceMapSettings(DailyChoicePlaceMapSettings settings) {
+    _setCustomState(_customState.copyWith(placeMapSettings: settings));
+  }
+
+  Future<DailyChoiceOption> _saveOsmPlaceAsCustom(
+    DailyChoiceOsmPlace place,
+  ) async {
+    final option = place.toDailyChoiceOption();
+    _setCustomState(_customState.upsertCustom(option));
+    return option;
+  }
+
   @override
   void dispose() {
     if (_ownsEatLibraryStore) {
@@ -910,6 +926,9 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
         onInspectOption: _openPlaceInspectOption,
         onAdjustBuiltInOption: _openPlaceAdjustmentEditor,
         onSaveBuiltInAsCustom: _openPlaceSaveAsCustomEditor,
+        placeMapSettings: _customState.placeMapSettings,
+        onPlaceMapSettingsChanged: _setPlaceMapSettings,
+        onSaveOsmPlace: _saveOsmPlaceAsCustom,
       ),
       'activity' => _ActivityChoiceModule(
         key: const ValueKey<String>('activity'),

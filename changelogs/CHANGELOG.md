@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_077-PLACE-GPS-OSM-MAP] - 2026-04-28
+
+### 原因
+- 用户希望将工具箱「每日决策 - 去哪儿」做得更专业实用：作为可选扩展接入 GPS 与 OpenStreetMap 周边地图信息，在说明详细 GPS 用途和隐私边界后由用户同意启用，并支持把地图中的真实场所加入用户自己的场所清单。
+
+### 新增
+- 新增 `DailyChoicePlaceMapSettings`，持久化「周边地图」同意状态、模糊位置开关和查询半径；默认关闭且默认使用模糊位置。
+- 新增 `DailyChoicePlaceMapService` 能力：设备前台定位读取、约 500 米网格模糊位置、Overpass 半径查询、OSM 场所解析、距离计算和场所转 `DailyChoiceOption`。
+- 新增「去哪儿」周边地图面板：隐私说明与同意启用、模糊/精确定位切换、500m-5km 半径选择、在线 OSM 地图预览、周边场所列表和一键保存到本机场所清单。
+- 新增 Android 前台定位权限声明，并加入 `geolocator`、`flutter_map`、`latlong2` 依赖。
+- 新增地图服务单测，覆盖模糊定位、Overpass 查询构建与解析、OSM 场所保存模型和设置持久化。
+
+### 修改
+- 「去哪儿」模块在内置地点库与随机面板之间增加折叠式周边地图扩展，不挤压默认随机体验。
+- 保存的 OSM 场所作为用户自定义 `go` 条目参与现有随机与管理流程，并保留 OSM 条目引用、地图搜索词、场景分类、距离层级和本地编辑能力。
+- 隐私文案明确：查询会把本次查询中心和半径发送给 OpenStreetMap/Overpass；本 App 不收集、不上传到自有服务、不出售定位数据，保存场所时不保存用户 GPS 坐标。
+
+### 修复
+- 避免将“按区域下载地图瓦片”作为默认方案落地，改为遵循 OSM 公共服务边界的按需在线查询和交互式地图查看。
+
+### 风险变更
+- 周边场所查询依赖公共 Overpass 服务和 OSM 社区数据，可能因地区、网络或服务繁忙导致结果不完整；UI 会提示扩大范围或稍后重试。
+- 使用精确定位时，查询中心会发送给 OpenStreetMap/Overpass；默认仍使用模糊位置，并由用户主动切换。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，4 tests）
+- `flutter test .\test\daily_choice_place_seed_test.dart .\test\daily_choice_place_map_service_test.dart .\test\daily_choice_custom_state_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，28 tests）
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_seed_test.dart .\test\daily_choice_place_map_service_test.dart .\test\daily_choice_custom_state_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+
 ## [Unreleased-PLAN_076-PLACE-DATA-IMPORT] - 2026-04-28
 
 ### 原因
