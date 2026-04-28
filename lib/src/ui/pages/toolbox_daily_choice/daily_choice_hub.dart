@@ -16,6 +16,7 @@ import 'daily_choice_eat_catalog.dart';
 import 'daily_choice_eat_library_store.dart';
 import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
+import 'daily_choice_place_library_store.dart';
 import 'daily_choice_seed_data.dart';
 import 'daily_choice_storage.dart';
 import 'daily_choice_wear_library_store.dart';
@@ -92,6 +93,16 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
   bool _wearLibraryLoading = false;
   bool _wearLibraryInstalling = false;
 
+  late final DailyChoicePlaceLibraryStore _placeLibraryStore =
+      DailyChoicePlaceLibraryStore();
+  DailyChoicePlaceLibraryStatus _placeLibraryStatus =
+      const DailyChoicePlaceLibraryStatus.empty();
+  List<DailyChoiceOption> _placeRawBuiltInOptions = const <DailyChoiceOption>[];
+  List<DailyChoiceOption> _placeBuiltInOptions = const <DailyChoiceOption>[];
+  bool _placeLibraryLoaded = false;
+  bool _placeLibraryLoading = false;
+  bool _placeLibraryInstalling = false;
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +116,8 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
       } else if (_selectedModuleId == DailyChoiceModuleId.wear.storageValue) {
         _refreshWeatherForWearIfNeeded();
         unawaited(_ensureWearLibraryLoaded());
+      } else if (_selectedModuleId == DailyChoiceModuleId.go.storageValue) {
+        unawaited(_ensurePlaceLibraryLoaded());
       }
     });
   }
@@ -349,6 +362,113 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     }
   }
 
+  Future<void> _ensurePlaceLibraryLoaded() async {
+    if (_placeLibraryLoaded ||
+        _placeLibraryLoading ||
+        _placeLibraryInstalling) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _placeLibraryLoading = true;
+      });
+    }
+    try {
+      final status = await _placeLibraryStore.inspectStatus();
+      if (!mounted) {
+        return;
+      }
+      final builtInOptions = status.hasInstalledLibrary
+          ? await _placeLibraryStore.loadBuiltInSummaries()
+          : const <DailyChoiceOption>[];
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _placeLibraryStatus = status;
+        _rebuildPlaceState(builtInOptions: builtInOptions);
+        _placeLibraryLoaded = true;
+        _placeLibraryLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _placeLibraryStatus = DailyChoicePlaceLibraryStatus(
+          hasInstalledLibrary: false,
+          errorMessage: '$error',
+        );
+        _rebuildPlaceState(builtInOptions: const <DailyChoiceOption>[]);
+        _placeLibraryLoaded = true;
+        _placeLibraryLoading = false;
+      });
+    }
+  }
+
+  Future<void> _installPlaceLibrary() async {
+    if (_placeLibraryInstalling || _placeLibraryLoading) {
+      return;
+    }
+    setState(() {
+      _placeLibraryInstalling = true;
+      _placeLibraryLoaded = false;
+    });
+    try {
+      final status = await _placeLibraryStore.installLibrary();
+      final builtInOptions = await _placeLibraryStore.loadBuiltInSummaries();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _placeLibraryStatus = status;
+        _rebuildPlaceState(builtInOptions: builtInOptions);
+        _placeLibraryLoaded = true;
+        _placeLibraryInstalling = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _placeLibraryStatus = _placeLibraryStatus.copyWith(
+          errorMessage: '$error',
+        );
+        _placeLibraryLoaded = true;
+        _placeLibraryInstalling = false;
+      });
+    }
+  }
+
+  void _rebuildPlaceState({List<DailyChoiceOption>? builtInOptions}) {
+    _placeRawBuiltInOptions = builtInOptions ?? _placeRawBuiltInOptions;
+    _placeBuiltInOptions = _applyPlaceBuiltInAdjustments(
+      _placeRawBuiltInOptions,
+      _customState,
+    );
+  }
+
+  List<DailyChoiceOption> _applyPlaceBuiltInAdjustments(
+    List<DailyChoiceOption> builtInOptions,
+    DailyChoiceCustomState customState,
+  ) {
+    if (customState.adjustedBuiltInOptions.isEmpty) {
+      return List<DailyChoiceOption>.unmodifiable(builtInOptions);
+    }
+    final adjustedById = <String, DailyChoiceOption>{
+      for (final item in customState.adjustedBuiltInOptions.where(
+        (item) => item.moduleId == DailyChoiceModuleId.go.storageValue,
+      ))
+        item.id: item,
+    };
+    if (adjustedById.isEmpty) {
+      return List<DailyChoiceOption>.unmodifiable(builtInOptions);
+    }
+    return List<DailyChoiceOption>.unmodifiable(
+      builtInOptions.map((item) => adjustedById[item.id] ?? item),
+    );
+  }
+
   void _setCustomState(DailyChoiceCustomState next) {
     final normalizedNext = next
         .withDefaultEatCollections()
@@ -361,6 +481,10 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
       _customState,
       normalizedNext,
     );
+    final shouldRebuildPlaceState = !_samePlaceCatalogInputs(
+      _customState,
+      normalizedNext,
+    );
     setState(() {
       _customState = normalizedNext;
       if (shouldRebuildEatState) {
@@ -368,6 +492,9 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
       }
       if (shouldRebuildWearState) {
         _rebuildWearState(customState: normalizedNext);
+      }
+      if (shouldRebuildPlaceState) {
+        _rebuildPlaceState(builtInOptions: _placeRawBuiltInOptions);
       }
     });
     unawaited(_storage.save(normalizedNext));
@@ -379,6 +506,9 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     }
     if (moduleId == DailyChoiceModuleId.wear.storageValue) {
       return _wearBuiltInOptions;
+    }
+    if (moduleId == DailyChoiceModuleId.go.storageValue) {
+      return _placeBuiltInOptions;
     }
     return _staticSeedOptions
         .where((item) => item.moduleId == moduleId)
@@ -571,12 +701,99 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     );
   }
 
+  Future<DailyChoiceOption?> _resolvePlaceDetail(
+    DailyChoiceOption option,
+  ) async {
+    if (option.custom ||
+        option.detailsZh.trim().isNotEmpty ||
+        option.stepsZh.isNotEmpty ||
+        option.materialsZh.isNotEmpty) {
+      return option;
+    }
+    if (!_placeLibraryStatus.hasInstalledLibrary ||
+        option.moduleId != DailyChoiceModuleId.go.storageValue ||
+        option.id.trim().isEmpty) {
+      return option;
+    }
+    return await _placeLibraryStore.loadBuiltInDetail(option.id) ?? option;
+  }
+
+  Future<void> _openPlaceInspectOption(DailyChoiceOption option) async {
+    final detail = await _resolvePlaceDetail(option);
+    if (detail == null || !mounted) {
+      return;
+    }
+    await showDailyChoiceDetailSheet(
+      context: context,
+      i18n: AppI18n(Localizations.localeOf(context).languageCode),
+      accent: dailyChoiceModuleConfigs
+          .firstWhere((item) => item.id == 'go')
+          .accent,
+      option: detail,
+    );
+  }
+
+  Future<DailyChoiceOption?> _openPlaceAdjustmentEditor(
+    DailyChoiceOption option,
+  ) async {
+    final detail = await _resolvePlaceDetail(option);
+    if (detail == null || !mounted) {
+      return null;
+    }
+    final result = await showDailyChoiceEditorSheet(
+      context: context,
+      i18n: AppI18n(Localizations.localeOf(context).languageCode),
+      accent: dailyChoiceModuleConfigs
+          .firstWhere((item) => item.id == 'go')
+          .accent,
+      moduleId: 'go',
+      categories: placeCategories,
+      initialCategoryId: detail.categoryId,
+      contexts: placeSceneCategories,
+      initialContextId: detail.contextId,
+      contextLabelZh: '场景',
+      contextLabelEn: 'Scene',
+      option: detail,
+    );
+    return result?.option;
+  }
+
+  Future<DailyChoiceEditorResult?> _openPlaceSaveAsCustomEditor(
+    DailyChoiceOption option, {
+    required List<DailyChoiceEatCollection> eatCollections,
+    required Set<String> initialEatCollectionIds,
+    required List<DailyChoiceWearCollection> wearCollections,
+    required Set<String> initialWearCollectionIds,
+  }) async {
+    final detail = await _resolvePlaceDetail(option);
+    if (detail == null || !mounted) {
+      return null;
+    }
+    return showDailyChoiceEditorSheet(
+      context: context,
+      i18n: AppI18n(Localizations.localeOf(context).languageCode),
+      accent: dailyChoiceModuleConfigs
+          .firstWhere((item) => item.id == 'go')
+          .accent,
+      moduleId: 'go',
+      categories: placeCategories,
+      initialCategoryId: detail.categoryId,
+      contexts: placeSceneCategories,
+      initialContextId: detail.contextId,
+      contextLabelZh: '场景',
+      contextLabelEn: 'Scene',
+      option: detail,
+      forceNewId: true,
+    );
+  }
+
   @override
   void dispose() {
     if (_ownsEatLibraryStore) {
       unawaited(_eatLibraryStore.close());
     }
     unawaited(_wearLibraryStore.close());
+    unawaited(_placeLibraryStore.close());
     super.dispose();
   }
 
@@ -609,6 +826,8 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
             } else if (value == DailyChoiceModuleId.wear.storageValue) {
               _refreshWeatherForWearIfNeeded();
               unawaited(_ensureWearLibraryLoaded());
+            } else if (value == DailyChoiceModuleId.go.storageValue) {
+              unawaited(_ensurePlaceLibraryLoaded());
             }
           },
         ),
@@ -684,6 +903,13 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
         builtInOptions: _builtInFor('go'),
         customState: _customState,
         onStateChanged: _setCustomState,
+        libraryStatus: _placeLibraryStatus,
+        libraryLoading: _placeLibraryLoading,
+        libraryInstalling: _placeLibraryInstalling,
+        onInstallLibrary: _installPlaceLibrary,
+        onInspectOption: _openPlaceInspectOption,
+        onAdjustBuiltInOption: _openPlaceAdjustmentEditor,
+        onSaveBuiltInAsCustom: _openPlaceSaveAsCustomEditor,
       ),
       'activity' => _ActivityChoiceModule(
         key: const ValueKey<String>('activity'),
@@ -720,6 +946,15 @@ bool _sameWearCatalogInputs(
     previous.adjustedBuiltInOptions,
     next.adjustedBuiltInOptions,
   );
+}
+
+bool _samePlaceCatalogInputs(
+  DailyChoiceCustomState previous,
+  DailyChoiceCustomState next,
+) {
+  return identical(previous.hiddenBuiltInIds, next.hiddenBuiltInIds) &&
+      identical(previous.customOptions, next.customOptions) &&
+      identical(previous.adjustedBuiltInOptions, next.adjustedBuiltInOptions);
 }
 
 bool _sameStringList(List<String> a, List<String> b) {

@@ -9,6 +9,13 @@ class _PlaceChoiceModule extends StatefulWidget {
     required this.builtInOptions,
     required this.customState,
     required this.onStateChanged,
+    required this.libraryStatus,
+    required this.libraryLoading,
+    required this.libraryInstalling,
+    required this.onInstallLibrary,
+    this.onInspectOption,
+    this.onAdjustBuiltInOption,
+    this.onSaveBuiltInAsCustom,
   });
 
   final AppI18n i18n;
@@ -17,6 +24,14 @@ class _PlaceChoiceModule extends StatefulWidget {
   final List<DailyChoiceOption> builtInOptions;
   final DailyChoiceCustomState customState;
   final ValueChanged<DailyChoiceCustomState> onStateChanged;
+  final DailyChoicePlaceLibraryStatus libraryStatus;
+  final bool libraryLoading;
+  final bool libraryInstalling;
+  final Future<void> Function() onInstallLibrary;
+  final Future<void> Function(DailyChoiceOption option)? onInspectOption;
+  final Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
+  onAdjustBuiltInOption;
+  final DailyChoiceSaveAsCustomEditor? onSaveBuiltInAsCustom;
 
   @override
   State<_PlaceChoiceModule> createState() => _PlaceChoiceModuleState();
@@ -25,9 +40,12 @@ class _PlaceChoiceModule extends StatefulWidget {
 class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
   String _placeId = 'outside';
   String _sceneId = allPlaceSceneCategory.id;
+  bool _libraryStatusExpanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final hasInstalledLibrary = widget.libraryStatus.hasInstalledLibrary;
+    final busy = widget.libraryInstalling || widget.libraryLoading;
     final sceneFilters = <DailyChoiceCategory>[
       allPlaceSceneCategory,
       ...placeSceneCategories,
@@ -93,6 +111,20 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
           sceneCoverageCount: sceneCoverageCount,
         ),
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
+        _PlaceLibraryStatusPanel(
+          i18n: widget.i18n,
+          accent: widget.accent,
+          libraryStatus: widget.libraryStatus,
+          busy: busy,
+          libraryInstalling: widget.libraryInstalling,
+          libraryLoading: widget.libraryLoading,
+          hasInstalledLibrary: hasInstalledLibrary,
+          expanded: _libraryStatusExpanded,
+          onInstallLibrary: widget.onInstallLibrary,
+          onToggleExpanded: () =>
+              setState(() => _libraryStatusExpanded = !_libraryStatusExpanded),
+        ),
+        const SizedBox(height: ToolboxUiTokens.cardSpacing),
         DailyChoiceRandomPanel(
           i18n: widget.i18n,
           accent: widget.accent,
@@ -116,12 +148,19 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
                 ? 'No destinations are available in this distance tier right now. Restore hidden items or add your own frequent places.'
                 : 'No destinations match this distance and scene yet. Try another scene or add your own place in Manage.',
           ),
-          onDetail: (option) => showDailyChoiceDetailSheet(
-            context: context,
-            i18n: widget.i18n,
-            accent: widget.accent,
-            option: option,
-          ),
+          onDetail: (option) {
+            final handler = widget.onInspectOption;
+            if (handler != null) {
+              unawaited(handler(option));
+              return;
+            }
+            showDailyChoiceDetailSheet(
+              context: context,
+              i18n: widget.i18n,
+              accent: widget.accent,
+              option: option,
+            );
+          },
           onGuide: () => showDailyChoiceGuideSheet(
             context: context,
             i18n: widget.i18n,
@@ -145,6 +184,9 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
                 : _sceneId,
             contextLabelZh: '场景',
             contextLabelEn: 'Scene',
+            onInspectOption: widget.onInspectOption,
+            onAdjustBuiltInOption: widget.onAdjustBuiltInOption,
+            onSaveBuiltInAsCustom: widget.onSaveBuiltInAsCustom,
           ),
         ),
       ],
@@ -374,6 +416,158 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PlaceLibraryStatusPanel extends StatelessWidget {
+  const _PlaceLibraryStatusPanel({
+    required this.i18n,
+    required this.accent,
+    required this.libraryStatus,
+    required this.busy,
+    required this.libraryInstalling,
+    required this.libraryLoading,
+    required this.hasInstalledLibrary,
+    required this.expanded,
+    required this.onInstallLibrary,
+    required this.onToggleExpanded,
+  });
+
+  final AppI18n i18n;
+  final Color accent;
+  final DailyChoicePlaceLibraryStatus libraryStatus;
+  final bool busy;
+  final bool libraryInstalling;
+  final bool libraryLoading;
+  final bool hasInstalledLibrary;
+  final bool expanded;
+  final Future<void> Function() onInstallLibrary;
+  final VoidCallback onToggleExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(16),
+      radius: ToolboxUiTokens.sectionPanelRadius,
+      borderColor: accent.withValues(alpha: 0.18),
+      shadowColor: accent,
+      shadowOpacity: 0.05,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          GestureDetector(
+            onTap: onToggleExpanded,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  hasInstalledLibrary
+                      ? Icons.cloud_done_rounded
+                      : Icons.cloud_download_rounded,
+                  size: 18,
+                  color: accent,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    pickUiText(
+                      i18n,
+                      zh: hasInstalledLibrary
+                          ? '内置地点库已就绪（${libraryStatus.placeCount} 条）'
+                          : '内置地点库未下载',
+                      en: hasInstalledLibrary
+                          ? 'Place library ready (${libraryStatus.placeCount} entries)'
+                          : 'Place library not downloaded',
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(
+                  expanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+          if (!hasInstalledLibrary) ...<Widget>[
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: busy ? null : () => unawaited(onInstallLibrary()),
+              icon: Icon(
+                busy
+                    ? Icons.hourglass_top_rounded
+                    : Icons.cloud_download_rounded,
+              ),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: busy ? '正在加载地点库…' : '下载内置地点库',
+                  en: libraryInstalling
+                      ? 'Loading place library…'
+                      : libraryLoading
+                      ? 'Reading place library…'
+                      : 'Download built-in place library',
+                ),
+              ),
+            ),
+          ],
+          if (expanded) ...<Widget>[
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(
+                i18n,
+                zh: hasInstalledLibrary
+                    ? '内置地点库已就绪，按距离和场景随机方向。你也可以在管理里补充自己常去的地点。'
+                    : '首次使用可下载内置地点库；下载后按距离和场景筛选随机。',
+                en: hasInstalledLibrary
+                    ? 'The built-in place library is ready. You can also add your own frequent places in Manage.'
+                    : 'Download the built-in place library once to randomize by distance and scene.',
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.35,
+              ),
+            ),
+          ],
+          if (busy) ...<Widget>[
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              color: accent,
+              minHeight: 4,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ],
+          if (libraryStatus.errorMessage != null && expanded) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '最近一次同步有异常，当前会继续使用本地可用地点库。',
+                en: 'The latest sync reported an error. The page will keep using the local library that is already available.',
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              libraryStatus.errorMessage!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

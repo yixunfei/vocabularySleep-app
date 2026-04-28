@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_076-PLACE-DATA-IMPORT] - 2026-04-28
+
+### 原因
+- 用户要求优化并完善工具箱「每日决策 - 去哪儿」模块，将目的地数据全部改为数据导入加载，不再在 App 代码中硬编码目的地条目，并生成更完整的数据集导出到 `D:\vocabularySleep-resources\去哪儿-数据`。
+
+### 新增
+- 新增 `DailyChoicePlaceLibraryStore`，支持去哪儿内置地点库状态检查、JSON 下载导入、本地 SQLite 安装、摘要读取、筛选查询和详情读取。
+- 新增 `scripts/generate_daily_choice_place_dataset.py`，生成去哪儿目的地方向库 JSON、SQLite、`FORMAT.md` 和 `GENERATION_SUMMARY.md`。
+- 新增 Store 导入链路单测，覆盖本地 JSON 安装、SQLite 摘要/详情读取、筛选查询和静态 seed 迁移边界。
+
+### 修改
+- 去哪儿模块候选池改为从 `DailyChoicePlaceLibraryStore` 加载；静态 `daily_choice_place_seed.dart` 不再提供 `go` 目的地 option。
+- 去哪儿页面新增地点库状态面板和下载入口，并在详情、管理页查看、内置项调整、另存为自定义时按需解析完整详情。
+- 数据集扩充为 3 个距离层级 × 15 个场景 × 8 个目的地类型 × 2 条路线角度，共 720 条；每条包含地图搜索词、时长、预算、同行建议、检查步骤、室内外与标签属性。
+
+### 修复
+- 修复旧导出脚本仍依赖静态 `go` seed 的问题，改由独立生成脚本统一导出资源。
+- 修复地点库安装流程中同步失败可能提前删除既有本地库的风险，改为临时库构建成功后再替换正式库。
+- 修复生成数据中辅助场景 id 指向不存在筛选项的问题，并加入生成校验。
+
+### 风险变更
+- 首次进入去哪儿且未安装地点库时，内置候选池为空；页面保留下载入口和自定义地点管理入口。
+- 生成数据是通用目的地类型和地图搜索方向，不是固定真实 POI；用户仍需结合所在城市、天气、营业时间和返程窗口落地。
+
+### 验证
+- `python -X utf8 -m py_compile .\scripts\generate_daily_choice_place_dataset.py`（通过）
+- `python -X utf8 .\scripts\generate_daily_choice_place_dataset.py`（通过，导出 720 条）
+- JSON / SQLite 二次校验：JSON 720 条、SQLite active 720 条、`PRAGMA integrity_check = ok`、来源字段数量 0（通过）
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_seed_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_place_seed_test.dart --reporter compact`（通过，9 tests）
+
 ## [Unreleased-PLAN_075-WEAR-REVIEW-CLEANUP] - 2026-04-28
 
 ### 原因
