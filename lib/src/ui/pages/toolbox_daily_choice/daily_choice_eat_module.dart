@@ -562,8 +562,10 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
 
   Future<DailyChoiceEditorResult?> _openSaveAsCustomEditor(
     DailyChoiceOption option, {
-    required List<DailyChoiceEatCollection> collections,
-    required Set<String> initialCollectionIds,
+    required List<DailyChoiceEatCollection> eatCollections,
+    required Set<String> initialEatCollectionIds,
+    required List<DailyChoiceWearCollection> wearCollections,
+    required Set<String> initialWearCollectionIds,
   }) async {
     final resolved = await _resolveDetailOption(option);
     if (!mounted) {
@@ -582,8 +584,8 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       contextLabelEn: 'Tool',
       option: resolved,
       forceNewId: true,
-      eatCollections: collections,
-      initialEatCollectionIds: initialCollectionIds,
+      eatCollections: eatCollections,
+      initialEatCollectionIds: initialEatCollectionIds,
     );
   }
 }

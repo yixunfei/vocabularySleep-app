@@ -48,36 +48,41 @@ String _builtInSectionSubtitle(
   required int visible,
   bool loading = false,
   String? errorMessage,
+  bool isWearModule = false,
 }) {
   if (!builtInExpanded) {
     return pickUiText(
       i18n,
-      zh: '展开后按当前搜索和筛选查看内置菜谱。',
+      zh: isWearModule ? '展开后按当前搜索和筛选查看内置参考搭配。' : '展开后按当前搜索和筛选查看内置菜谱。',
       en: 'Expand to show built-ins using the current search and filters.',
     );
   }
   if (loading && visible == 0) {
     return pickUiText(
       i18n,
-      zh: '正在按当前筛选读取内置菜谱。',
+      zh: isWearModule ? '正在按当前筛选读取内置参考搭配。' : '正在按当前筛选读取内置菜谱。',
       en: 'Loading built-ins for the current filters.',
     );
   }
   if (errorMessage != null) {
     return pickUiText(
       i18n,
-      zh: '读取内置菜谱时遇到问题，可稍后重试。',
+      zh: isWearModule ? '读取内置参考搭配时遇到问题，可稍后重试。' : '读取内置菜谱时遇到问题，可稍后重试。',
       en: 'Built-ins could not be loaded. Try again later.',
     );
   }
   return pickUiText(
     i18n,
     zh: total > visible
-        ? '已显示 $visible / $total 条；搜索和筛选仍作用于完整菜谱库。'
+        ? isWearModule
+              ? '已显示 $visible / $total 条；搜索和筛选仍作用于完整参考搭配库。'
+              : '已显示 $visible / $total 条；搜索和筛选仍作用于完整菜谱库。'
+        : isWearModule
+        ? '可把内置搭配当模板，调整后另存为自己的真实衣柜搭配。'
         : '可隐藏不喜欢的条目，也可在原菜谱上做个人调整或另存为个人食谱。',
     en: total > visible
         ? 'Showing $visible of $total; search and filters still cover the full library.'
-        : 'Hide unwanted items, save adjustments, or copy a built-in as your own recipe.',
+        : 'Hide unwanted items, save adjustments, or copy a built-in as your own ${isWearModule ? 'outfit' : 'recipe'}.',
   );
 }
 
@@ -148,12 +153,12 @@ String _managerDescription(
   return pickUiText(
     i18n,
     zh: isWearModule
-        ? '删除内置条目会把它加入“不喜欢”隐藏列表；自定义穿搭会保存在本机，并可按风格、版型和样式类型管理。'
+        ? '内置条目适合作为参考模板；个人衣柜会保存在本机，并可按性别参考、年龄阶段、风格、版型和样式类型管理。'
         : (isEatModule
               ? '不喜欢会先确认再隐藏内置菜；个人调整会覆盖原菜谱参与随机；个人食谱保存在本机并参与高级筛选。'
               : '删除内置条目会把它加入“不喜欢”隐藏列表；自定义条目会保存在本机。'),
     en: isWearModule
-        ? 'Deleting a built-in item hides it. Custom outfits stay local and can be managed by style, silhouette, and key pieces.'
+        ? 'Built-ins are reference templates. Your wardrobe stays local and can be managed by gender reference, age stage, style, silhouette, and key pieces.'
         : (isEatModule
               ? 'Disliked built-ins are hidden, personal adjustments override built-ins, and personal recipes stay local for filtering and random picks.'
               : 'Deleting a built-in item hides it. Custom items are saved locally.'),
@@ -170,12 +175,12 @@ String _emptyCustomHint(
     zh: isEatModule
         ? '当前筛选下还没有个人食谱。可以补上你常做、爱吃、想长期保存的菜。'
         : (isWearModule
-              ? '当前筛选下还没有个人衣橱搭配。可以按风格、版型和样式类型补上你真的会穿的组合。'
+              ? '当前筛选下还没有个人衣柜搭配。可以从真实衣柜新建一套，也可以把内置参考另存后改成自己的单品。'
               : '当前筛选下还没有自定义条目。可以补上自己的搭配、地点或行动。'),
     en: isEatModule
         ? 'No personal recipes in this filter yet. Add the dishes you actually make or want to keep.'
         : (isWearModule
-              ? 'No saved wardrobe outfits in this filter yet.'
+              ? 'No personal wardrobe outfits in this filter yet.'
               : 'No custom items in this filter yet.'),
   );
 }
@@ -184,10 +189,10 @@ String _emptyBuiltInHint(AppI18n i18n, {required bool isWearModule}) {
   return pickUiText(
     i18n,
     zh: isWearModule
-        ? '当前筛选下没有内置穿搭，换一个气温、场景或特征标签试试。'
+        ? '当前筛选下没有内置参考搭配。可以放宽气温、场景、性别年龄或风格筛选，也可以直接新建自己的衣柜搭配。'
         : '当前筛选下没有内置菜谱，换一个分类或上下文试试。',
     en: isWearModule
-        ? 'No built-in outfits match this filter.'
+        ? 'No built-in reference outfits match this filter.'
         : 'No built-in recipes match this filter.',
   );
 }

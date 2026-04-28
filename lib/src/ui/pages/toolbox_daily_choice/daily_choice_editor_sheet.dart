@@ -4,10 +4,12 @@ class DailyChoiceEditorResult {
   const DailyChoiceEditorResult({
     required this.option,
     this.eatCollectionIds = const <String>{},
+    this.wearCollectionIds = const <String>{},
   });
 
   final DailyChoiceOption option;
   final Set<String> eatCollectionIds;
+  final Set<String> wearCollectionIds;
 }
 
 Future<DailyChoiceEditorResult?> showDailyChoiceEditorSheet({
@@ -26,6 +28,9 @@ Future<DailyChoiceEditorResult?> showDailyChoiceEditorSheet({
   List<DailyChoiceEatCollection> eatCollections =
       const <DailyChoiceEatCollection>[],
   Set<String> initialEatCollectionIds = const <String>{},
+  List<DailyChoiceWearCollection> wearCollections =
+      const <DailyChoiceWearCollection>[],
+  Set<String> initialWearCollectionIds = const <String>{},
 }) {
   return showModalBottomSheet<DailyChoiceEditorResult>(
     context: context,
@@ -46,6 +51,8 @@ Future<DailyChoiceEditorResult?> showDailyChoiceEditorSheet({
         forceNewId: forceNewId,
         eatCollections: eatCollections,
         initialEatCollectionIds: initialEatCollectionIds,
+        wearCollections: wearCollections,
+        initialWearCollectionIds: initialWearCollectionIds,
       );
     },
   );
@@ -67,6 +74,8 @@ class DailyChoiceEditorSheet extends StatefulWidget {
     this.forceNewId = false,
     this.eatCollections = const <DailyChoiceEatCollection>[],
     this.initialEatCollectionIds = const <String>{},
+    this.wearCollections = const <DailyChoiceWearCollection>[],
+    this.initialWearCollectionIds = const <String>{},
   });
 
   final AppI18n i18n;
@@ -82,6 +91,8 @@ class DailyChoiceEditorSheet extends StatefulWidget {
   final bool forceNewId;
   final List<DailyChoiceEatCollection> eatCollections;
   final Set<String> initialEatCollectionIds;
+  final List<DailyChoiceWearCollection> wearCollections;
+  final Set<String> initialWearCollectionIds;
 
   @override
   State<DailyChoiceEditorSheet> createState() => _DailyChoiceEditorSheetState();
@@ -101,6 +112,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
   String? _contextId;
   late final Map<String, Set<String>> _selectedAttributes;
   late Set<String> _selectedEatCollectionIds;
+  late Set<String> _selectedWearCollectionIds;
   bool _saving = false;
 
   bool get _isEatModule =>
@@ -136,6 +148,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
         group.id: option?.attributeValues(group.id).toSet() ?? <String>{},
     };
     _selectedEatCollectionIds = _resolveInitialEatCollectionIds();
+    _selectedWearCollectionIds = _resolveInitialWearCollectionIds();
   }
 
   @override
@@ -183,6 +196,14 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
     }
     final validIds = widget.eatCollections.map((item) => item.id).toSet();
     return widget.initialEatCollectionIds.where(validIds.contains).toSet();
+  }
+
+  Set<String> _resolveInitialWearCollectionIds() {
+    if (!_isWearModule || widget.wearCollections.isEmpty) {
+      return <String>{};
+    }
+    final validIds = widget.wearCollections.map((item) => item.id).toSet();
+    return widget.initialWearCollectionIds.where(validIds.contains).toSet();
   }
 
   void _save() {
@@ -293,6 +314,9 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
         eatCollectionIds: _isEatModule
             ? Set<String>.unmodifiable(_selectedEatCollectionIds)
             : const <String>{},
+        wearCollectionIds: _isWearModule
+            ? Set<String>.unmodifiable(_selectedWearCollectionIds)
+            : const <String>{},
       ),
     );
   }
@@ -342,6 +366,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
         _selectedEatCollectionIds.remove(collectionId);
       } else {
         _selectedEatCollectionIds.add(collectionId);
+      }
+    });
+  }
+
+  void _toggleWearCollection(String collectionId) {
+    setState(() {
+      if (_selectedWearCollectionIds.contains(collectionId)) {
+        _selectedWearCollectionIds.remove(collectionId);
+      } else {
+        _selectedWearCollectionIds.add(collectionId);
       }
     });
   }
@@ -458,21 +492,29 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                 widget.forceNewId
                     ? pickUiText(
                         widget.i18n,
-                        zh: _isEatModule ? '另存为个人食谱' : '另存为自定义条目',
+                        zh: _isEatModule
+                            ? '另存为个人食谱'
+                            : (_isWearModule ? '另存到我的衣柜' : '另存为自定义条目'),
                         en: _isEatModule
                             ? 'Save as personal recipe'
-                            : 'Save as custom item',
+                            : (_isWearModule
+                                  ? 'Save to my wardrobe'
+                                  : 'Save as custom item'),
                       )
                     : widget.option == null
                     ? pickUiText(
                         widget.i18n,
-                        zh: '新增自定义条目',
-                        en: 'Add custom item',
+                        zh: _isWearModule ? '新增我的衣柜搭配' : '新增自定义条目',
+                        en: _isWearModule
+                            ? 'Add my wardrobe outfit'
+                            : 'Add custom item',
                       )
                     : pickUiText(
                         widget.i18n,
-                        zh: '编辑自定义条目',
-                        en: 'Edit custom item',
+                        zh: _isWearModule ? '编辑我的衣柜搭配' : '编辑自定义条目',
+                        en: _isWearModule
+                            ? 'Edit my wardrobe outfit'
+                            : 'Edit custom item',
                       ),
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w900,
@@ -485,8 +527,12 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                   decoration: InputDecoration(
                     labelText: pickUiText(
                       widget.i18n,
-                      zh: _isEatModule ? '主要餐段' : '分类',
-                      en: _isEatModule ? 'Primary meal' : 'Category',
+                      zh: _isEatModule
+                          ? '主要餐段'
+                          : (_isWearModule ? '适用气温' : '分类'),
+                      en: _isEatModule
+                          ? 'Primary meal'
+                          : (_isWearModule ? 'Temperature' : 'Category'),
                     ),
                   ),
                   items: _categoryChoices
@@ -537,13 +583,18 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                 Text(
                   pickUiText(
                     widget.i18n,
-                    zh: '先给这套搭配打上风格和样式特征，后面管理个人衣橱时会更容易筛选和复用。',
-                    en: 'Tag style and outfit traits first so wardrobe management stays easy to filter and reuse.',
+                    zh: '先从你真实拥有的单品出发：能明天就穿、能替换、能重复出现的搭配，才值得放进我的衣柜。',
+                    en: 'Start from pieces you actually own. A useful outfit is wearable tomorrow, easy to substitute, and worth repeating.',
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     height: 1.35,
                   ),
+                ),
+                const SizedBox(height: 12),
+                _WearEditorPrincipleCard(
+                  i18n: widget.i18n,
+                  accent: widget.accent,
                 ),
                 const SizedBox(height: 12),
                 for (final group in wearTraitGroups) ...<Widget>[
@@ -557,6 +608,17 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                   ),
                   const SizedBox(height: 12),
                 ],
+              ],
+              if (_isWearModule &&
+                  widget.wearCollections.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 14),
+                _EditorWearCollectionSection(
+                  i18n: widget.i18n,
+                  accent: widget.accent,
+                  collections: widget.wearCollections,
+                  selectedIds: _selectedWearCollectionIds,
+                  onToggle: _toggleWearCollection,
+                ),
               ],
               if (_isEatModule) ...<Widget>[
                 const SizedBox(height: 14),
@@ -588,9 +650,20 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                 decoration: InputDecoration(
                   labelText: pickUiText(
                     widget.i18n,
-                    zh: _isEatModule ? '菜名' : '名称',
-                    en: _isEatModule ? 'Dish name' : 'Name',
+                    zh: _isEatModule
+                        ? '菜名'
+                        : (_isWearModule ? '搭配名称 / 公式' : '名称'),
+                    en: _isEatModule
+                        ? 'Dish name'
+                        : (_isWearModule ? 'Outfit formula' : 'Name'),
                   ),
+                  helperText: _isWearModule
+                      ? pickUiText(
+                          widget.i18n,
+                          zh: '写成“核心单品 + 下装 + 鞋/外套”，以后更容易复用。',
+                          en: 'Use “key piece + bottom + shoes/outer layer” so it is easy to reuse.',
+                        )
+                      : null,
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -602,11 +675,18 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '一句话推荐 / 口味特点'
-                        : (_isWearModule ? '一句话风格说明' : '一句话说明'),
+                        : (_isWearModule ? '一句话使用场景' : '一句话说明'),
                     en: _isEatModule
                         ? 'Short recipe note'
-                        : (_isWearModule ? 'Style note' : 'Short note'),
+                        : (_isWearModule ? 'When to wear it' : 'Short note'),
                   ),
+                  helperText: _isWearModule
+                      ? pickUiText(
+                          widget.i18n,
+                          zh: '说明这套适合哪种日程、天气或心情，不必写成评价。',
+                          en: 'Name the day, weather, or mood this outfit solves.',
+                        )
+                      : null,
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -620,9 +700,18 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '详细介绍 / 适合什么时候做'
-                        : (_isWearModule ? '详细介绍 / 穿着场景' : '详细介绍'),
-                    en: _isEatModule ? 'Details / when to make it' : 'Details',
+                        : (_isWearModule ? '为什么这样搭 / 适合哪天穿' : '详细介绍'),
+                    en: _isEatModule
+                        ? 'Details / when to make it'
+                        : (_isWearModule ? 'Why it works' : 'Details'),
                   ),
+                  helperText: _isWearModule
+                      ? pickUiText(
+                          widget.i18n,
+                          zh: '可写比例、颜色、材质、行动便利和当天场景。',
+                          en: 'Mention proportion, color, fabric, mobility, and scene.',
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(height: 10),
@@ -644,6 +733,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                               ? 'Pieces / components'
                               : 'Materials / conditions'),
                   ),
+                  helperText: _isWearModule
+                      ? pickUiText(
+                          widget.i18n,
+                          zh: '优先写真实拥有的单品；没有同款时写可替代颜色、版型或面料。',
+                          en: 'Use real closet pieces first; add substitutes by color, shape, or fabric.',
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(height: 10),
@@ -663,6 +759,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                               ? 'Outfit steps / checklist'
                               : 'Steps'),
                   ),
+                  helperText: _isWearModule
+                      ? pickUiText(
+                          widget.i18n,
+                          zh: '建议写：先确定内外层，再看比例，最后检查鞋包和天气。',
+                          en: 'Try: layer first, then proportion, then shoes, bag, and weather.',
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(height: 10),
@@ -675,11 +778,18 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '技巧 / 备注（每行一条）'
-                        : (_isWearModule ? '适用提醒 / 保养备注' : '补充备注（每行一条）'),
+                        : (_isWearModule ? '替换方案 / 保养提醒' : '补充备注（每行一条）'),
                     en: _isEatModule
                         ? 'Tips / notes'
                         : (_isWearModule ? 'Wear notes / care' : 'Extra notes'),
                   ),
+                  helperText: _isWearModule
+                      ? pickUiText(
+                          widget.i18n,
+                          zh: '记录容易忘的点：裤长、鞋底、防晒、保暖、易皱或洗护。',
+                          en: 'Record easy-to-forget details: hem, traction, sun, warmth, wrinkles, care.',
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(height: 10),
@@ -695,6 +805,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                               : '标签（用顿号、逗号或空格分隔）'),
                     en: 'Tags',
                   ),
+                  helperText: _isWearModule
+                      ? pickUiText(
+                          widget.i18n,
+                          zh: '性别和年龄只是参考标签，按你自己的穿着习惯选就好。',
+                          en: 'Gender and age are reference tags only; choose by your real habits.',
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -735,6 +852,80 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _WearEditorPrincipleCard extends StatelessWidget {
+  const _WearEditorPrincipleCard({required this.i18n, required this.accent});
+
+  final AppI18n i18n;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final items = <String>[
+      pickUiText(
+        i18n,
+        zh: '先写真实单品，再写替代方案。',
+        en: 'Start with real pieces, then note substitutes.',
+      ),
+      pickUiText(
+        i18n,
+        zh: '先解决温度和行动，再处理风格亮点。',
+        en: 'Solve weather and movement before styling accents.',
+      ),
+      pickUiText(
+        i18n,
+        zh: '用性别和年龄做参考，不把它们当规则。',
+        en: 'Use gender and age as references, not rules.',
+      ),
+    ];
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(12),
+      borderColor: accent.withValues(alpha: 0.16),
+      shadowOpacity: 0.02,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.lightbulb_outline_rounded, size: 18, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                pickUiText(i18n, zh: '录入原则', en: 'Saving principles'),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final item in items) ...<Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Icon(Icons.circle, size: 5, color: accent),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ],
+        ],
       ),
     );
   }
@@ -804,6 +995,79 @@ class _EditorEatCollectionSection extends StatelessWidget {
                   i18n,
                   zh: '${collection.optionIds.length} 道菜',
                   en: '${collection.optionIds.length} recipes',
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditorWearCollectionSection extends StatelessWidget {
+  const _EditorWearCollectionSection({
+    required this.i18n,
+    required this.accent,
+    required this.collections,
+    required this.selectedIds,
+    required this.onToggle,
+  });
+
+  final AppI18n i18n;
+  final Color accent;
+  final List<DailyChoiceWearCollection> collections;
+  final Set<String> selectedIds;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(14),
+      borderColor: accent.withValues(alpha: 0.16),
+      shadowOpacity: 0.03,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.checkroom_rounded, size: 18, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                pickUiText(i18n, zh: '保存到我的衣柜', en: 'Save to my wardrobe'),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            pickUiText(
+              i18n,
+              zh: '建议至少选一个自己的衣柜。这样随机时可以直接从真实衣橱里抽取，而不是只看内置参考。',
+              en: 'Choose at least one wardrobe when possible, so random picks can come from your real closet instead of only the built-in reference.',
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final collection in collections)
+            CheckboxListTile(
+              value: selectedIds.contains(collection.id),
+              onChanged: (_) => onToggle(collection.id),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(collection.title(i18n)),
+              subtitle: Text(
+                pickUiText(
+                  i18n,
+                  zh: '${collection.optionIds.length} 套搭配',
+                  en: '${collection.optionIds.length} outfits',
                 ),
               ),
             ),

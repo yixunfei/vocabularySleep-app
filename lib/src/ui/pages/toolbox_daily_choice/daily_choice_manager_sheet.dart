@@ -3,8 +3,10 @@ part of 'daily_choice_widgets.dart';
 typedef DailyChoiceSaveAsCustomEditor =
     Future<DailyChoiceEditorResult?> Function(
       DailyChoiceOption option, {
-      required List<DailyChoiceEatCollection> collections,
-      required Set<String> initialCollectionIds,
+      required List<DailyChoiceEatCollection> eatCollections,
+      required Set<String> initialEatCollectionIds,
+      required List<DailyChoiceWearCollection> wearCollections,
+      required Set<String> initialWearCollectionIds,
     });
 
 Future<void> showDailyChoiceManagerSheet({
@@ -26,19 +28,25 @@ Future<void> showDailyChoiceManagerSheet({
   Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
   onAdjustBuiltInOption,
   DailyChoiceSaveAsCustomEditor? onSaveBuiltInAsCustom,
+  List<DailyChoiceWearCollection> wearCollections =
+      const <DailyChoiceWearCollection>[],
 }) async {
-  var localState = state.withDefaultEatCollections();
-  final filterCategories = <DailyChoiceCategory>[
-    const DailyChoiceCategory(
-      id: 'all',
-      icon: Icons.grid_view_rounded,
-      titleZh: '全部',
-      titleEn: 'All',
-      subtitleZh: '不过滤分类',
-      subtitleEn: 'All categories',
-    ),
-    ...categories,
-  ];
+  var localState = state
+      .withDefaultEatCollections()
+      .withDefaultWearCollections();
+  final filterCategories = categories.any((item) => item.id == 'all')
+      ? categories
+      : <DailyChoiceCategory>[
+          const DailyChoiceCategory(
+            id: 'all',
+            icon: Icons.grid_view_rounded,
+            titleZh: '全部',
+            titleEn: 'All',
+            subtitleZh: '不过滤分类',
+            subtitleEn: 'All categories',
+          ),
+          ...categories,
+        ];
   final filterContexts = contexts.any((item) => item.id == 'all')
       ? contexts
       : <DailyChoiceCategory>[
@@ -71,6 +79,9 @@ Future<void> showDailyChoiceManagerSheet({
   var collectionNameDraft = '';
   var collectionInputVersion = 0;
   var selectedCollectionId = 'all';
+  var wearCollectionNameDraft = '';
+  var wearCollectionInputVersion = 0;
+  var selectedWearCollectionId = 'all';
   var builtInVisibleLimit = _managerInitialBuiltInLimit(isEatModule);
   var builtInSqlActiveKey = '';
   var builtInSqlLoadingKey = '';
@@ -101,7 +112,9 @@ Future<void> showDailyChoiceManagerSheet({
         return StatefulBuilder(
           builder: (context, setSheetState) {
             void publish(DailyChoiceCustomState next) {
-              localState = next.withDefaultEatCollections();
+              localState = next
+                  .withDefaultEatCollections()
+                  .withDefaultWearCollections();
               onStateChanged(localState);
               setSheetState(() {});
             }
@@ -220,9 +233,31 @@ Future<void> showDailyChoiceManagerSheet({
             }
             final selectedCollectionOptionIds = selectedCollection?.optionIds
                 .toSet();
+            DailyChoiceWearCollection? selectedWearCollection =
+                selectedWearCollectionId == 'all'
+                ? null
+                : localState.wearCollectionById(selectedWearCollectionId);
+            if (selectedWearCollection == null) {
+              selectedWearCollectionId = 'all';
+            }
+            final selectedWearCollectionOptionIds = selectedWearCollection
+                ?.optionIds
+                .toSet();
+            final userWearCollections = localState.wearCollections
+                .where(
+                  (collection) => !isBuiltInWearCollectionId(collection.id),
+                )
+                .toList(growable: false);
             bool matchesCollection(DailyChoiceOption item) {
-              return selectedCollectionOptionIds == null ||
-                  selectedCollectionOptionIds.contains(item.id);
+              if (isEatModule) {
+                return selectedCollectionOptionIds == null ||
+                    selectedCollectionOptionIds.contains(item.id);
+              }
+              if (isWearModule) {
+                return selectedWearCollectionOptionIds == null ||
+                    selectedWearCollectionOptionIds.contains(item.id);
+              }
+              return true;
             }
 
             final customItems = localState.customOptions
@@ -253,14 +288,20 @@ Future<void> showDailyChoiceManagerSheet({
                 )
                 .toList(growable: false);
             final canUseSqlBuiltIns = isEatModule && eatLibraryStore != null;
+            final activeCollectionId = isWearModule
+                ? selectedWearCollectionId
+                : selectedCollectionId;
+            final activeCollectionOptionIds = isWearModule
+                ? selectedWearCollectionOptionIds
+                : selectedCollectionOptionIds;
             final nextBuiltInFilterCacheKey = _managerBuiltInFilterCacheKey(
               moduleId: moduleId,
               categoryId: selectedCategoryId,
               contextId: selectedContextId,
               searchQuery: searchQuery,
               traitFilters: selectedTraitFilters,
-              selectedCollectionId: selectedCollectionId,
-              selectedCollectionOptionIds: selectedCollectionOptionIds,
+              selectedCollectionId: activeCollectionId,
+              selectedCollectionOptionIds: activeCollectionOptionIds,
             );
             late final List<DailyChoiceOption> allVisibleBuiltIns;
             late final int builtInTotalCount;
@@ -452,6 +493,17 @@ Future<void> showDailyChoiceManagerSheet({
                         defaultFavoriteWhenEmpty: option == null,
                       )
                     : const <String>{},
+                wearCollections: isWearModule
+                    ? userWearCollections
+                    : const <DailyChoiceWearCollection>[],
+                initialWearCollectionIds: isWearModule
+                    ? _managerInitialWearCollectionIds(
+                        collections: userWearCollections,
+                        option: option,
+                        selectedCollection: selectedWearCollection,
+                        defaultFavoriteWhenEmpty: option == null,
+                      )
+                    : const <String>{},
               );
               if (editorResult == null) {
                 return;
@@ -462,6 +514,12 @@ Future<void> showDailyChoiceManagerSheet({
                 nextState = nextState.setOptionEatCollections(
                   optionId: result.id,
                   collectionIds: editorResult.eatCollectionIds,
+                );
+              }
+              if (isWearModule) {
+                nextState = nextState.setOptionWearCollections(
+                  optionId: result.id,
+                  collectionIds: editorResult.wearCollectionIds,
                 );
               }
               await publishWithProcessing(
@@ -512,13 +570,28 @@ Future<void> showDailyChoiceManagerSheet({
                     actionId: _managerActionSaveAs,
                     action: () => onSaveBuiltInAsCustom(
                       option,
-                      collections: localState.eatCollections,
-                      initialCollectionIds: _managerInitialEatCollectionIds(
-                        collections: localState.eatCollections,
-                        option: option,
-                        selectedCollection: selectedCollection,
-                        defaultFavoriteWhenEmpty: true,
-                      ),
+                      eatCollections: isEatModule
+                          ? localState.eatCollections
+                          : const <DailyChoiceEatCollection>[],
+                      initialEatCollectionIds: isEatModule
+                          ? _managerInitialEatCollectionIds(
+                              collections: localState.eatCollections,
+                              option: option,
+                              selectedCollection: selectedCollection,
+                              defaultFavoriteWhenEmpty: true,
+                            )
+                          : const <String>{},
+                      wearCollections: isWearModule
+                          ? userWearCollections
+                          : const <DailyChoiceWearCollection>[],
+                      initialWearCollectionIds: isWearModule
+                          ? _managerInitialWearCollectionIds(
+                              collections: userWearCollections,
+                              option: option,
+                              selectedCollection: selectedWearCollection,
+                              defaultFavoriteWhenEmpty: true,
+                            )
+                          : const <String>{},
                     ),
                   );
               if (editorResult == null) {
@@ -526,10 +599,18 @@ Future<void> showDailyChoiceManagerSheet({
               }
               final result = editorResult.option;
               var nextState = localState.upsertCustom(result);
-              nextState = nextState.setOptionEatCollections(
-                optionId: result.id,
-                collectionIds: editorResult.eatCollectionIds,
-              );
+              if (isEatModule) {
+                nextState = nextState.setOptionEatCollections(
+                  optionId: result.id,
+                  collectionIds: editorResult.eatCollectionIds,
+                );
+              }
+              if (isWearModule) {
+                nextState = nextState.setOptionWearCollections(
+                  optionId: result.id,
+                  collectionIds: editorResult.wearCollectionIds,
+                );
+              }
               await publishWithProcessing(
                 nextState,
                 pickUiText(i18n, zh: '正在保存副本...', en: 'Saving copy...'),
@@ -556,6 +637,26 @@ Future<void> showDailyChoiceManagerSheet({
               );
             }
 
+            Future<void> addOptionToWearCollections({
+              required String optionId,
+              required Set<String> collectionIds,
+            }) async {
+              if (collectionIds.isEmpty) {
+                return;
+              }
+              var nextState = localState;
+              for (final collectionId in collectionIds) {
+                nextState = nextState.addOptionToWearCollection(
+                  collectionId: collectionId,
+                  optionId: optionId,
+                );
+              }
+              await publishWithProcessing(
+                nextState,
+                pickUiText(i18n, zh: '正在加入衣橱...', en: 'Adding to wardrobe...'),
+              );
+            }
+
             Future<void> toggleBuiltInHidden({
               required DailyChoiceOption option,
               required bool isHidden,
@@ -563,7 +664,13 @@ Future<void> showDailyChoiceManagerSheet({
               if (isHidden) {
                 await publishWithProcessing(
                   localState.restoreBuiltIn(option.id),
-                  pickUiText(i18n, zh: '正在恢复菜谱...', en: 'Restoring recipe...'),
+                  pickUiText(
+                    i18n,
+                    zh: isWearModule ? '正在恢复搭配...' : '正在恢复菜谱...',
+                    en: isWearModule
+                        ? 'Restoring outfit...'
+                        : 'Restoring recipe...',
+                  ),
                 );
                 return;
               }
@@ -571,13 +678,18 @@ Future<void> showDailyChoiceManagerSheet({
                 context: context,
                 i18n: i18n,
                 option: option,
+                isWearModule: isWearModule,
               );
               if (confirmed != true) {
                 return;
               }
               await publishWithProcessing(
                 localState.hideBuiltIn(option.id),
-                pickUiText(i18n, zh: '正在加入不喜欢...', en: 'Hiding recipe...'),
+                pickUiText(
+                  i18n,
+                  zh: '正在加入不喜欢...',
+                  en: isWearModule ? 'Hiding outfit...' : 'Hiding recipe...',
+                ),
               );
             }
 
@@ -596,6 +708,23 @@ Future<void> showDailyChoiceManagerSheet({
               selectedCollectionId = collection.id;
               resetBuiltInPaging();
               publish(localState.upsertEatCollection(collection));
+            }
+
+            void createWearCollection() {
+              final title = wearCollectionNameDraft.trim();
+              if (title.isEmpty) {
+                return;
+              }
+              final collection = DailyChoiceWearCollection(
+                id: 'wear_collection_${DateTime.now().microsecondsSinceEpoch}',
+                titleZh: title,
+                titleEn: title,
+              );
+              wearCollectionNameDraft = '';
+              wearCollectionInputVersion += 1;
+              selectedWearCollectionId = collection.id;
+              resetBuiltInPaging();
+              publish(localState.upsertWearCollection(collection));
             }
 
             void showManagerMessage({required String zh, required String en}) {
@@ -666,6 +795,58 @@ Future<void> showDailyChoiceManagerSheet({
                   zh: '正在删除食谱集...',
                   en: 'Deleting recipe set...',
                 ),
+              );
+            }
+
+            Future<void> renameSelectedWearCollection() async {
+              final collection = localState.wearCollectionById(
+                selectedWearCollectionId,
+              );
+              if (collection == null ||
+                  isProtectedWearCollectionId(collection.id)) {
+                return;
+              }
+              final title = await _promptWearCollectionName(
+                context: context,
+                i18n: i18n,
+                accent: accent,
+                initialTitle: collection.title(i18n),
+              );
+              if (title == null || title.trim().isEmpty) {
+                return;
+              }
+              await publishWithProcessing(
+                localState.upsertWearCollection(
+                  collection.copyWith(
+                    titleZh: title.trim(),
+                    titleEn: title.trim(),
+                  ),
+                ),
+                pickUiText(i18n, zh: '正在重命名衣橱...', en: 'Renaming wardrobe...'),
+              );
+            }
+
+            Future<void> deleteSelectedWearCollection() async {
+              final collection = localState.wearCollectionById(
+                selectedWearCollectionId,
+              );
+              if (collection == null ||
+                  isProtectedWearCollectionId(collection.id)) {
+                return;
+              }
+              final confirmed = await _confirmDeleteWearCollection(
+                context: context,
+                i18n: i18n,
+                collection: collection,
+              );
+              if (confirmed != true) {
+                return;
+              }
+              selectedWearCollectionId = 'all';
+              resetBuiltInPaging();
+              await publishWithProcessing(
+                localState.deleteWearCollection(collection.id),
+                pickUiText(i18n, zh: '正在删除衣橱...', en: 'Deleting wardrobe...'),
               );
             }
 
@@ -766,6 +947,103 @@ Future<void> showDailyChoiceManagerSheet({
               }
             }
 
+            Future<void> exportSelectedWearCollection() async {
+              final collection = localState.wearCollectionById(
+                selectedWearCollectionId,
+              );
+              if (collection == null) {
+                showManagerMessage(
+                  zh: '请先选择一个衣橱。',
+                  en: 'Choose a wardrobe first.',
+                );
+                return;
+              }
+              try {
+                final payload = _buildWearCollectionExportPackage(
+                  state: localState,
+                  collection: collection,
+                );
+                final encoded = const JsonEncoder.withIndent(
+                  '  ',
+                ).convert(payload);
+                final fileName =
+                    '${_safeWearCollectionExportFileName(collection.title(i18n))}.daily-choice-wardrobe.json';
+                final path = await FilePicker.platform.saveFile(
+                  dialogTitle: pickUiText(
+                    i18n,
+                    zh: '导出衣橱',
+                    en: 'Export wardrobe',
+                  ),
+                  fileName: fileName,
+                  type: FileType.custom,
+                  allowedExtensions: const <String>['json'],
+                  bytes: Uint8List.fromList(utf8.encode(encoded)),
+                  lockParentWindow: true,
+                );
+                if (path == null) {
+                  return;
+                }
+                showManagerMessage(zh: '衣橱已导出。', en: 'Wardrobe exported.');
+              } catch (error) {
+                showManagerMessage(
+                  zh: '导出失败：$error',
+                  en: 'Export failed: $error',
+                );
+              }
+            }
+
+            Future<void> importWearCollections() async {
+              try {
+                final result = await FilePicker.platform.pickFiles(
+                  dialogTitle: pickUiText(
+                    i18n,
+                    zh: '导入衣橱',
+                    en: 'Import wardrobe',
+                  ),
+                  type: FileType.custom,
+                  allowedExtensions: const <String>['json'],
+                  withData: true,
+                  lockParentWindow: true,
+                );
+                if (result == null || result.files.isEmpty) {
+                  return;
+                }
+                final bytes = result.files.single.bytes;
+                if (bytes == null || bytes.isEmpty) {
+                  throw const FormatException(
+                    'Selected wardrobe file could not be read.',
+                  );
+                }
+                final decoded = jsonDecode(utf8.decode(bytes));
+                if (decoded is! Map) {
+                  throw const FormatException('Invalid wardrobe package.');
+                }
+                final imported = _importWearCollectionExportPackage(
+                  state: localState,
+                  payload: decoded.cast<String, Object?>(),
+                );
+                selectedWearCollectionId = imported.selectedCollectionId;
+                resetBuiltInPaging();
+                await publishWithProcessing(
+                  imported.state,
+                  pickUiText(
+                    i18n,
+                    zh: '正在导入衣橱...',
+                    en: 'Importing wardrobe...',
+                  ),
+                );
+                showManagerMessage(
+                  zh: '已导入 ${imported.collectionCount} 个衣橱。',
+                  en: '${imported.collectionCount} wardrobe(s) imported.',
+                );
+              } catch (error) {
+                showManagerMessage(
+                  zh: '导入失败：$error',
+                  en: 'Import failed: $error',
+                );
+              }
+            }
+
             bool maybeAutoLoadBuiltInsFromMetrics(ScrollMetrics metrics) {
               if (!builtInExpanded ||
                   builtInSqlLoading ||
@@ -854,6 +1132,10 @@ Future<void> showDailyChoiceManagerSheet({
                                 child: _ManagerSearchField(
                                   i18n: i18n,
                                   initialText: searchDraft,
+                                  labelZh: '搜索菜品名称',
+                                  labelEn: 'Search recipe name',
+                                  hintZh: '按菜名、简介关键词快速筛选',
+                                  hintEn: 'Search by recipe title or summary',
                                   onDraftChanged: (value) {
                                     searchDraft = value;
                                   },
@@ -1068,6 +1350,240 @@ Future<void> showDailyChoiceManagerSheet({
                               ),
                               const SizedBox(height: 12),
                             ],
+                            if (isWearModule) ...<Widget>[
+                              ToolboxSurfaceCard(
+                                padding: const EdgeInsets.all(12),
+                                borderColor: accent.withValues(alpha: 0.14),
+                                shadowOpacity: 0.02,
+                                child: _ManagerSearchField(
+                                  i18n: i18n,
+                                  initialText: searchDraft,
+                                  labelZh: '搜索搭配或单品',
+                                  labelEn: 'Search outfit or piece',
+                                  hintZh: '按搭配名称、真实单品、场景关键词筛选',
+                                  hintEn:
+                                      'Search by outfit, piece, or scene keyword',
+                                  onDraftChanged: (value) {
+                                    searchDraft = value;
+                                  },
+                                  onCommitted: commitSearchQuery,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _ManagerExpandableSection(
+                                title: pickUiText(
+                                  i18n,
+                                  zh: '衣柜集合',
+                                  en: 'Wardrobes',
+                                ),
+                                subtitle: selectedWearCollection == null
+                                    ? pickUiText(
+                                        i18n,
+                                        zh: '把真实会穿的通勤、周末、运动、雨天组合整理成独立衣柜。内置衣柜只做参考，你的衣柜才是日常随机的核心。',
+                                        en: 'Group real commute, weekend, active, or rainy-day outfits into wardrobes. Built-ins are references; your wardrobe is the daily core.',
+                                      )
+                                    : pickUiText(
+                                        i18n,
+                                        zh: '当前只看「${selectedWearCollection.title(i18n)}」。',
+                                        en: 'Showing "${selectedWearCollection.title(i18n)}" only.',
+                                      ),
+                                accent: accent,
+                                expanded: collectionsExpanded,
+                                countLabel:
+                                    '${localState.wearCollections.length}',
+                                onToggle: () {
+                                  setSheetState(() {
+                                    collectionsExpanded = !collectionsExpanded;
+                                  });
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    TextFormField(
+                                      key: ValueKey<String>(
+                                        'wear-collection-input-$wearCollectionInputVersion',
+                                      ),
+                                      initialValue: wearCollectionNameDraft,
+                                      onChanged: (value) {
+                                        wearCollectionNameDraft = value;
+                                      },
+                                      onFieldSubmitted: (_) =>
+                                          createWearCollection(),
+                                      decoration: InputDecoration(
+                                        prefixIcon: const Icon(
+                                          Icons.checkroom_rounded,
+                                        ),
+                                        labelText: pickUiText(
+                                          i18n,
+                                          zh: '新建我的衣柜',
+                                          en: 'New wardrobe',
+                                        ),
+                                        hintText: pickUiText(
+                                          i18n,
+                                          zh: '例如：日常通勤、周末休闲、运动穿搭',
+                                          en: 'For example: Daily commute, Weekend casual',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: FilledButton.icon(
+                                        onPressed: createWearCollection,
+                                        icon: const Icon(Icons.add_rounded),
+                                        label: Text(
+                                          pickUiText(
+                                            i18n,
+                                            zh: '创建我的衣柜',
+                                            en: 'Create wardrobe',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Expanded(
+                                          child: DropdownButtonFormField<String>(
+                                            key: ValueKey<String>(
+                                              'wear-collection-scope-$selectedWearCollectionId',
+                                            ),
+                                            initialValue:
+                                                selectedWearCollectionId,
+                                            isExpanded: true,
+                                            decoration: InputDecoration(
+                                              prefixIcon: const Icon(
+                                                Icons.filter_list_rounded,
+                                              ),
+                                              labelText: pickUiText(
+                                                i18n,
+                                                zh: '当前随机范围',
+                                                en: 'Random pool',
+                                              ),
+                                            ),
+                                            items: <DropdownMenuItem<String>>[
+                                              DropdownMenuItem<String>(
+                                                value: 'all',
+                                                child: Text(
+                                                  pickUiText(
+                                                    i18n,
+                                                    zh: '全部衣柜',
+                                                    en: 'All wardrobes',
+                                                  ),
+                                                ),
+                                              ),
+                                              ...localState.wearCollections.map(
+                                                (
+                                                  collection,
+                                                ) => DropdownMenuItem<String>(
+                                                  value: collection.id,
+                                                  child: Text(
+                                                    '${collection.title(i18n)} · ${collection.optionIds.length}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                            onChanged: (value) {
+                                              if (value == null) {
+                                                return;
+                                              }
+                                              setSheetState(() {
+                                                selectedWearCollectionId =
+                                                    value;
+                                                resetBuiltInPaging();
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Tooltip(
+                                          message: pickUiText(
+                                            i18n,
+                                            zh: '重命名衣橱',
+                                            en: 'Rename wardrobe',
+                                          ),
+                                          child: IconButton.filledTonal(
+                                            onPressed:
+                                                selectedWearCollection ==
+                                                        null ||
+                                                    isProtectedWearCollectionId(
+                                                      selectedWearCollection.id,
+                                                    )
+                                                ? null
+                                                : renameSelectedWearCollection,
+                                            icon: const Icon(
+                                              Icons.drive_file_rename_outline,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Tooltip(
+                                          message: pickUiText(
+                                            i18n,
+                                            zh: '删除衣橱',
+                                            en: 'Delete wardrobe',
+                                          ),
+                                          child: IconButton.filledTonal(
+                                            onPressed:
+                                                selectedWearCollection ==
+                                                        null ||
+                                                    isProtectedWearCollectionId(
+                                                      selectedWearCollection.id,
+                                                    )
+                                                ? null
+                                                : deleteSelectedWearCollection,
+                                            icon: const Icon(
+                                              Icons.delete_outline_rounded,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: <Widget>[
+                                        OutlinedButton.icon(
+                                          onPressed:
+                                              selectedWearCollection == null
+                                              ? null
+                                              : exportSelectedWearCollection,
+                                          icon: const Icon(
+                                            Icons.ios_share_rounded,
+                                          ),
+                                          label: Text(
+                                            pickUiText(
+                                              i18n,
+                                              zh: '导出当前',
+                                              en: 'Export current',
+                                            ),
+                                          ),
+                                        ),
+                                        OutlinedButton.icon(
+                                          onPressed: importWearCollections,
+                                          icon: const Icon(
+                                            Icons.file_upload_outlined,
+                                          ),
+                                          label: Text(
+                                            pickUiText(
+                                              i18n,
+                                              zh: '导入分享包',
+                                              en: 'Import package',
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
                             _ManagerExpandableSection(
                               title: pickUiText(
                                 i18n,
@@ -1077,7 +1593,9 @@ Future<void> showDailyChoiceManagerSheet({
                               subtitle: activeFilterCount <= 0
                                   ? pickUiText(
                                       i18n,
-                                      zh: '当前显示全部范围，可折叠收起。',
+                                      zh: isWearModule
+                                          ? '当前显示全部范围。可以按性别参考、年龄阶段、风格和版型逐步缩小。'
+                                          : '当前显示全部范围，可折叠收起。',
                                       en: 'Showing the full range for now.',
                                     )
                                   : pickUiText(
@@ -1177,7 +1695,7 @@ Future<void> showDailyChoiceManagerSheet({
                                   i18n,
                                   zh: isEatModule
                                       ? '新增个人食谱'
-                                      : (isWearModule ? '新增个人衣橱搭配' : '新增'),
+                                      : (isWearModule ? '新建我的衣柜搭配' : '新增'),
                                   en: isEatModule
                                       ? 'Add recipe'
                                       : (isWearModule
@@ -1195,8 +1713,12 @@ Future<void> showDailyChoiceManagerSheet({
                               ),
                               subtitle: pickUiText(
                                 i18n,
-                                zh: '完全属于你的新增条目，可直接编辑和删除。',
-                                en: 'Your own saved items that can be edited or removed.',
+                                zh: isWearModule
+                                    ? '这些是你基于真实衣柜保存的搭配，可编辑、删除，也会直接参与随机。'
+                                    : '完全属于你的新增条目，可直接编辑和删除。',
+                                en: isWearModule
+                                    ? 'These outfits come from your real wardrobe and can be edited, removed, and used in random picks.'
+                                    : 'Your own saved items that can be edited or removed.',
                               ),
                               accent: accent,
                               expanded: customExpanded,
@@ -1246,42 +1768,81 @@ Future<void> showDailyChoiceManagerSheet({
                                                     ),
                                                   ),
                                                 ),
-                                                ..._managerCollectionActions(
-                                                  context: context,
-                                                  i18n: i18n,
-                                                  collections:
-                                                      localState.eatCollections,
-                                                  selectedCollection:
-                                                      selectedCollection,
-                                                  optionId: item.id,
-                                                  onAddMultiple:
-                                                      (collectionIds) {
-                                                        unawaited(
-                                                          addOptionToCollections(
-                                                            optionId: item.id,
-                                                            collectionIds:
-                                                                collectionIds,
-                                                          ),
-                                                        );
-                                                      },
-                                                  onRemove: (collectionId) {
-                                                    unawaited(
-                                                      publishWithProcessing(
-                                                        localState
-                                                            .removeOptionFromEatCollection(
-                                                              collectionId:
-                                                                  collectionId,
+                                                if (isEatModule)
+                                                  ..._managerCollectionActions(
+                                                    context: context,
+                                                    i18n: i18n,
+                                                    collections: localState
+                                                        .eatCollections,
+                                                    selectedCollection:
+                                                        selectedCollection,
+                                                    optionId: item.id,
+                                                    onAddMultiple:
+                                                        (collectionIds) {
+                                                          unawaited(
+                                                            addOptionToCollections(
                                                               optionId: item.id,
+                                                              collectionIds:
+                                                                  collectionIds,
                                                             ),
-                                                        pickUiText(
-                                                          i18n,
-                                                          zh: '正在移出食谱集...',
-                                                          en: 'Removing from set...',
+                                                          );
+                                                        },
+                                                    onRemove: (collectionId) {
+                                                      unawaited(
+                                                        publishWithProcessing(
+                                                          localState
+                                                              .removeOptionFromEatCollection(
+                                                                collectionId:
+                                                                    collectionId,
+                                                                optionId:
+                                                                    item.id,
+                                                              ),
+                                                          pickUiText(
+                                                            i18n,
+                                                            zh: '正在移出食谱集...',
+                                                            en: 'Removing from set...',
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
+                                                      );
+                                                    },
+                                                  ),
+                                                if (isWearModule)
+                                                  ..._managerWearCollectionActions(
+                                                    context: context,
+                                                    i18n: i18n,
+                                                    collections:
+                                                        userWearCollections,
+                                                    selectedCollection:
+                                                        selectedWearCollection,
+                                                    optionId: item.id,
+                                                    onAddMultiple: (collectionIds) {
+                                                      unawaited(
+                                                        addOptionToWearCollections(
+                                                          optionId: item.id,
+                                                          collectionIds:
+                                                              collectionIds,
+                                                        ),
+                                                      );
+                                                    },
+                                                    onRemove: (collectionId) {
+                                                      unawaited(
+                                                        publishWithProcessing(
+                                                          localState
+                                                              .removeOptionFromWearCollection(
+                                                                collectionId:
+                                                                    collectionId,
+                                                                optionId:
+                                                                    item.id,
+                                                              ),
+                                                          pickUiText(
+                                                            i18n,
+                                                            zh: '正在移出衣橱...',
+                                                            en: 'Removing from wardrobe...',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
                                                 TextButton.icon(
                                                   onPressed: () {
                                                     publish(
@@ -1308,17 +1869,21 @@ Future<void> showDailyChoiceManagerSheet({
                                           .toList(growable: false),
                                     ),
                             ),
-                            if (isEatModule)
+                            if (isEatModule || isWearModule)
                               _ManagerExpandableSection(
                                 title: pickUiText(
                                   i18n,
-                                  zh: '我的调整',
+                                  zh: isWearModule ? '我的穿搭调整' : '我的调整',
                                   en: 'My adjustments',
                                 ),
                                 subtitle: pickUiText(
                                   i18n,
-                                  zh: '基于内置菜谱保存的个人口味版本，会直接参与随机与筛选。',
-                                  en: 'Your personal overrides of built-in recipes.',
+                                  zh: isWearModule
+                                      ? '基于内置搭配保存的个人版本，会直接参与随机与筛选。'
+                                      : '基于内置菜谱保存的个人口味版本，会直接参与随机与筛选。',
+                                  en: isWearModule
+                                      ? 'Your personal overrides of built-in outfits.'
+                                      : 'Your personal overrides of built-in recipes.',
                                 ),
                                 accent: accent,
                                 expanded: adjustedExpanded,
@@ -1332,7 +1897,9 @@ Future<void> showDailyChoiceManagerSheet({
                                     ? _ManagerHint(
                                         text: pickUiText(
                                           i18n,
-                                          zh: '当前筛选下还没有保存过个人调整。点开内置菜即可基于原菜谱做个人化微调。',
+                                          zh: isWearModule
+                                              ? '当前筛选下还没有保存过穿搭调整。点开内置搭配即可基于原方案做个人化微调。'
+                                              : '当前筛选下还没有保存过个人调整。点开内置菜即可基于原菜谱做个人化微调。',
                                           en: 'No personal adjustments in this filter yet.',
                                         ),
                                       )
@@ -1423,43 +1990,80 @@ Future<void> showDailyChoiceManagerSheet({
                                                             item,
                                                           ),
                                                     ),
-                                                  ..._managerCollectionActions(
-                                                    context: context,
-                                                    i18n: i18n,
-                                                    collections: localState
-                                                        .eatCollections,
-                                                    selectedCollection:
-                                                        selectedCollection,
-                                                    optionId: item.id,
-                                                    onAddMultiple:
-                                                        (collectionIds) {
-                                                          unawaited(
-                                                            addOptionToCollections(
-                                                              optionId: item.id,
-                                                              collectionIds:
-                                                                  collectionIds,
-                                                            ),
-                                                          );
-                                                        },
-                                                    onRemove: (collectionId) {
-                                                      unawaited(
-                                                        publishWithProcessing(
-                                                          localState
-                                                              .removeOptionFromEatCollection(
-                                                                collectionId:
-                                                                    collectionId,
-                                                                optionId:
-                                                                    item.id,
-                                                              ),
-                                                          pickUiText(
-                                                            i18n,
-                                                            zh: '正在移出食谱集...',
-                                                            en: 'Removing from set...',
+                                                  if (isEatModule)
+                                                    ..._managerCollectionActions(
+                                                      context: context,
+                                                      i18n: i18n,
+                                                      collections: localState
+                                                          .eatCollections,
+                                                      selectedCollection:
+                                                          selectedCollection,
+                                                      optionId: item.id,
+                                                      onAddMultiple: (collectionIds) {
+                                                        unawaited(
+                                                          addOptionToCollections(
+                                                            optionId: item.id,
+                                                            collectionIds:
+                                                                collectionIds,
                                                           ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
+                                                        );
+                                                      },
+                                                      onRemove: (collectionId) {
+                                                        unawaited(
+                                                          publishWithProcessing(
+                                                            localState
+                                                                .removeOptionFromEatCollection(
+                                                                  collectionId:
+                                                                      collectionId,
+                                                                  optionId:
+                                                                      item.id,
+                                                                ),
+                                                            pickUiText(
+                                                              i18n,
+                                                              zh: '正在移出食谱集...',
+                                                              en: 'Removing from set...',
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  if (isWearModule)
+                                                    ..._managerWearCollectionActions(
+                                                      context: context,
+                                                      i18n: i18n,
+                                                      collections:
+                                                          userWearCollections,
+                                                      selectedCollection:
+                                                          selectedWearCollection,
+                                                      optionId: item.id,
+                                                      onAddMultiple: (collectionIds) {
+                                                        unawaited(
+                                                          addOptionToWearCollections(
+                                                            optionId: item.id,
+                                                            collectionIds:
+                                                                collectionIds,
+                                                          ),
+                                                        );
+                                                      },
+                                                      onRemove: (collectionId) {
+                                                        unawaited(
+                                                          publishWithProcessing(
+                                                            localState
+                                                                .removeOptionFromWearCollection(
+                                                                  collectionId:
+                                                                      collectionId,
+                                                                  optionId:
+                                                                      item.id,
+                                                                ),
+                                                            pickUiText(
+                                                              i18n,
+                                                              zh: '正在移出衣橱...',
+                                                              en: 'Removing from wardrobe...',
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
                                                   TextButton.icon(
                                                     onPressed: busy
                                                         ? null
@@ -1477,7 +2081,9 @@ Future<void> showDailyChoiceManagerSheet({
                                                     label: Text(
                                                       pickUiText(
                                                         i18n,
-                                                        zh: '恢复原味',
+                                                        zh: isWearModule
+                                                            ? '恢复原样'
+                                                            : '恢复原味',
                                                         en: 'Restore original',
                                                       ),
                                                     ),
@@ -1491,8 +2097,10 @@ Future<void> showDailyChoiceManagerSheet({
                             _ManagerExpandableSection(
                               title: pickUiText(
                                 i18n,
-                                zh: '内置菜谱浏览',
-                                en: 'Built-in browser',
+                                zh: isWearModule ? '内置参考搭配' : '内置菜谱浏览',
+                                en: isWearModule
+                                    ? 'Built-in references'
+                                    : 'Built-in browser',
                               ),
                               subtitle: _builtInSectionSubtitle(
                                 i18n,
@@ -1501,6 +2109,7 @@ Future<void> showDailyChoiceManagerSheet({
                                 visible: visibleBuiltIns.length,
                                 loading: builtInSqlLoading,
                                 errorMessage: builtInSqlError,
+                                isWearModule: isWearModule,
                               ),
                               accent: accent,
                               expanded: builtInExpanded,
@@ -1526,8 +2135,12 @@ Future<void> showDailyChoiceManagerSheet({
                                   ? _ManagerHint(
                                       text: pickUiText(
                                         i18n,
-                                        zh: '正在读取内置菜谱...',
-                                        en: 'Loading built-in recipes...',
+                                        zh: isWearModule
+                                            ? '正在读取内置搭配...'
+                                            : '正在读取内置菜谱...',
+                                        en: isWearModule
+                                            ? 'Loading built-in outfits...'
+                                            : 'Loading built-in recipes...',
                                       ),
                                     )
                                   : builtInSqlError != null &&
@@ -1535,8 +2148,12 @@ Future<void> showDailyChoiceManagerSheet({
                                   ? _ManagerHint(
                                       text: pickUiText(
                                         i18n,
-                                        zh: '读取内置菜谱失败：$builtInSqlError',
-                                        en: 'Failed to load built-in recipes: $builtInSqlError',
+                                        zh: isWearModule
+                                            ? '读取内置搭配失败：$builtInSqlError'
+                                            : '读取内置菜谱失败：$builtInSqlError',
+                                        en: isWearModule
+                                            ? 'Failed to load built-in outfits: $builtInSqlError'
+                                            : 'Failed to load built-in recipes: $builtInSqlError',
                                       ),
                                     )
                                   : visibleBuiltIns.isEmpty
@@ -1565,7 +2182,9 @@ Future<void> showDailyChoiceManagerSheet({
                                             subtitle: isHidden
                                                 ? pickUiText(
                                                     i18n,
-                                                    zh: '这道菜当前已加入不喜欢列表。',
+                                                    zh: isWearModule
+                                                        ? '这套搭配当前已加入不喜欢列表。'
+                                                        : '这道菜当前已加入不喜欢列表。',
                                                     en: 'This item is hidden right now.',
                                                   )
                                                 : displayItem.subtitle(i18n),
@@ -1648,42 +2267,82 @@ Future<void> showDailyChoiceManagerSheet({
                                                         displayItem,
                                                       ),
                                                 ),
-                                              ..._managerCollectionActions(
-                                                context: context,
-                                                i18n: i18n,
-                                                collections:
-                                                    localState.eatCollections,
-                                                selectedCollection:
-                                                    selectedCollection,
-                                                optionId: baseItem.id,
-                                                onAddMultiple: (collectionIds) {
-                                                  unawaited(
-                                                    addOptionToCollections(
-                                                      optionId: baseItem.id,
-                                                      collectionIds:
-                                                          collectionIds,
-                                                    ),
-                                                  );
-                                                },
-                                                onRemove: (collectionId) {
-                                                  unawaited(
-                                                    publishWithProcessing(
-                                                      localState
-                                                          .removeOptionFromEatCollection(
-                                                            collectionId:
-                                                                collectionId,
+                                              if (isEatModule)
+                                                ..._managerCollectionActions(
+                                                  context: context,
+                                                  i18n: i18n,
+                                                  collections:
+                                                      localState.eatCollections,
+                                                  selectedCollection:
+                                                      selectedCollection,
+                                                  optionId: baseItem.id,
+                                                  onAddMultiple:
+                                                      (collectionIds) {
+                                                        unawaited(
+                                                          addOptionToCollections(
                                                             optionId:
                                                                 baseItem.id,
+                                                            collectionIds:
+                                                                collectionIds,
                                                           ),
-                                                      pickUiText(
-                                                        i18n,
-                                                        zh: '正在移出食谱集...',
-                                                        en: 'Removing from set...',
+                                                        );
+                                                      },
+                                                  onRemove: (collectionId) {
+                                                    unawaited(
+                                                      publishWithProcessing(
+                                                        localState
+                                                            .removeOptionFromEatCollection(
+                                                              collectionId:
+                                                                  collectionId,
+                                                              optionId:
+                                                                  baseItem.id,
+                                                            ),
+                                                        pickUiText(
+                                                          i18n,
+                                                          zh: '正在移出食谱集...',
+                                                          en: 'Removing from set...',
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
+                                                    );
+                                                  },
+                                                ),
+                                              if (isWearModule)
+                                                ..._managerWearCollectionActions(
+                                                  context: context,
+                                                  i18n: i18n,
+                                                  collections:
+                                                      userWearCollections,
+                                                  selectedCollection:
+                                                      selectedWearCollection,
+                                                  optionId: baseItem.id,
+                                                  onAddMultiple: (collectionIds) {
+                                                    unawaited(
+                                                      addOptionToWearCollections(
+                                                        optionId: baseItem.id,
+                                                        collectionIds:
+                                                            collectionIds,
+                                                      ),
+                                                    );
+                                                  },
+                                                  onRemove: (collectionId) {
+                                                    unawaited(
+                                                      publishWithProcessing(
+                                                        localState
+                                                            .removeOptionFromWearCollection(
+                                                              collectionId:
+                                                                  collectionId,
+                                                              optionId:
+                                                                  baseItem.id,
+                                                            ),
+                                                        pickUiText(
+                                                          i18n,
+                                                          zh: '正在移出衣橱...',
+                                                          en: 'Removing from wardrobe...',
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                               if (hasAdjustment)
                                                 TextButton.icon(
                                                   onPressed: busy
@@ -1748,13 +2407,17 @@ Future<void> showDailyChoiceManagerSheet({
                                             text: builtInSqlLoading
                                                 ? pickUiText(
                                                     i18n,
-                                                    zh: '正在加载更多内置菜谱...',
-                                                    en: 'Loading more built-in recipes...',
+                                                    zh: isWearModule
+                                                        ? '正在加载更多内置搭配...'
+                                                        : '正在加载更多内置菜谱...',
+                                                    en: isWearModule
+                                                        ? 'Loading more built-in outfits...'
+                                                        : 'Loading more built-in recipes...',
                                                   )
                                                 : pickUiText(
                                                     i18n,
                                                     zh: '还有 ${builtInTotalCount - visibleBuiltIns.length} 条待加载。',
-                                                    en: '${builtInTotalCount - visibleBuiltIns.length} more recipes are ready to load.',
+                                                    en: '${builtInTotalCount - visibleBuiltIns.length} more ${isWearModule ? 'outfits' : 'recipes'} are ready to load.',
                                                   ),
                                           ),
                                         ],

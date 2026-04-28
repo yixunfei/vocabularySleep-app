@@ -397,6 +397,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 250));
 
       expect(find.text('Temperature'), findsOneWidget);
+      expect(find.text('Test · Partly cloudy'), findsOneWidget);
+      expect(find.text('Suggest Mild'), findsOneWidget);
+      expect(
+        find.textContaining('Showing all temperatures for now'),
+        findsNothing,
+      );
       expect(libraryStore.summaryCompleted, isFalse);
       expect(tester.takeException(), isNull);
 

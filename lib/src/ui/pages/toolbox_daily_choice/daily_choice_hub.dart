@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../i18n/app_i18n.dart';
 import '../../../models/weather_snapshot.dart';
 import '../../../state/app_state_provider.dart';
+import '../../motion/app_motion.dart';
 import '../../ui_copy.dart';
 import '../toolbox/toolbox_ui_components.dart';
 import '../toolbox/toolbox_ui_tokens.dart';
@@ -17,6 +18,7 @@ import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
 import 'daily_choice_seed_data.dart';
 import 'daily_choice_storage.dart';
+import 'daily_choice_wear_library_store.dart';
 import 'daily_choice_widgets.dart';
 
 part 'daily_choice_eat_module.dart';
@@ -80,16 +82,30 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
   bool _eatLibraryLoading = false;
   bool _eatLibraryInstalling = false;
 
+  late final DailyChoiceWearLibraryStore _wearLibraryStore =
+      DailyChoiceWearLibraryStore();
+  DailyChoiceWearLibraryStatus _wearLibraryStatus =
+      const DailyChoiceWearLibraryStatus.empty();
+  List<DailyChoiceOption> _wearRawBuiltInOptions = const <DailyChoiceOption>[];
+  List<DailyChoiceOption> _wearBuiltInOptions = const <DailyChoiceOption>[];
+  bool _wearLibraryLoaded = false;
+  bool _wearLibraryLoading = false;
+  bool _wearLibraryInstalling = false;
+
   @override
   void initState() {
     super.initState();
     unawaited(_initialize());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted ||
-          _selectedModuleId != DailyChoiceModuleId.eat.storageValue) {
+      if (!mounted) {
         return;
       }
-      unawaited(_ensureEatLibraryLoaded());
+      if (_selectedModuleId == DailyChoiceModuleId.eat.storageValue) {
+        unawaited(_ensureEatLibraryLoaded());
+      } else if (_selectedModuleId == DailyChoiceModuleId.wear.storageValue) {
+        _refreshWeatherForWearIfNeeded();
+        unawaited(_ensureWearLibraryLoaded());
+      }
     });
   }
 
@@ -97,8 +113,20 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     await _loadCustomState();
   }
 
+  void _refreshWeatherForWearIfNeeded() {
+    if (widget.weatherStateOverride != null) {
+      return;
+    }
+    final appState = ref.read(appStateProvider);
+    if (appState.weatherEnabled) {
+      appState.refreshWeatherIfStale();
+    }
+  }
+
   Future<void> _loadCustomState() async {
-    final loaded = (await _storage.load()).withDefaultEatCollections();
+    final loaded = (await _storage.load())
+        .withDefaultEatCollections()
+        .withDefaultWearCollections();
     if (!mounted) {
       return;
     }
@@ -186,9 +214,150 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     }
   }
 
+  Future<void> _ensureWearLibraryLoaded() async {
+    if (_wearLibraryLoaded || _wearLibraryLoading || _wearLibraryInstalling) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _wearLibraryLoading = true;
+      });
+    }
+    try {
+      final status = await _wearLibraryStore.inspectStatus();
+      if (!mounted) {
+        return;
+      }
+      final builtInOptions = status.hasInstalledLibrary
+          ? await _wearLibraryStore.loadBuiltInSummaries()
+          : const <DailyChoiceOption>[];
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _wearLibraryStatus = status;
+        _rebuildWearState(builtInOptions: builtInOptions);
+        _wearLibraryLoaded = true;
+        _wearLibraryLoading = false;
+      });
+      if (builtInOptions.isNotEmpty) {
+        final nextState = _populateBuiltInWearCollections(
+          _customState,
+          builtInOptions,
+        );
+        if (nextState != null && mounted) {
+          _setCustomState(nextState);
+        }
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _wearLibraryStatus = DailyChoiceWearLibraryStatus(
+          hasInstalledLibrary: false,
+          errorMessage: '$error',
+        );
+        _rebuildWearState(builtInOptions: const <DailyChoiceOption>[]);
+        _wearLibraryLoaded = true;
+        _wearLibraryLoading = false;
+      });
+    }
+  }
+
+  DailyChoiceCustomState? _populateBuiltInWearCollections(
+    DailyChoiceCustomState currentState,
+    List<DailyChoiceOption> builtInOptions,
+  ) {
+    var next = currentState;
+    var anyChanged = false;
+    for (final builtIn in wearBuiltInCollections) {
+      final sceneId = sceneByBuiltInWearCollectionId[builtIn.id];
+      if (sceneId == null) {
+        continue;
+      }
+      final existing = next.wearCollectionById(builtIn.id);
+      final optionIds = builtInOptions
+          .where((item) => _matchesWearScene(item, sceneId))
+          .map((item) => item.id)
+          .toList(growable: false);
+      if (existing == null) {
+        next = next.upsertWearCollection(
+          builtIn.copyWith(optionIds: optionIds),
+        );
+        anyChanged = true;
+      } else if (!_sameStringList(existing.optionIds, optionIds)) {
+        next = next.upsertWearCollection(
+          existing.copyWith(
+            titleZh: builtIn.titleZh,
+            titleEn: builtIn.titleEn,
+            optionIds: optionIds,
+          ),
+        );
+        anyChanged = true;
+      } else if (existing.titleZh != builtIn.titleZh ||
+          existing.titleEn != builtIn.titleEn) {
+        next = next.upsertWearCollection(
+          existing.copyWith(titleZh: builtIn.titleZh, titleEn: builtIn.titleEn),
+        );
+        anyChanged = true;
+      }
+    }
+    return anyChanged ? next : null;
+  }
+
+  Future<void> _installWearLibrary() async {
+    if (_wearLibraryInstalling || _wearLibraryLoading) {
+      return;
+    }
+    setState(() {
+      _wearLibraryInstalling = true;
+      _wearLibraryLoaded = false;
+    });
+    try {
+      final status = await _wearLibraryStore.installLibrary();
+      final builtInOptions = await _wearLibraryStore.loadBuiltInSummaries();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _wearLibraryStatus = status;
+        _rebuildWearState(builtInOptions: builtInOptions);
+        _wearLibraryLoaded = true;
+        _wearLibraryInstalling = false;
+      });
+      if (builtInOptions.isNotEmpty) {
+        final nextState = _populateBuiltInWearCollections(
+          _customState,
+          builtInOptions,
+        );
+        if (nextState != null && mounted) {
+          _setCustomState(nextState);
+        }
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _wearLibraryStatus = _wearLibraryStatus.copyWith(
+          errorMessage: '$error',
+        );
+        _wearLibraryLoaded = true;
+        _wearLibraryInstalling = false;
+      });
+    }
+  }
+
   void _setCustomState(DailyChoiceCustomState next) {
-    final normalizedNext = next.withDefaultEatCollections();
+    final normalizedNext = next
+        .withDefaultEatCollections()
+        .withDefaultWearCollections();
     final shouldRebuildEatState = !_sameEatCatalogInputs(
+      _customState,
+      normalizedNext,
+    );
+    final shouldRebuildWearState = !_sameWearCatalogInputs(
       _customState,
       normalizedNext,
     );
@@ -197,6 +366,9 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
       if (shouldRebuildEatState) {
         _rebuildEatState(customState: normalizedNext);
       }
+      if (shouldRebuildWearState) {
+        _rebuildWearState(customState: normalizedNext);
+      }
     });
     unawaited(_storage.save(normalizedNext));
   }
@@ -204,6 +376,9 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
   List<DailyChoiceOption> _builtInFor(String moduleId) {
     if (moduleId == DailyChoiceModuleId.eat.storageValue) {
       return _eatBuiltInOptions;
+    }
+    if (moduleId == DailyChoiceModuleId.wear.storageValue) {
+      return _wearBuiltInOptions;
     }
     return _staticSeedOptions
         .where((item) => item.moduleId == moduleId)
@@ -247,7 +422,10 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
       return List<DailyChoiceOption>.unmodifiable(builtInOptions);
     }
     final adjustedById = <String, DailyChoiceOption>{
-      for (final item in customState.adjustedBuiltInOptions) item.id: item,
+      for (final item in customState.adjustedBuiltInOptions.where(
+        (item) => item.moduleId == DailyChoiceModuleId.eat.storageValue,
+      ))
+        item.id: item,
     };
     return List<DailyChoiceOption>.unmodifiable(
       builtInOptions.map((item) {
@@ -272,11 +450,133 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
     ]);
   }
 
+  void _rebuildWearState({
+    List<DailyChoiceOption>? builtInOptions,
+    DailyChoiceCustomState? customState,
+  }) {
+    final resolvedCustomState = customState ?? _customState;
+    _wearRawBuiltInOptions = builtInOptions ?? _wearRawBuiltInOptions;
+    _wearBuiltInOptions = _applyWearBuiltInAdjustments(
+      _wearRawBuiltInOptions,
+      resolvedCustomState,
+    );
+  }
+
+  List<DailyChoiceOption> _applyWearBuiltInAdjustments(
+    List<DailyChoiceOption> builtInOptions,
+    DailyChoiceCustomState customState,
+  ) {
+    if (customState.adjustedBuiltInOptions.isEmpty) {
+      return List<DailyChoiceOption>.unmodifiable(builtInOptions);
+    }
+    final adjustedById = <String, DailyChoiceOption>{
+      for (final item in customState.adjustedBuiltInOptions.where(
+        (item) => item.moduleId == DailyChoiceModuleId.wear.storageValue,
+      ))
+        item.id: item,
+    };
+    if (adjustedById.isEmpty) {
+      return List<DailyChoiceOption>.unmodifiable(builtInOptions);
+    }
+    return List<DailyChoiceOption>.unmodifiable(
+      builtInOptions.map((item) => adjustedById[item.id] ?? item),
+    );
+  }
+
+  Future<DailyChoiceOption?> _resolveWearDetail(
+    DailyChoiceOption option,
+  ) async {
+    if (option.detailsZh.isNotEmpty || option.materialsZh.isNotEmpty) {
+      return option;
+    }
+    if (!_wearLibraryStatus.hasInstalledLibrary) {
+      return null;
+    }
+    return _wearLibraryStore.loadBuiltInDetail(option.id);
+  }
+
+  Future<DailyChoiceOption?> _openWearAdjustmentEditor(
+    DailyChoiceOption option,
+  ) async {
+    final detail = await _resolveWearDetail(option);
+    if (detail == null) {
+      return null;
+    }
+    if (!mounted) {
+      return null;
+    }
+    final result = await showDailyChoiceEditorSheet(
+      context: context,
+      i18n: AppI18n(Localizations.localeOf(context).languageCode),
+      accent: dailyChoiceModuleConfigs
+          .firstWhere((item) => item.id == 'wear')
+          .accent,
+      moduleId: 'wear',
+      categories: temperatureCategories,
+      initialCategoryId: detail.categoryId,
+      contexts: wearSceneCategories,
+      initialContextId: detail.contextId,
+      option: detail,
+    );
+    return result?.option;
+  }
+
+  Future<DailyChoiceEditorResult?> _openWearSaveAsCustomEditor(
+    DailyChoiceOption option, {
+    required List<DailyChoiceEatCollection> eatCollections,
+    required Set<String> initialEatCollectionIds,
+    required List<DailyChoiceWearCollection> wearCollections,
+    required Set<String> initialWearCollectionIds,
+  }) async {
+    final detail = await _resolveWearDetail(option);
+    if (detail == null) {
+      return null;
+    }
+    if (!mounted) {
+      return null;
+    }
+    return showDailyChoiceEditorSheet(
+      context: context,
+      i18n: AppI18n(Localizations.localeOf(context).languageCode),
+      accent: dailyChoiceModuleConfigs
+          .firstWhere((item) => item.id == 'wear')
+          .accent,
+      moduleId: 'wear',
+      categories: temperatureCategories,
+      initialCategoryId: detail.categoryId,
+      contexts: wearSceneCategories,
+      initialContextId: detail.contextId,
+      option: detail,
+      forceNewId: true,
+      wearCollections: wearCollections,
+      initialWearCollectionIds: initialWearCollectionIds,
+    );
+  }
+
+  Future<void> _openWearInspectOption(DailyChoiceOption option) async {
+    final detail = await _resolveWearDetail(option);
+    if (detail == null) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    await showDailyChoiceDetailSheet(
+      context: context,
+      i18n: AppI18n(Localizations.localeOf(context).languageCode),
+      accent: dailyChoiceModuleConfigs
+          .firstWhere((item) => item.id == 'wear')
+          .accent,
+      option: detail,
+    );
+  }
+
   @override
   void dispose() {
     if (_ownsEatLibraryStore) {
       unawaited(_eatLibraryStore.close());
     }
+    unawaited(_wearLibraryStore.close());
     super.dispose();
   }
 
@@ -306,6 +606,9 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
             });
             if (value == DailyChoiceModuleId.eat.storageValue) {
               unawaited(_ensureEatLibraryLoaded());
+            } else if (value == DailyChoiceModuleId.wear.storageValue) {
+              _refreshWeatherForWearIfNeeded();
+              unawaited(_ensureWearLibraryLoaded());
             }
           },
         ),
@@ -364,6 +667,14 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
         weatherEnabled: weatherEnabled,
         weatherLoading: weatherLoading,
         weatherSnapshot: weatherSnapshot,
+        libraryStatus: _wearLibraryStatus,
+        libraryLoading: _wearLibraryLoading,
+        libraryInstalling: _wearLibraryInstalling,
+        onInstallLibrary: _installWearLibrary,
+        wearCollections: _customState.wearCollections,
+        onInspectOption: _openWearInspectOption,
+        onAdjustBuiltInOption: _openWearAdjustmentEditor,
+        onSaveBuiltInAsCustom: _openWearSaveAsCustomEditor,
       ),
       'go' => _PlaceChoiceModule(
         key: const ValueKey<String>('go'),
@@ -399,4 +710,29 @@ bool _sameEatCatalogInputs(
   return identical(previous.hiddenBuiltInIds, next.hiddenBuiltInIds) &&
       identical(previous.customOptions, next.customOptions) &&
       identical(previous.adjustedBuiltInOptions, next.adjustedBuiltInOptions);
+}
+
+bool _sameWearCatalogInputs(
+  DailyChoiceCustomState previous,
+  DailyChoiceCustomState next,
+) {
+  return identical(
+    previous.adjustedBuiltInOptions,
+    next.adjustedBuiltInOptions,
+  );
+}
+
+bool _sameStringList(List<String> a, List<String> b) {
+  if (identical(a, b)) {
+    return true;
+  }
+  if (a.length != b.length) {
+    return false;
+  }
+  final setA = a.toSet();
+  final setB = b.toSet();
+  if (setA.length != setB.length) {
+    return false;
+  }
+  return setA.containsAll(setB);
 }

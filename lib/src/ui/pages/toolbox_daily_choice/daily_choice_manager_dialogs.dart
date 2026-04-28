@@ -4,12 +4,19 @@ Future<bool?> _confirmHideBuiltInRecipe({
   required BuildContext context,
   required AppI18n i18n,
   required DailyChoiceOption option,
+  bool isWearModule = false,
 }) {
   return showDialog<bool>(
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: Text(pickUiText(i18n, zh: '确认不喜欢？', en: 'Hide this recipe?')),
+        title: Text(
+          pickUiText(
+            i18n,
+            zh: '确认不喜欢？',
+            en: isWearModule ? 'Hide this outfit?' : 'Hide this recipe?',
+          ),
+        ),
         content: Text(
           pickUiText(
             i18n,

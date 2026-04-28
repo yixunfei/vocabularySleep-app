@@ -6,7 +6,6 @@ import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
 
 part 'daily_choice_food_seed.dart';
-part 'daily_choice_wear_seed.dart';
 part 'daily_choice_place_seed.dart';
 part 'daily_choice_activity_place_seed.dart';
 
@@ -398,6 +397,16 @@ const List<DailyChoiceCategory> temperatureCategories = <DailyChoiceCategory>[
     subtitleEn: 'Above 35°C',
   ),
 ];
+const DailyChoiceCategory allTemperatureCategory = DailyChoiceCategory(
+  id: 'all',
+  icon: Icons.grid_view_rounded,
+  titleZh: '全部气温',
+  titleEn: 'All temperatures',
+  subtitleZh: '不限定气温，覆盖整个衣橱',
+  subtitleEn: 'All temperatures, full wardrobe',
+);
+const List<DailyChoiceCategory> wearTemperatureFilterCategories =
+    <DailyChoiceCategory>[allTemperatureCategory, ...temperatureCategories];
 const List<DailyChoiceCategory> wearSceneCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'commute',
@@ -448,7 +457,86 @@ const List<DailyChoiceCategory> wearSceneCategories = <DailyChoiceCategory>[
     subtitleEn: 'Grippy, quick-dry, layered',
   ),
 ];
+const DailyChoiceCategory allWearSceneCategory = DailyChoiceCategory(
+  id: 'all',
+  icon: Icons.grid_view_rounded,
+  titleZh: '全部场景',
+  titleEn: 'All scenes',
+  subtitleZh: '不限定场景',
+  subtitleEn: 'All scenes',
+);
+const List<DailyChoiceCategory> wearSceneFilterCategories =
+    <DailyChoiceCategory>[allWearSceneCategory, ...wearSceneCategories];
 const List<DailyChoiceTraitGroup> wearTraitGroups = <DailyChoiceTraitGroup>[
+  DailyChoiceTraitGroup(
+    id: 'gender',
+    icon: Icons.wc_rounded,
+    titleZh: '性别参考',
+    titleEn: 'Gender reference',
+    subtitleZh: '只作为版型和单品方向参考，可按自己的穿着习惯自由选择',
+    subtitleEn:
+        'A fit and styling reference only; choose by your own wardrobe habits',
+    options: <DailyChoiceTraitOption>[
+      DailyChoiceTraitOption(
+        id: 'gender_neutral',
+        titleZh: '不限定',
+        titleEn: 'Open',
+        icon: Icons.all_inclusive_rounded,
+      ),
+      DailyChoiceTraitOption(
+        id: 'womenswear',
+        titleZh: '女装方向',
+        titleEn: 'Womenswear',
+        icon: Icons.face_retouching_natural_rounded,
+      ),
+      DailyChoiceTraitOption(
+        id: 'menswear',
+        titleZh: '男装方向',
+        titleEn: 'Menswear',
+        icon: Icons.man_rounded,
+      ),
+    ],
+  ),
+  DailyChoiceTraitGroup(
+    id: 'age',
+    icon: Icons.diversity_3_rounded,
+    titleZh: '年龄阶段',
+    titleEn: 'Age stage',
+    subtitleZh: '按生活阶段和穿着语气筛选，不把年龄当成硬限制',
+    subtitleEn: 'Filter by life stage and styling tone, not a hard age rule',
+    options: <DailyChoiceTraitOption>[
+      DailyChoiceTraitOption(
+        id: 'all_age',
+        titleZh: '通用不挑龄',
+        titleEn: 'Age-flexible',
+        icon: Icons.all_inclusive_rounded,
+      ),
+      DailyChoiceTraitOption(
+        id: 'youth',
+        titleZh: '学生 / 青春',
+        titleEn: 'Youth',
+        icon: Icons.school_rounded,
+      ),
+      DailyChoiceTraitOption(
+        id: 'young_adult',
+        titleZh: '年轻通勤',
+        titleEn: 'Young adult',
+        icon: Icons.badge_rounded,
+      ),
+      DailyChoiceTraitOption(
+        id: 'adult',
+        titleZh: '成熟日常',
+        titleEn: 'Adult',
+        icon: Icons.work_outline_rounded,
+      ),
+      DailyChoiceTraitOption(
+        id: 'mature',
+        titleZh: '稳重质感',
+        titleEn: 'Mature',
+        icon: Icons.workspace_premium_rounded,
+      ),
+    ],
+  ),
   DailyChoiceTraitGroup(
     id: 'style',
     icon: Icons.style_rounded,
@@ -729,7 +817,7 @@ const List<DailyChoiceTraitGroup> wearTraitGroups = <DailyChoiceTraitGroup>[
   ),
 ];
 final List<DailyChoiceTraitGroup> wearManagerTraitGroups =
-    <String>{'style', 'silhouette', 'key_piece'}
+    <String>{'gender', 'age', 'style', 'silhouette', 'key_piece'}
         .map((id) => wearTraitGroupById(id))
         .whereType<DailyChoiceTraitGroup>()
         .toList(growable: false);
@@ -1658,7 +1746,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '基础款是衣橱的主语，不是无聊的替身',
         titleEn: 'Basics are the sentence, not a boring placeholder',
         bodyZh:
-            '从《基本穿搭》《风格的练习》《搭配其实很好玩 2》整理出来的共同点很明确：真正高频、耐用的穿搭，不是靠一次次追新，而是靠白衬衫、干净针织、直筒裤、轻外套、稳妥鞋履这些能反复重组的主力单品。先把七成衣橱交给稳定基础款，剩下三成再留给个性、颜色和记忆点，随机推荐命中率才会高。',
+            '真正高频、耐用的穿搭，不靠一次次追新，而靠白衬衫、干净针织、直筒裤、轻外套、稳妥鞋履这些能反复重组的主力单品。先把大部分衣橱交给稳定基础款，再给颜色、图案和个性单品留一点位置，随机推荐才更容易命中你真的会穿的答案。',
         bodyEn:
             'The strongest shared lesson is that repeatable outfits come from stable core pieces first, then a smaller layer of personality and accents.',
       ),
@@ -1667,7 +1755,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '风格不是标签堆叠，而是你真实的日常比例',
         titleEn: 'Style is the ratio of your real life',
         bodyZh:
-            '《我的风格小黑皮书》《风格的练习》都强调，风格先回答“你常去哪里、想呈现什么、身体想穿什么”。如果你大多数时间在通勤、开会、久坐和短途出行之间切换，那么利落通勤、极简基础通常比强戏剧化更好用；如果你常在校园、咖啡店、散步和周末慢生活之间切换，松弛休闲和温柔轻熟会更自然。先承认生活半径，风格才不会悬空。',
+            '风格先回答“你常去哪里、想呈现什么、身体愿意穿什么”。如果你大多数时间在通勤、开会、久坐和短途出行之间切换，利落通勤、极简基础通常比强戏剧化更好用；如果你常在校园、咖啡店、散步和周末慢生活之间切换，松弛休闲和柔和搭配会更自然。先承认生活半径，风格才不会悬空。',
         bodyEn:
             'Style works best when it reflects your actual routines, social settings, and what your body is willing to wear all day.',
       ),
@@ -1686,7 +1774,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '先看肩线、裤长、后背，再看正面',
         titleEn: 'Check shoulders, hem, and back view first',
         bodyZh:
-            '《穿衣的基本》与《职场穿衣的终极搭配》都把“合身”放在第一位。肩线掉太多、裤脚堆太厚、后背绷紧或松垮，都会让再贵的衣服也显得没精神。挑衣服时先看能不能走路、坐下、抬手，再看镜子里的正面效果；正面漂亮但活动受限的衣服，实际穿着频率往往会很低。',
+            '合身永远先于复杂设计。肩线掉太多、裤脚堆太厚、后背绷紧或松垮，都会让再好的衣服显得没精神。挑衣服时先看能不能走路、坐下、抬手，再看镜子里的正面效果；正面漂亮但活动受限的衣服，实际穿着频率往往会很低。',
         bodyEn:
             'Fit starts with movement, shoulder line, hem length, and how the garment behaves from the back, not only the front mirror angle.',
       ),
@@ -1695,7 +1783,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '上下量感要分工，不要同时抢戏',
         titleEn: 'Let top and bottom split the visual work',
         bodyZh:
-            '常见的稳妥公式是：宽松上装配利落下装，修身上装配有量感下装；想显精神，就让腰线、裤线或鞋面承担收口任务。《搭配其实很好玩 2》里对小个子和比例的提醒也很实用：高腰、短外套、纵向线条、露脚踝或清晰鞋口，都比一味堆层数更有效。',
+            '常见的稳妥公式是：宽松上装配利落下装，修身上装配有量感下装；想显精神，就让腰线、裤线或鞋面承担收口任务。高腰、短外套、纵向线条、露脚踝或清晰鞋口，通常比一味堆层数更有效。',
         bodyEn:
             'Reliable proportion comes from letting either the top or the bottom carry volume while the other side stays clearer and cleaner.',
       ),
@@ -1714,7 +1802,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '职场穿衣先看行业、职位、日程三件事',
         titleEn: 'For work, start with industry, role, and agenda',
         bodyZh:
-            '《上班穿什么》和《绅士时尚》都强调 TPO 与职业角色。创意行业、技术岗位、行政支持、管理层、对外见客户的穿法不该完全一样。问自己三个问题：今天会不会久坐？会不会频繁见人？会不会在室内外来回切换？答案会决定你该不该加外套、穿不穿明显配饰、鞋子要不要更正式。',
+            '职场穿衣先看环境和角色。创意行业、技术岗位、行政支持、管理层、对外见客户的穿法不必完全一样。问自己三个问题：今天会不会久坐？会不会频繁见人？会不会在室内外来回切换？答案会决定你该不该加外套、穿不穿明显配饰、鞋子要不要更正式。',
         bodyEn:
             'Workwear choices should react to industry, seniority, and what the day actually demands, especially meetings, sitting time, and indoor-outdoor switching.',
       ),
@@ -1742,7 +1830,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '先用中性色稳住，再决定要不要加亮点',
         titleEn: 'Anchor with neutrals before adding color',
         bodyZh:
-            '从《服装色彩搭配》《风格的练习》和阿秋秋的色彩经验里，可以归纳出一条实用线：先用黑、白、灰、海军蓝、卡其、深棕这类中性色打底，再加一个小面积提气色。安全做法是一主色、一中性色、一亮点；想再大胆一些，也先从低饱和配色、同色系深浅变化和“黑色带彩色”开始练习。',
+            '配色可以先走一条稳妥路线：用黑、白、灰、海军蓝、卡其、深棕这类中性色打底，再加一个小面积提气色。安全做法是一主色、一中性色、一亮点；想再大胆一些，也先从低饱和配色、同色系深浅变化和“黑色带彩色”开始练习。',
         bodyEn:
             'A practical route into color is to stabilize the outfit with neutrals first, then add a small accent instead of starting with several loud tones.',
       ),
@@ -1751,7 +1839,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '材质会直接决定“看起来贵不贵、轻不轻松”',
         titleEn: 'Fabric decides whether the look feels polished or cheap',
         bodyZh:
-            '《穿衣的基本》《上班穿什么》都反复提醒，挺括面料更容易撑起职业感，柔软材质更容易制造亲和感，垂感面料更适合热天和约会，棉麻更适合微热到炎热，羊毛与针织则更适合冷天层次。配色一样时，材质差异往往比颜色本身更能拉开质感差距。',
+            '挺括面料更容易撑起职业感，柔软材质更容易制造亲和感，垂感面料更适合热天和约会，棉麻更适合微热到炎热，羊毛与针织则更适合冷天层次。配色一样时，材质差异往往比颜色本身更能拉开质感差距。',
         bodyEn:
             'Structure, drape, and texture often change the perceived quality of an outfit more than color alone.',
       ),
@@ -1798,7 +1886,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '鞋子决定完成度，包和腰带负责统一',
         titleEn: 'Shoes finish the outfit, bag and belt unify it',
         bodyZh:
-            '《基本穿搭》里把鞋子看作最能暴露穿搭功底的单品，这很值得借用。通勤和正式场景先保证鞋面整洁、线条清楚、适合久走；包、腰带、表和首饰则尽量配合同一语气，不需要每样都出彩，只要整体不散。想省力时，优先把鞋和包选稳。',
+            '鞋子常常决定一套搭配是否完整。通勤和正式场景先保证鞋面整洁、线条清楚、适合久走；包、腰带、表和首饰则尽量配合同一语气，不需要每样都出彩，只要整体不散。想省力时，优先把鞋和包选稳。',
         bodyEn:
             'Shoes often reveal the most about whether an outfit feels intentional, while bag and belt keep the whole look speaking in one tone.',
       ),
@@ -1826,7 +1914,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '按常穿频率和场景保留，不按愧疚感保留',
         titleEn: 'Keep by frequency and scene, not by guilt',
         bodyZh:
-            '《基本穿搭》《职场穿衣的终极搭配》都强调质胜于量。整理衣橱时，先留下最合身、最常穿、最好搭、最能代表你当前生活的核心款；低频、难打理、总需要“等一个合适场合”的衣服，要么转入备用，要么尽快清理。你在管理页里标注的风格、版型和样式类型，本质上就是帮自己建立这套衣橱索引。',
+            '衣橱管理重在质胜于量。整理衣橱时，先留下最合身、最常穿、最好搭、最能代表你当前生活的核心款；低频、难打理、总需要“等一个合适场合”的衣服，要么转入备用，要么尽快清理。你在管理页里标注的风格、版型和样式类型，本质上就是帮自己建立这套衣橱索引。',
         bodyEn:
             'Edit the closet around what fits, gets worn, and actually supports your current life. The guided traits in management are there to make that inventory visible.',
       ),
@@ -1835,7 +1923,7 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
         titleZh: '在家练穿搭，比出门前临时拼更有效',
         titleEn: 'Practice at home before needing the outfit',
         bodyZh:
-            '《风格的练习》给了一个特别实用的提醒：不要把所有试错都放在出门前五分钟。可以把高频场景的几套组合提前试好、拍照、记录优缺点，再把最常穿的搭配录入管理页。久而久之，页面里的随机结果会越来越接近你的个人衣橱，而不是一组抽象建议。',
+            '不要把所有试错都放在出门前五分钟。可以把高频场景的几套组合提前试好、拍照、记录优缺点，再把最常穿的搭配录入管理页。久而久之，页面里的随机结果会越来越接近你的个人衣橱，而不是一组抽象建议。',
         bodyEn:
             'Testing combinations ahead of time builds a personal outfit library, which makes both daily choice and wardrobe management dramatically more useful.',
       ),
@@ -2048,11 +2136,7 @@ List<DailyChoiceOption> buildDailyChoiceFallbackEatOptions() {
 }
 
 List<DailyChoiceOption> buildDailyChoiceStaticSeedOptions() {
-  return <DailyChoiceOption>[
-    ..._wearOptions,
-    ..._placeOptions,
-    ..._activityOptions,
-  ];
+  return <DailyChoiceOption>[..._placeOptions, ..._activityOptions];
 }
 
 List<DailyChoiceOption> buildDailyChoiceSeedOptions() {

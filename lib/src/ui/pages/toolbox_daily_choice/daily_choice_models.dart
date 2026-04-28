@@ -470,22 +470,165 @@ const DailyChoiceEatCollection dailyChoiceFavoriteEatCollection =
       titleEn: 'My favorite dishes',
     );
 
+class DailyChoiceWearCollection {
+  const DailyChoiceWearCollection({
+    required this.id,
+    required this.titleZh,
+    required this.titleEn,
+    this.optionIds = const <String>[],
+  });
+
+  final String id;
+  final String titleZh;
+  final String titleEn;
+  final List<String> optionIds;
+
+  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+
+  bool containsOption(String optionId) => optionIds.contains(optionId);
+
+  DailyChoiceWearCollection copyWith({
+    String? id,
+    String? titleZh,
+    String? titleEn,
+    List<String>? optionIds,
+  }) {
+    return DailyChoiceWearCollection(
+      id: id ?? this.id,
+      titleZh: titleZh ?? this.titleZh,
+      titleEn: titleEn ?? this.titleEn,
+      optionIds: optionIds ?? this.optionIds,
+    );
+  }
+
+  DailyChoiceWearCollection addOption(String optionId) {
+    final normalized = optionId.trim();
+    if (normalized.isEmpty || optionIds.contains(normalized)) {
+      return this;
+    }
+    return copyWith(optionIds: <String>[...optionIds, normalized]);
+  }
+
+  DailyChoiceWearCollection removeOption(String optionId) {
+    return copyWith(
+      optionIds: optionIds
+          .where((item) => item != optionId)
+          .toList(growable: false),
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'titleZh': titleZh,
+      'titleEn': titleEn,
+      'optionIds': optionIds,
+    };
+  }
+
+  factory DailyChoiceWearCollection.fromJson(Map<String, Object?> json) {
+    return DailyChoiceWearCollection(
+      id: _stringValue(json['id']),
+      titleZh: _stringValue(json['titleZh']),
+      titleEn: _stringValue(json['titleEn']),
+      optionIds: _dedupeStringList(_stringList(json['optionIds'])),
+    );
+  }
+}
+
+const String dailyChoiceFavoriteWearCollectionId =
+    'wear_collection_my_wardrobe';
+
+const DailyChoiceWearCollection dailyChoiceFavoriteWearCollection =
+    DailyChoiceWearCollection(
+      id: dailyChoiceFavoriteWearCollectionId,
+      titleZh: '我的衣橱',
+      titleEn: 'My wardrobe',
+    );
+
+const wearBuiltInCollections = <DailyChoiceWearCollection>[
+  DailyChoiceWearCollection(
+    id: 'wear_builtin_commute',
+    titleZh: '通勤',
+    titleEn: 'Commute',
+  ),
+  DailyChoiceWearCollection(
+    id: 'wear_builtin_casual',
+    titleZh: '日常',
+    titleEn: 'Casual',
+  ),
+  DailyChoiceWearCollection(
+    id: 'wear_builtin_business',
+    titleZh: '正式',
+    titleEn: 'Business',
+  ),
+  DailyChoiceWearCollection(
+    id: 'wear_builtin_date',
+    titleZh: '约会',
+    titleEn: 'Date',
+  ),
+  DailyChoiceWearCollection(
+    id: 'wear_builtin_exercise',
+    titleZh: '运动',
+    titleEn: 'Exercise',
+  ),
+  DailyChoiceWearCollection(
+    id: 'wear_builtin_rain',
+    titleZh: '雨天',
+    titleEn: 'Rain',
+  ),
+];
+
+const wearBuiltInCollectionPrefix = 'wear_builtin_';
+
+bool isBuiltInWearCollectionId(String collectionId) {
+  return collectionId.startsWith(wearBuiltInCollectionPrefix);
+}
+
+bool isProtectedWearCollectionId(String collectionId) {
+  return collectionId == dailyChoiceFavoriteWearCollectionId ||
+      isBuiltInWearCollectionId(collectionId);
+}
+
+const sceneByBuiltInWearCollectionId = <String, String>{
+  'wear_builtin_commute': 'commute',
+  'wear_builtin_casual': 'casual',
+  'wear_builtin_business': 'business',
+  'wear_builtin_date': 'date',
+  'wear_builtin_exercise': 'exercise',
+  'wear_builtin_rain': 'rain',
+};
+
+DailyChoiceWearCollection? builtInWearCollectionById(String collectionId) {
+  for (final collection in wearBuiltInCollections) {
+    if (collection.id == collectionId) {
+      return collection;
+    }
+  }
+  return null;
+}
+
 class DailyChoiceCustomState {
   const DailyChoiceCustomState({
     this.hiddenBuiltInIds = const <String>{},
     this.customOptions = const <DailyChoiceOption>[],
     this.adjustedBuiltInOptions = const <DailyChoiceOption>[],
     this.eatCollections = const <DailyChoiceEatCollection>[],
+    this.wearCollections = const <DailyChoiceWearCollection>[],
   });
 
   final Set<String> hiddenBuiltInIds;
   final List<DailyChoiceOption> customOptions;
   final List<DailyChoiceOption> adjustedBuiltInOptions;
   final List<DailyChoiceEatCollection> eatCollections;
+  final List<DailyChoiceWearCollection> wearCollections;
 
   static const DailyChoiceCustomState empty = DailyChoiceCustomState(
     eatCollections: <DailyChoiceEatCollection>[
       dailyChoiceFavoriteEatCollection,
+    ],
+    wearCollections: <DailyChoiceWearCollection>[
+      dailyChoiceFavoriteWearCollection,
     ],
   );
 
@@ -494,6 +637,7 @@ class DailyChoiceCustomState {
     List<DailyChoiceOption>? customOptions,
     List<DailyChoiceOption>? adjustedBuiltInOptions,
     List<DailyChoiceEatCollection>? eatCollections,
+    List<DailyChoiceWearCollection>? wearCollections,
   }) {
     return DailyChoiceCustomState(
       hiddenBuiltInIds: hiddenBuiltInIds ?? this.hiddenBuiltInIds,
@@ -501,6 +645,7 @@ class DailyChoiceCustomState {
       adjustedBuiltInOptions:
           adjustedBuiltInOptions ?? this.adjustedBuiltInOptions,
       eatCollections: eatCollections ?? this.eatCollections,
+      wearCollections: wearCollections ?? this.wearCollections,
     );
   }
 
@@ -534,6 +679,48 @@ class DailyChoiceCustomState {
       return this;
     }
     return copyWith(eatCollections: next);
+  }
+
+  DailyChoiceCustomState withDefaultWearCollections() {
+    var hasFavorite = false;
+    var changed = false;
+    final existingIds = wearCollections.map((item) => item.id).toSet();
+    final next = <DailyChoiceWearCollection>[];
+    for (final collection in wearCollections) {
+      if (collection.id == dailyChoiceFavoriteWearCollectionId) {
+        hasFavorite = true;
+        final normalized = collection.copyWith(
+          titleZh: dailyChoiceFavoriteWearCollection.titleZh,
+          titleEn: dailyChoiceFavoriteWearCollection.titleEn,
+          optionIds: _dedupeStringList(collection.optionIds),
+        );
+        next.add(normalized);
+        changed = changed || !identical(normalized, collection);
+      } else {
+        final builtIn = builtInWearCollectionById(collection.id);
+        final normalized = collection.copyWith(
+          titleZh: builtIn?.titleZh ?? collection.titleZh,
+          titleEn: builtIn?.titleEn ?? collection.titleEn,
+          optionIds: _dedupeStringList(collection.optionIds),
+        );
+        next.add(normalized);
+        changed = changed || !identical(normalized, collection);
+      }
+    }
+    if (!hasFavorite) {
+      next.insert(0, dailyChoiceFavoriteWearCollection);
+      changed = true;
+    }
+    for (final builtIn in wearBuiltInCollections) {
+      if (!existingIds.contains(builtIn.id)) {
+        next.add(builtIn);
+        changed = true;
+      }
+    }
+    if (!changed && wearCollections.isNotEmpty) {
+      return this;
+    }
+    return copyWith(wearCollections: next);
   }
 
   DailyChoiceCustomState hideBuiltIn(String optionId) {
@@ -571,6 +758,9 @@ class DailyChoiceCustomState {
           .where((item) => item.id != optionId)
           .toList(growable: false),
       eatCollections: eatCollections
+          .map((collection) => collection.removeOption(optionId))
+          .toList(growable: false),
+      wearCollections: wearCollections
           .map((collection) => collection.removeOption(optionId))
           .toList(growable: false),
     );
@@ -705,6 +895,100 @@ class DailyChoiceCustomState {
     );
   }
 
+  DailyChoiceWearCollection? wearCollectionById(String collectionId) {
+    for (final item in wearCollections) {
+      if (item.id == collectionId) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  DailyChoiceCustomState upsertWearCollection(
+    DailyChoiceWearCollection collection,
+  ) {
+    final normalized = collection.copyWith(
+      optionIds: _dedupeStringList(collection.optionIds),
+    );
+    final next = <DailyChoiceWearCollection>[];
+    var replaced = false;
+    for (final item in wearCollections) {
+      if (item.id == normalized.id) {
+        next.add(normalized);
+        replaced = true;
+      } else {
+        next.add(item);
+      }
+    }
+    if (!replaced) {
+      next.add(normalized);
+    }
+    return copyWith(wearCollections: next);
+  }
+
+  DailyChoiceCustomState deleteWearCollection(String collectionId) {
+    if (isProtectedWearCollectionId(collectionId)) {
+      return this;
+    }
+    return copyWith(
+      wearCollections: wearCollections
+          .where((item) => item.id != collectionId)
+          .toList(growable: false),
+    );
+  }
+
+  DailyChoiceCustomState addOptionToWearCollection({
+    required String collectionId,
+    required String optionId,
+  }) {
+    final state = withDefaultWearCollections();
+    return state.copyWith(
+      wearCollections: state.wearCollections
+          .map(
+            (collection) => collection.id == collectionId
+                ? collection.addOption(optionId)
+                : collection,
+          )
+          .toList(growable: false),
+    );
+  }
+
+  DailyChoiceCustomState removeOptionFromWearCollection({
+    required String collectionId,
+    required String optionId,
+  }) {
+    final state = withDefaultWearCollections();
+    return state.copyWith(
+      wearCollections: state.wearCollections
+          .map(
+            (collection) => collection.id == collectionId
+                ? collection.removeOption(optionId)
+                : collection,
+          )
+          .toList(growable: false),
+    );
+  }
+
+  DailyChoiceCustomState setOptionWearCollections({
+    required String optionId,
+    required Set<String> collectionIds,
+  }) {
+    final state = withDefaultWearCollections();
+    final normalizedIds = collectionIds
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toSet();
+    return state.copyWith(
+      wearCollections: state.wearCollections
+          .map(
+            (collection) => normalizedIds.contains(collection.id)
+                ? collection.addOption(optionId)
+                : collection.removeOption(optionId),
+          )
+          .toList(growable: false),
+    );
+  }
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'hiddenBuiltInIds': hiddenBuiltInIds.toList(growable: false)..sort(),
@@ -715,6 +999,9 @@ class DailyChoiceCustomState {
           .map((item) => item.toJson())
           .toList(growable: false),
       'eatCollections': eatCollections
+          .map((item) => item.toJson())
+          .toList(growable: false),
+      'wearCollections': wearCollections
           .map((item) => item.toJson())
           .toList(growable: false),
     };
@@ -762,12 +1049,27 @@ class DailyChoiceCustomState {
         }
       }
     }
+    final wearCollectionsRaw = json['wearCollections'];
+    final wearCollections = <DailyChoiceWearCollection>[];
+    if (wearCollectionsRaw is List) {
+      for (final item in wearCollectionsRaw) {
+        if (item is Map) {
+          final collection = DailyChoiceWearCollection.fromJson(
+            item.cast<String, Object?>(),
+          );
+          if (collection.id.isNotEmpty && collection.titleZh.isNotEmpty) {
+            wearCollections.add(collection);
+          }
+        }
+      }
+    }
     return DailyChoiceCustomState(
       hiddenBuiltInIds: hiddenBuiltInIds,
       customOptions: customOptions,
       adjustedBuiltInOptions: adjustedBuiltInOptions,
       eatCollections: eatCollections,
-    ).withDefaultEatCollections();
+      wearCollections: wearCollections,
+    ).withDefaultEatCollections().withDefaultWearCollections();
   }
 }
 
