@@ -33,7 +33,8 @@ Future<void> showDailyChoiceManagerSheet({
 }) async {
   var localState = state
       .withDefaultEatCollections()
-      .withDefaultWearCollections();
+      .withDefaultWearCollections()
+      .withDefaultActivityCollections();
   final filterCategories = categories.any((item) => item.id == 'all')
       ? categories
       : <DailyChoiceCategory>[
@@ -75,6 +76,8 @@ Future<void> showDailyChoiceManagerSheet({
   var adjustedExpanded = true;
   final isEatModule = moduleId == DailyChoiceModuleId.eat.storageValue;
   final isWearModule = moduleId == DailyChoiceModuleId.wear.storageValue;
+  final isActivityModule =
+      moduleId == DailyChoiceModuleId.activity.storageValue;
   var builtInExpanded = !isEatModule;
   var collectionNameDraft = '';
   var collectionInputVersion = 0;
@@ -82,6 +85,9 @@ Future<void> showDailyChoiceManagerSheet({
   var wearCollectionNameDraft = '';
   var wearCollectionInputVersion = 0;
   var selectedWearCollectionId = 'all';
+  var activityCollectionNameDraft = '';
+  var activityCollectionInputVersion = 0;
+  var selectedActivityCollectionId = 'all';
   var builtInVisibleLimit = _managerInitialBuiltInLimit(isEatModule);
   var builtInSqlActiveKey = '';
   var builtInSqlLoadingKey = '';
@@ -114,7 +120,8 @@ Future<void> showDailyChoiceManagerSheet({
             void publish(DailyChoiceCustomState next) {
               localState = next
                   .withDefaultEatCollections()
-                  .withDefaultWearCollections();
+                  .withDefaultWearCollections()
+                  .withDefaultActivityCollections();
               onStateChanged(localState);
               setSheetState(() {});
             }
@@ -248,6 +255,17 @@ Future<void> showDailyChoiceManagerSheet({
                   (collection) => !isBuiltInWearCollectionId(collection.id),
                 )
                 .toList(growable: false);
+            DailyChoiceActivityCollection? selectedActivityCollection =
+                selectedActivityCollectionId == 'all'
+                ? null
+                : localState.activityCollectionById(
+                    selectedActivityCollectionId,
+                  );
+            if (selectedActivityCollection == null) {
+              selectedActivityCollectionId = 'all';
+            }
+            final selectedActivityCollectionOptionIds =
+                selectedActivityCollection?.optionIds.toSet();
             bool matchesCollection(DailyChoiceOption item) {
               if (isEatModule) {
                 return selectedCollectionOptionIds == null ||
@@ -256,6 +274,10 @@ Future<void> showDailyChoiceManagerSheet({
               if (isWearModule) {
                 return selectedWearCollectionOptionIds == null ||
                     selectedWearCollectionOptionIds.contains(item.id);
+              }
+              if (isActivityModule) {
+                return selectedActivityCollectionOptionIds == null ||
+                    selectedActivityCollectionOptionIds.contains(item.id);
               }
               return true;
             }
@@ -290,10 +312,14 @@ Future<void> showDailyChoiceManagerSheet({
             final canUseSqlBuiltIns = isEatModule && eatLibraryStore != null;
             final activeCollectionId = isWearModule
                 ? selectedWearCollectionId
-                : selectedCollectionId;
+                : (isActivityModule
+                      ? selectedActivityCollectionId
+                      : selectedCollectionId);
             final activeCollectionOptionIds = isWearModule
                 ? selectedWearCollectionOptionIds
-                : selectedCollectionOptionIds;
+                : (isActivityModule
+                      ? selectedActivityCollectionOptionIds
+                      : selectedCollectionOptionIds);
             final nextBuiltInFilterCacheKey = _managerBuiltInFilterCacheKey(
               moduleId: moduleId,
               categoryId: selectedCategoryId,
@@ -504,6 +530,17 @@ Future<void> showDailyChoiceManagerSheet({
                         defaultFavoriteWhenEmpty: option == null,
                       )
                     : const <String>{},
+                activityCollections: isActivityModule
+                    ? localState.activityCollections
+                    : const <DailyChoiceActivityCollection>[],
+                initialActivityCollectionIds: isActivityModule
+                    ? _managerInitialActivityCollectionIds(
+                        collections: localState.activityCollections,
+                        option: option,
+                        selectedCollection: selectedActivityCollection,
+                        defaultFavoriteWhenEmpty: option == null,
+                      )
+                    : const <String>{},
               );
               if (editorResult == null) {
                 return;
@@ -520,6 +557,12 @@ Future<void> showDailyChoiceManagerSheet({
                 nextState = nextState.setOptionWearCollections(
                   optionId: result.id,
                   collectionIds: editorResult.wearCollectionIds,
+                );
+              }
+              if (isActivityModule) {
+                nextState = nextState.setOptionActivityCollections(
+                  optionId: result.id,
+                  collectionIds: editorResult.activityCollectionIds,
                 );
               }
               await publishWithProcessing(
@@ -611,6 +654,12 @@ Future<void> showDailyChoiceManagerSheet({
                   collectionIds: editorResult.wearCollectionIds,
                 );
               }
+              if (isActivityModule) {
+                nextState = nextState.setOptionActivityCollections(
+                  optionId: result.id,
+                  collectionIds: editorResult.activityCollectionIds,
+                );
+              }
               await publishWithProcessing(
                 nextState,
                 pickUiText(i18n, zh: '正在保存副本...', en: 'Saving copy...'),
@@ -657,6 +706,30 @@ Future<void> showDailyChoiceManagerSheet({
               );
             }
 
+            Future<void> addOptionToActivityCollections({
+              required String optionId,
+              required Set<String> collectionIds,
+            }) async {
+              if (collectionIds.isEmpty) {
+                return;
+              }
+              var nextState = localState;
+              for (final collectionId in collectionIds) {
+                nextState = nextState.addOptionToActivityCollection(
+                  collectionId: collectionId,
+                  optionId: optionId,
+                );
+              }
+              await publishWithProcessing(
+                nextState,
+                pickUiText(
+                  i18n,
+                  zh: '正在加入行动集...',
+                  en: 'Adding to action set...',
+                ),
+              );
+            }
+
             Future<void> toggleBuiltInHidden({
               required DailyChoiceOption option,
               required bool isHidden,
@@ -666,10 +739,14 @@ Future<void> showDailyChoiceManagerSheet({
                   localState.restoreBuiltIn(option.id),
                   pickUiText(
                     i18n,
-                    zh: isWearModule ? '正在恢复搭配...' : '正在恢复菜谱...',
+                    zh: isWearModule
+                        ? '正在恢复搭配...'
+                        : (isActivityModule ? '正在恢复行动...' : '正在恢复菜谱...'),
                     en: isWearModule
                         ? 'Restoring outfit...'
-                        : 'Restoring recipe...',
+                        : (isActivityModule
+                              ? 'Restoring action...'
+                              : 'Restoring recipe...'),
                   ),
                 );
                 return;
@@ -679,6 +756,7 @@ Future<void> showDailyChoiceManagerSheet({
                 i18n: i18n,
                 option: option,
                 isWearModule: isWearModule,
+                isActivityModule: isActivityModule,
               );
               if (confirmed != true) {
                 return;
@@ -688,7 +766,11 @@ Future<void> showDailyChoiceManagerSheet({
                 pickUiText(
                   i18n,
                   zh: '正在加入不喜欢...',
-                  en: isWearModule ? 'Hiding outfit...' : 'Hiding recipe...',
+                  en: isWearModule
+                      ? 'Hiding outfit...'
+                      : (isActivityModule
+                            ? 'Hiding action...'
+                            : 'Hiding recipe...'),
                 ),
               );
             }
@@ -725,6 +807,23 @@ Future<void> showDailyChoiceManagerSheet({
               selectedWearCollectionId = collection.id;
               resetBuiltInPaging();
               publish(localState.upsertWearCollection(collection));
+            }
+
+            void createActivityCollection() {
+              final title = activityCollectionNameDraft.trim();
+              if (title.isEmpty) {
+                return;
+              }
+              final collection = DailyChoiceActivityCollection(
+                id: 'activity_collection_${DateTime.now().microsecondsSinceEpoch}',
+                titleZh: title,
+                titleEn: title,
+              );
+              activityCollectionNameDraft = '';
+              activityCollectionInputVersion += 1;
+              selectedActivityCollectionId = collection.id;
+              resetBuiltInPaging();
+              publish(localState.upsertActivityCollection(collection));
             }
 
             void showManagerMessage({required String zh, required String en}) {
@@ -847,6 +946,66 @@ Future<void> showDailyChoiceManagerSheet({
               await publishWithProcessing(
                 localState.deleteWearCollection(collection.id),
                 pickUiText(i18n, zh: '正在删除衣橱...', en: 'Deleting wardrobe...'),
+              );
+            }
+
+            Future<void> renameSelectedActivityCollection() async {
+              final collection = localState.activityCollectionById(
+                selectedActivityCollectionId,
+              );
+              if (collection == null ||
+                  collection.id == dailyChoiceFavoriteActivityCollectionId) {
+                return;
+              }
+              final title = await _promptActivityCollectionName(
+                context: context,
+                i18n: i18n,
+                accent: accent,
+                initialTitle: collection.title(i18n),
+              );
+              if (title == null || title.trim().isEmpty) {
+                return;
+              }
+              await publishWithProcessing(
+                localState.upsertActivityCollection(
+                  collection.copyWith(
+                    titleZh: title.trim(),
+                    titleEn: title.trim(),
+                  ),
+                ),
+                pickUiText(
+                  i18n,
+                  zh: '正在重命名行动集...',
+                  en: 'Renaming action set...',
+                ),
+              );
+            }
+
+            Future<void> deleteSelectedActivityCollection() async {
+              final collection = localState.activityCollectionById(
+                selectedActivityCollectionId,
+              );
+              if (collection == null ||
+                  collection.id == dailyChoiceFavoriteActivityCollectionId) {
+                return;
+              }
+              final confirmed = await _confirmDeleteActivityCollection(
+                context: context,
+                i18n: i18n,
+                collection: collection,
+              );
+              if (confirmed != true) {
+                return;
+              }
+              selectedActivityCollectionId = 'all';
+              resetBuiltInPaging();
+              await publishWithProcessing(
+                localState.deleteActivityCollection(collection.id),
+                pickUiText(
+                  i18n,
+                  zh: '正在删除行动集...',
+                  en: 'Deleting action set...',
+                ),
               );
             }
 
@@ -1044,6 +1203,103 @@ Future<void> showDailyChoiceManagerSheet({
               }
             }
 
+            Future<void> exportSelectedActivityCollection() async {
+              final collection = localState.activityCollectionById(
+                selectedActivityCollectionId,
+              );
+              if (collection == null) {
+                showManagerMessage(
+                  zh: '请先选择一个行动集。',
+                  en: 'Choose an action set first.',
+                );
+                return;
+              }
+              try {
+                final payload = _buildActivityCollectionExportPackage(
+                  state: localState,
+                  collection: collection,
+                );
+                final encoded = const JsonEncoder.withIndent(
+                  '  ',
+                ).convert(payload);
+                final fileName =
+                    '${_safeActivityCollectionExportFileName(collection.title(i18n))}.daily-choice-actions.json';
+                final path = await FilePicker.platform.saveFile(
+                  dialogTitle: pickUiText(
+                    i18n,
+                    zh: '导出行动集',
+                    en: 'Export action set',
+                  ),
+                  fileName: fileName,
+                  type: FileType.custom,
+                  allowedExtensions: const <String>['json'],
+                  bytes: Uint8List.fromList(utf8.encode(encoded)),
+                  lockParentWindow: true,
+                );
+                if (path == null) {
+                  return;
+                }
+                showManagerMessage(zh: '行动集已导出。', en: 'Action set exported.');
+              } catch (error) {
+                showManagerMessage(
+                  zh: '导出失败：$error',
+                  en: 'Export failed: $error',
+                );
+              }
+            }
+
+            Future<void> importActivityCollections() async {
+              try {
+                final result = await FilePicker.platform.pickFiles(
+                  dialogTitle: pickUiText(
+                    i18n,
+                    zh: '导入行动集',
+                    en: 'Import action set',
+                  ),
+                  type: FileType.custom,
+                  allowedExtensions: const <String>['json'],
+                  withData: true,
+                  lockParentWindow: true,
+                );
+                if (result == null || result.files.isEmpty) {
+                  return;
+                }
+                final bytes = result.files.single.bytes;
+                if (bytes == null || bytes.isEmpty) {
+                  throw const FormatException(
+                    'Selected action set file could not be read.',
+                  );
+                }
+                final decoded = jsonDecode(utf8.decode(bytes));
+                if (decoded is! Map) {
+                  throw const FormatException('Invalid action set package.');
+                }
+                final imported = _importActivityCollectionExportPackage(
+                  state: localState,
+                  payload: decoded.cast<String, Object?>(),
+                );
+                selectedActivityCollectionId = imported.selectedCollectionId;
+                resetBuiltInPaging();
+                await publishWithProcessing(
+                  imported.state,
+                  pickUiText(
+                    i18n,
+                    zh: '正在导入行动集...',
+                    en: 'Importing action set...',
+                  ),
+                );
+                showManagerMessage(
+                  zh: '已导入 ${imported.collectionCount} 个行动集。',
+                  en: '${imported.collectionCount} action set(s) imported.',
+                );
+              } catch (error) {
+                showManagerMessage(
+                  zh: '导入失败：$error',
+                  en: 'Import failed: $error',
+                );
+              }
+            }
+
             bool maybeAutoLoadBuiltInsFromMetrics(ScrollMetrics metrics) {
               if (!builtInExpanded ||
                   builtInSqlLoading ||
@@ -1117,6 +1373,7 @@ Future<void> showDailyChoiceManagerSheet({
                                 i18n,
                                 isEatModule: isEatModule,
                                 isWearModule: isWearModule,
+                                isActivityModule: isActivityModule,
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -1584,6 +1841,239 @@ Future<void> showDailyChoiceManagerSheet({
                               ),
                               const SizedBox(height: 12),
                             ],
+                            if (isActivityModule) ...<Widget>[
+                              ToolboxSurfaceCard(
+                                padding: const EdgeInsets.all(12),
+                                borderColor: accent.withValues(alpha: 0.14),
+                                shadowOpacity: 0.02,
+                                child: _ManagerSearchField(
+                                  i18n: i18n,
+                                  initialText: searchDraft,
+                                  labelZh: '搜索行动',
+                                  labelEn: 'Search action',
+                                  hintZh: '按行动名称、触发场景、标签筛选',
+                                  hintEn: 'Search by action, trigger, or tag',
+                                  onDraftChanged: (value) {
+                                    searchDraft = value;
+                                  },
+                                  onCommitted: commitSearchQuery,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _ManagerExpandableSection(
+                                title: pickUiText(
+                                  i18n,
+                                  zh: '行动集',
+                                  en: 'Action sets',
+                                ),
+                                subtitle: selectedActivityCollection == null
+                                    ? pickUiText(
+                                        i18n,
+                                        zh: '把注意力重启、短出门、整理、学习、放松等行动整理成独立随机池。每次随机会先按当前行动集收口。',
+                                        en: 'Group focus resets, quick outings, tidying, learning, and recovery actions into separate random pools.',
+                                      )
+                                    : pickUiText(
+                                        i18n,
+                                        zh: '当前只看「${selectedActivityCollection.title(i18n)}」。',
+                                        en: 'Showing "${selectedActivityCollection.title(i18n)}" only.',
+                                      ),
+                                accent: accent,
+                                expanded: collectionsExpanded,
+                                countLabel:
+                                    '${localState.activityCollections.length}',
+                                onToggle: () {
+                                  setSheetState(() {
+                                    collectionsExpanded = !collectionsExpanded;
+                                  });
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    TextFormField(
+                                      key: ValueKey<String>(
+                                        'activity-collection-input-$activityCollectionInputVersion',
+                                      ),
+                                      initialValue: activityCollectionNameDraft,
+                                      onChanged: (value) {
+                                        activityCollectionNameDraft = value;
+                                      },
+                                      onFieldSubmitted: (_) =>
+                                          createActivityCollection(),
+                                      decoration: InputDecoration(
+                                        prefixIcon: const Icon(
+                                          Icons.playlist_add_check_rounded,
+                                        ),
+                                        labelText: pickUiText(
+                                          i18n,
+                                          zh: '新建行动集',
+                                          en: 'New action set',
+                                        ),
+                                        hintText: pickUiText(
+                                          i18n,
+                                          zh: '例如：注意力重启、饭后出门、睡前收口',
+                                          en: 'For example: Focus reset, After-meal walk',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: FilledButton.icon(
+                                        onPressed: createActivityCollection,
+                                        icon: const Icon(Icons.add_rounded),
+                                        label: Text(
+                                          pickUiText(
+                                            i18n,
+                                            zh: '创建行动集',
+                                            en: 'Create action set',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Expanded(
+                                          child: DropdownButtonFormField<String>(
+                                            key: ValueKey<String>(
+                                              'activity-collection-scope-$selectedActivityCollectionId',
+                                            ),
+                                            initialValue:
+                                                selectedActivityCollectionId,
+                                            isExpanded: true,
+                                            decoration: InputDecoration(
+                                              prefixIcon: const Icon(
+                                                Icons.filter_list_rounded,
+                                              ),
+                                              labelText: pickUiText(
+                                                i18n,
+                                                zh: '当前随机范围',
+                                                en: 'Random pool',
+                                              ),
+                                            ),
+                                            items: <DropdownMenuItem<String>>[
+                                              DropdownMenuItem<String>(
+                                                value: 'all',
+                                                child: Text(
+                                                  pickUiText(
+                                                    i18n,
+                                                    zh: '内置行动库',
+                                                    en: 'Built-in actions',
+                                                  ),
+                                                ),
+                                              ),
+                                              ...localState.activityCollections.map(
+                                                (
+                                                  collection,
+                                                ) => DropdownMenuItem<String>(
+                                                  value: collection.id,
+                                                  child: Text(
+                                                    '${collection.title(i18n)} · ${collection.optionIds.length}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                            onChanged: (value) {
+                                              if (value == null) {
+                                                return;
+                                              }
+                                              setSheetState(() {
+                                                selectedActivityCollectionId =
+                                                    value;
+                                                resetBuiltInPaging();
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Tooltip(
+                                          message: pickUiText(
+                                            i18n,
+                                            zh: '重命名行动集',
+                                            en: 'Rename action set',
+                                          ),
+                                          child: IconButton.filledTonal(
+                                            onPressed:
+                                                selectedActivityCollection ==
+                                                        null ||
+                                                    selectedActivityCollection
+                                                            .id ==
+                                                        dailyChoiceFavoriteActivityCollectionId
+                                                ? null
+                                                : renameSelectedActivityCollection,
+                                            icon: const Icon(
+                                              Icons.drive_file_rename_outline,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Tooltip(
+                                          message: pickUiText(
+                                            i18n,
+                                            zh: '删除行动集',
+                                            en: 'Delete action set',
+                                          ),
+                                          child: IconButton.filledTonal(
+                                            onPressed:
+                                                selectedActivityCollection ==
+                                                        null ||
+                                                    selectedActivityCollection
+                                                            .id ==
+                                                        dailyChoiceFavoriteActivityCollectionId
+                                                ? null
+                                                : deleteSelectedActivityCollection,
+                                            icon: const Icon(
+                                              Icons.delete_outline_rounded,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: <Widget>[
+                                        OutlinedButton.icon(
+                                          onPressed:
+                                              selectedActivityCollection == null
+                                              ? null
+                                              : exportSelectedActivityCollection,
+                                          icon: const Icon(
+                                            Icons.ios_share_rounded,
+                                          ),
+                                          label: Text(
+                                            pickUiText(
+                                              i18n,
+                                              zh: '导出当前',
+                                              en: 'Export current',
+                                            ),
+                                          ),
+                                        ),
+                                        OutlinedButton.icon(
+                                          onPressed: importActivityCollections,
+                                          icon: const Icon(
+                                            Icons.file_upload_outlined,
+                                          ),
+                                          label: Text(
+                                            pickUiText(
+                                              i18n,
+                                              zh: '导入分享包',
+                                              en: 'Import package',
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
                             _ManagerExpandableSection(
                               title: pickUiText(
                                 i18n,
@@ -1595,7 +2085,9 @@ Future<void> showDailyChoiceManagerSheet({
                                       i18n,
                                       zh: isWearModule
                                           ? '当前显示全部范围。可以按性别参考、年龄阶段、风格和版型逐步缩小。'
-                                          : '当前显示全部范围，可折叠收起。',
+                                          : (isActivityModule
+                                                ? '当前显示全部行动方向，可按行动类型逐步缩小。'
+                                                : '当前显示全部范围，可折叠收起。'),
                                       en: 'Showing the full range for now.',
                                     )
                                   : pickUiText(
@@ -1695,12 +2187,18 @@ Future<void> showDailyChoiceManagerSheet({
                                   i18n,
                                   zh: isEatModule
                                       ? '新增个人食谱'
-                                      : (isWearModule ? '新建我的衣柜搭配' : '新增'),
+                                      : (isWearModule
+                                            ? '新建我的衣柜搭配'
+                                            : (isActivityModule
+                                                  ? '新增个人行动'
+                                                  : '新增')),
                                   en: isEatModule
                                       ? 'Add recipe'
                                       : (isWearModule
                                             ? 'Add wardrobe outfit'
-                                            : 'Add'),
+                                            : (isActivityModule
+                                                  ? 'Add action'
+                                                  : 'Add')),
                                 ),
                               ),
                             ),
@@ -1715,10 +2213,14 @@ Future<void> showDailyChoiceManagerSheet({
                                 i18n,
                                 zh: isWearModule
                                     ? '这些是你基于真实衣柜保存的搭配，可编辑、删除，也会直接参与随机。'
-                                    : '完全属于你的新增条目，可直接编辑和删除。',
+                                    : (isActivityModule
+                                          ? '这些是你保存的个人行动，可加入不同行动集并直接参与随机。'
+                                          : '完全属于你的新增条目，可直接编辑和删除。'),
                                 en: isWearModule
                                     ? 'These outfits come from your real wardrobe and can be edited, removed, and used in random picks.'
-                                    : 'Your own saved items that can be edited or removed.',
+                                    : (isActivityModule
+                                          ? 'Your own saved actions can be edited, grouped, and used in random picks.'
+                                          : 'Your own saved items that can be edited or removed.'),
                               ),
                               accent: accent,
                               expanded: customExpanded,
@@ -1734,6 +2236,7 @@ Future<void> showDailyChoiceManagerSheet({
                                         i18n,
                                         isEatModule: isEatModule,
                                         isWearModule: isWearModule,
+                                        isActivityModule: isActivityModule,
                                       ),
                                     )
                                   : Column(
@@ -1752,6 +2255,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                 item,
                                                 isEatModule: isEatModule,
                                                 isWearModule: isWearModule,
+                                                isActivityModule:
+                                                    isActivityModule,
                                               ),
                                               actions: <Widget>[
                                                 TextButton.icon(
@@ -1838,6 +2343,43 @@ Future<void> showDailyChoiceManagerSheet({
                                                             i18n,
                                                             zh: '正在移出衣橱...',
                                                             en: 'Removing from wardrobe...',
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                if (isActivityModule)
+                                                  ..._managerActivityCollectionActions(
+                                                    context: context,
+                                                    i18n: i18n,
+                                                    collections: localState
+                                                        .activityCollections,
+                                                    selectedCollection:
+                                                        selectedActivityCollection,
+                                                    optionId: item.id,
+                                                    onAddMultiple: (collectionIds) {
+                                                      unawaited(
+                                                        addOptionToActivityCollections(
+                                                          optionId: item.id,
+                                                          collectionIds:
+                                                              collectionIds,
+                                                        ),
+                                                      );
+                                                    },
+                                                    onRemove: (collectionId) {
+                                                      unawaited(
+                                                        publishWithProcessing(
+                                                          localState
+                                                              .removeOptionFromActivityCollection(
+                                                                collectionId:
+                                                                    collectionId,
+                                                                optionId:
+                                                                    item.id,
+                                                              ),
+                                                          pickUiText(
+                                                            i18n,
+                                                            zh: '正在移出行动集...',
+                                                            en: 'Removing from action set...',
                                                           ),
                                                         ),
                                                       );
@@ -2097,10 +2639,14 @@ Future<void> showDailyChoiceManagerSheet({
                             _ManagerExpandableSection(
                               title: pickUiText(
                                 i18n,
-                                zh: isWearModule ? '内置参考搭配' : '内置菜谱浏览',
+                                zh: isWearModule
+                                    ? '内置参考搭配'
+                                    : (isActivityModule ? '内置行动浏览' : '内置菜谱浏览'),
                                 en: isWearModule
                                     ? 'Built-in references'
-                                    : 'Built-in browser',
+                                    : (isActivityModule
+                                          ? 'Built-in actions'
+                                          : 'Built-in browser'),
                               ),
                               subtitle: _builtInSectionSubtitle(
                                 i18n,
@@ -2110,6 +2656,7 @@ Future<void> showDailyChoiceManagerSheet({
                                 loading: builtInSqlLoading,
                                 errorMessage: builtInSqlError,
                                 isWearModule: isWearModule,
+                                isActivityModule: isActivityModule,
                               ),
                               accent: accent,
                               expanded: builtInExpanded,
@@ -2137,10 +2684,14 @@ Future<void> showDailyChoiceManagerSheet({
                                         i18n,
                                         zh: isWearModule
                                             ? '正在读取内置搭配...'
-                                            : '正在读取内置菜谱...',
+                                            : (isActivityModule
+                                                  ? '正在读取内置行动...'
+                                                  : '正在读取内置菜谱...'),
                                         en: isWearModule
                                             ? 'Loading built-in outfits...'
-                                            : 'Loading built-in recipes...',
+                                            : (isActivityModule
+                                                  ? 'Loading built-in actions...'
+                                                  : 'Loading built-in recipes...'),
                                       ),
                                     )
                                   : builtInSqlError != null &&
@@ -2150,10 +2701,14 @@ Future<void> showDailyChoiceManagerSheet({
                                         i18n,
                                         zh: isWearModule
                                             ? '读取内置搭配失败：$builtInSqlError'
-                                            : '读取内置菜谱失败：$builtInSqlError',
+                                            : (isActivityModule
+                                                  ? '读取内置行动失败：$builtInSqlError'
+                                                  : '读取内置菜谱失败：$builtInSqlError'),
                                         en: isWearModule
                                             ? 'Failed to load built-in outfits: $builtInSqlError'
-                                            : 'Failed to load built-in recipes: $builtInSqlError',
+                                            : (isActivityModule
+                                                  ? 'Failed to load built-in actions: $builtInSqlError'
+                                                  : 'Failed to load built-in recipes: $builtInSqlError'),
                                       ),
                                     )
                                   : visibleBuiltIns.isEmpty
@@ -2161,6 +2716,7 @@ Future<void> showDailyChoiceManagerSheet({
                                       text: _emptyBuiltInHint(
                                         i18n,
                                         isWearModule: isWearModule,
+                                        isActivityModule: isActivityModule,
                                       ),
                                     )
                                   : Column(
@@ -2184,7 +2740,9 @@ Future<void> showDailyChoiceManagerSheet({
                                                     i18n,
                                                     zh: isWearModule
                                                         ? '这套搭配当前已加入不喜欢列表。'
-                                                        : '这道菜当前已加入不喜欢列表。',
+                                                        : (isActivityModule
+                                                              ? '这个行动当前已加入不喜欢列表。'
+                                                              : '这道菜当前已加入不喜欢列表。'),
                                                     en: 'This item is hidden right now.',
                                                   )
                                                 : displayItem.subtitle(i18n),
@@ -2228,6 +2786,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                 displayItem,
                                                 isEatModule: isEatModule,
                                                 isWearModule: isWearModule,
+                                                isActivityModule:
+                                                    isActivityModule,
                                               ),
                                             ],
                                             actions: <Widget>[
@@ -2343,6 +2903,43 @@ Future<void> showDailyChoiceManagerSheet({
                                                     );
                                                   },
                                                 ),
+                                              if (isActivityModule)
+                                                ..._managerActivityCollectionActions(
+                                                  context: context,
+                                                  i18n: i18n,
+                                                  collections: localState
+                                                      .activityCollections,
+                                                  selectedCollection:
+                                                      selectedActivityCollection,
+                                                  optionId: baseItem.id,
+                                                  onAddMultiple: (collectionIds) {
+                                                    unawaited(
+                                                      addOptionToActivityCollections(
+                                                        optionId: baseItem.id,
+                                                        collectionIds:
+                                                            collectionIds,
+                                                      ),
+                                                    );
+                                                  },
+                                                  onRemove: (collectionId) {
+                                                    unawaited(
+                                                      publishWithProcessing(
+                                                        localState
+                                                            .removeOptionFromActivityCollection(
+                                                              collectionId:
+                                                                  collectionId,
+                                                              optionId:
+                                                                  baseItem.id,
+                                                            ),
+                                                        pickUiText(
+                                                          i18n,
+                                                          zh: '正在移出行动集...',
+                                                          en: 'Removing from action set...',
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                               if (hasAdjustment)
                                                 TextButton.icon(
                                                   onPressed: busy
@@ -2409,15 +3006,19 @@ Future<void> showDailyChoiceManagerSheet({
                                                     i18n,
                                                     zh: isWearModule
                                                         ? '正在加载更多内置搭配...'
-                                                        : '正在加载更多内置菜谱...',
+                                                        : (isActivityModule
+                                                              ? '正在加载更多内置行动...'
+                                                              : '正在加载更多内置菜谱...'),
                                                     en: isWearModule
                                                         ? 'Loading more built-in outfits...'
-                                                        : 'Loading more built-in recipes...',
+                                                        : (isActivityModule
+                                                              ? 'Loading more built-in actions...'
+                                                              : 'Loading more built-in recipes...'),
                                                   )
                                                 : pickUiText(
                                                     i18n,
                                                     zh: '还有 ${builtInTotalCount - visibleBuiltIns.length} 条待加载。',
-                                                    en: '${builtInTotalCount - visibleBuiltIns.length} more ${isWearModule ? 'outfits' : 'recipes'} are ready to load.',
+                                                    en: '${builtInTotalCount - visibleBuiltIns.length} more ${isWearModule ? 'outfits' : (isActivityModule ? 'actions' : 'recipes')} are ready to load.',
                                                   ),
                                           ),
                                         ],

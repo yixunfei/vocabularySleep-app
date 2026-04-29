@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import sqlite3
+import unicodedata
 import urllib.request
 from collections import Counter
 from datetime import datetime, timezone
@@ -119,6 +120,11 @@ def main() -> None:
     parser.add_argument("--cook-csv", type=Path)
     parser.add_argument("--cook-csv-url", default=DEFAULT_COOK_CSV_URL)
     parser.add_argument(
+        "--source-dir",
+        type=Path,
+        help="Optional local cooking resource directory for omitted-document reporting.",
+    )
+    parser.add_argument(
         "--output-md",
         type=Path,
         default=Path("records/record_070_daily_choice_recipe_data_audit.md"),
@@ -127,6 +133,16 @@ def main() -> None:
         "--output-json",
         type=Path,
         default=Path("records/record_070_daily_choice_recipe_data_audit.json"),
+    )
+    parser.add_argument(
+        "--output-omitted-md",
+        type=Path,
+        help="Optional markdown report listing sources without extractable real steps.",
+    )
+    parser.add_argument(
+        "--output-omitted-json",
+        type=Path,
+        help="Optional JSON report listing sources without extractable real steps.",
     )
     parser.add_argument("--sample-limit", type=int, default=12)
     args = parser.parse_args()
@@ -182,6 +198,28 @@ def main() -> None:
 
     print(f"Wrote {args.output_md}")
     print(f"Wrote {args.output_json}")
+
+    if args.output_omitted_md or args.output_omitted_json:
+        omitted_report = build_omitted_real_steps_report(
+            report=report,
+            recipes=recipes,
+            cook_rows=cook_rows,
+            source_dir=args.source_dir,
+        )
+        if args.output_omitted_json:
+            args.output_omitted_json.parent.mkdir(parents=True, exist_ok=True)
+            args.output_omitted_json.write_text(
+                json.dumps(omitted_report, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            print(f"Wrote {args.output_omitted_json}")
+        if args.output_omitted_md:
+            args.output_omitted_md.parent.mkdir(parents=True, exist_ok=True)
+            args.output_omitted_md.write_text(
+                render_omitted_real_steps_markdown(omitted_report),
+                encoding="utf-8",
+            )
+            print(f"Wrote {args.output_omitted_md}")
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -439,7 +477,7 @@ def audit_recipes(
                     contains=sorted(contains),
                 )
 
-        if any(marker in haystack for marker in GARBLED_MARKERS):
+        if any(marker in haystack for marker in GARBLED_MARKERS) or has_text_artifact(haystack):
             add_sample(
                 buckets["garbled_text_markers"],
                 sample_limit,
@@ -488,11 +526,15 @@ def audit_source_coverage(
             summary_with_reference_like_fields += 1
 
     missing_count = len(missing_cook_names)
+    cook_standalone_imported = bool(stats.get("cookStandaloneImported"))
+    cook_reference_matched_count = int(stats.get("cookReferenceMatchedCount") or 0)
     return {
         "cookCsvRows": len(cook_rows),
         "cookCsvExactTitleMatches": len(cook_names) - missing_count,
         "cookCsvMissingExactTitles": missing_count,
         "cookCsvMissingSamples": missing_cook_names[:sample_limit],
+        "cookStandaloneImported": cook_standalone_imported,
+        "cookReferenceMatchedCount": cook_reference_matched_count,
         "zeroExtractedBooks": zero_extract_books,
         "summaryRowsWithSourceLabelOrUrl": summary_with_source,
         "summaryRowsWithReferences": summary_with_reference_like_fields,
@@ -500,6 +542,8 @@ def audit_source_coverage(
         "finding": (
             "YunYouJun/cook recipe.csv rows are present in the generated library."
             if cook_names and missing_count == 0
+            else "YunYouJun/cook recipe.csv rows are used as metadata references, not standalone recipes."
+            if cook_reference_matched_count > 0 and not cook_standalone_imported
             else "YunYouJun/cook recipe.csv rows are not fully imported into the generated library."
         ),
     }
@@ -555,6 +599,183 @@ def has_standalone_scallion(materials: str) -> bool:
     return any(term in cleaned for term in ("葱", "香葱", "青葱", "葱花", "葱段"))
 
 
+def has_text_artifact(value: str) -> bool:
+    normalized = unicodedata.normalize("NFKC", value)
+    cjk_count = sum("\u4e00" <= character <= "\u9fff" for character in normalized)
+    if cjk_count and "?" in normalized:
+        return True
+    return any(unicodedata.category(character) == "Co" for character in normalized)
+
+
+def build_omitted_real_steps_report(
+    *,
+    report: dict[str, Any],
+    recipes: list[dict[str, Any]],
+    cook_rows: list[dict[str, str]],
+    source_dir: Path | None,
+) -> dict[str, Any]:
+    stats = report["stats"]
+    library_stats = stats.get("libraryStats", {})
+    source_coverage = report["sourceCoverage"]
+    recipe_titles = {str(recipe.get("titleZh", "")).strip() for recipe in recipes}
+    zero_documents = [
+        {
+            "source": item["book"],
+            "kind": "epub",
+            "reason": "当前结构化解析器未抽取出同时包含材料和真实步骤的菜谱；未生成占位步骤。",
+        }
+        for item in source_coverage.get("zeroExtractedBooks", [])
+    ]
+
+    cook_missing_rows = []
+    for row in cook_rows:
+        name = row.get("name", "").strip()
+        if not name or name in recipe_titles:
+            continue
+        cook_missing_rows.append(
+            {
+                "name": name,
+                "stuff": row.get("stuff", "").strip(),
+                "difficulty": row.get("difficulty", "").strip(),
+                "methods": row.get("methods", "").strip(),
+                "tools": row.get("tools", "").strip(),
+                "tags": row.get("tags", "").strip(),
+                "bv": row.get("bv", "").strip(),
+                "reason": (
+                    "recipe.csv 仅提供名称、食材分类、难度、做法标签、工具和 BV 视频号等元数据，"
+                    "未包含可离线验证的文字制作步骤。"
+                ),
+            }
+        )
+
+    return {
+        "generatedAt": report["generatedAt"],
+        "generatedFrom": report["inputs"]["libraryJson"],
+        "recipeCount": stats["recipeCount"],
+        "sourceCounts": {
+            "howToCook": library_stats.get("howToCookRecipeCount", 0),
+            "localBook": library_stats.get("localBookRecipeCount", 0),
+            "cookCsvReferenceMatches": library_stats.get("cookReferenceMatchedCount", 0),
+        },
+        "principle": "只收录能从来源中抽取到材料和真实制作步骤的菜谱；缺少自包含步骤时列入本报告，不生成模板步骤或占位步骤。",
+        "zeroExtractedDocuments": zero_documents,
+        "pdfDocumentsNotImported": inspect_pdf_documents(source_dir),
+        "cookCsvRowsWithoutStandaloneTextStepsCount": len(cook_missing_rows),
+        "cookCsvRowsWithoutStandaloneTextSteps": cook_missing_rows,
+    }
+
+
+def inspect_pdf_documents(source_dir: Path | None) -> list[dict[str, Any]]:
+    if source_dir is None or not source_dir.exists():
+        return []
+    pdfs = sorted(source_dir.glob("*.pdf"))
+    if not pdfs:
+        return []
+
+    try:
+        from pypdf import PdfReader
+    except Exception as error:  # pragma: no cover - optional local dependency
+        return [
+            {
+                "source": pdf.name,
+                "kind": "pdf",
+                "pages": None,
+                "first20TextChars": None,
+                "reason": f"未检测到可用 PDF 文本解析器，无法确认真实步骤；未生成占位步骤。错误: {error}",
+            }
+            for pdf in pdfs
+        ]
+
+    omitted = []
+    for pdf in pdfs:
+        try:
+            reader = PdfReader(str(pdf))
+            page_count = len(reader.pages)
+            text_chars = 0
+            for page in reader.pages[:20]:
+                text_chars += len((page.extract_text() or "").strip())
+            if text_chars == 0:
+                reason = "前 20 页未抽取到可用文本，疑似扫描版或图片 PDF；需要 OCR 或人工整理后再入库。"
+            else:
+                reason = "当前生成器未启用 PDF 专用菜谱结构解析；需要补充 PDF 解析和人工校验后再入库。"
+            omitted.append(
+                {
+                    "source": pdf.name,
+                    "kind": "pdf",
+                    "pages": page_count,
+                    "first20TextChars": text_chars,
+                    "reason": reason,
+                }
+            )
+        except Exception as error:  # pragma: no cover - corrupt PDF path
+            omitted.append(
+                {
+                    "source": pdf.name,
+                    "kind": "pdf",
+                    "pages": None,
+                    "first20TextChars": None,
+                    "reason": f"PDF 读取失败，无法确认真实步骤；未生成占位步骤。错误: {error}",
+                }
+            )
+    return omitted
+
+
+def render_omitted_real_steps_markdown(report: dict[str, Any]) -> str:
+    counts = report["sourceCounts"]
+    lines = [
+        "# 菜谱真实步骤遗漏报告",
+        "",
+        "## 原则",
+        f"- {report['principle']}",
+        "- 本报告用于记录本轮未入库或仅作为元数据参考的来源，避免把视频标题、目录、功效说明或空白抽取结果伪装成可执行菜谱。",
+        "",
+        "## 已生成数据",
+        f"- 菜谱总数: {report['recipeCount']}",
+        f"- HowToCook: {counts['howToCook']}",
+        f"- 本地资料: {counts['localBook']}",
+        f"- cook CSV 元数据匹配: {counts['cookCsvReferenceMatches']}",
+        "",
+        "## 未抽取到真实步骤的本地文档",
+    ]
+
+    zero_docs = report["zeroExtractedDocuments"]
+    pdf_docs = report["pdfDocumentsNotImported"]
+    if not zero_docs and not pdf_docs:
+        lines.append("- 无")
+    for item in zero_docs:
+        lines.append(f"- `{item['source']}`: {item['reason']}")
+    for item in pdf_docs:
+        page_text = "页数未知" if item["pages"] is None else f"{item['pages']} 页"
+        chars = (
+            "未知"
+            if item["first20TextChars"] is None
+            else str(item["first20TextChars"])
+        )
+        lines.append(
+            f"- `{item['source']}`: {page_text}，前 20 页可抽取文本字符数 {chars}。{item['reason']}"
+        )
+
+    cook_rows = report["cookCsvRowsWithoutStandaloneTextSteps"]
+    lines.extend(
+        [
+            "",
+            "## YunYouJun/cook 未作为独立菜谱导入的条目",
+            f"- 未导入数量: {report['cookCsvRowsWithoutStandaloneTextStepsCount']}",
+            "- 原因: `recipe.csv` 不包含可离线验证的文字制作步骤；本轮只把可匹配到完整菜谱的行作为元数据参考。",
+            "- 前 30 条样例:",
+        ]
+    )
+    for row in cook_rows[:30]:
+        stuff = row["stuff"] or "未填"
+        bv = row["bv"] or "未填"
+        lines.append(f"  - {row['name']} | 食材: {stuff} | BV: {bv}")
+    if not cook_rows:
+        lines.append("  - 无")
+    lines.append("")
+    lines.append("完整 cook CSV 未导入清单见 `validation_omitted_real_steps.json`。")
+    return "\n".join(lines) + "\n"
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     stats = report["stats"]
     source = report["sourceCoverage"]
@@ -570,6 +791,12 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"{source['cookCsvRows']} 行，当前库标题精确命中 "
             f"{source['cookCsvExactTitleMatches']} 行，未命中 "
             f"{source['cookCsvMissingExactTitles']} 行。"
+        )
+    elif source["cookReferenceMatchedCount"] > 0 and not source["cookStandaloneImported"]:
+        cook_coverage_line = (
+            f"1. `YunYouJun/cook` 本轮按“自包含步骤优先”策略作为元数据参考：recipe.csv 共 "
+            f"{source['cookCsvRows']} 行，其中 {source['cookReferenceMatchedCount']} 行已匹配到完整菜谱并补充难度、工具、方法或 BV 字段；"
+            "未把缺少制作步骤的视频标题单独导入随机库。"
         )
     else:
         cook_coverage_line = (
@@ -639,7 +866,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             "2. 肉类判断不要只依赖 canonical ingredient；`contains` 与 `profile` 应来自同一套原始材料风险词表，并覆盖兔、龟、鸽、牡蛎等当前漏建模动物食材。",
             "3. 菜系不再写入 notes。若源资料明确给出菜系，后续迁移到 `recipe_filter_index(group=cuisine, confidence=source)`；无明确来源则留空。",
             "4. 食材索引拆成 `raw_ingredient`、`canonical_ingredient`、`family_ingredient` 三层，默认匹配 raw/canonical，只有用户显式扩展时才用 family。",
-            "5. 将 YunYouJun/cook 的 `recipe.csv` 单独导入为默认 cook 菜谱集，保留 difficulty/methods/tools/tags/stuff 原始字段；本地书籍资料作为另一个可选资料集。",
+            "5. 对缺少自包含步骤的数据源只做元数据参考或候选清单，不再生成通用模板步骤；后续若能补齐真实步骤，再分批进入随机库。",
         ]
     )
 

@@ -11,6 +11,7 @@ class ModuleIds {
   // Toolbox modules.
   static const String toolboxSleepAssistant = 'toolbox.sleep_assistant';
   static const String toolboxMiniGames = 'toolbox.mini_games';
+  static const String toolboxHumanTests = 'toolbox.human_tests';
   static const String toolboxSoothingMusic = 'toolbox.soothing_music';
   static const String toolboxSoundDeck = 'toolbox.sound_deck';
   static const String toolboxSingingBowls = 'toolbox.singing_bowls';
@@ -33,6 +34,7 @@ class ModuleIds {
   static const List<String> toolboxModules = <String>[
     toolboxSleepAssistant,
     toolboxMiniGames,
+    toolboxHumanTests,
     toolboxSoothingMusic,
     toolboxSoundDeck,
     toolboxSingingBowls,

@@ -25,6 +25,11 @@ class ModuleRegistry {
       parentId: ModuleIds.toolbox,
     ),
     ModuleDescriptor(
+      id: ModuleIds.toolboxHumanTests,
+      group: ModuleGroup.toolbox,
+      parentId: ModuleIds.toolbox,
+    ),
+    ModuleDescriptor(
       id: ModuleIds.toolboxSoothingMusic,
       group: ModuleGroup.toolbox,
       parentId: ModuleIds.toolbox,

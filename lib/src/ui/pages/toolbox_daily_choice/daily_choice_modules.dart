@@ -138,6 +138,8 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
           settings: widget.placeMapSettings,
           onSettingsChanged: widget.onPlaceMapSettingsChanged,
           onSavePlace: widget.onSaveOsmPlace,
+          activeDistanceCategory: category,
+          activeSceneCategory: scene,
           savedOptionIds: widget.customState.customOptions
               .where(
                 (item) =>
@@ -351,6 +353,12 @@ class _ActivityChoiceModule extends StatefulWidget {
     required this.builtInOptions,
     required this.customState,
     required this.onStateChanged,
+    required this.libraryStatus,
+    required this.libraryLoading,
+    required this.libraryInstalling,
+    required this.onInstallLibrary,
+    required this.activityCollections,
+    this.onInspectOption,
   });
 
   final AppI18n i18n;
@@ -359,6 +367,12 @@ class _ActivityChoiceModule extends StatefulWidget {
   final List<DailyChoiceOption> builtInOptions;
   final DailyChoiceCustomState customState;
   final ValueChanged<DailyChoiceCustomState> onStateChanged;
+  final DailyChoiceActivityLibraryStatus libraryStatus;
+  final bool libraryLoading;
+  final bool libraryInstalling;
+  final Future<void> Function() onInstallLibrary;
+  final List<DailyChoiceActivityCollection> activityCollections;
+  final Future<void> Function(DailyChoiceOption option)? onInspectOption;
 
   @override
   State<_ActivityChoiceModule> createState() => _ActivityChoiceModuleState();
@@ -366,6 +380,8 @@ class _ActivityChoiceModule extends StatefulWidget {
 
 class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
   String _activityId = randomActivityCategory.id;
+  String _collectionId = 'all';
+  bool _libraryStatusExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -374,11 +390,17 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
       ...activityCategories,
     ];
     final filtered = _activityId == randomActivityCategory.id
-        ? widget.options
-        : widget.options
+        ? _optionsForCollection(widget.options)
+        : _optionsForCollection(widget.options)
               .where((item) => item.categoryId == _activityId)
               .toList(growable: false);
     final category = categories.firstWhere((item) => item.id == _activityId);
+    final selectedCollection = _activityCollectionById(_collectionId);
+    if (_collectionId != 'all' && selectedCollection == null) {
+      _collectionId = 'all';
+    }
+    final collectionTitle = selectedCollection?.title(widget.i18n);
+    final busy = widget.libraryLoading || widget.libraryInstalling;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -390,6 +412,27 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
           accent: widget.accent,
           compactUnselected: true,
           onSelected: (value) => setState(() => _activityId = value),
+        ),
+        const SizedBox(height: ToolboxUiTokens.cardSpacing),
+        _ActivityCollectionSelector(
+          i18n: widget.i18n,
+          accent: widget.accent,
+          collections: widget.activityCollections,
+          selectedId: _collectionId,
+          onChanged: (value) => setState(() => _collectionId = value),
+        ),
+        const SizedBox(height: ToolboxUiTokens.cardSpacing),
+        _ActivityLibraryStatusPanel(
+          i18n: widget.i18n,
+          accent: widget.accent,
+          status: widget.libraryStatus,
+          busy: busy,
+          installing: widget.libraryInstalling,
+          loading: widget.libraryLoading,
+          expanded: _libraryStatusExpanded,
+          onInstallLibrary: widget.onInstallLibrary,
+          onToggleExpanded: () =>
+              setState(() => _libraryStatusExpanded = !_libraryStatusExpanded),
         ),
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         DailyChoiceRandomPanel(
@@ -404,25 +447,42 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
                 ? 'What to do today'
                 : 'What to do',
           ),
-          subtitle: category.subtitle(widget.i18n),
+          subtitle: collectionTitle == null
+              ? category.subtitle(widget.i18n)
+              : pickUiText(
+                  widget.i18n,
+                  zh: '${category.subtitleZh}；当前行动集：$collectionTitle。',
+                  en: '${category.subtitleEn}. Current set: $collectionTitle.',
+                ),
           options: filtered,
           emptyText: pickUiText(
             widget.i18n,
-            zh: '这个方向还没有行动条目。可以新增自己的低阻力动作。',
-            en: 'No actions here yet. Add your own low-friction action.',
+            zh: widget.libraryStatus.hasInstalledLibrary
+                ? '这个方向或行动集暂时没有候选。可以换一个行动集，或在管理里加入/新增行动。'
+                : '还没有安装内置行动库。可以先下载行动库，也可以在管理里新增自己的低阻力行动。',
+            en: widget.libraryStatus.hasInstalledLibrary
+                ? 'No actions match this direction or set. Switch sets or add one in Manage.'
+                : 'The built-in action library is not installed yet. Install it or add your own action.',
           ),
-          onDetail: (option) => showDailyChoiceDetailSheet(
-            context: context,
-            i18n: widget.i18n,
-            accent: widget.accent,
-            option: option,
-          ),
+          onDetail: (option) {
+            final handler = widget.onInspectOption;
+            if (handler != null) {
+              unawaited(handler(option));
+              return;
+            }
+            showDailyChoiceDetailSheet(
+              context: context,
+              i18n: widget.i18n,
+              accent: widget.accent,
+              option: option,
+            );
+          },
           onGuide: () => showDailyChoiceGuideSheet(
             context: context,
             i18n: widget.i18n,
             accent: widget.accent,
             title: pickUiText(widget.i18n, zh: '行动指南', en: 'Action guide'),
-            entries: activityGuideEntries,
+            modules: activityGuideModules,
           ),
           onManage: () => showDailyChoiceManagerSheet(
             context: context,
@@ -436,9 +496,258 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
             initialCategoryId: _activityId == randomActivityCategory.id
                 ? activityCategories.first.id
                 : _activityId,
+            onInspectOption: widget.onInspectOption,
           ),
         ),
       ],
+    );
+  }
+
+  List<DailyChoiceOption> _optionsForCollection(
+    List<DailyChoiceOption> options,
+  ) {
+    if (_collectionId == 'all') {
+      return options;
+    }
+    final collection = _activityCollectionById(_collectionId);
+    if (collection == null) {
+      return options;
+    }
+    final allowedIds = collection.optionIds.toSet();
+    return options
+        .where((item) => allowedIds.contains(item.id))
+        .toList(growable: false);
+  }
+
+  DailyChoiceActivityCollection? _activityCollectionById(String collectionId) {
+    if (collectionId == 'all') {
+      return null;
+    }
+    for (final collection in widget.activityCollections) {
+      if (collection.id == collectionId) {
+        return collection;
+      }
+    }
+    return null;
+  }
+}
+
+class _ActivityCollectionSelector extends StatelessWidget {
+  const _ActivityCollectionSelector({
+    required this.i18n,
+    required this.accent,
+    required this.collections,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  final AppI18n i18n;
+  final Color accent;
+  final List<DailyChoiceActivityCollection> collections;
+  final String selectedId;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final validSelectedId =
+        selectedId == 'all' || collections.any((item) => item.id == selectedId)
+        ? selectedId
+        : 'all';
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(14),
+      radius: ToolboxUiTokens.sectionPanelRadius,
+      borderColor: accent.withValues(alpha: 0.14),
+      shadowOpacity: 0.03,
+      child: DropdownButtonFormField<String>(
+        initialValue: validSelectedId,
+        isExpanded: true,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.playlist_add_check_rounded),
+          labelText: pickUiText(i18n, zh: '事件集 / 随机池', en: 'Action set'),
+          helperText: pickUiText(
+            i18n,
+            zh: '每次随机会基于当前行动集收口；选择内置行动库则查看全部可用行动。',
+            en: 'Random picks draw from this set; built-in library shows all available actions.',
+          ),
+        ),
+        items: <DropdownMenuItem<String>>[
+          DropdownMenuItem<String>(
+            value: 'all',
+            child: Text(pickUiText(i18n, zh: '内置行动库', en: 'Built-in actions')),
+          ),
+          ...collections.map(
+            (collection) => DropdownMenuItem<String>(
+              value: collection.id,
+              child: Text(
+                '${collection.title(i18n)} · ${collection.optionIds.length}',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            onChanged(value);
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _ActivityLibraryStatusPanel extends StatelessWidget {
+  const _ActivityLibraryStatusPanel({
+    required this.i18n,
+    required this.accent,
+    required this.status,
+    required this.busy,
+    required this.installing,
+    required this.loading,
+    required this.expanded,
+    required this.onInstallLibrary,
+    required this.onToggleExpanded,
+  });
+
+  final AppI18n i18n;
+  final Color accent;
+  final DailyChoiceActivityLibraryStatus status;
+  final bool busy;
+  final bool installing;
+  final bool loading;
+  final bool expanded;
+  final Future<void> Function() onInstallLibrary;
+  final VoidCallback onToggleExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasLibrary = status.hasInstalledLibrary;
+    final summary = hasLibrary
+        ? pickUiText(
+            i18n,
+            zh: '已安装 ${status.actionCount} 个行动；随机会结合方向、行动集和隐藏列表生成候选。',
+            en: '${status.actionCount} actions installed. Picks use direction, action set, and hidden items.',
+          )
+        : pickUiText(
+            i18n,
+            zh: '内置行动库尚未安装。下载后会写入本地 SQLite，行动内容不再硬编码在 App 里。',
+            en: 'The built-in action library is not installed. It will be downloaded and installed into local SQLite.',
+          );
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(16),
+      radius: ToolboxUiTokens.sectionPanelRadius,
+      borderColor: accent.withValues(alpha: 0.18),
+      shadowOpacity: 0.04,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                hasLibrary
+                    ? Icons.download_done_rounded
+                    : Icons.cloud_download_rounded,
+                color: accent,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  pickUiText(i18n, zh: '行动库状态', en: 'Action library'),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              ToolboxInfoPill(
+                text: busy
+                    ? pickUiText(i18n, zh: '处理中', en: 'Busy')
+                    : (hasLibrary
+                          ? pickUiText(i18n, zh: '已安装', en: 'Installed')
+                          : pickUiText(i18n, zh: '未安装', en: 'Missing')),
+                accent: accent,
+                backgroundColor: theme.colorScheme.surfaceContainerLow,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          if (status.errorMessage != null) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '上次同步失败：${status.errorMessage}',
+                en: 'Last sync failed: ${status.errorMessage}',
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+                height: 1.3,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              FilledButton.icon(
+                onPressed: busy ? null : () => unawaited(onInstallLibrary()),
+                icon: installing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_download_rounded),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: hasLibrary ? '刷新行动库' : '下载行动库',
+                    en: hasLibrary ? 'Refresh library' : 'Install library',
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onToggleExpanded,
+                icon: Icon(
+                  expanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                ),
+                label: Text(
+                  expanded
+                      ? pickUiText(i18n, zh: '收起说明', en: 'Less')
+                      : pickUiText(i18n, zh: '查看说明', en: 'Details'),
+                ),
+              ),
+            ],
+          ),
+          if (loading && !installing) ...<Widget>[
+            const SizedBox(height: 10),
+            LinearProgressIndicator(color: accent),
+          ],
+          if (expanded) ...<Widget>[
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '数据源会从远端 JSON 下载，安装成功后替换本地 SQLite。若下载失败，已有本地库会保留；没有本地库时仍可使用自己的行动集。',
+                en: 'The remote JSON is downloaded and installed into local SQLite. Existing local data is kept if refresh fails; personal action sets still work without the built-in library.',
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -5,11 +5,13 @@ class DailyChoiceEditorResult {
     required this.option,
     this.eatCollectionIds = const <String>{},
     this.wearCollectionIds = const <String>{},
+    this.activityCollectionIds = const <String>{},
   });
 
   final DailyChoiceOption option;
   final Set<String> eatCollectionIds;
   final Set<String> wearCollectionIds;
+  final Set<String> activityCollectionIds;
 }
 
 Future<DailyChoiceEditorResult?> showDailyChoiceEditorSheet({
@@ -31,6 +33,9 @@ Future<DailyChoiceEditorResult?> showDailyChoiceEditorSheet({
   List<DailyChoiceWearCollection> wearCollections =
       const <DailyChoiceWearCollection>[],
   Set<String> initialWearCollectionIds = const <String>{},
+  List<DailyChoiceActivityCollection> activityCollections =
+      const <DailyChoiceActivityCollection>[],
+  Set<String> initialActivityCollectionIds = const <String>{},
 }) {
   return showModalBottomSheet<DailyChoiceEditorResult>(
     context: context,
@@ -53,6 +58,8 @@ Future<DailyChoiceEditorResult?> showDailyChoiceEditorSheet({
         initialEatCollectionIds: initialEatCollectionIds,
         wearCollections: wearCollections,
         initialWearCollectionIds: initialWearCollectionIds,
+        activityCollections: activityCollections,
+        initialActivityCollectionIds: initialActivityCollectionIds,
       );
     },
   );
@@ -76,6 +83,8 @@ class DailyChoiceEditorSheet extends StatefulWidget {
     this.initialEatCollectionIds = const <String>{},
     this.wearCollections = const <DailyChoiceWearCollection>[],
     this.initialWearCollectionIds = const <String>{},
+    this.activityCollections = const <DailyChoiceActivityCollection>[],
+    this.initialActivityCollectionIds = const <String>{},
   });
 
   final AppI18n i18n;
@@ -93,6 +102,8 @@ class DailyChoiceEditorSheet extends StatefulWidget {
   final Set<String> initialEatCollectionIds;
   final List<DailyChoiceWearCollection> wearCollections;
   final Set<String> initialWearCollectionIds;
+  final List<DailyChoiceActivityCollection> activityCollections;
+  final Set<String> initialActivityCollectionIds;
 
   @override
   State<DailyChoiceEditorSheet> createState() => _DailyChoiceEditorSheetState();
@@ -113,12 +124,15 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
   late final Map<String, Set<String>> _selectedAttributes;
   late Set<String> _selectedEatCollectionIds;
   late Set<String> _selectedWearCollectionIds;
+  late Set<String> _selectedActivityCollectionIds;
   bool _saving = false;
 
   bool get _isEatModule =>
       widget.moduleId == DailyChoiceModuleId.eat.storageValue;
   bool get _isWearModule =>
       widget.moduleId == DailyChoiceModuleId.wear.storageValue;
+  bool get _isActivityModule =>
+      widget.moduleId == DailyChoiceModuleId.activity.storageValue;
 
   @override
   void initState() {
@@ -149,6 +163,7 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
     };
     _selectedEatCollectionIds = _resolveInitialEatCollectionIds();
     _selectedWearCollectionIds = _resolveInitialWearCollectionIds();
+    _selectedActivityCollectionIds = _resolveInitialActivityCollectionIds();
   }
 
   @override
@@ -204,6 +219,14 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
     }
     final validIds = widget.wearCollections.map((item) => item.id).toSet();
     return widget.initialWearCollectionIds.where(validIds.contains).toSet();
+  }
+
+  Set<String> _resolveInitialActivityCollectionIds() {
+    if (!_isActivityModule || widget.activityCollections.isEmpty) {
+      return <String>{};
+    }
+    final validIds = widget.activityCollections.map((item) => item.id).toSet();
+    return widget.initialActivityCollectionIds.where(validIds.contains).toSet();
   }
 
   void _save() {
@@ -317,6 +340,9 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
         wearCollectionIds: _isWearModule
             ? Set<String>.unmodifiable(_selectedWearCollectionIds)
             : const <String>{},
+        activityCollectionIds: _isActivityModule
+            ? Set<String>.unmodifiable(_selectedActivityCollectionIds)
+            : const <String>{},
       ),
     );
   }
@@ -380,6 +406,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
     });
   }
 
+  void _toggleActivityCollection(String collectionId) {
+    setState(() {
+      if (_selectedActivityCollectionIds.contains(collectionId)) {
+        _selectedActivityCollectionIds.remove(collectionId);
+      } else {
+        _selectedActivityCollectionIds.add(collectionId);
+      }
+    });
+  }
+
   String _fallbackDetails({
     required String title,
     required String subtitle,
@@ -424,6 +460,28 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
               : 'Main ingredients: $materialsPreview.',
         if (traitPreview.isNotEmpty)
           useZh ? '大致属于：$traitPreview。' : 'This usually fits: $traitPreview.',
+      ].join(' ');
+    }
+    if (_isActivityModule) {
+      final categoryTitle = _categoryTitle(
+        _categoryChoices,
+        _categoryId,
+        useZh,
+      );
+      final conditionPreview = materials.take(3).join(useZh ? '、' : ', ');
+      final leading = subtitle.isEmpty
+          ? (useZh
+                ? '这是一个保存到行动集里的可执行动作。'
+                : 'This is a saved action for an action set.')
+          : subtitle;
+      return <String>[
+        leading,
+        if (categoryTitle.isNotEmpty)
+          useZh ? '方向：$categoryTitle。' : 'Direction: $categoryTitle.',
+        if (conditionPreview.isNotEmpty)
+          useZh
+              ? '开始条件：$conditionPreview。'
+              : 'Start conditions: $conditionPreview.',
       ].join(' ');
     }
     if (!_isWearModule) {
@@ -494,27 +552,41 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                         widget.i18n,
                         zh: _isEatModule
                             ? '另存为个人食谱'
-                            : (_isWearModule ? '另存到我的衣柜' : '另存为自定义条目'),
+                            : (_isWearModule
+                                  ? '另存到我的衣柜'
+                                  : (_isActivityModule
+                                        ? '另存到行动集'
+                                        : '另存为自定义条目')),
                         en: _isEatModule
                             ? 'Save as personal recipe'
                             : (_isWearModule
                                   ? 'Save to my wardrobe'
-                                  : 'Save as custom item'),
+                                  : (_isActivityModule
+                                        ? 'Save to action set'
+                                        : 'Save as custom item')),
                       )
                     : widget.option == null
                     ? pickUiText(
                         widget.i18n,
-                        zh: _isWearModule ? '新增我的衣柜搭配' : '新增自定义条目',
+                        zh: _isWearModule
+                            ? '新增我的衣柜搭配'
+                            : (_isActivityModule ? '新增行动' : '新增自定义条目'),
                         en: _isWearModule
                             ? 'Add my wardrobe outfit'
-                            : 'Add custom item',
+                            : (_isActivityModule
+                                  ? 'Add action'
+                                  : 'Add custom item'),
                       )
                     : pickUiText(
                         widget.i18n,
-                        zh: _isWearModule ? '编辑我的衣柜搭配' : '编辑自定义条目',
+                        zh: _isWearModule
+                            ? '编辑我的衣柜搭配'
+                            : (_isActivityModule ? '编辑行动' : '编辑自定义条目'),
                         en: _isWearModule
                             ? 'Edit my wardrobe outfit'
-                            : 'Edit custom item',
+                            : (_isActivityModule
+                                  ? 'Edit action'
+                                  : 'Edit custom item'),
                       ),
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w900,
@@ -529,10 +601,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                       widget.i18n,
                       zh: _isEatModule
                           ? '主要餐段'
-                          : (_isWearModule ? '适用气温' : '分类'),
+                          : (_isWearModule
+                                ? '适用气温'
+                                : (_isActivityModule ? '行动方向' : '分类')),
                       en: _isEatModule
                           ? 'Primary meal'
-                          : (_isWearModule ? 'Temperature' : 'Category'),
+                          : (_isWearModule
+                                ? 'Temperature'
+                                : (_isActivityModule
+                                      ? 'Action direction'
+                                      : 'Category')),
                     ),
                   ),
                   items: _categoryChoices
@@ -644,6 +722,29 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                   ),
                 ],
               ],
+              if (_isActivityModule &&
+                  widget.activityCollections.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 14),
+                Text(
+                  pickUiText(
+                    widget.i18n,
+                    zh: '行动要写成低摩擦、可结束的事件：什么时候开始、做到哪一步算完成、什么情况可以停。',
+                    en: 'Save actions as low-friction, finishable events: when to start, what counts as done, and when to stop.',
+                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _EditorActivityCollectionSection(
+                  i18n: widget.i18n,
+                  accent: widget.accent,
+                  collections: widget.activityCollections,
+                  selectedIds: _selectedActivityCollectionIds,
+                  onToggle: _toggleActivityCollection,
+                ),
+              ],
               const SizedBox(height: 10),
               TextField(
                 controller: _titleController,
@@ -652,10 +753,14 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '菜名'
-                        : (_isWearModule ? '搭配名称 / 公式' : '名称'),
+                        : (_isWearModule
+                              ? '搭配名称 / 公式'
+                              : (_isActivityModule ? '行动名称' : '名称')),
                     en: _isEatModule
                         ? 'Dish name'
-                        : (_isWearModule ? 'Outfit formula' : 'Name'),
+                        : (_isWearModule
+                              ? 'Outfit formula'
+                              : (_isActivityModule ? 'Action name' : 'Name')),
                   ),
                   helperText: _isWearModule
                       ? pickUiText(
@@ -663,7 +768,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                           zh: '写成“核心单品 + 下装 + 鞋/外套”，以后更容易复用。',
                           en: 'Use “key piece + bottom + shoes/outer layer” so it is easy to reuse.',
                         )
-                      : null,
+                      : (_isActivityModule
+                            ? pickUiText(
+                                widget.i18n,
+                                zh: '写成动词开头的小动作，例如“散步 12 分钟”“整理桌面一小块”。',
+                                en: 'Start with a verb, such as “walk for 12 minutes” or “clear one desk zone”.',
+                              )
+                            : null),
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -675,10 +786,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '一句话推荐 / 口味特点'
-                        : (_isWearModule ? '一句话使用场景' : '一句话说明'),
+                        : (_isWearModule
+                              ? '一句话使用场景'
+                              : (_isActivityModule ? '触发场景' : '一句话说明')),
                     en: _isEatModule
                         ? 'Short recipe note'
-                        : (_isWearModule ? 'When to wear it' : 'Short note'),
+                        : (_isWearModule
+                              ? 'When to wear it'
+                              : (_isActivityModule
+                                    ? 'Trigger situation'
+                                    : 'Short note')),
                   ),
                   helperText: _isWearModule
                       ? pickUiText(
@@ -686,7 +803,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                           zh: '说明这套适合哪种日程、天气或心情，不必写成评价。',
                           en: 'Name the day, weather, or mood this outfit solves.',
                         )
-                      : null,
+                      : (_isActivityModule
+                            ? pickUiText(
+                                widget.i18n,
+                                zh: '写“注意力涣散时”“饭后不想坐着时”“睡前想收口时”这类入口。',
+                                en: 'Name the entry point, such as distracted, after a meal, or before bed.',
+                              )
+                            : null),
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -700,10 +823,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '详细介绍 / 适合什么时候做'
-                        : (_isWearModule ? '为什么这样搭 / 适合哪天穿' : '详细介绍'),
+                        : (_isWearModule
+                              ? '为什么这样搭 / 适合哪天穿'
+                              : (_isActivityModule ? '执行边界 / 为什么做' : '详细介绍')),
                     en: _isEatModule
                         ? 'Details / when to make it'
-                        : (_isWearModule ? 'Why it works' : 'Details'),
+                        : (_isWearModule
+                              ? 'Why it works'
+                              : (_isActivityModule
+                                    ? 'Why and boundary'
+                                    : 'Details')),
                   ),
                   helperText: _isWearModule
                       ? pickUiText(
@@ -711,7 +840,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                           zh: '可写比例、颜色、材质、行动便利和当天场景。',
                           en: 'Mention proportion, color, fabric, mobility, and scene.',
                         )
-                      : null,
+                      : (_isActivityModule
+                            ? pickUiText(
+                                widget.i18n,
+                                zh: '说明目标、完成标准和退出条件，不把行动写成无限任务。',
+                                en: 'State the goal, done condition, and exit rule so it does not become endless.',
+                              )
+                            : null),
                 ),
               ),
               const SizedBox(height: 10),
@@ -726,12 +861,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                         ? '食材清单（每行一个）'
                         : (_isWearModule
                               ? '核心单品 / 搭配组成（每行一个）'
-                              : '材料 / 条件（每行一个）'),
+                              : (_isActivityModule
+                                    ? '开始条件 / 准备（每行一个）'
+                                    : '材料 / 条件（每行一个）')),
                     en: _isEatModule
                         ? 'Ingredients (one per line)'
                         : (_isWearModule
                               ? 'Pieces / components'
-                              : 'Materials / conditions'),
+                              : (_isActivityModule
+                                    ? 'Start conditions'
+                                    : 'Materials / conditions')),
                   ),
                   helperText: _isWearModule
                       ? pickUiText(
@@ -739,7 +878,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                           zh: '优先写真实拥有的单品；没有同款时写可替代颜色、版型或面料。',
                           en: 'Use real closet pieces first; add substitutes by color, shape, or fabric.',
                         )
-                      : null,
+                      : (_isActivityModule
+                            ? pickUiText(
+                                widget.i18n,
+                                zh: '例如：计时器 8 分钟、无需换衣、只需要手机备忘录。',
+                                en: 'For example: 8-minute timer, no outfit change, notes app only.',
+                              )
+                            : null),
                 ),
               ),
               const SizedBox(height: 10),
@@ -752,12 +897,16 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '详细做法（每行一步）'
-                        : (_isWearModule ? '穿法步骤 / 出门检查' : '方法步骤（每行一步）'),
+                        : (_isWearModule
+                              ? '穿法步骤 / 出门检查'
+                              : (_isActivityModule
+                                    ? '执行步骤（每行一步）'
+                                    : '方法步骤（每行一步）')),
                     en: _isEatModule
                         ? 'Recipe steps'
                         : (_isWearModule
                               ? 'Outfit steps / checklist'
-                              : 'Steps'),
+                              : (_isActivityModule ? 'Action steps' : 'Steps')),
                   ),
                   helperText: _isWearModule
                       ? pickUiText(
@@ -765,7 +914,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                           zh: '建议写：先确定内外层，再看比例，最后检查鞋包和天气。',
                           en: 'Try: layer first, then proportion, then shoes, bag, and weather.',
                         )
-                      : null,
+                      : (_isActivityModule
+                            ? pickUiText(
+                                widget.i18n,
+                                zh: '第一步必须足够小；最后一步写“到点停止或记录下一步”。',
+                                en: 'Make step one tiny; end with stop on time or record next step.',
+                              )
+                            : null),
                 ),
               ),
               const SizedBox(height: 10),
@@ -778,10 +933,18 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                     widget.i18n,
                     zh: _isEatModule
                         ? '技巧 / 备注（每行一条）'
-                        : (_isWearModule ? '替换方案 / 保养提醒' : '补充备注（每行一条）'),
+                        : (_isWearModule
+                              ? '替换方案 / 保养提醒'
+                              : (_isActivityModule
+                                    ? '退出条件 / 注意事项'
+                                    : '补充备注（每行一条）')),
                     en: _isEatModule
                         ? 'Tips / notes'
-                        : (_isWearModule ? 'Wear notes / care' : 'Extra notes'),
+                        : (_isWearModule
+                              ? 'Wear notes / care'
+                              : (_isActivityModule
+                                    ? 'Exit rules / notes'
+                                    : 'Extra notes')),
                   ),
                   helperText: _isWearModule
                       ? pickUiText(
@@ -789,7 +952,13 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                           zh: '记录容易忘的点：裤长、鞋底、防晒、保暖、易皱或洗护。',
                           en: 'Record easy-to-forget details: hem, traction, sun, warmth, wrinkles, care.',
                         )
-                      : null,
+                      : (_isActivityModule
+                            ? pickUiText(
+                                widget.i18n,
+                                zh: '写明身体不舒服、天气不合适、时间被打断时可以如何替代。',
+                                en: 'Note substitutions when body, weather, or time is not suitable.',
+                              )
+                            : null),
                 ),
               ),
               const SizedBox(height: 10),
@@ -802,7 +971,9 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
                         ? '附加标签（例如家常、下饭、减脂）'
                         : (_isWearModule
                               ? '附加标签（会自动并入风格特征）'
-                              : '标签（用顿号、逗号或空格分隔）'),
+                              : (_isActivityModule
+                                    ? '附加标签（例如低阻力、户外、重启）'
+                                    : '标签（用顿号、逗号或空格分隔）')),
                     en: 'Tags',
                   ),
                   helperText: _isWearModule
@@ -1068,6 +1239,79 @@ class _EditorWearCollectionSection extends StatelessWidget {
                   i18n,
                   zh: '${collection.optionIds.length} 套搭配',
                   en: '${collection.optionIds.length} outfits',
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditorActivityCollectionSection extends StatelessWidget {
+  const _EditorActivityCollectionSection({
+    required this.i18n,
+    required this.accent,
+    required this.collections,
+    required this.selectedIds,
+    required this.onToggle,
+  });
+
+  final AppI18n i18n;
+  final Color accent;
+  final List<DailyChoiceActivityCollection> collections;
+  final Set<String> selectedIds;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ToolboxSurfaceCard(
+      padding: const EdgeInsets.all(14),
+      borderColor: accent.withValues(alpha: 0.16),
+      shadowOpacity: 0.03,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.playlist_add_check_rounded, size: 18, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                pickUiText(i18n, zh: '保存到行动集', en: 'Save to action sets'),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            pickUiText(
+              i18n,
+              zh: '建议至少选一个行动集。之后随机会先按行动集收口，再从里面抽取具体行动。',
+              en: 'Choose at least one action set when possible. Random picks will draw from the selected set.',
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final collection in collections)
+            CheckboxListTile(
+              value: selectedIds.contains(collection.id),
+              onChanged: (_) => onToggle(collection.id),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(collection.title(i18n)),
+              subtitle: Text(
+                pickUiText(
+                  i18n,
+                  zh: '${collection.optionIds.length} 个行动',
+                  en: '${collection.optionIds.length} actions',
                 ),
               ),
             ),

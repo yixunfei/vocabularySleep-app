@@ -5,6 +5,7 @@ Future<bool?> _confirmHideBuiltInRecipe({
   required AppI18n i18n,
   required DailyChoiceOption option,
   bool isWearModule = false,
+  bool isActivityModule = false,
 }) {
   return showDialog<bool>(
     context: context,
@@ -14,7 +15,11 @@ Future<bool?> _confirmHideBuiltInRecipe({
           pickUiText(
             i18n,
             zh: '确认不喜欢？',
-            en: isWearModule ? 'Hide this outfit?' : 'Hide this recipe?',
+            en: isWearModule
+                ? 'Hide this outfit?'
+                : (isActivityModule
+                      ? 'Hide this action?'
+                      : 'Hide this recipe?'),
           ),
         ),
         content: Text(

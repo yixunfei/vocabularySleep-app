@@ -18,6 +18,11 @@ String localizedModuleLabel(AppI18n i18n, String moduleId) {
       en: 'Sleep assistant',
     ),
     ModuleIds.toolboxMiniGames => pickUiText(i18n, zh: '小游戏', en: 'Mini games'),
+    ModuleIds.toolboxHumanTests => pickUiText(
+      i18n,
+      zh: '人类测试',
+      en: 'Human tests',
+    ),
     ModuleIds.toolboxSoothingMusic => pickUiText(
       i18n,
       zh: '舒缓音乐',

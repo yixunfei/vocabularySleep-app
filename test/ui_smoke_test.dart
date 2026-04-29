@@ -689,11 +689,43 @@ void main() {
       );
       expect(find.text('Schulte grid'), findsOneWidget);
       await tester.scrollUntilVisible(
+        find.text('Human test hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Human test hub'), findsOneWidget);
+      await tester.scrollUntilVisible(
         find.text('Daily decision'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Daily decision'), findsOneWidget);
+    });
+
+    testWidgets('toolbox page opens human test hub', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      final humanTestCard = find
+          .ancestor(
+            of: find.text('Human test hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+
+      await tester.scrollUntilVisible(
+        find.text('Human test hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(humanTestCard);
+      await tester.pumpAndSettle();
+      await tester.tap(humanTestCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Test hub'), findsOneWidget);
+      expect(find.text('Reaction test'), findsWidgets);
+      expect(find.text('Color vision'), findsOneWidget);
     });
 
     testWidgets('toolbox page opens schulte grid and advances target', (

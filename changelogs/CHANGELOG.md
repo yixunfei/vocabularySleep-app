@@ -1,5 +1,500 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_096-HUMAN-TESTS-HUB] - 2026-04-29
+
+### 原因
+- 用户希望在工具箱模块新增“人类测试”类型，参考 `https://aring.cc/human-benchmark/dashboard/` 中的趣味测试条目，把反应、记忆、视觉、手眼协调、计算和注意力类测试移植到当前项目。
+
+### 新增
+- 工具箱新增独立 `toolbox.human_tests` 模块 ID、模块注册、模块管理文案和入口卡片。
+- 新增 `HumanTestsToolPage` 人类测试中心，移动端优先展示 17 个测试入口：反应测试、数字记忆、黑猩猩测试、打字测试、视觉记忆、瞄准测试、色觉测试、斯特鲁普、词汇记忆、序列记忆、运气测试、手速测试、时间感知测试、手眼协调测试、计算能力测试、动态视力测试、持续注意力测试。
+- 新增本地 Flutter 交互实现，按动作/计时、记忆、视觉、认知注意力和共享 UI 拆分文件，避免单页继续膨胀。
+- 新增工具箱 smoke 测试，覆盖工具箱入口列表展示“Human test hub”以及进入人类测试中心后的核心条目渲染。
+
+### 修改
+- `PROJECT_DOMAIN.md` 和 `modules/toolbox/README.md` 补充人类测试模块范围、文件边界、即时结果边界和后续扩展路线。
+
+### 风险变更
+- 本轮仅参考网页测试条目、玩法规则和信息结构，不复制外站源码或样式实现。
+- 人类测试结果仅在当前页面即时展示，不保存到 AppState、主数据库、学习记录或历史统计。
+- 测试结果只适合作为趣味反馈，不能作为医学、心理、职业能力或教育评价依据。
+
+### 验证
+- `dart format lib\src\core\module_system\module_id.dart lib\src\core\module_system\module_registry.dart lib\src\ui\module\module_access.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\ui\pages\toolbox_human_tests.dart lib\src\ui\pages\toolbox_human_tests_shared.dart lib\src\ui\pages\toolbox_human_tests_action.dart lib\src\ui\pages\toolbox_human_tests_memory.dart lib\src\ui\pages\toolbox_human_tests_visual.dart lib\src\ui\pages\toolbox_human_tests_cognition.dart test\ui_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_human_tests.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\core\module_system\module_id.dart lib\src\core\module_system\module_registry.dart lib\src\ui\module\module_access.dart`（通过，No issues found）
+- `flutter test test\ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过，1 test）
+- `flutter test test\ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
+- `git diff --check`（通过，仅提示当前工作树中既有文件下次被 Git 触碰时 LF 将按配置替换为 CRLF）
+
+## [Unreleased-PLAN_095-ROULETTE-SINGLE-SPIN-AUDIO-CHANNEL-FIX] - 2026-04-29
+
+### 原因
+- 用户反馈俄罗斯轮盘赌的弹仓只需要在开局时旋转一次，后续扣动扳机不应重复旋转弹仓。
+- Android 运行时出现 `roulette_spin`、`roulette_click`、`roulette_shot` 三个 `audioplayers` 事件通道从非平台线程发送消息的警告。
+
+### 修改
+- 俄罗斯轮盘赌移除每次空膛后的弹仓旋转动画，后续扣动扳机仅推进当前膛位高亮并保留空膛机械抖动反馈。
+- 弹仓视觉旋转只保留在「旋转弹仓」准备开局阶段。
+- 俄罗斯轮盘赌移除三个独立 `AudioPlayer` 实例，不再创建 `roulette_spin/click/shot` 事件通道；短反馈音改用 Flutter `SystemSound`，触感反馈保持不变。
+- 调整空膛说明文案，从“弹仓前进”改为“机械落位到下一膛”，避免误导为重复旋转弹仓。
+
+### 风险变更
+- 本轮不修改 `_buildSequence`、子弹数、命中判断和扣动流程语义，只收敛动效和音频实现方式。
+- 俄罗斯轮盘赌不再播放三段自定义 wav 资产音效，后续若需要恢复自定义音色，建议用无事件通道的原生短音效实现。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart test\toolbox_mini_games_roulette_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart test\toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
+- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，1 test）
+- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
+
+## [Unreleased-PLAN_092-RANDOM-ASSISTANT-REALISTIC-DICE] - 2026-04-29
+
+### 原因
+- 用户希望重新设计「工具箱 - 每日决策 - 随机助手」中的骰子样式和特效，让骰子更真实自然，而不是只像平面图标或简单旋转块。
+
+### 修改
+- 随机助手骰子舞台新增柔和桌面承托、桌面纹理、滚动轨迹光痕和落定氛围光，增强骰子所处环境的真实感。
+- 骰子动画从单纯旋转调整为带有非线性滑移、弹跳高度、接触阴影、碰撞压缩和落定轻微回摆的组合动效。
+- 骰子本体绘制升级为更圆润的多面实体：增加树脂/象牙质感、侧面厚度、圆角边缘、微颗粒纹理、玻璃高光和选中态描边。
+- 点数改为更接近嵌入墨点的凹陷质感，超过 6 面的数字面增加刻印阴影和高光，不改变原有面数分配。
+
+### 风险变更
+- 本轮只修改 `daily_choice_custom_random_visuals.dart` 的展示层和动效绘制，不修改随机引擎、概率计算、骰子分组或结果收口逻辑。
+- 新增绘制细节会略微增加骰子舞台的 painter 工作量，已保持在局部 `RepaintBoundary` 内并通过定向测试验证。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+
+## [Unreleased-PLAN_093-ROULETTE-IMMERSIVE-EFFECTS] - 2026-04-29
+
+### 原因
+- 用户希望重新设计「工具箱 - 游戏中心 - 俄罗斯轮盘赌」模块中的动画与特效，让左轮舞台尽可能真实、有机械重量和临场代入感。
+
+### 修改
+- 俄罗斯轮盘赌新增环境呼吸、空膛机械抖动和命中后坐三组视觉动画控制器，强化弹仓旋转、扳机反馈和击发瞬间的节奏。
+- 重绘左轮枪 `CustomPainter`：增加枪管内膛、弹仓倒角、膛孔深度、金属高光、木柄纹理、螺丝、机械缝隙、枪口火光和命中烟雾。
+- 主舞台改为暗场聚光与台面氛围层，加入低强度尘粒、桌面线条、短促冲击光和稳定状态承托层，避免关键文字悬浮在复杂背景上。
+- 顶部状态区改为装填、空膛、膛位和状态四个独立仪表卡；准备区收敛为装填控制台，保留原有装填 slider、旋转弹仓、扣动扳机和重置操作。
+
+### 修复
+- 修复 `dart:ui` 多色渐变缺少 `colorStops` 导致俄罗斯轮盘舞台首帧绘制崩溃的问题。
+- 新增俄罗斯轮盘赌页面 smoke test，覆盖沉浸舞台首帧绘制，避免同类 `CustomPainter` 渐变参数问题回归。
+
+### 风险变更
+- 本轮只改俄罗斯轮盘赌表现层、绘制层和动效参数，不修改 `_buildSequence`、子弹数、命中判断、音效资源和扣动流程语义。
+- 命中特效由高频闪烁改为短促冲击光、后坐、火光和烟雾消散，降低视觉疲劳风险。
+- 新增多个轻量 `CustomPainter` 绘制细节，后续可在真机上继续观察低端设备帧率。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_mini_games_roulette.dart`（通过）
+- `dart format test\toolbox_mini_games_roulette_smoke_test.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart test\toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
+- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，1 test）
+- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
+
+## [Unreleased-PLAN_094-RANDOM-WHEEL-REALISTIC-REDESIGN] - 2026-04-29
+
+### 原因
+- 用户希望重新设计「工具箱 - 每日决策 - 随机助手」中的大转盘样式和特效，使其尽可能接近真实桌面抽奖轮盘。
+
+### 修改
+- 大转盘舞台新增桌面承托、低饱和光晕和固定指针支架，让主舞台更像真实轮盘装置，而不是平面色盘。
+- 重绘转盘本体：增加厚度侧壁、金属外圈、内外圈刻度、分隔铆钉、中心轴、螺栓和扇区材质高光。
+- 中奖停靠时增加扇区边缘光、轻微轮体起伏、指针弹片颤动和慢停回弹，强化真实惯性与停靠反馈。
+- 调整移动端舞台半径，避免厚外圈和桌面阴影在紧凑高度下被裁切。
+
+### 风险变更
+- 本轮仅修改随机助手大转盘视觉和动效绘制，不修改 `DailyChoiceCustomRandomEngine` 的概率、抽取、骰子或硬币逻辑。
+- 转盘绘制层比之前更复杂，但仍限制在单个 `RepaintBoundary` 和轻量 `CustomPainter` 内，未引入新依赖或图片资产。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+
+## [Unreleased-PLAN_090-DECISION-ACTION-CARD] - 2026-04-29
+
+### 原因
+- 用户希望进一步完善「每日抉择 - 决策助手」的具体功能落地能力，不止给出模型分析，还要帮助用户把结论变成可执行动作。
+
+### 新增
+- 决策助手新增「落地执行卡」：承接模型报告结果，展示当前应先补信息、收口执行还是继续校准。
+- 新增一键生成落地草案：自动生成下一步动作、关键验证信息、停止规则、复盘触发和失败预演五项内容。
+- 新增执行草案编辑区，用户可按自己的真实情境修改自动生成内容。
+- 新增「复制执行简报」能力，可将决策问题、模型共识、推荐模型和五项落地草案复制到剪贴板。
+
+### 修改
+- 决策助手输出链路从「问答输入 → 模型报告 → 检查清单」补强为「问答输入 → 模型报告 → 落地执行 → 检查清单」，更符合具体使用闭环。
+- 落地卡默认保持摘要状态，避免页面启动时额外展开大段表单。
+
+### 风险变更
+- 自动生成内容仅作为执行草案，仍需用户根据真实约束确认和编辑；高风险医疗、法律、财务等事项不应只依赖本模块执行。
+
+### 验证
+- `dart format .\test\daily_choice_hub_smoke_test.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_interaction.dart`（通过）
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，18 tests）
+
+## [Unreleased-PLAN_089-RANDOM-ASSISTANT-VISUAL-POLISH] - 2026-04-29
+
+### 原因
+- 用户反馈「工具箱 - 每日抉择 - 随机助手」中的大转盘、骰子与硬币样式和特效仍不够现代自然，尤其骰子需要呈现多面立体结构，而不是简单平面图片。
+
+### 修改
+- 随机助手舞台容器改为更柔和的渐变承托层，减少生硬白底感，并保留稳定边界以保证可读性。
+- 大转盘增加轮体厚度、底部承托阴影、内外圈刻度、中心轴高光和更明确的指针层次，中奖扇区停留时有更清晰的高光边界。
+- 骰子从平面圆角方块改为 Flutter `CustomPainter` 绘制的可变面数立体多面体：按 3 到 12 面绘制正面多边形、背面偏移、侧面分片、棱线、高光、阴影和落地反馈。
+- 骰子继续保留 D1 / 面数 / 当前面值显示；6 面以内使用点数，超过 6 面显示数字，不改变原有面数分配和抽取结果。
+- 硬币翻转改为根据最终结果决定落在正面或反面，并增加金属边缘压缩、环形纹理、刻度、阴影和中奖停留光感。
+
+### 风险变更
+- 本轮只改随机助手视觉层和动效绘制，不修改 `DailyChoiceCustomRandomEngine` 的概率、骰子分组、硬币计数和结果收口逻辑。
+- 新增多个轻量 `CustomPainter`，视觉层复杂度提高；已通过定向分析和测试，后续仍可在真机上观察低端设备帧率。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+
+## [Unreleased-PLAN_088-MINI-GAMES-INTERACTION-UPGRADE] - 2026-04-29
+
+### 原因
+- 用户反馈俄罗斯轮盘赌当前界面像骰子，缺少真实左轮枪模拟、准备上膛流程、自定义特效与音效；俄罗斯方块需要按屏幕高度适配、改用遥控手柄式控制、增加难度与失败结算；推箱子需要难度设置，并支持多个箱子和多个目标点。
+
+### 新增
+- 俄罗斯轮盘赌新增“准备：上膛并旋转弹仓”流程，准备时会重洗弹仓并播放弹仓旋转音效。
+- 俄罗斯轮盘赌新增三段本地 wav 音效资源：弹仓旋转、空膛金属咔哒、击发爆裂音效，并接入 `audioplayers` 资产播放。
+- 俄罗斯轮盘赌新增左轮枪 CustomPainter 舞台，包含枪身、枪管、弹仓、扳机、击锤、当前膛位高亮、扣动扳机动画和命中枪口火光。
+- 俄罗斯方块新增难度档位：放松、经典、竞速；每个档位配置不同初始下降速度、每级加速幅度和升级行数。
+- 俄罗斯方块新增失败结算弹窗，显示得分、消行、等级和难度，并支持直接再来一局。
+- 推箱子新增难度档位：单箱、双箱、三箱；按难度生成多个箱子、多个目标点和多条正确推动路线。
+
+### 修改
+- 俄罗斯方块棋盘按屏幕高度动态限制尺寸，避免固定高度在小屏上过长。
+- 俄罗斯方块控制区改为五键手柄：上键暂停/继续，左/右键移动，下键软降且长按硬降，中间键变形。
+- 推箱子提示逻辑改为在多个箱子的正确路线中寻找下一步可推箱子，并在显示路线时展示多条路径。
+- `pubspec.yaml` 新增 `assets/toolbox/games/roulette/` 资产目录。
+
+### 风险变更
+- 俄罗斯轮盘赌命中特效更明显，仍保持用户主动扣动扳机后短时触发，避免循环闪烁。
+- 推箱子多箱关卡采用“先生成多条可解路径，再放置障碍并验证”的轻量生成策略；复杂程度高于单箱，但仍不是完整专业关卡编辑器。
+
+### 验证
+- `flutter pub get`（通过）
+- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart lib\src\ui\pages\toolbox_mini_games_tetris.dart lib\src\ui\pages\toolbox_mini_games_sokoban.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart`（通过）
+- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
+- `git diff --check`（通过，仅提示当前工作树若干既有文件下次被 Git 触碰时 LF 会按配置转为 CRLF）
+
+## [Unreleased-PLAN_086-DAILY-CHOICE-UX-COPY-LAYOUT] - 2026-04-29
+
+### 原因
+- 用户反馈每日决策当前 UX 结构偏长、区块边界不清、折叠入口不够醒目，且部分默认文案如 Option A/B 不够本地化和专业。
+
+### 新增
+- 决策助手新增彩色分区标题与辅助状态色，区分问题、可选项、情境分型、校准和报告摘要。
+- 折叠/展开入口新增彩色圆形图标状态：展开态使用主强调色，收起态使用辅助提醒色。
+- 决策报告的完整模型对照改为弹窗查看，决策检查清单也改为摘要卡 + 弹窗清单。
+
+### 修改
+- 默认可选项文案从 Option A/B/C 调整为中文环境下的「可选项 A/B/C」，自定义随机默认项同步调整。
+- 决策助手、计算模型、报告和检查区文案精简为更短的提示性表达。
+- 高级评分表、随机助手参数区和模型对照折叠入口使用更清晰的颜色边界与状态提示。
+
+### 风险变更
+- 详细模型对照和决策检查清单从主页面下沉到弹窗，需要用户多点击一次；主页面保留摘要、稳定度、信息价值和高风险提醒。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+- `git diff --check`（通过，仅提示当前工作树中既有 LF/CRLF 转换警告）
+
+## [Unreleased-PLAN_088-RANDOM-ASSISTANT-UX-MOTION] - 2026-04-29
+
+### 原因
+- 用户反馈「自定义随机」命名、参数编辑位置和三种随机动画质感仍不够自然：选项参数在页面底部导致频繁上下滑动，转盘/骰子/硬币动画也缺少真实质感和减速/碰撞/金属旋转反馈。
+
+### 修改
+- 将「自定义随机」统一更名为「随机助手」，同步每日决策模块入口、页面标题、指南和文档说明。
+- 随机助手页面重排为「方式选择 → 选项与参数 → 随机舞台」，选项参数与方式参数合并为随机上方的可折叠面板。
+- 参数面板新增有效选项数/总选项数摘要，编辑名称、增删选项、切换方式或调整骰子/硬币参数时实时刷新当前数量和可用约束。
+- 大转盘改为更高质感的分区色盘：高对比扇区、外圈刻度、中心轴、指针和多圈缓慢减速停止。
+- 骰子动画改为更真实的骰面表达：6 面内显示点数，大于 6 面显示数字，并增加旋转、弹跳和碰撞感。
+- 硬币动画改为金属质感圆币，支持快速翻转显示正反两面和最终结果。
+
+### 风险变更
+- 更丰富的动画仍保持轻量 Transform 和 CustomPainter 实现，不引入物理引擎；低端设备可能需要继续观察帧率。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_random_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+
+## [Unreleased-PLAN_086-CUSTOM-RANDOM] - 2026-04-29
+
+### 原因
+- 用户希望在「工具箱 - 每日决策」中单独新增「随机助手」子模块，支持均匀、加权、联合分布多轮等随机方式，并提供转盘、骰子、硬币等动画效果。
+
+### 新增
+- 每日决策新增「随机助手」子模块：支持临时录入选项、编辑权重和条件概率，并在均匀/加权/联合多轮之间切换。
+- 新增自定义随机引擎，集中处理概率归一化、加权抽取、联合分布多轮抽取、骰子面数分配和多硬币结果收口。
+- 新增三类动画舞台：大转盘按当前概率模型展示扇区，骰子按选项数拆分为 3 到 12 面的多骰子，硬币限制为两面均匀并支持多枚硬币。
+- 新增引擎单元测试和 hub 冒烟测试，覆盖加权概率、联合概率、骰子约束、硬币约束和新子模块入口。
+
+### 修改
+- 每日决策入口从五模块更新为六模块，并将「随机助手」接入模块切换器。
+- 同步 `PROJECT_DOMAIN.md` 与 `modules/toolbox/README.md` 中的每日抉择模块边界说明。
+
+### 风险变更
+- 随机助手仅适合低风险、可回退、选项差异不大的选择；高风险医疗、法律、财务或不可逆决策仍应使用决策助手或专业意见。
+- 骰子动画在超过 12 个选项时采用多骰子分组展示，最终抽取仍对全部选项保持均匀。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_random_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+
+## [Unreleased-PLAN_087-MINI-GAMES-EXPANSION] - 2026-04-29
+
+### 原因
+- 用户希望在工具箱-游戏中心中补充俄罗斯轮盘赌、俄罗斯方块和推箱子三个小游戏，并要求轮盘赌具备音效、闪烁、震动反馈，推箱子关卡至少保证有解并提供提示/正确路线辅助。
+
+### 新增
+- 游戏中心新增俄罗斯轮盘赌入口与页面：支持 1-5 发子弹设置、逐次扣动扳机、空膛系统点击音、命中后的系统警示音、触感反馈和短时全屏闪烁效果。
+- 游戏中心新增俄罗斯方块入口与页面：支持 10x20 棋盘、七种方块、旋转、左右移动、软降、硬降、消行得分、等级加速、暂停和新局。
+- 游戏中心新增推箱子入口与页面：先生成箱子的正确推动路径，再生成障碍并验证路径可达；支持移动、撤销、提示、正确路线显示、新关卡和基于正确路径步数的难度展示。
+
+### 修改
+- 更新工具箱游戏中心入口说明与 mini games hub 条目，使新增三个小游戏与现有数独、扫雷、拼图、五子棋和 2048/4096 一起展示。
+- 新增小游戏均拆分为独立 `toolbox_mini_games_*.dart` part 文件，保持 hub 文件只负责页面入口与导航组织。
+
+### 风险变更
+- 俄罗斯轮盘赌的命中特效包含短时闪屏和震动，已限制为用户主动点击后的低频短时反馈，但敏感用户仍可能感到刺激。
+- 俄罗斯方块与推箱子采用本地轻量规则引擎，未引入第三方游戏库；后续如需关卡包、排行榜、AI 求解器或更完整规则，可单独评估成熟开源实现。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart lib\src\ui\pages\toolbox_mini_games_tetris.dart lib\src\ui\pages\toolbox_mini_games_sokoban.dart`（通过）
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart`（通过）
+- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
+- `git diff --check`（通过，仅提示当前工作树若干既有文件下次被 Git 触碰时 LF 会按配置转为 CRLF）
+
+## [Unreleased-PLAN_084-ACTIVITY-LIBRARY-SETS] - 2026-04-29
+
+### 原因
+- 用户希望完善「工具箱 - 每日决策 - 干什么」子模块：像吃什么、穿什么一样支持可管理的自定义事件集，并把 demo 静态行动数据升级为可上传 S3、App 下载后写入 SQLite 的真实行动库。
+- 原有干什么数据仍带有从菜谱 demo 复制来的材料/步骤语义，需要改成“开始条件、执行步骤、退出边界”的行动结构，并补充具体问题导向的行动指南。
+
+### 新增
+- 干什么新增用户可管理的行动集：支持默认行动集、自建行动集、重命名、删除、导入导出，以及在编辑行动时勾选所属行动集。
+- 新增 `DailyChoiceActivityLibraryStore`：从 `activity_data/daily_choice_activity_library.json` 下载远端 JSON，安装为本地 `toolbox_daily_choice_activity.db`，并支持摘要、详情和分类/场景查询。
+- 新增干什么数据生成脚本，已导出到 `D:\vocabularySleep-resources\干什么-数据`：包含 JSON、SQLite、`FORMAT.md` 和 `GENERATION_SUMMARY.md`，当前 48 条行动。
+- 新增行动库测试，覆盖远端 JSON 安装 SQLite、失败保留旧库、无硬编码 activity seed；自定义状态测试覆盖行动集持久化、删除清理和成员重写。
+
+### 修改
+- 干什么随机候选改为基于“方向 + 当前行动集 + 隐藏列表”生成，未安装内置库时保留明确下载入口和个人行动入口。
+- 干什么管理页接入行动集筛选、加入/移出行动集、行动集导入导出和 activity 专属编辑文案。
+- 干什么行动详情语义从菜谱式“材料/制作方法”推进为“开始条件/执行步骤/关键提示”，数据字段继续复用 `DailyChoiceOption` 以降低模块耦合。
+- 行动指南入口切换为具体问题模块，覆盖注意力涣散、什么时候出门散步、低意志力启动和行动边界。
+- 移除旧的 activity demo seed part 文件，避免干什么内置行动继续留在编译单元中。
+
+### 风险变更
+- 首次安装前内置行动为空，用户需要先下载行动库或创建个人行动；UI 已在状态面板和空状态提示这一点。
+- 当前远端文件路径固定为 `activity_data/daily_choice_activity_library.json`，上传 S3 时需要保持同一路径，或后续再调整 store 的 `remoteLibraryKey`。
+- 行动建议只作为日常行动判断和注意力复盘提示，不作为医疗、心理或安全决策依据。
+
+### 验证
+- `python -X utf8 -m py_compile .\scripts\generate_daily_choice_activity_dataset.py`（通过）
+- `python -X utf8 .\scripts\generate_daily_choice_activity_dataset.py`（通过，导出 48 条行动）
+- SQLite `PRAGMA integrity_check = ok`，`user_version = 1`，有效行动 48 条
+- JSON SHA256 `1E32FBD4937AF940578C6BD0ABEC404895525B6306BBC087A1EC1CA6CED01FA5`
+- DB SHA256 `E64DFB24DE244CA350D598F7730DCA43E3E5720ECF47021721E212A22321E022`
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_state_test.dart .\test\daily_choice_activity_library_store_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_custom_state_test.dart .\test\daily_choice_activity_library_store_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，25 tests）
+- `git diff --check`（通过）
+
+## [Unreleased-PLAN_085-DECISION-ASSISTANT-GUIDED-REPORT] - 2026-04-29
+
+### 原因
+- 用户反馈「工具箱 - 每日抉择 - 决策助手」当前过于繁琐、片面且难以把握，实际使用门槛偏高。
+- 本轮参考 `D:\vocabularySleep-resources\决策` 下三份决策资料，将优质决策六要素、偏差/噪声控制、概率校准和情景分析收敛为更可操作的移动端交互。
+
+### 新增
+- 决策助手新增「问答式快速决策」入口：支持填写决策问题、快速命名方案、套用常规比较/低风险快决/高风险稳妥/不确定先查四种情境预设。
+- 新增逐个方案校准流程：默认只展示成功率、执行率、收益和风险四个高影响问题，可按需展开投入、可回退、把握度、后悔和信息差。
+- 新增「跨模型决策分析报告」：按加权因素、期望收益、联合概率、情景分析、后悔与机会成本、底线守门、校准预测和随机模型逐项说明赢家、分差、适用场景、指标解释和风险提醒。
+- 新增 hub smoke 测试，覆盖进入 Decision 页后问答流、报告面板和高风险预设的渲染。
+
+### 修改
+- 决策助手默认首屏从大段参数表改为问答流 + 当前建议 + 跨模型报告；原九字段评分表下沉为「高级评分表」按需展开，降低启动构建和用户理解成本。
+- 方案名称输入允许清空并由引擎兜底为方案 id，避免用户改名时被旧值强行保留。
+- 恢复未接入的 activity seed part 分析链路，并对未使用的旧静态行动 seed 做文件级忽略，保证 `toolbox_daily_choice` 目录分析可通过。
+- 修正 activity 模块指南入口回退为现有 `activityGuideEntries`，避免引用未接线的 guide module 阻塞分析。
+
+### 修复
+- 提升决策助手问答流步骤标题、序号徽标、说明块和内联提示块的明暗对比，避免浅色 accent 与浅背景接近时文字识别度不足。
+
+### 风险变更
+- 决策助手报告会给出模型建议，但仍只用于整理思路；高风险医疗、法律、财务决策不能把本模块当作单一依据。
+- 高级评分表默认折叠，老用户需要多点一次才能看到完整矩阵；问答流中的「展开完整校准」可覆盖同一批字段。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_decision_engine_test.dart --reporter compact`（通过，5 tests）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，12 tests）
+- `git diff --check`（通过，仅提示当前工作树中若干既有文件下次被 Git 触碰时 LF 会按配置转 CRLF）
+
+## [Unreleased-PLAN_083-DAILY-CHOICE-REAL-RECIPE-DATASET] - 2026-04-29
+
+### 原因
+- 用户反馈“每日决策 - 吃什么”子模块现有数据不可用，尤其制作方法和执行步骤缺少真实可操作性，需要基于本地做菜资料和开源菜谱项目重建可上传 S3 的验证包。
+
+### 新增
+- 菜谱生成器新增 `Anduin2017/HowToCook` Markdown 解析，按“必备原料和工具 / 计算 / 操作 / 附加内容”整理材料、份量、执行步骤和提示。
+- 验证包新增 `validation_audit.md`、`validation_audit.json`、`validation_quality_report.json`，记录数据覆盖、字段风险、SQLite 完整性和质量指标。
+- 审计脚本新增 `validation_omitted_real_steps.md/json` 输出，列出缺少可抽取真实步骤的本地文档、扫描 PDF 和 cook CSV 视频型条目，避免用模板步骤补齐。
+
+### 修改
+- `YunYouJun/cook` 的 `recipe.csv` 不再默认生成缺少步骤的独立菜谱；本轮仅作为元数据参考，为已匹配完整菜谱补充难度、工具、方法和 BV 字段。
+- 本地 EPUB 抽取恢复参考资料覆盖，同时保留质量闸门：仅收录材料和真实步骤均可抽取的条目，过滤功效说明、版权/Issue 文本、超长步骤、材料缺失和步骤缺失条目。
+- 重新生成 `D:\vocabularySleep-resources\cook_data_plan070_validation`：最终 7,351 条菜谱，其中 HowToCook 347 条、本地资料 7,004 条，cook 元数据匹配 47 条。
+
+### 风险变更
+- 7 个 EPUB 当前未抽取到同时包含材料和真实步骤的结构化菜谱，2 个 PDF 前 20 页无法抽取文本，疑似扫描版或图片 PDF；本轮列入遗漏报告，后续需 OCR、专项解析或人工校验后再入库。
+- `YunYouJun/cook` 仍有 558 行缺少可离线验证的文字制作步骤，继续只作为元数据候选，不生成虚假步骤。
+
+### 验证
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
+- 生成验证包到 `D:\vocabularySleep-resources\cook_data_plan070_validation`（通过，7,351 条）
+- `validation_quality_report.json`：材料空值 0、步骤空值 0、无步骤菜谱 0、超过 320 字步骤 0、说明污染步骤 0
+- SQLite `PRAGMA integrity_check = ok`，`user_version = 2`，DB SHA256 `3875D2CBBA0A6F40E782331587EF3ECE6C76404F6B5B63806D479B7FF4EDFCBC`
+
+## [Unreleased-PLAN_082-PLACE-MAP-HOT-IP-COARSE] - 2026-04-29
+
+### 原因
+- 用户希望将 OSM HOT 作为默认地图源，并明确其他地图源通常需要国际网络环境。
+- 用户希望在设备定位/GPS 未开启时，引导打开系统设置。
+- 用户希望新增一个不依赖 GPS 的模糊范围场所查询能力，仅通过 IP 粗略估算范围。
+
+### 新增
+- 周边地图新增「IP 粗略范围」查询入口：不请求 GPS，通过网络出口 IP 估算城市级中心点，再按 12km 粗略范围查询 OSM 场所。
+- 新增 IP 粗定位服务 `DailyChoiceIpCoarseLocationProvider`，支持解析 `loc`、`lat/lon`、`latitude/longitude` 等常见坐标字段。
+- 设备定位服务未开启或权限被系统永久拒绝时，弹出设置引导，可跳转系统定位设置或 App 设置页。
+
+### 修改
+- 默认地图源从 OSM France 切换为 OSM HOT。
+- 旧默认源 `carto_voyager` 和 `osm_france` 配置会迁移到当前默认 `osm_hot`。
+- 地图源选择区拆分为默认源与其他备用源，并说明其他备用源通常需要国际网络环境。
+- 地图状态浮层新增查询来源提示，区分设备定位与 IP 粗略范围。
+
+### 风险变更
+- IP 粗略范围只反映网络出口或运营商出口，可能与用户真实位置存在城市级偏差；距离排序仅作粗略参考。
+- IP 粗略范围依赖 IPinfo JSON 接口与公共 Overpass 查询；弱网、代理/VPN 或公共服务繁忙时仍可能失败。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，10 tests）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
+
+## [Unreleased-PLAN_081-PLACE-MAP-RESTRICTED-NETWORK-SOURCES] - 2026-04-28
+
+### 原因
+- 用户反馈当前三个地图源在中国大陆等部分地区不可用，希望找到限制网络下更容易连通的数据源并设为默认，或直接使用 OpenStreetMap。
+
+### 新增
+- 周边地图新增 OSM HOT 与 OpenStreetMap.de 两个 OSM 社区瓦片备用源。
+- 地图源说明新增 OSM 社区公共瓦片的保守使用提示：按视野动态加载、只缓存看过的瓦片、避免批量预下载，连接不稳定时可切换其他源。
+
+### 修改
+- 默认地图源由 CARTO Voyager 改为 OSM France，仍使用 OpenStreetMap 数据与署名，在部分受限网络下作为优先尝试源。
+- CARTO Voyager 改为 `carto_voyager_fallback` 备用源；旧的 `carto_voyager` 默认配置会迁移到当前默认 OSM France，避免老用户继续停留在较易不可用的旧默认源。
+- OpenStreetMap 官方标准瓦片继续保留为手动备用源，不再标注为唯一备用。
+
+### 风险变更
+- OSM France / OSM HOT / OpenStreetMap.de 仍是社区公共瓦片资源，不提供可用性 SLA；本轮通过多源切换、按需加载与本地缓存降低弱网白屏概率，但无法保证所有地区必达。
+- 暂未默认接入天地图、高德或腾讯地图瓦片；这类源通常涉及 API Key、授权条款和国内坐标系适配，后续如要接入需单独做合规与坐标转换方案。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，9 tests）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
+
+## [Unreleased-PLAN_080-MAP-LAUNCHER-BUILD-FIX] - 2026-04-28
+
+### 原因
+- 用户通过 `.\scripts\build.ps1` 打包 Android 真机测试时，Release 构建在 `:app:checkReleaseAarMetadata` 阶段失败；最新 `url_launcher_android` 依赖链会引入 `androidx.browser:browser:1.9.0` 与 `androidx.core:core:1.17.0`，要求 Android Gradle Plugin 8.9.1+，而当前项目仍使用 AGP 8.7.3。
+
+### 修改
+- 保持 `url_launcher_android` 显式约束在 `6.3.17`，避免解析到引入更高 AndroidX 元数据要求的 `6.3.29`。
+- 补充并收尾 `PLAN_080_地图拉起依赖构建修复.md`，记录本轮构建兼容策略。
+
+### 风险变更
+- 该约束是兼容 AGP 8.7.3 的临时构建保护；未来升级到 AGP 8.9.1+ 后，可以重新评估是否放开 `url_launcher_android` 到最新版。
+
+### 验证
+- `flutter pub get`（通过，解析到 `url_launcher_android 6.3.17`）
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，8 tests）
+- `.\scripts\build.ps1 -Target android-apk`（通过，生成 `build\app\outputs\flutter-apk\app-release.apk` 并复制到 `dist\android-apk\xianyushengxi.apk`）
+
+## [Unreleased-PLAN_079-PLACE-MAP-INTERACTION-FIX] - 2026-04-28
+
+### 原因
+- 用户反馈周边地图的全屏按钮会被周边场所统计信息遮挡，希望增加基于周边场所的随机地点功能，并补充拉起用户设备地图软件的入口，同时收口定位查询说明中的歧义表述。
+
+### 新增
+- 周边地图结果区新增「随机周边地点」按钮，可从当前筛选后的周边场所中随机聚焦一个地点。
+- 周边场所列表新增「打开地图 App」图标按钮，优先尝试设备原生 `geo:` 地图协议，失败时使用 Apple Maps 与 OpenStreetMap 网页链接兜底。
+- 新增 `url_launcher` 依赖，用于拉起设备地图软件或外部地图网页。
+
+### 修改
+- 将地图全屏按钮从右侧纵向控制组拆到左上角，避免与底部统计浮层在小地图高度中互相遮挡。
+- 隐私与查询说明去掉“发送给地图源”的歧义表述，改为说明 App 不经中间服务器收集或留存定位，只在用户点击时由设备按需查询。
+
+### 风险变更
+- 不同设备和默认地图 App 对 `geo:` 协议支持不同；当前实现提供多级 URI 兜底，并在全部失败时给出错误提示。
+
+### 验证
+- `flutter pub get`（通过）
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，8 tests）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
+
+## [Unreleased-PLAN_078-PLACE-MAP-UX-RESOURCES] - 2026-04-28
+
+### 原因
+- 用户反馈「每日决策 - 去哪儿 - 周边地图」仍像最小 demo，且 `flutter_map` 直接访问 `tile.openstreetmap.org` 时出现公共瓦片源警告和超时，需要推进到更接近可落地的地图体验。
+
+### 新增
+- 周边地图新增可切换地图源，默认改为 CARTO Voyager，保留 CARTO Light 与 OSM Standard 备用源，并在 UI 中标注公共 OSM 瓦片源风险。
+- 新增地图瓦片按需动态加载与本地缓存管理：缓存开关、缓存大小展示、清空缓存入口和缓存资源说明。
+- 新增地图交互：放大、缩小、贴合结果、回到定位中心、全屏查看、查询半径圈、瓦片加载错误次数提示和地点标记选中态。
+- 新增地图结果与当前「去哪儿」距离/场景筛选联动，支持只看当前筛选匹配结果或查看全部周边结果。
+
+### 修改
+- `DailyChoicePlaceMapSettings` 扩展持久化地图源、瓦片缓存开关和自动贴合结果开关，旧配置读取时自动补齐默认值。
+- 周边地图预览重构为可复用地图画布，主页面和全屏页共用同一套瓦片、标记、控制按钮和状态反馈。
+- 周边场所列表支持点击聚焦地图标记，并显示当前筛选结果数与总结果数。
+
+### 修复
+- 修复默认地图瓦片源直接使用 `tile.openstreetmap.org` 导致的 `flutter_map` OSM 公共瓦片警告与较高超时风险。
+- 降低地图拖动/缩放时的额外瓦片请求量，启用过期请求中止、低缓冲和可清理缓存。
+
+### 风险变更
+- CARTO 瓦片仍依赖在线第三方地图服务，弱网或服务不可达时可能出现瓦片空白；UI 会显示瓦片重试计数，并可切换备用源。
+- 本轮不做区域批量下载，避免违反公共瓦片服务策略和扩大流量风险；当前实现只缓存用户实际查看过的瓦片。
+
+### 验证
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，7 tests）
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
+- `git diff --check`（通过，仅提示 `changelogs/CHANGELOG.md` 在当前 Git 配置下下次触碰会从 LF 转为 CRLF）
+
 ## [Unreleased-PLAN_077-PLACE-GPS-OSM-MAP] - 2026-04-28
 
 ### 原因

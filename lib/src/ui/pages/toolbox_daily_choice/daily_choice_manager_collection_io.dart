@@ -536,3 +536,282 @@ Set<String> _managerInitialWearCollectionIds({
   }
   return ids;
 }
+
+Future<String?> _promptActivityCollectionName({
+  required BuildContext context,
+  required AppI18n i18n,
+  required Color accent,
+  required String initialTitle,
+}) async {
+  final controller = TextEditingController(text: initialTitle);
+  try {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(pickUiText(i18n, zh: '重命名行动集', en: 'Rename action set')),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.playlist_add_check_rounded),
+              labelText: pickUiText(i18n, zh: '行动集名称', en: 'Action set name'),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: accent),
+              ),
+            ),
+            onSubmitted: (value) {
+              final title = value.trim();
+              if (title.isNotEmpty) {
+                Navigator.of(context).pop(title);
+              }
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                final title = controller.text.trim();
+                if (title.isNotEmpty) {
+                  Navigator.of(context).pop(title);
+                }
+              },
+              icon: const Icon(Icons.check_rounded),
+              label: Text(pickUiText(i18n, zh: '保存', en: 'Save')),
+            ),
+          ],
+        );
+      },
+    );
+  } finally {
+    controller.dispose();
+  }
+}
+
+Future<bool?> _confirmDeleteActivityCollection({
+  required BuildContext context,
+  required AppI18n i18n,
+  required DailyChoiceActivityCollection collection,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(pickUiText(i18n, zh: '删除行动集？', en: 'Delete action set?')),
+        content: Text(
+          pickUiText(
+            i18n,
+            zh: '「${collection.title(i18n)}」只会删除这个集合，不会删除集合里的个人行动或内置行动。',
+            en: '"${collection.title(i18n)}" will be removed as a set. Actions inside it will not be deleted.',
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+const _activityCollectionExportFormat =
+    'vocabulary_sleep_daily_choice_activity_collection';
+const _activityCollectionExportFormatVersion = 1;
+
+Map<String, Object?> _buildActivityCollectionExportPackage({
+  required DailyChoiceCustomState state,
+  required DailyChoiceActivityCollection collection,
+}) {
+  final optionIds = collection.optionIds.toSet();
+  final customOptions = state.customOptions
+      .where(
+        (option) =>
+            option.moduleId == DailyChoiceModuleId.activity.storageValue &&
+            optionIds.contains(option.id),
+      )
+      .map((option) => option.toJson())
+      .toList(growable: false);
+  final adjustedBuiltIns = state.adjustedBuiltInOptions
+      .where(
+        (option) =>
+            option.moduleId == DailyChoiceModuleId.activity.storageValue &&
+            optionIds.contains(option.id),
+      )
+      .map((option) => option.toJson())
+      .toList(growable: false);
+  return <String, Object?>{
+    'format': _activityCollectionExportFormat,
+    'formatVersion': _activityCollectionExportFormatVersion,
+    'exportedAt': DateTime.now().toIso8601String(),
+    'collections': <Object?>[collection.toJson()],
+    'customOptions': customOptions,
+    'adjustedBuiltInOptions': adjustedBuiltIns,
+  };
+}
+
+_ActivityCollectionImportResult _importActivityCollectionExportPackage({
+  required DailyChoiceCustomState state,
+  required Map<String, Object?> payload,
+}) {
+  if (payload['format'] != _activityCollectionExportFormat) {
+    throw const FormatException('Unsupported action set package.');
+  }
+  if (payload['formatVersion'] != _activityCollectionExportFormatVersion) {
+    throw const FormatException('Unsupported action set package version.');
+  }
+  final collections = _eatCollectionJsonList(payload['collections'])
+      .map(DailyChoiceActivityCollection.fromJson)
+      .where((collection) {
+        return collection.id.trim().isNotEmpty ||
+            collection.titleZh.trim().isNotEmpty ||
+            collection.titleEn.trim().isNotEmpty;
+      })
+      .toList(growable: false);
+  if (collections.isEmpty) {
+    throw const FormatException('Action set package has no collections.');
+  }
+
+  var next = state.withDefaultActivityCollections();
+  final existingCustomIds = next.customOptions.map((item) => item.id).toSet();
+  final importedOptionIdByOriginalId = <String, String>{};
+  var uniqueSeed = DateTime.now().microsecondsSinceEpoch;
+  var customCount = 0;
+  var adjustedCount = 0;
+
+  for (final raw in _eatCollectionJsonList(payload['customOptions'])) {
+    final option = DailyChoiceOption.fromJson(raw).copyWith(
+      moduleId: DailyChoiceModuleId.activity.storageValue,
+      custom: true,
+    );
+    final originalId = option.id.trim();
+    if (originalId.isEmpty) {
+      continue;
+    }
+    var nextId = originalId;
+    if (existingCustomIds.contains(nextId)) {
+      nextId = 'custom_activity_import_${uniqueSeed++}';
+    }
+    importedOptionIdByOriginalId[originalId] = nextId;
+    existingCustomIds.add(nextId);
+    next = next.upsertCustom(option.copyWith(id: nextId, custom: true));
+    customCount += 1;
+  }
+
+  for (final raw in _eatCollectionJsonList(payload['adjustedBuiltInOptions'])) {
+    final option = DailyChoiceOption.fromJson(raw).copyWith(
+      moduleId: DailyChoiceModuleId.activity.storageValue,
+      custom: false,
+    );
+    if (option.id.trim().isEmpty) {
+      continue;
+    }
+    next = next.upsertAdjustedBuiltIn(option);
+    adjustedCount += 1;
+  }
+
+  var importedCollectionCount = 0;
+  var selectedCollectionId = 'all';
+  for (final collection in collections) {
+    final fallbackTitle = collection.titleZh.trim().isNotEmpty
+        ? collection.titleZh.trim()
+        : collection.titleEn.trim();
+    if (fallbackTitle.isEmpty) {
+      continue;
+    }
+    final collectionId = 'activity_collection_import_${uniqueSeed++}';
+    final optionIds = collection.optionIds
+        .map((id) => importedOptionIdByOriginalId[id] ?? id)
+        .where((id) => id.trim().isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    next = next.upsertActivityCollection(
+      collection.copyWith(
+        id: collectionId,
+        titleZh: collection.titleZh.trim().isEmpty
+            ? fallbackTitle
+            : collection.titleZh.trim(),
+        titleEn: collection.titleEn.trim().isEmpty
+            ? fallbackTitle
+            : collection.titleEn.trim(),
+        optionIds: optionIds,
+      ),
+    );
+    selectedCollectionId = collectionId;
+    importedCollectionCount += 1;
+  }
+
+  if (importedCollectionCount == 0) {
+    throw const FormatException('Action set package has no valid collections.');
+  }
+  return _ActivityCollectionImportResult(
+    state: next,
+    selectedCollectionId: selectedCollectionId,
+    collectionCount: importedCollectionCount,
+    customCount: customCount,
+    adjustedCount: adjustedCount,
+  );
+}
+
+String _safeActivityCollectionExportFileName(String title) {
+  final normalized = title.trim().replaceAll(RegExp(r'[\\/:*?"<>|]+'), '_');
+  if (normalized.isEmpty) {
+    return 'daily_choice_action_set';
+  }
+  return normalized.length > 40 ? normalized.substring(0, 40) : normalized;
+}
+
+class _ActivityCollectionImportResult {
+  const _ActivityCollectionImportResult({
+    required this.state,
+    required this.selectedCollectionId,
+    required this.collectionCount,
+    required this.customCount,
+    required this.adjustedCount,
+  });
+
+  final DailyChoiceCustomState state;
+  final String selectedCollectionId;
+  final int collectionCount;
+  final int customCount;
+  final int adjustedCount;
+}
+
+Set<String> _managerInitialActivityCollectionIds({
+  required List<DailyChoiceActivityCollection> collections,
+  required DailyChoiceOption? option,
+  required DailyChoiceActivityCollection? selectedCollection,
+  required bool defaultFavoriteWhenEmpty,
+}) {
+  final ids = <String>{};
+  final validIds = collections.map((item) => item.id).toSet();
+  final optionId = option?.id.trim();
+  if (optionId != null && optionId.isNotEmpty) {
+    for (final collection in collections) {
+      if (collection.containsOption(optionId)) {
+        ids.add(collection.id);
+      }
+    }
+  }
+  if (selectedCollection != null && validIds.contains(selectedCollection.id)) {
+    ids.add(selectedCollection.id);
+  }
+  if (ids.isEmpty &&
+      defaultFavoriteWhenEmpty &&
+      collections.any(
+        (item) => item.id == dailyChoiceFavoriteActivityCollectionId,
+      )) {
+    ids.add(dailyChoiceFavoriteActivityCollectionId);
+  }
+  return ids;
+}

@@ -115,6 +115,127 @@ void main() {
     }
   }
 
+  testWidgets('decision assistant opens guided flow and model report', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final result = DailyChoiceCookLoadResult(
+      options: const <DailyChoiceOption>[],
+      source: DailyChoiceCookDataSource.remote,
+      localLibraryCount: 0,
+      referenceTitles: const <String>[],
+      updatedAt: DateTime(2026, 4, 29, 10, 0),
+    );
+    final document = DailyChoiceRecipeLibraryDocument(
+      libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+      libraryVersion: '2026-04-29',
+      schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+      schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+      generatedAt: result.updatedAt,
+      referenceTitles: result.referenceTitles,
+      stats: const <String, Object?>{'recipeCount': 0},
+      recipes: const <DailyChoiceOption>[],
+    );
+
+    await pumpEatHub(
+      tester,
+      cookService: _FakeCookService(result, document),
+      libraryStore: _FakeEatLibraryStore(document),
+    );
+
+    await tester.tap(find.text('Decision'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Guided decision flow'), findsOneWidget);
+    expect(find.text('Decision analysis report'), findsOneWidget);
+    expect(find.text('Execution card'), findsOneWidget);
+    expect(find.text('Advanced score table'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Generate action draft'));
+    await tester.tap(find.text('Generate action draft'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Next action'), findsOneWidget);
+    expect(find.text('Stop rule'), findsOneWidget);
+    expect(find.text('Copy brief'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('High stakes'));
+    await tester.tap(find.text('High stakes'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Guardrails first'), findsWidgets);
+  });
+
+  testWidgets('random assistant opens and supports dice draw constraints', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final result = DailyChoiceCookLoadResult(
+      options: const <DailyChoiceOption>[],
+      source: DailyChoiceCookDataSource.remote,
+      localLibraryCount: 0,
+      referenceTitles: const <String>[],
+      updatedAt: DateTime(2026, 4, 29, 12, 0),
+    );
+    final document = DailyChoiceRecipeLibraryDocument(
+      libraryId: DailyChoiceRecipeLibraryDocument.defaultLibraryId,
+      libraryVersion: '2026-04-29',
+      schemaId: DailyChoiceRecipeLibraryDocument.defaultSchemaId,
+      schemaVersion: DailyChoiceRecipeLibraryDocument.defaultSchemaVersion,
+      generatedAt: result.updatedAt,
+      referenceTitles: result.referenceTitles,
+      stats: const <String, Object?>{'recipeCount': 0},
+      recipes: const <DailyChoiceOption>[],
+    );
+
+    await pumpEatHub(
+      tester,
+      cookService: _FakeCookService(result, document),
+      libraryStore: _FakeEatLibraryStore(document),
+    );
+
+    await tester.tap(find.text('Random assistant').first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Make randomness adjustable'), findsOneWidget);
+    expect(find.text('Uniform'), findsWidgets);
+    expect(find.text('Wheel'), findsWidgets);
+    expect(find.text('Options & parameters'), findsOneWidget);
+    expect(find.text('4 active / 4 total'), findsOneWidget);
+
+    final optionFields = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.decoration?.labelText == 'Option name',
+    );
+    await tester.enterText(optionFields.first, '');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.text('3 active / 4 total'), findsOneWidget);
+
+    await tester.tap(find.text('Dice').first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.text('Dice count'), findsOneWidget);
+
+    await tester.tap(find.text('Draw'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 900));
+
+    expect(find.textContaining('Picked:'), findsOneWidget);
+    expect(find.textContaining('Landed on D'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'DailyChoiceHub eat page stays interactive with lightweight install and lazy details',
     (WidgetTester tester) async {

@@ -58,6 +58,8 @@ dependencies:
   geolocator: ^14.0.2
   flutter_map: ^8.3.0
   latlong2: ^0.9.1
+  url_launcher: ^6.3.2
+  url_launcher_android: 6.3.17
 
 dev_dependencies:
   flutter_test:
@@ -105,6 +107,7 @@ flutter:
     - assets/branding/
     - assets/en_zh_15000_wordbook.json
     - assets/toolbox/beads/
+    - assets/toolbox/games/roulette/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

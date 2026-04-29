@@ -7,7 +7,8 @@ enum DailyChoiceModuleId {
   eat('eat'),
   wear('wear'),
   go('go'),
-  activity('activity');
+  activity('activity'),
+  customRandom('custom_random');
 
   const DailyChoiceModuleId(this.storageValue);
 
@@ -400,17 +401,25 @@ class DailyChoicePlaceMapSettings {
     this.consentGranted = false,
     this.useApproximateLocation = true,
     this.radiusMeters = defaultRadiusMeters,
+    this.tileProviderId = defaultTileProviderId,
+    this.cacheTiles = true,
+    this.autoFitResults = true,
   });
 
   static const int minRadiusMeters = 500;
   static const int maxRadiusMeters = 5000;
   static const int defaultRadiusMeters = 1500;
+  static const int coarseRangeRadiusMeters = 12000;
+  static const String defaultTileProviderId = 'osm_hot';
   static const DailyChoicePlaceMapSettings defaults =
       DailyChoicePlaceMapSettings();
 
   final bool consentGranted;
   final bool useApproximateLocation;
   final int radiusMeters;
+  final String tileProviderId;
+  final bool cacheTiles;
+  final bool autoFitResults;
 
   int get normalizedRadiusMeters {
     return radiusMeters.clamp(minRadiusMeters, maxRadiusMeters).toInt();
@@ -420,12 +429,18 @@ class DailyChoicePlaceMapSettings {
     bool? consentGranted,
     bool? useApproximateLocation,
     int? radiusMeters,
+    String? tileProviderId,
+    bool? cacheTiles,
+    bool? autoFitResults,
   }) {
     return DailyChoicePlaceMapSettings(
       consentGranted: consentGranted ?? this.consentGranted,
       useApproximateLocation:
           useApproximateLocation ?? this.useApproximateLocation,
       radiusMeters: radiusMeters ?? this.radiusMeters,
+      tileProviderId: tileProviderId ?? this.tileProviderId,
+      cacheTiles: cacheTiles ?? this.cacheTiles,
+      autoFitResults: autoFitResults ?? this.autoFitResults,
     );
   }
 
@@ -434,6 +449,9 @@ class DailyChoicePlaceMapSettings {
       'consentGranted': consentGranted,
       'useApproximateLocation': useApproximateLocation,
       'radiusMeters': normalizedRadiusMeters,
+      'tileProviderId': tileProviderId,
+      'cacheTiles': cacheTiles,
+      'autoFitResults': autoFitResults,
     };
   }
 
@@ -446,6 +464,9 @@ class DailyChoicePlaceMapSettings {
       ),
       radiusMeters:
           int.tryParse('${json['radiusMeters'] ?? ''}') ?? defaultRadiusMeters,
+      tileProviderId: _normalizedTileProviderId(json['tileProviderId']),
+      cacheTiles: _boolValue(json['cacheTiles'], defaultValue: true),
+      autoFitResults: _boolValue(json['autoFitResults'], defaultValue: true),
     );
   }
 }
@@ -591,6 +612,72 @@ class DailyChoiceWearCollection {
   }
 }
 
+class DailyChoiceActivityCollection {
+  const DailyChoiceActivityCollection({
+    required this.id,
+    required this.titleZh,
+    required this.titleEn,
+    this.optionIds = const <String>[],
+  });
+
+  final String id;
+  final String titleZh;
+  final String titleEn;
+  final List<String> optionIds;
+
+  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+
+  bool containsOption(String optionId) => optionIds.contains(optionId);
+
+  DailyChoiceActivityCollection copyWith({
+    String? id,
+    String? titleZh,
+    String? titleEn,
+    List<String>? optionIds,
+  }) {
+    return DailyChoiceActivityCollection(
+      id: id ?? this.id,
+      titleZh: titleZh ?? this.titleZh,
+      titleEn: titleEn ?? this.titleEn,
+      optionIds: optionIds ?? this.optionIds,
+    );
+  }
+
+  DailyChoiceActivityCollection addOption(String optionId) {
+    final normalized = optionId.trim();
+    if (normalized.isEmpty || optionIds.contains(normalized)) {
+      return this;
+    }
+    return copyWith(optionIds: <String>[...optionIds, normalized]);
+  }
+
+  DailyChoiceActivityCollection removeOption(String optionId) {
+    return copyWith(
+      optionIds: optionIds
+          .where((item) => item != optionId)
+          .toList(growable: false),
+    );
+  }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'titleZh': titleZh,
+      'titleEn': titleEn,
+      'optionIds': optionIds,
+    };
+  }
+
+  factory DailyChoiceActivityCollection.fromJson(Map<String, Object?> json) {
+    return DailyChoiceActivityCollection(
+      id: _stringValue(json['id']),
+      titleZh: _stringValue(json['titleZh']),
+      titleEn: _stringValue(json['titleEn']),
+      optionIds: _dedupeStringList(_stringList(json['optionIds'])),
+    );
+  }
+}
+
 const String dailyChoiceFavoriteWearCollectionId =
     'wear_collection_my_wardrobe';
 
@@ -599,6 +686,16 @@ const DailyChoiceWearCollection dailyChoiceFavoriteWearCollection =
       id: dailyChoiceFavoriteWearCollectionId,
       titleZh: '我的衣橱',
       titleEn: 'My wardrobe',
+    );
+
+const String dailyChoiceFavoriteActivityCollectionId =
+    'activity_collection_my_actions';
+
+const DailyChoiceActivityCollection dailyChoiceFavoriteActivityCollection =
+    DailyChoiceActivityCollection(
+      id: dailyChoiceFavoriteActivityCollectionId,
+      titleZh: '我的行动集',
+      titleEn: 'My action set',
     );
 
 const wearBuiltInCollections = <DailyChoiceWearCollection>[
@@ -670,6 +767,7 @@ class DailyChoiceCustomState {
     this.adjustedBuiltInOptions = const <DailyChoiceOption>[],
     this.eatCollections = const <DailyChoiceEatCollection>[],
     this.wearCollections = const <DailyChoiceWearCollection>[],
+    this.activityCollections = const <DailyChoiceActivityCollection>[],
     this.placeMapSettings = DailyChoicePlaceMapSettings.defaults,
   });
 
@@ -678,6 +776,7 @@ class DailyChoiceCustomState {
   final List<DailyChoiceOption> adjustedBuiltInOptions;
   final List<DailyChoiceEatCollection> eatCollections;
   final List<DailyChoiceWearCollection> wearCollections;
+  final List<DailyChoiceActivityCollection> activityCollections;
   final DailyChoicePlaceMapSettings placeMapSettings;
 
   static const DailyChoiceCustomState empty = DailyChoiceCustomState(
@@ -687,6 +786,9 @@ class DailyChoiceCustomState {
     wearCollections: <DailyChoiceWearCollection>[
       dailyChoiceFavoriteWearCollection,
     ],
+    activityCollections: <DailyChoiceActivityCollection>[
+      dailyChoiceFavoriteActivityCollection,
+    ],
   );
 
   DailyChoiceCustomState copyWith({
@@ -695,6 +797,7 @@ class DailyChoiceCustomState {
     List<DailyChoiceOption>? adjustedBuiltInOptions,
     List<DailyChoiceEatCollection>? eatCollections,
     List<DailyChoiceWearCollection>? wearCollections,
+    List<DailyChoiceActivityCollection>? activityCollections,
     DailyChoicePlaceMapSettings? placeMapSettings,
   }) {
     return DailyChoiceCustomState(
@@ -704,6 +807,7 @@ class DailyChoiceCustomState {
           adjustedBuiltInOptions ?? this.adjustedBuiltInOptions,
       eatCollections: eatCollections ?? this.eatCollections,
       wearCollections: wearCollections ?? this.wearCollections,
+      activityCollections: activityCollections ?? this.activityCollections,
       placeMapSettings: placeMapSettings ?? this.placeMapSettings,
     );
   }
@@ -782,6 +886,38 @@ class DailyChoiceCustomState {
     return copyWith(wearCollections: next);
   }
 
+  DailyChoiceCustomState withDefaultActivityCollections() {
+    var hasFavorite = false;
+    var changed = false;
+    final next = <DailyChoiceActivityCollection>[];
+    for (final collection in activityCollections) {
+      if (collection.id == dailyChoiceFavoriteActivityCollectionId) {
+        hasFavorite = true;
+        final normalized = collection.copyWith(
+          titleZh: dailyChoiceFavoriteActivityCollection.titleZh,
+          titleEn: dailyChoiceFavoriteActivityCollection.titleEn,
+          optionIds: _dedupeStringList(collection.optionIds),
+        );
+        next.add(normalized);
+        changed = changed || !identical(normalized, collection);
+      } else {
+        final normalized = collection.copyWith(
+          optionIds: _dedupeStringList(collection.optionIds),
+        );
+        next.add(normalized);
+        changed = changed || !identical(normalized, collection);
+      }
+    }
+    if (!hasFavorite) {
+      next.insert(0, dailyChoiceFavoriteActivityCollection);
+      changed = true;
+    }
+    if (!changed && activityCollections.isNotEmpty) {
+      return this;
+    }
+    return copyWith(activityCollections: next);
+  }
+
   DailyChoiceCustomState hideBuiltIn(String optionId) {
     return copyWith(hiddenBuiltInIds: <String>{...hiddenBuiltInIds, optionId});
   }
@@ -820,6 +956,9 @@ class DailyChoiceCustomState {
           .map((collection) => collection.removeOption(optionId))
           .toList(growable: false),
       wearCollections: wearCollections
+          .map((collection) => collection.removeOption(optionId))
+          .toList(growable: false),
+      activityCollections: activityCollections
           .map((collection) => collection.removeOption(optionId))
           .toList(growable: false),
     );
@@ -1048,6 +1187,100 @@ class DailyChoiceCustomState {
     );
   }
 
+  DailyChoiceActivityCollection? activityCollectionById(String collectionId) {
+    for (final item in activityCollections) {
+      if (item.id == collectionId) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  DailyChoiceCustomState upsertActivityCollection(
+    DailyChoiceActivityCollection collection,
+  ) {
+    final normalized = collection.copyWith(
+      optionIds: _dedupeStringList(collection.optionIds),
+    );
+    final next = <DailyChoiceActivityCollection>[];
+    var replaced = false;
+    for (final item in activityCollections) {
+      if (item.id == normalized.id) {
+        next.add(normalized);
+        replaced = true;
+      } else {
+        next.add(item);
+      }
+    }
+    if (!replaced) {
+      next.add(normalized);
+    }
+    return copyWith(activityCollections: next);
+  }
+
+  DailyChoiceCustomState deleteActivityCollection(String collectionId) {
+    if (collectionId == dailyChoiceFavoriteActivityCollectionId) {
+      return this;
+    }
+    return copyWith(
+      activityCollections: activityCollections
+          .where((item) => item.id != collectionId)
+          .toList(growable: false),
+    );
+  }
+
+  DailyChoiceCustomState addOptionToActivityCollection({
+    required String collectionId,
+    required String optionId,
+  }) {
+    final state = withDefaultActivityCollections();
+    return state.copyWith(
+      activityCollections: state.activityCollections
+          .map(
+            (collection) => collection.id == collectionId
+                ? collection.addOption(optionId)
+                : collection,
+          )
+          .toList(growable: false),
+    );
+  }
+
+  DailyChoiceCustomState removeOptionFromActivityCollection({
+    required String collectionId,
+    required String optionId,
+  }) {
+    final state = withDefaultActivityCollections();
+    return state.copyWith(
+      activityCollections: state.activityCollections
+          .map(
+            (collection) => collection.id == collectionId
+                ? collection.removeOption(optionId)
+                : collection,
+          )
+          .toList(growable: false),
+    );
+  }
+
+  DailyChoiceCustomState setOptionActivityCollections({
+    required String optionId,
+    required Set<String> collectionIds,
+  }) {
+    final state = withDefaultActivityCollections();
+    final normalizedIds = collectionIds
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toSet();
+    return state.copyWith(
+      activityCollections: state.activityCollections
+          .map(
+            (collection) => normalizedIds.contains(collection.id)
+                ? collection.addOption(optionId)
+                : collection.removeOption(optionId),
+          )
+          .toList(growable: false),
+    );
+  }
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'hiddenBuiltInIds': hiddenBuiltInIds.toList(growable: false)..sort(),
@@ -1063,6 +1296,9 @@ class DailyChoiceCustomState {
       'wearCollections': wearCollections
           .map((item) => item.toJson())
           .toList(growable: false),
+      'activityCollections': activityCollections
+          .map((item) => item.toJson())
+          .toList(growable: false),
       'placeMapSettings': placeMapSettings.toJson(),
     };
   }
@@ -1072,10 +1308,12 @@ class DailyChoiceCustomState {
     final customRaw = json['customOptions'];
     final adjustedRaw = json['adjustedBuiltInOptions'];
     final eatCollectionsRaw = json['eatCollections'];
+    final activityCollectionsRaw = json['activityCollections'];
     final placeMapSettingsRaw = json['placeMapSettings'];
     final customOptions = <DailyChoiceOption>[];
     final adjustedBuiltInOptions = <DailyChoiceOption>[];
     final eatCollections = <DailyChoiceEatCollection>[];
+    final activityCollections = <DailyChoiceActivityCollection>[];
     if (customRaw is List) {
       for (final item in customRaw) {
         if (item is Map) {
@@ -1110,6 +1348,18 @@ class DailyChoiceCustomState {
         }
       }
     }
+    if (activityCollectionsRaw is List) {
+      for (final item in activityCollectionsRaw) {
+        if (item is Map) {
+          final collection = DailyChoiceActivityCollection.fromJson(
+            item.cast<String, Object?>(),
+          );
+          if (collection.id.isNotEmpty && collection.titleZh.isNotEmpty) {
+            activityCollections.add(collection);
+          }
+        }
+      }
+    }
     final wearCollectionsRaw = json['wearCollections'];
     final wearCollections = <DailyChoiceWearCollection>[];
     if (wearCollectionsRaw is List) {
@@ -1125,21 +1375,33 @@ class DailyChoiceCustomState {
       }
     }
     return DailyChoiceCustomState(
-      hiddenBuiltInIds: hiddenBuiltInIds,
-      customOptions: customOptions,
-      adjustedBuiltInOptions: adjustedBuiltInOptions,
-      eatCollections: eatCollections,
-      wearCollections: wearCollections,
-      placeMapSettings: placeMapSettingsRaw is Map
-          ? DailyChoicePlaceMapSettings.fromJson(
-              placeMapSettingsRaw.cast<String, Object?>(),
-            )
-          : DailyChoicePlaceMapSettings.defaults,
-    ).withDefaultEatCollections().withDefaultWearCollections();
+          hiddenBuiltInIds: hiddenBuiltInIds,
+          customOptions: customOptions,
+          adjustedBuiltInOptions: adjustedBuiltInOptions,
+          eatCollections: eatCollections,
+          wearCollections: wearCollections,
+          activityCollections: activityCollections,
+          placeMapSettings: placeMapSettingsRaw is Map
+              ? DailyChoicePlaceMapSettings.fromJson(
+                  placeMapSettingsRaw.cast<String, Object?>(),
+                )
+              : DailyChoicePlaceMapSettings.defaults,
+        )
+        .withDefaultEatCollections()
+        .withDefaultWearCollections()
+        .withDefaultActivityCollections();
   }
 }
 
 String _stringValue(Object? value) => value == null ? '' : '$value'.trim();
+
+String _normalizedTileProviderId(Object? value) {
+  final id = _stringValue(value);
+  if (id.isEmpty || id == 'carto_voyager' || id == 'osm_france') {
+    return DailyChoicePlaceMapSettings.defaultTileProviderId;
+  }
+  return id;
+}
 
 bool _boolValue(Object? value, {bool defaultValue = false}) {
   if (value is bool) {

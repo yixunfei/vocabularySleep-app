@@ -7,7 +7,6 @@ import 'daily_choice_models.dart';
 
 part 'daily_choice_food_seed.dart';
 part 'daily_choice_place_seed.dart';
-part 'daily_choice_activity_place_seed.dart';
 
 const String cookRecipeSourceLabel = 'YunYouJun/cook recipe.csv';
 const String cookRecipeSourceUrl =
@@ -55,6 +54,15 @@ const List<DailyChoiceModuleConfig> dailyChoiceModuleConfigs =
         titleEn: 'Do',
         subtitleZh: '先选方向，也可以让方向一起随机。',
         subtitleEn: 'Pick a direction, or randomize the direction too.',
+      ),
+      DailyChoiceModuleConfig(
+        id: 'custom_random',
+        icon: Icons.shuffle_rounded,
+        accent: Color(0xFF607C8F),
+        titleZh: '随机助手',
+        titleEn: 'Random assistant',
+        subtitleZh: '录入自己的选项，用转盘、骰子或硬币抽取。',
+        subtitleEn: 'Enter your own options and draw by wheel, dice, or coin.',
       ),
       DailyChoiceModuleConfig(
         id: 'assistant',
@@ -1226,6 +1234,14 @@ const DailyChoiceCategory randomActivityCategory = DailyChoiceCategory(
 );
 const List<DailyChoiceCategory> activityCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
+    id: 'focus',
+    icon: Icons.center_focus_strong_rounded,
+    titleZh: '专注',
+    titleEn: 'Focus',
+    subtitleZh: '把注意力重新放回目标',
+    subtitleEn: 'Return attention to the current goal',
+  ),
+  DailyChoiceCategory(
     id: 'move',
     icon: Icons.fitness_center_rounded,
     titleZh: '运动',
@@ -2096,6 +2112,131 @@ activityGuideEntries = <DailyChoiceGuideEntry>[
         'When even the direction feels hard, use Random. Let the tool pick the direction and then a concrete action.',
   ),
 ];
+const List<DailyChoiceGuideModule>
+activityGuideModules = <DailyChoiceGuideModule>[
+  DailyChoiceGuideModule(
+    id: 'attention',
+    icon: Icons.center_focus_strong_rounded,
+    titleZh: '注意力涣散',
+    titleEn: 'Attention drift',
+    subtitleZh: '先复盘涣散内容，再决定回到目标还是换一个低阻力动作',
+    subtitleEn:
+        'Review the drift, then return to the goal or pick a smaller action',
+    entries: <DailyChoiceGuideEntry>[
+      DailyChoiceGuideEntry(
+        icon: Icons.psychology_alt_rounded,
+        titleZh: '不评价地回看刚才在想什么',
+        titleEn: 'Review the drift without judgment',
+        bodyZh: '停 20 秒，写下刚才跑掉的内容：是在幻想结果、担心别人评价、想逃开任务，还是身体真的累了。只记录，不批评。',
+        bodyEn:
+            'Pause for 20 seconds and name the drift: fantasy, fear of judgment, task avoidance, or real fatigue. Record it without scolding yourself.',
+      ),
+      DailyChoiceGuideEntry(
+        icon: Icons.flag_rounded,
+        titleZh: '重新说出当前目标',
+        titleEn: 'Restate the current goal',
+        bodyZh:
+            '用一句话写出“我现在原本要完成什么”。如果目标太大，改成 5 分钟版本；如果目标已经失效，就允许重新随机一个更贴近当下的行动。',
+        bodyEn:
+            'Write one sentence for what you meant to do. If it is too large, shrink it to five minutes; if it no longer fits, reroll a better action.',
+      ),
+      DailyChoiceGuideEntry(
+        icon: Icons.timer_rounded,
+        titleZh: '只承诺一小轮',
+        titleEn: 'Commit to one small round',
+        bodyZh: '先做一轮 5 到 12 分钟。到点后再决定继续、休息或换方向，避免把随机结果变成新的压力。',
+        bodyEn:
+            'Do one 5 to 12 minute round first. When it ends, choose continue, rest, or switch.',
+      ),
+    ],
+  ),
+  DailyChoiceGuideModule(
+    id: 'walk',
+    icon: Icons.directions_walk_rounded,
+    titleZh: '什么时候出门走走',
+    titleEn: 'When to walk outside',
+    subtitleZh: '把出门当作状态切换，而不是逃避任务',
+    subtitleEn: 'Use walking as a state shift, not pure avoidance',
+    entries: <DailyChoiceGuideEntry>[
+      DailyChoiceGuideEntry(
+        icon: Icons.cloud_queue_rounded,
+        titleZh: '身体和环境允许时优先短出门',
+        titleEn: 'Choose a short outing when conditions allow',
+        bodyZh: '天气安全、身体没有明显不适、任务卡住超过 15 分钟、室内刺激变得黏滞时，优先选择 8 到 20 分钟散步。',
+        bodyEn:
+            'If weather and body are safe, the task has been stuck for 15 minutes, and the room feels stale, pick an 8 to 20 minute walk.',
+      ),
+      DailyChoiceGuideEntry(
+        icon: Icons.route_rounded,
+        titleZh: '走固定短路线',
+        titleEn: 'Use a fixed short route',
+        bodyZh: '路线越固定越不耗决策力。出门前只检查钥匙、手机、电量和天气；不要把散步扩展成复杂外出。',
+        bodyEn:
+            'A fixed route costs less decision energy. Check keys, phone, battery, and weather; do not let the walk grow into a complex outing.',
+      ),
+      DailyChoiceGuideEntry(
+        icon: Icons.assignment_return_rounded,
+        titleZh: '回来要接一个小动作',
+        titleEn: 'Return into one small action',
+        bodyZh: '回到室内后立刻接一个 2 分钟动作：打开文档、洗杯子、整理桌面一角或写下一句目标，防止散步后继续漂走。',
+        bodyEn:
+            'After returning, do one two-minute action: open the document, wash a cup, clear one desk corner, or write the goal.',
+      ),
+    ],
+  ),
+  DailyChoiceGuideModule(
+    id: 'low_energy',
+    icon: Icons.battery_2_bar_rounded,
+    titleZh: '低意志力启动',
+    titleEn: 'Low-energy start',
+    subtitleZh: '降低动作体积，让开始先发生',
+    subtitleEn: 'Shrink the action so starting happens first',
+    entries: <DailyChoiceGuideEntry>[
+      DailyChoiceGuideEntry(
+        icon: Icons.compress_rounded,
+        titleZh: '把任务缩到一个可见终点',
+        titleEn: 'Shrink to a visible endpoint',
+        bodyZh: '不要写“学习英语”，写“复习 10 个词”；不要写“收拾房间”，写“只清空桌面左上角”。',
+        bodyEn:
+            'Do not write “study English”; write “review 10 words.” Do not write “clean the room”; write “clear the top-left desk corner.”',
+      ),
+      DailyChoiceGuideEntry(
+        icon: Icons.hourglass_empty_rounded,
+        titleZh: '默认时间盒要短',
+        titleEn: 'Keep the time box short',
+        bodyZh: '低意志力时，5 分钟不是偷懒，而是启动协议。完成后如果状态变好，再自愿追加一轮。',
+        bodyEn:
+            'At low energy, five minutes is a start protocol, not laziness. Add another round only if it helps.',
+      ),
+    ],
+  ),
+  DailyChoiceGuideModule(
+    id: 'boundaries',
+    icon: Icons.rule_rounded,
+    titleZh: '行动边界',
+    titleEn: 'Action boundaries',
+    subtitleZh: '知道什么时候停，也知道什么时候换行动',
+    subtitleEn: 'Know when to stop and when to switch',
+    entries: <DailyChoiceGuideEntry>[
+      DailyChoiceGuideEntry(
+        icon: Icons.stop_circle_rounded,
+        titleZh: '到点停止也算完成',
+        titleEn: 'Stopping on time counts',
+        bodyZh: '随机工具只负责帮你开始和收口。到达时间盒、身体不舒服、外部条件不合适或行动明显偏题时，可以停止。',
+        bodyEn:
+            'The randomizer helps you start and close. Stop when the time box ends, body feels wrong, conditions are poor, or the action drifts off target.',
+      ),
+      DailyChoiceGuideEntry(
+        icon: Icons.swap_horiz_rounded,
+        titleZh: '换行动要保留原因',
+        titleEn: 'Keep the reason when switching',
+        bodyZh: '如果你换掉当前结果，记录一句原因：太晚、太吵、身体累、需要别人配合、目标不匹配。这样下次可以优化行动集。',
+        bodyEn:
+            'When switching, keep one reason: too late, too noisy, tired body, needs another person, or mismatched goal. Use it to improve the set later.',
+      ),
+    ],
+  ),
+];
 const List<DailyChoiceGuideEntry>
 decisionGuideEntries = <DailyChoiceGuideEntry>[
   DailyChoiceGuideEntry(
@@ -2136,7 +2277,7 @@ List<DailyChoiceOption> buildDailyChoiceFallbackEatOptions() {
 }
 
 List<DailyChoiceOption> buildDailyChoiceStaticSeedOptions() {
-  return <DailyChoiceOption>[..._placeOptions, ..._activityOptions];
+  return <DailyChoiceOption>[..._placeOptions];
 }
 
 List<DailyChoiceOption> buildDailyChoiceSeedOptions() {

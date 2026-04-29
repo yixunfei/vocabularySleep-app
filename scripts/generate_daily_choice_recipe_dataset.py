@@ -239,6 +239,11 @@ ENGLISH_STEP_HEADERS = ("procedure", "method", "directions", "instructions")
 ENGLISH_NOTE_HEADERS = ("tips", "notes", "note")
 ENGLISH_META_PREFIXES = (
     "serves ",
+    "serve ",
+    "makes ",
+    "make ",
+    "yield:",
+    "yields ",
     "serving size:",
     "cooking time:",
     "prep time:",
@@ -387,6 +392,92 @@ STOP_WORDS = (
     "干",
 )
 
+MARKDOWN_LINK_RE = re.compile(r"!?\[([^\]]*)\]\([^)]+\)")
+MARKDOWN_BULLET_RE = re.compile(r"^\s*(?:[-*+]|\d+[.、．)]|[①-⑳])\s+")
+HOWTOCOOK_SECTION_ENDINGS = (
+    "附加内容",
+    "参考资料",
+    "成品",
+    "流程图解",
+)
+HOWTOCOOK_EXCLUDED_CATEGORIES = {"template", "condiment"}
+HOWTOCOOK_CATEGORY_TYPES = {
+    "aquatic": (),
+    "breakfast": (),
+    "dessert": ("dessert",),
+    "drink": ("dessert",),
+    "meat_dish": (),
+    "semi-finished": (),
+    "soup": ("soup",),
+    "staple": (),
+    "vegetable_dish": (),
+}
+
+TOOL_ONLY_TERMS = (
+    "锅",
+    "炒锅",
+    "平底锅",
+    "不粘锅",
+    "汤锅",
+    "蒸锅",
+    "电饭煲",
+    "高压锅",
+    "空气炸锅",
+    "微波炉",
+    "烤箱",
+    "电磁炉",
+    "燃气灶",
+    "砧板",
+    "菜刀",
+    "锅铲",
+    "勺",
+    "盆",
+    "碗",
+    "盘",
+    "保鲜膜",
+    "锡纸",
+    "厨房纸",
+    "隔热手套",
+    "手套",
+    "密封袋",
+    "保鲜袋",
+    "搅拌机",
+    "料理机",
+)
+
+BAD_STEP_MARKERS = (
+    "适用范围",
+    "功能",
+    "功效",
+    "营养功效",
+    "营养看台",
+    "营养快线",
+    "营养丰富",
+    "维生素",
+    "蛋白质",
+    "膳食纤维",
+    "帮助消化",
+    "Message",
+    "用料:",
+    "用料：",
+    "应用:",
+    "应用：",
+    "用法:",
+    "用法：",
+    "主编",
+    "出版社",
+    "出版",
+    "版权所有",
+    "ISBN",
+    "Issue",
+    "Pull request",
+    "如果您遵循本指南",
+)
+
+COOK_REFERENCE_SET = "cook_csv_reference"
+HOWTOCOOK_SET = "how_to_cook"
+LOCAL_BOOK_SET = "local_book"
+
 
 @dataclass
 class ExtractedRecipe:
@@ -507,7 +598,7 @@ def looks_like_section_heading(lines: list[str], index: int) -> bool:
 def split_materials(lines: list[str]) -> list[str]:
     items: list[str] = []
     for line in lines:
-        parts = re.split(r"[；;。]|[，,、]", line)
+        parts = re.split(r"[；;。]|[，,、?？]", line)
         for part in parts:
             cleaned = part.strip(" 　,，。；;")
             if cleaned:
@@ -516,23 +607,31 @@ def split_materials(lines: list[str]) -> list[str]:
 
 
 def split_steps(lines: list[str]) -> list[str]:
-    steps: list[str] = []
+    raw_steps: list[str] = []
     for line in lines:
         parts = re.split(r"(?=(?:[0-9]+[.．、]))", line)
         for part in parts:
-            cleaned = re.sub(r"^[➊➋➌➍➎➏➐➑➒➓❶❷❸❹❺❻❼❽❾❿]\s*", "", part).strip()
-            cleaned = re.sub(r"^[0-9]+[.．、]\s*", "", cleaned)
-            cleaned = cleaned.replace("??", "").replace("�", "").replace("□", "").strip()
+            cleaned = clean_step_text(part)
             if not cleaned:
                 continue
-            steps.append(cleaned)
-    return steps
+            raw_steps.append(cleaned)
+    return normalize_steps(raw_steps, limit=24)
 
 
 def clean_output_text(value: str) -> str:
     text = unicodedata.normalize("NFKC", value)
     text = text.replace("??", "").replace("�", "").replace("□", "")
     return text.strip()
+
+
+def has_text_artifact(value: str) -> bool:
+    normalized = unicodedata.normalize("NFKC", value)
+    cjk_count = sum("\u4e00" <= character <= "\u9fff" for character in normalized)
+    if cjk_count and "?" in normalized:
+        return True
+    if any(character in normalized for character in ("�", "□")):
+        return True
+    return any(unicodedata.category(character) == "Co" for character in normalized)
 
 
 def dedupe_strings(values: list[str], limit: int | None = None) -> list[str]:
@@ -547,6 +646,186 @@ def dedupe_strings(values: list[str], limit: int | None = None) -> list[str]:
         if limit is not None and len(result) >= limit:
             break
     return result
+
+
+def clean_markdown_text(value: str) -> str:
+    text = MARKDOWN_LINK_RE.sub(lambda match: match.group(1), value)
+    text = text.replace("`", "")
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.strip().strip("*_ ")
+    return clean_output_text(text)
+
+
+def markdown_heading_level(line: str) -> int | None:
+    match = re.match(r"^(#{1,6})\s+(.+?)\s*$", line.strip())
+    if match is None:
+        return None
+    return len(match.group(1))
+
+
+def markdown_heading_text(line: str) -> str:
+    return clean_markdown_text(re.sub(r"^#{1,6}\s+", "", line.strip()))
+
+
+def is_markdown_bullet(line: str) -> bool:
+    return bool(MARKDOWN_BULLET_RE.match(line))
+
+
+def strip_markdown_bullet(line: str) -> str:
+    return clean_markdown_text(MARKDOWN_BULLET_RE.sub("", line).strip())
+
+
+def split_action_sentences(text: str) -> list[str]:
+    normalized = clean_output_text(text)
+    normalized = re.sub(r"^\[[^\]]+\][：:]\s*", "", normalized)
+    if len(normalized) <= 140 and not re.search(r"[。；;].{6,}", normalized):
+        return [normalized] if normalized else []
+    parts = re.split(r"(?<=[。；;])\s*|(?=\([0-9０-９一二三四五六七八九十]+\))", normalized)
+    if len(parts) <= 1:
+        parts = re.split(r"(?<=后[，,])|(?<=时[，,])|(?<=备用[，,])", normalized)
+    result: list[str] = []
+    buffer = ""
+    for part in parts:
+        cleaned = part.strip(" 　,，。；;")
+        if not cleaned:
+            continue
+        candidate = f"{buffer}，{cleaned}" if buffer else cleaned
+        if len(candidate) < 12:
+            buffer = candidate
+            continue
+        result.append(candidate)
+        buffer = ""
+    if buffer:
+        if result:
+            result[-1] = f"{result[-1]}，{buffer}"
+        else:
+            result.append(buffer)
+    return result
+
+
+def clean_step_text(raw: str) -> str:
+    step = clean_markdown_text(raw)
+    step = step.replace("*", "")
+    for marker in ("营养看台", "Message", "关键:", "关键："):
+        if marker in step:
+            step = step.split(marker, 1)[0]
+    step = re.sub(r"^(烹饪方法|制作方法|制作过程|制法|做法|操作)[：:]\s*", "", step)
+    step = re.sub(r"^[➊➋➌➍➎➏➐➑➒➓❶❷❸❹❺❻❼❽❾❿①-⑳]\s*", "", step)
+    step = re.sub(r"^[0-9]+[.．、]\s*", "", step)
+    step = step.replace("??", "").replace("�", "").replace("□", "")
+    return step.strip(" 　,，。；;")
+
+
+def is_bad_step(step: str, *, allow_english: bool = False) -> bool:
+    normalized = clean_output_text(step)
+    if not normalized:
+        return True
+    if has_text_artifact(step):
+        return True
+    if any(marker in normalized for marker in BAD_STEP_MARKERS):
+        return True
+    if len(normalized) > (320 if allow_english else 240):
+        return True
+    cjk_count = sum("\u4e00" <= character <= "\u9fff" for character in normalized)
+    if cjk_count < 4 and not allow_english:
+        return True
+    if allow_english and cjk_count < 4 and not re.search(r"[A-Za-z]{3,}", normalized):
+        return True
+    return False
+
+
+def split_english_step_sentences(text: str) -> list[str]:
+    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z])", clean_output_text(text))
+    grouped: list[str] = []
+    buffer = ""
+    for part in parts:
+        cleaned = part.strip()
+        if not cleaned:
+            continue
+        candidate = f"{buffer} {cleaned}".strip() if buffer else cleaned
+        if len(candidate) <= 240:
+            buffer = candidate
+            continue
+        if buffer:
+            grouped.append(buffer)
+        buffer = cleaned
+    if buffer:
+        grouped.append(buffer)
+    return grouped
+
+
+def normalize_steps(
+    raw_steps: list[str],
+    *,
+    limit: int = 28,
+    allow_english: bool = False,
+) -> list[str]:
+    steps: list[str] = []
+    for raw_step in raw_steps:
+        parts = (
+            split_english_step_sentences(raw_step)
+            if allow_english
+            else split_action_sentences(raw_step)
+        )
+        for part in parts:
+            cleaned = clean_step_text(part)
+            if is_bad_step(cleaned, allow_english=allow_english):
+                continue
+            if steps and re.match(r"^[0-9０-９]+(?:厘米|毫米|克|毫升|分钟|小时|倍)", cleaned):
+                steps[-1] = f"{steps[-1]}{cleaned}"
+                continue
+            if steps and len(cleaned) <= 24 and not any(
+                verb in cleaned
+                for verb in ("洗", "切", "加", "放", "炒", "煮", "蒸", "炖", "煎", "炸", "烤", "拌", "焯", "腌", "盛", "泡", "汆", "煨", "调")
+            ):
+                steps[-1] = f"{steps[-1]}{cleaned}"
+                continue
+            steps.append(cleaned)
+    return dedupe_strings(steps, limit=limit)
+
+
+def looks_like_tool_only(text: str) -> bool:
+    cleaned = clean_output_text(text)
+    cleaned = re.sub(r"[（(].*?[）)]", "", cleaned).strip()
+    if not cleaned:
+        return True
+    if "火锅" in cleaned or "锅巴" in cleaned:
+        return False
+    if len(cleaned) <= 24 and any(term in cleaned for term in TOOL_ONLY_TERMS):
+        return True
+    if len(cleaned) <= 10 and any(term == cleaned for term in TOOL_ONLY_TERMS):
+        return True
+    if len(cleaned) <= 12 and any(
+        cleaned.endswith(term) for term in ("锅", "炉", "刀", "板", "碗", "盆", "盘")
+    ):
+        return True
+    return False
+
+
+def normalize_materials(raw_materials: list[str], *, limit: int = 48) -> list[str]:
+    materials: list[str] = []
+    for raw in raw_materials:
+        cleaned = clean_markdown_text(raw)
+        cleaned = re.sub(r"^(主料|辅料|调味料|调料|配料|原料|材料|可选原料)\s*[：:]\s*", "", cleaned)
+        cleaned = cleaned.strip(" 　,，。；;")
+        if not cleaned or looks_like_tool_only(cleaned):
+            continue
+        if normalize_header(cleaned) in {
+            "原料",
+            "调味料",
+            "调料",
+            "材料",
+            "主料",
+            "辅料",
+            "工具",
+        }:
+            continue
+        if any(marker in cleaned for marker in BAD_STEP_MARKERS):
+            continue
+        if has_text_artifact(cleaned):
+            continue
+        materials.append(cleaned)
+    return dedupe_strings(materials, limit=limit)
 
 
 def looks_like_english_recipe_title(line: str) -> bool:
@@ -844,8 +1123,10 @@ def normalize_name(name: str) -> str:
 
 
 def recipe_quality_score(recipe: ExtractedRecipe) -> int:
+    source_bonus = 1000 if recipe.book_title.startswith("HowToCook/") else 0
     return (
-        len(recipe.materials) * 3
+        source_bonus
+        + len(recipe.materials) * 3
         + len(recipe.seasonings) * 2
         + len(recipe.steps) * 4
         + len(recipe.notes)
@@ -879,6 +1160,9 @@ def annotate_dish_types(recipe: ExtractedRecipe) -> list[str]:
     for dish_type, keywords in TYPE_KEYWORDS.items():
         if any(keyword in haystack for keyword in keywords):
             dish_types.append(dish_type)
+    if recipe.book_title.startswith("HowToCook/"):
+        category = recipe.book_title.split("/", 1)[1]
+        dish_types.extend(HOWTOCOOK_CATEGORY_TYPES.get(category, ()))
     if "意大利" in recipe.book_title or "意面" in haystack:
         dish_types.append("noodle")
     if "凉拌" in recipe.book_title:
@@ -1162,6 +1446,14 @@ def clean_recipe_notes(raw_notes: list[str]) -> list[str]:
         note = unicodedata.normalize("NFKC", raw_note).strip()
         if not note:
             continue
+        if normalize_header(note) in JUNK_EXACT_NORMALIZED:
+            continue
+        if any(marker in note for marker in BAD_STEP_MARKERS):
+            continue
+        if has_text_artifact(note):
+            continue
+        if len(note) > 120:
+            continue
         if "清真友好" in note:
             continue
         for marker in CUISINE_MARKERS:
@@ -1224,6 +1516,266 @@ def merge_duplicate_recipes(recipes: list[ExtractedRecipe]) -> list[ExtractedRec
     return list(merged.values())
 
 
+def normalize_recipe_name_from_markdown(raw_title: str, path: Path) -> str:
+    title = clean_markdown_text(raw_title)
+    title = re.sub(r"^#\s*", "", title).strip()
+    title = re.sub(r"(?:的)?(?:做法|制作方法|制作)$", "", title).strip()
+    title = title.strip("《》")
+    if not title:
+        title = path.stem
+    return title
+
+
+def collect_markdown_sections(text: str) -> tuple[str, dict[str, list[str]]]:
+    title = ""
+    sections: dict[str, list[str]] = {}
+    current_heading = ""
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            continue
+        level = markdown_heading_level(line)
+        if level == 1 and not title:
+            title = markdown_heading_text(line)
+            continue
+        if level == 2:
+            current_heading = markdown_heading_text(line)
+            sections.setdefault(current_heading, [])
+            continue
+        if current_heading:
+            sections.setdefault(current_heading, []).append(line)
+    return title, sections
+
+
+def parse_howtocook_materials(lines: list[str]) -> list[str]:
+    raw_items: list[str] = []
+    for line in lines:
+        if line.lstrip().startswith(">"):
+            continue
+        if markdown_heading_level(line) is not None:
+            continue
+        if is_markdown_bullet(line):
+            item = strip_markdown_bullet(line)
+            if item:
+                if re.match(r"^(主料|辅料|调味料|调料|配料|原料|材料|可选原料)\s*[：:]", item):
+                    item = re.sub(
+                        r"^(主料|辅料|调味料|调料|配料|原料|材料|可选原料)\s*[：:]\s*",
+                        "",
+                        item,
+                    )
+                    raw_items.extend(
+                        part.strip()
+                        for part in re.split(r"[、，,；;]", item)
+                        if part.strip()
+                    )
+                else:
+                    raw_items.append(item)
+        elif "：" in line or ":" in line:
+            item = clean_markdown_text(line)
+            if 1 < len(item) <= 40:
+                raw_items.append(item)
+    return normalize_materials(raw_items, limit=42)
+
+
+def parse_howtocook_calculation(lines: list[str]) -> tuple[dict[str, str], list[str]]:
+    quantity_by_name: dict[str, str] = {}
+    notes: list[str] = []
+    for line in lines:
+        if markdown_heading_level(line) is not None:
+            continue
+        text = strip_markdown_bullet(line) if is_markdown_bullet(line) else clean_markdown_text(line)
+        if not text:
+            continue
+        text = text.replace("* 份数", "/份").replace("*份数", "/份")
+        if normalize_header(text) in {"总量", "每份", "每2份", "每3份"}:
+            continue
+        if "=" in text:
+            left, right = text.split("=", 1)
+            key = clean_output_text(left).strip(" 　:：")
+            value = clean_output_text(right).strip(" 　:：")
+            if key and value and len(key) <= 18:
+                quantity_by_name[key] = value
+                notes.append(f"用量：{key} = {value}")
+            continue
+        quantity_match = re.match(
+            r"^(.{1,18}?)\s+([0-9０-９一二三四五六七八九十半两几少适].*)$",
+            text,
+        )
+        if quantity_match is not None:
+            key = clean_output_text(quantity_match.group(1)).strip(" 　:：")
+            value = clean_output_text(quantity_match.group(2)).strip(" 　:：")
+            if key and value:
+                quantity_by_name[key] = value
+                notes.append(f"用量：{key} = {value}")
+            continue
+        if any(keyword in text for keyword in ("份", "总量", "食用", "约")):
+            notes.append(text)
+    return quantity_by_name, dedupe_strings(notes, limit=10)
+
+
+def apply_howtocook_quantities(
+    materials: list[str],
+    quantity_by_name: dict[str, str],
+) -> list[str]:
+    if not quantity_by_name:
+        return materials
+    enriched: list[str] = []
+    for material in materials:
+        normalized_material = cleaned_ingredient_text(material) or material
+        matched_quantity = ""
+        for name, quantity in quantity_by_name.items():
+            normalized_name = cleaned_ingredient_text(name) or name
+            if not normalized_name:
+                continue
+            if normalized_name in normalized_material or normalized_material in normalized_name:
+                matched_quantity = quantity
+                break
+        if matched_quantity and "：" not in material and ":" not in material:
+            enriched.append(f"{material}：{matched_quantity}")
+        else:
+            enriched.append(material)
+    return dedupe_strings(enriched, limit=42)
+
+
+def parse_howtocook_steps(lines: list[str]) -> list[str]:
+    raw_steps: list[str] = []
+    current_prefix = ""
+    for line in lines:
+        level = markdown_heading_level(line)
+        if level is not None:
+            heading = markdown_heading_text(line)
+            if level == 2 and heading in HOWTOCOOK_SECTION_ENDINGS:
+                break
+            if level >= 3:
+                current_prefix = heading
+            continue
+        if is_markdown_bullet(line):
+            step = strip_markdown_bullet(line)
+        else:
+            step = clean_markdown_text(line)
+        if not step:
+            continue
+        if current_prefix and not step.startswith(current_prefix) and len(step) < 120:
+            step = f"{current_prefix}：{step}"
+        raw_steps.append(step)
+    return normalize_steps(raw_steps, limit=30)
+
+
+def parse_howtocook_extra_notes(lines: list[str]) -> list[str]:
+    notes: list[str] = []
+    for line in lines:
+        if markdown_heading_level(line) is not None:
+            continue
+        note = strip_markdown_bullet(line) if is_markdown_bullet(line) else clean_markdown_text(line)
+        if not note or is_bad_step(note):
+            continue
+        if note.startswith("|"):
+            continue
+        if len(note) > 100:
+            continue
+        notes.append(note)
+    return dedupe_strings(notes, limit=8)
+
+
+def extract_from_howtocook_markdown(markdown_path: Path, root_dir: Path) -> ExtractedRecipe | None:
+    relative = markdown_path.relative_to(root_dir)
+    category = relative.parts[0] if relative.parts else ""
+    if category in HOWTOCOOK_EXCLUDED_CATEGORIES:
+        return None
+    text = markdown_path.read_text(encoding="utf-8", errors="ignore")
+    title, sections = collect_markdown_sections(text)
+    name = normalize_recipe_name_from_markdown(title, markdown_path)
+    if not name or name == "示例菜":
+        return None
+    materials = parse_howtocook_materials(sections.get("必备原料和工具", []))
+    quantity_by_name, calculation_notes = parse_howtocook_calculation(
+        sections.get("计算", [])
+    )
+    materials = apply_howtocook_quantities(materials, quantity_by_name)
+    steps = parse_howtocook_steps(sections.get("操作", []))
+    notes = [
+        *calculation_notes,
+        *parse_howtocook_extra_notes(sections.get("附加内容", [])),
+    ]
+    if len(materials) < 1 or len(steps) < 2:
+        return None
+    return ExtractedRecipe(
+        name=name,
+        materials=materials,
+        seasonings=[],
+        steps=steps,
+        notes=dedupe_strings(notes, limit=12),
+        book_title=f"HowToCook/{category}",
+    )
+
+
+def extract_from_howtocook_dir(root_dir: Path | None) -> list[ExtractedRecipe]:
+    if root_dir is None or not root_dir.exists():
+        return []
+    dishes_dir = root_dir / "dishes"
+    if not dishes_dir.exists():
+        return []
+    recipes: list[ExtractedRecipe] = []
+    for markdown_path in sorted(dishes_dir.rglob("*.md")):
+        recipe = extract_from_howtocook_markdown(markdown_path, dishes_dir)
+        if recipe is not None:
+            recipes.append(recipe)
+    return merge_duplicate_recipes(recipes)
+
+
+def is_practical_local_recipe(recipe: ExtractedRecipe) -> bool:
+    title_cjk = sum("\u4e00" <= character <= "\u9fff" for character in recipe.name)
+    is_english = title_cjk < 2 and bool(re.search(r"[A-Za-z]{3,}", recipe.name))
+    if title_cjk < 2 and not is_english:
+        return False
+    if is_english and (
+        looks_like_english_step(recipe.name)
+        or looks_like_english_ingredient(recipe.name)
+        or ";" in recipe.name
+        or re.match(r"^(?:\d+|[½¼¾⅓⅔⅛⅜⅝⅞])", recipe.name.strip())
+    ):
+        return False
+    if len(recipe.name) > 40:
+        return False
+    materials = normalize_materials([*recipe.materials, *recipe.seasonings])
+    steps = normalize_steps(recipe.steps, limit=24, allow_english=is_english)
+    if len(materials) < 1 or len(steps) < 1:
+        return False
+    if any(len(step) > (300 if is_english else 220) for step in steps):
+        return False
+    if is_english:
+        return any(
+            re.search(
+                r"\b(add|heat|cook|bake|mix|stir|place|bring|drain|serve|combine|preheat|pour|simmer|fry|boil|season)\b",
+                step,
+                re.IGNORECASE,
+            )
+            for step in steps
+        )
+    action_verbs = ("洗", "切", "加", "放", "炒", "煮", "蒸", "炖", "煎", "炸", "烤", "拌", "焯", "腌", "盛", "泡", "汆", "煨", "调")
+    return any(any(verb in step for verb in action_verbs) for step in steps)
+
+
+def normalize_local_recipe(recipe: ExtractedRecipe) -> ExtractedRecipe | None:
+    title_cjk = sum("\u4e00" <= character <= "\u9fff" for character in recipe.name)
+    is_english = title_cjk < 2 and bool(re.search(r"[A-Za-z]{3,}", recipe.name))
+    materials = normalize_materials(recipe.materials, limit=42)
+    seasonings = normalize_materials(recipe.seasonings, limit=24)
+    steps = normalize_steps(recipe.steps, limit=24, allow_english=is_english)
+    notes = clean_recipe_notes(recipe.notes)
+    normalized = ExtractedRecipe(
+        name=clean_output_text(recipe.name),
+        materials=materials,
+        seasonings=seasonings,
+        steps=steps,
+        notes=notes,
+        book_title=recipe.book_title,
+    )
+    if not is_practical_local_recipe(normalized):
+        return None
+    return normalized
+
+
 def extract_from_epub(epub_path: Path) -> list[ExtractedRecipe]:
     extracted: list[ExtractedRecipe] = []
     with zipfile.ZipFile(epub_path) as zf:
@@ -1235,7 +1787,12 @@ def extract_from_epub(epub_path: Path) -> list[ExtractedRecipe]:
             )
             extracted.extend(parse_recipe_blocks(lines, epub_path.name))
             extracted.extend(parse_english_recipe_blocks(lines, epub_path.name))
-    return merge_duplicate_recipes(extracted)
+    normalized = [
+        recipe
+        for recipe in (normalize_local_recipe(item) for item in extracted)
+        if recipe is not None
+    ]
+    return merge_duplicate_recipes(normalized)
 
 
 def split_cook_items(raw: str) -> list[str]:
@@ -1473,6 +2030,81 @@ def cook_csv_payloads(rows: list[dict[str, str]]) -> list[dict[str, object]]:
     return payloads
 
 
+def build_cook_reference_index(rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
+    index: dict[str, dict[str, str]] = {}
+    for row in rows:
+        name = row.get("name", "").strip()
+        if not name:
+            continue
+        keys = {
+            normalize_name(name),
+            normalize_name(name.replace("版", "")),
+            normalize_name(re.sub(r"^(电饭煲|空气炸锅|烤箱|微波炉)版", "", name)),
+        }
+        for key in keys:
+            if key and key not in index:
+                index[key] = row
+    return index
+
+
+def enrich_payload_with_cook_reference(
+    payload: dict[str, object],
+    row: dict[str, str],
+) -> None:
+    attributes = payload.get("attributes", {})
+    if not isinstance(attributes, dict):
+        attributes = {}
+        payload["attributes"] = attributes
+    tags_raw = split_cook_items(row.get("tags", ""))
+    methods = split_cook_items(row.get("methods", ""))
+    tools_raw = split_cook_items(row.get("tools", ""))
+    difficulty = row.get("difficulty", "").strip()
+    bv = clean_cook_bv(row.get("bv", ""))
+    ingredients = split_cook_items(row.get("stuff", ""))
+    recipe_sets = [str(item) for item in attributes.get("recipeSet", []) if str(item)]
+    attributes["recipeSet"] = dedupe_strings([*recipe_sets, COOK_REFERENCE_SET])
+    attributes["cookDifficulty"] = [difficulty] if difficulty else []
+    attributes["cookTag"] = tags_raw
+    attributes["cookMethod"] = methods
+    attributes["cookTool"] = tools_raw
+    attributes["cookBv"] = [bv] if bv else []
+    attributes["cookStuff"] = ingredients
+
+    existing_tags = [str(item) for item in payload.get("tagsZh", []) if str(item)]
+    payload["tagsZh"] = dedupe_strings(
+        [*existing_tags, difficulty, *tags_raw[:2], *methods[:2], *tools_raw[:1]],
+        limit=10,
+    )
+    payload["tagsEn"] = payload["tagsZh"]
+    existing_context_ids = [str(item) for item in payload.get("contextIds", []) if str(item)]
+    tool_ids = [item for item in (cook_tool_id(tool) for tool in tools_raw) if item]
+    merged_tools = dedupe_strings([*existing_context_ids, *tool_ids])
+    if merged_tools:
+        payload["contextIds"] = merged_tools
+        payload["contextId"] = payload.get("contextId") or merged_tools[0]
+    notes = [str(item) for item in payload.get("notesZh", []) if str(item)]
+    if difficulty:
+        notes.append(f"难度：{difficulty}")
+    payload["notesZh"] = dedupe_strings(notes, limit=10)
+    payload["notesEn"] = payload["notesZh"]
+
+
+def enrich_payloads_with_cook_references(
+    payloads: list[dict[str, object]],
+    rows: list[dict[str, str]],
+) -> int:
+    index = build_cook_reference_index(rows)
+    matched = 0
+    for payload in payloads:
+        key = normalize_name(str(payload.get("titleZh", "")))
+        row = index.get(key)
+        if row is None:
+            continue
+        enrich_payload_with_cook_reference(payload, row)
+        matched += 1
+    return matched
+
+
 def recipe_to_option_payload(recipe: ExtractedRecipe) -> dict[str, object]:
     dish_types = annotate_dish_types(recipe)
     ingredient_keywords = extract_ingredient_keywords(recipe)
@@ -1481,12 +2113,14 @@ def recipe_to_option_payload(recipe: ExtractedRecipe) -> dict[str, object]:
     tools = infer_tools(recipe, dish_types)
     tags = build_tags(meals, dish_types, filter_ids)
     notes = build_notes(recipe, filter_ids, dish_types)
+    recipe_set = HOWTOCOOK_SET if recipe.book_title.startswith("HowToCook/") else LOCAL_BOOK_SET
     attributes = {
         "meal": meals,
         "type": [item.split(":", 1)[1] for item in filter_ids if item.startswith("type:")],
         "profile": [item.split(":", 1)[1] for item in filter_ids if item.startswith("profile:")],
         "contains": [item.split(":", 1)[1] for item in filter_ids if item.startswith("contains:")],
         "ingredient": ingredient_keywords,
+        "recipeSet": [recipe_set],
     }
     return {
         "id": f"library_{normalize_name(recipe.name)}",
@@ -1517,9 +2151,15 @@ def build_dataset(
     source_dir: Path,
     *,
     cook_rows: list[dict[str, str]] | None = None,
+    howtocook_dir: Path | None = None,
+    include_cook_csv_standalone: bool = False,
 ) -> dict[str, object]:
     all_recipes: list[ExtractedRecipe] = []
     per_book_counts: Counter[str] = Counter()
+
+    howtocook_recipes = extract_from_howtocook_dir(howtocook_dir)
+    per_book_counts["HowToCook"] = len(howtocook_recipes)
+    all_recipes.extend(howtocook_recipes)
 
     for epub_path in sorted(source_dir.glob("*.epub")):
         extracted = extract_from_epub(epub_path)
@@ -1528,7 +2168,13 @@ def build_dataset(
 
     deduped_recipes = merge_duplicate_recipes(all_recipes)
     book_payloads = [recipe_to_option_payload(recipe) for recipe in deduped_recipes]
-    cook_payload_list = cook_csv_payloads(cook_rows or [])
+    cook_reference_matched_count = enrich_payloads_with_cook_references(
+        book_payloads,
+        cook_rows or [],
+    )
+    cook_payload_list = (
+        cook_csv_payloads(cook_rows or []) if include_cook_csv_standalone else []
+    )
     payloads = sorted(
         [*cook_payload_list, *book_payloads],
         key=lambda item: (
@@ -1540,16 +2186,21 @@ def build_dataset(
 
     return {
         "libraryId": LIBRARY_ID,
-        "libraryVersion": "2026-04-25",
+        "libraryVersion": "2026-04-29",
         "schemaId": SCHEMA_ID,
         "schemaVersion": SCHEMA_VERSION,
-        "version": "2026-04-25",
+        "version": "2026-04-29",
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "referenceTitles": [],
         "stats": {
             "rawRecipeCount": len(all_recipes),
             "bookRecipeCount": len(book_payloads),
+            "howToCookRecipeCount": len(howtocook_recipes),
+            "localBookRecipeCount": len(book_payloads) - len(howtocook_recipes),
             "cookRecipeCount": len(cook_payload_list),
+            "cookReferenceMatchedCount": cook_reference_matched_count,
+            "cookCsvRowCount": len(cook_rows or []),
+            "cookStandaloneImported": include_cook_csv_standalone,
             "dedupedRecipeCount": len(payloads),
             "perBookCounts": dict(per_book_counts),
         },
@@ -1729,10 +2380,10 @@ def write_sqlite_v2_export(
         (
             V2_BOOK_SET_ID,
             "builtin",
-            "内置书籍菜谱",
-            "Built-in book recipes",
-            "从本地做菜资料抽取的内置菜谱集",
-            "Recipes extracted from the bundled cooking references",
+            "可执行菜谱库",
+            "Executable recipe library",
+            "以结构化步骤为优先整理的内置菜谱集",
+            "Recipes normalized with self-contained executable steps",
             10,
         ),
         (
@@ -2185,6 +2836,9 @@ def write_export_bundle(
 def parse_args() -> argparse.Namespace:
     script_path = Path(__file__).resolve()
     default_source = Path(r"D:\vocabularySleep-resources\做菜")
+    default_howtocook = (
+        script_path.parent.parent / "build" / "_external" / "HowToCook"
+    )
     default_output = (
         script_path.parent.parent
         / "assets"
@@ -2225,6 +2879,20 @@ def parse_args() -> argparse.Namespace:
         help="YunYouJun/cook recipe.csv URL used when --cook-csv is omitted.",
     )
     parser.add_argument(
+        "--howtocook-dir",
+        type=Path,
+        default=default_howtocook,
+        help="Optional local Anduin2017/HowToCook checkout directory.",
+    )
+    parser.add_argument(
+        "--include-cook-csv-standalone",
+        action="store_true",
+        help=(
+            "Import YunYouJun/cook recipe.csv rows as standalone recipes. "
+            "Disabled by default because recipe.csv does not contain self-contained steps."
+        ),
+    )
+    parser.add_argument(
         "--skip-cook-csv",
         action="store_true",
         help="Skip importing YunYouJun/cook recipe.csv rows.",
@@ -2248,7 +2916,12 @@ def main() -> None:
         args.cook_csv_url,
         skip_cook_csv=args.skip_cook_csv,
     )
-    dataset = build_dataset(args.source_dir, cook_rows=cook_rows)
+    dataset = build_dataset(
+        args.source_dir,
+        cook_rows=cook_rows,
+        howtocook_dir=args.howtocook_dir,
+        include_cook_csv_standalone=args.include_cook_csv_standalone,
+    )
     write_json(args.output, dataset)
     write_export_bundle(args.export_dir, dataset, sqlite_mode=args.sqlite_mode)
     print(
@@ -2258,6 +2931,10 @@ def main() -> None:
     print(
         f"Book recipes: {dataset['stats']['bookRecipeCount']}; "
         f"cook CSV recipes: {dataset['stats']['cookRecipeCount']}."
+    )
+    print(
+        f"HowToCook recipes: {dataset['stats']['howToCookRecipeCount']}; "
+        f"cook references matched: {dataset['stats']['cookReferenceMatchedCount']}."
     )
     print(f"Output: {args.output}")
     print(f"Export directory: {args.export_dir}")

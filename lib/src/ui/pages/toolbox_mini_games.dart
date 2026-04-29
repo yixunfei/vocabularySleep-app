@@ -20,6 +20,9 @@ part 'toolbox_mini_games_minesweeper.dart';
 part 'toolbox_mini_games_jigsaw.dart';
 part 'toolbox_mini_games_gomoku.dart';
 part 'toolbox_mini_games_slide.dart';
+part 'toolbox_mini_games_roulette.dart';
+part 'toolbox_mini_games_tetris.dart';
+part 'toolbox_mini_games_sokoban.dart';
 
 class MiniGamesToolPage extends StatelessWidget {
   const MiniGamesToolPage({super.key});
@@ -31,10 +34,64 @@ class MiniGamesToolPage extends StatelessWidget {
       title: pickUiText(i18n, zh: '小游戏模块', en: 'Mini games'),
       subtitle: pickUiText(
         i18n,
-        zh: '在工具箱里集中放置数独、扫雷、电子拼图、五子棋和 2048/4096。',
-        en: 'A compact game module with Sudoku, Minesweeper, image jigsaw, Gomoku, and 2048/4096.',
+        zh: '在工具箱里集中放置俄罗斯轮盘赌、俄罗斯方块、推箱子、数独、扫雷、电子拼图、五子棋和 2048/4096。',
+        en: 'A compact game module with roulette, Tetris, Sokoban, Sudoku, Minesweeper, image jigsaw, Gomoku, and 2048/4096.',
       ),
       child: const _MiniGamesHub(),
+    );
+  }
+}
+
+class RouletteGamePage extends StatelessWidget {
+  const RouletteGamePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    return ToolboxToolPage(
+      title: pickUiText(i18n, zh: '俄罗斯轮盘赌', en: 'Roulette trigger'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '设置子弹数后依次扣动扳机，空膛播放咔哒声，命中时触发闪烁、震动和警示音。',
+        en: 'Set the bullet count and pull chamber by chamber. Empty pulls click; hits flash, vibrate, and play an alert.',
+      ),
+      child: const _RouletteGame(),
+    );
+  }
+}
+
+class TetrisGamePage extends StatelessWidget {
+  const TetrisGamePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    return ToolboxToolPage(
+      title: pickUiText(i18n, zh: '俄罗斯方块', en: 'Tetris'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '经典 10x20 下落方块，支持旋转、软降、硬降、消行得分和暂停。',
+        en: 'Classic 10x20 falling blocks with rotate, soft drop, hard drop, line clears, scoring, and pause.',
+      ),
+      child: const _TetrisGame(),
+    );
+  }
+}
+
+class SokobanGamePage extends StatelessWidget {
+  const SokobanGamePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    return ToolboxToolPage(
+      title: pickUiText(i18n, zh: '推箱子', en: 'Sokoban'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '先生成可解正确路径，再布置障碍；支持提示、撤销和正确线路显示。',
+        en: 'Generates a solvable route first, then places walls. Includes hints, undo, and route reveal.',
+      ),
+      child: const _SokobanGame(),
     );
   }
 }
@@ -136,6 +193,39 @@ class _MiniGamesHub extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final entries = <_MiniGameEntry>[
+      _MiniGameEntry(
+        title: pickUiText(i18n, zh: '俄罗斯轮盘赌', en: 'Roulette trigger'),
+        subtitle: pickUiText(
+          i18n,
+          zh: '设置子弹数，逐次扣动扳机。',
+          en: 'Set bullets and pull one chamber at a time.',
+        ),
+        icon: Icons.casino_rounded,
+        accent: const Color(0xFFC2554C),
+        pageBuilder: RouletteGamePage.new,
+      ),
+      _MiniGameEntry(
+        title: pickUiText(i18n, zh: '俄罗斯方块', en: 'Tetris'),
+        subtitle: pickUiText(
+          i18n,
+          zh: '下落、旋转、消行和得分。',
+          en: 'Drop, rotate, clear lines, and score.',
+        ),
+        icon: Icons.view_module_rounded,
+        accent: const Color(0xFF4B8BC8),
+        pageBuilder: TetrisGamePage.new,
+      ),
+      _MiniGameEntry(
+        title: pickUiText(i18n, zh: '推箱子', en: 'Sokoban'),
+        subtitle: pickUiText(
+          i18n,
+          zh: '有解关卡、提示与正确路线。',
+          en: 'Solvable levels with hints and route reveal.',
+        ),
+        icon: Icons.inventory_2_rounded,
+        accent: const Color(0xFF8A6CCF),
+        pageBuilder: SokobanGamePage.new,
+      ),
       _MiniGameEntry(
         title: pickUiText(i18n, zh: '数独', en: 'Sudoku'),
         subtitle: pickUiText(i18n, zh: '9x9 逻辑填数。', en: '9x9 logic puzzle.'),

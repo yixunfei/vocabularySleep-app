@@ -687,6 +687,49 @@ List<Widget> _managerWearCollectionActions({
   return actions;
 }
 
+List<Widget> _managerActivityCollectionActions({
+  required BuildContext context,
+  required AppI18n i18n,
+  required List<DailyChoiceActivityCollection> collections,
+  required DailyChoiceActivityCollection? selectedCollection,
+  required String optionId,
+  required ValueChanged<Set<String>> onAddMultiple,
+  required ValueChanged<String> onRemove,
+}) {
+  if (collections.isEmpty) {
+    return const <Widget>[];
+  }
+  final actions = <Widget>[
+    TextButton.icon(
+      onPressed: () async {
+        final selectedIds = await _showActivityCollectionPicker(
+          context: context,
+          i18n: i18n,
+          collections: collections,
+          optionId: optionId,
+        );
+        if (selectedIds == null || selectedIds.isEmpty) {
+          return;
+        }
+        onAddMultiple(selectedIds);
+      },
+      icon: const Icon(Icons.playlist_add_check_rounded),
+      label: Text(pickUiText(i18n, zh: '加入行动集', en: 'Add to set')),
+    ),
+  ];
+  if (selectedCollection != null &&
+      selectedCollection.containsOption(optionId)) {
+    actions.add(
+      TextButton.icon(
+        onPressed: () => onRemove(selectedCollection.id),
+        icon: const Icon(Icons.playlist_remove_rounded),
+        label: Text(pickUiText(i18n, zh: '移出当前行动集', en: 'Remove from set')),
+      ),
+    );
+  }
+  return actions;
+}
+
 Future<Set<String>?> _showWearCollectionPicker({
   required BuildContext context,
   required AppI18n i18n,
@@ -732,6 +775,79 @@ Future<Set<String>?> _showWearCollectionPicker({
                               i18n,
                               zh: '${collection.optionIds.length} 套搭配',
                               en: '${collection.optionIds.length} outfits',
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              ),
+              FilledButton.icon(
+                onPressed: selectedIds.isEmpty
+                    ? null
+                    : () => Navigator.of(context).pop(selectedIds),
+                icon: const Icon(Icons.check_rounded),
+                label: Text(pickUiText(i18n, zh: '确认加入', en: 'Add')),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+Future<Set<String>?> _showActivityCollectionPicker({
+  required BuildContext context,
+  required AppI18n i18n,
+  required List<DailyChoiceActivityCollection> collections,
+  required String optionId,
+}) {
+  final initialSelected = <String>{
+    dailyChoiceFavoriteActivityCollectionId,
+    for (final collection in collections)
+      if (collection.containsOption(optionId)) collection.id,
+  };
+  return showDialog<Set<String>>(
+    context: context,
+    builder: (context) {
+      final selectedIds = initialSelected.toSet();
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(pickUiText(i18n, zh: '加入行动集', en: 'Add to action set')),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: collections
+                      .map(
+                        (collection) => CheckboxListTile(
+                          value: selectedIds.contains(collection.id),
+                          onChanged: (value) {
+                            setDialogState(() {
+                              if (value == true) {
+                                selectedIds.add(collection.id);
+                              } else {
+                                selectedIds.remove(collection.id);
+                              }
+                            });
+                          },
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(collection.title(i18n)),
+                          subtitle: Text(
+                            pickUiText(
+                              i18n,
+                              zh: '${collection.optionIds.length} 个行动',
+                              en: '${collection.optionIds.length} actions',
                             ),
                           ),
                         ),

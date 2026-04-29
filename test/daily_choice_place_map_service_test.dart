@@ -136,6 +136,9 @@ void main() {
         consentGranted: true,
         useApproximateLocation: false,
         radiusMeters: 3000,
+        tileProviderId: 'carto_light',
+        cacheTiles: false,
+        autoFitResults: false,
       ),
     );
 
@@ -144,5 +147,126 @@ void main() {
     expect(restored.placeMapSettings.consentGranted, isTrue);
     expect(restored.placeMapSettings.useApproximateLocation, isFalse);
     expect(restored.placeMapSettings.radiusMeters, 3000);
+    expect(restored.placeMapSettings.tileProviderId, 'carto_light');
+    expect(restored.placeMapSettings.cacheTiles, isFalse);
+    expect(restored.placeMapSettings.autoFitResults, isFalse);
+  });
+
+  test('default tile provider uses OSM HOT instead of CARTO', () {
+    final provider = dailyChoiceResolveMapTileProvider(
+      DailyChoicePlaceMapSettings.defaults.tileProviderId,
+    );
+
+    expect(provider.id, DailyChoicePlaceMapSettings.defaultTileProviderId);
+    expect(provider.urlTemplate, contains('tile.openstreetmap.fr/hot'));
+    expect(provider.urlTemplate, isNot(contains('tile.openstreetmap.org')));
+    expect(provider.usesOsmPublicTileServer, isFalse);
+    expect(provider.requiresConservativeUse, isTrue);
+    expect(provider.attribution, contains('OpenStreetMap'));
+  });
+
+  test('tile provider resolution includes community fallbacks', () {
+    final fallback = dailyChoiceResolveMapTileProvider('missing-provider');
+    final osm = dailyChoiceResolveMapTileProvider('osm_standard');
+    final france = dailyChoiceResolveMapTileProvider('osm_france_fallback');
+    final de = dailyChoiceResolveMapTileProvider('osm_de');
+    final carto = dailyChoiceResolveMapTileProvider('carto_voyager_fallback');
+
+    expect(fallback.id, DailyChoicePlaceMapSettings.defaultTileProviderId);
+    expect(osm.urlTemplate, contains('tile.openstreetmap.org'));
+    expect(osm.usesOsmPublicTileServer, isTrue);
+    expect(france.urlTemplate, contains('tile.openstreetmap.fr/osmfr'));
+    expect(de.urlTemplate, contains('tile.openstreetmap.de'));
+    expect(carto.urlTemplate, contains('basemaps.cartocdn.com'));
+  });
+
+  test(
+    'legacy CARTO and OSM France default settings migrate to the current default source',
+    () {
+      final restoredCarto = DailyChoicePlaceMapSettings.fromJson(
+        <String, Object?>{'tileProviderId': 'carto_voyager'},
+      );
+      final restoredFrance = DailyChoicePlaceMapSettings.fromJson(
+        <String, Object?>{'tileProviderId': 'osm_france'},
+      );
+
+      expect(
+        restoredCarto.tileProviderId,
+        DailyChoicePlaceMapSettings.defaultTileProviderId,
+      );
+      expect(
+        restoredFrance.tileProviderId,
+        DailyChoicePlaceMapSettings.defaultTileProviderId,
+      );
+    },
+  );
+
+  test('IP coarse location provider parses city-level coordinates', () async {
+    late Uri requestedUrl;
+    final provider = DailyChoiceIpCoarseLocationProvider(
+      endpoint: Uri.https('example.test', '/json'),
+      httpClient: MockClient((request) async {
+        requestedUrl = request.url;
+        expect(request.headers['User-Agent'], contains('IP coarse range'));
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode(<String, Object?>{
+              'city': 'Chengdu',
+              'region': 'Sichuan',
+              'country': 'CN',
+              'loc': '30.6667,104.0667',
+            }),
+          ),
+          200,
+          headers: <String, String>{'content-type': 'application/json'},
+        );
+      }),
+    );
+
+    final result = await provider.readCoarseLocation();
+
+    expect(requestedUrl.host, 'example.test');
+    expect(result.hasPoint, isTrue);
+    expect(result.source, DailyChoiceLocationReadSource.ipCoarse);
+    expect(result.usedApproximateLocation, isTrue);
+    expect(result.areaLabel, 'Chengdu, Sichuan, CN');
+    expect(result.point!.latitude, 30.6667);
+    expect(result.point!.longitude, 104.0667);
+    expect(
+      result.point!.accuracyMeters,
+      DailyChoicePlaceMapSettings.coarseRangeRadiusMeters,
+    );
+  });
+
+  test('map cache byte labels use compact units', () {
+    expect(dailyChoiceFormatBytes(512), '512 B');
+    expect(dailyChoiceFormatBytes(1536), '1.5 KB');
+    expect(dailyChoiceFormatBytes(2 * 1024 * 1024), '2.0 MB');
+  });
+
+  test('external map links prefer native map app URI with web fallback', () {
+    const place = DailyChoiceOsmPlace(
+      id: 'go_osm_node_77',
+      osmType: 'node',
+      osmId: 77,
+      name: 'Pocket Garden',
+      latitude: 31.234567,
+      longitude: 121.456789,
+      distanceMeters: 200,
+      categoryId: 'outside',
+      sceneId: 'nature',
+      kindZh: '自然',
+      kindEn: 'Nature',
+      tags: <String, String>{'leisure': 'garden'},
+    );
+
+    final links = dailyChoiceExternalMapUris(place);
+
+    expect(links, hasLength(3));
+    expect(links.first.scheme, 'geo');
+    expect(links.first.toString(), contains('31.234567,121.456789'));
+    expect(links.first.toString(), contains('Pocket%20Garden'));
+    expect(links[1].host, 'maps.apple.com');
+    expect(links.last.host, 'www.openstreetmap.org');
   });
 }

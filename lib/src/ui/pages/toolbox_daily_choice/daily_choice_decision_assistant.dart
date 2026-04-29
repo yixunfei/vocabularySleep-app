@@ -44,6 +44,52 @@ class _DecisionDraft {
   }
 }
 
+class _DecisionActionDraft {
+  const _DecisionActionDraft({
+    required this.nextStep,
+    required this.evidenceTask,
+    required this.stopRule,
+    required this.reviewTrigger,
+    required this.premortem,
+  });
+
+  const _DecisionActionDraft.empty()
+    : nextStep = '',
+      evidenceTask = '',
+      stopRule = '',
+      reviewTrigger = '',
+      premortem = '';
+
+  final String nextStep;
+  final String evidenceTask;
+  final String stopRule;
+  final String reviewTrigger;
+  final String premortem;
+
+  bool get hasContent =>
+      nextStep.trim().isNotEmpty ||
+      evidenceTask.trim().isNotEmpty ||
+      stopRule.trim().isNotEmpty ||
+      reviewTrigger.trim().isNotEmpty ||
+      premortem.trim().isNotEmpty;
+
+  _DecisionActionDraft copyWith({
+    String? nextStep,
+    String? evidenceTask,
+    String? stopRule,
+    String? reviewTrigger,
+    String? premortem,
+  }) {
+    return _DecisionActionDraft(
+      nextStep: nextStep ?? this.nextStep,
+      evidenceTask: evidenceTask ?? this.evidenceTask,
+      stopRule: stopRule ?? this.stopRule,
+      reviewTrigger: reviewTrigger ?? this.reviewTrigger,
+      premortem: premortem ?? this.premortem,
+    );
+  }
+}
+
 class _DecisionAssistantModule extends StatefulWidget {
   const _DecisionAssistantModule({
     super.key,
@@ -63,7 +109,15 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
   final math.Random _random = math.Random();
   DailyChoiceDecisionMethod _method = DailyChoiceDecisionMethod.weightedFactors;
   DailyChoiceDecisionContext _context = const DailyChoiceDecisionContext();
+  String _decisionQuestion = '';
+  String _activeQuestionOptionId = 'plan_a';
   String? _randomPickId;
+  int _draftRevision = 0;
+  int _actionDraftRevision = 0;
+  bool _showFullQuestionCalibration = false;
+  bool _advancedEditorExpanded = false;
+  bool _actionPlanExpanded = false;
+  _DecisionActionDraft _actionDraft = const _DecisionActionDraft.empty();
   late List<_DecisionDraft> _items = _buildDemoItems();
 
   @override
@@ -88,6 +142,10 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
             (item) => item.id == _randomPickId,
             orElse: () => report.options.first,
           );
+    final activeQuestionOptionId =
+        _items.any((item) => item.id == _activeQuestionOptionId)
+        ? _activeQuestionOptionId
+        : _items.first.id;
     final thresholdPassCount = report
         .resultFor(DailyChoiceDecisionMethod.thresholdGuardrail)
         .ranked
@@ -104,10 +162,18 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
           onReset: _resetDemo,
         ),
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
-        _DecisionContextCard(
+        _DecisionQuestionFlowCard(
           i18n: widget.i18n,
           accent: widget.accent,
+          decisionQuestion: _decisionQuestion,
           contextValue: _context,
+          report: report,
+          items: _items,
+          activeOptionId: activeQuestionOptionId,
+          draftRevision: _draftRevision,
+          showFullCalibration: _showFullQuestionCalibration,
+          onQuestionChanged: (value) =>
+              setState(() => _decisionQuestion = value),
           onStakesChanged: (value) =>
               setState(() => _context = _context.copyWith(stakes: value)),
           onUncertaintyChanged: (value) =>
@@ -117,6 +183,20 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
           ),
           onUrgencyChanged: (value) =>
               setState(() => _context = _context.copyWith(urgency: value)),
+          onPresetSelected: _applyQuickPreset,
+          onOptionNameChanged: (item, value) {
+            setState(() {
+              item.name = value;
+            });
+          },
+          onActiveOptionChanged: (value) =>
+              setState(() => _activeQuestionOptionId = value),
+          onAddOption: _items.length >= 6 ? null : _addItem,
+          onDeleteOption: _deleteItem,
+          onChanged: () => setState(() {}),
+          onToggleFullCalibration: () => setState(
+            () => _showFullQuestionCalibration = !_showFullQuestionCalibration,
+          ),
         ),
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         _DecisionMethodCard(
@@ -144,35 +224,41 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
           onReset: _resetDemo,
         ),
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
-        for (final item in _items) ...<Widget>[
-          _DecisionInputCard(
-            key: ValueKey<String>(item.id),
-            i18n: widget.i18n,
-            accent: widget.accent,
-            item: item,
-            score: activeScores[item.id],
-            infoSignal: report.infoSignal,
-            method: _method,
-            canDelete: _items.length > 2,
-            onChanged: () => setState(() {}),
-            onDelete: () {
-              setState(() {
-                _items.removeWhere((candidate) => candidate.id == item.id);
-                if (_randomPickId == item.id) {
-                  _randomPickId = null;
-                }
-              });
-            },
-          ),
-          const SizedBox(height: 10),
-        ],
-        _DecisionRankingCard(
+        _DecisionReportCard(
           i18n: widget.i18n,
           accent: widget.accent,
+          report: report,
+          activeMethod: _method,
+        ),
+        const SizedBox(height: ToolboxUiTokens.cardSpacing),
+        _DecisionActionPlanCard(
+          i18n: widget.i18n,
+          accent: widget.accent,
+          decisionQuestion: _decisionQuestion,
+          report: report,
+          draft: _actionDraft,
+          expanded: _actionPlanExpanded,
+          draftRevision: _actionDraftRevision,
+          onGenerate: () => _generateActionDraft(report),
+          onToggle: () =>
+              setState(() => _actionPlanExpanded = !_actionPlanExpanded),
+          onDraftChanged: (draft) => setState(() => _actionDraft = draft),
+        ),
+        const SizedBox(height: ToolboxUiTokens.cardSpacing),
+        _DecisionAdvancedEditorCard(
+          i18n: widget.i18n,
+          accent: widget.accent,
+          items: _items,
+          activeScores: activeScores,
+          infoSignal: report.infoSignal,
           method: _method,
-          spec: activeSpec,
-          result: activeResult,
-          consensus: report.consensus,
+          expanded: _advancedEditorExpanded,
+          draftRevision: _draftRevision,
+          onToggle: () => setState(
+            () => _advancedEditorExpanded = !_advancedEditorExpanded,
+          ),
+          onChanged: () => setState(() {}),
+          onDelete: _deleteItem,
         ),
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         _DecisionHygieneCard(
@@ -211,12 +297,13 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
 
   void _addItem() {
     final nextIndex = _items.length + 1;
+    final nextId = 'custom_${DateTime.now().microsecondsSinceEpoch}';
     setState(() {
       _items = <_DecisionDraft>[
         ..._items,
         _DecisionDraft(
-          id: 'custom_${DateTime.now().microsecondsSinceEpoch}',
-          name: 'Option $nextIndex',
+          id: nextId,
+          name: _defaultDecisionOptionName(widget.i18n, nextIndex),
           successProbability: 0.55,
           executionProbability: 0.60,
           upside: 6,
@@ -228,6 +315,62 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
           infoGap: 4,
         ),
       ];
+      _activeQuestionOptionId = nextId;
+    });
+  }
+
+  void _deleteItem(_DecisionDraft item) {
+    if (_items.length <= 2) {
+      return;
+    }
+    setState(() {
+      _items.removeWhere((candidate) => candidate.id == item.id);
+      if (_randomPickId == item.id) {
+        _randomPickId = null;
+      }
+      if (_activeQuestionOptionId == item.id) {
+        _activeQuestionOptionId = _items.first.id;
+      }
+    });
+  }
+
+  void _applyQuickPreset(_DecisionQuickPreset preset) {
+    setState(() {
+      _randomPickId = null;
+      switch (preset) {
+        case _DecisionQuickPreset.balanced:
+          _method = DailyChoiceDecisionMethod.weightedFactors;
+          _context = const DailyChoiceDecisionContext(
+            stakes: DailyChoiceDecisionLevel.medium,
+            uncertainty: DailyChoiceDecisionLevel.medium,
+            reversibility: DailyChoiceDecisionReversibility.mixed,
+            urgency: DailyChoiceDecisionUrgency.soon,
+          );
+        case _DecisionQuickPreset.quick:
+          _method = DailyChoiceDecisionMethod.random;
+          _context = const DailyChoiceDecisionContext(
+            stakes: DailyChoiceDecisionLevel.low,
+            uncertainty: DailyChoiceDecisionLevel.low,
+            reversibility: DailyChoiceDecisionReversibility.easy,
+            urgency: DailyChoiceDecisionUrgency.now,
+          );
+        case _DecisionQuickPreset.highStakes:
+          _method = DailyChoiceDecisionMethod.thresholdGuardrail;
+          _context = const DailyChoiceDecisionContext(
+            stakes: DailyChoiceDecisionLevel.high,
+            uncertainty: DailyChoiceDecisionLevel.medium,
+            reversibility: DailyChoiceDecisionReversibility.hard,
+            urgency: DailyChoiceDecisionUrgency.soon,
+          );
+        case _DecisionQuickPreset.uncertain:
+          _method = DailyChoiceDecisionMethod.scenarioBlend;
+          _context = const DailyChoiceDecisionContext(
+            stakes: DailyChoiceDecisionLevel.medium,
+            uncertainty: DailyChoiceDecisionLevel.high,
+            reversibility: DailyChoiceDecisionReversibility.mixed,
+            urgency: DailyChoiceDecisionUrgency.canWait,
+          );
+      }
     });
   }
 
@@ -235,16 +378,165 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
     setState(() {
       _method = DailyChoiceDecisionMethod.weightedFactors;
       _context = const DailyChoiceDecisionContext();
+      _decisionQuestion = '';
+      _activeQuestionOptionId = 'plan_a';
       _randomPickId = null;
+      _draftRevision += 1;
+      _actionDraftRevision += 1;
+      _showFullQuestionCalibration = false;
+      _advancedEditorExpanded = false;
+      _actionPlanExpanded = false;
+      _actionDraft = const _DecisionActionDraft.empty();
       _items = _buildDemoItems();
     });
+  }
+
+  void _generateActionDraft(DailyChoiceDecisionReport report) {
+    setState(() {
+      _actionDraft = _buildSuggestedActionDraft(report);
+      _actionDraftRevision += 1;
+      _actionPlanExpanded = true;
+    });
+  }
+
+  _DecisionActionDraft _buildSuggestedActionDraft(
+    DailyChoiceDecisionReport report,
+  ) {
+    final focus = _focusOptionForAction(report);
+    final focusName = focus?.name ?? report.consensus.winnerName;
+    final hasFocus = focusName.trim().isNotEmpty;
+    final shouldResearch =
+        report.infoSignal.shouldGatherMoreInfo ||
+        report.infoSignal.shouldDelayDecision;
+    final highStakes = report.context.stakes == DailyChoiceDecisionLevel.high;
+    final highUncertainty =
+        report.context.uncertainty == DailyChoiceDecisionLevel.high;
+    final decideNow = report.context.urgency == DailyChoiceDecisionUrgency.now;
+
+    final nextStep = shouldResearch
+        ? pickUiText(
+            widget.i18n,
+            zh: hasFocus
+                ? '先核实「$focusName」最可能改变结论的一条事实，再回到模型对照。'
+                : '先核实最可能改变结论的一条事实，再回到模型对照。',
+            en: hasFocus
+                ? 'Verify the one fact most likely to change $focusName, then return to the model comparison.'
+                : 'Verify the one fact most likely to change the conclusion, then return to the model comparison.',
+          )
+        : report.consensus.winnerName.isNotEmpty
+        ? pickUiText(
+            widget.i18n,
+            zh: '围绕「${report.consensus.winnerName}」先做一个最小可回退动作，并记录实际结果。',
+            en: 'Take one small reversible action around ${report.consensus.winnerName}, and record what happens.',
+          )
+        : pickUiText(
+            widget.i18n,
+            zh: '先补全可选项或重新校准关键评分，再决定是否进入执行。',
+            en: 'Add viable options or recalibrate the key scores before moving into execution.',
+          );
+
+    final evidenceTask = shouldResearch
+        ? pickUiText(
+            widget.i18n,
+            zh: hasFocus
+                ? '只查一条信息：「$focusName」的成功条件、失败代价或信息差中，哪一项最可能推翻结论。'
+                : '只查一条信息：成功条件、失败代价或信息差中，哪一项最可能推翻结论。',
+            en: hasFocus
+                ? 'Research one fact only: which success condition, downside, or info gap could overturn $focusName?'
+                : 'Research one fact only: which success condition, downside, or info gap could overturn the conclusion?',
+          )
+        : pickUiText(
+            widget.i18n,
+            zh: '把当前概率、风险和收益依据写下来，避免事后只凭记忆复盘。',
+            en: 'Write down the basis for the current odds, risk, and upside so review is not based on memory alone.',
+          );
+
+    final stopRule = decideNow
+        ? pickUiText(
+            widget.i18n,
+            zh: '看完本轮守门线后不再新增变量，今天先执行第一步。',
+            en: 'After this guardrail pass, stop adding variables and take the first step today.',
+          )
+        : shouldResearch
+        ? pickUiText(
+            widget.i18n,
+            zh: '补到 1 条关键事实，或到今晚 22:00 停止查证并重新看报告。',
+            en: 'Stop after one key fact, or at 22:00 tonight, then review the report again.',
+          )
+        : pickUiText(
+            widget.i18n,
+            zh: '最多再补 2 条证据；若两种推荐模型仍支持同一方向，就停止分析。',
+            en: 'Add at most two more pieces of evidence; if two recommended lenses still agree, stop analyzing.',
+          );
+
+    final reviewTrigger = highStakes
+        ? pickUiText(
+            widget.i18n,
+            zh: '在下一个关键节点复盘：实际风险、信息差和可回退性是否如预期。',
+            en: 'Review at the next key milestone: did risk, info gaps, and reversibility match the forecast?',
+          )
+        : pickUiText(
+            widget.i18n,
+            zh: '执行后 24 小时或完成第一步后复盘一次。',
+            en: 'Review once 24 hours after execution or after the first step is complete.',
+          );
+
+    final premortem = highStakes
+        ? pickUiText(
+            widget.i18n,
+            zh: '假设三个月后失败，最可能是信息不足、下行风险过大或不可回退环节失控；先写一个预防动作。',
+            en: 'Assume this failed three months from now. The likely cause is missing information, excess downside, or poor reversibility; write one preventive action.',
+          )
+        : highUncertainty
+        ? pickUiText(
+            widget.i18n,
+            zh: '假设结果不如预期，最可能是哪条关键假设错了？先准备一个替代动作。',
+            en: 'Assume the result disappoints. Which key assumption was probably wrong? Prepare one fallback action.',
+          )
+        : pickUiText(
+            widget.i18n,
+            zh: '假设明天发现不值得做，最可能是哪项成本被低估？',
+            en: 'Assume tomorrow shows this was not worth doing. Which cost was most likely underestimated?',
+          );
+
+    return _DecisionActionDraft(
+      nextStep: nextStep,
+      evidenceTask: evidenceTask,
+      stopRule: stopRule,
+      reviewTrigger: reviewTrigger,
+      premortem: premortem,
+    );
+  }
+
+  DailyChoiceDecisionOptionInput? _focusOptionForAction(
+    DailyChoiceDecisionReport report,
+  ) {
+    final highlightId = report.infoSignal.highlightOptionId;
+    if (highlightId != null) {
+      for (final option in report.options) {
+        if (option.id == highlightId) {
+          return option;
+        }
+      }
+    }
+    if (report.consensus.winnerId.isNotEmpty) {
+      for (final option in report.options) {
+        if (option.id == report.consensus.winnerId) {
+          return option;
+        }
+      }
+    }
+    final recommended = report.recommendedMethods.isEmpty
+        ? report.activeMethod
+        : report.recommendedMethods.first;
+    return report.resultFor(recommended).winner?.option;
   }
 
   List<_DecisionDraft> _buildDemoItems() {
     return <_DecisionDraft>[
       _DecisionDraft(
         id: 'plan_a',
-        name: 'Option A',
+        name: _defaultDecisionOptionName(widget.i18n, 1),
         successProbability: 0.72,
         executionProbability: 0.78,
         upside: 8.4,
@@ -257,7 +549,7 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
       ),
       _DecisionDraft(
         id: 'plan_b',
-        name: 'Option B',
+        name: _defaultDecisionOptionName(widget.i18n, 2),
         successProbability: 0.58,
         executionProbability: 0.84,
         upside: 9.0,
@@ -270,7 +562,7 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
       ),
       _DecisionDraft(
         id: 'plan_c',
-        name: 'Option C',
+        name: _defaultDecisionOptionName(widget.i18n, 3),
         successProbability: 0.64,
         executionProbability: 0.66,
         upside: 7.1,
@@ -317,7 +609,7 @@ class _DecisionWorkbenchCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '科学决策助手', en: 'Decision workbench'),
+                      pickUiText(i18n, zh: '决策助手', en: 'Decision workbench'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -326,8 +618,8 @@ class _DecisionWorkbenchCard extends StatelessWidget {
                     Text(
                       pickUiText(
                         i18n,
-                        zh: '把六要素、偏差校正、概率与情景分析收成一个透明工作台，帮你把“纠结”拆成可以比较的字段。',
-                        en: 'Turn framing, bias control, probability, and scenario thinking into a transparent workbench for comparing choices.',
+                        zh: '把问题、可选项、风险和信息差拆开，用多模型交叉验证结论。',
+                        en: 'Separate the question, options, risks, and info gaps, then cross-check the conclusion.',
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         height: 1.4,
@@ -398,6 +690,7 @@ class _DecisionWorkbenchCard extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _DecisionContextCard extends StatelessWidget {
   const _DecisionContextCard({
     required this.i18n,
@@ -591,7 +884,7 @@ class _DecisionMethodCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '选择计算镜头', en: 'Choose the decision lens'),
+            pickUiText(i18n, zh: '计算模型', en: 'Decision lens'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
             ),
@@ -600,8 +893,8 @@ class _DecisionMethodCard extends StatelessWidget {
           Text(
             pickUiText(
               i18n,
-              zh: '根据当前情境，先看推荐镜头；如果你想交叉验证，再切到别的策略做对照。',
-              en: 'Start with the recommended lenses for this context, then cross-check with others if needed.',
+              zh: '先用推荐模型收口，再按需切换交叉验证。',
+              en: 'Start with recommended lenses, then cross-check as needed.',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -665,7 +958,7 @@ class _DecisionMethodCard extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onAddOption,
                 icon: const Icon(Icons.add_rounded),
-                label: Text(pickUiText(i18n, zh: '新增选项', en: 'Add option')),
+                label: Text(pickUiText(i18n, zh: '新增可选项', en: 'Add option')),
               ),
               TextButton.icon(
                 onPressed: onGuide,
@@ -945,7 +1238,7 @@ class _DecisionInputCard extends StatelessWidget {
                     isDense: true,
                   ),
                   onChanged: (value) {
-                    item.name = value.trim().isEmpty ? item.name : value.trim();
+                    item.name = value;
                     onChanged();
                   },
                 ),
@@ -1070,6 +1363,7 @@ class _DecisionInputCard extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _DecisionRankingCard extends StatelessWidget {
   const _DecisionRankingCard({
     required this.i18n,
@@ -1200,85 +1494,123 @@ class _DecisionHygieneCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cautionTint = showHighRiskBoundary
+        ? theme.colorScheme.error
+        : theme.colorScheme.tertiary;
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(16),
-      borderColor: accent.withValues(alpha: 0.16),
+      borderColor: cautionTint.withValues(alpha: 0.18),
       shadowOpacity: 0.04,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            pickUiText(i18n, zh: '决策卫生检查', en: 'Decision hygiene'),
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: <Widget>[
+              Icon(Icons.health_and_safety_rounded, color: cautionTint),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  pickUiText(i18n, zh: '决策检查', en: 'Decision hygiene'),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              ToolboxInfoPill(
+                text: pickUiText(
+                  i18n,
+                  zh: '${entries.length} 项',
+                  en: '${entries.length} checks',
+                ),
+                accent: cautionTint,
+                backgroundColor: theme.colorScheme.surfaceContainerLow,
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(
             pickUiText(
               i18n,
-              zh: '在最终拍板前，至少过一遍这些偏差与噪声校正项。',
-              en: 'Run through these bias and noise checks before you commit.',
+              zh: showHighRiskBoundary
+                  ? '高风险场景先看底线，再谈收益。完整清单已下沉到弹窗。'
+                  : '最终拍板前，快速扫一遍偏差、噪声和复盘条件。',
+              en: showHighRiskBoundary
+                  ? 'For high-stakes calls, check guardrails before upside. Open the full checklist when needed.'
+                  : 'Before committing, scan bias, noise, and review conditions.',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 12),
-          for (var index = 0; index < entries.length; index += 1) ...<Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Icon(entries[index].icon, color: accent, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        entries[index].title(i18n),
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        entries[index].body(i18n),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (index != entries.length - 1) ...<Widget>[
-              const SizedBox(height: 12),
-              Divider(color: theme.colorScheme.outlineVariant),
-              const SizedBox(height: 12),
-            ],
-          ],
           if (showHighRiskBoundary) ...<Widget>[
             const SizedBox(height: 12),
-            Divider(color: theme.colorScheme.outlineVariant),
-            const SizedBox(height: 12),
-            Text(
-              pickUiText(
+            _DecisionInlineNotice(
+              accent: cautionTint,
+              icon: Icons.warning_amber_rounded,
+              title: pickUiText(i18n, zh: '高风险提醒', en: 'High-stakes reminder'),
+              body: pickUiText(
                 i18n,
-                zh: '提醒：高风险医疗、法律、财务决策请把本模块当作整理思路的辅助手段，不要当成单一依据。',
-                en: 'Reminder: for high-stakes medical, legal, or financial decisions, use this module to organize thinking, not as a sole basis.',
-              ),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.35,
+                zh: '医疗、法律、财务等问题请把本模块当作整理思路的辅助，不要作为单一依据。',
+                en: 'For medical, legal, or financial calls, use this only to organize thinking, not as the sole basis.',
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _showChecklist(context),
+            icon: const Icon(Icons.checklist_rounded),
+            label: Text(pickUiText(i18n, zh: '查看检查清单', en: 'Open checklist')),
+          ),
         ],
       ),
+    );
+  }
+
+  void _showChecklist(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.70,
+            minChildSize: 0.40,
+            maxChildSize: 0.92,
+            builder: (context, controller) {
+              return ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(18, 4, 18, 24),
+                children: <Widget>[
+                  Text(
+                    pickUiText(i18n, zh: '决策检查清单', en: 'Decision checklist'),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  for (
+                    var index = 0;
+                    index < entries.length;
+                    index += 1
+                  ) ...<Widget>[
+                    _DecisionInlineNotice(
+                      accent: accent,
+                      icon: entries[index].icon,
+                      title: entries[index].title(i18n),
+                      body: entries[index].body(i18n),
+                    ),
+                    if (index != entries.length - 1) const SizedBox(height: 10),
+                  ],
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

@@ -1,19 +1,235 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'daily_choice_models.dart';
 
 const String dailyChoicePlaceMapSourceLabel = 'OpenStreetMap';
+const String dailyChoicePlaceMapUserAgentPackageName = 'group.zn.xianyushengxi';
+const int dailyChoicePlaceMapTileCacheMaxBytes = 160 * 1024 * 1024;
+const Duration dailyChoicePlaceMapTileFreshAge = Duration(days: 7);
 const String dailyChoicePlaceMapTileUrlTemplate =
-    'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png';
 final Uri dailyChoiceOverpassEndpoint = Uri(
   scheme: 'https',
   host: 'overpass-api.de',
   path: '/api/interpreter',
 );
+final Uri dailyChoiceIpCoarseLocationEndpoint = Uri(
+  scheme: 'https',
+  host: 'ipinfo.io',
+  path: '/json',
+);
+
+class DailyChoiceMapTileProviderSpec {
+  const DailyChoiceMapTileProviderSpec({
+    required this.id,
+    required this.titleZh,
+    required this.titleEn,
+    required this.descriptionZh,
+    required this.descriptionEn,
+    required this.urlTemplate,
+    required this.attribution,
+    this.subdomains = const <String>[],
+    this.minZoom = 3,
+    this.maxZoom = 19,
+    this.usesOsmPublicTileServer = false,
+    this.requiresConservativeUse = false,
+  });
+
+  final String id;
+  final String titleZh;
+  final String titleEn;
+  final String descriptionZh;
+  final String descriptionEn;
+  final String urlTemplate;
+  final String attribution;
+  final List<String> subdomains;
+  final double minZoom;
+  final double maxZoom;
+  final bool usesOsmPublicTileServer;
+  final bool requiresConservativeUse;
+}
+
+const List<DailyChoiceMapTileProviderSpec>
+dailyChoicePlaceMapTileProviders = <DailyChoiceMapTileProviderSpec>[
+  DailyChoiceMapTileProviderSpec(
+    id: DailyChoicePlaceMapSettings.defaultTileProviderId,
+    titleZh: 'OSM HOT',
+    titleEn: 'OSM HOT',
+    descriptionZh: '默认地图源，使用 OSM 人道主义样式；地名和道路层级更醒目，适合作为受限网络下的优先尝试源。',
+    descriptionEn:
+        'Default tile source using the OSM humanitarian style, with more visible labels and road hierarchy for restricted networks.',
+    urlTemplate: dailyChoicePlaceMapTileUrlTemplate,
+    attribution: 'OpenStreetMap contributors, HOT, OpenStreetMap France',
+    subdomains: <String>['a', 'b', 'c'],
+    requiresConservativeUse: true,
+  ),
+  DailyChoiceMapTileProviderSpec(
+    id: 'osm_france_fallback',
+    titleZh: 'OSM France',
+    titleEn: 'OSM France',
+    descriptionZh: 'OSM France 社区瓦片；作为备用源保留，通常需要可访问国际网络的环境。',
+    descriptionEn:
+        'OSM France community tiles kept as a fallback; usually requires access to the international network.',
+    urlTemplate: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+    attribution: 'OpenStreetMap contributors, OpenStreetMap France',
+    subdomains: <String>['a', 'b', 'c'],
+    requiresConservativeUse: true,
+  ),
+  DailyChoiceMapTileProviderSpec(
+    id: 'osm_de',
+    titleZh: 'OpenStreetMap.de',
+    titleEn: 'OpenStreetMap.de',
+    descriptionZh: '德国 OSM 社区样式；通常需要可访问国际网络的环境，默认源不稳定时可手动切换。',
+    descriptionEn:
+        'German OSM community style; usually requires access to the international network and can be selected when the default source is unstable.',
+    urlTemplate: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+    attribution: 'OpenStreetMap contributors, OpenStreetMap.de',
+    requiresConservativeUse: true,
+  ),
+  DailyChoiceMapTileProviderSpec(
+    id: 'osm_standard',
+    titleZh: 'OSM Standard',
+    titleEn: 'OSM Standard',
+    descriptionZh: 'OpenStreetMap 官方标准瓦片；通常需要可访问国际网络的环境，仅在需要核对标准样式时手动切换。',
+    descriptionEn:
+        'Official OpenStreetMap standard tiles; usually requires access to the international network and should be selected only when the standard style is needed.',
+    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: 'OpenStreetMap contributors',
+    maxZoom: 19,
+    usesOsmPublicTileServer: true,
+    requiresConservativeUse: true,
+  ),
+  DailyChoiceMapTileProviderSpec(
+    id: 'carto_voyager_fallback',
+    titleZh: 'CARTO Voyager',
+    titleEn: 'CARTO Voyager',
+    descriptionZh: 'CARTO 真实街区样式；通常需要可访问国际网络的环境，在部分地区可能不可用。',
+    descriptionEn:
+        'CARTO street basemap that usually requires access to the international network and may be unavailable in some regions.',
+    urlTemplate:
+        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: 'OpenStreetMap contributors, CARTO',
+    subdomains: <String>['a', 'b', 'c', 'd'],
+    maxZoom: 20,
+  ),
+  DailyChoiceMapTileProviderSpec(
+    id: 'carto_light',
+    titleZh: 'CARTO Light',
+    titleEn: 'CARTO Light',
+    descriptionZh: '更克制的浅色底图，适合降低视觉噪声；通常需要可访问国际网络的环境，作为非默认备用源保留。',
+    descriptionEn:
+        'A quieter light basemap that keeps dense place markers easier to scan; usually requires access to the international network.',
+    urlTemplate:
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution: 'OpenStreetMap contributors, CARTO',
+    subdomains: <String>['a', 'b', 'c', 'd'],
+    maxZoom: 20,
+  ),
+];
+
+DailyChoiceMapTileProviderSpec dailyChoiceResolveMapTileProvider(String id) {
+  final normalized = id.trim();
+  for (final provider in dailyChoicePlaceMapTileProviders) {
+    if (provider.id == normalized) {
+      return provider;
+    }
+  }
+  return dailyChoicePlaceMapTileProviders.first;
+}
+
+Future<Directory> dailyChoicePlaceMapCacheDirectory() async {
+  final root = await getApplicationCacheDirectory();
+  return Directory(p.join(root.path, 'daily_choice', 'place_map_tiles'));
+}
+
+Future<MapCachingProvider> dailyChoiceCreatePlaceMapCachingProvider({
+  required bool cacheTiles,
+}) async {
+  if (!cacheTiles) {
+    return const DisabledMapCachingProvider();
+  }
+  final directory = await dailyChoicePlaceMapCacheDirectory();
+  return BuiltInMapCachingProvider.getOrCreateInstance(
+    cacheDirectory: directory.path,
+    maxCacheSize: dailyChoicePlaceMapTileCacheMaxBytes,
+    overrideFreshAge: dailyChoicePlaceMapTileFreshAge,
+  );
+}
+
+Future<int> dailyChoicePlaceMapCacheSizeBytes() async {
+  final directory = await dailyChoicePlaceMapCacheDirectory();
+  if (!await directory.exists()) {
+    return 0;
+  }
+  var size = 0;
+  await for (final entity in directory.list(
+    recursive: true,
+    followLinks: false,
+  )) {
+    if (entity is File) {
+      try {
+        size += await entity.length();
+      } on FileSystemException {
+        // Cache entries are disposable; ignore files removed while scanning.
+      }
+    }
+  }
+  return size;
+}
+
+Future<void> dailyChoiceClearPlaceMapCache() async {
+  final directory = await dailyChoicePlaceMapCacheDirectory();
+  final provider = BuiltInMapCachingProvider.getOrCreateInstance(
+    cacheDirectory: directory.path,
+    maxCacheSize: dailyChoicePlaceMapTileCacheMaxBytes,
+    overrideFreshAge: dailyChoicePlaceMapTileFreshAge,
+  );
+  await provider.destroy(deleteCache: true);
+  if (await directory.exists()) {
+    await directory.delete(recursive: true);
+  }
+}
+
+String dailyChoiceFormatBytes(int bytes) {
+  if (bytes < 1024) {
+    return '$bytes B';
+  }
+  final kb = bytes / 1024;
+  if (kb < 1024) {
+    return '${kb.toStringAsFixed(kb < 10 ? 1 : 0)} KB';
+  }
+  final mb = kb / 1024;
+  if (mb < 1024) {
+    return '${mb.toStringAsFixed(mb < 10 ? 1 : 0)} MB';
+  }
+  final gb = mb / 1024;
+  return '${gb.toStringAsFixed(gb < 10 ? 1 : 0)} GB';
+}
+
+List<Uri> dailyChoiceExternalMapUris(DailyChoiceOsmPlace place) {
+  final lat = place.latitude.toStringAsFixed(6);
+  final lon = place.longitude.toStringAsFixed(6);
+  final label = place.name.trim().isEmpty ? 'Destination' : place.name.trim();
+  return <Uri>[
+    Uri.parse('geo:0,0?q=$lat,$lon(${Uri.encodeComponent(label)})'),
+    Uri.https('maps.apple.com', '/', <String, String>{
+      'll': '$lat,$lon',
+      'q': label,
+    }),
+    Uri.https('www.openstreetmap.org', '/', <String, String>{
+      'mlat': lat,
+      'mlon': lon,
+    }).replace(fragment: 'map=17/$lat/$lon'),
+  ];
+}
 
 class DailyChoiceGeoPoint {
   const DailyChoiceGeoPoint({
@@ -53,18 +269,24 @@ enum DailyChoiceLocationReadStatus {
   failed,
 }
 
+enum DailyChoiceLocationReadSource { device, ipCoarse }
+
 class DailyChoiceLocationReadResult {
   const DailyChoiceLocationReadResult({
     required this.status,
     this.point,
     this.message,
     this.usedApproximateLocation = true,
+    this.source = DailyChoiceLocationReadSource.device,
+    this.areaLabel,
   });
 
   final DailyChoiceLocationReadStatus status;
   final DailyChoiceGeoPoint? point;
   final String? message;
   final bool usedApproximateLocation;
+  final DailyChoiceLocationReadSource source;
+  final String? areaLabel;
 
   bool get hasPoint =>
       status == DailyChoiceLocationReadStatus.ready && point != null;
@@ -135,6 +357,112 @@ class DailyChoiceDeviceLocationProvider implements DailyChoiceLocationProvider {
       );
     }
   }
+}
+
+abstract class DailyChoiceCoarseLocationProvider {
+  Future<DailyChoiceLocationReadResult> readCoarseLocation();
+}
+
+class DailyChoiceIpCoarseLocationProvider
+    implements DailyChoiceCoarseLocationProvider {
+  const DailyChoiceIpCoarseLocationProvider({
+    http.Client? httpClient,
+    Uri? endpoint,
+  }) : _httpClient = httpClient,
+       _endpoint = endpoint;
+
+  final http.Client? _httpClient;
+  final Uri? _endpoint;
+
+  @override
+  Future<DailyChoiceLocationReadResult> readCoarseLocation() async {
+    final client = _httpClient ?? http.Client();
+    try {
+      final response = await client
+          .get(
+            _endpoint ?? dailyChoiceIpCoarseLocationEndpoint,
+            headers: const <String, String>{
+              'Accept': 'application/json',
+              'User-Agent':
+                  'vocabulary_sleep_app/1.0 (Daily Choice IP coarse range lookup)',
+            },
+          )
+          .timeout(const Duration(seconds: 12));
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return DailyChoiceLocationReadResult(
+          status: DailyChoiceLocationReadStatus.failed,
+          message: 'IP coarse location failed (${response.statusCode}).',
+          source: DailyChoiceLocationReadSource.ipCoarse,
+        );
+      }
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map) {
+        return const DailyChoiceLocationReadResult(
+          status: DailyChoiceLocationReadStatus.failed,
+          message: 'IP coarse location returned an unexpected response.',
+          source: DailyChoiceLocationReadSource.ipCoarse,
+        );
+      }
+      return _parseIpCoarseLocation(decoded);
+    } catch (error) {
+      return DailyChoiceLocationReadResult(
+        status: DailyChoiceLocationReadStatus.failed,
+        message: '$error',
+        source: DailyChoiceLocationReadSource.ipCoarse,
+      );
+    } finally {
+      if (_httpClient == null) {
+        client.close();
+      }
+    }
+  }
+
+  static DailyChoiceLocationReadResult _parseIpCoarseLocation(Map raw) {
+    final loc = '${raw['loc'] ?? ''}'.trim();
+    double? latitude;
+    double? longitude;
+    if (loc.contains(',')) {
+      final parts = loc.split(',');
+      if (parts.length >= 2) {
+        latitude = _doubleValue(parts[0]);
+        longitude = _doubleValue(parts[1]);
+      }
+    }
+    latitude ??= _doubleValue(raw['latitude']) ?? _doubleValue(raw['lat']);
+    longitude ??= _doubleValue(raw['longitude']) ?? _doubleValue(raw['lon']);
+    if (latitude == null || longitude == null) {
+      return const DailyChoiceLocationReadResult(
+        status: DailyChoiceLocationReadStatus.failed,
+        message: 'IP coarse location did not include coordinates.',
+        source: DailyChoiceLocationReadSource.ipCoarse,
+      );
+    }
+    final areaParts = <String>[
+      '${raw['city'] ?? ''}'.trim(),
+      '${raw['region'] ?? raw['regionName'] ?? ''}'.trim(),
+      '${raw['country'] ?? ''}'.trim(),
+    ].where((item) => item.isNotEmpty).toList(growable: false);
+    return DailyChoiceLocationReadResult(
+      status: DailyChoiceLocationReadStatus.ready,
+      point: DailyChoiceGeoPoint(
+        latitude: latitude,
+        longitude: longitude,
+        accuracyMeters: DailyChoicePlaceMapSettings.coarseRangeRadiusMeters
+            .toDouble(),
+      ),
+      usedApproximateLocation: true,
+      source: DailyChoiceLocationReadSource.ipCoarse,
+      areaLabel: areaParts.join(', '),
+    );
+  }
+}
+
+Future<bool> dailyChoiceOpenLocationSettings() {
+  return Geolocator.openLocationSettings();
+}
+
+Future<bool> dailyChoiceOpenAppSettings() {
+  return Geolocator.openAppSettings();
 }
 
 class DailyChoiceOsmPlace {
@@ -273,7 +601,7 @@ class DailyChoiceOverpassClient {
   final String _userAgent;
 
   static const int maxRadiusMeters =
-      DailyChoicePlaceMapSettings.maxRadiusMeters;
+      DailyChoicePlaceMapSettings.coarseRangeRadiusMeters;
   static const int maxResultCount = 60;
 
   Future<List<DailyChoiceOsmPlace>> fetchNearbyPlaces({

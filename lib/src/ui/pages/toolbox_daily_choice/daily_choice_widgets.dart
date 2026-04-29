@@ -56,7 +56,7 @@ class DailyChoiceHeroPanel extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxInfoPill(
-                text: pickUiText(i18n, zh: '五模块基础版', en: 'Five modules'),
+                text: pickUiText(i18n, zh: '六模块基础版', en: 'Six modules'),
                 accent: accent,
                 backgroundColor: Colors.white.withValues(alpha: 0.64),
               ),
@@ -78,8 +78,8 @@ class DailyChoiceHeroPanel extends StatelessWidget {
           Text(
             pickUiText(
               i18n,
-              zh: '吃什么、穿什么、去哪儿、干什么和决策助手都在同一套轻量交互里：选条件、开始随机、停止选中，再按需查看详情或管理自己的条目。',
-              en: 'Eat, wear, go, do, and decision tools share one light flow: choose conditions, randomize, stop, then inspect or manage your own entries.',
+              zh: '吃什么、穿什么、去哪儿、干什么、随机助手和决策助手都在同一套轻量交互里：选条件、开始随机、停止选中，再按需查看详情或管理自己的条目。',
+              en: 'Eat, wear, go, do, random assistant, and decision tools share one light flow: choose conditions, randomize, stop, then inspect or manage your own entries.',
             ),
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
           ),

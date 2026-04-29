@@ -5,6 +5,7 @@ import '../../../i18n/app_i18n.dart';
 import '../../theme/toolbox_colors.dart';
 import '../../ui_copy.dart';
 import '../toolbox_daily_choice_tool.dart';
+import '../toolbox_human_tests.dart';
 import '../toolbox_mini_games.dart';
 import '../toolbox_mind_tools.dart';
 import '../toolbox_sleep_assistant_page.dart';
@@ -54,12 +55,34 @@ List<ToolboxSectionData> buildToolboxSections(
           title: pickUiText(i18n, zh: '游戏中心', en: 'Game hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '包含数独、扫雷和导入图片拼图。',
-            en: 'Includes Sudoku, Minesweeper, and imported-image jigsaw.',
+            zh: '包含俄罗斯轮盘赌、俄罗斯方块、推箱子、数独、扫雷和导入图片拼图。',
+            en: 'Includes roulette, Tetris, Sokoban, Sudoku, Minesweeper, and imported-image jigsaw.',
           ),
           icon: Icons.videogame_asset_rounded,
           accent: ToolboxColors.gamesAccent,
           pageBuilder: () => const MiniGamesToolPage(),
+        ),
+      ],
+    ),
+    ToolboxSectionData(
+      title: pickUiText(i18n, zh: '人类测试', en: 'Human tests'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '反应、记忆、视觉、手眼协调与注意力趣味测试。',
+        en: 'Fun reaction, memory, vision, coordination, and attention tests.',
+      ),
+      entries: <ToolboxEntryData>[
+        ToolboxEntryData(
+          moduleId: ModuleIds.toolboxHumanTests,
+          title: pickUiText(i18n, zh: '人类测试中心', en: 'Human test hub'),
+          subtitle: pickUiText(
+            i18n,
+            zh: '包含反应测试、数字记忆、黑猩猩测试、打字测试、色觉测试等 17 个轻量测试。',
+            en: 'Includes 17 lightweight tests such as reaction, number memory, chimp, typing, and color vision.',
+          ),
+          icon: Icons.psychology_alt_rounded,
+          accent: const Color(0xFF2F8D8E),
+          pageBuilder: () => const HumanTestsToolPage(),
         ),
       ],
     ),
