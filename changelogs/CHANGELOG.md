@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_111-README-DETAILED-UPDATE] - 2026-05-02
+
+### 原因
+- 根目录 README 需要从简要介绍升级为面向新协作者、维护者和发布前检查的详细入口文档。
+
+### 修改
+- 重写 `README.md`，补充项目定位、顶层模块、toolbox 子模块、技术栈、目录结构、环境准备、运行构建、验证测试、数据资源、国际化、开发规范、文档索引、常见问题和协作流程。
+- 明确 `scripts/build.ps1` 对 Web target 的禁用约束，以及 FFI 依赖下 Web 构建需要替代实现后再启用。
+- 新增 `PLAN_111_README_详细更新与提交推送.md`，记录本轮文档更新、提交和推送边界。
+
+### 风险变更
+- 本轮仅更新文档，不修改应用逻辑、路由、状态、资源或测试代码。
+
+### 验证
+- 已检查 README 内容与 `pubspec.yaml`、`scripts/`、模块注册表和现有目录结构的一致性。
+- 未运行 Flutter 测试；本轮无 Dart 代码改动。
+
 ## [Unreleased-PLAN_096-HUMAN-TESTS-HUB] - 2026-04-29
 
 ### 原因
