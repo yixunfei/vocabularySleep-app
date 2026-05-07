@@ -1,356 +1,5 @@
 part of 'toolbox_human_tests.dart';
 
-enum _ReactionPhase { idle, waiting, ready, tooSoon, result, done }
-
-class ReactionTestPage extends StatelessWidget {
-  const ReactionTestPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '反应测试', en: 'Reaction test'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '等待舞台变绿后立刻点击，5 次后显示平均反应时间。',
-        en: 'Wait until the stage turns green, then tap as fast as you can. Five trials are averaged.',
-      ),
-      accent: const Color(0xFF2F8D8E),
-      icon: Icons.flash_on_rounded,
-      status: pickUiText(i18n, zh: '下一步：点击开始测试', en: 'Next: tap to start'),
-      child: const _ReactionTestCard(),
-    );
-  }
-}
-
-class _ReactionTestCard extends StatefulWidget {
-  const _ReactionTestCard();
-
-  @override
-  State<_ReactionTestCard> createState() => _ReactionTestCardState();
-}
-
-class _ReactionTestCardState extends State<_ReactionTestCard> {
-  final math.Random _random = math.Random();
-  final Stopwatch _stopwatch = Stopwatch();
-  final List<int> _results = <int>[];
-  Timer? _timer;
-  _ReactionPhase _phase = _ReactionPhase.idle;
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _startRound() {
-    _timer?.cancel();
-    _stopwatch.stop();
-    _stopwatch.reset();
-    setState(() => _phase = _ReactionPhase.waiting);
-    final delay = Duration(milliseconds: 900 + _random.nextInt(2600));
-    _timer = Timer(delay, () {
-      if (!mounted) {
-        return;
-      }
-      _stopwatch
-        ..reset()
-        ..start();
-      setState(() => _phase = _ReactionPhase.ready);
-    });
-  }
-
-  void _reset() {
-    _timer?.cancel();
-    _stopwatch.stop();
-    _stopwatch.reset();
-    setState(() {
-      _results.clear();
-      _phase = _ReactionPhase.idle;
-    });
-  }
-
-  void _handleTap() {
-    if (_phase == _ReactionPhase.waiting) {
-      _timer?.cancel();
-      setState(() => _phase = _ReactionPhase.tooSoon);
-      return;
-    }
-    if (_phase == _ReactionPhase.ready) {
-      _stopwatch.stop();
-      _results.add(_stopwatch.elapsedMilliseconds);
-      setState(() {
-        _phase = _results.length >= 5
-            ? _ReactionPhase.done
-            : _ReactionPhase.result;
-      });
-      return;
-    }
-    if (_phase == _ReactionPhase.done) {
-      _reset();
-      return;
-    }
-    _startRound();
-  }
-
-  Color _stageColor(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return switch (_phase) {
-      _ReactionPhase.ready => const Color(0xFF3FA76B),
-      _ReactionPhase.waiting => const Color(0xFFC2614E),
-      _ReactionPhase.tooSoon => colorScheme.errorContainer,
-      _ReactionPhase.done => colorScheme.primaryContainer,
-      _ => colorScheme.surfaceContainerHigh,
-    };
-  }
-
-  String _stageText(AppI18n i18n) {
-    return switch (_phase) {
-      _ReactionPhase.idle => pickUiText(i18n, zh: '点击开始', en: 'Tap to start'),
-      _ReactionPhase.waiting => pickUiText(
-        i18n,
-        zh: '等待变绿',
-        en: 'Wait for green',
-      ),
-      _ReactionPhase.ready => pickUiText(i18n, zh: '现在点击', en: 'Tap now'),
-      _ReactionPhase.tooSoon => pickUiText(
-        i18n,
-        zh: '太早了，再来一次',
-        en: 'Too soon. Try again',
-      ),
-      _ReactionPhase.result => pickUiText(
-        i18n,
-        zh: '已记录，继续下一次',
-        en: 'Saved. Continue',
-      ),
-      _ReactionPhase.done => pickUiText(
-        i18n,
-        zh: '完成，点击重置',
-        en: 'Done. Tap to reset',
-      ),
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final average = _results.isEmpty
-        ? 0
-        : _results.reduce((a, b) => a + b) / _results.length;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _HumanMetricWrap(
-          metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '次数', en: 'Trials'), '${_results.length}/5'),
-            (
-              pickUiText(i18n, zh: '平均', en: 'Average'),
-              _results.isEmpty ? '-' : _formatMilliseconds(average),
-            ),
-            (
-              pickUiText(i18n, zh: '最近', en: 'Latest'),
-              _results.isEmpty ? '-' : _formatMilliseconds(_results.last),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _handleTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOutCubic,
-            height: 260,
-            width: double.infinity,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: _stageColor(context),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Text(
-              _stageText(i18n),
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: _reset,
-          icon: const Icon(Icons.restart_alt_rounded),
-          label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
-        ),
-      ],
-    );
-  }
-}
-
-class AimTestPage extends StatelessWidget {
-  const AimTestPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '瞄准测试', en: 'Aim test'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '连续点击出现的目标，完成 20 次命中后显示平均间隔。',
-        en: 'Tap each target as it appears. The test ends after 20 hits.',
-      ),
-      accent: const Color(0xFFC24D5A),
-      icon: Icons.adjust_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '下一步：点击开始后追踪目标',
-        en: 'Next: start and track targets',
-      ),
-      child: const _AimTestCard(),
-    );
-  }
-}
-
-class _AimTestCard extends StatefulWidget {
-  const _AimTestCard();
-
-  @override
-  State<_AimTestCard> createState() => _AimTestCardState();
-}
-
-class _AimTestCardState extends State<_AimTestCard> {
-  static const int _targetCount = 20;
-  final math.Random _random = math.Random();
-  final Stopwatch _stopwatch = Stopwatch();
-  Offset _target = const Offset(0.5, 0.5);
-  int _hits = 0;
-  bool _running = false;
-  int? _finalMilliseconds;
-
-  void _newTarget() {
-    _target = Offset(
-      0.08 + _random.nextDouble() * 0.84,
-      0.10 + _random.nextDouble() * 0.78,
-    );
-  }
-
-  void _start() {
-    setState(() {
-      _hits = 0;
-      _finalMilliseconds = null;
-      _running = true;
-      _newTarget();
-    });
-    _stopwatch
-      ..reset()
-      ..start();
-  }
-
-  void _hit() {
-    if (!_running) {
-      return;
-    }
-    if (_hits + 1 >= _targetCount) {
-      _stopwatch.stop();
-      setState(() {
-        _hits = _targetCount;
-        _finalMilliseconds = _stopwatch.elapsedMilliseconds;
-        _running = false;
-      });
-      return;
-    }
-    setState(() {
-      _hits += 1;
-      _newTarget();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final average = _finalMilliseconds == null
-        ? null
-        : _finalMilliseconds! / _targetCount;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _HumanMetricWrap(
-          metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$_hits/$_targetCount'),
-            (
-              pickUiText(i18n, zh: '平均间隔', en: 'Avg interval'),
-              average == null ? '-' : _formatMilliseconds(average),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _HumanPanel(
-          padding: EdgeInsets.zero,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final height = math.min(360.0, constraints.maxWidth * 0.78);
-              return SizedBox(
-                height: height,
-                child: Stack(
-                  children: <Widget>[
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
-                          color: Theme.of(context).colorScheme.surface,
-                        ),
-                      ),
-                    ),
-                    if (_running)
-                      Positioned(
-                        left: _target.dx * (constraints.maxWidth - 54),
-                        top: _target.dy * (height - 54),
-                        child: GestureDetector(
-                          onTap: _hit,
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(
-                                0xFFC24D5A,
-                              ).withValues(alpha: 0.18),
-                              border: Border.all(
-                                color: const Color(0xFFC24D5A),
-                                width: 3,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Container(
-                              width: 16,
-                              height: 16,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(0xFFC24D5A),
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      Center(
-                        child: _HumanActionButton(
-                          label: pickUiText(i18n, zh: '开始', en: 'Start'),
-                          icon: Icons.play_arrow_rounded,
-                          onPressed: _start,
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class TapSpeedTestPage extends StatelessWidget {
   const TapSpeedTestPage({super.key});
 
@@ -361,20 +10,22 @@ class TapSpeedTestPage extends StatelessWidget {
       title: pickUiText(i18n, zh: '手速测试', en: 'Tap speed'),
       subtitle: pickUiText(
         i18n,
-        zh: '10 秒内尽可能多次点击同一个按钮。',
-        en: 'Tap the same button as many times as possible in 10 seconds.',
+        zh: '在经典连点、目标追击和节奏命中模式中测试点击速度、稳定性与准确率。',
+        en: 'Measure tap speed, stability, and accuracy across classic, target chase, and rhythm modes.',
       ),
       accent: const Color(0xFFC05180),
       icon: Icons.touch_app_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：开始后连续点击',
-        en: 'Next: start and keep tapping',
+        zh: '下一步：选择模式后开始挑战',
+        en: 'Next: choose a mode and start',
       ),
       child: const _TapSpeedTestCard(),
     );
   }
 }
+
+enum _TapSpeedMode { classic, targetChase, rhythm }
 
 class _TapSpeedTestCard extends StatefulWidget {
   const _TapSpeedTestCard();
@@ -384,12 +35,28 @@ class _TapSpeedTestCard extends StatefulWidget {
 }
 
 class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
-  static const Duration _duration = Duration(seconds: 10);
+  static const Color _accent = Color(0xFFC05180);
+  final math.Random _random = math.Random();
   Timer? _timer;
+  _TapSpeedMode _mode = _TapSpeedMode.classic;
+  int _durationSeconds = 10;
   int _count = 0;
-  int _remainingTenths = _duration.inMilliseconds ~/ 100;
+  int _attempts = 0;
+  int _combo = 0;
+  int _bestCombo = 0;
+  int _remainingTenths = 100;
+  int _targetSlot = 4;
+  int _rhythmSlot = 4;
   bool _running = false;
   bool _done = false;
+  bool? _lastHit;
+  int _feedbackSerial = 0;
+
+  int get _totalTenths => _durationSeconds * 10;
+
+  double get _cps => _durationSeconds <= 0 ? 0 : _count / _durationSeconds;
+
+  double get _accuracy => _attempts <= 0 ? 1 : _count / _attempts;
 
   @override
   void dispose() {
@@ -401,9 +68,16 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
     _timer?.cancel();
     setState(() {
       _count = 0;
-      _remainingTenths = _duration.inMilliseconds ~/ 100;
+      _attempts = 0;
+      _combo = 0;
+      _bestCombo = 0;
+      _remainingTenths = _totalTenths;
+      _targetSlot = _random.nextInt(9);
+      _rhythmSlot = 4;
       _running = true;
       _done = false;
+      _lastHit = null;
+      _feedbackSerial = 0;
     });
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (!mounted) {
@@ -416,173 +90,249 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
           _running = false;
           _done = true;
         });
+        unawaited(_showReport());
         return;
       }
-      setState(() => _remainingTenths -= 1);
+      setState(() {
+        _remainingTenths -= 1;
+        if (_mode == _TapSpeedMode.rhythm && _remainingTenths % 5 == 0) {
+          _rhythmSlot = _random.nextInt(9);
+        }
+      });
     });
   }
 
-  void _tap() {
+  void _registerTap({required bool hit}) {
     if (!_running) {
+      _start();
       return;
     }
-    setState(() => _count += 1);
+    setState(() {
+      _attempts += 1;
+      if (hit) {
+        _count += 1;
+        _combo += 1;
+        _bestCombo = math.max(_bestCombo, _combo);
+        if (_mode == _TapSpeedMode.targetChase) {
+          _targetSlot = _nextDifferentSlot(_targetSlot);
+        }
+      } else {
+        _combo = 0;
+      }
+      _lastHit = hit;
+      _feedbackSerial += 1;
+    });
+  }
+
+  int _nextDifferentSlot(int current) {
+    var next = _random.nextInt(9);
+    var guard = 0;
+    while (next == current && guard < 8) {
+      guard += 1;
+      next = _random.nextInt(9);
+    }
+    return next;
+  }
+
+  void _setMode(_TapSpeedMode mode) {
+    if (_running) {
+      return;
+    }
+    setState(() {
+      _mode = mode;
+      _done = false;
+      _lastHit = null;
+    });
+  }
+
+  Future<void> _showReport() async {
+    if (!mounted || (!_done && _attempts <= 0)) {
+      return;
+    }
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => _TapSpeedReportDialog(
+        i18n: i18n,
+        mode: _modeLabel(i18n, _mode),
+        taps: _count,
+        attempts: _attempts,
+        cps: _cps,
+        accuracy: _accuracy,
+        bestCombo: _bestCombo,
+        durationSeconds: _durationSeconds,
+      ),
+    );
+  }
+
+  String _modeLabel(AppI18n i18n, _TapSpeedMode mode) {
+    return switch (mode) {
+      _TapSpeedMode.classic => pickUiText(i18n, zh: '经典连点', en: 'Classic'),
+      _TapSpeedMode.targetChase => pickUiText(
+        i18n,
+        zh: '目标追击',
+        en: 'Target chase',
+      ),
+      _TapSpeedMode.rhythm => pickUiText(i18n, zh: '节奏命中', en: 'Rhythm hit'),
+    };
+  }
+
+  String _modeHint(AppI18n i18n) {
+    return switch (_mode) {
+      _TapSpeedMode.classic => pickUiText(
+        i18n,
+        zh: '任意点击舞台，尽量保持稳定高速。',
+        en: 'Tap anywhere on the stage and keep a stable high pace.',
+      ),
+      _TapSpeedMode.targetChase => pickUiText(
+        i18n,
+        zh: '只点亮起的目标格，点错会断连击。',
+        en: 'Tap only the lit target tile. Wrong taps break combo.',
+      ),
+      _TapSpeedMode.rhythm => pickUiText(
+        i18n,
+        zh: '目标按节奏跳动，抓住亮起的格子。',
+        en: 'The target jumps on a rhythm. Catch the lit tile.',
+      ),
+    };
   }
 
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final theme = Theme.of(context);
     final secondsLeft = _remainingTenths / 10;
-    final cps = _done ? _count / 10 : 0.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '点击', en: 'Taps'), '$_count'),
+            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$_count'),
             (
               pickUiText(i18n, zh: '剩余', en: 'Left'),
               _formatSeconds(secondsLeft),
             ),
             (
               pickUiText(i18n, zh: '每秒', en: 'Per sec'),
-              _done ? cps.toStringAsFixed(1) : '-',
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: _running ? _tap : _start,
-          child: Container(
-            height: 240,
-            width: double.infinity,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              color: const Color(0xFFC05180).withValues(alpha: 0.14),
-              border: Border.all(
-                color: const Color(0xFFC05180).withValues(alpha: 0.22),
-              ),
-            ),
-            child: Text(
-              _running
-                  ? pickUiText(i18n, zh: '点击', en: 'Tap')
-                  : pickUiText(i18n, zh: '点击开始', en: 'Tap to start'),
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class TimePerceptionTestPage extends StatelessWidget {
-  const TimePerceptionTestPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '时间感知测试', en: 'Time perception'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '点击开始后在心里估算 5 秒，再点击停止。',
-        en: 'Start, estimate 5 seconds in your head, then stop.',
-      ),
-      accent: const Color(0xFF4D8C9E),
-      icon: Icons.timer_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '下一步：开始后不要看钟',
-        en: 'Next: start without watching a clock',
-      ),
-      child: const _TimePerceptionTestCard(),
-    );
-  }
-}
-
-class _TimePerceptionTestCard extends StatefulWidget {
-  const _TimePerceptionTestCard();
-
-  @override
-  State<_TimePerceptionTestCard> createState() =>
-      _TimePerceptionTestCardState();
-}
-
-class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
-  final Stopwatch _stopwatch = Stopwatch();
-  bool _running = false;
-  Duration? _last;
-
-  void _toggle() {
-    if (_running) {
-      _stopwatch.stop();
-      setState(() {
-        _last = _stopwatch.elapsed;
-        _running = false;
-      });
-      return;
-    }
-    _stopwatch
-      ..reset()
-      ..start();
-    setState(() {
-      _last = null;
-      _running = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final diff = _last == null
-        ? null
-        : (_last!.inMilliseconds - 5000).abs() / 1000;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _HumanMetricWrap(
-          metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '目标', en: 'Target'), _formatSeconds(5)),
-            (
-              pickUiText(i18n, zh: '结果', en: 'Result'),
-              _last == null
-                  ? '-'
-                  : _formatSeconds(_last!.inMilliseconds / 1000),
+              (_running || _done) ? _cps.toStringAsFixed(1) : '-',
             ),
             (
-              pickUiText(i18n, zh: '误差', en: 'Error'),
-              diff == null ? '-' : _formatSeconds(diff),
+              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+              _attempts <= 0 ? '-' : '${(_accuracy * 100).round()}%',
             ),
+            (pickUiText(i18n, zh: '连击', en: 'Combo'), '$_combo'),
           ],
         ),
         const SizedBox(height: 12),
         _HumanPanel(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Text(
-                _running
-                    ? pickUiText(
-                        i18n,
-                        zh: '正在计时，感觉到 5 秒就停止',
-                        en: 'Running. Stop when 5 seconds feel right',
-                      )
-                    : pickUiText(i18n, zh: '准备好后开始', en: 'Start when ready'),
+                _modeHint(i18n),
                 textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              const SizedBox(height: 18),
-              _HumanActionButton(
-                label: _running
-                    ? pickUiText(i18n, zh: '停止', en: 'Stop')
-                    : pickUiText(i18n, zh: '开始', en: 'Start'),
-                icon: _running ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                onPressed: _toggle,
+              const SizedBox(height: 12),
+              _TapSpeedStage(
+                mode: _mode,
+                running: _running,
+                targetSlot: _mode == _TapSpeedMode.rhythm
+                    ? _rhythmSlot
+                    : _targetSlot,
+                lastHit: _lastHit,
+                feedbackSerial: _feedbackSerial,
+                onTapStage: () =>
+                    _registerTap(hit: _mode == _TapSpeedMode.classic),
+                onTapSlot: (index) {
+                  if (_mode == _TapSpeedMode.classic) {
+                    _registerTap(hit: true);
+                    return;
+                  }
+                  final target = _mode == _TapSpeedMode.rhythm
+                      ? _rhythmSlot
+                      : _targetSlot;
+                  _registerTap(hit: index == target);
+                },
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: <Widget>[
+                  _HumanActionButton(
+                    label: _running
+                        ? pickUiText(i18n, zh: '挑战中', en: 'Running')
+                        : pickUiText(i18n, zh: '开始挑战', en: 'Start challenge'),
+                    icon: _running
+                        ? Icons.flash_on_rounded
+                        : Icons.play_arrow_rounded,
+                    onPressed: _running ? null : _start,
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _attempts <= 0
+                        ? null
+                        : () => unawaited(_showReport()),
+                    icon: const Icon(Icons.analytics_rounded),
+                    label: Text(pickUiText(i18n, zh: '报告', en: 'Report')),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _HumanSettingsSection(
+                title: pickUiText(i18n, zh: '手速设置', en: 'Tap settings'),
+                subtitle: pickUiText(
+                  i18n,
+                  zh: '选择玩法和挑战时长，运行中设置会锁定。',
+                  en: 'Choose mode and duration. Settings lock while running.',
+                ),
+                initiallyExpanded: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickUiText(i18n, zh: '玩法模式', en: 'Game mode'),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _TapSpeedMode.values
+                          .map(
+                            (mode) => ChoiceChip(
+                              label: Text(_modeLabel(i18n, mode)),
+                              selected: _mode == mode,
+                              onSelected: _running
+                                  ? null
+                                  : (_) => _setMode(mode),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      pickUiText(i18n, zh: '挑战时长', en: 'Duration'),
+                      style: theme.textTheme.labelLarge,
+                    ),
+                    Slider(
+                      value: _durationSeconds.toDouble(),
+                      min: 5,
+                      max: 30,
+                      divisions: 5,
+                      label: '$_durationSeconds s',
+                      onChanged: _running
+                          ? null
+                          : (value) => setState(
+                              () => _durationSeconds = value.round(),
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -592,193 +342,284 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
   }
 }
 
-class HandEyeCoordinationTestPage extends StatelessWidget {
-  const HandEyeCoordinationTestPage({super.key});
+class _TapSpeedStage extends StatelessWidget {
+  const _TapSpeedStage({
+    required this.mode,
+    required this.running,
+    required this.targetSlot,
+    required this.lastHit,
+    required this.feedbackSerial,
+    required this.onTapStage,
+    required this.onTapSlot,
+  });
+
+  final _TapSpeedMode mode;
+  final bool running;
+  final int targetSlot;
+  final bool? lastHit;
+  final int feedbackSerial;
+  final VoidCallback onTapStage;
+  final ValueChanged<int> onTapSlot;
 
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '手眼协调测试', en: 'Hand-eye coordination'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '在移动舞台中追踪目标，命中 12 次完成一轮。',
-        en: 'Track the moving target and land 12 hits to finish.',
-      ),
-      accent: const Color(0xFFB55D42),
-      icon: Icons.center_focus_strong_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '下一步：开始后点击移动圆心',
-        en: 'Next: start and tap the moving center',
-      ),
-      child: const _HandEyeCoordinationCard(),
-    );
-  }
-}
-
-class _HandEyeCoordinationCard extends StatefulWidget {
-  const _HandEyeCoordinationCard();
-
-  @override
-  State<_HandEyeCoordinationCard> createState() =>
-      _HandEyeCoordinationCardState();
-}
-
-class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
-    with SingleTickerProviderStateMixin {
-  static const int _targetHits = 12;
-  late final AnimationController _controller;
-  int _hits = 0;
-  int _misses = 0;
-  bool _running = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _start() {
-    setState(() {
-      _hits = 0;
-      _misses = 0;
-      _running = true;
-    });
-    _controller
-      ..reset()
-      ..repeat(reverse: true);
-  }
-
-  Offset _targetCenter(Size size) {
-    final t = _controller.value;
-    return Offset(
-      40 + t * (size.width - 80),
-      size.height * (0.50 + math.sin(t * math.pi * 2) * 0.22),
-    );
-  }
-
-  void _tap(Size size, Offset localPosition) {
-    if (!_running) {
-      return;
-    }
-    final center = _targetCenter(size);
-    if ((localPosition - center).distance <= 34) {
-      if (_hits + 1 >= _targetHits) {
-        _controller.stop();
-        setState(() {
-          _hits = _targetHits;
-          _running = false;
-        });
-      } else {
-        setState(() => _hits += 1);
-      }
-    } else {
-      setState(() => _misses += 1);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final total = _hits + _misses;
-    final accuracy = total == 0 ? 0 : _hits / total * 100;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _HumanMetricWrap(
-          metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$_hits/$_targetHits'),
-            (pickUiText(i18n, zh: '失误', en: 'Misses'), '$_misses'),
-            (
-              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
-              total == 0 ? '-' : '${accuracy.round()}%',
-            ),
-          ],
+    if (mode == _TapSpeedMode.classic) {
+      return GestureDetector(
+        onTap: onTapStage,
+        child: _TapSpeedClassicPad(
+          running: running,
+          lastHit: lastHit,
+          feedbackSerial: feedbackSerial,
         ),
-        const SizedBox(height: 12),
-        _HumanPanel(
-          padding: EdgeInsets.zero,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final size = Size(
-                constraints.maxWidth,
-                math.min(340, constraints.maxWidth * 0.72),
-              );
-              return GestureDetector(
-                onTapDown: _running
-                    ? (details) => _tap(size, details.localPosition)
-                    : null,
-                child: SizedBox(
-                  width: size.width,
-                  height: size.height,
-                  child: AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      final center = _targetCenter(size);
-                      return Stack(
-                        children: <Widget>[
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(22),
-                                color: Theme.of(context).colorScheme.surface,
-                              ),
-                            ),
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = 8.0;
+        final width = (constraints.maxWidth - spacing * 2) / 3;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children:
+              List<Widget>.generate(9, (index) {
+                final active = running && index == targetSlot;
+                return SizedBox(
+                  width: width,
+                  height: 82,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => onTapSlot(index),
+                      borderRadius: BorderRadius.circular(18),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 140),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          color: active
+                              ? _TapSpeedTestCardState._accent.withValues(
+                                  alpha: 0.22,
+                                )
+                              : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                    .withValues(alpha: 0.40),
+                          border: Border.all(
+                            color: active
+                                ? _TapSpeedTestCardState._accent.withValues(
+                                    alpha: 0.70,
+                                  )
+                                : Theme.of(context).colorScheme.outlineVariant,
+                            width: active ? 2 : 1,
                           ),
-                          if (_running)
-                            Positioned(
-                              left: center.dx - 28,
-                              top: center.dy - 28,
-                              child: Container(
-                                width: 56,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(
-                                    0xFFB55D42,
-                                  ).withValues(alpha: 0.18),
-                                  border: Border.all(
-                                    color: const Color(0xFFB55D42),
-                                    width: 3,
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Container(
-                                  width: 14,
-                                  height: 14,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFFB55D42),
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            Center(
-                              child: _HumanActionButton(
-                                label: pickUiText(i18n, zh: '开始', en: 'Start'),
-                                icon: Icons.play_arrow_rounded,
-                                onPressed: _start,
-                              ),
-                            ),
-                        ],
-                      );
-                    },
+                        ),
+                        child: Center(
+                          child: Icon(
+                            active
+                                ? Icons.ads_click_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            color: active
+                                ? _TapSpeedTestCardState._accent
+                                : Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              })..insert(
+                0,
+                SizedBox(
+                  width: constraints.maxWidth,
+                  child: Text(
+                    running
+                        ? pickUiText(
+                            i18n,
+                            zh: '点击亮起目标',
+                            en: 'Tap the lit target',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '开始后目标会亮起',
+                            en: 'Targets light up after start',
+                          ),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+        );
+      },
+    );
+  }
+}
+
+class _TapSpeedClassicPad extends StatelessWidget {
+  const _TapSpeedClassicPad({
+    required this.running,
+    required this.lastHit,
+    required this.feedbackSerial,
+  });
+
+  final bool running;
+  final bool? lastHit;
+  final int feedbackSerial;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final theme = Theme.of(context);
+    return Stack(
+      alignment: Alignment.center,
+      children: <Widget>[
+        Container(
+          height: 220,
+          width: double.infinity,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: _TapSpeedTestCardState._accent.withValues(alpha: 0.14),
+            border: Border.all(
+              color: _TapSpeedTestCardState._accent.withValues(alpha: 0.24),
+            ),
+          ),
+          child: Text(
+            running
+                ? pickUiText(i18n, zh: '点击', en: 'Tap')
+                : pickUiText(i18n, zh: '点击开始', en: 'Tap to start'),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        if (feedbackSerial > 0)
+          TweenAnimationBuilder<double>(
+            key: ValueKey<int>(feedbackSerial),
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 170),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: (1 - value).clamp(0.0, 1.0),
+                child: Transform.scale(
+                  scale: 0.7 + value * 0.6,
+                  child: Icon(
+                    Icons.touch_app_rounded,
+                    size: 64,
+                    color: _TapSpeedTestCardState._accent,
                   ),
                 ),
               );
             },
           ),
+      ],
+    );
+  }
+}
+
+class _TapSpeedReportDialog extends StatelessWidget {
+  const _TapSpeedReportDialog({
+    required this.i18n,
+    required this.mode,
+    required this.taps,
+    required this.attempts,
+    required this.cps,
+    required this.accuracy,
+    required this.bestCombo,
+    required this.durationSeconds,
+  });
+
+  final AppI18n i18n;
+  final String mode;
+  final int taps;
+  final int attempts;
+  final double cps;
+  final double accuracy;
+  final int bestCombo;
+  final int durationSeconds;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final title = cps >= 8.5 && accuracy >= 0.9
+        ? pickUiText(i18n, zh: '爆发型选手', en: 'Burst specialist')
+        : cps >= 6.5
+        ? pickUiText(i18n, zh: '高速稳定', en: 'Fast and steady')
+        : accuracy < 0.75
+        ? pickUiText(i18n, zh: '需要稳手', en: 'Needs control')
+        : pickUiText(i18n, zh: '稳定练习中', en: 'Steady practice');
+    return AlertDialog(
+      title: Text(pickUiText(i18n, zh: '手速报告', en: 'Tap speed report')),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: <Widget>[
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '称号', en: 'Title'),
+                    value: title,
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '每秒', en: 'Per sec'),
+                    value: cps.toStringAsFixed(1),
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '命中/尝试', en: 'Hits/attempts'),
+                    value: '$taps/$attempts',
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '最佳连击', en: 'Best combo'),
+                    value: '$bestCombo',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _ColorVisionReportSection(
+                title: pickUiText(i18n, zh: '本轮设置', en: 'Session settings'),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    Chip(label: Text(mode)),
+                    Chip(label: Text('$durationSeconds s')),
+                    Chip(label: Text('${(accuracy * 100).round()}% accuracy')),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _ColorVisionReportSection(
+                title: pickUiText(i18n, zh: '训练建议', en: 'Training note'),
+                child: Text(
+                  accuracy < 0.8
+                      ? pickUiText(
+                          i18n,
+                          zh: '先降低误触，目标追击模式下保持拇指回到中心再点下一格。',
+                          en: 'Reduce mis-taps first. In target chase, return to center before the next tile.',
+                        )
+                      : pickUiText(
+                          i18n,
+                          zh: '准确率稳定，可以缩短休息间隔或切换到节奏命中练习爆发。',
+                          en: 'Accuracy is stable. Shorten rests or switch to rhythm hit for burst practice.',
+                        ),
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
         ),
       ],
     );

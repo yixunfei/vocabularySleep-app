@@ -113,6 +113,7 @@ class DailyChoicePlaceLibraryStore {
     final targetFile = await _databaseFile();
     final jsonFile = File('${targetFile.path}.json_download');
     try {
+      await _deleteDatabaseArtifacts(targetFile);
       await _downloadRemoteLibrary(jsonFile);
       final dbFile = File('${targetFile.path}.build');
       await _deleteDatabaseArtifacts(dbFile);

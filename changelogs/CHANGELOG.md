@@ -1,5 +1,574 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_136-TOOLBOX-STAGE-COMMIT-DOCS] - 2026-05-07
+
+### 原因
+- 用户要求整理当前进度，补充完整提交日志和 README，并完成一次提交推送。
+
+### 新增
+- 根 `README.md` 新增 2026-05-07 toolbox 阶段近期进展说明。
+- 新增 `records/record_135_toolbox_human_tests_and_roulette_stage_commit.md`，记录本次阶段提交范围、验证命令和已知风险。
+- 新增 `plans/PLAN_136_toolbox阶段进度整理提交推送.md`，记录本次整理、提交和推送流程。
+
+### 修改
+- 梳理 `changelogs/CHANGELOG.md` 和 `modules/toolbox/README.md`，确保人类测试中心、运气测试、摇杆全屏和俄罗斯轮盘阶段进展可追溯。
+
+### 风险变更
+- 本次为阶段整合提交，范围包含多轮 toolbox 改动；提交日志已明确记录范围和验证结果。
+
+## [Unreleased-PLAN_135-LUCK-EFFECTS-AND-JOYSTICK-LANDSCAPE-ZONES] - 2026-05-07
+
+### 原因
+- 用户反馈运气测试稀有特效不够持久全屏，多连抽下一轮刷新入口不明确；摇杆手眼协调手机横屏全屏时摇杆和射击触发区域应固定在左右两侧。
+
+### 修改
+- 运气测试史诗/传说特效延长为更持久的全屏覆盖，并增强金色/紫色流动与中心稀有提示。
+- 运气测试多连抽全部翻开后，将“全部翻开”切换为“继续下一轮”，点击后清理当前批次并生成下一批卡片。
+- 摇杆手眼协调全屏横屏时将左侧区域作为摇杆唤起区、右侧区域作为射击唤起区，中间保留缓冲区；浮层仍随手指触点唤起和重定位。
+
+### 风险变更
+- 稀有特效仍受“稀有抽中特效”开关控制，且不拦截点击；横屏左右热区只影响全屏模式，普通页面与竖屏逻辑保持原有行为。
+
+## [Unreleased-PLAN_134-LUCK-DRAW-STAGE-MUTUAL-EXCLUSION] - 2026-05-07
+
+### 原因
+- 修复运气测试中单抽 5 张牌和多连抽批量卡片同时显示，造成两个翻卡界面重叠的问题。
+
+### 修改
+- 运气测试抽卡舞台改为互斥展示：单抽模式只显示 5 张单抽牌，多抽模式只显示批量卡片区域或生成提示。
+- 切换抽卡模式时清理未完成的批量展示状态，避免旧批次残留到单抽界面。
+
+### 风险变更
+- 模式切换只清理展示中的临时批次，不重置已记录的抽卡统计。
+
+## [Unreleased-PLAN_133-HUMAN-TESTS-FEEDBACK-AND-REPORTS] - 2026-05-07
+
+### 原因
+- 继续完善 `工具箱 - 人类测试中心` 中持续注意力、运气、时间感知、手速、序列记忆、斯特鲁普和色觉报告，使交互反馈、娱乐性和统计可读性更完整。
+
+### 新增
+- 持续注意力测试新增默认关闭的目标背景高亮开关，并在命中、误点和重复点击时显示短促点中反馈。
+- 运气测试新增多连抽卡片池，十连/二十连会生成对应数量的真实卡片，支持逐张翻开或一键全翻；史诗/传说抽中时可显示短暂全屏稀有特效。
+- 运气统计报告新增趣味称号，包括欧皇在世、气运之子、小幸运、普普通通、运气不佳和非酋等分档。
+- 时间感知测试开始前新增 3-2-1 大屏倒计时，秒表在倒计时结束后才启动。
+- 手速测试新增经典连点、目标追击和节奏命中三种玩法，补充挑战时长、连击、准确率和完成报告。
+- 序列记忆新增点击反馈、正确/错误图标和输入进度徽标。
+- 斯特鲁普新增一致判断、说出墨色、读出字义和反向规则子模式，并统计反应时与完成报告。
+
+### 修改
+- 色觉测试报告移除低可读性的曲线/倾向 CustomPaint 图表，改为近轮色差记录、色相分组表现和差异类型表现列表。
+
+### 风险变更
+- 运气测试多连抽改为翻开后才计入统计，避免“已生成但未展示”的卡片污染报告；本页结果仍只保存在当前页面内存中。
+
+## [Unreleased-PLAN_132-HUMAN-TESTS-SIX-MODULES] - 2026-05-07
+
+### 原因
+- 完善 `工具箱 - 人类测试中心` 中计算能力、动态视力字符识别、持续注意力、运气测试、色觉报告图表和页面文案，使基础实现提升为可配置、可复盘的训练模块。
+
+### 新增
+- 计算能力测试新增轻量/标准/进阶/专家难度、混合/加减/乘法/除法/两步题/未知数题型、固定题量/限时两种结束条件和完成报告。
+- 动态视力字符识别新增字符集、移动轨迹、选项数量、弱干扰字符、即时反馈和完成报告；小球数量逻辑保持独立。
+- 持续注意力测试新增目标点击、低频目标和 n-back 三类任务，并支持刺激数量、节奏、目标比例和 n-back 间隔设置。
+- 运气测试新增单抽、十连、二十连、卡片数量/幸运指数/抽数目标和目标完成报告。
+
+### 修改
+- 运气测试幸运值改为按概率期望计算幸运指数，100 作为期望基线。
+- 色觉报告将色彩偏向和差异类型图表改为横向评分条，显示百分比与命中数量，减少低样本时只出现单条竖线的问题。
+- 更新人类测试中心、toolbox 总入口和模块说明文案，移除过期的基础描述。
+
+### 风险变更
+- 本轮新增的报告均只使用当前页面内存统计，不写入 AppState、数据库或学习记录。
+
+## [Unreleased-PLAN_131-JOYSTICK-FULLSCREEN-SETTINGS-DIALOG] - 2026-05-07
+
+### 原因
+- 用户希望摇杆手眼协调全屏模式增加一个小设置入口按钮，规格与开始、重置按钮一致，点击后用弹窗展开设置。
+
+### 新增
+- 摇杆手眼协调全屏顶部操作区新增设置图标按钮。
+- 点击设置按钮后弹出全屏设置弹窗，复用摇杆设置、目标移动设置和高阶干扰设置。
+
+### 修改
+- 更新摇杆全屏 smoke test，覆盖设置入口、弹窗展示和目标移动设置展开。
+
+### 风险变更
+- 设置弹窗复用普通页锁定规则，运行中关键设置仍禁用，避免测试过程中的规则切换混入当前成绩。
+
+## [Unreleased-PLAN_130-JOYSTICK-FULLSCREEN-IMPLICIT-PRACTICE] - 2026-05-07
+
+### 原因
+- 用户希望摇杆手眼协调全屏模式在手指未按下时隐藏摇杆，去掉摇杆外层方形边框，并允许未开始时先练习准星控制。
+
+### 修改
+- 全屏摇杆改为按下后才显示、抬起后隐藏，舞台空闲时不再常驻左下摇杆浮层。
+- 全屏摇杆去除外层方形半透明面板，只保留圆形摇杆本体。
+- 全屏未开始状态下允许拖动准星进行手感适应；该练习态不触发目标刷新、射击计分或测试计时。
+- 更新摇杆全屏 smoke test，覆盖初始隐藏、触点显示、抬起隐藏和未开始准星移动。
+
+### 风险变更
+- 隐式摇杆减少了固定视觉提示，但触点即摇杆中心的操作模型更适合全屏沉浸训练；正式测试仍需点击开始按钮进入计时/计分。
+
+## [Unreleased-PLAN_129-JOYSTICK-FULLSCREEN-WHITE-OVERLAY] - 2026-05-07
+
+### 原因
+- 用户希望摇杆手眼协调全屏模式进一步释放舞台面积，改为白色全屏铺面，并让摇杆、射击等操作浮层能根据手指按下位置调整。
+
+### 修改
+- 摇杆手眼协调全屏舞台改为白色全屏铺面，移除旧的左右控制栏和中间舞台分栏。
+- 摇杆、射击、顶部状态和会话按钮改为半透明浮层，保留退出、开始/结束、重置和报告入口。
+- 运行中在舞台按下会把摇杆浮层移动到触点附近并继续响应拖动；右下射击热区会按触点移动射击浮层并触发射击。
+- 更新摇杆全屏横屏和竖屏 smoke test，覆盖全屏舞台尺寸、浮层覆盖和触点重定位行为。
+
+### 风险变更
+- 全屏目标活动区域扩大后，目标更贴近真实全屏训练；顶部状态区域仍保留最小安全边距，避免目标与关键浮层过度重叠。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen"`（通过）
+
+## [Unreleased-PLAN_128-HUMAN-TESTS-REFINE] - 2026-05-07
+
+### 原因
+- 收口 `工具箱 - 人类测试中心` 的 8 处 UI/报告问题，统一补齐完成弹窗、设置折叠与全屏布局优化。
+
+### 修改
+- 数字记忆仅在失败完成一轮时弹出统计报告。
+- 反应测试在完成一组后自动弹出统计分析报告。
+- 打字测试将设置区改为折叠展开，并默认提供“全部”题材。
+- 视觉记忆增加完成后的报告入口。
+- 瞄准测试移除重复的开始按钮。
+- 色觉测试修正报告趋势折线的绘制范围与缩放。
+- 序列记忆扩展图标数量配置，并增强连续重复图标的播放辨识度。
+- 摇杆手眼协调全屏布局收紧边距，扩大舞台可用面积。
+
+### 修复
+- 更新相关 smoke test、模块说明与计划状态，保持 toolbox 变更收口一致。
+
+### 风险变更
+- 序列记忆的可选图标数增加后，默认体验更丰富，但视觉复杂度略有提升。
+
+## [Unreleased-PLAN_122-CHIMP-SETTINGS-REPORT] - 2026-05-06
+
+### 原因
+- 继续完善「工具箱 - 人类测试中心 - 黑猩猩测试」，增加最大表格大小、显示答案和默认关闭的提示辅助，并在测试结束后弹出统计分析报告。
+
+### 新增
+- 黑猩猩测试新增最大表格大小、本组最大目标数、显示答案、下一步提示、一次错误保护和完成后自动报告设置。
+- 顺序数字与颜色顺序模式保留数字/颜色播放速度设置，颜色顺序模式保留颜色数量设置。
+- 测试完成上限或失败后新增「黑猩猩测试统计报告」弹窗，展示模式、表格、完成轮次、失败轮次、最佳目标、准确率、错误数、平均/最快用时、辅助状态和训练建议。
+- 新增定向 smoke test 覆盖设置入口、答案/提示辅助和报告弹窗。
+
+### 修改
+- 黑猩猩测试入口说明和 toolbox 模块说明同步更新为设置与报告能力描述。
+- 设置变更会清理当前轮状态和本组统计，避免旧轮次与新规则混用。
+
+### 风险变更
+- 答案显示、下一步提示与一次错误保护均默认关闭；开启后报告会标注辅助状态，避免与纯净记忆成绩直接比较。
+- 结果仍只在当前页面内存中即时展示，不写入 AppState、数据库或学习记录。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "chimp test exposes assists and completion report" --reporter compact`（通过）
+
+## [Unreleased-PLAN_127-VERBAL-MEMORY-MULTI-MODE-REPORT] - 2026-05-06
+
+### 原因
+- 将工具箱-人类测试中心-词汇记忆扩展为更完整的专业训练模块，补齐词库、多模式、可自定义舞台高度和结束报告。
+
+### 新增
+- 词汇模式支持分领域词库多选。
+- 新增数字序列记忆模式，支持随级别增长的长度。
+- 新增空间箭头记忆模式，支持 4 向和 8 向方向集。
+- 新增可自定义的舞台高度配置。
+- 新增结束后的完整结果分析报告弹窗。
+
+### 修改
+- 将词汇记忆模块按 `models / data / view / widgets` 收敛成独立 part 结构。
+- 更新工具箱模块文档映射，补齐新的词汇记忆拆分文件。
+
+### 风险变更
+- 新增模式只保留当前页面内的局部统计，不写入全局状态或持久化存储。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_data.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_models.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_view.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_widgets.dart test/toolbox_verbal_memory_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_data.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_models.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_view.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_widgets.dart test/toolbox_verbal_memory_smoke_test.dart`（通过）
+- `flutter test test/toolbox_verbal_memory_smoke_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_126-COLOR-VISION-MIXED-REPORT] - 2026-05-06
+
+### 原因
+- 用户要求继续完善「工具箱 - 人类测试中心 - 色觉测试」，增加更多可调设置、混色匹配玩法、提示按钮，并在测试结束时给出具体统计分析报告和图表。
+
+### 新增
+- 色觉测试新增「经典找不同 / 混色匹配」双模式；混色匹配会在网格上方提示目标色，用户点击与目标色完全相同的色块。
+- 新增色系排除设置：完整色系、排除红绿、排除蓝黄、低饱和，用于避开特定色觉困难敏感色组或做低饱和训练。
+- 新增最大生命设置，支持 1 次、3 次、5 次与无限生命。
+- 新增初始网格、最大网格、混色目标同色块数量和目标数量随机设置。
+- 新增提示按钮，会在当前轮次为目标色块添加边框和图标，并将提示次数写入本次报告。
+- 测试结束新增「色觉测试报告」弹窗，展示最高等级、正确率、轮次、提示次数、整体判断、色差表现曲线、色彩偏向曲线、弱项饼图、本轮设置和训练建议。
+- 新增 `test/toolbox_color_vision_smoke_test.dart`，覆盖设置入口、混色模式、提示按钮和报告弹窗。
+
+### 修改
+- 色觉测试入口说明从单一找不同更新为双模式与色差/色相分析说明。
+- 色觉测试 UI 拆出 `toolbox_human_tests_visual_widgets.dart`，主文件保留状态机、色块生成和统计逻辑。
+
+### 风险变更
+- 新增玩法和报告均只使用当前页面内存统计，不写入 AppState、数据库或学习记录。
+- 切换模式、色系、生命和网格设置会立即重开当前色觉测试，以避免旧轮次和新规则混用。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_visual_widgets.dart test/toolbox_color_vision_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_color_vision_smoke_test.dart`（通过）
+- `flutter test test/toolbox_color_vision_smoke_test.dart --reporter compact`（通过；命令期间 pub advisories 解码打印 warning，但测试退出码为 0）
+
+## [Unreleased-PLAN_125-JOYSTICK-HOTZONE-REPORT] - 2026-05-06
+
+### 原因
+- 用户希望继续收口「工具箱 - 人类测试中心 - 摇杆手眼协调」全屏：隐藏或折叠进度统计、把摇杆和射击按钮从屏幕边缘内缩成更接近正式射击游戏的手感，并补齐结果报告入口和弹窗。
+
+### 新增
+- 摇杆手眼协调全屏顶部统计默认折叠为轻量入口，点击后可展开查看进度、命中和射空统计。
+- 摇杆手眼协调全屏新增顶部浮层报告入口，测试完成后可再次打开本轮结果报告弹窗。
+- 全屏结果报告标题统一为「摇杆手眼协调结果报告」，与模块命名保持一致。
+
+### 修改
+- 摇杆手眼协调全屏改为顶部浮层控制条 + 底部双侧操作区：左侧保留摇杆，右侧保留射击，开始/结束/重置/报告改为顶部浮层按钮。
+- 全屏舞台的目标与假目标刷新范围改为按可用舞台安全边界计算，避开顶部浮层和左右操作区周边热区。
+- 摇杆和射击按钮统一向屏幕边缘内缩，并补足底部安全余量，避免手机边缘区域误触。
+- 更新摇杆手眼协调 smoke test，覆盖顶部统计折叠、控制区内缩、目标安全边界、横竖屏全屏布局和报告弹窗入口。
+
+### 风险变更
+- 全屏目标安全边界略微缩小了可刷目标范围，但避免目标与操作区和顶部统计浮层重叠。
+- 结果报告按钮改为顶部浮层图标入口后，用户需要依赖图标和提示文本识别功能。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen keeps controls off the center stage|joystick fullscreen portrait uses left controls and right stage|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls" --reporter compact`（通过）
+
+## [Unreleased-PLAN_124-AIM-COMBO-SNIPER-REPORT] - 2026-05-06
+
+### 原因
+- 用户希望继续完善「工具箱 - 人类测试中心 - 瞄准测试」，让降级放大、真假干扰和移动靶可以形成更多可选组合，并增加一个虚拟狙击手趣味包装，同时完成后给出完整结果报告。
+
+### 新增
+- 瞄准测试新增「移动放大」开关，降级放大目标可在移动中持续放大。
+- 移动靶新增「加入真假干扰」开关，支持移动且干扰的组合训练。
+- 真假干扰模式新增「真假目标移动」开关，真目标和假目标可共同移动。
+- 降级放大新增可选「虚拟狙击手对决」包装：目标放大到最大仍未命中时触发震动与全屏红色失败弹窗，并记录狙击失败次数。
+- 瞄准测试完成后新增完整结果报告，展示模式组合、命中、点空、假目标、超时、狙击失败、准确率、平均命中、最佳连击、总用时、评级、本轮设置和训练建议。
+
+### 修改
+- 瞄准测试内部将移动、放大和干扰能力改为可组合判断，默认经典/降级放大/移动靶/真假干扰入口仍保持原有默认语义。
+- 完成后保留「查看报告」按钮，允许用户回看本轮结果。
+
+### 修复
+- 狙击手失败弹窗出现时会暂停下一目标计时，用户确认后再继续，避免弹窗背后连续触发失败。
+
+### 风险变更
+- 新组合和狙击手对决均为默认关闭的设置项；结果仍只在当前页面展示，不写入 AppState、数据库或学习记录。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --name "aim test" --reporter compact`（通过）
+
+## [Unreleased-PLAN_116-VISUAL-MEMORY-REPORT-AND-DECOYS] - 2026-05-06
+
+### 原因
+- 用户要求继续优化「视觉记忆」：干扰色差应随难度和进度变得更接近，目标颜色等说明要更清晰自然，并在测试结束时弹出统计分析报告。
+
+### 新增
+- 视觉记忆结束时新增统计分析报告弹窗，展示最高等级、完成关卡、回忆率、点击准确率、误点来源、近似色压力和最近关卡明细。
+- 彩色目标和指定颜色模式新增“近似色压力”计算，随难度、等级、模式和干扰强度提升，将异色干扰逐步调成更接近目标色。
+
+### 修改
+- 优化视觉记忆页面说明、目标色 pill、观察阶段和输入阶段提示，使“本轮目标色”和“哪些格子算误点”更直接。
+- 干扰格设置说明补充颜色模式下的近似色效果，避免用户把干扰强度只理解为灰色格数量。
+
+### 风险变更
+- 近似色干扰只影响颜色模式；默认位置记忆仍保持经典玩法。结束报告仅使用当前页面内存统计，不写入 AppState、数据库或学习记录。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_visual_memory_widgets.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
+- `flutter test test/toolbox_visual_memory_smoke_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_123-TYPING-PRO-MODULE] - 2026-05-06
+
+### 原因
+- 用户希望「工具箱 - 人类测试中心 - 打字测试」从基础可用状态扩展为更专业完善的功能模块，覆盖内容、趣味模式、语言和结果报告。
+
+### 新增
+- 打字测试新增中文、英文、混合、日文和西语语料，并按专注、睡眠、技术、短文、词汇和旅行主题抽取内容。
+- 打字测试新增短句、标准和长段三档长度选择。
+- 打字测试新增经典、冲刺、精准、盲打、符号、纠错、代码和数字八种训练模式。
+- 新增字符级实时反馈，区分正确、错误、待输入和当前输入位置。
+- 新增 WPM、净 WPM、CPM、准确率、错误数、回退数、用时、进度和稳定性指标。
+- 完成后新增结果报告，展示等级、峰值速度、长停顿、错误结构、错误热区、训练建议、建议练习入口、模式/语言/主题/长度摘要和本页最近结果。
+- 新增打字测试 smoke test，覆盖新增模式、语言、长度、代码语料和完成报告。
+
+### 修改
+- 打字测试从 `toolbox_human_tests_cognition.dart` 拆分到独立 typing part 组，并进一步拆分 `copy/data/widgets`，降低主状态文件继续膨胀风险。
+- 更新人类测试中心打字测试入口说明和 toolbox 模块说明。
+
+### 风险变更
+- 新增模式、语料和长度只影响当前打字测试页面即时训练；结果仍不写入 AppState、主数据库或学习记录。
+- 盲打模式改为单行隐藏输入，避免多行隐藏文本输入在 Flutter 中触发断言。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_typing.dart lib/src/ui/pages/toolbox_human_tests_typing_copy.dart lib/src/ui/pages/toolbox_human_tests_typing_data.dart lib/src/ui/pages/toolbox_human_tests_typing_widgets.dart test/toolbox_typing_test_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_typing_test_smoke_test.dart`（通过）
+- `flutter test test/toolbox_typing_test_smoke_test.dart --reporter compact`（通过；命令期间 pub advisories 解码打印 warning，但测试退出码为 0）
+
+## [Unreleased-PLAN_121-NUMBER-MEMORY-ROUND-REPORT] - 2026-05-06
+
+### 原因
+- 用户反馈数字记忆彩色数字模式输入阶段没有明确提示要匹配哪种目标颜色，同时希望文案更自然，并在一轮结束后先查看统计分析，避免自动继续或误触重置。
+
+### 新增
+- 数字记忆每轮提交后新增结果弹窗，展示模式、等级、规模、目标、停留时间、正确答案、用户输入、累计正确率和最好等级。
+- 彩色数字模式在展示期舞台内新增目标颜色色块提示，输入期隐藏舞台和输入提示也保留具体目标颜色。
+
+### 修改
+- 数字记忆正确提交后不再自动开始下一轮，改为在弹窗中由用户选择“下一轮 / 再来一轮”或先停留。
+- 重置按钮在展示、输入和结果弹窗流程中禁用，减少误触清空。
+- 优化数字记忆入口、模式说明和设置项文案，使描述更接近日常短语。
+
+### 修复
+- 修复彩色数字模式只提示“目标颜色”但不说明具体颜色的问题。
+- 修正数字记忆最好等级统计，避免正确通过后因等级预增而显示偏高。
+
+### 风险变更
+- 数字记忆提交后的节奏从自动进入下一轮改为弹窗确认，交互更稳但需要用户多一次确认。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_number_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory_models.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_number_memory_widgets.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "number memory exposes richer modes and millisecond controls" --reporter compact`（未完成；当前测试编译被并行改动阻断：`toolbox_human_tests_typing.dart` 重复 `_buildReport`，`toolbox_human_tests_memory.dart` 缺少 `_roundTapCount` / `_roundMistakes` 字段）
+
+## [Unreleased-PLAN_120-JOYSTICK-PORTRAIT-LEFT-CONTROLS] - 2026-05-04
+
+### 原因
+- 用户通过示意图和截图指出摇杆手眼协调全屏竖屏仍是上下堆叠，期望改为左侧独立控制栏、右侧主舞台：摇杆在左上，射击在左下，舞台不被状态和按钮遮挡。
+
+### 新增
+- 新增竖屏全屏 smoke test，覆盖左侧控制栏、右侧舞台、摇杆位于射击上方，以及控制区与舞台不交叠。
+
+### 修改
+- 摇杆手眼协调竖屏全屏改为左控右舞台布局，右侧舞台独占剩余空间。
+- 左侧控制栏收纳摇杆、关闭、状态、开始/重置与射击按钮，避免任何控制面板进入舞台区域。
+- 竖屏状态面板与开始/重置按钮改为窄栏纵向紧凑版，适配左侧控制列。
+
+### 风险变更
+- 竖屏全屏左侧控制栏会占用固定窄列宽度，舞台宽度相应减少，但目标、准星和提示不再被控制元素遮挡。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen portrait uses left controls and right stage|joystick fullscreen keeps controls off the center stage|joystick pad drag does not scroll the outer page" --reporter compact`（通过）
+
+## [Unreleased-PLAN_119-JOYSTICK-HAND-EYE-FULLSCREEN-REDO] - 2026-05-04
+
+### 原因
+- 用户反馈「工具箱 - 人类测试中心 - 摇杆手眼协调」全屏模式存在按钮/提示遮挡目标、全屏摇杆和射击按钮位置不符合横屏双手操作，以及普通页摇杆上下拖动容易触发页面滚动的问题。
+
+### 新增
+- 新增摇杆普通页手势冲突回归测试，验证在摇杆区域上下拖动不会滚动外层页面。
+- 更新摇杆全屏 smoke test，覆盖控制栏与中央舞台不交叠、左侧射击与右侧摇杆的新全屏布局。
+
+### 修改
+- 摇杆全屏重排为左侧射击、中间目标舞台、右侧摇杆的横屏结构，顶部统计与开始/重置控制独立放在中间控制带。
+- 全屏舞台移除内部状态提示文字，避免文字面板或操作按钮遮挡目标与准星。
+- 竖屏全屏同样改为舞台、会话控制、底部两端操作区的结构，减少叠加层遮挡。
+- 普通页和全屏摇杆控件改用指针级拖动识别，摇杆区域会主动抢占拖动手势，降低与页面纵向滚动冲突。
+
+### 风险变更
+- 摇杆与射击在全屏中的左右位置发生变化：射击在左侧，摇杆在右侧，符合用户指定的“射击按钮在原摇杆位置、摇杆在关闭按钮位置”的双手横屏操作期望。
+- 手势抢占仅作用于摇杆控件自身区域，控件外页面滚动行为不变。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen keeps controls off the center stage|joystick pad drag does not scroll the outer page|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls" --reporter compact`（通过）
+
+## [Unreleased-PLAN_118-AIM-REVEAL-GROWTH] - 2026-05-04
+
+### 原因
+- 用户要求将「瞄准测试」中的压力缩圈改为降级放大：目标从极小、默认肉眼不可见的点开始，在 100-150ms 内快速放大到勉强可见，再持续放大，并允许配置速率曲线和目标曲线。
+
+### 新增
+- 降级放大模式新增初始点径、显形时间、可见点径、放大速率、速率曲线和目标曲线设置。
+- 降级放大目标改为单纯点状目标，显示直径与命中半径同步变化。
+
+### 修改
+- 原「缩圈压力 / Shrinking」模式替换为「降级放大 / Reveal grow」，目标尺寸从递减缩圈改为分段放大。
+- 更新瞄准测试入口说明、页面说明、模块说明和 smoke test 断言。
+
+### 风险变更
+- 默认仍保留经典点靶为初始模式；降级放大只影响当前页面即时训练，不写入 AppState、数据库或学习记录。
+- 降级放大初始点默认 0.2dp，可能在部分屏幕上完全不可见；用户可通过设置调大初始点径、显形时间或可见点径。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "aim test exposes multiple target modes and feedback" --reporter compact`（通过）
+
+## [Unreleased-PLAN_116-VISUAL-MEMORY-MULTI-MODE] - 2026-05-04
+
+### 原因
+- 用户要求专注完善「工具箱 - 人类测试中心 - 视觉记忆」模块：当前仅有固定 4x4 基础玩法，需要基于难度和进度扩展，并增加颜色、指定颜色与干扰等趣味设置。
+
+### 新增
+- 视觉记忆新增轻量、标准、进阶和自定义四档阶梯难度，默认随等级从 4x4 扩展到 6x6，并提高目标格数量。
+- 新增位置记忆、彩色目标和指定颜色三种模式；彩色目标每轮随机指定目标颜色，只点击对应颜色方块才算正确，其他颜色方块计为误点。
+- 新增柔和、鲜明和高对比三套颜色主题，并支持设置参与颜色数量。
+- 新增可选干扰格和干扰强度设置，观察阶段额外闪现灰色非目标格。
+- 新增视觉记忆 smoke test，覆盖设置展开、彩色目标规则提示和开始轮次。
+
+### 修改
+- 将视觉记忆从 `toolbox_human_tests_memory.dart` 拆分为 `toolbox_human_tests_visual_memory.dart` 与 `toolbox_human_tests_visual_memory_widgets.dart`，避免继续扩大记忆集合文件。
+- 更新人类测试入口和视觉记忆页说明，突出动态网格、颜色目标和干扰玩法。
+- 补齐人类测试主库中已有拆分文件的 part 声明，确保同一 library 在 Flutter 测试中可完整编译。
+
+### 风险变更
+- 默认仍为位置记忆和标准难度；颜色模式、指定颜色与干扰格均需用户主动开启或切换，不写入 AppState、数据库或学习记录。
+- 彩色目标与指定颜色都使用目标色判定；彩色目标保留较轻异色干扰，指定颜色保留更强干扰密度。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_visual_memory_widgets.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
+- `flutter test test/toolbox_visual_memory_smoke_test.dart --reporter compact`（通过）
+
+## [Unreleased-PLAN_113-HAND-EYE-FULLSCREEN-INTERACTION] - 2026-05-04
+
+### 原因
+- 手眼协调测试与摇杆手眼协调全屏 route 复用普通页状态时，普通页被覆盖后 ticker 停摆，导致全屏内目标/准星运动、设置同步和摇杆交互异常。
+
+### 新增
+- 手眼协调全屏新增设置按钮与设置面板，可在未运行或完成后直接调整目标设置与干扰设置。
+- smoke test 补充手眼全屏设置面板断言，以及摇杆全屏拖动摇杆后准星实际移动的断言。
+
+### 修改
+- 手眼协调全屏改用全屏 route 自身的轻量帧驱动刷新目标位置，普通页设置在全屏内继续生效。
+- 摇杆手眼协调全屏进入时接管准星/目标运动驱动，退出后按运行状态恢复普通页驱动，避免全屏内摇杆无法移动。
+- 摇杆全屏竖屏也改为左侧摇杆、右侧射击的两侧布局，避免射击与摇杆上下堆叠。
+- 高阶干扰目标改为更贴近真目标的位置、颜色和协同运动轨迹，提升混淆辅助强度；默认仍关闭。
+- 修复人类测试中心拆分 part 的空悬引用、数字记忆颜色上限读取和视觉记忆目标颜色 token nullable 推断问题，避免同模块编译被阻断。
+
+### 风险变更
+- 全屏新增独立帧驱动只在对应全屏 route 存活期间运行；摇杆全屏会暂停普通页运动驱动，避免移动速度叠加。
+- 干扰目标增强仅在用户开启高阶干扰后生效，不改变默认测试难度。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart`（通过，No issues found）
+- `flutter test test/ui_smoke_test.dart --name "hand-eye coordination exposes target settings|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls|joystick fullscreen uses opposite-side landscape controls" --reporter compact`（通过）
+
+## [Unreleased-PLAN_117-AIM-MULTI-MODE] - 2026-05-04
+
+### 原因
+- 用户要求专注完善「工具箱 - 人类测试中心 - 瞄准测试」，当前模块只有基础点靶，需要增加更多模式和趣味性。
+
+### 新增
+- 瞄准测试新增四种模式：经典点靶、降级放大、移动靶和真假干扰。
+- 新增目标总数、目标大小、显形放大参数、移动速度和假目标数量设置。
+- 新增命中、误点、假目标、超时、准确率、平均命中、最佳连击和评级反馈。
+- 新增瞄准测试 smoke test，覆盖模式入口、设置展开、目标生成和误点反馈。
+
+### 修改
+- 将瞄准测试从 `toolbox_human_tests_action.dart` 拆分为 `toolbox_human_tests_aim.dart` 与 `toolbox_human_tests_aim_widgets.dart`。
+- 人类测试入口与 toolbox 模块说明同步更新瞄准测试能力描述。
+
+### 风险变更
+- 默认仍为经典点靶模式；新增模式仅影响当前页面即时训练，不写入 AppState、数据库或学习记录。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "aim test exposes multiple target modes and feedback" --reporter compact`（通过）
+
+## [Unreleased-PLAN_115-NUMBER-MEMORY-MULTI-MODE] - 2026-05-04
+
+### 原因
+- 用户要求专注完善「工具箱 - 人类测试中心 - 数字记忆」，增加更精确的毫秒设置、色彩、多数字单目标、计算式和随机化等能力，并避免影响其它并行修改中的模块。
+
+### 新增
+- 数字记忆新增四类训练模式：数字串、彩色数字、多数字目标和计算式。
+- 新增精确毫秒输入，显示停留支持 50-60000ms 手动应用；滑动条保留 100-5000ms 快速调节。
+- 新增随机停留时间、随机位数、允许首位 0、避免相邻重复等随机化与题面生成选项。
+- 彩色数字支持颜色数量设置，多数字目标支持同时显示组数设置，计算式支持项数和乘法开关。
+- 新增数字记忆 smoke test，覆盖多模式入口、精确毫秒输入和细分设置项。
+
+### 修改
+- 将数字记忆从 `toolbox_human_tests_memory.dart` 拆分为专用 part 组：状态机、模型、视图扩展和小组件分别收口。
+- 人类测试入口与 toolbox 模块说明同步更新数字记忆能力描述。
+
+### 风险变更
+- 默认模式仍为经典数字串复现；新增模式仅影响当前数字记忆页面即时训练，不写入 AppState、数据库或学习记录。
+- 数字记忆隐藏题面计时器通过 round token 和重置/设置变更取消逻辑收口，降低旧回调串场风险。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory_models.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_number_memory_widgets.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "number memory exposes richer modes and millisecond controls" --reporter compact`（通过）
+
+## [Unreleased-PLAN_114-REACTION-MULTI-MODE] - 2026-05-04
+
+### 原因
+- 用户要求专注完善「工具箱 - 人类测试中心 - 反应测试」，增加更多模式和趣味性，并避免影响其它并行修改中的模块。
+
+### 新增
+- 反应测试保留经典按住等待信号后松手，并新增方向滑动与颜色匹配两种模式。
+- 新增轮次数与信号节奏设置，支持 5/8/12 轮以及标准、冲刺、迷惑三档随机等待区间。
+- 新增平均、最快、准确率、连击、超越区间和本组轨迹反馈。
+- 新增反应测试 smoke test，覆盖三模式入口、方向 D-pad、颜色按钮和设置项。
+
+### 修改
+- 将反应测试从 `toolbox_human_tests_action.dart` 拆分到 `toolbox_human_tests_reaction.dart`，使 action 文件继续只承载瞄准测试和手速测试。
+- 人类测试入口与 toolbox 模块说明同步更新反应测试能力描述。
+- 删除与经典反应重复的点击信号和 Go/No-Go 模式，避免入口冗余。
+- 方向选择从横向按钮优化为上/左/中/右/下 D-pad，并支持中心按住后向四向滑动。
+
+### 风险变更
+- 本轮只修改反应测试页面状态机、入口说明、模块文档与定向测试；不写入 AppState、数据库或其它人类测试子模块。
+- 反应测试随机计时器通过 token 和统一取消逻辑收口，降低切换模式、重置或离开页面后的旧回调串场风险。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "reaction test exposes focused reaction modes" --reporter compact`（通过）
+
+## [Unreleased-PLAN_112-HAND-EYE-FULLSCREEN-RELEASE] - 2026-05-04
+
+### 原因
+- 「手眼协调测试」与「摇杆手眼协调」全屏模式此前因设备兼容和布局问题被临时隐藏，需要修复到可开启发布的程度。
+
+### 新增
+- 手眼协调全屏新增顶部轻量统计面板，展示轮次、命中、点空和平均反应，并补充独立开始/重置控制 key 供 smoke test 覆盖。
+- 新增全屏 smoke test，覆盖手眼全屏入口可进入、控制按钮触控尺寸，以及摇杆横屏全屏左右两端控制布局。
+
+### 修改
+- 恢复手眼协调测试与摇杆手眼协调普通页面中的全屏入口。
+- 手眼协调全屏隐藏舞台内重复开始按钮，改为底部稳定控制区；目标绘制和命中检测避开顶部统计与底部控制安全区。
+- 摇杆手眼协调全屏重排为横屏左侧摇杆、中间舞台、右侧射击按钮，开始/结束/重置独立位于底部中央；竖屏保留底部两端控制布局。
+- 摇杆全屏舞台不再叠加内部开始按钮，避免和独立控制区重复。
+- 补充 `PLAN_112_手眼协调全屏发布级修复.md` 并更新 toolbox 模块说明。
+
+### 风险变更
+- 全屏 route 仍复用当前页面状态机，不新增持久化数据；横屏方向锁定继续仅在 Android/iOS 生效，桌面/Web 只使用当前 route 布局。
+- 手眼全屏安全目标区域会略微缩小可刷目标范围，但避免目标被状态栏或操作区遮挡。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye fullscreen entry opens release-ready controls" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick fullscreen uses opposite-side landscape controls" --reporter compact`（通过）
+
 ## [Unreleased-PLAN_111-README-DETAILED-UPDATE] - 2026-05-02
 
 ### 原因
@@ -16,6 +585,357 @@
 ### 验证
 - 已检查 README 内容与 `pubspec.yaml`、`scripts/`、模块注册表和现有目录结构的一致性。
 - 未运行 Flutter 测试；本轮无 Dart 代码改动。
+
+## [Unreleased-PLAN_110-HAND-EYE-FULLSCREEN-ENTRY-HIDDEN] - 2026-04-30
+
+### 原因
+- 当前全屏训练入口仍存在设备兼容问题，但需要立即发布对外测试进度包，因此先临时隐藏入口。
+
+### 修改
+- 通过临时发布开关隐藏手眼协调测试与摇杆手眼协调的普通页面全屏按钮，并在代码中保留 TODO 注释。
+
+### 风险变更
+- 全屏 route 与实现仍保留，仅 UI 不再展示入口；修复完成后可恢复开关重新开放。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+
+## [Unreleased-PLAN_109-HAND-EYE-FULLSCREEN-INTERFERENCE] - 2026-04-30
+
+### 原因
+- 用户反馈手眼协调测试与摇杆手眼协调进入全屏后点击开始不刷新全屏舞台、退出后外部页面才启动；同时需要横屏沉浸全屏、扩大设置范围、自定义输入、完整完成报告和默认关闭的多目标假目标干扰。
+
+### 新增
+- 手眼协调测试新增自定义数值输入：轮数、显示时长、移动幅度、速度、点击次数和目标大小均可在滑动条外直接输入。
+- 手眼协调测试新增默认关闭的高阶多目标真假干扰，可设置假目标出现概率与最大数量，假目标使用错误色区分并单独统计。
+- 手眼协调测试完成后弹出完整结果报告，包含成功/漏掉/点空/假目标、平均/最快反应、平均完成时长和逐轮明细。
+- 摇杆手眼协调新增目标大小设置、自定义输入、默认关闭的目标移动设置和默认关闭的多目标假目标干扰设置。
+- 摇杆手眼协调完成后弹出完整报告，包含模式、进度、命中、射空、准确率、反应明细、假目标射击、目标大小和目标移动状态。
+
+### 修改
+- 修复两个手眼协调子模块全屏 route 复用外层状态时不刷新的问题；全屏内点击开始会立即更新当前全屏舞台。
+- 两个全屏入口改为移动端横屏沉浸模式，退出后恢复系统 UI 和方向；全屏布局不再展示普通页面统计信息。
+- 摇杆允许拖出原始摇杆范围，并将超出幅度用于控制准星速率，使手感更接近手机游戏虚拟摇杆。
+- 手眼与摇杆相关设置组件、报告弹窗和摇杆全屏布局继续拆分到独立 part 文件，避免单文件继续膨胀。
+- 完成报告弹窗改为专用有限尺寸 `Dialog` 框架，避免 `AlertDialog` 内容在窄屏/鼠标命中测试阶段出现无尺寸 RenderBox。
+- 摇杆全屏控制区改为按可用宽度计算摇杆与射击按钮尺寸，避免 320dp 级窄屏下固定宽度 Row 溢出。
+
+### 风险变更
+- 高阶假目标干扰和摇杆目标移动均默认关闭，避免改变默认成绩含义；开启后难度与报告指标会明显变化。
+- 横屏方向锁定仅在 Android/iOS 生效，桌面和 Web 不强行锁定方向。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye completion report fits narrow viewport" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick fullscreen controls fit narrow viewport" --reporter compact`（通过）
+
+## [Unreleased-PLAN_108-HAND-EYE-FULLSCREEN-TUNING] - 2026-04-30
+
+### 原因
+- 用户反馈手眼协调测试的 100% 运动幅度和最高速度仍偏弱，目标点在手机小屏幕中过大，显示时长缺少“点满才结束”模式；摇杆手眼协调需要更真实的摇杆加速、降低误触的控制布局，以及横屏全屏训练体验。
+
+### 新增
+- 手眼协调测试新增“点满才消失”显示模式，可在完成需要点击次数后再进入下一轮。
+- 手眼协调测试新增目标点大小设置，命中半径随视觉目标同步变化。
+- 手眼协调测试新增全屏训练入口，全屏仅展示舞台、轻量指标和开始/重置/退出控制。
+- 摇杆手眼协调新增摇杆位置加速设置，用于调整轻推与重推的响应曲线。
+- 摇杆手眼协调新增全屏训练入口；横屏时采用左侧摇杆、中间舞台、右侧射击布局。
+
+### 修改
+- 重新校准手眼目标运动模型，高幅度/高速度时目标跨越范围更大、动画周期更短，更适合快速移动手眼协调测试。
+- 手眼目标默认尺寸从偏大的 58dp 调整为 42dp，并支持 22-68dp 范围调节。
+- 摇杆测试普通布局改为射击按钮独立放大，开始/结束/重置放在次级控制区，避免和射击并列误触。
+- 手眼与摇杆舞台抽取为共享展示组件，保持普通页和全屏页复用同一状态机。
+
+### 风险变更
+- 高强度幅度/速度会显著提高难度；已保留低速、低幅度、目标尺寸和点满才消失模式供用户自行调节。
+- 全屏模式复用当前页面状态，不额外写入持久化数据；退出全屏不会保存或重建成绩。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`（通过，No issues found）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
+
+## [Unreleased-PLAN_107-HAND-EYE-COORDINATION] - 2026-04-30
+
+### 原因
+- 用户要求完善「工具箱 - 人类测试中心 - 手眼协调测试」：现有模块过于简单，需要改为随机出现、移动、消失的目标，并新增类似手机游戏摇杆瞄准射击的独立子模块。
+
+### 新增
+- 新增摇杆手眼协调测试入口，使用虚拟摇杆移动准星并点击射击。
+- 摇杆测试支持单位时间测试和目标总数测试两种方案。
+- 摇杆测试新增准星响应位移速率设置，以及命中后立即刷新/随机延迟刷新设置。
+- 新增手眼协调 smoke test，覆盖随机目标设置、摇杆模式、射击按钮和模式切换。
+
+### 修改
+- 手眼协调测试由固定往返目标改为随机延迟出现、随机位置生成、按设置时长快速移动并消失的目标。
+- 手眼协调测试新增可折叠设置：轮数、显示移动时长、随机运动幅度、速度、需要点击次数。
+- 手眼协调统计扩展为成功、漏掉、点空、平均反应延迟和逐轮明细。
+- 人类测试中心入口更新为 18 个本地趣味测试，并补充摇杆手眼协调卡片。
+- 将时间感知和手眼协调相关实现拆分为独立 part 文件，收口 `toolbox_human_tests_action.dart` 文件体量。
+
+### 风险变更
+- 手眼协调与摇杆测试均只在当前页面即时展示结果，不写入 AppState、主数据库或学习记录。
+- 新增动画与计时器均通过 token、Timer 取消和 AnimationController 停止收口，降低重置/退出后的串场风险。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_time_perception.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_time_perception.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`（通过，No issues found）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；`test/ui_smoke_test.dart` 仍有既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
+
+## [Unreleased-PLAN_106-TIME-PERCEPTION-RANDOM-TARGETS] - 2026-04-30
+
+### 原因
+- 用户反馈「工具箱 - 人类测试中心 - 时间感知测试」存在点击状态与颜色表达反向、按钮编号造成歧义、目标时间固定，以及缺少最大时间和最小单位设置的问题。
+
+### 新增
+- 时间感知测试新增最大目标时间设置，可在当前随机单位约束下控制目标时刻范围。
+- 时间感知测试新增最小随机单位设置，支持分钟、秒、毫秒和微秒四档。
+- 新增定向 smoke test，覆盖时间感知测试设置、随机目标按钮、无编号按钮和点击后显示实际时间/误差。
+
+### 修改
+- 时间感知测试默认改为单目标节点；连续节点变为独立开关，开启后才显示 2-6 个连续节点数量设置。
+- 时间感知目标由固定等差时间改为每轮开始时在范围内随机生成，并按时间从早到晚排列。
+- 时间按钮不再显示 `#1/#2` 编号，改为通过目标时间和当前高亮状态表达顺序。
+- 点击后同一按钮内展示目标时间、实际点击时间和误差，已点击、当前待点、候选目标使用不同图标、边框和色块区分。
+- 扩展页面说明，明确“按钮不显示编号、点击后在按钮内显示结果、单位用于随机粒度”的操作语义。
+
+### 风险变更
+- 微秒粒度只影响目标生成粒度，移动端实际点击仍受设备和系统事件精度影响；结果以实际点击时间和误差展示，避免把微秒档误解为可稳定达到的人工精度。
+- 本轮仅修改时间感知测试局部状态和展示，不接入持久化、AppState 或其它人类测试子模块。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_action.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart test/ui_smoke_test.dart`（通过；`test/ui_smoke_test.dart` 仍有既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "time perception randomizes targets and shows tap result" --reporter compact`（通过）
+
+## [Unreleased-PLAN_105-DYNAMIC-VISION-RESET-CONFIRM] - 2026-04-30
+
+### 原因
+- 用户反馈小球数量模式答对提示会暴露下一轮难度随机策略；动态视力设置弹窗在非当前轮次进行中也会出现，且确认后自动开始导致每改一项都被迫重开；字符识别模式缺少明确的重置开始按钮。
+
+### 新增
+- 字符识别模式新增常驻「重置开始」按钮，便于在未完成或完成后回到初始等待开始状态。
+
+### 修改
+- 动态视力设置确认仅在当前轮次观察或答题阶段出现；历史轮次、反馈结果或等待下一轮状态下修改设置会直接应用并重置，不再弹窗。
+- 设置确认与进行中切换模式确认后只应用设置并重置，不再自动开始；开始动作始终由用户点击触发。
+- 小球数量模式答对反馈改为简短确认，移除“下一轮在等级范围内随机抽取数量和速度”的提示。
+
+### 风险变更
+- 取消自动开始后，用户需要多点一次开始；该行为符合“开始始终由用户点击”的新边界，并避免设置调整时连续弹窗/自动重开。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart`（通过，No issues found）
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision supports custom symbols and restart confirm" --reporter compact`（通过）
+
+## [Unreleased-PLAN_104-DYNAMIC-VISION-RANDOMIZED-SETTINGS] - 2026-04-30
+
+### 原因
+- 用户反馈动态视力字符识别需要多字符/自定义组合；小球数量模式默认多色会降低辨识难度，观察时间需要可输入；数量与速度线性增长会让答案过于明显；测试进行中设置不可改需要优化为确认后自动重置并开始。
+
+### 新增
+- 字符识别新增「字符组合长度」设置，并支持自定义组合输入，按逗号或中文逗号分割。
+- 小球数量新增同色/多色设置，默认同色。
+- 小球数量新增观察时长秒数输入框，滑杆范围扩展到 0.8-12 秒。
+- 进行中修改动态视力设置时新增确认弹窗；确认后会取消旧轮次、应用设置、重置并自动开始新一轮。
+
+### 修改
+- 小球数量与速度改为基于等级范围随机抽样，不再直接线性公开下一轮答案。
+- 小球数量模式指标改为显示数量范围和速度范围，避免直接暴露本轮小球数量。
+- 动态视力实现继续拆分为逻辑、绘制/控件、UI 构建三个 part 文件，保持单文件低于 1000 行。
+
+### 风险变更
+- 随机化难度可能造成同等级体验波动；已限定在等级对应范围内随机，避免无界跳变。
+- 自定义字符组合少于 2 个有效项时会回退到内置组合生成，避免选项不足。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart`（通过，No issues found）
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision supports custom symbols and restart confirm" --reporter compact`（通过）
+
+## [Unreleased-PLAN_103-DYNAMIC-VISION-BALL-COUNT-SETTINGS] - 2026-04-30
+
+### 原因
+- 用户要求优化「工具箱 - 人类测试 - 动态视力测试」子模块：新增参考网页规则的小球数量测试模式，并为当前测试和新模式补齐可折叠设置。
+
+### 新增
+- 动态视力测试新增「小球数量」模式：舞台内随机生成移动碰撞小球，观察结束后选择数量；答对后提升等级，小球数量与速度随增长曲线递增。
+- 新增动态视力模式切换入口，可在「字符识别」和「小球数量」之间切换。
+- 新增动态视力 smoke test，覆盖页面渲染、小球数量模式与设置面板入口。
+
+### 修改
+- 现有字符识别测试新增可折叠设置：测试轮次数、基础移动速度、上下摆动幅度与增长曲线。
+- 小球数量模式新增可折叠设置：起始数量、最大数量、基础移动速度、观察时长与增长曲线。
+- 将动态视力测试拆分到独立 part 文件，并把小球 Painter 与设置小组件拆入辅助 part，避免视觉测试文件继续膨胀。
+- 人类测试入口中的动态视力描述更新为双模式语义。
+
+### 风险变更
+- 小球数量模式引入持续动画；已限制最大球数并使用单个 `CustomPainter` 绘制，避免生成大量 Widget。
+- 本轮不接入成绩持久化，不修改主路由、其他人类测试子模块或 AppState 数据模型。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart test/ui_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart test/ui_smoke_test.dart`（目标动态视力文件通过；`test/ui_smoke_test.dart` 仍有既有 const/final info）
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过）
+
+## [Unreleased-PLAN_102-ROULETTE-LOW-METAL-SFX] - 2026-04-29
+
+### 原因
+- 用户反馈俄罗斯轮盘赌扳机和弹仓音效过于木制空腔化、过于清脆，希望更接近低沉金属摩擦与咔嚓声。
+
+### 修改
+- 重新生成 `assets/toolbox/games/roulette/revolver_click.wav`：从短促清脆点击改为 240ms 低频金属双段咔嚓，加入短摩擦尾音。
+- 重新生成 `assets/toolbox/games/roulette/cylinder_spin.wav`：改为 980ms 低沉金属拖擦、棘轮分段和落位声。
+- 调低轮盘赌中准备、击发、空膛与弹仓旋转播放速率，避免播放参数把金属音色抬得过亮。
+
+### 风险变更
+- 新音效更低沉，手机外放上低频体感会弱于耳机；已保留中低频金属泛音以增强可识别度。
+- 本轮不修改玩法逻辑、命中判定、视觉结构、路由或持久化。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_mini_games_roulette.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
+- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，2 tests）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
+- 音频检查：`revolver_click.wav` 240ms / 44.1kHz / peak 0.455；`cylinder_spin.wav` 980ms / 44.1kHz / peak 0.315。
+
+## [Unreleased-PLAN_101-ROULETTE-REVOLVER-VISUAL-REFINE] - 2026-04-29
+
+### 原因
+- 用户要求俄罗斯轮盘赌舞台中的左轮手枪更接近真实左轮造型，同时背景不要过黑。
+
+### 修改
+- 调亮俄罗斯轮盘赌主舞台背景，从近黑氛围改为暖灰、金属台面和柔和烟雾层，提升首屏可读性。
+- 重绘左轮细节：补充枪管上肋、准星、退壳杆、枪口层次、侧板螺丝、弹巢凹槽、击锤、握把木纹和防滑纹。
+- 保持弹仓状态、命中判定、音效、触觉和路由逻辑不变，仅调整展示层 Painter 与舞台配色。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_mini_games_roulette_view.dart lib/src/ui/pages/toolbox_mini_games_roulette_painters.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
+- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，2 tests）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
+
+## [Unreleased-PLAN_100-ROULETTE-TEXT-SFX-THREAD-FIX] - 2026-04-29
+
+### 原因
+- 用户反馈「工具箱 - 游戏中心 - 俄罗斯轮盘赌」仍存在中文乱码、拟真咔哒/咔咔声音异常、命中全屏血色闪烁与震动效果不足，以及 Android `audioplayers` 事件通道可能从非平台线程发送消息的风险。
+
+### 修改
+- 俄罗斯轮盘赌命中反馈增强为页面级震动 + root overlay 血色闪烁，保留短时衰减，避免持续高频闪。
+- 轮盘赌准备/重置/关闭音效时会停止残留效果音，降低爆炸声、旋转声或咔哒声串场概率。
+- 轮盘赌页面说明文案更新为拟真咔哒/咔咔机械声、血色闪烁、震动和爆炸音效语义。
+- 将轮盘赌主状态、展示构建和 Painter 绘制拆分为 3 个 part 文件，收口单文件超过 1000 行的问题。
+- 本地 `audioplayers_android` 覆盖包的 `EventHandler` 明确保证 `EventSink` 回调在 Android 主线程执行。
+
+### 修复
+- 修复轮盘赌控制区、指标区和音效错误提示中的中文 `??` / `????` 乱码。
+- 新增中文 smoke test，覆盖「旋转弹仓」「扣动扳机」「舞台控制」等核心中文文案并拦截 `??` 回归。
+
+### 风险变更
+- 本轮不修改弹仓随机、命中判断、子弹数规则、路由和持久化逻辑。
+- 停止残留音效只发生在重置、新一轮旋转和关闭音效等明确边界动作。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_mini_games.dart lib/src/ui/pages/toolbox_mini_games_roulette.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
+- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，2 tests）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
+
+## [Unreleased-PLAN_099-ROULETTE-CINEMATIC-REDESIGN] - 2026-04-29
+
+### Why
+- The user requested a full redesign of Toolbox > Game Center > Russian Roulette with realistic animation and stronger staged feedback: prep clack, firing-pin snap, hit explosion, full-screen flash, and vibration.
+
+### Added
+- Added new explosion SFX asset: `assets/toolbox/games/roulette/explosion_blast.wav`.
+- Added root-overlay full-screen flash effect for hit moments.
+- Added roulette SFX warm-up chain for spin, click, shot, and explosion with best-effort fallback.
+
+### Changed
+- Rewrote `toolbox_mini_games_roulette.dart` end-to-end with a new state flow, new stage composition, new drawing layer, and new control console.
+- Re-sequenced firing flow to: prep clack -> cylinder spin -> firing-pin snap -> empty step or hit blast.
+- Added recoil, shake, muzzle flash, smoke, and multi-stage haptic feedback.
+- Added sound and haptics toggles in the control panel.
+- Updated `toolbox_mini_games.dart` import to use `ToolboxAudioService` classes.
+- UX round-2: moved primary trigger actions directly under the stage and removed the extra gap between stage visuals and action buttons on mobile.
+- UX round-2: converted load/toggle options into a collapsible settings section so direct play actions stay on the same screen as the revolver animation.
+- Audio round-2: upgraded click handling to a layered mechanical double-clack with timing and pitch/volume jitter for a more realistic metal "clack-clack".
+
+### Risk
+- Stronger hit feedback may be overstimulating for some users; this is mitigated by short single-pulse flash and user toggles.
+- Audio playback remains best-effort and will not block gameplay when loading fails.
+
+### Validation
+- `dart format lib/src/ui/pages/toolbox_mini_games.dart lib/src/ui/pages/toolbox_mini_games_roulette.dart` (passed)
+- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart` (passed, No issues found)
+- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact` (passed, 1 test)
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact` (passed, 1 test)
+
+## [Unreleased-PLAN_098-HUMAN-TESTS-CHIMP-LUCK-SETTINGS-FOLD] - 2026-04-29
+
+### 原因
+- 用户追加人类测试细化需求：黑猩猩颜色顺序模式改为逐步展示并按目标颜色点击；全部子模块设置项要支持折叠展开；运气测试需要真实 5 卡样式、翻牌动画与翻后自动洗牌。
+
+### 新增
+- 新增 `_HumanSettingsSection` 复用组件，支持设置区统一折叠/展开。
+- 运气测试新增 5 张卡牌翻转动画流程：点击翻牌、卡面展示结果、短暂停留后自动洗牌复位。
+
+### 修改
+- 黑猩猩颜色顺序模式改为“依次显示颜色+位置（x1/x2/…）”，并新增目标颜色机制，仅按该颜色在序列中的位置顺序点击。
+- 黑猩猩颜色顺序模式每轮保证目标颜色至少出现 2 次，避免退化为单点点击。
+- 黑猩猩颜色顺序模式新增“颜色数量”可调，目标颜色由本轮序列自动指定。
+- 数字记忆、黑猩猩、斯特鲁普、时间感知、运气测试的设置项统一迁移到可折叠设置面板。
+- 斯特鲁普测试颜色池扩展并支持 3-12 动态调节。
+- 运气测试文案更新为 5 卡抽取与概率配置语义。
+
+### 风险变更
+- 黑猩猩与运气测试都引入异步动画阶段，已通过 token/busy 状态锁防止串场和重复点击。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_action.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_action.dart`（通过，No issues found）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过）
+## [Unreleased-PLAN_097-HUMAN-TESTS-ROUND2] - 2026-04-29
+
+### 原因
+- 用户要求对工具箱「人类测试」模块进行二期增强，重点覆盖反应测试、数字记忆、黑猩猩测试、视觉记忆、斯特鲁普、运气测试和时间感知测试，并明确本轮跳过瞄准测试扩展。
+
+### 新增
+- 反应测试改为「按下开始等待、松手结算」交互，并新增 5 次平均成绩对应的区间超越百分比反馈。
+- 数字记忆新增难度档位（初级/中级/高级/自定义）、自定义初始位数和数字停留时长配置。
+- 黑猩猩测试在经典模式外新增「顺序数字模式」与「颜色顺序模式」，支持数字/颜色切换速度与颜色目标数量调节。
+- 运气测试升级为 5 张卡牌抽取模型，并新增不同品质卡牌概率的可视化自定义滑杆。
+- 时间感知测试新增连续多时间节点模式，支持在多个目标时刻按顺序点击对应数字并输出节点误差。
+
+### 修改
+- 视觉记忆参考网页节奏重构：每关允许误点 3 次，超限则重开当前关并扣除生命。
+- 斯特鲁普测试支持颜色数量 3-12 动态可调，并联动题面抽样池。
+- 人类测试中心（Hub）相关条目文案同步更新，明确新增玩法与设置能力。
+- `modules/toolbox/README.md` 同步更新人类测试当前能力与历史记录。
+
+### 风险变更
+- 本轮仍保持「仅本地即时结果展示」边界，不写入 AppState、主数据库或学习记录。
+- 黑猩猩顺序/颜色模式引入异步播放状态机；已通过 token 收口避免重复触发导致的串场。
+- 运气测试概率自定义允许单档权重为 0；当权重总和为 0 时会回退到默认可抽取档位，避免崩溃。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart`（通过）
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart`（通过，No issues found）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过，1 test）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
 
 ## [Unreleased-PLAN_096-HUMAN-TESTS-HUB] - 2026-04-29
 

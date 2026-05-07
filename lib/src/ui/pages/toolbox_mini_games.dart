@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../services/toolbox_audio_service.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_sudoku_card.dart';
@@ -21,6 +22,8 @@ part 'toolbox_mini_games_jigsaw.dart';
 part 'toolbox_mini_games_gomoku.dart';
 part 'toolbox_mini_games_slide.dart';
 part 'toolbox_mini_games_roulette.dart';
+part 'toolbox_mini_games_roulette_view.dart';
+part 'toolbox_mini_games_roulette_painters.dart';
 part 'toolbox_mini_games_tetris.dart';
 part 'toolbox_mini_games_sokoban.dart';
 
@@ -52,8 +55,8 @@ class RouletteGamePage extends StatelessWidget {
       title: pickUiText(i18n, zh: '俄罗斯轮盘赌', en: 'Roulette trigger'),
       subtitle: pickUiText(
         i18n,
-        zh: '设置子弹数后依次扣动扳机，空膛播放咔哒声，命中时触发闪烁、震动和警示音。',
-        en: 'Set the bullet count and pull chamber by chamber. Empty pulls click; hits flash, vibrate, and play an alert.',
+        zh: '设置子弹数后旋转弹仓，空膛播放拟真咔哒/咔咔机械声，命中时触发血色闪烁、震动和爆炸音效。',
+        en: 'Set the bullet count, spin the cylinder, and pull chamber by chamber. Empty pulls clack; hits flash red, vibrate, and blast.',
       ),
       child: const _RouletteGame(),
     );

@@ -292,7 +292,11 @@ class EventHandler(private val eventChannel: EventChannel) : EventChannel.Stream
     }
 
     private fun runOnPlatformThread(block: () -> Unit) {
-        mainHandler.post(block)
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            block()
+        } else {
+            mainHandler.post(block)
+        }
     }
 
     fun success(method: String, arguments: Map<String, Any> = HashMap()) {

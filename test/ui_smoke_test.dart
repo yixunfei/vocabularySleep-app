@@ -52,6 +52,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_notebook_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_human_tests.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music/runtime_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music_v2_page.dart';
@@ -726,6 +727,1172 @@ void main() {
       expect(find.text('Test hub'), findsOneWidget);
       expect(find.text('Reaction test'), findsWidgets);
       expect(find.text('Color vision'), findsOneWidget);
+    });
+
+    testWidgets('reaction test exposes focused reaction modes', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ReactionTestPage());
+
+      expect(find.text('Reaction test'), findsWidgets);
+      expect(find.text('Modes'), findsOneWidget);
+      expect(find.text('Release'), findsOneWidget);
+      expect(find.text('Direction'), findsOneWidget);
+      expect(find.text('Color match'), findsOneWidget);
+      expect(find.text('Tap signal'), findsNothing);
+      expect(find.text('Go/No-Go'), findsNothing);
+      expect(find.text('Accuracy'), findsOneWidget);
+      expect(find.text('Streak'), findsOneWidget);
+      expect(find.text('Set trail'), findsOneWidget);
+
+      await tester.tap(find.text('Direction'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Direction D-pad'), findsOneWidget);
+      expect(find.text('↑'), findsOneWidget);
+      expect(find.text('→'), findsOneWidget);
+      expect(find.text('↓'), findsOneWidget);
+      expect(find.text('←'), findsOneWidget);
+      expect(find.text('●'), findsOneWidget);
+      expect(find.text('Hold center'), findsOneWidget);
+
+      await tester.tap(find.text('Color match'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Color buttons'), findsOneWidget);
+      expect(find.text('Red'), findsOneWidget);
+      expect(find.text('Blue'), findsOneWidget);
+      expect(find.text('Green'), findsOneWidget);
+      expect(find.text('Yellow'), findsOneWidget);
+      expect(find.text('Purple'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Reaction settings'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reaction settings'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Round count'), findsOneWidget);
+      expect(find.text('Signal pace'), findsOneWidget);
+      expect(find.text('Sprint'), findsOneWidget);
+      expect(find.text('Variable'), findsOneWidget);
+    });
+
+    testWidgets('reaction test shows completion report after a full set', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ReactionTestPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Reaction settings'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reaction settings'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sprint'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final stageFinder = find.byKey(const ValueKey<String>('reaction_stage'));
+      for (var round = 0; round < 5; round += 1) {
+        final gesture = await tester.startGesture(
+          tester.getCenter(stageFinder),
+        );
+        await tester.pump(const Duration(milliseconds: 1500));
+        await gesture.up();
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.text('Reaction test report'), findsOneWidget);
+      final reportDialog = find.byType(Dialog).last;
+      expect(
+        find.descendant(of: reportDialog, matching: find.text('Analysis')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: reportDialog, matching: find.text('Set trail')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('aim test exposes multiple target modes and feedback', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const AimTestPage());
+
+      expect(find.text('Aim test'), findsWidgets);
+      expect(find.text('Mode'), findsWidgets);
+      expect(find.text('Classic'), findsWidgets);
+      expect(find.text('Reveal grow'), findsOneWidget);
+      expect(find.text('Moving'), findsOneWidget);
+      expect(find.text('Decoys'), findsOneWidget);
+      expect(find.text('Accuracy'), findsOneWidget);
+      expect(find.text('Best streak'), findsOneWidget);
+      expect(find.text('Rating'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Aim settings'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Aim settings'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Target total · 20'), findsOneWidget);
+      expect(find.text('Target size · 54 dp'), findsOneWidget);
+
+      await tester.tap(find.text('Reveal grow'));
+      await tester.pumpAndSettle();
+      expect(find.text('Start size · 0.2 dp'), findsOneWidget);
+      expect(find.text('Reveal time · 120 ms'), findsOneWidget);
+      expect(find.text('Visible size · 6.0 dp'), findsOneWidget);
+      expect(find.text('Growth speed · 1.1x'), findsOneWidget);
+      expect(find.text('Moving growth'), findsOneWidget);
+      expect(find.text('Sniper duel'), findsOneWidget);
+      expect(find.text('Speed curve'), findsOneWidget);
+      expect(find.text('Target curve'), findsOneWidget);
+
+      await tester.tap(find.text('Moving'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Movement speed'), findsOneWidget);
+      expect(find.text('Add decoys'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Decoys'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Decoys'));
+      await tester.pumpAndSettle();
+      expect(find.text('Moving decoys'), findsOneWidget);
+      expect(find.textContaining('False targets'), findsOneWidget);
+
+      final startButton = find.widgetWithText(FilledButton, 'Start').first;
+      await tester.scrollUntilVisible(
+        startButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(startButton, warnIfMissed: false);
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('aim_real_target_marker')),
+        findsOneWidget,
+      );
+
+      final stageRect = tester.getRect(
+        find.byKey(const ValueKey<String>('aim_stage_area')),
+      );
+      await tester.tapAt(stageRect.topLeft + const Offset(12, 12));
+      await tester.pump();
+      expect(find.textContaining('Blank tap'), findsOneWidget);
+    });
+
+    testWidgets('aim test result report includes combos and sniper fields', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const AimTestPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Aim settings'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Aim settings'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Target total · 20'),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(Slider).first, const Offset(-500, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Target total · 5'), findsOneWidget);
+
+      final startButton = find.widgetWithText(FilledButton, 'Start').first;
+      await tester.scrollUntilVisible(
+        startButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(startButton, warnIfMissed: false);
+      await tester.pump();
+
+      for (var index = 0; index < 5; index++) {
+        final targetFinder = find.byKey(
+          const ValueKey<String>('aim_real_target_marker'),
+        );
+        expect(targetFinder, findsOneWidget);
+        await tester.tapAt(tester.getCenter(targetFinder));
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+      await tester.pumpAndSettle();
+
+      expect(find.text('Aim test report'), findsOneWidget);
+      expect(find.text('Mode combo'), findsOneWidget);
+      expect(find.text('Sniper fails'), findsWidgets);
+      expect(find.text('Training note'), findsOneWidget);
+    });
+
+    testWidgets('number memory exposes richer modes and millisecond controls', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1300));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const NumberMemoryTestPage(),
+      );
+
+      expect(find.text('Number memory'), findsWidgets);
+      expect(find.text('Digit string'), findsWidgets);
+      expect(find.text('Training settings'), findsOneWidget);
+
+      await tester.tap(find.text('Training settings'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Colored digits'), findsOneWidget);
+      expect(find.text('Multi-target'), findsOneWidget);
+      expect(find.text('Equation'), findsOneWidget);
+      expect(find.text('Exact milliseconds'), findsOneWidget);
+      expect(find.text('Randomize dwell time'), findsOneWidget);
+      expect(find.text('Randomize length'), findsOneWidget);
+      expect(find.text('Allow leading zero'), findsOneWidget);
+      expect(find.text('Avoid adjacent repeats'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('number-memory-dwell-input')),
+        '900',
+      );
+      final applyButtons = find.text('Apply');
+      await tester.ensureVisible(applyButtons.first);
+      await tester.pumpAndSettle();
+      await tester.tap(applyButtons.first, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.text('900 ms'), findsWidgets);
+
+      const coloredDigitsMode = ValueKey<String>(
+        'number-memory-mode-coloredDigits',
+      );
+      const multiTargetMode = ValueKey<String>(
+        'number-memory-mode-multiTarget',
+      );
+      const equationMode = ValueKey<String>('number-memory-mode-equation');
+
+      await tester.ensureVisible(find.byKey(coloredDigitsMode));
+      await tester.pumpAndSettle();
+      tester
+          .widget<ChoiceChip>(find.byKey(coloredDigitsMode))
+          .onSelected
+          ?.call(true);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Color count'), findsOneWidget);
+      await tester.ensureVisible(find.text('Start'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pump();
+      expect(find.textContaining('Match'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 901));
+      await tester.pump();
+      expect(find.textContaining('Only'), findsOneWidget);
+      await tester.tap(find.text('Submit'));
+      await tester.pumpAndSettle();
+      expect(find.text('Round missed'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+      expect(find.text('Stay here'), findsOneWidget);
+      await tester.tap(find.text('Stay here'));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(multiTargetMode));
+      await tester.pumpAndSettle();
+      tester
+          .widget<ChoiceChip>(find.byKey(multiTargetMode))
+          .onSelected
+          ?.call(true);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Visible groups'), findsOneWidget);
+
+      await tester.ensureVisible(find.byKey(equationMode));
+      await tester.pumpAndSettle();
+      tester
+          .widget<ChoiceChip>(find.byKey(equationMode))
+          .onSelected
+          ?.call(true);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Equation terms'), findsOneWidget);
+      expect(find.text('Include multiplication'), findsOneWidget);
+    });
+
+    testWidgets('chimp test exposes assists and completion report', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1300));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ChimpTestPage());
+
+      expect(find.text('Chimp test'), findsWidgets);
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Max board size'), findsOneWidget);
+      expect(find.text('Set target cap'), findsOneWidget);
+      expect(find.text('Show answer'), findsOneWidget);
+      expect(find.text('Next-step hint'), findsOneWidget);
+      expect(find.text('One-mistake rescue'), findsOneWidget);
+      expect(find.text('Auto report'), findsOneWidget);
+
+      await tester.tap(find.text('Show answer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Next-step hint'));
+      await tester.pumpAndSettle();
+
+      final startButton = find.widgetWithText(FilledButton, 'Start').first;
+      await tester.ensureVisible(startButton);
+      await tester.pumpAndSettle();
+      await tester.tap(startButton, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final firstCell = find.text('1').first;
+      expect(firstCell, findsOneWidget);
+      await tester.tap(firstCell, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      await tester.tap(firstCell, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chimp test report'), findsOneWidget);
+      expect(find.text('Analysis'), findsOneWidget);
+      expect(find.text('Assists'), findsOneWidget);
+      expect(find.textContaining('Show answer'), findsWidgets);
+    });
+
+    testWidgets('time perception randomizes targets and shows tap result', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const TimePerceptionTestPage(),
+      );
+
+      expect(find.text('Maximum target time'), findsOneWidget);
+      expect(find.text('Minimum unit'), findsOneWidget);
+      expect(find.text('Continuous nodes'), findsOneWidget);
+      expect(find.text('0/1'), findsOneWidget);
+      expect(find.text('Node count'), findsNothing);
+      expect(find.text('Milliseconds'), findsOneWidget);
+      expect(
+        find.text(
+          'Randomized target-time buttons will appear here after start.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Continuous nodes'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Node count'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Start'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Current target:'), findsOneWidget);
+      expect(find.text('#1'), findsNothing);
+      expect(find.textContaining('Target'), findsWidgets);
+      expect(find.text('Tap now'), findsOneWidget);
+
+      await tester.tap(find.text('Tap now'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tapped'), findsOneWidget);
+      expect(find.textContaining('Actual'), findsOneWidget);
+      expect(find.textContaining('Error'), findsOneWidget);
+    });
+
+    testWidgets('hand-eye coordination exposes target settings', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const HandEyeCoordinationTestPage(),
+      );
+
+      expect(find.text('Hand-eye coordination'), findsWidgets);
+      expect(find.text('Target settings'), findsOneWidget);
+      expect(find.text('Success'), findsOneWidget);
+      expect(find.text('Missed'), findsOneWidget);
+      expect(find.text('Blanks'), findsOneWidget);
+
+      await tester.tap(find.text('Target settings'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Visible time'), findsOneWidget);
+      expect(find.textContaining('Movement range'), findsOneWidget);
+      expect(find.textContaining('Required taps'), findsOneWidget);
+      expect(find.text('Until taps complete'), findsOneWidget);
+      expect(find.textContaining('Target size'), findsOneWidget);
+      expect(find.textContaining('Custom visible time'), findsOneWidget);
+      expect(find.textContaining('Custom target size'), findsOneWidget);
+      expect(find.text('Advanced interference'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('hand_eye_fullscreen_button')),
+        findsOneWidget,
+      );
+
+      await tester.scrollUntilVisible(
+        find.text('Advanced interference'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced interference'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Multi-target false distractors'), findsOneWidget);
+      expect(find.textContaining('Spawn chance'), findsOneWidget);
+      expect(find.textContaining('Max false targets'), findsOneWidget);
+
+      final startButton = find.text('Start').first;
+      await tester.scrollUntilVisible(
+        startButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(startButton, warnIfMissed: false);
+      await tester.pump();
+
+      expect(find.text('Waiting for target'), findsOneWidget);
+    });
+
+    testWidgets('hand-eye completion report fits narrow viewport', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 720));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const HandEyeCoordinationTestPage(),
+      );
+
+      await tester.scrollUntilVisible(
+        find.text('Target settings'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Target settings'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final customRoundsField = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.labelText == 'Custom rounds',
+      );
+      await tester.ensureVisible(customRoundsField);
+      await tester.pumpAndSettle();
+      await tester.enterText(customRoundsField, '1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Until taps complete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Until taps complete'));
+      await tester.pumpAndSettle();
+
+      final startButton = find.text('Start').first;
+      await tester.scrollUntilVisible(
+        startButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(startButton, warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 1500));
+
+      final targetMarker = find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString() == '_HandEyeTargetMarker',
+      );
+      expect(targetMarker, findsOneWidget);
+
+      await tester.tap(targetMarker);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Hand-eye report'), findsOneWidget);
+      expect(find.text('Round details'), findsOneWidget);
+      final dialogBox = tester.renderObject<RenderBox>(find.byType(Dialog));
+      expect(dialogBox.hasSize, isTrue);
+      expect(dialogBox.size.width, greaterThan(0));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('joystick coordination exposes joystick modes and controls', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const JoystickHandEyeCoordinationTestPage(),
+      );
+
+      expect(find.text('Joystick coordination'), findsWidgets);
+      expect(find.text('Joystick settings'), findsOneWidget);
+      expect(find.text('Fire'), findsOneWidget);
+      expect(find.text('Timed'), findsWidgets);
+
+      await tester.tap(find.text('Joystick settings'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Target count'), findsOneWidget);
+      expect(find.textContaining('Response speed'), findsOneWidget);
+      expect(find.textContaining('Joystick acceleration'), findsOneWidget);
+      expect(find.textContaining('Target size'), findsOneWidget);
+      expect(find.textContaining('Custom target size'), findsOneWidget);
+      expect(find.text('Immediate'), findsWidgets);
+      expect(find.text('Random delay'), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('joystick_hand_eye_fullscreen_button'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Target count'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Target total'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Target movement settings'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Target movement settings'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enable target movement'), findsOneWidget);
+      expect(find.textContaining('Target move speed'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Advanced interference'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced interference'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Multi-target false distractors'), findsOneWidget);
+      expect(find.textContaining('Max false targets'), findsOneWidget);
+    });
+
+    testWidgets('joystick pad drag does not scroll the outer page', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const JoystickHandEyeCoordinationTestPage(),
+      );
+
+      final scrollable = find.byType(Scrollable).first;
+      final startButton = find.widgetWithText(OutlinedButton, 'Start');
+      await tester.scrollUntilVisible(startButton, 300, scrollable: scrollable);
+      await tester.pumpAndSettle();
+      await tester.tap(startButton, warnIfMissed: false);
+      await tester.pump();
+
+      final padFinder = find.byKey(
+        const ValueKey<String>('joystick_hand_eye_pad'),
+      );
+      await tester.scrollUntilVisible(padFinder, -180, scrollable: scrollable);
+      await tester.pumpAndSettle();
+
+      final scrollableState = tester.state<ScrollableState>(scrollable);
+      final beforeScroll = scrollableState.position.pixels;
+      final gesture = await tester.startGesture(tester.getCenter(padFinder));
+      await tester.pump(const Duration(milliseconds: 16));
+      await gesture.moveBy(const Offset(0, -120));
+      await tester.pump(const Duration(milliseconds: 16));
+      await gesture.moveBy(const Offset(0, 220));
+      await tester.pump(const Duration(milliseconds: 16));
+      final afterScroll = scrollableState.position.pixels;
+
+      await gesture.up();
+      await tester.pump();
+
+      expect((afterScroll - beforeScroll).abs(), lessThan(1));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('hand-eye fullscreen entry opens release-ready controls', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 720));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      _mockSystemChromeForFullscreenTest();
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const HandEyeCoordinationTestPage(),
+      );
+
+      const fullscreenButtonKey = ValueKey<String>(
+        'hand_eye_fullscreen_button',
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(fullscreenButtonKey),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(fullscreenButtonKey), findsOneWidget);
+      await tester.tap(find.byKey(fullscreenButtonKey), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('hand_eye_fullscreen_view')),
+        findsOneWidget,
+      );
+      expect(find.text('Rounds'), findsWidgets);
+      expect(find.text('Hits'), findsWidgets);
+      expect(find.text('Blanks'), findsWidgets);
+      expect(find.text('Start'), findsWidgets);
+      expect(find.text('Reset'), findsWidgets);
+
+      final startRect = tester.getRect(
+        find.byKey(const ValueKey<String>('hand_eye_fullscreen_start_button')),
+      );
+      final resetRect = tester.getRect(
+        find.byKey(const ValueKey<String>('hand_eye_fullscreen_reset_button')),
+      );
+      expect(startRect.height, greaterThanOrEqualTo(40));
+      expect(resetRect.height, greaterThanOrEqualTo(40));
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('hand_eye_fullscreen_settings_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(
+          const ValueKey<String>('hand_eye_fullscreen_settings_panel'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Fullscreen settings'), findsOneWidget);
+      expect(find.textContaining('Custom target size'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('joystick fullscreen keeps controls off the center stage', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(720, 320));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      _mockSystemChromeForFullscreenTest();
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const JoystickHandEyeCoordinationTestPage(),
+      );
+
+      const fullscreenButtonKey = ValueKey<String>(
+        'joystick_hand_eye_fullscreen_button',
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(fullscreenButtonKey),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(fullscreenButtonKey), findsOneWidget);
+      await tester.tap(find.byKey(fullscreenButtonKey), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('joystick_hand_eye_fullscreen_view')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_left_controls')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+        findsNothing,
+      );
+      final rightRect = tester.getRect(
+        find.byKey(
+          const ValueKey<String>('joystick_fullscreen_right_controls'),
+        ),
+      );
+      final fireRect = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_fire_button')),
+      );
+      final stageRect = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_stage_zone')),
+      );
+      final whiteStageRect = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_white_stage')),
+      );
+
+      expect(stageRect.left, 0);
+      expect(stageRect.top, 0);
+      expect(stageRect.width, 720);
+      expect(stageRect.height, 320);
+      expect(whiteStageRect, stageRect);
+      expect(rightRect.right, greaterThan(704));
+      expect(fireRect.center.dx, greaterThan(500));
+      expect(rightRect.bottom, greaterThan(300));
+      expect(stageRect.contains(fireRect.center), isTrue);
+      expect(fireRect.overlaps(stageRect), isTrue);
+
+      final fireGesture = await tester.startGesture(
+        Offset(stageRect.right - 214, stageRect.bottom - 70),
+      );
+      await tester.pump();
+      final movedFireRect = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_fire_button')),
+      );
+      expect(
+        movedFireRect.center.dx,
+        moreOrLessEquals(stageRect.right - 214, epsilon: 18),
+      );
+      expect(
+        movedFireRect.center.dy,
+        moreOrLessEquals(stageRect.bottom - 70, epsilon: 18),
+      );
+      await fireGesture.up();
+      await tester.pump();
+
+      final leftFireAttempt = await tester.startGesture(
+        Offset(stageRect.left + 210, stageRect.bottom - 70),
+      );
+      await tester.pump();
+      final fireAfterLeftAttempt = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_fire_button')),
+      );
+      expect(fireAfterLeftAttempt.center, movedFireRect.center);
+      await leftFireAttempt.up();
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_status_panel')),
+        findsNothing,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_status_toggle')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_status_panel')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_start_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_reset_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('joystick_fullscreen_settings_button'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('joystick_fullscreen_settings_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(
+          const ValueKey<String>('joystick_fullscreen_settings_dialog'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Joystick settings'), findsWidgets);
+      expect(find.textContaining('Response speed'), findsOneWidget);
+      expect(find.text('Target movement settings'), findsOneWidget);
+
+      await tester.tap(find.text('Target movement settings'));
+      await tester.pumpAndSettle();
+      expect(find.text('Enable target movement'), findsOneWidget);
+
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      final crosshairFinder = find.byKey(
+        const ValueKey<String>('joystick_crosshair_marker'),
+      );
+      final beforeMove = tester.getRect(crosshairFinder);
+
+      final practiceGesture = await tester.startGesture(
+        Offset(stageRect.left + 210, stageRect.bottom - 82),
+      );
+      await tester.pump();
+      final practicePadRect = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+      );
+      expect(practicePadRect.center.dx, moreOrLessEquals(210, epsilon: 12));
+      expect(
+        practicePadRect.center.dy,
+        moreOrLessEquals(stageRect.bottom - 82, epsilon: 12),
+      );
+      await practiceGesture.moveBy(const Offset(-72, 0));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final afterPracticeMove = tester.getRect(crosshairFinder);
+      expect(afterPracticeMove.center.dx, lessThan(beforeMove.center.dx - 8));
+
+      await practiceGesture.up();
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+        findsNothing,
+      );
+
+      final rightJoystickAttempt = await tester.startGesture(
+        Offset(stageRect.right - 160, stageRect.bottom - 86),
+      );
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+        findsNothing,
+      );
+      await rightJoystickAttempt.up();
+      await tester.pump();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_start_button')),
+      );
+      await tester.pump();
+
+      final joystickGesture = await tester.startGesture(
+        Offset(stageRect.left + 196, stageRect.bottom - 86),
+      );
+      await tester.pump();
+      final movedPadRect = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+      );
+      expect(movedPadRect.center.dx, moreOrLessEquals(196, epsilon: 12));
+      expect(
+        movedPadRect.center.dy,
+        moreOrLessEquals(stageRect.bottom - 86, epsilon: 12),
+      );
+      await joystickGesture.up();
+      await tester.pump();
+
+      final targetRect = tester.getRect(
+        find.byKey(const ValueKey<String>('joystick_real_target_marker')),
+      );
+      expect(targetRect.left, greaterThan(stageRect.left + 16));
+      expect(targetRect.right, lessThan(stageRect.right - 16));
+
+      final gesture = await tester.startGesture(movedPadRect.center);
+      await tester.pump(const Duration(milliseconds: 16));
+      await gesture.moveBy(const Offset(-72, 0));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final afterMove = tester.getRect(crosshairFinder);
+      expect(afterMove.center.dx, lessThan(beforeMove.center.dx - 8));
+
+      await gesture.up();
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+        findsNothing,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_start_button')),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Joystick report'), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('joystick_fullscreen_report_button')),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Joystick report'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      'joystick fullscreen portrait keeps a full white stage with floating controls',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(640, 960));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        _mockSystemChromeForFullscreenTest();
+
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const JoystickHandEyeCoordinationTestPage(),
+        );
+
+        const fullscreenButtonKey = ValueKey<String>(
+          'joystick_hand_eye_fullscreen_button',
+        );
+        await tester.scrollUntilVisible(
+          find.byKey(fullscreenButtonKey),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(fullscreenButtonKey), warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(
+            const ValueKey<String>('joystick_fullscreen_left_controls'),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+          findsNothing,
+        );
+        final stageRect = tester.getRect(
+          find.byKey(const ValueKey<String>('joystick_fullscreen_stage_zone')),
+        );
+        final whiteStageRect = tester.getRect(
+          find.byKey(const ValueKey<String>('joystick_fullscreen_white_stage')),
+        );
+        final fireRect = tester.getRect(
+          find.byKey(const ValueKey<String>('joystick_fullscreen_fire_button')),
+        );
+
+        expect(stageRect.left, 0);
+        expect(stageRect.top, 0);
+        expect(stageRect.width, 640);
+        expect(stageRect.height, 960);
+        expect(whiteStageRect, stageRect);
+        expect(fireRect.right, greaterThan(620));
+        expect(fireRect.bottom, greaterThan(940));
+        expect(fireRect.overlaps(stageRect), isTrue);
+
+        final joystickGesture = await tester.startGesture(
+          Offset(stageRect.left + 150, stageRect.bottom - 180),
+        );
+        await tester.pump();
+        final movedPadRect = tester.getRect(
+          find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+        );
+        expect(movedPadRect.center.dx, moreOrLessEquals(150, epsilon: 14));
+        expect(
+          movedPadRect.center.dy,
+          moreOrLessEquals(stageRect.bottom - 180, epsilon: 14),
+        );
+        await joystickGesture.up();
+        await tester.pump();
+        expect(
+          find.byKey(const ValueKey<String>('joystick_fullscreen_pad')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('dynamic vision exposes ball count mode and settings', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const DynamicVisionTestPage(),
+      );
+
+      expect(find.text('Dynamic vision'), findsWidgets);
+      expect(find.text('Moving symbol'), findsOneWidget);
+      expect(find.text('Ball count'), findsOneWidget);
+
+      await tester.tap(find.text('Ball count'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ball count settings'), findsOneWidget);
+      expect(find.textContaining('Starting balls'), findsOneWidget);
+
+      final settingsHeader = find.text('Ball count settings');
+      await tester.ensureVisible(settingsHeader);
+      await tester.pumpAndSettle();
+      await tester.tap(settingsHeader);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Maximum balls'), findsOneWidget);
+      expect(find.text('Growth curve'), findsWidgets);
+      expect(find.text('Uniform'), findsOneWidget);
+      expect(find.text('Observe time input (seconds)'), findsOneWidget);
+    });
+
+    testWidgets('dynamic vision supports custom symbols and restart confirm', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const DynamicVisionTestPage(),
+      );
+
+      expect(find.text('Reset start'), findsOneWidget);
+
+      final symbolSettings = find.text('Symbol settings');
+      await tester.scrollUntilVisible(
+        symbolSettings,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(symbolSettings);
+      await tester.pumpAndSettle();
+      await tester.tap(symbolSettings);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Symbol group length'), findsOneWidget);
+      expect(find.text('Custom groups (comma separated)'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).first, 'AB, 82, F9, P6');
+      expect(find.text('AB, 82, F9, P6'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Apply custom groups'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Apply custom groups'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Change settings?'), findsNothing);
+
+      await tester.tap(find.text('Ball count'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pump(const Duration(milliseconds: 120));
+
+      final ballSettings = find.text('Ball count settings');
+      await tester.scrollUntilVisible(
+        ballSettings,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(ballSettings);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Varied'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Varied'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Varied'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Change settings?'), findsOneWidget);
+
+      await tester.tap(find.text('Confirm and reset'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Watching'), findsNothing);
+      expect(find.text('Start'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Start'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start'));
+      await tester.pump(const Duration(milliseconds: 2300));
+
+      final answerButton = find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is OutlinedButton &&
+                widget.child is Text &&
+                int.tryParse((widget.child! as Text).data ?? '') != null,
+          )
+          .first;
+      await tester.tap(answerButton);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Uniform'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Uniform'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Change settings?'), findsNothing);
     });
 
     testWidgets('toolbox page opens schulte grid and advances target', (
@@ -2547,6 +3714,20 @@ Future<void> _pumpAppShell(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+void _mockSystemChromeForFullscreenTest() {
+  final binding = TestDefaultBinaryMessengerBinding.instance;
+  binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (MethodCall methodCall) async => null,
+  );
+  addTearDown(() {
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      null,
+    );
+  });
 }
 
 class _FakeAppState extends ChangeNotifier

@@ -1,6 +1,6 @@
 part of 'toolbox_mini_games.dart';
 
-enum _RoulettePhase { setup, loading, ready, hit }
+enum _RoulettePhase { idle, spinning, armed, firing, safeClick, hit, exhausted }
 
 class _RouletteGame extends StatefulWidget {
   const _RouletteGame();
@@ -12,63 +12,122 @@ class _RouletteGame extends StatefulWidget {
 class _RouletteGameState extends State<_RouletteGame>
     with TickerProviderStateMixin {
   static const int _chambers = 6;
+  static const String _spinAsset =
+      'assets/toolbox/games/roulette/cylinder_spin.wav';
+  static const String _clickAsset =
+      'assets/toolbox/games/roulette/revolver_click.wav';
+  static const String _shotAsset =
+      'assets/toolbox/games/roulette/revolver_shot.wav';
+  static const String _explosionAsset =
+      'assets/toolbox/games/roulette/explosion_blast.wav';
+
   final math.Random _random = math.Random();
+
   late final AnimationController _ambientController;
-  late final AnimationController _flashController;
-  late final AnimationController _cylinderController;
-  late final AnimationController _triggerController;
-  late final AnimationController _emptyClickController;
-  late final AnimationController _shotController;
+  late final AnimationController _spinController;
+  late final AnimationController _chamberStepController;
+  late final AnimationController _fireController;
+  late final AnimationController _safeKickController;
+  late final AnimationController _recoilController;
+  late final AnimationController _hitFlashController;
+  late final AnimationController _shakeController;
+
+  final List<Timer> _timers = <Timer>[];
+  OverlayEntry? _flashEntry;
+
+  ToolboxEffectPlayer? _spinPlayer;
+  ToolboxEffectPlayer? _clickPlayer;
+  ToolboxEffectPlayer? _shotPlayer;
+  ToolboxEffectPlayer? _explosionPlayer;
+  bool _audioReady = false;
+  bool _audioFailed = false;
 
   int _bulletCount = 1;
   late List<bool> _sequence;
   int _activeChamber = 0;
-  int _pullIndex = 0;
-  int _safePulls = 0;
-  _RoulettePhase _phase = _RoulettePhase.setup;
-  OverlayEntry? _flashEntry;
+  int _pullCount = 0;
+  int _safePullCount = 0;
+  _RoulettePhase _phase = _RoulettePhase.idle;
+  double _cylinderBaseAngle = 0;
+  double _spinTurns = 7.0;
+
+  bool _soundEnabled = true;
+  bool _hapticsEnabled = true;
+  bool _settingsExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _ambientController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 6800),
+      duration: const Duration(milliseconds: 8200),
     )..repeat();
-    _flashController = AnimationController(
+    _spinController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 760),
+      duration: const Duration(milliseconds: 1280),
     );
-    _cylinderController = AnimationController(
+    _chamberStepController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 420),
+      duration: const Duration(milliseconds: 220),
     );
-    _triggerController = AnimationController(
+    _fireController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 260),
     );
-    _emptyClickController = AnimationController(
+    _safeKickController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 360),
+      duration: const Duration(milliseconds: 320),
     );
-    _shotController = AnimationController(
+    _recoilController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1180),
+      duration: const Duration(milliseconds: 780),
+    );
+    _hitFlashController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 760),
+    );
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 460),
     );
     _sequence = _buildSequence();
+    _cylinderBaseAngle = _random.nextDouble() * math.pi * 2;
+    unawaited(_prepareAudio());
   }
 
   @override
   void dispose() {
-    _flashEntry?.remove();
-    _flashEntry = null;
+    _cancelTimers();
+    _removeFlashOverlay();
     _ambientController.dispose();
-    _flashController.dispose();
-    _cylinderController.dispose();
-    _triggerController.dispose();
-    _emptyClickController.dispose();
-    _shotController.dispose();
+    _spinController.dispose();
+    _chamberStepController.dispose();
+    _fireController.dispose();
+    _safeKickController.dispose();
+    _recoilController.dispose();
+    _hitFlashController.dispose();
+    _shakeController.dispose();
+    final spin = _spinPlayer;
+    final click = _clickPlayer;
+    final shot = _shotPlayer;
+    final explosion = _explosionPlayer;
+    if (spin != null) {
+      unawaited(spin.dispose());
+    }
+    if (click != null) {
+      unawaited(click.dispose());
+    }
+    if (shot != null) {
+      unawaited(shot.dispose());
+    }
+    if (explosion != null) {
+      unawaited(explosion.dispose());
+    }
     super.dispose();
+  }
+
+  String _text(AppI18n i18n, {required String zh, required String en}) {
+    return pickUiText(i18n, zh: zh, en: en);
   }
 
   List<bool> _buildSequence() {
@@ -78,152 +137,372 @@ class _RouletteGameState extends State<_RouletteGame>
     return next;
   }
 
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
+  Future<ToolboxEffectPlayer> _createPlayer(
+    String assetPath, {
+    int maxPlayers = 4,
+  }) async {
+    final buffer = await rootBundle.load(assetPath);
+    final player = ToolboxEffectPlayer(
+      buffer.buffer.asUint8List(),
+      maxPlayers: maxPlayers,
+    );
+    await player.warmUp();
+    return player;
   }
 
-  void _playCue(SystemSoundType type) {
-    unawaited(SystemSound.play(type));
+  Future<void> _prepareAudio() async {
+    ToolboxEffectPlayer? spin;
+    ToolboxEffectPlayer? click;
+    ToolboxEffectPlayer? shot;
+    ToolboxEffectPlayer? explosion;
+    try {
+      spin = await _createPlayer(_spinAsset, maxPlayers: 2);
+      click = await _createPlayer(_clickAsset, maxPlayers: 4);
+      shot = await _createPlayer(_shotAsset, maxPlayers: 3);
+      try {
+        explosion = await _createPlayer(_explosionAsset, maxPlayers: 3);
+      } catch (_) {
+        explosion = await _createPlayer(_shotAsset, maxPlayers: 3);
+      }
+      if (!mounted) {
+        await spin.dispose();
+        await click.dispose();
+        await shot.dispose();
+        await explosion.dispose();
+        return;
+      }
+      final oldSpin = _spinPlayer;
+      final oldClick = _clickPlayer;
+      final oldShot = _shotPlayer;
+      final oldExplosion = _explosionPlayer;
+      setState(() {
+        _spinPlayer = spin;
+        _clickPlayer = click;
+        _shotPlayer = shot;
+        _explosionPlayer = explosion;
+        _audioReady = true;
+        _audioFailed = false;
+      });
+      if (oldSpin != null) {
+        unawaited(oldSpin.dispose());
+      }
+      if (oldClick != null) {
+        unawaited(oldClick.dispose());
+      }
+      if (oldShot != null) {
+        unawaited(oldShot.dispose());
+      }
+      if (oldExplosion != null) {
+        unawaited(oldExplosion.dispose());
+      }
+    } catch (_) {
+      if (spin != null) {
+        await spin.dispose();
+      }
+      if (click != null) {
+        await click.dispose();
+      }
+      if (shot != null) {
+        await shot.dispose();
+      }
+      if (explosion != null) {
+        await explosion.dispose();
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _audioReady = false;
+        _audioFailed = true;
+      });
+    }
   }
 
-  void _resetToSetup({int? bullets}) {
-    _cylinderController
-      ..stop()
-      ..value = 0;
-    _triggerController
-      ..stop()
-      ..value = 0;
-    _emptyClickController
-      ..stop()
-      ..value = 0;
-    _shotController
-      ..stop()
-      ..value = 0;
-    _flashController
-      ..stop()
-      ..value = 0;
+  Future<void> _playEffect(
+    ToolboxEffectPlayer? player, {
+    required double volume,
+    required double playbackRate,
+  }) async {
+    if (!_soundEnabled || player == null) {
+      return;
+    }
+    try {
+      await player.play(volume: volume, playbackRate: playbackRate);
+    } catch (_) {}
+  }
+
+  double _withRateJitter(double baseRate, {double amount = 0.04}) {
+    final jitter = (_random.nextDouble() * 2 - 1) * amount;
+    return (baseRate + jitter).clamp(0.88, 1.14);
+  }
+
+  double _withVolumeJitter(double baseVolume, {double amount = 0.1}) {
+    final jitter = (_random.nextDouble() * 2 - 1) * amount;
+    return (baseVolume + jitter).clamp(0.0, 1.0);
+  }
+
+  void _playMechanicalClack({
+    double baseVolume = 0.8,
+    double baseRate = 1.0,
+    int secondDelayMs = 34,
+    double secondVolumeScale = 0.66,
+    double secondRateOffset = -0.1,
+  }) {
+    unawaited(
+      _playEffect(
+        _clickPlayer,
+        volume: _withVolumeJitter(baseVolume, amount: 0.07),
+        playbackRate: _withRateJitter(baseRate, amount: 0.05),
+      ),
+    );
+    _schedule(Duration(milliseconds: secondDelayMs), () {
+      unawaited(
+        _playEffect(
+          _clickPlayer,
+          volume: _withVolumeJitter(
+            baseVolume * secondVolumeScale,
+            amount: 0.06,
+          ),
+          playbackRate: _withRateJitter(
+            baseRate + secondRateOffset,
+            amount: 0.04,
+          ),
+        ),
+      );
+    });
+  }
+
+  void _cancelTimers() {
+    for (final timer in _timers) {
+      timer.cancel();
+    }
+    _timers.clear();
+  }
+
+  void _removeFlashOverlay() {
     _flashEntry?.remove();
     _flashEntry = null;
+  }
+
+  void _stopAllEffects() {
+    for (final player in <ToolboxEffectPlayer?>[
+      _spinPlayer,
+      _clickPlayer,
+      _shotPlayer,
+      _explosionPlayer,
+    ]) {
+      if (player != null) {
+        unawaited(player.stop());
+      }
+    }
+  }
+
+  void _schedule(Duration delay, VoidCallback callback) {
+    late final Timer timer;
+    timer = Timer(delay, () {
+      _timers.remove(timer);
+      if (!mounted) {
+        return;
+      }
+      callback();
+    });
+    _timers.add(timer);
+  }
+
+  void _resetTransientControllers() {
+    _spinController
+      ..stop()
+      ..value = 0;
+    _chamberStepController
+      ..stop()
+      ..value = 0;
+    _fireController
+      ..stop()
+      ..value = 0;
+    _safeKickController
+      ..stop()
+      ..value = 0;
+    _recoilController
+      ..stop()
+      ..value = 0;
+    _hitFlashController
+      ..stop()
+      ..value = 0;
+    _shakeController
+      ..stop()
+      ..value = 0;
+    _removeFlashOverlay();
+  }
+
+  void _resetRound({int? bullets}) {
+    _cancelTimers();
+    _stopAllEffects();
+    _resetTransientControllers();
     setState(() {
       if (bullets != null) {
         _bulletCount = bullets.clamp(1, _chambers - 1);
       }
       _sequence = _buildSequence();
       _activeChamber = 0;
-      _pullIndex = 0;
-      _safePulls = 0;
-      _phase = _RoulettePhase.setup;
+      _pullCount = 0;
+      _safePullCount = 0;
+      _phase = _RoulettePhase.idle;
+      _cylinderBaseAngle = _random.nextDouble() * math.pi * 2;
+      _spinTurns = 7.0;
     });
   }
 
   Future<void> _prepareRound() async {
-    if (_phase == _RoulettePhase.loading) {
+    if (_phase == _RoulettePhase.spinning) {
       return;
     }
-    _shotController
-      ..stop()
-      ..value = 0;
-    _emptyClickController
-      ..stop()
-      ..value = 0;
+    _cancelTimers();
+    _stopAllEffects();
+    _resetTransientControllers();
     setState(() {
       _sequence = _buildSequence();
       _activeChamber = 0;
-      _pullIndex = 0;
-      _safePulls = 0;
-      _phase = _RoulettePhase.loading;
+      _pullCount = 0;
+      _safePullCount = 0;
+      _phase = _RoulettePhase.spinning;
+      _spinTurns = 6.5 + _random.nextDouble() * 4.0;
     });
-    _playCue(SystemSoundType.click);
-    unawaited(HapticFeedback.mediumImpact());
-    _cylinderController.repeat(period: const Duration(milliseconds: 460));
-    await Future<void>.delayed(const Duration(milliseconds: 1180));
-    if (!mounted || _phase != _RoulettePhase.loading) {
+    _playMechanicalClack(
+      baseVolume: 0.82,
+      baseRate: 0.88,
+      secondDelayMs: 38,
+      secondVolumeScale: 0.62,
+      secondRateOffset: -0.08,
+    );
+    unawaited(_playEffect(_spinPlayer, volume: 0.86, playbackRate: 0.94));
+    if (_hapticsEnabled) {
+      unawaited(HapticFeedback.mediumImpact());
+    }
+
+    try {
+      await _spinController.forward(from: 0);
+    } catch (_) {}
+    if (!mounted || _phase != _RoulettePhase.spinning) {
       return;
     }
-    _cylinderController
-      ..stop()
-      ..value = 0;
     setState(() {
-      _phase = _RoulettePhase.ready;
+      _cylinderBaseAngle =
+          (_cylinderBaseAngle + _spinTurns * math.pi * 2) % (math.pi * 2);
+      _phase = _RoulettePhase.armed;
     });
-    unawaited(HapticFeedback.selectionClick());
+    _playMechanicalClack(
+      baseVolume: 0.68,
+      baseRate: 0.86,
+      secondDelayMs: 26,
+      secondVolumeScale: 0.6,
+      secondRateOffset: -0.06,
+    );
+    if (_hapticsEnabled) {
+      unawaited(HapticFeedback.selectionClick());
+    }
   }
 
-  Future<void> _pullTrigger() async {
-    if (_phase != _RoulettePhase.ready || _pullIndex >= _chambers) {
+  void _triggerHitHaptics() {
+    if (!_hapticsEnabled) {
       return;
     }
-    final chamberIndex = _activeChamber;
-    final chamberHasBullet = _sequence[chamberIndex];
-
-    _playCue(SystemSoundType.click);
-    unawaited(HapticFeedback.selectionClick());
-    unawaited(_triggerController.forward(from: 0));
-
-    await Future<void>.delayed(const Duration(milliseconds: 150));
-    if (!mounted || _phase != _RoulettePhase.ready) {
-      return;
-    }
-    if (chamberHasBullet) {
-      setState(() {
-        _pullIndex += 1;
-        _phase = _RoulettePhase.hit;
-      });
-      unawaited(_shotController.forward(from: 0));
-      _playCue(SystemSoundType.alert);
-      unawaited(HapticFeedback.heavyImpact());
+    unawaited(HapticFeedback.heavyImpact());
+    _schedule(const Duration(milliseconds: 65), () {
       unawaited(HapticFeedback.vibrate());
-      _showFlashOverlay();
-      return;
-    }
-
-    setState(() {
-      _pullIndex += 1;
-      _safePulls += 1;
-      _activeChamber = (_activeChamber + 1) % _chambers;
     });
-    unawaited(HapticFeedback.lightImpact());
-    unawaited(_emptyClickController.forward(from: 0));
+    _schedule(const Duration(milliseconds: 150), () {
+      unawaited(HapticFeedback.heavyImpact());
+    });
+    _schedule(const Duration(milliseconds: 250), () {
+      unawaited(HapticFeedback.mediumImpact());
+    });
   }
 
-  void _showFlashOverlay() {
+  void _showHitFlashOverlay() {
     final overlay = Overlay.of(context, rootOverlay: true);
-    _flashEntry?.remove();
+    _removeFlashOverlay();
     final entry = OverlayEntry(
       builder: (context) {
         return IgnorePointer(
           child: AnimatedBuilder(
-            animation: _flashController,
+            animation: Listenable.merge(<Listenable>[
+              _hitFlashController,
+              _shakeController,
+            ]),
             builder: (context, _) {
-              final t = _flashController.value.clamp(0.0, 1.0);
-              final flash = 1 - Curves.easeOutCubic.transform(t);
-              final ember = 1 - Curves.easeInQuad.transform(t);
-              return Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  Opacity(
-                    opacity: (flash * 0.42).clamp(0.0, 0.42),
-                    child: const ColoredBox(color: Color(0xFFFFF0C2)),
-                  ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(0.78, -0.08),
-                        radius: 0.74 + t * 0.34,
-                        colors: <Color>[
-                          const Color(
-                            0xFFFFD166,
-                          ).withValues(alpha: ember * 0.46),
-                          const Color(
-                            0xFF7A221A,
-                          ).withValues(alpha: ember * 0.18),
-                          Colors.black.withValues(alpha: 0),
-                        ],
-                        stops: const <double>[0, 0.38, 1],
+              final t = _hitFlashController.value.clamp(0.0, 1.0);
+              if (t <= 0) {
+                return const SizedBox.shrink();
+              }
+              final pulseA = t <= 0.42
+                  ? 1 - Curves.easeOutQuart.transform(t / 0.42)
+                  : 0.0;
+              final delayed = ((t - 0.28) / 0.72).clamp(0.0, 1.0);
+              final pulseB =
+                  (1 - Curves.easeOutCubic.transform(delayed)) * 0.55;
+              final flashOpacity = (pulseA * 0.86 + pulseB).clamp(0.0, 1.0);
+              final emberOpacity = (1 - Curves.easeInQuad.transform(t)).clamp(
+                0.0,
+                1.0,
+              );
+              final bloodOpacity = (emberOpacity * 0.22 + pulseB * 0.18).clamp(
+                0.0,
+                0.34,
+              );
+              return Transform.translate(
+                offset: Offset(_screenShakeX(), _screenShakeY()),
+                child: Transform.scale(
+                  scale: 1.04,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: <Widget>[
+                      Opacity(
+                        opacity: flashOpacity * 0.42,
+                        child: const ColoredBox(color: Color(0xFFFFF7CF)),
                       ),
-                    ),
+                      Opacity(
+                        opacity: bloodOpacity,
+                        child: const ColoredBox(color: Color(0xFF7A0508)),
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: const Alignment(0.72, -0.06),
+                            radius: 0.58 + t * 0.52,
+                            colors: <Color>[
+                              const Color(
+                                0xFFFFC14D,
+                              ).withValues(alpha: emberOpacity * 0.42),
+                              const Color(
+                                0xFF9B2E22,
+                              ).withValues(alpha: emberOpacity * 0.32),
+                              Colors.transparent,
+                            ],
+                            stops: const <double>[0, 0.38, 1],
+                          ),
+                        ),
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: <Color>[
+                              const Color(
+                                0xFF2A0204,
+                              ).withValues(alpha: bloodOpacity * 0.4),
+                              Colors.transparent,
+                              const Color(
+                                0xFF2A0204,
+                              ).withValues(alpha: bloodOpacity * 0.56),
+                            ],
+                            stops: const <double>[0, 0.48, 1],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               );
             },
           ),
@@ -232,7 +511,7 @@ class _RouletteGameState extends State<_RouletteGame>
     );
     _flashEntry = entry;
     overlay.insert(entry);
-    _flashController
+    _hitFlashController
       ..stop()
       ..forward(from: 0).whenComplete(() {
         if (_flashEntry == entry) {
@@ -242,1215 +521,221 @@ class _RouletteGameState extends State<_RouletteGame>
       });
   }
 
-  String _statusLabel(AppI18n i18n) {
+  Future<void> _pullTrigger() async {
+    if (_phase != _RoulettePhase.armed || _pullCount >= _chambers) {
+      return;
+    }
+    final chamberIndex = _activeChamber;
+    final hasBullet = _sequence[chamberIndex];
+    setState(() {
+      _phase = _RoulettePhase.firing;
+    });
+
+    unawaited(_fireController.forward(from: 0));
+    _playMechanicalClack(
+      baseVolume: 0.9,
+      baseRate: 0.96,
+      secondDelayMs: 28,
+      secondVolumeScale: 0.58,
+      secondRateOffset: -0.08,
+    );
+    if (_hapticsEnabled) {
+      unawaited(HapticFeedback.selectionClick());
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 140));
+    if (!mounted || _phase != _RoulettePhase.firing) {
+      return;
+    }
+
+    if (hasBullet) {
+      setState(() {
+        _pullCount += 1;
+        _phase = _RoulettePhase.hit;
+      });
+      unawaited(_recoilController.forward(from: 0));
+      unawaited(_shakeController.forward(from: 0));
+      _showHitFlashOverlay();
+      unawaited(_playEffect(_shotPlayer, volume: 0.96, playbackRate: 0.99));
+      _schedule(const Duration(milliseconds: 72), () {
+        unawaited(
+          _playEffect(_explosionPlayer, volume: 0.90, playbackRate: 0.94),
+        );
+      });
+      _triggerHitHaptics();
+      return;
+    }
+
+    setState(() {
+      _pullCount += 1;
+      _safePullCount += 1;
+      _phase = _RoulettePhase.safeClick;
+    });
+    unawaited(_safeKickController.forward(from: 0));
+    _playMechanicalClack(
+      baseVolume: 0.78,
+      baseRate: 0.88,
+      secondDelayMs: 44,
+      secondVolumeScale: 0.68,
+      secondRateOffset: -0.06,
+    );
+    if (_hapticsEnabled) {
+      unawaited(HapticFeedback.lightImpact());
+    }
+
+    try {
+      await _chamberStepController.forward(from: 0);
+    } catch (_) {}
+    if (!mounted || _phase != _RoulettePhase.safeClick) {
+      return;
+    }
+    setState(() {
+      _cylinderBaseAngle =
+          (_cylinderBaseAngle + (math.pi * 2 / _chambers)) % (math.pi * 2);
+      _activeChamber = (_activeChamber + 1) % _chambers;
+      _phase = _pullCount >= _chambers
+          ? _RoulettePhase.exhausted
+          : _RoulettePhase.armed;
+    });
+    _chamberStepController.value = 0;
+    _safeKickController.value = 0;
+  }
+
+  double _stageShakeX() {
+    final t = _shakeController.value.clamp(0.0, 1.0);
+    if (t <= 0 || t >= 1) {
+      return 0;
+    }
+    final envelope = 1 - Curves.easeOutCubic.transform(t);
+    return math.sin(t * math.pi * 20) * envelope * 8.0;
+  }
+
+  double _stageShakeY() {
+    final t = _shakeController.value.clamp(0.0, 1.0);
+    if (t <= 0 || t >= 1) {
+      return 0;
+    }
+    final envelope = 1 - Curves.easeOutQuad.transform(t);
+    return math.sin(t * math.pi * 14) * envelope * 2.6;
+  }
+
+  double _screenShakeX() {
+    final t = _shakeController.value.clamp(0.0, 1.0);
+    if (t <= 0 || t >= 1) {
+      return 0;
+    }
+    final envelope = 1 - Curves.easeOutCubic.transform(t);
+    final secondary = math.sin(t * math.pi * 37) * 0.36;
+    return (math.sin(t * math.pi * 24) + secondary) * envelope * 10.0;
+  }
+
+  double _screenShakeY() {
+    final t = _shakeController.value.clamp(0.0, 1.0);
+    if (t <= 0 || t >= 1) {
+      return 0;
+    }
+    final envelope = 1 - Curves.easeOutQuad.transform(t);
+    return math.sin(t * math.pi * 18) * envelope * 4.2;
+  }
+
+  double _displayCylinderAngle() {
+    var angle = _cylinderBaseAngle;
+    if (_phase == _RoulettePhase.spinning) {
+      final t = Curves.easeOutCubic.transform(_spinController.value);
+      angle += _spinTurns * math.pi * 2 * t;
+    } else if (_phase == _RoulettePhase.safeClick) {
+      final t = Curves.easeOutCubic.transform(_chamberStepController.value);
+      angle += (math.pi * 2 / _chambers) * t;
+    }
+    return angle;
+  }
+
+  String _phaseLabel(AppI18n i18n) {
     return switch (_phase) {
-      _RoulettePhase.setup => _text(i18n, zh: '待上膛', en: 'Not loaded'),
-      _RoulettePhase.loading => _text(i18n, zh: '旋转弹仓', en: 'Spinning'),
-      _RoulettePhase.ready => _text(i18n, zh: '已就绪', en: 'Ready'),
-      _RoulettePhase.hit => _text(i18n, zh: '击发命中', en: 'Fired'),
+      _RoulettePhase.idle => _text(i18n, zh: '待机', en: 'Idle'),
+      _RoulettePhase.spinning => _text(i18n, zh: '准备中', en: 'Preparing'),
+      _RoulettePhase.armed => _text(i18n, zh: '可击发', en: 'Armed'),
+      _RoulettePhase.firing => _text(i18n, zh: '撞针释放', en: 'Pin strike'),
+      _RoulettePhase.safeClick => _text(i18n, zh: '空膛', en: 'Empty click'),
+      _RoulettePhase.hit => _text(i18n, zh: '命中爆发', en: 'Direct hit'),
+      _RoulettePhase.exhausted => _text(i18n, zh: '本轮结束', en: 'Round over'),
     };
   }
 
-  String _stageText(AppI18n i18n) {
-    if (_phase == _RoulettePhase.loading) {
-      return _text(
+  String _stageCopy(AppI18n i18n) {
+    return switch (_phase) {
+      _RoulettePhase.idle => _text(
         i18n,
-        zh: '弹仓高速旋转，金属棘轮正在落位',
-        en: 'Cylinder spinning. The ratchet is settling into place.',
-      );
-    }
-    if (_phase == _RoulettePhase.ready && _safePulls > 0) {
-      return _text(
+        zh: '设定装填后点击旋转弹仓，先听到准备咔哒再进入待击发状态。',
+        en: 'Set load and spin. You hear a prep clack before arming.',
+      ),
+      _RoulettePhase.spinning => _text(
         i18n,
-        zh: '空膛咔哒，机械落位到下一膛',
-        en: 'Empty click. The mechanism steps to the next chamber.',
-      );
-    }
-    if (_phase == _RoulettePhase.hit) {
-      return _text(
-        i18n,
-        zh: '击发瞬间：后坐、火光与烟雾已释放',
-        en: 'Fired: recoil, muzzle flash, and smoke are released.',
-      );
-    }
-    return _text(
-      i18n,
-      zh: '调整装填数量，再旋转弹仓开始',
-      en: 'Set the load, then spin the cylinder to begin.',
-    );
-  }
-
-  Widget _buildRevolverStage(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final accent = const Color(0xFFC2554C);
-    return RepaintBoundary(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: AnimatedBuilder(
-          animation: Listenable.merge(<Listenable>[
-            _ambientController,
-            _cylinderController,
-            _triggerController,
-            _emptyClickController,
-            _shotController,
-          ]),
-          builder: (context, _) {
-            final triggerProgress = math
-                .sin(_triggerController.value * math.pi)
-                .clamp(0.0, 1.0);
-            final cylinderTurn = _phase == _RoulettePhase.loading
-                ? _cylinderController.value * math.pi * 9.6
-                : 0.0;
-            final stageText = _stageText(i18n);
-            return DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: <Color>[
-                    Color.alphaBlend(
-                      const Color(0xFF121318).withValues(alpha: 0.88),
-                      colors.surfaceContainerHighest,
-                    ),
-                    Color.alphaBlend(
-                      accent.withValues(alpha: 0.18),
-                      const Color(0xFF1B1414),
-                    ),
-                    const Color(0xFF09090B),
-                  ],
-                ),
-                border: Border.all(
-                  color: Color.alphaBlend(
-                    accent.withValues(alpha: 0.24),
-                    colors.outlineVariant,
-                  ),
-                ),
-              ),
-              child: CustomPaint(
-                painter: _RouletteStageAtmospherePainter(
-                  colorScheme: colors,
-                  accent: accent,
-                  ambientProgress: _ambientController.value,
-                  shotProgress: _phase == _RoulettePhase.hit
-                      ? _shotController.value
-                      : 0,
-                  phase: _phase,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
-                  child: Column(
-                    children: <Widget>[
-                      AspectRatio(
-                        aspectRatio: 1.58,
-                        child: CustomPaint(
-                          painter: _RouletteRevolverPainter(
-                            colorScheme: colors,
-                            bulletCount: _bulletCount,
-                            sequence: _sequence,
-                            activeChamber: _activeChamber,
-                            pullIndex: _pullIndex,
-                            phase: _phase,
-                            cylinderTurn: cylinderTurn,
-                            triggerProgress: triggerProgress,
-                            ambientProgress: _ambientController.value,
-                            emptyClickProgress: _emptyClickController.value,
-                            shotProgress: _phase == _RoulettePhase.hit
-                                ? _shotController.value
-                                : 0,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 220),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        child: Container(
-                          key: ValueKey<String>(stageText),
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            color: Colors.black.withValues(alpha: 0.34),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.11),
-                            ),
-                          ),
-                          child: Text(
-                            stageText,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
+        zh: '弹仓高速旋转，棘轮回位；落位后即可扣动扳机。',
+        en: 'Cylinder spinning. Ratchet settles, then trigger is live.',
       ),
-    );
-  }
-
-  Widget _buildStatusConsole(
-    BuildContext context,
-    AppI18n i18n, {
-    required int remaining,
-  }) {
-    final colors = Theme.of(context).colorScheme;
-    final accent = const Color(0xFFC2554C);
-    final tiles = <Widget>[
-      _RouletteStatusTile(
-        label: _text(i18n, zh: '装填', en: 'Load'),
-        value: '$_bulletCount / $_chambers',
-        accent: accent,
-      ),
-      _RouletteStatusTile(
-        label: _text(i18n, zh: '空膛', en: 'Empty'),
-        value: '$_safePulls',
-        accent: const Color(0xFFB8A47A),
-      ),
-      _RouletteStatusTile(
-        label: _text(i18n, zh: '膛位', en: 'Chambers'),
-        value: '$remaining',
-        accent: const Color(0xFF7FA0B8),
-      ),
-      _RouletteStatusTile(
-        label: _text(i18n, zh: '状态', en: 'Status'),
-        value: _statusLabel(i18n),
-        accent: _phase == _RoulettePhase.hit ? colors.error : accent,
-        emphasized: _phase == _RoulettePhase.ready,
-      ),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            colors.surfaceContainerHigh,
-            Color.alphaBlend(
-              accent.withValues(alpha: 0.08),
-              colors.surfaceContainerLow,
-            ),
-          ],
-        ),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 460;
-          final spacing = 8.0;
-          final tileWidth = compact
-              ? math.max(120.0, (constraints.maxWidth - spacing) / 2)
-              : math.max(120.0, (constraints.maxWidth - spacing * 3) / 4);
-          return Wrap(
-            spacing: spacing,
-            runSpacing: spacing,
-            children: tiles
-                .map((tile) => SizedBox(width: tileWidth, child: tile))
-                .toList(growable: false),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildControlPanel(
-    BuildContext context,
-    AppI18n i18n, {
-    required bool canPrepare,
-    required bool canPull,
-  }) {
-    final colors = Theme.of(context).colorScheme;
-    final accent = const Color(0xFFC2554C);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            Color.alphaBlend(
-              accent.withValues(alpha: 0.09),
-              colors.surfaceContainerLow,
-            ),
-            colors.surfaceContainerHigh,
-          ],
-        ),
-        border: Border.all(
-          color: Color.alphaBlend(
-            accent.withValues(alpha: 0.16),
-            colors.outlineVariant,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: <Color>[
-                      accent.withValues(alpha: 0.24),
-                      accent.withValues(alpha: 0.08),
-                    ],
-                  ),
-                  border: Border.all(color: accent.withValues(alpha: 0.26)),
-                ),
-                child: Icon(Icons.tune_rounded, color: accent, size: 21),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      _text(i18n, zh: '装填控制', en: 'Load control'),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _text(
-                        i18n,
-                        zh: '设置装填数后旋转弹仓；准备完成后再扣动扳机。',
-                        en: 'Set the load, spin the cylinder, then pull.',
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerLowest.withValues(alpha: 0.72),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.outlineVariant),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Text(
-                      _text(i18n, zh: '装填数量', en: 'Rounds loaded'),
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(999),
-                        color: accent.withValues(alpha: 0.12),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Text(
-                        '$_bulletCount / $_chambers',
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: colors.onSurface,
-                              fontWeight: FontWeight.w900,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: accent,
-                    inactiveTrackColor: accent.withValues(alpha: 0.16),
-                    thumbColor: const Color(0xFFFFD166),
-                    overlayColor: accent.withValues(alpha: 0.12),
-                    valueIndicatorColor: accent,
-                  ),
-                  child: Slider(
-                    value: _bulletCount.toDouble(),
-                    min: 1,
-                    max: (_chambers - 1).toDouble(),
-                    divisions: _chambers - 2,
-                    label: '$_bulletCount',
-                    onChanged: _phase == _RoulettePhase.loading
-                        ? null
-                        : (value) => _resetToSetup(bullets: value.round()),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: <Widget>[
-              FilledButton.icon(
-                onPressed: canPrepare ? _prepareRound : null,
-                icon: const Icon(Icons.sync_rounded),
-                label: Text(_text(i18n, zh: '旋转弹仓', en: 'Spin cylinder')),
-              ),
-              FilledButton.icon(
-                onPressed: canPull ? _pullTrigger : null,
-                icon: const Icon(Icons.touch_app_rounded),
-                label: Text(_text(i18n, zh: '扣动扳机', en: 'Pull trigger')),
-              ),
-              OutlinedButton.icon(
-                onPressed: _phase == _RoulettePhase.loading
-                    ? null
-                    : _resetToSetup,
-                icon: const Icon(Icons.refresh_rounded),
-                label: Text(_text(i18n, zh: '重置', en: 'Reset')),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final remaining = math.max(0, _chambers - _pullIndex);
-    final canPrepare =
-        _phase == _RoulettePhase.setup || _phase == _RoulettePhase.hit;
-    final canPull = _phase == _RoulettePhase.ready;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _buildStatusConsole(context, i18n, remaining: remaining),
-            const SizedBox(height: 14),
-            _buildRevolverStage(context),
-            const SizedBox(height: 14),
-            _buildControlPanel(
-              context,
-              i18n,
-              canPrepare: canPrepare,
-              canPull: canPull,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _text(
+      _RoulettePhase.armed =>
+        _safePullCount > 0
+            ? _text(
                 i18n,
-                zh: '命中效果为短促冲击光、后坐、火光、烟雾和震动；空膛保留金属咔哒与弹仓推进反馈。',
-                en: 'A hit uses a brief impact glow, recoil, flash, smoke, and haptics; empty pulls keep the metallic click and chamber step feedback.',
+                zh: '空膛咔哒后已推进到下一膛位，继续扣动扳机。',
+                en: 'After the empty clack, chamber advanced. Pull again.',
+              )
+            : _text(
+                i18n,
+                zh: '已上膛：先撞针咔嚓，再决定是否命中。',
+                en: 'Armed: firing pin snaps before the outcome.',
               ),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
+      _RoulettePhase.firing => _text(
+        i18n,
+        zh: '撞针前冲，扳机与击锤联动释放。',
+        en: 'Firing pin lunges as trigger and hammer release together.',
       ),
-    );
+      _RoulettePhase.safeClick => _text(
+        i18n,
+        zh: '空膛反馈完成，弹仓步进落位。',
+        en: 'Empty click done. Cylinder steps into the next chamber.',
+      ),
+      _RoulettePhase.hit => _text(
+        i18n,
+        zh: '命中触发爆炸声、全屏闪烁与震动。',
+        en: 'Hit triggers blast sound, full-screen flash, and vibration.',
+      ),
+      _RoulettePhase.exhausted => _text(
+        i18n,
+        zh: '六个膛位已走完，重新旋转可开始下一轮。',
+        en: 'All chambers consumed. Spin again for a new round.',
+      ),
+    };
   }
-}
-
-class _RouletteStatusTile extends StatelessWidget {
-  const _RouletteStatusTile({
-    required this.label,
-    required this.value,
-    required this.accent,
-    this.emphasized = false,
-  });
-
-  final String label;
-  final String value;
-  final Color accent;
-  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      constraints: const BoxConstraints(minHeight: 58),
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: Color.alphaBlend(
-          accent.withValues(alpha: emphasized ? 0.18 : 0.08),
-          colors.surfaceContainerLowest,
-        ),
-        border: Border.all(
-          color: accent.withValues(alpha: emphasized ? 0.42 : 0.2),
-        ),
-        boxShadow: emphasized
-            ? <BoxShadow>[
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RouletteStageAtmospherePainter extends CustomPainter {
-  const _RouletteStageAtmospherePainter({
-    required this.colorScheme,
-    required this.accent,
-    required this.ambientProgress,
-    required this.shotProgress,
-    required this.phase,
-  });
-
-  final ColorScheme colorScheme;
-  final Color accent;
-  final double ambientProgress;
-  final double shotProgress;
-  final _RoulettePhase phase;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final pulse = 0.5 + 0.5 * math.sin(ambientProgress * math.pi * 2);
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = ui.Gradient.linear(
-          Offset.zero,
-          Offset(size.width, size.height),
-          <Color>[
-            const Color(0xFF15161B),
-            Color.alphaBlend(
-              accent.withValues(alpha: 0.10 + pulse * 0.04),
-              const Color(0xFF191111),
-            ),
-            const Color(0xFF070708),
-          ],
-          const <double>[0, 0.48, 1],
-        ),
-    );
-
-    final spotlight = Paint()
-      ..shader = ui.Gradient.radial(
-        Offset(size.width * 0.46, size.height * 0.38),
-        size.width * (0.46 + pulse * 0.03),
-        <Color>[
-          Colors.white.withValues(alpha: 0.12 + pulse * 0.03),
-          accent.withValues(alpha: 0.09),
-          Colors.transparent,
-        ],
-        const <double>[0, 0.42, 1],
-      );
-    canvas.drawRect(rect, spotlight);
-
-    final vignette = Paint()
-      ..shader = ui.Gradient.radial(
-        Offset(size.width * 0.5, size.height * 0.44),
-        size.width * 0.78,
-        <Color>[Colors.transparent, Colors.black.withValues(alpha: 0.54)],
-        const <double>[0.46, 1],
-      );
-    canvas.drawRect(rect, vignette);
-
-    final tableLinePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.035)
-      ..strokeWidth = 1;
-    for (var index = 0; index < 9; index += 1) {
-      final y = size.height * (0.64 + index * 0.035);
-      canvas.drawLine(
-        Offset(size.width * -0.1, y),
-        Offset(size.width * 1.08, y + size.height * 0.11),
-        tableLinePaint,
-      );
-    }
-
-    final dustPaint = Paint()..style = PaintingStyle.fill;
-    for (var index = 0; index < 24; index += 1) {
-      final seed = index * 12.9898;
-      final drift = math.sin(ambientProgress * math.pi * 2 + seed);
-      final x =
-          (size.width * ((math.sin(seed) * 0.5 + 0.5) * 0.92 + 0.04)) +
-          drift * 2.5;
-      final y =
-          size.height * ((math.cos(seed * 1.7) * 0.5 + 0.5) * 0.72 + 0.06);
-      final alpha =
-          0.05 + (math.sin(seed + ambientProgress * math.pi * 4) + 1) * 0.025;
-      dustPaint.color = Colors.white.withValues(alpha: alpha);
-      canvas.drawCircle(Offset(x, y), 0.7 + index % 3 * 0.25, dustPaint);
-    }
-
-    if (phase == _RoulettePhase.hit && shotProgress > 0) {
-      final t = shotProgress.clamp(0.0, 1.0);
-      final flash = 1 - Curves.easeOutCubic.transform(t);
-      final muzzle = Offset(size.width * 0.88, size.height * 0.37);
-      canvas.drawCircle(
-        muzzle,
-        size.width * (0.18 + t * 0.34),
-        Paint()
-          ..shader = ui.Gradient.radial(
-            muzzle,
-            size.width * (0.22 + t * 0.32),
-            <Color>[
-              const Color(0xFFFFD166).withValues(alpha: flash * 0.24),
-              const Color(0xFFC2554C).withValues(alpha: flash * 0.10),
-              Colors.transparent,
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final content = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Column(
+            children: <Widget>[
+              _buildStage(context, i18n),
+              const SizedBox(height: 8),
+              _buildControlPanel(context, i18n),
             ],
-            const <double>[0, 0.42, 1],
           ),
-      );
-
-      final smokePaint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.008
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7);
-      for (var index = 0; index < 4; index += 1) {
-        final localT = ((t - 0.10) * 1.18 - index * 0.08).clamp(0.0, 1.0);
-        if (localT <= 0) {
-          continue;
-        }
-        final alpha = (1 - localT) * 0.22;
-        smokePaint.color = const Color(0xFFD8D0C4).withValues(alpha: alpha);
-        final start = muzzle + Offset(size.width * (0.03 + index * 0.018), 0);
-        final path = Path()
-          ..moveTo(start.dx, start.dy)
-          ..cubicTo(
-            start.dx + size.width * (0.04 + localT * 0.08),
-            start.dy - size.height * (0.06 + index * 0.02),
-            start.dx + size.width * (0.12 + localT * 0.12),
-            start.dy + size.height * (0.02 - index * 0.03),
-            start.dx + size.width * (0.18 + localT * 0.18),
-            start.dy - size.height * (0.02 + index * 0.015),
-          );
-        canvas.drawPath(path, smokePaint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _RouletteStageAtmospherePainter oldDelegate) {
-    return oldDelegate.colorScheme != colorScheme ||
-        oldDelegate.accent != accent ||
-        oldDelegate.ambientProgress != ambientProgress ||
-        oldDelegate.shotProgress != shotProgress ||
-        oldDelegate.phase != phase;
-  }
-}
-
-class _RouletteRevolverPainter extends CustomPainter {
-  const _RouletteRevolverPainter({
-    required this.colorScheme,
-    required this.bulletCount,
-    required this.sequence,
-    required this.activeChamber,
-    required this.pullIndex,
-    required this.phase,
-    required this.cylinderTurn,
-    required this.triggerProgress,
-    required this.ambientProgress,
-    required this.emptyClickProgress,
-    required this.shotProgress,
-  });
-
-  final ColorScheme colorScheme;
-  final int bulletCount;
-  final List<bool> sequence;
-  final int activeChamber;
-  final int pullIndex;
-  final _RoulettePhase phase;
-  final double cylinderTurn;
-  final double triggerProgress;
-  final double ambientProgress;
-  final double emptyClickProgress;
-  final double shotProgress;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final shotT = shotProgress.clamp(0.0, 1.0).toDouble();
-    final emptyT = emptyClickProgress.clamp(0.0, 1.0).toDouble();
-    final shotKick = math.sin(shotT * math.pi).clamp(0.0, 1.0).toDouble();
-    final emptyKick = math.sin(emptyT * math.pi).clamp(0.0, 1.0).toDouble();
-    final rattle =
-        math.sin(emptyT * math.pi * 5) * (1 - emptyT) * size.width * 0.004;
-    final recoil =
-        shotKick * size.width * 0.052 + emptyKick * size.width * 0.01;
-    final muzzleLift = -(shotKick * 0.045 + emptyKick * 0.008);
-    final pulse = 0.5 + 0.5 * math.sin(ambientProgress * math.pi * 2);
-
-    canvas.save();
-    canvas.translate(-recoil + rattle, 0);
-    canvas.translate(size.width * 0.47, size.height * 0.48);
-    canvas.rotate(muzzleLift);
-    canvas.translate(-size.width * 0.47, -size.height * 0.48);
-
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.34)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(size.width * 0.49, size.height * 0.78),
-        width: size.width * 0.72,
-        height: size.height * 0.18,
-      ),
-      shadowPaint,
-    );
-
-    final darkPaint = Paint()
-      ..color = const Color(0xFF171A20)
-      ..style = PaintingStyle.fill;
-    final edgePaint = Paint()
-      ..color = const Color(0xFF111318)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.009;
-    final steelPaint = Paint()
-      ..shader = ui.Gradient.linear(
-        Offset(size.width * 0.28, size.height * 0.2),
-        Offset(size.width * 0.88, size.height * 0.56),
-        <Color>[
-          const Color(0xFF9DA6B2).withValues(alpha: 0.98),
-          const Color(0xFF4D5561),
-          const Color(0xFF1E232B),
-        ],
-        const <double>[0, 0.42, 1],
-      );
-    final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18 + pulse * 0.04)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.006
-      ..strokeCap = StrokeCap.round;
-
-    final barrel = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.49,
-        size.height * 0.27,
-        size.width * 0.39,
-        size.height * 0.18,
-      ),
-      Radius.circular(size.height * 0.065),
-    );
-    canvas.drawRRect(barrel.shift(Offset(0, size.height * 0.018)), darkPaint);
-    canvas.drawRRect(barrel, steelPaint);
-    canvas.drawRRect(barrel, edgePaint);
-
-    final barrelRail = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.55,
-        size.height * 0.23,
-        size.width * 0.25,
-        size.height * 0.055,
-      ),
-      Radius.circular(size.height * 0.018),
-    );
-    canvas.drawRRect(barrelRail, Paint()..color = const Color(0xFF313842));
-    canvas.drawLine(
-      Offset(size.width * 0.55, size.height * 0.255),
-      Offset(size.width * 0.79, size.height * 0.255),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.09)
-        ..strokeWidth = size.width * 0.004
-        ..strokeCap = StrokeCap.round,
-    );
-
-    final muzzle = Offset(size.width * 0.875, size.height * 0.36);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: muzzle,
-        width: size.width * 0.1,
-        height: size.height * 0.12,
-      ),
-      Paint()
-        ..shader = ui.Gradient.radial(muzzle, size.width * 0.06, const <Color>[
-          Color(0xFF707784),
-          Color(0xFF15181E),
-        ]),
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: muzzle,
-        width: size.width * 0.058,
-        height: size.height * 0.066,
-      ),
-      Paint()..color = const Color(0xFF07080A),
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: muzzle.translate(-size.width * 0.006, -size.height * 0.006),
-        width: size.width * 0.026,
-        height: size.height * 0.028,
-      ),
-      Paint()..color = Colors.white.withValues(alpha: 0.09),
-    );
-
-    final underlug = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.56,
-        size.height * 0.4,
-        size.width * 0.27,
-        size.height * 0.06,
-      ),
-      Radius.circular(size.height * 0.025),
-    );
-    canvas.drawRRect(underlug, darkPaint);
-
-    final frame = Path()
-      ..moveTo(size.width * 0.21, size.height * 0.36)
-      ..quadraticBezierTo(
-        size.width * 0.34,
-        size.height * 0.23,
-        size.width * 0.53,
-        size.height * 0.3,
-      )
-      ..lineTo(size.width * 0.59, size.height * 0.48)
-      ..quadraticBezierTo(
-        size.width * 0.43,
-        size.height * 0.62,
-        size.width * 0.22,
-        size.height * 0.51,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.18,
-        size.height * 0.45,
-        size.width * 0.21,
-        size.height * 0.36,
-      )
-      ..close();
-    canvas.drawPath(frame.shift(Offset(0, size.height * 0.014)), darkPaint);
-    canvas.drawPath(frame, steelPaint);
-    canvas.drawPath(frame, edgePaint);
-
-    final cylinderCenter = Offset(size.width * 0.4, size.height * 0.42);
-    final radius = size.height * 0.192;
-    _drawCylinder(canvas, size, cylinderCenter, radius, pulse);
-
-    final cylinderLatch = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.47,
-        size.height * 0.47,
-        size.width * 0.08,
-        size.height * 0.025,
-      ),
-      Radius.circular(size.height * 0.01),
-    );
-    canvas.drawRRect(cylinderLatch, Paint()..color = const Color(0xFF20242B));
-
-    final grip = Path()
-      ..moveTo(size.width * 0.27, size.height * 0.52)
-      ..lineTo(size.width * 0.43, size.height * 0.55)
-      ..quadraticBezierTo(
-        size.width * 0.39,
-        size.height * 0.82,
-        size.width * 0.22,
-        size.height * 0.9,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.12,
-        size.height * 0.73,
-        size.width * 0.2,
-        size.height * 0.56,
-      )
-      ..close();
-    canvas.drawPath(
-      grip.shift(Offset(0, size.height * 0.014)),
-      Paint()..color = Colors.black.withValues(alpha: 0.28),
-    );
-    canvas.drawPath(
-      grip,
-      Paint()
-        ..shader = ui.Gradient.linear(
-          Offset(size.width * 0.18, size.height * 0.55),
-          Offset(size.width * 0.38, size.height * 0.88),
-          const <Color>[
-            Color(0xFF8A5636),
-            Color(0xFF5A321F),
-            Color(0xFF2F1B14),
-          ],
-          const <double>[0, 0.56, 1],
         ),
-    );
-    canvas.save();
-    canvas.clipPath(grip);
-    final grainPaint = Paint()
-      ..color = const Color(0xFFD4A06D).withValues(alpha: 0.18)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.004
-      ..strokeCap = StrokeCap.round;
-    for (var index = 0; index < 5; index += 1) {
-      final y = size.height * (0.6 + index * 0.055);
-      canvas.drawPath(
-        Path()
-          ..moveTo(size.width * 0.18, y)
-          ..quadraticBezierTo(
-            size.width * (0.28 + index * 0.01),
-            y + size.height * 0.03,
-            size.width * 0.38,
-            y + size.height * 0.015,
-          ),
-        grainPaint,
-      );
-    }
-    canvas.restore();
-    canvas.drawPath(
-      grip,
-      Paint()
-        ..color = const Color(0xFF2A1711)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.009,
-    );
-    for (final screw in <Offset>[
-      Offset(size.width * 0.29, size.height * 0.61),
-      Offset(size.width * 0.25, size.height * 0.78),
-    ]) {
-      canvas.drawCircle(screw, size.width * 0.019, darkPaint);
-      canvas.drawCircle(
-        screw.translate(-size.width * 0.003, -size.height * 0.003),
-        size.width * 0.008,
-        Paint()..color = Colors.white.withValues(alpha: 0.14),
-      );
-    }
-
-    final triggerGuard = Rect.fromLTWH(
-      size.width * 0.34,
-      size.height * 0.52,
-      size.width * 0.16,
-      size.height * 0.18,
-    );
-    canvas.drawOval(
-      triggerGuard,
-      Paint()
-        ..color = const Color(0xFF151820)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.022,
-    );
-    canvas.drawOval(
-      triggerGuard.deflate(size.width * 0.008),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.08)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.004,
-    );
-    final triggerX = size.width * (0.417 + triggerProgress * 0.043);
-    canvas.drawArc(
-      Rect.fromLTWH(
-        triggerX,
-        size.height * 0.535,
-        size.width * 0.065,
-        size.height * 0.13,
       ),
-      math.pi * 0.82,
-      math.pi * 0.82,
-      false,
-      Paint()
-        ..shader = ui.Gradient.linear(
-          Offset(triggerX, size.height * 0.54),
-          Offset(triggerX + size.width * 0.06, size.height * 0.66),
-          const <Color>[Color(0xFF30353D), Color(0xFF0A0B0D)],
-        )
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.014
-        ..strokeCap = StrokeCap.round,
     );
-
-    final hammerBack = triggerProgress * 0.045 + shotKick * 0.018;
-    final hammer = Path()
-      ..moveTo(size.width * 0.235, size.height * 0.345)
-      ..lineTo(
-        size.width * (0.16 - hammerBack),
-        size.height * (0.265 - triggerProgress * 0.018),
-      )
-      ..quadraticBezierTo(
-        size.width * (0.17 - hammerBack),
-        size.height * 0.205,
-        size.width * (0.225 - hammerBack * 0.4),
-        size.height * 0.225,
-      )
-      ..lineTo(size.width * 0.302, size.height * 0.318)
-      ..close();
-    canvas.drawPath(hammer, darkPaint);
-    canvas.drawPath(
-      hammer,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.07)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.004,
-    );
-
-    canvas.drawLine(
-      Offset(size.width * 0.51, size.height * 0.305),
-      Offset(size.width * 0.82, size.height * 0.305),
-      highlightPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.27, size.height * 0.39),
-      Offset(size.width * 0.53, size.height * 0.33),
-      highlightPaint..color = Colors.white.withValues(alpha: 0.08),
-    );
-
-    if (phase == _RoulettePhase.hit && shotT < 0.62) {
-      _drawMuzzleFlash(canvas, size, muzzle, shotT);
-    }
-
-    canvas.restore();
-  }
-
-  void _drawCylinder(
-    Canvas canvas,
-    Size size,
-    Offset center,
-    double radius,
-    double pulse,
-  ) {
-    final outerPaint = Paint()
-      ..shader = ui.Gradient.radial(
-        center.translate(-radius * 0.22, -radius * 0.22),
-        radius * 1.18,
-        const <Color>[Color(0xFF9AA2AD), Color(0xFF4E5662), Color(0xFF171A20)],
-        const <double>[0, 0.44, 1],
-      );
-    canvas.drawCircle(
-      center.translate(0, radius * 0.08),
-      radius * 1.1,
-      Paint()..color = Colors.black.withValues(alpha: 0.34),
-    );
-    canvas.drawCircle(
-      center,
-      radius * 1.08,
-      Paint()..color = const Color(0xFF14171C),
-    );
-    canvas.drawCircle(center, radius, outerPaint);
-
-    if (phase == _RoulettePhase.loading) {
-      final blurPaint = Paint()
-        ..color = const Color(0xFFFFD166).withValues(alpha: 0.15 + pulse * 0.08)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.008
-        ..strokeCap = StrokeCap.round;
-      for (var index = 0; index < 4; index += 1) {
-        final start = cylinderTurn + index * math.pi * 0.5;
-        canvas.drawArc(
-          Rect.fromCircle(
-            center: center,
-            radius: radius * (0.86 - index * 0.06),
-          ),
-          start,
-          math.pi * 0.34,
-          false,
-          blurPaint,
+    return AnimatedBuilder(
+      animation: _shakeController,
+      child: content,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(_screenShakeX() * 0.5, _screenShakeY() * 0.5),
+          child: child,
         );
-      }
-    }
-
-    final chambers = sequence.length;
-    for (var index = 0; index < chambers; index += 1) {
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(cylinderTurn + index * math.pi * 2 / chambers);
-      final flute = RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(radius * 0.38, 0),
-          width: radius * 0.22,
-          height: radius * 0.55,
-        ),
-        Radius.circular(radius * 0.11),
-      );
-      canvas.drawRRect(
-        flute,
-        Paint()..color = Colors.black.withValues(alpha: 0.18),
-      );
-      canvas.drawRRect(
-        flute.deflate(radius * 0.018),
-        Paint()..color = Colors.white.withValues(alpha: 0.035),
-      );
-      canvas.restore();
-    }
-
-    canvas.drawCircle(
-      center,
-      radius * 0.34,
-      Paint()
-        ..shader = ui.Gradient.radial(
-          center.translate(-radius * 0.08, -radius * 0.08),
-          radius * 0.34,
-          const <Color>[Color(0xFF4E5660), Color(0xFF111419)],
-        ),
+      },
     );
-    canvas.drawCircle(
-      center,
-      radius * 0.11,
-      Paint()..color = const Color(0xFF08090B),
-    );
-
-    for (var index = 0; index < chambers; index += 1) {
-      final angle = cylinderTurn - math.pi / 2 + index * math.pi * 2 / chambers;
-      final chamberCenter =
-          center + Offset(math.cos(angle), math.sin(angle)) * radius * 0.58;
-      final spent = index < pullIndex;
-      final isCurrent = phase == _RoulettePhase.ready && index == activeChamber;
-      final hasBullet = index < sequence.length && sequence[index];
-      final chamberPaint = Paint()
-        ..shader = ui.Gradient.radial(
-          chamberCenter.translate(-radius * 0.04, -radius * 0.04),
-          radius * 0.24,
-          <Color>[
-            spent && hasBullet
-                ? colorScheme.error.withValues(alpha: 0.86)
-                : spent
-                ? const Color(0xFF7E8A79)
-                : const Color(0xFF3A4049),
-            const Color(0xFF08090B),
-          ],
-        );
-      canvas.drawCircle(
-        chamberCenter,
-        radius * 0.235,
-        Paint()..color = const Color(0xFF090B0E),
-      );
-      canvas.drawCircle(chamberCenter, radius * 0.205, chamberPaint);
-      canvas.drawCircle(
-        chamberCenter.translate(-radius * 0.035, -radius * 0.04),
-        radius * 0.055,
-        Paint()..color = Colors.white.withValues(alpha: spent ? 0.04 : 0.09),
-      );
-      if (phase == _RoulettePhase.setup && index < bulletCount) {
-        canvas.drawCircle(
-          chamberCenter,
-          radius * 0.118,
-          Paint()
-            ..shader = ui.Gradient.radial(
-              chamberCenter.translate(-radius * 0.03, -radius * 0.03),
-              radius * 0.14,
-              const <Color>[Color(0xFFFFD56A), Color(0xFF9E6421)],
-            ),
-        );
-      }
-      if (isCurrent) {
-        canvas.drawCircle(
-          chamberCenter,
-          radius * (0.275 + pulse * 0.015),
-          Paint()
-            ..color = const Color(0xFFFFD15C)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = size.width * 0.006,
-        );
-        canvas.drawCircle(
-          chamberCenter,
-          radius * 0.315,
-          Paint()
-            ..color = const Color(
-              0xFFFFD15C,
-            ).withValues(alpha: 0.10 + pulse * 0.07)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = size.width * 0.012,
-        );
-      }
-    }
-  }
-
-  void _drawMuzzleFlash(Canvas canvas, Size size, Offset muzzle, double shotT) {
-    final localT = (shotT / 0.62).clamp(0.0, 1.0).toDouble();
-    final alpha = 1 - Curves.easeInQuad.transform(localT);
-    final length = size.width * (0.11 + (1 - localT) * 0.08);
-    final height = size.height * (0.11 + (1 - localT) * 0.05);
-    final outer = Path()
-      ..moveTo(muzzle.dx + size.width * 0.018, muzzle.dy)
-      ..lineTo(muzzle.dx + length * 0.55, muzzle.dy - height * 0.58)
-      ..lineTo(muzzle.dx + length * 0.42, muzzle.dy - height * 0.12)
-      ..lineTo(muzzle.dx + length, muzzle.dy)
-      ..lineTo(muzzle.dx + length * 0.42, muzzle.dy + height * 0.14)
-      ..lineTo(muzzle.dx + length * 0.56, muzzle.dy + height * 0.62)
-      ..close();
-    canvas.drawPath(
-      outer,
-      Paint()
-        ..shader = ui.Gradient.linear(
-          muzzle,
-          Offset(muzzle.dx + length, muzzle.dy),
-          <Color>[
-            const Color(0xFFFFF4B8).withValues(alpha: alpha),
-            const Color(0xFFFFB02E).withValues(alpha: alpha * 0.82),
-            const Color(0xFFC2554C).withValues(alpha: alpha * 0.18),
-          ],
-          const <double>[0, 0.45, 1],
-        ),
-    );
-    canvas.drawPath(
-      outer,
-      Paint()
-        ..color = const Color(0xFFFFE4A0).withValues(alpha: alpha * 0.22)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.006
-        ..strokeJoin = StrokeJoin.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RouletteRevolverPainter oldDelegate) {
-    return oldDelegate.bulletCount != bulletCount ||
-        oldDelegate.sequence != sequence ||
-        oldDelegate.activeChamber != activeChamber ||
-        oldDelegate.pullIndex != pullIndex ||
-        oldDelegate.phase != phase ||
-        oldDelegate.cylinderTurn != cylinderTurn ||
-        oldDelegate.triggerProgress != triggerProgress ||
-        oldDelegate.ambientProgress != ambientProgress ||
-        oldDelegate.emptyClickProgress != emptyClickProgress ||
-        oldDelegate.shotProgress != shotProgress ||
-        oldDelegate.colorScheme != colorScheme;
   }
 }

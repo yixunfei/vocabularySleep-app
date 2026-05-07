@@ -77,8 +77,8 @@ List<ToolboxSectionData> buildToolboxSections(
           title: pickUiText(i18n, zh: '人类测试中心', en: 'Human test hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '包含反应测试、数字记忆、黑猩猩测试、打字测试、色觉测试等 17 个轻量测试。',
-            en: 'Includes 17 lightweight tests such as reaction, number memory, chimp, typing, and color vision.',
+            zh: '包含反应、记忆、打字、色觉、动态视力、计算、注意力和手眼协调等本地测试。',
+            en: 'Includes local tests for reaction, memory, typing, color vision, dynamic vision, calculation, attention, and coordination.',
           ),
           icon: Icons.psychology_alt_rounded,
           accent: const Color(0xFF2F8D8E),

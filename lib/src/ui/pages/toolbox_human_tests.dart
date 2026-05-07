@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../ui_copy.dart';
@@ -9,10 +12,39 @@ import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
 
 part 'toolbox_human_tests_action.dart';
+part 'toolbox_human_tests_aim.dart';
+part 'toolbox_human_tests_aim_widgets.dart';
 part 'toolbox_human_tests_cognition.dart';
+part 'toolbox_human_tests_typing.dart';
+part 'toolbox_human_tests_typing_copy.dart';
+part 'toolbox_human_tests_typing_data.dart';
+part 'toolbox_human_tests_typing_widgets.dart';
+part 'toolbox_human_tests_dynamic_vision.dart';
+part 'toolbox_human_tests_dynamic_vision_parts.dart';
+part 'toolbox_human_tests_dynamic_vision_ui.dart';
+part 'toolbox_human_tests_hand_eye.dart';
+part 'toolbox_human_tests_hand_eye_joystick.dart';
+part 'toolbox_human_tests_hand_eye_parts.dart';
+part 'toolbox_human_tests_hand_eye_fullscreen.dart';
+part 'toolbox_human_tests_hand_eye_reports.dart';
+part 'toolbox_human_tests_hand_eye_settings.dart';
+part 'toolbox_human_tests_reaction.dart';
+part 'toolbox_human_tests_number_memory_models.dart';
+part 'toolbox_human_tests_verbal_memory_data.dart';
+part 'toolbox_human_tests_number_memory.dart';
+part 'toolbox_human_tests_number_memory_view.dart';
+part 'toolbox_human_tests_number_memory_widgets.dart';
+part 'toolbox_human_tests_verbal_memory_models.dart';
+part 'toolbox_human_tests_verbal_memory.dart';
+part 'toolbox_human_tests_verbal_memory_view.dart';
+part 'toolbox_human_tests_verbal_memory_widgets.dart';
 part 'toolbox_human_tests_memory.dart';
 part 'toolbox_human_tests_shared.dart';
+part 'toolbox_human_tests_time_perception.dart';
+part 'toolbox_human_tests_visual_memory.dart';
+part 'toolbox_human_tests_visual_memory_widgets.dart';
 part 'toolbox_human_tests_visual.dart';
+part 'toolbox_human_tests_visual_widgets.dart';
 
 class HumanTestsToolPage extends StatelessWidget {
   const HumanTestsToolPage({super.key});
@@ -30,6 +62,39 @@ class HumanTestsToolPage extends StatelessWidget {
       child: const _HumanTestsHub(),
     );
   }
+}
+
+const List<DeviceOrientation> _humanTestAllOrientations = <DeviceOrientation>[
+  DeviceOrientation.portraitUp,
+  DeviceOrientation.portraitDown,
+  DeviceOrientation.landscapeLeft,
+  DeviceOrientation.landscapeRight,
+];
+
+bool _supportsHumanTestOrientationLock() {
+  if (kIsWeb) {
+    return false;
+  }
+  return defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+}
+
+Future<void> _enterHumanTestLandscapeFullscreen() async {
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+  if (_supportsHumanTestOrientationLock()) {
+    await SystemChrome.setPreferredOrientations(const <DeviceOrientation>[
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+}
+
+Future<void> _exitHumanTestFullscreen() async {
+  if (_supportsHumanTestOrientationLock()) {
+    await SystemChrome.setPreferredOrientations(_humanTestAllOrientations);
+  }
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 }
 
 class _HumanTestsHub extends StatelessWidget {
@@ -83,8 +148,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '反应测试', en: 'Reaction test'),
       subtitle: pickUiText(
         i18n,
-        zh: '等待颜色变绿后立刻点击，统计 5 次平均反应。',
-        en: 'Wait for green, then tap fast. Averages 5 trials.',
+        zh: '经典松手、方向滑动与颜色匹配三种反应模式。',
+        en: 'Classic release, direction-swipe, and color-match reaction modes.',
       ),
       icon: Icons.flash_on_rounded,
       accent: const Color(0xFF2F8D8E),
@@ -94,8 +159,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '数字记忆', en: 'Number memory'),
       subtitle: pickUiText(
         i18n,
-        zh: '记住逐级变长的数字串，再输入复现。',
-        en: 'Memorize a growing number string and type it back.',
+        zh: '支持数字串、彩色数字、多数字目标与计算式，毫秒级停留和随机化可调。',
+        en: 'Train digit strings, colored digits, multi-number targets, and equations with millisecond timing and randomization.',
       ),
       icon: Icons.pin_rounded,
       accent: const Color(0xFF536CC7),
@@ -105,8 +170,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '黑猩猩测试', en: 'Chimp test'),
       subtitle: pickUiText(
         i18n,
-        zh: '数字消失后，按顺序找回全部位置。',
-        en: 'Remember numbered locations after they vanish.',
+        zh: '支持经典、顺序数字与颜色顺序三种模式，并可调切换速度与难度。',
+        en: 'Classic, sequential-number, and color-sequence modes with tunable speed/difficulty.',
       ),
       icon: Icons.grid_view_rounded,
       accent: const Color(0xFF6C8D42),
@@ -116,8 +181,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '打字测试', en: 'Typing test'),
       subtitle: pickUiText(
         i18n,
-        zh: '输入短句，查看速度与准确率。',
-        en: 'Type a short passage and check speed and accuracy.',
+        zh: '多语言语料、趣味模式、实时纠错和完成报告，训练速度、准确率与节奏稳定性。',
+        en: 'Multi-language passages, playful modes, live correction, and reports for speed, accuracy, and rhythm.',
       ),
       icon: Icons.keyboard_alt_rounded,
       accent: const Color(0xFFC27A37),
@@ -127,8 +192,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '视觉记忆', en: 'Visual memory'),
       subtitle: pickUiText(
         i18n,
-        zh: '记住闪烁格子，再从网格中点回。',
-        en: 'Memorize highlighted cells and select them again.',
+        zh: '支持动态网格、颜色目标、指定颜色与干扰格，难度随等级阶梯提升。',
+        en: 'Dynamic grids, color targets, target-color recall, and distractors with stepped difficulty.',
       ),
       icon: Icons.dashboard_customize_rounded,
       accent: const Color(0xFF8B6BC8),
@@ -138,8 +203,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '瞄准测试', en: 'Aim test'),
       subtitle: pickUiText(
         i18n,
-        zh: '连续点击目标，统计平均命中间隔。',
-        en: 'Tap targets in sequence and measure average time.',
+        zh: '支持经典点靶、降级放大、移动靶和真假干扰，统计命中质量与连击。',
+        en: 'Classic, reveal-grow, moving, and decoy target modes with accuracy and streak feedback.',
       ),
       icon: Icons.adjust_rounded,
       accent: const Color(0xFFC24D5A),
@@ -149,8 +214,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '色觉测试', en: 'Color vision'),
       subtitle: pickUiText(
         i18n,
-        zh: '找出色块阵列里唯一不同的颜色。',
-        en: 'Find the one tile with a different color.',
+        zh: '找不同、混色匹配、提示记录和可读报告，分析色差、色相与差异类型弱项。',
+        en: 'Odd-tile and mixed-match modes with hints and readable reports for hue, delta, and contrast weaknesses.',
       ),
       icon: Icons.palette_rounded,
       accent: const Color(0xFF3F9A6B),
@@ -160,8 +225,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '斯特鲁普', en: 'Stroop test'),
       subtitle: pickUiText(
         i18n,
-        zh: '判断文字含义和显示颜色是否一致。',
-        en: 'Judge whether the word meaning matches its ink color.',
+        zh: '可配置 3-12 种颜色，判断词义与显示颜色是否一致。',
+        en: 'Configure 3-12 colors and judge meaning-vs-ink consistency.',
       ),
       icon: Icons.contrast_rounded,
       accent: const Color(0xFF5B82C2),
@@ -171,8 +236,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '词汇记忆', en: 'Verbal memory'),
       subtitle: pickUiText(
         i18n,
-        zh: '判断当前词是否已经出现过。',
-        en: 'Decide whether the current word has appeared before.',
+        zh: '支持分领域词库、随机数字串与空间箭头序列，并可自定义展示高度。',
+        en: 'Domain word banks, random digit strings, and arrow sequences with custom stage height.',
       ),
       icon: Icons.menu_book_rounded,
       accent: const Color(0xFF8F6C45),
@@ -193,8 +258,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '运气测试', en: 'Luck test'),
       subtitle: pickUiText(
         i18n,
-        zh: '猜左右结果，看看连续命中的手气。',
-        en: 'Guess left or right and track your streak.',
+        zh: '支持单抽、十连、二十连、概率自定义、目标抽取和幸运指数报告。',
+        en: 'Single, 10x, and 20x draws with custom odds, goals, and luck-index reports.',
       ),
       icon: Icons.casino_rounded,
       accent: const Color(0xFFD0923A),
@@ -215,8 +280,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '时间感知测试', en: 'Time perception'),
       subtitle: pickUiText(
         i18n,
-        zh: '闭眼估算 5 秒，越接近越好。',
-        en: 'Estimate 5 seconds without watching a timer.',
+        zh: '连续多个时间节点感知：在指定时刻点击对应数字。',
+        en: 'Multi-node time perception: tap matching numbers at planned moments.',
       ),
       icon: Icons.timer_rounded,
       accent: const Color(0xFF4D8C9E),
@@ -226,19 +291,30 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '手眼协调测试', en: 'Hand-eye coordination'),
       subtitle: pickUiText(
         i18n,
-        zh: '追踪移动目标并尽量准确点击。',
-        en: 'Track a moving target and tap accurately.',
+        zh: '随机目标快速出现、移动并消失，统计成功、漏点、点空和反应延迟。',
+        en: 'Fast random targets appear, move, and vanish while tracking hits, misses, blanks, and latency.',
       ),
       icon: Icons.center_focus_strong_rounded,
       accent: const Color(0xFFB55D42),
       pageBuilder: () => const HandEyeCoordinationTestPage(),
     ),
     _HumanTestEntry(
+      title: pickUiText(i18n, zh: '摇杆手眼协调', en: 'Joystick coordination'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '用虚拟摇杆移动准星并点击射击，支持限时和目标总数两种测试。',
+        en: 'Move a crosshair with a virtual joystick and fire in timed or target-count modes.',
+      ),
+      icon: Icons.gamepad_rounded,
+      accent: const Color(0xFF8A6849),
+      pageBuilder: () => const JoystickHandEyeCoordinationTestPage(),
+    ),
+    _HumanTestEntry(
       title: pickUiText(i18n, zh: '计算能力测试', en: 'Calculation test'),
       subtitle: pickUiText(
         i18n,
-        zh: '快速完成四则运算题。',
-        en: 'Solve quick arithmetic prompts.',
+        zh: '按难度、题型、题量或限时训练口算，完成后查看速度与准确率分析。',
+        en: 'Train arithmetic by difficulty, operation type, fixed rounds, or time limit with speed and accuracy analysis.',
       ),
       icon: Icons.calculate_rounded,
       accent: const Color(0xFF6178B8),
@@ -248,8 +324,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '动态视力测试', en: 'Dynamic vision'),
       subtitle: pickUiText(
         i18n,
-        zh: '观察移动字符，结束后选择你看到的内容。',
-        en: 'Watch a moving symbol, then choose what you saw.',
+        zh: '字符识别支持字符集、轨迹、干扰与报告；小球数量随等级提升速度和数量。',
+        en: 'Symbol recognition adds sets, paths, distractors, and reports; ball counting raises speed and count by level.',
       ),
       icon: Icons.remove_red_eye_rounded,
       accent: const Color(0xFF407E92),
@@ -259,8 +335,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: pickUiText(i18n, zh: '持续注意力测试', en: 'Sustained attention'),
       subtitle: pickUiText(
         i18n,
-        zh: '连续观察刺激，只在目标出现时点击。',
-        en: 'Watch a stream and tap only when the target appears.',
+        zh: '目标点击、低频目标和 n-back 三类任务，统计命中、漏点、误点与反应时。',
+        en: 'Go/no-go, oddball, and n-back tasks with hit, miss, false-alarm, and reaction-time stats.',
       ),
       icon: Icons.track_changes_rounded,
       accent: const Color(0xFF6D8657),

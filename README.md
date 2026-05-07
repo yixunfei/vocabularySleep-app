@@ -53,6 +53,16 @@ Toolbox UI 调整需要同步遵守：
 - `docs/toolbox_design/TOOLBOX_ANIMATION_SPEC.md`
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
+## 近期进展
+
+2026-05-07 的 toolbox 阶段提交重点收口以下内容：
+
+- **人类测试中心**: 进一步拆分 `toolbox_human_tests_*` 页面职责，补齐反应、瞄准、打字、词汇记忆、数字记忆、动态视力、色觉、手眼协调、计算、持续注意力、运气、手速、序列记忆、斯特鲁普和时间感知等测试的设置、反馈、报告与 smoke test。
+- **运气测试**: 支持单抽、十连、二十连、抽卡目标、概率期望幸运指数、真实批量卡片翻开、史诗/传说全屏特效、趣味称号和下一轮批次刷新。
+- **摇杆手眼协调**: 白底全屏训练支持隐式摇杆、预练习、设置弹窗、横屏左摇杆/右射击热区、触点唤起浮层和报告。
+- **小游戏中心**: 俄罗斯轮盘完成低沉金属音效、爆炸音效、左轮视觉拆分、Painter/View 分层与 Android 音频事件主线程派发修复。
+- **文档与验证**: `modules/toolbox/README.md`、`changelogs/CHANGELOG.md`、`records/` 和相关 `plans/` 已同步记录阶段范围与验证命令。
+
 ## 技术栈
 
 - **框架**: Flutter
