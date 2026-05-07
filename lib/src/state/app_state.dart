@@ -128,12 +128,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
        _playback = playback,
        _ambient = ambient,
        _asr = asr,
-        _focusService = focusService,
-        _remoteResourcePrewarm = remoteResourcePrewarm,
-        _weatherService = weatherService ?? WeatherService(),
-        _dailyQuoteService = dailyQuoteService ?? DailyQuoteService(),
-        _practiceStore = practiceStore ?? PracticeStore(),
-        _playbackStore = playbackStore ?? PlaybackStore() {
+       _focusService = focusService,
+       _remoteResourcePrewarm = remoteResourcePrewarm,
+       _weatherService = weatherService ?? WeatherService(),
+       _dailyQuoteService = dailyQuoteService ?? DailyQuoteService(),
+       _practiceStore = practiceStore ?? PracticeStore(),
+       _playbackStore = playbackStore ?? PlaybackStore() {
     _weatherStore =
         weatherStore ??
         WeatherStore(
@@ -210,6 +210,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
   ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
+  ToolboxLayoutState _toolboxLayoutState = ToolboxLayoutState.defaults;
   bool _remotePrewarmActive = false;
   bool _remotePrewarmCompleted = false;
   bool _remotePrewarmFailed = false;
@@ -305,6 +306,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
   ModuleToggleState get moduleToggleState => _moduleToggleState;
+  ToolboxLayoutState get toolboxLayoutState => _toolboxLayoutState;
   AppHomeTab get startupPage => _startupStore.startupPage;
   FocusStartupTab get focusStartupTab => _startupStore.focusStartupTab;
   StudyStartupTab get studyStartupTab => _startupStore.studyStartupTab;
@@ -417,14 +419,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _practiceDisplayWords(_practiceStore.weakWords);
   List<PracticeSessionRecord> get practiceSessionHistory =>
       List<PracticeSessionRecord>.unmodifiable(_practiceStore.sessionHistory);
-  bool get practiceAutoAddWeakWordsToTask => _practiceStore.autoAddWeakWordsToTask;
-  bool get practiceAutoPlayPronunciation => _practiceStore.autoPlayPronunciation;
+  bool get practiceAutoAddWeakWordsToTask =>
+      _practiceStore.autoAddWeakWordsToTask;
+  bool get practiceAutoPlayPronunciation =>
+      _practiceStore.autoPlayPronunciation;
   bool get practiceShowHintsByDefault => _practiceStore.showHintsByDefault;
   bool get practiceShowAnswerFeedbackDialog =>
       _practiceStore.showAnswerFeedbackDialog;
   PracticeQuestionType get practiceDefaultQuestionType =>
       _practiceStore.defaultQuestionType;
-  PracticeRoundSettings get practiceRoundSettings => _practiceStore.roundSettings;
+  PracticeRoundSettings get practiceRoundSettings =>
+      _practiceStore.roundSettings;
   int? get pendingTodoReminderLaunchId =>
       _startupStore.pendingTodoReminderLaunchId;
   List<WordEntry> get practiceWrongNotebookEntries {
@@ -433,10 +438,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   double get practiceTodayAccuracy => _practiceStore.todayReviewed <= 0
       ? 0
-      : (_practiceStore.todayRemembered / _practiceStore.todayReviewed).clamp(0.0, 1.0);
+      : (_practiceStore.todayRemembered / _practiceStore.todayReviewed).clamp(
+          0.0,
+          1.0,
+        );
   double get practiceTotalAccuracy => _practiceStore.totalReviewed <= 0
       ? 0
-      : (_practiceStore.totalRemembered / _practiceStore.totalReviewed).clamp(0.0, 1.0);
+      : (_practiceStore.totalRemembered / _practiceStore.totalReviewed).clamp(
+          0.0,
+          1.0,
+        );
   List<AmbientSource> get ambientSources => _ambient.sources;
   bool get ambientEnabled => _ambient.isEnabled;
   double get ambientMasterVolume => _ambient.masterVolume;
@@ -778,6 +789,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void setModuleEnabled(String moduleId, bool enabled) =>
       _setModuleEnabledImpl(moduleId, enabled);
+
+  void setToolboxEntryOrder(List<String> moduleIds) =>
+      _setToolboxEntryOrderImpl(moduleIds);
+
+  void hideToolboxEntry(String moduleId) => _hideToolboxEntryImpl(moduleId);
+
+  void restoreToolboxEntry(String moduleId) =>
+      _restoreToolboxEntryImpl(moduleId);
+
+  void resetToolboxLayout() => _resetToolboxLayoutImpl();
 
   void setWeatherEnabled(bool enabled) => _setWeatherEnabledImpl(enabled);
 
@@ -2714,16 +2735,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     _playbackStore.playbackProgressByWordbookPath =
         <String, PlaybackProgressSnapshot>{
-      ..._playbackStore.playbackProgressByWordbookPath,
-      path: PlaybackProgressSnapshot(
-        wordbookPath: path,
-        wordId: resolvedEntry.id,
-        entryUid: resolvedEntry.entryUid,
-        primaryGloss: resolvedEntry.primaryGloss,
-        word: resolvedEntry.word,
-        updatedAt: DateTime.now(),
-      ),
-    };
+          ..._playbackStore.playbackProgressByWordbookPath,
+          path: PlaybackProgressSnapshot(
+            wordbookPath: path,
+            wordId: resolvedEntry.id,
+            entryUid: resolvedEntry.entryUid,
+            primaryGloss: resolvedEntry.primaryGloss,
+            word: resolvedEntry.word,
+            updatedAt: DateTime.now(),
+          ),
+        };
     _persistPlaybackProgress();
   }
 
@@ -2812,6 +2833,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     _startupStore.syncPersistentStateFromSettings();
     _weatherStore.syncEnabledFromSettings();
+    _toolboxLayoutState = _settings.loadToolboxLayoutState().normalizedFor(
+      ModuleIds.toolboxModules,
+    );
     _rememberedWords = _settings.loadRememberedWords();
     _playbackStore.playbackProgressByWordbookPath = _settings
         .loadPlaybackProgressByWordbook();

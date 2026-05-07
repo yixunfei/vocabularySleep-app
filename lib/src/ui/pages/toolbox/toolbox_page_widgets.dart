@@ -76,9 +76,22 @@ class ToolboxIntroPanel extends StatelessWidget {
 }
 
 class ToolboxSection extends StatelessWidget {
-  const ToolboxSection({super.key, required this.section});
+  const ToolboxSection({
+    super.key,
+    required this.section,
+    this.editing = false,
+    this.onEntryLongPress,
+    this.onEntryRemove,
+    this.dragTooltip = '',
+    this.removeTooltip = '',
+  });
 
   final ToolboxSectionData section;
+  final bool editing;
+  final ValueChanged<ToolboxEntryData>? onEntryLongPress;
+  final ValueChanged<ToolboxEntryData>? onEntryRemove;
+  final String dragTooltip;
+  final String removeTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +115,18 @@ class ToolboxSection extends StatelessWidget {
                   .map(
                     (entry) => SizedBox(
                       width: cardWidth,
-                      child: ToolboxEntryCard(entry: entry),
+                      child: ToolboxEntryCard(
+                        entry: entry,
+                        editing: editing,
+                        onLongPress: onEntryLongPress == null
+                            ? null
+                            : () => onEntryLongPress!(entry),
+                        onRemove: onEntryRemove == null
+                            ? null
+                            : () => onEntryRemove!(entry),
+                        dragTooltip: dragTooltip,
+                        removeTooltip: removeTooltip,
+                      ),
                     ),
                   )
                   .toList(growable: false),
@@ -115,9 +139,24 @@ class ToolboxSection extends StatelessWidget {
 }
 
 class ToolboxEntryCard extends ConsumerStatefulWidget {
-  const ToolboxEntryCard({super.key, required this.entry});
+  const ToolboxEntryCard({
+    super.key,
+    required this.entry,
+    this.editing = false,
+    this.onLongPress,
+    this.onRemove,
+    this.dragHandle,
+    this.dragTooltip = '',
+    this.removeTooltip = '',
+  });
 
   final ToolboxEntryData entry;
+  final bool editing;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onRemove;
+  final Widget? dragHandle;
+  final String dragTooltip;
+  final String removeTooltip;
 
   @override
   ConsumerState<ToolboxEntryCard> createState() => _ToolboxEntryCardState();
@@ -173,6 +212,9 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
               });
             },
             onTap: () {
+              if (widget.editing) {
+                return;
+              }
               final appState = ref.read(appStateProvider);
               pushModuleRoute<void>(
                 context,
@@ -181,6 +223,7 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
                 builder: (_) => entry.pageBuilder(),
               );
             },
+            onLongPress: widget.onLongPress,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -230,51 +273,128 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  SizedBox(
-                    height: 52,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        AnimatedContainer(
-                          duration: AppDurations.quick,
-                          curve: AppEasing.snappy,
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: accent.withValues(
-                              alpha: _pressed ? 0.12 : 0.08,
-                            ),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 18,
-                            color: accent.withValues(
-                              alpha: _pressed ? 0.98 : 0.84,
-                            ),
-                          ),
-                        ),
-                        AnimatedOpacity(
-                          duration: AppDurations.quick,
-                          curve: AppEasing.gentle,
-                          opacity: _pressed ? 0.12 : 1,
-                          child: Container(
-                            width: 18,
-                            height: 3,
+                  if (widget.editing)
+                    _ToolboxEntryEditActions(
+                      accent: accent,
+                      dragHandle: widget.dragHandle,
+                      onRemove: widget.onRemove,
+                      dragTooltip: widget.dragTooltip,
+                      removeTooltip: widget.removeTooltip,
+                      removeKey: ValueKey<String>(
+                        'toolbox_remove_${entry.moduleId}',
+                      ),
+                    )
+                  else
+                    SizedBox(
+                      height: 52,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          AnimatedContainer(
+                            duration: AppDurations.quick,
+                            curve: AppEasing.snappy,
+                            width: 30,
+                            height: 30,
                             decoration: BoxDecoration(
+                              color: accent.withValues(
+                                alpha: _pressed ? 0.12 : 0.08,
+                              ),
                               borderRadius: BorderRadius.circular(999),
-                              color: accent.withValues(alpha: 0.42),
+                            ),
+                            child: Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 18,
+                              color: accent.withValues(
+                                alpha: _pressed ? 0.98 : 0.84,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          AnimatedOpacity(
+                            duration: AppDurations.quick,
+                            curve: AppEasing.gentle,
+                            opacity: _pressed ? 0.12 : 1,
+                            child: Container(
+                              width: 18,
+                              height: 3,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(999),
+                                color: accent.withValues(alpha: 0.42),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ToolboxEntryEditActions extends StatelessWidget {
+  const _ToolboxEntryEditActions({
+    required this.accent,
+    required this.dragHandle,
+    required this.onRemove,
+    required this.dragTooltip,
+    required this.removeTooltip,
+    required this.removeKey,
+  });
+
+  final Color accent;
+  final Widget? dragHandle;
+  final VoidCallback? onRemove;
+  final String dragTooltip;
+  final String removeTooltip;
+  final Key removeKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 44,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Tooltip(
+            message: dragTooltip,
+            child:
+                dragHandle ??
+                Icon(Icons.drag_handle_rounded, color: accent, size: 26),
+          ),
+          const SizedBox(height: 8),
+          Tooltip(
+            message: removeTooltip,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: removeKey,
+                borderRadius: BorderRadius.circular(999),
+                onTap: onRemove,
+                child: Ink(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: colorScheme.errorContainer.withValues(alpha: 0.74),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: colorScheme.error.withValues(alpha: 0.24),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.remove_circle_outline_rounded,
+                    size: 20,
+                    color: colorScheme.onErrorContainer,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

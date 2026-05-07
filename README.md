@@ -53,6 +53,8 @@ Toolbox UI 调整需要同步遵守：
 - `docs/toolbox_design/TOOLBOX_ANIMATION_SPEC.md`
 - `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
 
+Toolbox 首页支持用户自定义布局：点击“编辑布局”或长按工具卡片进入编辑模式，可拖拽调整模块顺序、从首页隐藏入口、恢复隐藏入口或重置默认布局。该能力只影响工具箱首页展示，和“模块管理”中的全局启停相互独立；全局禁用仍会通过模块守卫阻断入口和路由访问。
+
 ## 近期进展
 
 2026-05-07 的 toolbox 阶段提交重点收口以下内容：

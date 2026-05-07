@@ -117,6 +117,27 @@ void main() {
     expect(restored, <String>{'alpha', 'beta'});
   });
 
+  test('toolbox layout state persists through SettingsService', () {
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
+
+    expect(settings.loadToolboxLayoutState(), ToolboxLayoutState.defaults);
+
+    settings.saveToolboxLayoutState(
+      const ToolboxLayoutState(
+        order: <String>['toolbox.human_tests', 'toolbox.mini_games'],
+        hidden: <String>{'toolbox.sleep_assistant'},
+      ),
+    );
+
+    final restored = createSettings(store).loadToolboxLayoutState();
+    expect(restored.order, <String>[
+      'toolbox.human_tests',
+      'toolbox.mini_games',
+    ]);
+    expect(restored.hidden, <String>{'toolbox.sleep_assistant'});
+  });
+
   test('ambient presets persist through SettingsService', () {
     final store = _MemorySettingsStoreRepository();
     final settings = createSettings(store);
@@ -128,7 +149,7 @@ void main() {
         createdAt: DateTime(2026, 3, 30),
         masterVolume: 0.72,
         entries: <AmbientPresetEntry>[
-          AmbientPresetEntry(
+          const AmbientPresetEntry(
             sourceId: 'downloaded_ambient_noise_white',
             name: 'White Noise',
             volume: 0.4,

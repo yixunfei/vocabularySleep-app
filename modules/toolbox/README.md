@@ -14,6 +14,19 @@
 - 子模块入口: `toolbox_page_content.dart` 的 `ToolboxEntryData.moduleId`
 - 路由守卫: `ui/module/module_access.dart` 的 `pushModuleRoute`
 
+## 首页布局自定义
+- 状态模型: `ToolboxLayoutState`，位于 `lib/src/models/settings_dto.dart`。
+- 持久化键: `SettingsService.toolboxLayoutKey`，仅保存工具箱首页模块顺序 `order` 和首页隐藏列表 `hidden`。
+- 页面入口: `ToolboxPage` 默认展示“我的工具箱”，按 `ToolboxLayoutState` 对 `buildAllToolboxSections()` 中的入口进行排序和过滤。
+- 交互能力:
+  - 点击“编辑布局”或长按任意工具卡片进入编辑模式。
+  - 编辑模式中使用拖拽手柄调整顺序。
+  - 点击减号只会从工具箱首页隐藏入口。
+  - “恢复隐藏入口”会把入口放回首页。
+  - “重置默认”会清空自定义顺序和隐藏列表。
+- 边界说明: 首页隐藏不等于禁用模块。全局启停仍由 `ModuleRegistry + ModuleToggleState + ModuleRuntimeGuard` 和模块管理页控制；隐藏入口不会阻断已有路由守卫允许的访问。
+- 兼容策略: 渲染和保存前按 `ModuleIds.toolboxModules` 归一化布局状态，过滤未知 ID，并在新增 toolbox 子模块时自动补齐到可见列表末尾。
+
 ## 游戏中心
 - 入口: `MiniGamesToolPage`
 - 页面编排: `lib/src/ui/pages/toolbox_mini_games.dart`

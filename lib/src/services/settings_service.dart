@@ -23,6 +23,7 @@ class SettingsService {
   static const String remotePrewarmCompletedKey =
       'remoteResourcePrewarmCompletedV1';
   static const String moduleTogglesKey = 'module_toggles_v1';
+  static const String toolboxLayoutKey = 'toolbox_layout_v1';
 
   final SettingsStoreRepository _store;
 
@@ -304,5 +305,21 @@ class SettingsService {
 
   void saveModuleToggleState(ModuleToggleState value) {
     _store.setSetting(moduleTogglesKey, jsonEncode(value.toJsonMap()));
+  }
+
+  ToolboxLayoutState loadToolboxLayoutState() {
+    final raw = _store.getSetting(toolboxLayoutKey);
+    if (raw == null || raw.trim().isEmpty) {
+      return ToolboxLayoutState.defaults;
+    }
+    try {
+      return ToolboxLayoutState.fromJsonValue(jsonDecode(raw));
+    } catch (_) {
+      return ToolboxLayoutState.defaults;
+    }
+  }
+
+  void saveToolboxLayoutState(ToolboxLayoutState value) {
+    _store.setSetting(toolboxLayoutKey, jsonEncode(value.toJsonMap()));
   }
 }

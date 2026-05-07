@@ -3,6 +3,122 @@ import 'word_field.dart';
 import 'practice_question_type.dart';
 import 'practice_session_record.dart';
 
+class ToolboxLayoutState {
+  const ToolboxLayoutState({
+    this.version = currentVersion,
+    this.order = const <String>[],
+    this.hidden = const <String>{},
+  });
+
+  static const int currentVersion = 1;
+  static const ToolboxLayoutState defaults = ToolboxLayoutState();
+
+  final int version;
+  final List<String> order;
+  final Set<String> hidden;
+
+  bool isHidden(String moduleId) => hidden.contains(moduleId);
+
+  ToolboxLayoutState copyWith({List<String>? order, Set<String>? hidden}) {
+    return ToolboxLayoutState(
+      version: currentVersion,
+      order: order ?? this.order,
+      hidden: hidden ?? this.hidden,
+    );
+  }
+
+  ToolboxLayoutState normalizedFor(Iterable<String> moduleIds) {
+    final available = moduleIds
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+    final availableSet = available.toSet();
+    final normalizedOrder = <String>[];
+    for (final moduleId in order) {
+      final normalized = moduleId.trim();
+      if (!availableSet.contains(normalized) ||
+          normalizedOrder.contains(normalized)) {
+        continue;
+      }
+      normalizedOrder.add(normalized);
+    }
+    for (final moduleId in available) {
+      if (!normalizedOrder.contains(moduleId)) {
+        normalizedOrder.add(moduleId);
+      }
+    }
+    return ToolboxLayoutState(
+      version: currentVersion,
+      order: normalizedOrder,
+      hidden: hidden.intersection(availableSet),
+    );
+  }
+
+  Map<String, Object?> toJsonMap() {
+    return <String, Object?>{
+      'version': version,
+      'order': order,
+      'hidden': hidden.toList(growable: false)..sort(),
+    };
+  }
+
+  factory ToolboxLayoutState.fromJsonValue(Object? value) {
+    if (value is! Map) {
+      return defaults;
+    }
+    final rawOrder = value['order'];
+    final rawHidden = value['hidden'];
+    return ToolboxLayoutState(
+      version: switch (value['version']) {
+        int version => version,
+        num version => version.toInt(),
+        _ => currentVersion,
+      },
+      order: rawOrder is List
+          ? rawOrder
+                .map((item) => '$item'.trim())
+                .where((item) => item.isNotEmpty)
+                .toSet()
+                .toList(growable: false)
+          : const <String>[],
+      hidden: rawHidden is List
+          ? rawHidden
+                .map((item) => '$item'.trim())
+                .where((item) => item.isNotEmpty)
+                .toSet()
+          : const <String>{},
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ToolboxLayoutState &&
+        other.version == version &&
+        _sameStringList(other.order, order) &&
+        other.hidden.length == hidden.length &&
+        other.hidden.containsAll(hidden);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    version,
+    Object.hashAll(order),
+    Object.hashAll(hidden.toList(growable: false)..sort()),
+  );
+
+  static bool _sameStringList(List<String> a, List<String> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i += 1) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
+
 class TestModeState {
   const TestModeState({
     this.enabled = false,

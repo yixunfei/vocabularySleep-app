@@ -10,6 +10,9 @@ extension _AppStateStartup on AppState {
     try {
       await _maintenanceRepository.init();
       _moduleToggleState = _settings.loadModuleToggleState();
+      _toolboxLayoutState = _settings.loadToolboxLayoutState().normalizedFor(
+        ModuleIds.toolboxModules,
+      );
 
       if (isModuleEnabled(ModuleIds.focus)) {
         await _focusService.init();
@@ -144,6 +147,58 @@ extension _AppStateStartup on AppState {
       _startupStore.setPendingTodoReminderLaunchId(null);
     }
 
+    _notifyStateChanged();
+  }
+
+  void _setToolboxEntryOrderImpl(List<String> moduleIds) {
+    final normalized = _toolboxLayoutState
+        .copyWith(order: moduleIds)
+        .normalizedFor(ModuleIds.toolboxModules);
+    if (normalized == _toolboxLayoutState) {
+      return;
+    }
+    _toolboxLayoutState = normalized;
+    _settings.saveToolboxLayoutState(normalized);
+    _notifyStateChanged();
+  }
+
+  void _hideToolboxEntryImpl(String moduleId) {
+    final normalizedModuleId = moduleId.trim();
+    if (!ModuleIds.toolboxModules.contains(normalizedModuleId) ||
+        _toolboxLayoutState.hidden.contains(normalizedModuleId)) {
+      return;
+    }
+    final normalized = _toolboxLayoutState
+        .copyWith(
+          hidden: <String>{..._toolboxLayoutState.hidden, normalizedModuleId},
+        )
+        .normalizedFor(ModuleIds.toolboxModules);
+    _toolboxLayoutState = normalized;
+    _settings.saveToolboxLayoutState(normalized);
+    _notifyStateChanged();
+  }
+
+  void _restoreToolboxEntryImpl(String moduleId) {
+    final normalizedModuleId = moduleId.trim();
+    if (!_toolboxLayoutState.hidden.contains(normalizedModuleId)) {
+      return;
+    }
+    final nextHidden = <String>{..._toolboxLayoutState.hidden}
+      ..remove(normalizedModuleId);
+    final normalized = _toolboxLayoutState
+        .copyWith(hidden: nextHidden)
+        .normalizedFor(ModuleIds.toolboxModules);
+    _toolboxLayoutState = normalized;
+    _settings.saveToolboxLayoutState(normalized);
+    _notifyStateChanged();
+  }
+
+  void _resetToolboxLayoutImpl() {
+    if (_toolboxLayoutState == ToolboxLayoutState.defaults) {
+      return;
+    }
+    _toolboxLayoutState = ToolboxLayoutState.defaults;
+    _settings.saveToolboxLayoutState(_toolboxLayoutState);
     _notifyStateChanged();
   }
 

@@ -1927,6 +1927,67 @@ void main() {
       expect(find.text('2'), findsWidgets);
     });
 
+    testWidgets('toolbox page supports editable home layout', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      expect(find.text('My toolbox'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Human test hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final humanTestCard = find
+          .ancestor(
+            of: find.text('Human test hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.ensureVisible(humanTestCard);
+      await tester.pumpAndSettle();
+      await tester.longPress(humanTestCard);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Toolbox home is in edit mode'), findsOneWidget);
+      expect(find.text('Done'), findsWidgets);
+
+      await tester.scrollUntilVisible(
+        find.text('Human test hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final removeHumanTests = find.byKey(
+        const ValueKey<String>('toolbox_remove_toolbox.human_tests'),
+      );
+      expect(removeHumanTests, findsOneWidget);
+      await tester.ensureVisible(removeHumanTests);
+      await tester.pumpAndSettle();
+      await tester.tap(removeHumanTests, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(state.toolboxLayoutState.hidden.length, 1);
+      expect(find.textContaining('hidden'), findsWidgets);
+
+      final restoreEntriesButton = find.byKey(
+        const ValueKey<String>('toolbox_restore_entries_button'),
+      );
+      await tester.ensureVisible(restoreEntriesButton);
+      await tester.pumpAndSettle();
+      await tester.tap(restoreEntriesButton);
+      await tester.pumpAndSettle();
+      expect(find.text('Restore hidden entries'), findsOneWidget);
+
+      await tester.tap(find.text('Restore').last);
+      await tester.pumpAndSettle();
+
+      expect(state.toolboxLayoutState.hidden, isEmpty);
+    });
+
     testWidgets('soothing music page shows extended modes', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await tester.binding.setSurfaceSize(const Size(1280, 900));
@@ -3932,6 +3993,7 @@ class _FakeAppState extends ChangeNotifier
   StudyStartupTab _studyStartupTab = StudyStartupTab.play;
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
+  ToolboxLayoutState _toolboxLayoutState = ToolboxLayoutState.defaults;
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
@@ -4366,6 +4428,9 @@ class _FakeAppState extends ChangeNotifier
   ModuleToggleState get moduleToggleState => _moduleToggleState;
 
   @override
+  ToolboxLayoutState get toolboxLayoutState => _toolboxLayoutState;
+
+  @override
   AppHomeTab get startupPage => _startupPage;
 
   @override
@@ -4431,6 +4496,38 @@ class _FakeAppState extends ChangeNotifier
   @override
   void setModuleEnabled(String moduleId, bool enabled) {
     _moduleToggleState = _moduleToggleState.copyWithModule(moduleId, enabled);
+    notifyListeners();
+  }
+
+  @override
+  void setToolboxEntryOrder(List<String> moduleIds) {
+    _toolboxLayoutState = _toolboxLayoutState
+        .copyWith(order: moduleIds)
+        .normalizedFor(ModuleIds.toolboxModules);
+    notifyListeners();
+  }
+
+  @override
+  void hideToolboxEntry(String moduleId) {
+    _toolboxLayoutState = _toolboxLayoutState
+        .copyWith(hidden: <String>{..._toolboxLayoutState.hidden, moduleId})
+        .normalizedFor(ModuleIds.toolboxModules);
+    notifyListeners();
+  }
+
+  @override
+  void restoreToolboxEntry(String moduleId) {
+    final nextHidden = <String>{..._toolboxLayoutState.hidden}
+      ..remove(moduleId);
+    _toolboxLayoutState = _toolboxLayoutState
+        .copyWith(hidden: nextHidden)
+        .normalizedFor(ModuleIds.toolboxModules);
+    notifyListeners();
+  }
+
+  @override
+  void resetToolboxLayout() {
+    _toolboxLayoutState = ToolboxLayoutState.defaults;
     notifyListeners();
   }
 

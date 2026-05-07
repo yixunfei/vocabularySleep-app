@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/module_system/module_id.dart';
 import '../../../i18n/app_i18n.dart';
+import '../../../models/settings_dto.dart';
 import '../../theme/toolbox_colors.dart';
 import '../../ui_copy.dart';
 import '../toolbox_daily_choice_tool.dart';
@@ -18,13 +19,68 @@ import 'toolbox_page_models.dart';
 List<ToolboxSectionData> buildToolboxSections(
   AppI18n i18n, {
   required bool Function(String moduleId) isModuleEnabled,
+  ToolboxLayoutState layoutState = ToolboxLayoutState.defaults,
 }) {
-  final sections = <ToolboxSectionData>[
+  final sections = buildAllToolboxSections(i18n);
+  final visibleEntries = orderedToolboxEntries(
+    sections,
+    layoutState: layoutState,
+    isModuleEnabled: isModuleEnabled,
+  );
+  return sections
+      .map((section) {
+        final visibleSectionEntries = visibleEntries
+            .where((entry) => section.entries.any((item) => item == entry))
+            .toList(growable: false);
+        return ToolboxSectionData(
+          title: section.title,
+          subtitle: section.subtitle,
+          entries: visibleSectionEntries,
+        );
+      })
+      .where((section) => section.entries.isNotEmpty)
+      .toList(growable: false);
+}
+
+List<ToolboxEntryData> orderedToolboxEntries(
+  List<ToolboxSectionData> sections, {
+  required ToolboxLayoutState layoutState,
+  required bool Function(String moduleId) isModuleEnabled,
+  bool includeHidden = false,
+}) {
+  final entries = flattenToolboxEntries(sections)
+      .where((entry) => isModuleEnabled(entry.moduleId))
+      .where((entry) => includeHidden || !layoutState.isHidden(entry.moduleId))
+      .toList(growable: false);
+  final order = layoutState
+      .normalizedFor(entries.map((entry) => entry.moduleId))
+      .order;
+  final originalIndexById = <String, int>{
+    for (var i = 0; i < entries.length; i += 1) entries[i].moduleId: i,
+  };
+  final indexById = <String, int>{
+    for (var i = 0; i < order.length; i += 1) order[i]: i,
+  };
+  entries.sort((a, b) {
+    return (indexById[a.moduleId] ?? originalIndexById[a.moduleId] ?? 0)
+        .compareTo(indexById[b.moduleId] ?? originalIndexById[b.moduleId] ?? 0);
+  });
+  return entries;
+}
+
+List<ToolboxEntryData> flattenToolboxEntries(
+  List<ToolboxSectionData> sections,
+) {
+  return <ToolboxEntryData>[for (final section in sections) ...section.entries];
+}
+
+List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
+  return <ToolboxSectionData>[
     ToolboxSectionData(
       title: pickUiText(i18n, zh: '睡眠支持', en: 'Sleep support'),
       subtitle: pickUiText(
         i18n,
-        zh: '从评估、记录、减压到夜醒救援的一体化睡眠模块。',
+        zh: '从评估、记录、睡前流程到夜醒救援的一体化睡眠模块。',
         en: 'An integrated sleep module spanning assessment, logging, wind-down, and rescue.',
       ),
       entries: <ToolboxEntryData>[
@@ -46,7 +102,7 @@ List<ToolboxSectionData> buildToolboxSections(
       title: pickUiText(i18n, zh: '小游戏', en: 'Mini games'),
       subtitle: pickUiText(
         i18n,
-        zh: '轻量益智与拼图。',
+        zh: '轻量益智与拼图游戏。',
         en: 'Lightweight puzzles and small games.',
       ),
       entries: <ToolboxEntryData>[
@@ -55,7 +111,7 @@ List<ToolboxSectionData> buildToolboxSections(
           title: pickUiText(i18n, zh: '游戏中心', en: 'Game hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '包含俄罗斯轮盘赌、俄罗斯方块、推箱子、数独、扫雷和导入图片拼图。',
+            zh: '包含俄罗斯轮盘、俄罗斯方块、推箱子、数独、扫雷和导入图片拼图。',
             en: 'Includes roulette, Tetris, Sokoban, Sudoku, Minesweeper, and imported-image jigsaw.',
           ),
           icon: Icons.videogame_asset_rounded,
@@ -77,7 +133,7 @@ List<ToolboxSectionData> buildToolboxSections(
           title: pickUiText(i18n, zh: '人类测试中心', en: 'Human test hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '包含反应、记忆、打字、色觉、动态视力、计算、注意力和手眼协调等本地测试。',
+            zh: '反应、记忆、打字、色觉、动态视力、计算、注意力和手眼协调等本地测试。',
             en: 'Includes local tests for reaction, memory, typing, color vision, dynamic vision, calculation, attention, and coordination.',
           ),
           icon: Icons.psychology_alt_rounded,
@@ -123,7 +179,7 @@ List<ToolboxSectionData> buildToolboxSections(
           title: pickUiText(i18n, zh: '疗愈音钵', en: 'Healing bowls'),
           subtitle: pickUiText(
             i18n,
-            zh: '参考站频率体系、移动端抽屉交互与沉静共振尾韵。',
+            zh: '参考频率体系、移动端抽屉交互与沉静共振尾音。',
             en: 'Reference-matched tones, mobile drawer controls, and spacious resonance.',
           ),
           icon: Icons.blur_circular_rounded,
@@ -160,7 +216,7 @@ List<ToolboxSectionData> buildToolboxSections(
       title: pickUiText(i18n, zh: '专注训练', en: 'Focus drills'),
       subtitle: pickUiText(
         i18n,
-        zh: '稳定你的注意力、节奏与呼吸。',
+        zh: '稳定注意力、节奏与呼吸。',
         en: 'Steady your attention, rhythm, and breathing.',
       ),
       entries: <ToolboxEntryData>[
@@ -181,7 +237,7 @@ List<ToolboxSectionData> buildToolboxSections(
           title: pickUiText(i18n, zh: '呼吸训练', en: 'Breathing practice'),
           subtitle: pickUiText(
             i18n,
-            zh: '做专注、放松、睡前和生理叹息练习。',
+            zh: '适合专注、放松、睡前和生理叹息的呼吸练习。',
             en: 'Scenario-based breathing for focus, relaxation, bedtime, and physiological sigh drills.',
           ),
           icon: Icons.air_rounded,
@@ -194,7 +250,7 @@ List<ToolboxSectionData> buildToolboxSections(
       title: pickUiText(i18n, zh: '静心减压', en: 'Calm tools'),
       subtitle: pickUiText(
         i18n,
-        zh: '通过计数、动作和简洁视觉放松。',
+        zh: '通过计数、触摸和简单视觉放松。',
         en: 'Unwind through counting, touch, and simple visuals.',
       ),
       entries: <ToolboxEntryData>[
@@ -215,7 +271,7 @@ List<ToolboxSectionData> buildToolboxSections(
           title: pickUiText(i18n, zh: '禅意沙盘', en: 'Zen sand tray'),
           subtitle: pickUiText(
             i18n,
-            zh: '画耙痕、摆石子，做一个迷你沙盘。',
+            zh: '画出痕迹、摆放石子，做一个迷你沙盘。',
             en: 'Mobile-friendly sand drawing with synced textures, quick rituals, and calm focus resets.',
           ),
           icon: Icons.landscape_rounded,
@@ -247,16 +303,4 @@ List<ToolboxSectionData> buildToolboxSections(
       ],
     ),
   ];
-  return sections
-      .map(
-        (section) => ToolboxSectionData(
-          title: section.title,
-          subtitle: section.subtitle,
-          entries: section.entries
-              .where((entry) => isModuleEnabled(entry.moduleId))
-              .toList(growable: false),
-        ),
-      )
-      .where((section) => section.entries.isNotEmpty)
-      .toList(growable: false);
 }
