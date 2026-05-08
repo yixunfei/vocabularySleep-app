@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../services/audio_player_source_helper.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
@@ -22,6 +24,11 @@ part 'toolbox_human_tests_typing_widgets.dart';
 part 'toolbox_human_tests_dynamic_vision.dart';
 part 'toolbox_human_tests_dynamic_vision_parts.dart';
 part 'toolbox_human_tests_dynamic_vision_ui.dart';
+part 'toolbox_human_tests_visual_search.dart';
+part 'toolbox_human_tests_auditory.dart';
+part 'toolbox_human_tests_switching.dart';
+part 'toolbox_human_tests_drag_tracking.dart';
+part 'toolbox_human_tests_bimanual.dart';
 part 'toolbox_human_tests_hand_eye.dart';
 part 'toolbox_human_tests_hand_eye_joystick.dart';
 part 'toolbox_human_tests_hand_eye_parts.dart';
@@ -56,8 +63,8 @@ class HumanTestsToolPage extends StatelessWidget {
       title: pickUiText(i18n, zh: '人类测试', en: 'Human tests'),
       subtitle: pickUiText(
         i18n,
-        zh: '参考 Human Benchmark 条目组织的本地趣味测试，覆盖反应、记忆、视觉、手眼协调、计算和注意力。',
-        en: 'A local set of Human Benchmark-inspired tests covering reaction, memory, vision, coordination, calculation, and attention.',
+        zh: '参考 Human Benchmark 条目组织的本地趣味测试，覆盖反应、记忆、视觉搜索、听觉、打字、手眼协调、双任务切换、计算和注意力。',
+        en: 'A local set of Human Benchmark-inspired tests covering reaction, memory, visual search, sound, typing, coordination, switching, calculation, and attention.',
       ),
       child: const _HumanTestsHub(),
     );
@@ -200,6 +207,17 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       pageBuilder: () => const VisualMemoryTestPage(),
     ),
     _HumanTestEntry(
+      title: pickUiText(i18n, zh: '视觉搜索', en: 'Visual search'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '在密集特征网格中快速找目标，并在双面板对照模式中辨别细微差异。',
+        en: 'Scan dense grids for the target, then compare paired boards to spot a subtle difference.',
+      ),
+      icon: Icons.manage_search_rounded,
+      accent: const Color(0xFF457B9D),
+      pageBuilder: () => const VisualSearchTestPage(),
+    ),
+    _HumanTestEntry(
       title: pickUiText(i18n, zh: '瞄准测试', en: 'Aim test'),
       subtitle: pickUiText(
         i18n,
@@ -220,6 +238,17 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       icon: Icons.palette_rounded,
       accent: const Color(0xFF3F9A6B),
       pageBuilder: () => const ColorVisionTestPage(),
+    ),
+    _HumanTestEntry(
+      title: pickUiText(i18n, zh: '听觉反应', en: 'Auditory reaction'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '在随机提示下练习听音反应，并在快速音效识别模式中判断声音类型。',
+        en: 'Train reaction time to a cue sound or identify which sound effect was played.',
+      ),
+      icon: Icons.hearing_rounded,
+      accent: const Color(0xFF6E9BC3),
+      pageBuilder: () => const AuditoryReactionTestPage(),
     ),
     _HumanTestEntry(
       title: pickUiText(i18n, zh: '斯特鲁普', en: 'Stroop test'),
@@ -299,6 +328,17 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       pageBuilder: () => const HandEyeCoordinationTestPage(),
     ),
     _HumanTestEntry(
+      title: pickUiText(i18n, zh: '精细拖拽追踪', en: 'Fine drag tracking'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '沿窄轨迹拖动光标，记录偏离距离、离轨次数和完成时间。',
+        en: 'Drag a small cursor along a narrow track while watching deviation, off-track events, and completion time.',
+      ),
+      icon: Icons.gesture_rounded,
+      accent: const Color(0xFF4E8B6B),
+      pageBuilder: () => const FineDragTrackingTestPage(),
+    ),
+    _HumanTestEntry(
       title: pickUiText(i18n, zh: '摇杆手眼协调', en: 'Joystick coordination'),
       subtitle: pickUiText(
         i18n,
@@ -308,6 +348,17 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       icon: Icons.gamepad_rounded,
       accent: const Color(0xFF8A6849),
       pageBuilder: () => const JoystickHandEyeCoordinationTestPage(),
+    ),
+    _HumanTestEntry(
+      title: pickUiText(i18n, zh: '双手协调', en: 'Bimanual coordination'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '在交替或同步节拍中双手协同，练习左右手切换和同次反应。',
+        en: 'Practice left-right alternation or synchronized double taps across both hands.',
+      ),
+      icon: Icons.pan_tool_alt_rounded,
+      accent: const Color(0xFFD08A3A),
+      pageBuilder: () => const BimanualCoordinationTestPage(),
     ),
     _HumanTestEntry(
       title: pickUiText(i18n, zh: '计算能力测试', en: 'Calculation test'),
@@ -330,6 +381,17 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       icon: Icons.remove_red_eye_rounded,
       accent: const Color(0xFF407E92),
       pageBuilder: () => const DynamicVisionTestPage(),
+    ),
+    _HumanTestEntry(
+      title: pickUiText(i18n, zh: '双任务切换', en: 'Dual-task switching'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '在数字与颜色判断之间来回切换注意力，并统计切换代价。',
+        en: 'Switch between two judgment rules and track switch cost, repeat cost, and response speed.',
+      ),
+      icon: Icons.swap_horiz_rounded,
+      accent: const Color(0xFFB05C5C),
+      pageBuilder: () => const DualTaskSwitchTestPage(),
     ),
     _HumanTestEntry(
       title: pickUiText(i18n, zh: '持续注意力测试', en: 'Sustained attention'),

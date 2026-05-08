@@ -882,12 +882,14 @@ class _HandEyeJoystickPad extends StatefulWidget {
     required this.enabled,
     required this.onChanged,
     this.size = 132,
+    this.fullscreenStyle = false,
   });
 
   final Offset vector;
   final bool enabled;
   final ValueChanged<Offset> onChanged;
   final double size;
+  final bool fullscreenStyle;
 
   @override
   State<_HandEyeJoystickPad> createState() => _HandEyeJoystickPadState();
@@ -948,7 +950,10 @@ class _HandEyeJoystickPadState extends State<_HandEyeJoystickPad> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final accent = _JoystickHandEyeCardState._accent;
-    final knob = (widget.size * 0.35).clamp(38.0, 56.0);
+    final knob = (widget.size * (widget.fullscreenStyle ? 0.31 : 0.35)).clamp(
+      38.0,
+      56.0,
+    );
     final center = Offset(widget.size / 2, widget.size / 2);
     final normalizedDistance = widget.vector.distance <= 1
         ? widget.vector.distance
@@ -986,11 +991,15 @@ class _HandEyeJoystickPadState extends State<_HandEyeJoystickPad> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: colorScheme.surfaceContainerHighest.withValues(
-                      alpha: widget.enabled ? 0.70 : 0.36,
+                      alpha: widget.fullscreenStyle
+                          ? (widget.enabled ? 0.52 : 0.26)
+                          : (widget.enabled ? 0.70 : 0.36),
                     ),
                     border: Border.all(
                       color: accent.withValues(
-                        alpha: widget.enabled ? 0.36 : 0.16,
+                        alpha: widget.fullscreenStyle
+                            ? (widget.enabled ? 0.24 : 0.12)
+                            : (widget.enabled ? 0.36 : 0.16),
                       ),
                     ),
                   ),
@@ -1007,12 +1016,16 @@ class _HandEyeJoystickPadState extends State<_HandEyeJoystickPad> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: widget.enabled
-                        ? accent.withValues(alpha: 0.86)
+                        ? accent.withValues(
+                            alpha: widget.fullscreenStyle ? 0.72 : 0.86,
+                          )
                         : colorScheme.outlineVariant,
                     boxShadow: widget.enabled
                         ? <BoxShadow>[
                             BoxShadow(
-                              color: accent.withValues(alpha: 0.18),
+                              color: accent.withValues(
+                                alpha: widget.fullscreenStyle ? 0.10 : 0.18,
+                              ),
                               blurRadius: 16,
                               offset: const Offset(0, 7),
                             ),

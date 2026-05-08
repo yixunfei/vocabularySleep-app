@@ -25,6 +25,95 @@ class StroopTestPage extends StatelessWidget {
   }
 }
 
+class _ScratchTicketStubChip extends StatelessWidget {
+  const _ScratchTicketStubChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFFF8F0DE),
+        border: Border.all(color: const Color(0x2EB78328)),
+      ),
+      child: Text(
+        '$label $value',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: const Color(0xFF76551A),
+          fontWeight: FontWeight.w800,
+          fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScratchBarcodeStrip extends StatelessWidget {
+  const _ScratchBarcodeStrip({required this.digits, required this.seed});
+
+  final String digits;
+  final int seed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        SizedBox(
+          height: 38,
+          child: CustomPaint(painter: _ScratchBarcodePainter(seed: seed)),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          digits,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: const Color(0xFF5E5A52),
+            letterSpacing: 0,
+            fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ScratchBarcodePainter extends CustomPainter {
+  const _ScratchBarcodePainter({required this.seed});
+
+  final int seed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = math.Random(seed & 0x7fffffff);
+    final paint = Paint()..color = const Color(0xFF2F3135);
+    var x = 0.0;
+    while (x < size.width) {
+      final width = 1.0 + random.nextInt(3).toDouble();
+      final gap = 1.0 + random.nextInt(2).toDouble();
+      final heightFactor = 0.78 + random.nextDouble() * 0.22;
+      canvas.drawRect(
+        Rect.fromLTWH(x, size.height * (1 - heightFactor), width, size.height),
+        paint,
+      );
+      x += width + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScratchBarcodePainter oldDelegate) {
+    return oldDelegate.seed != seed;
+  }
+}
+
 class _StroopItem {
   const _StroopItem({required this.zh, required this.en, required this.color});
 
@@ -585,8 +674,24 @@ class _StroopReportDialog extends StatelessWidget {
   }
 }
 
-class LuckTestPage extends StatelessWidget {
+class LuckTestPage extends StatefulWidget {
   const LuckTestPage({super.key});
+
+  @override
+  State<LuckTestPage> createState() => _LuckTestPageState();
+}
+
+enum _LuckTestModule { draw, scratch }
+
+class _LuckTestPageState extends State<LuckTestPage> {
+  _LuckTestModule _module = _LuckTestModule.draw;
+
+  void _setModule(_LuckTestModule module) {
+    if (_module == module) {
+      return;
+    }
+    setState(() => _module = module);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -595,23 +700,56 @@ class LuckTestPage extends StatelessWidget {
       title: pickUiText(i18n, zh: '运气测试', en: 'Luck test'),
       subtitle: pickUiText(
         i18n,
-        zh: '支持单抽、十连、二十连、概率自定义和目标抽取，按期望值计算幸运指数。',
-        en: 'Single, 10x, and 20x card draws with custom odds, goals, and expectation-based luck index.',
+        zh: '支持抽卡和独立刮刮乐两种子模块，并提供自定义概率与结果报告。',
+        en: 'Draw cards or play a standalone scratch-off mode with custom odds and reports.',
       ),
       accent: const Color(0xFFD0923A),
       icon: Icons.casino_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择抽卡模式或目标',
-        en: 'Next: choose a draw mode or target',
+        zh: '下一步：选择运气子模块',
+        en: 'Next: choose a luck module',
       ),
-      child: const _LuckTestCard(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              ChoiceChip(
+                key: const ValueKey<String>('luck-module-draw'),
+                label: Text(pickUiText(i18n, zh: '抽卡', en: 'Draw cards')),
+                selected: _module == _LuckTestModule.draw,
+                onSelected: (_) => _setModule(_LuckTestModule.draw),
+              ),
+              ChoiceChip(
+                key: const ValueKey<String>('luck-module-scratch'),
+                label: Text(pickUiText(i18n, zh: '刮刮乐', en: 'Scratch')),
+                selected: _module == _LuckTestModule.scratch,
+                onSelected: (_) => _setModule(_LuckTestModule.scratch),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: _module == _LuckTestModule.draw
+                ? const _LuckTestCard(key: ValueKey<String>('luck-draw-module'))
+                : const _LuckScratchTestCard(
+                    key: ValueKey<String>('luck-scratch-module'),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _LuckTestCard extends StatefulWidget {
-  const _LuckTestCard();
+  const _LuckTestCard({super.key});
 
   @override
   State<_LuckTestCard> createState() => _LuckTestCardState();
@@ -634,8 +772,6 @@ class _LuckCardTier {
 }
 
 enum _LuckDrawMode { single, ten, twenty }
-
-enum _LuckRevealMode { cards, scratch }
 
 enum _LuckGoalType { unlimited, tierCount, luckIndex, drawCount }
 
@@ -700,7 +836,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
   _LuckCardTier? _lastTier;
   _LuckCardTier? _revealedTier;
   _LuckDrawMode _drawMode = _LuckDrawMode.single;
-  _LuckRevealMode _revealMode = _LuckRevealMode.cards;
   _LuckGoalType _goalType = _LuckGoalType.unlimited;
   int _goalTierIndex = 4;
   int _goalTierCount = 1;
@@ -712,7 +847,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
   bool _goalReportShown = false;
   bool _reportDialogOpen = false;
   bool _rareEffectPlaying = false;
-  double _scratchProgress = 0;
   int _lastBatchPointerIndex = -1;
   OverlayEntry? _rareOverlayEntry;
 
@@ -749,12 +883,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _batchCards.isNotEmpty &&
       _batchRevealed.isNotEmpty &&
       _batchRevealed.every((revealed) => revealed);
-
-  bool get _scratchReady =>
-      _revealMode == _LuckRevealMode.scratch &&
-      _batchCards.isNotEmpty &&
-      _batchCards.length == 1 &&
-      !_batchRevealed.first;
 
   double get _weightSum => _weights.fold(0, (sum, value) => sum + value);
 
@@ -945,10 +1073,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
   }
 
   Future<void> _drawCurrentMode() async {
-    if (_revealMode == _LuckRevealMode.scratch) {
-      await _drawBatch(1);
-      return;
-    }
     if (_drawMode == _LuckDrawMode.single) {
       await _pickCard(_random.nextInt(_deckOrder.length));
       return;
@@ -957,7 +1081,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
   }
 
   Future<void> _drawBatch(int count) async {
-    if (_busy || (_batchActive && _revealMode != _LuckRevealMode.scratch)) {
+    if (_busy || _batchActive) {
       return;
     }
     final token = ++_flipToken;
@@ -969,7 +1093,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _lastBatch.clear();
       _batchCards.clear();
       _batchRevealed.clear();
-      _scratchProgress = 0;
       _lastBatchPointerIndex = -1;
     });
     if (showShuffle) {
@@ -1076,25 +1199,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
     }
   }
 
-  void _scratchAt(Offset localPosition, Size size) {
-    if (!_scratchReady || size.width <= 0 || size.height <= 0) {
-      return;
-    }
-    final inBounds =
-        localPosition.dx >= 0 &&
-        localPosition.dy >= 0 &&
-        localPosition.dx <= size.width &&
-        localPosition.dy <= size.height;
-    if (!inBounds) {
-      return;
-    }
-    final nextProgress = (_scratchProgress + 0.085).clamp(0.0, 1.0);
-    setState(() => _scratchProgress = nextProgress);
-    if (nextProgress >= 0.72) {
-      unawaited(_revealBatchCard(0));
-    }
-  }
-
   Future<void> _continueBatch() async {
     if (_busy || _batchActive || _drawMode == _LuckDrawMode.single) {
       return;
@@ -1128,7 +1232,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _revealedTier = null;
       _shuffling = false;
       _goalReportShown = false;
-      _scratchProgress = 0;
       _lastBatchPointerIndex = -1;
       _deckOrder.shuffle(_random);
     });
@@ -1153,7 +1256,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _batchCards.clear();
       _batchRevealed.clear();
       _lastBatch.clear();
-      _scratchProgress = 0;
       _lastBatchPointerIndex = -1;
     });
   }
@@ -1163,32 +1265,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _LuckDrawMode.single => pickUiText(i18n, zh: '单抽', en: 'Single'),
       _LuckDrawMode.ten => pickUiText(i18n, zh: '十连', en: '10 draws'),
       _LuckDrawMode.twenty => pickUiText(i18n, zh: '二十连', en: '20 draws'),
-    };
-  }
-
-  void _setRevealMode(_LuckRevealMode mode) {
-    if (_busy || _revealMode == mode) {
-      return;
-    }
-    setState(() {
-      _revealMode = mode;
-      _drawMode = mode == _LuckRevealMode.scratch
-          ? _LuckDrawMode.single
-          : _drawMode;
-      _selectedCard = -1;
-      _revealedTier = null;
-      _batchCards.clear();
-      _batchRevealed.clear();
-      _lastBatch.clear();
-      _scratchProgress = 0;
-      _lastBatchPointerIndex = -1;
-    });
-  }
-
-  String _revealModeLabel(AppI18n i18n, _LuckRevealMode mode) {
-    return switch (mode) {
-      _LuckRevealMode.cards => pickUiText(i18n, zh: '翻卡', en: 'Flip cards'),
-      _LuckRevealMode.scratch => pickUiText(i18n, zh: '刮刮乐', en: 'Scratch'),
     };
   }
 
@@ -1558,118 +1634,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
     );
   }
 
-  Widget _buildScratchStage(BuildContext context, AppI18n i18n) {
-    final theme = Theme.of(context);
-    final tier = _batchCards.isEmpty ? null : _batchCards.first;
-    final revealed = _batchRevealed.isNotEmpty && _batchRevealed.first;
-    final progress = revealed ? 1.0 : _scratchProgress;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        const height = 188.0;
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onPanStart: tier == null
-              ? null
-              : (details) =>
-                    _scratchAt(details.localPosition, Size(width, height)),
-          onPanUpdate: tier == null
-              ? null
-              : (details) =>
-                    _scratchAt(details.localPosition, Size(width, height)),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              SizedBox(
-                height: height,
-                width: double.infinity,
-                child: tier == null
-                    ? _buildScratchEmpty(context, i18n)
-                    : _buildCardBack(context, i18n, 1, tier),
-              ),
-              if (tier != null && !revealed)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: Opacity(
-                      opacity: (1 - progress).clamp(0.0, 0.92),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: <Color>[
-                              theme.colorScheme.surfaceContainerHighest,
-                              theme.colorScheme.outlineVariant,
-                              theme.colorScheme.surfaceContainerLow,
-                            ],
-                          ),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Icon(
-                                Icons.gesture_rounded,
-                                color: theme.colorScheme.onSurfaceVariant,
-                                size: 34,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '滑动刮开',
-                                  en: 'Swipe to scratch',
-                                ),
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: 160,
-                                child: LinearProgressIndicator(value: progress),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildScratchEmpty(BuildContext context, AppI18n i18n) {
-    final theme = Theme.of(context);
-    return Container(
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.34,
-        ),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Text(
-        pickUiText(
-          i18n,
-          zh: '点击下方按钮生成一张刮刮乐奖面。',
-          en: 'Press the button below to generate one scratch card.',
-        ),
-        textAlign: TextAlign.center,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w800,
-          height: 1.35,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
@@ -1723,17 +1687,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
                           zh: '已翻开 $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length} 张：${_batchSummary(i18n)}',
                           en: 'Revealed $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length}: ${_batchSummary(i18n)}',
                         )
-                      : _revealMode == _LuckRevealMode.scratch &&
-                            _batchCards.isNotEmpty
-                      ? pickUiText(
-                          i18n,
-                          zh: _batchComplete
-                              ? '刮开完成：${_batchSummary(i18n)}'
-                              : '刮刮乐已生成，滑动灰色涂层逐步刮开。',
-                          en: _batchComplete
-                              ? 'Scratch complete: ${_batchSummary(i18n)}'
-                              : 'Scratch card ready. Swipe across the cover to reveal it.',
-                        )
                       : _batchActive
                       ? pickUiText(
                           i18n,
@@ -1757,9 +1710,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
                 ),
               ),
               const SizedBox(height: 12),
-              if (_revealMode == _LuckRevealMode.scratch)
-                _buildScratchStage(context, i18n)
-              else if (_drawMode == _LuckDrawMode.single)
+              if (_drawMode == _LuckDrawMode.single)
                 AnimatedBuilder(
                   animation: _flipController,
                   builder: (context, _) {
@@ -1798,8 +1749,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
                     ),
                   ),
                 ),
-              if (_revealMode == _LuckRevealMode.cards &&
-                  _drawMode != _LuckDrawMode.single &&
+              if (_drawMode != _LuckDrawMode.single &&
                   _batchCards.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 _HumanSettingsSection(
@@ -1890,20 +1840,14 @@ class _LuckTestCardState extends State<_LuckTestCard>
                     key: const ValueKey<String>('luck-primary-draw-button'),
                     label: pickUiText(
                       i18n,
-                      zh: _revealMode == _LuckRevealMode.scratch
-                          ? '生成刮刮乐'
-                          : '${_drawModeLabel(i18n, _drawMode)}抽卡',
-                      en: _revealMode == _LuckRevealMode.scratch
-                          ? 'New scratch card'
-                          : _drawMode == _LuckDrawMode.single
+                      zh: '${_drawModeLabel(i18n, _drawMode)}抽卡',
+                      en: _drawMode == _LuckDrawMode.single
                           ? 'Single draw'
                           : '$_drawCountForMode draws',
                     ),
                     icon: Icons.auto_awesome_rounded,
                     onPressed: _busy || _batchActive
-                        ? (_revealMode == _LuckRevealMode.scratch
-                              ? () => unawaited(_drawCurrentMode())
-                              : null)
+                        ? null
                         : () => unawaited(_drawCurrentMode()),
                   ),
                   OutlinedButton.icon(
@@ -1935,29 +1879,6 @@ class _LuckTestCardState extends State<_LuckTestCard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '揭示方式', en: 'Reveal mode'),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _LuckRevealMode.values
-                          .map(
-                            (mode) => ChoiceChip(
-                              label: Text(_revealModeLabel(i18n, mode)),
-                              selected: _revealMode == mode,
-                              onSelected: _busy
-                                  ? null
-                                  : (_) => _setRevealMode(mode),
-                            ),
-                          )
-                          .toList(growable: false),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
                       pickUiText(i18n, zh: '抽卡模式', en: 'Draw mode'),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -1972,9 +1893,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
                             (mode) => ChoiceChip(
                               label: Text(_drawModeLabel(i18n, mode)),
                               selected: _drawMode == mode,
-                              onSelected:
-                                  _busy ||
-                                      _revealMode == _LuckRevealMode.scratch
+                              onSelected: _busy
                                   ? null
                                   : (_) => _setDrawMode(mode),
                             ),
@@ -2084,13 +2003,13 @@ class _LuckTestCardState extends State<_LuckTestCard>
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(i18n, zh: '稀有抽中特效', en: 'Rare draw effects'),
+                        pickUiText(i18n, zh: '翻卡特效', en: 'Flip card effects'),
                       ),
                       subtitle: Text(
                         pickUiText(
                           i18n,
-                          zh: '传说和史诗出现时显示短暂全屏金光或紫色流动。',
-                          en: 'Legendary and Epic reveals show a brief full-screen flash.',
+                          zh: '史诗和传说翻卡时会显示短暂全屏闪光。',
+                          en: 'Legendary and Epic flips show a brief full-screen flash.',
                         ),
                       ),
                       value: _rareEffectEnabled,
@@ -2490,6 +2409,2514 @@ class _LuckReportDialog extends StatelessWidget {
   }
 }
 
+class _LuckScratchCell {
+  const _LuckScratchCell({
+    required this.tierKey,
+    required this.number,
+    required this.displayPrize,
+    required this.amount,
+    required this.isWinning,
+    required this.multiplier,
+    required this.isAutoWin,
+    required this.validationCode,
+  });
+
+  final String tierKey;
+  final int number;
+  final int displayPrize;
+  final int amount;
+  final bool isWinning;
+  final int multiplier;
+  final bool isAutoWin;
+  final String validationCode;
+}
+
+class _LuckScratchPrizeTier {
+  const _LuckScratchPrizeTier({
+    required this.key,
+    required this.zhLabel,
+    required this.enLabel,
+    required this.weight,
+    required this.baseAmount,
+    required this.minAmount,
+    required this.maxAmount,
+    required this.roundTo,
+    this.isJackpot = false,
+  });
+
+  final String key;
+  final String zhLabel;
+  final String enLabel;
+  final double weight;
+  final int baseAmount;
+  final int minAmount;
+  final int maxAmount;
+  final int roundTo;
+  final bool isJackpot;
+
+  int sampleAmount(math.Random random, double priceScale) {
+    final minValue = math.max(0, (minAmount * priceScale).round());
+    final maxValue = math.max(minValue, (maxAmount * priceScale).round());
+    final spread = maxValue - minValue;
+    final rawValue = spread <= 0
+        ? maxValue
+        : minValue + random.nextInt(spread + 1);
+    final scaledRound = math.max(1, (roundTo * priceScale).round());
+    return _roundToNearest(rawValue, scaledRound);
+  }
+}
+
+enum _LuckScratchFoilStyle { metal, starfield, ripple, confetti }
+
+class _LuckScratchSettingsSnapshot {
+  const _LuckScratchSettingsSnapshot({
+    required this.ticketPrice,
+    required this.cellCount,
+    required this.overallProbabilityCorrection,
+    required this.customProbabilityCorrection,
+    required this.revealSteps,
+    required this.showAmount,
+    required this.showResultBadge,
+    required this.celebrationEnabled,
+    required this.foilStyle,
+  });
+
+  final int ticketPrice;
+  final int cellCount;
+  final double overallProbabilityCorrection;
+  final double customProbabilityCorrection;
+  final int revealSteps;
+  final bool showAmount;
+  final bool showResultBadge;
+  final bool celebrationEnabled;
+  final _LuckScratchFoilStyle foilStyle;
+}
+
+int _roundToNearest(int value, int roundTo) {
+  if (roundTo <= 1) {
+    return value;
+  }
+  return (value / roundTo).round() * roundTo;
+}
+
+class _LuckScratchMark {
+  const _LuckScratchMark({
+    required this.center,
+    required this.angle,
+    required this.length,
+    required this.width,
+  });
+
+  final Offset center;
+  final double angle;
+  final double length;
+  final double width;
+}
+
+class _LuckScratchTestCard extends StatefulWidget {
+  const _LuckScratchTestCard({super.key});
+
+  @override
+  State<_LuckScratchTestCard> createState() => _LuckScratchTestCardState();
+}
+
+class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
+  static const Color _accent = Color(0xFFD0923A);
+  static const int _defaultTicketPrice = 10;
+  static const int _defaultCellCount = 8;
+  static const double _defaultOverallProbabilityCorrection = 1.0;
+  static const double _defaultCustomProbabilityCorrection = 1.0;
+  static const int _defaultRevealSteps = 4;
+  static const bool _defaultShowAmount = true;
+  static const bool _defaultShowResultBadge = false;
+  static const bool _defaultCelebrationEnabled = true;
+  static const _LuckScratchFoilStyle _defaultFoilStyle =
+      _LuckScratchFoilStyle.metal;
+  static const _LuckScratchSettingsSnapshot _defaultScratchSettings =
+      _LuckScratchSettingsSnapshot(
+        ticketPrice: _defaultTicketPrice,
+        cellCount: _defaultCellCount,
+        overallProbabilityCorrection: _defaultOverallProbabilityCorrection,
+        customProbabilityCorrection: _defaultCustomProbabilityCorrection,
+        revealSteps: _defaultRevealSteps,
+        showAmount: _defaultShowAmount,
+        showResultBadge: _defaultShowResultBadge,
+        celebrationEnabled: _defaultCelebrationEnabled,
+        foilStyle: _defaultFoilStyle,
+      );
+  static const double _baseOverallOdds = 3.45;
+  static const double _scratchRevealThreshold = 0.62;
+  static const double _scratchPromptThreshold = 0.38;
+  static const double _scratchCompleteThreshold = 0.96;
+  static const List<int> _ticketPriceOptions = <int>[2, 5, 10, 20, 50];
+  static const List<_LuckScratchPrizeTier> _prizeTierTemplates =
+      <_LuckScratchPrizeTier>[
+        _LuckScratchPrizeTier(
+          key: 'special',
+          zhLabel: '特等奖',
+          enLabel: 'Grand prize',
+          weight: 0.001,
+          baseAmount: 250000,
+          minAmount: 200000,
+          maxAmount: 500000,
+          roundTo: 10000,
+          isJackpot: true,
+        ),
+        _LuckScratchPrizeTier(
+          key: 'first',
+          zhLabel: '一等奖',
+          enLabel: 'First prize',
+          weight: 0.007,
+          baseAmount: 50000,
+          minAmount: 30000,
+          maxAmount: 100000,
+          roundTo: 5000,
+          isJackpot: true,
+        ),
+        _LuckScratchPrizeTier(
+          key: 'second',
+          zhLabel: '二等奖',
+          enLabel: 'Second prize',
+          weight: 0.05,
+          baseAmount: 10000,
+          minAmount: 6000,
+          maxAmount: 18000,
+          roundTo: 1000,
+        ),
+        _LuckScratchPrizeTier(
+          key: 'third',
+          zhLabel: '三等奖',
+          enLabel: 'Third prize',
+          weight: 0.32,
+          baseAmount: 1000,
+          minAmount: 500,
+          maxAmount: 3000,
+          roundTo: 100,
+        ),
+        _LuckScratchPrizeTier(
+          key: 'fourth',
+          zhLabel: '四等奖',
+          enLabel: 'Fourth prize',
+          weight: 1.6,
+          baseAmount: 200,
+          minAmount: 100,
+          maxAmount: 500,
+          roundTo: 100,
+        ),
+        _LuckScratchPrizeTier(
+          key: 'fifth',
+          zhLabel: '五等奖',
+          enLabel: 'Fifth prize',
+          weight: 36.0,
+          baseAmount: 20,
+          minAmount: 10,
+          maxAmount: 50,
+          roundTo: 10,
+        ),
+        _LuckScratchPrizeTier(
+          key: 'sixth',
+          zhLabel: '六等奖',
+          enLabel: 'Sixth prize',
+          weight: 210.0,
+          baseAmount: 10,
+          minAmount: 10,
+          maxAmount: 20,
+          roundTo: 10,
+        ),
+      ];
+  static const _LuckScratchPrizeTier _missTier = _LuckScratchPrizeTier(
+    key: 'miss',
+    zhLabel: '谢谢惠顾',
+    enLabel: 'Try again',
+    weight: 0,
+    baseAmount: 0,
+    minAmount: 0,
+    maxAmount: 0,
+    roundTo: 1,
+  );
+
+  final math.Random _random = math.Random();
+  late _LuckScratchPrizeTier _winningTier;
+  late int _winningAmount;
+  late Map<String, int> _prizeTable;
+  late List<int> _winningNumbers;
+  late String _ticketId;
+  late String _packId;
+  late String _ticketValidationCode;
+  late String _barcodeDigits;
+  late List<_LuckScratchCell> _cells;
+  late List<double> _progress;
+  late List<List<_LuckScratchMark>> _scratchMarks;
+  int _ticketPrice = _defaultTicketPrice;
+  int _slotCount = _defaultCellCount;
+  double _overallProbabilityCorrection = _defaultOverallProbabilityCorrection;
+  double _customProbabilityCorrection = _defaultCustomProbabilityCorrection;
+  int _revealSteps = _defaultRevealSteps;
+  bool _showAmount = _defaultShowAmount;
+  bool _showResultBadge = _defaultShowResultBadge;
+  bool _celebrationEnabled = _defaultCelebrationEnabled;
+  _LuckScratchFoilStyle _foilStyle = _defaultFoilStyle;
+  int _tickets = 0;
+  int _winningTickets = 0;
+  int _matchCount = 0;
+  int _totalPrize = 0;
+  int _totalSpent = 0;
+  int _currentTicketMatches = 0;
+  int _currentTicketPrize = 0;
+  int _revealedCells = 0;
+  bool _ticketComplete = false;
+  bool _reportDialogOpen = false;
+  bool _celebrationDialogOpen = false;
+  int _lastScratchIndex = -1;
+  Offset? _lastScratchPoint;
+  int _scratchVersion = 0;
+
+  int get _cellCount => _cells.length;
+
+  double get _priceScale => _ticketPrice / _defaultTicketPrice;
+
+  double get _completionRatio =>
+      _cellCount <= 0 ? 0 : _revealedCells / _cellCount;
+
+  int get _netPrize => _totalPrize - _totalSpent;
+
+  double get _effectiveWinChance {
+    return (1 / _baseOverallOdds * _overallProbabilityCorrection)
+        .clamp(0.04, 0.92)
+        .toDouble();
+  }
+
+  double get _effectiveOverallOdds {
+    final chance = _effectiveWinChance;
+    return chance <= 0 ? _baseOverallOdds : 1 / chance;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _seedTicket(incrementTicket: true);
+  }
+
+  String _randomDigits(int length) {
+    return List<int>.generate(length, (_) => _random.nextInt(10)).join();
+  }
+
+  String _randomValidationCode(int length) {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return List<String>.generate(
+      length,
+      (_) => alphabet[_random.nextInt(alphabet.length)],
+    ).join();
+  }
+
+  int _sampleTicketNumber(Set<int> usedNumbers) {
+    var number = _random.nextInt(99) + 1;
+    var guard = 0;
+    while (usedNumbers.contains(number) && guard < 180) {
+      number = _random.nextInt(99) + 1;
+      guard += 1;
+    }
+    usedNumbers.add(number);
+    return number;
+  }
+
+  int _sampleDecoyPrizeAmount() {
+    final common = <int>[
+      _ticketPrice,
+      _ticketPrice * 2,
+      _ticketPrice * 5,
+      _ticketPrice * 10,
+      _ticketPrice * 20,
+      _ticketPrice * 50,
+    ];
+    if (_random.nextDouble() < 0.82) {
+      return common[_random.nextInt(common.length)];
+    }
+    final tier =
+        _prizeTierTemplates[3 +
+            _random.nextInt(math.max(1, _prizeTierTemplates.length - 3))];
+    return tier.sampleAmount(_random, _priceScale);
+  }
+
+  int _sampleMultiplier(_LuckScratchPrizeTier tier) {
+    if (tier.isJackpot) {
+      return 1;
+    }
+    final baseAmount = _prizeTable[tier.key] ?? tier.baseAmount;
+    final roll = _random.nextDouble();
+    if (roll < 0.72) {
+      return 1;
+    }
+    if (roll < 0.90) {
+      return baseAmount >= _ticketPrice * 2 ? 2 : 1;
+    }
+    if (roll < 0.98) {
+      return baseAmount >= _ticketPrice * 5 ? 5 : 1;
+    }
+    return baseAmount >= _ticketPrice * 10 ? 10 : 1;
+  }
+
+  void _seedTicket({required bool incrementTicket}) {
+    final prizeTable = _buildPrizeTable();
+    final winningTier = _samplePrizeTier();
+    final winningAmount = prizeTable[winningTier.key] ?? 0;
+    final shouldWin = _random.nextDouble() < _effectiveWinChance;
+    final usedNumbers = <int>{};
+    final winningNumbers = List<int>.generate(
+      math.min(5, math.max(3, (_slotCount / 2).round())),
+      (_) => _sampleTicketNumber(usedNumbers),
+    );
+    final winningCellIndex = shouldWin && _slotCount > 0
+        ? _random.nextInt(_slotCount)
+        : -1;
+    final winningNumber = shouldWin
+        ? winningNumbers[_random.nextInt(winningNumbers.length)]
+        : -1;
+    _winningTier = winningTier;
+    _winningAmount = winningAmount;
+    _prizeTable = prizeTable;
+    _winningNumbers = winningNumbers;
+    _ticketId = '${_randomDigits(3)}-${_randomDigits(6)}-${_randomDigits(3)}';
+    _packId = '${_randomDigits(4)}-${_randomDigits(6)}';
+    _ticketValidationCode = _randomValidationCode(10);
+    _barcodeDigits =
+        '${_randomDigits(2)} ${_randomDigits(5)} ${_randomDigits(5)} ${_randomDigits(4)}';
+    _cells = List<_LuckScratchCell>.generate(_slotCount, (index) {
+      final isWinning = index == winningCellIndex;
+      final multiplier = isWinning ? _sampleMultiplier(winningTier) : 1;
+      final isAutoWin =
+          isWinning && !winningTier.isJackpot && _random.nextDouble() < 0.16;
+      final displayPrize = isWinning
+          ? (multiplier <= 1
+                ? winningAmount
+                : math.max(_ticketPrice, (winningAmount / multiplier).round()))
+          : _sampleDecoyPrizeAmount();
+      final number = isWinning
+          ? winningNumber
+          : _sampleTicketNumber(usedNumbers);
+      return _LuckScratchCell(
+        tierKey: isWinning ? winningTier.key : _missTier.key,
+        number: number,
+        displayPrize: displayPrize,
+        amount: isWinning ? winningAmount : 0,
+        isWinning: isWinning,
+        multiplier: multiplier,
+        isAutoWin: isAutoWin,
+        validationCode: _randomValidationCode(3),
+      );
+    });
+    _progress = List<double>.filled(_cells.length, 0);
+    _scratchMarks = List<List<_LuckScratchMark>>.generate(
+      _cells.length,
+      (_) => <_LuckScratchMark>[],
+    );
+    _currentTicketMatches = 0;
+    _currentTicketPrize = 0;
+    _revealedCells = 0;
+    _ticketComplete = false;
+    _lastScratchIndex = -1;
+    _lastScratchPoint = null;
+    _scratchVersion = 0;
+    if (incrementTicket) {
+      _tickets += 1;
+      _totalSpent += _ticketPrice;
+    }
+  }
+
+  Map<String, int> _buildPrizeTable() {
+    return <String, int>{
+      for (final tier in _prizeTierTemplates)
+        tier.key: tier.sampleAmount(_random, _priceScale),
+      _missTier.key: 0,
+    };
+  }
+
+  _LuckScratchPrizeTier _samplePrizeTier() {
+    final totalWeight = Iterable<int>.generate(_prizeTierTemplates.length)
+        .fold<double>(
+          0,
+          (sum, index) =>
+              sum + _adjustedPrizeTierWeight(_prizeTierTemplates[index], index),
+        );
+    final hit = _random.nextDouble() * totalWeight;
+    var cumulative = 0.0;
+    for (var i = 0; i < _prizeTierTemplates.length; i += 1) {
+      final tier = _prizeTierTemplates[i];
+      cumulative += _adjustedPrizeTierWeight(tier, i);
+      if (hit <= cumulative) {
+        return tier;
+      }
+    }
+    return _prizeTierTemplates.last;
+  }
+
+  double _adjustedPrizeTierWeight(_LuckScratchPrizeTier tier, int index) {
+    final maxIndex = math.max(1, _prizeTierTemplates.length - 1);
+    final topBias = 1 - index / maxIndex;
+    final correction =
+        1 + (_customProbabilityCorrection - 1) * (0.35 + topBias * 0.85);
+    return math.max(0.0001, tier.weight * correction);
+  }
+
+  _LuckScratchPrizeTier _tierForKey(String key) {
+    if (key == _missTier.key) {
+      return _missTier;
+    }
+    return _prizeTierTemplates.firstWhere(
+      (tier) => tier.key == key,
+      orElse: () => _missTier,
+    );
+  }
+
+  void _newTicket() {
+    setState(() => _seedTicket(incrementTicket: true));
+  }
+
+  void _reset() {
+    setState(() {
+      _clearScratchStats();
+      _seedTicket(incrementTicket: true);
+    });
+  }
+
+  void _clearScratchStats() {
+    _tickets = 0;
+    _winningTickets = 0;
+    _matchCount = 0;
+    _totalPrize = 0;
+    _totalSpent = 0;
+  }
+
+  void _restartScratchRun() {
+    _clearScratchStats();
+    _seedTicket(incrementTicket: true);
+  }
+
+  void _applyScratchSettings(_LuckScratchSettingsSnapshot settings) {
+    _ticketPrice = settings.ticketPrice;
+    _slotCount = settings.cellCount;
+    _overallProbabilityCorrection = settings.overallProbabilityCorrection;
+    _customProbabilityCorrection = settings.customProbabilityCorrection;
+    _revealSteps = settings.revealSteps;
+    _showAmount = settings.showAmount;
+    _showResultBadge = settings.showResultBadge;
+    _celebrationEnabled = settings.celebrationEnabled;
+    _foilStyle = settings.foilStyle;
+  }
+
+  void _resetScratchSettings() {
+    setState(() {
+      _applyScratchSettings(_defaultScratchSettings);
+      _restartScratchRun();
+    });
+  }
+
+  void _changeScratchSimulationSetting(VoidCallback update) {
+    setState(() {
+      update();
+      _restartScratchRun();
+    });
+  }
+
+  void _changeScratchVisualSetting(VoidCallback update) {
+    setState(update);
+  }
+
+  void _resetScratchStroke() {
+    _lastScratchIndex = -1;
+    _lastScratchPoint = null;
+  }
+
+  void _scratchAt(Offset localPosition, Size size) {
+    if (_ticketComplete ||
+        _cells.isEmpty ||
+        size.width <= 0 ||
+        size.height <= 0) {
+      return;
+    }
+    final layout = _scratchLayout(size.width, _cells.length);
+    final strideX = layout.cellWidth + layout.spacing;
+    final strideY = layout.cellHeight + layout.spacing;
+    final col = (localPosition.dx / strideX).floor();
+    final row = (localPosition.dy / strideY).floor();
+    if (col < 0 || row < 0 || col >= layout.columns || row >= layout.rows) {
+      return;
+    }
+    final withinCellX = localPosition.dx - col * strideX;
+    final withinCellY = localPosition.dy - row * strideY;
+    if (withinCellX < 0 ||
+        withinCellY < 0 ||
+        withinCellX > layout.cellWidth ||
+        withinCellY > layout.cellHeight) {
+      return;
+    }
+    final index = row * layout.columns + col;
+    if (index < 0 || index >= _cells.length) {
+      return;
+    }
+    final localInCell = Offset(withinCellX, withinCellY);
+    final normalized = Offset(
+      (localInCell.dx / layout.cellWidth).clamp(0.0, 1.0),
+      (localInCell.dy / layout.cellHeight).clamp(0.0, 1.0),
+    );
+    final hasPreviousPoint =
+        _lastScratchIndex == index && _lastScratchPoint != null;
+    if (hasPreviousPoint) {
+      final dx = normalized.dx - _lastScratchPoint!.dx;
+      final dy = normalized.dy - _lastScratchPoint!.dy;
+      if (dx * dx + dy * dy < 0.0018) {
+        return;
+      }
+    }
+    final delta = hasPreviousPoint
+        ? Offset(
+            normalized.dx - _lastScratchPoint!.dx,
+            normalized.dy - _lastScratchPoint!.dy,
+          )
+        : Offset(
+            math.cos(_random.nextDouble() * math.pi * 2),
+            math.sin(_random.nextDouble() * math.pi * 2),
+          );
+    final travel = hasPreviousPoint
+        ? math
+              .sqrt(delta.dx * delta.dx + delta.dy * delta.dy)
+              .clamp(0.08, 0.42)
+              .toDouble()
+        : 0.16 + _random.nextDouble() * 0.08;
+    final angle =
+        math.atan2(delta.dy, delta.dx) + (_random.nextDouble() - 0.5) * 0.18;
+    final length = (0.16 + travel * 0.95 + _random.nextDouble() * 0.06)
+        .clamp(0.16, 0.44)
+        .toDouble();
+    final width = (0.028 + travel * 0.17 + _random.nextDouble() * 0.014)
+        .clamp(0.03, 0.082)
+        .toDouble();
+    final mark = _LuckScratchMark(
+      center: normalized,
+      angle: angle,
+      length: length,
+      width: width,
+    );
+    final revealStep = 1 / math.max(1, _revealSteps);
+    final wasRevealed = _progress[index] >= _scratchRevealThreshold;
+    final nextProgress =
+        (_progress[index] +
+                revealStep *
+                    (0.38 + length * 1.15 + _random.nextDouble() * 0.14))
+            .clamp(0.0, 1.0);
+    if (nextProgress <= _progress[index]) {
+      return;
+    }
+    setState(() {
+      _lastScratchIndex = index;
+      _lastScratchPoint = normalized;
+      _scratchMarks[index].add(mark);
+      if (_scratchMarks[index].length > 24) {
+        _scratchMarks[index].removeAt(0);
+      }
+      _scratchVersion += 1;
+      _progress[index] = nextProgress;
+      if (!wasRevealed && nextProgress >= _scratchRevealThreshold) {
+        _revealedCells += 1;
+        final cell = _cells[index];
+        if (cell.isWinning) {
+          _matchCount += 1;
+          _currentTicketMatches += 1;
+          _currentTicketPrize += cell.amount;
+          _totalPrize += cell.amount;
+          if (_currentTicketMatches == 1) {
+            _winningTickets += 1;
+          }
+          if (_celebrationEnabled && _winningTier.isJackpot) {
+            unawaited(_showCelebration(_winningTier));
+          }
+        }
+        _ticketComplete = _progress.every(
+          (value) => value >= _scratchCompleteThreshold,
+        );
+      }
+    });
+  }
+
+  ({int columns, int rows, double spacing, double cellWidth, double cellHeight})
+  _scratchLayout(double maxWidth, int count) {
+    final columns = maxWidth < 360 ? 2 : 3;
+    final rows = (count / columns).ceil();
+    final spacing = maxWidth < 360 ? 8.0 : 10.0;
+    return (
+      columns: columns,
+      rows: rows,
+      spacing: spacing,
+      cellWidth: (maxWidth - spacing * (columns - 1)) / columns,
+      cellHeight: maxWidth < 420 ? 112.0 : 126.0,
+    );
+  }
+
+  Future<void> _showReport() async {
+    if (!mounted || _reportDialogOpen) {
+      return;
+    }
+    _reportDialogOpen = true;
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => _LuckScratchReportDialog(
+          i18n: i18n,
+          tickets: _tickets,
+          winningTickets: _winningTickets,
+          totalMatches: _matchCount,
+          totalPrize: _totalPrize,
+          totalSpent: _totalSpent,
+          netPrize: _netPrize,
+          winningTier: _winningTier,
+          winningAmount: _winningAmount,
+          currentMatches: _currentTicketMatches,
+          currentPrize: _currentTicketPrize,
+          completionRatio: _completionRatio,
+          prizeTable: Map<String, int>.unmodifiable(_prizeTable),
+          cells: List<_LuckScratchCell>.unmodifiable(_cells),
+          progress: List<double>.unmodifiable(_progress),
+          winningNumbers: List<int>.unmodifiable(_winningNumbers),
+          ticketId: _ticketId,
+          packId: _packId,
+          validationCode: _ticketValidationCode,
+        ),
+      );
+    } finally {
+      _reportDialogOpen = false;
+    }
+  }
+
+  Future<void> _showCelebration(_LuckScratchPrizeTier tier) async {
+    if (!mounted || _celebrationDialogOpen) {
+      return;
+    }
+    _celebrationDialogOpen = true;
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final amount = _prizeTable[tier.key] ?? _winningAmount;
+    try {
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: pickUiText(i18n, zh: '关闭', en: 'Close'),
+        barrierColor: Colors.black.withValues(alpha: 0.58),
+        transitionDuration: const Duration(milliseconds: 240),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _LuckScratchCelebrationDialog(
+            i18n: i18n,
+            tier: tier,
+            amountText: _formatPrize(amount),
+          );
+        },
+        transitionBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      );
+    } finally {
+      _celebrationDialogOpen = false;
+    }
+  }
+
+  String _formatPrize(int value) {
+    return value < 0 ? '-¥${value.abs()}' : '¥$value';
+  }
+
+  String _formatTicketNumber(int value) {
+    return value.toString().padLeft(2, '0');
+  }
+
+  String _tierLabel(AppI18n i18n, _LuckScratchPrizeTier tier) {
+    return pickUiText(i18n, zh: tier.zhLabel, en: tier.enLabel);
+  }
+
+  String _foilStyleLabel(AppI18n i18n, _LuckScratchFoilStyle style) {
+    return switch (style) {
+      _LuckScratchFoilStyle.metal => pickUiText(i18n, zh: '金属银', en: 'Metal'),
+      _LuckScratchFoilStyle.starfield => pickUiText(
+        i18n,
+        zh: '星点',
+        en: 'Stars',
+      ),
+      _LuckScratchFoilStyle.ripple => pickUiText(i18n, zh: '波纹', en: 'Ripple'),
+      _LuckScratchFoilStyle.confetti => pickUiText(
+        i18n,
+        zh: '彩屑',
+        en: 'Confetti',
+      ),
+    };
+  }
+
+  String _formatCorrection(double value) {
+    return '${(value * 100).round()}%';
+  }
+
+  Widget _buildScratchSettings(
+    BuildContext context,
+    AppI18n i18n,
+    ThemeData theme,
+  ) {
+    Widget sectionLabel(String text) {
+      return Text(
+        text,
+        style: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w900,
+        ),
+      );
+    }
+
+    return _HumanSettingsSection(
+      title: pickUiText(i18n, zh: '刮刮乐设置', en: 'Scratch settings'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '票价、刮开数量和概率变更会重新开始本轮模拟',
+        en: 'Price, spot count, and odds changes start a fresh simulation run',
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          sectionLabel(pickUiText(i18n, zh: '票价', en: 'Ticket price')),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _ticketPriceOptions
+                .map((price) {
+                  return ChoiceChip(
+                    label: Text(_formatPrize(price)),
+                    selected: _ticketPrice == price,
+                    onSelected: (_) {
+                      if (_ticketPrice == price) {
+                        return;
+                      }
+                      _changeScratchSimulationSetting(
+                        () => _ticketPrice = price,
+                      );
+                    },
+                  );
+                })
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 14),
+          sectionLabel(pickUiText(i18n, zh: '刮开数量', en: 'Covered spots')),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <int>[6, 8, 10, 12]
+                .map((count) {
+                  return ChoiceChip(
+                    label: Text(
+                      pickUiText(i18n, zh: '$count 格', en: '$count spots'),
+                    ),
+                    selected: _slotCount == count,
+                    onSelected: (_) {
+                      if (_slotCount == count) {
+                        return;
+                      }
+                      _changeScratchSimulationSetting(() => _slotCount = count);
+                    },
+                  );
+                })
+                .toList(growable: false),
+          ),
+          _LuckSettingSlider(
+            label: pickUiText(
+              i18n,
+              zh: '整体中奖概率修正',
+              en: 'Overall win correction',
+            ),
+            valueText: _formatCorrection(_overallProbabilityCorrection),
+            value: _overallProbabilityCorrection,
+            min: 0.5,
+            max: 1.8,
+            divisions: 26,
+            onChanged: (value) {
+              final next = (value * 100).round() / 100;
+              if (next == _overallProbabilityCorrection) {
+                return;
+              }
+              _changeScratchSimulationSetting(
+                () => _overallProbabilityCorrection = next,
+              );
+            },
+          ),
+          _LuckSettingSlider(
+            label: pickUiText(i18n, zh: '大奖概率修正', en: 'Prize tier correction'),
+            valueText: _formatCorrection(_customProbabilityCorrection),
+            value: _customProbabilityCorrection,
+            min: 0.5,
+            max: 2.0,
+            divisions: 30,
+            onChanged: (value) {
+              final next = (value * 100).round() / 100;
+              if (next == _customProbabilityCorrection) {
+                return;
+              }
+              _changeScratchSimulationSetting(
+                () => _customProbabilityCorrection = next,
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Chip(
+            visualDensity: VisualDensity.compact,
+            label: Text(
+              pickUiText(
+                i18n,
+                zh: '当前整票赔率约 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                en: 'Current ticket odds about 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          sectionLabel(pickUiText(i18n, zh: '刮开表现', en: 'Scratch display')),
+          _LuckSettingSlider(
+            label: pickUiText(i18n, zh: '完全显示滑动次数', en: 'Reveal passes'),
+            valueText: '$_revealSteps',
+            value: _revealSteps.toDouble(),
+            min: 2,
+            max: 8,
+            divisions: 6,
+            onChanged: (value) {
+              final next = value.round();
+              if (next == _revealSteps) {
+                return;
+              }
+              _changeScratchVisualSetting(() => _revealSteps = next);
+            },
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(pickUiText(i18n, zh: '显示金额', en: 'Show amount')),
+            value: _showAmount,
+            onChanged: (value) =>
+                _changeScratchVisualSetting(() => _showAmount = value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              pickUiText(i18n, zh: '显示中奖标记', en: 'Show result badge'),
+            ),
+            value: _showResultBadge,
+            onChanged: (value) =>
+                _changeScratchVisualSetting(() => _showResultBadge = value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              pickUiText(
+                i18n,
+                zh: '特等奖/一等奖全屏恭喜',
+                en: 'Grand and first prize celebration',
+              ),
+            ),
+            value: _celebrationEnabled,
+            onChanged: (value) =>
+                _changeScratchVisualSetting(() => _celebrationEnabled = value),
+          ),
+          const SizedBox(height: 8),
+          sectionLabel(pickUiText(i18n, zh: '印花样式', en: 'Foil pattern')),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _LuckScratchFoilStyle.values
+                .map((style) {
+                  return ChoiceChip(
+                    label: Text(_foilStyleLabel(i18n, style)),
+                    selected: _foilStyle == style,
+                    onSelected: (_) {
+                      if (_foilStyle == style) {
+                        return;
+                      }
+                      _changeScratchVisualSetting(() => _foilStyle = style);
+                    },
+                  );
+                })
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            key: const ValueKey<String>('luck-scratch-restore-defaults-button'),
+            onPressed: _resetScratchSettings,
+            icon: const Icon(Icons.settings_backup_restore_rounded),
+            label: Text(pickUiText(i18n, zh: '恢复默认设置', en: 'Restore defaults')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScratchTicketSummary(
+    BuildContext context,
+    AppI18n i18n,
+    ThemeData theme,
+  ) {
+    Widget titleChip({required bool compact}) {
+      return Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 10,
+          vertical: compact ? 4 : 6,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: const Color(0xFFECC760).withValues(alpha: 0.20),
+          border: Border.all(
+            color: const Color(0xFFD7B14F).withValues(alpha: 0.55),
+          ),
+        ),
+        child: Text(
+          pickUiText(i18n, zh: '刮刮乐彩票', en: 'Scratch-off ticket'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: const Color(0xFF8A611A),
+            fontSize: compact ? 12 : null,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      );
+    }
+
+    Widget targetChip({required bool compact}) {
+      final label = _tierLabel(i18n, _winningTier);
+      return Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 10 : 12,
+          vertical: compact ? 4 : 6,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: _accent.withValues(alpha: 0.14),
+          border: Border.all(color: _accent.withValues(alpha: 0.30)),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            pickUiText(i18n, zh: '目标 $label', en: 'Target $label'),
+            maxLines: 1,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: _accent,
+              fontSize: compact ? 13 : null,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactHeader = constraints.maxWidth < 340;
+        final header = compactHeader
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: titleChip(compact: true),
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: targetChip(compact: true),
+                  ),
+                ],
+              )
+            : Row(
+                children: <Widget>[
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: titleChip(compact: false),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  targetChip(compact: false),
+                ],
+              );
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            header,
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(
+                i18n,
+                zh: '刮开“中奖号码”和“我的号码”。我的号码命中任一中奖号码即可按该格奖金兑奖；星标为自动中奖，倍数符号会放大奖金。本地仅模拟票面与概率。',
+                en: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. This is a local ticket simulation.',
+              ),
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                Chip(
+                  label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '票价 ${_formatPrize(_ticketPrice)}',
+                      en: 'Price ${_formatPrize(_ticketPrice)}',
+                    ),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+                Chip(
+                  label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '有效赔率约 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                      en: 'Effective odds 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                    ),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+                Chip(
+                  label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: '$_slotCount 个刮开区',
+                      en: '$_slotCount covered spots',
+                    ),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(i18n, zh: '中奖号码', en: 'Winning numbers'),
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _winningNumbers
+                  .map(
+                    (number) => Container(
+                      width: 42,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: const Color(0xFFFFF1B8),
+                        border: Border.all(color: const Color(0xFFD7B14F)),
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(
+                            color: Color(0x1AB78328),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        _formatTicketNumber(number),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: const Color(0xFF7D5514),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  avatar: const Icon(Icons.star_rounded, size: 16),
+                  label: Text(
+                    pickUiText(i18n, zh: '星标自动中奖', en: 'Star auto-wins'),
+                  ),
+                ),
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  avatar: const Icon(Icons.close_rounded, size: 16),
+                  label: Text(
+                    pickUiText(
+                      i18n,
+                      zh: 'x2/x5/x10 放大奖金',
+                      en: 'x2/x5/x10 multiply prizes',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              pickUiText(i18n, zh: '奖级表', en: 'Prize table'),
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _prizeTierTemplates
+                  .map((tier) {
+                    final amount = _prizeTable[tier.key] ?? 0;
+                    return Chip(
+                      label: Text(
+                        '${_tierLabel(i18n, tier)} ${_formatPrize(amount)}',
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    );
+                  })
+                  .toList(growable: false),
+            ),
+            const SizedBox(height: 10),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withValues(alpha: 0.58),
+                border: Border.all(color: const Color(0x22B78328)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: <Widget>[
+                        _ScratchTicketStubChip(
+                          label: pickUiText(i18n, zh: '票号', en: 'Ticket'),
+                          value: _ticketId,
+                        ),
+                        _ScratchTicketStubChip(
+                          label: pickUiText(i18n, zh: '包号', en: 'Pack'),
+                          value: _packId,
+                        ),
+                        _ScratchTicketStubChip(
+                          label: pickUiText(i18n, zh: '校验码', en: 'Validation'),
+                          value: _ticketValidationCode,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _ScratchBarcodeStrip(
+                      digits: _barcodeDigits,
+                      seed: _ticketId.hashCode,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _HumanMetricWrap(
+          metrics: <(String, String)>[
+            (pickUiText(i18n, zh: '奖票', en: 'Tickets'), '$_tickets'),
+            (
+              pickUiText(i18n, zh: '中奖票', en: 'Winning tickets'),
+              '$_winningTickets',
+            ),
+            (pickUiText(i18n, zh: '中奖数', en: 'Matches'), '$_matchCount'),
+            (
+              pickUiText(i18n, zh: '总奖金', en: 'Total prize'),
+              _formatPrize(_totalPrize),
+            ),
+            (
+              pickUiText(i18n, zh: '总花费', en: 'Spent'),
+              _formatPrize(_totalSpent),
+            ),
+            (pickUiText(i18n, zh: '净收益', en: 'Net'), _formatPrize(_netPrize)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _HumanPanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: <Color>[
+                      const Color(0xFFFFF7D9),
+                      Theme.of(context).colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.62),
+                      const Color(0xFFFDF2E2),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: 0.72),
+                  ),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x22C08A2A),
+                      blurRadius: 18,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0x33D5AA4D)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: _buildScratchTicketSummary(context, i18n, theme),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                pickUiText(i18n, zh: '我的号码', en: 'Your numbers'),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 6),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final layout = _scratchLayout(width, _cells.length);
+                  final height =
+                      layout.cellHeight * layout.rows +
+                      layout.spacing * math.max(0, layout.rows - 1);
+                  return GestureDetector(
+                    key: const ValueKey<String>('luck-scratch-grid'),
+                    behavior: HitTestBehavior.opaque,
+                    onTapDown: (details) {
+                      _resetScratchStroke();
+                      _scratchAt(details.localPosition, Size(width, height));
+                    },
+                    onPanStart: (details) {
+                      _resetScratchStroke();
+                      _scratchAt(details.localPosition, Size(width, height));
+                    },
+                    onPanUpdate: (details) {
+                      _scratchAt(details.localPosition, Size(width, height));
+                    },
+                    onPanEnd: (_) => _resetScratchStroke(),
+                    onPanCancel: _resetScratchStroke,
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _cells.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: layout.columns,
+                        mainAxisExtent: layout.cellHeight,
+                        mainAxisSpacing: layout.spacing,
+                        crossAxisSpacing: layout.spacing,
+                      ),
+                      itemBuilder: (context, index) =>
+                          _buildScratchCell(context, i18n, index),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: <Widget>[
+                  _HumanActionButton(
+                    key: const ValueKey<String>(
+                      'luck-scratch-new-ticket-button',
+                    ),
+                    label: pickUiText(i18n, zh: '新奖票', en: 'New ticket'),
+                    icon: Icons.casino_rounded,
+                    onPressed: _newTicket,
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _tickets <= 0
+                        ? null
+                        : () => unawaited(_showReport()),
+                    icon: const Icon(Icons.analytics_rounded),
+                    label: Text(pickUiText(i18n, zh: '报告', en: 'Report')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _reset,
+                    icon: const Icon(Icons.restart_alt_rounded),
+                    label: Text(
+                      pickUiText(i18n, zh: '重置统计', en: 'Reset stats'),
+                    ),
+                  ),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '已刮开 ${(_completionRatio * 100).round()}%',
+                      en: 'Revealed ${(_completionRatio * 100).round()}%',
+                    ),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              if (_ticketComplete) ...<Widget>[
+                const SizedBox(height: 10),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '本张奖票已全部刮开，可以继续开下一张。',
+                    en: 'This ticket is fully revealed. You can open a new one.',
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: _accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              _buildScratchSettings(context, i18n, theme),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScratchCell(BuildContext context, AppI18n i18n, int index) {
+    final theme = Theme.of(context);
+    final cell = _cells[index];
+    final tier = _tierForKey(cell.tierKey);
+    final tierText = _tierLabel(i18n, tier);
+    final progress = _progress[index];
+    final revealed = progress >= _scratchRevealThreshold;
+    final matched = revealed && cell.isWinning;
+    final showBadge = revealed && _showResultBadge;
+    final showAmount = revealed && _showAmount;
+    final numberLabel = cell.isAutoWin
+        ? pickUiText(i18n, zh: '星标', en: 'STAR')
+        : _formatTicketNumber(cell.number);
+    final prizeAmount = cell.isWinning ? cell.amount : cell.displayPrize;
+    final multiplierLabel = cell.multiplier > 1 ? 'x${cell.multiplier}' : null;
+    final scratchMarks = List<_LuckScratchMark>.unmodifiable(
+      _scratchMarks[index],
+    );
+    final watermarkText = pickUiText(i18n, zh: '刮开', en: 'Scratch');
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact =
+            constraints.maxWidth < 118 || constraints.maxHeight < 116;
+        final radius = BorderRadius.circular(18);
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: matched
+                  ? <Color>[
+                      const Color(0xFFFFF2B8),
+                      _accent.withValues(alpha: 0.16),
+                    ]
+                  : <Color>[
+                      const Color(0xFFFFFCF2),
+                      theme.colorScheme.surfaceContainerLow.withValues(
+                        alpha: 0.96,
+                      ),
+                    ],
+            ),
+            border: Border.all(
+              color: matched
+                  ? _accent.withValues(alpha: 0.76)
+                  : const Color(0x44C69A36),
+              width: matched ? 2 : 1,
+            ),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: matched
+                    ? _accent.withValues(alpha: 0.16)
+                    : Colors.black.withValues(alpha: 0.05),
+                blurRadius: matched ? 14 : 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: radius,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: <Color>[
+                          matched
+                              ? const Color(0xFFFFF6C7)
+                              : const Color(0xFFFFFDF7),
+                          matched
+                              ? const Color(0xFFFFEBA0)
+                              : const Color(0xFFF5F0E4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 8,
+                  top: 8,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: compact ? 6 : 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: Colors.white.withValues(alpha: 0.76),
+                      border: Border.all(color: const Color(0x33B68C2B)),
+                    ),
+                    child: Text(
+                      '#${index + 1}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF7D5A16),
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: compact ? 6 : 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: cell.isAutoWin
+                          ? _accent.withValues(alpha: 0.18)
+                          : Colors.white.withValues(alpha: 0.70),
+                      border: Border.all(
+                        color: cell.isAutoWin
+                            ? _accent.withValues(alpha: 0.34)
+                            : const Color(0x22B68C2B),
+                      ),
+                    ),
+                    child: Text(
+                      numberLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: cell.isAutoWin
+                            ? _accent
+                            : const Color(0xFF6B5F48),
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        fontFeatures: const <FontFeature>[
+                          FontFeature.tabularFigures(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (showBadge)
+                  Positioned(
+                    left: 8,
+                    top: compact ? 32 : 36,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 6 : 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: matched
+                            ? _accent.withValues(alpha: 0.18)
+                            : theme.colorScheme.outlineVariant.withValues(
+                                alpha: 0.50,
+                              ),
+                      ),
+                      child: Text(
+                        matched
+                            ? pickUiText(i18n, zh: '中奖', en: 'Win')
+                            : pickUiText(i18n, zh: '未中', en: 'Miss'),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: matched
+                              ? _accent
+                              : theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      compact ? 8 : 10,
+                      compact ? 24 : 32,
+                      compact ? 8 : 10,
+                      showAmount ? (compact ? 34 : 44) : (compact ? 22 : 28),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            cell.isAutoWin ? '★' : numberLabel,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style:
+                                (compact
+                                        ? theme.textTheme.headlineSmall
+                                        : theme.textTheme.headlineMedium)
+                                    ?.copyWith(
+                                      color: matched
+                                          ? _accent
+                                          : theme.colorScheme.onSurface,
+                                      fontWeight: FontWeight.w900,
+                                      height: 0.92,
+                                      fontFeatures: const <FontFeature>[
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            tierText,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: matched
+                                  ? _accent
+                                  : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                          if (multiplierLabel != null) ...<Widget>[
+                            const SizedBox(height: 3),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(999),
+                                color: _accent.withValues(alpha: 0.14),
+                                border: Border.all(
+                                  color: _accent.withValues(alpha: 0.26),
+                                ),
+                              ),
+                              child: Text(
+                                multiplierLabel,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: _accent,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (showAmount)
+                  Positioned(
+                    left: 8,
+                    right: 8,
+                    bottom: 8,
+                    child: Container(
+                      height: compact ? 24 : 28,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 7),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: matched
+                            ? _accent.withValues(alpha: 0.16)
+                            : Colors.white.withValues(alpha: 0.78),
+                        border: Border.all(
+                          color: matched
+                              ? _accent.withValues(alpha: 0.30)
+                              : const Color(0x22A97922),
+                        ),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _formatPrize(prizeAmount),
+                          maxLines: 1,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: matched
+                                ? _accent
+                                : theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  right: 8,
+                  bottom: showAmount ? (compact ? 36 : 42) : 8,
+                  child: Text(
+                    cell.validationCode,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.46,
+                      ),
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+                if (progress < 0.995)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        painter: _LuckScratchFoilPainter(
+                          progress: progress,
+                          seed:
+                              index * 37 +
+                              (cell.tierKey.hashCode & 0x7fffffff) * 11 +
+                              cell.amount +
+                              _foilStyle.index * 101,
+                          marks: scratchMarks,
+                          scratchVersion: _scratchVersion,
+                          watermarkText: watermarkText,
+                          foilStyle: _foilStyle,
+                        ),
+                        child: progress < _scratchPromptThreshold
+                            ? Align(
+                                alignment: Alignment.topCenter,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    top: compact ? 8 : 10,
+                                  ),
+                                  child: AnimatedOpacity(
+                                    opacity:
+                                        (1 -
+                                                (progress /
+                                                    _scratchPromptThreshold))
+                                            .clamp(0.22, 1.0),
+                                    duration: const Duration(milliseconds: 120),
+                                    curve: Curves.easeOutCubic,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: compact ? 8 : 10,
+                                        vertical: compact ? 5 : 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.32,
+                                        ),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.34,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: <Widget>[
+                                          Icon(
+                                            Icons.gesture_rounded,
+                                            color: const Color(0xFF5D6572),
+                                            size: compact ? 15 : 17,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            watermarkText,
+                                            style: theme.textTheme.labelSmall
+                                                ?.copyWith(
+                                                  color: const Color(
+                                                    0xFF5D6572,
+                                                  ),
+                                                  fontWeight: FontWeight.w900,
+                                                  height: 1,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LuckScratchFoilPainter extends CustomPainter {
+  const _LuckScratchFoilPainter({
+    required this.progress,
+    required this.seed,
+    required this.marks,
+    required this.scratchVersion,
+    required this.watermarkText,
+    required this.foilStyle,
+  });
+
+  final double progress;
+  final int seed;
+  final List<_LuckScratchMark> marks;
+  final int scratchVersion;
+  final String watermarkText;
+  final _LuckScratchFoilStyle foilStyle;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress >= 0.995) {
+      return;
+    }
+    final coverStrength = (1.0 - progress * 0.06).clamp(0.94, 1.0).toDouble();
+
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(18));
+    final random = math.Random(seed);
+    final baseColors = switch (foilStyle) {
+      _LuckScratchFoilStyle.metal => const (
+        Color(0xFFF3F4F7),
+        Color(0xFFBFC4CE),
+        Color(0xFFE8EBF1),
+      ),
+      _LuckScratchFoilStyle.starfield => const (
+        Color(0xFFE9ECF5),
+        Color(0xFFAEB8CA),
+        Color(0xFFF5E8B8),
+      ),
+      _LuckScratchFoilStyle.ripple => const (
+        Color(0xFFECE8DC),
+        Color(0xFFC5C1B5),
+        Color(0xFFF4F0E5),
+      ),
+      _LuckScratchFoilStyle.confetti => const (
+        Color(0xFFF6E9C5),
+        Color(0xFFC8B17A),
+        Color(0xFFF0D8B2),
+      ),
+    };
+
+    canvas.save();
+    canvas.clipRRect(rrect);
+    canvas.saveLayer(rect, Paint());
+
+    final basePaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[baseColors.$1, baseColors.$2, baseColors.$3],
+        stops: const <double>[0, 0.54, 1],
+      ).createShader(rect);
+    canvas.drawRect(rect, basePaint);
+
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = const Color(0xFF6F7681).withValues(alpha: 0.24);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect.deflate(0.8), const Radius.circular(17)),
+      borderPaint,
+    );
+
+    final glowPaint = Paint()
+      ..shader = LinearGradient(
+        begin: const Alignment(-0.8, -1),
+        end: const Alignment(0.9, 1),
+        colors: <Color>[
+          Colors.white.withValues(alpha: 0.34 * coverStrength),
+          Colors.white.withValues(alpha: 0.08 * coverStrength),
+          const Color(0xFFF1C65A).withValues(alpha: 0.12 * coverStrength),
+        ],
+      ).createShader(rect);
+    canvas.drawRect(rect, glowPaint);
+
+    final strokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    switch (foilStyle) {
+      case _LuckScratchFoilStyle.metal:
+        for (var i = 0; i < 7; i += 1) {
+          final t = (seed * 0.17 + i * 0.39) % 1.0;
+          final y = size.height * (0.14 + 0.72 * t);
+          strokePaint
+            ..strokeWidth = 1.0 + random.nextDouble() * 0.9
+            ..color = Colors.white.withValues(
+              alpha: (0.20 + i * 0.025) * coverStrength,
+            );
+          canvas.drawLine(
+            Offset(-size.width * 0.08, y - size.height * 0.12),
+            Offset(size.width * 1.06, y + size.height * 0.10),
+            strokePaint,
+          );
+        }
+      case _LuckScratchFoilStyle.starfield:
+        for (var i = 0; i < 18; i += 1) {
+          final center = Offset(
+            random.nextDouble() * size.width,
+            random.nextDouble() * size.height,
+          );
+          final radius = 1.0 + random.nextDouble() * 2.4;
+          strokePaint
+            ..strokeWidth = 0.9
+            ..color = Colors.white.withValues(alpha: 0.36 * coverStrength);
+          canvas.drawLine(
+            center.translate(-radius, 0),
+            center.translate(radius, 0),
+            strokePaint,
+          );
+          canvas.drawLine(
+            center.translate(0, -radius),
+            center.translate(0, radius),
+            strokePaint,
+          );
+        }
+      case _LuckScratchFoilStyle.ripple:
+        for (var i = 0; i < 7; i += 1) {
+          final y = size.height * (0.12 + i * 0.13);
+          final path = Path()..moveTo(-8, y);
+          for (var x = 0.0; x <= size.width + 12; x += 18) {
+            path.quadraticBezierTo(
+              x + 9,
+              y + math.sin((x + seed + i * 17) * 0.08) * 5,
+              x + 18,
+              y,
+            );
+          }
+          strokePaint
+            ..strokeWidth = 1.1
+            ..color = Colors.white.withValues(alpha: 0.22 * coverStrength);
+          canvas.drawPath(path, strokePaint);
+        }
+      case _LuckScratchFoilStyle.confetti:
+        final confettiPaint = Paint();
+        const palette = <Color>[
+          Color(0xFFB58A3C),
+          Color(0xFFE5CF7A),
+          Color(0xFFD77B73),
+          Color(0xFF7E9CC8),
+        ];
+        for (var i = 0; i < 24; i += 1) {
+          final x = random.nextDouble() * size.width;
+          final y = random.nextDouble() * size.height;
+          final w = 2.4 + random.nextDouble() * 4.6;
+          final h = 1.2 + random.nextDouble() * 2.6;
+          confettiPaint.color = palette[i % palette.length].withValues(
+            alpha: 0.32 * coverStrength,
+          );
+          canvas.save();
+          canvas.translate(x, y);
+          canvas.rotate(random.nextDouble() * math.pi);
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromCenter(center: Offset.zero, width: w, height: h),
+              const Radius.circular(1.5),
+            ),
+            confettiPaint,
+          );
+          canvas.restore();
+        }
+    }
+
+    for (var i = 0; i < 16; i += 1) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      final radius = 0.6 + random.nextDouble() * 1.4;
+      final dotPaint = Paint()
+        ..color =
+            Color.lerp(
+              const Color(0xFF7F838C),
+              Colors.white,
+              random.nextDouble(),
+            )!.withValues(
+              alpha: (0.16 + random.nextDouble() * 0.18) * coverStrength,
+            );
+      canvas.drawCircle(Offset(x, y), radius, dotPaint);
+    }
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: watermarkText,
+        style: TextStyle(
+          color: const Color(0xFF4E5562).withValues(alpha: 0.58),
+          fontSize: math.max(8, size.shortestSide * 0.09),
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: size.width * 0.86);
+    final labelOffset = Offset(
+      (size.width - textPainter.width) / 2,
+      size.height * 0.16,
+    );
+    textPainter.paint(canvas, labelOffset);
+
+    final codePainter = TextPainter(
+      text: TextSpan(
+        text: '${(seed & 0xffff).toRadixString(16).toUpperCase()} VOID',
+        style: TextStyle(
+          color: const Color(0xFF4E5562).withValues(alpha: 0.22),
+          fontSize: math.max(7, size.shortestSide * 0.055),
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: size.width * 0.86);
+    codePainter.paint(
+      canvas,
+      Offset((size.width - codePainter.width) / 2, size.height * 0.72),
+    );
+
+    for (var i = 0; i < marks.length; i += 1) {
+      final mark = marks[i];
+      final localRandom = math.Random(
+        seed ^
+            scratchVersion ^
+            (i * 7919) ^
+            (mark.center.dx * 1000).round() ^
+            (mark.center.dy * 1000).round(),
+      );
+      _paintScratchMark(canvas, size, mark, localRandom, coverStrength);
+    }
+
+    canvas.restore();
+    canvas.restore();
+  }
+
+  void _paintScratchMark(
+    Canvas canvas,
+    Size size,
+    _LuckScratchMark mark,
+    math.Random localRandom,
+    double coverOpacity,
+  ) {
+    final center = Offset(
+      mark.center.dx * size.width,
+      mark.center.dy * size.height,
+    );
+    final length = size.shortestSide * mark.length;
+    final width = size.shortestSide * mark.width;
+    final path = Path()
+      ..moveTo(-length * 0.48, 0)
+      ..quadraticBezierTo(
+        -length * 0.20,
+        width * (localRandom.nextDouble() * 1.2 - 0.6),
+        0,
+        width * (localRandom.nextDouble() * 1.2 - 0.6),
+      )
+      ..quadraticBezierTo(
+        length * 0.20,
+        width * (localRandom.nextDouble() * 1.2 - 0.6),
+        length * 0.48,
+        0,
+      );
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(mark.angle);
+
+    final blurPaint = Paint()
+      ..blendMode = BlendMode.dstOut
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = width * (1.08 + localRandom.nextDouble() * 0.12)
+      ..maskFilter = MaskFilter.blur(
+        BlurStyle.normal,
+        math.max(0.6, width * 0.12),
+      )
+      ..color = Colors.black;
+    canvas.drawPath(path, blurPaint);
+
+    final corePaint = Paint()
+      ..blendMode = BlendMode.dstOut
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = width * (0.72 + localRandom.nextDouble() * 0.08)
+      ..color = Colors.black;
+    canvas.drawPath(path, corePaint);
+
+    final edgePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = width * 0.18
+      ..color = Colors.white.withValues(
+        alpha: (0.20 + localRandom.nextDouble() * 0.16) * coverOpacity,
+      );
+    canvas.drawPath(path.shift(Offset(0, -width * 0.06)), edgePaint);
+
+    final fleckPaint = Paint()
+      ..color =
+          Color.lerp(
+            const Color(0xFF9DA1AB),
+            Colors.white,
+            localRandom.nextDouble(),
+          )!.withValues(
+            alpha: (0.16 + localRandom.nextDouble() * 0.16) * coverOpacity,
+          );
+    for (var i = 0; i < 4; i += 1) {
+      final offsetX = (localRandom.nextDouble() - 0.5) * length * 0.92;
+      final offsetY = (localRandom.nextDouble() - 0.5) * width * 1.6;
+      final radius = width * (0.06 + localRandom.nextDouble() * 0.08);
+      canvas.drawCircle(Offset(offsetX, offsetY), radius, fleckPaint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _LuckScratchFoilPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.seed != seed ||
+        oldDelegate.scratchVersion != scratchVersion ||
+        oldDelegate.watermarkText != watermarkText ||
+        oldDelegate.foilStyle != foilStyle ||
+        oldDelegate.marks.length != marks.length;
+  }
+}
+
+class _LuckScratchCelebrationDialog extends StatelessWidget {
+  const _LuckScratchCelebrationDialog({
+    required this.i18n,
+    required this.tier,
+    required this.amountText,
+  });
+
+  final AppI18n i18n;
+  final _LuckScratchPrizeTier tier;
+  final String amountText;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tierLabel = pickUiText(i18n, zh: tier.zhLabel, en: tier.enLabel);
+    const effectColor = Color(0xFFFFC95A);
+    return Material(
+      color: Colors.transparent,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 1800),
+        curve: Curves.easeInOutCubic,
+        builder: (context, progress, child) {
+          final pulse = math.sin(progress * math.pi * 5).abs();
+          return Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    radius: 0.70 + progress * 0.55,
+                    colors: <Color>[
+                      effectColor.withValues(alpha: 0.64),
+                      const Color(0xFF9B5C19).withValues(alpha: 0.34),
+                      Colors.black.withValues(alpha: 0.70),
+                    ],
+                    stops: const <double>[0, 0.46, 1],
+                  ),
+                ),
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment(-1 + progress * 2, -1),
+                    end: Alignment(1 - progress * 2, 1),
+                    colors: <Color>[
+                      Colors.white.withValues(alpha: 0),
+                      Colors.white.withValues(alpha: 0.16 + pulse * 0.15),
+                      Colors.white.withValues(alpha: 0),
+                    ],
+                    stops: const <double>[0.18, 0.50, 0.82],
+                  ),
+                ),
+              ),
+              SafeArea(
+                child: Center(
+                  child: Transform.scale(
+                    scale: 0.94 + pulse * 0.04,
+                    child: Container(
+                      margin: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 22,
+                      ),
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: Colors.black.withValues(alpha: 0.48),
+                        border: Border.all(
+                          color: effectColor.withValues(alpha: 0.90),
+                          width: 2,
+                        ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: effectColor.withValues(alpha: 0.48),
+                            blurRadius: 42,
+                            spreadRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const Icon(
+                            Icons.workspace_premium_rounded,
+                            color: effectColor,
+                            size: 66,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            pickUiText(i18n, zh: '恭喜中奖', en: 'Congratulations'),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '$tierLabel  $amountText',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: effectColor,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          FilledButton.tonal(
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            child: Text(
+                              pickUiText(i18n, zh: '继续刮奖', en: 'Continue'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LuckScratchReportDialog extends StatelessWidget {
+  const _LuckScratchReportDialog({
+    required this.i18n,
+    required this.tickets,
+    required this.winningTickets,
+    required this.totalMatches,
+    required this.totalPrize,
+    required this.totalSpent,
+    required this.netPrize,
+    required this.winningTier,
+    required this.winningAmount,
+    required this.currentMatches,
+    required this.currentPrize,
+    required this.completionRatio,
+    required this.prizeTable,
+    required this.cells,
+    required this.progress,
+    required this.winningNumbers,
+    required this.ticketId,
+    required this.packId,
+    required this.validationCode,
+  });
+
+  final AppI18n i18n;
+  final int tickets;
+  final int winningTickets;
+  final int totalMatches;
+  final int totalPrize;
+  final int totalSpent;
+  final int netPrize;
+  final _LuckScratchPrizeTier winningTier;
+  final int winningAmount;
+  final int currentMatches;
+  final int currentPrize;
+  final double completionRatio;
+  final Map<String, int> prizeTable;
+  final List<_LuckScratchCell> cells;
+  final List<double> progress;
+  final List<int> winningNumbers;
+  final String ticketId;
+  final String packId;
+  final String validationCode;
+
+  String _formatPrize(int value) {
+    return value < 0 ? '-¥${value.abs()}' : '¥$value';
+  }
+
+  String _formatTicketNumber(int value) {
+    return value.toString().padLeft(2, '0');
+  }
+
+  _LuckScratchPrizeTier _tierForKey(String key) {
+    if (key == _LuckScratchTestCardState._missTier.key) {
+      return _LuckScratchTestCardState._missTier;
+    }
+    return _LuckScratchTestCardState._prizeTierTemplates.firstWhere(
+      (tier) => tier.key == key,
+      orElse: () => _LuckScratchTestCardState._missTier,
+    );
+  }
+
+  String _tierLabel(_LuckScratchPrizeTier tier) {
+    return pickUiText(i18n, zh: tier.zhLabel, en: tier.enLabel);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final revealed = <String>[];
+    for (var i = 0; i < cells.length; i += 1) {
+      if (progress[i] >= _LuckScratchTestCardState._scratchRevealThreshold) {
+        final cell = cells[i];
+        final tier = _tierForKey(cell.tierKey);
+        final amount = cell.isWinning ? cell.amount : cell.displayPrize;
+        final number = cell.isAutoWin
+            ? 'STAR'
+            : _formatTicketNumber(cell.number);
+        final multiplier = cell.multiplier > 1 ? ' x${cell.multiplier}' : '';
+        revealed.add(
+          '#${i + 1} $number ${_tierLabel(tier)} / ${_formatPrize(amount)}$multiplier',
+        );
+      }
+    }
+    return AlertDialog(
+      title: Text(pickUiText(i18n, zh: '刮刮乐报告', en: 'Scratch report')),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: <Widget>[
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '奖票', en: 'Tickets'),
+                    value: '$tickets',
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '中奖票', en: 'Winning tickets'),
+                    value: '$winningTickets',
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '中奖数', en: 'Matches'),
+                    value: '$totalMatches',
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '总奖金', en: 'Total prize'),
+                    value: _formatPrize(totalPrize),
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '总花费', en: 'Spent'),
+                    value: _formatPrize(totalSpent),
+                  ),
+                  _ColorVisionReportMetric(
+                    label: pickUiText(i18n, zh: '净收益', en: 'Net'),
+                    value: _formatPrize(netPrize),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _ColorVisionReportSection(
+                title: pickUiText(i18n, zh: '当前奖票', en: 'Current ticket'),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '中奖号码 ${winningNumbers.map(_formatTicketNumber).join(' ')}',
+                          en: 'Winning numbers ${winningNumbers.map(_formatTicketNumber).join(' ')}',
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '票号 $ticketId',
+                          en: 'Ticket $ticketId',
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(i18n, zh: '包号 $packId', en: 'Pack $packId'),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '校验码 $validationCode',
+                          en: 'Validation $validationCode',
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '目标奖级 ${_tierLabel(winningTier)}',
+                          en: 'Target tier ${_tierLabel(winningTier)}',
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '目标金额 ${_formatPrize(winningAmount)}',
+                          en: 'Target amount ${_formatPrize(winningAmount)}',
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '已中奖 $currentMatches',
+                          en: 'Matches $currentMatches',
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '当前奖金 ${_formatPrize(currentPrize)}',
+                          en: 'Current prize ${_formatPrize(currentPrize)}',
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '刮开进度 ${(completionRatio * 100).round()}%',
+                          en: 'Reveal ${(completionRatio * 100).round()}%',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _ColorVisionReportSection(
+                title: pickUiText(i18n, zh: '奖级表', en: 'Prize table'),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _LuckScratchTestCardState._prizeTierTemplates
+                      .map(
+                        (tier) => Chip(
+                          label: Text(
+                            '${_tierLabel(tier)} ${_formatPrize(prizeTable[tier.key] ?? 0)}',
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+              if (revealed.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 12),
+                _ColorVisionReportSection(
+                  title: pickUiText(i18n, zh: '已刮开内容', en: 'Revealed items'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: revealed
+                        .map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              item,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+        ),
+      ],
+    );
+  }
+}
+
 class CalculationTestPage extends StatelessWidget {
   const CalculationTestPage({super.key});
 
@@ -2670,6 +5097,15 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
     });
   }
 
+  void _setDifficulty(_CalculationDifficulty difficulty) {
+    setState(() {
+      _difficulty = difficulty;
+      if (!_availableTypesForDifficulty(difficulty).contains(_type)) {
+        _type = _CalculationType.mixed;
+      }
+    });
+  }
+
   void _submit() {
     if (!_running || _done || _currentProblem == null) {
       return;
@@ -2797,30 +5233,17 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
           difficulty: _difficulty,
         );
       case _CalculationType.twoStep:
-        final a = next(2, max ~/ 2);
-        final b = next(2, max ~/ 2);
-        final c = next(2, multiplierMax);
-        final pattern = _random.nextInt(3);
-        return switch (pattern) {
-          0 => _CalculationProblem(
-            prompt: '($a + $b) x $c = ?',
-            answer: (a + b) * c,
-            type: type,
-            difficulty: _difficulty,
-          ),
-          1 => _CalculationProblem(
-            prompt: '$a x $c + $b = ?',
-            answer: a * c + b,
-            type: type,
-            difficulty: _difficulty,
-          ),
-          _ => _CalculationProblem(
-            prompt: '$a x $c - $b = ?',
-            answer: a * c - b,
-            type: type,
-            difficulty: _difficulty,
-          ),
-        };
+        return _difficulty.index >= _CalculationDifficulty.hard.index
+            ? _buildAdvancedTwoStepProblem(
+                max: max,
+                multiplierMax: multiplierMax,
+                type: type,
+              )
+            : _buildBasicTwoStepProblem(
+                max: max,
+                multiplierMax: multiplierMax,
+                type: type,
+              );
       case _CalculationType.missing:
         final answer = next(2, max);
         final b = next(2, max ~/ 2);
@@ -2854,10 +5277,9 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
         );
       case _CalculationType.factorial:
         final n = switch (_difficulty) {
-          _CalculationDifficulty.easy => next(3, 5),
-          _CalculationDifficulty.standard => next(4, 6),
-          _CalculationDifficulty.hard => next(5, 7),
-          _CalculationDifficulty.expert => next(6, 8),
+          _CalculationDifficulty.hard => next(5, 8),
+          _CalculationDifficulty.expert => next(6, 10),
+          _ => next(5, 8),
         };
         return _CalculationProblem(
           prompt: '$n! = ?',
@@ -2925,6 +5347,171 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
     return result;
   }
 
+  _CalculationProblem _buildBasicTwoStepProblem({
+    required int max,
+    required int multiplierMax,
+    required _CalculationType type,
+  }) {
+    int next(int min, int upper) => min + _random.nextInt(upper - min + 1);
+    final a = next(2, max ~/ 2);
+    final b = next(2, max ~/ 2);
+    final c = next(2, multiplierMax);
+    switch (_random.nextInt(3)) {
+      case 0:
+        return _CalculationProblem(
+          prompt: '($a + $b) x $c = ?',
+          answer: (a + b) * c,
+          type: type,
+          difficulty: _difficulty,
+        );
+      case 1:
+        return _CalculationProblem(
+          prompt: '$a x $c + $b = ?',
+          answer: a * c + b,
+          type: type,
+          difficulty: _difficulty,
+        );
+      default:
+        return _CalculationProblem(
+          prompt: '$a x $c - $b = ?',
+          answer: a * c - b,
+          type: type,
+          difficulty: _difficulty,
+        );
+    }
+  }
+
+  _CalculationProblem _buildAdvancedTwoStepProblem({
+    required int max,
+    required int multiplierMax,
+    required _CalculationType type,
+  }) {
+    int next(int min, int upper) => min + _random.nextInt(upper - min + 1);
+    final advancedSequenceIndex = next(4, switch (_difficulty) {
+      _CalculationDifficulty.hard => 9,
+      _CalculationDifficulty.expert => 12,
+      _ => 9,
+    });
+    switch (_random.nextInt(6)) {
+      case 0:
+        {
+          final a = next(2, max ~/ 2);
+          final b = next(2, max ~/ 2);
+          final c = next(2, multiplierMax);
+          return _CalculationProblem(
+            prompt: '($a + $b) x $c = ?',
+            answer: (a + b) * c,
+            type: type,
+            difficulty: _difficulty,
+          );
+        }
+      case 1:
+        {
+          final a = next(2, max ~/ 2);
+          final b = next(2, max ~/ 2);
+          final c = next(2, multiplierMax);
+          return _CalculationProblem(
+            prompt: '$a x $c + $b = ?',
+            answer: a * c + b,
+            type: type,
+            difficulty: _difficulty,
+          );
+        }
+      case 2:
+        {
+          final a = next(2, max ~/ 2);
+          final b = next(2, max ~/ 2);
+          final c = next(2, multiplierMax);
+          return _CalculationProblem(
+            prompt: '$a x $c - $b = ?',
+            answer: a * c - b,
+            type: type,
+            difficulty: _difficulty,
+          );
+        }
+      case 3:
+        {
+          final first = next(2, max ~/ 3);
+          final diff = next(2, switch (_difficulty) {
+            _CalculationDifficulty.hard => 9,
+            _CalculationDifficulty.expert => 14,
+            _ => 9,
+          });
+          final extra = next(2, multiplierMax);
+          return _CalculationProblem(
+            prompt:
+                '$first, ${first + diff}, ${first + diff * 2}, ... 第 $advancedSequenceIndex 项 + $extra = ?',
+            answer: first + diff * (advancedSequenceIndex - 1) + extra,
+            type: type,
+            difficulty: _difficulty,
+          );
+        }
+      case 4:
+        {
+          final ratio = next(2, switch (_difficulty) {
+            _CalculationDifficulty.hard => 4,
+            _CalculationDifficulty.expert => 5,
+            _ => 4,
+          });
+          final first = next(2, max ~/ 4);
+          final extra = next(2, multiplierMax);
+          return _CalculationProblem(
+            prompt:
+                '$first, ${first * ratio}, ${first * ratio * ratio}, ... 第 $advancedSequenceIndex 项 - $extra = ?',
+            answer:
+                first * math.pow(ratio, advancedSequenceIndex - 1).toInt() -
+                extra,
+            type: type,
+            difficulty: _difficulty,
+          );
+        }
+      default:
+        {
+          final base = next(2, switch (_difficulty) {
+            _CalculationDifficulty.hard => 8,
+            _CalculationDifficulty.expert => 10,
+            _CalculationDifficulty.easy => 8,
+            _CalculationDifficulty.standard => 8,
+          });
+          final exponent = next(2, switch (_difficulty) {
+            _CalculationDifficulty.hard => 3,
+            _CalculationDifficulty.expert => 4,
+            _CalculationDifficulty.easy => 3,
+            _CalculationDifficulty.standard => 3,
+          });
+          final extra = next(2, multiplierMax);
+          return _CalculationProblem(
+            prompt: '($base + $extra)^$exponent = ?',
+            answer: math.pow(base + extra, exponent).toInt(),
+            type: type,
+            difficulty: _difficulty,
+          );
+        }
+    }
+  }
+
+  List<_CalculationType> _availableTypesForDifficulty(
+    _CalculationDifficulty difficulty,
+  ) {
+    final types = <_CalculationType>[
+      _CalculationType.mixed,
+      _CalculationType.addSub,
+      _CalculationType.multiply,
+      _CalculationType.division,
+      _CalculationType.twoStep,
+      _CalculationType.missing,
+      _CalculationType.exponent,
+    ];
+    if (difficulty.index >= _CalculationDifficulty.hard.index) {
+      types.add(_CalculationType.factorial);
+    }
+    types.addAll(<_CalculationType>[
+      _CalculationType.arithmeticSequence,
+      _CalculationType.geometricSequence,
+    ]);
+    return types;
+  }
+
   _CalculationType _effectiveType() {
     if (_type != _CalculationType.mixed) {
       return _type;
@@ -2946,6 +5533,8 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
         _CalculationType.twoStep,
         _CalculationType.exponent,
         _CalculationType.arithmeticSequence,
+        _CalculationType.geometricSequence,
+        _CalculationType.factorial,
       ],
       _CalculationDifficulty.expert => <_CalculationType>[
         _CalculationType.multiply,
@@ -3130,9 +5719,7 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                               selected: _difficulty == difficulty,
                               onSelected: _settingsLocked
                                   ? null
-                                  : (_) => setState(
-                                      () => _difficulty = difficulty,
-                                    ),
+                                  : (_) => _setDifficulty(difficulty),
                             ),
                           )
                           .toList(growable: false),
@@ -3148,7 +5735,7 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _CalculationType.values
+                      children: _availableTypesForDifficulty(_difficulty)
                           .map(
                             (type) => ChoiceChip(
                               label: Text(_typeLabel(i18n, type)),

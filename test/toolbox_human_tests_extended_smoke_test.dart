@@ -29,7 +29,7 @@ void main() {
     expect(find.text('Operation type'), findsOneWidget);
     expect(find.text('Two-step'), findsOneWidget);
     expect(find.text('Powers'), findsOneWidget);
-    expect(find.text('Factorial'), findsOneWidget);
+    expect(find.text('Factorial'), findsNothing);
     expect(find.text('Arithmetic seq.'), findsOneWidget);
     expect(find.text('Geometric seq.'), findsOneWidget);
     expect(find.text('Timed'), findsOneWidget);
@@ -83,14 +83,79 @@ void main() {
 
     expect(find.text('Luck index'), findsWidgets);
     expect(find.text('Draw settings'), findsOneWidget);
-    expect(find.text('Reveal mode'), findsOneWidget);
-    expect(find.text('Flip cards'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('luck-module-draw')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('luck-module-scratch')),
+      findsOneWidget,
+    );
+    expect(find.text('Draw cards'), findsOneWidget);
     expect(find.text('Scratch'), findsOneWidget);
     expect(find.text('20 draws'), findsWidgets);
     expect(find.text('Draw goal'), findsOneWidget);
     expect(find.text('Tier count'), findsOneWidget);
-    expect(find.text('Rare draw effects'), findsOneWidget);
+    expect(find.text('Flip card effects'), findsOneWidget);
     expect(find.text('A1'), findsWidgets);
+    await tester.tap(find.byKey(const ValueKey<String>('luck-module-scratch')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('New ticket'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('luck-scratch-grid')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. This is a local ticket simulation.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Winning numbers'), findsOneWidget);
+    expect(find.text('Your numbers'), findsOneWidget);
+    expect(find.text('Prize table'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'Ticket \d{3}-\d{6}-\d{3}')),
+      findsOneWidget,
+    );
+    expect(find.textContaining(RegExp(r'Pack \d{4}-\d{6}')), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'Validation [A-Z2-9]{10}')),
+      findsOneWidget,
+    );
+    expect(find.text('Spent'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.text('Scratch settings'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scratch settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ticket price'), findsOneWidget);
+    expect(find.text('Restore defaults'), findsOneWidget);
+    final scratchGrid = find.byKey(const ValueKey<String>('luck-scratch-grid'));
+    await tester.ensureVisible(scratchGrid);
+    await tester.pumpAndSettle();
+    final scratchGesture = await tester.startGesture(
+      tester.getCenter(scratchGrid),
+    );
+    await scratchGesture.moveBy(const Offset(34, 4));
+    await tester.pump(const Duration(milliseconds: 16));
+    await scratchGesture.moveBy(const Offset(26, -3));
+    await tester.pump(const Duration(milliseconds: 16));
+    await scratchGesture.moveBy(const Offset(20, 8));
+    await tester.pump(const Duration(milliseconds: 16));
+    await scratchGesture.up();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey<String>('luck-module-draw')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>('luck-module-draw')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('20 draws').first,
       300,
@@ -114,19 +179,6 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Multi-draw cards'), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.text('Scratch'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Scratch'));
-    await tester.pumpAndSettle();
-    expect(find.text('New scratch card'), findsOneWidget);
-    expect(
-      find.text('Press the button below to generate one scratch card.'),
-      findsOneWidget,
-    );
 
     await tester.pumpWidget(
       MaterialApp(
@@ -164,6 +216,7 @@ void main() {
     expect(find.text('Classic'), findsOneWidget);
     expect(find.text('Target chase'), findsOneWidget);
     expect(find.text('Rhythm hit'), findsOneWidget);
+    expect(find.text('Restart'), findsOneWidget);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -202,4 +255,89 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Running'), findsOneWidget);
   });
+
+  testWidgets(
+    'human tests hub exposes the new visual auditory and coordination modules',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: buildAppTheme(PlayConfig.defaults.appearance),
+          home: const HumanTestsToolPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Visual search'), findsWidgets);
+      expect(find.text('Auditory reaction'), findsWidgets);
+      expect(find.text('Dual-task switching'), findsWidgets);
+      expect(find.text('Fine drag tracking'), findsWidgets);
+      expect(find.text('Bimanual coordination'), findsWidgets);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: buildAppTheme(PlayConfig.defaults.appearance),
+          home: const VisualSearchTestPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Search'), findsOneWidget);
+      expect(find.text('Difference'), findsOneWidget);
+      expect(find.text('Visual search settings'), findsOneWidget);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: buildAppTheme(PlayConfig.defaults.appearance),
+          home: const AuditoryReactionTestPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Reaction'), findsWidgets);
+      expect(find.text('Frequency'), findsWidgets);
+      expect(find.text('Volume'), findsWidgets);
+      expect(find.text('Channel'), findsWidgets);
+      expect(find.text('Preview test tones'), findsOneWidget);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: buildAppTheme(PlayConfig.defaults.appearance),
+          home: const DualTaskSwitchTestPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Every round'), findsOneWidget);
+      expect(find.text('Odd'), findsOneWidget);
+      expect(find.text('Even'), findsOneWidget);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: buildAppTheme(PlayConfig.defaults.appearance),
+          home: const FineDragTrackingTestPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Track width'), findsOneWidget);
+      expect(find.text('Difficulty'), findsOneWidget);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: buildAppTheme(PlayConfig.defaults.appearance),
+          home: const BimanualCoordinationTestPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Alternating'), findsOneWidget);
+      expect(find.text('Sync'), findsOneWidget);
+      expect(find.text('Left'), findsWidgets);
+      expect(find.text('Right'), findsWidgets);
+    },
+  );
 }

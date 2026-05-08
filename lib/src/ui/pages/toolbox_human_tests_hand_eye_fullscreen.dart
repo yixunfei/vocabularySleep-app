@@ -458,9 +458,9 @@ class _JoystickFullscreenViewState extends State<_JoystickFullscreenView>
 
   Widget _fireControl({required double height}) {
     return _HumanTestFullscreenPanel(
-      opacity: 0.54,
-      shadowOpacity: 0.10,
-      padding: const EdgeInsets.all(8),
+      opacity: 0.42,
+      shadowOpacity: 0.06,
+      padding: const EdgeInsets.all(6),
       child: _JoystickFullscreenFireButton(state: state, height: height),
     );
   }
@@ -472,6 +472,7 @@ class _JoystickFullscreenViewState extends State<_JoystickFullscreenView>
         vector: state._joystickVector,
         enabled: true,
         size: size,
+        fullscreenStyle: true,
         onChanged: state._setJoystickVector,
       ),
     );
@@ -735,6 +736,7 @@ class _JoystickFullscreenFireButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: height,
       child: FilledButton.icon(
@@ -743,9 +745,26 @@ class _JoystickFullscreenFireButton extends StatelessWidget {
         icon: const Icon(Icons.my_location_rounded, size: 28),
         label: Text(pickUiText(i18n, zh: '射击', en: 'Fire')),
         style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.surface.withValues(alpha: 0.62),
+          foregroundColor: _JoystickHandEyeCardState._accent,
+          disabledBackgroundColor: colorScheme.surface.withValues(alpha: 0.34),
+          disabledForegroundColor: colorScheme.onSurfaceVariant.withValues(
+            alpha: 0.60,
+          ),
+          shadowColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          padding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: height < 92 ? 10 : 14,
+          ),
+          minimumSize: Size.fromHeight(height),
           textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
+          ),
+          side: BorderSide(
+            color: _JoystickHandEyeCardState._accent.withValues(alpha: 0.28),
           ),
         ),
       ),

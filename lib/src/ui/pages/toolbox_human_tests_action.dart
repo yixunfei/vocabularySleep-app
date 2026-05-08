@@ -102,6 +102,23 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
     });
   }
 
+  void _restart() {
+    _timer?.cancel();
+    setState(() {
+      _count = 0;
+      _attempts = 0;
+      _combo = 0;
+      _bestCombo = 0;
+      _remainingTenths = _totalTenths;
+      _targetSlot = _random.nextInt(9);
+      _rhythmSlot = 4;
+      _running = false;
+      _done = false;
+      _lastHit = null;
+      _feedbackSerial = 0;
+    });
+  }
+
   void _registerTap({required bool hit}) {
     if (!_running) {
       _start();
@@ -270,6 +287,11 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
                         ? Icons.flash_on_rounded
                         : Icons.play_arrow_rounded,
                     onPressed: _running ? null : _start,
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _restart,
+                    icon: const Icon(Icons.restart_alt_rounded),
+                    label: Text(pickUiText(i18n, zh: '重新开始', en: 'Restart')),
                   ),
                   OutlinedButton.icon(
                     onPressed: _attempts <= 0
@@ -505,7 +527,7 @@ class _TapSpeedClassicPad extends StatelessWidget {
                 opacity: (1 - value).clamp(0.0, 1.0),
                 child: Transform.scale(
                   scale: 0.7 + value * 0.6,
-                  child: Icon(
+                  child: const Icon(
                     Icons.touch_app_rounded,
                     size: 64,
                     color: _TapSpeedTestCardState._accent,
