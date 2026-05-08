@@ -12,6 +12,7 @@ class ToolboxUiTokens {
   static const double cardRadius = 16;
   static const double iconRadius = 12;
   static const double iconSize = 44;
+  static const double editActionSize = 48;
   static const double entryMinHeight = 92;
   static const double shellCardRadius = 18;
   static const double panelRadius = 24;

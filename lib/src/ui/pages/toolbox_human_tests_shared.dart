@@ -384,6 +384,7 @@ class _HumanMetricWrap extends StatelessWidget {
 
 class _HumanActionButton extends StatelessWidget {
   const _HumanActionButton({
+    super.key,
     required this.label,
     required this.icon,
     required this.onPressed,

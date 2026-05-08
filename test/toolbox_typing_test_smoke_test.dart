@@ -31,6 +31,7 @@ void main() {
 
     expect(find.text('Typing test'), findsWidgets);
     expect(find.text('Typing settings'), findsOneWidget);
+    expect(find.textContaining('鎵'), findsNothing);
     expect(find.text('Classic'), findsWidgets);
     expect(find.text('Sprint'), findsWidgets);
     expect(find.text('Precision'), findsWidgets);
@@ -73,7 +74,9 @@ void main() {
 
     await tapVisibleChip('typing-mode-code');
     expect(
-      find.text('Code drill: preserve case, brackets, quotes, and line breaks.'),
+      find.text(
+        'Code drill: preserve case, brackets, quotes, and line breaks.',
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('final', findRichText: true), findsOneWidget);

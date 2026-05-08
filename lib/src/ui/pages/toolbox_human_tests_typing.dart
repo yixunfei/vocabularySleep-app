@@ -812,10 +812,10 @@ class _TypingTestCardState extends State<_TypingTestCard> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '鎵撳瓧璁剧疆', en: 'Typing settings'),
+          title: pickUiText(i18n, zh: '打字设置', en: 'Typing settings'),
           subtitle: pickUiText(
             i18n,
-            zh: '妯″紡銆佽瑷€銆侀鏉愩€侀暱搴︿細鏀跺埌缁撴瀯鍖栬妭鐪',
+            zh: '模式、语言、题材和长度会收纳到结构化设置区，节省移动端空间。',
             en: 'Mode, language, topic, and length settings fold away to save space.',
           ),
           child: _typingBuildSettings(this, context, i18n),

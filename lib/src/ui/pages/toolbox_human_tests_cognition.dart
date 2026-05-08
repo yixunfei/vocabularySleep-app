@@ -76,7 +76,6 @@ class _StroopTestCardState extends State<_StroopTestCard> {
   late _StroopItem _word;
   late _StroopItem _ink;
   int _score = 0;
-  int _round = 0;
   int _lives = 3;
   DateTime? _roundStartedAt;
   bool _reportDialogOpen = false;
@@ -113,7 +112,6 @@ class _StroopTestCardState extends State<_StroopTestCard> {
           .toList(growable: false);
       _ink = _sample(_random, options);
     }
-    _round += 1;
     _roundStartedAt = DateTime.now();
   }
 
@@ -164,7 +162,6 @@ class _StroopTestCardState extends State<_StroopTestCard> {
   void _reset() {
     setState(() {
       _score = 0;
-      _round = 0;
       _lives = 3;
       _records.clear();
       _next();
@@ -175,7 +172,6 @@ class _StroopTestCardState extends State<_StroopTestCard> {
     setState(() {
       _colorCount = count;
       _score = 0;
-      _round = 0;
       _lives = 3;
       _records.clear();
       _next();
@@ -186,7 +182,6 @@ class _StroopTestCardState extends State<_StroopTestCard> {
     setState(() {
       _mode = mode;
       _score = 0;
-      _round = 0;
       _lives = 3;
       _records.clear();
       _next();
@@ -197,7 +192,6 @@ class _StroopTestCardState extends State<_StroopTestCard> {
     setState(() {
       _roundLimit = value;
       _score = 0;
-      _round = 0;
       _lives = 3;
       _records.clear();
       _next();
@@ -641,6 +635,8 @@ class _LuckCardTier {
 
 enum _LuckDrawMode { single, ten, twenty }
 
+enum _LuckRevealMode { cards, scratch }
+
 enum _LuckGoalType { unlimited, tierCount, luckIndex, drawCount }
 
 class _LuckTestCardState extends State<_LuckTestCard>
@@ -691,6 +687,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
   final List<_LuckCardTier> _lastBatch = <_LuckCardTier>[];
   final List<_LuckCardTier> _batchCards = <_LuckCardTier>[];
   final List<bool> _batchRevealed = <bool>[];
+  final List<_LuckCardTier> _rareEffectQueue = <_LuckCardTier>[];
   final List<int> _deckOrder = List<int>.generate(5, (index) => index);
 
   int _draws = 0;
@@ -703,6 +700,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
   _LuckCardTier? _lastTier;
   _LuckCardTier? _revealedTier;
   _LuckDrawMode _drawMode = _LuckDrawMode.single;
+  _LuckRevealMode _revealMode = _LuckRevealMode.cards;
   _LuckGoalType _goalType = _LuckGoalType.unlimited;
   int _goalTierIndex = 4;
   int _goalTierCount = 1;
@@ -713,6 +711,9 @@ class _LuckTestCardState extends State<_LuckTestCard>
   int _flipToken = 0;
   bool _goalReportShown = false;
   bool _reportDialogOpen = false;
+  bool _rareEffectPlaying = false;
+  double _scratchProgress = 0;
+  int _lastBatchPointerIndex = -1;
   OverlayEntry? _rareOverlayEntry;
 
   @override
@@ -729,6 +730,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
   @override
   void dispose() {
     _flipToken += 1;
+    _rareEffectQueue.clear();
     _rareOverlayEntry?.remove();
     _flipController.dispose();
     super.dispose();
@@ -747,6 +749,12 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _batchCards.isNotEmpty &&
       _batchRevealed.isNotEmpty &&
       _batchRevealed.every((revealed) => revealed);
+
+  bool get _scratchReady =>
+      _revealMode == _LuckRevealMode.scratch &&
+      _batchCards.isNotEmpty &&
+      _batchCards.length == 1 &&
+      !_batchRevealed.first;
 
   double get _weightSum => _weights.fold(0, (sum, value) => sum + value);
 
@@ -860,6 +868,19 @@ class _LuckTestCardState extends State<_LuckTestCard>
     if (!_rareEffectEnabled || !_isRareTier(tier) || !mounted) {
       return;
     }
+    _rareEffectQueue.add(tier);
+    _playNextRareEffect();
+  }
+
+  void _playNextRareEffect() {
+    if (_rareEffectPlaying ||
+        _rareEffectQueue.isEmpty ||
+        !mounted ||
+        !_rareEffectEnabled) {
+      return;
+    }
+    final tier = _rareEffectQueue.removeAt(0);
+    _rareEffectPlaying = true;
     _rareOverlayEntry?.remove();
     _rareOverlayEntry = OverlayEntry(
       builder: (context) => _LuckRareEffectOverlay(
@@ -874,6 +895,8 @@ class _LuckTestCardState extends State<_LuckTestCard>
     Future<void>.delayed(const Duration(milliseconds: 2600), () {
       _rareOverlayEntry?.remove();
       _rareOverlayEntry = null;
+      _rareEffectPlaying = false;
+      _playNextRareEffect();
     });
   }
 
@@ -922,6 +945,10 @@ class _LuckTestCardState extends State<_LuckTestCard>
   }
 
   Future<void> _drawCurrentMode() async {
+    if (_revealMode == _LuckRevealMode.scratch) {
+      await _drawBatch(1);
+      return;
+    }
     if (_drawMode == _LuckDrawMode.single) {
       await _pickCard(_random.nextInt(_deckOrder.length));
       return;
@@ -930,21 +957,26 @@ class _LuckTestCardState extends State<_LuckTestCard>
   }
 
   Future<void> _drawBatch(int count) async {
-    if (_busy || _batchActive) {
+    if (_busy || (_batchActive && _revealMode != _LuckRevealMode.scratch)) {
       return;
     }
     final token = ++_flipToken;
+    final showShuffle = _batchCards.isEmpty;
     setState(() {
-      _shuffling = true;
+      _shuffling = showShuffle;
       _selectedCard = -1;
       _revealedTier = null;
       _lastBatch.clear();
       _batchCards.clear();
       _batchRevealed.clear();
+      _scratchProgress = 0;
+      _lastBatchPointerIndex = -1;
     });
-    await Future<void>.delayed(const Duration(milliseconds: 260));
-    if (!mounted || token != _flipToken) {
-      return;
+    if (showShuffle) {
+      await Future<void>.delayed(const Duration(milliseconds: 220));
+      if (!mounted || token != _flipToken) {
+        return;
+      }
     }
     final batch = List<_LuckCardTier>.generate(count, (_) => _drawTier());
     setState(() {
@@ -978,6 +1010,47 @@ class _LuckTestCardState extends State<_LuckTestCard>
     await _maybeShowGoalReport();
   }
 
+  void _revealBatchCardFromGesture(int index) {
+    if (_shuffling ||
+        index < 0 ||
+        index >= _batchCards.length ||
+        _batchRevealed[index] ||
+        index == _lastBatchPointerIndex) {
+      return;
+    }
+    _lastBatchPointerIndex = index;
+    unawaited(_revealBatchCard(index));
+  }
+
+  void _handleBatchPan(Offset localPosition, double maxWidth) {
+    if (_batchCards.isEmpty || !_batchActive || maxWidth <= 0) {
+      return;
+    }
+    final layout = _batchGridLayout(maxWidth, _batchCards.length);
+    final col = (localPosition.dx / layout.cellWidth).floor();
+    final row = (localPosition.dy / layout.cellHeight).floor();
+    if (col < 0 || col >= layout.columns || row < 0 || row >= layout.rows) {
+      return;
+    }
+    final index = row * layout.columns + col;
+    if (index >= _batchCards.length) {
+      return;
+    }
+    _revealBatchCardFromGesture(index);
+  }
+
+  ({int columns, int rows, double cellWidth, double cellHeight})
+  _batchGridLayout(double maxWidth, int count) {
+    final columns = maxWidth < 420 ? 5 : 6;
+    final rows = (count / columns).ceil();
+    return (
+      columns: columns,
+      rows: rows,
+      cellWidth: maxWidth / columns,
+      cellHeight: maxWidth < 420 ? 92.0 : 112.0,
+    );
+  }
+
   List<_LuckCardTier> _revealedBatchCards() {
     final revealed = <_LuckCardTier>[];
     for (var index = 0; index < _batchCards.length; index += 1) {
@@ -1003,6 +1076,25 @@ class _LuckTestCardState extends State<_LuckTestCard>
     }
   }
 
+  void _scratchAt(Offset localPosition, Size size) {
+    if (!_scratchReady || size.width <= 0 || size.height <= 0) {
+      return;
+    }
+    final inBounds =
+        localPosition.dx >= 0 &&
+        localPosition.dy >= 0 &&
+        localPosition.dx <= size.width &&
+        localPosition.dy <= size.height;
+    if (!inBounds) {
+      return;
+    }
+    final nextProgress = (_scratchProgress + 0.085).clamp(0.0, 1.0);
+    setState(() => _scratchProgress = nextProgress);
+    if (nextProgress >= 0.72) {
+      unawaited(_revealBatchCard(0));
+    }
+  }
+
   Future<void> _continueBatch() async {
     if (_busy || _batchActive || _drawMode == _LuckDrawMode.single) {
       return;
@@ -1012,6 +1104,8 @@ class _LuckTestCardState extends State<_LuckTestCard>
 
   void _reset() {
     _flipToken += 1;
+    _rareEffectQueue.clear();
+    _rareEffectPlaying = false;
     _rareOverlayEntry?.remove();
     _rareOverlayEntry = null;
     _flipController.reset();
@@ -1034,6 +1128,8 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _revealedTier = null;
       _shuffling = false;
       _goalReportShown = false;
+      _scratchProgress = 0;
+      _lastBatchPointerIndex = -1;
       _deckOrder.shuffle(_random);
     });
   }
@@ -1057,6 +1153,8 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _batchCards.clear();
       _batchRevealed.clear();
       _lastBatch.clear();
+      _scratchProgress = 0;
+      _lastBatchPointerIndex = -1;
     });
   }
 
@@ -1065,6 +1163,32 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _LuckDrawMode.single => pickUiText(i18n, zh: '单抽', en: 'Single'),
       _LuckDrawMode.ten => pickUiText(i18n, zh: '十连', en: '10 draws'),
       _LuckDrawMode.twenty => pickUiText(i18n, zh: '二十连', en: '20 draws'),
+    };
+  }
+
+  void _setRevealMode(_LuckRevealMode mode) {
+    if (_busy || _revealMode == mode) {
+      return;
+    }
+    setState(() {
+      _revealMode = mode;
+      _drawMode = mode == _LuckRevealMode.scratch
+          ? _LuckDrawMode.single
+          : _drawMode;
+      _selectedCard = -1;
+      _revealedTier = null;
+      _batchCards.clear();
+      _batchRevealed.clear();
+      _lastBatch.clear();
+      _scratchProgress = 0;
+      _lastBatchPointerIndex = -1;
+    });
+  }
+
+  String _revealModeLabel(AppI18n i18n, _LuckRevealMode mode) {
+    return switch (mode) {
+      _LuckRevealMode.cards => pickUiText(i18n, zh: '翻卡', en: 'Flip cards'),
+      _LuckRevealMode.scratch => pickUiText(i18n, zh: '刮刮乐', en: 'Scratch'),
     };
   }
 
@@ -1083,7 +1207,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
       _LuckGoalType.tierCount =>
         '${_tierLabel(i18n, _tiers[_goalTierIndex])} x $_goalTierCount',
       _LuckGoalType.luckIndex =>
-        '${_goalLuckIndex} ${pickUiText(i18n, zh: '点', en: 'pts')}',
+        '$_goalLuckIndex ${pickUiText(i18n, zh: '点', en: 'pts')}',
       _LuckGoalType.drawCount => '$_goalDrawCount',
     };
   }
@@ -1159,13 +1283,20 @@ class _LuckTestCardState extends State<_LuckTestCard>
     }
   }
 
-  Widget _buildCardFront(BuildContext context, int cardNo) {
+  Widget _buildCardFront(
+    BuildContext context,
+    int cardNo, {
+    bool compact = false,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      height: 132,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      height: compact ? 86 : 132,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 10,
+        vertical: compact ? 6 : 8,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1189,6 +1320,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: Colors.white.withValues(alpha: 0.92),
                 fontWeight: FontWeight.w800,
+                fontSize: compact ? 10 : null,
               ),
             ),
           ),
@@ -1199,6 +1331,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: Colors.white.withValues(alpha: 0.70),
                 fontWeight: FontWeight.w700,
+                fontSize: compact ? 10 : null,
               ),
             ),
           ),
@@ -1206,7 +1339,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
             child: Icon(
               Icons.auto_awesome_rounded,
               color: Colors.white.withValues(alpha: 0.90),
-              size: 30,
+              size: compact ? 22 : 30,
             ),
           ),
         ],
@@ -1218,14 +1351,18 @@ class _LuckTestCardState extends State<_LuckTestCard>
     BuildContext context,
     AppI18n i18n,
     int cardNo,
-    _LuckCardTier tier,
-  ) {
+    _LuckCardTier tier, {
+    bool compact = false,
+  }) {
     final title = _tierLabel(i18n, tier);
     return Container(
-      height: 132,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      height: compact ? 86 : 132,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 10,
+        vertical: compact ? 6 : 8,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -1255,6 +1392,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
+                fontSize: compact ? 10 : null,
               ),
             ),
           ),
@@ -1265,23 +1403,38 @@ class _LuckTestCardState extends State<_LuckTestCard>
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  maxLines: compact ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      (compact
+                              ? Theme.of(context).textTheme.labelMedium
+                              : Theme.of(context).textTheme.titleMedium)
+                          ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  pickUiText(
-                    i18n,
-                    zh: '幸运值 +${tier.score}',
-                    en: 'Luck +${tier.score}',
+                if (!compact) ...<Widget>[
+                  const SizedBox(height: 4),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '幸运值 +${tier.score}',
+                      en: 'Luck +${tier.score}',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    fontWeight: FontWeight.w700,
+                ] else
+                  Text(
+                    '+${tier.score}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -1321,10 +1474,16 @@ class _LuckTestCardState extends State<_LuckTestCard>
     );
   }
 
-  Widget _buildBatchCard(BuildContext context, AppI18n i18n, int index) {
+  Widget _buildBatchCard(
+    BuildContext context,
+    AppI18n i18n,
+    int index, {
+    bool compact = false,
+  }) {
     final revealed = _batchRevealed[index];
     final tier = _batchCards[index];
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: revealed ? null : () => unawaited(_revealBatchCard(index)),
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0, end: revealed ? 1 : 0),
@@ -1342,13 +1501,171 @@ class _LuckTestCardState extends State<_LuckTestCard>
               ..setEntry(3, 2, 0.0018)
               ..rotateY(angle),
             child: SizedBox(
-              width: 88,
+              width: compact ? double.infinity : 88,
               child: showBack
-                  ? _buildCardBack(context, i18n, index + 1, tier)
-                  : _buildCardFront(context, index + 1),
+                  ? _buildCardBack(
+                      context,
+                      i18n,
+                      index + 1,
+                      tier,
+                      compact: compact,
+                    )
+                  : _buildCardFront(context, index + 1, compact: compact),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildBatchGrid(BuildContext context, AppI18n i18n) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final layout = _batchGridLayout(
+          constraints.maxWidth,
+          _batchCards.length,
+        );
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: (details) {
+            _lastBatchPointerIndex = -1;
+            _handleBatchPan(details.localPosition, constraints.maxWidth);
+          },
+          onPanUpdate: (details) {
+            _handleBatchPan(details.localPosition, constraints.maxWidth);
+          },
+          onPanEnd: (_) => _lastBatchPointerIndex = -1,
+          onPanCancel: () => _lastBatchPointerIndex = -1,
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _batchCards.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: layout.columns,
+              mainAxisExtent: layout.cellHeight,
+              mainAxisSpacing: 7,
+              crossAxisSpacing: 7,
+            ),
+            itemBuilder: (context, index) => _buildBatchCard(
+              context,
+              i18n,
+              index,
+              compact: constraints.maxWidth < 420,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScratchStage(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    final tier = _batchCards.isEmpty ? null : _batchCards.first;
+    final revealed = _batchRevealed.isNotEmpty && _batchRevealed.first;
+    final progress = revealed ? 1.0 : _scratchProgress;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        const height = 188.0;
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: tier == null
+              ? null
+              : (details) =>
+                    _scratchAt(details.localPosition, Size(width, height)),
+          onPanUpdate: tier == null
+              ? null
+              : (details) =>
+                    _scratchAt(details.localPosition, Size(width, height)),
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              SizedBox(
+                height: height,
+                width: double.infinity,
+                child: tier == null
+                    ? _buildScratchEmpty(context, i18n)
+                    : _buildCardBack(context, i18n, 1, tier),
+              ),
+              if (tier != null && !revealed)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: (1 - progress).clamp(0.0, 0.92),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: <Color>[
+                              theme.colorScheme.surfaceContainerHighest,
+                              theme.colorScheme.outlineVariant,
+                              theme.colorScheme.surfaceContainerLow,
+                            ],
+                          ),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(
+                                Icons.gesture_rounded,
+                                color: theme.colorScheme.onSurfaceVariant,
+                                size: 34,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '滑动刮开',
+                                  en: 'Swipe to scratch',
+                                ),
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: 160,
+                                child: LinearProgressIndicator(value: progress),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScratchEmpty(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    return Container(
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.34,
+        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Text(
+        pickUiText(
+          i18n,
+          zh: '点击下方按钮生成一张刮刮乐奖面。',
+          en: 'Press the button below to generate one scratch card.',
+        ),
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+          height: 1.35,
+        ),
       ),
     );
   }
@@ -1406,6 +1723,17 @@ class _LuckTestCardState extends State<_LuckTestCard>
                           zh: '已翻开 $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length} 张：${_batchSummary(i18n)}',
                           en: 'Revealed $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length}: ${_batchSummary(i18n)}',
                         )
+                      : _revealMode == _LuckRevealMode.scratch &&
+                            _batchCards.isNotEmpty
+                      ? pickUiText(
+                          i18n,
+                          zh: _batchComplete
+                              ? '刮开完成：${_batchSummary(i18n)}'
+                              : '刮刮乐已生成，滑动灰色涂层逐步刮开。',
+                          en: _batchComplete
+                              ? 'Scratch complete: ${_batchSummary(i18n)}'
+                              : 'Scratch card ready. Swipe across the cover to reveal it.',
+                        )
                       : _batchActive
                       ? pickUiText(
                           i18n,
@@ -1429,7 +1757,9 @@ class _LuckTestCardState extends State<_LuckTestCard>
                 ),
               ),
               const SizedBox(height: 12),
-              if (_drawMode == _LuckDrawMode.single)
+              if (_revealMode == _LuckRevealMode.scratch)
+                _buildScratchStage(context, i18n)
+              else if (_drawMode == _LuckDrawMode.single)
                 AnimatedBuilder(
                   animation: _flipController,
                   builder: (context, _) {
@@ -1468,7 +1798,8 @@ class _LuckTestCardState extends State<_LuckTestCard>
                     ),
                   ),
                 ),
-              if (_drawMode != _LuckDrawMode.single &&
+              if (_revealMode == _LuckRevealMode.cards &&
+                  _drawMode != _LuckDrawMode.single &&
                   _batchCards.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 _HumanSettingsSection(
@@ -1482,14 +1813,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: List<Widget>.generate(
-                          _batchCards.length,
-                          (index) => _buildBatchCard(context, i18n, index),
-                        ),
-                      ),
+                      _buildBatchGrid(context, i18n),
                       const SizedBox(height: 10),
                       Wrap(
                         spacing: 10,
@@ -1563,16 +1887,23 @@ class _LuckTestCardState extends State<_LuckTestCard>
                 runSpacing: 10,
                 children: <Widget>[
                   _HumanActionButton(
+                    key: const ValueKey<String>('luck-primary-draw-button'),
                     label: pickUiText(
                       i18n,
-                      zh: '${_drawModeLabel(i18n, _drawMode)}抽卡',
-                      en: _drawMode == _LuckDrawMode.single
+                      zh: _revealMode == _LuckRevealMode.scratch
+                          ? '生成刮刮乐'
+                          : '${_drawModeLabel(i18n, _drawMode)}抽卡',
+                      en: _revealMode == _LuckRevealMode.scratch
+                          ? 'New scratch card'
+                          : _drawMode == _LuckDrawMode.single
                           ? 'Single draw'
-                          : '${_drawCountForMode} draws',
+                          : '$_drawCountForMode draws',
                     ),
                     icon: Icons.auto_awesome_rounded,
                     onPressed: _busy || _batchActive
-                        ? null
+                        ? (_revealMode == _LuckRevealMode.scratch
+                              ? () => unawaited(_drawCurrentMode())
+                              : null)
                         : () => unawaited(_drawCurrentMode()),
                   ),
                   OutlinedButton.icon(
@@ -1604,6 +1935,29 @@ class _LuckTestCardState extends State<_LuckTestCard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
+                      pickUiText(i18n, zh: '揭示方式', en: 'Reveal mode'),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _LuckRevealMode.values
+                          .map(
+                            (mode) => ChoiceChip(
+                              label: Text(_revealModeLabel(i18n, mode)),
+                              selected: _revealMode == mode,
+                              onSelected: _busy
+                                  ? null
+                                  : (_) => _setRevealMode(mode),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
                       pickUiText(i18n, zh: '抽卡模式', en: 'Draw mode'),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -1618,7 +1972,9 @@ class _LuckTestCardState extends State<_LuckTestCard>
                             (mode) => ChoiceChip(
                               label: Text(_drawModeLabel(i18n, mode)),
                               selected: _drawMode == mode,
-                              onSelected: _busy
+                              onSelected:
+                                  _busy ||
+                                      _revealMode == _LuckRevealMode.scratch
                                   ? null
                                   : (_) => _setDrawMode(mode),
                             ),
@@ -2161,7 +2517,18 @@ class CalculationTestPage extends StatelessWidget {
 
 enum _CalculationDifficulty { easy, standard, hard, expert }
 
-enum _CalculationType { mixed, addSub, multiply, division, twoStep, missing }
+enum _CalculationType {
+  mixed,
+  addSub,
+  multiply,
+  division,
+  twoStep,
+  missing,
+  exponent,
+  factorial,
+  arithmeticSequence,
+  geometricSequence,
+}
 
 enum _CalculationSessionMode { fixedRounds, timed }
 
@@ -2464,9 +2831,98 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
           type: type,
           difficulty: _difficulty,
         );
+      case _CalculationType.exponent:
+        final baseMax = switch (_difficulty) {
+          _CalculationDifficulty.easy => 5,
+          _CalculationDifficulty.standard => 7,
+          _CalculationDifficulty.hard => 9,
+          _CalculationDifficulty.expert => 11,
+        };
+        final exponentMax = switch (_difficulty) {
+          _CalculationDifficulty.easy => 2,
+          _CalculationDifficulty.standard => 3,
+          _CalculationDifficulty.hard => 3,
+          _CalculationDifficulty.expert => 4,
+        };
+        final base = next(2, baseMax);
+        final exponent = next(2, exponentMax);
+        return _CalculationProblem(
+          prompt: '$base^$exponent = ?',
+          answer: math.pow(base, exponent).toInt(),
+          type: type,
+          difficulty: _difficulty,
+        );
+      case _CalculationType.factorial:
+        final n = switch (_difficulty) {
+          _CalculationDifficulty.easy => next(3, 5),
+          _CalculationDifficulty.standard => next(4, 6),
+          _CalculationDifficulty.hard => next(5, 7),
+          _CalculationDifficulty.expert => next(6, 8),
+        };
+        return _CalculationProblem(
+          prompt: '$n! = ?',
+          answer: _factorial(n),
+          type: type,
+          difficulty: _difficulty,
+        );
+      case _CalculationType.arithmeticSequence:
+        final first = next(2, max ~/ 3);
+        final diff = next(2, switch (_difficulty) {
+          _CalculationDifficulty.easy => 6,
+          _CalculationDifficulty.standard => 9,
+          _CalculationDifficulty.hard => 14,
+          _CalculationDifficulty.expert => 18,
+        });
+        final index = next(4, switch (_difficulty) {
+          _CalculationDifficulty.easy => 7,
+          _CalculationDifficulty.standard => 9,
+          _CalculationDifficulty.hard => 11,
+          _CalculationDifficulty.expert => 13,
+        });
+        return _CalculationProblem(
+          prompt:
+              '$first, ${first + diff}, ${first + diff * 2}, ... 第 $index 项 = ?',
+          answer: first + diff * (index - 1),
+          type: type,
+          difficulty: _difficulty,
+        );
+      case _CalculationType.geometricSequence:
+        final ratio = next(2, switch (_difficulty) {
+          _CalculationDifficulty.easy => 3,
+          _CalculationDifficulty.standard => 4,
+          _CalculationDifficulty.hard => 5,
+          _CalculationDifficulty.expert => 5,
+        });
+        final first = next(2, switch (_difficulty) {
+          _CalculationDifficulty.easy => 5,
+          _CalculationDifficulty.standard => 6,
+          _CalculationDifficulty.hard => 7,
+          _CalculationDifficulty.expert => 8,
+        });
+        final index = next(3, switch (_difficulty) {
+          _CalculationDifficulty.easy => 5,
+          _CalculationDifficulty.standard => 6,
+          _CalculationDifficulty.hard => 6,
+          _CalculationDifficulty.expert => 7,
+        });
+        return _CalculationProblem(
+          prompt:
+              '$first, ${first * ratio}, ${first * ratio * ratio}, ... 第 $index 项 = ?',
+          answer: first * math.pow(ratio, index - 1).toInt(),
+          type: type,
+          difficulty: _difficulty,
+        );
       case _CalculationType.mixed:
         return _generateProblem();
     }
+  }
+
+  int _factorial(int value) {
+    var result = 1;
+    for (var n = 2; n <= value; n += 1) {
+      result *= n;
+    }
+    return result;
   }
 
   _CalculationType _effectiveType() {
@@ -2488,12 +2944,18 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
         _CalculationType.multiply,
         _CalculationType.division,
         _CalculationType.twoStep,
+        _CalculationType.exponent,
+        _CalculationType.arithmeticSequence,
       ],
       _CalculationDifficulty.expert => <_CalculationType>[
         _CalculationType.multiply,
         _CalculationType.division,
         _CalculationType.twoStep,
         _CalculationType.missing,
+        _CalculationType.exponent,
+        _CalculationType.factorial,
+        _CalculationType.arithmeticSequence,
+        _CalculationType.geometricSequence,
       ],
     };
     return _sample(_random, pool);
@@ -2520,6 +2982,18 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
       _CalculationType.division => pickUiText(i18n, zh: '除法', en: 'Divide'),
       _CalculationType.twoStep => pickUiText(i18n, zh: '两步题', en: 'Two-step'),
       _CalculationType.missing => pickUiText(i18n, zh: '未知数', en: 'Missing'),
+      _CalculationType.exponent => pickUiText(i18n, zh: '指数', en: 'Powers'),
+      _CalculationType.factorial => pickUiText(i18n, zh: '阶乘', en: 'Factorial'),
+      _CalculationType.arithmeticSequence => pickUiText(
+        i18n,
+        zh: '等差数列',
+        en: 'Arithmetic seq.',
+      ),
+      _CalculationType.geometricSequence => pickUiText(
+        i18n,
+        zh: '等比数列',
+        en: 'Geometric seq.',
+      ),
     };
   }
 
@@ -2933,7 +3407,6 @@ class _SustainedAttentionCard extends StatefulWidget {
 }
 
 class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
-  static const Color _accent = Color(0xFF6D8657);
   final math.Random _random = math.Random();
   Timer? _timer;
   _AttentionMode _mode = _AttentionMode.goNoGo;
@@ -2963,10 +3436,6 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
     _AttentionPace.standard => 820,
     _AttentionPace.fast => 620,
   };
-
-  int get _targets => _records.where((record) => record.target).length;
-
-  double get _hitRate => _targets <= 0 ? 0 : _hits / _targets;
 
   int get _averageReactionMs {
     final times = _records

@@ -465,10 +465,26 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
   }
 
   void _handleDirectionPointerDown(PointerDownEvent event) {
+    _startDirectionGesture(event.position);
+  }
+
+  void _handleDirectionPointerMove(PointerMoveEvent event) {
+    _updateDirectionGesture(event.position);
+  }
+
+  void _handleDirectionPointerUp(PointerUpEvent event) {
+    _endDirectionGesture(event.position);
+  }
+
+  void _handleDirectionPointerCancel(PointerCancelEvent event) {
+    _clearDirectionPointer();
+  }
+
+  void _startDirectionGesture(Offset position) {
     if (_mode != _ReactionMode.direction) {
       return;
     }
-    _directionPointerOrigin = event.position;
+    _directionPointerOrigin = position;
     _directionPointerActive = true;
     if (_phase == _ReactionPhase.idle ||
         _phase == _ReactionPhase.feedback ||
@@ -477,7 +493,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
     }
   }
 
-  void _handleDirectionPointerMove(PointerMoveEvent event) {
+  void _updateDirectionGesture(Offset position) {
     if (!_directionPointerActive || _mode != _ReactionMode.direction) {
       return;
     }
@@ -485,7 +501,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
     if (origin == null) {
       return;
     }
-    final direction = _directionFromDelta(event.position - origin);
+    final direction = _directionFromDelta(position - origin);
     if (direction == null) {
       return;
     }
@@ -498,14 +514,14 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
     }
   }
 
-  void _handleDirectionPointerUp(PointerUpEvent event) {
+  void _endDirectionGesture(Offset? position) {
     if (!_directionPointerActive || _mode != _ReactionMode.direction) {
       return;
     }
     final origin = _directionPointerOrigin;
-    final direction = origin == null
+    final direction = origin == null || position == null
         ? null
-        : _directionFromDelta(event.position - origin);
+        : _directionFromDelta(position - origin);
     if (_phase == _ReactionPhase.waiting) {
       _falseStart();
       return;
@@ -518,10 +534,6 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
       }
       return;
     }
-    _clearDirectionPointer();
-  }
-
-  void _handleDirectionPointerCancel(PointerCancelEvent event) {
     _clearDirectionPointer();
   }
 
@@ -843,6 +855,64 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
     final theme = Theme.of(context);
     final stageColor = _stageColor(context);
     final foreground = _foregroundFor(stageColor);
+    final stage = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      height: 260,
+      width: double.infinity,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: stageColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (_phase == _ReactionPhase.ready &&
+              _mode == _ReactionMode.colorMatch &&
+              _colorTarget != null) ...<Widget>[
+            Container(
+              width: 74,
+              height: 74,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _colorTarget!.color,
+                border: Border.all(
+                  color: foreground.withValues(alpha: 0.72),
+                  width: 3,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+          Text(
+            _stageText(i18n),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              color: foreground,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _stageHint(i18n),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: foreground.withValues(alpha: 0.86),
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (_mode == _ReactionMode.direction) {
+      return _buildDirectionPointerRegion(
+        key: const ValueKey<String>('reaction_stage'),
+        child: stage,
+      );
+    }
     return GestureDetector(
       key: const ValueKey<String>('reaction_stage'),
       onTapDown: (_) => _handleStageDown(),
@@ -852,57 +922,27 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           _handleRelease();
         }
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        height: 260,
-        width: double.infinity,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: stageColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _accent.withValues(alpha: 0.18)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (_phase == _ReactionPhase.ready &&
-                _mode == _ReactionMode.colorMatch &&
-                _colorTarget != null) ...<Widget>[
-              Container(
-                width: 74,
-                height: 74,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _colorTarget!.color,
-                  border: Border.all(
-                    color: foreground.withValues(alpha: 0.72),
-                    width: 3,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-            ],
-            Text(
-              _stageText(i18n),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: foreground,
-                fontWeight: FontWeight.w900,
-              ),
+      child: stage,
+    );
+  }
+
+  Widget _buildDirectionPointerRegion({Key? key, required Widget child}) {
+    return RawGestureDetector(
+      key: key,
+      gestures: <Type, GestureRecognizerFactory>{
+        EagerGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<EagerGestureRecognizer>(
+              () => EagerGestureRecognizer(),
+              (EagerGestureRecognizer instance) {},
             ),
-            const SizedBox(height: 10),
-            Text(
-              _stageHint(i18n),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: foreground.withValues(alpha: 0.86),
-                height: 1.35,
-              ),
-            ),
-          ],
-        ),
+      },
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _handleDirectionPointerDown,
+        onPointerMove: _handleDirectionPointerMove,
+        onPointerUp: _handleDirectionPointerUp,
+        onPointerCancel: _handleDirectionPointerCancel,
+        child: child,
       ),
     );
   }
@@ -1014,11 +1054,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
   Widget _buildDirectionCenter(BuildContext context, AppI18n i18n) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Listener(
-      onPointerDown: _handleDirectionPointerDown,
-      onPointerMove: _handleDirectionPointerMove,
-      onPointerUp: _handleDirectionPointerUp,
-      onPointerCancel: _handleDirectionPointerCancel,
+    return _buildDirectionPointerRegion(
+      key: const ValueKey<String>('reaction_direction_center'),
       child: Container(
         width: 92,
         height: 72,

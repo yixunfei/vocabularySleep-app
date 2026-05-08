@@ -225,25 +225,72 @@ class _ToolboxLayoutEditor extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         ToolboxSurfaceCard(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           radius: ToolboxUiTokens.sectionPanelRadius,
           color: colorScheme.surfaceContainerLowest,
           borderColor: colorScheme.outlineVariant.withValues(alpha: 0.78),
           shadowOpacity: 0.05,
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Icon(Icons.tune_rounded, color: colorScheme.primary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _layoutCountText(
-                    i18n,
-                    visibleEntries.length,
-                    hiddenEntries.length,
+              Row(
+                children: <Widget>[
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer.withValues(
+                        alpha: 0.62,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: colorScheme.primary.withValues(alpha: 0.16),
+                      ),
+                    ),
+                    child: Icon(Icons.tune_rounded, color: colorScheme.primary),
                   ),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      pickUiText(i18n, zh: '编辑首页入口', en: 'Edit home entries'),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _ToolboxLayoutStatusChip(
+                    icon: Icons.visibility_rounded,
+                    label: pickUiText(i18n, zh: '显示', en: 'Visible'),
+                    value: '${visibleEntries.length}',
+                    tint: colorScheme.primary,
+                  ),
+                  _ToolboxLayoutStatusChip(
+                    icon: Icons.visibility_off_rounded,
+                    label: pickUiText(i18n, zh: '隐藏', en: 'Hidden'),
+                    value: '${hiddenEntries.length}',
+                    tint: hiddenEntries.isEmpty
+                        ? colorScheme.outline
+                        : colorScheme.tertiary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '拖拽可调整顺序，移除只隐藏首页入口，不会禁用模块。',
+                  en: 'Drag to reorder. Removing only hides the home entry and does not disable the module.',
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.35,
                 ),
               ),
             ],
@@ -352,12 +399,59 @@ class _ToolboxLayoutEditor extends StatelessWidget {
   }
 }
 
-String _layoutCountText(AppI18n i18n, int visibleCount, int hiddenCount) {
-  return pickUiText(
-    i18n,
-    zh: '当前显示 $visibleCount 个入口，已隐藏 $hiddenCount 个。',
-    en: '$visibleCount entries visible, $hiddenCount hidden.',
-  );
+class _ToolboxLayoutStatusChip extends StatelessWidget {
+  const _ToolboxLayoutStatusChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.tint,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color tint;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Semantics(
+      label: '$label $value',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(ToolboxUiTokens.pillRadius),
+          border: Border.all(color: tint.withValues(alpha: 0.22)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 16, color: tint),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                value,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: tint,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _EmptyToolboxLayoutPanel extends StatelessWidget {
@@ -381,6 +475,16 @@ class _EmptyToolboxLayoutPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withValues(alpha: 0.58),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(Icons.inventory_2_outlined, color: colorScheme.primary),
+          ),
+          const SizedBox(height: 12),
           Text(
             pickUiText(
               i18n,
@@ -403,6 +507,21 @@ class _EmptyToolboxLayoutPanel extends StatelessWidget {
                   : 'Enter edit mode to restore hidden tool entries.',
             ),
           ),
+          if (hiddenEntries.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 10),
+            ToolboxInfoPill(
+              text: pickUiText(
+                i18n,
+                zh: '已隐藏 ${hiddenEntries.length} 个首页入口',
+                en: '${hiddenEntries.length} home entries hidden',
+              ),
+              accent: colorScheme.tertiary,
+              backgroundColor: colorScheme.tertiaryContainer.withValues(
+                alpha: 0.36,
+              ),
+              textColor: colorScheme.onSurface,
+            ),
+          ],
           if (onEdit != null) ...<Widget>[
             const SizedBox(height: 12),
             FilledButton.icon(
@@ -440,32 +559,66 @@ void _showRestoreSheet(
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              pickUiText(
-                i18n,
-                zh: '恢复后入口会回到工具箱首页，模块启停状态不会改变。',
-                en: 'Restored entries return to the Toolbox home without changing module enablement.',
+            ToolboxSurfaceCard(
+              padding: const EdgeInsets.all(12),
+              radius: ToolboxUiTokens.cardRadius,
+              color: theme.colorScheme.surfaceContainerLow,
+              borderColor: theme.colorScheme.outlineVariant,
+              shadowOpacity: 0,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '恢复后入口会回到工具箱首页；模块启停状态仍由模块管理控制。',
+                        en: 'Restored entries return to the Toolbox home. Module enablement is still controlled in module management.',
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
+                    ),
+                  ),
+                ],
               ),
-              style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
             for (final entry in hiddenEntries)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  backgroundColor: entry.accent.withValues(alpha: 0.16),
-                  foregroundColor: entry.accent,
-                  child: Icon(entry.icon),
-                ),
-                title: Text(entry.title),
-                subtitle: Text(entry.subtitle),
-                trailing: FilledButton.tonalIcon(
-                  onPressed: () {
-                    state.restoreToolboxEntry(entry.moduleId);
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.add_rounded),
-                  label: Text(pickUiText(i18n, zh: '恢复', en: 'Restore')),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ToolboxSurfaceCard(
+                  padding: EdgeInsets.zero,
+                  radius: ToolboxUiTokens.cardRadius,
+                  color: theme.colorScheme.surfaceContainerLowest,
+                  borderColor: entry.accent.withValues(alpha: 0.2),
+                  shadowColor: entry.accent,
+                  shadowOpacity: 0.04,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    leading: CircleAvatar(
+                      backgroundColor: entry.accent.withValues(alpha: 0.16),
+                      foregroundColor: entry.accent,
+                      child: Icon(entry.icon),
+                    ),
+                    title: Text(entry.title),
+                    subtitle: Text(entry.subtitle),
+                    trailing: FilledButton.tonalIcon(
+                      onPressed: () {
+                        state.restoreToolboxEntry(entry.moduleId);
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.add_rounded),
+                      label: Text(pickUiText(i18n, zh: '恢复', en: 'Restore')),
+                    ),
+                  ),
                 ),
               ),
           ],

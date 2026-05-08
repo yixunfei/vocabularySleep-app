@@ -757,6 +757,10 @@ void main() {
       expect(find.text('←'), findsOneWidget);
       expect(find.text('●'), findsOneWidget);
       expect(find.text('Hold center'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('reaction_direction_center')),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Color match'));
       await tester.pumpAndSettle();
@@ -1952,6 +1956,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Toolbox home is in edit mode'), findsOneWidget);
+      expect(find.text('Edit home entries'), findsOneWidget);
+      expect(find.text('Visible'), findsOneWidget);
+      expect(find.text('Hidden'), findsOneWidget);
       expect(find.text('Done'), findsWidgets);
 
       await tester.scrollUntilVisible(
@@ -1964,14 +1971,21 @@ void main() {
       final removeHumanTests = find.byKey(
         const ValueKey<String>('toolbox_remove_toolbox.human_tests'),
       );
+      final dragHumanTests = find.byKey(
+        const ValueKey<String>('toolbox_drag_toolbox.human_tests'),
+      );
+      expect(dragHumanTests, findsOneWidget);
       expect(removeHumanTests, findsOneWidget);
+      expect(tester.getSize(dragHumanTests), const Size(48, 48));
+      expect(tester.getSize(removeHumanTests), const Size(48, 48));
       await tester.ensureVisible(removeHumanTests);
       await tester.pumpAndSettle();
       await tester.tap(removeHumanTests, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       expect(state.toolboxLayoutState.hidden.length, 1);
-      expect(find.textContaining('hidden'), findsWidgets);
+      expect(find.text('1'), findsWidgets);
+      expect(find.text('Hidden'), findsOneWidget);
 
       final restoreEntriesButton = find.byKey(
         const ValueKey<String>('toolbox_restore_entries_button'),
@@ -1981,6 +1995,10 @@ void main() {
       await tester.tap(restoreEntriesButton);
       await tester.pumpAndSettle();
       expect(find.text('Restore hidden entries'), findsOneWidget);
+      expect(
+        find.textContaining('Module enablement is still controlled'),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Restore').last);
       await tester.pumpAndSettle();

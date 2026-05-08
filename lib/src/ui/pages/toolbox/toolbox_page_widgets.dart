@@ -277,6 +277,9 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
                     _ToolboxEntryEditActions(
                       accent: accent,
                       dragHandle: widget.dragHandle,
+                      dragKey: ValueKey<String>(
+                        'toolbox_drag_${entry.moduleId}',
+                      ),
                       onRemove: widget.onRemove,
                       dragTooltip: widget.dragTooltip,
                       removeTooltip: widget.removeTooltip,
@@ -339,6 +342,7 @@ class _ToolboxEntryEditActions extends StatelessWidget {
   const _ToolboxEntryEditActions({
     required this.accent,
     required this.dragHandle,
+    required this.dragKey,
     required this.onRemove,
     required this.dragTooltip,
     required this.removeTooltip,
@@ -347,6 +351,7 @@ class _ToolboxEntryEditActions extends StatelessWidget {
 
   final Color accent;
   final Widget? dragHandle;
+  final Key dragKey;
   final VoidCallback? onRemove;
   final String dragTooltip;
   final String removeTooltip;
@@ -355,16 +360,35 @@ class _ToolboxEntryEditActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    const actionSize = ToolboxUiTokens.editActionSize;
     return SizedBox(
-      width: 44,
+      width: actionSize,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Tooltip(
             message: dragTooltip,
-            child:
-                dragHandle ??
-                Icon(Icons.drag_handle_rounded, color: accent, size: 26),
+            child: SizedBox(
+              key: dragKey,
+              width: actionSize,
+              height: actionSize,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: accent.withValues(alpha: 0.18)),
+                ),
+                child:
+                    dragHandle ??
+                    Center(
+                      child: Icon(
+                        Icons.drag_handle_rounded,
+                        color: accent,
+                        size: 26,
+                      ),
+                    ),
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Tooltip(
@@ -376,8 +400,8 @@ class _ToolboxEntryEditActions extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
                 onTap: onRemove,
                 child: Ink(
-                  width: 36,
-                  height: 36,
+                  width: actionSize,
+                  height: actionSize,
                   decoration: BoxDecoration(
                     color: colorScheme.errorContainer.withValues(alpha: 0.74),
                     borderRadius: BorderRadius.circular(999),

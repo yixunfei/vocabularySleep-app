@@ -28,6 +28,10 @@ void main() {
     expect(find.text('Difficulty'), findsOneWidget);
     expect(find.text('Operation type'), findsOneWidget);
     expect(find.text('Two-step'), findsOneWidget);
+    expect(find.text('Powers'), findsOneWidget);
+    expect(find.text('Factorial'), findsOneWidget);
+    expect(find.text('Arithmetic seq.'), findsOneWidget);
+    expect(find.text('Geometric seq.'), findsOneWidget);
     expect(find.text('Timed'), findsOneWidget);
     expect(find.text('Report'), findsOneWidget);
   });
@@ -79,6 +83,9 @@ void main() {
 
     expect(find.text('Luck index'), findsWidgets);
     expect(find.text('Draw settings'), findsOneWidget);
+    expect(find.text('Reveal mode'), findsOneWidget);
+    expect(find.text('Flip cards'), findsOneWidget);
+    expect(find.text('Scratch'), findsOneWidget);
     expect(find.text('20 draws'), findsWidgets);
     expect(find.text('Draw goal'), findsOneWidget);
     expect(find.text('Tier count'), findsOneWidget);
@@ -95,6 +102,29 @@ void main() {
     expect(find.text('A1'), findsNothing);
     expect(
       find.text('20 draws mode: press the button below to generate 20 cards.'),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey<String>('luck-primary-draw-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('luck-primary-draw-button')),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Multi-draw cards'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Scratch'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Scratch'));
+    await tester.pumpAndSettle();
+    expect(find.text('New scratch card'), findsOneWidget);
+    expect(
+      find.text('Press the button below to generate one scratch card.'),
       findsOneWidget,
     );
 
