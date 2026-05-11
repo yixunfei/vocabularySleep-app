@@ -2,14 +2,18 @@ part of 'toolbox_human_tests.dart';
 
 class _HumanTestEntry {
   const _HumanTestEntry({
+    required this.id,
     required this.title,
+    required this.shortTitle,
     required this.subtitle,
     required this.icon,
     required this.accent,
     required this.pageBuilder,
   });
 
+  final String id;
   final String title;
+  final String shortTitle;
   final String subtitle;
   final IconData icon;
   final Color accent;
@@ -17,79 +21,201 @@ class _HumanTestEntry {
 }
 
 class _HumanTestEntryCard extends StatelessWidget {
-  const _HumanTestEntryCard({required this.entry});
+  const _HumanTestEntryCard({
+    required this.entry,
+    this.compact = false,
+    this.highlighted = false,
+    this.dragging = false,
+  });
 
   final _HumanTestEntry entry;
+  final bool compact;
+  final bool highlighted;
+  final bool dragging;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute<void>(builder: (_) => entry.pageBuilder()));
-        },
-        child: Ink(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: <Color>[
-                entry.accent.withValues(alpha: 0.10),
-                colorScheme.surfaceContainerLow,
-                colorScheme.surface,
-              ],
-            ),
-            border: Border.all(color: entry.accent.withValues(alpha: 0.20)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: entry.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: Icon(entry.icon, color: entry.accent),
+    final radius = BorderRadius.circular(compact ? 18 : 20);
+    final card = AnimatedScale(
+      scale: dragging ? 0.96 : (highlighted ? 1.015 : 1),
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: radius,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => entry.pageBuilder()),
+            );
+          },
+          child: Ink(
+            height: compact ? 118 : null,
+            padding: EdgeInsets.all(compact ? 9 : 16),
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  entry.accent.withValues(
+                    alpha: dragging ? 0.05 : (highlighted ? 0.17 : 0.075),
+                  ),
+                  colorScheme.surfaceContainerLowest,
+                  colorScheme.surface,
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+              border: Border.all(
+                color: entry.accent.withValues(
+                  alpha: dragging ? 0.16 : (highlighted ? 0.52 : 0.14),
+                ),
+              ),
+              boxShadow: highlighted && !dragging
+                  ? <BoxShadow>[
+                      BoxShadow(
+                        color: entry.accent.withValues(alpha: 0.14),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : const <BoxShadow>[],
+            ),
+            child: compact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Container(
+                            width: 20,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: entry.accent.withValues(alpha: 0.42),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            Icons.drag_indicator_rounded,
+                            size: 14,
+                            color: entry.accent.withValues(alpha: 0.38),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: entry.accent.withValues(
+                            alpha: dragging ? 0.08 : 0.13,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: entry.accent.withValues(alpha: 0.14),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(entry.icon, color: entry.accent, size: 27),
+                      ),
+                      const SizedBox(height: 8),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          entry.shortTitle,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            height: 1.05,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 16),
+                        child: Text(
+                          entry.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w700,
+                            height: 1.05,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                    ],
+                  )
+                : Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: entry.accent.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(entry.icon, color: entry.accent),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            entry.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            entry.subtitle,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      entry.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      entry.shortTitle,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.outline,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      entry.subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: colorScheme.outline,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: colorScheme.outline,
-              ),
-            ],
           ),
         ),
+      ),
+    );
+    if (!compact) {
+      return card;
+    }
+    return Tooltip(
+      message: '${entry.title}\n${entry.subtitle}',
+      child: Semantics(
+        button: true,
+        label: entry.title,
+        hint: entry.subtitle,
+        child: card,
       ),
     );
   }

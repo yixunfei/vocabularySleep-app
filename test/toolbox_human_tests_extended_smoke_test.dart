@@ -272,10 +272,70 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Visual search'), findsWidgets);
-      expect(find.text('Auditory reaction'), findsWidgets);
+      expect(find.text('Auditory test'), findsWidgets);
+      expect(find.text('Acoustic experiment'), findsWidgets);
       expect(find.text('Dual-task switching'), findsWidgets);
       expect(find.text('Fine drag tracking'), findsWidgets);
       expect(find.text('Bimanual coordination'), findsWidgets);
+      expect(find.text('My tools'), findsOneWidget);
+      expect(find.text('No quick tools yet'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('human_tests_quick_dock')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('human_tests_entry_reaction')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('human_tests_entry_aim')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('human_tests_grid_slot_reaction')),
+        findsOneWidget,
+      );
+      final reactionRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_reaction')),
+      );
+      final aimRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_aim')),
+      );
+      expect((reactionRect.top - aimRect.top).abs(), lessThan(4));
+      expect(aimRect.left, greaterThan(reactionRect.left));
+      expect(reactionRect.height, closeTo(118, 0.5));
+
+      final reorderGesture = await tester.startGesture(aimRect.center);
+      await tester.pump(const Duration(milliseconds: 650));
+      await reorderGesture.moveBy(const Offset(-120, 0));
+      await tester.pump(const Duration(milliseconds: 120));
+      await reorderGesture.moveBy(const Offset(-120, 0));
+      await tester.pump(const Duration(milliseconds: 120));
+      await reorderGesture.up();
+      await tester.pumpAndSettle();
+      final reorderedAimRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_aim')),
+      );
+      final reorderedReactionRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_reaction')),
+      );
+      expect(reorderedAimRect.left, lessThan(reorderedReactionRect.left));
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('human_tests_add_quick_button')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Add quick tool'), findsWidgets);
+      await tester.tap(
+        find.widgetWithText(ListTile, 'Reaction test').last,
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey<String>('human_tests_quick_reaction')),
+        findsOneWidget,
+      );
+      expect(find.text('No quick tools yet'), findsNothing);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -287,7 +347,27 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Search'), findsOneWidget);
       expect(find.text('Difference'), findsOneWidget);
+      expect(find.text('Link match'), findsOneWidget);
       expect(find.text('Visual search settings'), findsOneWidget);
+
+      await tester.tap(find.text('Link match'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.text('Pairs'), findsOneWidget);
+      expect(find.text('Moves'), findsOneWidget);
+      expect(find.text('Link board size'), findsOneWidget);
+      expect(find.text('Icon-only match'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('visual-link-ignore-path-switch')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Icon-only match'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Ignore route blocking'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('visual-link-match-grid')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('two-turn route'), findsWidgets);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -297,11 +377,76 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Reaction'), findsWidgets);
+      expect(find.text('Auditory test'), findsWidgets);
+      expect(find.text('Volume calibration'), findsOneWidget);
+      expect(find.text('Mic acoustic lab'), findsNothing);
       expect(find.text('Frequency'), findsWidgets);
-      expect(find.text('Volume'), findsWidgets);
-      expect(find.text('Channel'), findsWidgets);
-      expect(find.text('Preview test tones'), findsOneWidget);
+      expect(find.text('Sensitivity'), findsWidgets);
+      expect(find.text('Spatial'), findsWidgets);
+      expect(find.text('Auditory settings'), findsOneWidget);
+      expect(find.text('Rounds'), findsOneWidget);
+      expect(find.text('10 rounds'), findsOneWidget);
+      expect(find.text('Analysis bands'), findsOneWidget);
+      expect(find.text('Allow replay'), findsOneWidget);
+      await tester.tap(find.text('Sensitivity'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.text('Threshold hint'), findsNothing);
+      await tester.tap(find.text('Spatial'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(find.text('Direction count'), findsOneWidget);
+      expect(find.text('Slider smoothing'), findsOneWidget);
+      expect(find.text('8-way pad'), findsOneWidget);
+      expect(find.text('Pointer'), findsOneWidget);
+      expect(find.text('Confirm position'), findsOneWidget);
+      expect(find.text('Preview current mode'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Start'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      final auditoryStatusSlot = find.byKey(
+        const ValueKey<String>('auditory-status-slot'),
+      );
+      expect(auditoryStatusSlot, findsOneWidget);
+      expect(tester.getSize(auditoryStatusSlot).height, 64);
+      await tester.tap(find.text('Start'), warnIfMissed: false);
+      await tester.pump();
+      expect(tester.getSize(auditoryStatusSlot).height, 64);
+      expect(
+        find.byKey(const ValueKey<String>('auditory-wait-marker')),
+        findsOneWidget,
+      );
+      final frontDirectionButton = find.byKey(
+        const ValueKey<String>('auditory-spatial-direction-0'),
+      );
+      final frontDirectionMaterial = tester.widget<Material>(
+        find
+            .descendant(
+              of: frontDirectionButton,
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(
+        frontDirectionMaterial.color,
+        Theme.of(tester.element(frontDirectionButton)).colorScheme.surface,
+      );
+      expect(find.textContaining('Playing'), findsNothing);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: buildAppTheme(PlayConfig.defaults.appearance),
+          home: const AcousticExperimentTestPage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Acoustic experiment'), findsWidgets);
+      expect(find.text('Mic acoustic lab'), findsOneWidget);
+      expect(find.text('Noise meter'), findsOneWidget);
+      expect(find.text('Smoothness'), findsOneWidget);
+      expect(find.text('Ambient'), findsOneWidget);
 
       await tester.pumpWidget(
         MaterialApp(

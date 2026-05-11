@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.net.Uri
@@ -38,6 +39,7 @@ class MainActivity : FlutterActivity() {
     private val systemSpeechChannelName = "vocabulary_sleep/system_speech"
     private val systemCalendarChannelName = "vocabulary_sleep/system_calendar"
     private val todoReminderChannelName = "vocabulary_sleep/todo_reminder"
+    private val systemAudioChannelName = "vocabulary_sleep/system_audio"
 
     private val reminderHandler = Handler(Looper.getMainLooper())
     private val speechHandler = Handler(Looper.getMainLooper())
@@ -232,6 +234,29 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            systemAudioChannelName,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getPlaybackVolume" -> {
+                    result.success(buildSystemAudioResult(
+                        requestedRatio = (call.arguments as? Map<*, *>)?.let {
+                            (it["recommendedRatio"] as? Number)?.toDouble() ?: 0.65
+                        } ?: 0.65,
+                    ))
+                }
+
+                "setPlaybackVolume" -> {
+                    val requestedRatio = ((call.arguments as? Map<*, *>)?.get("targetRatio") as? Number)
+                        ?.toDouble() ?: 0.65
+                    result.success(setPlaybackVolume(requestedRatio))
+                }
+
+                else -> result.notImplemented()
+            }
+        }
         TodoReminderScheduler.ensureNotificationChannels(applicationContext)
 
     }
@@ -382,6 +407,73 @@ class MainActivity : FlutterActivity() {
             "exactAlarmGranted" to exactAlarmGranted,
             "exactAlarmSettingsAvailable" to exactAlarmSettingsAvailable,
         )
+    }
+
+    private fun buildSystemAudioResult(requestedRatio: Double): Map<String, Any?> {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        val stream = AudioManager.STREAM_MUSIC
+        val currentIndex = audioManager?.getStreamVolume(stream)
+        val maxIndex = audioManager?.getStreamMaxVolume(stream)
+        val minIndex = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            audioManager?.getStreamMinVolume(stream)
+        } else {
+            0
+        }
+        val fixedVolume = audioManager?.isVolumeFixed == true
+        val currentRatio =
+            if (currentIndex != null && maxIndex != null && maxIndex > 0) currentIndex.toDouble() / maxIndex.toDouble() else 0.0
+        val recommendedRatio = requestedRatio.coerceIn(0.0, 1.0)
+        val recommendedIndex = if (maxIndex != null) {
+            (recommendedRatio * maxIndex).toInt().coerceIn(minIndex ?: 0, maxIndex)
+        } else {
+            null
+        }
+        val currentDb = if (currentIndex != null && maxIndex != null && maxIndex > 0) {
+            ((currentIndex.toDouble() / maxIndex.toDouble()) * 30.0) - 30.0
+        } else {
+            null
+        }
+        val recommendedDb = if (recommendedIndex != null && maxIndex != null && maxIndex > 0) {
+            ((recommendedIndex.toDouble() / maxIndex.toDouble()) * 30.0) - 30.0
+        } else {
+            null
+        }
+        val canAutoApply = audioManager != null && !fixedVolume
+        val needsAdjustment = currentRatio < recommendedRatio - 0.08 || currentRatio > recommendedRatio + 0.08
+        return mapOf(
+            "platformName" to "android",
+            "currentRatio" to currentRatio,
+            "recommendedRatio" to recommendedRatio,
+            "canAutoApply" to canAutoApply,
+            "fixedVolume" to fixedVolume,
+            "isSupported" to true,
+            "currentIndex" to currentIndex,
+            "maxIndex" to maxIndex,
+            "minIndex" to minIndex,
+            "currentDb" to currentDb,
+            "recommendedDb" to recommendedDb,
+            "needsAdjustment" to needsAdjustment,
+            "message" to if (needsAdjustment) "adjustment_recommended" else "ok",
+        )
+    }
+
+    private fun setPlaybackVolume(targetRatio: Double): Map<String, Any?> {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            ?: return buildSystemAudioResult(targetRatio).plus("message" to "unavailable")
+        val stream = AudioManager.STREAM_MUSIC
+        val maxIndex = audioManager.getStreamMaxVolume(stream)
+        val minIndex = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            audioManager.getStreamMinVolume(stream)
+        } else {
+            0
+        }
+        if (audioManager.isVolumeFixed) {
+            return buildSystemAudioResult(targetRatio).plus("message" to "fixed_volume")
+        }
+        val clampedRatio = targetRatio.coerceIn(0.0, 1.0)
+        val targetIndex = (clampedRatio * maxIndex).toInt().coerceIn(minIndex, maxIndex)
+        audioManager.setStreamVolume(stream, targetIndex, 0)
+        return buildSystemAudioResult(targetRatio)
     }
 
     private fun requestTodoReminderNotificationPermission(result: MethodChannel.Result) {

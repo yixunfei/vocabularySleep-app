@@ -1959,7 +1959,8 @@ void main() {
       expect(find.text('Edit home entries'), findsOneWidget);
       expect(find.text('Visible'), findsOneWidget);
       expect(find.text('Hidden'), findsOneWidget);
-      expect(find.text('Done'), findsWidgets);
+      expect(find.text('Exit'), findsWidgets);
+      expect(find.text('Exit edit'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('Human test hub'),

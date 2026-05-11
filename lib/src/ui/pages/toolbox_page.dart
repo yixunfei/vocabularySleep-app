@@ -23,6 +23,7 @@ class ToolboxPage extends ConsumerStatefulWidget {
 
 class _ToolboxPageState extends ConsumerState<ToolboxPage> {
   bool _editing = false;
+  bool _layoutDragActive = false;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +93,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
                     onTap: () {
                       setState(() {
                         _editing = !_editing;
+                        _layoutDragActive = false;
                       });
                     },
                   ),
@@ -128,9 +130,19 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
                     state: state,
                     visibleEntries: visibleEntries,
                     hiddenEntries: hiddenEntries,
+                    dragActive: _layoutDragActive,
+                    onDragStateChanged: (value) {
+                      if (_layoutDragActive == value) {
+                        return;
+                      }
+                      setState(() {
+                        _layoutDragActive = value;
+                      });
+                    },
                     onExit: () {
                       setState(() {
                         _editing = false;
+                        _layoutDragActive = false;
                       });
                     },
                   )
@@ -142,6 +154,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
                       onEdit: () {
                         setState(() {
                           _editing = true;
+                          _layoutDragActive = false;
                         });
                       },
                     )
@@ -151,6 +164,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
                       onEntryLongPress: (_) {
                         setState(() {
                           _editing = true;
+                          _layoutDragActive = false;
                         });
                       },
                     ),
@@ -185,17 +199,17 @@ class _ToolboxEditToggle extends StatelessWidget {
       tooltip: pickUiText(
         i18n,
         zh: editing ? '完成编辑' : '编辑工具箱布局',
-        en: editing ? 'Done editing' : 'Edit toolbox layout',
+        en: editing ? 'Exit edit mode' : 'Edit toolbox layout',
       ),
       leading: Icon(
-        editing ? Icons.check_rounded : Icons.dashboard_customize_rounded,
+        editing ? Icons.close_rounded : Icons.dashboard_customize_rounded,
         size: 18,
       ),
       label: Text(
         pickUiText(
           i18n,
           zh: editing ? '完成' : '编辑布局',
-          en: editing ? 'Done' : 'Edit layout',
+          en: editing ? 'Exit' : 'Edit layout',
         ),
       ),
     );
@@ -208,6 +222,8 @@ class _ToolboxLayoutEditor extends StatelessWidget {
     required this.state,
     required this.visibleEntries,
     required this.hiddenEntries,
+    required this.dragActive,
+    required this.onDragStateChanged,
     required this.onExit,
   });
 
@@ -215,6 +231,8 @@ class _ToolboxLayoutEditor extends StatelessWidget {
   final AppState state;
   final List<ToolboxEntryData> visibleEntries;
   final List<ToolboxEntryData> hiddenEntries;
+  final bool dragActive;
+  final ValueChanged<bool> onDragStateChanged;
   final VoidCallback onExit;
 
   @override
@@ -304,18 +322,32 @@ class _ToolboxLayoutEditor extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
+            onReorderStart: (_) => onDragStateChanged(true),
+            onReorderEnd: (_) {
+              onDragStateChanged(false);
+              onExit();
+            },
             proxyDecorator: (child, index, animation) {
               return AnimatedBuilder(
                 animation: animation,
                 builder: (context, child) {
-                  final elevation = 2 + animation.value * 8;
-                  return Material(
-                    color: Colors.transparent,
-                    elevation: elevation,
-                    borderRadius: BorderRadius.circular(
-                      ToolboxUiTokens.cardRadius,
+                  final value = Curves.easeOutCubic.transform(animation.value);
+                  return Transform.translate(
+                    offset: Offset(0, -4 * value),
+                    child: Transform.scale(
+                      scale: 1 + value * 0.03,
+                      child: Material(
+                        color: Colors.transparent,
+                        elevation: 2 + value * 8,
+                        shadowColor: colorScheme.primary.withValues(
+                          alpha: 0.22,
+                        ),
+                        borderRadius: BorderRadius.circular(
+                          ToolboxUiTokens.cardRadius,
+                        ),
+                        child: child,
+                      ),
                     ),
-                    child: child,
                   );
                 },
                 child: child,
@@ -372,9 +404,9 @@ class _ToolboxLayoutEditor extends StatelessWidget {
           runSpacing: 10,
           children: <Widget>[
             FilledButton.icon(
-              onPressed: onExit,
-              icon: const Icon(Icons.check_rounded),
-              label: Text(pickUiText(i18n, zh: '完成编辑', en: 'Done')),
+              onPressed: dragActive ? null : onExit,
+              icon: const Icon(Icons.close_rounded),
+              label: Text(pickUiText(i18n, zh: '退出编辑', en: 'Exit edit')),
             ),
             OutlinedButton.icon(
               key: const ValueKey<String>('toolbox_restore_entries_button'),
