@@ -14,6 +14,10 @@
 - 子模块入口: `toolbox_page_content.dart` 的 `ToolboxEntryData.moduleId`
 - 路由守卫: `ui/module/module_access.dart` 的 `pushModuleRoute`
 
+## 当前基线
+- 听觉测试当前基线已收口到 `PLAN_157` / `PLAN_158`：播放链路、Windows 启动卡顿、推进确认、UI 状态槽和空间默认高亮都已完成修复并验证。
+- 后续若只是对听觉测试做局部修补，请先沿当前基线继续，不要重新展开旧阶段的提示链和状态泄漏逻辑。
+
 ## 首页布局自定义
 - 状态模型: `ToolboxLayoutState`，位于 `lib/src/models/settings_dto.dart`。
 - 持久化键: `SettingsService.toolboxLayoutKey`，仅保存工具箱首页模块顺序 `order` 和首页隐藏列表 `hidden`。
@@ -59,7 +63,7 @@
   - `toolbox_human_tests_verbal_memory.dart` / `toolbox_human_tests_verbal_memory_models.dart` / `toolbox_human_tests_verbal_memory_data.dart` / `toolbox_human_tests_verbal_memory_view.dart` / `toolbox_human_tests_verbal_memory_widgets.dart`: 词汇记忆、数字序列和空间箭头三模式训练，支持分领域词库和自定义舞台高度。
   - `toolbox_human_tests_memory.dart`: 黑猩猩测试、视觉记忆、序列记忆，补强视觉记忆结算报告、序列图标配置和输入点击反馈。
   - `toolbox_human_tests_visual.dart` / `toolbox_human_tests_visual_widgets.dart`: 色觉测试、混色匹配、报告统计列表与弱项建议。
-- `toolbox_human_tests_visual_search.dart` / `toolbox_human_tests_auditory.dart` / `toolbox_human_tests_auditory_lab.dart` / `toolbox_human_tests_switching.dart` / `toolbox_human_tests_drag_tracking.dart` / `toolbox_human_tests_bimanual.dart`: 视觉搜索（含找目标、找不同和连连看趣味模式）、听觉测试（含稳定临时文件播放、可调测试轮数、频率默认 10 轮、递进式频率/音量/节奏评估、播放中频率提示、灵敏度阈值、八向空间定位盘、拖拽方位指针、系统音量自动/手动校准，以及测试期禁用预听/重播和随机等待节奏）、声学实验（麦克风低音/高音/持续曲线和噪音分贝仪）、双任务切换、精细拖拽追踪和双手协调。
+  - `toolbox_human_tests_visual_search.dart` / `toolbox_human_tests_auditory.dart` / `toolbox_human_tests_auditory_lab.dart` / `toolbox_human_tests_switching.dart` / `toolbox_human_tests_drag_tracking.dart` / `toolbox_human_tests_bimanual.dart`: 视觉搜索（含找目标、找不同和连连看趣味模式）、听觉测试（含稳定临时文件播放、可调测试轮数、频率默认 10 轮、递进式频率/音量/节奏评估、灵敏度阈值、八向空间定位盘、拖拽方位指针、系统音量自动/手动校准，以及测试期禁用预听/重播和随机等待节奏）、声学实验（麦克风低音/高音/持续曲线和噪音分贝仪）、双任务切换、精细拖拽追踪和双手协调；其中双手协调已扩展为左右独立脑裂小游戏集合，支持画图、弹球、楼梯三类组合，并补上手机默认横屏全屏、进入全屏即开局、手眼协调同款白底沉浸浮层、默认无限时长、轮数设置、窄屏同屏并排和脑裂风暴/同步窗口/长按充能结算。
   - `toolbox_human_tests_dynamic_vision.dart` / `toolbox_human_tests_dynamic_vision_parts.dart` / `toolbox_human_tests_dynamic_vision_ui.dart`: 动态视力测试。
   - `toolbox_human_tests_typing.dart` / `toolbox_human_tests_typing_copy.dart` / `toolbox_human_tests_typing_data.dart` / `toolbox_human_tests_typing_widgets.dart`: 打字测试训练状态、文案策略、语料库、折叠设置和报告 UI。
   - `toolbox_human_tests_cognition.dart`: 斯特鲁普、运气测试、计算能力测试、持续注意力测试。
@@ -182,6 +186,8 @@
 - 2026-05-08: 人类测试中心中断项收口：反应测试方向滑动局部接管手势避免页面滚动冲突，打字测试设置乱码修复，计算测试新增指数/阶乘/等差/等比题型，运气测试新增紧凑多抽网格、滑过连续翻卡、稀有特效队列和刮刮乐模式。
 - 2026-05-08: 运气测试刮刮乐继续增强为真实即开票结构，新增中奖号码、我的号码、奖金、星标自动中奖、倍数符号、票号/包号、校验码和条码票根模拟。
 - 2026-05-08: 人类测试中心新增视觉搜索、听觉反应、双任务切换、精细拖拽追踪和双手协调五个子模块入口。
+- 2026-05-11: 双手协调收口为左右独立脑裂小游戏集合，支持画图、弹球和楼梯三类任务配对，并强化同步窗口、长按充能、手机默认横屏全屏和轻量菜单式控制。
+- 2026-05-12: 双手协调全屏体验对齐手眼协调/摇杆手眼协调，真实移动端点击入口后自动进入 90 度横屏沉浸全屏并立即开始，设置、报告和会话控制收口到全屏浮层。
 - 2026-05-08: 听觉反应改为合成提示音播放，新增频率、音量和声道三类模拟医学测试；视觉搜索与听觉反应标题完成收口。
 - 2026-05-09: 听觉反应重构为听觉测试，频率测试改为多频率与节奏声量可听评估，音量测试改为听力灵敏度，声道测试改为八/十二/十六方向声音空间定位，并补齐完整自定义设置和分组报告。
 - 2026-05-11: 听觉测试进一步收口播放稳定性与反预测策略：改用临时文件播放合成音、播放中显示频率、测试期禁用预听/重播、随机化等待间隔和轮次顺序，移除进行中的阈值提示，并修正双重音量衰减导致的近静音。

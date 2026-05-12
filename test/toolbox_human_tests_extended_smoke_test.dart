@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:vocabulary_sleep_app/src/models/play_config.dart';
@@ -471,6 +472,7 @@ void main() {
       expect(find.text('Track width'), findsOneWidget);
       expect(find.text('Difficulty'), findsOneWidget);
 
+      _mockSystemChromeForFullscreenTest();
       await tester.pumpWidget(
         MaterialApp(
           locale: const Locale('en'),
@@ -479,10 +481,129 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Alternating'), findsOneWidget);
-      expect(find.text('Sync'), findsOneWidget);
-      expect(find.text('Left'), findsWidgets);
-      expect(find.text('Right'), findsWidgets);
+
+      final fullscreenView = find.byKey(
+        const ValueKey<String>('brain_split_fullscreen_view'),
+      );
+      if (fullscreenView.evaluate().isEmpty) {
+        expect(find.text('Bimanual coordination'), findsWidgets);
+        expect(find.text('Fullscreen start'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text('Fullscreen start'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Fullscreen start'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 650));
+      }
+
+      expect(fullscreenView, findsOneWidget);
+      expect(find.text('No active pair yet.'), findsNothing);
+      expect(find.text('Idle'), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('brain_split_fullscreen_status_peek')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('brain_split_fullscreen_start_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('brain_split_fullscreen_reset_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('brain_split_fullscreen_settings_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('brain_split_fullscreen_menu_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('brain_split_left_slot')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('brain_split_right_slot')),
+        findsOneWidget,
+      );
+      final leftSlotRect = tester.getRect(
+        find.byKey(const ValueKey<String>('brain_split_left_slot')),
+      );
+      final rightSlotRect = tester.getRect(
+        find.byKey(const ValueKey<String>('brain_split_right_slot')),
+      );
+      expect((leftSlotRect.top - rightSlotRect.top).abs(), lessThan(4));
+      expect(rightSlotRect.left, greaterThan(leftSlotRect.left));
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('brain_split_fullscreen_settings_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(
+          const ValueKey<String>('brain_split_fullscreen_settings_dialog'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Bimanual settings'), findsOneWidget);
+      expect(find.text('Split-brain settings'), findsOneWidget);
+      expect(find.text('Rounds'), findsOneWidget);
+      expect(find.text('Time limit'), findsWidgets);
+      expect(find.text('Unlimited'), findsWidgets);
+      expect(find.text('Pace level'), findsOneWidget);
+      expect(find.text('Sync window'), findsOneWidget);
+      expect(find.text('Charge window'), findsOneWidget);
+      expect(find.text('Arcade mix'), findsWidgets);
+      expect(find.text('Split-brain storm'), findsOneWidget);
+      expect(find.text('Rhythm conductor'), findsOneWidget);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('brain_split_fullscreen_menu_button'),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(_popupMenuItem('Settings'), findsOneWidget);
+      expect(_popupMenuItem('Reset'), findsOneWidget);
+      expect(_popupMenuItem('Stop challenge'), findsOneWidget);
+      expect(_popupMenuItem('Exit fullscreen'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
+}
+
+void _mockSystemChromeForFullscreenTest() {
+  final binding = TestDefaultBinaryMessengerBinding.instance;
+  binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (_) async => null,
+  );
+  addTearDown(() {
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      null,
+    );
+  });
+}
+
+Finder _popupMenuItem(String text) {
+  return find.byWidgetPredicate((widget) {
+    if (widget is! PopupMenuItem<dynamic>) {
+      return false;
+    }
+    final child = widget.child;
+    return child is Text && child.data == text;
+  });
 }

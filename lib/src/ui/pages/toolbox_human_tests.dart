@@ -1232,8 +1232,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       shortTitle: pickUiText(i18n, zh: '双手', en: 'Bimanual'),
       subtitle: pickUiText(
         i18n,
-        zh: '在交替或同步节拍中双手协同，练习左右手切换和同次反应。',
-        en: 'Practice left-right alternation or synchronized double taps across both hands.',
+        zh: '在脑裂指令、陷阱、长按和同步窗口中同时调度左右手，挑战节奏、抑制和双手分工。',
+        en: 'Run both hands through split-brain cues, traps, holds, and sync-window strikes for rhythm, inhibition, and coordination.',
       ),
       icon: Icons.pan_tool_alt_rounded,
       accent: const Color(0xFFD08A3A),
