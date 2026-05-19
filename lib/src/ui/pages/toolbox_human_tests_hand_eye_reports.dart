@@ -119,33 +119,113 @@ class _HandEyeCompletionReportDialog extends StatelessWidget {
           );
 
     return _HumanReportDialogFrame(
-      title: Text(pickUiText(i18n, zh: '手眼协调结果报告', en: 'Hand-eye report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '手眼协调结果报告',
+          en: 'Hand-eye report',
+          ja: 'Hand-eye report',
+          de: 'Hand-eye report',
+          fr: 'Rapport sur les yeux des mains',
+          es: 'Informe de mano-ojo',
+          ru: 'Отчет с глаз долой',
+        ),
+      ),
       accent: accent,
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(i18n, zh: '完成轮次', en: 'Rounds'),
+              pickUiText(
+                i18n,
+                zh: '完成轮次',
+                en: 'Rounds',
+                ja: 'Rounds',
+                de: 'Rounds',
+                fr: 'Rondes',
+                es: 'Rondas',
+                ru: 'Круги',
+              ),
               '$successes/$roundCount',
             ),
-            (pickUiText(i18n, zh: '漏掉', en: 'Missed'), '$missed'),
-            (pickUiText(i18n, zh: '点空', en: 'Blanks'), '$totalBlankTaps'),
             (
-              pickUiText(i18n, zh: '假目标', en: 'False targets'),
+              pickUiText(
+                i18n,
+                zh: '漏掉',
+                en: 'Missed',
+                ja: 'Missed',
+                de: 'Missed',
+                fr: 'Manque',
+                es: 'Desaparecido',
+                ru: 'Пропавший',
+              ),
+              '$missed',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '点空',
+                en: 'Blanks',
+                ja: 'ブランク',
+                de: 'Blanks',
+                fr: 'Blancs',
+                es: 'Blanks',
+                ru: 'бланки',
+              ),
+              '$totalBlankTaps',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '假目标',
+                en: 'False targets',
+                ja: 'False targets',
+                de: 'False targets',
+                fr: 'Faux objectifs',
+                es: 'Objetivos falsos',
+                ru: 'Ложные цели',
+              ),
               '$totalDistractorTaps',
             ),
             (
-              pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+              pickUiText(
+                i18n,
+                zh: '平均反应',
+                en: 'Avg reaction',
+                ja: '平均反応',
+                de: 'Avg reaction',
+                fr: 'Réaction d\' Avg',
+                es: 'Reacción de Avg',
+                ru: 'Авг реакция',
+              ),
               averageReaction == null
                   ? '-'
                   : _formatMilliseconds(averageReaction.inMilliseconds),
             ),
             (
-              pickUiText(i18n, zh: '最快反应', en: 'Best reaction'),
+              pickUiText(
+                i18n,
+                zh: '最快反应',
+                en: 'Best reaction',
+                ja: 'ベスト',
+                de: 'Best reaction',
+                fr: 'Meilleure réaction',
+                es: 'La mejor reacción',
+                ru: 'лучшая реакция',
+              ),
               bestReaction == null ? '-' : _formatMilliseconds(bestReaction),
             ),
             (
-              pickUiText(i18n, zh: '平均完成', en: 'Avg completion'),
+              pickUiText(
+                i18n,
+                zh: '平均完成',
+                en: 'Avg completion',
+                ja: '平均',
+                de: 'Avg completion',
+                fr: 'Achèvement',
+                es: 'Finalización de la Avg',
+                ru: 'Завершение Avg',
+              ),
               averageCompletion == null
                   ? '-'
                   : _formatMilliseconds(averageCompletion.inMilliseconds),
@@ -154,7 +234,16 @@ class _HandEyeCompletionReportDialog extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(i18n, zh: '逐轮明细', en: 'Round details'),
+          pickUiText(
+            i18n,
+            zh: '逐轮明细',
+            en: 'Round details',
+            ja: 'Round details',
+            de: 'Round details',
+            fr: 'Détails',
+            es: 'Detalles de la ronda',
+            ru: 'Круглые детали',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -225,54 +314,209 @@ class _JoystickCompletionReportDialog extends StatelessWidget {
         : '$hits/$targetGoal';
 
     return _HumanReportDialogFrame(
-      title: Text(pickUiText(i18n, zh: '摇杆手眼协调结果报告', en: 'Joystick report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '摇杆手眼协调结果报告',
+          en: 'Joystick report',
+          ja: 'Joystick report',
+          de: 'Joystick report',
+          fr: 'Rapport Joystick',
+          es: 'Informe de Joystick',
+          ru: 'Отчет Джойстика',
+        ),
+      ),
       accent: accent,
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(i18n, zh: '模式', en: 'Mode'),
+              pickUiText(
+                i18n,
+                zh: '模式',
+                en: 'Mode',
+                ja: 'Mode',
+                de: 'Mode',
+                fr: 'Mode',
+                es: 'Modo',
+                ru: 'Режим',
+              ),
               mode == _JoystickTestMode.timed
-                  ? pickUiText(i18n, zh: '单位时间', en: 'Timed')
-                  : pickUiText(i18n, zh: '目标总数', en: 'Target count'),
+                  ? pickUiText(
+                      i18n,
+                      zh: '单位时间',
+                      en: 'Timed',
+                      ja: 'Timed',
+                      de: 'Timed',
+                      fr: 'Délai',
+                      es: 'Timed',
+                      ru: 'Время',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '目标总数',
+                      en: 'Target count',
+                      ja: 'Target count',
+                      de: 'Target count',
+                      fr: 'Nombre cible',
+                      es: 'Conteo de objetivos',
+                      ru: 'Целевой счет',
+                    ),
             ),
-            (pickUiText(i18n, zh: '进度', en: 'Progress'), progress),
-            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$hits'),
-            (pickUiText(i18n, zh: '射空', en: 'Shots off'), '$shotsOff'),
             (
-              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
+              progress,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '命中',
+                en: 'Hits',
+                ja: 'Hits',
+                de: 'Hits',
+                fr: 'Coups',
+                es: 'Golpes',
+                ru: 'Хиты',
+              ),
+              '$hits',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '射空',
+                en: 'Shots off',
+                ja: 'Shots off',
+                de: 'Shots off',
+                fr: 'Coups de feu',
+                es: 'Disparos apagados',
+                ru: 'Выстрелы',
+              ),
+              '$shotsOff',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '准确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               accuracy == null ? '-' : '${accuracy.round()}%',
             ),
             (
-              pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+              pickUiText(
+                i18n,
+                zh: '平均反应',
+                en: 'Avg reaction',
+                ja: '平均反応',
+                de: 'Avg reaction',
+                fr: 'Réaction d\' Avg',
+                es: 'Reacción de Avg',
+                ru: 'Авг реакция',
+              ),
               averageReaction == null
                   ? '-'
                   : _formatMilliseconds(averageReaction.inMilliseconds),
             ),
             (
-              pickUiText(i18n, zh: '最快反应', en: 'Best reaction'),
+              pickUiText(
+                i18n,
+                zh: '最快反应',
+                en: 'Best reaction',
+                ja: 'ベスト',
+                de: 'Best reaction',
+                fr: 'Meilleure réaction',
+                es: 'La mejor reacción',
+                ru: 'лучшая реакция',
+              ),
               bestReaction == null ? '-' : _formatMilliseconds(bestReaction),
             ),
             (
-              pickUiText(i18n, zh: '假目标射击', en: 'False shots'),
+              pickUiText(
+                i18n,
+                zh: '假目标射击',
+                en: 'False shots',
+                ja: 'False shots',
+                de: 'False shots',
+                fr: 'Faux coups',
+                es: 'Falsos disparos',
+                ru: 'Ложные выстрелы',
+              ),
               '$falseTargetShots',
             ),
             (
-              pickUiText(i18n, zh: '目标大小', en: 'Target size'),
+              pickUiText(
+                i18n,
+                zh: '目标大小',
+                en: 'Target size',
+                ja: 'Target size',
+                de: 'Target size',
+                fr: 'Taille cible',
+                es: 'Tamaño del objetivo',
+                ru: 'Целевой размер',
+              ),
               '${targetDiameter.round()} dp',
             ),
             (
-              pickUiText(i18n, zh: '目标移动', en: 'Target movement'),
+              pickUiText(
+                i18n,
+                zh: '目标移动',
+                en: 'Target movement',
+                ja: 'Target movement',
+                de: 'Target movement',
+                fr: 'Cible',
+                es: 'Movimiento objetivo',
+                ru: 'Движение мишеней',
+              ),
               targetMovementEnabled
-                  ? pickUiText(i18n, zh: '开启', en: 'On')
-                  : pickUiText(i18n, zh: '关闭', en: 'Off'),
+                  ? pickUiText(
+                      i18n,
+                      zh: '开启',
+                      en: 'On',
+                      ja: 'On',
+                      de: 'On',
+                      fr: 'À',
+                      es: 'On',
+                      ru: 'На',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '关闭',
+                      en: 'Off',
+                      ja: 'Off',
+                      de: 'Off',
+                      fr: 'Arrêt',
+                      es: 'Fuera.',
+                      ru: 'Оставить',
+                    ),
             ),
           ],
         ),
         if (reactions.isNotEmpty) ...<Widget>[
           const SizedBox(height: 14),
           Text(
-            pickUiText(i18n, zh: '命中延迟明细', en: 'Hit latency details'),
+            pickUiText(
+              i18n,
+              zh: '命中延迟明细',
+              en: 'Hit latency details',
+              ja: 'Hit latency details',
+              de: 'Hit latency details',
+              fr: 'Affichage des détails de latence',
+              es: 'Datos de latencia',
+              ru: 'Детали задержки',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),

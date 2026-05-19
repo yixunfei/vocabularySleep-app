@@ -1584,7 +1584,31 @@ void main() {
       expect(find.textContaining('Response speed'), findsOneWidget);
       expect(find.text('Target movement settings'), findsOneWidget);
 
-      await tester.tap(find.text('Target movement settings'));
+      final responseLabel = find.textContaining('Response speed');
+      expect(responseLabel, findsOneWidget);
+      expect(find.textContaining('1.3x'), findsOneWidget);
+      await tester.ensureVisible(responseLabel);
+      await tester.pumpAndSettle();
+      final responseSlider = find.byWidgetPredicate(
+        (widget) =>
+            widget is Slider &&
+            widget.min == 0.2 &&
+            widget.max == 6 &&
+            widget.value == 1.25,
+      );
+      expect(responseSlider, findsOneWidget);
+      final slider = tester.widget<Slider>(responseSlider);
+      expect(slider.onChanged, isNotNull);
+      slider.onChanged!(3.0);
+      await tester.pump();
+      expect(find.textContaining('1.3x'), findsNothing);
+      expect(find.textContaining('3.0x'), findsOneWidget);
+      expect(find.textContaining('Response speed'), findsOneWidget);
+
+      final targetMovementSettings = find.text('Target movement settings');
+      await tester.ensureVisible(targetMovementSettings);
+      await tester.pumpAndSettle();
+      await tester.tap(targetMovementSettings, warnIfMissed: false);
       await tester.pumpAndSettle();
       expect(find.text('Enable target movement'), findsOneWidget);
 

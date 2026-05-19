@@ -522,6 +522,11 @@ class _JoystickFullscreenStatusPeek extends StatelessWidget {
                     i18n,
                     zh: '进度 $progress · 命中 ${state._hits}',
                     en: 'Progress $progress · Hits ${state._hits}',
+                    ja: 'Progress $progress · Hits ${state._hits}',
+                    de: 'Progress $progress · Hits ${state._hits}',
+                    fr: 'Progrès $progress · Affichages ${state._hits}',
+                    es: 'Progresos alcanzados 1/año · Visto',
+                    ru: 'Прогресс $progress · Хиты ${state._hits}',
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -570,23 +575,59 @@ class _JoystickFullscreenStatusPanel extends StatelessWidget {
           runSpacing: 8,
           children: <Widget>[
             _HumanTestFullscreenMetric(
-              label: pickUiText(i18n, zh: '进度', en: 'Progress'),
+              label: pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
               value: progress,
               accent: _JoystickHandEyeCardState._accent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(i18n, zh: '命中', en: 'Hits'),
+              label: pickUiText(
+                i18n,
+                zh: '命中',
+                en: 'Hits',
+                ja: 'Hits',
+                de: 'Hits',
+                fr: 'Coups',
+                es: 'Golpes',
+                ru: 'Хиты',
+              ),
               value: '${state._hits}',
               accent: _JoystickHandEyeCardState._accent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(i18n, zh: '射空', en: 'Miss'),
+              label: pickUiText(
+                i18n,
+                zh: '射空',
+                en: 'Miss',
+                ja: 'Miss',
+                de: 'Miss',
+                fr: 'Mlle',
+                es: 'Miss',
+                ru: 'Мисс.',
+              ),
               value: '${state._shotsOff}',
               accent: _JoystickHandEyeCardState._accent,
             ),
             if (!compact)
               _HumanTestFullscreenMetric(
-                label: pickUiText(i18n, zh: '准度', en: 'Accuracy'),
+                label: pickUiText(
+                  i18n,
+                  zh: '准度',
+                  en: 'Accuracy',
+                  ja: '精度',
+                  de: 'Accuracy',
+                  fr: 'Accuracy',
+                  es: 'Precisión',
+                  ru: 'точность',
+                ),
                 value: accuracy == null ? '-' : '${accuracy.round()}%',
                 accent: _JoystickHandEyeCardState._accent,
               ),
@@ -621,8 +662,26 @@ class _JoystickFullscreenSessionActions extends StatelessWidget {
           IconButton(
             key: const ValueKey<String>('joystick_fullscreen_start_button'),
             tooltip: state._running
-                ? pickUiText(i18n, zh: '结束', en: 'Finish')
-                : pickUiText(i18n, zh: '开始', en: 'Start'),
+                ? pickUiText(
+                    i18n,
+                    zh: '结束',
+                    en: 'Finish',
+                    ja: 'Finish',
+                    de: 'Finish',
+                    fr: 'Finition',
+                    es: 'Acabado',
+                    ru: 'Закончить',
+                  )
+                : pickUiText(
+                    i18n,
+                    zh: '开始',
+                    en: 'Start',
+                    ja: 'Start',
+                    de: 'Start',
+                    fr: 'Démarrer',
+                    es: 'Comienzo',
+                    ru: 'Начинать',
+                  ),
             onPressed: state._running ? state._finish : state._start,
             icon: Icon(
               state._running ? Icons.stop_rounded : Icons.play_arrow_rounded,
@@ -630,19 +689,46 @@ class _JoystickFullscreenSessionActions extends StatelessWidget {
           ),
           IconButton(
             key: const ValueKey<String>('joystick_fullscreen_reset_button'),
-            tooltip: pickUiText(i18n, zh: '重置', en: 'Reset'),
+            tooltip: pickUiText(
+              i18n,
+              zh: '重置',
+              en: 'Reset',
+              ja: 'Reset',
+              de: 'Reset',
+              fr: 'Réinitialiser',
+              es: 'Reset',
+              ru: 'сброс',
+            ),
             onPressed: state._reset,
             icon: const Icon(Icons.restart_alt_rounded),
           ),
           IconButton(
             key: const ValueKey<String>('joystick_fullscreen_settings_button'),
-            tooltip: pickUiText(i18n, zh: '设置', en: 'Settings'),
+            tooltip: pickUiText(
+              i18n,
+              zh: '设置',
+              en: 'Settings',
+              ja: 'Settings',
+              de: 'Settings',
+              fr: 'Paramètres',
+              es: 'Ajustes',
+              ru: 'Настройки',
+            ),
             onPressed: () => _showSettings(context),
             icon: const Icon(Icons.tune_rounded),
           ),
           IconButton(
             key: const ValueKey<String>('joystick_fullscreen_report_button'),
-            tooltip: pickUiText(i18n, zh: '报告', en: 'Report'),
+            tooltip: pickUiText(
+              i18n,
+              zh: '报告',
+              en: 'Report',
+              ja: 'Report',
+              de: 'Report',
+              fr: 'Rapport annuel',
+              es: 'Informe',
+              ru: 'Доклад',
+            ),
             onPressed: reportEnabled ? state._showJoystickReport : null,
             icon: const Icon(Icons.assessment_rounded),
           ),
@@ -659,67 +745,120 @@ class _JoystickFullscreenSettingsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final mediaSize = MediaQuery.sizeOf(context);
-    final dialogWidth = math.min(420.0, math.max(280.0, mediaSize.width - 32));
-    return AlertDialog(
-      key: const ValueKey<String>('joystick_fullscreen_settings_dialog'),
-      title: Text(pickUiText(i18n, zh: '摇杆设置', en: 'Joystick settings')),
-      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-      content: SizedBox(
-        width: dialogWidth,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              _HumanSettingsSection(
-                title: pickUiText(i18n, zh: '摇杆设置', en: 'Joystick settings'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '测试方案、准星速率和命中后刷新方式',
-                  en: 'Test mode, crosshair response speed, and respawn timing',
-                ),
-                child: state._buildJoystickSettings(i18n),
-              ),
-              const SizedBox(height: 12),
-              _HumanSettingsSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '目标移动设置',
-                  en: 'Target movement settings',
-                ),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '默认关闭：让目标在刷新后持续移动，增加追踪压力。',
-                  en: 'Off by default: keeps targets moving after spawn for harder tracking.',
-                ),
-                child: state._buildJoystickMovementSettings(i18n),
-              ),
-              const SizedBox(height: 12),
-              _HumanSettingsSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '高阶干扰设置',
-                  en: 'Advanced interference',
-                ),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '默认关闭：目标附近可随机出现不同颜色的假目标。',
-                  en: 'Off by default: color-coded false targets may appear around the real target.',
-                ),
-                child: state._buildJoystickDistractorSettings(i18n),
-              ),
-            ],
+    return AnimatedBuilder(
+      animation: state._viewSignal,
+      builder: (context, _) {
+        final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+        final mediaSize = MediaQuery.sizeOf(context);
+        final dialogWidth = math.min(
+          420.0,
+          math.max(280.0, mediaSize.width - 32),
+        );
+        return AlertDialog(
+          key: const ValueKey<String>('joystick_fullscreen_settings_dialog'),
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '摇杆设置',
+              en: 'Joystick settings',
+              ja: 'Joystick settings',
+              de: 'Joystick settings',
+              fr: 'Paramètres du joystick',
+              es: 'Ajustes de joystick',
+              ru: 'Настройка Joystick',
+            ),
           ),
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
-      ],
+          contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          content: SizedBox(
+            width: dialogWidth,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _HumanSettingsSection(
+                    title: pickUiText(
+                      i18n,
+                      zh: '摇杆设置',
+                      en: 'Joystick settings',
+                      ja: 'Joystick settings',
+                      de: 'Joystick settings',
+                      fr: 'Paramètres du joystick',
+                      es: 'Ajustes de joystick',
+                      ru: 'Настройка Joystick',
+                    ),
+                    subtitle: pickUiText(
+                      i18n,
+                      zh: '测试方案、准星速率和命中后刷新方式',
+                      en: 'Test mode, crosshair response speed, and respawn timing',
+                      ja: 'Test mode, crosshair response speed, and respawn timing',
+                      de: 'Test mode, crosshair response speed, and respawn timing',
+                      fr: 'Mode d\'essai, vitesse de réponse des cheveux croisés et chronométrage de remise en suspension',
+                      es: 'Modo de prueba, velocidad de respuesta cruzada y tiempo de reaparecer',
+                      ru: 'Режим испытания, скорость перекрестного реагирования и время повторного запуска',
+                    ),
+                    child: state._buildJoystickSettings(i18n),
+                  ),
+                  const SizedBox(height: 12),
+                  _HumanSettingsSection(
+                    title: pickUiText(
+                      i18n,
+                      zh: '目标移动设置',
+                      en: 'Target movement settings',
+                      ja: 'Target movement settings',
+                      de: 'Target movement settings',
+                      fr: 'Paramètres de mouvement de la cible',
+                      es: 'Ajustes del movimiento objetivo',
+                      ru: 'Настройки движения цели',
+                    ),
+                    subtitle: pickUiText(
+                      i18n,
+                      zh: '默认关闭：让目标在刷新后持续移动，增加追踪压力。',
+                      en: 'Off by default: keeps targets moving after spawn for harder tracking.',
+                      ja: 'Off by default: keeps targets moving after spawn for harder tracking.',
+                      de: 'Off by default: keeps targets moving after spawn for harder tracking.',
+                      fr: 'Arrêt par défaut : maintient les cibles en mouvement après le frai pour un suivi plus difficile.',
+                      es: 'De forma predeterminada: mantiene los objetivos que se mueven después de desove para un seguimiento más difícil.',
+                      ru: 'Выключено по умолчанию: держит цели движутся после нереста для более сложного отслеживания.',
+                    ),
+                    child: state._buildJoystickMovementSettings(i18n),
+                  ),
+                  const SizedBox(height: 12),
+                  _HumanSettingsSection(
+                    title: pickUiText(
+                      i18n,
+                      zh: '高阶干扰设置',
+                      en: 'Advanced interference',
+                      ja: '高度な干渉',
+                      de: 'Advanced interference',
+                      fr: 'Advanced interference',
+                      es: 'Interferencia avanzada',
+                      ru: 'Расширенное вмешательство',
+                    ),
+                    subtitle: pickUiText(
+                      i18n,
+                      zh: '默认关闭：目标附近可随机出现不同颜色的假目标。',
+                      en: 'Off by default: color-coded false targets may appear around the real target.',
+                      ja: 'Off by default: color-coded false targets may appear around the real target.',
+                      de: 'Off by default: color-coded false targets may appear around the real target.',
+                      fr: 'Désactivé par défaut : les fausses cibles codées en couleur peuvent apparaître autour de la cible réelle.',
+                      es: 'De forma predeterminada: los falsos blancos codificados por colores pueden aparecer alrededor del objetivo real.',
+                      ru: 'Выключено по умолчанию: цветные ложные цели могут появляться вокруг реальной цели.',
+                    ),
+                    child: state._buildJoystickDistractorSettings(i18n),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -743,7 +882,18 @@ class _JoystickFullscreenFireButton extends StatelessWidget {
         key: const ValueKey<String>('joystick_fullscreen_fire_button'),
         onPressed: state._running ? state._fire : null,
         icon: const Icon(Icons.my_location_rounded, size: 28),
-        label: Text(pickUiText(i18n, zh: '射击', en: 'Fire')),
+        label: Text(
+          pickUiText(
+            i18n,
+            zh: '射击',
+            en: 'Fire',
+            ja: 'Fire',
+            de: 'Fire',
+            fr: 'Feu',
+            es: 'Fuego',
+            ru: 'Огонь',
+          ),
+        ),
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.surface.withValues(alpha: 0.62),
           foregroundColor: _JoystickHandEyeCardState._accent,

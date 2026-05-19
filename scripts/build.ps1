@@ -1,6 +1,7 @@
 param(
   [string[]]$Target = @('all'),
   [switch]$Clean,
+  [switch]$ResetBuildCache,
   [switch]$NoPubGet,
   [string]$BuildName,
   [string]$BuildNumber,
@@ -9,6 +10,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'tooling-env.ps1')
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $distRoot = Join-Path $projectRoot 'dist'
@@ -102,97 +104,26 @@ function Resolve-FlutterCommand {
     return $script:FlutterCommand
   }
 
-  $candidates = @()
-
-  if ($env:FLUTTER_BIN) {
-    $candidates += $env:FLUTTER_BIN
-  }
-  if ($env:FLUTTER_ROOT) {
-    $candidates += (Join-Path $env:FLUTTER_ROOT 'bin\flutter.bat')
-    $candidates += (Join-Path $env:FLUTTER_ROOT 'bin\flutter')
-  }
-
-  $command = Get-Command flutter -ErrorAction SilentlyContinue
-  if ($command) {
-    $candidates += $command.Source
-  }
-
-  $candidates += @(
-    (Join-Path $projectRoot '.fvm\flutter_sdk\bin\flutter.bat'),
-    (Join-Path $projectRoot '.fvm\flutter_sdk\bin\flutter'),
-    'D:\env\Flutter\flutter\bin\flutter.bat',
-    'C:\src\flutter\bin\flutter.bat',
-    (Join-Path $env:USERPROFILE 'flutter\bin\flutter.bat'),
-    (Join-Path $env:USERPROFILE 'fvm\default\bin\flutter.bat')
-  )
-
-  foreach ($candidate in $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) {
-    if (Test-Path $candidate) {
-      $script:FlutterCommand = $candidate
-      return $script:FlutterCommand
-    }
-  }
-
-  throw "Flutter executable was not found. Set FLUTTER_BIN or FLUTTER_ROOT, or install Flutter in a standard location."
-}
-
-function Add-PathEntry {
-  param([string]$PathEntry)
-
-  if ([string]::IsNullOrWhiteSpace($PathEntry)) {
-    return
-  }
-  if (-not (Test-Path $PathEntry)) {
-    return
-  }
-
-  $separator = [System.IO.Path]::PathSeparator
-  $currentEntries = $env:PATH -split [regex]::Escape($separator)
-  if ($currentEntries -contains $PathEntry) {
-    return
-  }
-  $env:PATH = "$PathEntry$separator$env:PATH"
-}
-
-function Resolve-AndroidSdkRoot {
-  $candidates = @()
-
-  if ($env:ANDROID_SDK_ROOT) {
-    $candidates += $env:ANDROID_SDK_ROOT
-  }
-  if ($env:ANDROID_HOME) {
-    $candidates += $env:ANDROID_HOME
-  }
-
-  $candidates += @(
-    'D:\env\AndroidSDK',
-    "$env:LOCALAPPDATA\Android\Sdk",
-    "$env:USERPROFILE\AppData\Local\Android\Sdk",
-    'C:\Android\Sdk'
-  )
-
-  foreach ($candidate in $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) {
-    if ((Test-Path (Join-Path $candidate 'platform-tools\adb.exe')) -or
-        (Test-Path (Join-Path $candidate 'platform-tools\adb'))) {
-      return $candidate
-    }
-  }
-
-  return $null
+  $script:FlutterCommand = Resolve-ProjectFlutterCommand -ProjectRoot $projectRoot
+  return $script:FlutterCommand
 }
 
 function Ensure-AndroidSdkEnvironment {
-  $sdkRoot = Resolve-AndroidSdkRoot
-  if (-not $sdkRoot) {
-    throw "Android SDK was not found. Set ANDROID_HOME or ANDROID_SDK_ROOT, or install the SDK in a standard location."
-  }
+  return Ensure-ProjectAndroidSdkEnvironment -ProjectRoot $projectRoot
+}
 
-  $env:ANDROID_HOME = $sdkRoot
-  $env:ANDROID_SDK_ROOT = $sdkRoot
-  Add-PathEntry -PathEntry (Join-Path $sdkRoot 'platform-tools')
-  Add-PathEntry -PathEntry (Join-Path $sdkRoot 'emulator')
-  Add-PathEntry -PathEntry (Join-Path $sdkRoot 'cmdline-tools\latest\bin')
-  Add-PathEntry -PathEntry (Join-Path $sdkRoot 'tools\bin')
+function Ensure-AndroidAppBundleEnvironment {
+  $sdkRoot = Ensure-AndroidSdkEnvironment
+  $apkAnalyzer = Assert-ProjectAndroidAppBundleTooling -SdkRoot $sdkRoot
+  Write-Host "Android SDK: $sdkRoot"
+  Write-Host "Android apkanalyzer: $apkAnalyzer"
+}
+
+function Ensure-CMakeEnvironment {
+  $cmakeCommand = Ensure-ProjectCMakeEnvironment -ProjectRoot $projectRoot
+  $nugetCommand = Ensure-ProjectNuGet
+  Write-Host "CMake: $cmakeCommand"
+  Write-Host "NuGet: $nugetCommand"
 }
 
 function Reset-StaleGradleWrapperState {
@@ -362,6 +293,17 @@ try {
 
   Ensure-Directory -Path $distRoot
 
+  if ($ResetBuildCache) {
+    Clear-ProjectGeneratedBuildCache -ProjectRoot $projectRoot -Scope all -DryRun:$DryRun
+  } else {
+    if ($resolvedTargets -contains 'windows') {
+      Repair-ProjectCMakeCache -ProjectRoot $projectRoot -Scope windows -DryRun:$DryRun
+    }
+    if ($resolvedTargets -contains 'android-apk' -or $resolvedTargets -contains 'android-appbundle') {
+      Repair-ProjectCMakeCache -ProjectRoot $projectRoot -Scope android -DryRun:$DryRun
+    }
+  }
+
   if ($Clean) {
     Invoke-Flutter -Arguments @('clean')
   }
@@ -371,9 +313,17 @@ try {
   }
 
   if ($resolvedTargets -contains 'android-apk' -or $resolvedTargets -contains 'android-appbundle') {
-    Ensure-AndroidSdkEnvironment
+    if ($resolvedTargets -contains 'android-appbundle') {
+      Ensure-AndroidAppBundleEnvironment
+    } else {
+      $sdkRoot = Ensure-AndroidSdkEnvironment
+      Write-Host "Android SDK: $sdkRoot"
+    }
     Use-ProjectGradleUserHome
     Reset-StaleGradleWrapperState
+  }
+  if ($resolvedTargets -contains 'windows') {
+    Ensure-CMakeEnvironment
   }
 
   foreach ($item in $resolvedTargets) {

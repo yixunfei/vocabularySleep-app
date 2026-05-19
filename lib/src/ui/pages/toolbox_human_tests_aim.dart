@@ -22,11 +22,25 @@ class AimTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '瞄准测试', en: 'Aim test'),
+      title: pickUiText(
+        i18n,
+        zh: '瞄准测试',
+        en: 'Aim test',
+        ja: '照準テスト',
+        de: 'Aim test',
+        fr: 'Aim test',
+        es: 'Prueba de objetivos',
+        ru: 'Цель испытания',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '从经典点靶扩展到降级放大、移动靶和真假目标干扰，练速度，也练稳定性。',
         en: 'Train speed and control with classic, reveal-grow, moving, and decoy target modes.',
+        ja: 'Train speed and control with classic, reveal-grow, moving, and decoy target modes.',
+        de: 'Train speed and control with classic, reveal-grow, moving, and decoy target modes.',
+        fr: 'Vitesse et contrôle du train avec des modes classiques, de révélation, de déplacement et de cible de leurre.',
+        es: 'Entrena la velocidad y el control con los modos de destino clásicos, revelador, en movimiento y decodificación.',
+        ru: 'Скорость поезда и управление с классическими, открытыми, движущимися и скрытыми целевыми режимами.',
       ),
       accent: const Color(0xFFC24D5A),
       icon: Icons.adjust_rounded,
@@ -34,6 +48,11 @@ class AimTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：选择模式后开始追踪目标',
         en: 'Next: choose a mode and track the targets',
+        ja: 'Next: choose a mode and track the targets',
+        de: 'Next: choose a mode and track the targets',
+        fr: 'Suivant : choisir un mode et suivre les cibles',
+        es: 'Siguiente: elegir un modo y seguir los objetivos',
+        ru: 'Далее: выберите режим и отследите цели',
       ),
       child: const _AimTestCard(),
     );
@@ -549,15 +568,47 @@ class _AimTestCardState extends State<_AimTestCard>
       pageBuilder: (dialogContext, _, _) {
         return _AimSniperFailureOverlay(
           accent: _accent,
-          title: pickUiText(i18n, zh: '你被虚拟狙击手命中', en: 'Sniper hit'),
+          title: pickUiText(
+            i18n,
+            zh: '你被虚拟狙击手命中',
+            en: 'Sniper hit',
+            ja: 'Sniper hit',
+            de: 'Sniper hit',
+            fr: 'Sniper touché',
+            es: 'Sniper hit',
+            ru: 'Снайперский удар',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '目标已经放大到最大，反制窗口结束。本轮按失败记录。',
             en: 'The target reached maximum size. The counter-shot window closed.',
+            ja: 'The target reached maximum size. The counter-shot window closed.',
+            de: 'The target reached maximum size. The counter-shot window closed.',
+            fr: 'La cible a atteint la taille maximale. La fenêtre à contre-coups s\'est fermée.',
+            es: 'El objetivo alcanzó el tamaño máximo. La ventana cerrada.',
+            ru: 'Цель достигла максимального размера. Окно встречного выстрела закрыто.',
           ),
           actionLabel: finished
-              ? pickUiText(i18n, zh: '查看报告', en: 'View report')
-              : pickUiText(i18n, zh: '继续', en: 'Continue'),
+              ? pickUiText(
+                  i18n,
+                  zh: '查看报告',
+                  en: 'View report',
+                  ja: 'View report',
+                  de: 'View report',
+                  fr: 'Consulter le rapport',
+                  es: 'Ver informe',
+                  ru: 'Посмотреть доклад',
+                )
+              : pickUiText(
+                  i18n,
+                  zh: '继续',
+                  en: 'Continue',
+                  ja: '継続',
+                  de: 'Continue',
+                  fr: 'Continuer',
+                  es: 'Continuar',
+                  ru: 'Продолжать',
+                ),
           onDismiss: () => Navigator.of(dialogContext).pop(),
         );
       },
@@ -619,14 +670,46 @@ class _AimTestCardState extends State<_AimTestCard>
 
   String _modeLabel(AppI18n i18n, _AimTestMode mode) {
     return switch (mode) {
-      _AimTestMode.classic => pickUiText(i18n, zh: '经典点靶', en: 'Classic'),
+      _AimTestMode.classic => pickUiText(
+        i18n,
+        zh: '经典点靶',
+        en: 'Classic',
+        ja: 'クラシック',
+        de: 'Classic',
+        fr: 'Classique',
+        es: 'Clásico',
+        ru: 'Классика',
+      ),
       _AimTestMode.revealGrowth => pickUiText(
         i18n,
         zh: '降级放大',
         en: 'Reveal grow',
+        ja: 'Reveal grow',
+        de: 'Reveal grow',
+        fr: 'Faire pousser les révélations',
+        es: 'Crecimiento de la venganza',
+        ru: 'Показать рост',
       ),
-      _AimTestMode.moving => pickUiText(i18n, zh: '移动靶', en: 'Moving'),
-      _AimTestMode.decoys => pickUiText(i18n, zh: '真假干扰', en: 'Decoys'),
+      _AimTestMode.moving => pickUiText(
+        i18n,
+        zh: '移动靶',
+        en: 'Moving',
+        ja: 'Moving',
+        de: 'Moving',
+        fr: 'Déplacement',
+        es: 'Moving',
+        ru: 'двигаться',
+      ),
+      _AimTestMode.decoys => pickUiText(
+        i18n,
+        zh: '真假干扰',
+        en: 'Decoys',
+        ja: 'Decoys',
+        de: 'Decoys',
+        fr: 'Décors',
+        es: 'Decoys',
+        ru: 'Декои',
+      ),
     };
   }
 
@@ -636,21 +719,41 @@ class _AimTestCardState extends State<_AimTestCard>
         i18n,
         zh: '目标固定出现，适合测速和热身。',
         en: 'Fixed targets for speed checks and warm-ups.',
+        ja: 'Fixed targets for speed checks and warm-ups.',
+        de: 'Fixed targets for speed checks and warm-ups.',
+        fr: 'Objectifs fixes pour les contrôles de vitesse et les échauffements.',
+        es: 'Objetivos fijos para cheques de velocidad y calentamientos.',
+        ru: 'Фиксированные цели для проверки скорости и разминки.',
       ),
       _AimTestMode.revealGrowth => pickUiText(
         i18n,
         zh: '目标从几乎不可见的点快速显形，再持续放大，越早命中越难。',
         en: 'The target starts nearly invisible, appears quickly, then keeps growing.',
+        ja: 'The target starts nearly invisible, appears quickly, then keeps growing.',
+        de: 'The target starts nearly invisible, appears quickly, then keeps growing.',
+        fr: 'La cible commence presque invisible, apparaît rapidement, puis continue de croître.',
+        es: 'El objetivo comienza casi invisible, aparece rápidamente, luego sigue creciendo.',
+        ru: 'Цель становится почти невидимой, появляется быстро, а затем продолжает расти.',
       ),
       _AimTestMode.moving => pickUiText(
         i18n,
         zh: '目标在两点之间移动，考验追踪和预判。',
         en: 'The target moves between two points for tracking practice.',
+        ja: 'The target moves between two points for tracking practice.',
+        de: 'The target moves between two points for tracking practice.',
+        fr: 'La cible se déplace entre deux points pour suivre la pratique.',
+        es: 'El objetivo se mueve entre dos puntos para la práctica de seguimiento.',
+        ru: 'Цель перемещается между двумя точками для отслеживания.',
       ),
       _AimTestMode.decoys => pickUiText(
         i18n,
         zh: '红色是真目标，青色是假目标，点错会重刷。',
         en: 'Red is real, teal is false. Hitting a decoy refreshes the round.',
+        ja: 'Red is real, teal is false. Hitting a decoy refreshes the round.',
+        de: 'Red is real, teal is false. Hitting a decoy refreshes the round.',
+        fr: 'Red est réel, Teal est faux. Frapper un leurre rafraîchit la ronde.',
+        es: 'Red es real, teal es falso. Hitting un decoy refresca la ronda.',
+        ru: 'Красный - настоящий, теля - ложный. Удар по приманке освежает раунд.',
       ),
     };
   }
@@ -662,39 +765,83 @@ class _AimTestCardState extends State<_AimTestCard>
         i18n,
         zh: '目标已出现，尽快稳定命中。',
         en: 'Target is live. Aim and hit cleanly.',
+        ja: 'Target is live. Aim and hit cleanly.',
+        de: 'Target is live. Aim and hit cleanly.',
+        fr: 'La cible est en direct. Visez et frappez proprement.',
+        es: 'El blanco está vivo. Apunta y golpea limpiamente.',
+        ru: 'Цель живая. Целься и ударь чисто.',
       ),
       _AimFeedbackKind.hit =>
         _latestHitMs == null
-            ? pickUiText(i18n, zh: '命中', en: 'Hit')
+            ? pickUiText(
+                i18n,
+                zh: '命中',
+                en: 'Hit',
+                ja: 'Hit',
+                de: 'Hit',
+                fr: 'Affichage',
+                es: 'Hit',
+                ru: 'удар',
+              )
             : pickUiText(
                 i18n,
                 zh: '命中：${_formatMilliseconds(_latestHitMs!)}',
                 en: 'Hit: ${_formatMilliseconds(_latestHitMs!)}',
+                ja: 'Hit: ${_formatMilliseconds(_latestHitMs!)}',
+                de: 'Hit: ${_formatMilliseconds(_latestHitMs!)}',
+                fr: 'Affichage : ${_formatMilliseconds(_latestHitMs!)}',
+                es: 'Visto:',
+                ru: 'Хит: ${_formatMilliseconds(_latestHitMs!)}',
               ),
       _AimFeedbackKind.miss => pickUiText(
         i18n,
         zh: '点空了，目标不会消失，但连击已断。',
         en: 'Blank tap. The target stays, but the streak is broken.',
+        ja: 'ブランクタップ。ターゲットは残るが、ストリークは壊れている。',
+        de: 'Blank tap. The target stays, but the streak is broken.',
+        fr: 'Un robinet blanc. La cible reste, mais la stries est cassée.',
+        es: 'Grifo blanco. El objetivo se queda, pero la racha está rota.',
+        ru: 'Бланковый кран. Цель остается, но полоса сломана.',
       ),
       _AimFeedbackKind.decoy => pickUiText(
         i18n,
         zh: '点到假目标，本轮刷新。',
         en: 'Decoy hit. Round refreshed.',
+        ja: 'Decoy hit. Round refreshed.',
+        de: 'Decoy hit. Round refreshed.',
+        fr: 'C\'est déco. Rond rafraîchi.',
+        es: 'Golpe de Decoy. Refrigerio redondo.',
+        ru: 'Декой ударил. Круг освежен.',
       ),
       _AimFeedbackKind.timeout => pickUiText(
         i18n,
         zh: '放大窗口结束，进入下一目标。',
         en: 'Growth window ended. Moving to the next target.',
+        ja: 'Growth window ended. Moving to the next target.',
+        de: 'Growth window ended. Moving to the next target.',
+        fr: 'La fenêtre de croissance s\'est terminée. Aller à la prochaine cible.',
+        es: 'La ventana de crecimiento terminó. Mover al siguiente objetivo.',
+        ru: 'Окно роста закончилось. Переход к следующей цели.',
       ),
       _AimFeedbackKind.sniperFail => pickUiText(
         i18n,
         zh: '虚拟狙击手命中，反制失败。',
         en: 'Sniper hit. Counter-shot failed.',
+        ja: 'Sniper hit. Counter-shot failed.',
+        de: 'Sniper hit. Counter-shot failed.',
+        fr: 'Sniper frappé. Le contre-coup a échoué.',
+        es: 'Golpe de francotirador. El disparo falló.',
+        ru: 'Удар снайпера. Контр-выстрел провалился.',
       ),
       _AimFeedbackKind.complete => pickUiText(
         i18n,
         zh: '测试完成，可以调整模式再来一轮。',
         en: 'Test complete. Tune the mode and run another round.',
+        ja: 'Test complete. Tune the mode and run another round.',
+        de: 'Test complete. Tune the mode and run another round.',
+        fr: 'Essai terminé. Alignez le mode et exécutez un autre tour.',
+        es: 'Prueba completa. Tune el modo y ejecute otra ronda.',
+        ru: 'Тест завершен. Настройте режим и запустите еще один раунд.',
       ),
     };
   }
@@ -706,30 +853,110 @@ class _AimTestCardState extends State<_AimTestCard>
     final accuracy = _accuracy ?? 0;
     final average = _averageHitMs ?? 9999;
     if (accuracy >= 0.92 && average <= 620) {
-      return pickUiText(i18n, zh: 'S 级', en: 'S tier');
+      return pickUiText(
+        i18n,
+        zh: 'S 级',
+        en: 'S tier',
+        ja: 'S tier',
+        de: 'S tier',
+        fr: 'Niveau S',
+        es: 'S tierno',
+        ru: 'Уровень',
+      );
     }
     if (accuracy >= 0.82 && average <= 850) {
-      return pickUiText(i18n, zh: 'A 级', en: 'A tier');
+      return pickUiText(
+        i18n,
+        zh: 'A 级',
+        en: 'A tier',
+        ja: 'ランク',
+        de: 'A tier',
+        fr: 'A tier',
+        es: 'Un tierno',
+        ru: 'ярус',
+      );
     }
     if (accuracy >= 0.70 && average <= 1150) {
-      return pickUiText(i18n, zh: 'B 级', en: 'B tier');
+      return pickUiText(
+        i18n,
+        zh: 'B 级',
+        en: 'B tier',
+        ja: 'Bティア',
+        de: 'B tier',
+        fr: 'Niveau B',
+        es: 'B tier',
+        ru: 'B-ярус',
+      );
     }
-    return pickUiText(i18n, zh: '练习中', en: 'Training');
+    return pickUiText(
+      i18n,
+      zh: '练习中',
+      en: 'Training',
+      ja: 'Training',
+      de: 'Training',
+      fr: 'Formation',
+      es: 'Capacitación',
+      ru: 'Подготовка',
+    );
   }
 
   String _modeCombinationLabel(AppI18n i18n) {
     final parts = <String>[_modeLabel(i18n, _mode)];
     if (_usesRevealGrowth && _revealMoves) {
-      parts.add(pickUiText(i18n, zh: '移动放大', en: 'moving growth'));
+      parts.add(
+        pickUiText(
+          i18n,
+          zh: '移动放大',
+          en: 'moving growth',
+          ja: 'moving growth',
+          de: 'moving growth',
+          fr: 'croissance',
+          es: 'crecimiento en movimiento',
+          ru: 'движущийся рост',
+        ),
+      );
     }
     if (_mode == _AimTestMode.moving && _movingDecoys) {
-      parts.add(pickUiText(i18n, zh: '真假干扰', en: 'decoys'));
+      parts.add(
+        pickUiText(
+          i18n,
+          zh: '真假干扰',
+          en: 'decoys',
+          ja: 'decoys',
+          de: 'decoys',
+          fr: 'leurres',
+          es: 'decoys',
+          ru: 'приманка',
+        ),
+      );
     }
     if (_mode == _AimTestMode.decoys && _decoysMove) {
-      parts.add(pickUiText(i18n, zh: '移动干扰', en: 'moving decoys'));
+      parts.add(
+        pickUiText(
+          i18n,
+          zh: '移动干扰',
+          en: 'moving decoys',
+          ja: 'moving decoys',
+          de: 'moving decoys',
+          fr: 'leurres mobiles',
+          es: 'mudanzas decoys',
+          ru: 'перемещение приманок',
+        ),
+      );
     }
     if (_usesSniperDuel) {
-      parts.add(pickUiText(i18n, zh: '狙击手对决', en: 'sniper duel'));
+      parts.add(
+        pickUiText(
+          i18n,
+          zh: '狙击手对决',
+          en: 'sniper duel',
+          ja: 'sniper duel',
+          de: 'sniper duel',
+          fr: 'sniper duel',
+          es: 'duelo de francotirador',
+          ru: 'Снайперская дуэль',
+        ),
+      );
     }
     return parts.join(' / ');
   }
@@ -744,25 +971,109 @@ class _AimTestCardState extends State<_AimTestCard>
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '模式', en: 'Mode'), _modeLabel(i18n, _mode)),
             (
-              pickUiText(i18n, zh: '目标', en: 'Targets'),
+              pickUiText(
+                i18n,
+                zh: '模式',
+                en: 'Mode',
+                ja: 'Mode',
+                de: 'Mode',
+                fr: 'Mode',
+                es: 'Modo',
+                ru: 'Режим',
+              ),
+              _modeLabel(i18n, _mode),
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '目标',
+                en: 'Targets',
+                ja: 'Targets',
+                de: 'Targets',
+                fr: 'Objectifs',
+                es: 'Metas',
+                ru: 'Цели',
+              ),
               '$_resolvedTargets/$_targetGoal',
             ),
-            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$_hits'),
             (
-              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '命中',
+                en: 'Hits',
+                ja: 'Hits',
+                de: 'Hits',
+                fr: 'Coups',
+                es: 'Golpes',
+                ru: 'Хиты',
+              ),
+              '$_hits',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '准确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               accuracy == null ? '-' : '${(accuracy * 100).round()}%',
             ),
             (
-              pickUiText(i18n, zh: '平均命中', en: 'Avg hit'),
+              pickUiText(
+                i18n,
+                zh: '平均命中',
+                en: 'Avg hit',
+                ja: '平均ヒット',
+                de: 'Avg hit',
+                fr: 'Avg touché',
+                es: 'Avg hit',
+                ru: 'Авг ударил',
+              ),
               average == null ? '-' : _formatMilliseconds(average),
             ),
-            (pickUiText(i18n, zh: '最佳连击', en: 'Best streak'), '$_bestStreak'),
-            (pickUiText(i18n, zh: '评级', en: 'Rating'), _ratingLabel(i18n)),
+            (
+              pickUiText(
+                i18n,
+                zh: '最佳连击',
+                en: 'Best streak',
+                ja: 'ベストストリーク',
+                de: 'Best streak',
+                fr: 'Meilleure série',
+                es: 'La mejor racha',
+                ru: 'Лучшая полоса',
+              ),
+              '$_bestStreak',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '评级',
+                en: 'Rating',
+                ja: 'Rating',
+                de: 'Rating',
+                fr: 'Évaluation',
+                es: 'Valoración',
+                ru: 'Рейтинг',
+              ),
+              _ratingLabel(i18n),
+            ),
             if (_sniperFailures > 0)
               (
-                pickUiText(i18n, zh: '狙击失败', en: 'Sniper fails'),
+                pickUiText(
+                  i18n,
+                  zh: '狙击失败',
+                  en: 'Sniper fails',
+                  ja: 'Sniper fails',
+                  de: 'Sniper fails',
+                  fr: 'Le tireur échoue',
+                  es: 'El francotirador falla',
+                  ru: 'Снайпер провалился',
+                ),
                 '$_sniperFailures',
               ),
           ],
@@ -774,10 +1085,9 @@ class _AimTestCardState extends State<_AimTestCard>
             builder: (context, constraints) {
               final height = math.min(390.0, constraints.maxWidth * 0.78);
               final stageSize = Size(constraints.maxWidth, height);
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (details) =>
-                    _handleStageTap(details.localPosition, stageSize),
+              return _HumanPointerDragBoundary(
+                onPointerDown: (event) =>
+                    _handleStageTap(event.localPosition, stageSize),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(22),
                   child: SizedBox(
@@ -815,13 +1125,32 @@ class _AimTestCardState extends State<_AimTestCard>
                                       i18n,
                                       zh: '本轮完成',
                                       en: 'Round complete',
+                                      ja: 'Round complete',
+                                      de: 'Round complete',
+                                      fr: 'Cycle terminé',
+                                      es: 'Ronda completa',
+                                      ru: 'Полный раунд',
                                     )
-                                  : pickUiText(i18n, zh: '准备开始', en: 'Ready'),
+                                  : pickUiText(
+                                      i18n,
+                                      zh: '准备开始',
+                                      en: 'Ready',
+                                      ja: 'Ready',
+                                      de: 'Ready',
+                                      fr: 'Prêt',
+                                      es: 'Listo',
+                                      ru: 'Готовы',
+                                    ),
                               subtitle: _done
                                   ? pickUiText(
                                       i18n,
                                       zh: '总用时 ${_formatMilliseconds(_finalMilliseconds ?? 0)}',
                                       en: 'Total ${_formatMilliseconds(_finalMilliseconds ?? 0)}',
+                                      ja: 'Total ${_formatMilliseconds(_finalMilliseconds ?? 0)}',
+                                      de: 'Total ${_formatMilliseconds(_finalMilliseconds ?? 0)}',
+                                      fr: 'Total ${_formatMilliseconds(_finalMilliseconds ?? 0)}',
+                                      es: 'Total',
+                                      ru: 'Всего ${_formatMilliseconds(_finalMilliseconds ?? 0)}',
                                     )
                                   : _modeDescription(i18n, _mode),
                             ),
@@ -841,15 +1170,44 @@ class _AimTestCardState extends State<_AimTestCard>
           children: <Widget>[
             _HumanActionButton(
               label: _running
-                  ? pickUiText(i18n, zh: '重新开始', en: 'Restart')
-                  : pickUiText(i18n, zh: '开始', en: 'Start'),
+                  ? pickUiText(
+                      i18n,
+                      zh: '重新开始',
+                      en: 'Restart',
+                      ja: 'Restart',
+                      de: 'Restart',
+                      fr: 'Redémarrer',
+                      es: 'Restart',
+                      ru: 'Перезапустить',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '开始',
+                      en: 'Start',
+                      ja: 'Start',
+                      de: 'Start',
+                      fr: 'Démarrer',
+                      es: 'Comienzo',
+                      ru: 'Начинать',
+                    ),
               icon: _running ? Icons.refresh_rounded : Icons.play_arrow_rounded,
               onPressed: _start,
             ),
             OutlinedButton.icon(
               onPressed: _reset,
               icon: const Icon(Icons.restart_alt_rounded),
-              label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '重置',
+                  en: 'Reset',
+                  ja: 'Reset',
+                  de: 'Reset',
+                  fr: 'Réinitialiser',
+                  es: 'Reset',
+                  ru: 'сброс',
+                ),
+              ),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(112, 48),
                 textStyle: const TextStyle(fontWeight: FontWeight.w800),
@@ -859,7 +1217,18 @@ class _AimTestCardState extends State<_AimTestCard>
               OutlinedButton.icon(
                 onPressed: _showResultReport,
                 icon: const Icon(Icons.summarize_rounded),
-                label: Text(pickUiText(i18n, zh: '查看报告', en: 'View report')),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '查看报告',
+                    en: 'View report',
+                    ja: 'View report',
+                    de: 'View report',
+                    fr: 'Consulter le rapport',
+                    es: 'Ver informe',
+                    ru: 'Посмотреть доклад',
+                  ),
+                ),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(112, 48),
                   textStyle: const TextStyle(fontWeight: FontWeight.w800),
@@ -869,11 +1238,25 @@ class _AimTestCardState extends State<_AimTestCard>
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '瞄准设置', en: 'Aim settings'),
+          title: pickUiText(
+            i18n,
+            zh: '瞄准设置',
+            en: 'Aim settings',
+            ja: '照準設定',
+            de: 'Aim settings',
+            fr: 'Aim settings',
+            es: 'Ajustes de objetivos',
+            ru: 'Настройка цели',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '模式、目标数量、大小、显形、移动和干扰强度。',
             en: 'Modes, target count, size, reveal timing, movement, and decoys.',
+            ja: 'Modes, target count, size, reveal timing, movement, and decoys.',
+            de: 'Modes, target count, size, reveal timing, movement, and decoys.',
+            fr: 'Modes, nombre de cibles, taille, révéler le timing, le mouvement et les leurres.',
+            es: 'Modos, recuento de objetivos, tamaño, revelar tiempo, movimiento y decoys.',
+            ru: 'Режимы, количество целей, размер, выявляют время, движение и приманки.',
           ),
           child: _buildSettings(i18n),
         ),
@@ -927,7 +1310,16 @@ class _AimTestCardState extends State<_AimTestCard>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '模式', en: 'Mode'),
+          pickUiText(
+            i18n,
+            zh: '模式',
+            en: 'Mode',
+            ja: 'Mode',
+            de: 'Mode',
+            fr: 'Mode',
+            es: 'Modo',
+            ru: 'Режим',
+          ),
           style: Theme.of(
             context,
           ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -953,7 +1345,16 @@ class _AimTestCardState extends State<_AimTestCard>
         ),
         const SizedBox(height: 14),
         _AimSettingSlider(
-          label: pickUiText(i18n, zh: '目标总数', en: 'Target total'),
+          label: pickUiText(
+            i18n,
+            zh: '目标总数',
+            en: 'Target total',
+            ja: 'Target total',
+            de: 'Target total',
+            fr: 'Total des objectifs',
+            es: 'Total objetivo',
+            ru: 'Общая цель',
+          ),
           valueText: '$_targetGoal',
           value: _targetGoal.toDouble(),
           min: 5,
@@ -962,7 +1363,16 @@ class _AimTestCardState extends State<_AimTestCard>
           onChanged: _running ? null : _setTargetGoal,
         ),
         _AimSettingSlider(
-          label: pickUiText(i18n, zh: '目标大小', en: 'Target size'),
+          label: pickUiText(
+            i18n,
+            zh: '目标大小',
+            en: 'Target size',
+            ja: 'Target size',
+            de: 'Target size',
+            fr: 'Taille cible',
+            es: 'Tamaño del objetivo',
+            ru: 'Целевой размер',
+          ),
           valueText: '${_targetDiameter.round()} dp',
           value: _targetDiameter,
           min: 28,
@@ -972,7 +1382,16 @@ class _AimTestCardState extends State<_AimTestCard>
         ),
         if (_mode == _AimTestMode.moving)
           _AimSettingSlider(
-            label: pickUiText(i18n, zh: '移动速度', en: 'Movement speed'),
+            label: pickUiText(
+              i18n,
+              zh: '移动速度',
+              en: 'Movement speed',
+              ja: 'Movement speed',
+              de: 'Movement speed',
+              fr: 'Vitesse de mouvement',
+              es: 'Velocidad de movimiento',
+              ru: 'Скорость движения',
+            ),
             valueText: '${_movementSpeed.toStringAsFixed(1)}x',
             value: _movementSpeed,
             min: 0.6,
@@ -982,18 +1401,41 @@ class _AimTestCardState extends State<_AimTestCard>
           ),
         if (_mode == _AimTestMode.moving) ...<Widget>[
           _AimSettingSwitch(
-            title: pickUiText(i18n, zh: '加入真假干扰', en: 'Add decoys'),
+            title: pickUiText(
+              i18n,
+              zh: '加入真假干扰',
+              en: 'Add decoys',
+              ja: 'おとりを追加',
+              de: 'Add decoys',
+              fr: 'Add decoys',
+              es: 'Add decoys',
+              ru: 'Добавить приманки',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '移动靶旁生成真假目标，形成移动且干扰组合。',
               en: 'Add false targets around the moving target.',
+              ja: '移動ターゲットの周りに誤ったターゲットを追加します。',
+              de: 'Add false targets around the moving target.',
+              fr: 'Add false targets around the moving target.',
+              es: 'Añadir falsos objetivos alrededor del objetivo en movimiento.',
+              ru: 'Добавьте ложные цели вокруг движущейся цели.',
             ),
             value: _movingDecoys,
             onChanged: _running ? null : _setMovingDecoys,
           ),
           if (_movingDecoys)
             _AimSettingSlider(
-              label: pickUiText(i18n, zh: '假目标数量', en: 'False targets'),
+              label: pickUiText(
+                i18n,
+                zh: '假目标数量',
+                en: 'False targets',
+                ja: 'False targets',
+                de: 'False targets',
+                fr: 'Faux objectifs',
+                es: 'Objetivos falsos',
+                ru: 'Ложные цели',
+              ),
               valueText: '$_decoyCount',
               value: _decoyCount.toDouble(),
               min: 1,
@@ -1004,7 +1446,16 @@ class _AimTestCardState extends State<_AimTestCard>
         ],
         if (_mode == _AimTestMode.revealGrowth) ...<Widget>[
           _AimSettingSlider(
-            label: pickUiText(i18n, zh: '初始点径', en: 'Start size'),
+            label: pickUiText(
+              i18n,
+              zh: '初始点径',
+              en: 'Start size',
+              ja: 'Start size',
+              de: 'Start size',
+              fr: 'Taille de démarrage',
+              es: 'Tamaño de inicio',
+              ru: 'Стартовый размер',
+            ),
             valueText: '${_revealStartDiameter.toStringAsFixed(1)} dp',
             value: _revealStartDiameter,
             min: 0,
@@ -1013,7 +1464,16 @@ class _AimTestCardState extends State<_AimTestCard>
             onChanged: _running ? null : _setRevealStartDiameter,
           ),
           _AimSettingSlider(
-            label: pickUiText(i18n, zh: '显形时间', en: 'Reveal time'),
+            label: pickUiText(
+              i18n,
+              zh: '显形时间',
+              en: 'Reveal time',
+              ja: 'Reveal time',
+              de: 'Reveal time',
+              fr: 'Temps de révélation',
+              es: 'Tiempo de recuperación',
+              ru: 'Время раскрытия',
+            ),
             valueText: '$_revealMilliseconds ms',
             value: _revealMilliseconds.toDouble(),
             min: 60,
@@ -1022,7 +1482,16 @@ class _AimTestCardState extends State<_AimTestCard>
             onChanged: _running ? null : _setRevealMilliseconds,
           ),
           _AimSettingSlider(
-            label: pickUiText(i18n, zh: '可见点径', en: 'Visible size'),
+            label: pickUiText(
+              i18n,
+              zh: '可见点径',
+              en: 'Visible size',
+              ja: 'Visible size',
+              de: 'Visible size',
+              fr: 'Taille visible',
+              es: 'Tamaño visible',
+              ru: 'Видимый размер',
+            ),
             valueText: '${_revealVisibleDiameter.toStringAsFixed(1)} dp',
             value: _revealVisibleDiameter,
             min: 3,
@@ -1031,7 +1500,16 @@ class _AimTestCardState extends State<_AimTestCard>
             onChanged: _running ? null : _setRevealVisibleDiameter,
           ),
           _AimSettingSlider(
-            label: pickUiText(i18n, zh: '放大速率', en: 'Growth speed'),
+            label: pickUiText(
+              i18n,
+              zh: '放大速率',
+              en: 'Growth speed',
+              ja: 'Growth speed',
+              de: 'Growth speed',
+              fr: 'Vitesse de croissance',
+              es: 'Velocidad de crecimiento',
+              ru: 'Скорость роста',
+            ),
             valueText: '${_growthSpeed.toStringAsFixed(1)}x',
             value: _growthSpeed,
             min: 0.7,
@@ -1040,18 +1518,41 @@ class _AimTestCardState extends State<_AimTestCard>
             onChanged: _running ? null : _setGrowthSpeed,
           ),
           _AimSettingSwitch(
-            title: pickUiText(i18n, zh: '移动放大', en: 'Moving growth'),
+            title: pickUiText(
+              i18n,
+              zh: '移动放大',
+              en: 'Moving growth',
+              ja: 'Moving growth',
+              de: 'Moving growth',
+              fr: 'Croissance en mouvement',
+              es: 'Crecimiento en movimiento',
+              ru: 'Движущийся рост',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '目标在移动中从小点放大，组合追踪和抢点。',
               en: 'The target grows while moving, mixing tracking with early hits.',
+              ja: 'The target grows while moving, mixing tracking with early hits.',
+              de: 'The target grows while moving, mixing tracking with early hits.',
+              fr: 'La cible grandit tout en se déplaçant, mélangeant le suivi avec les premiers coups.',
+              es: 'El objetivo crece mientras se mueve, mezclando el seguimiento con éxitos tempranos.',
+              ru: 'Цель растет при движении, смешивая отслеживание с ранними попаданиями.',
             ),
             value: _revealMoves,
             onChanged: _running ? null : _setRevealMoves,
           ),
           if (_revealMoves)
             _AimSettingSlider(
-              label: pickUiText(i18n, zh: '移动速度', en: 'Movement speed'),
+              label: pickUiText(
+                i18n,
+                zh: '移动速度',
+                en: 'Movement speed',
+                ja: 'Movement speed',
+                de: 'Movement speed',
+                fr: 'Vitesse de mouvement',
+                es: 'Velocidad de movimiento',
+                ru: 'Скорость движения',
+              ),
               valueText: '${_movementSpeed.toStringAsFixed(1)}x',
               value: _movementSpeed,
               min: 0.6,
@@ -1060,43 +1561,98 @@ class _AimTestCardState extends State<_AimTestCard>
               onChanged: _running ? null : _setMovementSpeed,
             ),
           _AimSettingSwitch(
-            title: pickUiText(i18n, zh: '虚拟狙击手对决', en: 'Sniper duel'),
+            title: pickUiText(
+              i18n,
+              zh: '虚拟狙击手对决',
+              en: 'Sniper duel',
+              ja: 'Sniper duel',
+              de: 'Sniper duel',
+              fr: 'Sniper duel',
+              es: 'Duelo de francotirador',
+              ru: 'Снайперская дуэль',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '放大到最大仍未命中时，触发震动和红色失败弹窗。',
               en: 'If the target maxes out before a hit, trigger haptics and a red fail alert.',
+              ja: 'If the target maxes out before a hit, trigger haptics and a red fail alert.',
+              de: 'If the target maxes out before a hit, trigger haptics and a red fail alert.',
+              fr: 'Si la cible s\'éteint avant un coup, déclencher des haptiques et une alerte d\'échec rouge.',
+              es: 'Si el objetivo se maximiza antes de un golpe, dispara la haptica y una alerta de falla roja.',
+              ru: 'Если цель достигает максимума перед ударом, срабатывайте тактильность и красное предупреждение об отказе.',
             ),
             value: _sniperDuel,
             onChanged: _running ? null : _setSniperDuel,
           ),
           _buildCurveSelector(
             i18n,
-            label: pickUiText(i18n, zh: '速率曲线', en: 'Speed curve'),
+            label: pickUiText(
+              i18n,
+              zh: '速率曲线',
+              en: 'Speed curve',
+              ja: 'Speed curve',
+              de: 'Speed curve',
+              fr: 'Courbe de vitesse',
+              es: 'Curva de velocidad',
+              ru: 'Кривая скорости',
+            ),
             value: _speedCurve,
             onSelected: _setSpeedCurve,
           ),
           const SizedBox(height: 10),
           _buildCurveSelector(
             i18n,
-            label: pickUiText(i18n, zh: '目标曲线', en: 'Target curve'),
+            label: pickUiText(
+              i18n,
+              zh: '目标曲线',
+              en: 'Target curve',
+              ja: 'Target curve',
+              de: 'Target curve',
+              fr: 'Courbe cible',
+              es: 'Curva de destino',
+              ru: 'Целевая кривая',
+            ),
             value: _targetCurve,
             onSelected: _setTargetCurve,
           ),
         ],
         if (_mode == _AimTestMode.decoys) ...<Widget>[
           _AimSettingSwitch(
-            title: pickUiText(i18n, zh: '真假目标移动', en: 'Moving decoys'),
+            title: pickUiText(
+              i18n,
+              zh: '真假目标移动',
+              en: 'Moving decoys',
+              ja: 'Moving decoys',
+              de: 'Moving decoys',
+              fr: 'Déplacement des leurres',
+              es: 'Moving decoys',
+              ru: 'Движущиеся приманки',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '真目标和假目标一起移动，形成移动且干扰组合。',
               en: 'Move both real and false targets for the combined decoy drill.',
+              ja: 'Move both real and false targets for the combined decoy drill.',
+              de: 'Move both real and false targets for the combined decoy drill.',
+              fr: 'Déplacer les cibles réelles et fausses pour la perceuse de leurres combinée.',
+              es: 'Mover objetivos reales y falsos para el simulacro combinado de decoy.',
+              ru: 'Двигайте как реальные, так и ложные цели для комбинированной приманки.',
             ),
             value: _decoysMove,
             onChanged: _running ? null : _setDecoysMove,
           ),
           if (_decoysMove)
             _AimSettingSlider(
-              label: pickUiText(i18n, zh: '移动速度', en: 'Movement speed'),
+              label: pickUiText(
+                i18n,
+                zh: '移动速度',
+                en: 'Movement speed',
+                ja: 'Movement speed',
+                de: 'Movement speed',
+                fr: 'Vitesse de mouvement',
+                es: 'Velocidad de movimiento',
+                ru: 'Скорость движения',
+              ),
               valueText: '${_movementSpeed.toStringAsFixed(1)}x',
               value: _movementSpeed,
               min: 0.6,
@@ -1105,7 +1661,16 @@ class _AimTestCardState extends State<_AimTestCard>
               onChanged: _running ? null : _setMovementSpeed,
             ),
           _AimSettingSlider(
-            label: pickUiText(i18n, zh: '假目标数量', en: 'False targets'),
+            label: pickUiText(
+              i18n,
+              zh: '假目标数量',
+              en: 'False targets',
+              ja: 'False targets',
+              de: 'False targets',
+              fr: 'Faux objectifs',
+              es: 'Objetivos falsos',
+              ru: 'Ложные цели',
+            ),
             valueText: '$_decoyCount',
             value: _decoyCount.toDouble(),
             min: 1,
@@ -1153,14 +1718,55 @@ class _AimTestCardState extends State<_AimTestCard>
 
   String _curveLabel(AppI18n i18n, _AimGrowthCurve curve) {
     return switch (curve) {
-      _AimGrowthCurve.linear => pickUiText(i18n, zh: '线性', en: 'Linear'),
-      _AimGrowthCurve.easeOut => pickUiText(i18n, zh: '先快后慢', en: 'Ease out'),
-      _AimGrowthCurve.easeIn => pickUiText(i18n, zh: '先慢后快', en: 'Ease in'),
-      _AimGrowthCurve.easeInOut => pickUiText(i18n, zh: '平滑', en: 'Smooth'),
+      _AimGrowthCurve.linear => pickUiText(
+        i18n,
+        zh: '线性',
+        en: 'Linear',
+        ja: 'Linear',
+        de: 'Linear',
+        fr: 'Linéaire',
+        es: 'Linear',
+        ru: 'линейный',
+      ),
+      _AimGrowthCurve.easeOut => pickUiText(
+        i18n,
+        zh: '先快后慢',
+        en: 'Ease out',
+        ja: 'Ease out',
+        de: 'Ease out',
+        fr: 'Soulagement',
+        es: 'Cuidado.',
+        ru: 'Успокойся.',
+      ),
+      _AimGrowthCurve.easeIn => pickUiText(
+        i18n,
+        zh: '先慢后快',
+        en: 'Ease in',
+        ja: 'Ease in',
+        de: 'Ease in',
+        fr: 'Facilité',
+        es: 'Facilidad en',
+        ru: 'Полегче.',
+      ),
+      _AimGrowthCurve.easeInOut => pickUiText(
+        i18n,
+        zh: '平滑',
+        en: 'Smooth',
+        ja: 'Smooth',
+        de: 'Smooth',
+        fr: 'Lisse',
+        es: 'Smooth',
+        ru: 'гладкий',
+      ),
       _AimGrowthCurve.fastOutSlowIn => pickUiText(
         i18n,
         zh: '快出慢收',
         en: 'Fast-slow',
+        ja: 'Fast-slow',
+        de: 'Fast-slow',
+        fr: 'Rapide-doux',
+        es: 'Despacio rápido',
+        ru: 'Медленный',
       ),
     };
   }

@@ -1,6 +1,7 @@
 param(
   [switch]$Clean,
   [switch]$ResetAppState,
+  [switch]$ResetBuildCache,
   [switch]$NoPubGet,
   [switch]$NoRun,
   [string]$Device = "windows",
@@ -9,48 +10,27 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'tooling-env.ps1')
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
+$script:FlutterCommand = $null
 Push-Location $projectRoot
 
-function Add-PathIfMissing {
-  param([string]$PathToAdd)
-  if ([string]::IsNullOrWhiteSpace($PathToAdd)) { return }
-  $segments = ($env:Path -split ';') | Where-Object { $_ -and $_.Trim().Length -gt 0 }
-  if ($segments -contains $PathToAdd) { return }
-  $env:Path = "$PathToAdd;$env:Path"
-}
-
-function Ensure-NuGet {
-  $nuget = Get-Command nuget.exe -ErrorAction SilentlyContinue
-  if ($nuget) {
-    return $nuget.Source
+function Resolve-FlutterCommand {
+  if ($script:FlutterCommand) {
+    return $script:FlutterCommand
   }
 
-  $localBin = Join-Path $env:USERPROFILE ".local\bin"
-  $localNuget = Join-Path $localBin "nuget.exe"
-  if (Test-Path $localNuget) {
-    Add-PathIfMissing -PathToAdd $localBin
-    return $localNuget
-  }
-
-  Write-Host "nuget.exe not found. Downloading to $localNuget ..."
-  New-Item -ItemType Directory -Path $localBin -Force | Out-Null
-  Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile $localNuget
-  Add-PathIfMissing -PathToAdd $localBin
-  return $localNuget
+  $script:FlutterCommand = Resolve-ProjectFlutterCommand -ProjectRoot $projectRoot
+  return $script:FlutterCommand
 }
 
 function Ensure-BuildTools {
-  $flutterCmd = Get-Command flutter -ErrorAction SilentlyContinue
-  if (-not $flutterCmd) {
-    throw "flutter command not found in PATH."
-  }
-  $cmakeCmd = Get-Command cmake -ErrorAction SilentlyContinue
-  if (-not $cmakeCmd) {
-    throw "cmake command not found in PATH. Please install Visual Studio C++ build tools."
-  }
-  $null = Ensure-NuGet
+  $flutterCmd = Resolve-FlutterCommand
+  $cmakeCmd = Ensure-ProjectCMakeEnvironment -ProjectRoot $projectRoot
+  $null = Ensure-ProjectNuGet
+  Write-Host "Flutter: $flutterCmd"
+  Write-Host "CMake: $cmakeCmd"
 }
 
 function Stop-FlutterAppProcess {
@@ -78,6 +58,18 @@ function Remove-LockedRunnerArtifacts {
   }
 }
 
+function Invoke-Flutter {
+  param([string[]]$Arguments)
+
+  $flutterCommand = Resolve-FlutterCommand
+  $commandText = "$flutterCommand " + ($Arguments -join ' ')
+  Write-Host $commandText
+  & $flutterCommand @Arguments
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed with exit code ${LASTEXITCODE}: $commandText"
+  }
+}
+
 function Reset-AppState {
   $paths = @(
     (Join-Path $env:APPDATA "group.zn\xianyushengxi"),
@@ -100,9 +92,15 @@ try {
   Write-Host "Project root: $projectRoot"
   Ensure-BuildTools
 
+  if ($ResetBuildCache) {
+    Clear-ProjectGeneratedBuildCache -ProjectRoot $projectRoot -Scope windows
+  } else {
+    Repair-ProjectCMakeCache -ProjectRoot $projectRoot -Scope windows
+  }
+
   if ($Clean) {
     Write-Host "Running flutter clean..."
-    flutter clean
+    Invoke-Flutter -Arguments @('clean')
   }
 
   if ($ResetAppState -or $Clean) {
@@ -112,7 +110,7 @@ try {
 
   if (-not $NoPubGet) {
     Write-Host "Running flutter pub get..."
-    flutter pub get
+    Invoke-Flutter -Arguments @('pub', 'get')
   }
 
   Stop-FlutterAppProcess
@@ -126,7 +124,8 @@ try {
   $attempts = [Math]::Max(1, $RunRetry)
   for ($attempt = 1; $attempt -le $attempts; $attempt++) {
     Write-Host "Starting flutter run -d $Device (attempt $attempt/$attempts) ..."
-    flutter run -d $Device
+    $flutterCommand = Resolve-FlutterCommand
+    & $flutterCommand @('run', '-d', $Device)
     $exitCode = $LASTEXITCODE
     if ($exitCode -eq 0) {
       exit 0

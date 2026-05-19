@@ -3,72 +3,29 @@ param(
   [string[]]$Task = @("all"),
   [string[]]$Target = @("lib"),
   [switch]$CleanTemp,
+  [switch]$ResetBuildCache,
   [switch]$PubGet
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'tooling-env.ps1')
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 
 function Resolve-FlutterCommand {
-  $command = Get-Command flutter -ErrorAction SilentlyContinue
-  if ($command) {
-    return $command.Source
-  }
-
-  $candidates = @(
-    "D:\env\flutter\flutter\bin\flutter.bat",
-    (Join-Path $projectRoot ".fvm\flutter_sdk\bin\flutter.bat"),
-    $(if ($env:USERPROFILE) { Join-Path $env:USERPROFILE "flutter\bin\flutter.bat" })
-  ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-
-  foreach ($candidate in $candidates) {
-    if (Test-Path $candidate) {
-      return $candidate
-    }
-  }
-
-  throw "Flutter executable was not found. Ensure flutter is in PATH or installed in a known location."
+  return Resolve-ProjectFlutterCommand -ProjectRoot $projectRoot
 }
 
 function Resolve-DartCommand {
   param([string]$FlutterCommand)
 
-  $flutterDir = Split-Path -Parent $FlutterCommand
-  $dartFromFlutter = Join-Path $flutterDir "cache\dart-sdk\bin\dart.exe"
-  if (Test-Path $dartFromFlutter) {
-    return $dartFromFlutter
-  }
-
-  $command = Get-Command dart -ErrorAction SilentlyContinue
-  if ($command) {
-    return $command.Source
-  }
-
-  throw "Dart executable was not found."
+  return Resolve-ProjectDartCommand -FlutterCommand $FlutterCommand
 }
 
 function Initialize-LocalToolingEnvironment {
-  $toolingRoot = Join-Path $projectRoot ".tooling"
-  $paths = @{
-    APPDATA = Join-Path $toolingRoot "appdata"
-    LOCALAPPDATA = Join-Path $toolingRoot "localappdata"
-    PUB_CACHE = Join-Path $toolingRoot "pub-cache"
-    HOME = Join-Path $toolingRoot "home"
-    USERPROFILE = Join-Path $toolingRoot "home"
-  }
-
-  foreach ($path in ($paths.Values | Select-Object -Unique)) {
-    New-Item -ItemType Directory -Force -Path $path | Out-Null
-  }
-
-  foreach ($entry in $paths.GetEnumerator()) {
-    Set-Item -Path ("Env:{0}" -f $entry.Key) -Value $entry.Value
-  }
-
-  return $toolingRoot
+  return Initialize-ProjectLocalToolingEnvironment -ProjectRoot $projectRoot
 }
 
 function Resolve-RequestedTasks {
@@ -211,6 +168,12 @@ try {
 
   if ($CleanTemp -and (Test-Path $toolingRoot)) {
     Remove-Item -LiteralPath $toolingRoot -Recurse -Force
+  }
+
+  if ($ResetBuildCache) {
+    Clear-ProjectGeneratedBuildCache -ProjectRoot $projectRoot -Scope all
+  } else {
+    Repair-ProjectCMakeCache -ProjectRoot $projectRoot -Scope all
   }
 
   $toolingRoot = Initialize-LocalToolingEnvironment

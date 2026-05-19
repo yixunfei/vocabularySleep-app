@@ -7,11 +7,25 @@ class JoystickHandEyeCoordinationTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '摇杆手眼协调', en: 'Joystick coordination'),
+      title: pickUiText(
+        i18n,
+        zh: '摇杆手眼协调',
+        en: 'Joystick coordination',
+        ja: 'Joystick coordination',
+        de: 'Joystick coordination',
+        fr: 'Coordination des joysticks',
+        es: 'Coordinación de Joystick',
+        ru: 'Джойстик координация',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '像手机游戏一样用虚拟摇杆移动准星，点击射击命中随机目标。',
         en: 'Move a crosshair with a virtual joystick like a mobile game, then fire at random targets.',
+        ja: 'Move a crosshair with a virtual joystick like a mobile game, then fire at random targets.',
+        de: 'Move a crosshair with a virtual joystick like a mobile game, then fire at random targets.',
+        fr: 'Déplacez un crosshair avec un joystick virtuel comme un jeu mobile, puis tirez à des cibles aléatoires.',
+        es: 'Mover un crosshair con un joystick virtual como un juego móvil, luego disparar a objetivos aleatorios.',
+        ru: 'Переместите прицел с виртуальным джойстиком, как в мобильной игре, а затем стреляйте по случайным целям.',
       ),
       accent: const Color(0xFF8A6849),
       icon: Icons.gamepad_rounded,
@@ -19,6 +33,11 @@ class JoystickHandEyeCoordinationTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：开始后拖动摇杆并射击',
         en: 'Next: start, steer, and fire',
+        ja: 'Next: start, steer, and fire',
+        de: 'Next: start, steer, and fire',
+        fr: 'Suivant : démarrage, direction et feu',
+        es: 'Siguiente: comenzar, dirigir y fuego',
+        ru: 'Далее: старт, руль и огонь',
       ),
       child: const _JoystickHandEyeCard(),
     );
@@ -752,32 +771,100 @@ class _JoystickHandEyeCardState extends State<_JoystickHandEyeCard>
 
   String _modeLabel(AppI18n i18n, _JoystickTestMode mode) {
     return switch (mode) {
-      _JoystickTestMode.timed => pickUiText(i18n, zh: '单位时间', en: 'Timed'),
+      _JoystickTestMode.timed => pickUiText(
+        i18n,
+        zh: '单位时间',
+        en: 'Timed',
+        ja: 'Timed',
+        de: 'Timed',
+        fr: 'Délai',
+        es: 'Timed',
+        ru: 'Время',
+      ),
       _JoystickTestMode.targetCount => pickUiText(
         i18n,
         zh: '目标总数',
         en: 'Target count',
+        ja: 'Target count',
+        de: 'Target count',
+        fr: 'Nombre cible',
+        es: 'Conteo de objetivos',
+        ru: 'Целевой счет',
       ),
     };
   }
 
   String _spawnLabel(AppI18n i18n) {
     return _randomRespawnDelay
-        ? pickUiText(i18n, zh: '随机延迟', en: 'Random delay')
-        : pickUiText(i18n, zh: '立即刷新', en: 'Immediate');
+        ? pickUiText(
+            i18n,
+            zh: '随机延迟',
+            en: 'Random delay',
+            ja: 'Random delay',
+            de: 'Random delay',
+            fr: 'Délai aléatoire',
+            es: 'Retraso aleatorio',
+            ru: 'Случайная задержка',
+          )
+        : pickUiText(
+            i18n,
+            zh: '立即刷新',
+            en: 'Immediate',
+            ja: 'Immediate',
+            de: 'Immediate',
+            fr: 'Immédiate',
+            es: 'Inmediatamente',
+            ru: 'Немедленно',
+          );
   }
 
   String _statusText(AppI18n i18n) {
     if (_done) {
-      return pickUiText(i18n, zh: '测试完成', en: 'Test complete');
+      return pickUiText(
+        i18n,
+        zh: '测试完成',
+        en: 'Test complete',
+        ja: 'Test complete',
+        de: 'Test complete',
+        fr: 'Essai terminé',
+        es: 'Prueba completa',
+        ru: 'Испытание завершено',
+      );
     }
     if (!_running) {
-      return pickUiText(i18n, zh: '点击开始进入摇杆测试', en: 'Press Start');
+      return pickUiText(
+        i18n,
+        zh: '点击开始进入摇杆测试',
+        en: 'Press Start',
+        ja: 'Press Start',
+        de: 'Press Start',
+        fr: 'Appuyez sur Démarrer',
+        es: 'Press Start',
+        ru: 'Нажмите, чтобы начать',
+      );
     }
     if (_waitingTarget) {
-      return pickUiText(i18n, zh: '等待下一个目标', en: 'Waiting for target');
+      return pickUiText(
+        i18n,
+        zh: '等待下一个目标',
+        en: 'Waiting for target',
+        ja: 'Waiting for target',
+        de: 'Waiting for target',
+        fr: 'Attendre la cible',
+        es: 'Esperando el objetivo',
+        ru: 'В ожидании цели',
+      );
     }
-    return pickUiText(i18n, zh: '移动准星并射击', en: 'Move and fire');
+    return pickUiText(
+      i18n,
+      zh: '移动准星并射击',
+      en: 'Move and fire',
+      ja: 'Move and fire',
+      de: 'Move and fire',
+      fr: 'Déplacer et tirer',
+      es: 'Muévete y fuego',
+      ru: 'Двигаться и стрелять',
+    );
   }
 
   @override
@@ -793,20 +880,95 @@ class _JoystickHandEyeCardState extends State<_JoystickHandEyeCard>
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '模式', en: 'Mode'), _modeLabel(i18n, _mode)),
-            (pickUiText(i18n, zh: '进度', en: 'Progress'), progress),
-            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$_hits'),
-            (pickUiText(i18n, zh: '射空', en: 'Shots off'), '$_shotsOff'),
             (
-              pickUiText(i18n, zh: '假目标', en: 'False targets'),
+              pickUiText(
+                i18n,
+                zh: '模式',
+                en: 'Mode',
+                ja: 'Mode',
+                de: 'Mode',
+                fr: 'Mode',
+                es: 'Modo',
+                ru: 'Режим',
+              ),
+              _modeLabel(i18n, _mode),
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
+              progress,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '命中',
+                en: 'Hits',
+                ja: 'Hits',
+                de: 'Hits',
+                fr: 'Coups',
+                es: 'Golpes',
+                ru: 'Хиты',
+              ),
+              '$_hits',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '射空',
+                en: 'Shots off',
+                ja: 'Shots off',
+                de: 'Shots off',
+                fr: 'Coups de feu',
+                es: 'Disparos apagados',
+                ru: 'Выстрелы',
+              ),
+              '$_shotsOff',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '假目标',
+                en: 'False targets',
+                ja: 'False targets',
+                de: 'False targets',
+                fr: 'Faux objectifs',
+                es: 'Objetivos falsos',
+                ru: 'Ложные цели',
+              ),
               '$_falseTargetShots',
             ),
             (
-              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '准确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               accuracy == null ? '-' : '${accuracy.round()}%',
             ),
             (
-              pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+              pickUiText(
+                i18n,
+                zh: '平均反应',
+                en: 'Avg reaction',
+                ja: '平均反応',
+                de: 'Avg reaction',
+                fr: 'Réaction d\' Avg',
+                es: 'Reacción de Avg',
+                ru: 'Авг реакция',
+              ),
               averageReaction == null
                   ? '-'
                   : _formatMilliseconds(averageReaction.inMilliseconds),
@@ -815,31 +977,73 @@ class _JoystickHandEyeCardState extends State<_JoystickHandEyeCard>
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '摇杆设置', en: 'Joystick settings'),
+          title: pickUiText(
+            i18n,
+            zh: '摇杆设置',
+            en: 'Joystick settings',
+            ja: 'Joystick settings',
+            de: 'Joystick settings',
+            fr: 'Paramètres du joystick',
+            es: 'Ajustes de joystick',
+            ru: 'Настройка Joystick',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '测试方案、准星速率和命中后刷新方式',
             en: 'Test mode, crosshair response speed, and respawn timing',
+            ja: 'Test mode, crosshair response speed, and respawn timing',
+            de: 'Test mode, crosshair response speed, and respawn timing',
+            fr: 'Mode d\'essai, vitesse de réponse des cheveux croisés et chronométrage de remise en suspension',
+            es: 'Modo de prueba, velocidad de respuesta cruzada y tiempo de reaparecer',
+            ru: 'Режим испытания, скорость перекрестного реагирования и время повторного запуска',
           ),
           child: _buildJoystickSettings(i18n),
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '目标移动设置', en: 'Target movement settings'),
+          title: pickUiText(
+            i18n,
+            zh: '目标移动设置',
+            en: 'Target movement settings',
+            ja: 'Target movement settings',
+            de: 'Target movement settings',
+            fr: 'Paramètres de mouvement de la cible',
+            es: 'Ajustes del movimiento objetivo',
+            ru: 'Настройки движения цели',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '默认关闭：让目标在刷新后持续移动，增加追踪压力。',
             en: 'Off by default: keeps targets moving after spawn for harder tracking.',
+            ja: 'Off by default: keeps targets moving after spawn for harder tracking.',
+            de: 'Off by default: keeps targets moving after spawn for harder tracking.',
+            fr: 'Arrêt par défaut : maintient les cibles en mouvement après le frai pour un suivi plus difficile.',
+            es: 'De forma predeterminada: mantiene los objetivos que se mueven después de desove para un seguimiento más difícil.',
+            ru: 'Выключено по умолчанию: держит цели движутся после нереста для более сложного отслеживания.',
           ),
           child: _buildJoystickMovementSettings(i18n),
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '高阶干扰设置', en: 'Advanced interference'),
+          title: pickUiText(
+            i18n,
+            zh: '高阶干扰设置',
+            en: 'Advanced interference',
+            ja: '高度な干渉',
+            de: 'Advanced interference',
+            fr: 'Advanced interference',
+            es: 'Interferencia avanzada',
+            ru: 'Расширенное вмешательство',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '默认关闭：目标附近可随机出现不同颜色的假目标。',
             en: 'Off by default: color-coded false targets may appear around the real target.',
+            ja: 'Off by default: color-coded false targets may appear around the real target.',
+            de: 'Off by default: color-coded false targets may appear around the real target.',
+            fr: 'Désactivé par défaut : les fausses cibles codées en couleur peuvent apparaître autour de la cible réelle.',
+            es: 'De forma predeterminada: los falsos blancos codificados por colores pueden aparecer alrededor del objetivo real.',
+            ru: 'Выключено по умолчанию: цветные ложные цели могут появляться вокруг реальной цели.',
           ),
           child: _buildJoystickDistractorSettings(i18n),
         ),
@@ -860,7 +1064,18 @@ class _JoystickHandEyeCardState extends State<_JoystickHandEyeCard>
             key: const ValueKey<String>('joystick_hand_eye_fullscreen_button'),
             onPressed: _openFullscreen,
             icon: const Icon(Icons.fullscreen_rounded),
-            label: Text(pickUiText(i18n, zh: '全屏训练', en: 'Fullscreen')),
+            label: Text(
+              pickUiText(
+                i18n,
+                zh: '全屏训练',
+                en: 'Fullscreen',
+                ja: 'Fullscreen',
+                de: 'Fullscreen',
+                fr: 'Plein écran',
+                es: 'Pantalla completa',
+                ru: 'Полный экран',
+              ),
+            ),
           ),
         if (_hitReactions.isNotEmpty) ...<Widget>[
           const SizedBox(height: 12),

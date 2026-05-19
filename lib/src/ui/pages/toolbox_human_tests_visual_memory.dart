@@ -7,11 +7,25 @@ class VisualMemoryTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '视觉记忆', en: 'Visual memory'),
+      title: pickUiText(
+        i18n,
+        zh: '视觉记忆',
+        en: 'Visual memory',
+        ja: 'Visual memory',
+        de: 'Visual memory',
+        fr: 'Mémoire visuelle',
+        es: 'Memoria visual',
+        ru: 'Визуальная память',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '从经典位置到随机目标色，等级越高，干扰色会越接近目标。',
         en: 'From classic positions to random target colors; higher levels use closer decoy colors.',
+        ja: 'From classic positions to random target colors; higher levels use closer decoy colors.',
+        de: 'From classic positions to random target colors; higher levels use closer decoy colors.',
+        fr: 'Des positions classiques aux couleurs cibles aléatoires; des niveaux plus élevés utilisent des couleurs de leurre plus proches.',
+        es: 'Desde posiciones clásicas hasta colores de destino al azar; niveles más altos usan colores de decoy más cercanos.',
+        ru: 'От классических позиций до случайных целевых цветов; более высокие уровни используют более близкие цвета.',
       ),
       accent: const Color(0xFF8B6BC8),
       icon: Icons.dashboard_customize_rounded,
@@ -19,6 +33,11 @@ class VisualMemoryTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：选择模式后开始观察并复现目标',
         en: 'Next: choose a mode, observe, then reproduce the targets',
+        ja: 'Next: choose a mode, observe, then reproduce the targets',
+        de: 'Next: choose a mode, observe, then reproduce the targets',
+        fr: 'Suivant : choisir un mode, observer, puis reproduire les cibles',
+        es: 'Siguiente: elegir un modo, observar, luego reproducir los objetivos',
+        ru: 'Далее: выберите режим, наблюдайте, затем воспроизводите цели',
       ),
       child: const _VisualMemoryCard(),
     );
@@ -69,23 +88,49 @@ class _VisualMemoryColorToken {
     required this.color,
     required this.zh,
     required this.en,
+    required this.ja,
+    required this.de,
+    required this.fr,
+    required this.es,
+    required this.ru,
   });
 
   final Color color;
   final String zh;
   final String en;
+  final String ja;
+  final String de;
+  final String fr;
+  final String es;
+  final String ru;
+
+  String label(AppI18n i18n) =>
+      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
 }
 
 class _VisualMemoryPaletteSpec {
   const _VisualMemoryPaletteSpec({
     required this.zh,
     required this.en,
+    required this.ja,
+    required this.de,
+    required this.fr,
+    required this.es,
+    required this.ru,
     required this.colors,
   });
 
   final String zh;
   final String en;
+  final String ja;
+  final String de;
+  final String fr;
+  final String es;
+  final String ru;
   final List<_VisualMemoryColorToken> colors;
+
+  String label(AppI18n i18n) =>
+      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
 }
 
 class _VisualMemoryCellMark {
@@ -199,107 +244,274 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
     _VisualMemoryPalette.soft: _VisualMemoryPaletteSpec(
       zh: '柔和',
       en: 'Soft',
+      ja: 'やわらか',
+      de: 'Sanft',
+      fr: 'Doux',
+      es: 'Suave',
+      ru: 'Мягкая',
       colors: <_VisualMemoryColorToken>[
         _VisualMemoryColorToken(
           color: Color(0xFF7C72D9),
           zh: '紫色',
           en: 'Purple',
+          ja: '紫',
+          de: 'Violett',
+          fr: 'Violet',
+          es: 'Morado',
+          ru: 'Фиолетовый',
         ),
-        _VisualMemoryColorToken(color: Color(0xFF5C9DDC), zh: '蓝色', en: 'Blue'),
+        _VisualMemoryColorToken(
+          color: Color(0xFF5C9DDC),
+          zh: '蓝色',
+          en: 'Blue',
+          ja: '青',
+          de: 'Blau',
+          fr: 'Bleu',
+          es: 'Azul',
+          ru: 'Синий',
+        ),
         _VisualMemoryColorToken(
           color: Color(0xFF5DBA8D),
           zh: '绿色',
           en: 'Green',
+          ja: '緑',
+          de: 'Grün',
+          fr: 'Vert',
+          es: 'Verde',
+          ru: 'Зеленый',
         ),
-        _VisualMemoryColorToken(color: Color(0xFFE0A54A), zh: '金色', en: 'Gold'),
-        _VisualMemoryColorToken(color: Color(0xFFD36F8A), zh: '玫红', en: 'Rose'),
-        _VisualMemoryColorToken(color: Color(0xFF55B8B0), zh: '青色', en: 'Cyan'),
+        _VisualMemoryColorToken(
+          color: Color(0xFFE0A54A),
+          zh: '金色',
+          en: 'Gold',
+          ja: '金色',
+          de: 'Gold',
+          fr: 'Or',
+          es: 'Dorado',
+          ru: 'Золотой',
+        ),
+        _VisualMemoryColorToken(
+          color: Color(0xFFD36F8A),
+          zh: '玫红',
+          en: 'Rose',
+          ja: 'ローズ',
+          de: 'Rosé',
+          fr: 'Rose',
+          es: 'Rosa',
+          ru: 'Розовый',
+        ),
+        _VisualMemoryColorToken(
+          color: Color(0xFF55B8B0),
+          zh: '青色',
+          en: 'Cyan',
+          ja: 'シアン',
+          de: 'Türkis',
+          fr: 'Cyan',
+          es: 'Cian',
+          ru: 'Бирюзовый',
+        ),
         _VisualMemoryColorToken(
           color: Color(0xFFC48A56),
           zh: '琥珀',
           en: 'Amber',
+          ja: '琥珀',
+          de: 'Bernstein',
+          fr: 'Ambre',
+          es: 'Ámbar',
+          ru: 'Янтарный',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFF8796DF),
           zh: '靛蓝',
           en: 'Indigo',
+          ja: 'インディゴ',
+          de: 'Indigo',
+          fr: 'Indigo',
+          es: 'Índigo',
+          ru: 'Индиго',
         ),
       ],
     ),
     _VisualMemoryPalette.vivid: _VisualMemoryPaletteSpec(
       zh: '鲜明',
       en: 'Vivid',
+      ja: '鮮やか',
+      de: 'Kräftig',
+      fr: 'Vif',
+      es: 'Vivo',
+      ru: 'Яркая',
       colors: <_VisualMemoryColorToken>[
-        _VisualMemoryColorToken(color: Color(0xFFE84F5F), zh: '红色', en: 'Red'),
-        _VisualMemoryColorToken(color: Color(0xFF1E88E5), zh: '蓝色', en: 'Blue'),
+        _VisualMemoryColorToken(
+          color: Color(0xFFE84F5F),
+          zh: '红色',
+          en: 'Red',
+          ja: '赤',
+          de: 'Rot',
+          fr: 'Rouge',
+          es: 'Rojo',
+          ru: 'Красный',
+        ),
+        _VisualMemoryColorToken(
+          color: Color(0xFF1E88E5),
+          zh: '蓝色',
+          en: 'Blue',
+          ja: '青',
+          de: 'Blau',
+          fr: 'Bleu',
+          es: 'Azul',
+          ru: 'Синий',
+        ),
         _VisualMemoryColorToken(
           color: Color(0xFF23A455),
           zh: '绿色',
           en: 'Green',
+          ja: '緑',
+          de: 'Grün',
+          fr: 'Vert',
+          es: 'Verde',
+          ru: 'Зеленый',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFFF6B72F),
           zh: '黄色',
           en: 'Yellow',
+          ja: '黄色',
+          de: 'Gelb',
+          fr: 'Jaune',
+          es: 'Amarillo',
+          ru: 'Желтый',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFF9B55E6),
           zh: '紫色',
           en: 'Purple',
+          ja: '紫',
+          de: 'Violett',
+          fr: 'Violet',
+          es: 'Morado',
+          ru: 'Фиолетовый',
         ),
-        _VisualMemoryColorToken(color: Color(0xFF00A6A6), zh: '青色', en: 'Cyan'),
+        _VisualMemoryColorToken(
+          color: Color(0xFF00A6A6),
+          zh: '青色',
+          en: 'Cyan',
+          ja: 'シアン',
+          de: 'Türkis',
+          fr: 'Cyan',
+          es: 'Cian',
+          ru: 'Бирюзовый',
+        ),
         _VisualMemoryColorToken(
           color: Color(0xFFFF7A3D),
           zh: '橙色',
           en: 'Orange',
+          ja: 'オレンジ',
+          de: 'Orange',
+          fr: 'Orange',
+          es: 'Naranja',
+          ru: 'Оранжевый',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFF6072E8),
           zh: '靛蓝',
           en: 'Indigo',
+          ja: 'インディゴ',
+          de: 'Indigo',
+          fr: 'Indigo',
+          es: 'Índigo',
+          ru: 'Индиго',
         ),
       ],
     ),
     _VisualMemoryPalette.contrast: _VisualMemoryPaletteSpec(
       zh: '高对比',
       en: 'Contrast',
+      ja: '高コントラスト',
+      de: 'Kontrast',
+      fr: 'Contraste',
+      es: 'Contraste',
+      ru: 'Контраст',
       colors: <_VisualMemoryColorToken>[
         _VisualMemoryColorToken(
           color: Color(0xFF005BBB),
           zh: '深蓝',
           en: 'Deep blue',
+          ja: '濃い青',
+          de: 'Dunkelblau',
+          fr: 'Bleu profond',
+          es: 'Azul oscuro',
+          ru: 'Темно-синий',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFFFFB000),
           zh: '亮黄',
           en: 'Bright yellow',
+          ja: '明るい黄色',
+          de: 'Hellgelb',
+          fr: 'Jaune vif',
+          es: 'Amarillo vivo',
+          ru: 'Ярко-желтый',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFFDC267F),
           zh: '洋红',
           en: 'Magenta',
+          ja: 'マゼンタ',
+          de: 'Magenta',
+          fr: 'Magenta',
+          es: 'Magenta',
+          ru: 'Пурпурный',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFF009E73),
           zh: '翠绿',
           en: 'Emerald',
+          ja: 'エメラルド',
+          de: 'Smaragd',
+          fr: 'Émeraude',
+          es: 'Esmeralda',
+          ru: 'Изумрудный',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFFFE6100),
           zh: '橙色',
           en: 'Orange',
+          ja: 'オレンジ',
+          de: 'Orange',
+          fr: 'Orange',
+          es: 'Naranja',
+          ru: 'Оранжевый',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFF785EF0),
           zh: '紫色',
           en: 'Purple',
+          ja: '紫',
+          de: 'Violett',
+          fr: 'Violet',
+          es: 'Morado',
+          ru: 'Фиолетовый',
         ),
         _VisualMemoryColorToken(
           color: Color(0xFF648FFF),
           zh: '天蓝',
           en: 'Sky blue',
+          ja: '空色',
+          de: 'Himmelblau',
+          fr: 'Bleu ciel',
+          es: 'Azul cielo',
+          ru: 'Небесно-голубой',
         ),
-        _VisualMemoryColorToken(color: Color(0xFF7A7A7A), zh: '灰色', en: 'Gray'),
+        _VisualMemoryColorToken(
+          color: Color(0xFF7A7A7A),
+          zh: '灰色',
+          en: 'Gray',
+          ja: '灰色',
+          de: 'Grau',
+          fr: 'Gris',
+          es: 'Gris',
+          ru: 'Серый',
+        ),
       ],
     ),
   };
@@ -499,12 +711,39 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
 
   String _interferenceToneLabel(AppI18n i18n, double pressure) {
     if (pressure >= 0.58) {
-      return pickUiText(i18n, zh: '近似色干扰', en: 'Near-color decoys');
+      return pickUiText(
+        i18n,
+        zh: '近似色干扰',
+        en: 'Near-color decoys',
+        ja: 'Near-color decoys',
+        de: 'Near-color decoys',
+        fr: 'Des leurres de couleur proche',
+        es: 'Decoraciones de color cercano',
+        ru: 'Цветные приманки',
+      );
     }
     if (pressure >= 0.34) {
-      return pickUiText(i18n, zh: '色差接近', en: 'Closer colors');
+      return pickUiText(
+        i18n,
+        zh: '色差接近',
+        en: 'Closer colors',
+        ja: '近い色',
+        de: 'Closer colors',
+        fr: 'Couleurs plus proches',
+        es: 'Colores más cercanos',
+        ru: 'Ближайшие цвета',
+      );
     }
-    return pickUiText(i18n, zh: '色差清晰', en: 'Clear contrast');
+    return pickUiText(
+      i18n,
+      zh: '色差清晰',
+      en: 'Clear contrast',
+      ja: '明確なコントラスト',
+      de: 'Clear contrast',
+      fr: 'Contraste clair',
+      es: 'contraste claro',
+      ru: 'Явный контраст',
+    );
   }
 
   String _difficultyLabel(AppI18n i18n, _VisualMemoryDifficulty difficulty) {
@@ -513,21 +752,41 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         i18n,
         zh: '轻量',
         en: 'Relaxed',
+        ja: 'Relaxed',
+        de: 'Relaxed',
+        fr: 'Détends-toi',
+        es: 'Relajado',
+        ru: 'Расслабленный',
       ),
       _VisualMemoryDifficulty.standard => pickUiText(
         i18n,
         zh: '标准',
         en: 'Standard',
+        ja: 'Standard',
+        de: 'Standard',
+        fr: 'Norme',
+        es: 'Estándar',
+        ru: 'Стандарт',
       ),
       _VisualMemoryDifficulty.challenge => pickUiText(
         i18n,
         zh: '进阶',
         en: 'Challenge',
+        ja: 'チャレンジ',
+        de: 'Challenge',
+        fr: 'Défi',
+        es: 'Desafío',
+        ru: 'Вызов',
       ),
       _VisualMemoryDifficulty.custom => pickUiText(
         i18n,
         zh: '自定义',
         en: 'Custom',
+        ja: 'Custom',
+        de: 'Custom',
+        fr: 'Personnalisé',
+        es: 'Aduanas',
+        ru: 'обычай',
       ),
     };
   }
@@ -538,27 +797,42 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         i18n,
         zh: '位置记忆',
         en: 'Positions',
+        ja: 'Positions',
+        de: 'Positions',
+        fr: 'Positions',
+        es: 'Posiciones',
+        ru: 'Позиции',
       ),
       _VisualMemoryMode.colorTargets => pickUiText(
         i18n,
         zh: '彩色目标',
         en: 'Color targets',
+        ja: 'ターゲット',
+        de: 'Color targets',
+        fr: 'Cibles de couleur',
+        es: 'Objetivos de color',
+        ru: 'Цветовые цели',
       ),
       _VisualMemoryMode.targetColor => pickUiText(
         i18n,
         zh: '指定颜色',
         en: 'Target color',
+        ja: 'Target color',
+        de: 'Target color',
+        fr: 'Couleur de la cible',
+        es: 'Color blanco',
+        ru: 'Целевой цвет',
       ),
     };
   }
 
   String _paletteLabel(AppI18n i18n, _VisualMemoryPalette palette) {
     final spec = _paletteSpecs[palette]!;
-    return pickUiText(i18n, zh: spec.zh, en: spec.en);
+    return spec.label(i18n);
   }
 
   String _colorName(AppI18n i18n, _VisualMemoryColorToken token) {
-    return pickUiText(i18n, zh: token.zh, en: token.en);
+    return token.label(i18n);
   }
 
   String _targetPrompt(AppI18n i18n) {
@@ -570,6 +844,11 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
       i18n,
       zh: '本轮目标色：${_colorName(i18n, token)}',
       en: 'Target color: ${_colorName(i18n, token)}',
+      ja: '今回の目標色：${_colorName(i18n, token)}',
+      de: 'Zielfarbe: ${_colorName(i18n, token)}',
+      fr: 'Couleur cible : ${_colorName(i18n, token)}',
+      es: 'Color objetivo: ${_colorName(i18n, token)}',
+      ru: 'Целевой цвет: ${_colorName(i18n, token)}',
     );
   }
 
@@ -579,6 +858,11 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         i18n,
         zh: '测试结束，已生成本次统计报告。',
         en: 'Test finished. Your report is ready.',
+        ja: 'Test finished. Your report is ready.',
+        de: 'Test finished. Your report is ready.',
+        fr: 'Essai terminé. Votre rapport est prêt.',
+        es: 'Prueba terminada. Su informe está listo.',
+        ru: 'Тест закончен. Ваш доклад готов.',
       );
     }
     if (_roundFailed) {
@@ -586,6 +870,11 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         i18n,
         zh: '误点超限，已扣除生命并准备重开本关。',
         en: 'Miss limit reached. One life lost; this level is restarting.',
+        ja: 'Miss limit reached. One life lost; this level is restarting.',
+        de: 'Miss limit reached. One life lost; this level is restarting.',
+        fr: 'La limite a été atteinte. Une vie perdue ; ce niveau redémarre.',
+        es: 'El límite de la señorita llegó. Una vida perdida; este nivel es inquietante.',
+        ru: 'Мисс предел достигнут. Одна жизнь потеряна, этот уровень перезапускается.',
       );
     }
     if (_showing) {
@@ -595,12 +884,22 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
           i18n,
           zh: '记住所有 $colorName 方块；相近色和灰色格都是干扰。',
           en: 'Memorize every $colorName cell; similar colors and gray cells are decoys.',
+          ja: 'Memorize every $colorName cell; similar colors and gray cells are decoys.',
+          de: 'Memorize every $colorName cell; similar colors and gray cells are decoys.',
+          fr: 'Mémoriser chaque cellule $colorName; les couleurs et les cellules grises sont semblables.',
+          es: 'Memorizar cada célula <v0 / confianza; colores similares y células grises son decoys.',
+          ru: 'Запомните каждую ячейку $colorName; похожие цвета и серые ячейки являются приманками.',
         );
       }
       return pickUiText(
         i18n,
         zh: '记住亮起的目标格，稍后直接点选复现。',
         en: 'Memorize the highlighted targets, then tap them back.',
+        ja: 'Memorize the highlighted targets, then tap them back.',
+        de: 'Memorize the highlighted targets, then tap them back.',
+        fr: 'Mémoriser les cibles surlignées, puis les tapoter.',
+        es: 'Memorice los objetivos destacados y luego tóquelos de vuelta.',
+        ru: 'Запомните выделенные цели, а затем нажмите на них.',
       );
     }
     if (_input) {
@@ -610,18 +909,33 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
           i18n,
           zh: '现在只点 $colorName 方块；相近色、灰色格和空白格都会算误点。',
           en: 'Now tap only $colorName cells; similar colors, gray cells, and blanks count as misses.',
+          ja: 'Now tap only $colorName cells; similar colors, gray cells, and blanks count as misses.',
+          de: 'Now tap only $colorName cells; similar colors, gray cells, and blanks count as misses.',
+          fr: 'N\'appuyez maintenant que sur $colorName cellules; les couleurs semblables, les cellules grises et les blancs comptent comme manquants.',
+          es: 'Ahora sólo grifo <v0 / celdas de confianza; colores similares, células grises y espacios en blanco cuentan como faltas.',
+          ru: 'Теперь нажмите только $colorName ячейки; похожие цвета, серые ячейки и бланки считаются промахами.',
         );
       }
       return pickUiText(
         i18n,
         zh: '点击刚才亮起的目标格；本关允许误点 $_missLimit 次。',
         en: 'Tap the highlighted targets. Misses allowed: $_missLimit.',
+        ja: 'Tap the highlighted targets. Misses allowed: $_missLimit.',
+        de: 'Tap the highlighted targets. Misses allowed: $_missLimit.',
+        fr: 'Appuyez sur les cibles indiquées. Non autorisé: $_missLimit.',
+        es: 'Toque los objetivos destacados. Permisos permitidos: יv0/√≥n.',
+        ru: 'Нажмите на выделенные цели. Разрешено: $_missLimit.',
       );
     }
     return pickUiText(
       i18n,
       zh: '点击开始，先观察目标，隐藏后再复现。',
       en: 'Press start, observe the targets, then reproduce them after they hide.',
+      ja: 'Press start, observe the targets, then reproduce them after they hide.',
+      de: 'Press start, observe the targets, then reproduce them after they hide.',
+      fr: 'Appuyez sur Démarrer, observer les cibles, puis les reproduire après qu\'elles se soient cachées.',
+      es: 'Comienza a presionar, observa los objetivos, luego reproducirlos después de esconderse.',
+      ru: 'Нажмите на старт, наблюдайте за целями, а затем воспроизводите их после того, как они скрываются.',
     );
   }
 
@@ -907,15 +1221,69 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '等级', en: 'Level'), '$_level'),
             (
-              pickUiText(i18n, zh: '网格', en: 'Grid'),
+              pickUiText(
+                i18n,
+                zh: '等级',
+                en: 'Level',
+                ja: 'Level',
+                de: 'Level',
+                fr: 'Niveau',
+                es: 'Nivel',
+                ru: 'Уровень',
+              ),
+              '$_level',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '网格',
+                en: 'Grid',
+                ja: 'Grid',
+                de: 'Grid',
+                fr: 'Grille',
+                es: 'Grid',
+                ru: 'Сетка',
+              ),
               '${_targets.isEmpty ? _plannedGridSize : _activeGridSize} x ${_targets.isEmpty ? _plannedGridSize : _activeGridSize}',
             ),
-            (pickUiText(i18n, zh: '目标格', en: 'Targets'), '$targetMetric'),
-            (pickUiText(i18n, zh: '生命', en: 'Lives'), '$_lives'),
             (
-              pickUiText(i18n, zh: '误点', en: 'Misses'),
+              pickUiText(
+                i18n,
+                zh: '目标格',
+                en: 'Targets',
+                ja: 'Targets',
+                de: 'Targets',
+                fr: 'Objectifs',
+                es: 'Metas',
+                ru: 'Цели',
+              ),
+              '$targetMetric',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '生命',
+                en: 'Lives',
+                ja: 'Lives',
+                de: 'Lives',
+                fr: 'Vies',
+                es: 'Vidas',
+                ru: 'Жизни',
+              ),
+              '$_lives',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '误点',
+                en: 'Misses',
+                ja: 'Misses',
+                de: 'Misses',
+                fr: 'Mlle',
+                es: 'Misses',
+                ru: 'Мисс.',
+              ),
               '$_roundMistakes/$_missLimit',
             ),
           ],
@@ -941,6 +1309,11 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
                       i18n,
                       zh: '${_observeMilliseconds}ms 观察',
                       en: '${_observeMilliseconds}ms view',
+                      ja: '${_observeMilliseconds}ms view',
+                      de: '${_observeMilliseconds}ms view',
+                      fr: '${_observeMilliseconds}ms view',
+                      es: 'vista',
+                      ru: '${_observeMilliseconds}ms просмотр',
                     ),
                     accent: Theme.of(context).colorScheme.primary,
                   ),
@@ -991,22 +1364,60 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
                 children: <Widget>[
                   _HumanActionButton(
                     label: _targets.isEmpty
-                        ? pickUiText(i18n, zh: '开始', en: 'Start')
-                        : pickUiText(i18n, zh: '重开本关', en: 'Restart level'),
+                        ? pickUiText(
+                            i18n,
+                            zh: '开始',
+                            en: 'Start',
+                            ja: 'Start',
+                            de: 'Start',
+                            fr: 'Démarrer',
+                            es: 'Comienzo',
+                            ru: 'Начинать',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '重开本关',
+                            en: 'Restart level',
+                            ja: 'Restart level',
+                            de: 'Restart level',
+                            fr: 'Redémarrer le niveau',
+                            es: 'Nivel de reinicio',
+                            ru: 'Уровень перезапуска',
+                          ),
                     icon: Icons.play_arrow_rounded,
                     onPressed: _gameOver ? null : _startRound,
                   ),
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
-                    label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '重置',
+                        en: 'Reset',
+                        ja: 'Reset',
+                        de: 'Reset',
+                        fr: 'Réinitialiser',
+                        es: 'Reset',
+                        ru: 'сброс',
+                      ),
+                    ),
                   ),
                   if (_roundsStarted > 0)
                     OutlinedButton.icon(
                       onPressed: _showCompletionReport,
                       icon: const Icon(Icons.query_stats_rounded),
                       label: Text(
-                        pickUiText(i18n, zh: '查看报告', en: 'View report'),
+                        pickUiText(
+                          i18n,
+                          zh: '查看报告',
+                          en: 'View report',
+                          ja: 'View report',
+                          de: 'View report',
+                          fr: 'Consulter le rapport',
+                          es: 'Ver informe',
+                          ru: 'Посмотреть доклад',
+                        ),
                       ),
                     ),
                 ],
@@ -1016,11 +1427,25 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '视觉记忆设置', en: 'Visual memory settings'),
+          title: pickUiText(
+            i18n,
+            zh: '视觉记忆设置',
+            en: 'Visual memory settings',
+            ja: 'Visual memory settings',
+            de: 'Visual memory settings',
+            fr: 'Paramètres de la mémoire visuelle',
+            es: 'Ajustes de memoria visual',
+            ru: 'Настройки визуальной памяти',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '难度、模式、颜色和干扰格设置会在下一轮生效',
             en: 'Difficulty, mode, color, and distractor settings apply to the next round',
+            ja: 'Difficulty, mode, color, and distractor settings apply to the next round',
+            de: 'Difficulty, mode, color, and distractor settings apply to the next round',
+            fr: 'Les paramètres de difficulté, de mode, de couleur et de disjoncteur s\'appliquent au tour suivant',
+            es: 'Dificultad, modo, color y configuración de distracción se aplican a la siguiente ronda',
+            ru: 'Трудности, режим, цвет и настройки отвлекающего устройства применяются к следующему раунду',
           ),
           child: _buildSettings(context, i18n),
         ),
@@ -1034,7 +1459,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '难度阶梯', en: 'Difficulty ladder'),
+          pickUiText(
+            i18n,
+            zh: '难度阶梯',
+            en: 'Difficulty ladder',
+            ja: 'Difficulty ladder',
+            de: 'Difficulty ladder',
+            fr: 'Échelle de difficulté',
+            es: 'Dificultad de la escalera',
+            ru: 'Трудная лестница',
+          ),
           style: theme.textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -1059,7 +1493,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(i18n, zh: '记忆模式', en: 'Memory mode'),
+          pickUiText(
+            i18n,
+            zh: '记忆模式',
+            en: 'Memory mode',
+            ja: 'Memory mode',
+            de: 'Memory mode',
+            fr: 'Mode mémoire',
+            es: 'Modo de memoria',
+            ru: 'Режим памяти',
+          ),
           style: theme.textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -1080,7 +1523,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(i18n, zh: '颜色主题', en: 'Color theme'),
+          pickUiText(
+            i18n,
+            zh: '颜色主题',
+            en: 'Color theme',
+            ja: 'カラーテーマ',
+            de: 'Color theme',
+            fr: 'Thème couleur',
+            es: 'Tema de color',
+            ru: 'Цветовая тема',
+          ),
           style: theme.textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -1104,7 +1556,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         ),
         const SizedBox(height: 12),
         _VisualMemorySliderLabel(
-          label: pickUiText(i18n, zh: '观察时长', en: 'View time'),
+          label: pickUiText(
+            i18n,
+            zh: '观察时长',
+            en: 'View time',
+            ja: 'View time',
+            de: 'View time',
+            fr: 'Afficher l\'heure',
+            es: 'Ver tiempo',
+            ru: 'Время просмотра',
+          ),
           value: '$_observeMilliseconds ms',
         ),
         Slider(
@@ -1120,7 +1581,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         ),
         if (_mode != _VisualMemoryMode.positions) ...<Widget>[
           _VisualMemorySliderLabel(
-            label: pickUiText(i18n, zh: '参与颜色数', en: 'Active colors'),
+            label: pickUiText(
+              i18n,
+              zh: '参与颜色数',
+              en: 'Active colors',
+              ja: 'アクティブカラー',
+              de: 'Active colors',
+              fr: 'Active colors',
+              es: 'Colores activos',
+              ru: 'Активные цвета',
+            ),
             value: '$_colorCount',
           ),
           Slider(
@@ -1140,18 +1610,43 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
           onChanged: _roundBusy
               ? null
               : (value) => _applySetting(() => _distractorsEnabled = value),
-          title: Text(pickUiText(i18n, zh: '启用干扰格', en: 'Distractor cells')),
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '启用干扰格',
+              en: 'Distractor cells',
+              ja: 'Distractor cells',
+              de: 'Distractor cells',
+              fr: 'Cellules distracteurs',
+              es: 'Células Distractor',
+              ru: 'Дистрикторные ячейки',
+            ),
+          ),
           subtitle: Text(
             pickUiText(
               i18n,
               zh: '观察阶段额外闪现灰色非目标格；颜色模式下，强度也会让异色干扰更接近目标色。',
               en: 'Adds gray non-target cells during view time; in color modes, stronger intensity also makes decoy colors closer to the target.',
+              ja: '表示時間中に灰色の非ターゲットセルを追加します。カラーモードでは、強度が強くなると、オトリの色がターゲットに近づきます。',
+              de: 'Adds gray non-target cells during view time; in color modes, stronger intensity also makes decoy colors closer to the target.',
+              fr: 'Adds gray non-target cells during view time; in color modes, stronger intensity also makes decoy colors closer to the target.',
+              es: 'Añade células grises no-objetivos durante el tiempo de vista; en modos de color, la intensidad más fuerte también hace que los colores de decoy más cerca del objetivo.',
+              ru: 'Добавляет серые нецелевые ячейки во время просмотра; в цветовых режимах более сильная интенсивность также делает приманочные цвета ближе к цели.',
             ),
           ),
         ),
         if (_distractorsEnabled) ...<Widget>[
           _VisualMemorySliderLabel(
-            label: pickUiText(i18n, zh: '干扰强度', en: 'Distractor intensity'),
+            label: pickUiText(
+              i18n,
+              zh: '干扰强度',
+              en: 'Distractor intensity',
+              ja: 'Distractor intensity',
+              de: 'Distractor intensity',
+              fr: 'Intensité du distracteur',
+              es: 'Intensidad Distractor',
+              ru: 'Интенсивность дифрактора',
+            ),
             value: '$_distractorIntensity',
           ),
           Slider(
@@ -1169,12 +1664,30 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         if (_difficulty == _VisualMemoryDifficulty.custom) ...<Widget>[
           const SizedBox(height: 6),
           Text(
-            pickUiText(i18n, zh: '自定义阶梯', en: 'Custom ladder'),
+            pickUiText(
+              i18n,
+              zh: '自定义阶梯',
+              en: 'Custom ladder',
+              ja: 'Custom ladder',
+              de: 'Custom ladder',
+              fr: 'Échelle personnalisée',
+              es: 'Escalera personalizada',
+              ru: 'Частная лестница',
+            ),
             style: theme.textTheme.labelLarge,
           ),
           const SizedBox(height: 8),
           _VisualMemorySliderLabel(
-            label: pickUiText(i18n, zh: '最大网格', en: 'Max grid'),
+            label: pickUiText(
+              i18n,
+              zh: '最大网格',
+              en: 'Max grid',
+              ja: 'Max grid',
+              de: 'Max grid',
+              fr: 'Grille maximale',
+              es: 'Cuadrícula',
+              ru: 'Макс.',
+            ),
             value: '$_customMaxGridSize x $_customMaxGridSize',
           ),
           Slider(
@@ -1189,7 +1702,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
                       _applySetting(() => _customMaxGridSize = value.round()),
           ),
           _VisualMemorySliderLabel(
-            label: pickUiText(i18n, zh: '初始目标格', en: 'Base targets'),
+            label: pickUiText(
+              i18n,
+              zh: '初始目标格',
+              en: 'Base targets',
+              ja: '基本ターゲット',
+              de: 'Base targets',
+              fr: 'Objectifs de base',
+              es: 'Objetivos de base',
+              ru: 'Базовые цели',
+            ),
             value: '$_customBaseTargets',
           ),
           Slider(
@@ -1204,7 +1726,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
                       _applySetting(() => _customBaseTargets = value.round()),
           ),
           _VisualMemorySliderLabel(
-            label: pickUiText(i18n, zh: '每关误点上限', en: 'Miss limit'),
+            label: pickUiText(
+              i18n,
+              zh: '每关误点上限',
+              en: 'Miss limit',
+              ja: 'Miss limit',
+              de: 'Miss limit',
+              fr: 'Mlle limite',
+              es: 'Límite de la señorita',
+              ru: 'Мисс предел',
+            ),
             value: '$_customMissLimit',
           ),
           Slider(
@@ -1219,7 +1750,16 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
                       _applySetting(() => _customMissLimit = value.round()),
           ),
           _VisualMemorySliderLabel(
-            label: pickUiText(i18n, zh: '生命数', en: 'Lives'),
+            label: pickUiText(
+              i18n,
+              zh: '生命数',
+              en: 'Lives',
+              ja: 'Lives',
+              de: 'Lives',
+              fr: 'Vies',
+              es: 'Vidas',
+              ru: 'Жизни',
+            ),
             value: '$_customLives',
           ),
           Slider(

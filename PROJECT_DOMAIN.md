@@ -1,8 +1,8 @@
 # 项目整体说明文档
 
 ## 文档版本
-- **版本**: v0.0.10
-- **更新日期**: 2026-04-26
+- **版本**: v0.0.14
+- **更新日期**: 2026-05-18
 - **状态**: 待完善
 
 ---
@@ -109,6 +109,10 @@ lib/
     └── network/              # 网络服务
 
 scripts/
+├── tooling-env.ps1                  # 共享工具链探测、PATH 注入与 CMake 缓存迁移清理
+├── build.ps1                        # PowerShell 打包入口，支持 Windows/Android 等目标
+├── dev-run.ps1                      # Windows 桌面快捷运行入口
+├── test.ps1                         # Flutter 测试运行入口，统一 pub get、reporter 与缓存修复
 ├── verify-local-analysis.ps1         # 本地格式与 analyze 验证工具箱
 ├── opencode-minimax-m27.ps1          # 固定调用 MiniMax-M2.7 的命令模板
 ├── orchestrate-opencode-models.ps1   # 多模型 fan-out 调度脚本
@@ -122,6 +126,9 @@ scripts/
 
 ### 开发辅助工具
 - 当前仓库已内置本地验证脚本与 `opencode` 外部模型协作脚本，供开发期分析、方案草拟、并行对比和调度使用。
+- `scripts/tooling-env.ps1` 集中处理 Flutter、Dart、CMake、Android SDK、NuGet 的解析与 PATH 注入，优先读取环境变量，再回退到项目内 `.fvm`、`.tooling` 和常见安装目录。
+- `scripts/build.ps1`、`scripts/dev-run.ps1`、`scripts/test.ps1`、`scripts/verify-local-analysis.ps1` 会检查 `CMakeCache.txt` 是否残留旧工作区绝对路径；若发现从旧盘符复制带来的缓存错配，会清理对应生成目录后再继续。
+- 运行时脚本不写死个人机器绝对路径；外部素材和生成数据默认使用环境变量、显式参数或项目内 `build/generated/` 输出目录。
 - 外部模型输出仅作为辅助参考，不应直接替代对业务代码、架构边界和实际仓库上下文的本地判断。
 - 多模型调度默认将结果写入工作区 `.tmp_model_runs/`，便于后续复查与归档。
 
@@ -270,6 +277,8 @@ const apiTimeout = Duration(seconds: 30);
 | 2026-04-26 | v0.0.10 | 补充每日抉择“吃什么”模块的个人食谱集、集合内随机筛选、管理页分页性能与另存为个人食谱能力说明 |
 | 2026-04-29 | v0.0.11 | 补充每日抉择“随机助手”子模块范围、随机方式和动画边界说明 |
 | 2026-04-29 | v0.0.12 | 补充工具箱“人类测试”子模块范围、17 个趣味测试条目和本地即时结果边界 |
+| 2026-05-18 | v0.0.13 | 补充环境迁移后的工具链适配说明，新增共享工具环境脚本、测试入口与 CMake 缓存迁移清理边界 |
+| 2026-05-18 | v0.0.14 | 收口脚本中的个人绝对路径 fallback，数据生成默认改为环境变量、显式参数或项目内 `build/generated/` 路径 |
 
 ---
 

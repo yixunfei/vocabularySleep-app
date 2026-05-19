@@ -39,169 +39,193 @@ class _HumanTestEntryCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final radius = BorderRadius.circular(compact ? 18 : 20);
     final card = AnimatedScale(
-      scale: dragging ? 0.96 : (highlighted ? 1.015 : 1),
+      scale: dragging ? 1.045 : (highlighted ? 1.015 : 1),
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
           borderRadius: radius,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => entry.pageBuilder()),
-            );
-          },
-          child: Ink(
-            height: compact ? 118 : null,
-            padding: EdgeInsets.all(compact ? 9 : 16),
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[
-                  entry.accent.withValues(
-                    alpha: dragging ? 0.05 : (highlighted ? 0.17 : 0.075),
+          boxShadow: dragging
+              ? <BoxShadow>[
+                  BoxShadow(
+                    color: entry.accent.withValues(alpha: 0.22),
+                    blurRadius: 24,
+                    offset: const Offset(0, 14),
                   ),
-                  colorScheme.surfaceContainerLowest,
-                  colorScheme.surface,
-                ],
-              ),
-              border: Border.all(
-                color: entry.accent.withValues(
-                  alpha: dragging ? 0.16 : (highlighted ? 0.52 : 0.14),
-                ),
-              ),
-              boxShadow: highlighted && !dragging
-                  ? <BoxShadow>[
-                      BoxShadow(
-                        color: entry.accent.withValues(alpha: 0.14),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
+                ]
+              : const <BoxShadow>[],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: radius,
+            onTap: dragging
+                ? null
+                : () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => entry.pageBuilder(),
                       ),
-                    ]
-                  : const <BoxShadow>[],
-            ),
-            child: compact
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Row(
-                        children: <Widget>[
-                          Container(
-                            width: 20,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: entry.accent.withValues(alpha: 0.42),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.drag_indicator_rounded,
-                            size: 14,
-                            color: entry.accent.withValues(alpha: 0.38),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: entry.accent.withValues(
-                            alpha: dragging ? 0.08 : 0.13,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: entry.accent.withValues(alpha: 0.14),
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(entry.icon, color: entry.accent, size: 27),
-                      ),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          entry.shortTitle,
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            height: 1.05,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 16),
-                        child: Text(
-                          entry.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w700,
-                            height: 1.05,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                    ],
-                  )
-                : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: entry.accent.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(entry.icon, color: entry.accent),
+                    );
+                  },
+            child: Ink(
+              height: compact ? 118 : null,
+              padding: EdgeInsets.all(compact ? 9 : 16),
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[
+                    entry.accent.withValues(
+                      alpha: dragging ? 0.20 : (highlighted ? 0.17 : 0.075),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            entry.title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            entry.subtitle,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      entry.shortTitle,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.outline,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 16,
-                      color: colorScheme.outline,
-                    ),
+                    colorScheme.surfaceContainerLowest,
+                    colorScheme.surface,
                   ],
                 ),
+                border: Border.all(
+                  color: entry.accent.withValues(
+                    alpha: dragging ? 0.58 : (highlighted ? 0.52 : 0.14),
+                  ),
+                ),
+                boxShadow: highlighted && !dragging
+                    ? <BoxShadow>[
+                        BoxShadow(
+                          color: entry.accent.withValues(alpha: 0.14),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ]
+                    : const <BoxShadow>[],
+              ),
+              child: compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Container(
+                              width: 20,
+                              height: 3,
+                              decoration: BoxDecoration(
+                                color: entry.accent.withValues(alpha: 0.42),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.drag_indicator_rounded,
+                              size: 14,
+                              color: entry.accent.withValues(alpha: 0.38),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: entry.accent.withValues(
+                              alpha: dragging ? 0.08 : 0.13,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: entry.accent.withValues(alpha: 0.14),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            entry.icon,
+                            color: entry.accent,
+                            size: 27,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            entry.shortTitle,
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 16),
+                          child: Text(
+                            entry.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w700,
+                              height: 1.05,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: entry.accent.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(entry.icon, color: entry.accent),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                entry.title,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                entry.subtitle,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          entry.shortTitle,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.outline,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 16,
+                          color: colorScheme.outline,
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
@@ -354,6 +378,53 @@ class _HumanPanel extends StatelessWidget {
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: child,
+    );
+  }
+}
+
+class _HumanPointerDragBoundary extends StatelessWidget {
+  const _HumanPointerDragBoundary({
+    super.key,
+    required this.child,
+    this.enabled = true,
+    this.onPointerDown,
+    this.onPointerMove,
+    this.onPointerUp,
+    this.onPointerCancel,
+    this.behavior = HitTestBehavior.opaque,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final PointerDownEventListener? onPointerDown;
+  final PointerMoveEventListener? onPointerMove;
+  final PointerUpEventListener? onPointerUp;
+  final PointerCancelEventListener? onPointerCancel;
+  final HitTestBehavior behavior;
+
+  @override
+  Widget build(BuildContext context) {
+    final listener = Listener(
+      behavior: behavior,
+      onPointerDown: enabled ? onPointerDown : null,
+      onPointerMove: enabled ? onPointerMove : null,
+      onPointerUp: enabled ? onPointerUp : null,
+      onPointerCancel: enabled ? onPointerCancel : null,
+      child: child,
+    );
+    if (!enabled) {
+      return listener;
+    }
+    return RawGestureDetector(
+      behavior: behavior,
+      gestures: <Type, GestureRecognizerFactory>{
+        EagerGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<EagerGestureRecognizer>(
+              EagerGestureRecognizer.new,
+              (EagerGestureRecognizer instance) {},
+            ),
+      },
+      child: listener,
     );
   }
 }

@@ -7,11 +7,25 @@ class NumberMemoryTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '数字记忆', en: 'Number memory'),
+      title: pickUiText(
+        i18n,
+        zh: '数字记忆',
+        en: 'Number memory',
+        ja: 'Number memory',
+        de: 'Number memory',
+        fr: 'Mémoire numérique',
+        es: 'Número de memoria',
+        ru: 'Номер памяти',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '看数字、认颜色、找目标组，也可以心算；停留时间能精确到毫秒。',
         en: 'Recall numbers, track colors, pick target groups, or solve quick equations; dwell time can be set by the millisecond.',
+        ja: 'Recall numbers, track colors, pick target groups, or solve quick equations; dwell time can be set by the millisecond.',
+        de: 'Recall numbers, track colors, pick target groups, or solve quick equations; dwell time can be set by the millisecond.',
+        fr: 'Numéros de rappel, couleurs de piste, choisir des groupes cibles, ou résoudre des équations rapides; le temps de séjour peut être défini par la milliseconde.',
+        es: 'Recordar números, rastrear colores, elegir grupos de destino, o resolver ecuaciones rápidas; tiempo de residencia puede ser fijado por el milisegundo.',
+        ru: 'Вспомните числа, отследите цвета, выберите целевые группы или решите быстрые уравнения; время ожидания может быть установлено на миллисекунду.',
       ),
       accent: const Color(0xFF536CC7),
       icon: Icons.pin_rounded,
@@ -19,6 +33,11 @@ class NumberMemoryTestPage extends StatelessWidget {
         i18n,
         zh: '选个玩法，调好停留时间，就可以开始',
         en: 'Pick a mode, set the dwell time, then start',
+        ja: 'Pick a mode, set the dwell time, then start',
+        de: 'Pick a mode, set the dwell time, then start',
+        fr: 'Choisissez un mode, définissez l\'heure d\'arrêt, puis démarrez',
+        es: 'Elige un modo, establece el tiempo de residencia, luego comienza',
+        ru: 'Выберите режим, установите время пребывания, затем начните',
       ),
       child: const _NumberMemoryCard(),
     );
@@ -35,16 +54,66 @@ class _NumberMemoryCard extends StatefulWidget {
 class _NumberMemoryCardState extends State<_NumberMemoryCard> {
   static const List<_NumberMemoryColorSpec> _colorPalette =
       <_NumberMemoryColorSpec>[
-        _NumberMemoryColorSpec(color: Color(0xFFE35D6A), zh: '红色', en: 'Red'),
-        _NumberMemoryColorSpec(color: Color(0xFF4F83D1), zh: '蓝色', en: 'Blue'),
-        _NumberMemoryColorSpec(color: Color(0xFF43A66E), zh: '绿色', en: 'Green'),
-        _NumberMemoryColorSpec(color: Color(0xFFD39A35), zh: '琥珀', en: 'Amber'),
+        _NumberMemoryColorSpec(
+          color: Color(0xFFE35D6A),
+          zh: '红色',
+          en: 'Red',
+          ja: '赤',
+          de: 'Rot',
+          fr: 'Rouge',
+          es: 'Rojo',
+          ru: 'Красный',
+        ),
+        _NumberMemoryColorSpec(
+          color: Color(0xFF4F83D1),
+          zh: '蓝色',
+          en: 'Blue',
+          ja: '青',
+          de: 'Blau',
+          fr: 'Bleu',
+          es: 'Azul',
+          ru: 'Синий',
+        ),
+        _NumberMemoryColorSpec(
+          color: Color(0xFF43A66E),
+          zh: '绿色',
+          en: 'Green',
+          ja: '緑',
+          de: 'Grün',
+          fr: 'Vert',
+          es: 'Verde',
+          ru: 'Зеленый',
+        ),
+        _NumberMemoryColorSpec(
+          color: Color(0xFFD39A35),
+          zh: '琥珀',
+          en: 'Amber',
+          ja: '琥珀',
+          de: 'Bernstein',
+          fr: 'Ambre',
+          es: 'Ámbar',
+          ru: 'Янтарный',
+        ),
         _NumberMemoryColorSpec(
           color: Color(0xFF8B6AD4),
           zh: '紫色',
           en: 'Purple',
+          ja: '紫',
+          de: 'Violett',
+          fr: 'Violet',
+          es: 'Morado',
+          ru: 'Фиолетовый',
         ),
-        _NumberMemoryColorSpec(color: Color(0xFF36A7B2), zh: '青色', en: 'Cyan'),
+        _NumberMemoryColorSpec(
+          color: Color(0xFF36A7B2),
+          zh: '青色',
+          en: 'Cyan',
+          ja: 'シアン',
+          de: 'Türkis',
+          fr: 'Cyan',
+          es: 'Cian',
+          ru: 'Бирюзовый',
+        ),
       ];
 
   final math.Random _random = math.Random();
@@ -115,21 +184,41 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
         i18n,
         zh: '初级',
         en: 'Beginner',
+        ja: 'ビギナー',
+        de: 'Beginner',
+        fr: 'Débutant',
+        es: 'Beginner',
+        ru: 'Начинающий',
       ),
       _NumberMemoryDifficulty.intermediate => pickUiText(
         i18n,
         zh: '中级',
         en: 'Intermediate',
+        ja: 'Intermediate',
+        de: 'Intermediate',
+        fr: 'Intermédiaire',
+        es: 'Intermedio',
+        ru: 'промежуточный',
       ),
       _NumberMemoryDifficulty.advanced => pickUiText(
         i18n,
         zh: '高级',
         en: 'Advanced',
+        ja: '高度',
+        de: 'Advanced',
+        fr: 'Advanced',
+        es: 'Avances',
+        ru: 'продвинутый',
       ),
       _NumberMemoryDifficulty.custom => pickUiText(
         i18n,
         zh: '自定义',
         en: 'Custom',
+        ja: 'Custom',
+        de: 'Custom',
+        fr: 'Personnalisé',
+        es: 'Aduanas',
+        ru: 'обычай',
       ),
     };
   }
@@ -140,18 +229,42 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
         i18n,
         zh: '数字串',
         en: 'Digit string',
+        ja: 'Digit string',
+        de: 'Digit string',
+        fr: 'Chaîne de chiffres',
+        es: 'Digit string',
+        ru: 'струна gigit',
       ),
       _NumberMemoryMode.coloredDigits => pickUiText(
         i18n,
         zh: '彩色数字',
         en: 'Colored digits',
+        ja: 'カラーディジット',
+        de: 'Colored digits',
+        fr: 'Chiffres colorés',
+        es: 'dígitos coloreados',
+        ru: 'Цветные цифры',
       ),
       _NumberMemoryMode.multiTarget => pickUiText(
         i18n,
         zh: '多数字目标',
         en: 'Multi-target',
+        ja: 'Multi-target',
+        de: 'Multi-target',
+        fr: 'Multi-cible',
+        es: 'Multi-target',
+        ru: 'Многоцелевой',
       ),
-      _NumberMemoryMode.equation => pickUiText(i18n, zh: '计算式', en: 'Equation'),
+      _NumberMemoryMode.equation => pickUiText(
+        i18n,
+        zh: '计算式',
+        en: 'Equation',
+        ja: 'Equation',
+        de: 'Equation',
+        fr: 'Équation',
+        es: 'Ecuación',
+        ru: 'уравнение',
+      ),
     };
   }
 
@@ -161,27 +274,47 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
         i18n,
         zh: '看一眼，数字藏起来后原样写回。',
         en: 'Take a look, then type the digits back after they hide.',
+        ja: 'Take a look, then type the digits back after they hide.',
+        de: 'Take a look, then type the digits back after they hide.',
+        fr: 'Regardez, puis tapez les chiffres après qu\'ils se soient cachés.',
+        es: 'Echa un vistazo, luego escribe los dígitos después de esconderse.',
+        ru: 'Взгляните, затем введите цифры после того, как они спрячутся.',
       ),
       _NumberMemoryMode.coloredDigits => pickUiText(
         i18n,
         zh: '只记目标颜色上的数字，别被其他颜色带偏。',
         en: 'Remember only the digits in the target color.',
+        ja: 'Remember only the digits in the target color.',
+        de: 'Remember only the digits in the target color.',
+        fr: 'Rappelez-vous seulement les chiffres de la couleur cible.',
+        es: 'Recuerde sólo los dígitos en el color de destino.',
+        ru: 'Помните только цифры в целевом цвете.',
       ),
       _NumberMemoryMode.multiTarget => pickUiText(
         i18n,
         zh: '几组数字一起出现，只写指定那一组。',
         en: 'Several groups appear at once; type the requested one.',
+        ja: 'Several groups appear at once; type the requested one.',
+        de: 'Several groups appear at once; type the requested one.',
+        fr: 'Plusieurs groupes apparaissent à la fois; tapez celui demandé.',
+        es: 'Varios grupos aparecen a la vez; escriba el pedido.',
+        ru: 'Появляются сразу несколько групп; введите запрашиваемую.',
       ),
       _NumberMemoryMode.equation => pickUiText(
         i18n,
         zh: '先看式子并心算，藏起来后写结果。',
         en: 'Read the expression, solve it mentally, then type the result.',
+        ja: 'Read the expression, solve it mentally, then type the result.',
+        de: 'Read the expression, solve it mentally, then type the result.',
+        fr: 'Lisez l\'expression, résolvez-la mentalement, puis tapez le résultat.',
+        es: 'Lea la expresión, resuelva mentalmente, luego escriba el resultado.',
+        ru: 'Прочитайте выражение, разберитесь с ним мысленно, затем введите результат.',
       ),
     };
   }
 
   String _colorName(AppI18n i18n, _NumberMemoryColorSpec color) {
-    return pickUiText(i18n, zh: color.zh, en: color.en);
+    return color.label(i18n);
   }
 
   int _roundDigitCount() {
@@ -241,8 +374,18 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
       groups: const <_NumberMemoryGroup>[],
       targetZh: '记住这一串数字',
       targetEn: 'Remember this digit string',
+      targetJa: 'この数字列を覚える',
+      targetDe: 'Merke dir diese Zahlenfolge',
+      targetFr: 'Mémorisez cette suite de chiffres',
+      targetEs: 'Recuerda esta serie de números',
+      targetRu: 'Запомните эту последовательность цифр',
       inputZh: '把整串数字写回',
       inputEn: 'Type the whole string back',
+      inputJa: '数字列をすべて入力',
+      inputDe: 'Gib die ganze Folge ein',
+      inputFr: 'Saisissez toute la suite',
+      inputEs: 'Escribe toda la serie',
+      inputRu: 'Введите всю последовательность',
       sizeLabel: '$digitCount',
     );
   }
@@ -264,6 +407,7 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
         .where((token) => token.color == targetColor)
         .map((token) => token.text)
         .join();
+    final targetColorEn = targetColor.en.toLowerCase();
     return _NumberMemoryRound(
       mode: _NumberMemoryMode.coloredDigits,
       answer: answer,
@@ -272,9 +416,19 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
       groups: const <_NumberMemoryGroup>[],
       targetColor: targetColor,
       targetZh: '这轮只记${targetColor.zh}数字',
-      targetEn: 'This round: ${targetColor.en.toLowerCase()} digits',
+      targetEn: 'This round: $targetColorEn digits',
+      targetJa: '今回は${targetColor.ja}の数字だけ',
+      targetDe: 'Diese Runde: ${targetColor.de}-Ziffern',
+      targetFr: 'Cette fois : chiffres ${targetColor.fr}',
+      targetEs: 'Esta ronda: números ${targetColor.es}',
+      targetRu: 'В этом раунде: цифры цвета ${targetColor.ru}',
       inputZh: '只写${targetColor.zh}数字',
-      inputEn: 'Type the ${targetColor.en.toLowerCase()} digits',
+      inputEn: 'Type the $targetColorEn digits',
+      inputJa: '${targetColor.ja}の数字だけ入力',
+      inputDe: 'Gib nur die ${targetColor.de}-Ziffern ein',
+      inputFr: 'Saisissez seulement les chiffres ${targetColor.fr}',
+      inputEs: 'Escribe solo los números ${targetColor.es}',
+      inputRu: 'Введите только цифры цвета ${targetColor.ru}',
       sizeLabel: '$digitCount/${targetColor.en}',
     );
   }
@@ -304,8 +458,18 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
       groups: List<_NumberMemoryGroup>.unmodifiable(groups),
       targetZh: '只记 ${target.label} 组（${target.color.zh}）',
       targetEn: 'Remember group ${target.label} (${target.color.en})',
+      targetJa: '${target.label} 組だけ覚える（${target.color.ja}）',
+      targetDe: 'Merke dir Gruppe ${target.label} (${target.color.de})',
+      targetFr: 'Mémorisez le groupe ${target.label} (${target.color.fr})',
+      targetEs: 'Recuerda el grupo ${target.label} (${target.color.es})',
+      targetRu: 'Запомните группу ${target.label} (${target.color.ru})',
       inputZh: '写下 ${target.label} 组数字',
       inputEn: 'Type group ${target.label}',
+      inputJa: '${target.label} 組を入力',
+      inputDe: 'Gib Gruppe ${target.label} ein',
+      inputFr: 'Saisissez le groupe ${target.label}',
+      inputEs: 'Escribe el grupo ${target.label}',
+      inputRu: 'Введите группу ${target.label}',
       sizeLabel: '${groupCount}x$digitCount',
     );
   }
@@ -346,8 +510,18 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
       groups: const <_NumberMemoryGroup>[],
       targetZh: '先算出结果',
       targetEn: 'Solve it before it hides',
+      targetJa: '隠れる前に計算する',
+      targetDe: 'Löse es, bevor es verschwindet',
+      targetFr: 'Calculez avant que cela se cache',
+      targetEs: 'Resuélvelo antes de que se oculte',
+      targetRu: 'Решите пример, пока он не скрылся',
       inputZh: '写下计算结果',
       inputEn: 'Type the result',
+      inputJa: '答えを入力',
+      inputDe: 'Gib das Ergebnis ein',
+      inputFr: 'Saisissez le résultat',
+      inputEs: 'Escribe el resultado',
+      inputRu: 'Введите результат',
       sizeLabel: '${_equationTerms}T/${termDigits}D',
     );
   }
@@ -456,21 +630,58 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final accuracy = _attempts == 0 ? 0 : (_correct / _attempts * 100).round();
     final answerText = result.answer.isEmpty
-        ? pickUiText(i18n, zh: '留空', en: 'Blank')
+        ? pickUiText(
+            i18n,
+            zh: '留空',
+            en: 'Blank',
+            ja: 'ブランク',
+            de: 'Blank',
+            fr: 'Blanc',
+            es: 'Blank',
+            ru: 'бледный',
+          )
         : result.answer;
     final title = result.correct
-        ? pickUiText(i18n, zh: '本轮通过', en: 'Round passed')
-        : pickUiText(i18n, zh: '这轮没对', en: 'Round missed');
+        ? pickUiText(
+            i18n,
+            zh: '本轮通过',
+            en: 'Round passed',
+            ja: 'Round passed',
+            de: 'Round passed',
+            fr: 'Cycle passé',
+            es: 'Paso',
+            ru: 'Круг прошел',
+          )
+        : pickUiText(
+            i18n,
+            zh: '这轮没对',
+            en: 'Round missed',
+            ja: 'Round missed',
+            de: 'Round missed',
+            fr: 'Cycle manqué',
+            es: 'Se perdió la ronda',
+            ru: 'Пропущенный раунд',
+          );
     final note = result.correct
         ? pickUiText(
             i18n,
             zh: '已经过了 ${result.level} 级，下一轮从 $_level 级开始。',
             en: 'Level ${result.level} is cleared. The next round starts at level $_level.',
+            ja: 'Level ${result.level} is cleared. The next round starts at level $_level.',
+            de: 'Level ${result.level} is cleared. The next round starts at level $_level.',
+            fr: 'Le niveau ${result.level} est effacé. Le tour suivant commence au niveau $_level.',
+            es: 'El nivel se aclara. La siguiente ronda comienza en el nivel <v1/ título.',
+            ru: 'Уровень ${result.level} проясняется. Следующий раунд начинается на уровне $_level.',
           )
         : pickUiText(
             i18n,
             zh: '先看一眼差在哪里，再决定要不要重来。',
             en: 'Check the gap first, then decide when to retry.',
+            ja: '最初にギャップを確認し、再試行するタイミングを決定します。',
+            de: 'Check the gap first, then decide when to retry.',
+            fr: 'Vérifiez d\'abord l\'écart, puis décidez quand réessayer.',
+            es: 'Revisa la brecha primero, luego decide cuándo volver a entrar.',
+            ru: 'Сначала проверьте разрыв, а затем решите, когда повторить.',
           );
     final continueNext = await showDialog<bool>(
       context: context,
@@ -492,45 +703,122 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                   ),
                   const SizedBox(height: 12),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '模式', en: 'Mode'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '模式',
+                      en: 'Mode',
+                      ja: 'Mode',
+                      de: 'Mode',
+                      fr: 'Mode',
+                      es: 'Modo',
+                      ru: 'Режим',
+                    ),
                     value: _modeLabel(i18n, result.mode),
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '等级', en: 'Level'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '等级',
+                      en: 'Level',
+                      ja: 'Level',
+                      de: 'Level',
+                      fr: 'Niveau',
+                      es: 'Nivel',
+                      ru: 'Уровень',
+                    ),
                     value: '${result.level}',
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '规模', en: 'Size'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '规模',
+                      en: 'Size',
+                      ja: 'Size',
+                      de: 'Size',
+                      fr: 'Taille',
+                      es: 'Tamaño',
+                      ru: 'Размер',
+                    ),
                     value: result.sizeLabel,
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '本轮目标', en: 'Prompt'),
-                    value: pickUiText(
+                    label: pickUiText(
                       i18n,
-                      zh: round.targetZh,
-                      en: round.targetEn,
+                      zh: '本轮目标',
+                      en: 'Prompt',
+                      ja: 'Prompt',
+                      de: 'Prompt',
+                      fr: 'Rapide',
+                      es: 'Prompt',
+                      ru: 'быстро',
                     ),
+                    value: round.targetText(i18n),
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '停留', en: 'Dwell'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '停留',
+                      en: 'Dwell',
+                      ja: 'Dwell',
+                      de: 'Dwell',
+                      fr: 'Bien',
+                      es: 'Dwell',
+                      ru: 'Ужин',
+                    ),
                     value: _formatMilliseconds(result.dwellMs),
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '正确答案', en: 'Expected'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '正确答案',
+                      en: 'Expected',
+                      ja: 'Expected',
+                      de: 'Expected',
+                      fr: 'Montant prévu',
+                      es: 'Se prevé',
+                      ru: 'Ожидаемый',
+                    ),
                     value: result.expected,
                     mono: true,
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '你的输入', en: 'Your answer'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '你的输入',
+                      en: 'Your answer',
+                      ja: 'Your answer',
+                      de: 'Your answer',
+                      fr: 'Votre réponse',
+                      es: 'Su respuesta',
+                      ru: 'Ваш ответ',
+                    ),
                     value: answerText,
                     mono: result.answer.isNotEmpty,
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '累计正确率', en: 'Accuracy'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '累计正确率',
+                      en: 'Accuracy',
+                      ja: '精度',
+                      de: 'Accuracy',
+                      fr: 'Accuracy',
+                      es: 'Precisión',
+                      ru: 'точность',
+                    ),
                     value: '$_correct/$_attempts · $accuracy%',
                   ),
                   _NumberMemoryReportRow(
-                    label: pickUiText(i18n, zh: '最好等级', en: 'Best level'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '最好等级',
+                      en: 'Best level',
+                      ja: 'ベストレベル',
+                      de: 'Best level',
+                      fr: 'Meilleur niveau',
+                      es: 'Mejor nivel',
+                      ru: 'Лучший уровень',
+                    ),
                     value: '$_bestLevel',
                   ),
                 ],
@@ -540,7 +828,18 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(pickUiText(i18n, zh: '先停一下', en: 'Stay here')),
+              child: Text(
+                pickUiText(
+                  i18n,
+                  zh: '先停一下',
+                  en: 'Stay here',
+                  ja: 'Stay here',
+                  de: 'Stay here',
+                  fr: 'Reste ici.',
+                  es: 'Quédate aquí.',
+                  ru: 'Оставайся здесь.',
+                ),
+              ),
             ),
             FilledButton.icon(
               onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -551,8 +850,26 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
               ),
               label: Text(
                 result.correct
-                    ? pickUiText(i18n, zh: '下一轮', en: 'Next round')
-                    : pickUiText(i18n, zh: '再来一轮', en: 'Try again'),
+                    ? pickUiText(
+                        i18n,
+                        zh: '下一轮',
+                        en: 'Next round',
+                        ja: 'Next round',
+                        de: 'Next round',
+                        fr: 'Prochain tour',
+                        es: 'Siguiente ronda',
+                        ru: 'Следующий раунд',
+                      )
+                    : pickUiText(
+                        i18n,
+                        zh: '再来一轮',
+                        en: 'Try again',
+                        ja: 'Try again',
+                        de: 'Try again',
+                        fr: 'Essaie encore',
+                        es: 'Inténtalo de nuevo.',
+                        ru: 'Попробуйте еще раз',
+                      ),
               ),
             ),
           ],
@@ -635,7 +952,16 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
 
   String _scoreLabel(AppI18n i18n) {
     if (_attempts == 0) {
-      return pickUiText(i18n, zh: '未开始', en: 'Not started');
+      return pickUiText(
+        i18n,
+        zh: '未开始',
+        en: 'Not started',
+        ja: 'Not started',
+        de: 'Not started',
+        fr: 'Pas commencé',
+        es: 'No empezó',
+        ru: 'Не начиналось',
+      );
     }
     final rate = (_correct / _attempts * 100).round();
     return '$_correct/$_attempts · $rate%';
@@ -643,15 +969,51 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
 
   String _stageStatus(AppI18n i18n) {
     if (_showing) {
-      return pickUiText(i18n, zh: '正在显示', en: 'Showing');
+      return pickUiText(
+        i18n,
+        zh: '正在显示',
+        en: 'Showing',
+        ja: 'Showing',
+        de: 'Showing',
+        fr: 'Affichage',
+        es: 'Mostrando',
+        ru: 'Показывать',
+      );
     }
     if (_input) {
-      return pickUiText(i18n, zh: '等待输入', en: 'Awaiting input');
+      return pickUiText(
+        i18n,
+        zh: '等待输入',
+        en: 'Awaiting input',
+        ja: '入力待ち',
+        de: 'Awaiting input',
+        fr: 'En attente d\'une contribution',
+        es: 'Awaiting input',
+        ru: 'Ожидающий вклад',
+      );
     }
     if (_failed) {
-      return pickUiText(i18n, zh: '本轮错误', en: 'Missed');
+      return pickUiText(
+        i18n,
+        zh: '本轮错误',
+        en: 'Missed',
+        ja: 'Missed',
+        de: 'Missed',
+        fr: 'Manque',
+        es: 'Desaparecido',
+        ru: 'Пропавший',
+      );
     }
-    return pickUiText(i18n, zh: '准备', en: 'Ready');
+    return pickUiText(
+      i18n,
+      zh: '准备',
+      en: 'Ready',
+      ja: 'Ready',
+      de: 'Ready',
+      fr: 'Prêt',
+      es: 'Listo',
+      ru: 'Готовы',
+    );
   }
 
   String _feedbackText(AppI18n i18n) {
@@ -660,16 +1022,21 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
       return _modeDescription(i18n, _mode);
     }
     if (_showing) {
-      return pickUiText(i18n, zh: round.targetZh, en: round.targetEn);
+      return round.targetText(i18n);
     }
     if (_input) {
-      return pickUiText(i18n, zh: round.inputZh, en: round.inputEn);
+      return round.inputText(i18n);
     }
     if (_failed) {
       return pickUiText(
         i18n,
         zh: '正确答案：${round.answer}',
         en: 'Answer: ${round.answer}',
+        ja: '回答：${round.answer}',
+        de: 'Answer: ${round.answer}',
+        fr: 'Réponse : ${round.answer}',
+        es: 'Respuesta:',
+        ru: 'Ответ: ${round.answer}',
       );
     }
     return _modeDescription(i18n, _mode);
@@ -685,17 +1052,71 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '等级', en: 'Level'), '$_level'),
             (
-              pickUiText(i18n, zh: '规模', en: 'Size'),
+              pickUiText(
+                i18n,
+                zh: '等级',
+                en: 'Level',
+                ja: 'Level',
+                de: 'Level',
+                fr: 'Niveau',
+                es: 'Nivel',
+                ru: 'Уровень',
+              ),
+              '$_level',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '规模',
+                en: 'Size',
+                ja: 'Size',
+                de: 'Size',
+                fr: 'Taille',
+                es: 'Tamaño',
+                ru: 'Размер',
+              ),
               _round?.sizeLabel ?? '$_currentDigits',
             ),
             (
-              pickUiText(i18n, zh: '停留', en: 'Dwell'),
+              pickUiText(
+                i18n,
+                zh: '停留',
+                en: 'Dwell',
+                ja: 'Dwell',
+                de: 'Dwell',
+                fr: 'Bien',
+                es: 'Dwell',
+                ru: 'Ужин',
+              ),
               _formatMilliseconds(_lastDwellMs),
             ),
-            (pickUiText(i18n, zh: '模式', en: 'Mode'), modeLabel),
-            (pickUiText(i18n, zh: '成绩', en: 'Score'), _scoreLabel(i18n)),
+            (
+              pickUiText(
+                i18n,
+                zh: '模式',
+                en: 'Mode',
+                ja: 'Mode',
+                de: 'Mode',
+                fr: 'Mode',
+                es: 'Modo',
+                ru: 'Режим',
+              ),
+              modeLabel,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '成绩',
+                en: 'Score',
+                ja: 'Score',
+                de: 'Score',
+                fr: 'Score',
+                es: 'Puntuación',
+                ru: 'счет',
+              ),
+              _scoreLabel(i18n),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -725,12 +1146,17 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                 ],
                 decoration: InputDecoration(
                   labelText: _round == null
-                      ? pickUiText(i18n, zh: '输入答案', en: 'Type answer')
-                      : pickUiText(
+                      ? pickUiText(
                           i18n,
-                          zh: _round!.inputZh,
-                          en: _round!.inputEn,
-                        ),
+                          zh: '输入答案',
+                          en: 'Type answer',
+                          ja: 'Type answer',
+                          de: 'Type answer',
+                          fr: 'Type de réponse',
+                          es: 'Respuesta del tipo',
+                          ru: 'Тип ответа',
+                        )
+                      : _round!.inputText(i18n),
                   border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _submit(),
@@ -742,8 +1168,26 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                 children: <Widget>[
                   _HumanActionButton(
                     label: _input
-                        ? pickUiText(i18n, zh: '提交', en: 'Submit')
-                        : pickUiText(i18n, zh: '开始', en: 'Start'),
+                        ? pickUiText(
+                            i18n,
+                            zh: '提交',
+                            en: 'Submit',
+                            ja: 'Submit',
+                            de: 'Submit',
+                            fr: 'Soumettre',
+                            es: 'Submit',
+                            ru: 'Представить',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '开始',
+                            en: 'Start',
+                            ja: 'Start',
+                            de: 'Start',
+                            fr: 'Démarrer',
+                            es: 'Comienzo',
+                            ru: 'Начинать',
+                          ),
                     icon: _input
                         ? Icons.check_rounded
                         : Icons.play_arrow_rounded,
@@ -756,7 +1200,18 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                   OutlinedButton.icon(
                     onPressed: _roundBusy ? null : _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
-                    label: Text(pickUiText(i18n, zh: '清空', en: 'Reset')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '清空',
+                        en: 'Reset',
+                        ja: 'Reset',
+                        de: 'Reset',
+                        fr: 'Réinitialiser',
+                        es: 'Reset',
+                        ru: 'сброс',
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(112, 48),
                       textStyle: const TextStyle(fontWeight: FontWeight.w800),
@@ -879,6 +1334,11 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                     i18n,
                     zh: '目标颜色：${targetColor.zh}',
                     en: 'Match ${targetColor.en.toLowerCase()}',
+                    ja: 'Match ${targetColor.en.toLowerCase()}',
+                    de: 'Match ${targetColor.en.toLowerCase()}',
+                    fr: 'Correspond à ${targetColor.en.toLowerCase()}',
+                    es: 'Coincidencia:',
+                    ru: 'Матч ${targetColor.en.toLowerCase()}',
                   ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: targetColor.color,
@@ -958,6 +1418,11 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                             i18n,
                             zh: '${group.label} 目标',
                             en: '${group.label} target',
+                            ja: '${group.label}ターゲット',
+                            de: '${group.label} target',
+                            fr: '${group.label} target',
+                            es: 'Objetivo',
+                            ru: '${group.label} Цель',
                           )
                         : group.label,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -990,14 +1455,41 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
     final theme = Theme.of(context);
     final targetColor = round?.targetColor;
     final title = _failed && round != null
-        ? pickUiText(i18n, zh: '答案', en: 'Answer')
+        ? pickUiText(
+            i18n,
+            zh: '答案',
+            en: 'Answer',
+            ja: '回答',
+            de: 'Answer',
+            fr: 'Réponse',
+            es: 'Respuesta',
+            ru: 'Ответить',
+          )
         : _input
-        ? pickUiText(i18n, zh: '请复现', en: 'Recall now')
-        : pickUiText(i18n, zh: '准备', en: 'Ready');
+        ? pickUiText(
+            i18n,
+            zh: '请复现',
+            en: 'Recall now',
+            ja: 'Recall now',
+            de: 'Recall now',
+            fr: 'Rappelez-vous maintenant',
+            es: 'Ahora',
+            ru: 'Вспомнить сейчас',
+          )
+        : pickUiText(
+            i18n,
+            zh: '准备',
+            en: 'Ready',
+            ja: 'Ready',
+            de: 'Ready',
+            fr: 'Prêt',
+            es: 'Listo',
+            ru: 'Готовы',
+          );
     final value = _failed && round != null
         ? round.answer
         : _input && round != null
-        ? pickUiText(i18n, zh: round.inputZh, en: round.inputEn)
+        ? round.inputText(i18n)
         : _modeDescription(i18n, _mode);
     return Column(
       key: ValueKey<String>('hidden-$title-$value'),
@@ -1043,6 +1535,11 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                     i18n,
                     zh: '只写${targetColor.zh}数字',
                     en: 'Only ${targetColor.en.toLowerCase()} digits',
+                    ja: 'Only ${targetColor.en.toLowerCase()} digits',
+                    de: 'Only ${targetColor.en.toLowerCase()} digits',
+                    fr: 'Uniquement les chiffres ${targetColor.en.toLowerCase()}',
+                    es: 'Sólo los dígitos del título',
+                    ru: 'Только ${targetColor.en.toLowerCase()} цифры',
                   ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: targetColor.color,
@@ -1063,17 +1560,40 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
     String difficultyLabel,
   ) {
     return _HumanSettingsSection(
-      title: pickUiText(i18n, zh: '训练设置', en: 'Training settings'),
+      title: pickUiText(
+        i18n,
+        zh: '训练设置',
+        en: 'Training settings',
+        ja: 'Training settings',
+        de: 'Training settings',
+        fr: 'Cadres de formation',
+        es: 'Ajustes de capacitación',
+        ru: 'Условия обучения',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '换玩法、调停留时间，也可以加一点随机性',
         en: 'Change the mode, tune dwell time, or add a little randomness.',
+        ja: 'モードを変更するか、滞留時間を調整するか、または少しランダム性を追加します。',
+        de: 'Change the mode, tune dwell time, or add a little randomness.',
+        fr: 'Changez le mode, accordez le temps d\'attente, ou ajoutez un peu de hasard.',
+        es: 'Cambia el modo, sintoniza el tiempo, o agrega un poco de aleatoriedad.',
+        ru: 'Измените режим, настройте время пребывания или добавьте немного случайности.',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '模式', en: 'Mode'),
+            pickUiText(
+              i18n,
+              zh: '模式',
+              en: 'Mode',
+              ja: 'Mode',
+              de: 'Mode',
+              fr: 'Mode',
+              es: 'Modo',
+              ru: 'Режим',
+            ),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -1102,7 +1622,7 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           ),
           const SizedBox(height: 14),
           Text(
-            '${pickUiText(i18n, zh: '起始难度', en: 'Starting difficulty')} · $difficultyLabel',
+            '${pickUiText(i18n, zh: '起始难度', en: 'Starting difficulty', ja: 'Starting difficulty', de: 'Starting difficulty', fr: 'Difficulté de démarrage', es: 'Dificultad inicial', ru: 'Начало трудностей')} · $difficultyLabel',
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -1126,7 +1646,16 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           if (_difficulty == _NumberMemoryDifficulty.custom) ...<Widget>[
             const SizedBox(height: 12),
             _NumberMemorySettingSlider(
-              label: pickUiText(i18n, zh: '起步位数', en: 'Base digits'),
+              label: pickUiText(
+                i18n,
+                zh: '起步位数',
+                en: 'Base digits',
+                ja: 'ベースディジット',
+                de: 'Base digits',
+                fr: 'Chiffres de base',
+                es: 'dígitos de base',
+                ru: 'Базовые цифры',
+              ),
               valueText: '$_customBaseDigits',
               value: _customBaseDigits.toDouble(),
               min: 1,
@@ -1140,7 +1669,16 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           ],
           const SizedBox(height: 12),
           _NumberMemorySettingSlider(
-            label: pickUiText(i18n, zh: '停留时间', en: 'Dwell time'),
+            label: pickUiText(
+              i18n,
+              zh: '停留时间',
+              en: 'Dwell time',
+              ja: 'Dwell time',
+              de: 'Dwell time',
+              fr: 'Temps de repos',
+              es: 'Dwell time',
+              ru: 'Время ожидания',
+            ),
             valueText: _formatMilliseconds(_displayMilliseconds),
             value: _displayMilliseconds.toDouble(),
             min: 100,
@@ -1154,7 +1692,16 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           ),
           _NumberMemoryNumberInput(
             key: const ValueKey<String>('number-memory-dwell-input'),
-            label: pickUiText(i18n, zh: '直接输入毫秒', en: 'Exact milliseconds'),
+            label: pickUiText(
+              i18n,
+              zh: '直接输入毫秒',
+              en: 'Exact milliseconds',
+              ja: 'Exact milliseconds',
+              de: 'Exact milliseconds',
+              fr: 'millisecondes exactes',
+              es: 'Exact milliseconds',
+              ru: 'Точные миллисекунды',
+            ),
             controller: _dwellController,
             suffix: 'ms',
             enabled: !_roundBusy,
@@ -1166,11 +1713,25 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
             ),
           ),
           _NumberMemorySwitchTile(
-            title: pickUiText(i18n, zh: '随机停留时间', en: 'Randomize dwell time'),
+            title: pickUiText(
+              i18n,
+              zh: '随机停留时间',
+              en: 'Randomize dwell time',
+              ja: 'Randomize dwell time',
+              de: 'Randomize dwell time',
+              fr: 'Randomiser le temps de séjour',
+              es: 'Tiempo de residencia aleatorio',
+              ru: 'Рандомизированное время пребывания',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '每轮在当前时间附近轻微浮动',
               en: 'Each round drifts around the current dwell time.',
+              ja: 'Each round drifts around the current dwell time.',
+              de: 'Each round drifts around the current dwell time.',
+              fr: 'Chaque tour dérive autour du temps d\'habitation du courant.',
+              es: 'Cada ronda se desplaza alrededor del tiempo actual.',
+              ru: 'Каждый раунд дрейфует вокруг текущего времени пребывания.',
             ),
             value: _randomizeDwell,
             onChanged: _roundBusy
@@ -1180,7 +1741,16 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           if (_randomizeDwell) ...<Widget>[
             const SizedBox(height: 8),
             _NumberMemorySettingSlider(
-              label: pickUiText(i18n, zh: '浮动范围', en: 'Dwell jitter'),
+              label: pickUiText(
+                i18n,
+                zh: '浮动范围',
+                en: 'Dwell jitter',
+                ja: 'Dwell jitter',
+                de: 'Dwell jitter',
+                fr: 'Bizarre',
+                es: 'Dwell jitter',
+                ru: 'Джиттер',
+              ),
               valueText: '±$_dwellJitterMs ms',
               value: _dwellJitterMs.toDouble(),
               min: 0,
@@ -1191,7 +1761,16 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                   : (value) => _applySetting(() => _setJitterMs(value.round())),
             ),
             _NumberMemoryNumberInput(
-              label: pickUiText(i18n, zh: '直接输入浮动', en: 'Exact jitter'),
+              label: pickUiText(
+                i18n,
+                zh: '直接输入浮动',
+                en: 'Exact jitter',
+                ja: 'Exact jitter',
+                de: 'Exact jitter',
+                fr: 'C\'est exact.',
+                es: 'Exact jitter',
+                ru: 'Точное дрожание',
+              ),
               controller: _jitterController,
               suffix: 'ms',
               enabled: !_roundBusy,
@@ -1205,11 +1784,25 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           ],
           const SizedBox(height: 8),
           _NumberMemorySwitchTile(
-            title: pickUiText(i18n, zh: '随机位数', en: 'Randomize length'),
+            title: pickUiText(
+              i18n,
+              zh: '随机位数',
+              en: 'Randomize length',
+              ja: 'Randomize length',
+              de: 'Randomize length',
+              fr: 'randomiser la longueur',
+              es: 'Longitud aleatoria',
+              ru: 'Рандомизированная длина',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '每轮在起步位数和当前等级之间抽一个长度',
               en: 'Each round picks a length between the base and current level.',
+              ja: 'Each round picks a length between the base and current level.',
+              de: 'Each round picks a length between the base and current level.',
+              fr: 'Chaque tour prend une longueur entre la base et le niveau actuel.',
+              es: 'Cada ronda elige una longitud entre la base y el nivel actual.',
+              ru: 'Каждый раунд выбирает длину между базой и текущим уровнем.',
             ),
             value: _randomizeLength,
             onChanged: _roundBusy
@@ -1217,11 +1810,25 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                 : (value) => _applySetting(() => _randomizeLength = value),
           ),
           _NumberMemorySwitchTile(
-            title: pickUiText(i18n, zh: '允许首位 0', en: 'Allow leading zero'),
+            title: pickUiText(
+              i18n,
+              zh: '允许首位 0',
+              en: 'Allow leading zero',
+              ja: '先行ゼロを',
+              de: 'Allow leading zero',
+              fr: 'Allow leading zero',
+              es: 'Permitir cero líder',
+              ru: 'Позволяет вести ноль',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '关闭后，多位数字不会以 0 开头',
               en: 'When off, multi-digit prompts will not start with 0.',
+              ja: 'When off, multi-digit prompts will not start with 0.',
+              de: 'When off, multi-digit prompts will not start with 0.',
+              fr: 'Une fois éteints, les invites à plusieurs chiffres ne commenceront pas par 0.',
+              es: 'Cuando esté apagado, los impulsos de varios dígitos no comenzarán con 0.',
+              ru: 'При выключении многозначные подсказки не начнутся с 0.',
             ),
             value: _allowLeadingZero,
             onChanged: _roundBusy
@@ -1229,11 +1836,25 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                 : (value) => _applySetting(() => _allowLeadingZero = value),
           ),
           _NumberMemorySwitchTile(
-            title: pickUiText(i18n, zh: '避免相邻重复', en: 'Avoid adjacent repeats'),
+            title: pickUiText(
+              i18n,
+              zh: '避免相邻重复',
+              en: 'Avoid adjacent repeats',
+              ja: '隣接する繰り返しを避ける',
+              de: 'Avoid adjacent repeats',
+              fr: 'Éviter les répétitions adjacentes',
+              es: 'Evite las repeticiones adyacentes',
+              ru: 'Избегайте соседних повторов',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '少出现 11、77 这种挨在一起的重复',
               en: 'Reduces repeated neighbors such as 11 or 77.',
+              ja: 'Reduces repeated neighbors such as 11 or 77.',
+              de: 'Reduces repeated neighbors such as 11 or 77.',
+              fr: 'Réduit les voisins répétés comme 11 ou 77.',
+              es: 'Reduce los vecinos repetidos como 11 o 77.',
+              ru: 'Уменьшает количество повторных соседей, таких как 11 или 77.',
             ),
             value: _avoidAdjacentRepeat,
             onChanged: _roundBusy

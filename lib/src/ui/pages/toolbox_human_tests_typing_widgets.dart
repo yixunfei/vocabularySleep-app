@@ -24,7 +24,16 @@ Widget _typingBuildModeChips(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text(
-        pickUiText(i18n, zh: '趣味模式', en: 'Modes'),
+        pickUiText(
+          i18n,
+          zh: '趣味模式',
+          en: 'Modes',
+          ja: 'Modes',
+          de: 'Modes',
+          fr: 'Modes',
+          es: 'Modos',
+          ru: 'режимы',
+        ),
         style: Theme.of(
           context,
         ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900),
@@ -61,7 +70,16 @@ Widget _typingBuildLanguageTopicChips(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text(
-        pickUiText(i18n, zh: '语言', en: 'Language'),
+        pickUiText(
+          i18n,
+          zh: '语言',
+          en: 'Language',
+          ja: 'Language',
+          de: 'Language',
+          fr: 'Langue',
+          es: 'Idioma',
+          ru: 'Язык языка',
+        ),
         style: textStyle,
       ),
       const SizedBox(height: 8),
@@ -81,7 +99,16 @@ Widget _typingBuildLanguageTopicChips(
       ),
       const SizedBox(height: 10),
       Text(
-        pickUiText(i18n, zh: '内容题材', en: 'Content topic'),
+        pickUiText(
+          i18n,
+          zh: '内容题材',
+          en: 'Content topic',
+          ja: 'コンテンツトピック',
+          de: 'Content topic',
+          fr: 'Sujet de contenu',
+          es: 'Tema del contenido',
+          ru: 'Тема контента',
+        ),
         style: textStyle,
       ),
       const SizedBox(height: 8),
@@ -101,7 +128,16 @@ Widget _typingBuildLanguageTopicChips(
       ),
       const SizedBox(height: 10),
       Text(
-        pickUiText(i18n, zh: '长度', en: 'Length'),
+        pickUiText(
+          i18n,
+          zh: '长度',
+          en: 'Length',
+          ja: 'Length',
+          de: 'Length',
+          fr: 'Longueur',
+          es: 'Duración',
+          ru: 'Длина',
+        ),
         style: textStyle,
       ),
       const SizedBox(height: 8),
@@ -337,7 +373,16 @@ Widget _typingBuildReport(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '结果报告', en: 'Result report'),
+                    pickUiText(
+                      i18n,
+                      zh: '结果报告',
+                      en: 'Result report',
+                      ja: 'Result report',
+                      de: 'Result report',
+                      fr: 'Rapport de résultat',
+                      es: 'Informe de resultados',
+                      ru: 'Итоговый доклад',
+                    ),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -356,35 +401,107 @@ Widget _typingBuildReport(
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(i18n, zh: '完成速度', en: 'Final speed'),
+              pickUiText(
+                i18n,
+                zh: '完成速度',
+                en: 'Final speed',
+                ja: 'Final speed',
+                de: 'Final speed',
+                fr: 'Vitesse finale',
+                es: 'Velocidad final',
+                ru: 'Финальная скорость',
+              ),
               '${report.wpm.round()} WPM',
             ),
             (
-              pickUiText(i18n, zh: '净速度', en: 'Net speed'),
+              pickUiText(
+                i18n,
+                zh: '净速度',
+                en: 'Net speed',
+                ja: 'Net speed',
+                de: 'Net speed',
+                fr: 'Régime net',
+                es: 'Velocidad neta',
+                ru: 'Чистая скорость',
+              ),
               '${report.netWpm.round()} WPM',
             ),
             (
-              pickUiText(i18n, zh: '峰值速度', en: 'Peak speed'),
+              pickUiText(
+                i18n,
+                zh: '峰值速度',
+                en: 'Peak speed',
+                ja: 'Peak speed',
+                de: 'Peak speed',
+                fr: 'Vitesse maximale',
+                es: 'Velocidad de pico',
+                ru: 'Пик скорости',
+              ),
               '${report.peakWpm.round()} WPM',
             ),
             (
-              pickUiText(i18n, zh: '字符速度', en: 'Final chars'),
+              pickUiText(
+                i18n,
+                zh: '字符速度',
+                en: 'Final chars',
+                ja: 'Final chars',
+                de: 'Final chars',
+                fr: 'Charnières finales',
+                es: 'Final chars',
+                ru: 'Последние гонщики',
+              ),
               '${report.cpm.round()} CPM',
             ),
             (
-              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '准确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               '${report.accuracy.round()}%',
             ),
             (
-              pickUiText(i18n, zh: '稳定性', en: 'Stability'),
+              pickUiText(
+                i18n,
+                zh: '稳定性',
+                en: 'Stability',
+                ja: 'Stability',
+                de: 'Stability',
+                fr: 'Stabilité',
+                es: 'Estabilidad',
+                ru: 'Стабильность',
+              ),
               '${report.consistencyScore.round()}%',
             ),
             (
-              pickUiText(i18n, zh: '完成用时', en: 'Duration'),
+              pickUiText(
+                i18n,
+                zh: '完成用时',
+                en: 'Duration',
+                ja: 'Duration',
+                de: 'Duration',
+                fr: 'Durée',
+                es: 'Duración',
+                ru: 'Продолжительность',
+              ),
               state._formatDuration(report.elapsed),
             ),
             (
-              pickUiText(i18n, zh: '长停顿', en: 'Long pauses'),
+              pickUiText(
+                i18n,
+                zh: '长停顿',
+                en: 'Long pauses',
+                ja: 'Long pauses',
+                de: 'Long pauses',
+                fr: 'Longues pauses',
+                es: 'Pausas largas',
+                ru: 'Длинные паузы',
+              ),
               '${report.longPauses}',
             ),
           ],
@@ -406,19 +523,50 @@ Widget _typingBuildReport(
           runSpacing: 10,
           children: <Widget>[
             _HumanActionButton(
-              label: pickUiText(i18n, zh: '按建议再练', en: 'Practice suggestion'),
+              label: pickUiText(
+                i18n,
+                zh: '按建议再练',
+                en: 'Practice suggestion',
+                ja: 'Practice suggestion',
+                de: 'Practice suggestion',
+                fr: 'Proposition de pratique',
+                es: 'Propuesta de práctica',
+                ru: 'Практические рекомендации',
+              ),
               icon: _typingModeIcon(suggestedMode),
               onPressed: () => state._startSuggestedDrill(report),
             ),
             OutlinedButton.icon(
               onPressed: () => state._reset(pickNew: false),
               icon: const Icon(Icons.replay_rounded),
-              label: Text(pickUiText(i18n, zh: '同配置重来', en: 'Retry setup')),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '同配置重来',
+                  en: 'Retry setup',
+                  ja: 'Retry setup',
+                  de: 'Retry setup',
+                  fr: 'Réessayer la configuration',
+                  es: 'Retry setup',
+                  ru: 'Настройка повторного использования',
+                ),
+              ),
             ),
             OutlinedButton.icon(
               onPressed: state._reset,
               icon: const Icon(Icons.shuffle_rounded),
-              label: Text(pickUiText(i18n, zh: '新语料', en: 'New content')),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '新语料',
+                  en: 'New content',
+                  ja: 'New content',
+                  de: 'New content',
+                  fr: 'Nouveau contenu',
+                  es: 'Nuevo contenido',
+                  ru: 'Новый контент',
+                ),
+              ),
             ),
           ],
         ),
@@ -447,7 +595,16 @@ Widget _typingBuildIssueBars(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text(
-        pickUiText(i18n, zh: '错误结构', en: 'Error profile'),
+        pickUiText(
+          i18n,
+          zh: '错误结构',
+          en: 'Error profile',
+          ja: 'Error profile',
+          de: 'Error profile',
+          fr: 'Profil d\'erreur',
+          es: 'Perfil de error',
+          ru: 'Профиль ошибки',
+        ),
         style: theme.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w900,
         ),
@@ -481,7 +638,16 @@ Widget _typingBuildHotspots(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text(
-        pickUiText(i18n, zh: '错误热区', en: 'Error hotspots'),
+        pickUiText(
+          i18n,
+          zh: '错误热区',
+          en: 'Error hotspots',
+          ja: 'Error hotspots',
+          de: 'Error hotspots',
+          fr: 'Points chauds d\'erreur',
+          es: 'Puntos calientes de error',
+          ru: 'Горячие точки ошибок',
+        ),
         style: theme.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w900,
         ),
@@ -493,10 +659,28 @@ Widget _typingBuildHotspots(
         children: report.hotspots
             .map((item) {
               final expected = item.expected.isEmpty
-                  ? pickUiText(i18n, zh: '多余', en: 'Extra')
+                  ? pickUiText(
+                      i18n,
+                      zh: '多余',
+                      en: 'Extra',
+                      ja: 'Extra',
+                      de: 'Extra',
+                      fr: 'Extra',
+                      es: 'Extra',
+                      ru: 'дополнительный',
+                    )
                   : item.expected;
               final typed = item.typed.isEmpty
-                  ? pickUiText(i18n, zh: '漏输', en: 'Missing')
+                  ? pickUiText(
+                      i18n,
+                      zh: '漏输',
+                      en: 'Missing',
+                      ja: 'Missing',
+                      de: 'Missing',
+                      fr: 'Manque',
+                      es: 'Falta',
+                      ru: 'Пропавший',
+                    )
                   : item.typed;
               return _HumanPill(
                 text: '$expected -> $typed x${item.count}',
@@ -520,7 +704,16 @@ Widget _typingBuildRecentReports(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '本页最近结果', en: 'Recent local results'),
+          pickUiText(
+            i18n,
+            zh: '本页最近结果',
+            en: 'Recent results',
+            ja: '最近の結果',
+            de: 'Letzte Ergebnisse',
+            fr: 'Résultats récents',
+            es: 'Resultados recientes',
+            ru: 'Недавние результаты',
+          ),
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w900,
           ),
@@ -555,13 +748,76 @@ Widget _typingBuildRecentReports(
 
 String _typingIssueLabel(AppI18n i18n, _TypingIssue issue) {
   return switch (issue) {
-    _TypingIssue.letter => pickUiText(i18n, zh: '字母', en: 'Letters'),
-    _TypingIssue.cjk => pickUiText(i18n, zh: '中日韩字符', en: 'CJK chars'),
-    _TypingIssue.space => pickUiText(i18n, zh: '空格', en: 'Spaces'),
-    _TypingIssue.punctuation => pickUiText(i18n, zh: '标点符号', en: 'Punctuation'),
-    _TypingIssue.number => pickUiText(i18n, zh: '数字', en: 'Numbers'),
-    _TypingIssue.extra => pickUiText(i18n, zh: '多余输入', en: 'Extra input'),
-    _TypingIssue.missing => pickUiText(i18n, zh: '漏输', en: 'Missing'),
+    _TypingIssue.letter => pickUiText(
+      i18n,
+      zh: '字母',
+      en: 'Letters',
+      ja: 'Letters',
+      de: 'Letters',
+      fr: 'Lettres',
+      es: 'Cartas',
+      ru: 'Письма',
+    ),
+    _TypingIssue.cjk => pickUiText(
+      i18n,
+      zh: '中日韩字符',
+      en: 'CJK chars',
+      ja: 'CJK文字',
+      de: 'CJK chars',
+      fr: 'Charnières CJK',
+      es: 'CJK chars',
+      ru: 'CJK Chars',
+    ),
+    _TypingIssue.space => pickUiText(
+      i18n,
+      zh: '空格',
+      en: 'Spaces',
+      ja: 'Spaces',
+      de: 'Spaces',
+      fr: 'Espaces',
+      es: 'Espacios',
+      ru: 'Космос',
+    ),
+    _TypingIssue.punctuation => pickUiText(
+      i18n,
+      zh: '标点符号',
+      en: 'Punctuation',
+      ja: 'Punctuation',
+      de: 'Punctuation',
+      fr: 'Panctuation',
+      es: 'Punctuation',
+      ru: 'пунктуация',
+    ),
+    _TypingIssue.number => pickUiText(
+      i18n,
+      zh: '数字',
+      en: 'Numbers',
+      ja: 'Numbers',
+      de: 'Numbers',
+      fr: 'Nombres',
+      es: 'Números',
+      ru: 'Числа',
+    ),
+    _TypingIssue.extra => pickUiText(
+      i18n,
+      zh: '多余输入',
+      en: 'Extra input',
+      ja: 'Extra input',
+      de: 'Extra input',
+      fr: 'Entrée supplémentaire',
+      es: 'Entrada adicional',
+      ru: 'Дополнительный вклад',
+    ),
+    _TypingIssue.missing => pickUiText(
+      i18n,
+      zh: '漏输',
+      en: 'Missing',
+      ja: 'Missing',
+      de: 'Missing',
+      fr: 'Manque',
+      es: 'Falta',
+      ru: 'Пропавший',
+    ),
   };
 }
 

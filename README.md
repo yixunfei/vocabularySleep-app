@@ -57,13 +57,7 @@ Toolbox 首页支持用户自定义布局：点击“编辑布局”或长按工
 
 ## 近期进展
 
-2026-05-07 的 toolbox 阶段提交重点收口以下内容：
-
-- **人类测试中心**: 进一步拆分 `toolbox_human_tests_*` 页面职责，补齐反应、瞄准、打字、词汇记忆、数字记忆、动态视力、色觉、手眼协调、计算、持续注意力、运气、手速、序列记忆、斯特鲁普和时间感知等测试的设置、反馈、报告与 smoke test。
-- **运气测试**: 支持单抽、十连、二十连、抽卡目标、概率期望幸运指数、真实批量卡片翻开、史诗/传说全屏特效、趣味称号和下一轮批次刷新。
-- **摇杆手眼协调**: 白底全屏训练支持隐式摇杆、预练习、设置弹窗、横屏左摇杆/右射击热区、触点唤起浮层和报告。
-- **小游戏中心**: 俄罗斯轮盘完成低沉金属音效、爆炸音效、左轮视觉拆分、Painter/View 分层与 Android 音频事件主线程派发修复。
-- **文档与验证**: `modules/toolbox/README.md`、`changelogs/CHANGELOG.md`、`records/` 和相关 `plans/` 已同步记录阶段范围与验证命令。
+2026-05-11 的 toolbox / human tests 收口已完成，当前基线与历史变更继续由 `modules/toolbox/README.md` 和 `changelogs/CHANGELOG.md` 维护；计划与归档文件保留为本地工作流材料，不纳入版本控制。
 
 ## 技术栈
 
@@ -116,9 +110,26 @@ Toolbox 首页支持用户自定义布局：点击“编辑布局”或长按工
 - Android 构建需要 Android SDK、platform-tools 和 Gradle 环境。
 - iOS/macOS 构建需要 macOS、Xcode 和对应签名环境。
 
+### 工具链安装与路径解析
+
+项目脚本不再依赖固定盘符或个人目录。默认解析顺序为：
+
+1. 显式环境变量，例如 `FLUTTER_BIN`、`FLUTTER_ROOT`、`CMAKE_BIN`、`CMAKE_ROOT`、`ANDROID_HOME`、`ANDROID_SDK_ROOT`。
+2. 当前 shell 的 `PATH`。
+3. 项目内可选目录，例如 `.fvm/flutter_sdk`、`.tooling/cmake`、`.tooling/android-sdk`。
+4. 系统环境变量派生目录，例如 Windows 的 `%LOCALAPPDATA%/Android/Sdk` 或 `%ProgramFiles%/CMake`。
+
+Windows 桌面构建需要 CMake 的原因是 Flutter Windows runner 和部分原生插件会通过 CMake 生成 Visual Studio 工程；`flutter_tts` 等插件还会在 CMake 阶段调用 NuGet。推荐安装：
+
+- Visual Studio Build Tools 或 Visual Studio Community，并勾选 Desktop development with C++。
+- CMake，可通过 Visual Studio Installer 组件、winget、Chocolatey 或 CMake 官网安装。
+- NuGet CLI。若 `nuget.exe` 不在 `PATH`，脚本会尝试下载到当前用户目录；也可用 `NUGET_BIN` 指向本机 `nuget.exe`。
+
+Android 构建需要 Android SDK。推荐安装 Android Studio 后配置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，并确保 `platform-tools` 可用。构建 `android-appbundle` 时还需要 Android SDK Command-line Tools，Flutter 会在 Gradle 完成后调用 `cmdline-tools/latest/bin/apkanalyzer` 检查 AAB 的 native debug symbols；若缺失，可在 Android Studio SDK Manager 安装 Command-line Tools，或安装官方 command-line tools zip 后运行 `flutter doctor --android-licenses`。
+
 ### 可选环境变量
 
-项目支持可选 `.env` 文件。复制 `.env.template` 为 `.env` 后按需填写：
+项目支持可选 `.env` 文件，主要供应用运行配置使用。复制 `.env.template` 为 `.env` 后按需填写：
 
 ```powershell
 Copy-Item .env.template .env
@@ -135,6 +146,21 @@ Copy-Item .env.template .env
 - `API_BASE_URL`
 
 未提供 `.env` 时，应用会使用代码中的默认配置或公开只读资源配置。
+
+工具链脚本读取当前 shell / 系统环境变量，不要求把本机路径写进 `.env`。多人协作时建议在本机 PowerShell profile、系统环境变量或 CI secret 中配置：
+
+- `FLUTTER_BIN` / `FLUTTER_ROOT`
+- `CMAKE_BIN` / `CMAKE_ROOT`
+- `ANDROID_HOME` / `ANDROID_SDK_ROOT`
+- `NUGET_BIN`
+- `OPENCODE_BIN`
+- `DAILY_CHOICE_RECIPE_SOURCE_DIR`
+- `DAILY_CHOICE_RECIPE_EXPORT_DIR`
+- `DAILY_CHOICE_HOWTOCOOK_DIR`
+- `DAILY_CHOICE_WEAR_SOURCE_DIR`
+- `DAILY_CHOICE_WEAR_OUTPUT_DIR`
+- `DAILY_CHOICE_PLACE_OUTPUT_DIR`
+- `DAILY_CHOICE_ACTIVITY_OUTPUT_DIR`
 
 ## 快速开始
 
@@ -161,6 +187,7 @@ PowerShell 快捷运行脚本：
 ```powershell
 .\scripts\dev-run.ps1 -Clean
 .\scripts\dev-run.ps1 -ResetAppState
+.\scripts\dev-run.ps1 -ResetBuildCache
 .\scripts\dev-run.ps1 -Device windows
 .\scripts\dev-run.ps1 -NoRun
 ```
@@ -180,6 +207,7 @@ PowerShell 构建脚本会输出到 `dist/`：
 
 ```powershell
 .\scripts\build.ps1 -Target windows -Clean
+.\scripts\build.ps1 -Target windows -ResetBuildCache
 .\scripts\build.ps1 -Target android-apk -BuildName 1.0.0 -BuildNumber 1
 .\scripts\build.ps1 -Target windows -DryRun
 ```
@@ -197,13 +225,16 @@ Bash 构建脚本：
 - `scripts/build.ps1` 已明确禁用 `web` target。当前应用依赖 `sqlite3`、`sherpa_onnx` 等 FFI 能力，不能直接作为 Flutter Web 构建。
 - `scripts/build.sh` 仍保留 `web` 分支，使用前请确认目标平台依赖已经具备 Web 替代实现。
 - Android 构建会使用项目局部 Gradle user home，减少用户全局 Gradle 缓存污染。
+- PowerShell 运行、验证和构建脚本会检测旧工作区残留的 `CMakeCache.txt`。当缓存中的构建目录或源目录不属于当前项目路径时，会自动清理对应的生成目录；需要强制清理时可加 `-ResetBuildCache`。
 
 ## 验证与测试
 
 完整测试：
 
-```bash
-flutter test --reporter compact
+```powershell
+.\scripts\test.ps1
+.\scripts\test.ps1 -Target test/ui_smoke_test.dart
+.\scripts\test.ps1 -Target test/ui_smoke_test.dart -PlainName "toolbox page shows aggregated local tools"
 ```
 
 静态检查和格式检查：
@@ -221,9 +252,9 @@ flutter test --reporter compact
 
 单个测试示例：
 
-```bash
-flutter test test/ui_smoke_test.dart --reporter compact
-flutter test test/toolbox_audio_bank_regression_test.dart --reporter compact
+```powershell
+.\scripts\test.ps1 -Target test/ui_smoke_test.dart
+.\scripts\test.ps1 -Target test/toolbox_audio_bank_regression_test.dart
 ```
 
 提交前建议至少完成：
@@ -286,6 +317,24 @@ Get-Content -Raw -Encoding UTF8 README.md
 ### 为什么 Web 构建不可用？
 
 当前应用包含 SQLite FFI、离线 ASR、桌面/移动音频能力等依赖。它们没有完整 Web 替代实现前，Web 不是可靠目标。PowerShell 构建脚本已阻止 `web` target。
+
+### 复制项目后 Windows CMake 报旧盘符路径怎么办？
+
+优先使用脚本入口，它们会自动识别并清理旧路径缓存：
+
+```powershell
+.\scripts\dev-run.ps1 -NoRun
+.\scripts\build.ps1 -Target windows
+.\scripts\test.ps1 -NoPubGet
+```
+
+如果需要手动强制清理生成缓存：
+
+```powershell
+.\scripts\build.ps1 -Target windows -ResetBuildCache -NoPubGet
+```
+
+若 CMake 不在 PATH，可设置 `CMAKE_BIN` 指向本机 `cmake`/`cmake.exe`，或设置 `CMAKE_ROOT` 指向 CMake 安装根目录。请不要把个人机器的绝对路径写入仓库；把它们保留在本机 shell、系统环境变量或私有 `.env.local` 中。
 
 ### 为什么有 `third_party` 依赖？
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import sqlite3
 import unicodedata
 import urllib.request
@@ -15,6 +16,12 @@ from typing import Any
 DEFAULT_COOK_CSV_URL = (
     "https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv"
 )
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def env_path(name: str, fallback: Path) -> Path:
+    value = os.environ.get(name)
+    return Path(value).expanduser() if value else fallback
 
 MEAT_OR_SEAFOOD_CONTAINS = {"pork", "beef", "mutton", "seafood"}
 ANIMAL_CONTAINS = {"pork", "beef", "mutton", "seafood", "egg", "dairy"}
@@ -99,23 +106,27 @@ GARBLED_MARKERS = ("??", "□", "�")
 
 
 def main() -> None:
+    default_export_dir = env_path(
+        "DAILY_CHOICE_RECIPE_EXPORT_DIR",
+        PROJECT_ROOT / "build" / "generated" / "daily_choice" / "cook_data",
+    )
     parser = argparse.ArgumentParser(
         description="Audit the Daily Choice recipe dataset for field conflicts."
     )
     parser.add_argument(
         "--library-json",
         type=Path,
-        default=Path(r"D:\vocabularySleep-resources\cook_data\daily_choice_recipe_library.json"),
+        default=default_export_dir / "daily_choice_recipe_library.json",
     )
     parser.add_argument(
         "--summary-json",
         type=Path,
-        default=Path(r"D:\vocabularySleep-resources\cook_data\daily_choice_recipe_library_summary.json"),
+        default=default_export_dir / "daily_choice_recipe_library_summary.json",
     )
     parser.add_argument(
         "--sqlite-db",
         type=Path,
-        default=Path(r"D:\vocabularySleep-resources\cook_data\daily_choice_recipe_library.db"),
+        default=default_export_dir / "daily_choice_recipe_library.db",
     )
     parser.add_argument("--cook-csv", type=Path)
     parser.add_argument("--cook-csv-url", default=DEFAULT_COOK_CSV_URL)
@@ -127,12 +138,12 @@ def main() -> None:
     parser.add_argument(
         "--output-md",
         type=Path,
-        default=Path("records/record_070_daily_choice_recipe_data_audit.md"),
+        default=PROJECT_ROOT / "records" / "record_070_daily_choice_recipe_data_audit.md",
     )
     parser.add_argument(
         "--output-json",
         type=Path,
-        default=Path("records/record_070_daily_choice_recipe_data_audit.json"),
+        default=PROJECT_ROOT / "records" / "record_070_daily_choice_recipe_data_audit.json",
     )
     parser.add_argument(
         "--output-omitted-md",

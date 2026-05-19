@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_177-HUMAN-TESTS-MOBILE-GESTURE-CONTROLS] - 2026-05-19
+
+### 原因
+- 人类测试中心的摇杆协调全屏设置弹窗没有监听状态刷新，滑动条参数已变化但视觉滑块不会同步移动。
+- 刮刮乐、摇杆、描线、方向滑动、空间指针、瞄准和双手协调等操作舞台在真机窄屏上容易与页面纵向滚动抢手势。
+- 持续注意力和听觉测试缺少完整的停止/重置控制入口，部分测试流程中不便中断或重新开始。
+
+### 新增
+- 新增人类测试中心共享的连续触摸边界组件，用于让明确的操作舞台优先接收拖动、刮擦、摇杆和方向滑动手势。
+- 持续注意力测试补充重置入口，听觉测试补充停止入口。
+- 补充摇杆全屏设置刷新、刮刮乐拖动、持续注意力重置和听觉停止按钮的 widget 回归断言。
+- AGENTS.md 移动端体验规范新增连续手势模块需显式处理父级滚动冲突的注意事项。
+
+### 修改
+- 摇杆协调全屏设置弹窗改为监听共享视图信号，Slider 修改后立即重绘；自定义数字输入移除手动“应用”按钮，改为提交、完成编辑或失焦时自动应用，保留重置入口。
+- 刮刮乐、批量抽卡、精细拖拽、听觉空间指针、反应方向滑动、手眼目标舞台、摇杆控制、瞄准舞台和双手协调相关赛道统一收口连续手势边界。
+- 双手协调触区改为指针级点击/按住判定，避免外层手势边界抢占后丢失点击。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_auditory.dart lib/src/ui/pages/toolbox_human_tests_bimanual.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_drag_tracking.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests_shared.dart test/toolbox_human_tests_extended_smoke_test.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart test/ui_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick fullscreen keeps controls off the center stage"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "luck and sustained attention expose goals and richer tasks"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+
+### 风险变更
+- 连续手势边界仅包裹明确操作舞台，设置区和普通滚动区仍交给页面滚动；后续新增刮擦、描线、摇杆或拖拽类模块时需同步加入窄屏/真机手势回归。
+- 数字输入改为自动应用后，错误输入仍保持原值不变；后续若新增实时校验提示，需要避免每个字符输入时强制改写文本。
+
 ## [Unreleased-PLAN_176-TOOLBOX-LAYOUT-RECOVERY-AND-QUICK-ENTRIES] - 2026-05-19
 
 ### 原因

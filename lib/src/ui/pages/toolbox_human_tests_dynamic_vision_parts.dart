@@ -227,21 +227,45 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
             i18n,
             zh: '识别稳定，可以提高速度、增加组合长度或开启弱干扰字符。',
             en: 'Recognition is stable. Raise speed, increase group length, or enable faint distractors.',
+            ja: 'Recognition is stable. Raise speed, increase group length, or enable faint distractors.',
+            de: 'Recognition is stable. Raise speed, increase group length, or enable faint distractors.',
+            fr: 'La reconnaissance est stable. Augmenter la vitesse, augmenter la longueur du groupe ou permettre des disjoncteurs faibles.',
+            es: 'El reconocimiento es estable. Aumentar la velocidad, aumentar la longitud del grupo o permitir distracciones débiles.',
+            ru: 'Признание стабильное. Повысить скорость, увеличить длину группы или включить слабые отвлекающие факторы.',
           )
         : accuracy >= 0.65
         ? pickUiText(
             i18n,
             zh: '建议保留当前字符集，先把正确率稳定到 85% 后再增加速度。',
             en: 'Keep the current set and stabilize accuracy above 85% before raising speed.',
+            ja: 'Keep the current set and stabilize accuracy above 85% before raising speed.',
+            de: 'Keep the current set and stabilize accuracy above 85% before raising speed.',
+            fr: 'Conserver le réglage du courant et stabiliser la précision au-dessus de 85% avant de soulever la vitesse.',
+            es: 'Mantener el conjunto actual y estabilizar la precisión por encima del 85% antes de aumentar la velocidad.',
+            ru: 'Поддерживайте ток и стабилизируйте точность выше 85%, прежде чем повышать скорость.',
           )
         : pickUiText(
             i18n,
             zh: '先降低速度或改用数字/字母单一字符集，减少易混淆压力。',
             en: 'Lower speed or use a single digits/letters set to reduce confusable-symbol pressure.',
+            ja: 'Lower speed or use a single digits/letters set to reduce confusable-symbol pressure.',
+            de: 'Lower speed or use a single digits/letters set to reduce confusable-symbol pressure.',
+            fr: 'Abaissez la vitesse ou utilisez un seul chiffre/lettre pour réduire la pression du symbole confusable.',
+            es: 'Velocidad inferior o utilizar un solo dígitos/letters para reducir la presión confusable-símbolo.',
+            ru: 'Снижение скорости или использование однозначных цифр / букв, установленных для снижения давления конфузионного символа.',
           );
     return AlertDialog(
       title: Text(
-        pickUiText(i18n, zh: '字符识别报告', en: 'Symbol recognition report'),
+        pickUiText(
+          i18n,
+          zh: '字符识别报告',
+          en: 'Symbol recognition report',
+          ja: 'Symbol recognition report',
+          de: 'Symbol recognition report',
+          fr: 'Rapport de reconnaissance des symboles',
+          es: 'Informe sobre el reconocimiento de las signaturas',
+          ru: 'Отчет о признании символов',
+        ),
       ),
       content: SizedBox(
         width: 520,
@@ -255,26 +279,71 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '正确率', en: 'Accuracy'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '正确率',
+                      en: 'Accuracy',
+                      ja: '精度',
+                      de: 'Accuracy',
+                      fr: 'Accuracy',
+                      es: 'Precisión',
+                      ru: 'точность',
+                    ),
                     value: '${(accuracy * 100).round()}%',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '正确/轮次', en: 'Correct/rounds'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '正确/轮次',
+                      en: 'Correct/rounds',
+                      ja: '正解/ラウンド',
+                      de: 'Correct/rounds',
+                      fr: 'Correct/rounds',
+                      es: 'Correct/rounds',
+                      ru: 'Правильные/круглые',
+                    ),
                     value: '$correct/${records.length}',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '平均显示', en: 'Avg dwell'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '平均显示',
+                      en: 'Avg dwell',
+                      ja: '平均滞留',
+                      de: 'Avg dwell',
+                      fr: 'Avg habite',
+                      es: 'Avg habita',
+                      ru: 'Авг живет',
+                    ),
                     value: _formatMilliseconds(avgDwell),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '最快显示', en: 'Fastest dwell'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '最快显示',
+                      en: 'Fastest dwell',
+                      ja: 'Fastest dwell',
+                      de: 'Fastest dwell',
+                      fr: 'La plus rapide demeure',
+                      es: 'Morar más rápido',
+                      ru: 'Быстрый дом',
+                    ),
                     value: _formatMilliseconds(fastestDwell),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '本轮配置', en: 'Session setup'),
+                title: pickUiText(
+                  i18n,
+                  zh: '本轮配置',
+                  en: 'Session setup',
+                  ja: 'Session setup',
+                  de: 'Session setup',
+                  fr: 'Configuration de la session',
+                  es: 'Creación del período de sesiones',
+                  ru: 'Настройка сеанса',
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -287,6 +356,11 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
                           i18n,
                           zh: '速度 ${records.last.speed.toStringAsFixed(1)}x',
                           en: 'Speed ${records.last.speed.toStringAsFixed(1)}x',
+                          ja: 'Speed ${records.last.speed.toStringAsFixed(1)}x',
+                          de: 'Speed ${records.last.speed.toStringAsFixed(1)}x',
+                          fr: 'Vitesse ${records.last.speed.toStringAsFixed(1)}x',
+                          es: 'Velocidad',
+                          ru: 'Скорость <v0/x>',
                         ),
                       ),
                     ),
@@ -295,7 +369,16 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '训练建议', en: 'Training note'),
+                title: pickUiText(
+                  i18n,
+                  zh: '训练建议',
+                  en: 'Training note',
+                  ja: 'Training note',
+                  de: 'Training note',
+                  fr: 'Note de formation',
+                  es: 'Nota de capacitación',
+                  ru: 'Учебная записка',
+                ),
                 child: Text(
                   recommendation,
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -304,7 +387,16 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
               if (missed.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 _ColorVisionReportSection(
-                  title: pickUiText(i18n, zh: '错认记录', en: 'Missed symbols'),
+                  title: pickUiText(
+                    i18n,
+                    zh: '错认记录',
+                    en: 'Missed symbols',
+                    ja: 'Missed symbols',
+                    de: 'Missed symbols',
+                    fr: 'Symboles manquants',
+                    es: 'Símbolos perdidos',
+                    ru: 'Пропущенные символы',
+                  ),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -326,7 +418,18 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );

@@ -7,11 +7,25 @@ class TimePerceptionTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '时间感知测试', en: 'Time perception'),
+      title: pickUiText(
+        i18n,
+        zh: '时间感知测试',
+        en: 'Time perception',
+        ja: 'Time perception',
+        de: 'Time perception',
+        fr: 'Perception du temps',
+        es: 'Percepción del tiempo',
+        ru: 'Восприятие времени',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '启动后按随机目标时刻依次点击时间按钮，测试连续时间感知。',
         en: 'Start and tap randomized target-time buttons in sequence.',
+        ja: 'Start and tap randomized target-time buttons in sequence.',
+        de: 'Start and tap randomized target-time buttons in sequence.',
+        fr: 'Démarrer et appuyer sur les boutons randomisés de temps cible dans la séquence.',
+        es: 'Iniciar y pulsar botones aleatorios de tiempo de destino en secuencia.',
+        ru: 'Начните и нажмите рандомизированные кнопки целевого времени в последовательности.',
       ),
       accent: const Color(0xFF4D8C9E),
       icon: Icons.timer_rounded,
@@ -19,6 +33,11 @@ class TimePerceptionTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：开始后盯住当前目标时间',
         en: 'Next: start, then watch the current target time',
+        ja: 'Next: start, then watch the current target time',
+        de: 'Next: start, then watch the current target time',
+        fr: 'Suivant : démarrez, puis regardez l\'heure cible actuelle',
+        es: 'Siguiente: comenzar, entonces ver el tiempo de destino actual',
+        ru: 'Начните, затем посмотрите текущее целевое время',
       ),
       child: const _TimePerceptionTestCard(),
     );
@@ -30,25 +49,71 @@ enum _TimePerceptionUnit { minutes, seconds, milliseconds, microseconds }
 extension _TimePerceptionUnitText on _TimePerceptionUnit {
   String label(AppI18n i18n) {
     return switch (this) {
-      _TimePerceptionUnit.minutes => pickUiText(i18n, zh: '分钟', en: 'Minutes'),
-      _TimePerceptionUnit.seconds => pickUiText(i18n, zh: '秒', en: 'Seconds'),
+      _TimePerceptionUnit.minutes => pickUiText(
+        i18n,
+        zh: '分钟',
+        en: 'Minutes',
+        ja: 'Minutes',
+        de: 'Minutes',
+        fr: 'Procès-verbal',
+        es: 'Minutes',
+        ru: 'Минуты',
+      ),
+      _TimePerceptionUnit.seconds => pickUiText(
+        i18n,
+        zh: '秒',
+        en: 'Seconds',
+        ja: 'Seconds',
+        de: 'Seconds',
+        fr: 'Secondes',
+        es: 'Segundos',
+        ru: 'секунды',
+      ),
       _TimePerceptionUnit.milliseconds => pickUiText(
         i18n,
         zh: '毫秒',
         en: 'Milliseconds',
+        ja: 'Milliseconds',
+        de: 'Milliseconds',
+        fr: 'Millisecondes',
+        es: 'Milliseconds',
+        ru: 'Миллисекунды',
       ),
       _TimePerceptionUnit.microseconds => pickUiText(
         i18n,
         zh: '微秒',
         en: 'Microseconds',
+        ja: 'Microseconds',
+        de: 'Microseconds',
+        fr: 'Microsecondes',
+        es: 'Microseconds',
+        ru: 'Микросекунды',
       ),
     };
   }
 
   String shortLabel(AppI18n i18n) {
     return switch (this) {
-      _TimePerceptionUnit.minutes => pickUiText(i18n, zh: '分', en: 'min'),
-      _TimePerceptionUnit.seconds => pickUiText(i18n, zh: '秒', en: 's'),
+      _TimePerceptionUnit.minutes => pickUiText(
+        i18n,
+        zh: '分',
+        en: 'min',
+        ja: 'min',
+        de: 'min',
+        fr: 'min',
+        es: 'min',
+        ru: 'мин.',
+      ),
+      _TimePerceptionUnit.seconds => pickUiText(
+        i18n,
+        zh: '秒',
+        en: 's',
+        ja: 's',
+        de: 's',
+        fr: 's',
+        es: 's',
+        ru: 's',
+      ),
       _TimePerceptionUnit.milliseconds => 'ms',
       _TimePerceptionUnit.microseconds => 'us',
     };
@@ -354,14 +419,44 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(i18n, zh: '节点', en: 'Nodes'),
+              pickUiText(
+                i18n,
+                zh: '节点',
+                en: 'Nodes',
+                ja: 'Nodes',
+                de: 'Nodes',
+                fr: 'Noeuds',
+                es: 'Nodos',
+                ru: 'Узлы',
+              ),
               '${_results.length}/$plannedTargetCount',
             ),
             (
-              pickUiText(i18n, zh: '平均误差', en: 'Avg error'),
+              pickUiText(
+                i18n,
+                zh: '平均误差',
+                en: 'Avg error',
+                ja: '平均エラー',
+                de: 'Avg error',
+                fr: 'Erreur Avg',
+                es: 'Error de Avg',
+                ru: 'ошибка Avg',
+              ),
               avgError == null ? '-' : _formatSeconds(avgError),
             ),
-            (pickUiText(i18n, zh: '误触', en: 'Wrong taps'), '$_wrongTap'),
+            (
+              pickUiText(
+                i18n,
+                zh: '误触',
+                en: 'Wrong taps',
+                ja: 'Wrong taps',
+                de: 'Wrong taps',
+                fr: 'Mauvaises touches',
+                es: 'Grifos equivocados',
+                ru: 'Неправильные краны',
+              ),
+              '$_wrongTap',
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -375,17 +470,32 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                         i18n,
                         zh: '当前目标：${_formatDuration(_targets[_index], i18n)}',
                         en: 'Current target: ${_formatDuration(_targets[_index], i18n)}',
+                        ja: '現在のターゲット：${_formatDuration(_targets[_index], i18n)}',
+                        de: 'Current target: ${_formatDuration(_targets[_index], i18n)}',
+                        fr: 'Objectif actuel : ${_formatDuration(_targets[_index], i18n)}',
+                        es: 'Objetivo actual:',
+                        ru: 'Текущая цель: ${_formatDuration(_targets[_index], i18n)}',
                       )
                     : _done
                     ? pickUiText(
                         i18n,
                         zh: '本轮完成。绿色按钮表示已点击，误差按实际点击时间计算。',
                         en: 'Round complete. Green buttons show completed taps and errors use actual tap time.',
+                        ja: 'Round complete. Green buttons show completed taps and errors use actual tap time.',
+                        de: 'Round complete. Green buttons show completed taps and errors use actual tap time.',
+                        fr: 'Rond terminé. Les boutons verts montrent les touches et les erreurs terminées utilisent le temps de tap réel.',
+                        es: 'Completa. Los botones verdes muestran los grifos completados y los errores usan el tiempo real del grifo.',
+                        ru: 'Круг закончен. Зеленые кнопки показывают завершенные нажатия, а ошибки используют фактическое время нажатия.',
                       )
                     : pickUiText(
                         i18n,
                         zh: '开始时随机生成目标时间；按高亮按钮，在目标时刻点击。',
                         en: 'Target times are randomized on start. Tap the highlighted button at its target moment.',
+                        ja: 'Target times are randomized on start. Tap the highlighted button at its target moment.',
+                        de: 'Target times are randomized on start. Tap the highlighted button at its target moment.',
+                        fr: 'Les temps cibles sont randomisés au début. Appuyez sur le bouton en surbrillance à son moment cible.',
+                        es: 'Los tiempos de destino se aleatorizan al principio. Pulse el botón resaltado en su momento de destino.',
+                        ru: 'Время цели рандомизировано при запуске. Нажмите на выделенную кнопку в целевой момент.',
                       ),
                 textAlign: TextAlign.center,
                 style: Theme.of(
@@ -398,6 +508,11 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                   i18n,
                   zh: '按钮不显示编号，顺序由目标时间从早到晚自然排列；点击后会在同一按钮内显示目标时间、实际点击时间和误差。',
                   en: 'Buttons do not show numbers. They are sorted by target time; after tapping, the same button shows target time, actual tap time, and error.',
+                  ja: 'ボタンには数字が表示されません。ターゲット時間でソートされます。タップした後、同じボタンにターゲット時間、実際のタップ時間、およびエラーが表示されます。',
+                  de: 'Buttons do not show numbers. They are sorted by target time; after tapping, the same button shows target time, actual tap time, and error.',
+                  fr: 'Les boutons ne montrent pas de chiffres. Ils sont triés par temps cible; après avoir tapé, le même bouton affiche le temps cible, le temps de tap réel et l\'erreur.',
+                  es: 'Los botones no muestran números. Están ordenados por el tiempo de destino; después de tapping, el mismo botón muestra el tiempo de destino, el tiempo de grifo real y el error.',
+                  ru: 'Кнопки не показывают цифры. Они сортируются по целевому времени; после нажатия одна и та же кнопка показывает целевое время, фактическое время нажатия и ошибку.',
                 ),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -407,11 +522,25 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
               ),
               const SizedBox(height: 14),
               _HumanSettingsSection(
-                title: pickUiText(i18n, zh: '设置项', en: 'Settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '设置项',
+                  en: 'Settings',
+                  ja: 'Settings',
+                  de: 'Settings',
+                  fr: 'Paramètres',
+                  es: 'Ajustes',
+                  ru: 'Настройки',
+                ),
                 subtitle: pickUiText(
                   i18n,
                   zh: '调整目标数量、最大时间和随机粒度',
                   en: 'Adjust target count, maximum time, and randomization unit',
+                  ja: 'ターゲット数、最大時間、ランダム化単位の調整',
+                  de: 'Adjust target count, maximum time, and randomization unit',
+                  fr: 'Adjust target count, maximum time, and randomization unit',
+                  es: 'Ajuste el número de destino, el tiempo máximo y la unidad de azarización',
+                  ru: 'Скорректировать количество целей, максимальное время и единицу рандомизации',
                 ),
                 initiallyExpanded: true,
                 child: Column(
@@ -420,13 +549,27 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(i18n, zh: '连续节点', en: 'Continuous nodes'),
+                        pickUiText(
+                          i18n,
+                          zh: '连续节点',
+                          en: 'Continuous nodes',
+                          ja: '的なノード',
+                          de: 'Continuous nodes',
+                          fr: 'Nœuds continus',
+                          es: 'Nodos continuos',
+                          ru: 'непрерывные узлы',
+                        ),
                       ),
                       subtitle: Text(
                         pickUiText(
                           i18n,
                           zh: '关闭时只生成 1 个目标；开启后按多个随机时刻依次点击。',
                           en: 'Off creates 1 target. On asks you to tap multiple randomized moments in order.',
+                          ja: 'Off creates 1 target. On asks you to tap multiple randomized moments in order.',
+                          de: 'Off creates 1 target. On asks you to tap multiple randomized moments in order.',
+                          fr: 'Off crée 1 cible. On vous demande de taper plusieurs moments randomisés dans l\'ordre.',
+                          es: 'Fuera crea 1 objetivo. Le pide que toque múltiples momentos aleatorizados en orden.',
+                          ru: 'В результате получается 1 цель. Он просит вас нажать несколько рандомизированных моментов по порядку.',
                         ),
                       ),
                       value: _continuousNodes,
@@ -437,7 +580,16 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     if (_continuousNodes) ...<Widget>[
                       const SizedBox(height: 8),
                       Text(
-                        pickUiText(i18n, zh: '连续节点数', en: 'Node count'),
+                        pickUiText(
+                          i18n,
+                          zh: '连续节点数',
+                          en: 'Node count',
+                          ja: 'Node count',
+                          de: 'Node count',
+                          fr: 'Nombre de nœuds',
+                          es: 'Cuenta de nodos',
+                          ru: 'Счет узлов',
+                        ),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                       Slider(
@@ -453,7 +605,16 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     ],
                     const SizedBox(height: 8),
                     Text(
-                      pickUiText(i18n, zh: '最大目标时间', en: 'Maximum target time'),
+                      pickUiText(
+                        i18n,
+                        zh: '最大目标时间',
+                        en: 'Maximum target time',
+                        ja: 'Maximum target time',
+                        de: 'Maximum target time',
+                        fr: 'Durée cible maximale',
+                        es: 'Tiempo máximo de destino',
+                        ru: 'Максимальное целевое время',
+                      ),
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     Slider(
@@ -477,7 +638,16 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      pickUiText(i18n, zh: '最小随机单位', en: 'Minimum unit'),
+                      pickUiText(
+                        i18n,
+                        zh: '最小随机单位',
+                        en: 'Minimum unit',
+                        ja: 'Minimum unit',
+                        de: 'Minimum unit',
+                        fr: 'Unité minimale',
+                        es: 'Unidad mínima',
+                        ru: 'Минимальная единица',
+                      ),
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: 8),
@@ -502,6 +672,11 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                         i18n,
                         zh: '当前会在 ${_formatDuration(_minimumFirstTargetTime, i18n)} 到 ${_formatDuration(_maxTargetTime, i18n)} 之间随机生成 $plannedTargetCount 个目标；单位越细，目标时间越不容易落在整秒上。',
                         en: 'This will randomize $plannedTargetCount targets between ${_formatDuration(_minimumFirstTargetTime, i18n)} and ${_formatDuration(_maxTargetTime, i18n)}. Finer units make targets less likely to land on whole seconds.',
+                        ja: 'This will randomize $plannedTargetCount targets between ${_formatDuration(_minimumFirstTargetTime, i18n)} and ${_formatDuration(_maxTargetTime, i18n)}. Finer units make targets less likely to land on whole seconds.',
+                        de: 'This will randomize $plannedTargetCount targets between ${_formatDuration(_minimumFirstTargetTime, i18n)} and ${_formatDuration(_maxTargetTime, i18n)}. Finer units make targets less likely to land on whole seconds.',
+                        fr: 'Cela randomisera les cibles $plannedTargetCount entre ${_formatDuration(_minimumFirstTargetTime, i18n)} et ${_formatDuration(_maxTargetTime, i18n)}. Les unités plus fines rendent les cibles moins susceptibles d\'atterrir sur des secondes entières.',
+                        es: 'Esto aleatorizará los objetivos de неv2/tios entre неv0/año y יv1/conferencia. Las unidades más finas hacen que los objetivos sean menos propensos a aterrizar en segundos enteros.',
+                        ru: 'Это позволит рандомизировать цели $plannedTargetCount между ${_formatDuration(_minimumFirstTargetTime, i18n)} и ${_formatDuration(_maxTargetTime, i18n)}. Более совершенные подразделения снижают вероятность приземления на целые секунды.',
                       ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -520,6 +695,11 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     i18n,
                     zh: '点击开始后，这里会出现随机目标时间按钮。',
                     en: 'Randomized target-time buttons will appear here after start.',
+                    ja: 'Randomized target-time buttons will appear here after start.',
+                    de: 'Randomized target-time buttons will appear here after start.',
+                    fr: 'Les boutons randomisés du temps cible apparaîtront ici après le début.',
+                    es: 'Los botones aleatorios del tiempo de destino aparecerán aquí después del comienzo.',
+                    ru: 'Рандомизированные кнопки целевого времени появятся здесь после запуска.',
                   ),
                 )
               else
@@ -537,10 +717,37 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                 children: <Widget>[
                   _HumanActionButton(
                     label: _countingDown
-                        ? pickUiText(i18n, zh: '倒计时', en: 'Countdown')
+                        ? pickUiText(
+                            i18n,
+                            zh: '倒计时',
+                            en: 'Countdown',
+                            ja: 'カウントダウン',
+                            de: 'Countdown',
+                            fr: 'Compte à rebours',
+                            es: 'Cuenta atrás',
+                            ru: 'Обратный отсчет',
+                          )
                         : _running
-                        ? pickUiText(i18n, zh: '进行中', en: 'Running')
-                        : pickUiText(i18n, zh: '开始', en: 'Start'),
+                        ? pickUiText(
+                            i18n,
+                            zh: '进行中',
+                            en: 'Running',
+                            ja: 'Running',
+                            de: 'Running',
+                            fr: 'Courir',
+                            es: 'Corriendo',
+                            ru: 'бегать',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '开始',
+                            en: 'Start',
+                            ja: 'Start',
+                            de: 'Start',
+                            fr: 'Démarrer',
+                            es: 'Comienzo',
+                            ru: 'Начинать',
+                          ),
                     icon: _countingDown
                         ? Icons.hourglass_top_rounded
                         : _running
@@ -553,7 +760,18 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
-                    label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '重置',
+                        en: 'Reset',
+                        ja: 'Reset',
+                        de: 'Reset',
+                        fr: 'Réinitialiser',
+                        es: 'Reset',
+                        ru: 'сброс',
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -567,7 +785,16 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(i18n, zh: '结果说明', en: 'Result notes'),
+                  pickUiText(
+                    i18n,
+                    zh: '结果说明',
+                    en: 'Result notes',
+                    ja: 'Result notes',
+                    de: 'Result notes',
+                    fr: 'Notes de résultat',
+                    es: 'Notas de resultados',
+                    ru: 'Примечания к результатам',
+                  ),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -585,6 +812,11 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                         i18n,
                         zh: '目标 ${_formatDuration(result.target, i18n)}；实际 ${_formatDuration(result.actual, i18n)}；误差 ${_formatDuration(error, i18n)}。',
                         en: 'Target ${_formatDuration(result.target, i18n)}; actual ${_formatDuration(result.actual, i18n)}; error ${_formatDuration(error, i18n)}.',
+                        ja: 'Target ${_formatDuration(result.target, i18n)}; actual ${_formatDuration(result.actual, i18n)}; error ${_formatDuration(error, i18n)}.',
+                        de: 'Target ${_formatDuration(result.target, i18n)}; actual ${_formatDuration(result.actual, i18n)}; error ${_formatDuration(error, i18n)}.',
+                        fr: 'Cible ${_formatDuration(result.target, i18n)}; réelle ${_formatDuration(result.actual, i18n)}; erreur ${_formatDuration(error, i18n)}.',
+                        es: 'Meta: 0/ &gt; real &gt; &gt; &gt; error &gt;',
+                        ru: 'Цель ${_formatDuration(result.target, i18n)}; фактическая ${_formatDuration(result.actual, i18n)}; ошибка ${_formatDuration(error, i18n)}.',
                       ),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -819,10 +1051,37 @@ class _TimePerceptionTargetTile extends StatelessWidget {
                     Expanded(
                       child: Text(
                         reached
-                            ? pickUiText(i18n, zh: '已点击', en: 'Tapped')
+                            ? pickUiText(
+                                i18n,
+                                zh: '已点击',
+                                en: 'Tapped',
+                                ja: 'Tapped',
+                                de: 'Tapped',
+                                fr: 'Tapée',
+                                es: 'Tapa',
+                                ru: 'покрывал',
+                              )
                             : active
-                            ? pickUiText(i18n, zh: '待点击', en: 'Tap now')
-                            : pickUiText(i18n, zh: '候选目标', en: 'Pending'),
+                            ? pickUiText(
+                                i18n,
+                                zh: '待点击',
+                                en: 'Tap now',
+                                ja: 'Tap now',
+                                de: 'Tap now',
+                                fr: 'Appuyez maintenant',
+                                es: 'Toca ahora',
+                                ru: 'Нажмите сейчас',
+                              )
+                            : pickUiText(
+                                i18n,
+                                zh: '候选目标',
+                                en: 'Pending',
+                                ja: 'Pending',
+                                de: 'Pending',
+                                fr: 'En attente',
+                                es: 'Pendiente',
+                                ru: 'В ожидании',
+                              ),
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: baseColor,
@@ -834,18 +1093,45 @@ class _TimePerceptionTargetTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 _TimePerceptionTileLine(
-                  label: pickUiText(i18n, zh: '目标', en: 'Target'),
+                  label: pickUiText(
+                    i18n,
+                    zh: '目标',
+                    en: 'Target',
+                    ja: 'Target',
+                    de: 'Target',
+                    fr: 'Objectif',
+                    es: 'Meta',
+                    ru: 'Цель',
+                  ),
                   value: _format(target, i18n),
                 ),
                 if (result != null) ...<Widget>[
                   const SizedBox(height: 4),
                   _TimePerceptionTileLine(
-                    label: pickUiText(i18n, zh: '实际', en: 'Actual'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '实际',
+                      en: 'Actual',
+                      ja: '実績',
+                      de: 'Actual',
+                      fr: 'Actual',
+                      es: 'Actual',
+                      ru: 'Фактический',
+                    ),
                     value: _format(result!.actual, i18n),
                   ),
                   const SizedBox(height: 4),
                   _TimePerceptionTileLine(
-                    label: pickUiText(i18n, zh: '误差', en: 'Error'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '误差',
+                      en: 'Error',
+                      ja: 'Error',
+                      de: 'Error',
+                      fr: 'Erreur',
+                      es: 'Error',
+                      ru: 'ошибка',
+                    ),
                     value: _format(result!.signedError.abs(), i18n),
                   ),
                 ],

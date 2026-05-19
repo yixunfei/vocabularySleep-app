@@ -6,7 +6,16 @@ extension _NumberMemoryView on _NumberMemoryCardState {
       _NumberMemoryMode.coloredDigits => <Widget>[
         const SizedBox(height: 12),
         _NumberMemorySettingSlider(
-          label: pickUiText(i18n, zh: '参与颜色', en: 'Color count'),
+          label: pickUiText(
+            i18n,
+            zh: '参与颜色',
+            en: 'Color count',
+            ja: 'カラーカウント',
+            de: 'Color count',
+            fr: 'Nombre de couleurs',
+            es: 'Conteo de color',
+            ru: 'Количество цветов',
+          ),
           valueText: '$_colorCount',
           value: _colorCount.toDouble(),
           min: 3,
@@ -21,7 +30,16 @@ extension _NumberMemoryView on _NumberMemoryCardState {
       _NumberMemoryMode.multiTarget => <Widget>[
         const SizedBox(height: 12),
         _NumberMemorySettingSlider(
-          label: pickUiText(i18n, zh: '同时出现几组', en: 'Visible groups'),
+          label: pickUiText(
+            i18n,
+            zh: '同时出现几组',
+            en: 'Visible groups',
+            ja: 'Visible groups',
+            de: 'Visible groups',
+            fr: 'Groupes visibles',
+            es: 'Grupos visibles',
+            ru: 'Видимые группы',
+          ),
           valueText: '$_targetGroupCount',
           value: _targetGroupCount.toDouble(),
           min: 2,
@@ -36,7 +54,16 @@ extension _NumberMemoryView on _NumberMemoryCardState {
       _NumberMemoryMode.equation => <Widget>[
         const SizedBox(height: 12),
         _NumberMemorySettingSlider(
-          label: pickUiText(i18n, zh: '式子项数', en: 'Equation terms'),
+          label: pickUiText(
+            i18n,
+            zh: '式子项数',
+            en: 'Equation terms',
+            ja: 'Equation terms',
+            de: 'Equation terms',
+            fr: 'Termes d\'équation',
+            es: 'Condiciones de equiación',
+            ru: 'Условия уравнений',
+          ),
           valueText: '$_equationTerms',
           value: _equationTerms.toDouble(),
           min: 2,
@@ -47,11 +74,25 @@ extension _NumberMemoryView on _NumberMemoryCardState {
               : (value) => _applySetting(() => _equationTerms = value.round()),
         ),
         _NumberMemorySwitchTile(
-          title: pickUiText(i18n, zh: '加入乘法', en: 'Include multiplication'),
+          title: pickUiText(
+            i18n,
+            zh: '加入乘法',
+            en: 'Include multiplication',
+            ja: 'Include multiplication',
+            de: 'Include multiplication',
+            fr: 'Inclure la multiplication',
+            es: 'Incluir multiplicación',
+            ru: 'Включая умножение',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '偶尔出现 x，计算时按常规优先级来',
             en: 'Occasionally adds x, using normal operator precedence.',
+            ja: 'Occasionally adds x, using normal operator precedence.',
+            de: 'Occasionally adds x, using normal operator precedence.',
+            fr: 'Parfois, ajoute x, en utilisant la préséance de l\'opérateur normal.',
+            es: 'A veces añade x, usando la precedencia normal del operador.',
+            ru: 'Иногда добавляет x, используя обычное оперирование.',
           ),
           value: _includeMultiplication,
           onChanged: _roundBusy

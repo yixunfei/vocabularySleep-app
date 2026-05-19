@@ -7,11 +7,25 @@ class ColorVisionTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '色觉测试', en: 'Color vision'),
+      title: pickUiText(
+        i18n,
+        zh: '色觉测试',
+        en: 'Color vision',
+        ja: 'Color vision',
+        de: 'Color vision',
+        fr: 'Vision des couleurs',
+        es: 'Visión de color',
+        ru: 'Цветовое зрение',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持经典找不同与混色匹配，记录不同色差和色相方向的识别表现。',
         en: 'Classic odd-tile and mixed-color matching with per-hue and color-difference analysis.',
+        ja: '色相ごとの色差分析による古典的な奇数タイルと混合色のマッチング。',
+        de: 'Classic odd-tile and mixed-color matching with per-hue and color-difference analysis.',
+        fr: 'Classic impair-tile et mixte-couleur assorti avec la couleur-couleur-différence analyse.',
+        es: 'Clásico extraño-til y mezcla-color coincide con el análisis de per-hue y color-diferencia.',
+        ru: 'Классический нечетный и смешанный цвет, соответствующий анализу на оттенок и цветовую разницу.',
       ),
       accent: _ColorVisionCardState.accent,
       icon: Icons.palette_rounded,
@@ -19,6 +33,11 @@ class ColorVisionTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：选择模式并点击目标色块',
         en: 'Next: choose a mode and tap the target color',
+        ja: 'Next: choose a mode and tap the target color',
+        de: 'Next: choose a mode and tap the target color',
+        fr: 'Suivant : choisissez un mode et appuyez sur la couleur cible',
+        es: 'Siguiente: elegir un modo y pulsar el color de destino',
+        ru: 'Далее: выберите режим и нажмите целевой цвет',
       ),
       child: const _ColorVisionCard(),
     );
@@ -546,14 +565,56 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '等级', en: 'Level'), '$_level'),
-            (pickUiText(i18n, zh: '生命', en: 'Lives'), _livesLabel(i18n)),
             (
-              pickUiText(i18n, zh: '网格', en: 'Grid'),
+              pickUiText(
+                i18n,
+                zh: '等级',
+                en: 'Level',
+                ja: 'Level',
+                de: 'Level',
+                fr: 'Niveau',
+                es: 'Nivel',
+                ru: 'Уровень',
+              ),
+              '$_level',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '生命',
+                en: 'Lives',
+                ja: 'Lives',
+                de: 'Lives',
+                fr: 'Vies',
+                es: 'Vidas',
+                ru: 'Жизни',
+              ),
+              _livesLabel(i18n),
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '网格',
+                en: 'Grid',
+                ja: 'Grid',
+                de: 'Grid',
+                fr: 'Grille',
+                es: 'Grid',
+                ru: 'Сетка',
+              ),
               '${_currentGridSize}x$_currentGridSize',
             ),
             (
-              pickUiText(i18n, zh: '正确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '正确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               _rounds <= 0
                   ? '0%'
                   : '${((_correctRounds / _rounds) * 100).round()}%',
@@ -584,6 +645,11 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
                       i18n,
                       zh: '色差 ${(_currentDelta * 100).toStringAsFixed(1)}',
                       en: 'Delta ${(_currentDelta * 100).toStringAsFixed(1)}',
+                      ja: 'Delta ${(_currentDelta * 100).toStringAsFixed(1)}',
+                      de: 'Delta ${(_currentDelta * 100).toStringAsFixed(1)}',
+                      fr: 'Delta ${(_currentDelta * 100).toStringAsFixed(1)}',
+                      es: 'Delta',
+                      ru: 'Дельта ${(_currentDelta * 100).toStringAsFixed(1)}',
                     ),
                     accent: Theme.of(context).colorScheme.secondary,
                   ),
@@ -623,6 +689,11 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
                     i18n,
                     zh: '测试已结束，可以查看报告或重置后再试。',
                     en: 'Test over. Review the report or reset to try again.',
+                    ja: 'Test over. Review the report or reset to try again.',
+                    de: 'Test over. Review the report or reset to try again.',
+                    fr: 'Testez-le. Revoir le rapport ou réinitialiser pour essayer à nouveau.',
+                    es: 'Prueba. Revise el informe o reajuste para intentarlo de nuevo.',
+                    ru: 'Тест окончен. Просмотрите отчет или перезагрузите, чтобы попробовать еще раз.',
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
@@ -633,7 +704,16 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
                 runSpacing: 10,
                 children: <Widget>[
                   _HumanActionButton(
-                    label: pickUiText(i18n, zh: '提示', en: 'Hint'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '提示',
+                      en: 'Hint',
+                      ja: 'Hint',
+                      de: 'Hint',
+                      fr: 'Conseil',
+                      es: 'Hint',
+                      ru: 'подсказка',
+                    ),
                     icon: Icons.tips_and_updates_rounded,
                     onPressed: _gameOver ? null : _showHint,
                   ),
@@ -641,20 +721,49 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
                     onPressed: _finishNow,
                     icon: const Icon(Icons.analytics_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '结束并分析', en: 'End and analyze'),
+                      pickUiText(
+                        i18n,
+                        zh: '结束并分析',
+                        en: 'End and analyze',
+                        ja: 'End and analyze',
+                        de: 'End and analyze',
+                        fr: 'Terminer et analyser',
+                        es: 'Fin y análisis',
+                        ru: 'Конец и анализ',
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _rounds <= 0 ? null : _showCompletionReport,
                     icon: const Icon(Icons.query_stats_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '查看报告', en: 'View report'),
+                      pickUiText(
+                        i18n,
+                        zh: '查看报告',
+                        en: 'View report',
+                        ja: 'View report',
+                        de: 'View report',
+                        fr: 'Consulter le rapport',
+                        es: 'Ver informe',
+                        ru: 'Посмотреть доклад',
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
-                    label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '重置',
+                        en: 'Reset',
+                        ja: 'Reset',
+                        de: 'Reset',
+                        fr: 'Réinitialiser',
+                        es: 'Reset',
+                        ru: 'сброс',
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -663,11 +772,25 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '色觉测试设置', en: 'Color vision settings'),
+          title: pickUiText(
+            i18n,
+            zh: '色觉测试设置',
+            en: 'Color vision settings',
+            ja: 'カラービジョン設定',
+            de: 'Color vision settings',
+            fr: 'Paramètres de vision couleur',
+            es: 'Ajustes de la visión de color',
+            ru: 'Цветовое зрение',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '模式、色系排除、生命和网格会立即重开当前测试',
             en: 'Mode, color filter, lives, and grid settings restart the current test',
+            ja: 'Mode, color filter, lives, and grid settings restart the current test',
+            de: 'Mode, color filter, lives, and grid settings restart the current test',
+            fr: 'Mode, filtre couleur, vies et paramètres de grille redémarrent le test actuel',
+            es: 'Modo, filtro de color, vidas y configuración de la cuadrícula reiniciar la prueba actual',
+            ru: 'Режим, цветовой фильтр, жизнь и настройки сетки перезапускают текущий тест',
           ),
           initiallyExpanded: true,
           child: _buildSettings(context, i18n),
@@ -681,7 +804,16 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '模式', en: 'Mode'),
+          pickUiText(
+            i18n,
+            zh: '模式',
+            en: 'Mode',
+            ja: 'Mode',
+            de: 'Mode',
+            fr: 'Mode',
+            es: 'Modo',
+            ru: 'Режим',
+          ),
           style: Theme.of(
             context,
           ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -702,7 +834,16 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(i18n, zh: '色系排除', en: 'Color filter'),
+          pickUiText(
+            i18n,
+            zh: '色系排除',
+            en: 'Color filter',
+            ja: 'カラーフィルター',
+            de: 'Color filter',
+            fr: 'Filtre couleur',
+            es: 'Filtro de color',
+            ru: 'Цветной фильтр',
+          ),
           style: Theme.of(
             context,
           ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -723,7 +864,16 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(i18n, zh: '最大生命', en: 'Maximum lives'),
+          pickUiText(
+            i18n,
+            zh: '最大生命',
+            en: 'Maximum lives',
+            ja: 'Maximum lives',
+            de: 'Maximum lives',
+            fr: 'Durée de vie maximale',
+            es: 'Vidas máximas',
+            ru: 'Максимум жизней',
+          ),
           style: Theme.of(
             context,
           ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -744,7 +894,16 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
         ),
         const SizedBox(height: 14),
         _ColorVisionSettingSlider(
-          label: pickUiText(i18n, zh: '初始网格', en: 'Initial grid'),
+          label: pickUiText(
+            i18n,
+            zh: '初始网格',
+            en: 'Initial grid',
+            ja: 'Initial grid',
+            de: 'Initial grid',
+            fr: 'Grille initiale',
+            es: 'Cuadrícula inicial',
+            ru: 'Начальная сетка',
+          ),
           valueText: '${_initialGrid}x$_initialGrid',
           value: _initialGrid.toDouble(),
           min: _minGridSize.toDouble(),
@@ -753,7 +912,16 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
           onChanged: _setInitialGrid,
         ),
         _ColorVisionSettingSlider(
-          label: pickUiText(i18n, zh: '最大网格', en: 'Maximum grid'),
+          label: pickUiText(
+            i18n,
+            zh: '最大网格',
+            en: 'Maximum grid',
+            ja: 'Maximum grid',
+            de: 'Maximum grid',
+            fr: 'Grille maximale',
+            es: 'Cuadrícula máxima',
+            ru: 'Максимальная сетка',
+          ),
           valueText: '${_maxGrid}x$_maxGrid',
           value: _maxGrid.toDouble(),
           min: _initialGrid.toDouble(),
@@ -763,12 +931,26 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
         ),
         if (_mode == _ColorVisionMode.mixedMatch) ...<Widget>[
           _ColorVisionSettingSlider(
-            label: pickUiText(i18n, zh: '目标同色块', en: 'Matching targets'),
+            label: pickUiText(
+              i18n,
+              zh: '目标同色块',
+              en: 'Matching targets',
+              ja: 'Matching targets',
+              de: 'Matching targets',
+              fr: 'Objectifs correspondants',
+              es: 'Objetivos de coincidencia',
+              ru: 'Соответствие целей',
+            ),
             valueText: _randomTargetCount
                 ? pickUiText(
                     i18n,
                     zh: '随机 1-$_sameTargetCount',
                     en: 'Random 1-$_sameTargetCount',
+                    ja: 'Random 1-$_sameTargetCount',
+                    de: 'Random 1-$_sameTargetCount',
+                    fr: 'Aléatoire 1-$_sameTargetCount',
+                    es: 'Aleatorio 1-Seguidov0/',
+                    ru: 'Случайность 1-$_sameTargetCount',
                   )
                 : '$_sameTargetCount',
             value: _sameTargetCount.toDouble(),
@@ -780,13 +962,27 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(
-              pickUiText(i18n, zh: '目标数量随机', en: 'Random target count'),
+              pickUiText(
+                i18n,
+                zh: '目标数量随机',
+                en: 'Random target count',
+                ja: 'Random target count',
+                de: 'Random target count',
+                fr: 'Nombre de cibles aléatoires',
+                es: 'Conteo de objetivos aleatorios',
+                ru: 'Случайное количество целей',
+              ),
             ),
             subtitle: Text(
               pickUiText(
                 i18n,
                 zh: '每轮在 1 到设置上限之间抽取同色目标数。',
                 en: 'Each round samples the matching target count between 1 and the configured cap.',
+                ja: 'Each round samples the matching target count between 1 and the configured cap.',
+                de: 'Each round samples the matching target count between 1 and the configured cap.',
+                fr: 'Chaque ronde échantillonne le nombre de cibles correspondant entre 1 et le bouchon configuré.',
+                es: 'Cada ronda muestra el objetivo que coincide entre 1 y la tapa configurada.',
+                ru: 'Каждый раунд отбирает совпадающее количество целей между 1 и сконфигурированной шапкой.',
               ),
             ),
             value: _randomTargetCount,
@@ -803,22 +999,46 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
         i18n,
         zh: '找出唯一不同的色块。提示会给目标加边框，并计入最终报告。',
         en: 'Find the only different tile. Hints add a target border and are counted in the report.',
+        ja: 'Find the only different tile. Hints add a target border and are counted in the report.',
+        de: 'Find the only different tile. Hints add a target border and are counted in the report.',
+        fr: 'Trouvez la seule tuile différente. Les conseils ajoutent une frontière cible et sont comptés dans le rapport.',
+        es: 'Encuentra la única ficha diferente. Las hormigas agregan una frontera objetivo y se cuentan en el informe.',
+        ru: 'Найдите только разные плитки. Подсказки добавляют целевую границу и учитываются в отчете.',
       );
     }
     return pickUiText(
       i18n,
       zh: '先看上方目标色，再点击网格中与它完全相同的色块。',
       en: 'Match the target swatch above, then tap a tile with the exact same color.',
+      ja: 'Match the target swatch above, then tap a tile with the exact same color.',
+      de: 'Match the target swatch above, then tap a tile with the exact same color.',
+      fr: 'Correspondez à la cible swatch ci-dessus, puis appuyez sur une tuile de la même couleur exacte.',
+      es: 'Coincide con el objetivo swatch arriba, luego toque una baldosa con el mismo color exacto.',
+      ru: 'Сопоставьте целевой образец выше, а затем нажмите на плитку того же цвета.',
     );
   }
 
   String _modeLabel(AppI18n i18n, _ColorVisionMode mode) {
     return switch (mode) {
-      _ColorVisionMode.oddTile => pickUiText(i18n, zh: '经典找不同', en: 'Odd tile'),
+      _ColorVisionMode.oddTile => pickUiText(
+        i18n,
+        zh: '经典找不同',
+        en: 'Odd tile',
+        ja: 'Odd tile',
+        de: 'Odd tile',
+        fr: 'Carreaux bizarres',
+        es: 'Odd Tile',
+        ru: 'Странная плитка',
+      ),
       _ColorVisionMode.mixedMatch => pickUiText(
         i18n,
         zh: '混色匹配',
         en: 'Mixed match',
+        ja: 'Mixed match',
+        de: 'Mixed match',
+        fr: 'Match mixte',
+        es: 'Combinación mixta',
+        ru: 'Смешанный матч',
       ),
     };
   }
@@ -829,77 +1049,212 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
         i18n,
         zh: '完整色系',
         en: 'Full spectrum',
+        ja: 'Full spectrum',
+        de: 'Full spectrum',
+        fr: 'Plein spectre',
+        es: 'espectro completo',
+        ru: 'Полный спектр',
       ),
       _ColorVisionFilter.avoidRedGreen => pickUiText(
         i18n,
         zh: '排除红绿',
         en: 'Avoid red-green',
+        ja: '赤緑色を避ける',
+        de: 'Avoid red-green',
+        fr: 'Évitez le rouge-vert',
+        es: 'Evite el verde rojo',
+        ru: 'Избегайте красно-зеленых',
       ),
       _ColorVisionFilter.avoidBlueYellow => pickUiText(
         i18n,
         zh: '排除蓝黄',
         en: 'Avoid blue-yellow',
+        ja: '青黄色を避ける',
+        de: 'Avoid blue-yellow',
+        fr: 'Éviter les jaunes bleus',
+        es: 'Evite el amarillo azul',
+        ru: 'Избегайте сине-желтого',
       ),
       _ColorVisionFilter.grayscale => pickUiText(
         i18n,
         zh: '低饱和',
         en: 'Low saturation',
+        ja: 'Low saturation',
+        de: 'Low saturation',
+        fr: 'Basse saturation',
+        es: 'Baja saturación',
+        ru: 'Низкая насыщенность',
       ),
     };
   }
 
   String _livesPresetLabel(AppI18n i18n, _ColorVisionLivesPreset preset) {
     return switch (preset) {
-      _ColorVisionLivesPreset.one => pickUiText(i18n, zh: '1 次', en: '1 life'),
+      _ColorVisionLivesPreset.one => pickUiText(
+        i18n,
+        zh: '1 次',
+        en: '1 life',
+        ja: '1ライフ',
+        de: '1 life',
+        fr: '1 life',
+        es: '1 vida',
+        ru: '1 жизнь',
+      ),
       _ColorVisionLivesPreset.three => pickUiText(
         i18n,
         zh: '3 次',
         en: '3 lives',
+        ja: 'ライフを3',
+        de: '3 lives',
+        fr: '3 lives',
+        es: '3 vidas',
+        ru: '3 жизни',
       ),
       _ColorVisionLivesPreset.five => pickUiText(
         i18n,
         zh: '5 次',
         en: '5 lives',
+        ja: '5人暮らし',
+        de: '5 lives',
+        fr: '5 lives',
+        es: '5 vidas',
+        ru: '5 жизней',
       ),
       _ColorVisionLivesPreset.unlimited => pickUiText(
         i18n,
         zh: '无限',
         en: 'Unlimited',
+        ja: 'Unlimited',
+        de: 'Unlimited',
+        fr: 'Illimité',
+        es: 'Ilimitados',
+        ru: 'неограниченный',
       ),
     };
   }
 
   String _livesLabel(AppI18n i18n) {
     if (_unlimitedLives) {
-      return pickUiText(i18n, zh: '无限', en: 'Unlimited');
+      return pickUiText(
+        i18n,
+        zh: '无限',
+        en: 'Unlimited',
+        ja: 'Unlimited',
+        de: 'Unlimited',
+        fr: 'Illimité',
+        es: 'Ilimitados',
+        ru: 'неограниченный',
+      );
     }
     return '$_lives';
   }
 
   String _hueBandLabel(AppI18n i18n, _ColorVisionHueBand band) {
     return switch (band) {
-      _ColorVisionHueBand.red => pickUiText(i18n, zh: '红色区', en: 'Red'),
-      _ColorVisionHueBand.orange => pickUiText(i18n, zh: '橙色区', en: 'Orange'),
-      _ColorVisionHueBand.yellow => pickUiText(i18n, zh: '黄色区', en: 'Yellow'),
-      _ColorVisionHueBand.green => pickUiText(i18n, zh: '绿色区', en: 'Green'),
-      _ColorVisionHueBand.cyan => pickUiText(i18n, zh: '青色区', en: 'Cyan'),
-      _ColorVisionHueBand.blue => pickUiText(i18n, zh: '蓝色区', en: 'Blue'),
-      _ColorVisionHueBand.purple => pickUiText(i18n, zh: '紫色区', en: 'Purple'),
+      _ColorVisionHueBand.red => pickUiText(
+        i18n,
+        zh: '红色区',
+        en: 'Red',
+        ja: 'Red',
+        de: 'Red',
+        fr: 'Rouge',
+        es: 'Rojo',
+        ru: 'красный',
+      ),
+      _ColorVisionHueBand.orange => pickUiText(
+        i18n,
+        zh: '橙色区',
+        en: 'Orange',
+        ja: 'Orange',
+        de: 'Orange',
+        fr: 'Orange',
+        es: 'Orange',
+        ru: 'Оранжевый',
+      ),
+      _ColorVisionHueBand.yellow => pickUiText(
+        i18n,
+        zh: '黄色区',
+        en: 'Yellow',
+        ja: 'Yellow',
+        de: 'Yellow',
+        fr: 'Jaune',
+        es: 'Amarillo',
+        ru: 'желтый',
+      ),
+      _ColorVisionHueBand.green => pickUiText(
+        i18n,
+        zh: '绿色区',
+        en: 'Green',
+        ja: 'Green',
+        de: 'Green',
+        fr: 'Vert',
+        es: 'Verde',
+        ru: 'зеленый',
+      ),
+      _ColorVisionHueBand.cyan => pickUiText(
+        i18n,
+        zh: '青色区',
+        en: 'Cyan',
+        ja: 'Cyan',
+        de: 'Cyan',
+        fr: 'Cyan',
+        es: 'Cyan',
+        ru: 'Циан',
+      ),
+      _ColorVisionHueBand.blue => pickUiText(
+        i18n,
+        zh: '蓝色区',
+        en: 'Blue',
+        ja: '青',
+        de: 'Blue',
+        fr: 'Bleu',
+        es: 'Azul',
+        ru: 'голубой',
+      ),
+      _ColorVisionHueBand.purple => pickUiText(
+        i18n,
+        zh: '紫色区',
+        en: 'Purple',
+        ja: 'Purple',
+        de: 'Purple',
+        fr: 'Pourpre',
+        es: 'Púrpura',
+        ru: 'фиолетовый',
+      ),
     };
   }
 
   String _axisLabel(AppI18n i18n, _ColorVisionDeltaAxis axis) {
     return switch (axis) {
-      _ColorVisionDeltaAxis.hue => pickUiText(i18n, zh: '色相差', en: 'Hue shift'),
+      _ColorVisionDeltaAxis.hue => pickUiText(
+        i18n,
+        zh: '色相差',
+        en: 'Hue shift',
+        ja: 'Hue shift',
+        de: 'Hue shift',
+        fr: 'Groupe Hue',
+        es: 'Cambio de rumbo',
+        ru: 'Смена',
+      ),
       _ColorVisionDeltaAxis.saturation => pickUiText(
         i18n,
         zh: '饱和度差',
         en: 'Saturation shift',
+        ja: 'Saturation shift',
+        de: 'Saturation shift',
+        fr: 'Changement de saturation',
+        es: 'Cambio de saturación',
+        ru: 'Сдвиг насыщения',
       ),
       _ColorVisionDeltaAxis.lightness => pickUiText(
         i18n,
         zh: '明度差',
         en: 'Lightness shift',
+        ja: 'Lightness shift',
+        de: 'Lightness shift',
+        fr: 'Changement de légèreté',
+        es: 'Cambio de iluminación',
+        ru: 'Сдвиг света',
       ),
     };
   }

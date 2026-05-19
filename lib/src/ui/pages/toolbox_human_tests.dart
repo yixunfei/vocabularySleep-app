@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:record/record.dart';
 
@@ -64,11 +64,25 @@ class HumanTestsToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '人类测试', en: 'Human tests'),
+      title: pickUiText(
+        i18n,
+        zh: '人类测试',
+        en: 'Human tests',
+        ja: '人間テスト',
+        de: 'Menschliche Tests',
+        fr: 'Tests humains',
+        es: 'Pruebas humanas',
+        ru: 'Тесты человека',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '参考 Human Benchmark 条目组织的本地趣味测试，覆盖反应、记忆、视觉搜索、听觉、声学实验、打字、手眼协调、双任务切换、计算和注意力。',
-        en: 'A local set of Human Benchmark-inspired tests covering reaction, memory, visual search, sound, acoustic experiments, typing, coordination, switching, calculation, and attention.',
+        zh: '一组轻量测试，覆盖反应、记忆、视觉搜索、听觉、声学、打字、手眼协调、切换、计算和注意力。',
+        en: 'A set of quick tests for reaction, memory, visual search, hearing, acoustics, typing, coordination, switching, calculation, and attention.',
+        ja: '反応、記憶、視覚探索、聴覚、音響、タイピング、協調、切り替え、計算、注意を気軽に試せます。',
+        de: 'Kurze Tests für Reaktion, Gedächtnis, visuelle Suche, Hören, Akustik, Tippen, Koordination, Wechsel, Rechnen und Aufmerksamkeit.',
+        fr: 'Des tests rapides pour la réaction, la mémoire, la recherche visuelle, l’audition, l’acoustique, la frappe, la coordination, le calcul et l’attention.',
+        es: 'Pruebas rápidas de reacción, memoria, búsqueda visual, audición, acústica, escritura, coordinación, cálculo y atención.',
+        ru: 'Короткие тесты на реакцию, память, зрительный поиск, слух, акустику, набор текста, координацию, переключение, счет и внимание.',
       ),
       child: const _HumanTestsHub(),
     );
@@ -378,7 +392,16 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '添加快捷工具', en: 'Add quick tool'),
+                pickUiText(
+                  i18n,
+                  zh: '添加快捷工具',
+                  en: 'Add quick tool',
+                  ja: 'クイックツールを追加',
+                  de: 'Add quick tool',
+                  fr: 'Add quick tool',
+                  es: 'Añadir herramienta rápida',
+                  ru: 'Добавить быстрый инструмент',
+                ),
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
@@ -389,6 +412,11 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
                   i18n,
                   zh: '选择常用测试加入顶部入口，也可以长按下方卡片拖到顶部。',
                   en: 'Choose common tests for the top bar, or drag a card upward into My tools.',
+                  ja: 'トップバーの一般的なテストを選択するか、マイツールにカードを上にドラッグします。',
+                  de: 'Choose common tests for the top bar, or drag a card upward into My tools.',
+                  fr: 'Choisissez des tests courants pour la barre supérieure, ou faites glisser une carte vers le haut dans Mes outils.',
+                  es: 'Elija pruebas comunes para la barra superior, o arrastre una tarjeta hacia arriba en Mis herramientas.',
+                  ru: 'Выберите общие тесты для верхней панели или перетащите карту вверх в Мои инструменты.',
                 ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -403,6 +431,11 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
                       i18n,
                       zh: '所有测试都已加入快捷入口。',
                       en: 'All tests are already in My tools.',
+                      ja: 'すべてのテストは既にマイツールにあります。',
+                      de: 'All tests are already in My tools.',
+                      fr: 'All tests are already in My tools.',
+                      es: 'Todas las pruebas ya están en Mis herramientas.',
+                      ru: 'Все тесты уже в моих инструментах.',
                     ),
                   ),
                 )
@@ -437,7 +470,18 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
                             Navigator.of(context).pop();
                           },
                           icon: const Icon(Icons.add_rounded),
-                          label: Text(pickUiText(i18n, zh: '添加', en: 'Add')),
+                          label: Text(
+                            pickUiText(
+                              i18n,
+                              zh: '添加',
+                              en: 'Add',
+                              ja: '追加',
+                              de: 'Add',
+                              fr: 'Add',
+                              es: 'Añadir',
+                              ru: 'Добавить',
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -458,11 +502,25 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: pickUiText(i18n, zh: '测试中心', en: 'Test hub'),
+          title: pickUiText(
+            i18n,
+            zh: '测试中心',
+            en: 'Test hub',
+            ja: 'テストセンター',
+            de: 'Testzentrum',
+            fr: 'Centre de tests',
+            es: 'Centro de pruebas',
+            ru: 'Центр тестов',
+          ),
           subtitle: pickUiText(
             i18n,
-            zh: '选择一个测试开始，结果只在本次页面中展示，不写入用户数据。',
-            en: 'Choose a test to begin. Results are shown locally on this page only.',
+            zh: '选择一个测试开始。结果只保留在当前页面，方便随手对照。',
+            en: 'Choose a test to begin. Results stay on this screen for quick comparison.',
+            ja: 'テストを選んで始めます。結果はこの画面に残り、すぐ見比べられます。',
+            de: 'Wähle einen Test aus. Die Ergebnisse bleiben zum schnellen Vergleich auf diesem Bildschirm.',
+            fr: 'Choisissez un test pour commencer. Les résultats restent sur cet écran pour comparer facilement.',
+            es: 'Elige una prueba para comenzar. Los resultados se quedan en esta pantalla para comparar fácilmente.',
+            ru: 'Выберите тест и начните. Результаты остаются на этом экране для быстрого сравнения.',
           ),
         ),
         const SizedBox(height: 12),
@@ -600,7 +658,16 @@ class _HumanTestQuickDock extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            pickUiText(i18n, zh: '我的工具', en: 'My tools'),
+                            pickUiText(
+                              i18n,
+                              zh: '我的工具',
+                              en: 'My tools',
+                              ja: 'My tools',
+                              de: 'My tools',
+                              fr: 'Mes outils',
+                              es: 'Mis herramientas',
+                              ru: 'Мои инструменты',
+                            ),
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w900,
                             ),
@@ -610,6 +677,11 @@ class _HumanTestQuickDock extends StatelessWidget {
                               i18n,
                               zh: '添加或拖入常用测试',
                               en: 'Add or drag tests',
+                              ja: 'テストの追加またはドラッグ',
+                              de: 'Add or drag tests',
+                              fr: 'Add or drag tests',
+                              es: 'Agregar o arrastrar pruebas',
+                              ru: 'Добавить или перетащить тесты',
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -630,6 +702,11 @@ class _HumanTestQuickDock extends StatelessWidget {
                         i18n,
                         zh: '添加快捷工具',
                         en: 'Add quick tool',
+                        ja: 'クイックツールを追加',
+                        de: 'Add quick tool',
+                        fr: 'Add quick tool',
+                        es: 'Añadir herramienta rápida',
+                        ru: 'Добавить быстрый инструмент',
                       ),
                       icon: const Icon(Icons.add_rounded),
                     ),
@@ -658,11 +735,25 @@ class _HumanTestQuickDock extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Text(
                       highlighted
-                          ? pickUiText(i18n, zh: '松开即可添加', en: 'Release to add')
+                          ? pickUiText(
+                              i18n,
+                              zh: '松开即可添加',
+                              en: 'Release to add',
+                              ja: 'Release to add',
+                              de: 'Release to add',
+                              fr: 'Publication à ajouter',
+                              es: 'Lanzamiento a añadir',
+                              ru: 'Выпуск Добавить',
+                            )
                           : pickUiText(
                               i18n,
                               zh: '暂无快捷工具',
                               en: 'No quick tools yet',
+                              ja: 'No quick tools yet',
+                              de: 'No quick tools yet',
+                              fr: 'Pas encore d\'outils rapides',
+                              es: 'Aún no hay herramientas rápidas',
+                              ru: 'Быстрых инструментов пока нет',
                             ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: highlighted
@@ -861,25 +952,38 @@ class _HumanTestReorderGridState extends State<_HumanTestReorderGrid> {
                   top: (index ~/ columns) * (cardHeight + spacing),
                   width: cardWidth,
                   height: cardHeight,
-                  child: _HumanTestDraggableEntryCard(
-                    entry: widget.entries[index],
-                    dragging:
-                        widget.draggingEntryId == widget.entries[index].id,
-                    highlighted:
-                        widget.hoveredEntryId == widget.entries[index].id &&
-                        widget.draggingEntryId != widget.entries[index].id,
-                    onDragStarted: () =>
-                        widget.onDragStarted(widget.entries[index].id),
-                    onDragPosition: (globalPosition) => _handleDragPosition(
-                      draggedId: widget.entries[index].id,
-                      globalPosition: globalPosition,
-                      entries: widget.entries,
-                      columns: columns,
-                      cardWidth: cardWidth,
-                      cardHeight: cardHeight,
-                      spacing: spacing,
-                    ),
-                    onDragEnd: widget.onDragEnd,
+                  child: DragTarget<String>(
+                    onWillAcceptWithDetails: (details) {
+                      widget.onHover(details.data, widget.entries[index].id);
+                      return true;
+                    },
+                    onMove: (details) {
+                      widget.onHover(details.data, widget.entries[index].id);
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      return _HumanTestDraggableEntryCard(
+                        entry: widget.entries[index],
+                        dragging:
+                            widget.draggingEntryId == widget.entries[index].id,
+                        highlighted:
+                            (widget.hoveredEntryId ==
+                                    widget.entries[index].id ||
+                                candidateData.isNotEmpty) &&
+                            widget.draggingEntryId != widget.entries[index].id,
+                        onDragStarted: () =>
+                            widget.onDragStarted(widget.entries[index].id),
+                        onDragPosition: (globalPosition) => _handleDragPosition(
+                          draggedId: widget.entries[index].id,
+                          globalPosition: globalPosition,
+                          entries: widget.entries,
+                          columns: columns,
+                          cardWidth: cardWidth,
+                          cardHeight: cardHeight,
+                          spacing: spacing,
+                        ),
+                        onDragEnd: widget.onDragEnd,
+                      );
+                    },
                   ),
                 ),
             ],
@@ -914,65 +1018,63 @@ class _HumanTestDraggableEntryCard extends StatefulWidget {
 
 class _HumanTestDraggableEntryCardState
     extends State<_HumanTestDraggableEntryCard> {
-  static const double _dragStartDistance = 8.0;
-
-  int? _activePointer;
-  Offset? _pointerDownPosition;
-  bool _dragStarted = false;
-
-  void _handlePointerDown(PointerDownEvent event) {
-    _activePointer = event.pointer;
-    _pointerDownPosition = event.position;
-    _dragStarted = false;
-  }
-
-  void _handlePointerMove(PointerMoveEvent event) {
-    if (_activePointer != event.pointer || _pointerDownPosition == null) {
-      return;
-    }
-    if (!_dragStarted) {
-      final distance = (event.position - _pointerDownPosition!).distance;
-      if (distance < _dragStartDistance) {
-        return;
-      }
-      _dragStarted = true;
-      widget.onDragStarted();
-    }
-    widget.onDragPosition(event.position);
-  }
-
-  void _endDrag() {
-    if (_activePointer == null) {
-      return;
-    }
-    if (_dragStarted) {
-      widget.onDragEnd(accepted: false);
-    }
-    _activePointer = null;
-    _pointerDownPosition = null;
-    _dragStarted = false;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      key: ValueKey<String>('human_tests_entry_${widget.entry.id}'),
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: _handlePointerDown,
-      onPointerMove: _handlePointerMove,
-      onPointerUp: (_) => _endDrag(),
-      onPointerCancel: (_) => _endDrag(),
-      child: AnimatedSlide(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        offset: widget.dragging ? const Offset(0, -0.03) : Offset.zero,
-        child: _HumanTestEntryCard(
-          entry: widget.entry,
-          compact: true,
-          highlighted: widget.highlighted,
-          dragging: widget.dragging,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 160.0;
+        return SizedBox(
+          key: ValueKey<String>('human_tests_entry_${widget.entry.id}'),
+          width: double.infinity,
+          height: double.infinity,
+          child: LongPressDraggable<String>(
+            data: widget.entry.id,
+            delay: const Duration(milliseconds: 360),
+            dragAnchorStrategy: childDragAnchorStrategy,
+            maxSimultaneousDrags: 1,
+            onDragStarted: () {
+              HapticFeedback.selectionClick();
+              widget.onDragStarted();
+            },
+            onDragUpdate: (details) =>
+                widget.onDragPosition(details.globalPosition),
+            onDragEnd: (details) =>
+                widget.onDragEnd(accepted: details.wasAccepted),
+            feedback: SizedBox(
+              width: width,
+              height: 118,
+              child: IgnorePointer(
+                child: _HumanTestEntryCard(
+                  entry: widget.entry,
+                  compact: true,
+                  dragging: true,
+                ),
+              ),
+            ),
+            childWhenDragging: Opacity(
+              opacity: 0.34,
+              child: _HumanTestEntryCard(
+                entry: widget.entry,
+                compact: true,
+                highlighted: false,
+              ),
+            ),
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              offset: widget.dragging ? const Offset(0, -0.045) : Offset.zero,
+              child: _HumanTestEntryCard(
+                entry: widget.entry,
+                compact: true,
+                highlighted: widget.highlighted,
+                dragging: widget.dragging,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -981,12 +1083,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
   return <_HumanTestEntry>[
     _HumanTestEntry(
       id: 'reaction',
-      title: pickUiText(i18n, zh: '反应测试', en: 'Reaction test'),
-      shortTitle: pickUiText(i18n, zh: '反应', en: 'Reaction'),
+      title: pickUiText(
+        i18n,
+        zh: '反应测试',
+        en: 'Reaction test',
+        ja: 'Reaction test',
+        de: 'Reaction test',
+        fr: 'Essai de réaction',
+        es: 'Prueba de reacción',
+        ru: 'Реакционный тест',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '反应',
+        en: 'Reaction',
+        ja: 'Reaction',
+        de: 'Reaction',
+        fr: 'Réaction',
+        es: 'Reacción',
+        ru: 'Реакция',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '经典松手、方向滑动与颜色匹配三种反应模式。',
         en: 'Classic release, direction-swipe, and color-match reaction modes.',
+        ja: 'クラシックリリース、方向スワイプ、カラーマッチのリアクションモード。',
+        de: 'Classic release, direction-swipe, and color-match reaction modes.',
+        fr: 'Modes classiques de libération, de balayage de direction et de réaction par correspondance de couleur.',
+        es: 'Modos clásicos de liberación, dirección-swipe, y reacción de captura de color.',
+        ru: 'Классические режимы выпуска, направления и цветового соответствия.',
       ),
       icon: Icons.flash_on_rounded,
       accent: const Color(0xFF2F8D8E),
@@ -994,12 +1119,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'number_memory',
-      title: pickUiText(i18n, zh: '数字记忆', en: 'Number memory'),
-      shortTitle: pickUiText(i18n, zh: '数字', en: 'Numbers'),
+      title: pickUiText(
+        i18n,
+        zh: '数字记忆',
+        en: 'Number memory',
+        ja: 'Number memory',
+        de: 'Number memory',
+        fr: 'Mémoire numérique',
+        es: 'Número de memoria',
+        ru: 'Номер памяти',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '数字',
+        en: 'Numbers',
+        ja: 'Numbers',
+        de: 'Numbers',
+        fr: 'Nombres',
+        es: 'Números',
+        ru: 'Числа',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持数字串、彩色数字、多数字目标与计算式，毫秒级停留和随机化可调。',
         en: 'Train digit strings, colored digits, multi-number targets, and equations with millisecond timing and randomization.',
+        ja: 'Train digit strings, colored digits, multi-number targets, and equations with millisecond timing and randomization.',
+        de: 'Train digit strings, colored digits, multi-number targets, and equations with millisecond timing and randomization.',
+        fr: 'Chaînes à chiffres de train, chiffres colorés, cibles à nombres multiples et équations avec chronométrage et randomisation en millisecondes.',
+        es: 'Entrenar cadenas de dígitos, dígitos de colores, objetivos multinúmeros y ecuaciones con el tiempo de milisegundos y aleatorización.',
+        ru: 'Цифровые строки поезда, цветные цифры, многочисленные цели и уравнения с миллисекундным временем и рандомизацией.',
       ),
       icon: Icons.pin_rounded,
       accent: const Color(0xFF536CC7),
@@ -1007,12 +1155,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'chimp',
-      title: pickUiText(i18n, zh: '黑猩猩测试', en: 'Chimp test'),
-      shortTitle: pickUiText(i18n, zh: '黑猩猩', en: 'Chimp'),
+      title: pickUiText(
+        i18n,
+        zh: '黑猩猩测试',
+        en: 'Chimp test',
+        ja: 'CHIMP TEST',
+        de: 'Chimp test',
+        fr: 'Essai de chimie',
+        es: 'Prueba de chimpancé',
+        ru: 'шимпанзе',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '黑猩猩',
+        en: 'Chimp',
+        ja: 'CHIMP',
+        de: 'Chimp',
+        fr: 'Chimp',
+        es: 'Chimp',
+        ru: 'Конопля',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持经典、顺序数字与颜色顺序三种模式，并可调切换速度与难度。',
         en: 'Classic, sequential-number, and color-sequence modes with tunable speed/difficulty.',
+        ja: '速度/難易度を調整可能なクラシック、シーケンシャルナンバー、カラーシーケンスモード。',
+        de: 'Classic, sequential-number, and color-sequence modes with tunable speed/difficulty.',
+        fr: 'Modes classiques, séquentielle et séquentielle avec vitesse/difficulté réglable.',
+        es: 'modos clásicos, número secuencial y secuencia de color con velocidad/dificultad ajustable.',
+        ru: 'Классические, последовательные и цветовые режимы с настраиваемой скоростью / сложностью.',
       ),
       icon: Icons.grid_view_rounded,
       accent: const Color(0xFF6C8D42),
@@ -1020,12 +1191,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'typing',
-      title: pickUiText(i18n, zh: '打字测试', en: 'Typing test'),
-      shortTitle: pickUiText(i18n, zh: '打字', en: 'Typing'),
+      title: pickUiText(
+        i18n,
+        zh: '打字测试',
+        en: 'Typing test',
+        ja: 'Typing test',
+        de: 'Typing test',
+        fr: 'Essai de dactylographie',
+        es: 'Prueba de clasificación',
+        ru: 'Тест на ввод текста',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '打字',
+        en: 'Typing',
+        ja: 'Typing',
+        de: 'Typing',
+        fr: 'Dactylographie',
+        es: 'Tipografía',
+        ru: 'написание',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '多语言语料、趣味模式、实时纠错和完成报告，训练速度、准确率与节奏稳定性。',
         en: 'Multi-language passages, playful modes, live correction, and reports for speed, accuracy, and rhythm.',
+        ja: 'Multi-language passages, playful modes, live correction, and reports for speed, accuracy, and rhythm.',
+        de: 'Multi-language passages, playful modes, live correction, and reports for speed, accuracy, and rhythm.',
+        fr: 'Passages en plusieurs langues, modes ludiques, correction en direct et rapports pour la vitesse, la précision et le rythme.',
+        es: 'Pasajes multilingües, modos lúdicos, corrección en vivo e informes para velocidad, precisión y ritmo.',
+        ru: 'Многоязычные пассажи, игровые режимы, живая коррекция и отчеты о скорости, точности и ритме.',
       ),
       icon: Icons.keyboard_alt_rounded,
       accent: const Color(0xFFC27A37),
@@ -1033,12 +1227,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'visual_memory',
-      title: pickUiText(i18n, zh: '视觉记忆', en: 'Visual memory'),
-      shortTitle: pickUiText(i18n, zh: '视觉记忆', en: 'Visual'),
+      title: pickUiText(
+        i18n,
+        zh: '视觉记忆',
+        en: 'Visual memory',
+        ja: 'Visual memory',
+        de: 'Visual memory',
+        fr: 'Mémoire visuelle',
+        es: 'Memoria visual',
+        ru: 'Визуальная память',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '视觉记忆',
+        en: 'Visual',
+        ja: 'Visual',
+        de: 'Visual',
+        fr: 'Visuel',
+        es: 'Visual',
+        ru: 'визуальный',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持动态网格、颜色目标、指定颜色与干扰格，难度随等级阶梯提升。',
         en: 'Dynamic grids, color targets, target-color recall, and distractors with stepped difficulty.',
+        ja: 'Dynamic grids, color targets, target-color recall, and distractors with stepped difficulty.',
+        de: 'Dynamic grids, color targets, target-color recall, and distractors with stepped difficulty.',
+        fr: 'Grilles dynamiques, cibles de couleur, rappel de couleur cible, et disjoncteurs avec difficulté de marche.',
+        es: 'Cuadrículas dinámicas, objetivos de color, memoria de color blanco, y distracciones con dificultad paso.',
+        ru: 'Динамические сетки, цветовые мишени, запоминание цвета цели и отвлекающие факторы со ступенчатой сложностью.',
       ),
       icon: Icons.dashboard_customize_rounded,
       accent: const Color(0xFF8B6BC8),
@@ -1046,12 +1263,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'visual_search',
-      title: pickUiText(i18n, zh: '视觉搜索', en: 'Visual search'),
-      shortTitle: pickUiText(i18n, zh: '搜索', en: 'Search'),
+      title: pickUiText(
+        i18n,
+        zh: '视觉搜索',
+        en: 'Visual search',
+        ja: 'Visual search',
+        de: 'Visual search',
+        fr: 'Recherche visuelle',
+        es: 'Búsqueda visual',
+        ru: 'Визуальный поиск',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '搜索',
+        en: 'Search',
+        ja: 'Search',
+        de: 'Search',
+        fr: 'Recherche',
+        es: 'Búsqueda',
+        ru: 'Поиск',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '在密集特征网格中快速找目标，并在双面板对照模式中辨别细微差异。',
         en: 'Scan dense grids for the target, then compare paired boards to spot a subtle difference.',
+        ja: 'Scan dense grids for the target, then compare paired boards to spot a subtle difference.',
+        de: 'Scan dense grids for the target, then compare paired boards to spot a subtle difference.',
+        fr: 'Scanner des grilles denses pour la cible, puis comparer les planches appariées pour repérer une différence subtile.',
+        es: 'Analizar rejillas densas para el objetivo, luego comparar tablas emparejadas para detectar una diferencia sutil.',
+        ru: 'Сканируйте плотные сетки для цели, затем сравните парные доски, чтобы обнаружить тонкую разницу.',
       ),
       icon: Icons.manage_search_rounded,
       accent: const Color(0xFF457B9D),
@@ -1059,12 +1299,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'aim',
-      title: pickUiText(i18n, zh: '瞄准测试', en: 'Aim test'),
-      shortTitle: pickUiText(i18n, zh: '瞄准', en: 'Aim'),
+      title: pickUiText(
+        i18n,
+        zh: '瞄准测试',
+        en: 'Aim test',
+        ja: '照準テスト',
+        de: 'Aim test',
+        fr: 'Aim test',
+        es: 'Prueba de objetivos',
+        ru: 'Цель испытания',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '瞄准',
+        en: 'Aim',
+        ja: '狙い',
+        de: 'Aim',
+        fr: 'Aim',
+        es: 'Aim',
+        ru: 'Цель',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持经典点靶、降级放大、移动靶和真假干扰，统计命中质量与连击。',
         en: 'Classic, reveal-grow, moving, and decoy target modes with accuracy and streak feedback.',
+        ja: '精度とストリークフィードバックを備えたクラシック、露出成長、移動、おとりターゲットモード。',
+        de: 'Classic, reveal-grow, moving, and decoy target modes with accuracy and streak feedback.',
+        fr: 'Modes de cible classique, de révélation, de déplacement et de leurre avec précision et retour de stries.',
+        es: 'Modos de blanco clásico, revelador, en movimiento y decodificar con precisión y retroalimentación.',
+        ru: 'Классические, раскрывающие, движущиеся и приманивающие целевые режимы с точностью и полосовой обратной связью.',
       ),
       icon: Icons.adjust_rounded,
       accent: const Color(0xFFC24D5A),
@@ -1072,12 +1335,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'color_vision',
-      title: pickUiText(i18n, zh: '色觉测试', en: 'Color vision'),
-      shortTitle: pickUiText(i18n, zh: '色觉', en: 'Color'),
+      title: pickUiText(
+        i18n,
+        zh: '色觉测试',
+        en: 'Color vision',
+        ja: 'Color vision',
+        de: 'Color vision',
+        fr: 'Vision des couleurs',
+        es: 'Visión de color',
+        ru: 'Цветовое зрение',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '色觉',
+        en: 'Color',
+        ja: 'Color',
+        de: 'Color',
+        fr: 'Couleur',
+        es: 'Color',
+        ru: 'цвет',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '找不同、混色匹配、提示记录和可读报告，分析色差、色相与差异类型弱项。',
         en: 'Odd-tile and mixed-match modes with hints and readable reports for hue, delta, and contrast weaknesses.',
+        ja: 'Odd-tile and mixed-match modes with hints and readable reports for hue, delta, and contrast weaknesses.',
+        de: 'Odd-tile and mixed-match modes with hints and readable reports for hue, delta, and contrast weaknesses.',
+        fr: 'Modes od-tile et mixte avec des conseils et des rapports lisibles pour les nuances, le delta et les faiblesses de contraste.',
+        es: 'Modos extraños y mixtos con insinuaciones e informes legibles para debilidades de hue, delta y contraste.',
+        ru: 'Нечеткие и смешанные режимы с подсказками и читаемыми отчетами для слабых сторон оттенка, дельты и контраста.',
       ),
       icon: Icons.palette_rounded,
       accent: const Color(0xFF3F9A6B),
@@ -1085,12 +1371,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'auditory',
-      title: pickUiText(i18n, zh: '听觉测试', en: 'Auditory test'),
-      shortTitle: pickUiText(i18n, zh: '听觉', en: 'Hearing'),
+      title: pickUiText(
+        i18n,
+        zh: '听觉测试',
+        en: 'Auditory test',
+        ja: '聴覚テスト',
+        de: 'Auditory test',
+        fr: 'Test auditif',
+        es: 'Prueba de auditoria',
+        ru: 'Слуховой тест',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '听觉',
+        en: 'Hearing',
+        ja: 'Hearing',
+        de: 'Hearing',
+        fr: 'Audition',
+        es: 'Audiencia',
+        ru: 'слушание',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '覆盖频率、灵敏度与声音空间三类本地听感测试。',
-        en: 'Local hearing checks for frequency, sensitivity, and sound space.',
+        zh: '覆盖频率、灵敏度与声音空间三类听感测试。',
+        en: 'Hearing checks for frequency, sensitivity, and sound space.',
+        ja: 'Hearing checks for frequency, sensitivity, and sound space.',
+        de: 'Hearing checks for frequency, sensitivity, and sound space.',
+        fr: 'Vérification de la fréquence, de la sensibilité et de l\'espace sonore.',
+        es: 'Controles auditivos para frecuencia, sensibilidad y espacio de sonido.',
+        ru: 'Слушание проверяет частоту, чувствительность и звуковое пространство.',
       ),
       icon: Icons.hearing_rounded,
       accent: const Color(0xFF6E9BC3),
@@ -1098,12 +1407,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'acoustic_experiment',
-      title: pickUiText(i18n, zh: '声学实验', en: 'Acoustic experiment'),
-      shortTitle: pickUiText(i18n, zh: '声学', en: 'Acoustic'),
+      title: pickUiText(
+        i18n,
+        zh: '声学实验',
+        en: 'Acoustic experiment',
+        ja: '音響実験',
+        de: 'Akustiktest',
+        fr: 'Expérience acoustique',
+        es: 'Experimento acústico',
+        ru: 'Акустический тест',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '声学',
+        en: 'Acoustic',
+        ja: 'ア コ ー ス テ ィ ッ ク',
+        de: 'Acoustic',
+        fr: 'Acoustic',
+        es: 'Acústico',
+        ru: 'акустический',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '通过麦克风观察低音、高音、持续发声和噪声分贝的相对曲线。',
-        en: 'Use the microphone to observe relative curves for low tone, high tone, sustain, and ambient noise dB.',
+        zh: '用麦克风观察低音、高音、持续发声和环境噪声的变化曲线。',
+        en: 'Use the microphone to watch low tone, high tone, vocal sustain, and ambient noise trends.',
+        ja: 'Use the microphone to watch low tone, high tone, vocal sustain, and ambient noise trends.',
+        de: 'Use the microphone to watch low tone, high tone, vocal sustain, and ambient noise trends.',
+        fr: 'Utilisez le microphone pour observer les tendances sonores basses, élevées, vocales et ambiantes.',
+        es: 'Utilice el micrófono para ver las tendencias de tono bajo, tono alto, sostenimiento vocal y ruido ambiente.',
+        ru: 'Используйте микрофон, чтобы следить за низким тоном, высоким тоном, вокальной устойчивостью и тенденциями окружающего шума.',
       ),
       icon: Icons.mic_external_on_rounded,
       accent: const Color(0xFF7F8B55),
@@ -1111,12 +1443,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'stroop',
-      title: pickUiText(i18n, zh: '斯特鲁普', en: 'Stroop test'),
-      shortTitle: pickUiText(i18n, zh: '斯特鲁普', en: 'Stroop'),
+      title: pickUiText(
+        i18n,
+        zh: '斯特鲁普',
+        en: 'Stroop test',
+        ja: 'Stroop test',
+        de: 'Stroop test',
+        fr: 'Essai de serrage',
+        es: 'Prueba Stroop',
+        ru: 'Испытание штурвалом',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '斯特鲁普',
+        en: 'Stroop',
+        ja: 'Stroop',
+        de: 'Stroop',
+        fr: 'Couper',
+        es: 'Stroop',
+        ru: 'Струп',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '可配置 3-12 种颜色，判断词义与显示颜色是否一致。',
         en: 'Configure 3-12 colors and judge meaning-vs-ink consistency.',
+        ja: '3〜12色を設定し、意味とインクの一貫性を判断します。',
+        de: 'Configure 3-12 colors and judge meaning-vs-ink consistency.',
+        fr: 'Configurez 3-12 couleurs et jugez la cohérence sens-vs-ink.',
+        es: 'Configure 3-12 colores y juzgue la consistencia de tinta-vs.',
+        ru: 'Настройте 3-12 цветов и судите о последовательности смысл-vs-чернила.',
       ),
       icon: Icons.contrast_rounded,
       accent: const Color(0xFF5B82C2),
@@ -1124,12 +1479,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'verbal_memory',
-      title: pickUiText(i18n, zh: '词汇记忆', en: 'Verbal memory'),
-      shortTitle: pickUiText(i18n, zh: '词汇', en: 'Verbal'),
+      title: pickUiText(
+        i18n,
+        zh: '词汇记忆',
+        en: 'Verbal memory',
+        ja: 'Verbal memory',
+        de: 'Verbal memory',
+        fr: 'Mémoire verbale',
+        es: 'Memoria verbal',
+        ru: 'Вербальная память',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '词汇',
+        en: 'Verbal',
+        ja: 'Verbal',
+        de: 'Verbal',
+        fr: 'Verbal',
+        es: 'Verbal',
+        ru: 'вербальный',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持分领域词库、随机数字串与空间箭头序列，并可自定义展示高度。',
         en: 'Domain word banks, random digit strings, and arrow sequences with custom stage height.',
+        ja: 'Domain word banks, random digit strings, and arrow sequences with custom stage height.',
+        de: 'Domain word banks, random digit strings, and arrow sequences with custom stage height.',
+        fr: 'Banques de mots de domaine, chaînes à chiffres aléatoires et séquences de flèches avec hauteur de scène personnalisée.',
+        es: 'Bancos de palabras de dominio, cadenas de dígitos aleatorios y secuencias de flechas con altura de etapa personalizada.',
+        ru: 'Банки доменных слов, строки случайных цифр и последовательности стрелок с пользовательской высотой сцены.',
       ),
       icon: Icons.menu_book_rounded,
       accent: const Color(0xFF8F6C45),
@@ -1137,12 +1515,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'sequence_memory',
-      title: pickUiText(i18n, zh: '序列记忆', en: 'Sequence memory'),
-      shortTitle: pickUiText(i18n, zh: '序列', en: 'Sequence'),
+      title: pickUiText(
+        i18n,
+        zh: '序列记忆',
+        en: 'Sequence memory',
+        ja: 'Sequence memory',
+        de: 'Sequence memory',
+        fr: 'Mémoire de séquence',
+        es: 'Memoria de secuencias',
+        ru: 'память последовательностей',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '序列',
+        en: 'Sequence',
+        ja: 'Sequence',
+        de: 'Sequence',
+        fr: 'Séquence',
+        es: 'Secuencia',
+        ru: 'последовательность',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '记住灯光顺序并原样复现。',
         en: 'Remember the light sequence and repeat it.',
+        ja: 'Remember the light sequence and repeat it.',
+        de: 'Remember the light sequence and repeat it.',
+        fr: 'Rappelez-vous la séquence de lumière et répétez-la.',
+        es: 'Recuerda la secuencia de luz y repetirla.',
+        ru: 'Запомните световую последовательность и повторите ее.',
       ),
       icon: Icons.auto_awesome_motion_rounded,
       accent: const Color(0xFF7C6BC8),
@@ -1150,12 +1551,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'luck',
-      title: pickUiText(i18n, zh: '运气测试', en: 'Luck test'),
-      shortTitle: pickUiText(i18n, zh: '运气', en: 'Luck'),
+      title: pickUiText(
+        i18n,
+        zh: '运气测试',
+        en: 'Luck test',
+        ja: 'Luck test',
+        de: 'Luck test',
+        fr: 'Essai de chance',
+        es: 'Prueba de suerte',
+        ru: 'Удачный тест',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '运气',
+        en: 'Luck',
+        ja: 'Luck',
+        de: 'Luck',
+        fr: 'Bonne chance',
+        es: 'Luck',
+        ru: 'удача',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持单抽、十连、二十连、概率自定义、目标抽取和幸运指数报告。',
         en: 'Single, 10x, and 20x draws with custom odds, goals, and luck-index reports.',
+        ja: 'Single, 10x, and 20x draws with custom odds, goals, and luck-index reports.',
+        de: 'Single, 10x, and 20x draws with custom odds, goals, and luck-index reports.',
+        fr: 'Single, 10x, et 20x dessine avec des cotes personnalisées, des buts, et des rapports de chance-index.',
+        es: 'Single, 10x y 20x dibuja con probabilidades personalizadas, metas y reportes de índice de suerte.',
+        ru: 'Одиночные, 10x и 20x розыгрыши с пользовательскими коэффициентами, целями и индексами удачи.',
       ),
       icon: Icons.casino_rounded,
       accent: const Color(0xFFD0923A),
@@ -1163,12 +1587,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'tap_speed',
-      title: pickUiText(i18n, zh: '手速测试', en: 'Tap speed'),
-      shortTitle: pickUiText(i18n, zh: '手速', en: 'Tap'),
+      title: pickUiText(
+        i18n,
+        zh: '手速测试',
+        en: 'Tap speed',
+        ja: 'Tap speed',
+        de: 'Tap speed',
+        fr: 'Vitesse de la touche',
+        es: 'Velocidad',
+        ru: 'Скорость нажатия',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '手速',
+        en: 'Tap',
+        ja: 'Tap',
+        de: 'Tap',
+        fr: 'Appuyez sur',
+        es: 'Tap',
+        ru: 'нажатие',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '10 秒内尽可能多次点击按钮。',
         en: 'Tap as many times as possible in 10 seconds.',
+        ja: 'Tap as many times as possible in 10 seconds.',
+        de: 'Tap as many times as possible in 10 seconds.',
+        fr: 'Tapez autant de fois que possible en 10 secondes.',
+        es: 'Pulsa lo más posible en 10 segundos.',
+        ru: 'Нажмите как можно больше раз за 10 секунд.',
       ),
       icon: Icons.touch_app_rounded,
       accent: const Color(0xFFC05180),
@@ -1176,12 +1623,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'time_perception',
-      title: pickUiText(i18n, zh: '时间感知测试', en: 'Time perception'),
-      shortTitle: pickUiText(i18n, zh: '时间', en: 'Time'),
+      title: pickUiText(
+        i18n,
+        zh: '时间感知测试',
+        en: 'Time perception',
+        ja: 'Time perception',
+        de: 'Time perception',
+        fr: 'Perception du temps',
+        es: 'Percepción del tiempo',
+        ru: 'Восприятие времени',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '时间',
+        en: 'Time',
+        ja: 'Time',
+        de: 'Time',
+        fr: 'Heure',
+        es: 'Hora',
+        ru: 'Время',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '连续多个时间节点感知：在指定时刻点击对应数字。',
         en: 'Multi-node time perception: tap matching numbers at planned moments.',
+        ja: 'Multi-node time perception: tap matching numbers at planned moments.',
+        de: 'Multi-node time perception: tap matching numbers at planned moments.',
+        fr: 'Perception multi-noeud du temps: tapotez les numéros correspondants aux moments prévus.',
+        es: 'Percepción de tiempo multinodo: pulsar números coincidentes en los momentos previstos.',
+        ru: 'Восприятие многоузлового времени: использование совпадающих чисел в запланированные моменты.',
       ),
       icon: Icons.timer_rounded,
       accent: const Color(0xFF4D8C9E),
@@ -1189,12 +1659,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'hand_eye',
-      title: pickUiText(i18n, zh: '手眼协调测试', en: 'Hand-eye coordination'),
-      shortTitle: pickUiText(i18n, zh: '手眼', en: 'Hand-eye'),
+      title: pickUiText(
+        i18n,
+        zh: '手眼协调测试',
+        en: 'Hand-eye coordination',
+        ja: 'Hand-eye coordination',
+        de: 'Hand-eye coordination',
+        fr: 'Coordination des yeux de la main',
+        es: 'Coordinación de la mano-ojo',
+        ru: 'Координация рук и глаз',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '手眼',
+        en: 'Hand-eye',
+        ja: 'Hand-eye',
+        de: 'Hand-eye',
+        fr: 'Oeil manuel',
+        es: 'Mano-eye',
+        ru: 'Рука об руку',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '随机目标快速出现、移动并消失，统计成功、漏点、点空和反应延迟。',
         en: 'Fast random targets appear, move, and vanish while tracking hits, misses, blanks, and latency.',
+        ja: 'Fast random targets appear, move, and vanish while tracking hits, misses, blanks, and latency.',
+        de: 'Fast random targets appear, move, and vanish while tracking hits, misses, blanks, and latency.',
+        fr: 'Des cibles aléatoires rapides apparaissent, bougent et disparaissent tout en traquant les coups, les ratés, les blancs et la latence.',
+        es: 'Los objetivos aleatorios rápidos aparecen, se mueven y desaparecen mientras rastrean golpes, señoritas, blancos y latencia.',
+        ru: 'Быстрые случайные цели появляются, перемещаются и исчезают при отслеживании попаданий, промахов, пробелов и задержки.',
       ),
       icon: Icons.center_focus_strong_rounded,
       accent: const Color(0xFFB55D42),
@@ -1202,12 +1695,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'fine_drag',
-      title: pickUiText(i18n, zh: '精细拖拽追踪', en: 'Fine drag tracking'),
-      shortTitle: pickUiText(i18n, zh: '拖动', en: 'Drag'),
+      title: pickUiText(
+        i18n,
+        zh: '精细拖拽追踪',
+        en: 'Fine drag tracking',
+        ja: 'Fine drag tracking',
+        de: 'Fine drag tracking',
+        fr: 'Traçage fin de la traînée',
+        es: 'Seguimiento de la arrastre',
+        ru: 'Отличное отслеживание сопротивления',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '拖动',
+        en: 'Drag',
+        ja: 'Drag',
+        de: 'Drag',
+        fr: 'Faites glisser',
+        es: 'Arrastre',
+        ru: 'драка',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '沿窄轨迹拖动光标，记录偏离距离、离轨次数和完成时间。',
         en: 'Drag a small cursor along a narrow track while watching deviation, off-track events, and completion time.',
+        ja: 'Drag a small cursor along a narrow track while watching deviation, off-track events, and completion time.',
+        de: 'Drag a small cursor along a narrow track while watching deviation, off-track events, and completion time.',
+        fr: 'Faites glisser un petit curseur le long d\'une piste étroite tout en regardant la déviation, les événements hors piste, et le temps d\'achèvement.',
+        es: 'Arrastre un cursor pequeño a lo largo de una pista estrecha mientras observa la desviación, eventos fuera de pista y tiempo de terminación.',
+        ru: 'Перетащите небольшой курсор по узкой дорожке, наблюдая за отклонениями, внедорожными событиями и временем завершения.',
       ),
       icon: Icons.gesture_rounded,
       accent: const Color(0xFF4E8B6B),
@@ -1215,12 +1731,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'joystick',
-      title: pickUiText(i18n, zh: '摇杆手眼协调', en: 'Joystick coordination'),
-      shortTitle: pickUiText(i18n, zh: '摇杆', en: 'Joystick'),
+      title: pickUiText(
+        i18n,
+        zh: '摇杆手眼协调',
+        en: 'Joystick coordination',
+        ja: 'Joystick coordination',
+        de: 'Joystick coordination',
+        fr: 'Coordination des joysticks',
+        es: 'Coordinación de Joystick',
+        ru: 'Джойстик координация',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '摇杆',
+        en: 'Joystick',
+        ja: 'Joystick',
+        de: 'Joystick',
+        fr: 'Joystick',
+        es: 'Joystick',
+        ru: 'джойстик',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '用虚拟摇杆移动准星并点击射击，支持限时和目标总数两种测试。',
         en: 'Move a crosshair with a virtual joystick and fire in timed or target-count modes.',
+        ja: 'Move a crosshair with a virtual joystick and fire in timed or target-count modes.',
+        de: 'Move a crosshair with a virtual joystick and fire in timed or target-count modes.',
+        fr: 'Déplacez un crosshair avec un joystick virtuel et feu en mode chronométré ou cible-compte.',
+        es: 'Mueva un crosshair con un joystick virtual y fuego en modos temporizados o de venta de objetivos.',
+        ru: 'Переместите перекрестье с виртуальным джойстиком и огнём в режимах времени или счета целей.',
       ),
       icon: Icons.gamepad_rounded,
       accent: const Color(0xFF8A6849),
@@ -1228,12 +1767,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'bimanual',
-      title: pickUiText(i18n, zh: '双手协调', en: 'Bimanual coordination'),
-      shortTitle: pickUiText(i18n, zh: '双手', en: 'Bimanual'),
+      title: pickUiText(
+        i18n,
+        zh: '双手协调',
+        en: 'Bimanual coordination',
+        ja: 'バイマニュアルコーディネート',
+        de: 'Bimanual coordination',
+        fr: 'Coordination bimanuelle',
+        es: 'Coordinación bimanual',
+        ru: 'Двухсторонняя координация',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '双手',
+        en: 'Bimanual',
+        ja: 'バイマニュアル',
+        de: 'Bimanual',
+        fr: 'Bimanuel',
+        es: 'Bimanual',
+        ru: 'двуязычный',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '在脑裂指令、陷阱、长按和同步窗口中同时调度左右手，挑战节奏、抑制和双手分工。',
         en: 'Run both hands through split-brain cues, traps, holds, and sync-window strikes for rhythm, inhibition, and coordination.',
+        ja: 'Run both hands through split-brain cues, traps, holds, and sync-window strikes for rhythm, inhibition, and coordination.',
+        de: 'Run both hands through split-brain cues, traps, holds, and sync-window strikes for rhythm, inhibition, and coordination.',
+        fr: 'Exécutez les deux mains à travers des repères, des pièges, des cales et des frappes de synchronisation pour le rythme, l\'inhibition et la coordination.',
+        es: 'Ejecute ambas manos a través de cues, trampas, retenes y huelgas de sincronización para el ritmo, la inhibición y la coordinación.',
+        ru: 'Проведите обе руки через сигналы разделенного мозга, ловушки, трюмы и удары синхронного окна для ритма, торможения и координации.',
       ),
       icon: Icons.pan_tool_alt_rounded,
       accent: const Color(0xFFD08A3A),
@@ -1241,12 +1803,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'calculation',
-      title: pickUiText(i18n, zh: '计算能力测试', en: 'Calculation test'),
-      shortTitle: pickUiText(i18n, zh: '计算', en: 'Math'),
+      title: pickUiText(
+        i18n,
+        zh: '计算能力测试',
+        en: 'Calculation test',
+        ja: '計算テスト',
+        de: 'Calculation test',
+        fr: 'Essai de calcul',
+        es: 'Prueba de cálculo',
+        ru: 'Тест на расчет',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '计算',
+        en: 'Math',
+        ja: 'Math',
+        de: 'Math',
+        fr: 'Mathématiques',
+        es: 'Matemáticas',
+        ru: 'математика',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '按难度、题型、题量或限时训练口算，完成后查看速度与准确率分析。',
         en: 'Train arithmetic by difficulty, operation type, fixed rounds, or time limit with speed and accuracy analysis.',
+        ja: 'Train arithmetic by difficulty, operation type, fixed rounds, or time limit with speed and accuracy analysis.',
+        de: 'Train arithmetic by difficulty, operation type, fixed rounds, or time limit with speed and accuracy analysis.',
+        fr: 'Arithmétique du train par difficulté, type de fonctionnement, rondes fixes ou limite de temps avec analyse de vitesse et de précision.',
+        es: 'Entrenar aritmética por dificultad, tipo de operación, rondas fijas o límite de tiempo con análisis de velocidad y precisión.',
+        ru: 'Арифметика поезда по сложности, типу операции, фиксированным раундам или пределу времени с анализом скорости и точности.',
       ),
       icon: Icons.calculate_rounded,
       accent: const Color(0xFF6178B8),
@@ -1254,12 +1839,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'dynamic_vision',
-      title: pickUiText(i18n, zh: '动态视力测试', en: 'Dynamic vision'),
-      shortTitle: pickUiText(i18n, zh: '动态视力', en: 'Dynamic'),
+      title: pickUiText(
+        i18n,
+        zh: '动态视力测试',
+        en: 'Dynamic vision',
+        ja: 'Dynamic vision',
+        de: 'Dynamic vision',
+        fr: 'Vision dynamique',
+        es: 'Visión dinámica',
+        ru: 'Динамическое зрение',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '动态视力',
+        en: 'Dynamic',
+        ja: 'Dynamic',
+        de: 'Dynamic',
+        fr: 'Dynamique',
+        es: 'Dinámica dinámica',
+        ru: 'динамический',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '字符识别支持字符集、轨迹、干扰与报告；小球数量随等级提升速度和数量。',
         en: 'Symbol recognition adds sets, paths, distractors, and reports; ball counting raises speed and count by level.',
+        ja: 'Symbol recognition adds sets, paths, distractors, and reports; ball counting raises speed and count by level.',
+        de: 'Symbol recognition adds sets, paths, distractors, and reports; ball counting raises speed and count by level.',
+        fr: 'La reconnaissance des symboles ajoute des ensembles, des chemins, des disjoncteurs et des rapports; le comptage des boules augmente la vitesse et le nombre par niveau.',
+        es: 'El reconocimiento de símbolos añade conjuntos, caminos, distracciones e informes; el conteo de bolas aumenta la velocidad y cuenta por nivel.',
+        ru: 'Распознавание символов добавляет наборы, пути, отвлекающие факторы и отчеты; подсчет мяча повышает скорость и счет по уровню.',
       ),
       icon: Icons.remove_red_eye_rounded,
       accent: const Color(0xFF407E92),
@@ -1267,12 +1875,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'dual_task',
-      title: pickUiText(i18n, zh: '双任务切换', en: 'Dual-task switching'),
-      shortTitle: pickUiText(i18n, zh: '切换', en: 'Switch'),
+      title: pickUiText(
+        i18n,
+        zh: '双任务切换',
+        en: 'Dual-task switching',
+        ja: 'Dual-task switching',
+        de: 'Dual-task switching',
+        fr: 'Interrupteur à double tâche',
+        es: 'Interruptor de dos discos',
+        ru: 'Двойное задание',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '切换',
+        en: 'Switch',
+        ja: 'Switch',
+        de: 'Switch',
+        fr: 'Commutateur',
+        es: 'Cambio',
+        ru: 'переключатель',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '在数字与颜色判断之间来回切换注意力，并统计切换代价。',
         en: 'Switch between two judgment rules and track switch cost, repeat cost, and response speed.',
+        ja: 'Switch between two judgment rules and track switch cost, repeat cost, and response speed.',
+        de: 'Switch between two judgment rules and track switch cost, repeat cost, and response speed.',
+        fr: 'Interchanger entre deux règles de jugement et le coût de l\'interrupteur de voie, le coût de répétition et la vitesse de réponse.',
+        es: 'Interruptor entre dos reglas de juicio y el coste de cambio de pista, coste de repetición y velocidad de respuesta.',
+        ru: 'Переключитесь между двумя правилами суждения и стоимостью коммутатора трека, стоимостью повторения и скоростью ответа.',
       ),
       icon: Icons.swap_horiz_rounded,
       accent: const Color(0xFFB05C5C),
@@ -1280,12 +1911,35 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
     ),
     _HumanTestEntry(
       id: 'sustained_attention',
-      title: pickUiText(i18n, zh: '持续注意力测试', en: 'Sustained attention'),
-      shortTitle: pickUiText(i18n, zh: '注意力', en: 'Focus'),
+      title: pickUiText(
+        i18n,
+        zh: '持续注意力测试',
+        en: 'Sustained attention',
+        ja: 'Sustained attention',
+        de: 'Sustained attention',
+        fr: 'Une attention soutenue',
+        es: 'Atención sostenida',
+        ru: 'Постоянное внимание',
+      ),
+      shortTitle: pickUiText(
+        i18n,
+        zh: '注意力',
+        en: 'Focus',
+        ja: 'Focus',
+        de: 'Focus',
+        fr: 'Objectif',
+        es: 'Focus',
+        ru: 'Фокус',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '目标点击、低频目标和 n-back 三类任务，统计命中、漏点、误点与反应时。',
         en: 'Go/no-go, oddball, and n-back tasks with hit, miss, false-alarm, and reaction-time stats.',
+        ja: 'Go/no-go, oddball, and n-back tasks with hit, miss, false-alarm, and reaction-time stats.',
+        de: 'Go/no-go, oddball, and n-back tasks with hit, miss, false-alarm, and reaction-time stats.',
+        fr: 'Go/no-go, impairball, et n-back tâches avec succès, miss, faux bras, et des statistiques de temps de réaction.',
+        es: 'Go/no-go, oddball, y tareas n-back con éxito, señorita, falsa alarma y estadísticas de tiempo de reacción.',
+        ru: 'Go/no-go, нечетные и n-back задачи с хитом, промахом, ложной тревогой и статистикой времени реакции.',
       ),
       icon: Icons.track_changes_rounded,
       accent: const Color(0xFF6D8657),

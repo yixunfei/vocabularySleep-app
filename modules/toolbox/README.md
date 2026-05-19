@@ -63,7 +63,7 @@
   - `toolbox_human_tests_verbal_memory.dart` / `toolbox_human_tests_verbal_memory_models.dart` / `toolbox_human_tests_verbal_memory_data.dart` / `toolbox_human_tests_verbal_memory_view.dart` / `toolbox_human_tests_verbal_memory_widgets.dart`: 词汇记忆、数字序列和空间箭头三模式训练，支持分领域词库和自定义舞台高度。
   - `toolbox_human_tests_memory.dart`: 黑猩猩测试、视觉记忆、序列记忆，补强视觉记忆结算报告、序列图标配置和输入点击反馈。
   - `toolbox_human_tests_visual.dart` / `toolbox_human_tests_visual_widgets.dart`: 色觉测试、混色匹配、报告统计列表与弱项建议。
-  - `toolbox_human_tests_visual_search.dart` / `toolbox_human_tests_auditory.dart` / `toolbox_human_tests_auditory_lab.dart` / `toolbox_human_tests_switching.dart` / `toolbox_human_tests_drag_tracking.dart` / `toolbox_human_tests_bimanual.dart`: 视觉搜索（含找目标、找不同和连连看趣味模式）、听觉测试（含稳定临时文件播放、可调测试轮数、频率默认 10 轮、递进式频率/音量/节奏评估、灵敏度阈值、八向空间定位盘、拖拽方位指针、系统音量自动/手动校准，以及测试期禁用预听/重播和随机等待节奏）、声学实验（麦克风低音/高音/持续曲线和噪音分贝仪）、双任务切换、精细拖拽追踪和双手协调；其中双手协调已扩展为左右独立脑裂小游戏集合，支持画图、弹球、楼梯三类组合，并补上手机默认横屏全屏、进入全屏即开局、手眼协调同款白底沉浸浮层、默认无限时长、轮数设置、窄屏同屏并排和脑裂风暴/同步窗口/长按充能结算。
+  - `toolbox_human_tests_visual_search.dart` / `toolbox_human_tests_auditory.dart` / `toolbox_human_tests_auditory_lab.dart` / `toolbox_human_tests_switching.dart` / `toolbox_human_tests_drag_tracking.dart` / `toolbox_human_tests_bimanual.dart`: 视觉搜索（含找目标、找不同和连连看趣味模式）、听觉测试（含稳定临时文件播放、可调测试轮数、频率默认 10 轮、递进式频率/音量/节奏评估、灵敏度阈值、八向空间定位盘、拖拽方位指针、系统音量自动/手动校准，以及测试期禁用预听/重播和随机等待节奏）、声学实验（麦克风低音/高音/持续曲线和噪音分贝仪）、双任务切换、精细拖拽追踪和双手协调；其中双手协调已扩展为左右独立脑裂小游戏集合，支持画图、弹球、跳高三类自由组合，默认左右均为弹球，并补上默认关闭的单侧练习、随机几何一笔画节点/固定几何图案/连续描线判定、线段几何/最小角度/方向提示、弹球速率/球大小/多球/碰撞加速/随机障碍/拖尾/避遮挡挡板控制、横向移动平台跳高/平台宽度区间、难度预设和无限模式、手机默认横屏全屏、进入全屏即开局、手眼协调同款白底沉浸浮层、默认无限时长、轮数设置、窄屏同屏并排和同步窗口/长按充能结算。
   - `toolbox_human_tests_dynamic_vision.dart` / `toolbox_human_tests_dynamic_vision_parts.dart` / `toolbox_human_tests_dynamic_vision_ui.dart`: 动态视力测试。
   - `toolbox_human_tests_typing.dart` / `toolbox_human_tests_typing_copy.dart` / `toolbox_human_tests_typing_data.dart` / `toolbox_human_tests_typing_widgets.dart`: 打字测试训练状态、文案策略、语料库、折叠设置和报告 UI。
   - `toolbox_human_tests_cognition.dart`: 斯特鲁普、运气测试、计算能力测试、持续注意力测试。
@@ -108,11 +108,11 @@
 - 种子数据与指南: `daily_choice_seed_data.dart`
 - `cook` 数据读取与缓存: `daily_choice_cook_service.dart`
 - 远端菜谱库: S3 `/cook_data/daily_choice_recipe_library.db`（首次点击后下载到本地 `toolbox_daily_choice_recipes.db`，运行时只读本机 SQLite，不再随安装包打入 `recipe_library.json`）
-- 外部导出资源: `D:\vocabularySleep-resources\cook_data`（同步生成 full JSON、summary manifest 与标准 SQLite 表结构，便于后续远端资源库分发）
+- 外部导出资源: 默认写入 `build/generated/daily_choice/cook_data`；可通过 `--export-dir` 或 `DAILY_CHOICE_RECIPE_EXPORT_DIR` 覆盖（同步生成 full JSON、summary manifest 与标准 SQLite 表结构，便于后续远端资源库分发）
 - 本地自定义存储: `daily_choice_storage.dart`
 - 第一版能力:
   - `吃什么`: 首次进入会提示点击加载菜谱库，并从 S3 `/cook_data` 下载标准 SQLite 到本地后使用；页面常驻内存只保留摘要与筛选索引，支持按餐段、厨具和个人食谱集开始随机、停止后锁定当前菜品，详情页再按菜谱 ID 读取结构化详细介绍、食材、完整步骤和关键提示；“做菜指南”已统一整合 `cook` 的“做菜之前”、本地基础技能和参考书目。
-  - `穿什么`: 按气温档位和场景筛选随机；基于 `D:\vocabularySleep-resources\穿什么` 中多本本地 EPUB 资料整理出基础款、版型、TPO、色彩、材质、鞋配件与衣橱整理规则，并落地为 `87` 套温度/场景种子搭配、模块化穿搭指南、结构化详情说明和引导式衣橱管理。
+  - `穿什么`: 按气温档位和场景筛选随机；数据生成脚本通过 `--source-dir` 或 `DAILY_CHOICE_WEAR_SOURCE_DIR` 读取本地穿搭资料，并落地为 `87` 套温度/场景种子搭配、模块化穿搭指南、结构化详情说明和引导式衣橱管理。
   - `去哪儿`: 按 `出门 / 周边 / 远行` 与 `饮食 / 娱乐 / 运动 / 文化 / 历史 / 自然 / 学习 / 购物 / 社交 / 亲子 / 夜生活 / 放松 / 出片 / 特色区域 / 纪念` 双维筛选随机；当前内置 360 条常见场所 archetype 地点，详情页提供结构化出行说明、地图搜索词复制与 OpenStreetMap 检索链接，后续系统地图和开放地理数据接入仍独立推进。
   - `干什么`: 按运动、学习、出行、整理、放松、创作、社交随机，也支持“随机方向”。
   - `随机助手`: 支持临时录入自定义选项，在均匀、加权、联合分布多轮之间切换，并提供大转盘、骰子和硬币动画；骰子按 3 到 12 面拆分多骰子，硬币限制为两面均匀。
@@ -188,6 +188,12 @@
 - 2026-05-08: 人类测试中心新增视觉搜索、听觉反应、双任务切换、精细拖拽追踪和双手协调五个子模块入口。
 - 2026-05-11: 双手协调收口为左右独立脑裂小游戏集合，支持画图、弹球和楼梯三类任务配对，并强化同步窗口、长按充能、手机默认横屏全屏和轻量菜单式控制。
 - 2026-05-12: 双手协调全屏体验对齐手眼协调/摇杆手眼协调，真实移动端点击入口后自动进入 90 度横屏沉浸全屏并立即开始，设置、报告和会话控制收口到全屏浮层。
+- 2026-05-18: 双手协调改为左右手自由组合，初始版本默认左右均为画图；画图补充随机几何一笔画节点和线段样式，弹球补充速率/随机障碍/避遮挡挡板控制，跳高改为横向移动平台逐层登顶与难度蓄力跳跃。
+- 2026-05-18: 双手协调继续增强难度预设和无限模式；弹球新增球大小、多球、碰撞加速和拖尾，画图新增线段几何、最小角度、分段颜色和方向提示，跳高新增平台宽度与宽度随机区间。
+- 2026-05-18: 双手协调画图改为必须沿线段连续描摹，不能只点节点完成；跳高加入起跳弧线、空中/落地判定和更清晰的平台/终点/角色识别，沉浸式紧凑全屏折叠左右标题和描述。
+- 2026-05-18: 双手协调画图新增三角形、正方形、长方形、圆形、梯形、菱形、多面体等固定几何模式，并扩大有效图案尺寸；描线判定增加连续样本和描绘距离门槛，堵住点击节点直接完成的问题。
+- 2026-05-18: 双手协调默认测试改为左右均为弹球；新增默认关闭的单侧练习模式，并将画图描线判定重写为整条路径连续进度，修复滑动完成无法稳定触发成功的问题。
+- 2026-05-18: 双手协调画图结算闭环修复：进度显示改为已完成线段数，当前线段顺序吸附到目标节点，抵达最后节点后稳定成功结算并进入下一轮，偏离仅扣分不再误触发失败报告。
 - 2026-05-08: 听觉反应改为合成提示音播放，新增频率、音量和声道三类模拟医学测试；视觉搜索与听觉反应标题完成收口。
 - 2026-05-09: 听觉反应重构为听觉测试，频率测试改为多频率与节奏声量可听评估，音量测试改为听力灵敏度，声道测试改为八/十二/十六方向声音空间定位，并补齐完整自定义设置和分组报告。
 - 2026-05-11: 听觉测试进一步收口播放稳定性与反预测策略：改用临时文件播放合成音、播放中显示频率、测试期禁用预听/重播、随机化等待间隔和轮次顺序，移除进行中的阈值提示，并修正双重音量衰减导致的近静音。

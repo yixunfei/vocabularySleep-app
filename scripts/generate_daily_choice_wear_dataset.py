@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import sqlite3
 from collections import Counter, defaultdict
@@ -13,8 +14,22 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_SOURCE_DIR = Path(r"D:\vocabularySleep-resources\穿什么")
-DEFAULT_OUTPUT_DIR = Path(r"D:\vocabularySleep-resources\穿什么-数据")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def env_path(name: str, fallback: Path) -> Path:
+    value = os.environ.get(name)
+    return Path(value).expanduser() if value else fallback
+
+
+DEFAULT_SOURCE_DIR = env_path(
+    "DAILY_CHOICE_WEAR_SOURCE_DIR",
+    PROJECT_ROOT / "resources" / "daily_choice" / "wear",
+)
+DEFAULT_OUTPUT_DIR = env_path(
+    "DAILY_CHOICE_WEAR_OUTPUT_DIR",
+    PROJECT_ROOT / "build" / "generated" / "daily_choice" / "wear",
+)
 
 LIBRARY_ID = "toolbox_daily_choice_wear_library"
 SCHEMA_ID = "vocabulary_sleep.daily_choice.wear_library"

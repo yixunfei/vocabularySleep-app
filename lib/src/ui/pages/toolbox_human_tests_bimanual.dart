@@ -2,6 +2,8 @@ part of 'toolbox_human_tests.dart';
 
 enum _BimanualMode { arcade, splitBrain, conductor }
 
+enum _BimanualDifficulty { relaxed, standard, hard, expert }
+
 enum _BimanualLane { left, right, both }
 
 enum _BimanualRule { tap, hold, mirror, decoy }
@@ -11,6 +13,83 @@ enum _BimanualSide { left, right }
 enum _BimanualTaskType { trace, bounce, climb }
 
 enum _BrainSplitFullscreenAction { settings, reset, report, stop, exit }
+
+enum _BrainSplitTracePattern {
+  mixed,
+  zigzag,
+  wave,
+  star,
+  spiral,
+  box,
+  steps,
+  loop,
+  triangle,
+  square,
+  rectangle,
+  circle,
+  trapezoid,
+  diamond,
+  polyhedron,
+}
+
+enum _BrainSplitTraceLineStyle { solid, dashed, dotted, ribbon }
+
+enum _BrainSplitTraceSegmentMode { straight, curved, random }
+
+class _BrainSplitBounceObstacle {
+  const _BrainSplitBounceObstacle({required this.center, required this.radius});
+
+  final Offset center;
+  final double radius;
+}
+
+class _BrainSplitJumpPlatform {
+  const _BrainSplitJumpPlatform({
+    required this.level,
+    required this.width,
+    required this.speed,
+    required this.phase,
+    required this.requiredCharge,
+  });
+
+  final int level;
+  final double width;
+  final double speed;
+  final double phase;
+  final double requiredCharge;
+}
+
+class _BrainSplitBallState {
+  const _BrainSplitBallState({
+    required this.x,
+    required this.y,
+    required this.vx,
+    required this.vy,
+    this.trail = const <Offset>[],
+  });
+
+  final double x;
+  final double y;
+  final double vx;
+  final double vy;
+  final List<Offset> trail;
+
+  _BrainSplitBallState copyWith({
+    double? x,
+    double? y,
+    double? vx,
+    double? vy,
+    List<Offset>? trail,
+  }) {
+    return _BrainSplitBallState(
+      x: x ?? this.x,
+      y: y ?? this.y,
+      vx: vx ?? this.vx,
+      vy: vy ?? this.vy,
+      trail: trail ?? this.trail,
+    );
+  }
+}
 
 class BimanualCoordinationTestPage extends StatelessWidget {
   const BimanualCoordinationTestPage({super.key});
@@ -27,11 +106,25 @@ class BimanualCoordinationTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '双手协调', en: 'Bimanual coordination'),
+      title: pickUiText(
+        i18n,
+        zh: '双手协调',
+        en: 'Bimanual coordination',
+        ja: 'バイマニュアルコーディネート',
+        de: 'Bimanual coordination',
+        fr: 'Coordination bimanuelle',
+        es: 'Coordinación bimanual',
+        ru: 'Двухсторонняя координация',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '左右手同时控制不同小游戏，手机默认进入横屏全屏，在脑裂、同步奖励和节奏切换里练习独立分工。',
         en: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
+        ja: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
+        de: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
+        fr: 'Exécutez différents mini-jeux des deux côtés à la fois. Les téléphones par défaut pour le paysage plein écran pour la séparation du cerveau divisé, les bonus de synchronisation et les changements de rythme.',
+        es: 'Ejecute diferentes minijuegos en ambos lados a la vez. Teléfonos predeterminados para el paisaje de pantalla completa para separación de cerebros, bonos de sincronización y cambios de ritmo.',
+        ru: 'Выполняйте различные мини-игры с обеих сторон одновременно. Телефоны по умолчанию выходят на полный экран для разделения разделенного мозга, синхронизации бонусов и сдвига ритма.',
       ),
       accent: _accent,
       icon: Icons.pan_tool_alt_rounded,
@@ -39,6 +132,11 @@ class BimanualCoordinationTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：进入全屏横屏，同时推进左右两侧任务。',
         en: 'Next: enter landscape fullscreen and push both sides forward together.',
+        ja: 'Next: enter landscape fullscreen and push both sides forward together.',
+        de: 'Next: enter landscape fullscreen and push both sides forward together.',
+        fr: 'Suivant: entrer dans le paysage plein écran et pousser les deux côtés ensemble.',
+        es: 'Siguiente: introducir pantalla completa de paisaje y empujar ambos lados hacia adelante juntos.',
+        ru: 'Далее: введите ландшафтный полноэкранный экран и сдвиньте обе стороны вперед вместе.',
       ),
       child: const _BimanualBrainSplitGame(),
     );
@@ -53,6 +151,25 @@ class _BrainSplitTaskSpec {
     required this.goalText,
     required this.accent,
     required this.seed,
+    this.difficulty = _BimanualDifficulty.standard,
+    this.tracePattern = _BrainSplitTracePattern.zigzag,
+    this.traceLineStyle = _BrainSplitTraceLineStyle.solid,
+    this.traceNodeCount = 5,
+    this.traceThreshold = 0.12,
+    this.targetCount = 5,
+    this.speedScale = 1,
+    this.ballRadius = 0.044,
+    this.ballCount = 1,
+    this.collisionAcceleration = false,
+    this.paddleWidth = 0.28,
+    this.paddleHeight = 0.045,
+    this.traceSegmentMode = _BrainSplitTraceSegmentMode.straight,
+    this.traceMinAngleDegrees = 35,
+    this.traceColorSegments = false,
+    this.platformWidth = 0.32,
+    this.platformWidthRandomness = 0.08,
+    this.bounceObstacles = const <_BrainSplitBounceObstacle>[],
+    this.climbPlatforms = const <_BrainSplitJumpPlatform>[],
   });
 
   final _BimanualTaskType type;
@@ -61,6 +178,25 @@ class _BrainSplitTaskSpec {
   final String goalText;
   final Color accent;
   final int seed;
+  final _BimanualDifficulty difficulty;
+  final _BrainSplitTracePattern tracePattern;
+  final _BrainSplitTraceLineStyle traceLineStyle;
+  final int traceNodeCount;
+  final double traceThreshold;
+  final int targetCount;
+  final double speedScale;
+  final double ballRadius;
+  final int ballCount;
+  final bool collisionAcceleration;
+  final double paddleWidth;
+  final double paddleHeight;
+  final _BrainSplitTraceSegmentMode traceSegmentMode;
+  final double traceMinAngleDegrees;
+  final bool traceColorSegments;
+  final double platformWidth;
+  final double platformWidthRandomness;
+  final List<_BrainSplitBounceObstacle> bounceObstacles;
+  final List<_BrainSplitJumpPlatform> climbPlatforms;
 }
 
 class _BrainSplitRoundPlan {
@@ -68,13 +204,19 @@ class _BrainSplitRoundPlan {
     required this.label,
     required this.left,
     required this.right,
+    required this.leftActive,
+    required this.rightActive,
     required this.durationMs,
   });
 
   final String label;
   final _BrainSplitTaskSpec left;
   final _BrainSplitTaskSpec right;
+  final bool leftActive;
+  final bool rightActive;
   final int durationMs;
+
+  int get activeLaneCount => (leftActive ? 1 : 0) + (rightActive ? 1 : 0);
 }
 
 class _BrainSplitLaneResult {
@@ -564,34 +706,116 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
 
   String _modeLabel(AppI18n i18n, _BimanualMode mode) {
     return switch (mode) {
-      _BimanualMode.arcade => pickUiText(i18n, zh: '街机混合', en: 'Arcade mix'),
+      _BimanualMode.arcade => pickUiText(
+        i18n,
+        zh: '街机混合',
+        en: 'Arcade mix',
+        ja: 'アーケードミックス',
+        de: 'Arcade mix',
+        fr: 'Mélange d\'arcade',
+        es: 'Arcade mix',
+        ru: 'Аркадная смесь',
+      ),
       _BimanualMode.splitBrain => pickUiText(
         i18n,
         zh: '脑裂风暴',
         en: 'Split-brain storm',
+        ja: 'Split-brain storm',
+        de: 'Split-brain storm',
+        fr: 'Tempête de cervelle',
+        es: 'Tormenta de cerebro-dividido',
+        ru: 'Сплит-мозг шторм',
       ),
       _BimanualMode.conductor => pickUiText(
         i18n,
         zh: '节奏指挥',
         en: 'Rhythm conductor',
+        ja: 'Rhythm conductor',
+        de: 'Rhythm conductor',
+        fr: 'Conducteur de rythme',
+        es: 'Conductor de Rhythm',
+        ru: 'Ритм-проводник',
       ),
     };
   }
 
   String _ruleLabel(AppI18n i18n, _BimanualRule rule) {
     return switch (rule) {
-      _BimanualRule.tap => pickUiText(i18n, zh: '点按', en: 'Tap'),
-      _BimanualRule.hold => pickUiText(i18n, zh: '长按', en: 'Hold'),
-      _BimanualRule.mirror => pickUiText(i18n, zh: '同步', en: 'Sync'),
-      _BimanualRule.decoy => pickUiText(i18n, zh: '陷阱', en: 'Trap'),
+      _BimanualRule.tap => pickUiText(
+        i18n,
+        zh: '点按',
+        en: 'Tap',
+        ja: 'Tap',
+        de: 'Tap',
+        fr: 'Appuyez sur',
+        es: 'Tap',
+        ru: 'нажатие',
+      ),
+      _BimanualRule.hold => pickUiText(
+        i18n,
+        zh: '长按',
+        en: 'Hold',
+        ja: 'Hold',
+        de: 'Hold',
+        fr: 'Attendez',
+        es: 'Espera.',
+        ru: 'Держать',
+      ),
+      _BimanualRule.mirror => pickUiText(
+        i18n,
+        zh: '同步',
+        en: 'Sync',
+        ja: 'Sync',
+        de: 'Sync',
+        fr: 'Synchronisation',
+        es: 'Sync',
+        ru: 'синхронизация',
+      ),
+      _BimanualRule.decoy => pickUiText(
+        i18n,
+        zh: '陷阱',
+        en: 'Trap',
+        ja: 'Trap',
+        de: 'Trap',
+        fr: 'Trap',
+        es: 'Trampa',
+        ru: 'Ловушка',
+      ),
     };
   }
 
   String _laneLabel(AppI18n i18n, _BimanualLane lane) {
     return switch (lane) {
-      _BimanualLane.left => pickUiText(i18n, zh: '左手', en: 'Left'),
-      _BimanualLane.right => pickUiText(i18n, zh: '右手', en: 'Right'),
-      _BimanualLane.both => pickUiText(i18n, zh: '双手', en: 'Both'),
+      _BimanualLane.left => pickUiText(
+        i18n,
+        zh: '左手',
+        en: 'Left',
+        ja: 'Left',
+        de: 'Left',
+        fr: 'Gauche',
+        es: 'Izquierda',
+        ru: 'Левый',
+      ),
+      _BimanualLane.right => pickUiText(
+        i18n,
+        zh: '右手',
+        en: 'Right',
+        ja: 'Right',
+        de: 'Right',
+        fr: 'Droite',
+        es: 'Bien.',
+        ru: 'Правильно.',
+      ),
+      _BimanualLane.both => pickUiText(
+        i18n,
+        zh: '双手',
+        en: 'Both',
+        ja: '両方',
+        de: 'Both',
+        fr: 'Les deux',
+        es: 'Ambos',
+        ru: 'Оба',
+      ),
     };
   }
 
@@ -602,6 +826,11 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
         i18n,
         zh: '选择玩法后开始，双手分别守住左右触区。',
         en: 'Pick a mode and start. Keep both hands on the left and right pads.',
+        ja: 'Pick a mode and start. Keep both hands on the left and right pads.',
+        de: 'Pick a mode and start. Keep both hands on the left and right pads.',
+        fr: 'Choisissez un mode et démarrez. Gardez les deux mains sur les coussinets gauche et droit.',
+        es: 'Elige un modo y comienza. Mantén ambas manos en las almohadillas izquierda y derecha.',
+        ru: 'Выберите режим и начинайте. Держите обе руки на левой и правой подушках.',
       );
     }
     return switch (cue.rule) {
@@ -611,11 +840,21 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
                 i18n,
                 zh: '双手几乎同时点下',
                 en: 'Tap both pads nearly together',
+                ja: 'Tap both pads nearly together',
+                de: 'Tap both pads nearly together',
+                fr: 'Tapez les deux tampons presque ensemble',
+                es: 'Toca ambas almohadillas casi juntas',
+                ru: 'Нажмите обе прокладки почти вместе',
               )
             : pickUiText(
                 i18n,
                 zh: '点按${_laneLabel(i18n, cue.lane)}触区',
                 en: 'Tap the ${_laneLabel(i18n, cue.lane)} pad',
+                ja: 'Tap the ${_laneLabel(i18n, cue.lane)} pad',
+                de: 'Tap the ${_laneLabel(i18n, cue.lane)} pad',
+                fr: 'Appuyez sur le tampon ${_laneLabel(i18n, cue.lane)}',
+                es: 'Toca el almohadilla de <v0/',
+                ru: 'Нажмите ${_laneLabel(i18n, cue.lane)} pad',
               ),
       _BimanualRule.hold =>
         cue.lane == _BimanualLane.both
@@ -623,21 +862,41 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
                 i18n,
                 zh: '双手同时按住直到充能完成',
                 en: 'Hold both pads until charge completes',
+                ja: 'Hold both pads until charge completes',
+                de: 'Hold both pads until charge completes',
+                fr: 'Maintenez les deux tampons jusqu\'à la fin de la charge',
+                es: 'Sostenga ambas almohadillas hasta completar el cargo',
+                ru: 'Держите обе прокладки до завершения зарядки',
               )
             : pickUiText(
                 i18n,
                 zh: '按住${_laneLabel(i18n, cue.lane)}触区',
                 en: 'Hold the ${_laneLabel(i18n, cue.lane)} pad',
+                ja: 'Hold the ${_laneLabel(i18n, cue.lane)} pad',
+                de: 'Hold the ${_laneLabel(i18n, cue.lane)} pad',
+                fr: 'Maintenez le tampon ${_laneLabel(i18n, cue.lane)}',
+                es: 'Sostenga la almohadilla de <v0/',
+                ru: 'Держите колодку ${_laneLabel(i18n, cue.lane)}',
               ),
       _BimanualRule.mirror => pickUiText(
         i18n,
         zh: '镜像指令：左右手在窗口内连击',
         en: 'Mirror cue: strike left and right within the sync window',
+        ja: 'Mirror cue: strike left and right within the sync window',
+        de: 'Mirror cue: strike left and right within the sync window',
+        fr: 'Marque miroir: frappez à gauche et à droite dans la fenêtre de synchronisation',
+        es: 'Espejo cue: huelga izquierda y derecha dentro de la ventana de sincronización',
+        ru: 'Зеркальный сигнал: удар влево и вправо в окне синхронизации',
       ),
       _BimanualRule.decoy => pickUiText(
         i18n,
         zh: '陷阱指令：什么都别按',
         en: 'Trap cue: press nothing',
+        ja: 'Trap cue: press nothing',
+        de: 'Trap cue: press nothing',
+        fr: 'Trap cue: ne pressez rien',
+        es: 'Trap cue: nada de prensa',
+        ru: 'Оригинальное название: Press Nothing',
       ),
     };
   }
@@ -660,17 +919,68 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(i18n, zh: '进度', en: 'Progress'),
+              pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
               '$_roundIndex/$_roundCount',
             ),
-            (pickUiText(i18n, zh: '分数', en: 'Score'), '$_score'),
-            (pickUiText(i18n, zh: '连击', en: 'Combo'), '$_combo'),
             (
-              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '分数',
+                en: 'Score',
+                ja: 'Score',
+                de: 'Score',
+                fr: 'Score',
+                es: 'Puntuación',
+                ru: 'счет',
+              ),
+              '$_score',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '连击',
+                en: 'Combo',
+                ja: 'コンボ',
+                de: 'Combo',
+                fr: 'Combo',
+                es: 'Combo',
+                ru: 'Комбинация',
+              ),
+              '$_combo',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '准确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               _records.isEmpty ? '-' : '${(_accuracy * 100).round()}%',
             ),
             (
-              pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+              pickUiText(
+                i18n,
+                zh: '平均反应',
+                en: 'Avg reaction',
+                ja: '平均反応',
+                de: 'Avg reaction',
+                fr: 'Réaction d\' Avg',
+                es: 'Reacción de Avg',
+                ru: 'Авг реакция',
+              ),
               _averageMs == 0 ? '-' : _formatMilliseconds(_averageMs),
             ),
           ],
@@ -706,32 +1016,86 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
           children: <Widget>[
             _HumanActionButton(
               label: _running
-                  ? pickUiText(i18n, zh: '重新开始', en: 'Restart')
-                  : pickUiText(i18n, zh: '开始挑战', en: 'Start challenge'),
+                  ? pickUiText(
+                      i18n,
+                      zh: '重新开始',
+                      en: 'Restart',
+                      ja: 'Restart',
+                      de: 'Restart',
+                      fr: 'Redémarrer',
+                      es: 'Restart',
+                      ru: 'Перезапустить',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '开始挑战',
+                      en: 'Start challenge',
+                      ja: 'Start challenge',
+                      de: 'Start challenge',
+                      fr: 'Démarrage',
+                      es: 'Inicio desafío',
+                      ru: 'Начинать вызов',
+                    ),
               icon: _running ? Icons.replay_rounded : Icons.play_arrow_rounded,
               onPressed: _start,
             ),
             OutlinedButton.icon(
               onPressed: _reset,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '重置',
+                  en: 'Reset',
+                  ja: 'Reset',
+                  de: 'Reset',
+                  fr: 'Réinitialiser',
+                  es: 'Reset',
+                  ru: 'сброс',
+                ),
+              ),
             ),
             OutlinedButton.icon(
               onPressed: _records.isEmpty
                   ? null
                   : () => unawaited(_showReport()),
               icon: const Icon(Icons.analytics_rounded),
-              label: Text(pickUiText(i18n, zh: '报告', en: 'Report')),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '报告',
+                  en: 'Report',
+                  ja: 'Report',
+                  de: 'Report',
+                  fr: 'Rapport annuel',
+                  es: 'Informe',
+                  ru: 'Доклад',
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(i18n, zh: '双手挑战设置', en: 'Bimanual game settings'),
+          title: pickUiText(
+            i18n,
+            zh: '双手挑战设置',
+            en: 'Bimanual game settings',
+            ja: 'バイマニュアルゲーム設定',
+            de: 'Bimanual game settings',
+            fr: 'Paramètres du jeu bimanuel',
+            es: 'Ajustes de juego duales',
+            ru: 'Бирумные игровые настройки',
+          ),
           subtitle: pickUiText(
             i18n,
             zh: '切换玩法、轮数、节奏强度、同步窗口和长按时长。运行中设置会锁定。',
             en: 'Choose mode, rounds, pace, sync window, and hold duration. Settings lock while running.',
+            ja: 'モード、ラウンド、ペース、同期ウィンドウ、ホールド時間を選択します。実行中は設定がロックされます。',
+            de: 'Choose mode, rounds, pace, sync window, and hold duration. Settings lock while running.',
+            fr: 'Choisissez le mode, les tours, le rythme, la fenêtre de synchronisation et la durée de maintien. Réglages verrouillés pendant l\'exécution.',
+            es: 'Elija modo, rondas, ritmo, ventana de sincronización y mantener la duración. Los ajustes se bloquean mientras corren.',
+            ru: 'Выберите режим, раунды, темп, окно синхронизации и продолжительность удержания. Настройка замка во время бега.',
           ),
           initiallyExpanded: true,
           child: _buildSettings(context, i18n),
@@ -750,7 +1114,16 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '玩法模式', en: 'Game mode'),
+          pickUiText(
+            i18n,
+            zh: '玩法模式',
+            en: 'Game mode',
+            ja: 'Game mode',
+            de: 'Game mode',
+            fr: 'Mode jeu',
+            es: 'Modo de juego',
+            ru: 'Режим игры',
+          ),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -770,7 +1143,18 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               .toList(growable: false),
         ),
         const SizedBox(height: 12),
-        Text(pickUiText(i18n, zh: '轮数', en: 'Rounds')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '轮数',
+            en: 'Rounds',
+            ja: 'Rounds',
+            de: 'Rounds',
+            fr: 'Rondes',
+            es: 'Rondas',
+            ru: 'Круги',
+          ),
+        ),
         Slider(
           value: _roundCount.toDouble(),
           min: 8,
@@ -781,7 +1165,18 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               ? null
               : (value) => setState(() => _roundCount = value.round()),
         ),
-        Text(pickUiText(i18n, zh: '节奏强度', en: 'Pace level')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '节奏强度',
+            en: 'Pace level',
+            ja: 'Pace level',
+            de: 'Pace level',
+            fr: 'Niveau de Pace',
+            es: 'Nivel de rotación',
+            ru: 'Уровень темпа',
+          ),
+        ),
         Slider(
           value: _paceLevel.toDouble(),
           min: 1,
@@ -792,7 +1187,18 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               ? null
               : (value) => setState(() => _paceLevel = value.round()),
         ),
-        Text(pickUiText(i18n, zh: '同步窗口', en: 'Sync window')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '同步窗口',
+            en: 'Sync window',
+            ja: 'Sync window',
+            de: 'Sync window',
+            fr: 'Synchroniser la fenêtre',
+            es: 'Ventana sincronizada',
+            ru: 'Синхронное окно',
+          ),
+        ),
         Slider(
           value: _syncWindowMs.toDouble(),
           min: 120,
@@ -803,7 +1209,18 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               ? null
               : (value) => setState(() => _syncWindowMs = value.round()),
         ),
-        Text(pickUiText(i18n, zh: '长按充能', en: 'Hold charge')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '长按充能',
+            en: 'Hold charge',
+            ja: 'Hold charge',
+            de: 'Hold charge',
+            fr: 'Maintenance',
+            es: 'Carga de mano',
+            ru: 'Держите заряд.',
+          ),
+        ),
         Slider(
           value: _holdTargetMs.toDouble(),
           min: 220,
@@ -893,10 +1310,37 @@ class _BimanualStage extends StatelessWidget {
         ? _BimanualCoordinationGameState._accent
         : laneAccent(cue!.lane);
     final feedbackText = lastCorrect == null
-        ? pickUiText(i18n, zh: '等待输入', en: 'Awaiting input')
+        ? pickUiText(
+            i18n,
+            zh: '等待输入',
+            en: 'Awaiting input',
+            ja: '入力待ち',
+            de: 'Awaiting input',
+            fr: 'En attente d\'une contribution',
+            es: 'Awaiting input',
+            ru: 'Ожидающий вклад',
+          )
         : lastCorrect!
-        ? pickUiText(i18n, zh: '命中', en: 'Hit')
-        : pickUiText(i18n, zh: '失误', en: 'Miss');
+        ? pickUiText(
+            i18n,
+            zh: '命中',
+            en: 'Hit',
+            ja: 'Hit',
+            de: 'Hit',
+            fr: 'Affichage',
+            es: 'Hit',
+            ru: 'удар',
+          )
+        : pickUiText(
+            i18n,
+            zh: '失误',
+            en: 'Miss',
+            ja: 'Miss',
+            de: 'Miss',
+            fr: 'Mlle',
+            es: 'Miss',
+            ru: 'Мисс.',
+          );
     final feedbackColor = lastCorrect == false
         ? _BimanualCoordinationGameState._dangerAccent
         : accent;
@@ -971,10 +1415,37 @@ class _BimanualStage extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: _BimanualPad(
-                label: pickUiText(i18n, zh: '左手', en: 'Left'),
+                label: pickUiText(
+                  i18n,
+                  zh: '左手',
+                  en: 'Left',
+                  ja: 'Left',
+                  de: 'Left',
+                  fr: 'Gauche',
+                  es: 'Izquierda',
+                  ru: 'Левый',
+                ),
                 subtitle: firstSyncLane == _BimanualLane.left
-                    ? pickUiText(i18n, zh: '已先击', en: 'First strike')
-                    : pickUiText(i18n, zh: '蓝色触区', en: 'Blue pad'),
+                    ? pickUiText(
+                        i18n,
+                        zh: '已先击',
+                        en: 'First strike',
+                        ja: 'First strike',
+                        de: 'First strike',
+                        fr: 'Première grève',
+                        es: 'Primera huelga',
+                        ru: 'Первый удар',
+                      )
+                    : pickUiText(
+                        i18n,
+                        zh: '蓝色触区',
+                        en: 'Blue pad',
+                        ja: '青パッド',
+                        de: 'Blue pad',
+                        fr: 'Tapis bleu',
+                        es: 'Almohadilla azul',
+                        ru: 'Голубая колодка',
+                      ),
                 icon: Icons.arrow_back_rounded,
                 accent: _BimanualCoordinationGameState._leftAccent,
                 active:
@@ -994,10 +1465,37 @@ class _BimanualStage extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _BimanualPad(
-                label: pickUiText(i18n, zh: '右手', en: 'Right'),
+                label: pickUiText(
+                  i18n,
+                  zh: '右手',
+                  en: 'Right',
+                  ja: 'Right',
+                  de: 'Right',
+                  fr: 'Droite',
+                  es: 'Bien.',
+                  ru: 'Правильно.',
+                ),
                 subtitle: firstSyncLane == _BimanualLane.right
-                    ? pickUiText(i18n, zh: '已先击', en: 'First strike')
-                    : pickUiText(i18n, zh: '金色触区', en: 'Gold pad'),
+                    ? pickUiText(
+                        i18n,
+                        zh: '已先击',
+                        en: 'First strike',
+                        ja: 'First strike',
+                        de: 'First strike',
+                        fr: 'Première grève',
+                        es: 'Primera huelga',
+                        ru: 'Первый удар',
+                      )
+                    : pickUiText(
+                        i18n,
+                        zh: '金色触区',
+                        en: 'Gold pad',
+                        ja: 'Gold pad',
+                        de: 'Gold pad',
+                        fr: 'Pad doré',
+                        es: 'Almohadilla de oro',
+                        ru: 'Золотая колодка',
+                      ),
                 icon: Icons.arrow_forward_rounded,
                 accent: _BimanualCoordinationGameState._rightAccent,
                 active:
@@ -1051,7 +1549,48 @@ class _BimanualPad extends StatefulWidget {
 }
 
 class _BimanualPadState extends State<_BimanualPad> {
+  int? _activePointer;
+  bool _tapCandidate = false;
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (!widget.enabled || _activePointer != null) {
+      return;
+    }
+    _activePointer = event.pointer;
+    _tapCandidate = true;
+    widget.onHoldChanged(true);
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (event.pointer != _activePointer) {
+      return;
+    }
+    if (event.localDelta.distance > 12) {
+      _tapCandidate = false;
+    }
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (event.pointer != _activePointer) {
+      return;
+    }
+    final shouldTap = _tapCandidate && widget.enabled;
+    _release();
+    if (shouldTap) {
+      widget.onTap();
+    }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (event.pointer != _activePointer) {
+      return;
+    }
+    _release();
+  }
+
   void _release() {
+    _activePointer = null;
+    _tapCandidate = false;
     widget.onHoldChanged(false);
   }
 
@@ -1063,93 +1602,86 @@ class _BimanualPadState extends State<_BimanualPad> {
         ? _BimanualCoordinationGameState._dangerAccent
         : widget.accent;
     final highlighted = widget.active || widget.held || widget.warning;
-    return Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: widget.enabled
-          ? (_) {
-              widget.onHoldChanged(true);
-            }
-          : null,
-      onPointerUp: widget.enabled ? (_) => _release() : null,
-      onPointerCancel: widget.enabled ? (_) => _release() : null,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.enabled ? widget.onTap : null,
-        child: AnimatedScale(
-          scale: widget.held ? 0.97 : 1,
-          duration: const Duration(milliseconds: 90),
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            constraints: const BoxConstraints(minHeight: 176),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[
-                  highlighted
-                      ? accent.withValues(alpha: 0.24)
-                      : colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.42,
-                        ),
-                  colorScheme.surface,
-                ],
-              ),
-              border: Border.all(
-                color: highlighted
-                    ? accent.withValues(alpha: 0.62)
-                    : colorScheme.outlineVariant,
-                width: highlighted ? 2 : 1,
-              ),
-              boxShadow: highlighted
-                  ? <BoxShadow>[
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.14),
-                        blurRadius: 18,
-                        offset: const Offset(0, 9),
+    return _HumanPointerDragBoundary(
+      onPointerDown: _handlePointerDown,
+      onPointerMove: _handlePointerMove,
+      onPointerUp: _handlePointerUp,
+      onPointerCancel: _handlePointerCancel,
+      enabled: widget.enabled,
+      child: AnimatedScale(
+        scale: widget.held ? 0.97 : 1,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          constraints: const BoxConstraints(minHeight: 176),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                highlighted
+                    ? accent.withValues(alpha: 0.24)
+                    : colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.42,
                       ),
-                    ]
-                  : const <BoxShadow>[],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(widget.icon, size: 42, color: accent),
-                const SizedBox(height: 10),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    widget.label,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  widget.warning ? 'Trap' : widget.subtitle,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
-                  width: double.infinity,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    color: accent.withValues(alpha: widget.held ? 0.70 : 0.16),
-                  ),
-                ),
+                colorScheme.surface,
               ],
             ),
+            border: Border.all(
+              color: highlighted
+                  ? accent.withValues(alpha: 0.62)
+                  : colorScheme.outlineVariant,
+              width: highlighted ? 2 : 1,
+            ),
+            boxShadow: highlighted
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.14),
+                      blurRadius: 18,
+                      offset: const Offset(0, 9),
+                    ),
+                  ]
+                : const <BoxShadow>[],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(widget.icon, size: 42, color: accent),
+              const SizedBox(height: 10),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  widget.label,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                widget.warning ? 'Trap' : widget.subtitle,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                width: double.infinity,
+                height: 8,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: accent.withValues(alpha: widget.held ? 0.70 : 0.16),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1175,7 +1707,16 @@ class _BimanualRecentPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '最近节奏', en: 'Recent rhythm'),
+            pickUiText(
+              i18n,
+              zh: '最近节奏',
+              en: 'Recent rhythm',
+              ja: 'Recent rhythm',
+              de: 'Recent rhythm',
+              fr: 'Rythme récent',
+              es: 'ritmo reciente',
+              ru: 'Недавний ритм',
+            ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -1233,12 +1774,50 @@ class _BimanualReportDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = score >= records.length * 14 && accuracy >= 0.9
-        ? pickUiText(i18n, zh: '左右脑合拍', en: 'Two-hand flow')
+        ? pickUiText(
+            i18n,
+            zh: '左右脑合拍',
+            en: 'Two-hand flow',
+            ja: 'Two-hand flow',
+            de: 'Two-hand flow',
+            fr: 'Débit à deux mains',
+            es: 'Flujo de dos manos',
+            ru: 'Двусторонний поток',
+          )
         : accuracy < 0.7
-        ? pickUiText(i18n, zh: '需要降速稳住', en: 'Slow down first')
-        : pickUiText(i18n, zh: '节奏正在成形', en: 'Rhythm forming');
+        ? pickUiText(
+            i18n,
+            zh: '需要降速稳住',
+            en: 'Slow down first',
+            ja: 'Slow down first',
+            de: 'Slow down first',
+            fr: 'Ralentissez d\'abord',
+            es: 'Despacio primero',
+            ru: 'Сначала помедленнее',
+          )
+        : pickUiText(
+            i18n,
+            zh: '节奏正在成形',
+            en: 'Rhythm forming',
+            ja: 'Rhythm forming',
+            de: 'Rhythm forming',
+            fr: 'Rythme formant',
+            es: 'Rhythm formando',
+            ru: 'Формирование ритма',
+          );
     return AlertDialog(
-      title: Text(pickUiText(i18n, zh: '双手协调报告', en: 'Bimanual report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '双手协调报告',
+          en: 'Bimanual report',
+          ja: 'バイマニュアルレポート',
+          de: 'Bimanual report',
+          fr: 'Rapport bimanuel',
+          es: 'Informe bimanual',
+          ru: 'Двухсторонний доклад',
+        ),
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -1248,24 +1827,108 @@ class _BimanualReportDialog extends StatelessWidget {
             children: <Widget>[
               _HumanMetricWrap(
                 metrics: <(String, String)>[
-                  (pickUiText(i18n, zh: '称号', en: 'Title'), title),
-                  (pickUiText(i18n, zh: '模式', en: 'Mode'), mode),
-                  (pickUiText(i18n, zh: '分数', en: 'Score'), '$score'),
                   (
-                    pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+                    pickUiText(
+                      i18n,
+                      zh: '称号',
+                      en: 'Title',
+                      ja: 'Title',
+                      de: 'Title',
+                      fr: 'Titre',
+                      es: 'Título',
+                      ru: 'Название',
+                    ),
+                    title,
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '模式',
+                      en: 'Mode',
+                      ja: 'Mode',
+                      de: 'Mode',
+                      fr: 'Mode',
+                      es: 'Modo',
+                      ru: 'Режим',
+                    ),
+                    mode,
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '分数',
+                      en: 'Score',
+                      ja: 'Score',
+                      de: 'Score',
+                      fr: 'Score',
+                      es: 'Puntuación',
+                      ru: 'счет',
+                    ),
+                    '$score',
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '准确率',
+                      en: 'Accuracy',
+                      ja: '精度',
+                      de: 'Accuracy',
+                      fr: 'Accuracy',
+                      es: 'Precisión',
+                      ru: 'точность',
+                    ),
                     '${(accuracy * 100).round()}%',
                   ),
                   (
-                    pickUiText(i18n, zh: '最佳连击', en: 'Best combo'),
+                    pickUiText(
+                      i18n,
+                      zh: '最佳连击',
+                      en: 'Best combo',
+                      ja: 'ベストコンボ',
+                      de: 'Best combo',
+                      fr: 'Meilleur combo',
+                      es: 'Mejor combo',
+                      ru: 'Лучшее сочетание',
+                    ),
                     '$bestCombo',
                   ),
-                  (pickUiText(i18n, zh: '失误', en: 'Mistakes'), '$mistakes'),
                   (
-                    pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+                    pickUiText(
+                      i18n,
+                      zh: '失误',
+                      en: 'Mistakes',
+                      ja: 'Mistakes',
+                      de: 'Mistakes',
+                      fr: 'Erreurs',
+                      es: 'Errores',
+                      ru: 'Ошибки',
+                    ),
+                    '$mistakes',
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '平均反应',
+                      en: 'Avg reaction',
+                      ja: '平均反応',
+                      de: 'Avg reaction',
+                      fr: 'Réaction d\' Avg',
+                      es: 'Reacción de Avg',
+                      ru: 'Авг реакция',
+                    ),
                     averageMs == 0 ? '-' : _formatMilliseconds(averageMs),
                   ),
                   (
-                    pickUiText(i18n, zh: '同步差', en: 'Sync gap'),
+                    pickUiText(
+                      i18n,
+                      zh: '同步差',
+                      en: 'Sync gap',
+                      ja: 'Sync gap',
+                      de: 'Sync gap',
+                      fr: 'Écart de synchronisation',
+                      es: 'Sincronización',
+                      ru: 'Синхронный разрыв',
+                    ),
                     averageSyncGap == 0
                         ? '-'
                         : _formatMilliseconds(averageSyncGap),
@@ -1278,7 +1941,16 @@ class _BimanualReportDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '左右手负载', en: 'Hand load'),
+                      pickUiText(
+                        i18n,
+                        zh: '左右手负载',
+                        en: 'Hand load',
+                        ja: 'Hand load',
+                        de: 'Hand load',
+                        fr: 'Charge manuelle',
+                        es: 'Carga de mano',
+                        ru: 'Ручная нагрузка',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -1300,11 +1972,21 @@ class _BimanualReportDialog extends StatelessWidget {
                           i18n,
                           zh: '建议先降低节奏强度，重点练习陷阱不按和同步窗口内的双击。',
                           en: 'Lower the pace first. Practice ignoring trap cues and landing two-pad strikes inside the sync window.',
+                          ja: 'Lower the pace first. Practice ignoring trap cues and landing two-pad strikes inside the sync window.',
+                          de: 'Lower the pace first. Practice ignoring trap cues and landing two-pad strikes inside the sync window.',
+                          fr: 'Baissez d\'abord le rythme. Pratiquez l\'ignorance des repères de piège et atterrissez deux-pad frappes dans la fenêtre de synchronisation.',
+                          es: 'Baja el ritmo primero. Practica ignorando las trampas y aterrizando huelgas de dos patas dentro de la ventana de sincronización.',
+                          ru: 'Сначала понизить темп. Практикуйте игнорирование сигналов ловушки и посадку двухпадных ударов внутри синхронного окна.',
                         )
                       : pickUiText(
                           i18n,
                           zh: '表现稳定，可以提高节奏强度或切换到脑裂风暴，增加陷阱和长按压力。',
                           en: 'Performance is stable. Raise the pace or switch to Split-brain storm for more traps and hold pressure.',
+                          ja: 'Performance is stable. Raise the pace or switch to Split-brain storm for more traps and hold pressure.',
+                          de: 'Performance is stable. Raise the pace or switch to Split-brain storm for more traps and hold pressure.',
+                          fr: 'La performance est stable. Augmenter le rythme ou passer à la tempête de Split-cerveau pour plus de pièges et maintenir la pression.',
+                          es: 'El rendimiento es estable. Aumente el ritmo o cambie a la tormenta Split-brain para más trampas y mantenga presión.',
+                          ru: 'Производительность стабильна. Поднимите темп или переключитесь на шторм с разделенным мозгом для большего количества ловушек и удерживайте давление.',
                         ),
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
                 ),
@@ -1316,7 +1998,18 @@ class _BimanualReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );
@@ -1369,12 +2062,12 @@ class _BimanualLoadBar extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: Text(
-                '${pickUiText(i18n, zh: '左手', en: 'Left')} $leftHits',
+                '${pickUiText(i18n, zh: '左手', en: 'Left', ja: 'Left', de: 'Left', fr: 'Gauche', es: 'Izquierda', ru: 'Левый')} $leftHits',
                 style: theme.textTheme.labelMedium,
               ),
             ),
             Text(
-              '${pickUiText(i18n, zh: '右手', en: 'Right')} $rightHits',
+              '${pickUiText(i18n, zh: '右手', en: 'Right', ja: 'Right', de: 'Right', fr: 'Droite', es: 'Bien.', ru: 'Правильно.')} $rightHits',
               style: theme.textTheme.labelMedium,
             ),
           ],
@@ -1414,7 +2107,13 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
   Timer? _advanceTimer;
   Timer? _sessionTimer;
 
-  _BimanualMode _mode = _BimanualMode.arcade;
+  _BimanualTaskType _leftTaskType = _BimanualTaskType.bounce;
+  _BimanualTaskType _rightTaskType = _BimanualTaskType.bounce;
+  _BimanualDifficulty _difficulty = _BimanualDifficulty.standard;
+  _BrainSplitTracePattern _tracePattern = _BrainSplitTracePattern.mixed;
+  _BrainSplitTraceLineStyle _traceLineStyle = _BrainSplitTraceLineStyle.solid;
+  _BrainSplitTraceSegmentMode _traceSegmentMode =
+      _BrainSplitTraceSegmentMode.straight;
   _BrainSplitRoundPlan? _plan;
   _BrainSplitLaneResult? _leftResult;
   _BrainSplitLaneResult? _rightResult;
@@ -1430,12 +2129,30 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
   int _syncWindowMs = 260;
   int _holdTargetMs = 420;
   int _paceLevel = 2;
+  int _traceNodeCount = 6;
+  int _bounceBallCount = 1;
+  int _bounceTargetRallies = 6;
+  int _climbStepCount = 7;
+  int _climbPlatformSpeedLevel = 2;
+  double _traceMinAngleDegrees = 38;
+  double _bounceSpeedScale = 1.08;
+  double _bounceBallRadius = 0.043;
+  double _bouncePaddleWidth = 0.26;
+  double _bouncePaddleHeight = 0.045;
+  double _climbPlatformWidth = 0.32;
+  double _climbPlatformWidthRandomness = 0.08;
   int _serial = 0;
   bool _running = false;
   bool _done = false;
   bool _roundSettled = false;
   bool _fullscreenOpening = false;
   bool _fullscreenAutoLaunched = false;
+  bool _bounceCollisionAcceleration = false;
+  bool _traceColorSegments = false;
+  bool _infiniteMode = false;
+  bool _singleSidePractice = false;
+  _BimanualSide _practiceSide = _BimanualSide.left;
+  AppI18n _i18n = AppI18n('en');
 
   @override
   void initState() {
@@ -1445,24 +2162,38 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _i18n = AppI18n(Localizations.localeOf(context).languageCode);
+  }
+
   int get _laneSuccessCount => _records.fold<int>(
     0,
     (sum, record) =>
-        sum + (record.left.success ? 1 : 0) + (record.right.success ? 1 : 0),
+        sum +
+        (record.plan.leftActive && record.left.success ? 1 : 0) +
+        (record.plan.rightActive && record.right.success ? 1 : 0),
   );
 
+  int get _activeLaneAttemptCount =>
+      _records.fold<int>(0, (sum, record) => sum + record.plan.activeLaneCount);
+
   double get _accuracy {
-    if (_records.isEmpty) {
+    final attempts = _activeLaneAttemptCount;
+    if (attempts == 0) {
       return 0;
     }
-    return _laneSuccessCount / (_records.length * 2);
+    return _laneSuccessCount / attempts;
   }
 
   int get _averageMs {
     final successfulLaneTimes = <int>[
       for (final record in _records) ...<int>[
-        if (record.left.success) record.left.milliseconds,
-        if (record.right.success) record.right.milliseconds,
+        if (record.plan.leftActive && record.left.success)
+          record.left.milliseconds,
+        if (record.plan.rightActive && record.right.success)
+          record.right.milliseconds,
       ],
     ];
     if (successfulLaneTimes.isEmpty) {
@@ -1474,7 +2205,13 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
 
   int get _averageSyncGap {
     final items = _records
-        .where((item) => item.left.success && item.right.success)
+        .where(
+          (item) =>
+              item.plan.leftActive &&
+              item.plan.rightActive &&
+              item.left.success &&
+              item.right.success,
+        )
         .toList(growable: false);
     if (items.isEmpty) {
       return 0;
@@ -1524,17 +2261,113 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     unawaited(_openFullscreen(autoStart: true));
   }
 
-  void _setMode(_BimanualMode mode) {
-    if (_running || _mode == mode) {
+  void _setSideTask(_BimanualSide side, _BimanualTaskType type) {
+    if (_running) {
       return;
     }
     _updateView(() {
-      _mode = mode;
+      if (side == _BimanualSide.left) {
+        _leftTaskType = type;
+      } else {
+        _rightTaskType = type;
+      }
       _done = false;
     });
   }
 
-  void _start(BuildContext context) {
+  bool _isSideActive(_BimanualSide side) {
+    return !_singleSidePractice || side == _practiceSide;
+  }
+
+  _BrainSplitLaneResult _practiceRestResult(AppI18n i18n) {
+    return _BrainSplitLaneResult(
+      success: true,
+      milliseconds: 0,
+      scoreDelta: 0,
+      detail: pickUiText(
+        i18n,
+        zh: '单侧练习休息',
+        en: 'Single-side rest',
+        ja: 'Single-side rest',
+        de: 'Single-side rest',
+        fr: 'Repos latéral',
+        es: 'Descanso unilateral',
+        ru: 'односторонний отдых',
+      ),
+    );
+  }
+
+  void _applyDifficultyPreset(_BimanualDifficulty difficulty) {
+    _difficulty = difficulty;
+    switch (difficulty) {
+      case _BimanualDifficulty.relaxed:
+        _traceNodeCount = 5;
+        _traceMinAngleDegrees = 55;
+        _traceSegmentMode = _BrainSplitTraceSegmentMode.straight;
+        _traceColorSegments = true;
+        _bounceSpeedScale = 0.86;
+        _bounceBallRadius = 0.050;
+        _bounceBallCount = 1;
+        _bounceCollisionAcceleration = false;
+        _bouncePaddleWidth = 0.32;
+        _bouncePaddleHeight = 0.050;
+        _bounceTargetRallies = 4;
+        _climbStepCount = 5;
+        _climbPlatformSpeedLevel = 1;
+        _climbPlatformWidth = 0.40;
+        _climbPlatformWidthRandomness = 0.00;
+      case _BimanualDifficulty.standard:
+        _traceNodeCount = 6;
+        _traceMinAngleDegrees = 42;
+        _traceSegmentMode = _BrainSplitTraceSegmentMode.straight;
+        _traceColorSegments = false;
+        _bounceSpeedScale = 1.08;
+        _bounceBallRadius = 0.043;
+        _bounceBallCount = 1;
+        _bounceCollisionAcceleration = false;
+        _bouncePaddleWidth = 0.26;
+        _bouncePaddleHeight = 0.045;
+        _bounceTargetRallies = 6;
+        _climbStepCount = 7;
+        _climbPlatformSpeedLevel = 2;
+        _climbPlatformWidth = 0.32;
+        _climbPlatformWidthRandomness = 0.08;
+      case _BimanualDifficulty.hard:
+        _traceNodeCount = 8;
+        _traceMinAngleDegrees = 32;
+        _traceSegmentMode = _BrainSplitTraceSegmentMode.random;
+        _traceColorSegments = true;
+        _bounceSpeedScale = 1.32;
+        _bounceBallRadius = 0.038;
+        _bounceBallCount = 2;
+        _bounceCollisionAcceleration = true;
+        _bouncePaddleWidth = 0.22;
+        _bouncePaddleHeight = 0.038;
+        _bounceTargetRallies = 8;
+        _climbStepCount = 9;
+        _climbPlatformSpeedLevel = 3;
+        _climbPlatformWidth = 0.26;
+        _climbPlatformWidthRandomness = 0.11;
+      case _BimanualDifficulty.expert:
+        _traceNodeCount = 9;
+        _traceMinAngleDegrees = 24;
+        _traceSegmentMode = _BrainSplitTraceSegmentMode.random;
+        _traceColorSegments = true;
+        _bounceSpeedScale = 1.55;
+        _bounceBallRadius = 0.034;
+        _bounceBallCount = 3;
+        _bounceCollisionAcceleration = true;
+        _bouncePaddleWidth = 0.19;
+        _bouncePaddleHeight = 0.032;
+        _bounceTargetRallies = 10;
+        _climbStepCount = 11;
+        _climbPlatformSpeedLevel = 4;
+        _climbPlatformWidth = 0.22;
+        _climbPlatformWidthRandomness = 0.14;
+    }
+  }
+
+  void _start() {
     _cancelTimers();
     _cancelSessionTimer();
     _roundStopwatch
@@ -1557,13 +2390,13 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       _roundSettled = false;
       _serial += 1;
     });
-    _beginRound(context);
+    _beginRound();
     if (_timeLimitMs > 0) {
       _sessionTimer = Timer(Duration(milliseconds: _timeLimitMs), () {
         if (!mounted || !_running) {
           return;
         }
-        _expireSession(context);
+        _expireSession();
       });
     }
   }
@@ -1620,7 +2453,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     }
   }
 
-  void _stopChallenge(BuildContext context) {
+  void _stopChallenge() {
     if (!_running) {
       return;
     }
@@ -1628,23 +2461,23 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       _finish();
       return;
     }
-    _settleRound(context, timeout: true, finishImmediately: true);
+    _settleRound(timeout: true, finishImmediately: true);
   }
 
-  void _beginRound(BuildContext context) {
+  void _beginRound() {
     if (!mounted || !_running) {
       return;
     }
-    if (_roundIndex >= _roundCount) {
-      _finish(reportContext: context);
+    if (!_infiniteMode && _roundIndex >= _roundCount) {
+      _finish();
       return;
     }
     _cancelTimers();
-    final plan = _buildRoundPlan(context);
+    final plan = _buildRoundPlan();
     _updateView(() {
       _plan = plan;
-      _leftResult = null;
-      _rightResult = null;
+      _leftResult = plan.leftActive ? null : _practiceRestResult(_i18n);
+      _rightResult = plan.rightActive ? null : _practiceRestResult(_i18n);
       _roundSettled = false;
       _serial += 1;
       _roundStopwatch
@@ -1655,144 +2488,342 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       if (!mounted || !_running || _roundSettled) {
         return;
       }
-      _settleRound(context, timeout: true);
+      _settleRound(timeout: true, finishImmediately: _infiniteMode);
     });
   }
 
-  _BrainSplitRoundPlan _buildRoundPlan(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+  _BrainSplitRoundPlan _buildRoundPlan() {
+    final i18n = _i18n;
     final baseDuration = switch (_paceLevel) {
-      1 => 17000,
-      2 => 13600,
-      3 => 11200,
-      _ => 9400,
+      1 => 18200,
+      2 => 14800,
+      3 => 12200,
+      _ => 10400,
     };
     final pressure = (_roundIndex / math.max(1, _roundCount - 1)).clamp(
       0.0,
       1.0,
     );
-    final duration = (baseDuration - pressure * 3400)
+    final duration = ((baseDuration - pressure * 3400) * _difficultyTimeFactor)
         .round()
-        .clamp(7600, 19000)
+        .clamp(6400, 22000)
         .toInt();
-    final swapHands = _roundIndex.isOdd;
-
-    final left = switch (_mode) {
-      _BimanualMode.arcade =>
-        swapHands
-            ? _buildBounceSpec(context, _BimanualSide.left, _roundIndex + 17)
-            : _buildTraceSpec(context, _BimanualSide.left, _roundIndex + 11),
-      _BimanualMode.splitBrain =>
-        swapHands
-            ? _buildClimbSpec(context, _BimanualSide.left, _roundIndex + 21)
-            : _buildBounceSpec(context, _BimanualSide.left, _roundIndex + 13),
-      _BimanualMode.conductor =>
-        swapHands
-            ? _buildClimbSpec(context, _BimanualSide.left, _roundIndex + 31)
-            : _buildTraceSpec(context, _BimanualSide.left, _roundIndex + 23),
-    };
-
-    final right = switch (_mode) {
-      _BimanualMode.arcade =>
-        swapHands
-            ? _buildTraceSpec(context, _BimanualSide.right, _roundIndex + 29)
-            : _buildBounceSpec(context, _BimanualSide.right, _roundIndex + 19),
-      _BimanualMode.splitBrain =>
-        swapHands
-            ? _buildBounceSpec(context, _BimanualSide.right, _roundIndex + 25)
-            : _buildClimbSpec(context, _BimanualSide.right, _roundIndex + 15),
-      _BimanualMode.conductor =>
-        swapHands
-            ? _buildTraceSpec(context, _BimanualSide.right, _roundIndex + 37)
-            : _buildClimbSpec(context, _BimanualSide.right, _roundIndex + 27),
-    };
+    final serialSeed = _infiniteMode
+        ? _roundIndex + _mistakes * 19 + _score * 3
+        : _roundIndex;
+    final left = _buildTaskSpec(
+      _BimanualSide.left,
+      _leftTaskType,
+      serialSeed + 11,
+    );
+    final right = _buildTaskSpec(
+      _BimanualSide.right,
+      _rightTaskType,
+      serialSeed + 37,
+    );
+    final leftActive = _isSideActive(_BimanualSide.left);
+    final rightActive = _isSideActive(_BimanualSide.right);
+    final label = _singleSidePractice
+        ? pickUiText(
+            i18n,
+            zh: '${_sideLabel(i18n, _practiceSide)}单侧 ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
+            en: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
+            ja: '${_sideLabel(i18n, _practiceSide)} のみ ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
+            de: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
+            fr: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
+            es: 'No.',
+            ru: '${_sideLabel(i18n, _practiceSide)} только ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
+          )
+        : _pairLabel(i18n, left.type, right.type);
 
     return _BrainSplitRoundPlan(
-      label: _pairLabel(i18n, left.type, right.type),
+      label: label,
       left: left,
       right: right,
+      leftActive: leftActive,
+      rightActive: rightActive,
       durationMs: duration,
     );
   }
 
-  _BrainSplitTaskSpec _buildTraceSpec(
-    BuildContext context,
+  double get _difficultyTimeFactor {
+    return switch (_difficulty) {
+      _BimanualDifficulty.relaxed => 1.18,
+      _BimanualDifficulty.standard => 1.0,
+      _BimanualDifficulty.hard => 0.9,
+      _BimanualDifficulty.expert => 0.78,
+    };
+  }
+
+  int get _difficultyIndex => _BimanualDifficulty.values.indexOf(_difficulty);
+
+  _BrainSplitTaskSpec _buildTaskSpec(
     _BimanualSide side,
+    _BimanualTaskType type,
     int seed,
   ) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final shapeNames = <String>[
-      pickUiText(i18n, zh: 'A', en: 'A'),
-      pickUiText(i18n, zh: 'B', en: 'B'),
-      pickUiText(i18n, zh: 'C', en: 'C'),
-      pickUiText(i18n, zh: 'D', en: 'D'),
-    ];
-    final shape = shapeNames[seed % shapeNames.length];
+    return switch (type) {
+      _BimanualTaskType.trace => _buildTraceSpec(side, seed),
+      _BimanualTaskType.bounce => _buildBounceSpec(side, seed),
+      _BimanualTaskType.climb => _buildClimbSpec(side, seed),
+    };
+  }
+
+  _BrainSplitTaskSpec _buildTraceSpec(_BimanualSide side, int seed) {
+    final i18n = _i18n;
+    final pattern = _resolvedTracePattern(seed);
+    final patternLabel = _tracePatternLabel(i18n, pattern);
+    final lineStyleLabel = _traceLineStyleLabel(i18n, _traceLineStyle);
     final sideLabel = _sideLabel(i18n, side);
+    final nodes = (_traceNodeCount + _difficultyIndex - 1 + seed % 2)
+        .clamp(4, 10)
+        .toInt();
+    final threshold = (0.145 - _difficultyIndex * 0.014).clamp(0.085, 0.16);
     return _BrainSplitTaskSpec(
       type: _BimanualTaskType.trace,
       title: pickUiText(
         i18n,
-        zh: '$sideLabel 画图 $shape',
-        en: '$sideLabel Trace $shape',
+        zh: '$sideLabel 画图 $patternLabel',
+        en: '$sideLabel Trace $patternLabel',
+        ja: '$sideLabelバウンスハイジャンプトレース $patternLabel',
+        de: '$sideLabel Trace $patternLabel',
+        fr: '$sideLabel Trace $patternLabel',
+        es: '■v0/ título Trace',
+        ru: '$sideLabel След $patternLabel',
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '沿着节点顺序拖动指尖，把图形 $shape 一笔连完。',
-        en: 'Drag your finger through the checkpoints and finish shape $shape in one line.',
+        zh: '随机生成 $nodes 个几何节点，沿 $lineStyleLabel 一笔连完，偏离过远会扣分。',
+        en: 'Trace $nodes seeded geometry nodes as one $lineStyleLabel stroke; drifting too far costs points.',
+        ja: 'Trace $nodes seeded geometry nodes as one $lineStyleLabel stroke; drifting too far costs points.',
+        de: 'Trace $nodes seeded geometry nodes as one $lineStyleLabel stroke; drifting too far costs points.',
+        fr: 'Tracez les nœuds géométriques ensemencés comme une course $lineStyleLabel; dériver trop loin coûte des points.',
+        es: 'Rastreo de nodos geométricos seededed como uno de ellos; derivando demasiados costos puntos.',
+        ru: 'След $nodes засеянные геометрические узлы как один $lineStyleLabel ход; дрейф слишком далеко стоит точек.',
       ),
-      goalText: pickUiText(i18n, zh: '画完形状 $shape', en: 'Finish shape $shape'),
+      goalText: pickUiText(
+        i18n,
+        zh: '画完随机$patternLabel',
+        en: 'Finish random $patternLabel',
+        ja: 'Finish random $patternLabel',
+        de: 'Finish random $patternLabel',
+        fr: 'Terminer au hasard $patternLabel',
+        es: 'Finalizar al azar',
+        ru: 'Завершить случайный $patternLabel',
+      ),
       accent: _traceAccent,
       seed: seed,
+      difficulty: _difficulty,
+      tracePattern: pattern,
+      traceLineStyle: _traceLineStyle,
+      traceNodeCount: nodes,
+      traceThreshold: threshold.toDouble(),
+      traceSegmentMode: _traceSegmentMode,
+      traceMinAngleDegrees: _traceMinAngleDegrees,
+      traceColorSegments: _traceColorSegments,
     );
   }
 
-  _BrainSplitTaskSpec _buildBounceSpec(
-    BuildContext context,
-    _BimanualSide side,
-    int seed,
-  ) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+  _BrainSplitTaskSpec _buildBounceSpec(_BimanualSide side, int seed) {
+    final i18n = _i18n;
     final sideLabel = _sideLabel(i18n, side);
-    final rallies = 5 + (seed % 2);
+    final rallies = (_bounceTargetRallies + _difficultyIndex + seed % 2)
+        .clamp(3, 14)
+        .toInt();
+    final speedScale = (_bounceSpeedScale + _difficultyIndex * 0.09)
+        .clamp(0.65, 2.2)
+        .toDouble();
+    final paddleWidth = (_bouncePaddleWidth - _difficultyIndex * 0.012)
+        .clamp(0.16, 0.36)
+        .toDouble();
+    final ballRadius = (_bounceBallRadius - _difficultyIndex * 0.001).clamp(
+      0.030,
+      0.060,
+    );
+    final bounceObstacles = _buildBounceObstacles(seed);
     return _BrainSplitTaskSpec(
       type: _BimanualTaskType.bounce,
-      title: pickUiText(i18n, zh: '$sideLabel 弹球', en: '$sideLabel Pinball'),
+      title: pickUiText(
+        i18n,
+        zh: '$sideLabel 弹球',
+        en: '$sideLabel Bounce',
+        ja: '$sideLabel',
+        de: '$sideLabel Bounce',
+        fr: '$sideLabel Bounce',
+        es: '&quot; Rebonce &quot;',
+        ru: '$sideLabel Отскок',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '拖动挡板托住小球，连续稳住 $rallies 次回弹。',
-        en: 'Drag the paddle to keep the ball alive for $rallies rallies.',
+        zh: '在底部控制区拖动挡板，小球会撞随机障碍，速度 ${speedScale.toStringAsFixed(1)}x，稳住 $rallies 次。',
+        en: 'Drag from the lower control strip; the ball rebounds off random bumpers at ${speedScale.toStringAsFixed(1)}x for $rallies rallies.',
+        ja: 'Drag from the lower control strip; the ball rebounds off random bumpers at ${speedScale.toStringAsFixed(1)}x for $rallies rallies.',
+        de: 'Drag from the lower control strip; the ball rebounds off random bumpers at ${speedScale.toStringAsFixed(1)}x for $rallies rallies.',
+        fr: 'Faites glisser de la bande de contrôle inférieure; la balle rebondit des pare-chocs aléatoires à ${speedScale.toStringAsFixed(1)}x pour les rassemblements $rallies.',
+        es: 'Arrastre de la tira de control inferior; la bola rebota a los parachoques aleatorios en rallies de <v0/юx.',
+        ru: 'Перетащите с нижней контрольной полосы; мяч отскакивает от случайных бамперов на ${speedScale.toStringAsFixed(1)}x для митингов $rallies.',
       ),
       goalText: pickUiText(
         i18n,
         zh: '稳住 $rallies 次回弹',
         en: 'Keep $rallies rallies',
+        ja: 'Keep $rallies rallies',
+        de: 'Keep $rallies rallies',
+        fr: 'Conserver les rassemblements $rallies',
+        es: 'Mantener los rallyes',
+        ru: 'Сохранить $rallies митинги',
       ),
       accent: _bounceAccent,
       seed: seed,
+      difficulty: _difficulty,
+      targetCount: rallies,
+      speedScale: speedScale,
+      ballRadius: ballRadius.toDouble(),
+      ballCount: _bounceBallCount,
+      collisionAcceleration: _bounceCollisionAcceleration,
+      paddleWidth: paddleWidth,
+      paddleHeight: _bouncePaddleHeight,
+      bounceObstacles: bounceObstacles,
     );
   }
 
-  _BrainSplitTaskSpec _buildClimbSpec(
-    BuildContext context,
-    _BimanualSide side,
-    int seed,
-  ) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+  _BrainSplitTaskSpec _buildClimbSpec(_BimanualSide side, int seed) {
+    final i18n = _i18n;
     final sideLabel = _sideLabel(i18n, side);
-    final steps = 6 + (seed % 2);
+    final steps = (_climbStepCount + _difficultyIndex + seed % 2)
+        .clamp(5, 13)
+        .toInt();
+    final platformSpeed = (0.78 + _climbPlatformSpeedLevel * 0.18)
+        .clamp(0.55, 1.65)
+        .toDouble();
+    final platforms = _buildClimbPlatforms(steps, seed, platformSpeed);
     return _BrainSplitTaskSpec(
       type: _BimanualTaskType.climb,
-      title: pickUiText(i18n, zh: '$sideLabel 楼梯', en: '$sideLabel Stair run'),
+      title: pickUiText(
+        i18n,
+        zh: '$sideLabel 跳高',
+        en: '$sideLabel High jump',
+        ja: '$sideLabel',
+        de: '$sideLabel High jump',
+        fr: '$sideLabel High jump',
+        es: 'salto alto',
+        ru: '<v0/Высокий прыжок',
+      ),
       subtitle: pickUiText(
         i18n,
-        zh: '短按迈一步，长按充能跳过管道，冲到第 $steps 级。',
-        en: 'Tap to step, hold to charge over pipe barriers, and reach step $steps.',
+        zh: '看准横向移动平台，点击或按住蓄力逐层跳上去，冲到第 $steps 层。',
+        en: 'Time the moving platforms, tap or charge based on difficulty, and climb $steps levels.',
+        ja: 'Time the moving platforms, tap or charge based on difficulty, and climb $steps levels.',
+        de: 'Time the moving platforms, tap or charge based on difficulty, and climb $steps levels.',
+        fr: 'Temps de déplacement des plates-formes, tapoter ou charger en fonction de la difficulté, et monter $steps niveaux.',
+        es: 'Tiempo de las plataformas móviles, pulsar o cargar sobre la base de la dificultad, y escalar los niveles de garantía real.',
+        ru: 'Время перемещения платформ, нажатие или зарядка в зависимости от сложности и подъем уровня $steps.',
       ),
-      goalText: pickUiText(i18n, zh: '冲上 $steps 级楼梯', en: 'Reach step $steps'),
+      goalText: pickUiText(
+        i18n,
+        zh: '登顶 $steps 层',
+        en: 'Reach level $steps',
+        ja: 'Reach level $steps',
+        de: 'Reach level $steps',
+        fr: 'Niveau $steps',
+        es: 'Nivel de acceso',
+        ru: 'Достижение уровня $steps',
+      ),
       accent: _climbAccent,
       seed: seed,
+      difficulty: _difficulty,
+      targetCount: steps,
+      speedScale: platformSpeed,
+      platformWidth: _climbPlatformWidth,
+      platformWidthRandomness: _climbPlatformWidthRandomness,
+      climbPlatforms: platforms,
     );
+  }
+
+  List<_BrainSplitBounceObstacle> _buildBounceObstacles(int seed) {
+    final random = math.Random(seed * 97 + _difficultyIndex * 131);
+    final count = (_difficultyIndex + 1 + seed % 2).clamp(1, 5).toInt();
+    return List<_BrainSplitBounceObstacle>.generate(count, (index) {
+      final column = count == 1 ? 0.5 : (index + 1) / (count + 1);
+      final jitterX = (random.nextDouble() - 0.5) * 0.12;
+      final centerY = 0.22 + random.nextDouble() * 0.42;
+      final radius = (0.038 + random.nextDouble() * 0.020)
+          .clamp(0.034, 0.064)
+          .toDouble();
+      return _BrainSplitBounceObstacle(
+        center: Offset(
+          (column + jitterX).clamp(0.18, 0.82).toDouble(),
+          centerY.clamp(0.18, 0.66).toDouble(),
+        ),
+        radius: radius,
+      );
+    });
+  }
+
+  List<_BrainSplitJumpPlatform> _buildClimbPlatforms(
+    int steps,
+    int seed,
+    double platformSpeed,
+  ) {
+    final random = math.Random(seed * 173 + _difficultyIndex * 41);
+    return List<_BrainSplitJumpPlatform>.generate(steps, (index) {
+      final level = index + 1;
+      final randomWidthOffset = _climbPlatformWidthRandomness <= 0
+          ? 0.0
+          : (random.nextDouble() * 2 - 1) * _climbPlatformWidthRandomness;
+      final width =
+          (_climbPlatformWidth -
+                  _difficultyIndex * 0.010 -
+                  level * 0.002 +
+                  randomWidthOffset)
+              .clamp(0.16, 0.46)
+              .toDouble();
+      final speed =
+          (platformSpeed * (0.33 + random.nextDouble() * 0.24 + level * 0.012))
+              .clamp(0.22, 0.86)
+              .toDouble();
+      final requiresCharge = switch (_difficulty) {
+        _BimanualDifficulty.relaxed => false,
+        _BimanualDifficulty.standard => level >= 4 && level.isEven,
+        _BimanualDifficulty.hard => level >= 3,
+        _BimanualDifficulty.expert => level >= 2,
+      };
+      final requiredCharge = requiresCharge
+          ? (0.44 + _difficultyIndex * 0.08 + random.nextDouble() * 0.15)
+                .clamp(0.48, 0.9)
+                .toDouble()
+          : 0.0;
+      return _BrainSplitJumpPlatform(
+        level: level,
+        width: width,
+        speed: speed,
+        phase: random.nextDouble(),
+        requiredCharge: requiredCharge,
+      );
+    });
+  }
+
+  _BrainSplitTracePattern _resolvedTracePattern(int seed) {
+    if (_tracePattern != _BrainSplitTracePattern.mixed) {
+      return _tracePattern;
+    }
+    const patterns = <_BrainSplitTracePattern>[
+      _BrainSplitTracePattern.zigzag,
+      _BrainSplitTracePattern.wave,
+      _BrainSplitTracePattern.star,
+      _BrainSplitTracePattern.spiral,
+      _BrainSplitTracePattern.box,
+      _BrainSplitTracePattern.steps,
+      _BrainSplitTracePattern.loop,
+      _BrainSplitTracePattern.triangle,
+      _BrainSplitTracePattern.square,
+      _BrainSplitTracePattern.rectangle,
+      _BrainSplitTracePattern.circle,
+      _BrainSplitTracePattern.trapezoid,
+      _BrainSplitTracePattern.diamond,
+      _BrainSplitTracePattern.polyhedron,
+    ];
+    return patterns[seed % patterns.length];
   }
 
   String _pairLabel(
@@ -1806,29 +2837,358 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       i18n,
       zh: '$leftLabel / $rightLabel',
       en: '$leftLabel / $rightLabel',
+      ja: '$leftLabel /$rightLabel',
+      de: '$leftLabel / $rightLabel',
+      fr: '$leftLabel / $rightLabel',
+      es: '- No.',
+      ru: '$leftLabel $rightLabel',
     );
   }
 
   String _taskLabel(AppI18n i18n, _BimanualTaskType type) {
     return switch (type) {
-      _BimanualTaskType.trace => pickUiText(i18n, zh: '画图', en: 'Trace'),
-      _BimanualTaskType.bounce => pickUiText(i18n, zh: '弹球', en: 'Bounce'),
-      _BimanualTaskType.climb => pickUiText(i18n, zh: '楼梯', en: 'Climb'),
+      _BimanualTaskType.trace => pickUiText(
+        i18n,
+        zh: '画图',
+        en: 'Trace',
+        ja: 'Trace',
+        de: 'Trace',
+        fr: 'Trace',
+        es: 'Trace',
+        ru: 'след',
+      ),
+      _BimanualTaskType.bounce => pickUiText(
+        i18n,
+        zh: '弹球',
+        en: 'Bounce',
+        ja: 'バウンスバウンス',
+        de: 'Bounce',
+        fr: 'Bounce',
+        es: 'Bounce',
+        ru: 'отскакивать',
+      ),
+      _BimanualTaskType.climb => pickUiText(
+        i18n,
+        zh: '跳高',
+        en: 'High jump',
+        ja: 'High jump',
+        de: 'High jump',
+        fr: 'Saut en hauteur',
+        es: 'Alto salto',
+        ru: 'Высокий прыжок',
+      ),
+    };
+  }
+
+  String _difficultyLabel(AppI18n i18n, _BimanualDifficulty difficulty) {
+    return switch (difficulty) {
+      _BimanualDifficulty.relaxed => pickUiText(
+        i18n,
+        zh: '舒缓',
+        en: 'Relaxed',
+        ja: 'Relaxed',
+        de: 'Relaxed',
+        fr: 'Détends-toi',
+        es: 'Relajado',
+        ru: 'Расслабленный',
+      ),
+      _BimanualDifficulty.standard => pickUiText(
+        i18n,
+        zh: '标准',
+        en: 'Standard',
+        ja: 'Standard',
+        de: 'Standard',
+        fr: 'Norme',
+        es: 'Estándar',
+        ru: 'Стандарт',
+      ),
+      _BimanualDifficulty.hard => pickUiText(
+        i18n,
+        zh: '困难',
+        en: 'Hard',
+        ja: 'Hard',
+        de: 'Hard',
+        fr: 'Dur',
+        es: 'Duro',
+        ru: 'Жесткий',
+      ),
+      _BimanualDifficulty.expert => pickUiText(
+        i18n,
+        zh: '专家',
+        en: 'Expert',
+        ja: 'Expert',
+        de: 'Expert',
+        fr: 'Expert',
+        es: 'Expert',
+        ru: 'эксперт',
+      ),
+    };
+  }
+
+  String _tracePatternLabel(AppI18n i18n, _BrainSplitTracePattern pattern) {
+    return switch (pattern) {
+      _BrainSplitTracePattern.mixed => pickUiText(
+        i18n,
+        zh: '混合',
+        en: 'Mixed',
+        ja: 'Mixed',
+        de: 'Mixed',
+        fr: 'Mélange',
+        es: 'Mezcla',
+        ru: 'смешанный',
+      ),
+      _BrainSplitTracePattern.zigzag => pickUiText(
+        i18n,
+        zh: '折线',
+        en: 'Zigzag',
+        ja: 'Zigzag',
+        de: 'Zigzag',
+        fr: 'Zigzag',
+        es: 'Zigzag',
+        ru: 'Зигзаг',
+      ),
+      _BrainSplitTracePattern.wave => pickUiText(
+        i18n,
+        zh: '波浪',
+        en: 'Wave',
+        ja: 'Wave',
+        de: 'Wave',
+        fr: 'Vague',
+        es: 'Wave',
+        ru: 'волна',
+      ),
+      _BrainSplitTracePattern.star => pickUiText(
+        i18n,
+        zh: '星形',
+        en: 'Star',
+        ja: 'Star',
+        de: 'Star',
+        fr: 'Étoile',
+        es: 'Star',
+        ru: 'Звезда',
+      ),
+      _BrainSplitTracePattern.spiral => pickUiText(
+        i18n,
+        zh: '螺旋',
+        en: 'Spiral',
+        ja: 'Spiral',
+        de: 'Spiral',
+        fr: 'Spirale',
+        es: 'Spiral',
+        ru: 'спиральный',
+      ),
+      _BrainSplitTracePattern.box => pickUiText(
+        i18n,
+        zh: '方框',
+        en: 'Box',
+        ja: 'ボックス',
+        de: 'Box',
+        fr: 'Boîte',
+        es: 'Recuadro',
+        ru: 'Коробка',
+      ),
+      _BrainSplitTracePattern.steps => pickUiText(
+        i18n,
+        zh: '阶梯',
+        en: 'Steps',
+        ja: 'Steps',
+        de: 'Steps',
+        fr: 'Étapes',
+        es: 'Pasos',
+        ru: 'Шаги',
+      ),
+      _BrainSplitTracePattern.loop => pickUiText(
+        i18n,
+        zh: '回环',
+        en: 'Loop',
+        ja: 'Loop',
+        de: 'Loop',
+        fr: 'Boucle',
+        es: 'Loop',
+        ru: 'Луп',
+      ),
+      _BrainSplitTracePattern.triangle => pickUiText(
+        i18n,
+        zh: '三角形',
+        en: 'Triangle',
+        ja: 'Triangle',
+        de: 'Triangle',
+        fr: 'Triangle',
+        es: 'Triángulo',
+        ru: 'Треугольник',
+      ),
+      _BrainSplitTracePattern.square => pickUiText(
+        i18n,
+        zh: '正方形',
+        en: 'Square',
+        ja: 'Square',
+        de: 'Square',
+        fr: 'Carré',
+        es: 'Plaza',
+        ru: 'Площадь',
+      ),
+      _BrainSplitTracePattern.rectangle => pickUiText(
+        i18n,
+        zh: '长方形',
+        en: 'Rectangle',
+        ja: 'Rectangle',
+        de: 'Rectangle',
+        fr: 'Rectangle',
+        es: 'Rectángulo',
+        ru: 'прямоугольник',
+      ),
+      _BrainSplitTracePattern.circle => pickUiText(
+        i18n,
+        zh: '圆形',
+        en: 'Circle',
+        ja: '円',
+        de: 'Circle',
+        fr: 'Cercle',
+        es: 'Circle',
+        ru: 'Круг',
+      ),
+      _BrainSplitTracePattern.trapezoid => pickUiText(
+        i18n,
+        zh: '梯形',
+        en: 'Trapezoid',
+        ja: 'Trapezoid',
+        de: 'Trapezoid',
+        fr: 'Trapézoïde',
+        es: 'Trapezoide',
+        ru: 'Трапезоид',
+      ),
+      _BrainSplitTracePattern.diamond => pickUiText(
+        i18n,
+        zh: '菱形',
+        en: 'Diamond',
+        ja: 'Diamond',
+        de: 'Diamond',
+        fr: 'Diamant',
+        es: 'Diamante',
+        ru: 'алмаз',
+      ),
+      _BrainSplitTracePattern.polyhedron => pickUiText(
+        i18n,
+        zh: '多面体',
+        en: 'Polyhedron',
+        ja: 'Polyhedron',
+        de: 'Polyhedron',
+        fr: 'Polyèdre',
+        es: 'Polyhedron',
+        ru: 'многогранник',
+      ),
+    };
+  }
+
+  String _traceLineStyleLabel(AppI18n i18n, _BrainSplitTraceLineStyle style) {
+    return switch (style) {
+      _BrainSplitTraceLineStyle.solid => pickUiText(
+        i18n,
+        zh: '实线',
+        en: 'Solid',
+        ja: 'Solid',
+        de: 'Solid',
+        fr: 'Solide',
+        es: 'Sólido',
+        ru: 'твердый',
+      ),
+      _BrainSplitTraceLineStyle.dashed => pickUiText(
+        i18n,
+        zh: '虚线',
+        en: 'Dashed',
+        ja: 'Dashed',
+        de: 'Dashed',
+        fr: 'Déchiqueté',
+        es: 'Dashed',
+        ru: 'разбитый',
+      ),
+      _BrainSplitTraceLineStyle.dotted => pickUiText(
+        i18n,
+        zh: '点线',
+        en: 'Dotted',
+        ja: 'Dotted',
+        de: 'Dotted',
+        fr: 'Pointillé',
+        es: 'Dotted',
+        ru: 'точечный',
+      ),
+      _BrainSplitTraceLineStyle.ribbon => pickUiText(
+        i18n,
+        zh: '宽带',
+        en: 'Ribbon',
+        ja: 'Ribbon',
+        de: 'Ribbon',
+        fr: 'Ruban',
+        es: 'Ribbon',
+        ru: 'Лента',
+      ),
+    };
+  }
+
+  String _traceSegmentModeLabel(
+    AppI18n i18n,
+    _BrainSplitTraceSegmentMode mode,
+  ) {
+    return switch (mode) {
+      _BrainSplitTraceSegmentMode.straight => pickUiText(
+        i18n,
+        zh: '直线',
+        en: 'Straight',
+        ja: 'Straight',
+        de: 'Straight',
+        fr: 'Tout droit',
+        es: 'Derecho',
+        ru: 'Прямой',
+      ),
+      _BrainSplitTraceSegmentMode.curved => pickUiText(
+        i18n,
+        zh: '曲线',
+        en: 'Curved',
+        ja: 'Curved',
+        de: 'Curved',
+        fr: 'Courbé',
+        es: 'Curva',
+        ru: 'искривленный',
+      ),
+      _BrainSplitTraceSegmentMode.random => pickUiText(
+        i18n,
+        zh: '随机',
+        en: 'Random',
+        ja: 'Random',
+        de: 'Random',
+        fr: 'Aléatoire',
+        es: 'Aleatorio',
+        ru: 'Случайность',
+      ),
     };
   }
 
   String _sideLabel(AppI18n i18n, _BimanualSide side) {
     return switch (side) {
-      _BimanualSide.left => pickUiText(i18n, zh: '左侧', en: 'Left'),
-      _BimanualSide.right => pickUiText(i18n, zh: '右侧', en: 'Right'),
+      _BimanualSide.left => pickUiText(
+        i18n,
+        zh: '左侧',
+        en: 'Left',
+        ja: 'Left',
+        de: 'Left',
+        fr: 'Gauche',
+        es: 'Izquierda',
+        ru: 'Левый',
+      ),
+      _BimanualSide.right => pickUiText(
+        i18n,
+        zh: '右侧',
+        en: 'Right',
+        ja: 'Right',
+        de: 'Right',
+        fr: 'Droite',
+        es: 'Bien.',
+        ru: 'Правильно.',
+      ),
     };
   }
 
-  void _recordLaneResult(
-    BuildContext context,
-    _BimanualSide side,
-    _BrainSplitLaneResult result,
-  ) {
+  void _recordLaneResult(_BimanualSide side, _BrainSplitLaneResult result) {
     if (!_running || _roundSettled) {
       return;
     }
@@ -1839,31 +3199,30 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         _rightResult = result;
       }
     });
+    final leftActive = _plan?.leftActive ?? true;
+    final rightActive = _plan?.rightActive ?? true;
     if (!result.success) {
-      _settleRound(context, timeout: false);
+      _settleRound(timeout: false, finishImmediately: !_infiniteMode);
       return;
     }
-    if (_leftResult != null && _rightResult != null) {
-      _settleRound(context, timeout: false);
+    if ((!leftActive || _leftResult != null) &&
+        (!rightActive || _rightResult != null)) {
+      _settleRound(timeout: false);
     }
   }
 
-  void _expireSession(BuildContext context) {
+  void _expireSession() {
     if (!mounted || !_running) {
       return;
     }
     if (_roundSettled) {
-      _finish(reportContext: context);
+      _finish();
       return;
     }
-    _settleRound(context, timeout: true, finishImmediately: true);
+    _settleRound(timeout: true, finishImmediately: true);
   }
 
-  void _settleRound(
-    BuildContext context, {
-    required bool timeout,
-    bool finishImmediately = false,
-  }) {
+  void _settleRound({required bool timeout, bool finishImmediately = false}) {
     if (!_running || _roundSettled) {
       return;
     }
@@ -1883,9 +3242,14 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           detail: timeout
               ? 'timeout'
               : pickUiText(
-                  AppI18n(Localizations.localeOf(context).languageCode),
+                  _i18n,
                   zh: '未完成',
                   en: 'Incomplete',
+                  ja: 'Incomplete',
+                  de: 'Incomplete',
+                  fr: 'Incomplète',
+                  es: 'Incompleto',
+                  ru: 'неполный',
                 ),
         );
     final right =
@@ -1896,16 +3260,24 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           detail: timeout
               ? 'timeout'
               : pickUiText(
-                  AppI18n(Localizations.localeOf(context).languageCode),
+                  _i18n,
                   zh: '未完成',
                   en: 'Incomplete',
+                  ja: 'Incomplete',
+                  de: 'Incomplete',
+                  fr: 'Incomplète',
+                  es: 'Incompleto',
+                  ru: 'неполный',
                 ),
         );
-    final bothSuccess = left.success && right.success;
-    final syncGapMs = bothSuccess
+    final leftSuccess = !plan.leftActive || left.success;
+    final rightSuccess = !plan.rightActive || right.success;
+    final bothActive = plan.leftActive && plan.rightActive;
+    final bothSuccess = leftSuccess && rightSuccess;
+    final syncGapMs = bothSuccess && bothActive
         ? (left.milliseconds - right.milliseconds).abs()
         : 0;
-    final syncBonus = bothSuccess && syncGapMs <= _syncWindowMs
+    final syncBonus = bothSuccess && bothActive && syncGapMs <= _syncWindowMs
         ? (10 - (syncGapMs / 35).round()).clamp(0, 10).toInt()
         : 0;
     final roundScore = left.scoreDelta + right.scoreDelta + syncBonus;
@@ -1926,16 +3298,19 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         _bestCombo = math.max(_bestCombo, _combo);
       } else {
         _combo = 0;
-        _mistakes += (left.success ? 0 : 1) + (right.success ? 0 : 1);
+        _mistakes +=
+            (plan.leftActive && !left.success ? 1 : 0) +
+            (plan.rightActive && !right.success ? 1 : 0);
       }
-      if (left.success) {
+      if (plan.leftActive && left.success) {
         _leftWins += 1;
       }
-      if (right.success) {
+      if (plan.rightActive && right.success) {
         _rightWins += 1;
       }
       _roundIndex += 1;
-      _done = finishImmediately || _roundIndex >= _roundCount;
+      _done =
+          finishImmediately || (!_infiniteMode && _roundIndex >= _roundCount);
       _running = !_done;
       _plan = null;
       _leftResult = null;
@@ -1944,7 +3319,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     });
     HapticFeedback.lightImpact();
     if (_done) {
-      _finish(reportContext: context);
+      _finish();
       return;
     }
     _advanceTimer = Timer(const Duration(milliseconds: 540), () {
@@ -1952,9 +3327,9 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         return;
       }
       if (_done) {
-        _finish(reportContext: context);
-      } else {
-        _beginRound(context);
+        _finish();
+      } else if (_running) {
+        _beginRound();
       }
     });
   }
@@ -1986,30 +3361,93 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
   }
 
   String _modeLabel(AppI18n i18n, _BimanualMode mode) {
-    return switch (mode) {
-      _BimanualMode.arcade => pickUiText(i18n, zh: '街机混合', en: 'Arcade mix'),
-      _BimanualMode.splitBrain => pickUiText(
+    if (_singleSidePractice) {
+      final taskType = _practiceSide == _BimanualSide.left
+          ? _leftTaskType
+          : _rightTaskType;
+      return pickUiText(
         i18n,
-        zh: '脑裂风暴',
-        en: 'Split-brain storm',
-      ),
-      _BimanualMode.conductor => pickUiText(
-        i18n,
-        zh: '节奏指挥',
-        en: 'Rhythm conductor',
-      ),
-    };
+        zh: '${_sideLabel(i18n, _practiceSide)}单侧 ${_taskLabel(i18n, taskType)}',
+        en: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, taskType)}',
+        ja: '${_sideLabel(i18n, _practiceSide)} のみ ${_taskLabel(i18n, taskType)}',
+        de: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, taskType)}',
+        fr: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, taskType)}',
+        es: 'No.',
+        ru: '${_sideLabel(i18n, _practiceSide)} только ${_taskLabel(i18n, taskType)}',
+      );
+    }
+    return _pairLabel(i18n, _leftTaskType, _rightTaskType);
   }
 
   String _timeLimitLabel(AppI18n i18n, int limitMs) {
     return switch (limitMs) {
-      0 => pickUiText(i18n, zh: '无限', en: 'Unlimited'),
-      180000 => pickUiText(i18n, zh: '3 分钟', en: '3 min'),
-      300000 => pickUiText(i18n, zh: '5 分钟', en: '5 min'),
-      600000 => pickUiText(i18n, zh: '10 分钟', en: '10 min'),
-      900000 => pickUiText(i18n, zh: '15 分钟', en: '15 min'),
+      0 => pickUiText(
+        i18n,
+        zh: '无限',
+        en: 'Unlimited',
+        ja: 'Unlimited',
+        de: 'Unlimited',
+        fr: 'Illimité',
+        es: 'Ilimitados',
+        ru: 'неограниченный',
+      ),
+      180000 => pickUiText(
+        i18n,
+        zh: '3 分钟',
+        en: '3 min',
+        ja: '3分',
+        de: '3 min',
+        fr: '3 min',
+        es: '3 min',
+        ru: '3 мин.',
+      ),
+      300000 => pickUiText(
+        i18n,
+        zh: '5 分钟',
+        en: '5 min',
+        ja: '5分',
+        de: '5 min',
+        fr: '5 min',
+        es: '5 minutos',
+        ru: '5 мин.',
+      ),
+      600000 => pickUiText(
+        i18n,
+        zh: '10 分钟',
+        en: '10 min',
+        ja: '10分',
+        de: '10 min',
+        fr: '10 min',
+        es: '10 min',
+        ru: '10 мин.',
+      ),
+      900000 => pickUiText(
+        i18n,
+        zh: '15 分钟',
+        en: '15 min',
+        ja: '15分',
+        de: '15 min',
+        fr: '15 min',
+        es: '15 minutos',
+        ru: '15 мин.',
+      ),
       _ => _formatMilliseconds(limitMs),
     };
+  }
+
+  String _progressLabel(AppI18n i18n) {
+    return _infiniteMode
+        ? pickUiText(
+            i18n,
+            zh: '无限 $_roundIndex',
+            en: 'Endless $_roundIndex',
+            ja: 'Endless $_roundIndex',
+            de: 'Endless $_roundIndex',
+            fr: 'Sans fin $_roundIndex',
+            es: 'Endless',
+            ru: 'Бесконечный $_roundIndex',
+          )
+        : '$_roundIndex/$_roundCount';
   }
 
   @override
@@ -2022,21 +3460,81 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(i18n, zh: '进度', en: 'Progress'),
+              pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
               '$_roundIndex/$_roundCount',
             ),
             (
-              pickUiText(i18n, zh: '时长', en: 'Time limit'),
+              pickUiText(
+                i18n,
+                zh: '时长',
+                en: 'Time limit',
+                ja: 'Time limit',
+                de: 'Time limit',
+                fr: 'Délai',
+                es: 'Plazo límite',
+                ru: 'предельный срок',
+              ),
               _timeLimitLabel(i18n, _timeLimitMs),
             ),
-            (pickUiText(i18n, zh: '分数', en: 'Score'), '$_score'),
-            (pickUiText(i18n, zh: '连击', en: 'Combo'), '$_combo'),
             (
-              pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '分数',
+                en: 'Score',
+                ja: 'Score',
+                de: 'Score',
+                fr: 'Score',
+                es: 'Puntuación',
+                ru: 'счет',
+              ),
+              '$_score',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '连击',
+                en: 'Combo',
+                ja: 'コンボ',
+                de: 'Combo',
+                fr: 'Combo',
+                es: 'Combo',
+                ru: 'Комбинация',
+              ),
+              '$_combo',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '准确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               _records.isEmpty ? '-' : '${(_accuracy * 100).round()}%',
             ),
             (
-              pickUiText(i18n, zh: '平均用时', en: 'Avg lane time'),
+              pickUiText(
+                i18n,
+                zh: '平均用时',
+                en: 'Avg lane time',
+                ja: 'レーン時間',
+                de: 'Avg lane time',
+                fr: 'Heure de la voie d\'Avg',
+                es: 'Tiempo de carril de Avg',
+                ru: 'Время в пути',
+              ),
               _averageMs == 0 ? '-' : _formatMilliseconds(_averageMs),
             ),
           ],
@@ -2051,19 +3549,41 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                 spacing: 8,
                 runSpacing: 8,
                 children: <Widget>[
-                  _HumanPill(text: _modeLabel(i18n, _mode), accent: _accent),
+                  _HumanPill(
+                    text:
+                        '${_taskLabel(i18n, _leftTaskType)} / ${_taskLabel(i18n, _rightTaskType)}',
+                    accent: _accent,
+                  ),
+                  if (_singleSidePractice)
+                    _HumanPill(
+                      text: pickUiText(
+                        i18n,
+                        zh: '${_sideLabel(i18n, _practiceSide)}单侧练习',
+                        en: '${_sideLabel(i18n, _practiceSide)} practice',
+                        ja: '${_sideLabel(i18n, _practiceSide)}練習',
+                        de: '${_sideLabel(i18n, _practiceSide)} practice',
+                        fr: '${_sideLabel(i18n, _practiceSide)} practice',
+                        es: '■v0/ Práctica',
+                        ru: '${_sideLabel(i18n, _practiceSide)} Практика',
+                      ),
+                      accent: _rightAccent,
+                    ),
+                  _HumanPill(
+                    text: _difficultyLabel(i18n, _difficulty),
+                    accent: _dangerAccent,
+                  ),
                   _HumanPill(
                     text: plan == null ? '-' : plan.label,
                     accent: plan == null ? _accent : _traceAccent,
                   ),
                   _HumanPill(
                     text:
-                        '${pickUiText(i18n, zh: '同步窗', en: 'Sync')} $_syncWindowMs ms',
+                        '${pickUiText(i18n, zh: '同步窗', en: 'Sync', ja: 'Sync', de: 'Sync', fr: 'Synchronisation', es: 'Sync', ru: 'синхронизация')} $_syncWindowMs ms',
                     accent: _rightAccent,
                   ),
                   _HumanPill(
                     text:
-                        '${pickUiText(i18n, zh: '充能', en: 'Charge')} $_holdTargetMs ms',
+                        '${pickUiText(i18n, zh: '充能', en: 'Charge', ja: 'チャージ', de: 'Charge', fr: 'Frais', es: 'Carga', ru: 'Зарядка')} $_holdTargetMs ms',
                     accent: _climbAccent,
                   ),
                   _HumanPill(
@@ -2077,13 +3597,23 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                 plan == null
                     ? pickUiText(
                         i18n,
-                        zh: '手机默认会先进入全屏横屏训练；设置、重置和报告都收在菜单里。',
-                        en: 'Mobile opens fullscreen landscape first; settings, reset, and reports live in the menu.',
+                        zh: '默认左右都是弹球，可在设置里自由组合画图、弹球和跳高；也可开启单侧练习。',
+                        en: 'Both hands default to Bounce. Freely combine Trace, Bounce, and High jump in settings, or enable single-side practice.',
+                        ja: '手はデフォルトでバウンスします。 設定でトレース、バウンス、ハイジャンプを自由に組み合わせるか、片側練習を有効にします。',
+                        de: 'Both hands default to Bounce. Freely combine Trace, Bounce, and High jump in settings, or enable single-side practice.',
+                        fr: 'Les deux mains par défaut à Bounce. Combinez librement Trace, Bounce et High bond dans les réglages, ou activez la pratique à un seul côté.',
+                        es: 'Ambas manos predeterminan a Bounce. Combina libremente Trace, Bounce y Alto salto en la configuración, o habilitar la práctica de un solo lado.',
+                        ru: 'Обе руки по умолчанию отскакивают. Свободно комбинируйте Trace, Bounce и High jump в настройках или включите одностороннюю практику.',
                       )
                     : pickUiText(
                         i18n,
                         zh: '${plan.left.goalText}，${plan.right.goalText}。两侧都完成后可获得同步奖励，全屏里操作更顺手。',
                         en: '${plan.left.goalText}. ${plan.right.goalText}. Finish both sides to earn the sync bonus; fullscreen keeps the controls usable.',
+                        ja: '${plan.left.goalText} ${plan.right.goalText}。両サイドを完了して同期ボーナスを獲得します。フルスクリーンはコントロールを使用可能にします。',
+                        de: '${plan.left.goalText}. ${plan.right.goalText}. Finish both sides to earn the sync bonus; fullscreen keeps the controls usable.',
+                        fr: '${plan.left.goalText}. ${plan.right.goalText}. Finish both sides to earn the sync bonus; fullscreen keeps the controls usable.',
+                        es: '- No. Termina ambos lados para ganar el bono de sincronización; pantalla completa mantiene los controles utilizables.',
+                        ru: '${plan.left.goalText} ${plan.right.goalText}. Заканчивайте обе стороны, чтобы заработать бонус синхронизации; полноэкранный режим поддерживает управление.',
                       ),
                 style: Theme.of(
                   context,
@@ -2100,10 +3630,37 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           children: <Widget>[
             _HumanActionButton(
               label: _fullscreenOpening
-                  ? pickUiText(i18n, zh: '正在打开', en: 'Opening')
+                  ? pickUiText(
+                      i18n,
+                      zh: '正在打开',
+                      en: 'Opening',
+                      ja: 'Opening',
+                      de: 'Opening',
+                      fr: 'Ouverture',
+                      es: 'Apertura',
+                      ru: 'Открытие',
+                    )
                   : _running
-                  ? pickUiText(i18n, zh: '返回全屏', en: 'Return fullscreen')
-                  : pickUiText(i18n, zh: '全屏开始', en: 'Fullscreen start'),
+                  ? pickUiText(
+                      i18n,
+                      zh: '返回全屏',
+                      en: 'Return fullscreen',
+                      ja: 'Return fullscreen',
+                      de: 'Return fullscreen',
+                      fr: 'Retour en plein écran',
+                      es: 'Regrese pantalla completa',
+                      ru: 'Возврат полноэкранного',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '全屏开始',
+                      en: 'Fullscreen start',
+                      ja: 'Fullscreen start',
+                      de: 'Fullscreen start',
+                      fr: 'Début en plein écran',
+                      es: 'Inicio de pantalla completa',
+                      ru: 'Полноэкранный старт',
+                    ),
               icon: Icons.fullscreen_rounded,
               onPressed: _fullscreenOpening
                   ? null
@@ -2139,32 +3696,762 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '玩法配对', en: 'Pair mode'),
+          pickUiText(
+            i18n,
+            zh: '左右自由组合',
+            en: 'Free hand pairing',
+            ja: 'Free hand pairing',
+            de: 'Free hand pairing',
+            fr: 'Jumelage à main libre',
+            es: 'Pareja de mano libre',
+            ru: 'Свободная пара рук',
+          ),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _BrainSplitTaskPicker(
+          title: pickUiText(
+            i18n,
+            zh: '左手模式',
+            en: 'Left hand',
+            ja: 'Left hand',
+            de: 'Left hand',
+            fr: 'Main gauche',
+            es: 'Mano izquierda',
+            ru: 'Левая рука',
+          ),
+          value: _leftTaskType,
+          enabled: !_running,
+          i18n: i18n,
+          labelFor: _taskLabel,
+          onChanged: (type) {
+            _setSideTask(_BimanualSide.left, type);
+            onChanged?.call();
+          },
+        ),
+        const SizedBox(height: 12),
+        _BrainSplitTaskPicker(
+          title: pickUiText(
+            i18n,
+            zh: '右手模式',
+            en: 'Right hand',
+            ja: 'Right hand',
+            de: 'Right hand',
+            fr: 'Main droite',
+            es: 'Mano derecha',
+            ru: 'Правая рука',
+          ),
+          value: _rightTaskType,
+          enabled: !_running,
+          i18n: i18n,
+          labelFor: _taskLabel,
+          onChanged: (type) {
+            _setSideTask(_BimanualSide.right, type);
+            onChanged?.call();
+          },
+        ),
+        const SizedBox(height: 12),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '难度设置',
+            en: 'Difficulty',
+            ja: 'Difficulty',
+            de: 'Difficulty',
+            fr: 'Difficulté',
+            es: 'Dificultad',
+            ru: 'трудность',
           ),
         ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _BimanualMode.values
+          children: _BimanualDifficulty.values
               .map(
-                (mode) => ChoiceChip(
-                  label: Text(_modeLabel(i18n, mode)),
-                  selected: _mode == mode,
+                (difficulty) => ChoiceChip(
+                  label: Text(_difficultyLabel(i18n, difficulty)),
+                  selected: _difficulty == difficulty,
                   onSelected: _running
                       ? null
-                      : (_) {
-                          _setMode(mode);
-                          onChanged?.call();
-                        },
+                      : (_) => applySetting(
+                          () => _applyDifficultyPreset(difficulty),
+                        ),
                 ),
               )
               .toList(growable: false),
         ),
         const SizedBox(height: 12),
-        Text(pickUiText(i18n, zh: '轮数', en: 'Rounds')),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _infiniteMode,
+          onChanged: _running
+              ? null
+              : (value) => applySetting(() => _infiniteMode = value ?? false),
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '无限模式',
+              en: 'Endless mode',
+              ja: 'Endless mode',
+              de: 'Endless mode',
+              fr: 'Mode sans fin',
+              es: 'Modo sin fin',
+              ru: 'Бесконечный режим',
+            ),
+          ),
+          subtitle: Text(
+            pickUiText(
+              i18n,
+              zh: '成功持续得分，失败自动重开下一组；手动暂停或时间耗尽后再结算。',
+              en: 'Success keeps scoring, failure restarts the stream; stop manually or let the time limit end it.',
+              ja: 'Success keeps scoring, failure restarts the stream; stop manually or let the time limit end it.',
+              de: 'Success keeps scoring, failure restarts the stream; stop manually or let the time limit end it.',
+              fr: 'La réussite continue de marquer, l\'échec redémarre le flux; s\'arrêter manuellement ou laisser la limite de temps finir.',
+              es: 'El éxito sigue marcando, el fracaso reinicia el flujo; deténgase manualmente o deje que el límite de tiempo termine.',
+              ru: 'Успех продолжает забивать, неудача перезапускает поток; остановитесь вручную или дайте временному пределу закончить его.',
+            ),
+          ),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _singleSidePractice,
+          onChanged: _running
+              ? null
+              : (value) =>
+                    applySetting(() => _singleSidePractice = value ?? false),
+          title: Text(
+            pickUiText(
+              i18n,
+              zh: '单侧练习',
+              en: 'Single-side practice',
+              ja: 'Single-side practice',
+              de: 'Single-side practice',
+              fr: 'Pratique individuelle',
+              es: 'Práctica unilateral',
+              ru: 'Односторонняя практика',
+            ),
+          ),
+          subtitle: Text(
+            pickUiText(
+              i18n,
+              zh: '默认关闭；开启后只训练选中一侧，另一侧休息且不参与同步分。',
+              en: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
+              ja: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
+              de: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
+              fr: 'Désactivez par défaut; entraînez un côté sélectionné tandis que l\'autre repose et ne compte pas vers la synchronisation.',
+              es: 'De forma predeterminada; entrena un lado seleccionado mientras el otro descansa y no cuenta hacia la sincronización.',
+              ru: 'По умолчанию; тренируйте одну выбранную сторону, в то время как другая отдыхает и не рассчитывает на синхронизацию.',
+            ),
+          ),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '练习侧',
+                  en: 'Practice side',
+                  ja: 'Practice side',
+                  de: 'Practice side',
+                  fr: 'Côté pratique',
+                  es: 'Practicar el lado',
+                  ru: 'Практическая сторона',
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _BimanualSide.values
+                    .map(
+                      (side) => ChoiceChip(
+                        label: Text(
+                          side == _BimanualSide.left
+                              ? pickUiText(
+                                  i18n,
+                                  zh: '只练左侧',
+                                  en: 'Left only',
+                                  ja: 'Left only',
+                                  de: 'Left only',
+                                  fr: 'A gauche seulement',
+                                  es: 'Izquierda',
+                                  ru: 'Осталось только',
+                                )
+                              : pickUiText(
+                                  i18n,
+                                  zh: '只练右侧',
+                                  en: 'Right only',
+                                  ja: 'Right only',
+                                  de: 'Right only',
+                                  fr: 'Droit seulement',
+                                  es: 'Sólo derecho',
+                                  ru: 'Правильно только',
+                                ),
+                        ),
+                        selected: _practiceSide == side,
+                        onSelected: _running
+                            ? null
+                            : (_) => applySetting(() => _practiceSide = side),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _HumanSettingsSection(
+          title: pickUiText(
+            i18n,
+            zh: '画图设置',
+            en: 'Trace settings',
+            ja: 'Trace settings',
+            de: 'Trace settings',
+            fr: 'Paramètres des traces',
+            es: 'Ajustes de trace',
+            ru: 'Настройки трассы',
+          ),
+          subtitle: pickUiText(
+            i18n,
+            zh: '每回合按风格随机生成几何一笔画节点，线段样式和节点数同时作用于左右画图赛道。',
+            en: 'Each round generates seeded geometric one-stroke nodes; style and checkpoint count apply to every Trace lane.',
+            ja: 'Each round generates seeded geometric one-stroke nodes; style and checkpoint count apply to every Trace lane.',
+            de: 'Each round generates seeded geometric one-stroke nodes; style and checkpoint count apply to every Trace lane.',
+            fr: 'Chaque tour génère des nœuds géométriques à un temps; le style et le nombre de points de contrôle s\'appliquent à chaque voie Trace.',
+            es: 'Cada ronda genera nodos geométricos de un solo golpe de semilla; el estilo y la cuenta de control se aplican a cada carril Trace.',
+            ru: 'Каждый раунд генерирует семенные геометрические однотактные узлы; стиль и количество контрольных точек применяются к каждой полосе трассы.',
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '图案模式',
+                  en: 'Pattern mode',
+                  ja: 'Pattern mode',
+                  de: 'Pattern mode',
+                  fr: 'Mode modèle',
+                  es: 'Modo de patrón',
+                  ru: 'Режим шаблона',
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _BrainSplitTracePattern.values
+                    .map(
+                      (pattern) => ChoiceChip(
+                        key: ValueKey<String>(
+                          'brain_split_trace_pattern_${pattern.name}',
+                        ),
+                        label: Text(_tracePatternLabel(i18n, pattern)),
+                        selected: _tracePattern == pattern,
+                        onSelected: _running
+                            ? null
+                            : (_) =>
+                                  applySetting(() => _tracePattern = pattern),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '线段样式',
+                  en: 'Line style',
+                  ja: 'Line style',
+                  de: 'Line style',
+                  fr: 'Style de ligne',
+                  es: 'Estilo de línea',
+                  ru: 'Стиль линии',
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _BrainSplitTraceLineStyle.values
+                    .map(
+                      (style) => ChoiceChip(
+                        label: Text(_traceLineStyleLabel(i18n, style)),
+                        selected: _traceLineStyle == style,
+                        onSelected: _running
+                            ? null
+                            : (_) =>
+                                  applySetting(() => _traceLineStyle = style),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '线段几何',
+                  en: 'Segment geometry',
+                  ja: 'Segment geometry',
+                  de: 'Segment geometry',
+                  fr: 'Géométrie du segment',
+                  es: 'Geometría de segmentos',
+                  ru: 'Геометрия сегмента',
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _BrainSplitTraceSegmentMode.values
+                    .map(
+                      (mode) => ChoiceChip(
+                        label: Text(_traceSegmentModeLabel(i18n, mode)),
+                        selected: _traceSegmentMode == mode,
+                        onSelected: _running
+                            ? null
+                            : (_) =>
+                                  applySetting(() => _traceSegmentMode = mode),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '节点数量',
+                  en: 'Checkpoints',
+                  ja: 'チェックポイント',
+                  de: 'Checkpoints',
+                  fr: 'Points de contrôle',
+                  es: 'Puntos de control',
+                  ru: 'Контрольные точки',
+                ),
+              ),
+              Slider(
+                value: _traceNodeCount.toDouble(),
+                min: 4,
+                max: 12,
+                divisions: 8,
+                label: '$_traceNodeCount',
+                onChanged: _running
+                    ? null
+                    : (value) =>
+                          applySetting(() => _traceNodeCount = value.round()),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '最小角度',
+                  en: 'Minimum angle',
+                  ja: 'Minimum angle',
+                  de: 'Minimum angle',
+                  fr: 'Angle minimal',
+                  es: 'Ángulo mínimo',
+                  ru: 'Минимальный угол',
+                ),
+              ),
+              Slider(
+                value: _traceMinAngleDegrees,
+                min: 15,
+                max: 70,
+                divisions: 11,
+                label: '${_traceMinAngleDegrees.round()}°',
+                onChanged: _running
+                    ? null
+                    : (value) =>
+                          applySetting(() => _traceMinAngleDegrees = value),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _traceColorSegments,
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(
+                        () => _traceColorSegments = value ?? false,
+                      ),
+                title: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '分段彩色提示',
+                    en: 'Color each segment',
+                    ja: '各セグメントのカラー',
+                    de: 'Color each segment',
+                    fr: 'Couleur de chaque segment',
+                    es: 'Color cada segmento',
+                    ru: 'Цвет каждого сегмента',
+                  ),
+                ),
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '复杂交叉图形中用颜色和方向箭头凸显下一段。',
+                    en: 'Use colors and arrows to clarify the next segment in complex paths.',
+                    ja: 'Use colors and arrows to clarify the next segment in complex paths.',
+                    de: 'Use colors and arrows to clarify the next segment in complex paths.',
+                    fr: 'Utilisez les couleurs et les flèches pour clarifier le segment suivant dans les chemins complexes.',
+                    es: 'Utilice colores y flechas para aclarar el siguiente segmento en caminos complejos.',
+                    ru: 'Используйте цвета и стрелки для уточнения следующего сегмента сложными путями.',
+                  ),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _HumanSettingsSection(
+          title: pickUiText(
+            i18n,
+            zh: '弹球设置',
+            en: 'Bounce settings',
+            ja: '設定',
+            de: 'Bounce settings',
+            fr: 'Réglages des rebonds',
+            es: 'Ajustes de recompensa',
+            ru: 'Настройка отказов',
+          ),
+          subtitle: pickUiText(
+            i18n,
+            zh: '小球更小并加入随机障碍碰撞；挡板上移，底部控制条避免手指遮挡。',
+            en: 'The smaller ball now hits random bumpers; the paddle sits above a lower control strip so fingers do not cover it.',
+            ja: 'The smaller ball now hits random bumpers; the paddle sits above a lower control strip so fingers do not cover it.',
+            de: 'The smaller ball now hits random bumpers; the paddle sits above a lower control strip so fingers do not cover it.',
+            fr: 'La petite balle frappe maintenant des pare-chocs aléatoires; la pagaie est assise au-dessus d\'une bande de contrôle inférieure afin que les doigts ne la couvrent pas.',
+            es: 'La bola más pequeña ahora golpea los parachoques aleatorios; la paleta se sienta por encima de una tira de control inferior por lo que los dedos no lo cubren.',
+            ru: 'Меньший шар теперь попадает в случайные бамперы; весло находится над нижней контрольной полосой, поэтому пальцы не покрывают его.',
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '小球速率',
+                  en: 'Ball speed',
+                  ja: 'ボール速度',
+                  de: 'Ball speed',
+                  fr: 'Vitesse de la bille',
+                  es: 'Velocidad de bolas',
+                  ru: 'Скорость мяча',
+                ),
+              ),
+              Slider(
+                value: _bounceSpeedScale,
+                min: 0.7,
+                max: 1.7,
+                divisions: 10,
+                label: '${_bounceSpeedScale.toStringAsFixed(1)}x',
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(() => _bounceSpeedScale = value),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '球的大小',
+                  en: 'Ball size',
+                  ja: 'ボールサイズ',
+                  de: 'Ball size',
+                  fr: 'Taille de la boule',
+                  es: 'Tamaño de la bola',
+                  ru: 'Размер мяча',
+                ),
+              ),
+              Slider(
+                value: _bounceBallRadius,
+                min: 0.030,
+                max: 0.060,
+                divisions: 15,
+                label: '${(_bounceBallRadius * 100).round()}%',
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(() => _bounceBallRadius = value),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '小球个数',
+                  en: 'Ball count',
+                  ja: 'ボールカウント',
+                  de: 'Ball count',
+                  fr: 'Nombre de balles',
+                  es: 'Conteo de bolas',
+                  ru: 'Количество мячей',
+                ),
+              ),
+              Slider(
+                value: _bounceBallCount.toDouble(),
+                min: 1,
+                max: 3,
+                divisions: 2,
+                label: '$_bounceBallCount',
+                onChanged: _running
+                    ? null
+                    : (value) =>
+                          applySetting(() => _bounceBallCount = value.round()),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _bounceCollisionAcceleration,
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(
+                        () => _bounceCollisionAcceleration = value ?? false,
+                      ),
+                title: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '碰撞加速',
+                    en: 'Collision boost',
+                    ja: '衝突',
+                    de: 'Collision boost',
+                    fr: 'Augmentation de la collision',
+                    es: 'Aumento de la colisión',
+                    ru: 'Усиление столкновения',
+                  ),
+                ),
+                subtitle: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '关闭时每次碰撞只反弹；开启后挡板和障碍碰撞会逐步提速。',
+                    en: 'Off means rebound only; on makes paddle and bumper hits gradually faster.',
+                    ja: 'Off means rebound only; on makes paddle and bumper hits gradually faster.',
+                    de: 'Off means rebound only; on makes paddle and bumper hits gradually faster.',
+                    fr: 'Off signifie rebondissement seulement; sur fait paddle et pare-chocs frappe progressivement plus rapidement.',
+                    es: 'Fuera significa rebotar solamente; en hace que el remo y el parachoques golpea gradualmente más rápido.',
+                    ru: 'Выключение означает только отскок; на делает весло и бампер удары постепенно быстрее.',
+                  ),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '回弹目标',
+                  en: 'Rally target',
+                  ja: 'Rally target',
+                  de: 'Rally target',
+                  fr: 'Cible du rallye',
+                  es: 'Objetivo del Rally',
+                  ru: 'Цель ралли',
+                ),
+              ),
+              Slider(
+                value: _bounceTargetRallies.toDouble(),
+                min: 3,
+                max: 10,
+                divisions: 7,
+                label: '$_bounceTargetRallies',
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(
+                        () => _bounceTargetRallies = value.round(),
+                      ),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '挡板宽度',
+                  en: 'Paddle width',
+                  ja: 'Paddle width',
+                  de: 'Paddle width',
+                  fr: 'Largeur des pagaies',
+                  es: 'Ancho de paleta',
+                  ru: 'Ширина седла',
+                ),
+              ),
+              Slider(
+                value: _bouncePaddleWidth,
+                min: 0.18,
+                max: 0.34,
+                divisions: 8,
+                label: '${(_bouncePaddleWidth * 100).round()}%',
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(() => _bouncePaddleWidth = value),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '挡板厚度',
+                  en: 'Paddle thickness',
+                  ja: 'Paddle thickness',
+                  de: 'Paddle thickness',
+                  fr: 'Épaisseur de la pagaie',
+                  es: 'Espesor de palanca',
+                  ru: 'толщина седла',
+                ),
+              ),
+              Slider(
+                value: _bouncePaddleHeight,
+                min: 0.026,
+                max: 0.07,
+                divisions: 11,
+                label: '${(_bouncePaddleHeight * 100).round()}%',
+                onChanged: _running
+                    ? null
+                    : (value) =>
+                          applySetting(() => _bouncePaddleHeight = value),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _HumanSettingsSection(
+          title: pickUiText(
+            i18n,
+            zh: '跳高设置',
+            en: 'High jump settings',
+            ja: 'High jump settings',
+            de: 'High jump settings',
+            fr: 'Paramètres de saut élevé',
+            es: 'Ajustes de salto alto',
+            ru: 'Высокие прыжки',
+          ),
+          subtitle: pickUiText(
+            i18n,
+            zh: '跳高改为横向移动平台，点击或按住蓄力逐层跳上平台直到登顶。',
+            en: 'High jump now uses horizontally moving platforms; tap or hold to charge and climb to the summit one level at a time.',
+            ja: 'High jump now uses horizontally moving platforms; tap or hold to charge and climb to the summit one level at a time.',
+            de: 'High jump now uses horizontally moving platforms; tap or hold to charge and climb to the summit one level at a time.',
+            fr: 'Le saut en hauteur utilise maintenant des plates-formes en mouvement horizontal; touchez ou maintenez pour charger et monter au sommet un niveau à la fois.',
+            es: 'Alto salto ahora utiliza plataformas horizontalmente móviles; pulsar o mantener la carga y subir a la cumbre un nivel a la vez.',
+            ru: 'Высокий прыжок теперь использует горизонтально движущиеся платформы; нажмите или удерживайте заряд и поднимайтесь на вершину по одному уровню за раз.',
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '平台层数',
+                  en: 'Platform levels',
+                  ja: 'Platform levels',
+                  de: 'Platform levels',
+                  fr: 'Niveaux de la plate-forme',
+                  es: 'Niveles de la plataforma',
+                  ru: 'Уровень платформы',
+                ),
+              ),
+              Slider(
+                value: _climbStepCount.toDouble(),
+                min: 5,
+                max: 11,
+                divisions: 6,
+                label: '$_climbStepCount',
+                onChanged: _running
+                    ? null
+                    : (value) =>
+                          applySetting(() => _climbStepCount = value.round()),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '平台宽度',
+                  en: 'Platform width',
+                  ja: 'Platform width',
+                  de: 'Platform width',
+                  fr: 'Largeur de la plateforme',
+                  es: 'Ancho de plataforma',
+                  ru: 'Ширина платформы',
+                ),
+              ),
+              Slider(
+                value: _climbPlatformWidth,
+                min: 0.18,
+                max: 0.44,
+                divisions: 13,
+                label: '${(_climbPlatformWidth * 100).round()}%',
+                onChanged: _running
+                    ? null
+                    : (value) =>
+                          applySetting(() => _climbPlatformWidth = value),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '宽度随机区间',
+                  en: 'Width randomness',
+                  ja: 'Width randomness',
+                  de: 'Width randomness',
+                  fr: 'Largeur aléatoire',
+                  es: 'Aleatoriedad',
+                  ru: 'Случайность',
+                ),
+              ),
+              Slider(
+                value: _climbPlatformWidthRandomness,
+                min: 0,
+                max: 0.16,
+                divisions: 8,
+                label: _climbPlatformWidthRandomness == 0
+                    ? pickUiText(
+                        i18n,
+                        zh: '不随机',
+                        en: 'Fixed',
+                        ja: 'Fixed',
+                        de: 'Fixed',
+                        fr: 'Correction',
+                        es: 'Fijación',
+                        ru: 'фиксированный',
+                      )
+                    : '±${(_climbPlatformWidthRandomness * 100).round()}%',
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(
+                        () => _climbPlatformWidthRandomness = value,
+                      ),
+              ),
+              Text(
+                pickUiText(
+                  i18n,
+                  zh: '平台速率',
+                  en: 'Platform speed',
+                  ja: 'Platform speed',
+                  de: 'Platform speed',
+                  fr: 'Vitesse de la plate-forme',
+                  es: 'Velocidad de la plataforma',
+                  ru: 'Скорость платформы',
+                ),
+              ),
+              Slider(
+                value: _climbPlatformSpeedLevel.toDouble(),
+                min: 1,
+                max: 4,
+                divisions: 3,
+                label: '$_climbPlatformSpeedLevel',
+                onChanged: _running
+                    ? null
+                    : (value) => applySetting(
+                        () => _climbPlatformSpeedLevel = value.round(),
+                      ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '轮数',
+            en: 'Rounds',
+            ja: 'Rounds',
+            de: 'Rounds',
+            fr: 'Rondes',
+            es: 'Rondas',
+            ru: 'Круги',
+          ),
+        ),
         Slider(
           value: _roundCount.toDouble(),
           min: 8,
@@ -2176,7 +4463,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               : (value) => applySetting(() => _roundCount = value.round()),
         ),
         const SizedBox(height: 12),
-        Text(pickUiText(i18n, zh: '计时时长', en: 'Time limit')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '计时时长',
+            en: 'Time limit',
+            ja: 'Time limit',
+            de: 'Time limit',
+            fr: 'Délai',
+            es: 'Plazo límite',
+            ru: 'предельный срок',
+          ),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -2193,7 +4491,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               )
               .toList(growable: false),
         ),
-        Text(pickUiText(i18n, zh: '节奏强度', en: 'Pace level')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '节奏强度',
+            en: 'Pace level',
+            ja: 'Pace level',
+            de: 'Pace level',
+            fr: 'Niveau de Pace',
+            es: 'Nivel de rotación',
+            ru: 'Уровень темпа',
+          ),
+        ),
         Slider(
           value: _paceLevel.toDouble(),
           min: 1,
@@ -2204,7 +4513,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               ? null
               : (value) => applySetting(() => _paceLevel = value.round()),
         ),
-        Text(pickUiText(i18n, zh: '同步窗', en: 'Sync window')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '同步窗',
+            en: 'Sync window',
+            ja: 'Sync window',
+            de: 'Sync window',
+            fr: 'Synchroniser la fenêtre',
+            es: 'Ventana sincronizada',
+            ru: 'Синхронное окно',
+          ),
+        ),
         Slider(
           value: _syncWindowMs.toDouble(),
           min: 120,
@@ -2215,7 +4535,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               ? null
               : (value) => applySetting(() => _syncWindowMs = value.round()),
         ),
-        Text(pickUiText(i18n, zh: '充能时长', en: 'Charge window')),
+        Text(
+          pickUiText(
+            i18n,
+            zh: '充能时长',
+            en: 'Charge window',
+            ja: 'チャージウィンドウ',
+            de: 'Charge window',
+            fr: 'Fenêtre de chargement',
+            es: 'Ventana de carga',
+            ru: 'Окно зарядки',
+          ),
+        ),
         Slider(
           value: _holdTargetMs.toDouble(),
           min: 220,
@@ -2240,7 +4571,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       context: targetContext,
       builder: (context) => _BrainSplitReportDialog(
         i18n: i18n,
-        mode: _modeLabel(i18n, _mode),
+        mode: _modeLabel(i18n, _BimanualMode.arcade),
         records: List<_BrainSplitRoundRecord>.unmodifiable(_records),
         score: _score,
         bestCombo: _bestCombo,
@@ -2262,7 +4593,16 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         final colorScheme = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
           title: Text(
-            pickUiText(i18n, zh: '双手脑裂设置', en: 'Split-brain settings'),
+            pickUiText(
+              i18n,
+              zh: '双手脑裂设置',
+              en: 'Split-brain settings',
+              ja: 'Split-brain settings',
+              de: 'Split-brain settings',
+              fr: 'Réglages des cerveaux fractionnés',
+              es: 'Ajustes de doble cerebro',
+              ru: 'Сплит-мозг настройки',
+            ),
           ),
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
@@ -2282,7 +4622,16 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
-                pickUiText(i18n, zh: '关闭', en: 'Close'),
+                pickUiText(
+                  i18n,
+                  zh: '关闭',
+                  en: 'Close',
+                  ja: '閉じる',
+                  de: 'Close',
+                  fr: 'Fermer',
+                  es: 'Cerca',
+                  ru: 'Закрыть',
+                ),
                 style: TextStyle(color: colorScheme.primary),
               ),
             ),
@@ -2298,11 +4647,13 @@ class _BrainSplitActionMenuButton extends StatelessWidget {
     required this.state,
     required this.i18n,
     required this.fullscreen,
+    this.onExit,
   });
 
   final _BimanualBrainSplitGameState state;
   final AppI18n i18n;
   final bool fullscreen;
+  final VoidCallback? onExit;
 
   @override
   Widget build(BuildContext context) {
@@ -2310,16 +4661,18 @@ class _BrainSplitActionMenuButton extends StatelessWidget {
     final actionKey = fullscreen
         ? const ValueKey<String>('brain_split_fullscreen_menu_button')
         : const ValueKey<String>('brain_split_menu_button');
-    final startStopAction = fullscreen && !state._running
-        ? PopupMenuItem<_BrainSplitFullscreenAction>(
-            value: _BrainSplitFullscreenAction.stop,
-            enabled: false,
-            child: Text(pickUiText(i18n, zh: '挑战进行中', en: 'Running')),
-          )
-        : null;
     return PopupMenuButton<_BrainSplitFullscreenAction>(
       key: actionKey,
-      tooltip: pickUiText(i18n, zh: '更多', en: 'More'),
+      tooltip: pickUiText(
+        i18n,
+        zh: '更多',
+        en: 'More',
+        ja: 'More',
+        de: 'More',
+        fr: 'Plus',
+        es: 'Más',
+        ru: 'Больше',
+      ),
       icon: const Icon(Icons.more_vert_rounded),
       onSelected: (action) {
         switch (action) {
@@ -2334,42 +4687,143 @@ class _BrainSplitActionMenuButton extends StatelessWidget {
             break;
           case _BrainSplitFullscreenAction.stop:
             if (state._running) {
-              state._stopChallenge(context);
+              state._stopChallenge();
             }
             break;
           case _BrainSplitFullscreenAction.exit:
-            Navigator.of(context).pop();
+            onExit?.call();
             break;
         }
       },
       itemBuilder: (context) => <PopupMenuEntry<_BrainSplitFullscreenAction>>[
         PopupMenuItem<_BrainSplitFullscreenAction>(
           value: _BrainSplitFullscreenAction.settings,
-          child: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '设置',
+              en: 'Settings',
+              ja: 'Settings',
+              de: 'Settings',
+              fr: 'Paramètres',
+              es: 'Ajustes',
+              ru: 'Настройки',
+            ),
+          ),
         ),
         PopupMenuItem<_BrainSplitFullscreenAction>(
           value: _BrainSplitFullscreenAction.reset,
-          child: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '重置',
+              en: 'Reset',
+              ja: 'Reset',
+              de: 'Reset',
+              fr: 'Réinitialiser',
+              es: 'Reset',
+              ru: 'сброс',
+            ),
+          ),
         ),
         if (reportEnabled)
           PopupMenuItem<_BrainSplitFullscreenAction>(
             value: _BrainSplitFullscreenAction.report,
-            child: Text(pickUiText(i18n, zh: '报告', en: 'Report')),
+            child: Text(
+              pickUiText(
+                i18n,
+                zh: '报告',
+                en: 'Report',
+                ja: 'Report',
+                de: 'Report',
+                fr: 'Rapport annuel',
+                es: 'Informe',
+                ru: 'Доклад',
+              ),
+            ),
           ),
-        if (fullscreen ||
-            state._running) ...<PopupMenuEntry<_BrainSplitFullscreenAction>>[
-          const PopupMenuDivider(),
-          ?startStopAction,
+        if (state._running || fullscreen) const PopupMenuDivider(),
+        if (state._running)
           PopupMenuItem<_BrainSplitFullscreenAction>(
             value: _BrainSplitFullscreenAction.stop,
             enabled: state._running,
-            child: Text(pickUiText(i18n, zh: '结束挑战', en: 'Stop challenge')),
+            child: Text(
+              pickUiText(
+                i18n,
+                zh: '结束挑战',
+                en: 'Stop challenge',
+                ja: 'Stop challenge',
+                de: 'Stop challenge',
+                fr: 'Arrêter le défi',
+                es: 'Parar el desafío',
+                ru: 'Прекратить вызов',
+              ),
+            ),
           ),
+        if (fullscreen)
           PopupMenuItem<_BrainSplitFullscreenAction>(
             value: _BrainSplitFullscreenAction.exit,
-            child: Text(pickUiText(i18n, zh: '退出全屏', en: 'Exit fullscreen')),
+            child: Text(
+              pickUiText(
+                i18n,
+                zh: '退出全屏',
+                en: 'Exit fullscreen',
+                ja: 'Exit fullscreen',
+                de: 'Exit fullscreen',
+                fr: 'Sortie en plein écran',
+                es: 'Exit fullscreen',
+                ru: 'Выход Fullscreen',
+              ),
+            ),
           ),
-        ],
+      ],
+    );
+  }
+}
+
+class _BrainSplitTaskPicker extends StatelessWidget {
+  const _BrainSplitTaskPicker({
+    required this.title,
+    required this.value,
+    required this.enabled,
+    required this.i18n,
+    required this.labelFor,
+    required this.onChanged,
+  });
+
+  final String title;
+  final _BimanualTaskType value;
+  final bool enabled;
+  final AppI18n i18n;
+  final String Function(AppI18n i18n, _BimanualTaskType type) labelFor;
+  final ValueChanged<_BimanualTaskType> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _BimanualTaskType.values
+              .map(
+                (type) => ChoiceChip(
+                  label: Text(labelFor(i18n, type)),
+                  selected: value == type,
+                  onSelected: enabled ? (_) => onChanged(type) : null,
+                ),
+              )
+              .toList(growable: false),
+        ),
       ],
     );
   }
@@ -2392,6 +4846,7 @@ class _BrainSplitFullscreenView extends StatefulWidget {
 class _BrainSplitFullscreenViewState extends State<_BrainSplitFullscreenView>
     with SingleTickerProviderStateMixin {
   bool _statusExpanded = false;
+  bool _exiting = false;
 
   _BimanualBrainSplitGameState get state => widget.state;
 
@@ -2403,7 +4858,7 @@ class _BrainSplitFullscreenViewState extends State<_BrainSplitFullscreenView>
         return;
       }
       if (widget.autoStart || !state._running) {
-        state._start(context);
+        state._start();
       }
     });
   }
@@ -2412,70 +4867,98 @@ class _BrainSplitFullscreenViewState extends State<_BrainSplitFullscreenView>
     setState(() => _statusExpanded = !_statusExpanded);
   }
 
+  void _exitFullscreen() {
+    if (_exiting || !mounted) {
+      return;
+    }
+    _exiting = true;
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return Scaffold(
-      key: const ValueKey<String>('brain_split_fullscreen_view'),
-      backgroundColor: Colors.white,
-      body: AnimatedBuilder(
-        animation: Listenable.merge(<Listenable>[state._viewSignal]),
-        builder: (context, _) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final surfaceSize = Size(
-                constraints.maxWidth,
-                constraints.maxHeight,
-              );
-              final compact = surfaceSize.shortestSide < 380;
-              final topInset = MediaQuery.paddingOf(context).top;
-              final stageTopPadding = topInset + (compact ? 58 : 70);
-              return Stack(
-                children: <Widget>[
-                  Positioned.fill(
-                    child: _BrainSplitStage(
-                      key: ValueKey<String>(
-                        'brain_split_stage_${state._serial}',
-                      ),
-                      plan: state._plan,
-                      running: state._running,
-                      done: state._done,
-                      syncWindowMs: state._syncWindowMs,
-                      holdTargetMs: state._holdTargetMs,
-                      roundToken: state._serial,
-                      onLaneResult: (side, result) =>
-                          state._recordLaneResult(context, side, result),
-                      modeLabel: state._modeLabel(i18n, state._mode),
-                      fullscreen: true,
-                      activePadding: EdgeInsets.fromLTRB(
-                        compact ? 8 : 12,
-                        stageTopPadding,
-                        compact ? 8 : 12,
-                        compact ? 8 : 12,
-                      ),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _exitFullscreen();
+        }
+      },
+      child: Scaffold(
+        key: const ValueKey<String>('brain_split_fullscreen_view'),
+        backgroundColor: Colors.white,
+        body: AnimatedBuilder(
+          animation: Listenable.merge(<Listenable>[state._viewSignal]),
+          builder: (context, _) {
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final surfaceSize = Size(
+                  constraints.maxWidth,
+                  constraints.maxHeight,
+                );
+                final narrowLandscape =
+                    surfaceSize.width >= surfaceSize.height &&
+                    surfaceSize.height < 390;
+                final compact =
+                    surfaceSize.shortestSide < 390 || surfaceSize.width < 680;
+                final dense = narrowLandscape || surfaceSize.height < 430;
+                final outerPadding = EdgeInsets.fromLTRB(
+                  compact ? 6 : 10,
+                  compact ? 6 : 8,
+                  compact ? 6 : 10,
+                  compact ? 6 : 10,
+                );
+                return SafeArea(
+                  child: Padding(
+                    padding: outerPadding,
+                    child: Column(
+                      children: <Widget>[
+                        _BrainSplitFullscreenTopBar(
+                          state: state,
+                          i18n: i18n,
+                          compact: compact,
+                          dense: dense,
+                          expanded: _statusExpanded,
+                          onToggleStatus: _toggleStatus,
+                          onExit: _exitFullscreen,
+                        ),
+                        SizedBox(height: dense ? 6 : 8),
+                        Expanded(
+                          child: _BrainSplitStage(
+                            key: ValueKey<String>(
+                              'brain_split_stage_${state._serial}',
+                            ),
+                            plan: state._plan,
+                            running: state._running,
+                            done: state._done,
+                            leftActive:
+                                state._plan?.leftActive ??
+                                state._isSideActive(_BimanualSide.left),
+                            rightActive:
+                                state._plan?.rightActive ??
+                                state._isSideActive(_BimanualSide.right),
+                            syncWindowMs: state._syncWindowMs,
+                            holdTargetMs: state._holdTargetMs,
+                            roundToken: state._serial,
+                            onLaneResult: (side, result) =>
+                                state._recordLaneResult(side, result),
+                            modeLabel: state._modeLabel(
+                              i18n,
+                              _BimanualMode.arcade,
+                            ),
+                            fullscreen: true,
+                            denseFullscreen: dense,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Positioned(
-                    top: compact ? 6 : 8,
-                    left: compact ? 6 : 8,
-                    right: compact ? 6 : 8,
-                    child: SafeArea(
-                      bottom: false,
-                      child: _BrainSplitFullscreenTopBar(
-                        state: state,
-                        i18n: i18n,
-                        compact: compact,
-                        expanded: _statusExpanded,
-                        onToggleStatus: _toggleStatus,
-                        onExit: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -2486,6 +4969,7 @@ class _BrainSplitFullscreenTopBar extends StatelessWidget {
     required this.state,
     required this.i18n,
     required this.compact,
+    required this.dense,
     required this.expanded,
     required this.onToggleStatus,
     required this.onExit,
@@ -2494,6 +4978,7 @@ class _BrainSplitFullscreenTopBar extends StatelessWidget {
   final _BimanualBrainSplitGameState state;
   final AppI18n i18n;
   final bool compact;
+  final bool dense;
   final bool expanded;
   final VoidCallback onToggleStatus;
   final VoidCallback onExit;
@@ -2508,6 +4993,9 @@ class _BrainSplitFullscreenTopBar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             _HumanTestFullscreenIconButton(
+              key: const ValueKey<String>(
+                'brain_split_fullscreen_close_button',
+              ),
               onPressed: onExit,
               icon: Icons.close_rounded,
               tooltip: MaterialLocalizations.of(context).closeButtonLabel,
@@ -2523,10 +5011,15 @@ class _BrainSplitFullscreenTopBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            _BrainSplitFullscreenSessionActions(state: state, i18n: i18n),
+            _BrainSplitFullscreenSessionActions(
+              state: state,
+              i18n: i18n,
+              compact: compact || dense,
+              onExit: onExit,
+            ),
           ],
         ),
-        if (expanded) ...<Widget>[
+        if (expanded && !dense) ...<Widget>[
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
@@ -2560,12 +5053,28 @@ class _BrainSplitFullscreenStatusPeek extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final planLabel =
-        state._plan?.label ?? pickUiText(i18n, zh: '准备中', en: 'Preparing');
+        state._plan?.label ??
+        pickUiText(
+          i18n,
+          zh: '准备中',
+          en: 'Preparing',
+          ja: 'Preparing',
+          de: 'Preparing',
+          fr: 'Préparation',
+          es: 'Preparación',
+          ru: 'Подготовка',
+        );
+    final summary = compact
+        ? '${state._progressLabel(i18n)} · ${state._score}'
+        : '${state._progressLabel(i18n)} · $planLabel · ${state._score}';
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: compact ? 300 : 540),
+      constraints: BoxConstraints(maxWidth: compact ? 260 : 540),
       child: _HumanTestFullscreenPanel(
         key: const ValueKey<String>('brain_split_fullscreen_status_peek'),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 10,
+          vertical: compact ? 8 : 9,
+        ),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: onToggle,
@@ -2581,11 +5090,7 @@ class _BrainSplitFullscreenStatusPeek extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '${state._roundIndex}/${state._roundCount} · $planLabel · ${state._score}',
-                    en: '${state._roundIndex}/${state._roundCount} · $planLabel · ${state._score}',
-                  ),
+                  summary,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -2628,28 +5133,73 @@ class _BrainSplitFullscreenStatusPanel extends StatelessWidget {
           runSpacing: 8,
           children: <Widget>[
             _HumanTestFullscreenMetric(
-              label: pickUiText(i18n, zh: '模式', en: 'Mode'),
-              value: state._modeLabel(i18n, state._mode),
+              label: pickUiText(
+                i18n,
+                zh: '模式',
+                en: 'Mode',
+                ja: 'Mode',
+                de: 'Mode',
+                fr: 'Mode',
+                es: 'Modo',
+                ru: 'Режим',
+              ),
+              value: state._modeLabel(i18n, _BimanualMode.arcade),
               accent: _BimanualBrainSplitGameState._accent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(i18n, zh: '进度', en: 'Progress'),
-              value: '${state._roundIndex}/${state._roundCount}',
+              label: pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
+              value: state._progressLabel(i18n),
               accent: _BimanualBrainSplitGameState._traceAccent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(i18n, zh: '分数', en: 'Score'),
+              label: pickUiText(
+                i18n,
+                zh: '分数',
+                en: 'Score',
+                ja: 'Score',
+                de: 'Score',
+                fr: 'Score',
+                es: 'Puntuación',
+                ru: 'счет',
+              ),
               value: '${state._score}',
               accent: _BimanualBrainSplitGameState._rightAccent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(i18n, zh: '连击', en: 'Combo'),
+              label: pickUiText(
+                i18n,
+                zh: '连击',
+                en: 'Combo',
+                ja: 'コンボ',
+                de: 'Combo',
+                fr: 'Combo',
+                es: 'Combo',
+                ru: 'Комбинация',
+              ),
               value: '${state._combo}',
               accent: _BimanualBrainSplitGameState._climbAccent,
             ),
             if (!compact)
               _HumanTestFullscreenMetric(
-                label: pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+                label: pickUiText(
+                  i18n,
+                  zh: '准确率',
+                  en: 'Accuracy',
+                  ja: '精度',
+                  de: 'Accuracy',
+                  fr: 'Accuracy',
+                  es: 'Precisión',
+                  ru: 'точность',
+                ),
                 value: state._records.isEmpty
                     ? '-'
                     : '${(state._accuracy * 100).round()}%',
@@ -2666,10 +5216,14 @@ class _BrainSplitFullscreenSessionActions extends StatelessWidget {
   const _BrainSplitFullscreenSessionActions({
     required this.state,
     required this.i18n,
+    required this.compact,
+    required this.onExit,
   });
 
   final _BimanualBrainSplitGameState state;
   final AppI18n i18n;
+  final bool compact;
+  final VoidCallback onExit;
 
   Future<void> _showSettings(BuildContext context) {
     return showDialog<void>(
@@ -2682,47 +5236,101 @@ class _BrainSplitFullscreenSessionActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final reportEnabled = state._records.isNotEmpty;
     return _HumanTestFullscreenPanel(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 2 : 4,
+        vertical: compact ? 2 : 4,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           IconButton(
             key: const ValueKey<String>('brain_split_fullscreen_start_button'),
             tooltip: state._running
-                ? pickUiText(i18n, zh: '结束', en: 'Finish')
-                : pickUiText(i18n, zh: '开始', en: 'Start'),
-            onPressed: state._running
-                ? () => state._stopChallenge(context)
-                : () => state._start(context),
+                ? pickUiText(
+                    i18n,
+                    zh: '结束',
+                    en: 'Finish',
+                    ja: 'Finish',
+                    de: 'Finish',
+                    fr: 'Finition',
+                    es: 'Acabado',
+                    ru: 'Закончить',
+                  )
+                : pickUiText(
+                    i18n,
+                    zh: '开始',
+                    en: 'Start',
+                    ja: 'Start',
+                    de: 'Start',
+                    fr: 'Démarrer',
+                    es: 'Comienzo',
+                    ru: 'Начинать',
+                  ),
+            onPressed: state._running ? state._stopChallenge : state._start,
             icon: Icon(
               state._running ? Icons.stop_rounded : Icons.play_arrow_rounded,
             ),
           ),
           IconButton(
             key: const ValueKey<String>('brain_split_fullscreen_reset_button'),
-            tooltip: pickUiText(i18n, zh: '重置', en: 'Reset'),
+            tooltip: pickUiText(
+              i18n,
+              zh: '重置',
+              en: 'Reset',
+              ja: 'Reset',
+              de: 'Reset',
+              fr: 'Réinitialiser',
+              es: 'Reset',
+              ru: 'сброс',
+            ),
             onPressed: () {
               state._reset();
-              state._start(context);
+              state._start();
             },
             icon: const Icon(Icons.restart_alt_rounded),
           ),
           IconButton(
-            key: const ValueKey<String>('brain_split_fullscreen_settings_button'),
-            tooltip: pickUiText(i18n, zh: '设置', en: 'Settings'),
+            key: const ValueKey<String>(
+              'brain_split_fullscreen_settings_button',
+            ),
+            tooltip: pickUiText(
+              i18n,
+              zh: '设置',
+              en: 'Settings',
+              ja: 'Settings',
+              de: 'Settings',
+              fr: 'Paramètres',
+              es: 'Ajustes',
+              ru: 'Настройки',
+            ),
             onPressed: () => _showSettings(context),
             icon: const Icon(Icons.tune_rounded),
           ),
-          IconButton(
-            key: const ValueKey<String>('brain_split_fullscreen_report_button'),
-            tooltip: pickUiText(i18n, zh: '报告', en: 'Report'),
-            onPressed: reportEnabled ? () => state._showReport(context) : null,
-            icon: const Icon(Icons.assessment_rounded),
-          ),
+          if (!compact)
+            IconButton(
+              key: const ValueKey<String>(
+                'brain_split_fullscreen_report_button',
+              ),
+              tooltip: pickUiText(
+                i18n,
+                zh: '报告',
+                en: 'Report',
+                ja: 'Report',
+                de: 'Report',
+                fr: 'Rapport annuel',
+                es: 'Informe',
+                ru: 'Доклад',
+              ),
+              onPressed: reportEnabled
+                  ? () => state._showReport(context)
+                  : null,
+              icon: const Icon(Icons.assessment_rounded),
+            ),
           _BrainSplitActionMenuButton(
             state: state,
             i18n: i18n,
             fullscreen: true,
+            onExit: onExit,
           ),
         ],
       ),
@@ -2742,17 +5350,42 @@ class _BrainSplitFullscreenSettingsDialog extends StatelessWidget {
     final dialogWidth = math.min(420.0, math.max(280.0, mediaSize.width - 32));
     return AlertDialog(
       key: const ValueKey<String>('brain_split_fullscreen_settings_dialog'),
-      title: Text(pickUiText(i18n, zh: '双手协调设置', en: 'Bimanual settings')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '双手协调设置',
+          en: 'Bimanual settings',
+          ja: 'バイマニュアル設定',
+          de: 'Bimanual settings',
+          fr: 'Paramètres bimanuels',
+          es: 'Ajustes bimanuales',
+          ru: 'Бирумные настройки',
+        ),
+      ),
       contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       content: SizedBox(
         width: dialogWidth,
         child: SingleChildScrollView(
           child: _HumanSettingsSection(
-            title: pickUiText(i18n, zh: '脑裂挑战设置', en: 'Split-brain settings'),
+            title: pickUiText(
+              i18n,
+              zh: '脑裂挑战设置',
+              en: 'Split-brain settings',
+              ja: 'Split-brain settings',
+              de: 'Split-brain settings',
+              fr: 'Réglages des cerveaux fractionnés',
+              es: 'Ajustes de doble cerebro',
+              ru: 'Сплит-мозг настройки',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '进行中参数会锁定；重置后立即按新设置开局。',
               en: 'Running sessions lock settings; reset to restart with new values.',
+              ja: 'Running sessions lock settings; reset to restart with new values.',
+              de: 'Running sessions lock settings; reset to restart with new values.',
+              fr: 'Lancer des sessions verrouiller les paramètres; réinitialiser pour redémarrer avec de nouvelles valeurs.',
+              es: 'Realizar sesiones de configuración de bloqueo; reiniciar para reiniciar con nuevos valores.',
+              ru: 'Запуск сеансов блокировки настроек; сброс для перезапуска с новыми значениями.',
             ),
             initiallyExpanded: true,
             child: StatefulBuilder(
@@ -2781,18 +5414,22 @@ class _BrainSplitStage extends StatelessWidget {
     required this.plan,
     required this.running,
     required this.done,
+    required this.leftActive,
+    required this.rightActive,
     required this.syncWindowMs,
     required this.holdTargetMs,
     required this.roundToken,
     required this.onLaneResult,
     required this.modeLabel,
     this.fullscreen = false,
-    this.activePadding = EdgeInsets.zero,
+    this.denseFullscreen = false,
   });
 
   final _BrainSplitRoundPlan? plan;
   final bool running;
   final bool done;
+  final bool leftActive;
+  final bool rightActive;
   final int syncWindowMs;
   final int holdTargetMs;
   final int roundToken;
@@ -2800,7 +5437,7 @@ class _BrainSplitStage extends StatelessWidget {
   onLaneResult;
   final String modeLabel;
   final bool fullscreen;
-  final EdgeInsets activePadding;
+  final bool denseFullscreen;
 
   @override
   Widget build(BuildContext context) {
@@ -2813,71 +5450,101 @@ class _BrainSplitStage extends StatelessWidget {
             i18n,
             zh: '正在准备左右两侧任务。',
             en: 'Preparing left and right tasks.',
+            ja: 'Preparing left and right tasks.',
+            de: 'Preparing left and right tasks.',
+            fr: 'Préparation des tâches gauche et droite.',
+            es: 'Preparando tareas izquierda y derecha.',
+            ru: 'Подготовка левых и правых задач.',
           )
-        : pickUiText(
+        : currentPlan.leftActive && currentPlan.rightActive
+        ? pickUiText(
             i18n,
             zh: '${currentPlan.left.goalText}，${currentPlan.right.goalText}。',
             en: '${currentPlan.left.goalText}. ${currentPlan.right.goalText}.',
-          );
+            ja: '${currentPlan.left.goalText}ます${currentPlan.right.goalText}。',
+            de: '${currentPlan.left.goalText}. ${currentPlan.right.goalText}.',
+            fr: '${currentPlan.left.goalText}. ${currentPlan.right.goalText}.',
+            es: '- No.',
+            ru: '${currentPlan.left.goalText} ${currentPlan.right.goalText}.',
+          )
+        : currentPlan.leftActive
+        ? currentPlan.left.goalText
+        : currentPlan.right.goalText;
     final stageContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          children: <Widget>[
-            _HumanPill(
-              text: modeLabel,
-              accent: _BimanualBrainSplitGameState._accent,
-            ),
-            _HumanPill(
-              text:
-                  plan?.label ??
-                  pickUiText(i18n, zh: '等待配对', en: 'Waiting for pair'),
-              accent: plan == null
-                  ? _BimanualBrainSplitGameState._accent
-                  : _BimanualBrainSplitGameState._traceAccent,
-            ),
-            _HumanPill(
-              text: '$syncWindowMs ms sync',
-              accent: colorScheme.primary,
-            ),
-            _HumanPill(
-              text: '$holdTargetMs ms charge',
-              accent: _BimanualBrainSplitGameState._climbAccent,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          goalText,
-          maxLines: fullscreen ? 1 : 2,
-          overflow: TextOverflow.ellipsis,
-          style: (fullscreen ? theme.textTheme.labelLarge : theme.textTheme.bodySmall)
-              ?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                height: 1.35,
-                fontWeight: fullscreen ? FontWeight.w800 : null,
+        if (!denseFullscreen) ...<Widget>[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: <Widget>[
+              _HumanPill(
+                text: modeLabel,
+                accent: _BimanualBrainSplitGameState._accent,
               ),
-        ),
-        const SizedBox(height: 10),
+              _HumanPill(
+                text:
+                    plan?.label ??
+                    pickUiText(
+                      i18n,
+                      zh: '等待配对',
+                      en: 'Waiting for pair',
+                      ja: 'Waiting for pair',
+                      de: 'Waiting for pair',
+                      fr: 'Attendre la paire',
+                      es: 'Esperando pareja',
+                      ru: 'В ожидании пары',
+                    ),
+                accent: plan == null
+                    ? _BimanualBrainSplitGameState._accent
+                    : _BimanualBrainSplitGameState._traceAccent,
+              ),
+              _HumanPill(
+                text: '$syncWindowMs ms sync',
+                accent: colorScheme.primary,
+              ),
+              _HumanPill(
+                text: '$holdTargetMs ms charge',
+                accent: _BimanualBrainSplitGameState._climbAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            goalText,
+            maxLines: fullscreen ? 1 : 2,
+            overflow: TextOverflow.ellipsis,
+            style:
+                (fullscreen
+                        ? theme.textTheme.labelLarge
+                        : theme.textTheme.bodySmall)
+                    ?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                      fontWeight: fullscreen ? FontWeight.w800 : null,
+                    ),
+          ),
+          const SizedBox(height: 8),
+        ],
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 380;
-              final laneGap = compact ? 8.0 : 12.0;
+              final laneGap = denseFullscreen || compact ? 6.0 : 12.0;
               final left = KeyedSubtree(
                 key: const ValueKey<String>('brain_split_left_slot'),
                 child: _BrainSplitLaneView(
                   key: ValueKey<String>('brain_split_left_$roundToken'),
                   side: _BimanualSide.left,
                   spec: plan?.left,
-                  running: running,
+                  active: leftActive,
+                  running: running && leftActive,
                   holdTargetMs: holdTargetMs,
                   onCompleted: (result) =>
                       onLaneResult(_BimanualSide.left, result),
                   fullscreen: fullscreen,
+                  denseFullscreen: denseFullscreen,
                 ),
               );
               final right = KeyedSubtree(
@@ -2886,11 +5553,13 @@ class _BrainSplitStage extends StatelessWidget {
                   key: ValueKey<String>('brain_split_right_$roundToken'),
                   side: _BimanualSide.right,
                   spec: plan?.right,
-                  running: running,
+                  active: rightActive,
+                  running: running && rightActive,
                   holdTargetMs: holdTargetMs,
                   onCompleted: (result) =>
                       onLaneResult(_BimanualSide.right, result),
                   fullscreen: fullscreen,
+                  denseFullscreen: denseFullscreen,
                 ),
               );
               return Row(
@@ -2907,29 +5576,45 @@ class _BrainSplitStage extends StatelessWidget {
         if (done) ...<Widget>[
           const SizedBox(height: 10),
           _HumanPill(
-            text: pickUiText(i18n, zh: '本轮已结束', en: 'Round complete'),
+            text: pickUiText(
+              i18n,
+              zh: '本轮已结束',
+              en: 'Round complete',
+              ja: 'Round complete',
+              de: 'Round complete',
+              fr: 'Cycle terminé',
+              es: 'Ronda completa',
+              ru: 'Полный раунд',
+            ),
             accent: BimanualCoordinationTestPage._dangerAccent,
           ),
         ],
       ],
     );
     if (fullscreen) {
-      return Padding(
-        padding: activePadding,
-        child: _BrainSplitFullscreenStageSurface(child: stageContent),
+      return _BrainSplitFullscreenStageSurface(
+        dense: denseFullscreen,
+        child: stageContent,
       );
     }
     return SizedBox(
       height: 430,
-      child: _HumanPanel(padding: const EdgeInsets.all(14), child: stageContent),
+      child: _HumanPanel(
+        padding: const EdgeInsets.all(14),
+        child: stageContent,
+      ),
     );
   }
 }
 
 class _BrainSplitFullscreenStageSurface extends StatelessWidget {
-  const _BrainSplitFullscreenStageSurface({required this.child});
+  const _BrainSplitFullscreenStageSurface({
+    required this.child,
+    required this.dense,
+  });
 
   final Widget child;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -2937,15 +5622,12 @@ class _BrainSplitFullscreenStageSurface extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(dense ? 14 : 22),
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.42),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: child,
-      ),
+      child: Padding(padding: EdgeInsets.all(dense ? 6 : 12), child: child),
     );
   }
 }
@@ -2955,39 +5637,128 @@ class _BrainSplitLaneView extends StatelessWidget {
     super.key,
     required this.side,
     required this.spec,
+    required this.active,
     required this.running,
     required this.holdTargetMs,
     required this.onCompleted,
     this.fullscreen = false,
+    this.denseFullscreen = false,
   });
 
   final _BimanualSide side;
   final _BrainSplitTaskSpec? spec;
+  final bool active;
   final bool running;
   final int holdTargetMs;
   final ValueChanged<_BrainSplitLaneResult> onCompleted;
   final bool fullscreen;
+  final bool denseFullscreen;
 
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final accent = spec?.accent ?? _BimanualBrainSplitGameState._accent;
     final sideLabel = switch (side) {
-      _BimanualSide.left => pickUiText(i18n, zh: '左侧', en: 'Left'),
-      _BimanualSide.right => pickUiText(i18n, zh: '右侧', en: 'Right'),
+      _BimanualSide.left => pickUiText(
+        i18n,
+        zh: '左侧',
+        en: 'Left',
+        ja: 'Left',
+        de: 'Left',
+        fr: 'Gauche',
+        es: 'Izquierda',
+        ru: 'Левый',
+      ),
+      _BimanualSide.right => pickUiText(
+        i18n,
+        zh: '右侧',
+        en: 'Right',
+        ja: 'Right',
+        de: 'Right',
+        fr: 'Droite',
+        es: 'Bien.',
+        ru: 'Правильно.',
+      ),
     };
 
     if (spec == null) {
       return _BrainSplitLaneFrame(
         accent: accent,
         title: sideLabel,
-        subtitle: pickUiText(i18n, zh: '等待配对', en: 'Waiting for pair'),
+        subtitle: pickUiText(
+          i18n,
+          zh: '等待配对',
+          en: 'Waiting for pair',
+          ja: 'Waiting for pair',
+          de: 'Waiting for pair',
+          fr: 'Attendre la paire',
+          es: 'Esperando pareja',
+          ru: 'В ожидании пары',
+        ),
         goalText: '-',
         progressText: '0/0',
         progressValue: 0,
-        statusText: pickUiText(i18n, zh: '未开始', en: 'Idle'),
+        statusText: pickUiText(
+          i18n,
+          zh: '未开始',
+          en: 'Idle',
+          ja: 'Idle',
+          de: 'Idle',
+          fr: 'Idée',
+          es: 'Idle',
+          ru: 'безделье',
+        ),
         fullscreen: fullscreen,
+        denseFullscreen: denseFullscreen,
         child: const SizedBox.shrink(),
+      );
+    }
+
+    if (!active) {
+      return _BrainSplitLaneFrame(
+        accent: accent,
+        title: sideLabel,
+        subtitle: pickUiText(
+          i18n,
+          zh: '单侧练习中，此侧休息',
+          en: 'Resting during single-side practice',
+          ja: 'Resting during single-side practice',
+          de: 'Resting during single-side practice',
+          fr: 'Le repos pendant la pratique à un seul côté',
+          es: 'Descansar durante la práctica unilateral',
+          ru: 'Отдых во время односторонней практики',
+        ),
+        goalText: pickUiText(
+          i18n,
+          zh: '休息侧',
+          en: 'Rest side',
+          ja: 'Rest side',
+          de: 'Rest side',
+          fr: 'Côté repos',
+          es: 'Descanso lado',
+          ru: 'Отдых в стороне',
+        ),
+        progressText: '-',
+        progressValue: 0,
+        statusText: pickUiText(
+          i18n,
+          zh: '未计入本轮',
+          en: 'Not counted',
+          ja: 'Not counted',
+          de: 'Not counted',
+          fr: 'Non compté',
+          es: 'No cuenta',
+          ru: 'Не считается',
+        ),
+        fullscreen: fullscreen,
+        denseFullscreen: denseFullscreen,
+        child: Center(
+          child: Icon(
+            Icons.pause_circle_outline_rounded,
+            color: accent.withValues(alpha: 0.68),
+            size: denseFullscreen ? 34 : 46,
+          ),
+        ),
       );
     }
 
@@ -2998,6 +5769,7 @@ class _BrainSplitLaneView extends StatelessWidget {
         running: running,
         onCompleted: onCompleted,
         fullscreen: fullscreen,
+        denseFullscreen: denseFullscreen,
       ),
       _BimanualTaskType.bounce => _BrainSplitBounceLane(
         key: ValueKey<String>('brain_split_bounce_${spec!.seed}_$side'),
@@ -3005,6 +5777,7 @@ class _BrainSplitLaneView extends StatelessWidget {
         running: running,
         onCompleted: onCompleted,
         fullscreen: fullscreen,
+        denseFullscreen: denseFullscreen,
       ),
       _BimanualTaskType.climb => _BrainSplitClimbLane(
         key: ValueKey<String>('brain_split_climb_${spec!.seed}_$side'),
@@ -3013,6 +5786,7 @@ class _BrainSplitLaneView extends StatelessWidget {
         holdTargetMs: holdTargetMs,
         onCompleted: onCompleted,
         fullscreen: fullscreen,
+        denseFullscreen: denseFullscreen,
       ),
     };
   }
@@ -3029,6 +5803,7 @@ class _BrainSplitLaneFrame extends StatelessWidget {
     required this.statusText,
     required this.child,
     this.fullscreen = false,
+    this.denseFullscreen = false,
   });
 
   final Color accent;
@@ -3040,6 +5815,7 @@ class _BrainSplitLaneFrame extends StatelessWidget {
   final String statusText;
   final Widget child;
   final bool fullscreen;
+  final bool denseFullscreen;
 
   @override
   Widget build(BuildContext context) {
@@ -3047,9 +5823,14 @@ class _BrainSplitLaneFrame extends StatelessWidget {
       builder: (context, constraints) {
         final theme = Theme.of(context);
         final colorScheme = theme.colorScheme;
-        final compact = constraints.maxWidth < 180;
+        final compact = constraints.maxWidth < 180 || denseFullscreen;
+        final immersiveCompact = fullscreen && denseFullscreen;
         final padding = EdgeInsets.all(
-          fullscreen ? (compact ? 9 : 12) : (compact ? 10 : 12),
+          denseFullscreen
+              ? 7
+              : fullscreen
+              ? (compact ? 9 : 12)
+              : (compact ? 10 : 12),
         );
         final minHeight = fullscreen ? 0.0 : (compact ? 228.0 : 244.0);
         final titleStyle = compact
@@ -3075,20 +5856,27 @@ class _BrainSplitLaneFrame extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle,
+              if (!immersiveCompact) ...<Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: titleStyle,
+                      ),
                     ),
-                  ),
-                  _HumanPill(text: progressText, accent: accent),
-                ],
-              ),
-              if (!fullscreen || !compact) ...<Widget>[
+                    _HumanPill(text: progressText, accent: accent),
+                  ],
+                ),
+              ] else ...<Widget>[
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _HumanPill(text: progressText, accent: accent),
+                ),
+              ],
+              if (!immersiveCompact && (!fullscreen || !compact)) ...<Widget>[
                 SizedBox(height: compact ? 3 : 4),
                 Text(
                   subtitle,
@@ -3100,19 +5888,28 @@ class _BrainSplitLaneFrame extends StatelessWidget {
                   ),
                 ),
               ],
-              SizedBox(height: compact ? 4 : 6),
-              Text(
-                goalText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w800,
-                ),
+              SizedBox(
+                height: immersiveCompact
+                    ? 2
+                    : (denseFullscreen ? 3 : (compact ? 4 : 6)),
               ),
-              SizedBox(height: compact ? 6 : 8),
+              if (!immersiveCompact)
+                Text(
+                  goalText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: accent,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              SizedBox(
+                height: immersiveCompact
+                    ? 2
+                    : (denseFullscreen ? 4 : (compact ? 6 : 8)),
+              ),
               Expanded(child: child),
-              if (!fullscreen || !compact) ...<Widget>[
+              if (!fullscreen || (!compact && !denseFullscreen)) ...<Widget>[
                 SizedBox(height: compact ? 8 : 10),
                 SizedBox(
                   width: double.infinity,
@@ -3123,11 +5920,11 @@ class _BrainSplitLaneFrame extends StatelessWidget {
                   ),
                 ),
               ],
-              SizedBox(height: compact ? 4 : 8),
+              SizedBox(height: denseFullscreen ? 3 : (compact ? 4 : 8)),
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
                 child: LinearProgressIndicator(
-                  minHeight: compact ? 6 : 8,
+                  minHeight: denseFullscreen ? 5 : (compact ? 6 : 8),
                   value: progressValue.clamp(0, 1).toDouble(),
                   backgroundColor: colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(accent),
@@ -3148,12 +5945,14 @@ class _BrainSplitTraceLane extends StatefulWidget {
     required this.running,
     required this.onCompleted,
     this.fullscreen = false,
+    this.denseFullscreen = false,
   });
 
   final _BrainSplitTaskSpec spec;
   final bool running;
   final ValueChanged<_BrainSplitLaneResult> onCompleted;
   final bool fullscreen;
+  final bool denseFullscreen;
 
   @override
   State<_BrainSplitTraceLane> createState() => _BrainSplitTraceLaneState();
@@ -3162,9 +5961,18 @@ class _BrainSplitTraceLane extends StatefulWidget {
 class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
   final Stopwatch _stopwatch = Stopwatch();
   List<Offset> _path = <Offset>[];
+  List<Offset> _drawnPoints = <Offset>[];
+  List<double> _pathDistances = <double>[];
   Offset? _pointer;
+  Offset? _lastPointer;
   int _nextIndex = 1;
+  double _segmentProgress = 0;
+  double _traceProgressDistance = 0;
+  double _traceTotalDistance = 0;
+  double _drawnDistance = 0;
+  int _traceSampleCount = 0;
   bool _completed = false;
+  bool _started = false;
   int _mistakes = 0;
 
   @override
@@ -3177,16 +5985,37 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
   void didUpdateWidget(covariant _BrainSplitTraceLane oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spec.seed != widget.spec.seed ||
+        oldWidget.spec.tracePattern != widget.spec.tracePattern ||
+        oldWidget.spec.traceLineStyle != widget.spec.traceLineStyle ||
+        oldWidget.spec.traceSegmentMode != widget.spec.traceSegmentMode ||
+        oldWidget.spec.traceNodeCount != widget.spec.traceNodeCount ||
+        oldWidget.spec.traceThreshold != widget.spec.traceThreshold ||
+        oldWidget.spec.traceMinAngleDegrees !=
+            widget.spec.traceMinAngleDegrees ||
+        oldWidget.spec.traceColorSegments != widget.spec.traceColorSegments ||
         oldWidget.running != widget.running) {
       _reset();
     }
   }
 
   void _reset() {
-    _path = _buildPath(widget.spec.seed);
+    _path = _buildPath(
+      widget.spec.seed,
+      widget.spec.tracePattern,
+      widget.spec.traceNodeCount,
+    );
+    _pathDistances = _buildPathDistances(_path);
+    _drawnPoints = <Offset>[];
     _pointer = null;
+    _lastPointer = null;
     _nextIndex = 1;
+    _segmentProgress = 0;
+    _traceProgressDistance = 0;
+    _traceTotalDistance = _pathDistances.isEmpty ? 0 : _pathDistances.last;
+    _drawnDistance = 0;
+    _traceSampleCount = 0;
     _completed = false;
+    _started = false;
     _mistakes = 0;
     _stopwatch
       ..stop()
@@ -3196,66 +6025,553 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
     }
   }
 
-  List<Offset> _buildPath(int seed) {
-    final mode = seed % 3;
-    if (mode == 0) {
-      return <Offset>[
-        const Offset(0.12, 0.76),
-        const Offset(0.25, 0.54),
-        const Offset(0.42, 0.38),
-        const Offset(0.60, 0.57),
-        const Offset(0.79, 0.31),
-      ];
+  List<Offset> _buildPath(
+    int seed,
+    _BrainSplitTracePattern pattern,
+    int requestedCount,
+  ) {
+    final count = requestedCount.clamp(4, 12).toInt();
+    final fixedGeometry = _buildFixedGeometryPath(pattern, count);
+    if (fixedGeometry.isNotEmpty) {
+      return fixedGeometry;
     }
-    if (mode == 1) {
-      return <Offset>[
-        const Offset(0.15, 0.28),
-        const Offset(0.28, 0.49),
-        const Offset(0.42, 0.24),
-        const Offset(0.58, 0.52),
-        const Offset(0.75, 0.34),
-      ];
+    final random = math.Random(seed * 1009 + pattern.index * 97 + count * 13);
+    if (widget.spec.traceSegmentMode == _BrainSplitTraceSegmentMode.random ||
+        widget.spec.traceMinAngleDegrees > 15) {
+      final constrained = _buildDirectedPath(seed, pattern, count, random);
+      if (constrained.isNotEmpty) {
+        return constrained;
+      }
     }
-    return <Offset>[
-      const Offset(0.14, 0.68),
-      const Offset(0.28, 0.42),
-      const Offset(0.45, 0.64),
-      const Offset(0.60, 0.34),
-      const Offset(0.78, 0.50),
-    ];
+    switch (pattern) {
+      case _BrainSplitTracePattern.mixed:
+        return _buildPath(
+          seed,
+          _BrainSplitTracePattern.values[1 +
+              seed % (_BrainSplitTracePattern.values.length - 1)],
+          count,
+        );
+      case _BrainSplitTracePattern.zigzag:
+        return List<Offset>.generate(count, (index) {
+          final t = count == 1 ? 0.0 : index / (count - 1);
+          final jitterX = (random.nextDouble() - 0.5) * 0.045;
+          final high = 0.29 + random.nextDouble() * 0.08;
+          final low = 0.71 - random.nextDouble() * 0.08;
+          final y = index.isEven ? low : high;
+          return _traceNode(0.12 + t * 0.76 + jitterX, y);
+        });
+      case _BrainSplitTracePattern.wave:
+        return List<Offset>.generate(count, (index) {
+          final t = count == 1 ? 0.0 : index / (count - 1);
+          final phase = random.nextDouble() * math.pi * 0.8;
+          final amplitude = 0.17 + random.nextDouble() * 0.07;
+          final wave = math.sin(
+            (t * (1.7 + random.nextDouble() * 0.8)) * math.pi + phase,
+          );
+          return _traceNode(
+            0.10 + t * 0.80,
+            0.50 + wave * amplitude + (random.nextDouble() - 0.5) * 0.035,
+          );
+        });
+      case _BrainSplitTracePattern.star:
+        final center = const Offset(0.5, 0.5);
+        final phase = -math.pi / 2 + random.nextDouble() * math.pi * 0.18;
+        return List<Offset>.generate(count, (index) {
+          final angle =
+              phase + index * math.pi * (1.42 + random.nextDouble() * 0.22);
+          final radius =
+              (index.isEven ? 0.38 : 0.18) + (random.nextDouble() - 0.5) * 0.07;
+          return _traceNode(
+            center.dx + math.cos(angle) * radius,
+            center.dy + math.sin(angle) * radius,
+          );
+        });
+      case _BrainSplitTracePattern.spiral:
+        final phase = random.nextDouble() * math.pi;
+        return List<Offset>.generate(count, (index) {
+          final t = count == 1 ? 0.0 : index / (count - 1);
+          final angle =
+              phase + t * math.pi * (2.05 + random.nextDouble() * 0.85);
+          final radius = 0.10 + t * (0.34 + random.nextDouble() * 0.05);
+          return _traceNode(
+            0.5 + math.cos(angle) * radius,
+            0.52 + math.sin(angle) * radius,
+          );
+        });
+      case _BrainSplitTracePattern.box:
+        final left = 0.10 + random.nextDouble() * 0.06;
+        final right = 0.82 + random.nextDouble() * 0.08;
+        final top = 0.14 + random.nextDouble() * 0.06;
+        final bottom = 0.76 + random.nextDouble() * 0.10;
+        final midX = 0.38 + random.nextDouble() * 0.24;
+        final midY = 0.42 + random.nextDouble() * 0.18;
+        final anchors = <Offset>[
+          _traceNode(left, top),
+          _traceNode(right, top),
+          _traceNode(right, bottom),
+          _traceNode(left, bottom),
+          _traceNode(left, midY),
+          _traceNode(midX, midY),
+          _traceNode(midX, top + (bottom - top) * 0.68),
+          _traceNode(right - 0.14, top + (bottom - top) * 0.68),
+          _traceNode(right - 0.14, top + (bottom - top) * 0.44),
+          _traceNode(left + 0.22, top + (bottom - top) * 0.44),
+        ];
+        return anchors.take(count).toList(growable: false);
+      case _BrainSplitTracePattern.steps:
+        return List<Offset>.generate(count, (index) {
+          final t = count == 1 ? 0.0 : index / (count - 1);
+          final stair = index / math.max(1, count - 1);
+          final x =
+              0.14 +
+              (index.isEven
+                  ? t * 0.72
+                  : (t - 0.06 - random.nextDouble() * 0.06) * 0.72);
+          return _traceNode(
+            x,
+            0.78 - stair * (0.50 + random.nextDouble() * 0.08),
+          );
+        });
+      case _BrainSplitTracePattern.loop:
+        final phase = random.nextDouble() * math.pi;
+        final verticalPhase = seed.isEven ? 0.0 : math.pi / 2;
+        return List<Offset>.generate(count, (index) {
+          final t = count == 1 ? 0.0 : index / (count - 1);
+          final angle = t * math.pi * 2;
+          final x =
+              0.5 +
+              math.sin(angle + phase) * (0.26 + random.nextDouble() * 0.06);
+          final y =
+              0.5 +
+              math.sin(angle * 2 + verticalPhase + phase * 0.3) *
+                  (0.18 + random.nextDouble() * 0.05);
+          return _traceNode(x, y);
+        });
+      case _BrainSplitTracePattern.triangle:
+      case _BrainSplitTracePattern.square:
+      case _BrainSplitTracePattern.rectangle:
+      case _BrainSplitTracePattern.circle:
+      case _BrainSplitTracePattern.trapezoid:
+      case _BrainSplitTracePattern.diamond:
+      case _BrainSplitTracePattern.polyhedron:
+        return _buildFixedGeometryPath(pattern, count);
+    }
   }
 
-  void _handlePointer(Offset localPosition, Size size) {
-    if (!mounted || !widget.running || _completed) {
+  List<Offset> _buildFixedGeometryPath(
+    _BrainSplitTracePattern pattern,
+    int requestedCount,
+  ) {
+    switch (pattern) {
+      case _BrainSplitTracePattern.triangle:
+        return <Offset>[
+          const Offset(0.50, 0.12),
+          const Offset(0.86, 0.82),
+          const Offset(0.14, 0.82),
+          const Offset(0.50, 0.12),
+        ];
+      case _BrainSplitTracePattern.square:
+        return <Offset>[
+          const Offset(0.18, 0.18),
+          const Offset(0.82, 0.18),
+          const Offset(0.82, 0.82),
+          const Offset(0.18, 0.82),
+          const Offset(0.18, 0.18),
+        ];
+      case _BrainSplitTracePattern.rectangle:
+        return <Offset>[
+          const Offset(0.12, 0.25),
+          const Offset(0.88, 0.25),
+          const Offset(0.88, 0.75),
+          const Offset(0.12, 0.75),
+          const Offset(0.12, 0.25),
+        ];
+      case _BrainSplitTracePattern.circle:
+        final count = requestedCount.clamp(8, 12).toInt();
+        return List<Offset>.generate(count + 1, (index) {
+          final angle = -math.pi / 2 + index / count * math.pi * 2;
+          return Offset(
+            0.5 + math.cos(angle) * 0.34,
+            0.5 + math.sin(angle) * 0.34,
+          );
+        });
+      case _BrainSplitTracePattern.trapezoid:
+        return <Offset>[
+          const Offset(0.32, 0.18),
+          const Offset(0.68, 0.18),
+          const Offset(0.88, 0.80),
+          const Offset(0.12, 0.80),
+          const Offset(0.32, 0.18),
+        ];
+      case _BrainSplitTracePattern.diamond:
+        return <Offset>[
+          const Offset(0.50, 0.10),
+          const Offset(0.88, 0.50),
+          const Offset(0.50, 0.90),
+          const Offset(0.12, 0.50),
+          const Offset(0.50, 0.10),
+        ];
+      case _BrainSplitTracePattern.polyhedron:
+        return <Offset>[
+          const Offset(0.50, 0.10),
+          const Offset(0.84, 0.30),
+          const Offset(0.78, 0.72),
+          const Offset(0.50, 0.90),
+          const Offset(0.22, 0.72),
+          const Offset(0.16, 0.30),
+          const Offset(0.50, 0.10),
+          const Offset(0.78, 0.72),
+          const Offset(0.16, 0.30),
+          const Offset(0.84, 0.30),
+          const Offset(0.22, 0.72),
+        ];
+      case _:
+        return const <Offset>[];
+    }
+  }
+
+  Offset _traceNode(double x, double y) {
+    return Offset(
+      x.clamp(0.10, 0.90).toDouble(),
+      y.clamp(0.14, 0.86).toDouble(),
+    );
+  }
+
+  List<Offset> _buildDirectedPath(
+    int seed,
+    _BrainSplitTracePattern pattern,
+    int count,
+    math.Random random,
+  ) {
+    final startAngle = switch (pattern) {
+      _BrainSplitTracePattern.zigzag => seed.isEven ? 0.0 : math.pi,
+      _BrainSplitTracePattern.wave => math.pi * 0.08,
+      _BrainSplitTracePattern.star => -math.pi / 2,
+      _BrainSplitTracePattern.spiral => seed * 0.37,
+      _BrainSplitTracePattern.box => seed.isEven ? 0.0 : math.pi / 2,
+      _BrainSplitTracePattern.steps => -math.pi / 5,
+      _BrainSplitTracePattern.loop => seed * 0.22,
+      _BrainSplitTracePattern.mixed => seed * 0.19,
+      _BrainSplitTracePattern.triangle => -math.pi / 2,
+      _BrainSplitTracePattern.square => 0.0,
+      _BrainSplitTracePattern.rectangle => 0.0,
+      _BrainSplitTracePattern.circle => -math.pi / 2,
+      _BrainSplitTracePattern.trapezoid => 0.0,
+      _BrainSplitTracePattern.diamond => -math.pi / 2,
+      _BrainSplitTracePattern.polyhedron => -math.pi / 2,
+    };
+    final minAngle =
+        widget.spec.traceMinAngleDegrees.clamp(15.0, 80.0) * math.pi / 180;
+    final points = <Offset>[_traceNode(0.5, 0.52)];
+    var previousAngle = startAngle;
+    for (var index = 1; index < count; index += 1) {
+      Offset? accepted;
+      for (var attempt = 0; attempt < 24; attempt += 1) {
+        final directionJitter = switch (pattern) {
+          _BrainSplitTracePattern.zigzag =>
+            (index.isEven ? 1 : -1) * (math.pi * 0.55),
+          _BrainSplitTracePattern.wave =>
+            math.sin(index * 0.9 + seed) * math.pi * 0.36,
+          _BrainSplitTracePattern.star => math.pi * 1.42,
+          _BrainSplitTracePattern.spiral => math.pi * 0.42 + index * 0.12,
+          _BrainSplitTracePattern.box => math.pi / 2,
+          _BrainSplitTracePattern.steps => index.isEven ? 0.0 : -math.pi / 2,
+          _BrainSplitTracePattern.loop => math.pi * 0.72,
+          _BrainSplitTracePattern.mixed =>
+            (random.nextDouble() - 0.5) * math.pi * 1.6,
+          _BrainSplitTracePattern.triangle => math.pi * 2 / 3,
+          _BrainSplitTracePattern.square => math.pi / 2,
+          _BrainSplitTracePattern.rectangle => math.pi / 2,
+          _BrainSplitTracePattern.circle => math.pi / 5,
+          _BrainSplitTracePattern.trapezoid => math.pi / 2,
+          _BrainSplitTracePattern.diamond => math.pi / 2,
+          _BrainSplitTracePattern.polyhedron => math.pi / 3,
+        };
+        final angle =
+            previousAngle +
+            directionJitter.toDouble() +
+            (random.nextDouble() - 0.5) * math.pi * 0.46;
+        final delta = _angleDelta(angle, previousAngle).abs();
+        if (index > 1 && delta < minAngle && attempt < 18) {
+          continue;
+        }
+        final length = 0.16 + random.nextDouble() * 0.22;
+        final current = points.last;
+        final candidate = _traceNode(
+          current.dx + math.cos(angle) * length,
+          current.dy + math.sin(angle) * length,
+        );
+        if ((candidate - current).distance < 0.12 && attempt < 20) {
+          continue;
+        }
+        accepted = candidate;
+        previousAngle = angle;
+        break;
+      }
+      if (accepted == null) {
+        final fallbackAngle = previousAngle + minAngle;
+        final current = points.last;
+        accepted = _traceNode(
+          current.dx + math.cos(fallbackAngle) * 0.18,
+          current.dy + math.sin(fallbackAngle) * 0.18,
+        );
+        previousAngle = fallbackAngle;
+      }
+      points.add(accepted);
+    }
+    return points;
+  }
+
+  double _angleDelta(double a, double b) {
+    var delta = (a - b) % (math.pi * 2);
+    if (delta > math.pi) {
+      delta -= math.pi * 2;
+    }
+    if (delta < -math.pi) {
+      delta += math.pi * 2;
+    }
+    return delta;
+  }
+
+  List<double> _buildPathDistances(List<Offset> path) {
+    if (path.isEmpty) {
+      return const <double>[];
+    }
+    final distances = <double>[0];
+    for (var index = 1; index < path.length; index += 1) {
+      distances.add(distances.last + (path[index] - path[index - 1]).distance);
+    }
+    return distances;
+  }
+
+  void _beginPointer(Offset localPosition, Size size) {
+    if (!mounted || !widget.running || _completed || _path.length < 2) {
       return;
     }
     if (!_stopwatch.isRunning) {
       _stopwatch.start();
     }
-    setState(() => _pointer = localPosition);
-    if (_nextIndex >= _path.length) {
+    final threshold = widget.spec.traceThreshold;
+    final normalizedPosition = _normalizePointer(localPosition, size);
+    final start = _path.first;
+    final projection = _projectOntoPath(normalizedPosition, segmentIndex: 0);
+    final nearStart =
+        (normalizedPosition - start).distance <= threshold * 1.25 ||
+        (projection != null &&
+            projection.distanceToPath <= threshold &&
+            projection.distanceAlong <= threshold * 1.2);
+    setState(() {
+      _pointer = localPosition;
+      _lastPointer = localPosition;
+      if (nearStart) {
+        _started = true;
+        _drawnPoints = <Offset>[normalizedPosition];
+      } else {
+        _mistakes += 1;
+      }
+    });
+  }
+
+  void _handleMove(Offset localPosition, Size size) {
+    if (!mounted || !widget.running || _completed || _path.length < 2) {
       return;
     }
-    final target = _path[_nextIndex];
-    final targetPoint = Offset(target.dx * size.width, target.dy * size.height);
-    final threshold = math.min(size.width, size.height) * 0.12;
-    if ((localPosition - targetPoint).distance <= threshold) {
-      setState(() {
-        _nextIndex += 1;
-      });
-      if (_nextIndex >= _path.length) {
-        _complete(true);
-      }
-    } else if (_pointer != null) {
-      final current = _path[_nextIndex - 1];
-      final currentPoint = Offset(
-        current.dx * size.width,
-        current.dy * size.height,
-      );
-      if ((localPosition - currentPoint).distance > threshold * 2) {
-        setState(() => _mistakes += 1);
-      }
+    if (!_started) {
+      _beginPointer(localPosition, size);
+      return;
     }
+    if (!_stopwatch.isRunning) {
+      _stopwatch.start();
+    }
+    final threshold = widget.spec.traceThreshold;
+    final previousPointer = _lastPointer ?? localPosition;
+    final pixelScale = math.max(1.0, math.min(size.width, size.height));
+    final pointerMove = (localPosition - previousPointer).distance / pixelScale;
+    if (_traceTotalDistance <= 0) {
+      return;
+    }
+    final currentDistance = _traceProgressDistance;
+    final normalizedPosition = _normalizePointer(localPosition, size);
+    final segmentStartDistance = _pathDistances[_nextIndex - 1];
+    final segmentEndDistance = _pathDistances[_nextIndex];
+    final projection = _projectOntoPath(
+      normalizedPosition,
+      segmentIndex: _nextIndex - 1,
+    );
+    if (projection == null) {
+      setState(() {
+        _pointer = localPosition;
+        _lastPointer = localPosition;
+        _mistakes += 1;
+      });
+      return;
+    }
+    final distanceToPath = projection.distanceToPath;
+    final projectedDistance = projection.distanceAlong;
+    final forwardDistance = projectedDistance - currentDistance;
+    final target = _path[_nextIndex];
+    final nearTarget =
+        (normalizedPosition - target).distance <= threshold * 1.2;
+    final accepted =
+        (distanceToPath <= threshold || nearTarget) &&
+        forwardDistance >= -threshold * 0.42 &&
+        projectedDistance >= segmentStartDistance - threshold * 0.65 &&
+        projectedDistance <= segmentEndDistance + threshold * 0.25 &&
+        (forwardDistance <= math.max(pointerMove * 3.2 + threshold, 0.14) ||
+            _traceSampleCount >= 4);
+    if (!accepted) {
+      setState(() {
+        _pointer = localPosition;
+        _lastPointer = localPosition;
+        if (distanceToPath > threshold * 1.38 ||
+            forwardDistance < -threshold * 0.8 ||
+            projectedDistance > segmentEndDistance + threshold * 0.45) {
+          _mistakes += 1;
+        }
+      });
+      return;
+    }
+
+    final nearSegmentEnd =
+        nearTarget || projectedDistance >= segmentEndDistance - threshold;
+    final nextDistance = math.max(
+      currentDistance,
+      nearSegmentEnd ? segmentEndDistance : projectedDistance,
+    );
+    final progressDelta = nextDistance - currentDistance;
+    final shouldCountSample =
+        progressDelta > 0.006 || pointerMove > threshold * 0.18;
+    setState(() {
+      _pointer = localPosition;
+      _lastPointer = localPosition;
+      _traceProgressDistance = nextDistance;
+      _drawnDistance += pointerMove;
+      if (shouldCountSample) {
+        _traceSampleCount += 1;
+      }
+      _drawnPoints = <Offset>[..._drawnPoints, normalizedPosition];
+      if (_drawnPoints.length > 160) {
+        _drawnPoints = _drawnPoints.sublist(_drawnPoints.length - 160);
+      }
+      _syncProgressFromDistance();
+      _settleReachedSegments();
+    });
+    _checkCompletion();
+  }
+
+  void _endPointer() {
+    if (!mounted || _completed) {
+      return;
+    }
+    setState(() {
+      _lastPointer = null;
+      _pointer = null;
+    });
+  }
+
+  Offset _normalizePointer(Offset localPosition, Size size) {
+    return Offset(
+      (localPosition.dx / math.max(1, size.width)).clamp(0.0, 1.0).toDouble(),
+      (localPosition.dy / math.max(1, size.height)).clamp(0.0, 1.0).toDouble(),
+    );
+  }
+
+  _TracePathProjection? _projectOntoPath(
+    Offset point, {
+    required int segmentIndex,
+  }) {
+    if (_path.length < 2 || _pathDistances.length != _path.length) {
+      return null;
+    }
+    final index = segmentIndex.clamp(0, _path.length - 2).toInt();
+    final segmentStartDistance = _pathDistances[index];
+    final segmentEndDistance = _pathDistances[index + 1];
+    final start = _path[index];
+    final end = _path[index + 1];
+    final vector = end - start;
+    final lengthSquared = vector.dx * vector.dx + vector.dy * vector.dy;
+    if (lengthSquared <= 0) {
+      return null;
+    }
+    final pointerVector = point - start;
+    final projection =
+        (pointerVector.dx * vector.dx + pointerVector.dy * vector.dy) /
+        lengthSquared;
+    final clampedProjection = projection.clamp(0.0, 1.0).toDouble();
+    final closest = start + vector * clampedProjection;
+    return _TracePathProjection(
+      distanceAlong:
+          segmentStartDistance +
+          (segmentEndDistance - segmentStartDistance) * clampedProjection,
+      distanceToPath: (point - closest).distance,
+    );
+  }
+
+  void _syncProgressFromDistance() {
+    if (_pathDistances.length < 2) {
+      _nextIndex = 1;
+      _segmentProgress = 0;
+      return;
+    }
+    final progress = _traceProgressDistance.clamp(0.0, _traceTotalDistance);
+    var nextIndex = 1;
+    while (nextIndex < _pathDistances.length - 1 &&
+        progress >= _pathDistances[nextIndex] - 0.0008) {
+      nextIndex += 1;
+    }
+    final segmentStart = _pathDistances[nextIndex - 1];
+    final segmentEnd = _pathDistances[nextIndex];
+    _nextIndex = nextIndex;
+    _segmentProgress = segmentEnd <= segmentStart
+        ? 0
+        : ((progress - segmentStart) / (segmentEnd - segmentStart))
+              .clamp(0.0, 1.0)
+              .toDouble();
+  }
+
+  void _settleReachedSegments() {
+    while (_nextIndex < _pathDistances.length - 1 &&
+        _traceProgressDistance >= _pathDistances[_nextIndex] - 0.003) {
+      _nextIndex += 1;
+    }
+    if (_nextIndex >= _pathDistances.length - 1 &&
+        _traceProgressDistance >= _traceTotalDistance - 0.004) {
+      _nextIndex = _path.length;
+      _segmentProgress = 1;
+    } else {
+      _syncProgressFromDistance();
+    }
+  }
+
+  void _checkCompletion() {
+    if (_completed || _traceTotalDistance <= 0) {
+      return;
+    }
+    final minDrawnRatio = switch (widget.spec.difficulty) {
+      _BimanualDifficulty.relaxed => 0.38,
+      _BimanualDifficulty.standard => 0.42,
+      _BimanualDifficulty.hard => 0.48,
+      _BimanualDifficulty.expert => 0.52,
+    };
+    final minSamples = math.max(6, (_path.length - 1) * 2);
+    final reachedEnd =
+        _nextIndex >= _path.length &&
+        _traceProgressDistance >= _traceTotalDistance * 0.992;
+    if (!reachedEnd) {
+      return;
+    }
+    final tracedEnough =
+        _drawnDistance >= _traceTotalDistance * minDrawnRatio &&
+        _traceSampleCount >= minSamples;
+    setState(() {
+      if (!tracedEnough) {
+        _mistakes += 1;
+      }
+      _traceProgressDistance = _traceTotalDistance;
+      _nextIndex = _path.length;
+      _segmentProgress = 1;
+    });
+    _complete(true);
   }
 
   void _complete(bool success) {
@@ -3280,9 +6596,14 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
 
   @override
   Widget build(BuildContext context) {
-    final progressText =
-        '${math.min(_nextIndex, _path.length - 1)}/${_path.length - 1}';
-    final progressValue = (_nextIndex - 1) / math.max(1, _path.length - 1);
+    final totalSegments = math.max(1, _path.length - 1);
+    final completedSegments = _completed
+        ? totalSegments
+        : (_nextIndex - 1).clamp(0, totalSegments).toInt();
+    final progressText = '$completedSegments/$totalSegments';
+    final progressValue = _traceTotalDistance <= 0
+        ? 0.0
+        : (_traceProgressDistance / _traceTotalDistance).clamp(0.0, 1.0);
     return _BrainSplitLaneFrame(
       accent: widget.spec.accent,
       title: widget.spec.title,
@@ -3295,13 +6616,24 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
               AppI18n(Localizations.localeOf(context).languageCode),
               zh: '已完成',
               en: 'Completed',
+              ja: 'しました。完了しました',
+              de: 'Completed',
+              fr: 'Achevé',
+              es: 'Completado',
+              ru: 'завершенный',
             )
           : pickUiText(
               AppI18n(Localizations.localeOf(context).languageCode),
-              zh: '拖动描线',
-              en: 'Trace the path',
+              zh: '沿线描摹',
+              en: 'Trace along the line',
+              ja: 'Trace along the line',
+              de: 'Trace along the line',
+              fr: 'Tracer le long de la ligne',
+              es: 'Trace en la línea',
+              ru: 'След вдоль линии',
             ),
       fullscreen: widget.fullscreen,
+      denseFullscreen: widget.denseFullscreen,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = constraints.biggest;
@@ -3309,22 +6641,33 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
             return const SizedBox.shrink();
           }
           final theme = Theme.of(context);
-          return Listener(
-            behavior: HitTestBehavior.opaque,
+          return _HumanPointerDragBoundary(
+            enabled: widget.running,
             onPointerDown: widget.running
-                ? (event) => _handlePointer(event.localPosition, size)
+                ? (event) => _beginPointer(event.localPosition, size)
                 : null,
             onPointerMove: widget.running
-                ? (event) => _handlePointer(event.localPosition, size)
+                ? (event) => _handleMove(event.localPosition, size)
                 : null,
+            onPointerUp: widget.running ? (_) => _endPointer() : null,
+            onPointerCancel: widget.running ? (_) => _endPointer() : null,
             child: Stack(
               fit: StackFit.expand,
               children: <Widget>[
-                CustomPaint(
-                  painter: _TraceTrackPainter(
-                    path: _path,
-                    activeIndex: _nextIndex,
-                    accent: widget.spec.accent,
+                AnimatedOpacity(
+                  opacity: _completed ? 0.72 : 1,
+                  duration: const Duration(milliseconds: 180),
+                  child: CustomPaint(
+                    painter: _TraceTrackPainter(
+                      path: _path,
+                      activeIndex: _nextIndex,
+                      segmentProgress: _segmentProgress,
+                      drawnPoints: _drawnPoints,
+                      accent: widget.spec.accent,
+                      style: widget.spec.traceLineStyle,
+                      segmentMode: widget.spec.traceSegmentMode,
+                      colorSegments: widget.spec.traceColorSegments,
+                    ),
                   ),
                 ),
                 if (_pointer != null)
@@ -3347,21 +6690,27 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
                       ),
                     ),
                   ),
-                Positioned(
-                  left: 8,
-                  bottom: 8,
-                  child: Text(
-                    pickUiText(
-                      AppI18n(Localizations.localeOf(context).languageCode),
-                      zh: '按顺序连点节点',
-                      en: 'Hit the checkpoints in order',
-                    ),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
+                if (!widget.denseFullscreen)
+                  Positioned(
+                    left: 8,
+                    bottom: 8,
+                    child: Text(
+                      pickUiText(
+                        AppI18n(Localizations.localeOf(context).languageCode),
+                        zh: '沿当前线段描到下一个节点',
+                        en: 'Trace the segment into the next node',
+                        ja: 'Trace the segment into the next node',
+                        de: 'Trace the segment into the next node',
+                        fr: 'Tracez le segment dans le prochain nœud',
+                        es: 'Trace el segmento en el próximo nodo',
+                        ru: 'Отследить сегмент до следующего узла',
+                      ),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           );
@@ -3371,67 +6720,296 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
   }
 }
 
+class _TracePathProjection {
+  const _TracePathProjection({
+    required this.distanceAlong,
+    required this.distanceToPath,
+  });
+
+  final double distanceAlong;
+  final double distanceToPath;
+}
+
 class _TraceTrackPainter extends CustomPainter {
   const _TraceTrackPainter({
     required this.path,
     required this.activeIndex,
+    required this.segmentProgress,
+    required this.drawnPoints,
     required this.accent,
+    required this.style,
+    required this.segmentMode,
+    required this.colorSegments,
   });
 
   final List<Offset> path;
   final int activeIndex;
+  final double segmentProgress;
+  final List<Offset> drawnPoints;
   final Color accent;
+  final _BrainSplitTraceLineStyle style;
+  final _BrainSplitTraceSegmentMode segmentMode;
+  final bool colorSegments;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (path.isEmpty) {
       return;
     }
+    final strokeWidth = switch (style) {
+      _BrainSplitTraceLineStyle.ribbon => 9.0,
+      _BrainSplitTraceLineStyle.dotted => 4.5,
+      _ => 5.0,
+    };
+    final activeStrokeWidth = switch (style) {
+      _BrainSplitTraceLineStyle.ribbon => 11.0,
+      _BrainSplitTraceLineStyle.dotted => 6.0,
+      _ => 6.0,
+    };
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
       ..color = accent.withValues(alpha: 0.22);
     final activePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
+      ..strokeWidth = activeStrokeWidth
       ..strokeCap = StrokeCap.round
       ..color = accent.withValues(alpha: 0.78);
     final nodePaint = Paint()..style = PaintingStyle.fill;
     final pathPoints = path
         .map((point) => Offset(point.dx * size.width, point.dy * size.height))
         .toList(growable: false);
-    final linePath = Path()..moveTo(pathPoints.first.dx, pathPoints.first.dy);
-    for (final point in pathPoints.skip(1)) {
-      linePath.lineTo(point.dx, point.dy);
+    _drawStyledPath(canvas, pathPoints, paint, style);
+    if (drawnPoints.length > 1) {
+      final drawnPath = drawnPoints
+          .map((point) => Offset(point.dx * size.width, point.dy * size.height))
+          .toList(growable: false);
+      final drawnPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = activeStrokeWidth + 1
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..color = BimanualCoordinationTestPage._dangerAccent.withValues(
+          alpha: 0.64,
+        );
+      _drawStyledPath(
+        canvas,
+        drawnPath,
+        drawnPaint,
+        _BrainSplitTraceLineStyle.solid,
+      );
     }
-    canvas.drawPath(linePath, paint);
-    if (activeIndex > 1) {
-      final activePath = Path()
-        ..moveTo(pathPoints.first.dx, pathPoints.first.dy);
-      for (
-        var index = 1;
-        index < math.min(activeIndex, pathPoints.length);
-        index += 1
-      ) {
-        activePath.lineTo(pathPoints[index].dx, pathPoints[index].dy);
+    if (colorSegments) {
+      for (var index = 0; index < pathPoints.length - 1; index += 1) {
+        final segmentPaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth + 1
+          ..strokeCap = StrokeCap.round
+          ..color = _segmentColor(
+            index,
+          ).withValues(alpha: index < activeIndex ? 0.58 : 0.24);
+        _drawStyledPath(
+          canvas,
+          <Offset>[pathPoints[index], pathPoints[index + 1]],
+          segmentPaint,
+          style,
+        );
       }
-      canvas.drawPath(activePath, activePaint);
+    }
+    if (activeIndex > 1) {
+      _drawStyledPath(
+        canvas,
+        pathPoints.take(math.min(activeIndex, pathPoints.length)).toList(),
+        activePaint,
+        style,
+      );
+    }
+    if (activeIndex < pathPoints.length) {
+      final start = pathPoints[activeIndex - 1];
+      final end = pathPoints[activeIndex];
+      final livePoint = start + (end - start) * segmentProgress;
+      final livePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = activeStrokeWidth + 2
+        ..strokeCap = StrokeCap.round
+        ..color = BimanualCoordinationTestPage._dangerAccent.withValues(
+          alpha: 0.78,
+        );
+      _drawStyledPath(
+        canvas,
+        <Offset>[start, livePoint],
+        livePaint,
+        _BrainSplitTraceLineStyle.solid,
+      );
+    }
+    if (activeIndex < pathPoints.length) {
+      _drawDirectionHint(
+        canvas,
+        pathPoints[activeIndex - 1],
+        pathPoints[activeIndex],
+        size,
+      );
     }
     for (var index = 0; index < pathPoints.length; index += 1) {
       final point = pathPoints[index];
+      final isNext = index == activeIndex;
       nodePaint.color = index < activeIndex
           ? accent
+          : isNext
+          ? BimanualCoordinationTestPage._dangerAccent
           : accent.withValues(alpha: 0.34);
-      canvas.drawCircle(point, index == activeIndex ? 10 : 7, nodePaint);
+      canvas.drawCircle(point, isNext ? 12 : 7, nodePaint);
+      if (isNext) {
+        final ring = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..color = BimanualCoordinationTestPage._dangerAccent.withValues(
+            alpha: 0.70,
+          );
+        canvas.drawCircle(point, 18, ring);
+      }
     }
+  }
+
+  void _drawStyledPath(
+    Canvas canvas,
+    List<Offset> points,
+    Paint paint,
+    _BrainSplitTraceLineStyle style,
+  ) {
+    if (points.length < 2) {
+      return;
+    }
+    if (style == _BrainSplitTraceLineStyle.solid ||
+        style == _BrainSplitTraceLineStyle.ribbon) {
+      final linePath = Path()..moveTo(points.first.dx, points.first.dy);
+      for (var index = 1; index < points.length; index += 1) {
+        final point = points[index];
+        if (_useCurve(index)) {
+          final previous = points[index - 1];
+          final mid = Offset(
+            (previous.dx + point.dx) / 2,
+            (previous.dy + point.dy) / 2,
+          );
+          final normal = Offset(point.dy - previous.dy, previous.dx - point.dx);
+          final distance = (point - previous).distance;
+          final control = distance <= 0
+              ? mid
+              : mid + normal / distance * math.min(28.0, distance * 0.22);
+          linePath.quadraticBezierTo(
+            control.dx,
+            control.dy,
+            point.dx,
+            point.dy,
+          );
+        } else {
+          linePath.lineTo(point.dx, point.dy);
+        }
+      }
+      canvas.drawPath(linePath, paint);
+      if (style == _BrainSplitTraceLineStyle.ribbon) {
+        final highlight = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(2, paint.strokeWidth * 0.28)
+          ..strokeCap = StrokeCap.round
+          ..color = Colors.white.withValues(alpha: 0.34);
+        canvas.drawPath(linePath, highlight);
+      }
+      return;
+    }
+    for (var index = 0; index < points.length - 1; index += 1) {
+      final start = points[index];
+      final end = points[index + 1];
+      final vector = end - start;
+      final distance = vector.distance;
+      if (distance <= 0) {
+        continue;
+      }
+      final direction = vector / distance;
+      final dash = style == _BrainSplitTraceLineStyle.dotted ? 2.0 : 14.0;
+      final gap = style == _BrainSplitTraceLineStyle.dotted ? 10.0 : 8.0;
+      for (var offset = 0.0; offset < distance; offset += dash + gap) {
+        final from = start + direction * offset;
+        final to = start + direction * math.min(distance, offset + dash);
+        if (style == _BrainSplitTraceLineStyle.dotted) {
+          canvas.drawCircle(from, paint.strokeWidth * 0.64, paint);
+        } else {
+          canvas.drawLine(from, to, paint);
+        }
+      }
+    }
+  }
+
+  bool _useCurve(int index) {
+    return switch (segmentMode) {
+      _BrainSplitTraceSegmentMode.straight => false,
+      _BrainSplitTraceSegmentMode.curved => true,
+      _BrainSplitTraceSegmentMode.random => index.isEven,
+    };
+  }
+
+  Color _segmentColor(int index) {
+    const colors = <Color>[
+      Color(0xFF73A7C4),
+      Color(0xFFD08A3A),
+      Color(0xFFB96D5A),
+      Color(0xFF7DAA72),
+      Color(0xFF8C79B8),
+    ];
+    return colors[index % colors.length];
+  }
+
+  void _drawDirectionHint(Canvas canvas, Offset start, Offset end, Size size) {
+    final vector = end - start;
+    final distance = vector.distance;
+    if (distance <= 0) {
+      return;
+    }
+    final direction = vector / distance;
+    final center = start + direction * math.min(distance * 0.58, distance - 4);
+    final normal = Offset(-direction.dy, direction.dx);
+    final arrowSize = math.min(size.shortestSide * 0.045, 18.0);
+    final path = Path()
+      ..moveTo(
+        center.dx + direction.dx * arrowSize,
+        center.dy + direction.dy * arrowSize,
+      )
+      ..lineTo(
+        center.dx -
+            direction.dx * arrowSize * 0.72 +
+            normal.dx * arrowSize * 0.46,
+        center.dy -
+            direction.dy * arrowSize * 0.72 +
+            normal.dy * arrowSize * 0.46,
+      )
+      ..lineTo(
+        center.dx -
+            direction.dx * arrowSize * 0.72 -
+            normal.dx * arrowSize * 0.46,
+        center.dy -
+            direction.dy * arrowSize * 0.72 -
+            normal.dy * arrowSize * 0.46,
+      )
+      ..close();
+    final arrowPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = BimanualCoordinationTestPage._dangerAccent.withValues(
+        alpha: 0.82,
+      );
+    canvas.drawPath(path, arrowPaint);
   }
 
   @override
   bool shouldRepaint(covariant _TraceTrackPainter oldDelegate) {
     return oldDelegate.path != path ||
         oldDelegate.activeIndex != activeIndex ||
-        oldDelegate.accent != accent;
+        oldDelegate.segmentProgress != segmentProgress ||
+        oldDelegate.drawnPoints != drawnPoints ||
+        oldDelegate.accent != accent ||
+        oldDelegate.style != style ||
+        oldDelegate.segmentMode != segmentMode ||
+        oldDelegate.colorSegments != colorSegments;
   }
 }
 
@@ -3442,12 +7020,14 @@ class _BrainSplitBounceLane extends StatefulWidget {
     required this.running,
     required this.onCompleted,
     this.fullscreen = false,
+    this.denseFullscreen = false,
   });
 
   final _BrainSplitTaskSpec spec;
   final bool running;
   final ValueChanged<_BrainSplitLaneResult> onCompleted;
   final bool fullscreen;
+  final bool denseFullscreen;
 
   @override
   State<_BrainSplitBounceLane> createState() => _BrainSplitBounceLaneState();
@@ -3458,10 +7038,7 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
 
   Timer? _tickTimer;
   DateTime? _lastTickAt;
-  double _ballX = 0.5;
-  double _ballY = 0.35;
-  double _ballVx = 0.0;
-  double _ballVy = 0.0;
+  List<_BrainSplitBallState> _balls = <_BrainSplitBallState>[];
   double _paddleX = 0.5;
   int _rallies = 0;
   int _targetRallies = 5;
@@ -3478,6 +7055,15 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
   void didUpdateWidget(covariant _BrainSplitBounceLane oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spec.seed != widget.spec.seed ||
+        oldWidget.spec.targetCount != widget.spec.targetCount ||
+        oldWidget.spec.speedScale != widget.spec.speedScale ||
+        oldWidget.spec.ballRadius != widget.spec.ballRadius ||
+        oldWidget.spec.ballCount != widget.spec.ballCount ||
+        oldWidget.spec.collisionAcceleration !=
+            widget.spec.collisionAcceleration ||
+        oldWidget.spec.paddleWidth != widget.spec.paddleWidth ||
+        oldWidget.spec.paddleHeight != widget.spec.paddleHeight ||
+        oldWidget.spec.bounceObstacles != widget.spec.bounceObstacles ||
         oldWidget.running != widget.running) {
       _reset();
     }
@@ -3494,12 +7080,26 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
 
   void _reset() {
     _tickTimer?.cancel();
-    _targetRallies = 5 + (widget.spec.seed % 2);
-    _ballX = 0.34 + (widget.spec.seed % 4) * 0.12;
-    _ballY = 0.30;
-    final direction = widget.spec.seed.isEven ? -1.0 : 1.0;
-    _ballVx = direction * (0.18 + (widget.spec.seed % 3) * 0.03);
-    _ballVy = 0.34 + (widget.spec.seed % 2) * 0.03;
+    _targetRallies = widget.spec.targetCount;
+    _balls = List<_BrainSplitBallState>.generate(
+      widget.spec.ballCount.clamp(1, 3).toInt(),
+      (index) {
+        final direction = (widget.spec.seed + index).isEven ? -1.0 : 1.0;
+        return _BrainSplitBallState(
+          x: (0.30 + (widget.spec.seed % 4) * 0.10 + index * 0.12)
+              .clamp(0.18, 0.82)
+              .toDouble(),
+          y: (0.26 + index * 0.055).clamp(0.18, 0.42).toDouble(),
+          vx:
+              direction *
+              (0.16 + ((widget.spec.seed + index) % 3) * 0.032) *
+              widget.spec.speedScale,
+          vy:
+              (0.31 + ((widget.spec.seed + index) % 2) * 0.038) *
+              widget.spec.speedScale,
+        );
+      },
+    );
     _paddleX = 0.5;
     _rallies = 0;
     _completed = false;
@@ -3534,81 +7134,125 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
       return;
     }
 
-    const paddleWidth = 0.28;
-    const paddleY = 0.84;
-    const radius = 0.055;
-    final speedScale = 1.0 + _rallies * 0.055;
-
-    var nextX = _ballX + _ballVx * dt * speedScale;
-    var nextY = _ballY + _ballVy * dt * speedScale;
-    var nextVx = _ballVx;
-    var nextVy = _ballVy;
-
-    if (nextX <= radius) {
-      nextX = radius;
-      nextVx = nextVx.abs();
-    } else if (nextX >= 1 - radius) {
-      nextX = 1 - radius;
-      nextVx = -nextVx.abs();
-    }
-
-    if (nextY <= radius) {
-      nextY = radius;
-      nextVy = nextVy.abs();
-    }
+    final paddleWidth = widget.spec.paddleWidth;
+    const paddleY = 0.74;
+    final radius = widget.spec.ballRadius;
+    final speedScale =
+        1.0 + _rallies * (0.038 + widget.spec.speedScale * 0.014);
 
     final paddleHalf = paddleWidth / 2;
     final paddleLeft = (_paddleX - paddleHalf)
         .clamp(radius, 1 - paddleWidth - radius)
         .toDouble();
     final paddleRight = paddleLeft + paddleWidth;
-    final crossesPaddle = nextVy > 0 && nextY + radius >= paddleY;
+    final paddleCenter = paddleLeft + paddleHalf;
+    final updatedBalls = <_BrainSplitBallState>[];
+    for (final ball in _balls) {
+      var nextX = ball.x + ball.vx * dt * speedScale;
+      var nextY = ball.y + ball.vy * dt * speedScale;
+      var nextVx = ball.vx;
+      var nextVy = ball.vy;
+      var boosted = false;
 
-    if (crossesPaddle) {
-      if (nextX >= paddleLeft && nextX <= paddleRight) {
-        nextY = paddleY - radius;
-        nextVy = -((nextVy.abs() * 1.04).clamp(0.26, 0.62).toDouble());
-        final paddleBias = ((nextX - _paddleX) / paddleHalf)
-            .clamp(-1.0, 1.0)
-            .toDouble();
-        nextVx += paddleBias * 0.10;
-        _rallies += 1;
-        HapticFeedback.selectionClick();
-        if (_rallies >= _targetRallies) {
-          setState(() {
-            _ballX = nextX;
-            _ballY = nextY;
-            _ballVx = nextVx;
-            _ballVy = nextVy;
-          });
-          _complete(true);
+      if (nextX <= radius) {
+        nextX = radius;
+        nextVx = nextVx.abs();
+      } else if (nextX >= 1 - radius) {
+        nextX = 1 - radius;
+        nextVx = -nextVx.abs();
+      }
+
+      if (nextY <= radius) {
+        nextY = radius;
+        nextVy = nextVy.abs();
+      }
+
+      for (final obstacle in widget.spec.bounceObstacles) {
+        final dx = nextX - obstacle.center.dx;
+        final dy = nextY - obstacle.center.dy;
+        final distance = math.sqrt(dx * dx + dy * dy);
+        final minDistance = radius + obstacle.radius;
+        if (distance <= 0 || distance >= minDistance) {
+          continue;
+        }
+        final nx = dx / distance;
+        final ny = dy / distance;
+        final dot = nextVx * nx + nextVy * ny;
+        if (dot < 0) {
+          nextVx = nextVx - 2 * dot * nx;
+          nextVy = nextVy - 2 * dot * ny;
+          final push = minDistance - distance + 0.004;
+          nextX = (nextX + nx * push).clamp(radius, 1 - radius).toDouble();
+          nextY = (nextY + ny * push).clamp(radius, 1 - radius).toDouble();
+          boosted = true;
+        }
+      }
+
+      final crossesPaddle = nextVy > 0 && nextY + radius >= paddleY;
+      if (crossesPaddle) {
+        if (nextX >= paddleLeft && nextX <= paddleRight) {
+          nextY = paddleY - radius;
+          final bounceBoost = widget.spec.collisionAcceleration
+              ? 1.055 + widget.spec.speedScale * 0.020
+              : 1.010;
+          nextVy = -((nextVy.abs() * bounceBoost).clamp(0.24, 0.92).toDouble());
+          final paddleBias = ((nextX - paddleCenter) / paddleHalf)
+              .clamp(-1.0, 1.0)
+              .toDouble();
+          nextVx += paddleBias * 0.10;
+          boosted = true;
+          _rallies += 1;
+          HapticFeedback.selectionClick();
+          if (_rallies >= _targetRallies) {
+            updatedBalls.add(
+              ball.copyWith(x: nextX, y: nextY, vx: nextVx, vy: nextVy),
+            );
+            setState(() => _balls = updatedBalls);
+            _complete(true);
+            return;
+          }
+        } else if (nextY + radius >= 1 - radius * 0.3) {
+          _missed = true;
+          updatedBalls.add(
+            ball.copyWith(x: nextX, y: nextY, vx: nextVx, vy: nextVy),
+          );
+          setState(() => _balls = updatedBalls);
+          _complete(false);
           return;
         }
-      } else if (nextY + radius >= 1 - radius * 0.3) {
-        _missed = true;
-        setState(() {
-          _ballX = nextX;
-          _ballY = nextY;
-          _ballVx = nextVx;
-          _ballVy = nextVy;
-        });
-        _complete(false);
-        return;
       }
-    }
 
-    final magnitude = math.sqrt(nextVx * nextVx + nextVy * nextVy);
-    if (magnitude > 0.72) {
-      final scale = 0.72 / magnitude;
-      nextVx *= scale;
-      nextVy *= scale;
+      if (boosted && widget.spec.collisionAcceleration) {
+        nextVx *= 1.035;
+        nextVy *= 1.035;
+      }
+      final magnitude = math.sqrt(nextVx * nextVx + nextVy * nextVy);
+      final maxMagnitude = (0.72 + widget.spec.speedScale * 0.24).clamp(
+        0.74,
+        widget.spec.collisionAcceleration ? 1.28 : 1.05,
+      );
+      if (magnitude > maxMagnitude) {
+        final scale = maxMagnitude / magnitude;
+        nextVx *= scale;
+        nextVy *= scale;
+      }
+      final trail = <Offset>[
+        Offset(ball.x, ball.y),
+        ...ball.trail,
+      ].take(widget.spec.ballCount == 1 ? 8 : 5).toList(growable: false);
+      updatedBalls.add(
+        _BrainSplitBallState(
+          x: nextX,
+          y: nextY,
+          vx: nextVx,
+          vy: nextVy,
+          trail: trail,
+        ),
+      );
     }
 
     setState(() {
-      _ballX = nextX;
-      _ballY = nextY;
-      _ballVx = nextVx;
-      _ballVy = nextVy;
+      _balls = updatedBalls;
     });
   }
 
@@ -3659,13 +7303,50 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
       progressText: progressText,
       progressValue: progressValue,
       statusText: _completed
-          ? pickUiText(i18n, zh: '已完成', en: 'Completed')
+          ? pickUiText(
+              i18n,
+              zh: '已完成',
+              en: 'Completed',
+              ja: 'しました。完了しました',
+              de: 'Completed',
+              fr: 'Achevé',
+              es: 'Completado',
+              ru: 'завершенный',
+            )
           : _missed
-          ? pickUiText(i18n, zh: '漏球', en: 'Missed')
+          ? pickUiText(
+              i18n,
+              zh: '漏球',
+              en: 'Missed',
+              ja: 'Missed',
+              de: 'Missed',
+              fr: 'Manque',
+              es: 'Desaparecido',
+              ru: 'Пропавший',
+            )
           : widget.running
-          ? pickUiText(i18n, zh: '拖动挡板', en: 'Drag the paddle')
-          : pickUiText(i18n, zh: '待发球', en: 'Ready'),
+          ? pickUiText(
+              i18n,
+              zh: '拖动挡板',
+              en: 'Drag the paddle',
+              ja: 'Drag the paddle',
+              de: 'Drag the paddle',
+              fr: 'Faites glisser la palette',
+              es: 'Arrastre la paleta',
+              ru: 'Перетащите весло',
+            )
+          : pickUiText(
+              i18n,
+              zh: '待发球',
+              en: 'Ready',
+              ja: 'Ready',
+              de: 'Ready',
+              fr: 'Prêt',
+              es: 'Listo',
+              ru: 'Готовы',
+            ),
       fullscreen: widget.fullscreen,
+      denseFullscreen: widget.denseFullscreen,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = constraints.biggest;
@@ -3673,27 +7354,27 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
             return const SizedBox.shrink();
           }
           final theme = Theme.of(context);
-          const paddleWidth = 0.28;
-          const paddleHeight = 0.09;
-          const paddleY = 0.84;
-          final ballRadius = math.min(size.width, size.height) * 0.075;
-          final ballCenter = Offset(_ballX * size.width, _ballY * size.height);
+          final paddleWidth = widget.spec.paddleWidth;
+          final paddleHeight = widget.spec.paddleHeight;
+          const paddleY = 0.74;
+          const controlY = 0.90;
+          final ballRadius =
+              math.min(size.width, size.height) *
+              widget.spec.ballRadius *
+              (widget.denseFullscreen ? 0.92 : 1.0);
           final paddleLeft =
               ((_paddleX - paddleWidth / 2)
                   .clamp(0.08, 0.92 - paddleWidth)
                   .toDouble()) *
               size.width;
           final paddleTop = paddleY * size.height;
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapDown: widget.running
-                ? (details) => _setPaddle(details.localPosition.dx / size.width)
+          return _HumanPointerDragBoundary(
+            enabled: widget.running,
+            onPointerDown: widget.running
+                ? (event) => _setPaddle(event.localPosition.dx / size.width)
                 : null,
-            onHorizontalDragStart: widget.running
-                ? (details) => _setPaddle(details.localPosition.dx / size.width)
-                : null,
-            onHorizontalDragUpdate: widget.running
-                ? (details) => _setPaddle(details.localPosition.dx / size.width)
+            onPointerMove: widget.running
+                ? (event) => _setPaddle(event.localPosition.dx / size.width)
                 : null,
             child: Stack(
               fit: StackFit.expand,
@@ -3711,27 +7392,38 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
                     ),
                   ),
                 ),
-                Positioned(
-                  left: 12,
-                  top: 12,
-                  child: Text(
-                    widget.running
-                        ? pickUiText(
-                            i18n,
-                            zh: '把球稳住',
-                            en: 'Keep the ball alive',
-                          )
-                        : pickUiText(
-                            i18n,
-                            zh: '先开始再接球',
-                            en: 'Start before the serve',
-                          ),
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
+                if (!widget.denseFullscreen)
+                  Positioned(
+                    left: 12,
+                    top: 12,
+                    child: Text(
+                      widget.running
+                          ? pickUiText(
+                              i18n,
+                              zh: '把球稳住',
+                              en: 'Keep the ball alive',
+                              ja: 'Keep the ball alive',
+                              de: 'Keep the ball alive',
+                              fr: 'Garde la balle en vie',
+                              es: 'Mantenga la pelota viva',
+                              ru: 'Держите мяч живым',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '先开始再接球',
+                              en: 'Start before the serve',
+                              ja: 'Start before the serve',
+                              de: 'Start before the serve',
+                              fr: 'Commencez avant le service',
+                              es: 'Comience antes del servicio',
+                              ru: 'Начните перед подачей',
+                            ),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
                 for (var lane = 0; lane < 5; lane += 1)
                   Positioned(
                     left: 14,
@@ -3747,12 +7439,39 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
                       ),
                     ),
                   ),
+                for (final obstacle in widget.spec.bounceObstacles)
+                  Positioned(
+                    left:
+                        obstacle.center.dx * size.width -
+                        obstacle.radius * size.width,
+                    top:
+                        obstacle.center.dy * size.height -
+                        obstacle.radius * size.width,
+                    child: Container(
+                      width: obstacle.radius * size.width * 2,
+                      height: obstacle.radius * size.width * 2,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: widget.spec.accent.withValues(alpha: 0.18),
+                        border: Border.all(
+                          color: widget.spec.accent.withValues(alpha: 0.42),
+                        ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: widget.spec.accent.withValues(alpha: 0.10),
+                            blurRadius: 12,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 Positioned(
                   left: paddleLeft,
                   top: paddleTop,
                   child: Container(
                     width: size.width * paddleWidth,
-                    height: size.height * paddleHeight,
+                    height: math.max(8.0, size.height * paddleHeight),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
                       gradient: LinearGradient(
@@ -3774,27 +7493,85 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
                   ),
                 ),
                 Positioned(
-                  left: ballCenter.dx - ballRadius,
-                  top: ballCenter.dy - ballRadius,
+                  left: 16,
+                  right: 16,
+                  top: size.height * controlY,
                   child: Container(
-                    width: ballRadius * 2,
-                    height: ballRadius * 2,
+                    height: widget.denseFullscreen ? 16 : 22,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: widget.spec.accent.withValues(alpha: 0.94),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: widget.spec.accent.withValues(alpha: 0.28),
-                          blurRadius: 16,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(999),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.62),
+                      border: Border.all(
+                        color: widget.spec.accent.withValues(alpha: 0.20),
+                      ),
                     ),
                   ),
                 ),
                 Positioned(
-                  right: 12,
-                  top: 12,
+                  left: (_paddleX * size.width - 8).clamp(
+                    14.0,
+                    size.width - 30,
+                  ),
+                  top: size.height * controlY - 3,
+                  child: Container(
+                    width: 16,
+                    height: widget.denseFullscreen ? 22 : 28,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color: widget.spec.accent.withValues(alpha: 0.36),
+                    ),
+                  ),
+                ),
+                for (final ball in _balls)
+                  for (
+                    var index = ball.trail.length - 1;
+                    index >= 0;
+                    index -= 1
+                  )
+                    Positioned(
+                      left:
+                          ball.trail[index].dx * size.width -
+                          ballRadius * (0.35 + index * 0.045),
+                      top:
+                          ball.trail[index].dy * size.height -
+                          ballRadius * (0.35 + index * 0.045),
+                      child: Container(
+                        width: ballRadius * (0.70 + index * 0.09),
+                        height: ballRadius * (0.70 + index * 0.09),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: widget.spec.accent.withValues(
+                            alpha: (0.07 + index * 0.018).clamp(0.04, 0.16),
+                          ),
+                        ),
+                      ),
+                    ),
+                for (final ball in _balls)
+                  Positioned(
+                    left: ball.x * size.width - ballRadius,
+                    top: ball.y * size.height - ballRadius,
+                    child: Container(
+                      width: ballRadius * 2,
+                      height: ballRadius * 2,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: widget.spec.accent.withValues(alpha: 0.94),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: widget.spec.accent.withValues(alpha: 0.28),
+                            blurRadius: 16,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  right: widget.denseFullscreen ? 6 : 12,
+                  top: widget.denseFullscreen ? 6 : 12,
                   child: _HumanPill(
                     text:
                         '${(_rallies * 100 / math.max(1, _targetRallies)).round()}%',
@@ -3818,6 +7595,7 @@ class _BrainSplitClimbLane extends StatefulWidget {
     required this.holdTargetMs,
     required this.onCompleted,
     this.fullscreen = false,
+    this.denseFullscreen = false,
   });
 
   final _BrainSplitTaskSpec spec;
@@ -3825,6 +7603,7 @@ class _BrainSplitClimbLane extends StatefulWidget {
   final int holdTargetMs;
   final ValueChanged<_BrainSplitLaneResult> onCompleted;
   final bool fullscreen;
+  final bool denseFullscreen;
 
   @override
   State<_BrainSplitClimbLane> createState() => _BrainSplitClimbLaneState();
@@ -3833,14 +7612,25 @@ class _BrainSplitClimbLane extends StatefulWidget {
 class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
   final Stopwatch _stopwatch = Stopwatch();
 
+  Timer? _platformTimer;
   Timer? _chargeTimer;
+  Timer? _jumpTimer;
   DateTime? _chargeStartedAt;
-  int _stepIndex = 0;
+  DateTime? _lastPlatformTickAt;
+  DateTime? _jumpStartedAt;
+  int _levelIndex = 0;
   int _targetSteps = 6;
-  List<int> _obstacleSteps = <int>[];
+  List<_BrainSplitJumpPlatform> _platforms = <_BrainSplitJumpPlatform>[];
+  double _platformClock = 0;
   double _chargeProgress = 0;
+  double _lastLandingCharge = 0;
+  double _jumpProgress = 0;
+  double _jumpStartX = 0.5;
+  double _jumpStartY = 0.88;
+  double _jumpTargetX = 0.5;
+  double _jumpTargetY = 0.5;
   bool _charging = false;
-  bool _chargeReady = false;
+  bool _jumping = false;
   bool _chargeAnnounced = false;
   bool _completed = false;
   bool _failed = false;
@@ -3855,6 +7645,9 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
   void didUpdateWidget(covariant _BrainSplitClimbLane oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.spec.seed != widget.spec.seed ||
+        oldWidget.spec.targetCount != widget.spec.targetCount ||
+        oldWidget.spec.climbPlatforms != widget.spec.climbPlatforms ||
+        oldWidget.spec.speedScale != widget.spec.speedScale ||
         oldWidget.running != widget.running ||
         oldWidget.holdTargetMs != widget.holdTargetMs) {
       _reset();
@@ -3863,7 +7656,9 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
 
   @override
   void dispose() {
+    _platformTimer?.cancel();
     _chargeTimer?.cancel();
+    _jumpTimer?.cancel();
     _stopwatch
       ..stop()
       ..reset();
@@ -3871,30 +7666,59 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
   }
 
   void _reset() {
+    _platformTimer?.cancel();
     _chargeTimer?.cancel();
-    _targetSteps = 6 + (widget.spec.seed % 2);
-    _obstacleSteps = <int>{
-      2,
-      math.max(2, _targetSteps - 2),
-    }.toList(growable: false)..sort();
-    _stepIndex = 0;
+    _jumpTimer?.cancel();
+    _targetSteps = widget.spec.targetCount;
+    _platforms = widget.spec.climbPlatforms;
+    _levelIndex = 0;
+    _platformClock = (widget.spec.seed % 17) * 0.071;
     _chargeProgress = 0;
+    _lastLandingCharge = 0;
+    _jumpProgress = 0;
+    _jumpStartX = 0.5;
+    _jumpStartY = 0.88;
+    _jumpTargetX = 0.5;
+    _jumpTargetY = 0.5;
     _charging = false;
-    _chargeReady = false;
+    _jumping = false;
     _chargeAnnounced = false;
     _completed = false;
     _failed = false;
     _chargeStartedAt = null;
+    _lastPlatformTickAt = null;
+    _jumpStartedAt = null;
     _stopwatch
       ..stop()
       ..reset();
     if (widget.running) {
       _stopwatch.start();
+      _startPlatformTicker();
     }
   }
 
+  void _startPlatformTicker() {
+    _platformTimer?.cancel();
+    _lastPlatformTickAt = DateTime.now();
+    _platformTimer = Timer.periodic(const Duration(milliseconds: 32), (_) {
+      if (!mounted || !widget.running || _completed) {
+        return;
+      }
+      final now = DateTime.now();
+      final lastTick = _lastPlatformTickAt ?? now;
+      _lastPlatformTickAt = now;
+      final dt = now.difference(lastTick).inMicroseconds / 1000000.0;
+      if (dt <= 0) {
+        return;
+      }
+      setState(() {
+        _platformClock += dt;
+      });
+    });
+  }
+
   void _beginCharge() {
-    if (!mounted || !widget.running || _completed) {
+    if (!mounted || !widget.running || _completed || _jumping) {
       return;
     }
     if (_charging) {
@@ -3902,7 +7726,6 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
     }
     _chargeTimer?.cancel();
     _charging = true;
-    _chargeReady = false;
     _chargeAnnounced = false;
     _chargeProgress = 0;
     _chargeStartedAt = DateTime.now();
@@ -3917,7 +7740,6 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
           .toDouble();
       setState(() {
         _chargeProgress = progress;
-        _chargeReady = progress >= 1;
       });
       if (progress >= 1 && !_chargeAnnounced) {
         _chargeAnnounced = true;
@@ -3928,38 +7750,136 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
   }
 
   void _endCharge() {
-    if (!mounted || _completed) {
+    if (!mounted || _completed || _jumping) {
       return;
     }
-    final charged = _chargeReady;
     _chargeTimer?.cancel();
     _chargeTimer = null;
     _charging = false;
     _chargeStartedAt = null;
+    final releasedProgress = _chargeProgress;
     _chargeProgress = 0;
-    _chargeReady = false;
     _chargeAnnounced = false;
-    if (charged) {
-      _advanceStep(jump: _obstacleSteps.contains(_stepIndex));
-      return;
-    }
-    if (_obstacleSteps.contains(_stepIndex)) {
-      _complete(false);
-      return;
-    }
-    _advanceStep(jump: false);
+    _attemptJump(releasedProgress);
   }
 
-  void _advanceStep({required bool jump}) {
+  _BrainSplitJumpPlatform? get _nextPlatform {
+    if (_levelIndex >= _platforms.length) {
+      return null;
+    }
+    return _platforms[_levelIndex];
+  }
+
+  double _platformCenterX(_BrainSplitJumpPlatform platform) {
+    final left = 0.10 + platform.width / 2;
+    final right = 0.90 - platform.width / 2;
+    final mid = (left + right) / 2;
+    final amplitude = math.max(0.02, (right - left) / 2);
+    final phase =
+        (_platformClock * platform.speed + platform.phase) * math.pi * 2;
+    return (mid + math.sin(phase) * amplitude).clamp(left, right).toDouble();
+  }
+
+  double _runnerX() {
+    if (_levelIndex <= 0 || _platforms.isEmpty) {
+      return 0.5;
+    }
+    final platform = _platforms[math.min(_levelIndex, _platforms.length) - 1];
+    return _platformCenterX(platform);
+  }
+
+  double _landingTolerance(double chargeProgress) {
+    final base = switch (widget.spec.difficulty) {
+      _BimanualDifficulty.relaxed => 0.082,
+      _BimanualDifficulty.standard => 0.064,
+      _BimanualDifficulty.hard => 0.052,
+      _BimanualDifficulty.expert => 0.042,
+    };
+    return base + chargeProgress.clamp(0.0, 1.0).toDouble() * 0.045;
+  }
+
+  double _levelY(int level) {
+    return 0.88 - level * (0.72 / math.max(1, _targetSteps));
+  }
+
+  double _runnerRestY() {
+    return _levelIndex <= 0 ? _levelY(0) : _levelY(_levelIndex);
+  }
+
+  Offset _currentRunnerPosition() {
+    if (!_jumping) {
+      return Offset(_runnerX(), _runnerRestY());
+    }
+    final t = Curves.easeOutCubic.transform(_jumpProgress.clamp(0.0, 1.0));
+    final x = _jumpStartX + (_jumpTargetX - _jumpStartX) * t;
+    final yLine = _jumpStartY + (_jumpTargetY - _jumpStartY) * t;
+    final arc = math.sin(math.pi * t) * (0.12 + _lastLandingCharge * 0.05);
+    return Offset(x, yLine - arc);
+  }
+
+  void _attemptJump(double chargeProgress) {
     if (!mounted || _completed) {
       return;
     }
-    final obstacle = _obstacleSteps.contains(_stepIndex);
-    final advance = obstacle && jump ? 2 : 1;
-    setState(() {
-      _stepIndex = math.min(_targetSteps, _stepIndex + advance);
+    final platform = _nextPlatform;
+    if (platform == null) {
+      _complete(true);
+      return;
+    }
+    final requiredCharge = platform.requiredCharge;
+    final hasCharge = requiredCharge <= 0 || chargeProgress >= requiredCharge;
+    final currentPosition = _currentRunnerPosition();
+    final platformX = _platformCenterX(platform);
+    _jumpTimer?.cancel();
+    _jumping = true;
+    _jumpProgress = 0;
+    _jumpStartX = currentPosition.dx;
+    _jumpStartY = currentPosition.dy;
+    _jumpTargetX = platformX;
+    _jumpTargetY = _levelY(platform.level);
+    _lastLandingCharge = chargeProgress;
+    _jumpStartedAt = DateTime.now();
+    _jumpTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      if (!mounted || !_jumping || _completed) {
+        return;
+      }
+      final startedAt = _jumpStartedAt ?? DateTime.now();
+      final elapsed = DateTime.now().difference(startedAt).inMilliseconds;
+      final progress = (elapsed / 420).clamp(0.0, 1.0).toDouble();
+      if (progress < 1) {
+        setState(() => _jumpProgress = progress);
+        return;
+      }
+      _landJump(platform, chargeProgress, hasCharge);
     });
-    if (_stepIndex >= _targetSteps) {
+    setState(() {});
+  }
+
+  void _landJump(
+    _BrainSplitJumpPlatform platform,
+    double chargeProgress,
+    bool hasCharge,
+  ) {
+    _jumpTimer?.cancel();
+    final platformX = _platformCenterX(platform);
+    final horizontalOk =
+        (_jumpTargetX - platformX).abs() <=
+        platform.width / 2 + _landingTolerance(chargeProgress);
+    if (!hasCharge || !horizontalOk) {
+      setState(() {
+        _jumping = false;
+        _jumpProgress = 1;
+      });
+      _complete(false);
+      return;
+    }
+    setState(() {
+      _jumping = false;
+      _jumpProgress = 1;
+      _levelIndex = math.min(_targetSteps, _levelIndex + 1);
+      _lastLandingCharge = chargeProgress;
+    });
+    if (_levelIndex >= _targetSteps) {
       _complete(true);
       return;
     }
@@ -3972,10 +7892,19 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
     }
     _completed = true;
     _failed = !success;
+    _platformTimer?.cancel();
     _chargeTimer?.cancel();
+    _jumpTimer?.cancel();
     _stopwatch.stop();
     final elapsed = math.max(1, _stopwatch.elapsedMilliseconds);
-    final scoreDelta = success ? 13 + _targetSteps * 3 - (_failed ? 4 : 0) : -6;
+    final scoreDelta = success
+        ? 13 +
+              _targetSteps * 3 +
+              _platforms
+                      .where((platform) => platform.requiredCharge > 0)
+                      .length *
+                  2
+        : -6;
     widget.onCompleted(
       _BrainSplitLaneResult(
         success: success,
@@ -3992,9 +7921,10 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final progressText = '${math.min(_stepIndex, _targetSteps)}/$_targetSteps';
-    final progressValue = _stepIndex / math.max(1, _targetSteps);
-    final needCharge = _obstacleSteps.contains(_stepIndex);
+    final progressText = '${math.min(_levelIndex, _targetSteps)}/$_targetSteps';
+    final progressValue = _levelIndex / math.max(1, _targetSteps);
+    final nextPlatform = _nextPlatform;
+    final needCharge = (nextPlatform?.requiredCharge ?? 0) > 0;
     return _BrainSplitLaneFrame(
       accent: widget.spec.accent,
       title: widget.spec.title,
@@ -4003,19 +7933,72 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
       progressText: progressText,
       progressValue: progressValue,
       statusText: _completed
-          ? pickUiText(i18n, zh: '已登顶', en: 'Summit reached')
+          ? pickUiText(
+              i18n,
+              zh: '已登顶',
+              en: 'Summit reached',
+              ja: 'Summit reached',
+              de: 'Summit reached',
+              fr: 'Sommet atteint',
+              es: 'Cumbre alcanzada',
+              ru: 'Встреча на высшем уровне',
+            )
           : _failed
-          ? pickUiText(i18n, zh: '被管道拦住', en: 'Blocked')
+          ? pickUiText(
+              i18n,
+              zh: '没踩到平台',
+              en: 'Missed platform',
+              ja: 'Missed platform',
+              de: 'Missed platform',
+              fr: 'Plateforme manquante',
+              es: 'Plataforma perdida',
+              ru: 'Пропущенная платформа',
+            )
+          : _jumping
+          ? pickUiText(
+              i18n,
+              zh: '空中',
+              en: 'Airborne',
+              ja: 'Airborne',
+              de: 'Airborne',
+              fr: 'Airborne',
+              es: 'Airborne',
+              ru: 'воздушно-десантный',
+            )
           : _charging
           ? pickUiText(
               i18n,
-              zh: '蓄力中',
+              zh: '蓄力 ${(_chargeProgress * 100).round()}%',
               en: '${(_chargeProgress * 100).round()}% charge',
+              ja: '${(_chargeProgress * 100).round()}%チャージ',
+              de: '${(_chargeProgress * 100).round()}% charge',
+              fr: '${(_chargeProgress * 100).round()}% charge',
+              es: 'Cargo correspondiente',
+              ru: '<v0/% заряд',
             )
           : needCharge
-          ? pickUiText(i18n, zh: '长按起跳', en: 'Hold to jump')
-          : pickUiText(i18n, zh: '短按上步', en: 'Tap to step'),
+          ? pickUiText(
+              i18n,
+              zh: '长按蓄力等平台对齐',
+              en: 'Hold and time the platform',
+              ja: 'Hold and time the platform',
+              de: 'Hold and time the platform',
+              fr: 'Maintenez et maintenez la plate-forme',
+              es: 'Mantener y tiempo la plataforma',
+              ru: 'Время и время работы платформы',
+            )
+          : pickUiText(
+              i18n,
+              zh: '点击跳到下一层',
+              en: 'Tap to jump',
+              ja: 'Tap to jump',
+              de: 'Tap to jump',
+              fr: 'Appuyez sur pour sauter',
+              es: 'Pulsa para saltar',
+              ru: 'Прыжок прыжком',
+            ),
       fullscreen: widget.fullscreen,
+      denseFullscreen: widget.denseFullscreen,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = constraints.biggest;
@@ -4023,13 +8006,25 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
             return const SizedBox.shrink();
           }
           final theme = Theme.of(context);
-          final stepSpacing = size.height / (_targetSteps + 1.6);
-          final runnerY = size.height - ((_stepIndex + 1) * stepSpacing);
-          final runnerX = size.width * 0.26;
-          final pipeWidth = size.width * 0.18;
-          final pipeHeight = size.height * 0.09;
-          return Listener(
-            behavior: HitTestBehavior.opaque,
+          final baseY = size.height * 0.88;
+          final summitY = size.height * 0.16;
+          final levelSpacing = (baseY - summitY) / math.max(1, _targetSteps);
+          double platformY(_BrainSplitJumpPlatform platform) {
+            return baseY - platform.level * levelSpacing;
+          }
+
+          final runnerSize = widget.denseFullscreen ? 30.0 : 38.0;
+          final runnerPosition = _currentRunnerPosition();
+          final runnerX = runnerPosition.dx * size.width;
+          final runnerY = runnerPosition.dy * size.height - runnerSize * 0.82;
+          final targetX = nextPlatform == null
+              ? runnerX
+              : _platformCenterX(nextPlatform) * size.width;
+          final targetY = nextPlatform == null
+              ? summitY
+              : platformY(nextPlatform);
+          return _HumanPointerDragBoundary(
+            enabled: widget.running,
             onPointerDown: widget.running ? (_) => _beginCharge() : null,
             onPointerUp: widget.running ? (_) => _endCharge() : null,
             onPointerCancel: widget.running ? (_) => _endCharge() : null,
@@ -4050,81 +8045,153 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
                   ),
                 ),
                 Positioned(
-                  left: 12,
-                  top: 12,
-                  child: Text(
-                    widget.running
-                        ? pickUiText(
-                            i18n,
-                            zh: '按一下上一步，遇到管道就长按蓄力。',
-                            en: 'Tap to climb; hold when a pipe blocks the way.',
-                          )
-                        : pickUiText(
-                            i18n,
-                            zh: '先开始再冲楼梯',
-                            en: 'Start before climbing',
-                          ),
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
+                  left: 18,
+                  right: 18,
+                  top: summitY - 22,
+                  child: Container(
+                    height: 5,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      gradient: LinearGradient(
+                        colors: <Color>[
+                          widget.spec.accent.withValues(alpha: 0.10),
+                          widget.spec.accent.withValues(alpha: 0.50),
+                          widget.spec.accent.withValues(alpha: 0.10),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                for (var step = 0; step < _targetSteps; step += 1)
+                Positioned(
+                  right: 18,
+                  top: summitY - 42,
+                  child: Icon(
+                    Icons.flag_rounded,
+                    color: widget.spec.accent.withValues(alpha: 0.78),
+                    size: widget.denseFullscreen ? 18 : 24,
+                  ),
+                ),
+                if (!widget.denseFullscreen)
                   Positioned(
-                    left: 18,
-                    right: 18,
-                    top: size.height - (step + 1) * stepSpacing,
-                    child: Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: step <= _stepIndex
-                            ? widget.spec.accent.withValues(alpha: 0.36)
-                            : widget.spec.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
+                    left: 12,
+                    top: 12,
+                    child: Text(
+                      widget.running
+                          ? pickUiText(
+                              i18n,
+                              zh: '看准平台横向对齐，再点击或蓄力跳。',
+                              en: 'Time the moving platform, then tap or charge.',
+                              ja: 'Time the moving platform, then tap or charge.',
+                              de: 'Time the moving platform, then tap or charge.',
+                              fr: 'Temps de la plate-forme mobile, puis touchez ou chargez.',
+                              es: 'Hora de la plataforma móvil, luego pulsar o cargar.',
+                              ru: 'Время движущейся платформы, затем нажмите или зарядите.',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '先开始再跳高',
+                              en: 'Start before jumping',
+                              ja: 'Start before jumping',
+                              de: 'Start before jumping',
+                              fr: 'Commencez avant de sauter',
+                              es: 'Empieza antes de saltar',
+                              ru: 'Начните перед прыжком',
+                            ),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                for (final obstacle in _obstacleSteps)
-                  Positioned(
-                    right: 16,
-                    top: size.height - (obstacle + 1) * stepSpacing - 2,
-                    child: Container(
-                      width: pipeWidth,
-                      height: pipeHeight,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: <Color>[
-                            BimanualCoordinationTestPage._dangerAccent
-                                .withValues(
-                                  alpha: obstacle <= _stepIndex ? 0.72 : 0.92,
-                                ),
-                            widget.spec.accent.withValues(alpha: 0.88),
-                          ],
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.block_rounded,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 120),
-                  curve: Curves.easeOutCubic,
-                  left: runnerX,
-                  top: runnerY.clamp(12.0, size.height - 54).toDouble(),
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  top: baseY,
                   child: Container(
-                    width: 44,
-                    height: 44,
+                    height: 10,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      color: widget.spec.accent.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                for (final platform in _platforms)
+                  Positioned(
+                    left:
+                        _platformCenterX(platform) * size.width -
+                        platform.width * size.width / 2,
+                    top: platformY(platform),
+                    child: Container(
+                      width: platform.width * size.width,
+                      height: platform.requiredCharge > 0 ? 12 : 10,
+                      decoration: BoxDecoration(
+                        color: platform.level <= _levelIndex
+                            ? widget.spec.accent.withValues(alpha: 0.36)
+                            : platform.requiredCharge > 0
+                            ? BimanualCoordinationTestPage._dangerAccent
+                                  .withValues(alpha: 0.34)
+                            : widget.spec.accent.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: widget.spec.accent.withValues(
+                            alpha: platform.level == _levelIndex + 1
+                                ? 0.58
+                                : 0.18,
+                          ),
+                          width: platform.level == _levelIndex + 1 ? 2 : 1,
+                        ),
+                        boxShadow: <BoxShadow>[
+                          if (platform.level == _levelIndex + 1)
+                            BoxShadow(
+                              color: widget.spec.accent.withValues(alpha: 0.24),
+                              blurRadius: 12,
+                              spreadRadius: 1,
+                            ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: math.max(
+                            18,
+                            platform.width * size.width * 0.32,
+                          ),
+                          height: 2,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: Colors.white.withValues(alpha: 0.56),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_charging && nextPlatform != null)
+                  Positioned(
+                    left: math.min(runnerX, targetX),
+                    top: math.min(runnerY, targetY),
+                    child: CustomPaint(
+                      size: Size(
+                        (runnerX - targetX).abs().clamp(24.0, size.width),
+                        (runnerY - targetY).abs().clamp(24.0, size.height),
+                      ),
+                      painter: _ClimbJumpGuidePainter(
+                        accent: widget.spec.accent,
+                        progress: _chargeProgress,
+                        flipX: targetX < runnerX,
+                        flipY: targetY < runnerY,
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  left: (runnerX - runnerSize / 2).clamp(
+                    8.0,
+                    size.width - runnerSize - 8,
+                  ),
+                  top: runnerY.clamp(12.0, size.height - runnerSize - 8),
+                  child: Container(
+                    width: runnerSize,
+                    height: runnerSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -4141,40 +8208,84 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.directions_walk_rounded,
-                      color: Colors.white,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        Icon(
+                          _jumping
+                              ? Icons.flight_takeoff_rounded
+                              : _lastLandingCharge > 0.35
+                              ? Icons.keyboard_double_arrow_up_rounded
+                              : Icons.directions_run_rounded,
+                          color: Colors.white,
+                          size: widget.denseFullscreen ? 18 : 22,
+                        ),
+                        if (_failed)
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: BimanualCoordinationTestPage
+                                      ._dangerAccent
+                                      .withValues(alpha: 0.78),
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
                 Positioned(
-                  right: 12,
-                  top: 12,
+                  right: widget.denseFullscreen ? 6 : 12,
+                  top: widget.denseFullscreen ? 6 : 12,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: <Widget>[
                       _HumanPill(
                         text: needCharge
-                            ? pickUiText(i18n, zh: '管道', en: 'Pipe')
-                            : pickUiText(i18n, zh: '楼梯', en: 'Steps'),
+                            ? pickUiText(
+                                i18n,
+                                zh: '蓄力层',
+                                en: 'Charge',
+                                ja: 'チャージ',
+                                de: 'Charge',
+                                fr: 'Frais',
+                                es: 'Carga',
+                                ru: 'Зарядка',
+                              )
+                            : pickUiText(
+                                i18n,
+                                zh: '平台',
+                                en: 'Platform',
+                                ja: 'Platform',
+                                de: 'Platform',
+                                fr: 'Plateforme',
+                                es: 'Plataforma',
+                                ru: 'Платформа',
+                              ),
                         accent: widget.spec.accent,
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: 74,
-                        child: LinearProgressIndicator(
-                          minHeight: 6,
-                          value: _charging ? _chargeProgress : progressValue,
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _charging
-                                ? BimanualCoordinationTestPage._dangerAccent
-                                : widget.spec.accent,
+                      if (!widget.denseFullscreen) ...<Widget>[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: 74,
+                          child: LinearProgressIndicator(
+                            minHeight: 6,
+                            value: _charging ? _chargeProgress : progressValue,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _charging
+                                  ? BimanualCoordinationTestPage._dangerAccent
+                                  : widget.spec.accent,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -4184,6 +8295,47 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
         },
       ),
     );
+  }
+}
+
+class _ClimbJumpGuidePainter extends CustomPainter {
+  const _ClimbJumpGuidePainter({
+    required this.accent,
+    required this.progress,
+    required this.flipX,
+    required this.flipY,
+  });
+
+  final Color accent;
+  final double progress;
+  final bool flipX;
+  final bool flipY;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final start = Offset(flipX ? size.width : 0, flipY ? size.height : 0);
+    final end = Offset(flipX ? 0 : size.width, flipY ? 0 : size.height);
+    final control = Offset(
+      size.width / 2,
+      flipY ? size.height * 0.08 : size.height * 0.92,
+    );
+    final path = Path()
+      ..moveTo(start.dx, start.dy)
+      ..quadraticBezierTo(control.dx, control.dy, end.dx, end.dy);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0 + progress.clamp(0.0, 1.0) * 3.0
+      ..strokeCap = StrokeCap.round
+      ..color = accent.withValues(alpha: 0.22 + progress * 0.38);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ClimbJumpGuidePainter oldDelegate) {
+    return oldDelegate.accent != accent ||
+        oldDelegate.progress != progress ||
+        oldDelegate.flipX != flipX ||
+        oldDelegate.flipY != flipY;
   }
 }
 
@@ -4204,7 +8356,16 @@ class _BrainSplitRecentPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '最近回合', en: 'Recent rounds'),
+            pickUiText(
+              i18n,
+              zh: '最近回合',
+              en: 'Recent rounds',
+              ja: 'Recent rounds',
+              de: 'Recent rounds',
+              fr: 'Cycles récents',
+              es: 'rondas recientes',
+              ru: 'Последние раунды',
+            ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -4215,7 +8376,9 @@ class _BrainSplitRecentPanel extends StatelessWidget {
             runSpacing: 8,
             children: recent
                 .map((record) {
-                  final success = record.left.success && record.right.success;
+                  final success =
+                      (!record.plan.leftActive || record.left.success) &&
+                      (!record.plan.rightActive || record.right.success);
                   return _HumanPill(
                     text:
                         '${record.plan.label} ${success ? '+' : '-'}${record.scoreDelta.abs()}',
@@ -4263,12 +8426,50 @@ class _BrainSplitReportDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = score >= records.length * 18 && accuracy >= 0.9
-        ? pickUiText(i18n, zh: '左右脑合拍', en: 'Two-hand flow')
+        ? pickUiText(
+            i18n,
+            zh: '左右脑合拍',
+            en: 'Two-hand flow',
+            ja: 'Two-hand flow',
+            de: 'Two-hand flow',
+            fr: 'Débit à deux mains',
+            es: 'Flujo de dos manos',
+            ru: 'Двусторонний поток',
+          )
         : accuracy < 0.7
-        ? pickUiText(i18n, zh: '先稳住节奏', en: 'Slow down first')
-        : pickUiText(i18n, zh: '节奏正在成形', en: 'Rhythm forming');
+        ? pickUiText(
+            i18n,
+            zh: '先稳住节奏',
+            en: 'Slow down first',
+            ja: 'Slow down first',
+            de: 'Slow down first',
+            fr: 'Ralentissez d\'abord',
+            es: 'Despacio primero',
+            ru: 'Сначала помедленнее',
+          )
+        : pickUiText(
+            i18n,
+            zh: '节奏正在成形',
+            en: 'Rhythm forming',
+            ja: 'Rhythm forming',
+            de: 'Rhythm forming',
+            fr: 'Rythme formant',
+            es: 'Rhythm formando',
+            ru: 'Формирование ритма',
+          );
     return AlertDialog(
-      title: Text(pickUiText(i18n, zh: '双手协调报告', en: 'Bimanual report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '双手协调报告',
+          en: 'Bimanual report',
+          ja: 'バイマニュアルレポート',
+          de: 'Bimanual report',
+          fr: 'Rapport bimanuel',
+          es: 'Informe bimanual',
+          ru: 'Двухсторонний доклад',
+        ),
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -4278,24 +8479,108 @@ class _BrainSplitReportDialog extends StatelessWidget {
             children: <Widget>[
               _HumanMetricWrap(
                 metrics: <(String, String)>[
-                  (pickUiText(i18n, zh: '称号', en: 'Title'), title),
-                  (pickUiText(i18n, zh: '模式', en: 'Mode'), mode),
-                  (pickUiText(i18n, zh: '分数', en: 'Score'), '$score'),
                   (
-                    pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+                    pickUiText(
+                      i18n,
+                      zh: '称号',
+                      en: 'Title',
+                      ja: 'Title',
+                      de: 'Title',
+                      fr: 'Titre',
+                      es: 'Título',
+                      ru: 'Название',
+                    ),
+                    title,
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '模式',
+                      en: 'Mode',
+                      ja: 'Mode',
+                      de: 'Mode',
+                      fr: 'Mode',
+                      es: 'Modo',
+                      ru: 'Режим',
+                    ),
+                    mode,
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '分数',
+                      en: 'Score',
+                      ja: 'Score',
+                      de: 'Score',
+                      fr: 'Score',
+                      es: 'Puntuación',
+                      ru: 'счет',
+                    ),
+                    '$score',
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '准确率',
+                      en: 'Accuracy',
+                      ja: '精度',
+                      de: 'Accuracy',
+                      fr: 'Accuracy',
+                      es: 'Precisión',
+                      ru: 'точность',
+                    ),
                     '${(accuracy * 100).round()}%',
                   ),
                   (
-                    pickUiText(i18n, zh: '最佳连击', en: 'Best combo'),
+                    pickUiText(
+                      i18n,
+                      zh: '最佳连击',
+                      en: 'Best combo',
+                      ja: 'ベストコンボ',
+                      de: 'Best combo',
+                      fr: 'Meilleur combo',
+                      es: 'Mejor combo',
+                      ru: 'Лучшее сочетание',
+                    ),
                     '$bestCombo',
                   ),
-                  (pickUiText(i18n, zh: '失误', en: 'Mistakes'), '$mistakes'),
                   (
-                    pickUiText(i18n, zh: '平均用时', en: 'Avg lane time'),
+                    pickUiText(
+                      i18n,
+                      zh: '失误',
+                      en: 'Mistakes',
+                      ja: 'Mistakes',
+                      de: 'Mistakes',
+                      fr: 'Erreurs',
+                      es: 'Errores',
+                      ru: 'Ошибки',
+                    ),
+                    '$mistakes',
+                  ),
+                  (
+                    pickUiText(
+                      i18n,
+                      zh: '平均用时',
+                      en: 'Avg lane time',
+                      ja: 'レーン時間',
+                      de: 'Avg lane time',
+                      fr: 'Heure de la voie d\'Avg',
+                      es: 'Tiempo de carril de Avg',
+                      ru: 'Время в пути',
+                    ),
                     averageMs == 0 ? '-' : _formatMilliseconds(averageMs),
                   ),
                   (
-                    pickUiText(i18n, zh: '同步差', en: 'Sync gap'),
+                    pickUiText(
+                      i18n,
+                      zh: '同步差',
+                      en: 'Sync gap',
+                      ja: 'Sync gap',
+                      de: 'Sync gap',
+                      fr: 'Écart de synchronisation',
+                      es: 'Sincronización',
+                      ru: 'Синхронный разрыв',
+                    ),
                     averageSyncGap == 0
                         ? '-'
                         : _formatMilliseconds(averageSyncGap),
@@ -4308,7 +8593,16 @@ class _BrainSplitReportDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '左右手负载', en: 'Hand load'),
+                      pickUiText(
+                        i18n,
+                        zh: '左右手负载',
+                        en: 'Hand load',
+                        ja: 'Hand load',
+                        de: 'Hand load',
+                        fr: 'Charge manuelle',
+                        es: 'Carga de mano',
+                        ru: 'Ручная нагрузка',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -4332,11 +8626,21 @@ class _BrainSplitReportDialog extends StatelessWidget {
                           i18n,
                           zh: '建议先降低节奏，重点练习左/右独立完成与同步窗口内的合拍收尾。',
                           en: 'Lower the pace first. Practice isolated left/right finishes and sync-window endings.',
+                          ja: 'Lower the pace first. Practice isolated left/right finishes and sync-window endings.',
+                          de: 'Lower the pace first. Practice isolated left/right finishes and sync-window endings.',
+                          fr: 'Baissez d\'abord le rythme. Pratiquez des finitions de gauche/droite isolées et des terminaisons de fenêtre de synchronisation.',
+                          es: 'Baja el ritmo primero. Practica acabados aislados izquierda/derecha y terminaciones de sincronización.',
+                          ru: 'Сначала понизить темп. Практикуйте изолированные лево-правые отделки и окончания синхронного окна.',
                         )
                       : pickUiText(
                           i18n,
                           zh: '表现稳定，可以提高节奏强度或切换到更强的脑裂配对。',
                           en: 'Performance is stable. Raise the pace or switch to a tougher split-brain pairing.',
+                          ja: 'Performance is stable. Raise the pace or switch to a tougher split-brain pairing.',
+                          de: 'Performance is stable. Raise the pace or switch to a tougher split-brain pairing.',
+                          fr: 'La performance est stable. Augmenter le rythme ou passer à un couplage plus dur entre les cerveaux.',
+                          es: 'El rendimiento es estable. Aumente el ritmo o cambie a un emparejamiento de cerebros de separación más duro.',
+                          ru: 'Производительность стабильна. Поднимите темп или переключитесь на более жесткое спаривание с разделенным мозгом.',
                         ),
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
                 ),
@@ -4348,7 +8652,18 @@ class _BrainSplitReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );

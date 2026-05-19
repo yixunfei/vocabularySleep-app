@@ -341,70 +341,327 @@ class _AimCompletionReportDialog extends StatelessWidget {
         : '${(accuracy! * 100).round()}%';
 
     return _HumanReportDialogFrame(
-      title: Text(pickUiText(i18n, zh: '瞄准测试结果报告', en: 'Aim test report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '瞄准测试结果报告',
+          en: 'Aim test report',
+          ja: 'エイムテストレポート',
+          de: 'Aim test report',
+          fr: 'Aim test report',
+          es: 'Informe de prueba de objetivos',
+          ru: 'Отчет об испытаниях на цель',
+        ),
+      ),
       accent: accent,
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '模式组合', en: 'Mode combo'), modeLabel),
             (
-              pickUiText(i18n, zh: '完成目标', en: 'Targets'),
+              pickUiText(
+                i18n,
+                zh: '模式组合',
+                en: 'Mode combo',
+                ja: 'Mode combo',
+                de: 'Mode combo',
+                fr: 'Mode combo',
+                es: 'Mode combo',
+                ru: 'Режим комбо',
+              ),
+              modeLabel,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '完成目标',
+                en: 'Targets',
+                ja: 'Targets',
+                de: 'Targets',
+                fr: 'Objectifs',
+                es: 'Metas',
+                ru: 'Цели',
+              ),
               '$resolvedTargets/$targetGoal',
             ),
-            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$hits'),
-            (pickUiText(i18n, zh: '点空', en: 'Blank taps'), '$misses'),
-            (pickUiText(i18n, zh: '假目标', en: 'Decoys'), '$decoyHits'),
-            (pickUiText(i18n, zh: '超时', en: 'Timeouts'), '$timeouts'),
             (
-              pickUiText(i18n, zh: '狙击失败', en: 'Sniper fails'),
+              pickUiText(
+                i18n,
+                zh: '命中',
+                en: 'Hits',
+                ja: 'Hits',
+                de: 'Hits',
+                fr: 'Coups',
+                es: 'Golpes',
+                ru: 'Хиты',
+              ),
+              '$hits',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '点空',
+                en: 'Blank taps',
+                ja: 'ブランクタップ',
+                de: 'Blank taps',
+                fr: 'Bouchons vierges',
+                es: 'Grifos en blanco',
+                ru: 'Бланковые краны',
+              ),
+              '$misses',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '假目标',
+                en: 'Decoys',
+                ja: 'Decoys',
+                de: 'Decoys',
+                fr: 'Décors',
+                es: 'Decoys',
+                ru: 'Декои',
+              ),
+              '$decoyHits',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '超时',
+                en: 'Timeouts',
+                ja: 'Timeouts',
+                de: 'Timeouts',
+                fr: 'Délais',
+                es: 'Timeouts',
+                ru: 'Тайм-ауты',
+              ),
+              '$timeouts',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '狙击失败',
+                en: 'Sniper fails',
+                ja: 'Sniper fails',
+                de: 'Sniper fails',
+                fr: 'Le tireur échoue',
+                es: 'El francotirador falla',
+                ru: 'Снайпер провалился',
+              ),
               '$sniperFailures',
             ),
-            (pickUiText(i18n, zh: '准确率', en: 'Accuracy'), accuracyText),
-            (pickUiText(i18n, zh: '平均命中', en: 'Avg hit'), averageText),
-            (pickUiText(i18n, zh: '最佳连击', en: 'Best streak'), '$bestStreak'),
-            (pickUiText(i18n, zh: '总用时', en: 'Total time'), totalTime),
-            (pickUiText(i18n, zh: '评级', en: 'Rating'), rating),
+            (
+              pickUiText(
+                i18n,
+                zh: '准确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
+              accuracyText,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '平均命中',
+                en: 'Avg hit',
+                ja: '平均ヒット',
+                de: 'Avg hit',
+                fr: 'Avg touché',
+                es: 'Avg hit',
+                ru: 'Авг ударил',
+              ),
+              averageText,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '最佳连击',
+                en: 'Best streak',
+                ja: 'ベストストリーク',
+                de: 'Best streak',
+                fr: 'Meilleure série',
+                es: 'La mejor racha',
+                ru: 'Лучшая полоса',
+              ),
+              '$bestStreak',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '总用时',
+                en: 'Total time',
+                ja: 'Total time',
+                de: 'Total time',
+                fr: 'Durée totale',
+                es: 'Tiempo total',
+                ru: 'Общее время',
+              ),
+              totalTime,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '评级',
+                en: 'Rating',
+                ja: 'Rating',
+                de: 'Rating',
+                fr: 'Évaluation',
+                es: 'Valoración',
+                ru: 'Рейтинг',
+              ),
+              rating,
+            ),
           ],
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(i18n, zh: '本轮设置', en: 'Round settings'),
+          pickUiText(
+            i18n,
+            zh: '本轮设置',
+            en: 'Round settings',
+            ja: 'Round settings',
+            de: 'Round settings',
+            fr: 'Réglages ronds',
+            es: 'Ajustes redondos',
+            ru: 'Круглые настройки',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 10),
         _AimReportSettingRow(
-          label: pickUiText(i18n, zh: '目标大小', en: 'Target size'),
+          label: pickUiText(
+            i18n,
+            zh: '目标大小',
+            en: 'Target size',
+            ja: 'Target size',
+            de: 'Target size',
+            fr: 'Taille cible',
+            es: 'Tamaño del objetivo',
+            ru: 'Целевой размер',
+          ),
           value: '${targetDiameter.round()} dp',
         ),
         _AimReportSettingRow(
-          label: pickUiText(i18n, zh: '移动', en: 'Movement'),
+          label: pickUiText(
+            i18n,
+            zh: '移动',
+            en: 'Movement',
+            ja: 'Movement',
+            de: 'Movement',
+            fr: 'Mouvement',
+            es: 'Movimiento',
+            ru: 'Движение',
+          ),
           value: movementEnabled
-              ? '${pickUiText(i18n, zh: '开启', en: 'On')} · ${movementSpeed.toStringAsFixed(1)}x'
-              : pickUiText(i18n, zh: '关闭', en: 'Off'),
+              ? '${pickUiText(i18n, zh: '开启', en: 'On', ja: 'On', de: 'On', fr: 'À', es: 'On', ru: 'На')} · ${movementSpeed.toStringAsFixed(1)}x'
+              : pickUiText(
+                  i18n,
+                  zh: '关闭',
+                  en: 'Off',
+                  ja: 'Off',
+                  de: 'Off',
+                  fr: 'Arrêt',
+                  es: 'Fuera.',
+                  ru: 'Оставить',
+                ),
         ),
         _AimReportSettingRow(
-          label: pickUiText(i18n, zh: '降级放大', en: 'Reveal growth'),
+          label: pickUiText(
+            i18n,
+            zh: '降级放大',
+            en: 'Reveal growth',
+            ja: 'Reveal growth',
+            de: 'Reveal growth',
+            fr: 'La croissance révélée',
+            es: 'Crecimiento de la inversión',
+            ru: 'Показать рост',
+          ),
           value: revealEnabled
               ? '$revealMilliseconds ms · ${growthSpeed.toStringAsFixed(1)}x'
-              : pickUiText(i18n, zh: '关闭', en: 'Off'),
+              : pickUiText(
+                  i18n,
+                  zh: '关闭',
+                  en: 'Off',
+                  ja: 'Off',
+                  de: 'Off',
+                  fr: 'Arrêt',
+                  es: 'Fuera.',
+                  ru: 'Оставить',
+                ),
         ),
         _AimReportSettingRow(
-          label: pickUiText(i18n, zh: '真假干扰', en: 'Decoys'),
+          label: pickUiText(
+            i18n,
+            zh: '真假干扰',
+            en: 'Decoys',
+            ja: 'Decoys',
+            de: 'Decoys',
+            fr: 'Décors',
+            es: 'Decoys',
+            ru: 'Декои',
+          ),
           value: decoysEnabled
               ? '$decoyCount'
-              : pickUiText(i18n, zh: '关闭', en: 'Off'),
+              : pickUiText(
+                  i18n,
+                  zh: '关闭',
+                  en: 'Off',
+                  ja: 'Off',
+                  de: 'Off',
+                  fr: 'Arrêt',
+                  es: 'Fuera.',
+                  ru: 'Оставить',
+                ),
         ),
         _AimReportSettingRow(
-          label: pickUiText(i18n, zh: '狙击手对决', en: 'Sniper duel'),
+          label: pickUiText(
+            i18n,
+            zh: '狙击手对决',
+            en: 'Sniper duel',
+            ja: 'Sniper duel',
+            de: 'Sniper duel',
+            fr: 'Sniper duel',
+            es: 'Duelo de francotirador',
+            ru: 'Снайперская дуэль',
+          ),
           value: sniperDuel
-              ? pickUiText(i18n, zh: '开启', en: 'On')
-              : pickUiText(i18n, zh: '关闭', en: 'Off'),
+              ? pickUiText(
+                  i18n,
+                  zh: '开启',
+                  en: 'On',
+                  ja: 'On',
+                  de: 'On',
+                  fr: 'À',
+                  es: 'On',
+                  ru: 'На',
+                )
+              : pickUiText(
+                  i18n,
+                  zh: '关闭',
+                  en: 'Off',
+                  ja: 'Off',
+                  de: 'Off',
+                  fr: 'Arrêt',
+                  es: 'Fuera.',
+                  ru: 'Оставить',
+                ),
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(i18n, zh: '训练建议', en: 'Training note'),
+          pickUiText(
+            i18n,
+            zh: '训练建议',
+            en: 'Training note',
+            ja: 'Training note',
+            de: 'Training note',
+            fr: 'Note de formation',
+            es: 'Nota de capacitación',
+            ru: 'Учебная записка',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -425,6 +682,11 @@ class _AimCompletionReportDialog extends StatelessWidget {
         i18n,
         zh: '狙击手失败多时，先调低放大速率或关闭移动放大，把第一眼定位练稳后再增加压迫感。',
         en: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
+        ja: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
+        de: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
+        fr: 'En cas de défaillance du sniper, la vitesse de croissance est réduite ou la croissance mobile est désactivée jusqu\'à ce que l\'acquisition de la première vue soit stable.',
+        es: 'Con fallos de francotirador, menor velocidad de crecimiento o desactivar el crecimiento de movimiento hasta que la adquisición de primera vista se sienta estable.',
+        ru: 'При снайперских сбоях низкая скорость роста или отключение движущегося роста до тех пор, пока приобретение первого взгляда не станет стабильным.',
       );
     }
     if (decoyHits > 0) {
@@ -432,13 +694,23 @@ class _AimCompletionReportDialog extends StatelessWidget {
         i18n,
         zh: '假目标命中偏多，说明出手前确认不足；建议降低假目标数量，先练颜色识别再提速。',
         en: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
+        ja: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
+        de: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
+        fr: 'Les hits déco suggèrent une confirmation rapide. Réduire d\'abord les fausses cibles, puis rajouter la vitesse.',
+        es: 'Los golpes de Decoy sugieren confirmación apresurada. Reduzca los falsos objetivos primero, luego agregue la velocidad.',
+        ru: 'Удары Декоя предполагают срочное подтверждение. Сначала уменьшите ложные цели, а затем добавьте скорость.',
       );
     }
     if (resolvedAccuracy < 0.75) {
       return pickUiText(
         i18n,
         zh: '准确率还在建立中，优先调大目标或减少移动速度，把命中稳定性放在速度前面。',
-        en: 'Accuracy is still forming. Increase target size or lower movement speed before chasing raw pace.',
+        en: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',
+        ja: '精度はまだ落ち着いていません。ペースを押す前に、ターゲットサイズを大きくするか、移動速度を下げてください。',
+        de: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',
+        fr: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',
+        es: 'La precisión todavía se está adaptando. Aumentar el tamaño del objetivo o reducir la velocidad de movimiento antes de acelerar el ritmo.',
+        ru: 'Точность все еще остается. Увеличьте размер цели или меньшую скорость движения, прежде чем двигаться.',
       );
     }
     if ((averageHitMs ?? 9999) > 900) {
@@ -446,12 +718,22 @@ class _AimCompletionReportDialog extends StatelessWidget {
         i18n,
         zh: '命中稳定但速度还有空间，可以逐步降低目标大小或打开移动组合。',
         en: 'Hits are stable, so the next step is smaller targets or a gentle movement combo.',
+        ja: 'Hits are stable, so the next step is smaller targets or a gentle movement combo.',
+        de: 'Hits are stable, so the next step is smaller targets or a gentle movement combo.',
+        fr: 'Les coups sont stables, de sorte que la prochaine étape est des cibles plus petites ou un combo de mouvement doux.',
+        es: 'Los éxitos son estables, por lo que el siguiente paso es objetivos más pequeños o un combo de movimiento suave.',
+        ru: 'Хиты стабильны, поэтому следующим шагом являются небольшие цели или нежная комбинация движений.',
       );
     }
     return pickUiText(
       i18n,
       zh: '本轮节奏不错，可以尝试移动放大或移动干扰，把预判和确认一起练起来。',
       en: 'Nice rhythm. Try moving growth or moving decoys to train prediction and confirmation together.',
+      ja: 'Nice rhythm. Try moving growth or moving decoys to train prediction and confirmation together.',
+      de: 'Nice rhythm. Try moving growth or moving decoys to train prediction and confirmation together.',
+      fr: 'Joli rythme. Essayez de déplacer la croissance ou de déplacer les leurres pour former la prédiction et la confirmation ensemble.',
+      es: 'Buen ritmo. Trate de mover crecimiento o mover decoys para entrenar la predicción y confirmación juntos.',
+      ru: 'Отличный ритм. Попробуйте двигать рост или перемещать приманки, чтобы вместе тренировать предсказание и подтверждение.',
     );
   }
 }
@@ -535,7 +817,16 @@ class _AimStageIdleCard extends StatelessWidget {
           if (onStart != null) ...<Widget>[
             const SizedBox(height: 12),
             _HumanActionButton(
-              label: pickUiText(i18n, zh: '开始', en: 'Start'),
+              label: pickUiText(
+                i18n,
+                zh: '开始',
+                en: 'Start',
+                ja: 'Start',
+                de: 'Start',
+                fr: 'Démarrer',
+                es: 'Comienzo',
+                ru: 'Начинать',
+              ),
               icon: Icons.play_arrow_rounded,
               onPressed: onStart,
             ),

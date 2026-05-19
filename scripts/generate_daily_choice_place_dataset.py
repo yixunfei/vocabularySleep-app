@@ -6,13 +6,25 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import sqlite3
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
 
-DEFAULT_OUTPUT_DIR = Path(r"D:\vocabularySleep-resources\去哪儿-数据")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def env_path(name: str, fallback: Path) -> Path:
+    value = os.environ.get(name)
+    return Path(value).expanduser() if value else fallback
+
+
+DEFAULT_OUTPUT_DIR = env_path(
+    "DAILY_CHOICE_PLACE_OUTPUT_DIR",
+    PROJECT_ROOT / "build" / "generated" / "daily_choice" / "place",
+)
 
 LIBRARY_ID = "toolbox_daily_choice_place_library"
 SCHEMA_ID = "vocabulary_sleep.daily_choice.place_library"

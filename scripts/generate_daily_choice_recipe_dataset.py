@@ -5,6 +5,7 @@ import csv
 import hashlib
 import html
 import json
+import os
 import re
 import sqlite3
 import unicodedata
@@ -75,6 +76,12 @@ SCHEMA_VERSION = 1
 DEFAULT_COOK_CSV_URL = (
     "https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv"
 )
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def env_path(name: str, fallback: Path) -> Path:
+    value = os.environ.get(name)
+    return Path(value).expanduser() if value else fallback
 
 CUISINE_MARKERS = (
     "浙江菜",
@@ -2834,19 +2841,25 @@ def write_export_bundle(
 
 
 def parse_args() -> argparse.Namespace:
-    script_path = Path(__file__).resolve()
-    default_source = Path(r"D:\vocabularySleep-resources\做菜")
-    default_howtocook = (
-        script_path.parent.parent / "build" / "_external" / "HowToCook"
+    default_source = env_path(
+        "DAILY_CHOICE_RECIPE_SOURCE_DIR",
+        PROJECT_ROOT / "resources" / "daily_choice" / "cooking",
+    )
+    default_howtocook = env_path(
+        "DAILY_CHOICE_HOWTOCOOK_DIR",
+        PROJECT_ROOT / "build" / "_external" / "HowToCook",
     )
     default_output = (
-        script_path.parent.parent
+        PROJECT_ROOT
         / "assets"
         / "toolbox"
         / "daily_choice"
         / "recipe_library.json"
     )
-    default_export_dir = Path(r"D:\vocabularySleep-resources\cook_data")
+    default_export_dir = env_path(
+        "DAILY_CHOICE_RECIPE_EXPORT_DIR",
+        PROJECT_ROOT / "build" / "generated" / "daily_choice" / "cook_data",
+    )
     parser = argparse.ArgumentParser(
         description="Extract and normalize the local daily-choice recipe library.",
     )

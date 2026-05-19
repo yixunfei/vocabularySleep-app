@@ -17,23 +17,18 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $projectRoot
 
 function Resolve-OpencodeCommand {
+  if (-not [string]::IsNullOrWhiteSpace($env:OPENCODE_BIN)) {
+    if (Test-Path -LiteralPath $env:OPENCODE_BIN) {
+      return $env:OPENCODE_BIN
+    }
+  }
+
   $command = Get-Command opencode -ErrorAction SilentlyContinue
   if ($command) {
     return $command.Source
   }
 
-  $candidates = @(
-    "C:\Users\yixun\AppData\Roaming\npm\opencode.cmd",
-    "C:\Users\yixun\AppData\Roaming\npm\opencode.ps1"
-  )
-
-  foreach ($candidate in $candidates) {
-    if (Test-Path $candidate) {
-      return $candidate
-    }
-  }
-
-  throw "opencode command was not found. Ensure opencode is installed and available in PATH."
+  throw "opencode command was not found. Set OPENCODE_BIN or ensure opencode is installed and available in PATH."
 }
 
 try {
@@ -80,4 +75,3 @@ try {
 } finally {
   Pop-Location
 }
-

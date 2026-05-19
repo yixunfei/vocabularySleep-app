@@ -7,11 +7,25 @@ class StroopTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '斯特鲁普', en: 'Stroop test'),
+      title: pickUiText(
+        i18n,
+        zh: '斯特鲁普',
+        en: 'Stroop test',
+        ja: 'Stroop test',
+        de: 'Stroop test',
+        fr: 'Essai de serrage',
+        es: 'Prueba Stroop',
+        ru: 'Испытание штурвалом',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '判断文字含义和显示颜色是否一致，抵抗自动阅读干扰。',
         en: 'Judge whether word meaning and ink color match, resisting the reading reflex.',
+        ja: 'Judge whether word meaning and ink color match, resisting the reading reflex.',
+        de: 'Judge whether word meaning and ink color match, resisting the reading reflex.',
+        fr: 'Juger si mot signifie et couleur d\'encre correspond, résistant au réflexe de lecture.',
+        es: 'Juzgue si el significado de palabra y el color de tinta coinciden, resistiendo el reflejo de lectura.',
+        ru: 'Судите, совпадают ли значение слова и цвет чернил, сопротивляясь рефлексу чтения.',
       ),
       accent: const Color(0xFF5B82C2),
       icon: Icons.contrast_rounded,
@@ -19,6 +33,11 @@ class StroopTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：判断是否一致',
         en: 'Next: decide match or mismatch',
+        ja: 'Next: decide match or mismatch',
+        de: 'Next: decide match or mismatch',
+        fr: 'Suivant: décider match ou inadéquation',
+        es: 'Siguiente: decidir coincidencia o desajuste',
+        ru: 'Следующий: Решать матч или несоответствие',
       ),
       child: const _StroopTestCard(),
     );
@@ -115,11 +134,28 @@ class _ScratchBarcodePainter extends CustomPainter {
 }
 
 class _StroopItem {
-  const _StroopItem({required this.zh, required this.en, required this.color});
+  const _StroopItem({
+    required this.zh,
+    required this.en,
+    required this.ja,
+    required this.de,
+    required this.fr,
+    required this.es,
+    required this.ru,
+    required this.color,
+  });
 
   final String zh;
   final String en;
+  final String ja;
+  final String de;
+  final String fr;
+  final String es;
+  final String ru;
   final Color color;
+
+  String label(AppI18n i18n) =>
+      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
 }
 
 class _StroopTestCard extends StatefulWidget {
@@ -146,18 +182,126 @@ class _StroopRoundRecord {
 class _StroopTestCardState extends State<_StroopTestCard> {
   final math.Random _random = math.Random();
   final List<_StroopItem> _allItems = const <_StroopItem>[
-    _StroopItem(zh: '红色', en: 'Red', color: Color(0xFFC24D4D)),
-    _StroopItem(zh: '蓝色', en: 'Blue', color: Color(0xFF4D73C2)),
-    _StroopItem(zh: '绿色', en: 'Green', color: Color(0xFF3F9A6B)),
-    _StroopItem(zh: '黄色', en: 'Yellow', color: Color(0xFFD39B35)),
-    _StroopItem(zh: '紫色', en: 'Purple', color: Color(0xFF8C63D8)),
-    _StroopItem(zh: '橙色', en: 'Orange', color: Color(0xFFE58C3D)),
-    _StroopItem(zh: '粉色', en: 'Pink', color: Color(0xFFD46E98)),
-    _StroopItem(zh: '棕色', en: 'Brown', color: Color(0xFF8B6A4F)),
-    _StroopItem(zh: '青色', en: 'Cyan', color: Color(0xFF41A8B9)),
-    _StroopItem(zh: '灰色', en: 'Gray', color: Color(0xFF7E8795)),
-    _StroopItem(zh: '黄绿', en: 'Lime', color: Color(0xFF8ABF45)),
-    _StroopItem(zh: '靛蓝', en: 'Indigo', color: Color(0xFF5E6FD1)),
+    _StroopItem(
+      zh: '红色',
+      en: 'Red',
+      ja: '赤',
+      de: 'Rot',
+      fr: 'Rouge',
+      es: 'Rojo',
+      ru: 'Красный',
+      color: Color(0xFFC24D4D),
+    ),
+    _StroopItem(
+      zh: '蓝色',
+      en: 'Blue',
+      ja: '青',
+      de: 'Blau',
+      fr: 'Bleu',
+      es: 'Azul',
+      ru: 'Синий',
+      color: Color(0xFF4D73C2),
+    ),
+    _StroopItem(
+      zh: '绿色',
+      en: 'Green',
+      ja: '緑',
+      de: 'Grün',
+      fr: 'Vert',
+      es: 'Verde',
+      ru: 'Зеленый',
+      color: Color(0xFF3F9A6B),
+    ),
+    _StroopItem(
+      zh: '黄色',
+      en: 'Yellow',
+      ja: '黄色',
+      de: 'Gelb',
+      fr: 'Jaune',
+      es: 'Amarillo',
+      ru: 'Желтый',
+      color: Color(0xFFD39B35),
+    ),
+    _StroopItem(
+      zh: '紫色',
+      en: 'Purple',
+      ja: '紫',
+      de: 'Violett',
+      fr: 'Violet',
+      es: 'Morado',
+      ru: 'Фиолетовый',
+      color: Color(0xFF8C63D8),
+    ),
+    _StroopItem(
+      zh: '橙色',
+      en: 'Orange',
+      ja: 'オレンジ',
+      de: 'Orange',
+      fr: 'Orange',
+      es: 'Naranja',
+      ru: 'Оранжевый',
+      color: Color(0xFFE58C3D),
+    ),
+    _StroopItem(
+      zh: '粉色',
+      en: 'Pink',
+      ja: 'ピンク',
+      de: 'Rosa',
+      fr: 'Rose',
+      es: 'Rosa',
+      ru: 'Розовый',
+      color: Color(0xFFD46E98),
+    ),
+    _StroopItem(
+      zh: '棕色',
+      en: 'Brown',
+      ja: '茶色',
+      de: 'Braun',
+      fr: 'Marron',
+      es: 'Marrón',
+      ru: 'Коричневый',
+      color: Color(0xFF8B6A4F),
+    ),
+    _StroopItem(
+      zh: '青色',
+      en: 'Cyan',
+      ja: 'シアン',
+      de: 'Türkis',
+      fr: 'Cyan',
+      es: 'Cian',
+      ru: 'Бирюзовый',
+      color: Color(0xFF41A8B9),
+    ),
+    _StroopItem(
+      zh: '灰色',
+      en: 'Gray',
+      ja: '灰色',
+      de: 'Grau',
+      fr: 'Gris',
+      es: 'Gris',
+      ru: 'Серый',
+      color: Color(0xFF7E8795),
+    ),
+    _StroopItem(
+      zh: '黄绿',
+      en: 'Lime',
+      ja: 'ライム',
+      de: 'Limette',
+      fr: 'Vert citron',
+      es: 'Lima',
+      ru: 'Лаймовый',
+      color: Color(0xFF8ABF45),
+    ),
+    _StroopItem(
+      zh: '靛蓝',
+      en: 'Indigo',
+      ja: 'インディゴ',
+      de: 'Indigo',
+      fr: 'Indigo',
+      es: 'Índigo',
+      ru: 'Индиго',
+      color: Color(0xFF5E6FD1),
+    ),
   ];
   int _colorCount = 4;
   int _roundLimit = 24;
@@ -316,17 +460,41 @@ class _StroopTestCardState extends State<_StroopTestCard> {
         i18n,
         zh: '一致判断',
         en: 'Match judge',
+        ja: 'Match judge',
+        de: 'Match judge',
+        fr: 'Juge de correspondance',
+        es: 'Juez de partido',
+        ru: 'Судья матча',
       ),
-      _StroopMode.inkColor => pickUiText(i18n, zh: '说出墨色', en: 'Ink color'),
+      _StroopMode.inkColor => pickUiText(
+        i18n,
+        zh: '说出墨色',
+        en: 'Ink color',
+        ja: 'Ink color',
+        de: 'Ink color',
+        fr: 'Couleur de l\'encre',
+        es: 'Color de tinta',
+        ru: 'Цвет чернил',
+      ),
       _StroopMode.wordMeaning => pickUiText(
         i18n,
         zh: '读出字义',
         en: 'Word meaning',
+        ja: 'Word meaning',
+        de: 'Word meaning',
+        fr: 'Signification du mot',
+        es: 'Palabra que significa',
+        ru: 'Слово означает',
       ),
       _StroopMode.reverseRule => pickUiText(
         i18n,
         zh: '反向规则',
         en: 'Reverse rule',
+        ja: 'Reverse rule',
+        de: 'Reverse rule',
+        fr: 'Règle inverse',
+        es: 'Regla inversa',
+        ru: 'Обратное правило',
       ),
     };
   }
@@ -337,21 +505,41 @@ class _StroopTestCardState extends State<_StroopTestCard> {
         i18n,
         zh: '判断文字含义和显示颜色是否一致。',
         en: 'Decide whether word meaning and ink color match.',
+        ja: 'Decide whether word meaning and ink color match.',
+        de: 'Decide whether word meaning and ink color match.',
+        fr: 'Décidez si mot signifie et couleur d\'encre correspondent.',
+        es: 'Decide si el significado de palabra y el color de tinta coinciden.',
+        ru: 'Решите, совпадают ли значение слова и цвет чернил.',
       ),
       _StroopMode.inkColor => pickUiText(
         i18n,
         zh: '忽略文字含义，只选择显示出来的墨色。',
         en: 'Ignore the word and select the ink color.',
+        ja: 'Ignore the word and select the ink color.',
+        de: 'Ignore the word and select the ink color.',
+        fr: 'Ignorez le mot et sélectionnez la couleur de l\'encre.',
+        es: 'Ignora la palabra y selecciona el color de la tinta.',
+        ru: 'Игнорируйте слово и выберите цвет чернил.',
       ),
       _StroopMode.wordMeaning => pickUiText(
         i18n,
         zh: '忽略墨色，只选择文字本身的含义。',
         en: 'Ignore the ink and select the word meaning.',
+        ja: 'Ignore the ink and select the word meaning.',
+        de: 'Ignore the ink and select the word meaning.',
+        fr: 'Ignorez l\'encre et sélectionnez le sens du mot.',
+        es: 'Ignora la tinta y selecciona el significado de la palabra.',
+        ru: 'Игнорируйте чернила и выберите значение слова.',
       ),
       _StroopMode.reverseRule => pickUiText(
         i18n,
         zh: '反向作答：相同点“不一致”，不同点“一致”。',
         en: 'Reverse answers: same means Mismatch, different means Match.',
+        ja: 'Reverse answers: same means Mismatch, different means Match.',
+        de: 'Reverse answers: same means Mismatch, different means Match.',
+        fr: 'Réponses inversées: même signifie Mismatch, différents moyens Match.',
+        es: 'Respuestas inversas: igual significa Mismatch, diferentes medios Match.',
+        ru: 'Обратные ответы: одно и то же означает несоответствие, другое означает совпадение.',
       ),
     };
   }
@@ -359,22 +547,76 @@ class _StroopTestCardState extends State<_StroopTestCard> {
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    final wordLabel = pickUiText(i18n, zh: _word.zh, en: _word.en);
+    final wordLabel = _word.label(i18n);
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '得分', en: 'Score'), '$_score'),
             (
-              pickUiText(i18n, zh: '轮次', en: 'Round'),
+              pickUiText(
+                i18n,
+                zh: '得分',
+                en: 'Score',
+                ja: 'Score',
+                de: 'Score',
+                fr: 'Score',
+                es: 'Puntuación',
+                ru: 'счет',
+              ),
+              '$_score',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '轮次',
+                en: 'Round',
+                ja: 'Round',
+                de: 'Round',
+                fr: 'Cycle',
+                es: 'Ronda',
+                ru: 'Круглый',
+              ),
               '${_records.length}/$_roundLimit',
             ),
-            (pickUiText(i18n, zh: '生命', en: 'Lives'), '$_lives'),
-            (pickUiText(i18n, zh: '颜色数', en: 'Colors'), '$_colorCount'),
             (
-              pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+              pickUiText(
+                i18n,
+                zh: '生命',
+                en: 'Lives',
+                ja: 'Lives',
+                de: 'Lives',
+                fr: 'Vies',
+                es: 'Vidas',
+                ru: 'Жизни',
+              ),
+              '$_lives',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '颜色数',
+                en: 'Colors',
+                ja: 'カラー',
+                de: 'Colors',
+                fr: 'Couleurs',
+                es: 'Colores',
+                ru: 'Цвета',
+              ),
+              '$_colorCount',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '平均反应',
+                en: 'Avg reaction',
+                ja: '平均反応',
+                de: 'Avg reaction',
+                fr: 'Réaction d\' Avg',
+                es: 'Reacción de Avg',
+                ru: 'Авг реакция',
+              ),
               _averageReactionMs == 0
                   ? '-'
                   : _formatMilliseconds(_averageReactionMs),
@@ -387,18 +629,41 @@ class _StroopTestCardState extends State<_StroopTestCard> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _HumanSettingsSection(
-                title: pickUiText(i18n, zh: '设置项', en: 'Settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '设置项',
+                  en: 'Settings',
+                  ja: 'Settings',
+                  de: 'Settings',
+                  fr: 'Paramètres',
+                  es: 'Ajustes',
+                  ru: 'Настройки',
+                ),
                 subtitle: pickUiText(
                   i18n,
                   zh: '颜色数量可调范围：3-12',
                   en: 'Color count range: 3-12',
+                  ja: 'カラーカウント範囲： 3 -12',
+                  de: 'Color count range: 3-12',
+                  fr: 'Gamme de couleurs: 3-12',
+                  es: 'Rango de cuenta de color: 3-12',
+                  ru: 'Цветовой диапазон: 3-12',
                 ),
                 initiallyExpanded: true,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '子模式', en: 'Submode'),
+                      pickUiText(
+                        i18n,
+                        zh: '子模式',
+                        en: 'Submode',
+                        ja: 'Submode',
+                        de: 'Submode',
+                        fr: 'Sous-mode',
+                        es: 'Submode',
+                        ru: 'Подрежим',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -423,6 +688,11 @@ class _StroopTestCardState extends State<_StroopTestCard> {
                         i18n,
                         zh: '颜色数量设置（3-12）',
                         en: 'Color count setting (3-12)',
+                        ja: 'カラーカウント設定(3 -12)',
+                        de: 'Color count setting (3-12)',
+                        fr: 'Réglage du nombre de couleurs (3-12)',
+                        es: 'Ajuste de la cuenta de color (3-12)',
+                        ru: 'Настройка подсчета цветов (3-12)',
                       ),
                       style: theme.textTheme.labelLarge,
                     ),
@@ -436,7 +706,16 @@ class _StroopTestCardState extends State<_StroopTestCard> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      pickUiText(i18n, zh: '本轮题数', en: 'Round count'),
+                      pickUiText(
+                        i18n,
+                        zh: '本轮题数',
+                        en: 'Round count',
+                        ja: 'Round count',
+                        de: 'Round count',
+                        fr: 'Nombre de cycles',
+                        es: 'Cuenta redonda',
+                        ru: 'Круглый счет',
+                      ),
                       style: theme.textTheme.labelLarge,
                     ),
                     Slider(
@@ -482,26 +761,68 @@ class _StroopTestCardState extends State<_StroopTestCard> {
                   runSpacing: 10,
                   children: <Widget>[
                     _HumanActionButton(
-                      label: pickUiText(i18n, zh: '一致', en: 'Match'),
+                      label: pickUiText(
+                        i18n,
+                        zh: '一致',
+                        en: 'Match',
+                        ja: 'Match',
+                        de: 'Match',
+                        fr: 'Correspondance',
+                        es: 'Partido',
+                        ru: 'матч',
+                      ),
                       icon: Icons.check_rounded,
                       onPressed: _finished ? null : () => _answer(true),
                     ),
                     OutlinedButton.icon(
                       onPressed: _finished ? null : () => _answer(false),
                       icon: const Icon(Icons.close_rounded),
-                      label: Text(pickUiText(i18n, zh: '不一致', en: 'Mismatch')),
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '不一致',
+                          en: 'Mismatch',
+                          ja: 'Mismatch',
+                          de: 'Mismatch',
+                          fr: 'Mismatch',
+                          es: 'Mismatch',
+                          ru: 'несоответствие',
+                        ),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _records.isEmpty
                           ? null
                           : () => unawaited(_showReport()),
                       icon: const Icon(Icons.analytics_rounded),
-                      label: Text(pickUiText(i18n, zh: '报告', en: 'Report')),
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '报告',
+                          en: 'Report',
+                          ja: 'Report',
+                          de: 'Report',
+                          fr: 'Rapport annuel',
+                          es: 'Informe',
+                          ru: 'Доклад',
+                        ),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _reset,
                       icon: const Icon(Icons.restart_alt_rounded),
-                      label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '重置',
+                          en: 'Reset',
+                          ja: 'Reset',
+                          de: 'Reset',
+                          fr: 'Réinitialiser',
+                          es: 'Reset',
+                          ru: 'сброс',
+                        ),
+                      ),
                     ),
                   ],
                 )
@@ -514,7 +835,7 @@ class _StroopTestCardState extends State<_StroopTestCard> {
                       (item) => OutlinedButton.icon(
                         onPressed: _finished ? null : () => _answerColor(item),
                         icon: Icon(Icons.circle_rounded, color: item.color),
-                        label: Text(pickUiText(i18n, zh: item.zh, en: item.en)),
+                        label: Text(item.label(i18n)),
                       ),
                     ),
                     OutlinedButton.icon(
@@ -522,12 +843,34 @@ class _StroopTestCardState extends State<_StroopTestCard> {
                           ? null
                           : () => unawaited(_showReport()),
                       icon: const Icon(Icons.analytics_rounded),
-                      label: Text(pickUiText(i18n, zh: '报告', en: 'Report')),
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '报告',
+                          en: 'Report',
+                          ja: 'Report',
+                          de: 'Report',
+                          fr: 'Rapport annuel',
+                          es: 'Informe',
+                          ru: 'Доклад',
+                        ),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _reset,
                       icon: const Icon(Icons.restart_alt_rounded),
-                      label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                      label: Text(
+                        pickUiText(
+                          i18n,
+                          zh: '重置',
+                          en: 'Reset',
+                          ja: 'Reset',
+                          de: 'Reset',
+                          fr: 'Réinitialiser',
+                          es: 'Reset',
+                          ru: 'сброс',
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -547,6 +890,11 @@ class _StroopTestCardState extends State<_StroopTestCard> {
                       i18n,
                       zh: '本轮已结束，可查看报告或重置后继续。',
                       en: 'This run is complete. View the report or reset.',
+                      ja: 'This run is complete. View the report or reset.',
+                      de: 'This run is complete. View the report or reset.',
+                      fr: 'Cette course est terminée. Affiche le rapport ou réinitialise.',
+                      es: 'Esta carrera está completa. Vea el informe o reajuste.',
+                      ru: 'Этот забег завершен. Посмотреть отчет или перезагрузить.',
                     ),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -594,20 +942,46 @@ class _StroopReportDialog extends StatelessWidget {
             i18n,
             zh: '准确率和速度都比较稳定，可以提高颜色数量或切换到反向规则。',
             en: 'Accuracy and speed are stable. Increase colors or switch to reverse rule.',
+            ja: '精度とスピードが安定しています。色を増やすか、ルールを反転するように切り替えます。',
+            de: 'Accuracy and speed are stable. Increase colors or switch to reverse rule.',
+            fr: 'Accuracy and speed are stable. Increase colors or switch to reverse rule.',
+            es: 'La precisión y la velocidad son estables. Aumente los colores o cambie a la regla inversa.',
+            ru: 'Точность и скорость стабильны. Увеличьте цвет или переключитесь на обратное правило.',
           )
         : accuracy < 0.7
         ? pickUiText(
             i18n,
             zh: '错误偏多，建议先减少颜色数量，使用“说出墨色”模式单独练习抑制阅读反射。',
             en: 'Errors are high. Reduce colors and practice Ink color mode to isolate response inhibition.',
+            ja: 'Errors are high. Reduce colors and practice Ink color mode to isolate response inhibition.',
+            de: 'Errors are high. Reduce colors and practice Ink color mode to isolate response inhibition.',
+            fr: 'Les erreurs sont élevées. Réduire les couleurs et pratiquer le mode couleur d\'encre pour isoler l\'inhibition de la réponse.',
+            es: 'Los errores son altos. Reducir colores y practicar Modo de color de tinta para aislar la inhibición de la respuesta.',
+            ru: 'Ошибки высоки. Уменьшите цвета и практикуйте режим цвета чернил, чтобы изолировать ингибирование реакции.',
           )
         : pickUiText(
             i18n,
             zh: '表现接近稳定，下一轮可以保持当前模式并稍微增加题数。',
             en: 'Performance is close to stable. Keep this mode and slightly increase the round count.',
+            ja: 'Performance is close to stable. Keep this mode and slightly increase the round count.',
+            de: 'Performance is close to stable. Keep this mode and slightly increase the round count.',
+            fr: 'La performance est proche de la stabilité. Gardez ce mode et augmentez légèrement le nombre de tours.',
+            es: 'El rendimiento está cerca de la estabilidad. Mantenga este modo y aumente ligeramente el recuento redondo.',
+            ru: 'Производительность близка к стабильной. Сохраняйте этот режим и немного увеличивайте количество раундов.',
           );
     return AlertDialog(
-      title: Text(pickUiText(i18n, zh: '斯特鲁普报告', en: 'Stroop report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '斯特鲁普报告',
+          en: 'Stroop report',
+          ja: 'Stroop report',
+          de: 'Stroop report',
+          fr: 'Rapport Stroop',
+          es: 'Informe Stroop',
+          ru: 'Доклад Струпа',
+        ),
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -620,28 +994,73 @@ class _StroopReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '准确率', en: 'Accuracy'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '准确率',
+                      en: 'Accuracy',
+                      ja: '精度',
+                      de: 'Accuracy',
+                      fr: 'Accuracy',
+                      es: 'Precisión',
+                      ru: 'точность',
+                    ),
                     value: '${(accuracy * 100).round()}%',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '平均反应',
+                      en: 'Avg reaction',
+                      ja: '平均反応',
+                      de: 'Avg reaction',
+                      fr: 'Réaction d\' Avg',
+                      es: 'Reacción de Avg',
+                      ru: 'Авг реакция',
+                    ),
                     value: avgReaction == 0
                         ? '-'
                         : _formatMilliseconds(avgReaction),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '得分', en: 'Score'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '得分',
+                      en: 'Score',
+                      ja: 'Score',
+                      de: 'Score',
+                      fr: 'Score',
+                      es: 'Puntuación',
+                      ru: 'счет',
+                    ),
                     value: '$score/${records.length}',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '错误', en: 'Errors'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '错误',
+                      en: 'Errors',
+                      ja: 'Errors',
+                      de: 'Errors',
+                      fr: 'Erreurs',
+                      es: 'Errores',
+                      ru: 'ошибки',
+                    ),
                     value: '$errors',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '本轮设置', en: 'Session settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '本轮设置',
+                  en: 'Session settings',
+                  ja: 'Session settings',
+                  de: 'Session settings',
+                  fr: 'Paramètres de la session',
+                  es: 'Ajustes del período de sesiones',
+                  ru: 'Параметры сеанса',
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -654,7 +1073,16 @@ class _StroopReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '训练建议', en: 'Training note'),
+                title: pickUiText(
+                  i18n,
+                  zh: '训练建议',
+                  en: 'Training note',
+                  ja: 'Training note',
+                  de: 'Training note',
+                  fr: 'Note de formation',
+                  es: 'Nota de capacitación',
+                  ru: 'Учебная записка',
+                ),
                 child: Text(
                   recommendation,
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -667,7 +1095,18 @@ class _StroopReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );
@@ -697,11 +1136,25 @@ class _LuckTestPageState extends State<LuckTestPage> {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '运气测试', en: 'Luck test'),
+      title: pickUiText(
+        i18n,
+        zh: '运气测试',
+        en: 'Luck test',
+        ja: 'Luck test',
+        de: 'Luck test',
+        fr: 'Essai de chance',
+        es: 'Prueba de suerte',
+        ru: 'Удачный тест',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持抽卡和独立刮刮乐两种子模块，并提供自定义概率与结果报告。',
         en: 'Draw cards or play a standalone scratch-off mode with custom odds and reports.',
+        ja: 'Draw cards or play a standalone scratch-off mode with custom odds and reports.',
+        de: 'Draw cards or play a standalone scratch-off mode with custom odds and reports.',
+        fr: 'Dessinez des cartes ou jouez à un mode autonome avec des cotes et des rapports personnalisés.',
+        es: 'Dibujar tarjetas o jugar un modo independiente de rascacielos con probabilidades e informes personalizados.',
+        ru: 'Рисуй карты или играй в автономном режиме скретч-офф с пользовательскими коэффициентами и отчетами.',
       ),
       accent: const Color(0xFFD0923A),
       icon: Icons.casino_rounded,
@@ -709,6 +1162,11 @@ class _LuckTestPageState extends State<LuckTestPage> {
         i18n,
         zh: '下一步：选择运气子模块',
         en: 'Next: choose a luck module',
+        ja: 'Next: choose a luck module',
+        de: 'Next: choose a luck module',
+        fr: 'Suivant : choisissez un module chance',
+        es: 'Siguiente: elegir un módulo de suerte',
+        ru: 'Следующий: Выберите модуль удачи',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -719,13 +1177,35 @@ class _LuckTestPageState extends State<LuckTestPage> {
             children: <Widget>[
               ChoiceChip(
                 key: const ValueKey<String>('luck-module-draw'),
-                label: Text(pickUiText(i18n, zh: '抽卡', en: 'Draw cards')),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '抽卡',
+                    en: 'Draw cards',
+                    ja: 'Draw cards',
+                    de: 'Draw cards',
+                    fr: 'Dessiner des cartes',
+                    es: 'Tarjetas de dibujo',
+                    ru: 'Рисуем карты',
+                  ),
+                ),
                 selected: _module == _LuckTestModule.draw,
                 onSelected: (_) => _setModule(_LuckTestModule.draw),
               ),
               ChoiceChip(
                 key: const ValueKey<String>('luck-module-scratch'),
-                label: Text(pickUiText(i18n, zh: '刮刮乐', en: 'Scratch')),
+                label: Text(
+                  pickUiText(
+                    i18n,
+                    zh: '刮刮乐',
+                    en: 'Scratch',
+                    ja: 'Scratch',
+                    de: 'Scratch',
+                    fr: 'Grattez',
+                    es: 'Scratch',
+                    ru: 'Щелчок',
+                  ),
+                ),
                 selected: _module == _LuckTestModule.scratch,
                 onSelected: (_) => _setModule(_LuckTestModule.scratch),
               ),
@@ -759,6 +1239,11 @@ class _LuckCardTier {
   const _LuckCardTier({
     required this.zh,
     required this.en,
+    required this.ja,
+    required this.de,
+    required this.fr,
+    required this.es,
+    required this.ru,
     required this.color,
     required this.score,
     required this.defaultWeight,
@@ -766,9 +1251,17 @@ class _LuckCardTier {
 
   final String zh;
   final String en;
+  final String ja;
+  final String de;
+  final String fr;
+  final String es;
+  final String ru;
   final Color color;
   final int score;
   final double defaultWeight;
+
+  String label(AppI18n i18n) =>
+      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
 }
 
 enum _LuckDrawMode { single, ten, twenty }
@@ -782,6 +1275,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
     _LuckCardTier(
       zh: '普通卡',
       en: 'Common',
+      ja: 'コモン',
+      de: 'Gewöhnlich',
+      fr: 'Commune',
+      es: 'Común',
+      ru: 'Обычная',
       color: Color(0xFF8A95A7),
       score: 1,
       defaultWeight: 42,
@@ -789,6 +1287,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
     _LuckCardTier(
       zh: '优质卡',
       en: 'Uncommon',
+      ja: 'アンコモン',
+      de: 'Ungewöhnlich',
+      fr: 'Peu commune',
+      es: 'Poco común',
+      ru: 'Необычная',
       color: Color(0xFF58A47E),
       score: 2,
       defaultWeight: 28,
@@ -796,6 +1299,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
     _LuckCardTier(
       zh: '稀有卡',
       en: 'Rare',
+      ja: 'レア',
+      de: 'Selten',
+      fr: 'Rare',
+      es: 'Rara',
+      ru: 'Редкая',
       color: Color(0xFF4F87D7),
       score: 3,
       defaultWeight: 17,
@@ -803,6 +1311,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
     _LuckCardTier(
       zh: '史诗卡',
       en: 'Epic',
+      ja: 'エピック',
+      de: 'Episch',
+      fr: 'Épique',
+      es: 'Épica',
+      ru: 'Эпическая',
       color: Color(0xFFB06FD9),
       score: 4,
       defaultWeight: 9,
@@ -810,6 +1323,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
     _LuckCardTier(
       zh: '传说卡',
       en: 'Legendary',
+      ja: 'レジェンド',
+      de: 'Legendär',
+      fr: 'Légendaire',
+      es: 'Legendaria',
+      ru: 'Легендарная',
       color: Color(0xFFE7A43D),
       score: 5,
       defaultWeight: 4,
@@ -944,7 +1462,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
   }
 
   String _tierLabel(AppI18n i18n, _LuckCardTier tier) {
-    return pickUiText(i18n, zh: tier.zh, en: tier.en);
+    return tier.label(i18n);
   }
 
   _LuckCardTier _drawTier() {
@@ -1262,28 +1780,100 @@ class _LuckTestCardState extends State<_LuckTestCard>
 
   String _drawModeLabel(AppI18n i18n, _LuckDrawMode mode) {
     return switch (mode) {
-      _LuckDrawMode.single => pickUiText(i18n, zh: '单抽', en: 'Single'),
-      _LuckDrawMode.ten => pickUiText(i18n, zh: '十连', en: '10 draws'),
-      _LuckDrawMode.twenty => pickUiText(i18n, zh: '二十连', en: '20 draws'),
+      _LuckDrawMode.single => pickUiText(
+        i18n,
+        zh: '单抽',
+        en: 'Single',
+        ja: 'Single',
+        de: 'Single',
+        fr: 'Personne seule',
+        es: 'Individual',
+        ru: 'сингл',
+      ),
+      _LuckDrawMode.ten => pickUiText(
+        i18n,
+        zh: '十连',
+        en: '10 draws',
+        ja: '10回引く',
+        de: '10 draws',
+        fr: '10 draws',
+        es: '10 sorteos',
+        ru: '10 розыгрышей',
+      ),
+      _LuckDrawMode.twenty => pickUiText(
+        i18n,
+        zh: '二十连',
+        en: '20 draws',
+        ja: '20回',
+        de: '20 draws',
+        fr: '20 draws',
+        es: '20 sorteos',
+        ru: '20 розыгрышей',
+      ),
     };
   }
 
   String _goalTypeLabel(AppI18n i18n, _LuckGoalType type) {
     return switch (type) {
-      _LuckGoalType.unlimited => pickUiText(i18n, zh: '无限次', en: 'Unlimited'),
-      _LuckGoalType.tierCount => pickUiText(i18n, zh: '卡片数量', en: 'Tier count'),
-      _LuckGoalType.luckIndex => pickUiText(i18n, zh: '幸运指数', en: 'Luck index'),
-      _LuckGoalType.drawCount => pickUiText(i18n, zh: '抽数目标', en: 'Draw cap'),
+      _LuckGoalType.unlimited => pickUiText(
+        i18n,
+        zh: '无限次',
+        en: 'Unlimited',
+        ja: 'Unlimited',
+        de: 'Unlimited',
+        fr: 'Illimité',
+        es: 'Ilimitados',
+        ru: 'неограниченный',
+      ),
+      _LuckGoalType.tierCount => pickUiText(
+        i18n,
+        zh: '卡片数量',
+        en: 'Tier count',
+        ja: 'Tier count',
+        de: 'Tier count',
+        fr: 'Nombre de niveaux',
+        es: 'Cuento de tijeras',
+        ru: 'Подсчет уровня',
+      ),
+      _LuckGoalType.luckIndex => pickUiText(
+        i18n,
+        zh: '幸运指数',
+        en: 'Luck index',
+        ja: 'Luck index',
+        de: 'Luck index',
+        fr: 'Indice de la chance',
+        es: 'Índice de la suerte',
+        ru: 'Индекс удачи',
+      ),
+      _LuckGoalType.drawCount => pickUiText(
+        i18n,
+        zh: '抽数目标',
+        en: 'Draw cap',
+        ja: 'Draw cap',
+        de: 'Draw cap',
+        fr: 'Tirer le capuchon',
+        es: 'Gorro de dibujo',
+        ru: 'Кепка для рисования',
+      ),
     };
   }
 
   String _goalSummary(AppI18n i18n) {
     return switch (_goalType) {
-      _LuckGoalType.unlimited => pickUiText(i18n, zh: '无限次', en: 'Unlimited'),
+      _LuckGoalType.unlimited => pickUiText(
+        i18n,
+        zh: '无限次',
+        en: 'Unlimited',
+        ja: 'Unlimited',
+        de: 'Unlimited',
+        fr: 'Illimité',
+        es: 'Ilimitados',
+        ru: 'неограниченный',
+      ),
       _LuckGoalType.tierCount =>
         '${_tierLabel(i18n, _tiers[_goalTierIndex])} x $_goalTierCount',
       _LuckGoalType.luckIndex =>
-        '$_goalLuckIndex ${pickUiText(i18n, zh: '点', en: 'pts')}',
+        '$_goalLuckIndex ${pickUiText(i18n, zh: '点', en: 'pts', ja: 'pts', de: 'pts', fr: 'pts', es: 'pts', ru: 'pts')}',
       _LuckGoalType.drawCount => '$_goalDrawCount',
     };
   }
@@ -1305,21 +1895,75 @@ class _LuckTestCardState extends State<_LuckTestCard>
   String _luckTitle(AppI18n i18n) {
     final index = _luckIndex;
     if (index >= 130) {
-      return pickUiText(i18n, zh: '欧皇在世', en: 'Mythic luck');
+      return pickUiText(
+        i18n,
+        zh: '欧皇在世',
+        en: 'Mythic luck',
+        ja: 'Mythic luck',
+        de: 'Mythic luck',
+        fr: 'Bonne chance',
+        es: 'Suerte mística',
+        ru: 'Мифическая удача',
+      );
     }
     if (index >= 118) {
-      return pickUiText(i18n, zh: '气运之子', en: 'Fortune favored');
+      return pickUiText(
+        i18n,
+        zh: '气运之子',
+        en: 'Fortune favored',
+        ja: 'Fortune favored',
+        de: 'Fortune favored',
+        fr: 'Fortune favorisée',
+        es: 'Fortuna favorecida',
+        ru: 'Фортуна благоприятствует',
+      );
     }
     if (index >= 106) {
-      return pickUiText(i18n, zh: '小幸运', en: 'Lucky streak');
+      return pickUiText(
+        i18n,
+        zh: '小幸运',
+        en: 'Lucky streak',
+        ja: 'Lucky streak',
+        de: 'Lucky streak',
+        fr: 'Tranche de chance',
+        es: 'Lucky streak',
+        ru: 'Удачная полоса',
+      );
     }
     if (index >= 90) {
-      return pickUiText(i18n, zh: '普普通通', en: 'Average luck');
+      return pickUiText(
+        i18n,
+        zh: '普普通通',
+        en: 'Average luck',
+        ja: '平均運',
+        de: 'Average luck',
+        fr: 'La chance moyenne',
+        es: 'Mala suerte',
+        ru: 'Средняя удача',
+      );
     }
     if (index >= 75) {
-      return pickUiText(i18n, zh: '运气不佳', en: 'Below odds');
+      return pickUiText(
+        i18n,
+        zh: '运气不佳',
+        en: 'Below odds',
+        ja: '以下の確率',
+        de: 'Below odds',
+        fr: 'En dessous des cotes',
+        es: 'Debajo de las probabilidades',
+        ru: 'Ниже шансов',
+      );
     }
-    return pickUiText(i18n, zh: '非酋', en: 'Cursed run');
+    return pickUiText(
+      i18n,
+      zh: '非酋',
+      en: 'Cursed run',
+      ja: 'Cursed run',
+      de: 'Cursed run',
+      fr: 'Courage maudit',
+      es: 'Corrida curvada',
+      ru: 'Проклятый бег',
+    );
   }
 
   Future<void> _maybeShowGoalReport() async {
@@ -1497,6 +2141,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                       i18n,
                       zh: '幸运值 +${tier.score}',
                       en: 'Luck +${tier.score}',
+                      ja: 'Luck +${tier.score}',
+                      de: 'Luck +${tier.score}',
+                      fr: 'Chance +${tier.score}',
+                      es: 'Luck + sorteo',
+                      ru: 'Удача +${tier.score}',
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.95),
@@ -1601,17 +2250,17 @@ class _LuckTestCardState extends State<_LuckTestCard>
           constraints.maxWidth,
           _batchCards.length,
         );
-        return GestureDetector(
+        return _HumanPointerDragBoundary(
           behavior: HitTestBehavior.opaque,
-          onPanStart: (details) {
+          onPointerDown: (event) {
             _lastBatchPointerIndex = -1;
-            _handleBatchPan(details.localPosition, constraints.maxWidth);
+            _handleBatchPan(event.localPosition, constraints.maxWidth);
           },
-          onPanUpdate: (details) {
-            _handleBatchPan(details.localPosition, constraints.maxWidth);
+          onPointerMove: (event) {
+            _handleBatchPan(event.localPosition, constraints.maxWidth);
           },
-          onPanEnd: (_) => _lastBatchPointerIndex = -1,
-          onPanCancel: () => _lastBatchPointerIndex = -1,
+          onPointerUp: (_) => _lastBatchPointerIndex = -1,
+          onPointerCancel: (_) => _lastBatchPointerIndex = -1,
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -1643,18 +2292,60 @@ class _LuckTestCardState extends State<_LuckTestCard>
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '抽卡', en: 'Draws'), '$_draws'),
             (
-              pickUiText(i18n, zh: '幸运指数', en: 'Luck index'),
+              pickUiText(
+                i18n,
+                zh: '抽卡',
+                en: 'Draws',
+                ja: 'Draws',
+                de: 'Draws',
+                fr: 'Dessins',
+                es: 'Dibujos',
+                ru: 'Рисунки',
+              ),
+              '$_draws',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '幸运指数',
+                en: 'Luck index',
+                ja: 'Luck index',
+                de: 'Luck index',
+                fr: 'Indice de la chance',
+                es: 'Índice de la suerte',
+                ru: 'Индекс удачи',
+              ),
               _draws == 0 ? '-' : _luckIndex.toStringAsFixed(0),
             ),
             (
-              pickUiText(i18n, zh: '均值/期望', en: 'Avg/expected'),
+              pickUiText(
+                i18n,
+                zh: '均值/期望',
+                en: 'Avg/expected',
+                ja: '平均/予想',
+                de: 'Avg/expected',
+                fr: 'Avg/prévu',
+                es: 'Avg/expected',
+                ru: 'Avg/ожидаемый',
+              ),
               _draws == 0
                   ? '-'
                   : '${_averageScore.toStringAsFixed(2)}/${(_expectedScoreTotal / _draws).toStringAsFixed(2)}',
             ),
-            (pickUiText(i18n, zh: '目标', en: 'Goal'), _goalSummary(i18n)),
+            (
+              pickUiText(
+                i18n,
+                zh: '目标',
+                en: 'Goal',
+                ja: 'Goal',
+                de: 'Goal',
+                fr: 'Objectif',
+                es: 'Objetivo',
+                ru: 'Цель',
+              ),
+              _goalSummary(i18n),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -1680,29 +2371,54 @@ class _LuckTestCardState extends State<_LuckTestCard>
                           i18n,
                           zh: '正在抽取并洗牌，请稍候。',
                           en: 'Drawing and shuffling. Please wait.',
+                          ja: 'Drawing and shuffling. Please wait.',
+                          de: 'Drawing and shuffling. Please wait.',
+                          fr: 'Dessiner et secouer. Attendez.',
+                          es: 'Dibujando y brillando. Por favor, espera.',
+                          ru: 'Рисование и перетасовка. Пожалуйста, подождите.',
                         )
                       : _lastBatch.length > 1
                       ? pickUiText(
                           i18n,
                           zh: '已翻开 $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length} 张：${_batchSummary(i18n)}',
                           en: 'Revealed $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length}: ${_batchSummary(i18n)}',
+                          ja: 'Revealed $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length}: ${_batchSummary(i18n)}',
+                          de: 'Revealed $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length}: ${_batchSummary(i18n)}',
+                          fr: 'Révélé $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length}: ${_batchSummary(i18n)}',
+                          es: 'Revealed',
+                          ru: 'Выявлено $_batchRevealedCount/${_batchCards.isEmpty ? _lastBatch.length : _batchCards.length}: ${_batchSummary(i18n)}',
                         )
                       : _batchActive
                       ? pickUiText(
                           i18n,
                           zh: '已生成 ${_batchCards.length} 张卡片，点击卡片逐张翻开或一键全翻。',
                           en: '${_batchCards.length} cards are ready. Tap cards to flip them or reveal all.',
+                          ja: '${_batchCards.length} カードの準備ができました。カードをタップして裏返すか、すべてを表示します。',
+                          de: '${_batchCards.length} cards are ready. Tap cards to flip them or reveal all.',
+                          fr: '${_batchCards.length} cards are ready. Tap cards to flip them or reveal all.',
+                          es: 'Las tarjetas de usuario están listas. Pulsa las cartas para voltearlas o revelarlas.',
+                          ru: '${_batchCards.length} Карты готовы. Нажмите на карты, чтобы перевернуть их или раскрыть все.',
                         )
                       : _revealedTier == null
                       ? pickUiText(
                           i18n,
                           zh: '点击卡牌可单抽，也可以使用下方按钮按当前模式抽取。',
                           en: 'Tap a card for one draw, or use the button below for the selected mode.',
+                          ja: 'Tap a card for one draw, or use the button below for the selected mode.',
+                          de: 'Tap a card for one draw, or use the button below for the selected mode.',
+                          fr: 'Appuyez sur une carte pour un tirage ou utilisez le bouton ci-dessous pour le mode sélectionné.',
+                          es: 'Pulse una tarjeta para un sorteo o utilice el botón de abajo para el modo seleccionado.',
+                          ru: 'Нажмите на карту для одного рисунка или используйте кнопку ниже для выбранного режима.',
                         )
                       : pickUiText(
                           i18n,
                           zh: '本次翻到：${_tierLabel(i18n, _revealedTier!)}',
                           en: 'Revealed: ${_tierLabel(i18n, _revealedTier!)}',
+                          ja: 'Revealed: ${_tierLabel(i18n, _revealedTier!)}',
+                          de: 'Revealed: ${_tierLabel(i18n, _revealedTier!)}',
+                          fr: 'Révélé: ${_tierLabel(i18n, _revealedTier!)}',
+                          es: 'Revealed:',
+                          ru: 'Выявлено: ${_tierLabel(i18n, _revealedTier!)}',
                         ),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
@@ -1741,6 +2457,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                       i18n,
                       zh: '当前为${_drawModeLabel(i18n, _drawMode)}模式，点击下方按钮生成 $_drawCountForMode 张卡片。',
                       en: '${_drawModeLabel(i18n, _drawMode)} mode: press the button below to generate $_drawCountForMode cards.',
+                      ja: '${_drawModeLabel(i18n, _drawMode)} モード：下のボタンを押して$_drawCountForModeカードを生成します。',
+                      de: '${_drawModeLabel(i18n, _drawMode)} mode: press the button below to generate $_drawCountForMode cards.',
+                      fr: '${_drawModeLabel(i18n, _drawMode)} mode: press the button below to generate $_drawCountForMode cards.',
+                      es: '■v0/ Modo de usuario: pulse el botón de abajo para generar tarjetas de usuario.',
+                      ru: 'Режим ${_drawModeLabel(i18n, _drawMode)}: нажмите кнопку ниже, чтобы генерировать карты $_drawCountForMode.',
                     ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -1753,11 +2474,25 @@ class _LuckTestCardState extends State<_LuckTestCard>
                   _batchCards.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 _HumanSettingsSection(
-                  title: pickUiText(i18n, zh: '多连抽卡片', en: 'Multi-draw cards'),
+                  title: pickUiText(
+                    i18n,
+                    zh: '多连抽卡片',
+                    en: 'Multi-draw cards',
+                    ja: 'Multi-draw cards',
+                    de: 'Multi-draw cards',
+                    fr: 'Cartes à tirage multiple',
+                    es: 'Tarjetas multi-draw',
+                    ru: 'Многорисковые карты',
+                  ),
                   subtitle: pickUiText(
                     i18n,
                     zh: '真实生成本次连抽的全部卡片，翻开后才计入统计。',
                     en: 'All cards are generated for this batch and count after reveal.',
+                    ja: 'カードはこのバッチで生成され、公開後にカウントされます。',
+                    de: 'All cards are generated for this batch and count after reveal.',
+                    fr: 'All cards are generated for this batch and count after reveal.',
+                    es: 'Todas las tarjetas se generan para este lote y cuentan después de revelar.',
+                    ru: 'Все карты генерируются для этой партии и рассчитываются после раскрытия.',
                   ),
                   initiallyExpanded: true,
                   child: Column(
@@ -1775,6 +2510,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                                 i18n,
                                 zh: '继续下一轮',
                                 en: 'Next batch',
+                                ja: 'Next batch',
+                                de: 'Next batch',
+                                fr: 'Prochain lot',
+                                es: 'Siguiente lote',
+                                ru: 'Следующая партия',
                               ),
                               icon: Icons.refresh_rounded,
                               onPressed: _busy
@@ -1790,7 +2530,16 @@ class _LuckTestCardState extends State<_LuckTestCard>
                                 Icons.auto_awesome_motion_rounded,
                               ),
                               label: Text(
-                                pickUiText(i18n, zh: '全部翻开', en: 'Reveal all'),
+                                pickUiText(
+                                  i18n,
+                                  zh: '全部翻开',
+                                  en: 'Reveal all',
+                                  ja: 'Reveal all',
+                                  de: 'Reveal all',
+                                  fr: 'Tout révéler',
+                                  es: 'Revela todo',
+                                  ru: 'Показать все',
+                                ),
                               ),
                             ),
                           Text(
@@ -1798,6 +2547,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                               i18n,
                               zh: '进度 $_batchRevealedCount/${_batchCards.length}',
                               en: 'Progress $_batchRevealedCount/${_batchCards.length}',
+                              ja: 'Progress $_batchRevealedCount/${_batchCards.length}',
+                              de: 'Progress $_batchRevealedCount/${_batchCards.length}',
+                              fr: 'Progrès $_batchRevealedCount/${_batchCards.length}',
+                              es: 'Progresos realizados en relación con los progresos realizados',
+                              ru: 'Прогресс $_batchRevealedCount/${_batchCards.length}',
                             ),
                             style: theme.textTheme.labelLarge?.copyWith(
                               fontWeight: FontWeight.w800,
@@ -1844,6 +2598,21 @@ class _LuckTestCardState extends State<_LuckTestCard>
                       en: _drawMode == _LuckDrawMode.single
                           ? 'Single draw'
                           : '$_drawCountForMode draws',
+                      ja: _drawMode == _LuckDrawMode.single
+                          ? '1回引く'
+                          : '$_drawCountForMode回引く',
+                      de: _drawMode == _LuckDrawMode.single
+                          ? 'Einmal ziehen'
+                          : '$_drawCountForMode Ziehungen',
+                      fr: _drawMode == _LuckDrawMode.single
+                          ? 'Tirage simple'
+                          : '$_drawCountForMode tirages',
+                      es: _drawMode == _LuckDrawMode.single
+                          ? 'Tirada única'
+                          : '$_drawCountForMode tiradas',
+                      ru: _drawMode == _LuckDrawMode.single
+                          ? 'Один розыгрыш'
+                          : '$_drawCountForMode розыгрышей',
                     ),
                     icon: Icons.auto_awesome_rounded,
                     onPressed: _busy || _batchActive
@@ -1855,31 +2624,74 @@ class _LuckTestCardState extends State<_LuckTestCard>
                         ? null
                         : () => unawaited(_showReport()),
                     icon: const Icon(Icons.analytics_rounded),
-                    label: Text(pickUiText(i18n, zh: '统计报告', en: 'Report')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '统计报告',
+                        en: 'Report',
+                        ja: 'Report',
+                        de: 'Report',
+                        fr: 'Rapport annuel',
+                        es: 'Informe',
+                        ru: 'Доклад',
+                      ),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '重置成绩', en: 'Reset stats'),
+                      pickUiText(
+                        i18n,
+                        zh: '重置成绩',
+                        en: 'Reset stats',
+                        ja: 'Reset stats',
+                        de: 'Reset stats',
+                        fr: 'Réinitialiser les statistiques',
+                        es: 'Estadísticas de reasentamiento',
+                        ru: 'Перезагрузить статистику',
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
               _HumanSettingsSection(
-                title: pickUiText(i18n, zh: '抽卡设置', en: 'Draw settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '抽卡设置',
+                  en: 'Draw settings',
+                  ja: 'Draw settings',
+                  de: 'Draw settings',
+                  fr: 'Paramètres de dessin',
+                  es: 'Ajustes de dibujo',
+                  ru: 'Настройка рисунка',
+                ),
                 subtitle: pickUiText(
                   i18n,
                   zh: '选择抽卡模式、完成目标和不同卡牌概率',
                   en: 'Choose draw mode, completion goal, and card-tier odds',
+                  ja: 'ドローモード、コンプリート目標、カードティアのオッズを選択',
+                  de: 'Choose draw mode, completion goal, and card-tier odds',
+                  fr: 'Choisissez le mode de tirage, le but d\'achèvement et les cotes de niveau de carte',
+                  es: 'Elija modo de sorteo, meta de finalización y probabilidades de nivel de tarjeta',
+                  ru: 'Выберите режим рисования, цель завершения и коэффициенты уровня карты',
                 ),
                 initiallyExpanded: true,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '抽卡模式', en: 'Draw mode'),
+                      pickUiText(
+                        i18n,
+                        zh: '抽卡模式',
+                        en: 'Draw mode',
+                        ja: 'Draw mode',
+                        de: 'Draw mode',
+                        fr: 'Mode de dessin',
+                        es: 'Modo de dibujo',
+                        ru: 'Режим рисования',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -1902,7 +2714,16 @@ class _LuckTestCardState extends State<_LuckTestCard>
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      pickUiText(i18n, zh: '抽卡目标', en: 'Draw goal'),
+                      pickUiText(
+                        i18n,
+                        zh: '抽卡目标',
+                        en: 'Draw goal',
+                        ja: 'Draw goal',
+                        de: 'Draw goal',
+                        fr: 'Dessiner le but',
+                        es: 'Golpe de dibujo',
+                        ru: 'Забить гол',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -1951,6 +2772,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                           i18n,
                           zh: '目标张数',
                           en: 'Target copies',
+                          ja: 'Target copies',
+                          de: 'Target copies',
+                          fr: 'Copies cibles',
+                          es: 'Copias de objetivos',
+                          ru: 'Целевые копии',
                         ),
                         valueText: '$_goalTierCount',
                         value: _goalTierCount.toDouble(),
@@ -1971,6 +2797,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                           i18n,
                           zh: '目标幸运指数',
                           en: 'Target luck index',
+                          ja: 'Target luck index',
+                          de: 'Target luck index',
+                          fr: 'Indice de chance cible',
+                          es: 'Índice de suerte',
+                          ru: 'Индекс целевой удачи',
                         ),
                         valueText: '$_goalLuckIndex',
                         value: _goalLuckIndex.toDouble(),
@@ -1986,7 +2817,16 @@ class _LuckTestCardState extends State<_LuckTestCard>
                       ),
                     if (_goalType == _LuckGoalType.drawCount)
                       _LuckSettingSlider(
-                        label: pickUiText(i18n, zh: '目标抽数', en: 'Target draws'),
+                        label: pickUiText(
+                          i18n,
+                          zh: '目标抽数',
+                          en: 'Target draws',
+                          ja: 'Target draws',
+                          de: 'Target draws',
+                          fr: 'Tirage des cibles',
+                          es: 'Dibujos de destino',
+                          ru: 'Целевая ничья',
+                        ),
                         valueText: '$_goalDrawCount',
                         value: _goalDrawCount.toDouble(),
                         min: 10,
@@ -2003,13 +2843,27 @@ class _LuckTestCardState extends State<_LuckTestCard>
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(i18n, zh: '翻卡特效', en: 'Flip card effects'),
+                        pickUiText(
+                          i18n,
+                          zh: '翻卡特效',
+                          en: 'Flip card effects',
+                          ja: 'Flip card effects',
+                          de: 'Flip card effects',
+                          fr: 'Effets de carte flip',
+                          es: 'Efectos de la tarjeta Flip',
+                          ru: 'Эффекты флип-карт',
+                        ),
                       ),
                       subtitle: Text(
                         pickUiText(
                           i18n,
                           zh: '史诗和传说翻卡时会显示短暂全屏闪光。',
                           en: 'Legendary and Epic flips show a brief full-screen flash.',
+                          ja: 'Legendary and Epic flips show a brief full-screen flash.',
+                          de: 'Legendary and Epic flips show a brief full-screen flash.',
+                          fr: 'Legendary et Epic flips montrent un bref flash plein écran.',
+                          es: 'Las volteretas legendarias y épicas muestran un breve flash de pantalla completa.',
+                          ru: 'Легендарные и эпические флипы показывают краткую полноэкранную вспышку.',
                         ),
                       ),
                       value: _rareEffectEnabled,
@@ -2022,6 +2876,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                         i18n,
                         zh: '卡牌概率自定义',
                         en: 'Custom card probabilities',
+                        ja: 'Custom card probabilities',
+                        de: 'Custom card probabilities',
+                        fr: 'Probabilités de cartes personnalisées',
+                        es: 'Probabilidades de tarjeta personalizadas',
+                        ru: 'Вероятности пользовательских карт',
                       ),
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
@@ -2062,6 +2921,11 @@ class _LuckTestCardState extends State<_LuckTestCard>
                               i18n,
                               zh: '恢复默认概率',
                               en: 'Reset default odds',
+                              ja: 'Reset default odds',
+                              de: 'Reset default odds',
+                              fr: 'Réinitialiser les cotes par défaut',
+                              es: 'Reiniciar las probabilidades predeterminadas',
+                              ru: 'Сброс шансов по умолчанию',
                             ),
                           ),
                         ),
@@ -2296,17 +3160,45 @@ class _LuckReportDialog extends StatelessWidget {
             i18n,
             zh: '目标已完成。本轮结果可作为娱乐统计，不代表真实概率会持续偏离期望。',
             en: 'Goal completed. Treat this as entertainment analysis; future draws still follow the configured odds.',
+            ja: 'Goal completed. Treat this as entertainment analysis; future draws still follow the configured odds.',
+            de: 'Goal completed. Treat this as entertainment analysis; future draws still follow the configured odds.',
+            fr: 'Objectif atteint. Traitez cela comme une analyse de divertissement; les futurs tirages suivent toujours les cotes configurées.',
+            es: 'Objetivo terminado. Trata esto como análisis de entretenimiento; futuros sorteos siguen las probabilidades configuradas.',
+            ru: 'Цель выполнена. Относитесь к этому как к развлекательному анализу; будущие розыгрыши все еще следуют за настроенными коэффициентами.',
           )
         : pickUiText(
             i18n,
             zh: '当前统计基于本页已完成抽卡。幸运指数以 100 为期望水平，高于 100 表示本轮高于概率期望。',
             en: 'This report uses draws from the current page. Luck index uses 100 as expected; above 100 means this run beat expectation.',
+            ja: 'This report uses draws from the current page. Luck index uses 100 as expected; above 100 means this run beat expectation.',
+            de: 'This report uses draws from the current page. Luck index uses 100 as expected; above 100 means this run beat expectation.',
+            fr: 'Ce rapport s\'inspire de la page actuelle. L\'indice de chance utilise 100 comme prévu; au-dessus de 100 signifie cette attente de battement de course.',
+            es: 'Este informe utiliza los sorteos de la página actual. El índice de la suerte utiliza 100 como se espera; por encima de 100 significa esta expectativa de la fuga.',
+            ru: 'Этот отчет использует рисунки с текущей страницы. Индекс удачи использует 100, как и ожидалось; выше 100 означает, что этот бег опережает ожидание.',
           );
     return AlertDialog(
       title: Text(
         goalCompleted
-            ? pickUiText(i18n, zh: '抽卡目标完成', en: 'Draw goal complete')
-            : pickUiText(i18n, zh: '运气测试报告', en: 'Luck report'),
+            ? pickUiText(
+                i18n,
+                zh: '抽卡目标完成',
+                en: 'Draw goal complete',
+                ja: 'Draw goal complete',
+                de: 'Draw goal complete',
+                fr: 'Dessiner l\'objectif terminé',
+                es: 'Dibujo objetivo completo',
+                ru: 'Цель полностью',
+              )
+            : pickUiText(
+                i18n,
+                zh: '运气测试报告',
+                en: 'Luck report',
+                ja: 'Luck report',
+                de: 'Luck report',
+                fr: 'Rapport sur la chance',
+                es: 'Informe de la suerte',
+                ru: 'Удачный отчет',
+              ),
       ),
       content: SizedBox(
         width: 520,
@@ -2320,43 +3212,111 @@ class _LuckReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '抽数', en: 'Draws'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '抽数',
+                      en: 'Draws',
+                      ja: 'Draws',
+                      de: 'Draws',
+                      fr: 'Dessins',
+                      es: 'Dibujos',
+                      ru: 'Рисунки',
+                    ),
                     value: '$draws',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '幸运指数', en: 'Luck index'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '幸运指数',
+                      en: 'Luck index',
+                      ja: 'Luck index',
+                      de: 'Luck index',
+                      fr: 'Indice de la chance',
+                      es: 'Índice de la suerte',
+                      ru: 'Индекс удачи',
+                    ),
                     value: luckIndex.toStringAsFixed(0),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '趣味称号', en: 'Fun title'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '趣味称号',
+                      en: 'Fun title',
+                      ja: 'Fun title',
+                      de: 'Fun title',
+                      fr: 'Titre amusant',
+                      es: 'Título divertido',
+                      ru: 'Забавное название',
+                    ),
                     value: luckTitle,
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '实际/期望', en: 'Actual/expected'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '实际/期望',
+                      en: 'Actual/expected',
+                      ja: '実際の/予想される',
+                      de: 'Actual/expected',
+                      fr: 'Actual/expected',
+                      es: 'Actual/esperada',
+                      ru: 'Реальный/ожидаемый',
+                    ),
                     value:
                         '${totalScore.toStringAsFixed(1)}/${expectedScoreTotal.toStringAsFixed(1)}',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '最佳连中', en: 'Best streak'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '最佳连中',
+                      en: 'Best streak',
+                      ja: '最高連続',
+                      de: 'Beste Serie',
+                      fr: 'Meilleure série',
+                      es: 'Mejor racha',
+                      ru: 'Лучшая серия',
+                    ),
                     value: '$bestStreak',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '本轮判断', en: 'Run analysis'),
+                title: pickUiText(
+                  i18n,
+                  zh: '本轮判断',
+                  en: 'Run analysis',
+                  ja: '今回の分析',
+                  de: 'Rundenanalyse',
+                  fr: 'Analyse de la manche',
+                  es: 'Análisis de la ronda',
+                  ru: 'Анализ раунда',
+                ),
                 child: Text(
                   pickUiText(
                     i18n,
                     zh: '$summary\n目标：$goalText。总幸运值比期望${delta >= 0 ? '高' : '低'} ${delta.abs().toStringAsFixed(1)}。',
                     en: '$summary\nGoal: $goalText. Total luck score is ${delta >= 0 ? 'above' : 'below'} expectation by ${delta.abs().toStringAsFixed(1)}.',
+                    ja: '$summary\n目標: $goalText。合計ラッキースコアは期待より${delta >= 0 ? '高く' : '低く'}、差は ${delta.abs().toStringAsFixed(1)} です。',
+                    de: '$summary\nZiel: $goalText. Der Glückswert liegt ${delta >= 0 ? 'über' : 'unter'} der Erwartung um ${delta.abs().toStringAsFixed(1)}.',
+                    fr: '$summary\nObjectif : $goalText. Le score de chance est ${delta >= 0 ? 'au-dessus' : 'au-dessous'} de l’attendu de ${delta.abs().toStringAsFixed(1)}.',
+                    es: '$summary\nObjetivo: $goalText. La puntuación de suerte está ${delta >= 0 ? 'por encima' : 'por debajo'} de lo esperado en ${delta.abs().toStringAsFixed(1)}.',
+                    ru: '$summary\nЦель: $goalText. Общий индекс удачи ${delta >= 0 ? 'выше' : 'ниже'} ожидания на ${delta.abs().toStringAsFixed(1)}.',
                   ),
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
                 ),
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '卡片分布', en: 'Tier distribution'),
+                title: pickUiText(
+                  i18n,
+                  zh: '卡片分布',
+                  en: 'Tier distribution',
+                  ja: 'ランク分布',
+                  de: 'Stufenverteilung',
+                  fr: 'Répartition par niveau',
+                  es: 'Distribución por nivel',
+                  ru: 'Распределение уровней',
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: List<Widget>.generate(tiers.length, (index) {
@@ -2402,7 +3362,18 @@ class _LuckReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );
@@ -2436,6 +3407,11 @@ class _LuckScratchPrizeTier {
     required this.key,
     required this.zhLabel,
     required this.enLabel,
+    required this.jaLabel,
+    required this.deLabel,
+    required this.frLabel,
+    required this.esLabel,
+    required this.ruLabel,
     required this.weight,
     required this.baseAmount,
     required this.minAmount,
@@ -2447,6 +3423,11 @@ class _LuckScratchPrizeTier {
   final String key;
   final String zhLabel;
   final String enLabel;
+  final String jaLabel;
+  final String deLabel;
+  final String frLabel;
+  final String esLabel;
+  final String ruLabel;
   final double weight;
   final int baseAmount;
   final int minAmount;
@@ -2464,6 +3445,17 @@ class _LuckScratchPrizeTier {
     final scaledRound = math.max(1, (roundTo * priceScale).round());
     return _roundToNearest(rawValue, scaledRound);
   }
+
+  String label(AppI18n i18n) => pickUiText(
+    i18n,
+    zh: zhLabel,
+    en: enLabel,
+    ja: jaLabel,
+    de: deLabel,
+    fr: frLabel,
+    es: esLabel,
+    ru: ruLabel,
+  );
 }
 
 enum _LuckScratchFoilStyle { metal, starfield, ripple, confetti }
@@ -2555,6 +3547,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           key: 'special',
           zhLabel: '特等奖',
           enLabel: 'Grand prize',
+          jaLabel: '特賞',
+          deLabel: 'Hauptgewinn',
+          frLabel: 'Grand prix',
+          esLabel: 'Gran premio',
+          ruLabel: 'Главный приз',
           weight: 0.001,
           baseAmount: 250000,
           minAmount: 200000,
@@ -2566,6 +3563,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           key: 'first',
           zhLabel: '一等奖',
           enLabel: 'First prize',
+          jaLabel: '一等',
+          deLabel: 'Erster Preis',
+          frLabel: 'Premier prix',
+          esLabel: 'Primer premio',
+          ruLabel: 'Первый приз',
           weight: 0.007,
           baseAmount: 50000,
           minAmount: 30000,
@@ -2577,6 +3579,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           key: 'second',
           zhLabel: '二等奖',
           enLabel: 'Second prize',
+          jaLabel: '二等',
+          deLabel: 'Zweiter Preis',
+          frLabel: 'Deuxième prix',
+          esLabel: 'Segundo premio',
+          ruLabel: 'Второй приз',
           weight: 0.05,
           baseAmount: 10000,
           minAmount: 6000,
@@ -2587,6 +3594,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           key: 'third',
           zhLabel: '三等奖',
           enLabel: 'Third prize',
+          jaLabel: '三等',
+          deLabel: 'Dritter Preis',
+          frLabel: 'Troisième prix',
+          esLabel: 'Tercer premio',
+          ruLabel: 'Третий приз',
           weight: 0.32,
           baseAmount: 1000,
           minAmount: 500,
@@ -2597,6 +3609,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           key: 'fourth',
           zhLabel: '四等奖',
           enLabel: 'Fourth prize',
+          jaLabel: '四等',
+          deLabel: 'Vierter Preis',
+          frLabel: 'Quatrième prix',
+          esLabel: 'Cuarto premio',
+          ruLabel: 'Четвертый приз',
           weight: 1.6,
           baseAmount: 200,
           minAmount: 100,
@@ -2607,6 +3624,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           key: 'fifth',
           zhLabel: '五等奖',
           enLabel: 'Fifth prize',
+          jaLabel: '五等',
+          deLabel: 'Fünfter Preis',
+          frLabel: 'Cinquième prix',
+          esLabel: 'Quinto premio',
+          ruLabel: 'Пятый приз',
           weight: 36.0,
           baseAmount: 20,
           minAmount: 10,
@@ -2617,6 +3639,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           key: 'sixth',
           zhLabel: '六等奖',
           enLabel: 'Sixth prize',
+          jaLabel: '六等',
+          deLabel: 'Sechster Preis',
+          frLabel: 'Sixième prix',
+          esLabel: 'Sexto premio',
+          ruLabel: 'Шестой приз',
           weight: 210.0,
           baseAmount: 10,
           minAmount: 10,
@@ -2628,6 +3655,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
     key: 'miss',
     zhLabel: '谢谢惠顾',
     enLabel: 'Try again',
+    jaLabel: 'また挑戦',
+    deLabel: 'Noch einmal',
+    frLabel: 'Essayez encore',
+    esLabel: 'Inténtalo de nuevo',
+    ruLabel: 'Попробуйте еще',
     weight: 0,
     baseAmount: 0,
     minAmount: 0,
@@ -3099,7 +4131,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
       await showGeneralDialog<void>(
         context: context,
         barrierDismissible: true,
-        barrierLabel: pickUiText(i18n, zh: '关闭', en: 'Close'),
+        barrierLabel: pickUiText(
+          i18n,
+          zh: '关闭',
+          en: 'Close',
+          ja: '閉じる',
+          de: 'Close',
+          fr: 'Fermer',
+          es: 'Cerca',
+          ru: 'Закрыть',
+        ),
         barrierColor: Colors.black.withValues(alpha: 0.58),
         transitionDuration: const Duration(milliseconds: 240),
         pageBuilder: (context, animation, secondaryAnimation) {
@@ -3138,22 +4179,50 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
   }
 
   String _tierLabel(AppI18n i18n, _LuckScratchPrizeTier tier) {
-    return pickUiText(i18n, zh: tier.zhLabel, en: tier.enLabel);
+    return tier.label(i18n);
   }
 
   String _foilStyleLabel(AppI18n i18n, _LuckScratchFoilStyle style) {
     return switch (style) {
-      _LuckScratchFoilStyle.metal => pickUiText(i18n, zh: '金属银', en: 'Metal'),
+      _LuckScratchFoilStyle.metal => pickUiText(
+        i18n,
+        zh: '金属银',
+        en: 'Metal',
+        ja: 'Metal',
+        de: 'Metal',
+        fr: 'Métal',
+        es: 'Metal',
+        ru: 'металл',
+      ),
       _LuckScratchFoilStyle.starfield => pickUiText(
         i18n,
         zh: '星点',
         en: 'Stars',
+        ja: 'Stars',
+        de: 'Stars',
+        fr: 'Étoiles',
+        es: 'Estrellas',
+        ru: 'Звезды',
       ),
-      _LuckScratchFoilStyle.ripple => pickUiText(i18n, zh: '波纹', en: 'Ripple'),
+      _LuckScratchFoilStyle.ripple => pickUiText(
+        i18n,
+        zh: '波纹',
+        en: 'Ripple',
+        ja: 'Ripple',
+        de: 'Ripple',
+        fr: 'Mamelon',
+        es: 'Ripple',
+        ru: 'Риппл',
+      ),
       _LuckScratchFoilStyle.confetti => pickUiText(
         i18n,
         zh: '彩屑',
         en: 'Confetti',
+        ja: 'Confetti',
+        de: 'Confetti',
+        fr: 'Confettis',
+        es: 'Confetti',
+        ru: 'конфетти',
       ),
     };
   }
@@ -3177,16 +4246,41 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
     }
 
     return _HumanSettingsSection(
-      title: pickUiText(i18n, zh: '刮刮乐设置', en: 'Scratch settings'),
+      title: pickUiText(
+        i18n,
+        zh: '刮刮乐设置',
+        en: 'Scratch settings',
+        ja: 'Scratch settings',
+        de: 'Scratch settings',
+        fr: 'Paramètres d\'effacement',
+        es: 'Ajustes de rascacielos',
+        ru: 'Настройки Scratch',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '票价、刮开数量和概率变更会重新开始本轮模拟',
         en: 'Price, spot count, and odds changes start a fresh simulation run',
+        ja: 'Price, spot count, and odds changes start a fresh simulation run',
+        de: 'Price, spot count, and odds changes start a fresh simulation run',
+        fr: 'Le prix, le nombre de points et les changements de cotes commencent une nouvelle simulation',
+        es: 'Precio, cuenta de puntos y cambios de probabilidades comienzan una nueva simulación de funcionamiento',
+        ru: 'Цена, количество спотов и изменения шансов начинают новый симуляционный запуск',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          sectionLabel(pickUiText(i18n, zh: '票价', en: 'Ticket price')),
+          sectionLabel(
+            pickUiText(
+              i18n,
+              zh: '票价',
+              en: 'Ticket price',
+              ja: 'Ticket price',
+              de: 'Ticket price',
+              fr: 'Prix du billet',
+              es: 'Precio del billete',
+              ru: 'Стоимость билета',
+            ),
+          ),
           const SizedBox(height: 6),
           Wrap(
             spacing: 8,
@@ -3209,7 +4303,18 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                 .toList(growable: false),
           ),
           const SizedBox(height: 14),
-          sectionLabel(pickUiText(i18n, zh: '刮开数量', en: 'Covered spots')),
+          sectionLabel(
+            pickUiText(
+              i18n,
+              zh: '刮开数量',
+              en: 'Covered spots',
+              ja: '対象スポット',
+              de: 'Covered spots',
+              fr: 'Points couverts',
+              es: 'Puntos cubiertos',
+              ru: 'Закрытые пятна',
+            ),
+          ),
           const SizedBox(height: 6),
           Wrap(
             spacing: 8,
@@ -3218,7 +4323,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                 .map((count) {
                   return ChoiceChip(
                     label: Text(
-                      pickUiText(i18n, zh: '$count 格', en: '$count spots'),
+                      pickUiText(
+                        i18n,
+                        zh: '$count 格',
+                        en: '$count spots',
+                        ja: '$count 斑',
+                        de: '$count spots',
+                        fr: '$count spots',
+                        es: '■v0 / puntos de contacto',
+                        ru: '$count споты',
+                      ),
                     ),
                     selected: _slotCount == count,
                     onSelected: (_) {
@@ -3236,6 +4350,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
               i18n,
               zh: '整体中奖概率修正',
               en: 'Overall win correction',
+              ja: 'Overall win correction',
+              de: 'Overall win correction',
+              fr: 'Correction globale des gains',
+              es: 'Corrección de ganancia general',
+              ru: 'Общая коррекция выигрыша',
             ),
             valueText: _formatCorrection(_overallProbabilityCorrection),
             value: _overallProbabilityCorrection,
@@ -3253,7 +4372,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
             },
           ),
           _LuckSettingSlider(
-            label: pickUiText(i18n, zh: '大奖概率修正', en: 'Prize tier correction'),
+            label: pickUiText(
+              i18n,
+              zh: '大奖概率修正',
+              en: 'Prize tier correction',
+              ja: 'Prize tier correction',
+              de: 'Prize tier correction',
+              fr: 'Correction de niveau de prix',
+              es: 'Corrección del título de premio',
+              ru: 'Коррекция призового уровня',
+            ),
             valueText: _formatCorrection(_customProbabilityCorrection),
             value: _customProbabilityCorrection,
             min: 0.5,
@@ -3277,13 +4405,38 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                 i18n,
                 zh: '当前整票赔率约 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
                 en: 'Current ticket odds about 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                ja: 'Current ticket odds about 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                de: 'Current ticket odds about 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                fr: 'Nombre de places disponibles environ 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                es: 'Probaciones actuales de boletos alrededor de 1 / יv0/',
+                ru: 'Текущие шансы на билет около 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
               ),
             ),
           ),
           const SizedBox(height: 14),
-          sectionLabel(pickUiText(i18n, zh: '刮开表现', en: 'Scratch display')),
+          sectionLabel(
+            pickUiText(
+              i18n,
+              zh: '刮开表现',
+              en: 'Scratch display',
+              ja: 'Scratch display',
+              de: 'Scratch display',
+              fr: 'Affichage des rayures',
+              es: 'Pantalla Scratch',
+              ru: 'Дисплей Scratch',
+            ),
+          ),
           _LuckSettingSlider(
-            label: pickUiText(i18n, zh: '完全显示滑动次数', en: 'Reveal passes'),
+            label: pickUiText(
+              i18n,
+              zh: '完全显示滑动次数',
+              en: 'Reveal passes',
+              ja: 'Reveal passes',
+              de: 'Reveal passes',
+              fr: 'Passé de révélation',
+              es: 'Pases de inversión',
+              ru: 'Раскрывать пропуска',
+            ),
             valueText: '$_revealSteps',
             value: _revealSteps.toDouble(),
             min: 2,
@@ -3299,7 +4452,18 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(pickUiText(i18n, zh: '显示金额', en: 'Show amount')),
+            title: Text(
+              pickUiText(
+                i18n,
+                zh: '显示金额',
+                en: 'Show amount',
+                ja: 'Show amount',
+                de: 'Show amount',
+                fr: 'Afficher le montant',
+                es: 'Mostrar la cantidad',
+                ru: 'Показать сумму',
+              ),
+            ),
             value: _showAmount,
             onChanged: (value) =>
                 _changeScratchVisualSetting(() => _showAmount = value),
@@ -3307,7 +4471,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(
-              pickUiText(i18n, zh: '显示中奖标记', en: 'Show result badge'),
+              pickUiText(
+                i18n,
+                zh: '显示中奖标记',
+                en: 'Show result badge',
+                ja: 'Show result badge',
+                de: 'Show result badge',
+                fr: 'Afficher le badge résultat',
+                es: 'Mostrar la placa del resultado',
+                ru: 'Показать результат',
+              ),
             ),
             value: _showResultBadge,
             onChanged: (value) =>
@@ -3320,6 +4493,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                 i18n,
                 zh: '特等奖/一等奖全屏恭喜',
                 en: 'Grand and first prize celebration',
+                ja: 'Grand and first prize celebration',
+                de: 'Grand and first prize celebration',
+                fr: 'Grand et premier prix',
+                es: 'Gran y primer premio celebración',
+                ru: 'Большой и первый призовой праздник',
               ),
             ),
             value: _celebrationEnabled,
@@ -3327,7 +4505,18 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                 _changeScratchVisualSetting(() => _celebrationEnabled = value),
           ),
           const SizedBox(height: 8),
-          sectionLabel(pickUiText(i18n, zh: '印花样式', en: 'Foil pattern')),
+          sectionLabel(
+            pickUiText(
+              i18n,
+              zh: '印花样式',
+              en: 'Foil pattern',
+              ja: 'Foil pattern',
+              de: 'Foil pattern',
+              fr: 'Modèle de feuille',
+              es: 'Patrón de papel',
+              ru: 'Рисунок фольги',
+            ),
+          ),
           const SizedBox(height: 6),
           Wrap(
             spacing: 8,
@@ -3352,7 +4541,18 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
             key: const ValueKey<String>('luck-scratch-restore-defaults-button'),
             onPressed: _resetScratchSettings,
             icon: const Icon(Icons.settings_backup_restore_rounded),
-            label: Text(pickUiText(i18n, zh: '恢复默认设置', en: 'Restore defaults')),
+            label: Text(
+              pickUiText(
+                i18n,
+                zh: '恢复默认设置',
+                en: 'Restore defaults',
+                ja: 'Restore defaults',
+                de: 'Restore defaults',
+                fr: 'Restaurer les par défaut',
+                es: 'Restaurar defectos',
+                ru: 'Восстановление дефолтов',
+              ),
+            ),
           ),
         ],
       ),
@@ -3378,7 +4578,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           ),
         ),
         child: Text(
-          pickUiText(i18n, zh: '刮刮乐彩票', en: 'Scratch-off ticket'),
+          pickUiText(
+            i18n,
+            zh: '刮刮乐彩票',
+            en: 'Scratch-off ticket',
+            ja: 'Scratch-off ticket',
+            de: 'Scratch-off ticket',
+            fr: 'Billet stoppé',
+            es: 'Billete Scratch-off',
+            ru: 'Скретч-офф билет',
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.labelLarge?.copyWith(
@@ -3405,7 +4614,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
         child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            pickUiText(i18n, zh: '目标 $label', en: 'Target $label'),
+            pickUiText(
+              i18n,
+              zh: '目标 $label',
+              en: 'Target $label',
+              ja: 'Target $label',
+              de: 'Target $label',
+              fr: 'Cible $label',
+              es: 'Meta',
+              ru: 'Цель $label',
+            ),
             maxLines: 1,
             style: theme.textTheme.titleSmall?.copyWith(
               color: _accent,
@@ -3457,8 +4675,13 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
             Text(
               pickUiText(
                 i18n,
-                zh: '刮开“中奖号码”和“我的号码”。我的号码命中任一中奖号码即可按该格奖金兑奖；星标为自动中奖，倍数符号会放大奖金。本地仅模拟票面与概率。',
-                en: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. This is a local ticket simulation.',
+                zh: '刮开“中奖号码”和“我的号码”。我的号码命中任一中奖号码即可按该格奖金兑奖；星标为自动中奖，倍数符号会放大奖金。这里适合作为概率小游戏体验。',
+                en: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
+                ja: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
+                de: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
+                fr: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
+                es: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
+                ru: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
               ),
               style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
             ),
@@ -3473,6 +4696,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                       i18n,
                       zh: '票价 ${_formatPrize(_ticketPrice)}',
                       en: 'Price ${_formatPrize(_ticketPrice)}',
+                      ja: 'Price ${_formatPrize(_ticketPrice)}',
+                      de: 'Price ${_formatPrize(_ticketPrice)}',
+                      fr: 'Prix ${_formatPrize(_ticketPrice)}',
+                      es: 'Precio:',
+                      ru: 'Цена ${_formatPrize(_ticketPrice)}',
                     ),
                   ),
                   visualDensity: VisualDensity.compact,
@@ -3483,6 +4711,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                       i18n,
                       zh: '有效赔率约 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
                       en: 'Effective odds 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                      ja: 'Effective odds 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                      de: 'Effective odds 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                      fr: 'Risques effectifs 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
+                      es: 'Posibilidades efectivas 1 / ierev0/',
+                      ru: 'Эффективные коэффициенты 1 / ${_effectiveOverallOdds.toStringAsFixed(2)}',
                     ),
                   ),
                   visualDensity: VisualDensity.compact,
@@ -3493,6 +4726,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                       i18n,
                       zh: '$_slotCount 个刮开区',
                       en: '$_slotCount covered spots',
+                      ja: '$_slotCount 屋根付きスポット',
+                      de: '$_slotCount covered spots',
+                      fr: '$_slotCount covered spots',
+                      es: '■v0 / puntos cubiertos',
+                      ru: '$_slotCount покрытые пятна',
                     ),
                   ),
                   visualDensity: VisualDensity.compact,
@@ -3501,7 +4739,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
             ),
             const SizedBox(height: 10),
             Text(
-              pickUiText(i18n, zh: '中奖号码', en: 'Winning numbers'),
+              pickUiText(
+                i18n,
+                zh: '中奖号码',
+                en: 'Winning numbers',
+                ja: 'Winning numbers',
+                de: 'Winning numbers',
+                fr: 'Nombres gagnants',
+                es: 'Números ganadores',
+                ru: 'Выигрышные номера',
+              ),
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w900,
               ),
@@ -3548,7 +4795,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                   visualDensity: VisualDensity.compact,
                   avatar: const Icon(Icons.star_rounded, size: 16),
                   label: Text(
-                    pickUiText(i18n, zh: '星标自动中奖', en: 'Star auto-wins'),
+                    pickUiText(
+                      i18n,
+                      zh: '星标自动中奖',
+                      en: 'Star auto-wins',
+                      ja: 'Star auto-wins',
+                      de: 'Star auto-wins',
+                      fr: 'Star auto-wins',
+                      es: 'Star auto-wins',
+                      ru: 'Звездные автопобедители',
+                    ),
                   ),
                 ),
                 Chip(
@@ -3559,6 +4815,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                       i18n,
                       zh: 'x2/x5/x10 放大奖金',
                       en: 'x2/x5/x10 multiply prizes',
+                      ja: 'x2/x5/x10 multiply prizes',
+                      de: 'x2/x5/x10 multiply prizes',
+                      fr: 'x2/x5/x10 multiplier les prix',
+                      es: 'x2/x5/x10 multiplica los premios',
+                      ru: 'x2/x5/x10 Умножить призы',
                     ),
                   ),
                 ),
@@ -3566,7 +4827,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
             ),
             const SizedBox(height: 10),
             Text(
-              pickUiText(i18n, zh: '奖级表', en: 'Prize table'),
+              pickUiText(
+                i18n,
+                zh: '奖级表',
+                en: 'Prize table',
+                ja: 'Prize table',
+                de: 'Prize table',
+                fr: 'Tableau des prix',
+                es: 'Cuadro de premios',
+                ru: 'Таблица призов',
+              ),
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w900,
               ),
@@ -3604,15 +4874,42 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                       runSpacing: 6,
                       children: <Widget>[
                         _ScratchTicketStubChip(
-                          label: pickUiText(i18n, zh: '票号', en: 'Ticket'),
+                          label: pickUiText(
+                            i18n,
+                            zh: '票号',
+                            en: 'Ticket',
+                            ja: 'Ticket',
+                            de: 'Ticket',
+                            fr: 'Billet',
+                            es: 'Entrada',
+                            ru: 'билет',
+                          ),
                           value: _ticketId,
                         ),
                         _ScratchTicketStubChip(
-                          label: pickUiText(i18n, zh: '包号', en: 'Pack'),
+                          label: pickUiText(
+                            i18n,
+                            zh: '包号',
+                            en: 'Pack',
+                            ja: 'Pack',
+                            de: 'Pack',
+                            fr: 'Boîte',
+                            es: 'Pack',
+                            ru: 'Упаковка',
+                          ),
                           value: _packId,
                         ),
                         _ScratchTicketStubChip(
-                          label: pickUiText(i18n, zh: '校验码', en: 'Validation'),
+                          label: pickUiText(
+                            i18n,
+                            zh: '校验码',
+                            en: 'Validation',
+                            ja: 'Validation',
+                            de: 'Validation',
+                            fr: 'Validation',
+                            es: 'Validación',
+                            ru: 'валидация',
+                          ),
                           value: _ticketValidationCode,
                         ),
                       ],
@@ -3642,21 +4939,84 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '奖票', en: 'Tickets'), '$_tickets'),
             (
-              pickUiText(i18n, zh: '中奖票', en: 'Winning tickets'),
+              pickUiText(
+                i18n,
+                zh: '奖票',
+                en: 'Tickets',
+                ja: 'Tickets',
+                de: 'Tickets',
+                fr: 'Billets',
+                es: 'Billetes',
+                ru: 'билеты',
+              ),
+              '$_tickets',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '中奖票',
+                en: 'Winning tickets',
+                ja: 'Winning tickets',
+                de: 'Winning tickets',
+                fr: 'Billets gagnants',
+                es: 'Billetes ganadores',
+                ru: 'Выигрышные билеты',
+              ),
               '$_winningTickets',
             ),
-            (pickUiText(i18n, zh: '中奖数', en: 'Matches'), '$_matchCount'),
             (
-              pickUiText(i18n, zh: '总奖金', en: 'Total prize'),
+              pickUiText(
+                i18n,
+                zh: '中奖数',
+                en: 'Matches',
+                ja: 'Matches',
+                de: 'Matches',
+                fr: 'Correspondance',
+                es: 'Partidos',
+                ru: 'Матчи',
+              ),
+              '$_matchCount',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '总奖金',
+                en: 'Total prize',
+                ja: 'Total prize',
+                de: 'Total prize',
+                fr: 'Prix total',
+                es: 'Total del premio',
+                ru: 'Общий приз',
+              ),
               _formatPrize(_totalPrize),
             ),
             (
-              pickUiText(i18n, zh: '总花费', en: 'Spent'),
+              pickUiText(
+                i18n,
+                zh: '总花费',
+                en: 'Spent',
+                ja: 'Spent',
+                de: 'Spent',
+                fr: 'Dépensé',
+                es: 'Gasto',
+                ru: 'потраченный',
+              ),
               _formatPrize(_totalSpent),
             ),
-            (pickUiText(i18n, zh: '净收益', en: 'Net'), _formatPrize(_netPrize)),
+            (
+              pickUiText(
+                i18n,
+                zh: '净收益',
+                en: 'Net',
+                ja: 'Net',
+                de: 'Net',
+                fr: 'Montant net',
+                es: 'Net',
+                ru: 'нет',
+              ),
+              _formatPrize(_netPrize),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -3704,7 +5064,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
               ),
               const SizedBox(height: 12),
               Text(
-                pickUiText(i18n, zh: '我的号码', en: 'Your numbers'),
+                pickUiText(
+                  i18n,
+                  zh: '我的号码',
+                  en: 'Your numbers',
+                  ja: 'Your numbers',
+                  de: 'Your numbers',
+                  fr: 'Vos numéros',
+                  es: 'Tus números',
+                  ru: 'Ваши номера',
+                ),
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
@@ -3717,22 +5086,18 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                   final height =
                       layout.cellHeight * layout.rows +
                       layout.spacing * math.max(0, layout.rows - 1);
-                  return GestureDetector(
+                  return _HumanPointerDragBoundary(
                     key: const ValueKey<String>('luck-scratch-grid'),
                     behavior: HitTestBehavior.opaque,
-                    onTapDown: (details) {
+                    onPointerDown: (event) {
                       _resetScratchStroke();
-                      _scratchAt(details.localPosition, Size(width, height));
+                      _scratchAt(event.localPosition, Size(width, height));
                     },
-                    onPanStart: (details) {
-                      _resetScratchStroke();
-                      _scratchAt(details.localPosition, Size(width, height));
+                    onPointerMove: (event) {
+                      _scratchAt(event.localPosition, Size(width, height));
                     },
-                    onPanUpdate: (details) {
-                      _scratchAt(details.localPosition, Size(width, height));
-                    },
-                    onPanEnd: (_) => _resetScratchStroke(),
-                    onPanCancel: _resetScratchStroke,
+                    onPointerUp: (_) => _resetScratchStroke(),
+                    onPointerCancel: (_) => _resetScratchStroke(),
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -3758,7 +5123,16 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                     key: const ValueKey<String>(
                       'luck-scratch-new-ticket-button',
                     ),
-                    label: pickUiText(i18n, zh: '新奖票', en: 'New ticket'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '新奖票',
+                      en: 'New ticket',
+                      ja: 'New ticket',
+                      de: 'New ticket',
+                      fr: 'Nouveau ticket',
+                      es: 'Nuevo billete',
+                      ru: 'Новый билет',
+                    ),
                     icon: Icons.casino_rounded,
                     onPressed: _newTicket,
                   ),
@@ -3767,13 +5141,33 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                         ? null
                         : () => unawaited(_showReport()),
                     icon: const Icon(Icons.analytics_rounded),
-                    label: Text(pickUiText(i18n, zh: '报告', en: 'Report')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '报告',
+                        en: 'Report',
+                        ja: 'Report',
+                        de: 'Report',
+                        fr: 'Rapport annuel',
+                        es: 'Informe',
+                        ru: 'Доклад',
+                      ),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '重置统计', en: 'Reset stats'),
+                      pickUiText(
+                        i18n,
+                        zh: '重置统计',
+                        en: 'Reset stats',
+                        ja: 'Reset stats',
+                        de: 'Reset stats',
+                        fr: 'Réinitialiser les statistiques',
+                        es: 'Estadísticas de reasentamiento',
+                        ru: 'Перезагрузить статистику',
+                      ),
                     ),
                   ),
                   Text(
@@ -3781,6 +5175,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                       i18n,
                       zh: '已刮开 ${(_completionRatio * 100).round()}%',
                       en: 'Revealed ${(_completionRatio * 100).round()}%',
+                      ja: 'Revealed ${(_completionRatio * 100).round()}%',
+                      de: 'Revealed ${(_completionRatio * 100).round()}%',
+                      fr: 'Révélé ${(_completionRatio * 100).round()}%',
+                      es: 'Revelado',
+                      ru: 'Выявлено ${(_completionRatio * 100).round()}%',
                     ),
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -3795,6 +5194,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                     i18n,
                     zh: '本张奖票已全部刮开，可以继续开下一张。',
                     en: 'This ticket is fully revealed. You can open a new one.',
+                    ja: 'This ticket is fully revealed. You can open a new one.',
+                    de: 'This ticket is fully revealed. You can open a new one.',
+                    fr: 'Ce billet est entièrement révélé. Tu peux en ouvrir un nouveau.',
+                    es: 'Este billete está completamente revelado. Puedes abrir una nueva.',
+                    ru: 'Этот билет полностью раскрыт. Вы можете открыть новый.',
                   ),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: _accent,
@@ -3822,14 +5226,32 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
     final showBadge = revealed && _showResultBadge;
     final showAmount = revealed && _showAmount;
     final numberLabel = cell.isAutoWin
-        ? pickUiText(i18n, zh: '星标', en: 'STAR')
+        ? pickUiText(
+            i18n,
+            zh: '星标',
+            en: 'STAR',
+            ja: 'STAR',
+            de: 'STAR',
+            fr: 'STAR',
+            es: 'STAR',
+            ru: 'Звезда',
+          )
         : _formatTicketNumber(cell.number);
     final prizeAmount = cell.isWinning ? cell.amount : cell.displayPrize;
     final multiplierLabel = cell.multiplier > 1 ? 'x${cell.multiplier}' : null;
     final scratchMarks = List<_LuckScratchMark>.unmodifiable(
       _scratchMarks[index],
     );
-    final watermarkText = pickUiText(i18n, zh: '刮开', en: 'Scratch');
+    final watermarkText = pickUiText(
+      i18n,
+      zh: '刮开',
+      en: 'Scratch',
+      ja: 'Scratch',
+      de: 'Scratch',
+      fr: 'Grattez',
+      es: 'Scratch',
+      ru: 'Щелчок',
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact =
@@ -3970,8 +5392,26 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                       ),
                       child: Text(
                         matched
-                            ? pickUiText(i18n, zh: '中奖', en: 'Win')
-                            : pickUiText(i18n, zh: '未中', en: 'Miss'),
+                            ? pickUiText(
+                                i18n,
+                                zh: '中奖',
+                                en: 'Win',
+                                ja: 'Win',
+                                de: 'Win',
+                                fr: 'Gagner',
+                                es: 'Gana',
+                                ru: 'Победа',
+                              )
+                            : pickUiText(
+                                i18n,
+                                zh: '未中',
+                                en: 'Miss',
+                                ja: 'Miss',
+                                de: 'Miss',
+                                fr: 'Mlle',
+                                es: 'Miss',
+                                ru: 'Мисс.',
+                              ),
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: matched
                               ? _accent
@@ -4543,7 +5983,7 @@ class _LuckScratchCelebrationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tierLabel = pickUiText(i18n, zh: tier.zhLabel, en: tier.enLabel);
+    final tierLabel = tier.label(i18n);
     const effectColor = Color(0xFFFFC95A);
     return Material(
       color: Colors.transparent,
@@ -4620,7 +6060,16 @@ class _LuckScratchCelebrationDialog extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            pickUiText(i18n, zh: '恭喜中奖', en: 'Congratulations'),
+                            pickUiText(
+                              i18n,
+                              zh: '恭喜中奖',
+                              en: 'Congratulations',
+                              ja: 'おめでとうございます',
+                              de: 'Congratulations',
+                              fr: 'Félicitations',
+                              es: 'Felicitaciones',
+                              ru: 'Поздравляю.',
+                            ),
                             textAlign: TextAlign.center,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               color: Colors.white,
@@ -4640,7 +6089,16 @@ class _LuckScratchCelebrationDialog extends StatelessWidget {
                           FilledButton.tonal(
                             onPressed: () => Navigator.of(context).maybePop(),
                             child: Text(
-                              pickUiText(i18n, zh: '继续刮奖', en: 'Continue'),
+                              pickUiText(
+                                i18n,
+                                zh: '继续刮奖',
+                                en: 'Continue',
+                                ja: '継続',
+                                de: 'Continue',
+                                fr: 'Continuer',
+                                es: 'Continuar',
+                                ru: 'Продолжать',
+                              ),
                             ),
                           ),
                         ],
@@ -4719,7 +6177,7 @@ class _LuckScratchReportDialog extends StatelessWidget {
   }
 
   String _tierLabel(_LuckScratchPrizeTier tier) {
-    return pickUiText(i18n, zh: tier.zhLabel, en: tier.enLabel);
+    return tier.label(i18n);
   }
 
   @override
@@ -4741,7 +6199,18 @@ class _LuckScratchReportDialog extends StatelessWidget {
       }
     }
     return AlertDialog(
-      title: Text(pickUiText(i18n, zh: '刮刮乐报告', en: 'Scratch report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '刮刮乐报告',
+          en: 'Scratch report',
+          ja: 'Scratch report',
+          de: 'Scratch report',
+          fr: 'Rapport sur la fraude',
+          es: 'Scratch report',
+          ru: 'Отчет Scratch',
+        ),
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -4754,34 +6223,97 @@ class _LuckScratchReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '奖票', en: 'Tickets'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '奖票',
+                      en: 'Tickets',
+                      ja: 'Tickets',
+                      de: 'Tickets',
+                      fr: 'Billets',
+                      es: 'Billetes',
+                      ru: 'билеты',
+                    ),
                     value: '$tickets',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '中奖票', en: 'Winning tickets'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '中奖票',
+                      en: 'Winning tickets',
+                      ja: 'Winning tickets',
+                      de: 'Winning tickets',
+                      fr: 'Billets gagnants',
+                      es: 'Billetes ganadores',
+                      ru: 'Выигрышные билеты',
+                    ),
                     value: '$winningTickets',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '中奖数', en: 'Matches'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '中奖数',
+                      en: 'Matches',
+                      ja: 'Matches',
+                      de: 'Matches',
+                      fr: 'Correspondance',
+                      es: 'Partidos',
+                      ru: 'Матчи',
+                    ),
                     value: '$totalMatches',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '总奖金', en: 'Total prize'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '总奖金',
+                      en: 'Total prize',
+                      ja: 'Total prize',
+                      de: 'Total prize',
+                      fr: 'Prix total',
+                      es: 'Total del premio',
+                      ru: 'Общий приз',
+                    ),
                     value: _formatPrize(totalPrize),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '总花费', en: 'Spent'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '总花费',
+                      en: 'Spent',
+                      ja: 'Spent',
+                      de: 'Spent',
+                      fr: 'Dépensé',
+                      es: 'Gasto',
+                      ru: 'потраченный',
+                    ),
                     value: _formatPrize(totalSpent),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '净收益', en: 'Net'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '净收益',
+                      en: 'Net',
+                      ja: 'Net',
+                      de: 'Net',
+                      fr: 'Montant net',
+                      es: 'Net',
+                      ru: 'нет',
+                    ),
                     value: _formatPrize(netPrize),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '当前奖票', en: 'Current ticket'),
+                title: pickUiText(
+                  i18n,
+                  zh: '当前奖票',
+                  en: 'Current ticket',
+                  ja: '現在のチケット',
+                  de: 'Aktuelles Los',
+                  fr: 'Ticket actuel',
+                  es: 'Boleto actual',
+                  ru: 'Текущий билет',
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -4792,6 +6324,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '中奖号码 ${winningNumbers.map(_formatTicketNumber).join(' ')}',
                           en: 'Winning numbers ${winningNumbers.map(_formatTicketNumber).join(' ')}',
+                          ja: '当選番号 ${winningNumbers.map(_formatTicketNumber).join(' ')}',
+                          de: 'Gewinnzahlen ${winningNumbers.map(_formatTicketNumber).join(' ')}',
+                          fr: 'Numéros gagnants ${winningNumbers.map(_formatTicketNumber).join(' ')}',
+                          es: 'Números ganadores ${winningNumbers.map(_formatTicketNumber).join(' ')}',
+                          ru: 'Выигрышные номера ${winningNumbers.map(_formatTicketNumber).join(' ')}',
                         ),
                       ),
                     ),
@@ -4801,12 +6338,26 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '票号 $ticketId',
                           en: 'Ticket $ticketId',
+                          ja: 'Ticket $ticketId',
+                          de: 'Ticket $ticketId',
+                          fr: 'Billet $ticketId',
+                          es: 'Boleto $ticketId',
+                          ru: 'Билет $ticketId',
                         ),
                       ),
                     ),
                     Chip(
                       label: Text(
-                        pickUiText(i18n, zh: '包号 $packId', en: 'Pack $packId'),
+                        pickUiText(
+                          i18n,
+                          zh: '包号 $packId',
+                          en: 'Pack $packId',
+                          ja: 'パック $packId',
+                          de: 'Pack $packId',
+                          fr: 'Paquet $packId',
+                          es: 'Paquete $packId',
+                          ru: 'Пакет $packId',
+                        ),
                       ),
                     ),
                     Chip(
@@ -4815,6 +6366,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '校验码 $validationCode',
                           en: 'Validation $validationCode',
+                          ja: '確認コード $validationCode',
+                          de: 'Prüfcode $validationCode',
+                          fr: 'Code de contrôle $validationCode',
+                          es: 'Código de validación $validationCode',
+                          ru: 'Код проверки $validationCode',
                         ),
                       ),
                     ),
@@ -4824,6 +6380,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '目标奖级 ${_tierLabel(winningTier)}',
                           en: 'Target tier ${_tierLabel(winningTier)}',
+                          ja: '目標ランク ${_tierLabel(winningTier)}',
+                          de: 'Zielstufe ${_tierLabel(winningTier)}',
+                          fr: 'Niveau cible ${_tierLabel(winningTier)}',
+                          es: 'Nivel objetivo ${_tierLabel(winningTier)}',
+                          ru: 'Целевой уровень ${_tierLabel(winningTier)}',
                         ),
                       ),
                     ),
@@ -4833,6 +6394,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '目标金额 ${_formatPrize(winningAmount)}',
                           en: 'Target amount ${_formatPrize(winningAmount)}',
+                          ja: '目標金額 ${_formatPrize(winningAmount)}',
+                          de: 'Zielbetrag ${_formatPrize(winningAmount)}',
+                          fr: 'Montant cible ${_formatPrize(winningAmount)}',
+                          es: 'Importe objetivo ${_formatPrize(winningAmount)}',
+                          ru: 'Целевая сумма ${_formatPrize(winningAmount)}',
                         ),
                       ),
                     ),
@@ -4842,6 +6408,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '已中奖 $currentMatches',
                           en: 'Matches $currentMatches',
+                          ja: 'Matches $currentMatches',
+                          de: 'Matches $currentMatches',
+                          fr: 'Correspond à $currentMatches',
+                          es: 'Partidos',
+                          ru: 'Матчи $currentMatches',
                         ),
                       ),
                     ),
@@ -4851,6 +6422,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '当前奖金 ${_formatPrize(currentPrize)}',
                           en: 'Current prize ${_formatPrize(currentPrize)}',
+                          ja: '現在の賞品${_formatPrize(currentPrize)}',
+                          de: 'Current prize ${_formatPrize(currentPrize)}',
+                          fr: 'Prix actuel ${_formatPrize(currentPrize)}',
+                          es: 'Premio actual',
+                          ru: 'Текущий приз ${_formatPrize(currentPrize)}',
                         ),
                       ),
                     ),
@@ -4860,6 +6436,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                           i18n,
                           zh: '刮开进度 ${(completionRatio * 100).round()}%',
                           en: 'Reveal ${(completionRatio * 100).round()}%',
+                          ja: 'Reveal ${(completionRatio * 100).round()}%',
+                          de: 'Reveal ${(completionRatio * 100).round()}%',
+                          fr: 'Révèle ${(completionRatio * 100).round()}%',
+                          es: 'Revelación',
+                          ru: 'Показать ${(completionRatio * 100).round()}%',
                         ),
                       ),
                     ),
@@ -4868,7 +6449,16 @@ class _LuckScratchReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '奖级表', en: 'Prize table'),
+                title: pickUiText(
+                  i18n,
+                  zh: '奖级表',
+                  en: 'Prize table',
+                  ja: 'Prize table',
+                  de: 'Prize table',
+                  fr: 'Tableau des prix',
+                  es: 'Cuadro de premios',
+                  ru: 'Таблица призов',
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -4886,7 +6476,16 @@ class _LuckScratchReportDialog extends StatelessWidget {
               if (revealed.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 _ColorVisionReportSection(
-                  title: pickUiText(i18n, zh: '已刮开内容', en: 'Revealed items'),
+                  title: pickUiText(
+                    i18n,
+                    zh: '已刮开内容',
+                    en: 'Revealed items',
+                    ja: 'Revealed items',
+                    de: 'Revealed items',
+                    fr: 'Éléments révélés',
+                    es: 'Artículos revisados',
+                    ru: 'Раскрытые предметы',
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: revealed
@@ -4910,7 +6509,18 @@ class _LuckScratchReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );
@@ -4924,11 +6534,25 @@ class CalculationTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '计算能力测试', en: 'Calculation test'),
+      title: pickUiText(
+        i18n,
+        zh: '计算能力测试',
+        en: 'Calculation test',
+        ja: '計算テスト',
+        de: 'Calculation test',
+        fr: 'Essai de calcul',
+        es: 'Prueba de cálculo',
+        ru: 'Тест на расчет',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '按难度、题型、题量或限时进行口算训练，完成后查看速度和准确率报告。',
         en: 'Practice arithmetic by difficulty, operation type, round count, or time limit with a final speed and accuracy report.',
+        ja: 'Practice arithmetic by difficulty, operation type, round count, or time limit with a final speed and accuracy report.',
+        de: 'Practice arithmetic by difficulty, operation type, round count, or time limit with a final speed and accuracy report.',
+        fr: 'Pratiquez l\'arithmétique par difficulté, type de fonctionnement, nombre de tours ou limite de temps avec un rapport final de vitesse et de précision.',
+        es: 'Practicar aritmética por dificultad, tipo de operación, recuento redondo o límite de tiempo con un informe final de velocidad y precisión.',
+        ru: 'Практикуйте арифметику по сложности, типу операции, количеству оборотов или временному пределу с окончательным отчетом о скорости и точности.',
       ),
       accent: const Color(0xFF6178B8),
       icon: Icons.calculate_rounded,
@@ -4936,6 +6560,11 @@ class CalculationTestPage extends StatelessWidget {
         i18n,
         zh: '下一步：输入答案并提交',
         en: 'Next: type answers and submit',
+        ja: 'Next: type answers and submit',
+        de: 'Next: type answers and submit',
+        fr: 'Suivant: taper les réponses et soumettre',
+        es: 'Siguiente: escriba respuestas y envíe',
+        ru: 'Следующий: Тип ответов и отправить',
       ),
       child: const _CalculationTestCard(),
     );
@@ -5172,8 +6801,26 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
           difficulty: _difficultyLabel(i18n, _difficulty),
           type: _typeLabel(i18n, _type),
           mode: _sessionMode == _CalculationSessionMode.fixedRounds
-              ? pickUiText(i18n, zh: '固定题量', en: 'Fixed rounds')
-              : pickUiText(i18n, zh: '限时', en: 'Timed'),
+              ? pickUiText(
+                  i18n,
+                  zh: '固定题量',
+                  en: 'Fixed rounds',
+                  ja: 'Fixed rounds',
+                  de: 'Fixed rounds',
+                  fr: 'Tours fixes',
+                  es: 'Rondas fijas',
+                  ru: 'Фиксированные раунды',
+                )
+              : pickUiText(
+                  i18n,
+                  zh: '限时',
+                  en: 'Timed',
+                  ja: 'Timed',
+                  de: 'Timed',
+                  fr: 'Délai',
+                  es: 'Timed',
+                  ru: 'Время',
+                ),
         ),
       );
     } finally {
@@ -5552,36 +7199,150 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
 
   String _difficultyLabel(AppI18n i18n, _CalculationDifficulty difficulty) {
     return switch (difficulty) {
-      _CalculationDifficulty.easy => pickUiText(i18n, zh: '轻量', en: 'Easy'),
+      _CalculationDifficulty.easy => pickUiText(
+        i18n,
+        zh: '轻量',
+        en: 'Easy',
+        ja: 'Easy',
+        de: 'Easy',
+        fr: 'Facile',
+        es: 'Fácil',
+        ru: 'Легко',
+      ),
       _CalculationDifficulty.standard => pickUiText(
         i18n,
         zh: '标准',
         en: 'Standard',
+        ja: 'Standard',
+        de: 'Standard',
+        fr: 'Norme',
+        es: 'Estándar',
+        ru: 'Стандарт',
       ),
-      _CalculationDifficulty.hard => pickUiText(i18n, zh: '进阶', en: 'Hard'),
-      _CalculationDifficulty.expert => pickUiText(i18n, zh: '专家', en: 'Expert'),
+      _CalculationDifficulty.hard => pickUiText(
+        i18n,
+        zh: '进阶',
+        en: 'Hard',
+        ja: 'Hard',
+        de: 'Hard',
+        fr: 'Dur',
+        es: 'Duro',
+        ru: 'Жесткий',
+      ),
+      _CalculationDifficulty.expert => pickUiText(
+        i18n,
+        zh: '专家',
+        en: 'Expert',
+        ja: 'Expert',
+        de: 'Expert',
+        fr: 'Expert',
+        es: 'Expert',
+        ru: 'эксперт',
+      ),
     };
   }
 
   String _typeLabel(AppI18n i18n, _CalculationType type) {
     return switch (type) {
-      _CalculationType.mixed => pickUiText(i18n, zh: '混合', en: 'Mixed'),
-      _CalculationType.addSub => pickUiText(i18n, zh: '加减', en: 'Add/Sub'),
-      _CalculationType.multiply => pickUiText(i18n, zh: '乘法', en: 'Multiply'),
-      _CalculationType.division => pickUiText(i18n, zh: '除法', en: 'Divide'),
-      _CalculationType.twoStep => pickUiText(i18n, zh: '两步题', en: 'Two-step'),
-      _CalculationType.missing => pickUiText(i18n, zh: '未知数', en: 'Missing'),
-      _CalculationType.exponent => pickUiText(i18n, zh: '指数', en: 'Powers'),
-      _CalculationType.factorial => pickUiText(i18n, zh: '阶乘', en: 'Factorial'),
+      _CalculationType.mixed => pickUiText(
+        i18n,
+        zh: '混合',
+        en: 'Mixed',
+        ja: 'Mixed',
+        de: 'Mixed',
+        fr: 'Mélange',
+        es: 'Mezcla',
+        ru: 'смешанный',
+      ),
+      _CalculationType.addSub => pickUiText(
+        i18n,
+        zh: '加减',
+        en: 'Add/Sub',
+        ja: '追加/サブ',
+        de: 'Add/Sub',
+        fr: 'Add/Sub',
+        es: 'Add/Sub',
+        ru: 'Добавить/подключить',
+      ),
+      _CalculationType.multiply => pickUiText(
+        i18n,
+        zh: '乘法',
+        en: 'Multiply',
+        ja: 'Multiply',
+        de: 'Multiply',
+        fr: 'Multiplier',
+        es: 'Multiply',
+        ru: 'умножать',
+      ),
+      _CalculationType.division => pickUiText(
+        i18n,
+        zh: '除法',
+        en: 'Divide',
+        ja: 'Divide',
+        de: 'Divide',
+        fr: 'Diviser',
+        es: 'Divide',
+        ru: 'разделять',
+      ),
+      _CalculationType.twoStep => pickUiText(
+        i18n,
+        zh: '两步题',
+        en: 'Two-step',
+        ja: 'Two-step',
+        de: 'Two-step',
+        fr: 'Deux étapes',
+        es: 'Dos pasos',
+        ru: 'двухэтапный',
+      ),
+      _CalculationType.missing => pickUiText(
+        i18n,
+        zh: '未知数',
+        en: 'Missing',
+        ja: 'Missing',
+        de: 'Missing',
+        fr: 'Manque',
+        es: 'Falta',
+        ru: 'Пропавший',
+      ),
+      _CalculationType.exponent => pickUiText(
+        i18n,
+        zh: '指数',
+        en: 'Powers',
+        ja: 'Powers',
+        de: 'Powers',
+        fr: 'Compétences',
+        es: 'Potencias',
+        ru: 'Силы',
+      ),
+      _CalculationType.factorial => pickUiText(
+        i18n,
+        zh: '阶乘',
+        en: 'Factorial',
+        ja: 'Factorial',
+        de: 'Factorial',
+        fr: 'Facteurs',
+        es: 'Factorial',
+        ru: 'факториальный',
+      ),
       _CalculationType.arithmeticSequence => pickUiText(
         i18n,
         zh: '等差数列',
         en: 'Arithmetic seq.',
+        ja: '算術シーケンス',
+        de: 'Arithmetic seq.',
+        fr: 'Une suite arithmétique.',
+        es: 'Seq Aritmético.',
+        ru: 'Арифметический сек.',
       ),
       _CalculationType.geometricSequence => pickUiText(
         i18n,
         zh: '等比数列',
         en: 'Geometric seq.',
+        ja: 'Geometric seq.',
+        de: 'Geometric seq.',
+        fr: 'Une suite géométrique.',
+        es: 'Seq geométrico.',
+        ru: 'Геометрический сек.',
       ),
     };
   }
@@ -5599,14 +7360,56 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
-            (pickUiText(i18n, zh: '进度', en: 'Progress'), progressText),
-            (pickUiText(i18n, zh: '正确', en: 'Correct'), '$_score'),
             (
-              pickUiText(i18n, zh: '正确率', en: 'Accuracy'),
+              pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
+              progressText,
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '正确',
+                en: 'Correct',
+                ja: '正解',
+                de: 'Correct',
+                fr: 'Corrigé',
+                es: 'Correcto.',
+                ru: 'Правильно',
+              ),
+              '$_score',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '正确率',
+                en: 'Accuracy',
+                ja: '精度',
+                de: 'Accuracy',
+                fr: 'Accuracy',
+                es: 'Precisión',
+                ru: 'точность',
+              ),
               _attempts == 0 ? '-' : '${(_accuracy * 100).round()}%',
             ),
             (
-              pickUiText(i18n, zh: '平均用时', en: 'Avg time'),
+              pickUiText(
+                i18n,
+                zh: '平均用时',
+                en: 'Avg time',
+                ja: '時間平均',
+                de: 'Avg time',
+                fr: 'Avg temps',
+                es: 'Tiempo de entrada',
+                ru: 'Время авг',
+              ),
               _records.isEmpty ? '-' : _formatMilliseconds(_averageMs),
             ),
           ],
@@ -5626,8 +7429,26 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                 child: Text(
                   prompt ??
                       (_done
-                          ? pickUiText(i18n, zh: '本轮完成', en: 'Session done')
-                          : pickUiText(i18n, zh: '准备开始', en: 'Ready')),
+                          ? pickUiText(
+                              i18n,
+                              zh: '本轮完成',
+                              en: 'Session done',
+                              ja: 'Session done',
+                              de: 'Session done',
+                              fr: 'Séance terminée',
+                              es: 'Período de sesiones',
+                              ru: 'Заседание завершено',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '准备开始',
+                              en: 'Ready',
+                              ja: 'Ready',
+                              de: 'Ready',
+                              fr: 'Prêt',
+                              es: 'Listo',
+                              ru: 'Готовы',
+                            )),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -5638,11 +7459,25 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                 const SizedBox(height: 10),
                 Text(
                   _lastCorrect!
-                      ? pickUiText(i18n, zh: '上一题正确', en: 'Last answer correct')
+                      ? pickUiText(
+                          i18n,
+                          zh: '上一题正确',
+                          en: 'Last answer correct',
+                          ja: 'Last answer correct',
+                          de: 'Last answer correct',
+                          fr: 'Dernière réponse correcte',
+                          es: 'Última respuesta correcta',
+                          ru: 'Последний ответ правильный',
+                        )
                       : pickUiText(
                           i18n,
                           zh: '上一题答案：$_lastAnswer',
                           en: 'Last answer: $_lastAnswer',
+                          ja: 'Last answer: $_lastAnswer',
+                          de: 'Last answer: $_lastAnswer',
+                          fr: 'Dernière réponse : $_lastAnswer',
+                          es: 'Última respuesta:',
+                          ru: 'Последний ответ: $_lastAnswer',
                         ),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: _lastCorrect! ? _accent : theme.colorScheme.error,
@@ -5658,7 +7493,16 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                   signed: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: pickUiText(i18n, zh: '答案', en: 'Answer'),
+                  labelText: pickUiText(
+                    i18n,
+                    zh: '答案',
+                    en: 'Answer',
+                    ja: '回答',
+                    de: 'Answer',
+                    fr: 'Réponse',
+                    es: 'Respuesta',
+                    ru: 'Ответить',
+                  ),
                   border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _submit(),
@@ -5670,8 +7514,26 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                 children: <Widget>[
                   _HumanActionButton(
                     label: !_running
-                        ? pickUiText(i18n, zh: '开始', en: 'Start')
-                        : pickUiText(i18n, zh: '提交', en: 'Submit'),
+                        ? pickUiText(
+                            i18n,
+                            zh: '开始',
+                            en: 'Start',
+                            ja: 'Start',
+                            de: 'Start',
+                            fr: 'Démarrer',
+                            es: 'Comienzo',
+                            ru: 'Начинать',
+                          )
+                        : pickUiText(
+                            i18n,
+                            zh: '提交',
+                            en: 'Submit',
+                            ja: 'Submit',
+                            de: 'Submit',
+                            fr: 'Soumettre',
+                            es: 'Submit',
+                            ru: 'Представить',
+                          ),
                     icon: !_running
                         ? Icons.play_arrow_rounded
                         : Icons.check_rounded,
@@ -5682,28 +7544,73 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                         ? null
                         : () => unawaited(_showReport()),
                     icon: const Icon(Icons.analytics_rounded),
-                    label: Text(pickUiText(i18n, zh: '查看报告', en: 'Report')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '查看报告',
+                        en: 'Report',
+                        ja: 'Report',
+                        de: 'Report',
+                        fr: 'Rapport annuel',
+                        es: 'Informe',
+                        ru: 'Доклад',
+                      ),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
-                    label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                    label: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '重置',
+                        en: 'Reset',
+                        ja: 'Reset',
+                        de: 'Reset',
+                        fr: 'Réinitialiser',
+                        es: 'Reset',
+                        ru: 'сброс',
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
               _HumanSettingsSection(
-                title: pickUiText(i18n, zh: '计算设置', en: 'Calculation settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '计算设置',
+                  en: 'Calculation settings',
+                  ja: '計算設定',
+                  de: 'Calculation settings',
+                  fr: 'Paramètres de calcul',
+                  es: 'Ajustes de cálculo',
+                  ru: 'Настройки расчета',
+                ),
                 subtitle: pickUiText(
                   i18n,
                   zh: '选择难度、题型和结束条件',
                   en: 'Choose difficulty, operation type, and completion rule',
+                  ja: '難易度、操作タイプ、完了ルールを選択',
+                  de: 'Choose difficulty, operation type, and completion rule',
+                  fr: 'Choisissez la difficulté, le type d\'opération et la règle d\'achèvement',
+                  es: 'Elija dificultad, tipo de operación y regla de terminación',
+                  ru: 'Выберите сложность, тип операции и правило завершения',
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '难度', en: 'Difficulty'),
+                      pickUiText(
+                        i18n,
+                        zh: '难度',
+                        en: 'Difficulty',
+                        ja: 'Difficulty',
+                        de: 'Difficulty',
+                        fr: 'Difficulté',
+                        es: 'Dificultad',
+                        ru: 'трудность',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -5726,7 +7633,16 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      pickUiText(i18n, zh: '题型', en: 'Operation type'),
+                      pickUiText(
+                        i18n,
+                        zh: '题型',
+                        en: 'Operation type',
+                        ja: 'Operation type',
+                        de: 'Operation type',
+                        fr: 'Type d\'opération',
+                        es: 'Tipo de operación',
+                        ru: 'Тип операции',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -5749,7 +7665,16 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      pickUiText(i18n, zh: '模式', en: 'Mode'),
+                      pickUiText(
+                        i18n,
+                        zh: '模式',
+                        en: 'Mode',
+                        ja: 'Mode',
+                        de: 'Mode',
+                        fr: 'Mode',
+                        es: 'Modo',
+                        ru: 'Режим',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -5763,8 +7688,26 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                             (mode) => ChoiceChip(
                               label: Text(
                                 mode == _CalculationSessionMode.fixedRounds
-                                    ? pickUiText(i18n, zh: '固定题量', en: 'Fixed')
-                                    : pickUiText(i18n, zh: '限时', en: 'Timed'),
+                                    ? pickUiText(
+                                        i18n,
+                                        zh: '固定题量',
+                                        en: 'Fixed',
+                                        ja: 'Fixed',
+                                        de: 'Fixed',
+                                        fr: 'Correction',
+                                        es: 'Fijación',
+                                        ru: 'фиксированный',
+                                      )
+                                    : pickUiText(
+                                        i18n,
+                                        zh: '限时',
+                                        en: 'Timed',
+                                        ja: 'Timed',
+                                        de: 'Timed',
+                                        fr: 'Délai',
+                                        es: 'Timed',
+                                        ru: 'Время',
+                                      ),
                               ),
                               selected: _sessionMode == mode,
                               onSelected: _settingsLocked
@@ -5776,7 +7719,16 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                     ),
                     if (_sessionMode == _CalculationSessionMode.fixedRounds)
                       _LuckSettingSlider(
-                        label: pickUiText(i18n, zh: '题目数量', en: 'Round count'),
+                        label: pickUiText(
+                          i18n,
+                          zh: '题目数量',
+                          en: 'Round count',
+                          ja: 'Round count',
+                          de: 'Round count',
+                          fr: 'Nombre de cycles',
+                          es: 'Cuenta redonda',
+                          ru: 'Круглый счет',
+                        ),
                         valueText: '$_roundLimit',
                         value: _roundLimit.toDouble(),
                         min: 5,
@@ -5789,7 +7741,16 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                       )
                     else
                       _LuckSettingSlider(
-                        label: pickUiText(i18n, zh: '限时秒数', en: 'Time limit'),
+                        label: pickUiText(
+                          i18n,
+                          zh: '限时秒数',
+                          en: 'Time limit',
+                          ja: 'Time limit',
+                          de: 'Time limit',
+                          fr: 'Délai',
+                          es: 'Plazo límite',
+                          ru: 'предельный срок',
+                        ),
                         valueText: '$_timeLimitSeconds s',
                         value: _timeLimitSeconds.toDouble(),
                         min: 20,
@@ -5848,20 +7809,46 @@ class _CalculationReportDialog extends StatelessWidget {
             i18n,
             zh: '准确率稳定，可以提高难度或切换到限时模式。',
             en: 'Accuracy is stable. Raise the difficulty or switch to timed mode.',
+            ja: '精度は安定しています。難易度を上げるか、タイミングモードに切り替えます。',
+            de: 'Accuracy is stable. Raise the difficulty or switch to timed mode.',
+            fr: 'Accuracy is stable. Raise the difficulty or switch to timed mode.',
+            es: 'La precisión es estable. Aumente la dificultad o cambie al modo temporizado.',
+            ru: 'Точность стабильна. Поднимите сложность или переключитесь на режим времени.',
           )
         : averageMs > 6500
         ? pickUiText(
             i18n,
             zh: '先降低速度压力，保留当前难度练习口算路径。',
             en: 'Reduce time pressure and keep this difficulty until the arithmetic path feels automatic.',
+            ja: 'Reduce time pressure and keep this difficulty until the arithmetic path feels automatic.',
+            de: 'Reduce time pressure and keep this difficulty until the arithmetic path feels automatic.',
+            fr: 'Réduire la pression de temps et garder cette difficulté jusqu\'à ce que la trajectoire arithmétique se sente automatique.',
+            es: 'Reduzca la presión del tiempo y mantenga esta dificultad hasta que el camino aritmético se sienta automático.',
+            ru: 'Уменьшите временное давление и сохраняйте эту трудность до тех пор, пока арифметический путь не станет автоматическим.',
           )
         : pickUiText(
             i18n,
             zh: '错误主要来自判断而不是速度，建议先做单一题型专项练习。',
             en: 'Errors look more judgment-based than speed-based. Practice one operation type at a time.',
+            ja: 'Errors look more judgment-based than speed-based. Practice one operation type at a time.',
+            de: 'Errors look more judgment-based than speed-based. Practice one operation type at a time.',
+            fr: 'Les erreurs semblent davantage basées sur le jugement que sur la vitesse. Pratiquez un type d\'opération à la fois.',
+            es: 'Los errores parecen más basados en el juicio que en la velocidad. Practica un tipo de operación a la vez.',
+            ru: 'Ошибки больше основаны на суждениях, чем на скорости. Практикуйте один тип операции за раз.',
           );
     return AlertDialog(
-      title: Text(pickUiText(i18n, zh: '计算能力报告', en: 'Calculation report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '计算能力报告',
+          en: 'Calculation report',
+          ja: '計算レポート',
+          de: 'Calculation report',
+          fr: 'Rapport de calcul',
+          es: 'Informe de cálculo',
+          ru: 'Отчет о расчетах',
+        ),
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -5874,26 +7861,71 @@ class _CalculationReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '正确率', en: 'Accuracy'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '正确率',
+                      en: 'Accuracy',
+                      ja: '精度',
+                      de: 'Accuracy',
+                      fr: 'Accuracy',
+                      es: 'Precisión',
+                      ru: 'точность',
+                    ),
                     value: '${(accuracy * 100).round()}%',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '正确/题数', en: 'Correct/total'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '正确/题数',
+                      en: 'Correct/total',
+                      ja: '正しい/合計',
+                      de: 'Correct/total',
+                      fr: 'Correct/total',
+                      es: 'Corrección/total',
+                      ru: 'Правильный/полный',
+                    ),
                     value: '$score/$attempts',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '平均用时', en: 'Avg time'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '平均用时',
+                      en: 'Avg time',
+                      ja: '時間平均',
+                      de: 'Avg time',
+                      fr: 'Avg temps',
+                      es: 'Tiempo de entrada',
+                      ru: 'Время авг',
+                    ),
                     value: _formatMilliseconds(averageMs),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '最快', en: 'Fastest'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '最快',
+                      en: 'Fastest',
+                      ja: 'Fastest',
+                      de: 'Fastest',
+                      fr: 'Plus vite',
+                      es: 'Más rápido',
+                      ru: 'Самый быстрый',
+                    ),
                     value: _formatMilliseconds(fastest),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '本轮设置', en: 'Session settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '本轮设置',
+                  en: 'Session settings',
+                  ja: 'Session settings',
+                  de: 'Session settings',
+                  fr: 'Paramètres de la session',
+                  es: 'Ajustes del período de sesiones',
+                  ru: 'Параметры сеанса',
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -5906,7 +7938,16 @@ class _CalculationReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '训练建议', en: 'Training note'),
+                title: pickUiText(
+                  i18n,
+                  zh: '训练建议',
+                  en: 'Training note',
+                  ja: 'Training note',
+                  de: 'Training note',
+                  fr: 'Note de formation',
+                  es: 'Nota de capacitación',
+                  ru: 'Учебная записка',
+                ),
                 child: Text(
                   recommendation,
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -5915,14 +7956,23 @@ class _CalculationReportDialog extends StatelessWidget {
               if (wrong.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 _ColorVisionReportSection(
-                  title: pickUiText(i18n, zh: '错题回看', en: 'Missed prompts'),
+                  title: pickUiText(
+                    i18n,
+                    zh: '错题回看',
+                    en: 'Missed prompts',
+                    ja: 'Missed prompts',
+                    de: 'Missed prompts',
+                    fr: 'Invitations manquantes',
+                    es: 'Avisos perdidos',
+                    ru: 'Пропущенные подсказки',
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: wrong
                         .take(5)
                         .map((record) {
                           return Text(
-                            '${record.problem.prompt.replaceAll('?', record.problem.answer.toString())} · ${pickUiText(i18n, zh: '你的答案', en: 'Your answer')}: ${record.userAnswer ?? '-'}',
+                            '${record.problem.prompt.replaceAll('?', record.problem.answer.toString())} · ${pickUiText(i18n, zh: '你的答案', en: 'Your answer', ja: 'Your answer', de: 'Your answer', fr: 'Votre réponse', es: 'Su respuesta', ru: 'Ваш ответ')}: ${record.userAnswer ?? '-'}',
                             style: theme.textTheme.bodySmall,
                           );
                         })
@@ -5937,7 +7987,18 @@ class _CalculationReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );
@@ -5951,15 +8012,38 @@ class SustainedAttentionTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(i18n, zh: '持续注意力测试', en: 'Sustained attention'),
+      title: pickUiText(
+        i18n,
+        zh: '持续注意力测试',
+        en: 'Sustained attention',
+        ja: 'Sustained attention',
+        de: 'Sustained attention',
+        fr: 'Une attention soutenue',
+        es: 'Atención sostenida',
+        ru: 'Постоянное внимание',
+      ),
       subtitle: pickUiText(
         i18n,
         zh: '支持目标点击、低频目标和 n-back 任务，统计命中、漏点、误点和反应时。',
         en: 'Go/no-go, oddball, and n-back attention tasks with hit, miss, false-alarm, and reaction-time stats.',
+        ja: 'Go/no-go, oddball, and n-back attention tasks with hit, miss, false-alarm, and reaction-time stats.',
+        de: 'Go/no-go, oddball, and n-back attention tasks with hit, miss, false-alarm, and reaction-time stats.',
+        fr: 'Go/no-go, impairball, et n-back tâches d\'attention avec succès, miss, faux-alarme, et des statistiques de temps de réaction.',
+        es: 'Go/no-go, oddball y N-back tareas de atención con éxito, señorita, falso-alarma y estadísticas de tiempo de reacción.',
+        ru: 'Go/no-go, нечетные и n-задние задачи внимания с хитом, промахом, ложной тревогой и статистикой времени реакции.',
       ),
       accent: const Color(0xFF6D8657),
       icon: Icons.track_changes_rounded,
-      status: pickUiText(i18n, zh: '下一步：看到 X 才点击', en: 'Next: tap only on X'),
+      status: pickUiText(
+        i18n,
+        zh: '下一步：看到 X 才点击',
+        en: 'Next: tap only on X',
+        ja: 'Next: tap only on X',
+        de: 'Next: tap only on X',
+        fr: 'Suivant : appuyez uniquement sur X',
+        es: 'Siguiente: pulsar sólo en X',
+        ru: 'Оригинальное название: Tap Only on X',
+      ),
       child: const _SustainedAttentionCard(),
     );
   }
@@ -6069,6 +8153,26 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
     _finalizeCurrentStimulus();
     setState(() => _running = false);
     unawaited(_showReport());
+  }
+
+  void _reset() {
+    _timer?.cancel();
+    setState(() {
+      _step = 0;
+      _hits = 0;
+      _misses = 0;
+      _falseAlarms = 0;
+      _correctRejects = 0;
+      _running = false;
+      _current = '-';
+      _target = false;
+      _tappedThisStimulus = false;
+      _tapFeedbackSerial = 0;
+      _tapFeedbackCorrect = null;
+      _stimulusStartedAt = null;
+      _sequence.clear();
+      _records.clear();
+    });
   }
 
   void _advance() {
@@ -6224,17 +8328,71 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
 
   String _modeLabel(AppI18n i18n, _AttentionMode mode) {
     return switch (mode) {
-      _AttentionMode.goNoGo => pickUiText(i18n, zh: '目标点击', en: 'Go/No-go'),
-      _AttentionMode.oddball => pickUiText(i18n, zh: '低频目标', en: 'Oddball'),
-      _AttentionMode.nBack => pickUiText(i18n, zh: 'n-back', en: 'n-back'),
+      _AttentionMode.goNoGo => pickUiText(
+        i18n,
+        zh: '目标点击',
+        en: 'Go/No-go',
+        ja: 'Go/No-go',
+        de: 'Go/No-go',
+        fr: 'Aller/Pas aller',
+        es: 'Go/No-go',
+        ru: 'Нет-нет-нет',
+      ),
+      _AttentionMode.oddball => pickUiText(
+        i18n,
+        zh: '低频目标',
+        en: 'Oddball',
+        ja: 'Oddball',
+        de: 'Oddball',
+        fr: 'C\'est bizarre',
+        es: 'Oddball',
+        ru: 'Странный мяч',
+      ),
+      _AttentionMode.nBack => pickUiText(
+        i18n,
+        zh: 'n-back',
+        en: 'n-back',
+        ja: 'n-back',
+        de: 'n-back',
+        fr: 'n-back',
+        es: 'N-back',
+        ru: 'спина',
+      ),
     };
   }
 
   String _paceLabel(AppI18n i18n, _AttentionPace pace) {
     return switch (pace) {
-      _AttentionPace.calm => pickUiText(i18n, zh: '平缓', en: 'Calm'),
-      _AttentionPace.standard => pickUiText(i18n, zh: '标准', en: 'Standard'),
-      _AttentionPace.fast => pickUiText(i18n, zh: '快速', en: 'Fast'),
+      _AttentionPace.calm => pickUiText(
+        i18n,
+        zh: '平缓',
+        en: 'Calm',
+        ja: '落ち着き',
+        de: 'Calm',
+        fr: 'Calme',
+        es: 'Calma.',
+        ru: 'Спокойно.',
+      ),
+      _AttentionPace.standard => pickUiText(
+        i18n,
+        zh: '标准',
+        en: 'Standard',
+        ja: 'Standard',
+        de: 'Standard',
+        fr: 'Norme',
+        es: 'Estándar',
+        ru: 'Стандарт',
+      ),
+      _AttentionPace.fast => pickUiText(
+        i18n,
+        zh: '快速',
+        en: 'Fast',
+        ja: 'Fast',
+        de: 'Fast',
+        fr: 'Rapide',
+        es: 'Rápido',
+        ru: 'Быстро',
+      ),
     };
   }
 
@@ -6244,16 +8402,31 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
         i18n,
         zh: '只在 X 出现时点击。',
         en: 'Tap only when X appears.',
+        ja: 'Tap only when X appears.',
+        de: 'Tap only when X appears.',
+        fr: 'Appuyez seulement lorsque X apparaît.',
+        es: 'Pulsa sólo cuando aparezca X.',
+        ru: 'Нажмите только тогда, когда появляется X.',
       ),
       _AttentionMode.oddball => pickUiText(
         i18n,
         zh: '只点击低频出现的 X，忽略相近干扰字符。',
         en: 'Tap the rare X and ignore similar distractors.',
+        ja: 'Tap the rare X and ignore similar distractors.',
+        de: 'Tap the rare X and ignore similar distractors.',
+        fr: 'Appuyez sur le X rare et ignorez les dissidents similaires.',
+        es: 'Toca la rara X e ignora los distraedores similares.',
+        ru: 'Нажмите на редкий X и игнорируйте подобные отвлекающие факторы.',
       ),
       _AttentionMode.nBack => pickUiText(
         i18n,
         zh: '当前字符与前 $_nBack 个字符相同时点击。',
         en: 'Tap when the current symbol matches the one $_nBack step(s) back.',
+        ja: 'Tap when the current symbol matches the one $_nBack step(s) back.',
+        de: 'Tap when the current symbol matches the one $_nBack step(s) back.',
+        fr: 'Appuyez sur lorsque le symbole courant correspond à l\'étape(s) $_nBack en arrière.',
+        es: 'Pulse cuando el símbolo actual coincida con el paso(s) de la espalda.',
+        ru: 'Нажмите, когда текущий символ соответствует шагу (шагам) назад $_nBack.',
       ),
     };
   }
@@ -6268,14 +8441,68 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(i18n, zh: '进度', en: 'Progress'),
+              pickUiText(
+                i18n,
+                zh: '进度',
+                en: 'Progress',
+                ja: 'Progress',
+                de: 'Progress',
+                fr: 'Progrès accomplis',
+                es: 'Progresos',
+                ru: 'Прогресс',
+              ),
               '$_step/$_stimulusCount',
             ),
-            (pickUiText(i18n, zh: '命中', en: 'Hits'), '$_hits'),
-            (pickUiText(i18n, zh: '漏点', en: 'Misses'), '$_misses'),
-            (pickUiText(i18n, zh: '误点', en: 'False taps'), '$_falseAlarms'),
             (
-              pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+              pickUiText(
+                i18n,
+                zh: '命中',
+                en: 'Hits',
+                ja: 'Hits',
+                de: 'Hits',
+                fr: 'Coups',
+                es: 'Golpes',
+                ru: 'Хиты',
+              ),
+              '$_hits',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '漏点',
+                en: 'Misses',
+                ja: 'Misses',
+                de: 'Misses',
+                fr: 'Mlle',
+                es: 'Misses',
+                ru: 'Мисс.',
+              ),
+              '$_misses',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '误点',
+                en: 'False taps',
+                ja: 'False taps',
+                de: 'False taps',
+                fr: 'Faux robinets',
+                es: 'Grifos falsos',
+                ru: 'Ложные краны',
+              ),
+              '$_falseAlarms',
+            ),
+            (
+              pickUiText(
+                i18n,
+                zh: '平均反应',
+                en: 'Avg reaction',
+                ja: '平均反応',
+                de: 'Avg reaction',
+                fr: 'Réaction d\' Avg',
+                es: 'Reacción de Avg',
+                ru: 'Авг реакция',
+              ),
               _averageReactionMs == 0
                   ? '-'
                   : _formatMilliseconds(_averageReactionMs),
@@ -6305,7 +8532,16 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                 child: Text(
                   _running
                       ? (_current == '-' ? '' : _current)
-                      : pickUiText(i18n, zh: '点击开始', en: 'Tap to start'),
+                      : pickUiText(
+                          i18n,
+                          zh: '点击开始',
+                          en: 'Tap to start',
+                          ja: 'Tap to start',
+                          de: 'Tap to start',
+                          fr: 'Appuyez sur pour démarrer',
+                          es: 'Pulsa para empezar',
+                          ru: 'Нажмите, чтобы начать',
+                        ),
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -6377,8 +8613,26 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
           children: <Widget>[
             _HumanActionButton(
               label: _running
-                  ? pickUiText(i18n, zh: '点击目标', en: 'Tap target')
-                  : pickUiText(i18n, zh: '开始', en: 'Start'),
+                  ? pickUiText(
+                      i18n,
+                      zh: '点击目标',
+                      en: 'Tap target',
+                      ja: 'Tap target',
+                      de: 'Tap target',
+                      fr: 'Toucher la cible',
+                      es: 'Toque el objetivo',
+                      ru: 'Нажмите цель',
+                    )
+                  : pickUiText(
+                      i18n,
+                      zh: '开始',
+                      en: 'Start',
+                      ja: 'Start',
+                      de: 'Start',
+                      fr: 'Démarrer',
+                      es: 'Comienzo',
+                      ru: 'Начинать',
+                    ),
               icon: _running
                   ? Icons.ads_click_rounded
                   : Icons.play_arrow_rounded,
@@ -6387,32 +8641,82 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
             OutlinedButton.icon(
               onPressed: _running ? _stop : null,
               icon: const Icon(Icons.stop_rounded),
-              label: Text(pickUiText(i18n, zh: '结束', en: 'Stop')),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '结束',
+                  en: 'Stop',
+                  ja: 'Stop',
+                  de: 'Stop',
+                  fr: 'Arrête',
+                  es: 'Para.',
+                  ru: 'Стоп!',
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: _reset,
+              icon: const Icon(Icons.restart_alt_rounded),
+              label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
             ),
             OutlinedButton.icon(
               onPressed: _records.isEmpty
                   ? null
                   : () => unawaited(_showReport()),
               icon: const Icon(Icons.analytics_rounded),
-              label: Text(pickUiText(i18n, zh: '查看报告', en: 'Report')),
+              label: Text(
+                pickUiText(
+                  i18n,
+                  zh: '查看报告',
+                  en: 'Report',
+                  ja: 'Report',
+                  de: 'Report',
+                  fr: 'Rapport annuel',
+                  es: 'Informe',
+                  ru: 'Доклад',
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         _HumanPanel(
           child: _HumanSettingsSection(
-            title: pickUiText(i18n, zh: '注意力设置', en: 'Attention settings'),
+            title: pickUiText(
+              i18n,
+              zh: '注意力设置',
+              en: 'Attention settings',
+              ja: '注意設定',
+              de: 'Attention settings',
+              fr: 'Paramètres de l\' attention',
+              es: 'Ajustes de atención',
+              ru: 'Настройки внимания',
+            ),
             subtitle: pickUiText(
               i18n,
               zh: '选择任务、刺激速度、目标比例和总轮次',
               en: 'Choose task, pace, target ratio, and total stimuli',
+              ja: 'タスク、ペース、ターゲット比率、合計刺激を選択します',
+              de: 'Choose task, pace, target ratio, and total stimuli',
+              fr: 'Choisir la tâche, le rythme, le rapport cible et les stimuli totaux',
+              es: 'Elija tareas, ritmo, relación objetivo y estímulos totales',
+              ru: 'Выберите задачу, темп, целевое соотношение и общие стимулы',
             ),
             initiallyExpanded: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(i18n, zh: '任务模式', en: 'Task mode'),
+                  pickUiText(
+                    i18n,
+                    zh: '任务模式',
+                    en: 'Task mode',
+                    ja: 'Task mode',
+                    de: 'Task mode',
+                    fr: 'Mode tâche',
+                    es: 'Modo de tareas',
+                    ru: 'Режим задачи',
+                  ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -6435,7 +8739,16 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  pickUiText(i18n, zh: '节奏', en: 'Pace'),
+                  pickUiText(
+                    i18n,
+                    zh: '节奏',
+                    en: 'Pace',
+                    ja: 'Pace',
+                    de: 'Pace',
+                    fr: 'Pace',
+                    es: 'Pace',
+                    ru: 'темп',
+                  ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -6457,7 +8770,16 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                       .toList(growable: false),
                 ),
                 _LuckSettingSlider(
-                  label: pickUiText(i18n, zh: '刺激数量', en: 'Stimuli'),
+                  label: pickUiText(
+                    i18n,
+                    zh: '刺激数量',
+                    en: 'Stimuli',
+                    ja: 'Stimuli',
+                    de: 'Stimuli',
+                    fr: 'Stimuli',
+                    es: 'Estimuli',
+                    ru: 'стимулы',
+                  ),
                   valueText: '$_stimulusCount',
                   value: _stimulusCount.toDouble(),
                   min: 20,
@@ -6469,7 +8791,16 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                             setState(() => _stimulusCount = value.round()),
                 ),
                 _LuckSettingSlider(
-                  label: pickUiText(i18n, zh: '目标比例', en: 'Target ratio'),
+                  label: pickUiText(
+                    i18n,
+                    zh: '目标比例',
+                    en: 'Target ratio',
+                    ja: 'Target ratio',
+                    de: 'Target ratio',
+                    fr: 'Taux cible',
+                    es: 'Tasa de asignación',
+                    ru: 'Целевой коэффициент',
+                  ),
                   valueText: '$_targetProbability%',
                   value: _targetProbability.toDouble(),
                   min: 10,
@@ -6482,7 +8813,16 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                 ),
                 if (_mode == _AttentionMode.nBack)
                   _LuckSettingSlider(
-                    label: pickUiText(i18n, zh: 'n-back 间隔', en: 'n-back span'),
+                    label: pickUiText(
+                      i18n,
+                      zh: 'n-back 间隔',
+                      en: 'n-back span',
+                      ja: 'n-back span',
+                      de: 'n-back span',
+                      fr: 'Étendue n-arrière',
+                      es: '# Lazo trasero #',
+                      ru: 'n-задний пролет',
+                    ),
                     valueText: '$_nBack',
                     value: _nBack.toDouble(),
                     min: 1,
@@ -6499,6 +8839,11 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                       i18n,
                       zh: '目标背景高亮',
                       en: 'Highlight target background',
+                      ja: 'Highlight target background',
+                      de: 'Highlight target background',
+                      fr: 'Mettre en évidence l\'arrière-plan de la cible',
+                      es: 'Antecedentes objetivos destacados',
+                      ru: 'Выделить целевой фон',
                     ),
                   ),
                   subtitle: Text(
@@ -6506,6 +8851,11 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                       i18n,
                       zh: '默认关闭；开启后目标出现时舞台会轻微变色，适合练习阶段。',
                       en: 'Off by default. When on, targets tint the stage for practice.',
+                      ja: 'Off by default. When on, targets tint the stage for practice.',
+                      de: 'Off by default. When on, targets tint the stage for practice.',
+                      fr: 'Arrêt par défaut. Lorsque sur, les cibles teintent la scène pour la pratique.',
+                      es: 'Por defecto. Cuando en adelante, los objetivos marcan el escenario para la práctica.',
+                      ru: 'По умолчанию. Когда он включен, цели окрашивают сцену для практики.',
                     ),
                   ),
                   value: _highlightTargets,
@@ -6563,20 +8913,46 @@ class _AttentionReportDialog extends StatelessWidget {
             i18n,
             zh: '命中稳定且误点较少，可以提高节奏或改用 n-back。',
             en: 'Hits are stable and false alarms are low. Increase pace or switch to n-back.',
+            ja: 'Hits are stable and false alarms are low. Increase pace or switch to n-back.',
+            de: 'Hits are stable and false alarms are low. Increase pace or switch to n-back.',
+            fr: 'Les coups sont stables et les fausses alarmes sont faibles. Augmentez le rythme ou passez à n-back.',
+            es: 'Los golpes son estables y las falsas alarmas son bajas. Aumentar el ritmo o cambiar a N-back.',
+            ru: 'Хиты стабильны, а ложная тревога низкая. Увеличьте скорость или переключитесь на n-back.',
           )
         : falseAlarms > misses
         ? pickUiText(
             i18n,
             zh: '当前更容易冲动点击，建议降低速度并提高只在目标出现时才动作的抑制感。',
             en: 'False alarms dominate. Slow down and practice response inhibition.',
+            ja: 'False alarms dominate. Slow down and practice response inhibition.',
+            de: 'False alarms dominate. Slow down and practice response inhibition.',
+            fr: 'Les fausses alarmes dominent. Ralentissez et pratiquez l\'inhibition de la réponse.',
+            es: 'Las falsas alarmas dominan. Despacio y practica la inhibición de la respuesta.',
+            ru: 'Доминируют ложные тревоги. Замедляйте и практикуйте ингибирование реакции.',
           )
         : pickUiText(
             i18n,
             zh: '漏点偏多，建议先使用平缓节奏和更高目标比例建立搜索节奏。',
             en: 'Misses are high. Start with calm pace and a higher target ratio to build the search rhythm.',
+            ja: 'Misses are high. Start with calm pace and a higher target ratio to build the search rhythm.',
+            de: 'Misses are high. Start with calm pace and a higher target ratio to build the search rhythm.',
+            fr: 'Les filles sont défoncées. Commencez par un rythme calme et un ratio cible plus élevé pour construire le rythme de recherche.',
+            es: 'Las señoritas están altas. Comience con el ritmo de calma y una relación de objetivo más alta para construir el ritmo de búsqueda.',
+            ru: 'Промахи высоки. Начните со спокойного темпа и более высокого целевого соотношения, чтобы построить поисковый ритм.',
           );
     return AlertDialog(
-      title: Text(pickUiText(i18n, zh: '持续注意力报告', en: 'Attention report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '持续注意力报告',
+          en: 'Attention report',
+          ja: '注意レポート',
+          de: 'Attention report',
+          fr: 'Rapport d \' attention',
+          es: 'Informe de atención',
+          ru: 'Доклад о внимании',
+        ),
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -6589,28 +8965,73 @@ class _AttentionReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '命中率', en: 'Hit rate'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '命中率',
+                      en: 'Hit rate',
+                      ja: 'Hit rate',
+                      de: 'Hit rate',
+                      fr: 'Taux de succès',
+                      es: 'Tasa de crecimiento',
+                      ru: 'Скорость удара',
+                    ),
                     value: '${(hitRate * 100).round()}%',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '平均反应', en: 'Avg reaction'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '平均反应',
+                      en: 'Avg reaction',
+                      ja: '平均反応',
+                      de: 'Avg reaction',
+                      fr: 'Réaction d\' Avg',
+                      es: 'Reacción de Avg',
+                      ru: 'Авг реакция',
+                    ),
                     value: avgReaction == 0
                         ? '-'
                         : _formatMilliseconds(avgReaction),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '漏点', en: 'Misses'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '漏点',
+                      en: 'Misses',
+                      ja: 'Misses',
+                      de: 'Misses',
+                      fr: 'Mlle',
+                      es: 'Misses',
+                      ru: 'Мисс.',
+                    ),
                     value: '$misses',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '误点', en: 'False taps'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '误点',
+                      en: 'False taps',
+                      ja: 'False taps',
+                      de: 'False taps',
+                      fr: 'Faux robinets',
+                      es: 'Grifos falsos',
+                      ru: 'Ложные краны',
+                    ),
                     value: '$falseAlarms',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '本轮设置', en: 'Session settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '本轮设置',
+                  en: 'Session settings',
+                  ja: 'Session settings',
+                  de: 'Session settings',
+                  fr: 'Paramètres de la session',
+                  es: 'Ajustes del período de sesiones',
+                  ru: 'Параметры сеанса',
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -6624,7 +9045,16 @@ class _AttentionReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '训练建议', en: 'Training note'),
+                title: pickUiText(
+                  i18n,
+                  zh: '训练建议',
+                  en: 'Training note',
+                  ja: 'Training note',
+                  de: 'Training note',
+                  fr: 'Note de formation',
+                  es: 'Nota de capacitación',
+                  ru: 'Учебная записка',
+                ),
                 child: Text(
                   recommendation,
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -6637,7 +9067,18 @@ class _AttentionReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );

@@ -62,11 +62,10 @@ class _HandEyePlayStage extends StatelessWidget {
           math.max(1, size.width - left - right),
           math.max(1, size.height - top - bottom),
         );
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (details) => state._handleStageTap(
+        return _HumanPointerDragBoundary(
+          onPointerDown: (event) => state._handleStageTap(
             activeSize,
-            details.localPosition - activeOrigin,
+            event.localPosition - activeOrigin,
           ),
           child: SizedBox(
             width: size.width,
@@ -136,7 +135,16 @@ class _HandEyePlayStage extends StatelessWidget {
                             state._phase == _HandEyePhase.done))
                       Center(
                         child: _HumanActionButton(
-                          label: pickUiText(i18n, zh: '开始', en: 'Start'),
+                          label: pickUiText(
+                            i18n,
+                            zh: '开始',
+                            en: 'Start',
+                            ja: 'Start',
+                            de: 'Start',
+                            fr: 'Démarrer',
+                            es: 'Comienzo',
+                            ru: 'Начинать',
+                          ),
                           icon: Icons.play_arrow_rounded,
                           onPressed: state._start,
                         ),
@@ -404,6 +412,11 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                               i18n,
                               zh: '全屏设置',
                               en: 'Fullscreen settings',
+                              ja: 'Fullscreen settings',
+                              de: 'Fullscreen settings',
+                              fr: 'Paramètres en plein écran',
+                              es: 'Ajustes de pantalla completa',
+                              ru: 'Полноэкранные настройки',
                             ),
                           ),
                         ],
@@ -437,13 +450,27 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                     i18n,
                                     zh: '轮次',
                                     en: 'Rounds',
+                                    ja: 'Rounds',
+                                    de: 'Rounds',
+                                    fr: 'Rondes',
+                                    es: 'Rondas',
+                                    ru: 'Круги',
                                   ),
                                   value:
                                       '${state._results.length}/${state._roundCount}',
                                   accent: _HandEyeCoordinationCardState._accent,
                                 ),
                                 _HumanTestFullscreenMetric(
-                                  label: pickUiText(i18n, zh: '命中', en: 'Hits'),
+                                  label: pickUiText(
+                                    i18n,
+                                    zh: '命中',
+                                    en: 'Hits',
+                                    ja: 'Hits',
+                                    de: 'Hits',
+                                    fr: 'Coups',
+                                    es: 'Golpes',
+                                    ru: 'Хиты',
+                                  ),
                                   value: '${state._successes}',
                                   accent: _HandEyeCoordinationCardState._accent,
                                 ),
@@ -452,6 +479,11 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                     i18n,
                                     zh: '点空',
                                     en: 'Blanks',
+                                    ja: 'ブランク',
+                                    de: 'Blanks',
+                                    fr: 'Blancs',
+                                    es: 'Blanks',
+                                    ru: 'бланки',
                                   ),
                                   value: '${state._totalBlankTaps}',
                                   accent: _HandEyeCoordinationCardState._accent,
@@ -462,6 +494,11 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                       i18n,
                                       zh: '均值',
                                       en: 'Avg',
+                                      ja: '平均',
+                                      de: 'Avg',
+                                      fr: 'Pays',
+                                      es: 'Avg',
+                                      ru: 'Авг',
                                     ),
                                     value: averageReaction == null
                                         ? '-'
@@ -506,6 +543,11 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                               i18n,
                                               zh: '全屏设置',
                                               en: 'Fullscreen settings',
+                                              ja: 'Fullscreen settings',
+                                              de: 'Fullscreen settings',
+                                              fr: 'Paramètres en plein écran',
+                                              es: 'Ajustes de pantalla completa',
+                                              ru: 'Полноэкранные настройки',
                                             ),
                                             style: Theme.of(context)
                                                 .textTheme
@@ -530,6 +572,11 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                         i18n,
                                         zh: '未开始或完成后可直接调整；进行中会锁定测试参数。',
                                         en: 'Adjust before starting or after finishing. Running tests lock these parameters.',
+                                        ja: '開始前または終了後に調整します。テストを実行すると、これらのパラメータがロックされます。',
+                                        de: 'Adjust before starting or after finishing. Running tests lock these parameters.',
+                                        fr: 'Adjust before starting or after finishing. Running tests lock these parameters.',
+                                        es: 'Ajuste antes de comenzar o después de terminar. Las pruebas de ejecución bloquean estos parámetros.',
+                                        ru: 'Настройка перед началом или после окончания. Тесты блокируют эти параметры.',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -542,6 +589,11 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                         i18n,
                                         zh: '目标设置',
                                         en: 'Target settings',
+                                        ja: 'Target settings',
+                                        de: 'Target settings',
+                                        fr: 'Paramètres de la cible',
+                                        es: 'Ajustes de objetivos',
+                                        ru: 'Целевые настройки',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -558,6 +610,11 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                         i18n,
                                         zh: '高阶干扰设置',
                                         en: 'Advanced interference',
+                                        ja: '高度な干渉',
+                                        de: 'Advanced interference',
+                                        fr: 'Advanced interference',
+                                        es: 'Interferencia avanzada',
+                                        ru: 'Расширенное вмешательство',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -611,8 +668,22 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                           i18n,
                                           zh: '进行中',
                                           en: 'Running',
+                                          ja: 'Running',
+                                          de: 'Running',
+                                          fr: 'Courir',
+                                          es: 'Corriendo',
+                                          ru: 'бегать',
                                         )
-                                      : pickUiText(i18n, zh: '开始', en: 'Start'),
+                                      : pickUiText(
+                                          i18n,
+                                          zh: '开始',
+                                          en: 'Start',
+                                          ja: 'Start',
+                                          de: 'Start',
+                                          fr: 'Démarrer',
+                                          es: 'Comienzo',
+                                          ru: 'Начинать',
+                                        ),
                                 ),
                                 style: FilledButton.styleFrom(
                                   minimumSize: const Size(108, 48),
@@ -628,7 +699,16 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                 onPressed: state._reset,
                                 icon: const Icon(Icons.restart_alt_rounded),
                                 label: Text(
-                                  pickUiText(i18n, zh: '重置', en: 'Reset'),
+                                  pickUiText(
+                                    i18n,
+                                    zh: '重置',
+                                    en: 'Reset',
+                                    ja: 'Reset',
+                                    de: 'Reset',
+                                    fr: 'Réinitialiser',
+                                    es: 'Reset',
+                                    ru: 'сброс',
+                                  ),
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(96, 48),
@@ -964,83 +1044,71 @@ class _HandEyeJoystickPadState extends State<_HandEyeJoystickPad> {
               widget.vector.distance *
               normalizedDistance.clamp(0.0, 1.34);
     final knobCenter = center + visualVector * (widget.size * 0.29);
-    return RawGestureDetector(
-      behavior: HitTestBehavior.opaque,
-      gestures: widget.enabled
-          ? <Type, GestureRecognizerFactory>{
-              EagerGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<EagerGestureRecognizer>(
-                    EagerGestureRecognizer.new,
-                    (EagerGestureRecognizer instance) {},
+    return _HumanPointerDragBoundary(
+      enabled: widget.enabled,
+      onPointerDown: _handlePointerDown,
+      onPointerMove: _handlePointerMove,
+      onPointerUp: _handlePointerUp,
+      onPointerCancel: _handlePointerUp,
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: widget.fullscreenStyle
+                        ? (widget.enabled ? 0.52 : 0.26)
+                        : (widget.enabled ? 0.70 : 0.36),
                   ),
-            }
-          : const <Type, GestureRecognizerFactory>{},
-      child: Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerDown: _handlePointerDown,
-        onPointerMove: _handlePointerMove,
-        onPointerUp: _handlePointerUp,
-        onPointerCancel: _handlePointerUp,
-        child: SizedBox(
-          width: widget.size,
-          height: widget.size,
-          child: Stack(
-            children: <Widget>[
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colorScheme.surfaceContainerHighest.withValues(
+                  border: Border.all(
+                    color: accent.withValues(
                       alpha: widget.fullscreenStyle
-                          ? (widget.enabled ? 0.52 : 0.26)
-                          : (widget.enabled ? 0.70 : 0.36),
-                    ),
-                    border: Border.all(
-                      color: accent.withValues(
-                        alpha: widget.fullscreenStyle
-                            ? (widget.enabled ? 0.24 : 0.12)
-                            : (widget.enabled ? 0.36 : 0.16),
-                      ),
+                          ? (widget.enabled ? 0.24 : 0.12)
+                          : (widget.enabled ? 0.36 : 0.16),
                     ),
                   ),
                 ),
               ),
-              Positioned(
-                left: knobCenter.dx - knob / 2,
-                top: knobCenter.dy - knob / 2,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 80),
-                  curve: Curves.easeOutCubic,
-                  width: knob,
-                  height: knob,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: widget.enabled
-                        ? accent.withValues(
-                            alpha: widget.fullscreenStyle ? 0.72 : 0.86,
-                          )
-                        : colorScheme.outlineVariant,
-                    boxShadow: widget.enabled
-                        ? <BoxShadow>[
-                            BoxShadow(
-                              color: accent.withValues(
-                                alpha: widget.fullscreenStyle ? 0.10 : 0.18,
-                              ),
-                              blurRadius: 16,
-                              offset: const Offset(0, 7),
+            ),
+            Positioned(
+              left: knobCenter.dx - knob / 2,
+              top: knobCenter.dy - knob / 2,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 80),
+                curve: Curves.easeOutCubic,
+                width: knob,
+                height: knob,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.enabled
+                      ? accent.withValues(
+                          alpha: widget.fullscreenStyle ? 0.72 : 0.86,
+                        )
+                      : colorScheme.outlineVariant,
+                  boxShadow: widget.enabled
+                      ? <BoxShadow>[
+                          BoxShadow(
+                            color: accent.withValues(
+                              alpha: widget.fullscreenStyle ? 0.10 : 0.18,
                             ),
-                          ]
-                        : null,
-                  ),
-                  child: const Icon(
-                    Icons.open_with_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                            blurRadius: 16,
+                            offset: const Offset(0, 7),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: const Icon(
+                  Icons.open_with_rounded,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1172,7 +1240,16 @@ class _JoystickPlayStage extends StatelessWidget {
                   if (!state._running && showStartOverlay)
                     Center(
                       child: _HumanActionButton(
-                        label: pickUiText(i18n, zh: '开始', en: 'Start'),
+                        label: pickUiText(
+                          i18n,
+                          zh: '开始',
+                          en: 'Start',
+                          ja: 'Start',
+                          de: 'Start',
+                          fr: 'Démarrer',
+                          es: 'Comienzo',
+                          ru: 'Начинать',
+                        ),
                         icon: Icons.play_arrow_rounded,
                         onPressed: state._start,
                       ),
@@ -1199,7 +1276,18 @@ class _JoystickControlDeck extends StatelessWidget {
     final fireButton = FilledButton.icon(
       onPressed: state._running ? state._fire : null,
       icon: const Icon(Icons.my_location_rounded),
-      label: Text(pickUiText(i18n, zh: '射击', en: 'Fire')),
+      label: Text(
+        pickUiText(
+          i18n,
+          zh: '射击',
+          en: 'Fire',
+          ja: 'Fire',
+          de: 'Fire',
+          fr: 'Feu',
+          es: 'Fuego',
+          ru: 'Огонь',
+        ),
+      ),
       style: FilledButton.styleFrom(
         minimumSize: Size.fromHeight(fullscreen ? 88 : 64),
         textStyle: const TextStyle(fontWeight: FontWeight.w900),
@@ -1216,14 +1304,43 @@ class _JoystickControlDeck extends StatelessWidget {
           ),
           label: Text(
             state._running
-                ? pickUiText(i18n, zh: '结束', en: 'Finish')
-                : pickUiText(i18n, zh: '开始', en: 'Start'),
+                ? pickUiText(
+                    i18n,
+                    zh: '结束',
+                    en: 'Finish',
+                    ja: 'Finish',
+                    de: 'Finish',
+                    fr: 'Finition',
+                    es: 'Acabado',
+                    ru: 'Закончить',
+                  )
+                : pickUiText(
+                    i18n,
+                    zh: '开始',
+                    en: 'Start',
+                    ja: 'Start',
+                    de: 'Start',
+                    fr: 'Démarrer',
+                    es: 'Comienzo',
+                    ru: 'Начинать',
+                  ),
           ),
         ),
         OutlinedButton.icon(
           onPressed: state._reset,
           icon: const Icon(Icons.restart_alt_rounded),
-          label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+          label: Text(
+            pickUiText(
+              i18n,
+              zh: '重置',
+              en: 'Reset',
+              ja: 'Reset',
+              de: 'Reset',
+              fr: 'Réinitialiser',
+              es: 'Reset',
+              ru: 'сброс',
+            ),
+          ),
         ),
       ],
     );
@@ -1296,7 +1413,16 @@ class _HandEyeResultPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '详细统计', en: 'Detailed results'),
+            pickUiText(
+              i18n,
+              zh: '详细统计',
+              en: 'Detailed results',
+              ja: 'Detailed results',
+              de: 'Detailed results',
+              fr: 'Résultats détaillés',
+              es: 'Resultados detallados',
+              ru: 'Подробные результаты',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -1350,6 +1476,11 @@ class _HandEyeResultRow extends StatelessWidget {
             i18n,
             zh: '；假目标 ${result.distractorTaps}',
             en: '; false ${result.distractorTaps}',
+            ja: '偽',
+            de: '; false ${result.distractorTaps}',
+            fr: '; false ${result.distractorTaps}',
+            es: '; falsos',
+            ru: '; ложный ${result.distractorTaps}',
           )
         : '';
     return Container(
@@ -1373,6 +1504,11 @@ class _HandEyeResultRow extends StatelessWidget {
                 i18n,
                 zh: '#$index  ${result.taps}/${result.requiredTaps} 次；点空 ${result.blankTaps}$falseHitText；反应 $reaction；窗口 $completion',
                 en: '#$index  ${result.taps}/${result.requiredTaps} taps; blanks ${result.blankTaps}$falseHitText; reaction $reaction; window $completion',
+                ja: '$index ${result.taps}#/${result.requiredTaps} taps; blanks${result.blankTaps}$falseHitText; reaction$reaction; window $completion',
+                de: '#$index  ${result.taps}/${result.requiredTaps} taps; blanks ${result.blankTaps}$falseHitText; reaction $reaction; window $completion',
+                fr: '#$index  ${result.taps}/${result.requiredTaps} taps; blanks ${result.blankTaps}$falseHitText; reaction $reaction; window $completion',
+                es: '#Secundación de los grifos; blancos; objetos en blanco; objetos en blanco; reacción; reacción;',
+                ru: '#$index ${result.taps}/${result.requiredTaps} краны; бланки ${result.blankTaps}$falseHitText; реакция $reaction; окно $completion',
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -1405,7 +1541,16 @@ class _JoystickResultPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '命中延迟明细', en: 'Hit latency details'),
+            pickUiText(
+              i18n,
+              zh: '命中延迟明细',
+              en: 'Hit latency details',
+              ja: 'Hit latency details',
+              de: 'Hit latency details',
+              fr: 'Affichage des détails de latence',
+              es: 'Datos de latencia',
+              ru: 'Детали задержки',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),

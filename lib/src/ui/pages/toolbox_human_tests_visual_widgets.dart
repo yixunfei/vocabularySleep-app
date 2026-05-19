@@ -40,7 +40,16 @@ class _ColorVisionTargetPrompt extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(i18n, zh: '目标颜色', en: 'Target color'),
+                  pickUiText(
+                    i18n,
+                    zh: '目标颜色',
+                    en: 'Target color',
+                    ja: 'Target color',
+                    de: 'Target color',
+                    fr: 'Couleur de la cible',
+                    es: 'Color blanco',
+                    ru: 'Целевой цвет',
+                  ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -51,6 +60,11 @@ class _ColorVisionTargetPrompt extends StatelessWidget {
                     i18n,
                     zh: '点击与左侧色块完全相同的格子，本轮目标数：$targetCount',
                     en: 'Tap tiles exactly matching the swatch. Targets this round: $targetCount',
+                    ja: 'Tap tiles exactly matching the swatch. Targets this round: $targetCount',
+                    de: 'Tap tiles exactly matching the swatch. Targets this round: $targetCount',
+                    fr: 'Taper les tuiles qui correspondent exactement à la montre. Cible ce cycle : $targetCount',
+                    es: 'Pulsa las fichas exactamente igualando el reloj. Metas de esta ronda:',
+                    ru: 'Нажмите на плитки, точно соответствующие часам. Цели этого раунда: $targetCount',
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(height: 1.25),
                 ),
@@ -95,8 +109,26 @@ class _ColorVisionGrid extends StatelessWidget {
         return Semantics(
           button: true,
           label: showHint
-              ? pickUiText(i18n, zh: '提示目标色块', en: 'Hint target color tile')
-              : pickUiText(i18n, zh: '色块', en: 'Color tile'),
+              ? pickUiText(
+                  i18n,
+                  zh: '提示目标色块',
+                  en: 'Hint target color tile',
+                  ja: 'Hint target color tile',
+                  de: 'Hint target color tile',
+                  fr: 'Aligner la tuile de couleur cible',
+                  es: 'Azulejos de color blanco',
+                  ru: 'Цветная плитка Hint Target',
+                )
+              : pickUiText(
+                  i18n,
+                  zh: '色块',
+                  en: 'Color tile',
+                  ja: 'カラータイル',
+                  de: 'Color tile',
+                  fr: 'Carrelage couleur',
+                  es: 'Azulejos de color',
+                  ru: 'Цветная плитка',
+                ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
@@ -231,7 +263,18 @@ class _ColorVisionReportDialog extends StatelessWidget {
     final recommendation = _recommendation(i18n, weakestBand, weakestAxis);
 
     return AlertDialog(
-      title: Text(pickUiText(i18n, zh: '色觉测试报告', en: 'Color vision report')),
+      title: Text(
+        pickUiText(
+          i18n,
+          zh: '色觉测试报告',
+          en: 'Color vision report',
+          ja: 'カラービジョンカラービジョンレポート',
+          de: 'Color vision report',
+          fr: 'Rapport de vision couleur',
+          es: 'Informe de visión de color',
+          ru: 'Отчет о цветовом зрении',
+        ),
+      ),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -244,26 +287,71 @@ class _ColorVisionReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '最高等级', en: 'Best level'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '最高等级',
+                      en: 'Best level',
+                      ja: 'ベストレベル',
+                      de: 'Best level',
+                      fr: 'Meilleur niveau',
+                      es: 'Mejor nivel',
+                      ru: 'Лучший уровень',
+                    ),
                     value: '${data.bestLevel}',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '正确率', en: 'Accuracy'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '正确率',
+                      en: 'Accuracy',
+                      ja: '精度',
+                      de: 'Accuracy',
+                      fr: 'Accuracy',
+                      es: 'Precisión',
+                      ru: 'точность',
+                    ),
                     value: '${(data.accuracy * 100).round()}%',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '完成轮次', en: 'Rounds'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '完成轮次',
+                      en: 'Rounds',
+                      ja: 'Rounds',
+                      de: 'Rounds',
+                      fr: 'Rondes',
+                      es: 'Rondas',
+                      ru: 'Круги',
+                    ),
                     value: '${data.rounds}',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(i18n, zh: '提示次数', en: 'Hints'),
+                    label: pickUiText(
+                      i18n,
+                      zh: '提示次数',
+                      en: 'Hints',
+                      ja: 'Hints',
+                      de: 'Hints',
+                      fr: 'Conseils',
+                      es: 'Hintes',
+                      ru: 'Подсказки',
+                    ),
                     value: '${data.hintsUsed}',
                   ),
                 ],
               ),
               const SizedBox(height: 14),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '整体判断', en: 'Overall analysis'),
+                title: pickUiText(
+                  i18n,
+                  zh: '整体判断',
+                  en: 'Overall analysis',
+                  ja: 'Overall analysis',
+                  de: 'Overall analysis',
+                  fr: 'Analyse générale',
+                  es: 'Análisis general',
+                  ru: 'Общий анализ',
+                ),
                 child: Text(
                   _overallSummary(i18n, weakestBand, weakestAxis),
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -276,6 +364,11 @@ class _ColorVisionReportDialog extends StatelessWidget {
                     i18n,
                     zh: '近轮色差记录',
                     en: 'Recent delta records',
+                    ja: 'Recent delta records',
+                    de: 'Recent delta records',
+                    fr: 'Données récentes concernant le delta',
+                    es: 'Registros recientes delta',
+                    ru: 'Последние дельта рекорды',
                   ),
                   child: _ColorVisionRecentDeltaList(
                     records: data.records,
@@ -285,7 +378,16 @@ class _ColorVisionReportDialog extends StatelessWidget {
               const SizedBox(height: 12),
               if (bandStats.isNotEmpty)
                 _ColorVisionReportSection(
-                  title: pickUiText(i18n, zh: '色相分组表现', en: 'Hue groups'),
+                  title: pickUiText(
+                    i18n,
+                    zh: '色相分组表现',
+                    en: 'Hue groups',
+                    ja: 'Hue groups',
+                    de: 'Hue groups',
+                    fr: 'Groupes Hue',
+                    es: 'Grupos de Hue',
+                    ru: 'Группы Хюэ',
+                  ),
                   child: _ColorVisionBandStatList(
                     stats: bandStats,
                     labelFor: bandLabel,
@@ -295,7 +397,16 @@ class _ColorVisionReportDialog extends StatelessWidget {
               const SizedBox(height: 12),
               if (axisStats.isNotEmpty)
                 _ColorVisionReportSection(
-                  title: pickUiText(i18n, zh: '差异类型表现', en: 'Contrast axes'),
+                  title: pickUiText(
+                    i18n,
+                    zh: '差异类型表现',
+                    en: 'Contrast axes',
+                    ja: 'コントラスト軸',
+                    de: 'Contrast axes',
+                    fr: 'Axes parallèles',
+                    es: 'Hachas de contraste',
+                    ru: 'Контрастные оси',
+                  ),
                   child: _ColorVisionAxisStatList(
                     stats: axisStats,
                     labelFor: axisLabel,
@@ -304,7 +415,16 @@ class _ColorVisionReportDialog extends StatelessWidget {
                 ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '本轮设置', en: 'Session settings'),
+                title: pickUiText(
+                  i18n,
+                  zh: '本轮设置',
+                  en: 'Session settings',
+                  ja: 'Session settings',
+                  de: 'Session settings',
+                  fr: 'Paramètres de la session',
+                  es: 'Ajustes del período de sesiones',
+                  ru: 'Параметры сеанса',
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -322,6 +442,11 @@ class _ColorVisionReportDialog extends StatelessWidget {
                           i18n,
                           zh: '平均通过色差 ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}',
                           en: 'Avg passed delta ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}',
+                          ja: '平均合格デルタ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}',
+                          de: 'Avg passed delta ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}',
+                          fr: 'Avg est passé delta ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}',
+                          es: 'Avg pasó delta <v0/',
+                          ru: 'Avg прошел дельту ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}',
                         ),
                       ),
                     ),
@@ -330,7 +455,16 @@ class _ColorVisionReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(i18n, zh: '训练建议', en: 'Training note'),
+                title: pickUiText(
+                  i18n,
+                  zh: '训练建议',
+                  en: 'Training note',
+                  ja: 'Training note',
+                  de: 'Training note',
+                  fr: 'Note de formation',
+                  es: 'Nota de capacitación',
+                  ru: 'Учебная записка',
+                ),
                 child: Text(
                   recommendation,
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -343,7 +477,18 @@ class _ColorVisionReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+          child: Text(
+            pickUiText(
+              i18n,
+              zh: '关闭',
+              en: 'Close',
+              ja: '閉じる',
+              de: 'Close',
+              fr: 'Fermer',
+              es: 'Cerca',
+              ru: 'Закрыть',
+            ),
+          ),
         ),
       ],
     );
@@ -400,18 +545,46 @@ class _ColorVisionReportDialog extends StatelessWidget {
         i18n,
         zh: '还没有有效轮次。先完成几轮后，报告会显示色差、色相和弱项分析。',
         en: 'No valid rounds yet. Complete a few rounds to unlock delta, hue, and weak-area analysis.',
+        ja: 'No valid rounds yet. Complete a few rounds to unlock delta, hue, and weak-area analysis.',
+        de: 'No valid rounds yet. Complete a few rounds to unlock delta, hue, and weak-area analysis.',
+        fr: 'Pas encore de rondes valides. Terminer quelques rondes pour déverrouiller l\'analyse delta, teinte et zone faible.',
+        es: 'Todavía no hay rondas válidas. Complete algunas rondas para desbloquear el delta, el hue y el análisis de área débil.',
+        ru: 'Никаких действительных раундов. Выполните несколько раундов, чтобы разблокировать анализ дельты, оттенка и слабой области.',
       );
     }
     final weakBandText = weakestBand == null
-        ? pickUiText(i18n, zh: '暂不明显', en: 'not clear yet')
+        ? pickUiText(
+            i18n,
+            zh: '暂不明显',
+            en: 'not clear yet',
+            ja: 'not clear yet',
+            de: 'not clear yet',
+            fr: 'pas encore clair',
+            es: 'todavía no está claro',
+            ru: 'Пока не ясно',
+          )
         : bandLabel(weakestBand.band);
     final weakAxisText = weakestAxis == null
-        ? pickUiText(i18n, zh: '暂不明显', en: 'not clear yet')
+        ? pickUiText(
+            i18n,
+            zh: '暂不明显',
+            en: 'not clear yet',
+            ja: 'not clear yet',
+            de: 'not clear yet',
+            fr: 'pas encore clair',
+            es: 'todavía no está claro',
+            ru: 'Пока не ясно',
+          )
         : axisLabel(weakestAxis.axis);
     return pickUiText(
       i18n,
       zh: '本轮正确率 ${(data.accuracy * 100).round()}%，最弱色相集中在 $weakBandText，较弱差异类型为 $weakAxisText。平均通过色差 ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}，平均失误色差 ${(data.averageMissDelta * 100).toStringAsFixed(1)}。',
       en: 'Accuracy is ${(data.accuracy * 100).round()}%. The weakest hue band is $weakBandText, and the weaker contrast axis is $weakAxisText. Average passed delta is ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}, while missed delta averages ${(data.averageMissDelta * 100).toStringAsFixed(1)}.',
+      ja: '精度は${(data.accuracy * 100).round()}%です。最も弱い色相帯域はで$weakBandText、より弱いコントラスト軸はです$weakAxisText。合格したデルタの平均はですが${(data.averageCorrectDelta * 100).toStringAsFixed(1)}、合格しなかったデルタの平均はです${(data.averageMissDelta * 100).toStringAsFixed(1)}。',
+      de: 'Accuracy is ${(data.accuracy * 100).round()}%. The weakest hue band is $weakBandText, and the weaker contrast axis is $weakAxisText. Average passed delta is ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}, while missed delta averages ${(data.averageMissDelta * 100).toStringAsFixed(1)}.',
+      fr: 'Accuracy is ${(data.accuracy * 100).round()}%. The weakest hue band is $weakBandText, and the weaker contrast axis is $weakAxisText. Average passed delta is ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}, while missed delta averages ${(data.averageMissDelta * 100).toStringAsFixed(1)}.',
+      es: 'La precisión es יv0/%. La banda más débil de los cascos es неv3/ confiar, y el eje de contraste más débil es неv4/ ES. Promedio aprobado delta es неv1/ título, mientras que falta el delta promedios יv2/año.',
+      ru: 'Точность ${(data.accuracy * 100).round()}%. Самая слабая полоса оттенка - $weakBandText, а более слабая ось контраста - $weakAxisText. Средняя пройденная дельта ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}, в то время как пропущенные средние дельты ${(data.averageMissDelta * 100).toStringAsFixed(1)}.',
     );
   }
 
@@ -425,6 +598,11 @@ class _ColorVisionReportDialog extends StatelessWidget {
         i18n,
         zh: '样本量还少，建议至少完成 10 轮再判断稳定弱项。可以先用 3 到 5 生命、4x4 网格练习。',
         en: 'The sample is still small. Complete at least 10 rounds before treating weak areas as stable. Start with 3 to 5 lives and a 4x4 grid.',
+        ja: 'The sample is still small. Complete at least 10 rounds before treating weak areas as stable. Start with 3 to 5 lives and a 4x4 grid.',
+        de: 'The sample is still small. Complete at least 10 rounds before treating weak areas as stable. Start with 3 to 5 lives and a 4x4 grid.',
+        fr: 'L\'échantillon est encore petit. Terminer au moins 10 rondes avant de traiter les zones faibles comme stables. Commencez par 3 à 5 vies et une grille 4x4.',
+        es: 'La muestra sigue siendo pequeña. Completa al menos 10 rondas antes de tratar áreas débiles como estables. Comience con 3 a 5 vidas y una cuadrícula 4x4.',
+        ru: 'Образец все еще небольшой. Выполните не менее 10 раундов, прежде чем рассматривать слабые области как стабильные. Начните с 3-5 жизней и сетки 4x4.',
       );
     }
     final band = weakestBand == null ? '' : bandLabel(weakestBand.band);
@@ -433,6 +611,11 @@ class _ColorVisionReportDialog extends StatelessWidget {
       i18n,
       zh: '建议下一轮保留当前弱项相关色系，降低最大网格或开启提示练习。重点关注 $band 的 $axis，等正确率稳定后再提高最大网格。',
       en: 'For the next run, keep the weak hue family enabled, lower the maximum grid, or practice with hints. Focus on $axis around $band, then raise the maximum grid after accuracy stabilizes.',
+      ja: 'For the next run, keep the weak hue family enabled, lower the maximum grid, or practice with hints. Focus on $axis around $band, then raise the maximum grid after accuracy stabilizes.',
+      de: 'For the next run, keep the weak hue family enabled, lower the maximum grid, or practice with hints. Focus on $axis around $band, then raise the maximum grid after accuracy stabilizes.',
+      fr: 'Pour la prochaine course, gardez la famille de teintes faibles activée, baissez la grille maximale, ou pratiquez avec des conseils. Concentrez-vous sur $axis autour de $band, puis augmentez la grille maximale après stabilisation de la précision.',
+      es: 'Para la próxima carrera, mantenga activada la familia débil del casco, baja la rejilla máxima, o practique con indicios. Enfóquese en יv0/tio alrededor de <v1/tio, luego levante la cuadrícula máxima después de que se estabilice la precisión.',
+      ru: 'Для следующего пробега держите семью слабого оттенка включенной, понижайте максимальную сетку или практикуйте с подсказками. Сосредоточьтесь на $axis вокруг $band, затем поднимите максимальную сетку после стабилизации точности.',
     );
   }
 }
@@ -550,6 +733,11 @@ class _ColorVisionRecentDeltaList extends StatelessWidget {
                   i18n,
                   zh: '色差 ${(record.delta * 100).toStringAsFixed(1)}',
                   en: 'Delta ${(record.delta * 100).toStringAsFixed(1)}',
+                  ja: 'Delta ${(record.delta * 100).toStringAsFixed(1)}',
+                  de: 'Delta ${(record.delta * 100).toStringAsFixed(1)}',
+                  fr: 'Delta ${(record.delta * 100).toStringAsFixed(1)}',
+                  es: 'Delta',
+                  ru: 'Дельта ${(record.delta * 100).toStringAsFixed(1)}',
                 ),
                 style: Theme.of(context).textTheme.labelMedium,
               ),
