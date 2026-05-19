@@ -1,5 +1,315 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_176-TOOLBOX-LAYOUT-RECOVERY-AND-QUICK-ENTRIES] - 2026-05-19
+
+### 原因
+- 工具箱首页在编辑布局时，拖拽释放后有时不能稳定落位，靠近列表边缘时也缺少自动滚动，移动端编辑体验不完整。
+- 首页“移除”入口只隐藏了卡片，但恢复路径和模块管理页没有同步说明，容易让人误以为模块被永久删除。
+- 工具箱页面里仍有一些偏开发说明的措辞，入口卡片高度也因为内容长短不一致而显得参差。
+- 首页缺少用户可自定义的常用快速入口。
+
+### 新增
+- 工具箱首页新增“常用快速入口”区，支持从现有工具中勾选常用入口并保存。
+- 工具箱首页支持把模块卡片直接拖到“常用快速入口”，松手后自动加入。
+- 工具箱编辑模式中也显示“常用快速入口”，支持长按模块卡片拖入后加入常用工具。
+- 模块管理页为工具箱工具补充“恢复首页入口”操作，方便把被首页隐藏的入口重新显示出来。
+
+### 修改
+- 工具箱编辑态改为可滚动的重排列表，拖拽结束后不会立刻退出编辑态，移动到顶部或底部时可自动滚动。
+- “移除首页入口”现在会先弹出确认对话框，并给出恢复说明与后续入口。
+- 工具箱入口卡片统一为固定高度，标题和说明在窄屏下会自动截断，避免高低不一。
+- 工具箱普通入口卡片高度下调，减少短文案卡片底部留白；编辑态保留较高高度以容纳拖拽和移除按钮。
+- 工具箱首页与模块管理页的文案改成更自然的日常表达，清理了偏说明书口吻的内容。
+
+### 验证
+- `dart format lib/src/models/settings_dto.dart lib/src/state/app_state.dart lib/src/state/app_state_startup.dart lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart lib/src/ui/pages/toolbox/toolbox_quick_entries.dart lib/src/ui/pages/toolbox/toolbox_ui_tokens.dart lib/src/ui/pages/module_management_page.dart test/settings_service_test.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/models/settings_dto.dart lib/src/state/app_state.dart lib/src/state/app_state_startup.dart lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart lib/src/ui/pages/toolbox/toolbox_quick_entries.dart lib/src/ui/pages/toolbox/toolbox_ui_tokens.dart lib/src/ui/pages/module_management_page.dart test/settings_service_test.dart test/ui_smoke_test.dart`
+- `flutter test test/settings_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page supports editable home layout"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page supports custom quick entries"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page adds entries by dragging them to quick entries"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox edit mode adds entries by dragging them to quick entries"`
+
+### 风险变更
+- 快速入口与首页隐藏状态共享同一份布局配置，新增排序或隐藏规则时需要同步检查 quick 列表的归一化逻辑。
+- 编辑态改为独立滚动后，若后续再调整页面骨架，需要保持 header/footer 与重排列表的边界清晰。
+
+## [Unreleased-PLAN_175-HUMAN-TESTS-COPY-I18N-CLEANUP] - 2026-05-18
+
+### 原因
+- 人类测试中心仍有部分文案偏开发说明、偏“AI/本地实现”口吻，声学和抽卡等页面也有过硬的诊断/模拟提示。
+- 模块内大量 `pickUiText` 仅有中英文，动态题库、颜色名、反馈语和报告入口在多语言环境下会回退或显示不完整。
+
+### 新增
+- 为人类测试中心 `pickUiText` 文案补齐 ja/de/fr/es/ru 字段，覆盖入口、测试页、设置项、按钮、状态、报告、弹窗和提示。
+- 为词语记忆词库、颜色名称、听觉/声学模式、反应颜色、数字记忆提示、视觉记忆调色板、抽卡等级和刮刮卡奖项补充多语言字段。
+- 动态反馈新增多语言来源，包含动态视觉、数字记忆、词语记忆、听觉记录和声学报告等运行时文案。
+
+### 修改
+- 清理“local / 本地 / 原始数据 / medical judgment / diagnosis / 专业报告”等偏开发或偏诊断表达，改为练习、观察、对比和专业检查替代说明。
+- 声学实验文案统一为“声学报告 / 加入报告”，去掉过度专业化和诊断化口吻。
+- 打字测试将“代码”相关模式文案调整为更通俗的“格式/日常”等表达，并修复最近结果等多语言显示。
+- 同步更新 smoke test 文案断言，匹配新的自然文案。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests*.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+- 自定义扫描确认 `toolbox_human_tests*.dart` 内 `pickUiText` 均含 zh/en/ja/de/fr/es/ru。
+- 自定义扫描确认无 `????` / `�` / 常见 mojibake 残留。
+
+### 风险变更
+- 多语言文案已逐处补齐并通过扫描，但少量非中文语言仍以短句可读为优先，后续可交给母语审校继续润色。
+- 测试中依赖旧文案的断言已更新；若外部自动化也直接匹配旧文案，需要同步调整。
+
+## [Unreleased-PLAN_174-HUMAN-TESTS-DRAG-ACOUSTIC-REPORT] - 2026-05-18
+
+### 原因
+- 人类测试中心双列模块调整布局时，普通拖动会直接触发排序，缺少“选中/拿起”反馈，视觉上较突兀。
+- 声学实验虽然已有麦克风基础指标，但还缺少测试协议、采样沉淀和专业报告闭环。
+
+### 新增
+- 声学实验新增模式采样记录，按低音、高音、持续和噪声仪保存聚合样本。
+- 声学实验新增专业报告入口，展示相对 dBFS、峰值、音高、音高波动、目标命中、信噪比、削波、质量等级和复测建议。
+- 声学实验新增协议提示与样本写入流程，明确噪声底、低音/高音和持续发声的采样方法。
+
+### 修改
+- 人类测试中心模块排序改为长按后再拖拽，长按后卡片放大、抬升、加深边框和阴影，并保留快捷入口拖入能力。
+- 声学实时仪表补充响度一致性、过零率、削波、样本帧数和已写入样本摘要。
+- 声学报告弹窗新增显式关闭入口，降低长页面测试与移动端操作的不确定性。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_auditory_lab.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 声学报告基于设备麦克风的相对 dBFS 与本地算法，不作为医学或实验室标定结果；报告中已加入说明与复测建议。
+- 长按拖拽改变了排序触发门槛，点击进入测试不受影响，但用户需要长按后再移动才能调整布局。
+
+## [Unreleased-PLAN_173-HUMAN-TESTS-BIMANUAL-TRACE-SETTLEMENT-FIX] - 2026-05-18
+
+### 原因
+- 用户截图反馈画图赛道已显示最后节点进度，但没有触发成功结算，也没有进入下一轮。
+
+### 修改
+- 画图进度显示改为已完成线段数，不再把当前目标节点误显示为已完成进度，避免 `4/4`、`10/10` 这类假满格状态。
+- 画图路径投影改为只沿当前目标线段顺序推进，并在接近目标节点时吸附到该线段终点，减少交叉线段误投影导致的结算卡死。
+- 画图到达最后节点后必定调用成功结算；样本或描线距离不足时只追加失误扣分，不再把赛道留在满进度未完成状态。
+- 描线偏离只记录失误，不再主动触发失败结算，避免复杂几何图形中短暂误投影直接结束本轮。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "bimanual trace lane completes from continuous sliding"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 画图失败更多依赖整轮超时或停止结算，偏离路径会扣分但不立即打断；这更符合练习场景，也避免复杂图案误杀。
+
+## [Unreleased-PLAN_172-HUMAN-TESTS-BIMANUAL-TRACE-REWRITE-PRACTICE] - 2026-05-18
+
+### 原因
+- 用户反馈双手协调画图在改为滑动描线后仍无法稳定触发成功，需要彻底重做画图完成判定。
+- 当前默认左右均为画图已不符合最新训练入口预期，需要改为左右弹球默认测试，并补充单侧练习模式。
+
+### 新增
+- 新增默认关闭的单侧练习开关，可选择只练左侧或只练右侧；休息侧不参与同步分、准确率和真实命中统计。
+
+### 修改
+- 双手协调默认左右任务改为弹球，首页提示和模式摘要同步更新为默认弹球。
+- 画图判定重写为整条路径连续进度模型：从起点附近开始，滑动时按路径投影推进，完成时同时检查路径进度、实际描线距离和连续样本数。
+- 画图赛道不再在按下时推进完成，点击节点或跳点无法跨段触发成功；滑动沿线完成可稳定结算。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "bimanual trace lane completes from continuous sliding"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 画图视觉曲线仍使用折线近似判定，复杂曲线会以较宽容路径阈值吸收偏差；后续可继续按真曲线采样提升手感。
+
+## [Unreleased-PLAN_171-HUMAN-TESTS-BIMANUAL-TRACE-GEOMETRY-FIX] - 2026-05-18
+
+### 原因
+- 双手协调画图赛道仍存在点击节点即可完成的漏洞，没有强制持续滑动描线；图案有效尺寸偏小，且缺少不随机节点的简单几何图形。
+
+### 新增
+- 画图图案新增三角形、正方形、长方形、圆形、梯形、菱形、多面体等固定几何模式，固定图案不使用随机节点。
+
+### 修改
+- 固定几何图案按更大的有效舞台尺寸生成，随机图案也扩大了路径半径和边界使用率。
+- 描线判定新增连续样本数、描绘距离和进度增长门槛，每段必须持续滑动足够距离后才能进入下一段，点击终点节点不再能直接完成。
+- 画图设置文案从“随机节点风格”调整为“图案模式”，兼容随机风格和固定几何模式。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 描线门槛提高后，快速跳点会被判为无效；为了保留手感，门槛只要求少量连续样本和约三分之一线段长度的描绘距离。
+
+## [Unreleased-PLAN_170-HUMAN-TESTS-BIMANUAL-TRACE-JUMP-IMMERSIVE] - 2026-05-18
+
+### 原因
+- 双手协调画图仍可通过触达节点快速推进，缺少真实沿线描摹要求；跳高虽有移动平台但识别度和小游戏感不足；沉浸式横屏中左右赛道标题、目标和说明占用空间过多。
+
+### 修改
+- 画图判定改为沿当前线段连续推进，基于手指到线段的距离和投影进度判定，点击远端节点不再能直接完成。
+- 画图舞台新增已描绘轨迹和当前线段进度反馈，同时保留下一节点高亮和方向箭头。
+- 跳高改为释放后进入短暂空中状态，角色沿弧线飞向平台，落地时再按平台当前位置、蓄力和容错判定成功或坠落。
+- 跳高舞台强化终点线、旗帜、目标平台高亮、平台高光和角色图标，提升小游戏识别度。
+- 沉浸式紧凑全屏隐藏左右赛道标题、目标和说明，仅保留必要进度、状态和操作舞台。
+
+### 验证
+- 待运行：`flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 画图比上一版更强调连续操作，容错仍沿用难度阈值；后续可根据实际手感继续微调阈值和失败上限。
+
+## [Unreleased-PLAN_169-HUMAN-TESTS-BIMANUAL-DIFFICULTY-ENDLESS] - 2026-05-18
+
+### 原因
+- 双手协调的难度预设仍主要影响隐藏公式，弹球、画图和跳高缺少更多可匹配难度的显式玩法参数；复杂画图路径的方向提示不足，弹球单球缺少拖尾反馈，也缺少可持续练习的无限模式。
+
+### 新增
+- 新增无限模式：成功持续得分并自动进入下一组，失败只重开下一组，不立即进入报告；手动停止或时间耗尽后结算。
+- 弹球新增碰撞加速开关、球大小、小球个数设置，并为单球/多球增加拖尾效果。
+- 画图新增线段几何模式（直线、曲线、随机）、最小角度限制、分段彩色提示和更明显的下一节点方向箭头。
+- 跳高新增平台宽度和宽度随机区间设置，可设置为固定宽度或按区间随机。
+
+### 修改
+- 难度切换会同步应用一整组预设，自动调整节点数/角度、弹球速度/球数/球大小/挡板、跳高平台层数/宽度/速率等参数。
+- 画图路径生成改为每个节点沿随机方向推进，并在最小角度限制下减少过小夹角带来的路径混叠。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 多球和碰撞加速会提高弹球挑战强度，默认仍保持单球且关闭碰撞加速；困难/专家预设会主动开启更高强度。
+
+## [Unreleased-PLAN_168-HUMAN-TESTS-BIMANUAL-PLATFORM-REFINE] - 2026-05-18
+
+### 原因
+- `工具箱 -> 人类测试中心 -> 双手协调` 中画图仍偏固定模板，弹球缺少障碍碰撞且挡板操作容易被手指遮挡，跳高仍停留在台阶/栏杆模型，不符合横向移动平台逐层登顶的目标玩法。
+
+### 新增
+- 画图赛道改为带种子的随机几何节点生成，保留折线、波浪、星形、螺旋、方框、阶梯、回环等风格族，并尽量生成可读的一笔画路径。
+- 弹球赛道新增随机圆形障碍物和反弹碰撞，小球尺寸收小，挡板上移并新增底部控制条/幽灵指示，降低手指遮挡。
+- 跳高赛道新增横向移动平台、平台速率设置、难度驱动的蓄力层和逐层登顶判定。
+
+### 修改
+- 跳高设置从“台阶目标/障碍密度”改为“平台层数/平台速率”，点击或蓄力只推进一层，命中平台才继续。
+- 弹球文案与物理节奏改为围绕底部控制区、随机障碍和更小球体展开。
+- 画图设置文案从固定路径图案改为随机节点风格，强调每回合几何节点会变化。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 跳高判定由固定进度推进改为平台横向命中检测，默认保留较宽容的命中窗口；专家难度会明显更依赖时机和蓄力。
+
+## [Unreleased-PLAN_167-HUMAN-TESTS-BIMANUAL-FREE-COMBO] - 2026-05-18
+
+### 原因
+- `工具箱 -> 人类测试中心 -> 双手协调` 仍以三种固定左右配对为主，无法自由组合左右手任务；画图图案较少，弹球参数不可调且挡板偏厚，跳高/登阶玩法仍停留在雏形。
+
+### 新增
+- 双手协调设置新增左右手自由组合，左手和右手都可独立选择画图、弹球或跳高，默认均为画图。
+- 新增统一难度设置，并补充画图图案、线段样式、节点数量，弹球速率/回弹目标/挡板宽度/挡板厚度，以及跳高台阶目标/障碍密度设置。
+
+### 修改
+- 回合生成从固定三模式配对改为读取左右任务配置，并让难度影响回合时长、画图容错、弹球速度和跳高障碍密度。
+- 画图赛道扩展为混合、折线、波浪、星形、螺旋、方框、阶梯、回环等图案，支持实线、虚线、点线和宽带样式。
+- 弹球挡板改为更细的默认厚度，并将小球速度、目标回弹次数和碰撞上限纳入配置。
+- 跳高赛道补齐栏杆障碍、蓄力跳跃、跨越等级和状态反馈，不再只是普通台阶占位。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 新增参数集中在双手协调本地状态中，运行中仍锁定设置；默认左右均为画图，和旧版默认配对不同，但符合本轮需求。
+
+## [Unreleased-PLAN_166-HUMAN-TESTS-BIMANUAL-FULLSCREEN-NARROW-EXIT] - 2026-05-18
+
+### 原因
+- `工具箱 -> 人类测试中心 -> 双手协调` 的全屏横屏体验在低高度手机屏幕中仍会被顶部浮层和赛道卡片挤压，退出全屏入口也容易和普通页菜单语义混淆。
+
+### 修改
+- 双手协调全屏页改为 `SafeArea + Column` 的剩余空间布局，顶部控制条不再覆盖主舞台，窄横屏下自动启用紧凑模式。
+- 全屏紧凑模式会压缩顶部摘要、隐藏次级报告图标、降低左右赛道内距，并隐藏低优先级说明文案，保留左右赛道并排、标题、目标、进度和可操作区域。
+- 全屏关闭按钮、菜单退出项统一走同一退出函数；普通页菜单不再显示“退出全屏”，避免运行中误把普通页返回当成全屏退出。
+
+### 修复
+- 修复窄横屏下左右赛道被顶部全屏浮层挤压、全屏 90 度横屏无法稳定适配手机高度的问题。
+- 修复全屏退出入口和普通页菜单语义混乱导致的误退出风险。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 紧凑横屏下会减少赛道内部说明文字，规则细节主要依赖标题、目标、进度和设置/报告补充；后续若继续增加赛道类型，需要同步确认紧凑模式仍保留足够可读信息。
+
+## [Unreleased-PLAN_165-PORTABLE-PATH-DEFAULTS] - 2026-05-18
+
+### 原因
+- 项目作为开源协作项目，不应依赖个人机器上的固定盘符、用户目录或外部素材目录；旧的 fallback 路径会让新成员拉取后出现不可复现的构建、测试和数据生成行为。
+- 前一轮已修复旧 CMake 缓存迁移问题，本轮继续收口脚本和文档中的个人绝对路径默认值。
+
+### 修改
+- `scripts/tooling-env.ps1` 移除 Flutter、CMake、Android SDK 等个人机器路径 fallback，改为环境变量、PATH、项目内 `.fvm` / `.tooling` 和系统派生目录。
+- `scripts/opencode-minimax-m27.ps1` 与 `scripts/orchestrate-opencode-models.ps1` 移除个人 `C:\Users\...` opencode fallback，改为 `OPENCODE_BIN` 或 PATH。
+- 每日决策数据生成/审计脚本的默认输入输出改为项目内 `resources/daily_choice/...`、`build/generated/daily_choice/...` 或对应环境变量覆盖。
+- `README.md`、`.env.template`、`modules/toolbox/README.md`、`PROJECT_DOMAIN.md` 补充可移植工具链、数据目录和协作路径约束说明。
+
+### 验证
+- 运行严格路径扫描：`scripts`、`README.md`、`PROJECT_DOMAIN.md`、`modules`、`.env.template` 中未发现运行时 Windows 盘符路径或 `vocabularySleep-resources` 依赖。
+- PowerShell Parser 语法检查通过：`scripts/tooling-env.ps1`、`scripts/build.ps1`、`scripts/dev-run.ps1`、`scripts/verify-local-analysis.ps1`、`scripts/test.ps1`、`scripts/opencode-minimax-m27.ps1`、`scripts/orchestrate-opencode-models.ps1`。
+- `python -m py_compile` 通过：5 个每日决策数据生成/审计脚本。
+- `.\scripts\build.ps1 -Target windows -DryRun -NoPubGet`、`.\scripts\test.ps1 -Target test\sanity_test.dart -DryRun -NoPubGet`、`.\scripts\test.ps1 -Target test\sanity_test.dart -NoPubGet` 均通过。
+- `git diff --check` 通过。
+
+### 风险变更
+- 仍保留的绝对路径命中位于历史 `changelogs/` 记录、测试样例字符串和词典语料，不参与运行脚本默认路径解析。
+- 当前本机验证输出中的 `D:\env\...` 来自 shell/PATH 环境解析，不是仓库内硬编码 fallback。
+
+## [Unreleased-PLAN_164-ENV-MIGRATION-TOOLING] - 2026-05-18
+
+### 原因
+- 项目从旧机器和旧 `D:\workspace` 路径复制到当前 `L:\workspace\vocabularySleep-app` 后，Windows / Android CMake 生成缓存仍保存旧绝对路径，导致 `CMakeCache.txt directory ... is different` 与 source directory 不匹配。
+- 当前运行、测试和打包入口对 Flutter、CMake、NuGet、Android SDK 等工具路径变化的适配分散，迁移后容易变成手动排障。
+
+### 新增
+- 新增 `scripts/tooling-env.ps1`，集中处理 Flutter、Dart、CMake、Android SDK、NuGet 的解析、PATH 注入、本地 tooling 环境和 CMake 缓存迁移检测。
+- 新增 `scripts/test.ps1`，统一 `flutter test` 的 `pub get`、reporter、定向测试、`-PlainName` / `-Name` 和 `-ResetBuildCache` 入口。
+- 新增 `plans/PLAN_164_环境迁移构建测试工具适配.md`，记录本轮环境迁移修复目标、步骤与风险边界。
+
+### 修改
+- `scripts/build.ps1` 复用共享工具环境逻辑，Windows 构建前自动解析 CMake 与 NuGet，Android / Windows 构建前自动检测并清理旧路径 CMake 缓存；新增 `-ResetBuildCache`。
+- `scripts/dev-run.ps1` 复用共享工具环境逻辑，Windows 运行前自动解析 Flutter、CMake、NuGet，并在运行前修复旧路径 CMake 缓存；新增 `-ResetBuildCache`。
+- `scripts/verify-local-analysis.ps1` 复用共享 Flutter / Dart / 本地 tooling 环境解析，并在验证前检查旧路径 CMake 缓存。
+- 更新 `README.md` 与 `PROJECT_DOMAIN.md`，补充环境变量、测试入口、缓存修复入口和复制项目后的 CMake 排障说明。
+
+### 修复
+- 修复 `build/windows/x64/CMakeCache.txt` 中残留 `d:/workspace/vocabularySleep-app` 导致 Windows 打包失败的问题，脚本会在检测到缓存路径不属于当前项目时清理 `build/windows`。
+- 修复 Android `.cxx` CMake 缓存中残留旧工作区输出目录的问题，脚本会清理 `build/.cxx` 与 `build/app/intermediates/cxx`。
+- 修复 Windows 打包阶段 `flutter_tts` CMakeLists 找不到 `nuget.exe` 的环境准备缺口。
+
+### 验证
+- PowerShell Parser 语法检查通过：`scripts/tooling-env.ps1`、`scripts/build.ps1`、`scripts/dev-run.ps1`、`scripts/verify-local-analysis.ps1`、`scripts/test.ps1`。
+- `.\scripts\test.ps1 -Target test\sanity_test.dart`（通过，清理旧 CMake 缓存后运行 1 个测试）。
+- `.\scripts\build.ps1 -Target windows -NoPubGet`（通过，生成 `build\windows\x64\runner\Release\xianyushengxi.exe` 并复制到 `dist\windows`）。
+- `.\scripts\build.ps1 -Target windows -DryRun -NoPubGet`（通过，不再报告旧 `D:\workspace` CMake 缓存）。
+
+### 风险变更
+- 自动清理仅限生成目录：`build/windows`、`build/.cxx`、`build/app/intermediates/cxx`；不会修改业务代码或源文件。
+- `pubspec.lock` 在本轮开始前已处于 modified 状态；本轮未将其作为工具修复范围处理。
+
 ## [Unreleased-PLAN_163-HUMAN-TESTS-BIMANUAL-IMMERSIVE-FULLSCREEN] - 2026-05-12
 
 ### 原因

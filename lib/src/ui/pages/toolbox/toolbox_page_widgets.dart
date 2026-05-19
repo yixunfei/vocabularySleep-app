@@ -80,6 +80,7 @@ class ToolboxSection extends StatelessWidget {
     super.key,
     required this.section,
     this.editing = false,
+    this.enableQuickDrag = false,
     this.onEntryLongPress,
     this.onEntryRemove,
     this.dragTooltip = '',
@@ -88,6 +89,7 @@ class ToolboxSection extends StatelessWidget {
 
   final ToolboxSectionData section;
   final bool editing;
+  final bool enableQuickDrag;
   final ValueChanged<ToolboxEntryData>? onEntryLongPress;
   final ValueChanged<ToolboxEntryData>? onEntryRemove;
   final String dragTooltip;
@@ -115,9 +117,10 @@ class ToolboxSection extends StatelessWidget {
                   .map(
                     (entry) => SizedBox(
                       width: cardWidth,
-                      child: ToolboxEntryCard(
+                      child: _ToolboxEntryTile(
                         entry: entry,
                         editing: editing,
+                        enableQuickDrag: enableQuickDrag,
                         onLongPress: onEntryLongPress == null
                             ? null
                             : () => onEntryLongPress!(entry),
@@ -134,6 +137,54 @@ class ToolboxSection extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class _ToolboxEntryTile extends StatelessWidget {
+  const _ToolboxEntryTile({
+    required this.entry,
+    required this.editing,
+    required this.enableQuickDrag,
+    required this.onLongPress,
+    required this.onRemove,
+    required this.dragTooltip,
+    required this.removeTooltip,
+  });
+
+  final ToolboxEntryData entry;
+  final bool editing;
+  final bool enableQuickDrag;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onRemove;
+  final String dragTooltip;
+  final String removeTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final card = ToolboxEntryCard(
+      entry: entry,
+      editing: editing,
+      onLongPress: onLongPress,
+      onRemove: onRemove,
+      dragTooltip: dragTooltip,
+      removeTooltip: removeTooltip,
+    );
+    if (!enableQuickDrag || editing) {
+      return card;
+    }
+    return Draggable<ToolboxEntryData>(
+      key: ValueKey<String>('toolbox_entry_draggable_${entry.moduleId}'),
+      data: entry,
+      feedback: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: MediaQuery.sizeOf(context).width - 32,
+          child: Opacity(opacity: 0.94, child: card),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.55, child: card),
+      child: card,
     );
   }
 }
@@ -180,6 +231,9 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
       child: AnimatedContainer(
         duration: AppDurations.standard,
         curve: AppEasing.standard,
+        height: widget.editing
+            ? ToolboxUiTokens.entryEditingCardHeight
+            : ToolboxUiTokens.entryCardHeight,
         constraints: const BoxConstraints(
           minHeight: ToolboxUiTokens.entryMinHeight,
         ),
@@ -256,6 +310,8 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
                       children: <Widget>[
                         Text(
                           entry.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: colorScheme.onSurface,
@@ -264,6 +320,8 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
                         const SizedBox(height: 4),
                         Text(
                           entry.subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
                             height: 1.35,
                             color: colorScheme.onSurfaceVariant,

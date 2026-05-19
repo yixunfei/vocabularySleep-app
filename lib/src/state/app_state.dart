@@ -793,6 +793,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void setToolboxEntryOrder(List<String> moduleIds) =>
       _setToolboxEntryOrderImpl(moduleIds);
 
+  void setToolboxQuickEntries(List<String> moduleIds) =>
+      _setToolboxQuickEntriesImpl(moduleIds);
+
   void hideToolboxEntry(String moduleId) => _hideToolboxEntryImpl(moduleId);
 
   void restoreToolboxEntry(String moduleId) =>

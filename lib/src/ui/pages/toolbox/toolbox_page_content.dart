@@ -68,6 +68,25 @@ List<ToolboxEntryData> orderedToolboxEntries(
   return entries;
 }
 
+List<ToolboxEntryData> quickToolboxEntries(
+  List<ToolboxSectionData> sections, {
+  required ToolboxLayoutState layoutState,
+  required bool Function(String moduleId) isModuleEnabled,
+}) {
+  final visibleEntries = orderedToolboxEntries(
+    sections,
+    layoutState: layoutState,
+    isModuleEnabled: isModuleEnabled,
+  );
+  final entryById = <String, ToolboxEntryData>{
+    for (final entry in visibleEntries) entry.moduleId: entry,
+  };
+  return layoutState.quick
+      .map((moduleId) => entryById[moduleId])
+      .nonNulls
+      .toList(growable: false);
+}
+
 List<ToolboxEntryData> flattenToolboxEntries(
   List<ToolboxSectionData> sections,
 ) {
@@ -80,8 +99,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '睡眠支持', en: 'Sleep support'),
       subtitle: pickUiText(
         i18n,
-        zh: '从评估、记录、睡前流程到夜醒救援的一体化睡眠模块。',
-        en: 'An integrated sleep module spanning assessment, logging, wind-down, and rescue.',
+        zh: '记录睡眠、安排睡前准备，也能在夜里醒来时帮你缓一缓。',
+        en: 'Track sleep, wind down at night, and get a calmer path when you wake up.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
@@ -89,8 +108,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
           subtitle: pickUiText(
             i18n,
-            zh: '睡眠评估、昨夜记录、睡前流程、夜醒救援与周报。',
-            en: 'Assessment, sleep logs, wind-down, night rescue, and reports.',
+            zh: '睡眠记录、睡前清单、夜醒安抚和每周回顾。',
+            en: 'Sleep logs, wind-down steps, night support, and weekly reviews.',
           ),
           icon: Icons.bedtime_rounded,
           accent: ToolboxColors.sleepAccent,
@@ -102,8 +121,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '小游戏', en: 'Mini games'),
       subtitle: pickUiText(
         i18n,
-        zh: '轻量益智与拼图游戏。',
-        en: 'Lightweight puzzles and small games.',
+        zh: '短时间就能玩一局的益智小游戏。',
+        en: 'Small puzzle games for a quick break.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
@@ -111,8 +130,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '游戏中心', en: 'Game hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '包含俄罗斯轮盘、俄罗斯方块、推箱子、数独、扫雷和导入图片拼图。',
-            en: 'Includes roulette, Tetris, Sokoban, Sudoku, Minesweeper, and imported-image jigsaw.',
+            zh: '俄罗斯方块、推箱子、数独、扫雷、拼图和小转盘都在这里。',
+            en: 'Tetris, Sokoban, Sudoku, Minesweeper, jigsaw, and a small roulette game.',
           ),
           icon: Icons.videogame_asset_rounded,
           accent: ToolboxColors.gamesAccent,
@@ -124,8 +143,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '人类测试', en: 'Human tests'),
       subtitle: pickUiText(
         i18n,
-        zh: '反应、记忆、视觉、手眼协调与注意力趣味测试。',
-        en: 'Fun reaction, memory, vision, coordination, and attention tests.',
+        zh: '测测反应、记忆、视觉搜索和手眼协调。',
+        en: 'Try reaction, memory, visual search, and coordination tests.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
@@ -133,8 +152,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '人类测试中心', en: 'Human test hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '反应、记忆、打字、色觉、动态视力、计算、注意力和手眼协调等本地测试。',
-            en: 'Includes local tests for reaction, memory, typing, color vision, dynamic vision, calculation, attention, and coordination.',
+            zh: '反应、记忆、打字、色觉、视力、计算和协调练习。',
+            en: 'Reaction, memory, typing, color, vision, math, and coordination drills.',
           ),
           icon: Icons.psychology_alt_rounded,
           accent: const Color(0xFF2F8D8E),
@@ -146,8 +165,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '声音工具', en: 'Sound tools'),
       subtitle: pickUiText(
         i18n,
-        zh: '本地优先的乐器、节拍与放松声音。',
-        en: 'Local-first instruments, beats, and calming sound tools.',
+        zh: '一些可以放松、打节奏或随手演奏的声音。',
+        en: 'Sounds for relaxing, keeping rhythm, or playing for a moment.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
@@ -155,8 +174,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '舒缓音乐', en: 'Soothing music'),
           subtitle: pickUiText(
             i18n,
-            zh: '本地曲目配合沉浸式视觉。',
-            en: 'Local tracks with immersive visuals.',
+            zh: '挑一段音乐，让自己慢慢安静下来。',
+            en: 'Pick a track and let the room settle.',
           ),
           icon: Icons.spa_rounded,
           accent: ToolboxColors.soundAccent,
@@ -167,8 +186,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '空灵竖琴', en: 'Ethereal harp'),
           subtitle: pickUiText(
             i18n,
-            zh: '统一入口切换多种乐器。',
-            en: 'Unified deck for harp, piano, flute, drum pad, guitar, triangle, violin, and pickup.',
+            zh: '竖琴、钢琴、长笛、鼓垫和几种小乐器随手切换。',
+            en: 'Switch between harp, piano, flute, drum pad, guitar, and small instruments.',
           ),
           icon: Icons.music_note_rounded,
           accent: ToolboxColors.harpAccent,
@@ -179,8 +198,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '疗愈音钵', en: 'Healing bowls'),
           subtitle: pickUiText(
             i18n,
-            zh: '参考频率体系、移动端抽屉交互与沉静共振尾音。',
-            en: 'Reference-matched tones, mobile drawer controls, and spacious resonance.',
+            zh: '轻敲音钵，听一段慢慢散开的共振。',
+            en: 'Tap a bowl and listen to a slow, spacious resonance.',
           ),
           icon: Icons.blur_circular_rounded,
           accent: ToolboxColors.bowlsAccent,
@@ -191,8 +210,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '专注节拍', en: 'Focus beats'),
           subtitle: pickUiText(
             i18n,
-            zh: '沉浸式节拍训练与循环编排。',
-            en: 'Immersive rhythm practice with cycle arrangement.',
+            zh: '跟着节拍练专注，也可以自己排一段循环。',
+            en: 'Practice with a beat or build a simple loop.',
           ),
           icon: Icons.av_timer_rounded,
           accent: ToolboxColors.beatsAccent,
@@ -216,8 +235,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '专注训练', en: 'Focus drills'),
       subtitle: pickUiText(
         i18n,
-        zh: '稳定注意力、节奏与呼吸。',
-        en: 'Steady your attention, rhythm, and breathing.',
+        zh: '用数字、呼吸和节奏把注意力拉回来。',
+        en: 'Use numbers, breathing, and rhythm to steady attention.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
@@ -237,8 +256,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '呼吸训练', en: 'Breathing practice'),
           subtitle: pickUiText(
             i18n,
-            zh: '适合专注、放松、睡前和生理叹息的呼吸练习。',
-            en: 'Scenario-based breathing for focus, relaxation, bedtime, and physiological sigh drills.',
+            zh: '专注、放松、睡前和短暂停顿时都能用。',
+            en: 'Breathing patterns for focus, relaxing, bedtime, and short pauses.',
           ),
           icon: Icons.air_rounded,
           accent: ToolboxColors.breathingAccent,
@@ -250,8 +269,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '静心减压', en: 'Calm tools'),
       subtitle: pickUiText(
         i18n,
-        zh: '通过计数、触摸和简单视觉放松。',
-        en: 'Unwind through counting, touch, and simple visuals.',
+        zh: '用触摸、计数和简单画面让自己慢下来。',
+        en: 'Slow down with touch, counting, and simple visuals.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
@@ -272,7 +291,7 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           subtitle: pickUiText(
             i18n,
             zh: '画出痕迹、摆放石子，做一个迷你沙盘。',
-            en: 'Mobile-friendly sand drawing with synced textures, quick rituals, and calm focus resets.',
+            en: 'Draw in sand, place stones, and make a small quiet scene.',
           ),
           icon: Icons.landscape_rounded,
           accent: ToolboxColors.zenAccent,
@@ -284,8 +303,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '随机决策', en: 'Random choice'),
       subtitle: pickUiText(
         i18n,
-        zh: '用转盘快速打破犹豫。',
-        en: 'Use a wheel to break indecision and keep moving.',
+        zh: '选择太多时，让转盘帮你先动起来。',
+        en: 'When there are too many choices, let the wheel get you moving.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(

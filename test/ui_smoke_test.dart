@@ -46,6 +46,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/follow_along_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/focus_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/library_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/language_settings_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/module_management_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/play_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_notebook_page.dart';
@@ -1955,12 +1956,12 @@ void main() {
       await tester.longPress(humanTestCard);
       await tester.pumpAndSettle();
 
-      expect(find.text('Toolbox home is in edit mode'), findsOneWidget);
+      expect(find.text('Editing your Toolbox home'), findsOneWidget);
+      expect(find.text('Frequent shortcuts'), findsOneWidget);
       expect(find.text('Edit home entries'), findsOneWidget);
       expect(find.text('Visible'), findsOneWidget);
       expect(find.text('Hidden'), findsOneWidget);
       expect(find.text('Exit'), findsWidgets);
-      expect(find.text('Exit edit'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('Human test hub'),
@@ -1983,21 +1984,38 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(removeHumanTests, warnIfMissed: false);
       await tester.pumpAndSettle();
+      expect(find.text('Remove Human test hub from home?'), findsOneWidget);
+      await tester.tap(find.text('Remove').last);
+      await tester.pump();
+      final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+      expect(snackBar.duration, const Duration(seconds: 3));
+      expect(snackBar.dismissDirection, DismissDirection.horizontal);
+      await tester.drag(
+        find.byType(SnackBar),
+        const Offset(500, 0),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
 
       expect(state.toolboxLayoutState.hidden.length, 1);
-      expect(find.text('1'), findsWidgets);
-      expect(find.text('Hidden'), findsOneWidget);
+      expect(
+        state.toolboxLayoutState.hidden,
+        contains(ModuleIds.toolboxHumanTests),
+      );
 
       final restoreEntriesButton = find.byKey(
         const ValueKey<String>('toolbox_restore_entries_button'),
       );
-      await tester.ensureVisible(restoreEntriesButton);
-      await tester.pumpAndSettle();
+      for (var i = 0; i < 4 && restoreEntriesButton.evaluate().isEmpty; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
+        await tester.pumpAndSettle();
+      }
+      expect(restoreEntriesButton, findsOneWidget);
       await tester.tap(restoreEntriesButton);
       await tester.pumpAndSettle();
       expect(find.text('Restore hidden entries'), findsOneWidget);
       expect(
-        find.textContaining('Module enablement is still controlled'),
+        find.textContaining('Whether a tool is enabled is still controlled'),
         findsOneWidget,
       );
 
@@ -2006,6 +2024,150 @@ void main() {
 
       expect(state.toolboxLayoutState.hidden, isEmpty);
     });
+
+    testWidgets('module management reflects hidden toolbox home entries', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      state.hideToolboxEntry(ModuleIds.toolboxHumanTests);
+
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const ModuleManagementPage(),
+      );
+
+      await tester.scrollUntilVisible(
+        find.text('Human tests'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final humanTestsTile = find.ancestor(
+        of: find.text('Human tests'),
+        matching: find.byType(SwitchListTile),
+      );
+      expect(humanTestsTile, findsOneWidget);
+      expect(tester.widget<SwitchListTile>(humanTestsTile).value, isFalse);
+      expect(find.text('Restore home entry'), findsOneWidget);
+
+      await tester.tap(humanTestsTile);
+      await tester.pumpAndSettle();
+
+      expect(
+        state.toolboxLayoutState.hidden,
+        isNot(contains(ModuleIds.toolboxHumanTests)),
+      );
+      expect(
+        state.moduleToggleState.isEnabled(ModuleIds.toolboxHumanTests),
+        isTrue,
+      );
+    });
+
+    testWidgets('toolbox page supports custom quick entries', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      expect(find.text('Frequent shortcuts'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('toolbox_manage_quick_entries')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Choose shortcuts'), findsOneWidget);
+      final sheetScrollable = find.byType(Scrollable).last;
+      await tester.scrollUntilVisible(
+        find.text('Human test hub').last,
+        180,
+        scrollable: sheetScrollable,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Human test hub').last, warnIfMissed: false);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('toolbox_save_quick_entries')),
+        220,
+        scrollable: sheetScrollable,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('toolbox_save_quick_entries')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(state.toolboxLayoutState.quick, <String>[
+        ModuleIds.toolboxHumanTests,
+      ]);
+      expect(find.text('Human test hub'), findsWidgets);
+    });
+
+    testWidgets('toolbox page adds entries by dragging them to quick entries', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await tester.binding.setSurfaceSize(const Size(390, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      final source = find.byKey(
+        const ValueKey<String>(
+          'toolbox_entry_draggable_${ModuleIds.toolboxSleepAssistant}',
+        ),
+      );
+      final target = find.text('Frequent shortcuts');
+
+      expect(source, findsOneWidget);
+      expect(target, findsOneWidget);
+
+      await tester.drag(
+        source,
+        tester.getCenter(target) - tester.getCenter(source),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(state.toolboxLayoutState.quick, <String>[
+        ModuleIds.toolboxSleepAssistant,
+      ]);
+      expect(find.text('Sleep assistant'), findsWidgets);
+    });
+
+    testWidgets(
+      'toolbox edit mode adds entries by dragging them to quick entries',
+      (tester) async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await tester.binding.setSurfaceSize(const Size(390, 1100));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await _pumpPage(tester, state: state, child: const ToolboxPage());
+        await tester.tap(find.text('Edit layout'));
+        await tester.pumpAndSettle();
+
+        final source = find.byKey(
+          const ValueKey<String>(
+            'toolbox_edit_quick_draggable_${ModuleIds.toolboxSleepAssistant}',
+          ),
+        );
+        final target = find.text('Frequent shortcuts');
+
+        expect(source, findsOneWidget);
+        expect(target, findsOneWidget);
+
+        final gesture = await tester.startGesture(tester.getCenter(source));
+        await tester.pump(const Duration(milliseconds: 650));
+        await gesture.moveTo(tester.getCenter(target));
+        await tester.pump();
+        await gesture.up();
+        await tester.pumpAndSettle();
+
+        expect(state.toolboxLayoutState.quick, <String>[
+          ModuleIds.toolboxSleepAssistant,
+        ]);
+        expect(find.text('Sleep assistant'), findsWidgets);
+      },
+    );
 
     testWidgets('soothing music page shows extended modes', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
@@ -4522,6 +4684,14 @@ class _FakeAppState extends ChangeNotifier
   void setToolboxEntryOrder(List<String> moduleIds) {
     _toolboxLayoutState = _toolboxLayoutState
         .copyWith(order: moduleIds)
+        .normalizedFor(ModuleIds.toolboxModules);
+    notifyListeners();
+  }
+
+  @override
+  void setToolboxQuickEntries(List<String> moduleIds) {
+    _toolboxLayoutState = _toolboxLayoutState
+        .copyWith(quick: moduleIds)
         .normalizedFor(ModuleIds.toolboxModules);
     notifyListeners();
   }

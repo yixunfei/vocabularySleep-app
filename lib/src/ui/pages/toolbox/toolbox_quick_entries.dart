@@ -1,0 +1,322 @@
+import 'package:flutter/material.dart';
+
+import '../../../i18n/app_i18n.dart';
+import '../../../state/app_state.dart';
+import '../../module/module_access.dart';
+import '../../ui_copy.dart';
+import 'toolbox_page_models.dart';
+import 'toolbox_ui_components.dart';
+import 'toolbox_ui_tokens.dart';
+
+class ToolboxQuickEntryPanel extends StatelessWidget {
+  const ToolboxQuickEntryPanel({
+    super.key,
+    required this.i18n,
+    required this.state,
+    required this.quickEntries,
+    required this.availableEntries,
+  });
+
+  final AppI18n i18n;
+  final AppState state;
+  final List<ToolboxEntryData> quickEntries;
+  final List<ToolboxEntryData> availableEntries;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final quickIds = quickEntries.map((entry) => entry.moduleId).toSet();
+    final availableIds = availableEntries
+        .map((entry) => entry.moduleId)
+        .toSet();
+    return DragTarget<ToolboxEntryData>(
+      onWillAcceptWithDetails: (details) =>
+          availableIds.contains(details.data.moduleId) &&
+          !quickIds.contains(details.data.moduleId),
+      onAcceptWithDetails: (details) {
+        final entry = details.data;
+        state.setToolboxQuickEntries(<String>[
+          for (final moduleId in state.toolboxLayoutState.quick)
+            if (availableIds.contains(moduleId)) moduleId,
+          entry.moduleId,
+        ]);
+      },
+      builder: (context, candidateData, rejectedData) {
+        final accepting = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          child: ToolboxSurfaceCard(
+            padding: const EdgeInsets.all(16),
+            radius: ToolboxUiTokens.sectionPanelRadius,
+            color: accepting
+                ? colorScheme.primaryContainer.withValues(alpha: 0.34)
+                : colorScheme.surfaceContainerLowest,
+            borderColor: accepting
+                ? colorScheme.primary.withValues(alpha: 0.42)
+                : colorScheme.outlineVariant.withValues(alpha: 0.74),
+            shadowColor: colorScheme.primary,
+            shadowOpacity: accepting ? 0.08 : 0.04,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(
+                          alpha: 0.58,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.16),
+                        ),
+                      ),
+                      child: Icon(
+                        accepting
+                            ? Icons.add_task_rounded
+                            : Icons.flash_on_rounded,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        pickUiText(
+                          i18n,
+                          zh: accepting ? '松手加入快速入口' : '常用快速入口',
+                          en: accepting
+                              ? 'Release to add shortcut'
+                              : 'Frequent shortcuts',
+                        ),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      key: const ValueKey<String>(
+                        'toolbox_manage_quick_entries',
+                      ),
+                      onPressed: availableEntries.isEmpty
+                          ? null
+                          : () => _showQuickEntrySheet(context),
+                      icon: const Icon(Icons.add_rounded),
+                      label: Text(pickUiText(i18n, zh: '管理', en: 'Manage')),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (quickEntries.isEmpty)
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '把常用工具拖到这里，打开会更快。',
+                      en: 'Drag go-to tools here for faster access.',
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: <Widget>[
+                      for (final entry in quickEntries)
+                        _QuickEntryChip(entry: entry, state: state),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showQuickEntrySheet(BuildContext context) {
+    final availableIds = availableEntries
+        .map((entry) => entry.moduleId)
+        .toSet();
+    final selected = <String>{
+      for (final moduleId in state.toolboxLayoutState.quick)
+        if (availableIds.contains(moduleId)) moduleId,
+    };
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            void saveAndClose() {
+              state.setToolboxQuickEntries(
+                availableEntries
+                    .where((entry) => selected.contains(entry.moduleId))
+                    .map((entry) => entry.moduleId)
+                    .toList(growable: false),
+              );
+              Navigator.of(context).pop();
+            }
+
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      pickUiText(i18n, zh: '选择快速入口', en: 'Choose shortcuts'),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      pickUiText(
+                        i18n,
+                        zh: '勾选后会显示在工具箱首页顶部。',
+                        en: 'Selected tools appear near the top of the Toolbox home.',
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    for (final entry in availableEntries)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ToolboxSurfaceCard(
+                          padding: EdgeInsets.zero,
+                          radius: ToolboxUiTokens.cardRadius,
+                          color: theme.colorScheme.surfaceContainerLowest,
+                          borderColor: selected.contains(entry.moduleId)
+                              ? entry.accent.withValues(alpha: 0.34)
+                              : theme.colorScheme.outlineVariant,
+                          shadowColor: entry.accent,
+                          shadowOpacity: selected.contains(entry.moduleId)
+                              ? 0.05
+                              : 0,
+                          child: CheckboxListTile(
+                            value: selected.contains(entry.moduleId),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            secondary: CircleAvatar(
+                              backgroundColor: entry.accent.withValues(
+                                alpha: 0.16,
+                              ),
+                              foregroundColor: entry.accent,
+                              child: Icon(entry.icon),
+                            ),
+                            title: Text(entry.title),
+                            subtitle: Text(entry.subtitle),
+                            onChanged: (value) {
+                              setModalState(() {
+                                if (value == true) {
+                                  selected.add(entry.moduleId);
+                                } else {
+                                  selected.remove(entry.moduleId);
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: selected.isEmpty
+                                ? null
+                                : () {
+                                    setModalState(selected.clear);
+                                  },
+                            icon: const Icon(Icons.clear_rounded),
+                            label: Text(
+                              pickUiText(i18n, zh: '清空', en: 'Clear'),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton.icon(
+                            key: const ValueKey<String>(
+                              'toolbox_save_quick_entries',
+                            ),
+                            onPressed: saveAndClose,
+                            icon: const Icon(Icons.check_rounded),
+                            label: Text(pickUiText(i18n, zh: '保存', en: 'Save')),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _QuickEntryChip extends StatelessWidget {
+  const _QuickEntryChip({required this.entry, required this.state});
+
+  final ToolboxEntryData entry;
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(ToolboxUiTokens.pillRadius),
+        onTap: () {
+          pushModuleRoute<void>(
+            context,
+            state: state,
+            moduleId: entry.moduleId,
+            builder: (_) => entry.pageBuilder(),
+          );
+        },
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: entry.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(ToolboxUiTokens.pillRadius),
+              border: Border.all(color: entry.accent.withValues(alpha: 0.22)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Icon(entry.icon, size: 18, color: entry.accent),
+                const SizedBox(width: 8),
+                Text(
+                  entry.title,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

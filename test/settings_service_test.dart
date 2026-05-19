@@ -127,6 +127,7 @@ void main() {
       const ToolboxLayoutState(
         order: <String>['toolbox.human_tests', 'toolbox.mini_games'],
         hidden: <String>{'toolbox.sleep_assistant'},
+        quick: <String>['toolbox.human_tests'],
       ),
     );
 
@@ -136,6 +137,7 @@ void main() {
       'toolbox.mini_games',
     ]);
     expect(restored.hidden, <String>{'toolbox.sleep_assistant'});
+    expect(restored.quick, <String>['toolbox.human_tests']);
   });
 
   test('ambient presets persist through SettingsService', () {

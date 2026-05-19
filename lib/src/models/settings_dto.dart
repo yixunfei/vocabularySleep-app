@@ -8,22 +8,31 @@ class ToolboxLayoutState {
     this.version = currentVersion,
     this.order = const <String>[],
     this.hidden = const <String>{},
+    this.quick = const <String>[],
   });
 
-  static const int currentVersion = 1;
+  static const int currentVersion = 2;
   static const ToolboxLayoutState defaults = ToolboxLayoutState();
 
   final int version;
   final List<String> order;
   final Set<String> hidden;
+  final List<String> quick;
 
   bool isHidden(String moduleId) => hidden.contains(moduleId);
 
-  ToolboxLayoutState copyWith({List<String>? order, Set<String>? hidden}) {
+  bool isQuick(String moduleId) => quick.contains(moduleId);
+
+  ToolboxLayoutState copyWith({
+    List<String>? order,
+    Set<String>? hidden,
+    List<String>? quick,
+  }) {
     return ToolboxLayoutState(
       version: currentVersion,
       order: order ?? this.order,
       hidden: hidden ?? this.hidden,
+      quick: quick ?? this.quick,
     );
   }
 
@@ -47,10 +56,22 @@ class ToolboxLayoutState {
         normalizedOrder.add(moduleId);
       }
     }
+    final normalizedHidden = hidden.intersection(availableSet);
+    final quickAvailableSet = availableSet.difference(normalizedHidden);
+    final normalizedQuick = <String>[];
+    for (final moduleId in quick) {
+      final normalized = moduleId.trim();
+      if (!quickAvailableSet.contains(normalized) ||
+          normalizedQuick.contains(normalized)) {
+        continue;
+      }
+      normalizedQuick.add(normalized);
+    }
     return ToolboxLayoutState(
       version: currentVersion,
       order: normalizedOrder,
-      hidden: hidden.intersection(availableSet),
+      hidden: normalizedHidden,
+      quick: normalizedQuick,
     );
   }
 
@@ -59,6 +80,7 @@ class ToolboxLayoutState {
       'version': version,
       'order': order,
       'hidden': hidden.toList(growable: false)..sort(),
+      'quick': quick,
     };
   }
 
@@ -68,6 +90,7 @@ class ToolboxLayoutState {
     }
     final rawOrder = value['order'];
     final rawHidden = value['hidden'];
+    final rawQuick = value['quick'];
     return ToolboxLayoutState(
       version: switch (value['version']) {
         int version => version,
@@ -87,6 +110,13 @@ class ToolboxLayoutState {
                 .where((item) => item.isNotEmpty)
                 .toSet()
           : const <String>{},
+      quick: rawQuick is List
+          ? rawQuick
+                .map((item) => '$item'.trim())
+                .where((item) => item.isNotEmpty)
+                .toSet()
+                .toList(growable: false)
+          : const <String>[],
     );
   }
 
@@ -96,7 +126,8 @@ class ToolboxLayoutState {
         other.version == version &&
         _sameStringList(other.order, order) &&
         other.hidden.length == hidden.length &&
-        other.hidden.containsAll(hidden);
+        other.hidden.containsAll(hidden) &&
+        _sameStringList(other.quick, quick);
   }
 
   @override
@@ -104,6 +135,7 @@ class ToolboxLayoutState {
     version,
     Object.hashAll(order),
     Object.hashAll(hidden.toList(growable: false)..sort()),
+    Object.hashAll(quick),
   );
 
   static bool _sameStringList(List<String> a, List<String> b) {

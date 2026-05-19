@@ -162,6 +162,18 @@ extension _AppStateStartup on AppState {
     _notifyStateChanged();
   }
 
+  void _setToolboxQuickEntriesImpl(List<String> moduleIds) {
+    final normalized = _toolboxLayoutState
+        .copyWith(quick: moduleIds)
+        .normalizedFor(ModuleIds.toolboxModules);
+    if (normalized == _toolboxLayoutState) {
+      return;
+    }
+    _toolboxLayoutState = normalized;
+    _settings.saveToolboxLayoutState(normalized);
+    _notifyStateChanged();
+  }
+
   void _hideToolboxEntryImpl(String moduleId) {
     final normalizedModuleId = moduleId.trim();
     if (!ModuleIds.toolboxModules.contains(normalizedModuleId) ||
