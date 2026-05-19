@@ -124,6 +124,8 @@ plans/
 records/
 web/
 windows/
+!third_party/audioplayers_windows/windows/
+!third_party/audioplayers_windows/windows/**
 wordbooks/
 
 # ------------------------------

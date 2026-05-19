@@ -1,5 +1,71 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_180-AUDITORY-LAB-COLLAPSIBLE-SETTINGS] - 2026-05-19
+
+### 原因
+- 声学实验页的设置、说明和诊断信息仍然以平铺方式堆叠，移动端首屏需要滚动较多才能看到主操作区，也不符合工具箱页面统一的可折叠设置语法。
+
+### 新增
+- 声学实验页新增统一折叠区，分别承载采样设置、采集诊断和复测建议。
+
+### 修改
+- 将原本分散在主区域的采样说明、环境提示、复测建议和诊断指标收敛到统一的可折叠结构中，保留模式切换、实时指标、波形和主操作按钮在更靠前的位置。
+
+### 修复
+- 修正声学实验页移动端设置信息过长、层级过散的问题，减少首屏纵向拥挤。
+
+### 风险变更
+- 折叠区默认收起后，首次使用者需要点击查看辅助说明；但这换来了更清晰的首屏主操作和更一致的 toolbox 页面语法。
+
+## [Unreleased-PLAN_179-ACOUSTIC-LAB-MOBILE-CAPTURE] - 2026-05-19
+
+### 原因
+- 工具箱-人类测试中心-声学实验仍偏基础示例，移动手机端在部分设备上可能启动录音但没有收到声音帧，用户只能看到近似静态仪表。
+- 旧流程缺少麦克风输入自检、首帧等待/失败提示、环境底噪引导和可用于复测判断的采样质控指标。
+
+### 新增
+- 声学实验新增 PCM 实时流能力自检、输入设备识别、首帧看门狗和结构化错误提示。
+- 录音启动新增多套移动端兼容配置：优先使用原始麦克风 PCM，失败后回退标准麦克风和语音识别兼容采样。
+- 页面新增环境底噪基线、推荐下一步、采样率、输入源、实时流模式、首帧延迟、空帧和启动尝试等状态指标。
+- 声学报告新增有效声占比、动态范围、峰均比、空白帧比例和帧数等质控指标。
+
+### 修改
+- 声学实验采样流程强化为“先噪声底，再低音/高音/持续”的实用闭环，并在样本写入后提示继续下一个模式或优先复测弱项。
+- 录音出现无 PCM 帧时不再静默停留在运行状态，而是明确提示检查系统麦克风权限、隐私开关、蓝牙耳机路由、录屏或通话占用。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_auditory_lab.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 声学报告仍基于设备麦克风的相对 dBFS、本地 PCM 分析和当前环境噪声底，不作为医学、听力诊断或专业声级计标定结果。
+- Android/iOS 对麦克风音频源、蓝牙路由和隐私占用的处理存在设备差异；本轮已加入多配置回退和无帧提示，但仍建议真机覆盖主流机型。
+
+## [Unreleased-PLAN_178-WINDOWS-AUDIO-PLATFORM-THREAD-FIX] - 2026-05-19
+
+### 原因
+- Windows 端 `audioplayers` 在媒体加载、完成、时长更新等回调中可能从原生后台线程直接向 `xyz.luan/audioplayers/events/...` EventChannel 发送消息，触发 Flutter 的 `non-platform thread` 警告，并存在事件丢失或崩溃风险。
+
+### 新增
+- 新增 `third_party/audioplayers_windows` 本地插件 fork，版本保持 `4.3.0`，用于承载 Windows 平台线程修复。
+
+### 修改
+- `pubspec.yaml` 增加 `audioplayers_windows` 本地 dependency override，`pubspec.lock` 同步改为 path source。
+- Windows 音频插件的 `EventStreamHandler` 现在会把后台线程产生的 `Success/Error` 通过宿主窗口消息投递回 Flutter 平台线程后再调用 `EventSink`。
+- `.gitignore` 补充 `third_party/audioplayers_windows/windows/**` 例外，确保 vendored Windows 插件源码进入版本管理。
+
+### 验证
+- `flutter pub get`
+- `flutter analyze --no-fatal-infos lib/src/services/audio_player_source_helper.dart lib/src/services/toolbox_audio_players.dart`
+- `flutter build windows --debug`
+- `flutter test test/audio_player_source_helper_test.dart test/playback_service_test.dart`
+
+### 风险变更
+- Windows 插件进入本地 fork 后，后续升级 `audioplayers` 时需要同步检查上游 `audioplayers_windows` 是否已修复平台线程投递。
+- 如果插件销毁或窗口不可用期间仍有后台音频事件抵达，会丢弃该事件而不是从后台线程触达 Flutter；这优先保证线程安全。
+
 ## [Unreleased-PLAN_177-HUMAN-TESTS-MOBILE-GESTURE-CONTROLS] - 2026-05-19
 
 ### 原因

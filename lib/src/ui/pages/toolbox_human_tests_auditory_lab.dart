@@ -737,6 +737,18 @@ class _MicModeSpec {
   );
 }
 
+class _MicRecorderProfile {
+  const _MicRecorderProfile({
+    required this.id,
+    required this.config,
+    required this.sampleRate,
+  });
+
+  final String id;
+  final RecordConfig config;
+  final int sampleRate;
+}
+
 class _MicFrameSample {
   const _MicFrameSample({
     required this.elapsedMs,
@@ -798,6 +810,7 @@ class _MicLabCapture {
     required this.crestFactorDb,
     required this.snrDb,
     required this.targetHitRatio,
+    required this.emptyChunkRatio,
     required this.qualityScore,
   });
 
@@ -807,7 +820,10 @@ class _MicLabCapture {
     required List<_MicFrameSample> samples,
     required double? noiseFloorDbfs,
   }) {
-    final pitchSamples = samples
+    final voicedSamples = samples
+        .where((sample) => sample.pitchHz != null && sample.dbfs > -62)
+        .toList(growable: false);
+    final pitchSamples = voicedSamples
         .map((sample) => sample.pitchHz)
         .whereType<double>()
         .toList(growable: false);
@@ -900,6 +916,10 @@ class _MicLabCapture {
       crestFactorDb: crestFactorDb,
       snrDb: snrDb,
       targetHitRatio: targetHitRatio,
+      emptyChunkRatio: samples.isEmpty
+          ? 0.0
+          : samples.where((sample) => sample.rms <= 0.001).length /
+                samples.length,
       qualityScore: qualityScore,
     );
   }
@@ -929,6 +949,7 @@ class _MicLabCapture {
   final double crestFactorDb;
   final double? snrDb;
   final double targetHitRatio;
+  final double emptyChunkRatio;
   final double qualityScore;
 
   double get seconds => durationMs / 1000;
@@ -945,19 +966,22 @@ class _MicLabCapture {
       final quietCount = samples.where((sample) => sample.dbfs <= -52).length;
       return quietCount / samples.length;
     }
+    final voicedSamples = samples
+        .where((sample) => sample.pitchHz != null && sample.dbfs > -62)
+        .toList(growable: false);
+    if (voicedSamples.isEmpty) {
+      return 0;
+    }
     final pitchSamples = samples
         .map((sample) => sample.pitchHz)
         .whereType<double>()
         .toList(growable: false);
-    if (pitchSamples.isEmpty) {
-      return 0;
-    }
     final inRange = pitchSamples
         .where(
           (pitch) => pitch >= spec.targetMinHz && pitch <= spec.targetMaxHz,
         )
         .length;
-    return inRange / pitchSamples.length;
+    return inRange / voicedSamples.length;
   }
 
   static double _qualityScore({
@@ -1132,9 +1156,90 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     ),
   };
 
+  static const int _primarySampleRate = 44100;
+  static const int _fallbackSampleRate = 16000;
+  static const Duration _firstFrameTimeout = Duration(milliseconds: 1600);
+
+  static const List<_MicRecorderProfile> _recorderProfiles =
+      <_MicRecorderProfile>[
+        _MicRecorderProfile(
+          id: 'unprocessed_44100',
+          sampleRate: _primarySampleRate,
+          config: RecordConfig(
+            encoder: AudioEncoder.pcm16bits,
+            sampleRate: _primarySampleRate,
+            numChannels: 1,
+            autoGain: false,
+            echoCancel: false,
+            noiseSuppress: false,
+            androidConfig: AndroidRecordConfig(
+              audioSource: AndroidAudioSource.unprocessed,
+              manageBluetooth: false,
+            ),
+            iosConfig: IosRecordConfig(
+              categoryOptions: <IosAudioCategoryOption>[
+                IosAudioCategoryOption.allowBluetooth,
+                IosAudioCategoryOption.allowBluetoothA2DP,
+              ],
+            ),
+            audioInterruption: AudioInterruptionMode.pause,
+            streamBufferSize: 4096,
+          ),
+        ),
+        _MicRecorderProfile(
+          id: 'mic_44100',
+          sampleRate: _primarySampleRate,
+          config: RecordConfig(
+            encoder: AudioEncoder.pcm16bits,
+            sampleRate: _primarySampleRate,
+            numChannels: 1,
+            autoGain: false,
+            echoCancel: false,
+            noiseSuppress: false,
+            androidConfig: AndroidRecordConfig(
+              audioSource: AndroidAudioSource.mic,
+              manageBluetooth: false,
+            ),
+            iosConfig: IosRecordConfig(
+              categoryOptions: <IosAudioCategoryOption>[
+                IosAudioCategoryOption.allowBluetooth,
+                IosAudioCategoryOption.allowBluetoothA2DP,
+              ],
+            ),
+            audioInterruption: AudioInterruptionMode.pause,
+            streamBufferSize: 4096,
+          ),
+        ),
+        _MicRecorderProfile(
+          id: 'voice_recognition_16000',
+          sampleRate: _fallbackSampleRate,
+          config: RecordConfig(
+            encoder: AudioEncoder.pcm16bits,
+            sampleRate: _fallbackSampleRate,
+            numChannels: 1,
+            autoGain: true,
+            echoCancel: false,
+            noiseSuppress: false,
+            androidConfig: AndroidRecordConfig(
+              audioSource: AndroidAudioSource.voiceRecognition,
+              manageBluetooth: false,
+            ),
+            iosConfig: IosRecordConfig(
+              categoryOptions: <IosAudioCategoryOption>[
+                IosAudioCategoryOption.allowBluetooth,
+                IosAudioCategoryOption.allowBluetoothA2DP,
+              ],
+            ),
+            audioInterruption: AudioInterruptionMode.pause,
+            streamBufferSize: 2048,
+          ),
+        ),
+      ];
+
   final AudioRecorder _recorder = AudioRecorder();
   StreamSubscription<Uint8List>? _pcmSubscription;
   StreamSubscription<RecordState>? _stateSubscription;
+  Timer? _firstFrameWatchdog;
   final List<double> _levelHistory = List<double>.filled(72, 0);
   final List<double> _pitchWindow = <double>[];
   final List<_MicFrameSample> _samples = <_MicFrameSample>[];
@@ -1146,6 +1251,14 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
   bool _starting = false;
   bool _running = false;
   String? _error;
+  String? _statusCode;
+  String? _activeRecorderProfileId;
+  String? _inputDeviceLabel;
+  int _activeSampleRate = _primarySampleRate;
+  int _streamRestartCount = 0;
+  int _emptyChunkCount = 0;
+  int? _firstFrameMs;
+  bool _hasSeenFrame = false;
   double _level = 0;
   double _peak = 0;
   double _dbfs = -120;
@@ -1162,6 +1275,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
 
   @override
   void dispose() {
+    _firstFrameWatchdog?.cancel();
     unawaited(_pcmSubscription?.cancel());
     unawaited(_stateSubscription?.cancel());
     unawaited(_recorder.dispose());
@@ -1178,6 +1292,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     setState(() {
       _mode = mode;
       _error = null;
+      _statusCode = null;
       _samples.clear();
       _pitchWindow.clear();
       _levelHistory.fillRange(0, _levelHistory.length, 0);
@@ -1203,8 +1318,15 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     setState(() {
       _starting = true;
       _error = null;
+      _statusCode = 'checking_input';
       _samples.clear();
+      _pitchWindow.clear();
       _frameCount = 0;
+      _streamRestartCount = 0;
+      _emptyChunkCount = 0;
+      _firstFrameMs = null;
+      _hasSeenFrame = false;
+      _activeRecorderProfileId = null;
     });
     try {
       final granted = await _recorder.hasPermission();
@@ -1215,46 +1337,29 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
         setState(() {
           _starting = false;
           _error = 'microphone_permission_denied';
+          _statusCode = 'permission_denied';
         });
         return;
       }
 
-      final stream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 44100,
-          numChannels: 1,
-          autoGain: false,
-          echoCancel: false,
-          noiseSuppress: false,
-          streamBufferSize: 4096,
-        ),
+      final supported = await _recorder.isEncoderSupported(
+        AudioEncoder.pcm16bits,
       );
+      if (!supported) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _starting = false;
+          _running = false;
+          _error = 'pcm_stream_not_supported';
+          _statusCode = 'unsupported';
+        });
+        return;
+      }
 
-      await _pcmSubscription?.cancel();
-      _pcmSubscription = stream.listen(
-        _handlePcmChunk,
-        onError: (Object error, StackTrace stackTrace) {
-          if (!mounted) {
-            return;
-          }
-          setState(() {
-            _error = '$error';
-            _running = false;
-            _starting = false;
-          });
-        },
-        onDone: () {
-          if (!mounted) {
-            return;
-          }
-          setState(() {
-            _running = false;
-            _starting = false;
-          });
-        },
-        cancelOnError: false,
-      );
+      await _refreshInputDeviceLabel();
+      await _startWithBestRecorderProfile();
 
       _stateSubscription ??= _recorder.onStateChanged().listen((state) {
         if (!mounted) {
@@ -1274,20 +1379,142 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       setState(() {
         _starting = false;
         _running = true;
+        _statusCode = 'waiting_for_signal';
       });
+      _armFirstFrameWatchdog();
     } catch (error) {
       if (!mounted) {
         return;
       }
+      AppLogService.instance.e(
+        'toolbox_acoustic_lab',
+        'start monitoring failed',
+        error: error,
+      );
       setState(() {
         _starting = false;
         _running = false;
         _error = '$error';
+        _statusCode = 'start_failed';
       });
     }
   }
 
+  Future<void> _refreshInputDeviceLabel() async {
+    try {
+      final devices = await _recorder.listInputDevices();
+      if (!mounted) {
+        return;
+      }
+      final label = devices.isEmpty
+          ? null
+          : devices.first.label.trim().isEmpty
+          ? devices.first.id
+          : devices.first.label.trim();
+      setState(() => _inputDeviceLabel = label);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _inputDeviceLabel = null);
+      }
+    }
+  }
+
+  Future<void> _startWithBestRecorderProfile() async {
+    Object? lastError;
+    StackTrace? lastStack;
+    for (final profile in _recorderProfiles) {
+      try {
+        await _startStreamWithProfile(profile);
+        return;
+      } catch (error, stackTrace) {
+        lastError = error;
+        lastStack = stackTrace;
+        AppLogService.instance.w(
+          'toolbox_acoustic_lab',
+          'recorder profile failed',
+          data: <String, Object?>{
+            'profile': profile.id,
+            'sampleRate': profile.sampleRate,
+            'error': '$error',
+          },
+        );
+        await _pcmSubscription?.cancel();
+        _pcmSubscription = null;
+        try {
+          await _recorder.stop();
+        } catch (_) {}
+      }
+    }
+    if (lastError != null) {
+      Error.throwWithStackTrace(lastError, lastStack ?? StackTrace.current);
+    }
+    throw StateError('No recorder profile is available.');
+  }
+
+  Future<void> _startStreamWithProfile(_MicRecorderProfile profile) async {
+    final stream = await _recorder.startStream(profile.config);
+    await _pcmSubscription?.cancel();
+    _pcmSubscription = stream.listen(
+      (chunk) => _handlePcmChunk(chunk, sampleRate: profile.sampleRate),
+      onError: (Object error, StackTrace stackTrace) {
+        AppLogService.instance.e(
+          'toolbox_acoustic_lab',
+          'pcm stream error',
+          error: error,
+          stackTrace: stackTrace,
+          data: <String, Object?>{'profile': profile.id},
+        );
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _error = '$error';
+          _running = false;
+          _starting = false;
+          _statusCode = 'stream_error';
+        });
+      },
+      onDone: () {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _running = false;
+          _starting = false;
+          _statusCode = _hasSeenFrame ? 'stream_done' : 'no_pcm_frames';
+        });
+      },
+      cancelOnError: false,
+    );
+    _activeSampleRate = profile.sampleRate;
+    _activeRecorderProfileId = profile.id;
+    _streamRestartCount += 1;
+  }
+
+  void _armFirstFrameWatchdog() {
+    _firstFrameWatchdog?.cancel();
+    _firstFrameWatchdog = Timer(_firstFrameTimeout, () {
+      if (!mounted || !_running || _hasSeenFrame) {
+        return;
+      }
+      setState(() {
+        _statusCode = 'no_pcm_frames';
+        _error = 'no_pcm_frames';
+      });
+      AppLogService.instance.w(
+        'toolbox_acoustic_lab',
+        'no pcm frame after start',
+        data: <String, Object?>{
+          'profile': _activeRecorderProfileId,
+          'sampleRate': _activeSampleRate,
+        },
+      );
+    });
+  }
+
   Future<void> _stopMonitoring() async {
+    _firstFrameWatchdog?.cancel();
+    _firstFrameWatchdog = null;
     await _pcmSubscription?.cancel();
     _pcmSubscription = null;
     try {
@@ -1299,7 +1526,10 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     _stopwatch
       ..stop()
       ..reset();
-    setState(() => _running = false);
+    setState(() {
+      _running = false;
+      _statusCode = _samples.isEmpty ? 'stopped_without_samples' : 'stopped';
+    });
   }
 
   Future<void> _finishCapture() async {
@@ -1329,12 +1559,16 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
         _noiseFloorDbfs = capture.averageDbfs;
       }
       _error = null;
+      _statusCode = 'sample_added';
     });
   }
 
   void _reset() {
+    _firstFrameWatchdog?.cancel();
+    _firstFrameWatchdog = null;
     setState(() {
       _error = null;
+      _statusCode = null;
       _samples.clear();
       _pitchWindow.clear();
       _levelHistory.fillRange(0, _levelHistory.length, 0);
@@ -1347,17 +1581,30 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       _zeroCrossingRate = 0;
       _clippingRatio = 0;
       _frameCount = 0;
+      _emptyChunkCount = 0;
+      _firstFrameMs = null;
+      _hasSeenFrame = false;
       _level = 0;
       _peak = 0;
       _dbfs = -120;
     });
   }
 
-  void _handlePcmChunk(Uint8List chunk) {
+  void _handlePcmChunk(Uint8List chunk, {required int sampleRate}) {
     final byteData = ByteData.sublistView(chunk);
     final sampleCount = byteData.lengthInBytes ~/ 2;
     if (sampleCount < 256) {
+      _emptyChunkCount += 1;
       return;
+    }
+    if (!_hasSeenFrame) {
+      _firstFrameWatchdog?.cancel();
+      _firstFrameWatchdog = null;
+      _hasSeenFrame = true;
+      _firstFrameMs = _stopwatch.elapsedMilliseconds;
+      if (_error == 'no_pcm_frames') {
+        _error = null;
+      }
     }
 
     var peak = 0.0;
@@ -1389,7 +1636,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     final dbfs = rms <= 1e-6
         ? -120.0
         : (20 * math.log(rms) / math.ln10).clamp(-120.0, 0.0).toDouble();
-    final detectedPitch = _detectPitch(samples, 44100);
+    final detectedPitch = _detectPitch(samples, sampleRate);
     _pushLevelHistory(rms);
     if (detectedPitch != null) {
       _pitchWindow.add(detectedPitch);
@@ -1444,6 +1691,10 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       _levelConsistencyScore = levelConsistency;
       _zeroCrossingRate = zeroCrossingRate;
       _clippingRatio = clippingRatio;
+      _statusCode = 'sampling';
+      if (_error == 'no_pcm_frames') {
+        _error = null;
+      }
     });
   }
 
@@ -1621,7 +1872,31 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
   }
 
   String _captureReadiness(AppI18n i18n) {
+    if (_starting) {
+      return pickUiText(
+        i18n,
+        zh: '正在检查麦克风和 PCM 实时流，请稍候。',
+        en: 'Checking the microphone and live PCM stream...',
+        ja: 'マイクとライブ PCM ストリームを確認しています...',
+        de: 'Mikrofon und Live-PCM-Stream werden geprüft...',
+        fr: 'Vérification du micro et du flux PCM en direct...',
+        es: 'Comprobando el micrófono y el flujo PCM en vivo...',
+        ru: 'Проверяем микрофон и поток PCM...',
+      );
+    }
     if (_running) {
+      if (!_hasSeenFrame) {
+        return pickUiText(
+          i18n,
+          zh: '录音已启动，正在等待第一帧声音数据。',
+          en: 'Recording has started; waiting for the first audio frame.',
+          ja: '録音は開始済みです。最初の音声フレームを待っています。',
+          de: 'Die Aufnahme läuft; warte auf den ersten Audio-Frame.',
+          fr: 'L’enregistrement a démarré ; attente de la première trame audio.',
+          es: 'La grabación comenzó; esperando el primer fotograma de audio.',
+          ru: 'Запись началась; ожидаем первый аудиофрейм.',
+        );
+      }
       if (_stopwatch.elapsedMilliseconds < 2800) {
         return pickUiText(
           i18n,
@@ -1643,6 +1918,18 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
         fr: 'L\'échantillon est prêt; arrêtez et ajoutez-le au rapport.',
         es: 'La muestra está lista; pare y agréguela al informe.',
         ru: 'Образец готов, остановитесь и добавьте его в отчет.',
+      );
+    }
+    if (_statusCode == 'sample_added') {
+      return pickUiText(
+        i18n,
+        zh: '样本已写入报告，可以继续切换到下一个模式。',
+        en: 'Sample saved to the report. You can move to the next mode.',
+        ja: 'サンプルをレポートに保存しました。次のモードへ進めます。',
+        de: 'Probe im Bericht gespeichert. Du kannst zum nächsten Modus wechseln.',
+        fr: 'Échantillon ajouté au rapport. Vous pouvez passer au mode suivant.',
+        es: 'Muestra guardada en el informe. Puedes pasar al siguiente modo.',
+        ru: 'Образец сохранен в отчет. Можно перейти к следующему режиму.',
       );
     }
     final capture = _captures[_mode];
@@ -1715,6 +2002,218 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     };
   }
 
+  String _statusLabel(AppI18n i18n) {
+    if (_starting) {
+      return pickUiText(
+        i18n,
+        zh: '启动中',
+        en: 'Starting',
+        ja: '起動中',
+        de: 'Startet',
+        fr: 'Démarrage',
+        es: 'Iniciando',
+        ru: 'Запуск',
+      );
+    }
+    if (_running && !_hasSeenFrame) {
+      return pickUiText(
+        i18n,
+        zh: '等待声音',
+        en: 'Waiting for audio',
+        ja: '音声待機中',
+        de: 'Warte auf Audio',
+        fr: 'Attente audio',
+        es: 'Esperando audio',
+        ru: 'Ожидание звука',
+      );
+    }
+    if (_running) {
+      return pickUiText(
+        i18n,
+        zh: '采样中',
+        en: 'Sampling',
+        ja: 'サンプリング中',
+        de: 'Messung läuft',
+        fr: 'Mesure en cours',
+        es: 'Muestreando',
+        ru: 'Идет замер',
+      );
+    }
+    if (_error != null) {
+      return pickUiText(
+        i18n,
+        zh: '需要处理',
+        en: 'Needs attention',
+        ja: '確認が必要',
+        de: 'Prüfen',
+        fr: 'À vérifier',
+        es: 'Revisar',
+        ru: 'Требует внимания',
+      );
+    }
+    if (_statusCode == 'sample_added') {
+      return pickUiText(
+        i18n,
+        zh: '已写入',
+        en: 'Saved',
+        ja: '保存済み',
+        de: 'Gespeichert',
+        fr: 'Enregistré',
+        es: 'Guardado',
+        ru: 'Сохранено',
+      );
+    }
+    return pickUiText(
+      i18n,
+      zh: '就绪',
+      en: 'Ready',
+      ja: '準備完了',
+      de: 'Bereit',
+      fr: 'Prêt',
+      es: 'Listo',
+      ru: 'Готово',
+    );
+  }
+
+  String _profileLabel(AppI18n i18n) {
+    final profile = _activeRecorderProfileId;
+    if (profile == null) {
+      return pickUiText(
+        i18n,
+        zh: '未启动',
+        en: 'Not started',
+        ja: '未開始',
+        de: 'Nicht gestartet',
+        fr: 'Non démarré',
+        es: 'Sin iniciar',
+        ru: 'Не запущено',
+      );
+    }
+    if (profile.contains('unprocessed')) {
+      return pickUiText(
+        i18n,
+        zh: '原始麦克风',
+        en: 'Raw mic',
+        ja: 'Raw mic',
+        de: 'Raw mic',
+        fr: 'Micro brut',
+        es: 'Micrófono directo',
+        ru: 'Чистый микрофон',
+      );
+    }
+    if (profile.contains('voice_recognition')) {
+      return pickUiText(
+        i18n,
+        zh: '兼容模式',
+        en: 'Compat mode',
+        ja: '互換モード',
+        de: 'Kompatibel',
+        fr: 'Mode compatible',
+        es: 'Modo compatible',
+        ru: 'Совместимый режим',
+      );
+    }
+    return pickUiText(
+      i18n,
+      zh: '标准麦克风',
+      en: 'Standard mic',
+      ja: '標準マイク',
+      de: 'Standardmikro',
+      fr: 'Micro standard',
+      es: 'Micrófono estándar',
+      ru: 'Стандартный микрофон',
+    );
+  }
+
+  String _inputLabel(AppI18n i18n) {
+    final label = _inputDeviceLabel;
+    if (label != null && label.trim().isNotEmpty) {
+      return label;
+    }
+    return pickUiText(
+      i18n,
+      zh: '默认输入',
+      en: 'Default input',
+      ja: '既定入力',
+      de: 'Standardeingang',
+      fr: 'Entrée par défaut',
+      es: 'Entrada predeterminada',
+      ru: 'Вход по умолчанию',
+    );
+  }
+
+  String _formatFirstFrame(AppI18n i18n) {
+    final firstFrameMs = _firstFrameMs;
+    if (firstFrameMs == null) {
+      return _hasSeenFrame
+          ? '< 1 ms'
+          : pickUiText(
+              i18n,
+              zh: '等待中',
+              en: 'Waiting',
+              ja: '待機中',
+              de: 'Wartet',
+              fr: 'Attente',
+              es: 'Esperando',
+              ru: 'Ожидание',
+            );
+    }
+    return '${firstFrameMs} ms';
+  }
+
+  String _errorMessage(AppI18n i18n) {
+    final error = _error;
+    if (error == 'microphone_permission_denied') {
+      return pickUiText(
+        i18n,
+        zh: '麦克风权限被拒绝，请在系统设置中允许本应用使用麦克风后再开始。',
+        en: 'Microphone permission was denied. Allow microphone access in system settings and try again.',
+        ja: 'マイク権限が拒否されました。システム設定でマイクを許可してから再試行してください。',
+        de: 'Mikrofonzugriff wurde verweigert. Erlaube den Zugriff in den Systemeinstellungen und versuche es erneut.',
+        fr: 'L’autorisation du micro a été refusée. Autorisez le micro dans les réglages système puis réessayez.',
+        es: 'Se denegó el permiso del micrófono. Permite el acceso en los ajustes del sistema e inténtalo de nuevo.',
+        ru: 'Доступ к микрофону отклонен. Разрешите микрофон в настройках системы и повторите попытку.',
+      );
+    }
+    if (error == 'pcm_stream_not_supported') {
+      return pickUiText(
+        i18n,
+        zh: '当前平台不支持 PCM 实时流，无法进行声学频谱与音高分析。',
+        en: 'This platform does not support live PCM streaming, so acoustic and pitch analysis cannot run.',
+        ja: 'この環境ではライブ PCM ストリームに対応していないため、音響・音高解析を実行できません。',
+        de: 'Diese Plattform unterstützt kein Live-PCM-Streaming; Akustik- und Tonhöhenanalyse können nicht laufen.',
+        fr: 'Cette plateforme ne prend pas en charge le flux PCM en direct ; l’analyse acoustique ne peut pas fonctionner.',
+        es: 'Esta plataforma no admite flujo PCM en vivo; no se puede analizar acústica ni tono.',
+        ru: 'Платформа не поддерживает поток PCM, поэтому анализ акустики и высоты недоступен.',
+      );
+    }
+    if (error == 'no_pcm_frames') {
+      return pickUiText(
+        i18n,
+        zh: '录音已启动但没有收到声音帧。请确认系统麦克风权限、隐私开关和外接耳机麦克风，然后重新开始。',
+        en: 'Recording started, but no audio frames arrived. Check microphone permission, privacy switches, and headset mic routing, then start again.',
+        ja: '録音は開始しましたが音声フレームを受信できません。権限、プライバシー設定、外部マイク経路を確認して再開してください。',
+        de: 'Die Aufnahme startete, aber es kamen keine Audio-Frames an. Prüfe Berechtigung, Datenschutzschalter und Headset-Mikrofon und starte neu.',
+        fr: 'L’enregistrement a démarré mais aucune trame audio n’est arrivée. Vérifiez l’autorisation, les réglages de confidentialité et le micro du casque, puis relancez.',
+        es: 'La grabación comenzó, pero no llegaron fotogramas de audio. Revisa permisos, privacidad y micrófono del auricular, y vuelve a iniciar.',
+        ru: 'Запись началась, но аудиофреймы не поступают. Проверьте разрешения, приватность и микрофон гарнитуры, затем перезапустите.',
+      );
+    }
+    if (error == 'capture_too_short') {
+      return pickUiText(
+        i18n,
+        zh: '样本过短，请至少采样 3 秒后加入报告。',
+        en: 'The sample is too short. Capture at least 3 seconds before adding it to the report.',
+        ja: 'サンプルが短すぎます。少なくとも 3 秒測定してからレポートに追加してください。',
+        de: 'Die Probe ist zu kurz. Miss mindestens 3 Sekunden, bevor du sie dem Bericht hinzufügst.',
+        fr: 'L’échantillon est trop court. Mesurez au moins 3 secondes avant de l’ajouter au rapport.',
+        es: 'La muestra es demasiado corta. Captura al menos 3 segundos antes de añadirla al informe.',
+        ru: 'Образец слишком короткий. Записывайте не менее 3 секунд перед добавлением в отчет.',
+      );
+    }
+    return error ?? '';
+  }
+
   String _reportSummary(AppI18n i18n) {
     if (_captures.isEmpty) {
       return pickUiText(
@@ -1749,6 +2248,77 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       fr: '${_captures.length}/4 modes complete. Overall quality: ${_captureQualityLabel(i18n, averageScore)}. Best: ${_modeSpecs[best.mode]!.label(i18n)}; retest priority: ${_modeSpecs[weakest.mode]!.label(i18n)}.',
       es: 'Se completan los modos de contacto. Calidad general: יv1/ título. Mejor: <v2/ título; retest priority: יv3/año.',
       ru: '${_captures.length}/4 режимы завершены. Общее качество: ${_captureQualityLabel(i18n, averageScore)} Лучше всего: ${_modeSpecs[best.mode]!.label(i18n)}; приоритет повторного тестирования: ${_modeSpecs[weakest.mode]!.label(i18n)}.',
+    );
+  }
+
+  String _recommendedNextStep(AppI18n i18n) {
+    if (!_captures.containsKey(_MicLabMode.noise)) {
+      return pickUiText(
+        i18n,
+        zh: '建议下一步：先测噪声仪，建立本机本房间的环境底噪。',
+        en: 'Next: measure the noise meter first to establish the room floor on this device.',
+        ja: '次は騒音計で部屋のノイズフロアを測り、この端末の基準を作ります。',
+        de: 'Nächster Schritt: zuerst den Geräuschmesser messen, um den Raumpegel auf diesem Gerät zu erfassen.',
+        fr: 'Étape suivante : mesurez d’abord le sonomètre pour établir le bruit de fond de cette pièce.',
+        es: 'Siguiente: mide primero el ruido ambiente para fijar el piso de sala en este dispositivo.',
+        ru: 'Далее: сначала измерьте шум комнаты, чтобы задать базовый фон на этом устройстве.',
+      );
+    }
+    for (final mode in <_MicLabMode>[
+      _MicLabMode.low,
+      _MicLabMode.high,
+      _MicLabMode.sustain,
+    ]) {
+      if (!_captures.containsKey(mode)) {
+        return pickUiText(
+          i18n,
+          zh: '建议下一步：完成 ${_modeSpecs[mode]!.label(i18n)} 样本，保持同一距离和音量。',
+          en: 'Next: capture ${_modeSpecs[mode]!.label(i18n)} with the same distance and level.',
+          ja: '次は ${_modeSpecs[mode]!.label(i18n)} を同じ距離と音量で測ります。',
+          de: 'Nächster Schritt: ${_modeSpecs[mode]!.label(i18n)} mit gleichem Abstand und Pegel aufnehmen.',
+          fr: 'Étape suivante : mesurez ${_modeSpecs[mode]!.label(i18n)} avec la même distance et le même niveau.',
+          es: 'Siguiente: captura ${_modeSpecs[mode]!.label(i18n)} con la misma distancia y nivel.',
+          ru: 'Далее: запишите ${_modeSpecs[mode]!.label(i18n)} на той же дистанции и громкости.',
+        );
+      }
+    }
+    final weakest = _captures.values.reduce(
+      (a, b) => a.qualityScore <= b.qualityScore ? a : b,
+    );
+    return pickUiText(
+      i18n,
+      zh: '四项已完成。若要提高可比性，优先复测 ${_modeSpecs[weakest.mode]!.label(i18n)}。',
+      en: 'All four modes are complete. To improve comparability, retest ${_modeSpecs[weakest.mode]!.label(i18n)} first.',
+      ja: '4 つのモードが完了しました。比較精度を上げるなら ${_modeSpecs[weakest.mode]!.label(i18n)} を優先して再測します。',
+      de: 'Alle vier Modi sind vollständig. Für bessere Vergleichbarkeit zuerst ${_modeSpecs[weakest.mode]!.label(i18n)} erneut messen.',
+      fr: 'Les quatre modes sont terminés. Pour améliorer la comparaison, recommencez d’abord ${_modeSpecs[weakest.mode]!.label(i18n)}.',
+      es: 'Los cuatro modos están completos. Para mejorar la comparación, repite primero ${_modeSpecs[weakest.mode]!.label(i18n)}.',
+      ru: 'Все четыре режима завершены. Для лучшего сравнения сначала повторите ${_modeSpecs[weakest.mode]!.label(i18n)}.',
+    );
+  }
+
+  String _baselineHint(AppI18n i18n) {
+    if (_noiseFloorDbfs != null) {
+      return pickUiText(
+        i18n,
+        zh: '环境底噪 ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS，后续报告会用它估算信噪比。',
+        en: 'Room floor: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Later samples use it for SNR.',
+        ja: 'ノイズフロア: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS。以後のサンプルで SNR 推定に使います。',
+        de: 'Raumpegel: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Spätere Proben nutzen ihn für SNR.',
+        fr: 'Bruit de fond : ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Les autres mesures l’utilisent pour le SNR.',
+        es: 'Piso de ruido: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Las muestras posteriores lo usan para SNR.',
+        ru: 'Фон комнаты: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Позже он используется для SNR.',
+      );
+    }
+    return pickUiText(
+      i18n,
+      zh: '尚未建立环境底噪。先测噪声仪，低音/高音/持续的信噪比会更可信。',
+      en: 'No room floor yet. Measure noise first so low, high, and sustain SNR are more useful.',
+      ja: 'まだノイズフロアがありません。先に騒音を測ると、低音・高音・持続の SNR が役立ちます。',
+      de: 'Noch kein Raumpegel. Miss zuerst Geräusch, damit SNR für Tiefton, Hochton und Halten nützlicher wird.',
+      fr: 'Aucun bruit de fond pour l’instant. Mesurez le bruit d’abord pour rendre le SNR plus utile.',
+      es: 'Aún no hay piso de ruido. Mide ruido primero para que el SNR sea más útil.',
+      ru: 'Фон комнаты еще не измерен. Сначала измерьте шум, чтобы SNR был полезнее.',
     );
   }
 
@@ -2106,18 +2676,99 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
             ),
           ),
           const SizedBox(height: 10),
-          _AcousticProtocolPanel(
-            icon: spec.icon,
-            title: spec.label(i18n),
-            protocol: _protocolText(i18n),
-            readiness: _captureReadiness(i18n),
-            accent: _meterColor(),
+          _HumanSettingsSection(
+            title: pickUiText(
+              i18n,
+              zh: '采样设置',
+              en: 'Sampling settings',
+              ja: 'Sampling settings',
+              de: 'Sampling settings',
+              fr: 'Sampling settings',
+              es: 'Sampling settings',
+              ru: 'Sampling settings',
+            ),
+            subtitle: pickUiText(
+              i18n,
+              zh: '查看当前模式的采集步骤、准备条件和复测建议。',
+              en: 'Review the capture steps, readiness, and retest hints for the current mode.',
+              ja: 'Review the capture steps, readiness, and retest hints for the current mode.',
+              de: 'Review the capture steps, readiness, and retest hints for the current mode.',
+              fr: 'Review the capture steps, readiness, and retest hints for the current mode.',
+              es: 'Review the capture steps, readiness, and retest hints for the current mode.',
+              ru: 'Review the capture steps, readiness, and retest hints for the current mode.',
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _AcousticProtocolPanel(
+                  icon: spec.icon,
+                  title: spec.label(i18n),
+                  protocol: _protocolText(i18n),
+                  readiness: _captureReadiness(i18n),
+                  accent: _meterColor(),
+                ),
+                const SizedBox(height: 12),
+                _AcousticStatusBanner(
+                  icon: Icons.route_rounded,
+                  message: _baselineHint(i18n),
+                  color: theme.colorScheme.secondary,
+                ),
+                if ((_running && !_hasSeenFrame) ||
+                    _statusCode == 'no_pcm_frames')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _AcousticStatusBanner(
+                      icon: Icons.mic_none_rounded,
+                      message: pickUiText(
+                        i18n,
+                        zh: '濡傛灉鎵嬫満绔竴鐩存病鏈夋尝褰紝璇锋鏌ョ郴缁熸槸鍚︽妸楹﹀厠椋庤矾鐢卞埌钃濈墮鑰虫満銆侀殣绉佸紑鍏虫垨褰曞睍/閫氳瘽鍗犵敤。',
+                        en: 'If the phone shows no waveform, check Bluetooth headset routing, privacy toggles, and whether screen recording or a call is using the mic.',
+                        ja: 'If the phone shows no waveform, check Bluetooth headset routing, privacy toggles, and whether screen recording or a call is using the mic.',
+                        de: 'Wenn kein Signal erscheint, pr眉fe Bluetooth-Headset-Routing, Datenschutzschalter und ob Aufnahme oder Anruf das Mikrofon nutzt.',
+                        fr: 'Si aucune forme d鈥檕nde n鈥檃ppara卯t sur t茅l茅phone, v茅rifiez le routage Bluetooth, les r茅glages de confidentialit茅 et l鈥檜sage du micro par un appel ou un enregistrement.',
+                        es: 'Si el tel茅fono no muestra forma de onda, revisa el enrutamiento Bluetooth, la privacidad y si una llamada o grabaci贸n usa el micr贸fono.',
+                        ru: '袝褋谢懈 薪邪 褌械谢械褎芯薪械 薪械褌 胁芯谢薪褘, 锌褉芯胁械褉褜褌械 Bluetooth-屑邪褉褕褉褍褌, 薪邪褋褌褉芯泄泻懈 锌褉懈胁邪褌薪芯褋褌懈 懈 薪械 蟹邪薪褟褌 谢懈 屑懈泻褉芯褎芯薪 蟹胁芯薪泻芯屑 懈谢懈 蟹邪锌懈褋褜褞.',
+                      ),
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Text(
+                  pickUiText(
+                    i18n,
+                    zh: '澹板璁板綍锛氫綆闊抽珮闊虫椂淇濇寔鍗曚竴鎸佺画闊筹紝鎸佺画娴嬭瘯鏃朵繚鎸佸悓涓€闊抽珮锛屽櫔澹颁华鏃朵繚鎸佸畨闈欏苟杩滅椋庡櫔。',
+                    en: 'Tip: keep a single steady sound for low/high mode, hold one pitch for sustain mode, and stay quiet for the noise meter.',
+                    ja: 'Tip: keep a single steady sound for low/high mode, hold one pitch for sustain mode, and stay quiet for the noise meter.',
+                    de: 'Tip: keep a single steady sound for low/high mode, hold one pitch for sustain mode, and stay quiet for the noise meter.',
+                    fr: 'Astuce : garder un seul son stable pour le mode bas/haut, maintenir une hauteur pour le mode support et rester silencieux pour le compteur de bruit.',
+                    es: 'Sugerencia: mantener un solo sonido estable para el modo bajo/alto, mantener un campo para el modo de soporte, y mantener silencio para el medidor de ruido.',
+                    ru: '小芯胁械褌: 褋芯褏褉邪薪褟泄褌械 芯写懈薪 褍褋褌芯泄褔懈胁褘泄 蟹胁褍泻 写谢褟 薪懈蟹泻芯谐芯 / 胁褘褋芯泻芯谐芯 褉械卸懈屑邪, 褍写械褉卸懈胁邪泄褌械 芯写懈薪 褕邪谐 写谢褟 褉械卸懈屑邪 锌芯写写械褉卸邪薪懈褟 懈 褋芯褏褉邪薪褟泄褌械 褌懈褕懈薪褍 写谢褟 褕褍屑芯屑械褉邪.',
+                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: <Widget>[
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '状态',
+                  en: 'Status',
+                  ja: '状態',
+                  de: 'Status',
+                  fr: 'État',
+                  es: 'Estado',
+                  ru: 'Статус',
+                ),
+                value: _statusLabel(i18n),
+              ),
               ToolboxMetricCard(
                 label: pickUiText(
                   i18n,
@@ -2279,6 +2930,60 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
               ToolboxMetricCard(
                 label: pickUiText(
                   i18n,
+                  zh: '采样率',
+                  en: 'Sample rate',
+                  ja: 'Sample rate',
+                  de: 'Sample rate',
+                  fr: 'Échantillonnage',
+                  es: 'Muestreo',
+                  ru: 'Частота',
+                ),
+                value: _running || _activeRecorderProfileId != null
+                    ? '${(_activeSampleRate / 1000).toStringAsFixed(_activeSampleRate % 1000 == 0 ? 0 : 1)} kHz'
+                    : '--',
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '输入',
+                  en: 'Input',
+                  ja: 'Input',
+                  de: 'Input',
+                  fr: 'Entrée',
+                  es: 'Entrada',
+                  ru: 'Вход',
+                ),
+                value: _inputLabel(i18n),
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '模式',
+                  en: 'Stream',
+                  ja: 'Stream',
+                  de: 'Stream',
+                  fr: 'Flux',
+                  es: 'Flujo',
+                  ru: 'Поток',
+                ),
+                value: _profileLabel(i18n),
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '首帧',
+                  en: 'First frame',
+                  ja: 'First frame',
+                  de: 'First frame',
+                  fr: '1re trame',
+                  es: 'Primer frame',
+                  ru: 'Первый кадр',
+                ),
+                value: _formatFirstFrame(i18n),
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
                   zh: '样本',
                   en: 'Frames',
                   ja: 'Frames',
@@ -2289,8 +2994,35 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                 ),
                 value: '$_frameCount',
               ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '空帧',
+                  en: 'Blank frames',
+                  ja: 'Blank frames',
+                  de: 'Leere Frames',
+                  fr: 'Trames vides',
+                  es: 'Frames vacíos',
+                  ru: 'Пустые кадры',
+                ),
+                value: '$_emptyChunkCount',
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '启动尝试',
+                  en: 'Starts',
+                  ja: 'Starts',
+                  de: 'Starts',
+                  fr: 'Démarrages',
+                  es: 'Inicios',
+                  ru: 'Запуски',
+                ),
+                value: '$_streamRestartCount',
+              ),
             ],
           ),
+          const SizedBox(height: 12),
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -2356,37 +3088,6 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
               capture: activeCapture,
               label: _captureQualityLabel(i18n, activeCapture.qualityScore),
               accent: _meterColor(),
-            ),
-          ],
-          if (_error != null) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(
-              _error == 'microphone_permission_denied'
-                  ? pickUiText(
-                      i18n,
-                      zh: '麦克风权限被拒绝，请允许后再开始测试。',
-                      en: 'Microphone permission was denied. Allow it and try again.',
-                      ja: 'Microphone permission was denied. Allow it and try again.',
-                      de: 'Microphone permission was denied. Allow it and try again.',
-                      fr: 'La permission du microphone a été refusée. Permettez-le et essayez encore.',
-                      es: 'Se denegó el permiso de micrófono. Permítelo e intenta de nuevo.',
-                      ru: 'В разрешении микрофона было отказано. Разрешите и попробуйте еще раз.',
-                    )
-                  : _error == 'capture_too_short'
-                  ? pickUiText(
-                      i18n,
-                      zh: '样本过短，请至少采样 3 秒后加入报告。',
-                      en: 'The sample is too short. Capture at least 3 seconds before adding it to the report.',
-                      ja: 'The sample is too short. Capture at least 3 seconds before adding it to the report.',
-                      de: 'The sample is too short. Capture at least 3 seconds before adding it to the report.',
-                      fr: 'L\'échantillon est trop court. Capturez au moins 3 secondes avant de l\'ajouter au rapport.',
-                      es: 'La muestra es muy corta. Captura al menos 3 segundos antes de añadirlo al informe.',
-                      ru: 'Образец слишком короткий. Захватите не менее 3 секунд, прежде чем добавить его в отчет.',
-                    )
-                  : _error!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -2488,20 +3189,47 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            pickUiText(
-              i18n,
-              zh: '建议：低音/高音时保持单一持续音；持续测试时尽量保持同一音高；噪声仪时保持安静并远离风噪。',
-              en: 'Tip: keep a single steady sound for low/high mode, hold one pitch for sustain mode, and stay quiet for the noise meter.',
-              ja: 'Tip: keep a single steady sound for low/high mode, hold one pitch for sustain mode, and stay quiet for the noise meter.',
-              de: 'Tip: keep a single steady sound for low/high mode, hold one pitch for sustain mode, and stay quiet for the noise meter.',
-              fr: 'Astuce : garder un seul son stable pour le mode bas/haut, maintenir une hauteur pour le mode support et rester silencieux pour le compteur de bruit.',
-              es: 'Sugerencia: mantener un solo sonido estable para el modo bajo/alto, mantener un campo para el modo de soporte, y mantener silencio para el medidor de ruido.',
-              ru: 'Совет: сохраняйте один устойчивый звук для низкого / высокого режима, удерживайте один шаг для режима поддержания и сохраняйте тишину для шумомера.',
-            ),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+        ],
+      ),
+    );
+  }
+}
+
+class _AcousticStatusBanner extends StatelessWidget {
+  const _AcousticStatusBanner({
+    required this.icon,
+    required this.message,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String message;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: color,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -2844,6 +3572,45 @@ class _AcousticReportCaptureCard extends StatelessWidget {
               ToolboxMetricCard(
                 label: pickUiText(
                   i18n,
+                  zh: '有效声',
+                  en: 'Voiced',
+                  ja: 'Voiced',
+                  de: 'Stimmhaft',
+                  fr: 'Voisé',
+                  es: 'Sonoro',
+                  ru: 'Голос',
+                ),
+                value: '${(capture.voicedRatio * 100).round()}%',
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '动态',
+                  en: 'Range',
+                  ja: 'Range',
+                  de: 'Range',
+                  fr: 'Plage',
+                  es: 'Rango',
+                  ru: 'Диапазон',
+                ),
+                value: '${capture.dynamicRangeDb.toStringAsFixed(1)} dB',
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '峰均比',
+                  en: 'Crest',
+                  ja: 'Crest',
+                  de: 'Crest',
+                  fr: 'Crête',
+                  es: 'Cresta',
+                  ru: 'Пик/ср.',
+                ),
+                value: '${capture.crestFactorDb.toStringAsFixed(1)} dB',
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
                   zh: '削波',
                   en: 'Clipping',
                   ja: 'クリッピング',
@@ -2853,6 +3620,32 @@ class _AcousticReportCaptureCard extends StatelessWidget {
                   ru: 'клиппинг',
                 ),
                 value: '${(capture.clippingRatio * 100).toStringAsFixed(1)}%',
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '空白帧',
+                  en: 'Blank',
+                  ja: 'Blank',
+                  de: 'Leer',
+                  fr: 'Blanc',
+                  es: 'Vacío',
+                  ru: 'Пусто',
+                ),
+                value: '${(capture.emptyChunkRatio * 100).toStringAsFixed(1)}%',
+              ),
+              ToolboxMetricCard(
+                label: pickUiText(
+                  i18n,
+                  zh: '帧数',
+                  en: 'Frames',
+                  ja: 'Frames',
+                  de: 'Frames',
+                  fr: 'Trames',
+                  es: 'Frames',
+                  ru: 'Кадры',
+                ),
+                value: '${capture.sampleCount}',
               ),
             ],
           ),
