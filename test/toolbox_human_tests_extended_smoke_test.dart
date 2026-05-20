@@ -53,13 +53,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Moving symbol'), findsWidgets);
-    await tester.scrollUntilVisible(
-      find.text('Character set'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.tap(find.text('Moving symbol'), warnIfMissed: false);
     await tester.pumpAndSettle();
-
+    await tester.tap(find.text('Symbol settings'), warnIfMissed: false);
+    await tester.pumpAndSettle();
     expect(find.text('Character set'), findsOneWidget);
     expect(find.text('Confusable'), findsOneWidget);
     expect(find.text('Movement path'), findsOneWidget);
@@ -384,7 +381,9 @@ void main() {
         find.byKey(const ValueKey<String>('visual-link-ignore-path-switch')),
         findsOneWidget,
       );
-      await tester.tap(find.text('Icon-only match'), warnIfMissed: false);
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('visual-link-ignore-path-switch')),
+      );
       await tester.pumpAndSettle();
       expect(find.textContaining('Ignore route blocking'), findsOneWidget);
       expect(
@@ -413,10 +412,22 @@ void main() {
       expect(find.text('Analysis bands'), findsOneWidget);
       expect(find.text('Allow replay'), findsOneWidget);
       expect(find.text('Stop'), findsOneWidget);
-      await tester.tap(find.text('Sensitivity'), warnIfMissed: false);
+      final sensitivityMode = find.widgetWithText(ChoiceChip, 'Sensitivity');
+      await tester.scrollUntilVisible(
+        sensitivityMode,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(sensitivityMode, warnIfMissed: false);
       await tester.pumpAndSettle();
       expect(find.text('Threshold hint'), findsNothing);
-      await tester.tap(find.text('Spatial'), warnIfMissed: false);
+      final spatialMode = find.widgetWithText(ChoiceChip, 'Spatial');
+      await tester.scrollUntilVisible(
+        spatialMode,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(spatialMode, warnIfMissed: false);
       await tester.pumpAndSettle();
       expect(find.text('Direction count'), findsOneWidget);
       expect(find.text('Slider smoothing'), findsOneWidget);

@@ -1157,6 +1157,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
         const SizedBox(height: 12),
         _buildModes(context, i18n),
         const SizedBox(height: 12),
+        _buildSettings(context, i18n),
+        const SizedBox(height: 12),
         _buildStage(context, i18n),
         const SizedBox(height: 12),
         if (_mode == _ReactionMode.direction)
@@ -1165,8 +1167,6 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           _buildColorControls(context, i18n)
         else
           _buildPrimaryControls(context, i18n),
-        const SizedBox(height: 12),
-        _buildSettings(context, i18n),
         const SizedBox(height: 12),
         _buildTrail(context, i18n),
       ],

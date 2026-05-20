@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_187-HUMAN-TESTS-SETTINGS-FIRST-COLLAPSE-STYLE] - 2026-05-20
+
+### 原因
+- 用户要求先提交当前代码备份，再对人类测试中心各子模块做一轮规整化。
+- 多个人类测试子页仍把设置选项放在主舞台或操作区下方，移动端用户需要先越过舞台才能找到参数入口。
+- 共享折叠设置区的展开/收起 affordance 不够明显，和“设置可折叠”的视觉预期不匹配。
+
+### 修改
+- 已完成备份提交 `df7d5b2 chore: backup current toolbox and human tests work`。
+- 强化 `_HumanSettingsSection` 共享样式：新增设置图标承托、展开态高亮边框、圆形箭头按钮、头部底色和更稳定的展开分隔层。
+- 将手速、瞄准、听觉、动态视力、视觉搜索、拖拽、双任务切换、双手协调、色觉、视觉记忆、序列记忆、数字记忆、词汇记忆、打字、反应和声学实验等页面中的设置区上移到主舞台前。
+- 声学实验的采样指南和采集诊断前置到实时声学舞台上方，保持麦克风采集、诊断开关和报告计算逻辑不变。
+- 更新人类测试 smoke 中受设置区上移影响的定位方式，避免点到舞台下方模式入口时被滚动位置影响。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_*.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
+
+### 风险变更
+- 设置区位置变化会改变部分 widget 测试的滚动落点；本轮已同步调整目标 smoke 的查找方式。
+- 折叠卡片样式为共享组件变更，会影响所有人类测试设置区的视觉表现，但未改变各页面的状态来源、计时、输入、报告和业务判断。
+
 ## [Unreleased-PLAN_186-ACOUSTIC-LAB-CAPTURE-REDESIGN] - 2026-05-20
 
 ### 原因

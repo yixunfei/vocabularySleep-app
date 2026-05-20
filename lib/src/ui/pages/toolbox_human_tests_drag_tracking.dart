@@ -408,8 +408,6 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
           ],
         ),
         const SizedBox(height: 12),
-        _HumanPanel(child: _buildStage(context, i18n)),
-        const SizedBox(height: 12),
         _HumanSettingsSection(
           title: pickUiText(
             i18n,
@@ -433,6 +431,8 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
           ),
           child: _buildSettings(context, i18n),
         ),
+        const SizedBox(height: 12),
+        _HumanPanel(child: _buildStage(context, i18n)),
       ],
     );
   }

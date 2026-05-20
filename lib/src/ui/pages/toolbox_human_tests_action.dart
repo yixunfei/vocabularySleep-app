@@ -349,6 +349,8 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
           ],
         ),
         const SizedBox(height: 12),
+        _buildTapSettingsSection(i18n, theme),
+        const SizedBox(height: 12),
         _HumanPanel(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -450,96 +452,94 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              _HumanSettingsSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '手速设置',
-                  en: 'Tap settings',
-                  ja: 'Tap settings',
-                  de: 'Tap settings',
-                  fr: 'Paramètres de la touche',
-                  es: 'Ajustes',
-                  ru: 'Настройки касания',
-                ),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '选择玩法和挑战时长，运行中设置会锁定。',
-                  en: 'Choose mode and duration. Settings lock while running.',
-                  ja: 'モードと期間を選択します。実行中は設定がロックされます。',
-                  de: 'Choose mode and duration. Settings lock while running.',
-                  fr: 'Choisissez le mode et la durée. Réglages verrouillés pendant l\'exécution.',
-                  es: 'Elige el modo y la duración. Los ajustes se bloquean mientras corren.',
-                  ru: 'Выберите режим и продолжительность. Настройка замка во время бега.',
-                ),
-                initiallyExpanded: true,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      pickUiText(
-                        i18n,
-                        zh: '玩法模式',
-                        en: 'Game mode',
-                        ja: 'Game mode',
-                        de: 'Game mode',
-                        fr: 'Mode jeu',
-                        es: 'Modo de juego',
-                        ru: 'Режим игры',
-                      ),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _TapSpeedMode.values
-                          .map(
-                            (mode) => ChoiceChip(
-                              label: Text(_modeLabel(i18n, mode)),
-                              selected: _mode == mode,
-                              onSelected: _running
-                                  ? null
-                                  : (_) => _setMode(mode),
-                            ),
-                          )
-                          .toList(growable: false),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      pickUiText(
-                        i18n,
-                        zh: '挑战时长',
-                        en: 'Duration',
-                        ja: 'Duration',
-                        de: 'Duration',
-                        fr: 'Durée',
-                        es: 'Duración',
-                        ru: 'Продолжительность',
-                      ),
-                      style: theme.textTheme.labelLarge,
-                    ),
-                    Slider(
-                      value: _durationSeconds.toDouble(),
-                      min: 5,
-                      max: 30,
-                      divisions: 5,
-                      label: '$_durationSeconds s',
-                      onChanged: _running
-                          ? null
-                          : (value) => setState(
-                              () => _durationSeconds = value.round(),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTapSettingsSection(AppI18n i18n, ThemeData theme) {
+    return _HumanSettingsSection(
+      title: pickUiText(
+        i18n,
+        zh: '手速设置',
+        en: 'Tap settings',
+        ja: 'Tap settings',
+        de: 'Tap settings',
+        fr: 'Paramètres de la touche',
+        es: 'Ajustes',
+        ru: 'Настройки касания',
+      ),
+      subtitle: pickUiText(
+        i18n,
+        zh: '选择玩法和挑战时长，运行中设置会锁定。',
+        en: 'Choose mode and duration. Settings lock while running.',
+        ja: 'モードと期間を選択します。実行中は設定がロックされます。',
+        de: 'Choose mode and duration. Settings lock while running.',
+        fr: 'Choisissez le mode et la durée. Réglages verrouillés pendant l\'exécution.',
+        es: 'Elige el modo y la duración. Los ajustes se bloquean mientras corren.',
+        ru: 'Выберите режим и продолжительность. Настройка замка во время бега.',
+      ),
+      initiallyExpanded: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            pickUiText(
+              i18n,
+              zh: '玩法模式',
+              en: 'Game mode',
+              ja: 'Game mode',
+              de: 'Game mode',
+              fr: 'Mode jeu',
+              es: 'Modo de juego',
+              ru: 'Режим игры',
+            ),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _TapSpeedMode.values
+                .map(
+                  (mode) => ChoiceChip(
+                    label: Text(_modeLabel(i18n, mode)),
+                    selected: _mode == mode,
+                    onSelected: _running ? null : (_) => _setMode(mode),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            pickUiText(
+              i18n,
+              zh: '挑战时长',
+              en: 'Duration',
+              ja: 'Duration',
+              de: 'Duration',
+              fr: 'Durée',
+              es: 'Duración',
+              ru: 'Продолжительность',
+            ),
+            style: theme.textTheme.labelLarge,
+          ),
+          Slider(
+            value: _durationSeconds.toDouble(),
+            min: 5,
+            max: 30,
+            divisions: 5,
+            label: '$_durationSeconds s',
+            onChanged: _running
+                ? null
+                : (value) => setState(() => _durationSeconds = value.round()),
+          ),
+        ],
+      ),
     );
   }
 }

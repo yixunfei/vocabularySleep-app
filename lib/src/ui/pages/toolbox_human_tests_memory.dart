@@ -2074,6 +2074,69 @@ class _SequenceMemoryCardState extends State<_SequenceMemoryCard> {
           ],
         ),
         const SizedBox(height: 12),
+        _HumanSettingsSection(
+          title: pickUiText(
+            i18n,
+            zh: '序列设置',
+            en: 'Sequence settings',
+            ja: 'Sequence settings',
+            de: 'Sequence settings',
+            fr: 'Paramètres de séquence',
+            es: 'Ajustes de secuencia',
+            ru: 'Параметры последовательности',
+          ),
+          subtitle: pickUiText(
+            i18n,
+            zh: '开始新一轮前可调整图标数量。',
+            en: 'Adjust the icon count before starting a new round.',
+            ja: '新しいラウンドを開始する前に、アイコンの数を調整してください。',
+            de: 'Adjust the icon count before starting a new round.',
+            fr: 'Adjust the icon count before starting a new round.',
+            es: 'Ajuste el icono contar antes de comenzar una nueva ronda.',
+            ru: 'Отрегулируйте количество иконок перед началом нового раунда.',
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '图标数量',
+                        en: 'Icon count',
+                        ja: 'Icon count',
+                        de: 'Icon count',
+                        fr: 'Nombre d\'icônes',
+                        es: 'Cuenta Icon',
+                        ru: 'Счет икон',
+                      ),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '$_itemCount',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ],
+              ),
+              Slider(
+                value: _itemCount.toDouble(),
+                min: _minItemCount.toDouble(),
+                max: _maxItemCount.toDouble(),
+                divisions: _maxItemCount - _minItemCount,
+                label: '$_itemCount',
+                onChanged: (_showing || _input)
+                    ? null
+                    : (value) => _setItemCount(value.round()),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         _HumanPanel(
           child: Column(
             children: <Widget>[
@@ -2297,69 +2360,6 @@ class _SequenceMemoryCardState extends State<_SequenceMemoryCard> {
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '序列设置',
-            en: 'Sequence settings',
-            ja: 'Sequence settings',
-            de: 'Sequence settings',
-            fr: 'Paramètres de séquence',
-            es: 'Ajustes de secuencia',
-            ru: 'Параметры последовательности',
-          ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '开始新一轮前可调整图标数量。',
-            en: 'Adjust the icon count before starting a new round.',
-            ja: '新しいラウンドを開始する前に、アイコンの数を調整してください。',
-            de: 'Adjust the icon count before starting a new round.',
-            fr: 'Adjust the icon count before starting a new round.',
-            es: 'Ajuste el icono contar antes de comenzar una nueva ronda.',
-            ru: 'Отрегулируйте количество иконок перед началом нового раунда.',
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '图标数量',
-                        en: 'Icon count',
-                        ja: 'Icon count',
-                        de: 'Icon count',
-                        fr: 'Nombre d\'icônes',
-                        es: 'Cuenta Icon',
-                        ru: 'Счет икон',
-                      ),
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '$_itemCount',
-                    style: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ],
-              ),
-              Slider(
-                value: _itemCount.toDouble(),
-                min: _minItemCount.toDouble(),
-                max: _maxItemCount.toDouble(),
-                divisions: _maxItemCount - _minItemCount,
-                label: '$_itemCount',
-                onChanged: (_showing || _input)
-                    ? null
-                    : (value) => _setItemCount(value.round()),
               ),
             ],
           ),

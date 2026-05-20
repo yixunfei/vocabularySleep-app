@@ -1557,8 +1557,6 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       children: <Widget>[
         _HumanMetricWrap(metrics: _metrics(i18n)),
         const SizedBox(height: 12),
-        _HumanPanel(child: _buildStage(context, i18n)),
-        const SizedBox(height: 12),
         _HumanSettingsSection(
           title: pickUiText(
             i18n,
@@ -1583,6 +1581,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           initiallyExpanded: true,
           child: _buildSettings(context, i18n),
         ),
+        const SizedBox(height: 12),
+        _HumanPanel(child: _buildStage(context, i18n)),
       ],
     );
   }

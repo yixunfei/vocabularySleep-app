@@ -431,8 +431,6 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
           ],
         ),
         const SizedBox(height: 12),
-        _HumanPanel(child: _buildStage(context, i18n)),
-        const SizedBox(height: 12),
         _HumanSettingsSection(
           title: pickUiText(
             i18n,
@@ -456,6 +454,8 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
           ),
           child: _buildSettings(context, i18n),
         ),
+        const SizedBox(height: 12),
+        _HumanPanel(child: _buildStage(context, i18n)),
       ],
     );
   }

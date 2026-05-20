@@ -5020,6 +5020,8 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           ],
         ),
         const SizedBox(height: 12),
+        _buildScratchSettings(context, i18n, theme),
+        const SizedBox(height: 12),
         _HumanPanel(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -5206,8 +5208,6 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
-              _buildScratchSettings(context, i18n, theme),
             ],
           ),
         ),

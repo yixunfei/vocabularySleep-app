@@ -3669,6 +3669,81 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     );
   }
 
+  Widget _buildSamplingGuideSection(
+    AppI18n i18n,
+    ThemeData theme,
+    _MicModeSpec spec,
+    Color meterColor,
+  ) {
+    return _HumanSettingsSection(
+      title: pickUiText(
+        i18n,
+        zh: '采样指南',
+        en: 'Sampling guide',
+        ja: 'Sampling guide',
+        de: 'Sampling guide',
+        fr: 'Guide de mesure',
+        es: 'Guía de muestreo',
+        ru: 'Руководство',
+      ),
+      subtitle: _baselineHint(i18n),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _AcousticProtocolPanel(
+            icon: spec.icon,
+            title: spec.label(i18n),
+            protocol: _protocolText(i18n),
+            readiness: _captureReadiness(i18n),
+            accent: meterColor,
+          ),
+          const SizedBox(height: 10),
+          _AcousticStatusBanner(
+            icon: Icons.tips_and_updates_rounded,
+            message: pickUiText(
+              i18n,
+              zh: '低音/高音保持单一持续音；持续模式保持同一音高；噪声仪保持安静，并让手机远离风扇和桌面震动。',
+              en: 'For low and high modes, keep one steady sound. For sustain, hold one pitch. For the noise meter, stay quiet and keep the phone away from fans and table vibration.',
+              ja: '低音/高音は安定した一音を保ち、持続は同じ音高を伸ばします。騒音計では静かにし、風や机の振動を避けます。',
+              de: 'Halte bei tief/hoch einen gleichmäßigen Ton. Beim Halten bleibt eine Tonhöhe stabil. Für Geräusch bleib ruhig und meide Lüfter oder Tischvibration.',
+              fr: 'Gardez un son stable en grave/aigu, une hauteur en tenue, et le silence pour le bruit. Éloignez le téléphone des ventilateurs et vibrations.',
+              es: 'En bajo/agudo mantén un sonido estable. En sostenido mantén un tono. En ruido, guarda silencio y evita ventiladores o vibración.',
+              ru: 'Для низкого/высокого тона держите ровный звук. Для длительности держите высоту. Для шума сохраняйте тишину и избегайте вибрации.',
+            ),
+            color: theme.colorScheme.secondary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnosticsSection(AppI18n i18n) {
+    return _HumanSettingsSection(
+      title: pickUiText(
+        i18n,
+        zh: '采集诊断',
+        en: 'Capture diagnostics',
+        ja: 'Capture diagnostics',
+        de: 'Capture diagnostics',
+        fr: 'Diagnostic de capture',
+        es: 'Diagnóstico de captura',
+        ru: 'Диагностика',
+      ),
+      subtitle: pickUiText(
+        i18n,
+        zh: '查看输入源、首帧、空帧和兼容模式；真机无声时优先打开这里。',
+        en: 'Check input source, first frame, blank frames, and compatibility mode. Open this first if a real device stays silent.',
+        ja: '入力、初回フレーム、空フレーム、互換モードを確認します。実機で無音ならここを開きます。',
+        de: 'Prüfe Eingang, ersten Frame, Leerframes und Kompatibilitätsmodus, wenn ein Gerät stumm bleibt.',
+        fr: 'Vérifiez l’entrée, la première trame, les trames vides et le mode compatible si l’appareil reste muet.',
+        es: 'Revisa entrada, primer frame, frames vacíos y modo compatible si el dispositivo queda sin señal.',
+        ru: 'Проверьте вход, первый кадр, пустые кадры и режим совместимости, если устройство молчит.',
+      ),
+      initiallyExpanded: _error != null || _profileNoticeCode != null,
+      child: _buildDiagnostics(i18n),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
@@ -3692,6 +3767,10 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _buildModeSelector(i18n),
+          const SizedBox(height: 12),
+          _buildSamplingGuideSection(i18n, theme, spec, meterColor),
+          const SizedBox(height: 10),
+          _buildDiagnosticsSection(i18n),
           const SizedBox(height: 12),
           _AcousticLiveStage(
             icon: spec.icon,
@@ -3754,72 +3833,6 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
             completedText: '${_captures.length}/4',
             onOpen: _showProfessionalReport,
             i18n: i18n,
-          ),
-          const SizedBox(height: 12),
-          _HumanSettingsSection(
-            title: pickUiText(
-              i18n,
-              zh: '采样指南',
-              en: 'Sampling guide',
-              ja: 'Sampling guide',
-              de: 'Sampling guide',
-              fr: 'Guide de mesure',
-              es: 'Guía de muestreo',
-              ru: 'Руководство',
-            ),
-            subtitle: _baselineHint(i18n),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _AcousticProtocolPanel(
-                  icon: spec.icon,
-                  title: spec.label(i18n),
-                  protocol: _protocolText(i18n),
-                  readiness: _captureReadiness(i18n),
-                  accent: meterColor,
-                ),
-                const SizedBox(height: 10),
-                _AcousticStatusBanner(
-                  icon: Icons.tips_and_updates_rounded,
-                  message: pickUiText(
-                    i18n,
-                    zh: '低音/高音保持单一持续音；持续模式保持同一音高；噪声仪保持安静，并让手机远离风扇和桌面震动。',
-                    en: 'For low and high modes, keep one steady sound. For sustain, hold one pitch. For the noise meter, stay quiet and keep the phone away from fans and table vibration.',
-                    ja: '低音/高音は安定した一音を保ち、持続は同じ音高を伸ばします。騒音計では静かにし、風や机の振動を避けます。',
-                    de: 'Halte bei tief/hoch einen gleichmäßigen Ton. Beim Halten bleibt eine Tonhöhe stabil. Für Geräusch bleib ruhig und meide Lüfter oder Tischvibration.',
-                    fr: 'Gardez un son stable en grave/aigu, une hauteur en tenue, et le silence pour le bruit. Éloignez le téléphone des ventilateurs et vibrations.',
-                    es: 'En bajo/agudo mantén un sonido estable. En sostenido mantén un tono. En ruido, guarda silencio y evita ventiladores o vibración.',
-                    ru: 'Для низкого/высокого тона держите ровный звук. Для длительности держите высоту. Для шума сохраняйте тишину и избегайте вибрации.',
-                  ),
-                  color: theme.colorScheme.secondary,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          _HumanSettingsSection(
-            title: pickUiText(
-              i18n,
-              zh: '采集诊断',
-              en: 'Capture diagnostics',
-              ja: 'Capture diagnostics',
-              de: 'Capture diagnostics',
-              fr: 'Diagnostic de capture',
-              es: 'Diagnóstico de captura',
-              ru: 'Диагностика',
-            ),
-            subtitle: pickUiText(
-              i18n,
-              zh: '查看输入源、首帧、空帧和兼容模式；真机无声时优先打开这里。',
-              en: 'Check input source, first frame, blank frames, and compatibility mode. Open this first if a real device stays silent.',
-              ja: '入力、初回フレーム、空フレーム、互換モードを確認します。実機で無音ならここを開きます。',
-              de: 'Prüfe Eingang, ersten Frame, Leerframes und Kompatibilitätsmodus, wenn ein Gerät stumm bleibt.',
-              fr: 'Vérifiez l’entrée, la première trame, les trames vides et le mode compatible si l’appareil reste muet.',
-              es: 'Revisa entrada, primer frame, frames vacíos y modo compatible si el dispositivo queda sin señal.',
-              ru: 'Проверьте вход, первый кадр, пустые кадры и режим совместимости, если устройство молчит.',
-            ),
-            initiallyExpanded: _error != null || _profileNoticeCode != null,
-            child: _buildDiagnostics(i18n),
           ),
         ],
       ),

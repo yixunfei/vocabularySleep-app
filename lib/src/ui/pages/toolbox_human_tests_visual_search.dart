@@ -998,8 +998,6 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
       children: <Widget>[
         _HumanMetricWrap(metrics: _metricItems(i18n)),
         const SizedBox(height: 12),
-        _HumanPanel(child: _buildStage(context, i18n)),
-        const SizedBox(height: 12),
         _HumanSettingsSection(
           title: pickUiText(
             i18n,
@@ -1023,6 +1021,8 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
           ),
           child: _buildSettings(context, i18n),
         ),
+        const SizedBox(height: 12),
+        _HumanPanel(child: _buildStage(context, i18n)),
       ],
     );
   }

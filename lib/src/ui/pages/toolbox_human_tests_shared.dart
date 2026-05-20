@@ -463,71 +463,149 @@ class _HumanSettingsSectionState extends State<_HumanSettingsSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Container(
+    final borderColor = _expanded
+        ? colorScheme.primary.withValues(alpha: 0.44)
+        : colorScheme.outlineVariant.withValues(alpha: 0.88);
+    final headerTint = colorScheme.primary.withValues(
+      alpha: _expanded ? 0.10 : 0.055,
+    );
+    final iconTint = _expanded
+        ? colorScheme.primary.withValues(alpha: 0.18)
+        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.72);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOutCubic,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outlineVariant),
-        color: colorScheme.surface.withValues(alpha: 0.56),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor),
+        color: colorScheme.surface.withValues(alpha: 0.72),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: colorScheme.shadow.withValues(
+              alpha: _expanded ? 0.10 : 0.06,
+            ),
+            blurRadius: _expanded ? 18 : 12,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _toggle,
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            widget.title,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _toggle,
+                child: Ink(
+                  decoration: BoxDecoration(color: headerTint),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 11, 10, 11),
+                    child: Row(
+                      children: <Widget>[
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeInOutCubic,
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: iconTint,
+                            border: Border.all(
+                              color: colorScheme.primary.withValues(
+                                alpha: _expanded ? 0.22 : 0.12,
+                              ),
                             ),
                           ),
-                          if (widget.subtitle != null) ...<Widget>[
-                            const SizedBox(height: 3),
-                            Text(
-                              widget.subtitle!,
-                              style: theme.textTheme.bodySmall,
+                          child: Icon(
+                            Icons.tune_rounded,
+                            color: colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 11),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                widget.title,
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              if (widget.subtitle != null) ...<Widget>[
+                                const SizedBox(height: 3),
+                                Text(
+                                  widget.subtitle!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    height: 1.32,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeInOutCubic,
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _expanded
+                                ? colorScheme.primary.withValues(alpha: 0.16)
+                                : colorScheme.surface.withValues(alpha: 0.78),
+                            border: Border.all(
+                              color: colorScheme.primary.withValues(
+                                alpha: _expanded ? 0.24 : 0.14,
+                              ),
                             ),
-                          ],
-                        ],
-                      ),
+                          ),
+                          child: AnimatedRotation(
+                            turns: _expanded ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeInOutCubic,
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Icon(
-                      _expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      color: colorScheme.primary,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: widget.child,
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(horizontal: 14),
+                    color: colorScheme.primary.withValues(alpha: 0.14),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                    child: widget.child,
+                  ),
+                ],
+              ),
+              crossFadeState: _expanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 220),
+              sizeCurve: Curves.easeInOutCubic,
             ),
-            crossFadeState: _expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 180),
-            sizeCurve: Curves.easeOutCubic,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

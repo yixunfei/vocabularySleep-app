@@ -80,10 +80,11 @@
   - `toolbox_human_tests_memory.dart`: 黑猩猩测试、视觉记忆、序列记忆，补强视觉记忆结算报告、序列图标配置和输入点击反馈。
   - `toolbox_human_tests_visual.dart` / `toolbox_human_tests_visual_widgets.dart`: 色觉测试、混色匹配、报告统计列表与弱项建议。
   - `toolbox_human_tests_visual_search.dart` / `toolbox_human_tests_auditory.dart` / `toolbox_human_tests_auditory_lab.dart` / `toolbox_human_tests_switching.dart` / `toolbox_human_tests_drag_tracking.dart` / `toolbox_human_tests_bimanual.dart`: 视觉搜索（含找目标、找不同和连连看趣味模式）、听觉测试（含稳定临时文件播放、可调测试轮数、频率默认 10 轮、递进式频率/音量/节奏评估、灵敏度阈值、八向空间定位盘、拖拽方位指针、系统音量自动/手动校准，以及测试期禁用预听/重播和随机等待节奏）、声学实验（麦克风低音/高音/持续曲线、噪音分贝仪、移动端 PCM 采集自检、环境底噪基线、首帧/空帧状态和声学质控报告）、双任务切换、精细拖拽追踪和双手协调；其中双手协调已扩展为左右独立脑裂小游戏集合，支持画图、弹球、跳高三类自由组合，默认左右均为弹球，并补上默认关闭的单侧练习、随机几何一笔画节点/固定几何图案/连续描线判定、线段几何/最小角度/方向提示、弹球速率/球大小/多球/碰撞加速/随机障碍/拖尾/避遮挡挡板控制、横向移动平台跳高/平台宽度区间、难度预设和无限模式、手机默认横屏全屏、进入全屏即开局、手眼协调同款白底沉浸浮层、默认无限时长、轮数设置、窄屏同屏并排和同步窗口/长按充能结算。
-  - `toolbox_human_tests_dynamic_vision.dart` / `toolbox_human_tests_dynamic_vision_parts.dart` / `toolbox_human_tests_dynamic_vision_ui.dart`: 动态视力测试。
-  - `toolbox_human_tests_typing.dart` / `toolbox_human_tests_typing_copy.dart` / `toolbox_human_tests_typing_data.dart` / `toolbox_human_tests_typing_widgets.dart`: 打字测试训练状态、文案策略、语料库、折叠设置和报告 UI。
-  - `toolbox_human_tests_cognition.dart`: 斯特鲁普、运气测试、计算能力测试、持续注意力测试。
+- `toolbox_human_tests_dynamic_vision.dart` / `toolbox_human_tests_dynamic_vision_parts.dart` / `toolbox_human_tests_dynamic_vision_ui.dart`: 动态视力测试。
+- `toolbox_human_tests_typing.dart` / `toolbox_human_tests_typing_copy.dart` / `toolbox_human_tests_typing_data.dart` / `toolbox_human_tests_typing_widgets.dart`: 打字测试训练状态、文案策略、语料库、折叠设置和报告 UI。
+- `toolbox_human_tests_cognition.dart`: 斯特鲁普、运气测试、计算能力测试、持续注意力测试。
 - 当前能力:
+- 人类测试各子页已统一将折叠设置区前置到主舞台之前，并强化共享折叠卡片的展开/收起视觉语法，方便移动端先看状态、再调参数、最后开始操作。
 - 按 Human Benchmark 类条目组织 24 个本地趣味测试，覆盖反应、短时记忆、视觉搜索、听觉、声学实验、视觉辨识、手眼协调、双任务切换、打字、计算和持续注意力。
   - 反应测试升级为多模式实验室：保留经典按住松手，并新增方向滑动与颜色匹配模式；方向输入采用上/左/中/右/下 D-pad，支持中心或主舞台按住后滑向对应方向；方向滑动区域会局部接管手势，避免手机纵向页面滚动抢走上滑/下滑动作；支持轮次、信号节奏、平均/最快/准确率/连击/轨迹反馈。
   - 数字记忆升级为多模式训练：默认数字串复现，新增彩色数字目标、多数字单目标和计算式模式；彩色数字会在展示期和输入期明确提示本轮目标颜色；支持精确毫秒输入、随机停留浮动、随机位数、首位 0、相邻重复、颜色数量、目标组数和计算项数/乘法等细分设置，并在每轮提交后弹出本轮统计报告，由用户确认后再进入下一轮。

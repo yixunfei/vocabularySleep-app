@@ -149,6 +149,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ],
         ),
         const SizedBox(height: 12),
+        _buildSymbolSettings(context, i18n),
+        const SizedBox(height: 12),
         _HumanPanel(
           padding: EdgeInsets.zero,
           child: buildSymbolStage(context, i18n),
@@ -249,8 +251,6 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        _buildSymbolSettings(context, i18n),
       ],
     );
   }
@@ -729,6 +729,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ],
         ),
         const SizedBox(height: 12),
+        _buildBallSettings(context, i18n),
+        const SizedBox(height: 12),
         _HumanPanel(
           padding: EdgeInsets.zero,
           child: buildBallStage(context, i18n),
@@ -876,8 +878,6 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        _buildBallSettings(context, i18n),
       ],
     );
   }

@@ -103,6 +103,8 @@ extension _VerbalMemoryView on _VerbalMemoryCardState {
           ],
         ),
         const SizedBox(height: 12),
+        _buildSettings(context, i18n),
+        const SizedBox(height: 12),
         _HumanPanel(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -119,8 +121,6 @@ extension _VerbalMemoryView on _VerbalMemoryCardState {
               _buildModeInput(context, i18n),
               const SizedBox(height: 12),
               _buildSessionActions(context, i18n),
-              const SizedBox(height: 12),
-              _buildSettings(context, i18n),
             ],
           ),
         ),

@@ -1120,6 +1120,8 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
           ],
         ),
         const SizedBox(height: 12),
+        _buildSettings(context, i18n, difficultyLabel),
+        const SizedBox(height: 12),
         _HumanPanel(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1223,8 +1225,6 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                 const SizedBox(height: 12),
                 _buildRecentResults(i18n),
               ],
-              const SizedBox(height: 12),
-              _buildSettings(context, i18n, difficultyLabel),
             ],
           ),
         ),
