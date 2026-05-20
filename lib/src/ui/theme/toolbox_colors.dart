@@ -8,6 +8,7 @@ abstract class ToolboxColors {
   static const soundAccent = Color(0xFF6E9BC3);
   static const harpAccent = Color(0xFF8A84D6);
   static const bowlsAccent = Color(0xFF6D8E7A);
+  static const locatorAccent = Color(0xFF0F9F9A);
   static const beatsAccent = Color(0xFF61A78A);
   static const woodfishAccent = Color(0xFFB36E3D);
   static const schulteAccent = Color(0xFF5B88D6);

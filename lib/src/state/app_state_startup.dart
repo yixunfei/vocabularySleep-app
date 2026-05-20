@@ -313,6 +313,22 @@ extension _AppStateStartup on AppState {
     _startupStore.setStartupTodoPromptEnabled(enabled);
   }
 
+  void _setTodoSystemRemindersEnabledImpl(bool enabled) {
+    if (_focusService.todoSystemRemindersEnabled == enabled) {
+      return;
+    }
+    _focusService.setTodoSystemRemindersEnabled(enabled);
+    _notifyStateChanged();
+  }
+
+  void _setToolboxAutoAdjustSystemVolumeEnabledImpl(bool enabled) {
+    if (_settings.loadToolboxAutoAdjustSystemVolumeEnabled() == enabled) {
+      return;
+    }
+    _settings.saveToolboxAutoAdjustSystemVolumeEnabled(enabled);
+    _notifyStateChanged();
+  }
+
   void _suppressStartupTodoPromptForTodayImpl() {
     final today = _todayDateKey();
     _startupStore.suppressStartupTodoPromptForDate(today);

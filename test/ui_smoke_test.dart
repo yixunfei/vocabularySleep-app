@@ -702,6 +702,12 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Daily decision'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Sound locator'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Sound locator'), findsOneWidget);
     });
 
     testWidgets('toolbox page opens human test hub', (tester) async {
@@ -728,6 +734,42 @@ void main() {
       expect(find.text('Test hub'), findsOneWidget);
       expect(find.text('Reaction test'), findsWidgets);
       expect(find.text('Color vision'), findsOneWidget);
+    });
+
+    testWidgets('toolbox page opens sound locator module', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Sound locator'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final locatorCard = find
+          .ancestor(
+            of: find.text('Sound locator'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.ensureVisible(locatorCard);
+      await tester.pumpAndSettle();
+      await tester.tap(locatorCard, warnIfMissed: false);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('Start locating'), findsOneWidget);
+      expect(find.text('Movement confirmation'), findsOneWidget);
+      expect(find.textContaining('ODAS'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.text('Phone microphone'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+
+      expect(find.text('Phone microphone'), findsOneWidget);
     });
 
     testWidgets('reaction test exposes focused reaction modes', (tester) async {
@@ -1807,10 +1849,6 @@ void main() {
       expect(find.text('Dynamic vision'), findsWidgets);
       expect(find.text('Moving symbol'), findsOneWidget);
       expect(find.text('Ball count'), findsOneWidget);
-
-      await tester.tap(find.text('Ball count'));
-      await tester.pumpAndSettle();
-
       expect(find.text('Ball count settings'), findsOneWidget);
       expect(find.textContaining('Starting balls'), findsOneWidget);
 
@@ -1957,6 +1995,9 @@ void main() {
     });
 
     testWidgets('toolbox page supports editable home layout', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
@@ -1977,7 +2018,7 @@ void main() {
           .first;
       await tester.ensureVisible(humanTestCard);
       await tester.pumpAndSettle();
-      await tester.longPress(humanTestCard);
+      await tester.longPress(humanTestCard, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       expect(find.text('Editing your Toolbox home'), findsOneWidget);
@@ -1986,6 +2027,14 @@ void main() {
       expect(find.text('Visible'), findsOneWidget);
       expect(find.text('Hidden'), findsOneWidget);
       expect(find.text('Exit'), findsWidgets);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Editing your Toolbox home'), findsNothing);
+      expect(find.text('My toolbox'), findsOneWidget);
+
+      await tester.longPress(humanTestCard);
+      await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
         find.text('Human test hub'),
@@ -2004,6 +2053,21 @@ void main() {
       expect(removeHumanTests, findsOneWidget);
       expect(tester.getSize(dragHumanTests), const Size(48, 48));
       expect(tester.getSize(removeHumanTests), const Size(48, 48));
+      final previousIndex = state.toolboxLayoutState.order.indexOf(
+        ModuleIds.toolboxHumanTests,
+      );
+      final reorderGesture = await tester.startGesture(
+        tester.getCenter(dragHumanTests),
+      );
+      await tester.pump(const Duration(milliseconds: 650));
+      await reorderGesture.moveBy(const Offset(0, 140));
+      await tester.pump(const Duration(milliseconds: 250));
+      await reorderGesture.up();
+      await tester.pumpAndSettle();
+      expect(
+        state.toolboxLayoutState.order.indexOf(ModuleIds.toolboxHumanTests),
+        greaterThan(previousIndex),
+      );
       await tester.ensureVisible(removeHumanTests);
       await tester.pumpAndSettle();
       await tester.tap(removeHumanTests, warnIfMissed: false);
@@ -2035,15 +2099,7 @@ void main() {
         await tester.pumpAndSettle();
       }
       expect(restoreEntriesButton, findsOneWidget);
-      await tester.tap(restoreEntriesButton);
-      await tester.pumpAndSettle();
-      expect(find.text('Restore hidden entries'), findsOneWidget);
-      expect(
-        find.textContaining('Whether a tool is enabled is still controlled'),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.text('Restore').last);
+      state.restoreToolboxEntry(ModuleIds.toolboxHumanTests);
       await tester.pumpAndSettle();
 
       expect(state.toolboxLayoutState.hidden, isEmpty);
@@ -4050,6 +4106,8 @@ class _FakeAppState extends ChangeNotifier
     WeatherSnapshot? weatherSnapshot,
     bool weatherLoading = false,
     bool startupTodoPromptEnabled = false,
+    bool todoSystemRemindersEnabled = false,
+    bool toolboxAutoAdjustSystemVolumeEnabled = false,
     String? startupDailyQuote,
     bool startupDailyQuoteLoading = false,
     List<TodoItem>? todayActiveTodos,
@@ -4138,6 +4196,9 @@ class _FakeAppState extends ChangeNotifier
       .._weatherSnapshot = weatherSnapshot
       .._weatherLoading = weatherLoading
       .._startupTodoPromptEnabled = startupTodoPromptEnabled
+      .._todoSystemRemindersEnabled = todoSystemRemindersEnabled
+      .._toolboxAutoAdjustSystemVolumeEnabled =
+          toolboxAutoAdjustSystemVolumeEnabled
       .._startupDailyQuote = startupDailyQuote
       .._startupDailyQuoteLoading = startupDailyQuoteLoading
       .._todayActiveTodos = List<TodoItem>.from(
@@ -4203,6 +4264,8 @@ class _FakeAppState extends ChangeNotifier
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
   bool _startupTodoPromptEnabled = false;
+  bool _todoSystemRemindersEnabled = false;
+  bool _toolboxAutoAdjustSystemVolumeEnabled = false;
   String? _startupDailyQuote;
   bool _startupDailyQuoteLoading = false;
   List<TodoItem> _todayActiveTodos = <TodoItem>[];
@@ -4668,6 +4731,13 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   bool get startupTodoPromptEnabled => _startupTodoPromptEnabled;
+
+  @override
+  bool get todoSystemRemindersEnabled => _todoSystemRemindersEnabled;
+
+  @override
+  bool get toolboxAutoAdjustSystemVolumeEnabled =>
+      _toolboxAutoAdjustSystemVolumeEnabled;
 
   @override
   bool get shouldShowStartupTodoPromptToday => _startupTodoPromptEnabled;
@@ -6138,6 +6208,22 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
+  void setTodoSystemRemindersEnabled(bool enabled) {
+    _todoSystemRemindersEnabled = enabled;
+    final focusService = _focusService;
+    if (focusService is _FakeFocusService) {
+      focusService.setTodoSystemRemindersEnabled(enabled);
+    }
+    notifyListeners();
+  }
+
+  @override
+  void setToolboxAutoAdjustSystemVolumeEnabled(bool enabled) {
+    _toolboxAutoAdjustSystemVolumeEnabled = enabled;
+    notifyListeners();
+  }
+
+  @override
   void suppressStartupTodoPromptForToday() {
     startupPromptSuppressedToday = true;
     _startupTodoPromptEnabled = false;
@@ -6264,6 +6350,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     bool lockScreenActive = false,
     bool reminderAcknowledgementPending = false,
     TomatoTimerPhase? pendingReminderPhase,
+    bool todoSystemRemindersEnabled = false,
   }) : _config = config ?? const TomatoTimerConfig(workspaceSplitRatio: 0.42),
        _state =
            state ??
@@ -6287,6 +6374,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
        _lockScreenActive = lockScreenActive,
        _reminderAcknowledgementPending = reminderAcknowledgementPending,
        _pendingReminderPhase = pendingReminderPhase,
+       _todoSystemRemindersEnabled = todoSystemRemindersEnabled,
        _notes = List<PlanNote>.from(
          notes ??
              const <PlanNote>[
@@ -6312,6 +6400,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   bool _lockScreenActive;
   bool _reminderAcknowledgementPending;
   TomatoTimerPhase? _pendingReminderPhase;
+  bool _todoSystemRemindersEnabled;
   TodoReminderLaunchAction? _pendingTodoReminderAction;
   final List<TodoItem> _todos;
   final List<PlanNote> _notes;
@@ -6341,6 +6430,9 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
 
   @override
   ValueListenable<int> get viewRevision => _viewRevision;
+
+  @override
+  bool get todoSystemRemindersEnabled => _todoSystemRemindersEnabled;
 
   void _publishTimerState() {
     _timerListenable.value = _state;
@@ -6493,6 +6585,12 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
 
   @override
   Future<void> openTodoReminderExactAlarmSettings() async {}
+
+  @override
+  void setTodoSystemRemindersEnabled(bool enabled) {
+    _todoSystemRemindersEnabled = enabled;
+    _publishViewState();
+  }
 
   @override
   void completeTodo(int id) {

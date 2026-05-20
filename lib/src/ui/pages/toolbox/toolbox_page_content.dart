@@ -12,6 +12,7 @@ import '../toolbox_mind_tools.dart';
 import '../toolbox_sleep_assistant_page.dart';
 import '../toolbox_singing_bowls_tool.dart';
 import '../toolbox_soothing_music_v2_page.dart';
+import '../toolbox_sound_locator_tool.dart';
 import '../toolbox_sound_tools.dart';
 import '../toolbox_zen_sand_tool.dart';
 import 'toolbox_page_models.dart';
@@ -204,6 +205,18 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           icon: Icons.blur_circular_rounded,
           accent: ToolboxColors.bowlsAccent,
           pageBuilder: () => const SingingBowlsToolPage(),
+        ),
+        ToolboxEntryData(
+          moduleId: ModuleIds.toolboxSoundLocator,
+          title: pickUiText(i18n, zh: '声源定位', en: 'Sound locator'),
+          subtitle: pickUiText(
+            i18n,
+            zh: '用麦克风阵列确认声源方向，并在空间舞台中给出指引。',
+            en: 'Confirm sound direction with mic arrays and spatial guidance.',
+          ),
+          icon: Icons.spatial_audio_rounded,
+          accent: ToolboxColors.locatorAccent,
+          pageBuilder: () => const SoundLocatorToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxFocusBeats,

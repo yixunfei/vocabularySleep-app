@@ -1,5 +1,115 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_186-ACOUSTIC-LAB-CAPTURE-REDESIGN] - 2026-05-20
+
+### 原因
+- 用户反馈工具箱-人类测试中心-声学实验完全不可用：打开麦克风并发声后仍监测不到任何声音。
+- 现有声学实验页把采样说明、实时指标、诊断信息和报告入口混在同一层级，移动端首屏难以判断状态和下一步。
+
+### 修改
+- 声学实验录音配置改为稳定输入优先：默认从系统推荐麦克风输入开始，再回退标准麦克风、语音识别兼容模式和原始麦克风。
+- 启动链路新增“有效声音信号”判定：无 PCM 帧或连续数字静音时会自动切换到下一个输入源，不再停留在“录音已启动但没有声音”的假成功状态。
+- 新增 `record` 幅度流兜底显示：当 PCM 帧短暂不可用但系统仍能返回幅度时，页面仍可展示实时 dBFS、电平曲线和基础样本。
+- 声学实验主卡重做为模式选择、实时输入舞台、主操作、核心指标、报告摘要、采样指南和采集诊断的分层结构。
+- 采集诊断新增“兼容输入优先”开关，便于真机上优先使用语音识别输入绕过设备音源兼容问题。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_auditory_lab.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- 额外尝试运行完整 `test/toolbox_human_tests_extended_smoke_test.dart`，当前被既有动态视力用例阻断：`dynamic vision symbol mode exposes sets paths and report` 在 `scrollUntilVisible` 阶段找不到 scrollable。
+
+### 风险变更
+- 默认输入更偏可用性，部分设备上的自动增益可能影响绝对电平可比性；报告仍定位为同设备练习、环境观察和前后对比，不作为医学或专业声级计结果。
+- 若系统级权限、隐私开关、通话/录屏占用或蓝牙路由阻断了所有输入源，页面会明确报错并提示检查系统设置。
+
+## [Unreleased-PLAN_185-PERMISSION-CONSENT-GUARDRAILS] - 2026-05-19
+
+### 原因
+- 专注/放松待办提醒会在后台创建系统级提醒，但现有流程没有在首次使用前明确说明，也缺少可在设置里关闭的统一开关。
+- 人类测试中心声学实验会自动读取并修改系统媒体音量，但现有流程没有在使用前给出明确提示，也缺少禁用后再引导快捷开启的入口。
+
+### 修改
+- 新增“待办系统提醒”和“声学测试自动调整系统音量”两项持久化开关，默认关闭。
+- 专注待办编辑器在关闭系统提醒时会显示独立说明卡，并提供快捷开启按钮；开启后再继续走通知权限/精确闹钟提示。
+- 声学测试音量卡在关闭自动调音时会先显示说明卡与快捷开启按钮；开启后才会继续读取与自动调整系统音量。
+- 设置中心新增“权限与系统操作”分组，集中控制两项能力的启用与禁用。
+- `FocusService` 在总开关关闭时不再静默创建本地提醒，并在关闭后清理本地提醒同步。
+
+### 验证
+- `flutter test test/settings_service_test.dart`
+- `flutter test test/focus_service_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter analyze`（仍有仓库既有 warning/info；本轮新增的抽象成员错误已修复，当前无新增 error）
+
+### 风险变更
+- 新用户和升级用户默认都需要先手动开启这两项系统级能力，旧的本地提醒不会自动延续，属于有意的权限收口。
+
+## [Unreleased-PLAN_184-TOOLBOX-MOBILE-DRAG-AND-BACK-FIX] - 2026-05-19
+
+### 原因
+- 用户反馈工具箱首页条目管理在手机真机上与 PC 表现不一致：未长按时滑动屏幕也会误触拖动、编辑态松手后位置不稳定、返回键会直接退出应用而不是先退出编辑模式。
+
+### 修改
+- 工具箱首页普通态的快捷入口拖拽改为长按触发，避免手指滚动列表时把条目直接拖起。
+- 工具箱编辑态的排序手柄改为长按后再拖动，并移除整卡长按拖入快捷入口与重排手势的竞争，优先保证移动端重排稳定落位。
+- 工具箱页接入 `PopScope`：编辑模式下按返回会先退出编辑模式，再恢复普通首页。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page supports editable home layout"`
+
+### 风险变更
+- 编辑态不再支持直接拖整张卡片到快捷入口区；如需管理快捷入口，可在普通态长按拖入，或使用顶部 `Manage` 面板。
+
+## [Unreleased-PLAN_183-HUMAN-TESTS-ORDER-DYNAMIC-VISION-LINK-MATCH] - 2026-05-19
+
+### 原因
+- 用户希望把工具箱-人类测试中心的首屏模块顺序调整得更贴近常用优先级，双列布局下先看到反应、视觉记忆、动态视力、摇杆协调等核心模块。
+- 用户希望动态视力进入后默认直接展示“小球数量”模式，而不是先落在字符识别。
+- 用户反馈视觉搜索连连看在出现相同外观元素时，仍可能因为内部配对编号不同而判定不能匹配，这和玩家看到的“它们明明一样”不一致。
+
+### 修改
+- 调整人类测试中心默认双列入口顺序，前排优先展示：反应、视觉记忆、动态视力、摇杆协调、手眼协调、色觉测试、序列记忆、黑猩猩测试、斯特鲁普、双手协调、运气测试、时间感知、瞄准等模块。
+- 动态视力默认模式改为“小球数量”，进入页面后首屏直接展示对应设置与舞台说明；字符识别模式仍保留原有功能和切换入口。
+- 修复视觉搜索连连看配对判定：从内部 `pairId` 匹配改为基于用户可见的图案与颜色外观匹配，避免相同元素因内部编号不同而误判。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_visual_search.dart test/toolbox_human_tests_extended_smoke_test.dart test/ui_smoke_test.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings"`
+
+### 风险变更
+- 人类测试中心入口排序仍是页面内默认顺序；用户长按拖动后的会话内排序行为不变，重新进入页面后仍会回到新的默认顺序。
+- 连连看当前把“可见外观一致”视为同类元素，规则更贴近用户感知；若后续引入更复杂的同图不同层机制，需要同步补充新的视觉区分语义。
+
+## [Unreleased-PLAN_182-SOUND-LOCATOR-MOBILE-MOVE] - 2026-05-19
+
+### 原因
+- 工具箱缺少面向复杂环境的声源定位工具；用户需求包含多声源确认、立体空间指引和回响场景，直接从零实现专业级阵列定位风险过高。
+- 产品主要运行在手机端，需要移除“外接同步麦克风阵列”为前提的表达，改为通过手机自带麦克风和多位置移动采样确认声源区域。
+
+### 新增
+- 新增工具箱“声源定位”入口、模块注册、模块管理标签和独立主题色。
+- 新增声源定位服务层，默认使用手机移动确认模型，并预留 ODAS tracked source 到 `azimuth/elevation/confidence/sourceId` 的可选归一化入口。
+- 新增手机端 PCM 分析：双声道输入使用 TDOA 粗略估计水平方位，单声道输入通过多位置采样的强度、SNR 和回响风险逐步确认声源区域。
+- 新增声源定位页面，包含主舞台空间指引、监听控制、记录当前位置、下一步移动提示、采样点列表、多声源候选列表和 SNR/回响风险。
+
+### 修改
+- 更新 toolbox 模块文档和项目说明，明确手机内置麦克风足够作为默认入口，但需要用户移动采集多个位置；ODAS/阵列输出只作为高级可选证据。
+- 工具箱入口聚合测试补充“Sound locator”可见性和进入页面的 smoke 覆盖。
+
+### 验证
+- `dart format lib/src/services/toolbox_sound_locator_service.dart lib/src/ui/pages/toolbox_sound_locator_tool.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/theme/toolbox_colors.dart lib/src/ui/module/module_access.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart test/toolbox_sound_locator_service_test.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/services/toolbox_sound_locator_service.dart lib/src/ui/pages/toolbox_sound_locator_tool.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/theme/toolbox_colors.dart lib/src/ui/module/module_access.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart test/toolbox_sound_locator_service_test.dart test/ui_smoke_test.dart`
+- `flutter test test/toolbox_sound_locator_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens sound locator module"`
+
+### 风险变更
+- 手机静止单点采样无法可靠确认 3D 方位；本轮改为通过多位置采样收敛声源区域，并在页面显示置信度、采样点数量和下一步移动建议。
+- 多声源、强回响和目标声源不持续时仍会降低确认质量；当前结果不作为安防、医疗、法律或工业定位依据。
+
 ## [Unreleased-PLAN_180-AUDITORY-LAB-COLLAPSIBLE-SETTINGS] - 2026-05-19
 
 ### 原因

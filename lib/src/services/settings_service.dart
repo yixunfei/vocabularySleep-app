@@ -24,6 +24,10 @@ class SettingsService {
       'remoteResourcePrewarmCompletedV1';
   static const String moduleTogglesKey = 'module_toggles_v1';
   static const String toolboxLayoutKey = 'toolbox_layout_v1';
+  static const String todoSystemRemindersEnabledKey =
+      'todo_system_reminders_enabled_v1';
+  static const String toolboxAutoAdjustSystemVolumeEnabledKey =
+      'toolbox_auto_adjust_system_volume_enabled_v1';
 
   final SettingsStoreRepository _store;
 
@@ -110,6 +114,25 @@ class SettingsService {
 
   void saveStartupTodoPromptEnabled(bool enabled) {
     _store.setSetting('startupTodoPromptEnabled', enabled ? '1' : '0');
+  }
+
+  bool loadTodoSystemRemindersEnabled() {
+    return _store.getSetting(todoSystemRemindersEnabledKey) == '1';
+  }
+
+  void saveTodoSystemRemindersEnabled(bool enabled) {
+    _store.setSetting(todoSystemRemindersEnabledKey, enabled ? '1' : '0');
+  }
+
+  bool loadToolboxAutoAdjustSystemVolumeEnabled() {
+    return _store.getSetting(toolboxAutoAdjustSystemVolumeEnabledKey) == '1';
+  }
+
+  void saveToolboxAutoAdjustSystemVolumeEnabled(bool enabled) {
+    _store.setSetting(
+      toolboxAutoAdjustSystemVolumeEnabledKey,
+      enabled ? '1' : '0',
+    );
   }
 
   String? loadStartupTodoPromptSuppressedDate() {

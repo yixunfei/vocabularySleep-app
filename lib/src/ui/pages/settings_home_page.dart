@@ -162,6 +162,86 @@ class SettingsHomePage extends ConsumerWidget {
                   Text(
                     pickUiText(
                       i18n,
+                      zh: '权限与系统操作',
+                      en: 'Permissions & system actions',
+                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '集中管理会触发系统通知、后台提醒或修改系统设置的功能。关闭后，下次使用对应功能时会提示快捷开启。',
+                      en: 'Manage features that create system notifications, background reminders, or change system settings. When off, the next use shows a quick-enable prompt.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: state.todoSystemRemindersEnabled,
+                    title: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '允许待办系统提醒',
+                        en: 'Allow system todo reminders',
+                      ),
+                    ),
+                    subtitle: Text(
+                      state.todoSystemRemindersEnabled
+                          ? pickUiText(
+                              i18n,
+                              zh: '已开启。专注/放松待办可在后台注册系统通知；首次使用仍需系统通知权限。',
+                              en: 'Enabled. Focus and relaxation todos may register background system notifications; first use can still require notification permission.',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '已关闭。待办时间只保存在应用内，不会创建后台通知。',
+                              en: 'Disabled. Todo times stay inside the app and no background notification is scheduled.',
+                            ),
+                    ),
+                    onChanged: state.setTodoSystemRemindersEnabled,
+                  ),
+                  const SizedBox(height: 4),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: state.toolboxAutoAdjustSystemVolumeEnabled,
+                    title: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '允许声学测试自动调整系统音量',
+                        en: 'Allow acoustic auto volume adjustment',
+                      ),
+                    ),
+                    subtitle: Text(
+                      state.toolboxAutoAdjustSystemVolumeEnabled
+                          ? pickUiText(
+                              i18n,
+                              zh: '已开启。声学测试会先检查音量，并在可自动调整的平台上把媒体音量调到建议范围。',
+                              en: 'Enabled. Acoustic tests check volume and may set media volume to the recommended range on supported platforms.',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '已关闭。声学测试不会自动修改系统媒体音量，只会提示手动校准或快捷开启。',
+                              en: 'Disabled. Acoustic tests will not change system media volume automatically and will show manual calibration or quick enable.',
+                            ),
+                    ),
+                    onChanged: state.setToolboxAutoAdjustSystemVolumeEnabled,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    pickUiText(
+                      i18n,
                       zh: '当前配置摘要',
                       en: 'Current summary',
                       ja: '現在の概要',

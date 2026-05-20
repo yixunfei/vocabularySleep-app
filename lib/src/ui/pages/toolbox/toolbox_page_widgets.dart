@@ -173,7 +173,7 @@ class _ToolboxEntryTile extends StatelessWidget {
     if (!enableQuickDrag || editing) {
       return card;
     }
-    return Draggable<ToolboxEntryData>(
+    return LongPressDraggable<ToolboxEntryData>(
       key: ValueKey<String>('toolbox_entry_draggable_${entry.moduleId}'),
       data: entry,
       feedback: Material(

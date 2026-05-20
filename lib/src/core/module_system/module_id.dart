@@ -15,6 +15,7 @@ class ModuleIds {
   static const String toolboxSoothingMusic = 'toolbox.soothing_music';
   static const String toolboxSoundDeck = 'toolbox.sound_deck';
   static const String toolboxSingingBowls = 'toolbox.singing_bowls';
+  static const String toolboxSoundLocator = 'toolbox.sound_locator';
   static const String toolboxFocusBeats = 'toolbox.focus_beats';
   static const String toolboxWoodfish = 'toolbox.woodfish';
   static const String toolboxSchulteGrid = 'toolbox.schulte_grid';
@@ -38,6 +39,7 @@ class ModuleIds {
     toolboxSoothingMusic,
     toolboxSoundDeck,
     toolboxSingingBowls,
+    toolboxSoundLocator,
     toolboxFocusBeats,
     toolboxWoodfish,
     toolboxSchulteGrid,

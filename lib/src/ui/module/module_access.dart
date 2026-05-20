@@ -38,6 +38,11 @@ String localizedModuleLabel(AppI18n i18n, String moduleId) {
       zh: '疗愈音钵',
       en: 'Healing bowls',
     ),
+    ModuleIds.toolboxSoundLocator => pickUiText(
+      i18n,
+      zh: '声源定位',
+      en: 'Sound locator',
+    ),
     ModuleIds.toolboxFocusBeats => pickUiText(
       i18n,
       zh: '专注节拍',

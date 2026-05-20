@@ -105,6 +105,21 @@ void main() {
     expect(restored.loadStartupTodoPromptSuppressedDate(), '2026-03-16');
   });
 
+  test('system action consent toggles persist through SettingsService', () {
+    final store = _MemorySettingsStoreRepository();
+    final settings = createSettings(store);
+
+    expect(settings.loadTodoSystemRemindersEnabled(), isFalse);
+    expect(settings.loadToolboxAutoAdjustSystemVolumeEnabled(), isFalse);
+
+    settings.saveTodoSystemRemindersEnabled(true);
+    settings.saveToolboxAutoAdjustSystemVolumeEnabled(true);
+
+    final restored = createSettings(store);
+    expect(restored.loadTodoSystemRemindersEnabled(), isTrue);
+    expect(restored.loadToolboxAutoAdjustSystemVolumeEnabled(), isTrue);
+  });
+
   test('remembered words persist through SettingsService', () {
     final store = _MemorySettingsStoreRepository();
     final settings = createSettings(store);

@@ -123,6 +123,24 @@ class FocusService extends ChangeNotifier {
     return _todoReminder.consumePendingTodoAction();
   }
 
+  bool get todoSystemRemindersEnabled =>
+      _settings.loadTodoSystemRemindersEnabled();
+
+  void setTodoSystemRemindersEnabled(bool enabled) {
+    if (todoSystemRemindersEnabled == enabled) {
+      return;
+    }
+    _settings.saveTodoSystemRemindersEnabled(enabled);
+    if (_initialized) {
+      if (enabled) {
+        unawaited(_syncAllTodoReminders());
+      } else {
+        unawaited(_removeAllLocalTodoReminders());
+      }
+    }
+    notifyListeners();
+  }
+
   Future<void> init() async {
     _timerConfig = await _loadConfig();
     _initialized = true;
@@ -1044,8 +1062,13 @@ class FocusService extends ChangeNotifier {
     if (!_initialized) {
       return;
     }
+    final localRemindersEnabled = todoSystemRemindersEnabled;
     for (final todo in getTodos()) {
-      await _todoReminder.syncTodo(todo);
+      if (localRemindersEnabled) {
+        await _todoReminder.syncTodo(todo);
+      } else if (todo.id != null) {
+        await _todoReminder.removeTodoReminder(todo.id!);
+      }
       await systemCalendar?.syncTodo(todo);
     }
   }
@@ -1054,7 +1077,11 @@ class FocusService extends ChangeNotifier {
     if (item.id == null) {
       return;
     }
-    unawaited(_todoReminder.syncTodo(item));
+    if (todoSystemRemindersEnabled) {
+      unawaited(_todoReminder.syncTodo(item));
+    } else {
+      unawaited(_todoReminder.removeTodoReminder(item.id!));
+    }
     final systemCalendar = _systemCalendar;
     if (systemCalendar != null) {
       unawaited(systemCalendar.syncTodo(item));
@@ -1066,6 +1093,19 @@ class FocusService extends ChangeNotifier {
     final systemCalendar = _systemCalendar;
     if (systemCalendar != null) {
       unawaited(systemCalendar.removeTodoReminder(todoId));
+    }
+  }
+
+  Future<void> _removeAllLocalTodoReminders() async {
+    if (!_initialized) {
+      return;
+    }
+    for (final todo in getTodos()) {
+      final todoId = todo.id;
+      if (todoId == null) {
+        continue;
+      }
+      await _todoReminder.removeTodoReminder(todoId);
     }
   }
 

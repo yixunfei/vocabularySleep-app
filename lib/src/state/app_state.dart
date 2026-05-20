@@ -314,6 +314,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   WeatherSnapshot? get weatherSnapshot => _weatherStore.snapshot;
   bool get weatherLoading => _weatherStore.loading;
   bool get startupTodoPromptEnabled => _startupStore.startupTodoPromptEnabled;
+  bool get todoSystemRemindersEnabled =>
+      _focusService.todoSystemRemindersEnabled;
+  bool get toolboxAutoAdjustSystemVolumeEnabled =>
+      _settings.loadToolboxAutoAdjustSystemVolumeEnabled();
   bool get shouldShowStartupTodoPromptToday =>
       _startupStore.startupTodoPromptEnabled &&
       _startupStore.startupTodoPromptSuppressedDate != _todayDateKey();
@@ -807,6 +811,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void setStartupTodoPromptEnabled(bool enabled) =>
       _setStartupTodoPromptEnabledImpl(enabled);
+
+  void setTodoSystemRemindersEnabled(bool enabled) =>
+      _setTodoSystemRemindersEnabledImpl(enabled);
+
+  void setToolboxAutoAdjustSystemVolumeEnabled(bool enabled) =>
+      _setToolboxAutoAdjustSystemVolumeEnabledImpl(enabled);
 
   void suppressStartupTodoPromptForToday() =>
       _suppressStartupTodoPromptForTodayImpl();

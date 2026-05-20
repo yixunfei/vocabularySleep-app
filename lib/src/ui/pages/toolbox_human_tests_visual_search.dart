@@ -53,6 +53,10 @@ class _VisualSearchCell {
 
   final IconData icon;
   final Color color;
+
+  bool sameAppearance(_VisualSearchCell other) {
+    return icon == other.icon && color.value == other.color.value;
+  }
 }
 
 class _VisualSearchLinkTile {
@@ -680,7 +684,7 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
       });
       return;
     }
-    final sameTile = firstTile.pairId == tile.pairId;
+    final sameTile = firstTile.cell.sameAppearance(tile.cell);
     final route = sameTile
         ? _findLinkRoute(_liveLinkBoard, firstIndex, index)
         : null;

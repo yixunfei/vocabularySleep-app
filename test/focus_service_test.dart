@@ -743,6 +743,7 @@ void main() {
         todoReminder: todoReminder,
       );
       await service.init();
+      service.setTodoSystemRemindersEnabled(true);
 
       service.addTodo(
         'Sync release checklist',
@@ -773,6 +774,34 @@ void main() {
     });
 
     test(
+      'saving a reminder todo leaves local system reminders off by default',
+      () async {
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
+        final systemCalendar = _FakeSystemCalendarService();
+        final todoReminder = _FakeTodoReminderService();
+        final service = _createService(
+          repository,
+          store,
+          systemCalendar: systemCalendar,
+          todoReminder: todoReminder,
+        );
+        await service.init();
+
+        service.addTodo(
+          'Ask before creating a local system reminder',
+          dueAt: DateTime(2026, 3, 15, 10, 0),
+          alarmEnabled: true,
+        );
+        await pumpEventQueue();
+
+        expect(systemCalendar.syncedTodos, hasLength(1));
+        expect(todoReminder.syncedTodos, isEmpty);
+        expect(todoReminder.removedTodoIds, hasLength(1));
+      },
+    );
+
+    test(
       'saving a local-only reminder todo does not sync it to the system calendar',
       () async {
         final repository = _MemoryFocusRepository();
@@ -786,6 +815,7 @@ void main() {
           todoReminder: todoReminder,
         );
         await service.init();
+        service.setTodoSystemRemindersEnabled(true);
 
         service.addTodo(
           'Keep reminder inside app only',
@@ -815,6 +845,7 @@ void main() {
           todoReminder: todoReminder,
         );
         await service.init();
+        service.setTodoSystemRemindersEnabled(true);
 
         service.addTodo(
           'Remove synced reminder',

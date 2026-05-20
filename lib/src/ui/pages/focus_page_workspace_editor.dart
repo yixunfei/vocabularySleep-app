@@ -234,6 +234,7 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
         todo?.systemCalendarNotificationMinutesBefore ?? 0;
     var systemCalendarAlarmMinutesBefore =
         todo?.systemCalendarAlarmMinutesBefore ?? 10;
+    var systemReminderEnabled = focus.todoSystemRemindersEnabled;
     Future<TodoReminderCapability> reminderCapabilityFuture = focus
         .getTodoReminderCapability();
 
@@ -455,110 +456,173 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                         style: theme.textTheme.bodySmall,
                       ),
                       const SizedBox(height: 8),
-                      FutureBuilder<TodoReminderCapability>(
-                        future: reminderCapabilityFuture,
-                        builder: (context, snapshot) {
-                          final capability =
-                              snapshot.data ??
-                              const TodoReminderCapability(
-                                notificationsGranted: true,
-                                notificationPermissionRequestable: false,
-                                exactAlarmGranted: true,
-                                exactAlarmSettingsAvailable: false,
-                              );
-                          final showNotificationWarning =
-                              capability.needsNotificationPermission;
-                          final showExactAlarmWarning =
-                              systemCalendarAlertMode ==
-                                  _TodoSystemCalendarAlertMode.alarm &&
-                              capability.needsExactAlarmPermission;
-                          if (!showNotificationWarning &&
-                              !showExactAlarmWarning) {
-                            return const SizedBox.shrink();
-                          }
-                          return Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: theme.colorScheme.outlineVariant,
+                      if (!systemReminderEnabled)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.tertiaryContainer
+                                .withValues(alpha: 0.50),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: theme.colorScheme.tertiary.withValues(
+                                alpha: 0.24,
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                if (showNotificationWarning) ...<Widget>[
-                                  Text(
-                                    pickUiText(
-                                      i18n,
-                                      zh: '当前系统未授予通知权限，待办到点后可能不会显示提醒。',
-                                      en: 'Notification permission is not granted, so todo reminders may not appear on time.',
-                                    ),
-                                    style: theme.textTheme.bodySmall,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '系统待办提醒已关闭',
+                                  en: 'System todo reminders are off',
+                                ),
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                pickUiText(
+                                  i18n,
+                                  zh: '保存后仍会保留应用内时间，但不会在后台创建系统通知。开启后，应用会向系统注册本地提醒；首次使用可能需要授予通知权限。',
+                                  en: 'The time is still saved in the app, but no background system notification will be scheduled. Turn this on to register local reminders; first use may ask for notification permission.',
+                                ),
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 8),
+                              FilledButton.tonalIcon(
+                                onPressed: () {
+                                  focus.setTodoSystemRemindersEnabled(true);
+                                  setSheetState(() {
+                                    systemReminderEnabled = true;
+                                    reminderCapabilityFuture = focus
+                                        .getTodoReminderCapability();
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.notifications_active_rounded,
+                                ),
+                                label: Text(
+                                  pickUiText(
+                                    i18n,
+                                    zh: '快捷开启系统提醒',
+                                    en: 'Enable system reminders',
                                   ),
-                                  const SizedBox(height: 8),
-                                  OutlinedButton.icon(
-                                    onPressed: () async {
-                                      await focus
-                                          .requestTodoReminderNotificationPermission();
-                                      if (!context.mounted) return;
-                                      setSheetState(() {
-                                        reminderCapabilityFuture = focus
-                                            .getTodoReminderCapability();
-                                      });
-                                    },
-                                    icon: const Icon(
-                                      Icons.notifications_active_rounded,
-                                    ),
-                                    label: Text(
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        FutureBuilder<TodoReminderCapability>(
+                          future: reminderCapabilityFuture,
+                          builder: (context, snapshot) {
+                            final capability =
+                                snapshot.data ??
+                                const TodoReminderCapability(
+                                  notificationsGranted: true,
+                                  notificationPermissionRequestable: false,
+                                  exactAlarmGranted: true,
+                                  exactAlarmSettingsAvailable: false,
+                                );
+                            final showNotificationWarning =
+                                capability.needsNotificationPermission;
+                            final showExactAlarmWarning =
+                                systemCalendarAlertMode ==
+                                    _TodoSystemCalendarAlertMode.alarm &&
+                                capability.needsExactAlarmPermission;
+                            if (!showNotificationWarning &&
+                                !showExactAlarmWarning) {
+                              return const SizedBox.shrink();
+                            }
+                            return Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  if (showNotificationWarning) ...<Widget>[
+                                    Text(
                                       pickUiText(
                                         i18n,
-                                        zh: '授予通知权限',
-                                        en: 'Enable notifications',
+                                        zh: '当前系统未授予通知权限，待办到点后可能不会显示提醒。',
+                                        en: 'Notification permission is not granted, so todo reminders may not appear on time.',
                                       ),
+                                      style: theme.textTheme.bodySmall,
                                     ),
-                                  ),
-                                ],
-                                if (showExactAlarmWarning) ...<Widget>[
-                                  if (showNotificationWarning)
                                     const SizedBox(height: 8),
-                                  Text(
-                                    pickUiText(
-                                      i18n,
-                                      zh: '闹钟模式建议开启“精确闹钟”，否则系统可能延后提醒时间。',
-                                      en: 'Alarm mode works best with exact alarms enabled. Otherwise the system may delay the reminder.',
-                                    ),
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  OutlinedButton.icon(
-                                    onPressed: () async {
-                                      await focus
-                                          .openTodoReminderExactAlarmSettings();
-                                      if (!context.mounted) return;
-                                      setSheetState(() {
-                                        reminderCapabilityFuture = focus
-                                            .getTodoReminderCapability();
-                                      });
-                                    },
-                                    icon: const Icon(Icons.alarm_on_rounded),
-                                    label: Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '打开精确闹钟设置',
-                                        en: 'Open exact alarm settings',
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        await focus
+                                            .requestTodoReminderNotificationPermission();
+                                        if (!context.mounted) return;
+                                        setSheetState(() {
+                                          reminderCapabilityFuture = focus
+                                              .getTodoReminderCapability();
+                                        });
+                                      },
+                                      icon: const Icon(
+                                        Icons.notifications_active_rounded,
+                                      ),
+                                      label: Text(
+                                        pickUiText(
+                                          i18n,
+                                          zh: '授予通知权限',
+                                          en: 'Enable notifications',
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  ],
+                                  if (showExactAlarmWarning) ...<Widget>[
+                                    if (showNotificationWarning)
+                                      const SizedBox(height: 8),
+                                    Text(
+                                      pickUiText(
+                                        i18n,
+                                        zh: '闹钟模式建议开启“精确闹钟”，否则系统可能延后提醒时间。',
+                                        en: 'Alarm mode works best with exact alarms enabled. Otherwise the system may delay the reminder.',
+                                      ),
+                                      style: theme.textTheme.bodySmall,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        await focus
+                                            .openTodoReminderExactAlarmSettings();
+                                        if (!context.mounted) return;
+                                        setSheetState(() {
+                                          reminderCapabilityFuture = focus
+                                              .getTodoReminderCapability();
+                                        });
+                                      },
+                                      icon: const Icon(Icons.alarm_on_rounded),
+                                      label: Text(
+                                        pickUiText(
+                                          i18n,
+                                          zh: '打开精确闹钟设置',
+                                          en: 'Open exact alarm settings',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                              ),
+                            );
+                          },
+                        ),
                       const SizedBox(height: 8),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,

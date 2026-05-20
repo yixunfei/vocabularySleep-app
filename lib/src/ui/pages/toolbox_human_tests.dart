@@ -6,12 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/app_log_service.dart';
 import '../../services/audio_player_source_helper.dart';
 import '../../services/toolbox_audio_volume_service.dart';
+import '../../state/app_state_provider.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
@@ -190,29 +192,29 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
   List<String> _defaultOrder(List<_HumanTestEntry> entries) {
     const preferredOrder = <String>[
       'reaction',
-      'aim',
-      'tap_speed',
-      'number_memory',
       'visual_memory',
-      'sequence_memory',
-      'verbal_memory',
-      'chimp',
-      'visual_search',
-      'color_vision',
       'dynamic_vision',
+      'joystick',
+      'hand_eye',
+      'color_vision',
+      'sequence_memory',
+      'chimp',
+      'stroop',
+      'bimanual',
+      'luck',
+      'time_perception',
+      'aim',
+      'visual_search',
+      'number_memory',
+      'verbal_memory',
+      'tap_speed',
       'auditory',
       'acoustic_experiment',
-      'stroop',
+      'dual_task',
       'calculation',
       'sustained_attention',
-      'dual_task',
-      'time_perception',
-      'hand_eye',
-      'joystick',
       'fine_drag',
-      'bimanual',
       'typing',
-      'luck',
     ];
     final entryIds = entries.map((entry) => entry.id).toSet();
     return <String>[

@@ -115,7 +115,7 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
   late final AnimationController _symbolController;
   late final AnimationController _ballController;
 
-  _DynamicVisionMode _mode = _DynamicVisionMode.symbol;
+  _DynamicVisionMode _mode = _DynamicVisionMode.ballCount;
 
   int _symbolRoundCount = 10;
   int _symbolGroupLength = 1;

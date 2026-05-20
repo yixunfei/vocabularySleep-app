@@ -291,7 +291,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey<String>('human_tests_entry_aim')),
+        find.byKey(const ValueKey<String>('human_tests_entry_visual_memory')),
         findsOneWidget,
       );
       expect(
@@ -301,14 +301,32 @@ void main() {
       final reactionRect = tester.getRect(
         find.byKey(const ValueKey<String>('human_tests_entry_reaction')),
       );
-      final aimRect = tester.getRect(
-        find.byKey(const ValueKey<String>('human_tests_entry_aim')),
+      final visualMemoryRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_visual_memory')),
       );
-      expect((reactionRect.top - aimRect.top).abs(), lessThan(4));
-      expect(aimRect.left, greaterThan(reactionRect.left));
+      final dynamicVisionRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_dynamic_vision')),
+      );
+      final joystickRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_joystick')),
+      );
+      final handEyeRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_hand_eye')),
+      );
+      final colorVisionRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_color_vision')),
+      );
+      expect((reactionRect.top - visualMemoryRect.top).abs(), lessThan(4));
+      expect(visualMemoryRect.left, greaterThan(reactionRect.left));
+      expect((dynamicVisionRect.top - joystickRect.top).abs(), lessThan(4));
+      expect(joystickRect.left, greaterThan(dynamicVisionRect.left));
+      expect(dynamicVisionRect.top, greaterThan(reactionRect.top));
+      expect((handEyeRect.top - colorVisionRect.top).abs(), lessThan(4));
+      expect(colorVisionRect.left, greaterThan(handEyeRect.left));
+      expect(handEyeRect.top, greaterThan(dynamicVisionRect.top));
       expect(reactionRect.height, closeTo(118, 0.5));
 
-      final reorderGesture = await tester.startGesture(aimRect.center);
+      final reorderGesture = await tester.startGesture(visualMemoryRect.center);
       await tester.pump(const Duration(milliseconds: 650));
       await reorderGesture.moveBy(const Offset(-120, 0));
       await tester.pump(const Duration(milliseconds: 120));
@@ -316,13 +334,16 @@ void main() {
       await tester.pump(const Duration(milliseconds: 120));
       await reorderGesture.up();
       await tester.pumpAndSettle();
-      final reorderedAimRect = tester.getRect(
-        find.byKey(const ValueKey<String>('human_tests_entry_aim')),
+      final reorderedVisualMemoryRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_visual_memory')),
       );
       final reorderedReactionRect = tester.getRect(
         find.byKey(const ValueKey<String>('human_tests_entry_reaction')),
       );
-      expect(reorderedAimRect.left, lessThan(reorderedReactionRect.left));
+      expect(
+        reorderedVisualMemoryRect.left,
+        lessThan(reorderedReactionRect.left),
+      );
 
       await tester.tap(
         find.byKey(const ValueKey<String>('human_tests_add_quick_button')),
@@ -451,8 +472,16 @@ void main() {
       expect(find.text('Noise meter'), findsOneWidget);
       expect(find.text('Acoustic report'), findsWidgets);
       expect(find.text('Add to report'), findsOneWidget);
+      expect(find.text('Open mic'), findsOneWidget);
       expect(find.text('Level hold'), findsOneWidget);
       expect(find.text('ZCR'), findsOneWidget);
+      expect(find.text('Capture diagnostics'), findsOneWidget);
+      await tester.ensureVisible(find.text('Capture diagnostics'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Capture diagnostics'));
+      await tester.pumpAndSettle();
+      expect(find.text('Compatibility input first'), findsOneWidget);
+      expect(find.text('First frame'), findsOneWidget);
       await tester.ensureVisible(find.text('Acoustic report').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Acoustic report').last);

@@ -65,24 +65,33 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
       isModuleEnabled: isEnabled,
     );
 
-    if (_editing) {
-      return _buildEditingView(
-        context: context,
-        i18n: i18n,
-        state: state,
-        visibleEntries: visibleEntries,
-        hiddenEntries: hiddenEntries,
-        quickEntries: quickEntries,
-      );
-    }
+    final body = _editing
+        ? _buildEditingView(
+            context: context,
+            i18n: i18n,
+            state: state,
+            visibleEntries: visibleEntries,
+            hiddenEntries: hiddenEntries,
+            quickEntries: quickEntries,
+          )
+        : _buildHomeView(
+            i18n: i18n,
+            state: state,
+            homeSection: homeSection,
+            visibleEntries: visibleEntries,
+            hiddenEntries: hiddenEntries,
+            quickEntries: quickEntries,
+          );
 
-    return _buildHomeView(
-      i18n: i18n,
-      state: state,
-      homeSection: homeSection,
-      visibleEntries: visibleEntries,
-      hiddenEntries: hiddenEntries,
-      quickEntries: quickEntries,
+    return PopScope(
+      canPop: !_editing,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || !_editing) {
+          return;
+        }
+        _exitEditMode();
+      },
+      child: body,
     );
   }
 
@@ -245,30 +254,26 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
           key: ValueKey<String>('toolbox_layout_${entry.moduleId}'),
           child: Padding(
             padding: const EdgeInsets.only(bottom: ToolboxUiTokens.cardSpacing),
-            child: _ToolboxQuickEntryDragWrapper(
+            child: ToolboxEntryCard(
               entry: entry,
-              child: ToolboxEntryCard(
-                entry: entry,
-                editing: true,
-                dragTooltip: pickUiText(
-                  i18n,
-                  zh: '拖动手柄排序',
-                  en: 'Drag the handle to reorder',
-                ),
-                removeTooltip: pickUiText(
-                  i18n,
-                  zh: '从首页移除',
-                  en: 'Remove from home',
-                ),
-                onRemove: () =>
-                    _confirmRemoveEntry(context, i18n, state, entry),
-                dragHandle: ReorderableDragStartListener(
-                  index: index,
-                  child: Icon(
-                    Icons.drag_handle_rounded,
-                    color: entry.accent,
-                    size: 26,
-                  ),
+              editing: true,
+              dragTooltip: pickUiText(
+                i18n,
+                zh: '拖动手柄排序',
+                en: 'Long press the handle, then drag to reorder',
+              ),
+              removeTooltip: pickUiText(
+                i18n,
+                zh: '从首页移除',
+                en: 'Remove from home',
+              ),
+              onRemove: () => _confirmRemoveEntry(context, i18n, state, entry),
+              dragHandle: ReorderableDelayedDragStartListener(
+                index: index,
+                child: Icon(
+                  Icons.drag_handle_rounded,
+                  color: entry.accent,
+                  size: 26,
                 ),
               ),
             ),
@@ -410,33 +415,6 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
           onPressed: () => state.restoreToolboxEntry(entry.moduleId),
         ),
       ),
-    );
-  }
-}
-
-class _ToolboxQuickEntryDragWrapper extends StatelessWidget {
-  const _ToolboxQuickEntryDragWrapper({
-    required this.entry,
-    required this.child,
-  });
-
-  final ToolboxEntryData entry;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return LongPressDraggable<ToolboxEntryData>(
-      key: ValueKey<String>('toolbox_edit_quick_draggable_${entry.moduleId}'),
-      data: entry,
-      feedback: Material(
-        color: Colors.transparent,
-        child: SizedBox(
-          width: MediaQuery.sizeOf(context).width - 32,
-          child: Opacity(opacity: 0.94, child: child),
-        ),
-      ),
-      childWhenDragging: Opacity(opacity: 0.55, child: child),
-      child: child,
     );
   }
 }
