@@ -4,6 +4,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val isBundleBuild = gradle.startParameter.taskNames.any { taskName ->
+    taskName.contains("bundle", ignoreCase = true)
+}
+
 android {
     namespace = "group.zn.xianyushengxi"
     compileSdk = flutter.compileSdkVersion
@@ -50,7 +54,7 @@ android {
 
     splits {
         abi {
-            isEnable = true
+            isEnable = !isBundleBuild
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86_64")
             isUniversalApk = true

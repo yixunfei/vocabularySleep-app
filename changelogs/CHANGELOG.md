@@ -1,3 +1,23 @@
+## [Unreleased-PLAN_238-ANDROID-AAB-ABI-SPLIT-FIX] - 2026-05-26
+
+### 原因
+- Android App Bundle release 打包在 `:app:buildReleasePreBundle` 阶段失败，AGP `PerModuleBundleTask` 读取资源包时遇到多份 ABI split resources，抛出 `Sequence contains more than one matching element`。
+
+### 修改
+- `android/app/build.gradle.kts`
+  - 根据 Gradle 请求任务名识别 bundle 构建。
+  - `splits.abi` 在 bundle 构建时关闭，在 APK 构建时继续启用，避免 AAB 预打包阶段匹配到多份 processed resources。
+- `plans/PLAN_238_AppBundle构建ABI拆分冲突修复.md`
+  - 记录本轮 AAB 构建修复边界、风险和验证结果。
+
+### 风险变更
+- App Bundle 构建不再使用 APK ABI splits；AAB 本身仍由 Android App Bundle 机制处理 ABI 分发。
+- APK 构建保留原有 ABI splits 和 universal APK 输出路径。
+
+### 验证
+- `flutter build appbundle --release`
+- `flutter build apk --release`
+
 ## [Unreleased-PLAN_236-ANDROID-AGP-CAMERAX-BUILD-FIX] - 2026-05-26
 
 ### 原因
