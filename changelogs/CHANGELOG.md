@@ -1,3 +1,21 @@
+## [Unreleased-PLAN_236-ANDROID-AGP-CAMERAX-BUILD-FIX] - 2026-05-26
+
+### 原因
+- Android release 打包在 `:app:checkReleaseAarMetadata` 阶段失败，CameraX 1.6.0 要求 Android Gradle Plugin 8.9.1 或更高版本，而项目仍使用 8.7.3。
+
+### 修改
+- `android/settings.gradle.kts`
+  - 将 `com.android.application` 从 8.7.3 升级到 8.9.1，满足 `camera_android_camerax` 0.7.2 间接引入的 CameraX 1.6.0 AAR metadata 要求。
+- `plans/PLAN_236_Android构建AGP兼容修复.md`
+  - 记录本轮构建修复目标、风险和验证结果。
+
+### 风险变更
+- 本轮只调整 Android 构建链版本，不改业务代码、不改相机逻辑。
+- AGP 升级可能影响后续 Android 插件兼容性；本轮已用 release APK 构建验证当前项目可通过。
+
+### 验证
+- `flutter build apk --release`
+
 ## [Unreleased-PLAN_229-LIFE-STEGANOGRAPHY-UI-COMPACT-KEYFILES] - 2026-05-26
 
 ### 原因
