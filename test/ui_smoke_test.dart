@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -124,8 +128,8 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'ja', config: config);
       await _pumpPage(tester, state: state, child: const VoiceSettingsPage());
 
-      expect(find.text('音声設定'), findsOneWidget);
-      expect(find.textContaining('現在の音声：Alex'), findsOneWidget);
+      expect(find.text('闊冲０瑷畾'), findsOneWidget);
+      expect(find.textContaining('鐝惧湪銇煶澹帮細Alex'), findsOneWidget);
       expect(find.text('Voice settings'), findsNothing);
     });
 
@@ -383,8 +387,8 @@ void main() {
         child: const LanguageSettingsPage(),
       );
 
-      expect(find.text('Настройки языка'), findsOneWidget);
-      expect(find.text('Русский'), findsWidgets);
+      expect(find.text('袧邪褋褌褉芯泄泻懈 褟蟹褘泻邪'), findsOneWidget);
+      expect(find.text('袪褍褋褋泻懈泄'), findsWidgets);
       expect(find.text('Language settings'), findsNothing);
     });
 
@@ -708,6 +712,12 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Sound locator'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Life tool hub'), findsOneWidget);
     });
 
     testWidgets('toolbox page opens human test hub', (tester) async {
@@ -770,6 +780,985 @@ void main() {
       await tester.pump(const Duration(milliseconds: 120));
 
       expect(find.text('Phone microphone'), findsOneWidget);
+    });
+
+    testWidgets('toolbox page opens life tool hub module', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.ensureVisible(lifeHubCard);
+      await tester.pumpAndSettle();
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Life tools'), findsWidgets);
+      expect(find.text('Overview'), findsOneWidget);
+      expect(find.text('Time screen'), findsWidgets);
+      expect(find.text('Scoreboard'), findsWidgets);
+    });
+
+    testWidgets('life tools exposes deep time screen and barrage controls', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final timeCard = find
+          .ancestor(of: find.text('Time screen'), matching: find.byType(Card))
+          .first;
+      await tester.tap(timeCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Clock preview'), findsOneWidget);
+      expect(find.text('Clock settings'), findsOneWidget);
+      expect(find.text('Open fullscreen clock'), findsOneWidget);
+      expect(find.text('Time format'), findsOneWidget);
+      expect(find.text('Flip animation'), findsOneWidget);
+      expect(find.text('Classic flip'), findsWidgets);
+
+      Navigator.of(tester.element(find.text('Clock preview'))).pop();
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Handheld barrage'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final barrageCard = find
+          .ancestor(
+            of: find.text('Handheld barrage'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.ensureVisible(barrageCard);
+      await tester.pumpAndSettle();
+      await tester.tap(barrageCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Barrage preview'), findsOneWidget);
+      expect(find.text('Barrage settings'), findsOneWidget);
+      expect(find.text('Show barrage'), findsOneWidget);
+      expect(find.text('Motion'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens ruler and protractor utility page', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Ruler and protractor'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final rulerCard = find
+          .ancestor(
+            of: find.text('Ruler and protractor'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(rulerCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Landscape ruler'), findsOneWidget);
+      expect(find.text('Open ruler'), findsOneWidget);
+      expect(find.text('Open protractor'), findsOneWidget);
+      expect(find.textContaining('Calibration:'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens local color helper palettes', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Color helper'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Color helper').last, warnIfMissed: false);
+      await _pumpUntilAnyFound(tester, <Finder>[
+        find.text('Unified palette'),
+        find.text('Palette load failed'),
+      ]);
+      expect(find.text('Palette load failed'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      expect(find.text('Auxiliary image sampler'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Auxiliary image sampler')).dy,
+        lessThan(tester.getTopLeft(find.text('Unified palette')).dy),
+      );
+      expect(find.text('Unified palette'), findsOneWidget);
+      expect(
+        find.text('Name / pinyin / romaji / hex / ??FF??'),
+        findsOneWidget,
+      );
+      expect(find.text('776 / 776 colors'), findsOneWidget);
+      expect(find.text('Page background'), findsOneWidget);
+      final searchBackgroundSwitch = find.byKey(
+        const ValueKey<String>('life_color_search_background_toggle'),
+      );
+      expect(searchBackgroundSwitch, findsOneWidget);
+      expect(tester.widget<Switch>(searchBackgroundSwitch).value, isFalse);
+      expect(find.byTooltip('Back to top'), findsOneWidget);
+
+      await tester.tap(searchBackgroundSwitch);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(searchBackgroundSwitch).value, isTrue);
+      final colorHelperScaffoldBeforeSelection = tester.widget<Scaffold>(
+        find.byType(Scaffold).last,
+      );
+      expect(colorHelperScaffoldBeforeSelection.backgroundColor, isNull);
+
+      await tester.enterText(find.byType(TextField).first, '??F4DC');
+      await tester.pumpAndSettle();
+
+      expect(find.text('涔崇櫧'), findsWidgets);
+      expect(find.text('RUBAI'), findsWidgets);
+
+      await tester.scrollUntilVisible(
+        find.text('涔崇櫧'),
+        120,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final rubaiTile = find
+          .ancestor(of: find.text('涔崇櫧'), matching: find.byType(InkWell))
+          .first;
+      await tester.tap(rubaiTile, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Copy hex'), findsOneWidget);
+      expect(find.text('Copy name'), findsOneWidget);
+      expect(find.text('RGB'), findsOneWidget);
+      expect(find.text('CMYK'), findsOneWidget);
+      expect(find.text('Page background'), findsWidgets);
+      expect(tester.widget<Switch>(searchBackgroundSwitch).value, isTrue);
+      expect(
+        tester
+            .widget<Switch>(
+              find.byKey(
+                const ValueKey<String>('life_color_detail_background_toggle'),
+              ),
+            )
+            .value,
+        isTrue,
+      );
+
+      final colorHelperScaffold = tester.widget<Scaffold>(
+        find.byType(Scaffold).last,
+      );
+      expect(colorHelperScaffold.backgroundColor, const Color(0xFFF9F4DC));
+
+      await tester.tap(find.byTooltip('Back to top'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'aikobicha');
+      await tester.pumpAndSettle();
+
+      final colorHelperScaffoldAfterSearch = tester.widget<Scaffold>(
+        find.byType(Scaffold).last,
+      );
+      expect(colorHelperScaffoldAfterSearch.backgroundColor, isNull);
+
+      expect(find.text('AIKOBICHA'), findsWidgets);
+      expect(find.text('AIKOBICHA'), findsWidgets);
+    });
+
+    testWidgets('life tools opens wallpaper helper controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Wallpaper helper'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final wallpaperCard = find
+          .ancestor(
+            of: find.text('Wallpaper helper'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.ensureVisible(wallpaperCard);
+      await tester.pumpAndSettle();
+      await tester.tap(wallpaperCard, warnIfMissed: false);
+      await _pumpUntilFound(tester, find.text('Wallpaper search'));
+
+      expect(find.text('Wallpaper search'), findsOneWidget);
+      expect(find.text('Image cache'), findsOneWidget);
+      expect(find.text('Clear cache'), findsOneWidget);
+      expect(find.text('Match screen'), findsOneWidget);
+      expect(find.text('Any size'), findsOneWidget);
+      expect(find.text('Bing Wallpaper'), findsWidgets);
+      expect(find.text('Wallhaven'), findsNothing);
+      expect(find.text('Konachan'), findsNothing);
+      expect(find.text('Anime Pictures'), findsNothing);
+      expect(find.textContaining('DPM'), findsNothing);
+
+      await tester.enterText(find.byType(TextField).last, 'sky');
+      await tester.pump();
+      expect(find.text('sky'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens garbage sorting query', (tester) async {
+      await _withMockHttp(_LifeToolsRemoteHttpOverrides(), () async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+        await tester.scrollUntilVisible(
+          find.text('Life tool hub'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
+        final lifeHubCard = find
+            .ancestor(
+              of: find.text('Life tool hub'),
+              matching: find.byType(InkWell),
+            )
+            .first;
+        await tester.tap(lifeHubCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        await tester.scrollUntilVisible(
+          find.text('Garbage sorting'),
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.pumpAndSettle();
+
+        final garbageCard = find
+            .ancestor(
+              of: find.text('Garbage sorting'),
+              matching: find.byType(Card),
+            )
+            .first;
+        await tester.ensureVisible(garbageCard);
+        await tester.pumpAndSettle();
+        await tester.tap(garbageCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        await _pumpUntilFound(tester, find.text('Start search'));
+        expect(find.text('Remote sorting data'), findsOneWidget);
+        expect(find.text('Remote data preview'), findsNothing);
+        expect(find.text('Start search'), findsOneWidget);
+        expect(find.text('Open online query'), findsOneWidget);
+        expect(find.text('Open source page'), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_garbage_search_field')),
+          'battery',
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('battery'), findsWidgets);
+        expect(find.text('Hazardous'), findsWidgets);
+        expect(find.textContaining('Remote category 2'), findsOneWidget);
+      });
+    });
+
+    testWidgets('life tools opens postal lookup query', (tester) async {
+      await _withMockHttp(_LifeToolsRemoteHttpOverrides(), () async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+        await tester.scrollUntilVisible(
+          find.text('Life tool hub'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
+        final lifeHubCard = find
+            .ancestor(
+              of: find.text('Life tool hub'),
+              matching: find.byType(InkWell),
+            )
+            .first;
+        await tester.tap(lifeHubCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        await tester.scrollUntilVisible(
+          find.text('Postal lookup'),
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.pumpAndSettle();
+
+        final postalCard = find
+            .ancestor(
+              of: find.text('Postal lookup'),
+              matching: find.byType(Card),
+            )
+            .first;
+        await tester.ensureVisible(postalCard);
+        await tester.pumpAndSettle();
+        await tester.tap(postalCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Postal lookup'), findsWidgets);
+        expect(find.text('Results'), findsOneWidget);
+        expect(find.text('Data source'), findsOneWidget);
+        expect(find.text('Remote query'), findsNothing);
+        expect(find.text('Remote results'), findsNothing);
+        expect(find.text('Page summary'), findsNothing);
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_postal_search_field')),
+          'Shenzhen',
+        );
+        await tester.tap(find.text('Search'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Shenzhen'), findsWidgets);
+        expect(
+          find.text('娣卞湷澶у閭斂鎵€ 路 鍗楀北灞辩菠娴疯閬撳崡娴峰ぇ閬?688鍙锋繁鍦冲ぇ瀛﹀疄楠屾ゼ'),
+          findsOneWidget,
+        );
+        expect(find.text('518060'), findsWidgets);
+        expect(find.text('13556892288'), findsWidgets);
+        expect(find.text('Page summary'), findsNothing);
+        expect(find.textContaining('Open source'), findsNothing);
+      });
+    });
+
+    testWidgets('life tools opens reverse image aggregation', (tester) async {
+      await _withMockHttp(_LifeToolsRemoteHttpOverrides(), () async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+        await tester.scrollUntilVisible(
+          find.text('Life tool hub'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
+        final lifeHubCard = find
+            .ancestor(
+              of: find.text('Life tool hub'),
+              matching: find.byType(InkWell),
+            )
+            .first;
+        await tester.tap(lifeHubCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        await tester.scrollUntilVisible(
+          find.text('Reverse image'),
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.pumpAndSettle();
+
+        final reverseImageCard = find
+            .ancestor(
+              of: find.text('Reverse image'),
+              matching: find.byType(Card),
+            )
+            .first;
+        await tester.ensureVisible(reverseImageCard);
+        await tester.pumpAndSettle();
+        await tester.tap(reverseImageCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Aggregated engines'), findsOneWidget);
+        expect(find.text('Run search'), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_reverse_image_url_field')),
+          'https://example.com/cat.png',
+        );
+        final searchButton = find.byKey(
+          const ValueKey<String>('life_reverse_image_search_button'),
+        );
+        await tester.ensureVisible(searchButton);
+        await tester.pumpAndSettle();
+        await tester.tap(searchButton.hitTestable());
+        await tester.pumpAndSettle();
+        expect(find.text('Aggregated results'), findsOneWidget);
+        expect(find.text('Source links'), findsOneWidget);
+        expect(find.textContaining('google-first.example.test'), findsWidgets);
+
+        final googleLoadMore = find.byKey(
+          const ValueKey<String>('life_reverse_image_load_more_google_lens'),
+        );
+        await tester.ensureVisible(googleLoadMore);
+        await tester.pumpAndSettle();
+        await tester.tap(googleLoadMore.hitTestable());
+        await tester.pumpAndSettle();
+        expect(find.textContaining('google-second.example.test'), findsWidgets);
+      });
+    });
+
+    testWidgets('life tools opens image compression controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Image compression'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final imageCompressCard = find
+          .ancestor(
+            of: find.text('Image compression'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.ensureVisible(imageCompressCard);
+      await tester.pumpAndSettle();
+      await tester.tap(imageCompressCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Source image'), findsOneWidget);
+      expect(find.text('Compression settings'), findsOneWidget);
+      expect(find.text('Compression result'), findsOneWidget);
+      expect(find.text('Preview'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_image_compress_pick_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_image_compress_run_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_image_compress_save_button')),
+        findsOneWidget,
+      );
+      expect(find.text('By ratio'), findsOneWidget);
+      expect(find.text('By width'), findsOneWidget);
+      expect(find.text('Auto best'), findsOneWidget);
+      expect(find.text('JPEG balanced'), findsOneWidget);
+      expect(find.text('JPEG aggressive'), findsOneWidget);
+      expect(find.text('PNG lossless'), findsOneWidget);
+      expect(find.text('GIF indexed'), findsOneWidget);
+      expect(find.text('Lossy preprocess'), findsOneWidget);
+      expect(find.text('Original color'), findsOneWidget);
+      expect(find.text('Grayscale'), findsOneWidget);
+      expect(find.text('Black/white'), findsOneWidget);
+      expect(find.text('DPI option'), findsOneWidget);
+      expect(find.text('No custom DPI'), findsOneWidget);
+      expect(find.text('Write PNG DPI'), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('life_image_compress_color_mode_field'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('life_image_compress_dpi_mode_field'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('JPEG quality'), findsOneWidget);
+      expect(find.text('No image selected yet.'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens steganography controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Steganography'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final stegoCard = find
+          .ancestor(of: find.text('Steganography'), matching: find.byType(Card))
+          .first;
+      await tester.ensureVisible(stegoCard);
+      await tester.tap(stegoCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Crypto stage'), findsOneWidget);
+      expect(find.text('Carrier and text'), findsOneWidget);
+      expect(find.text('Result'), findsOneWidget);
+      expect(find.text('Image preview'), findsOneWidget);
+      expect(find.text('Stego'), findsWidgets);
+      expect(find.text('File'), findsOneWidget);
+      expect(find.text('Hash'), findsOneWidget);
+      expect(find.text('Embed'), findsOneWidget);
+      expect(find.text('Reveal'), findsOneWidget);
+      expect(find.text('Image'), findsWidgets);
+      expect(find.text('Audio'), findsOneWidget);
+      expect(find.text('Video'), findsOneWidget);
+      expect(find.text('AES'), findsOneWidget);
+      expect(find.text('Twofish'), findsOneWidget);
+      expect(find.text('Camellia'), findsOneWidget);
+      expect(find.text('AES+Camellia'), findsOneWidget);
+      expect(find.text('Custom cascade'), findsOneWidget);
+      expect(find.text('RSA signature'), findsOneWidget);
+      expect(find.text('ECDSA signature'), findsOneWidget);
+      expect(find.text('Whirlpool MAC'), findsOneWidget);
+      expect(find.text('Standard'), findsOneWidget);
+      expect(find.text('Strong'), findsOneWidget);
+      expect(find.text('Extreme'), findsOneWidget);
+      expect(find.text('256-bit'), findsOneWidget);
+      expect(find.text('512-bit'), findsOneWidget);
+      expect(find.text('1024-bit'), findsOneWidget);
+      expect(find.text('Signature'), findsOneWidget);
+      expect(find.text('SHA256 stream'), findsOneWidget);
+      expect(find.text('RC4 legacy'), findsOneWidget);
+      expect(find.text('No encryption'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_stego_pick_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_stego_secret_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_stego_passphrase_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_stego_run_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_stego_save_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_crypto_key_file_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_crypto_generate_key_file')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Reveal'));
+      await tester.pumpAndSettle();
+      expect(find.text('Media to reveal'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_stego_secret_field')),
+        findsNothing,
+      );
+
+      await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'File'));
+      await tester.tap(find.widgetWithText(ChoiceChip, 'File'));
+      await tester.pumpAndSettle();
+      expect(find.text('File into media'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_crypto_pick_carrier_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_crypto_pick_file_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_crypto_file_run_button')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Hash'));
+      await tester.pumpAndSettle();
+      expect(find.text('Hash digest'), findsOneWidget);
+      expect(find.text('SHA-256'), findsWidgets);
+      expect(
+        find.byKey(const ValueKey<String>('life_crypto_hash_run_button')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('life tools opens simple mind map and edits nodes', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Simple mind map'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final mindMapCard = find
+          .ancestor(
+            of: find.text('Simple mind map'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.ensureVisible(mindMapCard);
+      await tester.pumpAndSettle();
+      await tester.tap(mindMapCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mind map stage'), findsOneWidget);
+      expect(find.text('Node actions'), findsOneWidget);
+      expect(find.text('Quick templates'), findsOneWidget);
+      expect(find.text('Outline'), findsOneWidget);
+      expect(find.text('Export'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_mind_map_canvas')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_mind_map_fullscreen_button')),
+        findsOneWidget,
+      );
+
+      final titleField = find.byKey(
+        const ValueKey<String>('life_mind_map_title_field'),
+      );
+      await tester.ensureVisible(titleField);
+      await tester.enterText(titleField, 'Launch plan');
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life_mind_map_add_child_button')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('New branch 4'), findsWidgets);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life_mind_map_add_sibling_button')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('New branch 5'), findsWidgets);
+
+      final fullscreenButton = find.byKey(
+        const ValueKey<String>('life_mind_map_fullscreen_button'),
+      );
+      await tester.ensureVisible(fullscreenButton);
+      await tester.pumpAndSettle();
+      await tester.tap(fullscreenButton.hitTestable());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Quick arrange'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_mind_map_fullscreen_canvas')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_snap_switch'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_edit_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_add_child_button'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_edit_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_title_field'),
+        ),
+        'Fullscreen node',
+      );
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_title_save_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Fullscreen node'), findsWidgets);
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_add_child_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('New branch 1'), findsWidgets);
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_delete_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+        find.byKey(const ValueKey<String>('life_mind_map_node_root')),
+        const Offset(32, 48),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_snap_switch'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Free drag'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('life_mind_map_fullscreen_close_button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life_mind_map_export_png_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_mind_map_copy_outline_button')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('life tools opens relatives calculator and builds chain', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Relative calculator'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final relativesCard = find
+          .ancestor(
+            of: find.text('Relative calculator'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.ensureVisible(relativesCard);
+      await tester.pumpAndSettle();
+      await tester.tap(relativesCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Calculator'), findsOneWidget);
+      expect(find.text('Relations'), findsOneWidget);
+      expect(find.text('Calculation options'), findsOneWidget);
+      expect(find.text('Family map'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_relatives_chain_text')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_relatives_calculate_button')),
+        findsOneWidget,
+      );
+      expect(find.text('Result appears here instantly'), findsOneWidget);
+      expect(find.text('Unknown'), findsNothing);
+
+      final youngerBrotherToken = find.byKey(
+        const ValueKey<String>('life_relatives_token_\u5f1f\u5f1f'),
+      );
+      await tester.ensureVisible(youngerBrotherToken);
+      await tester.pumpAndSettle();
+      await tester.tap(youngerBrotherToken.hitTestable(), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final wifeToken = find.byKey(
+        const ValueKey<String>('life_relatives_token_\u8001\u5a46'),
+      );
+      await tester.ensureVisible(wifeToken);
+      await tester.pumpAndSettle();
+      await tester.tap(wifeToken.hitTestable(), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      final chainTextWidget = tester.widget<SelectableText>(
+        find.byKey(const ValueKey<String>('life_relatives_chain_text')),
+      );
+      expect(
+        chainTextWidget.data,
+        startsWith('\u5f1f\u5f1f\u7684\u8001\u5a46 = '),
+      );
+
+      final undoButton = find.byKey(
+        const ValueKey<String>('life_relatives_undo_button'),
+      );
+      await tester.scrollUntilVisible(
+        undoButton,
+        320,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(undoButton.hitTestable(), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      final chainAfterUndo = tester.widget<SelectableText>(
+        find.byKey(const ValueKey<String>('life_relatives_chain_text')),
+      );
+      expect(chainAfterUndo.data, startsWith('\u5f1f\u5f1f = '));
     });
 
     testWidgets('reaction test exposes focused reaction modes', (tester) async {
@@ -900,15 +1889,15 @@ void main() {
       await tester.tap(find.text('Aim settings'), warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      expect(find.text('Target total · 20'), findsOneWidget);
-      expect(find.text('Target size · 54 dp'), findsOneWidget);
+      expect(find.text('Target total 路 20'), findsOneWidget);
+      expect(find.text('Target size 路 54 dp'), findsOneWidget);
 
       await tester.tap(find.text('Reveal grow'));
       await tester.pumpAndSettle();
-      expect(find.text('Start size · 0.2 dp'), findsOneWidget);
-      expect(find.text('Reveal time · 120 ms'), findsOneWidget);
-      expect(find.text('Visible size · 6.0 dp'), findsOneWidget);
-      expect(find.text('Growth speed · 1.1x'), findsOneWidget);
+      expect(find.text('Start size 路 0.2 dp'), findsOneWidget);
+      expect(find.text('Reveal time 路 120 ms'), findsOneWidget);
+      expect(find.text('Visible size 路 6.0 dp'), findsOneWidget);
+      expect(find.text('Growth speed 路 1.1x'), findsOneWidget);
       expect(find.text('Moving growth'), findsOneWidget);
       expect(find.text('Sniper duel'), findsOneWidget);
       expect(find.text('Speed curve'), findsOneWidget);
@@ -971,14 +1960,14 @@ void main() {
       await tester.tap(find.text('Aim settings'), warnIfMissed: false);
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text('Target total · 20'),
+        find.text('Target total 路 20'),
         160,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
       await tester.drag(find.byType(Slider).first, const Offset(-500, 0));
       await tester.pumpAndSettle();
-      expect(find.text('Target total · 5'), findsOneWidget);
+      expect(find.text('Target total 路 5'), findsOneWidget);
 
       final startButton = find.widgetWithText(FilledButton, 'Start').first;
       await tester.scrollUntilVisible(
@@ -2296,7 +3285,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Modes'), findsOneWidget);
-      expect(find.text('专注底色'), findsWidgets);
+      expect(find.text('涓撴敞搴曡壊'), findsWidgets);
       expect(find.text('Study'), findsWidgets);
     });
 
@@ -3456,7 +4445,7 @@ void main() {
           wordbookId: 1,
           word: 'alpha',
           fields: <WordFieldItem>[
-            WordFieldItem(key: 'meaning', label: '鍚箟', value: '寮€濮�'),
+            WordFieldItem(key: 'meaning', label: 'meaning', value: 'start'),
           ],
         ),
       ];
@@ -3464,7 +4453,7 @@ void main() {
       await _pumpPage(
         tester,
         state: state,
-        child: const PracticeSessionPage(title: '娴嬭瘯缁冧範', words: words),
+        child: const PracticeSessionPage(title: '濞村鐦紒鍐х瘎', words: words),
       );
 
       expect(find.text('\u663e\u793a\u63d0\u793a'), findsOneWidget);
@@ -3988,6 +4977,16 @@ void main() {
 
 void _noop() {}
 
+Future<T> _withMockHttp<T>(
+  HttpOverrides overrides,
+  Future<T> Function() body,
+) async {
+  return HttpOverrides.runZoned<Future<T>>(
+    body,
+    createHttpClient: (context) => overrides.createHttpClient(context),
+  );
+}
+
 Future<void> _selectTodoMenuOption(
   WidgetTester tester, {
   required ValueKey<String> menuKey,
@@ -4017,6 +5016,34 @@ Future<void> _pumpPage(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+Future<void> _pumpUntilFound(
+  WidgetTester tester,
+  Finder finder, {
+  int maxPumps = 40,
+  Duration step = const Duration(milliseconds: 100),
+}) async {
+  for (var i = 0; i < maxPumps; i += 1) {
+    await tester.pump(step);
+    if (finder.evaluate().isNotEmpty) {
+      return;
+    }
+  }
+}
+
+Future<void> _pumpUntilAnyFound(
+  WidgetTester tester,
+  List<Finder> finders, {
+  int maxPumps = 40,
+  Duration step = const Duration(milliseconds: 100),
+}) async {
+  for (var i = 0; i < maxPumps; i += 1) {
+    await tester.pump(step);
+    if (finders.any((finder) => finder.evaluate().isNotEmpty)) {
+      return;
+    }
+  }
 }
 
 Future<void> _pumpAppShell(
@@ -6779,3 +7806,420 @@ extension<T> on List<T> {
 
   T? get lastOrNull => this.isEmpty ? null : last;
 }
+
+class _LifeToolsRemoteHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return _MockHttpClient((uri) {
+      final url = uri.toString();
+      if (url.contains('garbage.json')) {
+        return _MockHttpResponseData(
+          jsonEncode(<Map<String, Object>>[
+            <String, Object>{'name': 'battery', 'category': 2},
+            <String, Object>{'name': 'plastic bottle', 'category': 1},
+            <String, Object>{'name': 'apple core', 'category': 4},
+            <String, Object>{'name': 'takeout box', 'category': 8},
+            <String, Object>{'name': 'sofa', 'category': 16},
+          ]),
+          statusCode: 200,
+          contentType: ContentType.json,
+        );
+      }
+      if (url.contains('chinapost.com.cn')) {
+        return const _MockHttpResponseData(_postalChinaPostFixtureHtml);
+      }
+      if (url.contains('uguu.se/upload')) {
+        return _MockHttpResponseData(
+          jsonEncode(<String, Object?>{
+            'success': true,
+            'files': <Map<String, String>>[
+              <String, String>{'url': 'https://mock.uguu.se/reverse-image.png'},
+            ],
+          }),
+          contentType: ContentType.json,
+        );
+      }
+      if (url.contains('lens.google.com/uploadbyurl')) {
+        return const _MockHttpResponseData(_reverseImageGoogleFixtureHtml);
+      }
+      if (url.contains('fixture-token') &&
+          (url.contains('start=20') || url.contains('start%3D20'))) {
+        // ignore: prefer_const_constructors
+        return _MockHttpResponseData(_reverseImageGoogleNextSearchFixtureHtml);
+      }
+      if (url.contains('fixture-token')) {
+        return const _MockHttpResponseData(
+          _reverseImageGoogleSearchFixtureHtml,
+        );
+      }
+      if (url.contains('yandex.com/images/search')) {
+        return const _MockHttpResponseData(_reverseImageYandexFixtureHtml);
+      }
+      if (url.contains('graph.baidu.com/s')) {
+        return const _MockHttpResponseData(_reverseImageBaiduFixtureHtml);
+      }
+      if (url.contains('image.sogou.com/risapi/pc/risSearchlist')) {
+        return _MockHttpResponseData(
+          '{"status":0,"forbid":false,"data":{"list":[{"title":"Sogou fixture result","pageUrl":"https://example.com/sogou-source","originImage":"https://example.com/sogou-image.jpg","thumbUrl":"https://example.com/sogou-thumb.jpg"}]}}',
+          contentType: ContentType.json,
+        );
+      }
+      if (url.contains('image.sogou.com/ris')) {
+        return const _MockHttpResponseData(_reverseImageSogouFixtureHtml);
+      }
+      return const _MockHttpResponseData('<html></html>');
+    });
+  }
+}
+
+class _MockHttpResponseData {
+  const _MockHttpResponseData(
+    this.body, {
+    this.statusCode = 200,
+    this.contentType,
+  });
+
+  final String body;
+  final int statusCode;
+  final ContentType? contentType;
+}
+
+class _MockHttpClient implements HttpClient {
+  _MockHttpClient(this.resolve);
+
+  final _MockHttpResponseData Function(Uri uri) resolve;
+
+  @override
+  Future<HttpClientRequest> openUrl(String method, Uri url) async {
+    return _MockHttpClientRequest(resolve(url));
+  }
+
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) => openUrl('GET', url);
+
+  @override
+  Future<HttpClientRequest> postUrl(Uri url) => openUrl('POST', url);
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _MockHttpClientRequest implements HttpClientRequest {
+  _MockHttpClientRequest(this.data);
+
+  final _MockHttpResponseData data;
+  final HttpHeaders _headers = _MockHttpHeaders();
+
+  @override
+  HttpHeaders get headers => _headers;
+
+  @override
+  int contentLength = 0;
+
+  @override
+  bool followRedirects = true;
+
+  @override
+  int maxRedirects = 5;
+
+  @override
+  bool persistentConnection = false;
+
+  @override
+  Future<HttpClientResponse> close() async => _MockHttpClientResponse(data);
+
+  @override
+  void abort([Object? exception, StackTrace? stackTrace]) {}
+
+  @override
+  void add(List<int> data) {}
+
+  @override
+  Future<void> addStream(Stream<List<int>> stream) async {
+    await for (final _ in stream) {}
+  }
+
+  @override
+  Future<void> flush() async {}
+
+  @override
+  void write(Object? object) {}
+
+  @override
+  void writeAll(Iterable<dynamic> objects, [String separator = '']) {}
+
+  @override
+  void writeCharCode(int charCode) {}
+
+  @override
+  void writeln([Object? object = '']) {}
+
+  @override
+  Encoding encoding = utf8;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _MockHttpClientResponse extends Stream<List<int>>
+    implements HttpClientResponse {
+  _MockHttpClientResponse(this.data);
+
+  final _MockHttpResponseData data;
+
+  List<int> get _bytes => utf8.encode(data.body);
+
+  @override
+  int get statusCode => data.statusCode;
+
+  @override
+  int get contentLength => _bytes.length;
+
+  @override
+  HttpHeaders get headers => _MockHttpHeaders(contentType: data.contentType);
+
+  @override
+  bool get isRedirect => false;
+
+  @override
+  bool get persistentConnection => false;
+
+  @override
+  String get reasonPhrase => statusCode == 200 ? 'OK' : 'Error';
+
+  @override
+  List<RedirectInfo> get redirects => const <RedirectInfo>[];
+
+  @override
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
+
+  @override
+  X509Certificate? get certificate => null;
+
+  @override
+  Future<Socket> detachSocket() {
+    throw UnsupportedError('Mock response cannot detach sockets.');
+  }
+
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return Stream<List<int>>.fromIterable(<List<int>>[_bytes]).listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _MockHttpHeaders implements HttpHeaders {
+  _MockHttpHeaders({ContentType? contentType}) : _contentType = contentType;
+
+  ContentType? _contentType;
+
+  @override
+  void add(String name, Object value, {bool preserveHeaderCase = false}) {}
+
+  @override
+  void set(String name, Object value, {bool preserveHeaderCase = false}) {}
+
+  @override
+  void remove(String name, Object value) {}
+
+  @override
+  void removeAll(String name) {}
+
+  @override
+  List<String>? operator [](String name) => null;
+
+  @override
+  String? value(String name) => null;
+
+  @override
+  void forEach(void Function(String name, List<String> values) action) {}
+
+  @override
+  void noFolding(String name) {}
+
+  @override
+  DateTime? date;
+
+  @override
+  DateTime? expires;
+
+  @override
+  String? host;
+
+  @override
+  int? port;
+
+  @override
+  ContentType? get contentType => _contentType;
+
+  @override
+  set contentType(ContentType? value) {
+    _contentType = value;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+const String _postalChinaPostFixtureHtml = '''
+<!doctype html>
+<html>
+<body>
+<table class="wangd2">
+<tr class="wangd2_tr">
+  <td>鐪?/td><td>甯?/td><td>鍘?/td><td>鏈嶅姟缃戠偣鍚嶇О</td><td>閭紪</td><td>鍦板潃</td><td>鏄惁鍔炵悊閲戣瀺涓氬姟</td><td>鐢佃瘽</td><td>钀ヤ笟鏃堕棿</td>
+</tr>
+<tr>
+  <td align=center>骞夸笢鐪?/td>
+  <td align=center>娣卞湷甯?/td>
+  <td align=center>鍗楀北鍖?/td>
+  <td align=center>娣卞湷澶у閭斂鎵€</td>
+  <td align=center>518060</td>
+  <td align=center>鍗楀北灞辩菠娴疯閬撳崡娴峰ぇ閬?688鍙锋繁鍦冲ぇ瀛﹀疄楠屾ゼ</td>
+  <td align=center>鍚?/td>
+  <td align=center>13556892288</td>
+  <td align=center>09:00-12:00 12:00-17:00</td>
+</tr>
+<tr>
+  <td align=center>璐靛窞鐪?/td>
+  <td align=center>閬典箟甯?/td>
+  <td align=center>姹囧窛鍖?/td>
+  <td align=center>娣卞湷璺偖鏀挎敮灞€</td>
+  <td align=center>563099</td>
+  <td align=center>璐靛窞鐪侀伒涔夊競姹囧窛鍖哄ぇ杩炶矾琛楅亾浣涘北璺奔鑺界ぞ鍖?/td>
+  <td align=center>鏄?/td>
+  <td align=center>15120287923</td>
+  <td align=center>09:00-12:00 12:00-17:00</td>
+</tr>
+</table>
+</body>
+</html>
+''';
+
+const String _reverseImageGoogleFixtureHtml = '''
+<!doctype html>
+<html>
+<head>
+  <title>Google Search</title>
+  <meta name="description" content="Visual matches loaded from Google Lens." />
+</head>
+<body>
+  <a href="https://www.google.com/search?vsrid=fixture-token">Open</a>
+</body>
+</html>
+''';
+
+const String _reverseImageGoogleSearchFixtureHtml = '''
+<!doctype html>
+<html>
+<head>
+  <title>Google visual search result</title>
+  <meta name="description" content="Google search result parsed with vsrid." />
+</head>
+<body>
+  <a href="https://www.google.com/imgres?imgurl=https%3A%2F%2Fgoogle-first.example.test%2Fimage.jpg&imgrefurl=https%3A%2F%2Fgoogle-first.example.test%2Fsource">
+    <img src="https://google-first.example.test/preview.jpg" />
+    First Google visual match
+  </a>
+  <a href="https://www.google.com/search?vsrid=fixture-token&start=20&udm=50">
+    More results
+  </a>
+</body>
+</html>
+''';
+
+const String _reverseImageGoogleNextSearchFixtureHtml = '''
+<!doctype html>
+<html>
+<head>
+  <title>Google visual search next page</title>
+  <meta name="description" content="Google next page parsed with vsrid." />
+</head>
+<body>
+  <a href="https://www.google.com/imgres?imgurl=https%3A%2F%2Fgoogle-second.example.test%2Fimage.jpg&imgrefurl=https%3A%2F%2Fgoogle-second.example.test%2Fsource">
+    <img src="https://google-second.example.test/preview.jpg" />
+    Second Google visual match
+  </a>
+</body>
+</html>
+''';
+
+const String _reverseImageYandexFixtureHtml = '''
+<!doctype html>
+<html>
+<head>
+  <title>Yandex</title>
+  <meta name="description" content="Yandex image search page loaded." />
+</head>
+<body>Yandex image search</body>
+</html>
+''';
+
+const String _reverseImageBaiduFixtureHtml = '''
+<!doctype html>
+<html>
+<head>
+  <title>Baidu reverse image result</title>
+  <meta name="description" content="Baidu structured reverse image payload." />
+</head>
+<body>
+<script>
+window.cardData =[
+  {
+    "cardName":"same",
+    "tplData":{
+      "list":[
+        {
+          "title":"Fixture source title",
+          "website":"example.com",
+          "url":"https://example.com/source-a",
+          "image_src":"https://example.com/thumb-a.jpg",
+          "abstract":"fixture abstract"
+        }
+      ]
+    }
+  },
+  {
+    "cardName":"simipic",
+    "tplData":{
+      "imageUrl":"https://example.com/query-image.jpg",
+      "firstUrl":"https://graph.baidu.com/ajax/pcsimi?fixture=1"
+    }
+  }
+];
+window.extData ={
+  "share":{
+    "shareImg":"https://example.com/query-image.jpg"
+  }
+};
+</script>
+</body>
+</html>
+''';
+
+const String _reverseImageSogouFixtureHtml = '''
+<!doctype html>
+<html>
+<head>
+  <title>鎼滅嫍鍥剧墖鎼滅储 - 涓婄綉浠庢悳鐙楀紑濮?/title>
+  <meta name="description" content="鎼滅嫍璇嗗浘缁撴灉椤靛凡鍔犺浇銆? />
+</head>
+<body>鎼滅嫍璇嗗浘</body>
+</html>
+''';

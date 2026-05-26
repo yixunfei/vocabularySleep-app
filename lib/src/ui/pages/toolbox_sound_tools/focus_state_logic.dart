@@ -81,11 +81,11 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
 
   String _animationLabel(_FocusBeatAnimationKind kind) {
     return switch (kind) {
-      _FocusBeatAnimationKind.pendulum => '摆钟 Pendulum',
-      _FocusBeatAnimationKind.hypno => '催眠球 Hypno',
-      _FocusBeatAnimationKind.dew => '露珠 Dewdrop',
-      _FocusBeatAnimationKind.gear => '齿轮 Gear',
-      _FocusBeatAnimationKind.steps => '步伐 Steps',
+      _FocusBeatAnimationKind.pendulum => '暖色轨道 Warm Path',
+      _FocusBeatAnimationKind.hypno => '静蓝环线 Still Orbit',
+      _FocusBeatAnimationKind.dew => '清水脉络 Clear Wave',
+      _FocusBeatAnimationKind.gear => '精密刻度 Precision Mark',
+      _FocusBeatAnimationKind.steps => '步阵路径 Step Array',
     };
   }
 
@@ -104,13 +104,29 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
     return switch (kind) {
       _FocusBeatAnimationKind.pendulum => pickUiText(
         i18n,
-        zh: '钟摆',
-        en: 'Pendulum',
+        zh: '暖轨',
+        en: 'Warm path',
       ),
-      _FocusBeatAnimationKind.hypno => pickUiText(i18n, zh: '律环', en: 'Orbit'),
-      _FocusBeatAnimationKind.dew => pickUiText(i18n, zh: '露滴', en: 'Droplet'),
-      _FocusBeatAnimationKind.gear => pickUiText(i18n, zh: '棱轮', en: 'Rotor'),
-      _FocusBeatAnimationKind.steps => pickUiText(i18n, zh: '步进', en: 'Steps'),
+      _FocusBeatAnimationKind.hypno => pickUiText(
+        i18n,
+        zh: '静环',
+        en: 'Still orbit',
+      ),
+      _FocusBeatAnimationKind.dew => pickUiText(
+        i18n,
+        zh: '清波',
+        en: 'Clear wave',
+      ),
+      _FocusBeatAnimationKind.gear => pickUiText(
+        i18n,
+        zh: '刻度',
+        en: 'Precision mark',
+      ),
+      _FocusBeatAnimationKind.steps => pickUiText(
+        i18n,
+        zh: '步阵',
+        en: 'Step array',
+      ),
     };
   }
 
@@ -139,21 +155,21 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
 
   String _animationDescription(_FocusBeatAnimationKind kind) {
     return switch (kind) {
-      _FocusBeatAnimationKind.pendulum => '锁链与金属摆锤同步摆动，强拍时反光与惯性更重。',
-      _FocusBeatAnimationKind.hypno => '同心波纹按拍扩张，适合长时间稳定专注。',
-      _FocusBeatAnimationKind.dew => '圆形透光露珠下坠，触水后才逐层扩散涟漪。',
-      _FocusBeatAnimationKind.gear => '金属齿轮按拍耦合咬合，落点带短促顿挫反馈。',
-      _FocusBeatAnimationKind.steps => '左右步态交替落拍，适合朗读、背诵与走拍。',
+      _FocusBeatAnimationKind.pendulum => '用暖色轨道突出第一拍，让一小节的起点更容易被眼睛捕捉。',
+      _FocusBeatAnimationKind.hypno => '用低对比环线降低刺激，把注意力集中在沿轨道推进的光点上。',
+      _FocusBeatAnimationKind.dew => '用清透冷色表达子拍密度，适合轻声朗读和较柔的跟拍节奏。',
+      _FocusBeatAnimationKind.gear => '用精密刻度强化拍点边界，适合需要明确节奏切分的专注任务。',
+      _FocusBeatAnimationKind.steps => '用步阵式色彩区分主拍推进，适合背诵、走拍和节奏记忆。',
     };
   }
 
   String _animationSyncHint(_FocusBeatAnimationKind kind) {
     return switch (kind) {
-      _FocusBeatAnimationKind.pendulum => '强拍摆幅最大，回摆更轻。',
-      _FocusBeatAnimationKind.hypno => '每拍呼吸一次，每小节推高一次峰值。',
-      _FocusBeatAnimationKind.dew => '落下前聚能，触水瞬间释放波纹。',
-      _FocusBeatAnimationKind.gear => '齿间在拍点咬合，视觉上能看到啮合停顿。',
-      _FocusBeatAnimationKind.steps => '左右脚按节拍交替，段落切换更稳。',
+      _FocusBeatAnimationKind.pendulum => '第一拍光晕更暖，普通拍保持轻量推进。',
+      _FocusBeatAnimationKind.hypno => '光点沿环线匀速呼吸，重拍只做克制强调。',
+      _FocusBeatAnimationKind.dew => '子拍以细小刻度衔接，主拍以清亮节点落位。',
+      _FocusBeatAnimationKind.gear => '每个拍点都有明确刻度，当前节点会短暂加亮。',
+      _FocusBeatAnimationKind.steps => '主拍像步阵依次前进，段落切换时更容易对齐。',
     };
   }
 
@@ -842,15 +858,14 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       ),
                       const SizedBox(height: 12),
                       _FocusControlSection(
-                        icon: Icons.animation_rounded,
-                        title: pickUiText(i18n, zh: '动画与音色', en: 'Style'),
+                        icon: Icons.graphic_eq_rounded,
+                        title: pickUiText(i18n, zh: '节拍音色', en: 'Beat timbre'),
                         subtitle: pickUiText(
                           i18n,
-                          zh: '选择舞台动画和节拍音色',
-                          en: 'Choose the stage motion and click timbre',
+                          zh: '选择当前节拍点击的声音质感',
+                          en: 'Choose the current click timbre',
                         ),
-                        summary:
-                            '${_animationName(sheetContext, _animationKind)} · ${_soundName(sheetContext, _soundKind)}',
+                        summary: _soundName(sheetContext, _soundKind),
                         expanded: _styleExpanded,
                         onToggle: () {
                           _setViewState(() {

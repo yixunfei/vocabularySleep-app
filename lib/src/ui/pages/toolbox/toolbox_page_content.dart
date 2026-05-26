@@ -12,6 +12,7 @@ import '../toolbox_mind_tools.dart';
 import '../toolbox_sleep_assistant_page.dart';
 import '../toolbox_singing_bowls_tool.dart';
 import '../toolbox_soothing_music_v2_page.dart';
+import '../toolbox_life_tools.dart';
 import '../toolbox_sound_locator_tool.dart';
 import '../toolbox_sound_tools.dart';
 import '../toolbox_zen_sand_tool.dart';
@@ -309,6 +310,28 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           icon: Icons.landscape_rounded,
           accent: ToolboxColors.zenAccent,
           pageBuilder: () => const ZenSandStudioPage(),
+        ),
+      ],
+    ),
+    ToolboxSectionData(
+      title: pickUiText(i18n, zh: '生活实用', en: 'Life tools'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '时间、弹幕、记分、查询、编码和计算工具集中在一个入口。',
+        en: 'Time, barrage, scoreboard, lookup, encoding, and calculators in one place.',
+      ),
+      entries: <ToolboxEntryData>[
+        ToolboxEntryData(
+          moduleId: ModuleIds.toolboxLifeTools,
+          title: pickUiText(i18n, zh: '生活实用中心', en: 'Life tool hub'),
+          subtitle: pickUiText(
+            i18n,
+            zh: '37 个独立功能入口，覆盖日常高频工具与在线资源助手。',
+            en: '37 standalone entries for daily practical tools and online resource helpers.',
+          ),
+          icon: Icons.home_repair_service_rounded,
+          accent: ToolboxColors.lifeAccent,
+          pageBuilder: () => const LifeToolsHubPage(),
         ),
       ],
     ),

@@ -11,6 +11,8 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
+import android.app.WallpaperManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -25,6 +27,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.view.WindowManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
@@ -40,6 +43,7 @@ class MainActivity : FlutterActivity() {
     private val systemCalendarChannelName = "vocabulary_sleep/system_calendar"
     private val todoReminderChannelName = "vocabulary_sleep/todo_reminder"
     private val systemAudioChannelName = "vocabulary_sleep/system_audio"
+    private val lifeDisplayChannelName = "vocabulary_sleep/life_display"
 
     private val reminderHandler = Handler(Looper.getMainLooper())
     private val speechHandler = Handler(Looper.getMainLooper())
@@ -252,6 +256,24 @@ class MainActivity : FlutterActivity() {
                     val requestedRatio = ((call.arguments as? Map<*, *>)?.get("targetRatio") as? Number)
                         ?.toDouble() ?: 0.65
                     result.success(setPlaybackVolume(requestedRatio))
+                }
+
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            lifeDisplayChannelName,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "setKeepScreenOn" -> {
+                    setLifeDisplayState(call.arguments as? Map<*, *>)
+                    result.success(null)
+                }
+
+                "setWallpaper" -> {
+                    result.success(setLifeWallpaper(call.arguments as? Map<*, *>))
                 }
 
                 else -> result.notImplemented()
@@ -474,6 +496,82 @@ class MainActivity : FlutterActivity() {
         val targetIndex = (clampedRatio * maxIndex).toInt().coerceIn(minIndex, maxIndex)
         audioManager.setStreamVolume(stream, targetIndex, 0)
         return buildSystemAudioResult(targetRatio)
+    }
+
+    private fun setLifeDisplayState(arguments: Map<*, *>?) {
+        val enabled = arguments?.get("enabled") as? Boolean ?: false
+        val brightness = ((arguments?.get("brightness") as? Number)?.toFloat() ?: 1.0f)
+            .coerceIn(0.0f, 1.0f)
+        runOnUiThread {
+            if (enabled) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                window.attributes = window.attributes.apply {
+                    screenBrightness = brightness
+                }
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                window.attributes = window.attributes.apply {
+                    screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                }
+            }
+        }
+    }
+
+    private fun setLifeWallpaper(arguments: Map<*, *>?): Map<String, Any?> {
+        val filePath = (arguments?.get("filePath") as? String)?.trim().orEmpty()
+        val target = (arguments?.get("target") as? String)?.trim()?.lowercase(Locale.US) ?: "both"
+        if (filePath.isEmpty()) {
+            return buildLifeWallpaperResult(false, "invalid_args")
+        }
+
+        val file = File(filePath)
+        if (!file.exists() || !file.isFile) {
+            return buildLifeWallpaperResult(false, "file_not_found")
+        }
+
+        return try {
+            val manager = WallpaperManager.getInstance(applicationContext)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+                    ?: return buildLifeWallpaperResult(false, "decode_failed")
+                val flags = when (target) {
+                    "home" -> WallpaperManager.FLAG_SYSTEM
+                    "lock" -> WallpaperManager.FLAG_LOCK
+                    else -> WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK
+                }
+                try {
+                    manager.setBitmap(bitmap, null, true, flags)
+                } finally {
+                    bitmap.recycle()
+                }
+            } else {
+                if (target == "lock") {
+                    return buildLifeWallpaperResult(false, "lock_unsupported")
+                }
+                file.inputStream().use { stream ->
+                    @Suppress("DEPRECATION")
+                    manager.setStream(stream)
+                }
+            }
+            buildLifeWallpaperResult(true, null)
+        } catch (error: Throwable) {
+            buildLifeWallpaperResult(false, "failed", error.message)
+        }
+    }
+
+    private fun buildLifeWallpaperResult(
+        success: Boolean,
+        errorCode: String?,
+        errorMessage: String? = null,
+    ): Map<String, Any?> {
+        return mutableMapOf<String, Any?>(
+            "success" to success,
+            "errorCode" to errorCode,
+        ).apply {
+            if (!errorMessage.isNullOrBlank()) {
+                put("errorMessage", errorMessage)
+            }
+        }
     }
 
     private fun requestTodoReminderNotificationPermission(result: MethodChannel.Result) {

@@ -1,5 +1,11 @@
 part of '../toolbox_sound_tools.dart';
 
+const int _pianoActiveKeyHoldMs = 150;
+const int _pianoGlissandoMinTriggerMs = 26;
+const int _pianoPhoneWarmUpKeyBudget = 12;
+const int _pianoFullScreenWarmUpKeyBudget = 18;
+const int _pianoWarmUpYieldMs = 4;
+
 class _PianoKeyboardSlice {
   const _PianoKeyboardSlice({
     required this.whiteKeys,

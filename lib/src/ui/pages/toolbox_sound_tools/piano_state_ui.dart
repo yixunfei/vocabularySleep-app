@@ -1862,6 +1862,8 @@ extension _PianoToolStateUi on _PianoToolState {
   void _disposePianoToolState() {
     _rangeWarmUpTimer?.cancel();
     _rangeWarmUpTimer = null;
+    _activeKeyReleaseTimer?.cancel();
+    _activeKeyReleaseTimer = null;
     _rangeWarmUpVersion += 1;
     _invalidatePlayers(warmUp: false);
   }
@@ -1909,19 +1911,21 @@ extension _PianoToolStateUi on _PianoToolState {
                     label: pickUiText(i18n, zh: '键数', en: 'Keys'),
                     value: '${_activeKeyLayout.keyCount}',
                   ),
-                  ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '总音域', en: 'Total range'),
-                    value:
-                        '${_noteLabelForMidi(_activeKeyLayout.startMidi)}-${_noteLabelForMidi(_activeKeyLayout.startMidi + _activeKeyLayout.keyCount - 1)}',
-                  ),
+                  if (!compactPhone)
+                    ToolboxMetricCard(
+                      label: pickUiText(i18n, zh: '总音域', en: 'Total range'),
+                      value:
+                          '${_noteLabelForMidi(_activeKeyLayout.startMidi)}-${_noteLabelForMidi(_activeKeyLayout.startMidi + _activeKeyLayout.keyCount - 1)}',
+                    ),
                   ToolboxMetricCard(
                     label: pickUiText(i18n, zh: '当前窗口', en: 'Window'),
                     value: slice.label,
                   ),
-                  ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '预设', en: 'Preset'),
-                    value: _displayPresetLabel(i18n, _activePreset),
-                  ),
+                  if (!compactPhone)
+                    ToolboxMetricCard(
+                      label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                      value: _displayPresetLabel(i18n, _activePreset),
+                    ),
                   ToolboxMetricCard(
                     label: pickUiText(i18n, zh: '和声', en: 'Harmony'),
                     value: _displayChordLabelFixed(i18n, _chordId),
@@ -2040,29 +2044,55 @@ extension _PianoToolStateUi on _PianoToolState {
                 ],
               ),
               const SizedBox(height: 10),
-              _buildRangeNavigator(
-                context,
-                i18n,
-                octaveSpan: viewport.octaveSpan,
-                rangeStart: rangeStart,
-                slice: slice,
-                immersive: false,
-                aggressiveOneHand: aggressiveOneHand,
-              ),
-              const SizedBox(height: 12),
-              effectiveDualMode
-                  ? _buildDualKeyboardStage(
-                      context,
-                      viewport: viewport,
-                      immersive: false,
-                    )
-                  : _buildKeyboardStage(
-                      context,
-                      slice,
-                      viewport: viewport,
-                      immersive: false,
-                      aggressiveOneHand: aggressiveOneHand,
-                    ),
+              if (compactPhone) ...<Widget>[
+                effectiveDualMode
+                    ? _buildDualKeyboardStage(
+                        context,
+                        viewport: viewport,
+                        immersive: false,
+                      )
+                    : _buildKeyboardStage(
+                        context,
+                        slice,
+                        viewport: viewport,
+                        immersive: false,
+                        aggressiveOneHand: aggressiveOneHand,
+                      ),
+                const SizedBox(height: 10),
+                _buildRangeNavigator(
+                  context,
+                  i18n,
+                  octaveSpan: viewport.octaveSpan,
+                  rangeStart: rangeStart,
+                  slice: slice,
+                  immersive: false,
+                  aggressiveOneHand: aggressiveOneHand,
+                ),
+              ] else ...<Widget>[
+                _buildRangeNavigator(
+                  context,
+                  i18n,
+                  octaveSpan: viewport.octaveSpan,
+                  rangeStart: rangeStart,
+                  slice: slice,
+                  immersive: false,
+                  aggressiveOneHand: aggressiveOneHand,
+                ),
+                const SizedBox(height: 12),
+                effectiveDualMode
+                    ? _buildDualKeyboardStage(
+                        context,
+                        viewport: viewport,
+                        immersive: false,
+                      )
+                    : _buildKeyboardStage(
+                        context,
+                        slice,
+                        viewport: viewport,
+                        immersive: false,
+                        aggressiveOneHand: aggressiveOneHand,
+                      ),
+              ],
               const SizedBox(height: 10),
               Text(
                 pickUiText(

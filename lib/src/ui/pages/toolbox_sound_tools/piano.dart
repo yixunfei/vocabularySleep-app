@@ -201,7 +201,8 @@ class _PianoToolState extends State<_PianoTool> {
       <String, ToolboxRealisticEffectPlayer>{};
   final Map<int, Offset> _activePointers = <int, Offset>{};
   final Map<int, String> _activePointerKeyIds = <int, String>{};
-  final Map<String, int> _activeKeyPulseCounts = <String, int>{};
+  final Map<int, int> _activePointerLastNoteAtMillis = <int, int>{};
+  final Map<String, int> _activeKeyReleaseAtMillis = <String, int>{};
   final math.Random _humanizeRandom = math.Random();
 
   Set<String> _activeKeyIds = <String>{};
@@ -229,6 +230,7 @@ class _PianoToolState extends State<_PianoTool> {
   bool _didApplyResponsiveDefaults = false;
   DateTime? _lastRangeGestureAt;
   Timer? _rangeWarmUpTimer;
+  Timer? _activeKeyReleaseTimer;
   int _rangeWarmUpVersion = 0;
   int _visibleOctaveSpan = 1;
   bool _isRangeWindowPreparing = false;

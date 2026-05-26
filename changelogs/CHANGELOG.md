@@ -1,224 +1,969 @@
-# CHANGELOG
+## [Unreleased-PLAN_226-LIFE-VERACRYPT-STYLE-STEGANOGRAPHY-FILE-CRYPTO] - 2026-05-26
+
+### 原因
+- 用户要求把生活实用隐写模块升级为可复用加解密库，移除未能可靠实现的 Serpent/Kuznyechik 占位，改用 SHA-256/RSA、ECDSA、Whirlpool，并按 VeraCrypt 策略补齐自由级联、独立密钥材料、keyfile 和文件载荷隐写。
+
+### 新增
+- `lib/src/services/toolbox_crypto_service.dart`
+  - 新增自由级联 `customCascade`，支持 AES、Twofish、Camellia、SHA256 stream 自由组合，每层独立派生 256/512/1024-bit 密钥材料。
+  - 新增 Whirlpool 哈希/MAC，新增 SHA-256/RSA 与 ECDSA 签名验证层，新增指定长度随机 keyfile 生成。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增文件 payload 写入/还原：文件字节先进入加密 envelope，再作为隐写载荷写入图片 LSB 或音视频尾部块。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 文件工作区从独立 `.vsc` 文件加密改为“选择载体媒体 + 选择文件 + 生成隐写媒体 / 从隐写媒体还原文件”。
+  - UI 增加 256/512/1024-bit 密钥材料、Whirlpool MAC、RSA/ECDSA 签名、自由级联选择和 keyfile 生成/导出控件。
+- `test/toolbox_crypto_service_test.dart`、`test/toolbox_steganography_service_test.dart`、`test/ui_smoke_test.dart`
+  - 覆盖自由级联、Whirlpool、RSA/ECDSA、随机 keyfile、文件载荷在图片/音频/视频中的写入与还原。
+
+### 风险变更
+- 本模块借鉴 VeraCrypt 的级联、独立密钥、KDF/hash 与 keyfile 策略，但不生成 VeraCrypt 兼容卷、卷头、XTS 设备或挂载语义。
+- 512/1024-bit 选项表示每层派生密钥材料长度；AES/Twofish/Camellia 实际块密码密钥会规范化到算法允许长度，额外材料仍参与密钥收敛。
+- 图片载体仍受 LSB 容量限制，较大文件应优先使用音频/视频尾部载荷。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart test/ui_smoke_test.dart`（仅剩 `test/ui_smoke_test.dart` 既有 info 级提示）
+- `flutter test test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_223-LIFE-RELATIVES-LIVE-CALCULATOR] - 2026-05-26
+
+### 原因
+- 用户反馈亲戚关系计算器仍偏“点等于后出结果”，关系按钮占屏过大，底部导图不够像家族图谱，且文案存在“关系舞台/关系按键”等不自然表达。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart`
+  - 计算器显示屏改为实时展示 `链路 = 称呼`，关系链、目标对象、性别、反向称呼和最短路径设置变化后自动刷新结果。
+  - 保留手动刷新按钮 key 兼容测试，但文案从“等于”改为“刷新结果”，避免暗示必须点击后才计算。
+  - 将“关系舞台”改为“计算器”，“关系按键”改为“关联关系”，“导图拓扑”改为“家族图谱”，整体说明更短更自然。
+  - 关联关系按钮压缩为 3-5 列紧凑布局，减少首屏占用和滚动成本。
+  - “我的性别”去掉“未知”，默认使用“男”，仅保留“男 / 女”切换。
+  - 底部图谱替换为树状家族图谱节点与连线，展示从“我”到当前关系链的路径。
+- `test/ui_smoke_test.dart`
+  - 更新亲戚关系计算器 smoke 测试，覆盖新文案、无 Unknown 选项、点击后实时出现 `链路 = 结果` 和退格后实时重算。
+
+### 风险变更
+- 实时计算会在目标对象输入变化时同步执行本地 `kinship.relationship`，当前链路长度较短，性能风险较低；若未来允许长文本自然语言输入，需要再加入防抖。
+- 家族图谱当前聚焦路径预览，不表达完整多分支亲属网络，复杂关系仍以顶部实时结果为准。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`（仅剩既有 info 级提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens relatives calculator and builds chain"`
+
+## [Unreleased-PLAN_225-LIFE-CRYPTO-LIB-FILE-CRYPTO] - 2026-05-26
+
+### 原因
+- 用户要求为隐写模块增加 AES、Serpent、Twofish、Camellia、Kuznyechik、组合加密和哈希能力，并沉淀为可复用加解密库，支持密钥文件和文件加密。
+
+### 新增
+- `lib/src/services/toolbox_crypto_service.dart`
+  - 新增通用加解密服务，支持 AES-GCM、Twofish-GCM、Camellia-GCM、AES+Twofish、AES+Camellia、AES+Twofish+Camellia 组合链路。
+  - 新增 `standard`、`strong`、`extreme` 三档强度，使用 scrypt 进行口令/密钥文件混合派生。
+  - 新增 SHA-256、SHA-512、SHA3、BLAKE2b 哈希计算。
+  - 新增加密文件 JSON 信封，包含算法、强度、KDF、密钥文件校验、密文与 MAC。
+- `test/toolbox_crypto_service_test.dart`
+  - 覆盖 AES 往返、组合链路、密钥文件校验、哈希和待接入算法状态。
+
+### 修改
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 隐写载荷加密改为复用 `ToolboxCryptoService`，并保留旧版 SHA256 stream/RC4 隐写载荷还原兼容。
+  - 写入/还原支持可选密钥文件。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 页面扩展为「隐写 / 文件 / 哈希」三工作区。
+  - 增加算法、强度、密钥文件选择、文件加密/解密、哈希计算与结果展示。
+- `pubspec.yaml`
+  - 新增 `pointycastle` 依赖承载成熟块密码算法实现。
+- `test/ui_smoke_test.dart`
+  - 扩展隐写页面 smoke 测试，覆盖文件加密与哈希入口控件。
+
+### 风险变更
+- Serpent 与 Kuznyechik 当前在 Flutter 可用成熟库中未启用，页面和服务保留选项但明确标记为待可靠后端接入。
+- 组合加密和 `extreme` 强度会增加 CPU 与内存成本，移动端大文件需关注耗时。
+- 启用密钥文件后，解密必须同时具备相同口令与相同密钥文件。
+
+### 验证
+- `dart format lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart test/ui_smoke_test.dart`（仅剩既有 `test/ui_smoke_test.dart` info 级提示）
+- `flutter test test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_227-LIFE-MIND-MAP-FULLSCREEN-ACTIONS] - 2026-05-26
+
+### 原因
+- 用户要求全屏模式下增加节点操作编辑的小按钮，并放在自动整理小图标旁边，避免占用过多画布空间。
+
+### 新增
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart`
+  - 全屏顶部新增紧凑图标按钮：编辑标题、添加子节点、添加同级、删除节点，并保留自动整理和吸附按钮。
+  - 新增全屏标题编辑弹窗，可在不退出全屏画布的情况下修改当前节点标题。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart`
+  - 新增全屏节点编辑快照回调，复用主页面已有改名、增删节点和坐标播种逻辑。
+
+### 修改
+- `test/ui_smoke_test.dart`
+  - 扩展思维导图 smoke 测试，覆盖全屏改名、添加子节点和删除节点按钮。
+- `modules/toolbox/README.md`
+  - 补充全屏便捷模式的紧凑节点操作按钮说明。
+
+### 风险变更
+- 全屏 AppBar 操作按钮较多，本轮采用 38dp 宽紧凑图标按钮与 tooltip，避免新增文字按钮挤占画布。
+- 根节点仍禁用添加同级和删除，避免破坏导图根结构。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart test/ui_smoke_test.dart`（仅剩既有 info 级提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens simple mind map and edits nodes"`
+
+## [Unreleased-PLAN_226-LIFE-MIND-MAP-FULLSCREEN] - 2026-05-26
+
+### 原因
+- 用户要求为工具箱「生活实用」中的「简易思维导图」增加全屏式便捷模式，支持节点吸附和在画布中直接拖拽整理。
+
+### 新增
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart`
+  - 新增全屏便捷整理页，提供独立全屏画布、当前节点提示、吸附开关和一键自动重排。
+  - 拖拽仅在全屏画布内部启用，避免与默认页面纵向滚动手势冲突。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart`
+  - 扩展导图画布为可接收节点坐标的布局层，支持节点拖拽回写、边界限制和吸附网格绘制。
+  - 吸附拖拽使用累计位移计算，避免小幅连续拖动被网格取整吞掉。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart`
+  - 主舞台增加「全屏便捷模式」入口、内联自动重排按钮和节点坐标状态。
+  - 新增节点会在已有手动布局中靠近父节点生成；模板切换会重置为自动布局。
+- `test/ui_smoke_test.dart`
+  - 扩展 `life tools opens simple mind map and edits nodes`，覆盖全屏入口、吸附开关和一次画布节点拖拽。
+- `modules/toolbox/README.md`
+  - 补充简易思维导图全屏便捷模式、吸附和拖拽交互边界说明。
+
+### 风险变更
+- 节点拖拽坐标按画布比例保存，在不同屏幕尺寸下会随画布缩放，必要时可通过自动重排回到结构布局。
+- 吸附当前以网格为主，适合快速整理；若后续需要专业排版，可继续增加节点间对齐线或分组吸附。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart test/ui_smoke_test.dart`（仅剩既有 info 级提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens simple mind map and edits nodes"`
+
+## [Unreleased-PLAN_224-LIFE-MIND-MAP] - 2026-05-26
+
+### 原因
+- 用户要求设计并完成落地工具箱「生活实用」中的「简易思维导图」模块，当前 `mind_map` 入口仍停留在占位信息页。
+
+### 新增
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart`
+  - 新增简易思维导图本地页面，支持节点舞台、结构连线、节点点击选中和移动端友好的按钮式编辑。
+  - 支持编辑当前节点标题、添加子节点、添加同级节点、删除节点、选择节点颜色。
+  - 支持空白、项目计划、会议记录、学习主题四类快速模板。
+  - 支持结构大纲展示、复制 Markdown 大纲、导出 PNG 图片，并在保存对话框不可用时回退到应用文档目录。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart`
+  - 拆出导图画布、节点 chip、连线 painter 与响应式布局计算，避免单个 part 文件过长。
+- `test/ui_smoke_test.dart`
+  - 新增 `life tools opens simple mind map and edits nodes`，覆盖入口可达、核心控件可见和基础节点编辑。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 接入 mind map part，并补充 `flutter/rendering.dart` 以支持 PNG 导出所需的 `RenderRepaintBoundary`。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `mind_map` 路由接入 `_MindMapToolPage`。
+
+### 修复
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart`
+  - 补齐 Google 搜索域名判断 helper，解除同库 life tools 测试编译阻塞。
+- `test/ui_smoke_test.dart`
+  - 将反向搜图聚合用例的搜索与加载更多点击改为命中可见按钮，避免窄屏滚动状态下误点空白区域。
+
+### 风险变更
+- 导图节点很多时，同层节点会自动换行，画布展示仍以简易梳理为主；完整长标题由结构大纲兜底。
+- PNG 导出依赖 Flutter 截图与平台保存能力，非桌面平台可能走应用文档目录或浏览器下载兜底。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart test/ui_smoke_test.dart`（仅剩既有 info 级提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens simple mind map and edits nodes"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens reverse image aggregation"`
+
+## [Unreleased-PLAN_224-LIFE-MEDIA-STEGANOGRAPHY] - 2026-05-26
+
+### 原因
+- 用户要求完成工具箱「生活实用」中的图片/音频/视频隐写模块，支持写入加密文本并从生成媒体中还原信息。
+
+### 新增
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增隐写服务层，统一处理文本加密、载荷封装、MAC/校验与还原。
+  - 支持图片 PNG LSB 隐写，以及音频/视频尾部载荷块隐写。
+  - 支持 `SHA256 stream`、`RC4 legacy`、`No encryption` 三种模式。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 新增图片/音频/视频隐写独立页面。
+  - 支持写入/还原模式切换、媒体类型切换、口令输入、结果导出、密文预览与还原文本展示。
+- `test/toolbox_steganography_service_test.dart`
+  - 覆盖图片、音频、视频写入后还原，以及错误口令拒绝。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 引入隐写服务与隐写页面 part，并更新 `steganography` 入口说明。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `steganography` 路由接入 `_SteganographyToolPage`。
+- `test/ui_smoke_test.dart`
+  - 新增生活实用隐写页入口与核心控件可见性 smoke 测试。
+- `modules/toolbox/README.md`
+  - 补充生活实用隐写模块能力与风险边界。
+
+### 风险变更
+- 图片隐写输出必须保持 PNG 等无损格式，二次转存 JPEG 会破坏 LSB 载荷。
+- 音频/视频尾部载荷通常能保持播放兼容，但少数严格解析器可能拒绝附加尾部数据。
+- 当前加密为应用内实现，后续若需要更高安全等级，可评估接入成熟加密库。
+
+### 验证
+- `dart format lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_steganography_service_test.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools.dart test/toolbox_steganography_service_test.dart test/ui_smoke_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_222-LIFE-IMAGE-COMPRESSION-LOSSY-PREPROCESS-DPI] - 2026-05-26
+
+### ??
+- ??????????????????????????????????????????/???? DPI ?????????????
+
+### ??
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart`
+  - ??????????`Original color`?`Grayscale`?`Black/white`?
+  - ?????????`BW threshold`?0.35~0.75??????????
+  - ?? DPI ???`No custom DPI`?`Write PNG DPI`???? `72~300 dpi` ?????
+  - ?????????DPI ????? PNG ?????JPEG/GIF ?????? DPI ????
+
+### ??
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart`
+  - ??????? `decode -> orientation -> resize -> preprocess -> encode`???????????????? `auto best` ???
+  - PNG ?????? `PngEncoder(pixelDimensions: ...)`???? DPI ????? PNG DPI ????
+  - ?????????? DPI ????????`gray`?`bw@0.50`?`dpi144(png-only)`??
+  - ????????????????
+- `test/ui_smoke_test.dart`
+  - ?? `life tools opens image compression controls` ????????????? DPI ??????
+
+### ????
+- ??????????????????????????????
+- DPI ?????????????????????????? JPEG/GIF ?????????????
+
+### ??
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens image compression controls"`?????????????????
+
+﻿# CHANGELOG
+
+## [Unreleased-PLAN_221-LIFE-RELATIVES-CALCULATOR] - 2026-05-26
+
+### 原因
+- 用户要求完成工具箱「生活实用」模块中的「亲戚关系计算器」子模块，当前 `relatives` 入口仍落在占位信息页，无法实际使用。
+
+### 新增
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart`
+  - 新增亲戚关系计算器独立页面（本地计算）。
+  - 支持关系输入、相对对象输入、性别选择、`reverse` 与 `optimal` 参数控制。
+  - 支持结果列表、空结果提示和错误提示。
+  - 支持常见英文关系词到中文关系词的输入归一化（如 `mom` -> `妈妈`）。
+- `test/ui_smoke_test.dart`
+  - 新增 `life tools opens relatives calculator and computes`，覆盖入口可达与核心控件可见。
+
+### 修改
+- `pubspec.yaml`
+  - 增加依赖：`kinship_calculator: ^4.0.0`。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 增加 `kinship_calculator` import 和 `toolbox_life_tools_relatives.dart` part 声明。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `relatives` 路由接入 `_RelativesToolPage`。
+
+### 风险变更
+- 算法包升级后可能带来称谓结果差异，后续需要在版本升级时做回归比对。
+- 称谓表达天然存在多义性，结果可能返回多个候选项。
+
+### 验证
+- `flutter pub get`
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens relatives calculator and computes"`
+
+## [Unreleased-PLAN_220-LIFE-IMAGE-COMPRESSION] - 2026-05-26
+
+### 鍘熷洜
+- 鐢ㄦ埛瑕佹眰涓撴敞骞跺畬鎴愬伐鍏风銆岀敓娲诲疄鐢ㄣ€嶄腑鐨勫浘鐗囧帇缂╁瓙妯″潡鍔熻兘锛屽綋鍓嶅叆鍙ｄ粛涓哄崰浣嶄俊鎭〉锛屼笉鍙疄闄呬娇鐢ㄣ€?
+### 鏂板
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart`
+  - 鏂板鍥剧墖鍘嬬缉鐙珛椤甸潰锛堟湰鍦扮绾匡級锛氭敮鎸侀€夊浘銆佹寜姣斾緥鍘嬬缉銆佹寜鐩爣瀹藉害鍘嬬缉銆丣PEG 璐ㄩ噺璋冭妭銆?  - 鏂板鍘嬬缉缁撴灉鎸囨爣锛氬師鍥句綋绉€佺粨鏋滀綋绉€佷綋绉崰姣斻€佸帇缂╁箙搴︺€佽緭鍑哄昂瀵搞€?  - 鏂板鍘熷浘/鍘嬬缉鍚庡弻棰勮锛堢獎灞忕旱鍚戙€佸灞忓弻鍒楋級涓庡鍑烘寜閽€?  - 鏂板瀵煎嚭鍏滃簳锛氫紭鍏堜娇鐢ㄤ繚瀛樺璇濇锛岃嫢涓嶅彲鐢ㄥ垯鍥為€€鍒板簲鐢ㄦ枃妗ｇ洰褰?`life_tools/image_compress`銆?- `test/ui_smoke_test.dart`
+  - 鏂板 `life tools opens image compression controls`锛岃鐩栧叆鍙ｅ彲杈句笌鏍稿績鎺т欢鍙銆?
+### 淇敼
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 鏂板 `image` 鍖呭鍏ヤ笌 `toolbox_life_tools_image_compress.dart` part 澹版槑銆?- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 灏?`image_compress` 鎺ュ叆 utility 璺敱鍒嗗彂銆?- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 灏?`image_compress` 鍒嗘敮鎺ュ叆 `_ImageCompressPage`銆?- `pubspec.yaml`
+  - 琛ュ厖鐩存帴渚濊禆锛歚image: ^4.8.0`锛堝師涓?transitive锛屾敼涓烘樉寮忎緷璧栦互绋冲畾缁存姢锛夈€?- `modules/toolbox/README.md`
+  - 琛ュ厖鍥剧墖鍘嬬缉瀛愭ā鍧楄兘鍔涗笌杈圭晫璇存槑銆?
+### 椋庨櫓鍙樻洿
+- 褰撳墠杈撳嚭鍥哄畾涓?JPEG锛歅NG 绛夊甫閫忔槑閫氶亾鍥剧墖浼氳鍘嬪钩鍚庡啀缂栫爜锛岄€傚悎浣撶Н浼樺寲浣嗕笉閫傚悎淇濈暀閫忔槑鑳屾櫙鍦烘櫙銆?- 瓒呭ぇ鍥惧湪涓荤嚎绋嬪帇缂╂椂鍙兘鐭椂鍗￠】锛涘悗缁彲璇勪及 isolate 鍖栧帇缂╀换鍔°€?
+### 楠岃瘉
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens image compression controls"`
+## [Unreleased-PLAN_219B-LIFE-REVERSE-IMAGE-AGGREGATION-PAGING-PARSERS] - 2026-05-26
+
+### 鍘熷洜
+- 鐢ㄦ埛瑕佹眰浠ュ浘鎼滃浘缁撴灉涓嶈灞曠ず闀胯姹?缁撴灉 URL 鏂囨湰锛屼笖蹇呴』鏀寔缈婚〉/鍔ㄦ€佸姞杞戒笌鍘婚噸銆?- 鐢ㄦ埛鍙嶉鎼滅嫍鏉ユ簮鍦板潃閿欓厤銆丟oogle 璇锋眰/瑙ｆ瀽寮傚父锛屽苟瑕佹眰浼樺厛钀藉埌 `https://www.google.com/search?vsrid=`銆?- 鐢ㄦ埛鏄庣‘ remove.bg 涓嶆槸鎼滃浘婧愶紝搴斾粠鑱氬悎寮曟搸涓Щ闄わ紝骞舵彁渚涘悗缁彲琛屾€ц瘎浼般€?
+### 淇敼
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart`
+  - 缁撴灉鍗￠殣钘?Request/Result page 闀?URL 灞曠ず锛屼粎淇濈暀鎵撳紑鎸夐挳銆?  - 缁撴灉鍒楄〃鏀逛负姣忓紩鎿?`Load more` 澧為噺鍔犺浇锛屼笉鍐嶅浐瀹氬彧鏄剧ず鍓?24 鏉°€?  - 鍘婚噸绛栫暐鍗囩骇涓哄熀浜庤鑼冨寲 `sourceUrl/imageUrl/title/site` 鐨勪紭鍏堢骇鍘婚噸锛屽噺灏戦噸澶嶇皣銆?  - Google 閾捐矾鏂板 `vsrid` 瑙ｆ瀽锛氫紭鍏堜粠 Lens 璺宠浆鎴栭〉闈腑鎻愬彇 `google.com/search?vsrid=...`銆?  - 鎼滅嫍閾捐矾鏂板 `window.__INITIAL_STATE__` 涓?`/risapi/pc/risSearchlist` 鐨勭粨鏋勫寲瑙ｆ瀽鍏滃簳銆?  - 鏉＄洰鍗￠殣钘忛暱 URL 鏂囨湰锛屼粎淇濈暀鎵撳紑鏉ユ簮/鍥剧墖鍦板潃鎸夐挳銆?- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - reverse image 鏉ユ簮鍒楄〃绉婚櫎 `remove.bg`銆?- `test/ui_smoke_test.dart`
+  - 琛ュ厖 Google `vsrid` 璺緞涓庢悳鐙?`risapi` mock锛岃鐩栨柊瑙ｆ瀽鍒嗘敮銆?
+### 鍙鎬ц瘎浼帮紙remove.bg锛屽悗缁兘鍔涳級
+- remove.bg 閫傚悎鍋氣€滄悳鍥惧墠棰勫鐞嗭紙鎶犲浘澧炲己鐗瑰緛锛夆€濈殑鍙€夋楠わ紝浣嗕笉閫傚悎浣滀负鎼滃浘寮曟搸銆?- 涓婄嚎鍓嶉渶璇勪及锛欰PI Key 绠＄悊銆佽皟鐢ㄦ垚鏈笌棰濆害銆侀殣绉佷笌鍚堣锛堝浘鐗囦笂浼狅級銆佽法鍖虹綉缁滃彲杈炬€т笌绋冲畾鎬с€?
+### 楠岃瘉
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart lib/src/ui/pages/toolbox_life_tools.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart lib/src/ui/pages/toolbox_life_tools.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens reverse image aggregation"`
+## [Unreleased-PLAN_219A-LIFE-REVERSE-IMAGE-STRUCTURED-RESULTS] - 2026-05-26
+
+### 閸樼喎娲?- 娴犮儱娴橀幖婊冩禈妞ょ敻娼拌ぐ鎾冲娴犲懎鐫嶇粈铏圭暆閸楁洜濮搁幀浣规喅鐟曚緤绱濋悽銊﹀煕鐟曚焦鐪伴弨閫涜礋缂佺喍绔寸紒鎾寸€崠鏍粵閸氬牏绮ㄩ弸婊愮礄閸ュ墽澧栨穱鈩冧紖 + 濠ф劕婀撮崸鈧敍澶堚偓?- 閻劍鍩涚憰浣圭湴閺堫剙婀撮崶鐐梾缁鳖澀绱崗鍫ｈ泲閹兼粎鍌ㄥ鏇熸惛閻╃绻涚拫鍐暏閿涘苯鏁栭柌蹇庣瑝娓氭繆绂嗘稉瀛樻閸忣剛缍夐崶鎯х哎閵?
+### 閺傛澘顤?- reverse image 閺傛澘顤冪紒鐔剁缂佹挻鐏夋い瑙勀侀崹瀣剁礉閹稿绱╅幙搴や粵閸氬牆鐫嶇粈鐑樼垼妫版ǜ鈧焦娼靛┃鎰彲閻愬箍鈧焦绨崷鏉挎絻閵嗕礁娴橀悧鍥ф勾閸р偓閵嗕胶缂夐悾銉ユ禈娑撳孩鎲崇憰浣蜂繆閹垬鈧?- 閺傛澘顤冮惂鎯у閻╃绻涙稉濠佺炊闁炬崘鐭鹃敍姘拱閸︽澘娴?`POST https://graph.baidu.com/upload` 閸氬海娲块崣鏍ㄦ偝缁便垽銆夐獮鎯靶掗弸鎰波閺嬪嫬瀵查崡锛勫閺佺増宓侀妴?- 閺傛澘顤冮惂鎯у缂佹挻鐎崠鏍掗弸鎰剁窗閺€顖涘瘮 `window.cardData` / `window.extData`閿涘苯鑻熼幏澶婂絿 `simipic` 閹恒儱褰涚悰銉ュ弿閻╅晲鎶€閸ョ偓娼靛┃鎰蒋閻╊喓鈧?
+### 娣囶喗鏁?- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart` 闁插秵鐎稉琛♀偓婊呮纯鏉╃偘绱崗?+ 缂佺喍绔寸紒鎾寸亯閸掓銆冮垾婵嗙杽閻滆埇鈧?- 閺堫剙婀撮崶鐐梾缁便垻鐡ラ悾銉ㄧ殶閺佺繝璐熼敍?  1. 閸忓牐铔嬮惂鎯у閻╃绻涙稉濠佺炊娑撳海绮ㄩ弸鍕鐟欙絾鐎介妴?  2. 閼汇儲瀣侀崚鏉垮讲濡偓缁便垹娴橀悧?URL閿涘苯顦查悽銊嚉 URL 閺屻儴顕楅崗鏈电铂瀵洘鎼搁妴?  3. 娴犲懎缍嬮弮鐘崇《瀵版鍩岄崣顖涱梾缁?URL 閺冭绱濋崶鐐衡偓鈧稉瀛樻閸忣剛缍夐崶鎯х哎閵?- 娣囨繄鏆€ `remove.bg` 娑撶儤澧滈崝銊ㄋ夐崗鍛弳閸欙綇绱濇担鍡欐捈閸忋儳绮烘稉鈧紒鎾寸亯闂堛垺婢橀弰鍓с仛閵?
+### 濞村鐦稉搴ㄧ崣鐠?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens reverse image aggregation"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閻ф儳瀹虫い鐢告桨缂佹挻鐎幋?`simipic` 閹恒儱褰涢崣鍌涙殶閸欐ɑ娲块弮璁圭礉缂佹挻鐎崠鏍掗弸鎰波閺嬫粈绱版稉瀣閿涘矂銆夐棃顫窗閼奉亜濮╅崶鐐衡偓鈧崚浼粹偓姘辨暏缂佹挻鐏夋い鐟扮潔缁€鎭掆偓?- 娑撳瓨妞傞崗顒傜秹閸ユ儳绨ユ稉宥呭晙閺勵垶绮拋銈堢熅瀵板嫸绱濇担鍡楁躬閻╃绻涙稉宥呭讲閻劍妞傛禒宥勭窗鐟欙箑褰傞敍宀€鏁ら幋铚傜瑐娴肩娀娈ｇ粔浣告禈閻楀洣绮涢棁鈧拫銊﹀帶閵?
+## [Unreleased-PLAN_219-LIFE-REVERSE-IMAGE-AGGREGATION] - 2026-05-26
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴閽€钘夋勾瀹搞儱鍙跨粻渚库偓宀€鏁撳ú璇茬杽閻劊鈧秳鑵戦惃鍕簰閸ョ偓鎮抽崶鎯у閼虫枻绱伴柅澶嬪閸ュ墽澧栭崥搴や粵閸氬牆缍嬮崜宥喣侀崸妤€鐖堕悽銊︽偝缁便垹绱╅幙搴¤嫙濮瑰洦鈧槒绻戦崶鐐电波閺嬫嚎鈧?
+### 閺傛澘顤?- 閺傛澘顤?`lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart`閿涘本褰佹笟娑椾簰閸ョ偓鎮抽崶鍓у缁斿銆夐棃顫偓?- 妞ょ敻娼伴弨顖涘瘮娑撱倗顫掓潏鎾冲弳閺傜懓绱￠敍姘垛偓澶嬪閺堫剙婀撮崶鍓у閹存牜娲块幒銉ㄧ翻閸忋儱鍙曞鈧崶鍓у URL閵?- 閺傛澘顤?reverse image 閼辨艾鎮庡ù浣衡柤閿涙碍婀伴崷鏉挎禈閸欘垯绗傛导鐘插煂娑撳瓨妞傞崗顒傜秹 URL閿涘苯鑻熼獮璺哄絺鐠囬攱鐪伴惂鎯у鐠囧棗娴橀妴浣规偝閻欐鐦戦崶淇扁偓涓無ogle Lens閵嗕箠andex閿涘本鐪归幀缁樼槨娑擃亜绱╅幙搴ｆ畱閻樿埖鈧降鈧焦鎲崇憰浣告嫲缂佹挻鐏夐柧鐐复閵?- 娣囨繄鏆€ `remove.bg` 娴ｆ粈璐熺悰銉ュ帠閹靛濮╅崗銉ュ經閿涘瞼绮烘稉鈧痪鍐插弳閸氬矂銆夌紒鎾寸亯閸栬桨绗岄弶銉︾爱閸忔粌绨抽崠鎭掆偓?- 閺傛澘顤?UI smoke 閻劋绶?`life tools opens reverse image aggregation`閿涘矁顩惄鏍晸濞茶鐤勯悽銊ュ弳閸欙絽鍩?reverse image 妞ょ敻娼伴惃鍕讲鐟欎焦鈧傜瑢閸╄櫣顢呮禍銈勭鞍閵?
+### 娣囶喗鏁?- `toolbox_life_tools.dart` 婢х偛濮?reverse image part 婢圭増妲戦妴?- `toolbox_life_tools_hub.dart` 鐏?`reverse_image` 鐠侯垳鏁遍幒銉ュ弳閺備即銆夐棃顫礉娑撳秴鍟€鐠ф澘宕版担宥勪繆閹垶銆夐妴?- `modules/toolbox/README.md` 閸氬本顒炵悰銉ュ帠娴犮儱娴橀幖婊冩禈閼宠棄濮忔潏鍦櫕娑撳酣顥撻梽鈺勵嚛閺勫簺鈧?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens reverse image aggregation"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剙婀撮崶鐐梾缁鳖澀绶风挧鏍﹀閺冭泛娴樻惔濠冨Ω閸ュ墽澧栨潪顒佸灇閸忣剛缍?URL閿涘奔绗傛导鐘绘懠鐠侯垰銇戠拹銉ょ窗鐎佃壈鍤ч懕姘値婢惰精瑙﹂敍娑樼安闁灝鍘ゆ稉濠佺炊閺佸繑鍔?闂呮劗顫嗛崶鍓у閵?- 閼辨艾鎮庣紒鎾寸亯閺夈儴鍤滅粭顑跨瑏閺傝鎮崇槐銏犵穿閹垮氦绻戦崶鐐恒€夐幗妯款洣閿涘苯褰堢粩娆戝仯閸欏秶鍩囩粵鏍殣閵嗕線銆夐棃銏㈢波閺嬪嫬鎷伴崷鏉垮隘閸欘垵鎻幀褍濂栭崫宥忕礉缁嬪啿鐣鹃幀褌绗夐悽鍗炵安閻劎顏€瑰苯鍙忛幒褍鍩楅妴?
+## [Unreleased-PLAN_218-LIFE-GARBAGE-NO-REMOTE-PREVIEW] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴閸ㄥ啫婧囬崚鍡欒缁夊娅庢潻婊呪柤閺佺増宓佹０鍕潔閿涘苯褰ф穱婵堟殌閺屻儴顕楅崗銉ュ經閵?
+### 娣囶喗鏁?- 閸ㄥ啫婧囬崚鍡欒缁岀儤鐓＄拠銏㈠Ц閹椒绗夐崘宥呯潔缁€楦跨箼缁嬪鏆熼幑顕€顣╃憴鍫濆灙鐞涱煉绱濋悽銊﹀煕鏉堟挸鍙嗛悧鈺佹惂閸氬秶袨閸氬孩澧犻弰鍓с仛閺屻儴顕楃紒鎾寸亯閵?- 缂佹挻鐏夐崠鐑樼垼妫版ɑ鏁归崣锝勮礋閳ユ粍鐓＄拠銏㈢波閺?/ Results閳ユ繐绱濇稉宥呭晙閺嶈宓佺粚鐑樼叀鐠囥垹鐫嶇粈琛♀偓婊嗙箼缁嬪鏆熼幑顕€顣╃憴鍫氣偓婵勨偓?- 鐠у嘲顫愰棃銏℃緲娑撳秴鍟€鐏炴洜銇氭潻婊呪柤妫板嫯顫嶉幋鏍仛娓氬鍨悰顭掔礉娴犲懍绻氶悾娆愮叀鐠囥垺褰佺粈鍝勬嫲閼垫崘顔嗛崷銊у殠閺屻儴顕楅崗銉ュ經閵?- 閺囧瓨鏌?smoke 濞村鐦敍宀€鈥樼拋銈団敄閺屻儴顕楅悩鑸碘偓浣风瑝閸愬秴鍤悳?`Remote data preview`閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_garbage.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_garbage.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens garbage sorting query"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閸掓繂顫愭い鍏哥瑝閸愬秴鐫嶇粈鐑樼壉娓氬绮ㄩ弸婊愮礉妞ょ敻娼伴弴瀵哥暆濞蹭緤绱遍崣顖炩偓姘崇箖閹兼粎鍌ㄥ鍡樺灗閸︺劎鍤庨崗銉ュ經瀵偓婵鐓＄拠顫偓?
+## [Unreleased-PLAN_217-LIFE-POSTAL-CHINAPOST-SOURCE] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴鐏忓棝鍋栫紓鏍ㄧ叀鐠囥垼绻欑粙瀣爱閺€閫涜礋娑擃厼娴楅柇顔芥杺閿涘苯鑻熼幐鍥х暰閺夈儲绨い?`https://www.chinapost.com.cn/html1/folder/181312/9531-1.htm`閵?
+### 娣囶喗鏁?- 闁喚绱弻銉嚄閺夈儲绨崗銉ュ經娴犲酣鍋栫紓鏍х氨閸掑洦宕叉稉杞拌厬閸ヤ粙鍋栭弨鎸庡瘹鐎规岸銆夐棃顫偓?- 閺屻儴顕楃拠閿嬬湴閺€閫涜礋娴ｈ法鏁ゆ稉顓炴禇闁喗鏂?iframe 缂冩垹鍋ｉ弻銉嚄閸︽澘娼?`https://iframe.chinapost.com.cn/jsp/type/institutionalsite/SiteSearchJT.jsp`閿涘本瀵滈悽銊﹀煕鏉堟挸鍙嗘担婊€璐熼張宥呭缂冩垹鍋ｉ崥宥囆?閸︽澘娼冮悧鍥唽閺屻儴顕楅妴?- 鐟欙絾鐎介柅鏄忕帆閺€閫涜礋鐠囪褰囨稉顓炴禇闁喗鏂傜純鎴犲仯鐞涖劍鐗告稉顓犳畱閻降鈧礁绔堕妴浣稿箼閵嗕焦婀囬崝锛勭秹閻愮懓鎮曠粔鑸偓渚€鍋栫紓鏍モ偓浣告勾閸р偓閸滃瞼鏁哥拠婵撶礉楠炲墎鎴风紒顓炲涧鐏炴洜銇氶崗鎶芥暛鐎涙顔岄妴?- 闁喚绱弻銉嚄鐠囧瓨妲戦崪灞炬殶閹诡喗娼靛┃鎰瀮濡楀牊鏁兼稉杞拌厬閸ヤ粙鍋栭弨璺ㄧ秹閻愯鐓＄拠銏犲經瀵板嫨鈧?- 閺囧瓨鏌?smoke 濞村鐦?fixture閿涘瞼鈥樻穱婵嬪仏缂傛牗鐓＄拠顫▏閻劋鑵戦崶浠嬪仏閺€璺ㄧ秹閻愮銆冮弽鐓庢惙鎼存棑绱濇稉宥呭晙娓氭繆绂嗛柇顔剧椽鎼?fixture閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?`const/final` 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens postal lookup query"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 娑擃厼娴楅柇顔芥杺閹稿洤鐣炬い鍨Ц缂冩垹鍋ｉ弻銉嚄妞ょ绱濈紒鎾寸亯闁艾鐖剁€电懓绨查崗铚傜秼闁喗鏂傜純鎴犲仯閿涘奔绗夐崘宥嗘Ц閸╁骸绔?閸栧搫骞欑痪褔鍋栫紓鏍х氨閿涙稖绶崗銉ㄧ箖鐎硅姤妞傞崣顖濆厴鏉╂柨娲栭崥灞芥倳缂冩垹鍋ｉ幋鏍ㄦ￥缂佹挻鐏夐敍宀勫櫢鐟曚線鍋栨禒鏈电矝闂団偓閹稿鐣弫鏉戞勾閸р偓閺嶆悂鐛欓妴?- 娑擃厼娴楅柇顔芥杺妞ょ敻娼伴柅姘崇箖 iframe 閸滃瞼鐝崘鍛板壖閺堫剙濮炴潪鐣岀波閺嬫粣绱濈€涙顔岀紒鎾寸€崣妯哄З閺冭泛褰查懗浠嬫付鐟曚浇鐨熼弫纾嬓掗弸鎰珤閵?
+## [Unreleased-PLAN_216-LIFE-POSTAL-LOOKUP-SIMPLIFY] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涢崣宥夘洯闁喚绱弻銉嚄妞ら潧绨茬粻鈧崠鏍电礉娑撳秹娓剁憰浣哥潔缁€楦跨箼缁嬪鐓＄拠銏″絹缁€鐚寸幢妞ょ敻娼伴幗妯款洣閺夈儴鍤滈弶銉︾爱妞ら潧绠嶉崨濠傛嫲鐎佃壈鍩呮穱鈩冧紖閿涘本鎮崇槐銏㈢波閺嬫粌褰ф惔鏃€妯夌粈鍝勭箑鐟曚礁鍙ч柨顔讳繆閹垬鈧?
+### 娣囶喗鏁?- 闁喚绱弻銉嚄妞ょ數鏁ら幋宄板讲鐟欎焦鏋冨鍫滅矤閳ユ粏绻欑粙瀣叀鐠団懇鈧繃鏁归崣锝勮礋閺咁噣鈧埃鈧粍鐓＄拠鈶┾偓婵嗗經瀵板嫸绱濋幐澶愭尦閵嗕胶濮搁幀浣稿幢閵嗕胶绮ㄩ弸婊勭垼妫版ê鎷伴幓鎰仛閸栬桨绗夐崘宥呭繁鐠嬪啳绻欑粙瀣嚞濮瑰倻绮忛懞鍌樷偓?- 缁夊娅庨柇顔剧椽閺屻儴顕楃紒鎾寸亯閸栬櫣娈戞い鐢告桨閹芥顩︾仦鏇犮仛閿涘矂浼╅崗宥嗗Ω閺夈儲绨い闈涚畭閸涘鈧礁顕遍懜顏呭灗 SEO 閺傚洦婀伴崨鍫㈠箛缂佹瑧鏁ら幋鏋偓?- 闁喚绱紒鎾寸亯閸椻€冲涧鐏炴洜銇氶崷鏉挎絻閵嗕線鍋栫紓鏍ф嫲韫囧懓顩﹂崠鍝勫娇閿涘奔绗夐崘宥呯潔缁€鍝勫晳闂€鎸庢降濠ф劘顕涢幆鍛摟濞堢偣鈧?- 閺囧瓨鏌?smoke 濞村鐦敍宀€鈥樼拋銈夊仏缂傛牗鐓＄拠銏ゃ€夋稉宥呭晙閸戣櫣骞?`Remote query` / `Remote results` / `Page summary`閿涘苯鑻熸宀冪槈缂佹挻鐏夋禒宥嗘▔缁€鐑樼箒閸﹀厖绗?`518000`閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?`const/final` 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens postal lookup query"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 妞ょ敻娼伴梾鎰閺夈儲绨幗妯款洣閸氬函绱濋悽銊﹀煕閻鍩岄惃鍕繆閹垱娲块獮鎻掑櫍閿涙稖瀚㈤棁鈧憰浣圭壋妤犲苯甯慨瀣降濠ф劧绱濇禒宥呭讲闁俺绻冩惔鏇㈠劥閺夈儲绨崗銉ュ經閹垫挸绱戦柇顔剧椽鎼存挻鍨ㄦ稉顓炴禇闁喗鏂傛い鐢告桨閵?
+## [Unreleased-PLAN_215-LIFE-REMOTE-GARBAGE-POSTAL] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴鐏忓棗浼愰崗椋庮唸閵嗗瞼鏁撳ú璇茬杽閻劊鈧秳鑵戦惃鍕€崷鎯у瀻缁绗岄柇顔剧椽閺屻儴顕楅柈鑺ユ暭娑撹櫣鍤庢稉濠勬畱鏉╂粎鈻奸弻銉嚄閿涘矁顕Ч鍌濈箼缁嬪婀撮崸鈧懢宄板絿缂佹挻鐏夐妴?
+### 閺傛澘顤?- 閺傛澘顤?`plans/PLAN_215_閻㈢喐妞跨€圭偟鏁ら崹鍐ㄦ簢閸掑棛琚稉搴ㄥ仏缂傛牞绻欑粙瀣叀鐠?md`閿涘矁顔囪ぐ鏇＄箼缁嬪鏆熼幑顔界爱閵嗕笭TML 鐟欙絾鐎芥潏鍦櫕閸滃瞼缍夌紒婊堫棑闂勨斂鈧?- 娑撹櫣鏁撳ú璇茬杽閻?smoke 濞村鐦弬鏉款杻 `HttpOverrides` 鏉╂粎鈻奸崫宥呯安 fixture閿涘矂鐛欑拠浣哥€崷鎯у瀻缁?JSON 閸旂姾娴囬崪宀勫仏缂傛牕绨辨い鐢告桨鐟欙絾鐎藉ù浣衡柤閿涘奔绗夋笟婵婄閻喎鐤勭純鎴犵捕閵?
+### 娣囶喗鏁?- 閸ㄥ啫婧囬崚鍡欒閺屻儴顕楁禒搴㈡拱閸︽媽鐦濇惔鎾存暭娑撻缚顕Ч鍌濆悩鐠?QQ 濞村繗顫嶉崳銊ヤ紣閸忛顔堥崗顒€绱戦崹鍐ㄦ簢閸掑棛琚?JSON閿涘苯濮炴潪钘夋倵閹稿澧块崫浣告倳缁夐绗岄崚鍡欒缁涙盯鈧绻欑粙瀣唶瑜版洏鈧?- 闁喚绱弻銉嚄娴犲孩婀伴崷鏉跨厔鐢?閸栧搫骞欑槐銏犵穿閺€閫涜礋鐠囬攱鐪伴柇顔剧椽鎼存挻鎮崇槐銏ゃ€夐幋鏍纯鏉堥箖銆夐敍宀冃掗弸鎰€冮弽绗衡偓渚€銆夐棃銏＄垼妫版ü绗岄幓蹇氬牚娑擃厾娈戦柇顔剧椽缂佹挻鐏夐妴?- 妞ょ敻娼伴弬鍥攳閵嗕胶濮搁幀浣稿幢閸滃矂鏁婄拠顖涘絹缁€鍝勬倱濮濄儴鐨熼弫缈犺礋鏉╂粎鈻奸弻銉嚄閸欙絽绶為敍灞借嫙娣囨繄鏆€閺夈儲绨い鐢告桨/婢舵牠鍎撮弻銉嚄閸忔粌绨抽崗銉ュ經閵?- 閺囧瓨鏌婂Ο鈥虫健閺傚洦銆傞敍宀冾唶瑜版洖鐎崷鎯у瀻缁绗岄柇顔剧椽閺屻儴顕楅惃鍕箼缁嬪娼靛┃鎰┾偓浣虹秹缂佹粈绶风挧鏍ф嫲缁旀瑧鍋ｇ紒鎾寸€崣妯哄妞嬪酣娅撻妴?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_garbage.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_garbage.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?`const/final` 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens garbage sorting query"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens postal lookup query"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閸ㄥ啫婧囬崚鍡欒娓氭繆绂嗛懙鎹愵唵鏉╂粎鈻?JSON 閸欘垵顔栭梻顔解偓褍鎷伴崚鍡欒缂傛牕褰跨粙鍐茬暰閹嶇幢闁喚绱弻銉嚄娓氭繆绂嗛柇顔剧椽鎼存捇銆夐棃銏㈢波閺嬪嫸绱濋懟銉х彲閻愮顔栭梻顔剧摜閻ｃ儲鍨?HTML 缂佹挻鐎崣妯哄閿涘矂銆夐棃顫窗閺勫墽銇氶柨娆掝嚖楠炶泛绱╃€靛吋澧﹀鈧弶銉︾爱妞ゅ灚鐗虫灞烩偓?- 娑撱倓閲滈弻銉嚄闁粙娓剁憰浣稿讲閻劎缍夌紒婊愮幢瀵京缍夐妴涓廚S 閹存牜顑囨稉澶嬫煙缁旀瑧鍋ｅ鍌氱埗閺冭埖妫ゅ▔鏇氱箽鐠囦胶绮ㄩ弸婊冪杽閺冩儼绻戦崶鐐偓?
+## [Unreleased-PLAN_214-LIFE-POSTAL-LOOKUP] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴缂佈呯敾鐞涖儱鍙忓銉ュ徔缁犱究鈧瞼鏁撳ú璇茬杽閻劊鈧秵膩閸ф绱濈€瑰本鍨氳ぐ鎾冲閸欘亝婀侀崷銊у殠闁剧偓甯撮惃鍕┾偓宀勫仏缂傛牗鐓＄拠顫偓宥呯摍濡€虫健閸旂喕鍏橀妴?
+### 閺傛澘顤?- 閺傛澘顤?`plans/PLAN_214_閻㈢喐妞跨€圭偟鏁ら柇顔剧椽閺屻儴顕楃€圭偟骞?md`閿涘本妲戠涵顔芥拱鏉烆噣鍋栫紓鏍ㄧ叀鐠囥垻娈戦張顒€婀撮柅鐔哥叀閵嗕礁顦婚柈銊ュ幑鎼存洖鎷扮拠锔剧矎閸︽澘娼冮柇顔剧椽瀹割喖绱撴搴ㄦ珦閵?- 閺傛澘顤冮悽鐔告た鐎圭偟鏁ら柇顔剧椽閺屻儴顕楁い纰夌礉閹绘劒绶电敮鍝ユ暏閸╁骸绔?閸栧搫骞欓柇顔剧椽缁便垹绱╅妴浣稿隘閸╃喓鐡柅澶堚偓浣哥厔鐢?閸栧搫骞?閸忣厺缍呴柇顔剧椽閺屻儴顕楅妴浣哥埗閻劎銇氭笟瀣ㄢ偓渚€鍋栫紓鏍﹀▏閻劍褰佺粈鍝勬嫲娑擃厼娴楅柇顔芥杺/闁喚绱惔鎾愁樆闁劍鐓＄拠銏犲弳閸欙絻鈧?- 閺傛澘顤?`life tools opens postal lookup query` smoke 濞村鐦敍宀冾洬閻╂牜鏁撳ú璇茬杽閻劌鍙嗛崣锝冣偓渚€鍋栫紓鏍ㄧ叀鐠囥垽銆夐棃銏″ⅵ瀵偓閵嗕礁鍙ч柨顔跨槤閺屻儴顕楅崪灞剧箒閸︽娊鍋栫紓鏍波閺嬫粌鐫嶇粈鎭掆偓?
+### 娣囶喗鏁?- 閵嗗矂鍋栫紓鏍ㄧ叀鐠囶潿鈧秴鍙嗛崣锝嗘喅鐟曚椒绮犳稉顓炴禇闁喗鏂?闁喚绱惔鎾绘懠閹恒儲藟閹恒儴鐨熼弫缈犺礋鐢摜鏁ら崺搴＄/閸栧搫骞欓柇顔剧椽闁喐鐓￠敍灞借嫙閹恒儱鍙嗛悪顒傜彌閺堫剙婀存い鐢告桨閵?- 閺囧瓨鏌婂Ο鈥虫健閺傚洦銆傞敍宀冾唶瑜版洟鍋栫紓鏍ㄧ叀鐠囥垼鍏橀崝娑滅珶閻ｅ苯鎷扮拠锔剧矎閸︽澘娼冮弽鎼佺崣妞嬪酣娅撻妴?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_postal.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?`const/final` 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens postal lookup query"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 闁喚绱崣顖濆厴缂佸棗瀵查崚鎷岊敎闁挶鈧焦濮囬柅鎺戠湰閹存牕銇囬崹瀣礋娴ｅ稄绱遍張顒€婀寸槐銏犵穿娴犲懍缍旀稉鍝勭厔鐢?閸栧搫骞欑痪褍鐖堕悽銊┾偓鐔哥叀閿涘矂鍣哥憰渚€鍋栨禒韬测偓浣告値閸氬被鈧浇鐦夋禒鍓佺搼閹舵洟鈧帒澧犳禒宥夋付閹稿鐣弫鏉戞勾閸р偓闁俺绻冩稉顓炴禇闁喗鏂傞妴渚€鍋栫紓鏍х氨閹存牗鏁规禒璺哄礋娴ｅ秵鐗虫灞烩偓?
+## [Unreleased-PLAN_213-LIFE-GARBAGE-SORTING] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴缂佈呯敾鐞涖儱鍙忓銉ュ徔缁犱究鈧瞼鏁撳ú璇茬杽閻劊鈧秵膩閸ф绱濇导妯哄帥鐏忓棗缍嬮崜宥呭涧閺堝婀痪鍧楁懠閹恒儳娈戦妴灞界€崷鎯у瀻缁粯鐓＄拠顫偓宥呯杽閻滈璐熼崣顖滄暏閸旂喕鍏橀妴?
+### 閺傛澘顤?- 閺傛澘顤?`plans/PLAN_213_閻㈢喐妞跨€圭偟鏁ら崹鍐ㄦ簢閸掑棛琚弻銉嚄鐎圭偟骞?md`閿涘本妲戠涵顔芥拱鏉烆喖鐎崷鎯у瀻缁粯鐓＄拠銏㈡畱閺堫剙婀寸€圭偟骞囬妴浣稿幑鎼存洖鍙嗛崣锝呮嫲閸︽澘灏憴鍕灟妞嬪酣娅撻妴?- 閺傛澘顤冮悽鐔告た鐎圭偟鏁ら崹鍐ㄦ簢閸掑棛琚弻銉嚄妞ょ绱濋幓鎰返閺堫剙婀寸敮姝岊潌閻椻晛鎼х拠宥呯氨閵嗕礁鍩嗛崥宥呭爱闁板秲鈧礁鍨庣猾鑽ょ摣闁鈧礁鐖剁憴浣哄⒖閸濅線鈧喐鐓￠妴浣告彥闁喎鍨介弬顓☆潐閸掓瑥鎷伴懙鎹愵唵閸︺劎鍤庨弻銉嚄閸忔粌绨抽崗銉ュ經閵?- 閺傛澘顤?`life tools opens garbage sorting query` smoke 濞村鐦敍宀冾洬閻╂牜鏁撳ú璇茬杽閻劌鍙嗛崣锝冣偓浣哥€崷鎯у瀻缁銆夐棃銏″ⅵ瀵偓閵嗕礁鍙ч柨顔跨槤閺屻儴顕楅崪灞炬箒鐎瑰啿鐎崷鍓х波閺嬫粌鐫嶇粈鎭掆偓?
+### 娣囶喗鏁?- 閵嗗苯鐎崷鎯у瀻缁粯鐓＄拠顫偓宥呭弳閸欙絾鎲崇憰浣风矤閼垫崘顔嗛柧鐐复濡椼儲甯寸拫鍐╂殻娑撶儤婀伴崷鎷岀槤鎼存挷绗岄幎鏇熸杹閹绘劗銇氶敍灞借嫙閹恒儱鍙嗛悪顒傜彌閺堫剙婀存い鐢告桨閵?- 閺囧瓨鏌婂Ο鈥虫健閺傚洦銆傞敍宀冾唶瑜版洖鐎崷鎯у瀻缁粯鐓＄拠銏ｅ厴閸旀稖绔熼悾灞芥嫲閸︽澘灏弨璺ㄧ摜瀹割喖绱撴搴ㄦ珦閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_garbage.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_garbage.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?`const/final` 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens garbage sorting query"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閸ㄥ啫婧囬崚鍡欒閸欙絽绶炵€涙ê婀崺搴＄娑撳海銇為崠鍝勬▕瀵偊绱濋張顒€婀寸拠宥呯氨娴犲懍缍旀稉鐑樻）鐢悂鈧喐鐓￠崪灞惧閺€鐐絹缁€鐚寸幢鐟欏嫬鍨崘鑼崐閺冩湹浜掗幍鈧崷銊ユ勾閺堚偓閺傜増鏂傜粵鏍モ偓浣恒仦閸栧搫鎷伴弨鎯扮箥鐟曚焦鐪版稉鍝勫櫙閵?
+## [Unreleased-PLAN_212-LIFE-WALLPAPER-BING-ONLY] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴婢逛胶鐒婇崝鈺傚閸欘亙绻氶悾娆忕箑鎼存梹娼靛┃鎰剁礉閸掔娀娅?Wallhaven閵嗕甫onachan閵嗕竸nime Pictures 缁涘鍙炬禒鏍ㄦ降濠ф劑鈧?
+### 娣囶喗鏁?- 婢逛胶鐒婇崝鈺傚閺夈儲绨崚妤勩€冮弨璺哄經娑撹桨绮庢穱婵堟殌 Bing Wallpaper閵?- 閸掔娀娅?Wallhaven閵嗕甫onachan閵嗕竸nime Pictures 閻ㄥ嫭娼靛┃鎰弳閸欙絻鈧焦濮勯崣鏍у瀻閺€顖樷偓涓燭ML 妞ょ敻娼扮憴锝嗙€芥潏鍛И闁槒绶崪宀€鐝悙閫涚瑩閻劏顕Ч鍌氥仈閵?- 閺囧瓨鏌婃竟浣虹剨閸斺晜澧?smoke 濞村鐦敍宀€鈥樼拋銈夈€夐棃顫瑝閸愬秴鐫嶇粈?Wallhaven閵嗕甫onachan閵嗕竸nime Pictures閵?- 閺囧瓨鏌婂Ο鈥虫健閺傚洦銆傞敍灞炬绾喖缍嬮崜宥咁梿缁剧濮幍瀣╃矌娴ｈ法鏁?Bing Wallpaper閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper_cache.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens wallpaper helper controls"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺冄呯处鐎涙娲拌ぐ鏇氳厬閸欘垵鍏樻禒宥嗙暙閻ｆ瑥宸婚崣鏌ユ姜 Bing 閸ュ墽澧栭弬鍥︽閿涙稒娼靛┃鎰灙鐞涖劌鍑＄粔濠氭珟閿涘奔绗夋导姘晙鐠囬攱鐪伴幋鏍х潔缁€楦跨箹娴滄稒娼靛┃鎰剁礉閸欘垶鈧俺绻冮悳鐗堟箒缂傛挸鐡ㄥ〒鍛倞閸忋儱褰涘〒鍛存珟閺冄勬瀮娴犺翰鈧?
+## [Unreleased-PLAN_211-LIFE-WALLPAPER-REAL-SEARCH-PAGES] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涢幐鍥у毉 Wallhaven 瑜版挸澧犵拠閿嬬湴閸︽澘娼冮柨娆掝嚖閿涘苯顥嗙痪绋垮И閹靛绗夋惔鏃傛埛缂侇叀鐨熼悽?`/api/v1/search`閿涘矁鈧苯绨叉担璺ㄦ暏 `https://wallhaven.cc/search?q={query}` 閻喎鐤勯幖婊呭偍妞ょ绱盞onachan 娑?Anime Pictures 娑旂喖娓堕崚鍥ㄥ床閸掓壆婀＄€圭偤銆夐棃銏ｎ嚞濮瑰倸鎷版い鐢告桨閸忓啰绀岀憴锝嗙€介妴?
+### 閺傛澘顤?- 閺傛澘顤?`plans/PLAN_211_閻㈢喐妞跨€圭偟鏁ゆ竟浣虹剨閸斺晜澧滈惇鐔风杽閹兼粎鍌ㄦい鍨閸欐牔鎱ㄦ径?md`閿涘本妲戠涵顔芥拱鏉烆喕绮犻惇鐔风杽閹兼粎鍌ㄦい鍏告叏婢跺秳绗佺粩娆愭降濠ф劗娈戦幍褑顢戝銉╊€冮崪宀勵棑闂勨晞绔熼悾灞烩偓?- 閺傛澘顤?`records/record_211_life_wallpaper_real_search_page_diagnosis.md`閿涘矁顔囪ぐ?Wallhaven 鏉╃偞甯寸仦鍌濈Т閺冭翰鈧甫onachan Cloudflare challenge閵嗕竸nime Pictures 閹兼粎鍌ㄦい?HTML/JSON/AVIF 妫板嫯顫嶇紒鎾寸€崪灞藉斧閸?403 鏉堝湱鏅妴?- 婢逛胶鐒婇崝鈺傚閺傛澘顤?HTML 鐟欙絾鐎芥潏鍛И闁槒绶敍宀€鏁ゆ禍搴ば掗弸鎰埂鐎圭偞鎮崇槐銏ゃ€夋稉顓犳畱鐠囷附鍎忛柧鐐复閵嗕胶缂夐悾銉ユ禈閸︽澘娼冮妴浣告槀鐎甸晲淇婇幁顖氭嫲 Anime Pictures 妞ょ敻娼伴崘鍛サ posts 閺佺増宓侀妴?
+### 娣囶喗鏁?- Wallhaven 閺夈儲绨禒?`https://wallhaven.cc/api/v1/search` 閺€閫涜礋 `https://wallhaven.cc/search?q={query}` 閹兼粎鍌ㄦい浣冾嚞濮瑰偊绱濋獮鏈电矤閹兼粎鍌ㄧ紒鎾寸亯閸楋紕澧栫憴锝嗙€?`wallhaven.cc/w/{id}` 娑?`th.wallhaven.cc` 缂傗晝鏆愰崶淇扁偓?- Konachan 閺夈儲绨禒?`/post.json` 閺€閫涜礋 `https://konachan.net/post?tags={query}` 妞ょ敻娼扮拠閿嬬湴閿涘奔绻氶悾?`rating:safe` 閺嶅洨顒风痪锔芥将楠炴儼袙閺嬫劕褰茬拋鍧楁６妞ょ敻娼版稉顓犳畱 post 閸掓銆冮崗鍐閵?- Anime Pictures 閺夈儲绨禒?`api.anime-pictures.net/api/v3/posts` 閺€閫涜礋 `https://anime-pictures.net/posts?search_tag={query}` 妞ょ敻娼扮拠閿嬬湴閿涘矁顕伴崣鏍€夐棃銏犲敶瀹?posts 閺佺増宓佹稉?`<picture>` 妫板嫯顫嶉崗鍐閵?- 缁楊兛绗侀弬褰掋€夐棃銏ｎ嚞濮瑰倸銇旈弨閫涜礋閺囧瓨甯存潻鎴炴珮闁碍绁荤憴鍫濇珤閺傚洦銆傜拠閿嬬湴閻?`Accept` / `Referer` / `Sec-Fetch-*` 缂佸嫬鎮庨敍娑樻禈閻?CDN 娴犲秳濞囬悽銊ユ禈閻楀洩顕Ч鍌氥仈閵?
+### 娣囶喖顦?- 娣囶喖顦?Wallhaven 娴ｈ法鏁ら柨娆掝嚖 API 閸︽澘娼冪€佃壈鍤ч惃鍕降濠ф劕鐤勯悳鏉夸焊瀹割喓鈧?- 娣囶喖顦?Wallhaven 缁屽搫鍙ч柨顔跨槤閺冨墎鏁撻幋?`?q&...` 閻ㄥ嫰妫舵０姗堢礉姒涙顓绘担璺ㄦ暏 `q=nature` 娣囨繃瀵旈惇鐔风杽閹兼粎鍌ㄦい闈涘棘閺佹澘鐣弫娣偓?- 娣囶喖顦?Anime Pictures 閸欘亙绶风挧?API 閸忓啯鏆熼幑顔衡偓浣圭梾閺堝瀵滈惇鐔风杽閹兼粎鍌ㄦい闈涘帗缁辩姵鐎娲暕鐟欏牊娼靛┃鎰畱闂傤噣顣介妴?- 娣囶喖顦?Konachan HTML/Cloudflare challenge 娑?JSON 閹恒儱褰涘ǎ椋庢暏閺冭泛顔愰弰鎾诡嚖閸掋倛袙閺嬫劕銇戠拹銉ф畱闂傤噣顣介妴?- 閸?Wallhaven 缂冩垹绮舵径杈Е閸?Konachan 缁旀瑧鍋ｆ穱婵囧Б閺冦儱绻旀稉顓∷夐崗?`DNS/TCP`閵嗕梗Cloudflare` 鐠囧﹥鏌囩紒鍡氬Ν閿涘奔绌舵禍搴″隘閸掑棜绻涢幒銉﹁杽閺屾挸鎷版い鐢告桨鐟欙絾鐎介梻顕€顣介妴?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper_cache.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens wallpaper helper controls"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- Wallhaven 閸︺劌缍嬮崜宥囩秹缂佹粎骞嗘晶鍐х瑓娴犲秳绱版潻鐐村复 `wallhaven.cc:443` 鐡掑懏妞傞敍娑楀敩閻礁鍑℃穱顔筋劀鐠囬攱鐪伴崷鏉挎絻閿涘奔绲剧€圭偞妞傞崣顖滄暏閹傜矝閸欐牕鍠呮禍搴ｆ暏閹撮缍夌紒婊冩嫲缁旀瑧鍋ｆ潻鐐衡偓姘偓褋鈧?- 閺堫剙婀存径宥嗙ゴ閸欐垹骞?Wallhaven 閻╃鍙ч崺鐔锋倳娴兼俺顫︾憴锝嗙€介崚鏉跨磽鐢婀撮崸鈧▓纰夌礉TCP 443 婢惰精瑙﹂敍娑樼安閻劋鏅堕崣顏囧厴缂傗晝鐓粵澶婄窡閵嗕浇顔囪ぐ鏇＄槚閺傤厼鑻熸担璺ㄦ暏缂傛挸鐡?閺夈儲绨崗銉ュ經閸忔粌绨抽妴?- Konachan 瑜版挸澧犳潻鏂挎礀 Cloudflare challenge閿涘本婀版潪顔煎涧鐠囧棗鍩嗛獮鎯邦唶瑜版洜鐝悙閫涚箽閹躲倧绱濇稉宥囩搏鏉╁洭妲婚幎銈冣偓?- Anime Pictures 閹兼粎鍌ㄦい闈涘彆瀵偓妫板嫯顫嶆稉?AVIF閿涘矂鍎撮崚?Flutter/缁崵绮虹紒鍕値閸欘垵鍏橀弮鐘崇《鐟欙絿鐖滈敍娑樺斧閸ョ偓甯撮崣锝囨纯閹恒儴顕Ч鍌濈箲閸?403閿涘本婀版潪顔荤瑝缂佹洝绻冮幒鍫熸綀閹存牠妲婚惄妤呮懠闂勬劕鍩楅妴?
+## [Unreleased-PLAN_210-LIFE-WALLPAPER-SOURCE-DIAGNOSIS] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涢崣宥夘洯婢逛胶鐒婇崝鈺傚闂?Bing 婢舵牭绱漌allhaven閵嗕甫onachan閵嗕竸nime Pictures 閸у洤绱撶敮闀愮瑝閸欘垳鏁ら敍宀冾洣濮瑰倹顥呴弻銉嚞濮瑰倸銇旈妴浣稿冀閻栴剝娅曢崪宀€鐝悙纭呯珶閻ｅ苯鑻熸穱顔碱槻閵?
+### 閺傛澘顤?- 閺傛澘顤?`records/record_210_life_wallpaper_source_diagnosis.md`閿涘矁顔囪ぐ?Wallhaven DNS/鏉╃偞甯村鍌氱埗閵嗕甫onachan Cloudflare challenge閵嗕竸nime Pictures API/妫板嫯顫?閸樼喎娴樻潏鍦櫕閻ㄥ嫬鐤勫ù瀣波閺嬫嚎鈧?- Anime Pictures 娴犲海鍑介崗銉ュ經閺夈儲绨崡鍥╅獓娑撳搫鍙曞鈧０鍕潔閺夈儲绨敍宀冾嚢閸?`api.anime-pictures.net/api/v3/posts` 閸忓啯鏆熼幑顕嗙礉楠炴湹濞囬悽銊ュ彆瀵偓妫板嫯顫?CDN 閻㈢喐鍨?AVIF 妫板嫯顫嶉崶淇扁偓?- 婢逛胶鐒婇弶銉︾爱閸旂姾娴囬弬鏉款杻 `toolbox_wallpaper` 鏉╂劘顢戦弮鑸垫）韫囨绱濈拋鏉跨秿閺夈儲绨妴浣解偓妤佹閵嗕胶濮搁幀浣虹垳閵嗕線鏁婄拠顖滆閸掝偄鎷扮紓鎾崇摠閸忔粌绨抽悩鑸碘偓浣碘偓?
+### 娣囶喗鏁?- 婢逛胶鐒婇弶銉︾爱閸旂姾娴囬弨閫涜礋楠炶泛褰傞弨鍫曟肠閿涘苯宕熸稉顏呮降濠ф劘绉撮弮韬测偓涓廚S 瀵倸鐖堕幋鏍潶缁旀瑧鍋ｆ穱婵囧Б閹凤附鍩呴弮鏈电瑝閸愬秹妯嗘繅鐐插従娴犳牗娼靛┃鎰波閺嬫嚎鈧?- 婢х偛濮?Cloudflare challenge 鐠囧棗鍩嗛敍灞界殺 `Just a moment` / `cf-mitigated: challenge` 妞ょ敻娼拌ぐ鎺旇娑撹　鈧粎鐝悙纭咁問闂傤喕绻氶幎銈嗗閹搭亖鈧縿鈧?- 閸ュ墽澧栫紓鎾崇摠婢х偛濮?`content-type` 閺嶏繝鐛欓敍宀勪缉閸忓秴鐨?HTML challenge 妞ょ敻娼扮拠顖氬晸娑撳搫娴橀悧鍥╃处鐎涙﹫绱濋獮鎯八夐崗?`avif` 閹碘晛鐫嶉弨顖涘瘮閵?- 閺囧瓨鏌婃竟浣虹剨閸斺晜澧滈弶銉︾爱鐠囧瓨妲戦崪灞灸侀崸妤佹瀮濡楋綇绱濋弰搴ｂ€?Anime Pictures 閸樼喎娴樻稉搴㈠房閺夊啩绮涢棁鈧崶鐐插煂閺夈儲绨い鐢碘€樼拋銈冣偓?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper_cache.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper_cache.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens wallpaper helper controls"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- Wallhaven 閸︺劌缍嬮崜宥囩秹缂佹粈绗呯€涙ê婀?DNS/鏉╃偞甯寸仦鍌氱磽鐢潻绱濇惔鏃傛暏閸欘亣鍏樼拋鏉跨秿鐠囧﹥鏌囬妴浣借泲缂傛挸鐡ㄩ崪灞炬降濠ф劕鍙嗛崣锝呭幑鎼存洩绱濋弮鐘崇《閺囧じ鍞悽銊﹀煕缂冩垹绮剁憴锝嗙€介懗钘夊閵?- Konachan 閸?Anime Pictures 闁劌鍨庣粩顖滃仯娴兼俺袝閸?Cloudflare 娣囨繃濮㈤敍娑欐拱鏉烆喕绗夌紒鏇＄箖缁旀瑧鍋ｉ崣宥囧焽閵嗕胶娅ヨぐ鏇樷偓涓唎okie 閹存牗宸块弶鍐閸掕翰鈧?- Anime Pictures 閸忣剙绱戞０鍕潔娑?AVIF閿涘苯閽╅崣鎷屝掗惍浣告嫲鐠佸墽鐤嗙化鑽ょ埠婢逛胶鐒婇懗钘夊閸欐牕鍠呮禍?Flutter/缁崵绮洪弨顖涘瘮閵?
+## [Unreleased-PLAN_209-LIFE-WALLPAPER-INIT-ERROR-GUARD] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涢崣宥夘洯婢逛胶鐒婇崝鈺傚妫ｆ牗顐奸崝鐘烘祰閺冭泛鍤悳?`dependOnInheritedWidgetOfExactType<_LocalizationsScope>()` 閻㈢喎鎳￠崨銊︽埂瀵倸鐖堕敍灞借嫙娑?Wallhaven / Konachan 婢惰精瑙﹂崢鐔锋礈鐏炴洜銇氭潻鍥︾艾鎼存洖鐪伴妴?
+### 娣囶喖顦?- 娣囶喖顦叉竟浣虹剨閸斺晜澧滈崷?`initState` 閸氼垰濮╅崝鐘烘祰 Future 閺冩儼顔栭梻?`_lifeText(context, ...)` 閻ㄥ嫰妫舵０姗堢礉閸旂姾娴囩仦鍌欑瑝閸愬秳绶风挧?`Localizations`閵?- 鐏忓棙娼靛┃鎰版晩鐠囶垱鏁兼稉铏圭波閺嬪嫬瀵查悩鑸碘偓渚婄礉閸?UI 閺嬪嫬缂撻梼鑸殿唽閸愬秵婀伴崷鏉垮鐏炴洜銇氶妴?- 閺€鑸垫殐 Wallhaven 鐡掑懏妞傞妴涓紀cketException閵嗕甫onachan HTTP 403 缁涘鏁婄拠顖氱潔缁€鐚寸礉闁灝鍘ら惄瀛樺复閺嗘挳婀堕崘妤呮毐鎼存洖鐪板鍌氱埗閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_tool_shell.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens wallpaper helper controls"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺夈儲绨柨娆掝嚖鐠囷附鍎忛崷銊┿€夐棃顫瑐閸欐ü璐熼惌顓熷絹缁€鐚寸幢婵″倸鎮楃紒顓㈡付鐟曚浇鐦栭弬顓狀儑娑撳鏌熼幒銉ュ經缂佸棜濡敍灞藉讲閸愬秵甯撮崗銉ュ敶闁劍妫╄箛妞尖偓?
+## [Unreleased-PLAN_208-LIFE-WALLPAPER-SOURCE-CACHE] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涢崣宥夘洯婢逛胶鐒婇崝鈺傚娑?Wallhaven 娴兼艾鍤悳?12 缁夋帟绉撮弮韬测偓涓nachan 娴兼艾鍤悳?HTTP 403閵嗕竸nime Pictures 闁鑵戦崥搴㈡￥閸欏秴绨查敍灞借嫙鐟曚焦鐪版晶鐐插閸ュ墽澧栫紓鎾崇摠閸滃本绔婚悶鍡氬厴閸旀稏鈧?
+### 閺傛澘顤?- 娑撳搫顥嗙痪绋垮И閹靛鏌婃晶鐐存拱閸︽壆绱︾€涙ê鐪伴敍灞肩箽鐎涙ɑ娼靛┃鎰彥閻撗冩嫲閹?URL 閸濆牆绗囬拃鐣屾磸閻ㄥ嫬娴橀悧鍥ㄦ瀮娴犺翰鈧?- 閺傛澘顤冮妴灞芥禈閻楀洨绱︾€涙ǜ鈧秹娼伴弶鍖＄礉鐏炴洜銇氶弶銉︾爱韫囶偆鍙庨弫浼村櫤閵嗕礁娴橀悧鍥ㄦ殶闁插繐鎷扮紓鎾崇摠娴ｆ挾袧閿涘苯鑻熼幓鎰返娑撯偓闁款喗绔婚悶鍡欑处鐎涙ǜ鈧?- 閸ュ墽澧栫純鎴炵壐妫板嫯顫嶉妴浣稿弿鐏炲繘顣╃憴鍫涒偓浣风瑓鏉炶棄鎷扮拋鍓х枂婢逛胶鐒婇柧鎹愮熅閺€閫涜礋娴兼ê鍘涙径宥囨暏閺堫剙婀寸紓鎾崇摠閸ュ墽澧栭妴?- Anime Pictures 閺勫海鈥橀弨璺哄經娑撳搫鍙嗛崣锝呯€烽弶銉︾爱閿涘矂鈧鑵戦崥搴＄潔缁€楦款嚛閺勫簼绗岄幍鎾崇磻閺夈儲绨幐澶愭尦閵?
+### 娣囶喗鏁?- Wallhaven 鐠囬攱鐪扮搾鍛娴?12 缁夋帟鐨熼弫缈犺礋 25 缁夋帪绱濋獮璺烘躬鐡掑懏妞傞崥搴ょ箻鐞涘奔绔村▎锛勭叚闁插秷鐦敍娑樸亼鐠愩儲妞傜亸婵婄槸鐠囪褰囬弶銉︾爱缂傛挸鐡ㄩ妴?- Konachan 鐠囬攱鐪扮悰銉ュ帠濡楀矂娼?User-Agent閵嗕竸ccept閵嗕竸ccept-Language 閸?Referer閿涙稑銇戠拹銉︽鐏忔繆鐦拠璇插絿閺夈儲绨紓鎾崇摠閵?- 閺夈儲绨粵娑⑩偓澶婂瀼閹广垺妞傜粩瀣祮閸掗攱鏌婅ぐ鎾冲缂佹挻鐏夐敍瀛塶ime Pictures 缁涘鍙嗛崣锝呯€烽弶銉︾爱鐞氼偊鈧鑵戦崥搴ｆ纯閹恒儲妯夌粈鍝勫弳閸欙綀顕╅弰搴涒偓?- 閺夈儲绨径杈Е娑撳秴鍟€閸︺劍妫ょ紓鎾崇摠閺冨墎娲块幒銉﹀閹存劖鏆ｆい闈涚磽鐢潻绱濋懓灞炬Ц鐏炴洜銇氶崣顖濐嚢闁挎瑨顕ら悩鑸碘偓浣歌嫙娣囨繄鏆€閺夈儲绨崗銉ュ經閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper_cache.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_tool_shell.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens wallpaper helper controls"`
+- `./gradlew.bat :app:compileDebugKotlin -x checkDebugAarMetadata`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 缁楊兛绗侀弬鍦彲閻愮顔栭梻顔剧摜閻ｃ儰绮涢崣顖濆厴閸欐ê瀵查敍娑欐拱鏉烆喕绗夌紒鏇＄箖 Cloudflare 閹存牜鐝悙閫涚箽閹躲倧绱濋崣顏呭絹娓氭稑鍙嗛崣锝冣偓浣虹处鐎涙ê鍘规惔鏇炴嫲闁挎瑨顕ら崣宥夘洯閵?- 缂傛挸鐡ㄦ导姘窗閻劍婀伴崷鏉跨安閻劍鏁幐浣烘窗瑜版洜鈹栭梻杈剧礉瀹稿弶褰佹笟娑氱埠鐠佲€茬瑢濞撳懐鎮婇崗銉ュ經閿涙稒绔婚悶鍡楁倵缁傝崵鍤庨崗婊冪俺閸滃苯鍑＄紓鎾崇摠妫板嫯顫嶆导姘愁潶缁夊娅庨妴?
+## [Unreleased-PLAN_207-LIFE-WALLPAPER-HELPER] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴閸忓牆鐣幋鎰紣閸忛顔堥妴宀€鏁撳ú璇茬杽閻劊鈧秳鑵戦惃鍕梿缁剧濮幍瀣剁礉鐏忓棗甯崗鍫濆涧閺堝婀痪鍧楁懠閹恒儳娈戦崡鐘辩秴閸忋儱褰涢崡鍥╅獓娑撳搫褰查懢宄板絿閵嗕焦鎮崇槐顫偓渚€顣╃憴鍫涒偓浣风瑓鏉炶棄鎷扮拋鍓х枂婢逛胶鐒婇惃鍕粵閸氬牆浼愰崗鍑ょ礉楠炲墎些闂勩倕鐡ㄩ崷銊у閺夊啴顥撻梽鈺冩畱閺佸懎顔傛竟浣虹剨閺夈儲绨妴?
+### 閺傛澘顤?- 閺傛澘顤冩竟浣虹剨閸斺晜澧滈悪顒傜彌 part 妞ょ敻娼伴敍宀冧粵閸?Bing Wallpaper閵嗕箘allhaven閵嗕甫onachan 娑撳琚潻鎰攽閺冭泛娴橀悧鍥ㄦ降濠ф劧绱濋獮鏈电箽閻?Anime Pictures 娴ｆ粈璐熺紒鐔剁閺夈儲绨崗銉ュ經閵?- 鏉╂稑鍙嗘竟浣虹剨閸斺晜澧滄妯款吇閸旂姾娴?9 瀵娀娈㈤張鍝勵梿缁鹃潻绱濋弨顖涘瘮閸忔娊鏁拠宥嗘偝缁鳖潿鈧焦娼靛┃鎰摣闁鈧礁缍嬮崜宥呯潌楠炴洖鏄傜€?濮ｆ柧绶ラ崠褰掑帳閸滃奔绗夐梽鎰槀鐎靛憡鐓￠惇瀣ㄢ偓?- 閺傛澘顤冩竟浣虹剨妫板嫯顫嶆い纰夌礉閺€顖涘瘮 InteractiveViewer 缂傗晜鏂侀妴渚€鍣哥純顔剧級閺€淇扁偓浣规降濠ф劘鐑︽潪顑锯偓浣风瑓鏉炶棄鍩岄張顒€婀撮崪灞绢攽闂?闁夸礁鐫?娑撱倛鈧懓顔曠純顕€鈧銆嶉妴?- Android 缁旑垰婀?`vocabulary_sleep/life_display` 闁岸浜炬稉濠冩煀婢?`setWallpaper` 閺傝纭堕敍灞煎▏閻劎閮寸紒?`WallpaperManager` best-effort 鐠佸墽鐤嗘竟浣虹剨閵?- 閺傛澘顤?`life tools opens wallpaper helper controls` smoke 濞村鐦敍宀冾洬閻╂牜鏁撳ú璇茬杽閻劌鍙嗛崣锝冣偓浣割梿缁剧濮幍瀣付閸掕泛灏崪宀€些闂勩倝顥撻梽鈺傛降濠ф劑鈧?
+### 娣囶喗鏁?- 缁夊娅庢竟浣虹剨閸斺晜澧滈弶銉︾爱閸掓銆冩稉顓犳畱 dpm 閺佸懎顔傛竟浣虹剨闁剧偓甯撮妴?- 娑撳娴囬柧鎹愮熅閸忓牅绻氱€涙ê鍩屾惔鏃傛暏閸愬懘鍎存竟浣虹剨閻╊喖缍嶉悽銊ょ艾缁崵绮虹拋鍓х枂閿涙稓鏁ら幋铚傚瘜閸斻劋绗呮潪鑺ユ閸愬秴鐨剧拠鏇烆嚤閸戝搫鍩岄悽銊﹀煕闁瀚ㄦ担宥囩枂閿涘矂浼╅崗?Android 閸愬懎顔?URI 閺冪姵纭堕惄瀛樺复鐞氼偆閮寸紒鐔奉梿缁炬瓕顔曠純顔款嚢閸欐牓鈧?- 濡€虫健閺傚洦銆傜悰銉ュ帠閻㈢喐妞跨€圭偟鏁ゆ竟浣虹剨閸斺晜澧滈懗钘夊閵嗕焦娼靛┃鎰珶閻ｅ苯鎷伴獮鍐插酱妞嬪酣娅撶拠瀛樻閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_wallpaper.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_tool_shell.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens wallpaper helper controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+- `./gradlew.bat :app:compileDebugKotlin -x checkDebugAarMetadata`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 缁楊兛绗侀弬瑙勫复閸欙絽鎷伴幒鍫熸綀閺€璺ㄧ摜閸欘垵鍏橀崣妯哄閿涙稒婀版潪顔荤瑝閹垫挸瀵樼粭顑跨瑏閺傜懓顥嗙痪闈╃礉閸欘亣绻嶇悰灞炬閼辨艾鎮庨獮璺虹潔缁€鐑樻降濠ф劑鈧?- Android 鐠佸墽鐤嗘竟浣虹剨娓氭繆绂嗙化鑽ょ埠娑撳骸宸堕崯?ROM 閼宠棄濮忛敍宀勬敚鐏炲繐顥嗙痪绋垮讲閼冲€燁潶閹锋帞绮烽敍娑㈡姜 Android 楠炲啿褰存导姘舵缁狙傝礋娣囨繂鐡ㄩ張顒€婀撮獮鑸靛絹缁€鎭掆偓?- 閸忋劑鍣?Android 缂傛牞鐦цぐ鎾冲娴兼艾鍘涚悮顐ｆ＆閺?CameraX 1.6.0 娑?AGP 8.7.3 閸忓啯鏆熼幑顔款洣濮瑰倷绗夐崠褰掑帳闂冪粯鏌囬敍娑滅儲鏉?AAR metadata 閸?Kotlin 鐎规艾鎮滅紓鏍槯瀹告煡鈧俺绻冮妴?
+## [Unreleased-PLAN_206-LIFE-COLOR-HELPER-BACKGROUND-SWITCH-SEMANTICS] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴妞ょ敻娼伴懗灞炬珯鐠佸墽鐤嗛弨閫涜礋閻喐顒滈惃鍕磻閸忕绱濇稉宥夋付鐟曚線鈧鑵戦懝鎻掑幢閸氬孩澧犻崗浣筋啅鐠佸墽鐤嗛敍娑樼磻閸忓啿绱戦崥顖欑稻閺堫亪鈧鑵戦懝鎻掑幢閺冭绱濊ぐ鎾冲妞ょ敻娼版穱婵囧瘮濮濓絽鐖堕崢鐔奉潗閼冲本娅欓妴?
+### 娣囶喗鏁?- 鐏忓棝鍘ら懝鎻掑И閹靛鎮崇槐銏犲隘閻ㄥ嫰銆夐棃銏ｅ剹閺咁垰鍙嗛崣锝勭矤缁備胶鏁ゅ蹇斿瘻闁筋喗鏁兼稉鍝勵潗缂佸牆褰查幙宥勭稊閻?Switch閵?- 鐏忓棜澹婇崡陇顕涢幆鍛厬閻ㄥ嫰銆夐棃銏ｅ剹閺咁垰鍙嗛崣锝呮倱濮濄儲鏁兼稉?Switch閿涘苯鎷伴幖婊呭偍閸栧搫鍙￠悽銊ユ倱娑撯偓瀵偓閸忓磭濮搁幀浣碘偓?- 鐠嬪啯鏆ｉ幖婊呭偍閵嗕焦绔荤粚鍝勬嫲閸忔娊妫撮懝鎻掑幢鐠囷附鍎忛弮鍓佹畱閼冲本娅欓悩鑸碘偓浣筋嚔娑斿绱伴崣顏呯闂勩倕缍嬮崜宥夘暕鐟欏牓顤侀懝璇х礉娑撳秴鍟€瀵搫鍩楅崗鎶芥４妞ょ敻娼伴懗灞炬珯瀵偓閸忕偨鈧?- 閺囧瓨鏌婇柊宥堝閸斺晜澧?smoke 濞村鐦敍宀冾洬閻╂牗婀柅澶夎厬閼规彃宕遍弮璺虹磻閸氼垰绱戦崗鍏呯矝娣囨繃瀵旈崢鐔奉潗閼冲本娅欓妴渚€鈧鑵戦懝鎻掑幢閸氬氦鍤滈崝銊ョ安閻劏鍎楅弲顖樷偓浣疯⒈婢跺嫬绱戦崗宕囧Ц閹礁鎮撳銉ｂ偓?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_widgets.dart test/ui_smoke_test.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_tool_shell.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 瀵偓閸忓磭濮搁幀浣哄箛閸︺劌褰叉禒銉ユ躬濞屸剝婀佽ぐ鎾冲閼规彃宕辨０婊嗗閺冩湹绻氶幐浣哥磻閸氼垽绱辨い鐢告桨閼冲本娅欓崣顏勬躬鐎涙ê婀ぐ鎾冲闁鑵戦懝鍙夋鎼存梻鏁ら敍宀勪缉閸忓秶鈹栨０婊嗗閻樿埖鈧線鏁婄拠顖涙暭閸欐﹢銆夐棃銏ｅ剹閺咁垬鈧?
+## [Unreleased-PLAN_205-LIFE-COLOR-HELPER-SEARCH-BACKGROUND-TO-TOP] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴鐏忓棝銆夐棃銏ｅ剹閺咁垶顣╃憴鍫ｎ啎缂冾喕绡冩晶鐐插閸掓澘顦婚柈銊︽偝缁便垺顢嬫稉瀣煙閿涘苯鑻熺涵顔荤箽鐎瑰啩绗岄懝鎻掑幢鐠囷附鍎忔稉顓犳畱閼冲本娅欏鈧崗宕囧Ц閹礁鎮撳銉幢閸氬本妞傛稉鍝勭秼閸撳秹鍘ら懝鎻掑И閹靛銆夐棃銏狀杻閸旂姳绔撮柨顔跨箲閸ョ偤銆婇柈銊﹀瘻闁筋喓鈧?
+### 閺傛澘顤?- 娑撳搫浼愰崗鐑姐€夋竟铏煀婢х偛褰查柅?`scrollController` 娑?`floatingActionButton` 閸欏倹鏆熼敍宀勭帛鐠併倓绗夎ぐ鍗炴惙閸忔湹绮銉ュ徔妞ょ偣鈧?- 閸︺劑鍘ら懝鎻掑И閹靛鎮崇槐銏☆攱娑撳鏌熼弬鏉款杻閼冲本娅欐０鍕潔閹稿鎸抽敍灞炬弓闁鑵戦懝鎻掑幢閺冨墎顩﹂悽顭掔礉闁鑵戦懝鎻掑幢閸氬骸褰叉稉搴ゎ嚊閹懏瀵滈柦顔兼倱濮濄儱绱戦崗鐐解偓?- 娑撴椽鍘ら懝鎻掑И閹靛鏌婃晶鐐┾偓婊嗙箲閸ョ偤銆婇柈銊⑩偓婵囧亾濞搭喗瀵滈柦顕嗙礉娑撯偓闁款喗绮撮崶鐐茬秼閸撳秹銆夐棃銏ゃ€婇柈銊ｂ偓?
+### 娣囶喗鏁?- 闁板秷澹婇崝鈺傚閻ㄥ嫭鎮崇槐銏犲隘閼冲本娅欓幐澶愭尦娑撳氦澹婇崡陇顕涢幆鍛板剹閺咁垱瀵滈柦顔煎彙閻劌鎮撴稉鈧禒?`_pageColorPreviewEnabled` 閻樿埖鈧礁鎷伴崚鍥ㄥ床閸ョ偠鐨熼妴?- 閺囧瓨鏌婇柊宥堝閸斺晜澧?smoke 濞村鐦敍宀冾洬閻╂牗鎮崇槐銏犲隘閼冲本娅欓幐澶愭尦閵嗕浇鍎楅弲顖滃Ц閹礁鎮撳銉ユ嫲鏉╂柨娲栨い鍫曞劥閹稿鎸崇€涙ê婀幀褋鈧?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_tool_shell.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_widgets.dart test/ui_smoke_test.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_tool_shell.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 瀹搞儱鍙挎い闈涳紦閸欏倹鏆熸晶鐐插娴ｅ棗娼庢稉鍝勫讲闁绱卞鍙夋箒瀹搞儱鍙挎い鍏哥瑝娴肩姴鍙嗛弮鍓佹樊閹镐礁甯悰灞艰礋閵?
+## [Unreleased-PLAN_204-LIFE-COLOR-HELPER-PAGE-BACKGROUND-PREVIEW] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴閸︺劑鍘ら懝鎻掑И閹靛鑵戞晶鐐插娑撯偓娑擃亞鐣濋崡鏇熷瘻闁筋喖绱戦崗绛圭礉瀵偓閸氼垱妞傛稉瀛樻鐏忓棗缍嬮崜宥夈€夐棃銏ｅ剹閺咁垵澹婄拋鍓х枂娑撶儤澧嶉柅澶庡閸楋繝顤侀懝灞傗偓?
+### 閺傛澘顤?- 娑撳搫浼愰崗鐑姐€夋竟铏煀婢х偛褰查柅?`backgroundColor` 閸欏倹鏆熼敍宀勭帛鐠併倓绗夎ぐ鍗炴惙閸忔湹绮銉ュ徔妞ょ偣鈧?- 閸︺劑鍘ら懝鎻掑И閹靛鈧鑵戦懝鎻掑幢閻ㄥ嫭鏆ｇ悰宀冾嚊閹懍鑵戦弬鏉款杻閳ユ粓銆夐棃銏ｅ剹閺?/ 閸忔娊妫撮懗灞炬珯閳ユ繂绱戦崗铏瘻闁筋噯绱濋悽銊ょ艾娑撳瓨妞傛０鍕潔瑜版挸澧犻懝鎻掑幢娴ｆ粈璐熸い鐢告桨閼冲本娅欓妴?
+### 娣囶喗鏁?- 闁板秷澹婇崝鈺傚鐠佹澘缍嶈ぐ鎾冲闁鑵戦懝鎻掑幢妫版粏澹婇敍灞界磻閸氼垵鍎楅弲顖烆暕鐟欏牆鎮楁い鐢告桨閼冲本娅欓梾蹇涒偓澶夎厬閼规彃宕遍弴瀛樻煀閵?- 濞撳懐鈹栭幖婊呭偍閵嗕礁鍨忛幑銏℃偝缁便垼鐦濋幋鏍у彠闂傤參鈧鑵戦懝鎻掑幢閺冩儼鍤滈崝銊┾偓鈧崙楦垮剹閺咁垶顣╃憴鍫礉娑撳秴浠涢幐浣风畽閸栨牔绻氱€涙ǜ鈧?- 閺囧瓨鏌婇柊宥堝閸斺晜澧?smoke 濞村鐦敍宀冾洬閻╂牞鍎楅弲顖烆暕鐟欏牊瀵滈柦顔兼嫲 Scaffold 閼冲本娅欓懝鎻掑綁閺囨番鈧?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_tool_shell.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_widgets.dart test/ui_smoke_test.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_tool_shell.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 濞ｈ精澹婇崡鈥茬稊娑撴椽銆夐棃銏ｅ剹閺咁垱妞傛い闈涖仈閺傚洤鐡ч崣顖濆厴闂勫秳缍嗙€佃鐦惔锔肩幢鐠囥儴鍏橀崝娑楃矌娑撹桨澶嶉弮鍫曨暕鐟欏牞绱濋崗鎶芥４閹存牠鍣搁柅澶夌窗閹垹顦叉妯款吇閼冲本娅欓妴?
+## [Unreleased-PLAN_203-LIFE-COLOR-HELPER-SAMPLER-FIRST-ROW-DETAIL] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴鐏忓棗娴橀悧鍥у絿閼硅尙些閸斻劌鍩岄柊宥堝閸斺晜澧滃Ο鈥虫健娑撳﹥鏌熼敍灞借嫙娴兼ê瀵查懝鎻掑幢閻愮懓鍤仦鏇炵磻閺傜懓绱￠敍宀勪缉閸忓秴宕熸稉顏勫幢閻楀洤顤冩妯侯嚤閼锋潙鎮撴稉鈧純鎴炵壐鐞涘矁顫﹂幐銈呭竾闁挎瑤缍呴妴?
+### 娣囶喗鏁?- 鐏忓棌鈧粏绶熼崝鈺佹禈閻楀洤褰囬懝娴嬧偓婵嬫桨閺夊灝澧犵純顔煎煂闁板秷澹婇崝鈺傚娑撹缍嬫い鍫曞劥閿涘矁鐎洪崥鍫ｅ鎼存挷绗岄幖婊呭偍閸栧搫鐓欐稉瀣╅妴?- 鐏忓棜鐎洪崥鍫ｅ鎼存挾缍夐弽闂寸矤 `Wrap` 閸楁洖宕辩仦鏇炵磻閺€閫涜礋閹稿顢戝〒鍙夌厠閿涘矁澹婇崡鈥茬箽閹镐礁娴愮€规岸鐝惔锔衡偓?- 閻愮懓鍤懝鎻掑幢閸氬骸婀崗鑸靛閸︺劏顢戞稉瀣煙閹绘帒鍙嗛崗銊ヮ啍鐠囷附鍎忛棃銏℃緲閿涘苯鐫嶇粈鍝勬倳缁夎埇鈧焦瀚鹃棅?缂冩鈹堥棅鐐解偓涓燛X/RGB/CMYK閵嗕礁顦查崚鎯板閸婄厧鎷版径宥呭煑閼规彃鎮曢妴?- 閺囧瓨鏌婇柊宥堝閸斺晜澧?smoke 濞村鐦敍宀冾洬閻╂牕娴橀悧鍥у絿閼规彃婀摶宥呮値閼规彃绨辨稉濠冩煙閻ㄥ嫬绔风仦鈧憰浣圭湴閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_widgets.dart test/ui_smoke_test.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_life_tools.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閼规彃宕辩拠锔藉剰閺€閫涜礋閺佺顢戦幍鎸庡复閸氬函绱濋柅澶夎厬閼硅尪顕涢幆鍛窗閸楃姷鏁ゆ稉鈧弫纾嬵攽鐎硅棄瀹抽敍娑毿╅崝銊ь伂閸欘垵顕伴幀褎娲挎總鏂ょ礉娴ｅ棝鏆遍崚妤勩€冨姘З妤傛ê瀹虫导姘辨殣閺堝顤冮崝鐘偓?
+## [Unreleased-PLAN_202-LIFE-COLOR-HELPER-UNIFIED-WILDCARD] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涢崣宥夘洯闁板秷澹婇崝鈺傚娣団剝浼呴棃銏℃緲鏉╁洣绨弶鐐殠閵嗕浇澹婅ぐ鈺傜槷娓氬绗夐弰搴㈡▔閿涘苯鑻熺憰浣圭湴缁夊娅庨弶銉︾爱閹诲繗鍫妴浣割杻閸旂娀鍎撮崚?HEX / 闁岸鍘?HEX 鏉堟挸鍙嗛崠褰掑帳閵嗕胶鍋ｉ崙鏄忓閸椻€冲斧閸︽澘鐫嶅鈧拠锔藉剰閿涘奔浜掗崣濠呯€洪崥鍫滆⒈婵傛澹婇崡鈥茬瑝閸愬秴鍨庣紒鍕┾偓?
+### 閺傛澘顤?- 閺傛澘顤冮摶宥呮値閼规彃绨遍幖婊呭偍闂堛垺婢橀敍宀€绮烘稉鈧幍鑳祰閺堫剙婀存稉顓炴禇閼硅弓绗?NIPPON COLORS 閼规彃宕辩紒鎾寸亯閺佷即鍣洪崪灞藉彠闁款喛鐦濇潏鎾冲弳閵?- 閺傛澘顤?`??FF??` 缁鈧岸鍘?HEX 閸栧綊鍘ゆ稉搴㈡珮闁?HEX 閻楀洦顔岄崠褰掑帳閿涘本鏁幐浣烘暏闁劌鍨庨懝鎻掔厵韫囶偊鈧喓鐡柅澶婂斧婵澹婇崡掳鈧?- 閺傛澘顤冪紒鐔剁閼规彃宕辨晶娆戠矋娴犺绱濋悙鐟板毊閼规彃宕遍崥搴℃躬瑜版挸澧犻崡锛勫閸愬懎鐫嶅鈧?HEX/RGB/CMYK閵嗕礁顦查崚鎯板閸婄厧鎷版径宥呭煑閼规彃鎮曢妴?
+### 娣囶喗鏁?- 缁夊娅庨柊宥堝閸斺晜澧滈崢鐔告箒閳ユ粈鑵戦崶鍊熷婢?/ NIPPON COLORS閳ユ繃膩瀵繐鍨忛幑銏犳嫲妞ゅ爼鍎寸拠锔藉剰閼哥偛褰撮敍灞炬暭娑撹桨绗夐崚鍡欑矋閻ㄥ嫯鐎洪崥鍫ｅ閸椻剝绁﹂妴?- 閸樺缂夋い鍫曞劥娣団剝浼呴棃銏℃緲閿涘奔绮庢穱婵堟殌閾诲秴鎮庨懝鎻掔氨閺嶅洭顣介妴浣稿爱闁板秵鏆熼柌蹇庣瑢閹兼粎鍌ㄦ潏鎾冲弳閵?- 婢х偛銇囬懝鎻掑幢姒涙顓婚懝鎻掓健閸楃姵鐦敍宀冾唨妫版粏澹婇張顒冮煩閹存劒璐熷ù蹇氼潔娑撴槒顫嬬憴澶堚偓?- 缁夊娅庨懝鎻掑幢閺夈儲绨幓蹇氬牚閵嗕焦娼靛┃鎰瘻闁筋喖鎷板Ο鈥崇€锋稉顓犳畱閺夈儲绨?URL 鐎涙顔岄妴?- 閺囧瓨鏌婇柊宥堝閸斺晜澧?smoke 濞村鐦敍宀冾洬閻╂牞鐎洪崥鍫濆弳閸欙絻鈧線鈧岸鍘?HEX 閹兼粎鍌ㄩ妴浣稿幢閻楀洤鍞寸仦鏇炵磻鐠囷附鍎忔稉搴℃嫲閼瑰弶顥呯槐顫偓?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_models.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_widgets.dart test/ui_smoke_test.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_life_tools.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閸氬牆鑻熼懝鎻掔氨閸氬氦澹婇崡锟犮€庢惔蹇旀暭娑撹櫣绮烘稉鈧懝鑼祲閹烘帒绨敍灞芥嫲娑撳﹣绔撮悧鍫濆瀻濡€崇础濞村繗顫嶉惃鍕斧婵鐝悙褰掋€庢惔蹇庣瑝閸氬矉绱遍弽绋跨妇閺佺増宓侀妴浣规偝缁便垹鎷版径宥呭煑閼宠棄濮忔穱婵囧瘮閺堫剙婀撮崣顖滄暏閵?
+## [Unreleased-PLAN_201-LIFE-COLOR-HELPER-REBUILD] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴鐎靛厜鈧粌浼愰崗椋庮唸-閻㈢喐妞跨€圭偟鏁?闁板秷澹婇崝鈺傚閳ユ繀绮犳径鎾櫢閺傛澘鐤勯悳甯礉閺勫海鈥樻稉宥呭棘閼板啫缍嬮崜宥嗚穿娑旇京绮ㄩ弸鍕剁礉楠炴湹浜?`zhongguose.com` 娑?`nipponcolors.com/#aikobicha` 閻ㄥ嫯澹婅ぐ鈺佸幢閻楀洤濮涢懗鎴掕礋閺嶇绺鹃崑姘拱閸︽澘鐤勯悳鑸偓?
+### 閺傛澘顤?- 閺傛澘顤冮柊宥堝閸斺晜澧滈張顒€婀撮懝鎻掑幢濡€崇€锋稉搴濈波鎼存挻濯堕崚鍡樻瀮娴犺绱濈紒鐔剁鐠囪褰囬張顒€婀存稉顓炴禇閼硅弓绗?NIPPON COLORS JSON 閺佺増宓侀妴?- 閺傛澘顤冮柊宥堝閸斺晜澧滅仦鏇犮仛缂佸嫪娆㈤幏鍡楀瀻閺傚洣娆㈤敍灞惧鏉炶姤膩瀵繐鍨忛幑顫偓浣藉閸?pill閵嗕椒鑵戦崶鍊熷閼规彃顣鹃妴涓疘PPON COLORS 濞屽韫堥懜鐐插酱閵嗕焦铆閸氭垹鍌ㄥ鏇氱瑢 CMYK/RGB 娣団€冲娇閸ヤ勘鈧?
+### 娣囶喗鏁?- 闁插秴鍟撻柊宥堝閸斺晜澧滄い鐢告桨娑撹缍嬮敍灞炬暭娑撹　鈧粈鑵戦崶鍊熷婢ф瑢鈧繂鎷伴垾娣PPON COLORS閳ユ繀琚辨總妤佹拱閸︽壆鐝悙鐟板娴ｆ捇鐛欓妴?- 娑擃厼娴楅懝鍙壞佸蹇庣箽閻ｆ瑨澹婃晶娆愮セ鐟欏牄鈧焦鎮崇槐顫偓渚€鈧鑵戦懝鑼跺灦閸欒埇鈧笭EX/RGB/CMYK 鐏炴洜銇氶妴浣割槻閸掓儼澹婇崐?閼规彃鎮曢崪灞炬降濠ф劘鐑︽潪顑锯偓?- NIPPON COLORS 濡€崇础娣囨繄鏆€閸楁洝澹婂▽澶嬭箞閼哥偛褰撮妴浣稿閸氬骸鍨忛幑顫偓浣圭拨閸斻劌鍨忛幑顫偓浣姑崥鎴犲偍瀵洏鈧浇鐑︽潪顒€鍨悰銊ユ嫲閼规彃鈧厧顦查崚韬测偓?- 閸ュ墽澧栭崣鏍缂佈呯敾娣囨繄鏆€娑撻缚绶熼崝鈺勫厴閸旀冻绱濋獮鏈垫叏濮?`BoxFit.contain` 妫板嫯顫嶆稉瀣絿閺嶅嘲娼楅弽鍥ㄦЁ鐏忓嫸绱濋柆鍨帳闂堢偞寮ч柧鍝勬禈閻楀洤褰囬懝鎻掍焊缁夋眹鈧?- 閺囧瓨鏌婇柊宥堝閸斺晜澧?smoke 濞村鐦敍灞煎▏閸忚泛灏柊宥嗘煀閻?`NIPPON COLORS` 閸掑棙顔岄崗銉ュ經閵?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_models.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color_widgets.dart test/ui_smoke_test.dart`
+- `flutter analyze lib/src/ui/pages/toolbox_life_tools.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘径宥囧箛閺嶇绺惧ù蹇氼潔閸旂喕鍏樻稉搴Ｐ╅崝銊ь伂閸欘垳鏁ゆ担鎾荤崣閿涘本鐥呴張澶愨偓鎰剼缁辩姷鍙庨幖顒傜秹妞ら潧濮╅弫鍫幢閸氬海鐢绘俊鍌滄埛缂侇厾绨挎穱顕嗙礉閸欘垵藟閻喐婧€濠婃艾濮╂稉搴ｇ崕鐏炲繗顫嬬憴澶愮崣閺€韬测偓?
+## [Unreleased-PLAN_200-LIFE-TOOLS-COLOR-HELPER-FULL-LOCAL-SITES] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴鐏忓棌鈧粌浼愰崗椋庮唸-閻㈢喐妞跨€圭偟鏁ら垾婵呰厬閻ㄥ嫰鍘ら懝鎻掑И閹靛绮犻張顒€婀寸划楣冣偓澶庡閸椔ょ箻娑撯偓濮濄儱宕岀痪褌璐熼幒銉ㄧ箮閸樼喓鐝惃鍕暚閺佸瓨婀伴崷棰佺秼妤犲矉绱濋獮鑸垫绾喛顩﹀Ч鍌欏▏閻劎婀＄€圭偤顤侀懝鎻掓倳缁夐绗屾０婊嗗閺佺増宓侀敍宀冣偓灞肩瑝閺勵垰浠犻悾娆忔躬閳ユ粈鑵戦崶鍊熷 / NIPPON COLORS閳ユ繄楠囬崚顐ゆ畱缁犫偓閸楁洘娼惄顔衡偓?
+### 閺傛澘顤?- 閺傛澘顤?`assets/toolbox/colors/zhongguose_colors.json` 娑?`assets/toolbox/colors/nippon_colors.json` 娑撱倕顨滈張顒€婀撮懝鎻掑幢鐠у嫪楠囬敍灞藉瀻閸掝偅澹欐潪钘夌暚閺佺繝鑵戦崶鎴掔炊缂佺喕澹婃稉?NIPPON COLORS 閸氬秶袨閵嗕焦瀚鹃棅?缂冩鈹堥棅鐐解偓涓燛X閵嗕阜GB閵嗕竼MYK 閺佺増宓侀妴?- 娑撴椽鍘ら懝鎻掑И閹靛鏌婃晶鐐┾偓婊€鑵戦崶鍊熷婢ф瑢鈧繀绗岄垾娣ppon immersive閳ユ繂寮诲ù蹇氼潔濡€崇础閿涘苯鍨庨崚顐㈩槻閸掕崵鎮ｉ崥鍫ｅ婢ф瑦绁荤憴鍫濇嫲閸楁洝澹婂▽澶嬭箞濞村繗顫嶉惃鍕壋韫囧啰鐝悙閫涚秼妤犲被鈧?- 閺傛澘顤冩稉顓炴禇閼规煡鈧鑵戦懝鑼跺灦閸欒埇鈧礁鎷伴懝鑼剁儲鏉烆剙鍨悰銊ｂ偓浣稿閸氬骸鍨忛幑銏ｅ缓闁挶鈧浇澹婇崐闂翠繆閸欏嘲褰茬憴鍡楀娑撳孩娲跨€瑰本鏆ｉ惃鍕拱閸︾増鎮崇槐顫秼妤犲被鈧?
+### 娣囶喗鏁?- 鐏忓棝鍘ら懝鎻掑И閹靛銆夐棃銏ゅ櫢閸愭瑤璐熼張顒€婀撮弫鐗堝祦妞瑰崬濮╅惃鍕暚閺佺澹婅ぐ鈺傜セ鐟欏牆娅掗敍宀勩€夐棃銏ゎ€囬弸鎯扮殶閺佺繝璐熼垾婊勭セ鐟欏牊膩瀵?閳?娑撴槒鍨堕崣?閳?鏉堝懎濮崶鍓у閸欐牞澹婇垾婵勨偓?- 鐏忓棔鑵戦崶鍊熷濞村繗顫嶉崡鍥╅獓娑撶儤瀵滈懝鑼祲/閺勫骸瀹崇紒鍕矏閻ㄥ嫬鐣弫纾嬪婢ф瑱绱濋弨顖涘瘮闁鑵戦懝鑼额嚊閹懌鈧礁顦查崚?HEX閵嗕礁顦查崚璺烘倳缁夋澘鎷伴幍鎾崇磻閺夈儲绨い鐢告桨閵?- 鐏?NIPPON COLORS 濞村繗顫嶉崡鍥╅獓娑撶儤鐭囧ù绋跨础閺佹潙鐫嗘稉鏄忓閼哥偛褰撮敍灞炬暜閹镐礁澧犻崥搴″瀼閹诡潿鈧礁鎻╅柅鐔荤儲閼瑰眰鈧礁鎮曠粔棰佺瑢閼规彃鈧壈顕涢幆鍛颁粓閸斻劊鈧?- 鐏忓棙婀伴崷?JSON 鐠囪褰囨禒?`rootBundle.loadString` 鐠嬪啯鏆ｆ稉?`rootBundle.load + utf8.decode`閿涘矂浼╅崗宥呫亣鐠у嫭绨崷?widget test 娑擃參鏆遍張鐔蜂粻閻ｆ瑥婀崝鐘烘祰閹降鈧?- 濞撳懐鎮婇柊宥堝閸斺晜澧滅€?`nippon_colors` 鏉╂劘顢戦弮鏈电贩鐠ф牜娈戦惄瀛樺复娴ｈ法鏁ら敍灞炬暭娑撳搫鐣崗銊ょ贩鐠ф牗婀伴崷鎵瀲缁捐儻绁禍褋鈧?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?`const/final` 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛張顒€婀撮崠鏍ь槻閸掕绱崗鍫ｎ洬閻╂牗鐗宠箛鍐╃セ鐟欏牓鈧槒绶妴浣蜂繆閹垰鐪伴崪宀冾潒鐟欏濡總蹇ョ礉閺堫亪鈧劕鍎氱槐鐘靛弾閹碱剙甯粩娆愬閺堝缍夋い闈涘З閺佸牞绱遍崥搴ｇ敾婵″倻鎴风紒顓熺箒閸栨牭绱濋棁鈧憰浣告躬閻喐婧€娑撳﹤鍙у▔銊︾泊閸斻劋绗屾潻鍥ㄦ诞閹嗗厴閵?- 閺堫剙婀撮懝鎻掑幢鐠у嫪楠囧鎻掔暚閺佸顬囩痪鍨閿涘苯鎮楃紒顓″閸樼喓鐝弫鐗堝祦閺囧瓨鏌婇敍宀勬付鐟曚焦澧滈崝銊ユ倱濮?JSON 閺佺増宓佸┃鎰┾偓?
+## [Unreleased-PLAN_199-LIFE-TOOLS-COLOR-HELPER-LOCAL-PALETTES] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴缂佈呯敾鐞涖儱鍙忛垾婊冧紣閸忛顔?閻㈢喐妞跨€圭偟鏁ら垾婵呰厬閻ㄥ嫰鍘ら懝鎻掑И閹靛绱濋獮鑸垫绾喕浜?`zhongguose.com` 娑?`nipponcolors.com` 閻ㄥ嫯澹婅ぐ鈺佸幢閻楀洣缍嬫灞艰礋閸╄櫣顢呴崑姘拱閸︽澘鐤勯悳甯礉閼板奔绗夐弰顖氫粻閻ｆ瑥婀粻鈧崡鏇炲絿閼?demo閵?
+### 閺傛澘顤?- 娑撴椽鍘ら懝鎻掑И閹靛藟閸忓懍鑵戦崶鎴掔炊缂佺喕澹婃稉?NIPPON COLORS 閻ㄥ嫭婀伴崷鎵翱闁澹婇崡鈽呯礉娣囨繄鏆€娑擃厽鏋冮崥?閹峰ジ鐓舵稉搴℃嫲閸?缂冩鈹堥棅鐐解偓?- 閺傛澘顤冮懝鎻掑幢閺夈儲绨幀鏄忣潔閵嗕焦娼靛┃鎰摣闁鈧礁鍙ч柨顔跨槤閹兼粎鍌ㄩ妴浣藉閸椔ゎ嚊閹懎绨抽柈銊╂桨閺夊尅绱濇禒銉ュ挤婢跺秴鍩楅懝鎻掆偓?婢跺秴鍩楅崥宥囆?鐠哄疇娴嗛弶銉︾爱妞ょ敻娼伴懗钘夊閵?- 閺傛澘顤?`life tools opens local color helper palettes` smoke 濞村鐦敍宀冾洬閻╂牜鏁撳ú璇茬杽閻劌鍙嗛崣锝呭煂闁板秷澹婇崝鈺傚妞ょ敻娼伴惃鍕唨閺堫剙褰叉潏鐐偓褋鈧?
+### 娣囶喗鏁?- 鐏忓棗甯張顒€褰ч張?6 娑擃亞銇氭笟瀣閸ф娈戦柊宥堝閸斺晜澧滈柌宥呭晸娑撹櫣顬囩痪鑳閸椻剝绁荤憴鍫濇珤閿涘矂銆夐棃顫瘜鐠侯垰绶炵拫鍐╂殻娑撹　鈧粍娼靛┃鎰嚛閺?閳?閼规彃宕卞ù蹇氼潔 閳?閸ュ墽澧栭崣鏍閳ユ縿鈧?- 娣囨繄鏆€閸樼喐婀侀崶鍓у閸欐牞澹婇懗钘夊閿涘苯鑻熺亸鍡楀従娑撳鐭囨稉楦跨窡閸斺晛灏敍灞炬暜閹镐礁顕遍崗銉︽拱閸︽澘娴橀悧鍥ф倵閻愮懓鍤０鍕潔閸栧搫鐓欓崣鏍ㄧ壉楠炶埖鐓￠惇?RGB / HSV / CMYK閵?- 閹恒儱鍙?`nippon_colors` 閺堫剙婀撮懝鎻掆偓鐓庣埗闁插骏绱濋柆鍨帳閺冦儲婀版导鐘电埠閼规彃宕辨笟婵婄閸︺劎鍤庢い鐢告桨閼存碍婀伴幋鏍箥鐞涘本妞傜純鎴犵捕缂佹挻鐎妴?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens local color helper palettes"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 瑜版挸澧犻柌鍥╂暏缁箖鈧婀伴崷鎷屽閸椔も偓宀勬姜娑撯偓濞嗏剝鈧冪暚閺佸瓨鏁硅ぐ鏇炲弿闁劌鍙曞鈧懝鎻掑幢閿涘奔绱悙瑙勬Ц妞ょ敻娼伴弴纾嬩氦閵嗕焦娲跨粙绛圭幢閼汇儱鎮楃紒顓㈡付鐟曚焦澧跨€圭櫢绱濋崣顖氭躬娑撳秵鏁兼禍銈勭鞍妤犮劍鐏﹂惃鍕閹绘劒绗呯紒褏鐢绘潻钘夊閺佺増宓侀妴?- 閼规彃宕遍弶銉︾爱妞ょ敻娼版禒鍛稊娑撻缚顕╅弰搴濈瑢鐠哄疇娴嗛敍灞肩瑝娓氭繆绂嗙粭顑跨瑏閺傚湱鐝悙鐟版躬缁捐法绮ㄩ弸鍕剁礉閸ョ姵顒濈粋鑽ゅ殠閸欘垳鏁ら幀褎娲挎總鏂ょ礉娴ｅ棔绡冮幇蹇撴嚄閻偓閺堫剙婀撮弫鐗堝祦闂団偓鐟曚礁婀崥搴ｇ敾閻楀牊婀版稉顓熷閸斻劎娣幎銈冣偓?
+## [Unreleased-PLAN_198-LIFE-TOOLS-RULER-PROTRACTOR-UTILITY] - 2026-05-25
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴娴兼ê鍘涚悰銉ュ弿瀹搞儱鍙跨粻渚库偓宀€鏁撳ú璇茬杽閻劊鈧秳鑵戦惃鍕槀鐎涙劒绗岄柌蹇氼潡閸ｃ劍膩閸ф绱濇担鍨従娑撳秴鍟€閸嬫粎鏆€閸︺劍绱ㄧ粈鐑樷偓渚婄礉楠炶埖妲戠涵顔藉瘹閸戣櫣娲跨亸鍝勫煝鎼达箑绨茬拹纾嬬箮閹靛婧€鐏炲繐绠锋潏鍦喘閼板奔绗夐弰顖滅帛閸掕泛婀稉顓㈡？閵?
+### 閺傛澘顤?- 娑撹櫣鏁撳ú璇茬杽閻劍绁撮柌蹇撲紣閸忛攱甯撮崗?`camera` 娓氭繆绂嗛敍宀€鏁ゆ禍搴ㄥ櫤鐟欐帒娅掓い鐢告桨鐠囬攱鐪伴惄鍛婃簚閺夊啴妾洪獮鑸垫▔缁€鍝勭杽閺冩儼鍎楅弲顖樷偓?- 閺傛澘顤冮惄鏉戞槀/闁插繗顫楅崳銊┿€夐棃銏㈡畱閺嶁€冲櫙妫板嫯顫嶉崡掳鈧焦铆鐏炲繗绔熺紓妯兼纯鐏忛缚鍨堕崣鑸偓浣烘祲閺堥缚鍎楅弲顖炲櫤鐟欐帒娅掗懜鐐插酱閸滃瞼娴夐張铏瑰Ц閹焦褰佺粈楦垮厡閸ュ鈧?- 閺傛澘顤?`life tools opens ruler and protractor utility page` smoke 濞村鐦敍宀冾洬閻╂牜鏁撳ú璇茬杽閻劌鍙嗛崣锝呭煂鐏忓搫鐡欏銉ュ徔妞ょ數娈戦崺铏诡攨閸欘垵鎻幀褋鈧?
+### 娣囶喗鏁?- 鐏忓棗甯張澶嗏偓婊冩槀鐎涙劏鈧繂宕版担宥夈€夐崡鍥╅獓娑撹　鈧粌鏄傜€涙劕鎷伴柌蹇氼潡閸ｃ劉鈧繂鐤勯悽銊┿€夐敍灞炬暜閹镐焦澧滈崝銊︾墡閸戝棎鈧礁浜曠拫鍐ㄦ嫲闁插秶鐤嗛弽鍥у櫙閵?- 鐏忓棗鍙忕仦蹇曟纯鐏忕儤鏁兼稉鐑樏仦蹇旂焽濞寸绱℃潏鍦喘閸掕瀹冲〒鍙夌厠閿涘苯鍩㈡惔锕佸垱鏉╂垵鐫嗛獮鏇㈡毐鏉堢櫢绱濇笟澶哥艾娴犮儲澧滈張楦跨珶缂傛ü缍旀稉鐑樼ゴ闁插繐鐔€閸戝棎鈧?- 鐏忓棝鍣虹憴鎺戞珤閸忋劌鐫嗘い鍨暭娑撹桨绱崗鍫ｎ嚞濮瑰倸鎮楃純顔炬祲閺堢尨绱濋幋鎰閺冭埖妯夌粈铏规祲閺堟椽顣╃憴鍫礉婢惰精瑙﹂弮鍫曟缁狙傝礋闂堟瑦鈧浇鍎楅弲顖氬閸掕瀹崇仦鍌︾礉娑撳秹妯嗘繅鐐恒€夐棃顫▏閻劊鈧?- 娑?Android 娑?iOS 鐞涖儱鍘栭惄鍛婃簚閺夊啴妾烘竟鐗堟閵?
+### 妤犲矁鐦?- `flutter pub add camera`
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?`const/final` 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens ruler and protractor utility page"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens life tool hub module"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools exposes deep time screen and barrage controls"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閻╂潙鏄傛妯款吇閸掕瀹虫禒宥呯唨娴?Flutter 闁槒绶崓蹇曠閸╄櫣鍤庢导鎵暬閿涘奔绗夐崥灞炬簚閸ㄥ妫块崣顖濆厴鐎涙ê婀亸鎴﹀櫤鐠囶垰妯婇敍灞芥礈濮濄倓绻氶悾娆愬閸斻劍鐗庨崙鍡曠稊娑撶儤娓剁紒鍫ｆ儰閻愬箍鈧?- 闁插繗顫楅崳銊ф祲閺堟椽鎽肩捄顖氭躬濡楀矂娼伴妴浣圭ゴ鐠囨洜骞嗘晶鍐╁灗缁崵绮洪幏鎺撴綀閸︾儤娅欐稉瀣╃窗閼奉亜濮╅梽宥囬獓娑撴椽娼ら幀浣藉剹閺咁垰鍩㈡惔锕€鐪伴敍娑氭埂閺堣桨濞囬悽銊ュ娴犲秴缂撶拋顔兼躬 Android/iOS 鐠佹儳顦稉濠備粵娑撯偓濞嗏剝娼堥梽鎰瑢閸欐牗娅欐宀冪槈閵?
+## [Unreleased-PLAN_197-LIFE-TOOLS-TIME-FLIP-REFERENCE-FIX] - 2026-05-22
+
+### 閸樼喎娲?- 閻劍鍩涢幓鎰返閸欏倽鈧啫缍嶇仦蹇ョ礉鐢本婀滈弮鍫曟？鐏炲繐绠风紙濠氥€夐崣妯绘纯娑撶儤鏆ｆい鍏哥矤妞ゅ爼鍎撮崥鎴滅瑓 90 鎼达妇鐐曢惄鏍畱閺佸牊鐏夐敍宀勪缉閸忓秵妫弫鏉跨摟娑撳些閸滃奔鑵戠痪鎸庡閸欑姵鍔呴妴?
+### 娣囶喗鏁?- 鐏忓棙鏆熺€涙鐐曟い闈涚湴缁狙嗙殶閺佺繝璐熼弮褎鏆熺€涙娼ゅ顫稊娑撳搫绨抽弶鍖＄礉閺傜増鏆熺€涙銆夐棃顫簰娑撳﹨绔熺紓妯硅礋鏉炵繝绮犳潻?90 鎼达妇鐐曟稉瀣嫙鐟曞棛娲婇弮褍鈧鈧?- 娑撹櫣鐐曟い鐢搞€夐悧鍥ь杻閸旂娀娈㈢憴鎺戝閸欐ê瀵查惃鍕彯閸忓鎷伴幎鏇炲閿涘苯宸遍崠鏍у棘閼板啫绱＄紙濠氥€夐惃鍕紕閻╂牕鍙х化姹団偓?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_time_screen_flip.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools exposes deep time screen and barrage controls"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺佹挳銆?3D 缂堣濮╂笟婵堝姧娓氭繆绂嗛崡鏇氶嚋鐏炩偓闁劌濮╅悽缁樺付閸掕泛娅掗敍灞芥倵缂侇叀瀚㈢紒褏鐢婚崣鐘插閺囨潙顦块崗澶婂閹存牗鎶ら梹婊愮礉闂団偓鐟曚礁婀惇鐔告簚娑撳﹤鍙у▔銊ょ秵缁旑垵顔曟径鍥ф姎閻滃洢鈧?
+## [Unreleased-PLAN_196-LIFE-TOOLS-TIME-FLIP-OPTIMIZATION-2] - 2026-05-21
+
+### Reason
+- Refine the time screen flip clock so the update reads as a top-cover page flip, and fully hide the immersive HUD buttons when idle.
+
+### Changed
+- Reworked the digit transition into a top-edge covering page-flip, removing the midline split and the old digit drop-down feel.
+- Switched the immersive settings cluster to an off-screen slide with pointer blocking so hidden controls are no longer partially visible.
+
+### Validation
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_time_screen.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_time_screen_flip.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools exposes deep time screen and barrage controls"`
+
+## [Unreleased-PLAN_196-LIFE-TOOLS-TIME-FLIP-OPTIMIZATION] - 2026-05-21
+
+### 閸樼喎娲?- 閻劍鍩涚敮灞炬箿閺冨爼妫跨仦蹇撶閺佹澘鐡ч弴瀛樻煀閺冩湹绮犻垾婊嗕氦瀵邦喛鐑﹂崝銊⑩偓婵嗗磳缁狙傝礋閺囧婀＄€圭偟娈戠紙鑽ゅ妞ら潧濮╅悽浼欑礉楠炴湹绗栭崣顖欎簰闁瀚ㄦ稉宥呮倱閸斻劎鏁炬搴㈢壐閵?
+### 閺傛澘顤?- 娑撶儤妞傞梻鏉戠潌楠炴洖顤冮崝鐘电倳閻楀苯濮╅悽濠氼棑閺嶈壈顔曠純顔煎弳閸欙綇绱濋弨顖涘瘮缂佸繐鍚€閵嗕線銆庡鎴欌偓浣戒氦韫囶偂绗佺粔宥夈€夌紙缁樺閹扮喆鈧?
+### 娣囶喗鏁?- 鐏忓棙妞傞梻鏉戠潌楠炴洘鏆熺€涙鍨忛幑銏ゅ櫢閸愭瑤璐熸稉濠佺瑓閸楀﹦澧栭崚鍡楃湴缂堣崵澧濋弫鍫熺亯閿涘奔绗夐崘宥呭涧閺勵垱鏆ｉ崸妤勪氦瀵邦喗妫嗘潪顑锯偓?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_time_screen.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_time_screen_flip.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?const/final 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools exposes deep time screen and barrage controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens life tool hub module"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫嗛弮鍫曟？鐏炲繐绠烽惃鍕殶鐎涙鍨忛幑銏も偓鏄忕帆婢х偛濮炴禍鍡楃湰闁劌濮╅悽缁樺付閸掕泛娅掗敍宀冨閸氬海鐢婚崘宥呭綌閸旂姵娲挎径姘З閹焦鐗卞蹇ョ礉闂団偓鐟曚胶鎴风紒顓炲彠濞夈劑鍣哥紒妯诲灇閺堫兙鈧?
+## [Unreleased-PLAN_195-LIFE-TOOLS-CLOCK-BARRAGE-DEEPENING] - 2026-05-21
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴閸忓牆鐣幋鎰紣閸忛顔堥妴宀€鏁撳ú璇茬杽閻劊鈧秳鑵戦惃鍕┾偓灞炬闂傛潙鐫嗛獮鏇樷偓宥呮嫲閵嗗本澧滈幐浣歌剨楠炴洏鈧稄绱濋弴鎸庡床瑜版挸澧犵粻鈧崡?demo 娑撳骸宕愰幋鎰惂閻樿埖鈧降鈧?
+### 閺傛澘顤?- 閺傛澘顤冮悽鐔告た瀹搞儱鍙块弰鍓с仛濡椼儲甯撮柅姘朵壕 `vocabulary_sleep/life_display`閿涙ndroid 閺€顖涘瘮濞屽韫堟い闈涚埗娴滎喖鎷拌ぐ鎾冲缁愭褰涙禍顔煎閹绘劕宕岄敍娌琌S 閺€顖涘瘮濞屽韫堟い鐢殿洣濮濄垼鍤滈崝銊╂敚鐏炲繈鈧?- 閺傛澘顤冮悽鐔告た鐎圭偟鏁ら崗鍙橀煩鐠佸墽鐤嗙紒鍕閿涘瞼鏁ゆ禍搴″瀻濞堢敻鈧銆嶉妴浣藉閺夎￥鈧焦绮﹂弶鍡楁嫲妫板嫯顫嶅鍡礉閸氬海鐢婚崥宀€琚銉ュ徔閸欘垰顦查悽銊ｂ偓?- 閺傛澘顤?`life tools exposes deep time screen and barrage controls` smoke 濞村鐦敍宀冾洬閻╂牗妞傞梻鏉戠潌楠炴洖鎷伴幍瀣瘮瀵懓绠烽惃鍕箒鐏炲倽顔曠純顔煎弳閸欙絻鈧?
+### 娣囶喗鏁?- 鐏忓棛鏁撳ú璇茬杽閻劌鍙嗛崣锝夈€夐弽鍥暯娴犲簶鈧粎鏁撳ú璇茬杽閻劍膩閸фせ鈧繃鏁归崣锝勮礋閳ユ粎鏁撳ú璇茬杽閻劉鈧縿鈧?- 鐏忓棙妞傞梻鏉戠潌楠炴洘绻侀崠鏍﹁礋濡亜鐫嗗▽澶嬭箞缂堝銆夐弮鍫曟寭閿涙碍鏁幐浣峰瘜妫版ǜ鈧礁鐡ф担鎾活棑閺嶇鈧焦妞傞梻瀛樼壐瀵繈鈧浇鍎楅弲顖樷偓浣规殶鐎涙銇囩亸蹇嬧偓浣稿幢閻楀洤娓剧憴鎺嬧偓浣规）閺堢喎鎷伴弰鐔告埂閺勫墽銇氱拋鍓х枂閿涙稑鍙忕仦蹇涖€夋潪鏄徯曢弰鍓с仛鐠佸墽鐤?闁偓閸戠儤瀵滈柦顕嗙礉3 缁夋帗妫ら幙宥勭稊闂呮劘妫岄妴?- 鐏忓棙澧滈幐浣歌剨楠炴洘绻侀崠鏍﹁礋閸忋劌鐫嗗鐟扮瀹搞儱鍙块敍姘暜閹镐礁鍞寸€瑰箍鈧礁鐡ч崣鏋偓渚€鈧喎瀹抽妴浣姑粩鏍х潌閵嗕礁鐡ф担鎾寸壉瀵繈鈧礁濮炵划妞尖偓浣哥摟娴ｆ捇顤侀懝灞傗偓浣藉剹閺咁垯瀵?鏉堝懓澹婇妴浣哄嚱閼?濞撴劕褰?閼哥偛褰撮崗澶庡剹閺咁垽绱濇禒銉ュ挤闂堟瑦顒涢妴浣圭泊閸斻劊鈧線妫悜浣碘偓浣瑰閸斻劌濮╅幀浣碘偓?- 鐏忓棛鏁撳ú璇茬杽閻劍妯夌粈鍝勪紣閸忛攱濯堕崚鍡曡礋 `time_screen`閵嗕梗barrage`閵嗕梗shared` 缁涘瀚粩?part 閺傚洣娆㈤敍宀勬娴?display 閺傚洣娆㈢紒褏鐢婚懚銊ㄥ剦閻ㄥ嫰顥撻梽鈹库偓?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_shared.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_time_screen.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_barrage.dart test/ui_smoke_test.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart test/ui_smoke_test.dart`閿涘牅绮涢張?`test/ui_smoke_test.dart` 閺冦垺婀?info 缁?const/final 閹绘劗銇氶敍?- `flutter test test/ui_smoke_test.dart --plain-name "life tools exposes deep time screen and barrage controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens life tool hub module"`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫嗗銉ュ徔鏉╂稑鍙嗛弮鏈电窗娣囶喗鏁肩化鑽ょ埠閺傜懓鎮滈妴浣洪兇缂?UI 娑撳骸鐫嗛獮鏇炵埗娴滎喚濮搁幀渚婄礉闁偓閸戠儤妞傜紒鐔剁閹垹顦查敍娑滃楠炲啿褰撮柅姘朵壕娑撳秴褰查悽銊ょ窗闂堟瑩绮梽宥囬獓閵?- iOS 娓氀勬拱鏉烆喖褰ч崑姘鳖洣濮濄垼鍤滈崝銊╂敚鐏炲骏绱濇稉宥勫瘜閸斻劍鏁奸崗銊ョ湰鐏炲繐绠锋禍顔煎閿涘矂浼╅崗宥夆偓鈧崙鍝勬倵娴滎喖瀹冲▓瀣殌閵?
+## [Unreleased-PLAN_194-LIFE-TOOLS-ZH-LOCALIZATION] - 2026-05-21
+
+### Reason
+- Localize the new `toolbox.life_tools` module for Chinese UI usage.
+
+### Changed
+- Filled the life-tool catalog with Chinese titles and summaries.
+- Localized the display, utility, and color helper pages so visible labels, defaults, and color info read naturally in Chinese.
+
+### Validation
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart`
+
+## [Unreleased-PLAN_193-PIANO-MOBILE-TOUCH-CLEANUP] - 2026-05-21
+
+### 閸樼喎娲?- 閻劍鍩涚憰浣圭湴鐎电懓浼愰崗椋庮唸閵嗗矂鎸楅悶娣偓宥喣侀崸妤勭箻娑撯偓濮濄儰绱崠鏍モ偓?- 瑜版挸澧犻柦銏㈡償閸︺劍澧滈張铏诡伂濠婃垵顨旈妴浣瑰瘻闁款噣鐝禍顕€鍣撮弨鎯ф嫲闂婂啿鐓欐０鍕劰鐠侯垰绶炴禒宥嗘箒鏉堝啴鐝惃鍕彯妫版垹濮搁幀浣规纯閺傞绗岄崙鍡楊槵閸樺濮忛妴?
+### 娣囶喗鏁?- 闁姐垻鎯斿鎴濐殧婢х偛濮為幐澶嬪瘹闁藉牏娈戞潪濠氬櫤鐟欙箑褰傞懞鍌涚ウ閿涘苯鍣虹亸鎴ｇ箾缂?`PointerMove` 闁姵鍨氶惃鍕箖鐎靛棝鐓舵０鎴Ｐ曢崣鎴滅瑢鐟欏棜顫庨懘澶婂暱閵?- 鐏忓棙瀵滈柨顕€鐝禍顕€鍣撮弨鍙ョ矤濮ｅ繑顐奸崙濠氭暛閸掓稑缂撻悪顒傜彌瀵ゆ儼绻滄禒璇插閿涘本鏁兼稉楦跨箖閺堢喐妞傞梻纾嬨€冮崝鐘插礋娑擃亪鍣撮弨鎯х暰閺冭泛娅掗敍宀勬娴ｅ孩绮︽總蹇旀閻ㄥ嫰鍣稿鍝勫竾閸旀稏鈧?- 闂婂啿鐓欑粣妤€褰涙０鍕劰閺€閫涜礋娴兼ê鍘涢柨顔荤秴妫板嫮鐣婚敍姘喘閸忓牓顣╅悜顓㈩浕/娑?閺堫偆娅ч柨顔衡偓浣峰敩鐞涖劑绮﹂柨顔兼嫲閸у洤瀵戦柌鍥ㄧ壉闁款喕缍呴敍宀勪缉閸忓秶些閸斻劎顏崚鍥╃崶閺冩湹绔村▎鈩冣偓褔顣╅悜顓熸殻缁愭ぜ鈧?- 閹靛婧€閺咁噣鈧岸銆夐崙蹇撶毌妫ｆ牕鐫嗙敮鎼佲敆閹稿洦鐖ｉ敍灞借嫙鐏忓棝鏁惄妯垮灦閸欐澘澧犵純顔煎煂闂婂啿鐓欑粣妤€褰涚紒鍡樺付娑斿澧犻敍宀冾唨閻劍鍩涢弴鏉戞彥鐟欙箒鎻稉缁樼川婵傚繐灏妴?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_sound_tools/piano.dart lib/src/ui/pages/toolbox_sound_tools/piano_state_logic.dart lib/src/ui/pages/toolbox_sound_tools/piano_state_ui.dart lib/src/ui/pages/toolbox_sound_tools/piano_models.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_sound_tools.dart`
+- `flutter test test/toolbox_audio_bank_regression_test.dart`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺嬩線鐝柅鐔哥拨婵傚繑妞傞敍灞芥倱娑撯偓閹稿洭鎷￠崷?26ms 閸愬懓娉曟潻鍥╂畱闁劌鍨庢稉顓㈡？鐟欙箑褰傛导姘愁潶閸氬牆鑻熼敍灞绢劀鐢摜鍋ｉ崙姹団偓浣告嫲瀵负鈧線鐓堕崺鐔峰瀼閹广垹鎷伴崗銊ョ潌鐠囶厺绠熸穱婵囧瘮娑撳秴褰夐妴?- 妫板嫮鍎圭粵鏍殣閺囩浜ら敍灞界毌閺佷即娼导妯哄帥闁款喕缍呮＃鏍偧鐟欙箑褰傞崣顖濆厴娴犲秹娓堕崡铏閸掓稑缂撻幘顓熸杹閸ｎ煉绱濇担鍡樻殻娴ｆ挸鍨忕粣妤€甯囬崝娑欐纯娴ｅ簺鈧?
+## [Unreleased-PLAN_192-HARP-MOBILE-PERFORMANCE-CLEANUP] - 2026-05-21
+
+### 閸樼喎娲?- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻渚库偓宀€鈹栭悘鐢电彨閻炴番鈧秵澧滈張铏诡伂闂堢偛鐖堕崡鈽呯礉楠炴湹绗栭弲顕€鈧岸銆夐棃顫繆閹垯绗岄幒褍鍩楁い鐟扮垻閸欑姵璐╂稊渚库偓?
+### 娣囶喗鏁?- 鐏忓棛鐝悶纾嬪灦閸欎即鐝０鎴濆З閻㈣绮犻弫鎾€?`setState` 闁插秴缂撻弨閫涜礋 `CustomPaint` repaint notifier 妞瑰崬濮╅敍灞藉櫤鐏忔垶澹傚锕€鎷板锔藉盁閸斻劍妞傞惃?widget rebuild閵?- 娑撹櫣鐝悶纾嬪灦閸欐澘顤冮崝?`RepaintBoundary`閿涘苯鑻熺拋?Painter 娴ｈ法鏁ゆ潪濠氬櫤 `shouldRepaint`閿涘矂浼╅崗宥嗘￥瀹割喖鍩嗛崗銊╁櫤闁插秶绮妴?- 閺€鑸垫殐閹殿偄楦￠幏鏍х啲閺佷即鍣洪妴浣烘晸閸涜棄鎳嗛張鐔锋嫲鐟欙箑褰傞梻鎾閿涘瞼些闂勩倝鐝幋鎰拱濡紕纭﹂幏鏍х啲娑撳骸楦℃潏澶婂帨閿涘奔绻氶悾娆愭纯閸忓鍩楅惃鍕瀵箑寮芥＃鍫涒偓?- 鐏忓棙娅橀柅姘躲€夐棃顫厬閻ㄥ嫰鐓堕懝灞傗偓浣界殶瀵繈鈧礁鎷板锔衡偓浣瑰閹扮喓鐡戦梹鑳啎缂冾喖灏稉瀣焽閸掓壆骞囬張澶婄俺闁劏顔曠純顕€娼伴弶鍖＄礉妫ｆ牕鐫嗘穱婵堟殌閻樿埖鈧焦鎲崇憰浣碘偓浣峰瘜閼哥偛褰撮崪宀勭彯妫版垶鎼锋担婧库偓?- 缁旀牜鎯旈棅瀹犲妫板嫮鍎归弨閫涜礋娴兼ê鍘涙０鍕劰閸忔娊鏁锔跨秴娑撳骸缍嬮崜宥呮嫲瀵箑楦℃担宥忕礉闂勫秳缍嗘潻娑樺弳妞ょ敻娼伴崥搴ｆ畱缁夎濮╃粩顖氭倱濮濄儱甯囬崝娑栤偓?
+### 妤犲矁鐦?- `dart format lib/src/ui/pages/toolbox_sound_tools/harp.dart lib/src/ui/pages/toolbox_sound_tools/harp_render.dart lib/src/ui/pages/toolbox_sound_tools/harp_config.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_sound_tools.dart`
+- `flutter test test/toolbox_audio_bank_regression_test.dart`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘穱婵堟殌閺冦垺婀侀棅鎶筋暥閹绢厽鏂侀妴浣瑰閸旇儻袝閸欐垯鈧浇鐨熷?閸滃苯楦?妫板嫯顔曠拠顓濈疅閿涙稖顫嬬憴澶庣罚閸忓绗岄幏鏍х啲濮ｆ梹妫悧鍫熸纯閸忓鍩楅妴?- 闂堢偤顩荤仦蹇氼啎缂冾噣銆嶉崗銉ュ經娴犲酣銆夐棃銏ゆ毐閸掓銆冮弨閫涜礋鎼存洟鍎撮棃銏℃緲閿涘瞼鏁ら幋閿嬫惙娴ｆ粏鐭惧鍕纯閻叏绱濇担鍡樻＋妞ょ敻娼伴崘鍛畱閻╁瓨甯撮幒褍鍩楅崠杞扮瑝閸愬秴鐖舵す璇茬潔缁€鎭掆偓?
+## [Unreleased-PLAN_191-TOOLBOX-LIFE-TOOLS-PHASE1] - 2026-05-20
+
+### Reason
+- Add a new `toolbox.life_tools` submodule in Toolbox.
+- Deliver a first-phase implementation for 37 requested practical-life tool entries.
+
+### Added
+- Added module registration for `toolbox.life_tools`:
+  - `lib/src/core/module_system/module_id.dart`
+  - `lib/src/core/module_system/module_registry.dart`
+  - `lib/src/ui/module/module_access.dart`
+- Added a new Toolbox home card entry:
+  - `lib/src/ui/pages/toolbox/toolbox_page_content.dart`
+  - `lib/src/ui/theme/toolbox_colors.dart`
+- Added the new life tool hub and split page structure:
+  - `lib/src/ui/pages/toolbox_life_tools.dart`
+  - `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart`
+  - `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart`
+  - `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+
+### Changed
+- Toolbox now includes a dedicated "Life tool hub" entrance and independent routing for 37 life-tool entries.
+- Added source attribution links for public/free/open resources referenced by the new life-tool entries.
+
+### Validation
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_color.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens life tool hub module"`
+
+### Risk Changes
+- This is a phase-1 delivery: all 37 tools now have independent entries; only a subset is implemented as local functional MVPs in this round.
+- Some modules rely on external websites/resources and may be affected by network, availability, or third-party policy changes.
+
+## [Unreleased-PLAN_190-FOCUS-BEATS-PALE-STAGE-NO-ANIMATION-OPTIONS] - 2026-05-20
+
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴缁夊娅庢稉鎾存暈閼哄倹濯挎稉顓犳畱閸斻劎鏁鹃柅澶愩€嶇拋鍓х枂閿涘矂浼╅崗宥佲偓婊冨З閻㈢粯鐗卞蹇娾偓婵嗘嫲閳ユ粌濮╅悽濠氱叾閼硅尪浠堥崝銊⑩偓婵堟埛缂侇厼鍏遍幍鐗堢壋韫囧啳濡幏宥勫▏閻劊鈧?
+- 瑜版挸澧犻懜鐐插酱鐟欏棜顫庢禒宥呬焊濮楁瑦顥氶崪灞藉繁鐎佃鐦敍宀€鏁ら幋宄扮瑖閺堟稑濮╅悽缁樻殻娴ｆ挻娲垮ǎ锛勬閵嗕浇鍤滈悞韬测偓浣稿礂鐠嬪啩绗栨稉宥囩崐閸忊偓閵?
+
+### 娣囶喗鏁?
+- 鐏忓棔绗撳▔銊ㄥΝ閹峰秶娈戞搴㈢壐鐠佸墽鐤嗛崠鐑樻暪閸欙絼璐熼垾婊嗗Ν閹峰秹鐓堕懝娴嬧偓婵撶礉缁夊娅庨崣顖濐潌閻ㄥ嫯鍨堕崣鏉垮З閻㈠鈧瀚ㄩ妴浣稿З閻㈠鐓堕懝鑼朵粓閸斻劌绱戦崗鍐叉嫲娑撶粯甯堕崚璺哄隘閼辨柨濮╅悩鑸碘偓浣瑰絹缁€鎭掆偓?
+- 閸氬本顒炵粔璇插З缁旑垯瀵岀拋鍓х枂閸栬桨绗屽▽澶嬭箞閹貉冨煑闂堛垺婢橀弬鍥攳閿涘苯褰х仦鏇犮仛瑜版挸澧犻懞鍌涘闂婂疇澹婇敍灞肩瑝閸愬秴鐫嶇粈鍝勫З閻㈢粯鐗卞蹇旀喅鐟曚降鈧?
+- 鐏忓棜鍨堕崣鎷屽剹閺咁垬鈧浇寤洪柆鎾扁偓浣藉Ν閻愬箍鈧礁绐橀弽鍥ф嫲 HUD 閹垫寧澧仦鍌濈殶閺佺繝璐熸担搴ㄣ偙閸滃本娈╅惂鎴掔瑢濞村懘娅犻崷鐔剁秼缁紮绱濆鍗炲姒涙垼澹婇柆顔惧兊閸滃本顭跺Λ鏇㈢彯妤楀崬鎷伴崗澶嬫櫏閵?
+- 缂佺喍绔?Painter 閻ㄥ嫬濮╅悽鏄忕殶閼硅绱濇担鍨坊閸欐彃濮╅悽缁樼亣娑撳彞绗夐崘宥呰埌閹存劖妲戦弰鎯ь樆鐟欏倸妯婂鍌︾礉鐟欏棜顫庢稉濠佺箽閹镐椒绔存總妤佺厤閸滃本璐伴惂鐣屾畱閼哄倹濯挎潪銊╀壕閵?
+
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_sound_tools/focus.dart lib/src/ui/pages/toolbox_sound_tools/focus_state_logic.dart lib/src/ui/pages/toolbox_sound_tools/focus_state_stage.dart lib/src/ui/pages/toolbox_sound_tools/focus_state_stage_sections.dart lib/src/ui/pages/toolbox_sound_tools/focus_visualizer.dart lib/src/ui/pages/toolbox_sound_tools/focus_controls.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_sound_tools.dart`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏囩殶閺?UI 鐏炴洜銇氶妴浣藉灦閸欑増澹欓幍妯虹湴閸?Painter 鐟欏棜顫庨崣鍌涙殶閿涘奔绗夋穱顔芥暭閼哄倹濯?transport閵嗕線鐓舵０鎴炴尡閺€淇扁偓浣叫曢幇鐔恍曢崣鎴欌偓浣镐焊婵傝姤瀵旀稊鍛閹存牜濮搁幀浣规簚鐠囶厺绠熼妴?
+- 閺冄冧焊婵傛垝鑵戞穱婵嗙摠閻ㄥ嫬濮╅悽缁樼壉瀵繋绮涙导姘箽閻ｆ瑥婀崘鍛村劥閻樿埖鈧線鍣烽敍灞肩稻閸ョ姳璐熼崣顖濐潌鐠佸墽鐤嗛崗銉ュ經瀹歌尙些闂勩倓绗?Painter 缂佺喍绔寸憴鍡氼潕鐠囶叀鈻堥敍宀€鏁ら幋铚傛櫠娑撳秴鍟€閹扮喓鐓℃稉鍝勫讲闁濮╅悽缁樼壉瀵繈鈧?
+
+## [Unreleased-PLAN_189-FOCUS-BEATS-AUDIO-VISUAL-SYNC-WARMSTAGE] - 2026-05-20
+
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯娑撴挻鏁為懞鍌涘閻ㄥ嫬濮╅悽璁崇瑢閹绢厽鏂佹竟浼寸叾娑斿妫块張澶嬫閺勫彞绗栨稉宥堝殰閻掑墎娈戦幇鐔虹叀瀵ゆ儼绻滈妴?
+- 瑜版挸澧犻懜鐐插酱閼冲本娅欐禒宥呬焊閸愮柉澹婇敍灞芥嫲娑撴挻鏁為懞鍌涘閻ㄥ嫰鏆遍張鐔峰殞鐟欏棎鈧胶菙鐎规艾鎳犻崥姝屽Ν婵傚繋绗夋径鐔诲垱閸氬牄鈧?
+
+### 娣囶喗鏁?
+- 閸︺劋绗撳▔銊ㄥΝ閹?Painter 娑擃厼濮為崗銉х叚鐢呴獓婢规壆鏁鹃崥灞绢劄鐞涖儱浼╅敍宀冾唨鏉炪劑浜鹃幒銊ㄧ箻閵嗕浇濡悙褰掔彯娴滎喖鎷伴崘鎻掑毊閸忓鏅ョ粙宥呮倵闁插﹥鏂侀敍宀冨垱鏉╂垵鐤勯梽鍛儔閸掓壆鍋ｉ崙璇诧紣閻ㄥ嫭妞傞崚姹団偓?
+- 鐏忓棜鍨堕崣鎷屽剹閺咁垯绗屾潏鍦櫕閼瑰弶鏆ｆ担鎾圭殶閺佺繝璐熼弳鏍ㄦ濡洏鈧胶鎯€閻濃偓閸滃本娈╅悘棰佺秼缁紮绱濋崙蹇撶毌閸愮柉澹婄粔鎴炲Η閹扮喆鈧?
+- 閸氬本顒為弨璺哄經閼哥偛褰存径鏍х湴闂堛垺婢橀妴浣界珶濡楀棔绗岄梼鏉戝閿涘奔濞囨稉鏄忓灦閸欑増娲跨紒鐔剁閸︾増澹欓幍妯垮Ν閹峰秷寤洪柆鎾扁偓?
+
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_sound_tools/focus_visualizer.dart lib/src/ui/pages/toolbox_sound_tools/focus_state_stage.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_sound_tools.dart`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 鏉╂瑦顐奸崣顏呮暭鐏炴洜銇氱仦鍌滄畱閻╅晲缍呯悰銉ヤ缉閸滃矁鍎楅弲顖濆閿涘奔绗夐弨纭呭Ν閹?transport閵嗕線鐓舵０鎴炴尡閺€淇扁偓浣叫曢幇鐔恍曢崣鎴欌偓浣瑰瘮娑斿懎瀵查幋鏍Ц閹焦娼靛┃鎰┾偓?
+- 婵″倹鐏夌拋鎯ь槵闂婃娊顣舵潏鎾冲毉缂傛挸鍟块弰鎹愭啿妤傛ü绨惌顓炴姎鐞涖儱浼╅敍灞肩矝閸欘垵鍏橀棁鈧憰浣烘埛缂侇厼浜曠拫鍐夐崑鍧楁毐鎼达讣绱濇担鍡楃秼閸撳秴鐤勯悳鏉垮嚒閹跺﹨顫嬬憴澶嬪鐠烘垵甯囨担搴″煂閺囩鍤滈悞鍓佹畱閼煎啫娲块妴?
+
+## [Unreleased-PLAN_188-FOCUS-BEATS-RHYTHM-STAGE-REDESIGN] - 2026-05-20
+
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴闁插秵鏌婄拋鎹愵吀瀹搞儱鍙跨粻渚库偓灞肩瑩濞夈劏濡幏宥冣偓宥囨畱閼哄倸顨旂仦鏇犮仛娑撳氦鍨堕崣鏉垮З閻紮绱濈拋鈺勵潒鐟欏绗岄懞鍌涘閸忓疇浠堥弴瀛樻绾噯绱濋獮鏈电瑬娑撳秷顩﹀▽璺ㄦ暏瑜版挸澧犻弫鍫熺亯閵?
+- 閸樼喕鍨堕崣鏉垮З閻㈢粯娲块崑蹇擃樋缁夊秵瀚欓悧鈺傛櫏閺嬫粌鑻熼崚妤嬬礉閹峰秶鍋ｉ妴渚€鍣搁幏宥冣偓浣哥摍閹峰秴鎷板顏嗗箚濞堜絻鎯ゆ稊瀣？閻ㄥ嫬鍙х化璁崇瑝婢剁喖娉︽稉顓炲讲鐟欏棗瀵查妴?
+
+### 娣囶喗鏁?
+- 闁插秴鍟撴稉鎾存暈閼哄倹濯块懜鐐插酱 Painter閿涙碍鏁兼稉铏圭埠娑撯偓閻ㄥ嫨鈧矁濡幏宥堝缓闁挶鈧秶閮寸紒鐕傜礉娑撶粯濯挎稉楦垮缓闁挸銇囬懞鍌滃仯閵嗕礁鐡欓幏宥勮礋閼哄倻鍋ｉ梻鏉戝煝鎼达负鈧礁缍嬮崜宥嗗閻愯閮ㄩ梻顓犲箚鏉炪劑浜鹃幒銊ㄧ箻閵?
+- 鐏忓棝鍣搁幏宥冣偓浣诡唽閽€鍊熸崳閻愬箍鈧焦娅橀柅姘閸滃苯鐡欓幏宥嗘Ё鐏忓嫪璐熸稉宥呮倱瀵搫瀹抽惃鍕帨閺呮洏鈧礁鍩㈡惔锕€鎷版潪銊ㄦ姉閸欏秹顩敍灞藉繁閸栨牑鈧粌鎯夐崚鎵畱閹峰秶鍋ｉ垾婵嗘嫲閳ユ粎婀呴崚鎵畱閹峰秶鍋ｉ垾婵嗘倱濮濄儱鍙х化姹団偓?
+- 閺€鑸垫殐缁夎濮╃粩顖欏瘜閼哥偛褰寸憰鍡欐磰鐏炲偊绱濈粔濠氭珟閸掑棙鏆庣憗鍛淬偘閿涘本鏁兼稉楦垮缓闁挾濮搁幀浣碘偓浣峰瘜閹?鐎涙劖濯块弶鈥虫嫲濞堜絻鎯ら弶锛勬畱鏉炲鍣烘穱鈩冧紖鐏炲倶鈧?
+- 閺囧瓨鏌婃稉鎾存暈閼哄倹濯块崝銊ф暰閺嶅嘲绱￠崨钘夋倳娑撳氦顕╅弰搴礉娴犲孩妫幏鐔哄⒖閻椻晙娆㈢拠顓濈疅鏉烆兛璐熸潪銊╀壕閵嗕胶骞嗙痪瑁も偓浣瑰皾瑜邦潿鈧礁鍩㈡惔锕€鎷板銉╂█缁涘濡總蹇氥€冩潏淇扁偓?
+- 濞撳懐鎮婃稉鎾存暈閼哄倹濯块懜鐐插酱閺傚洣娆㈡稉顓犳畱娑撳秴褰叉潏鐐＋鐏炴洜銇氭禒锝囩垳閿涘奔濞囩拠銉ョ潔缁€鍝勭湴閺傚洣娆㈤崶鐐插煂 1000 鐞涘奔浜掗崘鍛偓?
+
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_sound_tools/focus_visualizer.dart lib/src/ui/pages/toolbox_sound_tools/focus_state_stage.dart lib/src/ui/pages/toolbox_sound_tools/focus_state_logic.dart`
+- `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_sound_tools.dart`
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒鍛扮殶閺?UI閵嗕赋ainter閵嗕焦鐗卞蹇撴嫲鐏炴洜銇氶弬鍥攳閿涘奔绗夋穱顔芥暭閼哄倹濯?transport閵嗕線鐓舵０鎴炴尡閺€淇扁偓浣叫曢幇鐔恍曢崣鎴欌偓浣瑰瘮娑斿懎瀵查崪灞肩瑹閸旓紕濮搁幀浣规降濠ф劑鈧?
+- 閼哥偛褰寸憴鍡氼潕鐠囶厺绠熸禒搴☆樋閹风喓澧块崝銊ф暰閺€鑸垫殐娑撹櫣绮烘稉鈧懞鍌涘鏉炪劑浜鹃敍宀€鏁ら幋宄邦嚠閺冄冨З閻㈣鎳￠崥宥囨畱鐠佹澘绻傞悙閫涚窗閸欐ê瀵查敍灞肩稻閼哄倹濯跨拋鍓х枂閸滃矂鐓堕懝鏌モ偓澶嬪閸忋儱褰涙穱婵囧瘮娑撳秴褰夐妴?
 
 ## [Unreleased-PLAN_187-HUMAN-TESTS-SETTINGS-FIRST-COLLAPSE-STYLE] - 2026-05-20
 
-### 原因
-- 用户要求先提交当前代码备份，再对人类测试中心各子模块做一轮规整化。
-- 多个人类测试子页仍把设置选项放在主舞台或操作区下方，移动端用户需要先越过舞台才能找到参数入口。
-- 共享折叠设置区的展开/收起 affordance 不够明显，和“设置可折叠”的视觉预期不匹配。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閸忓牊褰佹禍銈呯秼閸撳秳鍞惍浣割槵娴犳枻绱濋崘宥咁嚠娴滆櫣琚ù瀣槸娑擃厼绺鹃崥鍕摍濡€虫健閸嬫矮绔存潪顔款潐閺佹潙瀵查妴?
+- 婢舵矮閲滄禍铏硅濞村鐦€涙劙銆夋禒宥嗗Ω鐠佸墽鐤嗛柅澶愩€嶉弨鎯ф躬娑撴槒鍨堕崣鐗堝灗閹垮秳缍旈崠杞扮瑓閺傜櫢绱濈粔璇插З缁旑垳鏁ら幋鐑芥付鐟曚礁鍘涚搾濠呯箖閼哥偛褰撮幍宥堝厴閹垫儳鍩岄崣鍌涙殶閸忋儱褰涢妴?
+- 閸忓彉闊╅幎妯哄綌鐠佸墽鐤嗛崠铏规畱鐏炴洖绱?閺€鎯版崳 affordance 娑撳秴顧勯弰搴㈡▔閿涘苯鎷伴垾婊嗩啎缂冾喖褰查幎妯哄綌閳ユ繄娈戠憴鍡氼潕妫板嫭婀℃稉宥呭爱闁板秲鈧?
 
-### 修改
-- 已完成备份提交 `df7d5b2 chore: backup current toolbox and human tests work`。
-- 强化 `_HumanSettingsSection` 共享样式：新增设置图标承托、展开态高亮边框、圆形箭头按钮、头部底色和更稳定的展开分隔层。
-- 将手速、瞄准、听觉、动态视力、视觉搜索、拖拽、双任务切换、双手协调、色觉、视觉记忆、序列记忆、数字记忆、词汇记忆、打字、反应和声学实验等页面中的设置区上移到主舞台前。
-- 声学实验的采样指南和采集诊断前置到实时声学舞台上方，保持麦克风采集、诊断开关和报告计算逻辑不变。
-- 更新人类测试 smoke 中受设置区上移影响的定位方式，避免点到舞台下方模式入口时被滚动位置影响。
+### 娣囶喗鏁?
+- 瀹告彃鐣幋鎰槵娴犺姤褰佹禍?`df7d5b2 chore: backup current toolbox and human tests work`閵?
+- 瀵搫瀵?`_HumanSettingsSection` 閸忓彉闊╅弽宄扮础閿涙碍鏌婃晶鐐额啎缂冾喖娴橀弽鍥ㄥ閹垫ǜ鈧礁鐫嶅鈧幀渚€鐝禍顔跨珶濡楀棎鈧礁娓捐ぐ銏㈩唲婢跺瓨瀵滈柦顔衡偓浣搞仈闁劌绨抽懝鎻掓嫲閺囧菙鐎规氨娈戠仦鏇炵磻閸掑棝娈х仦鍌樷偓?
+- 鐏忓棙澧滈柅鐔粹偓浣虹€崙鍡愨偓浣告儔鐟欏鈧礁濮╅幀浣筋潒閸旀稏鈧浇顫嬬憴澶嬫偝缁鳖潿鈧焦瀚嬮幏濮愨偓浣稿蓟娴犺濮熼崚鍥ㄥ床閵嗕礁寮婚幍瀣礂鐠嬪啨鈧浇澹婄憴澶堚偓浣筋潒鐟欏顔囪箛鍡愨偓浣哥碍閸掓顔囪箛鍡愨偓浣规殶鐎涙顔囪箛鍡愨偓浣界槤濮瑰洩顔囪箛鍡愨偓浣瑰ⅵ鐎涙ぜ鈧礁寮芥惔鏂挎嫲婢规澘顒熺€圭偤鐛欑粵澶愩€夐棃顫厬閻ㄥ嫯顔曠純顔煎隘娑撳﹦些閸掗瀵岄懜鐐插酱閸撳秲鈧?
+- 婢规澘顒熺€圭偤鐛欓惃鍕櫚閺嶉攱瀵氶崡妤€鎷伴柌鍥肠鐠囧﹥鏌囬崜宥囩枂閸掓澘鐤勯弮璺猴紣鐎涳箒鍨堕崣棰佺瑐閺傜櫢绱濇穱婵囧瘮妤癸箑鍘犳搴ㄥ櫚闂嗗棎鈧浇鐦栭弬顓炵磻閸忓啿鎷伴幎銉ユ啞鐠侊紕鐣婚柅鏄忕帆娑撳秴褰夐妴?
+- 閺囧瓨鏌婃禍铏硅濞村鐦?smoke 娑擃厼褰堢拋鍓х枂閸栬桨绗傜粔璇插閸濆秶娈戠€规矮缍呴弬鐟扮础閿涘矂浼╅崗宥囧仯閸掓媽鍨堕崣棰佺瑓閺傝膩瀵繐鍙嗛崣锝嗘鐞氼偅绮撮崝銊ょ秴缂冾喖濂栭崫宥冣偓?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/ui/pages/toolbox_human_tests_*.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 设置区位置变化会改变部分 widget 测试的滚动落点；本轮已同步调整目标 smoke 的查找方式。
-- 折叠卡片样式为共享组件变更，会影响所有人类测试设置区的视觉表现，但未改变各页面的状态来源、计时、输入、报告和业务判断。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐠佸墽鐤嗛崠杞扮秴缂冾喖褰夐崠鏍︾窗閺€鐟板綁闁劌鍨?widget 濞村鐦惃鍕泊閸斻劏鎯ら悙鐧哥幢閺堫剝鐤嗗鎻掓倱濮濄儴鐨熼弫瀵告窗閺?smoke 閻ㄥ嫭鐓￠幍鐐煙瀵繈鈧?
+- 閹舵ê褰旈崡锛勫閺嶅嘲绱℃稉鍝勫彙娴滎偆绮嶆禒璺哄綁閺囪揪绱濇导姘閸濆秵澧嶉張澶夋眽缁粯绁寸拠鏇☆啎缂冾喖灏惃鍕潒鐟欏銆冮悳甯礉娴ｅ棙婀弨鐟板綁閸氬嫰銆夐棃銏㈡畱閻樿埖鈧焦娼靛┃鎰┾偓浣筋吀閺冭翰鈧浇绶崗銉ｂ偓浣瑰Г閸涘﹤鎷版稉姘閸掋倖鏌囬妴?
 
 ## [Unreleased-PLAN_186-ACOUSTIC-LAB-CAPTURE-REDESIGN] - 2026-05-20
 
-### 原因
-- 用户反馈工具箱-人类测试中心-声学实验完全不可用：打开麦克风并发声后仍监测不到任何声音。
-- 现有声学实验页把采样说明、实时指标、诊断信息和报告入口混在同一层级，移动端首屏难以判断状态和下一步。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻?娴滆櫣琚ù瀣槸娑擃厼绺?婢规澘顒熺€圭偤鐛欑€瑰苯鍙忔稉宥呭讲閻㈩煉绱伴幍鎾崇磻妤癸箑鍘犳搴¤嫙閸欐垵锛愰崥搴濈矝閻╂垶绁存稉宥呭煂娴犺缍嶆竟浼寸叾閵?
+- 閻滅増婀佹竟鏉款劅鐎圭偤鐛欐い鍨Ω闁插洦鐗辩拠瀛樻閵嗕礁鐤勯弮鑸靛瘹閺嶅洢鈧浇鐦栭弬顓濅繆閹垰鎷伴幎銉ユ啞閸忋儱褰涘ǎ宄版躬閸氬奔绔寸仦鍌滈獓閿涘瞼些閸斻劎顏＃鏍х潌闂呭彞浜掗崚銈嗘焽閻樿埖鈧礁鎷版稉瀣╃濮濄儯鈧?
 
-### 修改
-- 声学实验录音配置改为稳定输入优先：默认从系统推荐麦克风输入开始，再回退标准麦克风、语音识别兼容模式和原始麦克风。
-- 启动链路新增“有效声音信号”判定：无 PCM 帧或连续数字静音时会自动切换到下一个输入源，不再停留在“录音已启动但没有声音”的假成功状态。
-- 新增 `record` 幅度流兜底显示：当 PCM 帧短暂不可用但系统仍能返回幅度时，页面仍可展示实时 dBFS、电平曲线和基础样本。
-- 声学实验主卡重做为模式选择、实时输入舞台、主操作、核心指标、报告摘要、采样指南和采集诊断的分层结构。
-- 采集诊断新增“兼容输入优先”开关，便于真机上优先使用语音识别输入绕过设备音源兼容问题。
+### 娣囶喗鏁?
+- 婢规澘顒熺€圭偤鐛欒ぐ鏇㈢叾闁板秶鐤嗛弨閫涜礋缁嬪啿鐣炬潏鎾冲弳娴兼ê鍘涢敍姘剁帛鐠併倓绮犵化鑽ょ埠閹恒劏宕樻ス锕€鍘犳搴ょ翻閸忋儱绱戞慨瀣剁礉閸愬秴娲栭柅鈧弽鍥у櫙妤癸箑鍘犳搴涒偓浣筋嚔闂婂疇鐦戦崚顐㈠悑鐎硅膩瀵繐鎷伴崢鐔奉潗妤癸箑鍘犳搴涒偓?
+- 閸氼垰濮╅柧鎹愮熅閺傛澘顤冮垾婊勬箒閺佸牆锛愰棅鍏呬繆閸欏皝鈧繂鍨界€规熬绱伴弮?PCM 鐢勫灗鏉╃偟鐢婚弫鏉跨摟闂堟瑩鐓堕弮鏈电窗閼奉亜濮╅崚鍥ㄥ床閸掗绗呮稉鈧稉顏囩翻閸忋儲绨敍灞肩瑝閸愬秴浠犻悾娆忔躬閳ユ粌缍嶉棅鍐插嚒閸氼垰濮╂担鍡樼梾閺堝锛愰棅鏂モ偓婵堟畱閸嬪洦鍨氶崝鐔哄Ц閹降鈧?
+- 閺傛澘顤?`record` 楠炲懎瀹冲ù浣稿幑鎼存洘妯夌粈鐚寸窗瑜?PCM 鐢呯叚閺嗗倷绗夐崣顖滄暏娴ｅ棛閮寸紒鐔剁矝閼冲€熺箲閸ョ偛绠欐惔锔芥閿涘矂銆夐棃顫矝閸欘垰鐫嶇粈鍝勭杽閺?dBFS閵嗕胶鏁搁獮铏锤缁惧灝鎷伴崺铏诡攨閺嶉攱婀伴妴?
+- 婢规澘顒熺€圭偤鐛欐稉璇插幢闁插秴浠涙稉鐑樐佸蹇涒偓澶嬪閵嗕礁鐤勯弮鎯扮翻閸忋儴鍨堕崣鑸偓浣峰瘜閹垮秳缍旈妴浣圭壋韫囧啯瀵氶弽鍥モ偓浣瑰Г閸涘﹥鎲崇憰浣碘偓渚€鍣伴弽閿嬪瘹閸楁鎷伴柌鍥肠鐠囧﹥鏌囬惃鍕瀻鐏炲倻绮ㄩ弸鍕┾偓?
+- 闁插洭娉︾拠濠冩焽閺傛澘顤冮垾婊冨悑鐎圭绶崗銉ょ喘閸忓牃鈧繂绱戦崗绛圭礉娓氬じ绨惇鐔告簚娑撳﹣绱崗鍫滃▏閻劏顕㈤棅瀹犵槕閸掝偉绶崗銉х搏鏉╁洩顔曟径鍥叾濠ф劕鍚嬬€瑰綊妫舵０妯糕偓?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/ui/pages/toolbox_human_tests_auditory_lab.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
-- 额外尝试运行完整 `test/toolbox_human_tests_extended_smoke_test.dart`，当前被既有动态视力用例阻断：`dynamic vision symbol mode exposes sets paths and report` 在 `scrollUntilVisible` 阶段找不到 scrollable。
+- 妫版繂顦荤亸婵婄槸鏉╂劘顢戠€瑰本鏆?`test/toolbox_human_tests_extended_smoke_test.dart`閿涘苯缍嬮崜宥堫潶閺冦垺婀侀崝銊︹偓浣筋潒閸旀稓鏁ゆ笟瀣▎閺傤叏绱癭dynamic vision symbol mode exposes sets paths and report` 閸?`scrollUntilVisible` 闂冭埖顔岄幍鍙ョ瑝閸?scrollable閵?
 
-### 风险变更
-- 默认输入更偏可用性，部分设备上的自动增益可能影响绝对电平可比性；报告仍定位为同设备练习、环境观察和前后对比，不作为医学或专业声级计结果。
-- 若系统级权限、隐私开关、通话/录屏占用或蓝牙路由阻断了所有输入源，页面会明确报错并提示检查系统设置。
+### 妞嬪酣娅撻崣妯绘纯
+- 姒涙顓绘潏鎾冲弳閺囨潙浜搁崣顖滄暏閹嶇礉闁劌鍨庣拋鎯ь槵娑撳﹦娈戦懛顏勫З婢х偟娉崣顖濆厴瑜板崬鎼风紒婵嗩嚠閻㈤潧閽╅崣顖涚槷閹嶇幢閹躲儱鎲℃禒宥呯暰娴ｅ秳璐熼崥宀冾啎婢跺洨绮屾稊鐘偓浣哄箚婢у啳顫囩€电喎鎷伴崜宥呮倵鐎佃鐦敍灞肩瑝娴ｆ粈璐熼崠璇差劅閹存牔绗撴稉姘紣缁狙嗩吀缂佹挻鐏夐妴?
+- 閼汇儳閮寸紒鐔洪獓閺夊啴妾洪妴渚€娈ｇ粔浣哥磻閸忕偨鈧線鈧俺鐦?瑜版洖鐫嗛崡鐘垫暏閹存牞鎽戦悧娆掔熅閻㈤亶妯嗛弬顓濈啊閹碘偓閺堝绶崗銉︾爱閿涘矂銆夐棃顫窗閺勫海鈥橀幎銉╂晩楠炶埖褰佺粈鐑橆梾閺屻儳閮寸紒鐔活啎缂冾喓鈧?
 
 ## [Unreleased-PLAN_185-PERMISSION-CONSENT-GUARDRAILS] - 2026-05-19
 
-### 原因
-- 专注/放松待办提醒会在后台创建系统级提醒，但现有流程没有在首次使用前明确说明，也缺少可在设置里关闭的统一开关。
-- 人类测试中心声学实验会自动读取并修改系统媒体音量，但现有流程没有在使用前给出明确提示，也缺少禁用后再引导快捷开启的入口。
+### 閸樼喎娲?
+- 娑撴挻鏁?閺€鐐緱瀵板懎濮欓幓鎰板晪娴兼艾婀崥搴″酱閸掓稑缂撶化鑽ょ埠缁狙勫絹闁辨帪绱濇担鍡欏箛閺堝绁︾粙瀣梾閺堝婀＃鏍偧娴ｈ法鏁ら崜宥嗘绾喛顕╅弰搴礉娑旂喓宸辩亸鎴濆讲閸︺劏顔曠純顕€鍣烽崗鎶芥４閻ㄥ嫮绮烘稉鈧鈧崗鐐解偓?
+- 娴滆櫣琚ù瀣槸娑擃厼绺炬竟鏉款劅鐎圭偤鐛欐导姘冲殰閸斻劏顕伴崣鏍ц嫙娣囶喗鏁肩化鑽ょ埠婵帊缍嬮棅鎶藉櫤閿涘奔绲鹃悳鐗堟箒濞翠胶鈻煎▽鈩冩箒閸︺劋濞囬悽銊ュ缂佹瑥鍤弰搴ｂ€橀幓鎰仛閿涘奔绡冪紓鍝勭毌缁備胶鏁ら崥搴″晙瀵洖顕辫箛顐ｅ祹瀵偓閸氼垳娈戦崗銉ュ經閵?
 
-### 修改
-- 新增“待办系统提醒”和“声学测试自动调整系统音量”两项持久化开关，默认关闭。
-- 专注待办编辑器在关闭系统提醒时会显示独立说明卡，并提供快捷开启按钮；开启后再继续走通知权限/精确闹钟提示。
-- 声学测试音量卡在关闭自动调音时会先显示说明卡与快捷开启按钮；开启后才会继续读取与自动调整系统音量。
-- 设置中心新增“权限与系统操作”分组，集中控制两项能力的启用与禁用。
-- `FocusService` 在总开关关闭时不再静默创建本地提醒，并在关闭后清理本地提醒同步。
+### 娣囶喗鏁?
+- 閺傛澘顤冮垾婊冪窡閸旂偟閮寸紒鐔稿絹闁辨巻鈧繂鎷伴垾婊冿紣鐎涳附绁寸拠鏇″殰閸斻劏鐨熼弫瀵搁兇缂佺喖鐓堕柌蹇娾偓婵呰⒈妞よ瀵旀稊鍛瀵偓閸忕绱濇妯款吇閸忔娊妫撮妴?
+- 娑撴挻鏁炲鍛缂傛牞绶崳銊ユ躬閸忔娊妫寸化鑽ょ埠閹绘劙鍟嬮弮鏈电窗閺勫墽銇氶悪顒傜彌鐠囧瓨妲戦崡鈽呯礉楠炶埖褰佹笟娑樻彥閹瑰嘲绱戦崥顖涘瘻闁筋噯绱卞鈧崥顖氭倵閸愬秶鎴风紒顓¤泲闁氨鐓￠弶鍐/缁墽鈥橀梻褰掓寭閹绘劗銇氶妴?
+- 婢规澘顒熷ù瀣槸闂婃娊鍣洪崡鈥虫躬閸忔娊妫撮懛顏勫З鐠嬪啴鐓堕弮鏈电窗閸忓牊妯夌粈楦款嚛閺勫骸宕辨稉搴℃彥閹瑰嘲绱戦崥顖涘瘻闁筋噯绱卞鈧崥顖氭倵閹靛秳绱扮紒褏鐢荤拠璇插絿娑撳氦鍤滈崝銊ㄧ殶閺佸閮寸紒鐔肩叾闁插繈鈧?
+- 鐠佸墽鐤嗘稉顓炵妇閺傛澘顤冮垾婊勬綀闂勬劒绗岀化鑽ょ埠閹垮秳缍旈垾婵嗗瀻缂佸嫸绱濋梿鍡曡厬閹貉冨煑娑撱倝銆嶉懗钘夊閻ㄥ嫬鎯庨悽銊ょ瑢缁備胶鏁ら妴?
+- `FocusService` 閸︺劍鈧绱戦崗鍐插彠闂傤厽妞傛稉宥呭晙闂堟瑩绮崚娑樼紦閺堫剙婀撮幓鎰板晪閿涘苯鑻熼崷銊ュ彠闂傤厼鎮楀〒鍛倞閺堫剙婀撮幓鎰板晪閸氬本顒為妴?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter test test/settings_service_test.dart`
 - `flutter test test/focus_service_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
-- `flutter analyze`（仍有仓库既有 warning/info；本轮新增的抽象成员错误已修复，当前无新增 error）
+- `flutter analyze`閿涘牅绮涢張澶夌波鎼存挻妫﹂張?warning/info閿涙稒婀版潪顔芥煀婢х偟娈戦幎鍊熻杽閹存劕鎲抽柨娆掝嚖瀹歌弓鎱ㄦ径宥忕礉瑜版挸澧犻弮鐘虫煀婢?error閿?
 
-### 风险变更
-- 新用户和升级用户默认都需要先手动开启这两项系统级能力，旧的本地提醒不会自动延续，属于有意的权限收口。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺傛壆鏁ら幋宄版嫲閸楀洨楠囬悽銊﹀煕姒涙顓婚柈浠嬫付鐟曚礁鍘涢幍瀣З瀵偓閸氼垵绻栨稉銈夈€嶇化鑽ょ埠缁狙嗗厴閸旀冻绱濋弮褏娈戦張顒€婀撮幓鎰板晪娑撳秳绱伴懛顏勫З瀵ゅ墎鐢婚敍灞界潣娴滃孩婀侀幇蹇曟畱閺夊啴妾洪弨璺哄經閵?
 
 ## [Unreleased-PLAN_184-TOOLBOX-MOBILE-DRAG-AND-BACK-FIX] - 2026-05-19
 
-### 原因
-- 用户反馈工具箱首页条目管理在手机真机上与 PC 表现不一致：未长按时滑动屏幕也会误触拖动、编辑态松手后位置不稳定、返回键会直接退出应用而不是先退出编辑模式。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻閬嶎浕妞ゅ灚娼惄顔绢吀閻炲棗婀幍瀣簚閻喐婧€娑撳﹣绗?PC 鐞涖劎骞囨稉宥勭閼疯揪绱伴張顏堟毐閹稿妞傚鎴濆З鐏炲繐绠锋稊鐔剁窗鐠囶垵袝閹锋牕濮╅妴浣虹椽鏉堟垶鈧焦婢楅幍瀣倵娴ｅ秶鐤嗘稉宥嚽旂€规哎鈧浇绻戦崶鐐烘暛娴兼氨娲块幒銉┾偓鈧崙鍝勭安閻劏鈧奔绗夐弰顖氬帥闁偓閸戣櫣绱潏鎴災佸蹇嬧偓?
 
-### 修改
-- 工具箱首页普通态的快捷入口拖拽改为长按触发，避免手指滚动列表时把条目直接拖起。
-- 工具箱编辑态的排序手柄改为长按后再拖动，并移除整卡长按拖入快捷入口与重排手势的竞争，优先保证移动端重排稳定落位。
-- 工具箱页接入 `PopScope`：编辑模式下按返回会先退出编辑模式，再恢复普通首页。
+### 娣囶喗鏁?
+- 瀹搞儱鍙跨粻閬嶎浕妞ゅ灚娅橀柅姘偓浣烘畱韫囶偅宓庨崗銉ュ經閹锋牗瀚块弨閫涜礋闂€鎸庡瘻鐟欙箑褰傞敍宀勪缉閸忓秵澧滈幐鍥ㄧ泊閸斻劌鍨悰銊︽閹跺﹥娼惄顔炬纯閹恒儲瀚嬬挧鏋偓?
+- 瀹搞儱鍙跨粻杈╃椽鏉堟垶鈧胶娈戦幒鎺戠碍閹靛鐒洪弨閫涜礋闂€鎸庡瘻閸氬骸鍟€閹锋牕濮╅敍灞借嫙缁夊娅庨弫鏉戝幢闂€鎸庡瘻閹锋牕鍙嗚箛顐ｅ祹閸忋儱褰涙稉搴ㄥ櫢閹烘帗澧滈崝璺ㄦ畱缁旂偘绨ら敍灞肩喘閸忓牅绻氱拠浣盒╅崝銊ь伂闁插秵甯撶粙鍐茬暰閽€鎴掔秴閵?
+- 瀹搞儱鍙跨粻閬嶃€夐幒銉ュ弳 `PopScope`閿涙氨绱潏鎴災佸蹇庣瑓閹稿绻戦崶鐐扮窗閸忓牓鈧偓閸戣櫣绱潏鎴災佸蹇ョ礉閸愬秵浠径宥嗘珮闁岸顩绘い鐐光偓?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart test/ui_smoke_test.dart`
 - `flutter test test/ui_smoke_test.dart --plain-name "toolbox page supports editable home layout"`
 
-### 风险变更
-- 编辑态不再支持直接拖整张卡片到快捷入口区；如需管理快捷入口，可在普通态长按拖入，或使用顶部 `Manage` 面板。
+### 妞嬪酣娅撻崣妯绘纯
+- 缂傛牞绶幀浣风瑝閸愬秵鏁幐浣烘纯閹恒儲瀚嬮弫鏉戠炊閸楋紕澧栭崚鏉挎彥閹瑰嘲鍙嗛崣锝呭隘閿涙稑顩ч棁鈧粻锛勬倞韫囶偅宓庨崗銉ュ經閿涘苯褰查崷銊︽珮闁碍鈧線鏆遍幐澶嬪珛閸忋儻绱濋幋鏍﹀▏閻劑銆婇柈?`Manage` 闂堛垺婢橀妴?
 
 ## [Unreleased-PLAN_183-HUMAN-TESTS-ORDER-DYNAMIC-VISION-LINK-MATCH] - 2026-05-19
 
-### 原因
-- 用户希望把工具箱-人类测试中心的首屏模块顺序调整得更贴近常用优先级，双列布局下先看到反应、视觉记忆、动态视力、摇杆协调等核心模块。
-- 用户希望动态视力进入后默认直接展示“小球数量”模式，而不是先落在字符识别。
-- 用户反馈视觉搜索连连看在出现相同外观元素时，仍可能因为内部配对编号不同而判定不能匹配，这和玩家看到的“它们明明一样”不一致。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閹跺﹤浼愰崗椋庮唸-娴滆櫣琚ù瀣槸娑擃厼绺鹃惃鍕浕鐏炲繑膩閸ф銆庢惔蹇氱殶閺佹潙绶遍弴纾嬪垱鏉╂垵鐖堕悽銊ょ喘閸忓牏楠囬敍灞藉蓟閸掓绔风仦鈧稉瀣帥閻鍩岄崣宥呯安閵嗕浇顫嬬憴澶庮唶韫囧棎鈧礁濮╅幀浣筋潒閸旀稏鈧焦鎲為弶鍡楀礂鐠嬪啰鐡戦弽绋跨妇濡€虫健閵?
+- 閻劍鍩涚敮灞炬箿閸斻劍鈧浇顫嬮崝娑滅箻閸忋儱鎮楁妯款吇閻╁瓨甯寸仦鏇犮仛閳ユ粌鐨悶鍐╂殶闁插繆鈧繃膩瀵骏绱濋懓灞肩瑝閺勵垰鍘涢拃钘夋躬鐎涙顑佺拠鍡楀焼閵?
+- 閻劍鍩涢崣宥夘洯鐟欏棜顫庨幖婊呭偍鏉╃偠绻涢惇瀣躬閸戣櫣骞囬惄绋挎倱婢舵牞顫囬崗鍐閺冭绱濇禒宥呭讲閼宠棄娲滄稉鍝勫敶闁劑鍘ょ€靛湱绱崣铚傜瑝閸氬矁鈧苯鍨界€规矮绗夐懗钘夊爱闁板稄绱濇潻娆忔嫲閻溾晛顔嶉惇瀣煂閻ㄥ嫧鈧粌鐣犳禒顒佹閺勫簼绔撮弽灏佲偓婵呯瑝娑撯偓閼锋番鈧?
 
-### 修改
-- 调整人类测试中心默认双列入口顺序，前排优先展示：反应、视觉记忆、动态视力、摇杆协调、手眼协调、色觉测试、序列记忆、黑猩猩测试、斯特鲁普、双手协调、运气测试、时间感知、瞄准等模块。
-- 动态视力默认模式改为“小球数量”，进入页面后首屏直接展示对应设置与舞台说明；字符识别模式仍保留原有功能和切换入口。
-- 修复视觉搜索连连看配对判定：从内部 `pairId` 匹配改为基于用户可见的图案与颜色外观匹配，避免相同元素因内部编号不同而误判。
+### 娣囶喗鏁?
+- 鐠嬪啯鏆ｆ禍铏硅濞村鐦稉顓炵妇姒涙顓婚崣灞藉灙閸忋儱褰涙い鍝勭碍閿涘苯澧犻幒鎺嶇喘閸忓牆鐫嶇粈鐚寸窗閸欏秴绨查妴浣筋潒鐟欏顔囪箛鍡愨偓浣稿З閹浇顫嬮崝娑栤偓浣规啚閺夊棗宕楃拫鍐︹偓浣瑰閻厧宕楃拫鍐︹偓浣藉鐟欏绁寸拠鏇樷偓浣哥碍閸掓顔囪箛鍡愨偓渚€绮﹂悮鈺冨皰濞村鐦妴浣规焿閻楀綊鐬鹃弲顔衡偓浣稿蓟閹靛宕楃拫鍐︹偓浣界箥濮樻梹绁寸拠鏇樷偓浣规闂傚瓨鍔呴惌銉ｂ偓浣虹€崙鍡欑搼濡€虫健閵?
+- 閸斻劍鈧浇顫嬮崝娑㈢帛鐠併倖膩瀵繑鏁兼稉琛♀偓婊冪毈閻炲啯鏆熼柌蹇娾偓婵撶礉鏉╂稑鍙嗘い鐢告桨閸氬酣顩荤仦蹇曟纯閹恒儱鐫嶇粈鍝勵嚠鎼存棁顔曠純顔荤瑢閼哥偛褰寸拠瀛樻閿涙稑鐡х粭锕佺槕閸掝偅膩瀵繋绮涙穱婵堟殌閸樼喐婀侀崝鐔诲厴閸滃苯鍨忛幑銏犲弳閸欙絻鈧?
+- 娣囶喖顦茬憴鍡氼潕閹兼粎鍌ㄦ潻鐐剁箾閻鍘ょ€电懓鍨界€规熬绱版禒搴″敶闁?`pairId` 閸栧綊鍘ら弨閫涜礋閸╄桨绨悽銊﹀煕閸欘垵顫嗛惃鍕禈濡楀牅绗屾０婊嗗婢舵牞顫囬崠褰掑帳閿涘矂浼╅崗宥囨祲閸氬苯鍘撶槐鐘叉礈閸愬懘鍎寸紓鏍у娇娑撳秴鎮撻懓宀冾嚖閸掋們鈧?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_visual_search.dart test/toolbox_human_tests_extended_smoke_test.dart test/ui_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 - `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings"`
 
-### 风险变更
-- 人类测试中心入口排序仍是页面内默认顺序；用户长按拖动后的会话内排序行为不变，重新进入页面后仍会回到新的默认顺序。
-- 连连看当前把“可见外观一致”视为同类元素，规则更贴近用户感知；若后续引入更复杂的同图不同层机制，需要同步补充新的视觉区分语义。
+### 妞嬪酣娅撻崣妯绘纯
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崗銉ュ經閹烘帒绨禒宥嗘Ц妞ょ敻娼伴崘鍛寸帛鐠併倝銆庢惔蹇ョ幢閻劍鍩涢梹鎸庡瘻閹锋牕濮╅崥搴ｆ畱娴兼俺鐦介崘鍛笓鎼村繗顢戞稉杞扮瑝閸欐﹫绱濋柌宥嗘煀鏉╂稑鍙嗘い鐢告桨閸氬簼绮涙导姘礀閸掔増鏌婇惃鍕帛鐠併倝銆庢惔蹇嬧偓?
+- 鏉╃偠绻涢惇瀣秼閸撳秵濡搁垾婊冨讲鐟欎礁顦荤憴鍌欑閼风补鈧繆顫嬫稉鍝勬倱缁鍘撶槐鐙呯礉鐟欏嫬鍨弴纾嬪垱鏉╂垹鏁ら幋閿嬪妳閻儻绱遍懟銉ユ倵缂侇厼绱╅崗銉︽纯婢跺秵娼呴惃鍕倱閸ュ彞绗夐崥灞界湴閺堝搫鍩楅敍宀勬付鐟曚礁鎮撳銉ㄋ夐崗鍛煀閻ㄥ嫯顫嬬憴澶婂隘閸掑棜顕㈡稊澶堚偓?
 
 ## [Unreleased-PLAN_182-SOUND-LOCATOR-MOBILE-MOVE] - 2026-05-19
 
-### 原因
-- 工具箱缺少面向复杂环境的声源定位工具；用户需求包含多声源确认、立体空间指引和回响场景，直接从零实现专业级阵列定位风险过高。
-- 产品主要运行在手机端，需要移除“外接同步麦克风阵列”为前提的表达，改为通过手机自带麦克风和多位置移动采样确认声源区域。
+### 閸樼喎娲?
+- 瀹搞儱鍙跨粻杈╁繁鐏忔垿娼伴崥鎴濐槻閺夊倻骞嗘晶鍐畱婢圭増绨€规矮缍呭銉ュ徔閿涙稓鏁ら幋鐑芥付濮瑰倸瀵橀崥顐㈩樋婢圭増绨涵顔款吇閵嗕胶鐝涙担鎾垛敄闂傚瓨瀵氬鏇炴嫲閸ョ偛鎼烽崷鐑樻珯閿涘瞼娲块幒銉ょ矤闂嗚泛鐤勯悳棰佺瑩娑撴氨楠囬梼闈涘灙鐎规矮缍呮搴ㄦ珦鏉╁洭鐝妴?
+- 娴溠冩惂娑撴槒顩︽潻鎰攽閸︺劍澧滈張铏诡伂閿涘矂娓剁憰浣盒╅梽銈傗偓婊冾樆閹恒儱鎮撳銉╁閸忓顥撻梼闈涘灙閳ユ繀璐熼崜宥嗗絹閻ㄥ嫯銆冩潏鎾呯礉閺€閫涜礋闁俺绻冮幍瀣簚閼奉亜鐢ス锕€鍘犳搴℃嫲婢舵矮缍呯純顔拘╅崝銊╁櫚閺嶉鈥樼拋銈咃紣濠ф劕灏崺鐔粹偓?
 
-### 新增
-- 新增工具箱“声源定位”入口、模块注册、模块管理标签和独立主题色。
-- 新增声源定位服务层，默认使用手机移动确认模型，并预留 ODAS tracked source 到 `azimuth/elevation/confidence/sourceId` 的可选归一化入口。
-- 新增手机端 PCM 分析：双声道输入使用 TDOA 粗略估计水平方位，单声道输入通过多位置采样的强度、SNR 和回响风险逐步确认声源区域。
-- 新增声源定位页面，包含主舞台空间指引、监听控制、记录当前位置、下一步移动提示、采样点列表、多声源候选列表和 SNR/回响风险。
+### 閺傛澘顤?
+- 閺傛澘顤冨銉ュ徔缁犳墎鈧粌锛愬┃鎰暰娴ｅ秮鈧繂鍙嗛崣锝冣偓浣鼓侀崸妤佹暈閸愬被鈧焦膩閸ф顓搁悶鍡樼垼缁涙儳鎷伴悪顒傜彌娑撳顣介懝灞傗偓?
+- 閺傛澘顤冩竟鐗堢爱鐎规矮缍呴張宥呭鐏炲偊绱濇妯款吇娴ｈ法鏁ら幍瀣簚缁夎濮╃涵顔款吇濡€崇€烽敍灞借嫙妫板嫮鏆€ ODAS tracked source 閸?`azimuth/elevation/confidence/sourceId` 閻ㄥ嫬褰查柅澶婄秺娑撯偓閸栨牕鍙嗛崣锝冣偓?
+- 閺傛澘顤冮幍瀣簚缁?PCM 閸掑棙鐎介敍姘蓟婢逛即浜炬潏鎾冲弳娴ｈ法鏁?TDOA 缁鏆愭导鎷岊吀濮樻潙閽╅弬閫涚秴閿涘苯宕熸竟浼翠壕鏉堟挸鍙嗛柅姘崇箖婢舵矮缍呯純顕€鍣伴弽椋庢畱瀵搫瀹抽妴涓糔R 閸滃苯娲栭崫宥夘棑闂勨晠鈧劖顒炵涵顔款吇婢圭増绨崠鍝勭厵閵?
+- 閺傛澘顤冩竟鐗堢爱鐎规矮缍呮い鐢告桨閿涘苯瀵橀崥顐″瘜閼哥偛褰寸粚娲？閹稿洤绱╅妴浣烘磧閸氼剚甯堕崚韬测偓浣筋唶瑜版洖缍嬮崜宥勭秴缂冾喓鈧椒绗呮稉鈧銉╅崝銊﹀絹缁€鎭掆偓渚€鍣伴弽椋庡仯閸掓銆冮妴浣割樋婢圭増绨崐娆撯偓澶婂灙鐞涖劌鎷?SNR/閸ョ偛鎼锋搴ㄦ珦閵?
 
-### 修改
-- 更新 toolbox 模块文档和项目说明，明确手机内置麦克风足够作为默认入口，但需要用户移动采集多个位置；ODAS/阵列输出只作为高级可选证据。
-- 工具箱入口聚合测试补充“Sound locator”可见性和进入页面的 smoke 覆盖。
+### 娣囶喗鏁?
+- 閺囧瓨鏌?toolbox 濡€虫健閺傚洦銆傞崪宀勩€嶉惄顔款嚛閺勫函绱濋弰搴ｂ€橀幍瀣簚閸愬懐鐤嗘ス锕€鍘犳搴ゅ喕婢剁喍缍旀稉娲帛鐠併倕鍙嗛崣锝忕礉娴ｅ棝娓剁憰浣烘暏閹撮些閸斻劑鍣伴梿鍡楊樋娑擃亙缍呯純顕嗙幢ODAS/闂冮潧鍨潏鎾冲毉閸欘亙缍旀稉娲彯缁狙冨讲闁鐦夐幑顔衡偓?
+- 瀹搞儱鍙跨粻鍗炲弳閸欙綀浠涢崥鍫熺ゴ鐠囨洝藟閸忓應鈧藩ound locator閳ユ繂褰茬憴浣光偓褍鎷版潻娑樺弳妞ょ敻娼伴惃?smoke 鐟曞棛娲婇妴?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/services/toolbox_sound_locator_service.dart lib/src/ui/pages/toolbox_sound_locator_tool.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/theme/toolbox_colors.dart lib/src/ui/module/module_access.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart test/toolbox_sound_locator_service_test.dart test/ui_smoke_test.dart`
 - `flutter analyze --no-fatal-infos lib/src/services/toolbox_sound_locator_service.dart lib/src/ui/pages/toolbox_sound_locator_tool.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/theme/toolbox_colors.dart lib/src/ui/module/module_access.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart test/toolbox_sound_locator_service_test.dart test/ui_smoke_test.dart`
 - `flutter test test/toolbox_sound_locator_service_test.dart`
 - `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools"`
 - `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens sound locator module"`
 
-### 风险变更
-- 手机静止单点采样无法可靠确认 3D 方位；本轮改为通过多位置采样收敛声源区域，并在页面显示置信度、采样点数量和下一步移动建议。
-- 多声源、强回响和目标声源不持续时仍会降低确认质量；当前结果不作为安防、医疗、法律或工业定位依据。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹靛婧€闂堟瑦顒涢崡鏇犲仯闁插洦鐗遍弮鐘崇《閸欘垶娼涵顔款吇 3D 閺傞€涚秴閿涙稒婀版潪顔芥暭娑撴椽鈧俺绻冩径姘秴缂冾噣鍣伴弽閿嬫暪閺佹稑锛愬┃鎰隘閸╃噦绱濋獮璺烘躬妞ょ敻娼伴弰鍓с仛缂冾喕淇婃惔锔衡偓渚€鍣伴弽椋庡仯閺佷即鍣洪崪灞肩瑓娑撯偓濮濄儳些閸斻劌缂撶拋顔衡偓?
+- 婢舵艾锛愬┃鎰┾偓浣稿繁閸ョ偛鎼烽崪宀€娲伴弽鍥э紣濠ф劒绗夐幐浣虹敾閺冩湹绮涙导姘舵娴ｅ海鈥樼拋銈堝窛闁插骏绱辫ぐ鎾冲缂佹挻鐏夋稉宥勭稊娑撳搫鐣ㄩ梼灞傗偓浣稿鞍閻ゆぜ鈧焦纭跺瀣灗瀹搞儰绗熺€规矮缍呮笟婵囧祦閵?
 
 ## [Unreleased-PLAN_180-AUDITORY-LAB-COLLAPSIBLE-SETTINGS] - 2026-05-19
 
-### 原因
-- 声学实验页的设置、说明和诊断信息仍然以平铺方式堆叠，移动端首屏需要滚动较多才能看到主操作区，也不符合工具箱页面统一的可折叠设置语法。
+### 閸樼喎娲?
+- 婢规澘顒熺€圭偤鐛欐い鐢垫畱鐠佸墽鐤嗛妴浣筋嚛閺勫骸鎷扮拠濠冩焽娣団剝浼呮禒宥囧姧娴犮儱閽╅柧鐑樻煙瀵繐鐖㈤崣鐙呯礉缁夎濮╃粩顖烆浕鐏炲繘娓剁憰浣圭泊閸斻劏绶濇径姘閼崇晫婀呴崚棰佸瘜閹垮秳缍旈崠鐚寸礉娑旂喍绗夌粭锕€鎮庡銉ュ徔缁犻亶銆夐棃銏㈢埠娑撯偓閻ㄥ嫬褰查幎妯哄綌鐠佸墽鐤嗙拠顓熺《閵?
 
-### 新增
-- 声学实验页新增统一折叠区，分别承载采样设置、采集诊断和复测建议。
+### 閺傛澘顤?
+- 婢规澘顒熺€圭偤鐛欐い鍨煀婢х偟绮烘稉鈧幎妯哄綌閸栫尨绱濋崚鍡楀焼閹佃儻娴囬柌鍥ㄧ壉鐠佸墽鐤嗛妴渚€鍣伴梿鍡氱槚閺傤厼鎷版径宥嗙ゴ瀵ら缚顔呴妴?
 
-### 修改
-- 将原本分散在主区域的采样说明、环境提示、复测建议和诊断指标收敛到统一的可折叠结构中，保留模式切换、实时指标、波形和主操作按钮在更靠前的位置。
+### 娣囶喗鏁?
+- 鐏忓棗甯張顒€鍨庨弫锝呮躬娑撹灏崺鐔烘畱闁插洦鐗辩拠瀛樻閵嗕胶骞嗘晶鍐╁絹缁€鎭掆偓浣割槻濞村缂撶拋顔兼嫲鐠囧﹥鏌囬幐鍥ㄧ垼閺€鑸垫殐閸掓壆绮烘稉鈧惃鍕讲閹舵ê褰旂紒鎾寸€稉顓ㄧ礉娣囨繄鏆€濡€崇础閸掑洦宕查妴浣哥杽閺冭埖瀵氶弽鍥モ偓浣瑰皾瑜般垹鎷版稉缁樻惙娴ｆ粍瀵滈柦顔兼躬閺囨挳娼崜宥囨畱娴ｅ秶鐤嗛妴?
 
-### 修复
-- 修正声学实验页移动端设置信息过长、层级过散的问题，减少首屏纵向拥挤。
+### 娣囶喖顦?
+- 娣囶喗顒滄竟鏉款劅鐎圭偤鐛欐い鐢敌╅崝銊ь伂鐠佸墽鐤嗘穱鈩冧紖鏉╁洭鏆遍妴浣哥湴缁狙嗙箖閺侊絿娈戦梻顕€顣介敍灞藉櫤鐏忔垿顩荤仦蹇曟棻閸氭垶瀚㈤幐銈冣偓?
 
-### 风险变更
-- 折叠区默认收起后，首次使用者需要点击查看辅助说明；但这换来了更清晰的首屏主操作和更一致的 toolbox 页面语法。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹舵ê褰旈崠娲帛鐠併倖鏁圭挧宄版倵閿涘矂顩诲▎鈥插▏閻劏鈧懘娓剁憰浣哄仯閸戠粯鐓￠惇瀣窡閸斺晞顕╅弰搴幢娴ｅ棜绻栭幑銏℃降娴滃棙娲垮〒鍛珰閻ㄥ嫰顩荤仦蹇庡瘜閹垮秳缍旈崪灞炬纯娑撯偓閼峰娈?toolbox 妞ょ敻娼扮拠顓熺《閵?
 
 ## [Unreleased-PLAN_179-ACOUSTIC-LAB-MOBILE-CAPTURE] - 2026-05-19
 
-### 原因
-- 工具箱-人类测试中心-声学实验仍偏基础示例，移动手机端在部分设备上可能启动录音但没有收到声音帧，用户只能看到近似静态仪表。
-- 旧流程缺少麦克风输入自检、首帧等待/失败提示、环境底噪引导和可用于复测判断的采样质控指标。
+### 閸樼喎娲?
+- 瀹搞儱鍙跨粻?娴滆櫣琚ù瀣槸娑擃厼绺?婢规澘顒熺€圭偤鐛欐禒宥呬焊閸╄櫣顢呯粈杞扮伐閿涘瞼些閸斻劍澧滈張铏诡伂閸︺劑鍎撮崚鍡氼啎婢跺洣绗傞崣顖濆厴閸氼垰濮╄ぐ鏇㈢叾娴ｅ棙鐥呴張澶嬫暪閸掓澘锛愰棅鍐叉姎閿涘瞼鏁ら幋宄板涧閼崇晫婀呴崚鎷岀箮娴煎ジ娼ら幀浣峰崕鐞涖劊鈧?
+- 閺冄勭ウ缁嬪宸辩亸鎴﹀閸忓顥撴潏鎾冲弳閼奉亝顥呴妴渚€顩荤敮褏鐡戝?婢惰精瑙﹂幓鎰仛閵嗕胶骞嗘晶鍐ㄧ俺閸ｎ亜绱╃€电厧鎷伴崣顖滄暏娴滃骸顦插ù瀣灲閺傤厾娈戦柌鍥ㄧ壉鐠愩劍甯堕幐鍥ㄧ垼閵?
 
-### 新增
-- 声学实验新增 PCM 实时流能力自检、输入设备识别、首帧看门狗和结构化错误提示。
-- 录音启动新增多套移动端兼容配置：优先使用原始麦克风 PCM，失败后回退标准麦克风和语音识别兼容采样。
-- 页面新增环境底噪基线、推荐下一步、采样率、输入源、实时流模式、首帧延迟、空帧和启动尝试等状态指标。
-- 声学报告新增有效声占比、动态范围、峰均比、空白帧比例和帧数等质控指标。
+### 閺傛澘顤?
+- 婢规澘顒熺€圭偤鐛欓弬鏉款杻 PCM 鐎圭偞妞傚ù浣藉厴閸旀稖鍤滃Λ鈧妴浣界翻閸忋儴顔曟径鍥槕閸掝偁鈧線顩荤敮褏婀呴梻銊у珝閸滃瞼绮ㄩ弸鍕闁挎瑨顕ら幓鎰仛閵?
+- 瑜版洟鐓堕崥顖氬З閺傛澘顤冩径姘殰缁夎濮╃粩顖氬悑鐎瑰綊鍘ょ純顕嗙窗娴兼ê鍘涙担璺ㄦ暏閸樼喎顫愭ス锕€鍘犳?PCM閿涘苯銇戠拹銉ユ倵閸ョ偤鈧偓閺嶅洤鍣ス锕€鍘犳搴℃嫲鐠囶參鐓剁拠鍡楀焼閸忕厧顔愰柌鍥ㄧ壉閵?
+- 妞ょ敻娼伴弬鏉款杻閻滎垰顣ㄦ惔鏇炴珨閸╄櫣鍤庨妴浣瑰腹閼芥劒绗呮稉鈧銉ｂ偓渚€鍣伴弽椋庡芳閵嗕浇绶崗銉︾爱閵嗕礁鐤勯弮鑸电ウ濡€崇础閵嗕線顩荤敮褍娆㈡潻鐔粹偓浣衡敄鐢冩嫲閸氼垰濮╃亸婵婄槸缁涘濮搁幀浣瑰瘹閺嶅洢鈧?
+- 婢规澘顒熼幎銉ユ啞閺傛澘顤冮張澶嬫櫏婢规澘宕板В鏂烩偓浣稿З閹浇瀵栭崶娣偓浣稿槻閸у洦鐦妴浣衡敄閻ц棄鎶氬В鏂剧伐閸滃苯鎶氶弫鎵搼鐠愩劍甯堕幐鍥ㄧ垼閵?
 
-### 修改
-- 声学实验采样流程强化为“先噪声底，再低音/高音/持续”的实用闭环，并在样本写入后提示继续下一个模式或优先复测弱项。
-- 录音出现无 PCM 帧时不再静默停留在运行状态，而是明确提示检查系统麦克风权限、隐私开关、蓝牙耳机路由、录屏或通话占用。
+### 娣囶喗鏁?
+- 婢规澘顒熺€圭偤鐛欓柌鍥ㄧ壉濞翠胶鈻煎鍝勫娑撹　鈧粌鍘涢崳顏勶紣鎼存洩绱濋崘宥勭秵闂?妤傛﹢鐓?閹镐胶鐢婚垾婵堟畱鐎圭偟鏁ら梻顓犲箚閿涘苯鑻熼崷銊︾壉閺堫剙鍟撻崗銉ユ倵閹绘劗銇氱紒褏鐢绘稉瀣╃娑擃亝膩瀵繑鍨ㄦ导妯哄帥婢跺秵绁村閬嶃€嶉妴?
+- 瑜版洟鐓堕崙铏瑰箛閺?PCM 鐢勬娑撳秴鍟€闂堟瑩绮崑婊呮殌閸︺劏绻嶇悰宀€濮搁幀渚婄礉閼板本妲搁弰搴ｂ€橀幓鎰仛濡偓閺屻儳閮寸紒鐔煎閸忓顥撻弶鍐閵嗕線娈ｇ粔浣哥磻閸忕偨鈧浇鎽戦悧娆掆偓铏簚鐠侯垳鏁遍妴浣哥秿鐏炲繑鍨ㄩ柅姘崇樈閸楃姷鏁ら妴?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/ui/pages/toolbox_human_tests_auditory_lab.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 声学报告仍基于设备麦克风的相对 dBFS、本地 PCM 分析和当前环境噪声底，不作为医学、听力诊断或专业声级计标定结果。
-- Android/iOS 对麦克风音频源、蓝牙路由和隐私占用的处理存在设备差异；本轮已加入多配置回退和无帧提示，但仍建议真机覆盖主流机型。
+### 妞嬪酣娅撻崣妯绘纯
+- 婢规澘顒熼幎銉ユ啞娴犲秴鐔€娴滃氦顔曟径鍥閸忓顥撻惃鍕祲鐎?dBFS閵嗕焦婀伴崷?PCM 閸掑棙鐎介崪灞界秼閸撳秶骞嗘晶鍐ㄦ珨婢规澘绨抽敍灞肩瑝娴ｆ粈璐熼崠璇差劅閵嗕礁鎯夐崝娑滅槚閺傤厽鍨ㄦ稉鎾茬瑹婢规壆楠囩拋鈩冪垼鐎规氨绮ㄩ弸婧库偓?
+- Android/iOS 鐎靛綊瀹抽崗瀣棑闂婃娊顣跺┃鎰┾偓浣芥憫閻楁瑨鐭鹃悽鍗炴嫲闂呮劗顫嗛崡鐘垫暏閻ㄥ嫬顦╅悶鍡楃摠閸︺劏顔曟径鍥ф▕瀵偊绱遍張顒冪枂瀹告彃濮為崗銉ヮ樋闁板秶鐤嗛崶鐐衡偓鈧崪灞炬￥鐢勫絹缁€鐚寸礉娴ｅ棔绮涘楦款唴閻喐婧€鐟曞棛娲婃稉缁樼ウ閺堝搫鐎烽妴?
 
 ## [Unreleased-PLAN_178-WINDOWS-AUDIO-PLATFORM-THREAD-FIX] - 2026-05-19
 
-### 原因
-- Windows 端 `audioplayers` 在媒体加载、完成、时长更新等回调中可能从原生后台线程直接向 `xyz.luan/audioplayers/events/...` EventChannel 发送消息，触发 Flutter 的 `non-platform thread` 警告，并存在事件丢失或崩溃风险。
+### 閸樼喎娲?
+- Windows 缁?`audioplayers` 閸︺劌鐛熸担鎾冲鏉炲鈧礁鐣幋鎰┾偓浣规闂€鎸庢纯閺傛壆鐡戦崶鐐剁殶娑擃厼褰查懗鎴掔矤閸樼喓鏁撻崥搴″酱缁捐法鈻奸惄瀛樺复閸?`xyz.luan/audioplayers/events/...` EventChannel 閸欐垿鈧焦绉烽幁顖ょ礉鐟欙箑褰?Flutter 閻?`non-platform thread` 鐠€锕€鎲￠敍灞借嫙鐎涙ê婀禍瀣╂娑撱垹銇戦幋鏍х┛濠у啴顥撻梽鈹库偓?
 
-### 新增
-- 新增 `third_party/audioplayers_windows` 本地插件 fork，版本保持 `4.3.0`，用于承载 Windows 平台线程修复。
+### 閺傛澘顤?
+- 閺傛澘顤?`third_party/audioplayers_windows` 閺堫剙婀撮幓鎺嶆 fork閿涘瞼澧楅張顑跨箽閹?`4.3.0`閿涘瞼鏁ゆ禍搴㈠鏉?Windows 楠炲啿褰寸痪璺ㄢ柤娣囶喖顦查妴?
 
-### 修改
-- `pubspec.yaml` 增加 `audioplayers_windows` 本地 dependency override，`pubspec.lock` 同步改为 path source。
-- Windows 音频插件的 `EventStreamHandler` 现在会把后台线程产生的 `Success/Error` 通过宿主窗口消息投递回 Flutter 平台线程后再调用 `EventSink`。
-- `.gitignore` 补充 `third_party/audioplayers_windows/windows/**` 例外，确保 vendored Windows 插件源码进入版本管理。
+### 娣囶喗鏁?
+- `pubspec.yaml` 婢х偛濮?`audioplayers_windows` 閺堫剙婀?dependency override閿涘畭pubspec.lock` 閸氬本顒為弨閫涜礋 path source閵?
+- Windows 闂婃娊顣堕幓鎺嶆閻?`EventStreamHandler` 閻滄澘婀导姘Ω閸氬骸褰寸痪璺ㄢ柤娴溠呮晸閻?`Success/Error` 闁俺绻冪€瑰じ瀵岀粣妤€褰涘☉鍫熶紖閹舵洟鈧帒娲?Flutter 楠炲啿褰寸痪璺ㄢ柤閸氬骸鍟€鐠嬪啰鏁?`EventSink`閵?
+- `.gitignore` 鐞涖儱鍘?`third_party/audioplayers_windows/windows/**` 娓氬顦婚敍宀€鈥樻穱?vendored Windows 閹绘帊娆㈠┃鎰垳鏉╂稑鍙嗛悧鍫熸拱缁狅紕鎮婇妴?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter pub get`
 - `flutter analyze --no-fatal-infos lib/src/services/audio_player_source_helper.dart lib/src/services/toolbox_audio_players.dart`
 - `flutter build windows --debug`
 - `flutter test test/audio_player_source_helper_test.dart test/playback_service_test.dart`
 
-### 风险变更
-- Windows 插件进入本地 fork 后，后续升级 `audioplayers` 时需要同步检查上游 `audioplayers_windows` 是否已修复平台线程投递。
-- 如果插件销毁或窗口不可用期间仍有后台音频事件抵达，会丢弃该事件而不是从后台线程触达 Flutter；这优先保证线程安全。
+### 妞嬪酣娅撻崣妯绘纯
+- Windows 閹绘帊娆㈡潻娑樺弳閺堫剙婀?fork 閸氬函绱濋崥搴ｇ敾閸楀洨楠?`audioplayers` 閺冨爼娓剁憰浣告倱濮濄儲顥呴弻銉ょ瑐濞?`audioplayers_windows` 閺勵垰鎯佸韫叏婢跺秴閽╅崣鎵殠缁嬪濮囬柅鎺嬧偓?
+- 婵″倹鐏夐幓鎺嶆闁库偓濮ｄ焦鍨ㄧ粣妤€褰涙稉宥呭讲閻劍婀￠梻缈犵矝閺堝鎮楅崣浼寸叾妫版垳绨ㄦ禒鑸靛Х鏉堟拝绱濇导姘丢瀵啳顕氭禍瀣╂閼板奔绗夐弰顖欑矤閸氬骸褰寸痪璺ㄢ柤鐟欙箒鎻?Flutter閿涙稖绻栨导妯哄帥娣囨繆鐦夌痪璺ㄢ柤鐎瑰鍙忛妴?
 
 ## [Unreleased-PLAN_177-HUMAN-TESTS-MOBILE-GESTURE-CONTROLS] - 2026-05-19
 
-### 原因
-- 人类测试中心的摇杆协调全屏设置弹窗没有监听状态刷新，滑动条参数已变化但视觉滑块不会同步移动。
-- 刮刮乐、摇杆、描线、方向滑动、空间指针、瞄准和双手协调等操作舞台在真机窄屏上容易与页面纵向滚动抢手势。
-- 持续注意力和听觉测试缺少完整的停止/重置控制入口，部分测试流程中不便中断或重新开始。
+### 閸樼喎娲?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃惃鍕啚閺夊棗宕楃拫鍐ㄥ弿鐏炲繗顔曠純顔艰剨缁愭鐥呴張澶屾磧閸氼剛濮搁幀浣稿煕閺傚府绱濆鎴濆З閺夆€冲棘閺佹澘鍑￠崣妯哄娴ｅ棜顫嬬憴澶嬬拨閸фぞ绗夋导姘倱濮濄儳些閸斻劊鈧?
+- 閸掝喖鍩夋稊鎰┾偓浣规啚閺夊棎鈧焦寮跨痪瑁も偓浣规煙閸氭垶绮﹂崝銊ｂ偓浣衡敄闂傚瓨瀵氶柦鍫涒偓浣虹€崙鍡楁嫲閸欏本澧滈崡蹇氱殶缁涘鎼锋担婊嗗灦閸欐澘婀惇鐔告簚缁愬嫬鐫嗘稉濠傤啇閺勬挷绗屾い鐢告桨缁鹃潧鎮滃姘З閹躲垺澧滈崝瑁も偓?
+- 閹镐胶鐢诲▔銊﹀壈閸旀稑鎷伴崥顒冾潕濞村鐦紓鍝勭毌鐎瑰本鏆ｉ惃鍕粻濮?闁插秶鐤嗛幒褍鍩楅崗銉ュ經閿涘矂鍎撮崚鍡樼ゴ鐠囨洘绁︾粙瀣╄厬娑撳秳绌舵稉顓熸焽閹存牠鍣搁弬鏉跨磻婵鈧?
 
-### 新增
-- 新增人类测试中心共享的连续触摸边界组件，用于让明确的操作舞台优先接收拖动、刮擦、摇杆和方向滑动手势。
-- 持续注意力测试补充重置入口，听觉测试补充停止入口。
-- 补充摇杆全屏设置刷新、刮刮乐拖动、持续注意力重置和听觉停止按钮的 widget 回归断言。
-- AGENTS.md 移动端体验规范新增连续手势模块需显式处理父级滚动冲突的注意事项。
+### 閺傛澘顤?
+- 閺傛澘顤冩禍铏硅濞村鐦稉顓炵妇閸忓彉闊╅惃鍕箾缂侇叀袝閹芥瓕绔熼悾宀€绮嶆禒璁圭礉閻劋绨拋鈺傛绾喚娈戦幙宥勭稊閼哥偛褰存导妯哄帥閹恒儲鏁归幏鏍уЗ閵嗕礁鍩夐幙锔衡偓浣规啚閺夊棗鎷伴弬鐟版倻濠婃垵濮╅幍瀣◢閵?
+- 閹镐胶鐢诲▔銊﹀壈閸旀稒绁寸拠鏇∷夐崗鍛村櫢缂冾喖鍙嗛崣锝忕礉閸氼剝顫庡ù瀣槸鐞涖儱鍘栭崑婊勵剾閸忋儱褰涢妴?
+- 鐞涖儱鍘栭幗鍥ㄦ綄閸忋劌鐫嗙拋鍓х枂閸掗攱鏌婇妴浣稿焿閸掝喕绠伴幏鏍уЗ閵嗕焦瀵旂紒顓熸暈閹板繐濮忛柌宥囩枂閸滃苯鎯夌憴澶婁粻濮濄垺瀵滈柦顔炬畱 widget 閸ョ偛缍婇弬顓♀枅閵?
+- AGENTS.md 缁夎濮╃粩顖欑秼妤犲矁顫夐懠鍐╂煀婢х偠绻涚紒顓熷閸旀寧膩閸ф娓堕弰鎯х础婢跺嫮鎮婇悥鍓侀獓濠婃艾濮╅崘鑼崐閻ㄥ嫭鏁為幇蹇庣皑妞ゅ箍鈧?
 
-### 修改
-- 摇杆协调全屏设置弹窗改为监听共享视图信号，Slider 修改后立即重绘；自定义数字输入移除手动“应用”按钮，改为提交、完成编辑或失焦时自动应用，保留重置入口。
-- 刮刮乐、批量抽卡、精细拖拽、听觉空间指针、反应方向滑动、手眼目标舞台、摇杆控制、瞄准舞台和双手协调相关赛道统一收口连续手势边界。
-- 双手协调触区改为指针级点击/按住判定，避免外层手势边界抢占后丢失点击。
+### 娣囶喗鏁?
+- 閹藉洦娼岄崡蹇氱殶閸忋劌鐫嗙拋鍓х枂瀵湱鐛ラ弨閫涜礋閻╂垵鎯夐崗鍙橀煩鐟欏棗娴樻穱鈥冲娇閿涘lider 娣囶喗鏁奸崥搴ｇ彌閸楁娊鍣哥紒姗堢幢閼奉亜鐣炬稊澶嬫殶鐎涙绶崗銉╅梽銈嗗閸斻劉鈧粌绨查悽銊⑩偓婵囧瘻闁筋噯绱濋弨閫涜礋閹绘劒姘﹂妴浣哥暚閹存劗绱潏鎴炲灗婢惰京鍔嶉弮鎯板殰閸斻劌绨查悽顭掔礉娣囨繄鏆€闁插秶鐤嗛崗銉ュ經閵?
+- 閸掝喖鍩夋稊鎰┾偓浣瑰闁插繑濞婇崡掳鈧胶绨跨紒鍡樺珛閹峰鈧礁鎯夌憴澶屸敄闂傚瓨瀵氶柦鍫涒偓浣稿冀鎼存梹鏌熼崥鎴炵拨閸斻劊鈧焦澧滈惇鑲╂窗閺嶅洩鍨堕崣鑸偓浣规啚閺夊棙甯堕崚韬测偓浣虹€崙鍡氬灦閸欐澘鎷伴崣灞惧閸楀繗鐨熼惄绋垮彠鐠ф盯浜剧紒鐔剁閺€璺哄經鏉╃偟鐢婚幍瀣◢鏉堝湱鏅妴?
+- 閸欏本澧滈崡蹇氱殶鐟欙箑灏弨閫涜礋閹稿洭鎷＄痪褏鍋ｉ崙?閹稿缍囬崚銈呯暰閿涘矂浼╅崗宥咁樆鐏炲倹澧滈崝鑳珶閻ｅ本濮犻崡鐘叉倵娑撱垹銇戦悙鐟板毊閵?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_auditory.dart lib/src/ui/pages/toolbox_human_tests_bimanual.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_drag_tracking.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests_shared.dart test/toolbox_human_tests_extended_smoke_test.dart test/ui_smoke_test.dart`
 - `flutter analyze --no-fatal-infos lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_human_tests_extended_smoke_test.dart test/ui_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
@@ -226,32 +971,32 @@
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "luck and sustained attention expose goals and richer tasks"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 
-### 风险变更
-- 连续手势边界仅包裹明确操作舞台，设置区和普通滚动区仍交给页面滚动；后续新增刮擦、描线、摇杆或拖拽类模块时需同步加入窄屏/真机手势回归。
-- 数字输入改为自动应用后，错误输入仍保持原值不变；后续若新增实时校验提示，需要避免每个字符输入时强制改写文本。
+### 妞嬪酣娅撻崣妯绘纯
+- 鏉╃偟鐢婚幍瀣◢鏉堝湱鏅禒鍛瘶鐟佽妲戠涵顔芥惙娴ｆ粏鍨堕崣甯礉鐠佸墽鐤嗛崠鍝勬嫲閺咁噣鈧碍绮撮崝銊ュ隘娴犲秳姘︾紒娆撱€夐棃銏＄泊閸旑煉绱遍崥搴ｇ敾閺傛澘顤冮崚顔芥憹閵嗕焦寮跨痪瑁も偓浣规啚閺夊棙鍨ㄩ幏鏍ㄥ缁粯膩閸ф妞傞棁鈧崥灞绢劄閸旂姴鍙嗙粣鍕潌/閻喐婧€閹靛濞嶉崶鐐茬秺閵?
+- 閺佹澘鐡ф潏鎾冲弳閺€閫涜礋閼奉亜濮╂惔鏃傛暏閸氬函绱濋柨娆掝嚖鏉堟挸鍙嗘禒宥勭箽閹镐礁甯崐闂寸瑝閸欐﹫绱遍崥搴ｇ敾閼汇儲鏌婃晶鐐茬杽閺冭埖鐗庢灞惧絹缁€鐚寸礉闂団偓鐟曚線浼╅崗宥嗙槨娑擃亜鐡х粭锕佺翻閸忋儲妞傚鍝勫煑閺€鐟板晸閺傚洦婀伴妴?
 
 ## [Unreleased-PLAN_176-TOOLBOX-LAYOUT-RECOVERY-AND-QUICK-ENTRIES] - 2026-05-19
 
-### 原因
-- 工具箱首页在编辑布局时，拖拽释放后有时不能稳定落位，靠近列表边缘时也缺少自动滚动，移动端编辑体验不完整。
-- 首页“移除”入口只隐藏了卡片，但恢复路径和模块管理页没有同步说明，容易让人误以为模块被永久删除。
-- 工具箱页面里仍有一些偏开发说明的措辞，入口卡片高度也因为内容长短不一致而显得参差。
-- 首页缺少用户可自定义的常用快速入口。
+### 閸樼喎娲?
+- 瀹搞儱鍙跨粻閬嶎浕妞ら潧婀紓鏍帆鐢啫鐪弮璁圭礉閹锋牗瀚块柌濠冩杹閸氬孩婀侀弮鏈电瑝閼崇晫菙鐎规俺鎯ゆ担宥忕礉闂堢姾绻庨崚妤勩€冩潏鍦喘閺冩湹绡冪紓鍝勭毌閼奉亜濮╁姘З閿涘瞼些閸斻劎顏紓鏍帆娴ｆ捇鐛欐稉宥呯暚閺佹番鈧?
+- 妫ｆ牠銆夐垾婊呅╅梽銈傗偓婵嗗弳閸欙絽褰ч梾鎰娴滃棗宕遍悧鍥风礉娴ｅ棙浠径宥堢熅瀵板嫬鎷板Ο鈥虫健缁狅紕鎮婃い鍨梾閺堝鎮撳銉嚛閺勫函绱濈€硅妲楃拋鈺€姹夌拠顖欎簰娑撶儤膩閸ф顫﹀闀愮畽閸掔娀娅庨妴?
+- 瀹搞儱鍙跨粻閬嶃€夐棃銏ゅ櫡娴犲秵婀佹稉鈧禍娑樹焊瀵偓閸欐垼顕╅弰搴ｆ畱閹侯亣绶搁敍灞藉弳閸欙絽宕遍悧鍥彯鎼达缚绡冮崶鐘辫礋閸愬懎顔愰梹璺ㄧ叚娑撳秳绔撮懛纾嬧偓灞炬▔瀵版寮顔衡偓?
+- 妫ｆ牠銆夌紓鍝勭毌閻劍鍩涢崣顖濆殰鐎规矮绠熼惃鍕埗閻劌鎻╅柅鐔峰弳閸欙絻鈧?
 
-### 新增
-- 工具箱首页新增“常用快速入口”区，支持从现有工具中勾选常用入口并保存。
-- 工具箱首页支持把模块卡片直接拖到“常用快速入口”，松手后自动加入。
-- 工具箱编辑模式中也显示“常用快速入口”，支持长按模块卡片拖入后加入常用工具。
-- 模块管理页为工具箱工具补充“恢复首页入口”操作，方便把被首页隐藏的入口重新显示出来。
+### 閺傛澘顤?
+- 瀹搞儱鍙跨粻閬嶎浕妞ゅ灚鏌婃晶鐐┾偓婊冪埗閻劌鎻╅柅鐔峰弳閸欙絺鈧繂灏敍灞炬暜閹镐椒绮犻悳鐗堟箒瀹搞儱鍙挎稉顓炲瑎闁鐖堕悽銊ュ弳閸欙絽鑻熸穱婵嗙摠閵?
+- 瀹搞儱鍙跨粻閬嶎浕妞ゅ灚鏁幐浣瑰Ω濡€虫健閸楋紕澧栭惄瀛樺复閹锋牕鍩岄垾婊冪埗閻劌鎻╅柅鐔峰弳閸欙絺鈧繐绱濋弶鐐閸氬氦鍤滈崝銊ュ閸忋儯鈧?
+- 瀹搞儱鍙跨粻杈╃椽鏉堟垶膩瀵繋鑵戞稊鐔告▔缁€琛♀偓婊冪埗閻劌鎻╅柅鐔峰弳閸欙絺鈧繐绱濋弨顖涘瘮闂€鎸庡瘻濡€虫健閸楋紕澧栭幏鏍у弳閸氬骸濮為崗銉ョ埗閻劌浼愰崗鏋偓?
+- 濡€虫健缁狅紕鎮婃い鍏歌礋瀹搞儱鍙跨粻鍗炰紣閸忕柉藟閸忓應鈧粍浠径宥夘浕妞ら潧鍙嗛崣锝傗偓婵囨惙娴ｆ粣绱濋弬閫涚┒閹跺﹨顫︽＃鏍€夐梾鎰閻ㄥ嫬鍙嗛崣锝夊櫢閺傜増妯夌粈鍝勫毉閺夈儯鈧?
 
-### 修改
-- 工具箱编辑态改为可滚动的重排列表，拖拽结束后不会立刻退出编辑态，移动到顶部或底部时可自动滚动。
-- “移除首页入口”现在会先弹出确认对话框，并给出恢复说明与后续入口。
-- 工具箱入口卡片统一为固定高度，标题和说明在窄屏下会自动截断，避免高低不一。
-- 工具箱普通入口卡片高度下调，减少短文案卡片底部留白；编辑态保留较高高度以容纳拖拽和移除按钮。
-- 工具箱首页与模块管理页的文案改成更自然的日常表达，清理了偏说明书口吻的内容。
+### 娣囶喗鏁?
+- 瀹搞儱鍙跨粻杈╃椽鏉堟垶鈧焦鏁兼稉鍝勫讲濠婃艾濮╅惃鍕櫢閹烘帒鍨悰顭掔礉閹锋牗瀚跨紒鎾存将閸氬簼绗夋导姘辩彌閸掑鈧偓閸戣櫣绱潏鎴炩偓渚婄礉缁夎濮╅崚浼淬€婇柈銊﹀灗鎼存洟鍎撮弮璺哄讲閼奉亜濮╁姘З閵?
+- 閳ユ粎些闂勩倝顩绘い闈涘弳閸欙絺鈧繄骞囬崷銊ょ窗閸忓牆鑴婇崙铏光€樼拋銈咁嚠鐠囨繃顢嬮敍灞借嫙缂佹瑥鍤幁銏狀槻鐠囧瓨妲戞稉搴℃倵缂侇厼鍙嗛崣锝冣偓?
+- 瀹搞儱鍙跨粻鍗炲弳閸欙絽宕遍悧鍥╃埠娑撯偓娑撳搫娴愮€规岸鐝惔锔肩礉閺嶅洭顣介崪宀冾嚛閺勫骸婀粣鍕潌娑撳绱伴懛顏勫З閹搭亝鏌囬敍宀勪缉閸忓秹鐝担搴濈瑝娑撯偓閵?
+- 瀹搞儱鍙跨粻杈ㄦ珮闁艾鍙嗛崣锝呭幢閻楀洭鐝惔锔跨瑓鐠嬪喛绱濋崙蹇撶毌閻厽鏋冨鍫濆幢閻楀洤绨抽柈銊ф殌閻ф枻绱辩紓鏍帆閹椒绻氶悾娆掔窛妤傛﹢鐝惔锔夸簰鐎瑰湱鎾奸幏鏍ㄥ閸滃瞼些闂勩倖瀵滈柦顔衡偓?
+- 瀹搞儱鍙跨粻閬嶎浕妞ゅ吀绗屽Ο鈥虫健缁狅紕鎮婃い鐢垫畱閺傚洦顢嶉弨瑙勫灇閺囩鍤滈悞鍓佹畱閺冦儱鐖剁悰銊ㄦ彧閿涘本绔婚悶鍡曠啊閸嬪繗顕╅弰搴濆姛閸欙絽鎯㈤惃鍕敶鐎瑰箍鈧?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/models/settings_dto.dart lib/src/state/app_state.dart lib/src/state/app_state_startup.dart lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart lib/src/ui/pages/toolbox/toolbox_quick_entries.dart lib/src/ui/pages/toolbox/toolbox_ui_tokens.dart lib/src/ui/pages/module_management_page.dart test/settings_service_test.dart test/ui_smoke_test.dart`
 - `flutter analyze --no-fatal-infos lib/src/models/settings_dto.dart lib/src/state/app_state.dart lib/src/state/app_state_startup.dart lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart lib/src/ui/pages/toolbox/toolbox_quick_entries.dart lib/src/ui/pages/toolbox/toolbox_ui_tokens.dart lib/src/ui/pages/module_management_page.dart test/settings_service_test.dart test/ui_smoke_test.dart`
 - `flutter test test/settings_service_test.dart`
@@ -261,1617 +1006,1617 @@
 - `flutter test test/ui_smoke_test.dart --plain-name "toolbox page adds entries by dragging them to quick entries"`
 - `flutter test test/ui_smoke_test.dart --plain-name "toolbox edit mode adds entries by dragging them to quick entries"`
 
-### 风险变更
-- 快速入口与首页隐藏状态共享同一份布局配置，新增排序或隐藏规则时需要同步检查 quick 列表的归一化逻辑。
-- 编辑态改为独立滚动后，若后续再调整页面骨架，需要保持 header/footer 与重排列表的边界清晰。
+### 妞嬪酣娅撻崣妯绘纯
+- 韫囶偊鈧喎鍙嗛崣锝勭瑢妫ｆ牠銆夐梾鎰閻樿埖鈧礁鍙℃禍顐㈡倱娑撯偓娴犺棄绔风仦鈧柊宥囩枂閿涘本鏌婃晶鐐村笓鎼村繑鍨ㄩ梾鎰鐟欏嫬鍨弮鍫曟付鐟曚礁鎮撳銉︻梾閺?quick 閸掓銆冮惃鍕秺娑撯偓閸栨牠鈧槒绶妴?
+- 缂傛牞绶幀浣规暭娑撹櫣瀚粩瀣泊閸斻劌鎮楅敍宀冨閸氬海鐢婚崘宥堢殶閺佹挳銆夐棃銏ゎ€囬弸璁圭礉闂団偓鐟曚椒绻氶幐?header/footer 娑撳酣鍣搁幒鎺戝灙鐞涖劎娈戞潏鍦櫕濞撳懏娅氶妴?
 
 ## [Unreleased-PLAN_175-HUMAN-TESTS-COPY-I18N-CLEANUP] - 2026-05-18
 
-### 原因
-- 人类测试中心仍有部分文案偏开发说明、偏“AI/本地实现”口吻，声学和抽卡等页面也有过硬的诊断/模拟提示。
-- 模块内大量 `pickUiText` 仅有中英文，动态题库、颜色名、反馈语和报告入口在多语言环境下会回退或显示不完整。
+### 閸樼喎娲?
+- 娴滆櫣琚ù瀣槸娑擃厼绺炬禒宥嗘箒闁劌鍨庨弬鍥攳閸嬪繐绱戦崣鎴ｎ嚛閺勫簺鈧礁浜搁垾娣嶪/閺堫剙婀寸€圭偟骞囬垾婵嗗經閸氫紮绱濇竟鏉款劅閸滃本濞婇崡锛勭搼妞ょ敻娼版稊鐔告箒鏉╁洨鈥栭惃鍕槚閺?濡剝瀚欓幓鎰仛閵?
+- 濡€虫健閸愬懎銇囬柌?`pickUiText` 娴犲懏婀佹稉顓″閺傚浄绱濋崝銊︹偓渚€顣芥惔鎾扁偓渚€顤侀懝鎻掓倳閵嗕礁寮芥＃鍫ｎ嚔閸滃本濮ら崨濠傚弳閸欙絽婀径姘愁嚔鐟封偓閻滎垰顣ㄦ稉瀣╃窗閸ョ偤鈧偓閹存牗妯夌粈杞扮瑝鐎瑰本鏆ｉ妴?
 
-### 新增
-- 为人类测试中心 `pickUiText` 文案补齐 ja/de/fr/es/ru 字段，覆盖入口、测试页、设置项、按钮、状态、报告、弹窗和提示。
-- 为词语记忆词库、颜色名称、听觉/声学模式、反应颜色、数字记忆提示、视觉记忆调色板、抽卡等级和刮刮卡奖项补充多语言字段。
-- 动态反馈新增多语言来源，包含动态视觉、数字记忆、词语记忆、听觉记录和声学报告等运行时文案。
+### 閺傛澘顤?
+- 娑撹桨姹夌猾缁樼ゴ鐠囨洑鑵戣箛?`pickUiText` 閺傚洦顢嶇悰銉╃秷 ja/de/fr/es/ru 鐎涙顔岄敍宀冾洬閻╂牕鍙嗛崣锝冣偓浣圭ゴ鐠囨洟銆夐妴浣筋啎缂冾噣銆嶉妴浣瑰瘻闁筋喓鈧胶濮搁幀浣碘偓浣瑰Г閸涘鈧礁鑴婄粣妤€鎷伴幓鎰仛閵?
+- 娑撻缚鐦濈拠顓☆唶韫囧棜鐦濇惔鎾扁偓渚€顤侀懝鎻掓倳缁夎埇鈧礁鎯夌憴?婢规澘顒熷Ο鈥崇础閵嗕礁寮芥惔鏃堫杹閼瑰眰鈧焦鏆熺€涙顔囪箛鍡樺絹缁€鎭掆偓浣筋潒鐟欏顔囪箛鍡氱殶閼瑰弶婢橀妴浣瑰▕閸楋紕鐡戠痪褍鎷伴崚顔煎焿閸椻€愁殯妞ょ藟閸忓懎顦跨拠顓♀枅鐎涙顔岄妴?
+- 閸斻劍鈧礁寮芥＃鍫熸煀婢х偛顦跨拠顓♀枅閺夈儲绨敍灞藉瘶閸氼偄濮╅幀浣筋潒鐟欏鈧焦鏆熺€涙顔囪箛鍡愨偓浣界槤鐠囶叀顔囪箛鍡愨偓浣告儔鐟欏顔囪ぐ鏇炴嫲婢规澘顒熼幎銉ユ啞缁涘绻嶇悰灞炬閺傚洦顢嶉妴?
 
-### 修改
-- 清理“local / 本地 / 原始数据 / medical judgment / diagnosis / 专业报告”等偏开发或偏诊断表达，改为练习、观察、对比和专业检查替代说明。
-- 声学实验文案统一为“声学报告 / 加入报告”，去掉过度专业化和诊断化口吻。
-- 打字测试将“代码”相关模式文案调整为更通俗的“格式/日常”等表达，并修复最近结果等多语言显示。
-- 同步更新 smoke test 文案断言，匹配新的自然文案。
+### 娣囶喗鏁?
+- 濞撳懐鎮婇垾娓搊cal / 閺堫剙婀?/ 閸樼喎顫愰弫鐗堝祦 / medical judgment / diagnosis / 娑撴挷绗熼幎銉ユ啞閳ユ繄鐡戦崑蹇撶磻閸欐垶鍨ㄩ崑蹇氱槚閺傤叀銆冩潏鎾呯礉閺€閫涜礋缂佸啩绡勯妴浣筋潎鐎电喆鈧礁顕В鏂挎嫲娑撴挷绗熷Λ鈧弻銉︽禌娴狅綀顕╅弰搴涒偓?
+- 婢规澘顒熺€圭偤鐛欓弬鍥攳缂佺喍绔存稉琛♀偓婊冿紣鐎涳附濮ら崨?/ 閸旂姴鍙嗛幎銉ユ啞閳ユ繐绱濋崢缁樺竴鏉╁洤瀹虫稉鎾茬瑹閸栨牕鎷扮拠濠冩焽閸栨牕褰涢崥姹団偓?
+- 閹垫挸鐡уù瀣槸鐏忓棌鈧粈鍞惍浣测偓婵堟祲閸忚櫕膩瀵繑鏋冨鍫ｇ殶閺佺繝璐熼弴鎾偓姘箶閻ㄥ嫧鈧粍鐗稿?閺冦儱鐖堕垾婵堢搼鐞涖劏鎻敍灞借嫙娣囶喖顦查張鈧潻鎴犵波閺嬫粎鐡戞径姘愁嚔鐟封偓閺勫墽銇氶妴?
+- 閸氬本顒為弴瀛樻煀 smoke test 閺傚洦顢嶉弬顓♀枅閿涘苯灏柊宥嗘煀閻ㄥ嫯鍤滈悞鑸垫瀮濡楀牄鈧?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/ui/pages/toolbox_human_tests*.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
-- 自定义扫描确认 `toolbox_human_tests*.dart` 内 `pickUiText` 均含 zh/en/ja/de/fr/es/ru。
-- 自定义扫描确认无 `????` / `�` / 常见 mojibake 残留。
+- 閼奉亜鐣炬稊澶嬪閹诲繒鈥樼拋?`toolbox_human_tests*.dart` 閸?`pickUiText` 閸у洤鎯?zh/en/ja/de/fr/es/ru閵?
+- 閼奉亜鐣炬稊澶嬪閹诲繒鈥樼拋銈嗘￥ `????` / `閿熺禇 / 鐢瓕顫?mojibake 濞堝鏆€閵?
 
-### 风险变更
-- 多语言文案已逐处补齐并通过扫描，但少量非中文语言仍以短句可读为优先，后续可交给母语审校继续润色。
-- 测试中依赖旧文案的断言已更新；若外部自动化也直接匹配旧文案，需要同步调整。
+### 妞嬪酣娅撻崣妯绘纯
+- 婢舵俺顕㈢懛鈧弬鍥攳瀹告煡鈧劕顦╃悰銉╃秷楠炲爼鈧俺绻冮幍顐ｅ伎閿涘奔绲剧亸鎴﹀櫤闂堢偘鑵戦弬鍥嚔鐟封偓娴犲秳浜掗惌顓炲綖閸欘垵顕版稉杞扮喘閸忓牞绱濋崥搴ｇ敾閸欘垯姘︾紒娆愮槤鐠囶厼顓搁弽锛勬埛缂侇厽榧庨懝灞傗偓?
+- 濞村鐦稉顓濈贩鐠ф牗妫弬鍥攳閻ㄥ嫭鏌囩懛鈧鍙夋纯閺傚府绱遍懟銉ヮ樆闁劏鍤滈崝銊ュ娑旂喓娲块幒銉ュ爱闁板秵妫弬鍥攳閿涘矂娓剁憰浣告倱濮濄儴鐨熼弫娣偓?
 
 ## [Unreleased-PLAN_174-HUMAN-TESTS-DRAG-ACOUSTIC-REPORT] - 2026-05-18
 
-### 原因
-- 人类测试中心双列模块调整布局时，普通拖动会直接触发排序，缺少“选中/拿起”反馈，视觉上较突兀。
-- 声学实验虽然已有麦克风基础指标，但还缺少测试协议、采样沉淀和专业报告闭环。
+### 閸樼喎娲?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崣灞藉灙濡€虫健鐠嬪啯鏆ｇ敮鍐ㄧ湰閺冭绱濋弲顕€鈧碍瀚嬮崝銊ょ窗閻╁瓨甯寸憴锕€褰傞幒鎺戠碍閿涘瞼宸辩亸鎴斺偓婊堚偓澶夎厬/閹疯儻鎹ｉ垾婵嗗冀妫ｅ牞绱濈憴鍡氼潕娑撳﹨绶濈粣浣稿帎閵?
+- 婢规澘顒熺€圭偤鐛欓搹鐣屽姧瀹稿弶婀佹ス锕€鍘犳搴＄唨绾偓閹稿洦鐖ｉ敍灞肩稻鏉╂宸辩亸鎴炵ゴ鐠囨洖宕楃拋顔衡偓渚€鍣伴弽閿嬬焽濞ｂ偓閸滃奔绗撴稉姘Г閸涘﹪妫撮悳顖樷偓?
 
-### 新增
-- 声学实验新增模式采样记录，按低音、高音、持续和噪声仪保存聚合样本。
-- 声学实验新增专业报告入口，展示相对 dBFS、峰值、音高、音高波动、目标命中、信噪比、削波、质量等级和复测建议。
-- 声学实验新增协议提示与样本写入流程，明确噪声底、低音/高音和持续发声的采样方法。
+### 閺傛澘顤?
+- 婢规澘顒熺€圭偤鐛欓弬鏉款杻濡€崇础闁插洦鐗辩拋鏉跨秿閿涘本瀵滄担搴ㄧ叾閵嗕線鐝棅鐐解偓浣瑰瘮缂侇厼鎷伴崳顏勶紣娴狀亙绻氱€涙浠涢崥鍫熺壉閺堫兙鈧?
+- 婢规澘顒熺€圭偤鐛欓弬鏉款杻娑撴挷绗熼幎銉ユ啞閸忋儱褰涢敍灞界潔缁€铏规祲鐎?dBFS閵嗕礁鍢查崐绗衡偓渚€鐓舵妯糕偓渚€鐓舵妯诲皾閸斻劊鈧胶娲伴弽鍥ф嚒娑擃厹鈧椒淇婇崳顏呯槷閵嗕礁澧涘▔顫偓浣藉窛闁插繒鐡戠痪褍鎷版径宥嗙ゴ瀵ら缚顔呴妴?
+- 婢规澘顒熺€圭偤鐛欓弬鏉款杻閸楀繗顔呴幓鎰仛娑撳孩鐗遍張顒€鍟撻崗銉︾ウ缁嬪绱濋弰搴ｂ€橀崳顏勶紣鎼存洏鈧椒缍嗛棅?妤傛﹢鐓堕崪灞惧瘮缂侇厼褰傛竟鎵畱闁插洦鐗遍弬瑙勭《閵?
 
-### 修改
-- 人类测试中心模块排序改为长按后再拖拽，长按后卡片放大、抬升、加深边框和阴影，并保留快捷入口拖入能力。
-- 声学实时仪表补充响度一致性、过零率、削波、样本帧数和已写入样本摘要。
-- 声学报告弹窗新增显式关闭入口，降低长页面测试与移动端操作的不确定性。
+### 娣囶喗鏁?
+- 娴滆櫣琚ù瀣槸娑擃厼绺惧Ο鈥虫健閹烘帒绨弨閫涜礋闂€鎸庡瘻閸氬骸鍟€閹锋牗瀚块敍宀勬毐閹稿鎮楅崡锛勫閺€鎯с亣閵嗕焦濮崡鍥モ偓浣稿濞ｈ精绔熷鍡楁嫲闂冩潙濂栭敍灞借嫙娣囨繄鏆€韫囶偅宓庨崗銉ュ經閹锋牕鍙嗛懗钘夊閵?
+- 婢规澘顒熺€圭偞妞傛禒顏囥€冪悰銉ュ帠閸濆秴瀹虫稉鈧懛瀛樷偓褋鈧浇绻冮梿鍓佸芳閵嗕礁澧涘▔顫偓浣圭壉閺堫剙鎶氶弫鏉挎嫲瀹告彃鍟撻崗銉︾壉閺堫剚鎲崇憰浣碘偓?
+- 婢规澘顒熼幎銉ユ啞瀵湱鐛ラ弬鏉款杻閺勬儳绱￠崗鎶芥４閸忋儱褰涢敍宀勬娴ｅ酣鏆辨い鐢告桨濞村鐦稉搴Ｐ╅崝銊ь伂閹垮秳缍旈惃鍕瑝绾喖鐣鹃幀褋鈧?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_auditory_lab.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 声学报告基于设备麦克风的相对 dBFS 与本地算法，不作为医学或实验室标定结果；报告中已加入说明与复测建议。
-- 长按拖拽改变了排序触发门槛，点击进入测试不受影响，但用户需要长按后再移动才能调整布局。
+### 妞嬪酣娅撻崣妯绘纯
+- 婢规澘顒熼幎銉ユ啞閸╄桨绨拋鎯ь槵妤癸箑鍘犳搴ｆ畱閻╃顕?dBFS 娑撳孩婀伴崷鎵暬濞夋洩绱濇稉宥勭稊娑撳搫灏扮€涳附鍨ㄧ€圭偤鐛欑€广倖鐖ｇ€规氨绮ㄩ弸婊愮幢閹躲儱鎲℃稉顓炲嚒閸旂姴鍙嗙拠瀛樻娑撳骸顦插ù瀣紦鐠侇喓鈧?
+- 闂€鎸庡瘻閹锋牗瀚块弨鐟板綁娴滃棙甯撴惔蹇毿曢崣鎴︽，濡叉冻绱濋悙鐟板毊鏉╂稑鍙嗗ù瀣槸娑撳秴褰堣ぐ鍗炴惙閿涘奔绲鹃悽銊﹀煕闂団偓鐟曚線鏆遍幐澶婃倵閸愬秶些閸斻劍澧犻懗鍊熺殶閺佹潙绔风仦鈧妴?
 
 ## [Unreleased-PLAN_173-HUMAN-TESTS-BIMANUAL-TRACE-SETTLEMENT-FIX] - 2026-05-18
 
-### 原因
-- 用户截图反馈画图赛道已显示最后节点进度，但没有触发成功结算，也没有进入下一轮。
+### 閸樼喎娲?
+- 閻劍鍩涢幋顏勬禈閸欏秹顩悽璇叉禈鐠ф盯浜惧鍙夋▔缁€鐑樻付閸氬氦濡悙纭呯箻鎼达讣绱濇担鍡樼梾閺堝袝閸欐垶鍨氶崝鐔虹波缁犳绱濇稊鐔哥梾閺堝绻橀崗銉ょ瑓娑撯偓鏉烆喓鈧?
 
-### 修改
-- 画图进度显示改为已完成线段数，不再把当前目标节点误显示为已完成进度，避免 `4/4`、`10/10` 这类假满格状态。
-- 画图路径投影改为只沿当前目标线段顺序推进，并在接近目标节点时吸附到该线段终点，减少交叉线段误投影导致的结算卡死。
-- 画图到达最后节点后必定调用成功结算；样本或描线距离不足时只追加失误扣分，不再把赛道留在满进度未完成状态。
-- 描线偏离只记录失误，不再主动触发失败结算，避免复杂几何图形中短暂误投影直接结束本轮。
+### 娣囶喗鏁?
+- 閻㈣娴樻潻娑樺閺勫墽銇氶弨閫涜礋瀹告彃鐣幋鎰殠濞堝灚鏆熼敍灞肩瑝閸愬秵濡歌ぐ鎾冲閻╊喗鐖ｉ懞鍌滃仯鐠囶垱妯夌粈杞拌礋瀹告彃鐣幋鎰箻鎼达讣绱濋柆鍨帳 `4/4`閵嗕梗10/10` 鏉╂瑧琚崑鍥ㄥ姬閺嶈偐濮搁幀浣碘偓?
+- 閻㈣娴樼捄顖氱窞閹舵洖濂栭弨閫涜礋閸欘亝閮ㄨぐ鎾冲閻╊喗鐖ｇ痪鎸庮唽妞ゅ搫绨幒銊ㄧ箻閿涘苯鑻熼崷銊﹀复鏉╂垹娲伴弽鍥Ν閻愯妞傞崥鎼佹閸掓媽顕氱痪鎸庮唽缂佸牏鍋ｉ敍灞藉櫤鐏忔垳姘﹂崣澶屽殠濞堜絻顕ら幎鏇炲鐎佃壈鍤ч惃鍕波缁犳宕卞姹団偓?
+- 閻㈣娴橀崚鎷屾彧閺堚偓閸氬氦濡悙鐟版倵韫囧懎鐣剧拫鍐暏閹存劕濮涚紒鎾剁暬閿涙稒鐗遍張顒佸灗閹诲繒鍤庣捄婵堫瀲娑撳秷鍐婚弮璺哄涧鏉╄棄濮炴径杈嚖閹碉絽鍨庨敍灞肩瑝閸愬秵濡哥挧娑壕閻ｆ瑥婀陇绻樻惔锔芥弓鐎瑰本鍨氶悩鑸碘偓浣碘偓?
+- 閹诲繒鍤庨崑蹇曨瀲閸欘亣顔囪ぐ鏇炪亼鐠囶垽绱濇稉宥呭晙娑撹濮╃憴锕€褰傛径杈Е缂佹挾鐣婚敍宀勪缉閸忓秴顦查弶鍌氬殤娴ｆ洖娴樿ぐ顫厬閻厽娈忕拠顖涘瑜拌京娲块幒銉х波閺夌喐婀版潪顔衡偓?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "bimanual trace lane completes from continuous sliding"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 画图失败更多依赖整轮超时或停止结算，偏离路径会扣分但不立即打断；这更符合练习场景，也避免复杂图案误杀。
+### 妞嬪酣娅撻崣妯绘纯
+- 閻㈣娴樻径杈Е閺囨潙顦挎笟婵婄閺佺鐤嗙搾鍛閹存牕浠犲銏㈢波缁犳绱濋崑蹇曨瀲鐠侯垰绶炴导姘⒏閸掑棔绲炬稉宥囩彌閸楄櫕澧﹂弬顓ㄧ幢鏉╂瑦娲跨粭锕€鎮庣紒鍐х瘎閸︾儤娅欓敍灞肩瘍闁灝鍘ゆ径宥嗘絽閸ョ偓顢嶇拠顖涙絻閵?
 
 ## [Unreleased-PLAN_172-HUMAN-TESTS-BIMANUAL-TRACE-REWRITE-PRACTICE] - 2026-05-18
 
-### 原因
-- 用户反馈双手协调画图在改为滑动描线后仍无法稳定触发成功，需要彻底重做画图完成判定。
-- 当前默认左右均为画图已不符合最新训练入口预期，需要改为左右弹球默认测试，并补充单侧练习模式。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閸欏本澧滈崡蹇氱殶閻㈣娴橀崷銊︽暭娑撶儤绮﹂崝銊﹀伎缁惧灝鎮楁禒宥嗘￥濞夋洜菙鐎规俺袝閸欐垶鍨氶崝鐕傜礉闂団偓鐟曚礁浜ゆ惔鏇㈠櫢閸嬫氨鏁鹃崶鎯х暚閹存劕鍨界€规哎鈧?
+- 瑜版挸澧犳妯款吇瀹革箑褰搁崸鍥﹁礋閻㈣娴樺韫瑝缁楋箑鎮庨張鈧弬鎷岊唲缂佸啫鍙嗛崣锝夘暕閺堢噦绱濋棁鈧憰浣规暭娑撳搫涔忛崣鍐茶剨閻炲啴绮拋銈嗙ゴ鐠囨洩绱濋獮鎯八夐崗鍛礋娓氀呯矊娑旂姵膩瀵繈鈧?
 
-### 新增
-- 新增默认关闭的单侧练习开关，可选择只练左侧或只练右侧；休息侧不参与同步分、准确率和真实命中统计。
+### 閺傛澘顤?
+- 閺傛澘顤冩妯款吇閸忔娊妫撮惃鍕礋娓氀呯矊娑旂姴绱戦崗绛圭礉閸欘垶鈧瀚ㄩ崣顏嗙矊瀹革缚鏅堕幋鏍у涧缂佸啫褰告笟褝绱辨导鎴炰紖娓氀傜瑝閸欏倷绗岄崥灞绢劄閸掑棎鈧礁鍣涵顔惧芳閸滃瞼婀＄€圭偛鎳℃稉顓犵埠鐠伮扳偓?
 
-### 修改
-- 双手协调默认左右任务改为弹球，首页提示和模式摘要同步更新为默认弹球。
-- 画图判定重写为整条路径连续进度模型：从起点附近开始，滑动时按路径投影推进，完成时同时检查路径进度、实际描线距离和连续样本数。
-- 画图赛道不再在按下时推进完成，点击节点或跳点无法跨段触发成功；滑动沿线完成可稳定结算。
+### 娣囶喗鏁?
+- 閸欏本澧滈崡蹇氱殶姒涙顓诲锕€褰告禒璇插閺€閫涜礋瀵湱鎮嗛敍宀勵浕妞ゅ灚褰佺粈鍝勬嫲濡€崇础閹芥顩﹂崥灞绢劄閺囧瓨鏌婃稉娲帛鐠併倕鑴婇悶鍐︹偓?
+- 閻㈣娴橀崚銈呯暰闁插秴鍟撴稉鐑樻殻閺壜ょ熅瀵板嫯绻涚紒顓＄箻鎼达附膩閸ㄥ绱版禒搴ゆ崳閻愬綊妾潻鎴濈磻婵绱濆鎴濆З閺冭埖瀵滅捄顖氱窞閹舵洖濂栭幒銊ㄧ箻閿涘苯鐣幋鎰閸氬本妞傚Λ鈧弻銉ㄧ熅瀵板嫯绻樻惔锔衡偓浣哥杽闂勫懏寮跨痪鑳獩缁傝鎷版潻鐐电敾閺嶉攱婀伴弫鑸偓?
+- 閻㈣娴樼挧娑壕娑撳秴鍟€閸︺劍瀵滄稉瀣閹恒劏绻樼€瑰本鍨氶敍宀€鍋ｉ崙鏄忓Ν閻愯鍨ㄧ捄宕囧仯閺冪姵纭剁捄銊︻唽鐟欙箑褰傞幋鎰閿涙稒绮﹂崝銊﹂儴缁惧灝鐣幋鎰讲缁嬪啿鐣剧紒鎾剁暬閵?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "bimanual trace lane completes from continuous sliding"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 画图视觉曲线仍使用折线近似判定，复杂曲线会以较宽容路径阈值吸收偏差；后续可继续按真曲线采样提升手感。
+### 妞嬪酣娅撻崣妯绘纯
+- 閻㈣娴樼憴鍡氼潕閺囪尙鍤庢禒宥勫▏閻劍濮岀痪鑳箮娴肩厧鍨界€规熬绱濇径宥嗘絽閺囪尙鍤庢导姘簰鏉堝啫顔旂€圭鐭惧鍕閸婄厧鎯涢弨璺轰焊瀹割噯绱遍崥搴ｇ敾閸欘垳鎴风紒顓熷瘻閻喐娲哥痪鍧楀櫚閺嶉攱褰侀崡鍥ㄥ閹扮喆鈧?
 
 ## [Unreleased-PLAN_171-HUMAN-TESTS-BIMANUAL-TRACE-GEOMETRY-FIX] - 2026-05-18
 
-### 原因
-- 双手协调画图赛道仍存在点击节点即可完成的漏洞，没有强制持续滑动描线；图案有效尺寸偏小，且缺少不随机节点的简单几何图形。
+### 閸樼喎娲?
+- 閸欏本澧滈崡蹇氱殶閻㈣娴樼挧娑壕娴犲秴鐡ㄩ崷銊у仯閸戞槒濡悙鐟板祮閸欘垰鐣幋鎰畱濠曞繑绀婇敍灞剧梾閺堝宸遍崚鑸靛瘮缂侇厽绮﹂崝銊﹀伎缁惧尅绱遍崶鐐攳閺堝鏅ョ亸鍝勵嚟閸嬪繐鐨敍灞肩瑬缂傚搫鐨稉宥夋閺堥缚濡悙鍦畱缁犫偓閸楁洖鍤戞担鏇炴禈瑜邦潿鈧?
 
-### 新增
-- 画图图案新增三角形、正方形、长方形、圆形、梯形、菱形、多面体等固定几何模式，固定图案不使用随机节点。
+### 閺傛澘顤?
+- 閻㈣娴橀崶鐐攳閺傛澘顤冩稉澶庮潡瑜邦潿鈧焦顒滈弬鐟拌埌閵嗕線鏆遍弬鐟拌埌閵嗕礁娓捐ぐ顫偓浣诡潽瑜邦潿鈧浇褰佃ぐ顫偓浣割樋闂堫澀缍嬬粵澶婃祼鐎规艾鍤戞担鏇熌佸蹇ョ礉閸ュ搫鐣鹃崶鐐攳娑撳秳濞囬悽銊╂閺堥缚濡悙骞库偓?
 
-### 修改
-- 固定几何图案按更大的有效舞台尺寸生成，随机图案也扩大了路径半径和边界使用率。
-- 描线判定新增连续样本数、描绘距离和进度增长门槛，每段必须持续滑动足够距离后才能进入下一段，点击终点节点不再能直接完成。
-- 画图设置文案从“随机节点风格”调整为“图案模式”，兼容随机风格和固定几何模式。
+### 娣囶喗鏁?
+- 閸ュ搫鐣鹃崙鐘辩秿閸ョ偓顢嶉幐澶嬫纯婢堆呮畱閺堝鏅ラ懜鐐插酱鐏忓搫顕悽鐔稿灇閿涘矂娈㈤張鍝勬禈濡楀牅绡冮幍鈺併亣娴滃棜鐭惧鍕磹瀵板嫬鎷版潏鍦櫕娴ｈ法鏁ら悳鍥モ偓?
+- 閹诲繒鍤庨崚銈呯暰閺傛澘顤冩潻鐐电敾閺嶉攱婀伴弫鑸偓浣瑰伎缂佹绐涚粋璇叉嫲鏉╂稑瀹虫晶鐐烘毐闂傘劍顫犻敍灞剧槨濞堥潧绻€妞ょ粯瀵旂紒顓熺拨閸斻劏鍐绘径鐔荤獩缁傝鎮楅幍宥堝厴鏉╂稑鍙嗘稉瀣╃濞堢绱濋悙鐟板毊缂佸牏鍋ｉ懞鍌滃仯娑撳秴鍟€閼崇晫娲块幒銉ョ暚閹存劑鈧?
+- 閻㈣娴樼拋鍓х枂閺傚洦顢嶆禒搴樷偓婊堟閺堥缚濡悙褰掝棑閺嶅皷鈧繆鐨熼弫缈犺礋閳ユ粌娴樺鍫熌佸蹇娾偓婵撶礉閸忕厧顔愰梾蹇旀簚妞嬪孩鐗搁崪灞芥祼鐎规艾鍤戞担鏇熌佸蹇嬧偓?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 描线门槛提高后，快速跳点会被判为无效；为了保留手感，门槛只要求少量连续样本和约三分之一线段长度的描绘距离。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹诲繒鍤庨梻銊︻潬閹绘劙鐝崥搴礉韫囶偊鈧喕鐑﹂悙閫涚窗鐞氼偄鍨芥稉鐑樻￥閺佸牞绱辨稉杞扮啊娣囨繄鏆€閹靛鍔呴敍宀勬，濡叉稑褰х憰浣圭湴鐏忔垿鍣烘潻鐐电敾閺嶉攱婀伴崪宀€瀹虫稉澶婂瀻娑斿绔寸痪鎸庮唽闂€鍨閻ㄥ嫭寮跨紒妯跨獩缁傛眹鈧?
 
 ## [Unreleased-PLAN_170-HUMAN-TESTS-BIMANUAL-TRACE-JUMP-IMMERSIVE] - 2026-05-18
 
-### 原因
-- 双手协调画图仍可通过触达节点快速推进，缺少真实沿线描摹要求；跳高虽有移动平台但识别度和小游戏感不足；沉浸式横屏中左右赛道标题、目标和说明占用空间过多。
+### 閸樼喎娲?
+- 閸欏本澧滈崡蹇氱殶閻㈣娴樻禒宥呭讲闁俺绻冪憴锕佹彧閼哄倻鍋ｈ箛顐︹偓鐔稿腹鏉╂冻绱濈紓鍝勭毌閻喎鐤勫▽璺ㄥ殠閹诲繑鎳濈憰浣圭湴閿涙稖鐑︽妯挎閺堝些閸斻劌閽╅崣棰佺稻鐠囧棗鍩嗘惔锕€鎷扮亸蹇旂埗閹村繑鍔呮稉宥堝喕閿涙稒鐭囧ù绋跨础濡亜鐫嗘稉顓炰箯閸欏疇绂岄柆鎾寸垼妫版ǜ鈧胶娲伴弽鍥ф嫲鐠囧瓨妲戦崡鐘垫暏缁屾椽妫挎潻鍥ь樋閵?
 
-### 修改
-- 画图判定改为沿当前线段连续推进，基于手指到线段的距离和投影进度判定，点击远端节点不再能直接完成。
-- 画图舞台新增已描绘轨迹和当前线段进度反馈，同时保留下一节点高亮和方向箭头。
-- 跳高改为释放后进入短暂空中状态，角色沿弧线飞向平台，落地时再按平台当前位置、蓄力和容错判定成功或坠落。
-- 跳高舞台强化终点线、旗帜、目标平台高亮、平台高光和角色图标，提升小游戏识别度。
-- 沉浸式紧凑全屏隐藏左右赛道标题、目标和说明，仅保留必要进度、状态和操作舞台。
+### 娣囶喗鏁?
+- 閻㈣娴橀崚銈呯暰閺€閫涜礋濞屽灝缍嬮崜宥囧殠濞堜絻绻涚紒顓熷腹鏉╂冻绱濋崺杞扮艾閹靛瀵氶崚鎵殠濞堢數娈戠捄婵堫瀲閸滃本濮囪ぐ杈箻鎼达箑鍨界€规熬绱濋悙鐟板毊鏉╂粎顏懞鍌滃仯娑撳秴鍟€閼崇晫娲块幒銉ョ暚閹存劑鈧?
+- 閻㈣娴橀懜鐐插酱閺傛澘顤冨鍙夊伎缂佹寤烘潻鐟版嫲瑜版挸澧犵痪鎸庮唽鏉╂稑瀹抽崣宥夘洯閿涘苯鎮撻弮鏈电箽閻ｆ瑤绗呮稉鈧懞鍌滃仯妤傛ü瀵掗崪灞炬煙閸氭垹顔勬径娣偓?
+- 鐠烘娊鐝弨閫涜礋闁插﹥鏂侀崥搴ょ箻閸忋儳鐓弳鍌溾敄娑擃厾濮搁幀渚婄礉鐟欐帟澹婂▽鍨К缁惧潡顥ｉ崥鎴濋挬閸欏府绱濋拃钘夋勾閺冭泛鍟€閹稿閽╅崣鏉跨秼閸撳秳缍呯純顔衡偓浣芥惈閸旀稑鎷扮€瑰綊鏁婇崚銈呯暰閹存劕濮涢幋鏍ф浆閽€濮愨偓?
+- 鐠烘娊鐝懜鐐插酱瀵搫瀵茬紒鍫㈠仯缁捐￥鈧焦妫楃敮婧库偓浣烘窗閺嶅洤閽╅崣浼寸彯娴滎喓鈧礁閽╅崣浼寸彯閸忓鎷扮憴鎺曞閸ョ偓鐖ｉ敍灞惧絹閸楀洤鐨〒鍛婂灆鐠囧棗鍩嗘惔锔衡偓?
+- 濞屽韫堝蹇曟彛閸戞垵鍙忕仦蹇涙閽樺繐涔忛崣瀹犵闁挻鐖ｆ０妯糕偓浣烘窗閺嶅洤鎷扮拠瀛樻閿涘奔绮庢穱婵堟殌韫囧懓顩︽潻娑樺閵嗕胶濮搁幀浣告嫲閹垮秳缍旈懜鐐插酱閵?
 
-### 验证
-- 待运行：`flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
+### 妤犲矁鐦?
+- 瀵板懓绻嶇悰宀嬬窗`flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 画图比上一版更强调连续操作，容错仍沿用难度阈值；后续可根据实际手感继续微调阈值和失败上限。
+### 妞嬪酣娅撻崣妯绘纯
+- 閻㈣娴樺В鏂剧瑐娑撯偓閻楀牊娲垮楦跨殶鏉╃偟鐢婚幙宥勭稊閿涘苯顔愰柨娆庣矝濞岃法鏁ら梾鎯у闂冨牆鈧》绱遍崥搴ｇ敾閸欘垱鐗撮幑顔肩杽闂勫懏澧滈幇鐔烘埛缂侇厼浜曠拫鍐閸婄厧鎷版径杈Е娑撳﹪妾洪妴?
 
 ## [Unreleased-PLAN_169-HUMAN-TESTS-BIMANUAL-DIFFICULTY-ENDLESS] - 2026-05-18
 
-### 原因
-- 双手协调的难度预设仍主要影响隐藏公式，弹球、画图和跳高缺少更多可匹配难度的显式玩法参数；复杂画图路径的方向提示不足，弹球单球缺少拖尾反馈，也缺少可持续练习的无限模式。
+### 閸樼喎娲?
+- 閸欏本澧滈崡蹇氱殶閻ㄥ嫰姣︽惔锕傤暕鐠佸彞绮涙稉鏄忣洣瑜板崬鎼烽梾鎰閸忣剙绱￠敍灞借剨閻炲啨鈧胶鏁鹃崶鎯ф嫲鐠烘娊鐝紓鍝勭毌閺囨潙顦块崣顖氬爱闁板秹姣︽惔锔炬畱閺勬儳绱￠悳鈺傜《閸欏倹鏆熼敍娑橆槻閺夊倻鏁鹃崶鎹愮熅瀵板嫮娈戦弬鐟版倻閹绘劗銇氭稉宥堝喕閿涘苯鑴婇悶鍐ㄥ礋閻炲啰宸辩亸鎴炲珛鐏忔儳寮芥＃鍫礉娑旂喓宸辩亸鎴濆讲閹镐胶鐢荤紒鍐х瘎閻ㄥ嫭妫ら梽鎰佸蹇嬧偓?
 
-### 新增
-- 新增无限模式：成功持续得分并自动进入下一组，失败只重开下一组，不立即进入报告；手动停止或时间耗尽后结算。
-- 弹球新增碰撞加速开关、球大小、小球个数设置，并为单球/多球增加拖尾效果。
-- 画图新增线段几何模式（直线、曲线、随机）、最小角度限制、分段彩色提示和更明显的下一节点方向箭头。
-- 跳高新增平台宽度和宽度随机区间设置，可设置为固定宽度或按区间随机。
+### 閺傛澘顤?
+- 閺傛澘顤冮弮鐘绘濡€崇础閿涙碍鍨氶崝鐔稿瘮缂侇厼绶遍崚鍡楄嫙閼奉亜濮╂潻娑樺弳娑撳绔寸紒鍕剁礉婢惰精瑙﹂崣顏堝櫢瀵偓娑撳绔寸紒鍕剁礉娑撳秶鐝涢崡瀹犵箻閸忋儲濮ら崨濠忕幢閹靛濮╅崑婊勵剾閹存牗妞傞梻纾嬧偓妤€鏁栭崥搴ｇ波缁犳ぜ鈧?
+- 瀵湱鎮嗛弬鏉款杻绾扮増鎸掗崝鐘烩偓鐔风磻閸忕偨鈧胶鎮嗘径褍鐨妴浣哥毈閻炲啩閲滈弫鎷岊啎缂冾噯绱濋獮鏈佃礋閸楁洜鎮?婢舵氨鎮嗘晶鐐插閹锋牕鐔弫鍫熺亯閵?
+- 閻㈣娴橀弬鏉款杻缁炬寧顔岄崙鐘辩秿濡€崇础閿涘牏娲跨痪瑁も偓浣规锤缁捐￥鈧線娈㈤張鐚寸礆閵嗕焦娓剁亸蹇氼潡鎼达箓妾洪崚韬测偓浣稿瀻濞堥潧鍍甸懝鍙夊絹缁€鍝勬嫲閺囧瓨妲戦弰鍓ф畱娑撳绔撮懞鍌滃仯閺傜懓鎮滅粻顓炪仈閵?
+- 鐠烘娊鐝弬鏉款杻楠炲啿褰寸€硅棄瀹抽崪灞筋啍鎼达箓娈㈤張鍝勫隘闂傜顔曠純顕嗙礉閸欘垵顔曠純顔昏礋閸ュ搫鐣剧€硅棄瀹抽幋鏍ㄥ瘻閸栨椽妫块梾蹇旀簚閵?
 
-### 修改
-- 难度切换会同步应用一整组预设，自动调整节点数/角度、弹球速度/球数/球大小/挡板、跳高平台层数/宽度/速率等参数。
-- 画图路径生成改为每个节点沿随机方向推进，并在最小角度限制下减少过小夹角带来的路径混叠。
+### 娣囶喗鏁?
+- 闂呮儳瀹抽崚鍥ㄥ床娴兼艾鎮撳銉ョ安閻劋绔撮弫瀵哥矋妫板嫯顔曢敍宀冨殰閸斻劏鐨熼弫纾嬪Ν閻愯鏆?鐟欐帒瀹抽妴浣歌剨閻炲啴鈧喎瀹?閻炲啯鏆?閻炲啫銇囩亸?閹糕剝婢橀妴浣界儲妤傛ê閽╅崣鏉跨湴閺?鐎硅棄瀹?闁喓宸肩粵澶婂棘閺佽埇鈧?
+- 閻㈣娴樼捄顖氱窞閻㈢喐鍨氶弨閫涜礋濮ｅ繋閲滈懞鍌滃仯濞屽潡娈㈤張鐑樻煙閸氭垶甯规潻娑崇礉楠炶泛婀張鈧亸蹇氼潡鎼达箓妾洪崚鏈电瑓閸戝繐鐨潻鍥х毈婢剁顫楃敮锔芥降閻ㄥ嫯鐭惧鍕穿閸欑姰鈧?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 多球和碰撞加速会提高弹球挑战强度，默认仍保持单球且关闭碰撞加速；困难/专家预设会主动开启更高强度。
+### 妞嬪酣娅撻崣妯绘纯
+- 婢舵氨鎮嗛崪宀€顫幘鐐插闁喍绱伴幓鎰扮彯瀵湱鎮嗛幐鎴炲灛瀵搫瀹抽敍宀勭帛鐠併倓绮涙穱婵囧瘮閸楁洜鎮嗘稉鏂垮彠闂傤厾顫幘鐐插闁噦绱遍崶浼存/娑撴挸顔嶆０鍕啎娴兼矮瀵岄崝銊ョ磻閸氼垱娲挎妯哄繁鎼达负鈧?
 
 ## [Unreleased-PLAN_168-HUMAN-TESTS-BIMANUAL-PLATFORM-REFINE] - 2026-05-18
 
-### 原因
-- `工具箱 -> 人类测试中心 -> 双手协调` 中画图仍偏固定模板，弹球缺少障碍碰撞且挡板操作容易被手指遮挡，跳高仍停留在台阶/栏杆模型，不符合横向移动平台逐层登顶的目标玩法。
+### 閸樼喎娲?
+- `瀹搞儱鍙跨粻?-> 娴滆櫣琚ù瀣槸娑擃厼绺?-> 閸欏本澧滈崡蹇氱殶` 娑擃厾鏁鹃崶鍙ョ矝閸嬪繐娴愮€规碍膩閺夊尅绱濆鍦倖缂傚搫鐨梾婊咁暡绾扮増鎸掓稉鏃€灏呴弶鎸庢惙娴ｆ粌顔愰弰鎾诡潶閹靛瀵氶柆顔藉皡閿涘矁鐑︽妯圭矝閸嬫粎鏆€閸︺劌褰撮梼?閺嶅繑娼屽Ο鈥崇€烽敍灞肩瑝缁楋箑鎮庡Ο顏勬倻缁夎濮╅獮鍐插酱闁劕鐪伴惂濠氥€婇惃鍕窗閺嶅洨甯哄▔鏇樷偓?
 
-### 新增
-- 画图赛道改为带种子的随机几何节点生成，保留折线、波浪、星形、螺旋、方框、阶梯、回环等风格族，并尽量生成可读的一笔画路径。
-- 弹球赛道新增随机圆形障碍物和反弹碰撞，小球尺寸收小，挡板上移并新增底部控制条/幽灵指示，降低手指遮挡。
-- 跳高赛道新增横向移动平台、平台速率设置、难度驱动的蓄力层和逐层登顶判定。
+### 閺傛澘顤?
+- 閻㈣娴樼挧娑壕閺€閫涜礋鐢妇顫掔€涙劗娈戦梾蹇旀簚閸戠姳缍嶉懞鍌滃仯閻㈢喐鍨氶敍灞肩箽閻ｆ瑦濮岀痪瑁も偓浣瑰皾濞搭亗鈧焦妲﹁ぐ顫偓浣界仾閺冨鈧焦鏌熷鍡愨偓渚€妯佸顖樷偓浣告礀閻滎垳鐡戞搴㈢壐閺冨骏绱濋獮璺烘晼闁插繒鏁撻幋鎰讲鐠囪崵娈戞稉鈧粭鏃傛暰鐠侯垰绶為妴?
+- 瀵湱鎮嗙挧娑壕閺傛澘顤冮梾蹇旀簚閸﹀棗鑸伴梾婊咁暡閻椻晛鎷伴崣宥呰剨绾扮増鎸掗敍灞界毈閻炲啫鏄傜€靛憡鏁圭亸蹇ョ礉閹糕剝婢樻稉濠勑╅獮鑸垫煀婢х偛绨抽柈銊﹀付閸掕埖娼?楠炵晫浼掗幐鍥┿仛閿涘矂妾锋担搴㈠閹稿洭浼勯幐掳鈧?
+- 鐠烘娊鐝挧娑壕閺傛澘顤冨Ο顏勬倻缁夎濮╅獮鍐插酱閵嗕礁閽╅崣浼粹偓鐔哄芳鐠佸墽鐤嗛妴渚€姣︽惔锕傗攳閸斻劎娈戦拑鍕鐏炲倸鎷伴柅鎰湴閻у銆婇崚銈呯暰閵?
 
-### 修改
-- 跳高设置从“台阶目标/障碍密度”改为“平台层数/平台速率”，点击或蓄力只推进一层，命中平台才继续。
-- 弹球文案与物理节奏改为围绕底部控制区、随机障碍和更小球体展开。
-- 画图设置文案从固定路径图案改为随机节点风格，强调每回合几何节点会变化。
+### 娣囶喗鏁?
+- 鐠烘娊鐝拋鍓х枂娴犲簶鈧粌褰撮梼鍓佹窗閺?闂呮粎顣茬€靛棗瀹抽垾婵囨暭娑撹　鈧粌閽╅崣鏉跨湴閺?楠炲啿褰撮柅鐔哄芳閳ユ繐绱濋悙鐟板毊閹存牞鎼崝娑樺涧閹恒劏绻樻稉鈧仦鍌︾礉閸涙垝鑵戦獮鍐插酱閹靛秶鎴风紒顓溾偓?
+- 瀵湱鎮嗛弬鍥攳娑撳海澧块悶鍡氬Ν婵傚繑鏁兼稉鍝勬纯缂佹洖绨抽柈銊﹀付閸掕泛灏妴渚€娈㈤張娲绾板秴鎷伴弴鏉戠毈閻炲啩缍嬬仦鏇炵磻閵?
+- 閻㈣娴樼拋鍓х枂閺傚洦顢嶆禒搴℃祼鐎规俺鐭惧鍕禈濡楀牊鏁兼稉娲閺堥缚濡悙褰掝棑閺嶇》绱濆楦跨殶濮ｅ繐娲栭崥鍫濆殤娴ｆ洝濡悙閫涚窗閸欐ê瀵查妴?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 跳高判定由固定进度推进改为平台横向命中检测，默认保留较宽容的命中窗口；专家难度会明显更依赖时机和蓄力。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐠烘娊鐝崚銈呯暰閻㈠崬娴愮€规俺绻樻惔锔藉腹鏉╂稒鏁兼稉鍝勯挬閸欑増铆閸氭垵鎳℃稉顓燁梾濞村绱濇妯款吇娣囨繄鏆€鏉堝啫顔旂€瑰湱娈戦崨鎴掕厬缁愭褰涢敍娑楃瑩鐎瑰爼姣︽惔锔跨窗閺勫孩妯夐弴缈犵贩鐠ф牗妞傞張鍝勬嫲閽冨嫬濮忛妴?
 
 ## [Unreleased-PLAN_167-HUMAN-TESTS-BIMANUAL-FREE-COMBO] - 2026-05-18
 
-### 原因
-- `工具箱 -> 人类测试中心 -> 双手协调` 仍以三种固定左右配对为主，无法自由组合左右手任务；画图图案较少，弹球参数不可调且挡板偏厚，跳高/登阶玩法仍停留在雏形。
+### 閸樼喎娲?
+- `瀹搞儱鍙跨粻?-> 娴滆櫣琚ù瀣槸娑擃厼绺?-> 閸欏本澧滈崡蹇氱殶` 娴犲秳浜掓稉澶岊潚閸ュ搫鐣惧锕€褰搁柊宥咁嚠娑撹桨瀵岄敍灞炬￥濞夋洝鍤滈悽杈╃矋閸氬牆涔忛崣铏娴犺濮熼敍娑氭暰閸ユ儳娴樺鍫ｇ窛鐏忔埊绱濆鍦倖閸欏倹鏆熸稉宥呭讲鐠嬪啩绗栭幐鈩冩緲閸嬪繐甯ら敍宀冪儲妤?閻у妯侀悳鈺傜《娴犲秴浠犻悾娆忔躬闂嗗繐鑸伴妴?
 
-### 新增
-- 双手协调设置新增左右手自由组合，左手和右手都可独立选择画图、弹球或跳高，默认均为画图。
-- 新增统一难度设置，并补充画图图案、线段样式、节点数量，弹球速率/回弹目标/挡板宽度/挡板厚度，以及跳高台阶目标/障碍密度设置。
+### 閺傛澘顤?
+- 閸欏本澧滈崡蹇氱殶鐠佸墽鐤嗛弬鏉款杻瀹革箑褰搁幍瀣殰閻㈣京绮嶉崥鍫礉瀹革附澧滈崪灞藉礁閹靛鍏橀崣顖滃缁斿鈧瀚ㄩ悽璇叉禈閵嗕礁鑴婇悶鍐╁灗鐠烘娊鐝敍宀勭帛鐠併倕娼庢稉铏规暰閸ヤ勘鈧?
+- 閺傛澘顤冪紒鐔剁闂呮儳瀹崇拋鍓х枂閿涘苯鑻熺悰銉ュ帠閻㈣娴橀崶鐐攳閵嗕胶鍤庡▓鍨壉瀵繈鈧浇濡悙瑙勬殶闁插骏绱濆鍦倖闁喓宸?閸ョ偛鑴婇惄顔界垼/閹糕剝婢樼€硅棄瀹?閹糕剝婢橀崢姘閿涘奔浜掗崣濠呯儲妤傛ê褰撮梼鍓佹窗閺?闂呮粎顣茬€靛棗瀹崇拋鍓х枂閵?
 
-### 修改
-- 回合生成从固定三模式配对改为读取左右任务配置，并让难度影响回合时长、画图容错、弹球速度和跳高障碍密度。
-- 画图赛道扩展为混合、折线、波浪、星形、螺旋、方框、阶梯、回环等图案，支持实线、虚线、点线和宽带样式。
-- 弹球挡板改为更细的默认厚度，并将小球速度、目标回弹次数和碰撞上限纳入配置。
-- 跳高赛道补齐栏杆障碍、蓄力跳跃、跨越等级和状态反馈，不再只是普通台阶占位。
+### 娣囶喗鏁?
+- 閸ョ偛鎮庨悽鐔稿灇娴犲骸娴愮€规矮绗佸Ο鈥崇础闁板秴顕弨閫涜礋鐠囪褰囧锕€褰告禒璇插闁板秶鐤嗛敍灞借嫙鐠佲晠姣︽惔锕€濂栭崫宥呮礀閸氬牊妞傞梹瑁も偓浣烘暰閸ユ儳顔愰柨娆嶁偓浣歌剨閻炲啴鈧喎瀹抽崪宀冪儲妤傛﹢娈扮喊宥呯槕鎼达负鈧?
+- 閻㈣娴樼挧娑壕閹碘晛鐫嶆稉鐑樿穿閸氬牄鈧焦濮岀痪瑁も偓浣瑰皾濞搭亗鈧焦妲﹁ぐ顫偓浣界仾閺冨鈧焦鏌熷鍡愨偓渚€妯佸顖樷偓浣告礀閻滎垳鐡戦崶鐐攳閿涘本鏁幐浣哥杽缁捐￥鈧浇娅勭痪瑁も偓浣哄仯缁惧灝鎷扮€硅棄鐢弽宄扮础閵?
+- 瀵湱鎮嗛幐鈩冩緲閺€閫涜礋閺囧绮忛惃鍕帛鐠併倕甯ゆ惔锔肩礉楠炶泛鐨㈢亸蹇曟倖闁喎瀹抽妴浣烘窗閺嶅洤娲栧瑙勵偧閺佹澘鎷扮喊鐗堟寬娑撳﹪妾虹痪鍐插弳闁板秶鐤嗛妴?
+- 鐠烘娊鐝挧娑壕鐞涖儵缍堥弽蹇旀綄闂呮粎顣查妴浣芥惈閸旀稖鐑︾捄鍐︹偓浣芥硶鐡掑﹦鐡戠痪褍鎷伴悩鑸碘偓浣稿冀妫ｅ牞绱濇稉宥呭晙閸欘亝妲搁弲顕€鈧艾褰撮梼璺哄窗娴ｅ秲鈧?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart`
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 新增参数集中在双手协调本地状态中，运行中仍锁定设置；默认左右均为画图，和旧版默认配对不同，但符合本轮需求。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺傛澘顤冮崣鍌涙殶闂嗗棔鑵戦崷銊ュ蓟閹靛宕楃拫鍐╂拱閸︽壆濮搁幀浣疯厬閿涘矁绻嶇悰灞艰厬娴犲秹鏀ｇ€规俺顔曠純顕嗙幢姒涙顓诲锕€褰搁崸鍥﹁礋閻㈣娴橀敍灞芥嫲閺冄呭姒涙顓婚柊宥咁嚠娑撳秴鎮撻敍灞肩稻缁楋箑鎮庨張顒冪枂闂団偓濮瑰倶鈧?
 
 ## [Unreleased-PLAN_166-HUMAN-TESTS-BIMANUAL-FULLSCREEN-NARROW-EXIT] - 2026-05-18
 
-### 原因
-- `工具箱 -> 人类测试中心 -> 双手协调` 的全屏横屏体验在低高度手机屏幕中仍会被顶部浮层和赛道卡片挤压，退出全屏入口也容易和普通页菜单语义混淆。
+### 閸樼喎娲?
+- `瀹搞儱鍙跨粻?-> 娴滆櫣琚ù瀣槸娑擃厼绺?-> 閸欏本澧滈崡蹇氱殶` 閻ㄥ嫬鍙忕仦蹇斆仦蹇庣秼妤犲苯婀担搴ㄧ彯鎼达附澧滈張鍝勭潌楠炴洑鑵戞禒宥勭窗鐞氼偊銆婇柈銊﹁癁鐏炲倸鎷扮挧娑壕閸楋紕澧栭幐銈呭竾閿涘矂鈧偓閸戝搫鍙忕仦蹇撳弳閸欙絼绡冪€硅妲楅崪灞炬珮闁岸銆夐懣婊冨礋鐠囶厺绠熷ǎ閿嬬┋閵?
 
-### 修改
-- 双手协调全屏页改为 `SafeArea + Column` 的剩余空间布局，顶部控制条不再覆盖主舞台，窄横屏下自动启用紧凑模式。
-- 全屏紧凑模式会压缩顶部摘要、隐藏次级报告图标、降低左右赛道内距，并隐藏低优先级说明文案，保留左右赛道并排、标题、目标、进度和可操作区域。
-- 全屏关闭按钮、菜单退出项统一走同一退出函数；普通页菜单不再显示“退出全屏”，避免运行中误把普通页返回当成全屏退出。
+### 娣囶喗鏁?
+- 閸欏本澧滈崡蹇氱殶閸忋劌鐫嗘い鍨暭娑?`SafeArea + Column` 閻ㄥ嫬澧挎担娆戔敄闂傛潙绔风仦鈧敍宀勩€婇柈銊﹀付閸掕埖娼稉宥呭晙鐟曞棛娲婃稉鏄忓灦閸欏府绱濈粣鍕仦蹇庣瑓閼奉亜濮╅崥顖滄暏缁毖冨櫨濡€崇础閵?
+- 閸忋劌鐫嗙槐褍鍣惧Ο鈥崇础娴兼艾甯囩紓鈺呫€婇柈銊︽喅鐟曚降鈧線娈ｉ挊蹇旑偧缁狙勫Г閸涘﹤娴橀弽鍥モ偓渚€妾锋担搴′箯閸欏疇绂岄柆鎾冲敶鐠烘繐绱濋獮鍫曟閽樺繋缍嗘导妯哄帥缁狙嗩嚛閺勫孩鏋冨鍫礉娣囨繄鏆€瀹革箑褰哥挧娑壕楠炶埖甯撻妴浣圭垼妫版ǜ鈧胶娲伴弽鍥モ偓浣界箻鎼达箑鎷伴崣顖涙惙娴ｆ粌灏崺鐔粹偓?
+- 閸忋劌鐫嗛崗鎶芥４閹稿鎸抽妴浣藉綅閸楁洟鈧偓閸戞椽銆嶇紒鐔剁鐠ф澘鎮撴稉鈧柅鈧崙鍝勫毐閺佸府绱遍弲顕€鈧岸銆夐懣婊冨礋娑撳秴鍟€閺勫墽銇氶垾婊堚偓鈧崙鍝勫弿鐏炲繆鈧繐绱濋柆鍨帳鏉╂劘顢戞稉顓☆嚖閹跺﹥娅橀柅姘躲€夋潻鏂挎礀瑜版挻鍨氶崗銊ョ潌闁偓閸戞亽鈧?
 
-### 修复
-- 修复窄横屏下左右赛道被顶部全屏浮层挤压、全屏 90 度横屏无法稳定适配手机高度的问题。
-- 修复全屏退出入口和普通页菜单语义混乱导致的误退出风险。
+### 娣囶喖顦?
+- 娣囶喖顦茬粣鍕仦蹇庣瑓瀹革箑褰哥挧娑壕鐞氼偊銆婇柈銊ュ弿鐏炲繑璇炵仦鍌涘皨閸樺鈧礁鍙忕仦?90 鎼达附铆鐏炲繑妫ゅ▔鏇犌旂€规岸鈧倿鍘ら幍瀣簚妤傛ê瀹抽惃鍕６妫版ǜ鈧?
+- 娣囶喖顦查崗銊ョ潌闁偓閸戝搫鍙嗛崣锝呮嫲閺咁噣鈧岸銆夐懣婊冨礋鐠囶厺绠熷ǎ铚傝础鐎佃壈鍤ч惃鍕嚖闁偓閸戞椽顥撻梽鈹库偓?
 
-### 验证
+### 妤犲矁鐦?
 - `flutter analyze lib/src/ui/pages/toolbox_human_tests_bimanual.dart test/toolbox_human_tests_extended_smoke_test.dart`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart --plain-name "human tests hub exposes the new visual auditory and coordination modules"`
 - `flutter test test/toolbox_human_tests_extended_smoke_test.dart`
 
-### 风险变更
-- 紧凑横屏下会减少赛道内部说明文字，规则细节主要依赖标题、目标、进度和设置/报告补充；后续若继续增加赛道类型，需要同步确认紧凑模式仍保留足够可读信息。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁毖冨櫨濡亜鐫嗘稉瀣╃窗閸戝繐鐨挧娑壕閸愬懘鍎寸拠瀛樻閺傚洤鐡ч敍宀冾潐閸掓瑧绮忛懞鍌欏瘜鐟曚椒绶风挧鏍ㄧ垼妫版ǜ鈧胶娲伴弽鍥モ偓浣界箻鎼达箑鎷扮拋鍓х枂/閹躲儱鎲＄悰銉ュ帠閿涙稑鎮楃紒顓″缂佈呯敾婢х偛濮炵挧娑壕缁鐎烽敍宀勬付鐟曚礁鎮撳銉р€樼拋銈囨彛閸戞垶膩瀵繋绮涙穱婵堟殌鐡掑啿顧勯崣顖濐嚢娣団剝浼呴妴?
 
 ## [Unreleased-PLAN_165-PORTABLE-PATH-DEFAULTS] - 2026-05-18
 
-### 原因
-- 项目作为开源协作项目，不应依赖个人机器上的固定盘符、用户目录或外部素材目录；旧的 fallback 路径会让新成员拉取后出现不可复现的构建、测试和数据生成行为。
-- 前一轮已修复旧 CMake 缓存迁移问题，本轮继续收口脚本和文档中的个人绝对路径默认值。
+### 閸樼喎娲?
+- 妞ゅ湱娲版担婊€璐熷鈧┃鎰礂娴ｆ粓銆嶉惄顕嗙礉娑撳秴绨叉笟婵婄娑擃亙姹夐張鍝勬珤娑撳﹦娈戦崶鍝勭暰閻╂顑侀妴浣烘暏閹撮娲拌ぐ鏇熷灗婢舵牠鍎寸槐鐘虫綏閻╊喖缍嶉敍娑欐＋閻?fallback 鐠侯垰绶炴导姘愁唨閺傜増鍨氶崨妯诲閸欐牕鎮楅崙铏瑰箛娑撳秴褰叉径宥囧箛閻ㄥ嫭鐎鎭掆偓浣圭ゴ鐠囨洖鎷伴弫鐗堝祦閻㈢喐鍨氱悰灞艰礋閵?
+- 閸撳秳绔存潪顔煎嚒娣囶喖顦查弮?CMake 缂傛挸鐡ㄦ潻浣盒╅梻顕€顣介敍灞炬拱鏉烆喚鎴风紒顓熸暪閸欙綀鍓奸張顒€鎷伴弬鍥ㄣ€傛稉顓犳畱娑擃亙姹夌紒婵嗩嚠鐠侯垰绶炴妯款吇閸婄鈧?
 
-### 修改
-- `scripts/tooling-env.ps1` 移除 Flutter、CMake、Android SDK 等个人机器路径 fallback，改为环境变量、PATH、项目内 `.fvm` / `.tooling` 和系统派生目录。
-- `scripts/opencode-minimax-m27.ps1` 与 `scripts/orchestrate-opencode-models.ps1` 移除个人 `C:\Users\...` opencode fallback，改为 `OPENCODE_BIN` 或 PATH。
-- 每日决策数据生成/审计脚本的默认输入输出改为项目内 `resources/daily_choice/...`、`build/generated/daily_choice/...` 或对应环境变量覆盖。
-- `README.md`、`.env.template`、`modules/toolbox/README.md`、`PROJECT_DOMAIN.md` 补充可移植工具链、数据目录和协作路径约束说明。
+### 娣囶喗鏁?
+- `scripts/tooling-env.ps1` 缁夊娅?Flutter閵嗕竼Make閵嗕竸ndroid SDK 缁涘閲滄禍鐑樻簚閸ｃ劏鐭惧?fallback閿涘本鏁兼稉铏瑰箚婢у啫褰夐柌蹇嬧偓涓矨TH閵嗕線銆嶉惄顔煎敶 `.fvm` / `.tooling` 閸滃瞼閮寸紒鐔告烦閻㈢喓娲拌ぐ鏇樷偓?
+- `scripts/opencode-minimax-m27.ps1` 娑?`scripts/orchestrate-opencode-models.ps1` 缁夊娅庢稉顏冩眽 `C:\Users\...` opencode fallback閿涘本鏁兼稉?`OPENCODE_BIN` 閹?PATH閵?
+- 濮ｅ繑妫╅崘宕囩摜閺佺増宓侀悽鐔稿灇/鐎孤ゎ吀閼存碍婀伴惃鍕帛鐠併倛绶崗銉ㄧ翻閸戠儤鏁兼稉娲€嶉惄顔煎敶 `resources/daily_choice/...`閵嗕梗build/generated/daily_choice/...` 閹存牕顕惔鏃傚箚婢у啫褰夐柌蹇氼洬閻╂牓鈧?
+- `README.md`閵嗕梗.env.template`閵嗕梗modules/toolbox/README.md`閵嗕梗PROJECT_DOMAIN.md` 鐞涖儱鍘栭崣顖溞╁宥呬紣閸忕兘鎽奸妴浣规殶閹诡喚娲拌ぐ鏇炴嫲閸楀繋缍旂捄顖氱窞缁撅附娼拠瀛樻閵?
 
-### 验证
-- 运行严格路径扫描：`scripts`、`README.md`、`PROJECT_DOMAIN.md`、`modules`、`.env.template` 中未发现运行时 Windows 盘符路径或 `vocabularySleep-resources` 依赖。
-- PowerShell Parser 语法检查通过：`scripts/tooling-env.ps1`、`scripts/build.ps1`、`scripts/dev-run.ps1`、`scripts/verify-local-analysis.ps1`、`scripts/test.ps1`、`scripts/opencode-minimax-m27.ps1`、`scripts/orchestrate-opencode-models.ps1`。
-- `python -m py_compile` 通过：5 个每日决策数据生成/审计脚本。
-- `.\scripts\build.ps1 -Target windows -DryRun -NoPubGet`、`.\scripts\test.ps1 -Target test\sanity_test.dart -DryRun -NoPubGet`、`.\scripts\test.ps1 -Target test\sanity_test.dart -NoPubGet` 均通过。
-- `git diff --check` 通过。
+### 妤犲矁鐦?
+- 鏉╂劘顢戞稉銉︾壐鐠侯垰绶為幍顐ｅ伎閿涙瓪scripts`閵嗕梗README.md`閵嗕梗PROJECT_DOMAIN.md`閵嗕梗modules`閵嗕梗.env.template` 娑擃厽婀崣鎴犲箛鏉╂劘顢戦弮?Windows 閻╂顑佺捄顖氱窞閹?`vocabularySleep-resources` 娓氭繆绂嗛妴?
+- PowerShell Parser 鐠囶厽纭跺Λ鈧弻銉┾偓姘崇箖閿涙瓪scripts/tooling-env.ps1`閵嗕梗scripts/build.ps1`閵嗕梗scripts/dev-run.ps1`閵嗕梗scripts/verify-local-analysis.ps1`閵嗕梗scripts/test.ps1`閵嗕梗scripts/opencode-minimax-m27.ps1`閵嗕梗scripts/orchestrate-opencode-models.ps1`閵?
+- `python -m py_compile` 闁俺绻冮敍? 娑擃亝鐦￠弮銉ュ枀缁涙牗鏆熼幑顔炬晸閹?鐎孤ゎ吀閼存碍婀伴妴?
+- `.\scripts\build.ps1 -Target windows -DryRun -NoPubGet`閵嗕梗.\scripts\test.ps1 -Target test\sanity_test.dart -DryRun -NoPubGet`閵嗕梗.\scripts\test.ps1 -Target test\sanity_test.dart -NoPubGet` 閸у洭鈧俺绻冮妴?
+- `git diff --check` 闁俺绻冮妴?
 
-### 风险变更
-- 仍保留的绝对路径命中位于历史 `changelogs/` 记录、测试样例字符串和词典语料，不参与运行脚本默认路径解析。
-- 当前本机验证输出中的 `D:\env\...` 来自 shell/PATH 环境解析，不是仓库内硬编码 fallback。
+### 妞嬪酣娅撻崣妯绘纯
+- 娴犲秳绻氶悾娆戞畱缂佹繂顕捄顖氱窞閸涙垝鑵戞担宥勭艾閸樺棗褰?`changelogs/` 鐠佹澘缍嶉妴浣圭ゴ鐠囨洘鐗辨笟瀣摟缁楋缚瑕嗛崪宀冪槤閸忔瓕顕㈤弬娆欑礉娑撳秴寮稉搴ょ箥鐞涘矁鍓奸張顒勭帛鐠併倛鐭惧鍕掗弸鎰┾偓?
+- 瑜版挸澧犻張顒佹簚妤犲矁鐦夋潏鎾冲毉娑擃厾娈?`D:\env\...` 閺夈儴鍤?shell/PATH 閻滎垰顣ㄧ憴锝嗙€介敍灞肩瑝閺勵垯绮ㄦ惔鎾冲敶绾剛绱惍?fallback閵?
 
 ## [Unreleased-PLAN_164-ENV-MIGRATION-TOOLING] - 2026-05-18
 
-### 原因
-- 项目从旧机器和旧 `D:\workspace` 路径复制到当前 `L:\workspace\vocabularySleep-app` 后，Windows / Android CMake 生成缓存仍保存旧绝对路径，导致 `CMakeCache.txt directory ... is different` 与 source directory 不匹配。
-- 当前运行、测试和打包入口对 Flutter、CMake、NuGet、Android SDK 等工具路径变化的适配分散，迁移后容易变成手动排障。
+### 閸樼喎娲?
+- 妞ゅ湱娲版禒搴㈡＋閺堝搫娅掗崪灞炬＋ `D:\workspace` 鐠侯垰绶炴径宥呭煑閸掓澘缍嬮崜?`L:\workspace\vocabularySleep-app` 閸氬函绱漌indows / Android CMake 閻㈢喐鍨氱紓鎾崇摠娴犲秳绻氱€涙ɑ妫紒婵嗩嚠鐠侯垰绶為敍灞筋嚤閼?`CMakeCache.txt directory ... is different` 娑?source directory 娑撳秴灏柊宥冣偓?
+- 瑜版挸澧犳潻鎰攽閵嗕焦绁寸拠鏇炴嫲閹垫挸瀵橀崗銉ュ經鐎?Flutter閵嗕竼Make閵嗕腐uGet閵嗕竸ndroid SDK 缁涘浼愰崗鐤熅瀵板嫬褰夐崠鏍畱闁倿鍘ら崚鍡樻殠閿涘矁绺肩粔璇叉倵鐎硅妲楅崣妯诲灇閹靛濮╅幒鎺楁閵?
 
-### 新增
-- 新增 `scripts/tooling-env.ps1`，集中处理 Flutter、Dart、CMake、Android SDK、NuGet 的解析、PATH 注入、本地 tooling 环境和 CMake 缓存迁移检测。
-- 新增 `scripts/test.ps1`，统一 `flutter test` 的 `pub get`、reporter、定向测试、`-PlainName` / `-Name` 和 `-ResetBuildCache` 入口。
-- 新增 `plans/PLAN_164_环境迁移构建测试工具适配.md`，记录本轮环境迁移修复目标、步骤与风险边界。
+### 閺傛澘顤?
+- 閺傛澘顤?`scripts/tooling-env.ps1`閿涘矂娉︽稉顓烆槱閻?Flutter閵嗕笍art閵嗕竼Make閵嗕竸ndroid SDK閵嗕腐uGet 閻ㄥ嫯袙閺嬫劑鈧赋ATH 濞夈劌鍙嗛妴浣规拱閸?tooling 閻滎垰顣ㄩ崪?CMake 缂傛挸鐡ㄦ潻浣盒╁Λ鈧ù瀣ㄢ偓?
+- 閺傛澘顤?`scripts/test.ps1`閿涘瞼绮烘稉鈧?`flutter test` 閻?`pub get`閵嗕购eporter閵嗕礁鐣鹃崥鎴炵ゴ鐠囨洏鈧梗-PlainName` / `-Name` 閸?`-ResetBuildCache` 閸忋儱褰涢妴?
+- 閺傛澘顤?`plans/PLAN_164_閻滎垰顣ㄦ潻浣盒╅弸鍕紦濞村鐦銉ュ徔闁倿鍘?md`閿涘矁顔囪ぐ鏇熸拱鏉烆喚骞嗘晶鍐讣缁夎鎱ㄦ径宥囨窗閺嶅洢鈧焦顒炴銈勭瑢妞嬪酣娅撴潏鍦櫕閵?
 
-### 修改
-- `scripts/build.ps1` 复用共享工具环境逻辑，Windows 构建前自动解析 CMake 与 NuGet，Android / Windows 构建前自动检测并清理旧路径 CMake 缓存；新增 `-ResetBuildCache`。
-- `scripts/dev-run.ps1` 复用共享工具环境逻辑，Windows 运行前自动解析 Flutter、CMake、NuGet，并在运行前修复旧路径 CMake 缓存；新增 `-ResetBuildCache`。
-- `scripts/verify-local-analysis.ps1` 复用共享 Flutter / Dart / 本地 tooling 环境解析，并在验证前检查旧路径 CMake 缓存。
-- 更新 `README.md` 与 `PROJECT_DOMAIN.md`，补充环境变量、测试入口、缓存修复入口和复制项目后的 CMake 排障说明。
+### 娣囶喗鏁?
+- `scripts/build.ps1` 婢跺秶鏁ら崗鍙橀煩瀹搞儱鍙块悳顖氼暔闁槒绶敍瀛竔ndows 閺嬪嫬缂撻崜宥堝殰閸斻劏袙閺?CMake 娑?NuGet閿涘瓑ndroid / Windows 閺嬪嫬缂撻崜宥堝殰閸斻劍顥呭ù瀣嫙濞撳懐鎮婇弮褑鐭惧?CMake 缂傛挸鐡ㄩ敍娑欐煀婢?`-ResetBuildCache`閵?
+- `scripts/dev-run.ps1` 婢跺秶鏁ら崗鍙橀煩瀹搞儱鍙块悳顖氼暔闁槒绶敍瀛竔ndows 鏉╂劘顢戦崜宥堝殰閸斻劏袙閺?Flutter閵嗕竼Make閵嗕腐uGet閿涘苯鑻熼崷銊ㄧ箥鐞涘苯澧犳穱顔碱槻閺冄嗙熅瀵?CMake 缂傛挸鐡ㄩ敍娑欐煀婢?`-ResetBuildCache`閵?
+- `scripts/verify-local-analysis.ps1` 婢跺秶鏁ら崗鍙橀煩 Flutter / Dart / 閺堫剙婀?tooling 閻滎垰顣ㄧ憴锝嗙€介敍灞借嫙閸︺劑鐛欑拠浣稿濡偓閺屻儲妫捄顖氱窞 CMake 缂傛挸鐡ㄩ妴?
+- 閺囧瓨鏌?`README.md` 娑?`PROJECT_DOMAIN.md`閿涘矁藟閸忓懐骞嗘晶鍐ㄥ綁闁插繈鈧焦绁寸拠鏇炲弳閸欙絻鈧胶绱︾€涙ü鎱ㄦ径宥呭弳閸欙絽鎷版径宥呭煑妞ゅ湱娲伴崥搴ｆ畱 CMake 閹烘帡娈扮拠瀛樻閵?
 
-### 修复
-- 修复 `build/windows/x64/CMakeCache.txt` 中残留 `d:/workspace/vocabularySleep-app` 导致 Windows 打包失败的问题，脚本会在检测到缓存路径不属于当前项目时清理 `build/windows`。
-- 修复 Android `.cxx` CMake 缓存中残留旧工作区输出目录的问题，脚本会清理 `build/.cxx` 与 `build/app/intermediates/cxx`。
-- 修复 Windows 打包阶段 `flutter_tts` CMakeLists 找不到 `nuget.exe` 的环境准备缺口。
+### 娣囶喖顦?
+- 娣囶喖顦?`build/windows/x64/CMakeCache.txt` 娑擃厽鐣悾?`d:/workspace/vocabularySleep-app` 鐎佃壈鍤?Windows 閹垫挸瀵樻径杈Е閻ㄥ嫰妫舵０姗堢礉閼存碍婀版导姘躬濡偓濞村鍩岀紓鎾崇摠鐠侯垰绶炴稉宥呯潣娴滃骸缍嬮崜宥夈€嶉惄顔芥濞撳懐鎮?`build/windows`閵?
+- 娣囶喖顦?Android `.cxx` CMake 缂傛挸鐡ㄦ稉顓熺暙閻ｆ瑦妫銉ょ稊閸栭缚绶崙铏规窗瑜版洜娈戦梻顕€顣介敍宀冨壖閺堫兛绱板〒鍛倞 `build/.cxx` 娑?`build/app/intermediates/cxx`閵?
+- 娣囶喖顦?Windows 閹垫挸瀵橀梼鑸殿唽 `flutter_tts` CMakeLists 閹靛彞绗夐崚?`nuget.exe` 閻ㄥ嫮骞嗘晶鍐ㄥ櫙婢跺洨宸遍崣锝冣偓?
 
-### 验证
-- PowerShell Parser 语法检查通过：`scripts/tooling-env.ps1`、`scripts/build.ps1`、`scripts/dev-run.ps1`、`scripts/verify-local-analysis.ps1`、`scripts/test.ps1`。
-- `.\scripts\test.ps1 -Target test\sanity_test.dart`（通过，清理旧 CMake 缓存后运行 1 个测试）。
-- `.\scripts\build.ps1 -Target windows -NoPubGet`（通过，生成 `build\windows\x64\runner\Release\xianyushengxi.exe` 并复制到 `dist\windows`）。
-- `.\scripts\build.ps1 -Target windows -DryRun -NoPubGet`（通过，不再报告旧 `D:\workspace` CMake 缓存）。
+### 妤犲矁鐦?
+- PowerShell Parser 鐠囶厽纭跺Λ鈧弻銉┾偓姘崇箖閿涙瓪scripts/tooling-env.ps1`閵嗕梗scripts/build.ps1`閵嗕梗scripts/dev-run.ps1`閵嗕梗scripts/verify-local-analysis.ps1`閵嗕梗scripts/test.ps1`閵?
+- `.\scripts\test.ps1 -Target test\sanity_test.dart`閿涘牓鈧俺绻冮敍灞剧閻炲棙妫?CMake 缂傛挸鐡ㄩ崥搴ょ箥鐞?1 娑擃亝绁寸拠鏇礆閵?
+- `.\scripts\build.ps1 -Target windows -NoPubGet`閿涘牓鈧俺绻冮敍宀€鏁撻幋?`build\windows\x64\runner\Release\xianyushengxi.exe` 楠炶泛顦查崚璺哄煂 `dist\windows`閿涘鈧?
+- `.\scripts\build.ps1 -Target windows -DryRun -NoPubGet`閿涘牓鈧俺绻冮敍灞肩瑝閸愬秵濮ら崨濠冩＋ `D:\workspace` CMake 缂傛挸鐡ㄩ敍澶堚偓?
 
-### 风险变更
-- 自动清理仅限生成目录：`build/windows`、`build/.cxx`、`build/app/intermediates/cxx`；不会修改业务代码或源文件。
-- `pubspec.lock` 在本轮开始前已处于 modified 状态；本轮未将其作为工具修复范围处理。
+### 妞嬪酣娅撻崣妯绘纯
+- 閼奉亜濮╁〒鍛倞娴犲懘妾洪悽鐔稿灇閻╊喖缍嶉敍姝歜uild/windows`閵嗕梗build/.cxx`閵嗕梗build/app/intermediates/cxx`閿涙稐绗夋导姘叏閺€閫涚瑹閸斺€插敩閻焦鍨ㄥ┃鎰瀮娴犺翰鈧?
+- `pubspec.lock` 閸︺劍婀版潪顔肩磻婵澧犲鎻掝槱娴?modified 閻樿埖鈧緤绱遍張顒冪枂閺堫亜鐨㈤崗鏈电稊娑撳搫浼愰崗铚傛叏婢跺秷瀵栭崶鏉戭槱閻炲棎鈧?
 
 ## [Unreleased-PLAN_163-HUMAN-TESTS-BIMANUAL-IMMERSIVE-FULLSCREEN] - 2026-05-12
 
-### 原因
-- 双手协调从人类测试中心进入后仍会落到普通页式状态和错乱设置层，没有像手眼协调/摇杆手眼协调一样直接进入可玩的横屏沉浸全屏。
+### 閸樼喎娲?
+- 閸欏本澧滈崡蹇氱殶娴犲簼姹夌猾缁樼ゴ鐠囨洑鑵戣箛鍐箻閸忋儱鎮楁禒宥勭窗閽€钘夊煂閺咁噣鈧岸銆夊蹇曞Ц閹礁鎷伴柨娆庤础鐠佸墽鐤嗙仦鍌︾礉濞屸剝婀侀崓蹇斿閻厧宕楃拫?閹藉洦娼岄幍瀣簜閸楀繗鐨熸稉鈧弽椋庢纯閹恒儴绻橀崗銉ュ讲閻溾晝娈戝Ο顏勭潌濞屽韫堥崗銊ョ潌閵?
 
-### 修改
-- 双手协调在真实移动端进入页面后自动打开 90 度横屏沉浸全屏，并在全屏首帧自动开始左右独立脑裂挑战。
-- 全屏控制层改为白底舞台、半透明浮层、图标按钮、状态展开面板和设置弹窗，样式对齐手眼协调与摇杆手眼协调全屏模式。
-- 全屏内开始、重置、设置、报告、结束和退出均从当前全屏上下文触发，避免报告或弹窗落回普通页上下文。
+### 娣囶喗鏁?
+- 閸欏本澧滈崡蹇氱殶閸︺劎婀＄€圭偟些閸斻劎顏潻娑樺弳妞ょ敻娼伴崥搴ゅ殰閸斻劍澧﹀鈧?90 鎼达附铆鐏炲繑鐭囧ù绋垮弿鐏炲骏绱濋獮璺烘躬閸忋劌鐫嗘＃鏍ф姎閼奉亜濮╁鈧慨瀣箯閸欏磭瀚粩瀣壋鐟佸倹瀵幋妯糕偓?
+- 閸忋劌鐫嗛幒褍鍩楃仦鍌涙暭娑撹櫣娅ф惔鏇″灦閸欒埇鈧礁宕愰柅蹇旀濞搭喖鐪伴妴浣告禈閺嶅洦瀵滈柦顔衡偓浣哄Ц閹礁鐫嶅鈧棃銏℃緲閸滃矁顔曠純顔艰剨缁愭绱濋弽宄扮础鐎靛綊缍堥幍瀣簜閸楀繗鐨熸稉搴㈡啚閺夊棙澧滈惇鐓庡礂鐠嬪啫鍙忕仦蹇斈佸蹇嬧偓?
+- 閸忋劌鐫嗛崘鍛磻婵鈧線鍣哥純顔衡偓浣筋啎缂冾喓鈧焦濮ら崨濞库偓浣虹波閺夌喎鎷伴柅鈧崙鍝勬綆娴犲骸缍嬮崜宥呭弿鐏炲繋绗傛稉瀣瀮鐟欙箑褰傞敍宀勪缉閸忓秵濮ら崨濠冨灗瀵湱鐛ラ拃钘夋礀閺咁噣鈧岸銆夋稉濠佺瑓閺傚洢鈧?
 
-### 修复
-- 修复全屏进入后仍显示未开始、等待配对或普通页卡片式设置导致模块不可用的问题。
-- 修复全屏状态刷新依赖持续 ticker 的问题，改为由双手协调状态信号驱动刷新，降低测试和运行时空转风险。
-- 更新 smoke test，覆盖全屏入口、自动开局、左右舞台同屏、设置弹窗和全屏菜单。
+### 娣囶喖顦?
+- 娣囶喖顦查崗銊ョ潌鏉╂稑鍙嗛崥搴濈矝閺勫墽銇氶張顏勭磻婵鈧胶鐡戝鍛村帳鐎佃鍨ㄩ弲顕€鈧岸銆夐崡锛勫瀵繗顔曠純顔碱嚤閼峰瓨膩閸фぞ绗夐崣顖滄暏閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦查崗銊ョ潌閻樿埖鈧礁鍩涢弬棰佺贩鐠ф牗瀵旂紒?ticker 閻ㄥ嫰妫舵０姗堢礉閺€閫涜礋閻㈠崬寮婚幍瀣礂鐠嬪啰濮搁幀浣蜂繆閸欑兘鈹嶉崝銊ュ煕閺傚府绱濋梽宥勭秵濞村鐦崪宀冪箥鐞涘本妞傜粚楦挎祮妞嬪酣娅撻妴?
+- 閺囧瓨鏌?smoke test閿涘矁顩惄鏍у弿鐏炲繐鍙嗛崣锝冣偓浣藉殰閸斻劌绱戠仦鈧妴浣镐箯閸欏疇鍨堕崣鏉挎倱鐏炲繈鈧浇顔曠純顔艰剨缁愭鎷伴崗銊ョ潌閼挎粌宕熼妴?
 
-### 风险变更
-- 全屏与普通页继续共享同一局内状态，后续新增弹窗、报告或计时逻辑时需要继续使用当前全屏上下文并回归退出生命周期。
-- 自动进入全屏在 Flutter widget test 与 Web 环境中保留显式入口，真实移动端行为需继续通过设备回归确认。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫嗘稉搴㈡珮闁岸銆夌紒褏鐢婚崗鍙橀煩閸氬奔绔寸仦鈧崘鍛Ц閹緤绱濋崥搴ｇ敾閺傛澘顤冨鍦崶閵嗕焦濮ら崨濠冨灗鐠佲剝妞傞柅鏄忕帆閺冨爼娓剁憰浣烘埛缂侇厺濞囬悽銊ョ秼閸撳秴鍙忕仦蹇庣瑐娑撳鏋冮獮璺烘礀瑜版帡鈧偓閸戣櫣鏁撻崨钘夋噯閺堢喆鈧?
+- 閼奉亜濮╂潻娑樺弳閸忋劌鐫嗛崷?Flutter widget test 娑?Web 閻滎垰顣ㄦ稉顓濈箽閻ｆ瑦妯夊蹇撳弳閸欙綇绱濋惇鐔风杽缁夎濮╃粩顖濐攽娑撴椽娓剁紒褏鐢婚柅姘崇箖鐠佹儳顦崶鐐茬秺绾喛顓婚妴?
 
 ## [Unreleased-PLAN_162-HUMAN-TESTS-BIMANUAL-FULLSCREEN-DEFAULT] - 2026-05-11
 
-### 原因
-- 双手协调脑裂集合在手机窄屏上仍然过于拥挤，需要默认直接进入 90 度横屏全屏，并把设置、重置、结束等操作收进更轻量的入口。
-### 新增
-- 手机端进入双手协调时默认优先全屏横屏；普通页保留一个全屏启动按钮和更多菜单入口。
-### 修改
-- 全屏内继续沿用左右独立舞台与菜单式控制，并收口为更适合单手离开的轻量按钮/弹出入口。
-### 修复
-- 修复 climb 赛道和 trace 赛道在退出后偶发的 `setState() called after dispose()` 风险。
+### 閸樼喎娲?
+- 閸欏本澧滈崡蹇氱殶閼存垼顥囬梿鍡楁値閸︺劍澧滈張铏圭崕鐏炲繋绗傛禒宥囧姧鏉╁洣绨幏銉﹀皨閿涘矂娓剁憰渚€绮拋銈囨纯閹恒儴绻橀崗?90 鎼达附铆鐏炲繐鍙忕仦蹇ョ礉楠炶埖濡哥拋鍓х枂閵嗕線鍣哥純顔衡偓浣虹波閺夌喓鐡戦幙宥勭稊閺€鎯扮箻閺囩浜ら柌蹇曟畱閸忋儱褰涢妴?
+### 閺傛澘顤?
+- 閹靛婧€缁旑垵绻橀崗銉ュ蓟閹靛宕楃拫鍐╂姒涙顓绘导妯哄帥閸忋劌鐫嗗Ο顏勭潌閿涙稒娅橀柅姘躲€夋穱婵堟殌娑撯偓娑擃亜鍙忕仦蹇撴儙閸斻劍瀵滈柦顔兼嫲閺囨潙顦块懣婊冨礋閸忋儱褰涢妴?
+### 娣囶喗鏁?
+- 閸忋劌鐫嗛崘鍛埛缂侇厽閮ㄩ悽銊ヤ箯閸欏磭瀚粩瀣灦閸欓绗岄懣婊冨礋瀵繑甯堕崚璁圭礉楠炶埖鏁归崣锝勮礋閺囨挳鈧倸鎮庨崡鏇熷缁傝绱戦惃鍕氦闁插繑瀵滈柦?瀵懓鍤崗銉ュ經閵?
+### 娣囶喖顦?
+- 娣囶喖顦?climb 鐠ф盯浜鹃崪?trace 鐠ф盯浜鹃崷銊┾偓鈧崙鍝勬倵閸嬭泛褰傞惃?`setState() called after dispose()` 妞嬪酣娅撻妴?
 
 ## [Unreleased-PLAN_161-HUMAN-TESTS-BIMANUAL-TIME-NARROW-FIX] - 2026-05-11
 
-### 原因
-- 双手协调脑裂小游戏还缺少显式计时时长入口，默认也没有把无限时长和轮数设置说清楚；同时窄屏下左右舞台的可视与可操作性还不够稳定，并存在 trace 赛道在销毁后仍可能收到指针回调的风险。
+### 閸樼喎娲?
+- 閸欏本澧滈崡蹇氱殶閼存垼顥囩亸蹇旂埗閹村繗绻曠紓鍝勭毌閺勬儳绱＄拋鈩冩閺冨爼鏆遍崗銉ュ經閿涘矂绮拋銈勭瘍濞屸剝婀侀幎濠冩￥闂勬劖妞傞梹鍨嫲鏉烆喗鏆熺拋鍓х枂鐠囧瓨绔诲Δ姘剧幢閸氬本妞傜粣鍕潌娑撳涔忛崣瀹犲灦閸欐壆娈戦崣顖濐潒娑撳骸褰查幙宥勭稊閹嗙箷娑撳秴顧勭粙鍐茬暰閿涘苯鑻熺€涙ê婀?trace 鐠ф盯浜鹃崷銊╂敘濮ｄ礁鎮楁禒宥呭讲閼宠姤鏁归崚鐗堝瘹闁藉牆娲栫拫鍐畱妞嬪酣娅撻妴?
 
-### 新增
-- 为双手协调脑裂小游戏补上计时时长设置，默认值为无限时长，并把轮数上限拉长到更适合长局训练的范围。
+### 閺傛澘顤?
+- 娑撳搫寮婚幍瀣礂鐠嬪啳鍓崇憗鍌氱毈濞撳憡鍨欑悰銉ょ瑐鐠佲剝妞傞弮鍫曟毐鐠佸墽鐤嗛敍宀勭帛鐠併倕鈧棿璐熼弮鐘绘閺冨爼鏆遍敍灞借嫙閹跺﹨鐤嗛弫棰佺瑐闂勬劖濯洪梹鍨煂閺囨挳鈧倸鎮庨梹鍨湰鐠侇厾绮岄惃鍕瘱閸ユ番鈧?
 
-### 修改
-- 将双手协调脑裂小游戏的设置区改为默认折叠，补充计时时长、轮数与当前时长的摘要展示。
-- 将窄屏舞台改为左右并排同屏布局，并压缩赛道卡片的紧凑态尺寸，避免上下堆叠后双手无法同时操作。
+### 娣囶喗鏁?
+- 鐏忓棗寮婚幍瀣礂鐠嬪啳鍓崇憗鍌氱毈濞撳憡鍨欓惃鍕啎缂冾喖灏弨閫涜礋姒涙顓婚幎妯哄綌閿涘矁藟閸忓懓顓搁弮鑸垫闂€瑁も偓浣界枂閺侀绗岃ぐ鎾冲閺冨爼鏆遍惃鍕喅鐟曚礁鐫嶇粈鎭掆偓?
+- 鐏忓棛鐛庣仦蹇氬灦閸欑増鏁兼稉鍝勪箯閸欏啿鑻熼幒鎺戞倱鐏炲繐绔风仦鈧敍灞借嫙閸樺缂夌挧娑壕閸楋紕澧栭惃鍕彛閸戞垶鈧礁鏄傜€甸潻绱濋柆鍨帳娑撳﹣绗呴崼鍡楀綌閸氬骸寮婚幍瀣￥濞夋洖鎮撻弮鑸垫惙娴ｆ嚎鈧?
 
-### 修复
-- 修复 trace 赛道在旧手势事件进入已销毁状态后仍可能触发 `setState()` 的问题。
-- 修复计时时长设置缺位、默认结束条件不清晰以及窄屏左右舞台分离的问题。
+### 娣囶喖顦?
+- 娣囶喖顦?trace 鐠ф盯浜鹃崷銊︽＋閹靛濞嶆禍瀣╂鏉╂稑鍙嗗鏌ユ敘濮ｄ胶濮搁幀浣告倵娴犲秴褰查懗鍊熜曢崣?`setState()` 閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦茬拋鈩冩閺冨爼鏆辩拋鍓х枂缂傝桨缍呴妴渚€绮拋銈囩波閺夌喐娼禒鏈电瑝濞撳懏娅氭禒銉ュ挤缁愬嫬鐫嗗锕€褰搁懜鐐插酱閸掑棛顬囬惃鍕６妫版ǜ鈧?
 
-### 风险变更
-- 新增的时长设置会让挑战更容易出现长局，手动结束按钮和报告收口逻辑需要持续回归。
-- 窄屏并排布局的控件密度更高，后续如果继续加长文案或加入更多赛道信息，需要继续控制卡片高度。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺傛澘顤冮惃鍕闂€鑳啎缂冾喕绱扮拋鈺傚閹存ɑ娲跨€硅妲楅崙铏瑰箛闂€鍨湰閿涘本澧滈崝銊х波閺夌喐瀵滈柦顔兼嫲閹躲儱鎲￠弨璺哄經闁槒绶棁鈧憰浣瑰瘮缂侇厼娲栬ぐ鎺嬧偓?
+- 缁愬嫬鐫嗛獮鑸靛笓鐢啫鐪惃鍕付娴犺泛鐦戞惔锔芥纯妤傛﹫绱濋崥搴ｇ敾婵″倹鐏夌紒褏鐢婚崝鐘绘毐閺傚洦顢嶉幋鏍у閸忋儲娲挎径姘崇闁挷淇婇幁顖ょ礉闂団偓鐟曚胶鎴风紒顓熷付閸掕泛宕遍悧鍥彯鎼达负鈧?
 
 ## [Unreleased-PLAN_159-HUMAN-TESTS-BIMANUAL-SPLIT-BRAIN] - 2026-05-11
 
-### 原因
-- 双手协调模块仍停留在基础左右点击层，缺少真正左右分离的脑裂小游戏集合、节奏变化和可复看的结算反馈。
+### 閸樼喎娲?
+- 閸欏本澧滈崡蹇氱殶濡€虫健娴犲秴浠犻悾娆忔躬閸╄櫣顢呭锕€褰搁悙鐟板毊鐏炲偊绱濈紓鍝勭毌閻喐顒滃锕€褰搁崚鍡欘瀲閻ㄥ嫯鍓崇憗鍌氱毈濞撳憡鍨欓梿鍡楁値閵嗕浇濡總蹇撳綁閸栨牕鎷伴崣顖氼槻閻娈戠紒鎾剁暬閸欏秹顩妴?
 
-### 新增
-- 将「工具箱 - 人类测试中心 - 双手协调」重做为左右独立的脑裂小游戏集合，加入画图、弹球、楼梯三类任务配对，以及更鲜明的首屏舞台与分数反馈。
+### 閺傛澘顤?
+- 鐏忓棎鈧苯浼愰崗椋庮唸 - 娴滆櫣琚ù瀣槸娑擃厼绺?- 閸欏本澧滈崡蹇氱殶閵嗗秹鍣搁崑姘礋瀹革箑褰搁悪顒傜彌閻ㄥ嫯鍓崇憗鍌氱毈濞撳憡鍨欓梿鍡楁値閿涘苯濮為崗銉ф暰閸ヤ勘鈧礁鑴婇悶鍐︹偓浣广偧濮婎垯绗佺猾璁虫崲閸旓繝鍘ょ€电櫢绱濇禒銉ュ挤閺囨挳鐭為弰搴ｆ畱妫ｆ牕鐫嗛懜鐐插酱娑撳骸鍨庨弫鏉垮冀妫ｅ牄鈧?
 
-### 修改
-- 更新双手协调页面的状态组织、结果结算、模式选择文案与左右独立任务配对说明。
-- 更新人类测试中心入口描述，使该模块在入口层就能传达更强的游戏化特征。
+### 娣囶喗鏁?
+- 閺囧瓨鏌婇崣灞惧閸楀繗鐨熸い鐢告桨閻ㄥ嫮濮搁幀浣虹矋缂佸洢鈧胶绮ㄩ弸婊呯波缁犳ぜ鈧焦膩瀵繘鈧瀚ㄩ弬鍥攳娑撳骸涔忛崣宕囧缁斿鎹㈤崝锟犲帳鐎电顕╅弰搴涒偓?
+- 閺囧瓨鏌婃禍铏硅濞村鐦稉顓炵妇閸忋儱褰涢幓蹇氬牚閿涘奔濞囩拠銉δ侀崸妤€婀崗銉ュ經鐏炲倸姘ㄩ懗鎴掔炊鏉堢偓娲垮铏规畱濞撳憡鍨欓崠鏍瀵颁降鈧?
 
-### 修复
-- 修复双手协调仅作为弱占位而缺少挑战层次的问题。
+### 娣囶喖顦?
+- 娣囶喖顦查崣灞惧閸楀繗鐨熸禒鍛稊娑撳搫鎬ラ崡鐘辩秴閼板瞼宸辩亸鎴炲閹存ê鐪板▎锛勬畱闂傤噣顣介妴?
 
-### 风险变更
-- 双手触控规则更复杂，可能更容易和页面滚动、误触与节奏判定产生边界冲突，因此需要针对性 smoke test 回归。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸欏本澧滅憴锔藉付鐟欏嫬鍨弴鏉戭槻閺夊偊绱濋崣顖濆厴閺囨潙顔愰弰鎾虫嫲妞ょ敻娼板姘З閵嗕浇顕ょ憴锔跨瑢閼哄倸顨旈崚銈呯暰娴溠呮晸鏉堝湱鏅崘鑼崐閿涘苯娲滃銈夋付鐟曚線鎷＄€佃鈧?smoke test 閸ョ偛缍婇妴?
 
 ## [Unreleased-PLAN_158-HUMAN-TESTS-AUDITORY-UI-STABILITY] - 2026-05-11
 
-### 原因
-- 听觉测试在开始后仍会通过阶段文案、播放提示和等待标记的显隐变化暴露播放时机，同时空间测试八向面板会把“前方”作为默认高亮，影响点击手感并泄漏答案状态。
+### 閸樼喎娲?
+- 閸氼剝顫庡ù瀣槸閸︺劌绱戞慨瀣倵娴犲秳绱伴柅姘崇箖闂冭埖顔岄弬鍥攳閵嗕焦鎸遍弨鐐絹缁€鍝勬嫲缁涘绶熼弽鍥唶閻ㄥ嫭妯夐梾鎰綁閸栨牗姣氶棁鍙夋尡閺€鐐閺堢尨绱濋崥灞炬缁屾椽妫垮ù瀣槸閸忣偄鎮滈棃銏℃緲娴兼碍濡搁垾婊冨閺傚厜鈧繀缍旀稉娲帛鐠併倝鐝禍顕嗙礉瑜板崬鎼烽悙鐟板毊閹靛鍔呴獮鑸电濠曞繒鐡熷鍫㈠Ц閹降鈧?
 
-### 修改
-- 将听觉测试的等待/出声阶段收敛为同一套固定高度的状态槽，移除播放中的频率提示，避免按钮区域因阶段切换产生位移。
-- 将空间测试的方向选择改为未选中初始态，开始后不再默认高亮“前方”，并让指针模式在未选中时保持中性显示。
+### 娣囶喗鏁?
+- 鐏忓棗鎯夌憴澶嬬ゴ鐠囨洜娈戠粵澶婄窡/閸戝搫锛愰梼鑸殿唽閺€鑸垫殐娑撳搫鎮撴稉鈧總妤€娴愮€规岸鐝惔锔炬畱閻樿埖鈧焦蝎閿涘瞼些闂勩倖鎸遍弨鍙ヨ厬閻ㄥ嫰顣堕悳鍥ㄥ絹缁€鐚寸礉闁灝鍘ら幐澶愭尦閸栧搫鐓欓崶鐘绘▉濞堥潧鍨忛幑顫獓閻㈢喍缍呯粔姹団偓?
+- 鐏忓棛鈹栭梻瀛樼ゴ鐠囨洜娈戦弬鐟版倻闁瀚ㄩ弨閫涜礋閺堫亪鈧鑵戦崚婵嗩潗閹緤绱濆鈧慨瀣倵娑撳秴鍟€姒涙顓绘妯瑰瘨閳ユ粌澧犻弬鍏夆偓婵撶礉楠炴儼顔€閹稿洭鎷″Ο鈥崇础閸︺劍婀柅澶夎厬閺冩湹绻氶幐浣疯厬閹勬▔缁€鎭掆偓?
 
-### 修复
-- 修复开始后通过界面变化推测播放时机的问题。
-- 修复空间八向面板在测试开始后默认选中“前方”的问题。
+### 娣囶喖顦?
+- 娣囶喖顦插鈧慨瀣倵闁俺绻冮悾宀勬桨閸欐ê瀵查幒銊︾ゴ閹绢厽鏂侀弮鑸垫簚閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦茬粚娲？閸忣偄鎮滈棃銏℃緲閸︺劍绁寸拠鏇炵磻婵鎮楁妯款吇闁鑵戦垾婊冨閺傚厜鈧繄娈戦梻顕€顣介妴?
 
-### 风险变更
-- 空间测试在等待阶段即可进行方位预选，视觉状态更稳定，但也允许更早做出误操作记录，符合当前测试对抗泄漏的目标。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁屾椽妫垮ù瀣槸閸︺劎鐡戝鍛存▉濞堥潧宓嗛崣顖濈箻鐞涘本鏌熸担宥夘暕闁绱濈憴鍡氼潕閻樿埖鈧焦娲跨粙鍐茬暰閿涘奔绲炬稊鐔峰帒鐠佸憡娲块弮鈺佷粵閸戦缚顕ら幙宥勭稊鐠佹澘缍嶉敍宀€顑侀崥鍫濈秼閸撳秵绁寸拠鏇烆嚠閹舵纭犲蹇曟畱閻╊喗鐖ｉ妴?
 
 ## [Unreleased-PLAN_157-HUMAN-TESTS-AUDITORY-WINDOWS-PLAYBACK-STALL] - 2026-05-11
 
-### 原因
-- 听觉测试在 Windows 上仍会出现明显的播放启动卡顿。排查后确认，启动链路里同时存在 `stop`、`seek(Duration.zero)`、`resume()` 和位置轮询确认等同步原生调用；其中 Windows 端的 `getCurrentPosition()` / `resume()` / `pause()` / `stop()` 都可能经由原生同步边界阻塞。
+### 閸樼喎娲?
+- 閸氼剝顫庡ù瀣槸閸?Windows 娑撳﹣绮涙导姘毉閻滅増妲戦弰鍓ф畱閹绢厽鏂侀崥顖氬З閸楋繝銆戦妴鍌涘笓閺屻儱鎮楃涵顔款吇閿涘苯鎯庨崝銊╂懠鐠侯垶鍣烽崥灞炬鐎涙ê婀?`stop`閵嗕梗seek(Duration.zero)`閵嗕梗resume()` 閸滃奔缍呯純顔跨枂鐠囥垻鈥樼拋銈囩搼閸氬本顒為崢鐔烘晸鐠嬪啰鏁ら敍娑樺従娑?Windows 缁旑垳娈?`getCurrentPosition()` / `resume()` / `pause()` / `stop()` 闁棄褰查懗鐣岀病閻㈠崬甯悽鐔锋倱濮濄儴绔熼悾宀勬▎婵夌偑鈧?
 
-### 修复
-- 启动前改为等待上一次静默处理完成，再在必要时使用 `pause()` 而不是 `stop()` 清理当前播放，避免回零 seek 和无意义的同步重置。
-- 去掉播放启动阶段的显式 `seek(Duration.zero)`，让新 source 直接从 0 播放。
-- 将 Windows 下的播放推进确认改为事件驱动的 `onPositionChanged` / `onPlayerStateChanged` 方案，避免在热路径上调用阻塞型 `getCurrentPosition()`。
-- 为 `setSource`、`waitForDuration`、`setVolume`、`resume()` 和推进确认补充细粒度耗时日志，便于后续继续定位原生层异常。
-- Windows 桌面端统一使用 `ReleaseMode.release`，避免完成态自动回零带来的额外 seek 噪声。
+### 娣囶喖顦?
+- 閸氼垰濮╅崜宥嗘暭娑撹櫣鐡戝鍛瑐娑撯偓濞嗭繝娼ゆ妯侯槱閻炲棗鐣幋鎰剁礉閸愬秴婀箛鍛邦洣閺冩湹濞囬悽?`pause()` 閼板奔绗夐弰?`stop()` 濞撳懐鎮婅ぐ鎾冲閹绢厽鏂侀敍宀勪缉閸忓秴娲栭梿?seek 閸滃本妫ら幇蹇庣疅閻ㄥ嫬鎮撳銉╁櫢缂冾喓鈧?
+- 閸樼粯甯€閹绢厽鏂侀崥顖氬З闂冭埖顔岄惃鍕▔瀵?`seek(Duration.zero)`閿涘矁顔€閺?source 閻╁瓨甯存禒?0 閹绢厽鏂侀妴?
+- 鐏?Windows 娑撳娈戦幘顓熸杹閹恒劏绻樼涵顔款吇閺€閫涜礋娴滃娆㈡す鍗炲З閻?`onPositionChanged` / `onPlayerStateChanged` 閺傝顢嶉敍宀勪缉閸忓秴婀悜顓＄熅瀵板嫪绗傜拫鍐暏闂冭顢ｉ崹?`getCurrentPosition()`閵?
+- 娑?`setSource`閵嗕梗waitForDuration`閵嗕梗setVolume`閵嗕梗resume()` 閸滃本甯规潻娑氣€樼拋銈埶夐崗鍛矎缁帒瀹抽懓妤佹閺冦儱绻旈敍灞肩┒娴滃骸鎮楃紒顓犳埛缂侇厼鐣炬担宥呭斧閻㈢喎鐪板鍌氱埗閵?
+- Windows 濡楀矂娼扮粩顖滅埠娑撯偓娴ｈ法鏁?`ReleaseMode.release`閿涘矂浼╅崗宥呯暚閹存劖鈧浇鍤滈崝銊ユ礀闂嗚泛鐢弶銉ф畱妫版繂顦?seek 閸ｎ亜锛愰妴?
 
-### 风险变更
-- 播放开始确认在 Windows 上从阻塞轮询改为事件确认，若个别设备短暂漏发位置事件，会回退到状态校验并保留一次重试。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹绢厽鏂佸鈧慨瀣€樼拋銈呮躬 Windows 娑撳﹣绮犻梼璇差敚鏉烆喛顕楅弨閫涜礋娴滃娆㈢涵顔款吇閿涘矁瀚㈡稉顏勫焼鐠佹儳顦惌顓熸畯濠曞繐褰傛担宥囩枂娴滃娆㈤敍灞肩窗閸ョ偤鈧偓閸掓壆濮搁幀浣圭墡妤犲苯鑻熸穱婵堟殌娑撯偓濞嗭繝鍣哥拠鏇樷偓?
 
 ## [Unreleased-PLAN_156-HUMAN-TESTS-AUDITORY-PLAYBACK-PROGRESS-CONFIRM] - 2026-05-11
 
-### 原因
-- 听觉测试日志显示播放器已进入 `playing`，但缺少位置推进日志，存在“假播放”、空播或起音迟到风险。
+### 閸樼喎娲?
+- 閸氼剝顫庡ù瀣槸閺冦儱绻旈弰鍓с仛閹绢厽鏂侀崳銊ュ嚒鏉╂稑鍙?`playing`閿涘奔绲剧紓鍝勭毌娴ｅ秶鐤嗛幒銊ㄧ箻閺冦儱绻旈敍灞界摠閸︺劉鈧粌浜ｉ幘顓熸杹閳ユ縿鈧胶鈹栭幘顓熷灗鐠х兘鐓舵潻鐔峰煂妞嬪酣娅撻妴?
 
-### 修复
-- 听觉测试播放链路改为先设置本地 WAV 源、等待可读 duration，再 `seek(Duration.zero)` 后 `resume()`。
-- 播放启动后短轮询 `getCurrentPosition()`，确认位置真正推进后才进入作答计时。
-- 若首次 resume 后位置未推进，停止并重新装载同一声音源后重试一次；仍失败时记录结构化错误并回退系统提示音。
-- Windows 桌面端跳过不受支持的 `AudioContext` 设置，减少无效平台日志对排障的干扰。
+### 娣囶喖顦?
+- 閸氼剝顫庡ù瀣槸閹绢厽鏂侀柧鎹愮熅閺€閫涜礋閸忓牐顔曠純顔芥拱閸?WAV 濠ф劑鈧胶鐡戝鍛讲鐠?duration閿涘苯鍟€ `seek(Duration.zero)` 閸?`resume()`閵?
+- 閹绢厽鏂侀崥顖氬З閸氬海鐓潪顔款嚄 `getCurrentPosition()`閿涘瞼鈥樼拋銈勭秴缂冾喚婀″锝嗗腹鏉╂稑鎮楅幍宥堢箻閸忋儰缍旂粵鏃囶吀閺冭翰鈧?
+- 閼汇儵顩诲▎?resume 閸氬簼缍呯純顔芥弓閹恒劏绻橀敍灞戒粻濮濄垹鑻熼柌宥嗘煀鐟佸懓娴囬崥灞肩婢逛即鐓跺┃鎰倵闁插秷鐦稉鈧▎鈽呯幢娴犲秴銇戠拹銉︽鐠佹澘缍嶇紒鎾寸€崠鏍晩鐠囶垰鑻熼崶鐐衡偓鈧化鑽ょ埠閹绘劗銇氶棅鐐解偓?
+- Windows 濡楀矂娼扮粩顖濈儲鏉╁洣绗夐崣妤佹暜閹镐胶娈?`AudioContext` 鐠佸墽鐤嗛敍灞藉櫤鐏忔垶妫ら弫鍫濋挬閸欑増妫╄箛妤€顕幒鎺楁閻ㄥ嫬鍏遍幍鑸偓?
 
-### 风险变更
-- 起音确认会增加少量启动等待，但能避免当前轮未实际发声就进入作答或下一轮的状态错位。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐠х兘鐓剁涵顔款吇娴兼艾顤冮崝鐘茬毌闁插繐鎯庨崝銊х搼瀵板拑绱濇担鍡氬厴闁灝鍘よぐ鎾冲鏉烆喗婀€圭偤妾崣鎴濓紣鐏忚精绻橀崗銉ょ稊缁涙梹鍨ㄦ稉瀣╃鏉烆喚娈戦悩鑸碘偓渚€鏁婃担宥冣偓?
 
 ## [Unreleased-PLAN_155-HUMAN-TESTS-AUDITORY-ROUNDS-LATE-AUDIO] - 2026-05-11
 
-### 原因
-- 用户反馈听觉测试仍有少量声音异常，表现像当前轮声音还没播出就进入下一轮后才响；同时要求测试进度轮数可自定义，并将频率模式默认改为 10 轮。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閸氼剝顫庡ù瀣槸娴犲秵婀佺亸鎴﹀櫤婢逛即鐓跺鍌氱埗閿涘矁銆冮悳鏉垮剼瑜版挸澧犳潪顔硷紣闂婂疇绻曞▽鈩冩尡閸戝搫姘ㄦ潻娑樺弳娑撳绔存潪顔兼倵閹靛秴鎼烽敍娑樻倱閺冩儼顩﹀Ч鍌涚ゴ鐠囨洝绻樻惔锕佺枂閺佹澘褰查懛顏勭暰娑斿绱濋獮璺虹殺妫版垹宸煎Ο鈥崇础姒涙顓婚弨閫涜礋 10 鏉烆喓鈧?
 
-### 修改
-- 听觉测试的测试规模从固定选项改为可调轮数滑杆，频率模式默认轮数改为 10 轮。
-- 频率、灵敏度和空间序列生成允许 10 轮快速筛查，并按模式限制最大轮数，避免进度显示和实际序列长度不一致。
+### 娣囶喗鏁?
+- 閸氼剝顫庡ù瀣槸閻ㄥ嫭绁寸拠鏇☆潐濡€茬矤閸ュ搫鐣鹃柅澶愩€嶉弨閫涜礋閸欘垵鐨熸潪顔芥殶濠婃垶娼岄敍宀勵暥閻滃洦膩瀵繘绮拋銈堢枂閺佺増鏁兼稉?10 鏉烆喓鈧?
+- 妫版垹宸奸妴浣轰紥閺佸繐瀹抽崪宀€鈹栭梻鏉戠碍閸掓鏁撻幋鎰帒鐠?10 鏉烆喖鎻╅柅鐔虹摣閺屻儻绱濋獮鑸靛瘻濡€崇础闂勬劕鍩楅張鈧径褑鐤嗛弫甯礉闁灝鍘ゆ潻娑樺閺勫墽銇氶崪灞界杽闂勫懎绨崚妤呮毐鎼达缚绗夋稉鈧懛娣偓?
 
-### 修复
-- 播放链路在每个异步阶段检查当前播放序列号，并改为播放命令发出后再进入作答计时；移除延迟 `seek/resume` 兜底，避免迟到起音跨轮播放。
-- 补回合成波形的输出音量系数，使播放器满量程时仍由刺激本身控制频率、灵敏度和空间模式的实际响度。
+### 娣囶喖顦?
+- 閹绢厽鏂侀柧鎹愮熅閸︺劍鐦℃稉顏勭磽濮濄儵妯佸▓鍨梾閺屻儱缍嬮崜宥嗘尡閺€鎯х碍閸掓褰块敍灞借嫙閺€閫涜礋閹绢厽鏂侀崨鎴掓姢閸欐垵鍤崥搴″晙鏉╂稑鍙嗘担婊呯摕鐠佲剝妞傞敍娑毿╅梽銈呮鏉?`seek/resume` 閸忔粌绨抽敍宀勪缉閸忓秷绻滈崚鎷屾崳闂婂疇娉曟潪顔芥尡閺€淇扁偓?
+- 鐞涖儱娲栭崥鍫熷灇濞夈垹鑸伴惃鍕翻閸戞椽鐓堕柌蹇曢兇閺佸府绱濇担鎸庢尡閺€鎯ф珤濠婏繝鍣虹粙瀣娴犲秶鏁遍崚鐑樼负閺堫剝闊╅幒褍鍩楁０鎴犲芳閵嗕胶浼掗弫蹇撳閸滃瞼鈹栭梻瀛樐佸蹇曟畱鐎圭偤妾崫宥呭閵?
 
-### 风险变更
-- 10 轮频率测试更适合快速筛查，报告分组可能较稀疏；正式评估仍建议手动提高轮数。
+### 妞嬪酣娅撻崣妯绘纯
+- 10 鏉烆噣顣堕悳鍥ㄧゴ鐠囨洘娲块柅鍌氭値韫囶偊鈧喓鐡弻銉礉閹躲儱鎲￠崚鍡欑矋閸欘垵鍏樻潏鍐枅閻ゅ骏绱卞锝呯础鐠囧嫪鍙婃禒宥呯紦鐠侇喗澧滈崝銊﹀絹妤傛鐤嗛弫鑸偓?
 
 ## [Unreleased-PLAN_154-HUMAN-TESTS-AUDITORY-PLAYBACK-ANTI-PREDICTION] - 2026-05-11
 
-### 原因
-- 用户反馈工具箱-人类测试中心-听觉测试模块存在大量声音无法正常播放、播放中频率不可见、测试过程可能被预听/规律推断，以及等待提示节奏过于规则的问题。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻?娴滆櫣琚ù瀣槸娑擃厼绺?閸氼剝顫庡ù瀣槸濡€虫健鐎涙ê婀径褔鍣烘竟浼寸叾閺冪姵纭跺锝呯埗閹绢厽鏂侀妴浣规尡閺€鍙ヨ厬妫版垹宸兼稉宥呭讲鐟欎降鈧焦绁寸拠鏇＄箖缁嬪褰查懗鍊燁潶妫板嫬鎯?鐟欏嫬绶ラ幒銊︽焽閿涘奔浜掗崣濠勭搼瀵板懏褰佺粈楦垮Ν婵傚繗绻冩禍搴ゎ潐閸掓瑧娈戦梻顕€顣介妴?
 
-### 新增
-- 听觉测试在频率与灵敏度模式的播放阶段显示当前声音频率，空间定位模式继续避免暴露方向答案。
-- 等待声音时新增不规则等待标记，并扩大随机等待区间，降低用户按固定节奏猜测的可能性。
+### 閺傛澘顤?
+- 閸氼剝顫庡ù瀣槸閸︺劑顣堕悳鍥︾瑢閻忓灚鏅辨惔锔侥佸蹇曟畱閹绢厽鏂侀梼鑸殿唽閺勫墽銇氳ぐ鎾冲婢逛即鐓舵０鎴犲芳閿涘瞼鈹栭梻鏉戠暰娴ｅ秵膩瀵繒鎴风紒顓缉閸忓秵姣氶棁鍙夋煙閸氭垹鐡熷鍫涒偓?
+- 缁涘绶熸竟浼寸叾閺冭埖鏌婃晶鐐扮瑝鐟欏嫬鍨粵澶婄窡閺嶅洩顔囬敍灞借嫙閹碘晛銇囬梾蹇旀簚缁涘绶熼崠娲？閿涘矂妾锋担搴ｆ暏閹撮攱瀵滈崶鍝勭暰閼哄倸顨旈悮婊勭ゴ閻ㄥ嫬褰查懗鑺モ偓褋鈧?
 
-### 修改
-- 听觉测试的合成音改为提前生成并缓存临时 WAV 文件，再通过本地文件源播放，替代直接字节源与低延迟模式。
-- 频率与灵敏度轮次改为随机顺序，测试进行中禁用预听/重播，并移除进行中的阈值提示开关。
-- 高频截止估计改为报告阶段按记录计算，不再在测试过程中维护预测状态或提前结束高频轮次。
-- 听觉合成音的播放器音量固定为满量程，输出强弱只由合成波形本身控制，避免波形和播放器双重衰减。
+### 娣囶喗鏁?
+- 閸氼剝顫庡ù瀣槸閻ㄥ嫬鎮庨幋鎰扮叾閺€閫涜礋閹绘劕澧犻悽鐔稿灇楠炲墎绱︾€涙ü澶嶉弮?WAV 閺傚洣娆㈤敍灞藉晙闁俺绻冮張顒€婀撮弬鍥︽濠ф劖鎸遍弨鎾呯礉閺囧じ鍞惄瀛樺复鐎涙濡┃鎰瑢娴ｅ骸娆㈡潻鐔改佸蹇嬧偓?
+- 妫版垹宸兼稉搴ｄ紥閺佸繐瀹虫潪顔筋偧閺€閫涜礋闂呭繑婧€妞ゅ搫绨敍灞剧ゴ鐠囨洝绻樼悰灞艰厬缁備胶鏁ゆ０鍕儔/闁插秵鎸遍敍灞借嫙缁夊娅庢潻娑滎攽娑擃厾娈戦梼鍫濃偓鍏煎絹缁€鍝勭磻閸忕偨鈧?
+- 妤傛﹢顣堕幋顏咁剾娴兼媽顓搁弨閫涜礋閹躲儱鎲￠梼鑸殿唽閹稿顔囪ぐ鏇☆吀缁犳绱濇稉宥呭晙閸︺劍绁寸拠鏇＄箖缁嬪鑵戠紒瀛樺Б妫板嫭绁撮悩鑸碘偓浣瑰灗閹绘劕澧犵紒鎾存将妤傛﹢顣舵潪顔筋偧閵?
+- 閸氼剝顫庨崥鍫熷灇闂婂磭娈戦幘顓熸杹閸ｃ劑鐓堕柌蹇撴祼鐎规矮璐熷锟犲櫤缁嬪绱濇潏鎾冲毉瀵搫鎬ラ崣顏嗘暠閸氬牊鍨氬▔銏犺埌閺堫剝闊╅幒褍鍩楅敍宀勪缉閸忓秵灏濊ぐ銏犳嫲閹绢厽鏂侀崳銊ュ蓟闁插秷鈥滈崙蹇嬧偓?
 
-### 修复
-- 修复部分平台上合成音字节源播放不稳定导致大量声音无法正常播放的问题。
-- 修复灵敏度等低输出轮次被二次音量衰减压到接近静音的问题，并在播放启动后增加位置推进检查；若播放器进入 playing 但位置未推进，会回到起点重试一次。
-- 响应、重置或结束时主动停止当前播放器，避免尾音拖入下一轮。
+### 娣囶喖顦?
+- 娣囶喖顦查柈銊ュ瀻楠炲啿褰存稉濠傛値閹存劙鐓剁€涙濡┃鎰尡閺€鍙ョ瑝缁嬪啿鐣剧€佃壈鍤ф径褔鍣烘竟浼寸叾閺冪姵纭跺锝呯埗閹绢厽鏂侀惃鍕６妫版ǜ鈧?
+- 娣囶喖顦查悘鍨櫛鎼达妇鐡戞担搴ょ翻閸戦缚鐤嗗▎陇顫︽禍灞绢偧闂婃娊鍣虹悰鏉垮櫤閸樺鍩岄幒銉ㄧ箮闂堟瑩鐓堕惃鍕６妫版﹫绱濋獮璺烘躬閹绢厽鏂侀崥顖氬З閸氬骸顤冮崝鐘辩秴缂冾喗甯规潻娑欘梾閺屻儻绱遍懟銉︽尡閺€鎯ф珤鏉╂稑鍙?playing 娴ｅ棔缍呯純顔芥弓閹恒劏绻橀敍灞肩窗閸ョ偛鍩岀挧椋庡仯闁插秷鐦稉鈧▎掳鈧?
+- 閸濆秴绨查妴渚€鍣哥純顔藉灗缂佹挻娼弮鏈靛瘜閸斻劌浠犲銏犵秼閸撳秵鎸遍弨鎯ф珤閿涘矂浼╅崗宥呯啲闂婅櫕瀚嬮崗銉ょ瑓娑撯偓鏉烆喓鈧?
 
-### 风险变更
-- 临时文件播放会使用系统临时目录缓存合成 WAV；若设备临时目录不可写，仍会回退到系统提示音并显示播放错误。
+### 妞嬪酣娅撻崣妯绘纯
+- 娑撳瓨妞傞弬鍥︽閹绢厽鏂佹导姘▏閻劎閮寸紒鐔跺閺冨墎娲拌ぐ鏇犵处鐎涙ê鎮庨幋?WAV閿涙稖瀚㈢拋鎯ь槵娑撳瓨妞傞惄顔肩秿娑撳秴褰查崘娆欑礉娴犲秳绱伴崶鐐衡偓鈧崚鎵兇缂佺喐褰佺粈娲叾楠炶埖妯夌粈鐑樻尡閺€楣冩晩鐠囶垬鈧?
 
 ## [Unreleased-PLAN_153-HUMAN-TESTS-ACOUSTIC-EXPERIMENT-ORDER-FIX] - 2026-05-10
 
-### 原因
-- 用户要求将麦克风声学实验拆分为人类测试中心内的独立模块“声学实验”，并修正人类测试中心模块拖动后排序位置不实际生效的问题。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐏忓棝瀹抽崗瀣棑婢规澘顒熺€圭偤鐛欓幏鍡楀瀻娑撹桨姹夌猾缁樼ゴ鐠囨洑鑵戣箛鍐ㄥ敶閻ㄥ嫮瀚粩瀣侀崸妞烩偓婊冿紣鐎涳箑鐤勬灞糕偓婵撶礉楠炴湹鎱ㄥ锝勬眽缁粯绁寸拠鏇氳厬韫囧啯膩閸ф瀚嬮崝銊ユ倵閹烘帒绨担宥囩枂娑撳秴鐤勯梽鍛晸閺佸牏娈戦梻顕€顣介妴?
 
-### 新增
-- 人类测试中心新增“声学实验”独立入口，承载麦克风低音、高音、持续和噪声仪实验。
+### 閺傛澘顤?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃弬鏉款杻閳ユ粌锛愮€涳箑鐤勬灞糕偓婵堝缁斿鍙嗛崣锝忕礉閹佃儻娴囨ス锕€鍘犳搴濈秵闂婄偨鈧線鐝棅鐐解偓浣瑰瘮缂侇厼鎷伴崳顏勶紣娴狀亜鐤勬灞烩偓?
 
-### 修改
-- 听觉测试页仅保留音量校准与频率、灵敏度、空间测试本体，麦克风实验不再混排其中。
-- 人类测试中心模块拖动排序改为原始指针追踪，拖动中以预览顺序渲染，松手后写入会话布局缓存；拖入“我的工具”仍可加入快捷入口。
+### 娣囶喗鏁?
+- 閸氼剝顫庡ù瀣槸妞ゅ吀绮庢穱婵堟殌闂婃娊鍣洪弽鈥冲櫙娑撳酣顣堕悳鍥モ偓浣轰紥閺佸繐瀹抽妴浣衡敄闂傚瓨绁寸拠鏇熸拱娴ｆ搫绱濇ス锕€鍘犳搴＄杽妤犲奔绗夐崘宥嗚穿閹烘帒鍙炬稉顓溾偓?
+- 娴滆櫣琚ù瀣槸娑擃厼绺惧Ο鈥虫健閹锋牕濮╅幒鎺戠碍閺€閫涜礋閸樼喎顫愰幐鍥嫛鏉╁€熼嚋閿涘本瀚嬮崝銊よ厬娴犮儵顣╃憴鍫ャ€庢惔蹇旇閺屾搫绱濋弶鐐閸氬骸鍟撻崗銉ょ窗鐠囨繂绔风仦鈧紓鎾崇摠閿涙稒瀚嬮崗銉⑩偓婊勫灉閻ㄥ嫬浼愰崗灏佲偓婵呯矝閸欘垰濮為崗銉ユ彥閹瑰嘲鍙嗛崣锝冣偓?
 
-### 修复
-- 修正拖动中预览顺序被旧的已提交顺序覆盖，导致松手后模块仍回到原位置的问题。
+### 娣囶喖顦?
+- 娣囶喗顒滈幏鏍уЗ娑擃參顣╃憴鍫ャ€庢惔蹇氼潶閺冄呮畱瀹稿弶褰佹禍銈夈€庢惔蹇氼洬閻╂牭绱濈€佃壈鍤ч弶鐐閸氬孩膩閸фぞ绮涢崶鐐插煂閸樼喍缍呯純顔炬畱闂傤噣顣介妴?
 
-### 风险变更
-- 排序状态当前以会话缓存为主，仍未接入更强持久化存储；关闭应用后会恢复默认布局。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹烘帒绨悩鑸碘偓浣哥秼閸撳秳浜掓导姘崇樈缂傛挸鐡ㄦ稉杞板瘜閿涘奔绮涢張顏呭复閸忋儲娲垮鐑樺瘮娑斿懎瀵茬€涙ê鍋嶉敍娑樺彠闂傤厼绨查悽銊ユ倵娴兼碍浠径宥夌帛鐠併倕绔风仦鈧妴?
 
 ## [Unreleased-PLAN_152-HUMAN-TESTS-AUDITORY-MEDICAL-GRADE] - 2026-05-10
 
-### 原因
-- 继续把工具箱-人类测试中心的听觉模块收口到更专业、更实用的本地自检层级，强化频率、灵敏度、空间定位、系统音量、麦克风声学和噪音分贝能力。
+### 閸樼喎娲?
+- 缂佈呯敾閹跺﹤浼愰崗椋庮唸-娴滆櫣琚ù瀣槸娑擃厼绺鹃惃鍕儔鐟欏膩閸ф鏁归崣锝呭煂閺囩繝绗撴稉姘モ偓浣规纯鐎圭偟鏁ら惃鍕拱閸︽媽鍤滃Λ鈧仦鍌滈獓閿涘苯宸遍崠鏍暥閻滃洢鈧胶浼掗弫蹇撳閵嗕胶鈹栭梻鏉戠暰娴ｅ秲鈧胶閮寸紒鐔肩叾闁插繈鈧線瀹抽崗瀣棑婢规澘顒熼崪灞芥珨闂婂啿鍨庣拹婵婂厴閸旀稏鈧?
 
-### 新增
-- 系统媒体音量启动检查支持自动校准，无法自动调整时会直接提示手动修正。
-- 麦克风实验补充曲线平滑度、环境评分和噪音分贝指示，低音/高音/持续/噪音四个模式更完整。
-- 空间测试改为八向扬声器盘与可拖拽方向指针，强调空间方位判断与偏差记录。
+### 閺傛澘顤?
+- 缁崵绮烘刊鎺嶇秼闂婃娊鍣洪崥顖氬З濡偓閺屻儲鏁幐浣藉殰閸斻劍鐗庨崙鍡礉閺冪姵纭堕懛顏勫З鐠嬪啯鏆ｉ弮鏈电窗閻╁瓨甯撮幓鎰仛閹靛濮╂穱顔筋劀閵?
+- 妤癸箑鍘犳搴＄杽妤犲矁藟閸忓懏娲哥痪鍨挬濠婃垵瀹抽妴浣哄箚婢у啳鐦庨崚鍡楁嫲閸ｎ亪鐓堕崚鍡氱閹稿洨銇氶敍灞肩秵闂?妤傛﹢鐓?閹镐胶鐢?閸ｎ亪鐓堕崶娑楅嚋濡€崇础閺囨潙鐣弫娣偓?
+- 缁屾椽妫垮ù瀣槸閺€閫涜礋閸忣偄鎮滈幍顒€锛愰崳銊ф磸娑撳骸褰查幏鏍ㄥ閺傜懓鎮滈幐鍥嫛閿涘苯宸辩拫鍐敄闂傚瓨鏌熸担宥呭灲閺傤厺绗岄崑蹇撴▕鐠佹澘缍嶉妴?
 
-### 修改
-- 频率测试改为更长的递进序列，频率、音量和节奏复杂度逐步抬升，末段遇到高频连续漏检时提前收口。
-- 播放阶段不再显示刺激高亮或答案提示，降低听觉干扰和视觉作弊空间。
-- 灵敏度测试改为更接近阶梯法的重复验证结构，并输出阈值估计。
+### 娣囶喗鏁?
+- 妫版垹宸煎ù瀣槸閺€閫涜礋閺囨挳鏆遍惃鍕偓鎺曠箻鎼村繐鍨敍宀勵暥閻滃洢鈧線鐓堕柌蹇撴嫲閼哄倸顨旀径宥嗘絽鎼达箓鈧劖顒為幎顒€宕岄敍灞炬汞濞堢敻浜ｉ崚浼寸彯妫版垼绻涚紒顓熺础濡偓閺冭埖褰侀崜宥嗘暪閸欙絻鈧?
+- 閹绢厽鏂侀梼鑸殿唽娑撳秴鍟€閺勫墽銇氶崚鐑樼负妤傛ü瀵掗幋鏍摕濡楀牊褰佺粈鐚寸礉闂勫秳缍嗛崥顒冾潕楠炲弶澹堥崪宀冾潒鐟欏缍斿濠勨敄闂傛番鈧?
+- 閻忓灚鏅辨惔锔界ゴ鐠囨洘鏁兼稉鐑樻纯閹恒儴绻庨梼鑸殿潽濞夋洜娈戦柌宥咁槻妤犲矁鐦夌紒鎾寸€敍灞借嫙鏉堟挸鍤梼鍫濃偓闂村強鐠伮扳偓?
 
-### 风险变更
-- 结果仍只适合作为本地自查参考，不构成医学诊断；空间定位仍基于设备扬声器和本地合成声线索，不等同临床 HRTF 测试。
+### 妞嬪酣娅撻崣妯绘纯
+- 缂佹挻鐏夋禒宥呭涧闁倸鎮庢担婊€璐熼張顒€婀撮懛顏呯叀閸欏倽鈧喛绱濇稉宥嗙€幋鎰鞍鐎涳箒鐦栭弬顓ㄧ幢缁屾椽妫跨€规矮缍呮禒宥呯唨娴滃氦顔曟径鍥ㄥ婢规澘娅掗崪灞炬拱閸︽澘鎮庨幋鎰紣缁捐法鍌ㄩ敍灞肩瑝缁涘鎮撴稉鏉戠哎 HRTF 濞村鐦妴?
 
 ## [Unreleased-PLAN_150-HUMAN-TESTS-AUDITORY-PRO-LAB-VERIFY] - 2026-05-10
 
-### 原因
-- 继续收口工具箱-人类测试中心-听觉测试模块，使其更接近专业自检和本地声学实验工具。
-### 新增
-- 播放前系统媒体音量检查与 Android 自动调整桥接，iOS 和不支持平台保留手动校准提示。
-- 麦克风声学实验区，覆盖低音、高音、持续和噪音观察。
-### 修改
-- 频率测试改为更长的递进式序列，并去除播放阶段的高亮/答案提示。
-- 灵敏度测试改为更像阶梯法的递进与重复确认。
-- 空间测试改为 8 向定位加滑动指针入口，记录方位偏差。
-### 修复
-- 修正空间轮次默认答案泄漏问题，并清理不可达的旧实现分支。
-### 风险变更
-- 结果仍然是本地自查参考，不构成医学诊断。
+### 閸樼喎娲?
+- 缂佈呯敾閺€璺哄經瀹搞儱鍙跨粻?娴滆櫣琚ù瀣槸娑擃厼绺?閸氼剝顫庡ù瀣槸濡€虫健閿涘奔濞囬崗鑸垫纯閹恒儴绻庢稉鎾茬瑹閼奉亝顥呴崪灞炬拱閸︽澘锛愮€涳箑鐤勬灞戒紣閸忔灚鈧?
+### 閺傛澘顤?
+- 閹绢厽鏂侀崜宥囬兇缂佺喎鐛熸担鎾荤叾闁插繑顥呴弻銉ょ瑢 Android 閼奉亜濮╃拫鍐╂殻濡椼儲甯撮敍瀹∣S 閸滃奔绗夐弨顖涘瘮楠炲啿褰存穱婵堟殌閹靛濮╅弽鈥冲櫙閹绘劗銇氶妴?
+- 妤癸箑鍘犳搴★紣鐎涳箑鐤勬灞藉隘閿涘矁顩惄鏍︾秵闂婄偨鈧線鐝棅鐐解偓浣瑰瘮缂侇厼鎷伴崳顏堢叾鐟欏倸鐧傞妴?
+### 娣囶喗鏁?
+- 妫版垹宸煎ù瀣槸閺€閫涜礋閺囨挳鏆遍惃鍕偓鎺曠箻瀵繐绨崚妤嬬礉楠炶泛骞撻梽銈嗘尡閺€楣冩▉濞堢數娈戞妯瑰瘨/缁涙梹顢嶉幓鎰仛閵?
+- 閻忓灚鏅辨惔锔界ゴ鐠囨洘鏁兼稉鐑樻纯閸嶅繘妯佸顖涚《閻ㄥ嫰鈧帟绻樻稉搴ㄥ櫢婢跺秶鈥樼拋銈冣偓?
+- 缁屾椽妫垮ù瀣槸閺€閫涜礋 8 閸氭垵鐣炬担宥呭濠婃垵濮╅幐鍥嫛閸忋儱褰涢敍宀冾唶瑜版洘鏌熸担宥呬焊瀹割喓鈧?
+### 娣囶喖顦?
+- 娣囶喗顒滅粚娲？鏉烆喗顐兼妯款吇缁涙梹顢嶅▔鍕础闂傤噣顣介敍灞借嫙濞撳懐鎮婃稉宥呭讲鏉堝墽娈戦弮褍鐤勯悳鏉垮瀻閺€顖樷偓?
+### 妞嬪酣娅撻崣妯绘纯
+- 缂佹挻鐏夋禒宥囧姧閺勵垱婀伴崷鎷屽殰閺屻儱寮懓鍐跨礉娑撳秵鐎幋鎰鞍鐎涳箒鐦栭弬顓溾偓?
 
 ## [Unreleased-PLAN_150-HUMAN-TESTS-AUDITORY-PRO-LAB] - 2026-05-10
 
-### 原因
-- 用户要求将工具箱-人类测试中心-听觉测试推进到更专业、实用、有效的本地自查水平，强化频率、灵敏度、空间定位、设备音量检查、麦克风声学和噪音分贝能力。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐏忓棗浼愰崗椋庮唸-娴滆櫣琚ù瀣槸娑擃厼绺?閸氼剝顫庡ù瀣槸閹恒劏绻橀崚鐗堟纯娑撴挷绗熼妴浣哥杽閻劊鈧焦婀侀弫鍫㈡畱閺堫剙婀撮懛顏呯叀濮樻潙閽╅敍灞藉繁閸栨牠顣堕悳鍥モ偓浣轰紥閺佸繐瀹抽妴浣衡敄闂傛潙鐣炬担宥冣偓浣筋啎婢跺洭鐓堕柌蹇旑梾閺屻儯鈧線瀹抽崗瀣棑婢规澘顒熼崪灞芥珨闂婂啿鍨庣拹婵婂厴閸旀稏鈧?
 
-### 新增
-- 新增播放前系统媒体音量检查：Android 通过 `vocabulary_sleep/system_audio` 读取并尝试调整媒体音量，iOS 读取当前输出音量并提示手动校准。
-- 新增麦克风声学实验区，支持低音、高音、持续发声和噪音分贝仪，显示 dBFS、峰值、音高、稳定度和持续性曲线。
-- 空间测试新增八向声源面板与滑动指针定位入口，记录用户选择方位和目标声源之间的角度偏差。
+### 閺傛澘顤?
+- 閺傛澘顤冮幘顓熸杹閸撳秶閮寸紒鐔风崯娴ｆ捇鐓堕柌蹇旑梾閺屻儻绱癆ndroid 闁俺绻?`vocabulary_sleep/system_audio` 鐠囪褰囬獮璺虹毦鐠囨洝鐨熼弫鏉戠崯娴ｆ捇鐓堕柌蹇ョ礉iOS 鐠囪褰囪ぐ鎾冲鏉堟挸鍤棅鎶藉櫤楠炶埖褰佺粈鐑樺閸斻劍鐗庨崙鍡愨偓?
+- 閺傛澘顤冩ス锕€鍘犳搴★紣鐎涳箑鐤勬灞藉隘閿涘本鏁幐浣风秵闂婄偨鈧線鐝棅鐐解偓浣瑰瘮缂侇厼褰傛竟鏉挎嫲閸ｎ亪鐓堕崚鍡氱娴狀亷绱濋弰鍓с仛 dBFS閵嗕礁鍢查崐绗衡偓渚€鐓舵妯糕偓浣呵旂€规艾瀹抽崪灞惧瘮缂侇厽鈧勬锤缁捐￥鈧?
+- 缁屾椽妫垮ù瀣槸閺傛澘顤冮崗顐㈡倻婢圭増绨棃銏℃緲娑撳孩绮﹂崝銊﹀瘹闁藉牆鐣炬担宥呭弳閸欙綇绱濈拋鏉跨秿閻劍鍩涢柅澶嬪閺傞€涚秴閸滃瞼娲伴弽鍥э紣濠ф劒绠ｉ梻瀵告畱鐟欐帒瀹抽崑蹇撴▕閵?
 
-### 修改
-- 频率测试改为更长的递进式频率/音量/节奏序列，逐步提高频率、音量和节奏复杂度。
-- 听觉测试播放阶段取消高亮背景和当前刺激提示，避免用户通过视觉变化或答案提示作弊。
-- 灵敏度测试改为更细的阶梯序列与重复验证结构，用于估计可听阈值。
+### 娣囶喗鏁?
+- 妫版垹宸煎ù瀣槸閺€閫涜礋閺囨挳鏆遍惃鍕偓鎺曠箻瀵繘顣堕悳?闂婃娊鍣?閼哄倸顨旀惔蹇撳灙閿涘矂鈧劖顒為幓鎰扮彯妫版垹宸奸妴渚€鐓堕柌蹇撴嫲閼哄倸顨旀径宥嗘絽鎼达负鈧?
+- 閸氼剝顫庡ù瀣槸閹绢厽鏂侀梼鑸殿唽閸欐牗绉锋妯瑰瘨閼冲本娅欓崪灞界秼閸撳秴鍩″┑鈧幓鎰仛閿涘矂浼╅崗宥囨暏閹寸兘鈧俺绻冪憴鍡氼潕閸欐ê瀵查幋鏍摕濡楀牊褰佺粈杞扮稊瀵鈧?
+- 閻忓灚鏅辨惔锔界ゴ鐠囨洘鏁兼稉鐑樻纯缂佸棛娈戦梼鑸殿潽鎼村繐鍨稉搴ㄥ櫢婢跺秹鐛欑拠浣虹波閺嬪嫸绱濋悽銊ょ艾娴兼媽顓搁崣顖氭儔闂冨牆鈧鈧?
 
-### 风险变更
-- 当前听觉结果仍依赖设备扬声器/耳机、系统音量、环境噪音和麦克风硬件，仅作为本地自查辅助，不构成医学诊断。
-- 空间定位使用双声道声像和轻量频率变化模拟空间线索，不等同专业 HRTF 或临床空间听觉设备。
+### 妞嬪酣娅撻崣妯绘纯
+- 瑜版挸澧犻崥顒冾潕缂佹挻鐏夋禒宥勭贩鐠ф牞顔曟径鍥ㄥ婢规澘娅?閼拌櫕婧€閵嗕胶閮寸紒鐔肩叾闁插繈鈧胶骞嗘晶鍐ㄦ珨闂婂啿鎷版ス锕€鍘犳搴ｂ€栨禒璁圭礉娴犲懍缍旀稉鐑樻拱閸︽媽鍤滈弻銉ㄧ窡閸斺晪绱濇稉宥嗙€幋鎰鞍鐎涳箒鐦栭弬顓溾偓?
+- 缁屾椽妫跨€规矮缍呮担璺ㄦ暏閸欏苯锛愰柆鎾筹紣閸嶅繐鎷版潪濠氬櫤妫版垹宸奸崣妯哄濡剝瀚欑粚娲？缁捐法鍌ㄩ敍灞肩瑝缁涘鎮撴稉鎾茬瑹 HRTF 閹存牔澶嶆惔濠勨敄闂傛潙鎯夌憴澶庮啎婢跺洢鈧?
 
 ## [Unreleased-PLAN_150-HUMAN-TESTS-AUDITORY-TEST] - 2026-05-09
 
-### 原因
-- 用户要求将工具箱-人类测试中心-听觉从“听觉反应”调整为“听觉测试”，并将频率、音量、声道三类旧模拟测试重构为更完整的听感评估。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐏忓棗浼愰崗椋庮唸-娴滆櫣琚ù瀣槸娑擃厼绺?閸氼剝顫庢禒搴樷偓婊冩儔鐟欏寮芥惔鏂衡偓婵婄殶閺佺繝璐熼垾婊冩儔鐟欏绁寸拠鏇椻偓婵撶礉楠炶泛鐨㈡０鎴犲芳閵嗕線鐓堕柌蹇嬧偓浣革紣闁挷绗佺猾缁樻＋濡剝瀚欏ù瀣槸闁插秵鐎稉鐑樻纯鐎瑰本鏆ｉ惃鍕儔閹扮喕鐦庢导鑸偓?
 
-### 新增
-- 听觉测试新增三类模式：频率评估、听力灵敏度、声音空间。
-- 频率评估支持 10/12/16/20 组分析、频率范围、测试大小、频率音量、节奏声量变化和节奏混合设置。
-- 听力灵敏度支持基准频率、音量阶数、最低/最高输出、对数阶梯和阈值提示设置。
-- 声音空间支持 8/12/16 个方向、自定义方向、空间音量、判定容差、滑杆平滑和方向标签设置。
-- 完成报告新增分组明细、原始记录开关、重播/试听控制和基于频率、灵敏度、空间误差的建议文案。
+### 閺傛澘顤?
+- 閸氼剝顫庡ù瀣槸閺傛澘顤冩稉澶岃濡€崇础閿涙岸顣堕悳鍥槑娴艰埇鈧礁鎯夐崝娑氫紥閺佸繐瀹抽妴浣革紣闂婂磭鈹栭梻娣偓?
+- 妫版垹宸肩拠鍕強閺€顖涘瘮 10/12/16/20 缂佸嫬鍨庨弸鎰┾偓渚€顣堕悳鍥瘱閸ユ番鈧焦绁寸拠鏇炪亣鐏忓繈鈧線顣堕悳鍥叾闁插繈鈧浇濡總蹇擄紣闁插繐褰夐崠鏍ф嫲閼哄倸顨斿ǎ宄版値鐠佸墽鐤嗛妴?
+- 閸氼剙濮忛悘鍨櫛鎼达附鏁幐浣哥唨閸戝棝顣堕悳鍥モ偓渚€鐓堕柌蹇涙▉閺佽埇鈧焦娓舵担?閺堚偓妤傛绶崙鎭掆偓浣割嚠閺佷即妯佸顖氭嫲闂冨牆鈧吋褰佺粈楦款啎缂冾喓鈧?
+- 婢逛即鐓剁粚娲？閺€顖涘瘮 8/12/16 娑擃亝鏌熼崥鎴欌偓浣藉殰鐎规矮绠熼弬鐟版倻閵嗕胶鈹栭梻鎾叾闁插繈鈧礁鍨界€规艾顔愬顔衡偓浣圭拨閺夊棗閽╁鎴濇嫲閺傜懓鎮滈弽鍥╊劮鐠佸墽鐤嗛妴?
+- 鐎瑰本鍨氶幎銉ユ啞閺傛澘顤冮崚鍡欑矋閺勫海绮忛妴浣稿斧婵顔囪ぐ鏇炵磻閸忕偨鈧線鍣搁幘?鐠囨洖鎯夐幒褍鍩楅崪灞界唨娴滃酣顣堕悳鍥モ偓浣轰紥閺佸繐瀹抽妴浣衡敄闂傜顕ゅ顔炬畱瀵ら缚顔呴弬鍥攳閵?
 
-### 修改
-- 人类测试中心听觉入口文案从“Auditory reaction / 听觉反应”收口为“Auditory test / 听觉测试”。
-- 旧“音量测试”改为“听力灵敏度测试”，旧“声道测试”改为“声音空间测试”，用户通过滑杆回报立体空间位置。
-- 更新 smoke test 与模块说明，覆盖新模式和关键自定义设置项。
+### 娣囶喗鏁?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崥顒冾潕閸忋儱褰涢弬鍥攳娴犲簶鈧穾uditory reaction / 閸氼剝顫庨崣宥呯安閳ユ繃鏁归崣锝勮礋閳ユ穾uditory test / 閸氼剝顫庡ù瀣槸閳ユ縿鈧?
+- 閺冄€鈧粓鐓堕柌蹇旂ゴ鐠囨洍鈧繃鏁兼稉琛♀偓婊冩儔閸旀稓浼掗弫蹇撳濞村鐦垾婵撶礉閺冄€鈧粌锛愰柆鎾寸ゴ鐠囨洍鈧繃鏁兼稉琛♀偓婊冿紣闂婂磭鈹栭梻瀛樼ゴ鐠囨洍鈧繐绱濋悽銊﹀煕闁俺绻冨鎴炴綄閸ョ偞濮ょ粩瀣╃秼缁屾椽妫挎担宥囩枂閵?
+- 閺囧瓨鏌?smoke test 娑撳孩膩閸ф顕╅弰搴礉鐟曞棛娲婇弬鐗埬佸蹇撴嫲閸忔娊鏁懛顏勭暰娑斿顔曠純顕€銆嶉妴?
 
-### 风险变更
-- 本轮仍使用本地合成 WAV 与设备输出模拟，结果仅用于自我观察，不替代专业听力检查。
-- 空间定位使用左右声道增益近似方位，不引入 HRTF 或专业空间音频引擎。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥勫▏閻劍婀伴崷鏉挎値閹?WAV 娑撳氦顔曟径鍥翻閸戠儤膩閹风噦绱濈紒鎾寸亯娴犲懐鏁ゆ禍搴ゅ殰閹存垼顫囩€电噦绱濇稉宥嗘禌娴狅絼绗撴稉姘儔閸旀稒顥呴弻銉ｂ偓?
+- 缁屾椽妫跨€规矮缍呮担璺ㄦ暏瀹革箑褰告竟浼翠壕婢х偟娉潻鎴滄妧閺傞€涚秴閿涘奔绗夊鏇炲弳 HRTF 閹存牔绗撴稉姘扁敄闂傛挳鐓舵０鎴濈穿閹垮簺鈧?
 
 ## [Unreleased-PLAN_151-HUMAN-TESTS-DRAG-MOTION-TOOLBOX-EDIT] - 2026-05-09
 
-### 原因
-- 用户反馈人类测试中心双列布局拖动时缺少其他图标跟随调整的动效，同时希望工具箱首页拖动松开后自动退出编辑态，不再依赖单独点击完成。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯娴滆櫣琚ù瀣槸娑擃厼绺鹃崣灞藉灙鐢啫鐪幏鏍уЗ閺冨墎宸辩亸鎴濆従娴犳牕娴橀弽鍥闂呭繗鐨熼弫瀵告畱閸斻劍鏅ラ敍灞芥倱閺冭泛绗囬張娑樹紣閸忛顔堟＃鏍€夐幏鏍уЗ閺夋儳绱戦崥搴ゅ殰閸斻劑鈧偓閸戣櫣绱潏鎴炩偓渚婄礉娑撳秴鍟€娓氭繆绂嗛崡鏇犲閻愮懓鍤€瑰本鍨氶妴?
 
-### 修改
-- 人类测试中心入口网格改为固定槽位动画布局，拖动排序时其他入口会随预览顺序滑动换位，松开后统一确认或回滚拖动状态。
-- 人类测试中心入口卡片进一步压缩为大图标启动器样式，降低长文案占用，保留 tooltip 和二级页面完整说明。
-- 工具箱首页编辑态接入拖动开始/结束状态，拖动排序松开后自动退出编辑态，并将显式完成按钮改为退出编辑语义。
+### 娣囶喗鏁?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崗銉ュ經缂冩垶鐗搁弨閫涜礋閸ュ搫鐣惧Σ鎴掔秴閸斻劎鏁剧敮鍐ㄧ湰閿涘本瀚嬮崝銊﹀笓鎼村繑妞傞崗鏈电铂閸忋儱褰涙导姘舵妫板嫯顫嶆い鍝勭碍濠婃垵濮╅幑顫秴閿涘本婢楀鈧崥搴ｇ埠娑撯偓绾喛顓婚幋鏍ф礀濠婃碍瀚嬮崝銊уЦ閹降鈧?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崗銉ュ經閸楋紕澧栨潻娑楃濮濄儱甯囩紓鈺€璐熸径褍娴橀弽鍥ф儙閸斻劌娅掗弽宄扮础閿涘矂妾锋担搴ㄦ毐閺傚洦顢嶉崡鐘垫暏閿涘奔绻氶悾?tooltip 閸滃奔绨╃痪褔銆夐棃銏犵暚閺佺顕╅弰搴涒偓?
+- 瀹搞儱鍙跨粻閬嶎浕妞ょ數绱潏鎴炩偓浣瑰复閸忋儲瀚嬮崝銊ョ磻婵?缂佹挻娼悩鑸碘偓渚婄礉閹锋牕濮╅幒鎺戠碍閺夋儳绱戦崥搴ゅ殰閸斻劑鈧偓閸戣櫣绱潏鎴炩偓渚婄礉楠炶泛鐨㈤弰鎯х础鐎瑰本鍨氶幐澶愭尦閺€閫涜礋闁偓閸戣櫣绱潏鎴ｎ嚔娑斿鈧?
 
-### 风险变更
-- 本轮仍只调整展示层与拖动反馈，不改变工具箱模块启停、路由、持久化结构或具体人类测试子页面逻辑。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥呭涧鐠嬪啯鏆ｇ仦鏇犮仛鐏炲倷绗岄幏鏍уЗ閸欏秹顩敍灞肩瑝閺€鐟板綁瀹搞儱鍙跨粻杈侀崸妤€鎯庨崑婧库偓浣界熅閻究鈧焦瀵旀稊鍛缂佹挻鐎幋鏍у徔娴ｆ挷姹夌猾缁樼ゴ鐠囨洖鐡欐い鐢告桨闁槒绶妴?
 
 ## [Unreleased-PLAN_149-HUMAN-TESTS-GRID-POLISH] - 2026-05-09
 
-### 原因
-- 人类测试中心改为双列后，原信息卡片在手机上显得拥挤混乱，需要进一步收敛为更清爽的移动端工具入口。
+### 閸樼喎娲?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃弨閫涜礋閸欏苯鍨崥搴礉閸樼喍淇婇幁顖氬幢閻楀洤婀幍瀣簚娑撳﹥妯夊妤佸閹搞倖璐╂稊鎲嬬礉闂団偓鐟曚浇绻樻稉鈧銉︽暪閺佹稐璐熼弴瀛樼閻栫晫娈戠粔璇插З缁旑垰浼愰崗宄板弳閸欙絻鈧?
 
-### 修改
-- 人类测试中心双列入口改为大图标启动器样式，使用短标题、一行全名和固定高度，移除卡片内长说明。
-- 顶部“我的工具”区域压缩为更轻的快捷工具栏，快捷入口图标更小、面板边界更克制。
-- 调整网格间距、拖动反馈宽度和测试断言容差，保持原有添加、拖动添加和排序行为不变。
+### 娣囶喗鏁?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崣灞藉灙閸忋儱褰涢弨閫涜礋婢堆冩禈閺嶅洤鎯庨崝銊ユ珤閺嶅嘲绱￠敍灞煎▏閻劎鐓弽鍥暯閵嗕椒绔寸悰灞藉弿閸氬秴鎷伴崶鍝勭暰妤傛ê瀹抽敍宀€些闂勩倕宕遍悧鍥у敶闂€鑳嚛閺勫簺鈧?
+- 妞ゅ爼鍎撮垾婊勫灉閻ㄥ嫬浼愰崗灏佲偓婵嗗隘閸╃喎甯囩紓鈺€璐熼弴纾嬩氦閻ㄥ嫬鎻╅幑宄颁紣閸忛攱鐖敍灞芥彥閹瑰嘲鍙嗛崣锝呮禈閺嶅洦娲跨亸蹇嬧偓渚€娼伴弶鑳珶閻ｅ本娲块崗瀣煑閵?
+- 鐠嬪啯鏆ｇ純鎴炵壐闂傜绐涢妴浣瑰珛閸斻劌寮芥＃鍫濐啍鎼达箑鎷板ù瀣槸閺傤叀鈻堢€圭懓妯婇敍灞肩箽閹镐礁甯張澶嬪潑閸旂姰鈧焦瀚嬮崝銊﹀潑閸旂姴鎷伴幒鎺戠碍鐞涘奔璐熸稉宥呭綁閵?
 
-### 风险变更
-- 入口卡片不再直接展示完整说明；完整说明仍保留在进入具体测试页后的页面头部和模块内部文案中。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋儱褰涢崡锛勫娑撳秴鍟€閻╁瓨甯寸仦鏇犮仛鐎瑰本鏆ｇ拠瀛樻閿涙稑鐣弫纾嬵嚛閺勫簼绮涙穱婵堟殌閸︺劏绻橀崗銉ュ徔娴ｆ挻绁寸拠鏇€夐崥搴ｆ畱妞ょ敻娼版径鎾劥閸滃本膩閸ф鍞撮柈銊︽瀮濡楀牅鑵戦妴?
 
 ## [Unreleased-PLAN_147-HUMAN-TESTS-QUICK-LAYOUT] - 2026-05-09
 
-### 原因
-- 用户要求优化工具箱-人类测试中心各模块顺序，使入口更合理；模块区采用一行双列，并支持长按拖动排序和拖动添加到顶部快捷入口。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娴兼ê瀵插銉ュ徔缁?娴滆櫣琚ù瀣槸娑擃厼绺鹃崥鍕侀崸妤呫€庢惔蹇ョ礉娴ｅ灝鍙嗛崣锝嗘纯閸氬牏鎮婇敍娑櫮侀崸妤€灏柌鍥╂暏娑撯偓鐞涘苯寮婚崚妤嬬礉楠炶埖鏁幐渚€鏆遍幐澶嬪珛閸斻劍甯撴惔蹇撴嫲閹锋牕濮╁ǎ璇插閸掍即銆婇柈銊ユ彥閹瑰嘲鍙嗛崣锝冣偓?
 
-### 新增
-- 人类测试中心新增顶部“我的工具”快捷入口区，支持点击添加按钮选择测试模块。
-- 支持长按测试卡片拖动，将模块加入顶部快捷入口；松开后自动退出拖动状态。
+### 閺傛澘顤?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃弬鏉款杻妞ゅ爼鍎撮垾婊勫灉閻ㄥ嫬浼愰崗灏佲偓婵嗘彥閹瑰嘲鍙嗛崣锝呭隘閿涘本鏁幐浣哄仯閸戠粯鍧婇崝鐘冲瘻闁筋噣鈧瀚ㄥù瀣槸濡€虫健閵?
+- 閺€顖涘瘮闂€鎸庡瘻濞村鐦崡锛勫閹锋牕濮╅敍灞界殺濡€虫健閸旂姴鍙嗘い鍫曞劥韫囶偅宓庨崗銉ュ經閿涙稒婢楀鈧崥搴ゅ殰閸斻劑鈧偓閸戠儤瀚嬮崝銊уЦ閹降鈧?
 
-### 修改
-- 人类测试中心入口改为紧凑双列卡片布局，并按反应/操作、记忆、视觉听觉、认知注意、协调、输入娱乐的路径重新整理默认顺序。
-- 测试入口卡片增加短标题和稳定 ID，用于快捷入口展示、拖动排序与测试覆盖。
-- 更新人类测试中心 smoke test，覆盖顶部快捷入口、375dp 双列布局和点击添加流程。
+### 娣囶喗鏁?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崗銉ュ經閺€閫涜礋缁毖冨櫨閸欏苯鍨崡锛勫鐢啫鐪敍灞借嫙閹稿寮芥惔?閹垮秳缍旈妴浣筋唶韫囧棎鈧浇顫嬬憴澶婃儔鐟欏鈧浇顓婚惌銉︽暈閹板繈鈧礁宕楃拫鍐︹偓浣界翻閸忋儱奴娑旀劗娈戠捄顖氱窞闁插秵鏌婇弫瀵告倞姒涙顓绘い鍝勭碍閵?
+- 濞村鐦崗銉ュ經閸楋紕澧栨晶鐐插閻厽鐖ｆ０妯烘嫲缁嬪啿鐣?ID閿涘瞼鏁ゆ禍搴℃彥閹瑰嘲鍙嗛崣锝呯潔缁€鎭掆偓浣瑰珛閸斻劍甯撴惔蹇庣瑢濞村鐦憰鍡欐磰閵?
+- 閺囧瓨鏌婃禍铏硅濞村鐦稉顓炵妇 smoke test閿涘矁顩惄鏍€婇柈銊ユ彥閹瑰嘲鍙嗛崣锝冣偓?75dp 閸欏苯鍨敮鍐ㄧ湰閸滃瞼鍋ｉ崙缁樺潑閸旂姵绁︾粙瀣ㄢ偓?
 
-### 风险变更
-- 本轮快捷入口和排序为人类测试中心页面内状态，暂不写入全局 AppState 或 SettingsService；重新进入页面后按默认优化顺序展示。
-- 拖动交互仅作用于入口卡片层，不改变任何具体测试页的计时、统计、报告或持久化逻辑。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗚箛顐ｅ祹閸忋儱褰涢崪灞惧笓鎼村繋璐熸禍铏硅濞村鐦稉顓炵妇妞ょ敻娼伴崘鍛Ц閹緤绱濋弳鍌欑瑝閸愭瑥鍙嗛崗銊ョ湰 AppState 閹?SettingsService閿涙盯鍣搁弬鎷岀箻閸忋儵銆夐棃銏犳倵閹稿绮拋銈勭喘閸栨牠銆庢惔蹇撶潔缁€鎭掆偓?
+- 閹锋牕濮╂禍銈勭鞍娴犲懍缍旈悽銊ょ艾閸忋儱褰涢崡锛勫鐏炲偊绱濇稉宥嗘暭閸欐ü鎹㈡担鏇炲徔娴ｆ挻绁寸拠鏇€夐惃鍕吀閺冭翰鈧胶绮虹拋掳鈧焦濮ら崨濠冨灗閹镐椒绠欓崠鏍偓鏄忕帆閵?
 
 ## [Unreleased-PLAN_148-VISUAL-SEARCH-LINK-MATCH] - 2026-05-09
 
-### 原因
-- 用户要求在工具箱-人类测试中心-视觉搜索模块中增加连连看的趣味模式，并明确当前外部工具箱模块和布局正在并行修改，本轮只能收口在视觉搜索子模块内部。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閸︺劌浼愰崗椋庮唸-娴滆櫣琚ù瀣槸娑擃厼绺?鐟欏棜顫庨幖婊呭偍濡€虫健娑擃厼顤冮崝鐘虹箾鏉╃偟婀呴惃鍕彯閸涜櫕膩瀵骏绱濋獮鑸垫绾喖缍嬮崜宥咁樆闁劌浼愰崗椋庮唸濡€虫健閸滃苯绔风仦鈧锝呮躬楠炴儼顢戞穱顔芥暭閿涘本婀版潪顔煎涧閼宠姤鏁归崣锝呮躬鐟欏棜顫庨幖婊呭偍鐎涙劖膩閸ф鍞撮柈銊ｂ偓?
 
-### 新增
-- 视觉搜索新增「连连看 / Link match」模式，在视觉搜索页内部提供图案配对、边界路径与最多两次转弯判定、配对数、剩余对数、步数、用时和完成报告。
-- 新增连连看棋盘 smoke test，覆盖模式入口、尺寸设置、只匹配图案开关和主棋盘渲染。
+### 閺傛澘顤?
+- 鐟欏棜顫庨幖婊呭偍閺傛澘顤冮妴宀冪箾鏉╃偟婀?/ Link match閵嗗秵膩瀵骏绱濋崷銊潒鐟欏鎮崇槐銏ゃ€夐崘鍛村劥閹绘劒绶甸崶鐐攳闁板秴顕妴浣界珶閻ｅ矁鐭惧鍕瑢閺堚偓婢舵矮琚卞▎陇娴嗗顖氬灲鐎规哎鈧線鍘ょ€佃鏆熼妴浣稿⒖娴ｆ瑥顕弫鑸偓浣诡劄閺佽埇鈧胶鏁ら弮璺烘嫲鐎瑰本鍨氶幎銉ユ啞閵?
+- 閺傛澘顤冩潻鐐剁箾閻顥愰惄?smoke test閿涘矁顩惄鏍佸蹇撳弳閸欙絻鈧礁鏄傜€垫瓕顔曠純顔衡偓浣稿涧閸栧綊鍘ら崶鐐攳瀵偓閸忓啿鎷版稉缁橆棎閻╂ɑ瑕嗛弻鎾扁偓?
 
-### 修改
-- 视觉搜索设置文案扩展为搜索、找不同和连连看三模式；连连看使用独立棋盘尺寸设置，不影响原有找目标和找不同轮次逻辑。
-- 连连看棋盘从相邻成对改为随机可解分布，视觉上不再呈现整齐摆放的排列感。
-- 修复连连看开局仍容易退回相邻成对布局的问题：移除相邻兜底，改为随机生成优先、分层可解布局兜底，并允许路径借助棋盘外边界。
-- 连连看点击第二个图案后显示连接路线；路径被阻挡时在阻挡格显示红色叉号，图案不匹配时在两个图案上显示叉号。
-- 连连看设置新增「只匹配图案」开关，开启后相同图案无需路径连通也能消除，路线仅作为反馈显示。
+### 娣囶喗鏁?
+- 鐟欏棜顫庨幖婊呭偍鐠佸墽鐤嗛弬鍥攳閹碘晛鐫嶆稉鐑樻偝缁鳖潿鈧焦澹樻稉宥呮倱閸滃矁绻涙潻鐐垫箙娑撳膩瀵骏绱辨潻鐐剁箾閻濞囬悽銊у缁斿顥愰惄妯烘槀鐎垫瓕顔曠純顕嗙礉娑撳秴濂栭崫宥呭斧閺堝澹橀惄顔界垼閸滃本澹樻稉宥呮倱鏉烆喗顐奸柅鏄忕帆閵?
+- 鏉╃偠绻涢惇瀣棎閻╂ü绮犻惄鎼佸仸閹存劕顕弨閫涜礋闂呭繑婧€閸欘垵袙閸掑棗绔烽敍宀冾潒鐟欏绗傛稉宥呭晙閸涘牏骞囬弫鎾秷閹藉棙鏂侀惃鍕笓閸掓鍔呴妴?
+- 娣囶喖顦叉潻鐐剁箾閻绱戠仦鈧禒宥咁啇閺勬捇鈧偓閸ョ偟娴夐柇缁樺灇鐎电懓绔风仦鈧惃鍕６妫版﹫绱扮粔濠氭珟閻╂悂鍋﹂崗婊冪俺閿涘本鏁兼稉娲閺堣櫣鏁撻幋鎰喘閸忓牄鈧礁鍨庣仦鍌氬讲鐟欙絽绔风仦鈧崗婊冪俺閿涘苯鑻熼崗浣筋啅鐠侯垰绶為崐鐔峰И濡娲忔径鏍珶閻ｅ被鈧?
+- 鏉╃偠绻涢惇瀣仯閸戣崵顑囨禍灞奸嚋閸ョ偓顢嶉崥搴㈡▔缁€楦跨箾閹恒儴鐭剧痪鍖＄幢鐠侯垰绶炵悮顐︽▎閹糕剝妞傞崷銊╂▎閹糕剝鐗搁弰鍓с仛缁俱垼澹婇崣澶婂娇閿涘苯娴樺鍫滅瑝閸栧綊鍘ら弮璺烘躬娑撱倓閲滈崶鐐攳娑撳﹥妯夌粈鍝勫级閸欐灚鈧?
+- 鏉╃偠绻涢惇瀣啎缂冾喗鏌婃晶鐐偓灞藉涧閸栧綊鍘ら崶鐐攳閵嗗秴绱戦崗绛圭礉瀵偓閸氼垰鎮楅惄绋挎倱閸ョ偓顢嶉弮鐘绘付鐠侯垰绶炴潻鐐衡偓姘瘍閼宠姤绉烽梽銈忕礉鐠侯垳鍤庢禒鍛稊娑撳搫寮芥＃鍫熸▔缁€鎭掆偓?
 
-### 风险变更
-- 本轮只修改视觉搜索子模块、对应测试和文档，不触碰外层工具箱首页、布局排序、模块路由或持久化状态。
-- 连连看路径判定当前支持直线、棋盘外一圈和最多两次转弯，属于轻量趣味模式，不扩展到更复杂的多转弯规则。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏冩叏閺€纭咁潒鐟欏鎮崇槐銏犵摍濡€虫健閵嗕礁顕惔鏃€绁寸拠鏇炴嫲閺傚洦銆傞敍灞肩瑝鐟欙妇顫径鏍х湴瀹搞儱鍙跨粻閬嶎浕妞ょ偣鈧礁绔风仦鈧幒鎺戠碍閵嗕焦膩閸ф鐭鹃悽杈ㄥ灗閹镐椒绠欓崠鏍Ц閹降鈧?
+- 鏉╃偠绻涢惇瀣熅瀵板嫬鍨界€规艾缍嬮崜宥嗘暜閹镐胶娲跨痪瑁も偓浣诡棎閻╂ê顦绘稉鈧崷鍫濇嫲閺堚偓婢舵矮琚卞▎陇娴嗗顖ょ礉鐏炵偘绨潪濠氬櫤鐡掞絽鎳楀Ο鈥崇础閿涘奔绗夐幍鈺佺潔閸掔増娲挎径宥嗘絽閻ㄥ嫬顦挎潪顒€闆嗙憴鍕灟閵?
 
 ## [Unreleased-PLAN_146-TOOLBOX-AUDITORY-SIMULATION] - 2026-05-08
 
-### 原因
-- 用户要求将视觉搜索/找不同与听觉反应/声音辨识标题收口，并修复听觉反应播放失败，同时扩展频率、音量和声道三类模拟医学测试。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐏忓棜顫嬬憴澶嬫偝缁?閹靛彞绗夐崥灞肩瑢閸氼剝顫庨崣宥呯安/婢逛即鐓舵潏銊ㄧ槕閺嶅洭顣介弨璺哄經閿涘苯鑻熸穱顔碱槻閸氼剝顫庨崣宥呯安閹绢厽鏂佹径杈Е閿涘苯鎮撻弮鑸靛⒖鐏炴洟顣堕悳鍥モ偓渚€鐓堕柌蹇撴嫲婢逛即浜炬稉澶岃濡剝瀚欓崠璇差劅濞村鐦妴?
 
-### 新增
-- 听觉反应改为合成提示音实现，支持反应、频率、音量和声道四种模式。
-- 新增频率辨别、音量辨别和左右声道辨别的模拟测试项，结果仅作为本地自测反馈。
+### 閺傛澘顤?
+- 閸氼剝顫庨崣宥呯安閺€閫涜礋閸氬牊鍨氶幓鎰仛闂婂啿鐤勯悳甯礉閺€顖涘瘮閸欏秴绨查妴渚€顣堕悳鍥モ偓渚€鐓堕柌蹇撴嫲婢逛即浜鹃崶娑氼潚濡€崇础閵?
+- 閺傛澘顤冩０鎴犲芳鏉堛劌鍩嗛妴渚€鐓堕柌蹇氶哺閸掝偄鎷板锕€褰告竟浼翠壕鏉堛劌鍩嗛惃鍕侀幏鐔哥ゴ鐠囨洟銆嶉敍宀€绮ㄩ弸婊€绮庢担婊€璐熼張顒€婀撮懛顏呯ゴ閸欏秹顩妴?
 
-### 修改
-- 视觉搜索标题收口为“视觉搜索”，听觉模块标题收口为“听觉反应”。
-- 更新听觉页 smoke test、模块说明与入口文案，改用合成音播放路径。
+### 娣囶喗鏁?
+- 鐟欏棜顫庨幖婊呭偍閺嶅洭顣介弨璺哄經娑撹　鈧粏顫嬬憴澶嬫偝缁扁懇鈧繐绱濋崥顒冾潕濡€虫健閺嶅洭顣介弨璺哄經娑撹　鈧粌鎯夌憴澶婂冀鎼存柡鈧縿鈧?
+- 閺囧瓨鏌婇崥顒冾潕妞?smoke test閵嗕焦膩閸ф顕╅弰搴濈瑢閸忋儱褰涢弬鍥攳閿涘本鏁奸悽銊ユ値閹存劙鐓堕幘顓熸杹鐠侯垰绶為妴?
 
-### 风险变更
-- 合成音频依赖平台播放器和临时文件路径；若平台音频能力异常，页面会退化为系统提示音。
-- 声道模拟在单声道设备上感知可能不明显，因此仅作为本地模拟训练。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸氬牊鍨氶棅鎶筋暥娓氭繆绂嗛獮鍐插酱閹绢厽鏂侀崳銊ユ嫲娑撳瓨妞傞弬鍥︽鐠侯垰绶為敍娑滃楠炲啿褰撮棅鎶筋暥閼宠棄濮忓鍌氱埗閿涘矂銆夐棃顫窗闁偓閸栨牔璐熺化鑽ょ埠閹绘劗銇氶棅鐐解偓?
+- 婢逛即浜惧Ο鈩冨珯閸︺劌宕熸竟浼翠壕鐠佹儳顦稉濠冨妳閻儱褰查懗鎴掔瑝閺勫孩妯夐敍灞芥礈濮濄倓绮庢担婊€璐熼張顒€婀村Ο鈩冨珯鐠侇厾绮岄妴?
 
 ## [Unreleased-PLAN_145-HUMAN-TESTS-NEW-MODULES] - 2026-05-08
 
-### 原因
-- 用户要求在工具箱-人类测试中心新增视觉搜索/找不同、听觉反应/声音辨识、双任务切换、精细拖拽追踪和双手协调五个子模块。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閸︺劌浼愰崗椋庮唸-娴滆櫣琚ù瀣槸娑擃厼绺鹃弬鏉款杻鐟欏棜顫庨幖婊呭偍/閹靛彞绗夐崥灞烩偓浣告儔鐟欏寮芥惔?婢逛即鐓舵潏銊ㄧ槕閵嗕礁寮绘禒璇插閸掑洦宕查妴浣虹翱缂佸棙瀚嬮幏鍊熸嫹闊亜鎷伴崣灞惧閸楀繗鐨熸禍鏂鹃嚋鐎涙劖膩閸фぜ鈧?
 
-### 新增
-- 新增 `VisualSearchTestPage`，支持密集网格找目标与双面板找不同两种模式，并提供轮数、网格密度、准确率、平均用时和报告。
-- 新增 `AuditoryReactionTestPage`，使用现有 roulette 短音效资源提供听音反应与声音辨识两种模式，统计反应时、准确率、抢答和分音效表现。
-- 新增 `DualTaskSwitchTestPage`，在数字奇偶与颜色冷热规则之间切换，统计切换轮、重复轮、切换代价和连击。
-- 新增 `FineDragTrackingTestPage`，通过窄轨迹拖拽追踪记录偏离距离、离轨次数、完成时间和难度设置。
-- 新增 `BimanualCoordinationTestPage`，支持左右手交替与同步双击两类训练，记录同步窗口、平均用时、同步差和准确率。
+### 閺傛澘顤?
+- 閺傛澘顤?`VisualSearchTestPage`閿涘本鏁幐浣哥槕闂嗗棛缍夐弽鍏煎閻╊喗鐖ｆ稉搴″蓟闂堛垺婢橀幍鍙ョ瑝閸氬奔琚辩粔宥喣佸蹇ョ礉楠炶埖褰佹笟娑滅枂閺佽埇鈧胶缍夐弽鐓庣槕鎼达负鈧礁鍣涵顔惧芳閵嗕礁閽╅崸鍥╂暏閺冭泛鎷伴幎銉ユ啞閵?
+- 閺傛澘顤?`AuditoryReactionTestPage`閿涘奔濞囬悽銊у箛閺?roulette 閻參鐓堕弫鍫ｇカ濠ф劖褰佹笟娑樻儔闂婂啿寮芥惔鏂剧瑢婢逛即鐓舵潏銊ㄧ槕娑撱倗顫掑Ο鈥崇础閿涘瞼绮虹拋鈥冲冀鎼存梹妞傞妴浣稿櫙绾喚宸奸妴浣瑰缁涙柨鎷伴崚鍡涚叾閺佸牐銆冮悳鑸偓?
+- 閺傛澘顤?`DualTaskSwitchTestPage`閿涘苯婀弫鏉跨摟婵傚洤浼撴稉搴杹閼规彃鍠庨悜顓☆潐閸掓瑤绠ｉ梻鏉戝瀼閹诡澁绱濈紒鐔活吀閸掑洦宕叉潪顔衡偓渚€鍣告径宥堢枂閵嗕礁鍨忛幑顫敩娴犲嘲鎷版潻鐐插毊閵?
+- 閺傛澘顤?`FineDragTrackingTestPage`閿涘矂鈧俺绻冪粣鍕缓鏉╄瀚嬮幏鍊熸嫹闊亣顔囪ぐ鏇炰焊缁傛槒绐涚粋姹団偓浣侯瀲鏉炪劍顐奸弫鑸偓浣哥暚閹存劖妞傞梻鏉戞嫲闂呮儳瀹崇拋鍓х枂閵?
+- 閺傛澘顤?`BimanualCoordinationTestPage`閿涘本鏁幐浣镐箯閸欒櫕澧滄禍銈嗘禌娑撳骸鎮撳銉ュ蓟閸戣琚辩猾鏄忣唲缂佸喛绱濈拋鏉跨秿閸氬本顒炵粣妤€褰涢妴浣搁挬閸у洨鏁ら弮韬测偓浣告倱濮濄儱妯婇崪灞藉櫙绾喚宸奸妴?
 
-### 修改
-- 人类测试中心 hub 新增五个入口卡片，并同步更新模块 README 与 smoke test 覆盖。
+### 娣囶喗鏁?
+- 娴滆櫣琚ù瀣槸娑擃厼绺?hub 閺傛澘顤冩禍鏂鹃嚋閸忋儱褰涢崡锛勫閿涘苯鑻熼崥灞绢劄閺囧瓨鏌婂Ο鈥虫健 README 娑?smoke test 鐟曞棛娲婇妴?
 
-### 风险变更
-- 听觉测试依赖现有短音效资产和平台播放器；若平台音频不可用，页面会保持可操作但音效反馈可能退化。
-- 拖拽追踪和双手协调包含新的手势舞台，主要手势被限制在舞台区域内，页面外层滚动语义不变。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸氼剝顫庡ù瀣槸娓氭繆绂嗛悳鐗堟箒閻參鐓堕弫鍫ｇカ娴溠冩嫲楠炲啿褰撮幘顓熸杹閸ｎ煉绱遍懟銉ラ挬閸欎即鐓舵０鎴滅瑝閸欘垳鏁ら敍宀勩€夐棃顫窗娣囨繃瀵旈崣顖涙惙娴ｆ粈绲鹃棅铏櫏閸欏秹顩崣顖濆厴闁偓閸栨牓鈧?
+- 閹锋牗瀚挎潻鍊熼嚋閸滃苯寮婚幍瀣礂鐠嬪啫瀵橀崥顐ｆ煀閻ㄥ嫭澧滈崝鑳灦閸欏府绱濇稉鏄忣洣閹靛濞嶇悮顐︽閸掕泛婀懜鐐插酱閸栧搫鐓欓崘鍜冪礉妞ょ敻娼版径鏍х湴濠婃艾濮╃拠顓濈疅娑撳秴褰夐妴?
 
 ## [Unreleased-PLAN_144-SCRATCH-TICKET-REALISM] - 2026-05-08
 
-### 原因
-- 用户要求继续完成工具箱「人类测试中心 - 运气测试」中的刮刮乐子模块，使其达到更接近真实即开票的高度模拟。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴缂佈呯敾鐎瑰本鍨氬銉ュ徔缁犱究鈧奔姹夌猾缁樼ゴ鐠囨洑鑵戣箛?- 鏉╂劖鐨靛ù瀣槸閵嗗秳鑵戦惃鍕焿閸掝喕绠扮€涙劖膩閸ф绱濇担鍨従鏉堟儳鍩岄弴瀛樺复鏉╂垹婀＄€圭偛宓嗗鈧粊銊ф畱妤傛ê瀹冲Ο鈩冨珯閵?
 
-### 新增
-- 刮刮乐票面新增中奖号码区、我的号码区、票号、包号、校验码、条码样式区、星标自动中奖和倍数符号。
-- 每个刮开格新增隐藏号码、展示奖金、实际中奖金额、倍数和三位校验码，刮开后按真实票面结构露出内容。
-- 报告弹窗同步展示中奖号码、票号、包号、校验码和已刮开号码/奖金/倍数明细。
+### 閺傛澘顤?
+- 閸掝喖鍩夋稊鎰偍闂堛垺鏌婃晶鐐拌厬婵傛牕褰块惍浣稿隘閵嗕焦鍨滈惃鍕娇閻礁灏妴浣恒偍閸欐灚鈧礁瀵橀崣鏋偓浣圭墡妤犲瞼鐖滈妴浣规蒋閻焦鐗卞蹇撳隘閵嗕焦妲﹂弽鍥殰閸斻劋鑵戞總鏍ф嫲閸婂秵鏆熺粭锕€褰块妴?
+- 濮ｅ繋閲滈崚顔肩磻閺嶅吋鏌婃晶鐐烘閽樺繐褰块惍浣碘偓浣哥潔缁€鍝勵殯闁叉垯鈧礁鐤勯梽鍛厬婵傛牠鍣炬０婵勨偓浣糕偓宥嗘殶閸滃奔绗佹担宥嗙墡妤犲瞼鐖滈敍灞藉焿瀵偓閸氬孩瀵滈惇鐔风杽缁併劑娼扮紒鎾寸€棁鎻掑毉閸愬懎顔愰妴?
+- 閹躲儱鎲″鍦崶閸氬本顒炵仦鏇犮仛娑擃厼顨涢崣椋庣垳閵嗕胶銈ㄩ崣鏋偓浣稿瘶閸欐灚鈧焦鐗庢宀€鐖滈崪灞藉嚒閸掝喖绱戦崣椋庣垳/婵傛牠鍣?閸婂秵鏆熼弰搴ｇ矎閵?
 
-### 修改
-- 刮刮乐说明从单一奖级目标改为“中奖号码 + 我的号码 + 奖金 + 特殊符号”的真实即开票玩法。
-- 刮刮乐票面摘要区改为票头、玩法说明、中奖号码、奖级表和票根校验分层展示。
+### 娣囶喗鏁?
+- 閸掝喖鍩夋稊鎰嚛閺勫簼绮犻崡鏇氱婵傛牜楠囬惄顔界垼閺€閫涜礋閳ユ粈鑵戞總鏍у娇閻?+ 閹存垹娈戦崣椋庣垳 + 婵傛牠鍣?+ 閻楄鐣╃粭锕€褰块垾婵堟畱閻喎鐤勯崡鍐茬磻缁併劎甯哄▔鏇樷偓?
+- 閸掝喖鍩夋稊鎰偍闂堛垺鎲崇憰浣稿隘閺€閫涜礋缁併劌銇旈妴浣哄负濞夋洝顕╅弰搴涒偓浣疯厬婵傛牕褰块惍浣碘偓浣割殯缁狙嗐€冮崪宀€銈ㄩ弽瑙勭墡妤犲苯鍨庣仦鍌氱潔缁€鎭掆偓?
 
-### 风险变更
-- 本轮仍为本地娱乐模拟，不接入真实彩票购买、兑奖或联网校验；概率和票面结构仅参考常见 scratch-off 即开票组成。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥勮礋閺堫剙婀存繛鍙樼濡剝瀚欓敍灞肩瑝閹恒儱鍙嗛惇鐔风杽瑜扳晝銈ㄧ拹顓濇嫳閵嗕礁鍘總鏍ㄥ灗閼辨梻缍夐弽锟犵崣閿涙稒顩ч悳鍥ф嫲缁併劑娼扮紒鎾寸€禒鍛棘閼板啫鐖剁憴?scratch-off 閸楀啿绱戠粊銊х矋閹存劑鈧?
 
 ## [Unreleased-PLAN_143-SCRATCH-PRIZE-TABLE-SETTINGS] - 2026-05-08
 
-### 原因
-- 继续收口运气测试中的刮刮乐玩法，使中奖目标从单一数字升级为真实刮刮乐式奖级表，并补齐票价、概率、刮开难度和展示模式设置。
+### 閸樼喎娲?
+- 缂佈呯敾閺€璺哄經鏉╂劖鐨靛ù瀣槸娑擃厾娈戦崚顔煎焿娑旀劗甯哄▔鏇礉娴ｅじ鑵戞總鏍窗閺嶅洣绮犻崡鏇氱閺佹澘鐡ч崡鍥╅獓娑撹櫣婀＄€圭偛鍩夐崚顔荤瀵繐顨涚痪褑銆冮敍灞借嫙鐞涖儵缍堢粊銊ょ幆閵嗕焦顩ч悳鍥モ偓浣稿焿瀵偓闂呮儳瀹抽崪灞界潔缁€鐑樐佸蹇氼啎缂冾喓鈧?
 
-### 新增
-- 刮刮乐新增奖级表模型，按特等奖、一等奖、二等奖等层级生成目标金额，高额大奖保留随机区间并按百、千、万等粒度取整。
-- 刮刮乐新增设置区，支持票价、刮开数量、整体中奖概率修正、大奖概率修正、刮开难度、显示金额、显示中奖标记、大奖全屏恭喜、印花样式和恢复默认设置。
-- 统计与报告新增累计花费和净收益，花费按当前票价模拟累计。
+### 閺傛澘顤?
+- 閸掝喖鍩夋稊鎰煀婢х偛顨涚痪褑銆冨Ο鈥崇€烽敍灞惧瘻閻楀湱鐡戞總鏍モ偓浣风缁涘顨涢妴浣风癌缁涘顨涚粵澶婄湴缁狙呮晸閹存劗娲伴弽鍥櫨妫版繐绱濇姗€顤傛径褍顨涙穱婵堟殌闂呭繑婧€閸栨椽妫块獮鑸靛瘻閻т勘鈧礁宕堥妴浣风缁涘鐭戞惔锕€褰囬弫娣偓?
+- 閸掝喖鍩夋稊鎰煀婢х偠顔曠純顔煎隘閿涘本鏁幐浣恒偍娴犳灚鈧礁鍩夊鈧弫浼村櫤閵嗕焦鏆ｆ担鎾茶厬婵傛牗顩ч悳鍥︽叏濮濓絻鈧礁銇囨總鏍洤閻滃洣鎱ㄥ锝冣偓浣稿焿瀵偓闂呮儳瀹抽妴浣规▔缁€娲櫨妫版縿鈧焦妯夌粈杞拌厬婵傛牗鐖ｇ拋鑸偓浣搞亣婵傛牕鍙忕仦蹇斾純閸犳嚎鈧礁宓冮懞杈ㄧ壉瀵繐鎷伴幁銏狀槻姒涙顓荤拋鍓х枂閵?
+- 缂佺喕顓告稉搴㈠Г閸涘﹥鏌婃晶鐐电柈鐠伮ゅС鐠愮懓鎷伴崙鈧弨鍓佹抄閿涘矁濮崇拹瑙勫瘻瑜版挸澧犵粊銊ょ幆濡剝瀚欑槐顖濐吀閵?
 
-### 修改
-- 刮刮乐默认改为“用户按奖级表自行判断”的票面展示，未开启金额/中奖标记时不直接提示结果。
-- 刮奖覆层改为未刮区域完全不透明，只通过手指划过的局部擦痕透出内容，避免未刮前看到隐藏信息。
-- 特等奖与一等奖命中时增加可关闭的全屏恭喜效果。
+### 娣囶喗鏁?
+- 閸掝喖鍩夋稊鎰扮帛鐠併倖鏁兼稉琛♀偓婊呮暏閹撮攱瀵滄總鏍獓鐞涖劏鍤滅悰灞藉灲閺傤厸鈧繄娈戠粊銊╂桨鐏炴洜銇氶敍灞炬弓瀵偓閸氼垶鍣炬０?娑擃厼顨涢弽鍥唶閺冩湹绗夐惄瀛樺复閹绘劗銇氱紒鎾寸亯閵?
+- 閸掝喖顨涚憰鍡楃湴閺€閫涜礋閺堫亜鍩夐崠鍝勭厵鐎瑰苯鍙忔稉宥夆偓蹇旀閿涘苯褰ч柅姘崇箖閹靛瀵氶崚鎺曠箖閻ㄥ嫬鐪柈銊︽憹閻ユ洟鈧繐鍤崘鍛啇閿涘矂浼╅崗宥嗘弓閸掝喖澧犻惇瀣煂闂呮劘妫屾穱鈩冧紖閵?
+- 閻楀湱鐡戞總鏍︾瑢娑撯偓缁涘顨涢崨鎴掕厬閺冭泛顤冮崝鐘插讲閸忔娊妫撮惃鍕弿鐏炲繑浼冮崰婊勬櫏閺嬫嚎鈧?
 
-### 风险变更
-- 概率为模拟真实刮刮乐彩票的近似分布，不绑定具体地区或具体票种；高额奖项会明显低频于低额奖项。
+### 妞嬪酣娅撻崣妯绘纯
+- 濮掑倻宸兼稉鐑樐侀幏鐔烘埂鐎圭偛鍩夐崚顔荤瑜扳晝銈ㄩ惃鍕箮娴肩厧鍨庣敮鍐跨礉娑撳秶绮︾€规艾鍙挎担鎾虫勾閸栫儤鍨ㄩ崗铚傜秼缁併劎顫掗敍娑㈢彯妫版繂顨涙い閫涚窗閺勫孩妯夋担搴暥娴滃簼缍嗘０婵嗩殯妞ゅ箍鈧?
 
 ## [Unreleased-PLAN_142-SCRATCH-REALISM-AND-ERASE] - 2026-05-08
 
-### 原因
-- 继续把运气测试里的刮刮乐子模块做得更像真实刮奖票，同时把中奖概率、金额分布和刮开反馈收紧到更接近实体票面。
+### 閸樼喎娲?
+- 缂佈呯敾閹跺﹨绻嶅鏃€绁寸拠鏇㈠櫡閻ㄥ嫬鍩夐崚顔荤鐎涙劖膩閸ф浠涘妤佹纯閸嶅繒婀＄€圭偛鍩夋總鏍偍閿涘苯鎮撻弮鑸靛Ω娑擃厼顨涘鍌滃芳閵嗕線鍣炬０婵嗗瀻鐢啫鎷伴崚顔肩磻閸欏秹顩弨鍓佹彛閸掔増娲块幒銉ㄧ箮鐎圭偘缍嬬粊銊╂桨閵?
 
-### 修改
-- 刮刮乐彩票池改为更偏真实票型的权重分布，中奖以小额为主、大奖极少，非中奖格子的展示金额也收敛到更常见区间。
-- 刮开覆盖层改为逐笔触擦除，不再整块淡出；每次拖动只留下单条刮痕，并保留一点金属残留和边缘磨损感。
-- 刮刮乐彩票头与统计区改为更稳的 shrink-wrap 布局，降低窄屏下的底部溢出风险。
-- 为刮刮乐网格补充回归 key 与拖动刮开测试，覆盖真实手势路径。
+### 娣囶喗鏁?
+- 閸掝喖鍩夋稊鎰兊缁併劍鐫滈弨閫涜礋閺囨潙浜搁惇鐔风杽缁併劌鐎烽惃鍕綀闁插秴鍨庣敮鍐跨礉娑擃厼顨涙禒銉ョ毈妫版繀璐熸稉姹団偓浣搞亣婵傛牗鐎亸鎴礉闂堢偘鑵戞總鏍ㄧ壐鐎涙劗娈戠仦鏇犮仛闁叉垿顤傛稊鐔告暪閺佹稑鍩岄弴鏉戠埗鐟欎礁灏梻娣偓?
+- 閸掝喖绱戠憰鍡欐磰鐏炲倹鏁兼稉娲偓鎰應鐟欙附鎽濋梽銈忕礉娑撳秴鍟€閺佹潙娼″ǎ鈥冲毉閿涙稒鐦″▎鈩冨珛閸斻劌褰ч悾娆庣瑓閸楁洘娼崚顔炬閿涘苯鑻熸穱婵堟殌娑撯偓閻愬綊鍣剧仦鐐寸暙閻ｆ瑥鎷版潏鍦喘绾俱劍宕幇鐔粹偓?
+- 閸掝喖鍩夋稊鎰兊缁併劌銇旀稉搴ｇ埠鐠佲€冲隘閺€閫涜礋閺囧菙閻?shrink-wrap 鐢啫鐪敍宀勬娴ｅ海鐛庣仦蹇庣瑓閻ㄥ嫬绨抽柈銊﹀閸戞椽顥撻梽鈹库偓?
+- 娑撳搫鍩夐崚顔荤缂冩垶鐗哥悰銉ュ帠閸ョ偛缍?key 娑撳孩瀚嬮崝銊ュ焿瀵偓濞村鐦敍宀冾洬閻╂牜婀＄€圭偞澧滈崝鑳熅瀵板嫨鈧?
 
-### 风险变更
-- 本轮仍只调整刮刮乐子模块的展示、概率和测试，不改变其他人类测试模块语义。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥呭涧鐠嬪啯鏆ｉ崚顔煎焿娑旀劕鐡欏Ο鈥虫健閻ㄥ嫬鐫嶇粈鎭掆偓浣诡洤閻滃洤鎷板ù瀣槸閿涘奔绗夐弨鐟板綁閸忔湹绮禍铏硅濞村鐦Ο鈥虫健鐠囶厺绠熼妴?
 
 ## [Unreleased-PLAN_141-SCRATCH-CARD-POLISH] - 2026-05-08
 
-### 原因
-- 继续把运气测试里的刮刮乐子模块做得更像真实刮奖票，并修复小屏下的布局溢出问题。
+### 閸樼喎娲?
+- 缂佈呯敾閹跺﹨绻嶅鏃€绁寸拠鏇㈠櫡閻ㄥ嫬鍩夐崚顔荤鐎涙劖膩閸ф浠涘妤佹纯閸嶅繒婀＄€圭偛鍩夋總鏍偍閿涘苯鑻熸穱顔碱槻鐏忓繐鐫嗘稉瀣畱鐢啫鐪┃銏犲毉闂傤噣顣介妴?
 
-### 修改
-- 刮刮乐彩票面改为更接近真实票面的纸感、金边、票头和中奖展示语言。
-- 刮开覆盖层改为金属涂层质感与刮擦纹理，提升“刮奖”反馈的真实感。
-- 刮刮乐彩票头改为小屏自适应布局，避免长标题或中奖数字在窄宽度下溢出。
-- 为刮刮乐模块补充 overflow 回归断言，防止后续视觉调整再次撑爆布局。
+### 娣囶喗鏁?
+- 閸掝喖鍩夋稊鎰兊缁併劑娼伴弨閫涜礋閺囧瓨甯存潻鎴犳埂鐎圭偟銈ㄩ棃銏㈡畱缁惧憡鍔呴妴渚€鍣炬潏骞库偓浣恒偍婢舵潙鎷版稉顓烆殯鐏炴洜銇氱拠顓♀枅閵?
+- 閸掝喖绱戠憰鍡欐磰鐏炲倹鏁兼稉娲櫨鐏炵偞绉辩仦鍌濆窛閹扮喍绗岄崚顔芥憹缁惧湱鎮婇敍灞惧絹閸楀洠鈧粌鍩夋總鏍も偓婵嗗冀妫ｅ牏娈戦惇鐔风杽閹扮喆鈧?
+- 閸掝喖鍩夋稊鎰兊缁併劌銇旈弨閫涜礋鐏忓繐鐫嗛懛顏堚偓鍌氱安鐢啫鐪敍宀勪缉閸忓秹鏆遍弽鍥暯閹存牔鑵戞總鏍ㄦ殶鐎涙婀粣鍕啍鎼达缚绗呭┃銏犲毉閵?
+- 娑撳搫鍩夐崚顔荤濡€虫健鐞涖儱鍘?overflow 閸ョ偛缍婇弬顓♀枅閿涘矂妲诲銏犳倵缂侇叀顫嬬憴澶庣殶閺佹潙鍟€濞嗏剝鎷洪悥鍡楃鐏炩偓閵?
 
-### 风险变更
-- 这轮仅调整刮刮乐展示层和测试，不改变抽卡统计、奖票生成规则或其他人类测试模块语义。
+### 妞嬪酣娅撻崣妯绘纯
+- 鏉╂瑨鐤嗘禒鍛扮殶閺佹潙鍩夐崚顔荤鐏炴洜銇氱仦鍌氭嫲濞村鐦敍灞肩瑝閺€鐟板綁閹惰棄宕辩紒鐔活吀閵嗕礁顨涚粊銊ф晸閹存劘顫夐崚娆愬灗閸忔湹绮禍铏硅濞村鐦Ο鈥虫健鐠囶厺绠熼妴?
 
 ## [Unreleased-PLAN_140-HUMAN-TESTS-CALC-LUCK-TAP-JOYSTICK-FINISH] - 2026-05-08
 
-### 原因
-- 继续收口工具箱「人类测试中心」的题型分布、运气玩法、手速操作与摇杆全屏遮挡问题，让模块更像完整测试工具而不是局部拼接。
+### 閸樼喎娲?
+- 缂佈呯敾閺€璺哄經瀹搞儱鍙跨粻渚库偓灞兼眽缁粯绁寸拠鏇氳厬韫囧啨鈧秶娈戞０妯虹€烽崚鍡楃閵嗕浇绻嶅鏃傚负濞夋洏鈧焦澧滈柅鐔告惙娴ｆ粈绗岄幗鍥ㄦ綄閸忋劌鐫嗛柆顔藉皡闂傤噣顣介敍宀冾唨濡€虫健閺囨潙鍎氱€瑰本鏆ｅù瀣槸瀹搞儱鍙块懓灞肩瑝閺勵垰鐪柈銊﹀閹恒儯鈧?
 
-### 新增
-- 计算能力测试中阶乘题型仅在进阶和专家难度开放。
-- 运气测试新增独立刮刮乐子模块，采用中奖数字与奖金队列的手势刮开玩法。
-- 手速测试主操作区新增重新开始按钮。
+### 閺傛澘顤?
+- 鐠侊紕鐣婚懗钘夊濞村鐦稉顓㈡▉娑旀﹢顣介崹瀣╃矌閸︺劏绻橀梼璺烘嫲娑撴挸顔嶉梾鎯у瀵偓閺€淇扁偓?
+- 鏉╂劖鐨靛ù瀣槸閺傛澘顤冮悪顒傜彌閸掝喖鍩夋稊鎰摍濡€虫健閿涘矂鍣伴悽銊よ厬婵傛牗鏆熺€涙ぞ绗屾總鏍櫨闂冪喎鍨惃鍕閸斿灝鍩夊鈧悳鈺傜《閵?
+- 閹靛鈧喐绁寸拠鏇氬瘜閹垮秳缍旈崠鐑樻煀婢х偤鍣搁弬鏉跨磻婵瀵滈柦顔衡偓?
 
-### 修改
-- 计算能力测试的进阶及以上混合题与两步题随机加入等差、等比和指数变体，扩大高难度题池。
-- 运气测试拆分为“抽卡 / 刮刮乐”两个独立子模块，翻卡特效改为抽卡专用开关。
-- 摇杆手眼协调全屏下的射击按钮和摇杆改为更轻的半透明浮层样式，降低对目标的遮挡。
+### 娣囶喗鏁?
+- 鐠侊紕鐣婚懗钘夊濞村鐦惃鍕箻闂冭泛寮锋禒銉ょ瑐濞ｅ嘲鎮庢０妯圭瑢娑撱倖顒炴０姗€娈㈤張鍝勫閸忋儳鐡戝顔衡偓浣虹搼濮ｆ柨鎷伴幐鍥ㄦ殶閸欐ü缍嬮敍灞惧⒖婢堆囩彯闂呮儳瀹虫０妯荤潨閵?
+- 鏉╂劖鐨靛ù瀣槸閹峰棗鍨庢稉琛♀偓婊勫▕閸?/ 閸掝喖鍩夋稊鎰ㄢ偓婵呰⒈娑擃亞瀚粩瀣摍濡€虫健閿涘瞼鐐曢崡锛勫閺佸牊鏁兼稉鐑樺▕閸椻€茬瑩閻劌绱戦崗鐐解偓?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌娑撳娈戠亸鍕毊閹稿鎸抽崪灞炬啚閺夊棙鏁兼稉鐑樻纯鏉炶崵娈戦崡濠団偓蹇旀濞搭喖鐪伴弽宄扮础閿涘矂妾锋担搴☆嚠閻╊喗鐖ｉ惃鍕紕閹嘎扳偓?
 
-### 风险变更
-- 本轮仅调整人类测试中心页面内的 UI、题库分布和局部状态，不影响 AppState、数据库或持久化语义。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒鍛扮殶閺佺繝姹夌猾缁樼ゴ鐠囨洑鑵戣箛鍐€夐棃銏犲敶閻?UI閵嗕線顣芥惔鎾冲瀻鐢啫鎷扮仦鈧柈銊уЦ閹緤绱濇稉宥呭閸?AppState閵嗕焦鏆熼幑顔肩氨閹存牗瀵旀稊鍛鐠囶厺绠熼妴?
 
 ## [Unreleased-PLAN_139-HUMAN-TESTS-INTERRUPTED-POLISH] - 2026-05-08
 
-### 原因
-- 承接被中断的人类测试中心优化：反应测试方向滑动与页面滚动冲突、打字测试设置乱码、计算测试高级题型不足、运气测试多抽移动端过长、稀有特效覆盖、下一轮刷新卡顿、连续翻卡和刮刮乐玩法缺失。
+### 閸樼喎娲?
+- 閹垫寧甯寸悮顐¤厬閺傤厾娈戞禍铏硅濞村鐦稉顓炵妇娴兼ê瀵查敍姘冀鎼存梹绁寸拠鏇熸煙閸氭垶绮﹂崝銊ょ瑢妞ょ敻娼板姘З閸愯尙鐛婇妴浣瑰ⅵ鐎涙绁寸拠鏇☆啎缂冾喕璐￠惍浣碘偓浣筋吀缁犳绁寸拠鏇㈢彯缁狙囶暯閸ㄥ绗夌搾鐐解偓浣界箥濮樻梹绁寸拠鏇烆樋閹剁晫些閸斻劎顏潻鍥毐閵嗕胶鈻堥張澶屽閺佸牐顩惄鏍モ偓浣风瑓娑撯偓鏉烆喖鍩涢弬鏉垮幢妞よ￥鈧浇绻涚紒顓犵倳閸椻€虫嫲閸掝喖鍩夋稊鎰负濞夋洜宸辨径渚库偓?
 
-### 新增
-- 计算能力测试新增指数、阶乘、等差数列和等比数列题型，并纳入高难度混合题池。
-- 运气测试新增“刮刮乐”揭示方式，生成单张奖面后可通过手指滑动逐步刮开。
+### 閺傛澘顤?
+- 鐠侊紕鐣婚懗钘夊濞村鐦弬鏉款杻閹稿洦鏆熼妴渚€妯佹稊妯糕偓浣虹搼瀹割喗鏆熼崚妤€鎷扮粵澶嬬槷閺佹澘鍨０妯虹€烽敍灞借嫙缁惧啿鍙嗘姗€姣︽惔锔借穿閸氬牓顣藉Ч鐘偓?
+- 鏉╂劖鐨靛ù瀣槸閺傛澘顤冮垾婊冨焿閸掝喕绠伴垾婵囧疆缁€鐑樻煙瀵骏绱濋悽鐔稿灇閸楁洖绱舵總鏍桨閸氬骸褰查柅姘崇箖閹靛瀵氬鎴濆З闁劖顒為崚顔肩磻閵?
 
-### 修改
-- 反应测试方向模式的主舞台与中心 D-pad 改为局部接管指针手势，避免上滑/下滑反应被外层页面滚动抢走。
-- 修复打字测试设置区中文乱码，恢复“打字设置”与说明文案。
-- 运气测试多抽卡片改为手机端紧凑网格，支持手指滑过连续翻卡；二十抽不再因一行仅两张卡片导致页面过长。
-- 运气测试“继续下一轮”生成下一批卡片时减少整块舞台重建感，保留同一批量舞台结构做平滑替换。
-- 运气测试史诗/传说稀有特效改为队列播放，批量翻开时依次完整显示，不再互相覆盖。
+### 娣囶喗鏁?
+- 閸欏秴绨插ù瀣槸閺傜懓鎮滃Ο鈥崇础閻ㄥ嫪瀵岄懜鐐插酱娑撳簼鑵戣箛?D-pad 閺€閫涜礋鐏炩偓闁劍甯寸粻鈩冨瘹闁藉牊澧滈崝鍖＄礉闁灝鍘ゆ稉濠冪拨/娑撳绮﹂崣宥呯安鐞氼偄顦荤仦鍌炪€夐棃銏＄泊閸斻劍濮犵挧鑸偓?
+- 娣囶喖顦查幍鎾崇摟濞村鐦拋鍓х枂閸栬桨鑵戦弬鍥﹁础閻緤绱濋幁銏狀槻閳ユ粍澧︾€涙顔曠純顔光偓婵呯瑢鐠囧瓨妲戦弬鍥攳閵?
+- 鏉╂劖鐨靛ù瀣槸婢舵碍濞婇崡锛勫閺€閫涜礋閹靛婧€缁旑垳鎻ｉ崙鎴犵秹閺嶇》绱濋弨顖涘瘮閹靛瀵氬鎴ｇ箖鏉╃偟鐢荤紙璇插幢閿涙稐绨╅崡浣瑰▕娑撳秴鍟€閸ョ姳绔寸悰灞肩矌娑撱倕绱堕崡锛勫鐎佃壈鍤фい鐢告桨鏉╁洭鏆遍妴?
+- 鏉╂劖鐨靛ù瀣槸閳ユ粎鎴风紒顓濈瑓娑撯偓鏉烆喒鈧繄鏁撻幋鎰瑓娑撯偓閹电懓宕遍悧鍥ㄦ閸戝繐鐨弫鏉戞健閼哥偛褰撮柌宥呯紦閹扮噦绱濇穱婵堟殌閸氬奔绔撮幍褰掑櫤閼哥偛褰寸紒鎾寸€崑姘挬濠婃垶娴涢幑顫偓?
+- 鏉╂劖鐨靛ù瀣槸閸欒尪鐦?娴肩姾顕╃粙鈧張澶屽閺佸牊鏁兼稉娲Е閸掓鎸遍弨鎾呯礉閹靛綊鍣虹紙璇茬磻閺冩湹绶峰▎鈥崇暚閺佸瓨妯夌粈鐚寸礉娑撳秴鍟€娴滄帞娴夌憰鍡欐磰閵?
 
-### 风险变更
-- 本轮仍只影响人类测试中心页面内即时状态；不写入 AppState、数据库或学习记录。
-- 方向滑动手势只在反应测试方向模式的舞台与 D-pad 区域局部接管，页面其它区域保持正常纵向滚动。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥呭涧瑜板崬鎼锋禍铏硅濞村鐦稉顓炵妇妞ょ敻娼伴崘鍛祮閺冨墎濮搁幀渚婄幢娑撳秴鍟撻崗?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
+- 閺傜懓鎮滃鎴濆З閹靛濞嶉崣顏勬躬閸欏秴绨插ù瀣槸閺傜懓鎮滃Ο鈥崇础閻ㄥ嫯鍨堕崣棰佺瑢 D-pad 閸栧搫鐓欑仦鈧柈銊﹀复缁犫槄绱濇い鐢告桨閸忚泛鐣犻崠鍝勭厵娣囨繃瀵斿锝呯埗缁鹃潧鎮滃姘З閵?
 
 ## [Unreleased-PLAN_138-TOOLBOX-HOME-EDIT-MOBILE-POLISH] - 2026-05-08
 
-### 原因
-- 继续收口工具箱首页自定义布局体验，使编辑态在移动端更容易识别当前显示/隐藏状态，并降低拖拽、移除和恢复隐藏入口的误操作成本。
+### 閸樼喎娲?
+- 缂佈呯敾閺€璺哄經瀹搞儱鍙跨粻閬嶎浕妞や絻鍤滅€规矮绠熺敮鍐ㄧ湰娴ｆ捇鐛欓敍灞煎▏缂傛牞绶幀浣告躬缁夎濮╃粩顖涙纯鐎硅妲楃拠鍡楀焼瑜版挸澧犻弰鍓с仛/闂呮劘妫岄悩鑸碘偓渚婄礉楠炲爼妾锋担搴㈠珛閹峰鈧胶些闂勩倕鎷伴幁銏狀槻闂呮劘妫岄崗銉ュ經閻ㄥ嫯顕ら幙宥勭稊閹存劖婀伴妴?
 
-### 修改
-- 工具箱首页编辑态顶部状态面板改为“显示 / 隐藏”独立 chip，并补充“移除只隐藏首页入口，不会禁用模块”的边界说明。
-- 工具箱入口卡片编辑动作列统一为 48dp 触控热区，拖拽和移除按钮在移动端更稳定。
-- 精修首页空状态与恢复隐藏入口底部弹层，恢复弹层明确提示模块启停仍由模块管理控制。
-- 补充工具箱首页编辑 smoke test，覆盖编辑状态 chip、编辑动作热区和恢复弹层说明。
+### 娣囶喗鏁?
+- 瀹搞儱鍙跨粻閬嶎浕妞ょ數绱潏鎴炩偓渚€銆婇柈銊уЦ閹線娼伴弶鎸庢暭娑撹　鈧粍妯夌粈?/ 闂呮劘妫岄垾婵堝缁?chip閿涘苯鑻熺悰銉ュ帠閳ユ粎些闂勩倕褰ч梾鎰妫ｆ牠銆夐崗銉ュ經閿涘奔绗夋导姘鳖洣閻劍膩閸фせ鈧繄娈戞潏鍦櫕鐠囧瓨妲戦妴?
+- 瀹搞儱鍙跨粻鍗炲弳閸欙絽宕遍悧鍥╃椽鏉堟垵濮╂担婊冨灙缂佺喍绔存稉?48dp 鐟欙附甯堕悜顓炲隘閿涘本瀚嬮幏钘夋嫲缁夊娅庨幐澶愭尦閸︺劎些閸斻劎顏弴瀵盖旂€规哎鈧?
+- 缁彞鎱ㄦ＃鏍€夌粚铏瑰Ц閹椒绗岄幁銏狀槻闂呮劘妫岄崗銉ュ經鎼存洟鍎村鐟扮湴閿涘本浠径宥呰剨鐏炲倹妲戠涵顔藉絹缁€鐑樐侀崸妤€鎯庨崑婊€绮涢悽杈侀崸妤冾吀閻炲棙甯堕崚韬测偓?
+- 鐞涖儱鍘栧銉ュ徔缁犻亶顩绘い鐢电椽鏉?smoke test閿涘矁顩惄鏍椽鏉堟垹濮搁幀?chip閵嗕胶绱潏鎴濆З娴ｆ粎鍎归崠鍝勬嫲閹垹顦插鐟扮湴鐠囧瓨妲戦妴?
 
-### 风险变更
-- 本轮只调整展示层和测试，不改变 `ToolboxLayoutState`、`SettingsService`、模块启停、路由或持久化语义。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏囩殶閺佹潙鐫嶇粈鍝勭湴閸滃本绁寸拠鏇礉娑撳秵鏁奸崣?`ToolboxLayoutState`閵嗕梗SettingsService`閵嗕焦膩閸ф鎯庨崑婧库偓浣界熅閻㈣鲸鍨ㄩ幐浣风畽閸栨牞顕㈡稊澶堚偓?
 
 ## [Unreleased-PLAN_137-TOOLBOX-CUSTOM-LAYOUT] - 2026-05-07
 
-### 原因
-- 用户希望工具箱各模块可以通过长按自定义移动布局位置，并支持从工具箱首页删除/恢复入口，实现更灵活的插拔式首页。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿瀹搞儱鍙跨粻鍗炴倗濡€虫健閸欘垯浜掗柅姘崇箖闂€鎸庡瘻閼奉亜鐣炬稊澶屝╅崝銊ョ鐏炩偓娴ｅ秶鐤嗛敍灞借嫙閺€顖涘瘮娴犲骸浼愰崗椋庮唸妫ｆ牠銆夐崚鐘绘珟/閹垹顦查崗銉ュ經閿涘苯鐤勯悳鐗堟纯閻忓灚妞块惃鍕絻閹锋柨绱℃＃鏍€夐妴?
 
-### 新增
-- 新增 `ToolboxLayoutState`，持久化工具箱首页模块顺序与隐藏入口列表。
-- `SettingsService` 新增工具箱布局状态加载与保存能力。
-- `AppState` 新增工具箱首页排序、隐藏、恢复和重置布局接口。
-- 工具箱首页新增编辑模式：点击“编辑布局”或长按任意工具卡片进入；编辑模式支持拖拽排序、从首页移除、恢复隐藏入口和重置默认布局。
-- 新增工具箱布局持久化单元测试与首页编辑 smoke test。
+### 閺傛澘顤?
+- 閺傛澘顤?`ToolboxLayoutState`閿涘本瀵旀稊鍛瀹搞儱鍙跨粻閬嶎浕妞ゅ灚膩閸ф銆庢惔蹇庣瑢闂呮劘妫岄崗銉ュ經閸掓銆冮妴?
+- `SettingsService` 閺傛澘顤冨銉ュ徔缁犲崬绔风仦鈧悩鑸碘偓浣稿鏉炴垝绗屾穱婵嗙摠閼宠棄濮忛妴?
+- `AppState` 閺傛澘顤冨銉ュ徔缁犻亶顩绘い鍨笓鎼村繈鈧線娈ｉ挊蹇嬧偓浣逛划婢跺秴鎷伴柌宥囩枂鐢啫鐪幒銉ュ經閵?
+- 瀹搞儱鍙跨粻閬嶎浕妞ゅ灚鏌婃晶鐐电椽鏉堟垶膩瀵骏绱伴悙鐟板毊閳ユ粎绱潏鎴濈鐏炩偓閳ユ繃鍨ㄩ梹鎸庡瘻娴犵粯鍓板銉ュ徔閸楋紕澧栨潻娑樺弳閿涙稓绱潏鎴災佸蹇旀暜閹镐焦瀚嬮幏鑺ュ笓鎼村繈鈧椒绮犳＃鏍€夌粔濠氭珟閵嗕焦浠径宥夋閽樺繐鍙嗛崣锝呮嫲闁插秶鐤嗘妯款吇鐢啫鐪妴?
+- 閺傛澘顤冨銉ュ徔缁犲崬绔风仦鈧幐浣风畽閸栨牕宕熼崗鍐╃ゴ鐠囨洑绗屾＃鏍€夌紓鏍帆 smoke test閵?
 
-### 修改
-- 工具箱首页从固定分组展示升级为“我的工具箱”自定义顺序展示，同时保留原始入口定义作为默认顺序来源。
-- 修正本次触及的工具箱首页和入口内容中文文案，移除明显乱码说明。
-- 更新 `modules/toolbox/README.md` 与根 `README.md`，补充首页自定义布局与全局模块启停的边界说明。
+### 娣囶喗鏁?
+- 瀹搞儱鍙跨粻閬嶎浕妞ゅ吀绮犻崶鍝勭暰閸掑棛绮嶇仦鏇犮仛閸楀洨楠囨稉琛♀偓婊勫灉閻ㄥ嫬浼愰崗椋庮唸閳ユ繆鍤滅€规矮绠熸い鍝勭碍鐏炴洜銇氶敍灞芥倱閺冩湹绻氶悾娆忓斧婵鍙嗛崣锝呯暰娑斿缍旀稉娲帛鐠併倝銆庢惔蹇旀降濠ф劑鈧?
+- 娣囶喗顒滈張顒侇偧鐟欙箑寮烽惃鍕紣閸忛顔堟＃鏍€夐崪灞藉弳閸欙絽鍞寸€归€涜厬閺傚洦鏋冨鍫礉缁夊娅庨弰搴㈡▔娑旇京鐖滅拠瀛樻閵?
+- 閺囧瓨鏌?`modules/toolbox/README.md` 娑撳孩鐗?`README.md`閿涘矁藟閸忓懘顩绘い浣冨殰鐎规矮绠熺敮鍐ㄧ湰娑撳骸鍙忕仦鈧Ο鈥虫健閸氼垰浠犻惃鍕珶閻ｅ矁顕╅弰搴涒偓?
 
-### 风险变更
-- 首页“移除”只隐藏工具箱首页入口，不会禁用模块本身；真正的全局启停仍由模块管理页和 `ModuleToggleState` 控制。
-- 布局状态只保存模块 ID，渲染时会按当前 `ModuleIds.toolboxModules` 归一化，过滤未知模块并自动补齐新增模块。
+### 妞嬪酣娅撻崣妯绘纯
+- 妫ｆ牠銆夐垾婊呅╅梽銈傗偓婵嗗涧闂呮劘妫屽銉ュ徔缁犻亶顩绘い闈涘弳閸欙綇绱濇稉宥勭窗缁備胶鏁ゅΟ鈥虫健閺堫剝闊╅敍娑氭埂濮濓絿娈戦崗銊ョ湰閸氼垰浠犳禒宥囨暠濡€虫健缁狅紕鎮婃い闈涙嫲 `ModuleToggleState` 閹貉冨煑閵?
+- 鐢啫鐪悩鑸碘偓浣稿涧娣囨繂鐡ㄥΟ鈥虫健 ID閿涘本瑕嗛弻鎾存娴兼碍瀵滆ぐ鎾冲 `ModuleIds.toolboxModules` 瑜版帊绔撮崠鏍电礉鏉╁洦鎶ら張顏嗙叀濡€虫健楠炴儼鍤滈崝銊ㄋ夋鎰煀婢х偞膩閸фぜ鈧?
 
 ## [Unreleased-PLAN_136-TOOLBOX-STAGE-COMMIT-DOCS] - 2026-05-07
 
-### 原因
-- 用户要求整理当前进度，补充完整提交日志和 README，并完成一次提交推送。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閺佸鎮婅ぐ鎾冲鏉╂稑瀹抽敍宀兯夐崗鍛暚閺佸瓨褰佹禍銈嗘）韫囨鎷?README閿涘苯鑻熺€瑰本鍨氭稉鈧▎鈩冨絹娴溿倖甯归柅浣碘偓?
 
-### 新增
-- 根 `README.md` 新增 2026-05-07 toolbox 阶段近期进展说明。
-- 新增 `records/record_135_toolbox_human_tests_and_roulette_stage_commit.md`，记录本次阶段提交范围、验证命令和已知风险。
-- 新增 `plans/PLAN_136_toolbox阶段进度整理提交推送.md`，记录本次整理、提交和推送流程。
+### 閺傛澘顤?
+- 閺?`README.md` 閺傛澘顤?2026-05-07 toolbox 闂冭埖顔屾潻鎴炴埂鏉╂稑鐫嶇拠瀛樻閵?
+- 閺傛澘顤?`records/record_135_toolbox_human_tests_and_roulette_stage_commit.md`閿涘矁顔囪ぐ鏇熸拱濞嗭繝妯佸▓鍨絹娴溿倛瀵栭崶娣偓渚€鐛欑拠浣告嚒娴犮倕鎷板鑼叀妞嬪酣娅撻妴?
+- 閺傛澘顤?`plans/PLAN_136_toolbox闂冭埖顔屾潻娑樺閺佸鎮婇幓鎰唉閹恒劑鈧?md`閿涘矁顔囪ぐ鏇熸拱濞嗏剝鏆ｉ悶鍡愨偓浣瑰絹娴溿倕鎷伴幒銊┾偓浣圭ウ缁嬪鈧?
 
-### 修改
-- 梳理 `changelogs/CHANGELOG.md` 和 `modules/toolbox/README.md`，确保人类测试中心、运气测试、摇杆全屏和俄罗斯轮盘阶段进展可追溯。
+### 娣囶喗鏁?
+- 濮婂磭鎮?`changelogs/CHANGELOG.md` 閸?`modules/toolbox/README.md`閿涘瞼鈥樻穱婵呮眽缁粯绁寸拠鏇氳厬韫囧啨鈧浇绻嶅鏃€绁寸拠鏇樷偓浣规啚閺夊棗鍙忕仦蹇撴嫲娣囧嫮缍忛弬顖濈枂閻╂﹢妯佸▓浣冪箻鐏炴洖褰叉潻鑺ュ嚱閵?
 
-### 风险变更
-- 本次为阶段整合提交，范围包含多轮 toolbox 改动；提交日志已明确记录范围和验证结果。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剚顐兼稉娲▉濞堝灚鏆ｉ崥鍫熷絹娴溿倧绱濋懠鍐ㄦ纯閸栧懎鎯堟径姘崇枂 toolbox 閺€鐟板З閿涙稒褰佹禍銈嗘）韫囨鍑￠弰搴ｂ€樼拋鏉跨秿閼煎啫娲块崪宀勭崣鐠囦胶绮ㄩ弸婧库偓?
 
 ## [Unreleased-PLAN_135-LUCK-EFFECTS-AND-JOYSTICK-LANDSCAPE-ZONES] - 2026-05-07
 
-### 原因
-- 用户反馈运气测试稀有特效不够持久全屏，多连抽下一轮刷新入口不明确；摇杆手眼协调手机横屏全屏时摇杆和射击触发区域应固定在左右两侧。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯鏉╂劖鐨靛ù瀣槸缁嬧偓閺堝澹掗弫鍫滅瑝婢剁喐瀵旀稊鍛弿鐏炲骏绱濇径姘崇箾閹舵垝绗呮稉鈧潪顔煎煕閺傛澘鍙嗛崣锝勭瑝閺勫海鈥橀敍娑欐啚閺夊棙澧滈惇鐓庡礂鐠嬪啯澧滈張鐑樏仦蹇撳弿鐏炲繑妞傞幗鍥ㄦ綄閸滃苯鐨犻崙鏄徯曢崣鎴濆隘閸╃喎绨查崶鍝勭暰閸︺劌涔忛崣鍏呰⒈娓氀佲偓?
 
-### 修改
-- 运气测试史诗/传说特效延长为更持久的全屏覆盖，并增强金色/紫色流动与中心稀有提示。
-- 运气测试多连抽全部翻开后，将“全部翻开”切换为“继续下一轮”，点击后清理当前批次并生成下一批卡片。
-- 摇杆手眼协调全屏横屏时将左侧区域作为摇杆唤起区、右侧区域作为射击唤起区，中间保留缓冲区；浮层仍随手指触点唤起和重定位。
+### 娣囶喗鏁?
+- 鏉╂劖鐨靛ù瀣槸閸欒尪鐦?娴肩姾顕╅悧瑙勬櫏瀵ゅ爼鏆辨稉鐑樻纯閹镐椒绠欓惃鍕弿鐏炲繗顩惄鏍电礉楠炶泛顤冨娲櫨閼?缁鳖偉澹婂ù浣稿З娑撳簼鑵戣箛鍐枅閺堝褰佺粈鎭掆偓?
+- 鏉╂劖鐨靛ù瀣槸婢舵俺绻涢幎钘夊弿闁劎鐐曞鈧崥搴礉鐏忓棌鈧粌鍙忛柈銊х倳瀵偓閳ユ繂鍨忛幑顫礋閳ユ粎鎴风紒顓濈瑓娑撯偓鏉烆喒鈧繐绱濋悙鐟板毊閸氬孩绔婚悶鍡楃秼閸撳秵澹掑▎鈥宠嫙閻㈢喐鍨氭稉瀣╃閹电懓宕遍悧鍥モ偓?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌濡亜鐫嗛弮璺虹殺瀹革缚鏅堕崠鍝勭厵娴ｆ粈璐熼幗鍥ㄦ綄閸炪倛鎹ｉ崠鎭掆偓浣稿礁娓氀冨隘閸╃喍缍旀稉鍝勭殸閸戣鏁滅挧宄板隘閿涘奔鑵戦梻缈犵箽閻ｆ瑧绱﹂崘鎻掑隘閿涙稒璇炵仦鍌欑矝闂呭繑澧滈幐鍥曢悙鐟版暅鐠у嘲鎷伴柌宥呯暰娴ｅ秲鈧?
 
-### 风险变更
-- 稀有特效仍受“稀有抽中特效”开关控制，且不拦截点击；横屏左右热区只影响全屏模式，普通页面与竖屏逻辑保持原有行为。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁嬧偓閺堝澹掗弫鍫滅矝閸欐せ鈧粎鈻堥張澶嬪▕娑擃厾澹掗弫鍫氣偓婵嗙磻閸忚櫕甯堕崚璁圭礉娑撴柧绗夐幏锔藉焻閻愮懓鍤敍娑櫭仦蹇撲箯閸欏磭鍎归崠鍝勫涧瑜板崬鎼烽崗銊ョ潌濡€崇础閿涘本娅橀柅姘躲€夐棃顫瑢缁旀牕鐫嗛柅鏄忕帆娣囨繃瀵旈崢鐔告箒鐞涘奔璐熼妴?
 
 ## [Unreleased-PLAN_134-LUCK-DRAW-STAGE-MUTUAL-EXCLUSION] - 2026-05-07
 
-### 原因
-- 修复运气测试中单抽 5 张牌和多连抽批量卡片同时显示，造成两个翻卡界面重叠的问题。
+### 閸樼喎娲?
+- 娣囶喖顦叉潻鎰毜濞村鐦稉顓炲礋閹?5 瀵姷澧濋崪灞筋樋鏉╃偞濞婇幍褰掑櫤閸楋紕澧栭崥灞炬閺勫墽銇氶敍宀勨偓鐘冲灇娑撱倓閲滅紙璇插幢閻ｅ矂娼伴柌宥呭綌閻ㄥ嫰妫舵０妯糕偓?
 
-### 修改
-- 运气测试抽卡舞台改为互斥展示：单抽模式只显示 5 张单抽牌，多抽模式只显示批量卡片区域或生成提示。
-- 切换抽卡模式时清理未完成的批量展示状态，避免旧批次残留到单抽界面。
+### 娣囶喗鏁?
+- 鏉╂劖鐨靛ù瀣槸閹惰棄宕遍懜鐐插酱閺€閫涜礋娴滄帗鏋肩仦鏇犮仛閿涙艾宕熼幎鑺ツ佸蹇撳涧閺勫墽銇?5 瀵姴宕熼幎鐣屽閿涘苯顦块幎鑺ツ佸蹇撳涧閺勫墽銇氶幍褰掑櫤閸楋紕澧栭崠鍝勭厵閹存牜鏁撻幋鎰絹缁€鎭掆偓?
+- 閸掑洦宕查幎钘夊幢濡€崇础閺冭埖绔婚悶鍡樻弓鐎瑰本鍨氶惃鍕闁插繐鐫嶇粈铏瑰Ц閹緤绱濋柆鍨帳閺冄勫濞嗏剝鐣悾娆忓煂閸楁洘濞婇悾宀勬桨閵?
 
-### 风险变更
-- 模式切换只清理展示中的临时批次，不重置已记录的抽卡统计。
+### 妞嬪酣娅撻崣妯绘纯
+- 濡€崇础閸掑洦宕查崣顏呯閻炲棗鐫嶇粈杞拌厬閻ㄥ嫪澶嶉弮鑸靛濞嗏槄绱濇稉宥夊櫢缂冾喖鍑＄拋鏉跨秿閻ㄥ嫭濞婇崡锛勭埠鐠伮扳偓?
 
 ## [Unreleased-PLAN_133-HUMAN-TESTS-FEEDBACK-AND-REPORTS] - 2026-05-07
 
-### 原因
-- 继续完善 `工具箱 - 人类测试中心` 中持续注意力、运气、时间感知、手速、序列记忆、斯特鲁普和色觉报告，使交互反馈、娱乐性和统计可读性更完整。
+### 閸樼喎娲?
+- 缂佈呯敾鐎瑰苯鏉?`瀹搞儱鍙跨粻?- 娴滆櫣琚ù瀣槸娑擃厼绺綻 娑擃厽瀵旂紒顓熸暈閹板繐濮忛妴浣界箥濮樻柣鈧焦妞傞梻瀛樺妳閻儯鈧焦澧滈柅鐔粹偓浣哥碍閸掓顔囪箛鍡愨偓浣规焿閻楀綊鐬鹃弲顔兼嫲閼硅尪顫庨幎銉ユ啞閿涘奔濞囨禍銈勭鞍閸欏秹顩妴浣概稊鎰偓褍鎷扮紒鐔活吀閸欘垵顕伴幀褎娲跨€瑰本鏆ｉ妴?
 
-### 新增
-- 持续注意力测试新增默认关闭的目标背景高亮开关，并在命中、误点和重复点击时显示短促点中反馈。
-- 运气测试新增多连抽卡片池，十连/二十连会生成对应数量的真实卡片，支持逐张翻开或一键全翻；史诗/传说抽中时可显示短暂全屏稀有特效。
-- 运气统计报告新增趣味称号，包括欧皇在世、气运之子、小幸运、普普通通、运气不佳和非酋等分档。
-- 时间感知测试开始前新增 3-2-1 大屏倒计时，秒表在倒计时结束后才启动。
-- 手速测试新增经典连点、目标追击和节奏命中三种玩法，补充挑战时长、连击、准确率和完成报告。
-- 序列记忆新增点击反馈、正确/错误图标和输入进度徽标。
-- 斯特鲁普新增一致判断、说出墨色、读出字义和反向规则子模式，并统计反应时与完成报告。
+### 閺傛澘顤?
+- 閹镐胶鐢诲▔銊﹀壈閸旀稒绁寸拠鏇熸煀婢х偤绮拋銈呭彠闂傤厾娈戦惄顔界垼閼冲本娅欐妯瑰瘨瀵偓閸忕绱濋獮璺烘躬閸涙垝鑵戦妴浣筋嚖閻愮懓鎷伴柌宥咁槻閻愮懓鍤弮鑸垫▔缁€铏圭叚娣囧啰鍋ｆ稉顓炲冀妫ｅ牄鈧?
+- 鏉╂劖鐨靛ù瀣槸閺傛澘顤冩径姘崇箾閹惰棄宕遍悧鍥ㄧ潨閿涘苯宕勬潻?娴滃苯宕勬潻鐐扮窗閻㈢喐鍨氱€电懓绨查弫浼村櫤閻ㄥ嫮婀＄€圭偛宕遍悧鍥风礉閺€顖涘瘮闁劕绱剁紙璇茬磻閹存牔绔撮柨顔煎弿缂堜紮绱遍崣鑼剁槻/娴肩姾顕╅幎鎴掕厬閺冭泛褰查弰鍓с仛閻厽娈忛崗銊ョ潌缁嬧偓閺堝澹掗弫鍫涒偓?
+- 鏉╂劖鐨电紒鐔活吀閹躲儱鎲￠弬鏉款杻鐡掞絽鎳楃粔鏉垮娇閿涘苯瀵橀幏顒侇儌閻ㄥ洤婀稉鏍モ偓浣圭毜鏉╂劒绠ｇ€涙劑鈧礁鐨獮姝岀箥閵嗕焦娅橀弲顕€鈧岸鈧哎鈧浇绻嶅鏂剧瑝娴ｅ啿鎷伴棃鐐哄帬缁涘鍨庡锝冣偓?
+- 閺冨爼妫块幇鐔虹叀濞村鐦鈧慨瀣閺傛澘顤?3-2-1 婢堆冪潌閸婃帟顓搁弮璁圭礉缁夋帟銆冮崷銊モ偓鎺曨吀閺冨墎绮ㄩ弶鐔锋倵閹靛秴鎯庨崝銊ｂ偓?
+- 閹靛鈧喐绁寸拠鏇熸煀婢х偟绮￠崗姝岀箾閻愬箍鈧胶娲伴弽鍥嫹閸戣鎷伴懞鍌氼殧閸涙垝鑵戞稉澶岊潚閻溾晜纭堕敍宀兯夐崗鍛閹存ɑ妞傞梹瑁も偓浣界箾閸戞眹鈧礁鍣涵顔惧芳閸滃苯鐣幋鎰Г閸涘鈧?
+- 鎼村繐鍨拋鏉跨箓閺傛澘顤冮悙鐟板毊閸欏秹顩妴浣诡劀绾?闁挎瑨顕ら崶鐐垼閸滃矁绶崗銉ㄧ箻鎼达箑绐橀弽鍥モ偓?
+- 閺傤垳澹掓ご浣规珮閺傛澘顤冩稉鈧懛鏉戝灲閺傤厹鈧浇顕╅崙鍝勨叿閼瑰眰鈧浇顕伴崙鍝勭摟娑斿鎷伴崣宥呮倻鐟欏嫬鍨€涙劖膩瀵骏绱濋獮鍓佺埠鐠佲€冲冀鎼存梹妞傛稉搴＄暚閹存劖濮ら崨濞库偓?
 
-### 修改
-- 色觉测试报告移除低可读性的曲线/倾向 CustomPaint 图表，改为近轮色差记录、色相分组表现和差异类型表现列表。
+### 娣囶喗鏁?
+- 閼硅尪顫庡ù瀣槸閹躲儱鎲＄粔濠氭珟娴ｅ骸褰茬拠缁樷偓褏娈戦弴鑼殠/閸婃儳鎮?CustomPaint 閸ユ崘銆冮敍灞炬暭娑撻缚绻庢潪顔垮瀹割喛顔囪ぐ鏇樷偓浣藉閻╃鍨庣紒鍕€冮悳鏉挎嫲瀹割喖绱撶猾璇茬€风悰銊у箛閸掓銆冮妴?
 
-### 风险变更
-- 运气测试多连抽改为翻开后才计入统计，避免“已生成但未展示”的卡片污染报告；本页结果仍只保存在当前页面内存中。
+### 妞嬪酣娅撻崣妯绘纯
+- 鏉╂劖鐨靛ù瀣槸婢舵俺绻涢幎鑺ユ暭娑撹櫣鐐曞鈧崥搴㈠鐠佲€冲弳缂佺喕顓搁敍宀勪缉閸忓秮鈧粌鍑￠悽鐔稿灇娴ｅ棙婀仦鏇犮仛閳ユ繄娈戦崡锛勫濮光剝鐓嬮幎銉ユ啞閿涙稒婀版い鐢电波閺嬫粈绮涢崣顏冪箽鐎涙ê婀ぐ鎾冲妞ょ敻娼伴崘鍛摠娑擃厹鈧?
 
 ## [Unreleased-PLAN_132-HUMAN-TESTS-SIX-MODULES] - 2026-05-07
 
-### 原因
-- 完善 `工具箱 - 人类测试中心` 中计算能力、动态视力字符识别、持续注意力、运气测试、色觉报告图表和页面文案，使基础实现提升为可配置、可复盘的训练模块。
+### 閸樼喎娲?
+- 鐎瑰苯鏉?`瀹搞儱鍙跨粻?- 娴滆櫣琚ù瀣槸娑擃厼绺綻 娑擃叀顓哥粻妤勫厴閸旀稏鈧礁濮╅幀浣筋潒閸旀稑鐡х粭锕佺槕閸掝偁鈧焦瀵旂紒顓熸暈閹板繐濮忛妴浣界箥濮樻梹绁寸拠鏇樷偓浣藉鐟欏濮ら崨濠傛禈鐞涖劌鎷版い鐢告桨閺傚洦顢嶉敍灞煎▏閸╄櫣顢呯€圭偟骞囬幓鎰磳娑撳搫褰查柊宥囩枂閵嗕礁褰叉径宥囨磸閻ㄥ嫯顔勭紒鍐┠侀崸妞尖偓?
 
-### 新增
-- 计算能力测试新增轻量/标准/进阶/专家难度、混合/加减/乘法/除法/两步题/未知数题型、固定题量/限时两种结束条件和完成报告。
-- 动态视力字符识别新增字符集、移动轨迹、选项数量、弱干扰字符、即时反馈和完成报告；小球数量逻辑保持独立。
-- 持续注意力测试新增目标点击、低频目标和 n-back 三类任务，并支持刺激数量、节奏、目标比例和 n-back 间隔设置。
-- 运气测试新增单抽、十连、二十连、卡片数量/幸运指数/抽数目标和目标完成报告。
+### 閺傛澘顤?
+- 鐠侊紕鐣婚懗钘夊濞村鐦弬鏉款杻鏉炲鍣?閺嶅洤鍣?鏉╂盯妯?娑撴挸顔嶉梾鎯у閵嗕焦璐╅崥?閸旂姴鍣?娑旀ɑ纭?闂勩倖纭?娑撱倖顒炴０?閺堫亞鐓￠弫浼搭暯閸ㄥ鈧礁娴愮€规岸顣介柌?闂勬劖妞傛稉銈囶潚缂佹挻娼弶鈥叉閸滃苯鐣幋鎰Г閸涘鈧?
+- 閸斻劍鈧浇顫嬮崝娑樼摟缁楋箒鐦戦崚顐ｆ煀婢х偛鐡х粭锕傛肠閵嗕胶些閸斻劏寤烘潻骞库偓渚€鈧銆嶉弫浼村櫤閵嗕礁鎬ラ獮鍙夊鐎涙顑侀妴浣稿祮閺冭泛寮芥＃鍫濇嫲鐎瑰本鍨氶幎銉ユ啞閿涙稑鐨悶鍐╂殶闁插繘鈧槒绶穱婵囧瘮閻欘剛鐝涢妴?
+- 閹镐胶鐢诲▔銊﹀壈閸旀稒绁寸拠鏇熸煀婢х偟娲伴弽鍥╁仯閸戞眹鈧椒缍嗘０鎴犳窗閺嶅洤鎷?n-back 娑撳琚禒璇插閿涘苯鑻熼弨顖涘瘮閸掔儤绺洪弫浼村櫤閵嗕浇濡總蹇嬧偓浣烘窗閺嶅洦鐦笟瀣嫲 n-back 闂傛挳娈х拋鍓х枂閵?
+- 鏉╂劖鐨靛ù瀣槸閺傛澘顤冮崡鏇熷▕閵嗕礁宕勬潻鐐偓浣风癌閸椾浇绻涢妴浣稿幢閻楀洦鏆熼柌?楠炴瓕绻嶉幐鍥ㄦ殶/閹惰姤鏆熼惄顔界垼閸滃瞼娲伴弽鍥х暚閹存劖濮ら崨濞库偓?
 
-### 修改
-- 运气测试幸运值改为按概率期望计算幸运指数，100 作为期望基线。
-- 色觉报告将色彩偏向和差异类型图表改为横向评分条，显示百分比与命中数量，减少低样本时只出现单条竖线的问题。
-- 更新人类测试中心、toolbox 总入口和模块说明文案，移除过期的基础描述。
+### 娣囶喗鏁?
+- 鏉╂劖鐨靛ù瀣槸楠炴瓕绻嶉崐鍏兼暭娑撶儤瀵滃鍌滃芳閺堢喐婀滅拋锛勭暬楠炴瓕绻嶉幐鍥ㄦ殶閿?00 娴ｆ粈璐熼張鐔告箿閸╄櫣鍤庨妴?
+- 閼硅尪顫庨幎銉ユ啞鐏忓棜澹婅ぐ鈺佷焊閸氭垵鎷板顔肩磽缁鐎烽崶鎹愩€冮弨閫涜礋濡亜鎮滅拠鍕瀻閺夆槄绱濋弰鍓с仛閻ф儳鍨庡В鏂剧瑢閸涙垝鑵戦弫浼村櫤閿涘苯鍣虹亸鎴滅秵閺嶉攱婀伴弮璺哄涧閸戣櫣骞囬崡鏇熸蒋缁旀牜鍤庨惃鍕６妫版ǜ鈧?
+- 閺囧瓨鏌婃禍铏硅濞村鐦稉顓炵妇閵嗕辜oolbox 閹鍙嗛崣锝呮嫲濡€虫健鐠囧瓨妲戦弬鍥攳閿涘瞼些闂勩倛绻冮張鐔烘畱閸╄櫣顢呴幓蹇氬牚閵?
 
-### 风险变更
-- 本轮新增的报告均只使用当前页面内存统计，不写入 AppState、数据库或学习记录。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛弬鏉款杻閻ㄥ嫭濮ら崨濠傛綆閸欘亙濞囬悽銊ョ秼閸撳秹銆夐棃銏犲敶鐎涙绮虹拋鈽呯礉娑撳秴鍟撻崗?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
 
 ## [Unreleased-PLAN_131-JOYSTICK-FULLSCREEN-SETTINGS-DIALOG] - 2026-05-07
 
-### 原因
-- 用户希望摇杆手眼协调全屏模式增加一个小设置入口按钮，规格与开始、重置按钮一致，点击后用弹窗展开设置。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌濡€崇础婢х偛濮炴稉鈧稉顏勭毈鐠佸墽鐤嗛崗銉ュ經閹稿鎸抽敍宀冾潐閺嶉棿绗屽鈧慨瀣ㄢ偓渚€鍣哥純顔藉瘻闁筋喕绔撮懛杈剧礉閻愮懓鍤崥搴ｆ暏瀵湱鐛ョ仦鏇炵磻鐠佸墽鐤嗛妴?
 
-### 新增
-- 摇杆手眼协调全屏顶部操作区新增设置图标按钮。
-- 点击设置按钮后弹出全屏设置弹窗，复用摇杆设置、目标移动设置和高阶干扰设置。
+### 閺傛澘顤?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌妞ゅ爼鍎撮幙宥勭稊閸栫儤鏌婃晶鐐额啎缂冾喖娴橀弽鍥ㄥ瘻闁筋喓鈧?
+- 閻愮懓鍤拋鍓х枂閹稿鎸抽崥搴¤剨閸戝搫鍙忕仦蹇氼啎缂冾喖鑴婄粣妤嬬礉婢跺秶鏁ら幗鍥ㄦ綄鐠佸墽鐤嗛妴浣烘窗閺嶅洨些閸斻劏顔曠純顔兼嫲妤傛﹢妯侀獮鍙夊鐠佸墽鐤嗛妴?
 
-### 修改
-- 更新摇杆全屏 smoke test，覆盖设置入口、弹窗展示和目标移动设置展开。
+### 娣囶喗鏁?
+- 閺囧瓨鏌婇幗鍥ㄦ綄閸忋劌鐫?smoke test閿涘矁顩惄鏍啎缂冾喖鍙嗛崣锝冣偓浣歌剨缁愭鐫嶇粈鍝勬嫲閻╊喗鐖ｇ粔璇插З鐠佸墽鐤嗙仦鏇炵磻閵?
 
-### 风险变更
-- 设置弹窗复用普通页锁定规则，运行中关键设置仍禁用，避免测试过程中的规则切换混入当前成绩。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐠佸墽鐤嗗鍦崶婢跺秶鏁ら弲顕€鈧岸銆夐柨浣哥暰鐟欏嫬鍨敍宀冪箥鐞涘奔鑵戦崗鎶芥暛鐠佸墽鐤嗘禒宥囶洣閻㈩煉绱濋柆鍨帳濞村鐦潻鍥┾柤娑擃厾娈戠憴鍕灟閸掑洦宕插ǎ宄板弳瑜版挸澧犻幋鎰摋閵?
 
 ## [Unreleased-PLAN_130-JOYSTICK-FULLSCREEN-IMPLICIT-PRACTICE] - 2026-05-07
 
-### 原因
-- 用户希望摇杆手眼协调全屏模式在手指未按下时隐藏摇杆，去掉摇杆外层方形边框，并允许未开始时先练习准星控制。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌濡€崇础閸︺劍澧滈幐鍥ㄦ弓閹稿绗呴弮鍫曟閽樺繑鎲為弶鍡礉閸樼粯甯€閹藉洦娼屾径鏍х湴閺傜懓鑸版潏瑙勵攱閿涘苯鑻熼崗浣筋啅閺堫亜绱戞慨瀣閸忓牏绮屾稊鐘插櫙閺勭喐甯堕崚韬测偓?
 
-### 修改
-- 全屏摇杆改为按下后才显示、抬起后隐藏，舞台空闲时不再常驻左下摇杆浮层。
-- 全屏摇杆去除外层方形半透明面板，只保留圆形摇杆本体。
-- 全屏未开始状态下允许拖动准星进行手感适应；该练习态不触发目标刷新、射击计分或测试计时。
-- 更新摇杆全屏 smoke test，覆盖初始隐藏、触点显示、抬起隐藏和未开始准星移动。
+### 娣囶喗鏁?
+- 閸忋劌鐫嗛幗鍥ㄦ綄閺€閫涜礋閹稿绗呴崥搴㈠閺勫墽銇氶妴浣瑰М鐠у嘲鎮楅梾鎰閿涘矁鍨堕崣鎵敄闂傚弶妞傛稉宥呭晙鐢悂鈹楀锔跨瑓閹藉洦娼屽ù顔肩湴閵?
+- 閸忋劌鐫嗛幗鍥ㄦ綄閸樺娅庢径鏍х湴閺傜懓鑸伴崡濠団偓蹇旀闂堛垺婢橀敍灞藉涧娣囨繄鏆€閸﹀棗鑸伴幗鍥ㄦ綄閺堫兛缍嬮妴?
+- 閸忋劌鐫嗛張顏勭磻婵濮搁幀浣风瑓閸忎浇顔忛幏鏍уЗ閸戝棙妲︽潻娑滎攽閹靛鍔呴柅鍌氱安閿涙稖顕氱紒鍐х瘎閹椒绗夌憴锕€褰傞惄顔界垼閸掗攱鏌婇妴浣哥殸閸戞槒顓搁崚鍡樺灗濞村鐦拋鈩冩閵?
+- 閺囧瓨鏌婇幗鍥ㄦ綄閸忋劌鐫?smoke test閿涘矁顩惄鏍у灥婵娈ｉ挊蹇嬧偓浣叫曢悙瑙勬▔缁€鎭掆偓浣瑰М鐠х兘娈ｉ挊蹇撴嫲閺堫亜绱戞慨瀣櫙閺勭喓些閸斻劊鈧?
 
-### 风险变更
-- 隐式摇杆减少了固定视觉提示，但触点即摇杆中心的操作模型更适合全屏沉浸训练；正式测试仍需点击开始按钮进入计时/计分。
+### 妞嬪酣娅撻崣妯绘纯
+- 闂呮劕绱￠幗鍥ㄦ綄閸戝繐鐨禍鍡楁祼鐎规俺顫嬬憴澶嬪絹缁€鐚寸礉娴ｅ棜袝閻愮懓宓嗛幗鍥ㄦ綄娑擃厼绺鹃惃鍕惙娴ｆ粍膩閸ㄥ娲块柅鍌氭値閸忋劌鐫嗗▽澶嬭箞鐠侇厾绮岄敍娑欘劀瀵繑绁寸拠鏇氱矝闂団偓閻愮懓鍤鈧慨瀣瘻闁筋喛绻橀崗銉吀閺?鐠佲€冲瀻閵?
 
 ## [Unreleased-PLAN_129-JOYSTICK-FULLSCREEN-WHITE-OVERLAY] - 2026-05-07
 
-### 原因
-- 用户希望摇杆手眼协调全屏模式进一步释放舞台面积，改为白色全屏铺面，并让摇杆、射击等操作浮层能根据手指按下位置调整。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌濡€崇础鏉╂稐绔村銉╁櫞閺€鎹愬灦閸欎即娼扮粔顖ょ礉閺€閫涜礋閻у€熷閸忋劌鐫嗛柧娲桨閿涘苯鑻熺拋鈺傛啚閺夊棎鈧礁鐨犻崙鑽ょ搼閹垮秳缍斿ù顔肩湴閼宠姤鐗撮幑顔藉閹稿洦瀵滄稉瀣╃秴缂冾喛鐨熼弫娣偓?
 
-### 修改
-- 摇杆手眼协调全屏舞台改为白色全屏铺面，移除旧的左右控制栏和中间舞台分栏。
-- 摇杆、射击、顶部状态和会话按钮改为半透明浮层，保留退出、开始/结束、重置和报告入口。
-- 运行中在舞台按下会把摇杆浮层移动到触点附近并继续响应拖动；右下射击热区会按触点移动射击浮层并触发射击。
-- 更新摇杆全屏横屏和竖屏 smoke test，覆盖全屏舞台尺寸、浮层覆盖和触点重定位行为。
+### 娣囶喗鏁?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌閼哥偛褰撮弨閫涜礋閻у€熷閸忋劌鐫嗛柧娲桨閿涘瞼些闂勩倖妫惃鍕箯閸欒櫕甯堕崚鑸电埉閸滃奔鑵戦梻纾嬪灦閸欐澘鍨庨弽蹇嬧偓?
+- 閹藉洦娼岄妴浣哥殸閸戞眹鈧線銆婇柈銊уЦ閹礁鎷版导姘崇樈閹稿鎸抽弨閫涜礋閸楀﹪鈧繑妲戝ù顔肩湴閿涘奔绻氶悾娆撯偓鈧崙鎭掆偓浣哥磻婵?缂佹挻娼妴渚€鍣哥純顔兼嫲閹躲儱鎲￠崗銉ュ經閵?
+- 鏉╂劘顢戞稉顓炴躬閼哥偛褰撮幐澶夌瑓娴兼碍濡搁幗鍥ㄦ綄濞搭喖鐪扮粔璇插З閸掓媽袝閻愬綊妾潻鎴濊嫙缂佈呯敾閸濆秴绨查幏鏍уЗ閿涙稑褰告稉瀣殸閸戣崵鍎归崠杞扮窗閹稿袝閻愬湱些閸斻劌鐨犻崙缁樿癁鐏炲倸鑻熺憴锕€褰傜亸鍕毊閵?
+- 閺囧瓨鏌婇幗鍥ㄦ綄閸忋劌鐫嗗Ο顏勭潌閸滃瞼鐝仦?smoke test閿涘矁顩惄鏍у弿鐏炲繗鍨堕崣鏉挎槀鐎垫悶鈧焦璇炵仦鍌濐洬閻╂牕鎷扮憴锔惧仯闁插秴鐣炬担宥堫攽娑撴亽鈧?
 
-### 风险变更
-- 全屏目标活动区域扩大后，目标更贴近真实全屏训练；顶部状态区域仍保留最小安全边距，避免目标与关键浮层过度重叠。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫嗛惄顔界垼濞茶濮╅崠鍝勭厵閹碘晛銇囬崥搴礉閻╊喗鐖ｉ弴纾嬪垱鏉╂垹婀＄€圭偛鍙忕仦蹇氼唲缂佸喛绱辨い鍫曞劥閻樿埖鈧礁灏崺鐔剁矝娣囨繄鏆€閺堚偓鐏忓繐鐣ㄩ崗銊ㄧ珶鐠烘繐绱濋柆鍨帳閻╊喗鐖ｆ稉搴″彠闁款喗璇炵仦鍌濈箖鎼达箓鍣搁崣鐘偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen"`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen"`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_128-HUMAN-TESTS-REFINE] - 2026-05-07
 
-### 原因
-- 收口 `工具箱 - 人类测试中心` 的 8 处 UI/报告问题，统一补齐完成弹窗、设置折叠与全屏布局优化。
+### 閸樼喎娲?
+- 閺€璺哄經 `瀹搞儱鍙跨粻?- 娴滆櫣琚ù瀣槸娑擃厼绺綻 閻?8 婢?UI/閹躲儱鎲￠梻顕€顣介敍宀€绮烘稉鈧悰銉╃秷鐎瑰本鍨氬鍦崶閵嗕浇顔曠純顔藉閸欑姳绗岄崗銊ョ潌鐢啫鐪导妯哄閵?
 
-### 修改
-- 数字记忆仅在失败完成一轮时弹出统计报告。
-- 反应测试在完成一组后自动弹出统计分析报告。
-- 打字测试将设置区改为折叠展开，并默认提供“全部”题材。
-- 视觉记忆增加完成后的报告入口。
-- 瞄准测试移除重复的开始按钮。
-- 色觉测试修正报告趋势折线的绘制范围与缩放。
-- 序列记忆扩展图标数量配置，并增强连续重复图标的播放辨识度。
-- 摇杆手眼协调全屏布局收紧边距，扩大舞台可用面积。
+### 娣囶喗鏁?
+- 閺佹澘鐡х拋鏉跨箓娴犲懎婀径杈Е鐎瑰本鍨氭稉鈧潪顔芥瀵懓鍤紒鐔活吀閹躲儱鎲￠妴?
+- 閸欏秴绨插ù瀣槸閸︺劌鐣幋鎰缂佸嫬鎮楅懛顏勫З瀵懓鍤紒鐔活吀閸掑棙鐎介幎銉ユ啞閵?
+- 閹垫挸鐡уù瀣槸鐏忓棜顔曠純顔煎隘閺€閫涜礋閹舵ê褰旂仦鏇炵磻閿涘苯鑻熸妯款吇閹绘劒绶甸垾婊冨弿闁劉鈧繈顣介弶鎰┾偓?
+- 鐟欏棜顫庣拋鏉跨箓婢х偛濮炵€瑰本鍨氶崥搴ｆ畱閹躲儱鎲￠崗銉ュ經閵?
+- 閻嫬鍣ù瀣槸缁夊娅庨柌宥咁槻閻ㄥ嫬绱戞慨瀣瘻闁筋喓鈧?
+- 閼硅尪顫庡ù瀣槸娣囶喗顒滈幎銉ユ啞鐡掑濞嶉幎妯煎殠閻ㄥ嫮绮崚鎯板瘱閸ョ繝绗岀紓鈺傛杹閵?
+- 鎼村繐鍨拋鏉跨箓閹碘晛鐫嶉崶鐐垼閺佷即鍣洪柊宥囩枂閿涘苯鑻熸晶鐐插繁鏉╃偟鐢婚柌宥咁槻閸ョ偓鐖ｉ惃鍕尡閺€鎹愰哺鐠囧棗瀹抽妴?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌鐢啫鐪弨鍓佹彛鏉堢绐涢敍灞惧⒖婢堆嗗灦閸欐澘褰查悽銊╂桨缁夘垬鈧?
 
-### 修复
-- 更新相关 smoke test、模块说明与计划状态，保持 toolbox 变更收口一致。
+### 娣囶喖顦?
+- 閺囧瓨鏌婇惄绋垮彠 smoke test閵嗕焦膩閸ф顕╅弰搴濈瑢鐠佲€冲灊閻樿埖鈧緤绱濇穱婵囧瘮 toolbox 閸欐ɑ娲块弨璺哄經娑撯偓閼锋番鈧?
 
-### 风险变更
-- 序列记忆的可选图标数增加后，默认体验更丰富，但视觉复杂度略有提升。
+### 妞嬪酣娅撻崣妯绘纯
+- 鎼村繐鍨拋鏉跨箓閻ㄥ嫬褰查柅澶婃禈閺嶅洦鏆熸晶鐐插閸氬函绱濇妯款吇娴ｆ捇鐛欓弴缈犺荡鐎靛矉绱濇担鍡氼潒鐟欏顦查弶鍌氬閻ｃ儲婀侀幓鎰磳閵?
 
 ## [Unreleased-PLAN_122-CHIMP-SETTINGS-REPORT] - 2026-05-06
 
-### 原因
-- 继续完善「工具箱 - 人类测试中心 - 黑猩猩测试」，增加最大表格大小、显示答案和默认关闭的提示辅助，并在测试结束后弹出统计分析报告。
+### 閸樼喎娲?
+- 缂佈呯敾鐎瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 姒涙垹灏掗悮鈺傜ゴ鐠囨洏鈧稄绱濇晶鐐插閺堚偓婢堆嗐€冮弽鐓庛亣鐏忓繈鈧焦妯夌粈铏圭摕濡楀牆鎷版妯款吇閸忔娊妫撮惃鍕絹缁€楦跨窡閸斺晪绱濋獮璺烘躬濞村鐦紒鎾存将閸氬骸鑴婇崙铏圭埠鐠佲€冲瀻閺嬫劖濮ら崨濞库偓?
 
-### 新增
-- 黑猩猩测试新增最大表格大小、本组最大目标数、显示答案、下一步提示、一次错误保护和完成后自动报告设置。
-- 顺序数字与颜色顺序模式保留数字/颜色播放速度设置，颜色顺序模式保留颜色数量设置。
-- 测试完成上限或失败后新增「黑猩猩测试统计报告」弹窗，展示模式、表格、完成轮次、失败轮次、最佳目标、准确率、错误数、平均/最快用时、辅助状态和训练建议。
-- 新增定向 smoke test 覆盖设置入口、答案/提示辅助和报告弹窗。
+### 閺傛澘顤?
+- 姒涙垹灏掗悮鈺傜ゴ鐠囨洘鏌婃晶鐐存付婢堆嗐€冮弽鐓庛亣鐏忓繈鈧焦婀扮紒鍕付婢堆呮窗閺嶅洦鏆熼妴浣规▔缁€铏圭摕濡楀牄鈧椒绗呮稉鈧銉﹀絹缁€鎭掆偓浣风濞嗭繝鏁婄拠顖欑箽閹躲倕鎷扮€瑰本鍨氶崥搴ゅ殰閸斻劍濮ら崨濠咁啎缂冾喓鈧?
+- 妞ゅ搫绨弫鏉跨摟娑撳酣顤侀懝鏌ャ€庢惔蹇斈佸蹇庣箽閻ｆ瑦鏆熺€?妫版粏澹婇幘顓熸杹闁喎瀹崇拋鍓х枂閿涘矂顤侀懝鏌ャ€庢惔蹇斈佸蹇庣箽閻ｆ瑩顤侀懝鍙夋殶闁插繗顔曠純顔衡偓?
+- 濞村鐦€瑰本鍨氭稉濠囨閹存牕銇戠拹銉ユ倵閺傛澘顤冮妴宀勭拨閻氣晝灏掑ù瀣槸缂佺喕顓搁幎銉ユ啞閵嗗秴鑴婄粣妤嬬礉鐏炴洜銇氬Ο鈥崇础閵嗕浇銆冮弽绗衡偓浣哥暚閹存劘鐤嗗▎掳鈧礁銇戠拹銉ㄧ枂濞喡扳偓浣规付娴ｅ磭娲伴弽鍥モ偓浣稿櫙绾喚宸奸妴渚€鏁婄拠顖涙殶閵嗕礁閽╅崸?閺堚偓韫囶偆鏁ら弮韬测偓浣界窡閸斺晝濮搁幀浣告嫲鐠侇厾绮屽楦款唴閵?
+- 閺傛澘顤冪€规艾鎮?smoke test 鐟曞棛娲婄拋鍓х枂閸忋儱褰涢妴浣虹摕濡?閹绘劗銇氭潏鍛И閸滃本濮ら崨濠傝剨缁愭ぜ鈧?
 
-### 修改
-- 黑猩猩测试入口说明和 toolbox 模块说明同步更新为设置与报告能力描述。
-- 设置变更会清理当前轮状态和本组统计，避免旧轮次与新规则混用。
+### 娣囶喗鏁?
+- 姒涙垹灏掗悮鈺傜ゴ鐠囨洖鍙嗛崣锝堫嚛閺勫骸鎷?toolbox 濡€虫健鐠囧瓨妲戦崥灞绢劄閺囧瓨鏌婃稉楦款啎缂冾喕绗岄幎銉ユ啞閼宠棄濮忛幓蹇氬牚閵?
+- 鐠佸墽鐤嗛崣妯绘纯娴兼碍绔婚悶鍡楃秼閸撳秷鐤嗛悩鑸碘偓浣告嫲閺堫剛绮嶇紒鐔活吀閿涘矂浼╅崗宥嗘＋鏉烆喗顐兼稉搴㈡煀鐟欏嫬鍨ǎ椋庢暏閵?
 
-### 风险变更
-- 答案显示、下一步提示与一次错误保护均默认关闭；开启后报告会标注辅助状态，避免与纯净记忆成绩直接比较。
-- 结果仍只在当前页面内存中即时展示，不写入 AppState、数据库或学习记录。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁涙梹顢嶉弰鍓с仛閵嗕椒绗呮稉鈧銉﹀絹缁€杞扮瑢娑撯偓濞嗭繝鏁婄拠顖欑箽閹躲倕娼庢妯款吇閸忔娊妫撮敍娑樼磻閸氼垰鎮楅幎銉ユ啞娴兼碍鐖ｅ▔銊ㄧ窡閸斺晝濮搁幀渚婄礉闁灝鍘ゆ稉搴ｅ嚱閸戔偓鐠佹澘绻傞幋鎰摋閻╁瓨甯村В鏃囩窛閵?
+- 缂佹挻鐏夋禒宥呭涧閸︺劌缍嬮崜宥夈€夐棃銏犲敶鐎涙ü鑵戦崡铏鐏炴洜銇氶敍灞肩瑝閸愭瑥鍙?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
 
-### 验证
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "chimp test exposes assists and completion report" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "chimp test exposes assists and completion report" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_127-VERBAL-MEMORY-MULTI-MODE-REPORT] - 2026-05-06
 
-### 原因
-- 将工具箱-人类测试中心-词汇记忆扩展为更完整的专业训练模块，补齐词库、多模式、可自定义舞台高度和结束报告。
+### 閸樼喎娲?
+- 鐏忓棗浼愰崗椋庮唸-娴滆櫣琚ù瀣槸娑擃厼绺?鐠囧秵鐪圭拋鏉跨箓閹碘晛鐫嶆稉鐑樻纯鐎瑰本鏆ｉ惃鍕瑩娑撴俺顔勭紒鍐┠侀崸妤嬬礉鐞涖儵缍堢拠宥呯氨閵嗕礁顦垮Ο鈥崇础閵嗕礁褰查懛顏勭暰娑斿鍨堕崣浼寸彯鎼达箑鎷扮紒鎾存将閹躲儱鎲￠妴?
 
-### 新增
-- 词汇模式支持分领域词库多选。
-- 新增数字序列记忆模式，支持随级别增长的长度。
-- 新增空间箭头记忆模式，支持 4 向和 8 向方向集。
-- 新增可自定义的舞台高度配置。
-- 新增结束后的完整结果分析报告弹窗。
+### 閺傛澘顤?
+- 鐠囧秵鐪瑰Ο鈥崇础閺€顖涘瘮閸掑棝顣崺鐔荤槤鎼存挸顦块柅澶堚偓?
+- 閺傛澘顤冮弫鏉跨摟鎼村繐鍨拋鏉跨箓濡€崇础閿涘本鏁幐渚€娈㈢痪褍鍩嗘晶鐐烘毐閻ㄥ嫰鏆辨惔锔衡偓?
+- 閺傛澘顤冪粚娲？缁狀厼銇旂拋鏉跨箓濡€崇础閿涘本鏁幐?4 閸氭垵鎷?8 閸氭垶鏌熼崥鎴︽肠閵?
+- 閺傛澘顤冮崣顖濆殰鐎规矮绠熼惃鍕灦閸欎即鐝惔锕傚帳缂冾喓鈧?
+- 閺傛澘顤冪紒鎾存将閸氬海娈戠€瑰本鏆ｇ紒鎾寸亯閸掑棙鐎介幎銉ユ啞瀵湱鐛ラ妴?
 
-### 修改
-- 将词汇记忆模块按 `models / data / view / widgets` 收敛成独立 part 结构。
-- 更新工具箱模块文档映射，补齐新的词汇记忆拆分文件。
+### 娣囶喗鏁?
+- 鐏忓棜鐦濆Ч鍥唶韫囧棙膩閸ф瀵?`models / data / view / widgets` 閺€鑸垫殐閹存劗瀚粩?part 缂佹挻鐎妴?
+- 閺囧瓨鏌婂銉ュ徔缁犺鲸膩閸ф鏋冨锝嗘Ё鐏忓嫸绱濈悰銉╃秷閺傛壆娈戠拠宥嗙湽鐠佹澘绻傞幏鍡楀瀻閺傚洣娆㈤妴?
 
-### 风险变更
-- 新增模式只保留当前页面内的局部统计，不写入全局状态或持久化存储。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺傛澘顤冨Ο鈥崇础閸欘亙绻氶悾娆忕秼閸撳秹銆夐棃銏犲敶閻ㄥ嫬鐪柈銊х埠鐠佲槄绱濇稉宥呭晸閸忋儱鍙忕仦鈧悩鑸碘偓浣瑰灗閹镐椒绠欓崠鏍х摠閸屻劊鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_data.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_models.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_view.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_widgets.dart test/toolbox_verbal_memory_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_data.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_models.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_view.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_widgets.dart test/toolbox_verbal_memory_smoke_test.dart`（通过）
-- `flutter test test/toolbox_verbal_memory_smoke_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_data.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_models.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_view.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_widgets.dart test/toolbox_verbal_memory_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_data.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_models.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_view.dart lib/src/ui/pages/toolbox_human_tests_verbal_memory_widgets.dart test/toolbox_verbal_memory_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_verbal_memory_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_126-COLOR-VISION-MIXED-REPORT] - 2026-05-06
 
-### 原因
-- 用户要求继续完善「工具箱 - 人类测试中心 - 色觉测试」，增加更多可调设置、混色匹配玩法、提示按钮，并在测试结束时给出具体统计分析报告和图表。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴缂佈呯敾鐎瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 閼硅尪顫庡ù瀣槸閵嗗稄绱濇晶鐐插閺囨潙顦块崣顖濈殶鐠佸墽鐤嗛妴浣硅穿閼规彃灏柊宥囧负濞夋洏鈧焦褰佺粈鐑樺瘻闁筋噯绱濋獮璺烘躬濞村鐦紒鎾存将閺冨墎绮伴崙鍝勫徔娴ｆ挾绮虹拋鈥冲瀻閺嬫劖濮ら崨濠傛嫲閸ユ崘銆冮妴?
 
-### 新增
-- 色觉测试新增「经典找不同 / 混色匹配」双模式；混色匹配会在网格上方提示目标色，用户点击与目标色完全相同的色块。
-- 新增色系排除设置：完整色系、排除红绿、排除蓝黄、低饱和，用于避开特定色觉困难敏感色组或做低饱和训练。
-- 新增最大生命设置，支持 1 次、3 次、5 次与无限生命。
-- 新增初始网格、最大网格、混色目标同色块数量和目标数量随机设置。
-- 新增提示按钮，会在当前轮次为目标色块添加边框和图标，并将提示次数写入本次报告。
-- 测试结束新增「色觉测试报告」弹窗，展示最高等级、正确率、轮次、提示次数、整体判断、色差表现曲线、色彩偏向曲线、弱项饼图、本轮设置和训练建议。
-- 新增 `test/toolbox_color_vision_smoke_test.dart`，覆盖设置入口、混色模式、提示按钮和报告弹窗。
+### 閺傛澘顤?
+- 閼硅尪顫庡ù瀣槸閺傛澘顤冮妴宀€绮￠崗鍛婂娑撳秴鎮?/ 濞ｇ柉澹婇崠褰掑帳閵嗗秴寮诲Ο鈥崇础閿涙稒璐╅懝鎻掑爱闁板秳绱伴崷銊х秹閺嶉棿绗傞弬瑙勫絹缁€铏规窗閺嶅洩澹婇敍宀€鏁ら幋椋庡仯閸戣绗岄惄顔界垼閼规彃鐣崗銊ф祲閸氬瞼娈戦懝鎻掓健閵?
+- 閺傛澘顤冮懝鑼兇閹烘帡娅庣拋鍓х枂閿涙艾鐣弫纾嬪缁眹鈧焦甯撻梽銈囧缂佽￥鈧焦甯撻梽銈堟憫姒涘嫨鈧椒缍嗘鍗炴嫲閿涘瞼鏁ゆ禍搴ㄤ缉瀵偓閻楃懓鐣鹃懝鑼额潕閸ヤ即姣﹂弫蹇斿妳閼硅尙绮嶉幋鏍т粵娴ｅ酣銈遍崪宀冾唲缂佸啨鈧?
+- 閺傛澘顤冮張鈧径褏鏁撻崨鍊燁啎缂冾噯绱濋弨顖涘瘮 1 濞喡扳偓? 濞喡扳偓? 濞嗏€茬瑢閺冪娀妾洪悽鐔锋嚒閵?
+- 閺傛澘顤冮崚婵嗩潗缂冩垶鐗搁妴浣规付婢堆呯秹閺嶇鈧焦璐╅懝鑼窗閺嶅洤鎮撻懝鎻掓健閺佷即鍣洪崪宀€娲伴弽鍥ㄦ殶闁插繘娈㈤張楦款啎缂冾喓鈧?
+- 閺傛澘顤冮幓鎰仛閹稿鎸抽敍灞肩窗閸︺劌缍嬮崜宥堢枂濞嗏€茶礋閻╊喗鐖ｉ懝鎻掓健濞ｈ濮炴潏瑙勵攱閸滃苯娴橀弽鍥风礉楠炶泛鐨㈤幓鎰仛濞嗏剝鏆熼崘娆忓弳閺堫剚顐奸幎銉ユ啞閵?
+- 濞村鐦紒鎾存将閺傛澘顤冮妴宀冨鐟欏绁寸拠鏇熷Г閸涘鈧秴鑴婄粣妤嬬礉鐏炴洜銇氶張鈧妯肩搼缁狙佲偓浣诡劀绾喚宸奸妴浣界枂濞喡扳偓浣瑰絹缁€鐑橆偧閺佽埇鈧焦鏆ｆ担鎾冲灲閺傤厹鈧浇澹婂顔裤€冮悳鐗堟锤缁捐￥鈧浇澹婅ぐ鈺佷焊閸氭垶娲哥痪瑁も偓浣告€ユい褰掋偧閸ヤ勘鈧焦婀版潪顔款啎缂冾喖鎷扮拋顓犵矊瀵ら缚顔呴妴?
+- 閺傛澘顤?`test/toolbox_color_vision_smoke_test.dart`閿涘矁顩惄鏍啎缂冾喖鍙嗛崣锝冣偓浣硅穿閼瑰弶膩瀵繈鈧焦褰佺粈鐑樺瘻闁筋喖鎷伴幎銉ユ啞瀵湱鐛ラ妴?
 
-### 修改
-- 色觉测试入口说明从单一找不同更新为双模式与色差/色相分析说明。
-- 色觉测试 UI 拆出 `toolbox_human_tests_visual_widgets.dart`，主文件保留状态机、色块生成和统计逻辑。
+### 娣囶喗鏁?
+- 閼硅尪顫庡ù瀣槸閸忋儱褰涚拠瀛樻娴犲骸宕熸稉鈧幍鍙ョ瑝閸氬本娲块弬棰佽礋閸欏本膩瀵繋绗岄懝鎻掓▕/閼硅尙娴夐崚鍡樼€界拠瀛樻閵?
+- 閼硅尪顫庡ù瀣槸 UI 閹峰棗鍤?`toolbox_human_tests_visual_widgets.dart`閿涘奔瀵岄弬鍥︽娣囨繄鏆€閻樿埖鈧焦婧€閵嗕浇澹婇崸妤冩晸閹存劕鎷扮紒鐔活吀闁槒绶妴?
 
-### 风险变更
-- 新增玩法和报告均只使用当前页面内存统计，不写入 AppState、数据库或学习记录。
-- 切换模式、色系、生命和网格设置会立即重开当前色觉测试，以避免旧轮次和新规则混用。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺傛澘顤冮悳鈺傜《閸滃本濮ら崨濠傛綆閸欘亙濞囬悽銊ョ秼閸撳秹銆夐棃銏犲敶鐎涙绮虹拋鈽呯礉娑撳秴鍟撻崗?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
+- 閸掑洦宕插Ο鈥崇础閵嗕浇澹婄化姹団偓浣烘晸閸涜棄鎷扮純鎴炵壐鐠佸墽鐤嗘导姘辩彌閸楁娊鍣稿鈧ぐ鎾冲閼硅尪顫庡ù瀣槸閿涘奔浜掗柆鍨帳閺冄嗙枂濞嗏€虫嫲閺傛媽顫夐崚娆愯穿閻劊鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_visual_widgets.dart test/toolbox_color_vision_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_color_vision_smoke_test.dart`（通过）
-- `flutter test test/toolbox_color_vision_smoke_test.dart --reporter compact`（通过；命令期间 pub advisories 解码打印 warning，但测试退出码为 0）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_visual_widgets.dart test/toolbox_color_vision_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_color_vision_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_color_vision_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍娑樻嚒娴犮倖婀￠梻?pub advisories 鐟欙絿鐖滈幍鎾冲祪 warning閿涘奔绲惧ù瀣槸闁偓閸戣櫣鐖滄稉?0閿?
 
 ## [Unreleased-PLAN_125-JOYSTICK-HOTZONE-REPORT] - 2026-05-06
 
-### 原因
-- 用户希望继续收口「工具箱 - 人类测试中心 - 摇杆手眼协调」全屏：隐藏或折叠进度统计、把摇杆和射击按钮从屏幕边缘内缩成更接近正式射击游戏的手感，并补齐结果报告入口和弹窗。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿缂佈呯敾閺€璺哄經閵嗗苯浼愰崗椋庮唸 - 娴滆櫣琚ù瀣槸娑擃厼绺?- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼妴宥呭弿鐏炲骏绱伴梾鎰閹存牗濮岄崣鐘虹箻鎼达妇绮虹拋掳鈧焦濡搁幗鍥ㄦ綄閸滃苯鐨犻崙缁樺瘻闁筋喕绮犵仦蹇撶鏉堝湱绱崘鍛級閹存劖娲块幒銉ㄧ箮濮濓絽绱＄亸鍕毊濞撳憡鍨欓惃鍕閹扮噦绱濋獮鎯八夋鎰波閺嬫粍濮ら崨濠傚弳閸欙絽鎷板鍦崶閵?
 
-### 新增
-- 摇杆手眼协调全屏顶部统计默认折叠为轻量入口，点击后可展开查看进度、命中和射空统计。
-- 摇杆手眼协调全屏新增顶部浮层报告入口，测试完成后可再次打开本轮结果报告弹窗。
-- 全屏结果报告标题统一为「摇杆手眼协调结果报告」，与模块命名保持一致。
+### 閺傛澘顤?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌妞ゅ爼鍎寸紒鐔活吀姒涙顓婚幎妯哄綌娑撻缚浜ら柌蹇撳弳閸欙綇绱濋悙鐟板毊閸氬骸褰茬仦鏇炵磻閺屻儳婀呮潻娑樺閵嗕礁鎳℃稉顓炴嫲鐏忓嫮鈹栫紒鐔活吀閵?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌閺傛澘顤冩い鍫曞劥濞搭喖鐪伴幎銉ユ啞閸忋儱褰涢敍灞剧ゴ鐠囨洖鐣幋鎰倵閸欘垰鍟€濞嗏剝澧﹀鈧張顒冪枂缂佹挻鐏夐幎銉ユ啞瀵湱鐛ラ妴?
+- 閸忋劌鐫嗙紒鎾寸亯閹躲儱鎲￠弽鍥暯缂佺喍绔存稉鎭掆偓灞炬啚閺夊棙澧滈惇鐓庡礂鐠嬪啰绮ㄩ弸婊勫Г閸涘鈧稄绱濇稉搴⒛侀崸妤€鎳￠崥宥勭箽閹镐椒绔撮懛娣偓?
 
-### 修改
-- 摇杆手眼协调全屏改为顶部浮层控制条 + 底部双侧操作区：左侧保留摇杆，右侧保留射击，开始/结束/重置/报告改为顶部浮层按钮。
-- 全屏舞台的目标与假目标刷新范围改为按可用舞台安全边界计算，避开顶部浮层和左右操作区周边热区。
-- 摇杆和射击按钮统一向屏幕边缘内缩，并补足底部安全余量，避免手机边缘区域误触。
-- 更新摇杆手眼协调 smoke test，覆盖顶部统计折叠、控制区内缩、目标安全边界、横竖屏全屏布局和报告弹窗入口。
+### 娣囶喗鏁?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌閺€閫涜礋妞ゅ爼鍎村ù顔肩湴閹貉冨煑閺?+ 鎼存洟鍎撮崣灞兼櫠閹垮秳缍旈崠鐚寸窗瀹革缚鏅舵穱婵堟殌閹藉洦娼岄敍灞藉礁娓氀傜箽閻ｆ瑥鐨犻崙浼欑礉瀵偓婵?缂佹挻娼?闁插秶鐤?閹躲儱鎲￠弨閫涜礋妞ゅ爼鍎村ù顔肩湴閹稿鎸抽妴?
+- 閸忋劌鐫嗛懜鐐插酱閻ㄥ嫮娲伴弽鍥︾瑢閸嬪洨娲伴弽鍥у煕閺傛媽瀵栭崶瀛樻暭娑撶儤瀵滈崣顖滄暏閼哥偛褰寸€瑰鍙忔潏鍦櫕鐠侊紕鐣婚敍宀勪缉瀵偓妞ゅ爼鍎村ù顔肩湴閸滃苯涔忛崣铏惙娴ｆ粌灏崨銊ㄧ珶閻戭厼灏妴?
+- 閹藉洦娼岄崪灞界殸閸戠粯瀵滈柦顔剧埠娑撯偓閸氭垵鐫嗛獮鏇＄珶缂傛ê鍞寸紓鈺嬬礉楠炴儼藟鐡掑啿绨抽柈銊ョ暔閸忋劋缍戦柌蹇ョ礉闁灝鍘ら幍瀣簚鏉堝湱绱崠鍝勭厵鐠囶垵袝閵?
+- 閺囧瓨鏌婇幗鍥ㄦ綄閹靛婧傞崡蹇氱殶 smoke test閿涘矁顩惄鏍€婇柈銊х埠鐠佲剝濮岄崣鐘偓浣瑰付閸掕泛灏崘鍛級閵嗕胶娲伴弽鍥х暔閸忋劏绔熼悾灞烩偓浣姑粩鏍х潌閸忋劌鐫嗙敮鍐ㄧ湰閸滃本濮ら崨濠傝剨缁愭鍙嗛崣锝冣偓?
 
-### 风险变更
-- 全屏目标安全边界略微缩小了可刷目标范围，但避免目标与操作区和顶部统计浮层重叠。
-- 结果报告按钮改为顶部浮层图标入口后，用户需要依赖图标和提示文本识别功能。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫嗛惄顔界垼鐎瑰鍙忔潏鍦櫕閻ｃ儱浜曠紓鈺佺毈娴滃棗褰查崚椋庢窗閺嶅洩瀵栭崶杈剧礉娴ｅ棝浼╅崗宥囨窗閺嶅洣绗岄幙宥勭稊閸栧搫鎷版い鍫曞劥缂佺喕顓稿ù顔肩湴闁插秴褰旈妴?
+- 缂佹挻鐏夐幎銉ユ啞閹稿鎸抽弨閫涜礋妞ゅ爼鍎村ù顔肩湴閸ョ偓鐖ｉ崗銉ュ經閸氬函绱濋悽銊﹀煕闂団偓鐟曚椒绶风挧鏍ф禈閺嶅洤鎷伴幓鎰仛閺傚洦婀扮拠鍡楀焼閸旂喕鍏橀妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen keeps controls off the center stage|joystick fullscreen portrait uses left controls and right stage|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen keeps controls off the center stage|joystick fullscreen portrait uses left controls and right stage|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_124-AIM-COMBO-SNIPER-REPORT] - 2026-05-06
 
-### 原因
-- 用户希望继续完善「工具箱 - 人类测试中心 - 瞄准测试」，让降级放大、真假干扰和移动靶可以形成更多可选组合，并增加一个虚拟狙击手趣味包装，同时完成后给出完整结果报告。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿缂佈呯敾鐎瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 閻嫬鍣ù瀣槸閵嗗稄绱濈拋鈺呮缁狙勬杹婢堆佲偓浣烘埂閸嬪洤鍏遍幍鏉挎嫲缁夎濮╅棃璺哄讲娴犮儱鑸伴幋鎰纯婢舵艾褰查柅澶岀矋閸氬牞绱濋獮璺侯杻閸旂姳绔存稉顏囨珓閹风喓瀚忛崙缁樺鐡掞絽鎳楅崠鍛邦棅閿涘苯鎮撻弮璺虹暚閹存劕鎮楃紒娆忓毉鐎瑰本鏆ｇ紒鎾寸亯閹躲儱鎲￠妴?
 
-### 新增
-- 瞄准测试新增「移动放大」开关，降级放大目标可在移动中持续放大。
-- 移动靶新增「加入真假干扰」开关，支持移动且干扰的组合训练。
-- 真假干扰模式新增「真假目标移动」开关，真目标和假目标可共同移动。
-- 降级放大新增可选「虚拟狙击手对决」包装：目标放大到最大仍未命中时触发震动与全屏红色失败弹窗，并记录狙击失败次数。
-- 瞄准测试完成后新增完整结果报告，展示模式组合、命中、点空、假目标、超时、狙击失败、准确率、平均命中、最佳连击、总用时、评级、本轮设置和训练建议。
+### 閺傛澘顤?
+- 閻嫬鍣ù瀣槸閺傛澘顤冮妴宀€些閸斻劍鏂佹径褋鈧秴绱戦崗绛圭礉闂勫秶楠囬弨鎯с亣閻╊喗鐖ｉ崣顖氭躬缁夎濮╂稉顓熷瘮缂侇厽鏂佹径褋鈧?
+- 缁夎濮╅棃鑸垫煀婢х偑鈧苯濮為崗銉ф埂閸嬪洤鍏遍幍鑸偓宥呯磻閸忕绱濋弨顖涘瘮缁夎濮╂稉鏂垮叡閹垫壆娈戠紒鍕値鐠侇厾绮岄妴?
+- 閻喎浜ｉ獮鍙夊濡€崇础閺傛澘顤冮妴宀€婀￠崑鍥╂窗閺嶅洨些閸斻劊鈧秴绱戦崗绛圭礉閻喓娲伴弽鍥ф嫲閸嬪洨娲伴弽鍥у讲閸忓崬鎮撶粔璇插З閵?
+- 闂勫秶楠囬弨鎯с亣閺傛澘顤冮崣顖炩偓澶堚偓宀冩珓閹风喓瀚忛崙缁樺鐎电懓鍠呴妴宥呭瘶鐟佸拑绱伴惄顔界垼閺€鎯с亣閸掔増娓舵径褌绮涢張顏勬嚒娑擃厽妞傜憴锕€褰傞棁鍥уЗ娑撳骸鍙忕仦蹇曞閼规彃銇戠拹銉ヨ剨缁愭绱濋獮鎯邦唶瑜版洜瀚忛崙璇层亼鐠愩儲顐奸弫鑸偓?
+- 閻嫬鍣ù瀣槸鐎瑰本鍨氶崥搴㈡煀婢х偛鐣弫瀵哥波閺嬫粍濮ら崨濠忕礉鐏炴洜銇氬Ο鈥崇础缂佸嫬鎮庨妴浣告嚒娑擃厹鈧胶鍋ｇ粚鎭掆偓浣镐海閻╊喗鐖ｉ妴浣界Т閺冭翰鈧胶瀚忛崙璇层亼鐠愩儯鈧礁鍣涵顔惧芳閵嗕礁閽╅崸鍥ф嚒娑擃厹鈧焦娓舵担瀹犵箾閸戞眹鈧焦鈧崵鏁ら弮韬测偓浣界槑缁狙佲偓浣规拱鏉烆喛顔曠純顔兼嫲鐠侇厾绮屽楦款唴閵?
 
-### 修改
-- 瞄准测试内部将移动、放大和干扰能力改为可组合判断，默认经典/降级放大/移动靶/真假干扰入口仍保持原有默认语义。
-- 完成后保留「查看报告」按钮，允许用户回看本轮结果。
+### 娣囶喗鏁?
+- 閻嫬鍣ù瀣槸閸愬懘鍎寸亸鍡櫺╅崝銊ｂ偓浣规杹婢堆冩嫲楠炲弶澹堥懗钘夊閺€閫涜礋閸欘垳绮嶉崥鍫濆灲閺傤叏绱濇妯款吇缂佸繐鍚€/闂勫秶楠囬弨鎯с亣/缁夎濮╅棃?閻喎浜ｉ獮鍙夊閸忋儱褰涙禒宥勭箽閹镐礁甯張澶愮帛鐠併倛顕㈡稊澶堚偓?
+- 鐎瑰本鍨氶崥搴濈箽閻ｆ瑣鈧本鐓￠惇瀣Г閸涘鈧秵瀵滈柦顕嗙礉閸忎浇顔忛悽銊﹀煕閸ョ偟婀呴張顒冪枂缂佹挻鐏夐妴?
 
-### 修复
-- 狙击手失败弹窗出现时会暂停下一目标计时，用户确认后再继续，避免弹窗背后连续触发失败。
+### 娣囶喖顦?
+- 閻欐瑥鍤幍瀣亼鐠愩儱鑴婄粣妤€鍤悳鐗堟娴兼碍娈忛崑婊€绗呮稉鈧惄顔界垼鐠佲剝妞傞敍宀€鏁ら幋椋庘€樼拋銈呮倵閸愬秶鎴风紒顓ㄧ礉闁灝鍘ゅ鍦崶閼冲苯鎮楁潻鐐电敾鐟欙箑褰傛径杈Е閵?
 
-### 风险变更
-- 新组合和狙击手对决均为默认关闭的设置项；结果仍只在当前页面展示，不写入 AppState、数据库或学习记录。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺傛壆绮嶉崥鍫濇嫲閻欐瑥鍤幍瀣嚠閸愬啿娼庢稉娲帛鐠併倕鍙ч梻顓犳畱鐠佸墽鐤嗘い鐧哥幢缂佹挻鐏夋禒宥呭涧閸︺劌缍嬮崜宥夈€夐棃銏犵潔缁€鐚寸礉娑撳秴鍟撻崗?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --name "aim test" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --name "aim test" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_116-VISUAL-MEMORY-REPORT-AND-DECOYS] - 2026-05-06
 
-### 原因
-- 用户要求继续优化「视觉记忆」：干扰色差应随难度和进度变得更接近，目标颜色等说明要更清晰自然，并在测试结束时弹出统计分析报告。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴缂佈呯敾娴兼ê瀵查妴宀冾潒鐟欏顔囪箛鍡愨偓宥忕窗楠炲弶澹堥懝鎻掓▕鎼存棃娈㈤梾鎯у閸滃矁绻樻惔锕€褰夊妤佹纯閹恒儴绻庨敍宀€娲伴弽鍥杹閼硅尙鐡戠拠瀛樻鐟曚焦娲垮〒鍛珰閼奉亞鍔ч敍灞借嫙閸︺劍绁寸拠鏇犵波閺夌喐妞傚鐟板毉缂佺喕顓搁崚鍡樼€介幎銉ユ啞閵?
 
-### 新增
-- 视觉记忆结束时新增统计分析报告弹窗，展示最高等级、完成关卡、回忆率、点击准确率、误点来源、近似色压力和最近关卡明细。
-- 彩色目标和指定颜色模式新增“近似色压力”计算，随难度、等级、模式和干扰强度提升，将异色干扰逐步调成更接近目标色。
+### 閺傛澘顤?
+- 鐟欏棜顫庣拋鏉跨箓缂佹挻娼弮鑸垫煀婢х偟绮虹拋鈥冲瀻閺嬫劖濮ら崨濠傝剨缁愭绱濈仦鏇犮仛閺堚偓妤傛鐡戠痪褋鈧礁鐣幋鎰彠閸椔扳偓浣告礀韫囧棛宸奸妴浣哄仯閸戣鍣涵顔惧芳閵嗕浇顕ら悙瑙勬降濠ф劑鈧浇绻庢导鑹板閸樺濮忛崪灞炬付鏉╂垵鍙ч崡鈩冩缂佸棎鈧?
+- 瑜扳晞澹婇惄顔界垼閸滃本瀵氱€规岸顤侀懝鍙壞佸蹇旀煀婢х偐鈧粏绻庢导鑹板閸樺濮忛垾婵婎吀缁犳绱濋梾蹇涙鎼达负鈧胶鐡戠痪褋鈧焦膩瀵繐鎷伴獮鍙夊瀵搫瀹抽幓鎰磳閿涘苯鐨㈠鍌濆楠炲弶澹堥柅鎰劄鐠嬪啯鍨氶弴瀛樺复鏉╂垹娲伴弽鍥閵?
 
-### 修改
-- 优化视觉记忆页面说明、目标色 pill、观察阶段和输入阶段提示，使“本轮目标色”和“哪些格子算误点”更直接。
-- 干扰格设置说明补充颜色模式下的近似色效果，避免用户把干扰强度只理解为灰色格数量。
+### 娣囶喗鏁?
+- 娴兼ê瀵茬憴鍡氼潕鐠佹澘绻傛い鐢告桨鐠囧瓨妲戦妴浣烘窗閺嶅洩澹?pill閵嗕浇顫囩€电喖妯佸▓闈涙嫲鏉堟挸鍙嗛梼鑸殿唽閹绘劗銇氶敍灞煎▏閳ユ粍婀版潪顔炬窗閺嶅洩澹婇垾婵嗘嫲閳ユ粌鎽㈡禍娑欑壐鐎涙劗鐣荤拠顖滃仯閳ユ繃娲块惄瀛樺复閵?
+- 楠炲弶澹堥弽鑹邦啎缂冾喛顕╅弰搴に夐崗鍛搭杹閼瑰弶膩瀵繋绗呴惃鍕箮娴艰壈澹婇弫鍫熺亯閿涘矂浼╅崗宥囨暏閹撮攱濡搁獮鍙夊瀵搫瀹抽崣顏嗘倞鐟欙絼璐熼悘鎷屽閺嶅吋鏆熼柌蹇嬧偓?
 
-### 风险变更
-- 近似色干扰只影响颜色模式；默认位置记忆仍保持经典玩法。结束报告仅使用当前页面内存统计，不写入 AppState、数据库或学习记录。
+### 妞嬪酣娅撻崣妯绘纯
+- 鏉╂垳鎶€閼规彃鍏遍幍鏉垮涧瑜板崬鎼锋０婊嗗濡€崇础閿涙盯绮拋銈勭秴缂冾喛顔囪箛鍡曠矝娣囨繃瀵旂紒蹇撳悁閻溾晜纭堕妴鍌滅波閺夌喐濮ら崨濠佺矌娴ｈ法鏁よぐ鎾冲妞ょ敻娼伴崘鍛摠缂佺喕顓搁敍灞肩瑝閸愭瑥鍙?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_visual_memory_widgets.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
-- `flutter test test/toolbox_visual_memory_smoke_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_visual_memory_widgets.dart test/toolbox_visual_memory_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_visual_memory_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_visual_memory_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_123-TYPING-PRO-MODULE] - 2026-05-06
 
-### 原因
-- 用户希望「工具箱 - 人类测试中心 - 打字测试」从基础可用状态扩展为更专业完善的功能模块，覆盖内容、趣味模式、语言和结果报告。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閵嗗苯浼愰崗椋庮唸 - 娴滆櫣琚ù瀣槸娑擃厼绺?- 閹垫挸鐡уù瀣槸閵嗗秳绮犻崺铏诡攨閸欘垳鏁ら悩鑸碘偓浣瑰⒖鐏炴洑璐熼弴缈犵瑩娑撴艾鐣崰鍕畱閸旂喕鍏樺Ο鈥虫健閿涘矁顩惄鏍у敶鐎瑰箍鈧浇鍙崨铏佸蹇嬧偓浣筋嚔鐟封偓閸滃瞼绮ㄩ弸婊勫Г閸涘鈧?
 
-### 新增
-- 打字测试新增中文、英文、混合、日文和西语语料，并按专注、睡眠、技术、短文、词汇和旅行主题抽取内容。
-- 打字测试新增短句、标准和长段三档长度选择。
-- 打字测试新增经典、冲刺、精准、盲打、符号、纠错、代码和数字八种训练模式。
-- 新增字符级实时反馈，区分正确、错误、待输入和当前输入位置。
-- 新增 WPM、净 WPM、CPM、准确率、错误数、回退数、用时、进度和稳定性指标。
-- 完成后新增结果报告，展示等级、峰值速度、长停顿、错误结构、错误热区、训练建议、建议练习入口、模式/语言/主题/长度摘要和本页最近结果。
-- 新增打字测试 smoke test，覆盖新增模式、语言、长度、代码语料和完成报告。
+### 閺傛澘顤?
+- 閹垫挸鐡уù瀣槸閺傛澘顤冩稉顓熸瀮閵嗕浇瀚抽弬鍥モ偓浣硅穿閸氬牄鈧焦妫╅弬鍥ф嫲鐟楄儻顕㈢拠顓熸灐閿涘苯鑻熼幐澶夌瑩濞夈劊鈧胶娼惇鐘偓浣瑰Η閺堫垬鈧胶鐓弬鍥モ偓浣界槤濮瑰洤鎷伴弮鍛邦攽娑撳顣介幎钘夊絿閸愬懎顔愰妴?
+- 閹垫挸鐡уù瀣槸閺傛澘顤冮惌顓炲綖閵嗕焦鐖ｉ崙鍡楁嫲闂€鎸庮唽娑撳銆傞梹鍨闁瀚ㄩ妴?
+- 閹垫挸鐡уù瀣槸閺傛澘顤冪紒蹇撳悁閵嗕礁鍟块崚鎭掆偓浣虹翱閸戝棎鈧胶娲搁幍鎾扁偓浣侯儊閸欐灚鈧胶绫傞柨娆嶁偓浣峰敩閻礁鎷伴弫鏉跨摟閸忣偆顫掔拋顓犵矊濡€崇础閵?
+- 閺傛澘顤冪€涙顑佺痪褍鐤勯弮璺哄冀妫ｅ牞绱濋崠鍝勫瀻濮濓絿鈥橀妴渚€鏁婄拠顖樷偓浣哥窡鏉堟挸鍙嗛崪灞界秼閸撳秷绶崗銉ょ秴缂冾喓鈧?
+- 閺傛澘顤?WPM閵嗕礁鍣?WPM閵嗕竼PM閵嗕礁鍣涵顔惧芳閵嗕線鏁婄拠顖涙殶閵嗕礁娲栭柅鈧弫鑸偓浣烘暏閺冭翰鈧浇绻樻惔锕€鎷扮粙鍐茬暰閹勫瘹閺嶅洢鈧?
+- 鐎瑰本鍨氶崥搴㈡煀婢х偟绮ㄩ弸婊勫Г閸涘绱濈仦鏇犮仛缁涘楠囬妴浣稿槻閸婂ジ鈧喎瀹抽妴渚€鏆遍崑婊堛€戦妴渚€鏁婄拠顖滅波閺嬪嫨鈧線鏁婄拠顖滃劰閸栨亽鈧浇顔勭紒鍐ㄧ紦鐠侇喓鈧礁缂撶拋顔剧矊娑旂姴鍙嗛崣锝冣偓浣鼓佸?鐠囶叀鈻?娑撳顣?闂€鍨閹芥顩﹂崪灞炬拱妞ゅ灚娓舵潻鎴犵波閺嬫嚎鈧?
+- 閺傛澘顤冮幍鎾崇摟濞村鐦?smoke test閿涘矁顩惄鏍ㄦ煀婢х偞膩瀵繈鈧浇顕㈢懛鈧妴渚€鏆辨惔锔衡偓浣峰敩閻浇顕㈤弬娆忔嫲鐎瑰本鍨氶幎銉ユ啞閵?
 
-### 修改
-- 打字测试从 `toolbox_human_tests_cognition.dart` 拆分到独立 typing part 组，并进一步拆分 `copy/data/widgets`，降低主状态文件继续膨胀风险。
-- 更新人类测试中心打字测试入口说明和 toolbox 模块说明。
+### 娣囶喗鏁?
+- 閹垫挸鐡уù瀣槸娴?`toolbox_human_tests_cognition.dart` 閹峰棗鍨庨崚鎵缁?typing part 缂佸嫸绱濋獮鎯扮箻娑撯偓濮濄儲濯堕崚?`copy/data/widgets`閿涘矂妾锋担搴濆瘜閻樿埖鈧焦鏋冩禒鍓佹埛缂侇叀鍟懗鈧搴ㄦ珦閵?
+- 閺囧瓨鏌婃禍铏硅濞村鐦稉顓炵妇閹垫挸鐡уù瀣槸閸忋儱褰涚拠瀛樻閸?toolbox 濡€虫健鐠囧瓨妲戦妴?
 
-### 风险变更
-- 新增模式、语料和长度只影响当前打字测试页面即时训练；结果仍不写入 AppState、主数据库或学习记录。
-- 盲打模式改为单行隐藏输入，避免多行隐藏文本输入在 Flutter 中触发断言。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺傛澘顤冨Ο鈥崇础閵嗕浇顕㈤弬娆忔嫲闂€鍨閸欘亜濂栭崫宥呯秼閸撳秵澧︾€涙绁寸拠鏇€夐棃銏犲祮閺冩儼顔勭紒鍐跨幢缂佹挻鐏夋禒宥勭瑝閸愭瑥鍙?AppState閵嗕椒瀵岄弫鐗堝祦鎼存挻鍨ㄧ€涳缚绡勭拋鏉跨秿閵?
+- 閻╁弶澧﹀Ο鈥崇础閺€閫涜礋閸楁洝顢戦梾鎰鏉堟挸鍙嗛敍宀勪缉閸忓秴顦跨悰宀勬閽樺繑鏋冮張顒冪翻閸忋儱婀?Flutter 娑擃叀袝閸欐垶鏌囩懛鈧妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_typing.dart lib/src/ui/pages/toolbox_human_tests_typing_copy.dart lib/src/ui/pages/toolbox_human_tests_typing_data.dart lib/src/ui/pages/toolbox_human_tests_typing_widgets.dart test/toolbox_typing_test_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_typing_test_smoke_test.dart`（通过）
-- `flutter test test/toolbox_typing_test_smoke_test.dart --reporter compact`（通过；命令期间 pub advisories 解码打印 warning，但测试退出码为 0）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_typing.dart lib/src/ui/pages/toolbox_human_tests_typing_copy.dart lib/src/ui/pages/toolbox_human_tests_typing_data.dart lib/src/ui/pages/toolbox_human_tests_typing_widgets.dart test/toolbox_typing_test_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_typing_test_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_typing_test_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍娑樻嚒娴犮倖婀￠梻?pub advisories 鐟欙絿鐖滈幍鎾冲祪 warning閿涘奔绲惧ù瀣槸闁偓閸戣櫣鐖滄稉?0閿?
 
 ## [Unreleased-PLAN_121-NUMBER-MEMORY-ROUND-REPORT] - 2026-05-06
 
-### 原因
-- 用户反馈数字记忆彩色数字模式输入阶段没有明确提示要匹配哪种目标颜色，同时希望文案更自然，并在一轮结束后先查看统计分析，避免自动继续或误触重置。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閺佹澘鐡х拋鏉跨箓瑜扳晞澹婇弫鏉跨摟濡€崇础鏉堟挸鍙嗛梼鑸殿唽濞屸剝婀侀弰搴ｂ€橀幓鎰仛鐟曚礁灏柊宥呮憿缁夊秶娲伴弽鍥杹閼硅绱濋崥灞炬鐢本婀滈弬鍥攳閺囩鍤滈悞璁圭礉楠炶泛婀稉鈧潪顔剧波閺夌喎鎮楅崗鍫熺叀閻绮虹拋鈥冲瀻閺嬫劧绱濋柆鍨帳閼奉亜濮╃紒褏鐢婚幋鏍嚖鐟欙箓鍣哥純顔衡偓?
 
-### 新增
-- 数字记忆每轮提交后新增结果弹窗，展示模式、等级、规模、目标、停留时间、正确答案、用户输入、累计正确率和最好等级。
-- 彩色数字模式在展示期舞台内新增目标颜色色块提示，输入期隐藏舞台和输入提示也保留具体目标颜色。
+### 閺傛澘顤?
+- 閺佹澘鐡х拋鏉跨箓濮ｅ繗鐤嗛幓鎰唉閸氬孩鏌婃晶鐐电波閺嬫粌鑴婄粣妤嬬礉鐏炴洜銇氬Ο鈥崇础閵嗕胶鐡戠痪褋鈧浇顫夊Ο掳鈧胶娲伴弽鍥モ偓浣镐粻閻ｆ瑦妞傞梻娣偓浣诡劀绾喚鐡熷鍫涒偓浣烘暏閹寸柉绶崗銉ｂ偓浣虹柈鐠佲剝顒滅涵顔惧芳閸滃本娓舵總鐣岀搼缁狙佲偓?
+- 瑜扳晞澹婇弫鏉跨摟濡€崇础閸︺劌鐫嶇粈鐑樻埂閼哥偛褰撮崘鍛煀婢х偟娲伴弽鍥杹閼硅尪澹婇崸妤佸絹缁€鐚寸礉鏉堟挸鍙嗛張鐔兼閽樺繗鍨堕崣鏉挎嫲鏉堟挸鍙嗛幓鎰仛娑旂喍绻氶悾娆忓徔娴ｆ挾娲伴弽鍥杹閼瑰眰鈧?
 
-### 修改
-- 数字记忆正确提交后不再自动开始下一轮，改为在弹窗中由用户选择“下一轮 / 再来一轮”或先停留。
-- 重置按钮在展示、输入和结果弹窗流程中禁用，减少误触清空。
-- 优化数字记忆入口、模式说明和设置项文案，使描述更接近日常短语。
+### 娣囶喗鏁?
+- 閺佹澘鐡х拋鏉跨箓濮濓絿鈥橀幓鎰唉閸氬簼绗夐崘宥堝殰閸斻劌绱戞慨瀣╃瑓娑撯偓鏉烆噯绱濋弨閫涜礋閸︺劌鑴婄粣妞捐厬閻㈣京鏁ら幋鐑解偓澶嬪閳ユ粈绗呮稉鈧潪?/ 閸愬秵娼垫稉鈧潪顔光偓婵囧灗閸忓牆浠犻悾娆嶁偓?
+- 闁插秶鐤嗛幐澶愭尦閸︺劌鐫嶇粈鎭掆偓浣界翻閸忋儱鎷扮紒鎾寸亯瀵湱鐛ュù浣衡柤娑擃厾顩﹂悽顭掔礉閸戝繐鐨拠顖澬曞〒鍛敄閵?
+- 娴兼ê瀵查弫鏉跨摟鐠佹澘绻傞崗銉ュ經閵嗕焦膩瀵繗顕╅弰搴℃嫲鐠佸墽鐤嗘い瑙勬瀮濡楀牞绱濇担鎸庡伎鏉╃増娲块幒銉ㄧ箮閺冦儱鐖堕惌顓☆嚔閵?
 
-### 修复
-- 修复彩色数字模式只提示“目标颜色”但不说明具体颜色的问题。
-- 修正数字记忆最好等级统计，避免正确通过后因等级预增而显示偏高。
+### 娣囶喖顦?
+- 娣囶喖顦茶ぐ鈺勫閺佹澘鐡уΟ鈥崇础閸欘亝褰佺粈琛♀偓婊呮窗閺嶅洭顤侀懝娴嬧偓婵呯稻娑撳秷顕╅弰搴″徔娴ｆ捇顤侀懝鑼畱闂傤噣顣介妴?
+- 娣囶喗顒滈弫鏉跨摟鐠佹澘绻傞張鈧總鐣岀搼缁狙呯埠鐠佲槄绱濋柆鍨帳濮濓絿鈥橀柅姘崇箖閸氬骸娲滅粵澶岄獓妫板嫬顤冮懓灞炬▔缁€鍝勪焊妤傛ǜ鈧?
 
-### 风险变更
-- 数字记忆提交后的节奏从自动进入下一轮改为弹窗确认，交互更稳但需要用户多一次确认。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺佹澘鐡х拋鏉跨箓閹绘劒姘﹂崥搴ｆ畱閼哄倸顨旀禒搴ゅ殰閸斻劏绻橀崗銉ょ瑓娑撯偓鏉烆喗鏁兼稉鍝勮剨缁愭鈥樼拋銈忕礉娴溿倓绨伴弴瀵盖旀担鍡涙付鐟曚胶鏁ら幋宄邦樋娑撯偓濞嗭紕鈥樼拋銈冣偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_number_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory_models.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_number_memory_widgets.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "number memory exposes richer modes and millisecond controls" --reporter compact`（未完成；当前测试编译被并行改动阻断：`toolbox_human_tests_typing.dart` 重复 `_buildReport`，`toolbox_human_tests_memory.dart` 缺少 `_roundTapCount` / `_roundMistakes` 字段）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_number_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory_models.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_number_memory_widgets.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "number memory exposes richer modes and millisecond controls" --reporter compact`閿涘牊婀€瑰本鍨氶敍娑樼秼閸撳秵绁寸拠鏇犵椽鐠囨垼顫﹂獮鎯邦攽閺€鐟板З闂冪粯鏌囬敍姝歵oolbox_human_tests_typing.dart` 闁插秴顦?`_buildReport`閿涘畭toolbox_human_tests_memory.dart` 缂傚搫鐨?`_roundTapCount` / `_roundMistakes` 鐎涙顔岄敍?
 
 ## [Unreleased-PLAN_120-JOYSTICK-PORTRAIT-LEFT-CONTROLS] - 2026-05-04
 
-### 原因
-- 用户通过示意图和截图指出摇杆手眼协调全屏竖屏仍是上下堆叠，期望改为左侧独立控制栏、右侧主舞台：摇杆在左上，射击在左下，舞台不被状态和按钮遮挡。
+### 閸樼喎娲?
+- 閻劍鍩涢柅姘崇箖缁€鐑樺壈閸ユ儳鎷伴幋顏勬禈閹稿洤鍤幗鍥ㄦ綄閹靛婧傞崡蹇氱殶閸忋劌鐫嗙粩鏍х潌娴犲秵妲告稉濠佺瑓閸棗褰旈敍灞炬埂閺堟稒鏁兼稉鍝勪箯娓氀呭缁斿甯堕崚鑸电埉閵嗕礁褰告笟褌瀵岄懜鐐插酱閿涙碍鎲為弶鍡楁躬瀹革缚绗傞敍灞界殸閸戣婀锔跨瑓閿涘矁鍨堕崣棰佺瑝鐞氼偆濮搁幀浣告嫲閹稿鎸抽柆顔藉皡閵?
 
-### 新增
-- 新增竖屏全屏 smoke test，覆盖左侧控制栏、右侧舞台、摇杆位于射击上方，以及控制区与舞台不交叠。
+### 閺傛澘顤?
+- 閺傛澘顤冪粩鏍х潌閸忋劌鐫?smoke test閿涘矁顩惄鏍т箯娓氀勫付閸掕埖鐖妴浣稿礁娓氀嗗灦閸欒埇鈧焦鎲為弶鍡曠秴娴滃骸鐨犻崙璁崇瑐閺傜櫢绱濇禒銉ュ挤閹貉冨煑閸栬桨绗岄懜鐐插酱娑撳秳姘﹂崣鐘偓?
 
-### 修改
-- 摇杆手眼协调竖屏全屏改为左控右舞台布局，右侧舞台独占剩余空间。
-- 左侧控制栏收纳摇杆、关闭、状态、开始/重置与射击按钮，避免任何控制面板进入舞台区域。
-- 竖屏状态面板与开始/重置按钮改为窄栏纵向紧凑版，适配左侧控制列。
+### 娣囶喗鏁?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熺粩鏍х潌閸忋劌鐫嗛弨閫涜礋瀹革附甯堕崣瀹犲灦閸欐澘绔风仦鈧敍灞藉礁娓氀嗗灦閸欐壆瀚崡鐘插⒖娴ｆ瑧鈹栭梻娣偓?
+- 瀹革缚鏅堕幒褍鍩楅弽蹇旀暪缁捐櫕鎲為弶鍡愨偓浣稿彠闂傤厹鈧胶濮搁幀浣碘偓浣哥磻婵?闁插秶鐤嗘稉搴＄殸閸戠粯瀵滈柦顕嗙礉闁灝鍘ゆ禒璁崇秿閹貉冨煑闂堛垺婢樻潻娑樺弳閼哥偛褰撮崠鍝勭厵閵?
+- 缁旀牕鐫嗛悩鑸碘偓渚€娼伴弶澶哥瑢瀵偓婵?闁插秶鐤嗛幐澶愭尦閺€閫涜礋缁愬嫭鐖痪闈涙倻缁毖冨櫨閻楀牞绱濋柅鍌炲帳瀹革缚鏅堕幒褍鍩楅崚妞尖偓?
 
-### 风险变更
-- 竖屏全屏左侧控制栏会占用固定窄列宽度，舞台宽度相应减少，但目标、准星和提示不再被控制元素遮挡。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁旀牕鐫嗛崗銊ョ潌瀹革缚鏅堕幒褍鍩楅弽蹇庣窗閸楃姷鏁ら崶鍝勭暰缁愬嫬鍨€硅棄瀹抽敍宀冨灦閸欐澘顔旀惔锔炬祲鎼存柨鍣虹亸鎴礉娴ｅ棛娲伴弽鍥モ偓浣稿櫙閺勭喎鎷伴幓鎰仛娑撳秴鍟€鐞氼偅甯堕崚璺哄帗缁辩娀浼勯幐掳鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen portrait uses left controls and right stage|joystick fullscreen keeps controls off the center stage|joystick pad drag does not scroll the outer page" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen portrait uses left controls and right stage|joystick fullscreen keeps controls off the center stage|joystick pad drag does not scroll the outer page" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_119-JOYSTICK-HAND-EYE-FULLSCREEN-REDO] - 2026-05-04
 
-### 原因
-- 用户反馈「工具箱 - 人类测试中心 - 摇杆手眼协调」全屏模式存在按钮/提示遮挡目标、全屏摇杆和射击按钮位置不符合横屏双手操作，以及普通页摇杆上下拖动容易触发页面滚动的问题。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗苯浼愰崗椋庮唸 - 娴滆櫣琚ù瀣槸娑擃厼绺?- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼妴宥呭弿鐏炲繑膩瀵繐鐡ㄩ崷銊﹀瘻闁?閹绘劗銇氶柆顔藉皡閻╊喗鐖ｉ妴浣稿弿鐏炲繑鎲為弶鍡楁嫲鐏忓嫬鍤幐澶愭尦娴ｅ秶鐤嗘稉宥囶儊閸氬牊铆鐏炲繐寮婚幍瀣惙娴ｆ粣绱濇禒銉ュ挤閺咁噣鈧岸銆夐幗鍥ㄦ綄娑撳﹣绗呴幏鏍уЗ鐎硅妲楃憴锕€褰傛い鐢告桨濠婃艾濮╅惃鍕６妫版ǜ鈧?
 
-### 新增
-- 新增摇杆普通页手势冲突回归测试，验证在摇杆区域上下拖动不会滚动外层页面。
-- 更新摇杆全屏 smoke test，覆盖控制栏与中央舞台不交叠、左侧射击与右侧摇杆的新全屏布局。
+### 閺傛澘顤?
+- 閺傛澘顤冮幗鍥ㄦ綄閺咁噣鈧岸銆夐幍瀣◢閸愯尙鐛婇崶鐐茬秺濞村鐦敍宀勭崣鐠囦礁婀幗鍥ㄦ綄閸栧搫鐓欐稉濠佺瑓閹锋牕濮╂稉宥勭窗濠婃艾濮╂径鏍х湴妞ょ敻娼伴妴?
+- 閺囧瓨鏌婇幗鍥ㄦ綄閸忋劌鐫?smoke test閿涘矁顩惄鏍ㄥ付閸掕埖鐖稉搴濊厬婢额喛鍨堕崣棰佺瑝娴溿倕褰旈妴浣镐箯娓氀冪殸閸戣绗岄崣鍏呮櫠閹藉洦娼岄惃鍕煀閸忋劌鐫嗙敮鍐ㄧ湰閵?
 
-### 修改
-- 摇杆全屏重排为左侧射击、中间目标舞台、右侧摇杆的横屏结构，顶部统计与开始/重置控制独立放在中间控制带。
-- 全屏舞台移除内部状态提示文字，避免文字面板或操作按钮遮挡目标与准星。
-- 竖屏全屏同样改为舞台、会话控制、底部两端操作区的结构，减少叠加层遮挡。
-- 普通页和全屏摇杆控件改用指针级拖动识别，摇杆区域会主动抢占拖动手势，降低与页面纵向滚动冲突。
+### 娣囶喗鏁?
+- 閹藉洦娼岄崗銊ョ潌闁插秵甯撴稉鍝勪箯娓氀冪殸閸戞眹鈧椒鑵戦梻瀵告窗閺嶅洩鍨堕崣鑸偓浣稿礁娓氀勬啚閺夊棛娈戝Ο顏勭潌缂佹挻鐎敍宀勩€婇柈銊х埠鐠佲€茬瑢瀵偓婵?闁插秶鐤嗛幒褍鍩楅悪顒傜彌閺€鎯ф躬娑擃參妫块幒褍鍩楃敮锔衡偓?
+- 閸忋劌鐫嗛懜鐐插酱缁夊娅庨崘鍛村劥閻樿埖鈧焦褰佺粈鐑樻瀮鐎涙绱濋柆鍨帳閺傚洤鐡ч棃銏℃緲閹存牗鎼锋担婊勫瘻闁筋噣浼勯幐锛勬窗閺嶅洣绗岄崙鍡樻Е閵?
+- 缁旀牕鐫嗛崗銊ョ潌閸氬本鐗遍弨閫涜礋閼哥偛褰撮妴浣风窗鐠囨繃甯堕崚韬测偓浣哥俺闁劋琚辩粩顖涙惙娴ｆ粌灏惃鍕波閺嬪嫸绱濋崙蹇撶毌閸欑姴濮炵仦鍌炰紕閹嘎扳偓?
+- 閺咁噣鈧岸銆夐崪灞藉弿鐏炲繑鎲為弶鍡樺付娴犺埖鏁奸悽銊﹀瘹闁藉牏楠囬幏鏍уЗ鐠囧棗鍩嗛敍灞炬啚閺夊棗灏崺鐔剁窗娑撹濮╅幎銏犲窗閹锋牕濮╅幍瀣◢閿涘矂妾锋担搴濈瑢妞ょ敻娼扮痪闈涙倻濠婃艾濮╅崘鑼崐閵?
 
-### 风险变更
-- 摇杆与射击在全屏中的左右位置发生变化：射击在左侧，摇杆在右侧，符合用户指定的“射击按钮在原摇杆位置、摇杆在关闭按钮位置”的双手横屏操作期望。
-- 手势抢占仅作用于摇杆控件自身区域，控件外页面滚动行为不变。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹藉洦娼屾稉搴＄殸閸戣婀崗銊ョ潌娑擃厾娈戝锕€褰告担宥囩枂閸欐垹鏁撻崣妯哄閿涙艾鐨犻崙璇叉躬瀹革缚鏅堕敍灞炬啚閺夊棗婀崣鍏呮櫠閿涘瞼顑侀崥鍫㈡暏閹撮攱瀵氱€规氨娈戦垾婊冪殸閸戠粯瀵滈柦顔兼躬閸樼喐鎲為弶鍡曠秴缂冾喓鈧焦鎲為弶鍡楁躬閸忔娊妫撮幐澶愭尦娴ｅ秶鐤嗛垾婵堟畱閸欏本澧滃Ο顏勭潌閹垮秳缍旈張鐔告箿閵?
+- 閹靛濞嶉幎銏犲窗娴犲懍缍旈悽銊ょ艾閹藉洦娼岄幒褌娆㈤懛顏囬煩閸栧搫鐓欓敍灞惧付娴犺泛顦绘い鐢告桨濠婃艾濮╃悰灞艰礋娑撳秴褰夐妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen keeps controls off the center stage|joystick pad drag does not scroll the outer page|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --name "joystick fullscreen keeps controls off the center stage|joystick pad drag does not scroll the outer page|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_118-AIM-REVEAL-GROWTH] - 2026-05-04
 
-### 原因
-- 用户要求将「瞄准测试」中的压力缩圈改为降级放大：目标从极小、默认肉眼不可见的点开始，在 100-150ms 内快速放大到勉强可见，再持续放大，并允许配置速率曲线和目标曲线。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐏忓棎鈧瞼鐎崙鍡樼ゴ鐠囨洏鈧秳鑵戦惃鍕竾閸旀稓缂夐崷鍫熸暭娑撴椽妾风痪褎鏂佹径褝绱伴惄顔界垼娴犲孩鐎亸蹇嬧偓渚€绮拋銈堝€濋惇闂寸瑝閸欘垵顫嗛惃鍕仯瀵偓婵绱濋崷?100-150ms 閸愬懎鎻╅柅鐔告杹婢堆冨煂閸曞宸遍崣顖濐潌閿涘苯鍟€閹镐胶鐢婚弨鎯с亣閿涘苯鑻熼崗浣筋啅闁板秶鐤嗛柅鐔哄芳閺囪尙鍤庨崪宀€娲伴弽鍥ㄦ锤缁捐￥鈧?
 
-### 新增
-- 降级放大模式新增初始点径、显形时间、可见点径、放大速率、速率曲线和目标曲线设置。
-- 降级放大目标改为单纯点状目标，显示直径与命中半径同步变化。
+### 閺傛澘顤?
+- 闂勫秶楠囬弨鎯с亣濡€崇础閺傛澘顤冮崚婵嗩潗閻愮懓绶為妴浣规▔瑜般垺妞傞梻娣偓浣稿讲鐟欎胶鍋ｅ鍕┾偓浣规杹婢堆団偓鐔哄芳閵嗕線鈧喓宸奸弴鑼殠閸滃瞼娲伴弽鍥ㄦ锤缁捐儻顔曠純顔衡偓?
+- 闂勫秶楠囬弨鎯с亣閻╊喗鐖ｉ弨閫涜礋閸楁洜鍑介悙鍦Ц閻╊喗鐖ｉ敍灞炬▔缁€铏规纯瀵板嫪绗岄崨鎴掕厬閸楀﹤绶為崥灞绢劄閸欐ê瀵查妴?
 
-### 修改
-- 原「缩圈压力 / Shrinking」模式替换为「降级放大 / Reveal grow」，目标尺寸从递减缩圈改为分段放大。
-- 更新瞄准测试入口说明、页面说明、模块说明和 smoke test 断言。
+### 娣囶喗鏁?
+- 閸樼喆鈧瞼缂夐崷鍫濆竾閸?/ Shrinking閵嗗秵膩瀵繑娴涢幑顫礋閵嗗矂妾风痪褎鏂佹径?/ Reveal grow閵嗗稄绱濋惄顔界垼鐏忓搫顕禒搴ㄢ偓鎺戝櫤缂傗晛婀€閺€閫涜礋閸掑棙顔岄弨鎯с亣閵?
+- 閺囧瓨鏌婇惉鍕櫙濞村鐦崗銉ュ經鐠囧瓨妲戦妴渚€銆夐棃銏ｎ嚛閺勫簺鈧焦膩閸ф顕╅弰搴℃嫲 smoke test 閺傤叀鈻堥妴?
 
-### 风险变更
-- 默认仍保留经典点靶为初始模式；降级放大只影响当前页面即时训练，不写入 AppState、数据库或学习记录。
-- 降级放大初始点默认 0.2dp，可能在部分屏幕上完全不可见；用户可通过设置调大初始点径、显形时间或可见点径。
+### 妞嬪酣娅撻崣妯绘纯
+- 姒涙顓绘禒宥勭箽閻ｆ瑧绮￠崗鍝ュ仯闂堟湹璐熼崚婵嗩潗濡€崇础閿涙盯妾风痪褎鏂佹径褍褰цぐ鍗炴惙瑜版挸澧犳い鐢告桨閸楄櫕妞傜拋顓犵矊閿涘奔绗夐崘娆忓弳 AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
+- 闂勫秶楠囬弨鎯с亣閸掓繂顫愰悙褰掔帛鐠?0.2dp閿涘苯褰查懗钘夋躬闁劌鍨庣仦蹇撶娑撳﹤鐣崗銊ょ瑝閸欘垵顫嗛敍娑氭暏閹村嘲褰查柅姘崇箖鐠佸墽鐤嗙拫鍐ㄣ亣閸掓繂顫愰悙鐟扮窞閵嗕焦妯夎ぐ銏℃闂傚瓨鍨ㄩ崣顖濐潌閻愮懓绶為妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "aim test exposes multiple target modes and feedback" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "aim test exposes multiple target modes and feedback" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_116-VISUAL-MEMORY-MULTI-MODE] - 2026-05-04
 
-### 原因
-- 用户要求专注完善「工具箱 - 人类测试中心 - 视觉记忆」模块：当前仅有固定 4x4 基础玩法，需要基于难度和进度扩展，并增加颜色、指定颜色与干扰等趣味设置。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娑撴挻鏁炵€瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 鐟欏棜顫庣拋鏉跨箓閵嗗秵膩閸ф绱拌ぐ鎾冲娴犲懏婀侀崶鍝勭暰 4x4 閸╄櫣顢呴悳鈺傜《閿涘矂娓剁憰浣哥唨娴滃酣姣︽惔锕€鎷版潻娑樺閹碘晛鐫嶉敍灞借嫙婢х偛濮炴０婊嗗閵嗕焦瀵氱€规岸顤侀懝韫瑢楠炲弶澹堢粵澶庡彯閸涘疇顔曠純顔衡偓?
 
-### 新增
-- 视觉记忆新增轻量、标准、进阶和自定义四档阶梯难度，默认随等级从 4x4 扩展到 6x6，并提高目标格数量。
-- 新增位置记忆、彩色目标和指定颜色三种模式；彩色目标每轮随机指定目标颜色，只点击对应颜色方块才算正确，其他颜色方块计为误点。
-- 新增柔和、鲜明和高对比三套颜色主题，并支持设置参与颜色数量。
-- 新增可选干扰格和干扰强度设置，观察阶段额外闪现灰色非目标格。
-- 新增视觉记忆 smoke test，覆盖设置展开、彩色目标规则提示和开始轮次。
+### 閺傛澘顤?
+- 鐟欏棜顫庣拋鏉跨箓閺傛澘顤冩潪濠氬櫤閵嗕焦鐖ｉ崙鍡愨偓浣界箻闂冭泛鎷伴懛顏勭暰娑斿娲撳锝夋▉濮婎垶姣︽惔锔肩礉姒涙顓婚梾蹇曠搼缁狙傜矤 4x4 閹碘晛鐫嶉崚?6x6閿涘苯鑻熼幓鎰扮彯閻╊喗鐖ｉ弽鍏兼殶闁插繈鈧?
+- 閺傛澘顤冩担宥囩枂鐠佹澘绻傞妴浣稿兊閼硅尙娲伴弽鍥ф嫲閹稿洤鐣炬０婊嗗娑撳顫掑Ο鈥崇础閿涙稑鍍甸懝鑼窗閺嶅洦鐦℃潪顕€娈㈤張鐑樺瘹鐎规氨娲伴弽鍥杹閼硅绱濋崣顏嗗仯閸戣顕惔鏃堫杹閼瑰弶鏌熼崸妤佸缁犳顒滅涵顕嗙礉閸忔湹绮０婊嗗閺傜懓娼＄拋鈥茶礋鐠囶垳鍋ｉ妴?
+- 閺傛澘顤冮弻鏂挎嫲閵嗕線鐭為弰搴℃嫲妤傛ê顕В鏂剧瑏婵傛顤侀懝韫瘜妫版﹫绱濋獮鑸垫暜閹镐浇顔曠純顔煎棘娑撳酣顤侀懝鍙夋殶闁插繈鈧?
+- 閺傛澘顤冮崣顖炩偓澶婂叡閹电増鐗搁崪灞藉叡閹垫澘宸辨惔锕侇啎缂冾噯绱濈憴鍌氱檪闂冭埖顔屾０婵嗩樆闂傤亞骞囬悘鎷屽闂堢偟娲伴弽鍥ㄧ壐閵?
+- 閺傛澘顤冪憴鍡氼潕鐠佹澘绻?smoke test閿涘矁顩惄鏍啎缂冾喖鐫嶅鈧妴浣稿兊閼硅尙娲伴弽鍥潐閸掓瑦褰佺粈鍝勬嫲瀵偓婵鐤嗗▎掳鈧?
 
-### 修改
-- 将视觉记忆从 `toolbox_human_tests_memory.dart` 拆分为 `toolbox_human_tests_visual_memory.dart` 与 `toolbox_human_tests_visual_memory_widgets.dart`，避免继续扩大记忆集合文件。
-- 更新人类测试入口和视觉记忆页说明，突出动态网格、颜色目标和干扰玩法。
-- 补齐人类测试主库中已有拆分文件的 part 声明，确保同一 library 在 Flutter 测试中可完整编译。
+### 娣囶喗鏁?
+- 鐏忓棜顫嬬憴澶庮唶韫囧棔绮?`toolbox_human_tests_memory.dart` 閹峰棗鍨庢稉?`toolbox_human_tests_visual_memory.dart` 娑?`toolbox_human_tests_visual_memory_widgets.dart`閿涘矂浼╅崗宥囨埛缂侇厽澧挎径褑顔囪箛鍡涙肠閸氬牊鏋冩禒韬测偓?
+- 閺囧瓨鏌婃禍铏硅濞村鐦崗銉ュ經閸滃矁顫嬬憴澶庮唶韫囧棝銆夌拠瀛樻閿涘瞼鐛婇崙鍝勫З閹胶缍夐弽绗衡偓渚€顤侀懝鑼窗閺嶅洤鎷伴獮鍙夊閻溾晜纭堕妴?
+- 鐞涖儵缍堟禍铏硅濞村鐦稉璇茬氨娑擃厼鍑￠張澶嬪閸掑棙鏋冩禒鍓佹畱 part 婢圭増妲戦敍宀€鈥樻穱婵嗘倱娑撯偓 library 閸?Flutter 濞村鐦稉顓炲讲鐎瑰本鏆ｇ紓鏍槯閵?
 
-### 风险变更
-- 默认仍为位置记忆和标准难度；颜色模式、指定颜色与干扰格均需用户主动开启或切换，不写入 AppState、数据库或学习记录。
-- 彩色目标与指定颜色都使用目标色判定；彩色目标保留较轻异色干扰，指定颜色保留更强干扰密度。
+### 妞嬪酣娅撻崣妯绘纯
+- 姒涙顓绘禒宥勮礋娴ｅ秶鐤嗙拋鏉跨箓閸滃本鐖ｉ崙鍡涙鎼达讣绱辨０婊嗗濡€崇础閵嗕焦瀵氱€规岸顤侀懝韫瑢楠炲弶澹堥弽鐓庢綆闂団偓閻劍鍩涙稉璇插З瀵偓閸氼垱鍨ㄩ崚鍥ㄥ床閿涘奔绗夐崘娆忓弳 AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
+- 瑜扳晞澹婇惄顔界垼娑撳孩瀵氱€规岸顤侀懝鏌ュ厴娴ｈ法鏁ら惄顔界垼閼规彃鍨界€规熬绱辫ぐ鈺勫閻╊喗鐖ｆ穱婵堟殌鏉堝啳浜ゅ鍌濆楠炲弶澹堥敍灞惧瘹鐎规岸顤侀懝韫箽閻ｆ瑦娲垮鍝勫叡閹垫澘鐦戞惔锔衡偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_visual_memory_widgets.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_visual_memory_smoke_test.dart`（通过）
-- `flutter test test/toolbox_visual_memory_smoke_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_visual_memory_widgets.dart test/toolbox_visual_memory_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/toolbox_visual_memory_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_visual_memory_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_113-HAND-EYE-FULLSCREEN-INTERACTION] - 2026-05-04
 
-### 原因
-- 手眼协调测试与摇杆手眼协调全屏 route 复用普通页状态时，普通页被覆盖后 ticker 停摆，导致全屏内目标/准星运动、设置同步和摇杆交互异常。
+### 閸樼喎娲?
+- 閹靛婧傞崡蹇氱殶濞村鐦稉搴㈡啚閺夊棙澧滈惇鐓庡礂鐠嬪啫鍙忕仦?route 婢跺秶鏁ら弲顕€鈧岸銆夐悩鑸碘偓浣规閿涘本娅橀柅姘躲€夌悮顐ヮ洬閻╂牕鎮?ticker 閸嬫粍鎲滈敍灞筋嚤閼锋潙鍙忕仦蹇撳敶閻╊喗鐖?閸戝棙妲︽潻鎰З閵嗕浇顔曠純顔兼倱濮濄儱鎷伴幗鍥ㄦ綄娴溿倓绨板鍌氱埗閵?
 
-### 新增
-- 手眼协调全屏新增设置按钮与设置面板，可在未运行或完成后直接调整目标设置与干扰设置。
-- smoke test 补充手眼全屏设置面板断言，以及摇杆全屏拖动摇杆后准星实际移动的断言。
+### 閺傛澘顤?
+- 閹靛婧傞崡蹇氱殶閸忋劌鐫嗛弬鏉款杻鐠佸墽鐤嗛幐澶愭尦娑撳氦顔曠純顕€娼伴弶鍖＄礉閸欘垰婀張顏囩箥鐞涘本鍨ㄧ€瑰本鍨氶崥搴ｆ纯閹恒儴鐨熼弫瀵告窗閺嶅洩顔曠純顔荤瑢楠炲弶澹堢拋鍓х枂閵?
+- smoke test 鐞涖儱鍘栭幍瀣簜閸忋劌鐫嗙拋鍓х枂闂堛垺婢橀弬顓♀枅閿涘奔浜掗崣濠冩啚閺夊棗鍙忕仦蹇斿珛閸斻劍鎲為弶鍡楁倵閸戝棙妲︾€圭偤妾粔璇插З閻ㄥ嫭鏌囩懛鈧妴?
 
-### 修改
-- 手眼协调全屏改用全屏 route 自身的轻量帧驱动刷新目标位置，普通页设置在全屏内继续生效。
-- 摇杆手眼协调全屏进入时接管准星/目标运动驱动，退出后按运行状态恢复普通页驱动，避免全屏内摇杆无法移动。
-- 摇杆全屏竖屏也改为左侧摇杆、右侧射击的两侧布局，避免射击与摇杆上下堆叠。
-- 高阶干扰目标改为更贴近真目标的位置、颜色和协同运动轨迹，提升混淆辅助强度；默认仍关闭。
-- 修复人类测试中心拆分 part 的空悬引用、数字记忆颜色上限读取和视觉记忆目标颜色 token nullable 推断问题，避免同模块编译被阻断。
+### 娣囶喗鏁?
+- 閹靛婧傞崡蹇氱殶閸忋劌鐫嗛弨鍦暏閸忋劌鐫?route 閼奉亣闊╅惃鍕氦闁插繐鎶氭す鍗炲З閸掗攱鏌婇惄顔界垼娴ｅ秶鐤嗛敍灞炬珮闁岸銆夌拋鍓х枂閸︺劌鍙忕仦蹇撳敶缂佈呯敾閻㈢喐鏅ラ妴?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌鏉╂稑鍙嗛弮鑸靛复缁犫€冲櫙閺?閻╊喗鐖ｆ潻鎰З妞瑰崬濮╅敍宀勨偓鈧崙鍝勬倵閹稿绻嶇悰宀€濮搁幀浣逛划婢跺秵娅橀柅姘躲€夋す鍗炲З閿涘矂浼╅崗宥呭弿鐏炲繐鍞撮幗鍥ㄦ綄閺冪姵纭剁粔璇插З閵?
+- 閹藉洦娼岄崗銊ョ潌缁旀牕鐫嗘稊鐔告暭娑撳搫涔忔笟褎鎲為弶鍡愨偓浣稿礁娓氀冪殸閸戣崵娈戞稉銈勬櫠鐢啫鐪敍宀勪缉閸忓秴鐨犻崙璁崇瑢閹藉洦娼屾稉濠佺瑓閸棗褰旈妴?
+- 妤傛﹢妯侀獮鍙夊閻╊喗鐖ｉ弨閫涜礋閺囩鍒涙潻鎴犳埂閻╊喗鐖ｉ惃鍕秴缂冾喓鈧線顤侀懝鎻掓嫲閸楀繐鎮撴潻鎰З鏉炪劏鎶楅敍灞惧絹閸楀洦璐╁ǎ鍡氱窡閸斺晛宸辨惔锔肩幢姒涙顓绘禒宥呭彠闂傤厹鈧?
+- 娣囶喖顦叉禍铏硅濞村鐦稉顓炵妇閹峰棗鍨?part 閻ㄥ嫮鈹栭幃顒€绱╅悽銊ｂ偓浣规殶鐎涙顔囪箛鍡涱杹閼硅弓绗傞梽鎰嚢閸欐牕鎷扮憴鍡氼潕鐠佹澘绻傞惄顔界垼妫版粏澹?token nullable 閹恒劍鏌囬梻顕€顣介敍宀勪缉閸忓秴鎮撳Ο鈥虫健缂傛牞鐦х悮顐︽▎閺傤厹鈧?
 
-### 风险变更
-- 全屏新增独立帧驱动只在对应全屏 route 存活期间运行；摇杆全屏会暂停普通页运动驱动，避免移动速度叠加。
-- 干扰目标增强仅在用户开启高阶干扰后生效，不改变默认测试难度。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫嗛弬鏉款杻閻欘剛鐝涚敮褔鈹嶉崝銊ュ涧閸︺劌顕惔鏂垮弿鐏?route 鐎涙ɑ妞块張鐔兼？鏉╂劘顢戦敍娑欐啚閺夊棗鍙忕仦蹇庣窗閺嗗倸浠犻弲顕€鈧岸銆夋潻鎰З妞瑰崬濮╅敍宀勪缉閸忓秶些閸斻劑鈧喎瀹抽崣鐘插閵?
+- 楠炲弶澹堥惄顔界垼婢х偛宸辨禒鍛躬閻劍鍩涘鈧崥顖炵彯闂冭泛鍏遍幍鏉挎倵閻㈢喐鏅ラ敍灞肩瑝閺€鐟板綁姒涙顓诲ù瀣槸闂呮儳瀹抽妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart`（通过，No issues found）
-- `flutter test test/ui_smoke_test.dart --name "hand-eye coordination exposes target settings|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls|joystick fullscreen uses opposite-side landscape controls" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_visual_memory.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/ui_smoke_test.dart --name "hand-eye coordination exposes target settings|joystick coordination exposes joystick modes and controls|hand-eye fullscreen entry opens release-ready controls|joystick fullscreen uses opposite-side landscape controls" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_117-AIM-MULTI-MODE] - 2026-05-04
 
-### 原因
-- 用户要求专注完善「工具箱 - 人类测试中心 - 瞄准测试」，当前模块只有基础点靶，需要增加更多模式和趣味性。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娑撴挻鏁炵€瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 閻嫬鍣ù瀣槸閵嗗稄绱濊ぐ鎾冲濡€虫健閸欘亝婀侀崺铏诡攨閻愬綊婢忛敍宀勬付鐟曚礁顤冮崝鐘虫纯婢舵碍膩瀵繐鎷扮搾锝呮嚄閹佲偓?
 
-### 新增
-- 瞄准测试新增四种模式：经典点靶、降级放大、移动靶和真假干扰。
-- 新增目标总数、目标大小、显形放大参数、移动速度和假目标数量设置。
-- 新增命中、误点、假目标、超时、准确率、平均命中、最佳连击和评级反馈。
-- 新增瞄准测试 smoke test，覆盖模式入口、设置展开、目标生成和误点反馈。
+### 閺傛澘顤?
+- 閻嫬鍣ù瀣槸閺傛澘顤冮崶娑氼潚濡€崇础閿涙氨绮￠崗鍝ュ仯闂堣翰鈧線妾风痪褎鏂佹径褋鈧胶些閸斻劑婢忛崪宀€婀￠崑鍥у叡閹佃埇鈧?
+- 閺傛澘顤冮惄顔界垼閹粯鏆熼妴浣烘窗閺嶅洤銇囩亸蹇嬧偓浣规▔瑜般垺鏂佹径褍寮弫鑸偓浣盒╅崝銊┾偓鐔峰閸滃苯浜ｉ惄顔界垼閺佷即鍣虹拋鍓х枂閵?
+- 閺傛澘顤冮崨鎴掕厬閵嗕浇顕ら悙骞库偓浣镐海閻╊喗鐖ｉ妴浣界Т閺冭翰鈧礁鍣涵顔惧芳閵嗕礁閽╅崸鍥ф嚒娑擃厹鈧焦娓舵担瀹犵箾閸戣鎷扮拠鍕獓閸欏秹顩妴?
+- 閺傛澘顤冮惉鍕櫙濞村鐦?smoke test閿涘矁顩惄鏍佸蹇撳弳閸欙絻鈧浇顔曠純顔肩潔瀵偓閵嗕胶娲伴弽鍥╂晸閹存劕鎷扮拠顖滃仯閸欏秹顩妴?
 
-### 修改
-- 将瞄准测试从 `toolbox_human_tests_action.dart` 拆分为 `toolbox_human_tests_aim.dart` 与 `toolbox_human_tests_aim_widgets.dart`。
-- 人类测试入口与 toolbox 模块说明同步更新瞄准测试能力描述。
+### 娣囶喗鏁?
+- 鐏忓棛鐎崙鍡樼ゴ鐠囨洑绮?`toolbox_human_tests_action.dart` 閹峰棗鍨庢稉?`toolbox_human_tests_aim.dart` 娑?`toolbox_human_tests_aim_widgets.dart`閵?
+- 娴滆櫣琚ù瀣槸閸忋儱褰涙稉?toolbox 濡€虫健鐠囧瓨妲戦崥灞绢劄閺囧瓨鏌婇惉鍕櫙濞村鐦懗钘夊閹诲繗鍫妴?
 
-### 风险变更
-- 默认仍为经典点靶模式；新增模式仅影响当前页面即时训练，不写入 AppState、数据库或学习记录。
+### 妞嬪酣娅撻崣妯绘纯
+- 姒涙顓绘禒宥勮礋缂佸繐鍚€閻愬綊婢忓Ο鈥崇础閿涙稒鏌婃晶鐐茨佸蹇庣矌瑜板崬鎼疯ぐ鎾冲妞ょ敻娼伴崡铏鐠侇厾绮岄敍灞肩瑝閸愭瑥鍙?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "aim test exposes multiple target modes and feedback" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_aim.dart lib/src/ui/pages/toolbox_human_tests_aim_widgets.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "aim test exposes multiple target modes and feedback" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_115-NUMBER-MEMORY-MULTI-MODE] - 2026-05-04
 
-### 原因
-- 用户要求专注完善「工具箱 - 人类测试中心 - 数字记忆」，增加更精确的毫秒设置、色彩、多数字单目标、计算式和随机化等能力，并避免影响其它并行修改中的模块。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娑撴挻鏁炵€瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 閺佹澘鐡х拋鏉跨箓閵嗗稄绱濇晶鐐插閺囧绨跨涵顔炬畱濮ｎ偆顫楃拋鍓х枂閵嗕浇澹婅ぐ鈹库偓浣割樋閺佹澘鐡ч崡鏇犳窗閺嶅洢鈧浇顓哥粻妤€绱￠崪宀勬閺堝搫瀵茬粵澶庡厴閸旀冻绱濋獮鍫曚缉閸忓秴濂栭崫宥呭従鐎瑰啫鑻熺悰灞兼叏閺€閫涜厬閻ㄥ嫭膩閸фぜ鈧?
 
-### 新增
-- 数字记忆新增四类训练模式：数字串、彩色数字、多数字目标和计算式。
-- 新增精确毫秒输入，显示停留支持 50-60000ms 手动应用；滑动条保留 100-5000ms 快速调节。
-- 新增随机停留时间、随机位数、允许首位 0、避免相邻重复等随机化与题面生成选项。
-- 彩色数字支持颜色数量设置，多数字目标支持同时显示组数设置，计算式支持项数和乘法开关。
-- 新增数字记忆 smoke test，覆盖多模式入口、精确毫秒输入和细分设置项。
+### 閺傛澘顤?
+- 閺佹澘鐡х拋鏉跨箓閺傛澘顤冮崶娑氳鐠侇厾绮屽Ο鈥崇础閿涙碍鏆熺€涙ぞ瑕嗛妴浣稿兊閼瑰弶鏆熺€涙ぜ鈧礁顦块弫鏉跨摟閻╊喗鐖ｉ崪宀冾吀缁犳绱￠妴?
+- 閺傛澘顤冪划鍓р€樺В顐ゎ潡鏉堟挸鍙嗛敍灞炬▔缁€鍝勪粻閻ｆ瑦鏁幐?50-60000ms 閹靛濮╂惔鏃傛暏閿涙稒绮﹂崝銊︽蒋娣囨繄鏆€ 100-5000ms 韫囶偊鈧喕鐨熼懞鍌樷偓?
+- 閺傛澘顤冮梾蹇旀簚閸嬫粎鏆€閺冨爼妫块妴渚€娈㈤張杞扮秴閺佽埇鈧礁鍘戠拋鎼侇浕娴?0閵嗕線浼╅崗宥囨祲闁鍣告径宥囩搼闂呭繑婧€閸栨牔绗屾０姗€娼伴悽鐔稿灇闁銆嶉妴?
+- 瑜扳晞澹婇弫鏉跨摟閺€顖涘瘮妫版粏澹婇弫浼村櫤鐠佸墽鐤嗛敍灞筋樋閺佹澘鐡ч惄顔界垼閺€顖涘瘮閸氬本妞傞弰鍓с仛缂佸嫭鏆熺拋鍓х枂閿涘矁顓哥粻妤€绱￠弨顖涘瘮妞よ鏆熼崪灞肩濞夋洖绱戦崗鐐解偓?
+- 閺傛澘顤冮弫鏉跨摟鐠佹澘绻?smoke test閿涘矁顩惄鏍ь樋濡€崇础閸忋儱褰涢妴浣虹翱绾喗顕犵粔鎺曠翻閸忋儱鎷扮紒鍡楀瀻鐠佸墽鐤嗘い骞库偓?
 
-### 修改
-- 将数字记忆从 `toolbox_human_tests_memory.dart` 拆分为专用 part 组：状态机、模型、视图扩展和小组件分别收口。
-- 人类测试入口与 toolbox 模块说明同步更新数字记忆能力描述。
+### 娣囶喗鏁?
+- 鐏忓棙鏆熺€涙顔囪箛鍡曠矤 `toolbox_human_tests_memory.dart` 閹峰棗鍨庢稉杞扮瑩閻?part 缂佸嫸绱伴悩鑸碘偓浣规簚閵嗕焦膩閸ㄥ鈧浇顫嬮崶鐐⒖鐏炴洖鎷扮亸蹇曠矋娴犺泛鍨庨崚顐ｆ暪閸欙絻鈧?
+- 娴滆櫣琚ù瀣槸閸忋儱褰涙稉?toolbox 濡€虫健鐠囧瓨妲戦崥灞绢劄閺囧瓨鏌婇弫鏉跨摟鐠佹澘绻傞懗钘夊閹诲繗鍫妴?
 
-### 风险变更
-- 默认模式仍为经典数字串复现；新增模式仅影响当前数字记忆页面即时训练，不写入 AppState、数据库或学习记录。
-- 数字记忆隐藏题面计时器通过 round token 和重置/设置变更取消逻辑收口，降低旧回调串场风险。
+### 妞嬪酣娅撻崣妯绘纯
+- 姒涙顓诲Ο鈥崇础娴犲秳璐熺紒蹇撳悁閺佹澘鐡ф稉鎻掝槻閻滃府绱遍弬鏉款杻濡€崇础娴犲懎濂栭崫宥呯秼閸撳秵鏆熺€涙顔囪箛鍡涖€夐棃銏犲祮閺冩儼顔勭紒鍐跨礉娑撳秴鍟撻崗?AppState閵嗕焦鏆熼幑顔肩氨閹存牕顒熸稊鐘侯唶瑜版洏鈧?
+- 閺佹澘鐡х拋鏉跨箓闂呮劘妫屾０姗€娼扮拋鈩冩閸ｃ劑鈧俺绻?round token 閸滃矂鍣哥純?鐠佸墽鐤嗛崣妯绘纯閸欐牗绉烽柅鏄忕帆閺€璺哄經閿涘矂妾锋担搴㈡＋閸ョ偠鐨熸稉鎻掓簚妞嬪酣娅撻妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory_models.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_number_memory_widgets.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "number memory exposes richer modes and millisecond controls" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory.dart lib/src/ui/pages/toolbox_human_tests_number_memory_models.dart lib/src/ui/pages/toolbox_human_tests_number_memory_view.dart lib/src/ui/pages/toolbox_human_tests_number_memory_widgets.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "number memory exposes richer modes and millisecond controls" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_114-REACTION-MULTI-MODE] - 2026-05-04
 
-### 原因
-- 用户要求专注完善「工具箱 - 人类测试中心 - 反应测试」，增加更多模式和趣味性，并避免影响其它并行修改中的模块。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娑撴挻鏁炵€瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 閸欏秴绨插ù瀣槸閵嗗稄绱濇晶鐐插閺囨潙顦垮Ο鈥崇础閸滃矁鍙崨铏偓褝绱濋獮鍫曚缉閸忓秴濂栭崫宥呭従鐎瑰啫鑻熺悰灞兼叏閺€閫涜厬閻ㄥ嫭膩閸фぜ鈧?
 
-### 新增
-- 反应测试保留经典按住等待信号后松手，并新增方向滑动与颜色匹配两种模式。
-- 新增轮次数与信号节奏设置，支持 5/8/12 轮以及标准、冲刺、迷惑三档随机等待区间。
-- 新增平均、最快、准确率、连击、超越区间和本组轨迹反馈。
-- 新增反应测试 smoke test，覆盖三模式入口、方向 D-pad、颜色按钮和设置项。
+### 閺傛澘顤?
+- 閸欏秴绨插ù瀣槸娣囨繄鏆€缂佸繐鍚€閹稿缍囩粵澶婄窡娣団€冲娇閸氬孩婢楅幍瀣剁礉楠炶埖鏌婃晶鐐存煙閸氭垶绮﹂崝銊ょ瑢妫版粏澹婇崠褰掑帳娑撱倗顫掑Ο鈥崇础閵?
+- 閺傛澘顤冩潪顔筋偧閺侀绗屾穱鈥冲娇閼哄倸顨旂拋鍓х枂閿涘本鏁幐?5/8/12 鏉烆喕浜掗崣濠冪垼閸戝棎鈧礁鍟块崚鎭掆偓浣界碃閹垳绗佸锝夋閺堣櫣鐡戝鍛隘闂傛番鈧?
+- 閺傛澘顤冮獮鍐叉綆閵嗕焦娓惰箛顐犫偓浣稿櫙绾喚宸奸妴浣界箾閸戞眹鈧浇绉寸搾濠傚隘闂傛潙鎷伴張顒傜矋鏉炪劏鎶楅崣宥夘洯閵?
+- 閺傛澘顤冮崣宥呯安濞村鐦?smoke test閿涘矁顩惄鏍︾瑏濡€崇础閸忋儱褰涢妴浣规煙閸?D-pad閵嗕線顤侀懝鍙夊瘻闁筋喖鎷扮拋鍓х枂妞ゅ箍鈧?
 
-### 修改
-- 将反应测试从 `toolbox_human_tests_action.dart` 拆分到 `toolbox_human_tests_reaction.dart`，使 action 文件继续只承载瞄准测试和手速测试。
-- 人类测试入口与 toolbox 模块说明同步更新反应测试能力描述。
-- 删除与经典反应重复的点击信号和 Go/No-Go 模式，避免入口冗余。
-- 方向选择从横向按钮优化为上/左/中/右/下 D-pad，并支持中心按住后向四向滑动。
+### 娣囶喗鏁?
+- 鐏忓棗寮芥惔鏃€绁寸拠鏇氱矤 `toolbox_human_tests_action.dart` 閹峰棗鍨庨崚?`toolbox_human_tests_reaction.dart`閿涘奔濞?action 閺傚洣娆㈢紒褏鐢婚崣顏呭鏉炵晫鐎崙鍡樼ゴ鐠囨洖鎷伴幍瀣偓鐔哥ゴ鐠囨洏鈧?
+- 娴滆櫣琚ù瀣槸閸忋儱褰涙稉?toolbox 濡€虫健鐠囧瓨妲戦崥灞绢劄閺囧瓨鏌婇崣宥呯安濞村鐦懗钘夊閹诲繗鍫妴?
+- 閸掔娀娅庢稉搴ｇ病閸忕寮芥惔鏃堝櫢婢跺秶娈戦悙鐟板毊娣団€冲娇閸?Go/No-Go 濡€崇础閿涘矂浼╅崗宥呭弳閸欙絽鍟戞担娆嶁偓?
+- 閺傜懓鎮滈柅澶嬪娴犲孩铆閸氭垶瀵滈柦顔荤喘閸栨牔璐熸稉?瀹?娑?閸?娑?D-pad閿涘苯鑻熼弨顖涘瘮娑擃厼绺鹃幐澶夌秶閸氬骸鎮滈崶娑樻倻濠婃垵濮╅妴?
 
-### 风险变更
-- 本轮只修改反应测试页面状态机、入口说明、模块文档与定向测试；不写入 AppState、数据库或其它人类测试子模块。
-- 反应测试随机计时器通过 token 和统一取消逻辑收口，降低切换模式、重置或离开页面后的旧回调串场风险。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏冩叏閺€鐟板冀鎼存梹绁寸拠鏇€夐棃銏㈠Ц閹焦婧€閵嗕礁鍙嗛崣锝堫嚛閺勫簺鈧焦膩閸ф鏋冨锝勭瑢鐎规艾鎮滃ù瀣槸閿涙稐绗夐崘娆忓弳 AppState閵嗕焦鏆熼幑顔肩氨閹存牕鍙剧€瑰啩姹夌猾缁樼ゴ鐠囨洖鐡欏Ο鈥虫健閵?
+- 閸欏秴绨插ù瀣槸闂呭繑婧€鐠佲剝妞傞崳銊┾偓姘崇箖 token 閸滃瞼绮烘稉鈧崣鏍ㄧХ闁槒绶弨璺哄經閿涘矂妾锋担搴″瀼閹广垺膩瀵繈鈧線鍣哥純顔藉灗缁傝绱戞い鐢告桨閸氬海娈戦弮褍娲栫拫鍐ц閸︽椽顥撻梽鈹库偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "reaction test exposes focused reaction modes" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_reaction.dart lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "reaction test exposes focused reaction modes" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_112-HAND-EYE-FULLSCREEN-RELEASE] - 2026-05-04
 
-### 原因
-- 「手眼协调测试」与「摇杆手眼协调」全屏模式此前因设备兼容和布局问题被临时隐藏，需要修复到可开启发布的程度。
+### 閸樼喎娲?
+- 閵嗗本澧滈惇鐓庡礂鐠嬪啯绁寸拠鏇樷偓宥勭瑢閵嗗本鎲為弶鍡樺閻厧宕楃拫鍐︹偓宥呭弿鐏炲繑膩瀵繑顒濋崜宥呮礈鐠佹儳顦崗鐓庮啇閸滃苯绔风仦鈧梻顕€顣界悮顐″閺冨爼娈ｉ挊蹇ョ礉闂団偓鐟曚椒鎱ㄦ径宥呭煂閸欘垰绱戦崥顖氬絺鐢啰娈戠粙瀣閵?
 
-### 新增
-- 手眼协调全屏新增顶部轻量统计面板，展示轮次、命中、点空和平均反应，并补充独立开始/重置控制 key 供 smoke test 覆盖。
-- 新增全屏 smoke test，覆盖手眼全屏入口可进入、控制按钮触控尺寸，以及摇杆横屏全屏左右两端控制布局。
+### 閺傛澘顤?
+- 閹靛婧傞崡蹇氱殶閸忋劌鐫嗛弬鏉款杻妞ゅ爼鍎存潪濠氬櫤缂佺喕顓搁棃銏℃緲閿涘苯鐫嶇粈楦跨枂濞喡扳偓浣告嚒娑擃厹鈧胶鍋ｇ粚鍝勬嫲楠炲啿娼庨崣宥呯安閿涘苯鑻熺悰銉ュ帠閻欘剛鐝涘鈧慨?闁插秶鐤嗛幒褍鍩?key 娓?smoke test 鐟曞棛娲婇妴?
+- 閺傛澘顤冮崗銊ョ潌 smoke test閿涘矁顩惄鏍ㄥ閻厧鍙忕仦蹇撳弳閸欙絽褰叉潻娑樺弳閵嗕焦甯堕崚鑸靛瘻闁筋喛袝閹貉冩槀鐎甸潻绱濇禒銉ュ挤閹藉洦娼屽Ο顏勭潌閸忋劌鐫嗗锕€褰告稉銈囶伂閹貉冨煑鐢啫鐪妴?
 
-### 修改
-- 恢复手眼协调测试与摇杆手眼协调普通页面中的全屏入口。
-- 手眼协调全屏隐藏舞台内重复开始按钮，改为底部稳定控制区；目标绘制和命中检测避开顶部统计与底部控制安全区。
-- 摇杆手眼协调全屏重排为横屏左侧摇杆、中间舞台、右侧射击按钮，开始/结束/重置独立位于底部中央；竖屏保留底部两端控制布局。
-- 摇杆全屏舞台不再叠加内部开始按钮，避免和独立控制区重复。
-- 补充 `PLAN_112_手眼协调全屏发布级修复.md` 并更新 toolbox 模块说明。
+### 娣囶喗鏁?
+- 閹垹顦查幍瀣簜閸楀繗鐨熷ù瀣槸娑撳孩鎲為弶鍡樺閻厧宕楃拫鍐╂珮闁岸銆夐棃顫厬閻ㄥ嫬鍙忕仦蹇撳弳閸欙絻鈧?
+- 閹靛婧傞崡蹇氱殶閸忋劌鐫嗛梾鎰閼哥偛褰撮崘鍛村櫢婢跺秴绱戞慨瀣瘻闁筋噯绱濋弨閫涜礋鎼存洟鍎寸粙鍐茬暰閹貉冨煑閸栫尨绱遍惄顔界垼缂佹ê鍩楅崪灞芥嚒娑擃厽顥呭ù瀣缉瀵偓妞ゅ爼鍎寸紒鐔活吀娑撳骸绨抽柈銊﹀付閸掕泛鐣ㄩ崗銊ュ隘閵?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼崗銊ョ潌闁插秵甯撴稉鐑樏仦蹇撲箯娓氀勬啚閺夊棎鈧椒鑵戦梻纾嬪灦閸欒埇鈧礁褰告笟褍鐨犻崙缁樺瘻闁筋噯绱濆鈧慨?缂佹挻娼?闁插秶鐤嗛悪顒傜彌娴ｅ秳绨惔鏇㈠劥娑擃厼銇庨敍娑氱彨鐏炲繋绻氶悾娆忕俺闁劋琚辩粩顖涘付閸掕泛绔风仦鈧妴?
+- 閹藉洦娼岄崗銊ョ潌閼哥偛褰存稉宥呭晙閸欑姴濮為崘鍛村劥瀵偓婵瀵滈柦顕嗙礉闁灝鍘ら崪宀€瀚粩瀣付閸掕泛灏柌宥咁槻閵?
+- 鐞涖儱鍘?`PLAN_112_閹靛婧傞崡蹇氱殶閸忋劌鐫嗛崣鎴濈缁狙傛叏婢?md` 楠炶埖娲块弬?toolbox 濡€虫健鐠囧瓨妲戦妴?
 
-### 风险变更
-- 全屏 route 仍复用当前页面状态机，不新增持久化数据；横屏方向锁定继续仅在 Android/iOS 生效，桌面/Web 只使用当前 route 布局。
-- 手眼全屏安全目标区域会略微缩小可刷目标范围，但避免目标被状态栏或操作区遮挡。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫?route 娴犲秴顦查悽銊ョ秼閸撳秹銆夐棃銏㈠Ц閹焦婧€閿涘奔绗夐弬鏉款杻閹镐椒绠欓崠鏍ㄦ殶閹诡噯绱卞Ο顏勭潌閺傜懓鎮滈柨浣哥暰缂佈呯敾娴犲懎婀?Android/iOS 閻㈢喐鏅ラ敍灞绢攽闂?Web 閸欘亙濞囬悽銊ョ秼閸?route 鐢啫鐪妴?
+- 閹靛婧傞崗銊ョ潌鐎瑰鍙忛惄顔界垼閸栧搫鐓欐导姘辨殣瀵邦喚缂夌亸蹇撳讲閸掗娲伴弽鍥瘱閸ヨ揪绱濇担鍡涗缉閸忓秶娲伴弽鍥潶閻樿埖鈧焦鐖幋鏍ㄦ惙娴ｆ粌灏柆顔藉皡閵?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye fullscreen entry opens release-ready controls" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "joystick fullscreen uses opposite-side landscape controls" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye fullscreen entry opens release-ready controls" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick fullscreen uses opposite-side landscape controls" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_111-README-DETAILED-UPDATE] - 2026-05-02
 
-### 原因
-- 根目录 README 需要从简要介绍升级为面向新协作者、维护者和发布前检查的详细入口文档。
+### 閸樼喎娲?
+- 閺嶅湱娲拌ぐ?README 闂団偓鐟曚椒绮犵粻鈧憰浣风矙缂佸秴宕岀痪褌璐熼棃銏犳倻閺傛澘宕楁担婊嗏偓鍛偓浣烘樊閹躲倛鈧懎鎷伴崣鎴濈閸撳秵顥呴弻銉ф畱鐠囷妇绮忛崗銉ュ經閺傚洦銆傞妴?
 
-### 修改
-- 重写 `README.md`，补充项目定位、顶层模块、toolbox 子模块、技术栈、目录结构、环境准备、运行构建、验证测试、数据资源、国际化、开发规范、文档索引、常见问题和协作流程。
-- 明确 `scripts/build.ps1` 对 Web target 的禁用约束，以及 FFI 依赖下 Web 构建需要替代实现后再启用。
-- 新增 `PLAN_111_README_详细更新与提交推送.md`，记录本轮文档更新、提交和推送边界。
+### 娣囶喗鏁?
+- 闁插秴鍟?`README.md`閿涘矁藟閸忓懘銆嶉惄顔肩暰娴ｅ秲鈧線銆婄仦鍌浤侀崸妞尖偓涔紀olbox 鐎涙劖膩閸фぜ鈧焦濡ч張顖涚垽閵嗕胶娲拌ぐ鏇犵波閺嬪嫨鈧胶骞嗘晶鍐ㄥ櫙婢跺洢鈧浇绻嶇悰灞剧€鎭掆偓渚€鐛欑拠浣圭ゴ鐠囨洏鈧焦鏆熼幑顔跨カ濠ф劑鈧礁娴楅梽鍛閵嗕礁绱戦崣鎴ｎ潐閼煎啨鈧焦鏋冨锝囧偍瀵洏鈧礁鐖剁憴渚€妫舵０妯烘嫲閸楀繋缍斿ù浣衡柤閵?
+- 閺勫海鈥?`scripts/build.ps1` 鐎?Web target 閻ㄥ嫮顩﹂悽銊у閺夌噦绱濇禒銉ュ挤 FFI 娓氭繆绂嗘稉?Web 閺嬪嫬缂撻棁鈧憰浣规禌娴狅絽鐤勯悳鏉挎倵閸愬秴鎯庨悽銊ｂ偓?
+- 閺傛澘顤?`PLAN_111_README_鐠囷妇绮忛弴瀛樻煀娑撳孩褰佹禍銈嗗腹闁?md`閿涘矁顔囪ぐ鏇熸拱鏉烆喗鏋冨锝嗘纯閺傝埇鈧焦褰佹禍銈呮嫲閹恒劑鈧浇绔熼悾灞烩偓?
 
-### 风险变更
-- 本轮仅更新文档，不修改应用逻辑、路由、状态、资源或测试代码。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒鍛纯閺傜増鏋冨锝忕礉娑撳秳鎱ㄩ弨鐟扮安閻劑鈧槒绶妴浣界熅閻究鈧胶濮搁幀浣碘偓浣界カ濠ф劖鍨ㄥù瀣槸娴狅絿鐖滈妴?
 
-### 验证
-- 已检查 README 内容与 `pubspec.yaml`、`scripts/`、模块注册表和现有目录结构的一致性。
-- 未运行 Flutter 测试；本轮无 Dart 代码改动。
+### 妤犲矁鐦?
+- 瀹稿弶顥呴弻?README 閸愬懎顔愭稉?`pubspec.yaml`閵嗕梗scripts/`閵嗕焦膩閸ф鏁為崘宀冦€冮崪宀€骞囬張澶屾窗瑜版洜绮ㄩ弸鍕畱娑撯偓閼峰瓨鈧佲偓?
+- 閺堫亣绻嶇悰?Flutter 濞村鐦敍娑欐拱鏉烆喗妫?Dart 娴狅絿鐖滈弨鐟板З閵?
 
 ## [Unreleased-PLAN_110-HAND-EYE-FULLSCREEN-ENTRY-HIDDEN] - 2026-04-30
 
-### 原因
-- 当前全屏训练入口仍存在设备兼容问题，但需要立即发布对外测试进度包，因此先临时隐藏入口。
+### 閸樼喎娲?
+- 瑜版挸澧犻崗銊ョ潌鐠侇厾绮岄崗銉ュ經娴犲秴鐡ㄩ崷銊啎婢跺洤鍚嬬€瑰綊妫舵０姗堢礉娴ｅ棝娓剁憰浣虹彌閸楀啿褰傜敮鍐嚠婢舵牗绁寸拠鏇＄箻鎼达箑瀵橀敍灞芥礈濮濄倕鍘涙稉瀛樻闂呮劘妫岄崗銉ュ經閵?
 
-### 修改
-- 通过临时发布开关隐藏手眼协调测试与摇杆手眼协调的普通页面全屏按钮，并在代码中保留 TODO 注释。
+### 娣囶喗鏁?
+- 闁俺绻冩稉瀛樻閸欐垵绔峰鈧崗鎶芥閽樺繑澧滈惇鐓庡礂鐠嬪啯绁寸拠鏇氱瑢閹藉洦娼岄幍瀣簜閸楀繗鐨熼惃鍕珮闁岸銆夐棃銏犲弿鐏炲繑瀵滈柦顕嗙礉楠炶泛婀禒锝囩垳娑擃厺绻氶悾?TODO 濞夈劑鍣撮妴?
 
-### 风险变更
-- 全屏 route 与实现仍保留，仅 UI 不再展示入口；修复完成后可恢复开关重新开放。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸忋劌鐫?route 娑撳骸鐤勯悳棰佺矝娣囨繄鏆€閿涘奔绮?UI 娑撳秴鍟€鐏炴洜銇氶崗銉ュ經閿涙稐鎱ㄦ径宥呯暚閹存劕鎮楅崣顖涗划婢跺秴绱戦崗鎶藉櫢閺傛澘绱戦弨淇扁偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
 
 ## [Unreleased-PLAN_109-HAND-EYE-FULLSCREEN-INTERFERENCE] - 2026-04-30
 
-### 原因
-- 用户反馈手眼协调测试与摇杆手眼协调进入全屏后点击开始不刷新全屏舞台、退出后外部页面才启动；同时需要横屏沉浸全屏、扩大设置范围、自定义输入、完整完成报告和默认关闭的多目标假目标干扰。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閹靛婧傞崡蹇氱殶濞村鐦稉搴㈡啚閺夊棙澧滈惇鐓庡礂鐠嬪啳绻橀崗銉ュ弿鐏炲繐鎮楅悙鐟板毊瀵偓婵绗夐崚閿嬫煀閸忋劌鐫嗛懜鐐插酱閵嗕線鈧偓閸戝搫鎮楁径鏍劥妞ょ敻娼伴幍宥呮儙閸旑煉绱遍崥灞炬闂団偓鐟曚焦铆鐏炲繑鐭囧ù绋垮弿鐏炲繈鈧焦澧挎径褑顔曠純顔垮瘱閸ユ番鈧浇鍤滅€规矮绠熸潏鎾冲弳閵嗕礁鐣弫鏉戠暚閹存劖濮ら崨濠傛嫲姒涙顓婚崗鎶芥４閻ㄥ嫬顦块惄顔界垼閸嬪洨娲伴弽鍥у叡閹佃埇鈧?
 
-### 新增
-- 手眼协调测试新增自定义数值输入：轮数、显示时长、移动幅度、速度、点击次数和目标大小均可在滑动条外直接输入。
-- 手眼协调测试新增默认关闭的高阶多目标真假干扰，可设置假目标出现概率与最大数量，假目标使用错误色区分并单独统计。
-- 手眼协调测试完成后弹出完整结果报告，包含成功/漏掉/点空/假目标、平均/最快反应、平均完成时长和逐轮明细。
-- 摇杆手眼协调新增目标大小设置、自定义输入、默认关闭的目标移动设置和默认关闭的多目标假目标干扰设置。
-- 摇杆手眼协调完成后弹出完整报告，包含模式、进度、命中、射空、准确率、反应明细、假目标射击、目标大小和目标移动状态。
+### 閺傛澘顤?
+- 閹靛婧傞崡蹇氱殶濞村鐦弬鏉款杻閼奉亜鐣炬稊澶嬫殶閸婅壈绶崗銉窗鏉烆喗鏆熼妴浣规▔缁€鐑樻闂€瑁も偓浣盒╅崝銊ョ畽鎼达负鈧線鈧喎瀹抽妴浣哄仯閸戠粯顐奸弫鏉挎嫲閻╊喗鐖ｆ径褍鐨崸鍥у讲閸︺劍绮﹂崝銊︽蒋婢舵牜娲块幒銉ㄧ翻閸忋儯鈧?
+- 閹靛婧傞崡蹇氱殶濞村鐦弬鏉款杻姒涙顓婚崗鎶芥４閻ㄥ嫰鐝梼璺侯樋閻╊喗鐖ｉ惇鐔蜂海楠炲弶澹堥敍灞藉讲鐠佸墽鐤嗛崑鍥╂窗閺嶅洤鍤悳鐗堫洤閻滃洣绗岄張鈧径褎鏆熼柌蹇ョ礉閸嬪洨娲伴弽鍥﹀▏閻劑鏁婄拠顖濆閸栧搫鍨庨獮璺哄礋閻欘剛绮虹拋掳鈧?
+- 閹靛婧傞崡蹇氱殶濞村鐦€瑰本鍨氶崥搴¤剨閸戝搫鐣弫瀵哥波閺嬫粍濮ら崨濠忕礉閸栧懎鎯堥幋鎰/濠曞繑甯€/閻愬湱鈹?閸嬪洨娲伴弽鍥モ偓浣搁挬閸?閺堚偓韫囶偄寮芥惔鏂烩偓浣搁挬閸у洤鐣幋鎰闂€鍨嫲闁劘鐤嗛弰搴ｇ矎閵?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼弬鏉款杻閻╊喗鐖ｆ径褍鐨拋鍓х枂閵嗕浇鍤滅€规矮绠熸潏鎾冲弳閵嗕線绮拋銈呭彠闂傤厾娈戦惄顔界垼缁夎濮╃拋鍓х枂閸滃矂绮拋銈呭彠闂傤厾娈戞径姘辨窗閺嶅洤浜ｉ惄顔界垼楠炲弶澹堢拋鍓х枂閵?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熺€瑰本鍨氶崥搴¤剨閸戝搫鐣弫瀛樺Г閸涘绱濋崠鍛儓濡€崇础閵嗕浇绻樻惔锔衡偓浣告嚒娑擃厹鈧礁鐨犵粚鎭掆偓浣稿櫙绾喚宸奸妴浣稿冀鎼存梹妲戠紒鍡愨偓浣镐海閻╊喗鐖ｇ亸鍕毊閵嗕胶娲伴弽鍥с亣鐏忓繐鎷伴惄顔界垼缁夎濮╅悩鑸碘偓浣碘偓?
 
-### 修改
-- 修复两个手眼协调子模块全屏 route 复用外层状态时不刷新的问题；全屏内点击开始会立即更新当前全屏舞台。
-- 两个全屏入口改为移动端横屏沉浸模式，退出后恢复系统 UI 和方向；全屏布局不再展示普通页面统计信息。
-- 摇杆允许拖出原始摇杆范围，并将超出幅度用于控制准星速率，使手感更接近手机游戏虚拟摇杆。
-- 手眼与摇杆相关设置组件、报告弹窗和摇杆全屏布局继续拆分到独立 part 文件，避免单文件继续膨胀。
-- 完成报告弹窗改为专用有限尺寸 `Dialog` 框架，避免 `AlertDialog` 内容在窄屏/鼠标命中测试阶段出现无尺寸 RenderBox。
-- 摇杆全屏控制区改为按可用宽度计算摇杆与射击按钮尺寸，避免 320dp 级窄屏下固定宽度 Row 溢出。
+### 娣囶喗鏁?
+- 娣囶喖顦叉稉銈勯嚋閹靛婧傞崡蹇氱殶鐎涙劖膩閸ф鍙忕仦?route 婢跺秶鏁ゆ径鏍х湴閻樿埖鈧焦妞傛稉宥呭煕閺傛壆娈戦梻顕€顣介敍娑樺弿鐏炲繐鍞撮悙鐟板毊瀵偓婵绱扮粩瀣祮閺囧瓨鏌婅ぐ鎾冲閸忋劌鐫嗛懜鐐插酱閵?
+- 娑撱倓閲滈崗銊ョ潌閸忋儱褰涢弨閫涜礋缁夎濮╃粩顖浢仦蹇旂焽濞村憡膩瀵骏绱濋柅鈧崙鍝勬倵閹垹顦茬化鑽ょ埠 UI 閸滃本鏌熼崥鎴幢閸忋劌鐫嗙敮鍐ㄧ湰娑撳秴鍟€鐏炴洜銇氶弲顕€鈧岸銆夐棃銏㈢埠鐠佲€蹭繆閹垬鈧?
+- 閹藉洦娼岄崗浣筋啅閹锋牕鍤崢鐔奉潗閹藉洦娼岄懠鍐ㄦ纯閿涘苯鑻熺亸鍡氱Т閸戝搫绠欐惔锔炬暏娴滃孩甯堕崚璺哄櫙閺勭喖鈧喓宸奸敍灞煎▏閹靛鍔呴弴瀛樺复鏉╂垶澧滈張鐑樼埗閹村繗娅勯幏鐔告啚閺夊棎鈧?
+- 閹靛婧傛稉搴㈡啚閺夊棛娴夐崗瀹狀啎缂冾喚绮嶆禒韬测偓浣瑰Г閸涘﹤鑴婄粣妤€鎷伴幗鍥ㄦ綄閸忋劌鐫嗙敮鍐ㄧ湰缂佈呯敾閹峰棗鍨庨崚鎵缁?part 閺傚洣娆㈤敍宀勪缉閸忓秴宕熼弬鍥︽缂佈呯敾閼躲劏鍎夐妴?
+- 鐎瑰本鍨氶幎銉ユ啞瀵湱鐛ラ弨閫涜礋娑撴挾鏁ら張澶愭鐏忓搫顕?`Dialog` 濡楀棙鐏﹂敍宀勪缉閸?`AlertDialog` 閸愬懎顔愰崷銊х崕鐏?姒х姵鐖ｉ崨鎴掕厬濞村鐦梼鑸殿唽閸戣櫣骞囬弮鐘叉槀鐎?RenderBox閵?
+- 閹藉洦娼岄崗銊ョ潌閹貉冨煑閸栫儤鏁兼稉鐑樺瘻閸欘垳鏁ょ€硅棄瀹崇拋锛勭暬閹藉洦娼屾稉搴＄殸閸戠粯瀵滈柦顔兼槀鐎甸潻绱濋柆鍨帳 320dp 缁狙呯崕鐏炲繋绗呴崶鍝勭暰鐎硅棄瀹?Row 濠с垹鍤妴?
 
-### 风险变更
-- 高阶假目标干扰和摇杆目标移动均默认关闭，避免改变默认成绩含义；开启后难度与报告指标会明显变化。
-- 横屏方向锁定仅在 Android/iOS 生效，桌面和 Web 不强行锁定方向。
+### 妞嬪酣娅撻崣妯绘纯
+- 妤傛﹢妯侀崑鍥╂窗閺嶅洤鍏遍幍鏉挎嫲閹藉洦娼岄惄顔界垼缁夎濮╅崸鍥帛鐠併倕鍙ч梻顓ㄧ礉闁灝鍘ら弨鐟板綁姒涙顓婚幋鎰摋閸氼偂绠熼敍娑樼磻閸氼垰鎮楅梾鎯у娑撳孩濮ら崨濠冨瘹閺嶅洣绱伴弰搴㈡▔閸欐ê瀵查妴?
+- 濡亜鐫嗛弬鐟版倻闁夸礁鐣炬禒鍛躬 Android/iOS 閻㈢喐鏅ラ敍灞绢攽闂堛垹鎷?Web 娑撳秴宸辩悰宀勬敚鐎规碍鏌熼崥鎴欌偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart test/ui_smoke_test.dart`（通过；仅 `test/ui_smoke_test.dart` 保留既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye completion report fits narrow viewport" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "joystick fullscreen controls fit narrow viewport" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_fullscreen.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_reports.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娑楃矌 `test/ui_smoke_test.dart` 娣囨繄鏆€閺冦垺婀?const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye completion report fits narrow viewport" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick fullscreen controls fit narrow viewport" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_108-HAND-EYE-FULLSCREEN-TUNING] - 2026-04-30
 
-### 原因
-- 用户反馈手眼协调测试的 100% 运动幅度和最高速度仍偏弱，目标点在手机小屏幕中过大，显示时长缺少“点满才结束”模式；摇杆手眼协调需要更真实的摇杆加速、降低误触的控制布局，以及横屏全屏训练体验。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閹靛婧傞崡蹇氱殶濞村鐦惃?100% 鏉╂劕濮╅獮鍛閸滃本娓舵姗€鈧喎瀹虫禒宥呬焊瀵唻绱濋惄顔界垼閻愮懓婀幍瀣簚鐏忓繐鐫嗛獮鏇氳厬鏉╁洤銇囬敍灞炬▔缁€鐑樻闂€璺ㄥ繁鐏忔垟鈧粎鍋ｅ鈩冨缂佹挻娼垾婵嚹佸蹇ョ幢閹藉洦娼岄幍瀣簜閸楀繗鐨熼棁鈧憰浣规纯閻喎鐤勯惃鍕啚閺夊棗濮為柅鐔粹偓渚€妾锋担搴ゎ嚖鐟欙妇娈戦幒褍鍩楃敮鍐ㄧ湰閿涘奔浜掗崣濠兠仦蹇撳弿鐏炲繗顔勭紒鍐х秼妤犲被鈧?
 
-### 新增
-- 手眼协调测试新增“点满才消失”显示模式，可在完成需要点击次数后再进入下一轮。
-- 手眼协调测试新增目标点大小设置，命中半径随视觉目标同步变化。
-- 手眼协调测试新增全屏训练入口，全屏仅展示舞台、轻量指标和开始/重置/退出控制。
-- 摇杆手眼协调新增摇杆位置加速设置，用于调整轻推与重推的响应曲线。
-- 摇杆手眼协调新增全屏训练入口；横屏时采用左侧摇杆、中间舞台、右侧射击布局。
+### 閺傛澘顤?
+- 閹靛婧傞崡蹇氱殶濞村鐦弬鏉款杻閳ユ粎鍋ｅ鈩冨濞戝牆銇戦垾婵囨▔缁€鐑樐佸蹇ョ礉閸欘垰婀€瑰本鍨氶棁鈧憰浣哄仯閸戠粯顐奸弫鏉挎倵閸愬秷绻橀崗銉ょ瑓娑撯偓鏉烆喓鈧?
+- 閹靛婧傞崡蹇氱殶濞村鐦弬鏉款杻閻╊喗鐖ｉ悙鐟般亣鐏忓繗顔曠純顕嗙礉閸涙垝鑵戦崡濠傜窞闂呭繗顫嬬憴澶屾窗閺嶅洤鎮撳銉ュ綁閸栨牓鈧?
+- 閹靛婧傞崡蹇氱殶濞村鐦弬鏉款杻閸忋劌鐫嗙拋顓犵矊閸忋儱褰涢敍灞藉弿鐏炲繋绮庣仦鏇犮仛閼哥偛褰撮妴浣戒氦闁插繑瀵氶弽鍥ф嫲瀵偓婵?闁插秶鐤?闁偓閸戠儤甯堕崚韬测偓?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼弬鏉款杻閹藉洦娼屾担宥囩枂閸旂娀鈧喕顔曠純顕嗙礉閻劋绨拫鍐╂殻鏉炵粯甯规稉搴ㄥ櫢閹恒劎娈戦崫宥呯安閺囪尙鍤庨妴?
+- 閹藉洦娼岄幍瀣簜閸楀繗鐨熼弬鏉款杻閸忋劌鐫嗙拋顓犵矊閸忋儱褰涢敍娑櫭仦蹇旀闁插洨鏁ゅ锔挎櫠閹藉洦娼岄妴浣疯厬闂傜鍨堕崣鑸偓浣稿礁娓氀冪殸閸戣绔风仦鈧妴?
 
-### 修改
-- 重新校准手眼目标运动模型，高幅度/高速度时目标跨越范围更大、动画周期更短，更适合快速移动手眼协调测试。
-- 手眼目标默认尺寸从偏大的 58dp 调整为 42dp，并支持 22-68dp 范围调节。
-- 摇杆测试普通布局改为射击按钮独立放大，开始/结束/重置放在次级控制区，避免和射击并列误触。
-- 手眼与摇杆舞台抽取为共享展示组件，保持普通页和全屏页复用同一状态机。
+### 娣囶喗鏁?
+- 闁插秵鏌婇弽鈥冲櫙閹靛婧傞惄顔界垼鏉╂劕濮╁Ο鈥崇€烽敍宀勭彯楠炲懎瀹?妤傛﹢鈧喎瀹抽弮鍓佹窗閺嶅洩娉曠搾濠呭瘱閸ュ瓨娲挎径褋鈧礁濮╅悽璇叉噯閺堢喐娲块惌顓ㄧ礉閺囨挳鈧倸鎮庤箛顐︹偓鐔盒╅崝銊﹀閻厧宕楃拫鍐╃ゴ鐠囨洏鈧?
+- 閹靛婧傞惄顔界垼姒涙顓荤亸鍝勵嚟娴犲骸浜告径褏娈?58dp 鐠嬪啯鏆ｆ稉?42dp閿涘苯鑻熼弨顖涘瘮 22-68dp 閼煎啫娲跨拫鍐Ν閵?
+- 閹藉洦娼屽ù瀣槸閺咁噣鈧艾绔风仦鈧弨閫涜礋鐏忓嫬鍤幐澶愭尦閻欘剛鐝涢弨鎯с亣閿涘苯绱戞慨?缂佹挻娼?闁插秶鐤嗛弨鎯ф躬濞嗭紕楠囬幒褍鍩楅崠鐚寸礉闁灝鍘ら崪灞界殸閸戣鑻熼崚妤勵嚖鐟欙负鈧?
+- 閹靛婧傛稉搴㈡啚閺夊棜鍨堕崣鐗堝▕閸欐牔璐熼崗鍙橀煩鐏炴洜銇氱紒鍕閿涘奔绻氶幐浣规珮闁岸銆夐崪灞藉弿鐏炲繘銆夋径宥囨暏閸氬奔绔撮悩鑸碘偓浣规簚閵?
 
-### 风险变更
-- 高强度幅度/速度会显著提高难度；已保留低速、低幅度、目标尺寸和点满才消失模式供用户自行调节。
-- 全屏模式复用当前页面状态，不额外写入持久化数据；退出全屏不会保存或重建成绩。
+### 妞嬪酣娅撻崣妯绘纯
+- 妤傛ê宸辨惔锕€绠欐惔?闁喎瀹虫导姘▔閽佹褰佹姗€姣︽惔锔肩幢瀹歌弓绻氶悾娆庣秵闁喆鈧椒缍嗛獮鍛閵嗕胶娲伴弽鍥ф槀鐎电鎷伴悙瑙勫姬閹靛秵绉锋径杈佸蹇庣返閻劍鍩涢懛顏囶攽鐠嬪啳濡妴?
+- 閸忋劌鐫嗗Ο鈥崇础婢跺秶鏁よぐ鎾冲妞ょ敻娼伴悩鑸碘偓渚婄礉娑撳秹顤傛径鏍у晸閸忋儲瀵旀稊鍛閺佺増宓侀敍娑⑩偓鈧崙鍝勫弿鐏炲繋绗夋导姘箽鐎涙ɑ鍨ㄩ柌宥呯紦閹存劗鍝楅妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`（通过，No issues found）
-- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_107-HAND-EYE-COORDINATION] - 2026-04-30
 
-### 原因
-- 用户要求完善「工具箱 - 人类测试中心 - 手眼协调测试」：现有模块过于简单，需要改为随机出现、移动、消失的目标，并新增类似手机游戏摇杆瞄准射击的独立子模块。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐎瑰苯鏉介妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸娑擃厼绺?- 閹靛婧傞崡蹇氱殶濞村鐦妴宥忕窗閻滅増婀佸Ο鈥虫健鏉╁洣绨粻鈧崡鏇礉闂団偓鐟曚焦鏁兼稉娲閺堝搫鍤悳鑸偓浣盒╅崝銊ｂ偓浣圭Х婢惰京娈戦惄顔界垼閿涘苯鑻熼弬鏉款杻缁鎶€閹靛婧€濞撳憡鍨欓幗鍥ㄦ綄閻嫬鍣亸鍕毊閻ㄥ嫮瀚粩瀣摍濡€虫健閵?
 
-### 新增
-- 新增摇杆手眼协调测试入口，使用虚拟摇杆移动准星并点击射击。
-- 摇杆测试支持单位时间测试和目标总数测试两种方案。
-- 摇杆测试新增准星响应位移速率设置，以及命中后立即刷新/随机延迟刷新设置。
-- 新增手眼协调 smoke test，覆盖随机目标设置、摇杆模式、射击按钮和模式切换。
+### 閺傛澘顤?
+- 閺傛澘顤冮幗鍥ㄦ綄閹靛婧傞崡蹇氱殶濞村鐦崗銉ュ經閿涘奔濞囬悽銊ㄦ珓閹风喐鎲為弶鍡櫺╅崝銊ュ櫙閺勭喎鑻熼悙鐟板毊鐏忓嫬鍤妴?
+- 閹藉洦娼屽ù瀣槸閺€顖涘瘮閸楁洑缍呴弮鍫曟？濞村鐦崪宀€娲伴弽鍥ㄢ偓缁樻殶濞村鐦稉銈囶潚閺傝顢嶉妴?
+- 閹藉洦娼屽ù瀣槸閺傛澘顤冮崙鍡樻Е閸濆秴绨叉担宥囆╅柅鐔哄芳鐠佸墽鐤嗛敍灞间簰閸欏﹤鎳℃稉顓炴倵缁斿宓嗛崚閿嬫煀/闂呭繑婧€瀵ゆ儼绻滈崚閿嬫煀鐠佸墽鐤嗛妴?
+- 閺傛澘顤冮幍瀣簜閸楀繗鐨?smoke test閿涘矁顩惄鏍閺堣櫣娲伴弽鍥啎缂冾喓鈧焦鎲為弶鍡樐佸蹇嬧偓浣哥殸閸戠粯瀵滈柦顔兼嫲濡€崇础閸掑洦宕查妴?
 
-### 修改
-- 手眼协调测试由固定往返目标改为随机延迟出现、随机位置生成、按设置时长快速移动并消失的目标。
-- 手眼协调测试新增可折叠设置：轮数、显示移动时长、随机运动幅度、速度、需要点击次数。
-- 手眼协调统计扩展为成功、漏掉、点空、平均反应延迟和逐轮明细。
-- 人类测试中心入口更新为 18 个本地趣味测试，并补充摇杆手眼协调卡片。
-- 将时间感知和手眼协调相关实现拆分为独立 part 文件，收口 `toolbox_human_tests_action.dart` 文件体量。
+### 娣囶喗鏁?
+- 閹靛婧傞崡蹇氱殶濞村鐦悽鍗炴祼鐎规艾绶氭潻鏃傛窗閺嶅洦鏁兼稉娲閺堝搫娆㈡潻鐔峰毉閻滆埇鈧線娈㈤張杞扮秴缂冾喚鏁撻幋鎰┾偓浣瑰瘻鐠佸墽鐤嗛弮鍫曟毐韫囶偊鈧喓些閸斻劌鑻熷☉鍫濄亼閻ㄥ嫮娲伴弽鍥モ偓?
+- 閹靛婧傞崡蹇氱殶濞村鐦弬鏉款杻閸欘垱濮岄崣鐘侯啎缂冾噯绱版潪顔芥殶閵嗕焦妯夌粈铏剐╅崝銊︽闂€瑁も偓渚€娈㈤張楦跨箥閸斻劌绠欐惔锔衡偓渚€鈧喎瀹抽妴渚€娓剁憰浣哄仯閸戠粯顐奸弫鑸偓?
+- 閹靛婧傞崡蹇氱殶缂佺喕顓搁幍鈺佺潔娑撶儤鍨氶崝鐔粹偓浣圭础閹哄鈧胶鍋ｇ粚鎭掆偓浣搁挬閸у洤寮芥惔鏂挎鏉╃喎鎷伴柅鎰枂閺勫海绮忛妴?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃崗銉ュ經閺囧瓨鏌婃稉?18 娑擃亝婀伴崷鎷屽彯閸涜櫕绁寸拠鏇礉楠炴儼藟閸忓懏鎲為弶鍡樺閻厧宕楃拫鍐ㄥ幢閻楀洢鈧?
+- 鐏忓棙妞傞梻瀛樺妳閻儱鎷伴幍瀣簜閸楀繗鐨熼惄绋垮彠鐎圭偟骞囬幏鍡楀瀻娑撹櫣瀚粩?part 閺傚洣娆㈤敍灞炬暪閸?`toolbox_human_tests_action.dart` 閺傚洣娆㈡担鎾诲櫤閵?
 
-### 风险变更
-- 手眼协调与摇杆测试均只在当前页面即时展示结果，不写入 AppState、主数据库或学习记录。
-- 新增动画与计时器均通过 token、Timer 取消和 AnimationController 停止收口，降低重置/退出后的串场风险。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹靛婧傞崡蹇氱殶娑撳孩鎲為弶鍡樼ゴ鐠囨洖娼庨崣顏勬躬瑜版挸澧犳い鐢告桨閸楄櫕妞傜仦鏇犮仛缂佹挻鐏夐敍灞肩瑝閸愭瑥鍙?AppState閵嗕椒瀵岄弫鐗堝祦鎼存挻鍨ㄧ€涳缚绡勭拋鏉跨秿閵?
+- 閺傛澘顤冮崝銊ф暰娑撳氦顓搁弮璺烘珤閸у洭鈧俺绻?token閵嗕箑imer 閸欐牗绉烽崪?AnimationController 閸嬫粍顒涢弨璺哄經閿涘矂妾锋担搴ㄥ櫢缂?闁偓閸戝搫鎮楅惃鍕閸︽椽顥撻梽鈹库偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_time_perception.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_time_perception.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`（通过，No issues found）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；`test/ui_smoke_test.dart` 仍有既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_time_perception.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_time_perception.dart lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_joystick.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娌梩est/ui_smoke_test.dart` 娴犲秵婀侀弮銏℃箒 const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "joystick coordination exposes joystick modes and controls" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_106-TIME-PERCEPTION-RANDOM-TARGETS] - 2026-04-30
 
-### 原因
-- 用户反馈「工具箱 - 人类测试中心 - 时间感知测试」存在点击状态与颜色表达反向、按钮编号造成歧义、目标时间固定，以及缺少最大时间和最小单位设置的问题。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗苯浼愰崗椋庮唸 - 娴滆櫣琚ù瀣槸娑擃厼绺?- 閺冨爼妫块幇鐔虹叀濞村鐦妴宥呯摠閸︺劎鍋ｉ崙鑽ゅЦ閹椒绗屾０婊嗗鐞涖劏鎻崣宥呮倻閵嗕焦瀵滈柦顔剧椽閸欑兘鈧姵鍨氬褌绠熼妴浣烘窗閺嶅洦妞傞梻鏉戞祼鐎规熬绱濇禒銉ュ挤缂傚搫鐨張鈧径褎妞傞梻鏉戞嫲閺堚偓鐏忓繐宕熸担宥堫啎缂冾喚娈戦梻顕€顣介妴?
 
-### 新增
-- 时间感知测试新增最大目标时间设置，可在当前随机单位约束下控制目标时刻范围。
-- 时间感知测试新增最小随机单位设置，支持分钟、秒、毫秒和微秒四档。
-- 新增定向 smoke test，覆盖时间感知测试设置、随机目标按钮、无编号按钮和点击后显示实际时间/误差。
+### 閺傛澘顤?
+- 閺冨爼妫块幇鐔虹叀濞村鐦弬鏉款杻閺堚偓婢堆呮窗閺嶅洦妞傞梻纾嬵啎缂冾噯绱濋崣顖氭躬瑜版挸澧犻梾蹇旀簚閸楁洑缍呯痪锔芥将娑撳甯堕崚鍓佹窗閺嶅洦妞傞崚鏄忓瘱閸ユ番鈧?
+- 閺冨爼妫块幇鐔虹叀濞村鐦弬鏉款杻閺堚偓鐏忓繘娈㈤張鍝勫礋娴ｅ秷顔曠純顕嗙礉閺€顖涘瘮閸掑棝鎸撻妴浣侯潡閵嗕焦顕犵粔鎺戞嫲瀵邦喚顫楅崶娑欍€傞妴?
+- 閺傛澘顤冪€规艾鎮?smoke test閿涘矁顩惄鏍ㄦ闂傚瓨鍔呴惌銉︾ゴ鐠囨洝顔曠純顔衡偓渚€娈㈤張铏规窗閺嶅洦瀵滈柦顔衡偓浣规￥缂傛牕褰块幐澶愭尦閸滃瞼鍋ｉ崙璇叉倵閺勫墽銇氱€圭偤妾弮鍫曟？/鐠囶垰妯婇妴?
 
-### 修改
-- 时间感知测试默认改为单目标节点；连续节点变为独立开关，开启后才显示 2-6 个连续节点数量设置。
-- 时间感知目标由固定等差时间改为每轮开始时在范围内随机生成，并按时间从早到晚排列。
-- 时间按钮不再显示 `#1/#2` 编号，改为通过目标时间和当前高亮状态表达顺序。
-- 点击后同一按钮内展示目标时间、实际点击时间和误差，已点击、当前待点、候选目标使用不同图标、边框和色块区分。
-- 扩展页面说明，明确“按钮不显示编号、点击后在按钮内显示结果、单位用于随机粒度”的操作语义。
+### 娣囶喗鏁?
+- 閺冨爼妫块幇鐔虹叀濞村鐦妯款吇閺€閫涜礋閸楁洜娲伴弽鍥Ν閻愮櫢绱辨潻鐐电敾閼哄倻鍋ｉ崣妯硅礋閻欘剛鐝涘鈧崗绛圭礉瀵偓閸氼垰鎮楅幍宥嗘▔缁€?2-6 娑擃亣绻涚紒顓″Ν閻愯鏆熼柌蹇氼啎缂冾喓鈧?
+- 閺冨爼妫块幇鐔虹叀閻╊喗鐖ｉ悽鍗炴祼鐎规氨鐡戝顔芥闂傚瓨鏁兼稉鐑樼槨鏉烆喖绱戞慨瀣閸︺劏瀵栭崶鏉戝敶闂呭繑婧€閻㈢喐鍨氶敍灞借嫙閹稿妞傞梻缈犵矤閺冣晛鍩岄弲姘笓閸掓ぜ鈧?
+- 閺冨爼妫块幐澶愭尦娑撳秴鍟€閺勫墽銇?`#1/#2` 缂傛牕褰块敍灞炬暭娑撴椽鈧俺绻冮惄顔界垼閺冨爼妫块崪灞界秼閸撳秹鐝禍顔惧Ц閹浇銆冩潏楣冦€庢惔蹇嬧偓?
+- 閻愮懓鍤崥搴℃倱娑撯偓閹稿鎸抽崘鍛潔缁€铏规窗閺嶅洦妞傞梻娣偓浣哥杽闂勫懐鍋ｉ崙缁樻闂傛潙鎷扮拠顖氭▕閿涘苯鍑￠悙鐟板毊閵嗕礁缍嬮崜宥呯窡閻愬箍鈧礁鈧瑩鈧娲伴弽鍥﹀▏閻劋绗夐崥灞芥禈閺嶅洢鈧浇绔熷鍡楁嫲閼规彃娼￠崠鍝勫瀻閵?
+- 閹碘晛鐫嶆い鐢告桨鐠囧瓨妲戦敍灞炬绾喒鈧粍瀵滈柦顔荤瑝閺勫墽銇氱紓鏍у娇閵嗕胶鍋ｉ崙璇叉倵閸︺劍瀵滈柦顔煎敶閺勫墽銇氱紒鎾寸亯閵嗕礁宕熸担宥囨暏娴滃酣娈㈤張铏圭煈鎼达腹鈧繄娈戦幙宥勭稊鐠囶厺绠熼妴?
 
-### 风险变更
-- 微秒粒度只影响目标生成粒度，移动端实际点击仍受设备和系统事件精度影响；结果以实际点击时间和误差展示，避免把微秒档误解为可稳定达到的人工精度。
-- 本轮仅修改时间感知测试局部状态和展示，不接入持久化、AppState 或其它人类测试子模块。
+### 妞嬪酣娅撻崣妯绘纯
+- 瀵邦喚顫楃划鎺戝閸欘亜濂栭崫宥囨窗閺嶅洨鏁撻幋鎰煈鎼达讣绱濈粔璇插З缁旑垰鐤勯梽鍛仯閸戣绮涢崣妤勵啎婢跺洤鎷扮化鑽ょ埠娴滃娆㈢划鎯у瑜板崬鎼烽敍娑氱波閺嬫粈浜掔€圭偤妾悙鐟板毊閺冨爼妫块崪宀冾嚖瀹割喖鐫嶇粈鐚寸礉闁灝鍘ら幎濠備簳缁夋帗銆傜拠顖澬掓稉鍝勫讲缁嬪啿鐣炬潏鎯у煂閻ㄥ嫪姹夊銉х翱鎼达负鈧?
+- 閺堫剝鐤嗘禒鍛叏閺€瑙勬闂傚瓨鍔呴惌銉︾ゴ鐠囨洖鐪柈銊уЦ閹礁鎷扮仦鏇犮仛閿涘奔绗夐幒銉ュ弳閹镐椒绠欓崠鏍モ偓涓刾pState 閹存牕鍙剧€瑰啩姹夌猾缁樼ゴ鐠囨洖鐡欏Ο鈥虫健閵?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_action.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart test/ui_smoke_test.dart`（通过；`test/ui_smoke_test.dart` 仍有既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "time perception randomizes targets and shows tap result" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_action.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍娌梩est/ui_smoke_test.dart` 娴犲秵婀侀弮銏℃箒 const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "time perception randomizes targets and shows tap result" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_105-DYNAMIC-VISION-RESET-CONFIRM] - 2026-04-30
 
-### 原因
-- 用户反馈小球数量模式答对提示会暴露下一轮难度随机策略；动态视力设置弹窗在非当前轮次进行中也会出现，且确认后自动开始导致每改一项都被迫重开；字符识别模式缺少明确的重置开始按钮。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯鐏忓繒鎮嗛弫浼村櫤濡€崇础缁涙柨顕幓鎰仛娴兼碍姣氶棁韫瑓娑撯偓鏉烆噣姣︽惔锕傛閺堣櫣鐡ラ悾銉幢閸斻劍鈧浇顫嬮崝娑滎啎缂冾喖鑴婄粣妤€婀棃鐐茬秼閸撳秷鐤嗗▎陇绻樼悰灞艰厬娑旂喍绱伴崙铏瑰箛閿涘奔绗栫涵顔款吇閸氬氦鍤滈崝銊ョ磻婵顕遍懛瀛樼槨閺€閫涚妞ゅ綊鍏樼悮顐ユ彥闁插秴绱戦敍娑樼摟缁楋箒鐦戦崚顐Ｄ佸蹇曞繁鐏忔垶妲戠涵顔炬畱闁插秶鐤嗗鈧慨瀣瘻闁筋喓鈧?
 
-### 新增
-- 字符识别模式新增常驻「重置开始」按钮，便于在未完成或完成后回到初始等待开始状态。
+### 閺傛澘顤?
+- 鐎涙顑佺拠鍡楀焼濡€崇础閺傛澘顤冪敮鎼佲敆閵嗗矂鍣哥純顔肩磻婵鈧秵瀵滈柦顕嗙礉娓氬じ绨崷銊︽弓鐎瑰本鍨氶幋鏍х暚閹存劕鎮楅崶鐐插煂閸掓繂顫愮粵澶婄窡瀵偓婵濮搁幀浣碘偓?
 
-### 修改
-- 动态视力设置确认仅在当前轮次观察或答题阶段出现；历史轮次、反馈结果或等待下一轮状态下修改设置会直接应用并重置，不再弹窗。
-- 设置确认与进行中切换模式确认后只应用设置并重置，不再自动开始；开始动作始终由用户点击触发。
-- 小球数量模式答对反馈改为简短确认，移除“下一轮在等级范围内随机抽取数量和速度”的提示。
+### 娣囶喗鏁?
+- 閸斻劍鈧浇顫嬮崝娑滎啎缂冾喚鈥樼拋銈勭矌閸︺劌缍嬮崜宥堢枂濞喡ゎ潎鐎电喐鍨ㄧ粵鏃堫暯闂冭埖顔岄崙铏瑰箛閿涙稑宸婚崣鑼剁枂濞喡扳偓浣稿冀妫ｅ牏绮ㄩ弸婊勫灗缁涘绶熸稉瀣╃鏉烆喚濮搁幀浣风瑓娣囶喗鏁肩拋鍓х枂娴兼氨娲块幒銉ョ安閻劌鑻熼柌宥囩枂閿涘奔绗夐崘宥呰剨缁愭ぜ鈧?
+- 鐠佸墽鐤嗙涵顔款吇娑撳氦绻樼悰灞艰厬閸掑洦宕插Ο鈥崇础绾喛顓婚崥搴″涧鎼存梻鏁ょ拋鍓х枂楠炲爼鍣哥純顕嗙礉娑撳秴鍟€閼奉亜濮╁鈧慨瀣剁幢瀵偓婵濮╂担婊冾潗缂佸牏鏁遍悽銊﹀煕閻愮懓鍤憴锕€褰傞妴?
+- 鐏忓繒鎮嗛弫浼村櫤濡€崇础缁涙柨顕崣宥夘洯閺€閫涜礋缁犫偓閻厾鈥樼拋銈忕礉缁夊娅庨垾婊€绗呮稉鈧潪顔兼躬缁涘楠囬懠鍐ㄦ纯閸愬懘娈㈤張鐑樺▕閸欐牗鏆熼柌蹇撴嫲闁喎瀹抽垾婵堟畱閹绘劗銇氶妴?
 
-### 风险变更
-- 取消自动开始后，用户需要多点一次开始；该行为符合“开始始终由用户点击”的新边界，并避免设置调整时连续弹窗/自动重开。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸欐牗绉烽懛顏勫З瀵偓婵鎮楅敍宀€鏁ら幋鐑芥付鐟曚礁顦块悙閫涚濞嗏€崇磻婵绱辩拠銉攽娑撹櫣顑侀崥鍫氣偓婊冪磻婵顫愮紒鍫㈡暠閻劍鍩涢悙鐟板毊閳ユ繄娈戦弬鎷岀珶閻ｅ矉绱濋獮鍫曚缉閸忓秷顔曠純顔跨殶閺佸瓨妞傛潻鐐电敾瀵湱鐛?閼奉亜濮╅柌宥呯磻閵?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart`（通过，No issues found）
-- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision supports custom symbols and restart confirm" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision supports custom symbols and restart confirm" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_104-DYNAMIC-VISION-RANDOMIZED-SETTINGS] - 2026-04-30
 
-### 原因
-- 用户反馈动态视力字符识别需要多字符/自定义组合；小球数量模式默认多色会降低辨识难度，观察时间需要可输入；数量与速度线性增长会让答案过于明显；测试进行中设置不可改需要优化为确认后自动重置并开始。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閸斻劍鈧浇顫嬮崝娑樼摟缁楋箒鐦戦崚顐︽付鐟曚礁顦跨€涙顑?閼奉亜鐣炬稊澶岀矋閸氬牞绱辩亸蹇曟倖閺佷即鍣哄Ο鈥崇础姒涙顓绘径姘冲娴兼岸妾锋担搴ら哺鐠囧棝姣︽惔锔肩礉鐟欏倸鐧傞弮鍫曟？闂団偓鐟曚礁褰叉潏鎾冲弳閿涙稒鏆熼柌蹇庣瑢闁喎瀹崇痪鎸庘偓褍顤冮梹澶哥窗鐠佲晝鐡熷鍫ｇ箖娴滃孩妲戦弰鎾呯幢濞村鐦潻娑滎攽娑擃叀顔曠純顔荤瑝閸欘垱鏁奸棁鈧憰浣风喘閸栨牔璐熺涵顔款吇閸氬氦鍤滈崝銊╁櫢缂冾喖鑻熷鈧慨瀣ㄢ偓?
 
-### 新增
-- 字符识别新增「字符组合长度」设置，并支持自定义组合输入，按逗号或中文逗号分割。
-- 小球数量新增同色/多色设置，默认同色。
-- 小球数量新增观察时长秒数输入框，滑杆范围扩展到 0.8-12 秒。
-- 进行中修改动态视力设置时新增确认弹窗；确认后会取消旧轮次、应用设置、重置并自动开始新一轮。
+### 閺傛澘顤?
+- 鐎涙顑佺拠鍡楀焼閺傛澘顤冮妴灞界摟缁楋妇绮嶉崥鍫ユ毐鎼达负鈧秷顔曠純顕嗙礉楠炶埖鏁幐浣藉殰鐎规矮绠熺紒鍕値鏉堟挸鍙嗛敍灞惧瘻闁褰块幋鏍﹁厬閺傚洭鈧褰块崚鍡楀閵?
+- 鐏忓繒鎮嗛弫浼村櫤閺傛澘顤冮崥宀冨/婢舵俺澹婄拋鍓х枂閿涘矂绮拋銈呮倱閼瑰眰鈧?
+- 鐏忓繒鎮嗛弫浼村櫤閺傛澘顤冪憴鍌氱檪閺冨爼鏆辩粔鎺撴殶鏉堟挸鍙嗗鍡礉濠婃垶娼岄懠鍐ㄦ纯閹碘晛鐫嶉崚?0.8-12 缁夋帇鈧?
+- 鏉╂稖顢戞稉顓濇叏閺€鐟板З閹浇顫嬮崝娑滎啎缂冾喗妞傞弬鏉款杻绾喛顓诲鍦崶閿涙稓鈥樼拋銈呮倵娴兼艾褰囧☉鍫熸＋鏉烆喗顐奸妴浣哥安閻劏顔曠純顔衡偓渚€鍣哥純顔艰嫙閼奉亜濮╁鈧慨瀣煀娑撯偓鏉烆喓鈧?
 
-### 修改
-- 小球数量与速度改为基于等级范围随机抽样，不再直接线性公开下一轮答案。
-- 小球数量模式指标改为显示数量范围和速度范围，避免直接暴露本轮小球数量。
-- 动态视力实现继续拆分为逻辑、绘制/控件、UI 构建三个 part 文件，保持单文件低于 1000 行。
+### 娣囶喗鏁?
+- 鐏忓繒鎮嗛弫浼村櫤娑撳酣鈧喎瀹抽弨閫涜礋閸╄桨绨粵澶岄獓閼煎啫娲块梾蹇旀簚閹惰姤鐗遍敍灞肩瑝閸愬秶娲块幒銉у殠閹冨彆瀵偓娑撳绔存潪顔剧摕濡楀牄鈧?
+- 鐏忓繒鎮嗛弫浼村櫤濡€崇础閹稿洦鐖ｉ弨閫涜礋閺勫墽銇氶弫浼村櫤閼煎啫娲块崪宀勨偓鐔峰閼煎啫娲块敍宀勪缉閸忓秶娲块幒銉︽瘹闂囧弶婀版潪顔肩毈閻炲啯鏆熼柌蹇嬧偓?
+- 閸斻劍鈧浇顫嬮崝娑樼杽閻滄壆鎴风紒顓熷閸掑棔璐熼柅鏄忕帆閵嗕胶绮崚?閹貉傛閵嗕箒I 閺嬪嫬缂撴稉澶夐嚋 part 閺傚洣娆㈤敍灞肩箽閹镐礁宕熼弬鍥︽娴ｅ簼绨?1000 鐞涘被鈧?
 
-### 风险变更
-- 随机化难度可能造成同等级体验波动；已限定在等级对应范围内随机，避免无界跳变。
-- 自定义字符组合少于 2 个有效项时会回退到内置组合生成，避免选项不足。
+### 妞嬪酣娅撻崣妯绘纯
+- 闂呭繑婧€閸栨牠姣︽惔锕€褰查懗浠嬧偓鐘冲灇閸氬瞼鐡戠痪褌缍嬫灞惧皾閸旑煉绱卞鏌ユ鐎规艾婀粵澶岄獓鐎电懓绨查懠鍐ㄦ纯閸愬懘娈㈤張鐚寸礉闁灝鍘ら弮鐘垫櫕鐠哄啿褰夐妴?
+- 閼奉亜鐣炬稊澶婄摟缁楋妇绮嶉崥鍫濈毌娴?2 娑擃亝婀侀弫鍫ャ€嶉弮鏈电窗閸ョ偤鈧偓閸掓澘鍞寸純顔剧矋閸氬牏鏁撻幋鎰剁礉闁灝鍘ら柅澶愩€嶆稉宥堝喕閵?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart`（通过，No issues found）
-- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision supports custom symbols and restart confirm" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_ui.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision supports custom symbols and restart confirm" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_103-DYNAMIC-VISION-BALL-COUNT-SETTINGS] - 2026-04-30
 
-### 原因
-- 用户要求优化「工具箱 - 人类测试 - 动态视力测试」子模块：新增参考网页规则的小球数量测试模式，并为当前测试和新模式补齐可折叠设置。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娴兼ê瀵查妴灞戒紣閸忛顔?- 娴滆櫣琚ù瀣槸 - 閸斻劍鈧浇顫嬮崝娑欑ゴ鐠囨洏鈧秴鐡欏Ο鈥虫健閿涙碍鏌婃晶鐐插棘閼板啰缍夋い浣冾潐閸掓瑧娈戠亸蹇曟倖閺佷即鍣哄ù瀣槸濡€崇础閿涘苯鑻熸稉鍝勭秼閸撳秵绁寸拠鏇炴嫲閺傜増膩瀵繗藟姒绘劕褰查幎妯哄綌鐠佸墽鐤嗛妴?
 
-### 新增
-- 动态视力测试新增「小球数量」模式：舞台内随机生成移动碰撞小球，观察结束后选择数量；答对后提升等级，小球数量与速度随增长曲线递增。
-- 新增动态视力模式切换入口，可在「字符识别」和「小球数量」之间切换。
-- 新增动态视力 smoke test，覆盖页面渲染、小球数量模式与设置面板入口。
+### 閺傛澘顤?
+- 閸斻劍鈧浇顫嬮崝娑欑ゴ鐠囨洘鏌婃晶鐐偓灞界毈閻炲啯鏆熼柌蹇嬧偓宥喣佸蹇ョ窗閼哥偛褰撮崘鍛存閺堣櫣鏁撻幋鎰╅崝銊ь潾閹剧偛鐨悶鍐跨礉鐟欏倸鐧傜紒鎾存将閸氬酣鈧瀚ㄩ弫浼村櫤閿涙稓鐡熺€电懓鎮楅幓鎰磳缁涘楠囬敍灞界毈閻炲啯鏆熼柌蹇庣瑢闁喎瀹抽梾蹇擃杻闂€鎸庢锤缁惧潡鈧帒顤冮妴?
+- 閺傛澘顤冮崝銊︹偓浣筋潒閸旀稒膩瀵繐鍨忛幑銏犲弳閸欙綇绱濋崣顖氭躬閵嗗苯鐡х粭锕佺槕閸掝偁鈧秴鎷伴妴灞界毈閻炲啯鏆熼柌蹇嬧偓宥勭闂傛潙鍨忛幑顫偓?
+- 閺傛澘顤冮崝銊︹偓浣筋潒閸?smoke test閿涘矁顩惄鏍€夐棃銏¤閺屾挶鈧礁鐨悶鍐╂殶闁插繑膩瀵繋绗岀拋鍓х枂闂堛垺婢橀崗銉ュ經閵?
 
-### 修改
-- 现有字符识别测试新增可折叠设置：测试轮次数、基础移动速度、上下摆动幅度与增长曲线。
-- 小球数量模式新增可折叠设置：起始数量、最大数量、基础移动速度、观察时长与增长曲线。
-- 将动态视力测试拆分到独立 part 文件，并把小球 Painter 与设置小组件拆入辅助 part，避免视觉测试文件继续膨胀。
-- 人类测试入口中的动态视力描述更新为双模式语义。
+### 娣囶喗鏁?
+- 閻滅増婀佺€涙顑佺拠鍡楀焼濞村鐦弬鏉款杻閸欘垱濮岄崣鐘侯啎缂冾噯绱板ù瀣槸鏉烆喗顐奸弫鑸偓浣哥唨绾偓缁夎濮╅柅鐔峰閵嗕椒绗傛稉瀣啘閸斻劌绠欐惔锔跨瑢婢х偤鏆遍弴鑼殠閵?
+- 鐏忓繒鎮嗛弫浼村櫤濡€崇础閺傛澘顤冮崣顖涘閸欑姾顔曠純顕嗙窗鐠у嘲顫愰弫浼村櫤閵嗕焦娓舵径褎鏆熼柌蹇嬧偓浣哥唨绾偓缁夎濮╅柅鐔峰閵嗕浇顫囩€电喐妞傞梹澶哥瑢婢х偤鏆遍弴鑼殠閵?
+- 鐏忓棗濮╅幀浣筋潒閸旀稒绁寸拠鏇熷閸掑棗鍩岄悪顒傜彌 part 閺傚洣娆㈤敍灞借嫙閹跺﹤鐨悶?Painter 娑撳氦顔曠純顔肩毈缂佸嫪娆㈤幏鍡楀弳鏉堝懎濮?part閿涘矂浼╅崗宥堫潒鐟欏绁寸拠鏇熸瀮娴犲墎鎴风紒顓″暙閼斥偓閵?
+- 娴滆櫣琚ù瀣槸閸忋儱褰涙稉顓犳畱閸斻劍鈧浇顫嬮崝娑欏伎鏉╃増娲块弬棰佽礋閸欏本膩瀵繗顕㈡稊澶堚偓?
 
-### 风险变更
-- 小球数量模式引入持续动画；已限制最大球数并使用单个 `CustomPainter` 绘制，避免生成大量 Widget。
-- 本轮不接入成绩持久化，不修改主路由、其他人类测试子模块或 AppState 数据模型。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐏忓繒鎮嗛弫浼村櫤濡€崇础瀵洖鍙嗛幐浣虹敾閸斻劎鏁鹃敍娑樺嚒闂勬劕鍩楅張鈧径褏鎮嗛弫鏉胯嫙娴ｈ法鏁ら崡鏇氶嚋 `CustomPainter` 缂佹ê鍩楅敍宀勪缉閸忓秶鏁撻幋鎰亣闁?Widget閵?
+- 閺堫剝鐤嗘稉宥嗗复閸忋儲鍨氱紒鈺傚瘮娑斿懎瀵查敍灞肩瑝娣囶喗鏁兼稉鏄忕熅閻究鈧礁鍙炬禒鏍︽眽缁粯绁寸拠鏇炵摍濡€虫健閹?AppState 閺佺増宓佸Ο鈥崇€烽妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart test/ui_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart test/ui_smoke_test.dart`（目标动态视力文件通过；`test/ui_smoke_test.dart` 仍有既有 const/final info）
-- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart test/ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_visual.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision.dart lib/src/ui/pages/toolbox_human_tests_dynamic_vision_parts.dart test/ui_smoke_test.dart`閿涘牏娲伴弽鍥уЗ閹浇顫嬮崝娑欐瀮娴犲爼鈧俺绻冮敍娌梩est/ui_smoke_test.dart` 娴犲秵婀侀弮銏℃箒 const/final info閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "dynamic vision exposes ball count mode and settings" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_102-ROULETTE-LOW-METAL-SFX] - 2026-04-29
 
-### 原因
-- 用户反馈俄罗斯轮盘赌扳机和弹仓音效过于木制空腔化、过于清脆，希望更接近低沉金属摩擦与咔嚓声。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯娣囧嫮缍忛弬顖濈枂閻╂绁甸幍铏簚閸滃苯鑴婃禒鎾荤叾閺佸牐绻冩禍搴㈡躬閸掑墎鈹栭懙鏂垮閵嗕浇绻冩禍搴㈢閼村棴绱濈敮灞炬箿閺囧瓨甯存潻鎴滅秵濞屽鍣剧仦鐐存噰閹匡缚绗岄崪鏂挎婢硅埇鈧?
 
-### 修改
-- 重新生成 `assets/toolbox/games/roulette/revolver_click.wav`：从短促清脆点击改为 240ms 低频金属双段咔嚓，加入短摩擦尾音。
-- 重新生成 `assets/toolbox/games/roulette/cylinder_spin.wav`：改为 980ms 低沉金属拖擦、棘轮分段和落位声。
-- 调低轮盘赌中准备、击发、空膛与弹仓旋转播放速率，避免播放参数把金属音色抬得过亮。
+### 娣囶喗鏁?
+- 闁插秵鏌婇悽鐔稿灇 `assets/toolbox/games/roulette/revolver_click.wav`閿涙矮绮犻惌顓濈妇濞撳懓鍓㈤悙鐟板毊閺€閫涜礋 240ms 娴ｅ酣顣堕柌鎴濈潣閸欏本顔岄崪鏂挎閿涘苯濮為崗銉х叚閹解晜鎽濈亸楣冪叾閵?
+- 闁插秵鏌婇悽鐔稿灇 `assets/toolbox/games/roulette/cylinder_spin.wav`閿涙碍鏁兼稉?980ms 娴ｅ孩鐭囬柌鎴濈潣閹锋牗鎽濋妴浣诡棟鏉烆喖鍨庡▓闈涙嫲閽€鎴掔秴婢硅埇鈧?
+- 鐠嬪啩缍嗘潪顔炬磸鐠у奔鑵戦崙鍡楊槵閵嗕礁鍤崣鎴欌偓浣衡敄閼舵稐绗屽閫涚波閺冨娴嗛幘顓熸杹闁喓宸奸敍宀勪缉閸忓秵鎸遍弨鎯у棘閺佺増濡搁柌鎴濈潣闂婂疇澹婇幎顒€绶辨潻鍥﹀瘨閵?
 
-### 风险变更
-- 新音效更低沉，手机外放上低频体感会弱于耳机；已保留中低频金属泛音以增强可识别度。
-- 本轮不修改玩法逻辑、命中判定、视觉结构、路由或持久化。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺備即鐓堕弫鍫熸纯娴ｅ孩鐭囬敍灞惧閺堝搫顦婚弨鍙ョ瑐娴ｅ酣顣舵担鎾村妳娴兼艾鎬ユ禍搴も偓铏簚閿涙稑鍑℃穱婵堟殌娑擃厺缍嗘０鎴﹀櫨鐏炵偞纭鹃棅鍏呬簰婢х偛宸遍崣顖濈槕閸掝偄瀹抽妴?
+- 閺堫剝鐤嗘稉宥勬叏閺€鍦负濞夋洟鈧槒绶妴浣告嚒娑擃厼鍨界€规哎鈧浇顫嬬憴澶岀波閺嬪嫨鈧浇鐭鹃悽杈ㄥ灗閹镐椒绠欓崠鏍モ偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_mini_games_roulette.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
-- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，2 tests）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
-- 音频检查：`revolver_click.wav` 240ms / 44.1kHz / peak 0.455；`cylinder_spin.wav` 980ms / 44.1kHz / peak 0.315。
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_mini_games_roulette.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
+- 闂婃娊顣跺Λ鈧弻銉窗`revolver_click.wav` 240ms / 44.1kHz / peak 0.455閿涙矖cylinder_spin.wav` 980ms / 44.1kHz / peak 0.315閵?
 
 ## [Unreleased-PLAN_101-ROULETTE-REVOLVER-VISUAL-REFINE] - 2026-04-29
 
-### 原因
-- 用户要求俄罗斯轮盘赌舞台中的左轮手枪更接近真实左轮造型，同时背景不要过黑。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娣囧嫮缍忛弬顖濈枂閻╂绁甸懜鐐插酱娑擃厾娈戝锕佺枂閹靛鐏欓弴瀛樺复鏉╂垹婀＄€圭偛涔忔潪顕€鈧姴鐎烽敍灞芥倱閺冩儼鍎楅弲顖欑瑝鐟曚浇绻冩鎴欌偓?
 
-### 修改
-- 调亮俄罗斯轮盘赌主舞台背景，从近黑氛围改为暖灰、金属台面和柔和烟雾层，提升首屏可读性。
-- 重绘左轮细节：补充枪管上肋、准星、退壳杆、枪口层次、侧板螺丝、弹巢凹槽、击锤、握把木纹和防滑纹。
-- 保持弹仓状态、命中判定、音效、触觉和路由逻辑不变，仅调整展示层 Painter 与舞台配色。
+### 娣囶喗鏁?
+- 鐠嬪啩瀵掓穱鍕稄閺傤垵鐤嗛惄妯跨サ娑撴槒鍨堕崣鎷屽剹閺咁垽绱濇禒搴ょ箮姒涙垶鐨奸崶瀛樻暭娑撶儤娈╅悘鑸偓渚€鍣剧仦鐐插酱闂堛垹鎷伴弻鏂挎嫲閻戠喖娴樼仦鍌︾礉閹绘劕宕屾＃鏍х潌閸欘垵顕伴幀褋鈧?
+- 闁插秶绮锕佺枂缂佸棜濡敍姘乘夐崗鍛仚缁犫€茬瑐閼插鈧礁鍣弰鐔粹偓渚€鈧偓婢硅櫕娼岄妴浣圭仚閸欙絽鐪板▎掳鈧椒鏅堕弶鑳仾娑撴縿鈧礁鑴婂銏犲毈濡插鈧礁鍤柨銈冣偓浣瑰綑閹跺﹥婀痪鐟版嫲闂冨弶绮︾痪骞库偓?
+- 娣囨繃瀵斿閫涚波閻樿埖鈧降鈧礁鎳℃稉顓炲灲鐎规哎鈧線鐓堕弫鍫涒偓浣叫曠憴澶婃嫲鐠侯垳鏁遍柅鏄忕帆娑撳秴褰夐敍灞肩矌鐠嬪啯鏆ｇ仦鏇犮仛鐏?Painter 娑撳氦鍨堕崣浼村帳閼瑰眰鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_mini_games_roulette_view.dart lib/src/ui/pages/toolbox_mini_games_roulette_painters.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
-- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，2 tests）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_mini_games_roulette_view.dart lib/src/ui/pages/toolbox_mini_games_roulette_painters.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
 
 ## [Unreleased-PLAN_100-ROULETTE-TEXT-SFX-THREAD-FIX] - 2026-04-29
 
-### 原因
-- 用户反馈「工具箱 - 游戏中心 - 俄罗斯轮盘赌」仍存在中文乱码、拟真咔哒/咔咔声音异常、命中全屏血色闪烁与震动效果不足，以及 Android `audioplayers` 事件通道可能从非平台线程发送消息的风险。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗苯浼愰崗椋庮唸 - 濞撳憡鍨欐稉顓炵妇 - 娣囧嫮缍忛弬顖濈枂閻╂绁甸妴宥勭矝鐎涙ê婀稉顓熸瀮娑旇京鐖滈妴浣瑰珯閻喎鎸冮崫?閸滄柨鎸冩竟浼寸叾瀵倸鐖堕妴浣告嚒娑擃厼鍙忕仦蹇氼攨閼规煡妫悜浣风瑢闂囧洤濮╅弫鍫熺亯娑撳秷鍐婚敍灞间簰閸?Android `audioplayers` 娴滃娆㈤柅姘朵壕閸欘垵鍏樻禒搴ㄦ姜楠炲啿褰寸痪璺ㄢ柤閸欐垿鈧焦绉烽幁顖滄畱妞嬪酣娅撻妴?
 
-### 修改
-- 俄罗斯轮盘赌命中反馈增强为页面级震动 + root overlay 血色闪烁，保留短时衰减，避免持续高频闪。
-- 轮盘赌准备/重置/关闭音效时会停止残留效果音，降低爆炸声、旋转声或咔哒声串场概率。
-- 轮盘赌页面说明文案更新为拟真咔哒/咔咔机械声、血色闪烁、震动和爆炸音效语义。
-- 将轮盘赌主状态、展示构建和 Painter 绘制拆分为 3 个 part 文件，收口单文件超过 1000 行的问题。
-- 本地 `audioplayers_android` 覆盖包的 `EventHandler` 明确保证 `EventSink` 回调在 Android 主线程执行。
+### 娣囶喗鏁?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁甸崨鎴掕厬閸欏秹顩晶鐐插繁娑撴椽銆夐棃銏㈤獓闂囧洤濮?+ root overlay 鐞涒偓閼规煡妫悜渚婄礉娣囨繄鏆€閻厽妞傜悰鏉垮櫤閿涘矂浼╅崗宥嗗瘮缂侇參鐝０鎴︽／閵?
+- 鏉烆喚娲忕挧灞藉櫙婢?闁插秶鐤?閸忔娊妫撮棅铏櫏閺冩湹绱伴崑婊勵剾濞堝鏆€閺佸牊鐏夐棅绛圭礉闂勫秳缍嗛悥鍡欏仮婢硅埇鈧焦妫嗘潪顒€锛愰幋鏍ф寖閸濇帒锛愭稉鎻掓簚濮掑倻宸奸妴?
+- 鏉烆喚娲忕挧宀勩€夐棃銏ｎ嚛閺勫孩鏋冨鍫熸纯閺傞璐熼幏鐔烘埂閸滄柨鎼?閸滄柨鎸冮張鐑橆潾婢硅埇鈧浇顢呴懝鏌ユ／閻戜降鈧線娓块崝銊ユ嫲閻栧棛鍋㈤棅铏櫏鐠囶厺绠熼妴?
+- 鐏忓棜鐤嗛惄妯跨サ娑撹崵濮搁幀浣碘偓浣哥潔缁€鐑樼€鍝勬嫲 Painter 缂佹ê鍩楅幏鍡楀瀻娑?3 娑?part 閺傚洣娆㈤敍灞炬暪閸欙絽宕熼弬鍥︽鐡掑懓绻?1000 鐞涘瞼娈戦梻顕€顣介妴?
+- 閺堫剙婀?`audioplayers_android` 鐟曞棛娲婇崠鍛畱 `EventHandler` 閺勫海鈥樻穱婵婄槈 `EventSink` 閸ョ偠鐨熼崷?Android 娑撹崵鍤庣粙瀣⒔鐞涘被鈧?
 
-### 修复
-- 修复轮盘赌控制区、指标区和音效错误提示中的中文 `??` / `????` 乱码。
-- 新增中文 smoke test，覆盖「旋转弹仓」「扣动扳机」「舞台控制」等核心中文文案并拦截 `??` 回归。
+### 娣囶喖顦?
+- 娣囶喖顦叉潪顔炬磸鐠у本甯堕崚璺哄隘閵嗕焦瀵氶弽鍥у隘閸滃矂鐓堕弫鍫ユ晩鐠囶垱褰佺粈杞拌厬閻ㄥ嫪鑵戦弬?`??` / `????` 娑旇京鐖滈妴?
+- 閺傛澘顤冩稉顓熸瀮 smoke test閿涘矁顩惄鏍モ偓灞炬鏉烆剙鑴婃禒鎾扁偓宥冣偓灞惧⒏閸斻劍澹嬮張鎭掆偓宥冣偓宀冨灦閸欑増甯堕崚韬测偓宥囩搼閺嶇绺炬稉顓熸瀮閺傚洦顢嶉獮鑸靛閹?`??` 閸ョ偛缍婇妴?
 
-### 风险变更
-- 本轮不修改弹仓随机、命中判断、子弹数规则、路由和持久化逻辑。
-- 停止残留音效只发生在重置、新一轮旋转和关闭音效等明确边界动作。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘稉宥勬叏閺€鐟拌剨娴犳捇娈㈤張鎭掆偓浣告嚒娑擃厼鍨介弬顓溾偓浣哥摍瀵鏆熺憴鍕灟閵嗕浇鐭鹃悽鍗炴嫲閹镐椒绠欓崠鏍偓鏄忕帆閵?
+- 閸嬫粍顒涘▓瀣殌闂婅櫕鏅ラ崣顏勫絺閻㈢喎婀柌宥囩枂閵嗕焦鏌婃稉鈧潪顔芥鏉烆剙鎷伴崗鎶芥４闂婅櫕鏅ョ粵澶嬫绾喛绔熼悾灞藉З娴ｆ嚎鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_mini_games.dart lib/src/ui/pages/toolbox_mini_games_roulette.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
-- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，2 tests）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_mini_games.dart lib/src/ui/pages/toolbox_mini_games_roulette.dart test/toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_mini_games.dart test/toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/toolbox_mini_games_roulette_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
 
 ## [Unreleased-PLAN_099-ROULETTE-CINEMATIC-REDESIGN] - 2026-04-29
 
@@ -1905,1822 +2650,1822 @@
 
 ## [Unreleased-PLAN_098-HUMAN-TESTS-CHIMP-LUCK-SETTINGS-FOLD] - 2026-04-29
 
-### 原因
-- 用户追加人类测试细化需求：黑猩猩颜色顺序模式改为逐步展示并按目标颜色点击；全部子模块设置项要支持折叠展开；运气测试需要真实 5 卡样式、翻牌动画与翻后自动洗牌。
+### 閸樼喎娲?
+- 閻劍鍩涙潻钘夊娴滆櫣琚ù瀣槸缂佸棗瀵查棁鈧Ч鍌︾窗姒涙垹灏掗悮鈺咁杹閼规煡銆庢惔蹇斈佸蹇旀暭娑撴椽鈧劖顒炵仦鏇犮仛楠炶埖瀵滈惄顔界垼妫版粏澹婇悙鐟板毊閿涙稑鍙忛柈銊ョ摍濡€虫健鐠佸墽鐤嗘い纭咁洣閺€顖涘瘮閹舵ê褰旂仦鏇炵磻閿涙稖绻嶅鏃€绁寸拠鏇㈡付鐟曚胶婀＄€?5 閸椻剝鐗卞蹇嬧偓浣虹倳閻楀苯濮╅悽璁崇瑢缂堣鎮楅懛顏勫З濞叉澧濋妴?
 
-### 新增
-- 新增 `_HumanSettingsSection` 复用组件，支持设置区统一折叠/展开。
-- 运气测试新增 5 张卡牌翻转动画流程：点击翻牌、卡面展示结果、短暂停留后自动洗牌复位。
+### 閺傛澘顤?
+- 閺傛澘顤?`_HumanSettingsSection` 婢跺秶鏁ょ紒鍕閿涘本鏁幐浣筋啎缂冾喖灏紒鐔剁閹舵ê褰?鐏炴洖绱戦妴?
+- 鏉╂劖鐨靛ù瀣槸閺傛澘顤?5 瀵姴宕遍悧宀€鐐曟潪顒€濮╅悽缁樼ウ缁嬪绱伴悙鐟板毊缂堣崵澧濋妴浣稿幢闂堛垹鐫嶇粈铏圭波閺嬫嚎鈧胶鐓弳鍌氫粻閻ｆ瑥鎮楅懛顏勫З濞叉澧濇径宥勭秴閵?
 
-### 修改
-- 黑猩猩颜色顺序模式改为“依次显示颜色+位置（x1/x2/…）”，并新增目标颜色机制，仅按该颜色在序列中的位置顺序点击。
-- 黑猩猩颜色顺序模式每轮保证目标颜色至少出现 2 次，避免退化为单点点击。
-- 黑猩猩颜色顺序模式新增“颜色数量”可调，目标颜色由本轮序列自动指定。
-- 数字记忆、黑猩猩、斯特鲁普、时间感知、运气测试的设置项统一迁移到可折叠设置面板。
-- 斯特鲁普测试颜色池扩展并支持 3-12 动态调节。
-- 运气测试文案更新为 5 卡抽取与概率配置语义。
+### 娣囶喗鏁?
+- 姒涙垹灏掗悮鈺咁杹閼规煡銆庢惔蹇斈佸蹇旀暭娑撹　鈧粈绶峰▎鈩冩▔缁€娲杹閼?娴ｅ秶鐤嗛敍鍧?/x2/閳ワ讣绱氶垾婵撶礉楠炶埖鏌婃晶鐐垫窗閺嶅洭顤侀懝鍙夋簚閸掕绱濇禒鍛瘻鐠囥儵顤侀懝鎻掓躬鎼村繐鍨稉顓犳畱娴ｅ秶鐤嗘い鍝勭碍閻愮懓鍤妴?
+- 姒涙垹灏掗悮鈺咁杹閼规煡銆庢惔蹇斈佸蹇旂槨鏉烆喕绻氱拠浣烘窗閺嶅洭顤侀懝鑼跺殾鐏忔垵鍤悳?2 濞嗏槄绱濋柆鍨帳闁偓閸栨牔璐熼崡鏇犲仯閻愮懓鍤妴?
+- 姒涙垹灏掗悮鈺咁杹閼规煡銆庢惔蹇斈佸蹇旀煀婢х偐鈧粓顤侀懝鍙夋殶闁插繆鈧繂褰茬拫鍐跨礉閻╊喗鐖ｆ０婊嗗閻㈣鲸婀版潪顔肩碍閸掓鍤滈崝銊﹀瘹鐎规哎鈧?
+- 閺佹澘鐡х拋鏉跨箓閵嗕線绮﹂悮鈺冨皰閵嗕焦鏌夐悧褰掔灳閺咁喓鈧焦妞傞梻瀛樺妳閻儯鈧浇绻嶅鏃€绁寸拠鏇犳畱鐠佸墽鐤嗘い鍦埠娑撯偓鏉╀胶些閸掓澘褰查幎妯哄綌鐠佸墽鐤嗛棃銏℃緲閵?
+- 閺傤垳澹掓ご浣规珮濞村鐦０婊嗗濮圭姵澧跨仦鏇炶嫙閺€顖涘瘮 3-12 閸斻劍鈧浇鐨熼懞鍌樷偓?
+- 鏉╂劖鐨靛ù瀣槸閺傚洦顢嶉弴瀛樻煀娑?5 閸椻剝濞婇崣鏍︾瑢濮掑倻宸奸柊宥囩枂鐠囶厺绠熼妴?
 
-### 风险变更
-- 黑猩猩与运气测试都引入异步动画阶段，已通过 token/busy 状态锁防止串场和重复点击。
+### 妞嬪酣娅撻崣妯绘纯
+- 姒涙垹灏掗悮鈺€绗屾潻鎰毜濞村鐦柈钘夌穿閸忋儱绱撳銉ュЗ閻㈠妯佸▓纰夌礉瀹告煡鈧俺绻?token/busy 閻樿埖鈧線鏀ｉ梼鍙夘剾娑撴彃婧€閸滃矂鍣告径宥囧仯閸戞眹鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_action.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_action.dart`（通过，No issues found）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_action.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests_shared.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart lib/src/ui/pages/toolbox_human_tests_action.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`閿涘牓鈧俺绻冮敍?
 ## [Unreleased-PLAN_097-HUMAN-TESTS-ROUND2] - 2026-04-29
 
-### 原因
-- 用户要求对工具箱「人类测试」模块进行二期增强，重点覆盖反应测试、数字记忆、黑猩猩测试、视觉记忆、斯特鲁普、运气测试和时间感知测试，并明确本轮跳过瞄准测试扩展。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐎电懓浼愰崗椋庮唸閵嗗奔姹夌猾缁樼ゴ鐠囨洏鈧秵膩閸ф绻樼悰灞肩癌閺堢喎顤冨鐚寸礉闁插秶鍋ｇ憰鍡欐磰閸欏秴绨插ù瀣槸閵嗕焦鏆熺€涙顔囪箛鍡愨偓渚€绮﹂悮鈺冨皰濞村鐦妴浣筋潒鐟欏顔囪箛鍡愨偓浣规焿閻楀綊鐬鹃弲顔衡偓浣界箥濮樻梹绁寸拠鏇炴嫲閺冨爼妫块幇鐔虹叀濞村鐦敍灞借嫙閺勫海鈥橀張顒冪枂鐠哄疇绻冮惉鍕櫙濞村鐦幍鈺佺潔閵?
 
-### 新增
-- 反应测试改为「按下开始等待、松手结算」交互，并新增 5 次平均成绩对应的区间超越百分比反馈。
-- 数字记忆新增难度档位（初级/中级/高级/自定义）、自定义初始位数和数字停留时长配置。
-- 黑猩猩测试在经典模式外新增「顺序数字模式」与「颜色顺序模式」，支持数字/颜色切换速度与颜色目标数量调节。
-- 运气测试升级为 5 张卡牌抽取模型，并新增不同品质卡牌概率的可视化自定义滑杆。
-- 时间感知测试新增连续多时间节点模式，支持在多个目标时刻按顺序点击对应数字并输出节点误差。
+### 閺傛澘顤?
+- 閸欏秴绨插ù瀣槸閺€閫涜礋閵嗗本瀵滄稉瀣磻婵鐡戝鍛偓浣规緱閹靛绮ㄧ粻妞尖偓宥勬唉娴滄帪绱濋獮鑸垫煀婢?5 濞嗏€抽挬閸у洦鍨氱紒鈺侇嚠鎼存梻娈戦崠娲？鐡掑懓绉洪惂鎯у瀻濮ｆ柨寮芥＃鍫涒偓?
+- 閺佹澘鐡х拋鏉跨箓閺傛澘顤冮梾鎯у濡楋絼缍呴敍鍫濆灥缁?娑擃厾楠?妤傛楠?閼奉亜鐣炬稊澶涚礆閵嗕浇鍤滅€规矮绠熼崚婵嗩潗娴ｅ秵鏆熼崪灞炬殶鐎涙浠犻悾娆愭闂€鍧楀帳缂冾喓鈧?
+- 姒涙垹灏掗悮鈺傜ゴ鐠囨洖婀紒蹇撳悁濡€崇础婢舵牗鏌婃晶鐐偓宀勩€庢惔蹇旀殶鐎涙膩瀵繈鈧秳绗岄妴宀勵杹閼规煡銆庢惔蹇斈佸蹇嬧偓宥忕礉閺€顖涘瘮閺佹澘鐡?妫版粏澹婇崚鍥ㄥ床闁喎瀹虫稉搴杹閼硅尙娲伴弽鍥ㄦ殶闁插繗鐨熼懞鍌樷偓?
+- 鏉╂劖鐨靛ù瀣槸閸楀洨楠囨稉?5 瀵姴宕遍悧灞惧▕閸欐牗膩閸ㄥ绱濋獮鑸垫煀婢х偘绗夐崥灞芥惂鐠愩劌宕遍悧灞绢洤閻滃洨娈戦崣顖濐潒閸栨牞鍤滅€规矮绠熷鎴炴綄閵?
+- 閺冨爼妫块幇鐔虹叀濞村鐦弬鏉款杻鏉╃偟鐢绘径姘闂傜濡悙瑙勀佸蹇ョ礉閺€顖涘瘮閸︺劌顦挎稉顏嗘窗閺嶅洦妞傞崚缁樺瘻妞ゅ搫绨悙鐟板毊鐎电懓绨查弫鏉跨摟楠炴儼绶崙楦垮Ν閻愮顕ゅ顔衡偓?
 
-### 修改
-- 视觉记忆参考网页节奏重构：每关允许误点 3 次，超限则重开当前关并扣除生命。
-- 斯特鲁普测试支持颜色数量 3-12 动态可调，并联动题面抽样池。
-- 人类测试中心（Hub）相关条目文案同步更新，明确新增玩法与设置能力。
-- `modules/toolbox/README.md` 同步更新人类测试当前能力与历史记录。
+### 娣囶喗鏁?
+- 鐟欏棜顫庣拋鏉跨箓閸欏倽鈧啰缍夋い浣冨Ν婵傚繘鍣搁弸鍕剁窗濮ｅ繐鍙ч崗浣筋啅鐠囶垳鍋?3 濞嗏槄绱濈搾鍛存閸掓瑩鍣稿鈧ぐ鎾冲閸忓啿鑻熼幍锝夋珟閻㈢喎鎳￠妴?
+- 閺傤垳澹掓ご浣规珮濞村鐦弨顖涘瘮妫版粏澹婇弫浼村櫤 3-12 閸斻劍鈧礁褰茬拫鍐跨礉楠炴儼浠堥崝銊╊暯闂堛垺濞婇弽閿嬬潨閵?
+- 娴滆櫣琚ù瀣槸娑擃厼绺鹃敍鍦歶b閿涘娴夐崗铏蒋閻╊喗鏋冨鍫濇倱濮濄儲娲块弬甯礉閺勫海鈥橀弬鏉款杻閻溾晜纭舵稉搴ゎ啎缂冾喛鍏橀崝娑栤偓?
+- `modules/toolbox/README.md` 閸氬本顒為弴瀛樻煀娴滆櫣琚ù瀣槸瑜版挸澧犻懗钘夊娑撳骸宸婚崣鑼额唶瑜版洏鈧?
 
-### 风险变更
-- 本轮仍保持「仅本地即时结果展示」边界，不写入 AppState、主数据库或学习记录。
-- 黑猩猩顺序/颜色模式引入异步播放状态机；已通过 token 收口避免重复触发导致的串场。
-- 运气测试概率自定义允许单档权重为 0；当权重总和为 0 时会回退到默认可抽取档位，避免崩溃。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥勭箽閹镐降鈧奔绮庨張顒€婀撮崡铏缂佹挻鐏夌仦鏇犮仛閵嗗秷绔熼悾宀嬬礉娑撳秴鍟撻崗?AppState閵嗕椒瀵岄弫鐗堝祦鎼存挻鍨ㄧ€涳缚绡勭拋鏉跨秿閵?
+- 姒涙垹灏掗悮鈺呫€庢惔?妫版粏澹婂Ο鈥崇础瀵洖鍙嗗鍌涱劄閹绢厽鏂侀悩鑸碘偓浣规簚閿涙稑鍑￠柅姘崇箖 token 閺€璺哄經闁灝鍘ら柌宥咁槻鐟欙箑褰傜€佃壈鍤ч惃鍕閸︽亽鈧?
+- 鏉╂劖鐨靛ù瀣槸濮掑倻宸奸懛顏勭暰娑斿鍘戠拋绋垮礋濡楋絾娼堥柌宥勮礋 0閿涙稑缍嬮弶鍐櫢閹鎷版稉?0 閺冩湹绱伴崶鐐衡偓鈧崚浼寸帛鐠併倕褰查幎钘夊絿濡楋絼缍呴敍宀勪缉閸忓秴绌垮┃鍐︹偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart`（通过，No issues found）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过，1 test）
-- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/toolbox_human_tests_action.dart lib/src/ui/pages/toolbox_human_tests_memory.dart lib/src/ui/pages/toolbox_human_tests_cognition.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
 
 ## [Unreleased-PLAN_096-HUMAN-TESTS-HUB] - 2026-04-29
 
-### 原因
-- 用户希望在工具箱模块新增“人类测试”类型，参考 `https://aring.cc/human-benchmark/dashboard/` 中的趣味测试条目，把反应、记忆、视觉、手眼协调、计算和注意力类测试移植到当前项目。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閸︺劌浼愰崗椋庮唸濡€虫健閺傛澘顤冮垾婊€姹夌猾缁樼ゴ鐠囨洍鈧繄琚崹瀣剁礉閸欏倽鈧?`https://aring.cc/human-benchmark/dashboard/` 娑擃厾娈戠搾锝呮嚄濞村鐦弶锛勬窗閿涘本濡搁崣宥呯安閵嗕浇顔囪箛鍡愨偓浣筋潒鐟欏鈧焦澧滈惇鐓庡礂鐠嬪啨鈧浇顓哥粻妤€鎷板▔銊﹀壈閸旀稓琚ù瀣槸缁夌粯顦查崚鏉跨秼閸撳秹銆嶉惄顔衡偓?
 
-### 新增
-- 工具箱新增独立 `toolbox.human_tests` 模块 ID、模块注册、模块管理文案和入口卡片。
-- 新增 `HumanTestsToolPage` 人类测试中心，移动端优先展示 17 个测试入口：反应测试、数字记忆、黑猩猩测试、打字测试、视觉记忆、瞄准测试、色觉测试、斯特鲁普、词汇记忆、序列记忆、运气测试、手速测试、时间感知测试、手眼协调测试、计算能力测试、动态视力测试、持续注意力测试。
-- 新增本地 Flutter 交互实现，按动作/计时、记忆、视觉、认知注意力和共享 UI 拆分文件，避免单页继续膨胀。
-- 新增工具箱 smoke 测试，覆盖工具箱入口列表展示“Human test hub”以及进入人类测试中心后的核心条目渲染。
+### 閺傛澘顤?
+- 瀹搞儱鍙跨粻杈ㄦ煀婢х偟瀚粩?`toolbox.human_tests` 濡€虫健 ID閵嗕焦膩閸ф鏁為崘灞烩偓浣鼓侀崸妤冾吀閻炲棙鏋冨鍫濇嫲閸忋儱褰涢崡锛勫閵?
+- 閺傛澘顤?`HumanTestsToolPage` 娴滆櫣琚ù瀣槸娑擃厼绺鹃敍宀€些閸斻劎顏导妯哄帥鐏炴洜銇?17 娑擃亝绁寸拠鏇炲弳閸欙綇绱伴崣宥呯安濞村鐦妴浣规殶鐎涙顔囪箛鍡愨偓渚€绮﹂悮鈺冨皰濞村鐦妴浣瑰ⅵ鐎涙绁寸拠鏇樷偓浣筋潒鐟欏顔囪箛鍡愨偓浣虹€崙鍡樼ゴ鐠囨洏鈧浇澹婄憴澶嬬ゴ鐠囨洏鈧焦鏌夐悧褰掔灳閺咁喓鈧浇鐦濆Ч鍥唶韫囧棎鈧礁绨崚妤勵唶韫囧棎鈧浇绻嶅鏃€绁寸拠鏇樷偓浣瑰闁喐绁寸拠鏇樷偓浣规闂傚瓨鍔呴惌銉︾ゴ鐠囨洏鈧焦澧滈惇鐓庡礂鐠嬪啯绁寸拠鏇樷偓浣筋吀缁犳鍏橀崝娑欑ゴ鐠囨洏鈧礁濮╅幀浣筋潒閸旀稒绁寸拠鏇樷偓浣瑰瘮缂侇厽鏁為幇蹇撳濞村鐦妴?
+- 閺傛澘顤冮張顒€婀?Flutter 娴溿倓绨扮€圭偟骞囬敍灞惧瘻閸斻劋缍?鐠佲剝妞傞妴浣筋唶韫囧棎鈧浇顫嬬憴澶堚偓浣筋吇閻儲鏁為幇蹇撳閸滃苯鍙℃禍?UI 閹峰棗鍨庨弬鍥︽閿涘矂浼╅崗宥呭礋妞ょ數鎴风紒顓″暙閼斥偓閵?
+- 閺傛澘顤冨銉ュ徔缁?smoke 濞村鐦敍宀冾洬閻╂牕浼愰崗椋庮唸閸忋儱褰涢崚妤勩€冪仦鏇犮仛閳ユ窏uman test hub閳ユ繀浜掗崣濠呯箻閸忋儰姹夌猾缁樼ゴ鐠囨洑鑵戣箛鍐ㄦ倵閻ㄥ嫭鐗宠箛鍐╂蒋閻╊喗瑕嗛弻鎾扁偓?
 
-### 修改
-- `PROJECT_DOMAIN.md` 和 `modules/toolbox/README.md` 补充人类测试模块范围、文件边界、即时结果边界和后续扩展路线。
+### 娣囶喗鏁?
+- `PROJECT_DOMAIN.md` 閸?`modules/toolbox/README.md` 鐞涖儱鍘栨禍铏硅濞村鐦Ο鈥虫健閼煎啫娲块妴浣规瀮娴犳儼绔熼悾灞烩偓浣稿祮閺冨墎绮ㄩ弸婊嗙珶閻ｅ苯鎷伴崥搴ｇ敾閹碘晛鐫嶇捄顖滃殠閵?
 
-### 风险变更
-- 本轮仅参考网页测试条目、玩法规则和信息结构，不复制外站源码或样式实现。
-- 人类测试结果仅在当前页面即时展示，不保存到 AppState、主数据库、学习记录或历史统计。
-- 测试结果只适合作为趣味反馈，不能作为医学、心理、职业能力或教育评价依据。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒鍛棘閼板啰缍夋い鍨ゴ鐠囨洘娼惄顔衡偓浣哄负濞夋洝顫夐崚娆忔嫲娣団剝浼呯紒鎾寸€敍灞肩瑝婢跺秴鍩楁径鏍彲濠ф劗鐖滈幋鏍ㄧ壉瀵繐鐤勯悳鑸偓?
+- 娴滆櫣琚ù瀣槸缂佹挻鐏夋禒鍛躬瑜版挸澧犳い鐢告桨閸楄櫕妞傜仦鏇犮仛閿涘奔绗夋穱婵嗙摠閸?AppState閵嗕椒瀵岄弫鐗堝祦鎼存挶鈧礁顒熸稊鐘侯唶瑜版洘鍨ㄩ崢鍡楀蕉缂佺喕顓搁妴?
+- 濞村鐦紒鎾寸亯閸欘亪鈧倸鎮庢担婊€璐熺搾锝呮嚄閸欏秹顩敍灞肩瑝閼虫垝缍旀稉鍝勫鞍鐎涳负鈧礁绺鹃悶鍡愨偓浣戒捍娑撴俺鍏橀崝娑欏灗閺佹瑨鍋涚拠鍕幆娓氭繃宓侀妴?
 
-### 验证
-- `dart format lib\src\core\module_system\module_id.dart lib\src\core\module_system\module_registry.dart lib\src\ui\module\module_access.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\ui\pages\toolbox_human_tests.dart lib\src\ui\pages\toolbox_human_tests_shared.dart lib\src\ui\pages\toolbox_human_tests_action.dart lib\src\ui\pages\toolbox_human_tests_memory.dart lib\src\ui\pages\toolbox_human_tests_visual.dart lib\src\ui\pages\toolbox_human_tests_cognition.dart test\ui_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_human_tests.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\core\module_system\module_id.dart lib\src\core\module_system\module_registry.dart lib\src\ui\module\module_access.dart`（通过，No issues found）
-- `flutter test test\ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`（通过，1 test）
-- `flutter test test\ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`（通过，1 test）
-- `git diff --check`（通过，仅提示当前工作树中既有文件下次被 Git 触碰时 LF 将按配置替换为 CRLF）
+### 妤犲矁鐦?
+- `dart format lib\src\core\module_system\module_id.dart lib\src\core\module_system\module_registry.dart lib\src\ui\module\module_access.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\ui\pages\toolbox_human_tests.dart lib\src\ui\pages\toolbox_human_tests_shared.dart lib\src\ui\pages\toolbox_human_tests_action.dart lib\src\ui\pages\toolbox_human_tests_memory.dart lib\src\ui\pages\toolbox_human_tests_visual.dart lib\src\ui\pages\toolbox_human_tests_cognition.dart test\ui_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_human_tests.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\core\module_system\module_id.dart lib\src\core\module_system\module_registry.dart lib\src\ui\module\module_access.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test\ui_smoke_test.dart --plain-name "toolbox page opens human test hub" --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
+- `flutter test test\ui_smoke_test.dart --plain-name "toolbox page shows aggregated local tools" --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇氳ぐ鎾冲瀹搞儰缍旈弽鎴滆厬閺冦垺婀侀弬鍥︽娑撳顐肩悮?Git 鐟欙妇顫弮?LF 鐏忓棙瀵滈柊宥囩枂閺囨寧宕叉稉?CRLF閿?
 
 ## [Unreleased-PLAN_095-ROULETTE-SINGLE-SPIN-AUDIO-CHANNEL-FIX] - 2026-04-29
 
-### 原因
-- 用户反馈俄罗斯轮盘赌的弹仓只需要在开局时旋转一次，后续扣动扳机不应重复旋转弹仓。
-- Android 运行时出现 `roulette_spin`、`roulette_click`、`roulette_shot` 三个 `audioplayers` 事件通道从非平台线程发送消息的警告。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯娣囧嫮缍忛弬顖濈枂閻╂绁甸惃鍕剨娴犳挸褰ч棁鈧憰浣告躬瀵偓鐏炩偓閺冭埖妫嗘潪顑跨濞嗏槄绱濋崥搴ｇ敾閹碉絽濮╅幍铏簚娑撳秴绨查柌宥咁槻閺冨娴嗗閫涚波閵?
+- Android 鏉╂劘顢戦弮璺哄毉閻?`roulette_spin`閵嗕梗roulette_click`閵嗕梗roulette_shot` 娑撳閲?`audioplayers` 娴滃娆㈤柅姘朵壕娴犲酣娼獮鍐插酱缁捐法鈻奸崣鎴︹偓浣圭Х閹垳娈戠拃锕€鎲￠妴?
 
-### 修改
-- 俄罗斯轮盘赌移除每次空膛后的弹仓旋转动画，后续扣动扳机仅推进当前膛位高亮并保留空膛机械抖动反馈。
-- 弹仓视觉旋转只保留在「旋转弹仓」准备开局阶段。
-- 俄罗斯轮盘赌移除三个独立 `AudioPlayer` 实例，不再创建 `roulette_spin/click/shot` 事件通道；短反馈音改用 Flutter `SystemSound`，触感反馈保持不变。
-- 调整空膛说明文案，从“弹仓前进”改为“机械落位到下一膛”，避免误导为重复旋转弹仓。
+### 娣囶喗鏁?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁电粔濠氭珟濮ｅ繑顐肩粚楦垮晽閸氬海娈戝閫涚波閺冨娴嗛崝銊ф暰閿涘苯鎮楃紒顓熷⒏閸斻劍澹嬮張杞扮矌閹恒劏绻樿ぐ鎾冲閼舵稐缍呮妯瑰瘨楠炴湹绻氶悾娆戔敄閼舵稒婧€濮婄増濮堥崝銊ュ冀妫ｅ牄鈧?
+- 瀵€涚波鐟欏棜顫庨弮瀣祮閸欘亙绻氶悾娆忔躬閵嗗本妫嗘潪顒€鑴婃禒鎾扁偓宥呭櫙婢跺洤绱戠仦鈧梼鑸殿唽閵?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁电粔濠氭珟娑撳閲滈悪顒傜彌 `AudioPlayer` 鐎圭偘绶ラ敍灞肩瑝閸愬秴鍨卞?`roulette_spin/click/shot` 娴滃娆㈤柅姘朵壕閿涙稓鐓崣宥夘洯闂婅櫕鏁奸悽?Flutter `SystemSound`閿涘矁袝閹扮喎寮芥＃鍫滅箽閹镐椒绗夐崣妯糕偓?
+- 鐠嬪啯鏆ｇ粚楦垮晽鐠囧瓨妲戦弬鍥攳閿涘奔绮犻垾婊冭剨娴犳挸澧犳潻娑掆偓婵囨暭娑撹　鈧粍婧€濮婃媽鎯ゆ担宥呭煂娑撳绔撮懚娑掆偓婵撶礉闁灝鍘ょ拠顖氼嚤娑撴椽鍣告径宥嗘鏉烆剙鑴婃禒鎾扁偓?
 
-### 风险变更
-- 本轮不修改 `_buildSequence`、子弹数、命中判断和扣动流程语义，只收敛动效和音频实现方式。
-- 俄罗斯轮盘赌不再播放三段自定义 wav 资产音效，后续若需要恢复自定义音色，建议用无事件通道的原生短音效实现。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘稉宥勬叏閺€?`_buildSequence`閵嗕礁鐡欏瑙勬殶閵嗕礁鎳℃稉顓炲灲閺傤厼鎷伴幍锝呭З濞翠胶鈻肩拠顓濈疅閿涘苯褰ч弨鑸垫殐閸斻劍鏅ラ崪宀勭叾妫版垵鐤勯悳鐗堟煙瀵繈鈧?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁垫稉宥呭晙閹绢厽鏂佹稉澶嬵唽閼奉亜鐣炬稊?wav 鐠у嫪楠囬棅铏櫏閿涘苯鎮楃紒顓″闂団偓鐟曚焦浠径宥堝殰鐎规矮绠熼棅瀹犲閿涘苯缂撶拋顔炬暏閺冪姳绨ㄦ禒鍫曗偓姘朵壕閻ㄥ嫬甯悽鐔虹叚闂婅櫕鏅ョ€圭偟骞囬妴?
 
-### 验证
-- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart test\toolbox_mini_games_roulette_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart test\toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
-- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，1 test）
-- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
+### 妤犲矁鐦?
+- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart test\toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart test\toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
+- `flutter test test\ui_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?6 tests閿?
 
 ## [Unreleased-PLAN_092-RANDOM-ASSISTANT-REALISTIC-DICE] - 2026-04-29
 
-### 原因
-- 用户希望重新设计「工具箱 - 每日决策 - 随机助手」中的骰子样式和特效，让骰子更真实自然，而不是只像平面图标或简单旋转块。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿闁插秵鏌婄拋鎹愵吀閵嗗苯浼愰崗椋庮唸 - 濮ｅ繑妫╅崘宕囩摜 - 闂呭繑婧€閸斺晜澧滈妴宥勮厬閻ㄥ嫰顎忕€涙劖鐗卞蹇撴嫲閻楄鏅ラ敍宀冾唨妤犳澘鐡欓弴瀵告埂鐎圭偠鍤滈悞璁圭礉閼板奔绗夐弰顖氬涧閸嶅繐閽╅棃銏犳禈閺嶅洦鍨ㄧ粻鈧崡鏇熸鏉烆剙娼￠妴?
 
-### 修改
-- 随机助手骰子舞台新增柔和桌面承托、桌面纹理、滚动轨迹光痕和落定氛围光，增强骰子所处环境的真实感。
-- 骰子动画从单纯旋转调整为带有非线性滑移、弹跳高度、接触阴影、碰撞压缩和落定轻微回摆的组合动效。
-- 骰子本体绘制升级为更圆润的多面实体：增加树脂/象牙质感、侧面厚度、圆角边缘、微颗粒纹理、玻璃高光和选中态描边。
-- 点数改为更接近嵌入墨点的凹陷质感，超过 6 面的数字面增加刻印阴影和高光，不改变原有面数分配。
+### 娣囶喗鏁?
+- 闂呭繑婧€閸斺晜澧滄鏉跨摍閼哥偛褰撮弬鏉款杻閺屾柨鎷板宀勬桨閹垫寧澧妴浣诡攽闂堛垻姹楅悶鍡愨偓浣圭泊閸斻劏寤烘潻鐟板帨閻ユ洖鎷伴拃钘夌暰濮樻稑娲块崗澶涚礉婢х偛宸辨鏉跨摍閹碘偓婢跺嫮骞嗘晶鍐畱閻喎鐤勯幇鐔粹偓?
+- 妤犳澘鐡欓崝銊ф暰娴犲骸宕熺痪顖涙鏉烆剝鐨熼弫缈犺礋鐢附婀侀棃鐐靛殠閹勭拨缁夋眹鈧礁鑴婄捄鎶界彯鎼达负鈧焦甯寸憴锕傛Ь瑜颁究鈧胶顫幘鐐插竾缂傗晛鎷伴拃钘夌暰鏉炶浜曢崶鐐存啘閻ㄥ嫮绮嶉崥鍫濆З閺佸牄鈧?
+- 妤犳澘鐡欓張顑跨秼缂佹ê鍩楅崡鍥╅獓娑撶儤娲块崷鍡橀紟閻ㄥ嫬顦块棃銏犵杽娴ｆ搫绱版晶鐐插閺嶆垼鍓?鐠烇紕澧拹銊﹀妳閵嗕椒鏅堕棃銏犲袱鎼达负鈧礁娓剧憴鎺曠珶缂傛ǜ鈧礁浜曟０妤冪煈缁惧湱鎮婇妴浣哄箵閻犲啴鐝崗澶婃嫲闁鑵戦幀浣瑰伎鏉堝箍鈧?
+- 閻愯鏆熼弨閫涜礋閺囧瓨甯存潻鎴濈サ閸忋儱鈪烽悙鍦畱閸戝綊娅＄拹銊﹀妳閿涘矁绉存潻?6 闂堛垻娈戦弫鏉跨摟闂堛垹顤冮崝鐘插煝閸椾即妲捐ぐ鍗炴嫲妤傛ê鍘滈敍灞肩瑝閺€鐟板綁閸樼喐婀侀棃銏℃殶閸掑棝鍘ら妴?
 
-### 风险变更
-- 本轮只修改 `daily_choice_custom_random_visuals.dart` 的展示层和动效绘制，不修改随机引擎、概率计算、骰子分组或结果收口逻辑。
-- 新增绘制细节会略微增加骰子舞台的 painter 工作量，已保持在局部 `RepaintBoundary` 内并通过定向测试验证。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏冩叏閺€?`daily_choice_custom_random_visuals.dart` 閻ㄥ嫬鐫嶇粈鍝勭湴閸滃苯濮╅弫鍫㈢帛閸掕绱濇稉宥勬叏閺€褰掓閺堝搫绱╅幙搴涒偓浣诡洤閻滃洩顓哥粻妞尖偓渚€顎忕€涙劕鍨庣紒鍕灗缂佹挻鐏夐弨璺哄經闁槒绶妴?
+- 閺傛澘顤冪紒妯哄煑缂佸棜濡导姘辨殣瀵邦喖顤冮崝鐘活€忕€涙劘鍨堕崣鎵畱 painter 瀹搞儰缍旈柌蹇ョ礉瀹歌弓绻氶幐浣告躬鐏炩偓闁?`RepaintBoundary` 閸愬懎鑻熼柅姘崇箖鐎规艾鎮滃ù瀣槸妤犲矁鐦夐妴?
 
-### 验证
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+### 妤犲矁鐦?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?3 tests閿?
 
 ## [Unreleased-PLAN_093-ROULETTE-IMMERSIVE-EFFECTS] - 2026-04-29
 
-### 原因
-- 用户希望重新设计「工具箱 - 游戏中心 - 俄罗斯轮盘赌」模块中的动画与特效，让左轮舞台尽可能真实、有机械重量和临场代入感。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿闁插秵鏌婄拋鎹愵吀閵嗗苯浼愰崗椋庮唸 - 濞撳憡鍨欐稉顓炵妇 - 娣囧嫮缍忛弬顖濈枂閻╂绁甸妴宥喣侀崸妞捐厬閻ㄥ嫬濮╅悽璁崇瑢閻楄鏅ラ敍宀冾唨瀹革箒鐤嗛懜鐐插酱鐏忚棄褰查懗鐣屾埂鐎圭偑鈧焦婀侀張鐑橆潾闁插秹鍣洪崪灞煎閸﹁桨鍞崗銉﹀妳閵?
 
-### 修改
-- 俄罗斯轮盘赌新增环境呼吸、空膛机械抖动和命中后坐三组视觉动画控制器，强化弹仓旋转、扳机反馈和击发瞬间的节奏。
-- 重绘左轮枪 `CustomPainter`：增加枪管内膛、弹仓倒角、膛孔深度、金属高光、木柄纹理、螺丝、机械缝隙、枪口火光和命中烟雾。
-- 主舞台改为暗场聚光与台面氛围层，加入低强度尘粒、桌面线条、短促冲击光和稳定状态承托层，避免关键文字悬浮在复杂背景上。
-- 顶部状态区改为装填、空膛、膛位和状态四个独立仪表卡；准备区收敛为装填控制台，保留原有装填 slider、旋转弹仓、扣动扳机和重置操作。
+### 娣囶喗鏁?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁甸弬鏉款杻閻滎垰顣ㄩ崨鐓庢儧閵嗕胶鈹栭懚娑欐簚濮婄増濮堥崝銊ユ嫲閸涙垝鑵戦崥搴℃綏娑撳绮嶇憴鍡氼潕閸斻劎鏁鹃幒褍鍩楅崳顭掔礉瀵搫瀵插閫涚波閺冨娴嗛妴浣瑰閺堝搫寮芥＃鍫濇嫲閸戣褰傞惉顒勬？閻ㄥ嫯濡總蹇嬧偓?
+- 闁插秶绮锕佺枂閺?`CustomPainter`閿涙艾顤冮崝鐘崇仚缁犫€冲敶閼舵稏鈧礁鑴婃禒鎾斥偓鎺曨潡閵嗕浇鍟楃€涙梹绻佹惔锔衡偓渚€鍣剧仦鐐虹彯閸忓鈧焦婀弻鍕睏閻炲棎鈧浇鐏稉婵勨偓浣规簚濮婃壆绱抽梾娆嶁偓浣圭仚閸欙絿浼€閸忓鎷伴崨鎴掕厬閻戠喖娴橀妴?
+- 娑撴槒鍨堕崣鐗堟暭娑撶儤娈崷楦夸粵閸忓绗岄崣浼存桨濮樻稑娲跨仦鍌︾礉閸旂姴鍙嗘担搴″繁鎼达箑鐨圭划鎺嬧偓浣诡攽闂堛垻鍤庨弶掳鈧胶鐓穱鍐ㄥ暱閸戣鍘滈崪宀€菙鐎规氨濮搁幀浣瑰閹垫ê鐪伴敍宀勪缉閸忓秴鍙ч柨顔芥瀮鐎涙鍋撳ù顔兼躬婢跺秵娼呴懗灞炬珯娑撳鈧?
+- 妞ゅ爼鍎撮悩鑸碘偓浣稿隘閺€閫涜礋鐟佸懎锝為妴浣衡敄閼舵稏鈧浇鍟楁担宥呮嫲閻樿埖鈧礁娲撴稉顏嗗缁斿鍗庣悰銊ュ幢閿涙稑鍣径鍥у隘閺€鑸垫殐娑撻缚顥婃繅顐ｅ付閸掕泛褰撮敍灞肩箽閻ｆ瑥甯張澶庮棅婵?slider閵嗕焦妫嗘潪顒€鑴婃禒鎾扁偓浣瑰⒏閸斻劍澹嬮張鍝勬嫲闁插秶鐤嗛幙宥勭稊閵?
 
-### 修复
-- 修复 `dart:ui` 多色渐变缺少 `colorStops` 导致俄罗斯轮盘舞台首帧绘制崩溃的问题。
-- 新增俄罗斯轮盘赌页面 smoke test，覆盖沉浸舞台首帧绘制，避免同类 `CustomPainter` 渐变参数问题回归。
+### 娣囶喖顦?
+- 娣囶喖顦?`dart:ui` 婢舵俺澹婂〒鎰綁缂傚搫鐨?`colorStops` 鐎佃壈鍤ф穱鍕稄閺傤垵鐤嗛惄妯垮灦閸欎即顩荤敮褏绮崚璺虹┛濠у啰娈戦梻顕€顣介妴?
+- 閺傛澘顤冩穱鍕稄閺傤垵鐤嗛惄妯跨サ妞ょ敻娼?smoke test閿涘矁顩惄鏍ㄧ焽濞存瓕鍨堕崣浼搭浕鐢呯帛閸掕绱濋柆鍨帳閸氬瞼琚?`CustomPainter` 濞撴劕褰夐崣鍌涙殶闂傤噣顣介崶鐐茬秺閵?
 
-### 风险变更
-- 本轮只改俄罗斯轮盘赌表现层、绘制层和动效参数，不修改 `_buildSequence`、子弹数、命中判断、音效资源和扣动流程语义。
-- 命中特效由高频闪烁改为短促冲击光、后坐、火光和烟雾消散，降低视觉疲劳风险。
-- 新增多个轻量 `CustomPainter` 绘制细节，后续可在真机上继续观察低端设备帧率。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏呮暭娣囧嫮缍忛弬顖濈枂閻╂绁电悰銊у箛鐏炲倶鈧胶绮崚璺虹湴閸滃苯濮╅弫鍫濆棘閺佸府绱濇稉宥勬叏閺€?`_buildSequence`閵嗕礁鐡欏瑙勬殶閵嗕礁鎳℃稉顓炲灲閺傤厹鈧線鐓堕弫鍫ｇカ濠ф劕鎷伴幍锝呭З濞翠胶鈻肩拠顓濈疅閵?
+- 閸涙垝鑵戦悧瑙勬櫏閻㈤亶鐝０鎴︽／閻戜焦鏁兼稉铏圭叚娣囧啫鍟块崙璇插帨閵嗕礁鎮楅崸鎰┾偓浣轰紑閸忓鎷伴悜鐔兼禈濞戝牊鏆庨敍宀勬娴ｅ氦顫嬬憴澶屾煂閸旀娊顥撻梽鈹库偓?
+- 閺傛澘顤冩径姘嚋鏉炲鍣?`CustomPainter` 缂佹ê鍩楃紒鍡氬Ν閿涘苯鎮楃紒顓炲讲閸︺劎婀￠張杞扮瑐缂佈呯敾鐟欏倸鐧傛担搴ｎ伂鐠佹儳顦敮褏宸奸妴?
 
-### 验证
-- `dart format lib\src\ui\pages\toolbox_mini_games_roulette.dart`（通过）
-- `dart format test\toolbox_mini_games_roulette_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart test\toolbox_mini_games_roulette_smoke_test.dart`（通过，No issues found）
-- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact`（通过，1 test）
-- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
+### 妤犲矁鐦?
+- `dart format lib\src\ui\pages\toolbox_mini_games_roulette.dart`閿涘牓鈧俺绻冮敍?
+- `dart format test\toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart test\toolbox_mini_games_roulette_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? test閿?
+- `flutter test test\ui_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?6 tests閿?
 
 ## [Unreleased-PLAN_094-RANDOM-WHEEL-REALISTIC-REDESIGN] - 2026-04-29
 
-### 原因
-- 用户希望重新设计「工具箱 - 每日决策 - 随机助手」中的大转盘样式和特效，使其尽可能接近真实桌面抽奖轮盘。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿闁插秵鏌婄拋鎹愵吀閵嗗苯浼愰崗椋庮唸 - 濮ｅ繑妫╅崘宕囩摜 - 闂呭繑婧€閸斺晜澧滈妴宥勮厬閻ㄥ嫬銇囨潪顒傛磸閺嶅嘲绱￠崪宀€澹掗弫鍫礉娴ｅ灝鍙剧亸钘夊讲閼宠姤甯存潻鎴犳埂鐎圭偞顢戦棃銏″▕婵傛牞鐤嗛惄妯糕偓?
 
-### 修改
-- 大转盘舞台新增桌面承托、低饱和光晕和固定指针支架，让主舞台更像真实轮盘装置，而不是平面色盘。
-- 重绘转盘本体：增加厚度侧壁、金属外圈、内外圈刻度、分隔铆钉、中心轴、螺栓和扇区材质高光。
-- 中奖停靠时增加扇区边缘光、轻微轮体起伏、指针弹片颤动和慢停回弹，强化真实惯性与停靠反馈。
-- 调整移动端舞台半径，避免厚外圈和桌面阴影在紧凑高度下被裁切。
+### 娣囶喗鏁?
+- 婢堆嗘祮閻╂鍨堕崣鐗堟煀婢х偞顢戦棃銏″閹垫ǜ鈧椒缍嗘鍗炴嫲閸忓妾块崪灞芥祼鐎规碍瀵氶柦鍫熸暜閺嬭绱濈拋鈺€瀵岄懜鐐插酱閺囨潙鍎氶惇鐔风杽鏉烆喚娲忕憗鍛枂閿涘矁鈧奔绗夐弰顖氶挬闂堛垼澹婇惄妯糕偓?
+- 闁插秶绮潪顒傛磸閺堫兛缍嬮敍姘杻閸旂姴甯ゆ惔锔挎櫠婢逛降鈧線鍣剧仦鐐差樆閸﹀牄鈧礁鍞存径鏍ф箑閸掕瀹抽妴浣稿瀻闂呮棃鎼柦澶堚偓浣疯厬韫囧啳閰遍妴浣界仾閺嶆挸鎷伴幍鍥у隘閺夋劘宸濇妯哄帨閵?
+- 娑擃厼顨涢崑婊堟浆閺冭泛顤冮崝鐘冲閸栭缚绔熺紓妯哄帨閵嗕浇浜ゅ顔跨枂娴ｆ捁鎹ｆ导蹇嬧偓浣瑰瘹闁藉牆鑴婇悧鍥叧閸斻劌鎷伴幈銏犱粻閸ョ偛鑴婇敍灞藉繁閸栨牜婀＄€圭偞鍎婚幀褌绗岄崑婊堟浆閸欏秹顩妴?
+- 鐠嬪啯鏆ｇ粔璇插З缁旑垵鍨堕崣鏉垮磹瀵板嫸绱濋柆鍨帳閸樻艾顦婚崷鍫濇嫲濡楀矂娼伴梼鏉戝閸︺劎鎻ｉ崙鎴︾彯鎼达缚绗呯悮顐ヮ梿閸掑洢鈧?
 
-### 风险变更
-- 本轮仅修改随机助手大转盘视觉和动效绘制，不修改 `DailyChoiceCustomRandomEngine` 的概率、抽取、骰子或硬币逻辑。
-- 转盘绘制层比之前更复杂，但仍限制在单个 `RepaintBoundary` 和轻量 `CustomPainter` 内，未引入新依赖或图片资产。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒鍛叏閺€褰掓閺堝搫濮幍瀣亣鏉烆剛娲忕憴鍡氼潕閸滃苯濮╅弫鍫㈢帛閸掕绱濇稉宥勬叏閺€?`DailyChoiceCustomRandomEngine` 閻ㄥ嫭顩ч悳鍥モ偓浣瑰▕閸欐牓鈧線顎忕€涙劖鍨ㄧ涵顒€绔甸柅鏄忕帆閵?
+- 鏉烆剛娲忕紒妯哄煑鐏炲倹鐦稊瀣閺囨潙顦查弶鍌︾礉娴ｅ棔绮涢梽鎰煑閸︺劌宕熸稉?`RepaintBoundary` 閸滃矁浜ら柌?`CustomPainter` 閸愬拑绱濋張顏勭穿閸忋儲鏌婃笟婵婄閹存牕娴橀悧鍥カ娴溠佲偓?
 
-### 验证
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+### 妤犲矁鐦?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?3 tests閿?
 
 ## [Unreleased-PLAN_090-DECISION-ACTION-CARD] - 2026-04-29
 
-### 原因
-- 用户希望进一步完善「每日抉择 - 决策助手」的具体功能落地能力，不止给出模型分析，还要帮助用户把结论变成可执行动作。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿鏉╂稐绔村銉ョ暚閸犲嫨鈧本鐦￠弮銉﹀Ψ閹?- 閸愬磭鐡ラ崝鈺傚閵嗗秶娈戦崗铚傜秼閸旂喕鍏橀拃钘夋勾閼宠棄濮忛敍灞肩瑝濮濄垻绮伴崙鐑樐侀崹瀣瀻閺嬫劧绱濇潻妯款洣鐢喖濮悽銊﹀煕閹跺﹦绮ㄧ拋鍝勫綁閹存劕褰查幍褑顢戦崝銊ょ稊閵?
 
-### 新增
-- 决策助手新增「落地执行卡」：承接模型报告结果，展示当前应先补信息、收口执行还是继续校准。
-- 新增一键生成落地草案：自动生成下一步动作、关键验证信息、停止规则、复盘触发和失败预演五项内容。
-- 新增执行草案编辑区，用户可按自己的真实情境修改自动生成内容。
-- 新增「复制执行简报」能力，可将决策问题、模型共识、推荐模型和五项落地草案复制到剪贴板。
+### 閺傛澘顤?
+- 閸愬磭鐡ラ崝鈺傚閺傛澘顤冮妴宀冩儰閸︾増澧界悰灞藉幢閵嗗稄绱伴幍鎸庡复濡€崇€烽幎銉ユ啞缂佹挻鐏夐敍灞界潔缁€鍝勭秼閸撳秴绨查崗鍫Ｋ夋穱鈩冧紖閵嗕焦鏁归崣锝嗗⒔鐞涘矁绻曢弰顖滄埛缂侇厽鐗庨崙鍡愨偓?
+- 閺傛澘顤冩稉鈧柨顔炬晸閹存劘鎯ら崷鎷屽磸濡楀牞绱伴懛顏勫З閻㈢喐鍨氭稉瀣╃濮濄儱濮╂担婧库偓浣稿彠闁款噣鐛欑拠浣蜂繆閹垬鈧礁浠犲銏ｎ潐閸掓瑣鈧礁顦查惄妯啃曢崣鎴濇嫲婢惰精瑙︽０鍕川娴滄棃銆嶉崘鍛啇閵?
+- 閺傛澘顤冮幍褑顢戦懡澶嬵攳缂傛牞绶崠鐚寸礉閻劍鍩涢崣顖涘瘻閼奉亜绻侀惃鍕埂鐎圭偞鍎忔晶鍐ф叏閺€纭呭殰閸斻劎鏁撻幋鎰敶鐎瑰箍鈧?
+- 閺傛澘顤冮妴灞筋槻閸掕埖澧界悰宀€鐣濋幎銉ｂ偓宥堝厴閸旀冻绱濋崣顖氱殺閸愬磭鐡ラ梻顕€顣介妴浣鼓侀崹瀣彙鐠囧棎鈧焦甯归懡鎰侀崹瀣嫲娴滄棃銆嶉拃钘夋勾閼藉顢嶆径宥呭煑閸掓澘澹€鐠愬瓨婢橀妴?
 
-### 修改
-- 决策助手输出链路从「问答输入 → 模型报告 → 检查清单」补强为「问答输入 → 模型报告 → 落地执行 → 检查清单」，更符合具体使用闭环。
-- 落地卡默认保持摘要状态，避免页面启动时额外展开大段表单。
+### 娣囶喗鏁?
+- 閸愬磭鐡ラ崝鈺傚鏉堟挸鍤柧鎹愮熅娴犲簺鈧矂妫剁粵鏃囩翻閸?閳?濡€崇€烽幎銉ユ啞 閳?濡偓閺屻儲绔婚崡鏇樷偓宥埶夊杞拌礋閵嗗矂妫剁粵鏃囩翻閸?閳?濡€崇€烽幎銉ユ啞 閳?閽€钘夋勾閹笛嗩攽 閳?濡偓閺屻儲绔婚崡鏇樷偓宥忕礉閺囧顑侀崥鍫濆徔娴ｆ挷濞囬悽銊╂４閻滎垬鈧?
+- 閽€钘夋勾閸楋繝绮拋銈勭箽閹镐焦鎲崇憰浣哄Ц閹緤绱濋柆鍨帳妞ょ敻娼伴崥顖氬З閺冨爼顤傛径鏍х潔瀵偓婢堆勵唽鐞涖劌宕熼妴?
 
-### 风险变更
-- 自动生成内容仅作为执行草案，仍需用户根据真实约束确认和编辑；高风险医疗、法律、财务等事项不应只依赖本模块执行。
+### 妞嬪酣娅撻崣妯绘纯
+- 閼奉亜濮╅悽鐔稿灇閸愬懎顔愭禒鍛稊娑撶儤澧界悰宀冨磸濡楀牞绱濇禒宥夋付閻劍鍩涢弽瑙勫祦閻喎鐤勭痪锔芥将绾喛顓婚崪宀€绱潏鎴幢妤傛﹢顥撻梽鈺佸鞍閻ゆぜ鈧焦纭跺瀣ㄢ偓浣藉偍閸旓紕鐡戞禍瀣€嶆稉宥呯安閸欘亙绶风挧鏍ㄦ拱濡€虫健閹笛嗩攽閵?
 
-### 验证
-- `dart format .\test\daily_choice_hub_smoke_test.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_interaction.dart`（通过）
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，18 tests）
+### 妤犲矁鐦?
+- `dart format .\test\daily_choice_hub_smoke_test.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_interaction.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?8 tests閿?
 
 ## [Unreleased-PLAN_089-RANDOM-ASSISTANT-VISUAL-POLISH] - 2026-04-29
 
-### 原因
-- 用户反馈「工具箱 - 每日抉择 - 随机助手」中的大转盘、骰子与硬币样式和特效仍不够现代自然，尤其骰子需要呈现多面立体结构，而不是简单平面图片。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗苯浼愰崗椋庮唸 - 濮ｅ繑妫╅幎澶嬪 - 闂呭繑婧€閸斺晜澧滈妴宥勮厬閻ㄥ嫬銇囨潪顒傛磸閵嗕線顎忕€涙劒绗岀涵顒€绔甸弽宄扮础閸滃瞼澹掗弫鍫滅矝娑撳秴顧勯悳棰佸敩閼奉亞鍔ч敍灞芥尐閸忓爼顎忕€涙劙娓剁憰浣告啛閻滄澘顦块棃銏㈢彌娴ｆ挾绮ㄩ弸鍕剁礉閼板奔绗夐弰顖滅暆閸楁洖閽╅棃銏犳禈閻楀洢鈧?
 
-### 修改
-- 随机助手舞台容器改为更柔和的渐变承托层，减少生硬白底感，并保留稳定边界以保证可读性。
-- 大转盘增加轮体厚度、底部承托阴影、内外圈刻度、中心轴高光和更明确的指针层次，中奖扇区停留时有更清晰的高光边界。
-- 骰子从平面圆角方块改为 Flutter `CustomPainter` 绘制的可变面数立体多面体：按 3 到 12 面绘制正面多边形、背面偏移、侧面分片、棱线、高光、阴影和落地反馈。
-- 骰子继续保留 D1 / 面数 / 当前面值显示；6 面以内使用点数，超过 6 面显示数字，不改变原有面数分配和抽取结果。
-- 硬币翻转改为根据最终结果决定落在正面或反面，并增加金属边缘压缩、环形纹理、刻度、阴影和中奖停留光感。
+### 娣囶喗鏁?
+- 闂呭繑婧€閸斺晜澧滈懜鐐插酱鐎圭懓娅掗弨閫涜礋閺囧瓨鐓嶉崪宀€娈戝〒鎰綁閹垫寧澧仦鍌︾礉閸戝繐鐨悽鐔衡€栭惂钘夌俺閹扮噦绱濋獮鏈电箽閻ｆ瑧菙鐎规俺绔熼悾灞间簰娣囨繆鐦夐崣顖濐嚢閹佲偓?
+- 婢堆嗘祮閻╂ê顤冮崝鐘虹枂娴ｆ挸甯ゆ惔锔衡偓浣哥俺闁劍澹欓幍姗€妲捐ぐ渚库偓浣稿敶婢舵牕婀€閸掕瀹抽妴浣疯厬韫囧啳閰辨妯哄帨閸滃本娲块弰搴ｂ€橀惃鍕瘹闁藉牆鐪板▎鈽呯礉娑擃厼顨涢幍鍥у隘閸嬫粎鏆€閺冭埖婀侀弴瀛樼閺呮壆娈戞妯哄帨鏉堝湱鏅妴?
+- 妤犳澘鐡欐禒搴￠挬闂堛垹娓剧憴鎺撴煙閸ф鏁兼稉?Flutter `CustomPainter` 缂佹ê鍩楅惃鍕讲閸欐﹢娼伴弫鎵彌娴ｆ挸顦块棃顫秼閿涙碍瀵?3 閸?12 闂堛垻绮崚鑸殿劀闂堛垹顦挎潏鐟拌埌閵嗕浇鍎楅棃銏犱焊缁夋眹鈧椒鏅堕棃銏犲瀻閻楀洢鈧焦锛戠痪瑁も偓渚€鐝崗澶堚偓渚€妲捐ぐ鍗炴嫲閽€钘夋勾閸欏秹顩妴?
+- 妤犳澘鐡欑紒褏鐢绘穱婵堟殌 D1 / 闂堛垺鏆?/ 瑜版挸澧犻棃銏犫偓鍏兼▔缁€鐚寸幢6 闂堫澀浜掗崘鍛▏閻劎鍋ｉ弫甯礉鐡掑懓绻?6 闂堛垺妯夌粈鐑樻殶鐎涙绱濇稉宥嗘暭閸欐ê甯張澶愭桨閺佹澘鍨庨柊宥呮嫲閹惰棄褰囩紒鎾寸亯閵?
+- 绾剙绔电紙鏄忔祮閺€閫涜礋閺嶈宓侀張鈧紒鍫㈢波閺嬫粌鍠呯€规俺鎯ら崷銊︻劀闂堛垺鍨ㄩ崣宥夋桨閿涘苯鑻熸晶鐐插闁叉垵鐫樻潏鍦喘閸樺缂夐妴浣哄箚瑜般垻姹楅悶鍡愨偓浣稿煝鎼达负鈧線妲捐ぐ鍗炴嫲娑擃厼顨涢崑婊呮殌閸忓鍔呴妴?
 
-### 风险变更
-- 本轮只改随机助手视觉层和动效绘制，不修改 `DailyChoiceCustomRandomEngine` 的概率、骰子分组、硬币计数和结果收口逻辑。
-- 新增多个轻量 `CustomPainter`，视觉层复杂度提高；已通过定向分析和测试，后续仍可在真机上观察低端设备帧率。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏呮暭闂呭繑婧€閸斺晜澧滅憴鍡氼潕鐏炲倸鎷伴崝銊︽櫏缂佹ê鍩楅敍灞肩瑝娣囶喗鏁?`DailyChoiceCustomRandomEngine` 閻ㄥ嫭顩ч悳鍥モ偓渚€顎忕€涙劕鍨庣紒鍕┾偓浣衡€栫敮浣筋吀閺佹澘鎷扮紒鎾寸亯閺€璺哄經闁槒绶妴?
+- 閺傛澘顤冩径姘嚋鏉炲鍣?`CustomPainter`閿涘矁顫嬬憴澶婄湴婢跺秵娼呮惔锔藉絹妤傛﹫绱卞鏌モ偓姘崇箖鐎规艾鎮滈崚鍡樼€介崪灞剧ゴ鐠囨洩绱濋崥搴ｇ敾娴犲秴褰查崷銊ф埂閺堣桨绗傜憴鍌氱檪娴ｅ海顏拋鎯ь槵鐢呭芳閵?
 
-### 验证
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+### 妤犲矁鐦?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_custom_random_visuals.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_custom_random_engine_test.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test\daily_choice_custom_random_engine_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?3 tests閿?
 
 ## [Unreleased-PLAN_088-MINI-GAMES-INTERACTION-UPGRADE] - 2026-04-29
 
-### 原因
-- 用户反馈俄罗斯轮盘赌当前界面像骰子，缺少真实左轮枪模拟、准备上膛流程、自定义特效与音效；俄罗斯方块需要按屏幕高度适配、改用遥控手柄式控制、增加难度与失败结算；推箱子需要难度设置，并支持多个箱子和多个目标点。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯娣囧嫮缍忛弬顖濈枂閻╂绁佃ぐ鎾冲閻ｅ矂娼伴崓蹇涱€忕€涙劧绱濈紓鍝勭毌閻喎鐤勫锕佺枂閺嬵亝膩閹风喆鈧礁鍣径鍥︾瑐閼舵稒绁︾粙瀣ㄢ偓浣藉殰鐎规矮绠熼悧瑙勬櫏娑撳酣鐓堕弫鍫幢娣囧嫮缍忛弬顖涙煙閸ф娓剁憰浣瑰瘻鐏炲繐绠锋妯哄闁倿鍘ら妴浣规暭閻劑浠撮幒褎澧滈弻鍕础閹貉冨煑閵嗕礁顤冮崝鐘绘鎼达缚绗屾径杈Е缂佹挾鐣婚敍娑欏腹缁犲崬鐡欓棁鈧憰渚€姣︽惔锕侇啎缂冾噯绱濋獮鑸垫暜閹镐礁顦挎稉顏嗩唸鐎涙劕鎷版径姘嚋閻╊喗鐖ｉ悙骞库偓?
 
-### 新增
-- 俄罗斯轮盘赌新增“准备：上膛并旋转弹仓”流程，准备时会重洗弹仓并播放弹仓旋转音效。
-- 俄罗斯轮盘赌新增三段本地 wav 音效资源：弹仓旋转、空膛金属咔哒、击发爆裂音效，并接入 `audioplayers` 资产播放。
-- 俄罗斯轮盘赌新增左轮枪 CustomPainter 舞台，包含枪身、枪管、弹仓、扳机、击锤、当前膛位高亮、扣动扳机动画和命中枪口火光。
-- 俄罗斯方块新增难度档位：放松、经典、竞速；每个档位配置不同初始下降速度、每级加速幅度和升级行数。
-- 俄罗斯方块新增失败结算弹窗，显示得分、消行、等级和难度，并支持直接再来一局。
-- 推箱子新增难度档位：单箱、双箱、三箱；按难度生成多个箱子、多个目标点和多条正确推动路线。
+### 閺傛澘顤?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁甸弬鏉款杻閳ユ粌鍣径鍥风窗娑撳﹨鍟楅獮鑸垫鏉烆剙鑴婃禒鎾偓婵囩ウ缁嬪绱濋崙鍡楊槵閺冩湹绱伴柌宥嗙瀵€涚波楠炶埖鎸遍弨鎯ц剨娴犳挻妫嗘潪顒勭叾閺佸牄鈧?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁甸弬鏉款杻娑撳顔岄張顒€婀?wav 闂婅櫕鏅ョ挧鍕爱閿涙艾鑴婃禒鎾存鏉烆兙鈧胶鈹栭懚娑㈠櫨鐏炵偛鎸冮崫鎺嬧偓浣稿毊閸欐垹鍨庣憗鍌炵叾閺佸牞绱濋獮鑸靛复閸?`audioplayers` 鐠у嫪楠囬幘顓熸杹閵?
+- 娣囧嫮缍忛弬顖濈枂閻╂绁甸弬鏉款杻瀹革箒鐤嗛弸?CustomPainter 閼哥偛褰撮敍灞藉瘶閸氼偅鐏欓煬顐犫偓浣圭仚缁犅扳偓浣歌剨娴犳挶鈧焦澹嬮張鎭掆偓浣稿毊闁裤們鈧礁缍嬮崜宥堝晽娴ｅ秹鐝禍顔衡偓浣瑰⒏閸斻劍澹嬮張鍝勫З閻㈣鎷伴崨鎴掕厬閺嬵亜褰涢悘顐㈠帨閵?
+- 娣囧嫮缍忛弬顖涙煙閸ф鏌婃晶鐐烘鎼达附銆傛担宥忕窗閺€鐐緱閵嗕胶绮￠崗鎼炩偓浣虹彽闁噦绱卞В蹇庨嚋濡楋絼缍呴柊宥囩枂娑撳秴鎮撻崚婵嗩潗娑撳妾烽柅鐔峰閵嗕焦鐦＄痪褍濮為柅鐔风畽鎼达箑鎷伴崡鍥╅獓鐞涘本鏆熼妴?
+- 娣囧嫮缍忛弬顖涙煙閸ф鏌婃晶鐐层亼鐠愩儳绮ㄧ粻妤€鑴婄粣妤嬬礉閺勫墽銇氬妤€鍨庨妴浣圭Х鐞涘被鈧胶鐡戠痪褍鎷伴梾鎯у閿涘苯鑻熼弨顖涘瘮閻╁瓨甯撮崘宥嗘降娑撯偓鐏炩偓閵?
+- 閹恒劎顔堢€涙劖鏌婃晶鐐烘鎼达附銆傛担宥忕窗閸楁洜顔堥妴浣稿蓟缁犱究鈧椒绗佺粻鎲嬬幢閹稿姣︽惔锔炬晸閹存劕顦挎稉顏嗩唸鐎涙劑鈧礁顦挎稉顏嗘窗閺嶅洨鍋ｉ崪灞筋樋閺夆剝顒滅涵顔藉腹閸斻劏鐭剧痪瑁も偓?
 
-### 修改
-- 俄罗斯方块棋盘按屏幕高度动态限制尺寸，避免固定高度在小屏上过长。
-- 俄罗斯方块控制区改为五键手柄：上键暂停/继续，左/右键移动，下键软降且长按硬降，中间键变形。
-- 推箱子提示逻辑改为在多个箱子的正确路线中寻找下一步可推箱子，并在显示路线时展示多条路径。
-- `pubspec.yaml` 新增 `assets/toolbox/games/roulette/` 资产目录。
+### 娣囶喗鏁?
+- 娣囧嫮缍忛弬顖涙煙閸ф顥愰惄妯诲瘻鐏炲繐绠锋妯哄閸斻劍鈧線妾洪崚璺烘槀鐎甸潻绱濋柆鍨帳閸ュ搫鐣炬妯哄閸︺劌鐨仦蹇庣瑐鏉╁洭鏆遍妴?
+- 娣囧嫮缍忛弬顖涙煙閸ф甯堕崚璺哄隘閺€閫涜礋娴滄棃鏁幍瀣労閿涙矮绗傞柨顔芥畯閸?缂佈呯敾閿涘苯涔?閸欐娊鏁粔璇插З閿涘奔绗呴柨顔胯拫闂勫秳绗栭梹鎸庡瘻绾剟妾烽敍灞艰厬闂傛挳鏁崣妯鸿埌閵?
+- 閹恒劎顔堢€涙劖褰佺粈娲偓鏄忕帆閺€閫涜礋閸︺劌顦挎稉顏嗩唸鐎涙劗娈戝锝団€樼捄顖滃殠娑擃厼顕伴幍鍙ョ瑓娑撯偓濮濄儱褰查幒銊ь唸鐎涙劧绱濋獮璺烘躬閺勫墽銇氱捄顖滃殠閺冭泛鐫嶇粈鍝勵樋閺壜ょ熅瀵板嫨鈧?
+- `pubspec.yaml` 閺傛澘顤?`assets/toolbox/games/roulette/` 鐠у嫪楠囬惄顔肩秿閵?
 
-### 风险变更
-- 俄罗斯轮盘赌命中特效更明显，仍保持用户主动扣动扳机后短时触发，避免循环闪烁。
-- 推箱子多箱关卡采用“先生成多条可解路径，再放置障碍并验证”的轻量生成策略；复杂程度高于单箱，但仍不是完整专业关卡编辑器。
+### 妞嬪酣娅撻崣妯绘纯
+- 娣囧嫮缍忛弬顖濈枂閻╂绁甸崨鎴掕厬閻楄鏅ラ弴瀛樻閺勬拝绱濇禒宥勭箽閹镐胶鏁ら幋铚傚瘜閸斻劍澧搁崝銊﹀閺堝搫鎮楅惌顓熸鐟欙箑褰傞敍宀勪缉閸忓秴鎯婇悳顖炴／閻戜降鈧?
+- 閹恒劎顔堢€涙劕顦跨粻鍗炲彠閸楋繝鍣伴悽銊⑩偓婊冨帥閻㈢喐鍨氭径姘蒋閸欘垵袙鐠侯垰绶為敍灞藉晙閺€鍓х枂闂呮粎顣查獮鍫曠崣鐠囦讲鈧繄娈戞潪濠氬櫤閻㈢喐鍨氱粵鏍殣閿涙稑顦查弶鍌溾柤鎼达箓鐝禍搴″礋缁犳唻绱濇担鍡曠矝娑撳秵妲哥€瑰本鏆ｆ稉鎾茬瑹閸忓啿宕辩紓鏍帆閸ｃ劊鈧?
 
-### 验证
-- `flutter pub get`（通过）
-- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart lib\src\ui\pages\toolbox_mini_games_tetris.dart lib\src\ui\pages\toolbox_mini_games_sokoban.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart`（通过）
-- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
-- `git diff --check`（通过，仅提示当前工作树若干既有文件下次被 Git 触碰时 LF 会按配置转为 CRLF）
+### 妤犲矁鐦?
+- `flutter pub get`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart lib\src\ui\pages\toolbox_mini_games_tetris.dart lib\src\ui\pages\toolbox_mini_games_sokoban.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\ui_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?6 tests閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇氳ぐ鎾冲瀹搞儰缍旈弽鎴ｅ楠炲弶妫﹂張澶嬫瀮娴犳湹绗呭▎陇顫?Git 鐟欙妇顫弮?LF 娴兼碍瀵滈柊宥囩枂鏉烆兛璐?CRLF閿?
 
 ## [Unreleased-PLAN_086-DAILY-CHOICE-UX-COPY-LAYOUT] - 2026-04-29
 
-### 原因
-- 用户反馈每日决策当前 UX 结构偏长、区块边界不清、折叠入口不够醒目，且部分默认文案如 Option A/B 不够本地化和专业。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯濮ｅ繑妫╅崘宕囩摜瑜版挸澧?UX 缂佹挻鐎崑蹇涙毐閵嗕礁灏崸妤勭珶閻ｅ奔绗夊〒鍛偓浣瑰閸欑姴鍙嗛崣锝勭瑝婢剁喖鍟嬮惄顕嗙礉娑撴棃鍎撮崚鍡涚帛鐠併倖鏋冨鍫濐洤 Option A/B 娑撳秴顧勯張顒€婀撮崠鏍ф嫲娑撴挷绗熼妴?
 
-### 新增
-- 决策助手新增彩色分区标题与辅助状态色，区分问题、可选项、情境分型、校准和报告摘要。
-- 折叠/展开入口新增彩色圆形图标状态：展开态使用主强调色，收起态使用辅助提醒色。
-- 决策报告的完整模型对照改为弹窗查看，决策检查清单也改为摘要卡 + 弹窗清单。
+### 閺傛澘顤?
+- 閸愬磭鐡ラ崝鈺傚閺傛澘顤冭ぐ鈺勫閸掑棗灏弽鍥暯娑撳氦绶熼崝鈺冨Ц閹浇澹婇敍灞藉隘閸掑棝妫舵０妯糕偓浣稿讲闁銆嶉妴浣瑰剰婢у啫鍨庨崹瀣ㄢ偓浣圭墡閸戝棗鎷伴幎銉ユ啞閹芥顩﹂妴?
+- 閹舵ê褰?鐏炴洖绱戦崗銉ュ經閺傛澘顤冭ぐ鈺勫閸﹀棗鑸伴崶鐐垼閻樿埖鈧緤绱扮仦鏇炵磻閹椒濞囬悽銊ゅ瘜瀵缚鐨熼懝璇х礉閺€鎯版崳閹椒濞囬悽銊ㄧ窡閸斺晜褰侀柋鎺曞閵?
+- 閸愬磭鐡ラ幎銉ユ啞閻ㄥ嫬鐣弫瀛樐侀崹瀣嚠閻撗勬暭娑撳搫鑴婄粣妤佺叀閻绱濋崘宕囩摜濡偓閺屻儲绔婚崡鏇氱瘍閺€閫涜礋閹芥顩﹂崡?+ 瀵湱鐛ュ〒鍛礋閵?
 
-### 修改
-- 默认可选项文案从 Option A/B/C 调整为中文环境下的「可选项 A/B/C」，自定义随机默认项同步调整。
-- 决策助手、计算模型、报告和检查区文案精简为更短的提示性表达。
-- 高级评分表、随机助手参数区和模型对照折叠入口使用更清晰的颜色边界与状态提示。
+### 娣囶喗鏁?
+- 姒涙顓婚崣顖炩偓澶愩€嶉弬鍥攳娴?Option A/B/C 鐠嬪啯鏆ｆ稉杞拌厬閺傚洨骞嗘晶鍐х瑓閻ㄥ嫨鈧苯褰查柅澶愩€?A/B/C閵嗗稄绱濋懛顏勭暰娑斿娈㈤張娲帛鐠併倝銆嶉崥灞绢劄鐠嬪啯鏆ｉ妴?
+- 閸愬磭鐡ラ崝鈺傚閵嗕浇顓哥粻妤伳侀崹瀣ㄢ偓浣瑰Г閸涘﹤鎷板Λ鈧弻銉ュ隘閺傚洦顢嶇划鍓х暆娑撶儤娲块惌顓犳畱閹绘劗銇氶幀褑銆冩潏淇扁偓?
+- 妤傛楠囩拠鍕瀻鐞涖劊鈧線娈㈤張鍝勫И閹靛寮弫鏉垮隘閸滃本膩閸ㄥ顕悡褎濮岄崣鐘插弳閸欙絼濞囬悽銊︽纯濞撳懏娅氶惃鍕杹閼硅尪绔熼悾灞肩瑢閻樿埖鈧焦褰佺粈鎭掆偓?
 
-### 风险变更
-- 详细模型对照和决策检查清单从主页面下沉到弹窗，需要用户多点击一次；主页面保留摘要、稳定度、信息价值和高风险提醒。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐠囷妇绮忓Ο鈥崇€风€靛湱鍙庨崪灞藉枀缁涙牗顥呴弻銉︾閸楁洑绮犳稉濠氥€夐棃顫瑓濞屽鍩屽鍦崶閿涘矂娓剁憰浣烘暏閹村嘲顦块悙鐟板毊娑撯偓濞嗏槄绱辨稉濠氥€夐棃顫箽閻ｆ瑦鎲崇憰浣碘偓浣呵旂€规艾瀹抽妴浣蜂繆閹垯鐜崐鐓庢嫲妤傛﹢顥撻梽鈺傚絹闁辨帇鈧?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
-- `git diff --check`（通过，仅提示当前工作树中既有 LF/CRLF 转换警告）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?3 tests閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇氳ぐ鎾冲瀹搞儰缍旈弽鎴滆厬閺冦垺婀?LF/CRLF 鏉烆剚宕茬拃锕€鎲￠敍?
 
 ## [Unreleased-PLAN_088-RANDOM-ASSISTANT-UX-MOTION] - 2026-04-29
 
-### 原因
-- 用户反馈「自定义随机」命名、参数编辑位置和三种随机动画质感仍不够自然：选项参数在页面底部导致频繁上下滑动，转盘/骰子/硬币动画也缺少真实质感和减速/碰撞/金属旋转反馈。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗矁鍤滅€规矮绠熼梾蹇旀簚閵嗗秴鎳￠崥宥冣偓浣稿棘閺佹壆绱潏鎴滅秴缂冾喖鎷版稉澶岊潚闂呭繑婧€閸斻劎鏁剧拹銊﹀妳娴犲秳绗夋径鐔诲殰閻掕绱伴柅澶愩€嶉崣鍌涙殶閸︺劑銆夐棃銏犵俺闁劌顕遍懛鎾暥缁讳椒绗傛稉瀣拨閸旑煉绱濇潪顒傛磸/妤犳澘鐡?绾剙绔甸崝銊ф暰娑旂喓宸辩亸鎴犳埂鐎圭偠宸濋幇鐔锋嫲閸戝繘鈧?绾扮増鎸?闁叉垵鐫橀弮瀣祮閸欏秹顩妴?
 
-### 修改
-- 将「自定义随机」统一更名为「随机助手」，同步每日决策模块入口、页面标题、指南和文档说明。
-- 随机助手页面重排为「方式选择 → 选项与参数 → 随机舞台」，选项参数与方式参数合并为随机上方的可折叠面板。
-- 参数面板新增有效选项数/总选项数摘要，编辑名称、增删选项、切换方式或调整骰子/硬币参数时实时刷新当前数量和可用约束。
-- 大转盘改为更高质感的分区色盘：高对比扇区、外圈刻度、中心轴、指针和多圈缓慢减速停止。
-- 骰子动画改为更真实的骰面表达：6 面内显示点数，大于 6 面显示数字，并增加旋转、弹跳和碰撞感。
-- 硬币动画改为金属质感圆币，支持快速翻转显示正反两面和最终结果。
+### 娣囶喗鏁?
+- 鐏忓棎鈧矁鍤滅€规矮绠熼梾蹇旀簚閵嗗秶绮烘稉鈧弴鏉戞倳娑撴亽鈧矂娈㈤張鍝勫И閹靛鈧稄绱濋崥灞绢劄濮ｅ繑妫╅崘宕囩摜濡€虫健閸忋儱褰涢妴渚€銆夐棃銏＄垼妫版ǜ鈧焦瀵氶崡妤€鎷伴弬鍥ㄣ€傜拠瀛樻閵?
+- 闂呭繑婧€閸斺晜澧滄い鐢告桨闁插秵甯撴稉鎭掆偓灞炬煙瀵繘鈧瀚?閳?闁銆嶆稉搴″棘閺?閳?闂呭繑婧€閼哥偛褰撮妴宥忕礉闁銆嶉崣鍌涙殶娑撳孩鏌熷蹇撳棘閺佹澘鎮庨獮鏈佃礋闂呭繑婧€娑撳﹥鏌熼惃鍕讲閹舵ê褰旈棃銏℃緲閵?
+- 閸欏倹鏆熼棃銏℃緲閺傛澘顤冮張澶嬫櫏闁銆嶉弫?閹鈧銆嶉弫鐗堟喅鐟曚緤绱濈紓鏍帆閸氬秶袨閵嗕礁顤冮崚鐘烩偓澶愩€嶉妴浣稿瀼閹广垺鏌熷蹇斿灗鐠嬪啯鏆ｆ鏉跨摍/绾剙绔甸崣鍌涙殶閺冭泛鐤勯弮璺哄煕閺傛澘缍嬮崜宥嗘殶闁插繐鎷伴崣顖滄暏缁撅附娼妴?
+- 婢堆嗘祮閻╂ɑ鏁兼稉鐑樻纯妤傛宸濋幇鐔烘畱閸掑棗灏懝鑼磸閿涙岸鐝€佃鐦幍鍥у隘閵嗕礁顦婚崷鍫濆煝鎼达负鈧椒鑵戣箛鍐叡閵嗕焦瀵氶柦鍫濇嫲婢舵艾婀€缂傛挻鍙冮崙蹇涒偓鐔蜂粻濮濐潿鈧?
+- 妤犳澘鐡欓崝銊ф暰閺€閫涜礋閺囧婀＄€圭偟娈戞浼存桨鐞涖劏鎻敍? 闂堛垹鍞撮弰鍓с仛閻愯鏆熼敍灞姐亣娴?6 闂堛垺妯夌粈鐑樻殶鐎涙绱濋獮璺侯杻閸旂姵妫嗘潪顑锯偓浣歌剨鐠哄啿鎷扮喊鐗堟寬閹扮喆鈧?
+- 绾剙绔甸崝銊ф暰閺€閫涜礋闁叉垵鐫樼拹銊﹀妳閸﹀棗绔甸敍灞炬暜閹镐礁鎻╅柅鐔虹倳鏉烆剚妯夌粈鐑橆劀閸欏秳琚遍棃銏犳嫲閺堚偓缂佸牏绮ㄩ弸婧库偓?
 
-### 风险变更
-- 更丰富的动画仍保持轻量 Transform 和 CustomPainter 实现，不引入物理引擎；低端设备可能需要继续观察帧率。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺囩繝璧寸€靛瞼娈戦崝銊ф暰娴犲秳绻氶幐浣戒氦闁?Transform 閸?CustomPainter 鐎圭偟骞囬敍灞肩瑝瀵洖鍙嗛悧鈺冩倞瀵洘鎼搁敍娑楃秵缁旑垵顔曟径鍥у讲閼充粙娓剁憰浣烘埛缂侇叀顫囩€电喎鎶氶悳鍥モ偓?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_random_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_random_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_custom_random_engine_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?3 tests閿?
 
 ## [Unreleased-PLAN_086-CUSTOM-RANDOM] - 2026-04-29
 
-### 原因
-- 用户希望在「工具箱 - 每日决策」中单独新增「随机助手」子模块，支持均匀、加权、联合分布多轮等随机方式，并提供转盘、骰子、硬币等动画效果。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閸︺劊鈧苯浼愰崗椋庮唸 - 濮ｅ繑妫╅崘宕囩摜閵嗗秳鑵戦崡鏇犲閺傛澘顤冮妴宀勬閺堝搫濮幍瀣ㄢ偓宥呯摍濡€虫健閿涘本鏁幐浣告綆閸栤偓閵嗕礁濮為弶鍐︹偓浣戒粓閸氬牆鍨庣敮鍐樋鏉烆喚鐡戦梾蹇旀簚閺傜懓绱￠敍灞借嫙閹绘劒绶垫潪顒傛磸閵嗕線顎忕€涙劑鈧胶鈥栫敮浣虹搼閸斻劎鏁鹃弫鍫熺亯閵?
 
-### 新增
-- 每日决策新增「随机助手」子模块：支持临时录入选项、编辑权重和条件概率，并在均匀/加权/联合多轮之间切换。
-- 新增自定义随机引擎，集中处理概率归一化、加权抽取、联合分布多轮抽取、骰子面数分配和多硬币结果收口。
-- 新增三类动画舞台：大转盘按当前概率模型展示扇区，骰子按选项数拆分为 3 到 12 面的多骰子，硬币限制为两面均匀并支持多枚硬币。
-- 新增引擎单元测试和 hub 冒烟测试，覆盖加权概率、联合概率、骰子约束、硬币约束和新子模块入口。
+### 閺傛澘顤?
+- 濮ｅ繑妫╅崘宕囩摜閺傛澘顤冮妴宀勬閺堝搫濮幍瀣ㄢ偓宥呯摍濡€虫健閿涙碍鏁幐浣峰閺冭泛缍嶉崗銉┾偓澶愩€嶉妴浣虹椽鏉堟垶娼堥柌宥呮嫲閺夆€叉濮掑倻宸奸敍灞借嫙閸︺劌娼庨崠鈧?閸旂姵娼?閼辨柨鎮庢径姘崇枂娑斿妫块崚鍥ㄥ床閵?
+- 閺傛澘顤冮懛顏勭暰娑斿娈㈤張鍝勭穿閹垮函绱濋梿鍡曡厬婢跺嫮鎮婂鍌滃芳瑜版帊绔撮崠鏍モ偓浣稿閺夊啯濞婇崣鏍モ偓浣戒粓閸氬牆鍨庣敮鍐樋鏉烆喗濞婇崣鏍モ偓渚€顎忕€涙劙娼伴弫鏉垮瀻闁板秴鎷版径姘扁€栫敮浣虹波閺嬫粍鏁归崣锝冣偓?
+- 閺傛澘顤冩稉澶岃閸斻劎鏁鹃懜鐐插酱閿涙艾銇囨潪顒傛磸閹稿缍嬮崜宥嗩洤閻滃洦膩閸ㄥ鐫嶇粈鐑樺閸栫尨绱濇鏉跨摍閹稿鈧銆嶉弫鐗堝閸掑棔璐?3 閸?12 闂堛垻娈戞径姘额€忕€涙劧绱濈涵顒€绔甸梽鎰煑娑撹桨琚遍棃銏犳綆閸栤偓楠炶埖鏁幐浣割樋閺嬫氨鈥栫敮浣碘偓?
+- 閺傛澘顤冨鏇熸惛閸楁洖鍘撳ù瀣槸閸?hub 閸愭帞鍎ù瀣槸閿涘矁顩惄鏍у閺夊啯顩ч悳鍥モ偓浣戒粓閸氬牊顩ч悳鍥モ偓渚€顎忕€涙劗瀹抽弶鐔粹偓浣衡€栫敮浣哄閺夌喎鎷伴弬鏉跨摍濡€虫健閸忋儱褰涢妴?
 
-### 修改
-- 每日决策入口从五模块更新为六模块，并将「随机助手」接入模块切换器。
-- 同步 `PROJECT_DOMAIN.md` 与 `modules/toolbox/README.md` 中的每日抉择模块边界说明。
+### 娣囶喗鏁?
+- 濮ｅ繑妫╅崘宕囩摜閸忋儱褰涙禒搴濈安濡€虫健閺囧瓨鏌婃稉鍝勫彋濡€虫健閿涘苯鑻熺亸鍡愨偓宀勬閺堝搫濮幍瀣ㄢ偓宥嗗复閸忋儲膩閸ф鍨忛幑銏犳珤閵?
+- 閸氬本顒?`PROJECT_DOMAIN.md` 娑?`modules/toolbox/README.md` 娑擃厾娈戝В蹇旀）閹跺瀚ㄥΟ鈥虫健鏉堝湱鏅拠瀛樻閵?
 
-### 风险变更
-- 随机助手仅适合低风险、可回退、选项差异不大的选择；高风险医疗、法律、财务或不可逆决策仍应使用决策助手或专业意见。
-- 骰子动画在超过 12 个选项时采用多骰子分组展示，最终抽取仍对全部选项保持均匀。
+### 妞嬪酣娅撻崣妯绘纯
+- 闂呭繑婧€閸斺晜澧滄禒鍛粹偓鍌氭値娴ｅ酣顥撻梽鈹库偓浣稿讲閸ョ偤鈧偓閵嗕線鈧銆嶅顔肩磽娑撳秴銇囬惃鍕偓澶嬪閿涙盯鐝搴ㄦ珦閸栬崵鏋熼妴浣圭《瀵板鈧浇鍌ㄩ崝鈩冨灗娑撳秴褰查柅鍡楀枀缁涙牔绮涙惔鏂惧▏閻劌鍠呯粵鏍уИ閹靛鍨ㄦ稉鎾茬瑹閹板繗顫嗛妴?
+- 妤犳澘鐡欓崝銊ф暰閸︺劏绉存潻?12 娑擃亪鈧銆嶉弮鍫曞櫚閻劌顦挎鏉跨摍閸掑棛绮嶇仦鏇犮仛閿涘本娓剁紒鍫熷▕閸欐牔绮涚€电懓鍙忛柈銊┾偓澶愩€嶆穱婵囧瘮閸у洤瀵戦妴?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_random_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_custom_random_engine_test.dart --reporter compact`（通过，5 tests）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，13 tests）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_random_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_custom_random_engine_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?3 tests閿?
 
 ## [Unreleased-PLAN_087-MINI-GAMES-EXPANSION] - 2026-04-29
 
-### 原因
-- 用户希望在工具箱-游戏中心中补充俄罗斯轮盘赌、俄罗斯方块和推箱子三个小游戏，并要求轮盘赌具备音效、闪烁、震动反馈，推箱子关卡至少保证有解并提供提示/正确路线辅助。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閸︺劌浼愰崗椋庮唸-濞撳憡鍨欐稉顓炵妇娑擃叀藟閸忓懍绺跨純妤佹焿鏉烆喚娲忕挧灞烩偓浣风缚缂冩鏌夐弬鐟版健閸滃本甯圭粻鍗炵摍娑撳閲滅亸蹇旂埗閹村骏绱濋獮鎯邦洣濮瑰倽鐤嗛惄妯跨サ閸忓嘲顦棅铏櫏閵嗕線妫悜浣碘偓渚€娓块崝銊ュ冀妫ｅ牞绱濋幒銊ь唸鐎涙劕鍙ч崡陇鍤︾亸鎴滅箽鐠囦焦婀佺憴锝呰嫙閹绘劒绶甸幓鎰仛/濮濓絿鈥樼捄顖滃殠鏉堝懎濮妴?
 
-### 新增
-- 游戏中心新增俄罗斯轮盘赌入口与页面：支持 1-5 发子弹设置、逐次扣动扳机、空膛系统点击音、命中后的系统警示音、触感反馈和短时全屏闪烁效果。
-- 游戏中心新增俄罗斯方块入口与页面：支持 10x20 棋盘、七种方块、旋转、左右移动、软降、硬降、消行得分、等级加速、暂停和新局。
-- 游戏中心新增推箱子入口与页面：先生成箱子的正确推动路径，再生成障碍并验证路径可达；支持移动、撤销、提示、正确路线显示、新关卡和基于正确路径步数的难度展示。
+### 閺傛澘顤?
+- 濞撳憡鍨欐稉顓炵妇閺傛澘顤冩穱鍕稄閺傤垵鐤嗛惄妯跨サ閸忋儱褰涙稉搴ㄣ€夐棃顫窗閺€顖涘瘮 1-5 閸欐垵鐡欏纭咁啎缂冾喓鈧線鈧劖顐奸幍锝呭З閹佃櫕婧€閵嗕胶鈹栭懚娑氶兇缂佺喓鍋ｉ崙濠氱叾閵嗕礁鎳℃稉顓炴倵閻ㄥ嫮閮寸紒鐔活劅缁€娲叾閵嗕浇袝閹扮喎寮芥＃鍫濇嫲閻厽妞傞崗銊ョ潌闂傤亞鍎婇弫鍫熺亯閵?
+- 濞撳憡鍨欐稉顓炵妇閺傛澘顤冩穱鍕稄閺傤垱鏌熼崸妤€鍙嗛崣锝勭瑢妞ょ敻娼伴敍姘暜閹?10x20 濡娲忛妴浣风缁夊秵鏌熼崸妞尖偓浣规鏉烆兙鈧礁涔忛崣宕囆╅崝銊ｂ偓浣借拫闂勫秲鈧胶鈥栭梽宥冣偓浣圭Х鐞涘苯绶遍崚鍡愨偓浣虹搼缁狙冨闁喆鈧焦娈忛崑婊冩嫲閺傛澘鐪妴?
+- 濞撳憡鍨欐稉顓炵妇閺傛澘顤冮幒銊ь唸鐎涙劕鍙嗛崣锝勭瑢妞ょ敻娼伴敍姘帥閻㈢喐鍨氱粻鍗炵摍閻ㄥ嫭顒滅涵顔藉腹閸斻劏鐭惧鍕剁礉閸愬秶鏁撻幋鎰版绾板秴鑻熸宀冪槈鐠侯垰绶為崣顖濇彧閿涙稒鏁幐浣盒╅崝銊ｂ偓浣规寵闁库偓閵嗕焦褰佺粈鎭掆偓浣诡劀绾喛鐭剧痪鎸庢▔缁€鎭掆偓浣规煀閸忓啿宕遍崪灞界唨娴滃孩顒滅涵顔跨熅瀵板嫭顒為弫鎵畱闂呮儳瀹崇仦鏇犮仛閵?
 
-### 修改
-- 更新工具箱游戏中心入口说明与 mini games hub 条目，使新增三个小游戏与现有数独、扫雷、拼图、五子棋和 2048/4096 一起展示。
-- 新增小游戏均拆分为独立 `toolbox_mini_games_*.dart` part 文件，保持 hub 文件只负责页面入口与导航组织。
+### 娣囶喗鏁?
+- 閺囧瓨鏌婂銉ュ徔缁犺鲸鐖堕幋蹇庤厬韫囧啫鍙嗛崣锝堫嚛閺勫簼绗?mini games hub 閺夛紕娲伴敍灞煎▏閺傛澘顤冩稉澶夐嚋鐏忓繑鐖堕幋蹇庣瑢閻滅増婀侀弫鎵閵嗕焦澹傞梿鏋偓浣瑰閸ヤ勘鈧椒绨茬€涙劖顥愰崪?2048/4096 娑撯偓鐠у嘲鐫嶇粈鎭掆偓?
+- 閺傛澘顤冪亸蹇旂埗閹村繐娼庨幏鍡楀瀻娑撹櫣瀚粩?`toolbox_mini_games_*.dart` part 閺傚洣娆㈤敍灞肩箽閹?hub 閺傚洣娆㈤崣顏囩鐠愶綁銆夐棃銏犲弳閸欙絼绗岀€佃壈鍩呯紒鍕矏閵?
 
-### 风险变更
-- 俄罗斯轮盘赌的命中特效包含短时闪屏和震动，已限制为用户主动点击后的低频短时反馈，但敏感用户仍可能感到刺激。
-- 俄罗斯方块与推箱子采用本地轻量规则引擎，未引入第三方游戏库；后续如需关卡包、排行榜、AI 求解器或更完整规则，可单独评估成熟开源实现。
+### 妞嬪酣娅撻崣妯绘纯
+- 娣囧嫮缍忛弬顖濈枂閻╂绁甸惃鍕嚒娑擃厾澹掗弫鍫濆瘶閸氼偆鐓弮鍫曟／鐏炲繐鎷伴棁鍥уЗ閿涘苯鍑￠梽鎰煑娑撹櫣鏁ら幋铚傚瘜閸斻劎鍋ｉ崙璇叉倵閻ㄥ嫪缍嗘０鎴犵叚閺冭泛寮芥＃鍫礉娴ｅ棙鏅遍幇鐔烘暏閹磋渹绮涢崣顖濆厴閹扮喎鍩岄崚鐑樼负閵?
+- 娣囧嫮缍忛弬顖涙煙閸фぞ绗岄幒銊ь唸鐎涙劙鍣伴悽銊︽拱閸︽媽浜ら柌蹇氼潐閸掓瑥绱╅幙搴礉閺堫亜绱╅崗銉ь儑娑撳鏌熷〒鍛婂灆鎼存搫绱遍崥搴ｇ敾婵″倿娓堕崗鍐插幢閸栧懌鈧焦甯撶悰灞绢渷閵嗕竸I 濮瑰倽袙閸ｃ劍鍨ㄩ弴鏉戠暚閺佺顫夐崚娆欑礉閸欘垰宕熼悪顒冪槑娴肩増鍨氶悢鐔风磻濠ф劕鐤勯悳鑸偓?
 
-### 验证
-- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart lib\src\ui\pages\toolbox_mini_games_tetris.dart lib\src\ui\pages\toolbox_mini_games_sokoban.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart`（通过）
-- `flutter test test\ui_smoke_test.dart --reporter compact`（通过，66 tests）
-- `git diff --check`（通过，仅提示当前工作树若干既有文件下次被 Git 触碰时 LF 会按配置转为 CRLF）
+### 妤犲矁鐦?
+- `dart format lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart lib\src\ui\pages\toolbox_mini_games_roulette.dart lib\src\ui\pages\toolbox_mini_games_tetris.dart lib\src\ui\pages\toolbox_mini_games_sokoban.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox\toolbox_page_content.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\ui_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?6 tests閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇氳ぐ鎾冲瀹搞儰缍旈弽鎴ｅ楠炲弶妫﹂張澶嬫瀮娴犳湹绗呭▎陇顫?Git 鐟欙妇顫弮?LF 娴兼碍瀵滈柊宥囩枂鏉烆兛璐?CRLF閿?
 
 ## [Unreleased-PLAN_084-ACTIVITY-LIBRARY-SETS] - 2026-04-29
 
-### 原因
-- 用户希望完善「工具箱 - 每日决策 - 干什么」子模块：像吃什么、穿什么一样支持可管理的自定义事件集，并把 demo 静态行动数据升级为可上传 S3、App 下载后写入 SQLite 的真实行动库。
-- 原有干什么数据仍带有从菜谱 demo 复制来的材料/步骤语义，需要改成“开始条件、执行步骤、退出边界”的行动结构，并补充具体问题导向的行动指南。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿鐎瑰苯鏉介妴灞戒紣閸忛顔?- 濮ｅ繑妫╅崘宕囩摜 - 楠炶弓绮堟稊鍫涒偓宥呯摍濡€虫健閿涙艾鍎氶崥鍐х矆娑斿牄鈧胶鈹涙禒鈧稊鍫滅閺嶉攱鏁幐浣稿讲缁狅紕鎮婇惃鍕殰鐎规矮绠熸禍瀣╂闂嗗棴绱濋獮鑸靛Ω demo 闂堟瑦鈧浇顢戦崝銊︽殶閹诡喖宕岀痪褌璐熼崣顖欑瑐娴?S3閵嗕竸pp 娑撳娴囬崥搴″晸閸?SQLite 閻ㄥ嫮婀＄€圭偠顢戦崝銊ョ氨閵?
+- 閸樼喐婀侀獮韫矆娑斿牊鏆熼幑顔荤矝鐢附婀佹禒搴ゅ綅鐠?demo 婢跺秴鍩楅弶銉ф畱閺夋劖鏋?濮濄儵顎冪拠顓濈疅閿涘矂娓剁憰浣规暭閹存劏鈧粌绱戞慨瀣蒋娴犺翰鈧焦澧界悰灞绢劄妤犮們鈧線鈧偓閸戦缚绔熼悾灞糕偓婵堟畱鐞涘苯濮╃紒鎾寸€敍灞借嫙鐞涖儱鍘栭崗铚傜秼闂傤噣顣界€电厧鎮滈惃鍕攽閸斻劍瀵氶崡妞尖偓?
 
-### 新增
-- 干什么新增用户可管理的行动集：支持默认行动集、自建行动集、重命名、删除、导入导出，以及在编辑行动时勾选所属行动集。
-- 新增 `DailyChoiceActivityLibraryStore`：从 `activity_data/daily_choice_activity_library.json` 下载远端 JSON，安装为本地 `toolbox_daily_choice_activity.db`，并支持摘要、详情和分类/场景查询。
-- 新增干什么数据生成脚本，已导出到 `D:\vocabularySleep-resources\干什么-数据`：包含 JSON、SQLite、`FORMAT.md` 和 `GENERATION_SUMMARY.md`，当前 48 条行动。
-- 新增行动库测试，覆盖远端 JSON 安装 SQLite、失败保留旧库、无硬编码 activity seed；自定义状态测试覆盖行动集持久化、删除清理和成员重写。
+### 閺傛澘顤?
+- 楠炶弓绮堟稊鍫熸煀婢х偟鏁ら幋宄板讲缁狅紕鎮婇惃鍕攽閸斻劑娉﹂敍姘暜閹镐線绮拋銈堫攽閸斻劑娉﹂妴浣藉殰瀵ら缚顢戦崝銊╂肠閵嗕線鍣搁崨钘夋倳閵嗕礁鍨归梽銈冣偓浣割嚤閸忋儱顕遍崙鐚寸礉娴犮儱寮烽崷銊х椽鏉堟垼顢戦崝銊︽閸曢箖鈧澧嶇仦鐐额攽閸斻劑娉﹂妴?
+- 閺傛澘顤?`DailyChoiceActivityLibraryStore`閿涙矮绮?`activity_data/daily_choice_activity_library.json` 娑撳娴囨潻婊咁伂 JSON閿涘苯鐣ㄧ憗鍛礋閺堫剙婀?`toolbox_daily_choice_activity.db`閿涘苯鑻熼弨顖涘瘮閹芥顩﹂妴浣筋嚊閹懎鎷伴崚鍡欒/閸︾儤娅欓弻銉嚄閵?
+- 閺傛澘顤冮獮韫矆娑斿牊鏆熼幑顔炬晸閹存劘鍓奸張顒婄礉瀹告彃顕遍崙鍝勫煂 `D:\vocabularySleep-resources\楠炶弓绮堟稊?閺佺増宓乣閿涙艾瀵橀崥?JSON閵嗕讣QLite閵嗕梗FORMAT.md` 閸?`GENERATION_SUMMARY.md`閿涘苯缍嬮崜?48 閺壜ゎ攽閸斻劊鈧?
+- 閺傛澘顤冪悰灞藉З鎼存挻绁寸拠鏇礉鐟曞棛娲婃潻婊咁伂 JSON 鐎瑰顥?SQLite閵嗕礁銇戠拹銉ょ箽閻ｆ瑦妫惔鎾扁偓浣规￥绾剛绱惍?activity seed閿涙稖鍤滅€规矮绠熼悩鑸碘偓浣圭ゴ鐠囨洝顩惄鏍攽閸斻劑娉﹂幐浣风畽閸栨牓鈧礁鍨归梽銈嗙閻炲棗鎷伴幋鎰喅闁插秴鍟撻妴?
 
-### 修改
-- 干什么随机候选改为基于“方向 + 当前行动集 + 隐藏列表”生成，未安装内置库时保留明确下载入口和个人行动入口。
-- 干什么管理页接入行动集筛选、加入/移出行动集、行动集导入导出和 activity 专属编辑文案。
-- 干什么行动详情语义从菜谱式“材料/制作方法”推进为“开始条件/执行步骤/关键提示”，数据字段继续复用 `DailyChoiceOption` 以降低模块耦合。
-- 行动指南入口切换为具体问题模块，覆盖注意力涣散、什么时候出门散步、低意志力启动和行动边界。
-- 移除旧的 activity demo seed part 文件，避免干什么内置行动继续留在编译单元中。
+### 娣囶喗鏁?
+- 楠炶弓绮堟稊鍫ユ閺堝搫鈧瑩鈧鏁兼稉鍝勭唨娴滃簶鈧粍鏌熼崥?+ 瑜版挸澧犵悰灞藉З闂?+ 闂呮劘妫岄崚妤勩€冮垾婵堟晸閹存劧绱濋張顏勭暔鐟佸懎鍞寸純顔肩氨閺冩湹绻氶悾娆愭绾喕绗呮潪钘夊弳閸欙絽鎷版稉顏冩眽鐞涘苯濮╅崗銉ュ經閵?
+- 楠炶弓绮堟稊鍫㈩吀閻炲棝銆夐幒銉ュ弳鐞涘苯濮╅梿鍡欑摣闁鈧礁濮為崗?缁夎鍤悰灞藉З闂嗗棎鈧浇顢戦崝銊╂肠鐎电厧鍙嗙€电厧鍤崪?activity 娑撴挸鐫樼紓鏍帆閺傚洦顢嶉妴?
+- 楠炶弓绮堟稊鍫ｎ攽閸斻劏顕涢幆鍛邦嚔娑斿绮犻懣婊嗘皑瀵繆鈧粍娼楅弬?閸掓湹缍旈弬瑙勭《閳ユ繃甯规潻娑楄礋閳ユ粌绱戞慨瀣蒋娴?閹笛嗩攽濮濄儵顎?閸忔娊鏁幓鎰仛閳ユ繐绱濋弫鐗堝祦鐎涙顔岀紒褏鐢绘径宥囨暏 `DailyChoiceOption` 娴犮儵妾锋担搴⒛侀崸妤勨偓锕€鎮庨妴?
+- 鐞涘苯濮╅幐鍥у础閸忋儱褰涢崚鍥ㄥ床娑撳搫鍙挎担鎾绘６妫版ɑ膩閸ф绱濈憰鍡欐磰濞夈劍鍓伴崝娑欏彯閺侊絻鈧椒绮堟稊鍫熸閸婃瑥鍤梻銊︽殠濮濄儯鈧椒缍嗛幇蹇撶箶閸旀稑鎯庨崝銊ユ嫲鐞涘苯濮╂潏鍦櫕閵?
+- 缁夊娅庨弮褏娈?activity demo seed part 閺傚洣娆㈤敍宀勪缉閸忓秴鍏辨禒鈧稊鍫濆敶缂冾喛顢戦崝銊ф埛缂侇厾鏆€閸︺劎绱拠鎴濆礋閸忓啩鑵戦妴?
 
-### 风险变更
-- 首次安装前内置行动为空，用户需要先下载行动库或创建个人行动；UI 已在状态面板和空状态提示这一点。
-- 当前远端文件路径固定为 `activity_data/daily_choice_activity_library.json`，上传 S3 时需要保持同一路径，或后续再调整 store 的 `remoteLibraryKey`。
-- 行动建议只作为日常行动判断和注意力复盘提示，不作为医疗、心理或安全决策依据。
+### 妞嬪酣娅撻崣妯绘纯
+- 妫ｆ牗顐肩€瑰顥婇崜宥呭敶缂冾喛顢戦崝銊よ礋缁岀尨绱濋悽銊﹀煕闂団偓鐟曚礁鍘涙稉瀣祰鐞涘苯濮╂惔鎾村灗閸掓稑缂撴稉顏冩眽鐞涘苯濮╅敍娌€I 瀹告彃婀悩鑸碘偓渚€娼伴弶鍨嫲缁岃櫣濮搁幀浣瑰絹缁€楦跨箹娑撯偓閻愬箍鈧?
+- 瑜版挸澧犳潻婊咁伂閺傚洣娆㈢捄顖氱窞閸ュ搫鐣炬稉?`activity_data/daily_choice_activity_library.json`閿涘奔绗傛导?S3 閺冨爼娓剁憰浣风箽閹镐礁鎮撴稉鈧捄顖氱窞閿涘本鍨ㄩ崥搴ｇ敾閸愬秷鐨熼弫?store 閻?`remoteLibraryKey`閵?
+- 鐞涘苯濮╁楦款唴閸欘亙缍旀稉鐑樻）鐢瓕顢戦崝銊ュ灲閺傤厼鎷板▔銊﹀壈閸旀稑顦查惄妯诲絹缁€鐚寸礉娑撳秳缍旀稉鍝勫鞍閻ゆぜ鈧礁绺鹃悶鍡樺灗鐎瑰鍙忛崘宕囩摜娓氭繃宓侀妴?
 
-### 验证
-- `python -X utf8 -m py_compile .\scripts\generate_daily_choice_activity_dataset.py`（通过）
-- `python -X utf8 .\scripts\generate_daily_choice_activity_dataset.py`（通过，导出 48 条行动）
-- SQLite `PRAGMA integrity_check = ok`，`user_version = 1`，有效行动 48 条
+### 妤犲矁鐦?
+- `python -X utf8 -m py_compile .\scripts\generate_daily_choice_activity_dataset.py`閿涘牓鈧俺绻冮敍?
+- `python -X utf8 .\scripts\generate_daily_choice_activity_dataset.py`閿涘牓鈧俺绻冮敍灞筋嚤閸?48 閺壜ゎ攽閸旑煉绱?
+- SQLite `PRAGMA integrity_check = ok`閿涘畭user_version = 1`閿涘本婀侀弫鍫ｎ攽閸?48 閺?
 - JSON SHA256 `1E32FBD4937AF940578C6BD0ABEC404895525B6306BBC087A1EC1CA6CED01FA5`
 - DB SHA256 `E64DFB24DE244CA350D598F7730DCA43E3E5720ECF47021721E212A22321E022`
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_state_test.dart .\test\daily_choice_activity_library_store_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_custom_state_test.dart .\test\daily_choice_activity_library_store_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，25 tests）
-- `git diff --check`（通过）
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_custom_state_test.dart .\test\daily_choice_activity_library_store_test.dart .\test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_custom_state_test.dart .\test\daily_choice_activity_library_store_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?5 tests閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_085-DECISION-ASSISTANT-GUIDED-REPORT] - 2026-04-29
 
-### 原因
-- 用户反馈「工具箱 - 每日抉择 - 决策助手」当前过于繁琐、片面且难以把握，实际使用门槛偏高。
-- 本轮参考 `D:\vocabularySleep-resources\决策` 下三份决策资料，将优质决策六要素、偏差/噪声控制、概率校准和情景分析收敛为更可操作的移动端交互。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗苯浼愰崗椋庮唸 - 濮ｅ繑妫╅幎澶嬪 - 閸愬磭鐡ラ崝鈺傚閵嗗秴缍嬮崜宥堢箖娴滃海绠掗悶鎰┾偓浣哄闂堫澀绗栭梾鍙ヤ簰閹跺﹥褰欓敍灞界杽闂勫懍濞囬悽銊╂，濡叉稑浜告妯糕偓?
+- 閺堫剝鐤嗛崣鍌濃偓?`D:\vocabularySleep-resources\閸愬磭鐡 娑撳绗佹禒钘夊枀缁涙牞绁弬娆欑礉鐏忓棔绱拹銊ュ枀缁涙牕鍙氱憰浣虹閵嗕礁浜稿?閸ｎ亜锛愰幒褍鍩楅妴浣诡洤閻滃洦鐗庨崙鍡楁嫲閹懏娅欓崚鍡樼€介弨鑸垫殐娑撶儤娲块崣顖涙惙娴ｆ粎娈戠粔璇插З缁旑垯姘︽禍鎺嬧偓?
 
-### 新增
-- 决策助手新增「问答式快速决策」入口：支持填写决策问题、快速命名方案、套用常规比较/低风险快决/高风险稳妥/不确定先查四种情境预设。
-- 新增逐个方案校准流程：默认只展示成功率、执行率、收益和风险四个高影响问题，可按需展开投入、可回退、把握度、后悔和信息差。
-- 新增「跨模型决策分析报告」：按加权因素、期望收益、联合概率、情景分析、后悔与机会成本、底线守门、校准预测和随机模型逐项说明赢家、分差、适用场景、指标解释和风险提醒。
-- 新增 hub smoke 测试，覆盖进入 Decision 页后问答流、报告面板和高风险预设的渲染。
+### 閺傛澘顤?
+- 閸愬磭鐡ラ崝鈺傚閺傛澘顤冮妴宀勬６缁涙柨绱¤箛顐︹偓鐔峰枀缁涙牓鈧秴鍙嗛崣锝忕窗閺€顖涘瘮婵夘偄鍟撻崘宕囩摜闂傤噣顣介妴浣告彥闁喎鎳￠崥宥嗘煙濡楀牄鈧礁顨滈悽銊ョ埗鐟欏嫭鐦潏?娴ｅ酣顥撻梽鈺佹彥閸?妤傛﹢顥撻梽鈺兦旀俊?娑撳秶鈥樼€规艾鍘涢弻銉ユ磽缁夊秵鍎忔晶鍐暕鐠佷勘鈧?
+- 閺傛澘顤冮柅鎰嚋閺傝顢嶉弽鈥冲櫙濞翠胶鈻奸敍姘剁帛鐠併倕褰х仦鏇犮仛閹存劕濮涢悳鍥モ偓浣瑰⒔鐞涘瞼宸奸妴浣规暪閻╁﹤鎷版搴ㄦ珦閸ユ稐閲滄妯哄閸濆秹妫舵０姗堢礉閸欘垱瀵滈棁鈧仦鏇炵磻閹舵洖鍙嗛妴浣稿讲閸ョ偤鈧偓閵嗕焦濡搁幓鈥冲閵嗕礁鎮楅幃鏂挎嫲娣団剝浼呭顔衡偓?
+- 閺傛澘顤冮妴宀冩硶濡€崇€烽崘宕囩摜閸掑棙鐎介幎銉ユ啞閵嗗稄绱伴幐澶婂閺夊啫娲滅槐鐘偓浣规埂閺堟稒鏁归惄濞库偓浣戒粓閸氬牊顩ч悳鍥モ偓浣瑰剰閺咁垰鍨庨弸鎰┾偓浣告倵閹柧绗岄張杞扮窗閹存劖婀伴妴浣哥俺缁惧灝鐣ч梻銊ｂ偓浣圭墡閸戝棝顣╁ù瀣嫲闂呭繑婧€濡€崇€烽柅鎰般€嶇拠瀛樻鐠с垹顔嶉妴浣稿瀻瀹割喓鈧線鈧倻鏁ら崷鐑樻珯閵嗕焦瀵氶弽鍥掗柌濠傛嫲妞嬪酣娅撻幓鎰板晪閵?
+- 閺傛澘顤?hub smoke 濞村鐦敍宀冾洬閻╂牞绻橀崗?Decision 妞ら潧鎮楅梻顔剧摕濞翠降鈧焦濮ら崨濠囨桨閺夊灝鎷版姗€顥撻梽鈺咁暕鐠佸墽娈戝〒鍙夌厠閵?
 
-### 修改
-- 决策助手默认首屏从大段参数表改为问答流 + 当前建议 + 跨模型报告；原九字段评分表下沉为「高级评分表」按需展开，降低启动构建和用户理解成本。
-- 方案名称输入允许清空并由引擎兜底为方案 id，避免用户改名时被旧值强行保留。
-- 恢复未接入的 activity seed part 分析链路，并对未使用的旧静态行动 seed 做文件级忽略，保证 `toolbox_daily_choice` 目录分析可通过。
-- 修正 activity 模块指南入口回退为现有 `activityGuideEntries`，避免引用未接线的 guide module 阻塞分析。
+### 娣囶喗鏁?
+- 閸愬磭鐡ラ崝鈺傚姒涙顓绘＃鏍х潌娴犲骸銇囧▓闈涘棘閺佹媽銆冮弨閫涜礋闂傤喚鐡熷ù?+ 瑜版挸澧犲楦款唴 + 鐠恒劍膩閸ㄥ濮ら崨濠忕幢閸樼喍绡€鐎涙顔岀拠鍕瀻鐞涖劋绗呭▽澶夎礋閵嗗矂鐝痪褑鐦庨崚鍡氥€冮妴宥嗗瘻闂団偓鐏炴洖绱戦敍宀勬娴ｅ骸鎯庨崝銊︾€鍝勬嫲閻劍鍩涢悶鍡毿掗幋鎰拱閵?
+- 閺傝顢嶉崥宥囆炴潏鎾冲弳閸忎浇顔忓〒鍛敄楠炲墎鏁卞鏇熸惛閸忔粌绨虫稉鐑樻煙濡?id閿涘矂浼╅崗宥囨暏閹撮攱鏁奸崥宥嗘鐞氼偅妫崐鐓庡繁鐞涘奔绻氶悾娆嶁偓?
+- 閹垹顦查張顏呭复閸忋儳娈?activity seed part 閸掑棙鐎介柧鎹愮熅閿涘苯鑻熺€佃婀担璺ㄦ暏閻ㄥ嫭妫棃娆愨偓浣筋攽閸?seed 閸嬫碍鏋冩禒鍓侀獓韫囩晫鏆愰敍灞肩箽鐠?`toolbox_daily_choice` 閻╊喖缍嶉崚鍡樼€介崣顖炩偓姘崇箖閵?
+- 娣囶喗顒?activity 濡€虫健閹稿洤宕￠崗銉ュ經閸ョ偤鈧偓娑撹櫣骞囬張?`activityGuideEntries`閿涘矂浼╅崗宥呯穿閻劍婀幒銉у殠閻?guide module 闂冭顢ｉ崚鍡樼€介妴?
 
-### 修复
-- 提升决策助手问答流步骤标题、序号徽标、说明块和内联提示块的明暗对比，避免浅色 accent 与浅背景接近时文字识别度不足。
+### 娣囶喖顦?
+- 閹绘劕宕岄崘宕囩摜閸斺晜澧滈梻顔剧摕濞翠焦顒炴銈嗙垼妫版ǜ鈧礁绨崣宄扮獦閺嶅洢鈧浇顕╅弰搴℃健閸滃苯鍞撮懕鏃€褰佺粈鍝勬健閻ㄥ嫭妲戦弳妤€顕В鏃撶礉闁灝鍘ゅù鍛板 accent 娑撳孩绁懗灞炬珯閹恒儴绻庨弮鑸垫瀮鐎涙鐦戦崚顐㈠娑撳秷鍐婚妴?
 
-### 风险变更
-- 决策助手报告会给出模型建议，但仍只用于整理思路；高风险医疗、法律、财务决策不能把本模块当作单一依据。
-- 高级评分表默认折叠，老用户需要多点一次才能看到完整矩阵；问答流中的「展开完整校准」可覆盖同一批字段。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸愬磭鐡ラ崝鈺傚閹躲儱鎲℃导姘辩舶閸戠儤膩閸ㄥ缂撶拋顕嗙礉娴ｅ棔绮涢崣顏嗘暏娴滃孩鏆ｉ悶鍡樷偓婵婄熅閿涙盯鐝搴ㄦ珦閸栬崵鏋熼妴浣圭《瀵板鈧浇鍌ㄩ崝鈥冲枀缁涙牔绗夐懗鑺ュΩ閺堫剚膩閸ф缍嬫担婊冨礋娑撯偓娓氭繃宓侀妴?
+- 妤傛楠囩拠鍕瀻鐞涖劑绮拋銈嗗閸欑媴绱濋懓浣烘暏閹寸兘娓剁憰浣割樋閻愰€涚濞嗏剝澧犻懗鐣屾箙閸掓澘鐣弫瀵哥叐闂冪绱遍梻顔剧摕濞翠椒鑵戦惃鍕┾偓灞界潔瀵偓鐎瑰本鏆ｉ弽鈥冲櫙閵嗗秴褰茬憰鍡欐磰閸氬奔绔撮幍鐟扮摟濞堢偣鈧?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_decision_engine_test.dart --reporter compact`（通过，5 tests）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，12 tests）
-- `git diff --check`（通过，仅提示当前工作树中若干既有文件下次被 Git 触碰时 LF 会按配置转 CRLF）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_decision_engine_test.dart .\test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_decision_engine_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?2 tests閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇氳ぐ鎾冲瀹搞儰缍旈弽鎴滆厬閼汇儱鍏遍弮銏℃箒閺傚洣娆㈡稉瀣偧鐞?Git 鐟欙妇顫弮?LF 娴兼碍瀵滈柊宥囩枂鏉?CRLF閿?
 
 ## [Unreleased-PLAN_083-DAILY-CHOICE-REAL-RECIPE-DATASET] - 2026-04-29
 
-### 原因
-- 用户反馈“每日决策 - 吃什么”子模块现有数据不可用，尤其制作方法和执行步骤缺少真实可操作性，需要基于本地做菜资料和开源菜谱项目重建可上传 S3 的验证包。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閳ユ粍鐦￠弮銉ュ枀缁?- 閸氬啩绮堟稊鍫氣偓婵嗙摍濡€虫健閻滅増婀侀弫鐗堝祦娑撳秴褰查悽顭掔礉鐏忋倕鍙鹃崚鏈电稊閺傝纭堕崪灞惧⒔鐞涘本顒炴銈囧繁鐏忔垹婀＄€圭偛褰查幙宥勭稊閹嶇礉闂団偓鐟曚礁鐔€娴滃孩婀伴崷鏉夸粵閼挎粏绁弬娆忔嫲瀵偓濠ф劘褰嶇拫閬嶃€嶉惄顕€鍣稿鍝勫讲娑撳﹣绱?S3 閻ㄥ嫰鐛欑拠浣稿瘶閵?
 
-### 新增
-- 菜谱生成器新增 `Anduin2017/HowToCook` Markdown 解析，按“必备原料和工具 / 计算 / 操作 / 附加内容”整理材料、份量、执行步骤和提示。
-- 验证包新增 `validation_audit.md`、`validation_audit.json`、`validation_quality_report.json`，记录数据覆盖、字段风险、SQLite 完整性和质量指标。
-- 审计脚本新增 `validation_omitted_real_steps.md/json` 输出，列出缺少可抽取真实步骤的本地文档、扫描 PDF 和 cook CSV 视频型条目，避免用模板步骤补齐。
+### 閺傛澘顤?
+- 閼挎粏姘ㄩ悽鐔稿灇閸ｃ劍鏌婃晶?`Anduin2017/HowToCook` Markdown 鐟欙絾鐎介敍灞惧瘻閳ユ粌绻€婢跺洤甯弬娆忔嫲瀹搞儱鍙?/ 鐠侊紕鐣?/ 閹垮秳缍?/ 闂勫嫬濮為崘鍛啇閳ユ繃鏆ｉ悶鍡樻綏閺傛瑣鈧椒鍞ら柌蹇嬧偓浣瑰⒔鐞涘本顒炴銈呮嫲閹绘劗銇氶妴?
+- 妤犲矁鐦夐崠鍛煀婢?`validation_audit.md`閵嗕梗validation_audit.json`閵嗕梗validation_quality_report.json`閿涘矁顔囪ぐ鏇熸殶閹诡喛顩惄鏍モ偓浣哥摟濞堢敻顥撻梽鈹库偓涓糛Lite 鐎瑰本鏆ｉ幀褍鎷扮拹銊╁櫤閹稿洦鐖ｉ妴?
+- 鐎孤ゎ吀閼存碍婀伴弬鏉款杻 `validation_omitted_real_steps.md/json` 鏉堟挸鍤敍灞藉灙閸戣櫣宸辩亸鎴濆讲閹惰棄褰囬惇鐔风杽濮濄儵顎冮惃鍕拱閸︾増鏋冨锝冣偓浣瑰閹?PDF 閸?cook CSV 鐟欏棝顣堕崹瀣蒋閻╊噯绱濋柆鍨帳閻劍膩閺夋寧顒炴銈埶夋鎰┾偓?
 
-### 修改
-- `YunYouJun/cook` 的 `recipe.csv` 不再默认生成缺少步骤的独立菜谱；本轮仅作为元数据参考，为已匹配完整菜谱补充难度、工具、方法和 BV 字段。
-- 本地 EPUB 抽取恢复参考资料覆盖，同时保留质量闸门：仅收录材料和真实步骤均可抽取的条目，过滤功效说明、版权/Issue 文本、超长步骤、材料缺失和步骤缺失条目。
-- 重新生成 `D:\vocabularySleep-resources\cook_data_plan070_validation`：最终 7,351 条菜谱，其中 HowToCook 347 条、本地资料 7,004 条，cook 元数据匹配 47 条。
+### 娣囶喗鏁?
+- `YunYouJun/cook` 閻?`recipe.csv` 娑撳秴鍟€姒涙顓婚悽鐔稿灇缂傚搫鐨銉╊€冮惃鍕缁斿褰嶇拫鎲嬬幢閺堫剝鐤嗘禒鍛稊娑撳搫鍘撻弫鐗堝祦閸欏倽鈧喛绱濇稉鍝勫嚒閸栧綊鍘ょ€瑰本鏆ｉ懣婊嗘皑鐞涖儱鍘栭梾鎯у閵嗕礁浼愰崗鏋偓浣规煙濞夋洖鎷?BV 鐎涙顔岄妴?
+- 閺堫剙婀?EPUB 閹惰棄褰囬幁銏狀槻閸欏倽鈧啳绁弬娆掝洬閻╂牭绱濋崥灞炬娣囨繄鏆€鐠愩劑鍣洪梻鎼佹，閿涙矮绮庨弨璺虹秿閺夋劖鏋￠崪宀€婀＄€圭偞顒炴銈呮綆閸欘垱濞婇崣鏍畱閺夛紕娲伴敍宀冪箖濠娿倕濮涢弫鍫ｎ嚛閺勫簺鈧胶澧楅弶?Issue 閺傚洦婀伴妴浣界Т闂€鎸庮劄妤犮們鈧焦娼楅弬娆戝繁婢跺崬鎷板銉╊€冪紓鍝勩亼閺夛紕娲伴妴?
+- 闁插秵鏌婇悽鐔稿灇 `D:\vocabularySleep-resources\cook_data_plan070_validation`閿涙碍娓剁紒?7,351 閺壜ゅ綅鐠嬫唻绱濋崗鏈佃厬 HowToCook 347 閺壜扳偓浣规拱閸︽媽绁弬?7,004 閺夆槄绱漜ook 閸忓啯鏆熼幑顔煎爱闁?47 閺壜扳偓?
 
-### 风险变更
-- 7 个 EPUB 当前未抽取到同时包含材料和真实步骤的结构化菜谱，2 个 PDF 前 20 页无法抽取文本，疑似扫描版或图片 PDF；本轮列入遗漏报告，后续需 OCR、专项解析或人工校验后再入库。
-- `YunYouJun/cook` 仍有 558 行缺少可离线验证的文字制作步骤，继续只作为元数据候选，不生成虚假步骤。
+### 妞嬪酣娅撻崣妯绘纯
+- 7 娑?EPUB 瑜版挸澧犻張顏呭▕閸欐牕鍩岄崥灞炬閸栧懎鎯堥弶鎰灐閸滃瞼婀＄€圭偞顒炴銈囨畱缂佹挻鐎崠鏍綅鐠嬫唻绱? 娑?PDF 閸?20 妞ゅ灚妫ゅ▔鏇熷▕閸欐牗鏋冮張顒婄礉閻ゆ垳鎶€閹殿偅寮块悧鍫熷灗閸ュ墽澧?PDF閿涙稒婀版潪顔煎灙閸忋儵浠愬蹇斿Г閸涘绱濋崥搴ｇ敾闂団偓 OCR閵嗕椒绗撴い纭呅掗弸鎰灗娴滃搫浼愰弽锟犵崣閸氬骸鍟€閸忋儱绨遍妴?
+- `YunYouJun/cook` 娴犲秵婀?558 鐞涘瞼宸辩亸鎴濆讲缁傝崵鍤庢宀冪槈閻ㄥ嫭鏋冪€涙鍩楁担婊勵劄妤犮倧绱濈紒褏鐢婚崣顏冪稊娑撳搫鍘撻弫鐗堝祦閸婃瑩鈧绱濇稉宥囨晸閹存劘娅勯崑鍥劄妤犮們鈧?
 
-### 验证
-- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
-- 生成验证包到 `D:\vocabularySleep-resources\cook_data_plan070_validation`（通过，7,351 条）
-- `validation_quality_report.json`：材料空值 0、步骤空值 0、无步骤菜谱 0、超过 320 字步骤 0、说明污染步骤 0
-- SQLite `PRAGMA integrity_check = ok`，`user_version = 2`，DB SHA256 `3875D2CBBA0A6F40E782331587EF3ECE6C76404F6B5B63806D479B7FF4EDFCBC`
+### 妤犲矁鐦?
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`閿涘牓鈧俺绻冮敍?
+- 閻㈢喐鍨氭宀冪槈閸栧懎鍩?`D:\vocabularySleep-resources\cook_data_plan070_validation`閿涘牓鈧俺绻冮敍?,351 閺夆槄绱?
+- `validation_quality_report.json`閿涙碍娼楅弬娆戔敄閸?0閵嗕焦顒炴銈団敄閸?0閵嗕焦妫ゅ銉╊€冮懣婊嗘皑 0閵嗕浇绉存潻?320 鐎涙顒炴?0閵嗕浇顕╅弰搴㈣杽閺屾挻顒炴?0
+- SQLite `PRAGMA integrity_check = ok`閿涘畭user_version = 2`閿涘瓕B SHA256 `3875D2CBBA0A6F40E782331587EF3ECE6C76404F6B5B63806D479B7FF4EDFCBC`
 
 ## [Unreleased-PLAN_082-PLACE-MAP-HOT-IP-COARSE] - 2026-04-29
 
-### 原因
-- 用户希望将 OSM HOT 作为默认地图源，并明确其他地图源通常需要国际网络环境。
-- 用户希望在设备定位/GPS 未开启时，引导打开系统设置。
-- 用户希望新增一个不依赖 GPS 的模糊范围场所查询能力，仅通过 IP 粗略估算范围。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿鐏?OSM HOT 娴ｆ粈璐熸妯款吇閸︽澘娴樺┃鎰剁礉楠炶埖妲戠涵顔煎従娴犳牕婀撮崶鐐爱闁艾鐖堕棁鈧憰浣告禇闂勫懐缍夌紒婊呭箚婢у啨鈧?
+- 閻劍鍩涚敮灞炬箿閸︺劏顔曟径鍥х暰娴?GPS 閺堫亜绱戦崥顖涙閿涘苯绱╃€靛吋澧﹀鈧化鑽ょ埠鐠佸墽鐤嗛妴?
+- 閻劍鍩涚敮灞炬箿閺傛澘顤冩稉鈧稉顏冪瑝娓氭繆绂?GPS 閻ㄥ嫭膩缁﹨瀵栭崶鏉戞簚閹碘偓閺屻儴顕楅懗钘夊閿涘奔绮庨柅姘崇箖 IP 缁鏆愭导鎵暬閼煎啫娲块妴?
 
-### 新增
-- 周边地图新增「IP 粗略范围」查询入口：不请求 GPS，通过网络出口 IP 估算城市级中心点，再按 12km 粗略范围查询 OSM 场所。
-- 新增 IP 粗定位服务 `DailyChoiceIpCoarseLocationProvider`，支持解析 `loc`、`lat/lon`、`latitude/longitude` 等常见坐标字段。
-- 设备定位服务未开启或权限被系统永久拒绝时，弹出设置引导，可跳转系统定位设置或 App 设置页。
+### 閺傛澘顤?
+- 閸涖劏绔熼崷鏉挎禈閺傛澘顤冮妴瀛朠 缁鏆愰懠鍐ㄦ纯閵嗗秵鐓＄拠銏犲弳閸欙綇绱版稉宥堫嚞濮?GPS閿涘矂鈧俺绻冪純鎴犵捕閸戝搫褰?IP 娴兼壆鐣婚崺搴＄缁狙傝厬韫囧啰鍋ｉ敍灞藉晙閹?12km 缁鏆愰懠鍐ㄦ纯閺屻儴顕?OSM 閸︾儤澧嶉妴?
+- 閺傛澘顤?IP 缁鐣炬担宥嗘箛閸?`DailyChoiceIpCoarseLocationProvider`閿涘本鏁幐浣叫掗弸?`loc`閵嗕梗lat/lon`閵嗕梗latitude/longitude` 缁涘鐖剁憴浣告綏閺嶅洤鐡у▓鐐光偓?
+- 鐠佹儳顦€规矮缍呴張宥呭閺堫亜绱戦崥顖涘灗閺夊啴妾虹悮顐ら兇缂佺喐妗堟稊鍛珕缂佹繃妞傞敍灞借剨閸戦缚顔曠純顔肩穿鐎电》绱濋崣顖濈儲鏉烆剛閮寸紒鐔风暰娴ｅ秷顔曠純顔藉灗 App 鐠佸墽鐤嗘い鐐光偓?
 
-### 修改
-- 默认地图源从 OSM France 切换为 OSM HOT。
-- 旧默认源 `carto_voyager` 和 `osm_france` 配置会迁移到当前默认 `osm_hot`。
-- 地图源选择区拆分为默认源与其他备用源，并说明其他备用源通常需要国际网络环境。
-- 地图状态浮层新增查询来源提示，区分设备定位与 IP 粗略范围。
+### 娣囶喗鏁?
+- 姒涙顓婚崷鏉挎禈濠ф劒绮?OSM France 閸掑洦宕叉稉?OSM HOT閵?
+- 閺冄囩帛鐠併倖绨?`carto_voyager` 閸?`osm_france` 闁板秶鐤嗘导姘崇讣缁夎鍩岃ぐ鎾冲姒涙顓?`osm_hot`閵?
+- 閸︽澘娴樺┃鎰扳偓澶嬪閸栫儤濯堕崚鍡曡礋姒涙顓诲┃鎰瑢閸忔湹绮径鍥╂暏濠ф劧绱濋獮鎯邦嚛閺勫骸鍙炬禒鏍ь槵閻劍绨柅姘埗闂団偓鐟曚礁娴楅梽鍛秹缂佹粎骞嗘晶鍐︹偓?
+- 閸︽澘娴橀悩鑸碘偓浣硅癁鐏炲倹鏌婃晶鐐寸叀鐠囥垺娼靛┃鎰絹缁€鐚寸礉閸栧搫鍨庣拋鎯ь槵鐎规矮缍呮稉?IP 缁鏆愰懠鍐ㄦ纯閵?
 
-### 风险变更
-- IP 粗略范围只反映网络出口或运营商出口，可能与用户真实位置存在城市级偏差；距离排序仅作粗略参考。
-- IP 粗略范围依赖 IPinfo JSON 接口与公共 Overpass 查询；弱网、代理/VPN 或公共服务繁忙时仍可能失败。
+### 妞嬪酣娅撻崣妯绘纯
+- IP 缁鏆愰懠鍐ㄦ纯閸欘亜寮介弰鐘电秹缂佹粌鍤崣锝嗗灗鏉╂劘鎯€閸熷棗鍤崣锝忕礉閸欘垵鍏樻稉搴ｆ暏閹撮婀＄€圭偘缍呯純顔肩摠閸︺劌鐓勭敮鍌滈獓閸嬪繐妯婇敍娑滅獩缁傜粯甯撴惔蹇庣矌娴ｆ粎鐭栭悾銉ュ棘閼板啨鈧?
+- IP 缁鏆愰懠鍐ㄦ纯娓氭繆绂?IPinfo JSON 閹恒儱褰涙稉搴″彆閸?Overpass 閺屻儴顕楅敍娑樻€ョ純鎴欌偓浣峰敩閻?VPN 閹存牕鍙曢崗杈ㄦ箛閸旓紕绠掕箛娆愭娴犲秴褰查懗钘夈亼鐠愩儯鈧?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，10 tests）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?0 tests閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?1 tests閿?
 
 ## [Unreleased-PLAN_081-PLACE-MAP-RESTRICTED-NETWORK-SOURCES] - 2026-04-28
 
-### 原因
-- 用户反馈当前三个地图源在中国大陆等部分地区不可用，希望找到限制网络下更容易连通的数据源并设为默认，或直接使用 OpenStreetMap。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瑜版挸澧犳稉澶夐嚋閸︽澘娴樺┃鎰躬娑擃厼娴楁径褔妾扮粵澶愬劥閸掑棗婀撮崠杞扮瑝閸欘垳鏁ら敍灞界瑖閺堟稒澹橀崚浼存閸掑墎缍夌紒婊€绗呴弴鏉戭啇閺勬捁绻涢柅姘辨畱閺佺増宓佸┃鎰嫙鐠佸彞璐熸妯款吇閿涘本鍨ㄩ惄瀛樺复娴ｈ法鏁?OpenStreetMap閵?
 
-### 新增
-- 周边地图新增 OSM HOT 与 OpenStreetMap.de 两个 OSM 社区瓦片备用源。
-- 地图源说明新增 OSM 社区公共瓦片的保守使用提示：按视野动态加载、只缓存看过的瓦片、避免批量预下载，连接不稳定时可切换其他源。
+### 閺傛澘顤?
+- 閸涖劏绔熼崷鏉挎禈閺傛澘顤?OSM HOT 娑?OpenStreetMap.de 娑撱倓閲?OSM 缁€鎯у隘閻★妇澧栨径鍥╂暏濠ф劑鈧?
+- 閸︽澘娴樺┃鎰嚛閺勫孩鏌婃晶?OSM 缁€鎯у隘閸忣剙鍙￠悺锔惧閻ㄥ嫪绻氱€瑰牅濞囬悽銊﹀絹缁€鐚寸窗閹稿顫嬮柌搴″З閹礁濮炴潪濮愨偓浣稿涧缂傛挸鐡ㄩ惇瀣箖閻ㄥ嫮鎽濋悧鍥モ偓渚€浼╅崗宥嗗闁插繘顣╂稉瀣祰閿涘矁绻涢幒銉ょ瑝缁嬪啿鐣鹃弮璺哄讲閸掑洦宕查崗鏈电铂濠ф劑鈧?
 
-### 修改
-- 默认地图源由 CARTO Voyager 改为 OSM France，仍使用 OpenStreetMap 数据与署名，在部分受限网络下作为优先尝试源。
-- CARTO Voyager 改为 `carto_voyager_fallback` 备用源；旧的 `carto_voyager` 默认配置会迁移到当前默认 OSM France，避免老用户继续停留在较易不可用的旧默认源。
-- OpenStreetMap 官方标准瓦片继续保留为手动备用源，不再标注为唯一备用。
+### 娣囶喗鏁?
+- 姒涙顓婚崷鏉挎禈濠ф劗鏁?CARTO Voyager 閺€閫涜礋 OSM France閿涘奔绮涙担璺ㄦ暏 OpenStreetMap 閺佺増宓佹稉搴ｈ閸氬稄绱濋崷銊╁劥閸掑棗褰堥梽鎰秹缂佹粈绗呮担婊€璐熸导妯哄帥鐏忔繆鐦┃鎰┾偓?
+- CARTO Voyager 閺€閫涜礋 `carto_voyager_fallback` 婢跺洨鏁ゅ┃鎰剁幢閺冄呮畱 `carto_voyager` 姒涙顓婚柊宥囩枂娴兼俺绺肩粔璇插煂瑜版挸澧犳妯款吇 OSM France閿涘矂浼╅崗宥堚偓浣烘暏閹撮鎴风紒顓炰粻閻ｆ瑥婀潏鍐╂娑撳秴褰查悽銊ф畱閺冄囩帛鐠併倖绨妴?
+- OpenStreetMap 鐎规ɑ鏌熼弽鍥у櫙閻★妇澧栫紒褏鐢绘穱婵堟殌娑撶儤澧滈崝銊ヮ槵閻劍绨敍灞肩瑝閸愬秵鐖ｅ▔銊よ礋閸烆垯绔存径鍥╂暏閵?
 
-### 风险变更
-- OSM France / OSM HOT / OpenStreetMap.de 仍是社区公共瓦片资源，不提供可用性 SLA；本轮通过多源切换、按需加载与本地缓存降低弱网白屏概率，但无法保证所有地区必达。
-- 暂未默认接入天地图、高德或腾讯地图瓦片；这类源通常涉及 API Key、授权条款和国内坐标系适配，后续如要接入需单独做合规与坐标转换方案。
+### 妞嬪酣娅撻崣妯绘纯
+- OSM France / OSM HOT / OpenStreetMap.de 娴犲秵妲哥粈鎯у隘閸忣剙鍙￠悺锔惧鐠у嫭绨敍灞肩瑝閹绘劒绶甸崣顖滄暏閹?SLA閿涙稒婀版潪顕€鈧俺绻冩径姘爱閸掑洦宕查妴浣瑰瘻闂団偓閸旂姾娴囨稉搴㈡拱閸︽壆绱︾€涙﹢妾锋担搴℃€ョ純鎴犳鐏炲繑顩ч悳鍥风礉娴ｅ棙妫ゅ▔鏇氱箽鐠囦焦澧嶉張澶婃勾閸栧搫绻€鏉堜勘鈧?
+- 閺嗗倹婀妯款吇閹恒儱鍙嗘径鈺佹勾閸ヤ勘鈧線鐝閿嬪灗閼垫崘顔嗛崷鏉挎禈閻★妇澧栭敍娑滅箹缁粯绨柅姘埗濞戝寮?API Key閵嗕焦宸块弶鍐╂蒋濞嗘儳鎷伴崶钘夊敶閸ф劖鐖ｇ化濠氣偓鍌炲帳閿涘苯鎮楃紒顓烆洤鐟曚焦甯撮崗銉╂付閸楁洜瀚崑姘値鐟欏嫪绗岄崸鎰垼鏉烆剚宕查弬瑙勵攳閵?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，9 tests）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?1 tests閿?
 
 ## [Unreleased-PLAN_080-MAP-LAUNCHER-BUILD-FIX] - 2026-04-28
 
-### 原因
-- 用户通过 `.\scripts\build.ps1` 打包 Android 真机测试时，Release 构建在 `:app:checkReleaseAarMetadata` 阶段失败；最新 `url_launcher_android` 依赖链会引入 `androidx.browser:browser:1.9.0` 与 `androidx.core:core:1.17.0`，要求 Android Gradle Plugin 8.9.1+，而当前项目仍使用 AGP 8.7.3。
+### 閸樼喎娲?
+- 閻劍鍩涢柅姘崇箖 `.\scripts\build.ps1` 閹垫挸瀵?Android 閻喐婧€濞村鐦弮璁圭礉Release 閺嬪嫬缂撻崷?`:app:checkReleaseAarMetadata` 闂冭埖顔屾径杈Е閿涙稒娓堕弬?`url_launcher_android` 娓氭繆绂嗛柧鍙ョ窗瀵洖鍙?`androidx.browser:browser:1.9.0` 娑?`androidx.core:core:1.17.0`閿涘矁顩﹀Ч?Android Gradle Plugin 8.9.1+閿涘矁鈧苯缍嬮崜宥夈€嶉惄顔荤矝娴ｈ法鏁?AGP 8.7.3閵?
 
-### 修改
-- 保持 `url_launcher_android` 显式约束在 `6.3.17`，避免解析到引入更高 AndroidX 元数据要求的 `6.3.29`。
-- 补充并收尾 `PLAN_080_地图拉起依赖构建修复.md`，记录本轮构建兼容策略。
+### 娣囶喗鏁?
+- 娣囨繃瀵?`url_launcher_android` 閺勬儳绱＄痪锔芥将閸?`6.3.17`閿涘矂浼╅崗宥埿掗弸鎰煂瀵洖鍙嗛弴鎾彯 AndroidX 閸忓啯鏆熼幑顔款洣濮瑰倻娈?`6.3.29`閵?
+- 鐞涖儱鍘栭獮鑸垫暪鐏?`PLAN_080_閸︽澘娴橀幏澶庢崳娓氭繆绂嗛弸鍕紦娣囶喖顦?md`閿涘矁顔囪ぐ鏇熸拱鏉烆喗鐎鍝勫悑鐎瑰湱鐡ラ悾銉ｂ偓?
 
-### 风险变更
-- 该约束是兼容 AGP 8.7.3 的临时构建保护；未来升级到 AGP 8.9.1+ 后，可以重新评估是否放开 `url_launcher_android` 到最新版。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐠囥儳瀹抽弶鐔告Ц閸忕厧顔?AGP 8.7.3 閻ㄥ嫪澶嶉弮鑸电€杞扮箽閹躲倧绱遍張顏呮降閸楀洨楠囬崚?AGP 8.9.1+ 閸氬函绱濋崣顖欎簰闁插秵鏌婄拠鍕強閺勵垰鎯侀弨鎯х磻 `url_launcher_android` 閸掔増娓堕弬鎵閵?
 
-### 验证
-- `flutter pub get`（通过，解析到 `url_launcher_android 6.3.17`）
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，8 tests）
-- `.\scripts\build.ps1 -Target android-apk`（通过，生成 `build\app\outputs\flutter-apk\app-release.apk` 并复制到 `dist\android-apk\xianyushengxi.apk`）
+### 妤犲矁鐦?
+- `flutter pub get`閿涘牓鈧俺绻冮敍宀冃掗弸鎰煂 `url_launcher_android 6.3.17`閿?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `.\scripts\build.ps1 -Target android-apk`閿涘牓鈧俺绻冮敍宀€鏁撻幋?`build\app\outputs\flutter-apk\app-release.apk` 楠炶泛顦查崚璺哄煂 `dist\android-apk\xianyushengxi.apk`閿?
 
 ## [Unreleased-PLAN_079-PLACE-MAP-INTERACTION-FIX] - 2026-04-28
 
-### 原因
-- 用户反馈周边地图的全屏按钮会被周边场所统计信息遮挡，希望增加基于周边场所的随机地点功能，并补充拉起用户设备地图软件的入口，同时收口定位查询说明中的歧义表述。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閸涖劏绔熼崷鏉挎禈閻ㄥ嫬鍙忕仦蹇斿瘻闁筋喕绱扮悮顐㈡噯鏉堢懓婧€閹碘偓缂佺喕顓告穱鈩冧紖闁喗灏呴敍灞界瑖閺堟稑顤冮崝鐘茬唨娴滃骸鎳嗘潏鐟版簚閹碘偓閻ㄥ嫰娈㈤張鍝勬勾閻愮懓濮涢懗鏂ょ礉楠炴儼藟閸忓懏濯虹挧椋庢暏閹寸柉顔曟径鍥ф勾閸ユ崘钂嬫禒鍓佹畱閸忋儱褰涢敍灞芥倱閺冭埖鏁归崣锝呯暰娴ｅ秵鐓＄拠銏ｎ嚛閺勫簼鑵戦惃鍕劆娑斿銆冩潻鑸偓?
 
-### 新增
-- 周边地图结果区新增「随机周边地点」按钮，可从当前筛选后的周边场所中随机聚焦一个地点。
-- 周边场所列表新增「打开地图 App」图标按钮，优先尝试设备原生 `geo:` 地图协议，失败时使用 Apple Maps 与 OpenStreetMap 网页链接兜底。
-- 新增 `url_launcher` 依赖，用于拉起设备地图软件或外部地图网页。
+### 閺傛澘顤?
+- 閸涖劏绔熼崷鏉挎禈缂佹挻鐏夐崠鐑樻煀婢х偑鈧矂娈㈤張鍝勬噯鏉堢懓婀撮悙骞库偓宥嗗瘻闁筋噯绱濋崣顖欑矤瑜版挸澧犵粵娑⑩偓澶婃倵閻ㄥ嫬鎳嗘潏鐟版簚閹碘偓娑擃參娈㈤張楦夸粵閻掞缚绔存稉顏勬勾閻愬箍鈧?
+- 閸涖劏绔熼崷鐑樺閸掓銆冮弬鏉款杻閵嗗本澧﹀鈧崷鏉挎禈 App閵嗗秴娴橀弽鍥ㄥ瘻闁筋噯绱濇导妯哄帥鐏忔繆鐦拋鎯ь槵閸樼喓鏁?`geo:` 閸︽澘娴橀崡蹇氼唴閿涘苯銇戠拹銉︽娴ｈ法鏁?Apple Maps 娑?OpenStreetMap 缂冩垿銆夐柧鐐复閸忔粌绨抽妴?
+- 閺傛澘顤?`url_launcher` 娓氭繆绂嗛敍宀€鏁ゆ禍搴㈠鐠х柉顔曟径鍥ф勾閸ユ崘钂嬫禒鑸靛灗婢舵牠鍎撮崷鏉挎禈缂冩垿銆夐妴?
 
-### 修改
-- 将地图全屏按钮从右侧纵向控制组拆到左上角，避免与底部统计浮层在小地图高度中互相遮挡。
-- 隐私与查询说明去掉“发送给地图源”的歧义表述，改为说明 App 不经中间服务器收集或留存定位，只在用户点击时由设备按需查询。
+### 娣囶喗鏁?
+- 鐏忓棗婀撮崶鎯у弿鐏炲繑瀵滈柦顔荤矤閸欏厖鏅剁痪闈涙倻閹貉冨煑缂佸嫭濯堕崚鏉夸箯娑撳﹨顫楅敍宀勪缉閸忓秳绗屾惔鏇㈠劥缂佺喕顓稿ù顔肩湴閸︺劌鐨崷鏉挎禈妤傛ê瀹虫稉顓濈鞍閻╂悂浼勯幐掳鈧?
+- 闂呮劗顫嗘稉搴㈢叀鐠囥垼顕╅弰搴″箵閹哄鈧粌褰傞柅浣虹舶閸︽澘娴樺┃鎰ㄢ偓婵堟畱濮澭傜疅鐞涖劏鍫敍灞炬暭娑撻缚顕╅弰?App 娑撳秶绮℃稉顓㈡？閺堝秴濮熼崳銊︽暪闂嗗棙鍨ㄩ悾娆忕摠鐎规矮缍呴敍灞藉涧閸︺劎鏁ら幋椋庡仯閸戠粯妞傞悽杈啎婢跺洦瀵滈棁鈧弻銉嚄閵?
 
-### 风险变更
-- 不同设备和默认地图 App 对 `geo:` 协议支持不同；当前实现提供多级 URI 兜底，并在全部失败时给出错误提示。
+### 妞嬪酣娅撻崣妯绘纯
+- 娑撳秴鎮撶拋鎯ь槵閸滃矂绮拋銈呮勾閸?App 鐎?`geo:` 閸楀繗顔呴弨顖涘瘮娑撳秴鎮撻敍娑樼秼閸撳秴鐤勯悳鐗堝絹娓氭稑顦跨痪?URI 閸忔粌绨抽敍灞借嫙閸︺劌鍙忛柈銊ャ亼鐠愩儲妞傜紒娆忓毉闁挎瑨顕ら幓鎰仛閵?
 
-### 验证
-- `flutter pub get`（通过）
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，8 tests）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
+### 妤犲矁鐦?
+- `flutter pub get`閿涘牓鈧俺绻冮敍?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?1 tests閿?
 
 ## [Unreleased-PLAN_078-PLACE-MAP-UX-RESOURCES] - 2026-04-28
 
-### 原因
-- 用户反馈「每日决策 - 去哪儿 - 周边地图」仍像最小 demo，且 `flutter_map` 直接访问 `tile.openstreetmap.org` 时出现公共瓦片源警告和超时，需要推进到更接近可落地的地图体验。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗本鐦￠弮銉ュ枀缁?- 閸樿鎽㈤崕?- 閸涖劏绔熼崷鏉挎禈閵嗗秳绮涢崓蹇旀付鐏?demo閿涘奔绗?`flutter_map` 閻╁瓨甯寸拋鍧楁６ `tile.openstreetmap.org` 閺冭泛鍤悳鏉垮彆閸忚京鎽濋悧鍥ㄧ爱鐠€锕€鎲￠崪宀冪Т閺冭绱濋棁鈧憰浣瑰腹鏉╂稑鍩岄弴瀛樺复鏉╂垵褰查拃钘夋勾閻ㄥ嫬婀撮崶鍙ョ秼妤犲被鈧?
 
-### 新增
-- 周边地图新增可切换地图源，默认改为 CARTO Voyager，保留 CARTO Light 与 OSM Standard 备用源，并在 UI 中标注公共 OSM 瓦片源风险。
-- 新增地图瓦片按需动态加载与本地缓存管理：缓存开关、缓存大小展示、清空缓存入口和缓存资源说明。
-- 新增地图交互：放大、缩小、贴合结果、回到定位中心、全屏查看、查询半径圈、瓦片加载错误次数提示和地点标记选中态。
-- 新增地图结果与当前「去哪儿」距离/场景筛选联动，支持只看当前筛选匹配结果或查看全部周边结果。
+### 閺傛澘顤?
+- 閸涖劏绔熼崷鏉挎禈閺傛澘顤冮崣顖氬瀼閹广垹婀撮崶鐐爱閿涘矂绮拋銈嗘暭娑?CARTO Voyager閿涘奔绻氶悾?CARTO Light 娑?OSM Standard 婢跺洨鏁ゅ┃鎰剁礉楠炶泛婀?UI 娑擃厽鐖ｅ▔銊ュ彆閸?OSM 閻★妇澧栧┃鎰邦棑闂勨斂鈧?
+- 閺傛澘顤冮崷鏉挎禈閻★妇澧栭幐澶愭付閸斻劍鈧礁濮炴潪鎴掔瑢閺堫剙婀寸紓鎾崇摠缁狅紕鎮婇敍姘辩处鐎涙ê绱戦崗鐐解偓浣虹处鐎涙ê銇囩亸蹇撶潔缁€鎭掆偓浣圭缁岃櫣绱︾€涙ê鍙嗛崣锝呮嫲缂傛挸鐡ㄧ挧鍕爱鐠囧瓨妲戦妴?
+- 閺傛澘顤冮崷鏉挎禈娴溿倓绨伴敍姘杹婢堆佲偓浣虹級鐏忓繈鈧浇鍒涢崥鍫㈢波閺嬫嚎鈧礁娲栭崚鏉跨暰娴ｅ秳鑵戣箛鍐︹偓浣稿弿鐏炲繑鐓￠惇瀣ㄢ偓浣圭叀鐠囥垹宕愬鍕箑閵嗕胶鎽濋悧鍥у鏉炰粙鏁婄拠顖涱偧閺佺増褰佺粈鍝勬嫲閸︽壆鍋ｉ弽鍥唶闁鑵戦幀浣碘偓?
+- 閺傛澘顤冮崷鏉挎禈缂佹挻鐏夋稉搴＄秼閸撳秲鈧苯骞撻崫顏勫姽閵嗗秷绐涚粋?閸︾儤娅欑粵娑⑩偓澶庝粓閸旑煉绱濋弨顖涘瘮閸欘亞婀呰ぐ鎾冲缁涙盯鈧灏柊宥囩波閺嬫粍鍨ㄩ弻銉ф箙閸忋劑鍎撮崨銊ㄧ珶缂佹挻鐏夐妴?
 
-### 修改
-- `DailyChoicePlaceMapSettings` 扩展持久化地图源、瓦片缓存开关和自动贴合结果开关，旧配置读取时自动补齐默认值。
-- 周边地图预览重构为可复用地图画布，主页面和全屏页共用同一套瓦片、标记、控制按钮和状态反馈。
-- 周边场所列表支持点击聚焦地图标记，并显示当前筛选结果数与总结果数。
+### 娣囶喗鏁?
+- `DailyChoicePlaceMapSettings` 閹碘晛鐫嶉幐浣风畽閸栨牕婀撮崶鐐爱閵嗕胶鎽濋悧鍥╃处鐎涙ê绱戦崗鍐叉嫲閼奉亜濮╃拹鏉戞値缂佹挻鐏夊鈧崗绛圭礉閺冄囧帳缂冾喛顕伴崣鏍ㄦ閼奉亜濮╃悰銉╃秷姒涙顓婚崐绗衡偓?
+- 閸涖劏绔熼崷鏉挎禈妫板嫯顫嶉柌宥嗙€稉鍝勫讲婢跺秶鏁ら崷鏉挎禈閻㈣绔烽敍灞煎瘜妞ょ敻娼伴崪灞藉弿鐏炲繘銆夐崗杈╂暏閸氬奔绔存總妤冩憹閻楀洢鈧焦鐖ｇ拋鑸偓浣瑰付閸掕埖瀵滈柦顔兼嫲閻樿埖鈧礁寮芥＃鍫涒偓?
+- 閸涖劏绔熼崷鐑樺閸掓銆冮弨顖涘瘮閻愮懓鍤懕姘卞妽閸︽澘娴橀弽鍥唶閿涘苯鑻熼弰鍓с仛瑜版挸澧犵粵娑⑩偓澶岀波閺嬫粍鏆熸稉搴⑩偓鑽ょ波閺嬫粍鏆熼妴?
 
-### 修复
-- 修复默认地图瓦片源直接使用 `tile.openstreetmap.org` 导致的 `flutter_map` OSM 公共瓦片警告与较高超时风险。
-- 降低地图拖动/缩放时的额外瓦片请求量，启用过期请求中止、低缓冲和可清理缓存。
+### 娣囶喖顦?
+- 娣囶喖顦叉妯款吇閸︽澘娴橀悺锔惧濠ф劗娲块幒銉ゅ▏閻?`tile.openstreetmap.org` 鐎佃壈鍤ч惃?`flutter_map` OSM 閸忣剙鍙￠悺锔惧鐠€锕€鎲℃稉搴ょ窛妤傛绉撮弮鍫曨棑闂勨斂鈧?
+- 闂勫秳缍嗛崷鏉挎禈閹锋牕濮?缂傗晜鏂侀弮鍓佹畱妫版繂顦婚悺锔惧鐠囬攱鐪伴柌蹇ョ礉閸氼垳鏁ゆ潻鍥ㄦ埂鐠囬攱鐪版稉顓燁剾閵嗕椒缍嗙紓鎾冲暱閸滃苯褰插〒鍛倞缂傛挸鐡ㄩ妴?
 
-### 风险变更
-- CARTO 瓦片仍依赖在线第三方地图服务，弱网或服务不可达时可能出现瓦片空白；UI 会显示瓦片重试计数，并可切换备用源。
-- 本轮不做区域批量下载，避免违反公共瓦片服务策略和扩大流量风险；当前实现只缓存用户实际查看过的瓦片。
+### 妞嬪酣娅撻崣妯绘纯
+- CARTO 閻★妇澧栨禒宥勭贩鐠ф牕婀痪璺儑娑撳鏌熼崷鏉挎禈閺堝秴濮熼敍灞芥€ョ純鎴炲灗閺堝秴濮熸稉宥呭讲鏉堢偓妞傞崣顖濆厴閸戣櫣骞囬悺锔惧缁岃櫣娅ч敍娌€I 娴兼碍妯夌粈铏规憹閻楀洭鍣哥拠鏇☆吀閺佸府绱濋獮璺哄讲閸掑洦宕叉径鍥╂暏濠ф劑鈧?
+- 閺堫剝鐤嗘稉宥呬粵閸栧搫鐓欓幍褰掑櫤娑撳娴囬敍宀勪缉閸忓秷绻氶崣宥呭彆閸忚京鎽濋悧鍥ㄦ箛閸旓紕鐡ラ悾銉ユ嫲閹碘晛銇囧ù渚€鍣烘搴ㄦ珦閿涙稑缍嬮崜宥呯杽閻滄澘褰х紓鎾崇摠閻劍鍩涚€圭偤妾弻銉ф箙鏉╁洨娈戦悺锔惧閵?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，7 tests）
-- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，11 tests）
-- `git diff --check`（通过，仅提示 `changelogs/CHANGELOG.md` 在当前 Git 配置下下次触碰会从 LF 转为 CRLF）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?1 tests閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇?`changelogs/CHANGELOG.md` 閸︺劌缍嬮崜?Git 闁板秶鐤嗘稉瀣╃瑓濞喡ば曠喊棰佺窗娴?LF 鏉烆兛璐?CRLF閿?
 
 ## [Unreleased-PLAN_077-PLACE-GPS-OSM-MAP] - 2026-04-28
 
-### 原因
-- 用户希望将工具箱「每日决策 - 去哪儿」做得更专业实用：作为可选扩展接入 GPS 与 OpenStreetMap 周边地图信息，在说明详细 GPS 用途和隐私边界后由用户同意启用，并支持把地图中的真实场所加入用户自己的场所清单。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿鐏忓棗浼愰崗椋庮唸閵嗗本鐦￠弮銉ュ枀缁?- 閸樿鎽㈤崕瑁も偓宥呬粵瀵版娲挎稉鎾茬瑹鐎圭偟鏁ら敍姘稊娑撳搫褰查柅澶嬪⒖鐏炴洘甯撮崗?GPS 娑?OpenStreetMap 閸涖劏绔熼崷鏉挎禈娣団剝浼呴敍灞芥躬鐠囧瓨妲戠拠锔剧矎 GPS 閻劑鈧柨鎷伴梾鎰潌鏉堝湱鏅崥搴ｆ暠閻劍鍩涢崥灞惧壈閸氼垳鏁ら敍灞借嫙閺€顖涘瘮閹跺﹤婀撮崶鍙ヨ厬閻ㄥ嫮婀＄€圭偛婧€閹碘偓閸旂姴鍙嗛悽銊﹀煕閼奉亜绻侀惃鍕簚閹碘偓濞撳懎宕熼妴?
 
-### 新增
-- 新增 `DailyChoicePlaceMapSettings`，持久化「周边地图」同意状态、模糊位置开关和查询半径；默认关闭且默认使用模糊位置。
-- 新增 `DailyChoicePlaceMapService` 能力：设备前台定位读取、约 500 米网格模糊位置、Overpass 半径查询、OSM 场所解析、距离计算和场所转 `DailyChoiceOption`。
-- 新增「去哪儿」周边地图面板：隐私说明与同意启用、模糊/精确定位切换、500m-5km 半径选择、在线 OSM 地图预览、周边场所列表和一键保存到本机场所清单。
-- 新增 Android 前台定位权限声明，并加入 `geolocator`、`flutter_map`、`latlong2` 依赖。
-- 新增地图服务单测，覆盖模糊定位、Overpass 查询构建与解析、OSM 场所保存模型和设置持久化。
+### 閺傛澘顤?
+- 閺傛澘顤?`DailyChoicePlaceMapSettings`閿涘本瀵旀稊鍛閵嗗苯鎳嗘潏鐟版勾閸ヤ勘鈧秴鎮撻幇蹇曞Ц閹降鈧焦膩缁﹣缍呯純顔肩磻閸忓啿鎷伴弻銉嚄閸楀﹤绶為敍娑㈢帛鐠併倕鍙ч梻顓濈瑬姒涙顓绘担璺ㄦ暏濡紕纭︽担宥囩枂閵?
+- 閺傛澘顤?`DailyChoicePlaceMapService` 閼宠棄濮忛敍姘愁啎婢跺洤澧犻崣鏉跨暰娴ｅ秷顕伴崣鏍モ偓浣哄 500 缁磭缍夐弽鍏寄佺化濠佺秴缂冾喓鈧副verpass 閸楀﹤绶為弻銉嚄閵嗕副SM 閸︾儤澧嶇憴锝嗙€介妴浣界獩缁傛槒顓哥粻妤€鎷伴崷鐑樺鏉?`DailyChoiceOption`閵?
+- 閺傛澘顤冮妴灞藉箵閸濐亜鍔归妴宥呮噯鏉堢懓婀撮崶楣冩桨閺夊尅绱伴梾鎰潌鐠囧瓨妲戞稉搴℃倱閹板繐鎯庨悽銊ｂ偓浣鼓佺化?缁墽鈥樼€规矮缍呴崚鍥ㄥ床閵?00m-5km 閸楀﹤绶為柅澶嬪閵嗕礁婀痪?OSM 閸︽澘娴樻０鍕潔閵嗕礁鎳嗘潏鐟版簚閹碘偓閸掓銆冮崪灞肩闁款喕绻氱€涙ê鍩岄張顒佹簚閸︾儤澧嶅〒鍛礋閵?
+- 閺傛澘顤?Android 閸撳秴褰寸€规矮缍呴弶鍐婢圭増妲戦敍灞借嫙閸旂姴鍙?`geolocator`閵嗕梗flutter_map`閵嗕梗latlong2` 娓氭繆绂嗛妴?
+- 閺傛澘顤冮崷鏉挎禈閺堝秴濮熼崡鏇熺ゴ閿涘矁顩惄鏍佺化濠傜暰娴ｅ秲鈧副verpass 閺屻儴顕楅弸鍕紦娑撳氦袙閺嬫劑鈧副SM 閸︾儤澧嶆穱婵嗙摠濡€崇€烽崪宀冾啎缂冾喗瀵旀稊鍛閵?
 
-### 修改
-- 「去哪儿」模块在内置地点库与随机面板之间增加折叠式周边地图扩展，不挤压默认随机体验。
-- 保存的 OSM 场所作为用户自定义 `go` 条目参与现有随机与管理流程，并保留 OSM 条目引用、地图搜索词、场景分类、距离层级和本地编辑能力。
-- 隐私文案明确：查询会把本次查询中心和半径发送给 OpenStreetMap/Overpass；本 App 不收集、不上传到自有服务、不出售定位数据，保存场所时不保存用户 GPS 坐标。
+### 娣囶喗鏁?
+- 閵嗗苯骞撻崫顏勫姽閵嗗秵膩閸ф婀崘鍛枂閸︽壆鍋ｆ惔鎾茬瑢闂呭繑婧€闂堛垺婢樻稊瀣？婢х偛濮為幎妯哄綌瀵繐鎳嗘潏鐟版勾閸ョ偓澧跨仦鏇礉娑撳秵灏嬮崢瀣帛鐠併倝娈㈤張杞扮秼妤犲被鈧?
+- 娣囨繂鐡ㄩ惃?OSM 閸︾儤澧嶆担婊€璐熼悽銊﹀煕閼奉亜鐣炬稊?`go` 閺夛紕娲伴崣鍌欑瑢閻滅増婀侀梾蹇旀簚娑撳海顓搁悶鍡樼ウ缁嬪绱濋獮鏈电箽閻?OSM 閺夛紕娲板鏇犳暏閵嗕礁婀撮崶鐐偝缁便垼鐦濋妴浣告簚閺咁垰鍨庣猾姹団偓浣界獩缁傝鐪扮痪褍鎷伴張顒€婀寸紓鏍帆閼宠棄濮忛妴?
+- 闂呮劗顫嗛弬鍥攳閺勫海鈥橀敍姘叀鐠囶澀绱伴幎濠冩拱濞嗏剝鐓＄拠顫厬韫囧啫鎷伴崡濠傜窞閸欐垿鈧胶绮?OpenStreetMap/Overpass閿涙稒婀?App 娑撳秵鏁归梿鍡愨偓浣风瑝娑撳﹣绱堕崚鎷屽殰閺堝婀囬崝掳鈧椒绗夐崙鍝勬暛鐎规矮缍呴弫鐗堝祦閿涘奔绻氱€涙ê婧€閹碘偓閺冩湹绗夋穱婵嗙摠閻劍鍩?GPS 閸ф劖鐖ｉ妴?
 
-### 修复
-- 避免将“按区域下载地图瓦片”作为默认方案落地，改为遵循 OSM 公共服务边界的按需在线查询和交互式地图查看。
+### 娣囶喖顦?
+- 闁灝鍘ょ亸鍡忊偓婊勫瘻閸栧搫鐓欐稉瀣祰閸︽澘娴橀悺锔惧閳ユ繀缍旀稉娲帛鐠併倖鏌熷鍫ｆ儰閸﹀府绱濋弨閫涜礋闁潧鎯?OSM 閸忣剙鍙￠張宥呭鏉堝湱鏅惃鍕瘻闂団偓閸︺劎鍤庨弻銉嚄閸滃奔姘︽禍鎺戠础閸︽澘娴橀弻銉ф箙閵?
 
-### 风险变更
-- 周边场所查询依赖公共 Overpass 服务和 OSM 社区数据，可能因地区、网络或服务繁忙导致结果不完整；UI 会提示扩大范围或稍后重试。
-- 使用精确定位时，查询中心会发送给 OpenStreetMap/Overpass；默认仍使用模糊位置，并由用户主动切换。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸涖劏绔熼崷鐑樺閺屻儴顕楁笟婵婄閸忣剙鍙?Overpass 閺堝秴濮熼崪?OSM 缁€鎯у隘閺佺増宓侀敍灞藉讲閼宠棄娲滈崷鏉垮隘閵嗕胶缍夌紒婊勫灗閺堝秴濮熺换浣哥箹鐎佃壈鍤х紒鎾寸亯娑撳秴鐣弫杈剧幢UI 娴兼碍褰佺粈鐑樺⒖婢堆嗗瘱閸ュ瓨鍨ㄧ粙宥呮倵闁插秷鐦妴?
+- 娴ｈ法鏁ょ划鍓р€樼€规矮缍呴弮璁圭礉閺屻儴顕楁稉顓炵妇娴兼艾褰傞柅浣虹舶 OpenStreetMap/Overpass閿涙盯绮拋銈勭矝娴ｈ法鏁ゅΟ锛勭ˇ娴ｅ秶鐤嗛敍灞借嫙閻㈣京鏁ら幋铚傚瘜閸斻劌鍨忛幑顫偓?
 
-### 验证
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`（通过，4 tests）
-- `flutter test .\test\daily_choice_place_seed_test.dart .\test\daily_choice_place_map_service_test.dart .\test\daily_choice_custom_state_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，28 tests）
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_seed_test.dart .\test\daily_choice_place_map_service_test.dart .\test\daily_choice_custom_state_test.dart .\test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
+### 妤犲矁鐦?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_map_service_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_place_map_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
+- `flutter test .\test\daily_choice_place_seed_test.dart .\test\daily_choice_place_map_service_test.dart .\test\daily_choice_custom_state_test.dart .\test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?8 tests閿?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_seed_test.dart .\test\daily_choice_place_map_service_test.dart .\test\daily_choice_custom_state_test.dart .\test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
 
 ## [Unreleased-PLAN_076-PLACE-DATA-IMPORT] - 2026-04-28
 
-### 原因
-- 用户要求优化并完善工具箱「每日决策 - 去哪儿」模块，将目的地数据全部改为数据导入加载，不再在 App 代码中硬编码目的地条目，并生成更完整的数据集导出到 `D:\vocabularySleep-resources\去哪儿-数据`。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娴兼ê瀵查獮璺虹暚閸犲嫬浼愰崗椋庮唸閵嗗本鐦￠弮銉ュ枀缁?- 閸樿鎽㈤崕瑁も偓宥喣侀崸妤嬬礉鐏忓棛娲伴惃鍕勾閺佺増宓侀崗銊╁劥閺€閫涜礋閺佺増宓佺€电厧鍙嗛崝鐘烘祰閿涘奔绗夐崘宥呮躬 App 娴狅絿鐖滄稉顓犫€栫紓鏍垳閻╊喚娈戦崷鐗堟蒋閻╊噯绱濋獮鍓佹晸閹存劖娲跨€瑰本鏆ｉ惃鍕殶閹诡噣娉︾€电厧鍤崚?`D:\vocabularySleep-resources\閸樿鎽㈤崕?閺佺増宓乣閵?
 
-### 新增
-- 新增 `DailyChoicePlaceLibraryStore`，支持去哪儿内置地点库状态检查、JSON 下载导入、本地 SQLite 安装、摘要读取、筛选查询和详情读取。
-- 新增 `scripts/generate_daily_choice_place_dataset.py`，生成去哪儿目的地方向库 JSON、SQLite、`FORMAT.md` 和 `GENERATION_SUMMARY.md`。
-- 新增 Store 导入链路单测，覆盖本地 JSON 安装、SQLite 摘要/详情读取、筛选查询和静态 seed 迁移边界。
+### 閺傛澘顤?
+- 閺傛澘顤?`DailyChoicePlaceLibraryStore`閿涘本鏁幐浣稿箵閸濐亜鍔归崘鍛枂閸︽壆鍋ｆ惔鎾跺Ц閹焦顥呴弻銉ｂ偓涓ON 娑撳娴囩€电厧鍙嗛妴浣规拱閸?SQLite 鐎瑰顥婇妴浣规喅鐟曚浇顕伴崣鏍モ偓浣虹摣闁鐓＄拠銏犳嫲鐠囷附鍎忕拠璇插絿閵?
+- 閺傛澘顤?`scripts/generate_daily_choice_place_dataset.py`閿涘瞼鏁撻幋鎰箵閸濐亜鍔归惄顔炬畱閸︾増鏌熼崥鎴濈氨 JSON閵嗕讣QLite閵嗕梗FORMAT.md` 閸?`GENERATION_SUMMARY.md`閵?
+- 閺傛澘顤?Store 鐎电厧鍙嗛柧鎹愮熅閸楁洘绁撮敍宀冾洬閻╂牗婀伴崷?JSON 鐎瑰顥婇妴涓糛Lite 閹芥顩?鐠囷附鍎忕拠璇插絿閵嗕胶鐡柅澶嬬叀鐠囥垹鎷伴棃娆愨偓?seed 鏉╀胶些鏉堝湱鏅妴?
 
-### 修改
-- 去哪儿模块候选池改为从 `DailyChoicePlaceLibraryStore` 加载；静态 `daily_choice_place_seed.dart` 不再提供 `go` 目的地 option。
-- 去哪儿页面新增地点库状态面板和下载入口，并在详情、管理页查看、内置项调整、另存为自定义时按需解析完整详情。
-- 数据集扩充为 3 个距离层级 × 15 个场景 × 8 个目的地类型 × 2 条路线角度，共 720 条；每条包含地图搜索词、时长、预算、同行建议、检查步骤、室内外与标签属性。
+### 娣囶喗鏁?
+- 閸樿鎽㈤崕鎸幠侀崸妤€鈧瑩鈧鐫滈弨閫涜礋娴?`DailyChoicePlaceLibraryStore` 閸旂姾娴囬敍娑㈡饯閹?`daily_choice_place_seed.dart` 娑撳秴鍟€閹绘劒绶?`go` 閻╊喚娈戦崷?option閵?
+- 閸樿鎽㈤崕鍧椼€夐棃銏℃煀婢х偛婀撮悙鐟扮氨閻樿埖鈧線娼伴弶鍨嫲娑撳娴囬崗銉ュ經閿涘苯鑻熼崷銊嚊閹懌鈧胶顓搁悶鍡涖€夐弻銉ф箙閵嗕礁鍞寸純顕€銆嶇拫鍐╂殻閵嗕礁褰熺€涙ü璐熼懛顏勭暰娑斿妞傞幐澶愭付鐟欙絾鐎界€瑰本鏆ｇ拠锔藉剰閵?
+- 閺佺増宓侀梿鍡樺⒖閸忓懍璐?3 娑擃亣绐涚粋璇茬湴缁?鑴?15 娑擃亜婧€閺?鑴?8 娑擃亞娲伴惃鍕勾缁鐎?鑴?2 閺壜ょ熅缁捐儻顫楁惔锔肩礉閸?720 閺夆槄绱卞В蹇旀蒋閸栧懎鎯堥崷鏉挎禈閹兼粎鍌ㄧ拠宥冣偓浣规闂€瑁も偓渚€顣╃粻妞尖偓浣告倱鐞涘苯缂撶拋顔衡偓浣诡梾閺屻儲顒炴銈冣偓浣割吇閸愬懎顦绘稉搴㈢垼缁涙儳鐫橀幀褋鈧?
 
-### 修复
-- 修复旧导出脚本仍依赖静态 `go` seed 的问题，改由独立生成脚本统一导出资源。
-- 修复地点库安装流程中同步失败可能提前删除既有本地库的风险，改为临时库构建成功后再替换正式库。
-- 修复生成数据中辅助场景 id 指向不存在筛选项的问题，并加入生成校验。
+### 娣囶喖顦?
+- 娣囶喖顦查弮褍顕遍崙楦垮壖閺堫兛绮涙笟婵婄闂堟瑦鈧?`go` seed 閻ㄥ嫰妫舵０姗堢礉閺€鍦暠閻欘剛鐝涢悽鐔稿灇閼存碍婀扮紒鐔剁鐎电厧鍤挧鍕爱閵?
+- 娣囶喖顦查崷鎵仯鎼存挸鐣ㄧ憗鍛ウ缁嬪鑵戦崥灞绢劄婢惰精瑙﹂崣顖濆厴閹绘劕澧犻崚鐘绘珟閺冦垺婀侀張顒€婀存惔鎾舵畱妞嬪酣娅撻敍灞炬暭娑撹桨澶嶉弮璺虹氨閺嬪嫬缂撻幋鎰閸氬骸鍟€閺囨寧宕插锝呯础鎼存挶鈧?
+- 娣囶喖顦查悽鐔稿灇閺佺増宓佹稉顓＄窡閸斺晛婧€閺?id 閹稿洤鎮滄稉宥呯摠閸︺劎鐡柅澶愩€嶉惃鍕６妫版﹫绱濋獮璺哄閸忋儳鏁撻幋鎰墡妤犲被鈧?
 
-### 风险变更
-- 首次进入去哪儿且未安装地点库时，内置候选池为空；页面保留下载入口和自定义地点管理入口。
-- 生成数据是通用目的地类型和地图搜索方向，不是固定真实 POI；用户仍需结合所在城市、天气、营业时间和返程窗口落地。
+### 妞嬪酣娅撻崣妯绘纯
+- 妫ｆ牗顐兼潻娑樺弳閸樿鎽㈤崕澶哥瑬閺堫亜鐣ㄧ憗鍛勾閻愮懓绨遍弮璁圭礉閸愬懐鐤嗛崐娆撯偓澶嬬潨娑撹櫣鈹栭敍娑€夐棃顫箽閻ｆ瑤绗呮潪钘夊弳閸欙絽鎷伴懛顏勭暰娑斿婀撮悙鍦吀閻炲棗鍙嗛崣锝冣偓?
+- 閻㈢喐鍨氶弫鐗堝祦閺勵垶鈧氨鏁ら惄顔炬畱閸︽壆琚崹瀣嫲閸︽澘娴橀幖婊呭偍閺傜懓鎮滈敍灞肩瑝閺勵垰娴愮€规氨婀＄€?POI閿涙稓鏁ら幋铚傜矝闂団偓缂佹挸鎮庨幍鈧崷銊ョ厔鐢倶鈧礁銇夊鏂烩偓浣芥儉娑撴碍妞傞梻鏉戞嫲鏉╂梻鈻肩粣妤€褰涢拃钘夋勾閵?
 
-### 验证
-- `python -X utf8 -m py_compile .\scripts\generate_daily_choice_place_dataset.py`（通过）
-- `python -X utf8 .\scripts\generate_daily_choice_place_dataset.py`（通过，导出 720 条）
-- JSON / SQLite 二次校验：JSON 720 条、SQLite active 720 条、`PRAGMA integrity_check = ok`、来源字段数量 0（通过）
-- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_seed_test.dart`（通过，No issues found）
-- `flutter test .\test\daily_choice_place_seed_test.dart --reporter compact`（通过，9 tests）
+### 妤犲矁鐦?
+- `python -X utf8 -m py_compile .\scripts\generate_daily_choice_place_dataset.py`閿涘牓鈧俺绻冮敍?
+- `python -X utf8 .\scripts\generate_daily_choice_place_dataset.py`閿涘牓鈧俺绻冮敍灞筋嚤閸?720 閺夆槄绱?
+- JSON / SQLite 娴滃本顐奸弽锟犵崣閿涙SON 720 閺壜扳偓涓糛Lite active 720 閺壜扳偓涔RAGMA integrity_check = ok`閵嗕焦娼靛┃鎰摟濞堝灚鏆熼柌?0閿涘牓鈧俺绻冮敍?
+- `dart analyze .\lib\src\ui\pages\toolbox_daily_choice .\test\daily_choice_place_seed_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test .\test\daily_choice_place_seed_test.dart --reporter compact`閿涘牓鈧俺绻冮敍? tests閿?
 
 ## [Unreleased-PLAN_075-WEAR-REVIEW-CLEANUP] - 2026-04-28
 
-### 原因
-- 用户要求对工具箱「每日决策 - 穿什么」再做一轮审查和清理优化，小问题直接修改；若无大问题则提交并推送。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐎电懓浼愰崗椋庮唸閵嗗本鐦￠弮銉ュ枀缁?- 缁屽じ绮堟稊鍫涒偓宥呭晙閸嬫矮绔存潪顔碱吀閺屻儱鎷板〒鍛倞娴兼ê瀵查敍灞界毈闂傤噣顣介惄瀛樺复娣囶喗鏁奸敍娑滃閺冪姴銇囬梻顕€顣介崚娆愬絹娴溿倕鑻熼幒銊┾偓浣碘偓?
 
-### 修改
-- 穿什么天气建议现在会复用已有启动天气提醒快照；即使全局天气概览开关未开启，只要启动提醒已读取到天气，也会用于推荐气温档位。
-- 衣柜集合归一化只在穿什么集合中刷新内置参考标题，吃什么集合不再误查穿什么内置集合。
+### 娣囶喗鏁?
+- 缁屽じ绮堟稊鍫濄亯濮樻柨缂撶拋顔惧箛閸︺劋绱版径宥囨暏瀹稿弶婀侀崥顖氬З婢垛晜鐨甸幓鎰板晪韫囶偆鍙庨敍娑樺祮娴ｅ灝鍙忕仦鈧径鈺傜毜濮掑倽顫嶅鈧崗铏弓瀵偓閸氼垽绱濋崣顏囶洣閸氼垰濮╅幓鎰板晪瀹歌尪顕伴崣鏍у煂婢垛晜鐨甸敍灞肩瘍娴兼氨鏁ゆ禍搴㈠腹閼芥劖鐨靛〒鈺傘€傛担宥冣偓?
+- 鐞涳絾鐓栭梿鍡楁値瑜版帊绔撮崠鏍у涧閸︺劎鈹涙禒鈧稊鍫ユ肠閸氬牅鑵戦崚閿嬫煀閸愬懐鐤嗛崣鍌濃偓鍐╃垼妫版﹫绱濋崥鍐х矆娑斿牓娉﹂崥鍫滅瑝閸愬秷顕ら弻銉р敍娴犫偓娑斿牆鍞寸純顕€娉﹂崥鍫涒偓?
 
-### 修复
-- 修复启动天气提醒已取得天气快照时，穿什么仍可能提示天气未启用、无法给出气温建议的问题。
-- 修复穿什么内置集合旧标题可能无法在默认集合归一化阶段收敛为「通勤 / 日常 / 正式」等短标题的问题。
+### 娣囶喖顦?
+- 娣囶喖顦查崥顖氬З婢垛晜鐨甸幓鎰板晪瀹告彃褰囧妤€銇夊鏂挎彥閻撗勬閿涘瞼鈹涙禒鈧稊鍫滅矝閸欘垵鍏橀幓鎰仛婢垛晜鐨甸張顏勬儙閻劊鈧焦妫ゅ▔鏇犵舶閸戠儤鐨靛〒鈺佺紦鐠侇喚娈戦梻顕€顣介妴?
+- 娣囶喖顦茬粚澶哥矆娑斿牆鍞寸純顕€娉﹂崥鍫熸＋閺嶅洭顣介崣顖濆厴閺冪姵纭堕崷銊╃帛鐠併倝娉﹂崥鍫濈秺娑撯偓閸栨牠妯佸▓鍨暪閺佹稐璐熼妴宀勨偓姘珶 / 閺冦儱鐖?/ 濮濓絽绱￠妴宥囩搼閻厽鐖ｆ０妯兼畱闂傤噣顣介妴?
 
-### 风险变更
-- 若用户关闭全局天气概览但启动天气提醒提供了快照，穿什么会使用该快照生成建议；没有快照时仍默认查看全部气温。
+### 妞嬪酣娅撻崣妯绘纯
+- 閼汇儳鏁ら幋宄板彠闂傤厼鍙忕仦鈧径鈺傜毜濮掑倽顫嶆担鍡楁儙閸斻劌銇夊鏃€褰侀柋鎺撳絹娓氭稐绨¤箛顐ゅ弾閿涘瞼鈹涙禒鈧稊鍫滅窗娴ｈ法鏁ょ拠銉ユ彥閻撗呮晸閹存劕缂撶拋顕嗙幢濞屸剝婀佽箛顐ゅ弾閺冩湹绮涙妯款吇閺屻儳婀呴崗銊╁劥濮樻梹淇妴?
 
-### 验证
-- `flutter test test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart`（通过，No issues found）
-- `git diff --check`（通过，仅有 changelog 换行提示）
-- `flutter analyze`（未通过，仍为既有非每日决策问题；本轮穿什么相关文件无新增分析问题）
+### 妤犲矁鐦?
+- `flutter test test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `git diff --check`閿涘牓鈧俺绻冮敍灞肩矌閺?changelog 閹广垼顢戦幓鎰仛閿?
+- `flutter analyze`閿涘牊婀柅姘崇箖閿涘奔绮涙稉鐑樻＆閺堝娼В蹇旀）閸愬磭鐡ラ梻顕€顣介敍娑欐拱鏉烆喚鈹涙禒鈧稊鍫㈡祲閸忚櫕鏋冩禒鑸垫￥閺傛澘顤冮崚鍡樼€介梻顕€顣介敍?
 
 ## [Unreleased-PLAN_074-WEAR-ADVISOR-LAYOUT-FIX] - 2026-04-28
 
-### 原因
-- 用户通过截图反馈「穿什么」评估建议页签在移动端展开后遮挡穿搭参考库、下载按钮、气温筛选和正文内容，收起时也会压到卡片右侧状态区域。
+### 閸樼喎娲?
+- 閻劍鍩涢柅姘崇箖閹搭亜娴橀崣宥夘洯閵嗗瞼鈹涙禒鈧稊鍫涒偓宥堢槑娴兼澘缂撶拋顕€銆夌粵鎯ф躬缁夎濮╃粩顖氱潔瀵偓閸氬酣浼勯幐锛勨敍閹碱厼寮懓鍐ㄧ氨閵嗕椒绗呮潪鑺ュ瘻闁筋喓鈧焦鐨靛〒鈺冪摣闁鎷板锝嗘瀮閸愬懎顔愰敍灞炬暪鐠ч攱妞傛稊鐔剁窗閸樺鍩岄崡锛勫閸欏厖鏅堕悩鑸碘偓浣稿隘閸╃喆鈧?
 
-### 修改
-- 将穿什么评估建议从 `Stack + Positioned` 悬浮抽屉改为正常文档流里的折叠卡片。
-- 默认收起时显示紧凑「评估建议」入口，展开后保留评估、颜色、层级、场景四类工具内容，并让后续内容自然下移。
+### 娣囶喗鏁?
+- 鐏忓棛鈹涙禒鈧稊鍫ｇ槑娴兼澘缂撶拋顔荤矤 `Stack + Positioned` 閹剚璇為幎钘夌溄閺€閫涜礋濮濓絽鐖堕弬鍥ㄣ€傚ù渚€鍣烽惃鍕閸欑姴宕遍悧鍥モ偓?
+- 姒涙顓婚弨鎯版崳閺冭埖妯夌粈铏规彛閸戞垯鈧矁鐦庢导鏉跨紦鐠侇喓鈧秴鍙嗛崣锝忕礉鐏炴洖绱戦崥搴濈箽閻ｆ瑨鐦庢导鑸偓渚€顤侀懝灞傗偓浣哥湴缁狙佲偓浣告簚閺咁垰娲撶猾璇蹭紣閸忓嘲鍞寸€圭櫢绱濋獮鎯邦唨閸氬海鐢婚崘鍛啇閼奉亞鍔ф稉瀣╅妴?
 
-### 修复
-- 修复评估建议在移动端与穿搭参考库、气温筛选、评估内容自身发生重叠的问题。
-- 修复收起态右侧竖向页签遮挡「尚未加载」状态和参考库操作按钮的问题。
+### 娣囶喖顦?
+- 娣囶喖顦茬拠鍕強瀵ら缚顔呴崷銊╅崝銊ь伂娑撳海鈹涢幖顓炲棘閼板啫绨遍妴浣圭毜濞撯晝鐡柅澶堚偓浣界槑娴兼澘鍞寸€圭鍤滈煬顐㈠絺閻㈢喖鍣搁崣鐘垫畱闂傤噣顣介妴?
+- 娣囶喖顦查弨鎯版崳閹礁褰告笟褏鐝崥鎴︺€夌粵楣冧紕閹嘎扳偓灞界毣閺堫亜濮炴潪濮愨偓宥囧Ц閹礁鎷伴崣鍌濃偓鍐ㄧ氨閹垮秳缍旈幐澶愭尦閻ㄥ嫰妫舵０妯糕偓?
 
-### 风险变更
-- 评估建议不再以悬浮侧边抽屉形式覆盖页面，侧边感减弱，但移动端可读性和可操作性更稳定。
+### 妞嬪酣娅撻崣妯绘纯
+- 鐠囧嫪鍙婂楦款唴娑撳秴鍟€娴犮儲鍋撳ù顔绘櫠鏉堣濞婄仦澶婅埌瀵繗顩惄鏍€夐棃顫礉娓氀嗙珶閹扮喎鍣哄鎲嬬礉娴ｅ棛些閸斻劎顏崣顖濐嚢閹冩嫲閸欘垱鎼锋担婊勨偓褎娲跨粙鍐茬暰閵?
 
 ## [Unreleased-PLAN_073-WEAR-UX-FIXES-ADVISOR] - 2026-04-28
 
-### 原因
-- 用户反馈「穿什么」仍存在管理搜索提示沿用菜品文案、天气未启用时默认气温不合理、内置衣柜入口过强且按钮过长、缺少基于穿衣规则的快速评估工具等体验问题。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閵嗗瞼鈹涙禒鈧稊鍫涒偓宥勭矝鐎涙ê婀粻锛勬倞閹兼粎鍌ㄩ幓鎰仛濞岃法鏁ら懣婊冩惂閺傚洦顢嶉妴浣搞亯濮樻梹婀崥顖滄暏閺冨爼绮拋銈嗙毜濞撯晙绗夐崥鍫㈡倞閵嗕礁鍞寸純顔裤€傞弻婊冨弳閸欙綀绻冨杞扮瑬閹稿鎸虫潻鍥毐閵嗕胶宸辩亸鎴濈唨娴滃海鈹涚悰锝堫潐閸掓瑧娈戣箛顐︹偓鐔荤槑娴兼澘浼愰崗椋庣搼娴ｆ捇鐛欓梻顕€顣介妴?
 
-### 新增
-- 新增 `plans/PLAN_073_每日决策穿什么体验细节修复与评估工具抽屉.md`，记录本轮体验修复、天气默认值、衣柜入口层级和评估工具范围。
-- 新增穿什么专属侧边「穿搭评估」工具抽屉，包含出门前 30 秒评估、单品颜色搭配建议与避雷、常见层级公式、场景优先级和常见失误。
+### 閺傛澘顤?
+- 閺傛澘顤?`plans/PLAN_073_濮ｅ繑妫╅崘宕囩摜缁屽じ绮堟稊鍫滅秼妤犲瞼绮忛懞鍌欐叏婢跺秳绗岀拠鍕強瀹搞儱鍙块幎钘夌溄.md`閿涘矁顔囪ぐ鏇熸拱鏉烆喕缍嬫灞兼叏婢跺秲鈧礁銇夊鏃堢帛鐠併倕鈧鈧浇銆傞弻婊冨弳閸欙絽鐪扮痪褍鎷扮拠鍕強瀹搞儱鍙块懠鍐ㄦ纯閵?
+- 閺傛澘顤冪粚澶哥矆娑斿牅绗撶仦鐐版櫠鏉堝箍鈧瞼鈹涢幖顓＄槑娴艰埇鈧秴浼愰崗閿嬪▕鐏炲绱濋崠鍛儓閸戞椽妫崜?30 缁夋帟鐦庢导鑸偓浣稿礋閸濅線顤侀懝鍙夋儗闁板秴缂撶拋顔荤瑢闁潡娴勯妴浣哥埗鐟欎礁鐪扮痪褍鍙曞蹇嬧偓浣告簚閺咁垯绱崗鍫㈤獓閸滃苯鐖剁憴浣搞亼鐠囶垬鈧?
 
-### 修改
-- 管理页搜索框按模块区分提示，穿什么改为搜索搭配、真实单品和场景关键词，不再显示菜品名称。
-- 穿什么未启用天气建议或暂无天气快照时默认保持「全部气温」；仅在全局天气数据可用时自动推荐气温档位。
-- 进入穿什么时复用全局天气刷新能力，避免设置已开启但天气快照尚未更新时一直停留在无数据状态。
-- 穿什么主页面默认优先选择「我的衣橱」，内置参考不再作为默认主入口。
-- 内置衣柜集合名称缩短为通勤、日常、正式、约会、运动、雨天，并在主页面衣柜选择中默认折叠展示。
+### 娣囶喗鏁?
+- 缁狅紕鎮婃い鍨偝缁便垺顢嬮幐澶嬆侀崸妤€灏崚鍡樺絹缁€鐚寸礉缁屽じ绮堟稊鍫熸暭娑撶儤鎮崇槐銏℃儗闁板秲鈧胶婀＄€圭偛宕熼崫浣告嫲閸︾儤娅欓崗鎶芥暛鐠囧稄绱濇稉宥呭晙閺勫墽銇氶懣婊冩惂閸氬秶袨閵?
+- 缁屽じ绮堟稊鍫熸弓閸氼垳鏁ゆ径鈺傜毜瀵ら缚顔呴幋鏍ㄦ畯閺冪姴銇夊鏂挎彥閻撗勬姒涙顓绘穱婵囧瘮閵嗗苯鍙忛柈銊︾毜濞撯斂鈧稄绱辨禒鍛躬閸忋劌鐪径鈺傜毜閺佺増宓侀崣顖滄暏閺冩儼鍤滈崝銊﹀腹閼芥劖鐨靛〒鈺傘€傛担宥冣偓?
+- 鏉╂稑鍙嗙粚澶哥矆娑斿牊妞傛径宥囨暏閸忋劌鐪径鈺傜毜閸掗攱鏌婇懗钘夊閿涘矂浼╅崗宥堫啎缂冾喖鍑″鈧崥顖欑稻婢垛晜鐨佃箛顐ゅ弾鐏忔碍婀弴瀛樻煀閺冩湹绔撮惄鏉戜粻閻ｆ瑥婀弮鐘虫殶閹诡喚濮搁幀浣碘偓?
+- 缁屽じ绮堟稊鍫滃瘜妞ょ敻娼版妯款吇娴兼ê鍘涢柅澶嬪閵嗗本鍨滈惃鍕€傚渚库偓宥忕礉閸愬懐鐤嗛崣鍌濃偓鍐х瑝閸愬秳缍旀稉娲帛鐠併倓瀵岄崗銉ュ經閵?
+- 閸愬懐鐤嗙悰锝嗙厲闂嗗棗鎮庨崥宥囆炵紓鈺冪叚娑撴椽鈧艾瀚熼妴浣规）鐢悶鈧焦顒滃蹇嬧偓浣哄娴兼哎鈧浇绻嶉崝銊ｂ偓渚€娲︽径鈺嬬礉楠炶泛婀稉濠氥€夐棃銏ｃ€傞弻婊堚偓澶嬪娑擃參绮拋銈嗗閸欑姴鐫嶇粈鎭掆偓?
 
-### 修复
-- 修复穿什么管理页搜索输入框文案仍提示「搜索菜品名称」的问题。
-- 修复天气建议不可用时文案提示从「温和」开始、但用户预期应查看全部气温的问题。
-- 修复内置参考衣柜 pill 在移动端过长、导致单列高度过高的问题。
+### 娣囶喖顦?
+- 娣囶喖顦茬粚澶哥矆娑斿牏顓搁悶鍡涖€夐幖婊呭偍鏉堟挸鍙嗗鍡樻瀮濡楀牅绮涢幓鎰仛閵嗗本鎮崇槐銏ｅ綅閸濅礁鎮曠粔鑸偓宥囨畱闂傤噣顣介妴?
+- 娣囶喖顦叉径鈺傜毜瀵ら缚顔呮稉宥呭讲閻劍妞傞弬鍥攳閹绘劗銇氭禒搴涒偓灞句刊閸滃被鈧秴绱戞慨瀣ㄢ偓浣风稻閻劍鍩涙０鍕埂鎼存梹鐓￠惇瀣弿闁劍鐨靛〒鈺冩畱闂傤噣顣介妴?
+- 娣囶喖顦查崘鍛枂閸欏倽鈧啳銆傞弻?pill 閸︺劎些閸斻劎顏潻鍥毐閵嗕礁顕遍懛鏉戝礋閸掓鐝惔锕佺箖妤傛娈戦梻顕€顣介妴?
 
-### 风险变更
-- 默认优先从「我的衣橱」抽取会让尚未录入个人穿搭的新用户看到空状态；空状态文案继续引导用户录入真实搭配或展开内置参考。
-- 侧边评估工具只在穿什么模块内部实现，不影响吃什么、去哪儿、做什么等其他每日决策子模块。
+### 妞嬪酣娅撻崣妯绘纯
+- 姒涙顓绘导妯哄帥娴犲簺鈧本鍨滈惃鍕€傚渚库偓宥嗗▕閸欐牔绱扮拋鈺佺毣閺堫亜缍嶉崗銉ら嚋娴滆櫣鈹涢幖顓犳畱閺傛壆鏁ら幋椋庢箙閸掓壆鈹栭悩鑸碘偓渚婄幢缁岃櫣濮搁幀浣规瀮濡楀牏鎴风紒顓炵穿鐎佃偐鏁ら幋宄扮秿閸忋儳婀＄€圭偞鎯岄柊宥嗗灗鐏炴洖绱戦崘鍛枂閸欏倽鈧啨鈧?
+- 娓氀嗙珶鐠囧嫪鍙婂銉ュ徔閸欘亜婀粚澶哥矆娑斿牊膩閸ф鍞撮柈銊ョ杽閻滃府绱濇稉宥呭閸濆秴鎮嗘禒鈧稊鍫涒偓浣稿箵閸濐亜鍔归妴浣镐粵娴犫偓娑斿牏鐡戦崗鏈电铂濮ｅ繑妫╅崘宕囩摜鐎涙劖膩閸фぜ鈧?
 
 ## [Unreleased-PLAN_072-WEAR-FILTERS-GUIDE-DATA] - 2026-04-28
 
-### 原因
-- 用户要求在工具箱「每日决策 - 穿什么」中补充性别与年龄筛选，优化文案和引导，突出“从自己的真实衣柜建立个人穿搭”的 UX 主线，并基于 `D:\vocabularySleep-resources\穿什么` 重新生成内置衣柜数据。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閸︺劌浼愰崗椋庮唸閵嗗本鐦￠弮銉ュ枀缁?- 缁屽じ绮堟稊鍫涒偓宥勮厬鐞涖儱鍘栭幀褍鍩嗘稉搴″嬀姒嫮鐡柅澶涚礉娴兼ê瀵查弬鍥攳閸滃苯绱╃€电》绱濈粣浣稿毉閳ユ粈绮犻懛顏勭箒閻ㄥ嫮婀＄€圭偠銆傞弻婊冪紦缁斿閲滄禍铏光敍閹碱厸鈧繄娈?UX 娑撹崵鍤庨敍灞借嫙閸╄桨绨?`D:\vocabularySleep-resources\缁屽じ绮堟稊鍧?闁插秵鏌婇悽鐔稿灇閸愬懐鐤嗙悰锝嗙厲閺佺増宓侀妴?
 
-### 新增
-- 新增 `plans/PLAN_072_每日决策穿什么性别年龄筛选与衣柜数据重建.md`，记录本轮性别年龄筛选、指南文案、编辑引导和数据重建范围。
-- 新增穿什么 `gender` 与 `age` 特征组，并接入随机页高级筛选、管理页筛选、编辑器标签区和内置数据生成属性。
-- 新增 `scripts/generate_daily_choice_wear_dataset.py`，可从本地穿搭资料生成穿什么内置衣柜 JSON、SQLite、格式说明和生成摘要。
-- 生成新的内置衣柜数据到 `D:\vocabularySleep-resources\穿什么-数据`，包含 1250 条穿搭、性别参考与年龄阶段分布、气温/场景覆盖摘要。
+### 閺傛澘顤?
+- 閺傛澘顤?`plans/PLAN_072_濮ｅ繑妫╅崘宕囩摜缁屽じ绮堟稊鍫熲偓褍鍩嗛獮鎾窞缁涙盯鈧绗岀悰锝嗙厲閺佺増宓侀柌宥呯紦.md`閿涘矁顔囪ぐ鏇熸拱鏉烆喗鈧冨焼楠炴挳绶炵粵娑⑩偓澶堚偓浣瑰瘹閸楁鏋冨鍫涒偓浣虹椽鏉堟垵绱╃€电厧鎷伴弫鐗堝祦闁插秴缂撻懠鍐ㄦ纯閵?
+- 閺傛澘顤冪粚澶哥矆娑?`gender` 娑?`age` 閻楃懓绶涚紒鍕剁礉楠炶埖甯撮崗銉╂閺堟椽銆夋妯奸獓缁涙盯鈧鈧胶顓搁悶鍡涖€夌粵娑⑩偓澶堚偓浣虹椽鏉堟垵娅掗弽鍥╊劮閸栧搫鎷伴崘鍛枂閺佺増宓侀悽鐔稿灇鐏炵偞鈧佲偓?
+- 閺傛澘顤?`scripts/generate_daily_choice_wear_dataset.py`閿涘苯褰叉禒搴㈡拱閸︽壆鈹涢幖顓＄カ閺傛瑧鏁撻幋鎰敍娴犫偓娑斿牆鍞寸純顔裤€傞弻?JSON閵嗕讣QLite閵嗕焦鐗稿蹇氼嚛閺勫骸鎷伴悽鐔稿灇閹芥顩﹂妴?
+- 閻㈢喐鍨氶弬鎵畱閸愬懐鐤嗙悰锝嗙厲閺佺増宓侀崚?`D:\vocabularySleep-resources\缁屽じ绮堟稊?閺佺増宓乣閿涘苯瀵橀崥?1250 閺夛紕鈹涢幖顓溾偓浣光偓褍鍩嗛崣鍌濃偓鍐х瑢楠炴挳绶為梼鑸殿唽閸掑棗绔烽妴浣圭毜濞?閸︾儤娅欑憰鍡欐磰閹芥顩﹂妴?
 
-### 修改
-- 重写穿衣指南展示文案，移除信息源、书名和来源背书表达，改为自然的穿衣原则、场景判断、天气检查和衣橱练习说明。
-- 优化穿什么随机页、管理页、衣柜选择、空状态和内置库状态文案，明确内置数据衣柜是参考模板，个人真实衣柜才是长期随机主线。
-- 优化穿搭新建/编辑表单提示，在搭配名称、场景、组成、步骤、备注和标签输入中接入穿衣原则，引导用户记录真实单品、替代方案、温度行动和比例检查。
+### 娣囶喗鏁?
+- 闁插秴鍟撶粚鑳€傞幐鍥у础鐏炴洜銇氶弬鍥攳閿涘瞼些闂勩倓淇婇幁顖涚爱閵嗕椒鍔熼崥宥呮嫲閺夈儲绨懗灞煎姛鐞涖劏鎻敍灞炬暭娑撻缚鍤滈悞鍓佹畱缁岃儻銆傞崢鐔峰灟閵嗕礁婧€閺咁垰鍨介弬顓溾偓浣搞亯濮樻梹顥呴弻銉ユ嫲鐞涳絾鈹嶇紒鍐х瘎鐠囧瓨妲戦妴?
+- 娴兼ê瀵茬粚澶哥矆娑斿牓娈㈤張娲€夐妴浣侯吀閻炲棝銆夐妴浣姐€傞弻婊堚偓澶嬪閵嗕胶鈹栭悩鑸碘偓浣告嫲閸愬懐鐤嗘惔鎾跺Ц閹焦鏋冨鍫礉閺勫海鈥橀崘鍛枂閺佺増宓佺悰锝嗙厲閺勵垰寮懓鍐┠侀弶鍖＄礉娑擃亙姹夐惇鐔风杽鐞涳絾鐓栭幍宥嗘Ц闂€鎸庢埂闂呭繑婧€娑撹崵鍤庨妴?
+- 娴兼ê瀵茬粚鎸庢儗閺傛澘缂?缂傛牞绶悰銊ュ礋閹绘劗銇氶敍灞芥躬閹碱參鍘ら崥宥囆為妴浣告簚閺咁垬鈧胶绮嶉幋鎰┾偓浣诡劄妤犮們鈧礁顦▔銊ユ嫲閺嶅洨顒锋潏鎾冲弳娑擃厽甯撮崗銉р敍鐞涳絽甯崚娆欑礉瀵洖顕遍悽銊﹀煕鐠佹澘缍嶉惇鐔风杽閸楁洖鎼ч妴浣规禌娴狅絾鏌熷鍫涒偓浣逛刊鎼达箒顢戦崝銊ユ嫲濮ｆ柧绶ュΛ鈧弻銉ｂ偓?
 
-### 修复
-- 修复穿衣指南仍可能暴露参考来源、引起争议或形成过度背书的问题。
-- 修复穿什么管理与筛选缺少性别参考、年龄阶段两个用户常用缩小维度的问题。
+### 娣囶喖顦?
+- 娣囶喖顦茬粚鑳€傞幐鍥у础娴犲秴褰查懗鑺ユ瘹闂囨彃寮懓鍐╂降濠ф劑鈧礁绱╃挧铚傜挨鐠侇喗鍨ㄨぐ銏″灇鏉╁洤瀹抽懗灞煎姛閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦茬粚澶哥矆娑斿牏顓搁悶鍡曠瑢缁涙盯鈧宸辩亸鎴炩偓褍鍩嗛崣鍌濃偓鍐︹偓浣稿嬀姒嫰妯佸▓鍏歌⒈娑擃亞鏁ら幋宄扮埗閻劎缂夌亸蹇曟樊鎼达妇娈戦梻顕€顣介妴?
 
-### 风险变更
-- 性别和年龄仅作为参考筛选维度，不作为硬规则；文案保留“不限定 / 通用不挑龄”入口，降低刻板推荐风险。
-- 新生成的内置数据仍应被视为参考模板，用户另存并改成自己的真实单品后，随机结果才会更贴近日常使用。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹冨焼閸滃苯鍕炬Λ鍕矌娴ｆ粈璐熼崣鍌濃偓鍐摣闁娣惔锔肩礉娑撳秳缍旀稉铏光€栫憴鍕灟閿涙稒鏋冨鍫滅箽閻ｆ瑢鈧粈绗夐梽鎰暰 / 闁氨鏁ゆ稉宥嗗姒嫧鈧繂鍙嗛崣锝忕礉闂勫秳缍嗛崚缁樻緲閹恒劏宕樻搴ㄦ珦閵?
+- 閺傛壆鏁撻幋鎰畱閸愬懐鐤嗛弫鐗堝祦娴犲秴绨茬悮顐ヮ潒娑撳搫寮懓鍐┠侀弶鍖＄礉閻劍鍩涢崣锕€鐡ㄩ獮鑸垫暭閹存劘鍤滃杈╂畱閻喎鐤勯崡鏇炴惂閸氬函绱濋梾蹇旀簚缂佹挻鐏夐幍宥勭窗閺囩鍒涙潻鎴炴）鐢晲濞囬悽銊ｂ偓?
 
 ## [Unreleased-PLAN_071-WEAR-WARDROBE] - 2026-04-28
 
-### 原因
-- 用户反馈工具箱「每日决策 - 穿什么」子模块当前代码接线错乱，要求完全参照「吃什么」的数据源、集合筛选、自定义集合和管理页思路，补齐内置数据衣柜与用户自定义衣柜。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻渚库偓灞剧槨閺冦儱鍠呯粵?- 缁屽じ绮堟稊鍫涒偓宥呯摍濡€虫健瑜版挸澧犳禒锝囩垳閹恒儳鍤庨柨娆庤础閿涘矁顩﹀Ч鍌氱暚閸忋劌寮悡褋鈧苯鎮嗘禒鈧稊鍫涒偓宥囨畱閺佺増宓佸┃鎰┾偓渚€娉﹂崥鍫㈢摣闁鈧浇鍤滅€规矮绠熼梿鍡楁値閸滃瞼顓搁悶鍡涖€夐幀婵婄熅閿涘矁藟姒绘劕鍞寸純顔芥殶閹诡喛銆傞弻婊€绗岄悽銊﹀煕閼奉亜鐣炬稊澶庛€傞弻婧库偓?
 
-### 新增
-- 新增 `plans/PLAN_071_每日决策穿什么子模块衣柜化完善.md`，记录穿什么衣柜化目标、步骤、风险和依赖。
-- 新增 `DailyChoiceWearLibraryStore`，按吃什么内置菜谱库思路支持穿搭内置库状态检查、远端安装、SQLite 摘要读取和详情懒加载。
-- 新增穿什么默认衣柜集合模型：默认「我的衣橱」、通勤/日常/正式/约会/运动/雨天等内置数据衣柜，以及用户自定义衣柜的持久化、增删改、成员关系管理和 JSON 导入导出。
-- 新增穿什么管理页搜索、衣柜集合选择、重命名、删除、导入导出、加入衣柜、移出当前衣柜、内置搭配详情、个人调整和另存为自定义的完整入口。
+### 閺傛澘顤?
+- 閺傛澘顤?`plans/PLAN_071_濮ｅ繑妫╅崘宕囩摜缁屽じ绮堟稊鍫濈摍濡€虫健鐞涳絾鐓栭崠鏍х暚閸?md`閿涘矁顔囪ぐ鏇犫敍娴犫偓娑斿牐銆傞弻婊冨閻╊喗鐖ｉ妴浣诡劄妤犮們鈧線顥撻梽鈺佹嫲娓氭繆绂嗛妴?
+- 閺傛澘顤?`DailyChoiceWearLibraryStore`閿涘本瀵滈崥鍐х矆娑斿牆鍞寸純顔垮綅鐠嬪崬绨遍幀婵婄熅閺€顖涘瘮缁屾寧鎯岄崘鍛枂鎼存挾濮搁幀浣诡梾閺屻儯鈧浇绻欑粩顖氱暔鐟佸懌鈧讣QLite 閹芥顩︾拠璇插絿閸滃矁顕涢幆鍛櫩閸旂姾娴囬妴?
+- 閺傛澘顤冪粚澶哥矆娑斿牓绮拋銈堛€傞弻婊堟肠閸氬牊膩閸ㄥ绱版妯款吇閵嗗本鍨滈惃鍕€傚渚库偓宥冣偓渚€鈧艾瀚?閺冦儱鐖?濮濓絽绱?缁撅缚绱?鏉╂劕濮?闂嗐劌銇夌粵澶婂敶缂冾喗鏆熼幑顔裤€傞弻婊愮礉娴犮儱寮烽悽銊﹀煕閼奉亜鐣炬稊澶庛€傞弻婊呮畱閹镐椒绠欓崠鏍モ偓浣割杻閸掔姵鏁奸妴浣瑰灇閸涙ê鍙х化鑽ゎ吀閻炲棗鎷?JSON 鐎电厧鍙嗙€电厧鍤妴?
+- 閺傛澘顤冪粚澶哥矆娑斿牏顓搁悶鍡涖€夐幖婊呭偍閵嗕浇銆傞弻婊堟肠閸氬牓鈧瀚ㄩ妴渚€鍣搁崨钘夋倳閵嗕礁鍨归梽銈冣偓浣割嚤閸忋儱顕遍崙鎭掆偓浣稿閸忋儴銆傞弻婧库偓浣盒╅崙鍝勭秼閸撳秷銆傞弻婧库偓浣稿敶缂冾喗鎯岄柊宥堫嚊閹懌鈧椒閲滄禍楦跨殶閺佹潙鎷伴崣锕€鐡ㄦ稉楦垮殰鐎规矮绠熼惃鍕暚閺佹潙鍙嗛崣锝冣偓?
 
-### 修改
-- `DailyChoiceHub` 接入穿搭内置库懒加载和安装状态，进入穿什么时按需读取内置摘要，并按场景回填内置数据衣柜成员。
-- 穿什么随机页改为支持全部衣柜、内置数据衣柜、用户自定义衣柜筛选，并与温度、场景、天气建议和高级穿搭特征筛选共同生效。
-- 管理页与编辑器的集合参数泛化为同时支持吃什么食谱集和穿什么衣柜，保持两类子模块的保存、另存和成员关系写入语义一致。
-- 穿什么指南与特征筛选转为稳定的模块内数据，不再依赖旧的静态穿搭 seed 文件。
+### 娣囶喗鏁?
+- `DailyChoiceHub` 閹恒儱鍙嗙粚鎸庢儗閸愬懐鐤嗘惔鎾村櫩閸旂姾娴囬崪灞界暔鐟佸懐濮搁幀渚婄礉鏉╂稑鍙嗙粚澶哥矆娑斿牊妞傞幐澶愭付鐠囪褰囬崘鍛枂閹芥顩﹂敍灞借嫙閹稿婧€閺咁垰娲栨繅顐㈠敶缂冾喗鏆熼幑顔裤€傞弻婊勫灇閸涙ǜ鈧?
+- 缁屽じ绮堟稊鍫ユ閺堟椽銆夐弨閫涜礋閺€顖涘瘮閸忋劑鍎寸悰锝嗙厲閵嗕礁鍞寸純顔芥殶閹诡喛銆傞弻婧库偓浣烘暏閹寸柉鍤滅€规矮绠熺悰锝嗙厲缁涙盯鈧绱濋獮鏈电瑢濞撯晛瀹抽妴浣告簚閺咁垬鈧礁銇夊鏂跨紦鐠侇喖鎷版妯奸獓缁屾寧鎯岄悧鐟扮窙缁涙盯鈧鍙￠崥宀€鏁撻弫鍫涒偓?
+- 缁狅紕鎮婃い鍏哥瑢缂傛牞绶崳銊ф畱闂嗗棗鎮庨崣鍌涙殶濞夋稑瀵叉稉鍝勬倱閺冭埖鏁幐浣告倖娴犫偓娑斿牓顥ょ拫閬嶆肠閸滃瞼鈹涙禒鈧稊鍫ｃ€傞弻婊愮礉娣囨繃瀵旀稉銈囪鐎涙劖膩閸ф娈戞穱婵嗙摠閵嗕礁褰熺€涙ê鎷伴幋鎰喅閸忓磭閮撮崘娆忓弳鐠囶厺绠熸稉鈧懛娣偓?
+- 缁屽じ绮堟稊鍫熷瘹閸楁ぞ绗岄悧鐟扮窙缁涙盯鈧娴嗘稉铏骨旂€规氨娈戝Ο鈥虫健閸愬懏鏆熼幑顕嗙礉娑撳秴鍟€娓氭繆绂嗛弮褏娈戦棃娆愨偓浣衡敍閹?seed 閺傚洣娆㈤妴?
 
-### 修复
-- 修复穿什么默认选中空「我的衣橱」时随机池仍像全量池工作的错乱体验。
-- 修复穿什么管理页内置搭配、个人搭配和个人调整没有按当前衣柜集合过滤的问题。
-- 修复穿什么随机页和内置数据衣柜回填只识别主场景、漏掉多场景穿搭的问题。
-- 修复穿什么天气建议与手动温度选择优先级表达式不清晰的问题。
+### 娣囶喖顦?
+- 娣囶喖顦茬粚澶哥矆娑斿牓绮拋銈夆偓澶夎厬缁屾亽鈧本鍨滈惃鍕€傚渚库偓宥嗘闂呭繑婧€濮圭姳绮涢崓蹇撳弿闁插繑鐫滃銉ょ稊閻ㄥ嫰鏁婃稊鍙樼秼妤犲被鈧?
+- 娣囶喖顦茬粚澶哥矆娑斿牏顓搁悶鍡涖€夐崘鍛枂閹碱參鍘ら妴浣烽嚋娴滅儤鎯岄柊宥呮嫲娑擃亙姹夌拫鍐╂殻濞屸剝婀侀幐澶婄秼閸撳秷銆傞弻婊堟肠閸氬牐绻冨銈囨畱闂傤噣顣介妴?
+- 娣囶喖顦茬粚澶哥矆娑斿牓娈㈤張娲€夐崪灞藉敶缂冾喗鏆熼幑顔裤€傞弻婊冩礀婵夘偄褰х拠鍡楀焼娑撹婧€閺咁垬鈧焦绱￠幒澶婎樋閸︾儤娅欑粚鎸庢儗閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦茬粚澶哥矆娑斿牆銇夊鏂跨紦鐠侇喕绗岄幍瀣З濞撯晛瀹抽柅澶嬪娴兼ê鍘涚痪褑銆冩潏鎯х础娑撳秵绔婚弲鎵畱闂傤噣顣介妴?
 
-### 风险变更
-- 内置穿搭库依赖本地 SQLite 安装状态；未安装或安装失败时保留状态面板与安装入口，自定义衣柜仍可继续使用。
-- `flutter analyze` 仍受既有非每日决策 lint/警告影响退出 1，本轮相关 `toolbox_daily_choice` 文件未新增分析问题。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸愬懐鐤嗙粚鎸庢儗鎼存挷绶风挧鏍ㄦ拱閸?SQLite 鐎瑰顥婇悩鑸碘偓渚婄幢閺堫亜鐣ㄧ憗鍛灗鐎瑰顥婃径杈Е閺冩湹绻氶悾娆戝Ц閹線娼伴弶澶哥瑢鐎瑰顥婇崗銉ュ經閿涘矁鍤滅€规矮绠熺悰锝嗙厲娴犲秴褰茬紒褏鐢绘担璺ㄦ暏閵?
+- `flutter analyze` 娴犲秴褰堥弮銏℃箒闂堢偞鐦￠弮銉ュ枀缁?lint/鐠€锕€鎲¤ぐ鍗炴惙闁偓閸?1閿涘本婀版潪顔炬祲閸?`toolbox_daily_choice` 閺傚洣娆㈤張顏呮煀婢х偛鍨庨弸鎰版６妫版ǜ鈧?
 
 ## [Unreleased-PLAN_070-EAT-OVERHAUL-TAKEOVER] - 2026-04-27
 
-### 原因
-- 用户反馈工具箱「每日决策 - 吃什么」子模块存在数据源错乱、筛选字段不准、严重性能瓶颈、随机体验异常、加载阻塞、管理 UI 强聚合、分页体验差和 `TextEditingController` 生命周期崩溃等系统性问题。
-- 用户要求先对当前工作区做备份式提交，再创建可持续接手的完整任务工作流与计划，便于后续会话继续推进。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻渚库偓灞剧槨閺冦儱鍠呯粵?- 閸氬啩绮堟稊鍫涒偓宥呯摍濡€虫健鐎涙ê婀弫鐗堝祦濠ф劙鏁婃稊渚库偓浣虹摣闁鐡у▓鍏哥瑝閸戝棎鈧椒寮楅柌宥嗏偓褑鍏橀悺鍫曨暛閵嗕線娈㈤張杞扮秼妤犲苯绱撶敮鎼炩偓浣稿鏉炰粙妯嗘繅鐐偓浣侯吀閻?UI 瀵缚浠涢崥鍫涒偓浣稿瀻妞ゅ吀缍嬫灞芥▕閸?`TextEditingController` 閻㈢喎鎳￠崨銊︽埂瀹曗晜绨濈粵澶岄兇缂佺喐鈧囨６妫版ǜ鈧?
+- 閻劍鍩涚憰浣圭湴閸忓牆顕ぐ鎾冲瀹搞儰缍旈崠鍝勪粵婢跺洣鍞ゅ蹇斿絹娴溿倧绱濋崘宥呭灡瀵ゅ搫褰查幐浣虹敾閹恒儲澧滈惃鍕暚閺佺繝鎹㈤崝鈥充紣娴ｆ粍绁︽稉搴ゎ吀閸掓帪绱濇笟澶哥艾閸氬海鐢绘导姘崇樈缂佈呯敾閹恒劏绻橀妴?
 
-### 新增
-- 新增 `plans/PLAN_070_每日决策吃什么子模块全面接管与数据UI重构.md`，记录接管分支、备份提交、阶段拆分、13 个问题验收标准、数据重建原则、schema 优化方向、UI 拆分边界和后续验证策略。
-- 新增 `DailyChoiceHub keeps other modules usable while eat library loads` smoke 测试，锁定吃什么摘要加载未完成时仍可切换并使用其他每日决策模块。
-- 新增 `scripts/audit_daily_choice_recipe_dataset.py`，审计当前 `D:\vocabularySleep-resources\cook_data` JSON/SQLite 与 YunYouJun/cook `recipe.csv` 的字段冲突、来源覆盖、菜系 notes 污染、食材别名过宽匹配和抽取乱码。
-- 新增 `records/record_070_daily_choice_recipe_data_audit.md` 与 `records/record_070_daily_choice_recipe_data_audit.json`，记录首轮数据源审计结果。
-- 新增 `records/record_070_daily_choice_recipe_data_audit_after_generation.md` 与 `records/record_070_daily_choice_recipe_data_audit_after_generation.json`，记录修正生成规则后的隔离验证包审计结果。
-- 新增 `records/record_070_daily_choice_recipe_schema_design.md`，记录吃什么 v2 数据库表设计、索引策略、典型查询、迁移顺序和验收标准。
-- 新增 `scripts/daily_choice_recipe_schema_v2.sql`，作为后续生成器与 Flutter store 迁移的可执行 SQLite schema 草案。
-- 新增 `decisions/ADR_070_daily_choice_recipe_schema_v2.md`，记录 v2 分层 schema 的技术决策。
-- 新增 `records/record_070_daily_choice_s3_upload_package.md`，记录 `cook_data_plan070_validation` 压缩后文件大小、建议 S3 key、远端安装边界和验证命令。
-- 新增 `DailyChoiceEatLibraryStore` 远端失败边界测试，覆盖“已有 SQLite 库时刷新失败不覆盖旧库”和“首次远端失败不生成 bundled JSON fallback”。
-- 新增 `scripts/verify_daily_choice_recipe_remote.dart`，用于通过 S3 远端完整下载吃什么 SQLite DB，并验证 v1/v2 表计数、meta 和 sample detail。
-- 新增 `records/record_070_daily_choice_remote_db_smoke.md`，记录 S3 `/cook_data` 上传后远端 key、文件大小、完整下载 smoke、meta 与 v2 当前状态。
-- 新增吃什么 catalog 回归测试，覆盖“全部餐段”默认候选池、花生坚果组合忌口，以及 `排骨` 不再退化成通用 `pork` 食材 token。
-- 新增 `records/record_070_daily_choice_v2_only_db_package.md`，记录新版 v2-only 上传 DB 的输出路径、大小、SHA256、schema/meta、表计数和运行时边界。
-- 新增 `records/record_070_daily_choice_recipe_v2_only_db_audit.md` 与 JSON 审计结果，记录 v2-only DB 与验证包 JSON 的一致性、cook CSV 覆盖和 10 个数据问题桶结果。
-- 新增 `records/record_070_daily_choice_remote_v2_runtime_smoke.md`，记录用户更新 S3 后的远端 v2-only DB 完整下载 smoke 和运行时读取验证。
-- 新增 `DailyChoiceEatLibraryStore installs v2-only SQLite and lazy loads details` 单测，覆盖 v2-only DB 的安装、book/cook 计数、摘要轻量读取和详情懒加载。
-- 新增 `DailyChoiceEatLibraryQuery` 与 `DailyChoiceEatLibraryQueryResult`，为吃什么 v2 内置库提供分页摘要、总数、完整随机候选 id 池和后续 random pivot 接入口。
-- 新增 `records/record_070_daily_choice_v2_sql_query_foundation.md`，记录 v2 SQL 查询基础、本轮边界、测试覆盖和后续 UI 接入风险。
-- 新增 v2 SQL 查询单测，覆盖索引筛选、分页摘要、`排骨` 精确食材匹配和花生坚果组合忌口。
-- 新增 `DailyChoiceEatLibraryStore.pickBuiltInRandomSummary(...)`，支持按 v2 `random_key` pivot 从完整候选池抽取轻量摘要。
-- 新增 `records/record_070_daily_choice_v2_random_pivot.md`，记录 store 层 random pivot 能力、测试覆盖和后续 UI 接入边界。
-- 新增 `DailyChoiceRandomPanel` 可选异步最终抽取入口，供吃什么主 UI 在停止随机时接入 store random pivot。
-- 新增 `records/record_070_daily_choice_ui_random_and_manager_sql_paging.md`，记录主 UI 随机与管理页内置库 SQL 分页接入边界。
-- 新增随机面板 widget 回归测试，覆盖候选池变化后旧异步抽取结果不回写当前 UI。
-- 新增 `DailyChoiceEatLibraryQuery.searchText`，为管理页吃什么内置库搜索下沉到 v2 SQLite search table 提供查询字段。
-- 新增 `records/record_070_daily_choice_manager_sql_search.md`，记录管理页内置库搜索下沉范围、验证和后续 FTS/拆页方向。
-- 新增管理页 SQL 内置摘要详情懒加载回归测试，覆盖内存全量摘要为空时仍可从 store 打开详情。
-- 新增 `records/record_070_daily_choice_manager_item_action_states.md`，记录管理页内置菜谱逐项 loading / disabled / error 状态的实现边界和验证。
-- 新增管理页内置菜谱逐项动作回归测试，覆盖 detail 慢读取期间不重复触发请求，以及 detail 失败时保留当前 sheet 并显示局部错误。
-- 新增 `records/record_070_daily_choice_manager_auto_paging_and_search_commit.md`，记录管理页自动分页、搜索提交边界和后续 FTS/倒排表风险。
-- 新增管理页自动分页与搜索提交回归测试，覆盖滚动触底自动扩大 SQL 分页 limit，以及输入搜索词期间不查询、失焦后才提交 `searchText`。
-- 新增 `records/record_070_daily_choice_random_stop_timeout_and_pivot_guard.md`，记录随机停止超时兜底、大候选池 SQL guard 和本轮验证。
-- 新增随机停止回归测试，覆盖异步最终抽取超时后退出 `Picking`，以及隐藏项导致需要精确可见池且候选过大时不触发重 SQL pivot。
-- 新增 `records/record_070_daily_choice_stop_local_and_manager_isolate_paging.md`，记录停止随机本地落点、管理页 isolate 查询和触底分页修复。
-- 新增默认空菜谱集“我喜欢的菜”，旧自定义状态在加载和保存时会自动补齐该集合，且管理页禁止删除这个默认集合。
-- 新增管理页内置菜谱“喜欢/加入”多选弹窗：点击时默认加入“我喜欢的菜”，也可同时加入其他个人菜谱集。
-- 新增管理页右侧固定“一键回到页首”浮动按钮，以及保存、调整、加入集合等写入动作的处理中遮罩反馈。
-- 新增 `records/record_070_daily_choice_collection_favorites_and_risk_cleanup.md`，记录本轮集合入口、喜欢集合、风险字段清理和验证包重建结果。
-- 新增食谱集 JSON 分享包导出/导入能力：用户可为当前个人食谱集选择保存位置导出，也可从本地 JSON 文件导入他人分享的集合、自定义菜谱和个人调整。
-- 新增 `records/record_070_daily_choice_collection_dropdown_import_export.md`，记录管理页集合入口去重、重命名/删除下拉操作和食谱集导入导出边界。
-- 新增筛选项紧凑展示：分类、场景、厨具、高级筛选和管理页筛选中，未选中项仅显示图标，选中项显示选项名。
-- 新增 `records/record_070_daily_choice_compact_filter_controls.md`，记录筛选项紧凑展示和展开入口增强。
-- 新增管理页结构拆分 part：查询 helper、section widgets、集合导入导出、确认弹窗从主 `daily_choice_manager_sheet.dart` 移出。
-- 新增 `records/record_070_daily_choice_p1_p4_closure.md`，记录 PLAN_070 P1-P4 收尾、分页追加模型、计划状态校准和验证结果。
-- 新增 `records/record_070_daily_choice_copy_cleanup_and_main_merge.md`，记录每日决策文案收口、开发说明删除、来源展示隐藏和合回主分支边界。
-- 新增吃什么自定义菜谱编辑器“保存到食谱集”多选区，新增、编辑和另存个人菜谱时可同步选择多个个人食谱集。
-- 新增 `records/record_070_daily_choice_custom_recipe_collection_editor.md`，记录自定义菜谱编辑时的食谱集多选入口、成员关系重写语义和验证结果。
+### 閺傛澘顤?
+- 閺傛澘顤?`plans/PLAN_070_濮ｅ繑妫╅崘宕囩摜閸氬啩绮堟稊鍫濈摍濡€虫健閸忋劑娼伴幒銉ь吀娑撳孩鏆熼幑鐢嶪闁插秵鐎?md`閿涘矁顔囪ぐ鏇熷复缁犫€冲瀻閺€顖樷偓浣割槵娴犺姤褰佹禍銈冣偓渚€妯佸▓鍨閸掑棎鈧?3 娑擃亪妫舵０姗€鐛欓弨鑸电垼閸戝棎鈧焦鏆熼幑顕€鍣稿鍝勫斧閸掓瑣鈧够chema 娴兼ê瀵查弬鐟版倻閵嗕箒I 閹峰棗鍨庢潏鍦櫕閸滃苯鎮楃紒顓㈢崣鐠囦胶鐡ラ悾銉ｂ偓?
+- 閺傛澘顤?`DailyChoiceHub keeps other modules usable while eat library loads` smoke 濞村鐦敍宀勬敚鐎规艾鎮嗘禒鈧稊鍫熸喅鐟曚礁濮炴潪鑺ユ弓鐎瑰本鍨氶弮鏈电矝閸欘垰鍨忛幑銏犺嫙娴ｈ法鏁ら崗鏈电铂濮ｅ繑妫╅崘宕囩摜濡€虫健閵?
+- 閺傛澘顤?`scripts/audit_daily_choice_recipe_dataset.py`閿涘苯顓哥拋鈥崇秼閸?`D:\vocabularySleep-resources\cook_data` JSON/SQLite 娑?YunYouJun/cook `recipe.csv` 閻ㄥ嫬鐡у▓闈涘暱缁愪降鈧焦娼靛┃鎰洬閻╂牓鈧浇褰嶇化?notes 濮光剝鐓嬮妴渚€顥ら弶鎰焼閸氬秷绻冪€硅棄灏柊宥呮嫲閹惰棄褰囨稊杈╃垳閵?
+- 閺傛澘顤?`records/record_070_daily_choice_recipe_data_audit.md` 娑?`records/record_070_daily_choice_recipe_data_audit.json`閿涘矁顔囪ぐ鏇㈩浕鏉烆喗鏆熼幑顔界爱鐎孤ゎ吀缂佹挻鐏夐妴?
+- 閺傛澘顤?`records/record_070_daily_choice_recipe_data_audit_after_generation.md` 娑?`records/record_070_daily_choice_recipe_data_audit_after_generation.json`閿涘矁顔囪ぐ鏇氭叏濮濓絿鏁撻幋鎰潐閸掓瑥鎮楅惃鍕缁傚鐛欑拠浣稿瘶鐎孤ゎ吀缂佹挻鐏夐妴?
+- 閺傛澘顤?`records/record_070_daily_choice_recipe_schema_design.md`閿涘矁顔囪ぐ鏇炴倖娴犫偓娑?v2 閺佺増宓佹惔鎾广€冪拋鎹愵吀閵嗕胶鍌ㄥ鏇犵摜閻ｃ儯鈧礁鍚€閸ㄥ鐓＄拠顫偓浣界讣缁夊銆庢惔蹇撴嫲妤犲本鏁归弽鍥у櫙閵?
+- 閺傛澘顤?`scripts/daily_choice_recipe_schema_v2.sql`閿涘奔缍旀稉鍝勬倵缂侇厾鏁撻幋鎰珤娑?Flutter store 鏉╀胶些閻ㄥ嫬褰查幍褑顢?SQLite schema 閼藉顢嶉妴?
+- 閺傛澘顤?`decisions/ADR_070_daily_choice_recipe_schema_v2.md`閿涘矁顔囪ぐ?v2 閸掑棗鐪?schema 閻ㄥ嫭濡ч張顖氬枀缁涙牓鈧?
+- 閺傛澘顤?`records/record_070_daily_choice_s3_upload_package.md`閿涘矁顔囪ぐ?`cook_data_plan070_validation` 閸樺缂夐崥搴㈡瀮娴犺泛銇囩亸蹇嬧偓浣哥紦鐠?S3 key閵嗕浇绻欑粩顖氱暔鐟佸懓绔熼悾灞芥嫲妤犲矁鐦夐崨鎴掓姢閵?
+- 閺傛澘顤?`DailyChoiceEatLibraryStore` 鏉╂粎顏径杈Е鏉堝湱鏅ù瀣槸閿涘矁顩惄鏍も偓婊冨嚒閺?SQLite 鎼存挻妞傞崚閿嬫煀婢惰精瑙︽稉宥堫洬閻╂牗妫惔鎾偓婵嗘嫲閳ユ粓顩诲▎陇绻欑粩顖氥亼鐠愩儰绗夐悽鐔稿灇 bundled JSON fallback閳ユ縿鈧?
+- 閺傛澘顤?`scripts/verify_daily_choice_recipe_remote.dart`閿涘瞼鏁ゆ禍搴ㄢ偓姘崇箖 S3 鏉╂粎顏€瑰本鏆ｆ稉瀣祰閸氬啩绮堟稊?SQLite DB閿涘苯鑻熸宀冪槈 v1/v2 鐞涖劏顓搁弫鑸偓涔礶ta 閸?sample detail閵?
+- 閺傛澘顤?`records/record_070_daily_choice_remote_db_smoke.md`閿涘矁顔囪ぐ?S3 `/cook_data` 娑撳﹣绱堕崥搴ょ箼缁?key閵嗕焦鏋冩禒璺恒亣鐏忓繈鈧礁鐣弫缈犵瑓鏉?smoke閵嗕沟eta 娑?v2 瑜版挸澧犻悩鑸碘偓浣碘偓?
+- 閺傛澘顤冮崥鍐х矆娑?catalog 閸ョ偛缍婂ù瀣槸閿涘矁顩惄鏍も偓婊冨弿闁劑顦靛▓纰樷偓婵嬬帛鐠併倕鈧瑩鈧鐫滈妴浣藉С閻㈢喎娼ラ弸婊呯矋閸氬牆绻夐崣锝忕礉娴犮儱寮?`閹烘帡顎嘸 娑撳秴鍟€闁偓閸栨牗鍨氶柅姘辨暏 `pork` 妞嬬喐娼?token閵?
+- 閺傛澘顤?`records/record_070_daily_choice_v2_only_db_package.md`閿涘矁顔囪ぐ鏇熸煀閻?v2-only 娑撳﹣绱?DB 閻ㄥ嫯绶崙楦跨熅瀵板嫨鈧礁銇囩亸蹇嬧偓涓糎A256閵嗕够chema/meta閵嗕浇銆冪拋鈩冩殶閸滃矁绻嶇悰灞炬鏉堝湱鏅妴?
+- 閺傛澘顤?`records/record_070_daily_choice_recipe_v2_only_db_audit.md` 娑?JSON 鐎孤ゎ吀缂佹挻鐏夐敍宀冾唶瑜?v2-only DB 娑撳酣鐛欑拠浣稿瘶 JSON 閻ㄥ嫪绔撮懛瀛樷偓褋鈧恭ook CSV 鐟曞棛娲婇崪?10 娑擃亝鏆熼幑顕€妫舵０妯汇€婄紒鎾寸亯閵?
+- 閺傛澘顤?`records/record_070_daily_choice_remote_v2_runtime_smoke.md`閿涘矁顔囪ぐ鏇犳暏閹撮攱娲块弬?S3 閸氬海娈戞潻婊咁伂 v2-only DB 鐎瑰本鏆ｆ稉瀣祰 smoke 閸滃矁绻嶇悰灞炬鐠囪褰囨宀冪槈閵?
+- 閺傛澘顤?`DailyChoiceEatLibraryStore installs v2-only SQLite and lazy loads details` 閸楁洘绁撮敍宀冾洬閻?v2-only DB 閻ㄥ嫬鐣ㄧ憗鍛偓涔ok/cook 鐠佲剝鏆熼妴浣规喅鐟曚浇浜ら柌蹇氼嚢閸欐牕鎷扮拠锔藉剰閹虫帒濮炴潪濮愨偓?
+- 閺傛澘顤?`DailyChoiceEatLibraryQuery` 娑?`DailyChoiceEatLibraryQueryResult`閿涘奔璐熼崥鍐х矆娑?v2 閸愬懐鐤嗘惔鎾村絹娓氭稑鍨庢い鍨喅鐟曚降鈧焦鈧粯鏆熼妴浣哥暚閺佹挳娈㈤張鍝勨偓娆撯偓?id 濮圭姴鎷伴崥搴ｇ敾 random pivot 閹恒儱鍙嗛崣锝冣偓?
+- 閺傛澘顤?`records/record_070_daily_choice_v2_sql_query_foundation.md`閿涘矁顔囪ぐ?v2 SQL 閺屻儴顕楅崺铏诡攨閵嗕焦婀版潪顔跨珶閻ｅ被鈧焦绁寸拠鏇☆洬閻╂牕鎷伴崥搴ｇ敾 UI 閹恒儱鍙嗘搴ㄦ珦閵?
+- 閺傛澘顤?v2 SQL 閺屻儴顕楅崡鏇熺ゴ閿涘矁顩惄鏍偍瀵洜鐡柅澶堚偓浣稿瀻妞ゅ灚鎲崇憰浣碘偓涔ｉ幒鎺楊€嘸 缁墽鈥樻鐔告綏閸栧綊鍘ら崪宀冨С閻㈢喎娼ラ弸婊呯矋閸氬牆绻夐崣锝冣偓?
+- 閺傛澘顤?`DailyChoiceEatLibraryStore.pickBuiltInRandomSummary(...)`閿涘本鏁幐浣瑰瘻 v2 `random_key` pivot 娴犲骸鐣弫鏉戔偓娆撯偓澶嬬潨閹惰棄褰囨潪濠氬櫤閹芥顩﹂妴?
+- 閺傛澘顤?`records/record_070_daily_choice_v2_random_pivot.md`閿涘矁顔囪ぐ?store 鐏?random pivot 閼宠棄濮忛妴浣圭ゴ鐠囨洝顩惄鏍ф嫲閸氬海鐢?UI 閹恒儱鍙嗘潏鍦櫕閵?
+- 閺傛澘顤?`DailyChoiceRandomPanel` 閸欘垶鈧绱撳銉︽付缂佸牊濞婇崣鏍у弳閸欙綇绱濇笟娑樻倖娴犫偓娑斿牅瀵?UI 閸︺劌浠犲銏ゆ閺堢儤妞傞幒銉ュ弳 store random pivot閵?
+- 閺傛澘顤?`records/record_070_daily_choice_ui_random_and_manager_sql_paging.md`閿涘矁顔囪ぐ鏇氬瘜 UI 闂呭繑婧€娑撳海顓搁悶鍡涖€夐崘鍛枂鎼?SQL 閸掑棝銆夐幒銉ュ弳鏉堝湱鏅妴?
+- 閺傛澘顤冮梾蹇旀簚闂堛垺婢?widget 閸ョ偛缍婂ù瀣槸閿涘矁顩惄鏍р偓娆撯偓澶嬬潨閸欐ê瀵查崥搴㈡＋瀵倹顒為幎钘夊絿缂佹挻鐏夋稉宥呮礀閸愭瑥缍嬮崜?UI閵?
+- 閺傛澘顤?`DailyChoiceEatLibraryQuery.searchText`閿涘奔璐熺粻锛勬倞妞ら潧鎮嗘禒鈧稊鍫濆敶缂冾喖绨遍幖婊呭偍娑撳鐭囬崚?v2 SQLite search table 閹绘劒绶甸弻銉嚄鐎涙顔岄妴?
+- 閺傛澘顤?`records/record_070_daily_choice_manager_sql_search.md`閿涘矁顔囪ぐ鏇狀吀閻炲棝銆夐崘鍛枂鎼存挻鎮崇槐顫瑓濞屽瀵栭崶娣偓渚€鐛欑拠浣告嫲閸氬海鐢?FTS/閹峰棝銆夐弬鐟版倻閵?
+- 閺傛澘顤冪粻锛勬倞妞?SQL 閸愬懐鐤嗛幗妯款洣鐠囷附鍎忛幊鎺戝鏉炶棄娲栬ぐ鎺撶ゴ鐠囨洩绱濈憰鍡欐磰閸愬懎鐡ㄩ崗銊╁櫤閹芥顩︽稉铏光敄閺冩湹绮涢崣顖欑矤 store 閹垫挸绱戠拠锔藉剰閵?
+- 閺傛澘顤?`records/record_070_daily_choice_manager_item_action_states.md`閿涘矁顔囪ぐ鏇狀吀閻炲棝銆夐崘鍛枂閼挎粏姘ㄩ柅鎰般€?loading / disabled / error 閻樿埖鈧胶娈戠€圭偟骞囨潏鍦櫕閸滃矂鐛欑拠浣碘偓?
+- 閺傛澘顤冪粻锛勬倞妞ら潧鍞寸純顔垮綅鐠嬮亶鈧劙銆嶉崝銊ょ稊閸ョ偛缍婂ù瀣槸閿涘矁顩惄?detail 閹便垼顕伴崣鏍ㄦ埂闂傜繝绗夐柌宥咁槻鐟欙箑褰傜拠閿嬬湴閿涘奔浜掗崣?detail 婢惰精瑙﹂弮鏈电箽閻ｆ瑥缍嬮崜?sheet 楠炶埖妯夌粈鍝勭湰闁劑鏁婄拠顖樷偓?
+- 閺傛澘顤?`records/record_070_daily_choice_manager_auto_paging_and_search_commit.md`閿涘矁顔囪ぐ鏇狀吀閻炲棝銆夐懛顏勫З閸掑棝銆夐妴浣规偝缁便垺褰佹禍銈堢珶閻ｅ苯鎷伴崥搴ｇ敾 FTS/閸婃帗甯撶悰銊╊棑闂勨斂鈧?
+- 閺傛澘顤冪粻锛勬倞妞や絻鍤滈崝銊ュ瀻妞ゅ吀绗岄幖婊呭偍閹绘劒姘﹂崶鐐茬秺濞村鐦敍宀冾洬閻╂牗绮撮崝銊ㄐ曟惔鏇″殰閸斻劍澧挎径?SQL 閸掑棝銆?limit閿涘奔浜掗崣濠呯翻閸忋儲鎮崇槐銏ｇ槤閺堢喖妫挎稉宥嗙叀鐠囶潿鈧礁銇戦悞锕€鎮楅幍宥嗗絹娴?`searchText`閵?
+- 閺傛澘顤?`records/record_070_daily_choice_random_stop_timeout_and_pivot_guard.md`閿涘矁顔囪ぐ鏇㈡閺堝搫浠犲銏ｇТ閺冭泛鍘规惔鏇樷偓浣搞亣閸婃瑩鈧鐫?SQL guard 閸滃本婀版潪顕€鐛欑拠浣碘偓?
+- 閺傛澘顤冮梾蹇旀簚閸嬫粍顒涢崶鐐茬秺濞村鐦敍宀冾洬閻╂牕绱撳銉︽付缂佸牊濞婇崣鏍Т閺冭泛鎮楅柅鈧崙?`Picking`閿涘奔浜掗崣濠囨閽樺繘銆嶇€佃壈鍤ч棁鈧憰浣虹翱绾喖褰茬憴浣圭潨娑撴柨鈧瑩鈧绻冩径褎妞傛稉宥埿曢崣鎴﹀櫢 SQL pivot閵?
+- 閺傛澘顤?`records/record_070_daily_choice_stop_local_and_manager_isolate_paging.md`閿涘矁顔囪ぐ鏇炰粻濮濄垽娈㈤張鐑樻拱閸︽媽鎯ら悙骞库偓浣侯吀閻炲棝銆?isolate 閺屻儴顕楅崪宀冃曟惔鏇炲瀻妞ゅ吀鎱ㄦ径宥冣偓?
+- 閺傛澘顤冩妯款吇缁岄缚褰嶇拫閬嶆肠閳ユ粍鍨滈崰婊勵偨閻ㄥ嫯褰嶉垾婵撶礉閺冄嗗殰鐎规矮绠熼悩鑸碘偓浣告躬閸旂姾娴囬崪灞肩箽鐎涙ɑ妞傛导姘冲殰閸斻劏藟姒绘劘顕氶梿鍡楁値閿涘奔绗栫粻锛勬倞妞ょ數顩﹀銏犲灩闂勩倛绻栨稉顏堢帛鐠併倝娉﹂崥鍫涒偓?
+- 閺傛澘顤冪粻锛勬倞妞ら潧鍞寸純顔垮綅鐠嬫墎鈧粌鏋╁▎?閸旂姴鍙嗛垾婵嗩樋闁鑴婄粣妤嬬窗閻愮懓鍤弮鍫曠帛鐠併倕濮為崗銉⑩偓婊勫灉閸犳粍顐介惃鍕綅閳ユ繐绱濇稊鐔峰讲閸氬本妞傞崝鐘插弳閸忔湹绮稉顏冩眽閼挎粏姘ㄩ梿鍡愨偓?
+- 閺傛澘顤冪粻锛勬倞妞ら潧褰告笟褍娴愮€规埃鈧粈绔撮柨顔兼礀閸掍即銆夋＃鏍も偓婵囪癁閸斻劍瀵滈柦顕嗙礉娴犮儱寮锋穱婵嗙摠閵嗕浇鐨熼弫娣偓浣稿閸忋儵娉﹂崥鍫㈢搼閸愭瑥鍙嗛崝銊ょ稊閻ㄥ嫬顦╅悶鍡曡厬闁喚鍍甸崣宥夘洯閵?
+- 閺傛澘顤?`records/record_070_daily_choice_collection_favorites_and_risk_cleanup.md`閿涘矁顔囪ぐ鏇熸拱鏉烆噣娉﹂崥鍫濆弳閸欙絻鈧礁鏋╁▎銏ゆ肠閸氬牄鈧線顥撻梽鈺佺摟濞堝灚绔婚悶鍡楁嫲妤犲矁鐦夐崠鍛村櫢瀵よ櫣绮ㄩ弸婧库偓?
+- 閺傛澘顤冩鐔绘皑闂?JSON 閸掑棔闊╅崠鍛嚤閸?鐎电厧鍙嗛懗钘夊閿涙氨鏁ら幋宄板讲娑撳搫缍嬮崜宥勯嚋娴滄椽顥ょ拫閬嶆肠闁瀚ㄦ穱婵嗙摠娴ｅ秶鐤嗙€电厧鍤敍灞肩瘍閸欘垯绮犻張顒€婀?JSON 閺傚洣娆㈢€电厧鍙嗘禒鏍︽眽閸掑棔闊╅惃鍕肠閸氬牄鈧浇鍤滅€规矮绠熼懣婊嗘皑閸滃奔閲滄禍楦跨殶閺佹番鈧?
+- 閺傛澘顤?`records/record_070_daily_choice_collection_dropdown_import_export.md`閿涘矁顔囪ぐ鏇狀吀閻炲棝銆夐梿鍡楁値閸忋儱褰涢崢濠氬櫢閵嗕線鍣搁崨钘夋倳/閸掔娀娅庢稉瀣閹垮秳缍旈崪宀勵棨鐠嬮亶娉︾€电厧鍙嗙€电厧鍤潏鍦櫕閵?
+- 閺傛澘顤冪粵娑⑩偓澶愩€嶇槐褍鍣剧仦鏇犮仛閿涙艾鍨庣猾姹団偓浣告簚閺咁垬鈧礁甯归崗鏋偓渚€鐝痪褏鐡柅澶婃嫲缁狅紕鎮婃い鐢电摣闁鑵戦敍灞炬弓闁鑵戞い閫涚矌閺勫墽銇氶崶鐐垼閿涘矂鈧鑵戞い瑙勬▔缁€娲偓澶愩€嶉崥宥冣偓?
+- 閺傛澘顤?`records/record_070_daily_choice_compact_filter_controls.md`閿涘矁顔囪ぐ鏇犵摣闁銆嶇槐褍鍣剧仦鏇犮仛閸滃苯鐫嶅鈧崗銉ュ經婢х偛宸遍妴?
+- 閺傛澘顤冪粻锛勬倞妞ょ數绮ㄩ弸鍕閸?part閿涙碍鐓＄拠?helper閵嗕够ection widgets閵嗕線娉﹂崥鍫濐嚤閸忋儱顕遍崙鎭掆偓浣衡€樼拋銈呰剨缁愭ぞ绮犳稉?`daily_choice_manager_sheet.dart` 缁夎鍤妴?
+- 閺傛澘顤?`records/record_070_daily_choice_p1_p4_closure.md`閿涘矁顔囪ぐ?PLAN_070 P1-P4 閺€璺虹啲閵嗕礁鍨庢い浣冩嫹閸旂姵膩閸ㄥ鈧浇顓搁崚鎺斿Ц閹焦鐗庨崙鍡楁嫲妤犲矁鐦夌紒鎾寸亯閵?
+- 閺傛澘顤?`records/record_070_daily_choice_copy_cleanup_and_main_merge.md`閿涘矁顔囪ぐ鏇熺槨閺冦儱鍠呯粵鏍ㄦ瀮濡楀牊鏁归崣锝冣偓浣哥磻閸欐垼顕╅弰搴″灩闂勩們鈧焦娼靛┃鎰潔缁€娲閽樺繐鎷伴崥鍫濇礀娑撹鍨庨弨顖濈珶閻ｅ被鈧?
+- 閺傛澘顤冮崥鍐х矆娑斿牐鍤滅€规矮绠熼懣婊嗘皑缂傛牞绶崳銊⑩偓婊€绻氱€涙ê鍩屾鐔绘皑闂嗗棌鈧繂顦块柅澶婂隘閿涘本鏌婃晶鐐偓浣虹椽鏉堟垵鎷伴崣锕€鐡ㄦ稉顏冩眽閼挎粏姘ㄩ弮璺哄讲閸氬本顒為柅澶嬪婢舵矮閲滄稉顏冩眽妞嬬喕姘ㄩ梿鍡愨偓?
+- 閺傛澘顤?`records/record_070_daily_choice_custom_recipe_collection_editor.md`閿涘矁顔囪ぐ鏇″殰鐎规矮绠熼懣婊嗘皑缂傛牞绶弮鍓佹畱妞嬬喕姘ㄩ梿鍡楊樋闁鍙嗛崣锝冣偓浣瑰灇閸涙ê鍙х化濠氬櫢閸愭瑨顕㈡稊澶婃嫲妤犲矁鐦夌紒鎾寸亯閵?
 
-### 修改
-- 将后续工作流明确为：每轮先更新计划边界，再实施改动，完成后更新 changelog 与计划进度，并按阶段提交。
-- 明确下一轮优先处理 P0 稳定性：每日决策入口不被吃什么菜谱库加载阻塞、管理 sheet controller 生命周期崩溃、随机面板停止按钮位置跳动和明显卡顿入口。
-- `DailyChoiceHub` 初始化不再等待吃什么菜谱库摘要加载完成；首屏只等待轻量自定义状态，吃什么菜谱库在进入吃什么模块后后台读取。
-- 吃什么资源状态面板区分后台读取和安装加载，读取期间只影响吃什么模块自身，不阻塞穿什么、去哪儿、干什么和决策助手。
-- 随机面板候选舞台固定高度，随机时限制标题、简介和标签行数，让停止按钮位置保持稳定。
-- 将 `PLAN_070` 阶段 2 标记为进行中，并写入首轮数据审计发现：`vegetarian` 与肉类/海鲜冲突 530 条，`vegan_friendly` 与动物性食材冲突 496 条，菜系标签混入 notes 2221 条，`清真友好` 规则说明混入 notes 3416 条，cook CSV 599 行中 569 行未在当前库标题精确命中。
-- `scripts/generate_daily_choice_recipe_dataset.py` 停用自动生成 `halal_friendly`、`vegan_friendly`、`vegetarian_friendly` diet 标签，避免无依据饮食友好标签继续进入筛选和展示。
-- 菜谱生成器不再把菜系标签或清真说明写入 notes，并统一清理 `??`、替换符等抽取乱码。
-- 食材抽取收紧高风险别名：`蛋` 不再作为鸡蛋裸词匹配，`洋葱` 不再误索引为 `葱`，`排骨`、`猪里脊`、`猪油`、`猪肝`、`猪蹄` 等具体猪肉项不再折叠成通用 `猪肉`。
-- 动物性风险判断补充兔肉、龟肉、甲鱼、鸽、鹌鹑、鹅肉、田鸡、牛蛙、牡蛎、蛤、蚌等词，`profile:vegetarian` 只在原始文本未命中肉类/水产风险时写入。
-- 将 YunYouJun/cook `recipe.csv` 导入生成器作为 `cook_csv` 数据来源，保留 difficulty、tags、methods、tools、bv、stuff 到结构化 attributes，并避免写入用户可见 sourceLabel、sourceUrl 和 references。
-- SQLite 导出 meta 现在写入真实 `bookRecipeCount` 与 `cookRecipeCount`，便于后续菜谱集分表和管理页展示。
-- 将 `PLAN_070` 阶段 3 标记为进行中，并明确本轮边界为数据库与索引设计，不直接迁移 Flutter 读取逻辑。
-- v2 schema 设计为 14 张表、18 个索引：菜谱集、基础索引、摘要、详情、材料/步骤行表、通用筛选索引、食材专用索引、搜索文本、本地用户状态和集合成员表。
-- 食材匹配索引拆为 `raw`、`canonical`、`family` 三层，并增加 `idx_dcr_ingredient_value_lookup` 保障默认 raw/canonical 查询。
-- 将 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份 JSON 压缩为上传前版本：`daily_choice_recipe_library.json` 19,614,095 bytes、`daily_choice_recipe_library_summary.json` 4,918,383 bytes、`recipe_library_asset.json` 19,614,095 bytes。
-- `DailyChoiceEatLibraryStore.installLibrary()` 改为远端 SQLite 候选文件安装：先下载到 `.remote` 候选 DB，规范 meta 并校验菜谱数，通过后才替换当前安装库。
-- `inspectStatus()` 在未安装 SQLite 文件时只返回空状态，不再为了检查状态创建空数据库文件。
-- 已验证用户上传到 S3 `/cook_data` 的远端包：运行时默认 key `cook_data/daily_choice_recipe_library.db` 可 HEAD、range 和完整下载，下载后 v1 summary/detail 均为 7,772 行。
-- `scripts/generate_daily_choice_recipe_dataset.py` 的 SQLite 导出改为 v1/v2 双写：保留现有 v1 runtime 表，同时写入菜谱集、v2 基础索引、摘要、详情、材料/步骤、筛选索引、食材 raw/canonical/family 索引、搜索文本和集合统计表。
-- 吃什么餐段默认改为“全部”，catalog 在 `mealId == 'all'` 时基于完整候选池筛选，不再按当前时间或午餐默认收窄。
-- 忌口预设精简为香菜、海鲜、花生坚果、酒精、辣椒；花生坚果在筛选层展开为 `peanut` + `nut`，保持 UI 简洁但不丢过滤语义。
-- 食材匹配继续收紧：`排骨`、猪蹄、猪肝、猪肚、猪油、火腿、培根、腊肉、腊肠等具体猪肉项不再作为默认 `pork` 食材同义词，只在 v2 family index 和 contains 排除里显式归入猪肉大类。
-- `scripts/generate_daily_choice_recipe_dataset.py` 的 SQLite 导出默认改为 v2-only；需要兼容旧 runtime 时可显式使用 `--sqlite-mode v1-v2`。
-- v2 SQLite 导出写入 `PRAGMA user_version=2`，便于上传后快速识别 schema 版本。
-- `scripts/audit_daily_choice_recipe_dataset.py` 支持自动识别 v2-only DB，不再强依赖 v1 summary/detail 表。
-- `scripts/verify_daily_choice_recipe_remote.dart` 支持 v1、v2 或 v1/v2 双写 DB 的远端 smoke 验证。
-- 已验证用户更新后的 S3 `cook_data/daily_choice_recipe_library.db` 为 v2-only DB：远端大小 142,467,072 bytes，`user_version=2`，v2 recipes/summaries/details 均为 7,772 行。
-- `DailyChoiceEatLibraryStore` 增加 schema 自动识别，优先读取 v2 表，同时保留 v1 旧库读取能力。
-- `DailyChoiceEatLibraryStore` 的远端 DB 安装归一化按 schema 写入 meta：v2 写入 `daily_choice_recipe_schema_meta`，v1 继续写入 `daily_choice_eat_recipe_meta`。
-- 吃什么内置菜谱摘要读取新增 v2 查询路径：从 `daily_choice_recipes` + `daily_choice_recipe_summaries` 读取轻量摘要，详情、材料、步骤继续按需从 `daily_choice_recipe_details` 懒加载。
-- `DailyChoiceEatLibraryStore.queryBuiltInSummaries()` 在 v2 DB 中使用 `daily_choice_recipe_filter_index` 处理餐段、厨具和 trait 筛选，并使用 `daily_choice_recipe_ingredient_index` 的 raw/canonical 层处理忌口排除和已有食材优先匹配。
-- legacy v1 库和缺少 v2 筛选索引的库继续回退到内存 `DailyChoiceEatCatalog` 过滤，避免查询入口影响已有本地库可读性。
-- v2 随机候选 id 查询按 `random_key` 排序并去重，避免 raw/canonical 同时命中时让同一菜谱在随机池中重复出现。
-- v2 random pivot 复用 `DailyChoiceEatLibraryQuery` 条件，并在 pivot 后半段无命中时回绕到候选池开头；随机抽取不读取详情字段。
-- 吃什么主 UI 在随机池全为可见内置菜谱时，停止随机会调用 `pickBuiltInRandomSummary(...)` 作为最终选中来源；随机池混入本地自定义时继续使用内存结果。
-- 随机面板在候选池变化时会让仍在进行的异步最终抽取失效，避免旧筛选结果回写到新筛选候选池。
-- 管理页吃什么内置库使用 `queryBuiltInSummaries(...)` 分页读取；搜索词非空时同步传给 store，并优先使用 v2 `daily_choice_recipe_search_text` 查询。
-- 管理页异步 SQL 查询在 sheet 关闭后不再调用 `setSheetState`，且失败时记录当前查询 key，降低关闭/返回和失败重试的生命周期风险。
-- 吃什么详情/个人调整/另存入口的内置菜谱判断改为基于模块、安装状态和轻量摘要内容，不再要求当前内存 `builtInOptions` 全量列表包含该 id。
-- 管理页吃什么内置菜谱的详情、个人调整、另存入口统一接入条目级异步动作状态；动作进行中会禁用同一条目的 detail/edit/copy 入口，并在条目内展示 loading 或错误反馈。
-- 吃什么管理页内触发详情读取时由 manager sheet 承接局部错误；主 UI 的详情按钮仍沿用 SnackBar 错误反馈。
-- 管理页吃什么内置库移除“继续加载”按钮，改为滚动接近底部时自动递增 SQL 查询 limit，并在加载下一页时保留当前已显示摘要。
-- 管理页搜索框改为组件级 `TextEditingController` / `FocusNode` 管理；输入只更新 draft，离开输入框或提交搜索后才刷新 SQL 搜索词。
-- 吃什么主 UI 停止随机时，无隐藏/个人调整/食谱集约束的内置候选池不再把全量 id 列表传给 `pickBuiltInRandomSummary(...)`，改为直接复用当前 SQL 筛选条件。
-- 需要精确可见池的随机停止场景若候选 id 超过 300 个，会跳过 store random pivot 并保留当前锁定候选，避免构造大 `IN (...)` 查询。
-- 吃什么主 UI 停止随机改为纯本地锁定当前候选，不再触发 `pickBuiltInRandomSummary(...)`；store random pivot 保留为底层能力，但不再位于停止按钮关键交互链路。
-- `DailyChoiceEatLibraryStore.queryBuiltInSummaries(...)` 优先通过 `Isolate.run` 在后台 isolate 重新打开 SQLite 文件执行分页/搜索查询，失败时回退旧同步路径。
-- 管理页内置库自动分页除监听滚动通知外，会在 SQL 返回后的下一帧检查当前滚动位置，修复已经停在底部时没有新滚动事件导致不继续加载的问题。
-- 吃什么外层随机入口现在直接展示菜谱集选择，用户开始随机前即可选择“内置菜谱”或个人菜谱集，避免默认总是在完整大库中随机。
-- 默认内置库口径正式统一为“内置菜谱”，管理页和外层入口不再使用“所有菜谱 / 全部菜谱”作为内置库名称。
-- 管理页“不喜欢”隐藏动作增加确认弹窗，避免误触；隐藏或恢复后保留当前 sheet、搜索和分页上下文。
-- 搜索输入框高度收紧为与旁边按钮更接近，减少管理页顶部工具区的视觉错位。
-- 吃什么 UI 移除饮食友好的辅助筛选入口，做菜指南不再展示清真等需要用户自行判断的关键提示。
-- 生成器和 v2 schema 移除菜谱起源地字段，验证包 JSON/SQLite 不再写入 `origin` 或 `diet` 字段；审计脚本继续保留风险检查桶用于确认这些字段没有回流。
-- 管理页“我的食谱集”不再同时展示选择 chip 和集合卡片，改为单一下拉框选择当前范围；重命名、删除按钮固定在下拉框旁边。
-- 默认“我喜欢的菜”集合继续受保护，不能通过管理页重命名或删除；其他个人集合可在下拉框旁执行重命名和删除。
-- 食谱集导出包包含集合元数据、集合内本地自定义菜谱、个人调整菜谱和内置菜谱 id 引用；导入时生成新的集合 id，避免覆盖已有集合。
-- 食谱集导入会校验分享包格式版本，文件内容无法读取时会显示导入失败提示，不再静默无响应。
-- `ToolboxSelectablePill` 支持隐藏文字标签并保留 tooltip/语义标签，便于移动端把筛选项尽量压在一行内。
-- 吃什么资源准备、高级设置和管理页可展开区的展开/收起按钮增加浅色背景、边框和 accent 色，提升可点击识别度。
-- 管理页内置菜谱 SQL 分页从“扩大 limit 重取前序摘要”改为 `offset + pageSize` 追加页，触底加载下一页时只请求新增窗口。
-- PLAN_070 阶段进度和 13 项验收表已按当前实现校准，明确主 UI 停止随机以响应性优先，路由级拆页和最近 3 个自定义忌口为后续增强。
-- PLAN_070 阶段 7 已完成本轮收尾验证；全量 `flutter analyze` 仍保留本轮外既有 lint 债，Android release APK 构建通过。
-- 每日决策模块文案完成一轮产品化收口：吃什么资源状态改为菜谱库准备提示，去哪儿、穿什么、做菜指南和决策助手移除“本轮 / 后续 / 扩展边界 / 资料来源”类开发说明。
-- 详情页不再渲染 sourceLabel、sourceUrl 或 references 来源块，保留菜品画像、材料/条件、步骤、关键提示和地图搜索词复制等用户直接需要的内容。
-- 吃什么管理页新增/编辑个人菜谱、另存内置菜谱为个人菜谱时，会把编辑器返回的食谱集选择精确写回集合成员关系；不勾选任何集合时仅保存为个人菜谱。
+### 娣囶喗鏁?
+- 鐏忓棗鎮楃紒顓炰紣娴ｆ粍绁﹂弰搴ｂ€樻稉鐚寸窗濮ｅ繗鐤嗛崗鍫熸纯閺傛媽顓搁崚鎺曠珶閻ｅ矉绱濋崘宥呯杽閺傝姤鏁奸崝顭掔礉鐎瑰本鍨氶崥搴㈡纯閺?changelog 娑撳氦顓搁崚鎺曠箻鎼达讣绱濋獮鑸靛瘻闂冭埖顔岄幓鎰唉閵?
+- 閺勫海鈥樻稉瀣╃鏉烆喕绱崗鍫濐槱閻?P0 缁嬪啿鐣鹃幀褝绱板В蹇旀）閸愬磭鐡ラ崗銉ュ經娑撳秷顫﹂崥鍐х矆娑斿牐褰嶇拫鍗炵氨閸旂姾娴囬梼璇差敚閵嗕胶顓搁悶?sheet controller 閻㈢喎鎳￠崨銊︽埂瀹曗晜绨濋妴渚€娈㈤張娲桨閺夊灝浠犲銏″瘻闁筋喕缍呯純顔跨儲閸斻劌鎷伴弰搴㈡▔閸楋繝銆戦崗銉ュ經閵?
+- `DailyChoiceHub` 閸掓繂顫愰崠鏍︾瑝閸愬秶鐡戝鍛倖娴犫偓娑斿牐褰嶇拫鍗炵氨閹芥顩﹂崝鐘烘祰鐎瑰本鍨氶敍娑㈩浕鐏炲繐褰х粵澶婄窡鏉炲鍣洪懛顏勭暰娑斿濮搁幀渚婄礉閸氬啩绮堟稊鍫ｅ綅鐠嬪崬绨遍崷銊ㄧ箻閸忋儱鎮嗘禒鈧稊鍫熌侀崸妤€鎮楅崥搴″酱鐠囪褰囬妴?
+- 閸氬啩绮堟稊鍫ｇカ濠ф劗濮搁幀渚€娼伴弶鍨隘閸掑棗鎮楅崣鎷岊嚢閸欐牕鎷扮€瑰顥婇崝鐘烘祰閿涘矁顕伴崣鏍ㄦ埂闂傛潙褰цぐ鍗炴惙閸氬啩绮堟稊鍫熌侀崸妤勫殰闊偓绱濇稉宥夋▎婵夌偟鈹涙禒鈧稊鍫涒偓浣稿箵閸濐亜鍔归妴浣稿叡娴犫偓娑斿牆鎷伴崘宕囩摜閸斺晜澧滈妴?
+- 闂呭繑婧€闂堛垺婢橀崐娆撯偓澶庡灦閸欐澘娴愮€规岸鐝惔锔肩礉闂呭繑婧€閺冨爼妾洪崚鑸电垼妫版ǜ鈧胶鐣濇禒瀣嫲閺嶅洨顒风悰灞炬殶閿涘矁顔€閸嬫粍顒涢幐澶愭尦娴ｅ秶鐤嗘穱婵囧瘮缁嬪啿鐣鹃妴?
+- 鐏?`PLAN_070` 闂冭埖顔?2 閺嶅洩顔囨稉楦跨箻鐞涘奔鑵戦敍灞借嫙閸愭瑥鍙嗘＃鏍枂閺佺増宓佺€孤ゎ吀閸欐垹骞囬敍姝歷egetarian` 娑撳氦鍊濈猾?濞寸兘鐭為崘鑼崐 530 閺夆槄绱漙vegan_friendly` 娑撳骸濮╅悧鈺傗偓褔顥ら弶鎰暱缁?496 閺夆槄绱濋懣婊呴兇閺嶅洨顒峰ǎ宄板弳 notes 2221 閺夆槄绱漙濞撳懐婀￠崣瀣偨` 鐟欏嫬鍨拠瀛樻濞ｅ嘲鍙?notes 3416 閺夆槄绱漜ook CSV 599 鐞涘奔鑵?569 鐞涘本婀崷銊ョ秼閸撳秴绨遍弽鍥暯缁墽鈥橀崨鎴掕厬閵?
+- `scripts/generate_daily_choice_recipe_dataset.py` 閸嬫粎鏁ら懛顏勫З閻㈢喐鍨?`halal_friendly`閵嗕梗vegan_friendly`閵嗕梗vegetarian_friendly` diet 閺嶅洨顒烽敍宀勪缉閸忓秵妫ゆ笟婵囧祦妤楊噣顥ら崣瀣偨閺嶅洨顒风紒褏鐢绘潻娑樺弳缁涙盯鈧鎷扮仦鏇犮仛閵?
+- 閼挎粏姘ㄩ悽鐔稿灇閸ｃ劋绗夐崘宥嗗Ω閼挎粎閮撮弽鍥╊劮閹存牗绔婚惇鐔活嚛閺勫骸鍟撻崗?notes閿涘苯鑻熺紒鐔剁濞撳懐鎮?`??`閵嗕焦娴涢幑銏㈩儊缁涘濞婇崣鏍﹁础閻降鈧?
+- 妞嬬喐娼楅幎钘夊絿閺€鍓佹彛妤傛﹢顥撻梽鈺佸焼閸氬稄绱癭閾斿獖 娑撳秴鍟€娴ｆ粈璐熸ウ陇娉茬憗姝岀槤閸栧綊鍘ら敍瀹嶅ú瀣嚂` 娑撳秴鍟€鐠囶垳鍌ㄥ鏇氳礋 `閽佺浗閿涘畭閹烘帡顎嘸閵嗕梗閻氼亪鍣烽懘濂伴妴涔ｉ悮顏呰ˉ`閵嗕梗閻氼亣鍊絗閵嗕梗閻氼亣绠榒 缁涘鍙挎担鎾跺皳閼插銆嶆稉宥呭晙閹舵ê褰旈幋鎰扳偓姘辨暏 `閻氼亣鍊漙閵?
+- 閸斻劎澧块幀褔顥撻梽鈺佸灲閺傤叀藟閸忓懎鍘伴懖澶堚偓渚€绶归懖澶堚偓浣烘暢妤哥鈧線闄勯妴渚€绠ゆィ鎴欌偓渚€绠欓懖澶堚偓浣烘暞妤β扳偓浣哄閾旀瑣鈧胶澧堕摂搴涒偓浣芥础閵嗕浇娈炵粵澶庣槤閿涘畭profile:vegetarian` 閸欘亜婀崢鐔奉潗閺傚洦婀伴張顏勬嚒娑擃叀鍊濈猾?濮樼繝楠囨搴ㄦ珦閺冭泛鍟撻崗銉ｂ偓?
+- 鐏?YunYouJun/cook `recipe.csv` 鐎电厧鍙嗛悽鐔稿灇閸ｃ劋缍旀稉?`cook_csv` 閺佺増宓侀弶銉︾爱閿涘奔绻氶悾?difficulty閵嗕辜ags閵嗕沟ethods閵嗕辜ools閵嗕攻v閵嗕够tuff 閸掓壆绮ㄩ弸鍕 attributes閿涘苯鑻熼柆鍨帳閸愭瑥鍙嗛悽銊﹀煕閸欘垵顫?sourceLabel閵嗕够ourceUrl 閸?references閵?
+- SQLite 鐎电厧鍤?meta 閻滄澘婀崘娆忓弳閻喎鐤?`bookRecipeCount` 娑?`cookRecipeCount`閿涘奔绌舵禍搴℃倵缂侇叀褰嶇拫閬嶆肠閸掑棜銆冮崪宀€顓搁悶鍡涖€夌仦鏇犮仛閵?
+- 鐏?`PLAN_070` 闂冭埖顔?3 閺嶅洩顔囨稉楦跨箻鐞涘奔鑵戦敍灞借嫙閺勫海鈥橀張顒冪枂鏉堝湱鏅稉鐑樻殶閹诡喖绨辨稉搴ｅ偍瀵洝顔曠拋鈽呯礉娑撳秶娲块幒銉ㄧ讣缁?Flutter 鐠囪褰囬柅鏄忕帆閵?
+- v2 schema 鐠佹崘顓告稉?14 瀵姾銆冮妴?8 娑擃亞鍌ㄥ鏇窗閼挎粏姘ㄩ梿鍡愨偓浣哥唨绾偓缁便垹绱╅妴浣规喅鐟曚降鈧浇顕涢幆鍛偓浣规綏閺?濮濄儵顎冪悰宀冦€冮妴渚€鈧氨鏁ょ粵娑⑩偓澶屽偍瀵洏鈧線顥ら弶鎰瑩閻劎鍌ㄥ鏇樷偓浣规偝缁便垺鏋冮張顑锯偓浣规拱閸︽壆鏁ら幋椋庡Ц閹礁鎷伴梿鍡楁値閹存劕鎲崇悰銊ｂ偓?
+- 妞嬬喐娼楅崠褰掑帳缁便垹绱╅幏鍡曡礋 `raw`閵嗕梗canonical`閵嗕梗family` 娑撳鐪伴敍灞借嫙婢х偛濮?`idx_dcr_ingredient_value_lookup` 娣囨繈娈版妯款吇 raw/canonical 閺屻儴顕楅妴?
+- 鐏?`D:\vocabularySleep-resources\cook_data_plan070_validation` 娑擃厺绗佹禒?JSON 閸樺缂夋稉杞扮瑐娴肩姴澧犻悧鍫熸拱閿涙瓪daily_choice_recipe_library.json` 19,614,095 bytes閵嗕梗daily_choice_recipe_library_summary.json` 4,918,383 bytes閵嗕梗recipe_library_asset.json` 19,614,095 bytes閵?
+- `DailyChoiceEatLibraryStore.installLibrary()` 閺€閫涜礋鏉╂粎顏?SQLite 閸婃瑩鈧鏋冩禒璺虹暔鐟佸拑绱伴崗鍫滅瑓鏉炶棄鍩?`.remote` 閸婃瑩鈧?DB閿涘矁顫夐懠?meta 楠炶埖鐗庢宀冨綅鐠嬭鲸鏆熼敍宀勨偓姘崇箖閸氬孩澧犻弴鎸庡床瑜版挸澧犵€瑰顥婃惔鎾扁偓?
+- `inspectStatus()` 閸︺劍婀€瑰顥?SQLite 閺傚洣娆㈤弮璺哄涧鏉╂柨娲栫粚铏瑰Ц閹緤绱濇稉宥呭晙娑撹桨绨″Λ鈧弻銉уЦ閹礁鍨卞铏光敄閺佺増宓佹惔鎾存瀮娴犺翰鈧?
+- 瀹告煡鐛欑拠浣烘暏閹磋渹绗傛导鐘插煂 S3 `/cook_data` 閻ㄥ嫯绻欑粩顖氬瘶閿涙俺绻嶇悰灞炬姒涙顓?key `cook_data/daily_choice_recipe_library.db` 閸?HEAD閵嗕购ange 閸滃苯鐣弫缈犵瑓鏉炴枻绱濇稉瀣祰閸?v1 summary/detail 閸у洣璐?7,772 鐞涘被鈧?
+- `scripts/generate_daily_choice_recipe_dataset.py` 閻?SQLite 鐎电厧鍤弨閫涜礋 v1/v2 閸欏苯鍟撻敍姘箽閻ｆ瑧骞囬張?v1 runtime 鐞涱煉绱濋崥灞炬閸愭瑥鍙嗛懣婊嗘皑闂嗗棎鈧箍2 閸╄櫣顢呯槐銏犵穿閵嗕焦鎲崇憰浣碘偓浣筋嚊閹懌鈧焦娼楅弬?濮濄儵顎冮妴浣虹摣闁鍌ㄥ鏇樷偓渚€顥ら弶?raw/canonical/family 缁便垹绱╅妴浣规偝缁便垺鏋冮張顒€鎷伴梿鍡楁値缂佺喕顓哥悰銊ｂ偓?
+- 閸氬啩绮堟稊鍫ヮ樀濞堢敻绮拋銈嗘暭娑撹　鈧粌鍙忛柈銊⑩偓婵撶礉catalog 閸?`mealId == 'all'` 閺冭泛鐔€娴滃骸鐣弫鏉戔偓娆撯偓澶嬬潨缁涙盯鈧绱濇稉宥呭晙閹稿缍嬮崜宥嗘闂傚瓨鍨ㄩ崡鍫ヮ樀姒涙顓婚弨鍓佺崕閵?
+- 韫囧苯褰涙０鍕啎缁墽鐣濇稉娲浘閼挎嚎鈧焦鎹ｆご婧库偓浣藉С閻㈢喎娼ラ弸婧库偓渚€鍘划淇扁偓浣借崋濡炴帪绱遍懞杈╂晸閸ф碍鐏夐崷銊х摣闁鐪扮仦鏇炵磻娑?`peanut` + `nut`閿涘奔绻氶幐?UI 缁犫偓濞蹭椒绲炬稉宥勬丢鏉╁洦鎶ょ拠顓濈疅閵?
+- 妞嬬喐娼楅崠褰掑帳缂佈呯敾閺€鍓佹彛閿涙瓪閹烘帡顎嘸閵嗕胶灏撻煫鍕┾偓浣哄皳閼叉縿鈧胶灏撻懖姘モ偓浣哄皳濞屽箍鈧胶浼€閼佃￥鈧礁鐓块弽骞库偓浣藉帪閼插鈧浇鍘為懖鐘电搼閸忚渹缍嬮悮顏囧€濇い閫涚瑝閸愬秳缍旀稉娲帛鐠?`pork` 妞嬬喐娼楅崥灞肩疅鐠囧稄绱濋崣顏勬躬 v2 family index 閸?contains 閹烘帡娅庨柌灞炬▔瀵繐缍婇崗銉у皳閼插銇囩猾姹団偓?
+- `scripts/generate_daily_choice_recipe_dataset.py` 閻?SQLite 鐎电厧鍤妯款吇閺€閫涜礋 v2-only閿涙盯娓剁憰浣稿悑鐎硅妫?runtime 閺冭泛褰查弰鎯х础娴ｈ法鏁?`--sqlite-mode v1-v2`閵?
+- v2 SQLite 鐎电厧鍤崘娆忓弳 `PRAGMA user_version=2`閿涘奔绌舵禍搴濈瑐娴肩姴鎮楄箛顐︹偓鐔荤槕閸?schema 閻楀牊婀伴妴?
+- `scripts/audit_daily_choice_recipe_dataset.py` 閺€顖涘瘮閼奉亜濮╃拠鍡楀焼 v2-only DB閿涘奔绗夐崘宥呭繁娓氭繆绂?v1 summary/detail 鐞涖劊鈧?
+- `scripts/verify_daily_choice_recipe_remote.dart` 閺€顖涘瘮 v1閵嗕箍2 閹?v1/v2 閸欏苯鍟?DB 閻ㄥ嫯绻欑粩?smoke 妤犲矁鐦夐妴?
+- 瀹告煡鐛欑拠浣烘暏閹撮攱娲块弬鏉挎倵閻?S3 `cook_data/daily_choice_recipe_library.db` 娑?v2-only DB閿涙俺绻欑粩顖氥亣鐏?142,467,072 bytes閿涘畭user_version=2`閿涘瘉2 recipes/summaries/details 閸у洣璐?7,772 鐞涘被鈧?
+- `DailyChoiceEatLibraryStore` 婢х偛濮?schema 閼奉亜濮╃拠鍡楀焼閿涘奔绱崗鍫ｎ嚢閸?v2 鐞涱煉绱濋崥灞炬娣囨繄鏆€ v1 閺冄冪氨鐠囪褰囬懗钘夊閵?
+- `DailyChoiceEatLibraryStore` 閻ㄥ嫯绻欑粩?DB 鐎瑰顥婅ぐ鎺嶇閸栨牗瀵?schema 閸愭瑥鍙?meta閿涙2 閸愭瑥鍙?`daily_choice_recipe_schema_meta`閿涘瘉1 缂佈呯敾閸愭瑥鍙?`daily_choice_eat_recipe_meta`閵?
+- 閸氬啩绮堟稊鍫濆敶缂冾喛褰嶇拫杈ㄦ喅鐟曚浇顕伴崣鏍ㄦ煀婢?v2 閺屻儴顕楃捄顖氱窞閿涙矮绮?`daily_choice_recipes` + `daily_choice_recipe_summaries` 鐠囪褰囨潪濠氬櫤閹芥顩﹂敍宀冾嚊閹懌鈧焦娼楅弬娆嶁偓浣诡劄妤犮倗鎴风紒顓熷瘻闂団偓娴?`daily_choice_recipe_details` 閹虫帒濮炴潪濮愨偓?
+- `DailyChoiceEatLibraryStore.queryBuiltInSummaries()` 閸?v2 DB 娑擃厺濞囬悽?`daily_choice_recipe_filter_index` 婢跺嫮鎮婃鎰唽閵嗕礁甯归崗宄版嫲 trait 缁涙盯鈧绱濋獮鏈靛▏閻?`daily_choice_recipe_ingredient_index` 閻?raw/canonical 鐏炲倸顦╅悶鍡楃箟閸欙絾甯撻梽銈呮嫲瀹稿弶婀佹鐔告綏娴兼ê鍘涢崠褰掑帳閵?
+- legacy v1 鎼存挸鎷扮紓鍝勭毌 v2 缁涙盯鈧鍌ㄥ鏇犳畱鎼存挾鎴风紒顓炴礀闁偓閸掓澘鍞寸€?`DailyChoiceEatCatalog` 鏉╁洦鎶ら敍宀勪缉閸忓秵鐓＄拠銏犲弳閸欙絽濂栭崫宥呭嚒閺堝婀伴崷鏉跨氨閸欘垵顕伴幀褋鈧?
+- v2 闂呭繑婧€閸婃瑩鈧?id 閺屻儴顕楅幐?`random_key` 閹烘帒绨獮璺哄箵闁插稄绱濋柆鍨帳 raw/canonical 閸氬本妞傞崨鎴掕厬閺冩儼顔€閸氬奔绔撮懣婊嗘皑閸︺劑娈㈤張鐑樼潨娑擃參鍣告径宥呭毉閻滆埇鈧?
+- v2 random pivot 婢跺秶鏁?`DailyChoiceEatLibraryQuery` 閺夆€叉閿涘苯鑻熼崷?pivot 閸氬骸宕愬▓鍨￥閸涙垝鑵戦弮璺烘礀缂佹洖鍩岄崐娆撯偓澶嬬潨瀵偓婢惰揪绱遍梾蹇旀簚閹惰棄褰囨稉宥堫嚢閸欐牞顕涢幆鍛摟濞堢偣鈧?
+- 閸氬啩绮堟稊鍫滃瘜 UI 閸︺劑娈㈤張鐑樼潨閸忋劋璐熼崣顖濐潌閸愬懐鐤嗛懣婊嗘皑閺冭绱濋崑婊勵剾闂呭繑婧€娴兼俺鐨熼悽?`pickBuiltInRandomSummary(...)` 娴ｆ粈璐熼張鈧紒鍫モ偓澶夎厬閺夈儲绨敍娑㈡閺堢儤鐫滃ǎ宄板弳閺堫剙婀撮懛顏勭暰娑斿妞傜紒褏鐢绘担璺ㄦ暏閸愬懎鐡ㄧ紒鎾寸亯閵?
+- 闂呭繑婧€闂堛垺婢橀崷銊モ偓娆撯偓澶嬬潨閸欐ê瀵查弮鏈电窗鐠佲晙绮涢崷銊ㄧ箻鐞涘瞼娈戝鍌涱劄閺堚偓缂佸牊濞婇崣鏍с亼閺佸牞绱濋柆鍨帳閺冄呯摣闁绮ㄩ弸婊冩礀閸愭瑥鍩岄弬鎵摣闁鈧瑩鈧鐫滈妴?
+- 缁狅紕鎮婃い闈涙倖娴犫偓娑斿牆鍞寸純顔肩氨娴ｈ法鏁?`queryBuiltInSummaries(...)` 閸掑棝銆夌拠璇插絿閿涙稒鎮崇槐銏ｇ槤闂堢偟鈹栭弮璺烘倱濮濄儰绱剁紒?store閿涘苯鑻熸导妯哄帥娴ｈ法鏁?v2 `daily_choice_recipe_search_text` 閺屻儴顕楅妴?
+- 缁狅紕鎮婃い闈涚磽濮?SQL 閺屻儴顕楅崷?sheet 閸忔娊妫撮崥搴濈瑝閸愬秷鐨熼悽?`setSheetState`閿涘奔绗栨径杈Е閺冩儼顔囪ぐ鏇炵秼閸撳秵鐓＄拠?key閿涘矂妾锋担搴″彠闂?鏉╂柨娲栭崪灞姐亼鐠愩儵鍣哥拠鏇犳畱閻㈢喎鎳￠崨銊︽埂妞嬪酣娅撻妴?
+- 閸氬啩绮堟稊鍫ｎ嚊閹?娑擃亙姹夌拫鍐╂殻/閸欙箑鐡ㄩ崗銉ュ經閻ㄥ嫬鍞寸純顔垮綅鐠嬪崬鍨介弬顓熸暭娑撳搫鐔€娴滃孩膩閸фぜ鈧礁鐣ㄧ憗鍛Ц閹礁鎷版潪濠氬櫤閹芥顩﹂崘鍛啇閿涘奔绗夐崘宥堫洣濮瑰倸缍嬮崜宥呭敶鐎?`builtInOptions` 閸忋劑鍣洪崚妤勩€冮崠鍛儓鐠?id閵?
+- 缁狅紕鎮婃い闈涙倖娴犫偓娑斿牆鍞寸純顔垮綅鐠嬭京娈戠拠锔藉剰閵嗕椒閲滄禍楦跨殶閺佹番鈧礁褰熺€涙ê鍙嗛崣锝囩埠娑撯偓閹恒儱鍙嗛弶锛勬窗缁狙冪磽濮濄儱濮╂担婊呭Ц閹緤绱遍崝銊ょ稊鏉╂稖顢戞稉顓濈窗缁備胶鏁ら崥灞肩閺夛紕娲伴惃?detail/edit/copy 閸忋儱褰涢敍灞借嫙閸︺劍娼惄顔煎敶鐏炴洜銇?loading 閹存牠鏁婄拠顖氬冀妫ｅ牄鈧?
+- 閸氬啩绮堟稊鍫㈩吀閻炲棝銆夐崘鍛靶曢崣鎴ｎ嚊閹懓顕伴崣鏍ㄦ閻?manager sheet 閹垫寧甯寸仦鈧柈銊╂晩鐠囶垽绱辨稉?UI 閻ㄥ嫯顕涢幆鍛瘻闁筋喕绮涘▽璺ㄦ暏 SnackBar 闁挎瑨顕ら崣宥夘洯閵?
+- 缁狅紕鎮婃い闈涙倖娴犫偓娑斿牆鍞寸純顔肩氨缁夊娅庨垾婊呮埛缂侇厼濮炴潪瑙ｂ偓婵囧瘻闁筋噯绱濋弨閫涜礋濠婃艾濮╅幒銉ㄧ箮鎼存洟鍎撮弮鎯板殰閸斻劑鈧帒顤?SQL 閺屻儴顕?limit閿涘苯鑻熼崷銊ュ鏉炴垝绗呮稉鈧い鍨娣囨繄鏆€瑜版挸澧犲鍙夋▔缁€鐑樻喅鐟曚降鈧?
+- 缁狅紕鎮婃い鍨偝缁便垺顢嬮弨閫涜礋缂佸嫪娆㈢痪?`TextEditingController` / `FocusNode` 缁狅紕鎮婇敍娑滅翻閸忋儱褰ч弴瀛樻煀 draft閿涘瞼顬囧鈧潏鎾冲弳濡楀棙鍨ㄩ幓鎰唉閹兼粎鍌ㄩ崥搴㈠閸掗攱鏌?SQL 閹兼粎鍌ㄧ拠宥冣偓?
+- 閸氬啩绮堟稊鍫滃瘜 UI 閸嬫粍顒涢梾蹇旀簚閺冭绱濋弮鐘绘閽?娑擃亙姹夌拫鍐╂殻/妞嬬喕姘ㄩ梿鍡欏閺夌喓娈戦崘鍛枂閸婃瑩鈧鐫滄稉宥呭晙閹跺﹤鍙忛柌?id 閸掓銆冩导鐘电舶 `pickBuiltInRandomSummary(...)`閿涘本鏁兼稉铏规纯閹恒儱顦查悽銊ョ秼閸?SQL 缁涙盯鈧娼禒韬测偓?
+- 闂団偓鐟曚胶绨跨涵顔煎讲鐟欎焦鐫滈惃鍕閺堝搫浠犲銏犳簚閺咁垵瀚㈤崐娆撯偓?id 鐡掑懓绻?300 娑擃亷绱濇导姘崇儲鏉?store random pivot 楠炴湹绻氶悾娆忕秼閸撳秹鏀ｇ€规艾鈧瑩鈧绱濋柆鍨帳閺嬪嫰鈧姴銇?`IN (...)` 閺屻儴顕楅妴?
+- 閸氬啩绮堟稊鍫滃瘜 UI 閸嬫粍顒涢梾蹇旀簚閺€閫涜礋缁绢垱婀伴崷浼存敚鐎规艾缍嬮崜宥呪偓娆撯偓澶涚礉娑撳秴鍟€鐟欙箑褰?`pickBuiltInRandomSummary(...)`閿涙硞tore random pivot 娣囨繄鏆€娑撳搫绨崇仦鍌濆厴閸旀冻绱濇担鍡曠瑝閸愬秳缍呮禍搴′粻濮濄垺瀵滈柦顔煎彠闁款喕姘︽禍鎺楁懠鐠侯垬鈧?
+- `DailyChoiceEatLibraryStore.queryBuiltInSummaries(...)` 娴兼ê鍘涢柅姘崇箖 `Isolate.run` 閸︺劌鎮楅崣?isolate 闁插秵鏌婇幍鎾崇磻 SQLite 閺傚洣娆㈤幍褑顢戦崚鍡涖€?閹兼粎鍌ㄩ弻銉嚄閿涘苯銇戠拹銉︽閸ョ偤鈧偓閺冄冩倱濮濄儴鐭惧鍕┾偓?
+- 缁狅紕鎮婃い闈涘敶缂冾喖绨遍懛顏勫З閸掑棝銆夐梽銈囨磧閸氼剚绮撮崝銊┾偓姘辩叀婢舵牭绱濇导姘躬 SQL 鏉╂柨娲栭崥搴ｆ畱娑撳绔寸敮褎顥呴弻銉ョ秼閸撳秵绮撮崝銊ょ秴缂冾噯绱濇穱顔碱槻瀹歌尙绮￠崑婊冩躬鎼存洟鍎撮弮鑸电梾閺堝鏌婂姘З娴滃娆㈢€佃壈鍤ф稉宥囨埛缂侇厼濮炴潪鐣屾畱闂傤噣顣介妴?
+- 閸氬啩绮堟稊鍫濐樆鐏炲倿娈㈤張鍝勫弳閸欙絿骞囬崷銊ф纯閹恒儱鐫嶇粈楦垮綅鐠嬮亶娉﹂柅澶嬪閿涘瞼鏁ら幋宄扮磻婵娈㈤張鍝勫閸楀啿褰查柅澶嬪閳ユ粌鍞寸純顔垮綅鐠嬫墎鈧繃鍨ㄦ稉顏冩眽閼挎粏姘ㄩ梿鍡礉闁灝鍘ゆ妯款吇閹粯妲搁崷銊ョ暚閺佹潙銇囨惔鎾茶厬闂呭繑婧€閵?
+- 姒涙顓婚崘鍛枂鎼存挸褰涘鍕劀瀵繒绮烘稉鈧稉琛♀偓婊冨敶缂冾喛褰嶇拫鎵佲偓婵撶礉缁狅紕鎮婃い闈涙嫲婢舵牕鐪伴崗銉ュ經娑撳秴鍟€娴ｈ法鏁ら垾婊勫閺堝褰嶇拫?/ 閸忋劑鍎撮懣婊嗘皑閳ユ繀缍旀稉鍝勫敶缂冾喖绨遍崥宥囆為妴?
+- 缁狅紕鎮婃い纰樷偓婊€绗夐崰婊勵偨閳ユ繈娈ｉ挊蹇撳З娴ｆ粌顤冮崝鐘碘€樼拋銈呰剨缁愭绱濋柆鍨帳鐠囶垵袝閿涙盯娈ｉ挊蹇斿灗閹垹顦查崥搴濈箽閻ｆ瑥缍嬮崜?sheet閵嗕焦鎮崇槐銏犳嫲閸掑棝銆夋稉濠佺瑓閺傚洢鈧?
+- 閹兼粎鍌ㄦ潏鎾冲弳濡楀棝鐝惔锔芥暪缁毖傝礋娑撳孩姊烘潏瑙勫瘻闁筋喗娲块幒銉ㄧ箮閿涘苯鍣虹亸鎴狀吀閻炲棝銆夋い鍫曞劥瀹搞儱鍙块崠铏规畱鐟欏棜顫庨柨娆庣秴閵?
+- 閸氬啩绮堟稊?UI 缁夊娅庢顕€顥ら崣瀣偨閻ㄥ嫯绶熼崝鈺冪摣闁鍙嗛崣锝忕礉閸嬫俺褰嶉幐鍥у础娑撳秴鍟€鐏炴洜銇氬〒鍛埂缁涘娓剁憰浣烘暏閹寸柉鍤滅悰灞藉灲閺傤厾娈戦崗鎶芥暛閹绘劗銇氶妴?
+- 閻㈢喐鍨氶崳銊ユ嫲 v2 schema 缁夊娅庨懣婊嗘皑鐠ч攱绨崷鏉跨摟濞堢绱濇宀冪槈閸?JSON/SQLite 娑撳秴鍟€閸愭瑥鍙?`origin` 閹?`diet` 鐎涙顔岄敍娑橆吀鐠伮ゅ壖閺堫剛鎴风紒顓濈箽閻ｆ瑩顥撻梽鈺傤梾閺屻儲銆婇悽銊ょ艾绾喛顓绘潻娆庣昂鐎涙顔屽▽鈩冩箒閸ョ偞绁﹂妴?
+- 缁狅紕鎮婃い纰樷偓婊勫灉閻ㄥ嫰顥ょ拫閬嶆肠閳ユ繀绗夐崘宥呮倱閺冭泛鐫嶇粈娲偓澶嬪 chip 閸滃矂娉﹂崥鍫濆幢閻楀浄绱濋弨閫涜礋閸楁洑绔存稉瀣濡楀棝鈧瀚ㄨぐ鎾冲閼煎啫娲块敍娑㈠櫢閸涜棄鎮曢妴浣稿灩闂勩倖瀵滈柦顔兼祼鐎规艾婀稉瀣濡楀棙姊烘潏骞库偓?
+- 姒涙顓婚垾婊勫灉閸犳粍顐介惃鍕綅閳ユ繈娉﹂崥鍫㈡埛缂侇厼褰堟穱婵囧Б閿涘奔绗夐懗浠嬧偓姘崇箖缁狅紕鎮婃い鐢稿櫢閸涜棄鎮曢幋鏍у灩闂勩倧绱遍崗鏈电铂娑擃亙姹夐梿鍡楁値閸欘垰婀稉瀣濡楀棙姊洪幍褑顢戦柌宥呮嚒閸氬秴鎷伴崚鐘绘珟閵?
+- 妞嬬喕姘ㄩ梿鍡楊嚤閸戝搫瀵橀崠鍛儓闂嗗棗鎮庨崗鍐╂殶閹诡喓鈧線娉﹂崥鍫濆敶閺堫剙婀撮懛顏勭暰娑斿褰嶇拫渚库偓浣烽嚋娴滈缚鐨熼弫纾嬪綅鐠嬪崬鎷伴崘鍛枂閼挎粏姘?id 瀵洜鏁ら敍娑橆嚤閸忋儲妞傞悽鐔稿灇閺傛壆娈戦梿鍡楁値 id閿涘矂浼╅崗宥堫洬閻╂牕鍑￠張澶愭肠閸氬牄鈧?
+- 妞嬬喕姘ㄩ梿鍡楊嚤閸忋儰绱伴弽锟犵崣閸掑棔闊╅崠鍛壐瀵繒澧楅張顒婄礉閺傚洣娆㈤崘鍛啇閺冪姵纭剁拠璇插絿閺冩湹绱伴弰鍓с仛鐎电厧鍙嗘径杈Е閹绘劗銇氶敍灞肩瑝閸愬秹娼ゆ妯绘￥閸濆秴绨查妴?
+- `ToolboxSelectablePill` 閺€顖涘瘮闂呮劘妫岄弬鍥х摟閺嶅洨顒烽獮鏈电箽閻?tooltip/鐠囶厺绠熼弽鍥╊劮閿涘奔绌舵禍搴Ｐ╅崝銊ь伂閹跺﹦鐡柅澶愩€嶇亸浠嬪櫤閸樺婀稉鈧悰灞藉敶閵?
+- 閸氬啩绮堟稊鍫ｇカ濠ф劕鍣径鍥モ偓渚€鐝痪褑顔曠純顔兼嫲缁狅紕鎮婃い闈涘讲鐏炴洖绱戦崠铏规畱鐏炴洖绱?閺€鎯版崳閹稿鎸虫晶鐐插濞村懓澹婇懗灞炬珯閵嗕浇绔熷鍡楁嫲 accent 閼硅绱濋幓鎰磳閸欘垳鍋ｉ崙鏄忕槕閸掝偄瀹抽妴?
+- 缁狅紕鎮婃い闈涘敶缂冾喛褰嶇拫?SQL 閸掑棝銆夋禒搴樷偓婊勫⒖婢?limit 闁插秴褰囬崜宥呯碍閹芥顩﹂垾婵囨暭娑?`offset + pageSize` 鏉╄棄濮炴い纰夌礉鐟欙箑绨抽崝鐘烘祰娑撳绔存い鍨閸欘亣顕Ч鍌涙煀婢х偟鐛ラ崣锝冣偓?
+- PLAN_070 闂冭埖顔屾潻娑樺閸?13 妞ゅ綊鐛欓弨鎯般€冨鍙夊瘻瑜版挸澧犵€圭偟骞囬弽鈥冲櫙閿涘本妲戠涵顔诲瘜 UI 閸嬫粍顒涢梾蹇旀簚娴犮儱鎼锋惔鏃€鈧傜喘閸忓牞绱濈捄顖滄暠缁狙勫妞ら潧鎷伴張鈧潻?3 娑擃亣鍤滅€规矮绠熻箛灞藉經娑撳搫鎮楃紒顓烆杻瀵亽鈧?
+- PLAN_070 闂冭埖顔?7 瀹告彃鐣幋鎰拱鏉烆喗鏁圭亸楣冪崣鐠囦緤绱遍崗銊╁櫤 `flutter analyze` 娴犲秳绻氶悾娆愭拱鏉烆喖顦婚弮銏℃箒 lint 閸婄尨绱滱ndroid release APK 閺嬪嫬缂撻柅姘崇箖閵?
+- 濮ｅ繑妫╅崘宕囩摜濡€虫健閺傚洦顢嶇€瑰本鍨氭稉鈧潪顔婚獓閸濅礁瀵查弨璺哄經閿涙艾鎮嗘禒鈧稊鍫ｇカ濠ф劗濮搁幀浣规暭娑撻缚褰嶇拫鍗炵氨閸戝棗顦幓鎰仛閿涘苯骞撻崫顏勫姽閵嗕胶鈹涙禒鈧稊鍫涒偓浣镐粵閼挎粍瀵氶崡妤€鎷伴崘宕囩摜閸斺晜澧滅粔濠氭珟閳ユ粍婀版潪?/ 閸氬海鐢?/ 閹碘晛鐫嶆潏鍦櫕 / 鐠у嫭鏋￠弶銉︾爱閳ユ繄琚鈧崣鎴ｎ嚛閺勫簺鈧?
+- 鐠囷附鍎忔い鍏哥瑝閸愬秵瑕嗛弻?sourceLabel閵嗕够ourceUrl 閹?references 閺夈儲绨崸妤嬬礉娣囨繄鏆€閼挎粌鎼ч悽璇插剼閵嗕焦娼楅弬?閺夆€叉閵嗕焦顒炴銈冣偓浣稿彠闁款喗褰佺粈鍝勬嫲閸︽澘娴橀幖婊呭偍鐠囧秴顦查崚鍓佺搼閻劍鍩涢惄瀛樺复闂団偓鐟曚胶娈戦崘鍛啇閵?
+- 閸氬啩绮堟稊鍫㈩吀閻炲棝銆夐弬鏉款杻/缂傛牞绶稉顏冩眽閼挎粏姘ㄩ妴浣稿綗鐎涙ê鍞寸純顔垮綅鐠嬪彉璐熸稉顏冩眽閼挎粏姘ㄩ弮璁圭礉娴兼碍濡哥紓鏍帆閸ｃ劏绻戦崶鐐垫畱妞嬬喕姘ㄩ梿鍡涒偓澶嬪缁墽鈥橀崘娆忔礀闂嗗棗鎮庨幋鎰喅閸忓磭閮撮敍娑楃瑝閸曢箖鈧鎹㈡担鏇㈡肠閸氬牊妞傛禒鍛箽鐎涙ü璐熸稉顏冩眽閼挎粏姘ㄩ妴?
 
-### 风险变更
-- 本轮只建立接管计划，不直接修改业务逻辑和远端/本地菜谱数据；实际数据清洗、schema 迁移和 UI 拆分将在后续阶段分批落地。
-- `plans/` 目录在当前仓库 `.gitignore` 中默认忽略，本计划需要作为本次接管凭据强制纳入提交。
-- 吃什么摘要加载改为模块级后台任务后，摘要未完成前吃什么候选池会保持为空并显示资源准备状态；这是有意降级，用来换取每日决策其他模块不被阻塞。
-- 本轮生成的验证包位于 `D:\vocabularySleep-resources\cook_data_plan070_validation`，尚未覆盖 `D:\vocabularySleep-resources\cook_data`；后续确认后再执行替换或上传。
-- cook CSV 原始 599 行中按标题/厨具去重导入 593 条菜谱，但审计按标题确认 599 行全部可在新库中命中。
-- v2 schema 已接入 app 运行时的安装、状态、摘要和详情读取路径；后续仍需要把分页、筛选索引查询和 random pivot 下沉到 v2 SQL。
-- SQLite 仍需要下载到应用支持目录后才能查询；本轮“不保留本地”收口为不再保留或生成 JSON 兜底缓存，而不是流式查询远端 SQLite。
-- 吃什么远端首装失败且无旧库时会返回错误状态和空候选池，不再静默生成 fallback 菜谱库；这是有意让数据可信度优先于离线兜底。
-- 当前已上传远端 DB 已切换为 v2-only，不再包含 v1 兼容表；旧版本 app 若只支持 v1 表将无法读取新版远端包。
-- `scripts/verify_daily_choice_recipe_remote.dart` 为纯 Dart S3 smoke 工具，需要通过环境变量或命令行参数提供 S3 配置；本轮验证时配置从现有 `CstCloudS3CompatClient` 默认值读取后注入环境变量。
-- 本轮重新生成的 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 为 v2-only DB，已移除 `origin` 列和高风险 `diet` 字段；当前大小 142,233,600 bytes，SHA256 为 `418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`。
-- 本轮未覆盖 `D:\vocabularySleep-resources\cook_data` 原始数据；S3 远端 DB 已由用户更新，本轮仅做远端 smoke 和运行时读取修复。
-- 当前 UI 仍保留内存 catalog 作为本地自定义、个人调整和旧库回退路径；吃什么内置库随机、管理页浏览和内置库搜索已逐步接入 store 查询。
-- 已有食材优先的 SQL 版本先采用 raw/canonical 任一命中收口，尚未完整复刻内存 catalog 的 exact/strong/broad 分层扩池策略。
-- random pivot 在主 UI 中只覆盖随机池全为可见内置菜谱的场景；legacy v1 fallback 使用候选 id 列表取模抽取，不具备 v2 `random_key` 的稳定全局分布。
-- 自定义菜谱保存时的食谱集选择采用精确重写语义：取消某个集合勾选会把该菜从对应集合移除，这是为了让编辑器状态与保存结果一致。
-- 管理页吃什么内置库搜索已接入 SQLite `daily_choice_recipe_search_text`；本地自定义和个人调整搜索仍走内存过滤，后续若要统一语义需单独处理 overlay 搜索。
-- 当前搜索仍是 `instr`/substring 查询，不是 FTS；拼音、分词、多关键词相关性排序需后续单独引入 FTS5 或倒排表。
-- 大候选池且存在隐藏/个人调整/食谱集约束时，最终随机分布会回退到当前 UI 随机过程锁定的候选；这是为避免停止按钮等待重 SQL 的性能兜底。
-- 管理页分页查询现在会额外打开后台 SQLite 连接；若平台 isolate 查询不可用会自动回退同步路径，后续如要进一步压低查询成本，应推进真正的长驻查询 worker 或 keyset/offset 追加分页。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏勭紦缁斿甯寸粻陇顓搁崚鎺炵礉娑撳秶娲块幒銉ゆ叏閺€閫涚瑹閸旓繝鈧槒绶崪宀冪箼缁?閺堫剙婀撮懣婊嗘皑閺佺増宓侀敍娑樼杽闂勫懏鏆熼幑顔界濞叉ぜ鈧够chema 鏉╀胶些閸?UI 閹峰棗鍨庣亸鍡楁躬閸氬海鐢婚梼鑸殿唽閸掑棙澹掗拃钘夋勾閵?
+- `plans/` 閻╊喖缍嶉崷銊ョ秼閸撳秳绮ㄦ惔?`.gitignore` 娑擃參绮拋銈呮嫹閻ｃ儻绱濋張顒冾吀閸掓帡娓剁憰浣风稊娑撶儤婀板▎鈩冨复缁犫€冲殶閹诡喖宸遍崚鍓佹捈閸忋儲褰佹禍銈冣偓?
+- 閸氬啩绮堟稊鍫熸喅鐟曚礁濮炴潪鑺ユ暭娑撶儤膩閸ф楠囬崥搴″酱娴犺濮熼崥搴礉閹芥顩﹂張顏勭暚閹存劕澧犻崥鍐х矆娑斿牆鈧瑩鈧鐫滄导姘箽閹镐椒璐熺粚鍝勮嫙閺勫墽銇氱挧鍕爱閸戝棗顦悩鑸碘偓渚婄幢鏉╂瑦妲搁張澶嬪壈闂勫秶楠囬敍宀€鏁ら弶銉﹀床閸欐牗鐦￠弮銉ュ枀缁涙牕鍙炬禒鏍侀崸妞剧瑝鐞氼偊妯嗘繅鐐偓?
+- 閺堫剝鐤嗛悽鐔稿灇閻ㄥ嫰鐛欑拠浣稿瘶娴ｅ秳绨?`D:\vocabularySleep-resources\cook_data_plan070_validation`閿涘苯鐨婚張顏囶洬閻?`D:\vocabularySleep-resources\cook_data`閿涙稑鎮楃紒顓犫€樼拋銈呮倵閸愬秵澧界悰灞炬禌閹广垺鍨ㄦ稉濠佺炊閵?
+- cook CSV 閸樼喎顫?599 鐞涘奔鑵戦幐澶嬬垼妫?閸樸劌鍙块崢濠氬櫢鐎电厧鍙?593 閺壜ゅ綅鐠嬫唻绱濇担鍡楊吀鐠佲剝瀵滈弽鍥暯绾喛顓?599 鐞涘苯鍙忛柈銊ュ讲閸︺劍鏌婃惔鎾茶厬閸涙垝鑵戦妴?
+- v2 schema 瀹稿弶甯撮崗?app 鏉╂劘顢戦弮鍓佹畱鐎瑰顥婇妴浣哄Ц閹降鈧焦鎲崇憰浣告嫲鐠囷附鍎忕拠璇插絿鐠侯垰绶為敍娑樻倵缂侇厺绮涢棁鈧憰浣瑰Ω閸掑棝銆夐妴浣虹摣闁鍌ㄥ鏇熺叀鐠囥垹鎷?random pivot 娑撳鐭囬崚?v2 SQL閵?
+- SQLite 娴犲秹娓剁憰浣风瑓鏉炶棄鍩屾惔鏃傛暏閺€顖涘瘮閻╊喖缍嶉崥搴㈠閼宠姤鐓＄拠顫幢閺堫剝鐤嗛垾婊€绗夋穱婵堟殌閺堫剙婀撮垾婵囨暪閸欙絼璐熸稉宥呭晙娣囨繄鏆€閹存牜鏁撻幋?JSON 閸忔粌绨崇紓鎾崇摠閿涘矁鈧奔绗夐弰顖涚ウ瀵繑鐓＄拠銏ｇ箼缁?SQLite閵?
+- 閸氬啩绮堟稊鍫ｇ箼缁旑垶顩荤憗鍛亼鐠愩儰绗栭弮鐘虫＋鎼存挻妞傛导姘崇箲閸ョ偤鏁婄拠顖滃Ц閹礁鎷扮粚鍝勨偓娆撯偓澶嬬潨閿涘奔绗夐崘宥夋饯姒涙鏁撻幋?fallback 閼挎粏姘ㄦ惔鎿勭幢鏉╂瑦妲搁張澶嬪壈鐠佲晜鏆熼幑顔煎讲娣団€冲娴兼ê鍘涙禍搴ｎ瀲缁惧灝鍘规惔鏇樷偓?
+- 瑜版挸澧犲韫瑐娴肩姾绻欑粩?DB 瀹告彃鍨忛幑顫礋 v2-only閿涘奔绗夐崘宥呭瘶閸?v1 閸忕厧顔愮悰顭掔幢閺冄呭閺?app 閼汇儱褰ч弨顖涘瘮 v1 鐞涖劌鐨㈤弮鐘崇《鐠囪褰囬弬鎵鏉╂粎顏崠鍛偓?
+- `scripts/verify_daily_choice_recipe_remote.dart` 娑撹櫣鍑?Dart S3 smoke 瀹搞儱鍙块敍宀勬付鐟曚線鈧俺绻冮悳顖氼暔閸欐﹢鍣洪幋鏍ф嚒娴犮倛顢戦崣鍌涙殶閹绘劒绶?S3 闁板秶鐤嗛敍娑欐拱鏉烆噣鐛欑拠浣规闁板秶鐤嗘禒搴ｅ箛閺?`CstCloudS3CompatClient` 姒涙顓婚崐鑹邦嚢閸欐牕鎮楀▔銊ュ弳閻滎垰顣ㄩ崣姗€鍣洪妴?
+- 閺堫剝鐤嗛柌宥嗘煀閻㈢喐鍨氶惃?`D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db` 娑?v2-only DB閿涘苯鍑＄粔濠氭珟 `origin` 閸掓鎷版姗€顥撻梽?`diet` 鐎涙顔岄敍娑樼秼閸撳秴銇囩亸?142,233,600 bytes閿涘HA256 娑?`418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`閵?
+- 閺堫剝鐤嗛張顏囶洬閻?`D:\vocabularySleep-resources\cook_data` 閸樼喎顫愰弫鐗堝祦閿涙奔3 鏉╂粎顏?DB 瀹歌尙鏁遍悽銊﹀煕閺囧瓨鏌婇敍灞炬拱鏉烆喕绮庨崑姘崇箼缁?smoke 閸滃矁绻嶇悰灞炬鐠囪褰囨穱顔碱槻閵?
+- 瑜版挸澧?UI 娴犲秳绻氶悾娆忓敶鐎?catalog 娴ｆ粈璐熼張顒€婀撮懛顏勭暰娑斿鈧椒閲滄禍楦跨殶閺佹潙鎷伴弮褍绨遍崶鐐衡偓鈧捄顖氱窞閿涙稑鎮嗘禒鈧稊鍫濆敶缂冾喖绨遍梾蹇旀簚閵嗕胶顓搁悶鍡涖€夊ù蹇氼潔閸滃苯鍞寸純顔肩氨閹兼粎鍌ㄥ鏌モ偓鎰劄閹恒儱鍙?store 閺屻儴顕楅妴?
+- 瀹稿弶婀佹鐔告綏娴兼ê鍘涢惃?SQL 閻楀牊婀伴崗鍫ュ櫚閻?raw/canonical 娴犺绔撮崨鎴掕厬閺€璺哄經閿涘苯鐨婚張顏勭暚閺佹潙顦查崚璇插敶鐎?catalog 閻?exact/strong/broad 閸掑棗鐪伴幍鈺傜潨缁涙牜鏆愰妴?
+- random pivot 閸︺劋瀵?UI 娑擃厼褰х憰鍡欐磰闂呭繑婧€濮圭姴鍙忔稉鍝勫讲鐟欎礁鍞寸純顔垮綅鐠嬭京娈戦崷鐑樻珯閿涙泊egacy v1 fallback 娴ｈ法鏁ら崐娆撯偓?id 閸掓銆冮崣鏍侀幎钘夊絿閿涘奔绗夐崗宄邦槵 v2 `random_key` 閻ㄥ嫮菙鐎规艾鍙忕仦鈧崚鍡楃閵?
+- 閼奉亜鐣炬稊澶庡綅鐠嬪彉绻氱€涙ɑ妞傞惃鍕棨鐠嬮亶娉﹂柅澶嬪闁插洨鏁ょ划鍓р€橀柌宥呭晸鐠囶厺绠熼敍姘絿濞戝牊鐓囨稉顏堟肠閸氬牆瀣€闁绱伴幎濠咁嚉閼挎粈绮犵€电懓绨查梿鍡楁値缁夊娅庨敍宀冪箹閺勵垯璐熸禍鍡氼唨缂傛牞绶崳銊уЦ閹椒绗屾穱婵嗙摠缂佹挻鐏夋稉鈧懛娣偓?
+- 缁狅紕鎮婃い闈涙倖娴犫偓娑斿牆鍞寸純顔肩氨閹兼粎鍌ㄥ鍙夊复閸?SQLite `daily_choice_recipe_search_text`閿涙稒婀伴崷鎷屽殰鐎规矮绠熼崪灞奸嚋娴滈缚鐨熼弫瀛樻偝缁鳖澀绮涚挧鏉垮敶鐎涙绻冨銈忕礉閸氬海鐢婚懟銉洣缂佺喍绔寸拠顓濈疅闂団偓閸楁洜瀚径鍕倞 overlay 閹兼粎鍌ㄩ妴?
+- 瑜版挸澧犻幖婊呭偍娴犲秵妲?`instr`/substring 閺屻儴顕楅敍灞肩瑝閺?FTS閿涙稒瀚鹃棅鐐解偓浣稿瀻鐠囧秲鈧礁顦块崗鎶芥暛鐠囧秶娴夐崗铏偓褎甯撴惔蹇涙付閸氬海鐢婚崡鏇犲瀵洖鍙?FTS5 閹存牕鈧帗甯撶悰銊ｂ偓?
+- 婢堆冣偓娆撯偓澶嬬潨娑撴柨鐡ㄩ崷銊╂閽?娑擃亙姹夌拫鍐╂殻/妞嬬喕姘ㄩ梿鍡欏閺夌喐妞傞敍灞炬付缂佸牓娈㈤張鍝勫瀻鐢啩绱伴崶鐐衡偓鈧崚鏉跨秼閸?UI 闂呭繑婧€鏉╁洨鈻奸柨浣哥暰閻ㄥ嫬鈧瑩鈧绱辨潻娆愭Ц娑撴椽浼╅崗宥呬粻濮濄垺瀵滈柦顔剧搼瀵板懘鍣?SQL 閻ㄥ嫭鈧嗗厴閸忔粌绨抽妴?
+- 缁狅紕鎮婃い闈涘瀻妞ゅ灚鐓＄拠銏㈠箛閸︺劋绱版０婵嗩樆閹垫挸绱戦崥搴″酱 SQLite 鏉╃偞甯撮敍娑滃楠炲啿褰?isolate 閺屻儴顕楁稉宥呭讲閻劋绱伴懛顏勫З閸ョ偤鈧偓閸氬本顒炵捄顖氱窞閿涘苯鎮楃紒顓烆洤鐟曚浇绻樻稉鈧銉ュ竾娴ｅ孩鐓＄拠銏″灇閺堫剨绱濇惔鏃€甯规潻娑氭埂濮濓絿娈戦梹鍧椻敆閺屻儴顕?worker 閹?keyset/offset 鏉╄棄濮為崚鍡涖€夐妴?
 
-### 修复
-- 修复每日决策入口被吃什么菜谱库摘要加载拖住的问题。
-- 修复管理 sheet 新建食谱集输入框因函数级 `TextEditingController` 在关闭/重建时被释放后继续参与 TextField 构建的崩溃风险。
-- 修复随机过程中菜品内容换行导致停止按钮上下跳动、难以点击的问题。
-- 修复当前生成数据中素食/纯素冲突、清真说明污染 notes、菜系标签污染 notes、洋葱误索引葱、具体猪肉项折叠为通用猪肉和抽取乱码等审计问题。
-- 修复远端 DB 安装失败时可能回退到 bundled JSON / cached CSV / fallback seed 并写入本地 JSON cache 的问题。
-- 修复远端刷新失败时可能直接覆盖现有 SQLite 库的风险；现在候选 DB 校验通过后才替换旧库。
-- 修复吃什么默认餐段过早收窄候选池的问题；默认现在从全部餐段候选中随机。
-- 修复 `排骨` 等具体食材在运行时食材匹配中被自动折叠为通用猪肉 token，导致输入排骨可能扩大到全猪肉菜谱的问题。
-- 修复新版 v2-only 远端 DB 因 `PRAGMA user_version=2` 被当前 store 判定为不支持新 schema，导致安装或读取失败的问题。
-- 修复 v2-only DB 缺少 v1 summary/detail 表时，吃什么摘要和详情读取 SQL 仍固定查询 v1 表的问题。
-- 修复 v2 查询候选 id 在 raw/canonical 同时命中时可能重复返回同一菜谱，导致随机权重被意外放大的问题。
-- 修复后续分页接入时随机可能只落在当前分页窗口的问题基础：store 层 random pivot 现在忽略 `limit` / `offset`，始终按完整候选池抽取。
-- 修复管理页内置库浏览和搜索仍同步过滤完整吃什么内置列表的性能路径，改为按当前筛选与搜索词分页查询 SQLite。
-- 修复管理页 SQL 分页返回的内置摘要在内存全量摘要缺失时无法按需读取完整详情的隐性依赖。
-- 修复管理页内置菜谱详情/个人调整/另存可重复点击导致重复 detail 读取的问题。
-- 修复管理页内置菜谱 detail 读取失败时只能走全局提示、缺少条目级错误反馈的问题；现在失败不会关闭管理 sheet 或清空当前搜索/分页状态。
-- 修复管理页搜索框每次输入字符都触发 SQL 查询的问题；现在只在失焦或提交时触发搜索。
-- 修复随机停止后因最终抽取耗时过长可能长时间卡在“选中中 / Picking”，且无法稳定显示最终菜谱的问题。
-- 修复主 UI 停止随机时对大候选池传入全量 `allowedOptionIds`，导致 v2 SQL random pivot 构造大 `IN (...)` 查询并拖慢交互的问题。
-- 修复主 UI 停止随机仍可能因同步 SQLite random pivot 占用 UI isolate，导致程序接近无响应的问题。
-- 修复管理页内置库滑到底部后，若 SQL 结果返回时用户已停在底部，后续页不会自动加载的问题。
-- 修复个人调整保存后 smoke 测试过早点击仍在退出动画后的 sheet 内容导致的误判；测试现在等待保存回写和 modal 动画完成后再继续点击详情。
-- 修复管理页内置库“喜欢/加入”只能隐式操作单一集合、缺少多集合选择入口的问题。
-- 修复管理页食谱集选择入口重复导致同一集合既在 chip 又在卡片中出现的问题。
-- 修复食谱集导入在文件选择器未返回内容时可能没有任何反馈的问题。
-- 修复管理页触底加载下一页时重复查询已显示内置菜谱摘要的问题。
+### 娣囶喖顦?
+- 娣囶喖顦插В蹇旀）閸愬磭鐡ラ崗銉ュ經鐞氼偄鎮嗘禒鈧稊鍫ｅ綅鐠嬪崬绨遍幗妯款洣閸旂姾娴囬幏鏍︾秶閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦茬粻锛勬倞 sheet 閺傛澘缂撴鐔绘皑闂嗗棜绶崗銉︻攱閸ョ姴鍤遍弫鎵獓 `TextEditingController` 閸︺劌鍙ч梻?闁插秴缂撻弮鎯邦潶闁插﹥鏂侀崥搴ｆ埛缂侇厼寮稉?TextField 閺嬪嫬缂撻惃鍕┛濠у啴顥撻梽鈹库偓?
+- 娣囶喖顦查梾蹇旀簚鏉╁洨鈻兼稉顓″綅閸濅礁鍞寸€硅宕茬悰灞筋嚤閼锋潙浠犲銏″瘻闁筋喕绗傛稉瀣儲閸斻劊鈧線姣︽禒銉у仯閸戣崵娈戦梻顕€顣介妴?
+- 娣囶喖顦茶ぐ鎾冲閻㈢喐鍨氶弫鐗堝祦娑擃厾绀屾?缁绢垳绀岄崘鑼崐閵嗕焦绔婚惇鐔活嚛閺勫孩钖勯弻?notes閵嗕浇褰嶇化缁樼垼缁涚偓钖勯弻?notes閵嗕焦纾遍拋杈嚖缁便垹绱╅拋渚库偓浣稿徔娴ｆ挾灏撻懖澶愩€嶉幎妯哄綌娑撴椽鈧氨鏁ら悮顏囧€濋崪灞惧▕閸欐牔璐￠惍浣虹搼鐎孤ゎ吀闂傤噣顣介妴?
+- 娣囶喖顦叉潻婊咁伂 DB 鐎瑰顥婃径杈Е閺冭泛褰查懗钘夋礀闁偓閸?bundled JSON / cached CSV / fallback seed 楠炶泛鍟撻崗銉︽拱閸?JSON cache 閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦叉潻婊咁伂閸掗攱鏌婃径杈Е閺冭泛褰查懗鐣屾纯閹恒儴顩惄鏍箛閺?SQLite 鎼存挾娈戞搴ㄦ珦閿涙稓骞囬崷銊モ偓娆撯偓?DB 閺嶏繝鐛欓柅姘崇箖閸氬孩澧犻弴鎸庡床閺冄冪氨閵?
+- 娣囶喖顦查崥鍐х矆娑斿牓绮拋銈夘樀濞堜絻绻冮弮鈺傛暪缁愬嫬鈧瑩鈧鐫滈惃鍕６妫版﹫绱辨妯款吇閻滄澘婀禒搴″弿闁劑顦靛▓闈涒偓娆撯偓澶夎厬闂呭繑婧€閵?
+- 娣囶喖顦?`閹烘帡顎嘸 缁涘鍙挎担鎾活棨閺夋劕婀潻鎰攽閺冨爼顥ら弶鎰爱闁板秳鑵戠悮顐ュ殰閸斻劍濮岄崣鐘辫礋闁氨鏁ら悮顏囧€?token閿涘苯顕遍懛纾嬬翻閸忋儲甯撴銊ュ讲閼宠姤澧挎径褍鍩岄崗銊у皳閼插褰嶇拫杈╂畱闂傤噣顣介妴?
+- 娣囶喖顦查弬鎵 v2-only 鏉╂粎顏?DB 閸?`PRAGMA user_version=2` 鐞氼偄缍嬮崜?store 閸掋倕鐣炬稉杞扮瑝閺€顖涘瘮閺?schema閿涘苯顕遍懛鏉戠暔鐟佸懏鍨ㄧ拠璇插絿婢惰精瑙﹂惃鍕６妫版ǜ鈧?
+- 娣囶喖顦?v2-only DB 缂傚搫鐨?v1 summary/detail 鐞涖劍妞傞敍灞芥倖娴犫偓娑斿牊鎲崇憰浣告嫲鐠囷附鍎忕拠璇插絿 SQL 娴犲秴娴愮€规碍鐓＄拠?v1 鐞涖劎娈戦梻顕€顣介妴?
+- 娣囶喖顦?v2 閺屻儴顕楅崐娆撯偓?id 閸?raw/canonical 閸氬本妞傞崨鎴掕厬閺冭泛褰查懗浠嬪櫢婢跺秷绻戦崶鐐叉倱娑撯偓閼挎粏姘ㄩ敍灞筋嚤閼锋挳娈㈤張鐑樻綀闁插秷顫﹂幇蹇擃樆閺€鎯с亣閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦查崥搴ｇ敾閸掑棝銆夐幒銉ュ弳閺冨爼娈㈤張鍝勫讲閼宠棄褰ч拃钘夋躬瑜版挸澧犻崚鍡涖€夌粣妤€褰涢惃鍕６妫版ê鐔€绾偓閿涙tore 鐏?random pivot 閻滄澘婀箛鐣屾殣 `limit` / `offset`閿涘苯顫愮紒鍫熷瘻鐎瑰本鏆ｉ崐娆撯偓澶嬬潨閹惰棄褰囬妴?
+- 娣囶喖顦茬粻锛勬倞妞ら潧鍞寸純顔肩氨濞村繗顫嶉崪灞炬偝缁鳖澀绮涢崥灞绢劄鏉╁洦鎶ょ€瑰本鏆ｉ崥鍐х矆娑斿牆鍞寸純顔煎灙鐞涖劎娈戦幀褑鍏樼捄顖氱窞閿涘本鏁兼稉鐑樺瘻瑜版挸澧犵粵娑⑩偓澶夌瑢閹兼粎鍌ㄧ拠宥呭瀻妞ゅ灚鐓＄拠?SQLite閵?
+- 娣囶喖顦茬粻锛勬倞妞?SQL 閸掑棝銆夋潻鏂挎礀閻ㄥ嫬鍞寸純顔芥喅鐟曚礁婀崘鍛摠閸忋劑鍣洪幗妯款洣缂傚搫銇戦弮鑸垫￥濞夋洘瀵滈棁鈧拠璇插絿鐎瑰本鏆ｇ拠锔藉剰閻ㄥ嫰娈ｉ幀褌绶风挧鏍モ偓?
+- 娣囶喖顦茬粻锛勬倞妞ら潧鍞寸純顔垮綅鐠嬭精顕涢幆?娑擃亙姹夌拫鍐╂殻/閸欙箑鐡ㄩ崣顖炲櫢婢跺秶鍋ｉ崙璇差嚤閼锋挳鍣告径?detail 鐠囪褰囬惃鍕６妫版ǜ鈧?
+- 娣囶喖顦茬粻锛勬倞妞ら潧鍞寸純顔垮綅鐠?detail 鐠囪褰囨径杈Е閺冭泛褰ч懗鍊熻泲閸忋劌鐪幓鎰仛閵嗕胶宸辩亸鎴炴蒋閻╊喚楠囬柨娆掝嚖閸欏秹顩惃鍕６妫版﹫绱遍悳鏉挎躬婢惰精瑙︽稉宥勭窗閸忔娊妫寸粻锛勬倞 sheet 閹存牗绔荤粚鍝勭秼閸撳秵鎮崇槐?閸掑棝銆夐悩鑸碘偓浣碘偓?
+- 娣囶喖顦茬粻锛勬倞妞ゅ灚鎮崇槐銏☆攱濮ｅ繑顐兼潏鎾冲弳鐎涙顑侀柈鍊熜曢崣?SQL 閺屻儴顕楅惃鍕６妫版﹫绱遍悳鏉挎躬閸欘亜婀径杈╁妽閹存牗褰佹禍銈嗘鐟欙箑褰傞幖婊呭偍閵?
+- 娣囶喖顦查梾蹇旀簚閸嬫粍顒涢崥搴℃礈閺堚偓缂佸牊濞婇崣鏍偓妤佹鏉╁洭鏆遍崣顖濆厴闂€鎸庢闂傛潙宕遍崷銊⑩偓婊堚偓澶夎厬娑?/ Picking閳ユ繐绱濇稉鏃€妫ゅ▔鏇犌旂€规碍妯夌粈鐑樻付缂佸牐褰嶇拫杈╂畱闂傤噣顣介妴?
+- 娣囶喖顦叉稉?UI 閸嬫粍顒涢梾蹇旀簚閺冭泛顕径褍鈧瑩鈧鐫滄导鐘插弳閸忋劑鍣?`allowedOptionIds`閿涘苯顕遍懛?v2 SQL random pivot 閺嬪嫰鈧姴銇?`IN (...)` 閺屻儴顕楅獮鑸靛珛閹鳖澀姘︽禍鎺旀畱闂傤噣顣介妴?
+- 娣囶喖顦叉稉?UI 閸嬫粍顒涢梾蹇旀簚娴犲秴褰查懗钘夋礈閸氬本顒?SQLite random pivot 閸楃姷鏁?UI isolate閿涘苯顕遍懛瀵糕柤鎼村繑甯存潻鎴炴￥閸濆秴绨查惃鍕６妫版ǜ鈧?
+- 娣囶喖顦茬粻锛勬倞妞ら潧鍞寸純顔肩氨濠婃垵鍩屾惔鏇㈠劥閸氬函绱濋懟?SQL 缂佹挻鐏夋潻鏂挎礀閺冨墎鏁ら幋宄板嚒閸嬫粌婀惔鏇㈠劥閿涘苯鎮楃紒顓€夋稉宥勭窗閼奉亜濮╅崝鐘烘祰閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦叉稉顏冩眽鐠嬪啯鏆ｆ穱婵嗙摠閸?smoke 濞村鐦潻鍥ㄦ－閻愮懓鍤禒宥呮躬闁偓閸戝搫濮╅悽璇叉倵閻?sheet 閸愬懎顔愮€佃壈鍤ч惃鍕嚖閸掋倧绱卞ù瀣槸閻滄澘婀粵澶婄窡娣囨繂鐡ㄩ崶鐐插晸閸?modal 閸斻劎鏁剧€瑰本鍨氶崥搴″晙缂佈呯敾閻愮懓鍤拠锔藉剰閵?
+- 娣囶喖顦茬粻锛勬倞妞ら潧鍞寸純顔肩氨閳ユ粌鏋╁▎?閸旂姴鍙嗛垾婵嗗涧閼充粙娈ｅ蹇旀惙娴ｆ粌宕熸稉鈧梿鍡楁値閵嗕胶宸辩亸鎴濐樋闂嗗棗鎮庨柅澶嬪閸忋儱褰涢惃鍕６妫版ǜ鈧?
+- 娣囶喖顦茬粻锛勬倞妞ょ敻顥ょ拫閬嶆肠闁瀚ㄩ崗銉ュ經闁插秴顦茬€佃壈鍤ч崥灞肩闂嗗棗鎮庨弮銏犳躬 chip 閸欏牆婀崡锛勫娑擃厼鍤悳鎵畱闂傤噣顣介妴?
+- 娣囶喖顦叉鐔绘皑闂嗗棗顕遍崗銉ユ躬閺傚洣娆㈤柅澶嬪閸ｃ劍婀潻鏂挎礀閸愬懎顔愰弮璺哄讲閼宠姤鐥呴張澶夋崲娴ｆ洖寮芥＃鍫㈡畱闂傤噣顣介妴?
+- 娣囶喖顦茬粻锛勬倞妞や絻袝鎼存洖濮炴潪鎴掔瑓娑撯偓妞ゅ灚妞傞柌宥咁槻閺屻儴顕楀鍙夋▔缁€鍝勫敶缂冾喛褰嶇拫杈ㄦ喅鐟曚胶娈戦梻顕€顣介妴?
 
-### 验证
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_content.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_detail_sheets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_place_seed.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
-- `flutter test test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_modules.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_wear_module.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_query_helpers.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_section_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_collection_io.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_dialogs.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `flutter analyze`（未通过，仅剩本轮外既有 harp/woodfish/pubspec/test lint）
-- `powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Target android-apk`（通过，release APK 构建成功）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_models.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_catalog.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_support.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_editor_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`（通过）
-- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `python -X utf8` 检查 `D:\vocabularySleep-resources\cook_data_plan070_validation`（通过，recipes=7772，user_version=2，integrity=ok，v2 recipes/summaries/details 均为 7,772，`hasOriginColumn=False`，JSON `diet/origin` 为 0，DB 风险 diet terms 为 0，DB SHA256=`418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `git switch -c codex/daily-choice-overhaul`（通过）
-- `git commit -m "chore: backup current workspace before daily choice overhaul"`（通过，备份提交 `735b95a`）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
-- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --cook-csv .tmp_recipe_csv_head.txt`（通过）
-- `python -m py_compile scripts\audit_daily_choice_recipe_dataset.py`（通过）
-- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
-- `python -X utf8 scripts\generate_daily_choice_recipe_dataset.py --cook-csv .tmp_plan070_recipe.csv --output D:\vocabularySleep-resources\cook_data_plan070_validation\recipe_library_asset.json --export-dir D:\vocabularySleep-resources\cook_data_plan070_validation`（通过）
-- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv .tmp_plan070_recipe.csv --output-md records\record_070_daily_choice_recipe_data_audit_after_generation.md --output-json records\record_070_daily_choice_recipe_data_audit_after_generation.json`（通过，10 个审计问题桶均为 0）
-- `python -X utf8` 内存 SQLite 执行 `scripts\daily_choice_recipe_schema_v2.sql`（通过，创建 14 张表和 18 个索引）
-- `EXPLAIN QUERY PLAN` 验证 v2 摘要分页、通用筛选、食材匹配和随机 pivot 查询（通过，命中目标索引）
-- `python -X utf8` 解析 `D:\vocabularySleep-resources\cook_data_plan070_validation` 中三份压缩 JSON（通过，三份 JSON 均为 7,772 条菜谱）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart test/daily_choice_eat_library_store_test.dart`（通过）
-- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart run scripts/s3_resource_probe.dart --op list --prefix cook_data/ --max-keys 20`（通过）
-- `dart run scripts/s3_resource_probe.dart --op head --key cook_data/daily_choice_recipe_library.db`（通过，47,915,008 bytes）
-- `dart run scripts/s3_resource_probe.dart --op get-range --key cook_data/daily_choice_recipe_library.db`（通过，SQLite 文件头）
-- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py`（通过）
-- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过）
-- `python -X utf8` 最小数据集调用 `write_sqlite_export(...)` 验证 v1/v2 双写（通过）
-- `dart analyze scripts/verify_daily_choice_recipe_remote.dart lib/src/ui/pages/toolbox_daily_choice test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
-- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`（通过）
-- `dart format scripts\verify_daily_choice_recipe_remote.dart`（通过）
-- `dart analyze scripts\verify_daily_choice_recipe_remote.dart`（通过）
-- `python -X utf8` 从验证包 JSON 调用 `write_sqlite_export(..., sqlite_mode='v2')` 重写 `D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db`（通过，7,772 条）
-- `python -X utf8` 检查 v2-only DB：`PRAGMA integrity_check=ok`、`user_version=2`、v1 summary/detail 表不存在、v2 recipes/summaries/details 均为 7,772 行（通过）
-- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv build\_external\cook\app\data\recipe.csv --output-md records\record_070_daily_choice_recipe_v2_only_db_audit.md --output-json records\record_070_daily_choice_recipe_v2_only_db_audit.json`（通过，10 个审计问题桶均为 0，cook CSV 599 行全部标题命中）
-- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`（通过，完整下载用户更新后的远端 v2-only DB，v2 recipes/summaries/details 均为 7,772 行）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart scripts\verify_daily_choice_recipe_remote.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页内置库搜索下沉后无静态问题）
-- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 v2 search table 查询）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖管理页搜索词传入 store 查询并只展示命中内置菜）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过，管理页 SQL 摘要 detail 解耦后无静态问题）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖内存摘要为空时管理页 SQL 摘要仍可打开详情，以及个人调整前 detail 懒加载）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart`（通过）
-- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 v2 SQL 筛选、分页、食材精确匹配和组合忌口）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart`（通过，新增 random pivot API 后无静态问题）
-- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`（通过，覆盖 pivot 命中、回绕和分页窗口外候选抽取）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机触发 store pivot、管理页展开内置库触发 SQL 查询、候选池变化后旧异步抽取不回写）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖随机停止超时兜底和大可见池本地 fallback）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`（通过）
-- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`（通过，覆盖停止随机不触发 store random pivot、管理页触底自动分页）
-- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`（通过）
-- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_assistant.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_decision_content.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_detail_sheets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_place_seed.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_cooking_guide_test.dart test\daily_choice_decision_engine_test.dart test\daily_choice_place_seed_test.dart test\daily_choice_wear_seed_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_modules.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_wear_module.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox\toolbox_ui_components.dart lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_query_helpers.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_section_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_collection_io.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_dialogs.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter analyze`閿涘牊婀柅姘崇箖閿涘奔绮庨崜鈺傛拱鏉烆喖顦婚弮銏℃箒 harp/woodfish/pubspec/test lint閿?
+- `powershell -ExecutionPolicy Bypass -File scripts\build.ps1 -Target android-apk`閿涘牓鈧俺绻冮敍瀹篹lease APK 閺嬪嫬缂撻幋鎰閿?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_models.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_catalog.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_support.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_editor_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_seed_data.dart test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_custom_state_test.dart test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `python -X utf8` 濡偓閺?`D:\vocabularySleep-resources\cook_data_plan070_validation`閿涘牓鈧俺绻冮敍瀹篹cipes=7772閿涘瘈ser_version=2閿涘ntegrity=ok閿涘瘉2 recipes/summaries/details 閸у洣璐?7,772閿涘畭hasOriginColumn=False`閿涘瓰SON `diet/origin` 娑?0閿涘瓕B 妞嬪酣娅?diet terms 娑?0閿涘瓕B SHA256=`418B40F934925FEB4AA1054A0A74442C2BEA063730EB727F20BE586ABD71C7B3`閿?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `git switch -c codex/daily-choice-overhaul`閿涘牓鈧俺绻冮敍?
+- `git commit -m "chore: backup current workspace before daily choice overhaul"`閿涘牓鈧俺绻冮敍灞筋槵娴犺姤褰佹禍?`735b95a`閿?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --cook-csv .tmp_recipe_csv_head.txt`閿涘牓鈧俺绻冮敍?
+- `python -m py_compile scripts\audit_daily_choice_recipe_dataset.py`閿涘牓鈧俺绻冮敍?
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`閿涘牓鈧俺绻冮敍?
+- `python -X utf8 scripts\generate_daily_choice_recipe_dataset.py --cook-csv .tmp_plan070_recipe.csv --output D:\vocabularySleep-resources\cook_data_plan070_validation\recipe_library_asset.json --export-dir D:\vocabularySleep-resources\cook_data_plan070_validation`閿涘牓鈧俺绻冮敍?
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv .tmp_plan070_recipe.csv --output-md records\record_070_daily_choice_recipe_data_audit_after_generation.md --output-json records\record_070_daily_choice_recipe_data_audit_after_generation.json`閿涘牓鈧俺绻冮敍?0 娑擃亜顓哥拋锟犳６妫版ɑ銆婇崸鍥﹁礋 0閿?
+- `python -X utf8` 閸愬懎鐡?SQLite 閹笛嗩攽 `scripts\daily_choice_recipe_schema_v2.sql`閿涘牓鈧俺绻冮敍灞藉灡瀵?14 瀵姾銆冮崪?18 娑擃亞鍌ㄥ鏇礆
+- `EXPLAIN QUERY PLAN` 妤犲矁鐦?v2 閹芥顩﹂崚鍡涖€夐妴渚€鈧氨鏁ょ粵娑⑩偓澶堚偓渚€顥ら弶鎰爱闁板秴鎷伴梾蹇旀簚 pivot 閺屻儴顕楅敍鍫モ偓姘崇箖閿涘苯鎳℃稉顓犳窗閺嶅洨鍌ㄥ鏇礆
+- `python -X utf8` 鐟欙絾鐎?`D:\vocabularySleep-resources\cook_data_plan070_validation` 娑擃厺绗佹禒钘夊竾缂?JSON閿涘牓鈧俺绻冮敍灞肩瑏娴?JSON 閸у洣璐?7,772 閺壜ゅ綅鐠嬫唻绱?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart test/daily_choice_eat_library_store_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart run scripts/s3_resource_probe.dart --op list --prefix cook_data/ --max-keys 20`閿涘牓鈧俺绻冮敍?
+- `dart run scripts/s3_resource_probe.dart --op head --key cook_data/daily_choice_recipe_library.db`閿涘牓鈧俺绻冮敍?7,915,008 bytes閿?
+- `dart run scripts/s3_resource_probe.dart --op get-range --key cook_data/daily_choice_recipe_library.db`閿涘牓鈧俺绻冮敍瀛睶Lite 閺傚洣娆㈡径杈剧礆
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py`閿涘牓鈧俺绻冮敍?
+- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`閿涘牓鈧俺绻冮敍?
+- `python -X utf8` 閺堚偓鐏忓繑鏆熼幑顕€娉︾拫鍐暏 `write_sqlite_export(...)` 妤犲矁鐦?v1/v2 閸欏苯鍟撻敍鍫モ偓姘崇箖閿?
+- `dart analyze scripts/verify_daily_choice_recipe_remote.dart lib/src/ui/pages/toolbox_daily_choice test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `python -m py_compile scripts\generate_daily_choice_recipe_dataset.py scripts\audit_daily_choice_recipe_dataset.py`閿涘牓鈧俺绻冮敍?
+- `dart format scripts\verify_daily_choice_recipe_remote.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze scripts\verify_daily_choice_recipe_remote.dart`閿涘牓鈧俺绻冮敍?
+- `python -X utf8` 娴犲酣鐛欑拠浣稿瘶 JSON 鐠嬪啰鏁?`write_sqlite_export(..., sqlite_mode='v2')` 闁插秴鍟?`D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db`閿涘牓鈧俺绻冮敍?,772 閺夆槄绱?
+- `python -X utf8` 濡偓閺?v2-only DB閿涙瓪PRAGMA integrity_check=ok`閵嗕梗user_version=2`閵嗕箍1 summary/detail 鐞涖劋绗夌€涙ê婀妴涔? recipes/summaries/details 閸у洣璐?7,772 鐞涘矉绱欓柅姘崇箖閿?
+- `python -X utf8 scripts\audit_daily_choice_recipe_dataset.py --library-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.json --summary-json D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library_summary.json --sqlite-db D:\vocabularySleep-resources\cook_data_plan070_validation\daily_choice_recipe_library.db --cook-csv build\_external\cook\app\data\recipe.csv --output-md records\record_070_daily_choice_recipe_v2_only_db_audit.md --output-json records\record_070_daily_choice_recipe_v2_only_db_audit.json`閿涘牓鈧俺绻冮敍?0 娑擃亜顓哥拋锟犳６妫版ɑ銆婇崸鍥﹁礋 0閿涘畱ook CSV 599 鐞涘苯鍙忛柈銊︾垼妫版ê鎳℃稉顓ㄧ礆
+- `dart run scripts/verify_daily_choice_recipe_remote.dart --key cook_data/daily_choice_recipe_library.db --expected-count 7772`閿涘牓鈧俺绻冮敍灞界暚閺佺繝绗呮潪鐣屾暏閹撮攱娲块弬鏉挎倵閻ㄥ嫯绻欑粩?v2-only DB閿涘瘉2 recipes/summaries/details 閸у洣璐?7,772 鐞涘矉绱?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart scripts\verify_daily_choice_recipe_remote.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍宀€顓搁悶鍡涖€夐崘鍛枂鎼存挻鎮崇槐顫瑓濞屽鎮楅弮鐘绘饯閹線妫舵０姗堢礆
+- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻?v2 search table 閺屻儴顕楅敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻╂牜顓搁悶鍡涖€夐幖婊呭偍鐠囧秳绱堕崗?store 閺屻儴顕楅獮璺哄涧鐏炴洜銇氶崨鎴掕厬閸愬懐鐤嗛懣婊愮礆
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍宀€顓搁悶鍡涖€?SQL 閹芥顩?detail 鐟欙綀鈧箑鎮楅弮鐘绘饯閹線妫舵０姗堢礆
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻╂牕鍞寸€涙ɑ鎲崇憰浣疯礋缁岀儤妞傜粻锛勬倞妞?SQL 閹芥顩︽禒宥呭讲閹垫挸绱戠拠锔藉剰閿涘奔浜掗崣濠侀嚋娴滈缚鐨熼弫鏉戝 detail 閹虫帒濮炴潪鏂ょ礆
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻?v2 SQL 缁涙盯鈧鈧礁鍨庢い鐐光偓渚€顥ら弶鎰翱绾喖灏柊宥呮嫲缂佸嫬鎮庤箛灞藉經閿?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart test\daily_choice_eat_library_store_test.dart`閿涘牓鈧俺绻冮敍灞炬煀婢?random pivot API 閸氬孩妫ら棃娆愨偓渚€妫舵０姗堢礆
+- `flutter test test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻?pivot 閸涙垝鑵戦妴浣告礀缂佹洖鎷伴崚鍡涖€夌粣妤€褰涙径鏍р偓娆撯偓澶嬪▕閸欐牭绱?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_eat_library_store_test.dart test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻╂牕浠犲銏ゆ閺堥缚袝閸?store pivot閵嗕胶顓搁悶鍡涖€夌仦鏇炵磻閸愬懐鐤嗘惔鎾剐曢崣?SQL 閺屻儴顕楅妴浣糕偓娆撯偓澶嬬潨閸欐ê瀵查崥搴㈡＋瀵倹顒為幎钘夊絿娑撳秴娲栭崘娆欑礆
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_widgets.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻╂牠娈㈤張鍝勪粻濮濄垼绉撮弮璺哄幑鎼存洖鎷版径褍褰茬憴浣圭潨閺堫剙婀?fallback閿?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_library_store.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_eat_module.dart lib\src\ui\pages\toolbox_daily_choice\daily_choice_manager_sheet.dart test\daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍宀冾洬閻╂牕浠犲銏ゆ閺堣桨绗夌憴锕€褰?store random pivot閵嗕胶顓搁悶鍡涖€夌憴锕€绨抽懛顏勫З閸掑棝銆夐敍?
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice test\daily_choice_hub_smoke_test.dart test\daily_choice_eat_library_store_test.dart test\daily_choice_eat_catalog_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test\daily_choice_eat_catalog_test.dart test\daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_069-BUILD-DISABLE-WEB] - 2026-04-26
 
-### 原因
-- 用户反馈 `.\scripts\build.ps1` 打 Web 包时失败，错误来自 `sherpa_onnx`、`sqlite3`、`ffi` 等 `dart:ffi` 依赖在 Flutter Web / Dart2JS 下无法编译。
-- 当前项目主要目标不是 Web，暂不投入 Web 专用实现或条件导入重构。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯 `.\scripts\build.ps1` 閹?Web 閸栧懏妞傛径杈Е閿涘矂鏁婄拠顖涙降閼?`sherpa_onnx`閵嗕梗sqlite3`閵嗕梗ffi` 缁?`dart:ffi` 娓氭繆绂嗛崷?Flutter Web / Dart2JS 娑撳妫ゅ▔鏇犵椽鐠囨垯鈧?
+- 瑜版挸澧犳い鍦窗娑撴槒顩﹂惄顔界垼娑撳秵妲?Web閿涘本娈忔稉宥嗗閸?Web 娑撴挾鏁ょ€圭偟骞囬幋鏍ㄦ蒋娴犺泛顕遍崗銉╁櫢閺嬪嫨鈧?
 
-### 修改
-- `scripts/build.ps1` 的默认 `all` 目标不再包含 `web`，Windows / macOS / Linux 宿主平台均只保留当前可用的 Android 与桌面构建目标。
-- 移除脚本中的 Web 构建分支，避免默认打包跑到 `flutter build web` 后输出大量 FFI 编译错误。
-- 显式传入 `-Target web` 时，脚本会在目标解析阶段直接提示：当前因 `sherpa_onnx`、`sqlite3`、`ffi` 等 FFI 依赖禁用 Web，需要 Web 专用实现后再重新启用。
+### 娣囶喗鏁?
+- `scripts/build.ps1` 閻ㄥ嫰绮拋?`all` 閻╊喗鐖ｆ稉宥呭晙閸栧懎鎯?`web`閿涘indows / macOS / Linux 鐎瑰じ瀵岄獮鍐插酱閸у洤褰ф穱婵堟殌瑜版挸澧犻崣顖滄暏閻?Android 娑撳孩顢戦棃銏＄€铏规窗閺嶅洢鈧?
+- 缁夊娅庨懘姘拱娑擃厾娈?Web 閺嬪嫬缂撻崚鍡樻暜閿涘矂浼╅崗宥夌帛鐠併倖澧﹂崠鍛扮獓閸?`flutter build web` 閸氬氦绶崙鍝勩亣闁?FFI 缂傛牞鐦ч柨娆掝嚖閵?
+- 閺勬儳绱℃导鐘插弳 `-Target web` 閺冭绱濋懘姘拱娴兼艾婀惄顔界垼鐟欙絾鐎介梼鑸殿唽閻╁瓨甯撮幓鎰仛閿涙艾缍嬮崜宥呮礈 `sherpa_onnx`閵嗕梗sqlite3`閵嗕梗ffi` 缁?FFI 娓氭繆绂嗙粋浣烘暏 Web閿涘矂娓剁憰?Web 娑撴挾鏁ょ€圭偟骞囬崥搴″晙闁插秵鏌婇崥顖滄暏閵?
 
-### 修复
-- 修复 `.\scripts\build.ps1` 默认全量打包时被 Web 目标拖失败的问题。
+### 娣囶喖顦?
+- 娣囶喖顦?`.\scripts\build.ps1` 姒涙顓婚崗銊╁櫤閹垫挸瀵橀弮鎯邦潶 Web 閻╊喗鐖ｉ幏鏍с亼鐠愩儳娈戦梻顕€顣介妴?
 
-### 风险变更
-- `web` 不再是脚本支持目标；后续若需要恢复 Web 包，需要先处理 FFI 依赖的 Web 替代实现或条件导入隔离。
+### 妞嬪酣娅撻崣妯绘纯
+- `web` 娑撳秴鍟€閺勵垵鍓奸張顒佹暜閹镐胶娲伴弽鍥风幢閸氬海鐢婚懟銉╂付鐟曚焦浠径?Web 閸栧拑绱濋棁鈧憰浣稿帥婢跺嫮鎮?FFI 娓氭繆绂嗛惃?Web 閺囧じ鍞€圭偟骞囬幋鏍ㄦ蒋娴犺泛顕遍崗銉╂缁傛眹鈧?
 
-### 验证
-- `.\scripts\build.ps1 -DryRun -NoPubGet`（通过，输出 Android APK / Android AppBundle / Windows，不再包含 Web）
-- `.\scripts\build.ps1 -Target web -DryRun -NoPubGet`（按预期失败，并输出 FFI 依赖导致 Web 禁用的明确提示）
-- `.\scripts\build.ps1 -Target android-apk -NoPubGet`（通过，产物输出到 `dist/android-apk/xianyushengxi.apk`）
+### 妤犲矁鐦?
+- `.\scripts\build.ps1 -DryRun -NoPubGet`閿涘牓鈧俺绻冮敍宀冪翻閸?Android APK / Android AppBundle / Windows閿涘奔绗夐崘宥呭瘶閸?Web閿?
+- `.\scripts\build.ps1 -Target web -DryRun -NoPubGet`閿涘牊瀵滄０鍕埂婢惰精瑙﹂敍灞借嫙鏉堟挸鍤?FFI 娓氭繆绂嗙€佃壈鍤?Web 缁備胶鏁ら惃鍕绾喗褰佺粈鐚寸礆
+- `.\scripts\build.ps1 -Target android-apk -NoPubGet`閿涘牓鈧俺绻冮敍灞奸獓閻椻晞绶崙鍝勫煂 `dist/android-apk/xianyushengxi.apk`閿?
 
 ## [Unreleased-PLAN_068-EAT-COOKING-GUIDE-PERF] - 2026-04-26
 
-### 原因
-- 用户要求「每日抉择 - 吃什么」中的做菜指南改成标准、通用、可长期扩展的做菜基准手册，移除混杂的项目 / 程序帮助内容。
-- 用户要求参考 YunYouJun/cook 与本地 `D:\vocabularySleep-resources\做菜` 资料中的通用烹饪技巧、规范与安全边界。
-- 用户要求把「高级设置」上移，并继续优化电脑端和手机端都能感知到的卡顿。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閵嗗本鐦￠弮銉﹀Ψ閹?- 閸氬啩绮堟稊鍫涒偓宥勮厬閻ㄥ嫬浠涢懣婊勫瘹閸楁鏁奸幋鎰垼閸戝棎鈧線鈧氨鏁ら妴浣稿讲闂€鎸庢埂閹碘晛鐫嶉惃鍕粵閼挎粌鐔€閸戝棙澧滈崘宀嬬礉缁夊娅庡ǎ閿嬫絽閻ㄥ嫰銆嶉惄?/ 缁嬪绨敮顔煎И閸愬懎顔愰妴?
+- 閻劍鍩涚憰浣圭湴閸欏倽鈧?YunYouJun/cook 娑撳孩婀伴崷?`D:\vocabularySleep-resources\閸嬫俺褰峘 鐠у嫭鏋℃稉顓犳畱闁氨鏁ら悜褰掋偑閹垛偓瀹秆佲偓浣筋潐閼煎啩绗岀€瑰鍙忔潏鍦櫕閵?
+- 閻劍鍩涚憰浣圭湴閹跺鈧矂鐝痪褑顔曠純顔衡偓宥勭瑐缁変紮绱濋獮鍓佹埛缂侇厺绱崠鏍暩閼存垹顏崪灞惧閺堣櫣顏柈鍊熷厴閹扮喓鐓￠崚鎵畱閸楋繝銆戦妴?
 
-### 新增
-- 新增 `test/daily_choice_cooking_guide_test.dart`，覆盖做菜指南不再出现 `recipe.csv`、`SQLite`、安装、远端、数据源等项目帮助语，并确认指南包含入厨、采购、清洗、刀工、火候和翻车排查等基准章节。
+### 閺傛澘顤?
+- 閺傛澘顤?`test/daily_choice_cooking_guide_test.dart`閿涘矁顩惄鏍т粵閼挎粍瀵氶崡妞剧瑝閸愬秴鍤悳?`recipe.csv`閵嗕梗SQLite`閵嗕礁鐣ㄧ憗鍛偓浣界箼缁旑垬鈧焦鏆熼幑顔界爱缁涘銆嶉惄顔煎簻閸斺晞顕㈤敍灞借嫙绾喛顓婚幐鍥у础閸栧懎鎯堥崗銉ュ腹閵嗕線鍣扮拹顓溾偓浣圭濞叉ぜ鈧礁鍨佸銉ｂ偓浣轰紑閸婃瑥鎷扮紙鏄忔簠閹烘帗鐓＄粵澶婄唨閸戝棛鐝烽懞鍌樷偓?
 
-### 修改
-- 重写吃什么做菜指南为通用烹饪手册结构，覆盖入厨前判断、采购验收、清洗去污、刀工切配、备料顺序、调味基准、火候锅具、基础处理技法、常用烹调法、米面烘焙、保存复热和翻车排查。
-- 做菜指南参考来源改为「参考与延伸阅读」附录口吻，只保留资料标题和摘要说明，不再解释项目字段、页面行为或接入边界。
-- 吃什么页面将「高级设置」前置到随机主舞台之前，让用户先收口已有材料、忌口、荤素 / 清真等条件，再开始随机。
-- 随机面板运行中不再每 120ms 触发整块 `AnimatedSwitcher` 切换动画，只更新同一个候选舞台；停止选中时保留正常过渡，降低随机过程中的重建与合成压力。
-- 菜谱库摘要加载改为后台 isolate 打开 SQLite 并解析摘要，失败时回退主 isolate 读取，减少进入吃什么界面时主线程同步解码压力。
-- 管理页内置菜谱筛选增加缓存键，展开内置库后折叠 / 展开其他区域不再重复过滤全量内置菜谱。
+### 娣囶喗鏁?
+- 闁插秴鍟撻崥鍐х矆娑斿牆浠涢懣婊勫瘹閸楁ぞ璐熼柅姘辨暏閻戝綊銈幍瀣斀缂佹挻鐎敍宀冾洬閻╂牕鍙嗛崢銊ュ閸掋倖鏌囬妴渚€鍣扮拹顓㈢崣閺€韬测偓浣圭濞叉骞撳Ч掳鈧礁鍨佸銉ュ瀼闁板秲鈧礁顦弬娆撱€庢惔蹇嬧偓浣界殶閸涘啿鐔€閸戝棎鈧胶浼€閸婃瑩鏀ㄩ崗鏋偓浣哥唨绾偓婢跺嫮鎮婇幎鈧▔鏇樷偓浣哥埗閻劎鍏愮拫鍐╃《閵嗕胶鑳岄棃銏㈠劋閻掓瑣鈧椒绻氱€涙ê顦查悜顓炴嫲缂堟槒婧呴幒鎺撶叀閵?
+- 閸嬫俺褰嶉幐鍥у础閸欏倽鈧啯娼靛┃鎰暭娑撴亽鈧苯寮懓鍐х瑢瀵ゆ湹鍑犻梼鍛邦嚢閵嗗秹妾ぐ鏇炲經閸氫紮绱濋崣顏冪箽閻ｆ瑨绁弬娆愮垼妫版ê鎷伴幗妯款洣鐠囧瓨妲戦敍灞肩瑝閸愬秷袙闁插﹪銆嶉惄顔肩摟濞堢偣鈧線銆夐棃銏ｎ攽娑撶儤鍨ㄩ幒銉ュ弳鏉堝湱鏅妴?
+- 閸氬啩绮堟稊鍫ャ€夐棃銏犵殺閵嗗矂鐝痪褑顔曠純顔衡偓宥呭缂冾喖鍩岄梾蹇旀簚娑撴槒鍨堕崣棰佺閸撳稄绱濈拋鈺冩暏閹村嘲鍘涢弨璺哄經瀹稿弶婀侀弶鎰灐閵嗕礁绻夐崣锝冣偓浣藉吹缁?/ 濞撳懐婀＄粵澶嬫蒋娴犺绱濋崘宥呯磻婵娈㈤張鎭掆偓?
+- 闂呭繑婧€闂堛垺婢樻潻鎰攽娑擃厺绗夐崘宥嗙槨 120ms 鐟欙箑褰傞弫鏉戞健 `AnimatedSwitcher` 閸掑洦宕查崝銊ф暰閿涘苯褰ч弴瀛樻煀閸氬奔绔存稉顏勨偓娆撯偓澶庡灦閸欏府绱遍崑婊勵剾闁鑵戦弮鏈电箽閻ｆ瑦顒滅敮姝岀箖濞撯槄绱濋梽宥勭秵闂呭繑婧€鏉╁洨鈻兼稉顓犳畱闁插秴缂撴稉搴℃値閹存劕甯囬崝娑栤偓?
+- 閼挎粏姘ㄦ惔鎾存喅鐟曚礁濮炴潪鑺ユ暭娑撳搫鎮楅崣?isolate 閹垫挸绱?SQLite 楠炴儼袙閺嬫劖鎲崇憰渚婄礉婢惰精瑙﹂弮璺烘礀闁偓娑?isolate 鐠囪褰囬敍灞藉櫤鐏忔垼绻橀崗銉ユ倖娴犫偓娑斿牏鏅棃銏℃娑撹崵鍤庣粙瀣倱濮濄儴袙閻礁甯囬崝娑栤偓?
+- 缁狅紕鎮婃い闈涘敶缂冾喛褰嶇拫杈╃摣闁顤冮崝鐘电处鐎涙﹢鏁敍灞界潔瀵偓閸愬懐鐤嗘惔鎾虫倵閹舵ê褰?/ 鐏炴洖绱戦崗鏈电铂閸栧搫鐓欐稉宥呭晙闁插秴顦叉潻鍥ㄦ姢閸忋劑鍣洪崘鍛枂閼挎粏姘ㄩ妴?
 
-### 修复
-- 修复做菜指南中混入 `recipe.csv`、筛选字段、页面匹配逻辑、未接入资料等项目帮助说明的问题。
-- 修复随机滚动时因高频切换动画导致的明显卡顿风险。
-- 修复管理页展开内置库后轻量 UI 状态变化仍反复扫描完整菜谱库的性能浪费。
+### 娣囶喖顦?
+- 娣囶喖顦查崑姘冲綅閹稿洤宕℃稉顓熻穿閸?`recipe.csv`閵嗕胶鐡柅澶婄摟濞堢偣鈧線銆夐棃銏犲爱闁板秹鈧槒绶妴浣规弓閹恒儱鍙嗙挧鍕灐缁涘銆嶉惄顔煎簻閸斺晞顕╅弰搴ｆ畱闂傤噣顣介妴?
+- 娣囶喖顦查梾蹇旀簚濠婃艾濮╅弮璺烘礈妤傛﹢顣堕崚鍥ㄥ床閸斻劎鏁剧€佃壈鍤ч惃鍕閺勬儳宕辨い鍧楊棑闂勨斂鈧?
+- 娣囶喖顦茬粻锛勬倞妞ら潧鐫嶅鈧崘鍛枂鎼存挸鎮楁潪濠氬櫤 UI 閻樿埖鈧礁褰夐崠鏍︾矝閸欏秴顦查幍顐ｅ伎鐎瑰本鏆ｉ懣婊嗘皑鎼存挾娈戦幀褑鍏樺ù顏囧瀭閵?
 
-### 风险变更
-- 摘要后台 isolate 读取依赖 SQLite 文件可被第二连接并发只读打开；若目标平台 isolate 读取失败，会自动回退既有主线程读取路径。
-- 做菜指南内容明显变丰富，但仍只在指南弹窗内按模块选择渲染，不常驻主页面。
-- 管理页筛选缓存仍基于本地摘要全集；若菜谱量继续增长到数十万级，后续应把管理搜索继续下沉到 SQLite 倒排 / FTS 查询。
+### 妞嬪酣娅撻崣妯绘纯
+- 閹芥顩﹂崥搴″酱 isolate 鐠囪褰囨笟婵婄 SQLite 閺傚洣娆㈤崣顖濐潶缁楊兛绨╂潻鐐村复楠炶泛褰傞崣顏囶嚢閹垫挸绱戦敍娑滃閻╊喗鐖ｉ獮鍐插酱 isolate 鐠囪褰囨径杈Е閿涘奔绱伴懛顏勫З閸ョ偤鈧偓閺冦垺婀佹稉鑽ゅ殠缁嬪顕伴崣鏍熅瀵板嫨鈧?
+- 閸嬫俺褰嶉幐鍥у础閸愬懎顔愰弰搴㈡▔閸欐ü璧寸€靛矉绱濇担鍡曠矝閸欘亜婀幐鍥у础瀵湱鐛ラ崘鍛瘻濡€虫健闁瀚ㄥ〒鍙夌厠閿涘奔绗夌敮鎼佲敆娑撳銆夐棃顫偓?
+- 缁狅紕鎮婃い鐢电摣闁绱︾€涙ü绮涢崺杞扮艾閺堫剙婀撮幗妯款洣閸忋劑娉﹂敍娑滃閼挎粏姘ㄩ柌蹇曟埛缂侇厼顤冮梹鍨煂閺佹澘宕勬稉鍥╅獓閿涘苯鎮楃紒顓炵安閹跺﹦顓搁悶鍡樻偝缁便垻鎴风紒顓濈瑓濞屽鍩?SQLite 閸婃帗甯?/ FTS 閺屻儴顕楅妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_cooking_guide_test.dart test/daily_choice_hub_smoke_test.dart`（通过）
-- `flutter analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_cooking_guide_test.dart test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
-- `flutter test test/daily_choice_cooking_guide_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`（通过）
-- `flutter test test/daily_choice_hub_smoke_test.dart`（通过）
-- `.\scripts\build.ps1 -Target android-apk -NoPubGet`（通过，产物输出到 `dist/android-apk/xianyushengxi.apk`）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_library_store.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_cooking_guide_test.dart test/daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_cooking_guide_test.dart test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_library_store_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_cooking_guide_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_eat_library_store_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `.\scripts\build.ps1 -Target android-apk -NoPubGet`閿涘牓鈧俺绻冮敍灞奸獓閻椻晞绶崙鍝勫煂 `dist/android-apk/xianyushengxi.apk`閿?
 
 ## [Unreleased-PLAN_067-EAT-FREEZE-BUILD] - 2026-04-26
 
-### 原因
-- 用户反馈工具箱「每日抉择 - 吃什么」进入页面接近卡死，管理页轻量折叠交互也会明显卡顿。
-- 用户反馈新增菜谱时 `DropdownButtonFormField` 因 `all` 上下文重复和值冲突直接断言报错。
-- 用户反馈通过 `.\scripts\build.ps1` release 打包时 Gradle 在 Flutter plugin loader 阶段因仓库策略冲突失败。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻渚库偓灞剧槨閺冦儲濡烽幏?- 閸氬啩绮堟稊鍫涒偓宥堢箻閸忋儵銆夐棃銏″复鏉╂垵宕卞浼欑礉缁狅紕鎮婃い浣冧氦闁插繑濮岄崣鐘辨唉娴滄帊绡冩导姘閺勬儳宕辨い瑁も偓?
+- 閻劍鍩涢崣宥夘洯閺傛澘顤冮懣婊嗘皑閺?`DropdownButtonFormField` 閸?`all` 娑撳﹣绗呴弬鍥櫢婢跺秴鎷伴崐鐓庡暱缁愪胶娲块幒銉︽焽鐟封偓閹躲儵鏁婇妴?
+- 閻劍鍩涢崣宥夘洯闁俺绻?`.\scripts\build.ps1` release 閹垫挸瀵橀弮?Gradle 閸?Flutter plugin loader 闂冭埖顔岄崶鐘辩波鎼存挾鐡ラ悾銉ュ暱缁愪礁銇戠拹銉ｂ偓?
 
-### 修改
-- `DailyChoiceEditorSheet` 内部统一对分类 / 上下文候选去重，并在编辑态剔除 `all` 这类筛选哨兵项，避免不同入口传入重复上下文时触发下拉断言。
-- 吃什么主页面在只变更食谱集数据且当前未选中食谱集时，不再重算当前随机池，减少管理页集合操作对底层页面的同步压力。
-- `scripts/build.ps1` 在 Android 构建阶段使用项目内隔离的 `GRADLE_USER_HOME`，避免读取用户全局 `~/.gradle/init.gradle` 后向 Flutter included build 注入项目级 Maven 仓库。
-- Android Gradle 配置移除 settings / project 两层自定义 Maven 镜像与全局 library `BuildConfig` 默认开关，分别修复 settings 仓库策略冲突和 `sherpa_onnx` 多 ABI 子包 release R8 重复类问题。
+### 娣囶喗鏁?
+- `DailyChoiceEditorSheet` 閸愬懘鍎寸紒鐔剁鐎电懓鍨庣猾?/ 娑撳﹣绗呴弬鍥р偓娆撯偓澶婂箵闁插稄绱濋獮璺烘躬缂傛牞绶幀浣稿ⅶ闂?`all` 鏉╂瑧琚粵娑⑩偓澶婃憼閸忕敻銆嶉敍宀勪缉閸忓秳绗夐崥灞藉弳閸欙絼绱堕崗銉╁櫢婢跺秳绗傛稉瀣瀮閺冩儼袝閸欐垳绗呴幏澶嬫焽鐟封偓閵?
+- 閸氬啩绮堟稊鍫滃瘜妞ょ敻娼伴崷銊ュ涧閸欐ɑ娲挎鐔绘皑闂嗗棙鏆熼幑顔荤瑬瑜版挸澧犻張顏堚偓澶夎厬妞嬬喕姘ㄩ梿鍡樻閿涘奔绗夐崘宥夊櫢缁犳缍嬮崜宥夋閺堢儤鐫滈敍灞藉櫤鐏忔垹顓搁悶鍡涖€夐梿鍡楁値閹垮秳缍旂€电懓绨崇仦鍌炪€夐棃銏㈡畱閸氬本顒為崢瀣閵?
+- `scripts/build.ps1` 閸?Android 閺嬪嫬缂撻梼鑸殿唽娴ｈ法鏁ゆい鍦窗閸愬懘娈х粋鑽ゆ畱 `GRADLE_USER_HOME`閿涘矂浼╅崗宥堫嚢閸欐牜鏁ら幋宄板弿鐏炩偓 `~/.gradle/init.gradle` 閸氬骸鎮?Flutter included build 濞夈劌鍙嗘い鍦窗缁?Maven 娴犳挸绨遍妴?
+- Android Gradle 闁板秶鐤嗙粔濠氭珟 settings / project 娑撱倕鐪伴懛顏勭暰娑?Maven 闂€婊冨剼娑撳骸鍙忕仦鈧?library `BuildConfig` 姒涙顓诲鈧崗绛圭礉閸掑棗鍩嗘穱顔碱槻 settings 娴犳挸绨辩粵鏍殣閸愯尙鐛婇崪?`sherpa_onnx` 婢?ABI 鐎涙劕瀵?release R8 闁插秴顦茬猾濠氭６妫版ǜ鈧?
 
-### 修复
-- 修复新增 / 调整 / 另存吃什么菜谱时上下文初始值为 `all` 或上下文列表包含重复 `all` 导致的 `DropdownButton` 崩溃。
-- 修复管理页在非必要场景下因食谱集状态变化牵动吃什么随机池重算的性能浪费。
-- 修复 `.\scripts\build.ps1 -Target android-apk` 的 Android release APK 构建链路。
+### 娣囶喖顦?
+- 娣囶喖顦查弬鏉款杻 / 鐠嬪啯鏆?/ 閸欙箑鐡ㄩ崥鍐х矆娑斿牐褰嶇拫杈ㄦ娑撳﹣绗呴弬鍥у灥婵鈧棿璐?`all` 閹存牔绗傛稉瀣瀮閸掓銆冮崠鍛儓闁插秴顦?`all` 鐎佃壈鍤ч惃?`DropdownButton` 瀹曗晜绨濋妴?
+- 娣囶喖顦茬粻锛勬倞妞ら潧婀棃鐐茬箑鐟曚礁婧€閺咁垯绗呴崶鐘活棨鐠嬮亶娉﹂悩鑸碘偓浣稿綁閸栨牜澹嶉崝銊ユ倖娴犫偓娑斿牓娈㈤張鐑樼潨闁插秶鐣婚惃鍕偓褑鍏樺ù顏囧瀭閵?
+- 娣囶喖顦?`.\scripts\build.ps1 -Target android-apk` 閻?Android release APK 閺嬪嫬缂撻柧鎹愮熅閵?
 
-### 风险变更
-- Android 构建脚本会在 `android/.gradle-user-home/` 下建立项目本地 Gradle 用户目录，首次构建需要重新下载 Gradle / AGP 依赖；该目录已加入 `.gitignore`。
-- 移除全局 library `BuildConfig` 默认开关后，依赖库回到 AGP 默认行为；如果未来某个旧 Android library 源码直接引用自身 `BuildConfig`，需要该库自行开启 `buildFeatures.buildConfig`。
-- 本机 Android SDK 的 `ndk;28.2.13676358` 曾处于半安装状态，本轮已通过 sdkmanager 重新安装；这是构建环境修复，不属于仓库源码变更。
+### 妞嬪酣娅撻崣妯绘纯
+- Android 閺嬪嫬缂撻懘姘拱娴兼艾婀?`android/.gradle-user-home/` 娑撳缂撶粩瀣€嶉惄顔芥拱閸?Gradle 閻劍鍩涢惄顔肩秿閿涘矂顩诲▎鈩冪€娲付鐟曚線鍣搁弬棰佺瑓鏉?Gradle / AGP 娓氭繆绂嗛敍娑滎嚉閻╊喖缍嶅鎻掑閸?`.gitignore`閵?
+- 缁夊娅庨崗銊ョ湰 library `BuildConfig` 姒涙顓诲鈧崗鍐叉倵閿涘奔绶风挧鏍х氨閸ョ偛鍩?AGP 姒涙顓荤悰灞艰礋閿涙稑顩ч弸婊勬弓閺夈儲鐓囨稉顏呮＋ Android library 濠ф劗鐖滈惄瀛樺复瀵洜鏁ら懛顏囬煩 `BuildConfig`閿涘矂娓剁憰浣筋嚉鎼存捁鍤滅悰灞界磻閸?`buildFeatures.buildConfig`閵?
+- 閺堫剚婧€ Android SDK 閻?`ndk;28.2.13676358` 閺囨儳顦╂禍搴″磹鐎瑰顥婇悩鑸碘偓渚婄礉閺堫剝鐤嗗鏌モ偓姘崇箖 sdkmanager 闁插秵鏌婄€瑰顥婇敍娑滅箹閺勵垱鐎铏瑰箚婢у啩鎱ㄦ径宥忕礉娑撳秴鐫樻禍搴濈波鎼存挻绨惍浣稿綁閺囨番鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart test/daily_choice_hub_smoke_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`（通过）
-- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart --reporter compact`（通过）
-- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `.\scripts\build.ps1 -Target android-apk -NoPubGet`（通过，产物输出到 `dist/android-apk/xianyushengxi.apk`）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart test/daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice test/daily_choice_hub_smoke_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `.\scripts\build.ps1 -Target android-apk -NoPubGet`閿涘牓鈧俺绻冮敍灞奸獓閻椻晞绶崙鍝勫煂 `dist/android-apk/xianyushengxi.apk`閿?
 
 ## [Unreleased-PLAN_066-EAT-PERFORMANCE-SETS] - 2026-04-26
 
-### 原因
-- 用户反馈工具箱「每日抉择 - 吃什么」首屏展示臃肿，「先让选择动起来」和常驻菜谱库说明缺乏实际价值。
-- 用户反馈「已有材料优先匹配」存在失效场景，连续食材短语无法稳定拆出多个可匹配 token。
-- 用户反馈点击管理页会卡死，需要针对 7000+ 菜谱规模设计更极致的性能路径。
-- 用户需要可自定义的食谱方案：把菜谱加入个人集合，并能在集合内筛选、随机、管理。
-- 用户需要内置菜谱支持覆盖式个人调整，也支持另存为独立个人菜谱。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瀹搞儱鍙跨粻渚库偓灞剧槨閺冦儲濡烽幏?- 閸氬啩绮堟稊鍫涒偓宥夘浕鐏炲繐鐫嶇粈楦垮櫑閼插尅绱濋妴灞藉帥鐠佲晠鈧瀚ㄩ崝銊ㄦ崳閺夈儯鈧秴鎷扮敮鎼佲敆閼挎粏姘ㄦ惔鎾诡嚛閺勫海宸辨稊蹇撶杽闂勫懍鐜崐绗衡偓?
+- 閻劍鍩涢崣宥夘洯閵嗗苯鍑￠張澶嬫綏閺傛瑤绱崗鍫濆爱闁板秲鈧秴鐡ㄩ崷銊ャ亼閺佸牆婧€閺咁垽绱濇潻鐐电敾妞嬬喐娼楅惌顓☆嚔閺冪姵纭剁粙鍐茬暰閹峰棗鍤径姘嚋閸欘垰灏柊?token閵?
+- 閻劍鍩涢崣宥夘洯閻愮懓鍤粻锛勬倞妞ゅ吀绱伴崡鈩冾劥閿涘矂娓剁憰渚€鎷＄€?7000+ 閼挎粏姘ㄧ憴鍕佺拋鎹愵吀閺囧瓨鐎懛瀵告畱閹嗗厴鐠侯垰绶為妴?
+- 閻劍鍩涢棁鈧憰浣稿讲閼奉亜鐣炬稊澶屾畱妞嬬喕姘ㄩ弬瑙勵攳閿涙碍濡搁懣婊嗘皑閸旂姴鍙嗘稉顏冩眽闂嗗棗鎮庨敍灞借嫙閼宠棄婀梿鍡楁値閸愬懐鐡柅澶堚偓渚€娈㈤張鎭掆偓浣侯吀閻炲棎鈧?
+- 閻劍鍩涢棁鈧憰浣稿敶缂冾喛褰嶇拫杈ㄦ暜閹镐浇顩惄鏍х础娑擃亙姹夌拫鍐╂殻閿涘奔绡冮弨顖涘瘮閸欙箑鐡ㄦ稉铏瑰缁斿閲滄禍楦垮綅鐠嬩究鈧?
 
-### 新增
-- `DailyChoiceEatCollection` 与 `DailyChoiceCustomState.eatCollections`，支持本地持久化吃什么专属食谱集。
-- 食谱集操作能力：创建集合、删除集合、加入菜谱、移出菜谱、删除自定义菜时自动从集合中清理。
-- 吃什么主页面新增食谱集筛选入口；选择集合后，随机池和高级筛选只在当前集合内工作。
-- 管理页新增「我的食谱集」区域，可创建集合、按集合只看、删除集合，并从内置 / 调整 / 自定义菜谱卡片加入或移出集合。
-- 内置菜和个人调整新增「另存」动作，可把菜谱复制成独立个人食谱继续编辑。
-- 新增 `test/daily_choice_custom_state_test.dart`，覆盖食谱集序列化和删除自定义菜时的集合清理。
+### 閺傛澘顤?
+- `DailyChoiceEatCollection` 娑?`DailyChoiceCustomState.eatCollections`閿涘本鏁幐浣规拱閸︾増瀵旀稊鍛閸氬啩绮堟稊鍫滅瑩鐏炵偤顥ょ拫閬嶆肠閵?
+- 妞嬬喕姘ㄩ梿鍡樻惙娴ｆ粏鍏橀崝娑崇窗閸掓稑缂撻梿鍡楁値閵嗕礁鍨归梽銈夋肠閸氬牄鈧礁濮為崗銉ㄥ綅鐠嬩究鈧胶些閸戦缚褰嶇拫渚库偓浣稿灩闂勩倛鍤滅€规矮绠熼懣婊勬閼奉亜濮╂禒搴ㄦ肠閸氬牅鑵戝〒鍛倞閵?
+- 閸氬啩绮堟稊鍫滃瘜妞ょ敻娼伴弬鏉款杻妞嬬喕姘ㄩ梿鍡欑摣闁鍙嗛崣锝忕幢闁瀚ㄩ梿鍡楁値閸氬函绱濋梾蹇旀簚濮圭姴鎷版妯奸獓缁涙盯鈧褰ч崷銊ョ秼閸撳秹娉﹂崥鍫濆敶瀹搞儰缍旈妴?
+- 缁狅紕鎮婃い鍨煀婢х偑鈧本鍨滈惃鍕棨鐠嬮亶娉﹂妴宥呭隘閸╃噦绱濋崣顖氬灡瀵ゆ椽娉﹂崥鍫涒偓浣瑰瘻闂嗗棗鎮庨崣顏嗘箙閵嗕礁鍨归梽銈夋肠閸氬牞绱濋獮鏈电矤閸愬懐鐤?/ 鐠嬪啯鏆?/ 閼奉亜鐣炬稊澶庡綅鐠嬪崬宕遍悧鍥у閸忋儲鍨ㄧ粔璇插毉闂嗗棗鎮庨妴?
+- 閸愬懐鐤嗛懣婊冩嫲娑擃亙姹夌拫鍐╂殻閺傛澘顤冮妴灞藉綗鐎涙ǜ鈧秴濮╂担婊愮礉閸欘垱濡搁懣婊嗘皑婢跺秴鍩楅幋鎰缁斿閲滄禍娲棨鐠嬭京鎴风紒顓犵椽鏉堟垯鈧?
+- 閺傛澘顤?`test/daily_choice_custom_state_test.dart`閿涘矁顩惄鏍棨鐠嬮亶娉︽惔蹇撳灙閸栨牕鎷伴崚鐘绘珟閼奉亜鐣炬稊澶庡綅閺冨墎娈戦梿鍡楁値濞撳懐鎮婇妴?
 
-### 修改
-- 每日抉择页移除首屏大卡片「先让选择动起来」，让模块切换与当前工具内容更快进入首屏。
-- 吃什么页面不再常驻展示菜谱库说明卡；仅在未安装、加载中或异常时显示资源准备状态。
-- 吃什么页面顺序调整为餐段 / 厨具 / 食谱集 -> 随机主舞台 -> 高级筛选，减少进入页面后的视觉负担。
-- 管理页内置菜谱列表改为分页展示，默认只构建首批条目，继续加载时再追加下一页，避免打开管理页一次性构建全量卡片。
-- 管理页搜索、餐段、厨具、标签和集合筛选变更时会重置分页窗口，搜索仍覆盖完整菜谱库。
-- 食材归一化增强为可从「番茄鸡蛋豆腐汤」这类连续短语中提取多个规范 token，并对 `豆腐 / 牛奶 / 鸡蛋` 等重叠别名采用更具体项优先，避免匹配分数虚高。
+### 娣囶喗鏁?
+- 濮ｅ繑妫╅幎澶嬪妞ょ數些闂勩倝顩荤仦蹇撱亣閸楋紕澧栭妴灞藉帥鐠佲晠鈧瀚ㄩ崝銊ㄦ崳閺夈儯鈧稄绱濈拋鈺偰侀崸妤€鍨忛幑顫瑢瑜版挸澧犲銉ュ徔閸愬懎顔愰弴鏉戞彥鏉╂稑鍙嗘＃鏍х潌閵?
+- 閸氬啩绮堟稊鍫ャ€夐棃顫瑝閸愬秴鐖舵す璇茬潔缁€楦垮綅鐠嬪崬绨辩拠瀛樻閸椻槄绱辨禒鍛躬閺堫亜鐣ㄧ憗鍛偓浣稿鏉炴垝鑵戦幋鏍х磽鐢憡妞傞弰鍓с仛鐠у嫭绨崙鍡楊槵閻樿埖鈧降鈧?
+- 閸氬啩绮堟稊鍫ャ€夐棃銏ゃ€庢惔蹇氱殶閺佺繝璐熸鎰唽 / 閸樸劌鍙?/ 妞嬬喕姘ㄩ梿?-> 闂呭繑婧€娑撴槒鍨堕崣?-> 妤傛楠囩粵娑⑩偓澶涚礉閸戝繐鐨潻娑樺弳妞ょ敻娼伴崥搴ｆ畱鐟欏棜顫庣拹鐔稿閵?
+- 缁狅紕鎮婃い闈涘敶缂冾喛褰嶇拫鍗炲灙鐞涖劍鏁兼稉鍝勫瀻妞ら潧鐫嶇粈鐚寸礉姒涙顓婚崣顏呯€娲浕閹佃娼惄顕嗙礉缂佈呯敾閸旂姾娴囬弮璺哄晙鏉╄棄濮炴稉瀣╃妞ょ绱濋柆鍨帳閹垫挸绱戠粻锛勬倞妞ゅ吀绔村▎鈩冣偓褎鐎鍝勫弿闁插繐宕遍悧鍥モ偓?
+- 缁狅紕鎮婃い鍨偝缁鳖潿鈧線顦靛▓鐐光偓浣稿腹閸忔灚鈧焦鐖ｇ粵鎯ф嫲闂嗗棗鎮庣粵娑⑩偓澶婂綁閺囧瓨妞傛导姘跺櫢缂冾喖鍨庢い鐢电崶閸欙綇绱濋幖婊呭偍娴犲秷顩惄鏍х暚閺佺褰嶇拫鍗炵氨閵?
+- 妞嬬喐娼楄ぐ鎺嶇閸栨牕顤冨杞拌礋閸欘垯绮犻妴宀€鏆橀懠鍕诞閾斿鐪撮懙鎰牎閵嗗秷绻栫猾鏄忕箾缂侇厾鐓拠顓濊厬閹绘劕褰囨径姘嚋鐟欏嫯瀵?token閿涘苯鑻熺€?`鐠炲棜鍘?/ 閻楁稑銈?/ 妤βゆ巢` 缁涘鍣搁崣鐘插焼閸氬秹鍣伴悽銊︽纯閸忚渹缍嬫い閫涚喘閸忓牞绱濋柆鍨帳閸栧綊鍘ら崚鍡樻殶閾忔岸鐝妴?
 
-### 修复
-- 修复已有材料优先匹配在紧凑输入或紧凑菜名中只命中第一个食材的问题。
-- 修复管理页打开时因一次性构建数千个内置菜谱卡片导致卡死的核心瓶颈。
+### 娣囶喖顦?
+- 娣囶喖顦插鍙夋箒閺夋劖鏋℃导妯哄帥閸栧綊鍘ら崷銊ф彛閸戞垼绶崗銉﹀灗缁毖冨櫨閼挎粌鎮曟稉顓炲涧閸涙垝鑵戠粭顑跨娑擃亪顥ら弶鎰畱闂傤噣顣介妴?
+- 娣囶喖顦茬粻锛勬倞妞ゅ灚澧﹀鈧弮璺烘礈娑撯偓濞嗏剝鈧勭€鐑樻殶閸楀啩閲滈崘鍛枂閼挎粏姘ㄩ崡锛勫鐎佃壈鍤ч崡鈩冾劥閻ㄥ嫭鐗宠箛鍐懕妫板牄鈧?
 
-### 风险变更
-- 食材短语拆词会让部分菜谱获得更完整的食材 token，随机池相关性会提升，但个别泛化标签命中范围也可能变化。
-- 食谱集当前仍保存在本机 `toolbox_daily_choice_v1.json`，尚未接入账号同步、备份导入导出或云端多端合并。
-- 管理页分页仅限制 UI 构建数量，搜索和筛选仍基于本地摘要全集；若未来菜谱量继续扩大到数十万级，应进一步把管理搜索迁移到 SQLite 索引查询。
+### 妞嬪酣娅撻崣妯绘纯
+- 妞嬬喐娼楅惌顓☆嚔閹峰棜鐦濇导姘愁唨闁劌鍨庨懣婊嗘皑閼惧嘲绶遍弴鏉戠暚閺佸娈戞鐔告綏 token閿涘矂娈㈤張鐑樼潨閻╃鍙ч幀褌绱伴幓鎰磳閿涘奔绲炬稉顏勫焼濞夋稑瀵查弽鍥╊劮閸涙垝鑵戦懠鍐ㄦ纯娑旂喎褰查懗钘夊綁閸栨牓鈧?
+- 妞嬬喕姘ㄩ梿鍡楃秼閸撳秳绮涙穱婵嗙摠閸︺劍婀伴張?`toolbox_daily_choice_v1.json`閿涘苯鐨婚張顏呭复閸忋儴澶勯崣宄版倱濮濄儯鈧礁顦禒钘夘嚤閸忋儱顕遍崙鐑樺灗娴滄垹顏径姘鳖伂閸氬牆鑻熼妴?
+- 缁狅紕鎮婃い闈涘瀻妞ゅ吀绮庨梽鎰煑 UI 閺嬪嫬缂撻弫浼村櫤閿涘本鎮崇槐銏犳嫲缁涙盯鈧绮涢崺杞扮艾閺堫剙婀撮幗妯款洣閸忋劑娉﹂敍娑滃閺堫亝娼甸懣婊嗘皑闁插繒鎴风紒顓熷⒖婢堆冨煂閺佹澘宕勬稉鍥╅獓閿涘苯绨叉潻娑楃濮濄儲濡哥粻锛勬倞閹兼粎鍌ㄦ潻浣盒╅崚?SQLite 缁便垹绱╅弻銉嚄閵?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`（通过）
-- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart --reporter compact`（通过）
-- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_eat_catalog_test.dart test/daily_choice_custom_state_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_065-EAT-S3] - 2026-04-25
 
-### 原因
-- 用户要求将“吃什么”菜谱库切换到远端 S3 `/cook_data` 资源，移除安装包内本地菜谱资源，避免继续增大包体并拖慢移动端首开。
-- 用户希望页面顶部进一步收口，只保留总条数与当前筛选池条数，并支持折叠。
-- 用户要求管理页在“不喜欢”之外新增“个人调整”能力，允许基于内置菜谱保存个人口味版本，并要求管理界面更适合手机端折叠浏览。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐏忓棌鈧粌鎮嗘禒鈧稊鍫氣偓婵婂綅鐠嬪崬绨遍崚鍥ㄥ床閸掓媽绻欑粩?S3 `/cook_data` 鐠у嫭绨敍宀€些闂勩倕鐣ㄧ憗鍛瘶閸愬懏婀伴崷鎷屽綅鐠嬭精绁┃鎰剁礉闁灝鍘ょ紒褏鐢绘晶鐐层亣閸栧懍缍嬮獮鑸靛珛閹便垻些閸斻劎顏＃鏍х磻閵?
+- 閻劍鍩涚敮灞炬箿妞ょ敻娼版い鍫曞劥鏉╂稐绔村銉︽暪閸欙綇绱濋崣顏冪箽閻ｆ瑦鈧粯娼弫棰佺瑢瑜版挸澧犵粵娑⑩偓澶嬬潨閺夆剝鏆熼敍灞借嫙閺€顖涘瘮閹舵ê褰旈妴?
+- 閻劍鍩涚憰浣圭湴缁狅紕鎮婃い闈涙躬閳ユ粈绗夐崰婊勵偨閳ユ繀绠ｆ径鏍ㄦ煀婢х偐鈧粈閲滄禍楦跨殶閺佺补鈧繆鍏橀崝娑崇礉閸忎浇顔忛崺杞扮艾閸愬懐鐤嗛懣婊嗘皑娣囨繂鐡ㄦ稉顏冩眽閸欙絽鎳楅悧鍫熸拱閿涘苯鑻熺憰浣圭湴缁狅紕鎮婇悾宀勬桨閺囨挳鈧倸鎮庨幍瀣簚缁旑垱濮岄崣鐘崇セ鐟欏牄鈧?
 
-### 新增
-- `DailyChoiceCustomState` 新增 `adjustedBuiltInOptions` 持久化字段，支持保存内置菜谱的个人调整版本，并提供 `upsertAdjustedBuiltIn / restoreAdjustedBuiltIn / adjustedBuiltInById` 操作。
-- `daily_choice_manager_sheet.dart` 为吃什么新增“我的调整”分区，支持继续调整、恢复原味，并把内置菜与个人调整统一纳入可搜索、可点击查看详情的移动端折叠管理界面。
+### 閺傛澘顤?
+- `DailyChoiceCustomState` 閺傛澘顤?`adjustedBuiltInOptions` 閹镐椒绠欓崠鏍х摟濞堢绱濋弨顖涘瘮娣囨繂鐡ㄩ崘鍛枂閼挎粏姘ㄩ惃鍕嚋娴滈缚鐨熼弫瀵稿閺堫剨绱濋獮鑸靛絹娓?`upsertAdjustedBuiltIn / restoreAdjustedBuiltIn / adjustedBuiltInById` 閹垮秳缍旈妴?
+- `daily_choice_manager_sheet.dart` 娑撳搫鎮嗘禒鈧稊鍫熸煀婢х偐鈧粍鍨滈惃鍕殶閺佺补鈧繂鍨庨崠鐚寸礉閺€顖涘瘮缂佈呯敾鐠嬪啯鏆ｉ妴浣逛划婢跺秴甯崨绛圭礉楠炶埖濡搁崘鍛枂閼挎粈绗屾稉顏冩眽鐠嬪啯鏆ｇ紒鐔剁缁惧啿鍙嗛崣顖涙偝缁鳖潿鈧礁褰查悙鐟板毊閺屻儳婀呯拠锔藉剰閻ㄥ嫮些閸斻劎顏幎妯哄綌缁狅紕鎮婇悾宀勬桨閵?
 
-### 修改
-- `daily_choice_eat_library_store.dart` 接入 S3 远端库主链路，首次点击时优先下载 `cook_data/daily_choice_recipe_library.db` 到应用支持目录，本地保留标准 SQLite `summary / detail / index / meta` 表结构并复用既有 S3 兼容客户端。
-- `daily_choice_eat_library_store.dart` 安装成功后会清理旧的 `toolbox_daily_choice_recipe_library.json` 和 `toolbox_daily_choice_cook_recipe.csv` 遗留缓存；若远端安装失败且本地已有库，则继续回退使用已有库。
-- `daily_choice_hub.dart` 与 `daily_choice_eat_module.dart` 改为同时保留“原始内置菜谱”和“应用个人调整后的内置菜谱”，确保管理页可以正确执行“恢复原味”，并避免把调整后的快照错误当作原始基线。
-- `daily_choice_eat_module.dart` 清理遗留旧状态卡代码，页面顶部菜谱库信息卡收口为折叠式紧凑卡片，只保留：
-  - 总库条数
-  - 当前筛选池条数
-  - 加载 / 错误状态
-- `daily_choice_manager_sheet.dart` 重构为更适合手机端的折叠结构：
-  - 搜索保持常驻
-  - 筛选条件折叠
-  - 我的自定义 / 我的调整 / 内置条目折叠
-  - 内置菜支持“个人调整 / 恢复原味 / 不喜欢”
-- `test/daily_choice_eat_library_store_test.dart` 改为覆盖远端 SQLite 安装链路，不再依赖网络下载或 bundled 资源。
-- `test/daily_choice_hub_smoke_test.dart` 同步验证 S3 风格加载按钮文案、管理页个人调整入口，以及“恢复原味”动作在交互层的可达性。
-- 吃什么菜谱 asset 已从应用打包配置中移除，不再继续随安装包携带 `assets/toolbox/daily_choice/recipe_library.json`。
+### 娣囶喗鏁?
+- `daily_choice_eat_library_store.dart` 閹恒儱鍙?S3 鏉╂粎顏惔鎾插瘜闁炬崘鐭鹃敍宀勵浕濞嗭紕鍋ｉ崙缁樻娴兼ê鍘涙稉瀣祰 `cook_data/daily_choice_recipe_library.db` 閸掓澘绨查悽銊︽暜閹镐胶娲拌ぐ鏇礉閺堫剙婀存穱婵堟殌閺嶅洤鍣?SQLite `summary / detail / index / meta` 鐞涖劎绮ㄩ弸鍕嫙婢跺秶鏁ら弮銏℃箒 S3 閸忕厧顔愮€广垺鍩涚粩顖樷偓?
+- `daily_choice_eat_library_store.dart` 鐎瑰顥婇幋鎰閸氬簼绱板〒鍛倞閺冄呮畱 `toolbox_daily_choice_recipe_library.json` 閸?`toolbox_daily_choice_cook_recipe.csv` 闁鏆€缂傛挸鐡ㄩ敍娑滃鏉╂粎顏€瑰顥婃径杈Е娑撴梹婀伴崷鏉垮嚒閺堝绨遍敍灞藉灟缂佈呯敾閸ョ偤鈧偓娴ｈ法鏁ゅ鍙夋箒鎼存挶鈧?
+- `daily_choice_hub.dart` 娑?`daily_choice_eat_module.dart` 閺€閫涜礋閸氬本妞傛穱婵堟殌閳ユ粌甯慨瀣敶缂冾喛褰嶇拫鎵佲偓婵嗘嫲閳ユ粌绨查悽銊ら嚋娴滈缚鐨熼弫鏉戞倵閻ㄥ嫬鍞寸純顔垮綅鐠嬫墎鈧繐绱濈涵顔荤箽缁狅紕鎮婃い闈涘讲娴犮儲顒滅涵顔藉⒔鐞涘备鈧粍浠径宥呭斧閸涙枼鈧繐绱濋獮鍫曚缉閸忓秵濡哥拫鍐╂殻閸氬海娈戣箛顐ゅ弾闁挎瑨顕よぐ鎾茬稊閸樼喎顫愰崺铏瑰殠閵?
+- `daily_choice_eat_module.dart` 濞撳懐鎮婇柆妤冩殌閺冄呭Ц閹礁宕辨禒锝囩垳閿涘矂銆夐棃銏ゃ€婇柈銊ㄥ綅鐠嬪崬绨辨穱鈩冧紖閸椻剝鏁归崣锝勮礋閹舵ê褰斿蹇曟彛閸戞垵宕遍悧鍥风礉閸欘亙绻氶悾娆欑窗
+  - 閹绨遍弶鈩冩殶
+  - 瑜版挸澧犵粵娑⑩偓澶嬬潨閺夆剝鏆?
+  - 閸旂姾娴?/ 闁挎瑨顕ら悩鑸碘偓?
+- `daily_choice_manager_sheet.dart` 闁插秵鐎稉鐑樻纯闁倸鎮庨幍瀣簚缁旑垳娈戦幎妯哄綌缂佹挻鐎敍?
+  - 閹兼粎鍌ㄦ穱婵囧瘮鐢悂鈹?
+  - 缁涙盯鈧娼禒鑸靛閸?
+  - 閹存垹娈戦懛顏勭暰娑?/ 閹存垹娈戠拫鍐╂殻 / 閸愬懐鐤嗛弶锛勬窗閹舵ê褰?
+  - 閸愬懐鐤嗛懣婊勬暜閹镐讲鈧粈閲滄禍楦跨殶閺?/ 閹垹顦查崢鐔锋嚄 / 娑撳秴鏋╁▎鈶┾偓?
+- `test/daily_choice_eat_library_store_test.dart` 閺€閫涜礋鐟曞棛娲婃潻婊咁伂 SQLite 鐎瑰顥婇柧鎹愮熅閿涘奔绗夐崘宥勭贩鐠ф牜缍夌紒婊€绗呮潪鑺ュ灗 bundled 鐠у嫭绨妴?
+- `test/daily_choice_hub_smoke_test.dart` 閸氬本顒炴宀冪槈 S3 妞嬪孩鐗搁崝鐘烘祰閹稿鎸抽弬鍥攳閵嗕胶顓搁悶鍡涖€夋稉顏冩眽鐠嬪啯鏆ｉ崗銉ュ經閿涘奔浜掗崣濞锯偓婊勪划婢跺秴甯崨鏂モ偓婵嗗З娴ｆ粌婀禍銈勭鞍鐏炲倻娈戦崣顖濇彧閹佲偓?
+- 閸氬啩绮堟稊鍫ｅ綅鐠?asset 瀹歌弓绮犳惔鏃傛暏閹垫挸瀵橀柊宥囩枂娑擃厾些闂勩倧绱濇稉宥呭晙缂佈呯敾闂呭繐鐣ㄧ憗鍛瘶閹煎搫鐢?`assets/toolbox/daily_choice/recipe_library.json`閵?
 
-### 风险变更
-- 当前远端安装仍保留“已有本地库优先继续可用”的兜底策略，但首次安装若 S3 访问失败，用户仍需要稍后重试才能拿到完整菜谱库。
-- `daily_choice_cook_service.dart` 中的 bundled 解析路径暂未完全删除，只作为兼容兜底逻辑保留；运行时主路径已经切到 S3 本地缓存库。
-- 本轮未完成仓库全量 `dart analyze`：当前桌面环境启动分析服务时遭遇 `dartaotruntime.exe` 拒绝访问，需要后续在本机权限环境下补跑。
+### 妞嬪酣娅撻崣妯绘纯
+- 瑜版挸澧犳潻婊咁伂鐎瑰顥婃禒宥勭箽閻ｆ瑢鈧粌鍑￠張澶嬫拱閸︽澘绨辨导妯哄帥缂佈呯敾閸欘垳鏁ら垾婵堟畱閸忔粌绨崇粵鏍殣閿涘奔绲炬＃鏍偧鐎瑰顥婇懟?S3 鐠佸潡妫舵径杈Е閿涘瞼鏁ら幋铚傜矝闂団偓鐟曚胶鈼㈤崥搴ㄥ櫢鐠囨洘澧犻懗鑺ュ瑏閸掓澘鐣弫纾嬪綅鐠嬪崬绨遍妴?
+- `daily_choice_cook_service.dart` 娑擃厾娈?bundled 鐟欙絾鐎界捄顖氱窞閺嗗倹婀€瑰苯鍙忛崚鐘绘珟閿涘苯褰ф担婊€璐熼崗鐓庮啇閸忔粌绨抽柅鏄忕帆娣囨繄鏆€閿涙稖绻嶇悰灞炬娑撴槒鐭惧鍕嚒缂佸繐鍨忛崚?S3 閺堫剙婀寸紓鎾崇摠鎼存挶鈧?
+- 閺堫剝鐤嗛張顏勭暚閹存劒绮ㄦ惔鎾冲弿闁?`dart analyze`閿涙艾缍嬮崜宥嗩攽闂堛垻骞嗘晶鍐ㄦ儙閸斻劌鍨庨弸鎰箛閸斺剝妞傞柆顓海 `dartaotruntime.exe` 閹锋帞绮风拋鍧楁６閿涘矂娓剁憰浣告倵缂侇厼婀張顒佹簚閺夊啴妾洪悳顖氼暔娑撳藟鐠烘垯鈧?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_library_store_test.dart test/daily_choice_hub_smoke_test.dart`（通过）
-- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart test/daily_choice_eat_library_store_test.dart test/daily_choice_hub_smoke_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_064-EAT] - 2026-04-25
 
-### 原因
-- 用户继续要求完善工具箱“每日抉择”中的“吃什么”子模块，并明确指出当前菜谱量级远远不够，需要接入更大的本地菜谱库。
-- 需要把 `D:\vocabularySleep-resources\做菜` 中可稳定抽取的完整菜谱去重后接入页面，同时补齐已有材料优先、高级筛选、管理搜索、指南整合和个人食谱能力。
-- 用户额外要求对古籍资料保持克制：只有在识别质量可靠时才单独接入“食疗与禁忌”子页，不能为了覆盖率强行识别。
-- 用户在继续体验时反馈“吃什么”页面首开非常卡、已有材料优先几乎只剩一种，要求把性能、匹配算法、多食材编辑和自定义忌口一起收口到可用状态。
+### 閸樼喎娲?
+- 閻劍鍩涚紒褏鐢荤憰浣圭湴鐎瑰苯鏉藉銉ュ徔缁犳墎鈧粍鐦￠弮銉﹀Ψ閹封斁鈧繀鑵戦惃鍕ㄢ偓婊冩倖娴犫偓娑斿牃鈧繂鐡欏Ο鈥虫健閿涘苯鑻熼弰搴ｂ€橀幐鍥у毉瑜版挸澧犻懣婊嗘皑闁插繒楠囨潻婊嗙箼娑撳秴顧勯敍宀勬付鐟曚焦甯撮崗銉︽纯婢堆呮畱閺堫剙婀撮懣婊嗘皑鎼存挶鈧?
+- 闂団偓鐟曚焦濡?`D:\vocabularySleep-resources\閸嬫俺褰峘 娑擃厼褰茬粙鍐茬暰閹惰棄褰囬惃鍕暚閺佺褰嶇拫鍗炲箵闁插秴鎮楅幒銉ュ弳妞ょ敻娼伴敍灞芥倱閺冩儼藟姒绘劕鍑￠張澶嬫綏閺傛瑤绱崗鍫涒偓渚€鐝痪褏鐡柅澶堚偓浣侯吀閻炲棙鎮崇槐顫偓浣瑰瘹閸楁鏆ｉ崥鍫濇嫲娑擃亙姹夋鐔绘皑閼宠棄濮忛妴?
+- 閻劍鍩涙０婵嗩樆鐟曚焦鐪扮€电懓褰滅猾宥堢カ閺傛瑤绻氶幐浣稿帬閸掕绱伴崣顏呮箒閸︺劏鐦戦崚顐ュ窛闁插繐褰查棃鐘虫閹靛秴宕熼悪顒佸复閸忋儮鈧粓顥ら悿妞剧瑢缁備礁绻夐垾婵嗙摍妞ょ绱濇稉宥堝厴娑撹桨绨＄憰鍡欐磰閻滃洤宸辩悰宀冪槕閸掝偁鈧?
+- 閻劍鍩涢崷銊ф埛缂侇厺缍嬫灞炬閸欏秹顩垾婊冩倖娴犫偓娑斿牃鈧繈銆夐棃銏ゎ浕瀵偓闂堢偛鐖堕崡掳鈧礁鍑￠張澶嬫綏閺傛瑤绱崗鍫濆殤娑斿骸褰ч崜鈺€绔寸粔宥忕礉鐟曚焦鐪伴幎濠冣偓褑鍏橀妴浣稿爱闁板秶鐣诲▔鏇樷偓浣割樋妞嬬喐娼楃紓鏍帆閸滃矁鍤滅€规矮绠熻箛灞藉經娑撯偓鐠ч攱鏁归崣锝呭煂閸欘垳鏁ら悩鑸碘偓浣碘偓?
 
-### 新增
-- 新增离线抽取脚本 `scripts/generate_daily_choice_recipe_dataset.py`，用于从 `D:\vocabularySleep-resources\做菜` 提取完整菜谱并生成项目内结构化数据集。
-- 新增打包资源 `assets/toolbox/daily_choice/recipe_library.json`，当前包含 `7179` 条去重后的本地菜谱，并附带统一参考书目元数据。
-- 新增本地导出目录 `D:\vocabularySleep-resources\cook_data`，同步生成：
+### 閺傛澘顤?
+- 閺傛澘顤冪粋鑽ゅ殠閹惰棄褰囬懘姘拱 `scripts/generate_daily_choice_recipe_dataset.py`閿涘瞼鏁ゆ禍搴濈矤 `D:\vocabularySleep-resources\閸嬫俺褰峘 閹绘劕褰囩€瑰本鏆ｉ懣婊嗘皑楠炲墎鏁撻幋鎰般€嶉惄顔煎敶缂佹挻鐎崠鏍ㄦ殶閹诡噣娉﹂妴?
+- 閺傛澘顤冮幍鎾冲瘶鐠у嫭绨?`assets/toolbox/daily_choice/recipe_library.json`閿涘苯缍嬮崜宥呭瘶閸?`7179` 閺夆€冲箵闁插秴鎮楅惃鍕拱閸︽媽褰嶇拫鎲嬬礉楠炲爼妾敮锔剧埠娑撯偓閸欏倽鈧啩鍔熼惄顔煎帗閺佺増宓侀妴?
+- 閺傛澘顤冮張顒€婀寸€电厧鍤惄顔肩秿 `D:\vocabularySleep-resources\cook_data`閿涘苯鎮撳銉ф晸閹存劧绱?
   - `daily_choice_recipe_library.json`
   - `daily_choice_recipe_library_summary.json`
   - `daily_choice_recipe_library.db`
-- 新增 `daily_choice_eat_library_store.dart`，将 bundled / cached / remote 菜谱资源整理导入独立 SQLite，本地维护 `summary / detail / index / meta` 四类标准表与筛选索引。
-- 数据整理脚本新增多解析器管线，补齐 `The Italian Pantry`、`Nourishing Recipes for Elderly`、`食趣：欧文的无国界创意厨房` 等新版式 EPUB 的完整菜谱提取，并对低质量古籍 / 扫描资料保持跳过策略。
-- 新增标准化菜谱库顶层字段：`libraryId / libraryVersion / schemaId / schemaVersion`，为后续远端分发或 S3 托管保留统一对象格式。
-- `daily_choice_eat_support.dart` 为吃什么新增结构化属性支持：
+- 閺傛澘顤?`daily_choice_eat_library_store.dart`閿涘苯鐨?bundled / cached / remote 閼挎粏姘ㄧ挧鍕爱閺佸鎮婄€电厧鍙嗛悪顒傜彌 SQLite閿涘本婀伴崷鎵樊閹?`summary / detail / index / meta` 閸ユ稓琚弽鍥у櫙鐞涖劋绗岀粵娑⑩偓澶屽偍瀵洏鈧?
+- 閺佺増宓侀弫瀵告倞閼存碍婀伴弬鏉款杻婢舵俺袙閺嬫劕娅掔粻锛勫殠閿涘矁藟姒?`The Italian Pantry`閵嗕梗Nourishing Recipes for Elderly`閵嗕梗妞嬬喕鍙敍姘儌閺傚洨娈戦弮鐘叉禇閻ｅ苯鍨遍幇蹇撳腹閹寸笡 缁涘鏌婇悧鍫濈础 EPUB 閻ㄥ嫬鐣弫纾嬪綅鐠嬭鲸褰侀崣鏍电礉楠炶泛顕担搴ゅ窛闁插繐褰滅猾?/ 閹殿偅寮跨挧鍕灐娣囨繃瀵旂捄瀹犵箖缁涙牜鏆愰妴?
+- 閺傛澘顤冮弽鍥у櫙閸栨牞褰嶇拫鍗炵氨妞よ泛鐪扮€涙顔岄敍姝歭ibraryId / libraryVersion / schemaId / schemaVersion`閿涘奔璐熼崥搴ｇ敾鏉╂粎顏崚鍡楀絺閹?S3 閹垫顓告穱婵堟殌缂佺喍绔寸€电钖勯弽鐓庣础閵?
+- `daily_choice_eat_support.dart` 娑撳搫鎮嗘禒鈧稊鍫熸煀婢х偟绮ㄩ弸鍕鐏炵偞鈧勬暜閹镐緤绱?
   - `meal / type / profile / diet / contains / ingredient / tool`
-  - 食材归一化与多来源属性补齐
-  - 已有材料匹配计数、匹配比例和最优候选收口
-  - 多来源菜谱合并去重
-- 新增 `daily_choice_eat_module.dart`，收拢吃什么专用页面结构、高级设置区和指南入口。
-- 扩充 `buildCookingGuideModules(...)`，新增“基础技能”“食材匹配与筛选说明”“参考书目”三个指南模块。
-- 扩充 `test/daily_choice_cook_service_test.dart`，覆盖：
-  - `cook` CSV 解析后的餐段/厨具映射
-  - 午餐/晚餐重叠行为
-  - bundled 菜谱库重复读取时的实例内解析缓存
-  - 多来源菜谱合并去重
-- 新增 `test/daily_choice_eat_catalog_test.dart` 与 `test/daily_choice_hub_smoke_test.dart`，分别覆盖高级筛选/多食材随机池策略，以及页面进入、展开高级设置、添加食材 chip、添加自定义忌口并完成随机停止的烟雾链路。
+  - 妞嬬喐娼楄ぐ鎺嶇閸栨牔绗屾径姘降濠ф劕鐫橀幀褑藟姒?
+  - 瀹稿弶婀侀弶鎰灐閸栧綊鍘ょ拋鈩冩殶閵嗕礁灏柊宥嗙槷娓氬鎷伴張鈧导妯衡偓娆撯偓澶嬫暪閸?
+  - 婢舵碍娼靛┃鎰綅鐠嬪崬鎮庨獮璺哄箵闁?
+- 閺傛澘顤?`daily_choice_eat_module.dart`閿涘本鏁归幏銏犳倖娴犫偓娑斿牅绗撻悽銊┿€夐棃銏㈢波閺嬪嫨鈧線鐝痪褑顔曠純顔煎隘閸滃本瀵氶崡妤€鍙嗛崣锝冣偓?
+- 閹碘晛鍘?`buildCookingGuideModules(...)`閿涘本鏌婃晶鐐┾偓婊冪唨绾偓閹垛偓閼宠В鈧績鈧粓顥ら弶鎰爱闁板秳绗岀粵娑⑩偓澶庮嚛閺勫簶鈧績鈧粌寮懓鍐у姛閻╊喒鈧繀绗佹稉顏呭瘹閸楁膩閸фぜ鈧?
+- 閹碘晛鍘?`test/daily_choice_cook_service_test.dart`閿涘矁顩惄鏍电窗
+  - `cook` CSV 鐟欙絾鐎介崥搴ｆ畱妞佹劖顔?閸樸劌鍙块弰鐘茬殸
+  - 閸楀牓顦?閺呮岸顦甸柌宥呭綌鐞涘奔璐?
+  - bundled 閼挎粏姘ㄦ惔鎾诲櫢婢跺秷顕伴崣鏍ㄦ閻ㄥ嫬鐤勬笟瀣敶鐟欙絾鐎界紓鎾崇摠
+  - 婢舵碍娼靛┃鎰綅鐠嬪崬鎮庨獮璺哄箵闁?
+- 閺傛澘顤?`test/daily_choice_eat_catalog_test.dart` 娑?`test/daily_choice_hub_smoke_test.dart`閿涘苯鍨庨崚顐ヮ洬閻╂牠鐝痪褏鐡柅?婢舵岸顥ら弶鎰版閺堢儤鐫滅粵鏍殣閿涘奔浜掗崣濠囥€夐棃銏ｇ箻閸忋儯鈧礁鐫嶅鈧妯奸獓鐠佸墽鐤嗛妴浣瑰潑閸旂娀顥ら弶?chip閵嗕焦鍧婇崝鐘哄殰鐎规矮绠熻箛灞藉經楠炶泛鐣幋鎰版閺堝搫浠犲銏㈡畱閻戠喖娴橀柧鎹愮熅閵?
 
-### 修改
-- `pubspec.yaml` 接入 `assets/toolbox/daily_choice/` 资源目录，保证离线菜谱库随应用打包。
-- `daily_choice_cook_service.dart` 改为按“本地库 -> 本地缓存 -> 远端刷新 -> 兜底种子”顺序加载，并在本地库与 `cook` 数据之间做结构化合并去重。
-- `daily_choice_cook_service.dart` 为 bundled 大菜谱库增加跨实例解析缓存、`12h` 远端刷新 TTL，并避免在没有缓存文件时无意义读取整份大 bundle。
-- `daily_choice_hub.dart` 将吃什么初始化流程改为并发加载自定义状态和菜谱数据，并确保吃什么候选在进入页面前统一补齐结构化属性；首次进入若尚未安装菜谱库，则明确提示用户点击导入本地 SQLite。
-- `daily_choice_hub.dart` 在页面层只持有一次当前可见菜谱索引，进入页面和切换筛选时不再反复对 6000+ 菜谱做全量属性推断与扫描。
-- `daily_choice_eat_catalog.dart` 新增预建索引过滤路径，稳定支持多餐段重叠、厨具筛选、荤素/友好标签、常见忌口、自定义忌口和多食材优先匹配。
-- `daily_choice_eat_support.dart` 将“已有材料优先”改为 `exact -> strong -> broad` 三阶段随机池策略，并在命中太少时自动补入高相关候选，避免随机结果长期只剩 1 道菜。
-- `daily_choice_seed_data.dart` 把做菜指南升级为统一参考书目版本，整合 `cook` “做菜之前”与本地基础技能，并补充“洗菜去残留”和“烘焙先称量”两条底层操作指南；《食物辑要》继续明确标记为暂不接入。
-- `daily_choice_manager_sheet.dart` 为吃什么新增菜名搜索、餐段重叠筛选、厨具筛选和标签筛选。
-- `daily_choice_eat_module.dart` 的高级设置改为支持多食材添加/删除、多自定义忌口 chip 编辑，并补齐香菜、花生、牛奶、鱼腥草等常见调料/食材忌口入口。
-- `daily_choice_editor_sheet.dart` 为个人食谱保存逻辑补齐自动 attributes 推断、标签补齐和默认详情兜底。
-- `daily_choice_detail_sheets.dart` 对吃什么详情页隐藏逐条来源说明，改为展示结构化标签摘要、完整步骤与关键提示；管理页点击菜名时同样按菜谱 ID 读取完整详情。
-- `daily_choice_modules.dart` 清理旧的吃什么实现，仅保留 `go / activity` 公共模块，避免旧逻辑继续与新吃什么页面并存。
-- `modules/toolbox/README.md` 同步记录吃什么离线大库、筛选能力、指南整合和古籍跳过边界。
+### 娣囶喗鏁?
+- `pubspec.yaml` 閹恒儱鍙?`assets/toolbox/daily_choice/` 鐠у嫭绨惄顔肩秿閿涘奔绻氱拠浣侯瀲缁捐儻褰嶇拫鍗炵氨闂呭繐绨查悽銊﹀ⅵ閸栧懌鈧?
+- `daily_choice_cook_service.dart` 閺€閫涜礋閹稿鈧粍婀伴崷鏉跨氨 -> 閺堫剙婀寸紓鎾崇摠 -> 鏉╂粎顏崚閿嬫煀 -> 閸忔粌绨崇粔宥呯摍閳ユ繈銆庢惔蹇撳鏉炴枻绱濋獮璺烘躬閺堫剙婀存惔鎾茬瑢 `cook` 閺佺増宓佹稊瀣？閸嬫氨绮ㄩ弸鍕閸氬牆鑻熼崢濠氬櫢閵?
+- `daily_choice_cook_service.dart` 娑?bundled 婢堆嗗綅鐠嬪崬绨辨晶鐐插鐠恒劌鐤勬笟瀣掗弸鎰处鐎涙ǜ鈧梗12h` 鏉╂粎顏崚閿嬫煀 TTL閿涘苯鑻熼柆鍨帳閸︺劍鐥呴張澶岀处鐎涙ɑ鏋冩禒鑸垫閺冪姵鍓版稊澶庮嚢閸欐牗鏆ｆ禒钘夈亣 bundle閵?
+- `daily_choice_hub.dart` 鐏忓棗鎮嗘禒鈧稊鍫濆灥婵瀵插ù浣衡柤閺€閫涜礋楠炶泛褰傞崝鐘烘祰閼奉亜鐣炬稊澶屽Ц閹礁鎷伴懣婊嗘皑閺佺増宓侀敍灞借嫙绾喕绻氶崥鍐х矆娑斿牆鈧瑩鈧婀潻娑樺弳妞ょ敻娼伴崜宥囩埠娑撯偓鐞涖儵缍堢紒鎾寸€崠鏍х潣閹嶇幢妫ｆ牗顐兼潻娑樺弳閼汇儱鐨婚張顏勭暔鐟佸懓褰嶇拫鍗炵氨閿涘苯鍨弰搴ｂ€橀幓鎰仛閻劍鍩涢悙鐟板毊鐎电厧鍙嗛張顒€婀?SQLite閵?
+- `daily_choice_hub.dart` 閸︺劑銆夐棃銏犵湴閸欘亝瀵旈張澶夌濞嗏€崇秼閸撳秴褰茬憴浣藉綅鐠嬭京鍌ㄥ鏇礉鏉╂稑鍙嗘い鐢告桨閸滃苯鍨忛幑銏㈢摣闁妞傛稉宥呭晙閸欏秴顦茬€?6000+ 閼挎粏姘ㄩ崑姘弿闁插繐鐫橀幀褎甯归弬顓濈瑢閹殿偅寮块妴?
+- `daily_choice_eat_catalog.dart` 閺傛澘顤冩０鍕紦缁便垹绱╂潻鍥ㄦ姢鐠侯垰绶為敍宀€菙鐎规碍鏁幐浣割樋妞佹劖顔岄柌宥呭綌閵嗕礁甯归崗椋庣摣闁鈧浇宕电槐?閸欏銈介弽鍥╊劮閵嗕礁鐖剁憴浣哥箟閸欙絻鈧浇鍤滅€规矮绠熻箛灞藉經閸滃苯顦挎鐔告綏娴兼ê鍘涢崠褰掑帳閵?
+- `daily_choice_eat_support.dart` 鐏忓棌鈧粌鍑￠張澶嬫綏閺傛瑤绱崗鍫氣偓婵囨暭娑?`exact -> strong -> broad` 娑撳妯佸▓鐢告閺堢儤鐫滅粵鏍殣閿涘苯鑻熼崷銊ユ嚒娑擃厼銇婄亸鎴炴閼奉亜濮╃悰銉ュ弳妤傛娴夐崗鍐测偓娆撯偓澶涚礉闁灝鍘ら梾蹇旀簚缂佹挻鐏夐梹鎸庢埂閸欘亜澧?1 闁捁褰嶉妴?
+- `daily_choice_seed_data.dart` 閹跺﹤浠涢懣婊勫瘹閸楁宕岀痪褌璐熺紒鐔剁閸欏倽鈧啩鍔熼惄顔惧閺堫剨绱濋弫鏉戞値 `cook` 閳ユ粌浠涢懣婊€绠ｉ崜宥佲偓婵呯瑢閺堫剙婀撮崺铏诡攨閹垛偓閼虫枻绱濋獮鎯八夐崗鍛偓婊勭閼挎粌骞撳▓瀣殌閳ユ繂鎷伴垾婊呭劋閻掓瑥鍘涚粔浼村櫤閳ユ繀琚遍弶鈥崇俺鐏炲倹鎼锋担婊勫瘹閸楁绱遍妴濠囶棨閻椻晞绶憰浣碘偓瀣埛缂侇厽妲戠涵顔界垼鐠侀璐熼弳鍌欑瑝閹恒儱鍙嗛妴?
+- `daily_choice_manager_sheet.dart` 娑撳搫鎮嗘禒鈧稊鍫熸煀婢х偠褰嶉崥宥嗘偝缁鳖潿鈧線顦靛▓鐢稿櫢閸欑姷鐡柅澶堚偓浣稿腹閸忛鐡柅澶婃嫲閺嶅洨顒风粵娑⑩偓澶堚偓?
+- `daily_choice_eat_module.dart` 閻ㄥ嫰鐝痪褑顔曠純顔芥暭娑撶儤鏁幐浣割樋妞嬬喐娼楀ǎ璇插/閸掔娀娅庨妴浣割樋閼奉亜鐣炬稊澶婄箟閸?chip 缂傛牞绶敍灞借嫙鐞涖儵缍堟＃娆掑綅閵嗕浇濮抽悽鐔粹偓浣哄婵傝翰鈧線濂旈懙銉ㄥ磸缁涘鐖剁憴浣界殶閺?妞嬬喐娼楄箛灞藉經閸忋儱褰涢妴?
+- `daily_choice_editor_sheet.dart` 娑撹桨閲滄禍娲棨鐠嬪彉绻氱€涙﹢鈧槒绶悰銉╃秷閼奉亜濮?attributes 閹恒劍鏌囬妴浣圭垼缁涙崘藟姒绘劕鎷版妯款吇鐠囷附鍎忛崗婊冪俺閵?
+- `daily_choice_detail_sheets.dart` 鐎电懓鎮嗘禒鈧稊鍫ｎ嚊閹懘銆夐梾鎰闁劖娼弶銉︾爱鐠囧瓨妲戦敍灞炬暭娑撳搫鐫嶇粈铏圭波閺嬪嫬瀵查弽鍥╊劮閹芥顩﹂妴浣哥暚閺佸瓨顒炴銈勭瑢閸忔娊鏁幓鎰仛閿涙稓顓搁悶鍡涖€夐悙鐟板毊閼挎粌鎮曢弮璺烘倱閺嶉攱瀵滈懣婊嗘皑 ID 鐠囪褰囩€瑰本鏆ｇ拠锔藉剰閵?
+- `daily_choice_modules.dart` 濞撳懐鎮婇弮褏娈戦崥鍐х矆娑斿牆鐤勯悳甯礉娴犲懍绻氶悾?`go / activity` 閸忣剙鍙″Ο鈥虫健閿涘矂浼╅崗宥嗘＋闁槒绶紒褏鐢绘稉搴㈡煀閸氬啩绮堟稊鍫ャ€夐棃銏犺嫙鐎涙ǜ鈧?
+- `modules/toolbox/README.md` 閸氬本顒炵拋鏉跨秿閸氬啩绮堟稊鍫㈩瀲缁惧灝銇囨惔鎾扁偓浣虹摣闁鍏橀崝娑栤偓浣瑰瘹閸楁鏆ｉ崥鍫濇嫲閸欍倗鐫勭捄瀹犵箖鏉堝湱鏅妴?
 
-### 风险变更
-- 清真友好、素食友好、常见忌口与过敏原筛选均属于启发式辅助标签，不等价于宗教、医学或专业营养认证。
-- 本地菜谱库体量已提升到约 `26.7 MB` JSON / `47.4 MB` SQLite 导出；当前通过预建索引、延后远端刷新、缓存复用与筛选收口控制首屏压力，后续若继续扩库，优先建议走 `summary manifest + detail/SQLite` 远端按需加载。
-- 《食物辑要》属于竖排古体资料，本轮明确不强行接入“食疗与禁忌”子页，后续只在识别质量稳定时再单独落地。
-- 自定义个人食谱与隐藏内置项仍保存在本地 `toolbox_daily_choice_v1.json`，当前不接入账号同步或跨端备份。
+### 妞嬪酣娅撻崣妯绘纯
+- 濞撳懐婀￠崣瀣偨閵嗕胶绀屾鐔峰几婵傚鈧礁鐖剁憴浣哥箟閸欙絼绗屾潻鍥ㄦ櫛閸樼喓鐡柅澶婃綆鐏炵偘绨崥顖氬絺瀵繗绶熼崝鈺傜垼缁涙拝绱濇稉宥囩搼娴犺渹绨€规鏆€閵嗕礁灏扮€涳附鍨ㄦ稉鎾茬瑹閽€銉ュ悋鐠併倛鐦夐妴?
+- 閺堫剙婀撮懣婊嗘皑鎼存挷缍嬮柌蹇撳嚒閹绘劕宕岄崚鎵 `26.7 MB` JSON / `47.4 MB` SQLite 鐎电厧鍤敍娑樼秼閸撳秹鈧俺绻冩０鍕紦缁便垹绱╅妴浣告閸氬氦绻欑粩顖氬煕閺傝埇鈧胶绱︾€涙ê顦查悽銊ょ瑢缁涙盯鈧鏁归崣锝嗗付閸掑爼顩荤仦蹇撳竾閸旀冻绱濋崥搴ｇ敾閼汇儳鎴风紒顓熷⒖鎼存搫绱濇导妯哄帥瀵ら缚顔呯挧?`summary manifest + detail/SQLite` 鏉╂粎顏幐澶愭付閸旂姾娴囬妴?
+- 閵嗗﹪顥ら悧鈺勭帆鐟曚降鈧鐫樻禍搴ｇ彨閹烘帒褰滄担鎾圭カ閺傛瑱绱濋張顒冪枂閺勫海鈥樻稉宥呭繁鐞涘本甯撮崗銉⑩偓婊堫棨閻ゆぞ绗岀粋浣哥箟閳ユ繂鐡欐い纰夌礉閸氬海鐢婚崣顏勬躬鐠囧棗鍩嗙拹銊╁櫤缁嬪啿鐣鹃弮璺哄晙閸楁洜瀚拃钘夋勾閵?
+- 閼奉亜鐣炬稊澶夐嚋娴滄椽顥ょ拫鍙樼瑢闂呮劘妫岄崘鍛枂妞ら€涚矝娣囨繂鐡ㄩ崷銊︽拱閸?`toolbox_daily_choice_v1.json`閿涘苯缍嬮崜宥勭瑝閹恒儱鍙嗙拹锕€褰块崥灞绢劄閹存牞娉曠粩顖氼槵娴犲鈧?
 
-### 验证
-- `python scripts\\generate_daily_choice_recipe_dataset.py`（通过，重新生成 `7179` 条去重菜谱，原始抽取 `7364` 条，并同步导出 full JSON / summary JSON / SQLite）
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_recipe_library.dart test/daily_choice_cook_service_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_hub_smoke_test.dart test/daily_choice_recipe_library_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice test`（通过；仍有全仓无关 `info`，不是本轮引入）
-- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`（通过）
-- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`（通过）
-- `flutter test test/daily_choice_recipe_library_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `python scripts\\generate_daily_choice_recipe_dataset.py`閿涘牓鈧俺绻冮敍宀勫櫢閺傛壆鏁撻幋?`7179` 閺夆€冲箵闁插秷褰嶇拫鎲嬬礉閸樼喎顫愰幎钘夊絿 `7364` 閺夆槄绱濋獮璺烘倱濮濄儱顕遍崙?full JSON / summary JSON / SQLite閿?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_catalog.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_eat_support.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_recipe_library.dart test/daily_choice_cook_service_test.dart test/daily_choice_eat_catalog_test.dart test/daily_choice_hub_smoke_test.dart test/daily_choice_recipe_library_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice test`閿涘牓鈧俺绻冮敍娑楃矝閺堝鍙忔禒鎾存￥閸?`info`閿涘奔绗夐弰顖涙拱鏉烆喖绱╅崗銉礆
+- `flutter test test/daily_choice_hub_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_eat_library_store_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `flutter test test/daily_choice_recipe_library_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_061-WEAR-2] - 2026-04-25
 
-### 原因
-- 用户继续要求专注工具箱“每日抉择”中的“穿什么”子模块，并指出当前数据量仍不足以支撑更细的筛选与管理需求。
-- 需要基于新增的本地穿搭参考资料继续扩充搭配库、把穿搭指南讲得更完整，并将个人衣橱管理升级为带有风格与样式引导的一版。
+### 閸樼喎娲?
+- 閻劍鍩涚紒褏鐢荤憰浣圭湴娑撴挻鏁炲銉ュ徔缁犳墎鈧粍鐦￠弮銉﹀Ψ閹封斁鈧繀鑵戦惃鍕ㄢ偓婊呪敍娴犫偓娑斿牃鈧繂鐡欏Ο鈥虫健閿涘苯鑻熼幐鍥у毉瑜版挸澧犻弫鐗堝祦闁插繋绮涙稉宥堝喕娴犮儲鏁幘鎴炴纯缂佸棛娈戠粵娑⑩偓澶夌瑢缁狅紕鎮婇棁鈧Ч鍌樷偓?
+- 闂団偓鐟曚礁鐔€娴滃孩鏌婃晶鐐垫畱閺堫剙婀寸粚鎸庢儗閸欏倽鈧啳绁弬娆戞埛缂侇厽澧块崗鍛儗闁板秴绨遍妴浣瑰Ω缁屾寧鎯岄幐鍥у础鐠佹彃绶遍弴鏉戠暚閺佽揪绱濋獮璺虹殺娑擃亙姹夌悰锝嗏攳缁狅紕鎮婇崡鍥╅獓娑撳搫鐢張澶愵棑閺嶉棿绗岄弽宄扮础瀵洖顕遍惃鍕閻楀牄鈧?
 
-### 新增
-- 为 `DailyChoiceOption` 新增结构化 `attributes` 字段，用于承载穿搭特征并持久化到 `toolbox_daily_choice_v1.json`。
-- 在 `daily_choice_seed_data.dart` 中新增穿什么的结构化特征定义：
-  - `风格`
-  - `版型`
-  - `样式类型`
-  - `面料与触感`
-  - `亮点`
-- 新增模块化穿搭指南 `wearGuideModules`，按以下 8 个章节组织：
-  - `基础与风格`
-  - `版型与比例`
-  - `场合与职场`
-  - `色彩与材质`
-  - `季节与天气`
-  - `鞋履与配饰`
-  - `衣橱整理与练习`
-  - `扩展边界`
-- 新增 `test/daily_choice_wear_seed_test.dart`，验证：
-  - 穿什么条目总量达到发布级覆盖
-  - 每个 `气温 × 场景` 组合至少有两条候选
-  - 每条内置搭配都具备核心结构化特征
+### 閺傛澘顤?
+- 娑?`DailyChoiceOption` 閺傛澘顤冪紒鎾寸€崠?`attributes` 鐎涙顔岄敍宀€鏁ゆ禍搴㈠鏉炵晫鈹涢幖顓犲瀵颁礁鑻熼幐浣风畽閸栨牕鍩?`toolbox_daily_choice_v1.json`閵?
+- 閸?`daily_choice_seed_data.dart` 娑擃厽鏌婃晶鐐碘敍娴犫偓娑斿牏娈戠紒鎾寸€崠鏍瀵颁礁鐣炬稊澶涚窗
+  - `妞嬪孩鐗竊
+  - `閻楀牆鐎穈
+  - `閺嶅嘲绱＄猾璇茬€穈
+  - `闂堛垺鏋℃稉搴ば曢幇鐒?
+  - `娴滎喚鍋
+- 閺傛澘顤冨Ο鈥虫健閸栨牜鈹涢幖顓熷瘹閸?`wearGuideModules`閿涘本瀵滄禒銉ょ瑓 8 娑擃亞鐝烽懞鍌滅矋缂佸浄绱?
+  - `閸╄櫣顢呮稉搴棑閺嶇钞
+  - `閻楀牆鐎锋稉搴㈢槷娓氬獖
+  - `閸﹀搫鎮庢稉搴や捍閸︾
+  - `閼规彃鍍垫稉搴㈡綏鐠愨暅
+  - `鐎涳綀濡稉搴°亯濮樻摽
+  - `闂夊楗辨稉搴ㄥ帳妤楃櫗
+  - `鐞涳絾鈹嶉弫瀵告倞娑撳海绮屾稊鐕?
+  - `閹碘晛鐫嶆潏鍦櫕`
+- 閺傛澘顤?`test/daily_choice_wear_seed_test.dart`閿涘矂鐛欑拠渚婄窗
+  - 缁屽じ绮堟稊鍫熸蒋閻╊喗鈧鍣烘潏鎯у煂閸欐垵绔风痪褑顩惄?
+  - 濮ｅ繋閲?`濮樻梹淇?鑴?閸︾儤娅檂 缂佸嫬鎮庨懛鍐茬毌閺堝琚遍弶鈥斥偓娆撯偓?
+  - 濮ｅ繑娼崘鍛枂閹碱參鍘ら柈钘夊徔婢跺洦鐗宠箛鍐波閺嬪嫬瀵查悧鐟扮窙
 
-### 修改
+### 娣囶喗鏁?
 - `daily_choice_wear_seed.dart`
-  - 将穿什么内置搭配扩充到 `87` 条
-  - 为原有与新增搭配补齐自动推断的结构化特征
-  - 将穿搭参考来源扩展到更多本地资料，包括 `上班穿什么`、`搭配其实很好玩2`、`风格的练习`、`穿衣的基本`、`绅士时尚` 等
+  - 鐏忓棛鈹涙禒鈧稊鍫濆敶缂冾喗鎯岄柊宥嗗⒖閸忓懎鍩?`87` 閺?
+  - 娑撳搫甯張澶夌瑢閺傛澘顤冮幖顓㈠帳鐞涖儵缍堥懛顏勫З閹恒劍鏌囬惃鍕波閺嬪嫬瀵查悧鐟扮窙
+  - 鐏忓棛鈹涢幖顓炲棘閼板啯娼靛┃鎰⒖鐏炴洖鍩岄弴鏉戭樋閺堫剙婀寸挧鍕灐閿涘苯瀵橀幏?`娑撳﹦褰粚澶哥矆娑斿潉閵嗕梗閹碱參鍘ら崗璺虹杽瀵板牆銈介悳?`閵嗕梗妞嬪孩鐗搁惃鍕矊娑旂嚮閵嗕梗缁岃儻銆傞惃鍕唨閺堢悺閵嗕梗缂佸懎锛嬮弮璺虹毣` 缁?
 - `daily_choice_editor_sheet.dart`
-  - 自定义穿搭编辑页新增五组引导式 trait 选择
-  - 穿搭字段文案升级为更贴合衣橱管理的表达
-  - 保存时会自动把结构化特征并入标签与默认详情
+  - 閼奉亜鐣炬稊澶屸敍閹碱厾绱潏鎴︺€夐弬鏉款杻娴滄梻绮嶅鏇烆嚤瀵?trait 闁瀚?
+  - 缁屾寧鎯岀€涙顔岄弬鍥攳閸楀洨楠囨稉鐑樻纯鐠愭潙鎮庣悰锝嗏攳缁狅紕鎮婇惃鍕€冩潏?
+  - 娣囨繂鐡ㄩ弮鏈电窗閼奉亜濮╅幎濠勭波閺嬪嫬瀵查悧鐟扮窙楠炶泛鍙嗛弽鍥╊劮娑撳酣绮拋銈堫嚊閹?
 - `daily_choice_manager_sheet.dart`
-  - 穿什么管理页新增 `风格 / 版型 / 样式类型` 三组筛选
-  - 自定义和内置条目卡片改为显示结构化特征 chip
-  - 衣橱管理文案升级为更明确的个人衣橱语义
-- `daily_choice_detail_sheets.dart` 为穿什么详情补充“风格画像”模块，展示结构化特征摘要。
-- `daily_choice_wear_module.dart` 的指南入口改为拉起新的模块化穿搭指南。
-- `daily_choice_modules.dart` 做最小必要编译修补：为吃什么数据来源状态补齐 `bundle` 分支，避免 UI smoke 失败。
-- `PROJECT_DOMAIN.md` 与 `modules/toolbox/README.md` 同步补充穿什么的结构化衣橱能力、87 条候选覆盖和详细指南说明。
+  - 缁屽じ绮堟稊鍫㈩吀閻炲棝銆夐弬鏉款杻 `妞嬪孩鐗?/ 閻楀牆鐎?/ 閺嶅嘲绱＄猾璇茬€穈 娑撳绮嶇粵娑⑩偓?
+  - 閼奉亜鐣炬稊澶婃嫲閸愬懐鐤嗛弶锛勬窗閸楋紕澧栭弨閫涜礋閺勫墽銇氱紒鎾寸€崠鏍瀵?chip
+  - 鐞涳絾鈹嶇粻锛勬倞閺傚洦顢嶉崡鍥╅獓娑撶儤娲块弰搴ｂ€橀惃鍕嚋娴滈缚銆傚杈嚔娑?
+- `daily_choice_detail_sheets.dart` 娑撹櫣鈹涙禒鈧稊鍫ｎ嚊閹懓藟閸忓應鈧粓顥撻弽鑲╂暰閸嶅繆鈧繃膩閸ф绱濈仦鏇犮仛缂佹挻鐎崠鏍瀵颁焦鎲崇憰浣碘偓?
+- `daily_choice_wear_module.dart` 閻ㄥ嫭瀵氶崡妤€鍙嗛崣锝嗘暭娑撶儤濯虹挧閿嬫煀閻ㄥ嫭膩閸ф瀵茬粚鎸庢儗閹稿洤宕￠妴?
+- `daily_choice_modules.dart` 閸嬫碍娓剁亸蹇撶箑鐟曚胶绱拠鎴滄叏鐞涖儻绱版稉鍝勬倖娴犫偓娑斿牊鏆熼幑顔芥降濠ф劗濮搁幀浣剿夋?`bundle` 閸掑棙鏁敍宀勪缉閸?UI smoke 婢惰精瑙﹂妴?
+- `PROJECT_DOMAIN.md` 娑?`modules/toolbox/README.md` 閸氬本顒炵悰銉ュ帠缁屽じ绮堟稊鍫㈡畱缂佹挻鐎崠鏍€傚杈厴閸旀稏鈧?7 閺夆€斥偓娆撯偓澶庮洬閻╂牕鎷扮拠锔剧矎閹稿洤宕＄拠瀛樻閵?
 
-### 风险变更
-- 穿什么仍提供的是可解释、可编辑的建议层，不替代个体体质差异、制服要求、极端天气安全判断或专业形象顾问。
-- 结构化特征目前用于本地筛选、展示和后续扩展边界，不代表已经接入图片识别、AI 试穿或购物平台。
-- 本轮未改动其他每日抉择子模块的业务逻辑，只做了一个与吃什么编译通过相关的最小分支补齐。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁屽じ绮堟稊鍫滅矝閹绘劒绶甸惃鍕Ц閸欘垵袙闁插鈧礁褰茬紓鏍帆閻ㄥ嫬缂撶拋顔肩湴閿涘奔绗夐弴澶稿敩娑擃亙缍嬫担鎾瑰窛瀹割喖绱撻妴浣稿煑閺堝秷顩﹀Ч鍌樷偓浣圭€粩顖氥亯濮樻柨鐣ㄩ崗銊ュ灲閺傤厽鍨ㄦ稉鎾茬瑹瑜般垼钖勬い楣冩６閵?
+- 缂佹挻鐎崠鏍瀵颁胶娲伴崜宥囨暏娴滃孩婀伴崷鎵摣闁鈧礁鐫嶇粈鍝勬嫲閸氬海鐢婚幍鈺佺潔鏉堝湱鏅敍灞肩瑝娴狅綀銆冨鑼病閹恒儱鍙嗛崶鍓у鐠囧棗鍩嗛妴涓処 鐠囨洜鈹涢幋鏍枠閻椻晛閽╅崣鑸偓?
+- 閺堫剝鐤嗛張顏呮暭閸斻劌鍙炬禒鏍ㄧ槨閺冦儲濡烽幏鈺佺摍濡€虫健閻ㄥ嫪绗熼崝锟犫偓鏄忕帆閿涘苯褰ч崑姘啊娑撯偓娑擃亙绗岄崥鍐х矆娑斿牏绱拠鎴︹偓姘崇箖閻╃鍙ч惃鍕付鐏忓繐鍨庨弨顖澦夋鎰┾偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`（通过，No issues found）
-- `flutter test test/daily_choice_wear_seed_test.dart --reporter compact`（通过，All tests passed）
-- `flutter test test/ui_smoke_test.dart --reporter compact`（通过，All tests passed）
-- `git diff --check -- lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/daily_choice_wear_seed_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
+- `flutter test test/ui_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
+- `git diff --check -- lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart test/daily_choice_wear_seed_test.dart`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_062-GO] - 2026-04-25
 
-### 原因
-- 用户要求只推进工具箱“每日抉择”中的“到哪儿去”子模块，并将其从占位级随机地点升级到可发布落地的一版。
-- 当前“去哪儿”只有极少量静态地点，缺少足够丰富的场景分类、地点覆盖、详情说明和可持续扩展边界。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閸欘亝甯规潻娑樹紣閸忛顔堥垾婊勭槨閺冦儲濡烽幏鈹锯偓婵呰厬閻ㄥ嫧鈧粌鍩岄崫顏勫姽閸樼儵鈧繂鐡欏Ο鈥虫健閿涘苯鑻熺亸鍡楀従娴犲骸宕版担宥囬獓闂呭繑婧€閸︽壆鍋ｉ崡鍥╅獓閸掓澘褰查崣鎴濈閽€钘夋勾閻ㄥ嫪绔撮悧鍫涒偓?
+- 瑜版挸澧犻垾婊冨箵閸濐亜鍔归垾婵嗗涧閺堝鐎亸鎴﹀櫤闂堟瑦鈧礁婀撮悙鐧哥礉缂傚搫鐨搾鍐差檮娑撴澘鐦滈惃鍕簚閺咁垰鍨庣猾姹団偓浣告勾閻愮顩惄鏍モ偓浣筋嚊閹懓顕╅弰搴℃嫲閸欘垱瀵旂紒顓熷⒖鐏炴洝绔熼悾灞烩偓?
 
-### 新增
-- 新增 `daily_choice_place_seed.dart`，将“去哪儿”地点种子从活动数据中独立拆出，避免 `go` 与 `activity` 继续耦合在同一份 seed 内。
-- 新增 15 个“去哪儿”场景分类：
-  - `饮食 / 娱乐 / 运动 / 文化 / 历史 / 自然 / 学习 / 购物 / 社交 / 亲子 / 夜生活 / 放松 / 出片 / 特色区域 / 纪念`
-- 基于 `3 个距离层级 × 15 个场景 × 8 个 archetype` 生成 360 条“去哪儿”内置地点条目，覆盖：
-  - 公园、绿道、湿地、山林步道、观景台
-  - 体育中心、健身房、游泳馆、球馆、攀岩馆
-  - 餐馆、咖啡甜品店、小吃街、夜宵区、景观餐厅
-  - 酒吧、精酿吧、Livehouse、KTV、网吧 / 电竞馆
-  - 博物馆、美术馆、科技馆、剧院、图书馆、书店
-  - 老街区、古镇、工业遗址、纪念馆、校史馆、城市记忆馆等
-- 新增结构化“出行指南”模块组，按“先定范围 / 按场景匹配 / 地图与检索 / 天气预算安全 / 最小准备包 / 后续扩展边界”展示。
-- 新增 `test/daily_choice_place_seed_test.dart`，验证“去哪儿”条目数量、分类覆盖、地图搜索词与引用字段完整性。
+### 閺傛澘顤?
+- 閺傛澘顤?`daily_choice_place_seed.dart`閿涘苯鐨㈤垾婊冨箵閸濐亜鍔归垾婵嗘勾閻愬湱顫掔€涙劒绮犲ú璇插З閺佺増宓佹稉顓犲缁斿濯堕崙鐚寸礉闁灝鍘?`go` 娑?`activity` 缂佈呯敾閼帮箑鎮庨崷銊ユ倱娑撯偓娴?seed 閸愬懌鈧?
+- 閺傛澘顤?15 娑擃亖鈧粌骞撻崫顏勫姽閳ユ繂婧€閺咁垰鍨庣猾浼欑窗
+  - `妤楊噣顥?/ 婵炲彉绠?/ 鏉╂劕濮?/ 閺傚洤瀵?/ 閸樺棗褰?/ 閼奉亞鍔?/ 鐎涳缚绡?/ 鐠愵厾澧?/ 缁€鍙ユ唉 / 娴滄彃鐡?/ 婢舵粎鏁撳ú?/ 閺€鐐緱 / 閸戣櫣澧?/ 閻楃澹婇崠鍝勭厵 / 缁绢亜搴穈
+- 閸╄桨绨?`3 娑擃亣绐涚粋璇茬湴缁?鑴?15 娑擃亜婧€閺?鑴?8 娑?archetype` 閻㈢喐鍨?360 閺夆檧鈧粌骞撻崫顏勫姽閳ユ繂鍞寸純顔兼勾閻愯娼惄顕嗙礉鐟曞棛娲婇敍?
+  - 閸忣剙娲妴浣鸿雹闁挶鈧焦绠嶉崷鑸偓浣稿寳閺嬫顒為柆鎾扁偓浣筋潎閺咁垰褰?
+  - 娴ｆ捁鍋涙稉顓炵妇閵嗕礁浠撮煬顐ｅ煣閵嗕焦鐖跺▔鎶筋洬閵嗕胶鎮嗘＃鍡愨偓浣规敘瀹€鈺咁洬
+  - 妞佹劙顩妴浣告寘閸燂紕鏁庨崫浣哥暗閵嗕礁鐨崥鍐敎閵嗕礁顧佺€归潧灏妴浣规珯鐟欏倿顦甸崢?
+  - 闁版帒鎯傞妴浣虹翱闁板灝鎯傞妴涓﹊vehouse閵嗕甫TV閵嗕胶缍夐崥?/ 閻㈢數鐝垫＃?
+  - 閸楁氨澧挎＃鍡愨偓浣虹法閺堫垶顩妴浣侯潠閹垛偓妫ｅ棎鈧礁澧介梽顫偓浣告禈娑旓箓顩妴浣峰姛鎼?
+  - 閼颁浇顢滈崠鎭掆偓浣稿綔闂€鍥モ偓浣镐紣娑撴岸浠愰崸鈧妴浣洪偗韫囩敻顩妴浣圭墡閸欐煡顩妴浣哥厔鐢倽顔囪箛鍡涱洬缁?
+- 閺傛澘顤冪紒鎾寸€崠鏍も偓婊冨毉鐞涘本瀵氶崡妞烩偓婵嚹侀崸妤冪矋閿涘本瀵滈垾婊冨帥鐎规俺瀵栭崶?/ 閹稿婧€閺咁垰灏柊?/ 閸︽澘娴樻稉搴㈩梾缁?/ 婢垛晜鐨垫０鍕暬鐎瑰鍙?/ 閺堚偓鐏忓繐鍣径鍥у瘶 / 閸氬海鐢婚幍鈺佺潔鏉堝湱鏅垾婵嗙潔缁€鎭掆偓?
+- 閺傛澘顤?`test/daily_choice_place_seed_test.dart`閿涘矂鐛欑拠浣测偓婊冨箵閸濐亜鍔归垾婵囨蒋閻╊喗鏆熼柌蹇嬧偓浣稿瀻缁槒顩惄鏍モ偓浣告勾閸ョ偓鎮崇槐銏ｇ槤娑撳骸绱╅悽銊ョ摟濞堥潧鐣弫瀛樷偓褋鈧?
 
-### 修改
-- `daily_choice_seed_data.dart` 为“去哪儿”补齐 `placeSceneCategories` 与 `allPlaceSceneCategory`，并将原本简陋的出行指南升级为模块化指南。
-- `daily_choice_modules.dart` 中的“去哪儿”页面改为：
-  - 距离 + 场景双维筛选
-  - 当前距离层级地点数 / 当前候选数 / 覆盖场景数状态面板
-  - 更清晰的空状态和移动端首屏信息
-  - 管理页支持按距离和场景筛选自定义地点
-- `daily_choice_detail_sheets.dart` 对“去哪儿”详情页补齐地图搜索词提取逻辑，复制按钮优先复制结构化地图检索词，而不再机械复制标题。
-- `daily_choice_activity_place_seed.dart` 移除旧的“去哪儿”占位数据，仅保留“干什么”相关 seed。
-- `modules/toolbox/README.md` 补充“去哪儿”子模块的双维筛选、360 条地点覆盖和地图扩展边界说明。
+### 娣囶喗鏁?
+- `daily_choice_seed_data.dart` 娑撹　鈧粌骞撻崫顏勫姽閳ユ繆藟姒?`placeSceneCategories` 娑?`allPlaceSceneCategory`閿涘苯鑻熺亸鍡楀斧閺堫剛鐣濋梽瀣畱閸戦缚顢戦幐鍥у础閸楀洨楠囨稉鐑樐侀崸妤€瀵查幐鍥у础閵?
+- `daily_choice_modules.dart` 娑擃厾娈戦垾婊冨箵閸濐亜鍔归垾婵嬨€夐棃銏℃暭娑撶尨绱?
+  - 鐠烘繄顬?+ 閸︾儤娅欓崣宀€娣粵娑⑩偓?
+  - 瑜版挸澧犵捄婵堫瀲鐏炲倻楠囬崷鎵仯閺?/ 瑜版挸澧犻崐娆撯偓澶嬫殶 / 鐟曞棛娲婇崷鐑樻珯閺佹壆濮搁幀渚€娼伴弶?
+  - 閺囧瓨绔婚弲鎵畱缁岃櫣濮搁幀浣告嫲缁夎濮╃粩顖烆浕鐏炲繋淇婇幁?
+  - 缁狅紕鎮婃い鍨暜閹镐焦瀵滅捄婵堫瀲閸滃苯婧€閺咁垳鐡柅澶庡殰鐎规矮绠熼崷鎵仯
+- `daily_choice_detail_sheets.dart` 鐎靛厜鈧粌骞撻崫顏勫姽閳ユ繆顕涢幆鍛淬€夌悰銉╃秷閸︽澘娴橀幖婊呭偍鐠囧秵褰侀崣鏍偓鏄忕帆閿涘苯顦查崚鑸靛瘻闁筋喕绱崗鍫濐槻閸掑墎绮ㄩ弸鍕閸︽澘娴樺Λ鈧槐銏ｇ槤閿涘矁鈧奔绗夐崘宥嗘簚濮婃澘顦查崚鑸电垼妫版ǜ鈧?
+- `daily_choice_activity_place_seed.dart` 缁夊娅庨弮褏娈戦垾婊冨箵閸濐亜鍔归垾婵嗗窗娴ｅ秵鏆熼幑顕嗙礉娴犲懍绻氶悾娆屸偓婊冨叡娴犫偓娑斿牃鈧繄娴夐崗?seed閵?
+- `modules/toolbox/README.md` 鐞涖儱鍘栭垾婊冨箵閸濐亜鍔归垾婵嗙摍濡€虫健閻ㄥ嫬寮荤紒瀵哥摣闁鈧?60 閺夆€虫勾閻愮顩惄鏍ф嫲閸︽澘娴橀幍鈺佺潔鏉堝湱鏅拠瀛樻閵?
 
-### 风险变更
-- 当前“去哪儿”仍属于结构化地点建议与搜索词辅助，不接入真实定位、系统地图拉起和在线 POI 动态检索。
-- 内置地点数据是按常见场所 archetype 生成的通用候选，不代表真实营业状态、实时评分或实时开放信息；出发前仍需看地图和营业时间。
-- 粗略定位、开放地理数据、系统地图与路线规划仍保留为后续独立扩展，不在本轮混入权限与平台差异处理。
+### 妞嬪酣娅撻崣妯绘纯
+- 瑜版挸澧犻垾婊冨箵閸濐亜鍔归垾婵呯矝鐏炵偘绨紒鎾寸€崠鏍ф勾閻愮懓缂撶拋顔荤瑢閹兼粎鍌ㄧ拠宥堢窡閸斺晪绱濇稉宥嗗复閸忋儳婀＄€圭偛鐣炬担宥冣偓浣洪兇缂佺喎婀撮崶鐐鐠у嘲鎷伴崷銊у殠 POI 閸斻劍鈧焦顥呯槐顫偓?
+- 閸愬懐鐤嗛崷鎵仯閺佺増宓侀弰顖涘瘻鐢瓕顫嗛崷鐑樺 archetype 閻㈢喐鍨氶惃鍕偓姘辨暏閸婃瑩鈧绱濇稉宥勫敩鐞涖劎婀＄€圭偠鎯€娑撴氨濮搁幀浣碘偓浣哥杽閺冩儼鐦庨崚鍡樺灗鐎圭偞妞傚鈧弨鍙ヤ繆閹垽绱遍崙鍝勫絺閸撳秳绮涢棁鈧惇瀣勾閸ユ儳鎷伴拃銉ょ瑹閺冨爼妫块妴?
+- 缁鏆愮€规矮缍呴妴浣哥磻閺€鎯ф勾閻炲棙鏆熼幑顔衡偓浣洪兇缂佺喎婀撮崶鍙ョ瑢鐠侯垳鍤庣憴鍕灊娴犲秳绻氶悾娆庤礋閸氬海鐢婚悪顒傜彌閹碘晛鐫嶉敍灞肩瑝閸︺劍婀版潪顔借穿閸忋儲娼堥梽鎰瑢楠炲啿褰村顔肩磽婢跺嫮鎮婇妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart`（通过，No issues found）
-- `flutter test test/daily_choice_place_seed_test.dart --reporter compact`（通过，All tests passed）
-- `git diff --check -- lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart plans/PLAN_062_每日抉择去哪儿子模块发布级完善.md`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/daily_choice_place_seed_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
+- `git diff --check -- lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_activity_place_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart test/daily_choice_place_seed_test.dart plans/PLAN_062_濮ｅ繑妫╅幎澶嬪閸樿鎽㈤崕鍨摍濡€虫健閸欐垵绔风痪褍鐣崰?md`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_062] - 2026-04-25
 
-### 原因
-- 用户要求专注完善 `工具箱 -> 每日决策 -> 决策助手` 子模块，基于本地 `D:\vocabularySleep-resources\决策` 资料，把原先的轻量占位计算器升级为可发布的理性决策辅助工作台。
-- 需要补齐一套实用且科学的决策策略体系，同时增加一个提取整理后的“理性决策精要指南”拉起页，并且不侵入其他并行开发中的每日抉择子模块。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娑撴挻鏁炵€瑰苯鏉?`瀹搞儱鍙跨粻?-> 濮ｅ繑妫╅崘宕囩摜 -> 閸愬磭鐡ラ崝鈺傚` 鐎涙劖膩閸ф绱濋崺杞扮艾閺堫剙婀?`D:\vocabularySleep-resources\閸愬磭鐡 鐠у嫭鏋￠敍灞惧Ω閸樼喎鍘涢惃鍕氦闁插繐宕版担宥堫吀缁犳娅掗崡鍥╅獓娑撳搫褰查崣鎴濈閻ㄥ嫮鎮婇幀褍鍠呯粵鏍窡閸斺晛浼愭担婊冨酱閵?
+- 闂団偓鐟曚浇藟姒绘劒绔存總妤€鐤勯悽銊ょ瑬缁夋垵顒熼惃鍕枀缁涙牜鐡ラ悾銉ょ秼缁紮绱濋崥灞炬婢х偛濮炴稉鈧稉顏呭絹閸欐牗鏆ｉ悶鍡楁倵閻ㄥ嫧鈧粎鎮婇幀褍鍠呯粵鏍翱鐟曚焦瀵氶崡妞烩偓婵囧鐠х兘銆夐敍灞借嫙娑撴柧绗夋笟闈涘弳閸忔湹绮獮鎯邦攽瀵偓閸欐垳鑵戦惃鍕槨閺冦儲濡烽幏鈺佺摍濡€虫健閵?
 
-### 新增
-- 新增 `daily_choice_decision_engine.dart`：
-  - 抽离决策助手的核心计算层
-  - 提供 `均匀随机 / 加权因素 / 期望收益 / 联合概率 / 情景分析 / 后悔与机会成本 / 底线守门 / 校准预测` 八类策略
-  - 增加跨策略共识、信息价值信号与守门线配置
-- 新增 `daily_choice_decision_content.dart`：
-  - 定义各决策策略的说明、公式与使用边界
-  - 增加模块化的 `理性决策精要指南`
-  - 根据当前决策情境生成“决策卫生检查”条目
-- 新增测试 `test/daily_choice_decision_engine_test.dart`，覆盖：
-  - 高风险高不确定情境下的方法推荐
-  - 底线守门优先保护风险下限
-  - 校准预测会把低把握极端值拉回均值
-  - 信息价值高时建议延后决策并优先补信息
-- 新增资料整理记录 `records/record_062_决策参考资料整理与产品映射.md`
-- 新增计划文档 `plans/PLAN_062_每日决策决策助手完善.md`
+### 閺傛澘顤?
+- 閺傛澘顤?`daily_choice_decision_engine.dart`閿?
+  - 閹剁晫顬囬崘宕囩摜閸斺晜澧滈惃鍕壋韫囧啳顓哥粻妤€鐪?
+  - 閹绘劒绶?`閸у洤瀵戦梾蹇旀簚 / 閸旂姵娼堥崶鐘电 / 閺堢喐婀滈弨鍓佹抄 / 閼辨柨鎮庡鍌滃芳 / 閹懏娅欓崚鍡樼€?/ 閸氬孩鍊叉稉搴㈡簚娴兼碍鍨氶張?/ 鎼存洜鍤庣€瑰牓妫?/ 閺嶁€冲櫙妫板嫭绁碻 閸忣偆琚粵鏍殣
+  - 婢х偛濮炵捄銊х摜閻ｃ儱鍙＄拠鍡愨偓浣蜂繆閹垯鐜崐闂翠繆閸欒渹绗岀€瑰牓妫痪鍧楀帳缂?
+- 閺傛澘顤?`daily_choice_decision_content.dart`閿?
+  - 鐎规矮绠熼崥鍕枀缁涙牜鐡ラ悾銉ф畱鐠囧瓨妲戦妴浣稿彆瀵繋绗屾担璺ㄦ暏鏉堝湱鏅?
+  - 婢х偛濮炲Ο鈥虫健閸栨牜娈?`閻炲棙鈧冨枀缁涙牜绨跨憰浣瑰瘹閸楁
+  - 閺嶈宓佽ぐ鎾冲閸愬磭鐡ラ幆鍛暔閻㈢喐鍨氶垾婊冨枀缁涙牕宕奸悽鐔割梾閺屻儮鈧繃娼惄?
+- 閺傛澘顤冨ù瀣槸 `test/daily_choice_decision_engine_test.dart`閿涘矁顩惄鏍电窗
+  - 妤傛﹢顥撻梽鈺呯彯娑撳秶鈥樼€规碍鍎忔晶鍐х瑓閻ㄥ嫭鏌熷▔鏇熷腹閼?
+  - 鎼存洜鍤庣€瑰牓妫导妯哄帥娣囨繃濮㈡搴ㄦ珦娑撳妾?
+  - 閺嶁€冲櫙妫板嫭绁存导姘Ω娴ｅ孩濡搁幓鈩冪€粩顖氣偓鍏煎閸ョ偛娼庨崐?
+  - 娣団剝浼呮禒宄扳偓濂哥彯閺冭泛缂撶拋顔兼閸氬骸鍠呯粵鏍ц嫙娴兼ê鍘涚悰銉や繆閹?
+- 閺傛澘顤冪挧鍕灐閺佸鎮婄拋鏉跨秿 `records/record_062_閸愬磭鐡ラ崣鍌濃偓鍐カ閺傛瑦鏆ｉ悶鍡曠瑢娴溠冩惂閺勭姴鐨?md`
+- 閺傛澘顤冪拋鈥冲灊閺傚洦銆?`plans/PLAN_062_濮ｅ繑妫╅崘宕囩摜閸愬磭鐡ラ崝鈺傚鐎瑰苯鏉?md`
 
-### 修改
-- 重写 `daily_choice_decision_assistant.dart`，将原来的单页轻量排序器升级为完整工作台：
-  - 新增“风险级别 / 不确定性 / 全局可回头性 / 时间压力”决策情境分型
-  - 新增推荐镜头提示、方法切换与透明结果面板
-  - 新增跨策略共识、守门线通过数、信息价值提示
-  - 扩充每个选项的输入维度为：成功概率、执行概率、收益、风险、投入、可回退、把握、后悔、信息差
-  - 增加“决策卫生检查”区，帮助用户在最终拍板前做偏差与噪声校正
-- `daily_choice_hub.dart` 接入新的决策内容层与引擎层。
-- `daily_choice_modules.dart` 做最小必要编译修补：`去哪儿` 子模块的指南入口从旧的 `placeGuideEntries` 对齐到现有 `placeGuideModules`，不改变其业务语义。
+### 娣囶喗鏁?
+- 闁插秴鍟?`daily_choice_decision_assistant.dart`閿涘苯鐨㈤崢鐔告降閻ㄥ嫬宕熸い浣冧氦闁插繑甯撴惔蹇撴珤閸楀洨楠囨稉鍝勭暚閺佹潙浼愭担婊冨酱閿?
+  - 閺傛澘顤冮垾婊堫棑闂勨晝楠囬崚?/ 娑撳秶鈥樼€规碍鈧?/ 閸忋劌鐪崣顖氭礀婢跺瓨鈧?/ 閺冨爼妫块崢瀣閳ユ繂鍠呯粵鏍ㄥ剰婢у啫鍨庨崹?
+  - 閺傛澘顤冮幒銊ㄥ礃闂€婊冦仈閹绘劗銇氶妴浣规煙濞夋洖鍨忛幑顫瑢闁繑妲戠紒鎾寸亯闂堛垺婢?
+  - 閺傛澘顤冪捄銊х摜閻ｃ儱鍙＄拠鍡愨偓浣哥暓闂傘劎鍤庨柅姘崇箖閺佽埇鈧椒淇婇幁顖欑幆閸婂吋褰佺粈?
+  - 閹碘晛鍘栧В蹇庨嚋闁銆嶉惃鍕翻閸忋儳娣惔锔胯礋閿涙碍鍨氶崝鐔割洤閻滃洢鈧焦澧界悰灞绢洤閻滃洢鈧焦鏁归惄濞库偓渚€顥撻梽鈹库偓浣瑰閸忋儯鈧礁褰查崶鐐衡偓鈧妴浣瑰Ω閹宦扳偓浣告倵閹柣鈧椒淇婇幁顖氭▕
+  - 婢х偛濮為垾婊冨枀缁涙牕宕奸悽鐔割梾閺屻儮鈧繂灏敍灞藉簻閸斺晝鏁ら幋宄版躬閺堚偓缂佸牊濯块弶鍨閸嬫艾浜稿顔荤瑢閸ｎ亜锛愰弽鈩冾劀
+- `daily_choice_hub.dart` 閹恒儱鍙嗛弬鎵畱閸愬磭鐡ラ崘鍛啇鐏炲倷绗屽鏇熸惛鐏炲倶鈧?
+- `daily_choice_modules.dart` 閸嬫碍娓剁亸蹇撶箑鐟曚胶绱拠鎴滄叏鐞涖儻绱癭閸樿鎽㈤崕绺?鐎涙劖膩閸ф娈戦幐鍥у础閸忋儱褰涙禒搴㈡＋閻?`placeGuideEntries` 鐎靛綊缍堥崚鎵箛閺?`placeGuideModules`閿涘奔绗夐弨鐟板綁閸忔湹绗熼崝陇顕㈡稊澶堚偓?
 
-### 风险变更
-- 当前决策助手提供的是“结构化辅助决策”，不是医疗、法律、财务等高风险专业判断的替代品。
-- 情景分析、后悔权衡与加权因素依旧属于解释型模型，核心价值是帮助用户显式化假设、排序因素和收口行动，而不是制造虚假的确定性。
-- 本轮没有接入历史决策日志，因此“校准预测”是基于当前选项集合的均值回拉，不是基于长期样本训练出的真实回归模型。
+### 妞嬪酣娅撻崣妯绘纯
+- 瑜版挸澧犻崘宕囩摜閸斺晜澧滈幓鎰返閻ㄥ嫭妲搁垾婊呯波閺嬪嫬瀵叉潏鍛И閸愬磭鐡ラ垾婵撶礉娑撳秵妲搁崠鑽ゆ灍閵嗕焦纭跺瀣ㄢ偓浣藉偍閸旓紕鐡戞姗€顥撻梽鈺€绗撴稉姘灲閺傤厾娈戦弴澶稿敩閸濅降鈧?
+- 閹懏娅欓崚鍡樼€介妴浣告倵閹梹娼堢悰鈥茬瑢閸旂姵娼堥崶鐘电娓氭繃妫仦鐐扮艾鐟欙綁鍣撮崹瀣侀崹瀣剁礉閺嶇绺炬禒宄扳偓鍏兼Ц鐢喖濮悽銊﹀煕閺勬儳绱￠崠鏍т海鐠佷勘鈧焦甯撴惔蹇撴礈缁辩姴鎷伴弨璺哄經鐞涘苯濮╅敍宀冣偓灞肩瑝閺勵垰鍩楅柅鐘烘珓閸嬪洨娈戠涵顔肩暰閹佲偓?
+- 閺堫剝鐤嗗▽鈩冩箒閹恒儱鍙嗛崢鍡楀蕉閸愬磭鐡ラ弮銉ョ箶閿涘苯娲滃銈傗偓婊勭墡閸戝棝顣╁ù瀣р偓婵囨Ц閸╄桨绨ぐ鎾冲闁銆嶉梿鍡楁値閻ㄥ嫬娼庨崐鐓庢礀閹峰绱濇稉宥嗘Ц閸╄桨绨梹鎸庢埂閺嶉攱婀扮拋顓犵矊閸戣櫣娈戦惇鐔风杽閸ョ偛缍婂Ο鈥崇€烽妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_engine.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_content.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_assistant.dart test/daily_choice_decision_engine_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_engine.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_content.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_assistant.dart test/daily_choice_decision_engine_test.dart`（通过，No issues found）
-- `flutter test test/daily_choice_decision_engine_test.dart --reporter compact`（通过，All tests passed）
-- `flutter test test/ui_smoke_test.dart --reporter compact`（通过，All tests passed）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_engine.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_content.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_assistant.dart test/daily_choice_decision_engine_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_engine.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_content.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_decision_assistant.dart test/daily_choice_decision_engine_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/daily_choice_decision_engine_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
+- `flutter test test/ui_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
 
 ## [Unreleased-PLAN_061] - 2026-04-25
 
-### 原因
-- 用户要求重点完善工具箱“每日抉择”中的“吃什么”子模块，不再停留在精简离线种子，而是接入 YunYouJun/cook 数据并把随机、详情、做菜指南和个人食谱管理做成可实际使用的一版。
-- 页面需要在移动端保持首屏清晰，同时支持“点击厨具图标后随机显示菜品、停止后锁定当前结果、点击菜品查看完整介绍和制作方法”的完整链路。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴闁插秶鍋ｇ€瑰苯鏉藉銉ュ徔缁犳墎鈧粍鐦￠弮銉﹀Ψ閹封斁鈧繀鑵戦惃鍕ㄢ偓婊冩倖娴犫偓娑斿牃鈧繂鐡欏Ο鈥虫健閿涘奔绗夐崘宥呬粻閻ｆ瑥婀划鍓х暆缁傝崵鍤庣粔宥呯摍閿涘矁鈧本妲搁幒銉ュ弳 YunYouJun/cook 閺佺増宓侀獮鑸靛Ω闂呭繑婧€閵嗕浇顕涢幆鍛偓浣镐粵閼挎粍瀵氶崡妤€鎷版稉顏冩眽妞嬬喕姘ㄧ粻锛勬倞閸嬫碍鍨氶崣顖氱杽闂勫懍濞囬悽銊ф畱娑撯偓閻楀牄鈧?
+- 妞ょ敻娼伴棁鈧憰浣告躬缁夎濮╃粩顖欑箽閹镐線顩荤仦蹇旂閺呭府绱濋崥灞炬閺€顖涘瘮閳ユ粎鍋ｉ崙璇插腹閸忓嘲娴橀弽鍥ф倵闂呭繑婧€閺勫墽銇氶懣婊冩惂閵嗕礁浠犲銏犳倵闁夸礁鐣捐ぐ鎾冲缂佹挻鐏夐妴浣哄仯閸戞槒褰嶉崫浣圭叀閻鐣弫缈犵矙缂佸秴鎷伴崚鏈电稊閺傝纭堕垾婵堟畱鐎瑰本鏆ｉ柧鎹愮熅閵?
 
-### 新增
-- 新增 `daily_choice_cook_service.dart`：
-  - 远端读取 `https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv`
-  - 解析 CSV 为吃什么专用条目
-  - 将 cook 数据写入应用支持目录缓存
-  - 远端失败时自动回退到缓存，再失败时回退到内置吃什么种子
-- 新增吃什么模块的厨具图标筛选：`全部厨具 / 一口大锅 / 电饭煲 / 微波炉 / 空气炸锅 / 烤箱`。
-- 新增结构化“做菜之前”指南卡组，按“盘点食材、筛字段、备菜、火候调味、保存与安全、长期规划”六个模块展示详细说明。
-- 新增吃什么解析层测试 `test/daily_choice_cook_service_test.dart`，覆盖 cook CSV 到菜品条目的餐段/厨具映射和引用生成。
+### 閺傛澘顤?
+- 閺傛澘顤?`daily_choice_cook_service.dart`閿?
+  - 鏉╂粎顏拠璇插絿 `https://raw.githubusercontent.com/YunYouJun/cook/main/app/data/recipe.csv`
+  - 鐟欙絾鐎?CSV 娑撳搫鎮嗘禒鈧稊鍫滅瑩閻劍娼惄?
+  - 鐏?cook 閺佺増宓侀崘娆忓弳鎼存梻鏁ら弨顖涘瘮閻╊喖缍嶇紓鎾崇摠
+  - 鏉╂粎顏径杈Е閺冩儼鍤滈崝銊ユ礀闁偓閸掓壆绱︾€涙﹫绱濋崘宥呫亼鐠愩儲妞傞崶鐐衡偓鈧崚鏉垮敶缂冾喖鎮嗘禒鈧稊鍫㈩潚鐎?
+- 閺傛澘顤冮崥鍐х矆娑斿牊膩閸ф娈戦崢銊ュ徔閸ョ偓鐖ｇ粵娑⑩偓澶涚窗`閸忋劑鍎撮崢銊ュ徔 / 娑撯偓閸欙絽銇囬柨?/ 閻㈢敻銈悡?/ 瀵邦喗灏濋悙?/ 缁岀儤鐨甸悙鎼佹敤 / 閻戙倗顔坄閵?
+- 閺傛澘顤冪紒鎾寸€崠鏍も偓婊冧粵閼挎粈绠ｉ崜宥佲偓婵囧瘹閸楁宕辩紒鍕剁礉閹稿鈧粎娲忛悙褰掝棨閺夋劑鈧胶鐡€涙顔岄妴浣割槵閼挎嚎鈧胶浼€閸婃瑨鐨熼崨鐐解偓浣风箽鐎涙ü绗岀€瑰鍙忛妴渚€鏆遍張鐔活潐閸掓巻鈧繂鍙氭稉顏吥侀崸妤€鐫嶇粈楦款嚊缂佸棜顕╅弰搴涒偓?
+- 閺傛澘顤冮崥鍐х矆娑斿牐袙閺嬫劕鐪板ù瀣槸 `test/daily_choice_cook_service_test.dart`閿涘矁顩惄?cook CSV 閸掓媽褰嶉崫浣规蒋閻╊喚娈戞鎰唽/閸樸劌鍙块弰鐘茬殸閸滃苯绱╅悽銊ф晸閹存劑鈧?
 
-### 修改
-- `DailyDecisionToolPage` 修复中文标题和副标题乱码。
-- 吃什么模块改为：
-  - 默认使用现有内置菜谱兜底，后台同步 cook 数据后平滑替换
-  - 按餐段和厨具筛选当前候选，再进入“开始随机 / 停止并选中”主舞台
-  - 页面展示当前数据来源状态、候选数量、同步时间和同步失败回退提示
-- 菜品详情弹层升级为显示：
-  - 结构化详细介绍
-  - 更完整的食材清单
-  - 更完整的制作步骤
-  - 关键提示
-  - cook 数据源 / B 站教程等参考链接与复制操作
-- 自定义管理升级为按当前分类与上下文筛选，避免全量 cook 数据接入后管理页过载。
-- 自定义编辑表单针对吃什么补齐更适合个人食谱的字段：餐段、厨具、菜名、介绍、食材、步骤、技巧备注和标签。
-- `modules/toolbox/README.md` 补充吃什么的数据读取、缓存策略和升级后的能力边界。
+### 娣囶喗鏁?
+- `DailyDecisionToolPage` 娣囶喖顦叉稉顓熸瀮閺嶅洭顣介崪灞藉閺嶅洭顣芥稊杈╃垳閵?
+- 閸氬啩绮堟稊鍫熌侀崸妤佹暭娑撶尨绱?
+  - 姒涙顓绘担璺ㄦ暏閻滅増婀侀崘鍛枂閼挎粏姘ㄩ崗婊冪俺閿涘苯鎮楅崣鏉挎倱濮?cook 閺佺増宓侀崥搴￠挬濠婃垶娴涢幑?
+  - 閹稿顦靛▓闈涙嫲閸樸劌鍙跨粵娑⑩偓澶婄秼閸撳秴鈧瑩鈧绱濋崘宥堢箻閸忋儮鈧粌绱戞慨瀣閺?/ 閸嬫粍顒涢獮鍫曗偓澶夎厬閳ユ繀瀵岄懜鐐插酱
+  - 妞ょ敻娼扮仦鏇犮仛瑜版挸澧犻弫鐗堝祦閺夈儲绨悩鑸碘偓浣碘偓浣糕偓娆撯偓澶嬫殶闁插繈鈧礁鎮撳銉︽闂傛潙鎷伴崥灞绢劄婢惰精瑙﹂崶鐐衡偓鈧幓鎰仛
+- 閼挎粌鎼х拠锔藉剰瀵懓鐪伴崡鍥╅獓娑撶儤妯夌粈鐚寸窗
+  - 缂佹挻鐎崠鏍嚊缂佸棔绮欑紒?
+  - 閺囨潙鐣弫瀵告畱妞嬬喐娼楀〒鍛礋
+  - 閺囨潙鐣弫瀵告畱閸掓湹缍斿銉╊€?
+  - 閸忔娊鏁幓鎰仛
+  - cook 閺佺増宓佸┃?/ B 缁旀瑦鏆€缁嬪鐡戦崣鍌濃偓鍐懠閹恒儰绗屾径宥呭煑閹垮秳缍?
+- 閼奉亜鐣炬稊澶岊吀閻炲棗宕岀痪褌璐熼幐澶婄秼閸撳秴鍨庣猾璁崇瑢娑撳﹣绗呴弬鍥╃摣闁绱濋柆鍨帳閸忋劑鍣?cook 閺佺増宓侀幒銉ュ弳閸氬海顓搁悶鍡涖€夋潻鍥祰閵?
+- 閼奉亜鐣炬稊澶岀椽鏉堟垼銆冮崡鏇㈡嫛鐎电懓鎮嗘禒鈧稊鍫Ｋ夋鎰纯闁倸鎮庢稉顏冩眽妞嬬喕姘ㄩ惃鍕摟濞堢绱版鎰唽閵嗕礁甯归崗鏋偓浣藉綅閸氬秲鈧椒绮欑紒宥冣偓渚€顥ら弶鎰┾偓浣诡劄妤犮們鈧焦濡у褍顦▔銊ユ嫲閺嶅洨顒烽妴?
+- `modules/toolbox/README.md` 鐞涖儱鍘栭崥鍐х矆娑斿牏娈戦弫鐗堝祦鐠囪褰囬妴浣虹处鐎涙鐡ラ悾銉ユ嫲閸楀洨楠囬崥搴ｆ畱閼宠棄濮忔潏鍦櫕閵?
 
-### 风险变更
-- cook 官方 `recipe.csv` 只提供菜名、食材、难度、标签、做法和厨具，不提供逐字逐步原文菜谱；本页详情中的“完整详细做法”属于基于元数据的结构化扩写，并保留原始来源链接。
-- 当前 `PROJECT_DOMAIN.md` 工作树里仍存在编码异常，本轮未扩大对该文档的修改范围，避免把乱码问题和功能改动混在一起。
-- 自定义个人食谱仍保存在 `toolbox_daily_choice_v1.json`，暂不接入主数据库、账号同步或导入导出。
+### 妞嬪酣娅撻崣妯绘纯
+- cook 鐎规ɑ鏌?`recipe.csv` 閸欘亝褰佹笟娑滃綅閸氬秲鈧線顥ら弶鎰┾偓渚€姣︽惔锔衡偓浣圭垼缁涗勘鈧礁浠涘▔鏇炴嫲閸樸劌鍙块敍灞肩瑝閹绘劒绶甸柅鎰摟闁劖顒為崢鐔告瀮閼挎粏姘ㄩ敍娑欐拱妞や絻顕涢幆鍛厬閻ㄥ嫧鈧粌鐣弫纾嬵嚊缂佸棗浠涘▔鏇椻偓婵嗙潣娴滃骸鐔€娴滃骸鍘撻弫鐗堝祦閻ㄥ嫮绮ㄩ弸鍕閹碘晛鍟撻敍灞借嫙娣囨繄鏆€閸樼喎顫愰弶銉︾爱闁剧偓甯撮妴?
+- 瑜版挸澧?`PROJECT_DOMAIN.md` 瀹搞儰缍旈弽鎴﹀櫡娴犲秴鐡ㄩ崷銊х椽閻礁绱撶敮闈╃礉閺堫剝鐤嗛張顏呭⒖婢堆冾嚠鐠囥儲鏋冨锝囨畱娣囶喗鏁奸懠鍐ㄦ纯閿涘矂浼╅崗宥嗗Ω娑旇京鐖滈梻顕€顣介崪灞藉閼宠姤鏁奸崝銊﹁穿閸︺劋绔寸挧鏋偓?
+- 閼奉亜鐣炬稊澶夐嚋娴滄椽顥ょ拫鍙樼矝娣囨繂鐡ㄩ崷?`toolbox_daily_choice_v1.json`閿涘本娈忔稉宥嗗复閸忋儰瀵岄弫鐗堝祦鎼存挶鈧浇澶勯崣宄版倱濮濄儲鍨ㄧ€电厧鍙嗙€电厧鍤妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart test/daily_choice_cook_service_test.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart test/daily_choice_cook_service_test.dart`（通过，No issues found）
-- `flutter test test/daily_choice_cook_service_test.dart --reporter compact`（通过，All tests passed）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_detail_sheets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_manager_sheet.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_editor_sheet.dart test/daily_choice_cook_service_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_cook_service.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart test/daily_choice_cook_service_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/daily_choice_cook_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
 
 ## [Unreleased-PLAN_061-WEAR] - 2026-04-25
 
-### 原因
-- 用户要求只推进工具箱“每日抉择”中的“穿什么”子模块，不影响其他并行开发中的子模块。
-- 当前穿什么仍偏占位，缺少资料整理、天气驱动默认推荐和足够丰富的可发布级穿搭数据。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴閸欘亝甯规潻娑樹紣閸忛顔堥垾婊勭槨閺冦儲濡烽幏鈹锯偓婵呰厬閻ㄥ嫧鈧粎鈹涙禒鈧稊鍫氣偓婵嗙摍濡€虫健閿涘奔绗夎ぐ鍗炴惙閸忔湹绮獮鎯邦攽瀵偓閸欐垳鑵戦惃鍕摍濡€虫健閵?
+- 瑜版挸澧犵粚澶哥矆娑斿牅绮涢崑蹇撳窗娴ｅ稄绱濈紓鍝勭毌鐠у嫭鏋￠弫瀵告倞閵嗕礁銇夊鏃堚攳閸斻劑绮拋銈嗗腹閼芥劕鎷扮搾鍐差檮娑撴澘鐦滈惃鍕讲閸欐垵绔风痪褏鈹涢幖顓熸殶閹诡喓鈧?
 
-### 新增
-- 新增 `daily_choice_wear_module.dart`，收拢穿什么的天气建议、默认档位和场景快捷逻辑。
-- 基于 `D:\\vocabularySleep-resources\\穿什么` 中的本地 EPUB 资料整理出穿搭原则，并补充到穿搭指南卡组。
-- 扩充穿什么种子数据，覆盖严寒到酷暑、通勤到雨天的 50+ 套基础穿搭条目。
+### 閺傛澘顤?
+- 閺傛澘顤?`daily_choice_wear_module.dart`閿涘本鏁归幏銏⑩敍娴犫偓娑斿牏娈戞径鈺傜毜瀵ら缚顔呴妴渚€绮拋銈嗐€傛担宥呮嫲閸︾儤娅欒箛顐ｅ祹闁槒绶妴?
+- 閸╄桨绨?`D:\\vocabularySleep-resources\\缁屽じ绮堟稊鍧?娑擃厾娈戦張顒€婀?EPUB 鐠у嫭鏋￠弫瀵告倞閸戣櫣鈹涢幖顓炲斧閸掓瑱绱濋獮鎯八夐崗鍛煂缁屾寧鎯岄幐鍥у础閸楋紕绮嶉妴?
+- 閹碘晛鍘栫粚澶哥矆娑斿牏顫掔€涙劖鏆熼幑顕嗙礉鐟曞棛娲婃稉銉ョ槰閸掍即鍙块弳鎴欌偓渚€鈧艾瀚熼崚浼存处婢垛晝娈?50+ 婵傛鐔€绾偓缁屾寧鎯岄弶锛勬窗閵?
 
-### 修改
-- `DailyChoiceHub` 接入当前天气状态，并只向穿什么子模块传递天气数据。
-- 穿什么默认根据 `AppState.weatherSnapshot` 的体感温度自动选中建议档位，同时保留手动覆盖与“恢复天气推荐”入口。
-- 当当前天气存在降水时，页面会给出“切到雨天场景”的快捷建议，但不会强制改写用户场景选择。
-- 当某个温度 + 场景精确条目过少时，随机结果会自动混入同温度稳妥备选，避免随机体验僵死。
-- `daily_choice_seed_data.dart` 的穿搭指南升级为“基础款优先、合身先于流行、场景先行、质胜于量、天气收尾检查”等更可执行的规则说明。
-- `PROJECT_DOMAIN.md` 与 `modules/toolbox/README.md` 补充穿什么的资料来源、天气建议和发布边界说明。
+### 娣囶喗鏁?
+- `DailyChoiceHub` 閹恒儱鍙嗚ぐ鎾冲婢垛晜鐨甸悩鑸碘偓渚婄礉楠炶泛褰ч崥鎴犫敍娴犫偓娑斿牆鐡欏Ο鈥虫健娴肩娀鈧帒銇夊鏃€鏆熼幑顔衡偓?
+- 缁屽じ绮堟稊鍫ョ帛鐠併倖鐗撮幑?`AppState.weatherSnapshot` 閻ㄥ嫪缍嬮幇鐔镐刊鎼达箒鍤滈崝銊┾偓澶夎厬瀵ら缚顔呭锝勭秴閿涘苯鎮撻弮鏈电箽閻ｆ瑦澧滈崝銊洬閻╂牔绗岄垾婊勪划婢跺秴銇夊鏃€甯归懡鎰ㄢ偓婵嗗弳閸欙絻鈧?
+- 瑜版挸缍嬮崜宥呫亯濮樻柨鐡ㄩ崷銊╂濮樺瓨妞傞敍宀勩€夐棃顫窗缂佹瑥鍤垾婊冨瀼閸掍即娲︽径鈺佹簚閺咁垪鈧繄娈戣箛顐ｅ祹瀵ら缚顔呴敍灞肩稻娑撳秳绱板鍝勫煑閺€鐟板晸閻劍鍩涢崷鐑樻珯闁瀚ㄩ妴?
+- 瑜版挻鐓囨稉顏呬刊鎼?+ 閸︾儤娅欑划鍓р€橀弶锛勬窗鏉╁洤鐨弮璁圭礉闂呭繑婧€缂佹挻鐏夋导姘冲殰閸斻劍璐╅崗銉ユ倱濞撯晛瀹崇粙鍐参曟径鍥偓澶涚礉闁灝鍘ら梾蹇旀簚娴ｆ捇鐛欓崓鍨劥閵?
+- `daily_choice_seed_data.dart` 閻ㄥ嫮鈹涢幖顓熷瘹閸楁宕岀痪褌璐熼垾婊冪唨绾偓濞嗗彞绱崗鍫涒偓浣告値闊偄鍘涙禍搴㈢ウ鐞涘被鈧礁婧€閺咁垰鍘涚悰灞烩偓浣藉窛閼虫粈绨柌蹇嬧偓浣搞亯濮樻梹鏁圭亸鐐梾閺屻儮鈧繄鐡戦弴鏉戝讲閹笛嗩攽閻ㄥ嫯顫夐崚娆掝嚛閺勫簺鈧?
+- `PROJECT_DOMAIN.md` 娑?`modules/toolbox/README.md` 鐞涖儱鍘栫粚澶哥矆娑斿牏娈戠挧鍕灐閺夈儲绨妴浣搞亯濮樻柨缂撶拋顔兼嫲閸欐垵绔锋潏鍦櫕鐠囧瓨妲戦妴?
 
-### 风险变更
-- 穿什么的内置搭配仍属于可解释建议，不替代个体体质差异、严格 dress code 或极端天气安全判断。
-- 当前天气建议依赖已有天气接口与近似定位；天气不可用时会回退到默认档位并允许用户手动调整。
-- AI 数字人试穿、衣橱识别与购物网站接入仍只保留扩展边界，不在本轮实现。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁屽じ绮堟稊鍫㈡畱閸愬懐鐤嗛幖顓㈠帳娴犲秴鐫樻禍搴″讲鐟欙綁鍣村楦款唴閿涘奔绗夐弴澶稿敩娑擃亙缍嬫担鎾瑰窛瀹割喖绱撻妴浣峰紬閺?dress code 閹存牗鐎粩顖氥亯濮樻柨鐣ㄩ崗銊ュ灲閺傤厹鈧?
+- 瑜版挸澧犳径鈺傜毜瀵ら缚顔呮笟婵婄瀹稿弶婀佹径鈺傜毜閹恒儱褰涙稉搴ょ箮娴肩厧鐣炬担宥忕幢婢垛晜鐨垫稉宥呭讲閻劍妞傛导姘礀闁偓閸掍即绮拋銈嗐€傛担宥呰嫙閸忎浇顔忛悽銊﹀煕閹靛濮╃拫鍐╂殻閵?
+- AI 閺佹澘鐡ф禍楦跨槸缁岃￥鈧浇銆傚杈槕閸掝偂绗岀拹顓犲⒖缂冩垹鐝幒銉ュ弳娴犲秴褰ф穱婵堟殌閹碘晛鐫嶆潏鍦櫕閿涘奔绗夐崷銊︽拱鏉烆喖鐤勯悳鑸偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart`（通过，No issues found）
-- `flutter test test/ui_smoke_test.dart --reporter compact`（通过，All tests passed）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_modules.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_module.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_wear_seed.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/ui_smoke_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
 
 ## [Unreleased-PLAN_060] - 2026-04-24
 
-### 原因
-- 用户要求专注工具箱“每日抉择”模块，将当前占位子模块扩展为“吃什么、穿什么、去哪儿、干什么、决策助手”五个大子模块。
-- 新模块需要移动端首屏清晰、支持随机选择、详情/指南、自定义增删改，并为 cook 数据、地图、AI 试穿、购物接入和数学建模预留扩展边界。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴娑撴挻鏁炲銉ュ徔缁犳墎鈧粍鐦￠弮銉﹀Ψ閹封斁鈧繃膩閸ф绱濈亸鍡楃秼閸撳秴宕版担宥呯摍濡€虫健閹碘晛鐫嶆稉琛♀偓婊冩倖娴犫偓娑斿牄鈧胶鈹涙禒鈧稊鍫涒偓浣稿箵閸濐亜鍔归妴浣稿叡娴犫偓娑斿牄鈧礁鍠呯粵鏍уИ閹靛鈧繀绨叉稉顏勩亣鐎涙劖膩閸фぜ鈧?
+- 閺傜増膩閸ф娓剁憰浣盒╅崝銊ь伂妫ｆ牕鐫嗗〒鍛珰閵嗕焦鏁幐渚€娈㈤張娲偓澶嬪閵嗕浇顕涢幆?閹稿洤宕￠妴浣藉殰鐎规矮绠熸晶鐐插灩閺€鐧哥礉楠炴湹璐?cook 閺佺増宓侀妴浣告勾閸ヤ勘鈧竸I 鐠囨洜鈹涢妴浣藉枠閻椻晜甯撮崗銉ユ嫲閺佹澘顒熷鐑樐佹０鍕殌閹碘晛鐫嶆潏鍦櫕閵?
 
-### 新增
-- 每日抉择新增五模块基础版：
-  - `吃什么`: 按早饭、午餐、晚餐、下午茶、宵夜随机菜品，详情显示材料、介绍、简化制作步骤和来源。
-  - `穿什么`: 按严寒、寒冷、凉爽、温和、微热、炎热、酷暑与通勤、日常、正式、约会、运动、雨天场景随机搭配。
-  - `去哪儿`: 按出门、周边、远行随机常见目的地，并可复制地图搜索词。
-  - `干什么`: 按运动、学习、出行、整理、放松、创作、社交随机行动，也支持随机方向。
-  - `决策助手`: 提供均匀随机、期望加权、因子评分和联合概率四类透明计算。
-- 新增 `toolbox_daily_choice/` 子目录，拆分模型、种子数据、本地 JSON 存储、共享组件和页面编排。
-- 新增本地自定义管理：可隐藏内置项，新增/编辑/删除自定义菜品、搭配、地点和行动。
-- 新增吃什么、穿什么、去哪儿、干什么和决策助手的基础指南弹层。
+### 閺傛澘顤?
+- 濮ｅ繑妫╅幎澶嬪閺傛澘顤冩禍鏃€膩閸ф鐔€绾偓閻楀牞绱?
+  - `閸氬啩绮堟稊鍧? 閹稿妫顓溾偓浣稿磵妞佹劑鈧焦娅勬鎰┾偓浣风瑓閸楀牐灏妴浣割唽婢舵粓娈㈤張楦垮綅閸濅緤绱濈拠锔藉剰閺勫墽銇氶弶鎰灐閵嗕椒绮欑紒宥冣偓浣虹暆閸栨牕鍩楁担婊勵劄妤犮倕鎷伴弶銉︾爱閵?
+  - `缁屽じ绮堟稊鍧? 閹稿寮楃€垫帇鈧礁鐦ㄩ崘鏋偓浣稿櫝閻栧鈧焦淇崪灞烩偓浣镐簳閻戭厹鈧胶鍊ら悜顓溾偓渚€鍙块弳鎴滅瑢闁艾瀚熼妴浣规）鐢悶鈧焦顒滃蹇嬧偓浣哄娴兼哎鈧浇绻嶉崝銊ｂ偓渚€娲︽径鈺佹簚閺咁垶娈㈤張鐑樻儗闁板秲鈧?
+  - `閸樿鎽㈤崕绺? 閹稿鍤梻銊ｂ偓浣告噯鏉堝箍鈧浇绻欑悰宀勬閺堝搫鐖剁憴浣烘窗閻ㄥ嫬婀撮敍灞借嫙閸欘垰顦查崚璺烘勾閸ョ偓鎮崇槐銏ｇ槤閵?
+  - `楠炶弓绮堟稊鍧? 閹稿绻嶉崝銊ｂ偓浣割劅娑旂姰鈧礁鍤悰灞烩偓浣规殻閻炲棎鈧焦鏂侀弶淇扁偓浣稿灡娴ｆ嚎鈧胶銇炴禍銈夋閺堥缚顢戦崝顭掔礉娑旂喐鏁幐渚€娈㈤張鐑樻煙閸氭垯鈧?
+  - `閸愬磭鐡ラ崝鈺傚`: 閹绘劒绶甸崸鍥у瘧闂呭繑婧€閵嗕焦婀￠張娑樺閺夊啨鈧礁娲滅€涙劘鐦庨崚鍡楁嫲閼辨柨鎮庡鍌滃芳閸ユ稓琚柅蹇旀鐠侊紕鐣婚妴?
+- 閺傛澘顤?`toolbox_daily_choice/` 鐎涙劗娲拌ぐ鏇礉閹峰棗鍨庡Ο鈥崇€烽妴浣侯潚鐎涙劖鏆熼幑顔衡偓浣规拱閸?JSON 鐎涙ê鍋嶉妴浣稿彙娴滎偆绮嶆禒璺烘嫲妞ょ敻娼扮紓鏍ㄥ笓閵?
+- 閺傛澘顤冮張顒€婀撮懛顏勭暰娑斿顓搁悶鍡窗閸欘垶娈ｉ挊蹇撳敶缂冾噣銆嶉敍灞炬煀婢?缂傛牞绶?閸掔娀娅庨懛顏勭暰娑斿褰嶉崫浣碘偓浣规儗闁板秲鈧礁婀撮悙鐟版嫲鐞涘苯濮╅妴?
+- 閺傛澘顤冮崥鍐х矆娑斿牄鈧胶鈹涙禒鈧稊鍫涒偓浣稿箵閸濐亜鍔归妴浣稿叡娴犫偓娑斿牆鎷伴崘宕囩摜閸斺晜澧滈惃鍕唨绾偓閹稿洤宕″鐟扮湴閵?
 
-### 修改
-- `DailyDecisionToolPage` 从旧转盘占位改为五模块入口和统一轻量随机交互。
-- `modules/toolbox/README.md` 补充每日抉择数据来源、存储边界、风险和后续扩展路线。
-- `PROJECT_DOMAIN.md` 更新到 v0.0.7，补充每日抉择五模块基础版说明。
+### 娣囶喗鏁?
+- `DailyDecisionToolPage` 娴犲孩妫潪顒傛磸閸楃姳缍呴弨閫涜礋娴滄梹膩閸ф鍙嗛崣锝呮嫲缂佺喍绔存潪濠氬櫤闂呭繑婧€娴溿倓绨伴妴?
+- `modules/toolbox/README.md` 鐞涖儱鍘栧В蹇旀）閹跺瀚ㄩ弫鐗堝祦閺夈儲绨妴浣哥摠閸屻劏绔熼悾灞烩偓渚€顥撻梽鈺佹嫲閸氬海鐢婚幍鈺佺潔鐠侯垳鍤庨妴?
+- `PROJECT_DOMAIN.md` 閺囧瓨鏌婇崚?v0.0.7閿涘矁藟閸忓懏鐦￠弮銉﹀Ψ閹封晙绨插Ο鈥虫健閸╄櫣顢呴悧鍫ｎ嚛閺勫簺鈧?
 
-### 风险变更
-- 吃什么第一版只使用参考 YunYouJun/cook `recipe.csv` 的离线种子子集，并使用本地简化步骤，不做远端实时同步。
-- 本地 `D:\vocabularySleep-resources\穿什么` 中 EPUB 不摘录原文；穿搭数据使用通用原则和生成式种子数据。
-- 自定义项存储在应用支持目录 JSON 文件中，暂不接入主数据库、账号同步或备份恢复。
-- 决策助手仅用于辅助排序和透明计算，不作为医疗、法律、财务等高风险决策依据。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸氬啩绮堟稊鍫㈩儑娑撯偓閻楀牆褰ф担璺ㄦ暏閸欏倽鈧?YunYouJun/cook `recipe.csv` 閻ㄥ嫮顬囩痪璺潚鐎涙劕鐡欓梿鍡礉楠炴湹濞囬悽銊︽拱閸︽壆鐣濋崠鏍劄妤犮倧绱濇稉宥呬粵鏉╂粎顏€圭偞妞傞崥灞绢劄閵?
+- 閺堫剙婀?`D:\vocabularySleep-resources\缁屽じ绮堟稊鍧?娑?EPUB 娑撳秵鎲宠ぐ鏇炲斧閺傚浄绱辩粚鎸庢儗閺佺増宓佹担璺ㄦ暏闁氨鏁ら崢鐔峰灟閸滃瞼鏁撻幋鎰础缁夊秴鐡欓弫鐗堝祦閵?
+- 閼奉亜鐣炬稊澶愩€嶇€涙ê鍋嶉崷銊ョ安閻劍鏁幐浣烘窗瑜?JSON 閺傚洣娆㈡稉顓ㄧ礉閺嗗倷绗夐幒銉ュ弳娑撶粯鏆熼幑顔肩氨閵嗕浇澶勯崣宄版倱濮濄儲鍨ㄦ径鍥﹀敜閹垹顦查妴?
+- 閸愬磭鐡ラ崝鈺傚娴犲懐鏁ゆ禍搴ょ窡閸斺晜甯撴惔蹇撴嫲闁繑妲戠拋锛勭暬閿涘奔绗夋担婊€璐熼崠鑽ゆ灍閵嗕焦纭跺瀣ㄢ偓浣藉偍閸旓紕鐡戞姗€顥撻梽鈺佸枀缁涙牔绶烽幑顔衡偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_storage.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_storage.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart`（通过，No issues found）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_storage.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_daily_choice_tool.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_storage.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_widgets.dart lib/src/ui/pages/toolbox_daily_choice/daily_choice_hub.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
 
 ## [Unreleased-PLAN_059] - 2026-04-24
 
-### 原因
-- 用户要求继续完成前面建议中的其他实用项，让睡眠助手在睡前、夜醒、醒来和跨工具放松之间形成更完整的低阻力路径。
-- 这些功能应继续保持手机端压缩，不把首页重新拉长，也不绕过模块启停边界。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴缂佈呯敾鐎瑰本鍨氶崜宥夋桨瀵ら缚顔呮稉顓犳畱閸忔湹绮€圭偟鏁ゆい鐧哥礉鐠佲晝娼惇鐘插И閹靛婀惈鈥冲閵嗕礁顧侀柋鎺嬧偓渚€鍟嬮弶銉ユ嫲鐠恒劌浼愰崗閿嬫杹閺夊彞绠ｉ梻鏉戣埌閹存劖娲跨€瑰本鏆ｉ惃鍕秵闂冭濮忕捄顖氱窞閵?
+- 鏉╂瑤绨洪崝鐔诲厴鎼存梻鎴风紒顓濈箽閹镐焦澧滈張铏诡伂閸樺缂夐敍灞肩瑝閹跺﹪顩绘い鐢稿櫢閺傜増濯洪梹鍖＄礉娑旂喍绗夌紒鏇＄箖濡€虫健閸氼垰浠犳潏鍦櫕閵?
 
-### 新增
-- 睡眠首页新增“睡前一键场景”确认抽屉，一次确认后打开睡眠暗色模式并启动最低能量流程。
-- 晨间三按钮快记新增推断提示，可展示最近夜醒记录、最低能量流程和晚间看屏线索，并保留“补详细日志”入口。
-- 免输入场景启动面板新增夜醒分支 chip，可直接进入“完全清醒、思绪停不下来、身体太兴奋”等夜醒救援状态。
-- 更多入口折叠区新增跨 toolbox 放松入口：呼吸训练、舒缓音乐、疗愈音钵和禅意沙盘。
+### 閺傛澘顤?
+- 閻紕婀㈡＃鏍€夐弬鏉款杻閳ユ粎娼崜宥勭闁款喖婧€閺咁垪鈧繄鈥樼拋銈嗗▕鐏炲绱濇稉鈧▎锛勨€樼拋銈呮倵閹垫挸绱戦惈锛勬耿閺嗘澹婂Ο鈥崇础楠炶泛鎯庨崝銊︽付娴ｅ氦鍏橀柌蹇旂ウ缁嬪鈧?
+- 閺呫劑妫挎稉澶嬪瘻闁筋喖鎻╃拋鐗堟煀婢х偞甯归弬顓熷絹缁€鐚寸礉閸欘垰鐫嶇粈鐑樻付鏉╂垵顧侀柋鎺曨唶瑜版洏鈧焦娓舵担搴ゅ厴闁插繑绁︾粙瀣嫲閺呮岸妫块惇瀣潌缁捐法鍌ㄩ敍灞借嫙娣囨繄鏆€閳ユ粏藟鐠囷妇绮忛弮銉ョ箶閳ユ繂鍙嗛崣锝冣偓?
+- 閸忓秷绶崗銉ユ簚閺咁垰鎯庨崝銊╂桨閺夋寧鏌婃晶鐐差檨闁辨帒鍨庨弨?chip閿涘苯褰查惄瀛樺复鏉╂稑鍙嗛垾婊冪暚閸忋劍绔婚柋鎺嬧偓浣光偓婵堝崕閸嬫粈绗夋稉瀣降閵嗕浇闊╂担鎾炽亰閸忔潙顨愰垾婵堢搼婢舵粓鍟嬮弫鎴炲胶閻樿埖鈧降鈧?
+- 閺囨潙顦块崗銉ュ經閹舵ê褰旈崠鐑樻煀婢х偠娉?toolbox 閺€鐐緱閸忋儱褰涢敍姘嚑閸氭瓕顔勭紒鍐︹偓浣藉灊缂傛捇鐓舵稊鎰┾偓浣烘灍閹板牓鐓堕柦闈涙嫲缁傚懏鍓板▽娆戞磸閵?
 
-### 修改
-- `SleepNightRescuePage` 新增可选 `initialMode` 参数，用于从首页分支直接进入对应夜醒状态；既有启动、保存和结束逻辑不变。
-- 睡前一键场景只自动处理睡眠暗色与最低能量流程，背景音和其他工具仍由用户主动选择，避免夜间误播放。
-- 跨 toolbox 入口统一使用 `pushModuleRoute` 与目标 moduleId，保持模块关闭时的访问守卫。
-- `modules/sleep/README.md` 补充本轮睡前一键场景、晨间推断、夜醒分支和跨工具联动说明。
+### 娣囶喗鏁?
+- `SleepNightRescuePage` 閺傛澘顤冮崣顖炩偓?`initialMode` 閸欏倹鏆熼敍宀€鏁ゆ禍搴濈矤妫ｆ牠銆夐崚鍡樻暜閻╁瓨甯存潻娑樺弳鐎电懓绨叉径婊堝晪閻樿埖鈧緤绱遍弮銏℃箒閸氼垰濮╅妴浣风箽鐎涙ê鎷扮紒鎾存将闁槒绶稉宥呭綁閵?
+- 閻€冲娑撯偓闁款喖婧€閺咁垰褰ч懛顏勫З婢跺嫮鎮婇惈锛勬耿閺嗘澹婃稉搴㈡付娴ｅ氦鍏橀柌蹇旂ウ缁嬪绱濋懗灞炬珯闂婂啿鎷伴崗鏈电铂瀹搞儱鍙挎禒宥囨暠閻劍鍩涙稉璇插З闁瀚ㄩ敍宀勪缉閸忓秴顧侀梻纾嬵嚖閹绢厽鏂侀妴?
+- 鐠?toolbox 閸忋儱褰涚紒鐔剁娴ｈ法鏁?`pushModuleRoute` 娑撳海娲伴弽?moduleId閿涘奔绻氶幐浣鼓侀崸妤€鍙ч梻顓熸閻ㄥ嫯顔栭梻顔肩暓閸楊偁鈧?
+- `modules/sleep/README.md` 鐞涖儱鍘栭張顒冪枂閻€冲娑撯偓闁款喖婧€閺咁垬鈧焦娅掗梻瀛樺腹閺傤厹鈧礁顧侀柋鎺戝瀻閺€顖氭嫲鐠恒劌浼愰崗鐤粓閸斻劏顕╅弰搴涒偓?
 
-### 风险变更
-- 本轮不新增睡眠持久化字段，不改变夜醒事件、日志保存或流程执行状态机。
-- 睡前一键场景会主动打开睡眠助手暗色模式；这是明确确认后的模块内偏好更新。
-- 跨 toolbox 链接只提供入口，不接管其他工具的播放状态或偏好。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘稉宥嗘煀婢х偟娼惇鐘冲瘮娑斿懎瀵茬€涙顔岄敍灞肩瑝閺€鐟板綁婢舵粓鍟嬫禍瀣╂閵嗕焦妫╄箛妞剧箽鐎涙ɑ鍨ㄥù浣衡柤閹笛嗩攽閻樿埖鈧焦婧€閵?
+- 閻€冲娑撯偓闁款喖婧€閺咁垯绱版稉璇插З閹垫挸绱戦惈锛勬耿閸斺晜澧滈弳妤勫濡€崇础閿涙稖绻栭弰顖涙绾喚鈥樼拋銈呮倵閻ㄥ嫭膩閸ф鍞撮崑蹇撱偨閺囧瓨鏌婇妴?
+- 鐠?toolbox 闁剧偓甯撮崣顏呭絹娓氭稑鍙嗛崣锝忕礉娑撳秵甯寸粻鈥冲従娴犳牕浼愰崗椋庢畱閹绢厽鏂侀悩鑸碘偓浣瑰灗閸嬪繐銈介妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`（通过，No issues found）
-- `flutter test test/sleep_repository_test.dart --reporter compact`（通过，All tests passed）
-- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/sleep_repository_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
+- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart lib/src/ui/pages/sleep_night_rescue_page.dart`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇?changelog 閸欐婀伴張?Git 閹广垼顢戠拋鍓х枂瑜板崬鎼烽敍?
 
 ## [Unreleased-PLAN_058] - 2026-04-24
 
-### 原因
-- 用户希望按照低意志力体验方案继续完善睡眠助手，重点解决睡眠不足、烦躁、容易中断习惯时的驱动力不足。
-- 首页需要加入具有鼓励、抚慰和支持性的目标文案，但仍要保持手机端紧凑，不再堆长页面。
+### 閸樼喎娲?
+- 閻劍鍩涚敮灞炬箿閹稿鍙庢担搴㈠壈韫囨濮忔担鎾荤崣閺傝顢嶇紒褏鐢荤€瑰苯鏉介惈锛勬耿閸斺晜澧滈敍宀勫櫢閻愮袙閸愬磭娼惇鐘辩瑝鐡掔偨鈧胶鍎查煬浣碘偓浣割啇閺勬挷鑵戦弬顓濈瘎閹垱妞傞惃鍕攳閸斻劌濮忔稉宥堝喕閵?
+- 妫ｆ牠銆夐棁鈧憰浣稿閸忋儱鍙块張澶愮处閸斾究鈧焦濮庨幈鏉挎嫲閺€顖涘瘮閹呮畱閻╊喗鐖ｉ弬鍥攳閿涘奔绲炬禒宥堫洣娣囨繃瀵旈幍瀣簚缁旑垳鎻ｉ崙鎴礉娑撳秴鍟€閸棝鏆辨い鐢告桨閵?
 
-### 新增
-- 新增 `sleep_low_effort_widgets.dart`，承载睡眠首页的低意志力组件：支持性目标提示、疲惫模式抽屉和晨间三按钮快记。
-- 睡眠首页主舞台新增“今晚目标”提示条，文案强调不追求完美睡眠，只先完成一个小动作，降低自责和选择负担。
-- 睡眠首页新增“更短版本 / 我现在很累”入口，拉起疲惫模式底部抽屉，直接提供调暗灯光、放远手机、停放担心三步，并保留 8 分钟流程、背景音和夜醒救援。
-- 早晨时段新增“醒来只点一下”三按钮快记，可用“差不多 / 更差 / 更好”记录晨间精神、白天困倦和必要备注。
+### 閺傛澘顤?
+- 閺傛澘顤?`sleep_low_effort_widgets.dart`閿涘本澹欐潪鐣屾蒋閻娀顩绘い鐢垫畱娴ｅ孩鍓拌箛妤€濮忕紒鍕閿涙碍鏁幐浣光偓褏娲伴弽鍥ㄥ絹缁€鎭掆偓浣烘煂閹偅膩瀵繑濞婄仦澶婃嫲閺呫劑妫挎稉澶嬪瘻闁筋喖鎻╃拋鑸偓?
+- 閻紕婀㈡＃鏍€夋稉鏄忓灦閸欑増鏌婃晶鐐┾偓婊€绮栭弲姘辨窗閺嶅洠鈧繃褰佺粈鐑樻蒋閿涘本鏋冨鍫濆繁鐠嬪啩绗夋潻鑺ョ湴鐎瑰瞼绶ㄩ惈锛勬耿閿涘苯褰ч崗鍫濈暚閹存劒绔存稉顏勭毈閸斻劋缍旈敍宀勬娴ｅ氦鍤滅拹锝呮嫲闁瀚ㄧ拹鐔稿閵?
+- 閻紕婀㈡＃鏍€夐弬鏉款杻閳ユ粍娲块惌顓犲閺?/ 閹存垹骞囬崷銊ョ发缁鳖垪鈧繂鍙嗛崣锝忕礉閹峰鎹ｉ悿鍙夊劮濡€崇础鎼存洟鍎撮幎钘夌溄閿涘瞼娲块幒銉﹀絹娓氭稖鐨熼弳妤冧紖閸忓鈧焦鏂佹潻婊勫閺堟亽鈧礁浠犻弨鐐韫囧啩绗佸銉礉楠炴湹绻氶悾?8 閸掑棝鎸撳ù浣衡柤閵嗕浇鍎楅弲顖炵叾閸滃苯顧侀柋鎺撴櫝閹绘番鈧?
+- 閺冣晜娅掗弮鑸殿唽閺傛澘顤冮垾婊堝晪閺夈儱褰ч悙閫涚娑撳鈧繀绗侀幐澶愭尦韫囶偉顔囬敍灞藉讲閻劉鈧粌妯婃稉宥咁樋 / 閺囨潙妯?/ 閺囨潙銈介垾婵婎唶瑜版洘娅掗梻瀵哥翱缁佺偑鈧胶娅ф径鈺佹炊閸婏箑鎷拌箛鍛邦洣婢跺洦鏁為妴?
 
-### 修改
-- 将支持性文案收进主舞台内部提示条，而不是额外新增长卡片，减少手机端首屏长度增长。
-- 免输入场景启动面板增加“我现在很累”高优先级按钮，让疲惫用户不必先理解四个场景按钮。
-- 晨间快记复用 `SleepDailyLog` 和 `AppState.saveSleepDailyLog`，不新增仓库字段或持久化结构。
-- `modules/sleep/README.md` 补充低意志力体验、疲惫模式抽屉和晨间三按钮快记说明。
+### 娣囶喗鏁?
+- 鐏忓棙鏁幐浣光偓褎鏋冨鍫熸暪鏉╂稐瀵岄懜鐐插酱閸愬懘鍎撮幓鎰仛閺夆槄绱濋懓灞肩瑝閺勵垶顤傛径鏍ㄦ煀婢х偤鏆遍崡锛勫閿涘苯鍣虹亸鎴炲閺堣櫣顏＃鏍х潌闂€鍨婢х偤鏆遍妴?
+- 閸忓秷绶崗銉ユ簚閺咁垰鎯庨崝銊╂桨閺夊灝顤冮崝鐘偓婊勫灉閻滄澘婀鍫㈢柈閳ユ繈鐝导妯哄帥缁狙勫瘻闁筋噯绱濈拋鈺冩煂閹偆鏁ら幋铚傜瑝韫囧懎鍘涢悶鍡毿掗崶娑楅嚋閸︾儤娅欓幐澶愭尦閵?
+- 閺呫劑妫胯箛顐ヮ唶婢跺秶鏁?`SleepDailyLog` 閸?`AppState.saveSleepDailyLog`閿涘奔绗夐弬鏉款杻娴犳挸绨辩€涙顔岄幋鏍ㄥ瘮娑斿懎瀵茬紒鎾寸€妴?
+- `modules/sleep/README.md` 鐞涖儱鍘栨担搴㈠壈韫囨濮忔担鎾荤崣閵嗕胶鏌岄幆顐Ｄ佸蹇斿▕鐏炲鎷伴弲銊╂？娑撳瀵滈柦顔兼彥鐠佹媽顕╅弰搴涒偓?
 
-### 风险变更
-- 晨间快记会更新当天日志的晨间精神和白天困倦；已有睡眠时长、时间轴、环境因子等详细字段会保留。
-- 疲惫模式抽屉只复用既有流程、白噪音和夜醒救援入口，不改变睡前流程状态机。
-- 本轮继续将新交互限制在睡眠助手首页展示与轻量日志保存层，不新增医疗判断或诊断承诺。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺呫劑妫胯箛顐ヮ唶娴兼碍娲块弬鏉跨秼婢垛晜妫╄箛妤冩畱閺呫劑妫跨划鍓ь殻閸滃瞼娅ф径鈺佹炊閸婏讣绱卞鍙夋箒閻紕婀㈤弮鍫曟毐閵嗕焦妞傞梻纾嬮叡閵嗕胶骞嗘晶鍐ㄦ礈鐎涙劗鐡戠拠锔剧矎鐎涙顔屾导姘箽閻ｆ瑣鈧?
+- 閻ゅ弶鍎峰Ο鈥崇础閹惰棄鐪介崣顏勵槻閻劍妫﹂張澶嬬ウ缁嬪鈧胶娅ч崳顏堢叾閸滃苯顧侀柋鎺撴櫝閹绘潙鍙嗛崣锝忕礉娑撳秵鏁奸崣妯兼蒋閸撳秵绁︾粙瀣Ц閹焦婧€閵?
+- 閺堫剝鐤嗙紒褏鐢荤亸鍡樻煀娴溿倓绨伴梽鎰煑閸︺劎娼惇鐘插И閹靛顩绘い闈涚潔缁€杞扮瑢鏉炲鍣洪弮銉ョ箶娣囨繂鐡ㄧ仦鍌︾礉娑撳秵鏌婃晶鐐插鞍閻ゆ鍨介弬顓熷灗鐠囧﹥鏌囬幍鑳嚡閵?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`（通过，No issues found）
-- `flutter test test/sleep_repository_test.dart --reporter compact`（通过，All tests passed）
-- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/sleep_repository_test.dart --reporter compact`閿涘牓鈧俺绻冮敍瀛塴l tests passed閿?
+- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_low_effort_widgets.dart`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇?changelog 閸欐婀伴張?Git 閹广垼顢戠拋鍓х枂瑜板崬鎼烽敍?
 
 ## [Unreleased-PLAN_057] - 2026-04-24
 
-### 原因
-- 用户反馈睡眠助手首页仍然偏长，需要在手机端用折叠抽屉、下拉和子页面压缩信息密度。
-- 用户要求新增“科学睡眠”子模块，参考 `D:\vocabularySleep-resources\睡眠参考` 中的资料，提炼高度实用的精简手册。
-- 睡眠暗色模式下首页上部提示文字仍可能呈黑色，影响可读性。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閻紕婀㈤崝鈺傚妫ｆ牠銆夋禒宥囧姧閸嬪繘鏆遍敍宀勬付鐟曚礁婀幍瀣簚缁旑垳鏁ら幎妯哄綌閹惰棄鐪介妴浣风瑓閹峰鎷扮€涙劙銆夐棃銏犲竾缂傗晙淇婇幁顖氱槕鎼达负鈧?
+- 閻劍鍩涚憰浣圭湴閺傛澘顤冮垾婊咁潠鐎涳妇娼惇鐘偓婵嗙摍濡€虫健閿涘苯寮懓?`D:\vocabularySleep-resources\閻紕婀㈤崣鍌濃偓鍍?娑擃厾娈戠挧鍕灐閿涘本褰侀悙濂哥彯鎼达箑鐤勯悽銊ф畱缁墽鐣濋幍瀣斀閵?
+- 閻紕婀㈤弳妤勫濡€崇础娑撳顩绘い鍏哥瑐闁劍褰佺粈鐑樻瀮鐎涙ぞ绮涢崣顖濆厴閸涘牓绮﹂懝璇х礉瑜板崬鎼烽崣顖濐嚢閹佲偓?
 
-### 新增
-- 新增 `SleepSciencePage` 科学睡眠页，作为睡眠助手子页面入口。
-- 科学睡眠页新增一分钟原则、风险优先、白天锚点、睡前收口、夜醒处理、易误用规则和参考资料索引，全部使用折叠标题组织。
-- 睡眠首页新增“快速定位”抽屉，可直接跳到当前主线、闭环路线、更多入口、直接建议、7 天趋势，或打开科学睡眠页。
+### 閺傛澘顤?
+- 閺傛澘顤?`SleepSciencePage` 缁夋垵顒熼惈锛勬耿妞ょ绱濇担婊€璐熼惈锛勬耿閸斺晜澧滅€涙劙銆夐棃銏犲弳閸欙絻鈧?
+- 缁夋垵顒熼惈锛勬耿妞ゅ灚鏌婃晶鐐扮閸掑棝鎸撻崢鐔峰灟閵嗕線顥撻梽鈺€绱崗鍫涒偓浣烘婢垛晠鏁嬮悙骞库偓浣烘蒋閸撳秵鏁归崣锝冣偓浣割檨闁辨帒顦╅悶鍡愨偓浣规鐠囶垳鏁ょ憴鍕灟閸滃苯寮懓鍐カ閺傛瑧鍌ㄥ鏇礉閸忋劑鍎存担璺ㄦ暏閹舵ê褰旈弽鍥暯缂佸嫮绮愰妴?
+- 閻紕婀㈡＃鏍€夐弬鏉款杻閳ユ粌鎻╅柅鐔风暰娴ｅ秮鈧繃濞婄仦澶涚礉閸欘垳娲块幒銉ㄧ儲閸掓澘缍嬮崜宥勫瘜缁捐￥鈧線妫撮悳顖濈熅缁捐￥鈧焦娲挎径姘弳閸欙絻鈧胶娲块幒銉ョ紦鐠侇喓鈧? 婢垛晞绉奸崝鍖＄礉閹存牗澧﹀鈧粔鎴濐劅閻紕婀㈡い鐐光偓?
 
-### 修改
-- 睡眠首页进一步压缩手机端长度：移除重复的“低能量快速开始”展开区，将更多入口与即时工具合并为折叠面板。
-- 当前主线、睡眠闭环路线、更多入口、直接建议、近 7 天趋势均改为折叠式面板，首屏保留下一步、免输入场景启动、指标与定位入口。
-- `sleepModuleTheme` 改为显式覆盖 headline/title/body/label 全部文字层级，修复暗色模式下顶部提示文字仍可能黑字不可见的问题。
-- 睡眠首页打鼾风险提示卡改为独立组件，在暗色主题内部读取 `errorContainer/onErrorContainer` 并显式设置正文颜色，避免浅色背景配浅色文字。
-- `modules/sleep/README.md` 补充移动端压缩首页和科学睡眠页能力说明。
+### 娣囶喗鏁?
+- 閻紕婀㈡＃鏍€夋潻娑楃濮濄儱甯囩紓鈺傚閺堣櫣顏梹鍨閿涙氨些闂勩倝鍣告径宥囨畱閳ユ粈缍嗛懗浠嬪櫤韫囶偊鈧喎绱戞慨瀣р偓婵嗙潔瀵偓閸栫尨绱濈亸鍡樻纯婢舵艾鍙嗛崣锝勭瑢閸楄櫕妞傚銉ュ徔閸氬牆鑻熸稉鐑樺閸欑娀娼伴弶瑁も偓?
+- 瑜版挸澧犳稉鑽ゅ殠閵嗕胶娼惇鐘绘４閻滎垵鐭剧痪瑁も偓浣规纯婢舵艾鍙嗛崣锝冣偓浣烘纯閹恒儱缂撶拋顔衡偓浣界箮 7 婢垛晞绉奸崝鍨綆閺€閫涜礋閹舵ê褰斿蹇涙桨閺夊尅绱濇＃鏍х潌娣囨繄鏆€娑撳绔村銉ｂ偓浣稿帳鏉堟挸鍙嗛崷鐑樻珯閸氼垰濮╅妴浣瑰瘹閺嶅洣绗岀€规矮缍呴崗銉ュ經閵?
+- `sleepModuleTheme` 閺€閫涜礋閺勬儳绱＄憰鍡欐磰 headline/title/body/label 閸忋劑鍎撮弬鍥х摟鐏炲倻楠囬敍灞兼叏婢跺秵娈懝鍙壞佸蹇庣瑓妞ゅ爼鍎撮幓鎰仛閺傚洤鐡ф禒宥呭讲閼充粙绮︾€涙ぞ绗夐崣顖濐潌閻ㄥ嫰妫舵０妯糕偓?
+- 閻紕婀㈡＃鏍€夐幍鎾诲妞嬪酣娅撻幓鎰仛閸椻剝鏁兼稉铏瑰缁斿绮嶆禒璁圭礉閸︺劍娈懝韫瘜妫版ê鍞撮柈銊嚢閸?`errorContainer/onErrorContainer` 楠炶埖妯夊蹇氼啎缂冾喗顒滈弬鍥杹閼硅绱濋柆鍨帳濞村懓澹婇懗灞炬珯闁板秵绁懝鍙夋瀮鐎涙ぜ鈧?
+- `modules/sleep/README.md` 鐞涖儱鍘栫粔璇插З缁旑垰甯囩紓鈺咁浕妞ら潧鎷扮粔鎴濐劅閻紕婀㈡い浣冨厴閸旀稖顕╅弰搴涒偓?
 
-### 风险变更
-- 科学睡眠页是健康教育和行为辅助，不替代医疗诊断；风险信号仍单独提示专业评估。
-- 本轮不改睡眠状态机、仓库持久化结构或流程执行语义。
-- `plans/` 与 `modules/sleep/` 当前被 `.gitignore` 忽略，本轮文档仍按项目规范在本地更新。
+### 妞嬪酣娅撻崣妯绘纯
+- 缁夋垵顒熼惈锛勬耿妞ゅ灚妲搁崑銉ユ倣閺佹瑨鍋涢崪宀冾攽娑撻缚绶熼崝鈺嬬礉娑撳秵娴涙禒锝呭鞍閻ゆ鐦栭弬顓ㄧ幢妞嬪酣娅撴穱鈥冲娇娴犲秴宕熼悪顒佸絹缁€杞扮瑩娑撴俺鐦庢导鑸偓?
+- 閺堫剝鐤嗘稉宥嗘暭閻紕婀㈤悩鑸碘偓浣规簚閵嗕椒绮ㄦ惔鎾村瘮娑斿懎瀵茬紒鎾寸€幋鏍ㄧウ缁嬪澧界悰宀冾嚔娑斿鈧?
+- `plans/` 娑?`modules/sleep/` 瑜版挸澧犵悮?`.gitignore` 韫囩晫鏆愰敍灞炬拱鏉烆喗鏋冨锝勭矝閹稿銆嶉惄顔款潐閼煎啫婀張顒€婀撮弴瀛樻煀閵?
 
-### 验证
-- `dart format lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_science_page.dart`（通过）
-- `dart analyze lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_science_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_assessment_page.dart`（通过，No issues found）
-- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_science_page.dart`（补充验证通过，No issues found）
-- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_science_page.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_science_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_assessment_page.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `dart analyze lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_science_page.dart`閿涘牐藟閸忓懘鐛欑拠渚€鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/sleep_repository_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_056] - 2026-04-24
 
-### 原因
-- 用户要求继续聚焦工具箱睡眠助手，修复睡眠暗色模式效果，并降低疲惫状态下的启动阻力。
-- 当前睡眠助手已有评估、日志、今晚流程、夜醒救援、白天节律和周报，但首页仍需要更明确的场景化入口和闭环串联。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴缂佈呯敾閼辨氨鍔嶅銉ュ徔缁犺京娼惇鐘插И閹靛绱濇穱顔碱槻閻紕婀㈤弳妤勫濡€崇础閺佸牊鐏夐敍灞借嫙闂勫秳缍嗛悿鍙夊劮閻樿埖鈧椒绗呴惃鍕儙閸斻劑妯嗛崝娑栤偓?
+- 瑜版挸澧犻惈锛勬耿閸斺晜澧滃鍙夋箒鐠囧嫪鍙婇妴浣规）韫囨ぜ鈧椒绮栭弲姘ウ缁嬪鈧礁顧侀柋鎺撴櫝閹绘番鈧胶娅ф径鈺勫Ν瀵板鎷伴崨銊﹀Г閿涘奔绲炬＃鏍€夋禒宥夋付鐟曚焦娲块弰搴ｂ€橀惃鍕簚閺咁垰瀵查崗銉ュ經閸滃矂妫撮悳顖欒閼辨柣鈧?
 
-### 新增
-- 睡眠首页新增“免输入场景启动”面板，提供“现在就睡、半夜醒了、放背景音、明早补记”四个低摩擦入口。
-- 睡眠首页新增“睡眠闭环路线”，把评估、今晚流程、夜醒救援、白天节律、最小日志和周报复盘串成可点击路径。
+### 閺傛澘顤?
+- 閻紕婀㈡＃鏍€夐弬鏉款杻閳ユ粌鍘ゆ潏鎾冲弳閸︾儤娅欓崥顖氬З閳ユ繈娼伴弶鍖＄礉閹绘劒绶甸垾婊呭箛閸︺劌姘ㄩ惈掳鈧礁宕愭径婊堝晪娴滃棎鈧焦鏂侀懗灞炬珯闂婄偨鈧焦妲戦弮鈺勊夌拋鎵斥偓婵嗘磽娑擃亙缍嗛幗鈺傛憹閸忋儱褰涢妴?
+- 閻紕婀㈡＃鏍€夐弬鏉款杻閳ユ粎娼惇鐘绘４閻滎垵鐭剧痪搴撯偓婵撶礉閹跺﹨鐦庢导鑸偓浣风矕閺呮碍绁︾粙瀣ㄢ偓浣割檨闁辨帗鏅抽幓娣偓浣烘婢垛晞濡瀣ㄢ偓浣规付鐏忓繑妫╄箛妤€鎷伴崨銊﹀Г婢跺秶娲忔稉鍙夊灇閸欘垳鍋ｉ崙鏄忕熅瀵板嫨鈧?
 
-### 修改
-- 强化 `sleepModuleTheme` 暗色主题，覆盖 Scaffold、AppBar、Card、Chip、ListTile、输入框、按钮、BottomSheet、SnackBar 和 TimePicker 等常见组件。
-- 将睡眠暗色主题扩展到睡眠评估、夜醒救援、白天节律、睡眠周报和流程编辑器，并补齐快速工具弹层与研究说明弹层的暗色主题。
-- 睡眠图表在暗色模式下会提升 accent 对比，并根据亮暗环境调整折线点内部颜色。
-- `modules/sleep/README.md` 记录本轮免输入入口、闭环路线，以及后续“零输入晨间补记、睡前一键场景、夜醒分支脚本、跨 toolbox 联动”等实用功能设计。
+### 娣囶喗鏁?
+- 瀵搫瀵?`sleepModuleTheme` 閺嗘澹婃稉濠氼暯閿涘矁顩惄?Scaffold閵嗕竸ppBar閵嗕竼ard閵嗕竼hip閵嗕俯istTile閵嗕浇绶崗銉︻攱閵嗕焦瀵滈柦顔衡偓涓卭ttomSheet閵嗕讣nackBar 閸?TimePicker 缁涘鐖剁憴浣虹矋娴犺翰鈧?
+- 鐏忓棛娼惇鐘虫閼硅弓瀵屾０妯诲⒖鐏炴洖鍩岄惈锛勬耿鐠囧嫪鍙婇妴浣割檨闁辨帗鏅抽幓娣偓浣烘婢垛晞濡瀣ㄢ偓浣烘蒋閻姴鎳嗛幎銉ユ嫲濞翠胶鈻肩紓鏍帆閸ｎ煉绱濋獮鎯八夋鎰彥闁喎浼愰崗宄拌剨鐏炲倷绗岄惍鏃傗敀鐠囧瓨妲戝鐟扮湴閻ㄥ嫭娈懝韫瘜妫版ǜ鈧?
+- 閻紕婀㈤崶鎹愩€冮崷銊︽閼瑰弶膩瀵繋绗呮导姘絹閸?accent 鐎佃鐦敍灞借嫙閺嶈宓佹禍顔芥閻滎垰顣ㄧ拫鍐╂殻閹舵鍤庨悙鐟板敶闁劑顤侀懝灞傗偓?
+- `modules/sleep/README.md` 鐠佹澘缍嶉張顒冪枂閸忓秷绶崗銉ュ弳閸欙絻鈧線妫撮悳顖濈熅缁惧尅绱濇禒銉ュ挤閸氬海鐢婚垾婊堟祩鏉堟挸鍙嗛弲銊╂？鐞涖儴顔囬妴浣烘蒋閸撳秳绔撮柨顔兼簚閺咁垬鈧礁顧侀柋鎺戝瀻閺€顖濆壖閺堫兙鈧浇娉?toolbox 閼辨柨濮╅垾婵堢搼鐎圭偟鏁ら崝鐔诲厴鐠佹崘顓搁妴?
 
-### 风险变更
-- 本轮没有新增睡眠数据模型，也没有改变 `SleepRepository` 的持久化结构。
-- 新场景入口仅复用既有路由、bottom sheet 与 `startSleepRoutine()`，不改变睡前流程状态机。
-- `plans/` 与 `modules/sleep/` 当前被 `.gitignore` 忽略，本轮文档仍按项目规范在本地更新。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗗▽鈩冩箒閺傛澘顤冮惈锛勬耿閺佺増宓佸Ο鈥崇€烽敍灞肩瘍濞屸剝婀侀弨鐟板綁 `SleepRepository` 閻ㄥ嫭瀵旀稊鍛缂佹挻鐎妴?
+- 閺傛澘婧€閺咁垰鍙嗛崣锝勭矌婢跺秶鏁ら弮銏℃箒鐠侯垳鏁遍妴涔ttom sheet 娑?`startSleepRoutine()`閿涘奔绗夐弨鐟板綁閻€冲濞翠胶鈻奸悩鑸碘偓浣规簚閵?
+- `plans/` 娑?`modules/sleep/` 瑜版挸澧犵悮?`.gitignore` 韫囩晫鏆愰敍灞炬拱鏉烆喗鏋冨锝勭矝閹稿銆嶉惄顔款潐閼煎啫婀張顒€婀撮弴瀛樻煀閵?
 
-### 验证
-- `dart format lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`（通过）
-- `dart analyze lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`（通过，No issues found）
-- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
-- `git diff --check -- changelogs/CHANGELOG.md plans/PLAN_056_睡眠助手暗色模式与场景闭环精修.md modules/sleep/README.md lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/sleep_repository_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `git diff --check -- changelogs/CHANGELOG.md plans/PLAN_056_閻紕婀㈤崝鈺傚閺嗘澹婂Ο鈥崇础娑撳骸婧€閺咁垶妫撮悳顖滅翱娣?md modules/sleep/README.md lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_chart_widgets.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_assessment_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_day_rhythm_page.dart lib/src/ui/pages/sleep_night_rescue_page.dart lib/src/ui/pages/sleep_report_page.dart lib/src/ui/pages/sleep_routine_editor_page.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇?changelog 閸欐婀伴張?Git 閹广垼顢戠拋鍓х枂瑜板崬鎼烽敍?
 
 ## [Unreleased-PLAN_055] - 2026-04-24
 
-### 原因
-- 用户反馈当前睡眠模块仍依赖大量人工输入，疲惫状态下启动阻力高。
-- 模块内流程串联不足，今晚流程选中模板后缺少可勾选、可确认的进一步交互。
-- 需要增加模块内睡眠暗色模式，并优先复用现有系统通知/闹钟联动能力。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯瑜版挸澧犻惈锛勬耿濡€虫健娴犲秳绶风挧鏍с亣闁插繋姹夊銉ㄧ翻閸忋儻绱濋悿鍙夊劮閻樿埖鈧椒绗呴崥顖氬З闂冭濮忔妯糕偓?
+- 濡€虫健閸愬懏绁︾粙瀣╄閼辨柧绗夌搾绛圭礉娴犲﹥娅勫ù浣衡柤闁鑵戝Ο鈩冩緲閸氬海宸辩亸鎴濆讲閸曢箖鈧鈧礁褰茬涵顔款吇閻ㄥ嫯绻樻稉鈧銉ゆ唉娴滄帇鈧?
+- 闂団偓鐟曚礁顤冮崝鐘衬侀崸妤€鍞撮惈锛勬耿閺嗘澹婂Ο鈥崇础閿涘苯鑻熸导妯哄帥婢跺秶鏁ら悳鐗堟箒缁崵绮洪柅姘辩叀/闂傚綊鎸撻懕鏂垮З閼宠棄濮忛妴?
 
-### 新增
-- 连续睡眠日志页新增“30 秒最小日志”预设，可一键填入常见睡眠时长、入睡潜伏期、夜醒、精神/困倦和压力负荷。
-- 日志页数值字段新增常见选项 chips，备注新增常见标签，保留自定义输入。
-- 今晚流程页新增步骤清单，当前步骤勾选后会直接推进到下一步。
-- 睡眠首页新增“睡眠暗色模式”开关，并在睡眠首页、连续日志、今晚流程内局部应用暗色主题。
-- 今晚流程页新增睡前提醒和起床闹钟入口，复用现有待办提醒与系统日历/闹钟字段。
+### 閺傛澘顤?
+- 鏉╃偟鐢婚惈锛勬耿閺冦儱绻旀い鍨煀婢х偐鈧?0 缁夋帗娓剁亸蹇旀）韫囨せ鈧繈顣╃拋鎾呯礉閸欘垯绔撮柨顔硷綖閸忋儱鐖剁憴浣烘蒋閻姵妞傞梹瑁も偓浣稿弳閻剝缍旀导蹇旀埂閵嗕礁顧侀柋鎺嬧偓浣虹翱缁?閸ユ澘鈧箑鎷伴崢瀣鐠愮喕宓庨妴?
+- 閺冦儱绻旀い鍨殶閸婄厧鐡у▓鍨煀婢х偛鐖剁憴渚€鈧銆?chips閿涘苯顦▔銊︽煀婢х偛鐖剁憴浣圭垼缁涙拝绱濇穱婵堟殌閼奉亜鐣炬稊澶庣翻閸忋儯鈧?
+- 娴犲﹥娅勫ù浣衡柤妞ゅ灚鏌婃晶鐐搭劄妤犮倖绔婚崡鏇礉瑜版挸澧犲銉╊€冮崟楣冣偓澶婃倵娴兼氨娲块幒銉﹀腹鏉╂稑鍩屾稉瀣╃濮濄儯鈧?
+- 閻紕婀㈡＃鏍€夐弬鏉款杻閳ユ粎娼惇鐘虫閼瑰弶膩瀵繆鈧繂绱戦崗绛圭礉楠炶泛婀惈锛勬耿妫ｆ牠銆夐妴浣界箾缂侇厽妫╄箛妞尖偓浣风矕閺呮碍绁︾粙瀣敶鐏炩偓闁劌绨查悽銊︽閼硅弓瀵屾０妯糕偓?
+- 娴犲﹥娅勫ù浣衡柤妞ゅ灚鏌婃晶鐐垫蒋閸撳秵褰侀柋鎺戞嫲鐠у嘲绨ラ梻褰掓寭閸忋儱褰涢敍灞筋槻閻劎骞囬張澶婄窡閸旂偞褰侀柋鎺嶇瑢缁崵绮洪弮銉ュ坊/闂傚綊鎸撶€涙顔岄妴?
 
-### 修改
-- `SleepDashboardState` 增加 `sleepDarkModeEnabled` 持久化字段，旧数据默认关闭。
-- 睡眠仓库测试增加 dashboard 暗色模式持久化断言。
+### 娣囶喗鏁?
+- `SleepDashboardState` 婢х偛濮?`sleepDarkModeEnabled` 閹镐椒绠欓崠鏍х摟濞堢绱濋弮褎鏆熼幑顕€绮拋銈呭彠闂傤厹鈧?
+- 閻紕婀㈡禒鎾崇氨濞村鐦晶鐐插 dashboard 閺嗘澹婂Ο鈥崇础閹镐椒绠欓崠鏍ㄦ焽鐟封偓閵?
 
-### 风险变更
-- 快速填充只在用户点击预设或 chips 时生效，不自动覆盖输入。
-- 步骤清单只复用既有 `advanceSleepRoutine()` 推进当前步骤，不新增独立流程状态机。
-- 系统提醒联动依赖既有待办提醒和平台能力，不新增新的平台插件。
+### 妞嬪酣娅撻崣妯绘纯
+- 韫囶偊鈧喎锝為崗鍛涧閸︺劎鏁ら幋椋庡仯閸戝顣╃拋鐐灗 chips 閺冨墎鏁撻弫鍫礉娑撳秷鍤滈崝銊洬閻╂牞绶崗銉ｂ偓?
+- 濮濄儵顎冨〒鍛礋閸欘亜顦查悽銊︽＆閺?`advanceSleepRoutine()` 閹恒劏绻樿ぐ鎾冲濮濄儵顎冮敍灞肩瑝閺傛澘顤冮悪顒傜彌濞翠胶鈻奸悩鑸碘偓浣规簚閵?
+- 缁崵绮洪幓鎰板晪閼辨柨濮╂笟婵婄閺冦垺婀佸鍛閹绘劙鍟嬮崪灞介挬閸欐媽鍏橀崝娑崇礉娑撳秵鏌婃晶鐐存煀閻ㄥ嫬閽╅崣鐗堝絻娴犺翰鈧?
 
-### 验证
-- `dart format lib/src/models/sleep_plan.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart test/sleep_repository_test.dart`（通过）
-- `dart analyze lib/src/models/sleep_plan.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart test/sleep_repository_test.dart`（通过，No issues found）
-- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/models/sleep_plan.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart test/sleep_repository_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/models/sleep_plan.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart lib/src/ui/pages/sleep_daily_log_page.dart lib/src/ui/pages/sleep_wind_down_page.dart test/sleep_repository_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/sleep_repository_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_054] - 2026-04-24
 
-### 原因
-- 进入睡眠连续日志页时，`SleepDailyLogPage.initState()` 同步调用 `_loadDate()`，而 `_loadDate()` 会更新 `AppState.sleepDashboardState` 并触发 provider 通知。
-- Riverpod 不允许在 widget tree 构建/挂载期间修改 provider，因此报错 “Tried to modify a provider while the widget tree was building”。
+### 閸樼喎娲?
+- 鏉╂稑鍙嗛惈锛勬耿鏉╃偟鐢婚弮銉ョ箶妞ゅ灚妞傞敍瀹峉leepDailyLogPage.initState()` 閸氬本顒炵拫鍐暏 `_loadDate()`閿涘矁鈧?`_loadDate()` 娴兼碍娲块弬?`AppState.sleepDashboardState` 楠炴儼袝閸?provider 闁氨鐓￠妴?
+- Riverpod 娑撳秴鍘戠拋绋挎躬 widget tree 閺嬪嫬缂?閹稿倽娴囬張鐔兼？娣囶喗鏁?provider閿涘苯娲滃銈嗗Г闁?閳ユ翻ried to modify a provider while the widget tree was building閳ユ縿鈧?
 
-### 修复
-- 将睡眠日志页的日期字段加载与 dashboard 选中日期同步拆开。
-- 初始化时先加载页面本地表单字段，首帧结束后再同步 `selectedLogDateKey`。
-- 用户通过日期选择器切换日志日期时仍保持即时同步 dashboard 状态。
+### 娣囶喖顦?
+- 鐏忓棛娼惇鐘虫）韫囨銆夐惃鍕）閺堢喎鐡у▓闈涘鏉炴垝绗?dashboard 闁鑵戦弮銉︽埂閸氬本顒為幏鍡楃磻閵?
+- 閸掓繂顫愰崠鏍ㄦ閸忓牆濮炴潪浠嬨€夐棃銏℃拱閸︽媽銆冮崡鏇炵摟濞堢绱濇＃鏍ф姎缂佹挻娼崥搴″晙閸氬本顒?`selectedLogDateKey`閵?
+- 閻劍鍩涢柅姘崇箖閺冦儲婀￠柅澶嬪閸ｃ劌鍨忛幑銏℃）韫囨妫╅張鐔告娴犲秳绻氶幐浣稿祮閺冭泛鎮撳?dashboard 閻樿埖鈧降鈧?
 
-### 风险变更
-- 首帧期间 dashboard 的选中日期可能短暂保持旧值，但页面本地日期和表单字段立即可用；首帧后会补齐同步。
-- 本轮只调整睡眠日志页初始化通知时机，不改变日志保存、字段含义、仓库持久化或首页推荐逻辑。
+### 妞嬪酣娅撻崣妯绘纯
+- 妫ｆ牕鎶氶張鐔兼？ dashboard 閻ㄥ嫰鈧鑵戦弮銉︽埂閸欘垵鍏橀惌顓熸畯娣囨繃瀵旈弮褍鈧》绱濇担鍡涖€夐棃銏℃拱閸︾増妫╅張鐔锋嫲鐞涖劌宕熺€涙顔岀粩瀣祮閸欘垳鏁ら敍娑㈩浕鐢冩倵娴兼俺藟姒绘劕鎮撳銉ｂ偓?
+- 閺堫剝鐤嗛崣顏囩殶閺佸娼惇鐘虫）韫囨銆夐崚婵嗩潗閸栨牠鈧氨鐓￠弮鑸垫簚閿涘奔绗夐弨鐟板綁閺冦儱绻旀穱婵嗙摠閵嗕礁鐡у▓闈涙儓娑斿鈧椒绮ㄦ惔鎾村瘮娑斿懎瀵查幋鏍浕妞ゅ灚甯归懡鎰扳偓鏄忕帆閵?
 
-### 验证
-- `dart format lib/src/ui/pages/sleep_daily_log_page.dart`（通过）
-- `dart analyze lib/src/ui/pages/sleep_daily_log_page.dart`（通过，No issues found）
-- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
-- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/sleep_daily_log_page.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/sleep_daily_log_page.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/sleep_daily_log_page.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/sleep_repository_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `git diff --check -- changelogs/CHANGELOG.md lib/src/ui/pages/sleep_daily_log_page.dart`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇?changelog 閸欐婀伴張?Git 閹广垼顢戠拋鍓х枂瑜板崬鎼烽敍?
 
 ## [Unreleased-PLAN_053] - 2026-04-24
 
-### 原因
-- 用户要求继续推进 toolbox 睡眠助手模块，将当前半完成示例扩展为完整、实用、科学且低启动成本的睡眠辅助闭环。
-- 本轮参考 `D:\vocabularySleep-resources\睡眠参考` 中的 CBT-I、睡眠日志、R90/90 分钟周期、晨光节律、咖啡因、夜醒和睡眠医学风险边界资料，将其产品化为可直接执行的工具。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴缂佈呯敾閹恒劏绻?toolbox 閻紕婀㈤崝鈺傚濡€虫健閿涘苯鐨㈣ぐ鎾冲閸楀﹤鐣幋鎰仛娓氬澧跨仦鏇氳礋鐎瑰本鏆ｉ妴浣哥杽閻劊鈧胶顫栫€涳缚绗栨担搴℃儙閸斻劍鍨氶張顒傛畱閻紕婀㈡潏鍛И闂傤厾骞嗛妴?
+- 閺堫剝鐤嗛崣鍌濃偓?`D:\vocabularySleep-resources\閻紕婀㈤崣鍌濃偓鍍?娑擃厾娈?CBT-I閵嗕胶娼惇鐘虫）韫囨ぜ鈧阜90/90 閸掑棝鎸撻崨銊︽埂閵嗕焦娅掗崗澶庡Ν瀵板鈧礁鎸呴崯鈥虫礈閵嗕礁顧侀柋鎺戞嫲閻紕婀㈤崠璇差劅妞嬪酣娅撴潏鍦櫕鐠у嫭鏋￠敍灞界殺閸忔湹楠囬崫浣稿娑撳搫褰查惄瀛樺复閹笛嗩攽閻ㄥ嫬浼愰崗鏋偓?
 
-### 新增
-- 新增睡眠助手首页“当前一步”主舞台，根据当前时间、评估、日志、晨光、咖啡因和流程运行状态推荐最值得做的一步。
-- 新增“低能量快速开始”工具区，集中睡前、夜醒、晨光、咖啡因和 90 分钟周期入口。
-- 新增 8 分钟内置 `minimum_energy_shutdown` 最低能量睡前流程，并在首页一键选中和启动。
-- 新增 90 分钟睡眠周期规划器，支持反推今晚关灯时间与“现在就睡”的参考醒来时间。
-- 新增睡眠日志/睡眠效率、90 分钟周期/R90 两类研究说明，并接入最小日志优先建议。
+### 閺傛澘顤?
+- 閺傛澘顤冮惈锛勬耿閸斺晜澧滄＃鏍€夐垾婊冪秼閸撳秳绔村銉⑩偓婵呭瘜閼哥偛褰撮敍灞剧壌閹诡喖缍嬮崜宥嗘闂傛番鈧浇鐦庢导鑸偓浣规）韫囨ぜ鈧焦娅掗崗澶堚偓浣告寘閸熲€虫礈閸滃本绁︾粙瀣箥鐞涘瞼濮搁幀浣瑰腹閼芥劖娓堕崐鐓庣繁閸嬫氨娈戞稉鈧銉ｂ偓?
+- 閺傛澘顤冮垾婊€缍嗛懗浠嬪櫤韫囶偊鈧喎绱戞慨瀣р偓婵嗕紣閸忓嘲灏敍宀勬肠娑擃厾娼崜宥冣偓浣割檨闁辨帇鈧焦娅掗崗澶堚偓浣告寘閸熲€虫礈閸?90 閸掑棝鎸撻崨銊︽埂閸忋儱褰涢妴?
+- 閺傛澘顤?8 閸掑棝鎸撻崘鍛枂 `minimum_energy_shutdown` 閺堚偓娴ｅ氦鍏橀柌蹇曟蒋閸撳秵绁︾粙瀣剁礉楠炶泛婀＃鏍€夋稉鈧柨顕€鈧鑵戦崪灞芥儙閸斻劊鈧?
+- 閺傛澘顤?90 閸掑棝鎸撻惈锛勬耿閸涖劍婀＄憴鍕灊閸ｎ煉绱濋弨顖涘瘮閸欏秵甯规禒濠冩珓閸忓磭浼呴弮鍫曟？娑撳簶鈧粎骞囬崷銊ユ皑閻檧鈧繄娈戦崣鍌濃偓鍐晪閺夈儲妞傞梻娣偓?
+- 閺傛澘顤冮惈锛勬耿閺冦儱绻?閻紕婀㈤弫鍫㈠芳閵?0 閸掑棝鎸撻崨銊︽埂/R90 娑撱倗琚惍鏃傗敀鐠囧瓨妲戦敍灞借嫙閹恒儱鍙嗛張鈧亸蹇旀）韫囨ぞ绱崗鍫濈紦鐠侇喓鈧?
 
-### 修改
-- 读取睡前流程模板时会合并缺失的内置默认模板，让已有用户也能获得新增最低能量流程。
-- 睡前流程页对内置模板和新增步骤增加本地化显示名，降低中文界面中的英文流程名暴露。
-- 模块文档补充当前睡眠闭环能力、实用边界和更新历史。
+### 娣囶喗鏁?
+- 鐠囪褰囬惈鈥冲濞翠胶鈻煎Ο鈩冩緲閺冩湹绱伴崥鍫濊嫙缂傚搫銇戦惃鍕敶缂冾噣绮拋銈喣侀弶鍖＄礉鐠佲晛鍑￠張澶屾暏閹磋渹绡冮懗鍊熷箯瀵版鏌婃晶鐐存付娴ｅ氦鍏橀柌蹇旂ウ缁嬪鈧?
+- 閻€冲濞翠胶鈻兼い闈涱嚠閸愬懐鐤嗗Ο鈩冩緲閸滃本鏌婃晶鐐搭劄妤犮倕顤冮崝鐘虫拱閸︽澘瀵查弰鍓с仛閸氬稄绱濋梽宥勭秵娑擃厽鏋冮悾宀勬桨娑擃厾娈戦懟杈ㄦ瀮濞翠胶鈻奸崥宥嗘瘹闂囧眰鈧?
+- 濡€虫健閺傚洦銆傜悰銉ュ帠瑜版挸澧犻惈锛勬耿闂傤厾骞嗛懗钘夊閵嗕礁鐤勯悽銊ㄧ珶閻ｅ苯鎷伴弴瀛樻煀閸樺棗褰堕妴?
 
-### 风险变更
-- 睡眠建议继续保持行为辅助、记录和风险提示定位，不替代医疗诊断；打鼾、憋醒和严重白天嗜睡等仍只提示进一步评估。
-- 90 分钟周期工具仅作为规划辅助，文案避免暗示必须精确卡点。
-- 本轮复用既有 `AppState`、`SleepRepository`、页面路由和模块开关，不新增独立强侵入式状态机。
+### 妞嬪酣娅撻崣妯绘纯
+- 閻紕婀㈠楦款唴缂佈呯敾娣囨繃瀵旂悰灞艰礋鏉堝懎濮妴浣筋唶瑜版洖鎷版搴ㄦ珦閹绘劗銇氱€规矮缍呴敍灞肩瑝閺囧じ鍞崠鑽ゆ灍鐠囧﹥鏌囬敍娑欏ⅵ姒т勘鈧焦鍞婚柋鎺戞嫲娑撱儵鍣搁惂钘夈亯閸℃粎娼粵澶夌矝閸欘亝褰佺粈楦跨箻娑撯偓濮濄儴鐦庢导鑸偓?
+- 90 閸掑棝鎸撻崨銊︽埂瀹搞儱鍙挎禒鍛稊娑撻缚顫夐崚鎺曠窡閸斺晪绱濋弬鍥攳闁灝鍘ら弳妤冦仛韫囧懘銆忕划鍓р€橀崡锛勫仯閵?
+- 閺堫剝鐤嗘径宥囨暏閺冦垺婀?`AppState`閵嗕梗SleepRepository`閵嗕線銆夐棃銏ｇ熅閻㈠崬鎷板Ο鈥虫健瀵偓閸忕绱濇稉宥嗘煀婢х偟瀚粩瀣繁娓氶潧鍙嗗蹇曞Ц閹焦婧€閵?
 
-### 验证
-- `dart format lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`（通过）
-- `dart analyze lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`（通过，No issues found）
-- `flutter test test/sleep_repository_test.dart --reporter compact`（通过）
-- `git diff --check -- plans/PLAN_053_睡眠助手实用闭环完善.md modules/sleep/README.md changelogs/CHANGELOG.md lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`（通过，仅提示 changelog 受本机 Git 换行设置影响）
+### 妤犲矁鐦?
+- `dart format lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `flutter test test/sleep_repository_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `git diff --check -- plans/PLAN_053_閻紕婀㈤崝鈺傚鐎圭偟鏁ら梻顓犲箚鐎瑰苯鏉?md modules/sleep/README.md changelogs/CHANGELOG.md lib/src/models/sleep_routine_template.dart lib/src/state/app_state_sleep.dart lib/src/ui/pages/sleep_assistant_ui_support.dart lib/src/ui/pages/sleep_quick_tools.dart lib/src/ui/pages/sleep_quick_tools_sheets.dart lib/src/ui/pages/sleep_research_library.dart lib/src/ui/pages/sleep_wind_down_page.dart lib/src/ui/pages/toolbox_sleep_assistant_page.dart test/sleep_repository_test.dart`閿涘牓鈧俺绻冮敍灞肩矌閹绘劗銇?changelog 閸欐婀伴張?Git 閹广垼顢戠拋鍓х枂瑜板崬鎼烽敍?
 
 ## [Unreleased-PLAN_052] - 2026-04-24
 
-### 原因
-- 用户确认 `ASR/sherpa-onnx-whisper-small.en.tar.bz2` 等 ASR 资源不是项目必须内容，要求整理 `.gitignore`，清除与项目代码无关的已跟踪文件，并保留最小提交。
-- GitHub 推送已被两个超过 100MB 的 ASR 压缩包拒绝，需要从本地未推送历史中彻底移除。
+### 閸樼喎娲?
+- 閻劍鍩涚涵顔款吇 `ASR/sherpa-onnx-whisper-small.en.tar.bz2` 缁?ASR 鐠у嫭绨稉宥嗘Ц妞ゅ湱娲拌箛鍛淬€忛崘鍛啇閿涘矁顩﹀Ч鍌涙殻閻?`.gitignore`閿涘本绔婚梽銈勭瑢妞ゅ湱娲版禒锝囩垳閺冪姴鍙ч惃鍕嚒鐠虹喕閲滈弬鍥︽閿涘苯鑻熸穱婵堟殌閺堚偓鐏忓繑褰佹禍銈冣偓?
+- GitHub 閹恒劑鈧礁鍑＄悮顐¤⒈娑擃亣绉存潻?100MB 閻?ASR 閸樺缂夐崠鍛珕缂佹繐绱濋棁鈧憰浣风矤閺堫剙婀撮張顏呭腹闁礁宸婚崣韫厬瑜拌绨崇粔濠氭珟閵?
 
-### 修改
-- 从 `origin/main..main` 的本地未推送历史中移除 `ASR/` 大模型压缩包和 `third_party/flutter_tts/example/` 第三方示例工程。
-- 更新 `.gitignore`，忽略 ASR 本地资源、第三方示例工程、常见模型文件和压缩包产物，避免再次误加入版本库。
-- 保留 `assets/branding/`、`assets/en_zh_15000_wordbook.json`、`assets/toolbox/` 等项目运行资产不变。
+### 娣囶喗鏁?
+- 娴?`origin/main..main` 閻ㄥ嫭婀伴崷鐗堟弓閹恒劑鈧礁宸婚崣韫厬缁夊娅?`ASR/` 婢堆勀侀崹瀣竾缂傗晛瀵橀崪?`third_party/flutter_tts/example/` 缁楊兛绗侀弬鍦仛娓氬浼愮粙瀣ㄢ偓?
+- 閺囧瓨鏌?`.gitignore`閿涘苯鎷烽悾?ASR 閺堫剙婀寸挧鍕爱閵嗕胶顑囨稉澶嬫煙缁€杞扮伐瀹搞儳鈻奸妴浣哥埗鐟欎焦膩閸ㄥ鏋冩禒璺烘嫲閸樺缂夐崠鍛獓閻椻晪绱濋柆鍨帳閸愬秵顐肩拠顖氬閸忋儳澧楅張顒€绨遍妴?
+- 娣囨繄鏆€ `assets/branding/`閵嗕梗assets/en_zh_15000_wordbook.json`閵嗕梗assets/toolbox/` 缁涘銆嶉惄顔跨箥鐞涘矁绁禍褌绗夐崣妯糕偓?
 
-### 风险变更
-- 本轮重写了本地尚未推送的 45 个提交哈希；远端 `origin/main` 未改写，当前 `main` 仍以远端分支为祖先。
-- 本轮仅清理非必需资源与忽略规则，不改动 Flutter 运行代码和沙盘功能逻辑。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛柌宥呭晸娴滃棙婀伴崷鏉跨毣閺堫亝甯归柅浣烘畱 45 娑擃亝褰佹禍銈呮惐鐢矉绱辨潻婊咁伂 `origin/main` 閺堫亝鏁奸崘娆欑礉瑜版挸澧?`main` 娴犲秳浜掓潻婊咁伂閸掑棙鏁稉铏诡殯閸忓牄鈧?
+- 閺堫剝鐤嗘禒鍛閻炲棝娼箛鍛存付鐠у嫭绨稉搴℃嫹閻ｃ儴顫夐崚娆欑礉娑撳秵鏁奸崝?Flutter 鏉╂劘顢戞禒锝囩垳閸滃本鐭欓惄妯哄閼充粙鈧槒绶妴?
 
-### 验证
-- `git merge-base --is-ancestor origin/main main`（通过）
-- `git filter-branch --force --index-filter "git rm -r --cached --ignore-unmatch ASR third_party/flutter_tts/example" --prune-empty --tag-name-filter cat -- origin/main..main`（通过）
-- `git ls-files ASR third_party/flutter_tts/example`（通过，无输出）
-- `git rev-list --objects main | Select-String -Pattern "sherpa-onnx-whisper|third_party/flutter_tts/example"`（通过，无输出）
+### 妤犲矁鐦?
+- `git merge-base --is-ancestor origin/main main`閿涘牓鈧俺绻冮敍?
+- `git filter-branch --force --index-filter "git rm -r --cached --ignore-unmatch ASR third_party/flutter_tts/example" --prune-empty --tag-name-filter cat -- origin/main..main`閿涘牓鈧俺绻冮敍?
+- `git ls-files ASR third_party/flutter_tts/example`閿涘牓鈧俺绻冮敍灞炬￥鏉堟挸鍤敍?
+- `git rev-list --objects main | Select-String -Pattern "sherpa-onnx-whisper|third_party/flutter_tts/example"`閿涘牓鈧俺绻冮敍灞炬￥鏉堟挸鍤敍?
 
 ## [Unreleased-PLAN_051] - 2026-04-24
 
-### 原因
-- 用户要求完成沙盘模块最后一轮收尾：将“一键抹平”加入页面底部菜单栏，并提交推送。
-- 收尾审核中发现沉浸模式折叠菜单也应补齐同一操作，且页面中存在一组未使用 setter warning。
+### 閸樼喎娲?
+- 閻劍鍩涚憰浣圭湴鐎瑰本鍨氬▽娆戞磸濡€虫健閺堚偓閸氬簼绔存潪顔芥暪鐏忔拝绱扮亸鍡忊偓婊€绔撮柨顔藉Ы楠炴枼鈧繂濮為崗銉┿€夐棃銏犵俺闁劏褰嶉崡鏇熺埉閿涘苯鑻熼幓鎰唉閹恒劑鈧降鈧?
+- 閺€璺虹啲鐎光剝鐗虫稉顓炲絺閻滅増鐭囧ù鍛娔佸蹇斿閸欑姾褰嶉崡鏇氱瘍鎼存棁藟姒绘劕鎮撴稉鈧幙宥勭稊閿涘奔绗栨い鐢告桨娑擃厼鐡ㄩ崷銊ょ缂佸嫭婀担璺ㄦ暏 setter warning閵?
 
-### 修改
-- 将“一键抹平”加入底部菜单栏的折叠、紧凑和常规三种形态，复用现有横向滚动结构，不增加底部栏高度。
-- 将画布快捷条文案统一为“一键抹平”，并复用 `_canSmoothAll` 禁用判断。
-- 在沉浸模式折叠菜单中补齐“一键抹平”，避免全屏状态下必须退出才能完成抹平。
-- 抹平成功后增加轻量提示，明确反馈笔触已被抹平。
-- 清理沙盘页面中未使用的私有 setter，消除沙盘相关 `unused_element` 分析警告。
+### 娣囶喗鏁?
+- 鐏忓棌鈧粈绔撮柨顔藉Ы楠炴枼鈧繂濮為崗銉ョ俺闁劏褰嶉崡鏇熺埉閻ㄥ嫭濮岄崣鐘偓浣烘彛閸戞垵鎷扮敮姝岊潐娑撳顫掕ぐ銏♀偓渚婄礉婢跺秶鏁ら悳鐗堟箒濡亜鎮滃姘З缂佹挻鐎敍灞肩瑝婢х偛濮炴惔鏇㈠劥閺嶅繘鐝惔锔衡偓?
+- 鐏忓棛鏁剧敮鍐ㄦ彥閹归攱娼弬鍥攳缂佺喍绔存稉琛♀偓婊€绔撮柨顔藉Ы楠炴枼鈧繐绱濋獮璺侯槻閻?`_canSmoothAll` 缁備胶鏁ら崚銈嗘焽閵?
+- 閸︺劍鐭囧ù鍛娔佸蹇斿閸欑姾褰嶉崡鏇氳厬鐞涖儵缍堥垾婊€绔撮柨顔藉Ы楠炴枼鈧繐绱濋柆鍨帳閸忋劌鐫嗛悩鑸碘偓浣风瑓韫囧懘銆忛柅鈧崙鐑樺閼宠棄鐣幋鎰Ы楠炵偨鈧?
+- 閹剁懓閽╅幋鎰閸氬骸顤冮崝鐘轰氦闁插繑褰佺粈鐚寸礉閺勫海鈥橀崣宥夘洯缁楁棁袝瀹歌尪顫﹂幎鐟伴挬閵?
+- 濞撳懐鎮婂▽娆戞磸妞ょ敻娼版稉顓熸弓娴ｈ法鏁ら惃鍕潌閺?setter閿涘本绉烽梽銈嗙煓閻╂娴夐崗?`unused_element` 閸掑棙鐎界拃锕€鎲￠妴?
 
-### 风险变更
-- 本轮不改变 `_smoothAll()` 的数据语义：仍然只清除笔触并保留景石。
-- 底部菜单新增按钮会增加横向滚动内容，但继续复用 48dp 触控按钮和现有滚动容器。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘稉宥嗘暭閸?`_smoothAll()` 閻ㄥ嫭鏆熼幑顔款嚔娑斿绱版禒宥囧姧閸欘亝绔婚梽銈囩應鐟欙箑鑻熸穱婵堟殌閺咁垳鐓堕妴?
+- 鎼存洟鍎撮懣婊冨礋閺傛澘顤冮幐澶愭尦娴兼艾顤冮崝鐘趁崥鎴炵泊閸斻劌鍞寸€圭櫢绱濇担鍡欐埛缂侇厼顦查悽?48dp 鐟欙附甯堕幐澶愭尦閸滃瞼骞囬張澶嬬泊閸斻劌顔愰崳銊ｂ偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_zen_sand_tool.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_config.dart lib/src/ui/pages/toolbox_zen_sand_tool_render.dart lib/src/ui/pages/toolbox_zen_sand_tool_state.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart`（通过，No issues found）
-- `git diff --check -- lib/src/ui/pages/toolbox_zen_sand_tool.dart changelogs/CHANGELOG.md plans/PLAN_051_创意沙盘底部抹平入口与收尾审核.md`（通过）
-- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_zen_sand_tool.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_config.dart lib/src/ui/pages/toolbox_zen_sand_tool_render.dart lib/src/ui/pages/toolbox_zen_sand_tool_state.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart`閿涘牓鈧俺绻冮敍瀛╫ issues found閿?
+- `git diff --check -- lib/src/ui/pages/toolbox_zen_sand_tool.dart changelogs/CHANGELOG.md plans/PLAN_051_閸掓稒鍓板▽娆戞磸鎼存洟鍎撮幎鐟伴挬閸忋儱褰涙稉搴㈡暪鐏忔儳顓搁弽?md`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_050] - 2026-04-24
 
-### 原因
-- 用户反馈创意沙盘“贴合触点”模式下，手指触点与实际画出的沙痕位置仍有错位，需要真实贴合。
-- 当前全屏沉浸模式仍保留顶部按钮和底部 dock，手机横屏时画布空间没有被充分释放。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閸掓稒鍓板▽娆戞磸閳ユ粏鍒涢崥鍫Ｐ曢悙鍏夆偓婵嚹佸蹇庣瑓閿涘本澧滈幐鍥曢悙閫涚瑢鐎圭偤妾悽璇插毉閻ㄥ嫭鐭欓惀鏇氱秴缂冾喕绮涢張澶愭晩娴ｅ稄绱濋棁鈧憰浣烘埂鐎圭偠鍒涢崥鍫涒偓?
+- 瑜版挸澧犻崗銊ョ潌濞屽韫堝Ο鈥崇础娴犲秳绻氶悾娆撱€婇柈銊﹀瘻闁筋喖鎷版惔鏇㈠劥 dock閿涘本澧滈張鐑樏仦蹇旀閻㈣绔风粚娲？濞屸剝婀佺悮顐㈠帠閸掑棝鍣撮弨淇扁偓?
 
-### 修改
-- 修正沙盘画布手势坐标基准：
-  - 原先使用外层容器尺寸计算落笔位置，容易被 padding、画布标题条和快捷操作条影响。
-  - 改为在真实绘制区域内部用 `LayoutBuilder` 获取画布尺寸，并将手势、归一化、缩放/平移反变换统一到同一尺寸基准。
-- 重构沉浸模式：
-  - 沉浸态隐藏画布标题、快捷 action strip、底部 dock 和常驻提示，让沙盘画布直接铺满屏幕。
-  - 仅保留一个 52dp 浮动菜单按钮，菜单中折叠提供退出全屏、场景、工具、预设、撤销、重做、重置视角和清空沙盘。
-  - 手机尺寸进入沉浸模式时尝试切换到横屏方向，并在退出或销毁页面时恢复系统 UI 与方向偏好。
+### 娣囶喗鏁?
+- 娣囶喗顒滃▽娆戞磸閻㈣绔烽幍瀣◢閸ф劖鐖ｉ崺鍝勫櫙閿?
+  - 閸樼喎鍘涙担璺ㄦ暏婢舵牕鐪扮€圭懓娅掔亸鍝勵嚟鐠侊紕鐣婚拃鐣岀應娴ｅ秶鐤嗛敍灞筋啇閺勬捁顫?padding閵嗕胶鏁剧敮鍐╃垼妫版ɑ娼崪灞芥彥閹归攱鎼锋担婊勬蒋瑜板崬鎼烽妴?
+  - 閺€閫涜礋閸︺劎婀＄€圭偟绮崚璺哄隘閸╃喎鍞撮柈銊ф暏 `LayoutBuilder` 閼惧嘲褰囬悽璇茬鐏忓搫顕敍灞借嫙鐏忓棙澧滈崝瑁も偓浣哥秺娑撯偓閸栨牓鈧胶缂夐弨?楠炲磭些閸欏秴褰夐幑銏㈢埠娑撯偓閸掓澘鎮撴稉鈧亸鍝勵嚟閸╁搫鍣妴?
+- 闁插秵鐎▽澶嬭箞濡€崇础閿?
+  - 濞屽韫堥幀渚€娈ｉ挊蹇曟暰鐢啯鐖ｆ０妯糕偓浣告彥閹?action strip閵嗕礁绨抽柈?dock 閸滃苯鐖舵す缁樺絹缁€鐚寸礉鐠佲晜鐭欓惄妯兼暰鐢啰娲块幒銉╂懙濠娾€崇潌楠炴洏鈧?
+  - 娴犲懍绻氶悾娆庣娑?52dp 濞搭喖濮╅懣婊冨礋閹稿鎸抽敍宀冨綅閸楁洑鑵戦幎妯哄綌閹绘劒绶甸柅鈧崙鍝勫弿鐏炲繈鈧礁婧€閺咁垬鈧礁浼愰崗鏋偓渚€顣╃拋淇扁偓浣规寵闁库偓閵嗕線鍣搁崑姘モ偓渚€鍣哥純顔款潒鐟欐帒鎷板〒鍛敄濞屾瑧娲忛妴?
+  - 閹靛婧€鐏忓搫顕潻娑樺弳濞屽韫堝Ο鈥崇础閺冭泛鐨剧拠鏇炲瀼閹广垹鍩屽Ο顏勭潌閺傜懓鎮滈敍灞借嫙閸︺劑鈧偓閸戠儤鍨ㄩ柨鈧В渚€銆夐棃銏℃閹垹顦茬化鑽ょ埠 UI 娑撳孩鏌熼崥鎴濅焊婵傚鈧?
 
-### 修复
-- 修复“贴合触点”开启后仍因外层尺寸与真实绘制面不一致导致的落笔偏移。
-- 修复沉浸模式控件占位过多、手机横屏不够沉浸的问题。
+### 娣囶喖顦?
+- 娣囶喖顦查垾婊嗗垱閸氬牐袝閻愬厜鈧繂绱戦崥顖氭倵娴犲秴娲滄径鏍х湴鐏忓搫顕稉搴ｆ埂鐎圭偟绮崚鍫曟桨娑撳秳绔撮懛鏉戭嚤閼峰娈戦拃鐣岀應閸嬪繒些閵?
+- 娣囶喖顦插▽澶嬭箞濡€崇础閹貉傛閸楃姳缍呮潻鍥ь樋閵嗕焦澧滈張鐑樏仦蹇庣瑝婢剁喐鐭囧ù鍝ユ畱闂傤噣顣介妴?
 
-### 风险变更
-- 坐标链路只修正画布尺寸来源，不改变现有 viewport 缩放/平移公式。
-- 沉浸模式会在手机尺寸下请求横屏方向，退出沉浸或离开页面时恢复。
+### 妞嬪酣娅撻崣妯绘纯
+- 閸ф劖鐖ｉ柧鎹愮熅閸欘亙鎱ㄥ锝囨暰鐢啫鏄傜€靛憡娼靛┃鎰剁礉娑撳秵鏁奸崣妯煎箛閺?viewport 缂傗晜鏂?楠炲磭些閸忣剙绱￠妴?
+- 濞屽韫堝Ο鈥崇础娴兼艾婀幍瀣簚鐏忓搫顕稉瀣嚞濮瑰倹铆鐏炲繑鏌熼崥鎴礉闁偓閸戠儤鐭囧ù鍛婂灗缁傝绱戞い鐢告桨閺冭埖浠径宥冣偓?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_zen_sand_tool.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_zen_sand_tool.dart`（仍有既有 6 条 `unused_element` warning）
-- `git diff --check -- lib/src/ui/pages/toolbox_zen_sand_tool.dart changelogs/CHANGELOG.md`（通过）
-- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_zen_sand_tool.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_zen_sand_tool.dart`閿涘牅绮涢張澶嬫＆閺?6 閺?`unused_element` warning閿?
+- `git diff --check -- lib/src/ui/pages/toolbox_zen_sand_tool.dart changelogs/CHANGELOG.md`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_049] - 2026-04-24
 
-### 原因
-- 当前沙盘音效已接近真实沙沙声，但仍需要进一步轻柔化，并且需要随滑动节奏变化：加速滑动略增强、匀速滑动稳定、不动时应无声。
+### 閸樼喎娲?
+- 瑜版挸澧犲▽娆戞磸闂婅櫕鏅ュ鍙夊复鏉╂垹婀＄€圭偞鐭欏▽娆忥紣閿涘奔绲炬禒宥夋付鐟曚浇绻樻稉鈧銉ㄤ氦閺屾柨瀵查敍灞借嫙娑撴棃娓剁憰渚€娈㈠鎴濆З閼哄倸顨旈崣妯哄閿涙艾濮為柅鐔哥拨閸斻劎鏆愭晶鐐插繁閵嗕礁瀵戦柅鐔哥拨閸斻劎菙鐎规哎鈧椒绗夐崝銊︽鎼存梹妫ゆ竟鑸偓?
 
-### 修改
-- 在 `toolbox_zen_sand_sound_service.dart` 中重写循环声量映射：
-  - `intensity <= 0.01` 时返回 0 音量，确保按住不动或停住时真正静音。
-  - 整体基础音量和上限下调，使沙声更轻、更贴近背景触感。
-  - 新增运动强度计算：根据位移、时间间隔、平滑速度和正向加速度计算 loop intensity。
-- 在 `toolbox_zen_sand_tool.dart` 中接入运动联动：
-  - 起笔只预热并以 0 音量启动 loop，不再触摸即响。
-  - 滑动更新时按速度/加速度驱动沙声强度。
-  - 停止移动约 `130ms` 后淡到 0，继续滑动时快速恢复。
-  - 水迹长按扩散不再模拟滑动音，避免“没动也有声”。
-- 在沙盘音效测试中新增运动联动断言，覆盖静止为 0、加速强于匀速、峰值保持轻柔。
+### 娣囶喗鏁?
+- 閸?`toolbox_zen_sand_sound_service.dart` 娑擃參鍣搁崘娆忔儕閻滎垰锛愰柌蹇旀Ё鐏忓嫸绱?
+  - `intensity <= 0.01` 閺冩儼绻戦崶?0 闂婃娊鍣洪敍宀€鈥樻穱婵囧瘻娴ｅ繋绗夐崝銊﹀灗閸嬫粈缍囬弮鍓佹埂濮濓綁娼ら棅鐐解偓?
+  - 閺佺繝缍嬮崺铏诡攨闂婃娊鍣洪崪灞肩瑐闂勬劒绗呯拫鍐跨礉娴ｆ寧鐭欐竟鐗堟纯鏉炴眹鈧焦娲跨拹纾嬬箮閼冲本娅欑憴锔藉妳閵?
+  - 閺傛澘顤冩潻鎰З瀵搫瀹崇拋锛勭暬閿涙碍鐗撮幑顔荤秴缁夋眹鈧焦妞傞梻鎾？闂呮柣鈧礁閽╁鎴︹偓鐔峰閸滃本顒滈崥鎴濆闁喎瀹崇拋锛勭暬 loop intensity閵?
+- 閸?`toolbox_zen_sand_tool.dart` 娑擃厽甯撮崗銉ㄧ箥閸斻劏浠堥崝顭掔窗
+  - 鐠ч鐟崣顏堫暕閻戭厼鑻熸禒?0 闂婃娊鍣洪崥顖氬З loop閿涘奔绗夐崘宥埿曢幗绋垮祮閸濆秲鈧?
+  - 濠婃垵濮╅弴瀛樻煀閺冭埖瀵滈柅鐔峰/閸旂娀鈧喎瀹虫す鍗炲З濞屾瑥锛愬鍝勫閵?
+  - 閸嬫粍顒涚粔璇插З缁?`130ms` 閸氬孩璐伴崚?0閿涘瞼鎴风紒顓熺拨閸斻劍妞傝箛顐︹偓鐔镐划婢跺秲鈧?
+  - 濮樼鎶楅梹鎸庡瘻閹碘晜鏆庢稉宥呭晙濡剝瀚欏鎴濆З闂婄绱濋柆鍨帳閳ユ粍鐥呴崝銊ょ瘍閺堝锛愰垾婵勨偓?
+- 閸︺劍鐭欓惄姗€鐓堕弫鍫熺ゴ鐠囨洑鑵戦弬鏉款杻鏉╂劕濮╅懕鏂垮З閺傤叀鈻堥敍宀冾洬閻╂牠娼ゅ顫礋 0閵嗕礁濮為柅鐔峰繁娴滃骸瀵戦柅鐔粹偓浣稿槻閸婇棿绻氶幐浣戒氦閺屾柣鈧?
 
-### 风险变更
-- 本轮只改变音效强度映射与手势运动到音量的联动，不改变绘制、落石、持久化或路由语义。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛崣顏呮暭閸欐﹢鐓堕弫鍫濆繁鎼达附妲х亸鍕瑢閹靛濞嶆潻鎰З閸掍即鐓堕柌蹇曟畱閼辨柨濮╅敍灞肩瑝閺€鐟板綁缂佹ê鍩楅妴浣芥儰閻偨鈧焦瀵旀稊鍛閹存牞鐭鹃悽杈嚔娑斿鈧?
 
-### 验证
-- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`（通过）
-- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
-- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`（仍有 `toolbox_zen_sand_tool.dart` 既有 6 条 unused_element warning）
+### 妤犲矁鐦?
+- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`閿涘牅绮涢張?`toolbox_zen_sand_tool.dart` 閺冦垺婀?6 閺?unused_element warning閿?
 
 ## [Unreleased-PLAN_048] - 2026-04-24
 
-### 原因
-- 用户进一步明确：创意沙盘音效核心应模拟手指在沙面滑动时沙砾发出的细密“悉沙声”，用于解压放松，而不是泛白噪声或电子噪音。
-- 参考网页 `https://www.ppbzy.com/tools/zen/` 的沙盘实现采用平滑随机噪声、约 800Hz 中频带通和拖动速度控制音量的思路，方向更接近真实砂面摩擦。
+### 閸樼喎娲?
+- 閻劍鍩涙潻娑楃濮濄儲妲戠涵顕嗙窗閸掓稒鍓板▽娆戞磸闂婅櫕鏅ラ弽绋跨妇鎼存梹膩閹风喐澧滈幐鍥ф躬濞屾瑩娼板鎴濆З閺冭埖鐭欓惍鎯у絺閸戣櫣娈戠紒鍡楃槕閳ユ粍鍊濆▽娆忥紣閳ユ繐绱濋悽銊ょ艾鐟欙絽甯囬弨鐐緱閿涘矁鈧奔绗夐弰顖涚【閻ц棄娅旀竟鐗堝灗閻㈤潧鐡欓崳顏堢叾閵?
+- 閸欏倽鈧啰缍夋い?`https://www.ppbzy.com/tools/zen/` 閻ㄥ嫭鐭欓惄妯虹杽閻滀即鍣伴悽銊ラ挬濠婃垿娈㈤張鍝勬珨婢硅埇鈧胶瀹?800Hz 娑擃參顣剁敮锕傗偓姘嫲閹锋牕濮╅柅鐔峰閹貉冨煑闂婃娊鍣洪惃鍕偓婵婄熅閿涘本鏌熼崥鎴炴纯閹恒儴绻庨惇鐔风杽閻倿娼伴幗鈺傛憹閵?
 
-### 修改
-- 重写 `toolbox_zen_sand_sound_service.dart` 的现代循环底噪生成器：
-  - 去除正弦 partial 堆叠，避免听感出现固定音高或电子调制感。
-  - 改为确定性有色颗粒噪声：中频摩擦带负责“悉沙”，细粒脉冲负责砂粒感，慢压力漂移负责随手指移动的自然起伏。
-  - 为木耙、指尖、水迹、沙铲、沙砾、抚平保留不同材质参数，但统一收口到“贴着沙面轻轻滑动”的声音方向。
-  - 对循环首尾做短融合，并按目标峰值归一化，降低拼接点击声和刺耳峰值。
+### 娣囶喗鏁?
+- 闁插秴鍟?`toolbox_zen_sand_sound_service.dart` 閻ㄥ嫮骞囨禒锝呮儕閻滎垰绨抽崳顏嗘晸閹存劕娅掗敍?
+  - 閸樺娅庡锝呴浮 partial 閸棗褰旈敍宀勪缉閸忓秴鎯夐幇鐔峰毉閻滄澘娴愮€规岸鐓舵妯诲灗閻㈤潧鐡欑拫鍐ㄥ煑閹扮喆鈧?
+  - 閺€閫涜礋绾喖鐣鹃幀褎婀侀懝鏌ヮ暭缁帒娅旀竟甯窗娑擃參顣堕幗鈺傛憹鐢箒绀嬬拹锝傗偓婊勫€濆▽娆屸偓婵撶礉缂佸棛鐭戦懘澶婂暱鐠愮喕鐭楅惍鍌滅煈閹扮噦绱濋幈銏犲竾閸旀稒绱撶粔鏄忕鐠愶綁娈㈤幍瀣瘹缁夎濮╅惃鍕殰閻掓儼鎹ｆ导蹇嬧偓?
+  - 娑撶儤婀懓娆嶁偓浣瑰瘹鐏忔牓鈧焦鎸夋潻骞库偓浣圭煓闁惧眰鈧焦鐭欓惍淇扁偓浣瑰楠炲厖绻氶悾娆庣瑝閸氬本娼楃拹銊ュ棘閺佸府绱濇担鍡欑埠娑撯偓閺€璺哄經閸掓壋鈧粏鍒涢惈鈧▽娆撴桨鏉炴槒浜ゅ鎴濆З閳ユ繄娈戞竟浼寸叾閺傜懓鎮滈妴?
+  - 鐎电懓鎯婇悳顖烆浕鐏忔儳浠涢惌顓＄€洪崥鍫礉楠炶埖瀵滈惄顔界垼瀹勬澘鈧厧缍婃稉鈧崠鏍电礉闂勫秳缍嗛幏鍏煎复閻愮懓鍤竟鏉挎嫲閸掗缚鈧啿鍢查崐绗衡偓?
 
-### 修复
-- 修复上一版循环底噪仍偏“合成噪声/电子噪声”的听感问题，使滑动声更接近真实沙砾摩擦。
+### 娣囶喖顦?
+- 娣囶喖顦叉稉濠佺閻楀牆鎯婇悳顖氱俺閸ｎ亙绮涢崑蹇娾偓婊冩値閹存劕娅旀竟?閻㈤潧鐡欓崳顏勶紣閳ユ繄娈戦崥顒佸妳闂傤噣顣介敍灞煎▏濠婃垵濮╂竟鐗堟纯閹恒儴绻庨惇鐔风杽濞屾瑧鐗奸幗鈺傛憹閵?
 
-### 风险变更
-- 音色主观听感变化较明显，但仅改动运行时合成音色，不改变手势语义、播放 API、持久化结构或 UI 行为。
+### 妞嬪酣娅撻崣妯绘纯
+- 闂婂疇澹婃稉鏄忣潎閸氼剚鍔呴崣妯哄鏉堝啯妲戦弰鎾呯礉娴ｅ棔绮庨弨鐟板З鏉╂劘顢戦弮璺烘値閹存劙鐓堕懝璇х礉娑撳秵鏁奸崣妯诲閸旇儻顕㈡稊澶堚偓浣规尡閺€?API閵嗕焦瀵旀稊鍛缂佹挻鐎幋?UI 鐞涘奔璐熼妴?
 
-### 验证
-- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart test/toolbox_zen_sand_sound_service_test.dart`（通过）
-- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart test/toolbox_zen_sand_sound_service_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_047] - 2026-04-24
 
-### 原因
-- 用户反馈创意沙盘滑动时音效卡顿严重，听感只有一声、不持续播放，期望连续滑动时有不停顿、无空白的沙沙声。
-- 同时要求面向手机小屏重新优化一版 UX/UI，优先保留画布空间、当前状态和主操作热区。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯閸掓稒鍓板▽娆戞磸濠婃垵濮╅弮鍫曠叾閺佸牆宕辨い澶稿紬闁插稄绱濋崥顒佸妳閸欘亝婀佹稉鈧竟鑸偓浣风瑝閹镐胶鐢婚幘顓熸杹閿涘本婀￠張娑滅箾缂侇厽绮﹂崝銊︽閺堝绗夐崑婊堛€戦妴浣规￥缁岃櫣娅ч惃鍕煓濞屾瑥锛愰妴?
+- 閸氬本妞傜憰浣圭湴闂堛垹鎮滈幍瀣簚鐏忓繐鐫嗛柌宥嗘煀娴兼ê瀵叉稉鈧悧?UX/UI閿涘奔绱崗鍫滅箽閻ｆ瑧鏁剧敮鍐敄闂傛番鈧礁缍嬮崜宥囧Ц閹礁鎷版稉缁樻惙娴ｆ粎鍎归崠鎭掆偓?
 
-### 新增
-- 新增 `plans/PLAN_047_创意沙盘连续音效与移动端UX优化.md`，承接本轮音效连续性与移动端 UX/UI 优化。
-- 在 `toolbox_zen_sand_sound_service.dart` 中补齐现代循环沙沙声 PCM 生成器，为木耙、指尖、水迹、沙铲、沙砾、抚平等连续工具提供 4.8s 周期底噪。
-- 在音效回归测试中新增循环声时长、最小窗口 RMS 和动态稳定性断言，防止后续再次出现首尾空白或中段掉音。
+### 閺傛澘顤?
+- 閺傛澘顤?`plans/PLAN_047_閸掓稒鍓板▽娆戞磸鏉╃偟鐢婚棅铏櫏娑撳海些閸斻劎顏琔X娴兼ê瀵?md`閿涘本澹欓幒銉︽拱鏉烆噣鐓堕弫鍫ｇ箾缂侇厽鈧傜瑢缁夎濮╃粩?UX/UI 娴兼ê瀵查妴?
+- 閸?`toolbox_zen_sand_sound_service.dart` 娑擃叀藟姒绘劗骞囨禒锝呮儕閻滎垱鐭欏▽娆忥紣 PCM 閻㈢喐鍨氶崳顭掔礉娑撶儤婀懓娆嶁偓浣瑰瘹鐏忔牓鈧焦鎸夋潻骞库偓浣圭煓闁惧眰鈧焦鐭欓惍淇扁偓浣瑰楠炲磭鐡戞潻鐐电敾瀹搞儱鍙块幓鎰返 4.8s 閸涖劍婀℃惔鏇炴珨閵?
+- 閸︺劑鐓堕弫鍫濇礀瑜版帗绁寸拠鏇氳厬閺傛澘顤冨顏嗗箚婢圭増妞傞梹瑁も偓浣规付鐏忓繒鐛ラ崣?RMS 閸滃苯濮╅幀浣呵旂€规碍鈧勬焽鐟封偓閿涘矂妲诲銏犳倵缂侇厼鍟€濞嗏€冲毉閻滀即顩荤亸鍓р敄閻ц姤鍨ㄦ稉顓燁唽閹哄鐓堕妴?
 
-### 修改
-- 调整循环播放器起播判定：播放器进入 `PlayerState.playing` 即可视为已启动，不再强依赖 position 立刻前进，避免部分平台 position 回报慢时被误判失败并反复重启。
-- 将循环 source ready 等待从长超时收敛为 `420ms` 短等待；源设置完成后优先快速尝试 `resume()`，减少首次滑动空白。
-- 连续型工具继续采用 loop 主导策略，减少滑动过程中短促 impact 反复切源造成的卡顿感。
-- 窄屏下压缩顶部标题区：保留返回、标题、场景和工具入口，说明文案收敛为一行，减少首屏高度占用。
-- 窄屏状态区由横向滚动 badge 改为可换行短 pill，优先展示场景、工具、音效和笔触，避免 375dp 手机上横向滑动。
-- 底部 Dock 按钮增加最小 `48dp` 触控约束，并限制按钮文本单行省略，提升手机端稳定性。
+### 娣囶喗鏁?
+- 鐠嬪啯鏆ｅ顏嗗箚閹绢厽鏂侀崳銊ㄦ崳閹绢厼鍨界€规熬绱伴幘顓熸杹閸ｃ劏绻橀崗?`PlayerState.playing` 閸楀啿褰茬憴鍡曡礋瀹告彃鎯庨崝顭掔礉娑撳秴鍟€瀵桨绶风挧?position 缁斿鍩㈤崜宥堢箻閿涘矂浼╅崗宥夊劥閸掑棗閽╅崣?position 閸ョ偞濮ら幈銏℃鐞氼偉顕ら崚銈呫亼鐠愩儱鑻熼崣宥咁槻闁插秴鎯庨妴?
+- 鐏忓棗鎯婇悳?source ready 缁涘绶熸禒搴ㄦ毐鐡掑懏妞傞弨鑸垫殐娑?`420ms` 閻厾鐡戝鍜冪幢濠ф劘顔曠純顔肩暚閹存劕鎮楁导妯哄帥韫囶偊鈧喎鐨剧拠?`resume()`閿涘苯鍣虹亸鎴︻浕濞嗏剝绮﹂崝銊р敄閻у鈧?
+- 鏉╃偟鐢婚崹瀣紣閸忛鎴风紒顓㈠櫚閻?loop 娑撹顕辩粵鏍殣閿涘苯鍣虹亸鎴炵拨閸斻劏绻冪粙瀣╄厬閻厺绺?impact 閸欏秴顦查崚鍥ㄧ爱闁姵鍨氶惃鍕幢妞ゆ寧鍔呴妴?
+- 缁愬嫬鐫嗘稉瀣竾缂傗晠銆婇柈銊︾垼妫版ê灏敍姘箽閻ｆ瑨绻戦崶鐐偓浣圭垼妫版ǜ鈧礁婧€閺咁垰鎷板銉ュ徔閸忋儱褰涢敍宀冾嚛閺勫孩鏋冨鍫熸暪閺佹稐璐熸稉鈧悰宀嬬礉閸戝繐鐨＃鏍х潌妤傛ê瀹抽崡鐘垫暏閵?
+- 缁愬嫬鐫嗛悩鑸碘偓浣稿隘閻㈣鲸铆閸氭垶绮撮崝?badge 閺€閫涜礋閸欘垱宕茬悰宀€鐓?pill閿涘奔绱崗鍫濈潔缁€鍝勬簚閺咁垬鈧礁浼愰崗鏋偓渚€鐓堕弫鍫濇嫲缁楁棁袝閿涘矂浼╅崗?375dp 閹靛婧€娑撳﹥铆閸氭垶绮﹂崝銊ｂ偓?
+- 鎼存洟鍎?Dock 閹稿鎸虫晶鐐插閺堚偓鐏?`48dp` 鐟欙附甯剁痪锔芥将閿涘苯鑻熼梽鎰煑閹稿鎸抽弬鍥ㄦ拱閸楁洝顢戦惇浣烘殣閿涘本褰侀崡鍥ㄥ閺堣櫣顏粙鍐茬暰閹佲偓?
 
-### 修复
-- 修复当前代码中 `_tryBuildModernZenSandLoopPcm(...)` 被调用但未定义导致分析失败的缺口。
-- 修复滑动音效可能因播放进度回报慢而进入“启动-误判失败-再次启动”的循环，降低只有首声、后续发空的概率。
+### 娣囶喖顦?
+- 娣囶喖顦茶ぐ鎾冲娴狅絿鐖滄稉?`_tryBuildModernZenSandLoopPcm(...)` 鐞氼偉鐨熼悽銊ょ稻閺堫亜鐣炬稊澶婎嚤閼锋潙鍨庨弸鎰亼鐠愩儳娈戠紓鍝勫經閵?
+- 娣囶喖顦插鎴濆З闂婅櫕鏅ラ崣顖濆厴閸ョ姵鎸遍弨鎹愮箻鎼达箑娲栭幎銉﹀弮閼板矁绻橀崗銉⑩偓婊冩儙閸?鐠囶垰鍨芥径杈Е-閸愬秵顐奸崥顖氬З閳ユ繄娈戝顏嗗箚閿涘矂妾锋担搴″涧閺堝顩绘竟鑸偓浣告倵缂侇厼褰傜粚铏规畱濮掑倻宸奸妴?
 
-### 风险变更
-- 本轮音效改动集中在合成循环声与播放器启动判定，不改变工具语义、手势语义、持久化结构和路由行为。
-- 小屏 UI 调整仅改变展示密度与控件布局，辅助设置仍通过场景/工具与控制面板进入。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛棅铏櫏閺€鐟板З闂嗗棔鑵戦崷銊ユ値閹存劕鎯婇悳顖氾紣娑撳孩鎸遍弨鎯ф珤閸氼垰濮╅崚銈呯暰閿涘奔绗夐弨鐟板綁瀹搞儱鍙跨拠顓濈疅閵嗕焦澧滈崝鑳嚔娑斿鈧焦瀵旀稊鍛缂佹挻鐎崪宀冪熅閻㈣精顢戞稉鎭掆偓?
+- 鐏忓繐鐫?UI 鐠嬪啯鏆ｆ禒鍛暭閸欐ê鐫嶇粈鍝勭槕鎼达缚绗岄幒褌娆㈢敮鍐ㄧ湰閿涘矁绶熼崝鈺勵啎缂冾喕绮涢柅姘崇箖閸︾儤娅?瀹搞儱鍙挎稉搴㈠付閸掑爼娼伴弶鑳箻閸忋儯鈧?
 
-### 验证
+### 妤犲矁鐦?
 - `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart test/toolbox_zen_sand_sound_service_test.dart`
-- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart test/toolbox_zen_sand_sound_service_test.dart`（仍有 `toolbox_zen_sand_tool.dart` 既有 6 条 unused_element warning）
-- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart lib/src/ui/pages/toolbox_zen_sand_tool_widgets.dart test/toolbox_zen_sand_sound_service_test.dart`閿涘牅绮涢張?`toolbox_zen_sand_tool.dart` 閺冦垺婀?6 閺?unused_element warning閿?
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_046] - 2026-04-23
 
@@ -3728,104 +4473,104 @@
 - Follow-up: switched the Zen Sand sustained loop from in-memory `BytesSource` playback to cached temp-file `DeviceFileSource` playback, matching the project's already-stable loop controller path on device.
 - Follow-up verification: `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart` returned `No issues found`.
 
-### 原因
-- 用户反馈禅意沙盘当前音效在起播和停后再播时存在明显空白与延迟，听感像“先出一声，随后发空”，需要确认问题来自音频本体还是播放链路。
-- 经代码排查，禅意沙盘音效并非静态 `assets` 文件，而是 `toolbox_zen_sand_sound_service.dart` 运行时合成的 WAV；因此需要同时检查合成波形与播放器切源/预热策略。
+### 閸樼喎娲?
+- 閻劍鍩涢崣宥夘洯缁傚懏鍓板▽娆戞磸瑜版挸澧犻棅铏櫏閸︺劏鎹ｉ幘顓炴嫲閸嬫粌鎮楅崘宥嗘尡閺冭泛鐡ㄩ崷銊︽閺勫墽鈹栭惂鎴掔瑢瀵ゆ儼绻滈敍灞芥儔閹扮喎鍎氶垾婊冨帥閸戣桨绔存竟甯礉闂呭繐鎮楅崣鎴犫敄閳ユ繐绱濋棁鈧憰浣衡€樼拋銈夋６妫版ɑ娼甸懛顏堢叾妫版垶婀版担鎾圭箷閺勵垱鎸遍弨楣冩懠鐠侯垬鈧?
+- 缂佸繋鍞惍浣瑰笓閺屻儻绱濈粋鍛壈濞屾瑧娲忛棅铏櫏楠炲爼娼棃娆愨偓?`assets` 閺傚洣娆㈤敍宀冣偓灞炬Ц `toolbox_zen_sand_sound_service.dart` 鏉╂劘顢戦弮璺烘値閹存劗娈?WAV閿涙稑娲滃銈夋付鐟曚礁鎮撻弮鑸殿梾閺屻儱鎮庨幋鎰皾瑜邦澀绗岄幘顓熸杹閸ｃ劌鍨忓┃?妫板嫮鍎圭粵鏍殣閵?
 
-### 修改
-- 在 `toolbox_zen_sand_sound_service.dart` 中新增 `prewarm(...)` 预热入口：
-  - 当前工具切换、笔触大小变化、偏好恢复、音效重新开启后，会提前准备循环底噪 source，减少首次 `setSource` 的等待空白。
-  - 同时预热当前工具首个常用击发音 source，并把 impact player 游标重置到已预热播放器，降低首响延迟。
-- 优化 impact 播放链路：
-  - 为 3 个 impact player 增加已加载 `cacheKey` 跟踪。
-  - 当同参数击发音再次触发时，优先 `seek(Duration.zero) + resume()` 复用已加载 source，而不是每次重新切源。
-- 根据用户实机日志进一步收口为“loop 主导”的连续沙声策略：
-  - 连续型沙盘工具在绘制过程中不再高频插入 `zen_sand_sfx_impact`，避免 100ms 级短击发音把听感切成“卡壳”片段。
-  - 提升 `zen_sand_sfx_loop` 基础音量与动态范围，并将非立即停播缓冲从 `240ms` 延长到 `420ms`，减少短抬手和触点抖动造成的断续感。
-  - 下调非石子类 impact 音量，使保留的操作反馈不再压过持续底噪。
-- 在 `toolbox_zen_sand_tool.dart` 中接入当前工具音频预热：
+### 娣囶喗鏁?
+- 閸?`toolbox_zen_sand_sound_service.dart` 娑擃厽鏌婃晶?`prewarm(...)` 妫板嫮鍎归崗銉ュ經閿?
+  - 瑜版挸澧犲銉ュ徔閸掑洦宕查妴浣虹應鐟欙箑銇囩亸蹇撳綁閸栨牓鈧礁浜告總鑺ヤ划婢跺秲鈧線鐓堕弫鍫ュ櫢閺傛澘绱戦崥顖氭倵閿涘奔绱伴幓鎰閸戝棗顦顏嗗箚鎼存洖娅?source閿涘苯鍣虹亸鎴︻浕濞?`setSource` 閻ㄥ嫮鐡戝鍛敄閻у鈧?
+  - 閸氬本妞傛０鍕劰瑜版挸澧犲銉ュ徔妫ｆ牔閲滅敮鍝ユ暏閸戣褰傞棅?source閿涘苯鑻熼幎?impact player 濞撳憡鐖ｉ柌宥囩枂閸掓澘鍑℃０鍕劰閹绢厽鏂侀崳顭掔礉闂勫秳缍嗘＃鏍ф惙瀵ゆ儼绻滈妴?
+- 娴兼ê瀵?impact 閹绢厽鏂侀柧鎹愮熅閿?
+  - 娑?3 娑?impact player 婢х偛濮炲鎻掑鏉?`cacheKey` 鐠虹喕閲滈妴?
+  - 瑜版挸鎮撻崣鍌涙殶閸戣褰傞棅鍐插晙濞喡ば曢崣鎴炴閿涘奔绱崗?`seek(Duration.zero) + resume()` 婢跺秶鏁ゅ鎻掑鏉?source閿涘矁鈧奔绗夐弰顖涚槨濞嗭繝鍣搁弬鏉垮瀼濠ф劑鈧?
+- 閺嶈宓侀悽銊﹀煕鐎圭偞婧€閺冦儱绻旀潻娑楃濮濄儲鏁归崣锝勮礋閳ユ笓oop 娑撹顕遍垾婵堟畱鏉╃偟鐢诲▽娆忥紣缁涙牜鏆愰敍?
+  - 鏉╃偟鐢婚崹瀣煓閻╂ê浼愰崗宄版躬缂佹ê鍩楁潻鍥┾柤娑擃厺绗夐崘宥夌彯妫版垶褰冮崗?`zen_sand_sfx_impact`閿涘矂浼╅崗?100ms 缁狙呯叚閸戣褰傞棅铏Ω閸氼剚鍔呴崚鍥ㄥ灇閳ユ粌宕辨竟鏂モ偓婵堝濞堢偣鈧?
+  - 閹绘劕宕?`zen_sand_sfx_loop` 閸╄櫣顢呴棅鎶藉櫤娑撳骸濮╅幀浣藉瘱閸ヨ揪绱濋獮璺虹殺闂堢偟鐝涢崡鍐蹭粻閹绢厾绱﹂崘韫矤 `240ms` 瀵ゅ爼鏆遍崚?`420ms`閿涘苯鍣虹亸鎴犵叚閹额剚澧滈崪宀冃曢悙瑙勫閸斻劑鈧姵鍨氶惃鍕焽缂侇厽鍔呴妴?
+  - 娑撳鐨熼棃鐐电叾鐎涙劗琚?impact 闂婃娊鍣洪敍灞煎▏娣囨繄鏆€閻ㄥ嫭鎼锋担婊冨冀妫ｅ牅绗夐崘宥呭竾鏉╁洦瀵旂紒顓炵俺閸ｎ亗鈧?
+- 閸?`toolbox_zen_sand_tool.dart` 娑擃厽甯撮崗銉ョ秼閸撳秴浼愰崗鐑界叾妫版垿顣╅悜顓ㄧ窗
   - `restore prefs`
   - `select tool`
   - `set brush size`
   - `toggle sound(true)`
   - `apply ritual preset`
 
-### 修复
-- 修复禅意沙盘循环底噪首次起播容易落在 impact 声之后、导致“只有一声随后发空”的问题。
-- 修复相同工具/参数连续绘制时反复切源带来的重复延迟，提升停后再播和短间隔连画的连续性。
-- 新增波形回归检查，确认当前合成音频不存在“大段前导空白”：
-  - 循环声 `leadingQuietMs = 0ms`，`longestQuietMs = 0-20ms`
-  - 击发声 `leadingQuietMs = 0ms`
+### 娣囶喖顦?
+- 娣囶喖顦茬粋鍛壈濞屾瑧娲忓顏嗗箚鎼存洖娅旀＃鏍偧鐠ч攱鎸辩€硅妲楅拃钘夋躬 impact 婢归绠ｉ崥搴涒偓浣割嚤閼风补鈧粌褰ч張澶夌婢逛即娈㈤崥搴″絺缁岃　鈧繄娈戦梻顕€顣介妴?
+- 娣囶喖顦查惄绋挎倱瀹搞儱鍙?閸欏倹鏆熸潻鐐电敾缂佹ê鍩楅弮璺哄冀婢跺秴鍨忓┃鎰敨閺夈儳娈戦柌宥咁槻瀵ゆ儼绻滈敍灞惧絹閸楀洤浠犻崥搴″晙閹绢厼鎷伴惌顓㈡？闂呮棁绻涢悽鑽ゆ畱鏉╃偟鐢婚幀褋鈧?
+- 閺傛澘顤冨▔銏犺埌閸ョ偛缍婂Λ鈧弻銉礉绾喛顓昏ぐ鎾冲閸氬牊鍨氶棅鎶筋暥娑撳秴鐡ㄩ崷銊⑩偓婊冦亣濞堥潧澧犵€佃偐鈹栭惂瑙ｂ偓婵撶窗
+  - 瀵邦亞骞嗘竟?`leadingQuietMs = 0ms`閿涘畭longestQuietMs = 0-20ms`
+  - 閸戣褰傛竟?`leadingQuietMs = 0ms`
 
-### 风险变更
-- 本轮调整集中在播放器预热与 source 复用策略，不改变手势语义、工具语义、持久化结构和页面业务逻辑。
-- 预热会让空闲状态下多保留少量已生成 WAV/已加载 source；范围仅限当前工具常用 bucket，风险可控。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗙拫鍐╂殻闂嗗棔鑵戦崷銊︽尡閺€鎯ф珤妫板嫮鍎规稉?source 婢跺秶鏁ょ粵鏍殣閿涘奔绗夐弨鐟板綁閹靛濞嶇拠顓濈疅閵嗕礁浼愰崗鐤嚔娑斿鈧焦瀵旀稊鍛缂佹挻鐎崪宀勩€夐棃顫瑹閸旓繝鈧槒绶妴?
+- 妫板嫮鍎规导姘愁唨缁屾椽妫介悩鑸碘偓浣风瑓婢舵矮绻氶悾娆忕毌闁插繐鍑￠悽鐔稿灇 WAV/瀹告彃濮炴潪?source閿涙稖瀵栭崶缈犵矌闂勬劕缍嬮崜宥呬紣閸忓嘲鐖堕悽?bucket閿涘矂顥撻梽鈺佸讲閹貉佲偓?
 
-### 验证
-- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`（通过）
-- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`（通过）
+### 妤犲矁鐦?
+- `dart format lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart test/toolbox_zen_sand_sound_service_test.dart`閿涘牓鈧俺绻冮敍?
+- `flutter test test/toolbox_zen_sand_sound_service_test.dart --reporter compact`閿涘牓鈧俺绻冮敍?
 
 ## [Unreleased-PLAN_045] - 2026-04-23
 
-### 原因
-- 空灵音钵（疗愈音钵）模块单文件 2255 行严重违反 500 行硬顶；视觉上七脉轮霓虹彩虹色与 toolbox「柔和、克制、舒缓」基线不一致；移动端底部 188dp 常驻抽屉挤压主舞台，音钵失去首屏视觉焦点。
+### 閸樼喎娲?
+- 缁岃櫣浼掗棅鎶芥尲閿涘牏鏋熼幇鍫ョ叾闁界绱氬Ο鈥虫健閸楁洘鏋冩禒?2255 鐞涘奔寮楅柌宥堢箽閸?500 鐞涘瞼鈥栨い璁圭幢鐟欏棜顫庢稉濠佺閼村鐤嗛棁鎾规瑜扳晞娅ｉ懝韫瑢 toolbox閵嗗本鐓嶉崪灞烩偓浣稿帬閸掕翰鈧浇鍨濈紓鎾扁偓宥呯唨缁惧じ绗夋稉鈧懛杈剧幢缁夎濮╃粩顖氱俺闁?188dp 鐢悂鈹楅幎钘夌溄閹搞倕甯囨稉鏄忓灦閸欏府绱濋棅鎶芥尲婢跺崬骞撴＃鏍х潌鐟欏棜顫庨悞锔惧仯閵?
 
-### 新增
-- `lib/src/ui/pages/toolbox_singing_bowls_tool_specs.dart`：频率/音色 spec + 11 组自然色 palette。
-- `lib/src/ui/pages/toolbox_singing_bowls_tool_painters.dart`：三组 CustomPainter（背景 / 音钵 / 余振扩散）。
-- `lib/src/ui/pages/toolbox_singing_bowls_tool_stage.dart`：音钵主舞台（`bowlSize` 上限 296→360，新自然色轻触提示 pill）。
-- `lib/src/ui/pages/toolbox_singing_bowls_tool_layout.dart`：移动端 Header(48dp) + Stage + SummaryBar(60dp) 三段结构；摘要条即把手，点击打开上拉 Sheet。
-- `lib/src/ui/pages/toolbox_singing_bowls_tool_wide.dart` + `_wide_tiles.dart`：宽屏 ≥ 760dp 布局保留原骨架，换为新自然色。
-- `lib/src/ui/pages/toolbox_singing_bowls_tool_sheet.dart` + `_sheet_controls.dart`：`DraggableScrollableSheet` 上拉抽屉，承载频率菜单（chakra/resonance 分组）+ 音色 2×2 网格 + 自动播放 slider + 触感 switch + 停止余振按钮。
-- `plans/PLAN_045_空灵音钵自然舒适移动端精修.md`：本轮计划文档。
+### 閺傛澘顤?
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_specs.dart`閿涙岸顣堕悳?闂婂疇澹?spec + 11 缂佸嫯鍤滈悞鎯板 palette閵?
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_painters.dart`閿涙矮绗佺紒?CustomPainter閿涘牐鍎楅弲?/ 闂婃娊鎸?/ 娴ｆ瑦灏熼幍鈺傛殠閿涘鈧?
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_stage.dart`閿涙岸鐓堕柦鍏稿瘜閼哥偛褰撮敍鍧刡owlSize` 娑撳﹪妾?296閳?60閿涘本鏌婇懛顏嗗姧閼硅尪浜ょ憴锔藉絹缁€?pill閿涘鈧?
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_layout.dart`閿涙氨些閸斻劎顏?Header(48dp) + Stage + SummaryBar(60dp) 娑撳顔岀紒鎾寸€敍娑欐喅鐟曚焦娼崡铏Ω閹靛绱濋悙鐟板毊閹垫挸绱戞稉濠冨 Sheet閵?
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_wide.dart` + `_wide_tiles.dart`閿涙艾顔旂仦?閳?760dp 鐢啫鐪穱婵堟殌閸樼喖顎囬弸璁圭礉閹诡澀璐熼弬鎷屽殰閻掓儼澹婇妴?
+- `lib/src/ui/pages/toolbox_singing_bowls_tool_sheet.dart` + `_sheet_controls.dart`閿涙瓪DraggableScrollableSheet` 娑撳﹥濯洪幎钘夌溄閿涘本澹欐潪浠嬵暥閻滃洩褰嶉崡鏇礄chakra/resonance 閸掑棛绮嶉敍? 闂婂疇澹?2鑴? 缂冩垶鐗?+ 閼奉亜濮╅幘顓熸杹 slider + 鐟欙附鍔?switch + 閸嬫粍顒涙担娆愬盁閹稿鎸抽妴?
+- `plans/PLAN_045_缁岃櫣浼掗棅鎶芥尲閼奉亞鍔ч懜鎺椻偓鍌溞╅崝銊ь伂缁彞鎱?md`閿涙碍婀版潪顔款吀閸掓帗鏋冨锝冣偓?
 
-### 修改
-- `lib/src/ui/pages/toolbox_singing_bowls_tool.dart`：从 2255 行收缩到 373 行，仅保留 `SingingBowlsToolPage` / `SingingBowlsPracticeCard` / `_SingingBowlsPracticeCardState` 的 lifecycle 与事件方法，其余通过 `part` 分片。
-- 11 组脉轮/共振频率的 `accent / glow / gradient` 重写为自然低饱和色系（陶土 / 苔藓 / 晨雾 / 檀褐 / 薰衣灰紫 等），保留 `id / note / frequency / 文案` 语义不变。
-- 背景线性纹理 alpha 从 0.026 降到 0.018，背景辉光轻度柔化，符合"自然舒适"气质。
-- 移动端头部删除冗长副标题"频率、音色与空间尾韵的移动端重构"（文案已迁入 Sheet 内）。
+### 娣囶喗鏁?
+- `lib/src/ui/pages/toolbox_singing_bowls_tool.dart`閿涙矮绮?2255 鐞涘本鏁圭紓鈺佸煂 373 鐞涘矉绱濇禒鍛箽閻?`SingingBowlsToolPage` / `SingingBowlsPracticeCard` / `_SingingBowlsPracticeCardState` 閻?lifecycle 娑撳簼绨ㄦ禒鑸垫煙濞夋洩绱濋崗鏈电稇闁俺绻?`part` 閸掑棛澧栭妴?
+- 11 缂佸嫯鍓︽潪?閸忚鲸灏熸０鎴犲芳閻?`accent / glow / gradient` 闁插秴鍟撴稉楦垮殰閻掓湹缍嗘鍗炴嫲閼硅尙閮撮敍鍫ユ珷閸?/ 閼绘棁妫?/ 閺呫劑娴?/ 濡锯偓鐟?/ 閽栨媽銆傞悘鎵紶 缁涘绱氶敍灞肩箽閻?`id / note / frequency / 閺傚洦顢峘 鐠囶厺绠熸稉宥呭綁閵?
+- 閼冲本娅欑痪鎸庘偓褏姹楅悶?alpha 娴?0.026 闂勫秴鍩?0.018閿涘矁鍎楅弲顖濈罚閸忓浜ゆ惔锔界厤閸栨牭绱濈粭锕€鎮?閼奉亞鍔ч懜鎺椻偓?濮樻棁宸濋妴?
+- 缁夎濮╃粩顖氥仈闁劌鍨归梽銈呭晳闂€鍨閺嶅洭顣?妫版垹宸奸妴渚€鐓堕懝韫瑢缁屾椽妫跨亸楣冪吂閻ㄥ嫮些閸斻劎顏柌宥嗙€?閿涘牊鏋冨鍫濆嚒鏉╀礁鍙?Sheet 閸愬拑绱氶妴?
 
-### 风险变更
-- 严格遵守「只动 UI、不动逻辑」边界：所有 `ToolboxSingingBowlsPrefsService` 调用、`ToolboxAudioBank.singingBowlTone` 调用方式、`_frequencyId/_voiceId/_autoPlayIntervalMs` 默认值与持久化结构、事件触发语义均未改动。
-- `part of` 拆分后所有原私有类（`_SingingBowlFrequencySpec` / `_SingingBowlPainter` 等）继续文件私有；新增 `setPressing(bool)` 公开方法以支持 stage extension 触发 setState，未暴露内部字段。
+### 妞嬪酣娅撻崣妯绘纯
+- 娑撱儲鐗搁柆闈涚暓閵嗗苯褰ч崝?UI閵嗕椒绗夐崝銊┾偓鏄忕帆閵嗗秷绔熼悾宀嬬窗閹碘偓閺?`ToolboxSingingBowlsPrefsService` 鐠嬪啰鏁ら妴涔oolboxAudioBank.singingBowlTone` 鐠嬪啰鏁ら弬鐟扮础閵嗕梗_frequencyId/_voiceId/_autoPlayIntervalMs` 姒涙顓婚崐闂寸瑢閹镐椒绠欓崠鏍波閺嬪嫨鈧椒绨ㄦ禒鎯靶曢崣鎴ｎ嚔娑斿娼庨張顏呮暭閸斻劊鈧?
+- `part of` 閹峰棗鍨庨崥搴㈠閺堝甯粔浣规箒缁紮绱檂_SingingBowlFrequencySpec` / `_SingingBowlPainter` 缁涘绱氱紒褏鐢婚弬鍥︽缁変焦婀侀敍娑欐煀婢?`setPressing(bool)` 閸忣剙绱戦弬瑙勭《娴犮儲鏁幐?stage extension 鐟欙箑褰?setState閿涘本婀弳鎾苟閸愬懘鍎寸€涙顔岄妴?
 
-### 验证
-- `dart format lib/src/ui/pages/toolbox_singing_bowls_tool*.dart`（通过）
-- `dart analyze lib/src/ui/pages/toolbox_singing_bowls_tool*.dart`（No issues found）
-- 所有 9 个子文件 ≤ 500 行硬顶：主 373 / specs 309 / painters 364 / stage 164 / layout 263 / wide 385 / wide_tiles 189 / sheet 267 / sheet_controls 324。
+### 妤犲矁鐦?
+- `dart format lib/src/ui/pages/toolbox_singing_bowls_tool*.dart`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/ui/pages/toolbox_singing_bowls_tool*.dart`閿涘湤o issues found閿?
+- 閹碘偓閺?9 娑擃亜鐡欓弬鍥︽ 閳?500 鐞涘瞼鈥栨い璁圭窗娑?373 / specs 309 / painters 364 / stage 164 / layout 263 / wide 385 / wide_tiles 189 / sheet 267 / sheet_controls 324閵?
 
 ## [Unreleased-PLAN_044] - 2026-04-23
 
-### 原因
-- 当前程序可运行，但禅意沙盘存在两类体验问题：单指绘制偶发误触缩放、背景效果音在一笔绘制过程中间歇性"掉一下"（听感断断续续）。
-- 用户反馈此前的 PLAN_044 改动只修到一半未提交；本次在同一 PLAN 下续补。
+### 閸樼喎娲?
+- 瑜版挸澧犵粙瀣碍閸欘垵绻嶇悰宀嬬礉娴ｅ棛顩幇蹇旂煓閻╂ê鐡ㄩ崷銊よ⒈缁缍嬫宀勬６妫版﹫绱伴崡鏇熷瘹缂佹ê鍩楅崑璺哄絺鐠囶垵袝缂傗晜鏂侀妴浣藉剹閺咁垱鏅ラ弸婊堢叾閸︺劋绔寸粭鏃傜帛閸掓儼绻冪粙瀣╄厬闂傚瓨鐡忛幀?閹哄绔存稉?閿涘牆鎯夐幇鐔告焽閺傤厾鐢荤紒顓ㄧ礆閵?
+- 閻劍鍩涢崣宥夘洯濮濄倕澧犻惃?PLAN_044 閺€鐟板З閸欘亙鎱ㄩ崚棰佺閸楀﹥婀幓鎰唉閿涙稒婀板▎鈥虫躬閸氬奔绔?PLAN 娑撳鐢荤悰銉ｂ偓?
 
-### 修改
-- 在 `toolbox_zen_sand_tool.dart` 中收紧缩放判定：
-  - 单指绘制状态下忽略 `|details.scale - 1| <= 0.02` 的微抖动，不再误切换到 transform 模式。
-- 在 `toolbox_zen_sand_tool.dart` 中做移动端窄屏抛光（纯 UI）：
-  - 在 <390dp 窄屏下收缩 padding、提升 headerGap/sectionGap 压缩、在 <380dp 将 Header 折叠为上下两行（返回+标题 / 描述 / 快捷入口 chip 行）。
-  - 两个抽屉卡片（场景 / 工具与控制）在可用宽度 <360dp 时改为单列；160-420 卡宽改为 170-360 更紧致。
-  - 底部 dock 折叠态删除"底部菜单已折叠"冗余副标题，腾出宽度给主操作按钮；compact 态外层冗余 `SingleChildScrollView` 改为 `Padding`，移除嵌套纵向滚动。
-- 在 `toolbox_zen_sand_sound_service.dart` 中彻底修复循环底噪"一笔中空音"：
-  - **根因**：此前合成混用了 `phase`（0→1 循环）与 `t`（绝对秒）两套自变量，在 phase=1 处以 `t` 驱动的波形不会闭合，叠加的 `loopWindow = 0.92 + 0.08 sin(2π phase) sin(4π phase)` 在 phase=0/0.25/0.5/0.75 又周期性压 8% 振幅，被人耳感知为"一笔画画隔一会儿就掉一下"。
-  - **修复**：`_buildLoopWav` 所有分量重写为纯 `phase` 基、整数频率倍数（`rustle/low/shimmer/motion/wash`），使波形在 phase 0↔1 处严格闭合；去除 `loopWindow`（= 1.0），消除内部周期性凹陷；`_seamBlendLoopPcm` 保留为保险带（从 96ms 降到 48ms）。
-  - 循环底噪长度从 `880ms` 延长到 `3200ms`；非立即停止延时从 `140ms` 调整到 `240ms`，减少短抬手造成的断续感。
+### 娣囶喗鏁?
+- 閸?`toolbox_zen_sand_tool.dart` 娑擃厽鏁圭槐褏缂夐弨鎯у灲鐎规熬绱?
+  - 閸楁洘瀵氱紒妯哄煑閻樿埖鈧椒绗呰箛鐣屾殣 `|details.scale - 1| <= 0.02` 閻ㄥ嫬浜曢幎鏍уЗ閿涘奔绗夐崘宥堫嚖閸掑洦宕查崚?transform 濡€崇础閵?
+- 閸?`toolbox_zen_sand_tool.dart` 娑擃厼浠涚粔璇插З缁旑垳鐛庣仦蹇斿閸忓绱欑痪?UI閿涘绱?
+  - 閸?<390dp 缁愬嫬鐫嗘稉瀣暪缂?padding閵嗕焦褰侀崡?headerGap/sectionGap 閸樺缂夐妴浣告躬 <380dp 鐏?Header 閹舵ê褰旀稉杞扮瑐娑撳琚辩悰宀嬬礄鏉╂柨娲?閺嶅洭顣?/ 閹诲繗鍫?/ 韫囶偅宓庨崗銉ュ經 chip 鐞涘矉绱氶妴?
+  - 娑撱倓閲滈幎钘夌溄閸楋紕澧栭敍鍫濇簚閺?/ 瀹搞儱鍙挎稉搴㈠付閸掕绱氶崷銊ュ讲閻劌顔旀惔?<360dp 閺冭埖鏁兼稉鍝勫礋閸掓绱?60-420 閸椻€愁啍閺€閫涜礋 170-360 閺囧鎻ｉ懛娣偓?
+  - 鎼存洟鍎?dock 閹舵ê褰旈幀浣稿灩闂?鎼存洟鍎撮懣婊冨礋瀹稿弶濮岄崣?閸愭ぞ缍戦崜顖涚垼妫版﹫绱濋懙鎯у毉鐎硅棄瀹崇紒娆庡瘜閹垮秳缍旈幐澶愭尦閿涙矞ompact 閹礁顦荤仦鍌氬晳娴?`SingleChildScrollView` 閺€閫涜礋 `Padding`閿涘瞼些闂勩倕绁垫總妤冩棻閸氭垶绮撮崝銊ｂ偓?
+- 閸?`toolbox_zen_sand_sound_service.dart` 娑擃厼浜ゆ惔鏇氭叏婢跺秴鎯婇悳顖氱俺閸?娑撯偓缁楁柧鑵戠粚娲叾"閿?
+  - **閺嶇懓娲?*閿涙碍顒濋崜宥呮値閹存劖璐╅悽銊ょ啊 `phase`閿?閳? 瀵邦亞骞嗛敍澶夌瑢 `t`閿涘牏绮风€靛湱顫楅敍澶夎⒈婵傛鍤滈崣姗€鍣洪敍灞芥躬 phase=1 婢跺嫪浜?`t` 妞瑰崬濮╅惃鍕皾瑜邦澀绗夋导姘舵４閸氬牞绱濋崣鐘插閻?`loopWindow = 0.92 + 0.08 sin(2锜?phase) sin(4锜?phase)` 閸?phase=0/0.25/0.5/0.75 閸欏牆鎳嗛張鐔糕偓褍甯?8% 閹割垰绠欓敍宀冾潶娴滈缚鈧櫕鍔呴惌銉よ礋"娑撯偓缁楁梻鏁鹃悽濠氭娑撯偓娴兼艾鍔圭亸杈ㄥ竴娑撯偓娑?閵?
+  - **娣囶喖顦?*閿涙瓪_buildLoopWav` 閹碘偓閺堝鍨庨柌蹇涘櫢閸愭瑤璐熺痪?`phase` 閸╂亽鈧焦鏆ｉ弫浼搭暥閻滃洤鈧秵鏆熼敍鍧剅ustle/low/shimmer/motion/wash`閿涘绱濇担鎸庡皾瑜般垹婀?phase 0閳? 婢跺嫪寮楅弽濂告４閸氬牞绱遍崢濠氭珟 `loopWindow`閿? 1.0閿涘绱濆☉鍫ユ珟閸愬懘鍎撮崨銊︽埂閹冨毈闂勫嚖绱盽_seamBlendLoopPcm` 娣囨繄鏆€娑撹桨绻氶梽鈺佺敨閿涘牅绮?96ms 闂勫秴鍩?48ms閿涘鈧?
+  - 瀵邦亞骞嗘惔鏇炴珨闂€鍨娴?`880ms` 瀵ゅ爼鏆遍崚?`3200ms`閿涙盯娼粩瀣祮閸嬫粍顒涘鑸垫娴?`140ms` 鐠嬪啯鏆ｉ崚?`240ms`閿涘苯鍣虹亸鎴犵叚閹额剚澧滈柅鐘冲灇閻ㄥ嫭鏌囩紒顓熷妳閵?
 
-### 修复
-- 修复禅意沙盘单指绘制时偶发"界面误判为缩放/平移"的问题。
-- 修复禅意沙盘背景效果音"一笔绘制过程中间隔一会儿就掉一下"的根因（相位不闭合 + loopWindow 周期性压幅）。
-- 提升 375dp/iPhone SE 等窄屏下 Header、dock、抽屉卡片的触达与阅读舒适度。
+### 娣囶喖顦?
+- 娣囶喖顦茬粋鍛壈濞屾瑧娲忛崡鏇熷瘹缂佹ê鍩楅弮璺轰紦閸?閻ｅ矂娼扮拠顖氬灲娑撹櫣缂夐弨?楠炲磭些"閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦茬粋鍛壈濞屾瑧娲忛懗灞炬珯閺佸牊鐏夐棅?娑撯偓缁楁梻绮崚鎯扮箖缁嬪鑵戦梻鎾娑撯偓娴兼艾鍔圭亸杈ㄥ竴娑撯偓娑?閻ㄥ嫭鐗撮崶鐙呯礄閻╅晲缍呮稉宥夋４閸?+ loopWindow 閸涖劍婀￠幀褍甯囬獮鍜冪礆閵?
+- 閹绘劕宕?375dp/iPhone SE 缁涘鐛庣仦蹇庣瑓 Header閵嗕龚ock閵嗕焦濞婄仦澶婂幢閻楀洨娈戠憴锕佹彧娑撳酣妲勭拠鏄忓灊闁倸瀹抽妴?
 
-### 风险变更
-- 音频合成分量数学表达变化，会改变底噪的纹理细节（仍在同一听感家族内）；未改变服务 API/事件语义/持久化。
-- 所有 UI 改动严格遵守"只动 UI、不动逻辑"边界。
+### 妞嬪酣娅撻崣妯绘纯
+- 闂婃娊顣堕崥鍫熷灇閸掑棝鍣洪弫鏉款劅鐞涖劏鎻崣妯哄閿涘奔绱伴弨鐟板綁鎼存洖娅旈惃鍕睏閻炲棛绮忛懞鍌︾礄娴犲秴婀崥灞肩閸氼剚鍔呯€硅埖妫岄崘鍜冪礆閿涙稒婀弨鐟板綁閺堝秴濮?API/娴滃娆㈢拠顓濈疅/閹镐椒绠欓崠鏍モ偓?
+- 閹碘偓閺?UI 閺€鐟板З娑撱儲鐗搁柆闈涚暓"閸欘亜濮?UI閵嗕椒绗夐崝銊┾偓鏄忕帆"鏉堝湱鏅妴?
 
-### 验证
-- `dart format`（通过）
-- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart`（仅既有 6 条 unused_element warning，无新增）
-- `flutter build windows --debug`（通过）
-- `flutter test --reporter compact`（All 231 tests passed）
+### 妤犲矁鐦?
+- `dart format`閿涘牓鈧俺绻冮敍?
+- `dart analyze lib/src/services/toolbox_zen_sand_sound_service.dart lib/src/ui/pages/toolbox_zen_sand_tool.dart`閿涘牅绮庨弮銏℃箒 6 閺?unused_element warning閿涘本妫ら弬鏉款杻閿?
+- `flutter build windows --debug`閿涘牓鈧俺绻冮敍?
+- `flutter test --reporter compact`閿涘湏ll 231 tests passed閿?
 
 ## [Unreleased-PLAN_043-MERGE-READY] - 2026-04-21
 
@@ -3846,22 +4591,22 @@
 
 ## [Unreleased-PLAN_043] - 2026-04-21
 
-### 原因
-- 需要先降低 ASR 测试脆弱性、音频缓存内存风险与 AppState 状态枢纽耦合，再推进大页面第三轮分层。
+### 閸樼喎娲?
+- 闂団偓鐟曚礁鍘涢梽宥勭秵 ASR 濞村鐦懘鍡楁€ラ幀褋鈧線鐓舵０鎴犵处鐎涙ê鍞寸€涙﹢顥撻梽鈺€绗?AppState 閻樿埖鈧焦鐏戠痪鍊熲偓锕€鎮庨敍灞藉晙閹恒劏绻樻径褔銆夐棃銏㈩儑娑撳鐤嗛崚鍡楃湴閵?
 
-### 修改
-- 新增 `AsrServiceContract` 抽象接口，`AsrService` 改为显式实现公共 API，并将 extension 暴露能力收口为内部实现方法。
-- `AppDependencies` 与 `AppState` 的 ASR 依赖改为面向 `AsrServiceContract`，测试 double 改为接口实现。
-- `ToolboxAudioBank` 引入可配置上限 LRU 缓存容器，新增 `configureCache`、`clearCache`、`clearDomainCache`、缓存容量/条目/估算字节观测接口。
-- 新增 `WeatherStore` 独立 notifier/store 并接入 `AppState`，天气域状态拥有权从 `AppState` 内部字段迁移到 store。
-- 锁定 `zen_sand / woodfish / harp` 第三轮结构拆分：新增配置层文件与渲染层入口文件，主文件保留状态编排与交互语义。
+### 娣囶喗鏁?
+- 閺傛澘顤?`AsrServiceContract` 閹跺€熻杽閹恒儱褰涢敍瀹岮srService` 閺€閫涜礋閺勬儳绱＄€圭偟骞囬崗顒€鍙?API閿涘苯鑻熺亸?extension 閺嗘挳婀堕懗钘夊閺€璺哄經娑撳搫鍞撮柈銊ョ杽閻滅増鏌熷▔鏇樷偓?
+- `AppDependencies` 娑?`AppState` 閻?ASR 娓氭繆绂嗛弨閫涜礋闂堛垹鎮?`AsrServiceContract`閿涘本绁寸拠?double 閺€閫涜礋閹恒儱褰涚€圭偟骞囬妴?
+- `ToolboxAudioBank` 瀵洖鍙嗛崣顖炲帳缂冾喕绗傞梽?LRU 缂傛挸鐡ㄧ€圭懓娅掗敍灞炬煀婢?`configureCache`閵嗕梗clearCache`閵嗕梗clearDomainCache`閵嗕胶绱︾€涙ê顔愰柌?閺夛紕娲?娴兼壆鐣荤€涙濡憴鍌涚ゴ閹恒儱褰涢妴?
+- 閺傛澘顤?`WeatherStore` 閻欘剛鐝?notifier/store 楠炶埖甯撮崗?`AppState`閿涘苯銇夊鏂跨厵閻樿埖鈧焦瀚㈤張澶嬫綀娴?`AppState` 閸愬懘鍎寸€涙顔屾潻浣盒╅崚?store閵?
+- 闁夸礁鐣?`zen_sand / woodfish / harp` 缁楊兛绗佹潪顔剧波閺嬪嫭濯堕崚鍡窗閺傛澘顤冮柊宥囩枂鐏炲倹鏋冩禒鏈电瑢濞撳弶鐓嬬仦鍌氬弳閸欙絾鏋冩禒璁圭礉娑撶粯鏋冩禒鏈电箽閻ｆ瑧濮搁幀浣虹椽閹烘帊绗屾禍銈勭鞍鐠囶厺绠熼妴?
 
-### 修复
-- 修复 `WeatherStore` 在 `AppState` 构造阶段过早读取设置导致数据库未初始化场景下触发 `LateInitializationError` 的问题。
-- 新增 `ToolboxAudioBank` 回归测试，覆盖 LRU 淘汰与 `clearDomainCache` 域级清理语义。
+### 娣囶喖顦?
+- 娣囶喖顦?`WeatherStore` 閸?`AppState` 閺嬪嫰鈧娀妯佸▓浣冪箖閺冣晞顕伴崣鏍啎缂冾喖顕遍懛瀛樻殶閹诡喖绨遍張顏勫灥婵瀵查崷鐑樻珯娑撳袝閸?`LateInitializationError` 閻ㄥ嫰妫舵０妯糕偓?
+- 閺傛澘顤?`ToolboxAudioBank` 閸ョ偛缍婂ù瀣槸閿涘矁顩惄?LRU 濞ｆɑ鍗戞稉?`clearDomainCache` 閸╃喓楠囧〒鍛倞鐠囶厺绠熼妴?
 
-### 风险变更
-- 本轮 `woodfish/harp` 渲染层先完成入口文件落位与配置层抽离，完整 painter 迁移将在后续迭代继续推进。
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤?`woodfish/harp` 濞撳弶鐓嬬仦鍌氬帥鐎瑰本鍨氶崗銉ュ經閺傚洣娆㈤拃鎴掔秴娑撳酣鍘ょ純顔肩湴閹剁晫顬囬敍灞界暚閺?painter 鏉╀胶些鐏忓棗婀崥搴ｇ敾鏉╊厺鍞紒褏鐢婚幒銊ㄧ箻閵?
 
 ### Continuation (2026-04-21)
 - AppState ownership split continues with a dedicated `TestModeStore`, including constructor injection, listener lifecycle wiring, and startup/reload sync integration.
@@ -3871,204 +4616,249 @@
 
 ## [Unreleased] - 2026-04-13
 
+### 閸樼喎娲?
+- 闂団偓鐟曚線妾锋担?`database_service.dart` 娑?`_applySchemaMigrations()` 閻ㄥ嫰鍣告径宥呭瀻閺€顖氼槻閺夊倸瀹抽敍灞藉櫤鐏忔垵鎮楃紒顓熸煀婢?schema 閻楀牊婀伴弮鍓佹畱缂佸瓨濮㈤幋鎰拱娑撳孩绱￠弨褰掝棑闂勨斂鈧?
+- 閹稿缍嬮崜宥囧閺堫剙鐔€缁炬寧绔婚悶鍡樻殶閹诡喖绨遍崢鍡楀蕉鏉╀胶些閸愭ぞ缍戞禒锝囩垳閿涘苯鍣虹亸鎴犳樊閹躲倛绀嬮幏鍛嫙閺€鑸垫殐閸掓繂顫愰崠鏍熅瀵板嫬顦查弶鍌氬閵?
+- `database_service.dart` 闂€鎸庢埂缁鳖垵顓搁崚鐗堟殶閸楀啳顢戦敍灞藉礋閺傚洣娆㈢紒瀛樺Б閹存劖婀版潻鍥彯閿涘矂娓堕幐澶婂閼宠姤膩閸ф濯堕崚鍡曚簰闂勫秳缍嗛懓锕€鎮庨崪灞炬暭閸斻劑顥撻梽鈹库偓?
+- 缁楊兛绔存潪顔侥侀崸妤佸閸掑棗鎮楅敍灞煎瘜閺傚洣娆㈡禒宥嗗鏉炶姤鐗宠箛鍐ㄧ杽閻滄壆绮忛懞鍌︾礉闂団偓缂佈呯敾閹峰棗鍤?core/schema 娴犮儴绻樻稉鈧銉╂娴ｅ骸鍙嗛崣锝嗘瀮娴犺泛顦查弶鍌氬閵?
+- 娣囶喖顦叉径褑鐦濋張顒佹尡閺€鐐閸欘亝鎸遍崡鏇＄槤閺堫剝闊╅妴渚€鍣存稊澶夌瑢閹碘晛鐫嶇€涙顔岄張顏嗘埛缂侇厽鎸遍弨鍓ф畱闂傤噣顣介妴?
+- 娣囶喖顦查崢鍡楀蕉閹绢厽鏂侀柊宥囩枂娑擃厾娈戠€涙顔岀粋浣烘暏閺嶅洩顔囨稉搴＄秼閸撳秹鍣告径宥嗩偧閺佹媽顔曠純顔煎暱缁愪緤绱濈€佃壈鍤х€涳缚绡勯幘顓熸杹閸欘亝鎸遍崡鏇＄槤閺堫剝闊╅惃鍕６妫版ǜ鈧?
+- 娣囶喖顦?Windows 閺堫剙婀?TTS 閸︺劏鍤滈崝銊嚔鐟封偓濡€崇础娑撳妫ゅ▔鏇㈡鐎涙顔岄崘鍛啇閸掑洦宕查棅瀹犲閿涘苯顕遍懛鏉戭劅娑旂姵鎸遍弨鍙ヨ厬閸氬海鐢绘稉顓熸瀮闁插﹣绠熺粵澶婄摟濞堥潧鎯夐幇鐔剁瑐閸嶅繆鈧粍鐥呴張澶屾埛缂侇厽鎸遍弨閿偓婵堟畱闂傤噣顣介妴?
+- 娣囶喖顦?Windows 閺堫剙婀?TTS 閸︺劌宕熺拠宥嗘尡鐎瑰苯鎮楅崶鐘茬暚閹存劕娲栫拫鍐╂弓濮濓絿鈥橀崶鐐插煂楠炲啿褰寸痪璺ㄢ柤閵嗕梗isSpeaking` 閻樿埖鈧焦绮搁悾娆掆偓宀勬毐閺冨爼妫块崑婊堛€戦獮鑸垫付缂佸牐绉撮弮鍓佹畱闂傤噣顣介妴?
+- 娣囶喗顒滈幘顓熸杹妞ら潧銇囩拠宥嗘拱閸忋儱褰涢垾婊冨鏉炶棄鑻熼幘顓熸杹閳ユ繀绱伴崷銊ュ鏉炶棄鐣幋鎰倵閻╁瓨甯村鈧幘顓ㄧ礉娑撳秶顑侀崥鍫濆帥閸旂姾娴囬崘宥囨暠閻劍鍩涢崘鍐茬暰閺勵垰鎯佸鈧慨瀣尡閺€鍓ф畱娴溿倓绨版０鍕埂閵?
+- 閺€鑸垫殐鏉炲鍣虹拠宥嗘蒋鐠囶厺绠熷鍌溞╂稉搴㈢ゴ鐠囨洖鐔€缁捐儻鈧礁瀵查梻顕€顣介敍宀勪缉閸忓秴顒熸稊鐘虫尡閺€鍙ユ叏婢跺秴寮介崥鎴炴杹婢堆冦亣鐠囧秵婀伴崝鐘烘祰閸愬懎鐡ㄩ妴浣稿幢妞ゅ灝鎷扮捄銊δ侀崸?UI 閸ョ偛缍婃径杈ㄦ櫏閵?
+- 娣囶喖顦茬紒鍐х瘎濡€虫健鏉╃偟鐢荤粵鏃堫暯閺?Windows 濡楀矂娼扮粩?`accessibility_bridge.cc` / `ui::AXTree` 閹躲儵鏁婃潻鐐插煕閿涘苯鑻熸导鎾閺勫孩妯夐崡锟犮€戦惃鍕６妫版ǜ鈧?
+- 娣囶喖顦茬紒鍐х瘎娴兼俺鐦介崷銊ュ瀼閹诡澀绗呮稉鈧０妯绘娴犲秴鐡ㄩ崷銊︽閺勬儳宕辨い鍖＄礉娑撴棁鐦濇稊澶愨偓澶嬪妫版﹢鏁婄拠顖欑稊缁涙梹妞傞崣顖濆厴鐞氼偉顕ら崚銈勮礋濮濓絿鈥橀惃鍕６妫版ǜ鈧?
+- 娑撳搫鎮庨獮璺哄閺€璺虹啲閸愬秴甯囩紓鈺冪矊娑旂姳绱扮拠婵嗗瀼妫版ɑ妞傞惃鍕倱濮濄儴顓哥粻妞剧瑢闂勫嫬濮為崘娆忓弳缁旂偘绨ら敍宀勬娴ｅ海些閸斻劎顏崪灞绢攽闂堛垻顏潻鐐电敾缂佸啩绡勯弮鍓佹畱閸撯晙缍戦幎鏍уЗ閵?
+- 閹恒劏绻?`PLAN_024` 闂冭埖顔岄崠鏍櫢閺嬪嫸绱濇禒搴樷偓婊勀侀崸妤€鍙嗛崣锝呭讲閹绘帗瀚堥垾婵婄箻娑撯偓濮濄儴鎯ら崚鎵斥偓婊嗙箥鐞涘本妞傞崣顖氫粻閻?+ 閺佺増宓佺仦鍌欑波鎼存挸鍨庨崺鐔测偓婵勨偓?
+- 閸?`PLAN_024` 婢跺洣鍞ら幓鎰唉閸氬海鎴风紒顓炵暚閹存劏鈧粈绗呮稉鈧?1/2/3閳ユ繐绱濋幒銊ㄧ箻 Riverpod 妫ｆ牗澹掓潻浣盒╅妴浣风波鎼存挸鍨庣仦鍌滅敾閹峰棔绗岀€涳缚绡勫Ο鈥虫健閸嬫粎鏁ょ拠顓濈疅閹碘晛鐫嶉妴?
+- 缂佈呯敾閹恒劏绻?`PLAN_024` 闂冭埖顔?2/3/4閿涙俺藟姒?sleep 閸╃喍绮ㄦ惔鎾圭珶閻ｅ被鈧胶绮烘稉鈧Ο鈥虫健鐠侯垳鏁辩€瑰牆宕奸獮璺虹殺濡剝婢橀幍鈺佺潔閸?focus/toolbox/sleep 閺傚洦銆傞崺鐔粹偓?
+- 缂佈呯敾閹恒劏绻?`PLAN_024` 闂冭埖顔?1閿涙艾鐨?`app_root` 娑撳簼瀵岄柧鎹愮熅妞ょ敻娼伴幍瑙勵偧 2閿涘湣ore/Library/Play閿涘绺肩粔璇插煂 Riverpod 鐠囪褰囬柧鎹愮熅閵?
+- 缂佈呯敾閹恒劏绻?`PLAN_024` 闂冭埖顔?1閿涙艾鐨㈢拋鍓х枂娑撳骸顦查惄姗€銆夐棃銏″濞?3閿涘潤anguage/data/appearance/wordbook/practice review/recognition/voice閿涘绺肩粔璇插煂 Riverpod 鐠囪褰囬柧鎹愮熅閵?
+- 鐎?`PLAN_024` 閹笛嗩攽闂冭埖顔岄梻銊ㄧ槑娴煎府绱濈涵顔款吇鐠愩劑鍣洪崺铏瑰殠娑撳氦绺肩粔璇差杻闁插繐褰茬粙鍐茬暰鏉╂稑鍙嗘稉瀣╃闂冭埖顔岄妴?
+- 閸氼垰濮?`PLAN_025`閿涘牓妯佸▓?5A閿涘绱伴崷銊ㄧ儲鏉?sleep 鐎涙劙銆夐棃銏㈡畱閸撳秵褰佹稉瀣剁礉娴兼ê鍘涢幒銊ㄧ箻婢堆勬瀮娴犲墎绮ㄩ弸鍕閸掑棔绗岄棃?sleep 閻?Riverpod 閺€璺虹啲閵?
+- 缂佈呯敾閹恒劏绻?`PLAN_026`閿涘牓妯佸▓?5B閿涘绱扮亸?`AppState/wordbook_state` 閻ㄥ嫬澧挎担娆愭殶閹诡喖绨遍惄纾嬬箾閼宠棄濮忔稉瀣焽閸掗绮ㄦ惔鎾崇湴閹跺€熻杽閵?
+
+### 娣囶喗鏁?
+- 鐏?`_applySchemaMigrations()` 闁插秵鐎稉琛♀偓婊嗙讣缁夌粯顒炴銈堛€?+ 缂佺喍绔存い鍝勭碍閹笛嗩攽閳ユ繄绱幒鎺炵礉娣囨繄鏆€闁劖顒炴潻浣盒╅崥搴ｇ彌閸楀啿鍟撻崗?`PRAGMA user_version` 閻ㄥ嫭妫﹂張澶庮嚔娑斿鈧?
+- 鐏忓棙鏆熼幑顔肩氨 schema 鏉╀胶些缁涙牜鏆愰弨鑸垫殐娑撹　鈧粈绮庣€靛綊缍堣ぐ鎾冲閻楀牊婀伴崣鍑ょ礄v9閿涘鈧繐绱濋獮璺哄灩闂勩倓绮庨張宥呭閺冄呭閸楀洨楠囬柧鎹愮熅閻?`_migrate*` 閸樺棗褰堕崘妞剧稇鐎圭偟骞囬妴?
+- 鐏?`database_service.dart` 閹峰棗鍨庢稉?`part` 缂佹挻鐎敍姝歞atabase_service_maintenance.dart`閵嗕梗database_service_wordbook_query.dart`閵嗕梗database_service_wordbook_import.dart`閵嗕梗database_service_tasks.dart`閿涘奔瀵岄弬鍥︽娣囨繄鏆€閺嶇绺炬銊︾仸娑撳骸鐔€绾偓閼宠棄濮忛妴?
+- 缂佈呯敾閹峰棗鍨?`database_service` 閺嶇绺剧仦鍌︾窗閺傛澘顤?`database_service_core.dart` 娑?`database_service_schema.dart`閿涘苯鐨㈠楦裤€?schema 鐎靛綊缍堟稉搴＄俺鐏炲倹鏆熼幑顔肩氨 helper 娴犲簼瀵岄弬鍥︽鏉╀礁鍤敍灞煎瘜閺傚洣娆㈤弨鑸垫殐閸掓壆琚崹瀣暰娑斿绗岄崚婵嗩潗閸栨牕鍙嗛崣锝冣偓?
+- 閸︺劍鎸遍弨楣冩懠鐠侯垯鑵戦崝鐘插弳闁劘鐦?hydrate 鐟欙絾鐎介敍灞肩箽閹镐礁銇囩拠宥嗘拱閸掓銆冩潪濠氬櫤閸旂姾娴囬惃鍕倱閺冭绱濈涵顔荤箽鐎圭偤妾幘顓熸杹閸撳秵瀣侀崚鏉跨暚閺佹潙鐡у▓鐐光偓?
+- 鐠嬪啯鏆ｇ€涙顔岄幘顓熸杹闁板秶鐤嗙憴锝嗙€介柅鏄忕帆閿涙艾缍嬮柌宥咁槻濞嗏剝鏆熸径褌绨?`0` 閺冭绱濇导妯哄帥鐟欏棔璐熻ぐ鎾冲鐎涙顔屾惔鏂垮棘娑撳孩鎸遍弨鎾呯礉楠炲墎绮烘稉鈧幐澶庮潐閼煎啫瀵茬€涙顔岄柨顔款嚢閸欐牠鍘ょ純顔界垼缁涘彞绗岄柌宥咁槻濞嗏剝鏆熼妴?
+- 娑?Windows 閺堫剙婀?TTS 婢х偛濮為崣顖滅处鐎涙娈戦張顒€婀撮棅瀹犲鐟欙絾鐎芥稉搴㈠瘻閺傚洦婀扮拠顓♀枅閼奉亜濮╅崠褰掑帳闁槒绶敍灞炬弓閺勬儳绱￠柅澶嬪閺堫剙婀撮棅瀹犲閺冭泛褰查崷銊ㄥ閺傚洣绗屾稉顓熸瀮鐎涙顔屾稊瀣？閼奉亜濮╅崚鍥ㄥ床閸氬牓鈧?voice閵?
+- 娑?Windows 閺堫剙婀?TTS 鐞涖儱鍘?`setVoice` 婢惰精瑙﹂崥搴ｆ畱 `setLanguage` 閸ョ偤鈧偓鐠侯垰绶為敍灞借嫙鐠佹澘缍嶇€圭偤妾拠顓㈢叾闁瀚ㄩ弮銉ョ箶閿涘本鏌熸笟鍨倵缂侇叀鎷烽煪顏傗偓?
+- 鐏?Windows 閺堫剙婀?TTS 閻ㄥ嫮鐡戝鍛摜閻ｃ儲鏁兼稉琛♀偓婊冪暚閹存劕娲栫拫鍐х喘閸忓牄鈧胶濮搁幀浣界枂鐠囥垹鍘规惔鏇椻偓婵撶礉娑撳秴鍟€閹?`isSpeaking` 鏉烆喛顕楁担婊€璐熼崬顖欑鐎瑰本鍨氭笟婵囧祦閵?
+- 娣囶喗顒?`flutter_tts` Windows 濡楀矂娼伴幓鎺嶆閻ㄥ嫬娲栫拫鍐╁闁帞鍤庣粙瀣╃瑢缁愭褰涢崣銉︾労娴ｈ法鏁ら弬鐟扮础閿涘瞼鈥樻穱?`MediaEnded` / `speak.onComplete` 閼崇晫婀″锝呮礀閸掍即銆婄仦鍌滅崶閸欙絿鍤庣粙瀣⒔鐞涘被鈧?
+- 鐏?`flutter_tts` Windows 濡楀矂娼伴幓鎺嶆閻?`isSpeaking` 閺屻儴顕楅弨閫涜礋娴兼ê鍘涚拠璇插絿鐎圭偤妾幘顓熸杹閻樿埖鈧緤绱濋柆鍨帳閸愬懘鍎寸敮鍐ㄧ毜閸婄厧宕卞璇差嚤閼风鐤嗙拠銏犲幑鎼存洖銇戦弫鍫涒偓?
+- 鐏忓棗顒熸稊鐘虫尡閺€鍓ф畱婢堆嗙槤閺堫剙娆㈡潻鐔峰鏉炶棄鍙嗛崣锝嗘暭娑撹　鈧粌鍘涢崝鐘烘祰鐠囧秵婀伴敍灞藉晙閹靛濮╁鈧慨瀣尡閺€閿偓婵撶礉闁灝鍘ゆ＃鏍偧閻愮懓鍤崡瀹犲殰閸斻劌绱戦幘顓溾偓?
+- 鐞涖儱宸?`PlaybackService` 妫板嫬濮炴潪鎴掔窗鐠囨繄濮搁幀浣侯吀閻炲棴绱濋崑婊勵剾閹存牕鍨忛幑銏犲煂閻╁瓨甯撮幘顓熸杹閺冩湹绱板〒鍛倞閺?prepared session閿涘苯鑻熸穱婵嗙摠鐟欙絾鐎介崥搴ｆ畱鐠囧秵娼箛顐ゅ弾闁灝鍘ら崥搴ｇ敾閸ョ偠鐨熼幏鍨煂鏉炲鍣虹€电钖勯妴?
+- 鐏?`getWordsLite()` / `searchWordsLite()` 閹垹顦叉稉铏规埂濮?lite 閺屻儴顕楅敍灞藉涧鐠囪褰囬張鈧亸蹇撶箑鐟曚礁鍨敍灞借嫙娴?`primary_gloss/meaning` 娴ｆ粈璐熸潪濠氬櫤閹芥顩﹂崗婊冪俺閵?
+- 閺勫海鈥橀張顒冪枂娑撳秵甯撮崣?richer-lite 鐠囶厺绠熼幍鈺佺炊閿涘瞼鎴风紒顓⑩偓姘崇箖 `hydrateWordEntry()` / 閹绢厽鏂侀崜宥嗗瘻闂団偓鐞涖儱鍙忓陇鍐荤€涳缚绡勯幘顓熸杹鐎涙顔岄棁鈧Ч鍌樷偓?
+- 娑?UI smoke 閸嬪洨濮搁幀浣剿夐崗鍛旂€规氨娈戦崷銊у殠閻滎垰顣ㄩ棅宕囨窗瑜版洘鐗辨笟瀣剁礉闁灝鍘ゆ笟婵婄瑜版挸澧犵痪澶哥瑐 fallback 娑撹櫣鈹栫€佃壈鍤ч惄顔肩秿閹垮秳缍旈崶鐐茬秺婢惰京婀￠妴?
+- 閸氬本顒為弴瀛樻煀閸氼垰濮╅幀浣风瑢閸掓繂顫愰崠鏍ㄧゴ鐠囨洜娈?tracking key / lite 鐎涙顔岄弬顓♀枅閿涘奔濞囩紒鍐х瘎閵嗕椒鎹㈤崝鈩冩拱娑撳骸顒熸稊鐘衬侀崸妤€鍙￠悽銊ф畱閻樿埖鈧焦婀￠張娑楃箽閹镐椒绔撮懛娣偓?
+- 鐏?Windows 缂佸啩绡勬导姘崇樈娑擃厾娈戦柅鎰邦暯缁涙棃顣介崣宥夘洯娴犲酣鐝０?`showDialog` 鐠侯垳鏁遍崚鍥ㄥ床娑撴椽銆夐崘鍛冀妫ｅ牆宕遍敍灞肩箽閻ｆ瑩鏁婃０妯绘拱瀵偓閸忕偨鈧礁鎬ラ崶鐘崇垼缁涙儳鎷扮紒褏鐢绘稉瀣╃妫版ɑ鎼锋担婊愮礉娴ｅ棗鍣虹亸鎴ｇ箾缂侇厾鐡熸０妯绘閻ㄥ嫯顕㈡稊澶嬬埐闁插秴缂撻妴?
+- 娑撹櫣绮屾稊鐘虹箻鎼达附娼晶鐐插缁嬪啿鐣剧拠顓濈疅閹诲繗鍫敍灞借嫙鐏忓棗宕熺拠宥呭幢閺嶅洭顣介弨閫涜礋缁嬪啿鐣剧拠顓濈疅閺嶅洨顒?+ 閹烘帡娅庣憗鍛淬偘閸斻劎鏁剧拠顓濈疅閻ㄥ嫮绮嶉崥鍫礉闂勫秳缍?AXTree 閹舵牕濮╅妴?
+- 鐏忓棛绮屾稊鐘烘嫹闊亜鎻╅悡褎鏁归弫娑楄礋鏉炲鍣洪幐浣风畽閸栨牜绮ㄩ弸鍕剁礉闁劙顣芥穱婵嗙摠閺冩湹绗夐崘宥嗘儭鐢箑鐣弫?`fields`閿涘苯鑻熸禒鍛躬闊偂鍞ら崗婊冪俺绾喗婀侀棁鈧憰浣规娣囨繄鏆€ `rawContent`閵?
+- 鐠嬪啯鏆ｇ紒鍐х瘎缂傛挸鐡ㄧ拠宥嗘蒋閻ㄥ嫪绱崗鍫㈤獓娑撳孩鐎柅鐘虫煙瀵骏绱伴崘鍛摠娑擃厺绱崗鍫㈢处鐎涙浜ら柌蹇氱槤閺夆槄绱濈€圭偤妾憴锝嗙€界拠宥嗘蒋閺冨墎鏁辫ぐ鎾冲娴ｆ粎鏁ら崺?瀹告彃濮炴潪鍊熺槤閺壜ゎ洬閻╂牞浜ら柌蹇撴彥閻撗嶇礉閸忓ジ銆愰幀褑鍏樻稉搴＄潔缁€鍝勭暚閺佹潙瀹抽妴?
+- 鐏忓棛绮屾稊鐘汇€夌€?`AppState` 閻ㄥ嫭鏆ｆい鐢垫磧閸氼剚鏁圭粣鍕煂 `uiLanguage`閿涘苯鑻熼幎濠呭殰閸斻劌褰傞棅瀹犘曢崣鎴滅矤 `build()` 閹割亜鍩岄崚鍥暯閸戝棗顦梼鑸殿唽閿涘苯鍣虹亸鎴滅瑓娑撯偓妫版﹢妯佸▓鐢垫畱閺冪姴鍙?rebuild 閸滃苯澹囨担婊呮暏閵?
+- 娑撹櫣绮屾稊鐘电摕妫版濮搁幀浣稿晸閸忋儰绗岄崚鍥暯鏉╁洨鈻兼晶鐐插閹便垼鐭惧鍕）韫囨绱濇笟澶哥艾缂佈呯敾鏉╁€熼嚋鐠佹儳顦笟褎鈧嗗厴瀵倸鐖堕妴?
+- 鐏忓棛绮屾稊鐘辩窗鐠囨繄娈戠拠宥勭疅閸婃瑩鈧鐫滈弨閫涜礋閹稿鐤嗗▎锟狀暕鐠侊紕鐣荤紓鎾崇摠閿涘矂浼╅崗宥嗙槨濞嗏€冲瀼妫版﹢鍏橀柌宥嗘煀闁秴宸婚弫纾嬬枂閸楁洝鐦濋獮鍫曞櫢婢跺秴缍婃稉鈧崠鏍槤娑斿鈧?
+- 鐏忓棝鏁婃０妯垮殰閸斻劌濮為崗銉ゆ崲閸斺剝婀伴惃鍕閸旂姴鍟撻崗銉︽暭娑撴椽顩荤敮褎瑕嗛弻鎾虫倵閸愬秷袝閸欐埊绱濋梽宥勭秵閸滃备鈧粈绗呮稉鈧０妯封偓婵堟櫕闂堛垹鍨忛幑顫挨閹额澀瀵岀痪璺ㄢ柤閻ㄥ嫭顩ч悳鍥モ偓?
+- 閺傛澘顤?`repositories` 閸掑棗鐪伴獮鑸靛复閸忋儰绶风挧鏍ㄦ暈閸忋儻绱癭PracticeRepository` 娑?`WordbookRepository` 娴ｆ粈璐熼弫鐗堝祦鎼存捁顔栭梻顔跨珶閻ｅ被鈧?
+- 鐏忓棛绮屾稊鐘茬厵閸忔娊鏁弫鐗堝祦鐠侯垰绶為敍鍫ｎ唶韫囧棜绻樻惔锔衡偓浣虹矊娑旂姳绨ㄦ禒韬测偓浣割嚤閸戝搫鍟撻崗銉礆閺€鍦暠 `PracticeRepository` 閹垫寧甯撮敍灞藉櫤鐏?`AppState` 鐎佃鏆熼幑顔肩氨鐎圭偟骞囩紒鍡氬Ν閻ㄥ嫮娲挎潻鐐偓?
+- 鐏忓棜鐦濋張顒€鐓欓崗鎶芥暛閺佺増宓佺捄顖氱窞閿涘牐鐦濋張?鐠囧秵娼?CRUD閵嗕焦鎮崇槐銏ｇ儲鏉烆兙鈧礁顕遍崗銉ヮ嚤閸戞亽鈧礁娆㈡潻鐔峰敶缂冾喛鐦濋張顒€濮炴潪鏂ょ礆閺€鍦暠 `WordbookRepository` 閹垫寧甯撮妴?
+- 濡€虫健瀵偓閸忚櫕鏌婃晶鐐剁箥鐞涘本妞傞懕鏂垮З閿涙艾浠犻悽?`focus` 閺冩湹瀵岄崝銊ヤ粻濮濐澀绱扮拠婵撶幢閸嬫粎鏁ら幍鈧張澶夌贩鐠ф牜骞嗘晶鍐叾濡€虫健閺冭泛浠犻幘顓炶嫙閸嬫粎鏁?ambient閿涙稒浠径宥呮儙閻劍妞傞幐澶愭付闁插秴缂撻崚婵嗩潗閸栨牠鎽肩捄顖樷偓?
+- 鐞涖儱鍘栧Ο鈥虫健閻╃鎻€瑰牆宕奸敍姝歅racticePage` 娑?`FocusPage` 閸︺劍膩閸ф浠犻悽銊︽鐏炴洜銇氶幁銏狀槻閹稿洤绱╅敍宀勪缉閸忓秹娈ｉ挊蹇撳弳閸欙絽鎮楁禒宥呭讲闁俺绻冮崢鍡楀蕉鐠侯垰绶炴潻娑樺弳婢惰鲸鏅ラ崝鐔诲厴閵?
+- 閺傛澘顤?`app_state_provider` 楠炶泛婀惔鏃傛暏閸氼垰濮╅柧鎹愮熅閹恒儱鍙?Riverpod overrides閿涘苯鑸伴幋?`AppState` 閸欏本鐖ゅ▔銊ュ弳鏉╁洦娴仦鍌︾礄Riverpod + provider閿涘鈧?
+- 妫ｆ牗澹掓い鐢告桨鐠囪褰囨潻浣盒╅崚?Riverpod閿涙瓪AppShell`閵嗕梗SettingsHomePage`閵嗕梗PracticePage`閵?
+- 閺傛澘顤冮獮鑸靛复閸?`SettingsStoreRepository`閵嗕梗FocusRepository`閵嗕梗AmbientRepository`閿涘苯鐨㈢拋鍓х枂閵嗕椒绗撳▔銊ょ瑢閻滎垰顣ㄩ棅宕囨祲閸忓疇鐭惧鍕埛缂侇厺绮犻崡鏇氱秼閺佺増宓佹惔鎾存箛閸斺€茶厬閸撱儳顬囬妴?
+- 閸氬本顒為弴瀛樻煀 `ui_smoke_test` 閻?`ProviderScope` 娑?provider override 閸栧懓顥婇敍宀€鈥樻穱婵婄讣缁夊妯佸▓鍨ゴ鐠囨洜菙鐎规哎鈧?
+- 閺傛澘顤冮獮鑸靛复閸?`SleepRepository`閿涘潉SettingsStoreSleepRepository`閿涘绱濈亸?sleep 閸╃喐瀵旀稊鍛娴?`SettingsService` 閻╃绻涙潻浣盒╅崚棰佺波鎼存捁绔熼悾灞烩偓?
+- `AppState` 閸氼垰濮╁ù浣衡柤閺傛澘顤?sleep assistant 妫板嫬濮炴潪鐣屾閸氬秴宕熼敍灞肩矌閸︺劍膩閸ф鎯庨悽銊︽閸旂姾娴?sleep 閺佺増宓侀妴?
+- 閺傛澘顤冪紒鐔剁濡€虫健鐎瑰牆宕肩仦?`ui/module/module_access.dart`閿涘苯顦查悽銊δ侀崸妤冾洣閻劍鏋冨鍫滅瑢鐠侯垳鏁遍梼缁樻焽闁槒绶妴?
+- 鐏忓棙膩閸ф鐣ч崡顐ｅ复閸?`StudyPage`閵嗕梗PracticePage`閵嗕梗FocusPage`閵嗕梗ToolboxPage`閵嗕梗ToolboxSleepAssistantPage`閿涘苯鑻熺憰鍡欐磰 toolbox 閸楋紕澧栭崗銉ュ經閵嗕够oothing mini player 閸忋儱褰涢妴涔竢actice 娴兼俺鐦介崗銉ュ經閵?
+- 閺囧瓨鏌?`modules/` 濡€虫健閺傚洦銆傚Ο鈩冩緲閿涘苯鑻熼弬鏉款杻 `focus`/`toolbox`/`sleep` 濡€虫健閺傚洦銆傞敍灞剧焽濞ｂ偓閳ユ粎濮搁幀浣哄缁?+ 娴犳挸绨遍悪顒傜彌 + 濞夈劌鍞芥す鍗炲З + 閸氼垰浠犵€瑰牆宕奸垾婵嗘磽娴犺泛顨滈妴?
+- 鐏?`VocabularySleepApp` 鏉╀胶些娑?`ConsumerWidget`閿涘苯绨查悽銊︾壌閻樿埖鈧浇顕伴崣鏍ㄦ暭娑?`ref.watch(appStateProvider)`閵?
+- 鐏?`MorePage`閵嗕梗LibraryPage`閵嗕梗PlayPage` 鏉╀胶些閸?Riverpod閿涘潉ConsumerWidget/ConsumerStatefulWidget`閿涘绱濋崙蹇撶毌娑撳鎽肩捄?UI 鐎?`provider` 閻ㄥ嫮娲块幒銉ょ贩鐠ф牓鈧?
+- 娣囨繃瀵旀潻浣盒╅張鐔峰蓟閺嶅牊鏁為崗銉ュ悑鐎圭櫢绱橰iverpod + provider閿涘绱濈涵顔荤箽 UI smoke 娑撳骸鍙忛柌蹇旂ゴ鐠囨洘妫ょ悰灞艰礋閸ョ偛缍婇妴?
+- 鐏?`LanguageSettingsPage`閵嗕梗DataManagementPage`閵嗕梗AppearanceStudioPage`閵嗕梗WordbookManagementPage` 鏉╀胶些閸?`ConsumerWidget`閿涘瞼濮搁幀浣筋嚢閸欐牜绮烘稉鈧弨閫涜礋 `ref.watch(appStateProvider)`閵?
+- 鐏?`PracticeReviewPage`閵嗕梗RecognitionSettingsPage`閵嗕梗VoiceSettingsPage` 鏉╀胶些閸?`ConsumerStatefulWidget`閿涘奔姘︽禍鎺楁懠鐠侯垯鑵戦惃鍕Ц閹浇顕伴崘娆戠埠娑撯偓閺€閫涜礋 `ref.read/watch(appStateProvider)`閵?
+- 閺傛澘顤冮梼鑸殿唽鐠囧嫪鍙婄拋鏉跨秿 `record_024_闂冭埖顔岄梻銊ㄧ槑娴奸绗岄梼鑸殿唽5閸氼垰濮?md`閿涘苯鑻熼崷?`PLAN_024` 閺勫海鈥橀梼鑸殿唽 5 閸氼垰濮╅懠鍐ㄦ纯娑撳酣鈧偓閸戠儤鐖ｉ崙鍡愨偓?
+- 閺傛澘顤?`PLAN_025`閿涘本妲戠涵顕€妯佸▓?5A 閻ㄥ嫭澧界悰宀冪珶閻ｅ矉绱欑捄瀹犵箖 sleep 鐎涙劙銆夐棃顫礆娑撳酣鐛欓弨鑸电垼閸戝棎鈧?
+- 鐏?`play_page.dart` 閹峰棗鍨庢稉?`play_page_navigation.dart` 娑?`play_page_weather.dart` 娑撱倓閲?part 閺傚洣娆㈤敍灞煎瘜妞ょ敻娼版穱婵堟殌缂傛牗甯撻柅鏄忕帆閵?
+- 鐏?`practice_page.dart` 閻ㄥ嫬銇囧▓闈涘隘閸ф鐎鍝勫毐閺佺増濯堕崚鍡楀煂 `practice_page_sections.dart`閿涘矂妾锋担搴濆瘜閺傚洣娆㈡担鎾诲櫤閸滃矁鈧箑鎮庢惔锔衡偓?
+- 鐏?`online_ambient_sheet.dart` 鏉╀胶些閸?Riverpod閿涘潉ConsumerStatefulWidget + ref.read/watch(appStateProvider)`閿涘鈧?
+- 鐏?`focus_lock_overlay.dart` 鏉╀胶些閸?Riverpod閿涘潉ConsumerStatefulWidget + ref.read/watch(appStateProvider)`閿涘鈧?
+- 閺傛澘顤?`MaintenanceRepository`閿涘潉DatabaseMaintenanceRepository`閿涘澹欓幒銉︽殶閹诡喖绨辨潻鎰樊閼宠棄濮忛敍姝歩nit/reset/backup/restore/export-dir/dispose`閵?
+- 鐏?`AppState` 娑?`app_state_startup.dart` 閻ㄥ嫭鏆熼幑顔肩氨鏉╂劗娣拫鍐暏鏉╀胶些閸?`MaintenanceRepository`閵?
+- 閹碘晛鐫?`WordbookRepository` 閹恒儱褰涢獮璺虹暚閹存劖鏆熼幑顔肩氨闁倿鍘ら敍姘煀婢?`databasePath`閵嗕梗ensureSpecialWordbooks()`閵嗕梗importWordbook(...)`閵嗕梗importWordbookAsync(...)`閵?
+- 鐏?`wordbook_state.dart` 閺€閫涜礋娴犲懍绶风挧?`WordbookRepository`閿涘瞼些闂勩倕顕?`AppDatabaseService` 閻ㄥ嫮娲块幒銉ょ贩鐠ф牓鈧?
+
+### 娣囶喖顦?
+- 娣囶喖顦叉径褑鐦濋張顒冧氦闁插繗鐦濋弶鈥冲棘娑撳孩鎸遍弨鐐闂冪喎鍨崣顏勫瘶閸?`word` 閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦查弮褏澧?`fieldSettings.enabled = false` 闁鏆€闁板秶鐤嗘导姘閹搭亪鍣存稊澶岀搼鐎涙顔岄幘顓熸杹閻ㄥ嫰妫舵０妯糕偓?
+- 娣囶喖顦?Windows 閺堫剙婀?TTS 閸欘亝閮ㄩ悽銊ч兇缂佺喖绮拋銈咃紣缁炬寧鎸遍幎銉﹁穿閸氬牆鐡у▓闈涘敶鐎圭櫢绱濈€佃壈鍤ч柌濠佺疅缁涘鑵戦弬鍥х摟濞堢數婀呮导鍏兼弓缂佈呯敾閹绢厽鏂侀惃鍕６妫版ǜ鈧?
+- 娣囶喖顦?Windows 閺堫剙婀?TTS 閸︺劌宕熺拠宥嗘尡鐎瑰苯鎮楅崡鈩冾劥閸︺劎鐡戝鍛暚閹存劗濮搁幀浣碘偓浣割嚤閼锋挳鍣存稊澶岀搼閸氬海鐢婚幘顓熸杹閸楁洖鍘撴潻鐔荤箿娑撳秴绱戞慨瀣畱闂傤噣顣介妴?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍宀冾洬閻╂牞浜ら柌蹇氱槤閺壜に夐崗銊ユ倵鎼存梻鎴风紒顓熸尡閺€楣冨櫞娑斿娈戦崷鐑樻珯閵?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍宀冾洬閻╂牠鍣告径宥嗩偧閺佹澘鍑″鈧崥顖欑稻閺冄冪摟濞堢數顩﹂悽銊︾垼鐠侀绮涚€涙ê婀弮鍓佹畱鐎涳缚绡勯幘顓熸杹閸︾儤娅欓妴?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍宀冾洬閻?Windows 閺堫剙婀?TTS 閸︺劏绻涚紒顓″閺?娑擃厽鏋冮幘顓熷Г閺冨墎娈戦懛顏勫З婢规壆鍤庨崚鍥ㄥ床娑撳骸娲栭柅鈧悰灞艰礋閵?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍宀冾洬閻?Windows 閺堫剙婀?TTS 閳ユ粌鐣幋鎰礀鐠嬪啫鍑￠崚棰佺稻 `isSpeaking` 娴犲秴宕辨担蹇娾偓?娑?閳ユ粌鐣幋鎰礀鐠嬪啰宸辨径杈ㄦ閻㈣精鐤嗙拠銏犲幑鎼存洖鐣幋鎰ㄢ偓?娑撱倗琚梼璇差敚閸︾儤娅欓妴?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍宀冾洬閻╂牕銇囩拠宥嗘拱瀵ゆ儼绻滈崝鐘烘祰閸︾儤娅欐稉瀣浕濞嗭紕鍋ｉ崙璇插涧閸旂姾娴囬妴浣侯儑娴滃本顐奸悙鐟板毊閹靛秵顒滃蹇旀尡閺€鍓ф畱閻樿埖鈧浇鐭惧鍕┾偓?
+- 娣囶喖顦?`ui_smoke_test` 娑擃厼婀痪璺ㄥ箚婢у啴鐓堕惄顔肩秿閸ョ偛缍婃笟婵婄缁?catalog 閸嬪洦鏆熼幑顔衡偓浣瑰瘻闁筋喗鐓￠幍鎹愬墷瀵崬顕遍懛瀵告畱鐠囶垰銇戠拹銉ｂ偓?
+- 娣囶喖顦?`app_state_startup_test` 鐎?remembered/weak tracking key 閻ㄥ嫭妫張鐔告箿閵?
+- 娣囶喖顦?`app_state_init_test` 鐎?lite 鐠囧秵娼€涙顔岄梿鍡楁値鏉╁洤顔旈惃鍕＋閺傤叀鈻堥妴?
+- 娣囶喖顦茬紒鍐х瘎娴兼俺鐦介崷?Windows 鏉╃偟鐢荤粵鏃堫暯閺冭泛寮芥径宥嗗ⅵ瀵偓/閸忔娊妫撮崣宥夘洯瀵湱鐛ュ鏇炲絺閻?AXTree 閺囧瓨鏌婂鍌氱埗娑撳骸宕辨い瑁も偓?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍宀冾洬閻?Windows 缂佸啩绡勬导姘崇樈缁涙棃顣介崥搴＄安鐠т即銆夐崘鍛冀妫ｅ牆宕遍懓灞肩瑝閺?`AlertDialog` 閻ㄥ嫮濮搁幀浣界熅瀵板嫨鈧?
+- 娣囶喖顦茬紒鍐х瘎娴兼俺鐦介柅鎰邦暯閽€鐣屾磸閺冭埖濡哥€瑰本鏆ｇ€涙顔岄崹瀣槤閺夆€虫彥閻撗傜楠炶泛绨崚妤€瀵查敍灞筋嚤閼锋潙鍨忛幑顫瑓娑撯偓妫版ɑ妲戦弰鎯у幢妞よ法娈戦梻顕€顣介妴?
+- 娣囶喖顦茬拠宥勭疅闁瀚ㄦ０妯烘躬闁挎瑨顕ら柅澶愩€嶆稉搴㈩劀绾噣鍣存稊澶婄秺娑撯偓閸栨牜顫幘鐐存閿涘奔绮涢崣顖濆厴閺勫墽銇氶垾婊冩礀缁涙梹顒滅涵顔光偓婵堟畱閸掋倝顣?閺傚洦顢嶅鍌氱埗閵?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍宀冾洬閻╂牜绮屾稊鐘烘嫹闊亜鎻╅悡褍绨叉穱婵囧瘮鏉炲鍣洪崠鏍电礉娴犮儱寮风拠宥勭疅闁瀚ㄦ０姗€鏁婄拠顖欑稊缁涙梹妞傝箛鍛淬€忛弰鍓с仛缁剧姵顒滈崣宥夘洯閻ㄥ嫮濮搁幀浣界熅瀵板嫨鈧?
+- 娣囶喖顦茬紒鍐х瘎鐠囧秳绠熸０妯烘躬鏉╃偟鐢绘导姘崇樈娑擃厼寮芥径宥夊櫢瀵ゅ搫鍏遍幍浼淬€嶅Ч鐘垫畱闁插秴顦茬拋锛勭暬瀵偓闁库偓閿涘矁绻樻稉鈧銉х級閻厺绗呮稉鈧０妯哄櫙婢跺洭妯佸▓鐐光偓?
+- 娣囶喖顦查柨娆擃暯閼奉亜濮╅崝鐘插弳娴犺濮熼張顑跨窗娑撳骸鍨忔０妯烘倱閺冨墎鐝垫禍澶嬪⒔鐞涘瞼娈戦梻顕€顣介敍灞肩喘閸忓牅绻氱拠浣风窗鐠囨繂鍨忔０妯荤ウ閻ｅ懏鈧佲偓?
+- 娣囶喖顦插Ο鈥虫健閸忔娊妫撮崥搴℃儙閸斻劑銆夐崣顖濆厴娴犲秵瀵氶崥鎴濆嚒閸嬫粎鏁ゅΟ鈥虫健閻ㄥ嫰妫舵０姗堢礉濡€虫健閸掑洦宕查崥搴濈窗閼奉亜濮╅崶鐐衡偓鈧獮鑸靛瘮娑斿懎瀵查崚鏉垮讲閻劌鍙嗛崣锝冣偓?
+- 娣囶喖顦茬€涳缚绡勫Ο鈥虫健閸忔娊妫撮崥搴濈矝閸欘垳绮￠惄纾嬫彧妞ょ敻娼扮拋鍧楁６鐎涳缚绡勭憴鍡楁禈閻ㄥ嫰妫舵０姗堢礉楠炶泛婀潻鎰攽閺冭泛鍙ч梻顓烆劅娑旂姵膩閸ф妞傛稉璇插З閸嬫粍顒涚€涳缚绡勯幘顓熸杹閵?
+- 娣囶喖顦茬粋浣烘暏 `toolbox.sleep_assistant` 閸氬簼绮涢崣顖濆厴缂佈呯敾閹笛嗩攽瀹告彃鎯庨崝?sleep routine 閻ㄥ嫰妫舵０姗堢礉濡€虫健閸忔娊妫撮弮鏈电窗缁斿宓嗛崑婊勬簚閵?
+- 娣囶喖顦?sleep assistant 鐎涙劙銆夐棃銏犲讲闁俺绻冮崢鍡楀蕉鐠侯垳鏁辩紒鏇＄箖濡€虫健瀵偓閸忓磭娈戦梻顕€顣介敍灞灸侀崸妤冾洣閻劌鎮楃紒鐔剁闂冪粯鏌囩捄瀹犳祮閵?
+- 閺傛澘顤冮崶鐐茬秺濞村鐦敍姝歴leep_repository_test` 娑?`app_state_init_test` 娑擃厾娈?sleep assistant 閸氼垰浠犵悰灞艰礋妤犲矁鐦夐妴?
+- 娣囶喖顦查棃?sleep 閼煎啫娲块崘鍛暙閻ｆ瑧娈?`provider` 閻╃顕?`AppState` 鐠侯垰绶為敍宀€绮烘稉鈧崶鐐存暪閼?Riverpod 鐠囪褰囬柧鎹愮熅閵?
+- 娣囶喖顦?`AppState` 娑撳骸宸婚崣?`wordbook_state` 鐎佃鏆熼幑顔肩氨鐎圭偟骞囩紒鍡氬Ν閼帮箑鎮庢潻鍥ㄧ箒閻ㄥ嫰妫舵０姗堢礉閺€閫涜礋缂佸繋绮ㄦ惔鎾圭珶閻ｅ矁顔栭梻顔芥殶閹诡喖绨辨潻鎰樊娑撳氦鐦濋張顒€顕遍崗銉ㄥ厴閸旀稏鈧?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5C 鐞涖儱鍘栭敍?
+- 閹稿娼?sleep 娴兼ê鍘涙い鍝勭碍鐎瑰本鍨氱亸蹇旂埗閹村繑膩閸ф銇囬弬鍥︽閹峰棗鍨庨敍姝歵oolbox_mini_games.dart` 閹峰棗鍨庢稉?5 娑?`part` 鐎涙劖鏋冩禒璁圭礄閺佹壆瀚?閹殿偊娴?閹风厧娴?娴滄柨鐡欏Λ?2048閿涘鈧?
+- 娑撶粯鏋冩禒鏈电箽閻ｆ瑥鍙嗛崣锝勭瑢閸忓彉闊╃紒鎾寸€敍宀勩€夐棃銏㈤獓濡€虫健閼卞矁鐭楁潻娑楃濮濄儲绔婚弲鏉垮閿涘矂妾锋担搴″礋閺傚洣娆㈤懓锕€鎮庢稉搴ｆ樊閹躲倖鍨氶張顑锯偓?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒鍛粵缂佹挻鐎幏鍡楀瀻閿涘奔绗夊☉澶婂挤 sleep 鐎涙劙銆夐棃顫瑢娑撴艾濮熼柅鏄忕帆鐠囶厺绠熼妴?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5D 鐞涖儱鍘栭敍?
+- 鐎靛綊娼?sleep 閻?`focus_page.dart` 鏉╂稖顢戠紒鎾寸€幏鍡楀瀻閿涙矮瀵岄弬鍥︽閺€鑸垫殐娑撳搫鍙嗛崣锝囩椽閹烘帊绗岄悽鐔锋嚒閸涖劍婀￠敍宀冾吀閺冭泛鐓欐稉搴′紣娴ｆ粌鐓欓幏鍡楀瀻閸?`focus_page_timer.dart`閵嗕梗focus_page_workspace.dart`閵?
+- 閺傛澘顤?`_setViewState(...)` 閻樿埖鈧焦娲块弬鐗埶夐幒銉礉閺囧じ鍞幍鈺佺潔閺傝纭堕崘鍛纯閹?`setState(...)`閿涘瞼鈥樻穱婵囧閸掑棗鎮?analyze 鐟欏嫬鍨穱婵囧瘮閸忋劎璞㈤妴?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥勫紬閺嶈壈鐑︽潻?`sleep_*.dart`閿涘本婀穱顔芥暭 sleep 鐎涙劙銆夐棃銏も偓鏄忕帆閵?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5D 鐞涖儱鍘?缁楊兛绨╁銉礆
+- 鐎?`focus_page_workspace.dart` 缂佈呯敾鏉╂稖顢戦棃?sleep 缂佹挻鐎幏鍡楀瀻閿涘奔瀵岄弬鍥︽閺€鑸垫殐娑撳搫浼愭担婊冨隘閸忋儱褰涚紓鏍ㄥ笓閵?
+- 閺傛澘顤?`focus_page_workspace_todo.dart`閵嗕梗focus_page_workspace_notes.dart`閵嗕梗focus_page_workspace_editor.dart`閿涘本瀵?`todo / notes / editor` 閹峰棗鍨庡銉ょ稊閸栧搫鐤勯悳鑸偓?
+- 娣囨繃瀵?Focus 瀹搞儰缍旈崠杞扮瑹閸斅ゎ嚔娑斿绗屾禍銈勭鞍濞翠胶鈻兼稉宥呭綁閿涘奔绌舵禍搴℃倵缂侇厽瀵滅€涙劕鐓欓悪顒傜彌缂佸瓨濮㈤妴?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5E 鐞涖儱鍘栭敍?
+- 鐎?`toolbox_sound_tools/focus.dart` 鏉╂稖顢戠粭顑跨濮濄儲膩閸ф濯堕崚鍡窗閹貉冨煑缂佸嫪娆㈤妴浣虹椽閹烘帞绱潏鎴濇珤閵嗕勾egacy painter閵嗕焦鏌婇悧?painter 閸掑棛顬囨稉铏瑰缁?part 閺傚洣娆㈤妴?
+- `toolbox_sound_tools.dart` 閺傛澘顤?`focus_controls.dart`閵嗕梗focus_arrangement_editor.dart`閵嗕梗focus_visualizer_legacy.dart`閵嗕梗focus_visualizer.dart` 閻?`part` 婢圭増妲戦妴?
+- `focus.dart` 閺傚洣娆㈡担鎾诲櫤娴?8290 鐞涘本鏁归弫娑滃殾 3787 鐞涘矉绱濋崥搴ｇ敾閸欘垳鎴风紒顓熷閸掑棛濮搁幀浣虹椽閹烘帒鐓欓妴?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥勫紬閺嶈壈鐑︽潻?`sleep_*.dart` 鐎涙劙銆夐棃顫礉娴犲懓绻樼悰宀勬姜 sleep 閻ㄥ嫮绮ㄩ弸鍕偓褔鍣搁弸鍕┾偓?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5E 鐞涖儱鍘?缁楊兛绨╁銉礆
+- 鐏?`toolbox_sound_tools/focus.dart` 娑?`_FocusBeatsToolState` 閻ㄥ嫯绻嶇悰宀勨偓鏄忕帆娑撳氦鍨堕崣鐗堢€鐑樻煙濞夋洘濯堕崚鍡楀煂 `focus_state_logic.dart`閵嗕梗focus_state_stage.dart` 娑撱倓閲滈弬?part 閺傚洣娆㈤妴?
+- `toolbox_sound_tools.dart` 閺傛澘顤?`focus_state_logic.dart` 娑?`focus_state_stage.dart` 閻?`part` 婢圭増妲戦敍灞肩箽閹镐焦膩閸ф绱╅悽銊ョ暚閺佹番鈧?
+- `focus.dart` 娴?3787 鐞涘矁绻樻稉鈧銉︽暪閺佹稑鍩?745 鐞涘矉绱濇稉缁樻瀮娴犳儼浠涢悞锔惧Ц閹礁鐡у▓鐐光偓浣烘晸閸涜棄鎳嗛張鐔剁瑢 build 閸忋儱褰涢妴?
+- 閺傛澘顤?`_setViewState(...)` 娴ｆ粈璐熺猾璇插敶閻樿埖鈧焦娲块弬鐗埶夐幒銉礉濞戝牓娅庨幍鈺佺潔閸愬懐娲块幒?`setState(...)` 閻?analyze 閸涘﹨顒熼妴?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥勫紬閺嶈壈鐑︽潻?`sleep_*.dart` 鐎涙劙銆夐棃顫礉娴犲懓绻樼悰宀勬姜 sleep 閻ㄥ嫮绮ㄩ弸鍕閹峰棗鍨庨妴?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5F 鐞涖儱鍘?缁楊兛绨╁銉窗Toolbox Audio Bank 娴滃苯鐪伴崺鐔稿閸掑棴绱?
+- 鐏?`toolbox_audio_bank.dart` 娴犲骸宕熼弬鍥︽缁変焦婀佺€圭偟骞囩紒褏鐢婚幏鍡楀瀻娑撴椽鐓堕懝?娑旀劕娅掗崺鐔剁癌鐏炲倻绮ㄩ弸鍕剁窗`loops / harp_piano / guitar_guqin / flute / strings / drums / clicks / prayer_bead / singing_bowl / woodfish / shared`閵?
+- `ToolboxAudioBank` 娑撶粯鏋冩禒鑸垫暪閺佹稐璐熺紓鎾崇摠娑撳骸顕径鏍饯閹?API閿涘瞼顫嗛張澶婃値閹存劕鐤勯悳鎷岀讣缁夎鍩岄悪顒傜彌 `part` 閺傚洣娆㈤敍宀勬娴ｅ骸鎮楃紒顓犳樊閹躲倗娈戦梼鍛邦嚢娑撳孩鏁奸崝銊﹀灇閺堫兙鈧?
+- `toolbox_audio_service.dart` 閸氬本顒為弬鏉款杻娴滃苯鐪?`part` 婢圭増妲戦敍宀€鈥樻穱婵嗙氨缁狙咁潌閺堝鍤遍弫鏉垮讲鐟欎焦鈧傜瑢鐠嬪啰鏁ら柧鍙ョ箽閹镐椒绔撮懛娣偓?
+- 閸?`flute/strings` 閸╃喐濯堕崚鍡毸夋鎰版▉濞堢敻鍣伴悽銊ユ倱閹恒儱褰涚€圭偟骞囬柌宥呯紦閿涘奔绻氶幐浣稿棘閺佹媽绔熼悾灞烩偓浣虹处鐎涙﹢鏁拠顓濈疅娑?WAV 鏉堟挸鍤弽鐓庣础娑撳秴褰夐妴?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗛弽绋跨妇閻╊喗鐖ｆ稉铏圭波閺嬪嫭濯堕崚鍡曠瑢閼卞矁鐭楅弨鑸垫殐閿涙矖flute/strings` 閸╃喎娲滅悰銉╃秷鐎圭偟骞囩€涙ê婀崥顒佸妳娓氀呯矎瀵邦喖妯婂鍌烆棑闂勨晪绱濆鏌モ偓姘崇箖鐎规艾鎮?analyze 娑撳海娴夐崗铏ゴ鐠囨洩绱濆楦款唴閸氬海鐢荤悰銉ょ鏉烆喖鎯夐幇鐔锋礀瑜版帡鐛欓弨韬测偓?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5F 鐞涖儱鍘?缁楊兛绗佸銉窗閸氼剚鍔呴崶鐐茬秺娑撳骸鐣ㄩ崗銊ㄧ殶娴兼﹫绱?
+- 鐎?`toolbox_audio_bank_flute.dart` 鏉╂稖顢戞穱婵嗙暓鐠嬪啴鐓堕敍姘叏婢跺秳瀵岄棅鍐插瘶缂佹粌绱撶敮鎼炩偓浣割杻瀵儤鐨甸崳顏勵敄瑜邦澀绗岄弨璇插毊閻剚鈧焦甯堕崚璁圭礉楠炶泛濮為崗銉ㄤ氦闁插繐閽╁鎴滅瑢鐏忕偓顔岀悰鏉垮櫤閺€璺哄經閵?
+- 鐎?`toolbox_audio_bank_strings.dart`閿涘澊iolin閿涘绻樼悰灞肩箽鐎瑰牐鐨熼棅绛圭窗鐞涖儱鍘栧鎾虫珨閸斻劍鈧浇绻冨銈冣偓渚€鈪抽棅铏瑤閸忋儯鈧焦鍙冮柅鐔哥磽缁夎绗岀亸鐐唽閹貉冨煑閿涘本褰佹妯跨箾鐠愵垱鈧傜瑢閼奉亞鍔ф惔锔衡偓?
+- 閸?`toolbox_audio_bank_shared.dart` 閺傛澘顤冪仦鈧柈銊ュ讲婢跺秶鏁?DSP 瀹搞儱鍙块敍鍧刜applyOnePoleLowPass`閵嗕梗_applyDcBlock`閿涘绱濇禒鍛暏娴滃孩婀版潪顔跨殶娴兼鐭惧鍕旂€规艾瀵查妴?
+- 閺傛澘顤?`test/toolbox_audio_bank_regression_test.dart`閿涘矁顩惄?WAV 缂佹挻鐎崥鍫熺《閹佲偓渚€娼棃娆撶叾闂冨牆鈧鈧礁鐔▓浣冣€滈崙蹇嬧偓浣稿綁娴ｆ挸妯婂鍌欑瑢閸氬苯寮弫鎵€樼€规碍鈧佲偓?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗙拫鍐х喘娣囨繃瀵?public API 娑撳海绱︾€涙﹢鏁稉宥呭綁閿涘矂顥撻梽鈺呮肠娑擃厼婀崥顒佸妳缂佸棗浜曢崣妯哄閿涙稑鍑￠柅姘崇箖鐎规艾鎮?analyze + 閸ョ偛缍婂ù瀣槸閺€鑸垫殐閸旂喕鍏橀幀褍娲栬ぐ鎺楊棑闂勨晪绱濆楦款唴鐞涖儰绔存潪顔绘眽瀹搞儱鎯夐幇鐔肩崣閺€韬测偓?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5F 鐞涖儱鍘栭敍娆癝R 娑?Toolbox Audio閿?
+- 鐎?`asr_service.dart` 鐎瑰本鍨氶幐澶婂閼宠棄鐓欓幏鍡楀瀻閿涙矮瀵岄弬鍥︽娴犲懍绻氶悾娆戣閸ㄥ鐣炬稊澶夌瑢閸忓彉闊╅悩鑸碘偓渚婄礉鐠囧棗鍩嗗ù浣衡柤閹峰棗鍨庨崚?`core / api / audio / offline / models` 娴滄柧閲?`part` 閺傚洣娆㈤妴?
+- 鐎?`toolbox_audio_service.dart` 鐎瑰本鍨氶幐澶庝捍鐠愶絾濯堕崚鍡窗娑撶粯鏋冩禒鏈电矌娣囨繄鏆€鎼存挸锛愰弰搴礉閹绢厽鏂侀崳銊︾潨娑撳酣鐓堕懝鎻掓値閹存劘鍏橀崝娑樺瀻閸掝偉绺肩粔璇插煂 `toolbox_audio_players.dart` 娑?`toolbox_audio_bank.dart`閵?
+- 濞撳懐鎮婇崡鏇熸瀮娴犺泛鐖㈤崣鐘茬础閸樺棗褰剁紒鎾寸€敍宀€绮烘稉鈧?`part of` 缂佸嫮绮愰獮鑸垫暪閺佹盯娼ら幀浣瑰灇閸涙顔栭梻顔跨熅瀵板嫸绱濇穱婵囧瘮閺冦垺婀?API 鐠囶厺绠熸稉搴ょ殶閻劍鏌熷蹇庣瑝閸欐ǜ鈧?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘稉铏圭波閺嬪嫭鈧囧櫢閺嬪嫸绱濇稉宥堢殶閺?ASR 娑撳酣鐓舵０鎴濇値閹存劗鐣诲▔鏇☆嚔娑斿绱遍崶鐐茬秺妞嬪酣娅撴稉鏄忣洣闂嗗棔鑵戦崷銊︽瀮娴犳儼绔熼悾宀冪讣缁変紮绱濆鏌モ偓姘崇箖鐎规艾鎮?analyze + 濞村鐦宀冪槈閺€鑸垫殐閵?
+
+### 娣囶喗鏁奸敍鍫ユ▉濞?5E 鐞涖儱鍘?缁楊兛绗佸銉礆
+- 鐎?`focus_state_stage.dart` 鏉╂稖顢戦懕宀冪煑閹峰棗鍨庨敍姘愁潒鐟欏鍨堕崣鐗堢€杞扮箽閻ｆ瑥婀崢鐔告瀮娴犺绱濋幒褍鍩楅崠?section 閺嬪嫬缂撴潻浣盒╅懛?`focus_state_stage_sections.dart`閵?
+- `toolbox_sound_tools.dart` 閺傛澘顤?`focus_state_stage_sections.dart` 閻?`part` 婢圭増妲戦敍灞肩箽閹镐焦膩閸ф绱╅悽銊ョ暚閺佹番鈧?
+- 娣囶喖顦查幏鍡楀瀻鏉╁洨鈻兼稉顓犳畱鐏忕偓顔岄幋顏呮焽閿涘苯鑻熷〒鍛倞 `_buildPrimaryControls` 閸?`return` 閸氬簼绗夐崣顖濇彧閻ㄥ嫰鍣告径宥勫敩閻礁娼￠敍鍫滅矌缂佹挻鐎〒鍛倞閿涘矁顢戞稉杞扮瑝閸欐﹫绱氶妴?
+
+### 妞嬪酣娅撻崣妯绘纯
+- 閺堫剝鐤嗘禒宥勫紬閺嶈壈鐑︽潻?`sleep_*.dart` 鐎涙劙銆夐棃顫礉娴犲懓绻樼悰宀勬姜 sleep 閻ㄥ嫮绮ㄩ弸鍕閹峰棗鍨庨妴?
+
+### 娣囶喗鏁奸敍?026-04-20 / PLAN_041閿?
+- 鐎电懓銇囬弬鍥︽閹峰棗鍨庣紒鎾寸亯閸嬫艾鐣ㄩ崗銊ょ秼濡偓閿涙矮鎱ㄦ径?`tts_service_api.dart` 閻?extension 闂堟瑦鈧焦鍨氶崨姗€妾虹€规艾绱╅悽銊╂６妫版﹫绱濋獮璺虹暚閹?`tts_service` 閸掑棗鐪伴弬鍥︽閻ㄥ嫭鐗稿蹇撳娑撳骸鐣鹃崥?analyze 妤犲矁鐦夐妴?
+- 閸ョ偞绮撮幑鐔锋綎閻?`piano` 閹峰棗鍨庣紒鎾寸亯閿涘本浠径?`toolbox_sound_tools/piano.dart` 閸掓澘褰茬紓鏍槯閻樿埖鈧緤绱濋柆鍨帳缂傛牜鐖?鐎涙顑佹稉鍙夊疮閸у繒鎴风紒顓熷⒖閺侊絻鈧?
+- 鐎?`toolbox_sound_tools/drum_pad.dart` 閸嬫氨顑囨稉鈧仦鍌澬掗懓锔肩窗閺傛澘顤?`drum_pad_state_logic.dart`閿涘牏濮搁幀浣风瑢闂婃娊顣堕柅鏄忕帆閿涘绗?`drum_pad_painter.dart`閿涘牆鍘滈弶鐔虹帛閸掕泛娅掗敍澶涚礉娑撶粯鏋冩禒鑸垫暪閺佹稐璐?UI 缂傛牗甯撻崗銉ュ經閵?
+- 閸掔娀娅庨崢鍡楀蕉閸愭ぞ缍戦弬鍥︽ `lib/src/ui/pages/toolbox_sound_tools/drum_pad.dart.bak`閿涘牊妫ゅ鏇犳暏婢跺洣鍞ら弬鍥︽閿涘鈧?
+
+### 妞嬪酣娅撻崣妯绘纯閿?026-04-20 / PLAN_041閿?
+- 閺堫剝鐤嗛懕姘卞妽缂佹挻鐎憴锝堚偓锔跨瑢缁嬪啿鐣鹃幀褌鎱ㄦ径宥忕礉娑撳秵鏁奸崝銊ょ瑹閸斅ゎ嚔娑斿绱辩€靛湱绱惍渚€顥撻梽鈺傛瀮娴犲爼鍣伴崣鏍ф礀濠婃俺鈧矂娼紒褏鐢婚崣鐘插閺€鐟板З閵?
+
+### 娣囶喗鏁奸敍?026-04-21 / PLAN_042閿?
+- 鐎?`toolbox_soothing_music_v2_page.dart` 鏉╂稖顢戝Ο鈥虫健閸栨牗濯堕崚鍡窗
+  - 閺傛澘顤?`toolbox_soothing_music_v2_playback.dart`閿涘本澹欓幒銉︽尡閺€淇扁偓浣稿瀼閺囧眰鈧焦膩瀵繐濮炴潪濮愨偓浣界カ濠ф劕濮炴潪鎴掔瑢閹绢厽鏂侀悩鑸碘偓浣圭ウ閵?
+  - 閺傛澘顤?`toolbox_soothing_music_v2_stage.dart`閿涘本澹欓幒銉ㄥ灦閸欐澘灏妴浣规锤閻╊喗鐖稉搴＄俺闁劍甯堕崚璺哄隘 UI 缂佸嫬鎮庨妴?
+- 閺傛澘顤?`_playbackIntent` 娑?`_playbackVisualActive` 閻樿埖鈧浇顕㈡稊澶涚礉娣囶喖顦查幘顓熸杹閹稿鎸抽崷銊ュ瀼閺囨彃濮炴潪鍊熺箖濞撯剝婀￠惃鍕▔缁€杞扮瑝娑撯偓閼锋番鈧?
+- 娣囶喖顦查崚鍥ㄥ床娑撳绔撮弴鍙夋閸嬭泛褰傛稉宥囩彌閸楀疇鍤滈崝銊︽尡閺€鎾呯窗閸掑洦绨柧鎹愮熅缂佺喍绔存稉鑼额攽閸栨牭绱濋崚鍥ㄧ爱閸?`stop()`閿涘本浠径宥嗘尡閺€鎯у `seek(Duration.zero)` + `resume()`閵?
+- 娴兼ê瀵查幍瀣簚缁旑垵鍨堕崣鐗堟櫏閺嬫粌褰茬憴浣光偓褝绱扮槐褍鍣剧敮鍐ㄧ湰閹绘劕宕岄悧瑙勬櫏婢х偟娉敍灞借嫙婢х偛宸辨０鎴ｆ皑 painter 閻ㄥ嫭灏熼獮鍛偓浣瑰皾鐢缚绗岄幓蹇氱珶瀵搫瀹抽妴?
+
+### 娣囶喖顦查敍?026-04-21 / PLAN_042閿?
+- 娣囶喖顦查幘顓熸杹閹稿鎸抽弰鍓с仛閻樿埖鈧椒绗岀€圭偤妾幘顓熸杹闁炬崘鐭鹃崑璺哄絺娑撳秴鎮撳銉ф畱闂傤噣顣介妴?
+- 娣囶喖顦插Ο鈥崇础/閺囪尙娲伴崚鍥ㄥ床閸︾儤娅欐稉瀣殰閸斻劍鎸遍弨鐐壈閸ユ儳婀惉顒佹 stop 娴滃娆㈡稉顓☆潶鐠囶垱绔荤粚鍝勵嚤閼峰娈戦弬顓熸尡闂傤噣顣介妴?
+- 娣囶喖顦查幍瀣簚缁旑垵鍨堕崣鏉垮讲鐟欏棗寮芥＃鍫ｇ箖瀵究鈧礁濮╅幀浣哥摠閸︺劍鍔呮稉宥堝喕閻ㄥ嫰妫舵０妯糕偓?
+
+### 妞嬪酣娅撻崣妯绘纯閿?026-04-21 / PLAN_042閿?
+- 閺堫剝鐤嗛弨鐟板З閼辨氨鍔嶆い鐢告桨閹峰棗鍨庢稉搴㈡尡閺€楣冩懠鐠侯垳菙鐎规碍鈧傛叏鐞涖儻绱濇稉宥嗘暭閸欐ê顕径鏍︾瑹閸斅ゎ嚔娑斿绗岄幘顓熸杹闁板秶鐤嗛幐浣风畽閸栨牕宕楃拋顔衡偓?
+
+
+## [Unreleased-PLAN_221-LIFE-IMAGE-COMPRESSION-ALGORITHMS] - 2026-05-26
+
+### 鍘熷洜
+- 鐢ㄦ埛瑕佹眰鍦ㄥ浘鐗囧帇缂╁瓙妯″潡澧炲姞鏇村鍘嬬缉绠楁硶鍙€夐」锛屽苟杩芥眰鏈€澶у帇缂╂晥鐜囥€?
+### 鏂板
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart`
+  - 鏂板鍘嬬缉绠楁硶閫夐」锛歚Auto best`銆乣JPEG balanced`銆乣JPEG aggressive`銆乣PNG lossless`銆乣GIF indexed`銆?  - 鏂板 `auto best` 绛栫暐锛氬悓涓€缂╂斁缁撴灉涓嬪苟琛屽€欓€夌紪鐮侊紝鑷姩閫夊彇浣撶Н鏈€灏忕粨鏋溿€?  - 鏂板绠楁硶缁撴灉淇℃伅灞曠ず锛歚Algorithm` 涓?`Encoding detail`銆?  - 瀵煎嚭缁撴灉鏂囦欢鎵╁睍鍚嶆敼涓鸿窡闅忓疄闄呯紪鐮佹牸寮忥紙`.jpg/.png/.gif`锛夈€?
+### 淇敼
+- `test/ui_smoke_test.dart`
+  - 鎵╁睍 `life tools opens image compression controls` 鏂█锛岃鐩栨柊澧炵畻娉曢€夐」鍙鎬с€?
+### 椋庨櫓鍙樻洿
+- `auto best` 浼氳繘琛屽杞紪鐮侊紝瓒呭ぇ鍥惧湪浣庣璁惧鍙兘澧炲姞绛夊緟鏃堕棿銆?- `GIF indexed` 涓洪珮鍘嬬缉鏈夋崯鏂规锛?56 鑹诧級锛岀敾璐ㄦ崯澶卞彲鑳借緝鏄庢樉銆?
+### 楠岃瘉
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens image compression controls"`锛堣鏃犲叧鏂囦欢 `toolbox_life_tools_relatives.dart` 鐜版湁缂栬瘧閿欒闃绘柇锛?
+
+
+## [Unreleased-PLAN_222-LIFE-RELATIVES-CLICK-CALCULATOR] - 2026-05-26
+
 ### 原因
-- 需要降低 `database_service.dart` 中 `_applySchemaMigrations()` 的重复分支复杂度，减少后续新增 schema 版本时的维护成本与漏改风险。
-- 按当前版本基线清理数据库历史迁移冗余代码，减少维护负担并收敛初始化路径复杂度。
-- `database_service.dart` 长期累计到数千行，单文件维护成本过高，需按功能模块拆分以降低耦合和改动风险。
-- 第一轮模块拆分后，主文件仍承载核心实现细节，需继续拆出 core/schema 以进一步降低入口文件复杂度。
-- 修复大词本播放时只播单词本身、释义与扩展字段未继续播放的问题。
-- 修复历史播放配置中的字段禁用标记与当前重复次数设置冲突，导致学习播放只播单词本身的问题。
-- 修复 Windows 本地 TTS 在自动语言模式下无法随字段内容切换音色，导致学习播放中后续中文释义等字段听感上像“没有继续播放”的问题。
-- 修复 Windows 本地 TTS 在单词播完后因完成回调未正确回到平台线程、`isSpeaking` 状态滞留而长时间停顿并最终超时的问题。
-- 修正播放页大词本入口“加载并播放”会在加载完成后直接开播，不符合先加载再由用户决定是否开始播放的交互预期。
-- 收敛轻量词条语义漂移与测试基线老化问题，避免学习播放修复反向放大大词本加载内存、卡顿和跨模块 UI 回归失效。
-- 修复练习模块连续答题时 Windows 桌面端 `accessibility_bridge.cc` / `ui::AXTree` 报错连刷，并伴随明显卡顿的问题。
-- 修复练习会话在切换下一题时仍存在明显卡顿，且词义选择题错误作答时可能被误判为正确的问题。
-- 为合并前收尾再压缩练习会话切题时的同步计算与附加写入竞争，降低移动端和桌面端连续练习时的剩余抖动。
-- 推进 `PLAN_024` 阶段化重构，从“模块入口可插拔”进一步落到“运行时可停用 + 数据层仓库分域”。
-- 在 `PLAN_024` 备份提交后继续完成“下一步 1/2/3”，推进 Riverpod 首批迁移、仓库分层续拆与学习模块停用语义扩展。
-- 继续推进 `PLAN_024` 阶段 2/3/4：补齐 sleep 域仓库边界、统一模块路由守卫并将模板扩展到 focus/toolbox/sleep 文档域。
-- 继续推进 `PLAN_024` 阶段 1：将 `app_root` 与主链路页面批次 2（More/Library/Play）迁移到 Riverpod 读取链路。
-- 继续推进 `PLAN_024` 阶段 1：将设置与复盘页面批次 3（language/data/appearance/wordbook/practice review/recognition/voice）迁移到 Riverpod 读取链路。
-- 对 `PLAN_024` 执行阶段门评估，确认质量基线与迁移增量可稳定进入下一阶段。
-- 启动 `PLAN_025`（阶段 5A）：在跳过 sleep 子页面的前提下，优先推进大文件结构拆分与非 sleep 的 Riverpod 收尾。
-- 继续推进 `PLAN_026`（阶段 5B）：将 `AppState/wordbook_state` 的剩余数据库直连能力下沉到仓库层抽象。
+- 用户要求把亲戚关系计算器改为更形象、实用、便捷的“关系点击叠加计算器”样式，不再依赖手动输入关系链。
+
+### 新增
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart`
+  - 新增关系按钮面板（常用称谓 token 点选叠加）。
+  - 新增链路舞台（当前关系链展示）及撤销、清空、示例填充动作。
+  - 新增拓扑导图展示（`CustomPainter`）：从“我”到关系链终点的可视化路径。
+  - 保留计算参数：`sex`、`reverse`、`optimal`。
 
 ### 修改
-- 将 `_applySchemaMigrations()` 重构为“迁移步骤表 + 统一顺序执行”编排，保留逐步迁移后立即写入 `PRAGMA user_version` 的既有语义。
-- 将数据库 schema 迁移策略收敛为“仅对齐当前版本号（v9）”，并删除仅服务旧版升级链路的 `_migrate*` 历史冗余实现。
-- 将 `database_service.dart` 拆分为 `part` 结构：`database_service_maintenance.dart`、`database_service_wordbook_query.dart`、`database_service_wordbook_import.dart`、`database_service_tasks.dart`，主文件保留核心骨架与基础能力。
-- 继续拆分 `database_service` 核心层：新增 `database_service_core.dart` 与 `database_service_schema.dart`，将建表/schema 对齐与底层数据库 helper 从主文件迁出，主文件收敛到类型定义与初始化入口。
-- 在播放链路中加入逐词 hydrate 解析，保持大词本列表轻量加载的同时，确保实际播放前拿到完整字段。
-- 调整字段播放配置解析逻辑：当重复次数大于 `0` 时，优先视为当前字段应参与播放，并统一按规范化字段键读取配置标签与重复次数。
-- 为 Windows 本地 TTS 增加可缓存的本地音色解析与按文本语言自动匹配逻辑，未显式选择本地音色时可在英文与中文字段之间自动切换合适 voice。
-- 为 Windows 本地 TTS 补充 `setVoice` 失败后的 `setLanguage` 回退路径，并记录实际语音选择日志，方便后续追踪。
-- 将 Windows 本地 TTS 的等待策略改为“完成回调优先、状态轮询兜底”，不再把 `isSpeaking` 轮询作为唯一完成依据。
-- 修正 `flutter_tts` Windows 桌面插件的回调投递线程与窗口句柄使用方式，确保 `MediaEnded` / `speak.onComplete` 能真正回到顶层窗口线程执行。
-- 将 `flutter_tts` Windows 桌面插件的 `isSpeaking` 查询改为优先读取实际播放状态，避免内部布尔值卡死导致轮询兜底失效。
-- 将学习播放的大词本延迟加载入口改为“先加载词本，再手动开始播放”，避免首次点击即自动开播。
-- 补强 `PlaybackService` 预加载会话状态管理，停止或切换到直接播放时会清理旧 prepared session，并保存解析后的词条快照避免后续回调拿到轻量对象。
-- 将 `getWordsLite()` / `searchWordsLite()` 恢复为真正 lite 查询，只读取最小必要列，并以 `primary_gloss/meaning` 作为轻量摘要兜底。
-- 明确本轮不接受 richer-lite 语义扩张，继续通过 `hydrateWordEntry()` / 播放前按需补全满足学习播放字段需求。
-- 为 UI smoke 假状态补充稳定的在线环境音目录样例，避免依赖当前线上 fallback 为空导致目录操作回归失真。
-- 同步更新启动态与初始化测试的 tracking key / lite 字段断言，使练习、任务本与学习模块共用的状态期望保持一致。
-- 将 Windows 练习会话中的逐题答题反馈从高频 `showDialog` 路由切换为页内反馈卡，保留错题本开关、弱因标签和继续下一题操作，但减少连续答题时的语义树重建。
-- 为练习进度条增加稳定语义描述，并将单词卡标题改为稳定语义标签 + 排除装饰动画语义的组合，降低 AXTree 抖动。
-- 将练习追踪快照收敛为轻量持久化结构，逐题保存时不再携带完整 `fields`，并仅在身份兜底确有需要时保留 `rawContent`。
-- 调整练习缓存词条的优先级与构造方式：内存中优先缓存轻量词条，实际解析词条时由当前作用域/已加载词条覆盖轻量快照，兼顾性能与展示完整度。
-- 将练习页对 `AppState` 的整页监听收窄到 `uiLanguage`，并把自动发音触发从 `build()` 挪到切题准备阶段，减少下一题阶段的无关 rebuild 和副作用。
-- 为练习答题状态写入与切题过程增加慢路径日志，便于继续追踪设备侧性能异常。
-- 将练习会话的词义候选池改为按轮次预计算缓存，避免每次切题都重新遍历整轮单词并重复归一化词义。
-- 将错题自动加入任务本的附加写入改为首帧渲染后再触发，降低和“下一题”界面切换争抢主线程的概率。
-- 新增 `repositories` 分层并接入依赖注入：`PracticeRepository` 与 `WordbookRepository` 作为数据库访问边界。
-- 将练习域关键数据路径（记忆进度、练习事件、导出写入）改由 `PracticeRepository` 承接，减少 `AppState` 对数据库实现细节的直连。
-- 将词本域关键数据路径（词本/词条 CRUD、搜索跳转、导入导出、延迟内置词本加载）改由 `WordbookRepository` 承接。
-- 模块开关新增运行时联动：停用 `focus` 时主动停止会话；停用所有依赖环境音模块时停播并停用 ambient；恢复启用时按需重建初始化链路。
-- 补充模块直达守卫：`PracticePage` 与 `FocusPage` 在模块停用时展示恢复指引，避免隐藏入口后仍可通过历史路径进入失效功能。
-- 新增 `app_state_provider` 并在应用启动链路接入 Riverpod overrides，形成 `AppState` 双栈注入过渡层（Riverpod + provider）。
-- 首批页面读取迁移到 Riverpod：`AppShell`、`SettingsHomePage`、`PracticePage`。
-- 新增并接入 `SettingsStoreRepository`、`FocusRepository`、`AmbientRepository`，将设置、专注与环境音相关路径继续从单体数据库服务中剥离。
-- 同步更新 `ui_smoke_test` 的 `ProviderScope` 与 provider override 包装，确保迁移阶段测试稳定。
-- 新增并接入 `SleepRepository`（`SettingsStoreSleepRepository`），将 sleep 域持久化从 `SettingsService` 直连迁移到仓库边界。
-- `AppState` 启动流程新增 sleep assistant 预加载白名单，仅在模块启用时加载 sleep 数据。
-- 新增统一模块守卫层 `ui/module/module_access.dart`，复用模块禁用文案与路由阻断逻辑。
-- 将模块守卫接入 `StudyPage`、`PracticePage`、`FocusPage`、`ToolboxPage`、`ToolboxSleepAssistantPage`，并覆盖 toolbox 卡片入口、soothing mini player 入口、practice 会话入口。
-- 更新 `modules/` 模块文档模板，并新增 `focus`/`toolbox`/`sleep` 模块文档，沉淀“状态独立 + 仓库独立 + 注册驱动 + 启停守卫”四件套。
-- 将 `VocabularySleepApp` 迁移为 `ConsumerWidget`，应用根状态读取改为 `ref.watch(appStateProvider)`。
-- 将 `MorePage`、`LibraryPage`、`PlayPage` 迁移到 Riverpod（`ConsumerWidget/ConsumerStatefulWidget`），减少主链路 UI 对 `provider` 的直接依赖。
-- 保持迁移期双栈注入兼容（Riverpod + provider），确保 UI smoke 与全量测试无行为回归。
-- 将 `LanguageSettingsPage`、`DataManagementPage`、`AppearanceStudioPage`、`WordbookManagementPage` 迁移到 `ConsumerWidget`，状态读取统一改为 `ref.watch(appStateProvider)`。
-- 将 `PracticeReviewPage`、`RecognitionSettingsPage`、`VoiceSettingsPage` 迁移到 `ConsumerStatefulWidget`，交互链路中的状态读写统一改为 `ref.read/watch(appStateProvider)`。
-- 新增阶段评估记录 `record_024_阶段门评估与阶段5启动.md`，并在 `PLAN_024` 明确阶段 5 启动范围与退出标准。
-- 新增 `PLAN_025`，明确阶段 5A 的执行边界（跳过 sleep 子页面）与验收标准。
-- 将 `play_page.dart` 拆分为 `play_page_navigation.dart` 与 `play_page_weather.dart` 两个 part 文件，主页面保留编排逻辑。
-- 将 `practice_page.dart` 的大段区块构建函数拆分到 `practice_page_sections.dart`，降低主文件体量和耦合度。
-- 将 `online_ambient_sheet.dart` 迁移到 Riverpod（`ConsumerStatefulWidget + ref.read/watch(appStateProvider)`）。
-- 将 `focus_lock_overlay.dart` 迁移到 Riverpod（`ConsumerStatefulWidget + ref.read/watch(appStateProvider)`）。
-- 新增 `MaintenanceRepository`（`DatabaseMaintenanceRepository`）承接数据库运维能力：`init/reset/backup/restore/export-dir/dispose`。
-- 将 `AppState` 与 `app_state_startup.dart` 的数据库运维调用迁移到 `MaintenanceRepository`。
-- 扩展 `WordbookRepository` 接口并完成数据库适配：新增 `databasePath`、`ensureSpecialWordbooks()`、`importWordbook(...)`、`importWordbookAsync(...)`。
-- 将 `wordbook_state.dart` 改为仅依赖 `WordbookRepository`，移除对 `AppDatabaseService` 的直接依赖。
-
-### 修复
-- 修复大词本轻量词条参与播放时队列只包含 `word` 的问题。
-- 修复旧版 `fieldSettings.enabled = false` 遗留配置会拦截释义等字段播放的问题。
-- 修复 Windows 本地 TTS 只沿用系统默认声线播报混合字段内容，导致释义等中文字段看似未继续播放的问题。
-- 修复 Windows 本地 TTS 在单词播完后卡死在等待完成状态、导致释义等后续播放单元迟迟不开始的问题。
-- 新增回归测试，覆盖轻量词条补全后应继续播放释义的场景。
-- 新增回归测试，覆盖重复次数已开启但旧字段禁用标记仍存在时的学习播放场景。
-- 新增回归测试，覆盖 Windows 本地 TTS 在连续英文/中文播报时的自动声线切换与回退行为。
-- 新增回归测试，覆盖 Windows 本地 TTS “完成回调已到但 `isSpeaking` 仍卡住” 与 “完成回调缺失时由轮询兜底完成” 两类阻塞场景。
-- 新增回归测试，覆盖大词本延迟加载场景下首次点击只加载、第二次点击才正式播放的状态路径。
-- 修复 `ui_smoke_test` 中在线环境音目录回归依赖空 catalog 假数据、按钮查找脆弱导致的误失败。
-- 修复 `app_state_startup_test` 对 remembered/weak tracking key 的旧期望。
-- 修复 `app_state_init_test` 对 lite 词条字段集合过宽的旧断言。
-- 修复练习会话在 Windows 连续答题时反复打开/关闭反馈弹窗引发的 AXTree 更新异常与卡顿。
-- 新增回归测试，覆盖 Windows 练习会话答题后应走页内反馈卡而不是 `AlertDialog` 的状态路径。
-- 修复练习会话逐题落盘时把完整字段型词条快照一并序列化，导致切换下一题明显卡顿的问题。
-- 修复词义选择题在错误选项与正确释义归一化碰撞时，仍可能显示“回答正确”的判题/文案异常。
-- 新增回归测试，覆盖练习追踪快照应保持轻量化，以及词义选择题错误作答时必须显示纠正反馈的状态路径。
-- 修复练习词义题在连续会话中反复重建干扰项池的重复计算开销，进一步缩短下一题准备阶段。
-- 修复错题自动加入任务本会与切题同时竞争执行的问题，优先保证会话切题流畅性。
-- 修复模块关闭后启动页可能仍指向已停用模块的问题，模块切换后会自动回退并持久化到可用入口。
-- 修复学习模块关闭后仍可经直达页面访问学习视图的问题，并在运行时关闭学习模块时主动停止学习播放。
-- 修复禁用 `toolbox.sleep_assistant` 后仍可能继续执行已启动 sleep routine 的问题，模块关闭时会立即停机。
-- 修复 sleep assistant 子页面可通过历史路由绕过模块开关的问题，模块禁用后统一阻断跳转。
-- 新增回归测试：`sleep_repository_test` 与 `app_state_init_test` 中的 sleep assistant 启停行为验证。
-- 修复非 sleep 范围内残留的 `provider` 直读 `AppState` 路径，统一回收至 Riverpod 读取链路。
-- 修复 `AppState` 与历史 `wordbook_state` 对数据库实现细节耦合过深的问题，改为经仓库边界访问数据库运维与词本导入能力。
-
-### 修改（阶段 5C 补充）
-- 按非 sleep 优先顺序完成小游戏模块大文件拆分：`toolbox_mini_games.dart` 拆分为 5 个 `part` 子文件（数独/扫雷/拼图/五子棋/2048）。
-- 主文件保留入口与共享结构，页面级模块职责进一步清晰化，降低单文件耦合与维护成本。
+- `test/ui_smoke_test.dart`
+  - 用例更新为 `life tools opens relatives calculator and builds chain`。
+  - 覆盖关系按钮点击、链路文本更新、计算动作与撤销动作。
 
 ### 风险变更
-- 本轮仅做结构拆分，不涉及 sleep 子页面与业务逻辑语义。
+- 拓扑横向滚动与页面纵向滚动叠加，真机窄屏下需持续做手势回归。
+- 预置按钮覆盖的是高频关系，不等于完整自然语言称谓全集。
 
-### 修改（阶段 5D 补充）
-- 对非 sleep 的 `focus_page.dart` 进行结构拆分：主文件收敛为入口编排与生命周期，计时域与工作域拆分到 `focus_page_timer.dart`、`focus_page_workspace.dart`。
-- 新增 `_setViewState(...)` 状态更新桥接，替代扩展方法内直接 `setState(...)`，确保拆分后 analyze 规则保持全绿。
-
-### 风险变更
-- 本轮仍严格跳过 `sleep_*.dart`，未修改 sleep 子页面逻辑。
-
-### 修改（阶段 5D 补充-第二步）
-- 对 `focus_page_workspace.dart` 继续进行非 sleep 结构拆分，主文件收敛为工作区入口编排。
-- 新增 `focus_page_workspace_todo.dart`、`focus_page_workspace_notes.dart`、`focus_page_workspace_editor.dart`，按 `todo / notes / editor` 拆分工作区实现。
-- 保持 Focus 工作区业务语义与交互流程不变，便于后续按子域独立维护。
-
-### 修改（阶段 5E 补充）
-- 对 `toolbox_sound_tools/focus.dart` 进行第一步模块拆分：控制组件、编排编辑器、legacy painter、新版 painter 分离为独立 part 文件。
-- `toolbox_sound_tools.dart` 新增 `focus_controls.dart`、`focus_arrangement_editor.dart`、`focus_visualizer_legacy.dart`、`focus_visualizer.dart` 的 `part` 声明。
-- `focus.dart` 文件体量从 8290 行收敛至 3787 行，后续可继续拆分状态编排域。
-
-### 风险变更
-- 本轮仍严格跳过 `sleep_*.dart` 子页面，仅进行非 sleep 的结构性重构。
-
-### 修改（阶段 5E 补充-第二步）
-- 将 `toolbox_sound_tools/focus.dart` 中 `_FocusBeatsToolState` 的运行逻辑与舞台构建方法拆分到 `focus_state_logic.dart`、`focus_state_stage.dart` 两个新 part 文件。
-- `toolbox_sound_tools.dart` 新增 `focus_state_logic.dart` 与 `focus_state_stage.dart` 的 `part` 声明，保持模块引用完整。
-- `focus.dart` 从 3787 行进一步收敛到 745 行，主文件聚焦状态字段、生命周期与 build 入口。
-- 新增 `_setViewState(...)` 作为类内状态更新桥接，消除扩展内直接 `setState(...)` 的 analyze 告警。
-
-### 风险变更
-- 本轮仍严格跳过 `sleep_*.dart` 子页面，仅进行非 sleep 的结构化拆分。
-
-### 修改（阶段 5F 补充-第二步：Toolbox Audio Bank 二层域拆分）
-- 将 `toolbox_audio_bank.dart` 从单文件私有实现继续拆分为音色/乐器域二层结构：`loops / harp_piano / guitar_guqin / flute / strings / drums / clicks / prayer_bead / singing_bowl / woodfish / shared`。
-- `ToolboxAudioBank` 主文件收敛为缓存与对外静态 API，私有合成实现迁移到独立 `part` 文件，降低后续维护的阅读与改动成本。
-- `toolbox_audio_service.dart` 同步新增二层 `part` 声明，确保库级私有函数可见性与调用链保持一致。
-- 在 `flute/strings` 域拆分补齐阶段采用同接口实现重建，保持参数边界、缓存键语义与 WAV 输出格式不变。
-
-### 风险变更
-- 本轮核心目标为结构拆分与职责收敛；`flute/strings` 域因补齐实现存在听感侧细微差异风险，已通过定向 analyze 与相关测试，建议后续补一轮听感回归验收。
-
-### 修改（阶段 5F 补充-第三步：听感回归与安全调优）
-- 对 `toolbox_audio_bank_flute.dart` 进行保守调音：修复主音包络异常、增强气噪塑形与攻击瞬态控制，并加入轻量平滑与尾段衰减收口。
-- 对 `toolbox_audio_bank_strings.dart`（violin）进行保守调音：补充弓噪动态过滤、颤音渐入、慢速漂移与尾段控制，提高连贯性与自然度。
-- 在 `toolbox_audio_bank_shared.dart` 新增局部可复用 DSP 工具（`_applyOnePoleLowPass`、`_applyDcBlock`），仅用于本轮调优路径稳定化。
-- 新增 `test/toolbox_audio_bank_regression_test.dart`，覆盖 WAV 结构合法性、非静音阈值、尾段衰减、变体差异与同参数确定性。
-
-### 风险变更
-- 本轮调优保持 public API 与缓存键不变，风险集中在听感细微变化；已通过定向 analyze + 回归测试收敛功能性回归风险，建议补一轮人工听感验收。
-
-### 修改（阶段 5F 补充：ASR 与 Toolbox Audio）
-- 对 `asr_service.dart` 完成按功能域拆分：主文件仅保留类型定义与共享状态，识别流程拆分到 `core / api / audio / offline / models` 五个 `part` 文件。
-- 对 `toolbox_audio_service.dart` 完成按职责拆分：主文件仅保留库声明，播放器池与音色合成能力分别迁移到 `toolbox_audio_players.dart` 与 `toolbox_audio_bank.dart`。
-- 清理单文件堆叠式历史结构，统一 `part of` 组织并收敛静态成员访问路径，保持既有 API 语义与调用方式不变。
-
-### 风险变更
-- 本轮为结构性重构，不调整 ASR 与音频合成算法语义；回归风险主要集中在文件边界迁移，已通过定向 analyze + 测试验证收敛。
-
-### 修改（阶段 5E 补充-第三步）
-- 对 `focus_state_stage.dart` 进行职责拆分：视觉舞台构建保留在原文件，控制区 section 构建迁移至 `focus_state_stage_sections.dart`。
-- `toolbox_sound_tools.dart` 新增 `focus_state_stage_sections.dart` 的 `part` 声明，保持模块引用完整。
-- 修复拆分过程中的尾段截断，并清理 `_buildPrimaryControls` 内 `return` 后不可达的重复代码块（仅结构清理，行为不变）。
-
-### 风险变更
-- 本轮仍严格跳过 `sleep_*.dart` 子页面，仅进行非 sleep 的结构化拆分。
-
-### 修改（2026-04-20 / PLAN_041）
-- 对大文件拆分结果做安全体检：修复 `tts_service_api.dart` 的 extension 静态成员限定引用问题，并完成 `tts_service` 分层文件的格式化与定向 analyze 验证。
-- 回滚损坏的 `piano` 拆分结果，恢复 `toolbox_sound_tools/piano.dart` 到可编译状态，避免编码/字符串损坏继续扩散。
-- 对 `toolbox_sound_tools/drum_pad.dart` 做第一层解耦：新增 `drum_pad_state_logic.dart`（状态与音频逻辑）与 `drum_pad_painter.dart`（光束绘制器），主文件收敛为 UI 编排入口。
-- 删除历史冗余文件 `lib/src/ui/pages/toolbox_sound_tools/drum_pad.dart.bak`（无引用备份文件）。
-
-### 风险变更（2026-04-20 / PLAN_041）
-- 本轮聚焦结构解耦与稳定性修复，不改动业务语义；对编码风险文件采取回滚而非继续叠加改动。
-
-### 修改（2026-04-21 / PLAN_042）
-- 对 `toolbox_soothing_music_v2_page.dart` 进行模块化拆分：
-  - 新增 `toolbox_soothing_music_v2_playback.dart`，承接播放、切曲、模式加载、资源加载与播放状态流。
-  - 新增 `toolbox_soothing_music_v2_stage.dart`，承接舞台区、曲目栏与底部控制区 UI 组合。
-- 新增 `_playbackIntent` 与 `_playbackVisualActive` 状态语义，修复播放按钮在切曲加载过渡期的显示不一致。
-- 修复切换下一曲时偶发不立即自动播放：切源链路统一串行化，切源前 `stop()`，恢复播放前 `seek(Duration.zero)` + `resume()`。
-- 优化手机端舞台效果可见性：紧凑布局提升特效增益，并增强频谱 painter 的振幅、波带与描边强度。
-
-### 修复（2026-04-21 / PLAN_042）
-- 修复播放按钮显示状态与实际播放链路偶发不同步的问题。
-- 修复模式/曲目切换场景下自动播放意图在瞬时 stop 事件中被误清空导致的断播问题。
-- 修复手机端舞台可视反馈过弱、动态存在感不足的问题。
-
-### 风险变更（2026-04-21 / PLAN_042）
-- 本轮改动聚焦页面拆分与播放链路稳定性修补，不改变对外业务语义与播放配置持久化协议。
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens relatives calculator and builds chain"`

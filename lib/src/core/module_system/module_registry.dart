@@ -84,6 +84,11 @@ class ModuleRegistry {
       group: ModuleGroup.toolbox,
       parentId: ModuleIds.toolbox,
     ),
+    ModuleDescriptor(
+      id: ModuleIds.toolboxLifeTools,
+      group: ModuleGroup.toolbox,
+      parentId: ModuleIds.toolbox,
+    ),
   ];
 
   static final Map<String, ModuleDescriptor> _byId = <String, ModuleDescriptor>{

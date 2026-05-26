@@ -57,23 +57,27 @@ class _HarpSweepTrail {
 }
 
 class _HarpPainter extends CustomPainter {
-  const _HarpPainter({
+  _HarpPainter({
+    required this.repaintSignal,
     required this.stringCount,
     required this.noteFrequencies,
     required this.stringOffsets,
     required this.focusedString,
+    required this.paintClockMicros,
     required this.colorScheme,
     required this.paletteColors,
     required this.pluckStyleId,
     required this.chordStringIndexes,
     required this.sweepTrails,
     required this.horizontalLayout,
-  });
+  }) : super(repaint: repaintSignal);
 
+  final Listenable repaintSignal;
   final int stringCount;
   final List<double> noteFrequencies;
   final List<double> stringOffsets;
-  final int? focusedString;
+  final ValueGetter<int?> focusedString;
+  final ValueGetter<int> paintClockMicros;
   final ColorScheme colorScheme;
   final List<Color> paletteColors;
   final String pluckStyleId;
@@ -235,11 +239,12 @@ class _HarpPainter extends CustomPainter {
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, auroraPaint);
 
-    final nowMicros = DateTime.now().microsecondsSinceEpoch;
+    final nowMicros = paintClockMicros();
     for (final trail in sweepTrails) {
-      final ageT = ((nowMicros - trail.createdAtMicros) / 280000)
-          .clamp(0.0, 1.0)
-          .toDouble();
+      final ageT =
+          ((nowMicros - trail.createdAtMicros) / _harpSweepTrailLifetimeMicros)
+              .clamp(0.0, 1.0)
+              .toDouble();
       if (ageT >= 1.0) {
         continue;
       }
@@ -251,11 +256,12 @@ class _HarpPainter extends CustomPainter {
       final stretched = trail.velocity / math.max(1.0, trail.velocity.distance);
       final center = trail.position - stretched * (trail.strength * 6);
       final trailPaint = Paint()
-        ..color = trailColor.withValues(alpha: 0.14 * fade)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+        ..color = trailColor.withValues(alpha: 0.1 * fade)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4 + trail.strength * 1.6;
       canvas.drawCircle(center, radius * fade, trailPaint);
       final corePaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.18 * fade);
+        ..color = Colors.white.withValues(alpha: 0.14 * fade);
       canvas.drawCircle(center, math.max(1.5, radius * 0.18 * fade), corePaint);
     }
 
@@ -268,6 +274,7 @@ class _HarpPainter extends CustomPainter {
     final textScale = horizontalLayout
         ? (size.height / 520).clamp(0.72, 1.06)
         : (size.width / 420).clamp(0.72, 1.0);
+    final currentFocus = focusedString();
     for (var index = 0; index < stringCount; index += 1) {
       final track = _stringTrackAt(index, size);
       final frequency = noteFrequencies[index % noteFrequencies.length];
@@ -277,7 +284,7 @@ class _HarpPainter extends CustomPainter {
           .clamp(-22.0, 22.0)
           .toDouble();
       final activity = (sway.abs() / 22).clamp(0.0, 1.0).toDouble();
-      final active = focusedString == index || activity > 0.04;
+      final active = currentFocus == index || activity > 0.04;
       final chordTone = chordStringIndexes.contains(index);
       final harmonyAlpha = chordTone || active ? 1.0 : 0.42;
       final paletteColor = _paletteColorAt(index / (stringCount - 1));
@@ -323,19 +330,17 @@ class _HarpPainter extends CustomPainter {
 
       if (active) {
         final underGlow = Paint()
-          ..color = baseColor.withValues(alpha: 0.2)
-          ..strokeWidth = 5.5
+          ..color = baseColor.withValues(alpha: 0.14)
+          ..strokeWidth = 4.8
           ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+          ..strokeCap = StrokeCap.round;
         canvas.drawPath(basePath, underGlow);
 
         final glow = Paint()
-          ..color = (strokeColor ?? colorScheme.primary).withValues(alpha: 0.28)
-          ..strokeWidth = 7
+          ..color = (strokeColor ?? colorScheme.primary).withValues(alpha: 0.16)
+          ..strokeWidth = 6
           ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+          ..strokeCap = StrokeCap.round;
         final glowPath = horizontalLayout
             ? (Path()
                 ..moveTo(leftX, track)
@@ -389,8 +394,7 @@ class _HarpPainter extends CustomPainter {
 
       if (chordTone) {
         final runePaint = Paint()
-          ..color = (strokeColor ?? colorScheme.primary).withValues(alpha: 0.32)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+          ..color = (strokeColor ?? colorScheme.primary).withValues(alpha: 0.2);
         final runeA = horizontalLayout
             ? Offset(leftX, track)
             : Offset(track, topY);
@@ -462,6 +466,13 @@ class _HarpPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HarpPainter oldDelegate) {
-    return true;
+    return oldDelegate.stringCount != stringCount ||
+        oldDelegate.noteFrequencies != noteFrequencies ||
+        oldDelegate.colorScheme != colorScheme ||
+        oldDelegate.paletteColors != paletteColors ||
+        oldDelegate.pluckStyleId != pluckStyleId ||
+        oldDelegate.chordStringIndexes.length != chordStringIndexes.length ||
+        !oldDelegate.chordStringIndexes.containsAll(chordStringIndexes) ||
+        oldDelegate.horizontalLayout != horizontalLayout;
   }
 }

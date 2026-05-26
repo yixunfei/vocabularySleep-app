@@ -1,49 +1,34 @@
-﻿part of '../toolbox_sound_tools.dart';
+part of '../toolbox_sound_tools.dart';
 
 // ignore_for_file: dead_code, unused_element, unused_local_variable
 
 extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
   Color _animationAccent(_FocusBeatAnimationKind kind) {
-    return switch (kind) {
-      _FocusBeatAnimationKind.pendulum => const Color(0xFFD7A86B),
-      _FocusBeatAnimationKind.hypno => const Color(0xFF7E90F2),
-      _FocusBeatAnimationKind.dew => const Color(0xFF59C6C0),
-      _FocusBeatAnimationKind.gear => const Color(0xFF95A6C2),
-      _FocusBeatAnimationKind.steps => const Color(0xFF78BC8E),
-    };
-  }
-
-  Color _soundAccent(_FocusBeatSoundKind kind) {
-    return switch (kind) {
-      _FocusBeatSoundKind.pendulum => const Color(0xFFC68F58),
-      _FocusBeatSoundKind.hypno => const Color(0xFF6E84E8),
-      _FocusBeatSoundKind.dew => const Color(0xFF4AB4D6),
-      _FocusBeatSoundKind.gear => const Color(0xFF8FA0B8),
-      _FocusBeatSoundKind.steps => const Color(0xFF84B56A),
-    };
+    return const Color(0xFFE5D8C8);
   }
 
   _FocusVisualPalette _visualPalette(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accent = Color.lerp(
-      _animationAccent(_animationKind),
-      colorScheme.primary,
-      0.22,
-    )!;
+    final accent = _animationAccent(_animationKind);
     return _FocusVisualPalette(
       accent: accent,
-      accentSoft: Color.lerp(accent, Colors.white, 0.72)!,
-      accentGlow: accent.withValues(alpha: 0.42),
-      stageTop: Color.lerp(const Color(0xFF08131F), accent, 0.30)!,
-      stageMid: Color.lerp(const Color(0xFF102034), accent, 0.16)!,
-      stageBottom: Color.lerp(const Color(0xFF040B14), accent, 0.12)!,
-      panel: colorScheme.surface.withValues(alpha: 0.92),
-      panelStrong: colorScheme.surfaceContainerHighest.withValues(alpha: 0.94),
-      stroke: Color.lerp(colorScheme.outlineVariant, accent, 0.34)!,
+      accentSoft: const Color(0xFFFFFBF5),
+      accentGlow: const Color(0xFFD6C5B5).withValues(alpha: 0.24),
+      stageTop: const Color(0xFFF9F5EE),
+      stageMid: const Color(0xFFE9DED1),
+      stageBottom: const Color(0xFFD5C5B4),
+      panel: colorScheme.surface.withValues(alpha: 0.96),
+      panelStrong: Color.lerp(
+        colorScheme.surface,
+        const Color(0xFFFFFBF5),
+        0.58,
+      )!,
+      stroke: const Color(0xFFC7B8A8),
     );
   }
 
   Widget _buildStage(BuildContext context) {
+    final i18n = _i18nOf(context);
     final palette = _visualPalette(context);
     final beatLabel = _activeBeat < 0 ? '--' : '${_activeBeat + 1}';
     final subLabel = _activeSubPulse == 0
@@ -72,17 +57,17 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
           ],
         ),
         borderRadius: BorderRadius.circular(widget.fullScreen ? 30 : 28),
-        border: Border.all(color: palette.stroke.withValues(alpha: 0.72)),
+        border: Border.all(color: palette.stroke.withValues(alpha: 0.46)),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: palette.accentGlow.withValues(alpha: 0.24),
-            blurRadius: 42,
-            offset: const Offset(0, 22),
+            color: palette.accentGlow.withValues(alpha: 0.16),
+            blurRadius: 34,
+            offset: const Offset(0, 18),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 22,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
@@ -95,22 +80,6 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
         builder: (context, _) {
           return Stack(
             children: <Widget>[
-              Positioned(
-                left: -48,
-                top: -36,
-                child: _FocusGlowOrb(
-                  size: 180,
-                  color: palette.accentGlow.withValues(alpha: 0.24),
-                ),
-              ),
-              Positioned(
-                right: -72,
-                bottom: -86,
-                child: _FocusGlowOrb(
-                  size: 220,
-                  color: Colors.white.withValues(alpha: 0.10),
-                ),
-              ),
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -118,9 +87,9 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: <Color>[
-                        Colors.white.withValues(alpha: 0.06),
+                        Colors.white.withValues(alpha: 0.12),
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.18),
+                        const Color(0xFF9E8D7C).withValues(alpha: 0.08),
                       ],
                       stops: const <double>[0.0, 0.38, 1.0],
                     ),
@@ -150,17 +119,13 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                   spacing: 8,
                   runSpacing: 8,
                   children: <Widget>[
-                    const _FocusStageBadge(
-                      icon: Icons.blur_on_rounded,
-                      label: 'Focus Studio',
-                    ),
                     _FocusStageBadge(
-                      icon: _animationKind.icon,
-                      label: _animationLabel(_animationKind),
+                      icon: Icons.route_rounded,
+                      label: pickUiText(i18n, zh: '节拍轨道', en: 'Beat path'),
                     ),
                     _FocusStageBadge(
                       icon: _soundKind.icon,
-                      label: _soundLabel(_soundKind),
+                      label: _soundName(context, _soundKind),
                     ),
                   ],
                 ),
@@ -170,10 +135,10 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                 top: 18,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.26),
+                    color: _focusStagePalePanel.withValues(alpha: 0.70),
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.12),
+                      color: Colors.white.withValues(alpha: 0.58),
                     ),
                   ),
                   child: Padding(
@@ -183,31 +148,35 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         Text(
-                          beatLabel,
+                          _activeBeat < 0 ? '--' : '$beatLabel/$_beatsPerBar',
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
-                                color: Colors.white,
+                                color: _focusStagePaleInk,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
                         if (_subdivision > 1) ...<Widget>[
                           const SizedBox(height: 2),
                           Text(
-                            'Sub $subLabel',
+                            pickUiText(
+                              i18n,
+                              zh: '子拍 $subLabel',
+                              en: 'Sub $subLabel',
+                            ),
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: _focusStagePaleMutedInk,
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
                         ],
                         const SizedBox(height: 4),
                         Text(
-                          _running ? '节拍运行中' : '等待开始',
+                          _running
+                              ? pickUiText(i18n, zh: '轨道推进中', en: 'Moving')
+                              : pickUiText(i18n, zh: '轨道待命', en: 'Ready'),
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.86),
-                              ),
+                              ?.copyWith(color: _focusStagePaleMutedInk),
                         ),
                       ],
                     ),
@@ -219,106 +188,83 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                 right: 18,
                 bottom: 18,
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.24),
-                    borderRadius: BorderRadius.circular(24),
+                    color: _focusStagePalePanel.withValues(alpha: 0.62),
+                    borderRadius: BorderRadius.circular(22),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.10),
+                      color: Colors.white.withValues(alpha: 0.54),
                     ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  _animationLabel(_animationKind),
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  _running
-                                      ? _animationSyncHint(_animationKind)
-                                      : _animationDescription(_animationKind),
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.82,
-                                        ),
-                                        height: 1.4,
-                                      ),
-                                ),
-                              ],
-                            ),
+                          _FocusStageBadge(
+                            icon: _running
+                                ? Icons.graphic_eq_rounded
+                                : Icons.motion_photos_paused_rounded,
+                            label: _running
+                                ? pickUiText(
+                                    i18n,
+                                    zh: '拍点正在推进',
+                                    en: 'Pulse in motion',
+                                  )
+                                : pickUiText(
+                                    i18n,
+                                    zh: '等待第一拍',
+                                    en: 'Waiting for beat one',
+                                  ),
                           ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: palette.accent.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: palette.accentSoft.withValues(
-                                  alpha: 0.34,
-                                ),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  'Cycle',
-                                  style: Theme.of(context).textTheme.labelMedium
-                                      ?.copyWith(
-                                        color: palette.accentSoft,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  cycleLabel,
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                              ],
+                          const Spacer(),
+                          _FocusStageBadge(
+                            icon: Icons.repeat_rounded,
+                            label: pickUiText(
+                              i18n,
+                              zh: '第 $cycleLabel 轮',
+                              en: 'Cycle $cycleLabel',
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      _buildStagePulseRail(context, palette),
                       const SizedBox(height: 12),
+                      _buildStagePulseRail(context, palette),
+                      const SizedBox(height: 10),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: <Widget>[
                           _FocusStageBadge(
                             icon: Icons.timeline_rounded,
-                            label: '编排 $arrangementLabel',
+                            label: pickUiText(
+                              i18n,
+                              zh: '编排 $arrangementLabel',
+                              en: 'Pattern $arrangementLabel',
+                            ),
                           ),
                           _FocusStageBadge(
                             icon: Icons.layers_rounded,
-                            label: '段落 $segmentLabel',
+                            label: pickUiText(
+                              i18n,
+                              zh: '段落 $segmentLabel',
+                              en: 'Phrase $segmentLabel',
+                            ),
                           ),
                           _FocusStageBadge(
                             icon: Icons.touch_app_rounded,
-                            label: _hapticsEnabled ? '触感已启用' : '触感已关闭',
+                            label: _hapticsEnabled
+                                ? pickUiText(
+                                    i18n,
+                                    zh: '触感已启用',
+                                    en: 'Haptics on',
+                                  )
+                                : pickUiText(
+                                    i18n,
+                                    zh: '触感已关闭',
+                                    en: 'Haptics off',
+                                  ),
                           ),
                         ],
                       ),
@@ -337,81 +283,132 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
     BuildContext context,
     _FocusVisualPalette palette,
   ) {
-    final activeBeat = _activeBeat;
+    final i18n = _i18nOf(context);
+    final activeBeat = _activeBeat >= 0 ? _activeBeat : -1;
     final activeSub = _activeSubPulse;
+    final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+      color: _focusStagePaleMutedInk,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            for (var index = 0; index < _beatsPerBar; index += 1)
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: index == _beatsPerBar - 1 ? 0 : 8,
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    height: 28,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: index == activeBeat
-                            ? <Color>[
-                                palette.accentSoft.withValues(alpha: 0.96),
-                                palette.accent.withValues(alpha: 0.92),
-                              ]
-                            : <Color>[
-                                Colors.white.withValues(
-                                  alpha: index == 0 ? 0.20 : 0.12,
-                                ),
-                                Colors.white.withValues(alpha: 0.04),
-                              ],
-                      ),
-                      border: Border.all(
-                        color: index == activeBeat
-                            ? palette.accentSoft.withValues(alpha: 0.78)
-                            : Colors.white.withValues(
-                                alpha: index == 0 ? 0.22 : 0.10,
-                              ),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: index == activeBeat
-                              ? const Color(0xFF09111B)
-                              : Colors.white.withValues(alpha: 0.88),
-                          fontWeight: FontWeight.w800,
+            SizedBox(
+              width: 42,
+              child: Text(
+                pickUiText(i18n, zh: '主拍', en: 'Beat'),
+                style: labelStyle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Row(
+                children: <Widget>[
+                  for (var index = 0; index < _beatsPerBar; index += 1)
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: index == _beatsPerBar - 1 ? 0 : 6,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          height: index == activeBeat ? 30 : 22,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: index == activeBeat
+                                  ? <Color>[
+                                      palette.accentSoft.withValues(
+                                        alpha: 0.98,
+                                      ),
+                                      palette.accent.withValues(alpha: 0.88),
+                                    ]
+                                  : <Color>[
+                                      _focusStagePaleMutedInk.withValues(
+                                        alpha: index == 0 ? 0.18 : 0.10,
+                                      ),
+                                      _focusStagePaleMutedInk.withValues(
+                                        alpha: 0.045,
+                                      ),
+                                    ],
+                            ),
+                            border: Border.all(
+                              color: index == activeBeat
+                                  ? palette.stroke.withValues(alpha: 0.38)
+                                  : _focusStagePaleMutedInk.withValues(
+                                      alpha: index == 0 ? 0.18 : 0.08,
+                                    ),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${index + 1}',
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
+                                    color: index == activeBeat
+                                        ? _focusStagePaleInk
+                                        : _focusStagePaleMutedInk.withValues(
+                                            alpha: 0.72,
+                                          ),
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0,
+                                  ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+                ],
               ),
+            ),
           ],
         ),
         if (_subdivision > 1) ...<Widget>[
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+          const SizedBox(height: 9),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              for (var index = 0; index < _subdivision; index += 1)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: activeSub == index + 1 ? 26 : 14,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    color: activeSub == index + 1
-                        ? palette.accentSoft
-                        : Colors.white.withValues(alpha: 0.18),
-                  ),
+              SizedBox(
+                width: 42,
+                child: Text(
+                  pickUiText(i18n, zh: '子拍', en: 'Sub'),
+                  style: labelStyle,
                 ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Row(
+                  children: <Widget>[
+                    for (var index = 0; index < _subdivision; index += 1)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          right: index == _subdivision - 1 ? 0 : 7,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          curve: Curves.easeOutCubic,
+                          width: activeSub == index + 1 ? 28 : 12,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: activeSub == index + 1
+                                ? palette.accentSoft
+                                : _focusStagePaleMutedInk.withValues(
+                                    alpha: 0.18,
+                                  ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
@@ -466,52 +463,6 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
           ),
       ],
     );
-
-    if (_patternEnabled && _patternError.isNotEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          _patternError,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onErrorContainer,
-          ),
-        ),
-      );
-    }
-    final segmentBeats = _patternError.isEmpty
-        ? _arrangementBeats
-        : <int>[_beatsPerBar];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: <Widget>[
-        for (var index = 0; index < segmentBeats.length; index += 1)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: _running && index == _currentSegmentIndex
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _running && index == _currentSegmentIndex
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.outlineVariant,
-              ),
-            ),
-            child: Text(
-              'S${index + 1} · ${segmentBeats[index]}拍 · '
-              '${_focusBarsLabel(segmentBeats[index] / _beatsPerBar)}',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-          ),
-      ],
-    );
   }
 
   Widget _buildStudioSummaryStrip(BuildContext context) {
@@ -529,8 +480,8 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                   ? Icons.graphic_eq_rounded
                   : Icons.motion_photos_paused_rounded,
               label: _running
-                  ? pickUiText(i18n, zh: '正在跟拍', en: 'In motion')
-                  : pickUiText(i18n, zh: '待启动', en: 'Ready'),
+                  ? pickUiText(i18n, zh: '节拍推进中', en: 'Pulse in motion')
+                  : pickUiText(i18n, zh: '轨道待命', en: 'Track ready'),
               emphasized: _running,
               tone: _visualPalette(context).accent,
             ),
@@ -551,13 +502,13 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
           _running
               ? pickUiText(
                   i18n,
-                  zh: '舞台、发音与触感已经对齐，保持呼吸或动作跟着当前拍点推进。',
-                  en: 'Stage, clicks, and haptics are aligned. Let your motion follow the current beat.',
+                  zh: '发音、触感和光点沿同一条节拍轨道推进，当前拍、重拍与子拍关系可以直接看见。',
+                  en: 'Clicks, haptics, and the light point move on one beat path so the beat, downbeat, and subdivisions stay visible.',
                 )
               : pickUiText(
                   i18n,
-                  zh: '首屏只保留开始、节奏和舞台，其他设置折叠到下方，适合手机单手快速进入状态。',
-                  en: 'The first screen keeps only start, rhythm, and stage so it is faster to enter flow on a phone.',
+                  zh: '先设定速度与拍号，再让光点从第一拍进入循环；其他设置保持折叠，不打断专注入口。',
+                  en: 'Set tempo and meter, then let the light point enter the loop from beat one. Secondary settings stay folded away.',
                 ),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -587,16 +538,16 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
           ],
         ),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: palette.stroke.withValues(alpha: 0.60)),
+        border: Border.all(color: palette.stroke.withValues(alpha: 0.42)),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: palette.accentGlow.withValues(alpha: 0.16),
-            blurRadius: 28,
+            color: palette.accentGlow.withValues(alpha: 0.12),
+            blurRadius: 24,
             offset: const Offset(0, 18),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 18,
             offset: const Offset(0, 14),
           ),
         ],
@@ -633,9 +584,9 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: <Color>[
-                        Colors.white.withValues(alpha: 0.04),
+                        Colors.white.withValues(alpha: 0.10),
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.14),
+                        const Color(0xFF9E8D7C).withValues(alpha: 0.06),
                       ],
                     ),
                   ),
@@ -645,7 +596,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                 left: 16,
                 top: 16,
                 child: _FocusStageBadge(
-                  icon: Icons.speed_rounded,
+                  icon: Icons.route_rounded,
                   label: '$_bpm BPM · $_beatsPerBar/4 × $_subdivision',
                 ),
               ),
@@ -657,8 +608,8 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       ? Icons.graphic_eq_rounded
                       : Icons.motion_photos_paused_rounded,
                   label: _running
-                      ? pickUiText(i18n, zh: '运行中', en: 'Running')
-                      : pickUiText(i18n, zh: '待启动', en: 'Ready'),
+                      ? pickUiText(i18n, zh: '轨道推进中', en: 'Moving')
+                      : pickUiText(i18n, zh: '轨道待命', en: 'Ready'),
                 ),
               ),
               Positioned(
@@ -666,12 +617,12 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                 right: 16,
                 bottom: 16,
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(22),
+                    color: _focusStagePalePanel.withValues(alpha: 0.64),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.10),
+                      color: Colors.white.withValues(alpha: 0.54),
                     ),
                   ),
                   child: Column(
@@ -696,58 +647,94 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
     BuildContext context,
     _FocusVisualPalette palette,
   ) {
-    final activeBeat = _activeBeat >= 0 ? _activeBeat : 0;
+    final i18n = _i18nOf(context);
+    final activeBeat = _activeBeat >= 0 ? _activeBeat : -1;
     final activeSub = _activeSubPulse;
+    final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+      color: _focusStagePaleMutedInk,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Row(
           children: <Widget>[
-            for (var index = 0; index < _beatsPerBar; index += 1)
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: index == _beatsPerBar - 1 ? 0 : 8,
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    curve: Curves.easeOutCubic,
-                    height: index == activeBeat ? 12 : 6,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: index == activeBeat
-                          ? palette.accentSoft
-                          : Colors.white.withValues(
-                              alpha: index == 0 ? 0.28 : 0.14,
-                            ),
-                    ),
-                  ),
-                ),
+            SizedBox(
+              width: 34,
+              child: Text(
+                pickUiText(i18n, zh: '拍', en: 'Beat'),
+                style: labelStyle,
               ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Row(
+                children: <Widget>[
+                  for (var index = 0; index < _beatsPerBar; index += 1)
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: index == _beatsPerBar - 1 ? 0 : 6,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          curve: Curves.easeOutCubic,
+                          height: index == activeBeat ? 13 : 7,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: index == activeBeat
+                                ? palette.accentSoft
+                                : _focusStagePaleMutedInk.withValues(
+                                    alpha: index == 0 ? 0.20 : 0.12,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
         if (_subdivision > 1) ...<Widget>[
           const SizedBox(height: 8),
           Row(
             children: <Widget>[
-              for (var index = 0; index < _subdivision; index += 1)
-                Padding(
-                  padding: EdgeInsets.only(
-                    right: index == _subdivision - 1 ? 0 : 6,
-                  ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 140),
-                    curve: Curves.easeOutCubic,
-                    width: activeSub == index + 1 ? 16 : 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: activeSub == index + 1
-                          ? palette.accent
-                          : Colors.white.withValues(alpha: 0.18),
-                    ),
-                  ),
+              SizedBox(
+                width: 34,
+                child: Text(
+                  pickUiText(i18n, zh: '分', en: 'Sub'),
+                  style: labelStyle,
                 ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Row(
+                  children: <Widget>[
+                    for (var index = 0; index < _subdivision; index += 1)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          right: index == _subdivision - 1 ? 0 : 6,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 140),
+                          curve: Curves.easeOutCubic,
+                          width: activeSub == index + 1 ? 18 : 8,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: activeSub == index + 1
+                                ? palette.accent
+                                : _focusStagePaleMutedInk.withValues(
+                                    alpha: 0.16,
+                                  ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
@@ -765,14 +752,18 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
         : <int>[_beatsPerBar];
     return Row(
       children: <Widget>[
-        Text(
-          pickUiText(i18n, zh: '循环', en: 'Loop'),
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: Colors.white.withValues(alpha: 0.72),
-            fontWeight: FontWeight.w700,
+        SizedBox(
+          width: 34,
+          child: Text(
+            pickUiText(i18n, zh: '段', en: 'Loop'),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: _focusStagePaleMutedInk,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Row(
             children: <Widget>[
@@ -790,7 +781,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                         borderRadius: BorderRadius.circular(999),
                         color: index == _currentSegmentIndex
                             ? palette.accent
-                            : Colors.white.withValues(alpha: 0.14),
+                            : _focusStagePaleMutedInk.withValues(alpha: 0.12),
                       ),
                     ),
                   ),
@@ -816,7 +807,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
         }
       },
       child: ColoredBox(
-        color: Colors.black,
+        color: const Color(0xFFF8F2EA),
         child: Stack(
           children: <Widget>[
             Positioned.fill(
@@ -851,9 +842,9 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: <Color>[
-                        Colors.black.withValues(alpha: 0.10),
+                        const Color(0xFF9E8D7C).withValues(alpha: 0.05),
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.16),
+                        const Color(0xFF9E8D7C).withValues(alpha: 0.10),
                       ],
                     ),
                   ),
@@ -874,7 +865,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                           Row(
                             children: <Widget>[
                               _FocusStageBadge(
-                                icon: Icons.speed_rounded,
+                                icon: Icons.route_rounded,
                                 label:
                                     '$_bpm BPM · $_beatsPerBar/4 × $_subdivision',
                               ),
@@ -913,10 +904,12 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                 12,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.22),
+                                color: _focusStagePalePanel.withValues(
+                                  alpha: 0.74,
+                                ),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.10),
+                                  color: Colors.white.withValues(alpha: 0.58),
                                 ),
                               ),
                               child: Row(
@@ -924,10 +917,9 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                 children: <Widget>[
                                   IconButton.filled(
                                     style: IconButton.styleFrom(
-                                      backgroundColor: Colors.white.withValues(
-                                        alpha: 0.14,
-                                      ),
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: _focusStagePaleMutedInk
+                                          .withValues(alpha: 0.12),
+                                      foregroundColor: _focusStagePaleInk,
                                     ),
                                     onPressed: _running ? _stop : _start,
                                     icon: Icon(
@@ -958,7 +950,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                             .textTheme
                                             .labelLarge
                                             ?.copyWith(
-                                              color: Colors.white,
+                                              color: _focusStagePaleInk,
                                               fontWeight: FontWeight.w700,
                                             ),
                                       ),
@@ -973,9 +965,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                             .textTheme
                                             .bodySmall
                                             ?.copyWith(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.76,
-                                              ),
+                                              color: _focusStagePaleMutedInk,
                                             ),
                                       ),
                                     ],
@@ -993,62 +983,6 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
             ),
           ],
         ),
-      ),
-    );
-
-    return ColoredBox(
-      color: Colors.black,
-      child: Stack(
-        children: <Widget>[
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: Listenable.merge(<Listenable>[
-                _pulseController,
-                _ambientController,
-              ]),
-              builder: (context, _) {
-                return CustomPaint(
-                  painter: _FocusBeatVisualizerPainter(
-                    kind: _animationKind,
-                    bpm: _bpm,
-                    pulseProgress: _pulseController.value,
-                    ambientProgress: _ambientController.value,
-                    accentLayer: _lastLayer,
-                    running: _running,
-                    activeBeat: _activeBeat,
-                    activeSubPulse: _activeSubPulse,
-                    beatsPerBar: _beatsPerBar,
-                    subdivision: _subdivision,
-                  ),
-                );
-              },
-            ),
-          ),
-          Align(
-            alignment: Alignment.topRight,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8, right: 8),
-                child: Wrap(
-                  spacing: 8,
-                  children: <Widget>[
-                    IconButton.filledTonal(
-                      tooltip: '退出沉浸',
-                      onPressed: _toggleImmersiveMode,
-                      icon: const Icon(Icons.fullscreen_exit_rounded),
-                    ),
-                    if (widget.onExitFullScreen != null)
-                      IconButton.filledTonal(
-                        tooltip: '退出全屏',
-                        onPressed: widget.onExitFullScreen,
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -16,4 +16,5 @@ abstract class ToolboxColors {
   static const prayerAccent = Color(0xFF8570B5);
   static const zenAccent = Color(0xFFC6A96A);
   static const decisionAccent = Color(0xFFE08B58);
+  static const lifeAccent = Color(0xFF4E8A67);
 }

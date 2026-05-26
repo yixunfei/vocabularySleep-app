@@ -2,6 +2,10 @@ part of '../toolbox_sound_tools.dart';
 
 // ignore_for_file: dead_code, unused_element, unused_local_variable
 
+const Color _focusStagePalePanel = Color(0xFFFFFBF5);
+const Color _focusStagePaleInk = Color(0xFF3A3027);
+const Color _focusStagePaleMutedInk = Color(0xFF6E6257);
+
 class _FocusControlSection extends StatelessWidget {
   const _FocusControlSection({
     required this.icon,
@@ -225,19 +229,19 @@ class _FocusStageBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.24),
+        color: _focusStagePalePanel.withValues(alpha: 0.66),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.58)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 15, color: Colors.white.withValues(alpha: 0.96)),
+          Icon(icon, size: 15, color: _focusStagePaleInk),
           const SizedBox(width: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.96),
+              color: _focusStagePaleInk,
               fontWeight: FontWeight.w700,
             ),
           ),

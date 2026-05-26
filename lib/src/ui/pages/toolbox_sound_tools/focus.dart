@@ -506,15 +506,14 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         ),
         const SizedBox(height: 12),
         _FocusControlSection(
-          icon: Icons.animation_rounded,
-          title: pickUiText(inlineI18n, zh: '动画与音色', en: 'Style'),
+          icon: Icons.graphic_eq_rounded,
+          title: pickUiText(inlineI18n, zh: '节拍音色', en: 'Beat timbre'),
           subtitle: pickUiText(
             inlineI18n,
-            zh: '选择舞台动画和节拍音色',
-            en: 'Choose the stage motion and click timbre',
+            zh: '选择当前节拍点击的声音质感',
+            en: 'Choose the current click timbre',
           ),
-          summary:
-              '${_animationName(context, _animationKind)} · ${_soundName(context, _soundKind)}',
+          summary: _soundName(context, _soundKind),
           expanded: _styleExpanded,
           onToggle: () {
             setState(() {
@@ -678,11 +677,6 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                   label: const Text('全屏启动'),
                 ),
               _FocusInfoPill(
-                icon: Icons.auto_graph_rounded,
-                label: _linkAnimationAndSound ? '已结对' : '自由混搭',
-                emphasized: _linkAnimationAndSound,
-              ),
-              _FocusInfoPill(
                 icon: Icons.vibration_rounded,
                 label: _hapticsEnabled ? '触感开启' : '触感关闭',
               ),
@@ -719,11 +713,10 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         ),
         const SizedBox(height: 12),
         _FocusControlSection(
-          icon: Icons.animation_rounded,
-          title: '拟真风格',
-          subtitle: '动画与音色可分离，也可一键结对',
-          summary:
-              '${_animationLabel(_animationKind)} · ${_soundLabel(_soundKind)}',
+          icon: Icons.graphic_eq_rounded,
+          title: '节拍音色',
+          subtitle: '选择当前节拍点击的声音质感',
+          summary: _soundLabel(_soundKind),
           expanded: _styleExpanded,
           onToggle: () {
             setState(() {

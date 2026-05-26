@@ -60,6 +60,11 @@ dependencies:
   latlong2: ^0.9.1
   url_launcher: ^6.3.2
   url_launcher_android: 6.3.17
+  camera: ^0.12.0+1
+  nippon_colors: ^0.2.2
+  kinship_calculator: ^4.0.0
+  image: ^4.8.0
+  pointycastle: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -109,6 +114,7 @@ flutter:
     - assets/branding/
     - assets/en_zh_15000_wordbook.json
     - assets/toolbox/beads/
+    - assets/toolbox/colors/
     - assets/toolbox/games/roulette/
 
   # To add assets to your application, add an assets section, like this:

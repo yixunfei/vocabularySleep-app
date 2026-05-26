@@ -12,18 +12,27 @@ class ToolboxToolPage extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.appBarActions,
+    this.backgroundColor,
+    this.scrollController,
+    this.floatingActionButton,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final List<Widget>? appBarActions;
+  final Color? backgroundColor;
+  final ScrollController? scrollController;
+  final Widget? floatingActionButton;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(title: Text(title), actions: appBarActions),
+      floatingActionButton: floatingActionButton,
       body: ListView(
+        controller: scrollController,
         padding: const EdgeInsets.fromLTRB(
           ToolboxUiTokens.pageHorizontalPadding,
           ToolboxUiTokens.pageTopPadding,

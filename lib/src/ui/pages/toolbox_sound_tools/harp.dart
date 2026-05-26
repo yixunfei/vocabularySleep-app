@@ -305,10 +305,13 @@ class _HarpToolState extends State<_HarpTool>
   final List<int> _lastPluckAtMillis = List<int>.filled(_stringCount, 0);
   final Map<int, _HarpPointerState> _pointerStates = <int, _HarpPointerState>{};
   final List<_HarpSweepTrail> _sweepTrails = <_HarpSweepTrail>[];
+  final ValueNotifier<int> _harpPaintRevision = ValueNotifier<int>(0);
   late final Ticker _vibrationTicker;
 
   int? _focusedString;
   int? _lastTickMicros;
+  int _paintClockMicros = DateTime.now().microsecondsSinceEpoch;
+  int _lastSweepTrailAtMicros = 0;
   bool _muted = false;
   late String _scaleId;
   late String _chordId;
@@ -355,7 +358,11 @@ class _HarpToolState extends State<_HarpTool>
       _damping = 10;
       _swipeThreshold = 1.2;
       _activeRealismPresetId = null;
-      _applyRealismPreset(_realismPresets.first, withSetState: false);
+      _applyRealismPreset(
+        _realismPresets.first,
+        withSetState: false,
+        warmUp: false,
+      );
     }
     _vibrationTicker = createTicker(_tickStrings);
     if (widget.fullScreen) {
@@ -382,6 +389,13 @@ class _HarpToolState extends State<_HarpTool>
         activeRealismPresetId: _activeRealismPresetId,
       ),
     );
+  }
+
+  void _requestHarpPaint({int? nowMicros}) {
+    if (nowMicros != null) {
+      _paintClockMicros = nowMicros;
+    }
+    _harpPaintRevision.value += 1;
   }
 
   _HarpScalePreset get _activeScale =>
@@ -593,6 +607,7 @@ class _HarpToolState extends State<_HarpTool>
   void _applyRealismPreset(
     _HarpRealismPreset preset, {
     bool withSetState = true,
+    bool warmUp = true,
   }) {
     void applyValues() {
       _scaleId = preset.scaleId;
@@ -613,7 +628,7 @@ class _HarpToolState extends State<_HarpTool>
     } else {
       applyValues();
     }
-    _invalidateAudioPlayers();
+    _invalidateAudioPlayers(warmUp: warmUp);
     _notifyConfigChanged();
   }
 
@@ -628,8 +643,16 @@ class _HarpToolState extends State<_HarpTool>
   }
 
   Future<void> _warmUpActiveTone() async {
-    for (final frequency in _activeNotes) {
-      await _playerForFrequency(frequency).warmUp();
+    final warmIndexes = <int>{
+      0,
+      _stringCount ~/ 2,
+      _stringCount - 1,
+      ..._activeChordStringIndexes(),
+    };
+    for (final index in warmIndexes) {
+      if (!mounted) return;
+      await _playerForFrequency(_activeNotes[index]).warmUp();
+      await Future<void>.delayed(const Duration(milliseconds: 8));
     }
   }
 
@@ -762,24 +785,31 @@ class _HarpToolState extends State<_HarpTool>
   }
 
   void _addSweepTrail(Offset position, Offset delta) {
+    final nowMicros = DateTime.now().microsecondsSinceEpoch;
+    if (nowMicros - _lastSweepTrailAtMicros < _harpMinSweepTrailGapMicros) {
+      return;
+    }
+    _lastSweepTrailAtMicros = nowMicros;
     final strength = (delta.distance / 78).clamp(0.2, 1.0).toDouble();
     _sweepTrails.add(
       _HarpSweepTrail(
         position: position,
         velocity: delta,
-        createdAtMicros: DateTime.now().microsecondsSinceEpoch,
+        createdAtMicros: nowMicros,
         strength: strength,
       ),
     );
-    if (_sweepTrails.length > 24) {
-      _sweepTrails.removeRange(0, _sweepTrails.length - 24);
+    if (_sweepTrails.length > _harpMaxSweepTrails) {
+      _sweepTrails.removeRange(0, _sweepTrails.length - _harpMaxSweepTrails);
     }
     _startVibrationTicker();
+    _requestHarpPaint(nowMicros: nowMicros);
   }
 
   void _pruneSweepTrails(int nowMicros) {
     _sweepTrails.removeWhere(
-      (trail) => nowMicros - trail.createdAtMicros > 280000,
+      (trail) =>
+          nowMicros - trail.createdAtMicros > _harpSweepTrailLifetimeMicros,
     );
   }
 
@@ -847,16 +877,13 @@ class _HarpToolState extends State<_HarpTool>
     if (!hasMotion) {
       _vibrationTicker.stop();
       _lastTickMicros = null;
-      if (_focusedString != null && mounted) {
-        setState(() {
-          _focusedString = null;
-        });
+      if (_focusedString != null) {
+        _focusedString = null;
+        _requestHarpPaint(nowMicros: wallClockMicros);
       }
       return;
     }
-    if (mounted) {
-      setState(() {});
-    }
+    _requestHarpPaint(nowMicros: wallClockMicros);
   }
 
   void _pluckString(
@@ -897,11 +924,8 @@ class _HarpToolState extends State<_HarpTool>
       );
     }
     _startVibrationTicker();
-    if (mounted) {
-      setState(() {
-        _focusedString = index;
-      });
-    }
+    _focusedString = index;
+    _requestHarpPaint();
   }
 
   void _handleTap(Offset localPosition, Size size) {
@@ -1126,11 +1150,8 @@ class _HarpToolState extends State<_HarpTool>
         _stringOffsets[index] += direction * (0.16 + strength * 0.8);
         _stringVelocities[index] += direction * (3 + strength * 12);
         _startVibrationTicker();
-        if (mounted) {
-          setState(() {
-            _focusedString = index;
-          });
-        }
+        _focusedString = index;
+        _requestHarpPaint();
       });
       slot += 1;
     }
@@ -1195,6 +1216,7 @@ class _HarpToolState extends State<_HarpTool>
       unawaited(_exitImmersiveMode());
     }
     _vibrationTicker.dispose();
+    _harpPaintRevision.dispose();
     _invalidateAudioPlayers(warmUp: false);
     super.dispose();
   }
@@ -1223,18 +1245,23 @@ class _HarpToolState extends State<_HarpTool>
         child: SizedBox(
           width: size.width,
           height: size.height,
-          child: CustomPaint(
-            painter: _HarpPainter(
-              stringCount: _stringCount,
-              noteFrequencies: _activeNotes,
-              stringOffsets: _stringOffsets,
-              focusedString: _focusedString,
-              colorScheme: Theme.of(context).colorScheme,
-              paletteColors: _activePalette.colors,
-              pluckStyleId: _pluckStyleId,
-              chordStringIndexes: _activeChordStringIndexes(),
-              sweepTrails: _sweepTrails,
-              horizontalLayout: _isHorizontalLayout,
+          child: RepaintBoundary(
+            child: CustomPaint(
+              isComplex: true,
+              painter: _HarpPainter(
+                repaintSignal: _harpPaintRevision,
+                stringCount: _stringCount,
+                noteFrequencies: _activeNotes,
+                stringOffsets: _stringOffsets,
+                focusedString: () => _focusedString,
+                paintClockMicros: () => _paintClockMicros,
+                colorScheme: Theme.of(context).colorScheme,
+                paletteColors: _activePalette.colors,
+                pluckStyleId: _pluckStyleId,
+                chordStringIndexes: _activeChordStringIndexes(),
+                sweepTrails: _sweepTrails,
+                horizontalLayout: _isHorizontalLayout,
+              ),
             ),
           ),
         ),
@@ -1488,6 +1515,12 @@ class _HarpToolState extends State<_HarpTool>
     final i18n = _toolboxI18n(context);
     final theme = Theme.of(context);
     final reverbPercent = (_reverbUi * 100).round();
+    final activePreset = _realismPresets.where((preset) {
+      return preset.id == _activeRealismPresetId;
+    });
+    final presetLabel = activePreset.isEmpty
+        ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+        : _realismLabel(i18n, activePreset.first);
     if (widget.fullScreen) {
       return _buildFullScreenBody(context);
     }
@@ -1498,11 +1531,11 @@ class _HarpToolState extends State<_HarpTool>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SectionHeader(
-              title: pickUiText(i18n, zh: '琴弦', en: 'Strings'),
+              title: pickUiText(i18n, zh: '空灵竖琴', en: 'Ethereal Harp'),
               subtitle: pickUiText(
                 i18n,
-                zh: '二阶段竖琴：开放音色、和声与手势手感参数。',
-                en: 'Second-pass harp with exposed tone, harmony, and gesture feel controls.',
+                zh: '轻触单音，顺着琴弦滑动可扫弦。',
+                en: 'Tap a note, then glide across strings to sweep.',
               ),
             ),
             const SizedBox(height: 12),
@@ -1512,8 +1545,8 @@ class _HarpToolState extends State<_HarpTool>
               crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '弦数', en: 'Strings'),
-                  value: '12',
+                  label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                  value: presetLabel,
                 ),
                 ToolboxMetricCard(
                   label: pickUiText(i18n, zh: '调式', en: 'Scale'),
@@ -1570,286 +1603,20 @@ class _HarpToolState extends State<_HarpTool>
                     pickUiText(i18n, zh: '自动琶音', en: 'Auto arpeggio'),
                   ),
                 ),
+                FilledButton.tonalIcon(
+                  onPressed: () => _openHarpSettingsSheet(context, i18n),
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                ),
                 Text(
                   pickUiText(
                     i18n,
-                    zh: '提示：更宽更快的扫弦会产生更明亮的音色。',
-                    en: 'Tip: a wider, faster swipe creates a brighter strum.',
+                    zh: '音色、调式、和弦与手感已收入口底板。',
+                    en: 'Timbre, scale, chord, and feel live in the sheet.',
                   ),
                   style: theme.textTheme.bodySmall,
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
-            SectionHeader(
-              title: pickUiText(i18n, zh: '高真实度预设', en: 'High Realism Presets'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '针对琴弦行为与空间响应调校的预设包。',
-                en: 'Preset bundles tuned for realistic string behavior and room response.',
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _realismPresets
-                  .map(
-                    (preset) => ChoiceChip(
-                      label: Text(_realismLabel(i18n, preset)),
-                      selected: _activeRealismPresetId == preset.id,
-                      tooltip: _realismDescription(i18n, preset),
-                      onSelected: (_) {
-                        _applyRealismPreset(preset);
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 16),
-            Divider(color: theme.colorScheme.outlineVariant),
-            const SizedBox(height: 12),
-            SectionHeader(
-              title: pickUiText(i18n, zh: '音色与视觉', en: 'Tone & Visual'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '将拨弦音色拟真与主题配色拆分，分别独立调整。',
-                en: 'Split pluck timbre realism and theme palette into separate controls.',
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              pickUiText(i18n, zh: '音色拟真', en: 'Timbre'),
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _pluckPresets
-                  .map(
-                    (preset) => ChoiceChip(
-                      label: Text(_pluckLabel(i18n, preset)),
-                      selected: _pluckStyleId == preset.id,
-                      tooltip: _pluckDescription(i18n, preset),
-                      onSelected: (_) {
-                        if (_pluckStyleId == preset.id) return;
-                        setState(() {
-                          _pluckStyleId = preset.id;
-                          _markRealismCustom();
-                        });
-                        _invalidateAudioPlayers();
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              pickUiText(i18n, zh: '主题配色', en: 'Palette'),
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _palettePresets
-                  .map(
-                    (preset) => ChoiceChip(
-                      label: Text(_paletteLabel(i18n, preset)),
-                      selected: _paletteId == preset.id,
-                      onSelected: (_) {
-                        if (_paletteId == preset.id) return;
-                        setState(() {
-                          _paletteId = preset.id;
-                          _markRealismCustom();
-                        });
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              pickUiText(
-                i18n,
-                zh: '残响 $reverbPercent%',
-                en: 'Reverb $reverbPercent%',
-              ),
-            ),
-            Slider(
-              value: _reverbUi,
-              min: 0.0,
-              max: 0.8,
-              divisions: 16,
-              onChanged: (value) {
-                setState(() {
-                  _reverbUi = value;
-                  _markRealismCustom();
-                });
-              },
-              onChangeEnd: (value) {
-                final quantized = (value * 20).round() / 20;
-                setState(() {
-                  _reverbUi = quantized;
-                  _reverbForAudio = quantized;
-                  _markRealismCustom();
-                });
-                _invalidateAudioPlayers();
-              },
-            ),
-            const SizedBox(height: 8),
-            SectionHeader(
-              title: pickUiText(i18n, zh: '和弦与调式', en: 'Scale & Chord'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '在同一竖琴面板中开放调式、和弦与琶音模式。',
-                en: 'Expose mode, chord voicing, and arpeggio pattern from the same harp deck.',
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _scalePresets
-                  .map(
-                    (preset) => ChoiceChip(
-                      label: Text(_scaleLabel(i18n, preset)),
-                      selected: _scaleId == preset.id,
-                      onSelected: (_) {
-                        if (_scaleId == preset.id) return;
-                        setState(() {
-                          _scaleId = preset.id;
-                          _markRealismCustom();
-                        });
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _chordPresets
-                  .map(
-                    (preset) => ChoiceChip(
-                      label: Text(_chordLabel(i18n, preset)),
-                      selected: _chordId == preset.id,
-                      onSelected: (_) {
-                        if (_chordId == preset.id) return;
-                        setState(() {
-                          _chordId = preset.id;
-                          _markRealismCustom();
-                        });
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _patternPresets
-                  .map(
-                    (preset) => ChoiceChip(
-                      label: Text(_patternLabel(i18n, preset)),
-                      selected: _patternId == preset.id,
-                      tooltip: _patternDescription(i18n, preset),
-                      onSelected: (_) {
-                        if (_patternId == preset.id) return;
-                        setState(() {
-                          _patternId = preset.id;
-                          _markRealismCustom();
-                        });
-                      },
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 8),
-            FilterChip(
-              label: Text(pickUiText(i18n, zh: '和弦共振', en: 'Chord resonance')),
-              selected: _chordResonanceEnabled,
-              onSelected: (selected) {
-                setState(() {
-                  _chordResonanceEnabled = selected;
-                  _markRealismCustom();
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-            Text(
-              pickUiText(
-                i18n,
-                zh: '和弦根音 ${_chordRootIndex + 1} / $_stringCount',
-                en: 'Chord root ${_chordRootIndex + 1} / $_stringCount',
-              ),
-            ),
-            Slider(
-              value: _chordRootIndex.toDouble(),
-              min: 0,
-              max: (_stringCount - 1).toDouble(),
-              divisions: _stringCount - 1,
-              onChanged: (value) {
-                setState(() {
-                  _chordRootIndex = value.round();
-                });
-              },
-            ),
-            const SizedBox(height: 8),
-            SectionHeader(
-              title: pickUiText(i18n, zh: '手感参数', en: 'Feel'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '开放阻尼与触发阈值，便于触控灵敏度调节。',
-                en: 'Expose damping and trigger threshold for touch sensitivity tuning.',
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              pickUiText(
-                i18n,
-                zh: '阻尼 ${_damping.toStringAsFixed(1)}',
-                en: 'Damping ${_damping.toStringAsFixed(1)}',
-              ),
-            ),
-            Slider(
-              value: _damping,
-              min: 4,
-              max: 18,
-              divisions: 28,
-              onChanged: (value) {
-                setState(() {
-                  _damping = value;
-                  _markRealismCustom();
-                });
-              },
-            ),
-            const SizedBox(height: 6),
-            Text(
-              pickUiText(
-                i18n,
-                zh: '触发阈值 ${_swipeThreshold.toStringAsFixed(1)} px',
-                en: 'Trigger threshold ${_swipeThreshold.toStringAsFixed(1)} px',
-              ),
-            ),
-            Slider(
-              value: _swipeThreshold,
-              min: 0.4,
-              max: 8,
-              divisions: 38,
-              onChanged: (value) {
-                setState(() {
-                  _swipeThreshold = value;
-                  _markRealismCustom();
-                });
-              },
             ),
           ],
         ),

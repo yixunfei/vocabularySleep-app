@@ -23,6 +23,7 @@ class ModuleIds {
   static const String toolboxPrayerBeads = 'toolbox.prayer_beads';
   static const String toolboxZenSand = 'toolbox.zen_sand';
   static const String toolboxDailyDecision = 'toolbox.daily_decision';
+  static const String toolboxLifeTools = 'toolbox.life_tools';
 
   static const List<String> topLevelModules = <String>[
     study,
@@ -47,6 +48,7 @@ class ModuleIds {
     toolboxPrayerBeads,
     toolboxZenSand,
     toolboxDailyDecision,
+    toolboxLifeTools,
   ];
 
   static const List<String> allModules = <String>[

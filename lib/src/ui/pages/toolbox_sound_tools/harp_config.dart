@@ -1,5 +1,9 @@
 part of '../toolbox_sound_tools.dart';
 
+const int _harpSweepTrailLifetimeMicros = 220000;
+const int _harpMaxSweepTrails = 10;
+const int _harpMinSweepTrailGapMicros = 24000;
+
 class _HarpConfig {
   const _HarpConfig({
     this.scaleId = 'c_major',

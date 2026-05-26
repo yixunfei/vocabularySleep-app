@@ -339,19 +339,10 @@ extension _PianoToolStateLogic on _PianoToolState {
       _maxRangeStart(span),
     );
     final slice = _sliceFor(start, span);
-    final candidates = preloadAllKeys
-        ? <_PianoKey>[
-            ...slice.whiteKeys,
-            ...slice.blackKeys.map((placement) => placement.key),
-          ]
-        : <_PianoKey>[
-            if (slice.whiteKeys.isNotEmpty) slice.whiteKeys.first,
-            if (slice.whiteKeys.isNotEmpty)
-              slice.whiteKeys[slice.whiteKeys.length ~/ 2],
-            if (slice.blackKeys.isNotEmpty)
-              slice.blackKeys[slice.blackKeys.length ~/ 2].key,
-            if (slice.whiteKeys.isNotEmpty) slice.whiteKeys.last,
-          ];
+    final candidates = _warmUpCandidatesFor(
+      slice,
+      preloadAllKeys: preloadAllKeys,
+    );
     final visited = <String>{};
     for (final key in candidates) {
       if (stopIfStale?.call() ?? false) {
@@ -361,7 +352,64 @@ extension _PianoToolStateLogic on _PianoToolState {
         continue;
       }
       await _playerFor(key).warmUp();
+      if (preloadAllKeys) {
+        await Future<void>.delayed(
+          const Duration(milliseconds: _pianoWarmUpYieldMs),
+        );
+      }
     }
+  }
+
+  List<_PianoKey> _warmUpCandidatesFor(
+    _PianoKeyboardSlice slice, {
+    required bool preloadAllKeys,
+  }) {
+    final whiteKeys = slice.whiteKeys;
+    final blackKeys = slice.blackKeys
+        .map((placement) => placement.key)
+        .toList(growable: false);
+    final ordered = <_PianoKey>[];
+    final seen = <String>{};
+
+    void add(_PianoKey? key) {
+      if (key == null || !seen.add(key.id)) return;
+      ordered.add(key);
+    }
+
+    if (whiteKeys.isNotEmpty) {
+      add(whiteKeys.first);
+      add(whiteKeys[whiteKeys.length ~/ 2]);
+      add(whiteKeys.last);
+      if (whiteKeys.length >= 8) {
+        add(whiteKeys[whiteKeys.length ~/ 4]);
+        add(whiteKeys[(whiteKeys.length * 3) ~/ 4]);
+      }
+    }
+    if (blackKeys.isNotEmpty) {
+      add(blackKeys[blackKeys.length ~/ 2]);
+      add(blackKeys.first);
+      add(blackKeys.last);
+    }
+    if (!preloadAllKeys) {
+      return ordered;
+    }
+
+    final allKeys = <_PianoKey>[...whiteKeys, ...blackKeys];
+    if (allKeys.isEmpty) {
+      return ordered;
+    }
+    final budget = math.min(
+      allKeys.length,
+      widget.fullScreen
+          ? _pianoFullScreenWarmUpKeyBudget
+          : _pianoPhoneWarmUpKeyBudget,
+    );
+    final denominator = math.max(1, budget - 1);
+    for (var i = 0; ordered.length < budget && i < budget; i += 1) {
+      final index = ((i * (allKeys.length - 1)) / denominator).round();
+      add(allKeys[index]);
+    }
+    return ordered;
   }
 
   double _velocityBucket(double velocity) {
@@ -436,11 +484,14 @@ extension _PianoToolStateLogic on _PianoToolState {
       _rangeStartOctave = normalized;
       _activePointers.clear();
       _activePointerKeyIds.clear();
-      _activeKeyPulseCounts.clear();
+      _activePointerLastNoteAtMillis.clear();
+      _activeKeyReleaseAtMillis.clear();
       _activeKeyIds = <String>{};
       _twoFingerOrigin = null;
       _lastRangeGestureAt = null;
     });
+    _activeKeyReleaseTimer?.cancel();
+    _activeKeyReleaseTimer = null;
     _scheduleRangeWarmUp(
       octaveSpan: octaveSpan,
       rangeStart: normalized,
@@ -571,6 +622,61 @@ extension _PianoToolStateLogic on _PianoToolState {
     return (0.2 + math.pow(normalized, 0.92) * 0.8).clamp(0.22, 1.0).toDouble();
   }
 
+  bool _allowGlissandoTrigger(PointerMoveEvent event) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final last = _activePointerLastNoteAtMillis[event.pointer];
+    if (last != null && now - last < _pianoGlissandoMinTriggerMs) {
+      return false;
+    }
+    _activePointerLastNoteAtMillis[event.pointer] = now;
+    return true;
+  }
+
+  void _activateKeys(List<_PianoKey> keys) {
+    if (!mounted || keys.isEmpty) {
+      return;
+    }
+    final expiresAt =
+        DateTime.now().millisecondsSinceEpoch + _pianoActiveKeyHoldMs;
+    _setViewState(() {
+      for (final key in keys) {
+        final previous = _activeKeyReleaseAtMillis[key.id] ?? 0;
+        if (previous < expiresAt) {
+          _activeKeyReleaseAtMillis[key.id] = expiresAt;
+        }
+      }
+      _activeKeyIds = _activeKeyReleaseAtMillis.keys.toSet();
+    });
+    _scheduleActiveKeyRelease();
+  }
+
+  void _scheduleActiveKeyRelease() {
+    _activeKeyReleaseTimer?.cancel();
+    if (_activeKeyReleaseAtMillis.isEmpty) {
+      _activeKeyReleaseTimer = null;
+      return;
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final nextExpiry = _activeKeyReleaseAtMillis.values.reduce(math.min);
+    final delayMs = math.max(16, nextExpiry - now);
+    _activeKeyReleaseTimer = Timer(
+      Duration(milliseconds: delayMs),
+      _releaseExpiredActiveKeys,
+    );
+  }
+
+  void _releaseExpiredActiveKeys() {
+    if (!mounted) {
+      return;
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _setViewState(() {
+      _activeKeyReleaseAtMillis.removeWhere((_, expiry) => expiry <= now);
+      _activeKeyIds = _activeKeyReleaseAtMillis.keys.toSet();
+    });
+    _scheduleActiveKeyRelease();
+  }
+
   ({double volume, double velocity}) _touchDynamicsForEvent(
     PointerEvent event,
     _PianoKey key,
@@ -645,50 +751,23 @@ extension _PianoToolStateLogic on _PianoToolState {
         voicedKeys.length,
         baseVelocity,
       );
-      unawaited(
-        Future<void>.delayed(
-          Duration(milliseconds: math.max(0, waitMs)),
-          () async {
+      final delayMs = math.max(0, waitMs);
+      if (delayMs == 0) {
+        unawaited(
+          _playerFor(note, velocity: noteVelocity).play(volume: noteVolume),
+        );
+      } else {
+        unawaited(
+          Future<void>.delayed(Duration(milliseconds: delayMs), () async {
             await _playerFor(
               note,
               velocity: noteVelocity,
             ).play(volume: noteVolume);
-          },
-        ),
-      );
-    }
-    if (!mounted) {
-      return;
-    }
-    _setViewState(() {
-      for (final note in voicedKeys) {
-        _activeKeyPulseCounts.update(
-          note.id,
-          (count) => count + 1,
-          ifAbsent: () => 1,
+          }),
         );
       }
-      _activeKeyIds = _activeKeyPulseCounts.keys.toSet();
-    });
-    Future<void>.delayed(const Duration(milliseconds: 170), () {
-      if (!mounted) {
-        return;
-      }
-      _setViewState(() {
-        for (final note in voicedKeys) {
-          final count = _activeKeyPulseCounts[note.id];
-          if (count == null) {
-            continue;
-          }
-          if (count <= 1) {
-            _activeKeyPulseCounts.remove(note.id);
-          } else {
-            _activeKeyPulseCounts[note.id] = count - 1;
-          }
-        }
-        _activeKeyIds = _activeKeyPulseCounts.keys.toSet();
-      });
-    });
+    }
+    _activateKeys(voicedKeys);
   }
 
   void _handleStagePointerDown(
@@ -798,6 +877,9 @@ extension _PianoToolStateLogic on _PianoToolState {
     if (key == null || key.id == lastKeyId) {
       return;
     }
+    if (!_allowGlissandoTrigger(event)) {
+      return;
+    }
     _activePointerKeyIds[event.pointer] = key.id;
     final dynamics = _touchDynamicsForEvent(
       event,
@@ -814,6 +896,7 @@ extension _PianoToolStateLogic on _PianoToolState {
   void _handleStagePointerUp(PointerEvent event) {
     _activePointers.remove(event.pointer);
     _activePointerKeyIds.remove(event.pointer);
+    _activePointerLastNoteAtMillis.remove(event.pointer);
     if (_activePointers.length < 2) {
       _twoFingerOrigin = null;
       _lastRangeGestureAt = null;

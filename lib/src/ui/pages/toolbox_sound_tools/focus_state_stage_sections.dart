@@ -453,7 +453,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          '拍号决定强弱拍结构，子拍决定每拍内部切分；两者会同步影响动画节奏和循环编排。',
+          '拍号决定强弱拍结构，子拍决定每拍内部切分；两者会同步影响节拍推进和循环编排。',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
         ),
         const SizedBox(height: 12),
@@ -497,17 +497,11 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
           children: <Widget>[
             Expanded(
               child: Text(
-                _linkAnimationAndSound
-                    ? pickUiText(
-                        styleI18n,
-                        zh: '动画与音色保持联动，适合快速切换一致风格。',
-                        en: 'Animation and timbre are linked for fast style switching.',
-                      )
-                    : pickUiText(
-                        styleI18n,
-                        zh: '动画与音色独立选择，适合细调个人偏好。',
-                        en: 'Animation and timbre are independent for finer tuning.',
-                      ),
+                pickUiText(
+                  styleI18n,
+                  zh: '选择节拍音色；舞台会保持淡白轨道，不再需要额外设置。',
+                  en: 'Choose the beat timbre. The stage keeps one soft pale track without extra settings.',
+                ),
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -519,40 +513,6 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
               icon: const Icon(Icons.graphic_eq_rounded),
               label: Text(pickUiText(styleI18n, zh: '试听', en: 'Preview')),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SwitchListTile.adaptive(
-          contentPadding: EdgeInsets.zero,
-          value: _linkAnimationAndSound,
-          onChanged: _setLinkAnimationAndSound,
-          title: Text(
-            pickUiText(
-              styleI18n,
-              zh: '联动动画与音色',
-              en: 'Link animation and timbre',
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          pickUiText(styleI18n, zh: '舞台动画', en: 'Stage animation'),
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <Widget>[
-            for (final kind in _FocusBeatAnimationKind.values)
-              ChoiceChip(
-                avatar: Icon(kind.icon, size: 18),
-                label: Text(_animationName(context, kind)),
-                selected: _animationKind == kind,
-                onSelected: (_) => _setAnimationKind(kind),
-              ),
           ],
         ),
         const SizedBox(height: 16),
@@ -576,39 +536,6 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
               ),
           ],
         ),
-      ],
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildSelectionSummary(context),
-        const SizedBox(height: 14),
-        Text(
-          '动画样式',
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        for (final kind in _FocusBeatAnimationKind.values) ...<Widget>[
-          _buildAnimationOptionTile(context, kind),
-          if (kind != _FocusBeatAnimationKind.values.last)
-            const SizedBox(height: 10),
-        ],
-        const SizedBox(height: 16),
-        Text(
-          '音色样式',
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        for (final kind in _FocusBeatSoundKind.values) ...<Widget>[
-          _buildSoundOptionTile(context, kind),
-          if (kind != _FocusBeatSoundKind.values.last)
-            const SizedBox(height: 10),
-        ],
       ],
     );
   }
@@ -656,8 +583,8 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
         Text(
           pickUiText(
             arrangementI18n,
-            zh: '通过段落组合，让动画和发音在一个循环里形成更清晰的推进感。',
-            en: 'Combine phrases to create clearer motion and click progression inside each loop.',
+            zh: '通过段落组合，让节拍和发音在一个循环里形成更清晰的推进感。',
+            en: 'Combine phrases so rhythm and click feel clearer inside each loop.',
           ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35),
         ),
@@ -1018,22 +945,6 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                     pickUiText(controlI18n, zh: '沉浸全屏', en: 'Immersive stage'),
                   ),
                 ),
-              _FocusInfoPill(
-                icon: Icons.auto_graph_rounded,
-                label: _linkAnimationAndSound
-                    ? pickUiText(
-                        controlI18n,
-                        zh: '动画音色联动',
-                        en: 'Linked AV style',
-                      )
-                    : pickUiText(
-                        controlI18n,
-                        zh: '动画音色分离',
-                        en: 'Split AV style',
-                      ),
-                emphasized: _linkAnimationAndSound,
-                tone: controlPalette.accent,
-              ),
               _FocusInfoPill(
                 icon: Icons.vibration_rounded,
                 label: _hapticsEnabled
