@@ -18,7 +18,12 @@ void main() {
       );
 
       expect(encrypted.envelopeBytes.length, greaterThan(plain.length));
+      expect(encrypted.cipherBytes.length, greaterThan(plain.length));
       expect(encrypted.cipherPreview, isNotEmpty);
+      final envelope = jsonDecode(utf8.decode(encrypted.envelopeBytes));
+      expect(envelope['version'], 3);
+      expect(envelope['kdf']['n'], 1 << 16);
+      expect(envelope['padding']['mode'], 'random-length-v1');
 
       final decrypted = service.decryptBytes(
         envelopeBytes: encrypted.envelopeBytes,
@@ -103,7 +108,6 @@ void main() {
           ToolboxCryptoCascadeCipher.aes,
           ToolboxCryptoCascadeCipher.twofish,
           ToolboxCryptoCascadeCipher.camellia,
-          ToolboxCryptoCascadeCipher.sha256Stream,
         ],
         keyBits: ToolboxCryptoKeyBits.bits512,
         macAlgorithm: ToolboxCryptoMacAlgorithm.whirlpool,
@@ -112,7 +116,7 @@ void main() {
       final envelope = jsonDecode(utf8.decode(encrypted.envelopeBytes));
       expect(envelope['keyBits'], 512);
       expect(envelope['macAlgorithm'], ToolboxCryptoMacAlgorithm.whirlpool.id);
-      expect((envelope['stages'] as List<Object?>).length, 4);
+      expect((envelope['stages'] as List<Object?>).length, 3);
 
       final decrypted = service.decryptBytes(
         envelopeBytes: encrypted.envelopeBytes,
@@ -152,6 +156,38 @@ void main() {
       expect(whirlpool.hex.length, 128);
       expect(keyFile.bytes.length, 64);
       expect(keyFile.sha256.length, 64);
+    });
+
+    test('keeps weak algorithms decrypt-only for new envelopes', () {
+      final plain = Uint8List.fromList(utf8.encode('legacy blocked'));
+      for (final algorithm in <ToolboxCryptoAlgorithm>[
+        ToolboxCryptoAlgorithm.sha256Stream,
+        ToolboxCryptoAlgorithm.rc4Legacy,
+      ]) {
+        expect(
+          () => service.encryptBytes(
+            plainBytes: plain,
+            algorithm: algorithm,
+            strength: ToolboxCryptoStrength.standard,
+            passphrase: 'weak-key',
+          ),
+          throwsA(isA<ToolboxCryptoException>()),
+        );
+      }
+
+      expect(
+        () => service.encryptBytes(
+          plainBytes: plain,
+          algorithm: ToolboxCryptoAlgorithm.customCascade,
+          strength: ToolboxCryptoStrength.standard,
+          passphrase: 'weak-key',
+          cascade: const <ToolboxCryptoCascadeCipher>[
+            ToolboxCryptoCascadeCipher.aes,
+            ToolboxCryptoCascadeCipher.sha256Stream,
+          ],
+        ),
+        throwsA(isA<ToolboxCryptoException>()),
+      );
     });
   });
 }

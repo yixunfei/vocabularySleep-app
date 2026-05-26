@@ -245,18 +245,20 @@
 
 ## Life Tools Steganography (2026-05-26)
 - `steganography` now opens a local media steganography page instead of a placeholder entry.
-- Supports image/audio/video modes with shared encryption and restore workflow.
-- Image steganography decodes the carrier and exports lossless PNG with RGB LSB payload, so the hidden text can be restored reliably.
-- Audio/video steganography appends a structured tail payload to preserve original media bytes and best-effort playback compatibility.
+- Supports image modes with shared encryption and restore workflow; audio/video legacy reveal remains available, but new writes are disabled until real frequency-domain or frame-level backends are connected.
+- Image steganography decodes the carrier and exports lossless PNG with RGB LSB payload, now using a key-derived header plus CSPRNG-derived randomized pixel/channel order.
+- Audio/video steganography no longer appends new tail payloads; the old structured tail parser is retained only for compatibility with previously generated media.
 - Encryption is now delegated to `ToolboxCryptoService`, a reusable local crypto library for toolbox modules.
-- Supported enabled encryption options: `AES-GCM`, `Twofish-GCM`, `Camellia-GCM`, fixed cascades, user-defined cascades, `SHA256 stream`, `RC4 legacy`, and `No encryption`.
+- Supported enabled encryption options: `AES-GCM`, `Twofish-GCM`, `Camellia-GCM`, fixed cascades, user-defined cascades, `SHA-256/RSA`, `ECDSA`, `Whirlpool`, and `No encryption`; `SHA256 stream` and `RC4 legacy` are reveal-only for old payloads.
 - Serpent/Kuznyechik placeholders were removed and replaced with implemented `SHA-256/RSA`, `ECDSA`, and `Whirlpool` layers: RSA/ECDSA are verification/signature modes, and Whirlpool is available for hashing/MAC.
-- Strength options: `standard`, `strong`, and `extreme`; encrypted modes derive keys with scrypt, use at least 256-bit per-stage key material, and can combine passphrase plus optional key-file material.
-- The file workspace now encrypts file bytes and embeds the encrypted payload into an image/audio/video carrier, then restores the original bytes from generated stego media.
-- Key files can be picked manually or generated locally at a chosen byte length and exported.
+- Strength options: `standard` = scrypt N=2^16, `strong` = 2^17, and `extreme` = 2^18; encrypted modes use random salt, built-in password mixing, random-length padding, at least 256-bit per-stage key material, and optional key-file material.
+- The file workspace now encrypts file bytes and embeds the encrypted payload into an image carrier, then restores the original bytes from generated stego media.
+- Key files are now controlled by a dedicated switch; when enabled, users can import one or more key files, generate random key files from a compact dialog, export generated material, or clear the selection.
+- Multiple key files are sorted by lowercase file name, SHA-256 digest, and byte length before being combined into deterministic key material for encryption and reveal.
+- The mobile page keeps advanced crypto settings collapsed by default, hides empty preview panels, and differentiates media/file/keyfile actions with separate button hierarchy to reduce accidental choices.
 - The same page also exposes hash calculation (`SHA-256`, `SHA-512`, `SHA3`, `BLAKE2b`, `Whirlpool`).
 - VeraCrypt boundary: the module borrows the cascade, independent-stage-key, KDF/hash, and keyfile strategy, but it does not create VeraCrypt-compatible volumes, headers, or XTS devices.
-- Risk boundary: image outputs must not be re-saved as lossy JPEG; audio/video tail payloads may be rejected by strict media parsers.
+- Risk boundary: image outputs must not be re-saved as lossy JPEG; audio/video writes require future DCT/DWT/echo-hiding or frame/motion-vector backends before being re-enabled.
 - Risk boundary: losing the key file makes any payload encrypted with it unrecoverable, even if the passphrase is known.
 
 ## 生活实用（新增：亲戚关系计算器）

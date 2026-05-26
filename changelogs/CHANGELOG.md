@@ -1,3 +1,67 @@
+## [Unreleased-PLAN_229-LIFE-STEGANOGRAPHY-UI-COMPACT-KEYFILES] - 2026-05-26
+
+### 原因
+- 用户反馈生活实用隐写页面在移动端过长，选择媒体、选择文件和密钥文件操作样式过于接近，并要求将密钥文件改为开关选项，支持多密钥文件导入与稳定组合。
+
+### 新增
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 新增“使用密钥文件”开关；开启后才显示导入、生成、导出和清空操作。
+  - 支持一次导入多个 keyfile，并按文件名、SHA-256、长度稳定排序后组合为统一派生材料。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 将高级加密设置收进折叠区，标题保留当前算法、强度和 keyfile 状态摘要，减少移动端首屏堆叠。
+  - 仅在存在源图或输出图时显示预览区，降低空预览造成的页面长度。
+  - 调整选择媒体、选择载体、选择待隐藏文件和 keyfile 操作按钮的视觉层级；生成/导出 keyfile 使用普通紧凑按钮。
+  - 文件隐写结果区按文件工作区显示，避免图片结果面板误占位。
+- `test/ui_smoke_test.dart`
+  - 更新隐写页面 smoke 测试，覆盖折叠高级设置、keyfile 开关显隐和新的文件/哈希入口滚动方式。
+
+### 风险变更
+- 多 keyfile 必须在加密和还原时使用同一组文件；组合顺序由文件名、哈希和长度自动稳定排序，避免用户手动选择顺序导致派生材料不一致。
+- 高级设置默认折叠会减少页面高度，但用户需要展开后才能看到全部算法细项。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_228-LIFE-STEGANOGRAPHY-SECURITY-HARDENING] - 2026-05-26
+
+### 原因
+- 用户要求对生活实用隐写模块做安全收紧：移除 RC4/SHA256 stream 新加密入口，提高 scrypt 强度，消除固定魔数检测预言机，随机化图片 LSB 嵌入顺序，并避免把音视频尾部追加伪装成频域或帧级隐写。
+
+### 新增
+- `lib/src/services/toolbox_crypto_service.dart`
+  - 新增 v3 crypto envelope，加入随机长度 padding、内置盐密码混合、scrypt 根密钥一次派生与按用途扩展。
+  - scrypt 参数提升为 standard `N=2^16`、strong `N=2^17`、extreme `N=2^18`。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 图片 LSB 新增密钥派生 header、随机 nonce、长度掩码和 CSPRNG 派生像素/通道顺序，降低固定头与顺序写入特征。
+  - 保留旧图片固定头和旧音视频尾部载荷读取兼容。
+
+### 修改
+- `lib/src/services/toolbox_crypto_service.dart`
+  - RC4 与 SHA256 stream 改为仅旧载荷解密兼容；新加密和自由级联不再允许选择弱算法。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 音频/视频新写入停止使用尾部追加；在接入 DCT/DWT/回声隐藏或帧内/运动矢量后端前返回明确错误。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 加密选项增加安全性评级文案，明文模式生成前弹窗确认，强度选项标明 scrypt N。
+  - keyfile 生成改为独立弹窗，音视频写入在 UI 中提示后端边界。
+- `test/toolbox_crypto_service_test.dart`、`test/toolbox_steganography_service_test.dart`、`test/ui_smoke_test.dart`
+  - 覆盖 v3 envelope、padding、scrypt N、弱算法新加密拒绝、图片随机化隐写、音视频写入禁用和 UI 新评级。
+
+### 风险变更
+- 新 v3 图片载荷的定位依赖相同口令/keyfile；输错时会表现为未发现新载荷，以避免固定检测预言机。
+- scrypt 参数提升会增加移动端耗时；当前通过单次根派生降低重复 KDF 成本。
+- 音视频新写入暂不可用，避免继续生成不满足频域/帧级要求的尾部追加载荷。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+- `dart analyze test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart test/ui_smoke_test.dart`（仅剩 `test/ui_smoke_test.dart` 既有 info 提示）
+- `flutter test test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
 ## [Unreleased-PLAN_226-LIFE-VERACRYPT-STYLE-STEGANOGRAPHY-FILE-CRYPTO] - 2026-05-26
 
 ### 原因

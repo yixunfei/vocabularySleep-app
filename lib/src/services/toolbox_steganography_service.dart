@@ -95,6 +95,11 @@ class ToolboxSteganographyFileRevealResult {
 class ToolboxSteganographyService {
   static final List<int> _blockMagic = ascii.encode('VSSG1');
   static final List<int> _tailMagic = ascii.encode('VSSGT1');
+  static const int _imageMagicLength = 16;
+  static const int _imageNonceLength = 16;
+  static const int _imageHeaderLength =
+      _imageMagicLength + _imageNonceLength + 4;
+  static final math.Random _secureRandom = math.Random.secure();
   final ToolboxCryptoService _cryptoService = ToolboxCryptoService();
 
   ToolboxSteganographyEmbedResult embedText({
@@ -124,6 +129,7 @@ class ToolboxSteganographyService {
         'This encryption mode requires a passphrase or key file.',
       );
     }
+    _validateMediaWriteBackend(mediaKind);
 
     final envelope = _buildEnvelope(
       payloadKind: ToolboxSteganographyPayloadKind.text,
@@ -144,6 +150,8 @@ class ToolboxSteganographyService {
         carrierBytes: carrierBytes,
         block: block,
         envelope: envelope,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
       ),
       ToolboxSteganographyMediaKind.audio ||
       ToolboxSteganographyMediaKind.video => _embedInTail(
@@ -185,6 +193,7 @@ class ToolboxSteganographyService {
         'This encryption mode requires a passphrase or key file.',
       );
     }
+    _validateMediaWriteBackend(mediaKind);
 
     final envelope = _buildEnvelope(
       payloadKind: ToolboxSteganographyPayloadKind.file,
@@ -207,6 +216,8 @@ class ToolboxSteganographyService {
         carrierBytes: carrierBytes,
         block: block,
         envelope: envelope,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
       ),
       ToolboxSteganographyMediaKind.audio ||
       ToolboxSteganographyMediaKind.video => _embedInTail(
@@ -230,7 +241,11 @@ class ToolboxSteganographyService {
     }
 
     final block = switch (mediaKind) {
-      ToolboxSteganographyMediaKind.image => _extractImageBlock(carrierBytes),
+      ToolboxSteganographyMediaKind.image => _extractImageBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+      ),
       ToolboxSteganographyMediaKind.audio ||
       ToolboxSteganographyMediaKind.video => _extractTailBlock(carrierBytes),
     };
@@ -262,7 +277,11 @@ class ToolboxSteganographyService {
     }
 
     final block = switch (mediaKind) {
-      ToolboxSteganographyMediaKind.image => _extractImageBlock(carrierBytes),
+      ToolboxSteganographyMediaKind.image => _extractImageBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+      ),
       ToolboxSteganographyMediaKind.audio ||
       ToolboxSteganographyMediaKind.video => _extractTailBlock(carrierBytes),
     };
@@ -285,10 +304,27 @@ class ToolboxSteganographyService {
     );
   }
 
+  void _validateMediaWriteBackend(ToolboxSteganographyMediaKind mediaKind) {
+    switch (mediaKind) {
+      case ToolboxSteganographyMediaKind.image:
+        return;
+      case ToolboxSteganographyMediaKind.audio:
+        throw const ToolboxSteganographyException(
+          'Audio steganography requires a frequency-domain backend before new payloads can be generated.',
+        );
+      case ToolboxSteganographyMediaKind.video:
+        throw const ToolboxSteganographyException(
+          'Video steganography requires a frame-level or motion-vector backend before new payloads can be generated.',
+        );
+    }
+  }
+
   ToolboxSteganographyEmbedResult _embedInImage({
     required Uint8List carrierBytes,
     required Uint8List block,
     required _EnvelopeBuildResult envelope,
+    required String passphrase,
+    required Uint8List? keyFileBytes,
   }) {
     final decoded = img.decodeImage(carrierBytes);
     if (decoded == null) {
@@ -297,7 +333,11 @@ class ToolboxSteganographyService {
       );
     }
     final image = img.bakeOrientation(decoded);
-    final capacity = (image.width * image.height * 3) ~/ 8;
+    final totalPositions = image.width * image.height * 3;
+    final capacity = (totalPositions - (_imageHeaderLength * 8)) ~/ 8;
+    if (capacity <= 0) {
+      throw const ToolboxSteganographyException('Image is too small.');
+    }
     if (block.length > capacity) {
       throw ToolboxSteganographyException(
         'Secret payload is too large for this image. Capacity: $capacity B, need: ${block.length} B.',
@@ -305,7 +345,12 @@ class ToolboxSteganographyService {
     }
 
     final stegoImage = img.Image.from(image);
-    _writeLsbBlock(stegoImage, block);
+    _writeRandomizedLsbBlock(
+      stegoImage,
+      block,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+    );
     final output = Uint8List.fromList(img.encodePng(stegoImage, level: 6));
     return ToolboxSteganographyEmbedResult(
       bytes: output,
@@ -315,7 +360,7 @@ class ToolboxSteganographyService {
       outputBytes: output.length,
       cipherPreview: envelope.cipherPreview,
       carrierDetail:
-          '${image.width}x${image.height}, capacity ${_formatBytes(capacity)}',
+          '${image.width}x${image.height}, randomized LSB capacity ${_formatBytes(capacity)}',
       capacityBytes: capacity,
     );
   }
@@ -353,7 +398,11 @@ class ToolboxSteganographyService {
     );
   }
 
-  Uint8List _extractImageBlock(Uint8List carrierBytes) {
+  Uint8List _extractImageBlock(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+  }) {
     final decoded = img.decodeImage(carrierBytes);
     if (decoded == null) {
       throw const ToolboxSteganographyException(
@@ -361,6 +410,18 @@ class ToolboxSteganographyService {
       );
     }
     final image = img.bakeOrientation(decoded);
+    try {
+      return _readRandomizedLsbBlock(
+        image,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+      );
+    } on ToolboxSteganographyException {
+      return _extractLegacyImageBlock(image);
+    }
+  }
+
+  Uint8List _extractLegacyImageBlock(img.Image image) {
     final headerLength = _blockMagic.length + 4;
     final capacity = (image.width * image.height * 3) ~/ 8;
     if (capacity < headerLength) {
@@ -434,7 +495,7 @@ class ToolboxSteganographyService {
       signatureMode: signatureMode,
     );
     final envelope = <String, Object?>{
-      'version': 2,
+      'version': 3,
       'payloadKind': payloadKind.id,
       'encoding': payloadKind == ToolboxSteganographyPayloadKind.text
           ? 'utf8'
@@ -456,7 +517,7 @@ class ToolboxSteganographyService {
     required Uint8List? keyFileBytes,
   }) {
     final version = map['version'];
-    if (version == 2) {
+    if (version == 2 || version == 3) {
       final payloadKind = map['payloadKind'] as String? ?? 'text';
       if (payloadKind != ToolboxSteganographyPayloadKind.text.id) {
         throw const ToolboxSteganographyException(
@@ -497,7 +558,7 @@ class ToolboxSteganographyService {
     required Uint8List? keyFileBytes,
   }) {
     final version = map['version'];
-    if (version != 2) {
+    if (version != 2 && version != 3) {
       throw const ToolboxSteganographyException(
         'This payload does not contain a hidden file.',
       );
@@ -605,14 +666,23 @@ class ToolboxSteganographyService {
   }
 
   Uint8List _buildBlock(Uint8List jsonBytes) {
-    return Uint8List.fromList(<int>[
-      ..._blockMagic,
-      ..._uint32Bytes(jsonBytes.length),
-      ...jsonBytes,
-    ]);
+    return Uint8List.fromList(jsonBytes);
   }
 
   Map<String, Object?> _parseBlock(Uint8List block) {
+    final jsonBytes = _startsWith(block, _blockMagic)
+        ? _legacyBlockJsonBytes(block)
+        : block;
+    final decoded = jsonDecode(utf8.decode(jsonBytes));
+    if (decoded is! Map<String, Object?>) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload body is invalid.',
+      );
+    }
+    return decoded;
+  }
+
+  Uint8List _legacyBlockJsonBytes(Uint8List block) {
     if (block.length < _blockMagic.length + 4 ||
         !_startsWith(block, _blockMagic)) {
       throw const ToolboxSteganographyException(
@@ -626,44 +696,358 @@ class ToolboxSteganographyService {
         'Hidden payload length is invalid.',
       );
     }
-    final decoded = jsonDecode(utf8.decode(block.sublist(jsonOffset)));
-    if (decoded is! Map<String, Object?>) {
-      throw const ToolboxSteganographyException(
-        'Hidden payload body is invalid.',
-      );
-    }
-    return decoded;
+    return Uint8List.fromList(block.sublist(jsonOffset));
   }
 
-  void _writeLsbBlock(img.Image image, Uint8List block) {
-    var bitIndex = 0;
-    final totalBits = block.length * 8;
-    for (var y = 0; y < image.height; y += 1) {
-      for (var x = 0; x < image.width; x += 1) {
-        final pixel = image.getPixel(x, y);
-        var r = pixel.r.toInt();
-        var g = pixel.g.toInt();
-        var b = pixel.b.toInt();
-        final a = pixel.a.toInt();
-        for (var channel = 0; channel < 3; channel += 1) {
-          if (bitIndex >= totalBits) {
-            image.setPixelRgba(x, y, r, g, b, a);
-            return;
-          }
-          final bit = _bitAt(block, bitIndex);
-          switch (channel) {
-            case 0:
-              r = (r & 0xfe) | bit;
-            case 1:
-              g = (g & 0xfe) | bit;
-            case 2:
-              b = (b & 0xfe) | bit;
-          }
-          bitIndex += 1;
-        }
-        image.setPixelRgba(x, y, r, g, b, a);
+  void _writeRandomizedLsbBlock(
+    img.Image image,
+    Uint8List block, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+  }) {
+    final locatorSecret = _locatorSecret(passphrase, keyFileBytes);
+    final nonce = _randomBytes(_imageNonceLength);
+    final totalPositions = image.width * image.height * 3;
+    final header = _buildImageHeader(
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      payloadLength: block.length,
+      width: image.width,
+      height: image.height,
+    );
+    final headerPositions = _selectPositions(
+      total: totalPositions,
+      count: header.length * 8,
+      seed: _positionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'image-header',
+        width: image.width,
+        height: image.height,
+      ),
+    );
+    final payloadPositions = _selectPositions(
+      total: totalPositions,
+      count: block.length * 8,
+      seed: _positionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'image-payload',
+        width: image.width,
+        height: image.height,
+        nonce: nonce,
+      ),
+      excluded: Set<int>.from(headerPositions),
+    );
+    _writeLsbBytesAtPositions(image, header, headerPositions);
+    _writeLsbBytesAtPositions(image, block, payloadPositions);
+  }
+
+  Uint8List _readRandomizedLsbBlock(
+    img.Image image, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+  }) {
+    final locatorSecret = _locatorSecret(passphrase, keyFileBytes);
+    final totalPositions = image.width * image.height * 3;
+    final headerPositions = _selectPositions(
+      total: totalPositions,
+      count: _imageHeaderLength * 8,
+      seed: _positionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'image-header',
+        width: image.width,
+        height: image.height,
+      ),
+    );
+    final header = _readLsbBytesAtPositions(
+      image,
+      byteCount: _imageHeaderLength,
+      positions: headerPositions,
+    );
+    final nonce = Uint8List.fromList(
+      header.sublist(_imageMagicLength, _imageMagicLength + _imageNonceLength),
+    );
+    final expectedMagic = _imageMagic(
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      width: image.width,
+      height: image.height,
+    );
+    if (!_bytesEqual(header.sublist(0, _imageMagicLength), expectedMagic)) {
+      throw const ToolboxSteganographyException(
+        'No hidden image payload found.',
+      );
+    }
+    final maskedLength = _readUint32(
+      header,
+      _imageMagicLength + _imageNonceLength,
+    );
+    final payloadLength =
+        maskedLength ^
+        _lengthMask(
+          locatorSecret: locatorSecret,
+          nonce: nonce,
+          width: image.width,
+          height: image.height,
+        );
+    final capacity = (totalPositions - (_imageHeaderLength * 8)) ~/ 8;
+    if (payloadLength <= 0 || payloadLength > capacity) {
+      throw const ToolboxSteganographyException(
+        'Hidden image payload is damaged or incomplete.',
+      );
+    }
+    final payloadPositions = _selectPositions(
+      total: totalPositions,
+      count: payloadLength * 8,
+      seed: _positionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'image-payload',
+        width: image.width,
+        height: image.height,
+        nonce: nonce,
+      ),
+      excluded: Set<int>.from(headerPositions),
+    );
+    return _readLsbBytesAtPositions(
+      image,
+      byteCount: payloadLength,
+      positions: payloadPositions,
+    );
+  }
+
+  Uint8List _buildImageHeader({
+    required Uint8List locatorSecret,
+    required Uint8List nonce,
+    required int payloadLength,
+    required int width,
+    required int height,
+  }) {
+    final maskedLength =
+        payloadLength ^
+        _lengthMask(
+          locatorSecret: locatorSecret,
+          nonce: nonce,
+          width: width,
+          height: height,
+        );
+    return Uint8List.fromList(<int>[
+      ..._imageMagic(
+        locatorSecret: locatorSecret,
+        nonce: nonce,
+        width: width,
+        height: height,
+      ),
+      ...nonce,
+      ..._uint32Bytes(maskedLength),
+    ]);
+  }
+
+  Uint8List _locatorSecret(String passphrase, Uint8List? keyFileBytes) {
+    final passphraseBytes = Uint8List.fromList(utf8.encode(passphrase));
+    final passphraseDigest = Uint8List.fromList(
+      sha256.convert(passphraseBytes).bytes,
+    );
+    final saltDigest = Uint8List.fromList(
+      sha256
+          .convert(utf8.encode('vocabulary_sleep_stego_v3_locator_salt'))
+          .bytes,
+    );
+    final interleaved = <int>[];
+    for (var index = 0; index < passphraseDigest.length; index += 1) {
+      interleaved
+        ..add(passphraseDigest[index])
+        ..add(saltDigest[(index * 5) % saltDigest.length]);
+    }
+    final keyFileDigest = (keyFileBytes == null || keyFileBytes.isEmpty)
+        ? <int>[]
+        : sha256.convert(keyFileBytes).bytes;
+    return Uint8List.fromList(
+      sha256.convert(<int>[
+        ...utf8.encode('vocabulary_sleep_stego_locator_v3'),
+        0,
+        ...passphraseDigest,
+        0,
+        ...interleaved,
+        0,
+        ...passphraseBytes,
+        0,
+        ...keyFileDigest,
+      ]).bytes,
+    );
+  }
+
+  Uint8List _imageMagic({
+    required Uint8List locatorSecret,
+    required Uint8List nonce,
+    required int width,
+    required int height,
+  }) {
+    return Uint8List.fromList(
+      sha256
+          .convert(<int>[
+            ...locatorSecret,
+            0,
+            ...nonce,
+            0,
+            ..._uint32Bytes(width),
+            ..._uint32Bytes(height),
+            0,
+            ...utf8.encode('image-magic'),
+          ])
+          .bytes
+          .sublist(0, _imageMagicLength),
+    );
+  }
+
+  int _lengthMask({
+    required Uint8List locatorSecret,
+    required Uint8List nonce,
+    required int width,
+    required int height,
+  }) {
+    final digest = sha256.convert(<int>[
+      ...locatorSecret,
+      0,
+      ...nonce,
+      0,
+      ..._uint32Bytes(width),
+      ..._uint32Bytes(height),
+      0,
+      ...utf8.encode('image-length'),
+    ]).bytes;
+    return _readUint32(digest, 0);
+  }
+
+  Uint8List _positionSeed({
+    required Uint8List locatorSecret,
+    required String purpose,
+    required int width,
+    required int height,
+    Uint8List? nonce,
+  }) {
+    return Uint8List.fromList(
+      sha256.convert(<int>[
+        ...locatorSecret,
+        0,
+        ...utf8.encode(purpose),
+        0,
+        ..._uint32Bytes(width),
+        ..._uint32Bytes(height),
+        0,
+        if (nonce != null) ...nonce,
+      ]).bytes,
+    );
+  }
+
+  List<int> _selectPositions({
+    required int total,
+    required int count,
+    required Uint8List seed,
+    Set<int>? excluded,
+  }) {
+    final unavailable = excluded == null ? <int>{} : Set<int>.from(excluded);
+    if (count < 0 || count > total - unavailable.length) {
+      throw const ToolboxSteganographyException(
+        'Hidden image payload is damaged or incomplete.',
+      );
+    }
+    final rng = _HmacSha256Csprng(seed);
+    final positions = <int>[];
+    final maxAttempts = math.max(256, count * 8);
+    var attempts = 0;
+    while (positions.length < count && attempts < maxAttempts) {
+      attempts += 1;
+      final candidate = rng.nextInt(total);
+      if (unavailable.add(candidate)) {
+        positions.add(candidate);
       }
     }
+    if (positions.length == count) {
+      return positions;
+    }
+
+    final remaining = <int>[];
+    for (var index = 0; index < total; index += 1) {
+      if (!unavailable.contains(index)) {
+        remaining.add(index);
+      }
+    }
+    for (var index = remaining.length - 1; index > 0; index -= 1) {
+      final swapIndex = rng.nextInt(index + 1);
+      final temp = remaining[index];
+      remaining[index] = remaining[swapIndex];
+      remaining[swapIndex] = temp;
+    }
+    positions.addAll(remaining.take(count - positions.length));
+    return positions;
+  }
+
+  void _writeLsbBytesAtPositions(
+    img.Image image,
+    Uint8List bytes,
+    List<int> positions,
+  ) {
+    final totalBits = bytes.length * 8;
+    if (positions.length < totalBits) {
+      throw const ToolboxSteganographyException(
+        'Hidden image payload is damaged or incomplete.',
+      );
+    }
+    for (var bitIndex = 0; bitIndex < totalBits; bitIndex += 1) {
+      _setLsbAtPosition(image, positions[bitIndex], _bitAt(bytes, bitIndex));
+    }
+  }
+
+  Uint8List _readLsbBytesAtPositions(
+    img.Image image, {
+    required int byteCount,
+    required List<int> positions,
+  }) {
+    final totalBits = byteCount * 8;
+    if (positions.length < totalBits) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload is incomplete.',
+      );
+    }
+    final output = Uint8List(byteCount);
+    for (var bitIndex = 0; bitIndex < totalBits; bitIndex += 1) {
+      output[bitIndex >> 3] |=
+          _lsbAtPosition(image, positions[bitIndex]) << (7 - (bitIndex & 7));
+    }
+    return output;
+  }
+
+  void _setLsbAtPosition(img.Image image, int position, int bit) {
+    final pixelIndex = position ~/ 3;
+    final x = pixelIndex % image.width;
+    final y = pixelIndex ~/ image.width;
+    final channel = position % 3;
+    final pixel = image.getPixel(x, y);
+    var r = pixel.r.toInt();
+    var g = pixel.g.toInt();
+    var b = pixel.b.toInt();
+    final a = pixel.a.toInt();
+    switch (channel) {
+      case 0:
+        r = (r & 0xfe) | bit;
+      case 1:
+        g = (g & 0xfe) | bit;
+      case 2:
+        b = (b & 0xfe) | bit;
+    }
+    image.setPixelRgba(x, y, r, g, b, a);
+  }
+
+  int _lsbAtPosition(img.Image image, int position) {
+    final pixelIndex = position ~/ 3;
+    final x = pixelIndex % image.width;
+    final y = pixelIndex ~/ image.width;
+    final channel = position % 3;
+    final pixel = image.getPixel(x, y);
+    return switch (channel) {
+      0 => pixel.r.toInt() & 1,
+      1 => pixel.g.toInt() & 1,
+      _ => pixel.b.toInt() & 1,
+    };
   }
 
   Uint8List _readLsbBytes(img.Image image, int byteCount) {
@@ -872,6 +1256,23 @@ class ToolboxSteganographyService {
     return diff == 0;
   }
 
+  bool _bytesEqual(List<int> a, List<int> b) {
+    var diff = a.length ^ b.length;
+    final maxLength = math.max(a.length, b.length);
+    for (var index = 0; index < maxLength; index += 1) {
+      final left = index < a.length ? a[index] : 0;
+      final right = index < b.length ? b[index] : 0;
+      diff |= left ^ right;
+    }
+    return diff == 0;
+  }
+
+  Uint8List _randomBytes(int length) {
+    return Uint8List.fromList(
+      List<int>.generate(length, (_) => _secureRandom.nextInt(256)),
+    );
+  }
+
   String _hexDigest(List<int> bytes) {
     final buffer = StringBuffer();
     for (final byte in bytes) {
@@ -962,4 +1363,52 @@ class _FileEnvelopeParseResult {
   final ToolboxCryptoAlgorithm encryption;
   final ToolboxCryptoStrength strength;
   final String cipherPreview;
+}
+
+class _HmacSha256Csprng {
+  _HmacSha256Csprng(this._seed);
+
+  final Uint8List _seed;
+  Uint8List _buffer = Uint8List(0);
+  var _offset = 0;
+  var _counter = 0;
+
+  int nextInt(int max) {
+    if (max <= 0 || max > 0x100000000) {
+      throw const ToolboxSteganographyException(
+        'Hidden image payload is damaged or incomplete.',
+      );
+    }
+    final bucket = 0x100000000;
+    final limit = bucket - (bucket % max);
+    while (true) {
+      final value = _nextUint32();
+      if (value < limit) {
+        return value % max;
+      }
+    }
+  }
+
+  int _nextUint32() {
+    if (_offset + 4 > _buffer.length) {
+      _buffer = Uint8List.fromList(
+        Hmac(sha256, _seed).convert(_counterBytes(_counter)).bytes,
+      );
+      _counter += 1;
+      _offset = 0;
+    }
+    final value =
+        (_buffer[_offset] << 24) |
+        (_buffer[_offset + 1] << 16) |
+        (_buffer[_offset + 2] << 8) |
+        _buffer[_offset + 3];
+    _offset += 4;
+    return value;
+  }
+
+  Uint8List _counterBytes(int value) {
+    return Uint8List.fromList(
+      List<int>.generate(8, (index) => (value >> ((7 - index) * 8)) & 255),
+    );
+  }
 }

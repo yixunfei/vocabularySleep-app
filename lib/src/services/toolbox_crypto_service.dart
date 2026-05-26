@@ -62,6 +62,14 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
 
   bool get requiresSecret => this != ToolboxCryptoAlgorithm.none;
 
+  bool get canEncrypt {
+    return switch (this) {
+      ToolboxCryptoAlgorithm.sha256Stream ||
+      ToolboxCryptoAlgorithm.rc4Legacy => false,
+      _ => true,
+    };
+  }
+
   bool get isAvailable => true;
 
   bool get isLegacy {
@@ -108,7 +116,7 @@ extension ToolboxCryptoCascadeCipherInfo on ToolboxCryptoCascadeCipher {
       ToolboxCryptoCascadeCipher.aes => 'AES-GCM',
       ToolboxCryptoCascadeCipher.twofish => 'Twofish-GCM',
       ToolboxCryptoCascadeCipher.camellia => 'Camellia-GCM',
-      ToolboxCryptoCascadeCipher.sha256Stream => 'SHA256 stream',
+      ToolboxCryptoCascadeCipher.sha256Stream => 'SHA256 stream (weak)',
     };
   }
 }
@@ -187,9 +195,9 @@ extension ToolboxCryptoStrengthInfo on ToolboxCryptoStrength {
 
   int get scryptN {
     return switch (this) {
-      ToolboxCryptoStrength.standard => 1 << 12,
-      ToolboxCryptoStrength.strong => 1 << 14,
-      ToolboxCryptoStrength.extreme => 1 << 15,
+      ToolboxCryptoStrength.standard => 1 << 16,
+      ToolboxCryptoStrength.strong => 1 << 17,
+      ToolboxCryptoStrength.extreme => 1 << 18,
     };
   }
 
@@ -334,7 +342,7 @@ class ToolboxCryptoKeyFileResult {
 }
 
 class ToolboxCryptoService {
-  static const int currentVersion = 2;
+  static const int currentVersion = 3;
   static final math.Random _secureRandom = math.Random.secure();
 
   ToolboxCryptoEncryptResult encryptBytes({
@@ -353,6 +361,11 @@ class ToolboxCryptoService {
     if (plainBytes.isEmpty) {
       throw const ToolboxCryptoException('Input bytes are empty.');
     }
+    if (!algorithm.canEncrypt) {
+      throw const ToolboxCryptoException(
+        'Legacy or weak algorithms can only decrypt existing payloads.',
+      );
+    }
     _validateAlgorithmAndSecret(
       algorithm: algorithm,
       passphrase: passphrase,
@@ -360,6 +373,7 @@ class ToolboxCryptoService {
     );
 
     final salt = _randomBytes(16);
+    final kdfSettings = _KdfSettings.fromStrength(strength);
     final keyFileHash = _keyFileHash(keyFileBytes);
     final stages = _stagesFor(algorithm, cascade: cascade, keyBits: keyBits);
     final effectiveMacAlgorithm = _effectiveMacAlgorithm(
@@ -370,15 +384,20 @@ class ToolboxCryptoService {
       algorithm,
       signatureMode,
     );
-    var activeBytes = Uint8List.fromList(plainBytes);
+    final paddedPlain = _padPlainPayload(plainBytes);
+    var activeBytes = Uint8List.fromList(paddedPlain);
     final stageMaps = <Map<String, Object?>>[];
-    final keyMaterial = _deriveKeyMaterial(
+    final rootKey = _deriveRootKey(
       passphrase: passphrase,
       keyFileBytes: keyFileBytes,
       salt: salt,
-      strength: strength,
       macAlgorithm: effectiveMacAlgorithm,
-      length: _keyMaterialLength(algorithm, stages: stages),
+      kdfSettings: kdfSettings,
+    );
+    final keyMaterial = _expandRootKey(
+      rootKey,
+      'stage-key-${effectiveMacAlgorithm.id}',
+      _keyMaterialLength(algorithm, stages: stages),
     );
     var keyOffset = 0;
 
@@ -421,25 +440,23 @@ class ToolboxCryptoService {
       keyFileSha256: keyFileHash,
       fileName: fileName,
       mediaType: mediaType,
+      kdfSettings: kdfSettings,
+      paddingMode: 'random-length-v1',
     );
-    final macKey = _deriveMacKey(
-      passphrase: passphrase,
-      keyFileBytes: keyFileBytes,
-      salt: salt,
-      strength: strength,
-      macAlgorithm: effectiveMacAlgorithm,
+    final macKey = _expandRootKey(
+      rootKey,
+      'mac-${effectiveMacAlgorithm.id}',
+      32,
     );
     final mac = _hmacHex(
       algorithm: effectiveMacAlgorithm,
       key: macKey,
       bytes: <int>[...associatedData, 0, ...cipherBytes],
     );
-    final signatureSeed = _deriveSignatureSeed(
-      passphrase: passphrase,
-      keyFileBytes: keyFileBytes,
-      salt: salt,
-      strength: strength,
-      macAlgorithm: effectiveMacAlgorithm,
+    final signatureSeed = _expandRootKey(
+      rootKey,
+      'signature-${effectiveMacAlgorithm.id}',
+      64,
     );
     final signedBytes = <int>[
       ...associatedData,
@@ -467,9 +484,13 @@ class ToolboxCryptoService {
       'signatureMode': effectiveSignatureMode.id,
       'kdf': <String, Object?>{
         'id': 'scrypt',
-        'n': strength.scryptN,
-        'r': strength.scryptR,
-        'p': strength.scryptP,
+        'n': kdfSettings.n,
+        'r': kdfSettings.r,
+        'p': kdfSettings.p,
+      },
+      'padding': <String, Object?>{
+        'mode': 'random-length-v1',
+        'cipherPlainBytes': paddedPlain.length,
       },
       'salt': base64Encode(salt),
       'stages': stageMaps,
@@ -506,12 +527,14 @@ class ToolboxCryptoService {
       throw const ToolboxCryptoException('Input bytes are empty.');
     }
     final map = _decodeEnvelope(envelopeBytes);
-    final version = map['version'];
-    if (version != currentVersion) {
+    final rawVersion = map['version'];
+    final version = rawVersion is int ? rawVersion : null;
+    if (version != 2 && version != currentVersion) {
       throw const ToolboxCryptoException('Unsupported crypto version.');
     }
     final algorithm = _algorithmFromId(_readString(map, 'algorithm'));
     final strength = _strengthFromId(_readString(map, 'strength'));
+    final kdfSettings = _readKdfSettings(map, strength);
     final keyBits = _keyBitsFromValue(map['keyBits']);
     final macAlgorithm = _macAlgorithmFromId(
       map['macAlgorithm'] as String? ?? ToolboxCryptoMacAlgorithm.sha256.id,
@@ -551,16 +574,29 @@ class ToolboxCryptoService {
       keyFileSha256: keyFileHash,
       fileName: fileName,
       mediaType: mediaType,
+      kdfSettings: version == currentVersion ? kdfSettings : null,
+      paddingMode: version == currentVersion ? _readPaddingMode(map) : null,
     );
+    final rootKey = version == currentVersion
+        ? _deriveRootKey(
+            passphrase: passphrase,
+            keyFileBytes: keyFileBytes,
+            salt: salt,
+            macAlgorithm: macAlgorithm,
+            kdfSettings: kdfSettings,
+          )
+        : null;
     final expectedMac = _hmacHex(
       algorithm: macAlgorithm,
-      key: _deriveMacKey(
-        passphrase: passphrase,
-        keyFileBytes: keyFileBytes,
-        salt: salt,
-        strength: strength,
-        macAlgorithm: macAlgorithm,
-      ),
+      key: rootKey == null
+          ? _deriveLegacyMacKey(
+              passphrase: passphrase,
+              keyFileBytes: keyFileBytes,
+              salt: salt,
+              macAlgorithm: macAlgorithm,
+              kdfSettings: kdfSettings,
+            )
+          : _expandRootKey(rootKey, 'mac-${macAlgorithm.id}', 32),
       bytes: <int>[...associatedData, 0, ...cipherBytes],
     );
     if (!_constantTimeEquals(mac, expectedMac)) {
@@ -583,14 +619,24 @@ class ToolboxCryptoService {
           ),
         )
         .toList(growable: false);
-    final keyMaterial = _deriveKeyMaterial(
-      passphrase: passphrase,
-      keyFileBytes: keyFileBytes,
-      salt: salt,
-      strength: strength,
-      macAlgorithm: macAlgorithm,
-      length: stages.fold<int>(0, (sum, stage) => sum + stage.keyBytes),
+    final keyMaterialLength = stages.fold<int>(
+      0,
+      (sum, stage) => sum + stage.keyBytes,
     );
+    final keyMaterial = rootKey == null
+        ? _deriveLegacyKeyMaterial(
+            passphrase: passphrase,
+            keyFileBytes: keyFileBytes,
+            salt: salt,
+            macAlgorithm: macAlgorithm,
+            kdfSettings: kdfSettings,
+            length: keyMaterialLength,
+          )
+        : _expandRootKey(
+            rootKey,
+            'stage-key-${macAlgorithm.id}',
+            keyMaterialLength,
+          );
     var keyOffset = keyMaterial.length;
     var activeBytes = Uint8List.fromList(cipherBytes);
     for (var index = stages.length - 1; index >= 0; index -= 1) {
@@ -612,7 +658,10 @@ class ToolboxCryptoService {
       );
     }
 
-    final output = Uint8List.fromList(activeBytes);
+    final decryptedPayload = Uint8List.fromList(activeBytes);
+    final output = rootKey == null
+        ? decryptedPayload
+        : _unpadPlainPayload(decryptedPayload);
     final actualSha = _hashHex(ToolboxCryptoHashAlgorithm.sha256, output);
     if (!_constantTimeEquals(actualSha, plainSha)) {
       throw const ToolboxCryptoException('Payload checksum failed.');
@@ -676,6 +725,42 @@ class ToolboxCryptoService {
     } on FormatException {
       throw const ToolboxCryptoException('Crypto envelope is invalid.');
     }
+  }
+
+  _KdfSettings _readKdfSettings(
+    Map<String, Object?> map,
+    ToolboxCryptoStrength strength,
+  ) {
+    final raw = map['kdf'];
+    if (raw is Map<String, Object?>) {
+      return _KdfSettings(
+        n: _readPositiveInt(raw['n']) ?? strength.scryptN,
+        r: _readPositiveInt(raw['r']) ?? strength.scryptR,
+        p: _readPositiveInt(raw['p']) ?? strength.scryptP,
+      );
+    }
+    return _KdfSettings.fromStrength(strength);
+  }
+
+  String _readPaddingMode(Map<String, Object?> map) {
+    final raw = map['padding'];
+    final mode = raw is Map<String, Object?> ? raw['mode'] : null;
+    if (mode is String && mode == 'random-length-v1') {
+      return mode;
+    }
+    throw const ToolboxCryptoException('Crypto envelope is invalid.');
+  }
+
+  int? _readPositiveInt(Object? value) {
+    final parsed = value is int
+        ? value
+        : value is String
+        ? int.tryParse(value)
+        : null;
+    if (parsed == null || parsed <= 0) {
+      return null;
+    }
+    return parsed;
   }
 
   void _validateAlgorithmAndSecret({
@@ -775,6 +860,11 @@ class ToolboxCryptoService {
         'Custom cascade supports up to 6 stages.',
       );
     }
+    if (selected.contains(ToolboxCryptoCascadeCipher.sha256Stream)) {
+      throw const ToolboxCryptoException(
+        'SHA256 stream can only decrypt existing legacy payloads.',
+      );
+    }
     return selected
         .map((cipher) => _stageForCascadeCipher(cipher, keyBits.bytes))
         .toList(growable: false);
@@ -805,25 +895,47 @@ class ToolboxCryptoService {
     return stages.fold<int>(0, (sum, stage) => sum + stage.keyBytes);
   }
 
-  Uint8List _deriveKeyMaterial({
+  Uint8List _deriveRootKey({
     required String passphrase,
     required Uint8List? keyFileBytes,
     required Uint8List salt,
-    required ToolboxCryptoStrength strength,
     required ToolboxCryptoMacAlgorithm macAlgorithm,
+    required _KdfSettings kdfSettings,
+  }) {
+    final secret = _secretBytesV3(passphrase, keyFileBytes);
+    final derivedSalt = _derivePurposeSalt(salt, 'root-v3-${macAlgorithm.id}');
+    final derivator = pc.Scrypt()
+      ..init(
+        pc.ScryptParameters(
+          kdfSettings.n,
+          kdfSettings.r,
+          kdfSettings.p,
+          64,
+          derivedSalt,
+        ),
+      );
+    return derivator.process(secret);
+  }
+
+  Uint8List _deriveLegacyKeyMaterial({
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required Uint8List salt,
+    required ToolboxCryptoMacAlgorithm macAlgorithm,
+    required _KdfSettings kdfSettings,
     required int length,
   }) {
     if (length == 0) {
       return Uint8List(0);
     }
-    final secret = _secretBytes(passphrase, keyFileBytes);
+    final secret = _secretBytesV2(passphrase, keyFileBytes);
     final derivedSalt = _derivePurposeSalt(salt, 'key-${macAlgorithm.id}');
     final derivator = pc.Scrypt()
       ..init(
         pc.ScryptParameters(
-          strength.scryptN,
-          strength.scryptR,
-          strength.scryptP,
+          kdfSettings.n,
+          kdfSettings.r,
+          kdfSettings.p,
           length,
           derivedSalt,
         ),
@@ -831,49 +943,76 @@ class ToolboxCryptoService {
     return derivator.process(secret);
   }
 
-  Uint8List _deriveMacKey({
+  Uint8List _deriveLegacyMacKey({
     required String passphrase,
     required Uint8List? keyFileBytes,
     required Uint8List salt,
-    required ToolboxCryptoStrength strength,
     required ToolboxCryptoMacAlgorithm macAlgorithm,
+    required _KdfSettings kdfSettings,
   }) {
     final macSalt = _derivePurposeSalt(salt, 'mac-${macAlgorithm.id}');
     final derivator = pc.Scrypt()
       ..init(
         pc.ScryptParameters(
-          strength.scryptN,
-          strength.scryptR,
-          strength.scryptP,
+          kdfSettings.n,
+          kdfSettings.r,
+          kdfSettings.p,
           32,
           macSalt,
         ),
       );
-    return derivator.process(_secretBytes(passphrase, keyFileBytes));
+    return derivator.process(_secretBytesV2(passphrase, keyFileBytes));
   }
 
-  Uint8List _deriveSignatureSeed({
-    required String passphrase,
-    required Uint8List? keyFileBytes,
-    required Uint8List salt,
-    required ToolboxCryptoStrength strength,
-    required ToolboxCryptoMacAlgorithm macAlgorithm,
-  }) {
-    final signatureSalt = _derivePurposeSalt(
-      salt,
-      'signature-${macAlgorithm.id}',
+  Uint8List _expandRootKey(Uint8List rootKey, String purpose, int length) {
+    if (length == 0) {
+      return Uint8List(0);
+    }
+    final output = BytesBuilder(copy: false);
+    var counter = 0;
+    while (output.length < length) {
+      final block = crypto.Hmac(crypto.sha256, rootKey).convert(<int>[
+        ...utf8.encode('vocabulary_sleep_crypto_v3_expand'),
+        0,
+        ...utf8.encode(purpose),
+        0,
+        ..._uint64Bytes(counter),
+      ]);
+      output.add(block.bytes);
+      counter += 1;
+    }
+    return Uint8List.fromList(output.takeBytes().sublist(0, length));
+  }
+
+  Uint8List _padPlainPayload(Uint8List plainBytes) {
+    final paddingLength = 16 + _secureRandom.nextInt(240);
+    final padding = _randomBytes(paddingLength);
+    final output = BytesBuilder(copy: false)
+      ..add(<int>[1])
+      ..add(_uint16Bytes(paddingLength))
+      ..add(_uint64Bytes(plainBytes.length))
+      ..add(plainBytes)
+      ..add(padding);
+    return output.takeBytes();
+  }
+
+  Uint8List _unpadPlainPayload(Uint8List paddedBytes) {
+    const headerLength = 1 + 2 + 8;
+    if (paddedBytes.length < headerLength || paddedBytes[0] != 1) {
+      throw const ToolboxCryptoException('Payload padding is invalid.');
+    }
+    final paddingLength = _readUint16(paddedBytes, 1);
+    final plainLength = _readUint64(paddedBytes, 3);
+    final plainOffset = headerLength;
+    final expectedLength = plainOffset + plainLength + paddingLength;
+    if (plainLength < 0 ||
+        paddingLength < 0 ||
+        expectedLength != paddedBytes.length) {
+      throw const ToolboxCryptoException('Payload padding is invalid.');
+    }
+    return Uint8List.fromList(
+      paddedBytes.sublist(plainOffset, plainOffset + plainLength),
     );
-    final derivator = pc.Scrypt()
-      ..init(
-        pc.ScryptParameters(
-          strength.scryptN,
-          strength.scryptR,
-          strength.scryptP,
-          64,
-          signatureSalt,
-        ),
-      );
-    return derivator.process(_secretBytes(passphrase, keyFileBytes));
   }
 
   Uint8List _derivePurposeSalt(Uint8List salt, String purpose) {
@@ -882,7 +1021,40 @@ class ToolboxCryptoService {
     );
   }
 
-  Uint8List _secretBytes(String passphrase, Uint8List? keyFileBytes) {
+  Uint8List _secretBytesV3(String passphrase, Uint8List? keyFileBytes) {
+    final keyFileDigest = keyFileBytes == null
+        ? Uint8List(0)
+        : Uint8List.fromList(crypto.sha256.convert(keyFileBytes).bytes);
+    final passphraseBytes = Uint8List.fromList(utf8.encode(passphrase));
+    final passphraseDigest = Uint8List.fromList(
+      crypto.sha256.convert(passphraseBytes).bytes,
+    );
+    final builtInSalt = Uint8List.fromList(
+      utf8.encode('vocabulary_sleep_crypto_v3_builtin_password_salt'),
+    );
+    final saltDigest = Uint8List.fromList(
+      crypto.sha256.convert(builtInSalt).bytes,
+    );
+    final interleaved = <int>[];
+    for (var index = 0; index < passphraseDigest.length; index += 1) {
+      interleaved
+        ..add(passphraseDigest[index])
+        ..add(saltDigest[(index * 7) % saltDigest.length]);
+    }
+    return Uint8List.fromList(<int>[
+      ...utf8.encode('vocabulary_sleep_crypto_v3'),
+      0,
+      ...passphraseDigest,
+      0,
+      ...interleaved,
+      0,
+      ...passphraseBytes,
+      0,
+      ...keyFileDigest,
+    ]);
+  }
+
+  Uint8List _secretBytesV2(String passphrase, Uint8List? keyFileBytes) {
     final keyFileDigest = keyFileBytes == null
         ? Uint8List(0)
         : Uint8List.fromList(crypto.sha256.convert(keyFileBytes).bytes);
@@ -915,25 +1087,30 @@ class ToolboxCryptoService {
     required String? keyFileSha256,
     required String? fileName,
     required String? mediaType,
+    _KdfSettings? kdfSettings,
+    String? paddingMode,
   }) {
-    return Uint8List.fromList(
-      utf8.encode(
-        jsonEncode(<String, Object?>{
-          'version': version,
-          'algorithm': algorithm.id,
-          'strength': strength.id,
-          'keyBits': keyBits.bits,
-          'macAlgorithm': macAlgorithm.id,
-          'signatureMode': signatureMode.id,
-          'salt': base64Encode(salt),
-          'plainSha256': plainSha256,
-          'stages': stages,
-          'keyFileSha256': keyFileSha256,
-          'fileName': fileName,
-          'mediaType': mediaType,
-        }),
-      ),
-    );
+    final map = <String, Object?>{
+      'version': version,
+      'algorithm': algorithm.id,
+      'strength': strength.id,
+      'keyBits': keyBits.bits,
+      'macAlgorithm': macAlgorithm.id,
+      'signatureMode': signatureMode.id,
+      'salt': base64Encode(salt),
+      'plainSha256': plainSha256,
+      'stages': stages,
+      'keyFileSha256': keyFileSha256,
+      'fileName': fileName,
+      'mediaType': mediaType,
+    };
+    if (kdfSettings != null) {
+      map['kdf'] = kdfSettings.toJson();
+    }
+    if (paddingMode != null) {
+      map['paddingMode'] = paddingMode;
+    }
+    return Uint8List.fromList(utf8.encode(jsonEncode(map)));
   }
 
   Uint8List _hashBytes(ToolboxCryptoHashAlgorithm algorithm, Uint8List bytes) {
@@ -1301,6 +1478,31 @@ class ToolboxCryptoService {
     return result;
   }
 
+  Uint8List _uint16Bytes(int value) {
+    if (value < 0 || value > 0xffff) {
+      throw const ToolboxCryptoException('Payload padding is invalid.');
+    }
+    return Uint8List.fromList(<int>[(value >> 8) & 255, value & 255]);
+  }
+
+  int _readUint16(Uint8List bytes, int offset) {
+    if (offset < 0 || offset + 2 > bytes.length) {
+      throw const ToolboxCryptoException('Payload padding is invalid.');
+    }
+    return (bytes[offset] << 8) | bytes[offset + 1];
+  }
+
+  int _readUint64(Uint8List bytes, int offset) {
+    if (offset < 0 || offset + 8 > bytes.length) {
+      throw const ToolboxCryptoException('Payload padding is invalid.');
+    }
+    var value = 0;
+    for (var index = 0; index < 8; index += 1) {
+      value = (value << 8) | bytes[offset + index];
+    }
+    return value;
+  }
+
   Uint8List _randomBytes(int length) {
     return Uint8List.fromList(
       List<int>.generate(length, (_) => _secureRandom.nextInt(256)),
@@ -1326,6 +1528,26 @@ class ToolboxCryptoService {
       buffer.write(byte.toRadixString(16).padLeft(2, '0'));
     }
     return buffer.toString();
+  }
+}
+
+class _KdfSettings {
+  const _KdfSettings({required this.n, required this.r, required this.p});
+
+  factory _KdfSettings.fromStrength(ToolboxCryptoStrength strength) {
+    return _KdfSettings(
+      n: strength.scryptN,
+      r: strength.scryptR,
+      p: strength.scryptP,
+    );
+  }
+
+  final int n;
+  final int r;
+  final int p;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'id': 'scrypt', 'n': n, 'r': r, 'p': p};
   }
 }
 

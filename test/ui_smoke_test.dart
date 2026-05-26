@@ -1401,7 +1401,7 @@ void main() {
       expect(find.text('Crypto stage'), findsOneWidget);
       expect(find.text('Carrier and text'), findsOneWidget);
       expect(find.text('Result'), findsOneWidget);
-      expect(find.text('Image preview'), findsOneWidget);
+      expect(find.text('Image preview'), findsNothing);
       expect(find.text('Stego'), findsWidgets);
       expect(find.text('File'), findsOneWidget);
       expect(find.text('Hash'), findsOneWidget);
@@ -1410,24 +1410,31 @@ void main() {
       expect(find.text('Image'), findsWidgets);
       expect(find.text('Audio'), findsOneWidget);
       expect(find.text('Video'), findsOneWidget);
-      expect(find.text('AES'), findsOneWidget);
-      expect(find.text('Twofish'), findsOneWidget);
-      expect(find.text('Camellia'), findsOneWidget);
-      expect(find.text('AES+Camellia'), findsOneWidget);
-      expect(find.text('Custom cascade'), findsOneWidget);
-      expect(find.text('RSA signature'), findsOneWidget);
-      expect(find.text('ECDSA signature'), findsOneWidget);
-      expect(find.text('Whirlpool MAC'), findsOneWidget);
-      expect(find.text('Standard'), findsOneWidget);
-      expect(find.text('Strong'), findsOneWidget);
-      expect(find.text('Extreme'), findsOneWidget);
+      expect(find.text('AES strong'), findsOneWidget);
+      expect(find.text('Twofish strong'), findsOneWidget);
+      expect(find.text('Camellia strong'), findsOneWidget);
+      expect(find.text('AES+Camellia strong+'), findsOneWidget);
+      expect(find.text('Custom strong'), findsOneWidget);
+      expect(find.text('RSA signed'), findsOneWidget);
+      expect(find.text('ECDSA signed'), findsOneWidget);
+      expect(find.text('Whirlpool strong'), findsOneWidget);
+      expect(find.text('Standard 2^16'), findsOneWidget);
+      expect(find.text('Strong 2^17'), findsOneWidget);
+      expect(find.text('Extreme 2^18'), findsOneWidget);
+      expect(find.text('Advanced crypto'), findsOneWidget);
+      expect(find.text('256-bit'), findsNothing);
+      await tester.ensureVisible(find.text('Advanced crypto'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced crypto'));
+      await tester.pumpAndSettle();
       expect(find.text('256-bit'), findsOneWidget);
       expect(find.text('512-bit'), findsOneWidget);
       expect(find.text('1024-bit'), findsOneWidget);
       expect(find.text('Signature'), findsOneWidget);
-      expect(find.text('SHA256 stream'), findsOneWidget);
-      expect(find.text('RC4 legacy'), findsOneWidget);
-      expect(find.text('No encryption'), findsOneWidget);
+      expect(find.text('SHA256 stream'), findsNothing);
+      expect(find.text('RC4 legacy'), findsNothing);
+      expect(find.text('No encryption plain'), findsOneWidget);
+      expect(find.textContaining('Safety: strong'), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('life_stego_pick_button')),
         findsOneWidget,
@@ -1449,6 +1456,22 @@ void main() {
         findsOneWidget,
       );
       expect(
+        find.byKey(const ValueKey<String>('life_crypto_use_key_file_switch')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_crypto_key_file_button')),
+        findsNothing,
+      );
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('life_crypto_use_key_file_switch')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life_crypto_use_key_file_switch')),
+      );
+      await tester.pumpAndSettle();
+      expect(
         find.byKey(const ValueKey<String>('life_crypto_key_file_button')),
         findsOneWidget,
       );
@@ -1457,6 +1480,8 @@ void main() {
         findsOneWidget,
       );
 
+      await tester.ensureVisible(find.text('Reveal'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Reveal'));
       await tester.pumpAndSettle();
       expect(find.text('Media to reveal'), findsOneWidget);
@@ -1465,7 +1490,12 @@ void main() {
         findsNothing,
       );
 
-      await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'File'));
+      await Scrollable.ensureVisible(
+        tester.element(find.widgetWithText(ChoiceChip, 'File')),
+        alignment: 0.2,
+        duration: Duration.zero,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ChoiceChip, 'File'));
       await tester.pumpAndSettle();
       expect(find.text('File into media'), findsOneWidget);
@@ -1482,6 +1512,12 @@ void main() {
         findsOneWidget,
       );
 
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Hash')),
+        alignment: 0.2,
+        duration: Duration.zero,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Hash'));
       await tester.pumpAndSettle();
       expect(find.text('Hash digest'), findsOneWidget);

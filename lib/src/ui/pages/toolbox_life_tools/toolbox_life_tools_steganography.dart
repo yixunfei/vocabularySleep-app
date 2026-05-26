@@ -41,8 +41,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   String? _sourceName;
   String? _sourceExtension;
   Uint8List? _sourceBytes;
+  bool _useKeyFiles = false;
   String? _keyFileName;
   Uint8List? _keyFileBytes;
+  List<_KeyFileEntry> _keyFileEntries = const <_KeyFileEntry>[];
   String? _fileName;
   String? _fileExtension;
   Uint8List? _fileBytes;
@@ -115,12 +117,18 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ),
           ],
           const SizedBox(height: 12),
-          if (_workspace != _CryptoWorkspace.hash) ...<Widget>[
+          if (_workspace == _CryptoWorkspace.steganography) ...<Widget>[
             _buildResultPanel(context),
-            const SizedBox(height: 12),
-            _buildPreviewPanel(context),
+            if (_shouldShowPreviewPanel) ...<Widget>[
+              const SizedBox(height: 12),
+              _buildPreviewPanel(context),
+            ],
           ] else if (_workspace == _CryptoWorkspace.file) ...<Widget>[
             _buildFileResultPanel(context),
+            if (_shouldShowPreviewPanel) ...<Widget>[
+              const SizedBox(height: 12),
+              _buildPreviewPanel(context),
+            ],
           ] else ...<Widget>[_buildHashResultPanel(context)],
           const SizedBox(height: 12),
           _buildBoundaryPanel(context),
@@ -130,99 +138,118 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   }
 
   Widget _buildCryptoAdvancedPanel(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _LifeSegmentedField<ToolboxCryptoKeyBits>(
-          label: _lifeText(context, zh: '密钥材料', en: 'Key bits'),
-          value: _keyBits,
-          options: const <_LifeOption<ToolboxCryptoKeyBits>>[
-            _LifeOption<ToolboxCryptoKeyBits>(
-              value: ToolboxCryptoKeyBits.bits256,
-              labelZh: '256-bit',
-              labelEn: '256-bit',
-            ),
-            _LifeOption<ToolboxCryptoKeyBits>(
-              value: ToolboxCryptoKeyBits.bits512,
-              labelZh: '512-bit',
-              labelEn: '512-bit',
-            ),
-            _LifeOption<ToolboxCryptoKeyBits>(
-              value: ToolboxCryptoKeyBits.bits1024,
-              labelZh: '1024-bit',
-              labelEn: '1024-bit',
-            ),
-          ],
-          onChanged: _busy
-              ? (_) {}
-              : (value) => setState(() => _keyBits = value),
+    return _LifePreviewFrame(
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 8),
+        title: Text(_lifeText(context, zh: '高级加密参数', en: 'Advanced crypto')),
+        subtitle: Text(
+          '${_keyBits.bits}-bit · ${_macAlgorithm.id} · ${_signatureMode.label}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 12),
-        _LifeSegmentedField<ToolboxCryptoMacAlgorithm>(
-          label: _lifeText(context, zh: '校验哈希', en: 'MAC hash'),
-          value: _macAlgorithm,
-          options: const <_LifeOption<ToolboxCryptoMacAlgorithm>>[
-            _LifeOption<ToolboxCryptoMacAlgorithm>(
-              value: ToolboxCryptoMacAlgorithm.sha256,
-              labelZh: 'SHA-256',
-              labelEn: 'SHA-256',
-            ),
-            _LifeOption<ToolboxCryptoMacAlgorithm>(
-              value: ToolboxCryptoMacAlgorithm.whirlpool,
-              labelZh: 'Whirlpool',
-              labelEn: 'Whirlpool',
-            ),
-          ],
-          onChanged: _busy
-              ? (_) {}
-              : (value) => setState(() => _macAlgorithm = value),
-        ),
-        const SizedBox(height: 12),
-        _LifeSegmentedField<ToolboxCryptoSignatureMode>(
-          label: _lifeText(context, zh: '签名层', en: 'Signature'),
-          value: _signatureMode,
-          options: const <_LifeOption<ToolboxCryptoSignatureMode>>[
-            _LifeOption<ToolboxCryptoSignatureMode>(
-              value: ToolboxCryptoSignatureMode.none,
-              labelZh: '无',
-              labelEn: 'None',
-            ),
-            _LifeOption<ToolboxCryptoSignatureMode>(
-              value: ToolboxCryptoSignatureMode.rsaSha256,
-              labelZh: 'SHA-256/RSA',
-              labelEn: 'SHA-256/RSA',
-            ),
-            _LifeOption<ToolboxCryptoSignatureMode>(
-              value: ToolboxCryptoSignatureMode.ecdsaSha256,
-              labelZh: 'ECDSA',
-              labelEn: 'ECDSA',
-            ),
-          ],
-          onChanged: _busy
-              ? (_) {}
-              : (value) => setState(() => _signatureMode = value),
-        ),
-        if (_encryption == ToolboxCryptoAlgorithm.customCascade) ...<Widget>[
-          const SizedBox(height: 12),
-          _buildInlineNotice(
-            context,
-            icon: Icons.account_tree_rounded,
-            text: _lifeText(
-              context,
-              zh: '自由级联会按下方顺序逐层加密，每层独立派生所选长度的密钥材料。',
-              en: 'Custom cascade encrypts in the order below, deriving independent key material for every stage.',
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: ToolboxCryptoCascadeCipher.values
-                .map((cipher) => _buildCascadeChip(context, cipher))
-                .toList(growable: false),
+        children: <Widget>[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _LifeSegmentedField<ToolboxCryptoKeyBits>(
+                label: _lifeText(context, zh: '密钥材料', en: 'Key bits'),
+                value: _keyBits,
+                options: const <_LifeOption<ToolboxCryptoKeyBits>>[
+                  _LifeOption<ToolboxCryptoKeyBits>(
+                    value: ToolboxCryptoKeyBits.bits256,
+                    labelZh: '256-bit',
+                    labelEn: '256-bit',
+                  ),
+                  _LifeOption<ToolboxCryptoKeyBits>(
+                    value: ToolboxCryptoKeyBits.bits512,
+                    labelZh: '512-bit',
+                    labelEn: '512-bit',
+                  ),
+                  _LifeOption<ToolboxCryptoKeyBits>(
+                    value: ToolboxCryptoKeyBits.bits1024,
+                    labelZh: '1024-bit',
+                    labelEn: '1024-bit',
+                  ),
+                ],
+                onChanged: _busy
+                    ? (_) {}
+                    : (value) => setState(() => _keyBits = value),
+              ),
+              const SizedBox(height: 12),
+              _LifeSegmentedField<ToolboxCryptoMacAlgorithm>(
+                label: _lifeText(context, zh: '校验哈希', en: 'MAC hash'),
+                value: _macAlgorithm,
+                options: const <_LifeOption<ToolboxCryptoMacAlgorithm>>[
+                  _LifeOption<ToolboxCryptoMacAlgorithm>(
+                    value: ToolboxCryptoMacAlgorithm.sha256,
+                    labelZh: 'SHA-256',
+                    labelEn: 'SHA-256',
+                  ),
+                  _LifeOption<ToolboxCryptoMacAlgorithm>(
+                    value: ToolboxCryptoMacAlgorithm.whirlpool,
+                    labelZh: 'Whirlpool',
+                    labelEn: 'Whirlpool',
+                  ),
+                ],
+                onChanged: _busy
+                    ? (_) {}
+                    : (value) => setState(() => _macAlgorithm = value),
+              ),
+              const SizedBox(height: 12),
+              _LifeSegmentedField<ToolboxCryptoSignatureMode>(
+                label: _lifeText(context, zh: '签名层', en: 'Signature'),
+                value: _signatureMode,
+                options: const <_LifeOption<ToolboxCryptoSignatureMode>>[
+                  _LifeOption<ToolboxCryptoSignatureMode>(
+                    value: ToolboxCryptoSignatureMode.none,
+                    labelZh: '无',
+                    labelEn: 'None',
+                  ),
+                  _LifeOption<ToolboxCryptoSignatureMode>(
+                    value: ToolboxCryptoSignatureMode.rsaSha256,
+                    labelZh: 'SHA-256/RSA',
+                    labelEn: 'SHA-256/RSA',
+                  ),
+                  _LifeOption<ToolboxCryptoSignatureMode>(
+                    value: ToolboxCryptoSignatureMode.ecdsaSha256,
+                    labelZh: 'ECDSA',
+                    labelEn: 'ECDSA',
+                  ),
+                ],
+                onChanged: _busy
+                    ? (_) {}
+                    : (value) => setState(() => _signatureMode = value),
+              ),
+              if (_encryption ==
+                  ToolboxCryptoAlgorithm.customCascade) ...<Widget>[
+                const SizedBox(height: 12),
+                _buildInlineNotice(
+                  context,
+                  icon: Icons.account_tree_rounded,
+                  text: _lifeText(
+                    context,
+                    zh: '自由级联会按下方顺序逐层加密，每层独立派生所选长度的密钥材料。',
+                    en: 'Custom cascade encrypts in the order below, deriving independent key material for every stage.',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: ToolboxCryptoCascadeCipher.values
+                      .where(
+                        (cipher) =>
+                            cipher != ToolboxCryptoCascadeCipher.sha256Stream,
+                      )
+                      .map((cipher) => _buildCascadeChip(context, cipher))
+                      .toList(growable: false),
+                ),
+              ],
+            ],
           ),
         ],
-      ],
+      ),
     );
   }
 
@@ -384,6 +411,18 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     },
             ),
             const SizedBox(height: 12),
+            if (_isUnsupportedMediaWrite) ...<Widget>[
+              _buildInlineNotice(
+                context,
+                icon: Icons.info_outline_rounded,
+                text: _lifeText(
+                  context,
+                  zh: '音频写入需要频域后端，视频写入需要帧内或运动矢量后端；当前仅保留旧载荷还原。',
+                  en: 'Audio writes require a frequency-domain backend and video writes require frame-level or motion-vector support. Legacy reveal stays available.',
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
           _LifeSegmentedField<ToolboxCryptoAlgorithm>(
             label: _lifeText(context, zh: '加密算法', en: 'Encryption'),
@@ -391,68 +430,58 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             options: const <_LifeOption<ToolboxCryptoAlgorithm>>[
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.aesGcm,
-                labelZh: 'AES',
-                labelEn: 'AES',
+                labelZh: 'AES 强',
+                labelEn: 'AES strong',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.twofishGcm,
-                labelZh: 'Twofish',
-                labelEn: 'Twofish',
+                labelZh: 'Twofish 强',
+                labelEn: 'Twofish strong',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.camelliaGcm,
-                labelZh: 'Camellia',
-                labelEn: 'Camellia',
+                labelZh: 'Camellia 强',
+                labelEn: 'Camellia strong',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.aesTwofishGcm,
-                labelZh: 'AES+Twofish',
-                labelEn: 'AES+Twofish',
+                labelZh: 'AES+Twofish 强+',
+                labelEn: 'AES+Twofish strong+',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.aesCamelliaGcm,
-                labelZh: 'AES+Camellia',
-                labelEn: 'AES+Camellia',
+                labelZh: 'AES+Camellia 强+',
+                labelEn: 'AES+Camellia strong+',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm,
-                labelZh: '三重组合',
-                labelEn: 'Triple',
+                labelZh: '三重 强+',
+                labelEn: 'Triple strong+',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.customCascade,
-                labelZh: '自由级联',
-                labelEn: 'Custom cascade',
+                labelZh: '自由级联 强',
+                labelEn: 'Custom strong',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.sha256RsaSignature,
-                labelZh: 'RSA 签名',
-                labelEn: 'RSA signature',
+                labelZh: 'RSA 签名 强',
+                labelEn: 'RSA signed',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.ecdsaSignature,
-                labelZh: 'ECDSA 签名',
-                labelEn: 'ECDSA signature',
+                labelZh: 'ECDSA 签名 强',
+                labelEn: 'ECDSA signed',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.whirlpoolDigest,
-                labelZh: 'Whirlpool',
-                labelEn: 'Whirlpool MAC',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.sha256Stream,
-                labelZh: 'SHA256 流',
-                labelEn: 'SHA256 stream',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.rc4Legacy,
-                labelZh: 'RC4 兼容',
-                labelEn: 'RC4 legacy',
+                labelZh: 'Whirlpool 校验 强',
+                labelEn: 'Whirlpool strong',
               ),
               _LifeOption<ToolboxCryptoAlgorithm>(
                 value: ToolboxCryptoAlgorithm.none,
-                labelZh: '不加密',
-                labelEn: 'No encryption',
+                labelZh: '不加密 明文',
+                labelEn: 'No encryption plain',
               ),
             ],
             onChanged: _busy
@@ -460,24 +489,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 : (value) => setState(() => _encryption = value),
           ),
           const SizedBox(height: 12),
+          _buildAlgorithmSafetyNotice(context),
+          const SizedBox(height: 12),
           _LifeSegmentedField<ToolboxCryptoStrength>(
             label: _lifeText(context, zh: '强度', en: 'Strength'),
             value: _strength,
             options: const <_LifeOption<ToolboxCryptoStrength>>[
               _LifeOption<ToolboxCryptoStrength>(
                 value: ToolboxCryptoStrength.standard,
-                labelZh: '标准',
-                labelEn: 'Standard',
+                labelZh: '标准 2^16',
+                labelEn: 'Standard 2^16',
               ),
               _LifeOption<ToolboxCryptoStrength>(
                 value: ToolboxCryptoStrength.strong,
-                labelZh: '加强',
-                labelEn: 'Strong',
+                labelZh: '加强 2^17',
+                labelEn: 'Strong 2^17',
               ),
               _LifeOption<ToolboxCryptoStrength>(
                 value: ToolboxCryptoStrength.extreme,
-                labelZh: '极限',
-                labelEn: 'Extreme',
+                labelZh: '极限 2^18',
+                labelEn: 'Extreme 2^18',
               ),
             ],
             onChanged: _busy
@@ -518,7 +549,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               child: FilledButton.tonalIcon(
                 key: const ValueKey<String>('life_stego_pick_button'),
                 onPressed: _busy ? null : _pickMedia,
-                icon: const Icon(Icons.file_open_rounded),
+                icon: Icon(_mediaIcon(_mediaKind)),
                 label: Text(_lifeText(context, zh: '选择媒体', en: 'Pick media')),
               ),
             ),
@@ -594,7 +625,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         Expanded(
           child: FilledButton.icon(
             key: const ValueKey<String>('life_stego_run_button'),
-            onPressed: _busy || _sourceBytes == null
+            onPressed: _busy || _sourceBytes == null || _isUnsupportedMediaWrite
                 ? null
                 : (_mode == _StegoMode.embed ? _embed : _reveal),
             icon: _busy
@@ -664,7 +695,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               child: FilledButton.tonalIcon(
                 key: const ValueKey<String>('life_crypto_pick_carrier_button'),
                 onPressed: _busy ? null : _pickMedia,
-                icon: const Icon(Icons.file_open_rounded),
+                icon: const Icon(Icons.perm_media_rounded),
                 label: Text(_lifeText(context, zh: '选择载体', en: 'Pick carrier')),
               ),
             ),
@@ -697,7 +728,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           Row(
             children: <Widget>[
               Expanded(
-                child: FilledButton.tonalIcon(
+                child: OutlinedButton.icon(
                   key: const ValueKey<String>('life_crypto_pick_file_button'),
                   onPressed: _busy ? null : _pickCryptoFile,
                   icon: const Icon(Icons.description_rounded),
@@ -757,6 +788,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onPressed:
                     _busy ||
                         _sourceBytes == null ||
+                        _isUnsupportedMediaWrite ||
                         (_fileMode == _FileCryptoMode.encrypt &&
                             _fileBytes == null)
                     ? null
@@ -1180,8 +1212,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         Text(
           _lifeText(
             context,
-            zh: '图片隐写采用无损 PNG LSB；请不要再转存为 JPEG。音频/视频采用尾部载荷块，通常可保持播放兼容，但少数严格解析器可能不接受附加尾部数据。',
-            en: 'Image stego uses lossless PNG LSB; do not re-save as JPEG. Audio/video use a tail payload block that is usually playback-compatible, but strict parsers may reject appended data.',
+            zh: '图片隐写采用密钥派生头和随机像素顺序的无损 PNG LSB；请不要再转存为 JPEG。音频/视频新写入等待频域、帧内或运动矢量后端，旧尾部载荷仅保留还原兼容。',
+            en: 'Image stego uses lossless PNG LSB with a key-derived header and randomized pixel order; do not re-save as JPEG. New audio/video writes wait for frequency-domain, frame-level, or motion-vector backends. Legacy tail payloads are reveal-only.',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -1312,91 +1344,139 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     );
   }
 
+  Widget _buildAlgorithmSafetyNotice(BuildContext context) {
+    final icon = switch (_encryption) {
+      ToolboxCryptoAlgorithm.none => Icons.warning_amber_rounded,
+      ToolboxCryptoAlgorithm.sha256Stream ||
+      ToolboxCryptoAlgorithm.rc4Legacy => Icons.history_rounded,
+      _ => Icons.verified_user_rounded,
+    };
+    return _buildInlineNotice(
+      context,
+      icon: icon,
+      text: _algorithmSafetyText(context, _encryption),
+    );
+  }
+
   Widget _buildKeyFileRow(BuildContext context) {
-    final text = _keyFileBytes == null
-        ? _lifeText(context, zh: '未使用密钥文件', en: 'No key file')
-        : '${_keyFileName ?? _lifeText(context, zh: '密钥文件', en: 'Key file')} · ${_formatBytes(_keyFileBytes!.length)}';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: OutlinedButton.icon(
-                key: const ValueKey<String>('life_crypto_key_file_button'),
-                onPressed: _busy ? null : _pickKeyFile,
-                icon: const Icon(Icons.key_rounded),
-                label: Text(
-                  _lifeText(context, zh: '选择密钥文件', en: 'Pick key file'),
-                  overflow: TextOverflow.ellipsis,
+    final hasKeyFiles = _keyFileEntries.isNotEmpty;
+    final summary = hasKeyFiles
+        ? _keyFileSummary(context)
+        : _lifeText(context, zh: '尚未选择密钥文件。', en: 'No key files selected.');
+    return _LifePreviewFrame(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.key_rounded, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _lifeText(context, zh: '使用密钥文件', en: 'Use key files'),
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    Text(
+                      _lifeText(
+                        context,
+                        zh: '开启后，所选文件会按稳定规则排序后参与派生。',
+                        en: 'When enabled, selected files are sorted and mixed into key derivation.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '移除密钥文件', en: 'Remove key file'),
-              onPressed: _busy || _keyFileBytes == null
-                  ? null
-                  : () => setState(() {
-                      _keyFileName = null;
-                      _keyFileBytes = null;
-                    }),
-              icon: const Icon(Icons.close_rounded),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                text,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
+              Switch(
+                key: const ValueKey<String>('life_crypto_use_key_file_switch'),
+                value: _useKeyFiles,
+                onChanged: _busy
+                    ? null
+                    : (value) => setState(() => _useKeyFiles = value),
               ),
+            ],
+          ),
+          if (_useKeyFiles) ...<Widget>[
+            const Divider(height: 18),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                OutlinedButton.icon(
+                  key: const ValueKey<String>('life_crypto_key_file_button'),
+                  onPressed: _busy ? null : _pickKeyFile,
+                  icon: const Icon(Icons.upload_file_rounded, size: 18),
+                  label: Text(
+                    _lifeText(context, zh: '导入', en: 'Import'),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: _compactButtonStyle(),
+                ),
+                TextButton.icon(
+                  key: const ValueKey<String>('life_crypto_generate_key_file'),
+                  onPressed: _busy ? null : _showKeyFileDialog,
+                  icon: const Icon(Icons.casino_rounded, size: 18),
+                  label: Text(_lifeText(context, zh: '生成', en: 'Generate')),
+                  style: _compactButtonStyle(),
+                ),
+                TextButton.icon(
+                  key: const ValueKey<String>('life_crypto_export_key_file'),
+                  onPressed: _busy || _keyFileBytes == null
+                      ? null
+                      : _saveKeyFile,
+                  icon: const Icon(Icons.save_alt_rounded, size: 18),
+                  label: Text(_lifeText(context, zh: '导出', en: 'Export')),
+                  style: _compactButtonStyle(),
+                ),
+                IconButton.outlined(
+                  tooltip: _lifeText(
+                    context,
+                    zh: '清空密钥文件',
+                    en: 'Clear key files',
+                  ),
+                  onPressed: _busy || !hasKeyFiles ? null : _clearKeyFiles,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              summary,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: <Widget>[
-            SizedBox(
-              width: 108,
-              child: TextField(
-                key: const ValueKey<String>('life_crypto_key_file_length'),
-                controller: _keyFileLengthController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: _lifeText(context, zh: '字节', en: 'Bytes'),
-                  isDense: true,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FilledButton.tonalIcon(
-                key: const ValueKey<String>('life_crypto_generate_key_file'),
-                onPressed: _busy ? null : _generateKeyFile,
-                icon: const Icon(Icons.casino_rounded),
-                label: Text(
-                  _lifeText(context, zh: '生成', en: 'Generate'),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                key: const ValueKey<String>('life_crypto_export_key_file'),
-                onPressed: _busy || _keyFileBytes == null ? null : _saveKeyFile,
-                icon: const Icon(Icons.save_alt_rounded),
-                label: Text(
-                  _lifeText(context, zh: '导出', en: 'Export'),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  ButtonStyle _compactButtonStyle() {
+    return const ButtonStyle(
+      visualDensity: VisualDensity.compact,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: WidgetStatePropertyAll<EdgeInsetsGeometry>(
+        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      minimumSize: WidgetStatePropertyAll<Size>(Size(0, 36)),
+    );
+  }
+
+  String _keyFileSummary(BuildContext context) {
+    final count = _keyFileEntries.length;
+    final names = _keyFileEntries.take(3).map((entry) => entry.name).join(', ');
+    final suffix = count > 3 ? ' +${count - 3}' : '';
+    final bytes = _keyFileBytes == null ? 0 : _keyFileBytes!.length;
+    return _lifeText(
+      context,
+      zh: '$count 个密钥文件 · ${_formatBytes(bytes)} · $names$suffix',
+      en: '$count key file(s) · ${_formatBytes(bytes)} · $names$suffix',
     );
   }
 
@@ -1501,23 +1581,29 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   Future<void> _pickKeyFile() async {
     try {
       final picked = await FilePicker.platform.pickFiles(
-        allowMultiple: false,
+        allowMultiple: true,
         type: FileType.any,
         withData: true,
       );
-      final file = (picked != null && picked.files.isNotEmpty)
-          ? picked.files.first
-          : null;
-      final bytes = file?.bytes;
-      if (file == null || bytes == null || bytes.isEmpty) {
+      final files = picked?.files ?? const <PlatformFile>[];
+      final entries = files
+          .where((file) => file.bytes != null && file.bytes!.isNotEmpty)
+          .map(
+            (file) => _KeyFileEntry(
+              name: file.name,
+              bytes: Uint8List.fromList(file.bytes!),
+            ),
+          )
+          .toList(growable: false);
+      if (entries.isEmpty) {
         return;
       }
       if (!mounted) {
         return;
       }
       setState(() {
-        _keyFileName = file.name;
-        _keyFileBytes = Uint8List.fromList(bytes);
+        _setKeyFileEntries(entries);
+        _useKeyFiles = true;
         _savedPath = null;
         _error = null;
       });
@@ -1533,6 +1619,52 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         );
       });
     }
+  }
+
+  Future<void> _showKeyFileDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            _lifeText(context, zh: '生成密钥文件', en: 'Generate key file'),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextField(
+                key: const ValueKey<String>('life_crypto_key_file_length'),
+                controller: _keyFileLengthController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: _lifeText(context, zh: '字节长度', en: 'Bytes'),
+                  helperText: _lifeText(
+                    context,
+                    zh: '建议至少 256 字节，可输入 32 到 1048576。',
+                    en: 'Recommended: at least 256 bytes. Range: 32 to 1048576.',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_lifeText(context, zh: '取消', en: 'Cancel')),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                await _generateKeyFile();
+              },
+              icon: const Icon(Icons.casino_rounded),
+              label: Text(_lifeText(context, zh: '生成', en: 'Generate')),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _generateKeyFile() async {
@@ -1554,8 +1686,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         fileName: 'vocabulary_sleep_key_${length}b_$timestamp.bin',
       );
       setState(() {
-        _keyFileName = result.fileName;
-        _keyFileBytes = result.bytes;
+        _setKeyFileEntries(<_KeyFileEntry>[
+          _KeyFileEntry(name: result.fileName, bytes: result.bytes),
+        ]);
+        _useKeyFiles = true;
         _savedPath = null;
         _error = null;
       });
@@ -1708,9 +1842,46 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     }
   }
 
+  Future<bool> _confirmPlaintextIfNeeded() async {
+    if (_encryption != ToolboxCryptoAlgorithm.none) {
+      return true;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(_lifeText(context, zh: '确认不加密', en: 'Confirm plaintext')),
+          content: Text(
+            _lifeText(
+              context,
+              zh: '当前选择“不加密”，payload 只会经过封装和隐写，不会被加密。空密码会让还原门槛更低，请确认仍要生成。',
+              en: 'No encryption is selected. The payload will be packaged and hidden, but not encrypted. An empty passphrase lowers the recovery barrier; confirm before generating.',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(_lifeText(context, zh: '取消', en: 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                _lifeText(context, zh: '继续生成', en: 'Generate anyway'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
+  }
+
   Future<void> _embed() async {
     final source = _sourceBytes;
     if (source == null) {
+      return;
+    }
+    if (!await _confirmPlaintextIfNeeded()) {
       return;
     }
     setState(() {
@@ -1727,7 +1898,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         encryption: _encryption,
         passphrase: _passphraseController.text,
         strength: _strength,
-        keyFileBytes: _keyFileBytes,
+        keyFileBytes: _activeKeyFileBytes,
         sourceExtension: _sourceExtension,
         cascade: _selectedCascade,
         keyBits: _keyBits,
@@ -1783,7 +1954,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         mediaKind: _mediaKind,
         carrierBytes: source,
         passphrase: _passphraseController.text,
-        keyFileBytes: _keyFileBytes,
+        keyFileBytes: _activeKeyFileBytes,
       );
       if (!mounted) {
         return;
@@ -1815,6 +1986,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (carrier == null || file == null) {
       return;
     }
+    if (!await _confirmPlaintextIfNeeded()) {
+      return;
+    }
     setState(() {
       _busy = true;
       _savedPath = null;
@@ -1829,7 +2003,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         encryption: _encryption,
         passphrase: _passphraseController.text,
         strength: _strength,
-        keyFileBytes: _keyFileBytes,
+        keyFileBytes: _activeKeyFileBytes,
         sourceExtension: _sourceExtension,
         fileName: _fileName,
         mediaType: _fileExtension,
@@ -1879,7 +2053,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         mediaKind: _mediaKind,
         carrierBytes: carrier,
         passphrase: _passphraseController.text,
-        keyFileBytes: _keyFileBytes,
+        keyFileBytes: _activeKeyFileBytes,
       );
       if (!mounted) {
         return;
@@ -2157,6 +2331,58 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     _error = null;
   }
 
+  void _clearKeyFiles() {
+    setState(() {
+      _keyFileName = null;
+      _keyFileBytes = null;
+      _keyFileEntries = const <_KeyFileEntry>[];
+    });
+  }
+
+  void _setKeyFileEntries(List<_KeyFileEntry> entries) {
+    final sorted = entries.toList(growable: false)
+      ..sort(_compareKeyFileEntries);
+    _keyFileEntries = sorted;
+    _keyFileBytes = _combineKeyFileEntries(sorted);
+    _keyFileName = sorted.length == 1
+        ? sorted.first.name
+        : 'vocabulary_sleep_key_bundle_${sorted.length}.bin';
+  }
+
+  int _compareKeyFileEntries(_KeyFileEntry left, _KeyFileEntry right) {
+    final nameCompare = left.name.toLowerCase().compareTo(
+      right.name.toLowerCase(),
+    );
+    if (nameCompare != 0) {
+      return nameCompare;
+    }
+    final hashCompare = left.digestHex.compareTo(right.digestHex);
+    if (hashCompare != 0) {
+      return hashCompare;
+    }
+    return left.bytes.length.compareTo(right.bytes.length);
+  }
+
+  Uint8List _combineKeyFileEntries(List<_KeyFileEntry> entries) {
+    if (entries.length == 1) {
+      return Uint8List.fromList(entries.first.bytes);
+    }
+    final builder = BytesBuilder(copy: false)
+      ..add(utf8.encode('vocabulary_sleep_keyfile_bundle_v1'))
+      ..addByte(0);
+    for (final entry in entries) {
+      final nameBytes = utf8.encode(entry.name);
+      final digestBytes = base64Decode(entry.digestBase64);
+      builder
+        ..add(_uint32Bytes(nameBytes.length))
+        ..add(nameBytes)
+        ..add(_uint32Bytes(entry.bytes.length))
+        ..add(digestBytes)
+        ..add(entry.bytes);
+    }
+    return builder.takeBytes();
+  }
+
   void _resetFileCrypto() {
     setState(() {
       _fileName = null;
@@ -2203,14 +2429,32 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   void _resetAll() {
     setState(() {
       _clearSourceAndResult();
+      _useKeyFiles = false;
       _keyFileName = null;
       _keyFileBytes = null;
+      _keyFileEntries = const <_KeyFileEntry>[];
       _secretController.clear();
     });
   }
 
   List<ToolboxCryptoCascadeCipher>? get _selectedCascade =>
       _encryption == ToolboxCryptoAlgorithm.customCascade ? _cascade : null;
+
+  Uint8List? get _activeKeyFileBytes => _useKeyFiles ? _keyFileBytes : null;
+
+  bool get _shouldShowPreviewPanel =>
+      _sourcePreview != null || _outputPreview != null;
+
+  bool get _isUnsupportedMediaWrite {
+    if (_mediaKind == ToolboxSteganographyMediaKind.image) {
+      return false;
+    }
+    return switch (_workspace) {
+      _CryptoWorkspace.steganography => _mode == _StegoMode.embed,
+      _CryptoWorkspace.file => _fileMode == _FileCryptoMode.encrypt,
+      _CryptoWorkspace.hash => false,
+    };
+  }
 
   String? _cleanExtension(String? extension) {
     final value = extension?.replaceFirst('.', '').trim().toLowerCase();
@@ -2262,6 +2506,42 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         en: 'File crypto',
       ),
       _CryptoWorkspace.hash => _lifeText(context, zh: '哈希', en: 'Hash'),
+    };
+  }
+
+  String _algorithmSafetyText(
+    BuildContext context,
+    ToolboxCryptoAlgorithm encryption,
+  ) {
+    return switch (encryption) {
+      ToolboxCryptoAlgorithm.none => _lifeText(
+        context,
+        zh: '安全性: 明文。不会加密 payload，生成前会再次确认；任何拿到载体的人都可能还原内容。',
+        en: 'Safety: plaintext. Payloads are not encrypted and generation asks for confirmation; anyone with the carrier may recover the content.',
+      ),
+      ToolboxCryptoAlgorithm.sha256Stream => _lifeText(
+        context,
+        zh: '安全性: 弱，仅用于旧载荷还原；新加密已移除。',
+        en: 'Safety: weak, reveal-only for legacy payloads. New encryption has been removed.',
+      ),
+      ToolboxCryptoAlgorithm.rc4Legacy => _lifeText(
+        context,
+        zh: '安全性: 弱，仅用于 RC4 旧载荷还原；新加密已移除。',
+        en: 'Safety: weak, reveal-only for legacy RC4 payloads. New encryption has been removed.',
+      ),
+      ToolboxCryptoAlgorithm.aesTwofishGcm ||
+      ToolboxCryptoAlgorithm.aesCamelliaGcm ||
+      ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm ||
+      ToolboxCryptoAlgorithm.customCascade => _lifeText(
+        context,
+        zh: '安全性: 强+。使用 scrypt 2^16 起步、随机填充、独立派生密钥材料和认证校验。',
+        en: 'Safety: strong+. Uses scrypt from 2^16, random padding, independent key material, and authentication.',
+      ),
+      _ => _lifeText(
+        context,
+        zh: '安全性: 强。默认 256-bit 以上密钥材料，使用随机盐、随机填充和认证校验。',
+        en: 'Safety: strong. Uses at least 256-bit key material, random salt, random padding, and authentication.',
+      ),
     };
   }
 
@@ -2400,6 +2680,15 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     return '${(kb / 1024).toStringAsFixed(2)} MB';
   }
 
+  Uint8List _uint32Bytes(int value) {
+    return Uint8List.fromList(<int>[
+      (value >> 24) & 255,
+      (value >> 16) & 255,
+      (value >> 8) & 255,
+      value & 255,
+    ]);
+  }
+
   String _friendlyError(BuildContext context, Object error) {
     final message = switch (error) {
       ToolboxSteganographyException(:final message) => message,
@@ -2441,6 +2730,25 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         zh: '密钥文件不匹配，或缺少密钥文件。',
         en: message,
       ),
+      'Legacy or weak algorithms can only decrypt existing payloads.' =>
+        _lifeText(
+          context,
+          zh: 'RC4 和 SHA256 流仅保留旧载荷解密兼容，不能用于新加密。',
+          en: message,
+        ),
+      'SHA256 stream can only decrypt existing legacy payloads.' => _lifeText(
+        context,
+        zh: 'SHA256 流仅保留旧载荷解密兼容，不能加入新的自由级联。',
+        en: message,
+      ),
+      'Audio steganography requires a frequency-domain backend before new payloads can be generated.' =>
+        _lifeText(
+          context,
+          zh: '音频新写入需要 DCT/DWT/回声隐藏等频域后端；当前仅支持旧载荷还原。',
+          en: message,
+        ),
+      'Video steganography requires a frame-level or motion-vector backend before new payloads can be generated.' =>
+        _lifeText(context, zh: '视频新写入需要帧内或运动矢量级后端；当前仅支持旧载荷还原。', en: message),
       'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.' =>
         _lifeText(
           context,
@@ -2509,6 +2817,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         zh: '载荷校验失败。',
         en: message,
       ),
+      'Payload padding is invalid.' => _lifeText(
+        context,
+        zh: '载荷随机填充无效，文件可能已损坏。',
+        en: message,
+      ),
       'Payload text is not valid UTF-8.' => _lifeText(
         context,
         zh: '载荷文本不是有效 UTF-8。',
@@ -2543,4 +2856,18 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       _ => message,
     };
   }
+}
+
+class _KeyFileEntry {
+  _KeyFileEntry({required this.name, required Uint8List bytes})
+    : bytes = Uint8List.fromList(bytes) {
+    final digest = sha256.convert(this.bytes);
+    digestHex = digest.toString();
+    digestBase64 = base64Encode(digest.bytes);
+  }
+
+  final String name;
+  final Uint8List bytes;
+  late final String digestHex;
+  late final String digestBase64;
 }
