@@ -357,9 +357,10 @@ class ToolboxCryptoKeyFileResult {
 
 class ToolboxCryptoService {
   static const int currentVersion = 4;
-  static const int maxPlainBytes = 128 * 1024 * 1024;
-  static const int maxCipherBytes = maxPlainBytes + 1024 * 1024;
-  static const int maxEnvelopeBytes = 192 * 1024 * 1024;
+  static const int maxPlainBytes = 256 * 1024 * 1024;
+  static const int maxCipherBytes = maxPlainBytes + 2 * 1024 * 1024;
+  static const int maxEnvelopeBytes = 384 * 1024 * 1024;
+  static const int maxKeyFileBytes = 1024 * 1024;
   static const int _maxStageCount = 8;
   static const int _maxScryptN = 1 << 18;
   static const int _maxScryptR = 8;
@@ -554,10 +555,9 @@ class ToolboxCryptoService {
     final map = _decodeEnvelope(envelopeBytes);
     final rawVersion = map['version'];
     final version = rawVersion is int ? rawVersion : null;
-    if (version != 2 && version != 3 && version != currentVersion) {
+    if (version != currentVersion) {
       throw const ToolboxCryptoException('Unsupported crypto version.');
     }
-    final includePublicHashes = version == 2 || version == 3;
     final algorithm = _algorithmFromId(_readString(map, 'algorithm'));
     final strength = _strengthFromId(_readString(map, 'strength'));
     final kdfSettings = _readKdfSettings(map, strength);
@@ -580,12 +580,6 @@ class ToolboxCryptoService {
       maxBytes: maxCipherBytes,
     );
     final mac = _readString(map, 'mac');
-    final plainSha = includePublicHashes
-        ? _readString(map, 'plainSha256')
-        : null;
-    final keyFileHash = includePublicHashes
-        ? map['keyFileSha256'] as String?
-        : null;
     final fileName = map['fileName'] as String?;
     final mediaType = map['mediaType'] as String?;
     final stageMaps = _readStages(map);
@@ -597,40 +591,23 @@ class ToolboxCryptoService {
       macAlgorithm: macAlgorithm,
       signatureMode: signatureMode,
       salt: salt,
-      includePublicHashes: includePublicHashes,
-      plainSha256: plainSha,
       stages: stageMaps,
-      keyFileSha256: keyFileHash,
       fileName: fileName,
       mediaType: mediaType,
-      kdfSettings: version == 3 || version == currentVersion
-          ? kdfSettings
-          : null,
-      paddingMode: version == 3 || version == currentVersion
-          ? _readPaddingMode(map)
-          : null,
+      kdfSettings: kdfSettings,
+      paddingMode: _readPaddingMode(map),
     );
-    final rootKey = version == 3 || version == currentVersion
-        ? _deriveRootKey(
-            passphrase: passphrase,
-            keyFileBytes: keyFileBytes,
-            salt: salt,
-            macAlgorithm: macAlgorithm,
-            kdfSettings: kdfSettings,
-          )
-        : null;
+    final rootKey = _deriveRootKey(
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      salt: salt,
+      macAlgorithm: macAlgorithm,
+      kdfSettings: kdfSettings,
+    );
     final macBytes = _hexToBytes(mac);
     final expectedMac = _hmacBytes(
       algorithm: macAlgorithm,
-      key: rootKey == null
-          ? _deriveLegacyMacKey(
-              passphrase: passphrase,
-              keyFileBytes: keyFileBytes,
-              salt: salt,
-              macAlgorithm: macAlgorithm,
-              kdfSettings: kdfSettings,
-            )
-          : _expandRootKey(rootKey, 'mac-${macAlgorithm.id}', 32),
+      key: _expandRootKey(rootKey, 'mac-${macAlgorithm.id}', 32),
       bytes: <int>[...associatedData, 0, ...cipherBytes],
     );
     if (macBytes == null || !_constantTimeBytesEquals(macBytes, expectedMac)) {
@@ -638,12 +615,9 @@ class ToolboxCryptoService {
         'Passphrase mismatch or payload is damaged.',
       );
     }
-    if (signatureMode != ToolboxCryptoSignatureMode.none && rootKey == null) {
-      throw const ToolboxCryptoException('Signature is invalid.');
-    }
     final signatureSeed = signatureMode == ToolboxCryptoSignatureMode.none
         ? null
-        : _expandRootKey(rootKey!, 'signature-${macAlgorithm.id}', 64);
+        : _expandRootKey(rootKey, 'signature-${macAlgorithm.id}', 64);
     _verifyEnvelopeSignature(
       mode: signatureMode,
       signature: map['signature'],
@@ -664,20 +638,11 @@ class ToolboxCryptoService {
       0,
       (sum, stage) => sum + stage.keyBytes,
     );
-    final keyMaterial = rootKey == null
-        ? _deriveLegacyKeyMaterial(
-            passphrase: passphrase,
-            keyFileBytes: keyFileBytes,
-            salt: salt,
-            macAlgorithm: macAlgorithm,
-            kdfSettings: kdfSettings,
-            length: keyMaterialLength,
-          )
-        : _expandRootKey(
-            rootKey,
-            'stage-key-${macAlgorithm.id}',
-            keyMaterialLength,
-          );
+    final keyMaterial = _expandRootKey(
+      rootKey,
+      'stage-key-${macAlgorithm.id}',
+      keyMaterialLength,
+    );
     var keyOffset = keyMaterial.length;
     var activeBytes = Uint8List.fromList(cipherBytes);
     for (var index = stages.length - 1; index >= 0; index -= 1) {
@@ -700,23 +665,13 @@ class ToolboxCryptoService {
     }
 
     final decryptedPayload = Uint8List.fromList(activeBytes);
-    final output = rootKey == null
-        ? decryptedPayload
-        : _unpadPlainPayload(decryptedPayload);
-    if (includePublicHashes) {
-      final plainShaBytes = _hexToBytes(plainSha!);
-      final actualSha = _hashBytes(ToolboxCryptoHashAlgorithm.sha256, output);
-      if (plainShaBytes == null ||
-          !_constantTimeBytesEquals(actualSha, plainShaBytes)) {
-        throw const ToolboxCryptoException('Payload checksum failed.');
-      }
-    }
+    final output = _unpadPlainPayload(decryptedPayload);
     return ToolboxCryptoDecryptResult(
       plainBytes: output,
       algorithm: algorithm,
       strength: strength,
       cipherPreview: previewBase64(cipherBytes),
-      keyFileSha256: keyFileHash ?? _keyFileHash(keyFileBytes),
+      keyFileSha256: _keyFileHash(keyFileBytes),
       fileName: fileName,
       mediaType: mediaType,
     );
@@ -738,7 +693,7 @@ class ToolboxCryptoService {
     required int length,
     String fileName = 'vocabulary_sleep_keyfile.bin',
   }) {
-    if (length < 32 || length > 1024 * 1024) {
+    if (length < 32 || length > maxKeyFileBytes) {
       throw const ToolboxCryptoException(
         'Key file length must be between 32 bytes and 1 MB.',
       );
@@ -1005,53 +960,6 @@ class ToolboxCryptoService {
     return derivator.process(secret);
   }
 
-  Uint8List _deriveLegacyKeyMaterial({
-    required String passphrase,
-    required Uint8List? keyFileBytes,
-    required Uint8List salt,
-    required ToolboxCryptoMacAlgorithm macAlgorithm,
-    required _KdfSettings kdfSettings,
-    required int length,
-  }) {
-    if (length == 0) {
-      return Uint8List(0);
-    }
-    final secret = _secretBytesV2(passphrase, keyFileBytes);
-    final derivedSalt = _derivePurposeSalt(salt, 'key-${macAlgorithm.id}');
-    final derivator = pc.Scrypt()
-      ..init(
-        pc.ScryptParameters(
-          kdfSettings.n,
-          kdfSettings.r,
-          kdfSettings.p,
-          length,
-          derivedSalt,
-        ),
-      );
-    return derivator.process(secret);
-  }
-
-  Uint8List _deriveLegacyMacKey({
-    required String passphrase,
-    required Uint8List? keyFileBytes,
-    required Uint8List salt,
-    required ToolboxCryptoMacAlgorithm macAlgorithm,
-    required _KdfSettings kdfSettings,
-  }) {
-    final macSalt = _derivePurposeSalt(salt, 'mac-${macAlgorithm.id}');
-    final derivator = pc.Scrypt()
-      ..init(
-        pc.ScryptParameters(
-          kdfSettings.n,
-          kdfSettings.r,
-          kdfSettings.p,
-          32,
-          macSalt,
-        ),
-      );
-    return derivator.process(_secretBytesV2(passphrase, keyFileBytes));
-  }
-
   Uint8List _expandRootKey(Uint8List rootKey, String purpose, int length) {
     if (length == 0) {
       return Uint8List(0);
@@ -1143,19 +1051,6 @@ class ToolboxCryptoService {
     ]);
   }
 
-  Uint8List _secretBytesV2(String passphrase, Uint8List? keyFileBytes) {
-    final keyFileDigest = keyFileBytes == null
-        ? Uint8List(0)
-        : Uint8List.fromList(crypto.sha256.convert(keyFileBytes).bytes);
-    return Uint8List.fromList(<int>[
-      ...utf8.encode('vocabulary_sleep_crypto_v2'),
-      0,
-      ...utf8.encode(passphrase),
-      0,
-      ...keyFileDigest,
-    ]);
-  }
-
   String? _keyFileHash(Uint8List? keyFileBytes) {
     if (keyFileBytes == null || keyFileBytes.isEmpty) {
       return null;
@@ -1174,9 +1069,6 @@ class ToolboxCryptoService {
     required List<Map<String, Object?>> stages,
     required String? fileName,
     required String? mediaType,
-    bool includePublicHashes = false,
-    String? plainSha256,
-    String? keyFileSha256,
     _KdfSettings? kdfSettings,
     String? paddingMode,
   }) {
@@ -1192,13 +1084,6 @@ class ToolboxCryptoService {
       'fileName': fileName,
       'mediaType': mediaType,
     };
-    if (includePublicHashes) {
-      if (plainSha256 == null) {
-        throw const ToolboxCryptoException('Crypto envelope is invalid.');
-      }
-      map['plainSha256'] = plainSha256;
-      map['keyFileSha256'] = keyFileSha256;
-    }
     if (kdfSettings != null) {
       map['kdf'] = kdfSettings.toJson();
     }

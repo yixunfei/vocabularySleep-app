@@ -1,3 +1,33 @@
+## [Unreleased-PLAN_241-LIFE-STEGANOGRAPHY-FILE-PICKER-MEMORY] - 2026-05-27
+
+### 原因
+- 用户指出隐写 UI 仍用 `withData: true` 选择媒体、keyfile 和普通文件，大文件会在进入服务层大小检查前先被 file_picker 读入内存；同时模块尚未发布，crypto envelope v2/v3 兼容读取不应继续保留。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 媒体、keyfile、普通文件选择均改为 `withData: false` + `withReadStream: true`。
+  - 读取前先检查 `PlatformFile.size`：图片载体、音视频尾部载体、普通文件和 keyfile 分别按服务层上限拒绝超限文件。
+  - 读取时优先使用 `PlatformFile.readStream`，其次使用本地路径 `File.openRead()` 分段读取，最后才在 Web/特殊平台回退到 bytes，避免移动端选择阶段额外复制整文件。
+  - keyfile 单文件上限复用 `ToolboxCryptoService.maxKeyFileBytes`，多 keyfile 总量增加 8MB 上限。
+- `lib/src/services/toolbox_crypto_service.dart`
+  - 普通加密输入上限提升到 256MB，cipher/envelope 上限同步扩大。
+  - 移除 crypto envelope v2/v3 读取分支和公开 `plainSha256` / `keyFileSha256` 兼容逻辑，v4 成为唯一支持的新 crypto envelope 格式。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 图片载体文件上限提升到 128MB，音视频尾部载体上限提升到 512MB；图片像素数上限仍保持 24MP。
+- `test/toolbox_crypto_service_test.dart`
+  - 覆盖 v2/v3 crypto envelope 被拒绝读取。
+
+### 风险变更
+- 原生平台若 file_picker 既不提供 read stream 也不提供路径，会显示“无法流式读取所选文件”；这是为了避免隐式整文件预读。
+- 服务层仍以字节形式执行当前加密/隐写格式；本轮降低的是选择阶段的额外内存副本，真正的超大文件流式加密/分块隐写需要后续格式级改造。
+- 旧 v2/v3 crypto envelope 试验文件不再可读；模块未正式发布，以 v4 为唯一格式。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
 ## [Unreleased-PLAN_240-LIFE-STEGANOGRAPHY-PRE-RELEASE-SECURITY-AUDIT] - 2026-05-27
 
 ### 原因

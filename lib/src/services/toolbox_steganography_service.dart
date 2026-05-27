@@ -175,9 +175,9 @@ class ToolboxSteganographySuccessfulRevealProtectionResult {
 class ToolboxSteganographyService {
   static final List<int> _managedBlockMagic = ascii.encode('VSSG3');
   static const int maxExtensionLength = 12;
-  static const int maxImageCarrierBytes = 64 * 1024 * 1024;
+  static const int maxImageCarrierBytes = 128 * 1024 * 1024;
   static const int maxImagePixels = 24 * 1000 * 1000;
-  static const int maxTailCarrierBytes = 256 * 1024 * 1024;
+  static const int maxTailCarrierBytes = 512 * 1024 * 1024;
   static const int maxEmbeddedCryptoEnvelopeBytes =
       ToolboxCryptoService.maxEnvelopeBytes;
   static final List<int> _blockMagic = ascii.encode('VSSG1');

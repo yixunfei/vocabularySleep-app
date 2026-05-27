@@ -342,6 +342,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   static const Duration _decodeErrorWindow = Duration(minutes: 5);
   static const Duration _decodeLockDuration = Duration(minutes: 5);
   static const int _decodeErrorLimit = 10;
+  static const int _maxCombinedKeyFileBytes =
+      8 * ToolboxCryptoService.maxKeyFileBytes;
   static final Map<String, List<DateTime>> _decodeErrorTimesByCarrier =
       <String, List<DateTime>>{};
   static final Map<String, DateTime> _decodeLockedUntilByCarrier =
@@ -2199,13 +2201,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       final picked = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: type,
-        withData: true,
+        withData: false,
+        withReadStream: true,
       );
       final file = (picked != null && picked.files.isNotEmpty)
           ? picked.files.first
           : null;
-      final bytes = file?.bytes;
-      if (file == null || bytes == null || bytes.isEmpty) {
+      if (file == null) {
+        return;
+      }
+      final bytes = await _readPickedFileBytes(
+        file,
+        maxBytes: _maxMediaPickBytes(_mediaKind),
+      );
+      if (bytes.isEmpty) {
         return;
       }
 
@@ -2223,7 +2232,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         _sourceName = file.name;
         _sourcePath = file.path;
         _sourceExtension = file.extension;
-        _sourceBytes = Uint8List.fromList(bytes);
+        _sourceBytes = bytes;
         _sourcePreview = preview;
         if (_workspace == _CryptoWorkspace.file) {
           _clearFileResults();
@@ -2239,8 +2248,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _error = _lifeText(
           context,
-          zh: '选择媒体失败: $error',
-          en: 'Failed to pick media: $error',
+          zh: '选择媒体失败: ${_friendlyError(context, error)}',
+          en: 'Failed to pick media: ${_friendlyError(context, error)}',
         );
       });
     }
@@ -2251,18 +2260,31 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       final picked = await FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: FileType.any,
-        withData: true,
+        withData: false,
+        withReadStream: true,
       );
       final files = picked?.files ?? const <PlatformFile>[];
-      final entries = files
-          .where((file) => file.bytes != null && file.bytes!.isNotEmpty)
-          .map(
-            (file) => _KeyFileEntry(
-              name: file.name,
-              bytes: Uint8List.fromList(file.bytes!),
-            ),
-          )
-          .toList(growable: false);
+      var totalSize = 0;
+      final entries = <_KeyFileEntry>[];
+      for (final file in files) {
+        _validatePickedFileSize(
+          file.size,
+          ToolboxCryptoService.maxKeyFileBytes,
+        );
+        totalSize += file.size;
+        if (totalSize > _maxCombinedKeyFileBytes) {
+          throw ToolboxSteganographyException(
+            'Selected key files are too large. Limit: ${_formatBytes(_maxCombinedKeyFileBytes)}.',
+          );
+        }
+        final bytes = await _readPickedFileBytes(
+          file,
+          maxBytes: ToolboxCryptoService.maxKeyFileBytes,
+        );
+        if (bytes.isNotEmpty) {
+          entries.add(_KeyFileEntry(name: file.name, bytes: bytes));
+        }
+      }
       if (entries.isEmpty) {
         return;
       }
@@ -2282,8 +2304,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _error = _lifeText(
           context,
-          zh: '选择密钥文件失败: $error',
-          en: 'Failed to pick key file: $error',
+          zh: '选择密钥文件失败: ${_friendlyError(context, error)}',
+          en: 'Failed to pick key file: ${_friendlyError(context, error)}',
         );
       });
     }
@@ -2446,10 +2468,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
 
   Future<void> _pickCryptoFile() async {
     await _pickAnyFile(
+      maxBytes: ToolboxCryptoService.maxPlainBytes,
       onPicked: (file, bytes) {
         _fileName = file.name;
         _fileExtension = file.extension;
-        _fileBytes = Uint8List.fromList(bytes);
+        _fileBytes = bytes;
         _clearFileResults();
       },
       errorZh: '选择文件失败',
@@ -2459,10 +2482,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
 
   Future<void> _pickHashFile() async {
     await _pickAnyFile(
+      maxBytes: ToolboxCryptoService.maxPlainBytes,
       onPicked: (file, bytes) {
         _fileName = file.name;
         _fileExtension = file.extension;
-        _fileBytes = Uint8List.fromList(bytes);
+        _fileBytes = bytes;
         _hashResult = null;
         _savedPath = null;
         _error = null;
@@ -2473,6 +2497,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   }
 
   Future<void> _pickAnyFile({
+    required int maxBytes,
     required void Function(PlatformFile file, Uint8List bytes) onPicked,
     required String errorZh,
     required String errorEn,
@@ -2481,13 +2506,17 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       final picked = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.any,
-        withData: true,
+        withData: false,
+        withReadStream: true,
       );
       final file = (picked != null && picked.files.isNotEmpty)
           ? picked.files.first
           : null;
-      final bytes = file?.bytes;
-      if (file == null || bytes == null || bytes.isEmpty) {
+      if (file == null) {
+        return;
+      }
+      final bytes = await _readPickedFileBytes(file, maxBytes: maxBytes);
+      if (bytes.isEmpty) {
         return;
       }
       if (!mounted) {
@@ -2503,11 +2532,79 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _error = _lifeText(
           context,
-          zh: '$errorZh: $error',
-          en: '$errorEn: $error',
+          zh: '$errorZh: ${_friendlyError(context, error)}',
+          en: '$errorEn: ${_friendlyError(context, error)}',
         );
       });
     }
+  }
+
+  int _maxMediaPickBytes(ToolboxSteganographyMediaKind kind) {
+    return switch (kind) {
+      ToolboxSteganographyMediaKind.image =>
+        ToolboxSteganographyService.maxImageCarrierBytes,
+      ToolboxSteganographyMediaKind.audio ||
+      ToolboxSteganographyMediaKind.video =>
+        ToolboxSteganographyService.maxTailCarrierBytes,
+    };
+  }
+
+  Future<Uint8List> _readPickedFileBytes(
+    PlatformFile file, {
+    required int maxBytes,
+  }) async {
+    _validatePickedFileSize(file.size, maxBytes);
+    final readStream = file.readStream;
+    if (readStream != null) {
+      return _readStreamBytesBounded(readStream, maxBytes: maxBytes);
+    }
+    final filePath = file.path;
+    if (!kIsWeb && filePath != null && filePath.trim().isNotEmpty) {
+      final source = File(filePath);
+      final diskLength = await source.length();
+      _validatePickedFileSize(diskLength, maxBytes);
+      return _readStreamBytesBounded(source.openRead(), maxBytes: maxBytes);
+    }
+    final bytes = file.bytes;
+    if (bytes != null) {
+      _validatePickedFileSize(bytes.length, maxBytes);
+      return Uint8List.fromList(bytes);
+    }
+    throw const ToolboxSteganographyException(
+      'Selected file cannot be read as a stream.',
+    );
+  }
+
+  void _validatePickedFileSize(int size, int maxBytes) {
+    if (size <= 0) {
+      throw const ToolboxSteganographyException('Selected file is empty.');
+    }
+    if (size > maxBytes) {
+      throw ToolboxSteganographyException(
+        'Selected file is too large. Limit: ${_formatBytes(maxBytes)}.',
+      );
+    }
+  }
+
+  Future<Uint8List> _readStreamBytesBounded(
+    Stream<List<int>> stream, {
+    required int maxBytes,
+  }) async {
+    final builder = BytesBuilder(copy: false);
+    var total = 0;
+    await for (final chunk in stream) {
+      total += chunk.length;
+      if (total > maxBytes) {
+        throw ToolboxSteganographyException(
+          'Selected file is too large. Limit: ${_formatBytes(maxBytes)}.',
+        );
+      }
+      builder.add(chunk);
+    }
+    if (total <= 0) {
+      throw const ToolboxSteganographyException('Selected file is empty.');
+    }
+    return builder.takeBytes();
   }
 
   Future<bool> _confirmPlaintextIfNeeded() async {

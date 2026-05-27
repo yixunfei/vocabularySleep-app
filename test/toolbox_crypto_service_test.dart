@@ -75,6 +75,31 @@ void main() {
       );
     });
 
+    test('rejects unpublished legacy crypto envelope versions', () {
+      final encrypted = service.encryptBytes(
+        plainBytes: Uint8List.fromList(utf8.encode('v4 only')),
+        algorithm: ToolboxCryptoAlgorithm.aesGcm,
+        strength: ToolboxCryptoStrength.standard,
+        passphrase: 'version-key',
+      );
+      final envelope = jsonDecode(utf8.decode(encrypted.envelopeBytes)) as Map;
+      for (final staleVersion in <int>[2, 3]) {
+        final staleEnvelope = Map<String, Object?>.from(envelope)
+          ..['version'] = staleVersion
+          ..['plainSha256'] = '00'
+          ..['keyFileSha256'] = null;
+        expect(
+          () => service.decryptBytes(
+            envelopeBytes: Uint8List.fromList(
+              utf8.encode(jsonEncode(staleEnvelope)),
+            ),
+            passphrase: 'version-key',
+          ),
+          throwsA(isA<ToolboxCryptoException>()),
+        );
+      }
+    });
+
     test('supports combination encryption pipeline', () {
       final plain = Uint8List.fromList(
         List<int>.generate(512, (index) => (index * 17) & 255),
