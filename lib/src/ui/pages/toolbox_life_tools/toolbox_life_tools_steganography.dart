@@ -23,8 +23,11 @@ class _StegoEmbedTextRequest {
     required this.mediaKind,
     required this.carrierBytes,
     required this.text,
+    required this.dualLayerEnabled,
+    required this.coverText,
     required this.encryption,
     required this.passphrase,
+    required this.coverPassphrase,
     required this.strength,
     required this.keyFileBytes,
     required this.sourceExtension,
@@ -33,6 +36,7 @@ class _StegoEmbedTextRequest {
     required this.macAlgorithm,
     required this.signatureMode,
     required this.maxErrorAttempts,
+    required this.maxSuccessfulReveals,
     required this.locatorAlgorithm,
     required this.locatorStrength,
   });
@@ -40,8 +44,11 @@ class _StegoEmbedTextRequest {
   final ToolboxSteganographyMediaKind mediaKind;
   final Uint8List carrierBytes;
   final String text;
+  final bool dualLayerEnabled;
+  final String coverText;
   final ToolboxCryptoAlgorithm encryption;
   final String passphrase;
+  final String coverPassphrase;
   final ToolboxCryptoStrength strength;
   final Uint8List? keyFileBytes;
   final String? sourceExtension;
@@ -50,6 +57,7 @@ class _StegoEmbedTextRequest {
   final ToolboxCryptoMacAlgorithm macAlgorithm;
   final ToolboxCryptoSignatureMode signatureMode;
   final int maxErrorAttempts;
+  final int maxSuccessfulReveals;
   final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
   final ToolboxSteganographyLocatorStrength locatorStrength;
 }
@@ -89,6 +97,7 @@ class _StegoEmbedFileRequest {
     required this.macAlgorithm,
     required this.signatureMode,
     required this.maxErrorAttempts,
+    required this.maxSuccessfulReveals,
     required this.locatorAlgorithm,
     required this.locatorStrength,
   });
@@ -108,6 +117,7 @@ class _StegoEmbedFileRequest {
   final ToolboxCryptoMacAlgorithm macAlgorithm;
   final ToolboxCryptoSignatureMode signatureMode;
   final int maxErrorAttempts;
+  final int maxSuccessfulReveals;
   final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
   final ToolboxSteganographyLocatorStrength locatorStrength;
 }
@@ -133,6 +143,28 @@ class _StegoRevealFileRequest {
 ToolboxSteganographyEmbedResult _runStegoEmbedText(
   _StegoEmbedTextRequest request,
 ) {
+  if (request.dualLayerEnabled) {
+    return ToolboxSteganographyService().embedDualText(
+      mediaKind: request.mediaKind,
+      carrierBytes: request.carrierBytes,
+      coverText: request.coverText,
+      hiddenText: request.text,
+      encryption: request.encryption,
+      coverPassphrase: request.coverPassphrase,
+      hiddenPassphrase: request.passphrase,
+      strength: request.strength,
+      hiddenKeyFileBytes: request.keyFileBytes,
+      sourceExtension: request.sourceExtension,
+      cascade: request.cascade,
+      keyBits: request.keyBits,
+      macAlgorithm: request.macAlgorithm,
+      signatureMode: request.signatureMode,
+      maxErrorAttempts: request.maxErrorAttempts,
+      maxSuccessfulReveals: request.maxSuccessfulReveals,
+      locatorAlgorithm: request.locatorAlgorithm,
+      locatorStrength: request.locatorStrength,
+    );
+  }
   return ToolboxSteganographyService().embedText(
     mediaKind: request.mediaKind,
     carrierBytes: request.carrierBytes,
@@ -147,6 +179,7 @@ ToolboxSteganographyEmbedResult _runStegoEmbedText(
     macAlgorithm: request.macAlgorithm,
     signatureMode: request.signatureMode,
     maxErrorAttempts: request.maxErrorAttempts,
+    maxSuccessfulReveals: request.maxSuccessfulReveals,
     locatorAlgorithm: request.locatorAlgorithm,
     locatorStrength: request.locatorStrength,
   );
@@ -184,6 +217,39 @@ ToolboxSteganographyEmbedResult _runStegoEmbedFile(
     macAlgorithm: request.macAlgorithm,
     signatureMode: request.signatureMode,
     maxErrorAttempts: request.maxErrorAttempts,
+    maxSuccessfulReveals: request.maxSuccessfulReveals,
+    locatorAlgorithm: request.locatorAlgorithm,
+    locatorStrength: request.locatorStrength,
+  );
+}
+
+class _StegoSuccessfulRevealProtectionRequest {
+  const _StegoSuccessfulRevealProtectionRequest({
+    required this.mediaKind,
+    required this.carrierBytes,
+    required this.passphrase,
+    required this.keyFileBytes,
+    required this.locatorAlgorithm,
+    required this.locatorStrength,
+  });
+
+  final ToolboxSteganographyMediaKind mediaKind;
+  final Uint8List carrierBytes;
+  final String passphrase;
+  final Uint8List? keyFileBytes;
+  final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
+  final ToolboxSteganographyLocatorStrength locatorStrength;
+}
+
+ToolboxSteganographySuccessfulRevealProtectionResult
+_runStegoSuccessfulRevealProtection(
+  _StegoSuccessfulRevealProtectionRequest request,
+) {
+  return ToolboxSteganographyService().applySuccessfulRevealProtection(
+    mediaKind: request.mediaKind,
+    carrierBytes: request.carrierBytes,
+    passphrase: request.passphrase,
+    keyFileBytes: request.keyFileBytes,
     locatorAlgorithm: request.locatorAlgorithm,
     locatorStrength: request.locatorStrength,
   );
@@ -213,11 +279,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   final ToolboxSteganographyService _service = ToolboxSteganographyService();
   final ToolboxCryptoService _cryptoService = ToolboxCryptoService();
   final TextEditingController _secretController = TextEditingController();
+  final TextEditingController _coverSecretController = TextEditingController();
   final TextEditingController _passphraseController = TextEditingController();
+  final TextEditingController _coverPassphraseController =
+      TextEditingController();
   final TextEditingController _keyFileLengthController = TextEditingController(
     text: '256',
   );
   final TextEditingController _maxErrorAttemptsController =
+      TextEditingController(text: '0');
+  final TextEditingController _maxSuccessfulRevealsController =
       TextEditingController(text: '0');
 
   _CryptoWorkspace _workspace = _CryptoWorkspace.steganography;
@@ -231,6 +302,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   ToolboxCryptoKeyBits _keyBits = ToolboxCryptoKeyBits.bits256;
   ToolboxCryptoMacAlgorithm _macAlgorithm = ToolboxCryptoMacAlgorithm.sha256;
   ToolboxCryptoSignatureMode _signatureMode = ToolboxCryptoSignatureMode.none;
+  bool _dualLayerEnabled = false;
   ToolboxSteganographyLocatorAlgorithm _locatorAlgorithm =
       ToolboxSteganographyLocatorAlgorithm.sha256;
   ToolboxSteganographyLocatorStrength _locatorStrength =
@@ -264,6 +336,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   String? _savedPath;
   String? _error;
   bool _maxErrorRiskPromptShown = false;
+  bool _successfulRevealRiskPromptShown = false;
   Timer? _decodeUnlockTimer;
 
   static const Duration _decodeErrorWindow = Duration(minutes: 5);
@@ -279,9 +352,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   @override
   void dispose() {
     _secretController.dispose();
+    _coverSecretController.dispose();
     _passphraseController.dispose();
+    _coverPassphraseController.dispose();
     _keyFileLengthController.dispose();
     _maxErrorAttemptsController.dispose();
+    _maxSuccessfulRevealsController.dispose();
     _decodeUnlockTimer?.cancel();
     _sourcePreview?.dispose();
     _outputPreview?.dispose();
@@ -482,6 +558,38 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 ),
               ],
               const SizedBox(height: 12),
+              SwitchListTile(
+                key: const ValueKey<String>('life_stego_dual_layer_switch'),
+                contentPadding: EdgeInsets.zero,
+                value: _dualLayerEnabled,
+                onChanged: _busy
+                    ? null
+                    : (value) => setState(() => _dualLayerEnabled = value),
+                secondary: const Icon(Icons.layers_rounded),
+                title: Text(
+                  _lifeText(context, zh: '双层可否认模式', en: 'Dual layer'),
+                ),
+                subtitle: Text(
+                  _lifeText(
+                    context,
+                    zh: '显式写入表层与深层两份内容；表层口令只还原表层内容。',
+                    en: 'Explicitly writes cover and hidden content; the cover passphrase reveals only the cover layer.',
+                  ),
+                ),
+              ),
+              if (_dualLayerEnabled) ...<Widget>[
+                const SizedBox(height: 8),
+                _buildInlineNotice(
+                  context,
+                  icon: Icons.privacy_tip_rounded,
+                  text: _lifeText(
+                    context,
+                    zh: '双层模式仅支持图片载体。请保存原始载体；修改双层内容时应重新生成，不要重复写入同一隐写文件。',
+                    en: 'Dual-layer mode supports image carriers only. Keep the original carrier; regenerate from it instead of writing into an existing stego file.',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
               TextField(
                 key: const ValueKey<String>('life_stego_max_error_attempts'),
                 controller: _maxErrorAttemptsController,
@@ -501,6 +609,29 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   ),
                 ),
                 onChanged: _handleMaxErrorAttemptsChanged,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey<String>(
+                  'life_stego_max_successful_reveals',
+                ),
+                controller: _maxSuccessfulRevealsController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.auto_delete_rounded),
+                  labelText: _lifeText(
+                    context,
+                    zh: '成功还原次数上限',
+                    en: 'Max successful reveals',
+                  ),
+                  helperText: _maxSuccessfulRevealsRiskText(context),
+                  helperMaxLines: 4,
+                  helperStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+                onChanged: _handleMaxSuccessfulRevealsChanged,
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxSteganographyLocatorAlgorithm>(
@@ -995,9 +1126,32 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             maxLines: 5,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '隐藏文本', en: 'Secret text'),
+              labelText: _dualLayerEnabled
+                  ? _lifeText(context, zh: '深层隐藏文本', en: 'Hidden layer text')
+                  : _lifeText(context, zh: '隐藏文本', en: 'Secret text'),
             ),
           ),
+          if (_dualLayerEnabled) ...<Widget>[
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey<String>('life_stego_cover_secret_field'),
+              controller: _coverSecretController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: _lifeText(
+                  context,
+                  zh: '表层文本',
+                  en: 'Cover layer text',
+                ),
+                helperText: _lifeText(
+                  context,
+                  zh: '使用表层口令还原时只显示这段内容。',
+                  en: 'Only this content is shown when revealing with the cover passphrase.',
+                ),
+              ),
+            ),
+          ],
         ],
         const SizedBox(height: 12),
         TextField(
@@ -1009,7 +1163,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.vpn_key_rounded),
-            labelText: _lifeText(context, zh: '口令', en: 'Passphrase'),
+            labelText: _dualLayerEnabled
+                ? _lifeText(context, zh: '深层口令', en: 'Hidden passphrase')
+                : _lifeText(context, zh: '口令', en: 'Passphrase'),
             helperText: _mode == _StegoMode.reveal
                 ? _lifeText(
                     context,
@@ -1029,6 +1185,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   ),
           ),
         ),
+        if (_mode == _StegoMode.embed && _dualLayerEnabled) ...<Widget>[
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey<String>('life_stego_cover_passphrase_field'),
+            controller: _coverPassphraseController,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.key_rounded),
+              labelText: _lifeText(context, zh: '表层口令', en: 'Cover passphrase'),
+              helperText: _lifeText(
+                context,
+                zh: '表层口令必须与深层口令不同；表层不使用当前密钥文件。',
+                en: 'Must differ from the hidden passphrase. The cover layer does not use the selected key file.',
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         _buildKeyFileRow(context),
       ],
@@ -2366,6 +2542,21 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     });
   }
 
+  void _handleMaxSuccessfulRevealsChanged(String value) {
+    setState(() {});
+    final attempts = int.tryParse(value.trim());
+    if (attempts == null || attempts <= 0 || _successfulRevealRiskPromptShown) {
+      return;
+    }
+    _successfulRevealRiskPromptShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _showMaxSuccessfulRevealsRiskDialog(attempts);
+    });
+  }
+
   Future<void> _showMaxErrorAttemptsRiskDialog(int attempts) async {
     await showDialog<void>(
       context: context,
@@ -2405,6 +2596,45 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     );
   }
 
+  Future<void> _showMaxSuccessfulRevealsRiskDialog(int attempts) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          title: Row(
+            children: <Widget>[
+              Icon(Icons.auto_delete_rounded, color: colorScheme.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _lifeText(
+                    context,
+                    zh: '成功还原后会清理载荷',
+                    en: 'Successful reveals can wipe data',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            _lifeText(
+              context,
+              zh: '已设置成功还原 $attempts 次后清理隐藏内容。此限制只会改写当前可写文件副本，无法约束已复制的文件或外部备份。',
+              en: 'Hidden data will be cleaned after $attempts successful reveal(s). This only rewrites the current writable file copy and cannot limit copied files or external backups.',
+            ),
+          ),
+          actions: <Widget>[
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_lifeText(context, zh: '知道了', en: 'OK')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _embed() async {
     final source = _sourceBytes;
     if (source == null) {
@@ -2412,6 +2642,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     }
     final maxErrorAttempts = _readMaxErrorAttemptsSetting();
     if (maxErrorAttempts == null) {
+      return;
+    }
+    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
+    if (maxSuccessfulReveals == null) {
       return;
     }
     if (!await _confirmPlaintextIfNeeded()) {
@@ -2430,8 +2664,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           mediaKind: _mediaKind,
           carrierBytes: source,
           text: _secretController.text,
+          dualLayerEnabled: _dualLayerEnabled,
+          coverText: _coverSecretController.text,
           encryption: _encryption,
           passphrase: _passphraseController.text,
+          coverPassphrase: _coverPassphraseController.text,
           strength: _strength,
           keyFileBytes: _activeKeyFileBytes,
           sourceExtension: _sourceExtension,
@@ -2440,6 +2677,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           macAlgorithm: _macAlgorithm,
           signatureMode: _signatureMode,
           maxErrorAttempts: maxErrorAttempts,
+          maxSuccessfulReveals: maxSuccessfulReveals,
           locatorAlgorithm: _locatorAlgorithm,
           locatorStrength: _locatorStrength,
         ),
@@ -2510,6 +2748,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         _revealResult = result;
       });
       _registerDecodeSuccess(source);
+      await _applySuccessfulRevealProtection(source);
     } catch (error) {
       if (!mounted) {
         return;
@@ -2546,6 +2785,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (maxErrorAttempts == null) {
       return;
     }
+    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
+    if (maxSuccessfulReveals == null) {
+      return;
+    }
     if (!await _confirmPlaintextIfNeeded()) {
       return;
     }
@@ -2574,6 +2817,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           macAlgorithm: _macAlgorithm,
           signatureMode: _signatureMode,
           maxErrorAttempts: maxErrorAttempts,
+          maxSuccessfulReveals: maxSuccessfulReveals,
           locatorAlgorithm: _locatorAlgorithm,
           locatorStrength: _locatorStrength,
         ),
@@ -2644,6 +2888,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         }
       });
       _registerDecodeSuccess(carrier);
+      await _applySuccessfulRevealProtection(carrier);
     } catch (error) {
       if (!mounted) {
         return;
@@ -3022,6 +3267,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       _keyFileBytes = null;
       _keyFileEntries = const <_KeyFileEntry>[];
       _secretController.clear();
+      _coverSecretController.clear();
+      _coverPassphraseController.clear();
     });
   }
 
@@ -3105,6 +3352,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     return parsed;
   }
 
+  int? _readMaxSuccessfulRevealsSetting() {
+    final raw = _maxSuccessfulRevealsController.text.trim();
+    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
+    if (parsed == null || parsed < 0 || parsed > 255) {
+      _maxSuccessfulRevealsController.text = '0';
+      _maxSuccessfulRevealsController.selection = TextSelection.collapsed(
+        offset: _maxSuccessfulRevealsController.text.length,
+      );
+      setState(() {
+        _error = _lifeText(
+          context,
+          zh: '成功还原次数上限必须是 0 到 255 之间的整数，已重置为 0（不限制）。',
+          en: 'Max successful reveals must be an integer from 0 to 255. It has been reset to 0 (unlimited).',
+        );
+      });
+      return null;
+    }
+    return parsed;
+  }
+
   String _maxErrorAttemptsRiskText(BuildContext context) {
     final raw = _maxErrorAttemptsController.text.trim();
     final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
@@ -3122,6 +3389,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       context,
       zh: '当前为 $current，最大 255 次。解密密码错误达到设置次数会销毁当前文件隐藏内容。',
       en: 'Current: $current, maximum 255. Reaching the limit with wrong decryption passwords destroys hidden data in the current file.',
+    );
+  }
+
+  String _maxSuccessfulRevealsRiskText(BuildContext context) {
+    final raw = _maxSuccessfulRevealsController.text.trim();
+    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
+    if (parsed == null || parsed < 0 || parsed > 255) {
+      return _lifeText(
+        context,
+        zh: '输入无效。必须为 0 到 255；确认生成时会重置为 0（不限制）。',
+        en: 'Invalid input. Use 0-255; it will reset to 0 (unlimited) before generation.',
+      );
+    }
+    final current = parsed == 0
+        ? _lifeText(context, zh: '不限制', en: 'unlimited')
+        : _lifeText(context, zh: '$parsed 次', en: '$parsed reveal(s)');
+    return _lifeText(
+      context,
+      zh: '当前为 $current。达到成功还原次数后会清理当前文件隐藏内容；复制文件或备份不受此限制。',
+      en: 'Current: $current. Hidden data is cleaned after the limit is reached; copied files or backups are not limited.',
     );
   }
 
@@ -3146,6 +3433,68 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     _decodeErrorTimesByCarrier.remove(key);
     _decodeLockedUntilByCarrier.remove(key);
     _protectedDecodeFailuresByCarrier.remove(key);
+  }
+
+  Future<void> _applySuccessfulRevealProtection(
+    Uint8List sourceSnapshot,
+  ) async {
+    try {
+      final result = await compute(
+        _runStegoSuccessfulRevealProtection,
+        _StegoSuccessfulRevealProtectionRequest(
+          mediaKind: _mediaKind,
+          carrierBytes: sourceSnapshot,
+          passphrase: _passphraseController.text,
+          keyFileBytes: _activeKeyFileBytes,
+          locatorAlgorithm: _locatorAlgorithm,
+          locatorStrength: _locatorStrength,
+        ),
+      );
+      if (!mounted || !result.changed) {
+        return;
+      }
+      final oldSource = _sourcePreview;
+      var wroteSource = false;
+      final sourcePath = _sourcePath;
+      if (!kIsWeb && sourcePath != null && sourcePath.trim().isNotEmpty) {
+        await File(sourcePath).writeAsBytes(result.bytes, flush: true);
+        wroteSource = true;
+      }
+      ui.Image? preview;
+      if (_mediaKind == ToolboxSteganographyMediaKind.image) {
+        preview = await _decodePreview(result.bytes);
+      }
+      if (!mounted) {
+        preview?.dispose();
+        return;
+      }
+      setState(() {
+        _sourceBytes = result.bytes;
+        _sourcePreview = preview;
+        _savedPath = result.removed
+            ? _lifeText(
+                context,
+                zh: wroteSource
+                    ? '成功还原次数已用尽，源文件隐藏内容已清理。'
+                    : '成功还原次数已用尽，当前内存载体隐藏内容已清理。',
+                en: wroteSource
+                    ? 'Successful reveal limit was reached; hidden data was cleaned from the source file.'
+                    : 'Successful reveal limit was reached; hidden data was cleaned from the in-memory carrier.',
+              )
+            : _lifeText(
+                context,
+                zh: wroteSource
+                    ? '成功还原次数剩余 ${result.remainingSuccessfulReveals}，源文件已更新。'
+                    : '成功还原次数剩余 ${result.remainingSuccessfulReveals}，当前内存载体已更新。',
+                en: wroteSource
+                    ? 'Remaining successful reveals: ${result.remainingSuccessfulReveals}. Source file was updated.'
+                    : 'Remaining successful reveals: ${result.remainingSuccessfulReveals}. In-memory carrier was updated.',
+              );
+      });
+      oldSource?.dispose();
+    } on Object {
+      // Successful reveal protection is best-effort; the revealed payload stays available.
+    }
   }
 
   _DecodeFailureStatus _registerDecodeFailure(Uint8List source) {
@@ -3747,6 +4096,32 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       'Max error attempts must be between 0 and 255.' => _lifeText(
         context,
         zh: '最大错误尝试次数必须在 0 到 255 之间。',
+        en: message,
+      ),
+      'Max successful reveals must be between 0 and 255.' => _lifeText(
+        context,
+        zh: '成功还原次数上限必须在 0 到 255 之间。',
+        en: message,
+      ),
+      'Carrier already contains hidden data. Use the original carrier, clear the hidden data, or embed the encrypted file as a new payload.' =>
+        _lifeText(
+          context,
+          zh: '该载体已被当前隐写格式占用。请使用原始文件重新生成，或先清理隐藏内容；如需多层，请把加密文件作为新的隐写载荷。',
+          en: message,
+        ),
+      'Dual-layer mode currently supports image carriers only.' => _lifeText(
+        context,
+        zh: '双层模式当前仅支持图片载体。',
+        en: message,
+      ),
+      'Dual-layer mode requires both passphrases.' => _lifeText(
+        context,
+        zh: '双层模式需要同时填写表层口令和深层口令。',
+        en: message,
+      ),
+      'Dual-layer passphrases must be different.' => _lifeText(
+        context,
+        zh: '表层口令必须与深层口令不同。',
         en: message,
       ),
       'Payload is too large.' => _lifeText(context, zh: '载荷过大。', en: message),

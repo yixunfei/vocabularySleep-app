@@ -136,10 +136,12 @@ class ToolboxSteganographyProtectionPolicy {
   const ToolboxSteganographyProtectionPolicy({
     required this.maxErrorAttempts,
     required this.hasTamperCheck,
+    this.remainingSuccessfulReveals = 0,
   });
 
   final int maxErrorAttempts;
   final bool hasTamperCheck;
+  final int remainingSuccessfulReveals;
 }
 
 class ToolboxSteganographySanitizeResult {
@@ -154,7 +156,24 @@ class ToolboxSteganographySanitizeResult {
   final bool removed;
 }
 
+class ToolboxSteganographySuccessfulRevealProtectionResult {
+  const ToolboxSteganographySuccessfulRevealProtectionResult({
+    required this.bytes,
+    required this.outputExtension,
+    required this.changed,
+    required this.removed,
+    required this.remainingSuccessfulReveals,
+  });
+
+  final Uint8List bytes;
+  final String outputExtension;
+  final bool changed;
+  final bool removed;
+  final int remainingSuccessfulReveals;
+}
+
 class ToolboxSteganographyService {
+  static final List<int> _managedBlockMagic = ascii.encode('VSSG3');
   static const int maxExtensionLength = 12;
   static final List<int> _blockMagic = ascii.encode('VSSG1');
   static final List<int> _protectedBlockMagic = ascii.encode('VSSG2');
@@ -193,6 +212,7 @@ class ToolboxSteganographyService {
     ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
     ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
     int maxErrorAttempts = 0,
+    int maxSuccessfulReveals = 0,
     ToolboxSteganographyLocatorAlgorithm locatorAlgorithm =
         ToolboxSteganographyLocatorAlgorithm.sha256,
     ToolboxSteganographyLocatorStrength locatorStrength =
@@ -213,6 +233,8 @@ class ToolboxSteganographyService {
     }
     _validateMediaWriteBackend(mediaKind);
     _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
+    _ensureCarrierIsWritable(mediaKind: mediaKind, carrierBytes: carrierBytes);
 
     final envelope = _buildEnvelope(
       payloadKind: ToolboxSteganographyPayloadKind.text,
@@ -229,6 +251,7 @@ class ToolboxSteganographyService {
     final block = _buildBlock(
       envelope.jsonBytes,
       maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
     );
 
     return switch (mediaKind) {
@@ -253,6 +276,112 @@ class ToolboxSteganographyService {
     };
   }
 
+  ToolboxSteganographyEmbedResult embedDualText({
+    required ToolboxSteganographyMediaKind mediaKind,
+    required Uint8List carrierBytes,
+    required String coverText,
+    required String hiddenText,
+    required ToolboxCryptoAlgorithm encryption,
+    required String coverPassphrase,
+    required String hiddenPassphrase,
+    ToolboxCryptoStrength strength = ToolboxCryptoStrength.standard,
+    Uint8List? hiddenKeyFileBytes,
+    String? sourceExtension,
+    List<ToolboxCryptoCascadeCipher>? cascade,
+    ToolboxCryptoKeyBits keyBits = ToolboxCryptoKeyBits.bits256,
+    ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
+    ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
+    int maxErrorAttempts = 0,
+    int maxSuccessfulReveals = 0,
+    ToolboxSteganographyLocatorAlgorithm locatorAlgorithm =
+        ToolboxSteganographyLocatorAlgorithm.sha256,
+    ToolboxSteganographyLocatorStrength locatorStrength =
+        ToolboxSteganographyLocatorStrength.standard,
+  }) {
+    if (carrierBytes.isEmpty) {
+      throw const ToolboxSteganographyException('Source media is empty.');
+    }
+    if (coverText.isEmpty || hiddenText.isEmpty) {
+      throw const ToolboxSteganographyException('Secret text is empty.');
+    }
+    if (coverPassphrase.trim().isEmpty || hiddenPassphrase.trim().isEmpty) {
+      throw const ToolboxSteganographyException(
+        'Dual-layer mode requires both passphrases.',
+      );
+    }
+    if (coverPassphrase == hiddenPassphrase) {
+      throw const ToolboxSteganographyException(
+        'Dual-layer passphrases must be different.',
+      );
+    }
+    if (encryption.requiresSecret &&
+        hiddenPassphrase.trim().isEmpty &&
+        (hiddenKeyFileBytes == null || hiddenKeyFileBytes.isEmpty)) {
+      throw const ToolboxSteganographyException(
+        'This encryption mode requires a passphrase or key file.',
+      );
+    }
+    _validateMediaWriteBackend(mediaKind);
+    _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
+    _ensureCarrierIsWritable(mediaKind: mediaKind, carrierBytes: carrierBytes);
+
+    final coverEnvelope = _buildEnvelope(
+      payloadKind: ToolboxSteganographyPayloadKind.text,
+      text: coverText,
+      encryption: encryption,
+      passphrase: coverPassphrase,
+      strength: strength,
+      keyFileBytes: null,
+      cascade: cascade,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+    );
+    final hiddenEnvelope = _buildEnvelope(
+      payloadKind: ToolboxSteganographyPayloadKind.text,
+      text: hiddenText,
+      encryption: encryption,
+      passphrase: hiddenPassphrase,
+      strength: strength,
+      keyFileBytes: hiddenKeyFileBytes,
+      cascade: cascade,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+    );
+    final coverBlock = _buildBlock(
+      coverEnvelope.jsonBytes,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
+    );
+    final hiddenBlock = _buildBlock(
+      hiddenEnvelope.jsonBytes,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
+    );
+
+    return switch (mediaKind) {
+      ToolboxSteganographyMediaKind.image => _embedDualTextInImage(
+        carrierBytes: carrierBytes,
+        coverBlock: coverBlock,
+        hiddenBlock: hiddenBlock,
+        hiddenEnvelope: hiddenEnvelope,
+        coverPassphrase: coverPassphrase,
+        hiddenPassphrase: hiddenPassphrase,
+        hiddenKeyFileBytes: hiddenKeyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.audio ||
+      ToolboxSteganographyMediaKind.video =>
+        throw const ToolboxSteganographyException(
+          'Dual-layer mode currently supports image carriers only.',
+        ),
+    };
+  }
+
   ToolboxSteganographyEmbedResult embedFile({
     required ToolboxSteganographyMediaKind mediaKind,
     required Uint8List carrierBytes,
@@ -269,6 +398,7 @@ class ToolboxSteganographyService {
     ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
     ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
     int maxErrorAttempts = 0,
+    int maxSuccessfulReveals = 0,
     ToolboxSteganographyLocatorAlgorithm locatorAlgorithm =
         ToolboxSteganographyLocatorAlgorithm.sha256,
     ToolboxSteganographyLocatorStrength locatorStrength =
@@ -289,6 +419,8 @@ class ToolboxSteganographyService {
     }
     _validateMediaWriteBackend(mediaKind);
     _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
+    _ensureCarrierIsWritable(mediaKind: mediaKind, carrierBytes: carrierBytes);
 
     final envelope = _buildEnvelope(
       payloadKind: ToolboxSteganographyPayloadKind.file,
@@ -307,6 +439,7 @@ class ToolboxSteganographyService {
     final block = _buildBlock(
       envelope.jsonBytes,
       maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
     );
 
     return switch (mediaKind) {
@@ -479,6 +612,38 @@ class ToolboxSteganographyService {
     };
   }
 
+  ToolboxSteganographySuccessfulRevealProtectionResult
+  applySuccessfulRevealProtection({
+    required ToolboxSteganographyMediaKind mediaKind,
+    required Uint8List carrierBytes,
+    required String passphrase,
+    Uint8List? keyFileBytes,
+    ToolboxSteganographyLocatorAlgorithm locatorAlgorithm =
+        ToolboxSteganographyLocatorAlgorithm.sha256,
+    ToolboxSteganographyLocatorStrength locatorStrength =
+        ToolboxSteganographyLocatorStrength.standard,
+  }) {
+    if (carrierBytes.isEmpty) {
+      throw const ToolboxSteganographyException('Source media is empty.');
+    }
+    return switch (mediaKind) {
+      ToolboxSteganographyMediaKind.image =>
+        _applySuccessfulImageRevealProtection(
+          carrierBytes,
+          passphrase: passphrase,
+          keyFileBytes: keyFileBytes,
+          locatorAlgorithm: locatorAlgorithm,
+          locatorStrength: locatorStrength,
+        ),
+      ToolboxSteganographyMediaKind.audio ||
+      ToolboxSteganographyMediaKind.video =>
+        _applySuccessfulTailRevealProtection(
+          carrierBytes,
+          mediaKind: mediaKind,
+        ),
+    };
+  }
+
   void _validateMediaWriteBackend(ToolboxSteganographyMediaKind mediaKind) {
     switch (mediaKind) {
       case ToolboxSteganographyMediaKind.image:
@@ -498,6 +663,31 @@ class ToolboxSteganographyService {
     if (value < 0 || value > 255) {
       throw const ToolboxSteganographyException(
         'Max error attempts must be between 0 and 255.',
+      );
+    }
+  }
+
+  void _validateMaxSuccessfulReveals(int value) {
+    if (value < 0 || value > 255) {
+      throw const ToolboxSteganographyException(
+        'Max successful reveals must be between 0 and 255.',
+      );
+    }
+  }
+
+  void _ensureCarrierIsWritable({
+    required ToolboxSteganographyMediaKind mediaKind,
+    required Uint8List carrierBytes,
+  }) {
+    final occupied = switch (mediaKind) {
+      ToolboxSteganographyMediaKind.image =>
+        _inspectImagePolicyHeader(carrierBytes) != null,
+      ToolboxSteganographyMediaKind.audio ||
+      ToolboxSteganographyMediaKind.video => _hasTailPayload(carrierBytes),
+    };
+    if (occupied) {
+      throw const ToolboxSteganographyException(
+        'Carrier already contains hidden data. Use the original carrier, clear the hidden data, or embed the encrypted file as a new payload.',
       );
     }
   }
@@ -552,6 +742,87 @@ class ToolboxSteganographyService {
       carrierDetail:
           '${image.width}x${image.height}, randomized LSB capacity ${_formatBytes(capacity)}',
       capacityBytes: capacity,
+    );
+  }
+
+  ToolboxSteganographyEmbedResult _embedDualTextInImage({
+    required Uint8List carrierBytes,
+    required Uint8List coverBlock,
+    required Uint8List hiddenBlock,
+    required _EnvelopeBuildResult hiddenEnvelope,
+    required String coverPassphrase,
+    required String hiddenPassphrase,
+    required Uint8List? hiddenKeyFileBytes,
+    required int maxErrorAttempts,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final decoded = img.decodeImage(carrierBytes);
+    if (decoded == null) {
+      throw const ToolboxSteganographyException(
+        'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.',
+      );
+    }
+    final image = img.bakeOrientation(decoded);
+    final totalPositions = image.width * image.height * 3;
+    final policyPositions = _imagePolicyPositions(
+      image,
+      headerLength: _imagePolicyHeaderLength,
+    );
+    final coverCapacity = _imageSlotCapacity(
+      totalPositions: totalPositions,
+      policyPositions: policyPositions,
+      slot: 1,
+    );
+    final hiddenCapacity = _imageSlotCapacity(
+      totalPositions: totalPositions,
+      policyPositions: policyPositions,
+      slot: 0,
+    );
+    if (coverBlock.length > coverCapacity ||
+        hiddenBlock.length > hiddenCapacity) {
+      throw ToolboxSteganographyException(
+        'Secret payload is too large for this image. Capacity: ${math.min(coverCapacity, hiddenCapacity)} B per layer.',
+      );
+    }
+
+    final stegoImage = img.Image.from(image);
+    _writeRandomizedLsbBlockInSlot(
+      stegoImage,
+      hiddenBlock,
+      passphrase: hiddenPassphrase,
+      keyFileBytes: hiddenKeyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      slot: 0,
+      policyPositions: policyPositions,
+    );
+    _writeRandomizedLsbBlockInSlot(
+      stegoImage,
+      coverBlock,
+      passphrase: coverPassphrase,
+      keyFileBytes: null,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      slot: 1,
+      policyPositions: policyPositions,
+    );
+    _writeImagePolicyHeader(
+      stegoImage,
+      maxErrorAttempts: maxErrorAttempts,
+      positions: policyPositions,
+    );
+    final output = Uint8List.fromList(img.encodePng(stegoImage, level: 6));
+    return ToolboxSteganographyEmbedResult(
+      bytes: output,
+      outputExtension: 'png',
+      payloadBytes: coverBlock.length + hiddenBlock.length,
+      sourceBytes: carrierBytes.length,
+      outputBytes: output.length,
+      cipherPreview: hiddenEnvelope.cipherPreview,
+      carrierDetail:
+          '${image.width}x${image.height}, dual-layer randomized LSB capacity ${_formatBytes(math.min(coverCapacity, hiddenCapacity))} per layer',
+      capacityBytes: coverCapacity + hiddenCapacity,
     );
   }
 
@@ -612,13 +883,27 @@ class ToolboxSteganographyService {
   }
 
   Uint8List _extractTailBlock(Uint8List carrierBytes) {
+    final tailInfo = _tailBlockRange(carrierBytes);
+    if (tailInfo == null) {
+      throw const ToolboxSteganographyException('No hidden payload found.');
+    }
+    return Uint8List.fromList(
+      carrierBytes.sublist(tailInfo.offset, tailInfo.offset + tailInfo.length),
+    );
+  }
+
+  bool _hasTailPayload(Uint8List carrierBytes) {
+    return _tailBlockRange(carrierBytes) != null;
+  }
+
+  _TailBlockRange? _tailBlockRange(Uint8List carrierBytes) {
     final minimum = _tailMagic.length + 4 + _blockMagic.length + 4;
     if (carrierBytes.length < minimum) {
-      throw const ToolboxSteganographyException('No hidden payload found.');
+      return null;
     }
     final magicOffset = carrierBytes.length - _tailMagic.length;
     if (!_rangeEquals(carrierBytes, magicOffset, _tailMagic)) {
-      throw const ToolboxSteganographyException('No hidden payload found.');
+      return null;
     }
     final lengthOffset = magicOffset - 4;
     final blockLength = _readUint32(carrierBytes, lengthOffset);
@@ -628,9 +913,7 @@ class ToolboxSteganographyService {
         'Hidden payload is damaged or incomplete.',
       );
     }
-    return Uint8List.fromList(
-      carrierBytes.sublist(blockOffset, blockOffset + blockLength),
-    );
+    return _TailBlockRange(offset: blockOffset, length: blockLength);
   }
 
   ToolboxSteganographySanitizeResult _stripImagePayload(
@@ -677,6 +960,90 @@ class ToolboxSteganographyService {
     );
   }
 
+  ToolboxSteganographySanitizeResult _clearImageSlotPayload(
+    img.Image image,
+    _ImageBlockReadResult read,
+  ) {
+    final stegoImage = img.Image.from(image);
+    for (final position in <int>[
+      ...read.headerPositions,
+      ...read.payloadPositions,
+    ]) {
+      _setLsbAtPosition(stegoImage, position, 0);
+    }
+    return ToolboxSteganographySanitizeResult(
+      bytes: Uint8List.fromList(img.encodePng(stegoImage, level: 6)),
+      outputExtension: 'png',
+      removed: true,
+    );
+  }
+
+  ToolboxSteganographySuccessfulRevealProtectionResult
+  _applySuccessfulImageRevealProtection(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final decoded = img.decodeImage(carrierBytes);
+    if (decoded == null) {
+      throw const ToolboxSteganographyException(
+        'Unsupported image format or no hidden payload found.',
+      );
+    }
+    final image = img.bakeOrientation(decoded);
+    final read = _readAnyRandomizedLsbBlockDetails(
+      image,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    );
+    final policy = _readBlockPolicy(read.block);
+    final remaining = policy.remainingSuccessfulReveals;
+    if (remaining <= 0) {
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: Uint8List.fromList(carrierBytes),
+        outputExtension: 'png',
+        changed: false,
+        removed: false,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    if (remaining == 1) {
+      final stripped = read.slot == null
+          ? _stripImagePayload(
+              carrierBytes,
+              passphrase: passphrase,
+              keyFileBytes: keyFileBytes,
+              locatorAlgorithm: locatorAlgorithm,
+              locatorStrength: locatorStrength,
+            )
+          : _clearImageSlotPayload(image, read);
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: stripped.bytes,
+        outputExtension: stripped.outputExtension,
+        changed: stripped.removed,
+        removed: stripped.removed,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    final updatedBlock = _managedBlockWithSuccessfulRevealCount(
+      read.block,
+      remaining - 1,
+    );
+    final stegoImage = img.Image.from(image);
+    _writeLsbBytesAtPositions(stegoImage, updatedBlock, read.payloadPositions);
+    return ToolboxSteganographySuccessfulRevealProtectionResult(
+      bytes: Uint8List.fromList(img.encodePng(stegoImage, level: 6)),
+      outputExtension: 'png',
+      changed: true,
+      removed: false,
+      remainingSuccessfulReveals: remaining - 1,
+    );
+  }
+
   ToolboxSteganographySanitizeResult _stripTailPayload(
     Uint8List carrierBytes, {
     required ToolboxSteganographyMediaKind mediaKind,
@@ -712,6 +1079,61 @@ class ToolboxSteganographyService {
       bytes: Uint8List.fromList(carrierBytes.sublist(0, blockOffset)),
       outputExtension: fallbackExtension,
       removed: true,
+    );
+  }
+
+  ToolboxSteganographySuccessfulRevealProtectionResult
+  _applySuccessfulTailRevealProtection(
+    Uint8List carrierBytes, {
+    required ToolboxSteganographyMediaKind mediaKind,
+  }) {
+    final fallbackExtension = mediaKind == ToolboxSteganographyMediaKind.audio
+        ? 'wav'
+        : 'mp4';
+    final tailInfo = _tailBlockRange(carrierBytes);
+    if (tailInfo == null) {
+      throw const ToolboxSteganographyException('No hidden payload found.');
+    }
+    final block = Uint8List.fromList(
+      carrierBytes.sublist(tailInfo.offset, tailInfo.offset + tailInfo.length),
+    );
+    final policy = _readBlockPolicy(block);
+    final remaining = policy.remainingSuccessfulReveals;
+    if (remaining <= 0) {
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: Uint8List.fromList(carrierBytes),
+        outputExtension: fallbackExtension,
+        changed: false,
+        removed: false,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    if (remaining == 1) {
+      final stripped = _stripTailPayload(carrierBytes, mediaKind: mediaKind);
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: stripped.bytes,
+        outputExtension: stripped.outputExtension,
+        changed: stripped.removed,
+        removed: stripped.removed,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    final updatedBlock = _managedBlockWithSuccessfulRevealCount(
+      block,
+      remaining - 1,
+    );
+    final output = Uint8List.fromList(carrierBytes);
+    output.setRange(
+      tailInfo.offset,
+      tailInfo.offset + updatedBlock.length,
+      updatedBlock,
+    );
+    return ToolboxSteganographySuccessfulRevealProtectionResult(
+      bytes: output,
+      outputExtension: fallbackExtension,
+      changed: true,
+      removed: false,
+      remainingSuccessfulReveals: remaining - 1,
     );
   }
 
@@ -918,11 +1340,17 @@ class ToolboxSteganographyService {
     }
   }
 
-  Uint8List _buildBlock(Uint8List jsonBytes, {required int maxErrorAttempts}) {
+  Uint8List _buildBlock(
+    Uint8List jsonBytes, {
+    required int maxErrorAttempts,
+    required int maxSuccessfulReveals,
+  }) {
     _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
     final prefix = BytesBuilder(copy: false)
-      ..add(_protectedBlockMagic)
+      ..add(_managedBlockMagic)
       ..addByte(maxErrorAttempts)
+      ..addByte(maxSuccessfulReveals)
       ..add(_uint32Bytes(jsonBytes.length))
       ..add(jsonBytes);
     final prefixBytes = prefix.takeBytes();
@@ -942,6 +1370,9 @@ class ToolboxSteganographyService {
   }
 
   Uint8List _blockJsonBytes(Uint8List block) {
+    if (_startsWith(block, _managedBlockMagic)) {
+      return _protectedBlockJsonBytes(block);
+    }
     if (_startsWith(block, _protectedBlockMagic)) {
       return _protectedBlockJsonBytes(block);
     }
@@ -952,6 +1383,14 @@ class ToolboxSteganographyService {
   }
 
   ToolboxSteganographyProtectionPolicy _readBlockPolicy(Uint8List block) {
+    if (_startsWith(block, _managedBlockMagic)) {
+      _protectedBlockJsonBytes(block);
+      return ToolboxSteganographyProtectionPolicy(
+        maxErrorAttempts: block[_managedBlockMagic.length],
+        hasTamperCheck: true,
+        remainingSuccessfulReveals: block[_managedBlockMagic.length + 1],
+      );
+    }
     if (_startsWith(block, _protectedBlockMagic)) {
       _protectedBlockJsonBytes(block);
       return ToolboxSteganographyProtectionPolicy(
@@ -971,14 +1410,21 @@ class ToolboxSteganographyService {
   }
 
   Uint8List _protectedBlockJsonBytes(Uint8List block) {
-    final headerLength = _protectedBlockMagic.length + 1 + 4;
+    final isManagedBlock = _startsWith(block, _managedBlockMagic);
+    final magicLength = isManagedBlock
+        ? _managedBlockMagic.length
+        : _protectedBlockMagic.length;
+    final headerLength = magicLength + (isManagedBlock ? 2 : 1) + 4;
     if (block.length < headerLength + _protectedBlockTailLength ||
-        !_startsWith(block, _protectedBlockMagic)) {
+        (!isManagedBlock && !_startsWith(block, _protectedBlockMagic))) {
       throw const ToolboxSteganographyException(
         'Hidden payload header is invalid.',
       );
     }
-    final jsonLength = _readUint32(block, _protectedBlockMagic.length + 1);
+    final jsonLength = _readUint32(
+      block,
+      magicLength + (isManagedBlock ? 2 : 1),
+    );
     final jsonOffset = headerLength;
     final tailOffset = jsonOffset + jsonLength;
     if (jsonLength <= 0 ||
@@ -1026,6 +1472,27 @@ class ToolboxSteganographyService {
           .bytes
           .sublist(0, _protectedBlockTailLength),
     );
+  }
+
+  Uint8List _managedBlockWithSuccessfulRevealCount(
+    Uint8List block,
+    int remainingSuccessfulReveals,
+  ) {
+    _validateMaxSuccessfulReveals(remainingSuccessfulReveals);
+    if (!_startsWith(block, _managedBlockMagic)) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload does not support successful reveal limits.',
+      );
+    }
+    _protectedBlockJsonBytes(block);
+    final jsonLength = _readUint32(block, _managedBlockMagic.length + 2);
+    final tailOffset = _managedBlockMagic.length + 2 + 4 + jsonLength;
+    final output = Uint8List.fromList(block);
+    output[_managedBlockMagic.length + 1] = remainingSuccessfulReveals;
+    final prefix = Uint8List.fromList(output.sublist(0, tailOffset));
+    final tail = _protectedBlockTail(prefix);
+    output.setRange(tailOffset, tailOffset + tail.length, tail);
+    return output;
   }
 
   void _writeRandomizedLsbBlock(
@@ -1088,12 +1555,112 @@ class ToolboxSteganographyService {
     );
   }
 
+  void _writeRandomizedLsbBlockInSlot(
+    img.Image image,
+    Uint8List block, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+    required int slot,
+    required List<int> policyPositions,
+  }) {
+    final locatorSecret = _locatorSecret(
+      passphrase,
+      keyFileBytes,
+      algorithm: locatorAlgorithm,
+      strength: locatorStrength,
+    );
+    final nonce = _randomBytes(_imageNonceLength);
+    final totalPositions = image.width * image.height * 3;
+    final header = _buildImageHeader(
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      payloadLength: block.length,
+      width: image.width,
+      height: image.height,
+    );
+    final headerPositions = _selectSlotPositions(
+      total: totalPositions,
+      count: header.length * 8,
+      seed: _positionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'image-header-slot-$slot',
+        width: image.width,
+        height: image.height,
+      ),
+      slot: slot,
+      excluded: Set<int>.from(policyPositions),
+    );
+    final payloadPositions = _selectSlotPositions(
+      total: totalPositions,
+      count: block.length * 8,
+      seed: _positionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'image-payload-slot-$slot',
+        width: image.width,
+        height: image.height,
+        nonce: nonce,
+      ),
+      slot: slot,
+      excluded: <int>{...policyPositions, ...headerPositions},
+    );
+    _writeLsbBytesAtPositions(image, header, headerPositions);
+    _writeLsbBytesAtPositions(image, block, payloadPositions);
+  }
+
   Uint8List _readRandomizedLsbBlock(
     img.Image image, {
     required String passphrase,
     required Uint8List? keyFileBytes,
     required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
     required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    return _readAnyRandomizedLsbBlockDetails(
+      image,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    ).block;
+  }
+
+  _ImageBlockReadResult _readAnyRandomizedLsbBlockDetails(
+    img.Image image, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final errors = <Object>[];
+    for (final slot in <int?>[null, 0, 1]) {
+      try {
+        return _readRandomizedLsbBlockDetails(
+          image,
+          passphrase: passphrase,
+          keyFileBytes: keyFileBytes,
+          locatorAlgorithm: locatorAlgorithm,
+          locatorStrength: locatorStrength,
+          slot: slot,
+        );
+      } on Object catch (error) {
+        errors.add(error);
+      }
+    }
+    final last = errors.isEmpty ? null : errors.last;
+    if (last is ToolboxSteganographyException) {
+      throw last;
+    }
+    throw const ToolboxSteganographyException('No hidden image payload found.');
+  }
+
+  _ImageBlockReadResult _readRandomizedLsbBlockDetails(
+    img.Image image, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+    int? slot,
   }) {
     final locatorSecret = _locatorSecret(
       passphrase,
@@ -1104,6 +1671,7 @@ class ToolboxSteganographyService {
     return _readRandomizedLsbBlockWithPolicyReservation(
       image,
       locatorSecret: locatorSecret,
+      slot: slot,
       policyPositions: _imagePolicyPositions(
         image,
         headerLength: _imagePolicyHeaderLength,
@@ -1111,23 +1679,33 @@ class ToolboxSteganographyService {
     );
   }
 
-  Uint8List _readRandomizedLsbBlockWithPolicyReservation(
+  _ImageBlockReadResult _readRandomizedLsbBlockWithPolicyReservation(
     img.Image image, {
     required Uint8List locatorSecret,
+    required int? slot,
     required List<int> policyPositions,
   }) {
     final totalPositions = image.width * image.height * 3;
-    final headerPositions = _selectPositions(
-      total: totalPositions,
-      count: _imageHeaderLength * 8,
-      seed: _positionSeed(
-        locatorSecret: locatorSecret,
-        purpose: 'image-header',
-        width: image.width,
-        height: image.height,
-      ),
-      excluded: Set<int>.from(policyPositions),
+    final headerSeed = _positionSeed(
+      locatorSecret: locatorSecret,
+      purpose: slot == null ? 'image-header' : 'image-header-slot-$slot',
+      width: image.width,
+      height: image.height,
     );
+    final headerPositions = slot == null
+        ? _selectPositions(
+            total: totalPositions,
+            count: _imageHeaderLength * 8,
+            seed: headerSeed,
+            excluded: Set<int>.from(policyPositions),
+          )
+        : _selectSlotPositions(
+            total: totalPositions,
+            count: _imageHeaderLength * 8,
+            seed: headerSeed,
+            slot: slot,
+            excluded: Set<int>.from(policyPositions),
+          );
     final header = _readLsbBytesAtPositions(
       image,
       byteCount: _imageHeaderLength,
@@ -1159,29 +1737,51 @@ class ToolboxSteganographyService {
           width: image.width,
           height: image.height,
         );
-    final reservedBits = (_imageHeaderLength * 8) + policyPositions.length;
-    final capacity = (totalPositions - reservedBits) ~/ 8;
+    final capacity = slot == null
+        ? (totalPositions -
+                  ((_imageHeaderLength * 8) + policyPositions.length)) ~/
+              8
+        : _imageSlotCapacity(
+            totalPositions: totalPositions,
+            policyPositions: policyPositions,
+            slot: slot,
+          );
     if (payloadLength <= 0 || payloadLength > capacity) {
       throw const ToolboxSteganographyException(
         'Hidden image payload is damaged or incomplete.',
       );
     }
-    final payloadPositions = _selectPositions(
-      total: totalPositions,
-      count: payloadLength * 8,
-      seed: _positionSeed(
-        locatorSecret: locatorSecret,
-        purpose: 'image-payload',
-        width: image.width,
-        height: image.height,
-        nonce: nonce,
-      ),
-      excluded: <int>{...policyPositions, ...headerPositions},
+    final payloadSeed = _positionSeed(
+      locatorSecret: locatorSecret,
+      purpose: slot == null ? 'image-payload' : 'image-payload-slot-$slot',
+      width: image.width,
+      height: image.height,
+      nonce: nonce,
     );
-    return _readLsbBytesAtPositions(
-      image,
-      byteCount: payloadLength,
-      positions: payloadPositions,
+    final payloadPositions = slot == null
+        ? _selectPositions(
+            total: totalPositions,
+            count: payloadLength * 8,
+            seed: payloadSeed,
+            excluded: <int>{...policyPositions, ...headerPositions},
+          )
+        : _selectSlotPositions(
+            total: totalPositions,
+            count: payloadLength * 8,
+            seed: payloadSeed,
+            slot: slot,
+            excluded: <int>{...policyPositions, ...headerPositions},
+          );
+    return _ImageBlockReadResult(
+      block: _readLsbBytesAtPositions(
+        image,
+        byteCount: payloadLength,
+        positions: payloadPositions,
+      ),
+      headerPositions: headerPositions,
+      payloadPositions: payloadPositions,
+      policyPositions: policyPositions,
+      slot: slot,
     );
   }
 
@@ -1643,6 +2243,68 @@ class ToolboxSteganographyService {
     return positions;
   }
 
+  int _imageSlotCapacity({
+    required int totalPositions,
+    required List<int> policyPositions,
+    required int slot,
+  }) {
+    final slotPositions = (totalPositions + (slot == 0 ? 1 : 0)) ~/ 2;
+    final reservedPolicy = policyPositions
+        .where((position) => position.isEven == (slot == 0))
+        .length;
+    return (slotPositions - reservedPolicy - (_imageHeaderLength * 8)) ~/ 8;
+  }
+
+  List<int> _selectSlotPositions({
+    required int total,
+    required int count,
+    required Uint8List seed,
+    required int slot,
+    Set<int>? excluded,
+  }) {
+    final unavailable = excluded == null ? <int>{} : Set<int>.from(excluded);
+    final candidates = <int>[];
+    for (var position = slot; position < total; position += 2) {
+      if (!unavailable.contains(position)) {
+        candidates.add(position);
+      }
+    }
+    if (count < 0 || count > candidates.length) {
+      throw const ToolboxSteganographyException(
+        'Hidden image payload is damaged or incomplete.',
+      );
+    }
+    final rng = _HmacSha256Csprng(seed);
+    final positions = <int>[];
+    final usedIndexes = <int>{};
+    final maxAttempts = math.max(256, count * 8);
+    var attempts = 0;
+    while (positions.length < count && attempts < maxAttempts) {
+      attempts += 1;
+      final index = rng.nextInt(candidates.length);
+      if (usedIndexes.add(index)) {
+        positions.add(candidates[index]);
+      }
+    }
+    if (positions.length == count) {
+      return positions;
+    }
+    final remaining = <int>[];
+    for (var index = 0; index < candidates.length; index += 1) {
+      if (!usedIndexes.contains(index)) {
+        remaining.add(candidates[index]);
+      }
+    }
+    for (var index = remaining.length - 1; index > 0; index -= 1) {
+      final swapIndex = rng.nextInt(index + 1);
+      final temp = remaining[index];
+      remaining[index] = remaining[swapIndex];
+      remaining[swapIndex] = temp;
+    }
+    positions.addAll(remaining.take(count - positions.length));
+    return positions;
+  }
+
   void _writeLsbBytesAtPositions(
     img.Image image,
     Uint8List bytes,
@@ -1950,6 +2612,29 @@ class _EnvelopeBuildResult {
 
   final Uint8List jsonBytes;
   final String cipherPreview;
+}
+
+class _ImageBlockReadResult {
+  const _ImageBlockReadResult({
+    required this.block,
+    required this.headerPositions,
+    required this.payloadPositions,
+    required this.policyPositions,
+    required this.slot,
+  });
+
+  final Uint8List block;
+  final List<int> headerPositions;
+  final List<int> payloadPositions;
+  final List<int> policyPositions;
+  final int? slot;
+}
+
+class _TailBlockRange {
+  const _TailBlockRange({required this.offset, required this.length});
+
+  final int offset;
+  final int length;
 }
 
 class _EnvelopeParseResult {

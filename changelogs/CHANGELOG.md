@@ -1,3 +1,33 @@
+## [Unreleased-PLAN_239-LIFE-STEGANOGRAPHY-DUAL-LAYER-REWRITE-GUARD] - 2026-05-27
+
+### 原因
+- 用户指出已隐写文件被再次写入会产生不可预测结果，并要求推进显式双层模式，同时新增成功还原指定次数后清理载荷的极端保护选项。
+
+### 新增
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增显式图片双层文本隐写：表层和深层分别写入独立 LSB 槽位，使用不同口令；表层口令只还原表层内容，深层口令只还原深层内容。
+  - 新增受管理保护块 `VSSG3`，记录最大错误尝试次数与剩余成功还原次数。
+  - 新增成功还原保护消费逻辑：剩余次数大于 1 时更新当前载体内计数，等于 1 时清理对应隐藏载荷。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 高级加密参数新增“双层可否认模式”开关，文本写入时显示表层文本与表层口令输入。
+  - 高级设置新增“成功还原次数上限”，首次设置为非 0 时弹窗提醒其只影响当前可写文件副本，无法约束已复制文件或外部备份。
+- `test/toolbox_steganography_service_test.dart`
+  - 覆盖重复写入拒绝、双层表层/深层分别还原，以及成功还原次数消费后清理载荷。
+
+### 修改
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 写入前对当前格式可确认已占用的载体默认拒绝再次写入，提示使用原始载体、先清理隐藏内容，或将加密文件作为新的隐写 payload。
+
+### 风险变更
+- 重复写入拒绝依赖当前格式可确认的占用标记，属于防误操作闸门，不是不可检测性保证。
+- 双层模式当前仅支持图片文本载荷；表层不使用选中的 keyfile，keyfile 仍用于深层。
+- 成功还原次数限制只能改写当前可写文件副本或当前内存载体，不防止已复制文件继续被还原。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
 ## [Unreleased-PLAN_237-LIFE-STEGANOGRAPHY-EXTENSION-CLEANUP] - 2026-05-26
 
 ### 原因

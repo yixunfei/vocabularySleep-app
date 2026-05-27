@@ -124,6 +124,120 @@ void main() {
       expect(revealed.encryption, ToolboxCryptoAlgorithm.twofishGcm);
     });
 
+    test('rejects writing into an already occupied carrier', () {
+      final embedded = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(),
+        text: 'first layer',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'first-key',
+      );
+
+      expect(
+        () => service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: embedded.bytes,
+          text: 'second layer',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'second-key',
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+    });
+
+    test('embeds dual text layers and reveals only matching layer', () {
+      final embedded = service.embedDualText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(width: 180, height: 180),
+        coverText: 'cover note',
+        hiddenText: 'real note',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        coverPassphrase: 'cover-key',
+        hiddenPassphrase: 'hidden-key',
+      );
+
+      final cover = service.revealText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'cover-key',
+      );
+      final hidden = service.revealText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'hidden-key',
+      );
+
+      expect(cover.text, 'cover note');
+      expect(hidden.text, 'real note');
+      expect(
+        () => service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: embedded.bytes,
+          text: 'third layer',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'third-key',
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+    });
+
+    test('consumes successful reveal limits and then clears payload', () {
+      final embedded = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(),
+        text: 'read twice',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'success-key',
+        maxSuccessfulReveals: 2,
+      );
+
+      expect(
+        service
+            .revealText(
+              mediaKind: ToolboxSteganographyMediaKind.image,
+              carrierBytes: embedded.bytes,
+              passphrase: 'success-key',
+            )
+            .text,
+        'read twice',
+      );
+      final firstConsume = service.applySuccessfulRevealProtection(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'success-key',
+      );
+      expect(firstConsume.changed, isTrue);
+      expect(firstConsume.removed, isFalse);
+      expect(firstConsume.remainingSuccessfulReveals, 1);
+
+      expect(
+        service
+            .revealText(
+              mediaKind: ToolboxSteganographyMediaKind.image,
+              carrierBytes: firstConsume.bytes,
+              passphrase: 'success-key',
+            )
+            .text,
+        'read twice',
+      );
+      final secondConsume = service.applySuccessfulRevealProtection(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: firstConsume.bytes,
+        passphrase: 'success-key',
+      );
+      expect(secondConsume.changed, isTrue);
+      expect(secondConsume.removed, isTrue);
+      expect(secondConsume.remainingSuccessfulReveals, 0);
+      expect(
+        () => service.revealText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: secondConsume.bytes,
+          passphrase: 'success-key',
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+    });
+
     test('embeds and reveals image text without encryption', () {
       final embedded = service.embedText(
         mediaKind: ToolboxSteganographyMediaKind.image,
