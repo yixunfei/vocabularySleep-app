@@ -52,6 +52,27 @@ void main() {
       expect(decrypted.algorithm, ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm);
     });
 
+    test('encrypts and decrypts bytes with ChaCha20-Poly1305', () {
+      final plain = Uint8List.fromList(utf8.encode('chacha payload'));
+      final encrypted = service.encryptBytes(
+        plainBytes: plain,
+        algorithm: ToolboxCryptoAlgorithm.chacha20Poly1305,
+        strength: ToolboxCryptoStrength.standard,
+        passphrase: 'chacha-key',
+      );
+
+      final envelope = jsonDecode(utf8.decode(encrypted.envelopeBytes));
+      expect(envelope['algorithm'], 'chacha20_poly1305');
+      expect((envelope['stages'] as List<Object?>).single, isA<Map>());
+
+      final decrypted = service.decryptBytes(
+        envelopeBytes: encrypted.envelopeBytes,
+        passphrase: 'chacha-key',
+      );
+      expect(decrypted.plainBytes, plain);
+      expect(decrypted.algorithm, ToolboxCryptoAlgorithm.chacha20Poly1305);
+    });
+
     test('requires matching key file when one is used', () {
       final encrypted = service.encryptBytes(
         plainBytes: Uint8List.fromList(<int>[1, 2, 3, 4]),
@@ -126,8 +147,9 @@ void main() {
       expect(decrypted.algorithm, ToolboxCryptoAlgorithm.customCascade);
     });
 
-    test('supports RSA and ECDSA signature envelope verification', () {
+    test('supports weak, RSA, and ECDSA signature envelope verification', () {
       for (final mode in <ToolboxCryptoSignatureMode>[
+        ToolboxCryptoSignatureMode.weakSha256,
         ToolboxCryptoSignatureMode.rsaSha256,
         ToolboxCryptoSignatureMode.ecdsaSha256,
       ]) {
@@ -138,11 +160,39 @@ void main() {
           passphrase: 'sign-key',
           signatureMode: mode,
         );
+        final envelope = jsonDecode(utf8.decode(encrypted.envelopeBytes));
+        expect(envelope['signatureMode'], mode.id);
+        if (mode == ToolboxCryptoSignatureMode.weakSha256) {
+          expect(envelope['signaturePublic'], <String, Object?>{
+            'mode': ToolboxCryptoSignatureMode.weakSha256.id,
+            'public': false,
+          });
+        }
         final decrypted = service.decryptBytes(
           envelopeBytes: encrypted.envelopeBytes,
           passphrase: 'sign-key',
         );
         expect(utf8.decode(decrypted.plainBytes), 'signed payload');
+
+        if (mode == ToolboxCryptoSignatureMode.weakSha256) {
+          final tamperedEnvelope = Map<String, Object?>.from(envelope as Map);
+          final signature = Map<String, Object?>.from(
+            tamperedEnvelope['signature']! as Map,
+          );
+          final tag = base64Decode(signature['value']! as String);
+          tag[0] ^= 0x01;
+          signature['value'] = base64Encode(tag);
+          tamperedEnvelope['signature'] = signature;
+          expect(
+            () => service.decryptBytes(
+              envelopeBytes: Uint8List.fromList(
+                utf8.encode(jsonEncode(tamperedEnvelope)),
+              ),
+              passphrase: 'sign-key',
+            ),
+            throwsA(isA<ToolboxCryptoException>()),
+          );
+        }
       }
     });
 

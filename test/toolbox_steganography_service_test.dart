@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -78,6 +79,20 @@ void main() {
       },
     );
 
+    test('normalizes extensions with shared service rule', () {
+      expect(ToolboxSteganographyService.maxExtensionLength, 12);
+      expect(
+        ToolboxSteganographyService.cleanExtension('.APPINSTALLER'),
+        'appinstaller',
+      );
+      expect(
+        ToolboxSteganographyService.cleanExtension('.verylongextension'),
+        isNull,
+      );
+      expect(ToolboxSteganographyService.cleanExtension('.---'), isNull);
+      expect(ToolboxSteganographyService.cleanExtension(null), isNull);
+    });
+
     test('uses optional key file for hidden payloads', () {
       final keyFile = Uint8List.fromList(<int>[8, 6, 7, 5, 3, 0, 9]);
       final embedded = service.embedText(
@@ -128,6 +143,52 @@ void main() {
       expect(revealed.encryption, ToolboxCryptoAlgorithm.none);
     });
 
+    test('stores reveal protection policy and strips hidden image payload', () {
+      final embedded = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(),
+        text: 'protected secret',
+        encryption: ToolboxCryptoAlgorithm.none,
+        passphrase: 'locator-key',
+        maxErrorAttempts: 3,
+        locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
+        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+      );
+
+      final policy = service.inspectProtectionPolicy(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'wrong-key',
+        locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
+        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+      );
+      expect(policy.maxErrorAttempts, 3);
+      expect(policy.hasTamperCheck, isTrue);
+      expect(
+        _readSequentialLsbBytes(embedded.bytes, 6),
+        isNot(ascii.encode('VSSGP2')),
+      );
+
+      final stripped = service.stripHiddenData(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'wrong-key',
+        locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
+        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+      );
+      expect(stripped.removed, isTrue);
+      expect(
+        () => service.revealText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: stripped.bytes,
+          passphrase: 'locator-key',
+          locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
+          locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+    });
+
     test('embeds and reveals encrypted files in image carriers', () {
       final secretFile = Uint8List.fromList(
         List<int>.generate(48, (index) => (index * 13) & 255),
@@ -170,6 +231,12 @@ void main() {
         expect(revealed.encryption, ToolboxCryptoAlgorithm.customCascade);
       }
     });
+
+    test('uses hardened locator KDF rounds for new payloads', () {
+      expect(ToolboxSteganographyLocatorStrength.standard.rounds, 4096);
+      expect(ToolboxSteganographyLocatorStrength.strong.rounds, 12000);
+      expect(ToolboxSteganographyLocatorStrength.extreme.rounds, 24000);
+    });
   });
 }
 
@@ -181,4 +248,27 @@ Uint8List _makePngCarrier({int width = 96, int height = 96}) {
     }
   }
   return Uint8List.fromList(img.encodePng(image));
+}
+
+List<int> _readSequentialLsbBytes(Uint8List pngBytes, int byteCount) {
+  final image = img.decodeImage(pngBytes)!;
+  final output = Uint8List(byteCount);
+  var bitIndex = 0;
+  for (var y = 0; y < image.height && bitIndex < byteCount * 8; y += 1) {
+    for (var x = 0; x < image.width && bitIndex < byteCount * 8; x += 1) {
+      final pixel = image.getPixel(x, y);
+      for (final channel in <int>[
+        pixel.r.toInt(),
+        pixel.g.toInt(),
+        pixel.b.toInt(),
+      ]) {
+        if (bitIndex >= byteCount * 8) {
+          return output;
+        }
+        output[bitIndex >> 3] |= (channel & 1) << (7 - (bitIndex & 7));
+        bitIndex += 1;
+      }
+    }
+  }
+  return output;
 }

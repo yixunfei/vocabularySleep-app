@@ -1,3 +1,25 @@
+## [Unreleased-PLAN_237-LIFE-STEGANOGRAPHY-EXTENSION-CLEANUP] - 2026-05-26
+
+### 原因
+- 用户指出隐写服务层 `_cleanExtension` 最大长度为 8，而生活实用隐写 UI 层为 12，可能导致导出扩展名在不同层处理不一致。
+
+### 修改
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 提取 `ToolboxSteganographyService.cleanExtension` 与 `maxExtensionLength = 12`，统一扩展名清洗入口。
+  - 服务层扩展名清洗同步处理清洗后为空字符串的输入，避免返回空扩展名。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 保存文件结果时改用服务层公共扩展名清洗方法，移除 UI 私有重复实现。
+- `test/toolbox_steganography_service_test.dart`
+  - 补充 12 位扩展名、超长扩展名、非法字符清空和 null 输入的边界测试。
+
+### 风险变更
+- 服务层允许的扩展名上限从 8 位统一放宽到 12 位，与既有 UI 行为一致；仍仅保留小写字母数字。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
 ## [Unreleased-PLAN_238-ANDROID-AAB-ABI-SPLIT-FIX] - 2026-05-26
 
 ### 原因
@@ -35,6 +57,173 @@
 
 ### 验证
 - `flutter build apk --release`
+
+## [Unreleased-PLAN_235-LIFE-STEGANOGRAPHY-WEAK-SIGNATURE] - 2026-05-26
+
+### 原因
+- 用户希望在强签名导致移动端性能下降明显的场景下，提供一个由内置长期域 key、随机短签名材料和 SHA-256/HMAC 组合而成的弱签名版本选项，并在选择签名时提示性能开销。
+
+### 新增
+- `lib/src/services/toolbox_crypto_service.dart`
+  - 新增 `ToolboxCryptoSignatureMode.weakSha256`，使用用户派生签名种子、内置域 key、随机 nonce/padding 和 HMAC-SHA256 生成 32 字节轻量标签。
+  - 弱签名路径不生成 RSA/ECDSA 密钥对，不写入可验证公钥，验证时只校验 envelope 附加标签是否匹配。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 隐写高级加密设置新增“弱签名版 快”选项。
+  - 选择弱签名时提示其为快速轻量标签、不提供第三方来源证明；选择 RSA/ECDSA 强签名时提示会生成密钥对并签名，移动设备可能需要等待。
+- `test/toolbox_crypto_service_test.dart`
+  - 覆盖弱签名、RSA 和 ECDSA 签名 envelope 的加解密验证，并补充弱签名标签篡改失败断言。
+
+### 风险变更
+- 弱签名不是公钥签名：内置域 key 可被逆向，安全性主要来自用户口令派生种子和现有 AEAD/MAC；它只作为低成本附加标签，不提供第三方来源证明。
+- 需要来源证明或更强签名语义时仍应使用 RSA/ECDSA，但移动设备上会有明显额外耗时。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_234-LIFE-STEGANOGRAPHY-SIGNATURE-REVEAL-UX] - 2026-05-26
+
+### 原因
+- 用户反馈签名层会让加解密性能下降数十倍，并要求最大错误次数风险提示前移、还原失败只显示错误次数、还原时隐藏加密算法和加密设置等不相关选项。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 最大错误次数风险弹窗改为第一次修改为非 0 时展示，文案压缩为“文件还原/解密时密码错误达到次数会销毁当前文件隐藏内容”。
+  - 生成/写入时不再二次弹出最大错误次数确认。
+  - 还原失败提示不再展示 `x/y` 进度，只显示当前文件错误次数。
+  - 还原/解密模式隐藏写入阶段才相关的加密算法、强度、安全提示和高级加密参数；仅保留口令、keyfile 与定位算法/强度。
+- `test/ui_smoke_test.dart`
+  - 覆盖还原模式下加密设置隐藏、定位设置保留。
+- `PROJECT_DOMAIN.md`
+  - 补充签名层性能边界与还原界面收口说明。
+
+### 风险变更
+- 签名层性能分析结论：RSA 路径当前会每个 envelope 确定性生成 2048-bit RSA 密钥对并签名，ECDSA 路径会生成 P-256 密钥对并执行确定性签名；这是纯 Dart 大整数/椭圆曲线运算，成本远高于对称 AEAD 和哈希。该层适合作为高级来源/完整性校验，不宜作为默认加密路径。
+- 还原模式隐藏写入设置后，用户无法在还原页修改加密算法；这是预期行为，因为算法来自 envelope，只有定位算法/强度仍需匹配。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_233-LIFE-STEGANOGRAPHY-PERFORMANCE] - 2026-05-26
+
+### 原因
+- 用户反馈当前图片/音频/视频隐写模块加密还原明显卡顿；模块尚未正式发布，因此无需保留上一轮试验格式兼容。
+
+### 修改
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 移除未发布的旧策略头、旧定位器和旧顺序 LSB 图片载荷兼容读取/清理分支，减少错误口令和还原路径的重复尝试。
+  - 保留当前定位器 KDF、scrypt 与 AEAD 安全参数，不通过降低默认安全强度换取速度。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 文本隐写生成/还原与文件隐写生成/还原迁移到 Flutter `compute` isolate，避免图片解码、LSB 定位、定位器 KDF、scrypt 和 AEAD 同步阻塞 UI 主线程。
+- `PROJECT_DOMAIN.md`
+  - 同步性能优化边界：总耗时仍取决于安全 KDF，但主线程卡顿降低。
+
+### 风险变更
+- 上一轮本地试验生成的旧策略头/旧定位器/旧顺序 LSB 图片载荷不再保证还原；因模块未正式发布，当前以新格式性能和稳定性为准。
+- `compute` isolate 主要改善 UI 响应性，不等同于完全缩短加密/还原总耗时。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_232-LIFE-STEGANOGRAPHY-SECURITY-REVIEW-FIXES] - 2026-05-26
+
+### 原因
+- 收到生活实用隐写模块安全反馈：公开策略头校验无密钥、定位器默认 KDF 过弱、策略头固定顺序 LSB 位置可检测、策略头校验长度偏短，以及 MAC/摘要比较先转十六进制字符串。
+
+### 新增
+- `plans/PLAN_232_隐写策略头与定位器安全修复.md`
+  - 记录本轮安全反馈评估、修复边界和兼容风险。
+
+### 修改
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新写入定位器 KDF 强度调整为 standard `4096` 轮、strong `12000` 轮、extreme `24000` 轮；旧 SHA-256 standard 载荷保留兼容读取。
+  - 图片公开策略头升级为 `VSSGP2`，校验长度提升到 16 字节，并改为基于图片内容派生位置写入，避免固定前 136 个 LSB。
+  - 兼容读取/清理上一轮 `VSSGP1` 顺序策略头和无策略头旧载荷。
+  - 旧隐写 envelope 的 MAC/摘要校验改为原始字节常量时间比较。
+- `lib/src/services/toolbox_crypto_service.dart`
+  - crypto envelope 的 MAC/摘要校验改为原始字节常量时间比较，十六进制仅作为存储编码。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 最大错误尝试次数风险提示明确：公开策略头是本机防误试/清理提示，不抵抗载体副本或策略头篡改。
+  - 定位密钥强度选项展示当前轮数。
+- `PROJECT_DOMAIN.md`
+  - 同步公开策略头的安全边界、定位器 KDF 强度和常量时间比较调整。
+
+### 风险变更
+- 新载荷定位器暴力破解成本提高，但写入/还原会比旧 `1` 轮定位器更耗时。
+- 无密码可读的公开策略头天然不能提供抗恶意篡改保证；自毁限制只能作为本机执行策略，真正保密性仍依赖定位器 KDF、scrypt、AEAD 与签名/MAC。
+- timing side-channel 反馈评估为低风险残留：用户主动选择的 locator strength 仍会影响本地耗时，但不再通过公开策略头暴露 strength 字段。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_231-LIFE-STEGANOGRAPHY-ATTEMPT-LIMIT-FIX] - 2026-05-26
+
+### 原因
+- 用户反馈最大错误尝试字节未稳定生效，超过次数后当前内存载体仍可能保留隐写内容；还原失败缺少当前文件错误次数，退出子模块会清空计数，软件级错误限制也不应被错误文件拖累。
+
+### 新增
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增图片轻量策略头，使新图片载荷在错误口令或定位参数不匹配时也能读取最大错误尝试次数。
+  - 新增错误口令场景下的图片 RGB LSB 清理兜底，无法精准定位 payload 时仍可破坏当前载体隐藏数据。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 错误次数改为按当前文件路径与内容摘要持久记录，退出并重新进入子模块后不清空。
+  - 还原失败提示新增当前文件 5 分钟错误次数与载荷错误次数进度。
+  - 非 0 最大错误尝试次数写入前新增风险确认弹窗。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 5 分钟内 10 次错误锁定改为按文件生效，避免一个错误文件锁住整个隐写模块。
+  - 最大错误尝试次数提示改为红色风险文案，展示最大 255 次与当前设置；非法输入会提示并重置为 0。
+  - 高级加密参数折叠区增加图标、边框和强调底色，提高可展开辨识度。
+- `PROJECT_DOMAIN.md`
+  - 同步按文件错误限制、策略头与当前内存载体清理边界。
+
+### 风险变更
+- 新写入图片会带有最小策略头，用于在错误口令场景执行错误次数限制；payload 内容仍由定位密钥随机化和加密 envelope 保护。
+- 超过载荷限制但无法用密钥定位 payload 时，图片清理会归零 RGB LSB，可能同时破坏其他 LSB 隐写内容。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_230-LIFE-STEGANOGRAPHY-SECURITY-ADVANCED] - 2026-05-26
+
+### 原因
+- 用户要求优化工具箱-生活实用图片/音频/视频隐写模块：提高选择文件和导出文件按钮辨识度，补充 ChaCha20 加密，并增加错误尝试、防篡改、定位密钥和解码锁定等高级安全设置。
+
+### 新增
+- `lib/src/services/toolbox_crypto_service.dart`
+  - 新增 ChaCha20-Poly1305 加密算法，并允许在自由级联中作为独立阶段使用。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增保护块格式：数据段前写入一字节最大允许错误尝试次数，尾部写入前置数据防篡改校验。
+  - 新增定位密钥算法与强度参数，保留旧隐写载荷读取兼容。
+  - 新增隐藏数据清理能力，用于篡改或超过载荷错误尝试限制后的复写移除。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 高级设置新增最大错误尝试次数、定位密钥算法和定位密钥强度。
+  - 还原流程新增模块级连续错误限制：5 分钟内连续 10 次错误后锁定还原功能 5 分钟。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 将选择媒体、选择载体、选择待隐藏文件、导出隐写媒体、导出还原文件和 keyfile 导入/导出类按钮调整为绿色背景，提高移动端操作辨识度。
+  - 还原失败时会根据保护策略提示错误次数限制、篡改清理或锁定剩余时间。
+- `PROJECT_DOMAIN.md`
+  - 同步生活实用隐写模块的 ChaCha20、保护块、防篡改、定位密钥和模块级锁定边界。
+
+### 风险变更
+- 最大错误尝试次数需要先成功定位到新保护块后才能读取并执行；定位口令、keyfile、算法或强度不一致时仍由模块级连续错误锁定兜底。
+- 自动清理隐藏数据仅在本地文件存在且可复写时能销毁源文件中的隐写数据；Web 或无源路径场景会退回为清理当前内存载体。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
 
 ## [Unreleased-PLAN_229-LIFE-STEGANOGRAPHY-UI-COMPACT-KEYFILES] - 2026-05-26
 

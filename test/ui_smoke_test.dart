@@ -1485,6 +1485,10 @@ void main() {
       await tester.tap(find.text('Reveal'));
       await tester.pumpAndSettle();
       expect(find.text('Media to reveal'), findsOneWidget);
+      expect(find.text('Encryption'), findsNothing);
+      expect(find.text('Advanced crypto'), findsNothing);
+      expect(find.text('Locator'), findsOneWidget);
+      expect(find.text('Locator algorithm'), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('life_stego_secret_field')),
         findsNothing,

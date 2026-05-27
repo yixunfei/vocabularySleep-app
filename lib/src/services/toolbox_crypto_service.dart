@@ -8,6 +8,7 @@ import 'package:pointycastle/export.dart' as pc;
 enum ToolboxCryptoAlgorithm {
   none,
   aesGcm,
+  chacha20Poly1305,
   camelliaGcm,
   twofishGcm,
   aesTwofishGcm,
@@ -26,6 +27,7 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
     return switch (this) {
       ToolboxCryptoAlgorithm.none => 'none',
       ToolboxCryptoAlgorithm.aesGcm => 'aes_gcm',
+      ToolboxCryptoAlgorithm.chacha20Poly1305 => 'chacha20_poly1305',
       ToolboxCryptoAlgorithm.camelliaGcm => 'camellia_gcm',
       ToolboxCryptoAlgorithm.twofishGcm => 'twofish_gcm',
       ToolboxCryptoAlgorithm.aesTwofishGcm => 'aes_twofish_gcm',
@@ -45,6 +47,7 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
     return switch (this) {
       ToolboxCryptoAlgorithm.none => 'No encryption',
       ToolboxCryptoAlgorithm.aesGcm => 'AES-GCM',
+      ToolboxCryptoAlgorithm.chacha20Poly1305 => 'ChaCha20-Poly1305',
       ToolboxCryptoAlgorithm.camelliaGcm => 'Camellia-GCM',
       ToolboxCryptoAlgorithm.twofishGcm => 'Twofish-GCM',
       ToolboxCryptoAlgorithm.aesTwofishGcm => 'AES + Twofish',
@@ -84,6 +87,7 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
     return switch (this) {
       ToolboxCryptoAlgorithm.none => 0,
       ToolboxCryptoAlgorithm.aesGcm => 256,
+      ToolboxCryptoAlgorithm.chacha20Poly1305 => 256,
       ToolboxCryptoAlgorithm.camelliaGcm => 256,
       ToolboxCryptoAlgorithm.twofishGcm => 256,
       ToolboxCryptoAlgorithm.aesTwofishGcm => 512,
@@ -99,12 +103,19 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
   }
 }
 
-enum ToolboxCryptoCascadeCipher { aes, twofish, camellia, sha256Stream }
+enum ToolboxCryptoCascadeCipher {
+  aes,
+  chacha20,
+  twofish,
+  camellia,
+  sha256Stream,
+}
 
 extension ToolboxCryptoCascadeCipherInfo on ToolboxCryptoCascadeCipher {
   String get id {
     return switch (this) {
       ToolboxCryptoCascadeCipher.aes => 'aes_gcm',
+      ToolboxCryptoCascadeCipher.chacha20 => 'chacha20_poly1305',
       ToolboxCryptoCascadeCipher.twofish => 'twofish_gcm',
       ToolboxCryptoCascadeCipher.camellia => 'camellia_gcm',
       ToolboxCryptoCascadeCipher.sha256Stream => 'sha256_stream',
@@ -114,6 +125,7 @@ extension ToolboxCryptoCascadeCipherInfo on ToolboxCryptoCascadeCipher {
   String get label {
     return switch (this) {
       ToolboxCryptoCascadeCipher.aes => 'AES-GCM',
+      ToolboxCryptoCascadeCipher.chacha20 => 'ChaCha20-Poly1305',
       ToolboxCryptoCascadeCipher.twofish => 'Twofish-GCM',
       ToolboxCryptoCascadeCipher.camellia => 'Camellia-GCM',
       ToolboxCryptoCascadeCipher.sha256Stream => 'SHA256 stream (weak)',
@@ -143,12 +155,13 @@ extension ToolboxCryptoKeyBitsInfo on ToolboxCryptoKeyBits {
   int get bytes => bits ~/ 8;
 }
 
-enum ToolboxCryptoSignatureMode { none, rsaSha256, ecdsaSha256 }
+enum ToolboxCryptoSignatureMode { none, weakSha256, rsaSha256, ecdsaSha256 }
 
 extension ToolboxCryptoSignatureModeInfo on ToolboxCryptoSignatureMode {
   String get id {
     return switch (this) {
       ToolboxCryptoSignatureMode.none => 'none',
+      ToolboxCryptoSignatureMode.weakSha256 => 'weak_sha256',
       ToolboxCryptoSignatureMode.rsaSha256 => 'rsa_sha256',
       ToolboxCryptoSignatureMode.ecdsaSha256 => 'ecdsa_sha256',
     };
@@ -157,6 +170,7 @@ extension ToolboxCryptoSignatureModeInfo on ToolboxCryptoSignatureMode {
   String get label {
     return switch (this) {
       ToolboxCryptoSignatureMode.none => 'No signature',
+      ToolboxCryptoSignatureMode.weakSha256 => 'Weak SHA-256',
       ToolboxCryptoSignatureMode.rsaSha256 => 'SHA-256/RSA',
       ToolboxCryptoSignatureMode.ecdsaSha256 => 'ECDSA',
     };
@@ -344,6 +358,9 @@ class ToolboxCryptoKeyFileResult {
 class ToolboxCryptoService {
   static const int currentVersion = 3;
   static final math.Random _secureRandom = math.Random.secure();
+  static final List<int> _weakSignatureDomainKey = utf8.encode(
+    'vocabulary_sleep_builtin_weak_signature_v1_not_a_private_key',
+  );
 
   ToolboxCryptoEncryptResult encryptBytes({
     required Uint8List plainBytes,
@@ -453,11 +470,10 @@ class ToolboxCryptoService {
       key: macKey,
       bytes: <int>[...associatedData, 0, ...cipherBytes],
     );
-    final signatureSeed = _expandRootKey(
-      rootKey,
-      'signature-${effectiveMacAlgorithm.id}',
-      64,
-    );
+    final signatureSeed =
+        effectiveSignatureMode == ToolboxCryptoSignatureMode.none
+        ? null
+        : _expandRootKey(rootKey, 'signature-${effectiveMacAlgorithm.id}', 64);
     final signedBytes = <int>[
       ...associatedData,
       0,
@@ -586,7 +602,8 @@ class ToolboxCryptoService {
             kdfSettings: kdfSettings,
           )
         : null;
-    final expectedMac = _hmacHex(
+    final macBytes = _hexToBytes(mac);
+    final expectedMac = _hmacBytes(
       algorithm: macAlgorithm,
       key: rootKey == null
           ? _deriveLegacyMacKey(
@@ -599,15 +616,22 @@ class ToolboxCryptoService {
           : _expandRootKey(rootKey, 'mac-${macAlgorithm.id}', 32),
       bytes: <int>[...associatedData, 0, ...cipherBytes],
     );
-    if (!_constantTimeEquals(mac, expectedMac)) {
+    if (macBytes == null || !_constantTimeBytesEquals(macBytes, expectedMac)) {
       throw const ToolboxCryptoException(
         'Passphrase mismatch or payload is damaged.',
       );
     }
+    if (signatureMode != ToolboxCryptoSignatureMode.none && rootKey == null) {
+      throw const ToolboxCryptoException('Signature is invalid.');
+    }
+    final signatureSeed = signatureMode == ToolboxCryptoSignatureMode.none
+        ? null
+        : _expandRootKey(rootKey!, 'signature-${macAlgorithm.id}', 64);
     _verifyEnvelopeSignature(
       mode: signatureMode,
       signature: map['signature'],
       publicKey: map['signaturePublic'],
+      keySeed: signatureSeed,
       data: <int>[...associatedData, 0, ...cipherBytes, 0, ...utf8.encode(mac)],
     );
 
@@ -662,8 +686,10 @@ class ToolboxCryptoService {
     final output = rootKey == null
         ? decryptedPayload
         : _unpadPlainPayload(decryptedPayload);
-    final actualSha = _hashHex(ToolboxCryptoHashAlgorithm.sha256, output);
-    if (!_constantTimeEquals(actualSha, plainSha)) {
+    final plainShaBytes = _hexToBytes(plainSha);
+    final actualSha = _hashBytes(ToolboxCryptoHashAlgorithm.sha256, output);
+    if (plainShaBytes == null ||
+        !_constantTimeBytesEquals(actualSha, plainShaBytes)) {
       throw const ToolboxCryptoException('Payload checksum failed.');
     }
     return ToolboxCryptoDecryptResult(
@@ -811,6 +837,9 @@ class ToolboxCryptoService {
       ToolboxCryptoAlgorithm.aesGcm => <_CryptoStage>[
         _CryptoStage.aesGcm(keyBytes: keyBits.bytes),
       ],
+      ToolboxCryptoAlgorithm.chacha20Poly1305 => <_CryptoStage>[
+        _CryptoStage.chacha20Poly1305(keyBytes: keyBits.bytes),
+      ],
       ToolboxCryptoAlgorithm.camelliaGcm => <_CryptoStage>[
         _CryptoStage.camelliaGcm(keyBytes: keyBits.bytes),
       ],
@@ -876,6 +905,9 @@ class ToolboxCryptoService {
   ) {
     return switch (cipher) {
       ToolboxCryptoCascadeCipher.aes => _CryptoStage.aesGcm(keyBytes: keyBytes),
+      ToolboxCryptoCascadeCipher.chacha20 => _CryptoStage.chacha20Poly1305(
+        keyBytes: keyBytes,
+      ),
       ToolboxCryptoCascadeCipher.twofish => _CryptoStage.twofishGcm(
         keyBytes: keyBytes,
       ),
@@ -1144,12 +1176,23 @@ class ToolboxCryptoService {
     required Uint8List key,
     required List<int> bytes,
   }) {
+    return _hexDigest(_hmacBytes(algorithm: algorithm, key: key, bytes: bytes));
+  }
+
+  Uint8List _hmacBytes({
+    required ToolboxCryptoMacAlgorithm algorithm,
+    required Uint8List key,
+    required List<int> bytes,
+  }) {
     return switch (algorithm) {
-      ToolboxCryptoMacAlgorithm.sha256 => _hexDigest(
+      ToolboxCryptoMacAlgorithm.sha256 => Uint8List.fromList(
         crypto.Hmac(crypto.sha256, key).convert(bytes).bytes,
       ),
-      ToolboxCryptoMacAlgorithm.whirlpool => _hexDigest(
-        _pointyHmac(pc.WhirlpoolDigest(), 64, key, bytes),
+      ToolboxCryptoMacAlgorithm.whirlpool => _pointyHmac(
+        pc.WhirlpoolDigest(),
+        64,
+        key,
+        bytes,
       ),
     };
   }
@@ -1207,6 +1250,7 @@ class ToolboxCryptoService {
     final stages = <_CryptoStage>[
       const _CryptoStage.none(),
       _CryptoStage.aesGcm(keyBytes: keyBytes ?? 32),
+      _CryptoStage.chacha20Poly1305(keyBytes: keyBytes ?? 32),
       _CryptoStage.camelliaGcm(keyBytes: keyBytes ?? 32),
       _CryptoStage.twofishGcm(keyBytes: keyBytes ?? 32),
       _CryptoStage.sha256Stream(keyBytes: keyBytes ?? 32),
@@ -1267,17 +1311,21 @@ class ToolboxCryptoService {
 
   Map<String, Object?>? _signEnvelope({
     required ToolboxCryptoSignatureMode mode,
-    required Uint8List keySeed,
+    required Uint8List? keySeed,
     required List<int> data,
   }) {
     return switch (mode) {
       ToolboxCryptoSignatureMode.none => null,
+      ToolboxCryptoSignatureMode.weakSha256 => _weakSignatureMap(
+        keySeed: keySeed ?? Uint8List(0),
+        data: data,
+      ),
       ToolboxCryptoSignatureMode.rsaSha256 => _rsaSignatureMap(
-        keySeed: keySeed,
+        keySeed: keySeed ?? Uint8List(0),
         data: data,
       ),
       ToolboxCryptoSignatureMode.ecdsaSha256 => _ecdsaSignatureMap(
-        keySeed: keySeed,
+        keySeed: keySeed ?? Uint8List(0),
         data: data,
       ),
     };
@@ -1285,13 +1333,61 @@ class ToolboxCryptoService {
 
   Map<String, Object?>? _signaturePublicKey({
     required ToolboxCryptoSignatureMode mode,
-    required Uint8List keySeed,
+    required Uint8List? keySeed,
   }) {
     return switch (mode) {
       ToolboxCryptoSignatureMode.none => null,
-      ToolboxCryptoSignatureMode.rsaSha256 => _rsaPublicKeyMap(keySeed),
-      ToolboxCryptoSignatureMode.ecdsaSha256 => _ecdsaPublicKeyMap(keySeed),
+      ToolboxCryptoSignatureMode.weakSha256 => <String, Object?>{
+        'mode': ToolboxCryptoSignatureMode.weakSha256.id,
+        'public': false,
+      },
+      ToolboxCryptoSignatureMode.rsaSha256 => _rsaPublicKeyMap(
+        keySeed ?? Uint8List(0),
+      ),
+      ToolboxCryptoSignatureMode.ecdsaSha256 => _ecdsaPublicKeyMap(
+        keySeed ?? Uint8List(0),
+      ),
     };
+  }
+
+  Map<String, Object?> _weakSignatureMap({
+    required Uint8List keySeed,
+    required List<int> data,
+  }) {
+    final nonce = _randomBytes(16);
+    final padding = _randomBytes(16);
+    final tag = _weakSignatureTag(
+      keySeed: keySeed,
+      nonce: nonce,
+      padding: padding,
+      data: data,
+    );
+    return <String, Object?>{
+      'mode': ToolboxCryptoSignatureMode.weakSha256.id,
+      'nonce': base64Encode(nonce),
+      'padding': base64Encode(padding),
+      'value': base64Encode(tag),
+    };
+  }
+
+  Uint8List _weakSignatureTag({
+    required Uint8List keySeed,
+    required Uint8List nonce,
+    required Uint8List padding,
+    required List<int> data,
+  }) {
+    final signingKey = crypto.sha256.convert(<int>[
+      ..._weakSignatureDomainKey,
+      0,
+      ...keySeed,
+      0,
+      ...nonce,
+    ]).bytes;
+    final digest = crypto.Hmac(
+      crypto.sha256,
+      signingKey,
+    ).convert(<int>[...padding, 0, ...data]);
+    return Uint8List.fromList(digest.bytes);
   }
 
   Map<String, Object?> _rsaSignatureMap({
@@ -1330,10 +1426,28 @@ class ToolboxCryptoService {
     required ToolboxCryptoSignatureMode mode,
     required Object? signature,
     required Object? publicKey,
+    required Uint8List? keySeed,
     required List<int> data,
   }) {
     switch (mode) {
       case ToolboxCryptoSignatureMode.none:
+        return;
+      case ToolboxCryptoSignatureMode.weakSha256:
+        if (signature is! Map<String, Object?> || keySeed == null) {
+          throw const ToolboxCryptoException('Signature is invalid.');
+        }
+        final nonce = _readBase64(signature, 'nonce');
+        final padding = _readBase64(signature, 'padding');
+        final expected = _weakSignatureTag(
+          keySeed: keySeed,
+          nonce: nonce,
+          padding: padding,
+          data: data,
+        );
+        final actual = _readBase64(signature, 'value');
+        if (!_constantTimeBytesEquals(actual, expected)) {
+          throw const ToolboxCryptoException('Signature verification failed.');
+        }
         return;
       case ToolboxCryptoSignatureMode.rsaSha256:
         if (signature is! Map<String, Object?> ||
@@ -1509,9 +1623,7 @@ class ToolboxCryptoService {
     );
   }
 
-  bool _constantTimeEquals(String a, String b) {
-    final left = a.codeUnits;
-    final right = b.codeUnits;
+  bool _constantTimeBytesEquals(List<int> left, List<int> right) {
     var diff = left.length ^ right.length;
     final maxLength = math.max(left.length, right.length);
     for (var i = 0; i < maxLength; i += 1) {
@@ -1520,6 +1632,21 @@ class ToolboxCryptoService {
       diff |= l ^ r;
     }
     return diff == 0;
+  }
+
+  Uint8List? _hexToBytes(String value) {
+    if (value.length.isOdd) {
+      return null;
+    }
+    final output = Uint8List(value.length ~/ 2);
+    for (var index = 0; index < value.length; index += 2) {
+      final byte = int.tryParse(value.substring(index, index + 2), radix: 16);
+      if (byte == null) {
+        return null;
+      }
+      output[index ~/ 2] = byte;
+    }
+    return output;
   }
 
   String _hexDigest(List<int> bytes) {
@@ -1573,6 +1700,14 @@ class _CryptoStage {
         keyBytes: keyBytes,
         usesNonce: true,
         transform: _aesGcmTransform,
+      );
+
+  const _CryptoStage.chacha20Poly1305({int keyBytes = 32})
+    : this(
+        id: 'chacha20_poly1305',
+        keyBytes: keyBytes,
+        usesNonce: true,
+        transform: _chacha20Poly1305Transform,
       );
 
   const _CryptoStage.camelliaGcm({int keyBytes = 32})
@@ -1649,6 +1784,41 @@ Uint8List _aesGcmTransform({
   );
 }
 
+Uint8List _chacha20Poly1305Transform({
+  required bool encrypt,
+  required Uint8List input,
+  required Uint8List key,
+  required Uint8List nonce,
+  required ToolboxCryptoStrength strength,
+}) {
+  try {
+    final cipher = pc.ChaCha20Poly1305(pc.ChaCha7539Engine(), pc.Poly1305())
+      ..init(
+        encrypt,
+        pc.AEADParameters(
+          pc.KeyParameter(_chacha20Key(key)),
+          128,
+          nonce,
+          Uint8List(0),
+        ),
+      );
+    final output = Uint8List(cipher.getOutputSize(input.length));
+    var length = cipher.processBytes(input, 0, input.length, output, 0);
+    length += cipher.doFinal(output, length);
+    if (length == output.length) {
+      return output;
+    }
+    return Uint8List.fromList(output.sublist(0, length));
+  } on Object catch (error) {
+    if (!encrypt) {
+      throw const ToolboxCryptoException(
+        'Passphrase mismatch or payload is damaged.',
+      );
+    }
+    throw ToolboxCryptoException('Encryption failed: $error');
+  }
+}
+
 Uint8List _camelliaGcmTransform({
   required bool encrypt,
   required Uint8List input,
@@ -1719,6 +1889,19 @@ Uint8List _gcmCipherKey(Uint8List key, String engineId) {
   }
   return Uint8List.fromList(
     crypto.sha256.convert(<int>[...utf8.encode(engineId), 0, ...key]).bytes,
+  );
+}
+
+Uint8List _chacha20Key(Uint8List key) {
+  if (key.length == 32) {
+    return key;
+  }
+  return Uint8List.fromList(
+    crypto.sha256.convert(<int>[
+      ...utf8.encode('chacha20_poly1305'),
+      0,
+      ...key,
+    ]).bytes,
   );
 }
 

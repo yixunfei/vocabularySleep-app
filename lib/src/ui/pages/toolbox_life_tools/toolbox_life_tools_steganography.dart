@@ -6,6 +6,202 @@ enum _CryptoWorkspace { steganography, file, hash }
 
 enum _FileCryptoMode { encrypt, decrypt }
 
+class _DecodeFailureStatus {
+  const _DecodeFailureStatus({
+    required this.windowCount,
+    required this.locked,
+    this.remaining,
+  });
+
+  final int windowCount;
+  final bool locked;
+  final Duration? remaining;
+}
+
+class _StegoEmbedTextRequest {
+  const _StegoEmbedTextRequest({
+    required this.mediaKind,
+    required this.carrierBytes,
+    required this.text,
+    required this.encryption,
+    required this.passphrase,
+    required this.strength,
+    required this.keyFileBytes,
+    required this.sourceExtension,
+    required this.cascade,
+    required this.keyBits,
+    required this.macAlgorithm,
+    required this.signatureMode,
+    required this.maxErrorAttempts,
+    required this.locatorAlgorithm,
+    required this.locatorStrength,
+  });
+
+  final ToolboxSteganographyMediaKind mediaKind;
+  final Uint8List carrierBytes;
+  final String text;
+  final ToolboxCryptoAlgorithm encryption;
+  final String passphrase;
+  final ToolboxCryptoStrength strength;
+  final Uint8List? keyFileBytes;
+  final String? sourceExtension;
+  final List<ToolboxCryptoCascadeCipher>? cascade;
+  final ToolboxCryptoKeyBits keyBits;
+  final ToolboxCryptoMacAlgorithm macAlgorithm;
+  final ToolboxCryptoSignatureMode signatureMode;
+  final int maxErrorAttempts;
+  final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
+  final ToolboxSteganographyLocatorStrength locatorStrength;
+}
+
+class _StegoRevealTextRequest {
+  const _StegoRevealTextRequest({
+    required this.mediaKind,
+    required this.carrierBytes,
+    required this.passphrase,
+    required this.keyFileBytes,
+    required this.locatorAlgorithm,
+    required this.locatorStrength,
+  });
+
+  final ToolboxSteganographyMediaKind mediaKind;
+  final Uint8List carrierBytes;
+  final String passphrase;
+  final Uint8List? keyFileBytes;
+  final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
+  final ToolboxSteganographyLocatorStrength locatorStrength;
+}
+
+class _StegoEmbedFileRequest {
+  const _StegoEmbedFileRequest({
+    required this.mediaKind,
+    required this.carrierBytes,
+    required this.fileBytes,
+    required this.fileName,
+    required this.encryption,
+    required this.passphrase,
+    required this.strength,
+    required this.keyFileBytes,
+    required this.sourceExtension,
+    required this.mediaType,
+    required this.cascade,
+    required this.keyBits,
+    required this.macAlgorithm,
+    required this.signatureMode,
+    required this.maxErrorAttempts,
+    required this.locatorAlgorithm,
+    required this.locatorStrength,
+  });
+
+  final ToolboxSteganographyMediaKind mediaKind;
+  final Uint8List carrierBytes;
+  final Uint8List fileBytes;
+  final String? fileName;
+  final ToolboxCryptoAlgorithm encryption;
+  final String passphrase;
+  final ToolboxCryptoStrength strength;
+  final Uint8List? keyFileBytes;
+  final String? sourceExtension;
+  final String? mediaType;
+  final List<ToolboxCryptoCascadeCipher>? cascade;
+  final ToolboxCryptoKeyBits keyBits;
+  final ToolboxCryptoMacAlgorithm macAlgorithm;
+  final ToolboxCryptoSignatureMode signatureMode;
+  final int maxErrorAttempts;
+  final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
+  final ToolboxSteganographyLocatorStrength locatorStrength;
+}
+
+class _StegoRevealFileRequest {
+  const _StegoRevealFileRequest({
+    required this.mediaKind,
+    required this.carrierBytes,
+    required this.passphrase,
+    required this.keyFileBytes,
+    required this.locatorAlgorithm,
+    required this.locatorStrength,
+  });
+
+  final ToolboxSteganographyMediaKind mediaKind;
+  final Uint8List carrierBytes;
+  final String passphrase;
+  final Uint8List? keyFileBytes;
+  final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
+  final ToolboxSteganographyLocatorStrength locatorStrength;
+}
+
+ToolboxSteganographyEmbedResult _runStegoEmbedText(
+  _StegoEmbedTextRequest request,
+) {
+  return ToolboxSteganographyService().embedText(
+    mediaKind: request.mediaKind,
+    carrierBytes: request.carrierBytes,
+    text: request.text,
+    encryption: request.encryption,
+    passphrase: request.passphrase,
+    strength: request.strength,
+    keyFileBytes: request.keyFileBytes,
+    sourceExtension: request.sourceExtension,
+    cascade: request.cascade,
+    keyBits: request.keyBits,
+    macAlgorithm: request.macAlgorithm,
+    signatureMode: request.signatureMode,
+    maxErrorAttempts: request.maxErrorAttempts,
+    locatorAlgorithm: request.locatorAlgorithm,
+    locatorStrength: request.locatorStrength,
+  );
+}
+
+ToolboxSteganographyRevealResult _runStegoRevealText(
+  _StegoRevealTextRequest request,
+) {
+  return ToolboxSteganographyService().revealText(
+    mediaKind: request.mediaKind,
+    carrierBytes: request.carrierBytes,
+    passphrase: request.passphrase,
+    keyFileBytes: request.keyFileBytes,
+    locatorAlgorithm: request.locatorAlgorithm,
+    locatorStrength: request.locatorStrength,
+  );
+}
+
+ToolboxSteganographyEmbedResult _runStegoEmbedFile(
+  _StegoEmbedFileRequest request,
+) {
+  return ToolboxSteganographyService().embedFile(
+    mediaKind: request.mediaKind,
+    carrierBytes: request.carrierBytes,
+    fileBytes: request.fileBytes,
+    fileName: request.fileName,
+    encryption: request.encryption,
+    passphrase: request.passphrase,
+    strength: request.strength,
+    keyFileBytes: request.keyFileBytes,
+    sourceExtension: request.sourceExtension,
+    mediaType: request.mediaType,
+    cascade: request.cascade,
+    keyBits: request.keyBits,
+    macAlgorithm: request.macAlgorithm,
+    signatureMode: request.signatureMode,
+    maxErrorAttempts: request.maxErrorAttempts,
+    locatorAlgorithm: request.locatorAlgorithm,
+    locatorStrength: request.locatorStrength,
+  );
+}
+
+ToolboxSteganographyFileRevealResult _runStegoRevealFile(
+  _StegoRevealFileRequest request,
+) {
+  return ToolboxSteganographyService().revealFile(
+    mediaKind: request.mediaKind,
+    carrierBytes: request.carrierBytes,
+    passphrase: request.passphrase,
+    keyFileBytes: request.keyFileBytes,
+    locatorAlgorithm: request.locatorAlgorithm,
+    locatorStrength: request.locatorStrength,
+  );
+}
+
 class _SteganographyToolPage extends StatefulWidget {
   const _SteganographyToolPage();
 
@@ -21,6 +217,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   final TextEditingController _keyFileLengthController = TextEditingController(
     text: '256',
   );
+  final TextEditingController _maxErrorAttemptsController =
+      TextEditingController(text: '0');
 
   _CryptoWorkspace _workspace = _CryptoWorkspace.steganography;
   _StegoMode _mode = _StegoMode.embed;
@@ -33,12 +231,17 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   ToolboxCryptoKeyBits _keyBits = ToolboxCryptoKeyBits.bits256;
   ToolboxCryptoMacAlgorithm _macAlgorithm = ToolboxCryptoMacAlgorithm.sha256;
   ToolboxCryptoSignatureMode _signatureMode = ToolboxCryptoSignatureMode.none;
+  ToolboxSteganographyLocatorAlgorithm _locatorAlgorithm =
+      ToolboxSteganographyLocatorAlgorithm.sha256;
+  ToolboxSteganographyLocatorStrength _locatorStrength =
+      ToolboxSteganographyLocatorStrength.standard;
   List<ToolboxCryptoCascadeCipher> _cascade =
       const <ToolboxCryptoCascadeCipher>[
         ToolboxCryptoCascadeCipher.aes,
         ToolboxCryptoCascadeCipher.twofish,
       ];
   String? _sourceName;
+  String? _sourcePath;
   String? _sourceExtension;
   Uint8List? _sourceBytes;
   bool _useKeyFiles = false;
@@ -60,12 +263,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   bool _busy = false;
   String? _savedPath;
   String? _error;
+  bool _maxErrorRiskPromptShown = false;
+  Timer? _decodeUnlockTimer;
+
+  static const Duration _decodeErrorWindow = Duration(minutes: 5);
+  static const Duration _decodeLockDuration = Duration(minutes: 5);
+  static const int _decodeErrorLimit = 10;
+  static final Map<String, List<DateTime>> _decodeErrorTimesByCarrier =
+      <String, List<DateTime>>{};
+  static final Map<String, DateTime> _decodeLockedUntilByCarrier =
+      <String, DateTime>{};
+  static final Map<String, int> _protectedDecodeFailuresByCarrier =
+      <String, int>{};
 
   @override
   void dispose() {
     _secretController.dispose();
     _passphraseController.dispose();
     _keyFileLengthController.dispose();
+    _maxErrorAttemptsController.dispose();
+    _decodeUnlockTimer?.cancel();
     _sourcePreview?.dispose();
     _outputPreview?.dispose();
     super.dispose();
@@ -140,11 +357,40 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   Widget _buildCryptoAdvancedPanel(BuildContext context) {
     return _LifePreviewFrame(
       child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(top: 8),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
+        maintainState: true,
+        leading: Icon(
+          Icons.tune_rounded,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        iconColor: Theme.of(context).colorScheme.primary,
+        collapsedIconColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(
+          context,
+        ).colorScheme.primaryContainer.withValues(alpha: 0.20),
+        collapsedBackgroundColor: Theme.of(
+          context,
+        ).colorScheme.primaryContainer.withValues(alpha: 0.10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.35),
+          ),
+        ),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.35),
+          ),
+        ),
         title: Text(_lifeText(context, zh: '高级加密参数', en: 'Advanced crypto')),
         subtitle: Text(
-          '${_keyBits.bits}-bit · ${_macAlgorithm.id} · ${_signatureMode.label}',
+          '${_keyBits.bits}-bit · ${_macAlgorithm.id} · ${_signatureMode.label} · ${_locatorAlgorithm.label}/${_locatorStrength.id}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -207,6 +453,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     labelEn: 'None',
                   ),
                   _LifeOption<ToolboxCryptoSignatureMode>(
+                    value: ToolboxCryptoSignatureMode.weakSha256,
+                    labelZh: '弱签名版 快',
+                    labelEn: 'Weak fast',
+                  ),
+                  _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.rsaSha256,
                     labelZh: 'SHA-256/RSA',
                     labelEn: 'SHA-256/RSA',
@@ -220,6 +471,87 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onChanged: _busy
                     ? (_) {}
                     : (value) => setState(() => _signatureMode = value),
+              ),
+              if (_effectiveSignatureMode !=
+                  ToolboxCryptoSignatureMode.none) ...<Widget>[
+                const SizedBox(height: 10),
+                _buildInlineNotice(
+                  context,
+                  icon: Icons.timer_rounded,
+                  text: _signaturePerformanceText(context),
+                ),
+              ],
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey<String>('life_stego_max_error_attempts'),
+                controller: _maxErrorAttemptsController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.security_update_warning_rounded),
+                  labelText: _lifeText(
+                    context,
+                    zh: '最大错误尝试次数',
+                    en: 'Max wrong attempts',
+                  ),
+                  helperText: _maxErrorAttemptsRiskText(context),
+                  helperMaxLines: 3,
+                  helperStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+                onChanged: _handleMaxErrorAttemptsChanged,
+              ),
+              const SizedBox(height: 12),
+              _LifeSegmentedField<ToolboxSteganographyLocatorAlgorithm>(
+                label: _lifeText(
+                  context,
+                  zh: '定位密钥算法',
+                  en: 'Locator algorithm',
+                ),
+                value: _locatorAlgorithm,
+                options:
+                    const <_LifeOption<ToolboxSteganographyLocatorAlgorithm>>[
+                      _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
+                        value: ToolboxSteganographyLocatorAlgorithm.sha256,
+                        labelZh: 'SHA-256',
+                        labelEn: 'SHA-256',
+                      ),
+                      _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
+                        value: ToolboxSteganographyLocatorAlgorithm.sha512,
+                        labelZh: 'SHA-512',
+                        labelEn: 'SHA-512',
+                      ),
+                    ],
+                onChanged: _busy
+                    ? (_) {}
+                    : (value) => setState(() => _locatorAlgorithm = value),
+              ),
+              const SizedBox(height: 12),
+              _LifeSegmentedField<ToolboxSteganographyLocatorStrength>(
+                label: _lifeText(context, zh: '定位密钥强度', en: 'Locator strength'),
+                value: _locatorStrength,
+                options:
+                    const <_LifeOption<ToolboxSteganographyLocatorStrength>>[
+                      _LifeOption<ToolboxSteganographyLocatorStrength>(
+                        value: ToolboxSteganographyLocatorStrength.standard,
+                        labelZh: '标准 4096',
+                        labelEn: 'Standard 4096',
+                      ),
+                      _LifeOption<ToolboxSteganographyLocatorStrength>(
+                        value: ToolboxSteganographyLocatorStrength.strong,
+                        labelZh: '加强 12000',
+                        labelEn: 'Strong 12000',
+                      ),
+                      _LifeOption<ToolboxSteganographyLocatorStrength>(
+                        value: ToolboxSteganographyLocatorStrength.extreme,
+                        labelZh: '极限 24000',
+                        labelEn: 'Extreme 24000',
+                      ),
+                    ],
+                onChanged: _busy
+                    ? (_) {}
+                    : (value) => setState(() => _locatorStrength = value),
               ),
               if (_encryption ==
                   ToolboxCryptoAlgorithm.customCascade) ...<Widget>[
@@ -247,6 +579,76 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 ),
               ],
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRevealLocatorPanel(BuildContext context) {
+    return _LifePreviewFrame(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                Icons.explore_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _lifeText(context, zh: '定位设置', en: 'Locator'),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _LifeSegmentedField<ToolboxSteganographyLocatorAlgorithm>(
+            label: _lifeText(context, zh: '定位密钥算法', en: 'Locator algorithm'),
+            value: _locatorAlgorithm,
+            options: const <_LifeOption<ToolboxSteganographyLocatorAlgorithm>>[
+              _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
+                value: ToolboxSteganographyLocatorAlgorithm.sha256,
+                labelZh: 'SHA-256',
+                labelEn: 'SHA-256',
+              ),
+              _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
+                value: ToolboxSteganographyLocatorAlgorithm.sha512,
+                labelZh: 'SHA-512',
+                labelEn: 'SHA-512',
+              ),
+            ],
+            onChanged: _busy
+                ? (_) {}
+                : (value) => setState(() => _locatorAlgorithm = value),
+          ),
+          const SizedBox(height: 12),
+          _LifeSegmentedField<ToolboxSteganographyLocatorStrength>(
+            label: _lifeText(context, zh: '定位密钥强度', en: 'Locator strength'),
+            value: _locatorStrength,
+            options: const <_LifeOption<ToolboxSteganographyLocatorStrength>>[
+              _LifeOption<ToolboxSteganographyLocatorStrength>(
+                value: ToolboxSteganographyLocatorStrength.standard,
+                labelZh: '标准 4096',
+                labelEn: 'Standard 4096',
+              ),
+              _LifeOption<ToolboxSteganographyLocatorStrength>(
+                value: ToolboxSteganographyLocatorStrength.strong,
+                labelZh: '加强 12000',
+                labelEn: 'Strong 12000',
+              ),
+              _LifeOption<ToolboxSteganographyLocatorStrength>(
+                value: ToolboxSteganographyLocatorStrength.extreme,
+                labelZh: '极限 24000',
+                labelEn: 'Extreme 24000',
+              ),
+            ],
+            onChanged: _busy
+                ? (_) {}
+                : (value) => setState(() => _locatorStrength = value),
           ),
         ],
       ),
@@ -424,99 +826,106 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               const SizedBox(height: 12),
             ],
           ],
-          _LifeSegmentedField<ToolboxCryptoAlgorithm>(
-            label: _lifeText(context, zh: '加密算法', en: 'Encryption'),
-            value: _encryption,
-            options: const <_LifeOption<ToolboxCryptoAlgorithm>>[
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.aesGcm,
-                labelZh: 'AES 强',
-                labelEn: 'AES strong',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.twofishGcm,
-                labelZh: 'Twofish 强',
-                labelEn: 'Twofish strong',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.camelliaGcm,
-                labelZh: 'Camellia 强',
-                labelEn: 'Camellia strong',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.aesTwofishGcm,
-                labelZh: 'AES+Twofish 强+',
-                labelEn: 'AES+Twofish strong+',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.aesCamelliaGcm,
-                labelZh: 'AES+Camellia 强+',
-                labelEn: 'AES+Camellia strong+',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm,
-                labelZh: '三重 强+',
-                labelEn: 'Triple strong+',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.customCascade,
-                labelZh: '自由级联 强',
-                labelEn: 'Custom strong',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.sha256RsaSignature,
-                labelZh: 'RSA 签名 强',
-                labelEn: 'RSA signed',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.ecdsaSignature,
-                labelZh: 'ECDSA 签名 强',
-                labelEn: 'ECDSA signed',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.whirlpoolDigest,
-                labelZh: 'Whirlpool 校验 强',
-                labelEn: 'Whirlpool strong',
-              ),
-              _LifeOption<ToolboxCryptoAlgorithm>(
-                value: ToolboxCryptoAlgorithm.none,
-                labelZh: '不加密 明文',
-                labelEn: 'No encryption plain',
-              ),
-            ],
-            onChanged: _busy
-                ? (_) {}
-                : (value) => setState(() => _encryption = value),
-          ),
-          const SizedBox(height: 12),
-          _buildAlgorithmSafetyNotice(context),
-          const SizedBox(height: 12),
-          _LifeSegmentedField<ToolboxCryptoStrength>(
-            label: _lifeText(context, zh: '强度', en: 'Strength'),
-            value: _strength,
-            options: const <_LifeOption<ToolboxCryptoStrength>>[
-              _LifeOption<ToolboxCryptoStrength>(
-                value: ToolboxCryptoStrength.standard,
-                labelZh: '标准 2^16',
-                labelEn: 'Standard 2^16',
-              ),
-              _LifeOption<ToolboxCryptoStrength>(
-                value: ToolboxCryptoStrength.strong,
-                labelZh: '加强 2^17',
-                labelEn: 'Strong 2^17',
-              ),
-              _LifeOption<ToolboxCryptoStrength>(
-                value: ToolboxCryptoStrength.extreme,
-                labelZh: '极限 2^18',
-                labelEn: 'Extreme 2^18',
-              ),
-            ],
-            onChanged: _busy
-                ? (_) {}
-                : (value) => setState(() => _strength = value),
-          ),
-          const SizedBox(height: 12),
-          _buildCryptoAdvancedPanel(context),
+          if (!_isRevealMode) ...<Widget>[
+            _LifeSegmentedField<ToolboxCryptoAlgorithm>(
+              label: _lifeText(context, zh: '加密算法', en: 'Encryption'),
+              value: _encryption,
+              options: const <_LifeOption<ToolboxCryptoAlgorithm>>[
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.aesGcm,
+                  labelZh: 'AES 强',
+                  labelEn: 'AES strong',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.chacha20Poly1305,
+                  labelZh: 'ChaCha20',
+                  labelEn: 'ChaCha20',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.twofishGcm,
+                  labelZh: 'Twofish 强',
+                  labelEn: 'Twofish strong',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.camelliaGcm,
+                  labelZh: 'Camellia 强',
+                  labelEn: 'Camellia strong',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.aesTwofishGcm,
+                  labelZh: 'AES+Twofish 强+',
+                  labelEn: 'AES+Twofish strong+',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.aesCamelliaGcm,
+                  labelZh: 'AES+Camellia 强+',
+                  labelEn: 'AES+Camellia strong+',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm,
+                  labelZh: '三重 强+',
+                  labelEn: 'Triple strong+',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.customCascade,
+                  labelZh: '自由级联 强',
+                  labelEn: 'Custom strong',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.sha256RsaSignature,
+                  labelZh: 'RSA 签名 强',
+                  labelEn: 'RSA signed',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.ecdsaSignature,
+                  labelZh: 'ECDSA 签名 强',
+                  labelEn: 'ECDSA signed',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.whirlpoolDigest,
+                  labelZh: 'Whirlpool 校验 强',
+                  labelEn: 'Whirlpool strong',
+                ),
+                _LifeOption<ToolboxCryptoAlgorithm>(
+                  value: ToolboxCryptoAlgorithm.none,
+                  labelZh: '不加密 明文',
+                  labelEn: 'No encryption plain',
+                ),
+              ],
+              onChanged: _busy
+                  ? (_) {}
+                  : (value) => setState(() => _encryption = value),
+            ),
+            const SizedBox(height: 12),
+            _buildAlgorithmSafetyNotice(context),
+            const SizedBox(height: 12),
+            _LifeSegmentedField<ToolboxCryptoStrength>(
+              label: _lifeText(context, zh: '强度', en: 'Strength'),
+              value: _strength,
+              options: const <_LifeOption<ToolboxCryptoStrength>>[
+                _LifeOption<ToolboxCryptoStrength>(
+                  value: ToolboxCryptoStrength.standard,
+                  labelZh: '标准 2^16',
+                  labelEn: 'Standard 2^16',
+                ),
+                _LifeOption<ToolboxCryptoStrength>(
+                  value: ToolboxCryptoStrength.strong,
+                  labelZh: '加强 2^17',
+                  labelEn: 'Strong 2^17',
+                ),
+                _LifeOption<ToolboxCryptoStrength>(
+                  value: ToolboxCryptoStrength.extreme,
+                  labelZh: '极限 2^18',
+                  labelEn: 'Extreme 2^18',
+                ),
+              ],
+              onChanged: _busy
+                  ? (_) {}
+                  : (value) => setState(() => _strength = value),
+            ),
+            const SizedBox(height: 12),
+            _buildCryptoAdvancedPanel(context),
+          ] else ...<Widget>[_buildRevealLocatorPanel(context)],
         ],
       ],
     );
@@ -549,6 +958,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               child: FilledButton.tonalIcon(
                 key: const ValueKey<String>('life_stego_pick_button'),
                 onPressed: _busy ? null : _pickMedia,
+                style: _greenActionButtonStyle(context),
                 icon: Icon(_mediaIcon(_mediaKind)),
                 label: Text(_lifeText(context, zh: '选择媒体', en: 'Pick media')),
               ),
@@ -600,7 +1010,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.vpn_key_rounded),
             labelText: _lifeText(context, zh: '口令', en: 'Passphrase'),
-            helperText: _encryption.requiresSecret
+            helperText: _mode == _StegoMode.reveal
+                ? _lifeText(
+                    context,
+                    zh: '请输入写入时使用的口令和密钥文件。',
+                    en: 'Use the passphrase and key file from embedding.',
+                  )
+                : _encryption.requiresSecret
                 ? _lifeText(
                     context,
                     zh: '口令或密钥文件至少提供一个，还原时必须一致。',
@@ -620,41 +1036,60 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   }
 
   Widget _buildActionPanel(BuildContext context) {
-    return Row(
+    final lockRemaining = _decodeLockRemaining;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Expanded(
-          child: FilledButton.icon(
-            key: const ValueKey<String>('life_stego_run_button'),
-            onPressed: _busy || _sourceBytes == null || _isUnsupportedMediaWrite
-                ? null
-                : (_mode == _StegoMode.embed ? _embed : _reveal),
-            icon: _busy
-                ? const SizedBox.square(
-                    dimension: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    _mode == _StegoMode.embed
-                        ? Icons.hide_image_rounded
-                        : Icons.visibility_rounded,
-                  ),
-            label: Text(
-              _busy
-                  ? _lifeText(context, zh: '处理中...', en: 'Working...')
-                  : _mode == _StegoMode.embed
-                  ? _lifeText(context, zh: '生成隐写媒体', en: 'Generate stego')
-                  : _lifeText(context, zh: '还原文本', en: 'Reveal text'),
+        if (lockRemaining != null) ...<Widget>[
+          _buildInlineNotice(
+            context,
+            icon: Icons.lock_clock_rounded,
+            text: _decodeLockText(context, lockRemaining),
+          ),
+          const SizedBox(height: 10),
+        ],
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: FilledButton.icon(
+                key: const ValueKey<String>('life_stego_run_button'),
+                onPressed:
+                    _busy ||
+                        _sourceBytes == null ||
+                        _isUnsupportedMediaWrite ||
+                        (_mode == _StegoMode.reveal && _isDecodeLocked)
+                    ? null
+                    : (_mode == _StegoMode.embed ? _embed : _reveal),
+                icon: _busy
+                    ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        _mode == _StegoMode.embed
+                            ? Icons.hide_image_rounded
+                            : Icons.visibility_rounded,
+                      ),
+                label: Text(
+                  _busy
+                      ? _lifeText(context, zh: '处理中...', en: 'Working...')
+                      : _mode == _StegoMode.embed
+                      ? _lifeText(context, zh: '生成隐写媒体', en: 'Generate stego')
+                      : _lifeText(context, zh: '还原文本', en: 'Reveal text'),
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: OutlinedButton.icon(
-            key: const ValueKey<String>('life_stego_save_button'),
-            onPressed: _busy || _outputBytes == null ? null : _saveOutput,
-            icon: const Icon(Icons.save_alt_rounded),
-            label: Text(_lifeText(context, zh: '导出结果', en: 'Export')),
-          ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton.icon(
+                key: const ValueKey<String>('life_stego_save_button'),
+                onPressed: _busy || _outputBytes == null ? null : _saveOutput,
+                style: _greenActionButtonStyle(context),
+                icon: const Icon(Icons.save_alt_rounded),
+                label: Text(_lifeText(context, zh: '导出结果', en: 'Export')),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -695,6 +1130,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               child: FilledButton.tonalIcon(
                 key: const ValueKey<String>('life_crypto_pick_carrier_button'),
                 onPressed: _busy ? null : _pickMedia,
+                style: _greenActionButtonStyle(context),
                 icon: const Icon(Icons.perm_media_rounded),
                 label: Text(_lifeText(context, zh: '选择载体', en: 'Pick carrier')),
               ),
@@ -728,9 +1164,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           Row(
             children: <Widget>[
               Expanded(
-                child: OutlinedButton.icon(
+                child: FilledButton.icon(
                   key: const ValueKey<String>('life_crypto_pick_file_button'),
                   onPressed: _busy ? null : _pickCryptoFile,
+                  style: _greenActionButtonStyle(context),
                   icon: const Icon(Icons.description_rounded),
                   label: Text(_lifeText(context, zh: '选择文件', en: 'Pick file')),
                 ),
@@ -779,6 +1216,15 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         ),
         const SizedBox(height: 10),
         _buildKeyFileRow(context),
+        if (_fileMode == _FileCryptoMode.decrypt &&
+            _decodeLockRemaining != null) ...<Widget>[
+          const SizedBox(height: 12),
+          _buildInlineNotice(
+            context,
+            icon: Icons.lock_clock_rounded,
+            text: _decodeLockText(context, _decodeLockRemaining!),
+          ),
+        ],
         const SizedBox(height: 12),
         Row(
           children: <Widget>[
@@ -789,6 +1235,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     _busy ||
                         _sourceBytes == null ||
                         _isUnsupportedMediaWrite ||
+                        (_fileMode == _FileCryptoMode.decrypt &&
+                            _isDecodeLocked) ||
                         (_fileMode == _FileCryptoMode.encrypt &&
                             _fileBytes == null)
                     ? null
@@ -816,11 +1264,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: OutlinedButton.icon(
+              child: FilledButton.icon(
                 key: const ValueKey<String>('life_crypto_file_save_button'),
                 onPressed: _busy || _fileOutputBytes == null
                     ? null
                     : _saveFileOutput,
+                style: _greenActionButtonStyle(context),
                 icon: const Icon(Icons.save_alt_rounded),
                 label: Text(_lifeText(context, zh: '导出文件', en: 'Export')),
               ),
@@ -851,6 +1300,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               child: FilledButton.tonalIcon(
                 key: const ValueKey<String>('life_crypto_hash_pick_button'),
                 onPressed: _busy ? null : _pickHashFile,
+                style: _greenActionButtonStyle(context),
                 icon: const Icon(Icons.file_open_rounded),
                 label: Text(_lifeText(context, zh: '选择文件', en: 'Pick file')),
               ),
@@ -1406,7 +1856,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
-                OutlinedButton.icon(
+                FilledButton.icon(
                   key: const ValueKey<String>('life_crypto_key_file_button'),
                   onPressed: _busy ? null : _pickKeyFile,
                   icon: const Icon(Icons.upload_file_rounded, size: 18),
@@ -1414,7 +1864,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     _lifeText(context, zh: '导入', en: 'Import'),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  style: _compactButtonStyle(),
+                  style: _compactGreenButtonStyle(context),
                 ),
                 TextButton.icon(
                   key: const ValueKey<String>('life_crypto_generate_key_file'),
@@ -1423,14 +1873,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   label: Text(_lifeText(context, zh: '生成', en: 'Generate')),
                   style: _compactButtonStyle(),
                 ),
-                TextButton.icon(
+                FilledButton.icon(
                   key: const ValueKey<String>('life_crypto_export_key_file'),
                   onPressed: _busy || _keyFileBytes == null
                       ? null
                       : _saveKeyFile,
                   icon: const Icon(Icons.save_alt_rounded, size: 18),
                   label: Text(_lifeText(context, zh: '导出', en: 'Export')),
-                  style: _compactButtonStyle(),
+                  style: _compactGreenButtonStyle(context),
                 ),
                 IconButton.outlined(
                   tooltip: _lifeText(
@@ -1465,6 +1915,30 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
       minimumSize: WidgetStatePropertyAll<Size>(Size(0, 36)),
+    );
+  }
+
+  ButtonStyle _greenActionButtonStyle(BuildContext context) {
+    const green = Color(0xFF168A45);
+    return FilledButton.styleFrom(
+      backgroundColor: green,
+      foregroundColor: Colors.white,
+      disabledBackgroundColor: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest,
+      disabledForegroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      minimumSize: const Size(48, 48),
+    );
+  }
+
+  ButtonStyle _compactGreenButtonStyle(BuildContext context) {
+    return _greenActionButtonStyle(context).copyWith(
+      visualDensity: VisualDensity.compact,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const WidgetStatePropertyAll<EdgeInsetsGeometry>(
+        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      minimumSize: const WidgetStatePropertyAll<Size>(Size(0, 36)),
     );
   }
 
@@ -1554,6 +2028,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       final oldSource = _sourcePreview;
       setState(() {
         _sourceName = file.name;
+        _sourcePath = file.path;
         _sourceExtension = file.extension;
         _sourceBytes = Uint8List.fromList(bytes);
         _sourcePreview = preview;
@@ -1876,9 +2351,67 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     return confirmed ?? false;
   }
 
+  void _handleMaxErrorAttemptsChanged(String value) {
+    setState(() {});
+    final attempts = int.tryParse(value.trim());
+    if (attempts == null || attempts <= 0 || _maxErrorRiskPromptShown) {
+      return;
+    }
+    _maxErrorRiskPromptShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _showMaxErrorAttemptsRiskDialog(attempts);
+    });
+  }
+
+  Future<void> _showMaxErrorAttemptsRiskDialog(int attempts) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          title: Row(
+            children: <Widget>[
+              Icon(Icons.warning_amber_rounded, color: colorScheme.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _lifeText(
+                    context,
+                    zh: '密码错误会销毁隐藏内容',
+                    en: 'Wrong passwords can wipe hidden data',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            _lifeText(
+              context,
+              zh: '已设置最大错误次数 $attempts。文件还原/解密时，如果密码错误累计达到该次数，将尝试销毁当前文件中的隐藏内容。',
+              en: 'Max wrong attempts is set to $attempts. During file reveal/decryption, reaching this many wrong passwords will try to destroy hidden data in the current file.',
+            ),
+          ),
+          actions: <Widget>[
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_lifeText(context, zh: '知道了', en: 'OK')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _embed() async {
     final source = _sourceBytes;
     if (source == null) {
+      return;
+    }
+    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
+    if (maxErrorAttempts == null) {
       return;
     }
     if (!await _confirmPlaintextIfNeeded()) {
@@ -1891,19 +2424,25 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       _clearResults();
     });
     try {
-      final result = _service.embedText(
-        mediaKind: _mediaKind,
-        carrierBytes: source,
-        text: _secretController.text,
-        encryption: _encryption,
-        passphrase: _passphraseController.text,
-        strength: _strength,
-        keyFileBytes: _activeKeyFileBytes,
-        sourceExtension: _sourceExtension,
-        cascade: _selectedCascade,
-        keyBits: _keyBits,
-        macAlgorithm: _macAlgorithm,
-        signatureMode: _signatureMode,
+      final result = await compute(
+        _runStegoEmbedText,
+        _StegoEmbedTextRequest(
+          mediaKind: _mediaKind,
+          carrierBytes: source,
+          text: _secretController.text,
+          encryption: _encryption,
+          passphrase: _passphraseController.text,
+          strength: _strength,
+          keyFileBytes: _activeKeyFileBytes,
+          sourceExtension: _sourceExtension,
+          cascade: _selectedCascade,
+          keyBits: _keyBits,
+          macAlgorithm: _macAlgorithm,
+          signatureMode: _signatureMode,
+          maxErrorAttempts: maxErrorAttempts,
+          locatorAlgorithm: _locatorAlgorithm,
+          locatorStrength: _locatorStrength,
+        ),
       );
       ui.Image? preview;
       if (_mediaKind == ToolboxSteganographyMediaKind.image) {
@@ -1943,6 +2482,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (source == null) {
       return;
     }
+    if (!_ensureDecodeUnlocked()) {
+      return;
+    }
     setState(() {
       _busy = true;
       _savedPath = null;
@@ -1950,11 +2492,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       _clearResults();
     });
     try {
-      final result = _service.revealText(
-        mediaKind: _mediaKind,
-        carrierBytes: source,
-        passphrase: _passphraseController.text,
-        keyFileBytes: _activeKeyFileBytes,
+      final result = await compute(
+        _runStegoRevealText,
+        _StegoRevealTextRequest(
+          mediaKind: _mediaKind,
+          carrierBytes: source,
+          passphrase: _passphraseController.text,
+          keyFileBytes: _activeKeyFileBytes,
+          locatorAlgorithm: _locatorAlgorithm,
+          locatorStrength: _locatorStrength,
+        ),
       );
       if (!mounted) {
         return;
@@ -1962,15 +2509,24 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _revealResult = result;
       });
+      _registerDecodeSuccess(source);
     } catch (error) {
       if (!mounted) {
         return;
       }
+      final protectionMessage = await _applyDecodeFailureProtection(
+        error,
+        source,
+      );
+      if (!mounted) {
+        return;
+      }
       setState(() {
+        final extra = protectionMessage == null ? '' : ' $protectionMessage';
         _error = _lifeText(
           context,
-          zh: '还原失败: ${_friendlyError(context, error)}',
-          en: 'Reveal failed: ${_friendlyError(context, error)}',
+          zh: '还原失败: ${_friendlyError(context, error)}$extra',
+          en: 'Reveal failed: ${_friendlyError(context, error)}$extra',
         );
       });
     } finally {
@@ -1986,6 +2542,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (carrier == null || file == null) {
       return;
     }
+    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
+    if (maxErrorAttempts == null) {
+      return;
+    }
     if (!await _confirmPlaintextIfNeeded()) {
       return;
     }
@@ -1996,21 +2556,27 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       _clearFileResults();
     });
     try {
-      final result = _service.embedFile(
-        mediaKind: _mediaKind,
-        carrierBytes: carrier,
-        fileBytes: file,
-        encryption: _encryption,
-        passphrase: _passphraseController.text,
-        strength: _strength,
-        keyFileBytes: _activeKeyFileBytes,
-        sourceExtension: _sourceExtension,
-        fileName: _fileName,
-        mediaType: _fileExtension,
-        cascade: _selectedCascade,
-        keyBits: _keyBits,
-        macAlgorithm: _macAlgorithm,
-        signatureMode: _signatureMode,
+      final result = await compute(
+        _runStegoEmbedFile,
+        _StegoEmbedFileRequest(
+          mediaKind: _mediaKind,
+          carrierBytes: carrier,
+          fileBytes: file,
+          encryption: _encryption,
+          passphrase: _passphraseController.text,
+          strength: _strength,
+          keyFileBytes: _activeKeyFileBytes,
+          sourceExtension: _sourceExtension,
+          fileName: _fileName,
+          mediaType: _fileExtension,
+          cascade: _selectedCascade,
+          keyBits: _keyBits,
+          macAlgorithm: _macAlgorithm,
+          signatureMode: _signatureMode,
+          maxErrorAttempts: maxErrorAttempts,
+          locatorAlgorithm: _locatorAlgorithm,
+          locatorStrength: _locatorStrength,
+        ),
       );
       if (!mounted) {
         return;
@@ -2042,6 +2608,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (carrier == null) {
       return;
     }
+    if (!_ensureDecodeUnlocked()) {
+      return;
+    }
     setState(() {
       _busy = true;
       _savedPath = null;
@@ -2049,11 +2618,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       _clearFileResults();
     });
     try {
-      final result = _service.revealFile(
-        mediaKind: _mediaKind,
-        carrierBytes: carrier,
-        passphrase: _passphraseController.text,
-        keyFileBytes: _activeKeyFileBytes,
+      final result = await compute(
+        _runStegoRevealFile,
+        _StegoRevealFileRequest(
+          mediaKind: _mediaKind,
+          carrierBytes: carrier,
+          passphrase: _passphraseController.text,
+          keyFileBytes: _activeKeyFileBytes,
+          locatorAlgorithm: _locatorAlgorithm,
+          locatorStrength: _locatorStrength,
+        ),
       );
       if (!mounted) {
         return;
@@ -2069,15 +2643,24 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               .trim();
         }
       });
+      _registerDecodeSuccess(carrier);
     } catch (error) {
       if (!mounted) {
         return;
       }
+      final protectionMessage = await _applyDecodeFailureProtection(
+        error,
+        carrier,
+      );
+      if (!mounted) {
+        return;
+      }
       setState(() {
+        final extra = protectionMessage == null ? '' : ' $protectionMessage';
         _error = _lifeText(
           context,
-          zh: '文件解密失败: ${_friendlyError(context, error)}',
-          en: 'File decryption failed: ${_friendlyError(context, error)}',
+          zh: '文件解密失败: ${_friendlyError(context, error)}$extra',
+          en: 'File decryption failed: ${_friendlyError(context, error)}$extra',
         );
       });
     } finally {
@@ -2231,13 +2814,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       final baseName = path.basenameWithoutExtension(sourceName);
       final outputExtension = _fileMode == _FileCryptoMode.encrypt
           ? (_fileEmbedResult?.outputExtension ??
-                _cleanExtension(_sourceExtension) ??
+                ToolboxSteganographyService.cleanExtension(_sourceExtension) ??
                 (_mediaKind == ToolboxSteganographyMediaKind.image
                     ? 'png'
                     : _mediaKind == ToolboxSteganographyMediaKind.audio
                     ? 'wav'
                     : 'mp4'))
-          : (_cleanExtension(path.extension(sourceName)) ?? 'bin');
+          : (ToolboxSteganographyService.cleanExtension(
+                  path.extension(sourceName),
+                ) ??
+                'bin');
       final fileName = _fileMode == _FileCryptoMode.encrypt
           ? '${baseName}_file_stego.$outputExtension'
           : '${baseName}_revealed.$outputExtension';
@@ -2396,6 +2982,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final oldSource = _sourcePreview;
     setState(() {
       _sourceName = null;
+      _sourcePath = null;
       _sourceExtension = null;
       _sourceBytes = null;
       _sourcePreview = null;
@@ -2418,6 +3005,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   void _clearSourceAndResult() {
     final oldSource = _sourcePreview;
     _sourceName = null;
+    _sourcePath = null;
     _sourceExtension = null;
     _sourceBytes = null;
     _sourcePreview = null;
@@ -2440,10 +3028,51 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   List<ToolboxCryptoCascadeCipher>? get _selectedCascade =>
       _encryption == ToolboxCryptoAlgorithm.customCascade ? _cascade : null;
 
+  ToolboxCryptoSignatureMode get _effectiveSignatureMode {
+    return switch (_encryption) {
+      ToolboxCryptoAlgorithm.sha256RsaSignature =>
+        ToolboxCryptoSignatureMode.rsaSha256,
+      ToolboxCryptoAlgorithm.ecdsaSignature =>
+        ToolboxCryptoSignatureMode.ecdsaSha256,
+      _ => _signatureMode,
+    };
+  }
+
   Uint8List? get _activeKeyFileBytes => _useKeyFiles ? _keyFileBytes : null;
 
   bool get _shouldShowPreviewPanel =>
       _sourcePreview != null || _outputPreview != null;
+
+  Duration? get _decodeLockRemaining {
+    final source = _sourceBytes;
+    if (source == null) {
+      return null;
+    }
+    return _decodeLockRemainingForKey(_currentSourceFailureKey(source));
+  }
+
+  Duration? _decodeLockRemainingForKey(String key) {
+    final lockedUntil = _decodeLockedUntilByCarrier[key];
+    if (lockedUntil == null) {
+      return null;
+    }
+    final remaining = lockedUntil.difference(DateTime.now());
+    if (remaining <= Duration.zero) {
+      _decodeLockedUntilByCarrier.remove(key);
+      return null;
+    }
+    return remaining;
+  }
+
+  bool get _isDecodeLocked => _decodeLockRemaining != null;
+
+  bool get _isRevealMode {
+    return switch (_workspace) {
+      _CryptoWorkspace.steganography => _mode == _StegoMode.reveal,
+      _CryptoWorkspace.file => _fileMode == _FileCryptoMode.decrypt,
+      _CryptoWorkspace.hash => false,
+    };
+  }
 
   bool get _isUnsupportedMediaWrite {
     if (_mediaKind == ToolboxSteganographyMediaKind.image) {
@@ -2456,13 +3085,258 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     };
   }
 
-  String? _cleanExtension(String? extension) {
-    final value = extension?.replaceFirst('.', '').trim().toLowerCase();
-    if (value == null || value.isEmpty || value.length > 12) {
+  int? _readMaxErrorAttemptsSetting() {
+    final raw = _maxErrorAttemptsController.text.trim();
+    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
+    if (parsed == null || parsed < 0 || parsed > 255) {
+      _maxErrorAttemptsController.text = '0';
+      _maxErrorAttemptsController.selection = TextSelection.collapsed(
+        offset: _maxErrorAttemptsController.text.length,
+      );
+      setState(() {
+        _error = _lifeText(
+          context,
+          zh: '最大错误尝试次数必须是 0 到 255 之间的整数，已重置为 0（无限）。',
+          en: 'Max wrong attempts must be an integer from 0 to 255. It has been reset to 0 (unlimited).',
+        );
+      });
       return null;
     }
-    final cleaned = value.replaceAll(RegExp(r'[^a-z0-9]'), '');
-    return cleaned.isEmpty ? null : cleaned;
+    return parsed;
+  }
+
+  String _maxErrorAttemptsRiskText(BuildContext context) {
+    final raw = _maxErrorAttemptsController.text.trim();
+    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
+    if (parsed == null || parsed < 0 || parsed > 255) {
+      return _lifeText(
+        context,
+        zh: '输入无效。必须为 0 到 255；确认生成时会重置为 0（无限）。',
+        en: 'Invalid input. Use 0-255; it will reset to 0 (unlimited) before generation.',
+      );
+    }
+    final current = parsed == 0
+        ? _lifeText(context, zh: '无限', en: 'unlimited')
+        : _lifeText(context, zh: '$parsed 次', en: '$parsed attempt(s)');
+    return _lifeText(
+      context,
+      zh: '当前为 $current，最大 255 次。解密密码错误达到设置次数会销毁当前文件隐藏内容。',
+      en: 'Current: $current, maximum 255. Reaching the limit with wrong decryption passwords destroys hidden data in the current file.',
+    );
+  }
+
+  bool _ensureDecodeUnlocked() {
+    final source = _sourceBytes;
+    if (source == null) {
+      return true;
+    }
+    final key = _currentSourceFailureKey(source);
+    final remaining = _decodeLockRemainingForKey(key);
+    if (remaining == null) {
+      return true;
+    }
+    setState(() {
+      _error = _decodeLockText(context, remaining);
+    });
+    return false;
+  }
+
+  void _registerDecodeSuccess(Uint8List source) {
+    final key = _currentSourceFailureKey(source);
+    _decodeErrorTimesByCarrier.remove(key);
+    _decodeLockedUntilByCarrier.remove(key);
+    _protectedDecodeFailuresByCarrier.remove(key);
+  }
+
+  _DecodeFailureStatus _registerDecodeFailure(Uint8List source) {
+    final key = _currentSourceFailureKey(source);
+    final existingLock = _decodeLockRemainingForKey(key);
+    if (existingLock != null) {
+      return _DecodeFailureStatus(
+        windowCount: _decodeErrorTimesByCarrier[key]?.length ?? 0,
+        locked: true,
+        remaining: existingLock,
+      );
+    }
+    final now = DateTime.now();
+    final times = _decodeErrorTimesByCarrier.putIfAbsent(
+      key,
+      () => <DateTime>[],
+    );
+    times.removeWhere((time) => now.difference(time) > _decodeErrorWindow);
+    times.add(now);
+    if (times.length >= _decodeErrorLimit) {
+      times.clear();
+      _decodeLockedUntilByCarrier[key] = now.add(_decodeLockDuration);
+      _decodeUnlockTimer?.cancel();
+      _decodeUnlockTimer = Timer(_decodeLockDuration, () {
+        if (!mounted) {
+          return;
+        }
+        _decodeLockRemainingForKey(key);
+        setState(() {});
+      });
+      return const _DecodeFailureStatus(
+        windowCount: _decodeErrorLimit,
+        locked: true,
+        remaining: _decodeLockDuration,
+      );
+    }
+    return _DecodeFailureStatus(windowCount: times.length, locked: false);
+  }
+
+  Future<String?> _applyDecodeFailureProtection(
+    Object error,
+    Uint8List source,
+  ) async {
+    final key = _currentSourceFailureKey(source);
+    final decodeStatus = _registerDecodeFailure(source);
+    final message = switch (error) {
+      ToolboxSteganographyException(:final message) => message,
+      ToolboxCryptoException(:final message) => message,
+      _ => null,
+    };
+    if (message == 'Hidden payload tamper check failed.') {
+      return _wipeCurrentHiddenData(
+        zhReason:
+            '检测到隐写数据被修改；${_decodeFailureStatusText(context, decodeStatus)} 已尝试清理当前载体。',
+        enReason:
+            'Hidden data appears to be tampered with; ${_decodeFailureStatusText(context, decodeStatus)} The current carrier was cleaned when possible.',
+        sourceSnapshot: source,
+        sourceKey: key,
+      );
+    }
+
+    try {
+      final policy = _service.inspectProtectionPolicy(
+        mediaKind: _mediaKind,
+        carrierBytes: source,
+        passphrase: _passphraseController.text,
+        keyFileBytes: _activeKeyFileBytes,
+        locatorAlgorithm: _locatorAlgorithm,
+        locatorStrength: _locatorStrength,
+      );
+      final maxAttempts = policy.maxErrorAttempts;
+      if (maxAttempts > 0) {
+        final count = (_protectedDecodeFailuresByCarrier[key] ?? 0) + 1;
+        _protectedDecodeFailuresByCarrier[key] = count;
+        if (count >= maxAttempts) {
+          _protectedDecodeFailuresByCarrier.remove(key);
+          return _wipeCurrentHiddenData(
+            zhReason:
+                '${_decodeFailureStatusText(context, decodeStatus)} 已达到隐写载荷限制，已尝试清理当前载体。',
+            enReason:
+                '${_decodeFailureStatusText(context, decodeStatus)} The hidden payload attempt limit was reached. The current carrier was cleaned when possible.',
+            sourceSnapshot: source,
+            sourceKey: key,
+          );
+        }
+        return _decodeFailureStatusText(context, decodeStatus);
+      }
+    } on Object {
+      // If the policy cannot be read, the module-level lock still applies.
+    }
+    return _decodeFailureStatusText(context, decodeStatus);
+  }
+
+  String _decodeFailureStatusText(
+    BuildContext context,
+    _DecodeFailureStatus status,
+  ) {
+    if (status.locked) {
+      return _decodeLockText(context, status.remaining ?? _decodeLockDuration);
+    }
+    return _lifeText(
+      context,
+      zh: '当前文件错误次数 ${status.windowCount}。',
+      en: 'Current file error count: ${status.windowCount}.',
+    );
+  }
+
+  String _decodeLockText(BuildContext context, Duration remaining) {
+    final minutes = math.max(1, remaining.inMinutes + 1);
+    return _lifeText(
+      context,
+      zh: '当前文件还原已锁定，约 $minutes 分钟后可重试。',
+      en: 'Reveal for the current file is locked. Try again in about $minutes minute(s).',
+    );
+  }
+
+  String _currentSourceFailureKey(Uint8List source) {
+    final digest = sha256.convert(source).toString();
+    final sourcePath = _sourcePath;
+    return sourcePath == null ? digest : '$sourcePath:$digest';
+  }
+
+  Future<String?> _wipeCurrentHiddenData({
+    required String zhReason,
+    required String enReason,
+    required Uint8List sourceSnapshot,
+    required String sourceKey,
+  }) async {
+    try {
+      final stripped = _service.stripHiddenData(
+        mediaKind: _mediaKind,
+        carrierBytes: sourceSnapshot,
+        passphrase: _passphraseController.text,
+        keyFileBytes: _activeKeyFileBytes,
+        locatorAlgorithm: _locatorAlgorithm,
+        locatorStrength: _locatorStrength,
+      );
+      if (!stripped.removed) {
+        return null;
+      }
+      _decodeErrorTimesByCarrier.remove(sourceKey);
+      _decodeLockedUntilByCarrier.remove(sourceKey);
+      _protectedDecodeFailuresByCarrier.remove(sourceKey);
+      var wroteSource = false;
+      final sourcePath = _sourcePath;
+      if (!kIsWeb && sourcePath != null && sourcePath.trim().isNotEmpty) {
+        await File(sourcePath).writeAsBytes(stripped.bytes, flush: true);
+        wroteSource = true;
+      }
+      ui.Image? preview;
+      if (_mediaKind == ToolboxSteganographyMediaKind.image) {
+        preview = await _decodePreview(stripped.bytes);
+      }
+      if (!mounted) {
+        preview?.dispose();
+        return null;
+      }
+      final oldSource = _sourcePreview;
+      final oldOutput = _outputPreview;
+      setState(() {
+        _sourceBytes = stripped.bytes;
+        _sourcePreview = preview;
+        _outputBytes = null;
+        _outputPreview = null;
+        _embedResult = null;
+        _revealResult = null;
+        _fileOutputBytes = null;
+        _fileEmbedResult = null;
+        _fileRevealResult = null;
+      });
+      oldSource?.dispose();
+      oldOutput?.dispose();
+      final target = wroteSource
+          ? _lifeText(
+              context,
+              zh: '已复写源文件。',
+              en: 'Source file was overwritten.',
+            )
+          : _lifeText(
+              context,
+              zh: '已清理当前内存载体；当前平台未提供可复写路径。',
+              en: 'Current in-memory carrier was cleaned; this platform did not provide a writable source path.',
+            );
+      return _lifeText(
+        context,
+        zh: '$zhReason $target',
+        en: '$enReason $target',
+      );
+    } on Object {
+      return null;
+    }
   }
 
   IconData _mediaIcon(ToolboxSteganographyMediaKind kind) {
@@ -2545,6 +3419,23 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     };
   }
 
+  String _signaturePerformanceText(BuildContext context) {
+    return switch (_effectiveSignatureMode) {
+      ToolboxCryptoSignatureMode.weakSha256 => _lifeText(
+        context,
+        zh: '弱签名是快速轻量标签，不生成公私钥，不提供第三方来源证明。',
+        en: 'Weak signature is a fast lightweight tag. It does not generate public/private keys or prove third-party origin.',
+      ),
+      ToolboxCryptoSignatureMode.rsaSha256 ||
+      ToolboxCryptoSignatureMode.ecdsaSha256 => _lifeText(
+        context,
+        zh: '强签名会生成密钥对并签名，移动设备可能等待较久。',
+        en: 'Strong signatures generate a key pair and sign the envelope; slower mobile devices may need more time.',
+      ),
+      ToolboxCryptoSignatureMode.none => '',
+    };
+  }
+
   String _encryptionLabel(
     BuildContext context,
     ToolboxCryptoAlgorithm encryption,
@@ -2554,6 +3445,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         context,
         zh: 'AES-GCM',
         en: 'AES-GCM',
+      ),
+      ToolboxCryptoAlgorithm.chacha20Poly1305 => _lifeText(
+        context,
+        zh: 'ChaCha20-Poly1305',
+        en: 'ChaCha20-Poly1305',
       ),
       ToolboxCryptoAlgorithm.twofishGcm => _lifeText(
         context,
@@ -2624,6 +3520,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   ) {
     return switch (cipher) {
       ToolboxCryptoCascadeCipher.aes => 'AES',
+      ToolboxCryptoCascadeCipher.chacha20 => 'ChaCha20',
       ToolboxCryptoCascadeCipher.twofish => 'Twofish',
       ToolboxCryptoCascadeCipher.camellia => 'Camellia',
       ToolboxCryptoCascadeCipher.sha256Stream => _lifeText(
@@ -2840,6 +3737,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       'Hidden payload body is invalid.' => _lifeText(
         context,
         zh: '隐写载荷内容无效。',
+        en: message,
+      ),
+      'Hidden payload tamper check failed.' => _lifeText(
+        context,
+        zh: '隐写数据防篡改校验失败。',
+        en: message,
+      ),
+      'Max error attempts must be between 0 and 255.' => _lifeText(
+        context,
+        zh: '最大错误尝试次数必须在 0 到 255 之间。',
         en: message,
       ),
       'Payload is too large.' => _lifeText(context, zh: '载荷过大。', en: message),
