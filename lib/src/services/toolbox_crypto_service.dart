@@ -309,6 +309,20 @@ class ToolboxCryptoEncryptResult {
   final String? mediaType;
 }
 
+class ToolboxCryptoEnvelopeSizeEstimate {
+  const ToolboxCryptoEnvelopeSizeEstimate({
+    required this.minimumBytes,
+    required this.recommendedBytes,
+    required this.minimumCipherBytes,
+    required this.recommendedCipherBytes,
+  });
+
+  final int minimumBytes;
+  final int recommendedBytes;
+  final int minimumCipherBytes;
+  final int recommendedCipherBytes;
+}
+
 class ToolboxCryptoDecryptResult {
   const ToolboxCryptoDecryptResult({
     required this.plainBytes,
@@ -541,6 +555,78 @@ class ToolboxCryptoService {
       keyFileSha256: keyFileHash,
       fileName: fileName,
       mediaType: mediaType,
+    );
+  }
+
+  ToolboxCryptoEnvelopeSizeEstimate estimateEnvelopeSize({
+    required int plainBytes,
+    required ToolboxCryptoAlgorithm algorithm,
+    required ToolboxCryptoStrength strength,
+    String? fileName,
+    String? mediaType,
+    List<ToolboxCryptoCascadeCipher>? cascade,
+    ToolboxCryptoKeyBits keyBits = ToolboxCryptoKeyBits.bits256,
+    ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
+    ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
+  }) {
+    if (plainBytes <= 0) {
+      throw const ToolboxCryptoException('Input bytes are empty.');
+    }
+    if (plainBytes > maxPlainBytes) {
+      throw const ToolboxCryptoException('Input file is too large.');
+    }
+    if (!algorithm.canEncrypt) {
+      throw const ToolboxCryptoException(
+        'Legacy or weak algorithms can only decrypt existing payloads.',
+      );
+    }
+
+    final stages = _stagesFor(algorithm, cascade: cascade, keyBits: keyBits);
+    final effectiveMacAlgorithm = _effectiveMacAlgorithm(
+      algorithm,
+      macAlgorithm,
+    );
+    final effectiveSignatureMode = _effectiveSignatureMode(
+      algorithm,
+      signatureMode,
+    );
+    final minimumCipherBytes = _estimatedCipherBytes(
+      plainBytes: plainBytes,
+      stages: stages,
+      paddingLength: 16,
+    );
+    final recommendedCipherBytes = _estimatedCipherBytes(
+      plainBytes: plainBytes,
+      stages: stages,
+      paddingLength: 255,
+    );
+    return ToolboxCryptoEnvelopeSizeEstimate(
+      minimumBytes: _estimatedEnvelopeJsonBytes(
+        algorithm: algorithm,
+        strength: strength,
+        keyBits: keyBits,
+        macAlgorithm: effectiveMacAlgorithm,
+        signatureMode: effectiveSignatureMode,
+        stages: stages,
+        cipherBytes: minimumCipherBytes,
+        paddedPlainBytes: plainBytes + 11 + 16,
+        fileName: fileName,
+        mediaType: mediaType,
+      ),
+      recommendedBytes: _estimatedEnvelopeJsonBytes(
+        algorithm: algorithm,
+        strength: strength,
+        keyBits: keyBits,
+        macAlgorithm: effectiveMacAlgorithm,
+        signatureMode: effectiveSignatureMode,
+        stages: stages,
+        cipherBytes: recommendedCipherBytes,
+        paddedPlainBytes: plainBytes + 11 + 255,
+        fileName: fileName,
+        mediaType: mediaType,
+      ),
+      minimumCipherBytes: minimumCipherBytes,
+      recommendedCipherBytes: recommendedCipherBytes,
     );
   }
 
@@ -938,6 +1024,80 @@ class ToolboxCryptoService {
     return stages.fold<int>(0, (sum, stage) => sum + stage.keyBytes);
   }
 
+  int _estimatedCipherBytes({
+    required int plainBytes,
+    required List<_CryptoStage> stages,
+    required int paddingLength,
+  }) {
+    var length = plainBytes + 11 + paddingLength;
+    for (final stage in stages) {
+      if (_stageAddsAeadTag(stage)) {
+        length += 16;
+      }
+    }
+    return length;
+  }
+
+  bool _stageAddsAeadTag(_CryptoStage stage) {
+    return stage.id == 'aes_gcm' ||
+        stage.id == 'chacha20_poly1305' ||
+        stage.id == 'camellia_gcm' ||
+        stage.id == 'twofish_gcm';
+  }
+
+  int _estimatedEnvelopeJsonBytes({
+    required ToolboxCryptoAlgorithm algorithm,
+    required ToolboxCryptoStrength strength,
+    required ToolboxCryptoKeyBits keyBits,
+    required ToolboxCryptoMacAlgorithm macAlgorithm,
+    required ToolboxCryptoSignatureMode signatureMode,
+    required List<_CryptoStage> stages,
+    required int cipherBytes,
+    required int paddedPlainBytes,
+    required String? fileName,
+    required String? mediaType,
+  }) {
+    final kdfSettings = _KdfSettings.fromStrength(strength);
+    final stageMaps = stages
+        .map(
+          (stage) => <String, Object?>{
+            'id': stage.id,
+            'nonce': _placeholderBase64(stage.usesNonce ? 12 : 16),
+            'keyBits': stage.keyBytes * 8,
+          },
+        )
+        .toList(growable: false);
+    final envelope = <String, Object?>{
+      'format': 'vocabulary_sleep_crypto',
+      'version': currentVersion,
+      'algorithm': algorithm.id,
+      'strength': strength.id,
+      'keyBits': keyBits.bits,
+      'macAlgorithm': macAlgorithm.id,
+      'signatureMode': signatureMode.id,
+      'kdf': <String, Object?>{
+        'id': 'scrypt',
+        'n': kdfSettings.n,
+        'r': kdfSettings.r,
+        'p': kdfSettings.p,
+      },
+      'padding': <String, Object?>{
+        'mode': 'random-length-v1',
+        'cipherPlainBytes': paddedPlainBytes,
+      },
+      'salt': _placeholderBase64(16),
+      'stages': stageMaps,
+      'encoding': 'bytes',
+      'fileName': fileName,
+      'mediaType': mediaType,
+      'ciphertext': _placeholderBase64(cipherBytes),
+      'mac': _placeholderHex(_macBytesLength(macAlgorithm)),
+      'signature': _placeholderSignature(signatureMode),
+      'signaturePublic': _placeholderSignaturePublic(signatureMode),
+    };
+    return utf8.encode(jsonEncode(envelope)).length;
+  }
+
   Uint8List _deriveRootKey({
     required String passphrase,
     required Uint8List? keyFileBytes,
@@ -1138,6 +1298,62 @@ class ToolboxCryptoService {
         key,
         bytes,
       ),
+    };
+  }
+
+  int _macBytesLength(ToolboxCryptoMacAlgorithm algorithm) {
+    return switch (algorithm) {
+      ToolboxCryptoMacAlgorithm.sha256 => 32,
+      ToolboxCryptoMacAlgorithm.whirlpool => 64,
+    };
+  }
+
+  String _placeholderBase64(int bytes) {
+    return 'A' * (((bytes + 2) ~/ 3) * 4);
+  }
+
+  String _placeholderHex(int bytes) {
+    return '0' * (bytes * 2);
+  }
+
+  Map<String, Object?>? _placeholderSignature(ToolboxCryptoSignatureMode mode) {
+    return switch (mode) {
+      ToolboxCryptoSignatureMode.none => null,
+      ToolboxCryptoSignatureMode.weakSha256 => <String, Object?>{
+        'mode': ToolboxCryptoSignatureMode.weakSha256.id,
+        'nonce': _placeholderBase64(16),
+        'padding': _placeholderBase64(16),
+        'value': _placeholderBase64(32),
+      },
+      ToolboxCryptoSignatureMode.rsaSha256 => <String, Object?>{
+        'mode': ToolboxCryptoSignatureMode.rsaSha256.id,
+        'value': _placeholderBase64(256),
+      },
+      ToolboxCryptoSignatureMode.ecdsaSha256 => <String, Object?>{
+        'mode': ToolboxCryptoSignatureMode.ecdsaSha256.id,
+        'r': _placeholderBase64(32),
+        's': _placeholderBase64(32),
+      },
+    };
+  }
+
+  Map<String, Object?>? _placeholderSignaturePublic(
+    ToolboxCryptoSignatureMode mode,
+  ) {
+    return switch (mode) {
+      ToolboxCryptoSignatureMode.none => null,
+      ToolboxCryptoSignatureMode.weakSha256 => <String, Object?>{
+        'mode': ToolboxCryptoSignatureMode.weakSha256.id,
+        'public': false,
+      },
+      ToolboxCryptoSignatureMode.rsaSha256 => <String, Object?>{
+        'n': _placeholderBase64(256),
+        'e': _placeholderBase64(3),
+      },
+      ToolboxCryptoSignatureMode.ecdsaSha256 => <String, Object?>{
+        'curve': 'prime256v1',
+        'q': _placeholderBase64(65),
+      },
     };
   }
 

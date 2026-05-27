@@ -145,6 +145,21 @@ void main() {
       );
     });
 
+    test('reports image capacity before writing payload', () {
+      final check = service.checkTextWriteCapacity(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(width: 20, height: 20),
+        text: 'capacity' * 200,
+        dualLayerEnabled: false,
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'capacity-key',
+      );
+
+      expect(check.fits, isFalse);
+      expect(check.requiredBytes, greaterThan(check.capacityBytes));
+      expect(check.minimumPixels, greaterThan(20 * 20));
+    });
+
     test('embeds dual text layers and reveals only matching layer', () {
       final embedded = service.embedDualText(
         mediaKind: ToolboxSteganographyMediaKind.image,

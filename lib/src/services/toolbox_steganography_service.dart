@@ -172,6 +172,39 @@ class ToolboxSteganographySuccessfulRevealProtectionResult {
   final int remainingSuccessfulReveals;
 }
 
+class ToolboxSteganographyCapacityCheck {
+  const ToolboxSteganographyCapacityCheck({
+    required this.dualLayer,
+    required this.width,
+    required this.height,
+    required this.capacityBytes,
+    required this.requiredBytes,
+    required this.minimumPixels,
+    this.perLayerCapacityBytes,
+    this.coverRequiredBytes,
+    this.hiddenRequiredBytes,
+  });
+
+  final bool dualLayer;
+  final int width;
+  final int height;
+  final int capacityBytes;
+  final int requiredBytes;
+  final int minimumPixels;
+  final int? perLayerCapacityBytes;
+  final int? coverRequiredBytes;
+  final int? hiddenRequiredBytes;
+
+  bool get fits {
+    if (!dualLayer) {
+      return requiredBytes <= capacityBytes;
+    }
+    final layerCapacity = perLayerCapacityBytes ?? 0;
+    return (coverRequiredBytes ?? 0) <= layerCapacity &&
+        (hiddenRequiredBytes ?? 0) <= layerCapacity;
+  }
+}
+
 class ToolboxSteganographyService {
   static final List<int> _managedBlockMagic = ascii.encode('VSSG3');
   static const int maxExtensionLength = 12;
@@ -201,6 +234,166 @@ class ToolboxSteganographyService {
     }
     final cleaned = value.replaceAll(RegExp(r'[^a-z0-9]'), '');
     return cleaned.isEmpty ? null : cleaned;
+  }
+
+  ToolboxSteganographyCapacityCheck checkTextWriteCapacity({
+    required ToolboxSteganographyMediaKind mediaKind,
+    required Uint8List carrierBytes,
+    required String text,
+    required bool dualLayerEnabled,
+    String coverText = '',
+    required ToolboxCryptoAlgorithm encryption,
+    required String passphrase,
+    String coverPassphrase = '',
+    ToolboxCryptoStrength strength = ToolboxCryptoStrength.standard,
+    Uint8List? keyFileBytes,
+    List<ToolboxCryptoCascadeCipher>? cascade,
+    ToolboxCryptoKeyBits keyBits = ToolboxCryptoKeyBits.bits256,
+    ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
+    ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
+    int maxErrorAttempts = 0,
+    int maxSuccessfulReveals = 0,
+  }) {
+    if (carrierBytes.isEmpty) {
+      throw const ToolboxSteganographyException('Source media is empty.');
+    }
+    if (dualLayerEnabled) {
+      if (coverText.isEmpty || text.isEmpty) {
+        throw const ToolboxSteganographyException('Secret text is empty.');
+      }
+      if (coverPassphrase.trim().isEmpty || passphrase.trim().isEmpty) {
+        throw const ToolboxSteganographyException(
+          'Dual-layer mode requires both passphrases.',
+        );
+      }
+      if (coverPassphrase == passphrase) {
+        throw const ToolboxSteganographyException(
+          'Dual-layer passphrases must be different.',
+        );
+      }
+      if (mediaKind != ToolboxSteganographyMediaKind.image) {
+        throw const ToolboxSteganographyException(
+          'Dual-layer mode currently supports image carriers only.',
+        );
+      }
+    } else if (text.isEmpty) {
+      throw const ToolboxSteganographyException('Secret text is empty.');
+    }
+    if (encryption.requiresSecret &&
+        passphrase.trim().isEmpty &&
+        (keyFileBytes == null || keyFileBytes.isEmpty)) {
+      throw const ToolboxSteganographyException(
+        'This encryption mode requires a passphrase or key file.',
+      );
+    }
+    _validateMediaWriteBackend(mediaKind);
+    _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
+    _ensureCarrierIsWritable(mediaKind: mediaKind, carrierBytes: carrierBytes);
+
+    if (dualLayerEnabled) {
+      final coverRequired = _estimatedBlockLength(
+        payloadKind: ToolboxSteganographyPayloadKind.text,
+        plainBytesLength: utf8.encode(coverText).length,
+        encryption: encryption,
+        strength: strength,
+        cascade: cascade,
+        keyBits: keyBits,
+        macAlgorithm: macAlgorithm,
+        signatureMode: signatureMode,
+        maxErrorAttempts: maxErrorAttempts,
+        maxSuccessfulReveals: maxSuccessfulReveals,
+      );
+      final hiddenRequired = _estimatedBlockLength(
+        payloadKind: ToolboxSteganographyPayloadKind.text,
+        plainBytesLength: utf8.encode(text).length,
+        encryption: encryption,
+        strength: strength,
+        cascade: cascade,
+        keyBits: keyBits,
+        macAlgorithm: macAlgorithm,
+        signatureMode: signatureMode,
+        maxErrorAttempts: maxErrorAttempts,
+        maxSuccessfulReveals: maxSuccessfulReveals,
+      );
+      return _checkDualImageCapacity(
+        carrierBytes: carrierBytes,
+        coverRequiredBytes: coverRequired,
+        hiddenRequiredBytes: hiddenRequired,
+      );
+    }
+
+    final requiredBytes = _estimatedBlockLength(
+      payloadKind: ToolboxSteganographyPayloadKind.text,
+      plainBytesLength: utf8.encode(text).length,
+      encryption: encryption,
+      strength: strength,
+      cascade: cascade,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
+    );
+    return _checkSingleImageCapacity(
+      carrierBytes: carrierBytes,
+      requiredBytes: requiredBytes,
+    );
+  }
+
+  ToolboxSteganographyCapacityCheck checkFileWriteCapacity({
+    required ToolboxSteganographyMediaKind mediaKind,
+    required Uint8List carrierBytes,
+    required Uint8List fileBytes,
+    required ToolboxCryptoAlgorithm encryption,
+    required String passphrase,
+    ToolboxCryptoStrength strength = ToolboxCryptoStrength.standard,
+    Uint8List? keyFileBytes,
+    String? fileName,
+    String? mediaType,
+    List<ToolboxCryptoCascadeCipher>? cascade,
+    ToolboxCryptoKeyBits keyBits = ToolboxCryptoKeyBits.bits256,
+    ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
+    ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
+    int maxErrorAttempts = 0,
+    int maxSuccessfulReveals = 0,
+  }) {
+    if (carrierBytes.isEmpty) {
+      throw const ToolboxSteganographyException('Source media is empty.');
+    }
+    if (fileBytes.isEmpty) {
+      throw const ToolboxSteganographyException('Secret file is empty.');
+    }
+    if (encryption.requiresSecret &&
+        passphrase.trim().isEmpty &&
+        (keyFileBytes == null || keyFileBytes.isEmpty)) {
+      throw const ToolboxSteganographyException(
+        'This encryption mode requires a passphrase or key file.',
+      );
+    }
+    _validateMediaWriteBackend(mediaKind);
+    _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
+    _ensureCarrierIsWritable(mediaKind: mediaKind, carrierBytes: carrierBytes);
+
+    final requiredBytes = _estimatedBlockLength(
+      payloadKind: ToolboxSteganographyPayloadKind.file,
+      plainBytesLength: fileBytes.length,
+      encryption: encryption,
+      strength: strength,
+      fileName: fileName,
+      mediaType: mediaType,
+      cascade: cascade,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
+    );
+    return _checkSingleImageCapacity(
+      carrierBytes: carrierBytes,
+      requiredBytes: requiredBytes,
+    );
   }
 
   ToolboxSteganographyEmbedResult embedText({
@@ -739,6 +932,136 @@ class ToolboxSteganographyService {
         'Carrier already contains hidden data. Use the original carrier, clear the hidden data, or embed the encrypted file as a new payload.',
       );
     }
+  }
+
+  ToolboxSteganographyCapacityCheck _checkSingleImageCapacity({
+    required Uint8List carrierBytes,
+    required int requiredBytes,
+  }) {
+    final image = _decodeCarrierImage(
+      carrierBytes,
+      failureMessage:
+          'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.',
+    );
+    final totalPositions = image.width * image.height * 3;
+    final reservedHeaderBytes = _imageHeaderLength + _imagePolicyHeaderLength;
+    final capacity = (totalPositions - (reservedHeaderBytes * 8)) ~/ 8;
+    if (capacity <= 0) {
+      throw const ToolboxSteganographyException('Image is too small.');
+    }
+    return ToolboxSteganographyCapacityCheck(
+      dualLayer: false,
+      width: image.width,
+      height: image.height,
+      capacityBytes: capacity,
+      requiredBytes: requiredBytes,
+      minimumPixels: _minimumSingleLayerPixels(requiredBytes),
+    );
+  }
+
+  ToolboxSteganographyCapacityCheck _checkDualImageCapacity({
+    required Uint8List carrierBytes,
+    required int coverRequiredBytes,
+    required int hiddenRequiredBytes,
+  }) {
+    final image = _decodeCarrierImage(
+      carrierBytes,
+      failureMessage:
+          'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.',
+    );
+    final totalPositions = image.width * image.height * 3;
+    final policyPositions = _imagePolicyPositions(
+      image,
+      headerLength: _imagePolicyHeaderLength,
+    );
+    final coverCapacity = _imageSlotCapacity(
+      totalPositions: totalPositions,
+      policyPositions: policyPositions,
+      slot: 1,
+    );
+    final hiddenCapacity = _imageSlotCapacity(
+      totalPositions: totalPositions,
+      policyPositions: policyPositions,
+      slot: 0,
+    );
+    final perLayerCapacity = math.min(coverCapacity, hiddenCapacity);
+    final requiredBytes = math.max(coverRequiredBytes, hiddenRequiredBytes);
+    return ToolboxSteganographyCapacityCheck(
+      dualLayer: true,
+      width: image.width,
+      height: image.height,
+      capacityBytes: coverCapacity + hiddenCapacity,
+      requiredBytes: requiredBytes,
+      perLayerCapacityBytes: perLayerCapacity,
+      coverRequiredBytes: coverRequiredBytes,
+      hiddenRequiredBytes: hiddenRequiredBytes,
+      minimumPixels: _minimumDualLayerPixels(requiredBytes),
+    );
+  }
+
+  int _estimatedBlockLength({
+    required ToolboxSteganographyPayloadKind payloadKind,
+    required int plainBytesLength,
+    required ToolboxCryptoAlgorithm encryption,
+    required ToolboxCryptoStrength strength,
+    String? fileName,
+    String? mediaType,
+    List<ToolboxCryptoCascadeCipher>? cascade,
+    ToolboxCryptoKeyBits keyBits = ToolboxCryptoKeyBits.bits256,
+    ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
+    ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
+    required int maxErrorAttempts,
+    required int maxSuccessfulReveals,
+  }) {
+    _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
+    final cryptoEstimate = _cryptoService.estimateEnvelopeSize(
+      plainBytes: plainBytesLength,
+      algorithm: encryption,
+      strength: strength,
+      fileName: fileName,
+      mediaType: mediaType,
+      cascade: cascade,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+    );
+    final envelope = <String, Object?>{
+      'version': 3,
+      'payloadKind': payloadKind.id,
+      'encoding': payloadKind == ToolboxSteganographyPayloadKind.text
+          ? 'utf8'
+          : 'bytes',
+      'fileName': fileName,
+      'mediaType': mediaType,
+      'cryptoEnvelope': _placeholderBase64(cryptoEstimate.recommendedBytes),
+    };
+    final jsonBytes = utf8.encode(jsonEncode(envelope)).length;
+    return _managedBlockMagic.length +
+        2 +
+        4 +
+        jsonBytes +
+        _protectedBlockTailLength;
+  }
+
+  int _minimumSingleLayerPixels(int requiredBytes) {
+    final requiredBits =
+        (requiredBytes * 8) +
+        ((_imageHeaderLength + _imagePolicyHeaderLength) * 8);
+    return (requiredBits + 2) ~/ 3;
+  }
+
+  int _minimumDualLayerPixels(int requiredBytes) {
+    final policyBits = _imagePolicyHeaderLength * 8;
+    final requiredSlotBits =
+        (requiredBytes * 8) +
+        (_imageHeaderLength * 8) +
+        ((policyBits + 1) ~/ 2);
+    return ((requiredSlotBits * 2) + 2) ~/ 3;
+  }
+
+  String _placeholderBase64(int bytes) {
+    return 'A' * (((bytes + 2) ~/ 3) * 4);
   }
 
   ToolboxSteganographyEmbedResult _embedInImage({

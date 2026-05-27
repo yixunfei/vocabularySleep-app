@@ -1,3 +1,37 @@
+## [Unreleased-PLAN_246-LIFE-STEGANOGRAPHY-INTERACTION-MEMORY] - 2026-05-27
+
+### 原因
+- 用户反馈隐写内容/隐写文件切换时媒体类型被错误隐藏，自由级联组合项远离加密算法，解密导出或触发清理后载体仍可能留在内存，并希望写入前提前提示载荷容量不足。
+
+### 新增
+- `plans/PLAN_246_隐写交互状态与载体内存卸载修复.md`
+  - 记录本轮交互状态、容量预检、内存卸载和多重加密安全边界。
+- `lib/src/services/toolbox_crypto_service.dart`
+  - 新增加密 envelope 尺寸估算接口，按当前算法、级联层数、MAC、签名模式和最大随机 padding 估算写入前所需容量，不派生口令也不执行实际加密。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增文本/文件写入前容量检查：先验证媒体大小、图片像素上限、重复隐写占用和预计载荷尺寸，再返回当前容量、预计需要和最低建议像素数。
+- `test/toolbox_steganography_service_test.dart`
+  - 覆盖图片容量预检在小载体上提前报告容量不足。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 媒体类型选择从“隐写文本”工作区中解耦，隐写内容与隐写文件模式都能正常选择图片/音频/视频类型。
+  - 自由级联组合项移动到加密算法下方，选择“自由级联”后立即展示组合芯片和独立密钥材料说明。
+  - 写入文本/文件前先运行容量预检，不足时提示当前图片容量、预计需要、媒体大小上限和最低建议像素尺寸。
+  - 写入或还原完成后增加导出/复制提醒；解密文件导出后卸载当前载体，成功/错误次数触发清理后也同步卸载载体内存和预览。
+  - 保存路径提示与普通状态提示拆分，避免“已保存”前缀错误包裹清理/浏览器下载类消息。
+
+### 风险变更
+- 容量预检采用最大随机 padding 的保守估算，可能比实际某次封装略大；这是为了避免真实写入阶段因随机尺寸波动失败。
+- 多重/组合加密的每一层使用同一根密钥派生出的独立 key slice 与独立 nonce，可抵抗单层参数复用问题；但它不是多个互不相关口令域，根密钥或口令被攻破时所有层都会失效。
+
+### 验证
+- `dart format lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
 ## [Unreleased-PLAN_241-LIFE-STEGANOGRAPHY-FILE-PICKER-MEMORY] - 2026-05-27
 
 ### 原因
