@@ -351,6 +351,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
 
   @override
   void dispose() {
+    _clearSecretInputs();
     _secretController.dispose();
     _coverSecretController.dispose();
     _passphraseController.dispose();
@@ -837,6 +838,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               : (value) {
                   setState(() {
                     _workspace = value;
+                    _clearSecretInputs();
                     _savedPath = null;
                     _error = null;
                   });
@@ -1843,6 +1845,15 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
+        const SizedBox(height: 8),
+        Text(
+          _lifeText(
+            context,
+            zh: '公开策略头、尾部防篡改和错误/成功次数限制只作为格式提示与本机当前文件的最佳努力清理；真正的数据认证来自加密 envelope 的 MAC/AEAD。',
+            en: 'Public policy headers, tamper hints, and error/success counters are format hints and best-effort cleanup for the current local file. Real authentication comes from the crypto envelope MAC/AEAD.',
+          ),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }
@@ -1862,8 +1873,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ? null
           : (_) {
               setState(() {
-                _mode = mode;
-                _clearResults();
+                if (_mode != mode) {
+                  _mode = mode;
+                  _clearSecretInputs();
+                  _clearResults();
+                }
               });
             },
     );
@@ -1884,8 +1898,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ? null
           : (_) {
               setState(() {
-                _fileMode = mode;
-                _clearFileResults();
+                if (_fileMode != mode) {
+                  _fileMode = mode;
+                  _clearSecretInputs();
+                  _clearFileResults();
+                }
               });
             },
     );
@@ -2571,7 +2588,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 child: Text(
                   _lifeText(
                     context,
-                    zh: '密码错误会销毁隐藏内容',
+                    zh: '密码错误会清空隐藏内容',
                     en: 'Wrong passwords can wipe hidden data',
                   ),
                 ),
@@ -2581,8 +2598,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           content: Text(
             _lifeText(
               context,
-              zh: '已设置最大错误次数 $attempts。文件还原/解密时，如果密码错误累计达到该次数，将尝试销毁当前文件中的隐藏内容。',
-              en: 'Max wrong attempts is set to $attempts. During file reveal/decryption, reaching this many wrong passwords will try to destroy hidden data in the current file.',
+              zh: '已设置为 $attempts 次。还原文件时如果密码错误达到该次数，当前文件中的隐藏内容会被清空。',
+              en: 'Set to $attempts. During reveal, reaching this many wrong passwords wipes hidden data in the current file.',
             ),
           ),
           actions: <Widget>[
@@ -2620,8 +2637,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           content: Text(
             _lifeText(
               context,
-              zh: '已设置成功还原 $attempts 次后清理隐藏内容。此限制只会改写当前可写文件副本，无法约束已复制的文件或外部备份。',
-              en: 'Hidden data will be cleaned after $attempts successful reveal(s). This only rewrites the current writable file copy and cannot limit copied files or external backups.',
+              zh: '已设置成功还原 $attempts 次后清理隐藏内容。此操作只是本机当前文件的最佳努力清理，无法约束已复制文件或外部备份。',
+              en: 'Hidden data will be cleaned after $attempts successful reveal(s). This is best-effort cleanup for the current local file only and cannot limit copied files or external backups.',
             ),
           ),
           actions: <Widget>[
@@ -3262,14 +3279,19 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   void _resetAll() {
     setState(() {
       _clearSourceAndResult();
-      _useKeyFiles = false;
-      _keyFileName = null;
-      _keyFileBytes = null;
-      _keyFileEntries = const <_KeyFileEntry>[];
-      _secretController.clear();
-      _coverSecretController.clear();
-      _coverPassphraseController.clear();
+      _clearSecretInputs();
     });
+  }
+
+  void _clearSecretInputs() {
+    _useKeyFiles = false;
+    _keyFileName = null;
+    _keyFileBytes = null;
+    _keyFileEntries = const <_KeyFileEntry>[];
+    _secretController.clear();
+    _coverSecretController.clear();
+    _passphraseController.clear();
+    _coverPassphraseController.clear();
   }
 
   List<ToolboxCryptoCascadeCipher>? get _selectedCascade =>
@@ -3778,8 +3800,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       ToolboxCryptoSignatureMode.rsaSha256 ||
       ToolboxCryptoSignatureMode.ecdsaSha256 => _lifeText(
         context,
-        zh: '强签名会生成密钥对并签名，移动设备可能等待较久。',
-        en: 'Strong signatures generate a key pair and sign the envelope; slower mobile devices may need more time.',
+        zh: 'RSA/ECDSA 是高成本完整性附加校验，不提供独立来源证明；移动设备可能需要等待。',
+        en: 'RSA/ECDSA are high-cost integrity checks, not independent origin proof. Slower mobile devices may need more time.',
       ),
       ToolboxCryptoSignatureMode.none => '',
     };
@@ -3955,6 +3977,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         zh: '输入文件为空。',
         en: message,
       ),
+      'Input file is too large.' => _lifeText(
+        context,
+        zh: '输入文件过大，已拒绝处理。',
+        en: message,
+      ),
+      'Source media is too large.' => _lifeText(
+        context,
+        zh: '媒体文件过大，已拒绝处理。',
+        en: message,
+      ),
+      'Image file is too large.' => _lifeText(
+        context,
+        zh: '图片文件过大，已拒绝解码。',
+        en: message,
+      ),
+      'Image dimensions are too large.' => _lifeText(
+        context,
+        zh: '图片像素尺寸过大，已拒绝解码。',
+        en: message,
+      ),
       'Secret text is empty.' => _lifeText(context, zh: '隐藏文本为空。', en: message),
       'This encryption mode requires a passphrase or key file.' => _lifeText(
         context,
@@ -4045,6 +4087,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       'Crypto envelope is invalid.' => _lifeText(
         context,
         zh: '加密文件格式无效。',
+        en: message,
+      ),
+      'Crypto envelope is too large.' => _lifeText(
+        context,
+        zh: '加密数据过大，已拒绝处理。',
+        en: message,
+      ),
+      'Crypto KDF parameters are invalid.' => _lifeText(
+        context,
+        zh: '加密文件的 KDF 参数无效或超过上限。',
         en: message,
       ),
       'This payload requires a passphrase.' => _lifeText(

@@ -356,7 +356,18 @@ class ToolboxCryptoKeyFileResult {
 }
 
 class ToolboxCryptoService {
-  static const int currentVersion = 3;
+  static const int currentVersion = 4;
+  static const int maxPlainBytes = 128 * 1024 * 1024;
+  static const int maxCipherBytes = maxPlainBytes + 1024 * 1024;
+  static const int maxEnvelopeBytes = 192 * 1024 * 1024;
+  static const int _maxStageCount = 8;
+  static const int _maxScryptN = 1 << 18;
+  static const int _maxScryptR = 8;
+  static const int _maxScryptP = 2;
+  static const int _maxSaltBytes = 64;
+  static const int _maxNonceBytes = 32;
+  static const int _maxSignatureBytes = 4096;
+  static const int _maxPublicKeyBytes = 4096;
   static final math.Random _secureRandom = math.Random.secure();
   static final List<int> _weakSignatureDomainKey = utf8.encode(
     'vocabulary_sleep_builtin_weak_signature_v1_not_a_private_key',
@@ -377,6 +388,9 @@ class ToolboxCryptoService {
   }) {
     if (plainBytes.isEmpty) {
       throw const ToolboxCryptoException('Input bytes are empty.');
+    }
+    if (plainBytes.length > maxPlainBytes) {
+      throw const ToolboxCryptoException('Input file is too large.');
     }
     if (!algorithm.canEncrypt) {
       throw const ToolboxCryptoException(
@@ -443,7 +457,6 @@ class ToolboxCryptoService {
     }
 
     final cipherBytes = Uint8List.fromList(activeBytes);
-    final plainSha = _hashHex(ToolboxCryptoHashAlgorithm.sha256, plainBytes);
     final associatedData = _associatedData(
       version: currentVersion,
       algorithm: algorithm,
@@ -452,9 +465,7 @@ class ToolboxCryptoService {
       macAlgorithm: effectiveMacAlgorithm,
       signatureMode: effectiveSignatureMode,
       salt: salt,
-      plainSha256: plainSha,
       stages: stageMaps,
-      keyFileSha256: keyFileHash,
       fileName: fileName,
       mediaType: mediaType,
       kdfSettings: kdfSettings,
@@ -513,8 +524,6 @@ class ToolboxCryptoService {
       'encoding': 'bytes',
       'fileName': fileName,
       'mediaType': mediaType,
-      'keyFileSha256': keyFileHash,
-      'plainSha256': plainSha,
       'ciphertext': base64Encode(cipherBytes),
       'mac': mac,
       'signature': signature,
@@ -545,9 +554,10 @@ class ToolboxCryptoService {
     final map = _decodeEnvelope(envelopeBytes);
     final rawVersion = map['version'];
     final version = rawVersion is int ? rawVersion : null;
-    if (version != 2 && version != currentVersion) {
+    if (version != 2 && version != 3 && version != currentVersion) {
       throw const ToolboxCryptoException('Unsupported crypto version.');
     }
+    final includePublicHashes = version == 2 || version == 3;
     final algorithm = _algorithmFromId(_readString(map, 'algorithm'));
     final strength = _strengthFromId(_readString(map, 'strength'));
     final kdfSettings = _readKdfSettings(map, strength);
@@ -563,37 +573,44 @@ class ToolboxCryptoService {
       passphrase: passphrase,
       keyFileBytes: keyFileBytes,
     );
-    final salt = _readBase64(map, 'salt');
-    final cipherBytes = _readBase64(map, 'ciphertext');
+    final salt = _readBase64(map, 'salt', maxBytes: _maxSaltBytes);
+    final cipherBytes = _readBase64(
+      map,
+      'ciphertext',
+      maxBytes: maxCipherBytes,
+    );
     final mac = _readString(map, 'mac');
-    final plainSha = _readString(map, 'plainSha256');
-    final keyFileHash = map['keyFileSha256'] as String?;
+    final plainSha = includePublicHashes
+        ? _readString(map, 'plainSha256')
+        : null;
+    final keyFileHash = includePublicHashes
+        ? map['keyFileSha256'] as String?
+        : null;
     final fileName = map['fileName'] as String?;
     final mediaType = map['mediaType'] as String?;
-    final actualKeyFileHash = _keyFileHash(keyFileBytes);
-    if (keyFileHash != actualKeyFileHash) {
-      throw const ToolboxCryptoException(
-        'Key file mismatch or missing key file.',
-      );
-    }
     final stageMaps = _readStages(map);
     final associatedData = _associatedData(
-      version: currentVersion,
+      version: version == 2 ? 3 : version!,
       algorithm: algorithm,
       strength: strength,
       keyBits: keyBits,
       macAlgorithm: macAlgorithm,
       signatureMode: signatureMode,
       salt: salt,
+      includePublicHashes: includePublicHashes,
       plainSha256: plainSha,
       stages: stageMaps,
       keyFileSha256: keyFileHash,
       fileName: fileName,
       mediaType: mediaType,
-      kdfSettings: version == currentVersion ? kdfSettings : null,
-      paddingMode: version == currentVersion ? _readPaddingMode(map) : null,
+      kdfSettings: version == 3 || version == currentVersion
+          ? kdfSettings
+          : null,
+      paddingMode: version == 3 || version == currentVersion
+          ? _readPaddingMode(map)
+          : null,
     );
-    final rootKey = version == currentVersion
+    final rootKey = version == 3 || version == currentVersion
         ? _deriveRootKey(
             passphrase: passphrase,
             keyFileBytes: keyFileBytes,
@@ -677,7 +694,7 @@ class ToolboxCryptoService {
         encrypt: false,
         input: activeBytes,
         key: Uint8List.fromList(key),
-        nonce: _readBase64(stageMap, 'nonce'),
+        nonce: _readBase64(stageMap, 'nonce', maxBytes: _maxNonceBytes),
         strength: strength,
       );
     }
@@ -686,18 +703,20 @@ class ToolboxCryptoService {
     final output = rootKey == null
         ? decryptedPayload
         : _unpadPlainPayload(decryptedPayload);
-    final plainShaBytes = _hexToBytes(plainSha);
-    final actualSha = _hashBytes(ToolboxCryptoHashAlgorithm.sha256, output);
-    if (plainShaBytes == null ||
-        !_constantTimeBytesEquals(actualSha, plainShaBytes)) {
-      throw const ToolboxCryptoException('Payload checksum failed.');
+    if (includePublicHashes) {
+      final plainShaBytes = _hexToBytes(plainSha!);
+      final actualSha = _hashBytes(ToolboxCryptoHashAlgorithm.sha256, output);
+      if (plainShaBytes == null ||
+          !_constantTimeBytesEquals(actualSha, plainShaBytes)) {
+        throw const ToolboxCryptoException('Payload checksum failed.');
+      }
     }
     return ToolboxCryptoDecryptResult(
       plainBytes: output,
       algorithm: algorithm,
       strength: strength,
       cipherPreview: previewBase64(cipherBytes),
-      keyFileSha256: keyFileHash,
+      keyFileSha256: keyFileHash ?? _keyFileHash(keyFileBytes),
       fileName: fileName,
       mediaType: mediaType,
     );
@@ -742,6 +761,9 @@ class ToolboxCryptoService {
   }
 
   Map<String, Object?> _decodeEnvelope(Uint8List envelopeBytes) {
+    if (envelopeBytes.length > maxEnvelopeBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
     try {
       final decoded = jsonDecode(utf8.decode(envelopeBytes));
       if (decoded is Map<String, Object?>) {
@@ -759,13 +781,36 @@ class ToolboxCryptoService {
   ) {
     final raw = map['kdf'];
     if (raw is Map<String, Object?>) {
-      return _KdfSettings(
-        n: _readPositiveInt(raw['n']) ?? strength.scryptN,
-        r: _readPositiveInt(raw['r']) ?? strength.scryptR,
-        p: _readPositiveInt(raw['p']) ?? strength.scryptP,
+      final id = raw['id'];
+      if (id != null && id != 'scrypt') {
+        throw const ToolboxCryptoException(
+          'Crypto KDF parameters are invalid.',
+        );
+      }
+      final settings = _KdfSettings(
+        n: _readKdfInt(raw, 'n') ?? strength.scryptN,
+        r: _readKdfInt(raw, 'r') ?? strength.scryptR,
+        p: _readKdfInt(raw, 'p') ?? strength.scryptP,
       );
+      _validateKdfSettings(settings);
+      return settings;
     }
-    return _KdfSettings.fromStrength(strength);
+    final settings = _KdfSettings.fromStrength(strength);
+    _validateKdfSettings(settings);
+    return settings;
+  }
+
+  void _validateKdfSettings(_KdfSettings settings) {
+    final n = settings.n;
+    final isPowerOfTwo = n > 1 && (n & (n - 1)) == 0;
+    if (!isPowerOfTwo ||
+        n > _maxScryptN ||
+        settings.r <= 0 ||
+        settings.r > _maxScryptR ||
+        settings.p <= 0 ||
+        settings.p > _maxScryptP) {
+      throw const ToolboxCryptoException('Crypto KDF parameters are invalid.');
+    }
   }
 
   String _readPaddingMode(Map<String, Object?> map) {
@@ -785,6 +830,17 @@ class ToolboxCryptoService {
         : null;
     if (parsed == null || parsed <= 0) {
       return null;
+    }
+    return parsed;
+  }
+
+  int? _readKdfInt(Map<String, Object?> map, String key) {
+    if (!map.containsKey(key)) {
+      return null;
+    }
+    final parsed = _readPositiveInt(map[key]);
+    if (parsed == null) {
+      throw const ToolboxCryptoException('Crypto KDF parameters are invalid.');
     }
     return parsed;
   }
@@ -1038,6 +1094,7 @@ class ToolboxCryptoService {
     final plainOffset = headerLength;
     final expectedLength = plainOffset + plainLength + paddingLength;
     if (plainLength < 0 ||
+        plainLength > maxPlainBytes ||
         paddingLength < 0 ||
         expectedLength != paddedBytes.length) {
       throw const ToolboxCryptoException('Payload padding is invalid.');
@@ -1114,11 +1171,12 @@ class ToolboxCryptoService {
     required ToolboxCryptoMacAlgorithm macAlgorithm,
     required ToolboxCryptoSignatureMode signatureMode,
     required Uint8List salt,
-    required String plainSha256,
     required List<Map<String, Object?>> stages,
-    required String? keyFileSha256,
     required String? fileName,
     required String? mediaType,
+    bool includePublicHashes = false,
+    String? plainSha256,
+    String? keyFileSha256,
     _KdfSettings? kdfSettings,
     String? paddingMode,
   }) {
@@ -1130,12 +1188,17 @@ class ToolboxCryptoService {
       'macAlgorithm': macAlgorithm.id,
       'signatureMode': signatureMode.id,
       'salt': base64Encode(salt),
-      'plainSha256': plainSha256,
       'stages': stages,
-      'keyFileSha256': keyFileSha256,
       'fileName': fileName,
       'mediaType': mediaType,
     };
+    if (includePublicHashes) {
+      if (plainSha256 == null) {
+        throw const ToolboxCryptoException('Crypto envelope is invalid.');
+      }
+      map['plainSha256'] = plainSha256;
+      map['keyFileSha256'] = keyFileSha256;
+    }
     if (kdfSettings != null) {
       map['kdf'] = kdfSettings.toJson();
     }
@@ -1165,10 +1228,6 @@ class ToolboxCryptoService {
         bytes,
       ),
     };
-  }
-
-  String _hashHex(ToolboxCryptoHashAlgorithm algorithm, Uint8List bytes) {
-    return _hexDigest(_hashBytes(algorithm, bytes));
   }
 
   String _hmacHex({
@@ -1280,7 +1339,7 @@ class ToolboxCryptoService {
 
   List<Map<String, Object?>> _readStages(Map<String, Object?> map) {
     final raw = map['stages'];
-    if (raw is! List<Object?> || raw.isEmpty) {
+    if (raw is! List<Object?> || raw.isEmpty || raw.length > _maxStageCount) {
       throw const ToolboxCryptoException('Crypto envelope is invalid.');
     }
     return raw
@@ -1301,9 +1360,20 @@ class ToolboxCryptoService {
     throw const ToolboxCryptoException('Crypto envelope is invalid.');
   }
 
-  Uint8List _readBase64(Map<String, Object?> map, String key) {
+  Uint8List _readBase64(Map<String, Object?> map, String key, {int? maxBytes}) {
+    final text = _readString(map, key);
+    if (maxBytes != null) {
+      final maxBase64Length = ((maxBytes + 2) ~/ 3) * 4;
+      if (text.length > maxBase64Length) {
+        throw const ToolboxCryptoException('Crypto envelope is too large.');
+      }
+    }
     try {
-      return Uint8List.fromList(base64Decode(_readString(map, key)));
+      final decoded = Uint8List.fromList(base64Decode(text));
+      if (maxBytes != null && decoded.length > maxBytes) {
+        throw const ToolboxCryptoException('Crypto envelope is too large.');
+      }
+      return decoded;
     } on FormatException {
       throw const ToolboxCryptoException('Crypto envelope is invalid.');
     }
@@ -1436,15 +1506,23 @@ class ToolboxCryptoService {
         if (signature is! Map<String, Object?> || keySeed == null) {
           throw const ToolboxCryptoException('Signature is invalid.');
         }
-        final nonce = _readBase64(signature, 'nonce');
-        final padding = _readBase64(signature, 'padding');
+        final nonce = _readBase64(signature, 'nonce', maxBytes: _maxNonceBytes);
+        final padding = _readBase64(
+          signature,
+          'padding',
+          maxBytes: _maxSignatureBytes,
+        );
         final expected = _weakSignatureTag(
           keySeed: keySeed,
           nonce: nonce,
           padding: padding,
           data: data,
         );
-        final actual = _readBase64(signature, 'value');
+        final actual = _readBase64(
+          signature,
+          'value',
+          maxBytes: _maxSignatureBytes,
+        );
         if (!_constantTimeBytesEquals(actual, expected)) {
           throw const ToolboxCryptoException('Signature verification failed.');
         }
@@ -1459,7 +1537,9 @@ class ToolboxCryptoService {
           ..init(false, pc.PublicKeyParameter<pc.RSAPublicKey>(key));
         final ok = signer.verifySignature(
           Uint8List.fromList(data),
-          pc.RSASignature(_readBase64(signature, 'value')),
+          pc.RSASignature(
+            _readBase64(signature, 'value', maxBytes: _maxSignatureBytes),
+          ),
         );
         if (!ok) {
           throw const ToolboxCryptoException('Signature verification failed.');
@@ -1476,8 +1556,14 @@ class ToolboxCryptoService {
         final ok = signer.verifySignature(
           Uint8List.fromList(data),
           pc.ECSignature(
-            _bigIntFromBase64(_readString(signature, 'r')),
-            _bigIntFromBase64(_readString(signature, 's')),
+            _bigIntFromBase64(
+              _readString(signature, 'r'),
+              maxBytes: _maxSignatureBytes,
+            ),
+            _bigIntFromBase64(
+              _readString(signature, 's'),
+              maxBytes: _maxSignatureBytes,
+            ),
           ),
         );
         if (!ok) {
@@ -1541,7 +1627,9 @@ class ToolboxCryptoService {
   pc.ECPublicKey _ecdsaPublicKeyFromMap(Map<String, Object?> map) {
     final domain = pc.ECDomainParameters(_readString(map, 'curve'));
     return pc.ECPublicKey(
-      domain.curve.decodePoint(_readBase64(map, 'q')),
+      domain.curve.decodePoint(
+        _readBase64(map, 'q', maxBytes: _maxPublicKeyBytes),
+      ),
       domain,
     );
   }
@@ -1567,8 +1655,20 @@ class ToolboxCryptoService {
     return base64Encode(_encodeUnsignedBigInt(value));
   }
 
-  BigInt _bigIntFromBase64(String value) {
-    return _decodeUnsignedBigInt(base64Decode(value));
+  BigInt _bigIntFromBase64(String value, {int maxBytes = _maxPublicKeyBytes}) {
+    final maxBase64Length = ((maxBytes + 2) ~/ 3) * 4;
+    if (value.length > maxBase64Length) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+    try {
+      final bytes = base64Decode(value);
+      if (bytes.length > maxBytes) {
+        throw const ToolboxCryptoException('Crypto envelope is too large.');
+      }
+      return _decodeUnsignedBigInt(bytes);
+    } on FormatException {
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    }
   }
 
   Uint8List _encodeUnsignedBigInt(BigInt value) {

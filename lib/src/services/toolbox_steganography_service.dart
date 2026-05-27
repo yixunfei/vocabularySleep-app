@@ -175,6 +175,11 @@ class ToolboxSteganographySuccessfulRevealProtectionResult {
 class ToolboxSteganographyService {
   static final List<int> _managedBlockMagic = ascii.encode('VSSG3');
   static const int maxExtensionLength = 12;
+  static const int maxImageCarrierBytes = 64 * 1024 * 1024;
+  static const int maxImagePixels = 24 * 1000 * 1000;
+  static const int maxTailCarrierBytes = 256 * 1024 * 1024;
+  static const int maxEmbeddedCryptoEnvelopeBytes =
+      ToolboxCryptoService.maxEnvelopeBytes;
   static final List<int> _blockMagic = ascii.encode('VSSG1');
   static final List<int> _protectedBlockMagic = ascii.encode('VSSG2');
   static final List<int> _tailMagic = ascii.encode('VSSGT1');
@@ -675,6 +680,50 @@ class ToolboxSteganographyService {
     }
   }
 
+  img.Image _decodeCarrierImage(
+    Uint8List carrierBytes, {
+    required String failureMessage,
+  }) {
+    if (carrierBytes.length > maxImageCarrierBytes) {
+      throw const ToolboxSteganographyException('Image file is too large.');
+    }
+    final decoded = img.decodeImage(carrierBytes);
+    if (decoded == null) {
+      throw ToolboxSteganographyException(failureMessage);
+    }
+    final image = img.bakeOrientation(decoded);
+    _validateImageDimensions(image);
+    return image;
+  }
+
+  img.Image? _tryDecodeCarrierImage(Uint8List carrierBytes) {
+    if (carrierBytes.length > maxImageCarrierBytes) {
+      throw const ToolboxSteganographyException('Image file is too large.');
+    }
+    final decoded = img.decodeImage(carrierBytes);
+    if (decoded == null) {
+      return null;
+    }
+    final image = img.bakeOrientation(decoded);
+    _validateImageDimensions(image);
+    return image;
+  }
+
+  void _validateImageDimensions(img.Image image) {
+    final pixels = image.width * image.height;
+    if (pixels > maxImagePixels) {
+      throw const ToolboxSteganographyException(
+        'Image dimensions are too large.',
+      );
+    }
+  }
+
+  void _validateTailCarrierSize(Uint8List carrierBytes) {
+    if (carrierBytes.length > maxTailCarrierBytes) {
+      throw const ToolboxSteganographyException('Source media is too large.');
+    }
+  }
+
   void _ensureCarrierIsWritable({
     required ToolboxSteganographyMediaKind mediaKind,
     required Uint8List carrierBytes,
@@ -702,13 +751,11 @@ class ToolboxSteganographyService {
     required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
     required ToolboxSteganographyLocatorStrength locatorStrength,
   }) {
-    final decoded = img.decodeImage(carrierBytes);
-    if (decoded == null) {
-      throw const ToolboxSteganographyException(
-        'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.',
-      );
-    }
-    final image = img.bakeOrientation(decoded);
+    final image = _decodeCarrierImage(
+      carrierBytes,
+      failureMessage:
+          'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.',
+    );
     final totalPositions = image.width * image.height * 3;
     final reservedHeaderBytes = _imageHeaderLength + _imagePolicyHeaderLength;
     final capacity = (totalPositions - (reservedHeaderBytes * 8)) ~/ 8;
@@ -757,13 +804,11 @@ class ToolboxSteganographyService {
     required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
     required ToolboxSteganographyLocatorStrength locatorStrength,
   }) {
-    final decoded = img.decodeImage(carrierBytes);
-    if (decoded == null) {
-      throw const ToolboxSteganographyException(
-        'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.',
-      );
-    }
-    final image = img.bakeOrientation(decoded);
+    final image = _decodeCarrierImage(
+      carrierBytes,
+      failureMessage:
+          'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.',
+    );
     final totalPositions = image.width * image.height * 3;
     final policyPositions = _imagePolicyPositions(
       image,
@@ -833,6 +878,7 @@ class ToolboxSteganographyService {
     required _EnvelopeBuildResult envelope,
     String? sourceExtension,
   }) {
+    _validateTailCarrierSize(carrierBytes);
     final output = Uint8List(
       carrierBytes.length + block.length + 4 + _tailMagic.length,
     );
@@ -866,13 +912,10 @@ class ToolboxSteganographyService {
     required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
     required ToolboxSteganographyLocatorStrength locatorStrength,
   }) {
-    final decoded = img.decodeImage(carrierBytes);
-    if (decoded == null) {
-      throw const ToolboxSteganographyException(
-        'Unsupported image format or no hidden payload found.',
-      );
-    }
-    final image = img.bakeOrientation(decoded);
+    final image = _decodeCarrierImage(
+      carrierBytes,
+      failureMessage: 'Unsupported image format or no hidden payload found.',
+    );
     return _readRandomizedLsbBlock(
       image,
       passphrase: passphrase,
@@ -897,6 +940,7 @@ class ToolboxSteganographyService {
   }
 
   _TailBlockRange? _tailBlockRange(Uint8List carrierBytes) {
+    _validateTailCarrierSize(carrierBytes);
     final minimum = _tailMagic.length + 4 + _blockMagic.length + 4;
     if (carrierBytes.length < minimum) {
       return null;
@@ -923,13 +967,10 @@ class ToolboxSteganographyService {
     required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
     required ToolboxSteganographyLocatorStrength locatorStrength,
   }) {
-    final decoded = img.decodeImage(carrierBytes);
-    if (decoded == null) {
-      throw const ToolboxSteganographyException(
-        'Unsupported image format or no hidden payload found.',
-      );
-    }
-    final image = img.bakeOrientation(decoded);
+    final image = _decodeCarrierImage(
+      carrierBytes,
+      failureMessage: 'Unsupported image format or no hidden payload found.',
+    );
     final stegoImage = img.Image.from(image);
     var removed = false;
     try {
@@ -986,13 +1027,10 @@ class ToolboxSteganographyService {
     required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
     required ToolboxSteganographyLocatorStrength locatorStrength,
   }) {
-    final decoded = img.decodeImage(carrierBytes);
-    if (decoded == null) {
-      throw const ToolboxSteganographyException(
-        'Unsupported image format or no hidden payload found.',
-      );
-    }
-    final image = img.bakeOrientation(decoded);
+    final image = _decodeCarrierImage(
+      carrierBytes,
+      failureMessage: 'Unsupported image format or no hidden payload found.',
+    );
     final read = _readAnyRandomizedLsbBlockDetails(
       image,
       passphrase: passphrase,
@@ -1201,7 +1239,7 @@ class ToolboxSteganographyService {
         throw const ToolboxSteganographyException('Hidden payload is invalid.');
       }
       final decrypted = _runCryptoDecrypt(
-        envelopeBytes: Uint8List.fromList(base64Decode(envelopeText)),
+        envelopeBytes: _decodeEmbeddedCryptoEnvelope(envelopeText),
         passphrase: passphrase,
         keyFileBytes: keyFileBytes,
       );
@@ -1246,7 +1284,7 @@ class ToolboxSteganographyService {
       throw const ToolboxSteganographyException('Hidden payload is invalid.');
     }
     final decrypted = _runCryptoDecrypt(
-      envelopeBytes: Uint8List.fromList(base64Decode(envelopeText)),
+      envelopeBytes: _decodeEmbeddedCryptoEnvelope(envelopeText),
       passphrase: passphrase,
       keyFileBytes: keyFileBytes,
     );
@@ -1258,6 +1296,26 @@ class ToolboxSteganographyService {
       strength: decrypted.strength,
       cipherPreview: decrypted.cipherPreview,
     );
+  }
+
+  Uint8List _decodeEmbeddedCryptoEnvelope(String text) {
+    final maxBase64Length = ((maxEmbeddedCryptoEnvelopeBytes + 2) ~/ 3) * 4;
+    if (text.length > maxBase64Length) {
+      throw const ToolboxSteganographyException(
+        'Crypto envelope is too large.',
+      );
+    }
+    try {
+      final bytes = Uint8List.fromList(base64Decode(text));
+      if (bytes.length > maxEmbeddedCryptoEnvelopeBytes) {
+        throw const ToolboxSteganographyException(
+          'Crypto envelope is too large.',
+        );
+      }
+      return bytes;
+    } on FormatException {
+      throw const ToolboxSteganographyException('Hidden payload is invalid.');
+    }
   }
 
   _EnvelopeParseResult _parseLegacyEnvelope(
@@ -1884,11 +1942,11 @@ class ToolboxSteganographyService {
   ToolboxSteganographyProtectionPolicy? _inspectImagePolicyHeader(
     Uint8List carrierBytes,
   ) {
-    final decoded = img.decodeImage(carrierBytes);
-    if (decoded == null) {
+    final image = _tryDecodeCarrierImage(carrierBytes);
+    if (image == null) {
       return null;
     }
-    return _readImagePolicyHeader(img.bakeOrientation(decoded));
+    return _readImagePolicyHeader(image);
   }
 
   List<int> _imagePolicyPositions(

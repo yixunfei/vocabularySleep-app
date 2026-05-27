@@ -21,9 +21,11 @@ void main() {
       expect(encrypted.cipherBytes.length, greaterThan(plain.length));
       expect(encrypted.cipherPreview, isNotEmpty);
       final envelope = jsonDecode(utf8.decode(encrypted.envelopeBytes));
-      expect(envelope['version'], 3);
+      expect(envelope['version'], ToolboxCryptoService.currentVersion);
       expect(envelope['kdf']['n'], 1 << 16);
       expect(envelope['padding']['mode'], 'random-length-v1');
+      expect(envelope.containsKey('plainSha256'), isFalse);
+      expect(envelope.containsKey('keyFileSha256'), isFalse);
 
       final decrypted = service.decryptBytes(
         envelopeBytes: encrypted.envelopeBytes,
@@ -31,6 +33,46 @@ void main() {
       );
       expect(utf8.decode(decrypted.plainBytes), 'secret text 你好');
       expect(decrypted.algorithm, ToolboxCryptoAlgorithm.aesGcm);
+    });
+
+    test('rejects malicious envelope resource parameters before KDF work', () {
+      final encrypted = service.encryptBytes(
+        plainBytes: Uint8List.fromList(<int>[1, 2, 3, 4]),
+        algorithm: ToolboxCryptoAlgorithm.aesGcm,
+        strength: ToolboxCryptoStrength.standard,
+        passphrase: 'bounded-key',
+      );
+      final envelope = jsonDecode(utf8.decode(encrypted.envelopeBytes)) as Map;
+      final highCostEnvelope = Map<String, Object?>.from(envelope);
+      highCostEnvelope['kdf'] = <String, Object?>{
+        ...Map<String, Object?>.from(envelope['kdf'] as Map),
+        'n': 1 << 30,
+      };
+      expect(
+        () => service.decryptBytes(
+          envelopeBytes: Uint8List.fromList(
+            utf8.encode(jsonEncode(highCostEnvelope)),
+          ),
+          passphrase: 'bounded-key',
+        ),
+        throwsA(isA<ToolboxCryptoException>()),
+      );
+
+      final tooManyStagesEnvelope = Map<String, Object?>.from(envelope);
+      final stages = List<Object?>.from(envelope['stages'] as List);
+      tooManyStagesEnvelope['stages'] = List<Object?>.generate(
+        9,
+        (index) => stages.first,
+      );
+      expect(
+        () => service.decryptBytes(
+          envelopeBytes: Uint8List.fromList(
+            utf8.encode(jsonEncode(tooManyStagesEnvelope)),
+          ),
+          passphrase: 'bounded-key',
+        ),
+        throwsA(isA<ToolboxCryptoException>()),
+      );
     });
 
     test('supports combination encryption pipeline', () {

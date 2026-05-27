@@ -1,3 +1,45 @@
+## [Unreleased-PLAN_240-LIFE-STEGANOGRAPHY-PRE-RELEASE-SECURITY-AUDIT] - 2026-05-27
+
+### 原因
+- 用户提供发布前安全审计反馈，指出 release 复用 debug 签名、敏感文件可能进入 Android 系统备份、恶意 envelope/图片可触发资源耗尽、签名层语义被误读、公开策略/次数限制不应作为安全边界、envelope 泄漏公开指纹，以及重置未清空主口令。
+
+### 新增
+- `android/app/src/main/res/xml/backup_rules.xml`
+- `android/app/src/main/res/xml/data_extraction_rules.xml`
+  - 明确排除 `life_tools/keys/` 与 `life_tools/steganography/`，并配合 Manifest 禁用系统备份。
+- `test/toolbox_crypto_service_test.dart`
+  - 覆盖新 envelope 不再写入 `plainSha256` / `keyFileSha256`，并验证超限 KDF 与 stage 数在进入重成本 KDF 前被拒绝。
+
+### 修改
+- `android/app/build.gradle.kts`
+  - release 不再使用 debug signingConfig，改为读取 `RELEASE_STORE_FILE`、`RELEASE_STORE_PASSWORD`、`RELEASE_KEY_ALIAS`、`RELEASE_KEY_PASSWORD` 或 `android/key.properties`；缺少配置时 release 构建直接失败。
+- `android/app/src/main/AndroidManifest.xml`
+  - `<application>` 增加 `android:allowBackup="false"`，并挂载备份/迁移排除规则。
+- `lib/src/services/toolbox_crypto_service.dart`
+  - crypto envelope 升级到 v4，新写入移除公开 `plainSha256` 与 `keyFileSha256`，keyfile 匹配交由 MAC/AEAD 失败处理。
+  - 增加 envelope、plaintext、ciphertext、KDF 参数、stage 数、nonce、签名和公钥字段的硬上限，拒绝异常参数后再进入 scrypt 或签名验证。
+  - 保留 v2/v3 旧 envelope 的必要读取兼容；旧公开哈希仅用于旧版本校验。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 图片隐写解码前增加文件大小上限，解码后增加像素数上限；音视频尾部载体与内嵌 crypto envelope 也增加大小上限。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 重置、切换工作区/模式和页面销毁前清空主口令、表层口令、隐藏文本、keyfile 等 secret 输入。
+  - RSA/ECDSA 文案改为“高成本完整性附加校验，不提供独立来源证明”；错误/成功次数限制和公开策略头文案降级为本机当前文件最佳努力清理。
+
+### 风险变更
+- 没有 release keystore 配置时 release 构建会失败，这是发布链路安全要求；debug dry-run 不受影响。
+- 新 envelope v4 改变未发布格式，新写入不再暴露公开明文哈希与 keyfile 哈希；旧 v2/v3 仍尽量保留读取兼容。
+- 图片、媒体和 envelope 上限会拒绝超大载体或异常参数，减少移动端资源耗尽风险。
+- 次数限制、公开策略头和轻量尾部校验不承诺抗恶意篡改、抗复制或阅后即焚，仅作为当前客户端/当前文件的最佳努力清理提示。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_crypto_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+- `android/gradlew.bat :app:assembleDebug --dry-run`
+- `android/gradlew.bat :app:processDebugMainManifest`
+- `android/gradlew.bat :app:assembleRelease --dry-run`（缺少 release keystore 配置时按预期失败并提示所需变量）
+
 ## [Unreleased-PLAN_239-LIFE-STEGANOGRAPHY-DUAL-LAYER-REWRITE-GUARD] - 2026-05-27
 
 ### 原因
@@ -91,7 +133,7 @@
 ## [Unreleased-PLAN_235-LIFE-STEGANOGRAPHY-WEAK-SIGNATURE] - 2026-05-26
 
 ### 原因
-- 用户希望在强签名导致移动端性能下降明显的场景下，提供一个由内置长期域 key、随机短签名材料和 SHA-256/HMAC 组合而成的弱签名版本选项，并在选择签名时提示性能开销。
+- 用户希望在 RSA/ECDSA 签名路径导致移动端性能下降明显的场景下，提供一个由内置长期域 key、随机短签名材料和 SHA-256/HMAC 组合而成的弱签名版本选项，并在选择签名时提示性能开销。
 
 ### 新增
 - `lib/src/services/toolbox_crypto_service.dart`
@@ -99,13 +141,13 @@
   - 弱签名路径不生成 RSA/ECDSA 密钥对，不写入可验证公钥，验证时只校验 envelope 附加标签是否匹配。
 - `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
   - 隐写高级加密设置新增“弱签名版 快”选项。
-  - 选择弱签名时提示其为快速轻量标签、不提供第三方来源证明；选择 RSA/ECDSA 强签名时提示会生成密钥对并签名，移动设备可能需要等待。
+  - 选择弱签名时提示其为快速轻量标签、不提供第三方来源证明；选择 RSA/ECDSA 时提示其为高成本完整性附加校验且不提供独立来源证明，移动设备可能需要等待。
 - `test/toolbox_crypto_service_test.dart`
   - 覆盖弱签名、RSA 和 ECDSA 签名 envelope 的加解密验证，并补充弱签名标签篡改失败断言。
 
 ### 风险变更
 - 弱签名不是公钥签名：内置域 key 可被逆向，安全性主要来自用户口令派生种子和现有 AEAD/MAC；它只作为低成本附加标签，不提供第三方来源证明。
-- 需要来源证明或更强签名语义时仍应使用 RSA/ECDSA，但移动设备上会有明显额外耗时。
+- 当前 RSA/ECDSA 仍由口令域确定性派生并把公钥写入同一 envelope，不提供独立来源证明；若未来需要来源证明，应支持外部长期私钥签名和独立公钥/指纹校验。
 
 ### 验证
 - `dart analyze lib/src/services/toolbox_crypto_service.dart lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_crypto_service_test.dart test/toolbox_steganography_service_test.dart`
@@ -129,7 +171,7 @@
   - 补充签名层性能边界与还原界面收口说明。
 
 ### 风险变更
-- 签名层性能分析结论：RSA 路径当前会每个 envelope 确定性生成 2048-bit RSA 密钥对并签名，ECDSA 路径会生成 P-256 密钥对并执行确定性签名；这是纯 Dart 大整数/椭圆曲线运算，成本远高于对称 AEAD 和哈希。该层适合作为高级来源/完整性校验，不宜作为默认加密路径。
+- 签名层性能分析结论：RSA 路径当前会每个 envelope 确定性生成 2048-bit RSA 密钥对并签名，ECDSA 路径会生成 P-256 密钥对并执行确定性签名；这是纯 Dart 大整数/椭圆曲线运算，成本远高于对称 AEAD 和哈希。该层只适合作为高成本完整性附加校验，不提供独立来源证明，也不宜作为默认加密路径。
 - 还原模式隐藏写入设置后，用户无法在还原页修改加密算法；这是预期行为，因为算法来自 envelope，只有定位算法/强度仍需匹配。
 
 ### 验证
