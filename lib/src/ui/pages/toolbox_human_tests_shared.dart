@@ -71,8 +71,8 @@ class _HumanTestEntryCard extends StatelessWidget {
                     );
                   },
             child: Ink(
-              height: compact ? 118 : null,
-              padding: EdgeInsets.all(compact ? 9 : 16),
+              height: compact ? 126 : null,
+              padding: EdgeInsets.all(compact ? 10 : 16),
               decoration: BoxDecoration(
                 borderRadius: radius,
                 gradient: LinearGradient(
@@ -108,30 +108,30 @@ class _HumanTestEntryCard extends StatelessWidget {
                         Row(
                           children: <Widget>[
                             Container(
-                              width: 20,
-                              height: 3,
+                              width: 18,
+                              height: 2.5,
                               decoration: BoxDecoration(
-                                color: entry.accent.withValues(alpha: 0.42),
+                                color: entry.accent.withValues(alpha: 0.32),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                             ),
                             const Spacer(),
                             Icon(
                               Icons.drag_indicator_rounded,
-                              size: 14,
-                              color: entry.accent.withValues(alpha: 0.38),
+                              size: 12,
+                              color: entry.accent.withValues(alpha: 0.28),
                             ),
                           ],
                         ),
                         const Spacer(),
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: entry.accent.withValues(
                               alpha: dragging ? 0.08 : 0.13,
                             ),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(18),
                             border: Border.all(
                               color: entry.accent.withValues(alpha: 0.14),
                             ),
@@ -140,10 +140,10 @@ class _HumanTestEntryCard extends StatelessWidget {
                           child: Icon(
                             entry.icon,
                             color: entry.accent,
-                            size: 27,
+                            size: 28,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -157,9 +157,9 @@ class _HumanTestEntryCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
                         ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 16),
+                          constraints: const BoxConstraints(maxHeight: 17),
                           child: Text(
                             entry.title,
                             maxLines: 1,
@@ -167,8 +167,9 @@ class _HumanTestEntryCard extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               height: 1.05,
+                              fontSize: 11,
                             ),
                           ),
                         ),

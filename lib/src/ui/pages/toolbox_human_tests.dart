@@ -546,7 +546,7 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
           },
           onDragEnd: () => _endDrag(accepted: true),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         _HumanTestReorderGrid(
           entries: entries,
           draggingEntryId: _draggingEntryId,
@@ -608,33 +608,39 @@ class _HumanTestQuickDock extends StatelessWidget {
             key: const ValueKey<String>('human_tests_quick_dock'),
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: <Color>[
                   colorScheme.primaryContainer.withValues(
-                    alpha: highlighted ? 0.52 : 0.24,
+                    alpha: highlighted ? 0.46 : 0.20,
                   ),
-                  colorScheme.surfaceContainerLowest,
+                  colorScheme.surfaceContainerLow,
                 ],
               ),
               border: Border.all(
                 color: highlighted
-                    ? colorScheme.primary.withValues(alpha: 0.52)
-                    : colorScheme.outlineVariant,
+                    ? colorScheme.primary.withValues(alpha: 0.48)
+                    : colorScheme.outlineVariant.withValues(alpha: 0.55),
               ),
               boxShadow: highlighted
                   ? <BoxShadow>[
                       BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.12),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
+                        color: colorScheme.primary.withValues(alpha: 0.10),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ]
-                  : const <BoxShadow>[],
+                  : <BoxShadow>[
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -642,19 +648,19 @@ class _HumanTestQuickDock extends StatelessWidget {
                 Row(
                   children: <Widget>[
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        color: colorScheme.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         Icons.widgets_rounded,
                         color: colorScheme.primary,
-                        size: 18,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -718,19 +724,19 @@ class _HumanTestQuickDock extends StatelessWidget {
                 if (entries.isEmpty)
                   Container(
                     width: double.infinity,
-                    constraints: const BoxConstraints(minHeight: 46),
+                    constraints: const BoxConstraints(minHeight: 52),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: 16,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: colorScheme.surface.withValues(alpha: 0.58),
+                      color: colorScheme.surface.withValues(alpha: 0.62),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: highlighted
-                            ? colorScheme.primary.withValues(alpha: 0.34)
+                            ? colorScheme.primary.withValues(alpha: 0.36)
                             : colorScheme.outlineVariant.withValues(
-                                alpha: 0.72,
+                                alpha: 0.50,
                               ),
                       ),
                     ),
@@ -767,8 +773,8 @@ class _HumanTestQuickDock extends StatelessWidget {
                   )
                 else
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 10,
+                    runSpacing: 10,
                     children: entries
                         .map(
                           (entry) => _HumanTestQuickTile(
@@ -809,19 +815,19 @@ class _HumanTestQuickTile extends StatelessWidget {
         },
         onLongPress: onRemove,
         child: Ink(
-          width: 64,
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          width: 68,
+          height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
           decoration: BoxDecoration(
-            color: entry.accent.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: entry.accent.withValues(alpha: 0.20)),
+            color: entry.accent.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: entry.accent.withValues(alpha: 0.18)),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Icon(entry.icon, size: 18, color: entry.accent),
-              const SizedBox(height: 3),
+              Icon(entry.icon, size: 20, color: entry.accent),
+              const SizedBox(height: 4),
               Text(
                 entry.shortTitle,
                 maxLines: 2,
@@ -829,8 +835,8 @@ class _HumanTestQuickTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.labelSmall?.copyWith(
                   height: 1.05,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
                   color: colorScheme.onSurface,
                 ),
               ),
@@ -929,14 +935,25 @@ class _HumanTestReorderGridState extends State<_HumanTestReorderGrid> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 10.0;
-        const cardHeight = 118.0;
+        final double spacing;
+        final double cardHeight;
+        if (constraints.maxWidth < 360) {
+          spacing = 8.0;
+          cardHeight = 126.0;
+        } else if (constraints.maxWidth < 500) {
+          spacing = 10.0;
+          cardHeight = 126.0;
+        } else {
+          spacing = 12.0;
+          cardHeight = 128.0;
+        }
         final columns = constraints.maxWidth < 260 ? 1 : 2;
         final cardWidth =
             (constraints.maxWidth - spacing * (columns - 1)) / columns;
         final rowCount = (widget.entries.length / columns).ceil();
         final height = rowCount * cardHeight + (rowCount - 1) * spacing;
 
+        final isReordering = widget.draggingEntryId != null;
         return SizedBox(
           key: _gridKey,
           height: height,
@@ -948,7 +965,7 @@ class _HumanTestReorderGridState extends State<_HumanTestReorderGrid> {
                   key: ValueKey<String>(
                     'human_tests_grid_slot_${widget.entries[index].id}',
                   ),
-                  duration: const Duration(milliseconds: 230),
+                  duration: Duration(milliseconds: isReordering ? 150 : 0),
                   curve: Curves.easeOutCubic,
                   left: (index % columns) * (cardWidth + spacing),
                   top: (index ~/ columns) * (cardHeight + spacing),
@@ -1046,7 +1063,7 @@ class _HumanTestDraggableEntryCardState
                 widget.onDragEnd(accepted: details.wasAccepted),
             feedback: SizedBox(
               width: width,
-              height: 118,
+              height: 126,
               child: IgnorePointer(
                 child: _HumanTestEntryCard(
                   entry: widget.entry,
@@ -1063,16 +1080,11 @@ class _HumanTestDraggableEntryCardState
                 highlighted: false,
               ),
             ),
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
-              offset: widget.dragging ? const Offset(0, -0.045) : Offset.zero,
-              child: _HumanTestEntryCard(
-                entry: widget.entry,
-                compact: true,
-                highlighted: widget.highlighted,
-                dragging: widget.dragging,
-              ),
+            child: _HumanTestEntryCard(
+              entry: widget.entry,
+              compact: true,
+              highlighted: widget.highlighted,
+              dragging: widget.dragging,
             ),
           ),
         );
